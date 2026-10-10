@@ -4,7 +4,7 @@ export const MARCA = {
   empresa: 'Windoce LLC',
   sitioEmpresa: 'https://windoce.com',
   colores: {
-    primario: '#E8355A',
+    primario: '#FF3008',
     secundario: '#2B1B4E',
     acento: '#FFB627',
     fondo: '#FFF8F3',
