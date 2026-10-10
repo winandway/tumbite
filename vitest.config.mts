@@ -6,7 +6,7 @@ export default defineConfig({
       {
         test: {
           name: 'compartido',
-          include: ['packages/compartido/src/**/*.test.ts'],
+          include: ['packages/compartido/src/**/*.test.{ts,tsx}'],
           environment: 'node',
         },
       },

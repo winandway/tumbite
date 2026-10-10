@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "react": "19.2.3"
   }
 }
