@@ -3,6 +3,13 @@ import type { MiddlewareHandler } from 'hono';
 /** Cabeceras de seguridad en TODAS las respuestas. */
 export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
   await next();
+  // Las respuestas que vienen de los estáticos traen cabeceras de solo lectura:
+  // se copian antes de tocarlas (si no, el servidor revienta con un 500).
+  try {
+    c.res.headers.set('X-Content-Type-Options', 'nosniff');
+  } catch {
+    c.res = new Response(c.res.body, c.res);
+  }
   const h = c.res.headers;
   h.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   h.set('X-Content-Type-Options', 'nosniff');

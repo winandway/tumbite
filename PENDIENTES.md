@@ -1,32 +1,32 @@
-# PAPOS — Pendientes
+# Tumbite — Pendientes
 
-👤 = depende de Richard
+👤 = depende de Richard. Ordenado por importancia.
 
-- [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos (envío y servicio al cliente, propina al repartidor, comisión al restaurante).
-- [x] Nombre: Tumbite (10 oct 2026).
-- [ ] 👤 Comprar tumbite.com YA, antes de que lo tome otro (compra: la hace Richard).
-- [ ] 👤 Revisión de marca «Tumbite» con abogado (USPTO, clases 9, 39, 42 y 43).
-- [ ] 👤 Nombre del programa de música.
-- [ ] 👤 Porcentaje de nuestras ganancias para el fondo de música (sugerido 5 %).
-- [ ] 👤 Aprobar nombres de planes: Inicial / Crece / Élite.
-- [ ] 👤 Nombres de los cuatro niveles de repartidor.
-- [x] Empresa: Windoce LLC (10 oct 2026).
-- [ ] 👤 Cuentas de desarrollador de Apple y Google a nombre de la empresa.
-- [ ] 👤 Consultar con el contador: impuesto de ventas en Florida y repartidores empleados vs independientes.
-- [ ] 👤 En YaDominios Cloud (cuenta tumbite.com@gmail.com, la misma del dominio): conectar el sitio «tumbite» con el repo https://github.com/winandway/tumbite y la rama yapanel-build, con un plan de pago (la base de datos y el dominio propio no existen en el plan gratis). Traer el enlace .sitios.dev o el mensaje en rojo.
-- [ ] 👤 Cuando compres tumbite.com, avisar para conectarlo al sitio.
+## 👤 Lo que solo puede hacer Richard
 
-## Fase 1 (orden del plan, ver docs/PANTALLAS-Y-PLAN.md)
+- [ ] 👤 **Base de datos en vivo.** `https://tumbite.com/datos/salud` dice `base: pendiente`: el sitio no tiene base de datos. Revisar en YaDominios Cloud → sitio tumbite que el plan incluya base de datos y mirar «Registro de errores». Sin esto, nada de cuentas ni pedidos funciona en vivo.
+- [ ] 👤 **Stripe de Windoce LLC** con Connect activado, y sus llaves de PRUEBA puestas en YaDominios Cloud → Variables de entorno: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITIO_URL`. Pasos exactos en `VERIFICAR-PAGOS.md`. Destranca la prueba del circuito de pagos.
+- [ ] 👤 **Administrador:** poner en Variables de entorno `ADMIN_CORREOS` (correo de la cuenta Soporte) y `ADMIN_SEMILLA` (secreto largo). Destranca el panel de administración.
+- [ ] 👤 **Cuentas de desarrollador** de Apple y Google a nombre de Windoce LLC, y cuenta de Expo (EAS) de la empresa. Destranca la publicación en tiendas (`docs/TIENDAS.md`).
+- [ ] 👤 **Abrir Xcode una vez** en esta Mac para que termine de instalarse. Destranca probar las apps en el simulador de iPhone.
+- [ ] 👤 Turnstile (escudo anti-robots): claves de Cloudflare para el login. Opcional; sin ellas el login funciona con el límite de intentos.
+- [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos (construido; se edita en el panel → Dinero).
+- [ ] 👤 Nombre del programa de música y porcentaje para el fondo (sugerido 5 %).
+- [ ] 👤 Nombres de los planes (hoy: Inicial / Crece / Élite) y de los cuatro niveles (hoy: Bronce / Plata / Oro / Diamante).
+- [ ] 👤 Revisión de marca «Tumbite» con abogado (USPTO, clases 9, 39, 42 y 43) y revisión legal de privacidad y términos.
+- [ ] 👤 Contador: impuesto de ventas en Florida; repartidores empleados e independientes.
+- [x] Empresa: Windoce LLC. Nombre: Tumbite. Dominio tumbite.com conectado y en vivo (10 oct 2026).
 
-- [x] Mapa de pantallas y plan (10 oct 2026).
-- [x] Paso 1 · Esqueleto y blindaje (10 oct 2026). Verify verde en GitHub; rama yapanel-build generada.
-- [ ] Paso 1b · Landing pública de Tumbite en «/» (bilingüe, quiénes somos, cómo funciona, para restaurantes, para repartidores, programa de música, contacto) + política de privacidad, términos y soporte (Apple y Google las exigen para publicar). Los paneles pasan a «/panel».
-- [ ] Paso 2 · Cuentas y roles.
-- [ ] Paso 3 · Restaurantes y menús.
-- [ ] Paso 4 · Pedir (App Cliente hasta el carrito).
-- [ ] Paso 5 · Cobrar (Stripe, cuatro bolsillos, billeteras).
-- [ ] Paso 6 · Recibir (App Restaurante con alarma).
-- [ ] Paso 7 · Repartir (App Repartidor, asignación, seguimiento).
-- [ ] Paso 8 · Regalos y marketing, niveles.
-- [ ] Paso 9 · Prueba del circuito completo de pagos.
-- [ ] Paso 10 · Publicación en tiendas.
+## Fase 1 (10 oct 2026, detalle en PLAN.md)
+
+- [x] Base y blindaje, landing con legales, cuentas, panel, tres apps, restaurantes y menús, carrito, cobros, ciclo del pedido, regalos, niveles, calificaciones, borrar cuenta, selector de idioma estilo Amazon, preparación de tiendas.
+- [ ] 🔴 Prueba del circuito de pagos de punta a punta (espera Stripe).
+
+## Siguiente fila (no depende de Richard)
+
+- [ ] Fotos de restaurantes y platos (subida al almacén del sitio).
+- [ ] Notificaciones al celular (pedido aceptado, repartidor en camino, oferta nueva).
+- [ ] Mapa en vivo del repartidor en la app del cliente.
+- [ ] Ubicación del repartidor en segundo plano (requiere build propio y video para Apple).
+- [ ] Impresora de cocina y conexión con cajas (Fase 2).
+- [ ] Programa de música y «Música en vivo esta semana» (Fase 2, espera el nombre).

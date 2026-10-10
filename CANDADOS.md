@@ -57,3 +57,11 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - Retiro atómico: revisar saldo y anotar el retiro es una sola sentencia (comprobado en rojo el 10 oct 2026 con dos retiros simultáneos).
 - El cliente ve la ubicación del repartidor solo mientras va en camino, y solo su nombre de pila.
 - Candados: `apps/servidor/src/rutas/operacion.test.ts`, `pedidos.test.ts`.
+
+## C-ESTATICOS-1 · Las páginas que no son la portada no pueden dar error 500
+
+- Qué se rompió (10 oct 2026, primera versión en vivo): `tumbite.com/privacidad`, `/panel`, `/og.png` y todo lo que no era la portada daba 500.
+- Causa: la respuesta de los estáticos trae cabeceras de solo lectura y el middleware de seguridad intentaba escribirles.
+- Arreglo: `cabecerasSeguridad` copia la respuesta antes de tocar las cabeceras, y la ruta de estáticos devuelve una copia (`new Response(res.body, res)`).
+- Candado: `apps/servidor/src/seguridad.test.ts` (comprobado en rojo).
+- Cómo comprobar en vivo: las rutas `/`, `/privacidad`, `/terminos`, `/soporte`, `/panel`, `/og.png`, `/robots.txt` deben dar 200.
