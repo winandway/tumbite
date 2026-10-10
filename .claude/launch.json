@@ -16,11 +16,11 @@
     {
       "name": "app-cliente-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["expo", "start", "--web", "--port", "8081", "--clear"],
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
       "cwd": "apps/cliente",
       "env": {
         "EXPO_PUBLIC_API_URL": "http://localhost:8787",
-        "CI": "1"
+        "EXPO_NO_TELEMETRY": "1"
       },
       "port": 8081
     }

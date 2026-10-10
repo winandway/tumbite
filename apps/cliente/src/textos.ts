@@ -1,0 +1,88 @@
+import type { Idioma } from '@tumbite/compartido';
+
+const es = {
+  cerca: 'Restaurantes cerca de ti',
+  abierto: 'Abierto',
+  cerrado: 'Cerrado',
+  km: 'km',
+  minutos: 'min',
+  sinRestaurantes: 'Todavía no hay restaurantes en tu zona. ¡Muy pronto!',
+  reintentar: 'Intentar de nuevo',
+  agregar: 'Agregar',
+  verCarrito: 'Ver carrito',
+  carrito: 'Tu pedido',
+  vacio: 'Tu carrito está vacío.',
+  otroRestaurante: 'Tu carrito tiene platos de otro restaurante. ¿Empezar un pedido nuevo aquí?',
+  siEmpezar: 'Sí, empezar de nuevo',
+  no: 'No',
+  subtotal: 'Comida',
+  envio: 'Envío',
+  servicio: 'Tarifa de servicio',
+  pequeno: 'Cargo por pedido pequeño',
+  propina: 'Propina para tu repartidor',
+  propinaNota: 'El 100 % de la propina es para quien te lleva el pedido.',
+  total: 'Total',
+  direccion: 'Dirección de entrega',
+  direccionAyuda: 'Calle, número, apartamento',
+  notas: 'Indicaciones para el repartidor (opcional)',
+  pagar: 'Pagar',
+  cerradoAhora: 'Este restaurante está cerrado ahora.',
+  usarUbicacion: 'Usar mi ubicación',
+  ubicacionOk: 'Ubicación lista',
+  quitar: 'Quitar',
+  volver: '← Volver',
+  mas: 'Más',
+  menos: 'Menos',
+  otra: 'Otra',
+  sinUbicacion: 'Activa tu ubicación para ordenar por cercanía.',
+  pedidos: 'Mis pedidos',
+  cuenta: 'Cuenta',
+};
+
+type T = typeof es;
+
+const en: T = {
+  cerca: 'Restaurants near you',
+  abierto: 'Open',
+  cerrado: 'Closed',
+  km: 'mi',
+  minutos: 'min',
+  sinRestaurantes: 'No restaurants in your area yet. Coming soon!',
+  reintentar: 'Try again',
+  agregar: 'Add',
+  verCarrito: 'View cart',
+  carrito: 'Your order',
+  vacio: 'Your cart is empty.',
+  otroRestaurante: 'Your cart has items from another restaurant. Start a new order here?',
+  siEmpezar: 'Yes, start over',
+  no: 'No',
+  subtotal: 'Food',
+  envio: 'Delivery',
+  servicio: 'Service fee',
+  pequeno: 'Small order fee',
+  propina: 'Tip for your driver',
+  propinaNota: 'Your driver keeps 100% of the tip.',
+  total: 'Total',
+  direccion: 'Delivery address',
+  direccionAyuda: 'Street, number, apartment',
+  notas: 'Notes for your driver (optional)',
+  pagar: 'Pay',
+  cerradoAhora: 'This restaurant is closed right now.',
+  usarUbicacion: 'Use my location',
+  ubicacionOk: 'Location ready',
+  quitar: 'Remove',
+  volver: '← Back',
+  mas: 'More',
+  menos: 'Less',
+  otra: 'Other',
+  sinUbicacion: 'Turn on location to sort by distance.',
+  pedidos: 'My orders',
+  cuenta: 'Account',
+};
+
+export const TEXTOS: Record<Idioma, T> = { es, en };
+
+/** En inglés de EE.UU. la distancia va en millas. */
+export function distanciaTexto(km: number, idioma: Idioma): string {
+  return idioma === 'en' ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`;
+}

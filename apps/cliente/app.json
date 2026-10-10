@@ -8,7 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.windoce.tumbite"
+      "bundleIdentifier": "com.windoce.tumbite",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show nearby restaurants and to deliver your order."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +27,15 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "tumbite-cliente",
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Tumbite uses your location to show nearby restaurants and to deliver your order."
+        }
+      ]
+    ]
   }
 }

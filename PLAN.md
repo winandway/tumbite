@@ -6,7 +6,7 @@
 - [x] Paso 2c: Panel web: entrar / registrarse con campo de contraseña con ojito, borradores, cerrar sesión de verdad.
 - [x] Paso 2d: Las tres apps: navegación con Expo Router, entrar / registrarse con ojito y borradores, sesión guardada segura, cerrar sesión.
 - [x] Paso 3: Restaurantes y menús: tablas, servidor (crear/editar restaurante y platos bilingües, aprobación por admin), pantallas del panel.
-- [ ] Paso 4: App Cliente: restaurantes abiertos, menú, carrito con desglose de los cuatro bolsillos (cálculo compartido y probado al 90 %).
+- [x] Paso 4: App Cliente: restaurantes abiertos, menú, carrito con desglose de los cuatro bolsillos (cálculo compartido y probado al 90 %).
 - [ ] Paso 5: Cobro: configuración de dinero editable por admin, pedido recalculado en el servidor, pago con Stripe Checkout, aviso de Stripe con firma verificada, alta de billetera con Stripe Connect; VERIFICAR-PAGOS.md con lo probado y lo NO probado.
 - [ ] Paso 6: App Restaurante: pedidos entrantes con alarma, aceptar con tiempo, listo, pausar restaurante.
 - [ ] Paso 7: App Repartidor: conectarse, ofertas por cercanía y nivel, aceptar/rechazar sin castigo, estados del viaje, ubicación; el cliente ve el seguimiento.

@@ -1,0 +1,121 @@
+import type { Plan } from './catalogo';
+import { type Centavos, porcentajeDe } from './dinero';
+
+/**
+ * Los cuatro bolsillos de cada pedido (docs/REQUISITOS.md, sección 3).
+ * Todo en centavos enteros y puntos básicos (750 = 7,5 %). Los valores los edita el admin.
+ */
+export type ConfigDinero = {
+  comisionPb: Record<Plan, number>;
+  envioBase: Centavos;
+  envioKmIncluidos: number;
+  envioPorKm: Centavos;
+  envioMaximo: Centavos;
+  servicioPb: number;
+  servicioMinimo: Centavos;
+  servicioMaximo: Centavos;
+  pedidoMinimo: Centavos;
+  cargoPedidoPequeno: Centavos;
+  pagoMinimoRepartidor: Centavos;
+};
+
+export const CONFIG_DINERO_INICIAL: ConfigDinero = {
+  comisionPb: { inicial: 750, crece: 1250, elite: 1500 },
+  envioBase: 299,
+  envioKmIncluidos: 3,
+  envioPorKm: 50,
+  envioMaximo: 799,
+  servicioPb: 500,
+  servicioMinimo: 99,
+  servicioMaximo: 499,
+  pedidoMinimo: 1000,
+  cargoPedidoPequeno: 200,
+  pagoMinimoRepartidor: 500,
+};
+
+export type LineaPedido = { precioCentavos: Centavos; cantidad: number };
+
+export type Desglose = {
+  subtotal: Centavos;
+  envio: Centavos;
+  servicio: Centavos;
+  cargoPedidoPequeno: Centavos;
+  propina: Centavos;
+  totalCliente: Centavos;
+  comisionRestaurante: Centavos;
+  pagoRestaurante: Centavos;
+  pagoRepartidor: Centavos;
+  complementoRepartidor: Centavos;
+  gananciaPlataforma: Centavos;
+};
+
+function entero(n: number, nombre: string): void {
+  if (!Number.isSafeInteger(n) || n < 0)
+    throw new Error(`calcularPedido: ${nombre} inválido (${n})`);
+}
+
+export function calcularEnvio(config: ConfigDinero, distanciaKm: number | null): Centavos {
+  const km =
+    distanciaKm == null || !Number.isFinite(distanciaKm)
+      ? config.envioKmIncluidos
+      : Math.max(0, distanciaKm);
+  const extra = Math.max(0, Math.ceil(km - config.envioKmIncluidos)) * config.envioPorKm;
+  return Math.min(config.envioBase + extra, config.envioMaximo);
+}
+
+/**
+ * La propina es 100 % del repartidor y NUNCA se usa para completar su pago mínimo:
+ * el mínimo se completa con dinero de la plataforma.
+ */
+export function calcularPedido(p: {
+  lineas: LineaPedido[];
+  plan: Plan;
+  propina: Centavos;
+  distanciaKm: number | null;
+  config?: ConfigDinero;
+  /** Lo que el restaurante regala en este pedido (cumpleaños, sellos). Sale de su pago. */
+  regalo?: Centavos;
+}): Desglose {
+  const c = p.config ?? CONFIG_DINERO_INICIAL;
+  entero(p.propina, 'propina');
+  const regalo = p.regalo ?? 0;
+  entero(regalo, 'regalo');
+  let subtotal = 0;
+  for (const l of p.lineas) {
+    entero(l.precioCentavos, 'precio');
+    if (!Number.isInteger(l.cantidad) || l.cantidad < 1 || l.cantidad > 99)
+      throw new Error('calcularPedido: cantidad inválida');
+    subtotal += l.precioCentavos * l.cantidad;
+  }
+  if (subtotal === 0) throw new Error('calcularPedido: el pedido está vacío');
+  const aCobrar = Math.max(0, subtotal - regalo);
+
+  const envio = calcularEnvio(c, p.distanciaKm);
+  const servicio = Math.min(
+    Math.max(porcentajeDe(aCobrar, c.servicioPb), c.servicioMinimo),
+    c.servicioMaximo,
+  );
+  const cargoPedidoPequeno = subtotal < c.pedidoMinimo ? c.cargoPedidoPequeno : 0;
+  const totalCliente = aCobrar + envio + servicio + cargoPedidoPequeno + p.propina;
+
+  const comisionRestaurante = porcentajeDe(aCobrar, c.comisionPb[p.plan]);
+  const pagoRestaurante = aCobrar - comisionRestaurante;
+  const complementoRepartidor = Math.max(0, c.pagoMinimoRepartidor - envio);
+  const pagoRepartidor = envio + complementoRepartidor + p.propina;
+  const gananciaPlataforma =
+    comisionRestaurante + servicio + cargoPedidoPequeno - complementoRepartidor;
+
+  return {
+    subtotal,
+    envio,
+    servicio,
+    cargoPedidoPequeno,
+    propina: p.propina,
+    totalCliente,
+    comisionRestaurante,
+    pagoRestaurante,
+    pagoRepartidor,
+    complementoRepartidor,
+    gananciaPlataforma,
+  };
+}
