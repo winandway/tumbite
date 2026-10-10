@@ -13,13 +13,14 @@
 - [x] Empresa: Windoce LLC (10 oct 2026).
 - [ ] 👤 Cuentas de desarrollador de Apple y Google a nombre de la empresa.
 - [ ] 👤 Consultar con el contador: impuesto de ventas en Florida y repartidores empleados vs independientes.
-- [ ] 👤 Activar en YaDominios Cloud un plan con base de datos y conectar el sitio «tumbite» (repo winandway/tumbite, rama yapanel-build). La base no existe en el plan gratis.
+- [ ] 👤 En YaDominios Cloud (cuenta tumbite.com@gmail.com, la misma del dominio): conectar el sitio «tumbite» con el repo https://github.com/winandway/tumbite y la rama yapanel-build, con un plan de pago (la base de datos y el dominio propio no existen en el plan gratis). Traer el enlace .sitios.dev o el mensaje en rojo.
 - [ ] 👤 Cuando compres tumbite.com, avisar para conectarlo al sitio.
 
 ## Fase 1 (orden del plan, ver docs/PANTALLAS-Y-PLAN.md)
 
 - [x] Mapa de pantallas y plan (10 oct 2026).
 - [x] Paso 1 · Esqueleto y blindaje (10 oct 2026). Verify verde en GitHub; rama yapanel-build generada.
+- [ ] Paso 1b · Landing pública de Tumbite en «/» (bilingüe, quiénes somos, cómo funciona, para restaurantes, para repartidores, programa de música, contacto) + política de privacidad, términos y soporte (Apple y Google las exigen para publicar). Los paneles pasan a «/panel».
 - [ ] Paso 2 · Cuentas y roles.
 - [ ] Paso 3 · Restaurantes y menús.
 - [ ] Paso 4 · Pedir (App Cliente hasta el carrito).

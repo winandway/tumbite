@@ -20,6 +20,9 @@ Las reglas globales de Richard aplican; estas se suman.
 
 ## Publicación
 
+- Cuenta de YaDominios Cloud y del dominio tumbite.com: tumbite.com@gmail.com (de Richard). No hace falta ninguna API ni credencial para publicar: el sitio se conecta en el panel con el repo y la rama.
+- El sitio sirve la landing pública en «/» y los paneles en «/panel».
+
 - Servidor + panel: YaDominios Cloud, sitio conectado a la rama `yapanel-build` (la llena el Action `publicar`).
 - YaDominios Cloud no tiene Durable Objects ni cron: el seguimiento en vivo empieza con consultas cada pocos segundos; si hace falta tiempo real con Durable Objects, esa pieza va directo a Cloudflare (regla de Richard).
 - Apps: EAS Build → TestFlight y Google Play, cuenta de Windoce LLC.
