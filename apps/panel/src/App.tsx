@@ -1,5 +1,5 @@
 import { enIdioma } from '@tumbite/compartido';
-import { Inicio } from './Inicio';
+import { PanelApp } from './panel/PanelApp';
 import { useRuta } from './ruta';
 import { useIdioma } from './usarIdioma';
 import { Landing } from './sitio/Landing';
@@ -12,7 +12,7 @@ export function App() {
   const ruta = useRuta();
   const [idioma, cambiar] = useIdioma();
 
-  if (ruta.startsWith('/panel')) return <Inicio />;
+  if (ruta.startsWith('/panel')) return <PanelApp ruta={ruta} />;
 
   const volver = enIdioma(TEXTOS_SITIO, idioma).volver;
   const legal =

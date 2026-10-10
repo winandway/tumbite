@@ -3,7 +3,7 @@
 - [x] Paso 1b: Landing pública bilingüe en «/» (quiénes somos, cómo funciona, restaurantes, repartidores, música, contacto) + páginas de privacidad, términos y soporte; panel movido a «/panel»; salud dice si existen la base y el almacén.
 - [x] Paso 2a: Base de datos (schema.sql) de cuentas y sesiones + servidor de cuentas: registrarse, entrar, salir, quién soy; contraseñas con hash fuerte; roles cliente/repartidor/restaurante/admin; regla «Soporte» para correos @windoce.com; Turnstile opcional; límite de intentos. Pruebas con una base SQLite local.
 - [x] Paso 2b: Paquete compartido: esquemas de datos (zod) y cliente del servidor usados por apps y panel; pieza reutilizable de borradores (useBorrador) con su prueba.
-- [ ] Paso 2c: Panel web: entrar / registrarse con campo de contraseña con ojito, borradores, cerrar sesión de verdad.
+- [x] Paso 2c: Panel web: entrar / registrarse con campo de contraseña con ojito, borradores, cerrar sesión de verdad.
 - [ ] Paso 2d: Las tres apps: navegación con Expo Router, entrar / registrarse con ojito y borradores, sesión guardada segura, cerrar sesión.
 - [ ] Paso 3: Restaurantes y menús: tablas, servidor (crear/editar restaurante y platos bilingües, aprobación por admin), pantallas del panel.
 - [ ] Paso 4: App Cliente: restaurantes abiertos, menú, carrito con desglose de los cuatro bolsillos (cálculo compartido y probado al 90 %).

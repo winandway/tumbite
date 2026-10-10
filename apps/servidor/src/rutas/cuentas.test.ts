@@ -3,9 +3,15 @@ import { app } from '../app';
 import { crearBasePruebas } from '../pruebas/d1';
 
 let DB: D1Database;
-const env = () => ({ DB, ADMIN_CORREOS: 'jefe@tumbite.com' });
+const SEMILLA = 'semilla-de-prueba-larga-123456';
+const env = () => ({ DB, ADMIN_CORREOS: 'jefe@tumbite.com', ADMIN_SEMILLA: SEMILLA });
 
-async function llamar(ruta: string, cuerpo?: unknown, token?: string, ip = '198.51.100.1') {
+async function llamar(
+  ruta: string,
+  cuerpo?: unknown,
+  token?: string,
+  ip = `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+) {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     'cf-connecting-ip': ip,
@@ -110,13 +116,37 @@ describe('cuentas', () => {
     expect(con.res.status).toBe(201);
   });
 
-  it('los correos de la lista de administradores quedan como admin', async () => {
+  it('registrarse con un correo de la lista NO da poderes de administrador', async () => {
     const r = await llamar('/datos/cuentas/registro', {
       ...nueva,
       correo: 'jefe@tumbite.com',
       nombre: 'Soporte Tumbite',
     });
-    expect(r.datos.usuario.rol).toBe('admin');
+    expect(r.datos.usuario.rol).toBe('cliente');
+  });
+
+  it('volverse admin exige sesión, correo en la lista y la semilla correcta', async () => {
+    const jefe = await llamar('/datos/cuentas/registro', {
+      ...nueva,
+      correo: 'jefe@tumbite.com',
+      nombre: 'Soporte Tumbite',
+    });
+    const mala = await llamar('/datos/cuentas/hacer-admin', { semilla: 'otra' }, jefe.datos.token);
+    expect(mala.res.status).toBe(403);
+    const intruso = await llamar('/datos/cuentas/registro', {
+      ...nueva,
+      correo: 'intruso@correo.com',
+    });
+    const conSemilla = await llamar(
+      '/datos/cuentas/hacer-admin',
+      { semilla: SEMILLA },
+      intruso.datos.token,
+    );
+    expect(conSemilla.res.status).toBe(403);
+    const ok = await llamar('/datos/cuentas/hacer-admin', { semilla: SEMILLA }, jefe.datos.token);
+    expect(ok.res.status).toBe(200);
+    const yo = await llamar('/datos/cuentas/yo', undefined, jefe.datos.token);
+    expect(yo.datos.usuario.rol).toBe('admin');
   });
 
   it('frena a quien prueba contraseñas a lo bruto', async () => {

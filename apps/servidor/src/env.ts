@@ -9,8 +9,10 @@ export const esquemaEnv = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   TURNSTILE_SECRET_KEY: z.string().min(10).optional(),
-  /** Correos (separados por coma) que al registrarse quedan como administradores. */
+  /** Correos (separados por coma) que PUEDEN volverse administradores con la semilla. */
   ADMIN_CORREOS: z.string().optional(),
+  /** Secreto largo para /datos/cuentas/hacer-admin. Va solo en el panel de YaDominios. */
+  ADMIN_SEMILLA: z.string().min(24).optional(),
 });
 
 export type Variables = z.infer<typeof esquemaEnv>;

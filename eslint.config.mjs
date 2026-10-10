@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/.expo/**',
       '**/.dist-worker/**',
+      '**/.wrangler/**',
       '**/coverage/**',
       'out-deploy/**',
       '**/*.config.js',

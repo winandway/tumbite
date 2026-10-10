@@ -1,6 +1,9 @@
 /**
  * Escudo anti-robots de Cloudflare. Se comprueba en el servidor ANTES de mirar la contraseña.
  * Sin clave configurada se apaga solo; si Cloudflare no responde, se deja pasar (la contraseña sigue detrás).
+ * Decisión de negocio de Richard (regla global «Todo login lleva salida y escudo anti-robots»):
+ * tumbar la entrada de todos por un mal minuto de un servicio ajeno no compensa. Detrás quedan
+ * la contraseña y el límite de intentos por IP. El fallo queda en el registro de errores.
  */
 export async function pasaTurnstile(
   secreto: string | undefined,

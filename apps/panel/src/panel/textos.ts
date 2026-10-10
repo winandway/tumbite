@@ -1,0 +1,79 @@
+import type { Idioma } from '@tumbite/compartido';
+
+const es = {
+  entrar: 'Entrar',
+  registrarse: 'Crear cuenta de restaurante',
+  yaTengo: '¿Ya tienes cuenta? Entra',
+  noTengo: '¿Tu restaurante aún no está en Tumbite? Crea tu cuenta',
+  nombre: 'Tu nombre',
+  correo: 'Correo',
+  clave: 'Contraseña',
+  telefono: 'Celular',
+  verClave: 'Ver la contraseña',
+  ocultarClave: 'Ocultar la contraseña',
+  recuperado: 'Recuperamos lo que estabas escribiendo.',
+  empezarDeNuevo: 'Empezar de nuevo',
+  enviando: 'Un momento…',
+  salir: 'Cerrar sesión',
+  hola: 'Hola',
+  cargando: 'Cargando…',
+  soloEquipo: 'Esta cuenta es de cliente o repartidor. Usa la app de Tumbite en tu celular.',
+  menuRest: {
+    inicio: 'Inicio',
+    restaurante: 'Mi restaurante',
+    menu: 'Menú',
+    pedidos: 'Pedidos',
+    beneficios: 'Beneficios',
+    regalos: 'Regalos y marketing',
+  },
+  menuAdmin: {
+    inicio: 'Inicio',
+    restaurantes: 'Restaurantes',
+    dinero: 'Dinero',
+    repartidores: 'Repartidores',
+  },
+  bienvenidaRest: 'Desde aquí manejas tu restaurante en Tumbite.',
+  bienvenidaAdmin: 'Panel de administración de Tumbite.',
+  pronto: 'Esta sección llega en el siguiente paso.',
+};
+
+type T = typeof es;
+
+const en: T = {
+  entrar: 'Sign in',
+  registrarse: 'Create a restaurant account',
+  yaTengo: 'Already have an account? Sign in',
+  noTengo: 'Restaurant not on Tumbite yet? Create your account',
+  nombre: 'Your name',
+  correo: 'Email',
+  clave: 'Password',
+  telefono: 'Mobile phone',
+  verClave: 'Show password',
+  ocultarClave: 'Hide password',
+  recuperado: 'We restored what you were typing.',
+  empezarDeNuevo: 'Start over',
+  enviando: 'One moment…',
+  salir: 'Sign out',
+  hola: 'Hi',
+  cargando: 'Loading…',
+  soloEquipo: 'This is a customer or driver account. Please use the Tumbite mobile app.',
+  menuRest: {
+    inicio: 'Home',
+    restaurante: 'My restaurant',
+    menu: 'Menu',
+    pedidos: 'Orders',
+    beneficios: 'Earnings',
+    regalos: 'Gifts and marketing',
+  },
+  menuAdmin: {
+    inicio: 'Home',
+    restaurantes: 'Restaurants',
+    dinero: 'Money',
+    repartidores: 'Drivers',
+  },
+  bienvenidaRest: 'Manage your restaurant on Tumbite from here.',
+  bienvenidaAdmin: 'Tumbite admin dashboard.',
+  pronto: 'This section is coming in the next step.',
+};
+
+export const TEXTOS_PANEL: Record<Idioma, T> = { es, en };

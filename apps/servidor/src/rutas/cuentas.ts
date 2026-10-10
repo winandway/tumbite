@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { esquemaEntrar, esquemaRegistro, type Rol, type Usuario } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { hashClave, nuevoId, nuevoToken, sha256, verificarClave } from '../cripto';
+import { z } from 'zod';
 import {
   COOKIE_SESION,
   DIAS_SESION,
@@ -13,6 +14,18 @@ import {
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
+
+const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
+
+let hashFalsoGuardado: Promise<string> | null = null;
+function hashFalso(): Promise<string> {
+  hashFalsoGuardado ??= hashClave(crypto.randomUUID());
+  return hashFalsoGuardado;
+}
+
+async function igualesSeguro(a: string, b: string): Promise<boolean> {
+  return (await sha256(a)) === (await sha256(b));
+}
 
 export const cuentas = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -63,7 +76,8 @@ cuentas.post('/registro', async (c) => {
       'correo',
       409,
     );
-  const rol: Rol = esAdmin(d.correo, c.env.ADMIN_CORREOS) ? 'admin' : d.rol;
+  // Nadie se vuelve administrador al registrarse: eso se hace aparte, con la semilla secreta.
+  const rol: Rol = d.rol;
   const id = nuevoId();
   await db
     .prepare(
@@ -96,8 +110,10 @@ cuentas.post('/entrar', async (c) => {
     )
     .bind(d.correo)
     .first<Usuario & { clave_hash: string }>();
-  // Mismo mensaje si el correo no existe o la clave está mal: no se le dice a un atacante cuál falló.
-  if (!fila || !(await verificarClave(d.clave, fila.clave_hash))) {
+  // Mismo mensaje y mismo tiempo si el correo no existe o la clave está mal:
+  // no se le dice a un atacante cuál de las dos falló.
+  const claveOk = await verificarClave(d.clave, fila?.clave_hash ?? (await hashFalso()));
+  if (!fila || !claveOk) {
     throw new ErrorDatos('El correo o la contraseña no coinciden.', undefined, 401);
   }
   const token = await abrirSesion(db, fila.id);
@@ -119,6 +135,27 @@ cuentas.post('/salir', async (c) => {
       .bind(await sha256(token))
       .run();
   c.header('Set-Cookie', cookie('', true));
+  return c.json({ ok: true });
+});
+
+/**
+ * Convertir una cuenta en administradora. Hace falta TODO esto a la vez:
+ * haber entrado, que el correo esté en ADMIN_CORREOS y conocer ADMIN_SEMILLA
+ * (secreto del panel de YaDominios). Registrarse con un correo de la lista no basta.
+ */
+cuentas.post('/hacer-admin', async (c) => {
+  const u = exigir(c);
+  const { semilla } = await leerCuerpo(c, esquemaSemilla);
+  const secreto = c.env.ADMIN_SEMILLA;
+  if (
+    !secreto ||
+    secreto.length < 24 ||
+    !esAdmin(u.correo, c.env.ADMIN_CORREOS) ||
+    !(await igualesSeguro(semilla, secreto))
+  ) {
+    throw new ErrorDatos('No se pudo completar.', undefined, 403);
+  }
+  await base(c).prepare("UPDATE usuarios SET rol = 'admin' WHERE id = ?").bind(u.id).run();
   return c.json({ ok: true });
 });
 
