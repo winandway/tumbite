@@ -485,3 +485,171 @@ h1 {
     white-space: nowrap;
   }
 }
+.formulario {
+  max-width: 560px;
+}
+.tarjeta-form {
+  background: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgb(43 27 78 / 8%);
+}
+.titulo-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fila-botones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fila-botones .boton {
+  padding: 10px 14px;
+}
+.fila-ubicacion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+.ok {
+  color: #0d7a3a;
+  font-weight: 600;
+}
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  background: #fff4d6;
+}
+.estado-aprobado {
+  background: #e3f6ea;
+}
+.estado-pausado,
+.estado-rechazado {
+  background: #fde4e4;
+}
+.lista {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lista li {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 4px rgb(43 27 78 / 6%);
+}
+.lista li.apagado {
+  opacity: 0.6;
+}
+.lista-texto {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lista-texto span {
+  color: #6b6178;
+  font-size: 0.88rem;
+}
+.interruptor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.tres-puntos {
+  position: relative;
+  margin-left: auto;
+}
+.tres-puntos > button {
+  background: transparent;
+  border: 0;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+.tres-puntos > button:hover {
+  background: #f3eef8;
+}
+.tres-puntos-menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 15%);
+  min-width: 150px;
+  z-index: 5;
+  overflow: hidden;
+}
+.tres-puntos-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 0;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+.tres-puntos-menu button:hover {
+  background: #f6f2fa;
+}
+.tres-puntos-menu button.peligro {
+  color: #c4001d;
+}
+.insignia {
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fff4d6;
+  color: #7a5300 !important;
+}
+.insignia-aprobado {
+  background: #e3f6ea;
+  color: #0d5a2c !important;
+}
+.insignia-pausado,
+.insignia-rechazado {
+  background: #fde4e4;
+  color: #8a0014 !important;
+}
+.campo-compacto {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  font-weight: 600;
+  gap: 4px;
+}
+.campo-compacto select {
+  font: inherit;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d8d0e3;
+}

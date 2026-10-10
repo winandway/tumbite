@@ -5,7 +5,7 @@
 - [x] Paso 2b: Paquete compartido: esquemas de datos (zod) y cliente del servidor usados por apps y panel; pieza reutilizable de borradores (useBorrador) con su prueba.
 - [x] Paso 2c: Panel web: entrar / registrarse con campo de contraseña con ojito, borradores, cerrar sesión de verdad.
 - [x] Paso 2d: Las tres apps: navegación con Expo Router, entrar / registrarse con ojito y borradores, sesión guardada segura, cerrar sesión.
-- [ ] Paso 3: Restaurantes y menús: tablas, servidor (crear/editar restaurante y platos bilingües, aprobación por admin), pantallas del panel.
+- [x] Paso 3: Restaurantes y menús: tablas, servidor (crear/editar restaurante y platos bilingües, aprobación por admin), pantallas del panel.
 - [ ] Paso 4: App Cliente: restaurantes abiertos, menú, carrito con desglose de los cuatro bolsillos (cálculo compartido y probado al 90 %).
 - [ ] Paso 5: Cobro: configuración de dinero editable por admin, pedido recalculado en el servidor, pago con Stripe Checkout, aviso de Stripe con firma verificada, alta de billetera con Stripe Connect; VERIFICAR-PAGOS.md con lo probado y lo NO probado.
 - [ ] Paso 6: App Restaurante: pedidos entrantes con alarma, aceptar con tiempo, listo, pausar restaurante.
@@ -13,4 +13,5 @@
 - [ ] Paso 8: Regalos y marketing (porcentaje por restaurante, cumpleaños, sellos, cliente que vuelve) y niveles de repartidor; pantallas del panel.
 - [ ] Paso 9: Prueba del circuito completo de pagos en modo prueba de Stripe (bloqueado si no hay llaves de prueba: se deja escrito en rojo).
 - [ ] Paso 10: Preparar publicación en tiendas (eas.json, fichas, permisos); bloqueado por las cuentas de Apple y Google.
+- [ ] Paso 10b: Selector de idioma estilo Amazon (pedido de Richard con captura): botón con bandera + código y flechita «🇪🇸 ES ▾»; al tocarlo, una ventanita con «Cambiar idioma», opciones con círculo de selección «English - EN» / «español - ES» separadas por una línea. En la web y en las tres apps. Guardarlo como REGLA GLOBAL en ~/.claude/CLAUDE.md para que todo proyecto nazca con este selector (respetando la bandera de España para el español).
 - [ ] Paso 11: Verificación completa, publicar, prueba de humo en vivo, documentos y PENDIENTES al día.

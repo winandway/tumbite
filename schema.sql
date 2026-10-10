@@ -28,3 +28,41 @@ CREATE TABLE IF NOT EXISTS sesiones (
   expira_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
+
+CREATE TABLE IF NOT EXISTS restaurantes (
+  id TEXT PRIMARY KEY,
+  dueno_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  categoria TEXT NOT NULL DEFAULT '',
+  telefono TEXT NOT NULL DEFAULT '',
+  direccion TEXT NOT NULL DEFAULT '',
+  lat REAL,
+  lng REAL,
+  imagen TEXT,
+  plan TEXT NOT NULL DEFAULT 'inicial' CHECK (plan IN ('inicial', 'crece', 'elite')),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'pausado', 'rechazado')),
+  abierto INTEGER NOT NULL DEFAULT 0,
+  tiempo_prep_min INTEGER NOT NULL DEFAULT 20,
+  regalos_pb INTEGER NOT NULL DEFAULT 300,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS restaurantes_estado ON restaurantes(estado);
+
+CREATE TABLE IF NOT EXISTS platos (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  nombre_es TEXT NOT NULL,
+  nombre_en TEXT NOT NULL DEFAULT '',
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  categoria TEXT NOT NULL DEFAULT '',
+  precio_centavos INTEGER NOT NULL CHECK (precio_centavos >= 0),
+  imagen TEXT,
+  disponible INTEGER NOT NULL DEFAULT 1,
+  eliminado INTEGER NOT NULL DEFAULT 0,
+  orden INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS platos_restaurante ON platos(restaurante_id);

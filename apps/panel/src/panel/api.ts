@@ -7,3 +7,11 @@ export const api = crearApi({
   idioma: leerIdioma,
   pase: () => (window as unknown as { tumbitePase?: string }).tumbitePase,
 });
+
+export async function pedir<T>(
+  metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  ruta: string,
+  cuerpo?: unknown,
+): Promise<T> {
+  return api.pedir<T>(metodo, ruta, cuerpo);
+}

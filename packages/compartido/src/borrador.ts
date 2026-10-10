@@ -25,10 +25,53 @@ export type OpcionesBorrador<T extends Record<string, unknown>> = {
   almacen: Almacen;
   sensibles?: (keyof T)[];
   esperaMs?: number;
+  /**
+   * Avisa cuando la app se va a segundo plano o la página se cierra, para guardar YA
+   * sin esperar el medio segundo. En el navegador se usa solo; en el celular se pasa AppState.
+   */
+  alSalir?: (guardarYa: () => void) => () => void;
 };
 
+type Escuchable = {
+  addEventListener?: (evento: string, f: () => void) => void;
+  removeEventListener?: (evento: string, f: () => void) => void;
+};
+
+function alSalirNavegador(guardarYa: () => void): () => void {
+  // Sin tipos del navegador a propósito: este paquete también corre en el servidor y en el celular.
+  const ventana = globalThis as unknown as Escuchable & {
+    document?: Escuchable & { visibilityState?: string };
+  };
+  const doc = ventana.document;
+  if (
+    typeof ventana.addEventListener !== 'function' ||
+    !doc ||
+    typeof doc.addEventListener !== 'function'
+  )
+    return () => {};
+  const oculto = () => {
+    if (doc.visibilityState === 'hidden') guardarYa();
+  };
+  ventana.addEventListener('pagehide', guardarYa);
+  ventana.addEventListener('beforeunload', guardarYa);
+  doc.addEventListener('visibilitychange', oculto);
+  return () => {
+    ventana.removeEventListener?.('pagehide', guardarYa);
+    ventana.removeEventListener?.('beforeunload', guardarYa);
+    doc.removeEventListener?.('visibilitychange', oculto);
+  };
+}
+
 export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorrador<T>) {
-  const { formulario, cuenta, inicial, almacen, sensibles = [], esperaMs = 500 } = op;
+  const {
+    formulario,
+    cuenta,
+    inicial,
+    almacen,
+    sensibles = [],
+    esperaMs = 500,
+    alSalir = alSalirNavegador,
+  } = op;
   const llave = llaveBorrador(formulario, cuenta);
   const [valores, setValores] = useState<T>(inicial);
   const [recuperado, setRecuperado] = useState(false);
@@ -59,17 +102,42 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     };
   }, [almacen, llave]);
 
+  // Lo último escrito, pendiente de guardar (null = ya guardado).
+  const pendiente = useRef<T | null>(null);
+
+  const guardarYa = useCallback(() => {
+    const v = pendiente.current;
+    if (!v) return;
+    pendiente.current = null;
+    const copia: Record<string, unknown> = { ...v };
+    for (const campo of sensiblesRef.current) delete copia[campo as string];
+    // Un formulario que quedó igual que al empezar no es un borrador: no se guarda.
+    const inicialSinSensibles: Record<string, unknown> = { ...inicialRef.current };
+    for (const campo of sensiblesRef.current) delete inicialSinSensibles[campo as string];
+    const valoresIniciales = new Map(Object.entries(inicialSinSensibles));
+    const vacio = Object.entries(copia).every(([k, val]) =>
+      Object.is(val, valoresIniciales.get(k)),
+    );
+    Promise.resolve(
+      vacio ? almacen.borrar(llave) : almacen.guardar(llave, JSON.stringify(copia)),
+    ).catch((e) => console.warn('borrador: no se pudo guardar', e));
+  }, [almacen, llave]);
+
   useEffect(() => {
     if (!listo.current) return;
-    const t = setTimeout(() => {
-      const copia: Record<string, unknown> = { ...valores };
-      for (const campo of sensiblesRef.current) delete copia[campo as string];
-      Promise.resolve(almacen.guardar(llave, JSON.stringify(copia))).catch((e) =>
-        console.warn('borrador: no se pudo guardar', e),
-      );
-    }, esperaMs);
+    pendiente.current = valores;
+    const t = setTimeout(guardarYa, esperaMs);
     return () => clearTimeout(t);
-  }, [valores, almacen, llave, esperaMs]);
+  }, [valores, esperaMs, guardarYa]);
+
+  // Si la página se cierra, la app se va a segundo plano o la pantalla se desmonta: se guarda ya.
+  useEffect(() => {
+    const quitar = alSalir(guardarYa);
+    return () => {
+      quitar();
+      guardarYa();
+    };
+  }, [alSalir, guardarYa]);
 
   const cambiar = useCallback(<K extends keyof T>(campo: K, valor: T[K]) => {
     setValores((v) => ({ ...v, [campo]: valor }));
@@ -78,6 +146,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   /** Al guardar con éxito, al cancelar a propósito o al cerrar sesión. */
   const limpiar = useCallback(async () => {
     listo.current = false;
+    pendiente.current = null;
     await almacen.borrar(llave);
     setValores(inicialRef.current);
     setRecuperado(false);

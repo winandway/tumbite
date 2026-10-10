@@ -25,3 +25,17 @@ export function porcentajeDe(centavos: Centavos, puntosBasicos: number): Centavo
   }
   return Math.round((centavos * puntosBasicos) / 10_000);
 }
+
+/** Convierte lo que escribe una persona ("12.50", "12,5", "$12") a centavos. Devuelve null si no es un precio. */
+export function dolaresACentavos(texto: string): Centavos | null {
+  const limpio = texto.trim().replace(/[$\s]/g, '').replace(',', '.');
+  const partes = limpio.split('.');
+  if (partes.length > 2) return null;
+  const [entero = '', decimales = ''] = partes;
+  if (!/^\d{1,7}$/.test(entero) || !/^\d{0,2}$/.test(decimales)) return null;
+  return Number(entero) * 100 + Number((decimales + '00').slice(0, 2));
+}
+
+export function centavosATexto(centavos: Centavos): string {
+  return (centavos / 100).toFixed(2);
+}

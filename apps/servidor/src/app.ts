@@ -6,6 +6,7 @@ import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
 import { cuentas } from './rutas/cuentas';
+import { catalogo } from './rutas/catalogo';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -79,6 +80,7 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+app.route('/datos', catalogo);
 
 app.onError((err, c) => {
   if (err instanceof ErrorDatos)

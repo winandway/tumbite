@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { almacenNavegador, borrarBorradoresDe, llaveBorrador, useBorrador } from './borrador';
 
 const inicial = { nombre: '', correo: '', clave: '' };
 
 describe('useBorrador: ningún formulario pierde lo escrito', () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => cleanup());
 
   it('guarda solo mientras se escribe, sin la contraseña', async () => {
     const { result } = renderHook(() =>
@@ -30,6 +31,31 @@ describe('useBorrador: ningún formulario pierde lo escrito', () => {
     expect(localStorage.getItem(llaveBorrador('registro'))).not.toContain('secreta123');
   });
 
+  it('si la página se cierra antes del medio segundo, guarda igual', async () => {
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'rapido', inicial, almacen: almacenNavegador, esperaMs: 10_000 }),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+    act(() => result.current.cambiar('nombre', 'Ana veloz'));
+    expect(localStorage.getItem(llaveBorrador('rapido'))).toBeNull();
+    window.dispatchEvent(new Event('pagehide'));
+    expect(localStorage.getItem(llaveBorrador('rapido'))).toContain('Ana veloz');
+  });
+
+  it('al cerrar la pantalla (desmontar) guarda lo pendiente', async () => {
+    const { result, unmount } = renderHook(() =>
+      useBorrador({ formulario: 'desmonta', inicial, almacen: almacenNavegador, esperaMs: 10_000 }),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+    act(() => result.current.cambiar('nombre', 'Leo'));
+    unmount();
+    expect(localStorage.getItem(llaveBorrador('desmonta'))).toContain('Leo');
+  });
+
   it('devuelve lo escrito al volver y avisa que lo recuperó', async () => {
     localStorage.setItem(
       llaveBorrador('registro'),
@@ -41,6 +67,22 @@ describe('useBorrador: ningún formulario pierde lo escrito', () => {
     await waitFor(() => expect(result.current.recuperado).toBe(true));
     expect(result.current.valores.nombre).toBe('Ana');
     expect(result.current.valores.clave).toBe('');
+  });
+
+  it('después de guardar con éxito, el formulario vacío no reaparece como borrador', async () => {
+    const { result, unmount } = renderHook(() =>
+      useBorrador({ formulario: 'vacio', inicial, almacen: almacenNavegador, esperaMs: 5 }),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+    act(() => result.current.cambiar('nombre', 'Plato'));
+    await act(() => result.current.limpiar());
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    unmount();
+    expect(localStorage.getItem(llaveBorrador('vacio'))).toBeNull();
   });
 
   it('cada cuenta tiene su propio borrador', async () => {

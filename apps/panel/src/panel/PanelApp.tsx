@@ -12,16 +12,24 @@ import { useIdioma } from '../usarIdioma';
 import { Acceso } from './Acceso';
 import { api } from './api';
 import { TEXTOS_PANEL } from './textos';
+import { MiRestaurante } from './MiRestaurante';
+import { Menu } from './Menu';
+import { AdminRestaurantes } from './AdminRestaurantes';
+
+function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
+  if (usuario.rol === 'restaurante') {
+    if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
+  }
+  if (usuario.rol === 'admin') {
+    if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
+  }
+  return null;
+}
 
 type Estado = { cargando: true } | { cargando: false; usuario: Usuario | null };
 
-export function PanelApp({
-  ruta,
-  secciones,
-}: {
-  ruta: string;
-  secciones?: Record<string, React.ReactNode>;
-}) {
+export function PanelApp({ ruta }: { ruta: string }) {
   const [idioma, cambiar] = useIdioma();
   const t = enIdioma(TEXTOS_PANEL, idioma);
   const [estado, setEstado] = useState<Estado>({ cargando: true });
@@ -96,7 +104,7 @@ export function PanelApp({
             })}
           </nav>
           <main className="panel-contenido">
-            {secciones?.[ruta.replace('/panel/', '').replace('/panel', 'inicio')] ??
+            {seccion(ruta, usuario, idioma) ??
               (ruta === '/panel' ? (
                 <>
                   <h1>

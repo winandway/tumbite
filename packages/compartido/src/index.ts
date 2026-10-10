@@ -4,3 +4,4 @@ export * from './dinero';
 export * from './esquemas';
 export * from './api';
 export * from './borrador';
+export * from './catalogo';

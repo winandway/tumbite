@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Almacen } from '@tumbite/compartido';
 
@@ -8,3 +9,11 @@ export const almacenTelefono: Almacen & { llaves: () => Promise<string[]> } = {
   borrar: (k) => AsyncStorage.removeItem(k),
   llaves: async () => [...(await AsyncStorage.getAllKeys())],
 };
+
+/** En el celular: si la app se va a segundo plano o se cierra, el borrador se guarda ya. */
+export function alSalirTelefono(guardarYa: () => void): () => void {
+  const sub = AppState.addEventListener('change', (estado) => {
+    if (estado !== 'active') guardarYa();
+  });
+  return () => sub.remove();
+}

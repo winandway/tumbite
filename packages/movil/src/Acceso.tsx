@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
-import { almacenTelefono } from './almacen';
+import { alSalirTelefono, almacenTelefono } from './almacen';
 import { useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { Boton, Campo, CampoClave, Pantalla, e } from './ui';
@@ -27,6 +27,7 @@ export function Acceso({
     inicial: INICIAL,
     almacen: almacenTelefono,
     sensibles: ['clave'],
+    alSalir: alSalirTelefono,
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
