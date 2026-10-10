@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { MARCA } from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
@@ -9,6 +10,17 @@ import { cuentas } from './rutas/cuentas';
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cabecerasSeguridad);
+// Las apps nativas no mandan «Origin». Esto solo abre la puerta a la vista web de las apps en la
+// computadora del programador. Nunca se abre a sitios ajenos.
+app.use(
+  '/datos/*',
+  cors({
+    origin: (origen) => (/^http:\/\/localhost:(8081|8082|8083)$/.test(origen) ? origen : null),
+    allowHeaders: ['content-type', 'authorization', 'cf-turnstile-response'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
+  }),
+);
 app.use('/datos/*', limiteIntentos(120, 60_000));
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));

@@ -23,6 +23,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "tumbite-restaurante"
+    "scheme": "tumbite-restaurante",
+    "plugins": ["expo-router", "expo-secure-store"]
   }
 }

@@ -12,6 +12,17 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "-w", "@tumbite/servidor", "--", "--port", "8787"],
       "port": 8787
+    },
+    {
+      "name": "app-cliente-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081", "--clear"],
+      "cwd": "apps/cliente",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8787",
+        "CI": "1"
+      },
+      "port": 8081
     }
   ]
 }

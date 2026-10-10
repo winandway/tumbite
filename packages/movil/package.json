@@ -1,0 +1,21 @@
+{
+  "name": "@tumbite/movil",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Piezas compartidas por las tres apps del celular: sesión, campos, acceso.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tumbite/compartido": "0.1.0"
+  },
+  "peerDependencies": {
+    "@react-native-async-storage/async-storage": "*",
+    "expo-secure-store": "*",
+    "react": "19.2.3",
+    "react-native": "*",
+    "react-native-safe-area-context": "*"
+  }
+}
