@@ -27,6 +27,8 @@ app.get('/datos/salud', async (c) => {
     }
   }
 
+  piezas.almacen = c.env.BUCKET ? 'ok' : 'pendiente';
+
   const env = revisarEnv(c.env as unknown as Record<string, unknown>);
   piezas.variables = env.ok ? 'ok' : 'error';
   piezas.stripe = c.env.STRIPE_SECRET_KEY ? 'ok' : 'pendiente';
@@ -36,13 +38,27 @@ app.get('/datos/salud', async (c) => {
   return c.json({ servicio: MARCA.nombre, ok: !algunError, piezas }, algunError ? 503 : 200);
 });
 
-app.notFound((c) =>
-  c.req.path.startsWith('/datos/')
-    ? c.json({ error: 'Esta dirección no existe.' }, 404)
-    : c.env.ASSETS
-      ? c.env.ASSETS.fetch(c.req.raw)
-      : c.text('No encontrado', 404),
-);
+const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte']);
+
+/**
+ * Todo lo que no es /datos lo sirven los estáticos. Las páginas de la app web
+ * (landing, legales, panel) son una sola página: si el archivo no existe, se
+ * entrega index.html y el navegador decide qué mostrar.
+ */
+app.notFound(async (c) => {
+  if (c.req.path.startsWith('/datos/')) return c.json({ error: 'Esta dirección no existe.' }, 404);
+  if (!c.env.ASSETS) return c.text('No encontrado', 404);
+  let res = await c.env.ASSETS.fetch(c.req.raw);
+  if (res.status === 404 && c.req.method === 'GET' && !/\.[a-z0-9]+$/i.test(c.req.path)) {
+    res = await c.env.ASSETS.fetch(new Request(new URL('/index.html', c.req.url), c.req.raw));
+  }
+  const respuesta = new Response(res.body, res);
+  if (RUTAS_PUBLICAS.has(c.req.path) && res.ok) {
+    // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
+    respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+  }
+  return respuesta;
+});
 
 app.onError((err, c) => {
   console.error('error no controlado', err);

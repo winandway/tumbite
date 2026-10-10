@@ -1,0 +1,36 @@
+import { enIdioma } from '@tumbite/compartido';
+import { Inicio } from './Inicio';
+import { useRuta } from './ruta';
+import { useIdioma } from './usarIdioma';
+import { Landing } from './sitio/Landing';
+import { Legal } from './sitio/Legal';
+import { PRIVACIDAD, SOPORTE, TERMINOS } from './sitio/legales';
+import { Sitio } from './sitio/Sitio';
+import { TEXTOS_SITIO } from './sitio/textos';
+
+export function App() {
+  const ruta = useRuta();
+  const [idioma, cambiar] = useIdioma();
+
+  if (ruta.startsWith('/panel')) return <Inicio />;
+
+  const volver = enIdioma(TEXTOS_SITIO, idioma).volver;
+  const legal =
+    ruta === '/privacidad'
+      ? PRIVACIDAD
+      : ruta === '/terminos'
+        ? TERMINOS
+        : ruta === '/soporte'
+          ? SOPORTE
+          : null;
+
+  return (
+    <Sitio idioma={idioma} cambiar={cambiar}>
+      {legal ? (
+        <Legal doc={enIdioma(legal, idioma)} volver={volver} />
+      ) : (
+        <Landing idioma={idioma} />
+      )}
+    </Sitio>
+  );
+}

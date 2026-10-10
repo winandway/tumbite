@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const RUTAS = ['/'];
+const RUTAS = ['/', '/privacidad', '/terminos', '/soporte', '/panel'];
 
 for (const ruta of RUTAS) {
   test(`la ruta ${ruta} responde 200 y muestra la marca`, async ({ page }) => {

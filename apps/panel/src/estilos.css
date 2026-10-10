@@ -98,3 +98,204 @@ h1 {
 .pie a:hover {
   color: var(--primario);
 }
+
+/* Sitio público */
+.logo {
+  color: #fff;
+  text-decoration: none;
+}
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 12px;
+}
+.cabecera-derecha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.boton-panel {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgb(255 255 255 / 40%);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.boton-panel:hover {
+  border-color: var(--acento);
+  color: var(--acento);
+}
+.hero {
+  background: var(--secundario);
+  color: #fff;
+  padding: 56px 16px 64px;
+}
+.hero-contenido {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.hero h1 {
+  color: #fff;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.1;
+  margin: 0 0 16px;
+}
+.hero h1::first-line {
+  color: var(--acento);
+}
+.hero p {
+  font-size: 1.15rem;
+  max-width: 620px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+  color: #e9e4f3;
+}
+.sello {
+  display: inline-block;
+  background: var(--primario);
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 999px;
+}
+.menu-secciones {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 16px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+.menu-secciones a {
+  white-space: nowrap;
+  color: var(--secundario);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+}
+.seccion {
+  padding: 40px 16px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+.seccion.alterna,
+.seccion.oscura {
+  max-width: none;
+}
+.seccion.alterna > *,
+.seccion.oscura > * {
+  max-width: 848px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.seccion.alterna {
+  background: #fff;
+}
+.seccion.oscura {
+  background: var(--secundario);
+  color: #fff;
+}
+.seccion.oscura h2 {
+  color: var(--acento);
+}
+.seccion h2 {
+  color: var(--secundario);
+  font-size: 1.8rem;
+  margin: 0 0 12px;
+}
+.entrada {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+.pasos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.pasos li {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgb(43 27 78 / 8%);
+}
+.pasos h3 {
+  margin: 8px 0;
+  color: var(--secundario);
+}
+.pasos p {
+  margin: 0;
+  line-height: 1.5;
+}
+.numero {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primario);
+  color: #fff;
+  font-weight: 800;
+}
+.puntos {
+  padding-left: 20px;
+  line-height: 1.8;
+}
+.boton {
+  display: inline-block;
+  background: var(--primario);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+.pie-enlaces {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.pie-enlaces a {
+  color: var(--secundario);
+}
+.legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  line-height: 1.7;
+  flex: 1;
+}
+.legal h1 {
+  margin: 16px 0 4px;
+}
+.legal .fecha {
+  color: #6b6178;
+  margin: 0 0 24px;
+}
+.legal h2 {
+  color: var(--secundario);
+  font-size: 1.2rem;
+  margin: 24px 0 8px;
+}
+@media (max-width: 400px) {
+  .logo {
+    font-size: 1.05rem;
+  }
+  .boton-panel {
+    padding: 5px 9px;
+    font-size: 0.8rem;
+  }
+  .idiomas button {
+    font-size: 1.2rem;
+    padding: 1px 4px;
+  }
+}

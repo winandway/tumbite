@@ -1,0 +1,46 @@
+import type { ReactNode } from 'react';
+import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
+import { Enlace } from '../Enlace';
+import { SelectorIdioma } from '../SelectorIdioma';
+import { TEXTOS_SITIO } from './textos';
+
+export function Sitio({
+  idioma,
+  cambiar,
+  children,
+}: {
+  idioma: Idioma;
+  cambiar: (i: Idioma) => void;
+  children: ReactNode;
+}) {
+  const t = enIdioma(TEXTOS_SITIO, idioma);
+  return (
+    <div className="pagina">
+      <header className="cabecera">
+        <Enlace a="/" className="logo">
+          <img src="/icono.svg" alt="" width={32} height={32} /> {MARCA.nombre}
+        </Enlace>
+        <div className="cabecera-derecha">
+          <Enlace a="/panel" className="boton-panel">
+            {t.menu.panel}
+          </Enlace>
+          <SelectorIdioma idioma={idioma} cambiar={cambiar} />
+        </div>
+      </header>
+      {children}
+      <footer className="pie">
+        <nav className="pie-enlaces" aria-label="Legal">
+          <Enlace a="/privacidad">{t.pie.privacidad}</Enlace>
+          <Enlace a="/terminos">{t.pie.terminos}</Enlace>
+          <Enlace a="/soporte">{t.pie.soporte}</Enlace>
+        </nav>
+        <p>
+          © {new Date().getFullYear()} tumbite.com | {t.pie.derechos} {t.pie.desarrollo}{' '}
+          <a href={MARCA.sitioEmpresa} target="_blank" rel="noopener noreferrer">
+            {MARCA.empresa}
+          </a>
+        </p>
+      </footer>
+    </div>
+  );
+}

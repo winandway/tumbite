@@ -50,3 +50,8 @@ export function t(idioma: Idioma, clave: ClaveTexto): string {
 export function esIdioma(valor: unknown): valor is Idioma {
   return IDIOMAS.some((i) => i.codigo === valor);
 }
+
+/** Elige el valor del idioma pedido sin indexar con variables (más seguro y sin avisos). */
+export function enIdioma<T>(valores: Record<Idioma, T>, idioma: Idioma): T {
+  return idioma === 'en' ? valores.en : valores.es;
+}

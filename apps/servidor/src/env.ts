@@ -15,6 +15,7 @@ export type Variables = z.infer<typeof esquemaEnv>;
 
 export interface Env extends Variables {
   DB?: D1Database;
+  BUCKET?: R2Bucket;
   ASSETS?: Fetcher;
 }
 

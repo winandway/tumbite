@@ -35,6 +35,26 @@ describe('servidor', () => {
     expect(res.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
   });
 
+  it('las páginas de la app web caen en index.html y las públicas llevan caché de borde', async () => {
+    const ASSETS = {
+      fetch: async (req: Request) => {
+        const ruta = new URL(req.url).pathname;
+        return ruta === '/index.html'
+          ? new Response('<html>tumbite</html>', { status: 200 })
+          : new Response('no', { status: 404 });
+      },
+    };
+    const terminos = await app.request('/terminos', {}, { ASSETS });
+    expect(terminos.status).toBe(200);
+    expect(await terminos.text()).toContain('tumbite');
+    expect(terminos.headers.get('Cache-Control')).toContain('s-maxage');
+    const panel = await app.request('/panel/pedidos', {}, { ASSETS });
+    expect(panel.status).toBe(200);
+    expect(panel.headers.get('Cache-Control')).toBeNull();
+    const archivo = await app.request('/no-existe.png', {}, { ASSETS });
+    expect(archivo.status).toBe(404);
+  });
+
   it('una ruta de datos que no existe da 404 claro', async () => {
     const res = await app.request('/datos/no-existe', {}, {});
     expect(res.status).toBe(404);
