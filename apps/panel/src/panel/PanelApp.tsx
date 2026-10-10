@@ -15,14 +15,18 @@ import { TEXTOS_PANEL } from './textos';
 import { MiRestaurante } from './MiRestaurante';
 import { Menu } from './Menu';
 import { AdminRestaurantes } from './AdminRestaurantes';
+import { AdminDinero } from './AdminDinero';
+import { Billetera } from './Billetera';
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
   if (usuario.rol === 'restaurante') {
     if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/beneficios') return <Billetera idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
+    if (ruta === '/panel/dinero') return <AdminDinero idioma={idioma} />;
   }
   return null;
 }

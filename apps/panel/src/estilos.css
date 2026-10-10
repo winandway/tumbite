@@ -653,3 +653,61 @@ h1 {
   border-radius: 8px;
   border: 1px solid #d8d0e3;
 }
+.dinero fieldset {
+  border: 1px solid #eee6f2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 0 0 14px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 14px;
+}
+.dinero legend {
+  font-weight: 800;
+  color: var(--secundario);
+  padding: 0 6px;
+}
+.con-sufijo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.con-sufijo input {
+  flex: 1;
+}
+.con-sufijo em {
+  font-style: normal;
+  color: #6b6178;
+  font-weight: 700;
+  min-width: 22px;
+}
+.ejemplo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f3eef8;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.saldo {
+  background: var(--secundario);
+  color: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.saldo strong {
+  font-size: 2rem;
+  color: var(--acento);
+}
+.positivo {
+  color: #0d7a3a;
+}
+.negativo {
+  color: #8a0014;
+}

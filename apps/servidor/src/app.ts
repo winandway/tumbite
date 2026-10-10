@@ -7,6 +7,8 @@ import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
 import { cuentas } from './rutas/cuentas';
 import { catalogo } from './rutas/catalogo';
+import { dinero } from './rutas/dinero';
+import { pedidos } from './rutas/pedidos';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -22,7 +24,11 @@ app.use(
     credentials: true,
   }),
 );
-app.use('/datos/*', limiteIntentos(120, 60_000));
+const limiteGeneral = limiteIntentos(120, 60_000);
+// Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
+app.use('/datos/*', (c, next) =>
+  c.req.path === '/datos/stripe/aviso' ? next() : limiteGeneral(c, next),
+);
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
 app.use('/datos/*', cargarSesion);
@@ -81,6 +87,8 @@ app.notFound(async (c) => {
 
 app.route('/datos/cuentas', cuentas);
 app.route('/datos', catalogo);
+app.route('/datos', dinero);
+app.route('/datos', pedidos);
 
 app.onError((err, c) => {
   if (err instanceof ErrorDatos)

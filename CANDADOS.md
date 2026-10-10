@@ -40,3 +40,10 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 
 - Pieza única `useBorrador` en `packages/compartido/src/borrador.ts`; todos los formularios la usan. No guarda campos sensibles; se borra al guardar, al cancelar y al cerrar sesión.
 - Candados: `borrador.test.tsx` y `apps/panel/src/panel/PanelApp.test.tsx`.
+
+## C-PAGOS-1 · El precio lo pone el servidor y el aviso de Stripe va firmado
+
+- `POST /datos/pedidos` ignora cualquier precio del teléfono: lee los platos de la base y calcula con `calcularPedido`.
+- `POST /datos/stripe/aviso`: firma HMAC verificada con tolerancia de 5 minutos, cada evento una sola vez (`avisos_stripe`), y el monto y la sesión deben cuadrar con el pedido.
+- La propina nunca completa el pago mínimo del repartidor (`bolsillos.ts`).
+- Candados: `apps/servidor/src/rutas/pedidos.test.ts` (firma comprobada en rojo el 10 oct 2026) y `packages/compartido/src/bolsillos.test.ts` (todo cuadra al centavo).

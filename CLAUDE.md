@@ -9,6 +9,7 @@ Las reglas globales de Richard aplican; estas se suman.
 - `docs/PANTALLAS-Y-PLAN.md` — mapa de pantallas y los 10 pasos de la Fase 1.
 - `PENDIENTES.md` — la fila; los 👤 dependen de Richard.
 - `CANDADOS.md` — lo que funciona y no se toca.
+- `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
 
 ## Estructura

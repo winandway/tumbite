@@ -66,3 +66,77 @@ CREATE TABLE IF NOT EXISTS platos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS platos_restaurante ON platos(restaurante_id);
+
+CREATE TABLE IF NOT EXISTS config (
+  clave TEXT PRIMARY KEY,
+  valor TEXT NOT NULL,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS pedidos (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  repartidor_id TEXT REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('pago_pendiente', 'pagado', 'aceptado', 'listo', 'en_camino', 'entregado', 'cancelado')),
+  lineas_json TEXT NOT NULL,
+  subtotal INTEGER NOT NULL,
+  envio INTEGER NOT NULL,
+  servicio INTEGER NOT NULL,
+  cargo_pequeno INTEGER NOT NULL,
+  propina INTEGER NOT NULL,
+  regalo INTEGER NOT NULL DEFAULT 0,
+  total INTEGER NOT NULL,
+  comision INTEGER NOT NULL,
+  pago_restaurante INTEGER NOT NULL,
+  pago_repartidor INTEGER NOT NULL,
+  complemento INTEGER NOT NULL,
+  ganancia INTEGER NOT NULL,
+  plan TEXT NOT NULL,
+  direccion TEXT NOT NULL,
+  notas TEXT NOT NULL DEFAULT '',
+  lat REAL,
+  lng REAL,
+  distancia_km REAL,
+  tiempo_prep_min INTEGER,
+  stripe_sesion TEXT,
+  stripe_pago TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  pagado_en TEXT,
+  aceptado_en TEXT,
+  listo_en TEXT,
+  recogido_en TEXT,
+  entregado_en TEXT,
+  cancelado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS pedidos_cliente ON pedidos(cliente_id, creado_en);
+CREATE INDEX IF NOT EXISTS pedidos_restaurante ON pedidos(restaurante_id, estado);
+CREATE INDEX IF NOT EXISTS pedidos_estado ON pedidos(estado);
+CREATE INDEX IF NOT EXISTS pedidos_sesion ON pedidos(stripe_sesion);
+
+-- Libro de la billetera: cada entrada es dinero que entra (+) o sale (-) de una cuenta.
+CREATE TABLE IF NOT EXISTS movimientos (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pedido_id TEXT REFERENCES pedidos(id),
+  monto INTEGER NOT NULL,
+  concepto TEXT NOT NULL CHECK (concepto IN ('venta', 'entrega', 'propina', 'retiro', 'ajuste', 'regalo')),
+  referencia TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS movimientos_usuario ON movimientos(usuario_id, creado_en);
+CREATE UNIQUE INDEX IF NOT EXISTS movimientos_unico ON movimientos(usuario_id, pedido_id, concepto) WHERE pedido_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS cuentas_stripe (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  stripe_cuenta TEXT NOT NULL,
+  pagos_activos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Avisos de Stripe ya procesados: el mismo aviso nunca se procesa dos veces.
+CREATE TABLE IF NOT EXISTS avisos_stripe (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

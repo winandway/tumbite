@@ -13,6 +13,8 @@ export const esquemaEnv = z.object({
   ADMIN_CORREOS: z.string().optional(),
   /** Secreto largo para /datos/cuentas/hacer-admin. Va solo en el panel de YaDominios. */
   ADMIN_SEMILLA: z.string().min(24).optional(),
+  /** Dirección pública del sitio, para las vueltas desde Stripe. */
+  SITIO_URL: z.url().optional(),
 });
 
 export type Variables = z.infer<typeof esquemaEnv>;

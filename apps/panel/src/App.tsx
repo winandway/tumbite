@@ -6,6 +6,7 @@ import { Landing } from './sitio/Landing';
 import { Legal } from './sitio/Legal';
 import { PRIVACIDAD, SOPORTE, TERMINOS } from './sitio/legales';
 import { Sitio } from './sitio/Sitio';
+import { RUTAS_VUELTA, Vuelta } from './sitio/Vuelta';
 import { TEXTOS_SITIO } from './sitio/textos';
 
 export function App() {
@@ -23,6 +24,15 @@ export function App() {
         : ruta === '/soporte'
           ? SOPORTE
           : null;
+
+  const vuelta = RUTAS_VUELTA.find((r) => r === ruta);
+  if (vuelta) {
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Vuelta ruta={vuelta} idioma={idioma} />
+      </Sitio>
+    );
+  }
 
   return (
     <Sitio idioma={idioma} cambiar={cambiar}>
