@@ -29,5 +29,14 @@ export default tseslint.config(
       'no-console': ['warn', { allow: ['error', 'warn'] }],
     },
   },
+  {
+    // Código de pruebas: no viaja a producción. Se permite leer archivos y usar tipos sueltos en respuestas.
+    files: ['**/*.test.{ts,tsx}', '**/pruebas/**', 'e2e/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-object-injection': 'off',
+    },
+  },
   prettier,
 );

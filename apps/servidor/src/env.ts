@@ -9,6 +9,8 @@ export const esquemaEnv = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
   TURNSTILE_SECRET_KEY: z.string().min(10).optional(),
+  /** Correos (separados por coma) que al registrarse quedan como administradores. */
+  ADMIN_CORREOS: z.string().optional(),
 });
 
 export type Variables = z.infer<typeof esquemaEnv>;

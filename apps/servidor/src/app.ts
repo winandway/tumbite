@@ -2,11 +2,17 @@ import { Hono } from 'hono';
 import { MARCA } from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
+import { type Variables, cargarSesion } from './sesion';
+import { ErrorDatos } from './validar';
+import { cuentas } from './rutas/cuentas';
 
-export const app = new Hono<{ Bindings: Env }>();
+export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cabecerasSeguridad);
 app.use('/datos/*', limiteIntentos(120, 60_000));
+app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
+app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
+app.use('/datos/*', cargarSesion);
 
 /**
  * Canario de salud. Cada pieza dice ok / error / pendiente. Nada falla en silencio:
@@ -60,7 +66,11 @@ app.notFound(async (c) => {
   return respuesta;
 });
 
+app.route('/datos/cuentas', cuentas);
+
 app.onError((err, c) => {
+  if (err instanceof ErrorDatos)
+    return c.json({ error: err.message, campo: err.campo }, err.estado);
   console.error('error no controlado', err);
   return c.json({ error: 'Algo salió mal de nuestro lado. Ya lo estamos revisando.' }, 500);
 });
