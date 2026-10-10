@@ -18,7 +18,6 @@ export default defineConfig({
         },
       },
       {
-        esbuild: { jsx: 'automatic' },
         test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.tsx'],
