@@ -1,0 +1,21 @@
+{
+  "name": "@tumbite/servidor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Servidor de Tumbite. Corre en YaDominios Cloud como _worker.js. Rutas de datos bajo /datos (nunca /api).",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "wrangler deploy --dry-run --outdir=.dist-worker --minify",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "@tumbite/compartido": "0.1.0",
+    "hono": "^4.13.13",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261010.1",
+    "wrangler": "^4.149.0"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+.expo
+out-deploy
+.dist-worker
+package-lock.json
+apps/*/AGENTS.md

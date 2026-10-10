@@ -1,0 +1,34 @@
+name: publicar
+# Compila el panel y el servidor, y empuja el resultado a la rama yapanel-build.
+# YaDominios Cloud está conectado a ESA rama (no a main) y republica solo.
+on:
+  workflow_run:
+    workflows: [verify]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: |
+          mkdir out-deploy
+          cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
+          cp -r apps/panel/dist/* out-deploy/
+          cp schema.sql out-deploy/
+          echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
+          test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: yapanel-build
+          publish_dir: ./out-deploy

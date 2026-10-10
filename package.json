@@ -1,0 +1,62 @@
+{
+  "name": "tumbite",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tumbite: marketplace de reparto de comida (cliente, repartidor, restaurante, paneles y servidor).",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "build": "npm run build -w @tumbite/panel && npm run build -w @tumbite/servidor",
+    "audit": "npm audit --audit-level=high --omit=dev -w @tumbite/servidor -w @tumbite/panel -w @tumbite/compartido",
+    "secrets": "gitleaks git --no-banner --redact .",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run audit",
+    "prepare": "husky",
+    "audit:apps": "npm audit --omit=dev -w @tumbite/cliente -w @tumbite/repartidor -w @tumbite/restaurante || true"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-security": "^4.2.0",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "jsdom": "^30.1.2",
+    "lint-staged": "^17.6.0",
+    "msw": "^3.0.3",
+    "prettier": "^3.9.10",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0 --no-warn-ignored"
+    ],
+    "*.{json,md,css,html,yml,yaml}": "prettier --write"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Tumbite Driver",
+    "slug": "tumbite-repartidor",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.windoce.tumbite.driver",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show the route to the restaurant and the customer while you deliver.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "While you are on an active delivery, Tumbite shares your location so the customer can follow the order on the map."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#2B1B4E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.windoce.tumbite.driver"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "tumbite-repartidor"
+  }
+}

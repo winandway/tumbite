@@ -1,0 +1,11 @@
+{
+  // Solo se usa para EMPAQUETAR (--dry-run) y para correr en local.
+  // YaDominios Cloud lee de aquí únicamente compatibility_date y compatibility_flags;
+  // las variables y secretos van en su panel.
+  "name": "tumbite",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "../panel/dist", "binding": "ASSETS", "run_worker_first": ["/datos/*"] },
+  "d1_databases": [{ "binding": "DB", "database_name": "tumbite-local", "database_id": "local" }],
+}
