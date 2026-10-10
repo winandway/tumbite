@@ -3,6 +3,19 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    # Expo fija sus propias versiones de React, React Native y sus módulos.
+    # Se suben juntos, a mano, con `npx expo install --fix` al cambiar de SDK.
+    ignore:
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: '@expo/*'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-native'
+      - dependency-name: '@types/react'
+      - dependency-name: '@types/react-dom'
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
