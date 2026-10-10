@@ -159,4 +159,38 @@ cuentas.post('/hacer-admin', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * Borrar la cuenta (Apple lo exige dentro de la app). Los datos personales se borran;
+ * los pedidos se quedan sin nombre, porque la contabilidad y los impuestos los necesitan.
+ */
+cuentas.delete('/yo', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const activo = await db
+    .prepare(
+      "SELECT 1 FROM pedidos WHERE (cliente_id = ? OR repartidor_id = ?) AND estado IN ('pagado','aceptado','listo','en_camino')",
+    )
+    .bind(u.id, u.id)
+    .first();
+  if (activo)
+    throw new ErrorDatos(
+      'Tienes un pedido en curso. Espera a que termine para borrar tu cuenta.',
+      undefined,
+      409,
+    );
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0 WHERE id = ?",
+      )
+      .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
+    db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
+    db
+      .prepare('UPDATE repartidores SET conectado = 0, lat = NULL, lng = NULL WHERE usuario_id = ?')
+      .bind(u.id),
+  ]);
+  c.header('Set-Cookie', cookie('', true));
+  return c.json({ ok: true });
+});
+
 cuentas.get('/yo', (c) => c.json({ usuario: exigir(c) }));

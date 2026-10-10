@@ -751,3 +751,9 @@ fieldset.regalo small,
 .lista li.resaltado {
   border: 3px solid var(--primario);
 }
+.cuenta-menu button.borrar-cuenta {
+  background: #fff;
+  color: #c4001d;
+  border: 1px solid #f1c4c4;
+  margin-bottom: 6px;
+}

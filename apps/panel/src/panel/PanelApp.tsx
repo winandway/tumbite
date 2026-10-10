@@ -51,6 +51,17 @@ export function PanelApp({ ruta }: { ruta: string }) {
       .catch(() => setEstado({ cargando: false, usuario: null }));
   }, []);
 
+  async function borrarCuenta(usuario: Usuario) {
+    if (!window.confirm(t.confirmarBorrar)) return;
+    try {
+      await api.borrarCuenta();
+      await borrarBorradoresDe(almacenNavegador, usuario.id);
+      window.location.href = '/';
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   async function salir(usuario: Usuario) {
     try {
       await api.salir();
@@ -81,6 +92,13 @@ export function PanelApp({ ruta }: { ruta: string }) {
               <summary>{usuario.nombre.split(' ')[0]}</summary>
               <div className="cuenta-menu">
                 <p>{usuario.correo}</p>
+                <button
+                  type="button"
+                  className="borrar-cuenta"
+                  onClick={() => void borrarCuenta(usuario)}
+                >
+                  {t.borrarCuenta}
+                </button>
                 <button type="button" onClick={() => void salir(usuario)}>
                   {t.salir}
                 </button>

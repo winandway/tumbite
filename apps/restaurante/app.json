@@ -8,7 +8,13 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.windoce.tumbite.restaurants"
+      "bundleIdentifier": "com.windoce.tumbite.restaurants",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,12 +24,16 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.windoce.tumbite.restaurants"
+      "package": "com.windoce.tumbite.restaurants",
+      "permissions": [],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "tumbite-restaurante",
-    "plugins": ["expo-router", "expo-secure-store", "expo-audio"]
+    "plugins": ["expo-router", "expo-secure-store", "expo-audio"],
+    "privacy": "public",
+    "description": "Receive and manage your Tumbite orders."
   }
 }

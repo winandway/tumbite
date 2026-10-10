@@ -10,7 +10,7 @@ import {
   formatearDolares,
   nombrePlato,
 } from '@tumbite/compartido';
-import { Boton, C, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 
 type Pedido = {
   id: string;
@@ -326,6 +326,7 @@ export function Inicio() {
         ),
       )}
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+      <MenuCuenta />
     </Pantalla>
   );
 }

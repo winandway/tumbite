@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, type Restaurante, descripcion, enIdioma } from '@tumbite/compartido';
-import { Boton, C, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS, distanciaTexto } from './textos';
 import { type Punto, miUbicacion } from './ubicacion';
@@ -95,6 +95,7 @@ export function Inicio() {
         />
       )}
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+      <MenuCuenta />
     </Pantalla>
   );
 }

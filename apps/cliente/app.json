@@ -10,7 +10,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.windoce.tumbite",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show nearby restaurants and to deliver your order."
+        "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show nearby restaurants and to deliver your order.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -21,7 +25,9 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.windoce.tumbite"
+      "package": "com.windoce.tumbite",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "blockedPermissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -36,6 +42,8 @@
           "locationWhenInUsePermission": "Tumbite uses your location to show nearby restaurants and to deliver your order."
         }
       ]
-    ]
+    ],
+    "privacy": "public",
+    "description": "Food delivery in Miami. Order from local restaurants and track your driver live."
   }
 }

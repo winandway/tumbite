@@ -69,6 +69,7 @@ export function crearApi(op: OpcionesApi) {
     entrar: (d: DatosEntrar) => pedir<RespuestaSesion>('POST', '/datos/cuentas/entrar', d),
     salir: () => pedir<{ ok: true }>('POST', '/datos/cuentas/salir', {}),
     yo: () => pedir<{ usuario: Usuario }>('GET', '/datos/cuentas/yo'),
+    borrarCuenta: () => pedir<{ ok: true }>('DELETE', '/datos/cuentas/yo'),
   };
 }
 

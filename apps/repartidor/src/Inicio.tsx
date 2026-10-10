@@ -3,7 +3,7 @@ import { Linking, Platform, Pressable, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { ErrorApi, type Nivel, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
-import { Boton, C, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 
 type Lugar = {
   nombre: string;
@@ -374,6 +374,7 @@ export function Inicio() {
         </View>
       )}
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+      <MenuCuenta />
     </Pantalla>
   );
 }

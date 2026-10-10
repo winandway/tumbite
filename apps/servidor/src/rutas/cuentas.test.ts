@@ -163,6 +163,27 @@ describe('cuentas', () => {
     expect(ultimo).toBe(429);
   });
 
+  it('borrar la cuenta quita los datos personales y cierra la sesión', async () => {
+    const r = await llamar('/datos/cuentas/registro', nueva);
+    const token = r.datos.token as string;
+    const res = await app.request(
+      '/datos/cuentas/yo',
+      { method: 'DELETE', headers: { authorization: `Bearer ${token}` } },
+      env(),
+    );
+    expect(res.status).toBe(200);
+    expect((await llamar('/datos/cuentas/yo', undefined, token)).res.status).toBe(401);
+    const fila = await DB.prepare('SELECT correo, nombre, activo FROM usuarios').first<{
+      correo: string;
+      nombre: string;
+      activo: number;
+    }>();
+    expect(fila?.correo).not.toContain('correo.com');
+    expect(fila?.activo).toBe(0);
+    // El correo queda libre para volver a registrarse.
+    expect((await llamar('/datos/cuentas/registro', nueva)).res.status).toBe(201);
+  });
+
   it('sin sesión, quién soy responde 401', async () => {
     const r = await llamar('/datos/cuentas/yo');
     expect(r.res.status).toBe(401);

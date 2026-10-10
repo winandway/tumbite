@@ -11,7 +11,11 @@
       "bundleIdentifier": "com.windoce.tumbite.driver",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show the route to the restaurant and the customer while you deliver.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "While you are on an active delivery, Tumbite shares your location so the customer can follow the order on the map."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "While you are on an active delivery, Tumbite shares your location so the customer can follow the order on the map.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -22,7 +26,9 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.windoce.tumbite.driver"
+      "package": "com.windoce.tumbite.driver",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "blockedPermissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,6 +43,8 @@
           "locationWhenInUsePermission": "Tumbite uses your location to offer you nearby orders and to show your route while you deliver."
         }
       ]
-    ]
+    ],
+    "privacy": "public",
+    "description": "Deliver with Tumbite and earn. Keep 100% of your tips."
   }
 }
