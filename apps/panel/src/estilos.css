@@ -711,3 +711,43 @@ h1 {
 .negativo {
   color: #8a0014;
 }
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.metricas div {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgb(43 27 78 / 6%);
+}
+.metricas span {
+  color: #6b6178;
+  font-size: 0.85rem;
+}
+.metricas strong {
+  font-size: 1.3rem;
+  color: var(--secundario);
+}
+fieldset.regalo {
+  border: 1px solid #eee6f2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+fieldset.regalo small,
+.campo small {
+  color: #6b6178;
+}
+.lista li.resaltado {
+  border: 3px solid var(--primario);
+}

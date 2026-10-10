@@ -28,6 +28,11 @@ Las reglas globales de Richard aplican; estas se suman.
 - YaDominios Cloud no tiene Durable Objects ni cron: el seguimiento en vivo empieza con consultas cada pocos segundos; si hace falta tiempo real con Durable Objects, esa pieza va directo a Cloudflare (regla de Richard).
 - Apps: EAS Build → TestFlight y Google Play, cuenta de Windoce LLC.
 
+## Base de datos: cuidado con los cambios de tablas
+
+- `schema.sql` corre en CADA publicación y solo con `CREATE ... IF NOT EXISTS`. Agregar una columna a una tabla que YA existe en producción NO se aplica solo (en SQLite `ALTER TABLE ADD COLUMN` no es idempotente y rompería la publicación).
+- Hasta el primer lanzamiento las tablas nacen completas. Después de lanzar, cada columna nueva se hace con una migración aparte (ruta de admin o la API de consultas de YaDominios con el token del panel), anotada en `CANDADOS.md`.
+
 ## Perímetro
 
 - Carpeta: solo `/Users/windocellc/PAPOS`.

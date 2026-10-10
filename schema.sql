@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   cargo_pequeno INTEGER NOT NULL,
   propina INTEGER NOT NULL,
   regalo INTEGER NOT NULL DEFAULT 0,
+  regalo_tipo TEXT,
   total INTEGER NOT NULL,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
@@ -170,4 +171,16 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   culpa_restaurante INTEGER NOT NULL DEFAULT 0,
   comentario TEXT NOT NULL DEFAULT '',
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS regalos_config (
+  restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
+  cumpleanos INTEGER NOT NULL DEFAULT 1,
+  cumple_plato_id TEXT,
+  sellos INTEGER NOT NULL DEFAULT 1,
+  sellos_meta INTEGER NOT NULL DEFAULT 10,
+  sellos_plato_id TEXT,
+  vuelve INTEGER NOT NULL DEFAULT 0,
+  vuelve_dias INTEGER NOT NULL DEFAULT 30,
+  vuelve_pb INTEGER NOT NULL DEFAULT 1000
 );

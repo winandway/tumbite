@@ -7,6 +7,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
+import { regalosDisponibles } from './regalos';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -21,6 +22,7 @@ const esquemaNuevoPedido = z.object({
   notas: z.string().trim().max(300).default(''),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
+  regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -113,20 +115,31 @@ pedidos.post('/pedidos', async (c) => {
     );
   const plan = rest.plan as Plan;
   const config = await leerConfigDinero(db);
+  let regalo = 0;
+  if (d.regalo) {
+    const subtotal = lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
+    const precios = new Map(lineas.map((l) => [l.platoId, l.precioCentavos]));
+    const disponible = (
+      await regalosDisponibles(db, String(rest.id), u.id, subtotal, precios)
+    ).find((r) => r.tipo === d.regalo);
+    if (!disponible) throw new ErrorDatos('Ese regalo ya no está disponible.', 'regalo', 409);
+    regalo = disponible.valorCentavos;
+  }
   const desglose = calcularPedido({
     lineas,
     plan,
     propina: d.propinaCentavos,
     distanciaKm: km,
     config,
+    regalo,
   });
 
   const id = nuevoId();
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -151,6 +164,8 @@ pedidos.post('/pedidos', async (c) => {
       d.lng,
       km,
       Number(rest.tiempo_prep_min),
+      regalo,
+      d.regalo,
     )
     .run();
 

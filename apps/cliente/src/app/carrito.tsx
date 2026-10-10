@@ -30,6 +30,20 @@ import { type Punto, miUbicacion } from '../ubicacion';
 
 const PROPINAS = [0, 1500, 2000, 2500]; // puntos básicos: 0 %, 15 %, 20 %, 25 %
 
+type Regalo = { tipo: 'cumpleanos' | 'sellos' | 'vuelve'; valorCentavos: number };
+const NOMBRE_REGALO = {
+  es: {
+    cumpleanos: '🎂 Regalo de cumpleaños',
+    sellos: '🎟️ Tu tarjeta de sellos está completa',
+    vuelve: '👋 ¡Qué bueno verte de nuevo!',
+  },
+  en: {
+    cumpleanos: '🎂 Birthday gift',
+    sellos: '🎟️ Your punch card is complete',
+    vuelve: '👋 Great to see you again!',
+  },
+};
+
 export default function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
@@ -39,6 +53,8 @@ export default function PantallaCarrito() {
   const [propinaPb, setPropinaPb] = useState<number | 'otra'>(2000);
   const [error, setError] = useState('');
   const [pagando, setPagando] = useState(false);
+  const [regalos, setRegalos] = useState<Regalo[]>([]);
+  const [regaloElegido, setRegaloElegido] = useState<Regalo['tipo'] | null>(null);
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
@@ -56,6 +72,27 @@ export default function PantallaCarrito() {
       });
     void miUbicacion().then(setPunto);
   }, [api]);
+
+  // ¿Le toca algún regalo de este restaurante con este carrito?
+  const llaveCarrito = carrito.lineas.map((l) => `${l.platoId}:${l.cantidad}`).join(',');
+  useEffect(() => {
+    if (!carrito.restauranteId || !llaveCarrito) return;
+    api
+      .pedir<{ regalos: Regalo[] }>(
+        'POST',
+        `/datos/restaurantes/${carrito.restauranteId}/mis-regalos`,
+        { lineas: carrito.lineas.map((l) => ({ platoId: l.platoId, cantidad: l.cantidad })) },
+      )
+      .then((r) => {
+        setRegalos(r.regalos);
+        setRegaloElegido((actual) =>
+          r.regalos.some((x) => x.tipo === actual) ? actual : (r.regalos[0]?.tipo ?? null),
+        );
+      })
+      .catch(() => setRegalos([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, carrito.restauranteId, llaveCarrito]);
+  const regalo = regalos.find((r) => r.tipo === regaloElegido)?.valorCentavos ?? 0;
 
   const subtotal = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   const propina =
@@ -75,9 +112,10 @@ export default function PantallaCarrito() {
             propina,
             distanciaKm: km,
             config,
+            regalo,
           })
         : null,
-    [carrito, propina, km, config],
+    [carrito, propina, km, config, regalo],
   );
 
   async function pagar() {
@@ -93,6 +131,7 @@ export default function PantallaCarrito() {
         notas: b.valores.notas,
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
+        regalo: regalo > 0 ? regaloElegido : null,
       });
       // El cobro lo hace Stripe en su página segura. Al volver, la app muestra el pedido.
       await Linking.openURL(r.urlPago);
@@ -209,8 +248,30 @@ export default function PantallaCarrito() {
       )}
       <Text style={{ color: '#6b6178', marginBottom: 12 }}>{t.propinaNota}</Text>
 
+      {regalos.map((r) => (
+        <Pressable
+          key={r.tipo}
+          onPress={() => setRegaloElegido(regaloElegido === r.tipo ? null : r.tipo)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: regaloElegido === r.tipo }}
+          style={[
+            e.tarjeta,
+            {
+              borderWidth: 2,
+              borderColor: regaloElegido === r.tipo ? C.acento : 'transparent',
+              backgroundColor: '#fff8e6',
+            },
+          ]}
+        >
+          <Text style={{ fontWeight: '800' }}>{enIdioma(NOMBRE_REGALO, idioma)[r.tipo]}</Text>
+          <Text>
+            −{formatearDolares(r.valorCentavos, idioma)} {regaloElegido === r.tipo ? '✓' : ''}
+          </Text>
+        </Pressable>
+      ))}
       <View style={e.tarjeta}>
         {fila(t.subtotal, d.subtotal)}
+        {regalo > 0 && fila('🎁', -regalo)}
         {fila(t.envio, d.envio)}
         {fila(t.servicio, d.servicio)}
         {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}

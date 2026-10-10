@@ -17,16 +17,22 @@ import { Menu } from './Menu';
 import { AdminRestaurantes } from './AdminRestaurantes';
 import { AdminDinero } from './AdminDinero';
 import { Billetera } from './Billetera';
+import { Regalos } from './Regalos';
+import { Pedidos } from './Pedidos';
+import { AdminRepartidores } from './AdminRepartidores';
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
   if (usuario.rol === 'restaurante') {
     if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/beneficios') return <Billetera idioma={idioma} />;
+    if (ruta === '/panel/regalos') return <Regalos idioma={idioma} />;
+    if (ruta === '/panel/pedidos') return <Pedidos idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
     if (ruta === '/panel/dinero') return <AdminDinero idioma={idioma} />;
+    if (ruta === '/panel/repartidores') return <AdminRepartidores idioma={idioma} />;
   }
   return null;
 }

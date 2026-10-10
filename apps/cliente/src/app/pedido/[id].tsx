@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { Linking, Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
 import { Boton, C, Pantalla, e, useSesion } from '@tumbite/movil';
@@ -43,6 +43,11 @@ const T = {
     } as Record<string, string>,
     repartidor: 'Tu repartidor',
     ubicacion: 'Ubicación actualizada',
+    calificar: '¿Qué tal todo?',
+    restaurante: 'La comida',
+    culpa: 'El problema fue de la comida o la demora del restaurante',
+    enviar: 'Enviar calificación',
+    gracias: '¡Gracias por tu calificación!',
   },
   en: {
     titulo: 'Your order',
@@ -60,8 +65,42 @@ const T = {
     } as Record<string, string>,
     repartidor: 'Your driver',
     ubicacion: 'Location updated',
+    calificar: 'How was everything?',
+    restaurante: 'The food',
+    culpa: 'The problem was the food or the restaurant’s delay',
+    enviar: 'Send rating',
+    gracias: 'Thanks for your rating!',
   },
 };
+
+function Estrellas({
+  valor,
+  cambiar,
+  etiqueta,
+}: {
+  valor: number;
+  cambiar: (n: number) => void;
+  etiqueta: string;
+}) {
+  return (
+    <View style={{ marginVertical: 6 }}>
+      <Text style={{ fontWeight: '700' }}>{etiqueta}</Text>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Pressable
+            key={n}
+            onPress={() => cambiar(n)}
+            accessibilityRole="button"
+            accessibilityLabel={`${n} / 5`}
+            hitSlop={6}
+          >
+            <Text style={{ fontSize: 30, color: n <= valor ? '#FFB627' : '#d8d0e3' }}>★</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 const PASOS = ['pagado', 'aceptado', 'listo', 'en_camino', 'entregado'];
 
@@ -72,6 +111,23 @@ export default function SeguirPedido() {
   const { vaciar } = useCarrito();
   const [p, setP] = useState<Pedido | null>(null);
   const [error, setError] = useState('');
+  const [estRest, setEstRest] = useState(0);
+  const [estRep, setEstRep] = useState(0);
+  const [culpa, setCulpa] = useState(false);
+  const [calificado, setCalificado] = useState(false);
+
+  async function calificar() {
+    try {
+      await api.pedir('POST', `/datos/pedidos/${id}/calificar`, {
+        estrellasRestaurante: estRest,
+        estrellasRepartidor: estRep || null,
+        culpaRestaurante: culpa,
+      });
+      setCalificado(true);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -150,6 +206,32 @@ export default function SeguirPedido() {
             </Text>
             <Text style={{ color: '#6b6178', marginTop: 4 }}>{p.direccion}</Text>
           </View>
+          {p.estado === 'entregado' && (
+            <View style={e.tarjeta}>
+              {calificado ? (
+                <Text style={{ fontWeight: '700' }}>{t.gracias}</Text>
+              ) : (
+                <>
+                  <Text style={{ fontWeight: '800', fontSize: 17 }}>{t.calificar}</Text>
+                  <Estrellas valor={estRest} cambiar={setEstRest} etiqueta={t.restaurante} />
+                  {p.repartidor && (
+                    <Estrellas
+                      valor={estRep}
+                      cambiar={setEstRep}
+                      etiqueta={`${t.repartidor}: ${p.repartidor.nombre}`}
+                    />
+                  )}
+                  {estRep > 0 && estRep < 4 && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Switch value={culpa} onValueChange={setCulpa} accessibilityLabel={t.culpa} />
+                      <Text style={{ flex: 1 }}>{t.culpa}</Text>
+                    </View>
+                  )}
+                  {estRest > 0 && <Boton texto={t.enviar} alTocar={() => void calificar()} />}
+                </>
+              )}
+            </View>
+          )}
           <Boton
             texto={t.ayuda}
             alTocar={() =>

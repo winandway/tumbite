@@ -10,6 +10,7 @@ import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
 import { pedidos } from './rutas/pedidos';
 import { operacion } from './rutas/operacion';
+import { regalos } from './rutas/regalos';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -91,6 +92,7 @@ app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
+app.route('/datos', regalos);
 
 app.onError((err, c) => {
   if (err instanceof ErrorDatos)
