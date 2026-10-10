@@ -13,5 +13,19 @@
 - [x] Empresa: Windoce LLC (10 oct 2026).
 - [ ] 👤 Cuentas de desarrollador de Apple y Google a nombre de la empresa.
 - [ ] 👤 Consultar con el contador: impuesto de ventas en Florida y repartidores empleados vs independientes.
-- [ ] Diseñar las pantallas de las cinco piezas (después de las respuestas).
-- [ ] Plan de construcción de la Fase 1.
+- [ ] 👤 Activar en YaDominios Cloud un plan con base de datos y conectar el sitio «tumbite» (repo winandway/tumbite, rama yapanel-build). La base no existe en el plan gratis.
+- [ ] 👤 Cuando compres tumbite.com, avisar para conectarlo al sitio.
+
+## Fase 1 (orden del plan, ver docs/PANTALLAS-Y-PLAN.md)
+
+- [x] Mapa de pantallas y plan (10 oct 2026).
+- [x] Paso 1 · Esqueleto y blindaje (10 oct 2026). Verify verde en GitHub; rama yapanel-build generada.
+- [ ] Paso 2 · Cuentas y roles.
+- [ ] Paso 3 · Restaurantes y menús.
+- [ ] Paso 4 · Pedir (App Cliente hasta el carrito).
+- [ ] Paso 5 · Cobrar (Stripe, cuatro bolsillos, billeteras).
+- [ ] Paso 6 · Recibir (App Restaurante con alarma).
+- [ ] Paso 7 · Repartir (App Repartidor, asignación, seguimiento).
+- [ ] Paso 8 · Regalos y marketing, niveles.
+- [ ] Paso 9 · Prueba del circuito completo de pagos.
+- [ ] Paso 10 · Publicación en tiendas.
