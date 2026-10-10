@@ -10,7 +10,8 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { IDIOMAS, MARCA, enIdioma } from '@tumbite/compartido';
+import { MARCA, enIdioma } from '@tumbite/compartido';
+import { SelectorIdioma } from './SelectorIdioma';
 import { useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 
@@ -36,20 +37,7 @@ export function Pantalla({
     <SafeAreaView style={e.fondo} edges={['top', 'left', 'right']}>
       <View style={e.cabecera}>
         <Text style={e.marca}>{MARCA.nombre}</Text>
-        <View style={e.banderas}>
-          {IDIOMAS.map((i) => (
-            <Pressable
-              key={i.codigo}
-              onPress={() => cambiarIdioma(i.codigo)}
-              accessibilityRole="button"
-              accessibilityLabel={i.nombre}
-              accessibilityState={{ selected: idioma === i.codigo }}
-              style={[e.bandera, idioma === i.codigo && e.banderaActiva]}
-            >
-              <Text style={{ fontSize: 20 }}>{i.bandera}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
       {scroll ? (
         <ScrollView contentContainerStyle={e.contenido} keyboardShouldPersistTaps="handled">

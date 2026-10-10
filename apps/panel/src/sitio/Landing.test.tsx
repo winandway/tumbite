@@ -3,15 +3,22 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../App';
 
+async function cambiarIdioma(i: 'es' | 'en') {
+  await userEvent.click(screen.getByRole('button', { name: /Cambiar idioma|Change language/ }));
+  await userEvent.click(
+    screen.getByRole('radio', { name: i === 'es' ? /español - ES/ : /English - EN/ }),
+  );
+}
+
 describe('sitio público', () => {
   it('muestra la landing en los dos idiomas con enlaces legales', async () => {
     window.history.pushState(null, '', '/');
     localStorage.clear();
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: 'Español' }));
+    await cambiarIdioma('es');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Comida rica');
     expect(screen.getByRole('link', { name: 'Privacidad' })).toHaveAttribute('href', '/privacidad');
-    await userEvent.click(screen.getByRole('button', { name: 'English' }));
+    await cambiarIdioma('en');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Great food');
   });
 
