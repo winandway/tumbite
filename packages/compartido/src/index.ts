@@ -6,3 +6,4 @@ export * from './api';
 export * from './borrador';
 export * from './catalogo';
 export * from './bolsillos';
+export * from './niveles';

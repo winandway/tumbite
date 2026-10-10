@@ -47,3 +47,13 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - `POST /datos/stripe/aviso`: firma HMAC verificada con tolerancia de 5 minutos, cada evento una sola vez (`avisos_stripe`), y el monto y la sesión deben cuadrar con el pedido.
 - La propina nunca completa el pago mínimo del repartidor (`bolsillos.ts`).
 - Candados: `apps/servidor/src/rutas/pedidos.test.ts` (firma comprobada en rojo el 10 oct 2026) y `packages/compartido/src/bolsillos.test.ts` (todo cuadra al centavo).
+
+## C-OPERACION-1 · Ciclo del pedido, reparto justo y billetera sin carreras
+
+- Estados: pagado → aceptado (el restaurante fija minutos) → listo → en_camino (solo si estaba listo) → entregado. Rechazar devuelve el dinero en Stripe.
+- Reparto (`repartirOfertas`): primero el más cercano; a igual distancia (medio km) gana el nivel más alto; la oferta vence a los 60 s; rechazar no castiga.
+- Aceptar una oferta es atómico: si dos tocan a la vez, solo uno se lo lleva.
+- Entregado acredita restaurante, entrega y propina UNA sola vez (índice único pedido + concepto).
+- Retiro atómico: revisar saldo y anotar el retiro es una sola sentencia (comprobado en rojo el 10 oct 2026 con dos retiros simultáneos).
+- El cliente ve la ubicación del repartidor solo mientras va en camino, y solo su nombre de pila.
+- Candados: `apps/servidor/src/rutas/operacion.test.ts`, `pedidos.test.ts`.

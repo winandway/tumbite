@@ -156,15 +156,18 @@ dinero.post('/billetera/retirar', async (c) => {
     .first<{ stripe_cuenta: string; pagos_activos: number }>();
   if (!cuenta || cuenta.pagos_activos !== 1)
     throw new ErrorDatos('Primero conecta tu cuenta bancaria en «Billetera».', undefined, 409);
-  const disponible = await saldo(db, u.id);
-  if (montoCentavos > disponible)
-    throw new ErrorDatos('No tienes saldo suficiente para ese retiro.', 'montoCentavos', 409);
   const id = nuevoId();
-  // Primero se anota el retiro (el saldo baja ya, así no se puede retirar dos veces); si Stripe falla, se devuelve.
-  await db
-    .prepare("INSERT INTO movimientos (id, usuario_id, monto, concepto) VALUES (?, ?, ?, 'retiro')")
-    .bind(id, u.id, -montoCentavos)
+  // Revisar el saldo y anotar el retiro en UNA sola operación: si llegan dos retiros a la vez,
+  // el segundo ya ve el saldo rebajado y no pasa. Así nunca se retira más de lo que hay.
+  const anotado = await db
+    .prepare(
+      `INSERT INTO movimientos (id, usuario_id, monto, concepto)
+       SELECT ?, ?, ?, 'retiro' WHERE (SELECT COALESCE(SUM(monto), 0) FROM movimientos WHERE usuario_id = ?) >= ?`,
+    )
+    .bind(id, u.id, -montoCentavos, u.id, montoCentavos)
     .run();
+  if (!anotado.meta.changes)
+    throw new ErrorDatos('No tienes saldo suficiente para ese retiro.', 'montoCentavos', 409);
   try {
     const t = await stripe.post<{ id: string }>(
       '/transfers',

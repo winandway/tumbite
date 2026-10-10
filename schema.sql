@@ -140,3 +140,34 @@ CREATE TABLE IF NOT EXISTS avisos_stripe (
   tipo TEXT NOT NULL,
   recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS repartidores (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  tipo TEXT NOT NULL DEFAULT 'independiente' CHECK (tipo IN ('independiente', 'empleado')),
+  conectado INTEGER NOT NULL DEFAULT 0,
+  lat REAL,
+  lng REAL,
+  ubicacion_en TEXT,
+  puntos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cada oferta de un pedido a un repartidor. Rechazar NO castiga: solo pasa al siguiente.
+CREATE TABLE IF NOT EXISTS ofertas (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('ofrecida', 'aceptada', 'rechazada', 'vencida')),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, repartidor_id)
+);
+CREATE INDEX IF NOT EXISTS ofertas_repartidor ON ofertas(repartidor_id, estado);
+
+-- Calificaciones: al restaurante y al repartidor por separado.
+CREATE TABLE IF NOT EXISTS calificaciones (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  estrellas_restaurante INTEGER CHECK (estrellas_restaurante BETWEEN 1 AND 5),
+  estrellas_repartidor INTEGER CHECK (estrellas_repartidor BETWEEN 1 AND 5),
+  culpa_restaurante INTEGER NOT NULL DEFAULT 0,
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

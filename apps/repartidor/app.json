@@ -28,6 +28,15 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "tumbite-repartidor",
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Tumbite uses your location to offer you nearby orders and to show your route while you deliver."
+        }
+      ]
+    ]
   }
 }
