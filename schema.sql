@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS trabajos_en_proceso (
   trabajo TEXT NOT NULL,
   estado TEXT NOT NULL CHECK (estado IN ('en_proceso', 'terminado', 'apagado')),
   activo INTEGER NOT NULL DEFAULT 1,
+  correo_confirmado_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -48,6 +49,15 @@ CREATE TABLE IF NOT EXISTS sesiones (
   expira_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
+
+-- Enlaces de un solo uso para confirmar el correo al registrarse (se guarda el hash).
+CREATE TABLE IF NOT EXISTS confirmaciones (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL,
+  usada_en TEXT
+);
 
 -- Enlaces de un solo uso para recuperar la contraseña (se guarda el hash, nunca el token).
 CREATE TABLE IF NOT EXISTS recuperaciones (
