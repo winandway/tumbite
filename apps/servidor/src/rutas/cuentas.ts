@@ -13,9 +13,51 @@ import {
   leerToken,
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
+import { enviarCorreo } from '../correo';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
+const esquemaRecuperar = z.object({
+  correo: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: 'Escribe un correo válido.' })),
+  idioma: z.enum(['es', 'en']).default('es'),
+});
+const esquemaRestablecer = z.object({
+  token: z.string().min(20).max(200),
+  clave: z
+    .string()
+    .min(8, { error: 'La contraseña debe tener al menos 8 caracteres.' })
+    .max(200, { error: 'La contraseña es demasiado larga.' }),
+});
+const MINUTOS_RECUPERACION = 30;
+
+const TEXTOS_RECUPERAR = {
+  es: {
+    asunto: 'Restablece tu contraseña de Tumbite',
+    cuerpo: (nombre: string, enlace: string) =>
+      `Hola, ${nombre}.
+
+Alguien pidió restablecer la contraseña de tu cuenta de Tumbite. Si fuiste tú, toca este enlace (sirve una sola vez y vence en ${MINUTOS_RECUPERACION} minutos):
+
+${enlace}
+
+Si no fuiste tú, no hagas nada: tu contraseña sigue igual.`,
+  },
+  en: {
+    asunto: 'Reset your Tumbite password',
+    cuerpo: (nombre: string, enlace: string) =>
+      `Hi ${nombre},
+
+Someone asked to reset the password for your Tumbite account. If that was you, tap this link (it works once and expires in ${MINUTOS_RECUPERACION} minutes):
+
+${enlace}
+
+If it wasn't you, do nothing: your password stays the same.`,
+  },
+};
 
 let hashFalsoGuardado: Promise<string> | null = null;
 function hashFalso(): Promise<string> {
@@ -126,6 +168,65 @@ cuentas.post('/entrar', async (c) => {
   };
   c.header('Set-Cookie', cookie(token));
   return c.json({ token, usuario });
+});
+
+/**
+ * Recuperar contraseña. Responde SIEMPRE igual (exista o no el correo), para no revelar
+ * qué correos tienen cuenta. El enlace sirve una vez y vence a los 30 minutos.
+ */
+cuentas.post('/recuperar', async (c) => {
+  await escudo(c);
+  const d = await leerCuerpo(c, esquemaRecuperar);
+  const db = base(c);
+  const fila = await db
+    .prepare('SELECT id, nombre, idioma FROM usuarios WHERE correo = ? AND activo = 1')
+    .bind(d.correo)
+    .first<{ id: string; nombre: string; idioma: 'es' | 'en' }>();
+  if (fila) {
+    const token = nuevoToken();
+    await db
+      .prepare(
+        `INSERT INTO recuperaciones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', ?))`,
+      )
+      .bind(await sha256(token), fila.id, `+${MINUTOS_RECUPERACION} minutes`)
+      .run();
+    const base_ = (c.env.SITIO_URL ?? 'https://tumbite.com').replace(/\/$/, '');
+    const t = TEXTOS_RECUPERAR[d.idioma ?? fila.idioma];
+    await enviarCorreo(c.env, {
+      de: 'avisos',
+      para: d.correo,
+      asunto: t.asunto,
+      texto: t.cuerpo(fila.nombre, `${base_}/restablecer?token=${token}`),
+    });
+  }
+  return c.json({ ok: true });
+});
+
+cuentas.post('/restablecer', async (c) => {
+  const d = await leerCuerpo(c, esquemaRestablecer);
+  const db = base(c);
+  const id = await sha256(d.token);
+  const r = await db
+    .prepare(
+      "SELECT usuario_id FROM recuperaciones WHERE id = ? AND usada_en IS NULL AND expira_en > datetime('now')",
+    )
+    .bind(id)
+    .first<{ usuario_id: string }>();
+  if (!r)
+    throw new ErrorDatos(
+      'Este enlace ya no sirve. Pide uno nuevo desde «Olvidé mi contraseña».',
+      undefined,
+      410,
+    );
+  await db.batch([
+    db
+      .prepare('UPDATE usuarios SET clave_hash = ? WHERE id = ?')
+      .bind(await hashClave(d.clave), r.usuario_id),
+    db.prepare("UPDATE recuperaciones SET usada_en = datetime('now') WHERE id = ?").bind(id),
+    // Se cierran todas las sesiones viejas: si alguien tenía la cuenta abierta, queda fuera.
+    db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(r.usuario_id),
+  ]);
+  return c.json({ ok: true });
 });
 
 cuentas.post('/salir', async (c) => {

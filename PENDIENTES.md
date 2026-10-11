@@ -34,7 +34,8 @@
 ## Siguiente fila — en el orden de docs/ROADMAP.md (no se adelanta nada)
 
 - [ ] Etapa 0.1: dejar el Action listo para publicar primero en pruebas y después en producción (espera el sitio de pruebas).
-- [ ] Etapa 0.2: pieza de correo con canario, recuperar contraseña, confirmar correo, recibos y avisos (espera la activación del correo).
+- [x] Etapa 0.2a (11 oct 2026): pieza de correo con canario y recuperar contraseña. Falta activar el dominio y `YAD_TOKEN` para que salga en vivo.
+- [ ] Etapa 0.2b: confirmar correo al registrarse, recibo del pedido, aviso al restaurante, aviso al admin, «te anotaste».
 - [ ] Etapa 0.4: propuesta de reloj externo y copia de seguridad de la base (se propone y espera el sí).
 - [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
 - [ ] Etapa 2: soporte por WhatsApp, avisos al celular, mapa en vivo, ubicación en segundo plano, marcar dirección en mapa.

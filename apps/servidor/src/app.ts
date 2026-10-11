@@ -15,6 +15,7 @@ import { regalos } from './rutas/regalos';
 import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
 import { fotos, media } from './rutas/fotos';
+import { correoConfigurado, ultimoErrorCorreo } from './correo';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -46,6 +47,8 @@ app.use('/datos/*', (c, next) =>
 );
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
+app.use('/datos/cuentas/recuperar', limiteIntentos(5, 60_000));
+app.use('/datos/cuentas/restablecer', limiteIntentos(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/*', async (c, next) => {
   if (c.env.DB) await asegurarEsquema(c.env.DB);
@@ -79,6 +82,7 @@ app.get('/datos/salud', async (c) => {
   piezas.variables = env.ok ? 'ok' : 'error';
   piezas.stripe = c.env.STRIPE_SECRET_KEY ? 'ok' : 'pendiente';
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
+  piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
 
   const algunError = Object.values(piezas).includes('error');
   return c.json({ servicio: MARCA.nombre, ok: !algunError, piezas }, algunError ? 503 : 200);

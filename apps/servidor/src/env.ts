@@ -13,6 +13,8 @@ export const esquemaEnv = z.object({
   ADMIN_CORREOS: z.string().optional(),
   /** Secreto largo para /datos/cuentas/hacer-admin. Va solo en el panel de YaDominios. */
   ADMIN_SEMILLA: z.string().min(24).optional(),
+  /** Token del sitio en YaDominios Cloud: manda correos desde tumbite.com. Solo en el panel. */
+  YAD_TOKEN: z.string().min(32).optional(),
   /** Dirección pública del sitio, para las vueltas desde Stripe. */
   SITIO_URL: z.url().optional(),
 });

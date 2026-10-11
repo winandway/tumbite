@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { Linking, Text } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
-import { useSesion } from './sesion';
+import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { Boton, Campo, CampoClave, Pantalla, e } from './ui';
 
@@ -133,6 +133,15 @@ export function Acceso({
         alTocar={() => void enviar()}
         cargando={enviando}
       />
+      {modo === 'entrar' ? (
+        <Text
+          style={e.enlace}
+          onPress={() => void Linking.openURL(`${URL_SERVIDOR}/olvide`)}
+          accessibilityRole="link"
+        >
+          {t.olvide}
+        </Text>
+      ) : null}
       {rolRegistro ? (
         <Text
           style={e.enlace}

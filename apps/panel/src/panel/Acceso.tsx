@@ -8,6 +8,7 @@ import {
   useBorrador,
 } from '@tumbite/compartido';
 import { api } from './api';
+import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
 import { TEXTOS_PANEL } from './textos';
 
@@ -127,6 +128,11 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
       >
         {modo === 'entrar' ? t.noTengo : t.yaTengo}
       </button>
+      {modo === 'entrar' && (
+        <button type="button" className="enlace" onClick={() => ir('/olvide')}>
+          {t.olvide}
+        </button>
+      )}
     </main>
   );
 }

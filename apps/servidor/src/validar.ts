@@ -5,7 +5,7 @@ export class ErrorDatos extends Error {
   constructor(
     message: string,
     public readonly campo?: string,
-    public readonly estado: 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 503 = 400,
+    public readonly estado: 400 | 401 | 403 | 404 | 409 | 410 | 413 | 415 | 422 | 503 = 400,
   ) {
     super(message);
   }
