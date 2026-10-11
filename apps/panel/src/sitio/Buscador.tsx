@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icono } from './Icono';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 
 const T = {
@@ -74,7 +75,7 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
     <div className="ld-buscador">
       <form onSubmit={buscar} role="search">
         <label className="ld-direccion">
-          <span aria-hidden="true">📍</span>
+          <Icono nombre="pin" tamano={20} />
           <input
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
@@ -88,7 +89,7 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
         </button>
       </form>
       <button type="button" className="ld-ubicacion" onClick={usarUbicacion} disabled={buscando}>
-        ➤ {buscando ? t.buscando : t.ubicacion}
+        <Icono nombre="ubicacion" tamano={16} /> {buscando ? t.buscando : t.ubicacion}
       </button>
       {mensaje && (
         <p className="ld-mensaje" role="status">

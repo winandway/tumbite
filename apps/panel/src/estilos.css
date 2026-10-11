@@ -357,9 +357,14 @@ h1 {
   transform: translateY(-50%);
   background: transparent;
   border: 0;
-  font-size: 1.2rem;
+  color: #5e5e5e;
+  display: grid;
+  place-items: center;
   cursor: pointer;
   padding: 6px;
+}
+.ojito:hover {
+  color: var(--secundario);
 }
 .error-campo,
 .error-general {
@@ -1175,8 +1180,8 @@ html {
   padding: 14px;
   box-shadow: 0 2px 8px rgb(25 25 25 / 6%);
 }
-.ld-ventajas span {
-  font-size: 1.5rem;
+.ld-ventajas .ld-icono {
+  margin-bottom: 8px;
 }
 .ld-ventajas small {
   color: #5e5e5e;
@@ -1338,8 +1343,8 @@ html {
 .ld-seccion:not(.ld-clara) .ld-funciones li {
   background: #fff;
 }
-.ld-funciones span {
-  font-size: 1.6rem;
+.ld-funciones .ld-icono {
+  flex: none;
 }
 .ld-funciones p {
   margin: 4px 0 0;
@@ -1400,8 +1405,8 @@ html {
   font-size: 1.1rem;
   font-weight: 700;
 }
-.ld-form-listo span {
-  font-size: 2.4rem;
+.ld-form-listo .icono {
+  color: var(--primario);
 }
 
 /* Mapa */
@@ -1885,4 +1890,56 @@ button {
 }
 .cabecera .cuenta summary {
   border-color: #d6d6d6;
+}
+
+/* Íconos de línea (nada de emojis) */
+.icono {
+  flex: none;
+  vertical-align: -0.2em;
+}
+.ld-icono {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff1ee;
+  color: var(--primario);
+}
+.ld-funciones li .ld-icono {
+  background: #fff1ee;
+}
+.ld-cta,
+.ld-ubicacion,
+.ld-tiendas span,
+.ld-etiqueta,
+.ok,
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.ld-direccion .icono {
+  color: var(--primario);
+}
+.ld-ubicacion .icono {
+  color: var(--primario);
+}
+.ld-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ld-nota .icono {
+  color: var(--primario);
+  margin-top: 2px;
+}
+.en-linea i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1a9e55;
+  vertical-align: 0.05em;
 }

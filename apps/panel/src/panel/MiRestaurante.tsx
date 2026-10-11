@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Icono } from '../sitio/Icono';
 import {
   ErrorApi,
   type Idioma,
@@ -239,7 +240,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         />
         <div className="fila-ubicacion">
           <button type="button" className="boton secundario" onClick={ubicar}>
-            📍 {t.ubicacion}
+            <Icono nombre="pin" tamano={18} /> {t.ubicacion}
           </button>
           <span>{v.lat && v.lng ? `${v.lat}, ${v.lng}` : t.sinUbicacion}</span>
         </div>

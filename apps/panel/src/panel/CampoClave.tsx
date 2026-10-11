@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Icono } from '../sitio/Icono';
 
 /** Campo de contraseña con ojito. Arranca oculta. Todas las pantallas usan este, nunca un input suelto. */
 export function CampoClave(props: {
@@ -31,7 +32,7 @@ export function CampoClave(props: {
           aria-label={visible ? props.textoOcultar : props.textoVer}
           aria-pressed={visible}
         >
-          {visible ? '🙈' : '👁'}
+          <Icono nombre={visible ? 'ocultar' : 'ver'} tamano={20} />
         </button>
       </div>
       {props.error && <p className="error-campo">{props.error}</p>}

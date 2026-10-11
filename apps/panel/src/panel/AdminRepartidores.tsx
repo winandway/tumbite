@@ -70,7 +70,12 @@ export function AdminRepartidores({ idioma }: { idioma: Idioma }) {
               <div className="lista-texto">
                 <strong>
                   {f.nombre}
-                  {f.conectado ? ` · 🟢 ${t.conectado}` : ''}
+                  {f.conectado && (
+                    <span className="en-linea">
+                      {' · '}
+                      <i aria-hidden="true" /> {t.conectado}
+                    </span>
+                  )}
                 </strong>
                 <span>{f.correo}</span>
                 <span>

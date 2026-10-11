@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Icono } from './Icono';
 import {
   ErrorApi,
   type Idioma,
@@ -85,7 +86,7 @@ export function FormEspera({
   if (estado === 'listo') {
     return (
       <div className="ld-form ld-form-listo" role="status">
-        <span aria-hidden="true">🎉</span>
+        <Icono nombre="listo" tamano={40} />
         <p>{t.listo}</p>
       </div>
     );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Icono } from '../sitio/Icono';
 import {
   ErrorApi,
   type Idioma,
@@ -177,7 +178,7 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
               checked={cfg.cumpleanos}
               onChange={(e) => setCfg({ ...cfg, cumpleanos: e.target.checked })}
             />{' '}
-            🎂 {t.cumple}
+            <Icono nombre="cumple" tamano={18} /> {t.cumple}
           </label>
           <small>{t.cumpleAyuda}</small>
           {cfg.cumpleanos &&
@@ -190,7 +191,7 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
               checked={cfg.sellos}
               onChange={(e) => setCfg({ ...cfg, sellos: e.target.checked })}
             />{' '}
-            🎟️ {t.sellos}
+            <Icono nombre="sellos" tamano={18} /> {t.sellos}
           </label>
           <small>{t.sellosAyuda}</small>
           {cfg.sellos && (
@@ -216,7 +217,7 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
               checked={cfg.vuelve}
               onChange={(e) => setCfg({ ...cfg, vuelve: e.target.checked })}
             />{' '}
-            👋 {t.vuelve}
+            <Icono nombre="saludo" tamano={18} /> {t.vuelve}
           </label>
           <small>{t.vuelveAyuda}</small>
           {cfg.vuelve && (

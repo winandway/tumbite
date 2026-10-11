@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icono } from '../sitio/Icono';
 import {
   ErrorApi,
   type Idioma,
@@ -22,7 +23,7 @@ const T = {
   es: {
     titulo: 'Pedidos',
     activar: 'Activar sonido de alarma',
-    sonidoOk: '🔔 Alarma activada',
+    sonidoOk: 'Alarma activada',
     vacio: 'Sin pedidos por ahora.',
     aceptar: 'Aceptar',
     min: 'min',
@@ -43,7 +44,7 @@ const T = {
   en: {
     titulo: 'Orders',
     activar: 'Turn on alarm sound',
-    sonidoOk: '🔔 Alarm on',
+    sonidoOk: 'Alarm on',
     vacio: 'No orders right now.',
     aceptar: 'Accept',
     min: 'min',
@@ -118,10 +119,12 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
       <div className="titulo-fila">
         <h1>{t.titulo}</h1>
         {sonido ? (
-          <span className="ok">{t.sonidoOk}</span>
+          <span className="ok">
+            <Icono nombre="alarma" tamano={18} /> {t.sonidoOk}
+          </span>
         ) : (
           <button type="button" className="boton" onClick={activarSonido}>
-            🔔 {t.activar}
+            <Icono nombre="alarma" tamano={18} /> {t.activar}
           </button>
         )}
       </div>

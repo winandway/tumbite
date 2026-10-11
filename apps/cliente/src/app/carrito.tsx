@@ -33,14 +33,14 @@ const PROPINAS = [0, 1500, 2000, 2500]; // puntos básicos: 0 %, 15 %, 20 %, 25 
 type Regalo = { tipo: 'cumpleanos' | 'sellos' | 'vuelve'; valorCentavos: number };
 const NOMBRE_REGALO = {
   es: {
-    cumpleanos: '🎂 Regalo de cumpleaños',
-    sellos: '🎟️ Tu tarjeta de sellos está completa',
-    vuelve: '👋 ¡Qué bueno verte de nuevo!',
+    cumpleanos: 'Regalo de cumpleaños',
+    sellos: 'Tu tarjeta de sellos está completa',
+    vuelve: '¡Qué bueno verte de nuevo!',
   },
   en: {
-    cumpleanos: '🎂 Birthday gift',
-    sellos: '🎟️ Your punch card is complete',
-    vuelve: '👋 Great to see you again!',
+    cumpleanos: 'Birthday gift',
+    sellos: 'Your punch card is complete',
+    vuelve: 'Great to see you again!',
   },
 };
 
@@ -271,7 +271,7 @@ export default function PantallaCarrito() {
       ))}
       <View style={e.tarjeta}>
         {fila(t.subtotal, d.subtotal)}
-        {regalo > 0 && fila('🎁', -regalo)}
+        {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
         {fila(t.envio, d.envio)}
         {fila(t.servicio, d.servicio)}
         {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}

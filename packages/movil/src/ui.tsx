@@ -69,6 +69,16 @@ export function Campo({
   );
 }
 
+/** Ojo de línea dibujado con vistas (sin emojis ni librerías nativas). Tachado = ocultar. */
+function Ojo({ tachado }: { tachado: boolean }) {
+  return (
+    <View style={e.ojo}>
+      <View style={e.ojoPupila} />
+      {tachado ? <View style={e.ojoRaya} /> : null}
+    </View>
+  );
+}
+
 /** Contraseña con ojito. Arranca oculta. Todas las pantallas usan esta. */
 export function CampoClave({
   etiqueta,
@@ -107,7 +117,7 @@ export function CampoClave({
           style={e.ojito}
           hitSlop={8}
         >
-          <Text style={{ fontSize: 20 }}>{visible ? '🙈' : '👁'}</Text>
+          <Ojo tachado={visible} />
         </Pressable>
       </View>
       {error ? <Text style={e.error}>{error}</Text> : null}
@@ -183,6 +193,23 @@ export const e = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     paddingHorizontal: 8,
+  },
+  ojo: {
+    width: 22,
+    height: 14,
+    borderWidth: 2,
+    borderColor: '#5e5e5e',
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ojoPupila: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#5e5e5e' },
+  ojoRaya: {
+    position: 'absolute',
+    width: 26,
+    height: 2,
+    backgroundColor: '#5e5e5e',
+    transform: [{ rotate: '-35deg' }],
   },
   boton: {
     backgroundColor: C.primario,
