@@ -20,6 +20,7 @@ import { Billetera } from './Billetera';
 import { Regalos } from './Regalos';
 import { Pedidos } from './Pedidos';
 import { AdminRepartidores } from './AdminRepartidores';
+import { AdminEspera, AdminZonas } from './AdminZonas';
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
   if (usuario.rol === 'restaurante') {
@@ -33,6 +34,8 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
     if (ruta === '/panel/dinero') return <AdminDinero idioma={idioma} />;
     if (ruta === '/panel/repartidores') return <AdminRepartidores idioma={idioma} />;
+    if (ruta === '/panel/zonas') return <AdminZonas idioma={idioma} />;
+    if (ruta === '/panel/espera') return <AdminEspera idioma={idioma} />;
   }
   return null;
 }

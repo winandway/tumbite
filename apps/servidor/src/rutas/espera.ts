@@ -24,7 +24,13 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
     );
   const d = await leerCuerpo(c, esquemaEspera);
   const db = base(c);
-  const zona = await zonaPara(db, d.lat, d.lng, false);
+  // Zona por ubicación; si no la dio, por el nombre de la ciudad que escribió.
+  const zona =
+    (await zonaPara(db, d.lat, d.lng, false)) ??
+    (await db
+      .prepare('SELECT id, nombre FROM zonas WHERE lower(nombre) = lower(?)')
+      .bind(d.ciudad)
+      .first<{ id: string; nombre: string }>());
   // Si ya estaba anotado, se actualizan sus datos en vez de dar error: lo importante es no perderlo.
   await db
     .prepare(

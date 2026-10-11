@@ -38,6 +38,10 @@ describe('lista de espera de la landing', () => {
         })
       ).estado,
     ).toBe(201);
+    const porCiudad = await m.DB.prepare(
+      "SELECT zona_id FROM lista_espera WHERE tipo = 'restaurante'",
+    ).first<{ zona_id: string }>();
+    expect(porCiudad?.zona_id).toBe('US-FL-MIAMI');
     const admin = await m.cuenta('admin');
     const lista = await m.llamar('GET', '/datos/admin/lista-espera', undefined, admin.token);
     expect(lista.datos.totales).toEqual({ comensal: 1, restaurante: 1, repartidor: 1 });
