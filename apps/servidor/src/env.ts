@@ -22,6 +22,8 @@ export const esquemaEnv = z.object({
     .optional(),
   /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
   EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
+  /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
+  RELOJ_SECRETO: z.string().min(24).optional(),
   /** Dirección pública del sitio, para las vueltas desde Stripe. */
   SITIO_URL: z.url().optional(),
 });

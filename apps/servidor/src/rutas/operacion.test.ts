@@ -249,3 +249,26 @@ describe('ciclo del pedido', () => {
     expect(ok.estado).toBe(200);
   });
 });
+
+describe('reloj externo', () => {
+  it('sin secreto correcto no existe; con él reparte ofertas pendientes', async () => {
+    const SEC = 'secreto-del-reloj-de-prueba-123456';
+    const m = mundo({ RELOJ_SECRETO: SEC });
+    const sin = await m.llamar('POST', '/datos/reloj', {});
+    expect(sin.estado).toBe(404);
+    const { app } = await import('../app');
+    const con = await app.request(
+      '/datos/reloj',
+      { method: 'POST', headers: { 'x-reloj-secreto': SEC, 'cf-connecting-ip': '10.0.0.9' } },
+      { DB: m.DB, RELOJ_SECRETO: SEC },
+    );
+    expect(con.status).toBe(200);
+    expect(((await con.json()) as { ok: boolean }).ok).toBe(true);
+    const nada = await app.request(
+      '/datos/reloj',
+      { method: 'POST', headers: { 'x-reloj-secreto': SEC } },
+      { DB: m.DB },
+    );
+    expect(nada.status).toBe(404);
+  });
+});

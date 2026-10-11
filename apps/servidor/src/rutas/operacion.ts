@@ -522,6 +522,35 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   return c.json({ ok: true });
 });
 
+// ======================= Reloj externo =======================
+
+/**
+ * YaDominios Cloud no tiene tareas programadas: un reloj de afuera (GitHub Actions, cada 5 min)
+ * llama aquí con el secreto. Hoy: vencer ofertas viejas y repartir las pendientes aunque ningún
+ * repartidor haya abierto la app. Sin secreto configurado, la ruta no existe para nadie.
+ */
+operacion.post('/reloj', async (c) => {
+  const secreto = c.env.RELOJ_SECRETO;
+  const dado = c.req.header('x-reloj-secreto') ?? '';
+  if (!secreto || dado.length !== secreto.length || !(await igualesSeguro(dado, secreto)))
+    throw new ErrorDatos('No encontrado.', undefined, 404);
+  const db = base(c);
+  await repartirOfertas(db, c.env);
+  const pendientes = await db
+    .prepare(
+      "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
+    )
+    .first<{ n: number }>();
+  return c.json({ ok: true, sinRepartidor: pendientes?.n ?? 0, cuando: new Date().toISOString() });
+});
+
+async function igualesSeguro(a: string, b: string): Promise<boolean> {
+  const h = async (x: string) =>
+    new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(x)));
+  const [ha, hb] = await Promise.all([h(a), h(b)]);
+  return ha.every((v, i) => v === hb.at(i));
+}
+
 // ======================= Cliente: seguimiento =======================
 
 operacion.get('/pedidos/:id/seguimiento', async (c) => {

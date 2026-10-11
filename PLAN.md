@@ -7,4 +7,5 @@ Lo que depende de Richard queda en PENDIENTES.md (👤). Aquí solo lo que se pu
 - [x] Paso 3: App cliente: marcar la dirección de entrega en un mapa (pin arrastrable que rellena la dirección escrita). Con borrador.
 - [x] Paso 4: Soporte por WhatsApp cableado: variable `WHATSAPP_SOPORTE` del sitio, servida por `/datos/publico`; el botón aparece solo en la landing y en las tres apps cuando exista el número. Prueba.
 - [x] Paso 5: Avisos al celular, preparación completa: tabla de dispositivos, ruta para registrar el token del teléfono, pieza `notificar` con transporte de Expo y canario; enganches: pedido aceptado y en camino (cliente), oferta nueva (repartidor), pedido pagado (restaurante). Apps: pedir permiso y registrar el token si hay proyecto de EAS (👤). Pruebas con transporte de mentira.
-- [ ] Paso 6: Verificación completa, publicar por el semáforo, documentar en CANDADOS.md, ROADMAP.md y PENDIENTES.md.
+- [x] Paso 6: Verificación completa, publicar por el semáforo, documentar en CANDADOS.md, ROADMAP.md y PENDIENTES.md.
+- [x] Paso 7 (extra): reloj externo con GitHub Actions cada 5 minutos (Etapa 0.4), con su secreto en los dos sitios y en GitHub.
