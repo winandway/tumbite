@@ -83,3 +83,12 @@ describe('una sola dirección oficial', () => {
     expect(res.headers.get('location')).toBe('https://tumbite.com/sitemap.xml');
   });
 });
+
+describe('datos públicos', () => {
+  it('el WhatsApp de soporte sale solo cuando la variable existe', async () => {
+    const sin = await app.request('/datos/publico', {}, {});
+    expect(((await sin.json()) as { whatsapp: string }).whatsapp).toBe('');
+    const con = await app.request('/datos/publico', {}, { WHATSAPP_SOPORTE: '13055550100' });
+    expect(((await con.json()) as { whatsapp: string }).whatsapp).toBe('13055550100');
+  });
+});

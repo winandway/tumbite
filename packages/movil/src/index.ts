@@ -5,3 +5,5 @@ export * from './Acceso';
 export * from './textos';
 export * from './BorrarCuenta';
 export * from './SelectorIdioma';
+export * from './avisos';
+export * from './soporte';

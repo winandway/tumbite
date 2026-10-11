@@ -27,6 +27,7 @@ import {
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
+import { ElegirEnMapa } from '../ElegirEnMapa';
 
 const PROPINAS = [0, 1500, 2000, 2500]; // puntos básicos: 0 %, 15 %, 20 %, 25 %
 
@@ -200,6 +201,12 @@ export default function PantallaCarrito() {
         </View>
       ))}
 
+      <ElegirEnMapa
+        punto={punto}
+        cambiarPunto={setPunto}
+        cambiarDireccion={(x) => b.cambiar('direccion', x)}
+        textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
+      />
       <Campo
         etiqueta={t.direccion}
         value={b.valores.direccion}

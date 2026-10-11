@@ -8,7 +8,8 @@
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
 - [x] Sitio de pruebas `tumbite-pruebas` creado por la IA con el acceso para IA (11 oct 2026). Semáforo activo (`URL_PRUEBAS` en GitHub).
 - [x] `YAD_TOKEN` puesto en tumbite y en tumbite-pruebas (11 oct 2026): canario `correo: ok` en los dos.
-- [ ] 👤 Número de WhatsApp de soporte de Tumbite (soporte humano en menos de 2 minutos). Destranca el botón de WhatsApp en la landing y las apps.
+- [ ] 👤 Número de WhatsApp de soporte (con prefijo, solo dígitos). Ya está todo cableado: la IA lo pone como variable `WHATSAPP_SOPORTE` y el botón aparece en la landing y las tres apps sin publicar código.
+- [ ] 👤 **Llave de Google Maps para Android** (Google Cloud → Maps SDK for Android; gratis hasta un volumen alto). Va en `apps/cliente/app.json`. Sin ella, el mapa solo se ve en iPhone.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
 - [ ] ~~Plataforma no republica~~ resuelto. Texto viejo: **La plataforma no está republicando.** Desde las 21:12 (hora UTC) del 10 oct 2026 la rama `yapanel-build` recibió 4 publicaciones nuevas y tumbite.com sigue con la primera. Esa primera versión da error en todas las páginas menos la portada. Entrar a YaDominios Cloud → sitio tumbite → «Registro de errores», y volver a publicar. Con eso se ven la landing nueva, las páginas legales, el panel y el color nuevo.
@@ -41,6 +42,7 @@
 - [x] Etapa 0.2b (11 oct 2026): confirmar correo al registrarse, recibo del pedido, aviso al restaurante, aviso al admin y bienvenida a la lista de espera. Candado C-AVISOS.
 - [ ] Etapa 0.4: propuesta de reloj externo y copia de seguridad de la base (se propone y espera el sí).
 - [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
-- [ ] Etapa 2: soporte por WhatsApp, avisos al celular, mapa en vivo, ubicación en segundo plano, marcar dirección en mapa.
+- [x] Etapa 2 (11 oct 2026): mapa en vivo del repartidor, pin de dirección en el mapa, WhatsApp cableado, avisos al celular preparados (candado C-ETAPA-2). Falta: ubicación del repartidor en segundo plano (requiere build propio).
+- [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).
 - [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.

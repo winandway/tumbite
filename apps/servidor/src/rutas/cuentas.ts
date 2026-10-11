@@ -35,6 +35,12 @@ const esquemaRestablecer = z.object({
 });
 const MINUTOS_RECUPERACION = 30;
 const esquemaConfirmar = z.object({ token: z.string().min(20).max(200) });
+const esquemaDispositivo = z.object({
+  token: z.string().regex(/^(ExponentPushToken|ExpoPushToken)\[[\w-]+\]$/, {
+    error: 'Ese token de avisos no es válido.',
+  }),
+  plataforma: z.enum(['ios', 'android', 'web', 'desconocida']).default('desconocida'),
+});
 
 const TEXTOS_RECUPERAR = {
   es: {
@@ -188,6 +194,30 @@ async function mandarConfirmacion(
     .run();
   await correoDeConfirmacion(env, { correo: u.correo, nombre: u.nombre, idioma: u.idioma, token });
 }
+
+/** El teléfono registra su token de avisos. Si ya estaba, se reactiva y se anota la visita. */
+cuentas.post('/dispositivo', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaDispositivo);
+  await base(c)
+    .prepare(
+      `INSERT INTO dispositivos (token, usuario_id, plataforma) VALUES (?, ?, ?)
+       ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now')`,
+    )
+    .bind(d.token, u.id, d.plataforma)
+    .run();
+  return c.json({ ok: true });
+});
+
+cuentas.delete('/dispositivo', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaDispositivo);
+  await base(c)
+    .prepare('UPDATE dispositivos SET activo = 0 WHERE token = ? AND usuario_id = ?')
+    .bind(d.token, u.id)
+    .run();
+  return c.json({ ok: true });
+});
 
 cuentas.post('/confirmar', async (c) => {
   const d = await leerCuerpo(c, esquemaConfirmar);

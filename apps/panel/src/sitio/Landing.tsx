@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
 import { MapaCobertura } from './MapaCobertura';
-import { CONTACTO, TEXTOS_SITIO, WHATSAPP_SOPORTE } from './textos';
+import { CONTACTO, TEXTOS_SITIO } from './textos';
 
 /** Imágenes del kit de marca aprobado (logo-imagenes-banner-marketing), optimizadas en public/marca. */
 const IMG = {
@@ -50,6 +51,14 @@ const ALT = {
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
   const a = enIdioma(ALT, idioma);
+  // El WhatsApp de soporte lo da el servidor (variable del sitio): aparece solo cuando exista.
+  const [whatsapp, setWhatsapp] = useState('');
+  useEffect(() => {
+    fetch('/datos/publico')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { whatsapp?: string } | null) => setWhatsapp(d?.whatsapp ?? ''))
+      .catch(() => setWhatsapp(''));
+  }, []);
   return (
     <main className="ld">
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
@@ -287,10 +296,10 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         <h2>{t.soporte.titulo}</h2>
         <p className="ld-entrada">{t.soporte.texto}</p>
         <div className="fila-botones">
-          {WHATSAPP_SOPORTE && (
+          {whatsapp && (
             <a
               className="boton ld-whatsapp"
-              href={`https://wa.me/${WHATSAPP_SOPORTE}`}
+              href={`https://wa.me/${whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -15,6 +15,13 @@ export const esquemaEnv = z.object({
   ADMIN_SEMILLA: z.string().min(24).optional(),
   /** Token del sitio en YaDominios Cloud: manda correos desde tumbite.com. Solo en el panel. */
   YAD_TOKEN: z.string().min(32).optional(),
+  /** Número de WhatsApp de soporte (con prefijo, solo dígitos). Vacío = el botón no se muestra. */
+  WHATSAPP_SOPORTE: z
+    .string()
+    .regex(/^\d{8,15}$/)
+    .optional(),
+  /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
+  EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
   /** Dirección pública del sitio, para las vueltas desde Stripe. */
   SITIO_URL: z.url().optional(),
 });

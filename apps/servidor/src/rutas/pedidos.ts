@@ -11,6 +11,7 @@ import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { anotar } from '../historial';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
+import { AVISOS, notificar } from '../notificaciones';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -282,7 +283,7 @@ async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string)
     .prepare(
       `SELECT p.id, p.lineas_json, p.subtotal, p.envio, p.servicio, p.propina, p.regalo, p.total, p.direccion, p.notas, p.pago_restaurante,
         c.correo AS cliente_correo, c.nombre AS cliente_nombre, c.idioma AS cliente_idioma,
-        r.nombre AS restaurante, d.correo AS dueno_correo, d.idioma AS dueno_idioma
+        r.nombre AS restaurante, d.id AS dueno_id, d.correo AS dueno_correo, d.idioma AS dueno_idioma
        FROM pedidos p JOIN usuarios c ON c.id = p.cliente_id
        JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios d ON d.id = r.dueno_id WHERE p.id = ?`,
     )
@@ -318,6 +319,13 @@ async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string)
     lineas,
     pagoRestaurante: Number(f.pago_restaurante),
     notas: String(f.notas ?? ''),
+  });
+  await notificar(env, db, String(f.dueno_id), {
+    ...AVISOS.pedidoNuevo(
+      f.dueno_idioma === 'en' ? 'en' : 'es',
+      pedidoId.slice(0, 8).toUpperCase(),
+    ),
+    datos: { pedidoId },
   });
 }
 

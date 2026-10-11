@@ -18,6 +18,7 @@ import {
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
+import { useAvisosCelular } from './avisos';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
 const LLAVE_IDIOMA = 'tumbite.idioma';
@@ -88,6 +89,8 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
     if (id) await borrarBorradoresDe(almacenTelefono, id);
     setUsuario(null);
   }, [api, usuario]);
+
+  useAvisosCelular(api, usuario);
 
   const cambiarIdioma = useCallback((i: Idioma) => {
     setIdioma(i);

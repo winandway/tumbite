@@ -2,8 +2,6 @@ import type { Idioma } from '@tumbite/compartido';
 
 /** Textos de la landing y las páginas legales, en los dos idiomas. */
 export const CONTACTO = 'tumbite.com@gmail.com';
-/** Número de WhatsApp de soporte humano. Vacío = el botón no se muestra (pendiente de Richard). */
-export const WHATSAPP_SOPORTE = '';
 
 const es = {
   menu: {

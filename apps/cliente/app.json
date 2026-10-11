@@ -27,7 +27,12 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.windoce.tumbite",
       "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
-      "blockedPermissions": []
+      "blockedPermissions": [],
+      "config": {
+        "googleMaps": {
+          "apiKey": "PON_AQUI_LA_LLAVE_DE_GOOGLE_MAPS"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -40,6 +45,14 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Tumbite uses your location to show nearby restaurants and to deliver your order."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#FF3008",
+          "defaultChannel": "pedidos"
         }
       ]
     ],

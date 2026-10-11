@@ -16,6 +16,7 @@ import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
 import { fotos, media } from './rutas/fotos';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
+import { ultimoErrorAviso } from './notificaciones';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -84,10 +85,18 @@ app.get('/datos/salud', async (c) => {
   piezas.stripe = c.env.STRIPE_SECRET_KEY ? 'ok' : 'pendiente';
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
+  piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
 
   const algunError = Object.values(piezas).includes('error');
   return c.json({ servicio: MARCA.nombre, ok: !algunError, piezas }, algunError ? 503 : 200);
 });
+
+/** Datos públicos que la landing y las apps leen sin sesión (el WhatsApp de soporte, por ahora). */
+app.get('/datos/publico', (c) =>
+  c.json({ whatsapp: c.env.WHATSAPP_SOPORTE ?? '', correoSoporte: 'support@tumbite.com' }, 200, {
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+  }),
+);
 
 const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte']);
 const DOMINIO = 'tumbite.com';

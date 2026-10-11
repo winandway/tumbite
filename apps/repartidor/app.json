@@ -42,6 +42,14 @@
         {
           "locationWhenInUsePermission": "Tumbite uses your location to offer you nearby orders and to show your route while you deliver."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#FF3008",
+          "defaultChannel": "pedidos"
+        }
       ]
     ],
     "privacy": "public",

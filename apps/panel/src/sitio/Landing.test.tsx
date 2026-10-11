@@ -41,3 +41,24 @@ describe('sitio público', () => {
     }
   });
 });
+
+describe('soporte por WhatsApp', () => {
+  it('el botón aparece solo cuando el servidor da el número', async () => {
+    const { waitFor } = await import('@testing-library/react');
+    const { vi } = await import('vitest');
+    const { Landing } = await import('./Landing');
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('/datos/publico')
+        ? new Response(JSON.stringify({ whatsapp: '13055550100' }), { status: 200 })
+        : new Response('{}', { status: 404 }),
+    );
+    render(<Landing idioma="es" />);
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Escríbenos por WhatsApp' })).toHaveAttribute(
+        'href',
+        'https://wa.me/13055550100',
+      ),
+    );
+    vi.unstubAllGlobals();
+  });
+});

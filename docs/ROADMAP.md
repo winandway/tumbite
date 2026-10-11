@@ -75,7 +75,7 @@
 - 🤖 Cada resultado se anota en `VERIFICAR-PAGOS.md`. Hasta que todo esté en verde, **no se anuncia
   nada a ningún cliente**.
 
-## Etapa 2 — Lo que hace falta para operar el primer día
+## Etapa 2 — Lo que hace falta para operar el primer día (construido el 11 oct 2026, salvo el punto 4)
 
 1. 🤖 **Soporte por WhatsApp** en la landing y las tres apps (👤 falta el número).
 2. 🤖 **Avisos al celular**: pedido aceptado, repartidor en camino, oferta nueva (👤 falta la cuenta

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Alert, Platform, Pressable, Text, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { useSesion } from './sesion';
+import { useSoporte } from './soporte';
+import { TEXTOS_MOVIL } from './textos';
 import { e } from './ui';
 
 const T = {
@@ -34,7 +36,9 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
 /** Borrar la cuenta vive escondida en los 3 puntos, con confirmación. */
 export function MenuCuenta() {
   const { api, idioma, salir } = useSesion();
+  const { whatsapp, abrirWhatsapp } = useSoporte(api);
   const t = enIdioma(T, idioma);
+  const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const [abierto, setAbierto] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,6 +64,18 @@ export function MenuCuenta() {
       >
         <Text style={{ fontSize: 22 }}>⋮</Text>
       </Pressable>
+      {abierto && whatsapp ? (
+        <Pressable
+          onPress={() => {
+            setAbierto(false);
+            void abrirWhatsapp();
+          }}
+          accessibilityRole="link"
+          style={{ padding: 10 }}
+        >
+          <Text style={{ fontWeight: '700' }}>{tm.soporteWhatsapp}</Text>
+        </Pressable>
+      ) : null}
       {abierto && (
         <Pressable onPress={() => void borrar()} accessibilityRole="button" style={{ padding: 10 }}>
           <Text style={{ color: '#c4001d', fontWeight: '700' }}>{t.borrar}</Text>

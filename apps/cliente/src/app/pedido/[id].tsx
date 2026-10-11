@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
 import { Boton, C, Pantalla, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
+import { MapaEntrega } from '../../MapaEntrega';
 
 type Pedido = {
   id: string;
@@ -11,6 +12,10 @@ type Pedido = {
   restauranteNombre?: string;
   total: number;
   direccion: string;
+  lat: number | null;
+  lng: number | null;
+  restaurante: { lat: number; lng: number } | null;
+  minutosEstimados: number | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -43,6 +48,10 @@ const T = {
     } as Record<string, string>,
     repartidor: 'Tu repartidor',
     ubicacion: 'Ubicación actualizada',
+    llega: 'Llega en unos',
+    minutos: 'min',
+    tuCasa: 'Tu dirección',
+    elRestaurante: 'El restaurante',
     calificar: '¿Qué tal todo?',
     restaurante: 'La comida',
     culpa: 'El problema fue de la comida o la demora del restaurante',
@@ -65,6 +74,10 @@ const T = {
     } as Record<string, string>,
     repartidor: 'Your driver',
     ubicacion: 'Location updated',
+    llega: 'Arriving in about',
+    minutos: 'min',
+    tuCasa: 'Your address',
+    elRestaurante: 'The restaurant',
     calificar: 'How was everything?',
     restaurante: 'The food',
     culpa: 'The problem was the food or the restaurant’s delay',
@@ -183,6 +196,24 @@ export default function SeguirPedido() {
               ))}
             </View>
           </View>
+          {p.minutosEstimados != null && (
+            <Text style={{ fontSize: 17, fontWeight: '800', color: C.secundario, marginBottom: 8 }}>
+              {t.llega} {p.minutosEstimados} {t.minutos}
+            </Text>
+          )}
+          {p.estado !== 'entregado' && p.estado !== 'cancelado' && (
+            <MapaEntrega
+              restaurante={p.restaurante}
+              casa={p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null}
+              repartidor={
+                p.repartidor?.lat != null && p.repartidor.lng != null
+                  ? { lat: p.repartidor.lat, lng: p.repartidor.lng }
+                  : null
+              }
+              nombreRepartidor={p.repartidor?.nombre}
+              etiquetas={{ restaurante: t.elRestaurante, casa: t.tuCasa, repartidor: t.repartidor }}
+            />
+          )}
           {p.repartidor && (
             <View style={e.tarjeta}>
               <Text style={{ fontWeight: '800' }}>

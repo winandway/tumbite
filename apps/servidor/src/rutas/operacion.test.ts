@@ -110,6 +110,10 @@ describe('ciclo del pedido', () => {
     const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(seg.datos.pedido.estado).toBe('en_camino');
     expect(seg.datos.pedido.repartidor).toMatchObject({ nombre: 'Pedro', lat: 25.775 });
+    // Para el mapa en vivo: el restaurante y el tiempo estimado (solo el viaje: ya salió de cocina).
+    expect(seg.datos.pedido.restaurante).toEqual({ lat: 25.77, lng: -80.19 });
+    expect(seg.datos.pedido.minutosEstimados).toBeGreaterThanOrEqual(5);
+    expect(seg.datos.pedido.minutosEstimados).toBeLessThan(20);
 
     expect(
       (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
@@ -133,6 +137,7 @@ describe('ciclo del pedido', () => {
     // Al terminar, la ubicación del repartidor deja de mostrarse al cliente.
     const fin = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(fin.datos.pedido.repartidor.lat).toBeNull();
+    expect(fin.datos.pedido.minutosEstimados).toBeNull();
   });
 
   it('la oferta va primero al más cercano; rechazar no castiga y pasa al siguiente', async () => {

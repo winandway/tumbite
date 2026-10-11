@@ -9,6 +9,8 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { type FilaPedido, aPedido } from './pedidos';
 import { zonaPara } from './zonas';
 import { anotar, anotarEstado } from '../historial';
+import { AVISOS, notificar } from '../notificaciones';
+import { formatearDolares } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -70,6 +72,9 @@ operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
     'aceptado',
     ", aceptado_en = datetime('now'), tiempo_prep_min = ?",
     [minutos],
+  );
+  await avisarAlCliente(c.env, base(c), c.req.param('id'), (i, f) =>
+    AVISOS.pedidoAceptado(i, f.restaurante),
   );
   return c.json({ ok: true });
 });
@@ -283,7 +288,7 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
   return results;
 }
 
-export async function repartirOfertas(db: D1Database): Promise<void> {
+export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> {
   await db
     .prepare(
       `UPDATE ofertas SET estado = 'vencida' WHERE estado = 'ofrecida' AND creada_en < datetime('now', ?)`,
@@ -292,13 +297,14 @@ export async function repartirOfertas(db: D1Database): Promise<void> {
     .run();
   const { results: pendientes } = await db
     .prepare(
-      `SELECT p.id, p.zona_id, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.id, p.zona_id, p.pago_repartidor, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.pedido_id = p.id AND o.estado = 'ofrecida') ORDER BY p.pagado_en LIMIT 20`,
     )
     .all<{
       id: string;
       zona_id: string;
+      pago_repartidor: number | null;
       lat: number | null;
       lng: number | null;
       geohash: string | null;
@@ -343,7 +349,47 @@ export async function repartirOfertas(db: D1Database): Promise<void> {
       )
       .bind(p.id, elegido.id)
       .run();
+    if (env) {
+      const rep = await db
+        .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+        .bind(elegido.id)
+        .first<{ idioma: string }>();
+      const i = rep?.idioma === 'en' ? 'en' : 'es';
+      const km =
+        p.lat != null && p.lng != null
+          ? distanciaKm(
+              { lat: elegido.lat, lng: elegido.lng },
+              { lat: Number(p.lat), lng: Number(p.lng) },
+            )
+          : 0;
+      await notificar(
+        env,
+        db,
+        elegido.id,
+        AVISOS.ofertaNueva(i, formatearDolares(Number(p.pago_repartidor ?? 0), i), km.toFixed(1)),
+      );
+    }
   }
+}
+
+/** Aviso al celular del cliente de un pedido, en su idioma. Nunca frena la operación. */
+async function avisarAlCliente(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  aviso: (idioma: string, f: { restaurante: string }) => { titulo: string; cuerpo: string },
+) {
+  const f = await db
+    .prepare(
+      'SELECT p.cliente_id, u.idioma, r.nombre AS restaurante FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?',
+    )
+    .bind(pedidoId)
+    .first<{ cliente_id: string; idioma: string; restaurante: string }>();
+  if (!f) return;
+  await notificar(env, db, f.cliente_id, {
+    ...aviso(f.idioma, { restaurante: f.restaurante }),
+    datos: { pedidoId },
+  });
 }
 
 function conDatosRestaurante(f: FilaPedido) {
@@ -363,7 +409,7 @@ function conDatosRestaurante(f: FilaPedido) {
 
 operacion.get('/repartidor/ofertas', async (c) => {
   const { u, db } = await miFicha(c);
-  await repartirOfertas(db);
+  await repartirOfertas(db, c.env);
   const { results } = await db
     .prepare(
       `SELECT p.*, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono, o.creada_en AS oferta_en
@@ -430,6 +476,9 @@ operacion.post('/repartidor/pedidos/:id/recogido', async (c) => {
   if (!r.meta.changes)
     throw new ErrorDatos('El restaurante todavía no marcó el pedido como listo.', undefined, 409);
   await anotar(db, c.req.param('id'), 'en_camino', u.id);
+  await avisarAlCliente(c.env, db, c.req.param('id'), (i) =>
+    AVISOS.enCamino(i, u.nombre.split(' ')[0] ?? ''),
+  );
   return c.json({ ok: true });
 });
 
@@ -469,6 +518,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       .bind(nuevoId(), u.id, id, Number(p.propina)),
     db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
   ]);
+  await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
   return c.json({ ok: true });
 });
 
@@ -478,7 +528,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.dueno_id, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en
+      `SELECT p.*, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id WHERE p.id = ?`,
     )
@@ -493,16 +543,36 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
     )
     .bind(c.req.param('id'))
     .all<{ estado: string; fecha: string }>();
+  // Tiempo estimado: lo que falta de cocina + el viaje a 25 km/h de ciudad (mínimo 5 min).
+  const repLat = enRuta && f.rep_lat != null ? Number(f.rep_lat) : null;
+  const repLng = enRuta && f.rep_lng != null ? Number(f.rep_lng) : null;
+  const casa = f.lat != null && f.lng != null ? { lat: Number(f.lat), lng: Number(f.lng) } : null;
+  const rest =
+    f.rest_lat != null && f.rest_lng != null
+      ? { lat: Number(f.rest_lat), lng: Number(f.rest_lng) }
+      : null;
+  const origen = repLat != null && repLng != null ? { lat: repLat, lng: repLng } : rest;
+  const kmQueFaltan = origen && casa ? distanciaKm(origen, casa) : null;
+  const minutosViaje =
+    kmQueFaltan == null ? null : Math.max(5, Math.round((kmQueFaltan / 25) * 60));
+  const minutosCocina =
+    f.estado === 'pagado' || f.estado === 'aceptado' ? Number(f.tiempo_prep_min ?? 20) : 0;
+  const minutosEstimados =
+    f.estado === 'entregado' || f.estado === 'cancelado' || minutosViaje == null
+      ? null
+      : minutosCocina + minutosViaje;
   return c.json({
     pedido: {
       ...aPedido(f),
       historial,
+      restaurante: rest,
+      minutosEstimados,
       repartidor: f.repartidor_id
         ? {
             // Solo el nombre de pila: la privacidad del repartidor también cuenta.
             nombre: String(f.repartidor_nombre ?? '').split(' ')[0],
-            lat: enRuta && f.rep_lat != null ? Number(f.rep_lat) : null,
-            lng: enRuta && f.rep_lng != null ? Number(f.rep_lng) : null,
+            lat: repLat,
+            lng: repLng,
             actualizado: enRuta ? ((f.rep_en as string | null) ?? null) : null,
           }
         : null,
