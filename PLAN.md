@@ -11,4 +11,4 @@ Fase 1 anterior: todo hecho salvo la prueba de pagos (espera Stripe). Historia e
 - [x] Paso 6b: Pedido de Richard con capturas: portada estilo Uber Eats con PIZZAS (no hamburguesas), buscador de dirección con pin y «usar mi ubicación» que dice si Tumbite llega a tu zona, y SOLO los colores corporativos: rojo escarlata dominante (#EB1700 / #FF3008), blanco (#FFFFFF) y gris oscuro Cod Gray (#191919). Quitar el morado de la web, las tres apps, los íconos y la tarjeta social. Guardarlo como regla del proyecto.
 - [x] Paso 7: Resumen del día para el restaurante (pedidos, ventas, comisión y neto de hoy) en el panel.
 - [x] Paso 8: Admin: zonas (ver, crear, activar) y lista de espera.
-- [ ] Paso 9: Verificación completa, publicar, prueba de humo en vivo (todas las rutas en 200), documentos y PENDIENTES al día.
+- [ ] Paso 9: Verificación completa, publicar, prueba de humo en vivo (todas las rutas en 200), documentos y PENDIENTES al día. Verificación verde (110 pruebas, GitHub en verde), publicado en la rama, documentos al día. 🔴 Falta que YaDominios republique (no lo hace solo); la prueba en vivo se repite después.
