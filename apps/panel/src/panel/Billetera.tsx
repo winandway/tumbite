@@ -9,6 +9,15 @@ import {
 import { pedir } from './api';
 
 type Mov = { id: string; pedidoId: string | null; monto: number; concepto: string; fecha: string };
+type Resumen = {
+  entregados: number;
+  enCurso: number;
+  cancelados: number;
+  ventas: number;
+  regalos: number;
+  comision: number;
+  neto: number;
+};
 type Datos = { saldo: number; movimientos: Mov[]; cuentaConectada: boolean; pagosActivos: boolean };
 
 const T = {
@@ -34,6 +43,14 @@ const T = {
     } as Record<string, string>,
     pedido: 'Pedido',
     montoMal: 'Escribe un monto como 25.00',
+    hoy: 'Hoy',
+    entregados: 'Pedidos entregados',
+    ventas: 'Ventas',
+    regalos: 'Regalos a clientes',
+    comision: 'Comisión de Tumbite',
+    neto: 'Te toca',
+    enCurso: 'en curso',
+    cancelados: 'cancelados',
   },
   en: {
     titulo: 'Earnings',
@@ -56,12 +73,21 @@ const T = {
     } as Record<string, string>,
     pedido: 'Order',
     montoMal: 'Enter an amount like 25.00',
+    hoy: 'Today',
+    entregados: 'Orders delivered',
+    ventas: 'Sales',
+    regalos: 'Customer gifts',
+    comision: 'Tumbite commission',
+    neto: 'Your payout',
+    enCurso: 'in progress',
+    cancelados: 'canceled',
   },
 };
 
 export function Billetera({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [d, setD] = useState<Datos | null>(null);
+  const [hoy, setHoy] = useState<Resumen | null>(null);
   const [monto, setMonto] = useState('');
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
@@ -72,6 +98,9 @@ export function Billetera({ idioma }: { idioma: Idioma }) {
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   useEffect(() => {
     void cargar();
+    pedir<{ resumen: Resumen }>('GET', '/datos/restaurante/resumen')
+      .then((r) => setHoy(r.resumen))
+      .catch(() => setHoy(null));
   }, []);
 
   async function conectar() {
@@ -104,6 +133,36 @@ export function Billetera({ idioma }: { idioma: Idioma }) {
   return (
     <section>
       <h1>{t.titulo}</h1>
+      {hoy && (
+        <>
+          <h2>{t.hoy}</h2>
+          <div className="metricas">
+            <div>
+              <span>{t.entregados}</span>
+              <strong>{hoy.entregados}</strong>
+              <small>
+                {hoy.enCurso} {t.enCurso} · {hoy.cancelados} {t.cancelados}
+              </small>
+            </div>
+            <div>
+              <span>{t.ventas}</span>
+              <strong>{formatearDolares(hoy.ventas, idioma)}</strong>
+            </div>
+            <div>
+              <span>{t.regalos}</span>
+              <strong>−{formatearDolares(hoy.regalos, idioma)}</strong>
+            </div>
+            <div>
+              <span>{t.comision}</span>
+              <strong>−{formatearDolares(hoy.comision, idioma)}</strong>
+            </div>
+            <div className="metrica-fuerte">
+              <span>{t.neto}</span>
+              <strong>{formatearDolares(hoy.neto, idioma)}</strong>
+            </div>
+          </div>
+        </>
+      )}
       <div className="saldo">
         <span>{t.saldo}</span>
         <strong>{formatearDolares(d.saldo, idioma)}</strong>

@@ -123,6 +123,70 @@ operacion.post('/restaurante/pedidos/:id/rechazar', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Inicio y fin (en hora UTC de la base) del día de hoy en la zona horaria del restaurante. */
+export function limitesDelDia(zonaHoraria: string, ahora = new Date()): [string, string] {
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: zonaHoraria,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
+    .formatToParts(ahora)
+    .reduce<Record<string, string>>((m, p) => ({ ...m, [p.type]: p.value }), {});
+  const localComoUtc = Date.UTC(
+    Number(partes.year),
+    Number(partes.month) - 1,
+    Number(partes.day),
+    Number(partes.hour),
+    Number(partes.minute),
+  );
+  const desfase = localComoUtc - Math.floor(ahora.getTime() / 60_000) * 60_000;
+  const inicio =
+    Date.UTC(Number(partes.year), Number(partes.month) - 1, Number(partes.day)) - desfase;
+  const sql = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
+  return [sql(inicio), sql(inicio + 86_400_000)];
+}
+
+/** Resumen del día: pedidos, ventas, regalos, comisión y lo que le toca al restaurante. */
+operacion.get('/restaurante/resumen', async (c) => {
+  const rid = await miRestauranteId(c);
+  const db = base(c);
+  const z = await db
+    .prepare(
+      'SELECT z.zona_horaria FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+    )
+    .bind(rid)
+    .first<{ zona_horaria: string }>();
+  const [desde, hasta] = limitesDelDia(z?.zona_horaria ?? 'America/New_York');
+  const f = await db
+    .prepare(
+      `SELECT COUNT(CASE WHEN estado = 'entregado' THEN 1 END) AS entregados,
+      COUNT(CASE WHEN estado IN ('pagado','aceptado','listo','en_camino') THEN 1 END) AS en_curso,
+      COUNT(CASE WHEN estado = 'cancelado' THEN 1 END) AS cancelados,
+      COALESCE(SUM(CASE WHEN estado = 'entregado' THEN subtotal END), 0) AS ventas,
+      COALESCE(SUM(CASE WHEN estado = 'entregado' THEN regalo END), 0) AS regalos,
+      COALESCE(SUM(CASE WHEN estado = 'entregado' THEN comision END), 0) AS comision,
+      COALESCE(SUM(CASE WHEN estado = 'entregado' THEN pago_restaurante END), 0) AS neto
+      FROM pedidos WHERE restaurante_id = ? AND pagado_en >= ? AND pagado_en < ?`,
+    )
+    .bind(rid, desde, hasta)
+    .first<Record<string, number>>();
+  return c.json({
+    resumen: {
+      entregados: Number(f?.entregados ?? 0),
+      enCurso: Number(f?.en_curso ?? 0),
+      cancelados: Number(f?.cancelados ?? 0),
+      ventas: Number(f?.ventas ?? 0),
+      regalos: Number(f?.regalos ?? 0),
+      comision: Number(f?.comision ?? 0),
+      neto: Number(f?.neto ?? 0),
+    },
+  });
+});
+
 // ======================= Repartidor =======================
 
 async function miFicha(c: Ctx) {

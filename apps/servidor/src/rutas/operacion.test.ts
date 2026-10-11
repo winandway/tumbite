@@ -56,6 +56,22 @@ async function escenario() {
   return { m, dueno, cliente, pedidoPagado, repartidor };
 }
 
+describe('día del restaurante', () => {
+  it('el día empieza a medianoche de Miami, no de Londres', async () => {
+    const { limitesDelDia } = await import('./operacion');
+    // 10 oct 2026, 02:00 en Miami = 06:00 UTC (horario de verano, UTC-4).
+    expect(limitesDelDia('America/New_York', new Date('2026-10-10T06:00:00Z'))).toEqual([
+      '2026-10-10 04:00:00',
+      '2026-10-11 04:00:00',
+    ]);
+    // A las 22:00 de Miami ya es el día siguiente en UTC, pero sigue siendo el mismo día del restaurante.
+    expect(limitesDelDia('America/New_York', new Date('2026-10-11T02:00:00Z'))).toEqual([
+      '2026-10-10 04:00:00',
+      '2026-10-11 04:00:00',
+    ]);
+  });
+});
+
 describe('ciclo del pedido', () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -101,6 +117,13 @@ describe('ciclo del pedido', () => {
     expect(
       (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
     ).toBe(409);
+    const resumen = await m.llamar('GET', '/datos/restaurante/resumen', undefined, dueno.token);
+    expect(resumen.datos.resumen).toMatchObject({
+      entregados: 1,
+      ventas: 3000,
+      comision: 225,
+      neto: 2775,
+    });
     const bRest = await m.llamar('GET', '/datos/billetera', undefined, dueno.token);
     expect(bRest.datos.saldo).toBe(3000 - 225);
     const bRep = await m.llamar('GET', '/datos/billetera', undefined, rep.token);

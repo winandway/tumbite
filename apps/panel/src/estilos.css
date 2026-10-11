@@ -1734,3 +1734,13 @@ html {
   fill: #f6f6f6;
   stroke: #191919;
 }
+.metrica-fuerte {
+  background: var(--primario) !important;
+}
+.metrica-fuerte span,
+.metrica-fuerte strong {
+  color: #fff !important;
+}
+.metricas small {
+  color: #5e5e5e;
+}
