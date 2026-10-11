@@ -9,6 +9,7 @@ const es = {
     restaurantes: 'Restaurantes',
     repartidores: 'Repartidores',
     como: 'Cómo funciona',
+    docs: 'Docs',
     panel: 'Panel',
   },
   hero: {
@@ -189,7 +190,7 @@ const es = {
     privacidad: 'Privacidad',
     terminos: 'Términos',
     soporte: 'Soporte',
-    docs: 'Panel',
+    docs: 'Docs',
     derechos: 'Todos los derechos reservados.',
     desarrollo: 'Desarrollado por',
   },
@@ -204,6 +205,7 @@ const en: Textos = {
     restaurantes: 'Restaurants',
     repartidores: 'Drivers',
     como: 'How it works',
+    docs: 'Docs',
     panel: 'Dashboard',
   },
   hero: {
@@ -387,7 +389,7 @@ const en: Textos = {
     privacidad: 'Privacy',
     terminos: 'Terms',
     soporte: 'Support',
-    docs: 'Dashboard',
+    docs: 'Docs',
     derechos: 'All rights reserved.',
     desarrollo: 'Developed by',
   },

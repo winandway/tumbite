@@ -17,6 +17,7 @@ import { espera } from './rutas/espera';
 import { fotos, media } from './rutas/fotos';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
+import { respaldo, ultimoErrorRespaldo, ultimoRespaldo } from './respaldo';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -86,9 +87,18 @@ app.get('/datos/salud', async (c) => {
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
+  piezas.respaldo = ultimoErrorRespaldo ? 'error' : 'ok';
 
   const algunError = Object.values(piezas).includes('error');
-  return c.json({ servicio: MARCA.nombre, ok: !algunError, piezas }, algunError ? 503 : 200);
+  return c.json(
+    {
+      servicio: MARCA.nombre,
+      ok: !algunError,
+      piezas,
+      ultimoRespaldo: ultimoRespaldo?.cuando ?? null,
+    },
+    algunError ? 503 : 200,
+  );
 });
 
 /** Datos públicos que la landing y las apps leen sin sesión (el WhatsApp de soporte, por ahora). */
@@ -98,7 +108,8 @@ app.get('/datos/publico', (c) =>
   }),
 );
 
-const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte']);
+const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte', '/docs']);
+const esRutaPublica = (ruta: string) => RUTAS_PUBLICAS.has(ruta) || ruta.startsWith('/docs/');
 const DOMINIO = 'tumbite.com';
 
 export function conCanonica(res: Response, href: string): Response {
@@ -132,7 +143,7 @@ app.notFound(async (c) => {
     );
   }
   let respuesta = new Response(res.body, res);
-  if (RUTAS_PUBLICAS.has(c.req.path) && res.ok) {
+  if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
     respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
     // La etiqueta canónica dice la dirección de ESTA página (el index.html trae la de la portada
@@ -155,6 +166,7 @@ app.route('/datos', zonas);
 app.route('/datos', espera);
 app.route('/datos', fotos);
 app.route('/', media);
+app.route('/datos', respaldo);
 
 app.onError((err, c) => {
   if (err instanceof ErrorDatos)

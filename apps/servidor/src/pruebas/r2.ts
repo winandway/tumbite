@@ -4,11 +4,11 @@ export function crearAlmacenPruebas() {
   const bucket = {
     async put(
       clave: string,
-      valor: Uint8Array,
+      valor: Uint8Array | string,
       op?: { httpMetadata?: { contentType?: string; cacheControl?: string } },
     ) {
       datos.set(clave, {
-        bytes: valor,
+        bytes: typeof valor === 'string' ? new TextEncoder().encode(valor) : valor,
         tipo: op?.httpMetadata?.contentType,
         cache: op?.httpMetadata?.cacheControl,
       });
@@ -25,6 +25,15 @@ export function crearAlmacenPruebas() {
           if (d.cache) h.set('cache-control', d.cache);
         },
       };
+    },
+    async list(op?: { prefix?: string }) {
+      const objects = [...datos.keys()]
+        .filter((k) => !op?.prefix || k.startsWith(op.prefix))
+        .map((key) => ({ key }));
+      return { objects, truncated: false, cursor: undefined };
+    },
+    async delete(claves: string | string[]) {
+      for (const k of Array.isArray(claves) ? claves : [claves]) datos.delete(k);
     },
   };
   return { bucket: bucket as unknown as R2Bucket, datos };

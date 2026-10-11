@@ -1,11 +1,8 @@
-# Plan: Etapa 2 sin Richard (11 oct 2026, piloto automático)
+# Plan: Etapa 0.4b + Docs (11 oct 2026, piloto automático)
 
 Lo que depende de Richard queda en PENDIENTES.md (👤). Aquí solo lo que se puede hacer ya.
 
-- [x] Paso 1: Servidor: el seguimiento del pedido devuelve también la ubicación del restaurante y del repartidor con su rumbo, y el tiempo estimado. Prueba.
-- [x] Paso 2: App cliente: mapa en vivo de la entrega (restaurante, tu casa y el repartidor moviéndose, con la línea entre ellos), actualizado cada 5 segundos. Android necesita llave de Google Maps (👤).
-- [x] Paso 3: App cliente: marcar la dirección de entrega en un mapa (pin arrastrable que rellena la dirección escrita). Con borrador.
-- [x] Paso 4: Soporte por WhatsApp cableado: variable `WHATSAPP_SOPORTE` del sitio, servida por `/datos/publico`; el botón aparece solo en la landing y en las tres apps cuando exista el número. Prueba.
-- [x] Paso 5: Avisos al celular, preparación completa: tabla de dispositivos, ruta para registrar el token del teléfono, pieza `notificar` con transporte de Expo y canario; enganches: pedido aceptado y en camino (cliente), oferta nueva (repartidor), pedido pagado (restaurante). Apps: pedir permiso y registrar el token si hay proyecto de EAS (👤). Pruebas con transporte de mentira.
-- [x] Paso 6: Verificación completa, publicar por el semáforo, documentar en CANDADOS.md, ROADMAP.md y PENDIENTES.md.
-- [x] Paso 7 (extra): reloj externo con GitHub Actions cada 5 minutos (Etapa 0.4), con su secreto en los dos sitios y en GitHub.
+- [x] Paso 1: Copia de seguridad diaria de la base: ruta protegida `/datos/respaldo` que vuelca cada tabla a JSON en el almacén del sitio (`respaldos/AAAA-MM-DD/tabla.json`), guarda 30 días y borra lo más viejo. El reloj de GitHub la llama una vez al día (3 am Miami). Canario `respaldo` con la fecha del último. Prueba con almacén de mentira.
+- [x] Paso 2: Sección pública «Docs» del sitio (regla de la casa: barra lateral con secciones e íconos, buscador, cada guía con su propia dirección, «← Docs» en celular, colores de Tumbite). Guías iniciales bilingües: comensales (pedir, seguir, regalos, calificar), restaurantes (panel, menú y fotos, pedidos y alarma, agotado, regalos y marketing, resumen y billetera), repartidores (conectarse, ofertas, niveles, billetera, ruta), y cuenta (recuperar contraseña, confirmar correo, borrar cuenta, soporte).
+- [x] Paso 3: Enlaces a Docs en el menú y el pie de la landing, en el mapa del sitio y en las apps (ayuda). Prueba de la barra que nunca se pierde y del buscador.
+- [x] Paso 4: Verificación completa, prueba en pantalla (celular), publicar por el semáforo, documentar en CANDADOS.md, ROADMAP.md y PENDIENTES.md.

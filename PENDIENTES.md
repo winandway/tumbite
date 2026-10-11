@@ -41,7 +41,8 @@
 - [x] Etapa 0.2a (11 oct 2026): pieza de correo con canario y recuperar contraseña. Falta activar el dominio y `YAD_TOKEN` para que salga en vivo.
 - [x] Etapa 0.2b (11 oct 2026): confirmar correo al registrarse, recibo del pedido, aviso al restaurante, aviso al admin y bienvenida a la lista de espera. Candado C-AVISOS.
 - [x] Etapa 0.4a (11 oct 2026): reloj externo con GitHub Actions cada 5 min (candado C-RELOJ). Cero costo.
-- [ ] Etapa 0.4b: copia de seguridad diaria de la base (se propone con tamaño y destino cuando haya datos reales).
+- [x] Etapa 0.4b (11 oct 2026): copia de seguridad diaria al almacén del sitio, 30 días (candado C-RESPALDO).
+- [x] Sección Docs pública en tumbite.com/docs, 20 guías bilingües (candado C-DOCS).
 - [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
 - [x] Etapa 2 (11 oct 2026): mapa en vivo del repartidor, pin de dirección en el mapa, WhatsApp cableado, avisos al celular preparados (candado C-ETAPA-2). Falta: ubicación del repartidor en segundo plano (requiere build propio).
 - [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).

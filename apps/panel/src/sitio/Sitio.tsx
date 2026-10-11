@@ -31,6 +31,7 @@ export function Sitio({
           <a href="/#restaurantes">{t.menu.restaurantes}</a>
           <a href="/#repartidores">{t.menu.repartidores}</a>
           <a href="/#como">{t.menu.como}</a>
+          <Enlace a="/docs">{t.menu.docs}</Enlace>
         </nav>
         <div className="cabecera-derecha">
           <Enlace a="/panel" className="boton-panel">
@@ -45,6 +46,7 @@ export function Sitio({
           <Enlace a="/privacidad">{t.pie.privacidad}</Enlace>
           <Enlace a="/terminos">{t.pie.terminos}</Enlace>
           <Enlace a="/soporte">{t.pie.soporte}</Enlace>
+          <Enlace a="/docs">{t.pie.docs}</Enlace>
         </nav>
         <p>
           © {new Date().getFullYear()} tumbite.com | {t.pie.derechos} {t.pie.desarrollo}{' '}

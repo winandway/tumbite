@@ -1,5 +1,7 @@
 import {
   BadgePercent,
+  BookOpen,
+  Search,
   Ban,
   Bell,
   Bike,
@@ -59,6 +61,8 @@ const ICONOS = {
   saludo: Hand,
   proteccion: ShieldCheck,
   foto: ImagePlus,
+  libro: BookOpen,
+  buscar: Search,
   subir: Upload,
 } satisfies Record<string, LucideIcon>;
 

@@ -58,7 +58,7 @@
 - 👤 Variables `ADMIN_CORREOS` y `ADMIN_SEMILLA` (en los dos sitios). Sin esto no se pueden aprobar
   restaurantes.
 
-### 0.4 Reloj externo y respaldo 🤖 (propuesta, espera el sí)
+### 0.4 Reloj externo y respaldo 🤖 — ✅ hecho el 11 oct 2026 (GitHub Actions, cero costo)
 
 - YaDominios no tiene tareas programadas. Para lo que debe pasar solo (vencer ofertas viejas,
   cerrar el día de cada restaurante, copia de seguridad de la base) hace falta un reloj de afuera

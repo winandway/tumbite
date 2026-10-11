@@ -1,10 +1,17 @@
 name: reloj
 # El reloj externo de Tumbite. YaDominios Cloud no tiene tareas programadas, así que GitHub
-# llama cada 5 minutos a /datos/reloj (producción y pruebas) con el secreto RELOJ_SECRETO.
+# llama cada 5 minutos a /datos/reloj (producción y pruebas) con el secreto RELOJ_SECRETO,
+# y una vez al día (08:00 UTC = 3 am Miami) pide la copia de seguridad de la base.
 on:
   schedule:
     - cron: '*/5 * * * *'
+    - cron: '0 8 * * *'
   workflow_dispatch:
+    inputs:
+      respaldo:
+        description: 'Hacer también la copia de seguridad'
+        type: boolean
+        default: false
 
 jobs:
   tic:
@@ -16,3 +23,7 @@ jobs:
       - name: Pruebas
         run: |
           curl -fsS -X POST https://staging.tumbite.com/datos/reloj -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || echo "::warning::El reloj de pruebas falló"
+      - name: Copia de seguridad diaria (producción)
+        if: ${{ github.event.schedule == '0 8 * * *' || inputs.respaldo }}
+        run: |
+          curl -fsS -X POST https://tumbite.com/datos/respaldo -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }

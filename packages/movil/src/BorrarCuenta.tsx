@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, Text, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { useSesion } from './sesion';
+import { URL_SERVIDOR, useSesion } from './sesion';
 import { useSoporte } from './soporte';
 import { TEXTOS_MOVIL } from './textos';
 import { e } from './ui';
@@ -64,6 +64,18 @@ export function MenuCuenta() {
       >
         <Text style={{ fontSize: 22 }}>⋮</Text>
       </Pressable>
+      {abierto ? (
+        <Pressable
+          onPress={() => {
+            setAbierto(false);
+            void Linking.openURL(`${URL_SERVIDOR}/docs`);
+          }}
+          accessibilityRole="link"
+          style={{ padding: 10 }}
+        >
+          <Text style={{ fontWeight: '700' }}>{tm.guias}</Text>
+        </Pressable>
+      ) : null}
       {abierto && whatsapp ? (
         <Pressable
           onPress={() => {
