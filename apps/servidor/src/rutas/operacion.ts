@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { distanciaKm, nivelDe } from '@tumbite/compartido';
+import { celdasVecinas, distanciaKm, geohash, nivelDe } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { type FilaPedido, aPedido } from './pedidos';
+import { zonaPara } from './zonas';
+import { anotar, anotarEstado } from '../historial';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -54,6 +56,7 @@ async function cambiarEstado(
     .run();
   if (!r.meta.changes)
     throw new ErrorDatos('Este pedido ya cambió de estado. Actualiza la pantalla.', undefined, 409);
+  await anotar(db, id, a, rid);
 }
 
 operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
@@ -167,9 +170,16 @@ operacion.post('/repartidor/conectar', async (c) => {
   );
   await db
     .prepare(
-      "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",
     )
-    .bind(d.conectado ? 1 : 0, d.lat, d.lng, u.id)
+    .bind(
+      d.conectado ? 1 : 0,
+      d.lat,
+      d.lng,
+      (await zonaPara(db, d.lat, d.lng))?.id ?? null,
+      d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null,
+      u.id,
+    )
     .run();
   return c.json({ conectado: d.conectado });
 });
@@ -179,9 +189,9 @@ operacion.post('/repartidor/ubicacion', async (c) => {
   const d = await leerCuerpo(c, punto);
   await db
     .prepare(
-      "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
     )
-    .bind(d.lat, d.lng, u.id)
+    .bind(d.lat, d.lng, (await zonaPara(db, d.lat, d.lng))?.id ?? null, geohash(d.lat, d.lng), u.id)
     .run();
   return c.json({ ok: true });
 });
@@ -191,6 +201,24 @@ operacion.post('/repartidor/ubicacion', async (c) => {
  * Si dos están igual de cerca (menos de medio km de diferencia), gana el de nivel más alto.
  * Rechazar o dejar vencer la oferta (60 s) solo la pasa al siguiente: no castiga.
  */
+type Libre = { id: string; lat: number; lng: number; puntos: number };
+
+/** Repartidores libres de una zona (y, si se piden, solo de esas celdas del mapa). */
+async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null): Promise<Libre[]> {
+  const filtroCeldas = celdas ? `AND d.geohash IN (${celdas.map(() => '?').join(',')})` : '';
+  const { results } = await db
+    .prepare(
+      `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos FROM repartidores d
+      WHERE d.zona_id = ? AND d.conectado = 1 ${filtroCeldas} AND d.lat IS NOT NULL
+      AND d.ubicacion_en > datetime('now','-10 minutes')
+      AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
+      AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')`,
+    )
+    .bind(zonaId, ...(celdas ?? []))
+    .all<Libre>();
+  return results;
+}
+
 export async function repartirOfertas(db: D1Database): Promise<void> {
   await db
     .prepare(
@@ -200,20 +228,18 @@ export async function repartirOfertas(db: D1Database): Promise<void> {
     .run();
   const { results: pendientes } = await db
     .prepare(
-      `SELECT p.id, r.lat, r.lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.id, p.zona_id, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.pedido_id = p.id AND o.estado = 'ofrecida') ORDER BY p.pagado_en LIMIT 20`,
     )
-    .all<{ id: string; lat: number | null; lng: number | null }>();
+    .all<{
+      id: string;
+      zona_id: string;
+      lat: number | null;
+      lng: number | null;
+      geohash: string | null;
+    }>();
   if (!pendientes.length) return;
-  const { results: libres } = await db
-    .prepare(
-      `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos FROM repartidores d WHERE d.conectado = 1 AND d.lat IS NOT NULL
-      AND d.ubicacion_en > datetime('now','-10 minutes')
-      AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
-      AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')`,
-    )
-    .all<{ id: string; lat: number; lng: number; puntos: number }>();
   const ocupados = new Set<string>();
   for (const p of pendientes) {
     const { results: yaVistos } = await db
@@ -221,22 +247,29 @@ export async function repartirOfertas(db: D1Database): Promise<void> {
       .bind(p.id)
       .all<{ repartidor_id: string }>();
     const vistos = new Set(yaVistos.map((v) => v.repartidor_id));
-    const candidatos = libres
-      .filter((d) => !vistos.has(d.id) && !ocupados.has(d.id))
-      .map((d) => ({
-        ...d,
-        km:
-          p.lat != null && p.lng != null
-            ? distanciaKm({ lat: d.lat, lng: d.lng }, { lat: p.lat, lng: p.lng })
-            : 0,
-      }))
-      .filter((d) => d.km <= 15)
-      .sort(
-        (a, b) =>
-          Math.floor(a.km * 2) - Math.floor(b.km * 2) ||
-          nivelDe(b.puntos).indice - nivelDe(a.puntos).indice ||
-          a.km - b.km,
-      );
+    const ordenar = (libres: Libre[]) =>
+      libres
+        .filter((d) => !vistos.has(d.id) && !ocupados.has(d.id))
+        .map((d) => ({
+          ...d,
+          km:
+            p.lat != null && p.lng != null
+              ? distanciaKm({ lat: d.lat, lng: d.lng }, { lat: p.lat, lng: p.lng })
+              : 0,
+        }))
+        .filter((d) => d.km <= 15)
+        .sort(
+          (a, b) =>
+            Math.floor(a.km * 2) - Math.floor(b.km * 2) ||
+            nivelDe(b.puntos).indice - nivelDe(a.puntos).indice ||
+            a.km - b.km,
+        );
+    // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
+    // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
+    let candidatos = p.geohash
+      ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
+      : [];
+    if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
     const elegido = candidatos[0];
     if (!elegido) continue;
     ocupados.add(elegido.id);
@@ -332,6 +365,7 @@ operacion.post('/repartidor/pedidos/:id/recogido', async (c) => {
     .run();
   if (!r.meta.changes)
     throw new ErrorDatos('El restaurante todavía no marcó el pedido como listo.', undefined, 409);
+  await anotar(db, c.req.param('id'), 'en_camino', u.id);
   return c.json({ ok: true });
 });
 
@@ -353,6 +387,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ?",
       )
       .bind(id),
+    anotarEstado(db, id, 'entregado', u.id),
     db
       .prepare(
         "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
@@ -388,9 +423,16 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   if (!f || (f.cliente_id !== u.id && u.rol !== 'admin'))
     throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   const enRuta = f.estado === 'en_camino';
+  const { results: historial } = await base(c)
+    .prepare(
+      'SELECT estado, creado_en AS fecha FROM historial_estados WHERE pedido_id = ? ORDER BY id',
+    )
+    .bind(c.req.param('id'))
+    .all<{ estado: string; fecha: string }>();
   return c.json({
     pedido: {
       ...aPedido(f),
+      historial,
       repartidor: f.repartidor_id
         ? {
             // Solo el nombre de pila: la privacidad del repartidor también cuenta.

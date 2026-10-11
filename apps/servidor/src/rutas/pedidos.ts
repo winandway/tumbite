@@ -8,6 +8,8 @@ import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { regalosDisponibles } from './regalos';
+import { ZONA_INICIAL } from './zonas';
+import { anotar } from '../historial';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -138,8 +140,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -166,8 +168,10 @@ pedidos.post('/pedidos', async (c) => {
       Number(rest.tiempo_prep_min),
       regalo,
       d.regalo,
+      String(rest.zona_id ?? ZONA_INICIAL),
     )
     .run();
+  await anotar(db, id, 'pago_pendiente', u.id);
 
   const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
   if (!stripe) {
@@ -257,6 +261,7 @@ pedidos.post('/stripe/aviso', async (c) => {
         )
         .bind(String(obj.payment_intent ?? ''), pedidoId)
         .run();
+      await anotar(db, pedidoId as string, 'pagado', null);
     }
   }
   if (evento.type === 'account.updated') {

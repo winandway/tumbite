@@ -6,12 +6,14 @@ import {
   type Plato,
   type Restaurante,
   distanciaKm,
+  geohash,
   esquemaMiRestaurante,
   esquemaPlato,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
+import { ZONA_INICIAL, zonaPara } from './zonas';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -58,8 +60,21 @@ export function aPlato(f: FilaRest): Plato {
 catalogo.get('/restaurantes', async (c) => {
   const lat = Number(c.req.query('lat'));
   const lng = Number(c.req.query('lng'));
-  const { results } = await base(c)
-    .prepare("SELECT * FROM restaurantes WHERE estado = 'aprobado' ORDER BY abierto DESC, nombre")
+  const db = base(c);
+  const tieneCoords = Number.isFinite(lat) && Number.isFinite(lng);
+  // La zona sale de las coordenadas (o se pide por código). Sin coordenadas, la zona inicial.
+  const zonaPedida = c.req.query('zona');
+  const zona = zonaPedida
+    ? { id: zonaPedida }
+    : tieneCoords
+      ? await zonaPara(db, lat, lng)
+      : { id: ZONA_INICIAL };
+  if (!zona) return c.json({ restaurantes: [], zona: null, fueraDeZona: true });
+  const { results } = await db
+    .prepare(
+      "SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado' ORDER BY abierto DESC, nombre",
+    )
+    .bind(zona.id)
     .all<FilaRest>();
   let lista = results.map(aRestaurante);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -78,7 +93,7 @@ catalogo.get('/restaurantes', async (c) => {
           Number(b.abierto) - Number(a.abierto) || (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999),
       );
   }
-  return c.json({ restaurantes: lista });
+  return c.json({ restaurantes: lista, zona: { id: zona.id }, fueraDeZona: false });
 });
 
 catalogo.get('/restaurantes/:id', async (c) => {
@@ -125,6 +140,10 @@ catalogo.put('/mi-restaurante', async (c) => {
   const d = await leerCuerpo(c, esquemaMiRestaurante);
   const db = base(c);
   const actual = await miRestaurante(db, u.id);
+  // Zona y celda del mapa salen de la ubicación del restaurante.
+  const zona = d.lat != null && d.lng != null ? await zonaPara(db, d.lat, d.lng, false) : null;
+  const zonaId = zona?.id ?? (actual?.zona_id as string | undefined) ?? ZONA_INICIAL;
+  const celda = d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null;
   const valores = [
     d.nombre,
     d.descripcionEs,
@@ -136,18 +155,20 @@ catalogo.put('/mi-restaurante', async (c) => {
     d.lng,
     d.tiempoPrepMin,
     d.imagen,
+    zonaId,
+    celda,
   ];
   if (actual) {
     await db
       .prepare(
-        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=? WHERE id=?',
+        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=?, zona_id=?, geohash=? WHERE id=?',
       )
       .bind(...valores, actual.id)
       .run();
   } else {
     await db
       .prepare(
-        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen, zona_id, geohash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       )
       .bind(nuevoId(), u.id, ...valores)
       .run();
