@@ -42,6 +42,17 @@ CREATE TABLE IF NOT EXISTS usuarios (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Teléfonos con avisos encendidos (token de Expo). Un token por fila; se apaga si el teléfono ya no existe.
+CREATE TABLE IF NOT EXISTS dispositivos (
+  token TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  plataforma TEXT NOT NULL DEFAULT 'desconocida',
+  activo INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  visto_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS dispositivos_usuario ON dispositivos(usuario_id, activo);
+
 CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),
