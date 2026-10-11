@@ -61,3 +61,8 @@ Las reglas globales de Richard aplican; estas se suman.
 
 `npm run verify` = typecheck + lint + pruebas con cobertura + build + audit. El pre-push lo exige.
 La auditoría de seguridad cubre servidor, panel y compartido; los avisos de las herramientas de compilación de Expo están anotados en `CANDADOS.md` (deuda vigilada).
+
+## Diseño: nada que huela a plantilla de IA (dictado por Richard, 12 oct 2026)
+
+- PROHIBIDAS las franjas gruesas de color arriba o al costado de las tarjetas (la «sonrisa» roja de los formularios). Las tarjetas llevan borde fino gris oscuro (`1px solid #2a2a2a`) y sombra suave.
+- Moderno y sobrio: nada de degradados, brillos, emojis ni adornos repetidos que se ven en todas las páginas hechas con IA.
