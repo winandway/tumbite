@@ -270,4 +270,7 @@ nada**) o «Esto es nuestro, no tuyo» (no toques el código, reintenta).
 - **Semáforo:** cuando la variable del repositorio `URL_PRUEBAS` tenga la dirección del sitio de pruebas (`https://tumbite-pruebas.sitios.dev`), el Action espera a que pruebas sirva la versión nueva y exige 200 en las rutas críticas (`scripts/semaforo.sh`). Si falla, producción no se toca. Sin la variable, el semáforo se salta (hasta que exista el sitio).
 - Las llaves de prueba de Stripe van SOLO en el sitio de pruebas; `YAD_TOKEN` es distinto en cada sitio (cada uno tiene su token).
 - El token del sitio abre solo su base y su correo; no expira; generar uno nuevo mata el anterior (401 `token_reemplazado`). Nunca en el repo.
-- MCP de YaDominios: no existe todavía (11 oct 2026). Variables, correos del dominio, crear sitios y el registro se hacen a mano en el panel.
+- **Acceso para IA (desde el 11 oct 2026):** el sitio tiene una llave `ydk_…` (lectura y escritura) que abre el servidor MCP `https://yapanel.yadominios.com/api/sitio/mcp` y la API `https://yapanel.yadominios.com/api/sitio/v1/<herramienta>`. Guía: `bash ~/.claude/skills/yadominios-cloud/doc.sh acceso-para-ia`.
+  - La llave vive en el llavero de la Mac (`security find-generic-password -a tumbite -s yadominios-llave-ia-tumbite -w`) y `~/.zshrc` la carga en `YADOMINIOS_LLAVE`. `.mcp.json` del repo la lee de esa variable: el archivo no lleva secreto.
+  - Con ella la IA ya hace sola: variables, republicar, registro, correos enviados, archivos, base y crear sitios. Cada llave abre UN sitio: para tumbite-pruebas hace falta otra.
+  - La semilla de administrador también está en el llavero (`-s tumbite-admin-semilla`).
