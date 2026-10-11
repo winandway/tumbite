@@ -18,7 +18,13 @@ export function Sitio({
     <div className="pagina">
       <header className="cabecera">
         <Enlace a="/" className="logo">
-          <img src="/icono.svg" alt="" width={32} height={32} /> {MARCA.nombre}
+          <img
+            className="logo-marca"
+            src="/marca/logo.webp"
+            alt={MARCA.nombre}
+            width={74}
+            height={38}
+          />
         </Enlace>
         <nav className="ld-nav" aria-label={t.menu.como}>
           <a href="/#comensales">{t.menu.comensales}</a>

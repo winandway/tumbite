@@ -6,7 +6,9 @@
   --acento: #ff3008;
   --fondo: #ffffff;
   --texto: #191919;
+  /* Tipografías del manual de marca: Montserrat para textos, Poppins para titulares y botones. */
   font-family:
+    'Montserrat',
     system-ui,
     -apple-system,
     'Segoe UI',
@@ -1743,4 +1745,144 @@ html {
 }
 .metricas small {
   color: #5e5e5e;
+}
+
+/* Tipografía del manual de marca */
+h1,
+h2,
+h3,
+.boton,
+.ld-cta,
+.ld-buscar,
+.ld-precio,
+.logo,
+button {
+  font-family:
+    'Poppins',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+.logo img.logo-marca {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
+/* ===== Imágenes del kit de marca ===== */
+.ld-hero-apps {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+}
+.ld-app {
+  width: min(46vw, 260px);
+  height: auto;
+  filter: drop-shadow(0 24px 40px rgb(0 0 0 / 35%));
+}
+.ld-hero-apps .ld-app-atras {
+  transform: rotate(-6deg) translateX(28px);
+  margin-bottom: 20px;
+}
+.ld-hero-apps .ld-app:last-child {
+  transform: rotate(4deg);
+  position: relative;
+  z-index: 1;
+}
+@media (min-width: 900px) {
+  .ld-hero-apps {
+    justify-content: flex-end;
+    margin-right: 6vw;
+  }
+  .ld-app {
+    width: 270px;
+  }
+}
+.ld-banner {
+  max-width: 1200px;
+  margin: 8px auto 0;
+  padding: 0 16px;
+}
+.ld-banner img {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  display: block;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 15%);
+}
+.ld-pasos .ld-app {
+  width: 220px;
+}
+.ld-con-foto {
+  display: grid;
+  gap: 22px;
+  align-items: center;
+  margin: 24px auto;
+}
+.ld-foto {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 15%);
+}
+.ld-foto-alta {
+  max-height: 560px;
+}
+@media (min-width: 900px) {
+  .ld-con-foto {
+    grid-template-columns: 1fr 1.1fr;
+  }
+}
+.ld-mapa .ld-foto {
+  margin-top: 18px;
+}
+.ld-musica .ld-foto {
+  margin-top: 24px;
+}
+.ld-mascota {
+  width: 200px;
+  height: auto;
+  display: block;
+  margin: 0 auto 8px;
+}
+/* Cabecera blanca: el logo oficial se diseñó para fondo claro */
+.cabecera {
+  background: #fff !important;
+  color: #191919;
+  border-bottom: 1px solid #ececec;
+}
+.logo img.logo-marca {
+  height: 46px;
+}
+.ld-nav a {
+  color: #191919;
+}
+.ld-nav a:hover {
+  color: var(--primario);
+}
+.boton-panel {
+  background: var(--primario);
+  color: #fff !important;
+  border-color: var(--primario) !important;
+}
+.boton-panel:hover {
+  background: #191919 !important;
+  border-color: #191919 !important;
+}
+.cabecera .selector-idioma-boton {
+  color: #191919;
+}
+.cabecera .selector-idioma-boton:hover,
+.cabecera .selector-idioma-boton[aria-expanded='true'] {
+  border-color: #191919;
+}
+.cabecera .cuenta {
+  color: #191919;
+}
+.cabecera .cuenta summary {
+  border-color: #d6d6d6;
 }

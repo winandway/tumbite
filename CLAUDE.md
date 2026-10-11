@@ -14,11 +14,18 @@ Las reglas globales de Richard aplican; estas se suman.
 
 ## Colores corporativos (dictado por Richard, 10 oct 2026) — SOLO estos
 
-- Rojo escarlata, dominante: `#EB1700` (principal, pasa contraste con texto blanco) y `#FF3008` (variante viva).
+- Rojo escarlata, dominante: `#FF3008` (el oficial del kit aprobado; `#EB1700` solo como tono más oscuro de apoyo).
 - Blanco `#FFFFFF`.
 - Gris oscuro Cod Gray `#191919` (textos, cabeceras oscuras, botón secundario fuerte).
 - PROHIBIDO el morado y cualquier otro color de marca. Grises neutros solo para bordes y textos suaves.
 - Estilo de referencia: Uber Eats (titular grande, buscador de dirección con pin, comida grande a la derecha), con PIZZAS, no hamburguesas.
+- Tipografías del manual: Poppins (titulares y botones) y Montserrat (textos).
+
+## Kit de marca oficial
+
+- Carpeta `logo-imagenes-banner-marketing/` (solo en esta computadora, fuera de git por peso). Lo aprobado está en `Tumbite_Kit_Final_Aprobado_v1/` (logo, mascota, variantes, manuales). Leer su `LEEME_PRIMERO.txt` antes de usar nada.
+- Reglas del manual: no deformar, rotar, recolorear ni quitar partes de la mascota; margen libre del tamaño de un ojo; usar PNG (el SVG experimental fue RECHAZADO, no usarlo).
+- Las versiones para la web (WebP livianos) están en `apps/panel/public/marca/`. Los íconos de las apps se arman con la mascota completa sobre escarlata (cliente), gris oscuro (repartidor) y blanco (restaurante).
 
 ## Estructura
 

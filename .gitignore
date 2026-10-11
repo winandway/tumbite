@@ -22,3 +22,6 @@ android/
 *.mobileprovision
 .vscode/
 .wrangler/
+
+# Kit de marca original (PNG pesados, se queda en la computadora; las versiones web están en apps/panel/public/marca)
+/logo-imagenes-banner-marketing/

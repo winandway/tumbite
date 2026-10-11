@@ -87,7 +87,13 @@ export function PanelApp({ ruta }: { ruta: string }) {
     <div className="pagina panel">
       <header className="cabecera">
         <Enlace a="/" className="logo">
-          <img src="/icono.svg" alt="" width={32} height={32} /> {MARCA.nombre}
+          <img
+            className="logo-marca"
+            src="/marca/logo.webp"
+            alt={MARCA.nombre}
+            width={74}
+            height={38}
+          />
         </Enlace>
         <div className="cabecera-derecha">
           {usuario && (

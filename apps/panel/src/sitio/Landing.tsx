@@ -1,24 +1,57 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
+import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { MapaCobertura } from './MapaCobertura';
-import { Buscador } from './Buscador';
-import { Pizza } from './Pizza';
-import {
-  PantallaAlarma,
-  PantallaBilletera,
-  PantallaCarrito,
-  PantallaLista,
-  PantallaOferta,
-  PantallaSeguimiento,
-  Telefono,
-} from './Telefono';
 import { CONTACTO, TEXTOS_SITIO, WHATSAPP_SOPORTE } from './textos';
+
+/** Imágenes del kit de marca aprobado (logo-imagenes-banner-marketing), optimizadas en public/marca. */
+const IMG = {
+  inicio: '/marca/app-inicio.webp',
+  pizzeria: '/marca/app-pizzeria.webp',
+  seguimiento: '/marca/app-seguimiento.webp',
+  restaurante: '/marca/entrega-restaurante.webp',
+  repartidor: '/marca/repartidor.webp',
+  miami: '/marca/cartel-miami.webp',
+  local: '/marca/local-tumbite.webp',
+  mascota: '/marca/mascota.webp',
+  banner: { es: '/marca/banner-es.webp', en: '/marca/banner-en.webp' },
+};
+
+const ALT = {
+  es: {
+    pantallas: [
+      'App de Tumbite: restaurantes cerca de ti',
+      'App de Tumbite: menú de una pizzería',
+      'App de Tumbite: seguimiento del pedido en el mapa',
+    ],
+    banner: 'Tus antojos en minutos con Tumbite',
+    restaurante: 'Un repartidor de Tumbite recoge un pedido en el mostrador de un restaurante',
+    repartidor: 'Repartidor de Tumbite en su moto por Miami',
+    miami: 'Cartel de Tumbite en una autopista de Miami',
+    local: 'Local de Tumbite',
+    mascota: 'Mascota de Tumbite',
+  },
+  en: {
+    pantallas: [
+      'Tumbite app: restaurants near you',
+      'Tumbite app: a pizzeria menu',
+      'Tumbite app: order tracking on the map',
+    ],
+    banner: 'Your cravings in minutes with Tumbite',
+    restaurante: 'A Tumbite driver picks up an order at a restaurant counter',
+    repartidor: 'Tumbite driver on a bike in Miami',
+    miami: 'Tumbite billboard on a Miami highway',
+    local: 'Tumbite storefront',
+    mascota: 'Tumbite mascot',
+  },
+};
 
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
+  const a = enIdioma(ALT, idioma);
   return (
     <main className="ld">
-      {/* 1 · Portada: los tres públicos desde el primer segundo */}
+      {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
       <section className="ld-hero">
         <div className="ld-hero-texto">
           <span className="ld-etiqueta">{t.hero.etiqueta}</span>
@@ -42,8 +75,22 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             <small>{t.hero.tiendas}</small>
           </div>
         </div>
-        <div className="ld-hero-pizza" aria-hidden="true">
-          <Pizza className="ld-pizza" />
+        <div className="ld-hero-apps">
+          <img
+            src={IMG.pizzeria}
+            alt={a.pantallas[1]}
+            width={260}
+            height={536}
+            className="ld-app ld-app-atras"
+          />
+          <img
+            src={IMG.inicio}
+            alt={a.pantallas[0]}
+            width={260}
+            height={557}
+            className="ld-app"
+            fetchPriority="high"
+          />
         </div>
       </section>
 
@@ -57,22 +104,31 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         ))}
       </ul>
 
-      {/* 2 · Comensales */}
+      <div className="ld-banner">
+        <img
+          src={enIdioma(IMG.banner, idioma)}
+          alt={a.banner}
+          width={1800}
+          height={663}
+          loading="lazy"
+        />
+      </div>
+
+      {/* 2 · Comensales: los tres pasos con las pantallas reales */}
       <section id="comensales" className="ld-seccion">
         <span className="ld-etiqueta">{t.comensales.etiqueta}</span>
         <h2>{t.comensales.titulo}</h2>
         <ol className="ld-pasos">
           {t.comensales.pasos.map(([titulo, texto], i) => (
             <li key={titulo}>
-              <Telefono etiqueta={titulo ?? ''}>
-                {i === 0 ? (
-                  <PantallaLista idioma={idioma} />
-                ) : i === 1 ? (
-                  <PantallaCarrito idioma={idioma} />
-                ) : (
-                  <PantallaSeguimiento idioma={idioma} />
-                )}
-              </Telefono>
+              <img
+                className="ld-app"
+                src={[IMG.inicio, IMG.pizzeria, IMG.seguimiento].at(i)}
+                alt={a.pantallas.at(i) ?? ''}
+                width={240}
+                height={510}
+                loading="lazy"
+              />
               <div className="ld-paso-texto">
                 <span className="numero">{i + 1}</span>
                 <h3>{titulo}</h3>
@@ -105,7 +161,15 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             </article>
           ))}
         </div>
-        <div className="ld-con-tel">
+        <div className="ld-con-foto">
+          <img
+            className="ld-foto"
+            src={IMG.restaurante}
+            alt={a.restaurante}
+            width={1200}
+            height={800}
+            loading="lazy"
+          />
           <ul className="ld-funciones">
             {t.restaurantes.funciones.map(([icono, titulo, texto]) => (
               <li key={titulo}>
@@ -117,9 +181,6 @@ export function Landing({ idioma }: { idioma: Idioma }) {
               </li>
             ))}
           </ul>
-          <Telefono etiqueta={t.restaurantes.funciones[0]?.[1] ?? ''}>
-            <PantallaAlarma idioma={idioma} />
-          </Telefono>
         </div>
         <FormEspera tipo="restaurante" idioma={idioma} titulo={t.restaurantes.form} />
       </section>
@@ -128,15 +189,15 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       <section id="repartidores" className="ld-seccion">
         <span className="ld-etiqueta">{t.repartidores.etiqueta}</span>
         <h2>{t.repartidores.titulo}</h2>
-        <div className="ld-con-tel">
-          <div className="ld-dos-tels">
-            <Telefono etiqueta={t.pantallas.oferta} inclinado="izq">
-              <PantallaOferta idioma={idioma} />
-            </Telefono>
-            <Telefono etiqueta="Wallet" inclinado="der">
-              <PantallaBilletera idioma={idioma} />
-            </Telefono>
-          </div>
+        <div className="ld-con-foto">
+          <img
+            className="ld-foto ld-foto-alta"
+            src={IMG.repartidor}
+            alt={a.repartidor}
+            width={900}
+            height={1350}
+            loading="lazy"
+          />
           <ul className="ld-funciones">
             {t.repartidores.puntos.map(([icono, titulo, texto]) => (
               <li key={titulo}>
@@ -152,24 +213,37 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         <FormEspera tipo="repartidor" idioma={idioma} titulo={t.repartidores.form} />
       </section>
 
-      {/* 5 · Mapa */}
+      {/* 5 · Dónde estamos */}
       <section id="como" className="ld-seccion ld-clara ld-mapa">
         <div>
           <span className="ld-etiqueta">{t.mapa.etiqueta}</span>
           <h2>{t.mapa.titulo}</h2>
           <p className="ld-entrada">{t.mapa.texto}</p>
-          <a className="boton" href="#comensales">
-            {t.hero.pedir}
-          </a>
+          <img
+            className="ld-foto"
+            src={IMG.miami}
+            alt={a.miami}
+            width={1400}
+            height={933}
+            loading="lazy"
+          />
         </div>
         <MapaCobertura idioma={idioma} />
       </section>
 
       {/* 6 · Música */}
-      <section className="ld-seccion ld-oscura">
+      <section className="ld-seccion ld-oscura ld-musica">
         <span className="ld-etiqueta">🎺 {t.musica.etiqueta}</span>
         <h2>{t.musica.titulo}</h2>
         <p className="ld-entrada">{t.musica.texto}</p>
+        <img
+          className="ld-foto"
+          src={IMG.local}
+          alt={a.local}
+          width={1400}
+          height={933}
+          loading="lazy"
+        />
       </section>
 
       {/* 7 · Preguntas */}
@@ -187,7 +261,15 @@ export function Landing({ idioma }: { idioma: Idioma }) {
 
       {/* 8 · Soporte humano */}
       <section className="ld-seccion ld-soporte">
-        <h2>💬 {t.soporte.titulo}</h2>
+        <img
+          className="ld-mascota"
+          src={IMG.mascota}
+          alt={a.mascota}
+          width={260}
+          height={172}
+          loading="lazy"
+        />
+        <h2>{t.soporte.titulo}</h2>
         <p className="ld-entrada">{t.soporte.texto}</p>
         <div className="fila-botones">
           {WHATSAPP_SOPORTE && (

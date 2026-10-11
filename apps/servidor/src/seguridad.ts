@@ -20,7 +20,7 @@ export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' https://js.stripe.com https://challenges.cloudflare.com; " +
       "frame-src https://js.stripe.com https://challenges.cloudflare.com; img-src 'self' data: https:; " +
-      "style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.stripe.com; frame-ancestors 'none'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com; frame-ancestors 'none'",
   );
 };
 
