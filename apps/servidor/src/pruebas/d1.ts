@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
  * Base de datos de pruebas: imita la interfaz de D1 sobre SQLite en memoria.
  * Carga el mismo schema.sql que corre en producción.
  */
+import { reiniciarEsquema } from '../esquema';
+
 export function crearBasePruebas(): D1Database {
+  reiniciarEsquema();
   const db = new DatabaseSync(':memory:');
   const schema = readFileSync(
     fileURLToPath(new URL('../../../../schema.sql', import.meta.url).href),

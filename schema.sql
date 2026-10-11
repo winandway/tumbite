@@ -1,4 +1,23 @@
 -- Tumbite: tablas de la base. DDL idempotente: corre en cada publicación.
+-- OJO: aquí solo CREATE ... IF NOT EXISTS. Las columnas nuevas de tablas que ya existen en
+-- producción (y sus índices) las agrega apps/servidor/src/esquema.ts al arrancar.
+
+-- Zonas («pueblo en pueblo»): cada ciudad donde opera Tumbite. Todo lo operativo lleva zona_id.
+CREATE TABLE IF NOT EXISTS zonas (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  zona_horaria TEXT NOT NULL DEFAULT 'America/New_York',
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  radio_km REAL NOT NULL DEFAULT 40,
+  activa INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+  VALUES ('US-FL-MIAMI', 'Miami', 'US', 'USD', 'America/New_York', 25.7617, -80.1918, 40, 1);
+
 -- Las tablas de negocio se agregan en el paso 2 (cuentas) en adelante.
 CREATE TABLE IF NOT EXISTS trabajos_en_proceso (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +35,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   fecha_nacimiento TEXT,
   rol TEXT NOT NULL CHECK (rol IN ('cliente', 'repartidor', 'restaurante', 'admin')),
   idioma TEXT NOT NULL DEFAULT 'es',
+  zona_id TEXT,
   clave_hash TEXT NOT NULL,
   activo INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
@@ -46,6 +66,8 @@ CREATE TABLE IF NOT EXISTS restaurantes (
   abierto INTEGER NOT NULL DEFAULT 0,
   tiempo_prep_min INTEGER NOT NULL DEFAULT 20,
   regalos_pb INTEGER NOT NULL DEFAULT 300,
+  zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
+  geohash TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS restaurantes_estado ON restaurantes(estado);
@@ -87,6 +109,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   propina INTEGER NOT NULL,
   regalo INTEGER NOT NULL DEFAULT 0,
   regalo_tipo TEXT,
+  zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   total INTEGER NOT NULL,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
@@ -150,6 +173,8 @@ CREATE TABLE IF NOT EXISTS repartidores (
   lng REAL,
   ubicacion_en TEXT,
   puntos INTEGER NOT NULL DEFAULT 0,
+  zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
+  geohash TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -183,4 +208,31 @@ CREATE TABLE IF NOT EXISTS regalos_config (
   vuelve INTEGER NOT NULL DEFAULT 0,
   vuelve_dias INTEGER NOT NULL DEFAULT 30,
   vuelve_pb INTEGER NOT NULL DEFAULT 1000
+);
+
+-- Cada cambio de estado de un pedido queda anotado: quién, cuándo y a qué estado.
+CREATE TABLE IF NOT EXISTS historial_estados (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  estado TEXT NOT NULL,
+  actor_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS historial_pedido ON historial_estados(pedido_id, creado_en);
+
+-- Lista de espera de la landing: comensales, restaurantes y repartidores.
+CREATE TABLE IF NOT EXISTS lista_espera (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('comensal', 'restaurante', 'repartidor')),
+  zona_id TEXT REFERENCES zonas(id),
+  nombre TEXT NOT NULL,
+  correo TEXT NOT NULL COLLATE NOCASE,
+  telefono TEXT NOT NULL DEFAULT '',
+  ciudad TEXT NOT NULL DEFAULT '',
+  codigo_postal TEXT NOT NULL DEFAULT '',
+  negocio TEXT NOT NULL DEFAULT '',
+  vehiculo TEXT NOT NULL DEFAULT '',
+  idioma TEXT NOT NULL DEFAULT 'es',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (tipo, correo)
 );

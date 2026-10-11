@@ -5,6 +5,7 @@ import { type Env, revisarEnv } from './env';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
+import { asegurarEsquema, ultimoErrorEsquema } from './esquema';
 import { cuentas } from './rutas/cuentas';
 import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
@@ -33,6 +34,10 @@ app.use('/datos/*', (c, next) =>
 );
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
+app.use('/datos/*', async (c, next) => {
+  if (c.env.DB) await asegurarEsquema(c.env.DB);
+  await next();
+});
 app.use('/datos/*', cargarSesion);
 
 /**
@@ -55,6 +60,7 @@ app.get('/datos/salud', async (c) => {
   }
 
   piezas.almacen = c.env.BUCKET ? 'ok' : 'pendiente';
+  if (c.env.DB) piezas.esquema = ultimoErrorEsquema ? 'error' : 'ok';
 
   const env = revisarEnv(c.env as unknown as Record<string, unknown>);
   piezas.variables = env.ok ? 'ok' : 'error';
