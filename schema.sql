@@ -49,6 +49,16 @@ CREATE TABLE IF NOT EXISTS sesiones (
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
 
+-- Enlaces de un solo uso para recuperar la contraseña (se guarda el hash, nunca el token).
+CREATE TABLE IF NOT EXISTS recuperaciones (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL,
+  usada_en TEXT
+);
+CREATE INDEX IF NOT EXISTS recuperaciones_usuario ON recuperaciones(usuario_id, creada_en);
+
 CREATE TABLE IF NOT EXISTS restaurantes (
   id TEXT PRIMARY KEY,
   dueno_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),
