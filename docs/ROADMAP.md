@@ -29,8 +29,8 @@
 
 ### 0.1 Entorno de pruebas separado (staging) 👤 + 🤖
 
-- 👤 En YaDominios Cloud, crear un segundo sitio **`tumbite-pruebas`** conectado al mismo
-  repositorio, a la rama **`yapanel-pruebas`**. Tiene su propia base y su propio almacén.
+- ✅ Hecho el 11 oct 2026: sitio **`tumbite-pruebas`** en `https://staging.tumbite.com`, rama
+  **`yapanel-pruebas`**, con su propia base y almacén.
 - 🤖 El Action publica primero en `yapanel-pruebas`; solo si la prueba de humo da 200 en todo,
   publica en `yapanel-build` (producción). Ese es el «semáforo» antes de producción.
 - 🤖 Las llaves de prueba de Stripe van SOLO en el sitio de pruebas. Producción solo recibe llaves

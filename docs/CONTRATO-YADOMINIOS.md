@@ -267,7 +267,7 @@ nada**) o «Esto es nuestro, no tuyo» (no toques el código, reintenta).
 ## Dos sitios: pruebas y producción (11 oct 2026)
 
 - El Action `publicar` empuja el MISMO armado primero a `yapanel-pruebas` (sitio `tumbite-pruebas`, con su propia base y almacén) y después a `yapanel-build` (tumbite.com).
-- **Semáforo:** cuando la variable del repositorio `URL_PRUEBAS` tenga la dirección del sitio de pruebas (`https://tumbite-pruebas.sitios.dev`), el Action espera a que pruebas sirva la versión nueva y exige 200 en las rutas críticas (`scripts/semaforo.sh`). Si falla, producción no se toca. Sin la variable, el semáforo se salta (hasta que exista el sitio).
+- **Semáforo:** la variable del repositorio `URL_PRUEBAS` tiene la dirección del sitio de pruebas (`https://staging.tumbite.com`, también responde en `tumbite-pruebas.sitios.dev`), el Action espera a que pruebas sirva la versión nueva y exige 200 en las rutas críticas (`scripts/semaforo.sh`). Si falla, producción no se toca. Sin la variable, el semáforo se salta (hasta que exista el sitio).
 - Las llaves de prueba de Stripe van SOLO en el sitio de pruebas; `YAD_TOKEN` es distinto en cada sitio (cada uno tiene su token).
 - El token del sitio abre solo su base y su correo; no expira; generar uno nuevo mata el anterior (401 `token_reemplazado`). Nunca en el repo.
 - **Acceso para IA (desde el 11 oct 2026):** el sitio tiene una llave `ydk_…` (lectura y escritura) que abre el servidor MCP `https://yapanel.yadominios.com/api/sitio/mcp` y la API `https://yapanel.yadominios.com/api/sitio/v1/<herramienta>`. Guía: `bash ~/.claude/skills/yadominios-cloud/doc.sh acceso-para-ia`.
