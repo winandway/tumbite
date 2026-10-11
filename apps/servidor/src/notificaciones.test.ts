@@ -56,6 +56,15 @@ describe('avisos al celular', () => {
     );
     const n = await m.DB.prepare('SELECT count(*) AS n FROM dispositivos').first<{ n: number }>();
     expect(n?.n).toBe(1);
+    // Otra cuenta no puede quedarse con el token mientras siga activo; al salir, sí.
+    const otra = await m.cuenta('cliente');
+    expect(
+      (await m.llamar('POST', '/datos/cuentas/dispositivo', { token: TOKEN }, otra.token)).estado,
+    ).toBe(409);
+    await m.llamar('DELETE', '/datos/cuentas/dispositivo', { token: TOKEN }, u.token);
+    expect(
+      (await m.llamar('POST', '/datos/cuentas/dispositivo', { token: TOKEN }, otra.token)).estado,
+    ).toBe(200);
   });
 
   it('aceptado, en camino y entregado avisan al cliente; la oferta al repartidor; el pago al restaurante', async () => {

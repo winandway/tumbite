@@ -18,7 +18,7 @@ import {
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
-import { useAvisosCelular } from './avisos';
+import { darDeBajaAvisos, useAvisosCelular } from './avisos';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
 const LLAVE_IDIOMA = 'tumbite.idioma';
@@ -78,6 +78,7 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
   }, []);
 
   const salir = useCallback(async () => {
+    await darDeBajaAvisos(api);
     try {
       await api.salir();
     } catch (e) {

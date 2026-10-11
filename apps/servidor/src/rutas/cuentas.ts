@@ -199,13 +199,23 @@ async function mandarConfirmacion(
 cuentas.post('/dispositivo', async (c) => {
   const u = exigir(c);
   const d = await leerCuerpo(c, esquemaDispositivo);
-  await base(c)
+  const db = base(c);
+  // Un token solo cambia de dueño si el dueño anterior ya cerró sesión (activo = 0):
+  // nadie se queda con los avisos de otro registrando su token.
+  const r = await db
     .prepare(
       `INSERT INTO dispositivos (token, usuario_id, plataforma) VALUES (?, ?, ?)
-       ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now')`,
+       ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now')
+       WHERE dispositivos.usuario_id = excluded.usuario_id OR dispositivos.activo = 0`,
     )
     .bind(d.token, u.id, d.plataforma)
     .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos(
+      'Este teléfono sigue con otra cuenta. Cierra sesión allí primero.',
+      undefined,
+      409,
+    );
   return c.json({ ok: true });
 });
 
