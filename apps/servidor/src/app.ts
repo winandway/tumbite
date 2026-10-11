@@ -85,6 +85,19 @@ app.get('/datos/salud', async (c) => {
 });
 
 const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte']);
+const DOMINIO = 'tumbite.com';
+
+export function conCanonica(res: Response, href: string): Response {
+  if (!res.headers.get('content-type')?.includes('text/html')) return res;
+  if (typeof HTMLRewriter === 'undefined') return res;
+  return new HTMLRewriter()
+    .on('link[rel="canonical"]', {
+      element(e) {
+        e.setAttribute('href', href);
+      },
+    })
+    .transform(res);
+}
 
 /**
  * Todo lo que no es /datos lo sirven los estáticos. Las páginas de la app web
@@ -104,10 +117,16 @@ app.notFound(async (c) => {
       new Request(new URL('/', c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
     );
   }
-  const respuesta = new Response(res.body, res);
+  let respuesta = new Response(res.body, res);
   if (RUTAS_PUBLICAS.has(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
     respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+    // La etiqueta canónica dice la dirección de ESTA página (el index.html trae la de la portada
+    // para todas; sin esto Google cree que privacidad y términos son copias de la portada).
+    respuesta = conCanonica(
+      respuesta,
+      `https://${DOMINIO}${c.req.path === '/' ? '/' : c.req.path}`,
+    );
   }
   return respuesta;
 });
