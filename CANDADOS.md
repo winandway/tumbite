@@ -65,3 +65,20 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - Arreglo: `cabecerasSeguridad` copia la respuesta antes de tocar las cabeceras, y la ruta de estáticos devuelve una copia (`new Response(res.body, res)`).
 - Candado: `apps/servidor/src/seguridad.test.ts` (comprobado en rojo).
 - Cómo comprobar en vivo: las rutas `/`, `/privacidad`, `/terminos`, `/soporte`, `/panel`, `/og.png`, `/robots.txt` deben dar 200.
+
+## C-ESQUEMA-1 · Migraciones seguras al arrancar
+
+- schema.sql solo crea lo que no existe; NO agrega columnas a tablas vivas. `apps/servidor/src/esquema.ts` revisa al arrancar qué columnas faltan, las agrega con `ALTER TABLE ... ADD COLUMN` (sin tocar datos) y crea los índices que dependen de ellas.
+- Regla: los índices sobre columnas NUEVAS van en `esquema.ts`, nunca en schema.sql (en una base vieja la columna aún no existe cuando corre schema.sql y la publicación fallaría).
+- Canario: `/datos/salud` → `esquema: ok/error`.
+- Candado: `apps/servidor/src/esquema.test.ts` (base vieja sin columnas queda completa; comprobado en rojo el 10 oct 2026).
+
+## C-ZONAS-1 · Pueblo en pueblo: nunca se cruza de zona
+
+- Todo lo operativo lleva `zona_id`. La lista pública filtra por zona; el reparto busca primero en la celda (geohash de 5 letras) del restaurante y sus 8 vecinas, luego en toda la zona, y jamás en otra zona.
+- Candado: `apps/servidor/src/rutas/zonas.test.ts` (zona vecina pegada; comprobado en rojo).
+
+## C-WEB-1 · Las páginas internas no redirigen a la portada
+
+- La plataforma redirige `/index.html` → `/`. Para servir la app web en rutas internas se pide `/` (no `/index.html`). También responden a HEAD.
+- Candado: `apps/servidor/src/app.test.ts`.
