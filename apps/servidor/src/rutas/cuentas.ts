@@ -14,6 +14,7 @@ import {
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { enviarCorreo } from '../correo';
+import { correoDeConfirmacion } from '../avisos';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
@@ -33,6 +34,7 @@ const esquemaRestablecer = z.object({
     .max(200, { error: 'La contraseña es demasiado larga.' }),
 });
 const MINUTOS_RECUPERACION = 30;
+const esquemaConfirmar = z.object({ token: z.string().min(20).max(200) });
 
 const TEXTOS_RECUPERAR = {
   es: {
@@ -137,6 +139,7 @@ cuentas.post('/registro', async (c) => {
     )
     .run();
   const token = await abrirSesion(db, id);
+  await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
   return c.json({ token, usuario }, 201);
@@ -168,6 +171,56 @@ cuentas.post('/entrar', async (c) => {
   };
   c.header('Set-Cookie', cookie(token));
   return c.json({ token, usuario });
+});
+
+/** Enlace para confirmar el correo: vence en 2 días, un solo uso. No bloquea entrar. */
+async function mandarConfirmacion(
+  env: Env,
+  db: D1Database,
+  u: { id: string; nombre: string; correo: string; idioma: 'es' | 'en' },
+) {
+  const token = nuevoToken();
+  await db
+    .prepare(
+      `INSERT INTO confirmaciones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+2 days'))`,
+    )
+    .bind(await sha256(token), u.id)
+    .run();
+  await correoDeConfirmacion(env, { correo: u.correo, nombre: u.nombre, idioma: u.idioma, token });
+}
+
+cuentas.post('/confirmar', async (c) => {
+  const d = await leerCuerpo(c, esquemaConfirmar);
+  const db = base(c);
+  const id = await sha256(d.token);
+  const r = await db
+    .prepare(
+      "SELECT usuario_id FROM confirmaciones WHERE id = ? AND usada_en IS NULL AND expira_en > datetime('now')",
+    )
+    .bind(id)
+    .first<{ usuario_id: string }>();
+  if (!r)
+    throw new ErrorDatos('Este enlace ya no sirve. Entra a tu cuenta y pide otro.', undefined, 410);
+  await db.batch([
+    db
+      .prepare("UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE id = ?")
+      .bind(r.usuario_id),
+    db.prepare("UPDATE confirmaciones SET usada_en = datetime('now') WHERE id = ?").bind(id),
+  ]);
+  return c.json({ ok: true });
+});
+
+/** Vuelve a mandar el enlace de confirmación a la cuenta que está entrando. */
+cuentas.post('/confirmar/reenviar', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const f = await db
+    .prepare('SELECT correo_confirmado_en FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ correo_confirmado_en: string | null }>();
+  if (f?.correo_confirmado_en) return c.json({ ok: true, yaConfirmado: true });
+  await mandarConfirmacion(c.env, db, u);
+  return c.json({ ok: true, yaConfirmado: false });
 });
 
 /**

@@ -1,6 +1,7 @@
 import { enIdioma } from '@tumbite/compartido';
 import { PanelApp } from './panel/PanelApp';
 import { Olvide, Restablecer } from './panel/Restablecer';
+import { Confirmar } from './panel/Confirmar';
 import { useRuta } from './ruta';
 import { useIdioma } from './usarIdioma';
 import { Landing } from './sitio/Landing';
@@ -19,6 +20,12 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Olvide idioma={idioma} />
+      </Sitio>
+    );
+  if (ruta === '/confirmar')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Confirmar idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/restablecer')

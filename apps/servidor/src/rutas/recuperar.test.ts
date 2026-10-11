@@ -31,12 +31,15 @@ describe('recuperar la contraseña por correo', () => {
     const cuenta = await m.cuenta('cliente', 'Rosa');
     const correo = (await m.llamar('GET', '/datos/cuentas/yo', undefined, cuenta.token)).datos
       .usuario.correo as string;
+    // El registro ya mandó el correo de confirmación; se cuenta solo lo que llega después.
+    const antes = enviados.length;
     const r = await m.llamar('POST', '/datos/cuentas/recuperar', { correo });
     expect(r.estado).toBe(200);
-    expect(enviados).toHaveLength(1);
-    expect(enviados[0]?.from.address).toBe(REMITENTES.avisos.address);
-    expect(enviados[0]?.to[0]?.address).toBe(correo);
-    const token = enlaceDe(enviados[0]?.text ?? '');
+    expect(enviados).toHaveLength(antes + 1);
+    const ultimo = enviados.at(-1);
+    expect(ultimo?.from.address).toBe(REMITENTES.avisos.address);
+    expect(ultimo?.to[0]?.address).toBe(correo);
+    const token = enlaceDe(ultimo?.text ?? '');
     expect(token.length).toBeGreaterThan(20);
 
     const mal = await m.llamar('POST', '/datos/cuentas/restablecer', { token, clave: 'corta' });
@@ -81,7 +84,7 @@ describe('recuperar la contraseña por correo', () => {
     await m.llamar('POST', '/datos/cuentas/recuperar', { correo });
     await m.DB.prepare("UPDATE recuperaciones SET expira_en = datetime('now', '-1 minute')").run();
     const r = await m.llamar('POST', '/datos/cuentas/restablecer', {
-      token: enlaceDe(enviados[0]?.text ?? ''),
+      token: enlaceDe(enviados.at(-1)?.text ?? ''),
       clave: 'nueva-clave-99',
     });
     expect(r.estado).toBe(410);

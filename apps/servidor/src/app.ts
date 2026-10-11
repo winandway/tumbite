@@ -48,6 +48,7 @@ app.use('/datos/*', (c, next) =>
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/recuperar', limiteIntentos(5, 60_000));
+app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentos(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/*', async (c, next) => {

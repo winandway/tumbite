@@ -10,6 +10,7 @@ import { leerConfigDinero } from './dinero';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { anotar } from '../historial';
+import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -262,6 +263,7 @@ pedidos.post('/stripe/aviso', async (c) => {
         .bind(String(obj.payment_intent ?? ''), pedidoId)
         .run();
       await anotar(db, pedidoId as string, 'pagado', null);
+      await correosDePedidoPagado(c.env, db, pedidoId as string);
     }
   }
   if (evento.type === 'account.updated') {
@@ -273,6 +275,51 @@ pedidos.post('/stripe/aviso', async (c) => {
   }
   return c.json({ ok: true });
 });
+
+/** Recibo al cliente y aviso al restaurante. Si el correo falla, el pedido sigue igual. */
+async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) {
+  const f = await db
+    .prepare(
+      `SELECT p.id, p.lineas_json, p.subtotal, p.envio, p.servicio, p.propina, p.regalo, p.total, p.direccion, p.notas, p.pago_restaurante,
+        c.correo AS cliente_correo, c.nombre AS cliente_nombre, c.idioma AS cliente_idioma,
+        r.nombre AS restaurante, d.correo AS dueno_correo, d.idioma AS dueno_idioma
+       FROM pedidos p JOIN usuarios c ON c.id = p.cliente_id
+       JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios d ON d.id = r.dueno_id WHERE p.id = ?`,
+    )
+    .bind(pedidoId)
+    .first<Record<string, unknown>>();
+  if (!f) return;
+  const lineas = JSON.parse(String(f.lineas_json)) as {
+    nombreEs: string;
+    nombreEn: string;
+    precioCentavos: number;
+    cantidad: number;
+  }[];
+  await reciboDePedido(env, {
+    correo: String(f.cliente_correo),
+    nombre: String(f.cliente_nombre),
+    idioma: f.cliente_idioma === 'en' ? 'en' : 'es',
+    pedidoId,
+    restaurante: String(f.restaurante),
+    lineas,
+    subtotal: Number(f.subtotal),
+    envio: Number(f.envio),
+    servicio: Number(f.servicio),
+    propina: Number(f.propina),
+    regalo: Number(f.regalo),
+    total: Number(f.total),
+    direccion: String(f.direccion),
+  });
+  await avisoPedidoAlRestaurante(env, {
+    correo: String(f.dueno_correo),
+    idioma: f.dueno_idioma === 'en' ? 'en' : 'es',
+    pedidoId,
+    restaurante: String(f.restaurante),
+    lineas,
+    pagoRestaurante: Number(f.pago_restaurante),
+    notas: String(f.notas ?? ''),
+  });
+}
 
 pedidos.get('/mis-pedidos', async (c) => {
   const u = exigir(c, 'cliente');

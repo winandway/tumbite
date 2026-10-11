@@ -15,6 +15,7 @@ import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { avisoRestauranteNuevoAlAdmin } from '../avisos';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -172,6 +173,13 @@ catalogo.put('/mi-restaurante', async (c) => {
       )
       .bind(nuevoId(), u.id, ...valores)
       .run();
+    await avisoRestauranteNuevoAlAdmin(c.env, {
+      restaurante: d.nombre,
+      dueno: u.nombre,
+      correoDueno: u.correo,
+      direccion: d.direccion,
+      categoria: d.categoria,
+    });
   }
   const f = await miRestaurante(db, u.id);
   return c.json({ restaurante: aRestaurante(f as FilaRest) }, actual ? 200 : 201);

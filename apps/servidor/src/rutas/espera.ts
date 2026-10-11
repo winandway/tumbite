@@ -7,6 +7,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { zonaPara } from './zonas';
+import { bienvenidaListaEspera } from '../avisos';
 
 export const espera = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -54,6 +55,13 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
       d.idioma,
     )
     .run();
+  await bienvenidaListaEspera(c.env, {
+    correo: d.correo,
+    nombre: d.nombre,
+    idioma: d.idioma,
+    tipo: d.tipo,
+    ciudad: d.ciudad,
+  });
   return c.json({ ok: true, zona: zona ? { id: zona.id, nombre: zona.nombre } : null }, 201);
 });
 
