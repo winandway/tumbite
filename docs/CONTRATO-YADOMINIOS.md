@@ -256,3 +256,10 @@ errores del sitio.
 Los errores de publicación vienen **etiquetados**: «Esto se arregla en tu
 repositorio» (corriges y haces push a la misma rama; **no hay que reconectar
 nada**) o «Esto es nuestro, no tuyo» (no toques el código, reintenta).
+
+## Qué versión está en vivo (11 oct 2026)
+
+- Cada página lleva `<meta name="version" content="…">` con los siete primeros caracteres del commit de `main` que se publicó.
+- Para saber si un cambio ya salió: abrir tumbite.com, ver el código de la página y comparar ese número con el último commit de `main`.
+- La plataforma republica sola hasta en unos 5 minutos. El fallo de que no lo hacía se arregló en YaDominios Cloud el 11 oct 2026 a las 03:34 UTC (candado 37 de ellos; reporte en `docs/SOPORTE-YADOMINIOS-REPUBLICAR.md`). Si pasan más de 10 minutos, el registro del sitio lo marca en rojo.
+- Ojo: si un push no cambia nada del armado (por ejemplo, solo documentos), el Action no empuja a `yapanel-build` y no hay nada que republicar. Eso es normal.

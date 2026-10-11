@@ -20,6 +20,8 @@ jobs:
         with: { node-version: 24, cache: npm }
       - run: npm ci
       - run: npm run build
+        env:
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
       - run: |
           mkdir out-deploy
           cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js

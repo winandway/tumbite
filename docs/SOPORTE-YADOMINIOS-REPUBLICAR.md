@@ -11,3 +11,9 @@ Reporte armado el 10 oct 2026 (23:26 hora de Miami) para llevarlo a la sesión d
 - No es caché: con `?v=aleatorio` sigue saliendo el JS viejo, y el JS nuevo da 404. En tumbite.sitios.dev pasa lo mismo.
 - Ya había pasado antes: el 10 oct, desde las 21:12 UTC, entraron 4 empujones y no salió ninguno hasta que se republicó a mano.
 - Dato extra: el HTML sale con `cf-cache-status: HIT` aunque tenga `max-age=0`.
+
+## Respuesta y arreglo (11 oct 2026)
+
+- **Causa:** la ronda automática de YaDominios revisaba solo los 10 sitios con la publicación más vieja, y esa lista no rotaba. Tumbite era el undécimo y nunca se revisaba. Además, la republicación manual no guardaba el SHA publicado.
+- **Arreglo de ellos:** ahora se revisan todos los sitios en cada ronda (se publican como máximo 5 por ronda y el resto queda en cola), se avisa si hay más de 10 minutos de atraso, y el registro muestra «En vivo» frente a «En tu rama». Funciona desde las 03:34 UTC.
+- **El empujón de las 03:27 UTC no existió:** ese push era solo de documentos, el armado salió idéntico y el Action no tenía nada que empujar.

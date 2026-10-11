@@ -5,7 +5,7 @@
 ## 👤 Lo que solo puede hacer Richard
 
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
-- [ ] 👤 🔴 **Republicar otra vez en YaDominios Cloud.** La publicación automática no funciona en este sitio: cada cambio se queda en la rama `yapanel-build` y tumbite.com sigue con la versión anterior hasta que se republica a mano. Con eso salen la landing nueva roja, las zonas y la lista de espera. Prompt de soporte listo para la sesión de YaDominios Cloud en `docs/SOPORTE-YADOMINIOS-REPUBLICAR.md`.
+- [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
 - [ ] 👤 Número de WhatsApp de soporte de Tumbite (soporte humano en menos de 2 minutos). Destranca el botón de WhatsApp en la landing y las apps.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
