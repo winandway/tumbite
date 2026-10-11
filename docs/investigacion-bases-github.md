@@ -1,4 +1,4 @@
-# PAPOS — Bases de código en GitHub para una app de reparto de comida
+# Tumbite — Bases de código en GitHub para una app de reparto de comida
 
 Investigación del 10 de octubre de 2026. Sin código todavía: solo opciones y requisitos a discutir.
 

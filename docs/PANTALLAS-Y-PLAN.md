@@ -1,4 +1,4 @@
-# PAPOS — Mapa de pantallas y plan de la Fase 1
+# Tumbite — Mapa de pantallas y plan de la Fase 1
 
 10 de octubre de 2026. Decidido: **un solo código, tres apps** + dos paneles web.
 

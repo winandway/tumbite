@@ -1,6 +1,6 @@
 # Tumbite — Requisitos base (versión 1)
 
-> **Nombre elegido: Tumbite** (10 oct 2026). Tummy (pancita) + bite (bocado), con eco de «tumbao». tumbite.com libre al momento de elegir. La carpeta sigue llamándose PAPOS.
+> **Nombre elegido: Tumbite** (10 oct 2026). Tummy (pancita) + bite (bocado), con eco de «tumbao». tumbite.com libre al momento de elegir. La carpeta se llamó PAPOS hasta el 10 oct 2026; ahora es `tumbite`.
 
 > Documento madre del proyecto. Se escribió el 10 de octubre de 2026, antes de tocar código.
 > Lo que cambie después se anota aquí mismo. La investigación de GitHub está en `investigacion-bases-github.md`.

@@ -57,7 +57,7 @@ Un optimizador decide con: distancia, tiempo de espera hasta que la comida esté
 - Cada nivel trae sus premios más los del anterior.
 - Los puntos exactos cambian por ciudad y no son públicos fuera de la app.
 
-## 3. Propuesta para PAPOS
+## 3. Propuesta para Tumbite
 
 ### Niveles de repartidor (nombres por definir)
 

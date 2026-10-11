@@ -1,4 +1,4 @@
-# Tumbite (carpeta PAPOS)
+# Tumbite
 
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
@@ -50,7 +50,7 @@ Las reglas globales de Richard aplican; estas se suman.
 
 ## Perímetro
 
-- Carpeta: solo `/Users/windocellc/PAPOS`.
+- Carpeta: solo `/Users/windocellc/tumbite`.
 - GitHub: repositorio `tumbite` de la cuenta conectada en `gh`.
 - YaDominios Cloud: solo el sitio `tumbite`.
 - Stripe: solo la cuenta de Windoce LLC (modo de prueba hasta probar el circuito completo).

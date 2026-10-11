@@ -1,7 +1,7 @@
 # Nombre de la app — búsqueda (10 oct 2026)
 
 Empresa: **Windoce LLC** (Stripe, Apple, Google).
-"PAPOS" es solo el nombre provisional de la carpeta.
+«PAPOS» fue el nombre provisional de la carpeta; desde el 10 oct 2026 la carpeta se llama `tumbite`.
 
 Comprobado: dominio .com (registro oficial de Verisign) y apps con ese nombre en la App Store de EE.UU.
 NO comprobado: marcas registradas (USPTO). Se revisa antes de invertir en logo.
