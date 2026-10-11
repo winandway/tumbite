@@ -6,6 +6,8 @@
 
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
+- [ ] 👤 🔴 **Sitio de pruebas (Etapa 0.1 del roadmap):** en YaDominios Cloud crear el sitio `tumbite-pruebas`, mismo repositorio, rama `yapanel-pruebas`. Destranca probar los pagos sin ensuciar la base real.
+- [ ] 👤 🔴 **Correo (Etapa 0.2):** YaDominios → Mis dominios → tumbite.com → «Activar correos de mi dominio», y poner el token del sitio como variable `YAD_TOKEN`. Destranca recuperar contraseña, recibos y avisos.
 - [ ] 👤 Número de WhatsApp de soporte de Tumbite (soporte humano en menos de 2 minutos). Destranca el botón de WhatsApp en la landing y las apps.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
@@ -29,11 +31,12 @@
 - [x] Base y blindaje, landing con legales, cuentas, panel, tres apps, restaurantes y menús, carrito, cobros, ciclo del pedido, regalos, niveles, calificaciones, borrar cuenta, selector de idioma estilo Amazon, preparación de tiendas.
 - [ ] 🔴 Prueba del circuito de pagos de punta a punta (espera Stripe).
 
-## Siguiente fila (no depende de Richard)
+## Siguiente fila — en el orden de docs/ROADMAP.md (no se adelanta nada)
 
-- [x] Fotos de restaurantes y platos (11 oct 2026): se suben desde el panel y se ven en la app del cliente.
-- [ ] Notificaciones al celular (pedido aceptado, repartidor en camino, oferta nueva).
-- [ ] Mapa en vivo del repartidor en la app del cliente.
-- [ ] Ubicación del repartidor en segundo plano (requiere build propio y video para Apple).
-- [ ] Impresora de cocina y conexión con cajas (Fase 2).
-- [ ] Programa de música y «Música en vivo esta semana» (Fase 2, espera el nombre).
+- [ ] Etapa 0.1: dejar el Action listo para publicar primero en pruebas y después en producción (espera el sitio de pruebas).
+- [ ] Etapa 0.2: pieza de correo con canario, recuperar contraseña, confirmar correo, recibos y avisos (espera la activación del correo).
+- [ ] Etapa 0.4: propuesta de reloj externo y copia de seguridad de la base (se propone y espera el sí).
+- [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
+- [ ] Etapa 2: soporte por WhatsApp, avisos al celular, mapa en vivo, ubicación en segundo plano, marcar dirección en mapa.
+- [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
+- [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.

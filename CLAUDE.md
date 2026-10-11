@@ -7,6 +7,7 @@ Las reglas globales de Richard aplican; estas se suman.
 
 - `docs/REQUISITOS.md` — documento madre (modelo de dinero, planes, regalos, niveles, fases).
 - `docs/PANTALLAS-Y-PLAN.md` — mapa de pantallas y los 10 pasos de la Fase 1.
+- `docs/ROADMAP.md` — el orden de las etapas. No se adelanta nada: una etapa no empieza hasta cerrar la anterior.
 - `PENDIENTES.md` — la fila; los 👤 dependen de Richard.
 - `CANDADOS.md` — lo que funciona y no se toca.
 - `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
