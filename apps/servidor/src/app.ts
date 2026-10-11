@@ -19,6 +19,15 @@ import { fotos, media } from './rutas/fotos';
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cabecerasSeguridad);
+// Una sola dirección oficial: www.tumbite.com manda a tumbite.com (Google no ve dos copias).
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.hostname.startsWith('www.')) {
+    url.hostname = url.hostname.slice(4);
+    return c.redirect(url.toString(), 301);
+  }
+  await next();
+});
 // Las apps nativas no mandan «Origin». Esto solo abre la puerta a la vista web de las apps en la
 // computadora del programador. Nunca se abre a sitios ajenos.
 app.use(

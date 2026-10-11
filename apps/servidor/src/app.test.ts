@@ -75,3 +75,11 @@ describe('servidor', () => {
     expect(ultimo).toBe(429);
   });
 });
+
+describe('una sola dirección oficial', () => {
+  it('www manda a la dirección sin www, conservando la ruta', async () => {
+    const res = await app.request('https://www.tumbite.com/sitemap.xml', {}, {});
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('https://tumbite.com/sitemap.xml');
+  });
+});
