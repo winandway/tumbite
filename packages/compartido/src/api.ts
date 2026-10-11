@@ -63,8 +63,43 @@ export function crearApi(op: OpcionesApi) {
     return datos as T;
   }
 
+  /** Sube una foto tal cual (sin JSON). El servidor revisa que de verdad sea una imagen. */
+  async function subirFoto(foto: Blob): Promise<{ url: string }> {
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      'content-type': foto.type || 'application/octet-stream',
+    };
+    const token = op.token?.();
+    if (token) headers.authorization = `Bearer ${token}`;
+    let res: Response;
+    try {
+      res = await hacer(`${op.base}/datos/mi-restaurante/fotos`, {
+        method: 'POST',
+        headers,
+        body: foto,
+        credentials: 'include',
+      } as Parameters<typeof fetch>[1]);
+    } catch {
+      throw new ErrorApi(
+        op.idioma?.() === 'en'
+          ? 'No connection. Try uploading the photo again in a moment.'
+          : 'Sin conexión. Intenta subir la foto de nuevo en un momento.',
+        0,
+      );
+    }
+    const datos = (await res.json().catch(() => null)) as {
+      url?: string;
+      error?: string;
+      campo?: string;
+    } | null;
+    if (!res.ok || !datos?.url)
+      throw new ErrorApi(datos?.error ?? 'No se pudo subir la foto.', res.status, datos?.campo);
+    return { url: datos.url };
+  }
+
   return {
     pedir,
+    subirFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
     entrar: (d: DatosEntrar) => pedir<RespuestaSesion>('POST', '/datos/cuentas/entrar', d),
     salir: () => pedir<{ ok: true }>('POST', '/datos/cuentas/salir', {}),

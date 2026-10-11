@@ -75,8 +75,11 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   const llave = llaveBorrador(formulario, cuenta);
   const [valores, setValores] = useState<T>(inicial);
   const [recuperado, setRecuperado] = useState(false);
+  const recuperadoRef = useRef(false);
   const listo = useRef(false);
   const inicialRef = useRef(inicial);
+  // Lo que ya está guardado de verdad (en blanco, o lo que vino del servidor). Igual a esto = no es borrador.
+  const baseRef = useRef<T>(inicial);
   const sensiblesRef = useRef(sensibles);
 
   useEffect(() => {
@@ -87,7 +90,8 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
         if (!vivo || !guardado) return;
         try {
           const datos = JSON.parse(guardado) as Partial<T>;
-          setValores({ ...inicialRef.current, ...datos });
+          setValores({ ...baseRef.current, ...datos });
+          recuperadoRef.current = true;
           setRecuperado(true);
         } catch {
           void almacen.borrar(llave);
@@ -111,8 +115,8 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     pendiente.current = null;
     const copia: Record<string, unknown> = { ...v };
     for (const campo of sensiblesRef.current) delete copia[campo as string];
-    // Un formulario que quedó igual que al empezar no es un borrador: no se guarda.
-    const inicialSinSensibles: Record<string, unknown> = { ...inicialRef.current };
+    // Un formulario igual a lo ya guardado (en blanco o lo que vino del servidor) no es borrador.
+    const inicialSinSensibles: Record<string, unknown> = { ...baseRef.current };
     for (const campo of sensiblesRef.current) delete inicialSinSensibles[campo as string];
     const valoresIniciales = new Map(Object.entries(inicialSinSensibles));
     const vacio = Object.entries(copia).every(([k, val]) =>
@@ -143,17 +147,53 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     setValores((v) => ({ ...v, [campo]: valor }));
   }, []);
 
+  /**
+   * Llena el formulario con lo que YA está guardado (lo que vino del servidor, o lo recién
+   * guardado). Eso no es un borrador: solo cuenta como borrador lo que la persona cambie después.
+   */
+  const cargar = useCallback(
+    (v: T) => {
+      baseRef.current = v;
+      pendiente.current = null;
+      void Promise.resolve(almacen.borrar(llave)).catch(() => {});
+      setValores(v);
+      recuperadoRef.current = false;
+      setRecuperado(false);
+    },
+    [almacen, llave],
+  );
+
+  /**
+   * Lo que vino del servidor al abrir la pantalla. Si la persona tenía algo a medio escribir,
+   * eso manda y se queda encima; si no, el formulario se llena con lo guardado.
+   */
+  const cargarBase = useCallback((v: T) => {
+    baseRef.current = v;
+    if (!recuperadoRef.current) setValores(v);
+  }, []);
+
   /** Al guardar con éxito, al cancelar a propósito o al cerrar sesión. */
   const limpiar = useCallback(async () => {
     listo.current = false;
     pendiente.current = null;
     await almacen.borrar(llave);
+    baseRef.current = inicialRef.current;
     setValores(inicialRef.current);
+    recuperadoRef.current = false;
     setRecuperado(false);
     listo.current = true;
   }, [almacen, llave]);
 
-  return { valores, cambiar, setValores, recuperado, limpiar, empezarDeNuevo: limpiar };
+  return {
+    valores,
+    cambiar,
+    setValores,
+    cargar,
+    cargarBase,
+    recuperado,
+    limpiar,
+    empezarDeNuevo: limpiar,
+  };
 }
 
 /** Al cerrar sesión: borra todos los borradores de esa cuenta. */

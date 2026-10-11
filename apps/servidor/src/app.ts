@@ -14,6 +14,7 @@ import { operacion } from './rutas/operacion';
 import { regalos } from './rutas/regalos';
 import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
+import { fotos, media } from './rutas/fotos';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -36,6 +37,7 @@ app.use('/datos/*', (c, next) =>
 );
 app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
+app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/*', async (c, next) => {
   if (c.env.DB) await asegurarEsquema(c.env.DB);
   await next();
@@ -109,6 +111,8 @@ app.route('/datos', operacion);
 app.route('/datos', regalos);
 app.route('/datos', zonas);
 app.route('/datos', espera);
+app.route('/datos', fotos);
+app.route('/', media);
 
 app.onError((err, c) => {
   if (err instanceof ErrorDatos)

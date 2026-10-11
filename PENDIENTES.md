@@ -31,7 +31,7 @@
 
 ## Siguiente fila (no depende de Richard)
 
-- [ ] Fotos de restaurantes y platos (subida al almacén del sitio).
+- [x] Fotos de restaurantes y platos (11 oct 2026): se suben desde el panel y se ven en la app del cliente.
 - [ ] Notificaciones al celular (pedido aceptado, repartidor en camino, oferta nueva).
 - [ ] Mapa en vivo del repartidor en la app del cliente.
 - [ ] Ubicación del repartidor en segundo plano (requiere build propio y video para Apple).

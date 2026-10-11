@@ -12,6 +12,8 @@ import {
   EyeOff,
   Gift,
   HandCoins,
+  ImagePlus,
+  Upload,
   Hand,
   Headset,
   LocateFixed,
@@ -56,6 +58,8 @@ const ICONOS = {
   sellos: Ticket,
   saludo: Hand,
   proteccion: ShieldCheck,
+  foto: ImagePlus,
+  subir: Upload,
 } satisfies Record<string, LucideIcon>;
 
 export type NombreIcono = keyof typeof ICONOS;

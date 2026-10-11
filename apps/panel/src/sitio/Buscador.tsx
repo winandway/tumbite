@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Icono } from './Icono';
-import { type Idioma, enIdioma } from '@tumbite/compartido';
+import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
 
 const T = {
   es: {
@@ -31,7 +31,14 @@ const T = {
 /** Buscador de dirección estilo Uber Eats: dice si Tumbite llega a tu zona y te lleva a anotarte. */
 export function Buscador({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
-  const [texto, setTexto] = useState('');
+  // Lo escrito se guarda solo, como en todo formulario de la casa.
+  const b = useBorrador({
+    formulario: 'buscador',
+    inicial: { texto: '' },
+    almacen: almacenNavegador,
+  });
+  const texto = b.valores.texto;
+  const setTexto = (x: string) => b.cambiar('texto', x);
   const [mensaje, setMensaje] = useState('');
   const [buscando, setBuscando] = useState(false);
 

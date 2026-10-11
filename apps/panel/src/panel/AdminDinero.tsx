@@ -3,12 +3,16 @@ import {
   type ConfigDinero,
   ErrorApi,
   type Idioma,
+  type Usuario,
+  almacenNavegador,
   calcularPedido,
   centavosATexto,
   dolaresACentavos,
   enIdioma,
   formatearDolares,
+  useBorrador,
 } from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 const T = {
@@ -142,17 +146,25 @@ function aConfig(t: Texto): ConfigDinero | null {
   return c as ConfigDinero;
 }
 
-export function AdminDinero({ idioma }: { idioma: Idioma }) {
+export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
-  const [valores, setValores] = useState<Texto | null>(null);
+  const b = useBorrador<{ campos: Texto | null }>({
+    formulario: 'config-dinero',
+    cuenta: usuario.id,
+    inicial: { campos: null },
+    almacen: almacenNavegador,
+  });
+  const valores = b.valores.campos;
+  const setValores = (x: Texto) => b.cambiar('campos', x);
+  const { cargarBase } = b;
   const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     pedir<{ config: ConfigDinero }>('GET', '/datos/config-dinero')
-      .then((r) => setValores(aTextos(r.config)))
+      .then((r) => cargarBase({ campos: aTextos(r.config) }))
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
-  }, []);
+  }, [cargarBase]);
 
   if (!valores) return error ? <p className="error-general">{error}</p> : null;
   const config = aConfig(valores);
@@ -173,6 +185,7 @@ export function AdminDinero({ idioma }: { idioma: Idioma }) {
     if (!config) return setError(t.malo);
     try {
       await pedir('PUT', '/datos/admin/config-dinero', config);
+      b.cargar({ campos: valores });
       setAviso(t.guardado);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -198,6 +211,11 @@ export function AdminDinero({ idioma }: { idioma: Idioma }) {
     <section>
       <h1>{t.titulo}</h1>
       <p>{t.ayuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
       <form onSubmit={guardar} className="dinero">
         <fieldset>
           <legend>{t.comision}</legend>

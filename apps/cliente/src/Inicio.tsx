@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, type Restaurante, descripcion, enIdioma } from '@tumbite/compartido';
-import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  MenuCuenta,
+  Pantalla,
+  TEXTOS_MOVIL,
+  e,
+  urlFoto,
+  useSesion,
+} from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS, distanciaTexto } from './textos';
 import { type Punto, miUbicacion } from './ubicacion';
@@ -66,6 +75,19 @@ export function Inicio() {
             pressed && { opacity: 0.8 },
           ]}
         >
+          {urlFoto(r.imagen) ? (
+            <Image
+              source={{ uri: urlFoto(r.imagen) ?? undefined }}
+              accessibilityIgnoresInvertColors
+              style={{
+                width: '100%',
+                aspectRatio: 16 / 9,
+                borderRadius: 12,
+                marginBottom: 10,
+                backgroundColor: '#f1f1f1',
+              }}
+            />
+          ) : null}
           <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{r.nombre}</Text>
           <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
             {[

@@ -6,6 +6,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  "assets": { "directory": "../panel/dist", "binding": "ASSETS", "run_worker_first": ["/datos/*"] },
+  "assets": {
+    "directory": "../panel/dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/datos/*", "/media/*"],
+  },
   "d1_databases": [{ "binding": "DB", "database_name": "tumbite-local", "database_id": "local" }],
+  // Almacén de fotos simulado en la computadora (wrangler dev). En la nube lo da YaDominios.
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "tumbite-local" }],
 }

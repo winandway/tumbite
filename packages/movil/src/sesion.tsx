@@ -112,3 +112,9 @@ export function useSesion(): Sesion {
   if (!s) throw new Error('useSesion fuera de SesionProvider');
   return s;
 }
+
+/** Las fotos se guardan con su ruta («/media/fotos/…»); la app necesita la dirección completa. */
+export function urlFoto(ruta: string | null | undefined): string | null {
+  if (!ruta) return null;
+  return ruta.startsWith('/') ? `${URL_SERVIDOR}${ruta}` : null;
+}

@@ -9,6 +9,14 @@ export type EstadoRestaurante = (typeof ESTADOS_RESTAURANTE)[number];
 
 const texto = (max: number) => z.string().trim().max(max);
 
+/** Solo fotos subidas a nuestro almacén: nada de enlaces a sitios ajenos. */
+export const RUTA_FOTO = /^\/media\/fotos\/[a-z0-9-]{1,64}\/[a-z0-9-]{1,64}\.(webp|jpg|png)$/;
+const foto = z
+  .string()
+  .regex(RUTA_FOTO, { error: 'Esa foto no es válida. Vuelve a subirla.' })
+  .nullable()
+  .default(null);
+
 export const esquemaMiRestaurante = z.object({
   nombre: z.string().trim().min(2, { error: 'Escribe el nombre del restaurante.' }).max(80),
   descripcionEs: texto(400).default(''),
@@ -19,7 +27,7 @@ export const esquemaMiRestaurante = z.object({
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   tiempoPrepMin: z.number().int().min(5).max(120).default(20),
-  imagen: texto(300).nullable().default(null),
+  imagen: foto,
 });
 export type DatosMiRestaurante = z.input<typeof esquemaMiRestaurante>;
 
@@ -31,7 +39,7 @@ export const esquemaPlato = z.object({
   categoria: texto(40).default(''),
   precioCentavos: z.number().int({ error: 'El precio va en centavos.' }).min(0).max(100_000_00),
   disponible: z.boolean().default(true),
-  imagen: texto(300).nullable().default(null),
+  imagen: foto,
 });
 export type DatosPlato = z.input<typeof esquemaPlato>;
 

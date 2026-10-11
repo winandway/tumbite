@@ -85,6 +85,43 @@ describe('useBorrador: ningún formulario pierde lo escrito', () => {
     expect(localStorage.getItem(llaveBorrador('vacio'))).toBeNull();
   });
 
+  it('lo que vino del servidor o lo recién guardado no reaparece como borrador', async () => {
+    const { result, unmount } = renderHook(() =>
+      useBorrador({ formulario: 'editar', inicial, almacen: almacenNavegador, esperaMs: 5 }),
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+    });
+    act(() => result.current.cargarBase({ nombre: 'Del servidor', correo: 'a@b.com', clave: '' }));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    expect(result.current.valores.nombre).toBe('Del servidor');
+    expect(localStorage.getItem(llaveBorrador('editar'))).toBeNull();
+    // Cambia algo: eso sí es borrador.
+    act(() => result.current.cambiar('nombre', 'Cambiado'));
+    await waitFor(() =>
+      expect(localStorage.getItem(llaveBorrador('editar'))).toContain('Cambiado'),
+    );
+    // Guarda con éxito y llena con lo guardado: el borrador desaparece y no vuelve.
+    act(() => result.current.cargar({ nombre: 'Cambiado', correo: 'a@b.com', clave: '' }));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+    });
+    unmount();
+    expect(localStorage.getItem(llaveBorrador('editar'))).toBeNull();
+  });
+
+  it('si había algo a medio escribir, lo del servidor no lo pisa', async () => {
+    localStorage.setItem(llaveBorrador('pisar'), JSON.stringify({ nombre: 'Mi cambio' }));
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'pisar', inicial, almacen: almacenNavegador }),
+    );
+    await waitFor(() => expect(result.current.recuperado).toBe(true));
+    act(() => result.current.cargarBase({ nombre: 'Del servidor', correo: 's@b.com', clave: '' }));
+    expect(result.current.valores.nombre).toBe('Mi cambio');
+  });
+
   it('cada cuenta tiene su propio borrador', async () => {
     localStorage.setItem(llaveBorrador('plato', 'cuenta-a'), JSON.stringify({ nombre: 'De A' }));
     const { result } = renderHook(() =>

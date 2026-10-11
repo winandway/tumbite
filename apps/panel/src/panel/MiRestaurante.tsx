@@ -11,6 +11,7 @@ import {
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { pedir } from './api';
+import { SubirFoto } from './SubirFoto';
 
 const T = {
   es: {
@@ -39,6 +40,7 @@ const T = {
       rechazado: 'No aprobado. Escríbenos para revisarlo.',
     },
     sinUbicacion: 'Sin ubicación: los clientes no verán la distancia.',
+    foto: 'Foto de portada del restaurante',
   },
   en: {
     titulo: 'My restaurant',
@@ -66,6 +68,7 @@ const T = {
       rechazado: 'Not approved. Contact us to review it.',
     },
     sinUbicacion: 'No location: customers won’t see the distance.',
+    foto: 'Restaurant cover photo',
   },
 };
 
@@ -79,6 +82,7 @@ const INICIAL = {
   tiempoPrepMin: '20',
   lat: '',
   lng: '',
+  imagen: '',
 };
 
 export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
@@ -93,15 +97,15 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
-  const { setValores, recuperado } = b;
+  const { cargar, cargarBase } = b;
 
   useEffect(() => {
     pedir<{ restaurante: Restaurante | null }>('GET', '/datos/mi-restaurante')
       .then((r) => {
         setRest(r.restaurante);
-        if (r.restaurante && !recuperado) {
+        if (r.restaurante) {
           const x = r.restaurante;
-          setValores({
+          cargarBase({
             nombre: x.nombre,
             categoria: x.categoria,
             telefono: x.telefono,
@@ -111,6 +115,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
             tiempoPrepMin: String(x.tiempoPrepMin),
             lat: x.lat == null ? '' : String(x.lat),
             lng: x.lng == null ? '' : String(x.lng),
+            imagen: x.imagen ?? '',
           });
         }
       })
@@ -136,11 +141,11 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         tiempoPrepMin: Number(v.tiempoPrepMin) || 20,
         lat: v.lat === '' ? null : Number(v.lat),
         lng: v.lng === '' ? null : Number(v.lng),
+        imagen: v.imagen || null,
       });
       setRest(r.restaurante);
-      await b.limpiar();
       const x = r.restaurante;
-      setValores({
+      cargar({
         nombre: x.nombre,
         categoria: x.categoria,
         telefono: x.telefono,
@@ -150,6 +155,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         tiempoPrepMin: String(x.tiempoPrepMin),
         lat: x.lat == null ? '' : String(x.lat),
         lng: x.lng == null ? '' : String(x.lng),
+        imagen: x.imagen ?? '',
       });
       setAviso(t.guardado);
     } catch (x) {
@@ -211,6 +217,12 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         </p>
       )}
       <form onSubmit={guardar} className="formulario" noValidate>
+        <SubirFoto
+          etiqueta={t.foto}
+          valor={v.imagen}
+          cambiar={(url) => b.cambiar('imagen', url)}
+          idioma={idioma}
+        />
         <Campo
           etiqueta={t.nombre}
           valor={v.nombre}

@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  type Usuario,
+  almacenNavegador,
+  enIdioma,
+  useBorrador,
+} from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 type Zona = {
@@ -83,10 +91,18 @@ const T = {
   },
 };
 
-export function AdminZonas({ idioma }: { idioma: Idioma }) {
+const ZONA_VACIA = { id: '', nombre: '', lat: '', lng: '', radio: '30' };
+
+export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [zonas, setZonas] = useState<Zona[]>([]);
-  const [nueva, setNueva] = useState({ id: '', nombre: '', lat: '', lng: '', radio: '30' });
+  const b = useBorrador({
+    formulario: 'zona-nueva',
+    cuenta: usuario.id,
+    inicial: ZONA_VACIA,
+    almacen: almacenNavegador,
+  });
+  const nueva = b.valores;
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
 
@@ -118,7 +134,7 @@ export function AdminZonas({ idioma }: { idioma: Idioma }) {
         activa: false,
       });
       setAviso(t.guardada);
-      setNueva({ id: '', nombre: '', lat: '', lng: '', radio: '30' });
+      await b.limpiar();
       await cargar();
     } catch (x) {
       setError(
@@ -157,6 +173,11 @@ export function AdminZonas({ idioma }: { idioma: Idioma }) {
       </ul>
       <form onSubmit={guardar} className="formulario tarjeta-form">
         <h2>{t.nueva}</h2>
+        <AvisoBorrador
+          visible={b.recuperado}
+          idioma={idioma}
+          empezar={() => void b.empezarDeNuevo()}
+        />
         {(['id', 'nombre', 'lat', 'lng', 'radio'] as const).map((k) => (
           <label className="campo" key={k}>
             <span>
@@ -182,7 +203,7 @@ export function AdminZonas({ idioma }: { idioma: Idioma }) {
                         ? nueva.lng
                         : nueva.radio
               }
-              onChange={(e) => setNueva({ ...nueva, [k]: e.target.value })}
+              onChange={(e) => b.cambiar(k, e.target.value)}
             />
           </label>
         ))}

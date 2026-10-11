@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
+  type Usuario,
+  almacenNavegador,
   dolaresACentavos,
   enIdioma,
   formatearDolares,
+  useBorrador,
 } from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 type Mov = { id: string; pedidoId: string | null; monto: number; concepto: string; fecha: string };
@@ -84,11 +88,17 @@ const T = {
   },
 };
 
-export function Billetera({ idioma }: { idioma: Idioma }) {
+export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [d, setD] = useState<Datos | null>(null);
   const [hoy, setHoy] = useState<Resumen | null>(null);
-  const [monto, setMonto] = useState('');
+  const b = useBorrador({
+    formulario: 'retiro',
+    cuenta: usuario.id,
+    inicial: { monto: '' },
+    almacen: almacenNavegador,
+  });
+  const monto = b.valores.monto;
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
 
@@ -121,7 +131,7 @@ export function Billetera({ idioma }: { idioma: Idioma }) {
     if (c === null) return setError(t.montoMal);
     try {
       await pedir('POST', '/datos/billetera/retirar', { montoCentavos: c });
-      setMonto('');
+      await b.limpiar();
       setAviso(t.retirado);
       await cargar();
     } catch (x) {
@@ -176,12 +186,17 @@ export function Billetera({ idioma }: { idioma: Idioma }) {
         </div>
       ) : (
         <form onSubmit={retirar} className="tarjeta-form fila-botones">
+          <AvisoBorrador
+            visible={b.recuperado}
+            idioma={idioma}
+            empezar={() => void b.empezarDeNuevo()}
+          />
           <label className="campo" style={{ flex: 1 }}>
             <span>{t.monto}</span>
             <input
               inputMode="decimal"
               value={monto}
-              onChange={(e) => setMonto(e.target.value)}
+              onChange={(e) => b.cambiar('monto', e.target.value)}
               placeholder="0.00"
             />
           </label>

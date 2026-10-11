@@ -4,10 +4,14 @@ import {
   ErrorApi,
   type Idioma,
   type Plato,
+  type Usuario,
+  almacenNavegador,
   enIdioma,
   formatearDolares,
   nombrePlato,
+  useBorrador,
 } from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 type Presupuesto = {
@@ -81,11 +85,19 @@ const T = {
   },
 };
 
-export function Regalos({ idioma }: { idioma: Idioma }) {
+export function Regalos({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [p, setP] = useState<Presupuesto | null>(null);
-  const [cfg, setCfg] = useState<Config | null>(null);
-  const [pct, setPct] = useState('3');
+  const b = useBorrador<{ cfg: Config | null; pct: string }>({
+    formulario: 'regalos',
+    cuenta: usuario.id,
+    inicial: { cfg: null, pct: '3' },
+    almacen: almacenNavegador,
+  });
+  const { cfg, pct } = b.valores;
+  const setCfg = (x: Config) => b.cambiar('cfg', x);
+  const setPct = (x: string) => b.cambiar('pct', x);
+  const { cargarBase } = b;
   const [platos, setPlatos] = useState<Plato[]>([]);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
@@ -97,12 +109,11 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
     ])
       .then(([r, m]) => {
         setP(r.presupuesto);
-        setCfg(r.config);
-        setPct(String(r.presupuesto.pb / 100));
+        cargarBase({ cfg: r.config, pct: String(r.presupuesto.pb / 100) });
         setPlatos(m.platos);
       })
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
-  }, []);
+  }, [cargarBase]);
 
   if (!cfg || !p) return error ? <p className="error-general">{error}</p> : null;
 
@@ -117,6 +128,7 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
         pb: Math.round(Number(pct.replace(',', '.')) * 100),
       });
       setP(r.presupuesto);
+      b.cargar({ cfg, pct });
       setAviso(t.guardado);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -163,6 +175,11 @@ export function Regalos({ idioma }: { idioma: Idioma }) {
         </div>
       </div>
       <form onSubmit={guardar} className="formulario">
+        <AvisoBorrador
+          visible={b.recuperado}
+          idioma={idioma}
+          empezar={() => void b.empezarDeNuevo()}
+        />
         <label className="campo">
           <span>{t.porcentaje}</span>
           <span className="con-sufijo">

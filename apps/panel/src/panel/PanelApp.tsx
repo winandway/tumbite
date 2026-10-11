@@ -26,15 +26,15 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
   if (usuario.rol === 'restaurante') {
     if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/beneficios') return <Billetera idioma={idioma} />;
-    if (ruta === '/panel/regalos') return <Regalos idioma={idioma} />;
+    if (ruta === '/panel/beneficios') return <Billetera usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/regalos') return <Regalos usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/pedidos') return <Pedidos idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
-    if (ruta === '/panel/dinero') return <AdminDinero idioma={idioma} />;
+    if (ruta === '/panel/dinero') return <AdminDinero usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/repartidores') return <AdminRepartidores idioma={idioma} />;
-    if (ruta === '/panel/zonas') return <AdminZonas idioma={idioma} />;
+    if (ruta === '/panel/zonas') return <AdminZonas usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/espera') return <AdminEspera idioma={idioma} />;
   }
   return null;

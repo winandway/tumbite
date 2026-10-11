@@ -15,6 +15,7 @@ import {
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { pedir } from './api';
+import { SubirFoto } from './SubirFoto';
 
 const T = {
   es: {
@@ -39,6 +40,7 @@ const T = {
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezar: 'Empezar de nuevo',
     opciones: 'Más opciones',
+    foto: 'Foto del plato',
   },
   en: {
     titulo: 'Menu',
@@ -62,6 +64,7 @@ const T = {
     recuperado: 'We restored what you were typing.',
     empezar: 'Start over',
     opciones: 'More options',
+    foto: 'Item photo',
   },
 };
 
@@ -73,6 +76,7 @@ const VACIO = {
   descripcionEn: '',
   categoria: '',
   precio: '',
+  imagen: '',
 };
 
 export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
@@ -102,7 +106,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
   const v = b.valores;
 
   function editar(p: Plato) {
-    b.setValores({
+    b.cargar({
       id: p.id,
       nombreEs: p.nombreEs,
       nombreEn: p.nombreEn,
@@ -110,6 +114,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       descripcionEn: p.descripcionEn,
       categoria: p.categoria,
       precio: centavosATexto(p.precioCentavos),
+      imagen: p.imagen ?? '',
     });
     setEditando(true);
   }
@@ -126,6 +131,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       descripcionEn: v.descripcionEn,
       categoria: v.categoria,
       precioCentavos,
+      imagen: v.imagen || null,
     };
     try {
       const r = v.id
@@ -242,6 +248,13 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             placeholder="0.00"
             error={errorDe('precioCentavos')}
           />
+          <SubirFoto
+            etiqueta={t.foto}
+            valor={v.imagen}
+            cambiar={(url) => b.cambiar('imagen', url)}
+            idioma={idioma}
+            formato="cuadrado"
+          />
           {error && !error.campo && (
             <p className="error-general" role="alert">
               {error.mensaje}
@@ -263,10 +276,17 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
         <ul className="lista">
           {platos.map((p) => (
             <li key={p.id} className={p.disponible ? '' : 'apagado'}>
+              {p.imagen ? (
+                <img className="miniatura" src={p.imagen} alt="" loading="lazy" />
+              ) : (
+                <span className="miniatura miniatura-vacia" aria-hidden="true" />
+              )}
               <div className="lista-texto">
                 <strong>{nombrePlato(p, idioma)}</strong>
                 <span>
-                  {p.categoria} · {formatearDolares(p.precioCentavos, idioma)}
+                  {[p.categoria, formatearDolares(p.precioCentavos, idioma)]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </span>
               </div>
               <label className="interruptor">
