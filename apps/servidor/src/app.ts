@@ -76,8 +76,14 @@ app.notFound(async (c) => {
   if (c.req.path.startsWith('/datos/')) return c.json({ error: 'Esta dirección no existe.' }, 404);
   if (!c.env.ASSETS) return c.text('No encontrado', 404);
   let res = await c.env.ASSETS.fetch(c.req.raw);
-  if (res.status === 404 && c.req.method === 'GET' && !/\.[a-z0-9]+$/i.test(c.req.path)) {
-    res = await c.env.ASSETS.fetch(new Request(new URL('/index.html', c.req.url), c.req.raw));
+  const esPagina =
+    (c.req.method === 'GET' || c.req.method === 'HEAD') && !/\.[a-z0-9]+$/i.test(c.req.path);
+  if (res.status === 404 && esPagina) {
+    // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
+    // y eso mandaba a la persona a la portada en vez de a la página que pidió.
+    res = await c.env.ASSETS.fetch(
+      new Request(new URL('/', c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
+    );
   }
   const respuesta = new Response(res.body, res);
   if (RUTAS_PUBLICAS.has(c.req.path) && res.ok) {

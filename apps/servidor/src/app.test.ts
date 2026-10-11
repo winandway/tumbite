@@ -39,7 +39,7 @@ describe('servidor', () => {
     const ASSETS = {
       fetch: async (req: Request) => {
         const ruta = new URL(req.url).pathname;
-        return ruta === '/index.html'
+        return ruta === '/'
           ? new Response('<html>tumbite</html>', { status: 200 })
           : new Response('no', { status: 404 });
       },
@@ -51,6 +51,8 @@ describe('servidor', () => {
     const panel = await app.request('/panel/pedidos', {}, { ASSETS });
     expect(panel.status).toBe(200);
     expect(panel.headers.get('Cache-Control')).toBeNull();
+    const cabeza = await app.request('/privacidad', { method: 'HEAD' }, { ASSETS });
+    expect(cabeza.status).toBe(200);
     const archivo = await app.request('/no-existe.png', {}, { ASSETS });
     expect(archivo.status).toBe(404);
   });
