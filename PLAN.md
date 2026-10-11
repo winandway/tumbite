@@ -1,17 +1,13 @@
-# Plan: Tumbite Fase 1 en piloto automático (desde el paso 1b)
+# Plan: Tumbite multi-zona + landing completa (10 oct 2026, piloto automático)
 
-- [x] Paso 1b: Landing pública bilingüe en «/» (quiénes somos, cómo funciona, restaurantes, repartidores, música, contacto) + páginas de privacidad, términos y soporte; panel movido a «/panel»; salud dice si existen la base y el almacén.
-- [x] Paso 2a: Base de datos (schema.sql) de cuentas y sesiones + servidor de cuentas: registrarse, entrar, salir, quién soy; contraseñas con hash fuerte; roles cliente/repartidor/restaurante/admin; regla «Soporte» para correos @windoce.com; Turnstile opcional; límite de intentos. Pruebas con una base SQLite local.
-- [x] Paso 2b: Paquete compartido: esquemas de datos (zod) y cliente del servidor usados por apps y panel; pieza reutilizable de borradores (useBorrador) con su prueba.
-- [x] Paso 2c: Panel web: entrar / registrarse con campo de contraseña con ojito, borradores, cerrar sesión de verdad.
-- [x] Paso 2d: Las tres apps: navegación con Expo Router, entrar / registrarse con ojito y borradores, sesión guardada segura, cerrar sesión.
-- [x] Paso 3: Restaurantes y menús: tablas, servidor (crear/editar restaurante y platos bilingües, aprobación por admin), pantallas del panel.
-- [x] Paso 4: App Cliente: restaurantes abiertos, menú, carrito con desglose de los cuatro bolsillos (cálculo compartido y probado al 90 %).
-- [x] Paso 5: Cobro: configuración de dinero editable por admin, pedido recalculado en el servidor, pago con Stripe Checkout, aviso de Stripe con firma verificada, alta de billetera con Stripe Connect; VERIFICAR-PAGOS.md con lo probado y lo NO probado.
-- [x] Paso 6: App Restaurante: pedidos entrantes con alarma, aceptar con tiempo, listo, pausar restaurante.
-- [x] Paso 7: App Repartidor: conectarse, ofertas por cercanía y nivel, aceptar/rechazar sin castigo, estados del viaje, ubicación; el cliente ve el seguimiento.
-- [x] Paso 8: Regalos y marketing (porcentaje por restaurante, cumpleaños, sellos, cliente que vuelve) y niveles de repartidor; pantallas del panel.
-- [ ] Paso 9: Prueba del circuito completo de pagos en modo prueba de Stripe. 🔴 BLOQUEADO: faltan las llaves de Stripe de Windoce LLC. Escrito en rojo en VERIFICAR-PAGOS.md con los pasos exactos.
-- [x] Paso 10: Preparar publicación en tiendas (eas.json, fichas, permisos) — hecho en docs/TIENDAS.md; el envío queda bloqueado por las cuentas de Apple y Google.
-- [x] Paso 10b: Selector de idioma estilo Amazon (pedido de Richard con captura): botón con bandera + código y flechita «🇪🇸 ES ▾»; al tocarlo, una ventanita con «Cambiar idioma», opciones con círculo de selección «English - EN» / «español - ES» separadas por una línea. En la web y en las tres apps. Guardarlo como REGLA GLOBAL en ~/.claude/CLAUDE.md para que todo proyecto nazca con este selector (respetando la bandera de España para el español).
-- [ ] Paso 11: Verificación completa, publicar, prueba de humo en vivo, documentos y PENDIENTES al día. Verificación verde en la computadora y en GitHub, publicado en la rama yapanel-build, documentos al día. 🔴 BLOQUEADO la prueba en vivo: YaDominios Cloud no republica (sigue la primera versión); requiere que Richard revise el panel.
+Fase 1 anterior: todo hecho salvo la prueba de pagos (espera Stripe). Historia en git.
+
+- [x] Paso 1: Guardar en el proyecto las sugerencias que trajo Richard (docs/EXPANSION-Y-LANDING.md) y sumarlas a REQUISITOS y PENDIENTES, separando lo que se hace ya, lo que es Fase 2 y las decisiones de negocio que son de Richard.
+- [ ] Paso 2: Arreglar en vivo las páginas internas (/privacidad, /panel…) que hoy redirigen a la portada, y que respondan también a HEAD.
+- [ ] Paso 3: Migraciones seguras: el servidor revisa al arrancar qué columnas faltan en la base viva y las agrega solo (la base de producción ya existe; schema.sql no agrega columnas).
+- [ ] Paso 4: Multi-zona («pueblo en pueblo»): tabla zonas con Miami sembrada, zona_id en usuarios, restaurantes, repartidores y pedidos, geohash para prefiltrar cercanía, índices compuestos por zona y estado, historial de estados del pedido. El servidor filtra todo por zona. Pruebas.
+- [ ] Paso 5: Lista de espera de los tres públicos (comensales, restaurantes, repartidores): tabla, servidor con validación y límite, panel admin para verla.
+- [ ] Paso 6: Landing nueva al 100 %: tres públicos desde el minuto cero con sus formularios (con borrador), las pantallas reales de las apps en teléfonos, los pasos de cada público, el mapa de cobertura y del recorrido, planes para restaurantes, música, preguntas frecuentes, soporte humano. Bilingüe, celular primero.
+- [ ] Paso 7: Resumen del día para el restaurante (pedidos, ventas, comisión y neto de hoy) en el panel.
+- [ ] Paso 8: Admin: zonas (ver, crear, activar) y lista de espera.
+- [ ] Paso 9: Verificación completa, publicar, prueba de humo en vivo (todas las rutas en 200), documentos y PENDIENTES al día.
