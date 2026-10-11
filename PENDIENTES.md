@@ -7,7 +7,7 @@
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
 - [ ] 👤 🔴 **Sitio de pruebas (Etapa 0.1 del roadmap):** en YaDominios Cloud crear el sitio `tumbite-pruebas`, mismo repositorio, rama `yapanel-pruebas`. Destranca probar los pagos sin ensuciar la base real.
-- [ ] 👤 🔴 **Correo (Etapa 0.2):** YaDominios → Mis dominios → tumbite.com → «Activar correos de mi dominio», y poner el token del sitio como variable `YAD_TOKEN`. Destranca recuperar contraseña, recibos y avisos.
+- [ ] 👤 🔴 **`YAD_TOKEN` (Etapa 0.2):** los correos del dominio ya están activos (11 oct; primer envío de prueba salió). Falta poner el token del sitio como variable `YAD_TOKEN` en el sitio tumbite. Destranca recuperar contraseña, recibos y avisos en vivo.
 - [ ] 👤 Número de WhatsApp de soporte de Tumbite (soporte humano en menos de 2 minutos). Destranca el botón de WhatsApp en la landing y las apps.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
@@ -33,7 +33,7 @@
 
 ## Siguiente fila — en el orden de docs/ROADMAP.md (no se adelanta nada)
 
-- [ ] Etapa 0.1: dejar el Action listo para publicar primero en pruebas y después en producción (espera el sitio de pruebas).
+- [x] Etapa 0.1 (11 oct 2026): el Action empuja a `yapanel-pruebas` y luego a `yapanel-build`, con semáforo `scripts/semaforo.sh` que se activa al poner la variable `URL_PRUEBAS` en GitHub.
 - [x] Etapa 0.2a (11 oct 2026): pieza de correo con canario y recuperar contraseña. Falta activar el dominio y `YAD_TOKEN` para que salga en vivo.
 - [ ] Etapa 0.2b: confirmar correo al registrarse, recibo del pedido, aviso al restaurante, aviso al admin, «te anotaste».
 - [ ] Etapa 0.4: propuesta de reloj externo y copia de seguridad de la base (se propone y espera el sí).

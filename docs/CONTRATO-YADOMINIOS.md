@@ -263,3 +263,11 @@ nada**) o «Esto es nuestro, no tuyo» (no toques el código, reintenta).
 - Para saber si un cambio ya salió: abrir tumbite.com, ver el código de la página y comparar ese número con el último commit de `main`.
 - La plataforma republica sola hasta en unos 5 minutos. El fallo de que no lo hacía se arregló en YaDominios Cloud el 11 oct 2026 a las 03:34 UTC (candado 37 de ellos; reporte en `docs/SOPORTE-YADOMINIOS-REPUBLICAR.md`). Si pasan más de 10 minutos, el registro del sitio lo marca en rojo.
 - Ojo: si un push no cambia nada del armado (por ejemplo, solo documentos), el Action no empuja a `yapanel-build` y no hay nada que republicar. Eso es normal.
+
+## Dos sitios: pruebas y producción (11 oct 2026)
+
+- El Action `publicar` empuja el MISMO armado primero a `yapanel-pruebas` (sitio `tumbite-pruebas`, con su propia base y almacén) y después a `yapanel-build` (tumbite.com).
+- **Semáforo:** cuando la variable del repositorio `URL_PRUEBAS` tenga la dirección del sitio de pruebas (`https://tumbite-pruebas.sitios.dev`), el Action espera a que pruebas sirva la versión nueva y exige 200 en las rutas críticas (`scripts/semaforo.sh`). Si falla, producción no se toca. Sin la variable, el semáforo se salta (hasta que exista el sitio).
+- Las llaves de prueba de Stripe van SOLO en el sitio de pruebas; `YAD_TOKEN` es distinto en cada sitio (cada uno tiene su token).
+- El token del sitio abre solo su base y su correo; no expira; generar uno nuevo mata el anterior (401 `token_reemplazado`). Nunca en el repo.
+- MCP de YaDominios: no existe todavía (11 oct 2026). Variables, correos del dominio, crear sitios y el registro se hacen a mano en el panel.
