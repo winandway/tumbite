@@ -273,4 +273,5 @@ nada**) o «Esto es nuestro, no tuyo» (no toques el código, reintenta).
 - **Acceso para IA (desde el 11 oct 2026):** el sitio tiene una llave `ydk_…` (lectura y escritura) que abre el servidor MCP `https://yapanel.yadominios.com/api/sitio/mcp` y la API `https://yapanel.yadominios.com/api/sitio/v1/<herramienta>`. Guía: `bash ~/.claude/skills/yadominios-cloud/doc.sh acceso-para-ia`.
   - La llave vive en el llavero de la Mac (`security find-generic-password -a tumbite -s yadominios-llave-ia-tumbite -w`) y `~/.zshrc` la carga en `YADOMINIOS_LLAVE`. `.mcp.json` del repo la lee de esa variable: el archivo no lleva secreto.
   - Con ella la IA ya hace sola: variables, republicar, registro, correos enviados, archivos, base y crear sitios. Cada llave abre UN sitio: para tumbite-pruebas hace falta otra.
-  - La semilla de administrador también está en el llavero (`-s tumbite-admin-semilla`).
+  - La llave del sitio de pruebas: `-s yadominios-llave-ia-tumbite-pruebas`. La semilla de administrador: `-s tumbite-admin-semilla`.
+  - Pruebas manda correos con el token del sitio tumbite (el código usa el sitio `tumbite` para el correo): comparte la cuota de 1.000 al día.

@@ -7,7 +7,7 @@
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
 - [x] Sitio de pruebas `tumbite-pruebas` creado por la IA con el acceso para IA (11 oct 2026). Semáforo activo (`URL_PRUEBAS` en GitHub).
-- [x] `YAD_TOKEN` puesto en tumbite (11 oct 2026): canario `correo: ok`. Falta ponerlo en tumbite-pruebas (necesita el token y una llave de IA de ESE sitio).
+- [x] `YAD_TOKEN` puesto en tumbite y en tumbite-pruebas (11 oct 2026): canario `correo: ok` en los dos.
 - [ ] 👤 Número de WhatsApp de soporte de Tumbite (soporte humano en menos de 2 minutos). Destranca el botón de WhatsApp en la landing y las apps.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
@@ -17,7 +17,8 @@
 - [ ] 👤 **Stripe de Windoce LLC** con Connect activado, y sus llaves de PRUEBA puestas en YaDominios Cloud → Variables de entorno: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITIO_URL`. Pasos exactos en `VERIFICAR-PAGOS.md`. Destranca la prueba del circuito de pagos.
 - [x] `ADMIN_CORREOS` (tumbite.com@gmail.com) y `ADMIN_SEMILLA` puestos (11 oct 2026; la semilla está en el llavero de esta Mac).
 - [ ] 👤 **Cuenta de administrador:** registrarse en tumbite.com/panel con tumbite.com@gmail.com y nombre «Soporte Tumbite»; la IA la vuelve administrador. Destranca aprobar restaurantes.
-- [ ] 👤 **Llave de IA y token del sitio tumbite-pruebas** (tarjeta del sitio → «Ver token» y «Acceso para IA», lectura y escritura). Destranca que la IA ponga `YAD_TOKEN` y las llaves de prueba de Stripe en pruebas.
+- [x] Llave de IA de tumbite-pruebas recibida (11 oct 2026): variables puestas, correo en verde. Las llaves de prueba de Stripe se ponen ahí en cuanto lleguen.
+- [ ] 👤 (YaDominios) Conectar `staging.tumbite.com` al sitio de pruebas: la plataforma hoy rechaza subdominios (error 1116 de Cloudflare). Prompt mandado a la sesión de YaDominios Cloud.
 - [ ] 👤 **Cuentas de desarrollador** de Apple y Google a nombre de Windoce LLC, y cuenta de Expo (EAS) de la empresa. Destranca la publicación en tiendas (`docs/TIENDAS.md`).
 - [ ] 👤 **Abrir Xcode una vez** en esta Mac para que termine de instalarse. Destranca probar las apps en el simulador de iPhone.
 - [ ] 👤 Turnstile (escudo anti-robots): claves de Cloudflare para el login. Opcional; sin ellas el login funciona con el límite de intentos.
