@@ -109,7 +109,8 @@ app.get('/datos/publico', (c) =>
 );
 
 const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte', '/docs']);
-const esRutaPublica = (ruta: string) => RUTAS_PUBLICAS.has(ruta) || ruta.startsWith('/docs/');
+const esRutaPublica = (ruta: string) =>
+  RUTAS_PUBLICAS.has(ruta) || /^\/(docs|pais|ciudad|comida)\//.test(ruta);
 const DOMINIO = 'tumbite.com';
 
 export function conCanonica(res: Response, href: string): Response {

@@ -1,8 +1,8 @@
-# Plan: Etapa 0.4b + Docs (11 oct 2026, piloto automático)
+# Plan: Pie de página profesional + páginas por país (12 oct 2026, piloto automático)
 
-Lo que depende de Richard queda en PENDIENTES.md (👤). Aquí solo lo que se puede hacer ya.
-
-- [x] Paso 1: Copia de seguridad diaria de la base: ruta protegida `/datos/respaldo` que vuelca cada tabla a JSON en el almacén del sitio (`respaldos/AAAA-MM-DD/tabla.json`), guarda 30 días y borra lo más viejo. El reloj de GitHub la llama una vez al día (3 am Miami). Canario `respaldo` con la fecha del último. Prueba con almacén de mentira.
-- [x] Paso 2: Sección pública «Docs» del sitio (regla de la casa: barra lateral con secciones e íconos, buscador, cada guía con su propia dirección, «← Docs» en celular, colores de Tumbite). Guías iniciales bilingües: comensales (pedir, seguir, regalos, calificar), restaurantes (panel, menú y fotos, pedidos y alarma, agotado, regalos y marketing, resumen y billetera), repartidores (conectarse, ofertas, niveles, billetera, ruta), y cuenta (recuperar contraseña, confirmar correo, borrar cuenta, soporte).
-- [x] Paso 3: Enlaces a Docs en el menú y el pie de la landing, en el mapa del sitio y en las apps (ayuda). Prueba de la barra que nunca se pierde y del buscador.
-- [x] Paso 4: Verificación completa, prueba en pantalla (celular), publicar por el semáforo, documentar en CANDADOS.md, ROADMAP.md y PENDIENTES.md.
+- [x] Paso 1: Datos de cobertura en un solo lugar (`apps/panel/src/sitio/cobertura.ts`): países (Estados Unidos activo en verde; Rumanía, Colombia, México, Venezuela, Guatemala y Bolivia «muy pronto») y ciudades (Miami activa; Orlando, Tampa y Ocala próximas), bilingüe, con su dirección propia.
+- [x] Paso 2: Pie de página nuevo (`Pie.tsx`): fondo negro estilo DoorDash, arriba el bloque de Uber con pestañas Ciudades / Países / Tipos de comida; columnas Conócenos, Te ayudamos, Negocios (con «Franquicias: muy pronto»), insignias de App Store y Google Play, redes, legal, crédito de Windoce. Enlaces reales (HTML) para el SEO.
+- [x] Paso 3: Página por país (`/pais/<slug>`) y por ciudad (`/ciudad/<slug>`): título, estado (activo / muy pronto), texto para el SEO, formulario de lista de espera de los tres públicos, canónica y mapa del sitio.
+- [x] Paso 4: Servidor: `/pais/*` y `/ciudad/*` públicas con caché y canónica. Pruebas: pie en los dos idiomas, página de país con formulario, mapa del sitio con todas las direcciones.
+- [x] Paso 5: Verificación completa, prueba en pantalla (celular y escritorio), publicar por el semáforo, documentar (CANDADOS, PENDIENTES).
+- [x] Paso 6: Prompt para la sesión de Laboratorio AI con la investigación de franquicias por ciudad.

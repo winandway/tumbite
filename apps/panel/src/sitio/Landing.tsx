@@ -3,6 +3,7 @@ import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
+import { LogoApple, LogoGooglePlay } from './Tiendas';
 import { MapaCobertura } from './MapaCobertura';
 import { CONTACTO, TEXTOS_SITIO } from './textos';
 
@@ -312,28 +313,5 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         </div>
       </section>
     </main>
-  );
-}
-
-/** Logos de las tiendas en una sola tinta, como piden sus guías de marca. */
-function LogoApple() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-      <path
-        fill="currentColor"
-        d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.15 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.78.74 2.99.72 1.24-.02 2.02-1.12 2.77-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.41-.92-2.43-3.65zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.02.61-2.67 1.37-.58.67-1.1 1.76-.96 2.8 1.02.08 2.06-.52 2.69-1.28z"
-      />
-    </svg>
-  );
-}
-
-function LogoGooglePlay() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-      <path
-        fill="currentColor"
-        d="M4.4 2.6c-.25.26-.4.67-.4 1.2v16.4c0 .53.15.94.4 1.2l.07.06L13.66 12.3v-.2L4.47 2.54l-.07.06zm12.3 12.75-3.04-3.05v-.2l3.04-3.05.07.04 3.6 2.05c1.03.58 1.03 1.54 0 2.13l-3.6 2.04-.07.04zm-.07.04L13.66 12.4 4.4 21.66c.34.36.9.4 1.54.05l10.69-6.32m0-6.78L5.94 2.29c-.63-.36-1.2-.31-1.54.05l9.26 9.26 2.97-2.99z"
-      />
-    </svg>
   );
 }

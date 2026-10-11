@@ -3,6 +3,7 @@ import { PanelApp } from './panel/PanelApp';
 import { Olvide, Restablecer } from './panel/Restablecer';
 import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
+import { PaginaLugar } from './sitio/Lugar';
 import { useRuta } from './ruta';
 import { useIdioma } from './usarIdioma';
 import { Landing } from './sitio/Landing';
@@ -17,6 +18,12 @@ export function App() {
   const [idioma, cambiar] = useIdioma();
 
   if (ruta.startsWith('/panel')) return <PanelApp ruta={ruta} />;
+  if (/^\/(pais|ciudad|comida)\/[a-z-]+$/.test(ruta))
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <PaginaLugar ruta={ruta} idioma={idioma} />
+      </Sitio>
+    );
   if (ruta === '/docs' || ruta.startsWith('/docs/'))
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>

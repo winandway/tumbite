@@ -2237,3 +2237,221 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Pie de página profesional (fondo oscuro, muchos enlaces reales) */
+.pie {
+  background: var(--secundario);
+  color: #d9d9d9;
+  padding: 36px 16px 20px;
+  text-align: left;
+  font-size: 0.95rem;
+  margin-top: 24px;
+}
+.pie a {
+  color: #d9d9d9;
+  text-decoration: none;
+  font-weight: 500;
+}
+.pie a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.pie h2,
+.pie h3 {
+  color: #fff;
+  margin: 0 0 14px;
+}
+.pie h2 {
+  font-size: 1.25rem;
+}
+.pie h3 {
+  font-size: 1rem;
+}
+.pie-cobertura,
+.pie-columnas,
+.pie-legal {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.pie-pestanas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.pie-pestanas button {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #bdbdbd;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pie-pestanas button.activa {
+  color: #fff;
+  border-bottom-color: var(--acento);
+}
+.pie-lugares {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.pie-lugares li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pie-lugares li.activo a {
+  color: #4ade80;
+  font-weight: 700;
+}
+.pie-lugares li.pronto a {
+  color: #9a9a9a;
+}
+.pie-activo,
+.pie-pronto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.pie-activo {
+  background: rgb(74 222 128 / 15%);
+  color: #4ade80;
+}
+.pie-pronto {
+  background: #2a2a2a;
+  color: #9a9a9a;
+}
+.pie-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.pie-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 16px;
+  padding: 24px 0;
+  border-top: 1px solid #333;
+}
+.pie-columnas nav,
+.pie-apps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pie-franquicia {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #9a9a9a;
+}
+.pie-tienda {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: #fff;
+  width: fit-content;
+}
+.pie-apps small {
+  color: #9a9a9a;
+}
+.pie-legal {
+  border-top: 1px solid #333;
+  padding-top: 16px;
+  font-size: 0.8rem;
+  color: #9a9a9a;
+}
+.pie-legal nav {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.pie-legal p {
+  margin: 0;
+}
+@media (min-width: 900px) {
+  .pie-lugares {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .pie-columnas {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .pie-legal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pie-legal nav {
+    margin: 0;
+  }
+}
+
+/* Páginas por país, ciudad y comida */
+.lugar {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  flex: 1;
+  line-height: 1.6;
+}
+.lugar h1 {
+  font-size: 2rem;
+  margin: 10px 0 8px;
+}
+.lugar h2 {
+  color: var(--secundario);
+  font-size: 1.25rem;
+  margin: 28px 0 10px;
+}
+.lugar .ld-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lugar-activo {
+  background: #e7f8ee !important;
+  color: #157347 !important;
+}
+.lugar-pronto {
+  background: #f1f1f1 !important;
+  color: #5e5e5e !important;
+}
+.lugar-ciudades ul,
+.lugar-publicos ul {
+  padding-left: 20px;
+}
+.lugar-ciudades li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.lugar-ciudades li span {
+  font-size: 0.8rem;
+  color: #5e5e5e;
+}
+.lugar-ciudades li.activo span {
+  color: #157347;
+  font-weight: 700;
+}
+.lugar .ld-form {
+  margin-top: 16px;
+}

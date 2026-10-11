@@ -3,6 +3,7 @@ import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { SelectorIdioma } from '../SelectorIdioma';
 import { TEXTOS_SITIO } from './textos';
+import { Pie } from './Pie';
 
 export function Sitio({
   idioma,
@@ -41,20 +42,7 @@ export function Sitio({
         </div>
       </header>
       {children}
-      <footer className="pie">
-        <nav className="pie-enlaces" aria-label="Legal">
-          <Enlace a="/privacidad">{t.pie.privacidad}</Enlace>
-          <Enlace a="/terminos">{t.pie.terminos}</Enlace>
-          <Enlace a="/soporte">{t.pie.soporte}</Enlace>
-          <Enlace a="/docs">{t.pie.docs}</Enlace>
-        </nav>
-        <p>
-          © {new Date().getFullYear()} tumbite.com | {t.pie.derechos} {t.pie.desarrollo}{' '}
-          <a href={MARCA.sitioEmpresa} target="_blank" rel="noopener noreferrer">
-            {MARCA.empresa}
-          </a>
-        </p>
-      </footer>
+      <Pie idioma={idioma} />
     </div>
   );
 }
