@@ -117,16 +117,31 @@ describe('zonas: pueblo en pueblo', () => {
       { minutos: 10 },
       dueno.token,
     );
-    // Un repartidor conectado en Ocala, aunque sea el único, no recibe pedidos de Miami.
-    const deOcala = await m.cuenta('repartidor');
+    // Zona vecina pegada a Miami: su repartidor está a pocos km del restaurante, pero es de otra zona.
+    await m.llamar(
+      'PUT',
+      '/datos/admin/zonas',
+      {
+        id: 'US-FL-BEACH',
+        nombre: 'Miami Beach',
+        pais: 'US',
+        lat: 25.79,
+        lng: -80.13,
+        radioKm: 3,
+        activa: true,
+      },
+      admin.token,
+    );
+    const deOtraZona = await m.cuenta('repartidor');
     await m.llamar(
       'POST',
       '/datos/repartidor/conectar',
-      { conectado: true, lat: 29.19, lng: -82.14 },
-      deOcala.token,
+      { conectado: true, lat: 25.795, lng: -80.13 },
+      deOtraZona.token,
     );
     expect(
-      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, deOcala.token)).datos.ofertas,
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, deOtraZona.token)).datos
+        .ofertas,
     ).toHaveLength(0);
     // Uno de Miami, lejos de la celda del restaurante pero dentro de la zona, sí (búsqueda en toda la zona).
     const deMiami = await m.cuenta('repartidor');
