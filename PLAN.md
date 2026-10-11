@@ -6,7 +6,7 @@ Fase 1 anterior: todo hecho salvo la prueba de pagos (espera Stripe). Historia e
 - [x] Paso 2: Arreglar en vivo las páginas internas (/privacidad, /panel…) que hoy redirigen a la portada, y que respondan también a HEAD.
 - [x] Paso 3: Migraciones seguras: el servidor revisa al arrancar qué columnas faltan en la base viva y las agrega solo (la base de producción ya existe; schema.sql no agrega columnas).
 - [x] Paso 4: Multi-zona («pueblo en pueblo»): tabla zonas con Miami sembrada, zona_id en usuarios, restaurantes, repartidores y pedidos, geohash para prefiltrar cercanía, índices compuestos por zona y estado, historial de estados del pedido. El servidor filtra todo por zona. Pruebas.
-- [ ] Paso 5: Lista de espera de los tres públicos (comensales, restaurantes, repartidores): tabla, servidor con validación y límite, panel admin para verla.
+- [x] Paso 5: Lista de espera de los tres públicos (comensales, restaurantes, repartidores): tabla, servidor con validación y límite, panel admin para verla.
 - [ ] Paso 6: Landing nueva al 100 %: tres públicos desde el minuto cero con sus formularios (con borrador), las pantallas reales de las apps en teléfonos, los pasos de cada público, el mapa de cobertura y del recorrido, planes para restaurantes, música, preguntas frecuentes, soporte humano. Bilingüe, celular primero.
 - [ ] Paso 7: Resumen del día para el restaurante (pedidos, ventas, comisión y neto de hoy) en el panel.
 - [ ] Paso 8: Admin: zonas (ver, crear, activar) y lista de espera.
