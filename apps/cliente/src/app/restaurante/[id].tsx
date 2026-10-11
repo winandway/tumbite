@@ -86,7 +86,7 @@ export default function MenuRestaurante() {
                       {nombrePlato(p, idioma)}
                     </Text>
                     {descripcion(p, idioma) ? (
-                      <Text style={{ color: '#6b6178' }}>{descripcion(p, idioma)}</Text>
+                      <Text style={{ color: '#5E5E5E' }}>{descripcion(p, idioma)}</Text>
                     ) : null}
                     <Text style={{ marginTop: 4, fontWeight: '700' }}>
                       {formatearDolares(p.precioCentavos, idioma)}

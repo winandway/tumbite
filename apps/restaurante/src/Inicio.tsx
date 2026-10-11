@@ -190,7 +190,7 @@ export function Inicio() {
         </Text>
       ))}
       {p.notas ? (
-        <Text style={{ marginTop: 6, color: '#6b6178' }}>
+        <Text style={{ marginTop: 6, color: '#5E5E5E' }}>
           {t.notas}: {p.notas}
         </Text>
       ) : null}
@@ -252,7 +252,7 @@ export function Inicio() {
             style={{
               backgroundColor: rest.abierto ? '#fff' : C.primario,
               borderWidth: 1,
-              borderColor: '#d8d0e3',
+              borderColor: '#D6D6D6',
               borderRadius: 999,
               paddingHorizontal: 16,
               paddingVertical: 8,
@@ -322,7 +322,7 @@ export function Inicio() {
         t.hechos,
         pedidos.filter((p) => p.estado === 'entregado' || p.estado === 'cancelado'),
         (p) => (
-          <Text style={{ color: '#6b6178' }}>{t.estados[p.estado]}</Text>
+          <Text style={{ color: '#5E5E5E' }}>{t.estados[p.estado]}</Text>
         ),
       )}
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />

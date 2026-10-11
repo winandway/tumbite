@@ -62,7 +62,7 @@ export function Campo({
         {...props}
         accessibilityLabel={etiqueta}
         style={[e.input, error ? e.inputError : null]}
-        placeholderTextColor="#9a90a8"
+        placeholderTextColor="#9A9A9A"
       />
       {error ? <Text style={e.error}>{error}</Text> : null}
     </View>
@@ -150,7 +150,7 @@ export function Boton({
 export const e = StyleSheet.create({
   fondo: { flex: 1, backgroundColor: C.fondo },
   cabecera: {
-    backgroundColor: C.secundario,
+    backgroundColor: C.primario,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -160,7 +160,7 @@ export const e = StyleSheet.create({
   marca: { color: '#fff', fontSize: 22, fontWeight: '800' },
   banderas: { flexDirection: 'row', gap: 6 },
   bandera: { borderWidth: 2, borderColor: 'transparent', borderRadius: 8, paddingHorizontal: 4 },
-  banderaActiva: { borderColor: C.acento },
+  banderaActiva: { borderColor: '#FFFFFF' },
   contenido: { padding: 16, gap: 4 },
   titulo: { fontSize: 26, fontWeight: '800', color: C.secundario, marginBottom: 12 },
   campo: { marginBottom: 14 },
@@ -168,7 +168,7 @@ export const e = StyleSheet.create({
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#d8d0e3',
+    borderColor: '#D6D6D6',
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
@@ -191,10 +191,10 @@ export const e = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 6,
   },
-  botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#d8d0e3' },
+  botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D6D6D6' },
   botonTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
   aviso: {
-    backgroundColor: '#fff4d6',
+    backgroundColor: '#FFF1EE',
     borderLeftWidth: 4,
     borderLeftColor: C.acento,
     padding: 10,
@@ -211,7 +211,7 @@ export const e = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#2B1B4E',
+    shadowColor: '#191919',
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,

@@ -11,10 +11,10 @@ export default function Entrada() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: C.secundario,
+          backgroundColor: C.primario,
         }}
       >
-        <ActivityIndicator color={C.acento} size="large" />
+        <ActivityIndicator color="#FFFFFF" size="large" />
       </View>
     );
   }

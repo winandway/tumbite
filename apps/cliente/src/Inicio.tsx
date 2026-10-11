@@ -46,7 +46,7 @@ export function Inicio() {
       <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario, marginBottom: 8 }}>
         {t.cerca}
       </Text>
-      {!punto && <Text style={{ color: '#6b6178', marginBottom: 8 }}>{t.sinUbicacion}</Text>}
+      {!punto && <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.sinUbicacion}</Text>}
       {error ? (
         <View>
           <Text style={e.error}>{error}</Text>
@@ -67,7 +67,7 @@ export function Inicio() {
           ]}
         >
           <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{r.nombre}</Text>
-          <Text style={{ color: '#6b6178', marginTop: 2 }}>
+          <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
             {[
               r.categoria,
               r.distanciaKm != null ? distanciaTexto(r.distanciaKm, idioma) : null,

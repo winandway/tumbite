@@ -90,7 +90,7 @@ export function SelectorIdioma({
                 transform: [{ rotate: '45deg' }],
               }}
             />
-            <Text style={{ marginBottom: 6, color: '#1A1325' }}>{titulo}</Text>
+            <Text style={{ marginBottom: 6, color: '#191919' }}>{titulo}</Text>
             {[...IDIOMAS].reverse().map((i, n) => {
               const elegido = idioma === i.codigo;
               return (
@@ -118,7 +118,7 @@ export function SelectorIdioma({
                       height: 20,
                       borderRadius: 10,
                       borderWidth: 2,
-                      borderColor: elegido ? '#e77600' : '#8d9096',
+                      borderColor: elegido ? '#EB1700' : '#8d9096',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
@@ -129,13 +129,13 @@ export function SelectorIdioma({
                           width: 10,
                           height: 10,
                           borderRadius: 5,
-                          backgroundColor: '#e77600',
+                          backgroundColor: '#EB1700',
                         }}
                       />
                     ) : null}
                   </View>
                   <Text style={{ fontSize: 16 }}>{i.bandera}</Text>
-                  <Text style={{ fontSize: 16, color: '#1A1325' }}>
+                  <Text style={{ fontSize: 16, color: '#191919' }}>
                     {i.codigo === 'en' ? 'English' : 'español'} - {i.codigo.toUpperCase()}
                   </Text>
                 </Pressable>

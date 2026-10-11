@@ -94,7 +94,7 @@ function Estrellas({
             accessibilityLabel={`${n} / 5`}
             hitSlop={6}
           >
-            <Text style={{ fontSize: 30, color: n <= valor ? '#FFB627' : '#d8d0e3' }}>★</Text>
+            <Text style={{ fontSize: 30, color: n <= valor ? '#FF3008' : '#D6D6D6' }}>★</Text>
           </Pressable>
         ))}
       </View>
@@ -160,7 +160,7 @@ export default function SeguirPedido() {
       {p && (
         <>
           <View style={[e.tarjeta, { backgroundColor: C.secundario }]}>
-            <Text style={{ color: C.acento, fontWeight: '800', fontSize: 18 }}>
+            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 18 }}>
               {p.restauranteNombre}
             </Text>
             <Text
@@ -189,7 +189,7 @@ export default function SeguirPedido() {
                 {t.repartidor}: {p.repartidor.nombre}
               </Text>
               {p.repartidor.actualizado ? (
-                <Text style={{ color: '#6b6178' }}>
+                <Text style={{ color: '#5E5E5E' }}>
                   {t.ubicacion}: {new Date(`${p.repartidor.actualizado}Z`).toLocaleTimeString()}
                 </Text>
               ) : null}
@@ -204,7 +204,7 @@ export default function SeguirPedido() {
             <Text style={{ fontWeight: '800', marginTop: 8 }}>
               {t.total}: {formatearDolares(p.total, idioma)}
             </Text>
-            <Text style={{ color: '#6b6178', marginTop: 4 }}>{p.direccion}</Text>
+            <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{p.direccion}</Text>
           </View>
           {p.estado === 'entregado' && (
             <View style={e.tarjeta}>

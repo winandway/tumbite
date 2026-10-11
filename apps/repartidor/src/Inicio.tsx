@@ -282,7 +282,7 @@ export function Inicio() {
                   alTocar={() => void accion(`/datos/repartidor/pedidos/${activo.id}/recogido`)}
                 />
               ) : (
-                <Text style={{ marginTop: 8, color: '#6b6178' }}>{t.esperando}</Text>
+                <Text style={{ marginTop: 8, color: '#5E5E5E' }}>{t.esperando}</Text>
               )}
             </>
           ) : (
@@ -290,7 +290,7 @@ export function Inicio() {
               <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
               <Text>{activo.direccion}</Text>
               {activo.notas ? (
-                <Text style={{ color: '#6b6178' }}>
+                <Text style={{ color: '#5E5E5E' }}>
                   {t.notas}: {activo.notas}
                 </Text>
               ) : null}
@@ -317,7 +317,7 @@ export function Inicio() {
                 {t.ganas} {formatearDolares(o.pagoRepartidor, idioma)}
               </Text>
               {o.propina > 0 ? (
-                <Text style={{ color: '#6b6178' }}>
+                <Text style={{ color: '#5E5E5E' }}>
                   {t.propinaIncluida} {formatearDolares(o.propina, idioma)}
                 </Text>
               ) : null}
@@ -339,7 +339,7 @@ export function Inicio() {
                 alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/rechazar`)}
                 secundario
               />
-              <Text style={{ color: '#6b6178', textAlign: 'center' }}>{t.sinCastigo}</Text>
+              <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.sinCastigo}</Text>
             </View>
           ))
         )
@@ -352,7 +352,7 @@ export function Inicio() {
             {estado.puntos} {t.puntos}
           </Text>
           {estado.nivel.siguiente ? (
-            <Text style={{ color: '#6b6178' }}>
+            <Text style={{ color: '#5E5E5E' }}>
               {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
               {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
             </Text>

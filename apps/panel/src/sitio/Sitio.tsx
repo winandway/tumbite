@@ -20,6 +20,12 @@ export function Sitio({
         <Enlace a="/" className="logo">
           <img src="/icono.svg" alt="" width={32} height={32} /> {MARCA.nombre}
         </Enlace>
+        <nav className="ld-nav" aria-label={t.menu.como}>
+          <a href="/#comensales">{t.menu.comensales}</a>
+          <a href="/#restaurantes">{t.menu.restaurantes}</a>
+          <a href="/#repartidores">{t.menu.repartidores}</a>
+          <a href="/#como">{t.menu.como}</a>
+        </nav>
         <div className="cabecera-derecha">
           <Enlace a="/panel" className="boton-panel">
             {t.menu.panel}

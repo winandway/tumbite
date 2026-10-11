@@ -12,6 +12,14 @@ Las reglas globales de Richard aplican; estas se suman.
 - `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
 
+## Colores corporativos (dictado por Richard, 10 oct 2026) — SOLO estos
+
+- Rojo escarlata, dominante: `#EB1700` (principal, pasa contraste con texto blanco) y `#FF3008` (variante viva).
+- Blanco `#FFFFFF`.
+- Gris oscuro Cod Gray `#191919` (textos, cabeceras oscuras, botón secundario fuerte).
+- PROHIBIDO el morado y cualquier otro color de marca. Grises neutros solo para bordes y textos suaves.
+- Estilo de referencia: Uber Eats (titular grande, buscador de dirección con pin, comida grande a la derecha), con PIZZAS, no hamburguesas.
+
 ## Estructura
 
 - `apps/cliente`, `apps/repartidor`, `apps/restaurante` — tres apps Expo (un solo código compartido). Se instalan dependencias con `npx expo install` dentro de cada app.

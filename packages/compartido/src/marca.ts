@@ -4,10 +4,12 @@ export const MARCA = {
   empresa: 'Windoce LLC',
   sitioEmpresa: 'https://windoce.com',
   colores: {
-    primario: '#FF3008',
-    secundario: '#2B1B4E',
-    acento: '#FFB627',
-    fondo: '#FFF8F3',
-    texto: '#1A1325',
+    // Colores corporativos (Richard, 10 oct 2026). SOLO estos: rojo escarlata dominante, blanco y Cod Gray.
+    primario: '#EB1700',
+    secundario: '#191919',
+    acento: '#FF3008',
+    fondo: '#FFFFFF',
+    texto: '#191919',
+    suave: '#F6F6F6',
   },
 } as const;

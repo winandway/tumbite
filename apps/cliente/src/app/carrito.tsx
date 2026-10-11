@@ -227,7 +227,7 @@ export default function PantallaCarrito() {
               paddingVertical: 8,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: propinaPb === pb ? C.primario : '#d8d0e3',
+              borderColor: propinaPb === pb ? C.primario : '#D6D6D6',
               backgroundColor: propinaPb === pb ? C.primario : '#fff',
             }}
           >
@@ -246,7 +246,7 @@ export default function PantallaCarrito() {
           placeholder="0.00"
         />
       )}
-      <Text style={{ color: '#6b6178', marginBottom: 12 }}>{t.propinaNota}</Text>
+      <Text style={{ color: '#5E5E5E', marginBottom: 12 }}>{t.propinaNota}</Text>
 
       {regalos.map((r) => (
         <Pressable
@@ -259,7 +259,7 @@ export default function PantallaCarrito() {
             {
               borderWidth: 2,
               borderColor: regaloElegido === r.tipo ? C.acento : 'transparent',
-              backgroundColor: '#fff8e6',
+              backgroundColor: '#FFF1EE',
             },
           ]}
         >
