@@ -149,7 +149,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 ## C-RESPALDO — Copia de seguridad diaria (11 oct 2026)
 
 - **Qué:** `POST /datos/respaldo` (mismo secreto del reloj) vuelca cada tabla a `respaldos/AAAA-MM-DD/<tabla>.json` en el almacén del sitio (`env.BUCKET`), sin la tabla `sesiones`, y borra lo más viejo que 30 días. El workflow `reloj.yml` lo pide a las 08:00 UTC (3 am Miami) y a mano con «Hacer también la copia de seguridad».
-- **Canario:** `/datos/salud` → `respaldo: ok/error` y `ultimoRespaldo` con la fecha.
+- **Canario:** `/datos/salud` → `respaldo: ok/error`. Ojo: `ultimoRespaldo` vive en memoria de cada instancia del Worker, así que puede salir `null` aunque el respaldo haya corrido; la prueba de verdad es la lista del almacén (`listar_archivos` → `respaldos/<día>/…`). Primer respaldo real: 11 oct 2026, 19 tablas.
 - **Cómo se restaura:** bajar el JSON de la tabla del almacén (listar_archivos / el panel) e insertarlo con `consultar_base`. Es un respaldo lógico, no de archivos: las fotos ya viven en el mismo almacén.
 - **Prueba:** `apps/servidor/src/respaldo.test.ts` con almacén de mentira.
 
