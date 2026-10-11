@@ -8,6 +8,7 @@ import globals from 'globals';
 export default tseslint.config(
   {
     ignores: [
+      'apps/panel/scripts/**',
       '**/node_modules/**',
       '**/dist/**',
       '**/.expo/**',

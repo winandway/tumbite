@@ -13,6 +13,8 @@ for i in $(seq 1 48); do
       echo "  $r → $code"
       [ "$code" = "200" ] || ok=0
     done
+    # El HTML tiene que llegar armado (prerender): Google no debe depender del JavaScript.
+    if curl -fsS "$URL/pais/colombia" | grep -q '<h1>'; then echo "  prerender → ok"; else echo "::error::El HTML de /pais/colombia llega vacío: falló el prerender."; ok=0; fi
     [ "$ok" = "1" ] && exit 0
     echo "::error::Una ruta crítica no responde 200 en pruebas. No se publica en producción."
     exit 1

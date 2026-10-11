@@ -44,6 +44,7 @@
 - [x] Etapa 0.4b (11 oct 2026): copia de seguridad diaria al almacén del sitio, 30 días (candado C-RESPALDO).
 - [x] Sección Docs pública en tumbite.com/docs, 20 guías bilingües (candado C-DOCS).
 - [x] Pie de página profesional con países, ciudades y comidas, cada uno con su página para SEO (12 oct 2026, candado C-PIE).
+- [x] Prerender: las 50 páginas públicas llegan armadas en HTML (12 oct 2026, candado C-PRERENDER).
 - [ ] 👤 **Franquicias por ciudad:** investigación en la sesión de Laboratorio AI (prompt entregado el 12 oct). Con el resultado se construye la página de franquicias y la calculadora por ciudad. Decisiones de dinero (cuota, porcentaje, derechos) son de Richard.
 - [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
 - [x] Etapa 2 (11 oct 2026): mapa en vivo del repartidor, pin de dirección en el mapa, WhatsApp cableado, avisos al celular preparados (candado C-ETAPA-2). Falta: ubicación del repartidor en segundo plano (requiere build propio).
