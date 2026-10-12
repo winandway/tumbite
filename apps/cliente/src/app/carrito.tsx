@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
   type ConfigDinero,
-  ErrorApi,
   calcularPedido,
   distanciaKm,
   dolaresACentavos,
@@ -60,7 +59,6 @@ export default function PantallaCarrito() {
   const [regaloElegido, setRegaloElegido] = useState<Regalo['tipo'] | null>(null);
   // El pedido ya creado y esperando la tarjeta. El formulario de pago aparece aquí mismo.
   const [cobroGuardado, setCobro] = useState<(Cobro & { total: number }) | null>(null);
-  const [clavePublica, setClavePublica] = useState('');
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
@@ -85,10 +83,6 @@ export default function PantallaCarrito() {
       .catch(() => {
         // Si no responde, se muestra con los valores de siempre; el servidor recalcula al pagar.
       });
-    api
-      .pedir<{ stripePublica?: string | null }>('GET', '/datos/publico')
-      .then((r) => setClavePublica(r.stripePublica ?? ''))
-      .catch(() => setClavePublica(''));
     void miUbicacion().then(setPunto);
   }, [api]);
 
@@ -153,9 +147,10 @@ export default function PantallaCarrito() {
         regalo: regalo > 0 ? regaloElegido : null,
       });
       // La tarjeta se pide aquí mismo, sin salir de la app.
+      if (!r.clavePublica) throw new Error(t.pagoNoDisponible);
       setCobro({ ...r, total: d.totalCliente });
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      setError(x instanceof Error ? x.message : String(x));
     } finally {
       setPagando(false);
     }
@@ -312,12 +307,12 @@ export default function PantallaCarrito() {
           {error}
         </Text>
       ) : null}
-      {cobro && clavePublica ? (
+      {cobro?.clavePublica ? (
         <>
           <Text style={{ fontWeight: '800', fontSize: 17, marginBottom: 8 }}>{t.tarjeta}</Text>
           <PagoTarjeta
             cobro={cobro}
-            clavePublica={clavePublica}
+            clavePublica={cobro.clavePublica}
             idioma={idioma}
             textos={{ pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}` }}
             alPagar={() => {
@@ -331,7 +326,7 @@ export default function PantallaCarrito() {
         <Boton
           texto={`${t.continuarPago} · ${formatearDolares(d.totalCliente, idioma)}`}
           alTocar={() => void pagar()}
-          cargando={pagando || !clavePublica}
+          cargando={pagando}
         />
       )}
     </Pantalla>

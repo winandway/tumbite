@@ -234,6 +234,9 @@ pedidos.post('/pedidos', async (c) => {
       clientSecret: intento.client_secret,
       sesionCliente: sesionCliente.client_secret,
       clienteStripe,
+      // La clave pública viaja con el cobro: la app no depende de otra consulta (que puede venir
+      // vieja de la caché) para pintar el formulario de tarjeta.
+      clavePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
       desglose,
     },
     201,

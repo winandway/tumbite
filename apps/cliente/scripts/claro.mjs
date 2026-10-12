@@ -10,7 +10,7 @@ html = html
   .replace('<html lang="en">', '<html lang="es">')
   .replace(
     '<title>Tumbite</title>',
-    '<meta name="color-scheme" content="light" />\n    <meta name="theme-color" content="#FF3008" />\n    <title>Tumbite</title>\n    <style>html, body { background: #ffffff !important; color: #191919; color-scheme: light; }</style>',
+    '<meta name="color-scheme" content="only light" />\n    <meta name="theme-color" content="#FF3008" />\n    <title>Tumbite</title>\n    <style>html, body { background: #ffffff !important; color: #191919; color-scheme: only light; }</style>',
   );
 if (!html.includes('name="color-scheme"'))
   throw new Error('claro: no se pudo inyectar el modo claro');

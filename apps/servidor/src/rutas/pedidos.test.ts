@@ -42,6 +42,7 @@ function stripeFalso() {
 async function escenario(
   extra: Record<string, unknown> = {
     STRIPE_SECRET_KEY: 'sk_test_x',
+    STRIPE_PUBLISHABLE_KEY: 'pk_test_x',
     STRIPE_WEBHOOK_SECRET: SECRETO,
   },
 ) {
@@ -99,6 +100,8 @@ describe('pedidos y pagos', () => {
     expect(r.datos.urlPago).toBeUndefined();
     expect(r.datos.clientSecret).toContain('_secret_');
     expect(r.datos.sesionCliente).toContain('_secret_');
+    // La clave pública va con el cobro: el botón no espera otra consulta que puede venir vieja.
+    expect(r.datos.clavePublica).toBe('pk_test_x');
     expect(r.datos.desglose.subtotal).toBe(3000);
     const intento = llamadas.find((l) => l.url.includes('/payment_intents'));
     expect(decodeURIComponent(intento?.cuerpo ?? '')).toContain(

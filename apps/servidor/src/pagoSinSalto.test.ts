@@ -21,3 +21,11 @@ describe('pago dentro de la app', () => {
     expect(leer('PagoTarjeta.tsx')).toMatch(/presentPaymentSheet/);
   });
 });
+
+describe('el botón de pagar nunca gira para siempre', () => {
+  it('no depende de una consulta aparte de la clave pública', () => {
+    const carrito = leer('app/carrito.tsx');
+    expect(carrito).not.toMatch(/datos\/publico/);
+    expect(carrito).toMatch(/cargando=\{pagando\}/);
+  });
+});

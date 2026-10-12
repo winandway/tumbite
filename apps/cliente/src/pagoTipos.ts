@@ -3,6 +3,7 @@ export type Cobro = {
   clientSecret: string;
   sesionCliente: string;
   clienteStripe: string;
+  clavePublica?: string;
 };
 
 export type PropsPago = {

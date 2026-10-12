@@ -111,7 +111,7 @@ app.get('/datos/publico', (c) =>
     },
     200,
     {
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      'Cache-Control': 'public, max-age=0, s-maxage=60',
     },
   ),
 );
