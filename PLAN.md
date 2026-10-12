@@ -11,4 +11,4 @@ Requisitos leídos el 12 oct 2026 en las guías de Apple (5.1.1, 5.1.2, 5.1.5) y
 - [x] 7. Aviso de aceptación al crear cuenta (app y panel) con enlaces a Términos y Privacidad.
 - [x] 8. Menú de 3 puntos de las apps: «Términos y privacidad» y «Borrar mi cuenta» (va directo a la página de borrar).
 - [x] 9. Pruebas de candado, verify completo, ver en pantalla, documentos (CANDADOS, PENDIENTES, TIENDAS).
-- [ ] 10. Commit, push, publicar y comprobar en vivo las páginas nuevas.
+- [x] 10. Commit, push, publicar y comprobar en vivo las páginas nuevas.
