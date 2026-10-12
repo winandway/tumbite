@@ -58,7 +58,46 @@ try {
     dom.window.localStorage.clear();
     dom.window.localStorage.setItem('tumbite.idioma', 'es');
     const html = renderToString(React.createElement(App));
+    // Título y descripción propios de cada página (si no, Google ve 50 páginas iguales).
+    const limpiar = (t) =>
+      t
+        .replace(/<[^>]+>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const h1 = limpiar(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '');
+    const parrafo = limpiar(
+      (ruta === '/'
+        ? html.match(/<div class="ld-hero-texto">[\s\S]*?<p>([\s\S]*?)<\/p>/)?.[1]
+        : null) ??
+        html.match(/<p class="(?:ld-entrada|docs-resumen|docs-sub)"[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
+        html.match(/<main[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
+        '',
+    );
+    const titulo =
+      ruta === '/'
+        ? 'Tumbite · Comida a domicilio en Miami'
+        : /tumbite/i.test(h1)
+          ? h1
+          : `${h1} · Tumbite`;
+    const descripcion = (parrafo || 'Tumbite: comida rica, con ritmo, hasta tu puerta.').slice(
+      0,
+      155,
+    );
+    const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     const pagina = plantilla
+      .replace(/<title>[^<]*<\/title>/, `<title>${esc(titulo)}</title>`)
+      .replace(
+        /<meta name="description" content="[^"]*" \/>/,
+        `<meta name="description" content="${esc(descripcion)}" />`,
+      )
+      .replace(
+        /<meta property="og:title" content="[^"]*" \/>/,
+        `<meta property="og:title" content="${esc(titulo)}" />`,
+      )
+      .replace(
+        /<meta property="og:url" content="[^"]*" \/>/,
+        `<meta property="og:url" content="${DOMINIO}${ruta === '/' ? '/' : ruta}" />`,
+      )
       // Aunque la plantilla ya traiga contenido (corrida repetida), se reemplaza entero.
       .replace(
         /<div id="raiz">[\s\S]*?<\/div>(?=\s*<\/body>)/,
