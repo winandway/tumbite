@@ -109,6 +109,10 @@ cada pedido, APIs y costos, alarmas y fases. Resumen del orden:
 - 🤖 **Fase A — Manager con reglas, costo cero:** reloj de tiempos esperados por pedido, semáforo
   verde/amarillo/rojo, avisos automáticos y bitácora en el panel. Puede empezar apenas se cierre la
   Etapa 1 (no gasta en IA ni toca dinero).
+- 👤 + 🤖 **Fase C' — Asistentes de soporte con IA (decisión de Richard, 12 oct):** uno para el cliente
+  («¿dónde está mi comida?»), otro para el repartidor y otro para el restaurante («¿cuándo cobro?»),
+  que leen la base solo de esa persona; y chat repartidor ↔ cliente con traducción en vivo. Va
+  después de la Fase A y antes de la B. Necesita el tope de gasto aprobado por Richard.
 - 🤖 **Fase B — Tiempo real de ruta** (OSRM): repartidor por minutos, oferta anticipada, juntar pedidos.
 - 👤 + 🤖 **Fase C — El cerebro que habla:** primero la guardia de modelos y el tope de gasto
   (👤 Richard aprueba el tope); luego mensajes, resumen del día y de reseñas.

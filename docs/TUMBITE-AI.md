@@ -137,6 +137,36 @@ Lo más valioso de la IA es la historia. Desde ya conviene guardar, sin costo:
 3. El nombre: «Tumbite AI» como nombre de la función dentro de la app. Antes de usarlo en
    publicidad, se agrega a la revisión de marca con el abogado.
 
+## 9. Decisión de Richard (12 oct 2026): primero, asistentes de soporte con IA
+
+Richard prefiere empezar la IA por el soporte, con un asistente para cada papel que lee la base de
+datos y responde lo que la app no muestra:
+
+- **Cliente:** «¿dónde está mi comida?», «¿ya la están preparando?», «¿por qué tarda?», «¿cuándo me
+  devuelven el dinero?». Responde con el estado real del pedido, la bitácora y la ubicación.
+- **Repartidor:** «¿cuánto llevo ganado hoy?», «¿cuándo me pagan?», «¿dónde queda la entrada del
+  restaurante?», dudas de la app.
+- **Restaurante:** «¿cuándo cobro?», «¿quién me paga y cómo?», «¿por qué no puedo retirar?» → «te
+  falta conectar tu banco en Stripe, toca aquí».
+- **Chat repartidor ↔ cliente con traducción en vivo:** cada uno escribe en su idioma y el otro lo
+  lee en el suyo. Solo mientras el pedido está activo; se cierra al entregar.
+
+**Cómo se hace (sin «entrenar» un modelo):** el asistente recibe dos cosas: (1) las guías de Docs
+que ya existen, como su memoria, y (2) unas pocas **herramientas de solo lectura** sobre la base,
+que siempre filtran por la persona que está escribiendo (un cliente solo ve sus pedidos; un
+restaurante solo su dinero). El asistente no puede cambiar nada, ni mover dinero, ni ver datos de
+otros. Si no sabe, pasa a una persona (support@tumbite.com, luego WhatsApp).
+
+**Costo estimado (precios del 12 oct 2026, sección 4):** una conversación de soporte de 4 preguntas
+con Gemini 2.5 Flash sale en **menos de un centavo** (≈ 0,007 USD); con Flash-Lite, ≈ 0,002 USD.
+Traducir un mensaje del chat: ≈ 0,0001 USD. Si 1 de cada 10 pedidos abre el chat, mil pedidos al
+día cuestan **unos 0,70 USD al día**. El gasto depende de cuánto se chatea, no de cuántos pedidos
+hay. Mismas alarmas de la sección 5 (guardia de modelos, prepago, tope diario, sin datos
+personales de más).
+
+**Orden nuevo de las fases:** A (Manager con reglas, costo cero) → **C' asistentes de soporte y
+chat con traducción** → B (tiempo real de ruta) → menú desde foto → aprender.
+
 ## Fuentes (leídas el 12 oct 2026)
 
 - Precios Gemini: https://www.morphllm.com/gemini-api-pricing y https://anotherwrapper.com/llm-pricing/gemini-2.5-flash (oficial a confirmar: https://ai.google.dev/gemini-api/docs/pricing)
