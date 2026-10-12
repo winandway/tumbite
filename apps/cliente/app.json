@@ -57,6 +57,7 @@
       ]
     ],
     "privacy": "public",
-    "description": "Food delivery in Miami. Order from local restaurants and track your driver live."
+    "description": "Food delivery in Miami. Order from local restaurants and track your driver live.",
+    "owner": "windoce-llc"
   }
 }

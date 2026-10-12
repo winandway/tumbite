@@ -46,6 +46,7 @@
       ]
     ],
     "privacy": "public",
-    "description": "Receive and manage your Tumbite orders."
+    "description": "Receive and manage your Tumbite orders.",
+    "owner": "windoce-llc"
   }
 }
