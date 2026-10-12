@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { app } from './app';
+import { app, raizDeApp } from './app';
 
 describe('servidor', () => {
   it('la salud responde 200 y marca como pendiente lo que aún no está conectado', async () => {
@@ -110,5 +110,15 @@ describe('app del cliente en versión web (/app)', () => {
     const res = await app.request('/app/restaurante/abc', {}, { ASSETS });
     expect(await res.text()).toContain('app');
     expect(pedidas).toContain('/app/');
+  });
+});
+
+describe('app del repartidor en versión web (/repartidor)', () => {
+  it('sus rutas internas caen en su propia raíz, no en la portada ni en la del cliente', () => {
+    expect(raizDeApp('/repartidor')).toBe('/repartidor/');
+    expect(raizDeApp('/repartidor/billetera')).toBe('/repartidor/');
+    expect(raizDeApp('/app/pedido/1')).toBe('/app/');
+    expect(raizDeApp('/repartidores')).toBe('/');
+    expect(raizDeApp('/privacidad')).toBe('/');
   });
 });

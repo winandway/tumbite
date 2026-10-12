@@ -30,6 +30,16 @@ type Pedido = {
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
 type Billetera = { saldo: number; cuentaConectada: boolean; pagosActivos: boolean };
 
+/** La ubicación con un tope de 15 segundos: si el GPS no responde, se usa la última conocida. */
+async function ubicacionConLimite(): Promise<Location.LocationObject | null> {
+  const tope = new Promise<null>((r) => setTimeout(() => r(null), 15000));
+  const actual = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }).catch(
+    () => null,
+  );
+  const p = await Promise.race([actual, tope]);
+  return p ?? (await Location.getLastKnownPositionAsync().catch(() => null));
+}
+
 const T = {
   es: {
     conectado: 'Conectado: recibiendo pedidos',
@@ -37,6 +47,9 @@ const T = {
     conectar: 'Conectarme',
     desconectar: 'Desconectarme',
     sinUbicacion: 'Para recibir pedidos necesitamos tu ubicación mientras usas la app.',
+    buscandoUbicacion: 'Buscando tu ubicación…',
+    ubicacionTarda:
+      'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que el navegador tenga permiso, y vuelve a intentar.',
     buscando: 'Buscando pedidos cerca de ti…',
     oferta: 'Nueva oferta',
     ganas: 'Ganas',
@@ -68,6 +81,9 @@ const T = {
     conectar: 'Go online',
     desconectar: 'Go offline',
     sinUbicacion: 'To receive orders we need your location while you use the app.',
+    buscandoUbicacion: 'Finding your location…',
+    ubicacionTarda:
+      'We couldn’t read your location. Make sure GPS is on and your browser has permission, then try again.',
     buscando: 'Looking for orders near you…',
     oferta: 'New offer',
     ganas: 'You earn',
@@ -113,6 +129,9 @@ export function Inicio() {
   const [ofertas, setOfertas] = useState<Pedido[]>([]);
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
+  const [cambiando, setCambiando] = useState(false);
+  // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
+  const [errorCarga, setErrorCarga] = useState('');
   const [aviso, setAviso] = useState('');
   const vigilante = useRef<Location.LocationSubscription | null>(null);
 
@@ -126,9 +145,9 @@ export function Inicio() {
         );
       else setOfertas([]);
       setBilletera(await api.pedir<Billetera>('GET', '/datos/billetera'));
-      setError('');
+      setErrorCarga('');
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      setErrorCarga(x instanceof ErrorApi ? x.message : String(x));
     }
   }, [api]);
 
@@ -170,21 +189,31 @@ export function Inicio() {
     };
   }, [estado?.conectado, api]);
 
+  // Nunca en silencio: mientras busca la ubicación lo dice, y si algo falla se ve en pantalla.
   async function alternar() {
+    if (cambiando) return;
     setError('');
-    if (estado?.conectado) {
-      await api.pedir('POST', '/datos/repartidor/conectar', { conectado: false });
-      return cargar();
+    setCambiando(true);
+    try {
+      if (estado?.conectado) {
+        await api.pedir('POST', '/datos/repartidor/conectar', { conectado: false });
+        return await cargar();
+      }
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return setError(t.sinUbicacion);
+      const p = await ubicacionConLimite();
+      if (!p) return setError(t.ubicacionTarda);
+      await api.pedir('POST', '/datos/repartidor/conectar', {
+        conectado: true,
+        lat: p.coords.latitude,
+        lng: p.coords.longitude,
+      });
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
+    } finally {
+      setCambiando(false);
     }
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return setError(t.sinUbicacion);
-    const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-    await api.pedir('POST', '/datos/repartidor/conectar', {
-      conectado: true,
-      lat: p.coords.latitude,
-      lng: p.coords.longitude,
-    });
-    await cargar();
   }
 
   async function accion(ruta: string) {
@@ -240,11 +269,15 @@ export function Inicio() {
               marginTop: 4,
             }}
           >
-            {estado.conectado ? t.desconectar : t.conectar}
+            {cambiando ? t.buscandoUbicacion : estado.conectado ? t.desconectar : t.conectar}
           </Text>
         </Pressable>
       )}
-      {error ? <Text style={[e.error, { marginBottom: 8 }]}>{error}</Text> : null}
+      {error || errorCarga ? (
+        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+          {error || errorCarga}
+        </Text>
+      ) : null}
       {aviso ? (
         <Text style={{ color: '#0d7a3a', fontWeight: '700', marginBottom: 8 }}>{aviso}</Text>
       ) : null}

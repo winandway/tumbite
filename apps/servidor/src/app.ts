@@ -138,6 +138,13 @@ export function conCanonica(res: Response, href: string): Response {
  * (landing, legales, panel) son una sola página: si el archivo no existe, se
  * entrega index.html y el navegador decide qué mostrar.
  */
+/** A qué raíz cae una ruta de página que no existe como archivo. */
+export function raizDeApp(ruta: string): string {
+  for (const base of ['/app', '/repartidor'])
+    if (ruta === base || ruta.startsWith(`${base}/`)) return `${base}/`;
+  return '/';
+}
+
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/datos/')) return c.json({ error: 'Esta dirección no existe.' }, 404);
   if (!c.env.ASSETS) return c.text('No encontrado', 404);
@@ -147,8 +154,8 @@ app.notFound(async (c) => {
   if (res.status === 404 && esPagina) {
     // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
     // y eso mandaba a la persona a la portada en vez de a la página que pidió.
-    // La app del cliente en versión web vive en /app: sus rutas internas caen en /app/.
-    const raiz = c.req.path === '/app' || c.req.path.startsWith('/app/') ? '/app/' : '/';
+    // Las apps web viven en /app (cliente) y /repartidor: sus rutas internas caen en su raíz.
+    const raiz = raizDeApp(c.req.path);
     res = await c.env.ASSETS.fetch(
       new Request(new URL(raiz, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
     );

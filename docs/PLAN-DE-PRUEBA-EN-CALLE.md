@@ -11,7 +11,7 @@
 ## La segunda prueba, en orden
 
 - **Antes (la IA):** zona de pruebas Novi activa; restaurante aprobado y abierto con un plato de un dólar; pago sin salto en la app; correo, avisos y canario en verde. Revisar `/datos/salud`.
-- **Cuentas (Richard, una vez):** cliente (`tumbite.com+cliente@gmail.com`), restaurante (`tumbite.com+restaurante@gmail.com`), repartidor (`tumbite.com+repartidor@gmail.com`, en la app web del repartidor o en Expo Go cuando funcione).
+- **Cuentas (Richard, una vez):** cliente (`tumbite.com+cliente@gmail.com`), restaurante (`tumbite.com+restaurante@gmail.com`), repartidor (`tumbite.com+repartidor@gmail.com`, en la app web del repartidor, `https://tumbite.com/repartidor/`, abierta en Safari).
 - **Dirección real a unas tres cuadras** del restaurante, marcada en el mapa, para probar mapa y tiempo estimado.
 - **El recorrido:** el cliente pide y paga dentro de la app → suena la alarma del restaurante y lo acepta → «¡Listo!» → al repartidor le llega la oferta → la acepta, va al restaurante, «Recogido» → recorrido en bicicleta las tres cuadras con la ubicación encendida → el cliente lo ve acercarse en el mapa → «Entregado» → el dinero aparece en las billeteras del restaurante y del repartidor → el cliente califica.
 - **Qué se anota:** cada paso con hora y captura; cualquier cosa rara va a esta lista como fallo y se arregla antes de la siguiente prueba.
