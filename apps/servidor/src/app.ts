@@ -14,6 +14,8 @@ import { operacion } from './rutas/operacion';
 import { regalos } from './rutas/regalos';
 import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
+import { tickets } from './rutas/tickets';
+import { franquicias } from './rutas/franquicias';
 import { fotos, media } from './rutas/fotos';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
@@ -182,6 +184,8 @@ app.notFound(async (c) => {
     );
   }
   let respuesta = new Response(res.body, res);
+  // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.
+  if (c.req.path.startsWith('/t/')) respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
   if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
     respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
@@ -203,6 +207,8 @@ app.route('/datos', operacion);
 app.route('/datos', regalos);
 app.route('/datos', zonas);
 app.route('/datos', espera);
+app.route('/datos', tickets);
+app.route('/datos', franquicias);
 app.route('/datos', fotos);
 app.route('/', media);
 app.route('/datos', respaldo);

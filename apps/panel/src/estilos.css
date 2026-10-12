@@ -2796,3 +2796,153 @@ button {
   width: fit-content;
   margin-bottom: 12px;
 }
+
+/* Tickets: la conversación privada /t/<codigo> */
+.ticket {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+.ticket-estado {
+  color: #5e5e5e;
+}
+.ticket-abierto {
+  background: #fff1ee;
+  color: #b42200;
+}
+.ticket-hilo {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+}
+.ticket-hilo li {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 12px 16px;
+  max-width: 90%;
+}
+.ticket-hilo li.del-equipo {
+  justify-self: end;
+  background: #191919;
+  color: #fff;
+}
+.ticket-hilo time {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+.ticket-hilo p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+.form-franquicia {
+  margin-top: 24px;
+}
+
+/* Superadmin y panel del franquiciado */
+.super h1 {
+  margin-top: 0;
+}
+.super-tarjetas {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 16px 0 24px;
+}
+.super-tarjeta {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.super-tarjeta span,
+.super-tarjeta small {
+  color: #5e5e5e;
+  font-size: 0.85rem;
+}
+.super-tarjeta strong {
+  font-size: 1.6rem;
+  font-family: Poppins, system-ui, sans-serif;
+}
+.tabla-ancha {
+  overflow-x: auto;
+}
+.super .tabla {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.super .tabla th,
+.super .tabla td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e6e6e6;
+  white-space: nowrap;
+}
+.super-libres,
+.super-lista,
+.super-bandeja,
+.super-franquicias {
+  list-style: none;
+  padding: 0;
+}
+.super-libres li,
+.super-lista li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.super-bandeja li a {
+  display: block;
+  padding: 12px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  color: #191919;
+}
+.super-bandeja small {
+  display: block;
+  color: #5e5e5e;
+  margin-top: 4px;
+}
+.super-filtros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.super-filtros button {
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.super-filtros button.activa {
+  background: #191919;
+  color: #fff;
+  border-color: #191919;
+}
+.super-franquicias {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.super-dos {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.ticket-responder small {
+  display: block;
+  margin-top: 8px;
+  color: #5e5e5e;
+}
+.super-tarjeta a {
+  color: #191919;
+}

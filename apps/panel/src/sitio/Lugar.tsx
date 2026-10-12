@@ -1,6 +1,7 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { FormEspera } from './FormEspera';
+import { FormFranquicia } from './FormFranquicia';
 import { Icono } from './Icono';
 import {
   CIUDADES,
@@ -135,6 +136,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           <Enlace a="/como-funciona#franquicias">{t.franquiciaEnlace}</Enlace>
         </section>
       )}
+      {pais && !activo && <FormFranquicia idioma={idioma} pais={enIdioma(pais.nombre, idioma)} />}
       <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
       <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
       <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />

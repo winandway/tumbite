@@ -37,7 +37,9 @@ const es = {
     regalos: 'Regalos y marketing',
   },
   menuAdmin: {
-    inicio: 'Inicio',
+    inicio: 'Resumen',
+    tickets: 'Tickets',
+    franquicias: 'Franquicias',
     restaurantes: 'Restaurantes',
     dinero: 'Dinero',
     repartidores: 'Repartidores',
@@ -46,6 +48,9 @@ const es = {
   },
   bienvenidaRest: 'Desde aquí manejas tu restaurante en Tumbite.',
   bienvenidaAdmin: 'Panel de administración de Tumbite.',
+  noExiste: 'Esta página no existe.',
+  alInicio: '← Ir al inicio',
+  miFranquicia: 'Ir al panel de mi franquicia',
   pronto: 'Esta sección llega en el siguiente paso.',
 };
 
@@ -88,7 +93,9 @@ const en: T = {
     regalos: 'Gifts and marketing',
   },
   menuAdmin: {
-    inicio: 'Home',
+    inicio: 'Overview',
+    tickets: 'Tickets',
+    franquicias: 'Franchises',
     restaurantes: 'Restaurants',
     dinero: 'Money',
     repartidores: 'Drivers',
@@ -97,6 +104,9 @@ const en: T = {
   },
   bienvenidaRest: 'Manage your restaurant on Tumbite from here.',
   bienvenidaAdmin: 'Tumbite admin dashboard.',
+  noExiste: 'This page doesn’t exist.',
+  alInicio: '← Go home',
+  miFranquicia: 'Go to my franchise dashboard',
   pronto: 'This section is coming in the next step.',
 };
 

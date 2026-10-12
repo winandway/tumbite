@@ -23,6 +23,23 @@ import { Regalos } from './Regalos';
 import { Pedidos } from './Pedidos';
 import { AdminRepartidores } from './AdminRepartidores';
 import { AdminEspera, AdminZonas } from './AdminZonas';
+import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
+import { PanelFranquicia } from './PanelFranquicia';
+import { ir } from '../ruta';
+import { pedir } from './api';
+
+/**
+ * Sección del superadmin según la parte de la dirección después de su base secreta
+ * (/panel/control-<id>). Las herramientas de siempre (restaurantes, dinero…) viven también ahí.
+ */
+function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
+  if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
+  if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
+  const t = /^\/tickets\/([0-9a-f-]{36})$/.exec(sub);
+  if (t?.[1]) return <SuperTickets base={base} idioma={idioma} ticketId={t[1]} />;
+  if (sub === '/franquicias') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
+  return seccion(`/panel${sub}`, usuario, idioma);
+}
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
   if (usuario.rol === 'restaurante') {
@@ -76,6 +93,46 @@ export function PanelApp({ ruta }: { ruta: string }) {
   }
 
   const usuario = estado.cargando ? null : estado.usuario;
+
+  // Dirección secreta del superadmin: solo el servidor la sabe y solo se la dice a un admin.
+  const [baseAdmin, setBaseAdmin] = useState<string | null>(null);
+  const [miFranquicia, setMiFranquicia] = useState<string | null>(null);
+  useEffect(() => {
+    if (!usuario) return;
+    if (usuario.rol === 'admin')
+      void pedir<{ ruta: string | null }>('GET', '/datos/admin/ruta').then((r) =>
+        setBaseAdmin(r.ruta ? `/panel/${r.ruta}` : '/panel'),
+      );
+    else
+      void pedir<{ ruta: string | null }>('GET', '/datos/mi-franquicia')
+        .then((r) => setMiFranquicia(r.ruta ? `/panel/${r.ruta}` : null))
+        .catch(() => setMiFranquicia(null));
+  }, [usuario]);
+  // El admin siempre trabaja bajo su dirección secreta: /panel y las rutas viejas lo llevan ahí.
+  useEffect(() => {
+    if (!baseAdmin || baseAdmin === '/panel') return;
+    if (ruta === '/panel') ir(baseAdmin);
+    else if (/^\/panel\/(restaurantes|dinero|repartidores|zonas|espera)$/.test(ruta))
+      ir(`${baseAdmin}${ruta.slice('/panel'.length)}`);
+  }, [baseAdmin, ruta]);
+
+  const esControl = ruta.startsWith('/panel/control-');
+  const esFranquicia = ruta.startsWith('/panel/franquicia-');
+  // La dirección del superadmin no existe para nadie más (ni siquiera muestra el login).
+  if (
+    esControl &&
+    !estado.cargando &&
+    (usuario?.rol !== 'admin' || (baseAdmin && !ruta.startsWith(baseAdmin)))
+  )
+    return (
+      <div className="pagina">
+        <main className="contenido">
+          <h1>{t.noExiste}</h1>
+          <Enlace a="/">{t.alInicio}</Enlace>
+        </main>
+      </div>
+    );
+
   const menu =
     usuario?.rol === 'admin'
       ? Object.entries(t.menuAdmin)
@@ -121,6 +178,10 @@ export function PanelApp({ ruta }: { ruta: string }) {
         </main>
       ) : !usuario ? (
         <Acceso idioma={idioma} alEntrar={(u) => setEstado({ cargando: false, usuario: u })} />
+      ) : esFranquicia ? (
+        <main className="contenido">
+          <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
+        </main>
       ) : menu.length === 0 && ruta === '/panel/configuracion' ? (
         <main className="contenido">
           <Configuracion
@@ -133,6 +194,13 @@ export function PanelApp({ ruta }: { ruta: string }) {
       ) : menu.length === 0 ? (
         <main className="contenido">
           <p>{t.soloEquipo}</p>
+          {miFranquicia && (
+            <p>
+              <Enlace a={miFranquicia} className="boton">
+                {t.miFranquicia}
+              </Enlace>
+            </p>
+          )}
           <div className="fila-botones">
             <a className="boton" href="/app/">
               {t.irApp}
@@ -146,7 +214,8 @@ export function PanelApp({ ruta }: { ruta: string }) {
         <div className="panel-cuerpo">
           <nav className="panel-menu" aria-label="Panel">
             {menu.map(([clave, texto]) => {
-              const destino = clave === 'inicio' ? '/panel' : `/panel/${clave}`;
+              const raiz = usuario.rol === 'admin' && baseAdmin ? baseAdmin : '/panel';
+              const destino = clave === 'inicio' ? raiz : `${raiz}/${clave}`;
               return (
                 <Enlace key={clave} a={destino} className={ruta === destino ? 'activo' : undefined}>
                   {texto}
@@ -163,7 +232,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 alBorrar={() => borrarCuenta(usuario)}
               />
             ) : (
-              (seccion(ruta, usuario, idioma) ??
+              ((usuario.rol === 'admin' && baseAdmin && ruta.startsWith(baseAdmin)
+                ? seccionAdmin(ruta.slice(baseAdmin.length), baseAdmin, usuario, idioma)
+                : seccion(ruta, usuario, idioma)) ??
               (ruta === '/panel' ? (
                 <>
                   <h1>

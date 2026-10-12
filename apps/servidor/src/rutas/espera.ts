@@ -7,7 +7,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { zonaPara } from './zonas';
-import { bienvenidaListaEspera } from '../avisos';
+import { crearTicket } from './tickets';
 
 export const espera = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -55,12 +55,41 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
       d.idioma,
     )
     .run();
-  await bienvenidaListaEspera(c.env, {
-    correo: d.correo,
+  // Cada anotación abre un ticket: la persona recibe su bienvenida con su enlace privado para
+  // conversar con el equipo, y a Richard le llega el aviso (antes no le llegaba nada).
+  const en = d.idioma === 'en';
+  const que = en
+    ? {
+        comensal: 'order food',
+        restaurante: 'bring your restaurant on board',
+        repartidor: 'start delivering',
+      }[d.tipo]
+    : {
+        comensal: 'pedir comida',
+        restaurante: 'traer tu restaurante',
+        repartidor: 'empezar a repartir',
+      }[d.tipo];
+  await crearTicket(c.env, db, {
+    tipo: `espera_${d.tipo}`,
     nombre: d.nombre,
-    idioma: d.idioma,
-    tipo: d.tipo,
+    correo: d.correo,
+    telefono: d.telefono,
     ciudad: d.ciudad,
+    idioma: d.idioma,
+    asunto: en ? `Waitlist in ${d.ciudad}` : `Lista de espera en ${d.ciudad}`,
+    mensaje: [
+      d.negocio ? `Restaurante: ${d.negocio}` : '',
+      d.vehiculo ? `Vehículo: ${d.vehiculo}` : '',
+      d.codigoPostal ? `Código postal: ${d.codigoPostal}` : '',
+      `Se anotó para ${que} en ${d.ciudad}.`,
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    zonaId: zona?.id ?? null,
+    asuntoCorreo: en ? `You're on the list, ${d.nombre}` : `Ya estás en la lista, ${d.nombre}`,
+    intro: en
+      ? `You're signed up to ${que} with Tumbite in ${d.ciudad}. We'll email you first the moment we open in your area. Thanks for being early.`
+      : `Quedaste anotado para ${que} con Tumbite en ${d.ciudad}. Te avisamos primero, por este correo, en cuanto abramos en tu zona. Gracias por llegar temprano.`,
   });
   return c.json({ ok: true, zona: zona ? { id: zona.id, nombre: zona.nombre } : null }, 201);
 });

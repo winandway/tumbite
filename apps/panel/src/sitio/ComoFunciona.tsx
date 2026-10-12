@@ -1,6 +1,7 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
+import { FormFranquicia } from './FormFranquicia';
 
 /**
  * «Cómo funciona Tumbite» (/como-funciona): el modelo completo de la empresa en una sola página,
@@ -98,7 +99,7 @@ const T = {
         },
       ],
       precio:
-        'El valor de cada franquicia depende del tamaño de la ciudad: no es lo mismo un pueblo que una capital. Escríbenos y te preparamos los números de tu ciudad.',
+        'El valor de cada franquicia depende del tamaño de la ciudad: no es lo mismo un pueblo que una capital. Déjanos tus datos y te preparamos los números de tu ciudad.',
       contacto: 'Quiero una franquicia: sales@tumbite.com',
     },
     frio: {
@@ -190,7 +191,7 @@ const T = {
         ],
         [
           '¿Cómo se abre Tumbite en mi ciudad?',
-          'Con una franquicia local que financia el arranque: motos, entrenamiento, el kit de cada restaurante y la búsqueda de los primeros clientes. Escríbenos a sales@tumbite.com.',
+          'Con una franquicia local que financia el arranque: motos, entrenamiento, el kit de cada restaurante y la búsqueda de los primeros clientes. Llena el formulario de franquicias de esta página.',
         ],
         [
           '¿Tumbite funciona en otros países?',
@@ -289,7 +290,7 @@ const T = {
         },
       ],
       precio:
-        'Each franchise is priced by city size: a small town isn’t a capital. Email us and we’ll prepare the numbers for your city.',
+        'Each franchise is priced by city size: a small town isn’t a capital. Leave us your details and we’ll prepare the numbers for your city.',
       contacto: 'I want a franchise: sales@tumbite.com',
     },
     frio: {
@@ -378,7 +379,7 @@ const T = {
         ],
         [
           'How does Tumbite open in my city?',
-          'With a local franchise that funds the launch: motorbikes, training, each restaurant’s kit, and finding the first customers. Email sales@tumbite.com.',
+          'With a local franchise that funds the launch: motorbikes, training, each restaurant’s kit, and finding the first customers. Fill out the franchise form on this page.',
         ],
         [
           'Does Tumbite work in other countries?',
@@ -488,11 +489,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
           ))}
         </ul>
         <p>{t.franquicias.precio}</p>
-        <p>
-          <a className="boton" href="mailto:sales@tumbite.com">
-            {t.franquicias.contacto}
-          </a>
-        </p>
+        <FormFranquicia idioma={idioma} />
       </section>
 
       <section id="arranque" className="como-seccion">

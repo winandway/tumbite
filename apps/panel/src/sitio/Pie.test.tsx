@@ -39,11 +39,12 @@ describe('pie de página y páginas por lugar', () => {
     expect(eeuu).toHaveClass('activo');
   });
 
-  it('cada país tiene su propia página con los tres formularios de lista de espera', async () => {
+  it('cada país tiene su propia página con los tres formularios de lista de espera y el de franquicia', async () => {
     window.history.pushState(null, '', '/pais/colombia');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Colombia/);
-    expect(screen.getAllByRole('form')).toHaveLength(3);
+    expect(screen.getAllByRole('form')).toHaveLength(4);
+    expect(screen.getByRole('form', { name: /franquicia|franchise/i })).toBeInTheDocument();
     window.history.pushState(null, '', '/ciudad/miami');
   });
 

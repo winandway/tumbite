@@ -4,6 +4,7 @@ import { Olvide, Restablecer } from './panel/Restablecer';
 import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
 import { ComoFunciona } from './sitio/ComoFunciona';
+import { TicketPublico } from './sitio/TicketPublico';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enIngles, sinIdioma } from './rutaIdioma';
@@ -62,6 +63,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Docs ruta={ruta} idioma={idioma} />
+      </Sitio>
+    );
+  // La conversación de un ticket: enlace secreto largo, privado y sin indexar.
+  const ticket = /^\/t\/([A-Za-z0-9_-]{40,60})$/.exec(ruta);
+  if (ticket?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <TicketPublico codigo={ticket[1]} idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/como-funciona')
