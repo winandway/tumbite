@@ -9,4 +9,4 @@ Objetivo: recorrer los tres papeles de punta a punta en esta computadora antes d
 - [x] 5. Repartidor: conectado cerca, le llega la oferta, la acepta, recoge, entrega.
 - [x] 6. Cliente: ve el avance del pedido y califica. Billeteras del restaurante y del repartidor con su dinero.
 - [x] 7. Cada fallo encontrado: arreglado, con prueba en rojo, y anotado en CANDADOS y en el plan de la calle.
-- [ ] 8. Verify, commit, push, publicar y comprobar en vivo.
+- [x] 8. Verify, commit, push, publicar y comprobar en vivo.
