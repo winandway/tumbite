@@ -55,12 +55,18 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
             `/datos/restaurantes?lat=${p.coords.latitude}&lng=${p.coords.longitude}`,
           );
           const d = (await r.json()) as { fueraDeZona?: boolean };
-          setMensaje(d.fueraDeZona ? t.fuera : t.dentro);
+          if (!d.fueraDeZona) {
+            // Dentro de la zona: directo a la app con la ubicación puesta.
+            window.location.href = `/app/?lat=${p.coords.latitude}&lng=${p.coords.longitude}`;
+            return;
+          }
+          setMensaje(t.fuera);
+          irAlFormulario();
         } catch {
           setMensaje(t.escrito);
+          irAlFormulario();
         } finally {
           setBuscando(false);
-          irAlFormulario();
         }
       },
       () => {
@@ -74,8 +80,8 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
   function buscar(e: React.FormEvent) {
     e.preventDefault();
     if (!texto.trim()) return setMensaje(t.vacio);
-    setMensaje(t.escrito);
-    irAlFormulario();
+    // La dirección escrita viaja a la app, que la deja puesta en el pedido.
+    window.location.href = `/app/?direccion=${encodeURIComponent(texto.trim())}`;
   }
 
   return (

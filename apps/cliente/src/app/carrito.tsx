@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
   type ConfigDinero,
@@ -63,6 +63,15 @@ export default function PantallaCarrito() {
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
+
+  // Si la persona escribió su dirección en la portada de tumbite.com, llega por la URL.
+  const { direccion: direccionUrl } = useLocalSearchParams<{ direccion?: string }>();
+  const { cambiar: cambiarBorrador } = b;
+  useEffect(() => {
+    if (direccionUrl && !b.valores.direccion) cambiarBorrador('direccion', String(direccionUrl));
+    // Solo al abrir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direccionUrl]);
 
   useEffect(() => {
     api

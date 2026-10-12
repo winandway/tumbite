@@ -100,3 +100,8 @@
 - Programa de música en vivo (👤 falta el nombre y el porcentaje).
 - Nuevas zonas: Orlando, Tampa, Ocala. Venezuela solo si Richard lo decide (Pago Móvil sí tiene
   pasarelas; Zelle no tiene API para comercios).
+
+## Buscador de la portada (dictado por Richard, 12 oct 2026) — no se olvida
+
+- Hoy: «Usar mi ubicación» comprueba la zona y, si Tumbite llega, abre la app web con la ubicación puesta; una dirección escrita abre la app con esa dirección en el pedido. Fuera de zona, manda a la lista de espera.
+- Falta (👤 llave de geocodificación de Google o Mapbox): convertir la dirección escrita en coordenadas para decir si está en zona ANTES de entrar, con sugerencias mientras se escribe, como Uber Eats. Va en la Etapa 2.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, type Restaurante, descripcion, enIdioma } from '@tumbite/compartido';
 import {
   Boton,
@@ -24,6 +24,8 @@ export function Inicio() {
   const [lista, setLista] = useState<Restaurante[] | null>(null);
   const [error, setError] = useState('');
   const [punto, setPunto] = useState<Punto | null>(null);
+  // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
+  const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
 
   const cargar = useCallback(
     async (p: Punto | null) => {
@@ -44,11 +46,15 @@ export function Inicio() {
 
   useEffect(() => {
     void (async () => {
-      const p = await miUbicacion();
+      const deUrl =
+        params.lat && params.lng && Number.isFinite(Number(params.lat))
+          ? { lat: Number(params.lat), lng: Number(params.lng) }
+          : null;
+      const p = deUrl ?? (await miUbicacion());
       setPunto(p);
       await cargar(p);
     })();
-  }, [cargar]);
+  }, [cargar, params.lat, params.lng]);
 
   return (
     <Pantalla titulo={`${tm.hola}, ${usuario?.nombre.split(' ')[0] ?? ''}`}>
