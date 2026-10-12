@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../App';
 import { CIUDADES, COCINAS, PAISES } from './cobertura';
+import { DOCS } from './docs/guias';
 
 describe('pie de página y páginas por lugar', () => {
   beforeEach(() => {
@@ -57,5 +58,59 @@ describe('pie de página y páginas por lugar', () => {
     window.history.pushState(null, '', '/pais/atlantida');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/no existe|doesn’t exist/);
+  });
+
+  it('ningún enlace del pie lleva a una página que no existe (C-PIE-ENLACES)', () => {
+    window.history.pushState(null, '', '/');
+    render(<App />);
+    const pie = screen.getByRole('contentinfo');
+    const existen = new Set([
+      '/',
+      '/como-funciona',
+      '/privacidad',
+      '/terminos',
+      '/terminos-restaurantes',
+      '/terminos-repartidores',
+      '/borrar-cuenta',
+      '/soporte',
+      '/docs',
+      '/panel',
+      '/app/',
+      '/repartidor/',
+      ...DOCS.es.flatMap((sec) => [
+        `/docs/${sec.id}`,
+        ...sec.guias.map((g) => `/docs/${sec.id}/${g.id}`),
+      ]),
+      ...PAISES.map((p) => `/pais/${p.slug}`),
+      ...CIUDADES.map((c) => `/ciudad/${c.slug}`),
+      ...COCINAS.map((c) => `/comida/${c.slug}`),
+    ]);
+    const internos = [...pie.querySelectorAll('a[href^="/"]')].map(
+      (a) => (a.getAttribute('href') ?? '').split('#')[0],
+    );
+    expect(internos.length).toBeGreaterThan(60);
+    const rotos = internos.filter((h) => !existen.has(h || '/'));
+    expect(rotos).toEqual([]);
+  });
+
+  it('cada país tiene texto propio: sus primeras ciudades, idioma y moneda', () => {
+    for (const p of PAISES) {
+      expect(p.primerasCiudades?.length).toBeGreaterThanOrEqual(2);
+      expect(p.idioma?.es).toBeTruthy();
+      expect(p.moneda?.en).toBeTruthy();
+      expect(p.region).toBeTruthy();
+    }
+    expect(PAISES.length).toBeGreaterThanOrEqual(30);
+    // Todos los de habla hispana, Brasil y España.
+    for (const s of [
+      'espana',
+      'brasil',
+      'argentina',
+      'chile',
+      'peru',
+      'republica-dominicana',
+      'guinea-ecuatorial',
+    ])
+      expect(PAISES.some((p) => p.slug === s)).toBe(true);
   });
 });

@@ -8,7 +8,7 @@ for i in $(seq 1 48); do
   if curl -fsS "$URL/?v=$RANDOM" | grep -q "name=\"version\" content=\"$VERSION\""; then
     echo "Pruebas ya sirve $VERSION (tras $((i*15)) s)."
     ok=1
-    for r in / /panel /app/ /repartidor/ /privacidad /terminos /terminos-restaurantes /terminos-repartidores /borrar-cuenta /soporte /datos/salud /sitemap.xml; do
+    for r in / /como-funciona /llms.txt /panel /app/ /repartidor/ /privacidad /terminos /terminos-restaurantes /terminos-repartidores /borrar-cuenta /soporte /datos/salud /sitemap.xml; do
       code=$(curl -s -o /dev/null -w '%{http_code}' "$URL$r")
       echo "  $r → $code"
       [ "$code" = "200" ] || ok=0

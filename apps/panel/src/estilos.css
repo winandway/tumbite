@@ -2558,3 +2558,241 @@ button {
     padding-right: 10px;
   }
 }
+
+/* Países del pie agrupados por región */
+.pie-region h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9a9a9a;
+  margin: 18px 0 8px;
+}
+.pie-region:first-child h3 {
+  margin-top: 0;
+}
+/* Página de país: datos, franquicia y vecinos */
+.lugar-datos dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 12px 0 0;
+}
+.lugar-datos dt {
+  color: #5e5e5e;
+}
+.lugar-datos dd {
+  margin: 0;
+  font-weight: 600;
+}
+.lugar-franquicia {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 24px 0;
+}
+.lugar-franquicia a {
+  font-weight: 700;
+  color: var(--primario);
+}
+.lugar-vecinos ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  list-style: none;
+  padding: 0;
+}
+
+/* Cómo funciona Tumbite */
+.como {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+.como > .docs-volver {
+  display: block;
+  margin-bottom: 16px;
+}
+.como h1 {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  margin: 12px 0;
+}
+.como-indice {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 24px 0 8px;
+}
+.como-indice ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  columns: 2 220px;
+}
+.como-indice a {
+  color: #191919;
+}
+.como-seccion {
+  margin-top: 56px;
+  scroll-margin-top: 80px;
+}
+.como-tres {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.como-parte {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 16px;
+  scroll-margin-top: 80px;
+}
+.como-parte img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 12px;
+  background: #f4f4f4;
+}
+.como-parte ul,
+.como-ideas {
+  list-style: none;
+  padding: 0;
+}
+.como-parte li {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+.como-parte li .icono {
+  color: var(--primario);
+  margin-top: 4px;
+}
+.como-dinero {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.como-dinero th,
+.como-dinero td {
+  text-align: left;
+  padding: 12px 8px;
+  border-bottom: 1px solid #e6e6e6;
+}
+.como-monto {
+  font-weight: 800;
+  text-align: right !important;
+  white-space: nowrap;
+}
+.como-nota {
+  color: #5e5e5e;
+  font-size: 0.9rem;
+}
+.como-franquicia {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: center;
+}
+.como-franquicia img {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+.como-tarjetas {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.como-tarjetas li {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 16px;
+}
+.como-tarjetas h3,
+.como-tarjetas h4 {
+  margin: 0 0 6px;
+}
+.como-pasos {
+  list-style: none;
+  padding: 0;
+}
+.como-pasos li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+.como-pasos h3 {
+  margin: 0 0 4px;
+}
+.como-pasos p {
+  margin: 0;
+}
+.como-numero {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #191919;
+  color: #fff;
+  font-weight: 800;
+}
+.como-sinergia {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: center;
+}
+.como-rueda {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  display: block;
+}
+.como-ideas li {
+  margin: 10px 0;
+}
+.como-pregunta {
+  border-bottom: 1px solid #e6e6e6;
+  padding: 12px 0;
+}
+.como-pregunta summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.como-cta {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* Enlaces cómodos de tocar con el dedo (mínimo 32 px de alto), hallado en la auditoría del 12 oct */
+.pie-columnas nav a,
+.pie-apps a,
+.pie-legal nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+.docs-volver {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+.pie-columnas nav,
+.pie-apps {
+  gap: 2px;
+}
+
+/* «← Volver» siempre en su propio renglón, encima de la etiqueta */
+.lugar > .docs-volver,
+.como > .docs-volver {
+  display: flex;
+  width: fit-content;
+  margin-bottom: 12px;
+}

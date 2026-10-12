@@ -118,6 +118,8 @@ export function FormEspera({
         {campo('codigoPostal', v.codigoPostal, t.codigoPostal, {
           autoComplete: 'postal-code',
           inputMode: 'numeric',
+          // La etiqueta ya dice «(opcional)»; el texto de ayuda corto cabe en el celular.
+          placeholder: '12345',
         })}
       </div>
       {tipo === 'repartidor' && (

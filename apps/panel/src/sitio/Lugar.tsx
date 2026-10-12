@@ -5,6 +5,7 @@ import { Icono } from './Icono';
 import {
   CIUDADES,
   PAISES,
+  REGIONES,
   type Lugar as DatosLugar,
   ciudadDe,
   cocinaDe,
@@ -55,6 +56,11 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const activo = lugar.estado === 'activo';
   const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug) : [];
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
+  const region = pais?.region ? (REGIONES.find((r) => r.id === pais.region) ?? null) : null;
+  // Enlaces internos a los países de la misma región (ayudan a Google a recorrer el sitio).
+  const vecinos = pais
+    ? PAISES.filter((p) => p.region === pais.region && p.slug !== pais.slug)
+    : [];
 
   return (
     <main className="lugar">
@@ -71,6 +77,36 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           ? ` ${t.enPais.replace('{pais}', enIdioma(paisDeCiudad.nombre, idioma))}`
           : ''}
       </p>
+      {pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
+        <section className="lugar-datos">
+          <h2>{t.primerasCiudades.replace('{lugar}', nombre)}</h2>
+          <p>
+            {t.primerasCiudadesTexto
+              .replace('{lugar}', nombre)
+              .replace('{ciudades}', listaHumana(pais.primerasCiudades, idioma))}
+          </p>
+          <dl>
+            {pais.idioma && (
+              <>
+                <dt>{t.idioma}</dt>
+                <dd>{enIdioma(pais.idioma, idioma)}</dd>
+              </>
+            )}
+            {pais.moneda && (
+              <>
+                <dt>{t.moneda}</dt>
+                <dd>{enIdioma(pais.moneda, idioma)}</dd>
+              </>
+            )}
+            {region && (
+              <>
+                <dt>{t.region}</dt>
+                <dd>{enIdioma(region.nombre, idioma)}</dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )}
       {ciudadesDelPais.length > 0 && (
         <section className="lugar-ciudades">
           <h2>{t.ciudadesDe.replace('{lugar}', nombre)}</h2>
@@ -92,9 +128,35 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           <li>{t.paraRepartidores}</li>
         </ul>
       </section>
+      {pais && !activo && (
+        <section className="lugar-franquicia">
+          <h2>{t.franquiciaTitulo.replace('{lugar}', nombre)}</h2>
+          <p>{t.franquiciaTexto}</p>
+          <Enlace a="/como-funciona#franquicias">{t.franquiciaEnlace}</Enlace>
+        </section>
+      )}
       <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
       <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
       <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />
+      {vecinos.length > 0 && region && (
+        <nav className="lugar-vecinos" aria-label={t.otrosPaises.replace('{region}', '')}>
+          <h2>{t.otrosPaises.replace('{region}', enIdioma(region.nombre, idioma))}</h2>
+          <ul>
+            {vecinos.map((v) => (
+              <li key={v.slug}>
+                <Enlace a={`/pais/${v.slug}`}>{enIdioma(v.nombre, idioma)}</Enlace>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </main>
   );
+}
+
+/** «A, B y C» / «A, B, and C». */
+function listaHumana(xs: string[], idioma: Idioma): string {
+  if (xs.length < 2) return xs.join('');
+  const y = idioma === 'en' ? (xs.length > 2 ? ', and ' : ' and ') : ' y ';
+  return `${xs.slice(0, -1).join(', ')}${y}${xs.at(-1) ?? ''}`;
 }

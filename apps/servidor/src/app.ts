@@ -123,6 +123,7 @@ app.get('/datos/publico', (c) =>
 
 const RUTAS_PUBLICAS = new Set([
   '/',
+  '/como-funciona',
   '/privacidad',
   '/terminos',
   '/terminos-restaurantes',

@@ -3,6 +3,7 @@ import { PanelApp } from './panel/PanelApp';
 import { Olvide, Restablecer } from './panel/Restablecer';
 import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
+import { ComoFunciona } from './sitio/ComoFunciona';
 import { PaginaLugar } from './sitio/Lugar';
 import { useRuta } from './ruta';
 import { useIdioma } from './usarIdioma';
@@ -45,6 +46,12 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Docs ruta={ruta} idioma={idioma} />
+      </Sitio>
+    );
+  if (ruta === '/como-funciona')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <ComoFunciona idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/olvide')

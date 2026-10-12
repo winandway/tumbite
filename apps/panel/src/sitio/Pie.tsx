@@ -3,7 +3,7 @@ import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
 import { LogoApple, LogoGooglePlay } from './Tiendas';
-import { CIUDADES, COCINAS, PAISES } from './cobertura';
+import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 
 /**
@@ -61,14 +61,37 @@ export function Pie({ idioma }: { idioma: Idioma }) {
             </button>
           ))}
         </div>
-        <ul className="pie-lugares" role="tabpanel">
-          {lista.map((l) => (
-            <li key={l.a} className={l.estado ?? undefined}>
-              <Enlace a={l.a}>{l.nombre}</Enlace>
-              {l.estado === 'activo' ? activo : l.estado === 'pronto' ? pronto : null}
-            </li>
-          ))}
-        </ul>
+        {pestana === 'paises' ? (
+          // Los países, agrupados por región (son muchos: así se encuentran rápido).
+          <div className="pie-regiones" role="tabpanel">
+            {REGIONES.map((r) => {
+              const deRegion = PAISES.filter((p) => p.region === r.id);
+              if (deRegion.length === 0) return null;
+              return (
+                <section key={r.id} className="pie-region">
+                  <h3>{enIdioma(r.nombre, idioma)}</h3>
+                  <ul className="pie-lugares">
+                    {deRegion.map((p) => (
+                      <li key={p.slug} className={p.estado}>
+                        <Enlace a={`/pais/${p.slug}`}>{enIdioma(p.nombre, idioma)}</Enlace>
+                        {p.estado === 'activo' ? activo : pronto}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
+        ) : (
+          <ul className="pie-lugares" role="tabpanel">
+            {lista.map((l) => (
+              <li key={l.a} className={l.estado ?? undefined}>
+                <Enlace a={l.a}>{l.nombre}</Enlace>
+                {l.estado === 'activo' ? activo : l.estado === 'pronto' ? pronto : null}
+              </li>
+            ))}
+          </ul>
+        )}
         {/* Para el SEO, las tres listas van completas en el HTML aunque solo una se vea. */}
         <nav className="pie-oculto" aria-label={t.cobertura}>
           {CIUDADES.map((c) => (
@@ -92,7 +115,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
       <div className="pie-columnas">
         <nav aria-label={t.conocenos}>
           <h3>{t.conocenos}</h3>
-          <Enlace a="/#como">{t.sobre}</Enlace>
+          <Enlace a="/como-funciona">{t.sobre}</Enlace>
           <Enlace a="/docs">{t.docs}</Enlace>
           <Enlace a="/pais/estados-unidos">{t.ciudadesTodas}</Enlace>
           <Enlace a="/soporte">{t.soporte}</Enlace>
@@ -112,9 +135,8 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/#repartidores">{t.repartir}</Enlace>
           <Enlace a="/docs/restaurantes/empezar">{t.guiaRestaurante}</Enlace>
           <Enlace a="/docs/repartidores/empezar">{t.guiaRepartidor}</Enlace>
-          <span className="pie-franquicia">
-            {t.franquicias} {pronto}
-          </span>
+          <Enlace a="/como-funciona#franquicias">{t.franquicias}</Enlace>
+          <Enlace a="/como-funciona#arranque">{t.arranque}</Enlace>
         </nav>
         <div className="pie-apps">
           <h3>{t.apps}</h3>
@@ -125,6 +147,9 @@ export function Pie({ idioma }: { idioma: Idioma }) {
             <LogoGooglePlay /> Google Play
           </span>
           <small>{t.tiendas}</small>
+          {/* Mientras llegan las tiendas, las apps ya funcionan en el navegador. */}
+          <a href="/app/">{t.appWeb}</a>
+          <a href="/repartidor/">{t.repartidorWeb}</a>
         </div>
       </div>
 
