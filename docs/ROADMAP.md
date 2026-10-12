@@ -101,6 +101,20 @@
 - Nuevas zonas: Orlando, Tampa, Ocala. Venezuela solo si Richard lo decide (Pago Móvil sí tiene
   pasarelas; Zelle no tiene API para comercios).
 
+## Etapa 5 — Tumbite AI (dictado por Richard, 12 oct 2026)
+
+Estudio completo en `docs/TUMBITE-AI.md`: dónde va la IA momento por momento, el Manager que vigila
+cada pedido, APIs y costos, alarmas y fases. Resumen del orden:
+
+- 🤖 **Fase A — Manager con reglas, costo cero:** reloj de tiempos esperados por pedido, semáforo
+  verde/amarillo/rojo, avisos automáticos y bitácora en el panel. Puede empezar apenas se cierre la
+  Etapa 1 (no gasta en IA ni toca dinero).
+- 🤖 **Fase B — Tiempo real de ruta** (OSRM): repartidor por minutos, oferta anticipada, juntar pedidos.
+- 👤 + 🤖 **Fase C — El cerebro que habla:** primero la guardia de modelos y el tope de gasto
+  (👤 Richard aprueba el tope); luego mensajes, resumen del día y de reseñas.
+- 🤖 **Fase D — Soporte con IA y menú desde una foto.**
+- 🤖 **Fase E — Aprender de la historia:** tiempos predichos, recomendaciones, fraude.
+
 ## Buscador de la portada (dictado por Richard, 12 oct 2026) — no se olvida
 
 - Hoy: «Usar mi ubicación» comprueba la zona y, si Tumbite llega, abre la app web con la ubicación puesta; una dirección escrita abre la app con esa dirección en el pedido. Fuera de zona, manda a la lista de espera.

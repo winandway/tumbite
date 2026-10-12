@@ -52,3 +52,5 @@
 - [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).
 - [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.
+- [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). La Fase A (Manager con reglas, costo cero) arranca al cerrar la Etapa 1.
+- [ ] 👤 Tumbite AI: tope mensual de gasto en IA (propuesto 20 USD prepago) y si el Manager puede dar regalos de disculpa solo y hasta cuánto.
