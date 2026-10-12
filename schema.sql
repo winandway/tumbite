@@ -316,3 +316,73 @@ CREATE TABLE IF NOT EXISTS franquicias (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   vendida_en TEXT
 );
+
+-- Datos del repartidor que pide cualquier plataforma seria (como DoorDash): vehículo, licencia,
+-- seguro y verificación de antecedentes. El número de seguro social y el banco NO se guardan aquí:
+-- los maneja Stripe Connect. Solo los ve el repartidor y el superadmin.
+CREATE TABLE IF NOT EXISTS repartidor_datos (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  vehiculo_tipo TEXT NOT NULL DEFAULT '' CHECK (vehiculo_tipo IN ('', 'carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),
+  marca TEXT NOT NULL DEFAULT '',
+  modelo TEXT NOT NULL DEFAULT '',
+  anio INTEGER,
+  color TEXT NOT NULL DEFAULT '',
+  placa TEXT NOT NULL DEFAULT '',
+  licencia_numero TEXT NOT NULL DEFAULT '',
+  licencia_estado TEXT NOT NULL DEFAULT '',
+  licencia_vence TEXT,
+  seguro_aseguradora TEXT NOT NULL DEFAULT '',
+  seguro_poliza TEXT NOT NULL DEFAULT '',
+  seguro_vence TEXT,
+  seguro_tumbite INTEGER NOT NULL DEFAULT 0,
+  antecedentes TEXT NOT NULL DEFAULT 'pendiente' CHECK (antecedentes IN ('pendiente', 'aprobado', 'rechazado')),
+  antecedentes_fecha TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Datos de la empresa del restaurante (como pide DoorDash al registrarse). El número fiscal y el
+-- banco los pide Stripe Connect al conectar la billetera; aquí no se guardan.
+CREATE TABLE IF NOT EXISTS restaurante_empresa (
+  restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
+  nombre_legal TEXT NOT NULL DEFAULT '',
+  tipo_empresa TEXT NOT NULL DEFAULT '',
+  direccion_fiscal TEXT NOT NULL DEFAULT '',
+  dueno_nombre TEXT NOT NULL DEFAULT '',
+  dueno_telefono TEXT NOT NULL DEFAULT '',
+  dueno_correo TEXT NOT NULL DEFAULT '',
+  manager_nombre TEXT NOT NULL DEFAULT '',
+  manager_telefono TEXT NOT NULL DEFAULT '',
+  manager_correo TEXT NOT NULL DEFAULT '',
+  horario TEXT NOT NULL DEFAULT '',
+  sitio_web TEXT NOT NULL DEFAULT '',
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Contadores por zona para los ID de repartidor (US-MIA-000123): suben de uno en uno, sin choques.
+CREATE TABLE IF NOT EXISTS contadores (
+  clave TEXT PRIMARY KEY,
+  n INTEGER NOT NULL DEFAULT 0
+);
+
+-- KYC (verificación de identidad): repartidores y dueños de restaurante. Las fotos van al almacén
+-- en kyc/<usuario>/… y NUNCA se sirven al público: solo el superadmin las ve, por una ruta propia.
+-- El restaurante además manda una foto del local con la ubicación del celular (para que no haya
+-- restaurantes falsos ni mudados) y se vuelve a verificar cada año.
+CREATE TABLE IF NOT EXISTS kyc (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'sin_enviar' CHECK (estado IN ('sin_enviar', 'pendiente', 'aprobado', 'rechazado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  doc_tipo TEXT NOT NULL DEFAULT '' CHECK (doc_tipo IN ('', 'licencia', 'pasaporte', 'identificacion')),
+  doc_frente TEXT,
+  doc_reverso TEXT,
+  selfie TEXT,
+  local TEXT,
+  local_lat REAL,
+  local_lng REAL,
+  local_distancia_m INTEGER,
+  enviado_en TEXT,
+  revisado_en TEXT,
+  revisado_por TEXT,
+  proxima_revision TEXT
+);
+CREATE INDEX IF NOT EXISTS kyc_estado ON kyc(estado, enviado_en);
