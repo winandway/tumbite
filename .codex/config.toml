@@ -1,0 +1,3 @@
+[mcp_servers.yadominios]
+url = "https://yapanel.yadominios.com/api/sitio/mcp"
+bearer_token_env_var = "YADOMINIOS_LLAVE"
