@@ -92,3 +92,23 @@ describe('datos públicos', () => {
     expect(((await con.json()) as { whatsapp: string }).whatsapp).toBe('13055550100');
   });
 });
+
+describe('app del cliente en versión web (/app)', () => {
+  it('sus rutas internas caen en /app/ y no en la portada', async () => {
+    const pedidas: string[] = [];
+    const ASSETS = {
+      fetch: async (req: Request) => {
+        const p = new URL(req.url).pathname;
+        pedidas.push(p);
+        if (p === '/app/')
+          return new Response('<html>app</html>', { headers: { 'content-type': 'text/html' } });
+        if (p === '/')
+          return new Response('<html>portada</html>', { headers: { 'content-type': 'text/html' } });
+        return new Response('no', { status: 404 });
+      },
+    };
+    const res = await app.request('/app/restaurante/abc', {}, { ASSETS });
+    expect(await res.text()).toContain('app');
+    expect(pedidas).toContain('/app/');
+  });
+});

@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       'apps/panel/scripts/**',
+      '**/dist-web/**',
       '**/node_modules/**',
       '**/dist/**',
       '**/.expo/**',

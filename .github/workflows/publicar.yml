@@ -27,10 +27,13 @@ jobs:
       - run: npm run build
         env:
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+      # La app del cliente también en versión web, en tumbite.com/app (para probar sin tiendas).
+      - run: npm run build:app-web
       - run: |
           mkdir out-deploy
           cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
           cp -r apps/panel/dist/* out-deploy/
+          mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
           cp schema.sql out-deploy/
           echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
           test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }

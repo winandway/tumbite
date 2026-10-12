@@ -139,8 +139,10 @@ app.notFound(async (c) => {
   if (res.status === 404 && esPagina) {
     // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
     // y eso mandaba a la persona a la portada en vez de a la página que pidió.
+    // La app del cliente en versión web vive en /app: sus rutas internas caen en /app/.
+    const raiz = c.req.path === '/app' || c.req.path.startsWith('/app/') ? '/app/' : '/';
     res = await c.env.ASSETS.fetch(
-      new Request(new URL('/', c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
+      new Request(new URL(raiz, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
     );
   }
   let respuesta = new Response(res.body, res);
