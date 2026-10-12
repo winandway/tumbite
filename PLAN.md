@@ -7,4 +7,5 @@
 - [x] 5. Buscadores de IA: `llms.txt` con todas las páginas y un resumen claro de Tumbite; `robots.txt` que invite por nombre a los buscadores de IA.
 - [x] 6. Auditoría de la web en celular (375) y computadora (1280): desplazamiento lateral, títulos, textos alternativos de imágenes, botones tocables, enlaces rotos. Arreglar lo que salga.
 - [x] 7. Verify, commit, push, publicar y comprobar en vivo (páginas nuevas, mapa del sitio, llms.txt).
-- [ ] 8. Si sobra tiempo: seguir con lo siguiente de la fila que no dependa de Richard.
+- [x] 8. Si sobra tiempo: seguir con lo siguiente de la fila que no dependa de Richard.
+- [x] 8b. (hecho con el tiempo que sobró) Cada página pública también en inglés bajo /en, con hreflang: 158 páginas indexables.
