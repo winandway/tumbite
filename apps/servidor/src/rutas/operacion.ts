@@ -192,6 +192,88 @@ operacion.get('/restaurante/resumen', async (c) => {
   });
 });
 
+/**
+ * Tablero del restaurante: 7 y 30 días, platos más vendidos, tiempo real de cocina y su
+ * calificación. Todo de sus propios pedidos. Candado C-TABLERO-REST.
+ */
+operacion.get('/restaurante/tablero', async (c) => {
+  const rid = await miRestauranteId(c);
+  const db = base(c);
+  const periodo = async (dias: number) => {
+    const f = await db
+      .prepare(
+        `SELECT COUNT(*) AS pedidos, COALESCE(SUM(subtotal), 0) AS ventas, COALESCE(SUM(pago_restaurante), 0) AS neto
+         FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now', ?)`,
+      )
+      .bind(rid, `-${dias} days`)
+      .first<{ pedidos: number; ventas: number; neto: number }>();
+    const pedidos = Number(f?.pedidos ?? 0);
+    const ventas = Number(f?.ventas ?? 0);
+    return {
+      pedidos,
+      ventas,
+      neto: Number(f?.neto ?? 0),
+      ticketPromedio: pedidos ? Math.round(ventas / pedidos) : 0,
+    };
+  };
+  const { results: filas } = await db
+    .prepare(
+      "SELECT lineas_json FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now','-30 days')",
+    )
+    .bind(rid)
+    .all<{ lineas_json: string }>();
+  const cuenta = new Map<string, { nombreEs: string; nombreEn: string; cantidad: number }>();
+  for (const f of filas)
+    for (const l of JSON.parse(f.lineas_json) as {
+      platoId: string;
+      nombreEs: string;
+      nombreEn: string;
+      cantidad: number;
+    }[]) {
+      const x = cuenta.get(l.platoId) ?? {
+        nombreEs: l.nombreEs,
+        nombreEn: l.nombreEn,
+        cantidad: 0,
+      };
+      x.cantidad += l.cantidad;
+      cuenta.set(l.platoId, x);
+    }
+  const tiempos = await db
+    .prepare(
+      `SELECT AVG((julianday(listo_en) - julianday(aceptado_en)) * 1440) AS cocina,
+       AVG(tiempo_prep_min) AS prometido
+       FROM pedidos WHERE restaurante_id = ? AND listo_en IS NOT NULL AND aceptado_en IS NOT NULL
+       AND pagado_en >= datetime('now','-30 days')`,
+    )
+    .bind(rid)
+    .first<{ cocina: number | null; prometido: number | null }>();
+  const cal = await db
+    .prepare(
+      `SELECT AVG(c.estrellas_restaurante) AS promedio, COUNT(c.estrellas_restaurante) AS n
+       FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id WHERE p.restaurante_id = ?`,
+    )
+    .bind(rid)
+    .first<{ promedio: number | null; n: number }>();
+  const ahora = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE restaurante_id = ? AND estado IN ('pagado','aceptado','listo')",
+    )
+    .bind(rid)
+    .first<{ n: number }>();
+  return c.json({
+    tablero: {
+      semana: await periodo(7),
+      mes: await periodo(30),
+      topPlatos: [...cuenta.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5),
+      minutosCocina: tiempos?.cocina == null ? null : Math.round(tiempos.cocina),
+      minutosPrometidos: tiempos?.prometido == null ? null : Math.round(tiempos.prometido),
+      calificacion: cal?.promedio == null ? null : Math.round(cal.promedio * 10) / 10,
+      calificaciones: Number(cal?.n ?? 0),
+      pedidosAhora: Number(ahora?.n ?? 0),
+    },
+  });
+});
+
 // ======================= Repartidor =======================
 
 async function miFicha(c: Ctx) {

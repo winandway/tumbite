@@ -3,7 +3,17 @@ import { Linking, Platform, Pressable, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { ErrorApi, type Nivel, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
-import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
+import {
+  Boton,
+  C,
+  MenuCuenta,
+  Pantalla,
+  ReportarProblema,
+  TEXTOS_MOVIL,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 
 type Lugar = {
   nombre: string;
@@ -28,7 +38,7 @@ type Pedido = {
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
-type Billetera = { saldo: number; cuentaConectada: boolean; pagosActivos: boolean };
+type Billetera = DatosBilletera;
 
 /** La ubicación con un tope de 15 segundos: si el GPS no responde, se usa la última conocida. */
 async function ubicacionConLimite(): Promise<Location.LocationObject | null> {
@@ -68,6 +78,11 @@ const T = {
     faltan: 'Te faltan',
     para: 'para',
     saldo: 'Tu saldo',
+    menu: 'Menú',
+    vistaInicio: 'Inicio',
+    vistaBilletera: 'Mi billetera',
+    verBilletera: 'Ver mi billetera y movimientos →',
+    volverInicio: '← Volver al inicio',
     conectarBanco: 'Conectar mi cuenta bancaria',
     retirarPanel: 'Retirar todo',
     llamar: 'Llamar al restaurante',
@@ -102,6 +117,11 @@ const T = {
     faltan: 'You need',
     para: 'to reach',
     saldo: 'Your balance',
+    menu: 'Menu',
+    vistaInicio: 'Home',
+    vistaBilletera: 'My wallet',
+    verBilletera: 'See my wallet and activity →',
+    volverInicio: '← Back to home',
     conectarBanco: 'Connect my bank account',
     retirarPanel: 'Cash out all',
     llamar: 'Call the restaurant',
@@ -130,6 +150,8 @@ export function Inicio() {
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
+  const [vista, setVista] = useState<'inicio' | 'billetera'>('inicio');
+  const [menuAbierto, setMenuAbierto] = useState(false);
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
   const [aviso, setAviso] = useState('');
@@ -248,8 +270,72 @@ export function Inicio() {
   }
 
   const activo = estado?.activo;
+  // Menú de tres rayas: la billetera completa vive en su propia vista, como en una app de banco.
+  const menuCabecera = (
+    <View style={{ marginBottom: 8 }}>
+      <Pressable
+        onPress={() => setMenuAbierto((x) => !x)}
+        accessibilityRole="button"
+        accessibilityLabel={t.menu}
+        hitSlop={8}
+        style={{ alignSelf: 'flex-start', padding: 6 }}
+      >
+        {/* Tres rayas dibujadas (sin emojis ni símbolos raros). */}
+        {[0, 1, 2].map((i) => (
+          <View
+            key={i}
+            style={{
+              width: 24,
+              height: 3,
+              borderRadius: 2,
+              backgroundColor: C.secundario,
+              marginVertical: 2.5,
+            }}
+          />
+        ))}
+      </Pressable>
+      {menuAbierto ? (
+        <View style={e.tarjeta}>
+          {(
+            [
+              ['inicio', t.vistaInicio],
+              ['billetera', t.vistaBilletera],
+            ] as const
+          ).map(([v, texto]) => (
+            <Text
+              key={v}
+              style={{ paddingVertical: 10, fontWeight: vista === v ? '800' : '600' }}
+              onPress={() => {
+                setVista(v);
+                setMenuAbierto(false);
+              }}
+              accessibilityRole="button"
+            >
+              {texto}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+  if (vista === 'billetera' && billetera)
+    return (
+      <Pantalla titulo={t.vistaBilletera}>
+        {menuCabecera}
+        <BilleteraRepartidor
+          datos={billetera}
+          idioma={idioma}
+          retirar={() => void retirar()}
+          conectar={() => void banco()}
+        />
+        <Text style={e.enlace} onPress={() => setVista('inicio')} accessibilityRole="button">
+          {t.volverInicio}
+        </Text>
+      </Pantalla>
+    );
   return (
     <Pantalla>
+      {menuCabecera}
       {estado && (
         <Pressable
           onPress={() => void alternar()}
@@ -401,19 +487,22 @@ export function Inicio() {
         </View>
       )}
       {billetera && (
-        <View style={e.tarjeta}>
-          <Text style={{ fontWeight: '800' }}>
-            {t.saldo}: {formatearDolares(billetera.saldo, idioma)}
+        <Pressable
+          onPress={() => setVista('billetera')}
+          accessibilityRole="link"
+          style={[e.tarjeta, { backgroundColor: C.secundario }]}
+        >
+          <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
+            {formatearDolares(billetera.saldo, idioma)}
           </Text>
-          {billetera.pagosActivos ? (
-            billetera.saldo >= 100 ? (
-              <Boton texto={t.retirarPanel} alTocar={() => void retirar()} />
-            ) : null
-          ) : (
-            <Boton texto={t.conectarBanco} alTocar={() => void banco()} secundario />
-          )}
-        </View>
+          <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
+            {t.verBilletera}
+          </Text>
+        </Pressable>
       )}
+      {/* Quejas y ayuda: si hay una entrega activa, el ticket va atado a ese pedido. */}
+      <ReportarProblema pedidoId={estado?.activo?.id} />
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
       <MenuCuenta />
     </Pantalla>

@@ -1,0 +1,266 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
+import { PanelFranquicia } from './PanelFranquicia';
+import { TableroRestaurante } from './TableroRestaurante';
+import { AyudaBurbuja } from './AyudaBurbuja';
+import { ReportarPanel } from './ReportarPanel';
+
+function servidor(manejar: (url: string, init?: RequestInit) => unknown) {
+  const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    llamadas.push({
+      url,
+      metodo: init?.method ?? 'GET',
+      cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
+    });
+    const r = manejar(url, init);
+    return r instanceof Response ? r : new Response(JSON.stringify(r), { status: 200 });
+  });
+  return llamadas;
+}
+
+const METRICAS = {
+  pedidosHoy: 2,
+  pedidos30: 40,
+  ventas30: 120000,
+  ganancia30: 9000,
+  restaurantes: 12,
+  restaurantesAbiertos: 9,
+  repartidores: 20,
+  repartidoresConectados: 6,
+  ticketsAbiertos: 1,
+};
+const FRANQUICIA = {
+  id: 'f1',
+  zonaId: 'US-FL-MIAMI',
+  ciudad: 'Miami',
+  pais: 'US',
+  estado: 'activa',
+  duenoCorreo: 'socio@ejemplo.com',
+  motos: 30,
+  notas: '',
+  ruta: 'franquicia-miami-0123456789abcdef0123',
+  metricas: METRICAS,
+};
+const RESUMEN = {
+  totales: {
+    franquicias: 1,
+    vendidas: 1,
+    activas: 1,
+    interesados: 3,
+    ticketsAbiertos: 4,
+    motos: 30,
+  },
+  franquicias: [FRANQUICIA],
+  sinFranquicia: [
+    { id: 'US-FL-TAMPA', ciudad: 'Tampa', pais: 'US', activa: false, metricas: METRICAS },
+  ],
+};
+const usuario = {
+  id: 'a1',
+  nombre: 'Soporte Tumbite',
+  correo: 'soporte@ejemplo.com',
+  rol: 'admin' as const,
+  idioma: 'es' as const,
+};
+
+describe('superadmin', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el resumen muestra totales, la producción de cada franquicia y las ciudades libres', async () => {
+    servidor(() => RESUMEN);
+    render(<SuperResumen base="/panel/control-x" idioma="es" />);
+    expect(await screen.findByText('Miami')).toBeInTheDocument();
+    expect(screen.getByText('Tampa')).toBeInTheDocument();
+    expect(screen.getByText('$1,200.00')).toBeInTheDocument();
+  });
+
+  it('la bandeja filtra por estado y el ticket se responde y se cierra', async () => {
+    const llamadas = servidor((url, init) => {
+      if (url.includes('/datos/admin/tickets?'))
+        return {
+          tickets: [
+            {
+              id: '11111111-1111-1111-1111-111111111111',
+              tipo: 'franquicia',
+              estado: 'abierto',
+              nombre: 'Marta',
+              correo: 'marta@ejemplo.com',
+              asunto: 'Franquicia en Medellín',
+              ciudad: 'Medellín',
+              pais: 'Colombia',
+              actualizado: '2026-10-12 20:00:00',
+              ultimo: 'Me interesa',
+            },
+          ],
+        };
+      if (init?.method === 'POST' || init?.method === 'PATCH') return { ok: true };
+      return {
+        ticket: {
+          id: '11111111-1111-1111-1111-111111111111',
+          tipo: 'franquicia',
+          estado: 'abierto',
+          nombre: 'Marta',
+          correo: 'marta@ejemplo.com',
+          telefono: '+57 300',
+          asunto: 'Franquicia en Medellín',
+          ciudad: 'Medellín',
+          pais: 'Colombia',
+          actualizado: '',
+          ultimo: '',
+          datos: {},
+          enlace: '/t/abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+          mensajes: [{ autor: 'persona', texto: 'Me interesa', fecha: '2026-10-12 20:00:00' }],
+        },
+      };
+    });
+    const { unmount } = render(
+      <SuperTickets base="/panel/control-x" idioma="es" ticketId={null} />,
+    );
+    expect(await screen.findByText('Franquicia en Medellín')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Cerrados' }));
+    await waitFor(() => expect(llamadas.some((l) => l.url.includes('estado=cerrado'))).toBe(true));
+    unmount();
+
+    render(
+      <SuperTickets
+        base="/panel/control-x"
+        idioma="es"
+        ticketId="11111111-1111-1111-1111-111111111111"
+      />,
+    );
+    expect(await screen.findByText('Me interesa')).toBeInTheDocument();
+    await userEvent.type(screen.getByRole('textbox'), 'Te mando los números');
+    await userEvent.click(screen.getByRole('button', { name: 'Responder' }));
+    await waitFor(() =>
+      expect(llamadas.some((l) => l.metodo === 'POST' && l.url.endsWith('/mensajes'))).toBe(true),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar ticket' }));
+    await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PATCH')).toBe(true));
+  });
+
+  it('crea una franquicia en una ciudad libre y edita las motos de una existente', async () => {
+    const llamadas = servidor((url, init) => {
+      if (url.includes('/datos/admin/zonas'))
+        return {
+          zonas: [
+            { id: 'US-FL-MIAMI', nombre: 'Miami' },
+            { id: 'US-FL-TAMPA', nombre: 'Tampa' },
+          ],
+        };
+      if (init?.method === 'POST' || init?.method === 'PATCH') return { franquicia: FRANQUICIA };
+      return RESUMEN;
+    });
+    render(<SuperFranquicias usuario={usuario} idioma="es" />);
+    await screen.findByText('Miami', { selector: 'h2' });
+    await userEvent.selectOptions(
+      await screen.findByRole('combobox', { name: 'Ciudad (zona)' }),
+      'US-FL-TAMPA',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Crear franquicia' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toMatchObject({
+        zonaId: 'US-FL-TAMPA',
+      }),
+    );
+    const motos = screen.getAllByRole('spinbutton')[0] as HTMLInputElement;
+    await userEvent.clear(motos);
+    await userEvent.type(motos, '40');
+    motos.blur();
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PATCH')?.cuerpo).toMatchObject({ motos: 40 }),
+    );
+  });
+});
+
+describe('panel del franquiciado', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('muestra su ciudad, y si no es suya dice que no existe', async () => {
+    servidor(() => ({
+      franquicia: { ciudad: 'Miami', pais: 'US', estado: 'activa', motos: 30 },
+      metricas: METRICAS,
+      restaurantes: [{ nombre: 'Sabor', estado: 'aprobado', abierto: true, plan: 'inicial' }],
+      repartidores: [{ nombre: 'Leo', conectado: true, puntos: 120 }],
+      quejas: [],
+    }));
+    const { unmount } = render(<PanelFranquicia ruta="franquicia-miami-x" idioma="es" />);
+    expect(await screen.findByText('Tu franquicia en Miami')).toBeInTheDocument();
+    expect(screen.getByText(/No hay quejas/)).toBeInTheDocument();
+    unmount();
+    servidor(
+      () => new Response(JSON.stringify({ error: 'Esta página no existe.' }), { status: 404 }),
+    );
+    render(<PanelFranquicia ruta="franquicia-miami-y" idioma="es" />);
+    expect(await screen.findByText('Esta página no existe.')).toBeInTheDocument();
+  });
+});
+
+describe('tablero y ayuda del restaurante', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el tablero muestra sus números, sus platos estrella y su calificación', async () => {
+    const periodo = { pedidos: 3, ventas: 4500, neto: 4100, ticketPromedio: 1500 };
+    servidor(() => ({
+      tablero: {
+        semana: periodo,
+        mes: periodo,
+        topPlatos: [{ nombreEs: 'Cubano', nombreEn: 'Cuban', cantidad: 5 }],
+        minutosCocina: 14,
+        minutosPrometidos: 15,
+        calificacion: 4.6,
+        calificaciones: 8,
+        pedidosAhora: 2,
+      },
+    }));
+    render(<TableroRestaurante nombre="Rosa" idioma="es" />);
+    expect(await screen.findByText('Cubano')).toBeInTheDocument();
+    expect(screen.getByText(/4.6 \/ 5/)).toBeInTheDocument();
+  });
+
+  it('la burbuja dice por qué no puede cobrar y, con banco, cuánto tiene', async () => {
+    let conectado = false;
+    servidor(() => ({ saldo: 1225, cuentaConectada: conectado, pagosActivos: conectado }));
+    render(<AyudaBurbuja idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Ayuda' }));
+    await userEvent.click(screen.getByRole('button', { name: '¿Cuándo y cómo cobro?' }));
+    expect(await screen.findByText(/te falta conectar tu cuenta bancaria/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Otra pregunta' }));
+    conectado = true;
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Escribe tu pregunta' }),
+      'cuando me pagan{Enter}',
+    );
+    expect(await screen.findByText(/Tu banco ya está conectado/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Otra pregunta' }));
+    await userEvent.click(screen.getByRole('button', { name: '¿Cuánto me cobran?' }));
+    expect(await screen.findByText(/Inicial 7,5 %/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Otra pregunta' }));
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Escribe tu pregunta' }),
+      'xyz{Enter}',
+    );
+    expect(await screen.findByText(/No tengo esa respuesta a mano/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Hablar con una persona' }));
+    expect(screen.getByText('Cuéntanos qué pasó')).toBeInTheDocument();
+  });
+
+  it('reportar un problema abre un ticket y da el enlace de la conversación', async () => {
+    const llamadas = servidor(() => ({ ok: true, enlace: '/t/abc' }));
+    render(
+      <ReportarPanel
+        pedidoId="22222222-2222-2222-2222-222222222222"
+        idioma="es"
+        alCerrar={() => {}}
+      />,
+    );
+    await userEvent.type(screen.getByRole('textbox'), 'El repartidor no llegó');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    expect(await screen.findByText(/Recibimos tu mensaje/)).toBeInTheDocument();
+    expect(llamadas[0]?.cuerpo).toMatchObject({ tipo: 'queja', texto: 'El repartidor no llegó' });
+  });
+});

@@ -419,3 +419,54 @@ pedidos.get('/pedidos/:id', async (c) => {
   if (!f || !puede) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   return c.json({ pedido: aPedido(f) });
 });
+
+// ======================= Tarjetas guardadas (Mi cuenta) =======================
+
+type MetodoStripe = {
+  id: string;
+  customer: string | null;
+  card?: { brand: string; last4: string; exp_month: number; exp_year: number };
+};
+
+/** Las tarjetas que la persona guardó en Stripe (Tumbite nunca ve el número completo). */
+pedidos.get('/mis-tarjetas', async (c) => {
+  const u = exigir(c, 'cliente');
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  const fila = await base(c)
+    .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ stripe_cliente: string | null }>();
+  if (!stripe || !fila?.stripe_cliente) return c.json({ tarjetas: [] });
+  const r = await stripe.get<{ data: MetodoStripe[] }>(
+    `/customers/${fila.stripe_cliente}/payment_methods`,
+    { type: 'card', limit: 20 },
+  );
+  return c.json({
+    tarjetas: r.data
+      .filter((m) => m.card)
+      .map((m) => ({
+        id: m.id,
+        marca: m.card?.brand ?? '',
+        ultimos4: m.card?.last4 ?? '',
+        vence: `${String(m.card?.exp_month ?? '').padStart(2, '0')}/${String(m.card?.exp_year ?? '').slice(-2)}`,
+      })),
+  });
+});
+
+/** Quitar una tarjeta guardada: solo si es de esta persona. */
+pedidos.post('/mis-tarjetas/:id/quitar', async (c) => {
+  const u = exigir(c, 'cliente');
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe) throw new ErrorDatos('Los pagos no están disponibles ahora.', undefined, 503);
+  const id = c.req.param('id');
+  if (!/^pm_[A-Za-z0-9]+$/.test(id)) throw new ErrorDatos('Esa tarjeta no existe.', undefined, 404);
+  const fila = await base(c)
+    .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ stripe_cliente: string | null }>();
+  const metodo = await stripe.get<MetodoStripe>(`/payment_methods/${id}`).catch(() => null);
+  if (!metodo || !fila?.stripe_cliente || metodo.customer !== fila.stripe_cliente)
+    throw new ErrorDatos('Esa tarjeta no existe.', undefined, 404);
+  await stripe.post(`/payment_methods/${id}/detach`, {});
+  return c.json({ ok: true });
+});

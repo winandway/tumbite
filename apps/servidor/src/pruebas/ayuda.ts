@@ -5,11 +5,14 @@ import { crearBasePruebas } from './d1';
 export function mundo(extra: Record<string, unknown> = {}) {
   const DB = crearBasePruebas();
   let ip = 0;
+  // Cada mundo con su propia red de mentira: el límite de intentos vive en memoria y, si no,
+  // las pruebas de un mismo archivo chocaban entre sí.
+  const red = Math.floor(Math.random() * 200) + 20;
   async function llamar(metodo: string, ruta: string, cuerpo?: unknown, token?: string) {
     ip++;
     const headers: Record<string, string> = {
       'content-type': 'application/json',
-      'cf-connecting-ip': `10.9.${Math.floor(ip / 250)}.${ip % 250}`,
+      'cf-connecting-ip': `10.${red}.${Math.floor(ip / 250)}.${ip % 250}`,
     };
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await app.request(

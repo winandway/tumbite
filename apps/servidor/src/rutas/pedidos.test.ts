@@ -393,3 +393,56 @@ describe('pago dentro de la app (sin salto)', () => {
     expect(llamadas.filter((l) => l.url.includes('/payment_intents'))).toHaveLength(2);
   });
 });
+
+describe('tarjetas guardadas (Mi cuenta)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('lista las tarjetas del cliente y solo deja quitar las suyas', async () => {
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
+    const cliente = await m.cuenta('cliente');
+    const llamadas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      llamadas.push(`${init?.method} ${url}`);
+      if (url.includes('/customers/cus_mio/payment_methods'))
+        return new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: 'pm_mia',
+                customer: 'cus_mio',
+                card: { brand: 'visa', last4: '4242', exp_month: 4, exp_year: 2031 },
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      if (url.endsWith('/payment_methods/pm_mia'))
+        return new Response(JSON.stringify({ id: 'pm_mia', customer: 'cus_mio' }), { status: 200 });
+      if (url.endsWith('/payment_methods/pm_ajena'))
+        return new Response(JSON.stringify({ id: 'pm_ajena', customer: 'cus_otro' }), {
+          status: 200,
+        });
+      if (url.endsWith('/detach')) return new Response('{}', { status: 200 });
+      return new Response('{}', { status: 404 });
+    });
+    // Sin cliente de Stripe todavía: lista vacía, sin llamar a Stripe.
+    expect(
+      (await m.llamar('GET', '/datos/mis-tarjetas', undefined, cliente.token)).datos.tarjetas,
+    ).toEqual([]);
+    await m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_mio' WHERE id = ?")
+      .bind(cliente.id)
+      .run();
+    const lista = await m.llamar('GET', '/datos/mis-tarjetas', undefined, cliente.token);
+    expect(lista.datos.tarjetas).toEqual([
+      { id: 'pm_mia', marca: 'visa', ultimos4: '4242', vence: '04/31' },
+    ]);
+    expect(
+      (await m.llamar('POST', '/datos/mis-tarjetas/pm_ajena/quitar', {}, cliente.token)).estado,
+    ).toBe(404);
+    expect(llamadas.some((l) => l.includes('pm_ajena/detach'))).toBe(false);
+    expect(
+      (await m.llamar('POST', '/datos/mis-tarjetas/pm_mia/quitar', {}, cliente.token)).estado,
+    ).toBe(200);
+    expect(llamadas.some((l) => l.includes('pm_mia/detach'))).toBe(true);
+  });
+});

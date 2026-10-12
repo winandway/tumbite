@@ -8,6 +8,7 @@ import {
   nombrePlato,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { ReportarPanel } from './ReportarPanel';
 import { pedir } from './api';
 
 type Pedido = {
@@ -29,6 +30,7 @@ const T = {
     min: 'min',
     listo: '¡Listo!',
     rechazar: 'Rechazar pedido',
+    reportar: 'Reportar un problema',
     confirmar: '¿Rechazar este pedido? Se le devuelve todo el dinero al cliente.',
     mas: 'Más opciones',
     notas: 'Notas',
@@ -50,6 +52,7 @@ const T = {
     min: 'min',
     listo: 'Ready!',
     rechazar: 'Reject order',
+    reportar: 'Report a problem',
     confirmar: 'Reject this order? The customer gets a full refund.',
     mas: 'More options',
     notas: 'Notes',
@@ -65,6 +68,7 @@ const T = {
 };
 
 export function Pedidos({ idioma }: { idioma: Idioma }) {
+  const [reportando, setReportando] = useState<string | null>(null);
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [error, setError] = useState('');
@@ -173,20 +177,26 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                 </button>
               )}
             </div>
-            {(p.estado === 'pagado' || p.estado === 'aceptado') && (
-              <MenuTresPuntos
-                etiqueta={t.mas}
-                opciones={[
-                  {
-                    texto: t.rechazar,
-                    peligro: true,
-                    alTocar: () => {
-                      if (window.confirm(t.confirmar))
-                        void accion(`/datos/restaurante/pedidos/${p.id}/rechazar`);
-                    },
-                  },
-                ]}
-              />
+            <MenuTresPuntos
+              etiqueta={t.mas}
+              opciones={[
+                { texto: t.reportar, alTocar: () => setReportando(p.id) },
+                ...(p.estado === 'pagado' || p.estado === 'aceptado'
+                  ? [
+                      {
+                        texto: t.rechazar,
+                        peligro: true,
+                        alTocar: () => {
+                          if (window.confirm(t.confirmar))
+                            void accion(`/datos/restaurante/pedidos/${p.id}/rechazar`);
+                        },
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            {reportando === p.id && (
+              <ReportarPanel pedidoId={p.id} idioma={idioma} alCerrar={() => setReportando(null)} />
             )}
           </li>
         ))}

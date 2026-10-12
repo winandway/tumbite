@@ -379,3 +379,43 @@ describe('reloj externo', () => {
     expect(nada.status).toBe(404);
   });
 });
+
+describe('tablero del restaurante (C-TABLERO-REST)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('cuenta pedidos, ventas, platos más vendidos y calificación de sus entregas', async () => {
+    const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Rep Tablero', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 15 },
+      dueno.token,
+    );
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
+    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token);
+    await m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/calificar`,
+      { estrellasRestaurante: 4, estrellasRepartidor: 5 },
+      cliente.token,
+    );
+    const r = await m.llamar('GET', '/datos/restaurante/tablero', undefined, dueno.token);
+    expect(r.estado).toBe(200);
+    expect(r.datos.tablero.semana).toMatchObject({
+      pedidos: 1,
+      ventas: 3000,
+      ticketPromedio: 3000,
+    });
+    expect(r.datos.tablero.topPlatos[0]).toMatchObject({ nombreEs: 'Cubano', cantidad: 2 });
+    expect(r.datos.tablero.calificacion).toBe(4);
+    // Un cliente no ve el tablero de nadie.
+    expect(
+      (await m.llamar('GET', '/datos/restaurante/tablero', undefined, cliente.token)).estado,
+    ).toBe(403);
+  });
+});

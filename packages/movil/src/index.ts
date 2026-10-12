@@ -8,3 +8,4 @@ export * from './SelectorIdioma';
 export * from './avisos';
 export * from './soporte';
 export * from './ConSesion';
+export * from './ReportarProblema';

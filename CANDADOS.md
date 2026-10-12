@@ -262,3 +262,13 @@ Fallos encontrados y arreglados:
 - **Franquicias** (`rutas/franquicias.ts`, tabla `franquicias`, una por zona): el dueño entra a `/panel/franquicia-<ciudad>-<20 hex>` con su cuenta (se enlaza por correo); otra cuenta, otra ciudad en la dirección o un código distinto → no existe. Pruebas `franquicias.test.ts`.
 - **En local** hay que crear las tablas nuevas a mano: `npx wrangler d1 execute DB --local --file=../../schema.sql` desde `apps/servidor` (en producción las crea la publicación).
 - Comprobado en pantalla (local): formulario de franquicia → enlace privado → superadmin con la dirección secreta → bandeja → respuesta → la persona ve la respuesta en su enlace. Una dirección de control inventada dice «no existe» sin login.
+
+## C-QUEJAS, «Mi cuenta», C-BILLETERA-REP, C-TABLERO-REST y burbuja de ayuda (12 oct 2026, noche)
+
+- **Quejas con tickets en las tres apps:** cliente desde su pedido (`ReportarProblema` en `packages/movil`, antes era un correo a una cuenta personal), repartidor desde su pantalla (atado a la entrega activa si hay), restaurante desde los tres puntos de cada pedido (`ReportarPanel`). Van a la bandeja del superadmin y a la del franquiciado de esa ciudad. Prueba `quejasApps.test.ts`.
+- **«Mi cuenta» del cliente** (`apps/cliente/src/app/cuenta.tsx`): historial de pedidos, tarjetas guardadas (`GET /datos/mis-tarjetas` y quitar con `POST /datos/mis-tarjetas/:id/quitar`, que comprueba que la tarjeta sea de ese cliente en Stripe antes de quitarla; quitar va escondido en los tres puntos y con confirmación), datos y ayuda. Prueba en `pedidos.test.ts`.
+- **Billetera del repartidor** (`apps/repartidor/src/Billetera.tsx`): saldo grande, ganado, propinas y retirado del mes, y cada movimiento con su pedido; menú de tres rayas dibujadas (el símbolo ☰ cuenta como emoji y lo frena `sinEmojis.test.ts`).
+- **Tablero del restaurante** (`GET /datos/restaurante/tablero`, `TableroRestaurante.tsx`): pedidos esperando, 7 y 30 días (pedidos, ventas, lo que recibe, ticket promedio), platos más vendidos, tiempo real de cocina contra el prometido y calificación. Prueba en `operacion.test.ts`.
+- **Burbuja de ayuda** (`AyudaBurbuja.tsx`): respuestas al instante, algunas con sus datos reales («todavía no puedes cobrar: te falta conectar tu banco; tu saldo está guardado»), buscador y «hablar con una persona» (ticket). Sin IA hasta que Richard apruebe el tope de gasto.
+- **Pruebas del servidor:** cada `mundo()` usa su propia red de mentira (el límite de intentos vive en memoria y las pruebas de un mismo archivo chocaban).
+- Comprobado en pantalla (local): tablero con datos del ensayo, la burbuja respondiendo con el saldo real, la billetera del repartidor con sus movimientos y «Mi cuenta» con el historial.

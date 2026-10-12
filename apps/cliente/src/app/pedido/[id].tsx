@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
-import { Boton, C, Pantalla, e, useSesion } from '@tumbite/movil';
+import { Boton, C, Pantalla, ReportarProblema, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { MapaEntrega } from '../../MapaEntrega';
 
@@ -36,7 +36,7 @@ const T = {
     titulo: 'Tu pedido',
     volver: '← Inicio',
     total: 'Total',
-    ayuda: '¿Problemas con tu pedido? Escríbenos',
+    ayuda: '¿Problemas con tu pedido? Cuéntanos',
     estados: {
       pago_pendiente: 'Esperando el pago…',
       pagado: 'Pago recibido. Esperando que el restaurante lo acepte.',
@@ -62,7 +62,7 @@ const T = {
     titulo: 'Your order',
     volver: '← Home',
     total: 'Total',
-    ayuda: 'Problems with your order? Email us',
+    ayuda: 'Problems with your order? Tell us',
     estados: {
       pago_pendiente: 'Waiting for payment…',
       pagado: 'Payment received. Waiting for the restaurant to accept.',
@@ -263,15 +263,8 @@ export default function SeguirPedido() {
               )}
             </View>
           )}
-          <Boton
-            texto={t.ayuda}
-            alTocar={() =>
-              void Linking.openURL(
-                `mailto:tumbite.com@gmail.com?subject=Pedido%20${p.id.slice(0, 8)}`,
-              )
-            }
-            secundario
-          />
+          {/* Abre un ticket atado a este pedido (antes era un correo a una cuenta personal). */}
+          <ReportarProblema pedidoId={p.id} textoBoton={t.ayuda} />
         </>
       )}
     </Pantalla>

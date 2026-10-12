@@ -25,6 +25,8 @@ import { AdminRepartidores } from './AdminRepartidores';
 import { AdminEspera, AdminZonas } from './AdminZonas';
 import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
 import { PanelFranquicia } from './PanelFranquicia';
+import { TableroRestaurante } from './TableroRestaurante';
+import { AyudaBurbuja } from './AyudaBurbuja';
 import { ir } from '../ruta';
 import { pedir } from './api';
 
@@ -235,7 +237,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
               ((usuario.rol === 'admin' && baseAdmin && ruta.startsWith(baseAdmin)
                 ? seccionAdmin(ruta.slice(baseAdmin.length), baseAdmin, usuario, idioma)
                 : seccion(ruta, usuario, idioma)) ??
-              (ruta === '/panel' ? (
+              (ruta === '/panel' && usuario.rol === 'restaurante' ? (
+                <TableroRestaurante nombre={usuario.nombre.split(' ')[0] ?? ''} idioma={idioma} />
+              ) : ruta === '/panel' ? (
                 <>
                   <h1>
                     {t.hola}, {usuario.nombre.split(' ')[0]}
@@ -249,6 +253,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
           </main>
         </div>
       )}
+      {usuario?.rol === 'restaurante' && <AyudaBurbuja idioma={idioma} />}
     </div>
   );
 }

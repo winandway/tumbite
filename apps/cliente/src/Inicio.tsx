@@ -58,6 +58,12 @@ export function Inicio() {
 
   return (
     <Pantalla titulo={`${tm.hola}, ${usuario?.nombre.split(' ')[0] ?? ''}`}>
+      {/* Mi cuenta: historial, tarjetas, datos y ayuda. */}
+      <Boton
+        texto={idioma === 'en' ? 'My account' : 'Mi cuenta'}
+        alTocar={() => router.push('/cuenta')}
+        secundario
+      />
       <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario, marginBottom: 8 }}>
         {t.cerca}
       </Text>
