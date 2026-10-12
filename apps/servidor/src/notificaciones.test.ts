@@ -73,8 +73,8 @@ describe('avisos al celular', () => {
       async () => new Response(JSON.stringify({ success: true, rebotados: [] })),
     );
     vi.stubGlobal('fetch', async (url: string) =>
-      url.includes('/checkout/sessions')
-        ? new Response(JSON.stringify({ id: 'cs_1', url: 'https://checkout.stripe.com/x' }))
+      /\/(payment_intents|customers|customer_sessions)/.test(url)
+        ? new Response(JSON.stringify({ id: 'cs_1', client_secret: 'cs_1_secret_x' }))
         : new Response('{}', { status: 404 }),
     );
     const ENV = { STRIPE_SECRET_KEY: 'sk_test_x', YAD_TOKEN: 'x'.repeat(40) };

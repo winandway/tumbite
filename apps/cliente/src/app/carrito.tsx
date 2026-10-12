@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
@@ -28,6 +28,8 @@ import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { ElegirEnMapa } from '../ElegirEnMapa';
+import { PagoTarjeta } from '../PagoTarjeta';
+import type { Cobro } from '../pagoTipos';
 
 const PROPINAS = [0, 1500, 2000, 2500]; // puntos básicos: 0 %, 15 %, 20 %, 25 %
 
@@ -48,7 +50,7 @@ const NOMBRE_REGALO = {
 export default function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
-  const { carrito, cambiarCantidad } = useCarrito();
+  const { carrito, cambiarCantidad, vaciar } = useCarrito();
   const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
   const [punto, setPunto] = useState<Punto | null>(null);
   const [propinaPb, setPropinaPb] = useState<number | 'otra'>(2000);
@@ -56,6 +58,9 @@ export default function PantallaCarrito() {
   const [pagando, setPagando] = useState(false);
   const [regalos, setRegalos] = useState<Regalo[]>([]);
   const [regaloElegido, setRegaloElegido] = useState<Regalo['tipo'] | null>(null);
+  // El pedido ya creado y esperando la tarjeta. El formulario de pago aparece aquí mismo.
+  const [cobroGuardado, setCobro] = useState<(Cobro & { total: number }) | null>(null);
+  const [clavePublica, setClavePublica] = useState('');
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
@@ -80,6 +85,10 @@ export default function PantallaCarrito() {
       .catch(() => {
         // Si no responde, se muestra con los valores de siempre; el servidor recalcula al pagar.
       });
+    api
+      .pedir<{ stripePublica?: string | null }>('GET', '/datos/publico')
+      .then((r) => setClavePublica(r.stripePublica ?? ''))
+      .catch(() => setClavePublica(''));
     void miUbicacion().then(setPunto);
   }, [api]);
 
@@ -133,7 +142,7 @@ export default function PantallaCarrito() {
     setError('');
     setPagando(true);
     try {
-      const r = await api.pedir<{ pedidoId: string; urlPago: string }>('POST', '/datos/pedidos', {
+      const r = await api.pedir<Cobro>('POST', '/datos/pedidos', {
         restauranteId: carrito.restauranteId,
         lineas: carrito.lineas.map((l) => ({ platoId: l.platoId, cantidad: l.cantidad })),
         propinaCentavos: propina,
@@ -143,15 +152,17 @@ export default function PantallaCarrito() {
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
       });
-      // El cobro lo hace Stripe en su página segura. Al volver, la app muestra el pedido.
-      await Linking.openURL(r.urlPago);
-      router.replace(`/pedido/${r.pedidoId}`);
+      // La tarjeta se pide aquí mismo, sin salir de la app.
+      setCobro({ ...r, total: d.totalCliente });
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setPagando(false);
     }
   }
+
+  // Si el total cambió después de crear el cobro, ese cobro ya no sirve: se crea otro.
+  const cobro = cobroGuardado && d && cobroGuardado.total === d.totalCliente ? cobroGuardado : null;
 
   if (!d) {
     return (
@@ -301,11 +312,28 @@ export default function PantallaCarrito() {
           {error}
         </Text>
       ) : null}
-      <Boton
-        texto={`${t.pagar} ${formatearDolares(d.totalCliente, idioma)}`}
-        alTocar={() => void pagar()}
-        cargando={pagando}
-      />
+      {cobro && clavePublica ? (
+        <>
+          <Text style={{ fontWeight: '800', fontSize: 17, marginBottom: 8 }}>{t.tarjeta}</Text>
+          <PagoTarjeta
+            cobro={cobro}
+            clavePublica={clavePublica}
+            idioma={idioma}
+            textos={{ pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}` }}
+            alPagar={() => {
+              void b.limpiar();
+              vaciar();
+              router.replace(`/pedido/${cobro.pedidoId}`);
+            }}
+          />
+        </>
+      ) : (
+        <Boton
+          texto={`${t.continuarPago} · ${formatearDolares(d.totalCliente, idioma)}`}
+          alTocar={() => void pagar()}
+          cargando={pagando || !clavePublica}
+        />
+      )}
     </Pantalla>
   );
 }

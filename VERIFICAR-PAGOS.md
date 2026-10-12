@@ -1,44 +1,44 @@
 # Tumbite — Estado del circuito de pagos
 
-> 🔴 **EL CIRCUITO DE PAGOS NO ESTÁ PROBADO. NO SE ANUNCIA NI SE MANDAN CLIENTES.**
-> Falta: las llaves de Stripe de Windoce LLC (modo prueba) puestas en el panel de YaDominios Cloud.
+> 🟡 **Tarjeta con Stripe real (modo live): PROBADA una vez con Checkout** (pedido de $7.18, 10 oct 2026, pago `pi_3UPZrOLDByFATg8R2eLasrcQ`).
+> 🔴 **El pago DENTRO de la app (sin salto) NO está probado con dinero real todavía.** No se anuncia hasta hacer la compra de $1 por la app web.
 > Regla global: no se dice «listo» hasta una compra de punta a punta por cada método.
 
-Actualizado: 10 de octubre de 2026.
+Actualizado: 11 de octubre de 2026.
 
 ## Cómo funciona (construido)
 
 1. La app manda qué platos y cuántos. **El servidor pone los precios** desde la base y calcula los cuatro bolsillos (`packages/compartido/src/bolsillos.ts`).
-2. El servidor crea el pedido en `pago_pendiente` y abre una **sesión de Stripe Checkout** por el total exacto. Tarjeta, Apple Pay y Google Pay los ofrece Stripe solo.
-3. Stripe avisa a `POST https://tumbite.com/datos/stripe/aviso`. Sin **firma válida** (y con más de 5 minutos de diferencia) no se procesa nada. Cada aviso se procesa **una sola vez**. Si el monto o la sesión no cuadran con el pedido, no se marca pagado y queda en el registro de errores.
-4. Pedido pagado → lo ve el restaurante (paso 6).
-5. Billetera: restaurantes y repartidores se dan de alta en **Stripe Connect Express** (los datos bancarios los escriben en Stripe). El saldo es un libro de movimientos; el retiro hace una transferencia de Stripe y, si falla, el libro anota la devolución (nunca se borra).
+2. El servidor crea el pedido en `pago_pendiente`, busca o crea el **cliente de Stripe** de la persona (`usuarios.stripe_cliente`), abre un **PaymentIntent** por el total exacto y una **CustomerSession** (para mostrar y guardar tarjetas).
+3. **El cobro es dentro de la app, sin salto:** en la web, el formulario `PaymentElement` va dentro del carrito (`apps/cliente/src/PagoTarjeta.web.tsx`, `redirect: 'if_required'`); en el celular, la hoja de pago de Stripe (`PagoTarjeta.tsx`). Al pagar, la app lleva directo al pedido.
+4. Stripe avisa a `POST https://tumbite.com/datos/stripe/aviso` con `payment_intent.succeeded` (y sigue aceptando `checkout.session.completed` de pedidos viejos). Sin **firma válida** no se procesa nada. Cada aviso se procesa **una sola vez**. Si el monto o el intento no cuadran con el pedido, no se marca pagado.
+5. Pedido pagado → lo ve el restaurante y salen los correos.
+6. Billetera: restaurantes y repartidores se dan de alta en **Stripe Connect Express**. El saldo es un libro de movimientos.
 
 ## Estado por pieza
 
-| Pieza                                             | Construida    | Pruebas automáticas           | Probada con Stripe real (modo prueba) |
-| ------------------------------------------------- | ------------- | ----------------------------- | ------------------------------------- |
-| Cálculo de bolsillos                              | ✅            | ✅ cuadra al centavo          | —                                     |
-| Crear pedido + Checkout                           | ✅            | ✅ (Stripe simulado)          | 🔴 NO                                 |
-| Aviso de Stripe (firma, una vez, monto)           | ✅            | ✅ (firma comprobada en rojo) | 🔴 NO                                 |
-| Tarjeta                                           | ✅ (Checkout) | —                             | 🔴 NO                                 |
-| Apple Pay                                         | ✅ (Checkout) | —                             | 🔴 NO                                 |
-| Google Pay                                        | ✅ (Checkout) | —                             | 🔴 NO                                 |
-| Alta de billetera (Connect Express)               | ✅            | ✅ (simulado)                 | 🔴 NO                                 |
-| Retiro a banco                                    | ✅            | ✅ (simulado)                 | 🔴 NO                                 |
-| Acreditar al restaurante y repartidor al entregar | paso 7        |                               | 🔴 NO                                 |
+| Pieza                                         | Construida  | Pruebas automáticas         | Probada con Stripe real            |
+| --------------------------------------------- | ----------- | --------------------------- | ---------------------------------- |
+| Cálculo de bolsillos                          | ✅          | ✅ cuadra al centavo        | ✅ (pedido de $7.18)               |
+| Pago con salto (Checkout, ya retirado)        | ✅          | ✅                          | ✅ 10 oct 2026                     |
+| Pago dentro de la app, web (PaymentElement)   | ✅          | ✅ candado C-PAGO-SIN-SALTO | 🔴 NO — falta la compra de $1      |
+| Pago dentro de la app, celular (hoja de pago) | ✅          | ✅ candado                  | 🔴 NO — falta la app en el celular |
+| Tarjetas guardadas (CustomerSession)          | ✅          | ✅ cliente se crea una vez  | 🔴 NO — se ve en la segunda compra |
+| Aviso `payment_intent.succeeded`              | ✅          | ✅ monto e intento en rojo  | 🔴 NO                              |
+| Apple Pay / Google Pay                        | ✅ (Stripe) | —                           | 🔴 NO                              |
+| Alta de billetera (Connect Express)           | ✅          | ✅ (simulado)               | 🔴 NO                              |
+| Retiro a banco                                | ✅          | ✅ (simulado)               | 🔴 NO                              |
 
 ## Lo que falta para probar (en orden)
 
-1. 👤 Richard: crear la cuenta de Stripe de Windoce LLC y activar **Connect** (plataforma tipo marketplace, cuentas Express).
-2. Poner en YaDominios Cloud → tarjeta del sitio → Variables de entorno:
-   - `STRIPE_SECRET_KEY` (la `sk_test_...` primero)
-   - `STRIPE_WEBHOOK_SECRET` (sale al crear el endpoint del aviso en Stripe → Developers → Webhooks, apuntando a `https://tumbite.com/datos/stripe/aviso`, eventos `checkout.session.completed` y `account.updated`)
-   - `SITIO_URL` = `https://tumbite.com`
-3. Comprobar `https://tumbite.com/datos/salud`: `stripe` y `webhookStripe` en `ok`.
-4. Compra de prueba con la tarjeta de prueba de Stripe por cada método; mirar en Stripe el cobro, en la base el pedido `pagado`, y en el panel del restaurante el pedido entrante.
-5. Alta de billetera de prueba y retiro de prueba.
-6. Repetir todo con las llaves `sk_live_` antes de lanzar.
+1. Compra de $1 (Carne Asada, Restaurante el Beef USA, zona Novi) desde `https://tumbite.com/app/`: el formulario de tarjeta tiene que salir dentro del carrito, cobrar, y llevar solo al pedido. Mirar en Stripe el cobro y en el panel del restaurante el pedido.
+2. Segunda compra: la tarjeta guardada tiene que aparecer sola.
+3. Alta de billetera y retiro (prueba en la calle, `docs/PLAN-DE-PRUEBA-EN-CALLE.md`).
+
+## Configuración en vivo
+
+- Endpoint del aviso en Stripe: `we_1UPXJsLDByFATg8RGREKxPll`, eventos `checkout.session.completed`, `account.updated` y `payment_intent.succeeded` (agregado el 11 oct 2026).
+- Variables en YaDominios (los dos sitios): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`.
 
 ## Canario
 

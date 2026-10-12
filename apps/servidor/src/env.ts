@@ -15,6 +15,8 @@ export const esquemaEnv = z.object({
   ADMIN_SEMILLA: z.string().min(24).optional(),
   /** Token del sitio en YaDominios Cloud: manda correos desde tumbite.com. Solo en el panel. */
   YAD_TOKEN: z.string().min(32).optional(),
+  /** Llave publicable de Stripe (pk_…): la usa la app para el pago dentro de la pantalla. */
+  STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
   /** Número de WhatsApp de soporte (con prefijo, solo dígitos). Vacío = el botón no se muestra. */
   WHATSAPP_SOPORTE: z
     .string()

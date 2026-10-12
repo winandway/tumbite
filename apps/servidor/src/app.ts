@@ -103,9 +103,17 @@ app.get('/datos/salud', async (c) => {
 
 /** Datos públicos que la landing y las apps leen sin sesión (el WhatsApp de soporte, por ahora). */
 app.get('/datos/publico', (c) =>
-  c.json({ whatsapp: c.env.WHATSAPP_SOPORTE ?? '', correoSoporte: 'support@tumbite.com' }, 200, {
-    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
-  }),
+  c.json(
+    {
+      whatsapp: c.env.WHATSAPP_SOPORTE ?? '',
+      correoSoporte: 'support@tumbite.com',
+      stripePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
+    },
+    200,
+    {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+    },
+  ),
 );
 
 const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte', '/docs']);

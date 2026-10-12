@@ -54,6 +54,13 @@
           "color": "#FF3008",
           "defaultChannel": "pedidos"
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "",
+          "enableGooglePay": false
+        }
       ]
     ],
     "privacy": "public",

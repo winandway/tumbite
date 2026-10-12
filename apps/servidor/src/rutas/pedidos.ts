@@ -184,33 +184,60 @@ pedidos.post('/pedidos', async (c) => {
       422,
     );
   }
-  const sitio = c.env.SITIO_URL ?? 'https://tumbite.com';
-  const sesion = await stripe.post<{ id: string; url: string }>(
-    '/checkout/sessions',
+  // Pago dentro de la app (sin salto): un PaymentIntent del cliente de Stripe de esta persona,
+  // y una sesión de cliente para que la hoja de pago muestre y guarde sus tarjetas.
+  const fila = await db
+    .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ stripe_cliente: string | null }>();
+  let clienteStripe = fila?.stripe_cliente ?? null;
+  if (!clienteStripe) {
+    const cliente = await stripe.post<{ id: string }>(
+      '/customers',
+      { email: u.correo, name: u.nombre, metadata: { usuario_id: u.id } },
+      `cliente-${u.id}`,
+    );
+    clienteStripe = cliente.id;
+    await db
+      .prepare('UPDATE usuarios SET stripe_cliente = ? WHERE id = ?')
+      .bind(clienteStripe, u.id)
+      .run();
+  }
+  const intento = await stripe.post<{ id: string; client_secret: string }>(
+    '/payment_intents',
     {
-      mode: 'payment',
-      customer_email: u.correo,
-      client_reference_id: id,
+      amount: desglose.totalCliente,
+      currency: 'usd',
+      customer: clienteStripe,
+      automatic_payment_methods: { enabled: true },
+      description: `Tumbite · ${String(rest.nombre)}`,
       metadata: { pedido_id: id },
-      payment_intent_data: { metadata: { pedido_id: id } },
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: 'usd',
-            unit_amount: desglose.totalCliente,
-            product_data: { name: `Tumbite · ${String(rest.nombre)}` },
-          },
-        },
-      ],
-      success_url: `${sitio}/pago/listo?pedido=${id}`,
-      cancel_url: `${sitio}/pago/cancelado?pedido=${id}`,
-      locale: u.idioma === 'en' ? 'en' : 'es',
     },
     `pedido-${id}`,
   );
-  await db.prepare('UPDATE pedidos SET stripe_sesion = ? WHERE id = ?').bind(sesion.id, id).run();
-  return c.json({ pedidoId: id, urlPago: sesion.url, desglose }, 201);
+  const funciones = {
+    payment_method_save: 'enabled',
+    payment_method_redisplay: 'enabled',
+    payment_method_remove: 'enabled',
+  };
+  const sesionCliente = await stripe.post<{ client_secret: string }>('/customer_sessions', {
+    customer: clienteStripe,
+    components: {
+      payment_element: { enabled: true, features: funciones },
+      mobile_payment_element: { enabled: true, features: funciones },
+    },
+  });
+  await db.prepare('UPDATE pedidos SET stripe_sesion = ? WHERE id = ?').bind(intento.id, id).run();
+  return c.json(
+    {
+      pedidoId: id,
+      clientSecret: intento.client_secret,
+      sesionCliente: sesionCliente.client_secret,
+      clienteStripe,
+      desglose,
+    },
+    201,
+  );
 });
 
 /**
@@ -262,6 +289,37 @@ pedidos.post('/stripe/aviso', async (c) => {
           "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
         )
         .bind(String(obj.payment_intent ?? ''), pedidoId)
+        .run();
+      await anotar(db, pedidoId as string, 'pagado', null);
+      await correosDePedidoPagado(c.env, db, pedidoId as string);
+    }
+  }
+  if (evento.type === 'payment_intent.succeeded') {
+    const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+    const pedido = pedidoId
+      ? await db
+          .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+          .bind(pedidoId)
+          .first<{ total: number; stripe_sesion: string; estado: string }>()
+      : null;
+    if (!pedido) {
+      if (pedidoId) console.error('aviso de pago sin pedido conocido', pedidoId);
+    } else if (
+      pedido.stripe_sesion !== obj.id ||
+      Number(obj.amount_received) !== Number(pedido.total)
+    ) {
+      console.error(
+        'aviso de pago que no cuadra con el pedido',
+        pedidoId,
+        obj.amount_received,
+        pedido.total,
+      );
+    } else if (pedido.estado === 'pago_pendiente') {
+      await db
+        .prepare(
+          "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+        )
+        .bind(String(obj.id), pedidoId)
         .run();
       await anotar(db, pedidoId as string, 'pagado', null);
       await correosDePedidoPagado(c.env, db, pedidoId as string);

@@ -3,8 +3,8 @@ import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 
 async function escenario() {
   vi.stubGlobal('fetch', async (url: string) =>
-    url.includes('/checkout/sessions')
-      ? new Response(JSON.stringify({ id: 'cs_1', url: 'https://checkout.stripe.com/x' }), {
+    /\/(payment_intents|customers|customer_sessions)/.test(url)
+      ? new Response(JSON.stringify({ id: 'cs_1', client_secret: 'cs_1_secret_x' }), {
           status: 200,
         })
       : new Response(JSON.stringify({ id: 're_1' }), { status: 200 }),

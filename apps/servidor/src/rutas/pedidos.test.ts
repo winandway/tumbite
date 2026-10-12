@@ -21,9 +21,9 @@ function stripeFalso() {
   const llamadas: { url: string; cuerpo: string }[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     llamadas.push({ url, cuerpo: String(init?.body ?? '') });
-    if (url.includes('/checkout/sessions'))
+    if (/\/(payment_intents|customers|customer_sessions)/.test(url))
       return new Response(
-        JSON.stringify({ id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' }),
+        JSON.stringify({ id: 'cs_test_1', client_secret: 'cs_test_1_secret_x' }),
         { status: 200 },
       );
     if (url.includes('/accounts'))
@@ -95,12 +95,21 @@ describe('pedidos y pagos', () => {
       cliente.token,
     );
     expect(r.estado).toBe(201);
-    expect(r.datos.urlPago).toContain('checkout.stripe.com');
+    // Pago dentro de la app: sin salto a otra página; la app recibe el secreto del intento de pago.
+    expect(r.datos.urlPago).toBeUndefined();
+    expect(r.datos.clientSecret).toContain('_secret_');
+    expect(r.datos.sesionCliente).toContain('_secret_');
     expect(r.datos.desglose.subtotal).toBe(3000);
-    const sesion = llamadas.find((l) => l.url.includes('/checkout/sessions'));
-    expect(decodeURIComponent(sesion?.cuerpo ?? '')).toContain(
-      `[unit_amount]=${r.datos.desglose.totalCliente}`,
+    const intento = llamadas.find((l) => l.url.includes('/payment_intents'));
+    expect(decodeURIComponent(intento?.cuerpo ?? '')).toContain(
+      `amount=${r.datos.desglose.totalCliente}`,
     );
+    expect(decodeURIComponent(intento?.cuerpo ?? '')).toContain(
+      `metadata[pedido_id]=${r.datos.pedidoId}`,
+    );
+    // La tarjeta se puede guardar para la próxima: la sesión del cliente lo permite.
+    const sesion = llamadas.find((l) => l.url.includes('/customer_sessions'));
+    expect(decodeURIComponent(sesion?.cuerpo ?? '')).toContain('[payment_method_save]=enabled');
     const fila = await m.DB.prepare('SELECT estado, total FROM pedidos WHERE id = ?')
       .bind(r.datos.pedidoId)
       .first<{ estado: string; total: number }>();
@@ -308,5 +317,74 @@ describe('pedidos y pagos', () => {
     const b = await m.llamar('GET', '/datos/billetera', undefined, dueno.token);
     expect(b.datos.saldo).toBe(400);
     expect(b.datos.pagosActivos).toBe(true);
+  });
+});
+
+describe('pago dentro de la app (sin salto)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el aviso payment_intent.succeeded marca pagado, una vez, solo si el monto y el intento cuadran', async () => {
+    stripeFalso();
+    const { m, cliente, pedidoBase } = await escenario();
+    const { app } = await import('../app');
+    const r = await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
+    const enviar = async (evento: object) => {
+      const cuerpo = JSON.stringify(evento);
+      return app.request(
+        '/datos/stripe/aviso',
+        { method: 'POST', body: cuerpo, headers: { 'stripe-signature': await firmar(cuerpo) } },
+        { DB: m.DB, STRIPE_WEBHOOK_SECRET: SECRETO },
+      );
+    };
+    const estado = async () =>
+      await m.DB.prepare('SELECT estado, stripe_pago FROM pedidos WHERE id = ?')
+        .bind(r.datos.pedidoId)
+        .first<{ estado: string; stripe_pago: string | null }>();
+    // Monto que no cuadra: no se toca.
+    await enviar({
+      id: 'evt_pi_x',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: { id: 'cs_test_1', amount_received: 1, metadata: { pedido_id: r.datos.pedidoId } },
+      },
+    });
+    expect((await estado())?.estado).toBe('pago_pendiente');
+    // Otro intento de pago con el mismo pedido: no se toca.
+    await enviar({
+      id: 'evt_pi_y',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'pi_otro',
+          amount_received: r.datos.desglose.totalCliente,
+          metadata: { pedido_id: r.datos.pedidoId },
+        },
+      },
+    });
+    expect((await estado())?.estado).toBe('pago_pendiente');
+    const bueno = {
+      id: 'evt_pi_ok',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'cs_test_1',
+          amount_received: r.datos.desglose.totalCliente,
+          metadata: { pedido_id: r.datos.pedidoId },
+        },
+      },
+    };
+    expect((await enviar(bueno)).status).toBe(200);
+    expect(await estado()).toEqual({ estado: 'pagado', stripe_pago: 'cs_test_1' });
+    const repetido = await enviar(bueno);
+    expect(((await repetido.json()) as { repetido?: boolean }).repetido).toBe(true);
+  });
+
+  it('el cliente de Stripe se crea una sola vez por persona', async () => {
+    const llamadas = stripeFalso();
+    const { m, cliente, pedidoBase } = await escenario();
+    await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
+    await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
+    expect(llamadas.filter((l) => l.url.endsWith('/customers'))).toHaveLength(1);
+    expect(llamadas.filter((l) => l.url.includes('/payment_intents'))).toHaveLength(2);
   });
 });

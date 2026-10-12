@@ -71,7 +71,7 @@ describe('zonas: pueblo en pueblo', () => {
     vi.stubGlobal(
       'fetch',
       async () =>
-        new Response(JSON.stringify({ id: 'cs_1', url: 'https://checkout.stripe.com/x' }), {
+        new Response(JSON.stringify({ id: 'cs_1', client_secret: 'cs_1_secret_x' }), {
           status: 200,
         }),
     );

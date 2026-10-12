@@ -7,6 +7,7 @@
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
+  ['usuarios', 'stripe_cliente', 'TEXT'],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
