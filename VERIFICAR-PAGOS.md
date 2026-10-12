@@ -4,7 +4,7 @@
 > 🔴 **El pago DENTRO de la app (sin salto) NO está probado con dinero real todavía.** No se anuncia hasta hacer la compra de $1 por la app web.
 > Regla global: no se dice «listo» hasta una compra de punta a punta por cada método.
 
-Actualizado: 11 de octubre de 2026.
+Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito se vio funcionando en local (candado C-PAGO-FORMULARIO); falta la compra real de $1.
 
 ## Cómo funciona (construido)
 

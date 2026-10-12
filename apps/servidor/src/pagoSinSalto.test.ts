@@ -29,3 +29,11 @@ describe('el botón de pagar nunca gira para siempre', () => {
     expect(carrito).toMatch(/cargando=\{pagando\}/);
   });
 });
+
+describe('si Stripe no pinta el formulario, se ve el error', () => {
+  it('la web escucha loaderror y no deja el botón sin formulario', () => {
+    const web = leer('PagoTarjeta.web.tsx');
+    expect(web).toMatch(/onLoadError=/);
+    expect(web).toMatch(/onReady=/);
+  });
+});

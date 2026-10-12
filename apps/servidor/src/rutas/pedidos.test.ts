@@ -110,6 +110,8 @@ describe('pedidos y pagos', () => {
     expect(decodeURIComponent(intento?.cuerpo ?? '')).toContain(
       `metadata[pedido_id]=${r.datos.pedidoId}`,
     );
+    // Sin esto, Stripe rechaza el formulario de tarjeta porque la sesión permite guardarla.
+    expect(decodeURIComponent(intento?.cuerpo ?? '')).toContain('setup_future_usage=off_session');
     // La tarjeta se puede guardar para la próxima: la sesión del cliente lo permite.
     const sesion = llamadas.find((l) => l.url.includes('/customer_sessions'));
     expect(decodeURIComponent(sesion?.cuerpo ?? '')).toContain('[payment_method_save]=enabled');

@@ -31,6 +31,7 @@ const es = {
   pagar: 'Pagar',
   continuarPago: 'Continuar al pago',
   tarjeta: 'Tu tarjeta',
+  cargandoTarjeta: 'Cargando el formulario de pago…',
   pagoNoDisponible:
     'El pago con tarjeta no está disponible en este momento. Intenta de nuevo en unos minutos.',
   cerradoAhora: 'Este restaurante está cerrado ahora.',
@@ -79,6 +80,7 @@ const en: T = {
   pagar: 'Pay',
   continuarPago: 'Continue to payment',
   tarjeta: 'Your card',
+  cargandoTarjeta: 'Loading the payment form…',
   pagoNoDisponible: 'Card payment isn’t available right now. Please try again in a few minutes.',
   cerradoAhora: 'This restaurant is closed right now.',
   usarUbicacion: 'Use my location',

@@ -314,7 +314,11 @@ export default function PantallaCarrito() {
             cobro={cobro}
             clavePublica={cobro.clavePublica}
             idioma={idioma}
-            textos={{ pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}` }}
+            textos={{
+              pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}`,
+              cargando: t.cargandoTarjeta,
+              sinFormulario: t.pagoNoDisponible,
+            }}
             alPagar={() => {
               void b.limpiar();
               vaciar();

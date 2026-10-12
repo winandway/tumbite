@@ -210,6 +210,9 @@ pedidos.post('/pedidos', async (c) => {
       currency: 'usd',
       customer: clienteStripe,
       automatic_payment_methods: { enabled: true },
+      // Obligatorio cuando la sesión del cliente permite guardar la tarjeta: sin esto, Stripe
+      // se niega a pintar el formulario (y lo hace en silencio). Candado C-PAGO-FORMULARIO.
+      setup_future_usage: 'off_session',
       description: `Tumbite · ${String(rest.nombre)}`,
       metadata: { pedido_id: id },
     },

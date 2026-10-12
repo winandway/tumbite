@@ -10,6 +10,6 @@ export type PropsPago = {
   cobro: Cobro;
   clavePublica: string;
   idioma: 'es' | 'en';
-  textos: { pagar: string };
+  textos: { pagar: string; cargando: string; sinFormulario: string };
   alPagar: () => void;
 };

@@ -41,6 +41,7 @@ function Formulario({ cobro, textos, alPagar }: PropsPago) {
   const elements = useElements();
   const [error, setError] = useState('');
   const [pagando, setPagando] = useState(false);
+  const [listo, setListo] = useState(false);
 
   async function pagar() {
     if (!stripe || !elements) return;
@@ -60,18 +61,23 @@ function Formulario({ cobro, textos, alPagar }: PropsPago) {
   return (
     <>
       <div style={{ marginBottom: 14 }}>
-        <PaymentElement options={{ layout: 'tabs' }} />
+        <PaymentElement
+          options={{ layout: 'tabs' }}
+          onReady={() => setListo(true)}
+          // Si Stripe se niega a pintar el formulario, se dice en pantalla: nunca en silencio.
+          onLoadError={(ev) => setError(ev.error.message ?? textos.sinFormulario)}
+        />
       </div>
       {error ? (
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error}
         </Text>
       ) : null}
-      <Boton
-        texto={textos.pagar}
-        alTocar={() => void pagar()}
-        cargando={pagando || !stripe || !elements}
-      />
+      {listo ? (
+        <Boton texto={textos.pagar} alTocar={() => void pagar()} cargando={pagando} />
+      ) : error ? null : (
+        <Text style={{ color: '#5E5E5E' }}>{textos.cargando}</Text>
+      )}
     </>
   );
 }
