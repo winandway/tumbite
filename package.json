@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "build": "npm run build -w @tumbite/panel && npm run build -w @tumbite/servidor",
-    "build:app-web": "cd apps/cliente && EXPO_PUBLIC_API_URL=https://tumbite.com EXPO_NO_TELEMETRY=1 CI=1 npx expo export --platform web --output-dir dist-web",
+    "build:app-web": "cd apps/cliente && EXPO_PUBLIC_API_URL=https://tumbite.com EXPO_NO_TELEMETRY=1 CI=1 npx expo export --platform web --output-dir dist-web && node scripts/claro.mjs",
     "audit": "npm audit --audit-level=high --omit=dev -w @tumbite/servidor -w @tumbite/panel -w @tumbite/compartido",
     "secrets": "gitleaks git --no-banner --redact .",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run audit",

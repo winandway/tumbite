@@ -105,3 +105,9 @@
 
 - Hoy: «Usar mi ubicación» comprueba la zona y, si Tumbite llega, abre la app web con la ubicación puesta; una dirección escrita abre la app con esa dirección en el pedido. Fuera de zona, manda a la lista de espera.
 - Falta (👤 llave de geocodificación de Google o Mapbox): convertir la dirección escrita en coordenadas para decir si está en zona ANTES de entrar, con sugerencias mientras se escribe, como Uber Eats. Va en la Etapa 2.
+
+## Dictado por Richard el 12 oct 2026, tras la primera compra de prueba
+
+1. **Pago dentro de la app, sin salto** (como Mercatren): Stripe Payment Element en la versión web y Payment Sheet en las apps, con tarjeta guardada para la próxima compra (Customer + setup_future_usage). Reemplaza el Checkout con salto. Es lo siguiente que se construye.
+2. **Dirección con autocompletado** (Google Places): se escribe la calle y aparecen las sugerencias hasta elegir la de uno. 👤 Llave de Google Places (Maps Platform) con tope de gasto.
+3. **La app siempre clara**: el navegador del teléfono en modo oscuro la oscurecía; se fuerza fondo blanco.
