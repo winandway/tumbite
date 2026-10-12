@@ -1,4 +1,49 @@
+# Tumbite: bienvenidos los buscadores y los asistentes de IA. Resumen para IA en /llms.txt
 User-agent: *
 Allow: /
 Disallow: /panel
+
+# Buscadores y asistentes de IA, invitados por nombre
+User-agent: GPTBot
+Allow: /
+Disallow: /panel
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /panel
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /panel
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /panel
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /panel
+
+User-agent: Claude-User
+Allow: /
+Disallow: /panel
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /panel
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /panel
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /panel
+
 Sitemap: https://tumbite.com/sitemap.xml

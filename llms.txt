@@ -1,0 +1,100 @@
+# Tumbite
+
+> Tumbite es una app de comida a domicilio de Windoce LLC (Florida, Estados Unidos). Conecta a clientes, restaurantes locales y repartidores: los restaurantes pagan entre 7,5 % y 15 % de comisión según su plan, sin contratos de permanencia; el repartidor se queda con el 100 % de la propina y ve cuánto gana antes de aceptar; el cliente ve el desglose completo antes de pagar y sigue su pedido en vivo. Empieza en Miami y abre ciudad por ciudad, en cualquier país, con franquicias locales que financian el arranque (flota de motos, entrenamiento, una tablet para cada restaurante y la búsqueda de los primeros clientes). La app es bilingüe (español e inglés). Contacto: support@tumbite.com · franquicias: sales@tumbite.com.
+
+## Lo principal
+
+- [Tumbite · Comida a domicilio en Miami](https://tumbite.com/): Tumbite conecta a los vecinos de Miami con sus restaurantes favoritos y con repartidores que ganan de verdad. Más justo para todos, con gente de carne y hu
+- [Cómo funciona Tumbite](https://tumbite.com/como-funciona): Tumbite es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos tod
+
+## Guías (Docs)
+
+- [Docs · Tumbite](https://tumbite.com/docs): Guías cortas para pedir, para restaurantes y para repartidores.
+- [Para pedir · Tumbite](https://tumbite.com/docs/comensales): ⌘K← Docs Para pedirCómo hacer tu primer pedidoElige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.Seguir tu pedido en 
+- [Cómo hacer tu primer pedido · Tumbite](https://tumbite.com/docs/comensales/pedir): Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.
+- [Seguir tu pedido en vivo · Tumbite](https://tumbite.com/docs/comensales/seguir): Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.
+- [Regalos: cumpleaños, sellos y bienvenida · Tumbite](https://tumbite.com/docs/comensales/regalos): Los restaurantes premian que vuelvas. Los regalos aparecen solos en el carrito.
+- [Calificar la comida y al repartidor · Tumbite](https://tumbite.com/docs/comensales/calificar): Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.
+- [Para restaurantes · Tumbite](https://tumbite.com/docs/restaurantes): ⌘K← Docs Para restaurantesPoner tu restaurante en TumbiteCrea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.Tu menú: pl
+- [Poner tu restaurante en Tumbite](https://tumbite.com/docs/restaurantes/empezar): Crea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.
+- [Tu menú: platos, precios y fotos · Tumbite](https://tumbite.com/docs/restaurantes/menu): Cada plato en español e inglés, con su precio, su categoría y su foto.
+- [Marcar un plato como agotado · Tumbite](https://tumbite.com/docs/restaurantes/agotado): Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.
+- [Recibir pedidos y la alarma · Tumbite](https://tumbite.com/docs/restaurantes/pedidos): Suena fuerte hasta que alguien acepta. Ningún pedido se queda olvidado en hora pico.
+- [Regalos y marketing · Tumbite](https://tumbite.com/docs/restaurantes/regalos): Aparta un porcentaje de tus ventas para premiar a tus clientes fieles.
+- [Resumen del día y tu billetera · Tumbite](https://tumbite.com/docs/restaurantes/beneficios): Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.
+- [Para repartidores · Tumbite](https://tumbite.com/docs/repartidores): ⌘K← Docs Para repartidoresEmpezar a repartirCrea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.Las ofertas: cuánto ganas antes de ac
+- [Empezar a repartir · Tumbite](https://tumbite.com/docs/repartidores/empezar): Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.
+- [Las ofertas: cuánto ganas antes de aceptar · Tumbite](https://tumbite.com/docs/repartidores/ofertas): Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.
+- [Niveles: Bronce, Plata, Oro y Diamante · Tumbite](https://tumbite.com/docs/repartidores/niveles): Los niveles altos ven primero los pedidos grandes. Se suben con entregas y buenas notas.
+- [Tu billetera y los retiros · Tumbite](https://tumbite.com/docs/repartidores/billetera): Saldo, historial del día y retiro a tu banco cuando quieras.
+- [Tu cuenta · Tumbite](https://tumbite.com/docs/cuenta): ⌘K← Docs Tu cuentaOlvidé mi contraseñaTe mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.Confirmar tu correoAl registrarte te llega 
+- [Olvidé mi contraseña · Tumbite](https://tumbite.com/docs/cuenta/contrasena): Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.
+- [Confirmar tu correo · Tumbite](https://tumbite.com/docs/cuenta/confirmar-correo): Al registrarte te llega un enlace para confirmar que el correo es tuyo.
+- [Borrar tu cuenta · Tumbite](https://tumbite.com/docs/cuenta/borrar): Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.
+- [Soporte humano · Tumbite](https://tumbite.com/docs/cuenta/soporte): Personas reales, rápido. Por WhatsApp o por correo.
+
+## Países
+
+- [Comida a domicilio en Estados Unidos con Tumbite](https://tumbite.com/pais/estados-unidos): Pide de los restaurantes de Estados Unidos, síguelo en el mapa y recíbelo en tu puerta. Comisiones justas para los restaurantes y el 100 % de la propina pa
+- [Tumbite llega muy pronto a México](https://tumbite.com/pais/mexico): Estamos preparando el lanzamiento en México: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Puerto Rico](https://tumbite.com/pais/puerto-rico): Estamos preparando el lanzamiento en Puerto Rico: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a República Dominicana](https://tumbite.com/pais/republica-dominicana): Estamos preparando el lanzamiento en República Dominicana: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Cuba](https://tumbite.com/pais/cuba): Estamos preparando el lanzamiento en Cuba: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Guatemala](https://tumbite.com/pais/guatemala): Estamos preparando el lanzamiento en Guatemala: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a El Salvador](https://tumbite.com/pais/el-salvador): Estamos preparando el lanzamiento en El Salvador: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Honduras](https://tumbite.com/pais/honduras): Estamos preparando el lanzamiento en Honduras: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Nicaragua](https://tumbite.com/pais/nicaragua): Estamos preparando el lanzamiento en Nicaragua: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Costa Rica](https://tumbite.com/pais/costa-rica): Estamos preparando el lanzamiento en Costa Rica: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Panamá](https://tumbite.com/pais/panama): Estamos preparando el lanzamiento en Panamá: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Colombia](https://tumbite.com/pais/colombia): Estamos preparando el lanzamiento en Colombia: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Venezuela](https://tumbite.com/pais/venezuela): Estamos preparando el lanzamiento en Venezuela: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Ecuador](https://tumbite.com/pais/ecuador): Estamos preparando el lanzamiento en Ecuador: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Perú](https://tumbite.com/pais/peru): Estamos preparando el lanzamiento en Perú: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Bolivia](https://tumbite.com/pais/bolivia): Estamos preparando el lanzamiento en Bolivia: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Chile](https://tumbite.com/pais/chile): Estamos preparando el lanzamiento en Chile: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Argentina](https://tumbite.com/pais/argentina): Estamos preparando el lanzamiento en Argentina: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Uruguay](https://tumbite.com/pais/uruguay): Estamos preparando el lanzamiento en Uruguay: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Paraguay](https://tumbite.com/pais/paraguay): Estamos preparando el lanzamiento en Paraguay: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Brasil](https://tumbite.com/pais/brasil): Estamos preparando el lanzamiento en Brasil: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Guyana](https://tumbite.com/pais/guyana): Estamos preparando el lanzamiento en Guyana: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Surinam](https://tumbite.com/pais/surinam): Estamos preparando el lanzamiento en Surinam: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a España](https://tumbite.com/pais/espana): Estamos preparando el lanzamiento en España: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Portugal](https://tumbite.com/pais/portugal): Estamos preparando el lanzamiento en Portugal: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Italia](https://tumbite.com/pais/italia): Estamos preparando el lanzamiento en Italia: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Francia](https://tumbite.com/pais/francia): Estamos preparando el lanzamiento en Francia: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Alemania](https://tumbite.com/pais/alemania): Estamos preparando el lanzamiento en Alemania: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Países Bajos](https://tumbite.com/pais/paises-bajos): Estamos preparando el lanzamiento en Países Bajos: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Reino Unido](https://tumbite.com/pais/reino-unido): Estamos preparando el lanzamiento en Reino Unido: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Rumanía](https://tumbite.com/pais/rumania): Estamos preparando el lanzamiento en Rumanía: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+- [Tumbite llega muy pronto a Guinea Ecuatorial](https://tumbite.com/pais/guinea-ecuatorial): Estamos preparando el lanzamiento en Guinea Ecuatorial: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.
+
+## Ciudades
+
+- [Comida a domicilio en Miami con Tumbite](https://tumbite.com/ciudad/miami): Pide de los restaurantes de Miami, síguelo en el mapa y recíbelo en tu puerta. Comisiones justas para los restaurantes y el 100 % de la propina para el rep
+- [Tumbite llega muy pronto a Orlando](https://tumbite.com/ciudad/orlando): Estamos preparando el lanzamiento en Orlando: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos. Forma parte de
+- [Tumbite llega muy pronto a Tampa](https://tumbite.com/ciudad/tampa): Estamos preparando el lanzamiento en Tampa: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos. Forma parte de n
+- [Tumbite llega muy pronto a Ocala](https://tumbite.com/ciudad/ocala): Estamos preparando el lanzamiento en Ocala: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos. Forma parte de n
+
+## Tipos de comida
+
+- [Pizza a domicilio con Tumbite](https://tumbite.com/comida/pizza): Los mejores lugares de pizza de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Hamburguesas a domicilio con Tumbite](https://tumbite.com/comida/hamburguesas): Los mejores lugares de hamburguesas de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Sushi a domicilio con Tumbite](https://tumbite.com/comida/sushi): Los mejores lugares de sushi de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Comida cubana a domicilio con Tumbite](https://tumbite.com/comida/cubana): Los mejores lugares de comida cubana de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Comida venezolana a domicilio con Tumbite](https://tumbite.com/comida/venezolana): Los mejores lugares de comida venezolana de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Comida colombiana a domicilio con Tumbite](https://tumbite.com/comida/colombiana): Los mejores lugares de comida colombiana de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Comida mexicana a domicilio con Tumbite](https://tumbite.com/comida/mexicana): Los mejores lugares de comida mexicana de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Pollo a domicilio con Tumbite](https://tumbite.com/comida/pollo): Los mejores lugares de pollo de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Saludable a domicilio con Tumbite](https://tumbite.com/comida/saludable): Los mejores lugares de saludable de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Postres a domicilio con Tumbite](https://tumbite.com/comida/postres): Los mejores lugares de postres de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Café y desayunos a domicilio con Tumbite](https://tumbite.com/comida/cafe): Los mejores lugares de café y desayunos de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+- [Mariscos a domicilio con Tumbite](https://tumbite.com/comida/mariscos): Los mejores lugares de mariscos de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.
+
+## Legal y soporte
+
+- [Política de privacidad · Tumbite](https://tumbite.com/privacidad): Esta política explica qué datos personales recoge Tumbite, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a
+- [Términos de uso · Tumbite](https://tumbite.com/terminos): Estos términos son un acuerdo entre tú y Windoce LLC para usar Tumbite. Al crear una cuenta o hacer un pedido los aceptas. Los restaurantes y los repartido
+- [Términos para restaurantes · Tumbite](https://tumbite.com/terminos-restaurantes): Estos términos se suman a los Términos de uso y aplican a los negocios que venden en Tumbite. Al registrar tu restaurante los aceptas en nombre del negocio
+- [Términos para repartidores · Tumbite](https://tumbite.com/terminos-repartidores): Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas con Tumbite Driver. Al crear tu cuenta de repartidor los aceptas.
+- [Borrar tu cuenta de Tumbite](https://tumbite.com/borrar-cuenta): Así borras tu cuenta de Tumbite (app de clientes, Tumbite Driver o Tumbite para restaurantes), de Windoce LLC. No hace falta tener la app instalada.
+- [Soporte · Tumbite](https://tumbite.com/soporte): Actualizado: 12 de octubre de 2026
