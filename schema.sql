@@ -268,3 +268,51 @@ CREATE TABLE IF NOT EXISTS lista_espera (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (tipo, correo)
 );
+
+-- Tickets: cada formulario abre una conversación (como en YaDominios Cloud). La persona no necesita
+-- cuenta: su llave es el código largo del enlace /t/<codigo> que recibe por correo (no se indexa).
+CREATE TABLE IF NOT EXISTS tickets (
+  id TEXT PRIMARY KEY,
+  codigo TEXT NOT NULL UNIQUE,
+  tipo TEXT NOT NULL CHECK (tipo IN ('espera_comensal', 'espera_restaurante', 'espera_repartidor', 'franquicia', 'queja', 'soporte')),
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'respondido', 'cerrado')),
+  nombre TEXT NOT NULL,
+  correo TEXT NOT NULL COLLATE NOCASE,
+  telefono TEXT NOT NULL DEFAULT '',
+  pais TEXT NOT NULL DEFAULT '',
+  ciudad TEXT NOT NULL DEFAULT '',
+  idioma TEXT NOT NULL DEFAULT 'es',
+  asunto TEXT NOT NULL,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  usuario_id TEXT REFERENCES usuarios(id),
+  pedido_id TEXT REFERENCES pedidos(id),
+  zona_id TEXT REFERENCES zonas(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS tickets_estado ON tickets(estado, actualizado_en);
+CREATE INDEX IF NOT EXISTS tickets_zona ON tickets(zona_id, estado, actualizado_en);
+
+CREATE TABLE IF NOT EXISTS ticket_mensajes (
+  id TEXT PRIMARY KEY,
+  ticket_id TEXT NOT NULL REFERENCES tickets(id),
+  autor TEXT NOT NULL CHECK (autor IN ('persona', 'equipo')),
+  texto TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS ticket_mensajes_ticket ON ticket_mensajes(ticket_id, creado_en);
+
+-- Franquicias: una por zona (ciudad). El franquiciado entra a su panel con su propia dirección
+-- (/panel/franquicia-<ciudad>-<codigo>); el código es largo y no se adivina.
+CREATE TABLE IF NOT EXISTS franquicias (
+  id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL UNIQUE REFERENCES zonas(id),
+  codigo TEXT NOT NULL UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'prospecto' CHECK (estado IN ('prospecto', 'vendida', 'activa', 'pausada')),
+  dueno_id TEXT REFERENCES usuarios(id),
+  dueno_correo TEXT NOT NULL DEFAULT '',
+  motos INTEGER NOT NULL DEFAULT 0,
+  notas TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  vendida_en TEXT
+);

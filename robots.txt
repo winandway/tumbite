@@ -2,39 +2,48 @@
 User-agent: *
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 # Buscadores y asistentes de IA, invitados por nombre
 User-agent: GPTBot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: OAI-SearchBot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: Claude-SearchBot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: Claude-User
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: Perplexity-User
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 User-agent: Google-Extended
 Allow: /
@@ -45,5 +54,6 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 Disallow: /panel
+Disallow: /t/
 
 Sitemap: https://tumbite.com/sitemap.xml
