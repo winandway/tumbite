@@ -111,3 +111,7 @@
 1. **Pago dentro de la app, sin salto** (como Mercatren): Stripe Payment Element en la versión web y Payment Sheet en las apps, con tarjeta guardada para la próxima compra (Customer + setup_future_usage). Reemplaza el Checkout con salto. Es lo siguiente que se construye.
 2. **Dirección con autocompletado** (Google Places): se escribe la calle y aparecen las sugerencias hasta elegir la de uno. 👤 Llave de Google Places (Maps Platform) con tope de gasto.
 3. **La app siempre clara**: el navegador del teléfono en modo oscuro la oscurecía; se fuerza fondo blanco.
+
+## Segunda prueba en la calle — ver `docs/PLAN-DE-PRUEBA-EN-CALLE.md`
+
+La primera prueba (11–12 oct) dio por probada la pasarela de pago: el cobro real entró, el pedido se marcó pagado y salieron los correos. La segunda prueba es el circuito completo: pedido, restaurante y repartidor en bicicleta con el mapa, siguiendo el plan escrito.
