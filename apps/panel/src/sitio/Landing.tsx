@@ -70,10 +70,10 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <p>{t.hero.texto}</p>
           <Buscador idioma={idioma} />
           <div className="ld-ctas">
-            <a className="ld-cta" href="#comensales">
+            <a className="ld-cta" href="/app/">
               <Icono nombre="pizza" tamano={18} /> {t.hero.pedir}
             </a>
-            <a className="ld-cta" href="#restaurantes">
+            <a className="ld-cta" href="/panel">
               <Icono nombre="chef" tamano={18} /> {t.hero.restaurante}
             </a>
             <a className="ld-cta" href="#repartidores">
@@ -107,6 +107,24 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             fetchPriority="high"
           />
         </div>
+      </section>
+
+      {/* Los tres caminos, claros y arriba: nadie tiene que adivinar ni bajar. */}
+      <section className="ld-entradas" aria-label={t.hero.pedir}>
+        {t.hero.entradas.map(([titulo, texto, boton], i) => {
+          const destino = ['/app/', '/panel', '#repartidores'].at(i) ?? '/';
+          const icono = (['pizza', 'chef', 'moto'] as const).at(i) ?? 'pizza';
+          return (
+            <a key={titulo} className="ld-entrada-tarjeta" href={destino}>
+              <span className="ld-icono">
+                <Icono nombre={icono} tamano={26} />
+              </span>
+              <strong>{titulo}</strong>
+              <p>{texto}</p>
+              <span className="boton">{boton}</span>
+            </a>
+          );
+        })}
       </section>
 
       <ul className="ld-ventajas">

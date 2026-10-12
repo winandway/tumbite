@@ -20,6 +20,19 @@ const es = {
     pedir: 'Quiero pedir',
     restaurante: 'Tengo un restaurante',
     repartir: 'Quiero repartir',
+    entradas: [
+      [
+        'Quiero pedir comida',
+        'Pide de los restaurantes de tu zona y síguelo en vivo.',
+        'Pedir ahora',
+      ],
+      [
+        'Tengo un restaurante',
+        'Vende más pagando la mitad de comisión. Sin permanencia.',
+        'Entrar al panel',
+      ],
+      ['Quiero repartir', 'Ves cuánto ganas antes de aceptar. Rechazar no te castiga.', 'Anotarme'],
+    ],
     tiendas: 'Muy pronto en App Store y Google Play',
   },
   ventajas: [
@@ -267,6 +280,19 @@ const en: Textos = {
       'Tumbite connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other side.',
     pedir: 'I want to order',
     restaurante: 'I own a restaurant',
+    entradas: [
+      ['I want to order food', 'Order from restaurants near you and track it live.', 'Order now'],
+      [
+        'I own a restaurant',
+        'Sell more paying half the commission. No lock-in.',
+        'Open the dashboard',
+      ],
+      [
+        'I want to deliver',
+        'See what you earn before you accept. Declining never counts against you.',
+        'Sign me up',
+      ],
+    ],
     repartir: 'I want to drive',
     tiendas: 'Coming soon to the App Store and Google Play',
   },
