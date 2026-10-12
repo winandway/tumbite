@@ -231,7 +231,15 @@ export function Inicio() {
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>
             {estado.conectado ? t.conectado : t.desconectado}
           </Text>
-          <Text style={{ color: C.acento, fontWeight: '700', marginTop: 4 }}>
+          <Text
+            style={{
+              // Blanco subrayado sobre verde; el rojo no se leía. Sobre gris oscuro sí va el escarlata.
+              color: estado.conectado ? '#fff' : C.acento,
+              textDecorationLine: estado.conectado ? 'underline' : 'none',
+              fontWeight: '700',
+              marginTop: 4,
+            }}
+          >
             {estado.conectado ? t.desconectar : t.conectar}
           </Text>
         </Pressable>

@@ -23,6 +23,28 @@
         "EXPO_NO_TELEMETRY": "1"
       },
       "port": 8081
+    },
+    {
+      "name": "app-repartidor-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8082"],
+      "cwd": "apps/repartidor",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8787",
+        "EXPO_NO_TELEMETRY": "1"
+      },
+      "port": 8082
+    },
+    {
+      "name": "app-restaurante-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8083"],
+      "cwd": "apps/restaurante",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8787",
+        "EXPO_NO_TELEMETRY": "1"
+      },
+      "port": 8083
     }
   ]
 }
