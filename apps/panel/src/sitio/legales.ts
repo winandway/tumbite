@@ -40,8 +40,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Qué datos recogemos y cómo',
         parrafos: [
-          'Datos que nos das tú: nombre, correo, número de celular, contraseña (la guardamos cifrada, nunca en texto), idioma y, si lo eliges, tu fecha de nacimiento para el regalo de cumpleaños. Si eres restaurante: nombre del negocio, dirección, teléfono, menú, precios y fotos. Si eres repartidor: el vehículo con el que entregas.',
+          'Datos que nos das tú: nombre, correo, número de celular, contraseña (la guardamos cifrada, nunca en texto), idioma y, si lo eliges, tu fecha de nacimiento para el regalo de cumpleaños. Si eres restaurante: nombre del negocio, dirección, teléfono, menú, precios y fotos. Si eres repartidor: tu vehículo (tipo, marca, modelo, año, color y placa), tu licencia de conducir (número, estado y vencimiento) y tu seguro (aseguradora, póliza y vencimiento).',
           'Datos de tus pedidos: lo que pides, el restaurante, la dirección de entrega, las indicaciones para el repartidor, los importes, la propina, las calificaciones y los comentarios que dejas.',
+          'Verificación de identidad (repartidores y dueños de restaurante): una foto de tu documento (frente y reverso) y una foto de tu cara, que toma tu cámara. Si tienes un restaurante, también una foto del local con la ubicación del celular en ese momento, para comprobar que existe en la dirección registrada. Una persona del equipo compara las fotos; no creamos plantillas biométricas de tu cara. Las fotos se guardan en un almacén privado que solo ve el equipo de Tumbite y se borran cuando borras tu cuenta.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
           'Datos técnicos: el identificador del teléfono para enviarte avisos (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
@@ -77,7 +78,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. Cuánto tiempo guardamos tus datos',
         parrafos: [
           'Mientras tu cuenta esté abierta, guardamos los datos de tu cuenta y de tus pedidos para darte el servicio.',
-          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones y tu anotación en la lista de espera.',
+          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones y tu anotación en la lista de espera.',
           'Lo que guardamos sin tu nombre: el importe, la fecha y el restaurante de cada pedido, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude. Esos registros ya no te identifican.',
           'Copias de seguridad: guardamos copias diarias durante 30 días. Lo que borres desaparece de ellas cuando caducan, como máximo 30 días después.',
           'Stripe guarda los datos de tus pagos según su propia política y las leyes financieras.',
@@ -141,8 +142,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. What we collect and how',
         parrafos: [
-          'Information you give us: name, email, mobile number, password (stored encrypted, never in plain text), language, and, if you choose, your birthday for your birthday gift. Restaurants: business name, address, phone, menu, prices, and photos. Drivers: the vehicle you deliver with.',
+          'Information you give us: name, email, mobile number, password (stored encrypted, never in plain text), language, and, if you choose, your birthday for your birthday gift. Restaurants: business name, address, phone, menu, prices, and photos. Drivers: your vehicle (type, make, model, year, color, and plate), your driver’s license (number, issuing state, and expiration), and your insurance (insurer, policy, and expiration).',
           'Order information: what you order, the restaurant, the delivery address, notes for your driver, amounts, tip, and the ratings and comments you leave.',
+          'Identity verification (drivers and restaurant owners): a photo of your ID document (front and back) and a photo of your face, taken with your camera. If you own a restaurant, also a photo of the storefront with your phone’s location at that moment, to confirm it exists at the registered address. A person on our team compares the photos; we don’t create biometric templates of your face. The photos are stored privately, only the Tumbite team can see them, and they’re deleted when you delete your account.',
           'Location: only with your permission. See section 4.',
           'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
           'Technical information: your device token to send you notifications (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
@@ -178,7 +180,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. How long we keep your data',
         parrafos: [
           'While your account is open, we keep your account and order data to provide the service.',
-          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, the addresses, notes, and location of your orders, the text of your ratings, and your waitlist entry.',
+          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, and your waitlist entry.',
           'What we keep without your name: the amount, date, and restaurant of each order, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud. Those records no longer identify you.',
           'Backups: we keep daily backups for 30 days. Deleted data disappears from them as they expire, at most 30 days later.',
           'Stripe keeps your payment data under its own policy and financial regulations.',
@@ -609,7 +611,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'Qué se borra',
         parrafos: [
-          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; y tu anotación en la lista de espera. Si eres repartidor, también tu última ubicación.',
+          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; y tu anotación en la lista de espera. Si eres repartidor, también tu última ubicación, tu vehículo, licencia y seguro. Y las fotos de tu verificación de identidad (documento, cara y local).',
         ],
       },
       {
@@ -646,7 +648,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'What gets deleted',
         parrafos: [
-          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; the addresses, notes, and location of your orders; the text of your ratings; and your waitlist entry. If you’re a driver, also your latest location.',
+          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; the addresses, notes, and location of your orders; the text of your ratings; and your waitlist entry. If you’re a driver, also your latest location, vehicle, license, and insurance. And your identity verification photos (document, face, and storefront).',
         ],
       },
       {

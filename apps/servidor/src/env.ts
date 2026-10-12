@@ -13,6 +13,8 @@ export const esquemaEnv = z.object({
   ADMIN_CORREOS: z.string().optional(),
   /** Secreto largo para /datos/cuentas/hacer-admin. Va solo en el panel de YaDominios. */
   ADMIN_SEMILLA: z.string().min(24).optional(),
+  /** «1» = sin KYC aprobado, el repartidor no se conecta y el restaurante no se aprueba. Lo decide Richard. */
+  KYC_OBLIGATORIO: z.enum(['0', '1']).optional(),
   /** Token del sitio en YaDominios Cloud: manda correos desde tumbite.com. Solo en el panel. */
   YAD_TOKEN: z.string().min(32).optional(),
   /** Llave publicable de Stripe (pk_…): la usa la app para el pago dentro de la pantalla. */

@@ -272,3 +272,12 @@ Fallos encontrados y arreglados:
 - **Burbuja de ayuda** (`AyudaBurbuja.tsx`): respuestas al instante, algunas con sus datos reales («todavía no puedes cobrar: te falta conectar tu banco; tu saldo está guardado»), buscador y «hablar con una persona» (ticket). Sin IA hasta que Richard apruebe el tope de gasto.
 - **Pruebas del servidor:** cada `mundo()` usa su propia red de mentira (el límite de intentos vive en memoria y las pruebas de un mismo archivo chocaban).
 - Comprobado en pantalla (local): tablero con datos del ensayo, la burbuja respondiendo con el saldo real, la billetera del repartidor con sus movimientos y «Mi cuenta» con el historial.
+
+## C-SUPERADMIN-ESCALA y C-KYC (12 oct 2026, noche)
+
+- **Superadmin por ciudades** (`rutas/superadmin.ts`, `SuperFichas.tsx`): Ciudades → restaurantes, repartidores y clientes de cada una; buscador por ID, número, nombre, correo o teléfono; listas de a 50 con «cargar más» (paginación por clave, sin OFFSET); fichas completas de repartidor (datos, vehículo, licencia y seguro con vigente/vencido/por vencer, antecedentes, seguro de Tumbite, tipo, ubicación, historial, dinero, calificación, quejas), de cliente (datos, compras, gastado, quejas) y de restaurante (empresa, dueño, manager, cuenta, menú, ventas, comisión, calificación, pedidos, quejas). La ruta vieja que listaba todos los repartidores de golpe se retiró. Detalle en `docs/SUPERADMIN.md`.
+- **ID del repartidor** `US-MIA-000123`: contador por ciudad con `INSERT … ON CONFLICT … RETURNING` (sin choques). Se asigna al crear su ficha, al empezar el KYC y, de a 200, al abrir el superadmin.
+- **Migraciones seguras** (`esquema.ts`): `zonas.codigo_ciudad` y `repartidores.codigo` se agregan solas; índices para buscar con millones de filas.
+- **Repartidor «Mis datos y vehículo»** (`MisDatos.tsx`) y **restaurante «Mi empresa»** (`MiEmpresa.tsx`), los dos con borrador.
+- **KYC** (`rutas/kyc.ts`, `Verificacion.tsx` en la app, `VerificacionPanel.tsx` en el panel, `SuperKyc.tsx`): fotos a `kyc/<usuario>/` (la carpeta pública solo sirve `fotos/`; prueba que `/media/kyc/…` da 404), vistas solo por el admin sin caché, rechazo con motivo por correo, aprobación con revisión anual para restaurantes, foto del local con distancia a la dirección. Interruptor `KYC_OBLIGATORIO` apagado hasta que Richard lo decida. Borrar la cuenta borra las fotos y los datos. Pruebas `kyc.test.ts`, `superadmin.test.ts`.
+- **Privacidad** actualizada (vehículo, licencia, seguro, verificación de identidad, sin plantillas biométricas, se borra con la cuenta).

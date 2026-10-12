@@ -275,33 +275,4 @@ regalos.post('/restaurantes/:id/mis-regalos', async (c) => {
   });
 });
 
-// ---------- Admin: repartidores y niveles ----------
-
-regalos.get('/admin/repartidores', async (c) => {
-  exigir(c, 'admin');
-  const { results } = await base(c)
-    .prepare(
-      `SELECT u.id, u.nombre, u.correo, d.tipo, d.conectado, d.puntos,
-      (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado') AS entregas,
-      (SELECT ROUND(AVG(k.estrellas_repartidor), 2) FROM calificaciones k JOIN pedidos p ON p.id = k.pedido_id
-        WHERE p.repartidor_id = u.id AND k.culpa_restaurante = 0 AND k.estrellas_repartidor IS NOT NULL) AS estrellas
-      FROM usuarios u LEFT JOIN repartidores d ON d.usuario_id = u.id WHERE u.rol = 'repartidor' ORDER BY d.puntos DESC`,
-    )
-    .all();
-  return c.json({ repartidores: results });
-});
-
-regalos.patch('/admin/repartidores/:id', async (c) => {
-  exigir(c, 'admin');
-  const { tipo } = await leerCuerpo(c, z.object({ tipo: z.enum(['independiente', 'empleado']) }));
-  const db = base(c);
-  await db
-    .prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)')
-    .bind(c.req.param('id'))
-    .run();
-  await db
-    .prepare('UPDATE repartidores SET tipo = ? WHERE usuario_id = ?')
-    .bind(tipo, c.req.param('id'))
-    .run();
-  return c.json({ ok: true });
-});
+// Admin de repartidores: vive en rutas/superadmin.ts (paginado y con buscador, para millones).

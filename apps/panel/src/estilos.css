@@ -3071,3 +3071,101 @@ button {
   display: block;
   margin-top: 8px;
 }
+
+/* Superadmin: fichas, buscador y verificaciones */
+.super-busqueda {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+.super-busqueda input {
+  flex: 1 1 240px;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+}
+.super-busqueda select {
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+}
+.super-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: #f1f1f1;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.super-dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 8px 0 16px;
+}
+.super-dl dt {
+  color: #5e5e5e;
+}
+.super-dl dd {
+  margin: 0;
+  font-weight: 600;
+}
+.punto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #bdbdbd;
+}
+.punto.en-linea {
+  background: #0d7a3a;
+}
+.doc-vencido {
+  color: #b42200;
+  font-weight: 700;
+}
+.doc-por_vencer {
+  color: #8a5a00;
+  font-weight: 700;
+}
+.doc-vigente {
+  color: #0d7a3a;
+}
+.insignia.doc-vencido {
+  background: #fff1ee;
+}
+.kyc-fotos {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 16px 0;
+}
+.kyc-fotos figure {
+  margin: 0;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.kyc-fotos img {
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+  background: #f4f4f4;
+}
+.kyc-fotos figcaption {
+  padding: 8px 12px;
+  font-weight: 700;
+}
+.verificacion-piezas {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.verificacion-piezas label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}

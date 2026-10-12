@@ -68,7 +68,10 @@ export function crearApi(op: OpcionesApi) {
   }
 
   /** Sube una foto tal cual (sin JSON). El servidor revisa que de verdad sea una imagen. */
-  async function subirFoto(foto: Blob): Promise<{ url: string }> {
+  async function subirFoto(
+    foto: Blob,
+    ruta = '/datos/mi-restaurante/fotos',
+  ): Promise<{ url: string }> {
     const headers: Record<string, string> = {
       accept: 'application/json',
       'content-type': foto.type || 'application/octet-stream',
@@ -77,7 +80,7 @@ export function crearApi(op: OpcionesApi) {
     if (token) headers.authorization = `Bearer ${token}`;
     let res: Response;
     try {
-      res = await hacer(`${op.base}/datos/mi-restaurante/fotos`, {
+      res = await hacer(`${op.base}${ruta}`, {
         method: 'POST',
         headers,
         body: foto,

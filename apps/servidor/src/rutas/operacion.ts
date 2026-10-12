@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { celdasVecinas, distanciaKm, geohash, nivelDe } from '@tumbite/compartido';
+import { asegurarCodigoRepartidor } from './superadmin';
+import { kycAprobado } from './kyc';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
@@ -280,6 +282,8 @@ async function miFicha(c: Ctx) {
   const u = exigir(c, 'repartidor');
   const db = base(c);
   await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+  // Cada repartidor nace con su ID (US-MIA-000123).
+  await asegurarCodigoRepartidor(db, u.id);
   const f = await db
     .prepare('SELECT * FROM repartidores WHERE usuario_id = ?')
     .bind(u.id)
@@ -319,6 +323,13 @@ operacion.post('/repartidor/conectar', async (c) => {
       lng: z.number().nullable().default(null),
     }),
   );
+  // Con el KYC obligatorio encendido, sin verificación aprobada no se reciben pedidos.
+  if (d.conectado && c.env.KYC_OBLIGATORIO === '1' && !(await kycAprobado(db, u.id)))
+    throw new ErrorDatos(
+      'Antes de conectarte, verifica tu identidad en «Mis datos y vehículo».',
+      'kyc',
+      403,
+    );
   await db
     .prepare(
       "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",

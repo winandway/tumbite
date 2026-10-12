@@ -14,6 +14,7 @@ import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ZONA_INICIAL, zonaPara } from './zonas';
+import { kycAprobado } from './kyc';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin } from '../avisos';
 
@@ -290,10 +291,26 @@ catalogo.delete('/mi-restaurante/platos/:id', async (c) => {
 
 catalogo.get('/admin/restaurantes', async (c) => {
   exigir(c, 'admin');
+  // Por ciudad y con tope: con miles de restaurantes la lista entera no sirve (se entra por ciudad).
+  const zona = c.req.query('zona') ?? '';
+  const q = (c.req.query('q') ?? '').trim();
+  const filtros: string[] = [];
+  const valores: string[] = [];
+  if (zona) {
+    filtros.push('r.zona_id = ?');
+    valores.push(zona);
+  }
+  if (q) {
+    filtros.push('r.nombre LIKE ?');
+    valores.push(`${q}%`);
+  }
   const { results } = await base(c)
     .prepare(
-      "SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id ORDER BY CASE r.estado WHEN 'pendiente' THEN 0 ELSE 1 END, r.creado_en DESC",
+      `SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
+       ${filtros.length ? `WHERE ${filtros.join(' AND ')}` : ''}
+       ORDER BY CASE r.estado WHEN 'pendiente' THEN 0 ELSE 1 END, r.creado_en DESC LIMIT 300`,
     )
+    .bind(...valores)
     .all<FilaRest>();
   return c.json({
     restaurantes: results.map((f) => ({
@@ -316,6 +333,17 @@ catalogo.patch('/admin/restaurantes/:id', async (c) => {
     .bind(c.req.param('id'))
     .first<FilaRest>();
   if (!f) throw new ErrorDatos('Ese restaurante no existe.', undefined, 404);
+  // Con el KYC obligatorio encendido, no se aprueba un restaurante sin dueño verificado y local comprobado.
+  if (
+    d.estado === 'aprobado' &&
+    c.env.KYC_OBLIGATORIO === '1' &&
+    !(await kycAprobado(db, String(f.dueno_id)))
+  )
+    throw new ErrorDatos(
+      'El dueño todavía no tiene la verificación (KYC) aprobada.',
+      'estado',
+      409,
+    );
   const estado = d.estado ?? f.estado;
   const abierto = estado === 'aprobado' ? Number(f.abierto) : 0;
   await db

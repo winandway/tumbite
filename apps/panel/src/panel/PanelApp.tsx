@@ -21,11 +21,20 @@ import { AdminDinero } from './AdminDinero';
 import { Billetera } from './Billetera';
 import { Regalos } from './Regalos';
 import { Pedidos } from './Pedidos';
-import { AdminRepartidores } from './AdminRepartidores';
 import { AdminEspera, AdminZonas } from './AdminZonas';
 import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
 import { PanelFranquicia } from './PanelFranquicia';
 import { TableroRestaurante } from './TableroRestaurante';
+import { MiEmpresa } from './MiEmpresa';
+import { SuperKyc } from './SuperKyc';
+import {
+  SuperCiudades,
+  SuperCliente,
+  SuperClientes,
+  SuperRepartidor,
+  SuperRepartidores,
+  SuperRestaurante,
+} from './SuperFichas';
 import { AyudaBurbuja } from './AyudaBurbuja';
 import { ir } from '../ruta';
 import { pedir } from './api';
@@ -40,6 +49,20 @@ function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' 
   const t = /^\/tickets\/([0-9a-f-]{36})$/.exec(sub);
   if (t?.[1]) return <SuperTickets base={base} idioma={idioma} ticketId={t[1]} />;
   if (sub === '/franquicias') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
+  if (sub === '/ciudades') return <SuperCiudades base={base} idioma={idioma} />;
+  if (sub === '/kyc') return <SuperKyc base={base} idioma={idioma} id={null} />;
+  const kycId = /^\/kyc\/([0-9a-f-]{36})$/.exec(sub);
+  if (kycId?.[1]) return <SuperKyc base={base} idioma={idioma} id={kycId[1]} />;
+  if (sub === '/repartidores') return <SuperRepartidores base={base} idioma={idioma} />;
+  if (sub === '/clientes') return <SuperClientes base={base} idioma={idioma} />;
+  if (sub === '/restaurantes') return <AdminRestaurantes idioma={idioma} base={base} />;
+  const ficha = /^\/(repartidores|clientes|restaurantes)\/([0-9a-f-]{36})$/.exec(sub);
+  if (ficha?.[1] === 'repartidores' && ficha[2])
+    return <SuperRepartidor base={base} id={ficha[2]} idioma={idioma} />;
+  if (ficha?.[1] === 'clientes' && ficha[2])
+    return <SuperCliente base={base} id={ficha[2]} idioma={idioma} />;
+  if (ficha?.[1] === 'restaurantes' && ficha[2])
+    return <SuperRestaurante base={base} id={ficha[2]} idioma={idioma} />;
   return seccion(`/panel${sub}`, usuario, idioma);
 }
 
@@ -47,6 +70,7 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
   if (usuario.rol === 'restaurante') {
     if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/empresa') return <MiEmpresa usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/beneficios') return <Billetera usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/regalos') return <Regalos usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/pedidos') return <Pedidos idioma={idioma} />;
@@ -54,7 +78,6 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
     if (ruta === '/panel/dinero') return <AdminDinero usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/repartidores') return <AdminRepartidores idioma={idioma} />;
     if (ruta === '/panel/zonas') return <AdminZonas usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/espera') return <AdminEspera idioma={idioma} />;
   }
@@ -114,7 +137,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
   useEffect(() => {
     if (!baseAdmin || baseAdmin === '/panel') return;
     if (ruta === '/panel') ir(baseAdmin);
-    else if (/^\/panel\/(restaurantes|dinero|repartidores|zonas|espera)$/.test(ruta))
+    else if (
+      /^\/panel\/(restaurantes|dinero|repartidores|zonas|espera|ciudades|clientes)$/.test(ruta)
+    )
       ir(`${baseAdmin}${ruta.slice('/panel'.length)}`);
   }, [baseAdmin, ruta]);
 

@@ -8,6 +8,7 @@ import {
   enIdioma,
 } from '@tumbite/compartido';
 import { pedir } from './api';
+import { Enlace } from '../Enlace';
 
 function nombrePlan(n: Record<Plan, string>, p: Plan): string {
   return p === 'elite' ? n.elite : p === 'crece' ? n.crece : n.inicial;
@@ -54,13 +55,17 @@ const T = {
   },
 };
 
-export function AdminRestaurantes({ idioma }: { idioma: Idioma }) {
+export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: string }) {
   const t = enIdioma(T, idioma);
   const [lista, setLista] = useState<Fila[] | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    pedir<{ restaurantes: Fila[] }>('GET', '/datos/admin/restaurantes')
+    const zona = new URLSearchParams(window.location.search).get('zona');
+    pedir<{ restaurantes: Fila[] }>(
+      'GET',
+      `/datos/admin/restaurantes${zona ? `?zona=${encodeURIComponent(zona)}` : ''}`,
+    )
       .then((r) => setLista(r.restaurantes))
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, []);
@@ -93,7 +98,9 @@ export function AdminRestaurantes({ idioma }: { idioma: Idioma }) {
         {lista.map((r) => (
           <li key={r.id}>
             <div className="lista-texto">
-              <strong>{r.nombre}</strong>
+              <strong>
+                {base ? <Enlace a={`${base}/restaurantes/${r.id}`}>{r.nombre}</Enlace> : r.nombre}
+              </strong>
               <span>
                 {r.duenoNombre} · {r.duenoCorreo}
               </span>

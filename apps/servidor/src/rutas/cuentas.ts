@@ -420,7 +420,15 @@ cuentas.delete('/yo', async (c) => {
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
+    // Verificación de identidad y datos del vehículo, licencia y seguro: se borran con la cuenta.
+    db.prepare('DELETE FROM kyc WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM repartidor_datos WHERE usuario_id = ?').bind(u.id),
   ]);
+  // Y las fotos del documento, la cara y el local, del almacén privado.
+  if (c.env.BUCKET) {
+    const lista = await c.env.BUCKET.list({ prefix: `kyc/${u.id}/` });
+    if (lista.objects.length) await c.env.BUCKET.delete(lista.objects.map((o) => o.key));
+  }
   c.header('Set-Cookie', cookie('', true));
   return c.json({ ok: true });
 });

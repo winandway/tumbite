@@ -4,6 +4,8 @@ import * as Location from 'expo-location';
 import { useKeepAwake } from 'expo-keep-awake';
 import { ErrorApi, type Nivel, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
+import { MisDatos } from './MisDatos';
+import { Verificacion } from './Verificacion';
 import {
   Boton,
   C,
@@ -81,6 +83,7 @@ const T = {
     menu: 'Menú',
     vistaInicio: 'Inicio',
     vistaBilletera: 'Mi billetera',
+    vistaDatos: 'Mis datos y vehículo',
     verBilletera: 'Ver mi billetera y movimientos →',
     volverInicio: '← Volver al inicio',
     conectarBanco: 'Conectar mi cuenta bancaria',
@@ -120,6 +123,7 @@ const T = {
     menu: 'Menu',
     vistaInicio: 'Home',
     vistaBilletera: 'My wallet',
+    vistaDatos: 'My details and vehicle',
     verBilletera: 'See my wallet and activity →',
     volverInicio: '← Back to home',
     conectarBanco: 'Connect my bank account',
@@ -150,7 +154,7 @@ export function Inicio() {
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
-  const [vista, setVista] = useState<'inicio' | 'billetera'>('inicio');
+  const [vista, setVista] = useState<'inicio' | 'billetera' | 'datos'>('inicio');
   const [menuAbierto, setMenuAbierto] = useState(false);
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
@@ -300,6 +304,7 @@ export function Inicio() {
             [
               ['inicio', t.vistaInicio],
               ['billetera', t.vistaBilletera],
+              ['datos', t.vistaDatos],
             ] as const
           ).map(([v, texto]) => (
             <Text
@@ -328,6 +333,17 @@ export function Inicio() {
           retirar={() => void retirar()}
           conectar={() => void banco()}
         />
+        <Text style={e.enlace} onPress={() => setVista('inicio')} accessibilityRole="button">
+          {t.volverInicio}
+        </Text>
+      </Pantalla>
+    );
+  if (vista === 'datos')
+    return (
+      <Pantalla titulo={t.vistaDatos}>
+        {menuCabecera}
+        <Verificacion />
+        <MisDatos />
         <Text style={e.enlace} onPress={() => setVista('inicio')} accessibilityRole="button">
           {t.volverInicio}
         </Text>
