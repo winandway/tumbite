@@ -48,4 +48,37 @@ describe('copia de seguridad diaria', () => {
     expect(s.piezas.respaldo).toBe('ok');
     expect(s.ultimoRespaldo).toBeTruthy();
   });
+
+  it('la fecha del último respaldo sale del almacén (no de la memoria) y avisa si se atrasó', async () => {
+    // Candado C-RESPALDO-REAL: el canario decía «ok» sin que hubiera ni un respaldo.
+    const r2 = crearAlmacenPruebas();
+    const m = mundo({ RELOJ_SECRETO: SEC, BUCKET: r2.bucket });
+    const salud = async () =>
+      (await (await app.request('/datos/salud', {}, { DB: m.DB, BUCKET: r2.bucket })).json()) as {
+        piezas: { respaldo: string };
+        ultimoRespaldo: string | null;
+      };
+    expect((await salud()).piezas.respaldo).toBe('atrasado');
+    expect((await salud()).ultimoRespaldo).toBeNull();
+    await r2.bucket.put('respaldos/2020-01-01/usuarios.json', new Uint8Array([91, 93]));
+    expect((await salud()).piezas.respaldo).toBe('atrasado');
+    const hoy = new Date().toISOString().slice(0, 10);
+    await r2.bucket.put(`respaldos/${hoy}/usuarios.json`, new Uint8Array([91, 93]));
+    expect(await salud()).toMatchObject({ piezas: { respaldo: 'ok' }, ultimoRespaldo: hoy });
+  });
+
+  it('el reloj lo pide en cada vuelta y solo se hace si hoy no hay uno', async () => {
+    const r2 = crearAlmacenPruebas();
+    const m = mundo({ RELOJ_SECRETO: SEC, BUCKET: r2.bucket });
+    const pedir = async () =>
+      (await (
+        await app.request(
+          '/datos/respaldo?siHaceFalta=1',
+          { method: 'POST', headers: { 'x-reloj-secreto': SEC } },
+          { DB: m.DB, BUCKET: r2.bucket, RELOJ_SECRETO: SEC },
+        )
+      ).json()) as { ok: boolean; omitido?: boolean };
+    expect(await pedir()).toMatchObject({ ok: true });
+    expect((await pedir()).omitido).toBe(true);
+  });
 });

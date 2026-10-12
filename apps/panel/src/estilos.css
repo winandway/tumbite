@@ -2526,3 +2526,35 @@ button {
   color: #191919;
   text-decoration: underline;
 }
+
+/* Celulares angostos (320–380 px): la cabecera nunca se sale de la pantalla.
+   Antes, con el nombre de la cuenta, el selector de idioma quedaba 32 px afuera. */
+@media (max-width: 380px) {
+  .cabecera {
+    gap: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .logo img.logo-marca {
+    height: 36px;
+    width: auto;
+  }
+  .cabecera-derecha {
+    gap: 6px;
+    min-width: 0;
+  }
+  .cabecera .cuenta {
+    min-width: 0;
+  }
+  .cabecera .cuenta summary {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 5px 10px;
+  }
+  .cabecera .boton-panel {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

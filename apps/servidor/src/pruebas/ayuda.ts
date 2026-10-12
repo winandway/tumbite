@@ -37,7 +37,9 @@ export function mundo(extra: Record<string, unknown> = {}) {
         .run();
     return { token: r.datos.token as string, id: r.datos.usuario.id as string };
   }
-  return { DB, llamar, cuenta };
+  /** Petición cruda (con cabeceras propias, p. ej. la firma de un aviso de Stripe). */
+  const crudo = (ruta: string, init: RequestInit) => app.request(ruta, init, { DB, ...extra });
+  return { DB, llamar, cuenta, crudo };
 }
 
 export const RESTAURANTE_BASE = {

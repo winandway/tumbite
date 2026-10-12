@@ -33,6 +33,11 @@ respaldo.post('/respaldo', async (c) => {
     ultimoErrorRespaldo = { cuando: new Date().toISOString(), motivo: 'Sin almacén (BUCKET).' };
     throw new ErrorDatos('El almacén no está disponible.', undefined, 503);
   }
+  // El reloj de GitHub no corre a horario fijo (a veces pasa horas sin correr): lo pide en cada
+  // vuelta con ?siHaceFalta=1 y aquí se hace solo si hoy todavía no hay uno.
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (c.req.query('siHaceFalta') && (await fechaUltimoRespaldo(c.env.BUCKET)) === hoy)
+    return c.json({ ok: true, omitido: true, ultimo: hoy });
   try {
     const r = await respaldarBase(base(c), c.env.BUCKET);
     ultimoRespaldo = { cuando: new Date().toISOString(), ...r };
@@ -44,6 +49,31 @@ respaldo.post('/respaldo', async (c) => {
     throw new ErrorDatos('No se pudo hacer la copia de seguridad.', undefined, 503);
   }
 });
+
+/**
+ * Fecha (AAAA-MM-DD) del respaldo más nuevo que hay de verdad en el almacén, o null.
+ * El canario lee esto y no una variable en memoria (que se pierde en cada reinicio y decía
+ * «ok» sin que hubiera ni un respaldo). Candado C-RESPALDO-REAL.
+ */
+export async function fechaUltimoRespaldo(almacen: R2Bucket): Promise<string | null> {
+  let ultima: string | null = null;
+  let cursor: string | undefined;
+  do {
+    const lista = await almacen.list({ prefix: 'respaldos/', cursor });
+    for (const o of lista.objects) {
+      const dia = o.key.split('/')[1] ?? '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dia) && (!ultima || dia > ultima)) ultima = dia;
+    }
+    cursor = lista.truncated ? lista.cursor : undefined;
+  } while (cursor);
+  return ultima;
+}
+
+/** 'ok' si hay respaldo de hoy o de ayer; 'atrasado' si no (visible en /datos/salud). */
+export function estadoRespaldo(ultima: string | null, ahora = new Date()): 'ok' | 'atrasado' {
+  const ayer = new Date(ahora.getTime() - 86_400_000).toISOString().slice(0, 10);
+  return ultima && ultima >= ayer ? 'ok' : 'atrasado';
+}
 
 export async function respaldarBase(db: D1Database, almacen: R2Bucket) {
   const dia = new Date().toISOString().slice(0, 10);

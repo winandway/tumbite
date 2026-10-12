@@ -1,6 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 
+const SECRETO_AVISO = `whsec_${crypto.randomUUID()}`;
+
+/** Firma un aviso como lo firma Stripe (t=…,v1=HMAC-SHA256). */
+async function avisoFirmado(cuerpo: string) {
+  const t = Math.floor(Date.now() / 1000);
+  const llave = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(SECRETO_AVISO),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const f = await crypto.subtle.sign('HMAC', llave, new TextEncoder().encode(`${t}.${cuerpo}`));
+  const v1 = [...new Uint8Array(f)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `t=${t},v1=${v1}`;
+}
+
 async function escenario() {
   vi.stubGlobal('fetch', async (url: string) =>
     /\/(payment_intents|customers|customer_sessions)/.test(url)
@@ -9,7 +26,7 @@ async function escenario() {
         })
       : new Response(JSON.stringify({ id: 're_1' }), { status: 200 }),
   );
-  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
+  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBHOOK_SECRET: SECRETO_AVISO });
   const dueno = await m.cuenta('restaurante');
   const admin = await m.cuenta('admin');
   const cliente = await m.cuenta('cliente', 'Ana Cliente');
@@ -53,7 +70,43 @@ async function escenario() {
     await m.llamar('POST', '/datos/repartidor/conectar', { conectado: true, lat, lng }, d.token);
     return d;
   }
-  return { m, dueno, cliente, pedidoPagado, repartidor };
+  /** Un pedido como lo hace la app: se crea y el pago llega por el aviso firmado de Stripe. */
+  async function pedidoPagadoPorStripe() {
+    const p = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: r.datos.restaurante.id,
+        lineas: [{ platoId: plato.datos.plato.id, cantidad: 1 }],
+        propinaCentavos: 300,
+        direccion: '300 Calle Prueba',
+        lat: 25.775,
+        lng: -80.195,
+      },
+      cliente.token,
+    );
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'cs_1',
+          amount_received: p.datos.desglose.totalCliente,
+          metadata: { pedido_id: p.datos.pedidoId },
+        },
+      },
+    });
+    const res = await m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cuerpo),
+      },
+      body: cuerpo,
+    });
+    return { id: p.datos.pedidoId as string, desglose: p.datos.desglose, aviso: res.status };
+  }
+  return { m, dueno, cliente, pedidoPagado, pedidoPagadoPorStripe, repartidor };
 }
 
 describe('día del restaurante', () => {
@@ -247,6 +300,60 @@ describe('ciclo del pedido', () => {
       cliente.token,
     );
     expect(ok.estado).toBe(200);
+  });
+});
+
+describe('recorrido completo como en la calle (C-ENSAYO-CALLE)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('pago por aviso de Stripe → restaurante → repartidor → entrega → billeteras → calificación', async () => {
+    const { m, dueno, cliente, pedidoPagadoPorStripe, repartidor } = await escenario();
+    const rep = await repartidor('Repartidor Calle', 25.7705, -80.1905);
+    const { id, desglose, aviso } = await pedidoPagadoPorStripe();
+    expect(aviso).toBe(200);
+
+    // El restaurante lo ve pagado, lo acepta y al repartidor cercano le llega la oferta.
+    const lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    expect(lista.datos.pedidos.find((p: { id: string }) => p.id === id)?.estado).toBe('pagado');
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 10 },
+      dueno.token,
+    );
+    const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    expect(ofertas.datos.ofertas[0]?.id).toBe(id);
+    expect(ofertas.datos.ofertas[0]?.pagoRepartidor).toBe(desglose.pagoRepartidor);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
+
+    // El cliente lo sigue en camino.
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.estado).toBe('en_camino');
+
+    // Entrega: el dinero cuadra al centavo con el desglose que vio el cliente.
+    expect(
+      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
+    ).toBe(200);
+    expect((await m.llamar('GET', '/datos/billetera', undefined, dueno.token)).datos.saldo).toBe(
+      desglose.pagoRestaurante,
+    );
+    expect((await m.llamar('GET', '/datos/billetera', undefined, rep.token)).datos.saldo).toBe(
+      desglose.pagoRepartidor,
+    );
+
+    // Y el cliente califica.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/calificar`,
+          { estrellasRestaurante: 5, estrellasRepartidor: 5 },
+          cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
   });
 });
 

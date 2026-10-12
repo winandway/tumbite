@@ -23,7 +23,8 @@ jobs:
       - name: Pruebas
         run: |
           curl -fsS -X POST https://staging.tumbite.com/datos/reloj -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || echo "::warning::El reloj de pruebas falló"
+      # GitHub no corre los horarios a la hora exacta (a veces pasa horas sin correr): en cada
+      # vuelta se pide el respaldo y el servidor solo lo hace si hoy todavía no hay uno.
       - name: Copia de seguridad diaria (producción)
-        if: ${{ github.event.schedule == '0 8 * * *' || inputs.respaldo }}
         run: |
-          curl -fsS -X POST https://tumbite.com/datos/respaldo -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }
+          curl -fsS -X POST "https://tumbite.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }

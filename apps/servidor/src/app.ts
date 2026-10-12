@@ -17,7 +17,7 @@ import { espera } from './rutas/espera';
 import { fotos, media } from './rutas/fotos';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
-import { respaldo, ultimoErrorRespaldo, ultimoRespaldo } from './respaldo';
+import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -64,7 +64,7 @@ app.use('/datos/*', cargarSesion);
  * si una pieza se cae, aquí se ve.
  */
 app.get('/datos/salud', async (c) => {
-  const piezas: Record<string, 'ok' | 'error' | 'pendiente'> = {};
+  const piezas: Record<string, 'ok' | 'error' | 'pendiente' | 'atrasado'> = {};
 
   if (!c.env.DB) {
     piezas.base = 'pendiente';
@@ -87,7 +87,12 @@ app.get('/datos/salud', async (c) => {
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
-  piezas.respaldo = ultimoErrorRespaldo ? 'error' : 'ok';
+  let fechaRespaldo: string | null = null;
+  if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
+  else {
+    fechaRespaldo = await fechaUltimoRespaldo(c.env.BUCKET).catch(() => null);
+    piezas.respaldo = ultimoErrorRespaldo ? 'error' : estadoRespaldo(fechaRespaldo);
+  }
 
   const algunError = Object.values(piezas).includes('error');
   return c.json(
@@ -95,7 +100,7 @@ app.get('/datos/salud', async (c) => {
       servicio: MARCA.nombre,
       ok: !algunError,
       piezas,
-      ultimoRespaldo: ultimoRespaldo?.cuando ?? null,
+      ultimoRespaldo: fechaRespaldo,
     },
     algunError ? 503 : 200,
   );
