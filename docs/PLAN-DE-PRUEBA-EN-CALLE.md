@@ -21,3 +21,14 @@
 El recorrido completo funcionó en la computadora con los tres papeles. Lo que apareció y ya está arreglado: la app y el panel se pisaban la sesión en el mismo navegador, pantallas sin sesión, la web sin mapa, Enter que no entraba. Detalle en `CANDADOS.md` (C-SESION-APP).
 
 **Consejo para el día de la prueba:** cada papel en su propio teléfono si se puede. Si hay que usar uno solo, ya no se pisan, pero es más fácil seguir el recorrido con un teléfono por papel.
+
+## Restaurantes de prueba en Novi (creados el 12 oct 2026, pedido por Richard)
+
+En la zona «Novi (pruebas)», aprobados y abiertos, con platos de 1 a 3 dólares. Sus dueños son cuentas sin contraseña (nadie entra con ellas; se manejan desde el superadmin):
+
+- Pizzería Novi (prueba) — 43155 Main St, Novi, MI 48375
+- Tacos Twelve Oaks (prueba) — 27500 Novi Rd, Novi, MI 48377
+- Burger Town Center (prueba) — 26132 Ingersol Dr, Novi, MI 48375
+- Café Fountain Walk (prueba) — 44175 W 12 Mile Rd, Novi, MI 48377
+
+Antes del lanzamiento abierto se pausan o se borran desde el superadmin (decisión de Richard).

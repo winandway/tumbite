@@ -8,4 +8,4 @@
 - [x] 6. «Mi cuenta» del cliente: historial, tarjetas, datos, ayuda.
 - [x] 7. Billetera del repartidor.
 - [x] 8. Panel del restaurante completo y burbuja de ayuda. — publicar bloques 4 a 8.
-- [ ] 9. Restaurantes de prueba en Novi (producción, zona de pruebas).
+- [x] 9. Restaurantes de prueba en Novi (producción, zona de pruebas).
