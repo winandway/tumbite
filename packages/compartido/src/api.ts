@@ -26,6 +26,10 @@ export type OpcionesApi = {
 /** Cliente del servidor de Tumbite. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
   const hacer = op.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
+  // Las apps entran con su propio token y NO mandan la cookie del navegador: en la web, la app
+  // (/app, /repartidor) y el panel comparten sitio, y la cookie del panel cambiaba de persona a
+  // la app (el cliente veía «Ese pedido no existe»). El panel, sin token, sigue con la cookie.
+  const credenciales: 'omit' | 'include' = op.token ? 'omit' : 'include';
 
   async function pedir<T>(
     metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
@@ -44,7 +48,7 @@ export function crearApi(op: OpcionesApi) {
         method: metodo,
         headers,
         body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-        credentials: 'include',
+        credentials: credenciales,
       } as Parameters<typeof fetch>[1];
       res = await hacer(`${op.base}${ruta}`, init);
     } catch {
@@ -77,7 +81,7 @@ export function crearApi(op: OpcionesApi) {
         method: 'POST',
         headers,
         body: foto,
-        credentials: 'include',
+        credentials: credenciales,
       } as Parameters<typeof fetch>[1]);
     } catch {
       throw new ErrorApi(

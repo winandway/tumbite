@@ -243,6 +243,7 @@ export default function PantallaCarrito() {
             key={String(pb)}
             onPress={() => setPropinaPb(pb)}
             accessibilityRole="button"
+            accessibilityLabel={`${t.propina}: ${pb === 'otra' ? t.otra : `${pb / 100}%`}`}
             accessibilityState={{ selected: propinaPb === pb }}
             style={{
               paddingHorizontal: 14,

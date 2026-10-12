@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SesionProvider } from '@tumbite/movil';
+import { ConSesion, SesionProvider } from '@tumbite/movil';
 import { CarritoProvider } from '../carrito';
 
 export default function Raiz() {
@@ -10,7 +10,9 @@ export default function Raiz() {
       <SesionProvider roles={['cliente']}>
         <CarritoProvider>
           <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <ConSesion rolRegistro="cliente" pideCumple>
+            <Stack screenOptions={{ headerShown: false }} />
+          </ConSesion>
         </CarritoProvider>
       </SesionProvider>
     </SafeAreaProvider>

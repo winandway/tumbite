@@ -218,3 +218,17 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Menú de 3 puntos de las apps:** «Términos y privacidad» y «Borrar mi cuenta» (va a `/borrar-cuenta`, que tiene el botón directo).
 - **Prueba:** `apps/panel/src/sitio/legales.test.tsx` (rojo comprobado quitando el botón de borrar) y `cuentas.test.ts` «borrar la cuenta también limpia…» (rojo comprobado antes del arreglo).
 - **No tocar:** si se cambia lo que guarda o borra el servidor, se cambia el texto de privacidad y de `/borrar-cuenta` en el mismo trabajo.
+
+## C-SESION-APP y C-ENSAYO-CALLE — ensayo general de la prueba en la calle, en local (12 oct 2026)
+
+Se recorrió completo en esta computadora: cliente pide → formulario de tarjeta en el carrito → aviso de pago firmado igual que Stripe → el restaurante acepta y marca listo → el repartidor conectado recibe la oferta ($7.80 con $2.80 de propina), acepta, recoge, entrega → billeteras: restaurante $12.25 y repartidor $7.80, al centavo → el cliente califica. Cómo repetirlo: servidor con `--var STRIPE_WEBHOOK_SECRET:<secreto local>` y `scratchpad/aviso.mjs` (firma con HMAC igual que Stripe); cuentas de prueba locales en `apps/servidor/.dev.vars` (fuera de git).
+
+Fallos encontrados y arreglados:
+
+- **La app y el panel se pisaban la sesión.** En la web comparten sitio y la app mandaba la cookie del navegador: con el panel abierto como restaurante, la app del cliente preguntaba por el pedido como restaurante y decía «Ese pedido no existe»; y cerrar sesión en el panel mataba la sesión de la app. Ahora las apps (con token) usan `credentials: 'omit'` y el panel (sin token) sigue con la cookie (`packages/compartido/src/api.ts`). Prueba en `api.test.ts` (rojo comprobado).
+- **Pantallas internas sin sesión.** Si la sesión caducaba, la pantalla del pedido seguía sola. Ahora toda la app del cliente va dentro de `ConSesion` (`packages/movil/src/ConSesion.tsx`): pide entrar ahí mismo y, al entrar, sigue en la misma pantalla.
+- **Una cuenta de otro papel quedaba abierta en la app** (un restaurante en la app del cliente). Al abrir la app ahora se revisa el papel.
+- **La web mostraba coordenadas en vez de mapa.** Ahora Leaflet con OpenStreetMap (`apps/cliente/src/mapaWeb.ts`): seguimiento del repartidor y pin de entrega. Los mosaicos de openstreetmap.org son para poco tráfico; si la web crece, se cambia el proveedor ahí.
+- **Enter en la contraseña no entraba** en las apps; ahora sí. **Los botones de propina** dicen su porcentaje al lector de pantalla.
+- Pruebas: `pagoSinSalto.test.ts` («la app del cliente no funciona sin sesión», «ensayo general»), rojo comprobado.
+- Los dos intentos de pago que quedaron sin pagar en Stripe durante las pruebas locales se cancelaron.

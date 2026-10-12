@@ -57,6 +57,11 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
         if (guardado) {
           try {
             const r = await crearApi({ base: URL_SERVIDOR, token: () => guardado }).yo();
+            // Una sesión de otro papel (p. ej. un restaurante en la app del cliente) no se abre.
+            if (!roles.includes(r.usuario.rol)) {
+              await llavero.borrar(LLAVE_TOKEN);
+              return;
+            }
             setToken(guardado);
             setUsuario(r.usuario);
           } catch (e) {
@@ -69,6 +74,8 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
         setCargando(false);
       }
     })();
+    // Solo al abrir la app: los papeles permitidos de cada app no cambian.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const alEntrar = useCallback(async (t: string, u: Usuario) => {

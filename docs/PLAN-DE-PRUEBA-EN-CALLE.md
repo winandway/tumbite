@@ -15,3 +15,9 @@
 - **Dirección real a unas tres cuadras** del restaurante, marcada en el mapa, para probar mapa y tiempo estimado.
 - **El recorrido:** el cliente pide y paga dentro de la app → suena la alarma del restaurante y lo acepta → «¡Listo!» → al repartidor le llega la oferta → la acepta, va al restaurante, «Recogido» → recorrido en bicicleta las tres cuadras con la ubicación encendida → el cliente lo ve acercarse en el mapa → «Entregado» → el dinero aparece en las billeteras del restaurante y del repartidor → el cliente califica.
 - **Qué se anota:** cada paso con hora y captura; cualquier cosa rara va a esta lista como fallo y se arregla antes de la siguiente prueba.
+
+## Ensayo general hecho por la IA en local (12 oct 2026)
+
+El recorrido completo funcionó en la computadora con los tres papeles. Lo que apareció y ya está arreglado: la app y el panel se pisaban la sesión en el mismo navegador, pantallas sin sesión, la web sin mapa, Enter que no entraba. Detalle en `CANDADOS.md` (C-SESION-APP).
+
+**Consejo para el día de la prueba:** cada papel en su propio teléfono si se puede. Si hay que usar uno solo, ya no se pisan, pero es más fácil seguir el recorrido con un teléfono por papel.

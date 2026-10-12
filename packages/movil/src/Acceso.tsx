@@ -122,6 +122,7 @@ export function Acceso({
         valor={v.clave}
         cambiar={(x) => b.cambiar('clave', x)}
         nueva={Boolean(registro)}
+        alEnviar={() => void enviar()}
         error={errorDe('clave')}
       />
       {error && !error.campo ? (

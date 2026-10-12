@@ -86,12 +86,15 @@ export function CampoClave({
   valor,
   cambiar,
   nueva,
+  alEnviar,
 }: {
   etiqueta: string;
   error?: string;
   valor: string;
   cambiar: (v: string) => void;
   nueva?: boolean;
+  /** La tecla «Ir»/Enter del teclado envía el formulario (como en cualquier app). */
+  alEnviar?: () => void;
 }) {
   const { idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
@@ -104,6 +107,8 @@ export function CampoClave({
           value={valor}
           onChangeText={cambiar}
           secureTextEntry={!visible}
+          onSubmitEditing={alEnviar}
+          returnKeyType={alEnviar ? 'go' : undefined}
           autoCapitalize="none"
           autoComplete={nueva ? 'new-password' : 'current-password'}
           textContentType={nueva ? 'newPassword' : 'password'}

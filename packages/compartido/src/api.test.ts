@@ -17,6 +17,20 @@ describe('cliente del servidor', () => {
     expect(cabecera).toBe('Bearer abc');
   });
 
+  it('las apps (con token) no mandan la cookie del navegador; el panel (sin token) sí', async () => {
+    // Candado C-SESION-APP: en la web la app y el panel comparten sitio; la cookie del panel
+    // cambiaba de persona a la app del cliente.
+    const vistas: (string | undefined)[] = [];
+    const responder = async (_u: unknown, init?: RequestInit) => {
+      vistas.push(init?.credentials);
+      return new Response(JSON.stringify({ usuario: { id: '1' } }), { status: 200 });
+    };
+    await crearApi({ base: '', token: () => 'abc', fetch: responder }).yo();
+    await crearApi({ base: '', token: () => null, fetch: responder }).yo();
+    await crearApi({ base: '', fetch: responder }).yo();
+    expect(vistas).toEqual(['omit', 'omit', 'include']);
+  });
+
   it('convierte los errores del servidor en mensajes claros con su campo', async () => {
     const api = crearApi({
       base: '',
