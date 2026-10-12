@@ -98,3 +98,9 @@
 - [Términos para repartidores · Tumbite](https://tumbite.com/terminos-repartidores): Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas con Tumbite Driver. Al crear tu cuenta de repartidor los aceptas.
 - [Borrar tu cuenta de Tumbite](https://tumbite.com/borrar-cuenta): Así borras tu cuenta de Tumbite (app de clientes, Tumbite Driver o Tumbite para restaurantes), de Windoce LLC. No hace falta tener la app instalada.
 - [Soporte · Tumbite](https://tumbite.com/soporte): Actualizado: 12 de octubre de 2026
+
+## In English
+
+Every page above also exists in English under https://tumbite.com/en (for example https://tumbite.com/en/como-funciona).
+- [Tumbite · Food delivery in Miami](https://tumbite.com/en): Tumbite connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other sid
+- [How Tumbite works](https://tumbite.com/en/como-funciona): Tumbite is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fin
