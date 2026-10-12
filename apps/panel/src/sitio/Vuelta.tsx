@@ -21,6 +21,8 @@ const T = {
       'Vuelve a «Beneficios» y toca «Terminar de conectar mi cuenta».',
     ],
     volver: 'Ir a mi panel',
+    verPedido: 'Ver mi pedido',
+    volverCarrito: 'Volver al carrito',
   },
   en: {
     '/pago/listo': [
@@ -40,6 +42,8 @@ const T = {
       'Go back to “Earnings” and tap “Finish connecting my account”.',
     ],
     volver: 'Go to my dashboard',
+    verPedido: 'See my order',
+    volverCarrito: 'Back to the cart',
   },
 };
 
@@ -60,10 +64,22 @@ export function Vuelta({ ruta, idioma }: { ruta: (typeof RUTAS_VUELTA)[number]; 
         : ruta === '/billetera/lista'
           ? t['/billetera/lista']
           : t['/billetera/conectar'];
+  // Stripe vuelve con ?pedido=<id>: desde la versión web se sigue el pedido ahí mismo.
+  const pedido = new URLSearchParams(window.location.search).get('pedido') ?? '';
   return (
     <main className="legal">
       <h1>{titulo}</h1>
       <p>{texto}</p>
+      {ruta === '/pago/listo' && (
+        <a className="boton" href={pedido ? `/app/pedido/${pedido}` : '/app/'}>
+          {t.verPedido}
+        </a>
+      )}
+      {ruta === '/pago/cancelado' && (
+        <a className="boton" href="/app/carrito">
+          {t.volverCarrito}
+        </a>
+      )}
       {ruta.startsWith('/billetera') && (
         <Enlace a="/panel/beneficios" className="boton">
           {t.volver}
