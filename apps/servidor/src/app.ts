@@ -116,7 +116,16 @@ app.get('/datos/publico', (c) =>
   ),
 );
 
-const RUTAS_PUBLICAS = new Set(['/', '/privacidad', '/terminos', '/soporte', '/docs']);
+const RUTAS_PUBLICAS = new Set([
+  '/',
+  '/privacidad',
+  '/terminos',
+  '/terminos-restaurantes',
+  '/terminos-repartidores',
+  '/borrar-cuenta',
+  '/soporte',
+  '/docs',
+]);
 const esRutaPublica = (ruta: string) =>
   RUTAS_PUBLICAS.has(ruta) || /^\/(docs|pais|ciudad|comida)\//.test(ruta);
 const DOMINIO = 'tumbite.com';

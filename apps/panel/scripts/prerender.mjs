@@ -43,6 +43,9 @@ try {
     '/',
     '/privacidad',
     '/terminos',
+    '/terminos-restaurantes',
+    '/terminos-repartidores',
+    '/borrar-cuenta',
     '/soporte',
     '/docs',
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
@@ -69,7 +72,9 @@ try {
       (ruta === '/'
         ? html.match(/<div class="ld-hero-texto">[\s\S]*?<p>([\s\S]*?)<\/p>/)?.[1]
         : null) ??
-        html.match(/<p class="(?:ld-entrada|docs-resumen|docs-sub)"[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
+        html.match(
+          /<p class="(?:ld-entrada|docs-resumen|docs-sub|legal-intro)"[^>]*>([\s\S]*?)<\/p>/,
+        )?.[1] ??
         html.match(/<main[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
         '',
     );

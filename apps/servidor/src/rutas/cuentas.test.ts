@@ -184,6 +184,59 @@ describe('cuentas', () => {
     expect((await llamar('/datos/cuentas/registro', nueva)).res.status).toBe(201);
   });
 
+  it('borrar la cuenta también limpia direcciones, comentarios, avisos y la lista de espera', async () => {
+    const r = await llamar('/datos/cuentas/registro', nueva);
+    const token = r.datos.token as string;
+    const id = r.datos.usuario.id as string;
+    // Un pedido entregado, su calificación, un teléfono con avisos y la anotación en la lista.
+    await DB.prepare(
+      "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES ('d1', 'dueno@ejemplo.com', 'Dueño', 'restaurante', 'x')",
+    ).run();
+    await DB.prepare(
+      "INSERT INTO restaurantes (id, dueno_id, nombre) VALUES ('r1', 'd1', 'Restaurante')",
+    ).run();
+    await DB.prepare(
+      `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio,
+        cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia,
+        plan, direccion, notas, lat, lng)
+       VALUES ('p1', ?, 'r1', 'entregado', '[]', 1000, 299, 99, 0, 200, 1598, 75, 925, 499, 0, 174,
+        'inicial', 'Calle Privada 123', 'Tocar el timbre', 25.77, -80.19)`,
+    )
+      .bind(id)
+      .run();
+    await DB.prepare(
+      "INSERT INTO calificaciones (pedido_id, estrellas_restaurante, comentario) VALUES ('p1', 5, 'Me llamo Ana y vivo aquí')",
+    ).run();
+    await DB.prepare("INSERT INTO dispositivos (token, usuario_id) VALUES ('tok-1', ?)")
+      .bind(id)
+      .run();
+    await DB.prepare(
+      "INSERT INTO lista_espera (id, tipo, nombre, correo) VALUES ('l1', 'comensal', 'Ana', 'ana@correo.com')",
+    ).run();
+
+    const res = await app.request(
+      '/datos/cuentas/yo',
+      { method: 'DELETE', headers: { authorization: `Bearer ${token}` } },
+      env(),
+    );
+    expect(res.status).toBe(200);
+    const pedido = await DB.prepare('SELECT direccion, notas, lat, lng, total FROM pedidos').first<
+      Record<string, unknown>
+    >();
+    expect(pedido?.direccion).not.toContain('Privada');
+    expect(pedido?.notas).toBe('');
+    expect(pedido?.lat).toBeNull();
+    // El importe se guarda: lo exigen los impuestos y la contabilidad.
+    expect(pedido?.total).toBe(1598);
+    const cal = await DB.prepare(
+      'SELECT comentario, estrellas_restaurante FROM calificaciones',
+    ).first<Record<string, unknown>>();
+    expect(cal?.comentario).toBe('');
+    expect(cal?.estrellas_restaurante).toBe(5);
+    expect(await DB.prepare('SELECT 1 FROM dispositivos').first()).toBeNull();
+    expect(await DB.prepare('SELECT 1 FROM lista_espera').first()).toBeNull();
+  });
+
   it('sin sesión, quién soy responde 401', async () => {
     const r = await llamar('/datos/cuentas/yo');
     expect(r.res.status).toBe(401);

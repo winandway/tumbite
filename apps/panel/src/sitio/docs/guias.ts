@@ -236,9 +236,10 @@ const es: SeccionDocs[] = [
         titulo: 'Borrar tu cuenta',
         resumen: 'Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.',
         pasos: [
-          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta».',
-          'Confirma. Se borran tu nombre, tu correo, tu teléfono y tu fecha de nacimiento.',
-          'Los pedidos quedan sin tu nombre, por obligaciones de facturación. No se puede deshacer.',
+          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/borrar-cuenta.',
+          'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
+          'Se borran tu nombre, correo, teléfono, fecha de nacimiento, las direcciones de tus pedidos y el texto de tus calificaciones. Los importes de los pedidos quedan sin tu nombre, por obligaciones de impuestos. No se puede deshacer.',
+          'Sin la app: escribe a support@tumbite.com desde el correo de tu cuenta y la borramos en un máximo de 30 días.',
         ],
       },
       {
@@ -473,9 +474,10 @@ const en: SeccionDocs[] = [
         titulo: 'Delete your account',
         resumen: 'From the account menu, in the three dots. Your personal data is removed.',
         pasos: [
-          'Open the account menu (the three dots, top right) and tap “Delete my account.”',
-          'Confirm. Your name, email, phone, and birthday are deleted.',
-          'Orders remain without your name, for invoicing obligations. This can’t be undone.',
+          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/borrar-cuenta.',
+          'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',
+          'Your name, email, phone, birthday, order addresses, and rating comments are deleted. Order amounts remain without your name, for tax obligations. This can’t be undone.',
+          'Without the app: email support@tumbite.com from your account’s email and we’ll delete it within 30 days.',
         ],
       },
       {

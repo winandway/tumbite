@@ -14,6 +14,9 @@
 
 - Política de privacidad: `https://tumbite.com/privacidad`
 - Términos: `https://tumbite.com/terminos`
+- Términos para restaurantes: `https://tumbite.com/terminos-restaurantes`
+- Términos para repartidores: `https://tumbite.com/terminos-repartidores`
+- Borrar la cuenta (Google Play → Seguridad de los datos → «enlace para borrar la cuenta»): `https://tumbite.com/borrar-cuenta`
 - Soporte: `https://tumbite.com/soporte`
 - Sitio: `https://tumbite.com`
 
@@ -44,7 +47,7 @@
 
 - **Ubicación:** solo «mientras se usa la app» en las tres. El repartidor comparte su ubicación solo mientras está conectado con la app abierta. (La ubicación en segundo plano queda para después del lanzamiento: Apple la revisa muy duro y exige video.)
 - **Pagos:** comida y entregas son bienes físicos, así que se cobran con Stripe, no con las compras dentro de la app de Apple ni de Google.
-- **Borrar la cuenta:** Apple lo exige dentro de la app. ✅ Hecho: en las tres apps y en el panel, dentro de los 3 puntos, con confirmación. Borra los datos personales y deja los pedidos sin nombre para la contabilidad.
+- **Borrar la cuenta:** Apple lo exige dentro de la app y Google pide además una página web. ✅ Hecho (12 oct 2026): en las tres apps, menú de 3 puntos → «Borrar mi cuenta» lleva directo a `/borrar-cuenta`, que tiene el botón para borrarla al instante y el camino por correo. Borra datos personales, direcciones, comentarios, avisos y lista de espera; deja los importes sin nombre (candado C-BORRADO-COMPLETO).
 - **Cuenta de prueba para el revisor:** hace falta una de cliente, una de repartidor y una de restaurante, en un restaurante de prueba aprobado. Se crean el día del envío.
 
 ## Pasos (quién hace qué)

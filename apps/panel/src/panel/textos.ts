@@ -3,6 +3,11 @@ import type { Idioma } from '@tumbite/compartido';
 const es = {
   entrar: 'Entrar',
   registrarse: 'Crear cuenta de restaurante',
+  aceptas: 'Al crear tu cuenta aceptas los',
+  terminos: 'Términos de uso',
+  terminosRestaurantes: 'Términos para restaurantes',
+  yLa: 'y la',
+  privacidad: 'Política de privacidad',
   yaTengo: '¿Ya tienes cuenta? Entra',
   noTengo: '¿Tu restaurante aún no está en Tumbite? Crea tu cuenta',
   nombre: 'Tu nombre',
@@ -49,6 +54,11 @@ type T = typeof es;
 const en: T = {
   entrar: 'Sign in',
   registrarse: 'Create a restaurant account',
+  aceptas: 'By creating your account you agree to the',
+  terminos: 'Terms of Service',
+  terminosRestaurantes: 'Restaurant Terms',
+  yLa: 'and the',
+  privacidad: 'Privacy Policy',
   yaTengo: 'Already have an account? Sign in',
   noTengo: 'Restaurant not on Tumbite yet? Create your account',
   nombre: 'Your name',

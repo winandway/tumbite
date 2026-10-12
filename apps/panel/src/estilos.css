@@ -281,6 +281,16 @@ h1 {
 .legal h1 {
   margin: 16px 0 4px;
 }
+.legal .legal-intro {
+  font-size: 1.05rem;
+  color: #191919;
+  border-left: 3px solid #191919;
+  padding-left: 12px;
+  margin: 16px 0 24px;
+}
+.legal section {
+  scroll-margin-top: 80px;
+}
 .legal .fecha {
   color: #5e5e5e;
   margin: 0 0 24px;
@@ -2504,4 +2514,15 @@ button {
   .ld-ventajas {
     margin-top: 0 !important;
   }
+}
+
+/* Aceptación de términos al crear cuenta */
+.nota-legal {
+  font-size: 0.85rem;
+  color: #5e5e5e;
+  margin: 4px 0 12px;
+}
+.nota-legal a {
+  color: #191919;
+  text-decoration: underline;
 }

@@ -66,6 +66,7 @@ export function Acceso({
   }
 
   const registro = modo === 'registro' && rolRegistro;
+  const abrir = (ruta: string) => void Linking.openURL(`${URL_SERVIDOR}${ruta}`);
   return (
     <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>
       {b.recuperado && (
@@ -126,6 +127,32 @@ export function Acceso({
       {error && !error.campo ? (
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error.mensaje}
+        </Text>
+      ) : null}
+      {registro ? (
+        // Aceptación visible antes de crear la cuenta (Apple y Google la revisan).
+        <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 10 }}>
+          {t.aceptas}{' '}
+          <Text style={e.enlaceLinea} onPress={() => abrir('/terminos')} accessibilityRole="link">
+            {t.terminos}
+          </Text>
+          {rolRegistro === 'repartidor' ? (
+            <>
+              ,{' '}
+              <Text
+                style={e.enlaceLinea}
+                onPress={() => abrir('/terminos-repartidores')}
+                accessibilityRole="link"
+              >
+                {t.terminosRepartidores}
+              </Text>
+            </>
+          ) : null}{' '}
+          {t.yLa}{' '}
+          <Text style={e.enlaceLinea} onPress={() => abrir('/privacidad')} accessibilityRole="link">
+            {t.privacidad}
+          </Text>
+          .
         </Text>
       ) : null}
       <Boton

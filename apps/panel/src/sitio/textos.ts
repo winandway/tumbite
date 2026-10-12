@@ -1,7 +1,7 @@
 import type { Idioma } from '@tumbite/compartido';
 
 /** Textos de la landing y las páginas legales, en los dos idiomas. */
-export const CONTACTO = 'tumbite.com@gmail.com';
+export const CONTACTO = 'support@tumbite.com';
 
 const es = {
   menu: {
@@ -203,6 +203,9 @@ const es = {
     privacidad: 'Privacidad',
     terminos: 'Términos',
     soporte: 'Soporte',
+    terminosRestaurantes: 'Términos para restaurantes',
+    terminosRepartidores: 'Términos para repartidores',
+    borrarCuenta: 'Borrar tu cuenta',
     docs: 'Docs',
     derechos: 'Todos los derechos reservados.',
     desarrollo: 'Desarrollado por',
@@ -467,6 +470,9 @@ const en: Textos = {
     privacidad: 'Privacy',
     terminos: 'Terms',
     soporte: 'Support',
+    terminosRestaurantes: 'Restaurant terms',
+    terminosRepartidores: 'Driver terms',
+    borrarCuenta: 'Delete your account',
     docs: 'Docs',
     derechos: 'All rights reserved.',
     desarrollo: 'Developed by',

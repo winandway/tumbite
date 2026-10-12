@@ -403,6 +403,23 @@ cuentas.delete('/yo', async (c) => {
     db
       .prepare('UPDATE repartidores SET conectado = 0, lat = NULL, lng = NULL WHERE usuario_id = ?')
       .bind(u.id),
+    // Lo que prometen la política de privacidad y la página /borrar-cuenta: se quitan direcciones,
+    // indicaciones y ubicación de sus pedidos y el texto de sus calificaciones. Los importes se
+    // guardan (impuestos y contabilidad). Candado C-BORRADO-COMPLETO.
+    db
+      .prepare(
+        "UPDATE pedidos SET direccion = 'Dirección borrada', notas = '', lat = NULL, lng = NULL WHERE cliente_id = ?",
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE calificaciones SET comentario = '' WHERE pedido_id IN (SELECT id FROM pedidos WHERE cliente_id = ?)",
+      )
+      .bind(u.id),
+    db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
   ]);
   c.header('Set-Cookie', cookie('', true));
   return c.json({ ok: true });

@@ -1,8 +1,14 @@
-# Plan: Pie de página profesional + páginas por país (12 oct 2026, piloto automático)
+# Plan: legales listos para las tiendas (Apple y Google)
 
-- [x] Paso 1: Datos de cobertura en un solo lugar (`apps/panel/src/sitio/cobertura.ts`): países (Estados Unidos activo en verde; Rumanía, Colombia, México, Venezuela, Guatemala y Bolivia «muy pronto») y ciudades (Miami activa; Orlando, Tampa y Ocala próximas), bilingüe, con su dirección propia.
-- [x] Paso 2: Pie de página nuevo (`Pie.tsx`): fondo negro estilo DoorDash, arriba el bloque de Uber con pestañas Ciudades / Países / Tipos de comida; columnas Conócenos, Te ayudamos, Negocios (con «Franquicias: muy pronto»), insignias de App Store y Google Play, redes, legal, crédito de Windoce. Enlaces reales (HTML) para el SEO.
-- [x] Paso 3: Página por país (`/pais/<slug>`) y por ciudad (`/ciudad/<slug>`): título, estado (activo / muy pronto), texto para el SEO, formulario de lista de espera de los tres públicos, canónica y mapa del sitio.
-- [x] Paso 4: Servidor: `/pais/*` y `/ciudad/*` públicas con caché y canónica. Pruebas: pie en los dos idiomas, página de país con formulario, mapa del sitio con todas las direcciones.
-- [x] Paso 5: Verificación completa, prueba en pantalla (celular y escritorio), publicar por el semáforo, documentar (CANDADOS, PENDIENTES).
-- [x] Paso 6: Prompt para la sesión de Laboratorio AI con la investigación de franquicias por ciudad.
+Requisitos leídos el 12 oct 2026 en las guías de Apple (5.1.1, 5.1.2, 5.1.5) y Google Play (datos de usuario y borrado de cuenta). Resumen en `docs/LEGALES-TIENDAS.md`.
+
+- [x] 1. Borrar cuenta de verdad: además de la cuenta, limpiar dirección, notas y ubicación de sus pedidos viejos, comentarios de sus calificaciones, teléfonos de avisos, enlaces de confirmación y recuperación, y su anotación en la lista de espera. Con prueba en rojo.
+- [x] 2. Política de privacidad completa (ES/EN): quién somos y contacto, qué datos y cómo se recogen, para qué, con quién (y que dan la misma protección), ubicación, avisos, pagos, cuánto tiempo se guarda cada cosa, cómo borrar y retirar el consentimiento, derechos de California y otros estados, menores, seguridad, cambios.
+- [x] 3. Términos de uso para clientes (ES/EN): servicio, cuenta, precios y cargos, propina, regalos y fidelidad, cancelaciones y reembolsos, uso correcto, contenido de calificaciones, responsabilidad, disputas, ley de Florida.
+- [x] 4. Términos para restaurantes y para repartidores (ES/EN): planes y comisión, pagos por Stripe Connect, repartidor independiente, seguridad, calificaciones y niveles.
+- [x] 5. Página pública «Borrar tu cuenta» (/borrar-cuenta): pasos en la app, pedido por correo sin reinstalar, qué se borra, qué se guarda y por qué, en cuánto tiempo.
+- [x] 6. Rutas, prerender, sitemap, canónica y enlaces en el pie para las páginas nuevas.
+- [x] 7. Aviso de aceptación al crear cuenta (app y panel) con enlaces a Términos y Privacidad.
+- [x] 8. Menú de 3 puntos de las apps: «Términos y privacidad» y «Borrar mi cuenta» (va directo a la página de borrar).
+- [x] 9. Pruebas de candado, verify completo, ver en pantalla, documentos (CANDADOS, PENDIENTES, TIENDAS).
+- [ ] 10. Commit, push, publicar y comprobar en vivo las páginas nuevas.

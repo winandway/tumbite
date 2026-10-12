@@ -132,6 +132,9 @@ export function Pie({ idioma }: { idioma: Idioma }) {
         <nav aria-label="Legal">
           <Enlace a="/privacidad">{t.privacidad}</Enlace>
           <Enlace a="/terminos">{t.terminos}</Enlace>
+          <Enlace a="/terminos-restaurantes">{t.terminosRestaurantes}</Enlace>
+          <Enlace a="/terminos-repartidores">{t.terminosRepartidores}</Enlace>
+          <Enlace a="/borrar-cuenta">{t.borrarCuenta}</Enlace>
           <Enlace a="/soporte">{t.soporte}</Enlace>
         </nav>
         <p>

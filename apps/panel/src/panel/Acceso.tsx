@@ -114,6 +114,23 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
             {error.mensaje}
           </p>
         )}
+        {modo === 'registro' && (
+          <p className="nota-legal">
+            {t.aceptas}{' '}
+            <a href="/terminos" target="_blank" rel="noopener noreferrer">
+              {t.terminos}
+            </a>
+            ,{' '}
+            <a href="/terminos-restaurantes" target="_blank" rel="noopener noreferrer">
+              {t.terminosRestaurantes}
+            </a>{' '}
+            {t.yLa}{' '}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer">
+              {t.privacidad}
+            </a>
+            .
+          </p>
+        )}
         <button type="submit" className="boton ancho" disabled={enviando}>
           {enviando ? t.enviando : modo === 'entrar' ? t.entrar : t.registrarse}
         </button>

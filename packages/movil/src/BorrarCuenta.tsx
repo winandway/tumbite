@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { enIdioma } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
+import { C } from './ui';
 import { useSoporte } from './soporte';
 import { TEXTOS_MOVIL } from './textos';
 
@@ -14,7 +15,7 @@ const T = {
   },
 };
 
-/** Menú de la cuenta (3 puntos): guías, soporte y Configuración, donde vive borrar la cuenta. */
+/** Menú de la cuenta (3 puntos): guías, soporte, términos y privacidad, Configuración y borrar la cuenta. */
 export function MenuCuenta() {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
@@ -58,6 +59,18 @@ export function MenuCuenta() {
         </Pressable>
       ) : null}
       {abierto && (
+        <Pressable
+          onPress={() => {
+            setAbierto(false);
+            void Linking.openURL(`${URL_SERVIDOR}/privacidad`);
+          }}
+          accessibilityRole="link"
+          style={{ padding: 10 }}
+        >
+          <Text style={{ fontWeight: '700' }}>{tm.legales}</Text>
+        </Pressable>
+      )}
+      {abierto && (
         // Datos, contraseña, correo y borrar la cuenta viven en Configuración, con confirmación escrita.
         <Pressable
           onPress={() => {
@@ -68,6 +81,20 @@ export function MenuCuenta() {
           style={{ padding: 10 }}
         >
           <Text style={{ fontWeight: '700' }}>{tm.configuracion}</Text>
+        </Pressable>
+      )}
+      {abierto && (
+        // Escondido en los tres puntos (regla de Richard). Lleva directo a la página que explica
+        // cómo borrar y qué se borra; ahí está el botón, con confirmación escrita (Apple 5.1.1 v).
+        <Pressable
+          onPress={() => {
+            setAbierto(false);
+            void Linking.openURL(`${URL_SERVIDOR}/borrar-cuenta`);
+          }}
+          accessibilityRole="link"
+          style={{ padding: 10 }}
+        >
+          <Text style={{ fontWeight: '700', color: C.primario }}>{tm.borrarCuenta}</Text>
         </Pressable>
       )}
     </View>

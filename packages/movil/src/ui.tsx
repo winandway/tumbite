@@ -233,6 +233,12 @@ export const e = StyleSheet.create({
     paddingVertical: 10,
     textAlign: 'center',
   },
+  // Enlace dentro de una frase (sin márgenes propios).
+  enlaceLinea: {
+    color: C.secundario,
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
   tarjeta: {
     backgroundColor: '#fff',
     borderRadius: 16,

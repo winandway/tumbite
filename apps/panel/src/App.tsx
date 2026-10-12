@@ -8,10 +8,27 @@ import { useRuta } from './ruta';
 import { useIdioma } from './usarIdioma';
 import { Landing } from './sitio/Landing';
 import { Legal } from './sitio/Legal';
-import { PRIVACIDAD, SOPORTE, TERMINOS } from './sitio/legales';
+import {
+  BORRAR_CUENTA,
+  PRIVACIDAD,
+  SOPORTE,
+  TERMINOS,
+  TERMINOS_REPARTIDORES,
+  TERMINOS_RESTAURANTES,
+} from './sitio/legales';
 import { Sitio } from './sitio/Sitio';
 import { RUTAS_VUELTA, Vuelta } from './sitio/Vuelta';
 import { TEXTOS_SITIO } from './sitio/textos';
+
+/** Páginas legales públicas (las tiendas de Apple y Google piden que existan y sean públicas). */
+const LEGALES = new Map([
+  ['/privacidad', PRIVACIDAD],
+  ['/terminos', TERMINOS],
+  ['/terminos-restaurantes', TERMINOS_RESTAURANTES],
+  ['/terminos-repartidores', TERMINOS_REPARTIDORES],
+  ['/borrar-cuenta', BORRAR_CUENTA],
+  ['/soporte', SOPORTE],
+]);
 
 export function App() {
   const ruta = useRuta();
@@ -50,14 +67,7 @@ export function App() {
     );
 
   const volver = enIdioma(TEXTOS_SITIO, idioma).volver;
-  const legal =
-    ruta === '/privacidad'
-      ? PRIVACIDAD
-      : ruta === '/terminos'
-        ? TERMINOS
-        : ruta === '/soporte'
-          ? SOPORTE
-          : null;
+  const legal = LEGALES.get(ruta) ?? null;
 
   const vuelta = RUTAS_VUELTA.find((r) => r === ruta);
   if (vuelta) {

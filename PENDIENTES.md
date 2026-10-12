@@ -26,7 +26,8 @@
 - [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos (construido; se edita en el panel → Dinero).
 - [ ] 👤 Nombre del programa de música y porcentaje para el fondo (sugerido 5 %).
 - [ ] 👤 Nombres de los planes (hoy: Inicial / Crece / Élite) y de los cuatro niveles (hoy: Bronce / Plata / Oro / Diamante).
-- [ ] 👤 Revisión de marca «Tumbite» con abogado (USPTO, clases 9, 39, 42 y 43) y revisión legal de privacidad y términos.
+- [x] Legales listos para las tiendas (12 oct 2026): privacidad, términos para clientes, restaurantes y repartidores, página de borrar cuenta y aviso al crear cuenta. Ver `docs/LEGALES-TIENDAS.md`.
+- [ ] 👤 Revisión de marca «Tumbite» con abogado (USPTO, clases 9, 39, 42 y 43) y revisión legal de los textos ya publicados.
 - [ ] 👤 Contador: impuesto de ventas en Florida; repartidores empleados e independientes.
 - [x] Empresa: Windoce LLC. Nombre: Tumbite. Dominio tumbite.com conectado y en vivo (10 oct 2026).
 
