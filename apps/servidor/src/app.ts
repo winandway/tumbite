@@ -132,8 +132,14 @@ const RUTAS_PUBLICAS = new Set([
   '/soporte',
   '/docs',
 ]);
-const esRutaPublica = (ruta: string) =>
-  RUTAS_PUBLICAS.has(ruta) || /^\/(docs|pais|ciudad|comida)\//.test(ruta);
+const esRutaPublica = (rutaConIdioma: string) => {
+  // /en/... es la misma página pública en inglés.
+  const ruta =
+    rutaConIdioma === '/en' || rutaConIdioma.startsWith('/en/')
+      ? rutaConIdioma.slice(3) || '/'
+      : rutaConIdioma;
+  return RUTAS_PUBLICAS.has(ruta) || /^\/(docs|pais|ciudad|comida)\//.test(ruta);
+};
 const DOMINIO = 'tumbite.com';
 
 export function conCanonica(res: Response, href: string): Response {

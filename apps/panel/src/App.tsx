@@ -5,7 +5,9 @@ import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
 import { ComoFunciona } from './sitio/ComoFunciona';
 import { PaginaLugar } from './sitio/Lugar';
-import { useRuta } from './ruta';
+import { ir, useRuta } from './ruta';
+import { conIdioma, enIngles, sinIdioma } from './rutaIdioma';
+import { useEffect } from 'react';
 import { useIdioma } from './usarIdioma';
 import { Landing } from './sitio/Landing';
 import { Legal } from './sitio/Legal';
@@ -32,8 +34,22 @@ const LEGALES = new Map([
 ]);
 
 export function App() {
-  const ruta = useRuta();
-  const [idioma, cambiar] = useIdioma();
+  const rutaReal = useRuta();
+  const ingles = enIngles(rutaReal);
+  // /en/... es la misma página en inglés (para que Google indexe el inglés).
+  const ruta = sinIdioma(rutaReal);
+  const [idiomaGuardado, guardarIdioma] = useIdioma();
+  const idioma = ingles ? 'en' : idiomaGuardado;
+  useEffect(() => {
+    document.documentElement.lang = idioma;
+  }, [idioma]);
+  const cambiar = (nuevo: typeof idioma) => {
+    guardarIdioma(nuevo);
+    if (ruta.startsWith('/panel')) return;
+    // En las páginas públicas, cambiar de idioma lleva a la dirección de ese idioma.
+    const destino = conIdioma(ruta, nuevo);
+    if (destino !== rutaReal) ir(destino);
+  };
 
   if (ruta.startsWith('/panel')) return <PanelApp ruta={ruta} />;
   if (/^\/(pais|ciudad|comida)\/[a-z-]+$/.test(ruta))

@@ -248,3 +248,9 @@ Fallos encontrados y arreglados:
 - **Pie:** «Cómo funciona», «Franquicias por ciudad» y «Cómo abrimos una ciudad» ya llevan a la página nueva; «Pide/Reparte desde el navegador» llevan a /app y /repartidor. Prueba `Pie.test.tsx` «ningún enlace del pie lleva a una página que no existe» (rojo comprobado).
 - **Auditoría (375 y 1280):** sin desplazamiento lateral, un solo h1 por página, todas las imágenes con texto alternativo. Se agrandaron los enlaces del pie y «← Volver» (eran difíciles de tocar) y el código postal ya no corta su ayuda.
 - El semáforo exige 200 también en `/como-funciona` y `/llms.txt`.
+
+## C-INGLES-SEO — cada página pública también en inglés bajo /en (12 oct 2026, noche)
+
+- **Por qué:** Google solo veía el español (el inglés salía después de cargar). Para un producto de EE.UU. eso era perder la mitad del SEO.
+- **Cómo quedó:** el prerender escribe cada página dos veces (`/pais/brasil` y `/en/pais/brasil`, 158 en total), cada una con `lang`, título, descripción y canónica propios, y las dos se señalan con `hreflang` (es, en y x-default = español). El mapa del sitio trae las dos. En la web, cambiar de idioma en una página pública lleva a la dirección de ese idioma; los enlaces internos dentro de /en se quedan en /en (`apps/panel/src/rutaIdioma.ts`, `Enlace.tsx`). El panel y las apps no llevan prefijo.
+- **Prueba:** `apps/panel/src/rutaIdioma.test.tsx`. Comprobado en pantalla: Brasil en español → inglés (/en/pais/brasil, lang en, vecinos con /en) → español otra vez; el panel no cambia de dirección.

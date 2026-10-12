@@ -100,82 +100,94 @@ try {
   ];
 
   let n = 0;
-  for (const ruta of rutas) {
-    dom.reconfigure({ url: `${DOMINIO}${ruta}` });
-    // Se prerrenderiza en español (el idioma por defecto); el visitante en inglés cambia al cargar.
-    dom.window.localStorage.clear();
-    dom.window.localStorage.setItem('tumbite.idioma', 'es');
-    const html = renderToString(React.createElement(App));
-    // Título y descripción propios de cada página (si no, Google ve 50 páginas iguales).
-    const limpiar = (t) =>
-      t
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const h1 = limpiar(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '');
-    const parrafo = limpiar(
-      (ruta === '/'
-        ? html.match(/<div class="ld-hero-texto">[\s\S]*?<p>([\s\S]*?)<\/p>/)?.[1]
-        : null) ??
-        html.match(
-          /<p class="(?:ld-entrada|docs-resumen|docs-sub|legal-intro)"[^>]*>([\s\S]*?)<\/p>/,
-        )?.[1] ??
-        html.match(/<main[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
-        '',
-    );
-    const titulo =
-      ruta === '/'
-        ? 'Tumbite · Comida a domicilio en Miami'
-        : /tumbite/i.test(h1)
-          ? h1
-          : `${h1} · Tumbite`;
-    const descripcion = (parrafo || 'Tumbite: comida rica, con ritmo, hasta tu puerta.').slice(
-      0,
-      155,
-    );
-    const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-    const pagina = plantilla
-      .replace(/<title>[^<]*<\/title>/, `<title>${esc(titulo)}</title>`)
-      .replace(
-        /<meta name="description" content="[^"]*" \/>/,
-        `<meta name="description" content="${esc(descripcion)}" />`,
-      )
-      .replace(
-        /<meta property="og:title" content="[^"]*" \/>/,
-        `<meta property="og:title" content="${esc(titulo)}" />`,
-      )
-      .replace(
-        /<meta property="og:url" content="[^"]*" \/>/,
-        `<meta property="og:url" content="${DOMINIO}${ruta === '/' ? '/' : ruta}" />`,
-      )
-      // Aunque la plantilla ya traiga contenido (corrida repetida), se reemplaza entero.
-      .replace(
-        /<div id="raiz">[\s\S]*?<\/div>(?=\s*<\/body>)/,
-        () => `<div id="raiz">${html}</div>`,
-      )
-      .replace(
-        /<link rel="canonical" href="[^"]*" \/>/,
-        `<link rel="canonical" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />`,
-      )
-      .replace('<html lang="en">', '<html lang="es">')
-      .replace(
-        '</head>',
-        () =>
-          datosDe(ruta)
-            .map(
-              (d) =>
-                `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`,
-            )
-            .join('') + '</head>',
+  // Cada página sale dos veces: en español (/pais/brasil) y en inglés (/en/pais/brasil), para que
+  // Google indexe los dos idiomas. Cada versión dice cuál es la otra (hreflang).
+  const enIngles = (ruta) => (ruta === '/' ? '/en' : `/en${ruta}`);
+  for (const lengua of ['es', 'en'])
+    for (const ruta of rutas) {
+      const url = lengua === 'en' ? enIngles(ruta) : ruta;
+      dom.reconfigure({ url: `${DOMINIO}${url}` });
+      dom.window.localStorage.clear();
+      dom.window.localStorage.setItem('tumbite.idioma', lengua);
+      const html = renderToString(React.createElement(App));
+      // Título y descripción propios de cada página (si no, Google ve 50 páginas iguales).
+      const limpiar = (t) =>
+        t
+          .replace(/<[^>]+>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      const h1 = limpiar(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '');
+      const parrafo = limpiar(
+        (ruta === '/'
+          ? html.match(/<div class="ld-hero-texto">[\s\S]*?<p>([\s\S]*?)<\/p>/)?.[1]
+          : null) ??
+          html.match(
+            /<p class="(?:ld-entrada|docs-resumen|docs-sub|legal-intro)"[^>]*>([\s\S]*?)<\/p>/,
+          )?.[1] ??
+          html.match(/<main[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/)?.[1] ??
+          '',
       );
-    paginas.push({ ruta, titulo, descripcion });
-    // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /pais/colombia
-    // tal cual, sin redirigir a /pais/colombia/ (una barra de más rompe la canónica y el SEO).
-    const destino = ruta === '/' ? join(dist, 'index.html') : join(dist, `${ruta}.html`);
-    mkdirSync(dirname(destino), { recursive: true });
-    writeFileSync(destino, pagina);
-    n++;
-  }
+      const titulo =
+        ruta === '/'
+          ? lengua === 'en'
+            ? 'Tumbite · Food delivery in Miami'
+            : 'Tumbite · Comida a domicilio en Miami'
+          : /tumbite/i.test(h1)
+            ? h1
+            : `${h1} · Tumbite`;
+      const descripcion = (
+        parrafo ||
+        (lengua === 'en'
+          ? 'Tumbite: great food, with rhythm, right to your door.'
+          : 'Tumbite: comida rica, con ritmo, hasta tu puerta.')
+      ).slice(0, 155);
+      const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const pagina = plantilla
+        .replace(/<title>[^<]*<\/title>/, `<title>${esc(titulo)}</title>`)
+        .replace(
+          /<meta name="description" content="[^"]*" \/>/,
+          `<meta name="description" content="${esc(descripcion)}" />`,
+        )
+        .replace(
+          /<meta property="og:title" content="[^"]*" \/>/,
+          `<meta property="og:title" content="${esc(titulo)}" />`,
+        )
+        .replace(
+          /<meta property="og:url" content="[^"]*" \/>/,
+          `<meta property="og:url" content="${DOMINIO}${url === '/' ? '/' : url}" />`,
+        )
+        // Aunque la plantilla ya traiga contenido (corrida repetida), se reemplaza entero.
+        .replace(
+          /<div id="raiz">[\s\S]*?<\/div>(?=\s*<\/body>)/,
+          () => `<div id="raiz">${html}</div>`,
+        )
+        .replace(
+          /<link rel="canonical" href="[^"]*" \/>/,
+          `<link rel="canonical" href="${DOMINIO}${url === '/' ? '/' : url}" />`,
+        )
+        .replace(/<html lang="[a-z]+">/, `<html lang="${lengua}">`)
+        .replace(
+          '</head>',
+          () =>
+            `<link rel="alternate" hreflang="es" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
+            `<link rel="alternate" hreflang="en" href="${DOMINIO}${enIngles(ruta)}" />` +
+            `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
+            datosDe(ruta)
+              .map(
+                (d) =>
+                  `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`,
+              )
+              .join('') +
+            '</head>',
+        );
+      paginas.push({ ruta: url, base: ruta, lengua, titulo, descripcion });
+      // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /pais/colombia
+      // tal cual, sin redirigir a /pais/colombia/ (una barra de más rompe la canónica y el SEO).
+      const destino = url === '/' ? join(dist, 'index.html') : join(dist, `${url}.html`);
+      mkdirSync(dirname(destino), { recursive: true });
+      writeFileSync(destino, pagina);
+      n++;
+    }
   console.log(`prerender: ${n} páginas públicas escritas en dist/`);
 
   // Mapa del sitio: sale de la misma lista de páginas (nunca más a mano ni desactualizado).
@@ -192,14 +204,14 @@ try {
             : '0.3';
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</loc><lastmod>${hoy}</lastmod><priority>${prioridad(p.ruta)}</priority></url>`).join('\n')}
+${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</loc><lastmod>${hoy}</lastmod><priority>${prioridad(p.base)}</priority></url>`).join('\n')}
 </urlset>
 `;
   writeFileSync(join(dist, 'sitemap.xml'), sitemap);
 
   // llms.txt: el resumen para los buscadores y asistentes de IA (formato llmstxt.org).
   const grupo = (titulo, filtro) => {
-    const xs = paginas.filter((p) => filtro(p.ruta));
+    const xs = paginas.filter((p) => p.lengua === 'es' && filtro(p.ruta));
     return xs.length
       ? `## ${titulo}\n\n${xs.map((p) => `- [${p.titulo}](${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}): ${p.descripcion}`).join('\n')}\n`
       : '';
@@ -213,7 +225,15 @@ ${grupo('Guías (Docs)', (r) => r.startsWith('/docs'))}
 ${grupo('Países', (r) => r.startsWith('/pais/'))}
 ${grupo('Ciudades', (r) => r.startsWith('/ciudad/'))}
 ${grupo('Tipos de comida', (r) => r.startsWith('/comida/'))}
-${grupo('Legal y soporte', (r) => /^\/(privacidad|terminos|borrar-cuenta|soporte)/.test(r))}`;
+${grupo('Legal y soporte', (r) => /^\/(privacidad|terminos|borrar-cuenta|soporte)/.test(r))}
+## In English
+
+Every page above also exists in English under ${DOMINIO}/en (for example ${DOMINIO}/en/como-funciona).
+${paginas
+  .filter((p) => p.lengua === 'en' && (p.base === '/' || p.base === '/como-funciona'))
+  .map((p) => `- [${p.titulo}](${DOMINIO}${p.ruta}): ${p.descripcion}`)
+  .join('\n')}
+`;
   writeFileSync(join(dist, 'llms.txt'), llms);
   console.log(`prerender: sitemap.xml y llms.txt con ${paginas.length} páginas`);
 } finally {
