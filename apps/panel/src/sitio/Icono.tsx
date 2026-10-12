@@ -3,6 +3,7 @@ import {
   BookOpen,
   Clock,
   Search,
+  Settings,
   Ban,
   Bell,
   Bike,
@@ -65,6 +66,7 @@ const ICONOS = {
   libro: BookOpen,
   reloj: Clock,
   buscar: Search,
+  ajustes: Settings,
   subir: Upload,
 } satisfies Record<string, LucideIcon>;
 

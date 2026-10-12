@@ -88,3 +88,48 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     Object.defineProperty(window, 'location', { configurable: true, value: original });
   });
 });
+
+describe('configuración de la cuenta', () => {
+  it('borrar la cuenta no está a la vista: vive en Configuración, dentro de los 3 puntos', async () => {
+    const { render, screen } = await import('@testing-library/react');
+    const userEvent = (await import('@testing-library/user-event')).default;
+    const { vi } = await import('vitest');
+    const { PanelApp } = await import('./PanelApp');
+    vi.stubGlobal('fetch', async (url: string) => {
+      const u = String(url);
+      if (u.includes('/datos/cuentas/yo'))
+        return new Response(
+          JSON.stringify({
+            usuario: {
+              id: 'u1',
+              nombre: 'Rosa',
+              correo: 'rosa@ejemplo.com',
+              rol: 'cliente',
+              idioma: 'es',
+            },
+          }),
+        );
+      if (u.includes('/datos/cuentas/perfil'))
+        return new Response(
+          JSON.stringify({
+            perfil: {
+              nombre: 'Rosa',
+              correo: 'rosa@ejemplo.com',
+              telefono: '',
+              fechaNacimiento: null,
+              idioma: 'es',
+              correoConfirmado: true,
+            },
+          }),
+        );
+      return new Response('{}', { status: 404 });
+    });
+    window.history.pushState(null, '', '/panel/configuracion');
+    render(<PanelApp ruta="/panel/configuracion" />);
+    expect(await screen.findByRole('heading', { name: /Configuración/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Borrar mi cuenta' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Más opciones' }));
+    expect(screen.getByRole('menuitem', { name: 'Borrar mi cuenta' })).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+});

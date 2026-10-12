@@ -10,6 +10,8 @@ import { Enlace } from '../Enlace';
 import { SelectorIdioma } from '../SelectorIdioma';
 import { useIdioma } from '../usarIdioma';
 import { Acceso } from './Acceso';
+import { Configuracion } from './Configuracion';
+import { Icono } from '../sitio/Icono';
 import { api } from './api';
 import { TEXTOS_PANEL } from './textos';
 import { MiRestaurante } from './MiRestaurante';
@@ -55,9 +57,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
   }, []);
 
   async function borrarCuenta(usuario: Usuario) {
-    if (!window.confirm(t.confirmarBorrar)) return;
     try {
-      await api.borrarCuenta();
       await borrarBorradoresDe(almacenNavegador, usuario.id);
       window.location.href = '/';
     } catch (e) {
@@ -101,13 +101,10 @@ export function PanelApp({ ruta }: { ruta: string }) {
               <summary>{usuario.nombre.split(' ')[0]}</summary>
               <div className="cuenta-menu">
                 <p>{usuario.correo}</p>
-                <button
-                  type="button"
-                  className="borrar-cuenta"
-                  onClick={() => void borrarCuenta(usuario)}
-                >
-                  {t.borrarCuenta}
-                </button>
+                {/* Borrar la cuenta vive en Configuración, escondido y con confirmación escrita. */}
+                <Enlace a="/panel/configuracion" className="boton secundario">
+                  <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
+                </Enlace>
                 <button type="button" onClick={() => void salir(usuario)}>
                   {t.salir}
                 </button>
@@ -124,9 +121,26 @@ export function PanelApp({ ruta }: { ruta: string }) {
         </main>
       ) : !usuario ? (
         <Acceso idioma={idioma} alEntrar={(u) => setEstado({ cargando: false, usuario: u })} />
+      ) : menu.length === 0 && ruta === '/panel/configuracion' ? (
+        <main className="contenido">
+          <Configuracion
+            usuario={usuario}
+            idioma={idioma}
+            alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
+            alBorrar={() => borrarCuenta(usuario)}
+          />
+        </main>
       ) : menu.length === 0 ? (
         <main className="contenido">
           <p>{t.soloEquipo}</p>
+          <div className="fila-botones">
+            <a className="boton" href="/app/">
+              {t.irApp}
+            </a>
+            <Enlace a="/panel/configuracion" className="boton secundario">
+              <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
+            </Enlace>
+          </div>
         </main>
       ) : (
         <div className="panel-cuerpo">
@@ -141,7 +155,15 @@ export function PanelApp({ ruta }: { ruta: string }) {
             })}
           </nav>
           <main className="panel-contenido">
-            {seccion(ruta, usuario, idioma) ??
+            {ruta === '/panel/configuracion' ? (
+              <Configuracion
+                usuario={usuario}
+                idioma={idioma}
+                alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
+                alBorrar={() => borrarCuenta(usuario)}
+              />
+            ) : (
+              (seccion(ruta, usuario, idioma) ??
               (ruta === '/panel' ? (
                 <>
                   <h1>
@@ -151,7 +173,8 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 </>
               ) : (
                 <p>{t.pronto}</p>
-              ))}
+              )))
+            )}
           </main>
         </div>
       )}

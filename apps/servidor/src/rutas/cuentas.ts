@@ -34,6 +34,27 @@ const esquemaRestablecer = z.object({
     .max(200, { error: 'La contraseña es demasiado larga.' }),
 });
 const MINUTOS_RECUPERACION = 30;
+const esquemaPerfil = z.object({
+  nombre: z.string().trim().min(2, { error: 'Escribe tu nombre.' }).max(80),
+  telefono: z.string().trim().max(30).default(''),
+  fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).nullable().default(null),
+  idioma: z.enum(['es', 'en']).default('es'),
+});
+const esquemaCambiarClave = z.object({
+  actual: z.string().min(1, { error: 'Escribe tu contraseña actual.' }).max(200),
+  nueva: z
+    .string()
+    .min(8, { error: 'La contraseña nueva debe tener al menos 8 caracteres.' })
+    .max(200),
+});
+const esquemaCambiarCorreo = z.object({
+  correo: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: 'Escribe un correo válido.' })),
+  clave: z.string().min(1, { error: 'Escribe tu contraseña para confirmar.' }).max(200),
+});
 const esquemaConfirmar = z.object({ token: z.string().min(20).max(200) });
 const esquemaDispositivo = z.object({
   token: z.string().regex(/^(ExponentPushToken|ExpoPushToken)\[[\w-]+\]$/, {
@@ -388,3 +409,92 @@ cuentas.delete('/yo', async (c) => {
 });
 
 cuentas.get('/yo', (c) => c.json({ usuario: exigir(c) }));
+
+// ---------- Configuración de la cuenta ----------
+
+cuentas.get('/perfil', async (c) => {
+  const u = exigir(c);
+  const f = await base(c)
+    .prepare(
+      'SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en FROM usuarios WHERE id = ?',
+    )
+    .bind(u.id)
+    .first<Record<string, unknown>>();
+  return c.json({
+    perfil: {
+      nombre: String(f?.nombre ?? ''),
+      correo: String(f?.correo ?? ''),
+      telefono: String(f?.telefono ?? ''),
+      fechaNacimiento: (f?.fecha_nacimiento as string | null) ?? null,
+      idioma: f?.idioma === 'en' ? 'en' : 'es',
+      correoConfirmado: Boolean(f?.correo_confirmado_en),
+    },
+  });
+});
+
+cuentas.patch('/yo', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaPerfil);
+  if (u.correo.endsWith('@windoce.com') && !/soporte/i.test(d.nombre))
+    throw new ErrorDatos(
+      'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',
+      'nombre',
+    );
+  await base(c)
+    .prepare(
+      'UPDATE usuarios SET nombre = ?, telefono = ?, fecha_nacimiento = ?, idioma = ? WHERE id = ?',
+    )
+    .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
+    .run();
+  return c.json({ usuario: { ...u, nombre: d.nombre, idioma: d.idioma } });
+});
+
+/** Cambiar la contraseña sabiendo la actual. Cierra las demás sesiones; la de ahora sigue. */
+cuentas.post('/clave', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaCambiarClave);
+  const db = base(c);
+  const f = await db
+    .prepare('SELECT clave_hash FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ clave_hash: string }>();
+  if (!f || !(await verificarClave(d.actual, f.clave_hash)))
+    throw new ErrorDatos('La contraseña actual no es correcta.', 'actual', 401);
+  const token = leerToken(c);
+  await db.batch([
+    db
+      .prepare('UPDATE usuarios SET clave_hash = ? WHERE id = ?')
+      .bind(await hashClave(d.nueva), u.id),
+    db
+      .prepare('DELETE FROM sesiones WHERE usuario_id = ? AND id != ?')
+      .bind(u.id, token ? await sha256(token) : ''),
+  ]);
+  return c.json({ ok: true });
+});
+
+/** Cambiar el correo con la contraseña. El correo nuevo queda sin confirmar y se le manda el enlace. */
+cuentas.post('/correo', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaCambiarCorreo);
+  const db = base(c);
+  const f = await db
+    .prepare('SELECT clave_hash FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ clave_hash: string }>();
+  if (!f || !(await verificarClave(d.clave, f.clave_hash)))
+    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 401);
+  if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: u });
+  const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
+  if (existe) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
+  await db
+    .prepare('UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL WHERE id = ?')
+    .bind(d.correo, u.id)
+    .run();
+  await mandarConfirmacion(c.env, db, {
+    id: u.id,
+    nombre: u.nombre,
+    correo: d.correo,
+    idioma: u.idioma,
+  });
+  return c.json({ usuario: { ...u, correo: d.correo } });
+});

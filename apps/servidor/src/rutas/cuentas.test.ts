@@ -189,3 +189,70 @@ describe('cuentas', () => {
     expect(r.res.status).toBe(401);
   });
 });
+
+describe('configuración de la cuenta', () => {
+  it('edita el perfil, cambia la clave sabiendo la actual y cambia el correo con la clave', async () => {
+    const { mundo } = await import('../pruebas/ayuda');
+    const m = mundo({ YAD_TOKEN: 'x'.repeat(40) });
+    const { usarTransporteCorreo } = await import('../correo');
+    const enviados: { to: { address: string }[] }[] = [];
+    usarTransporteCorreo(async (_u, init) => {
+      enviados.push(JSON.parse(String(init.body)));
+      return new Response(JSON.stringify({ success: true, rebotados: [] }));
+    });
+    const u = await m.cuenta('cliente', 'Rosa');
+    const perfil = await m.llamar('GET', '/datos/cuentas/perfil', undefined, u.token);
+    expect(perfil.datos.perfil.nombre).toBe('Rosa');
+
+    const ed = await m.llamar(
+      'PATCH',
+      '/datos/cuentas/yo',
+      { nombre: 'Rosa María', telefono: '3055550100', fechaNacimiento: '1990-05-20', idioma: 'en' },
+      u.token,
+    );
+    expect(ed.datos.usuario.nombre).toBe('Rosa María');
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/perfil', undefined, u.token)).datos.perfil
+        .fechaNacimiento,
+    ).toBe('1990-05-20');
+
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/cuentas/clave',
+          { actual: 'mala', nueva: 'nueva-clave-99' },
+          u.token,
+        )
+      ).estado,
+    ).toBe(401);
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/cuentas/clave',
+          { actual: 'clave-segura-1', nueva: 'nueva-clave-99' },
+          u.token,
+        )
+      ).estado,
+    ).toBe(200);
+    // La sesión actual sigue viva.
+    expect((await m.llamar('GET', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
+
+    const antes = enviados.length;
+    const correo = await m.llamar(
+      'POST',
+      '/datos/cuentas/correo',
+      { correo: 'rosa.nueva@ejemplo.com', clave: 'nueva-clave-99' },
+      u.token,
+    );
+    expect(correo.datos.usuario.correo).toBe('rosa.nueva@ejemplo.com');
+    expect(enviados.length).toBe(antes + 1);
+    expect(enviados.at(-1)?.to[0]?.address).toBe('rosa.nueva@ejemplo.com');
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/perfil', undefined, u.token)).datos.perfil
+        .correoConfirmado,
+    ).toBe(false);
+    usarTransporteCorreo(null);
+  });
+});
