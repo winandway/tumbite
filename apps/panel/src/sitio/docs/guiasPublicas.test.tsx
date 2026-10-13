@@ -83,6 +83,10 @@ describe('Docs públicos', () => {
         'restaurante-pedido-nuevo',
         'repartidor-oferta',
         'cliente-registro',
+        'cliente-regalo',
+        'cliente-cancelado',
+        'cliente-rechazado',
+        'cliente-manager-cancela',
       ])
         expect(lista).toContain(`/docs/recorrido-${n}-${i}.webp`);
     }

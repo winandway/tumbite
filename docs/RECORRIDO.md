@@ -15,7 +15,11 @@ Una prueba que hace dos trabajos a la vez:
 6. El restaurante acepta con 20 minutos y marca «¡Listo!».
 7. El repartidor recibe la oferta, la acepta, recoge y entrega; luego se desconecta.
 8. El cliente lo ve entregado y califica la comida y al repartidor.
-9. El dinero cuadra al centavo: restaurante + repartidor + Tumbite = lo que pagó el cliente.
+9. El restaurante aparta el 20 % de sus ventas para regalos y elige los nudos de ajo como regalo de cumpleaños; el cliente (que cumple años ese día) los pone en el carrito y el regalo aparece solo.
+10. El cliente paga ese pedido y lo cancela antes de que el restaurante acepte: ve la devolución.
+11. Otro pedido: el restaurante lo rechaza desde los tres puntos; el cliente ve que no se pudo atender y la devolución.
+12. Otro pedido que nadie confirma: a los 7 minutos sale en rojo en el panel y a los 10 el Manager lo cancela solo (el reloj se adelanta en la base de prueba, no se espera).
+13. En cada pago, el dinero cuadra al centavo: restaurante + repartidor + Tumbite = lo que pagó el cliente.
 
 ## Cómo se corre
 

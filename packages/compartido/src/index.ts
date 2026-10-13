@@ -11,3 +11,4 @@ export * from './geohash';
 export * from './espera';
 export * from './semaforo';
 export * from './rutasPublicas';
+export * from './limite';

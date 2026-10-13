@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, type Restaurante, descripcion, enIdioma } from '@tumbite/compartido';
@@ -23,19 +23,19 @@ export function Inicio() {
   const { cantidadTotal } = useCarrito();
   const [lista, setLista] = useState<Restaurante[] | null>(null);
   const [error, setError] = useState('');
-  const [punto, setPunto] = useState<Punto | null>(null);
+  const [puntoGps, setPuntoGps] = useState<Punto | null>(null);
   // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
 
   const cargar = useCallback(
     async (p: Punto | null) => {
-      setError('');
       try {
         const q = p ? `?lat=${p.lat}&lng=${p.lng}` : '';
         const r = await api.pedir<{ restaurantes: Restaurante[] }>(
           'GET',
           `/datos/restaurantes${q}`,
         );
+        setError('');
         setLista(r.restaurantes);
       } catch (x) {
         setError(x instanceof ErrorApi ? x.message : String(x));
@@ -44,17 +44,29 @@ export function Inicio() {
     [api],
   );
 
+  // Los restaurantes salen enseguida, sin esperar la ubicación; cuando llega, se ordenan por
+  // cercanía. Antes se esperaba la ubicación primero y, si el teléfono no contestaba, la lista no
+  // aparecía nunca (candado C-UBICACION-NO-FRENA, lo destapó el recorrido completo).
+  const deUrl = useMemo(
+    () =>
+      params.lat && params.lng && Number.isFinite(Number(params.lat))
+        ? { lat: Number(params.lat), lng: Number(params.lng) }
+        : null,
+    [params.lat, params.lng],
+  );
+  const punto = deUrl ?? puntoGps;
   useEffect(() => {
     void (async () => {
-      const deUrl =
-        params.lat && params.lng && Number.isFinite(Number(params.lat))
-          ? { lat: Number(params.lat), lng: Number(params.lng) }
-          : null;
-      const p = deUrl ?? (await miUbicacion());
-      setPunto(p);
+      if (deUrl) return cargar(deUrl);
+      // Primero la lista, sin esperar; la ubicación llega cuando llegue (o no llega).
+      const primera = cargar(null);
+      const p = await miUbicacion();
+      await primera;
+      if (!p) return;
+      setPuntoGps(p);
       await cargar(p);
     })();
-  }, [cargar, params.lat, params.lng]);
+  }, [cargar, deUrl]);
 
   return (
     <Pantalla titulo={`${tm.hola}, ${usuario?.nombre.split(' ')[0] ?? ''}`}>

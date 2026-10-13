@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -54,7 +55,7 @@ for (const idioma of ['en', 'es'] as const) {
         .first()
         .waitFor({ timeout: 10_000 })
         .catch(() => {});
-      await pagina.waitForTimeout(800);
+      await pagina.waitForTimeout(1500);
     };
     const foto = async (pagina: Page, nombre: string) => {
       if (!CAPTURAS) return;
@@ -103,6 +104,7 @@ for (const idioma of ['en', 'es'] as const) {
     for (const [es, en, catEs, catEn, precio] of [
       ['Pizza margarita', 'Margherita pizza', 'Pizzas', 'Pizzas', '14.00'],
       ['Limonada de coco', 'Coconut lemonade', 'Bebidas', 'Drinks', '4.50'],
+      ['Nudos de ajo', 'Garlic knots', 'Entradas', 'Starters', '3.00'],
     ]) {
       await panel.getByRole('button', { name: L.agregarPlato }).click();
       await panel.getByLabel(L.nombreEs).fill(es!);
@@ -196,11 +198,19 @@ for (const idioma of ['en', 'es'] as const) {
     // 5. El cliente se registra, elige, arma el carrito y paga.
     const cliCtx = await nuevoContexto('celular', CASA);
     const cli = await cliCtx.newPage();
+    cli.on('pageerror', (e) => console.error('app del cliente:', e.message));
+    cli.on(
+      'console',
+      (m) => m.type() === 'error' && console.error('consola del cliente:', m.text()),
+    );
     await cli.goto('/app/');
     await cli.getByText(L.appCrear).click();
     await cli.getByLabel(L.nombreCompleto).fill('Ana García');
     await cli.getByLabel(L.correo).fill(correo('cliente'));
     await cli.getByLabel(L.celular).fill('3055550103');
+    // Cumple hoy: así, después de su primer pedido, le toca el regalo de cumpleaños.
+    const hoy = new Date().toISOString().slice(5, 10);
+    await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
     await cli.getByRole('button', { name: L.crearCuenta }).click();
@@ -209,28 +219,12 @@ for (const idioma of ['en', 'es'] as const) {
       cli.getByText(idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita'),
     ).toBeVisible();
     await foto(cli, 'cliente-menu');
-    await cli
-      .getByRole('button', {
-        name: `${L.agregar} ${idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita'}`,
-      })
-      .click();
-    await cli
-      .getByRole('button', {
-        name: `${L.agregar} ${idioma === 'en' ? 'Coconut lemonade' : 'Limonada de coco'}`,
-      })
-      .click();
-    await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
-    await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
-    await mapaListo(cli);
-    await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
-    await foto(cli, 'cliente-carrito');
-    const [respuesta] = await Promise.all([
-      cli.waitForResponse(
-        (r) => r.url().endsWith('/datos/pedidos') && r.request().method() === 'POST',
-      ),
-      cli.getByText(L.continuarPago).filter({ visible: true }).click(),
-    ]);
-    const cobro = (await respuesta.json()) as {
+    const plato = {
+      pizza: idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita',
+      limonada: idioma === 'en' ? 'Coconut lemonade' : 'Limonada de coco',
+      nudos: idioma === 'en' ? 'Garlic knots' : 'Nudos de ajo',
+    };
+    type Cobro = {
       pedidoId: string;
       clientSecret: string;
       desglose: {
@@ -240,27 +234,67 @@ for (const idioma of ['en', 'es'] as const) {
         gananciaPlataforma: number;
       };
     };
-    expect(respuesta.status()).toBe(201);
-
-    // El banco aprueba (aviso firmado de Stripe, como el de verdad).
-    const cuerpo = JSON.stringify({
-      id: `evt_${id}`,
-      type: 'payment_intent.succeeded',
-      data: {
-        object: {
-          id: cobro.clientSecret.split('_secret')[0],
-          amount_received: cobro.desglose.totalCliente,
-          metadata: { pedido_id: cobro.pedidoId },
+    /** Del menú al pago: agrega los platos, va al carrito, paga y el banco aprueba (simulado). */
+    const pedirYPagar = async (platos: string[], fotoCarrito?: string): Promise<Cobro> => {
+      if (!cli.url().includes('/restaurant/')) {
+        await cli.goto('/app/');
+        try {
+          await cli.getByText(restaurante).click({ timeout: 15_000 });
+        } catch (e) {
+          console.error(
+            'DEPURAR inicio:',
+            cli.url(),
+            (await cli.locator('body').innerText()).slice(0, 800),
+          );
+          await cli.screenshot({ path: join(RAIZ, 'test-results', 'depurar-inicio.png') });
+          throw e;
+        }
+      }
+      for (const p of platos)
+        await cli
+          .getByRole('button', { name: `${L.agregar} ${p}` })
+          .filter({ visible: true })
+          .click();
+      await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
+      await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+      if (fotoCarrito) {
+        await mapaListo(cli);
+        await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
+        await foto(cli, fotoCarrito);
+      }
+      const [respuesta] = await Promise.all([
+        cli.waitForResponse(
+          (r) => r.url().endsWith('/datos/pedidos') && r.request().method() === 'POST',
+        ),
+        cli.getByText(L.continuarPago).filter({ visible: true }).click(),
+      ]);
+      expect(respuesta.status()).toBe(201);
+      const c = (await respuesta.json()) as Cobro;
+      // El banco aprueba: aviso firmado de Stripe, como el de verdad.
+      const cuerpo = JSON.stringify({
+        id: `evt_${c.pedidoId}`,
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: c.clientSecret.split('_secret')[0],
+            amount_received: c.desglose.totalCliente,
+            metadata: { pedido_id: c.pedidoId },
+          },
         },
-      },
-    });
-    const t = Math.floor(Date.now() / 1000);
-    const firma = createHmac('sha256', DATOS.secretoAviso).update(`${t}.${cuerpo}`).digest('hex');
-    const aviso = await request.post('/datos/stripe/aviso', {
-      headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${firma}` },
-      data: cuerpo,
-    });
-    expect(aviso.status()).toBe(200);
+      });
+      const t = Math.floor(Date.now() / 1000);
+      const firma = createHmac('sha256', DATOS.secretoAviso).update(`${t}.${cuerpo}`).digest('hex');
+      const aviso = await request.post('/datos/stripe/aviso', {
+        headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${firma}` },
+        data: cuerpo,
+      });
+      expect(aviso.status()).toBe(200);
+      // El dinero cuadra al centavo: lo que paga el cliente se reparte entero.
+      const d = c.desglose;
+      expect(d.pagoRestaurante + d.pagoRepartidor + d.gananciaPlataforma).toBe(d.totalCliente);
+      return c;
+    };
+    const cobro = await pedirYPagar([plato.pizza, plato.limonada], 'cliente-carrito');
     await cli.goto(`/app/order/${cobro.pedidoId}`);
     await expect(cli.getByText(/Payment received|Recibimos tu pago|Pago recibido/)).toBeVisible();
     await foto(cli, 'cliente-pagado');
@@ -304,9 +338,88 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-calificar');
     await cli.getByRole('button', { name: L.enviarCalificacion }).click();
 
-    // 9. El dinero cuadra al centavo: lo que pagó el cliente se reparte entero.
-    const d = cobro.desglose;
-    expect(d.pagoRestaurante + d.pagoRepartidor + d.gananciaPlataforma).toBe(d.totalCliente);
+    // 9. Regalo de cumpleaños: el restaurante aparta el 20 % y regala los nudos de ajo.
+    await panel.getByRole('link', { name: L.regalos, exact: true }).click();
+    await panel.getByLabel(L.porcentajeRegalos).fill('20');
+    const elegir = panel.getByLabel(L.platoRegalo).first();
+    const valor = await elegir.locator('option', { hasText: plato.nudos }).getAttribute('value');
+    await elegir.selectOption(valor ?? '');
+    await panel.getByRole('button', { name: L.guardar, exact: true }).click();
+    await expect(panel.getByText(/^Saved$|^Guardado$/)).toBeVisible();
+    await panel.evaluate(() => window.scrollTo(0, 0));
+    await foto(panel, 'restaurante-regalos');
+
+    // El cliente cumple años: al poner los nudos en el carrito, le aparece el regalo.
+    await cli.goto('/app/');
+    await cli.getByText(restaurante).click();
+    await cli
+      .getByRole('button', { name: `${L.agregar} ${plato.nudos}` })
+      .filter({ visible: true })
+      .click();
+    await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
+    await expect(cli.getByText(L.regaloCumple).filter({ visible: true })).toBeVisible();
+    await mapaListo(cli);
+    await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-regalo');
+
+    // 10. El cliente paga y se arrepiente: cancela antes de que el restaurante acepte.
+    const conRegalo = await pedirYPagar([]);
+    await cli.goto(`/app/order/${conRegalo.pedidoId}`);
+    await cli.getByText(L.cancelarPedido).filter({ visible: true }).click();
+    await foto(cli, 'cliente-cancelar');
+    await cli.getByText(L.siCancelar).filter({ visible: true }).click();
+    await expect(cli.getByText(L.cancelasteTu, { exact: false })).toBeVisible();
+    await foto(cli, 'cliente-cancelado');
+
+    // 11. El restaurante no puede atender un pedido y lo rechaza: el cliente recibe su dinero.
+    const rechazado = await pedirYPagar([plato.pizza]);
+    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    const codigo = rechazado.pedidoId.slice(0, 4).toUpperCase();
+    // La fila de ESE pedido: el ⋮ que está junto a su número.
+    const fila = panel
+      .locator('strong', { hasText: `#${codigo}` })
+      .locator(`xpath=ancestor::*[.//button[@aria-label="${L.masOpciones}"]][1]`);
+    await expect(fila).toBeVisible({ timeout: 20_000 });
+    panel.once('dialog', (d) => void d.accept());
+    await fila.getByRole('button', { name: L.masOpciones }).click();
+    await panel.getByRole('menuitem', { name: L.rechazar }).click();
+    await cli.goto(`/app/order/${rechazado.pedidoId}`);
+    await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-rechazado');
+
+    // 12. El Manager: un pedido que nadie confirma se pone en rojo y a los 10 minutos se cancela
+    //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
+    const olvidado = await pedirYPagar([plato.pizza]);
+    const atrasar = (minutos: number) =>
+      execFileSync(
+        'npx',
+        [
+          'wrangler',
+          'd1',
+          'execute',
+          'tumbite-local',
+          '--local',
+          '--persist-to',
+          '.recorrido/estado',
+          '-c',
+          '.recorrido/wrangler.jsonc',
+          '--command',
+          `UPDATE pedidos SET pagado_en = datetime('now','-${minutos} minutes') WHERE id = '${olvidado.pedidoId}'`,
+        ],
+        { cwd: RAIZ, stdio: 'ignore' },
+      );
+    atrasar(7);
+    await panel.reload();
+    await expect(panel.getByText(/In trouble|En problemas/).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await foto(panel, 'restaurante-semaforo-rojo');
+    atrasar(11);
+    await cli.goto(`/app/order/${olvidado.pedidoId}`);
+    await expect(cli.getByText(L.managerCancela, { exact: false })).toBeVisible({
+      timeout: 20_000,
+    });
+    await foto(cli, 'cliente-manager-cancela');
 
     await Promise.all([panelCtx.close(), repCtx.close(), cliCtx.close()]);
   });

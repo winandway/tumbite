@@ -394,3 +394,9 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **Capturas de Docs:** `npm run recorrido:capturas` las rehace con datos limpios. Las guías de pedir, seguir, calificar, empezar como restaurante, menú, pedidos, empezar a repartir, ofertas, el pedido de punta a punta y la guía nueva «Crear tu cuenta» las usan.
 - **«¿Cómo hago…?»:** cada guía lleva sus preguntas (`preguntas` en `guias.ts`), hay una página que las junta con su enlace (`/docs/how-to` y `/es/docs/how-to`), el buscador de Docs encuentra por pregunta, cada guía muestra al final las preguntas que responde y la burbuja de ayuda del panel lleva ahí. Candados en `guiasPublicas.test.tsx` y `Docs.test.tsx` (en rojo comprobado).
 - **No tocar:** si se cambia el texto de un botón que usa el recorrido, se cambia también en `e2e/recorrido/textos.ts` en el mismo trabajo.
+
+## Los otros caminos en el recorrido y C-UBICACION-NO-FRENA (13 oct 2026)
+
+- **Caminos nuevos en el recorrido:** regalo de cumpleaños, el cliente cancela, el restaurante rechaza y el Manager cancela solo, con sus capturas en las guías de regalos, cancelar, pedidos, el Manager y el semáforo (detalle en `docs/RECORRIDO.md`).
+- **Fallo real que destapó (C-UBICACION-NO-FRENA):** la portada del cliente esperaba la ubicación antes de pedir los restaurantes; si el teléfono o el navegador no contestaban, la lista no salía nunca y tampoco decía nada. Ahora la lista sale enseguida y se reordena por cercanía cuando llega la ubicación, que además tiene un tope de 8 segundos (`conLimite` en `packages/compartido/src/limite.ts`). Candados: `ubicacionNoFrena.test.ts` y `limite.test.ts` (en rojo comprobado) y el propio recorrido, que fallaba una de cada pocas corridas y pasó cinco seguidas con el arreglo.
+- **Detalle de pantalla:** el aviso «Guardado» quedaba pegado al botón de guardar en los formularios del panel; ahora lleva aire (`.ok + .boton`).

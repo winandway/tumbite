@@ -3343,3 +3343,7 @@ button {
   color: #eb1700;
   text-align: center;
 }
+/* «Guardado» junto al botón de guardar: con aire, nunca pegado (todos los formularios del panel). */
+.ok + .boton {
+  margin-left: 12px;
+}

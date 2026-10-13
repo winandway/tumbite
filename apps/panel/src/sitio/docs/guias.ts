@@ -102,14 +102,14 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/cancelar-pedido-es.webp',
-            alt: 'Pantalla del pedido en la app de Tumbite con la pregunta «Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?» y los botones «Sí, cancelar» y «No, seguir esperando».',
-            pie: 'Antes de cancelar, la app te pregunta. Nada se cancela por un toque sin querer.',
+            src: '/docs/recorrido-cliente-cancelar-es.webp',
+            alt: 'Pedido pagado en la app de Tumbite con la pregunta «Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?» y el botón «Sí, cancelar».',
+            pie: 'Antes de cancelar, la app te pregunta: nada se cancela por un toque sin querer.',
           },
           {
-            src: '/docs/pedido-cancelado-es.webp',
-            alt: 'Pedido cancelado en la app de Tumbite con el mensaje «Cancelaste este pedido. Te devolvimos todo el dinero a tu tarjeta».',
-            pie: 'La app te dice por qué se canceló y que el dinero vuelve a tu tarjeta.',
+            src: '/docs/recorrido-cliente-cancelado-es.webp',
+            alt: 'Pedido cancelado en la app de Tumbite con el aviso de que se devolvió todo el dinero a la tarjeta.',
+            pie: 'Cancelado: te dice por qué y que el dinero vuelve a tu tarjeta.',
           },
         ],
         preguntas: ['¿Cómo cancelo un pedido?', '¿Me devuelven el dinero si cancelo?'],
@@ -151,9 +151,9 @@ const es: SeccionDocs[] = [
         resumen: 'Los restaurantes premian que vuelvas. Los regalos aparecen solos en el carrito.',
         capturas: [
           {
-            src: '/docs/regalo-carrito-es.webp',
-            alt: 'Carrito de la app de Tumbite con el regalo de cumpleaños aplicado en verde y el descuento en el detalle del total.',
-            pie: 'Cuando te toca un regalo, aparece en el carrito y se descuenta del total.',
+            src: '/docs/recorrido-cliente-regalo-es.webp',
+            alt: 'Carrito de la app de Tumbite con el regalo de cumpleaños aplicado en verde y el descuento en el desglose del total.',
+            pie: 'El día de tu cumpleaños, el regalo aparece solo en el carrito y se descuenta del total.',
           },
         ],
         preguntas: [
@@ -291,6 +291,11 @@ const es: SeccionDocs[] = [
             alt: 'Pedido aceptado y en preparación, con el botón «¡Listo!».',
             pie: 'Cuando la comida está lista, tocas «¡Listo!» y avisamos al repartidor.',
           },
+          {
+            src: '/docs/recorrido-cliente-rechazado-es.webp',
+            alt: 'Pedido en la app de Tumbite que el restaurante no pudo atender, con el aviso de que se devolvió todo el dinero.',
+            pie: 'Si el restaurante no puede atender un pedido, el cliente lo ve al instante y recibe su dinero.',
+          },
         ],
         preguntas: [
           '¿Cómo acepto un pedido?',
@@ -364,9 +369,9 @@ const es: SeccionDocs[] = [
         resumen: 'Aparta un porcentaje de tus ventas para premiar a tus clientes fieles.',
         capturas: [
           {
-            src: '/docs/regalos-restaurante-es.webp',
-            alt: 'Pantalla «Regalos y marketing» del panel de Tumbite con lo acumulado, lo regalado y lo disponible, el porcentaje para regalos y los regalos de cumpleaños y tarjeta de sellos con su plato.',
-            pie: 'Eliges el porcentaje, los regalos que enciendes y el plato de cada uno.',
+            src: '/docs/recorrido-restaurante-regalos-es.webp',
+            alt: 'Pantalla «Regalos y marketing» con lo acumulado, lo regalado y lo disponible, el porcentaje de ventas para regalos y el plato del regalo de cumpleaños.',
+            pie: 'Eliges cuánto apartas y qué plato regalas; arriba ves lo acumulado y lo disponible.',
           },
         ],
         preguntas: ['¿Cómo premio a mis clientes fieles?', '¿Cuánto me cuesta un regalo?'],
@@ -619,14 +624,14 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/manager-cancela-es.webp',
-            alt: 'Pedido en la app de Tumbite que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de que se devolvió todo el dinero a la tarjeta.',
-            pie: 'Si el restaurante no confirma en 10 minutos, el Manager cancela el pedido y devuelve el dinero.',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
+            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 7 minutos sin aceptar (se cancela solo a los 10 minutos)».',
+            pie: 'Un pedido sin aceptar se pone en rojo y dice cuánto falta para que se cancele solo.',
           },
           {
-            src: '/docs/semaforo-restaurante-es.webp',
-            alt: 'Pedidos del restaurante en el panel de Tumbite con el semáforo de cada pedido y los minutos que lleva en su etapa.',
-            pie: 'En el restaurante, el semáforo muestra lo que el Manager vigila en cada pedido.',
+            src: '/docs/recorrido-cliente-manager-cancela-es.webp',
+            alt: 'Pedido en la app de Tumbite que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de la devolución.',
+            pie: 'Si el restaurante no confirma en 10 minutos, el Manager cancela el pedido y devuelve el dinero.',
           },
         ],
         preguntas: ['¿Qué pasa si el restaurante no acepta mi pedido?'],
@@ -648,6 +653,11 @@ const es: SeccionDocs[] = [
             src: '/docs/semaforo-restaurante-es.webp',
             alt: 'Lista de pedidos del panel del restaurante en Tumbite: un pedido «A tiempo» en verde, uno «Atrasándose» en amarillo sin aceptar y uno «En problemas» en rojo, listo y sin repartidor.',
             pie: 'Así lo ve el restaurante en su lista de pedidos: el color, los minutos y el motivo.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
+            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 7 minutos sin aceptar (se cancela solo a los 10 minutos)».',
+            pie: 'Un pedido sin aceptar se pone en rojo y dice cuánto falta para que se cancele solo.',
           },
         ],
         preguntas: ['¿Qué significan los colores de cada pedido?'],
@@ -954,14 +964,14 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/cancelar-pedido-en.webp',
-            alt: 'Order screen in the Tumbite app asking “We’ll refund all your money to your card. Cancel it?” with the buttons “Yes, cancel” and “No, keep waiting.”',
-            pie: 'The app asks before canceling. Nothing gets canceled by an accidental tap.',
+            src: '/docs/recorrido-cliente-cancelar-en.webp',
+            alt: 'Paid order in the Tumbite app with the question “We’ll refund all your money to your card. Cancel it?” and the “Yes, cancel” button.',
+            pie: 'Before canceling, the app asks first: nothing gets canceled by an accidental tap.',
           },
           {
-            src: '/docs/pedido-cancelado-en.webp',
-            alt: 'Canceled order in the Tumbite app with the message “You canceled this order. We refunded all your money to your card.”',
-            pie: 'The app tells you why it was canceled and that the money goes back to your card.',
+            src: '/docs/recorrido-cliente-cancelado-en.webp',
+            alt: 'Canceled order in the Tumbite app with the notice that all the money was refunded to the card.',
+            pie: 'Canceled: it tells you why and that the money goes back to your card.',
           },
         ],
         preguntas: ['How do I cancel an order?', 'Do I get my money back if I cancel?'],
@@ -1003,9 +1013,9 @@ const en: SeccionDocs[] = [
         resumen: 'Restaurants reward you for coming back. Gifts show up in your cart on their own.',
         capturas: [
           {
-            src: '/docs/regalo-carrito-en.webp',
+            src: '/docs/recorrido-cliente-regalo-en.webp',
             alt: 'Cart in the Tumbite app with the birthday gift applied in green and the discount in the total breakdown.',
-            pie: 'When a gift is yours, it shows up in the cart and comes off the total.',
+            pie: 'On your birthday, the gift shows up in your cart on its own and comes off the total.',
           },
         ],
         preguntas: ['How do I get my birthday gift?', 'How does the punch card work?'],
@@ -1139,6 +1149,11 @@ const en: SeccionDocs[] = [
             alt: 'Accepted order being prepared, with the “Ready!” button.',
             pie: 'When the food is ready, tap “Ready!” and we let the driver know.',
           },
+          {
+            src: '/docs/recorrido-cliente-rechazado-en.webp',
+            alt: 'Order in the Tumbite app that the restaurant couldn’t take, with the notice that all the money was refunded.',
+            pie: 'If the restaurant can’t take an order, the customer sees it right away and gets their money back.',
+          },
         ],
         preguntas: [
           'How do I accept an order?',
@@ -1212,9 +1227,9 @@ const en: SeccionDocs[] = [
         resumen: 'Set aside a share of your sales to reward loyal customers.',
         capturas: [
           {
-            src: '/docs/regalos-restaurante-en.webp',
-            alt: '“Gifts and marketing” screen in the Tumbite dashboard with accumulated, given, and available amounts, the gift percentage, and the birthday and punch card gifts with their items.',
-            pie: 'You pick the percentage, the gifts you turn on, and the item for each one.',
+            src: '/docs/recorrido-restaurante-regalos-en.webp',
+            alt: '“Gifts and marketing” screen with accumulated, given, and available amounts, the share of sales for gifts, and the birthday gift item.',
+            pie: 'You choose how much to set aside and which item to give; at the top you see what’s accumulated and available.',
           },
         ],
         preguntas: ['How do I reward my loyal customers?', 'How much does a gift cost me?'],
@@ -1468,14 +1483,14 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/manager-cancela-en.webp',
-            alt: 'Order in the Tumbite app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the notice that all the money was refunded to the card.',
-            pie: 'If the restaurant doesn’t confirm within 10 minutes, the Manager cancels the order and refunds the money.',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
+            alt: 'Restaurant orders with one in red: “In trouble, 7 min without being accepted (cancels on its own at 10 min).”',
+            pie: 'An unaccepted order turns red and says how long until it cancels on its own.',
           },
           {
-            src: '/docs/semaforo-restaurante-en.webp',
-            alt: 'Restaurant orders in the Tumbite dashboard with each order’s traffic light and the minutes it has been in its stage.',
-            pie: 'At the restaurant, the traffic light shows what the Manager watches on every order.',
+            src: '/docs/recorrido-cliente-manager-cancela-en.webp',
+            alt: 'Order in the Tumbite app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the refund notice.',
+            pie: 'If the restaurant doesn’t confirm within 10 minutes, the Manager cancels the order and refunds the money.',
           },
         ],
         preguntas: ['What happens if the restaurant doesn’t accept my order?'],
@@ -1497,6 +1512,11 @@ const en: SeccionDocs[] = [
             src: '/docs/semaforo-restaurante-en.webp',
             alt: 'Order list in the Tumbite restaurant dashboard: one order “On time” in green, one “Running late” in yellow not yet accepted, and one “In trouble” in red, ready with no driver.',
             pie: 'This is how restaurants see it in their order list: the color, the minutes, and the reason.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
+            alt: 'Restaurant orders with one in red: “In trouble, 7 min without being accepted (cancels on its own at 10 min).”',
+            pie: 'An unaccepted order turns red and says how long until it cancels on its own.',
           },
         ],
         preguntas: ['What do the colors on each order mean?'],
