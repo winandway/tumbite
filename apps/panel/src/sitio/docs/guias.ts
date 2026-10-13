@@ -494,6 +494,18 @@ const es: SeccionDocs[] = [
           'Cuando el pedido está listo y ningún repartidor lo ha tomado, el Manager avisa a nuestro equipo de operaciones para que busque a alguien de la zona. Y todo lo que pasa queda anotado con su hora: quién aceptó, cuándo salió, cuándo llegó.',
           'Para el cliente significa tranquilidad. Para el restaurante, un asistente que le recuerda lo urgente en la hora pico. Para el repartidor, pedidos que no se quedan colgados. Y para nuestro equipo, un tablero con todos los pedidos vivos donde los que necesitan ayuda aparecen primero.',
         ],
+        capturas: [
+          {
+            src: '/docs/manager-cancela-es.webp',
+            alt: 'Pedido en la app de Tumbite que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de que se devolvió todo el dinero a la tarjeta.',
+            pie: 'Si el restaurante no confirma en 10 minutos, el Manager cancela el pedido y devuelve el dinero.',
+          },
+          {
+            src: '/docs/semaforo-restaurante-es.webp',
+            alt: 'Pedidos del restaurante en el panel de Tumbite con el semáforo de cada pedido y los minutos que lleva en su etapa.',
+            pie: 'En el restaurante, el semáforo muestra lo que el Manager vigila en cada pedido.',
+          },
+        ],
         pasos: [],
         nota: 'Esta primera versión del Manager trabaja con reglas fijas y claras, iguales para todos. Las mismas reglas que ves en el semáforo de cada pedido.',
       },
@@ -529,6 +541,18 @@ const es: SeccionDocs[] = [
           'Antes de vender en Tumbite, el dueño de cada restaurante muestra su documento, una foto de su cara y una foto del frente del local tomada en el lugar, que comparamos con la dirección registrada. Así evitamos negocios falsos y locales que ya se mudaron.',
           'Antes de repartir, cada repartidor muestra su documento y una foto de su cara. Además registra su vehículo, su licencia y su seguro, y el sistema avisa cuando alguno está por vencer.',
           'Las fotos las revisa una persona de nuestro equipo, no una máquina. No se publican, no se usan para nada más y se borran cuando la persona cierra su cuenta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/verificacion-restaurante-es.webp',
+            alt: 'Sección «Verificación del dueño y del local» en el panel del restaurante de Tumbite, con el documento, la cara y el frente del local.',
+            pie: 'El restaurante verifica al dueño y el local con fotos tomadas desde el celular.',
+          },
+          {
+            src: '/docs/verificacion-repartidor-es.webp',
+            alt: 'Pantalla «Verifica tu identidad» de la app de repartidores de Tumbite, con el documento y la foto de la cara.',
+            pie: 'El repartidor verifica su identidad con su documento y una foto de su cara.',
+          },
         ],
         pasos: [],
         nota: 'Si eres restaurante o repartidor, mira las guías «Verificar tu restaurante» y «Verificar tu identidad»: son cuatro y tres fotos desde el celular.',
@@ -1151,6 +1175,18 @@ const en: SeccionDocs[] = [
           'When an order is ready and no driver has picked it up, the Manager alerts our operations team so they can find someone nearby. And everything that happens is logged with its time: who accepted, when it left, when it arrived.',
           'For customers, that means peace of mind. For restaurants, an assistant that flags what’s urgent at rush hour. For drivers, orders that don’t get stuck. And for our team, a live board of every order where the ones that need help show up first.',
         ],
+        capturas: [
+          {
+            src: '/docs/manager-cancela-en.webp',
+            alt: 'Order in the Tumbite app that the Manager cancelled on its own because the restaurant didn’t confirm in time, with the notice that all the money was refunded to the card.',
+            pie: 'If the restaurant doesn’t confirm within 10 minutes, the Manager cancels the order and refunds the money.',
+          },
+          {
+            src: '/docs/semaforo-restaurante-en.webp',
+            alt: 'Restaurant orders in the Tumbite dashboard with each order’s traffic light and the minutes it has been in its stage.',
+            pie: 'At the restaurant, the traffic light shows what the Manager watches on every order.',
+          },
+        ],
         pasos: [],
         nota: 'This first version of the Manager works with fixed, clear rules that are the same for everyone. The same rules you see in each order’s traffic light.',
       },
@@ -1186,6 +1222,18 @@ const en: SeccionDocs[] = [
           'Before selling on Tumbite, each restaurant owner shows an ID, a photo of their face, and a photo of the storefront taken on site, which we match with the registered address. That keeps out fake businesses and places that have moved.',
           'Before delivering, each driver shows an ID and a photo of their face. They also register their vehicle, license, and insurance, and the system flags anything about to expire.',
           'The photos are reviewed by a person on our team, not a machine. They’re never published, never used for anything else, and they’re deleted when the person closes their account.',
+        ],
+        capturas: [
+          {
+            src: '/docs/verificacion-restaurante-en.webp',
+            alt: '“Owner and storefront verification” section in the Tumbite restaurant dashboard, with the ID, the face photo, and the storefront.',
+            pie: 'Restaurants verify the owner and the location with photos taken from a phone.',
+          },
+          {
+            src: '/docs/verificacion-repartidor-en.webp',
+            alt: '“Verify your identity” screen in the Tumbite driver app, with the ID and the face photo.',
+            pie: 'Drivers verify their identity with their ID and a photo of their face.',
+          },
         ],
         pasos: [],
         nota: 'If you’re a restaurant or a driver, see the guides “Verify your restaurant” and “Verify your identity”: four and three photos from your phone.',
