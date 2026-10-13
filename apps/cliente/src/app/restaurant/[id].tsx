@@ -9,6 +9,7 @@ import {
   enIdioma,
   formatearDolares,
   nombrePlato,
+  categoriaPlato,
 } from '@tumbite/compartido';
 import { Boton, C, Pantalla, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -73,7 +74,13 @@ export default function MenuRestaurante() {
             <Text
               style={{ fontSize: 18, fontWeight: '800', color: C.secundario, marginVertical: 8 }}
             >
-              {cat}
+              {categoriaPlato(
+                datos?.platos.find((p) => p.categoria === cat) ?? {
+                  categoria: cat,
+                  categoriaEn: '',
+                },
+                idioma,
+              )}
             </Text>
           ) : null}
           {datos?.platos

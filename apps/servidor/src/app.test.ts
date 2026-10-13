@@ -107,9 +107,13 @@ describe('app del cliente en versión web (/app)', () => {
         return new Response('no', { status: 404 });
       },
     };
-    const res = await app.request('/app/restaurante/abc', {}, { ASSETS });
+    const res = await app.request('/app/restaurant/abc', {}, { ASSETS });
     expect(await res.text()).toContain('app');
     expect(pedidas).toContain('/app/');
+    // La dirección vieja en español lleva a la nueva (C-INGLES-PRINCIPAL).
+    const vieja = await app.request('/app/pedido/abc?x=1', { redirect: 'manual' }, { ASSETS });
+    expect(vieja.status).toBe(301);
+    expect(vieja.headers.get('location')).toBe('/app/order/abc?x=1');
   });
 });
 
@@ -166,5 +170,17 @@ describe('inglés como idioma principal: las direcciones viejas no se rompen (C-
     ])
       expect((await pedir(ruta)).status, ruta).toBe(200);
     expect((await pedir('/privacidad', 'POST')).status).not.toBe(301);
+  });
+});
+
+describe('Stripe simulado solo en localhost', () => {
+  it('una dirección que no es localhost se ignora y se habla con Stripe de verdad', async () => {
+    const { direccionStripe, usarStripeLocal } = await import('./stripe');
+    usarStripeLocal('https://stripe-falso.ejemplo.com');
+    expect(direccionStripe()).toBe('https://api.stripe.com');
+    usarStripeLocal('http://localhost:12111');
+    expect(direccionStripe()).toBe('http://localhost:12111');
+    usarStripeLocal(undefined);
+    expect(direccionStripe()).toBe('https://api.stripe.com');
   });
 });

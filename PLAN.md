@@ -1,8 +1,10 @@
-# Plan: nada solo en español dentro de las pantallas + guías públicas que faltan (13 oct 2026)
+# Plan: recorrido completo de un pedido, como gente real, sin pago real (13 oct 2026)
 
-- [x] Paso 1: Revisar las 86 páginas públicas en inglés ya generadas: ningún texto en español fuera de lo que el cliente escribió.
-- [x] Paso 2: Revisar el código del panel y de las tres apps: textos escritos directo en la pantalla sin su versión en inglés (botones, avisos, errores, títulos).
-- [x] Paso 3: Revisar los mensajes que manda el servidor (errores que ve la persona y correos): que salgan en el idioma de la persona.
-- [x] Paso 4: Corregir todo lo encontrado, con prueba que lo vigile (una prueba que falle si una página en inglés trae español).
-- [x] Paso 5: Guías públicas que faltan, en inglés y español, con capturas: tablero del restaurante, billetera del repartidor, «Mi cuenta» del cliente, ayuda con tickets y franquicias.
-- [x] Paso 6: verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: Stripe simulado solo en esta computadora (la dirección de Stripe se puede cambiar únicamente hacia localhost; en producción no se puede).
+- [x] Paso 2: Cliente en la app web: entrar, buscar el restaurante, armar el carrito, revisar el desglose y llegar al pago. El pago se marca como recibido con el aviso firmado de Stripe simulado.
+- [x] Paso 3: Restaurante en el panel: la alarma, el semáforo, aceptar con tiempo de preparación y marcar listo.
+- [x] Paso 4: Repartidor en la app web: conectarse, recibir la oferta, aceptarla, recoger y entregar.
+- [x] Paso 5: Cliente: seguimiento en vivo en cada paso, entregado, calificar; restaurante y repartidor ven su dinero en el tablero y la billetera.
+- [x] Paso 6: Segundo pedido: el cliente cancela y recibe la devolución; tercer pedido: nadie acepta y el Manager lo cancela solo.
+- [x] Paso 7: Arreglar todo lo que aparezca en el camino (cada arreglo con su prueba), anotar en el plan de la prueba en la calle lo que solo se puede ver con teléfonos reales.
+- [ ] Paso 8: verify, commit, push, publicación y comprobación en vivo.

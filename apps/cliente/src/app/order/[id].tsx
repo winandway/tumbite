@@ -9,6 +9,7 @@ import { MapaEntrega } from '../../MapaEntrega';
 type Pedido = {
   id: string;
   estado: string;
+  motivoCancelacion?: 'cliente' | 'restaurante' | 'sin_respuesta' | null;
   restauranteNombre?: string;
   total: number;
   direccion: string;
@@ -57,6 +58,13 @@ const T = {
     culpa: 'El problema fue de la comida o la demora del restaurante',
     enviar: 'Enviar calificación',
     gracias: '¡Gracias por tu calificación!',
+    motivos: {
+      cliente: 'Cancelaste este pedido. Te devolvimos todo el dinero a tu tarjeta.',
+      restaurante:
+        'El restaurante no pudo atender tu pedido. Te devolvimos todo el dinero a tu tarjeta.',
+      sin_respuesta:
+        'El restaurante no confirmó a tiempo, así que lo cancelamos. Te devolvimos todo el dinero a tu tarjeta.',
+    } as Record<string, string>,
     cancelar: 'Cancelar el pedido',
     seguro: 'Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?',
     siCancelar: 'Sí, cancelar',
@@ -87,6 +95,13 @@ const T = {
     culpa: 'The problem was the food or the restaurant’s delay',
     enviar: 'Send rating',
     gracias: 'Thanks for your rating!',
+    motivos: {
+      cliente: 'You cancelled this order. We refunded all your money to your card.',
+      restaurante:
+        'The restaurant couldn’t take your order. We refunded all your money to your card.',
+      sin_respuesta:
+        'The restaurant didn’t confirm in time, so we cancelled it. We refunded all your money to your card.',
+    } as Record<string, string>,
     cancelar: 'Cancel order',
     seguro: 'We’ll refund all your money to your card. Cancel it?',
     siCancelar: 'Yes, cancel',
@@ -98,10 +113,12 @@ function Estrellas({
   valor,
   cambiar,
   etiqueta,
+  idioma,
 }: {
   valor: number;
   cambiar: (n: number) => void;
   etiqueta: string;
+  idioma: 'es' | 'en';
 }) {
   return (
     <View style={{ marginVertical: 6 }}>
@@ -112,7 +129,10 @@ function Estrellas({
             key={n}
             onPress={() => cambiar(n)}
             accessibilityRole="button"
-            accessibilityLabel={`${n} / 5`}
+            // Para quien usa lector de pantalla: «La comida: 4 de 5 estrellas».
+            accessibilityLabel={
+              idioma === 'en' ? `${etiqueta}: ${n} of 5 stars` : `${etiqueta}: ${n} de 5 estrellas`
+            }
             hitSlop={6}
           >
             <Text style={{ fontSize: 30, color: n <= valor ? '#FF3008' : '#D6D6D6' }}>★</Text>
@@ -144,7 +164,10 @@ export default function SeguirPedido() {
     setCancelando(true);
     try {
       await api.pedir('POST', `/datos/pedidos/${id}/cancelar`, {});
-      setP((x) => (x ? { ...x, estado: 'cancelado' } : x));
+      // Al momento: cancelado, por el cliente y sin hora de llegada (no esperar a la próxima consulta).
+      setP((x) =>
+        x ? { ...x, estado: 'cancelado', motivoCancelacion: 'cliente', minutosEstimados: null } : x,
+      );
       setConfirmar(false);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -204,7 +227,11 @@ export default function SeguirPedido() {
               style={{ color: '#fff', fontSize: 17, marginTop: 6 }}
               accessibilityLiveRegion="polite"
             >
-              {t.estados[p.estado] ?? p.estado}
+              {(p.estado === 'cancelado' && p.motivoCancelacion
+                ? t.motivos[p.motivoCancelacion]
+                : null) ??
+                t.estados[p.estado] ??
+                p.estado}
             </Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 12 }}>
               {PASOS.map((s, i) => (
@@ -214,7 +241,8 @@ export default function SeguirPedido() {
                     flex: 1,
                     height: 6,
                     borderRadius: 3,
-                    backgroundColor: i <= paso ? C.primario : 'rgba(255,255,255,0.25)',
+                    // Lo que ya pasó va en verde: es un avance, no una alarma.
+                    backgroundColor: i <= paso ? C.exito : 'rgba(255,255,255,0.25)',
                   }}
                 />
               ))}
@@ -245,7 +273,11 @@ export default function SeguirPedido() {
               </Text>
               {p.repartidor.actualizado ? (
                 <Text style={{ color: '#5E5E5E' }}>
-                  {t.ubicacion}: {new Date(`${p.repartidor.actualizado}Z`).toLocaleTimeString()}
+                  {t.ubicacion}:{' '}
+                  {new Date(`${p.repartidor.actualizado}Z`).toLocaleTimeString(
+                    idioma === 'en' ? 'en-US' : 'es-US',
+                    { hour: 'numeric', minute: '2-digit' },
+                  )}
                 </Text>
               ) : null}
             </View>
@@ -268,12 +300,18 @@ export default function SeguirPedido() {
               ) : (
                 <>
                   <Text style={{ fontWeight: '800', fontSize: 17 }}>{t.calificar}</Text>
-                  <Estrellas valor={estRest} cambiar={setEstRest} etiqueta={t.restaurante} />
+                  <Estrellas
+                    valor={estRest}
+                    cambiar={setEstRest}
+                    etiqueta={t.restaurante}
+                    idioma={idioma}
+                  />
                   {p.repartidor && (
                     <Estrellas
                       valor={estRep}
                       cambiar={setEstRep}
                       etiqueta={`${t.repartidor}: ${p.repartidor.nombre}`}
+                      idioma={idioma}
                     />
                   )}
                   {estRep > 0 && estRep < 4 && (

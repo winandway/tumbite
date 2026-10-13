@@ -139,7 +139,7 @@ type Vigilado = {
 
 /** Una vuelta del Manager. Con pedidoId, solo mira ese pedido (lo usa el seguimiento). */
 export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string) {
-  const resumen = { recordatorios: 0, cancelados: 0, sinRepartidor: 0 };
+  const resumen = { recordatorios: 0, cancelados: 0, sinRepartidor: 0, abandonados: 0 };
   const solo = pedidoId ? ' AND p.id = ?' : '';
   const { results: esperando } = await db
     .prepare(
@@ -211,6 +211,37 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
         asunto: `Pedido #${corto} sin repartidor (${p.minutos} min)`,
         texto: `El pedido #${corto} de ${p.restaurante} lleva ${p.minutos} minutos aceptado y ningún repartidor lo ha tomado.\n\nEntrega en: ${p.direccion}\n\nRevisa la bitácora del pedido en el superadmin y, si hace falta, llama a un repartidor de la zona.`,
       }).catch((e: unknown) => console.error('manager: correo sin repartidor', e));
+  }
+  // Pedidos abandonados en el pago: después de 2 horas se anula el cobro en Stripe (para que ya
+  // no se pueda pagar) y se cierran. Si Stripe no lo deja anular (porque sí se pagó), no se
+  // tocan: el aviso del pago los pondrá como pagados.
+  if (!pedidoId) {
+    const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+    const { results: abandonados } = await db
+      .prepare(
+        "SELECT id, stripe_sesion FROM pedidos WHERE estado = 'pago_pendiente' AND creado_en <= datetime('now', '-2 hours') LIMIT 20",
+      )
+      .all<{ id: string; stripe_sesion: string | null }>();
+    for (const p of abandonados) {
+      try {
+        if (p.stripe_sesion) {
+          if (!stripe) continue;
+          await stripe.post(`/payment_intents/${p.stripe_sesion}/cancel`, {}, `anular-${p.id}`);
+        }
+        const r = await db
+          .prepare(
+            "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = ? AND estado = 'pago_pendiente'",
+          )
+          .bind(p.id)
+          .run();
+        if (r.meta.changes) {
+          await anotarEvento(db, p.id, 'abandonado_sin_pagar');
+          resumen.abandonados++;
+        }
+      } catch (e) {
+        console.error('manager: no se pudo cerrar un pedido sin pagar', p.id, e);
+      }
+    }
   }
   return resumen;
 }

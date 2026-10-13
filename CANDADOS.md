@@ -334,3 +334,14 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **Candado en la publicación:** `scripts/prerender.mjs` detiene el build si una página en inglés trae una frase en español (comprobado en rojo).
 - **Conversaciones privadas `/t/…`:** salen en el idioma que la persona eligió (antes siempre en inglés).
 - **Docs nuevas:** tablero del restaurante, «Mi cuenta» del cliente, billetera del repartidor, ayuda con enlace privado y franquicias (sección «Para emprendedores»), con capturas en los dos idiomas.
+
+## C-PAGO-SIN-ESPERA-ETERNA, C-VERDE-EXITO y lo que salió del recorrido completo (13 oct 2026)
+
+- **Pago sin espera eterna:** `PagoTarjeta.web.tsx` tiene tope de 20 s (si Stripe no aparece ni da error, se dice en pantalla y hay «Intentar de nuevo», que recarga Stripe desde cero); `loadStripe(...).catch` para cuando el script no carga; la vuelta del banco va a `/app/order/<id>`. `PagoTarjeta.tsx` (celular): `initStripe` dentro de `try`, tope de 20 s y el botón deja de girar si hay error. Prueba en `pagoSinSalto.test.ts` (comprobada en rojo).
+- **Stripe simulado para ensayar:** `usarStripeLocal` en `stripe.ts`, solo acepta `http://localhost` o `127.0.0.1`; cualquier otra dirección se ignora (prueba en `app.test.ts`). En producción no existe la variable.
+- **Verde para el éxito:** `MARCA.colores.exito` (#0D7A3A). Barra del seguimiento en verde, «Entregado» en verde en «Mi cuenta», insignias «respondido/cerrado» verdes, la insignia neutra ahora es gris (antes rojiza), franquicia activa en verde, verificación del repartidor en gris mientras espera. Prueba `colorExito.test.ts`.
+- **Categoría del plato en inglés:** columna `platos.categoria_en` (migración segura en `esquema.ts`), casilla nueva en el menú del panel, la app muestra la del idioma (`categoriaPlato`).
+- **Motivo de la cancelación** en el seguimiento (`motivoCancelacion`: cliente, restaurante o sin respuesta) y la app lo dice en palabras.
+- **Pedidos abandonados:** el Manager (solo en el reloj) anula en Stripe el cobro de los pedidos sin pagar de más de 2 horas y los cierra (`abandonado_sin_pagar` en la bitácora). Si Stripe no deja anular (porque sí se pagó), no se tocan. Prueba en `operacion.test.ts` (comprobada en rojo).
+- **Direcciones viejas de la app web** (`/app/pedido`, `/app/restaurante`, `/app/carrito`, `/app/cuenta`) redirigen con 301 a las nuevas.
+- **Capturas originales** en `docs/capturas/` (PNG); las de Docs en `apps/panel/public/docs/` (WebP).

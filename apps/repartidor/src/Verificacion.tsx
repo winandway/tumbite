@@ -132,8 +132,11 @@ export function Verificacion() {
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderRadius: 999,
-          backgroundColor: k.estado === 'aprobado' ? '#E6F4EA' : '#FFF1EE',
-          color: k.estado === 'aprobado' ? '#0D7A3A' : '#B42200',
+          // Verde si salió bien, rojo solo si hay que repetir, gris mientras tanto.
+          backgroundColor:
+            k.estado === 'aprobado' ? '#E6F4EA' : k.estado === 'rechazado' ? '#FFF1EE' : '#F1F1F1',
+          color:
+            k.estado === 'aprobado' ? C.exito : k.estado === 'rechazado' ? '#B42200' : C.secundario,
           fontWeight: '700',
         }}
       >

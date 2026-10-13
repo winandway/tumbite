@@ -16,24 +16,33 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
 
   useEffect(() => {
     let vivo = true;
+    // Candado C-PAGO-SIN-ESPERA-ETERNA: si Stripe no arranca en 20 segundos, se dice en pantalla.
+    const reloj = setTimeout(() => vivo && setError((x) => x || textos.sinFormulario), 20_000);
     void (async () => {
-      await initStripe({ publishableKey: clavePublica, urlScheme: 'tumbite-cliente' });
-      const r = await initPaymentSheet({
-        merchantDisplayName: 'Tumbite',
-        paymentIntentClientSecret: cobro.clientSecret,
-        customerId: cobro.clienteStripe,
-        customerSessionClientSecret: cobro.sesionCliente,
-        returnURL: 'tumbite-cliente://stripe-redirect',
-        allowsDelayedPaymentMethods: false,
-      });
-      if (!vivo) return;
-      if (r.error) setError(r.error.message);
-      else setLista(true);
+      try {
+        await initStripe({ publishableKey: clavePublica, urlScheme: 'tumbite-cliente' });
+        const r = await initPaymentSheet({
+          merchantDisplayName: 'Tumbite',
+          paymentIntentClientSecret: cobro.clientSecret,
+          customerId: cobro.clienteStripe,
+          customerSessionClientSecret: cobro.sesionCliente,
+          returnURL: 'tumbite-cliente://stripe-redirect',
+          allowsDelayedPaymentMethods: false,
+        });
+        if (!vivo) return;
+        clearTimeout(reloj);
+        if (r.error) setError(r.error.message);
+        else setLista(true);
+      } catch (e) {
+        console.error('pago: la hoja de Stripe no arrancó', e);
+        if (vivo) setError(textos.sinFormulario);
+      }
     })();
     return () => {
       vivo = false;
+      clearTimeout(reloj);
     };
-  }, [cobro, clavePublica]);
+  }, [cobro, clavePublica, textos.sinFormulario]);
 
   async function abrir() {
     setError('');
@@ -60,7 +69,12 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
           {error}
         </Text>
       ) : null}
-      <Boton texto={textos.pagar} alTocar={() => void abrir()} cargando={!lista || pagando} />
+      {/* Con error y sin hoja lista, el botón no gira: se ve el mensaje y no hay nada que esperar. */}
+      <Boton
+        texto={textos.pagar}
+        alTocar={() => void abrir()}
+        cargando={(!lista && !error) || pagando}
+      />
     </>
   );
 }

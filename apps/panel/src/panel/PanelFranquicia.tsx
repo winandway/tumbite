@@ -84,7 +84,9 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
     <section className="super">
       <h1>{t.titulo.replace('{ciudad}', r.franquicia.ciudad)}</h1>
       <p>
-        <span className="insignia">{t.estados[r.franquicia.estado]}</span>
+        <span className={`insignia ${r.franquicia.estado === 'activa' ? 'insignia-aprobado' : ''}`}>
+          {t.estados[r.franquicia.estado]}
+        </span>
       </p>
       <ul className="super-tarjetas">
         <li className="super-tarjeta">

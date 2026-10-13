@@ -22,6 +22,14 @@ El recorrido completo funcionó en la computadora con los tres papeles. Lo que a
 
 **Consejo para el día de la prueba:** cada papel en su propio teléfono si se puede. Si hay que usar uno solo, ya no se pisan, pero es más fácil seguir el recorrido con un teléfono por papel.
 
+## Recorrido completo hecho por la IA en local, sin pago real (13 oct 2026)
+
+Con Stripe simulado (solo en la computadora del programador: `STRIPE_API_URL` apunta a localhost; en producción se ignora). Cliente en la app web, restaurante en el panel y repartidor en la app web.
+
+- **Salió bien:** carrito con desglose exacto; el pedido llega al restaurante con el semáforo en verde; aceptar con tiempo; la oferta llega al repartidor con lo que gana y la distancia (en inglés, en millas); recoger y entregar; el cliente ve todo en vivo y califica; el dinero cuadra al centavo (cliente 26.18 = restaurante 16.19 + repartidor 8.70 + Tumbite 1.29); la cancelación del cliente pide una sola devolución; el Manager cancela solo a los 10 minutos y devuelve.
+- **Se arregló en el camino:** el formulario de tarjeta podía quedarse «Cargando…» para siempre si Stripe no carga (ahora a los 20 s lo dice y ofrece «Intentar de nuevo», en la web y en el celular); la vuelta del banco (3D Secure) apuntaba a una dirección vieja; la categoría del menú solo existía en español; la hora del seguimiento salía en el formato de la computadora; las estrellas no tenían nombre para lectores de pantalla; al cancelar seguía diciendo «Llega en unos 25 min»; ahora se dice por qué se canceló; los pedidos abandonados en el pago se anulan en Stripe y se cierran a las 2 horas; la barra de progreso avanza en verde.
+- **Solo se puede ver con teléfonos reales (para la prueba en la calle):** el permiso de ubicación del repartidor (en el navegador de prueba no se puede dar: la app lo dice claro), la cámara para la verificación, los avisos al celular con sonido, la hoja de pago de Stripe en iPhone y Android, y el formulario de tarjeta con Stripe real (la compra de 1 dólar).
+
 ## Restaurantes de prueba en Novi (creados el 12 oct 2026, pedido por Richard)
 
 En la zona «Novi (pruebas)», aprobados y abiertos, con platos de 1 a 3 dólares. Sus dueños son cuentas sin contraseña (nadie entra con ellas; se manejan desde el superadmin):

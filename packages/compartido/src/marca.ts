@@ -11,5 +11,8 @@ export const MARCA = {
     fondo: '#FFFFFF',
     texto: '#191919',
     suave: '#F6F6F6',
+    // Verde SOLO para lo que salió bien (entregado, aprobado, completado). Regla de Richard, 13 oct
+    // 2026: nunca rojo donde algo fue exitoso, porque confunde.
+    exito: '#0D7A3A',
   },
 } as const;

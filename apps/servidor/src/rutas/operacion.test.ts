@@ -513,6 +513,8 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     await atrasar(m, id, 'pagado_en', 12);
     const s = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(s.datos.pedido.estado).toBe('cancelado');
+    // Y se le dice al cliente por qué: el restaurante no respondió.
+    expect(s.datos.pedido.motivoCancelacion).toBe('sin_respuesta');
   });
 
   it('un pedido aceptado sin repartidor avisa una sola vez a los 15 minutos', async () => {
@@ -574,5 +576,43 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
       admin.token,
     );
     expect(ficha.datos.restaurante.kyc.estado).toBe('sin_enviar');
+  });
+
+  it('un pedido abandonado en el pago se anula en Stripe y se cierra a las 2 horas', async () => {
+    const { m, cliente } = await escenario();
+    const { vigilarPedidos } = await import('../manager');
+    const llamadas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      llamadas.push(url);
+      return new Response(
+        JSON.stringify({ id: 'pi_x', client_secret: 'pi_x_secret_y', status: 'canceled' }),
+        { status: 200 },
+      );
+    });
+    const r = await m.DB.prepare('SELECT id FROM restaurantes LIMIT 1').first<{ id: string }>();
+    const plato = await m.DB.prepare('SELECT id FROM platos LIMIT 1').first<{ id: string }>();
+    const p = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: r?.id,
+        lineas: [{ platoId: plato?.id, cantidad: 1 }],
+        propinaCentavos: 0,
+        direccion: '1 Calle',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    const id = p.datos.pedidoId as string;
+    const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    expect((await vigilarPedidos(env, m.DB)).abandonados).toBe(0);
+    await m.DB.prepare("UPDATE pedidos SET creado_en = datetime('now','-3 hours') WHERE id = ?")
+      .bind(id)
+      .run();
+    expect((await vigilarPedidos(env, m.DB)).abandonados).toBe(1);
+    expect(llamadas.some((u) => /\/payment_intents\/.+\/cancel$/.test(u))).toBe(true);
+    const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
+    expect(f?.estado).toBe('cancelado');
   });
 });

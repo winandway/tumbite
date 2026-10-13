@@ -62,4 +62,15 @@ describe('ensayo general del 12 oct: lo que se arregló no vuelve (C-ENSAYO-CALL
     );
     expect(acceso).toMatch(/alEnviar=\{/);
   });
+
+  it('el formulario de pago nunca se queda «Cargando…» para siempre (C-PAGO-SIN-ESPERA-ETERNA)', () => {
+    const web = leer('PagoTarjeta.web.tsx');
+    expect(web).toMatch(/setTimeout\(\(\) => setError\(textos\.sinFormulario\), 20_000\)/);
+    expect(web).toMatch(/loadStripe\(clavePublica\)\.catch/);
+    expect(web).toMatch(/textos\.reintentar/);
+    expect(web).toMatch(/return_url: `\$\{window\.location\.origin\}\/app\/order\//);
+    const nativo = leer('PagoTarjeta.tsx');
+    expect(nativo).toMatch(/catch \(e\)[\s\S]*setError\(textos\.sinFormulario\)/);
+    expect(nativo).toMatch(/cargando=\{\(!lista && !error\) \|\| pagando\}/);
+  });
 });

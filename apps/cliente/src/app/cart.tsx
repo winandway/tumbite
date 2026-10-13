@@ -319,6 +319,7 @@ export default function PantallaCarrito() {
               pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}`,
               cargando: t.cargandoTarjeta,
               sinFormulario: t.pagoNoDisponible,
+              reintentar: t.reintentarPago,
             }}
             alPagar={() => {
               void b.limpiar();

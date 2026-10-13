@@ -73,8 +73,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/pedido-cancelado-es.webp',
-            alt: 'Pedido cancelado en la app de Tumbite con el mensaje «Pedido cancelado. Si ya habías pagado, te devolvimos todo el dinero».',
-            pie: 'El pedido queda cancelado y el dinero vuelve a tu tarjeta.',
+            alt: 'Pedido cancelado en la app de Tumbite con el mensaje «Cancelaste este pedido. Te devolvimos todo el dinero a tu tarjeta».',
+            pie: 'La app te dice por qué se canceló y que el dinero vuelve a tu tarjeta.',
           },
         ],
         pasos: [
@@ -357,6 +357,37 @@ const es: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'order-journey',
+        titulo: 'Un pedido de punta a punta',
+        resumen:
+          'Qué pasa desde que el cliente paga hasta que la comida llega a su puerta, quién hace qué en cada momento y cómo se reparte el dinero.',
+        explicacion: [
+          'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, el pedido llega al restaurante con una alarma y un semáforo en verde.',
+          'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
+          'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor la recoge, la lleva y marca «Entregado». El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
+          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 26.18 dólares (comida 18.50, envío 2.99, servicio 0.99 y propina 3.70). El restaurante recibió 16.19, que es su comida menos la comisión. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 1.29.',
+          'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 10 minutos, cancela y devuelve el dinero solo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/oferta-repartidor-es.webp',
+            alt: 'Oferta nueva en la app de repartidores de Tumbite: «Ganas $8.70, incluye propina de $3.70», con dónde recoger, dónde entregar, la distancia y los botones «Aceptar» y «No, gracias».',
+            pie: 'Lo que ve el repartidor: cuánto gana y a dónde va, antes de aceptar.',
+          },
+          {
+            src: '/docs/semaforo-restaurante-es.webp',
+            alt: 'Lista de pedidos del restaurante con el semáforo de cada pedido.',
+            pie: 'Lo que ve el restaurante: cada pedido con su semáforo y sus botones.',
+          },
+        ],
+        pasos: [
+          'Cliente: elige, paga y sigue su pedido en vivo.',
+          'Restaurante: acepta con el tiempo de preparación y marca «¡Listo!».',
+          'Repartidor: acepta la oferta, recoge y marca «Entregado».',
+          'Cliente: califica. Cada uno ve su dinero en su billetera.',
+        ],
+      },
+      {
         id: 'manager',
         titulo: 'El Manager: ningún pedido se queda olvidado',
         resumen:
@@ -434,6 +465,30 @@ const es: SeccionDocs[] = [
           'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
           'Llena el formulario «Quiero una franquicia de Tumbite»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
           'Te llega un correo con el enlace privado a tu caso. Nuestro equipo te prepara los números de tu ciudad y te responde por ahí.',
+        ],
+      },
+      {
+        id: 'team-training',
+        titulo: 'Capacitación del equipo de lanzamiento',
+        resumen:
+          'La lista de lectura para cada persona del equipo que abre una ciudad: qué leer, en qué orden y qué tiene que saber explicar al terminar.',
+        explicacion: [
+          'En cada lanzamiento en frío, el equipo local entrega tablets en los restaurantes, entrena repartidores y atiende a los primeros clientes. Para hacerlo bien, todos tienen que conocer el producto como lo conoce un cliente. Estas guías son el material: cada una explica una función con capturas reales, en español y en inglés.',
+          'La tarea es leer las guías de su área, en orden, y al final poder explicarlas con sus propias palabras a un restaurante, a un repartidor o a un cliente. Cada guía tiene su propia dirección: se puede mandar por mensaje y abrir en el celular.',
+        ],
+        capturas: [
+          {
+            src: '/docs/verificacion-restaurante-es.webp',
+            alt: 'Verificación del dueño y del local en el panel del restaurante.',
+            pie: 'Ejemplo de lo que el equipo enseña en la visita al restaurante.',
+          },
+        ],
+        pasos: [
+          'Todo el equipo: «Un pedido de punta a punta», «El Manager», «El semáforo de cada pedido» y «Restaurantes y repartidores verificados».',
+          'Quien visita restaurantes: «Poner tu restaurante en Tumbite», «Verificar tu restaurante», «Tu menú», «Recibir pedidos y la alarma», «Tu tablero», «Regalos y marketing» y «Resumen del día y tu billetera».',
+          'Quien entrena repartidores: «Empezar a repartir», «Verificar tu identidad», «Las ofertas», «Los niveles» y «Tu billetera».',
+          'Quien atiende clientes: «Cómo hacer tu primer pedido», «Seguir tu pedido en vivo», «Cancelar un pedido», «Mi cuenta» y «Ayuda de una persona real».',
+          'Al terminar: explicarle a otra persona del equipo, con el celular en la mano, un pedido completo y qué pasa si el restaurante no responde.',
         ],
       },
     ],
@@ -553,8 +608,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/pedido-cancelado-en.webp',
-            alt: 'Cancelled order in the Tumbite app with the message “Order canceled. If you had paid, we refunded all your money.”',
-            pie: 'The order is cancelled and the money goes back to your card.',
+            alt: 'Cancelled order in the Tumbite app with the message “You cancelled this order. We refunded all your money to your card.”',
+            pie: 'The app tells you why it was cancelled and that the money goes back to your card.',
           },
         ],
         pasos: [
@@ -837,6 +892,37 @@ const en: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'order-journey',
+        titulo: 'An order from start to finish',
+        resumen:
+          'What happens from the moment the customer pays until the food reaches the door, who does what at each step, and how the money is split.',
+        explicacion: [
+          'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. Once they pay, the order reaches the restaurant with an alarm and a green traffic light.',
+          'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
+          'When the food is ready, the restaurant taps “Ready!” The driver picks it up, delivers it, and taps “Delivered.” The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
+          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $26.18 (food $18.50, delivery $2.99, service $0.99, and a $3.70 tip). The restaurant received $16.19, its food minus commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $1.29.',
+          'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 10 minutes, it cancels and refunds automatically.',
+        ],
+        capturas: [
+          {
+            src: '/docs/oferta-repartidor-en.webp',
+            alt: 'New offer in the Tumbite driver app: “You earn $8.70, includes a tip of $3.70,” with pickup, drop-off, distance, and the “Accept” and “No, thanks” buttons.',
+            pie: 'What the driver sees: what they earn and where they’re going, before accepting.',
+          },
+          {
+            src: '/docs/semaforo-restaurante-en.webp',
+            alt: 'Restaurant order list with the traffic light on each order.',
+            pie: 'What the restaurant sees: every order with its traffic light and buttons.',
+          },
+        ],
+        pasos: [
+          'Customer: chooses, pays, and follows the order live.',
+          'Restaurant: accepts with a prep time and taps “Ready!”',
+          'Driver: accepts the offer, picks up, and taps “Delivered.”',
+          'Customer: rates. Everyone sees their money in their wallet.',
+        ],
+      },
+      {
         id: 'manager',
         titulo: 'The Manager: no order gets forgotten',
         resumen:
@@ -916,6 +1002,30 @@ const en: SeccionDocs[] = [
           'You get an email with the private link to your case. Our team prepares your city’s numbers and replies there.',
         ],
       },
+      {
+        id: 'team-training',
+        titulo: 'Launch team training',
+        resumen:
+          'The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.',
+        explicacion: [
+          'At every cold launch, the local team delivers tablets to restaurants, trains drivers, and helps the first customers. To do it well, everyone needs to know the product the way a customer does. These guides are the material: each one explains a feature with real screenshots, in English and Spanish.',
+          'The assignment is to read the guides for their area, in order, and at the end be able to explain them in their own words to a restaurant, a driver, or a customer. Every guide has its own link: it can be sent in a message and opened on a phone.',
+        ],
+        capturas: [
+          {
+            src: '/docs/verificacion-restaurante-en.webp',
+            alt: 'Owner and storefront verification in the restaurant dashboard.',
+            pie: 'An example of what the team teaches during the restaurant visit.',
+          },
+        ],
+        pasos: [
+          'Whole team: “An order from start to finish,” “The Manager,” “The traffic light on every order,” and “Verified restaurants and drivers.”',
+          'Restaurant visits: “Put your restaurant on Tumbite,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
+          'Driver training: “Start delivering,” “Verify your identity,” “Offers,” “Levels,” and “Your wallet.”',
+          'Customer support: “How to place your first order,” “Track your order live,” “Cancel an order,” “My account,” and “Help from a real person.”',
+          'To finish: walk another team member through a full order, phone in hand, and what happens if the restaurant doesn’t answer.',
+        ],
+      },
     ],
   },
   {
@@ -988,7 +1098,8 @@ export const DOCS: Record<Idioma, SeccionDocs[]> = { es, en };
 export const TEXTOS_DOCS = {
   es: {
     titulo: 'Docs',
-    subtitulo: 'Guías cortas para pedir, para restaurantes y para repartidores.',
+    subtitulo:
+      'Guías cortas para pedir, para restaurantes, para repartidores y para los equipos que abren cada ciudad.',
     buscar: 'Buscar en Docs',
     atajo: '⌘K',
     sinResultados: 'No encontramos nada con eso. Prueba con otra palabra.',
@@ -1002,7 +1113,8 @@ export const TEXTOS_DOCS = {
   },
   en: {
     titulo: 'Docs',
-    subtitulo: 'Short guides for ordering, for restaurants, and for drivers.',
+    subtitulo:
+      'Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.',
     buscar: 'Search Docs',
     atajo: '⌘K',
     sinResultados: 'Nothing matched. Try another word.',

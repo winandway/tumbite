@@ -647,8 +647,9 @@ h1 {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
-  background: #fff1ee;
-  color: #9c1000 !important;
+  /* Neutra: el rojo queda para los problemas y el verde para lo que salió bien. */
+  background: #f1f1f1;
+  color: #191919 !important;
 }
 .insignia-aprobado {
   background: #e3f6ea;
@@ -3299,4 +3300,12 @@ button {
   color: #5e5e5e;
   border-left: 1px solid #2a2a2a;
   padding-left: 10px;
+}
+
+/* Lo que salió bien va en verde (regla de Richard, 13 oct 2026): una respuesta recibida o un caso
+   cerrado no se pintan de rojo. */
+.ticket-respondido,
+.ticket-cerrado {
+  background: #e3f6ea;
+  color: #0d5a2c !important;
 }

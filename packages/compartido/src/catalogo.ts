@@ -37,6 +37,7 @@ export const esquemaPlato = z.object({
   descripcionEs: texto(300).default(''),
   descripcionEn: texto(300).default(''),
   categoria: texto(40).default(''),
+  categoriaEn: texto(40).default(''),
   precioCentavos: z.number().int({ error: 'El precio va en centavos.' }).min(0).max(100_000_00),
   disponible: z.boolean().default(true),
   imagen: foto,
@@ -70,10 +71,19 @@ export type Plato = {
   descripcionEs: string;
   descripcionEn: string;
   categoria: string;
+  categoriaEn: string;
   precioCentavos: number;
   imagen: string | null;
   disponible: boolean;
 };
+
+/** Categoría del plato en el idioma pedido; si falta el inglés, cae al español. */
+export function categoriaPlato(
+  p: Pick<Plato, 'categoria' | 'categoriaEn'>,
+  idioma: 'es' | 'en',
+): string {
+  return idioma === 'en' && p.categoriaEn ? p.categoriaEn : p.categoria;
+}
 
 /** Nombre del plato en el idioma pedido; si falta el inglés, cae al español. */
 export function nombrePlato(p: Pick<Plato, 'nombreEs' | 'nombreEn'>, idioma: 'es' | 'en'): string {

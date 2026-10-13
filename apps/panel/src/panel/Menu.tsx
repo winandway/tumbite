@@ -11,6 +11,7 @@ import {
   formatearDolares,
   nombrePlato,
   useBorrador,
+  categoriaPlato,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -28,7 +29,8 @@ const T = {
     nombreEn: 'Nombre en inglés',
     descEs: 'Descripción en español',
     descEn: 'Descripción en inglés',
-    categoria: 'Categoría (por ejemplo: Entradas)',
+    categoria: 'Categoría en español (por ejemplo: Entradas)',
+    categoriaEn: 'Categoría en inglés (por ejemplo: Starters)',
     precio: 'Precio en dólares',
     guardar: 'Guardar plato',
     cancelar: 'Cancelar',
@@ -52,7 +54,8 @@ const T = {
     nombreEn: 'Name in English',
     descEs: 'Description in Spanish',
     descEn: 'Description in English',
-    categoria: 'Category (for example: Starters)',
+    categoria: 'Category in Spanish (for example: Entradas)',
+    categoriaEn: 'Category in English (for example: Starters)',
     precio: 'Price in dollars',
     guardar: 'Save item',
     cancelar: 'Cancel',
@@ -75,6 +78,7 @@ const VACIO = {
   descripcionEs: '',
   descripcionEn: '',
   categoria: '',
+  categoriaEn: '',
   precio: '',
   imagen: '',
 };
@@ -113,6 +117,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       descripcionEs: p.descripcionEs,
       descripcionEn: p.descripcionEn,
       categoria: p.categoria,
+      categoriaEn: p.categoriaEn,
       precio: centavosATexto(p.precioCentavos),
       imagen: p.imagen ?? '',
     });
@@ -130,6 +135,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       descripcionEs: v.descripcionEs,
       descripcionEn: v.descripcionEn,
       categoria: v.categoria,
+      categoriaEn: v.categoriaEn,
       precioCentavos,
       imagen: v.imagen || null,
     };
@@ -242,6 +248,12 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             placeholder={t.categoria}
           />
           <Campo
+            etiqueta={t.categoriaEn}
+            valor={v.categoriaEn}
+            cambiar={(x) => b.cambiar('categoriaEn', x)}
+            placeholder={t.categoriaEn}
+          />
+          <Campo
             etiqueta={t.precio}
             valor={v.precio}
             cambiar={(x) => b.cambiar('precio', x)}
@@ -284,7 +296,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
               <div className="lista-texto">
                 <strong>{nombrePlato(p, idioma)}</strong>
                 <span>
-                  {[p.categoria, formatearDolares(p.precioCentavos, idioma)]
+                  {[categoriaPlato(p, idioma), formatearDolares(p.precioCentavos, idioma)]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>

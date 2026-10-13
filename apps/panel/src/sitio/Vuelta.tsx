@@ -71,7 +71,7 @@ export function Vuelta({ ruta, idioma }: { ruta: (typeof RUTAS_VUELTA)[number]; 
       <h1>{titulo}</h1>
       <p>{texto}</p>
       {ruta === '/payment/done' && (
-        <a className="boton" href={pedido ? `/app/pedido/${pedido}` : '/app/'}>
+        <a className="boton" href={pedido ? `/app/order/${pedido}` : '/app/'}>
           {t.verPedido}
         </a>
       )}

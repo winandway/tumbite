@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
+import { usarStripeLocal } from './stripe';
 import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
@@ -27,6 +28,11 @@ import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } fr
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cabecerasSeguridad);
+// Stripe simulado solo en la computadora del programador (ver stripe.ts). En producción no existe.
+app.use('*', async (c, next) => {
+  usarStripeLocal((c.env as unknown as Record<string, unknown>).STRIPE_API_URL);
+  await next();
+});
 // Una sola dirección oficial: www.tumbite.com manda a tumbite.com (Google no ve dos copias).
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url);
@@ -47,6 +53,18 @@ app.use('*', async (c, next) => {
   // El panel también va en inglés: «/panel/pedidos» → «/panel/orders».
   const panel = panelNuevo(ruta);
   if (panel) return c.redirect(`${panel}${url.search}`, 301);
+  // Las pantallas de la app web del cliente también pasaron a inglés.
+  const partesApp = ruta.split('/');
+  const pantallaNueva = new Map([
+    ['pedido', 'order'],
+    ['restaurante', 'restaurant'],
+    ['carrito', 'cart'],
+    ['cuenta', 'account'],
+  ]).get(partesApp[2] ?? '');
+  if (partesApp[1] === 'app' && pantallaNueva) {
+    const resto = partesApp.slice(3).join('/');
+    return c.redirect(`/app/${pantallaNueva}${resto ? `/${resto}` : ''}${url.search}`, 301);
+  }
   // La app web del repartidor se llama /driver (antes /repartidor).
   if (ruta === '/repartidor' || ruta.startsWith('/repartidor/'))
     return c.redirect(`/driver${ruta.slice(11)}${url.search}`, 301);

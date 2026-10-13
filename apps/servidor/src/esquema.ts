@@ -16,6 +16,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Superadmin a escala (12 oct 2026): código de ciudad (MIA, NOV…) e ID del repartidor.
   ['zonas', 'codigo_ciudad', 'TEXT'],
   ['repartidores', 'codigo', 'TEXT'],
+  // Inglés como idioma principal (13 oct 2026): la categoría del plato también va en inglés.
+  ['platos', 'categoria_en', "TEXT NOT NULL DEFAULT ''"],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

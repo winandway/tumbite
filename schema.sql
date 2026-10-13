@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS platos (
   descripcion_es TEXT NOT NULL DEFAULT '',
   descripcion_en TEXT NOT NULL DEFAULT '',
   categoria TEXT NOT NULL DEFAULT '',
+  categoria_en TEXT NOT NULL DEFAULT '',
   precio_centavos INTEGER NOT NULL CHECK (precio_centavos >= 0),
   imagen TEXT,
   disponible INTEGER NOT NULL DEFAULT 1,

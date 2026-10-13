@@ -666,6 +666,24 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   if (!f || (f.cliente_id !== u.id && u.rol !== 'admin'))
     throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   const enRuta = f.estado === 'en_camino';
+  // Por qué se canceló, para decírselo claro al cliente (lo anota el Manager en la bitácora).
+  const motivo =
+    f.estado === 'cancelado'
+      ? await base(c)
+          .prepare(
+            "SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? AND evento IN ('cancelado_por_cliente','rechazado_por_restaurante','cancelado_sin_respuesta') ORDER BY id DESC LIMIT 1",
+          )
+          .bind(c.req.param('id'))
+          .first<{ evento: string }>()
+      : null;
+  const motivoCancelacion =
+    motivo?.evento === 'cancelado_por_cliente'
+      ? 'cliente'
+      : motivo?.evento === 'rechazado_por_restaurante'
+        ? 'restaurante'
+        : motivo?.evento === 'cancelado_sin_respuesta'
+          ? 'sin_respuesta'
+          : null;
   const { results: historial } = await base(c)
     .prepare(
       'SELECT estado, creado_en AS fecha FROM historial_estados WHERE pedido_id = ? ORDER BY id',
@@ -694,6 +712,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
     pedido: {
       ...aPedido(f),
       historial,
+      motivoCancelacion,
       restaurante: rest,
       minutosEstimados,
       repartidor: f.repartidor_id

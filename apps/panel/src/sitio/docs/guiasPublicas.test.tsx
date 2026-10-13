@@ -42,6 +42,8 @@ describe('Docs públicos', () => {
       'business/franchises',
       'drivers/wallet',
       'account/support',
+      'trust/order-journey',
+      'business/team-training',
     ])
       expect(todas).toContain(g);
   });

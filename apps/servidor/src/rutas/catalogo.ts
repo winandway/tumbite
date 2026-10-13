@@ -51,6 +51,7 @@ export function aPlato(f: FilaRest): Plato {
     descripcionEs: String(f.descripcion_es ?? ''),
     descripcionEn: String(f.descripcion_en ?? ''),
     categoria: String(f.categoria ?? ''),
+    categoriaEn: String(f.categoria_en ?? ''),
     precioCentavos: Number(f.precio_centavos),
     imagen: (f.imagen as string | null) ?? null,
     disponible: Number(f.disponible) === 1,
@@ -218,7 +219,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
   const id = nuevoId();
   await base(c)
     .prepare(
-      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, precio_centavos, disponible, imagen) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible, imagen) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
     )
     .bind(
       id,
@@ -228,6 +229,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
       d.descripcionEs,
       d.descripcionEn,
       d.categoria,
+      d.categoriaEn,
       d.precioCentavos,
       d.disponible ? 1 : 0,
       d.imagen,
@@ -242,7 +244,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
   const d = await leerCuerpo(c, esquemaPlato);
   const r = await base(c)
     .prepare(
-      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, precio_centavos=?, disponible=?, imagen=? WHERE id=? AND restaurante_id=? AND eliminado=0',
+      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=? WHERE id=? AND restaurante_id=? AND eliminado=0',
     )
     .bind(
       d.nombreEs,
@@ -250,6 +252,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
       d.descripcionEs,
       d.descripcionEn,
       d.categoria,
+      d.categoriaEn,
       d.precioCentavos,
       d.disponible ? 1 : 0,
       d.imagen,

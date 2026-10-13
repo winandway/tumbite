@@ -35,6 +35,30 @@ export function formulario(datos: Record<string, Valor>, prefijo = ''): string[]
   return partes;
 }
 
+/**
+ * Para ensayar el recorrido completo en la computadora del programador sin cobrar nada: Stripe
+ * puede apuntar a un simulador, pero SOLO en localhost. Cualquier otra dirección se ignora, así
+ * que en producción siempre se habla con Stripe de verdad.
+ */
+const STRIPE_REAL = 'https://api.stripe.com';
+let baseStripe = STRIPE_REAL;
+export function usarStripeLocal(url: unknown): void {
+  baseStripe = STRIPE_REAL;
+  if (typeof url !== 'string') return;
+  try {
+    const u = new URL(url);
+    if (
+      u.protocol === 'http:' &&
+      ['localhost', '127.0.0.1'].includes(u.hostname) &&
+      u.pathname === '/'
+    )
+      baseStripe = u.origin;
+  } catch {
+    // Dirección mal escrita: se queda Stripe de verdad.
+  }
+}
+export const direccionStripe = () => baseStripe;
+
 export function crearStripe(secreta: string | undefined) {
   if (!secreta) return null;
   async function llamar<T>(
@@ -51,7 +75,7 @@ export function crearStripe(secreta: string | undefined) {
     if (metodo === 'POST') headers['content-type'] = 'application/x-www-form-urlencoded';
     if (idempotencia) headers['idempotency-key'] = idempotencia;
     const res = await fetch(
-      `https://api.stripe.com/v1${ruta}${metodo === 'GET' && cuerpo ? `?${cuerpo}` : ''}`,
+      `${baseStripe}/v1${ruta}${metodo === 'GET' && cuerpo ? `?${cuerpo}` : ''}`,
       {
         method: metodo,
         headers,

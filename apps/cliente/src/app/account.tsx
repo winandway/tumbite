@@ -132,7 +132,11 @@ export default function MiCuenta() {
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: '700' }}>{p.restauranteNombre}</Text>
             <Text style={{ color: '#5E5E5E' }}>
-              {fecha(p.creadoEn)} · {t.estados[p.estado] ?? p.estado}
+              {fecha(p.creadoEn)} ·{' '}
+              {/* Entregado en verde: algo que salió bien nunca va en rojo. */}
+              <Text style={p.estado === 'entregado' ? { color: C.exito, fontWeight: '700' } : null}>
+                {t.estados[p.estado] ?? p.estado}
+              </Text>
             </Text>
           </View>
           <Text style={{ fontWeight: '800' }}>{formatearDolares(p.total, idioma)}</Text>
