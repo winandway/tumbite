@@ -13,7 +13,7 @@
 - [ ] 👤 Número de WhatsApp de soporte.
 - [ ] 👤 Llave de Google Places para que la dirección se complete sola.
 - [ ] 👤 Abogado: revisar los textos legales y la marca.
-- [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos.
+- [ ] 👤 **Aprobar el modelo de dinero** (`docs/MODELO-DE-DINERO.md`): hoy, con el plan Inicial, un pedido normal deja a Tumbite 69 centavos en pérdida por el cobro de Stripe. Recomendación: envío desde 3,99 y servicio con mínimo de 1,99. También: retiro mínimo.
 - [ ] 👤 Cuándo se vuelve obligatoria la verificación de identidad (interruptor `KYC_OBLIGATORIO`).
 - [ ] 👤 **Regalo que cubre todo el plato:** hoy el cliente igual paga envío, servicio y el cargo por pedido pequeño (en la prueba, un regalo de 3 dólares dejó el pedido en 6.58). Decidir si el cargo por pedido pequeño se perdona cuando el regalo cubre la comida.
 - [ ] 👤 Nombre público del negocio en Stripe (hoy sale «Windoce, LLC» en el cobro).
