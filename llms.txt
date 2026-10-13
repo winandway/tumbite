@@ -14,6 +14,7 @@
 - [How to place your first order · Tumbite](https://tumbite.com/docs/ordering/first-order): Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.
 - [Track your order live · Tumbite](https://tumbite.com/docs/ordering/track-order): Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.
 - [Cancel an order and get your money back · Tumbite](https://tumbite.com/docs/ordering/cancel-order): Until the restaurant accepts it, you cancel in one tap and get a full refund. And if the restaurant doesn’t answer, we cancel it for you.
+- [My account: your orders, cards, and details · Tumbite](https://tumbite.com/docs/ordering/my-account): All your orders and their status, the cards you saved, and your details, in one place in the app.
 - [Gifts: birthday, punch card, and win-back · Tumbite](https://tumbite.com/docs/ordering/rewards): Restaurants reward you for coming back. Gifts show up in your cart on their own.
 - [Rate the food and the driver · Tumbite](https://tumbite.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
 - [For restaurants · Tumbite](https://tumbite.com/docs/restaurants): ⌘K← Docs For restaurantsPut your restaurant on TumbiteCreate your account, complete your profile, and wait for approval. No lock-in contracts.Your menu: it
@@ -21,6 +22,7 @@
 - [Your menu: items, prices, and photos · Tumbite](https://tumbite.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Tumbite](https://tumbite.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Tumbite](https://tumbite.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
+- [Your dashboard: how your restaurant is doing · Tumbite](https://tumbite.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your real kitchen time, and what customers think, at a glance.
 - [Verify your restaurant · Tumbite](https://tumbite.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Tumbite](https://tumbite.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Tumbite](https://tumbite.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
@@ -29,23 +31,25 @@
 - [Verify your identity · Tumbite](https://tumbite.com/docs/drivers/verify): Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.
 - [Offers: see what you earn before you accept · Tumbite](https://tumbite.com/docs/drivers/offers): You see the pay, the distance, and the pickup spot. Declining never counts against you.
 - [Levels: Bronze, Silver, Gold, and Diamond · Tumbite](https://tumbite.com/docs/drivers/levels): Higher levels see bigger orders first. You level up with deliveries and good ratings.
-- [Your wallet and cash-outs · Tumbite](https://tumbite.com/docs/drivers/wallet): Balance, today’s history, and cash-out to your bank whenever you want.
+- [Your wallet: what you earn and how you cash out · Tumbite](https://tumbite.com/docs/drivers/wallet): Like a banking app: your balance, earnings, tips, and every movement with its order. Cash out to your bank whenever you want.
 - [How we look after every order · Tumbite](https://tumbite.com/docs/trust): ⌘K← Docs How we look after every orderThe Manager: no order gets forgottenAn automatic watcher follows every order from payment to the door, and steps in o
 - [The Manager: no order gets forgotten · Tumbite](https://tumbite.com/docs/trust/manager): An automatic watcher follows every order from payment to the door, and steps in only when something runs late.
 - [The traffic light on every order · Tumbite](https://tumbite.com/docs/trust/traffic-light): Green, yellow, or red: at a glance you know which order is fine and which one needs attention.
 - [Verified restaurants and drivers · Tumbite](https://tumbite.com/docs/trust/verification): Every restaurant is a real business and every driver is who they say they are. A person on our team checks it.
+- [For entrepreneurs · Tumbite](https://tumbite.com/docs/business): ⌘K← Docs For entrepreneursFranchises: bring Tumbite to your cityEvery new city opens with a local partner. What you pay for isn’t a brand: it’s a complete 
+- [Franchises: bring Tumbite to your city](https://tumbite.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
 - [Your account · Tumbite](https://tumbite.com/docs/account): ⌘K← Docs Your accountForgot my passwordWe email you a link. It works once and expires in 30 minutes.Confirm your emailWhen you sign up, you get a link to c
 - [Forgot my password · Tumbite](https://tumbite.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Tumbite](https://tumbite.com/docs/account/confirm-email): When you sign up, you get a link to confirm the email is yours.
 - [Delete your account · Tumbite](https://tumbite.com/docs/account/delete): From the account menu, in the three dots. Your personal data is removed.
-- [Human support · Tumbite](https://tumbite.com/docs/account/support): Real people, fast. On WhatsApp or by email.
+- [Help from a real person, with your own link · Tumbite](https://tumbite.com/docs/account/support): Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.
 
 ## Countries
 
-- [Food delivery in United States with Tumbite](https://tumbite.com/country/united-states): Order from United States restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver.
+- [Food delivery in the United States with Tumbite](https://tumbite.com/country/united-states): Order from the United States restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver
 - [Tumbite is coming soon to Mexico](https://tumbite.com/country/mexico): We’re getting ready to launch in Mexico: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Puerto Rico](https://tumbite.com/country/puerto-rico): We’re getting ready to launch in Puerto Rico: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
-- [Tumbite is coming soon to Dominican Republic](https://tumbite.com/country/dominican-republic): We’re getting ready to launch in Dominican Republic: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
+- [Tumbite is coming soon to the Dominican Republic](https://tumbite.com/country/dominican-republic): We’re getting ready to launch in the Dominican Republic: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Cuba](https://tumbite.com/country/cuba): We’re getting ready to launch in Cuba: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Guatemala](https://tumbite.com/country/guatemala): We’re getting ready to launch in Guatemala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to El Salvador](https://tumbite.com/country/el-salvador): We’re getting ready to launch in El Salvador: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
@@ -70,8 +74,8 @@
 - [Tumbite is coming soon to Italy](https://tumbite.com/country/italy): We’re getting ready to launch in Italy: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to France](https://tumbite.com/country/france): We’re getting ready to launch in France: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Germany](https://tumbite.com/country/germany): We’re getting ready to launch in Germany: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
-- [Tumbite is coming soon to Netherlands](https://tumbite.com/country/netherlands): We’re getting ready to launch in Netherlands: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
-- [Tumbite is coming soon to United Kingdom](https://tumbite.com/country/united-kingdom): We’re getting ready to launch in United Kingdom: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
+- [Tumbite is coming soon to the Netherlands](https://tumbite.com/country/netherlands): We’re getting ready to launch in the Netherlands: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
+- [Tumbite is coming soon to the United Kingdom](https://tumbite.com/country/united-kingdom): We’re getting ready to launch in the United Kingdom: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Romania](https://tumbite.com/country/romania): We’re getting ready to launch in Romania: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 - [Tumbite is coming soon to Equatorial Guinea](https://tumbite.com/country/equatorial-guinea): We’re getting ready to launch in Equatorial Guinea: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.
 
@@ -79,8 +83,8 @@
 
 - [Food delivery in Miami with Tumbite](https://tumbite.com/city/miami): Order from Miami restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver. Part of ou
 - [Tumbite is coming soon to Orlando](https://tumbite.com/city/orlando): We’re getting ready to launch in Orlando: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in
-- [Tumbite is coming soon to Tampa](https://tumbite.com/city/tampa): We’re getting ready to launch in Tampa: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in U
-- [Tumbite is coming soon to Ocala](https://tumbite.com/city/ocala): We’re getting ready to launch in Ocala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in U
+- [Tumbite is coming soon to Tampa](https://tumbite.com/city/tampa): We’re getting ready to launch in Tampa: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
+- [Tumbite is coming soon to Ocala](https://tumbite.com/city/ocala): We’re getting ready to launch in Ocala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
 
 ## Food types
 

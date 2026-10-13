@@ -13,6 +13,7 @@
   <url><loc>https://tumbite.com/docs/ordering/first-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/track-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/cancel-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/ordering/my-account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/rewards</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/rate</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -20,6 +21,7 @@
   <url><loc>https://tumbite.com/docs/restaurants/menu</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/sold-out</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/orders</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/restaurants/dashboard</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/verify</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/gifts</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/earnings</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -33,6 +35,8 @@
   <url><loc>https://tumbite.com/docs/trust/manager</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/traffic-light</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/verification</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/business</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/business/franchises</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account/password</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account/confirm-email</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -99,6 +103,7 @@
   <url><loc>https://tumbite.com/es/docs/ordering/first-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/track-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/cancel-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/ordering/my-account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/rewards</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/rate</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -106,6 +111,7 @@
   <url><loc>https://tumbite.com/es/docs/restaurants/menu</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/sold-out</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/orders</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/restaurants/dashboard</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/verify</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/gifts</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/earnings</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -119,6 +125,8 @@
   <url><loc>https://tumbite.com/es/docs/trust/manager</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/traffic-light</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/verification</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/business</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/business/franchises</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account/password</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account/confirm-email</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
