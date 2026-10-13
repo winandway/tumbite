@@ -357,7 +357,7 @@ export function Inicio() {
           onPress={() => void alternar()}
           accessibilityRole="switch"
           accessibilityState={{ checked: estado.conectado }}
-          style={[e.tarjeta, { backgroundColor: estado.conectado ? '#0d7a3a' : C.secundario }]}
+          style={[e.tarjeta, { backgroundColor: estado.conectado ? C.exito : C.secundario }]}
         >
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>
             {estado.conectado ? t.conectado : t.desconectado}
@@ -500,6 +500,27 @@ export function Inicio() {
               {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
             </Text>
           ) : null}
+          {/* Barra de avance al siguiente nivel, en verde: cada entrega es un paso hacia adelante. */}
+          <View
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.nivel.avance * 100) }}
+            style={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: '#ECECEC',
+              marginTop: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                width: `${Math.max(2, Math.round(estado.nivel.avance * 100))}%`,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: C.exito,
+              }}
+            />
+          </View>
         </View>
       )}
       {billetera && (

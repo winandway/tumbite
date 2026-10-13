@@ -21,6 +21,12 @@ describe('verde para el éxito', () => {
       /'entregado' \? \{ color: C\.exito/,
     );
   });
+  it('la barra de nivel del repartidor avanza en verde', () => {
+    expect(leer('apps', 'repartidor', 'src', 'Inicio.tsx')).toMatch(
+      /accessibilityRole="progressbar"[\s\S]*backgroundColor: C\.exito/,
+    );
+  });
+
   it('en el panel, respondido y cerrado son verdes y la insignia neutra no es roja', () => {
     const css = leer('apps', 'panel', 'src', 'estilos.css');
     expect(css).toMatch(/\.ticket-respondido,\s*\.ticket-cerrado \{\s*background: #e3f6ea/);

@@ -35,6 +35,18 @@ const es: SeccionDocs[] = [
         titulo: 'Cómo hacer tu primer pedido',
         resumen:
           'Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.',
+        capturas: [
+          {
+            src: '/docs/menu-cliente-es.webp',
+            alt: 'Menú de un restaurante en la app de Tumbite, agrupado por categorías, con los platos ya agregados al carrito marcados en verde y el botón «Ver carrito».',
+            pie: 'Elige tus platos: los que ya están en el carrito se marcan en verde.',
+          },
+          {
+            src: '/docs/carrito-es.webp',
+            alt: 'Carrito de Tumbite con la dirección de entrega, la propina elegida y el desglose de comida, envío, tarifa de servicio, propina y total antes de pagar.',
+            pie: 'Antes de pagar ves todo: comida, envío, servicio y propina.',
+          },
+        ],
         pasos: [
           'Abre la app de Tumbite y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
           'Toca un restaurante, elige tus platos y ajusta la cantidad con los botones de más y menos.',
@@ -48,6 +60,13 @@ const es: SeccionDocs[] = [
         id: 'track-order',
         titulo: 'Seguir tu pedido en vivo',
         resumen: 'Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.',
+        capturas: [
+          {
+            src: '/docs/seguimiento-es.webp',
+            alt: 'Seguimiento del pedido en la app de Tumbite: «Tu repartidor va en camino», la barra de avance en verde, el tiempo estimado de llegada, el mapa con el repartidor y la hora de la última ubicación.',
+            pie: 'Tu pedido en vivo: la barra avanza en verde y ves al repartidor en el mapa.',
+          },
+        ],
         pasos: [
           'Después de pagar, la pantalla del pedido muestra cinco pasos: pago recibido, en cocina, listo, en camino y entregado.',
           'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta, con el tiempo estimado de llegada.',
@@ -124,6 +143,13 @@ const es: SeccionDocs[] = [
         id: 'rate',
         titulo: 'Calificar la comida y al repartidor',
         resumen: 'Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.',
+        capturas: [
+          {
+            src: '/docs/calificar-es.webp',
+            alt: 'Pedido entregado en la app de Tumbite con la barra completa en verde y la calificación de la comida y del repartidor con estrellas.',
+            pie: 'Al llegar, calificas la comida y al repartidor por separado.',
+          },
+        ],
         pasos: [
           'Cuando el pedido llega, en la pantalla del pedido aparece «¿Qué tal todo?».',
           'Califica la comida (el restaurante) y a tu repartidor por separado, con estrellas.',
@@ -155,10 +181,17 @@ const es: SeccionDocs[] = [
         id: 'menu',
         titulo: 'Tu menú: platos, precios y fotos',
         resumen: 'Cada plato en español e inglés, con su precio, su categoría y su foto.',
+        capturas: [
+          {
+            src: '/docs/menu-restaurante-es.webp',
+            alt: 'Menú en el panel del restaurante de Tumbite con cada plato, su categoría y precio, y la casilla de disponible o agotado.',
+            pie: 'Tu menú en el panel: cada plato con su categoría, su precio y su disponibilidad.',
+          },
+        ],
         pasos: [
           'En «Menú», toca «Agregar plato».',
           'Escribe el nombre y la descripción en español y en inglés. Tus clientes ven el idioma que eligieron.',
-          'Pon la categoría (por ejemplo «Entradas») para agrupar el menú, y el precio en dólares.',
+          'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en dólares.',
           'Sube la foto del plato. Si no tienes, puedes agregarla después: el plato se publica igual.',
           'Guarda. Lo que escribas se guarda solo mientras lo escribes: si se te cierra la ventana, al volver sigue ahí.',
         ],
@@ -167,6 +200,13 @@ const es: SeccionDocs[] = [
         id: 'sold-out',
         titulo: 'Marcar un plato como agotado',
         resumen: 'Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.',
+        capturas: [
+          {
+            src: '/docs/menu-restaurante-es.webp',
+            alt: 'Menú del restaurante con un plato marcado como «Agotado».',
+            pie: 'Un toque y el plato queda «Agotado»: deja de aparecer para los clientes.',
+          },
+        ],
         pasos: [
           'En «Menú», cada plato tiene un interruptor «Disponible / Agotado».',
           'Tócalo para apagarlo. Desaparece de la app de los clientes al instante.',
@@ -178,6 +218,13 @@ const es: SeccionDocs[] = [
         titulo: 'Recibir pedidos y la alarma',
         resumen:
           'Suena fuerte hasta que alguien acepta. Ningún pedido se queda olvidado en hora pico.',
+        capturas: [
+          {
+            src: '/docs/semaforo-restaurante-es.webp',
+            alt: 'Lista de pedidos del restaurante con la alarma, el semáforo de cada pedido y los botones para aceptar con 10, 20 o 30 minutos.',
+            pie: 'Los pedidos con su semáforo y los botones para aceptar.',
+          },
+        ],
         pasos: [
           'En «Pedidos», toca «Activar alarma» una vez (el navegador pide permiso para el sonido).',
           'Cuando entra un pedido pagado, suena hasta que lo aceptes. Elige los minutos de preparación.',
@@ -306,11 +353,18 @@ const es: SeccionDocs[] = [
         id: 'offers',
         titulo: 'Las ofertas: cuánto ganas antes de aceptar',
         resumen: 'Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.',
+        capturas: [
+          {
+            src: '/docs/oferta-repartidor-es.webp',
+            alt: 'Oferta nueva en la app de repartidores: lo que ganas con la propina incluida, dónde recoger, dónde entregar y la distancia.',
+            pie: 'La oferta: cuánto ganas y a dónde vas, antes de aceptar.',
+          },
+        ],
         pasos: [
           'Cuando hay un pedido cerca, te llega una oferta con el pago en dólares, la distancia y el restaurante.',
           'Tienes 60 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no cuenta en tu contra.',
-          'Al aceptar, ve al restaurante. Toca «Recogido» cuando tengas la comida y «Entregado» en la puerta del cliente.',
-          'Toca «Ruta» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
+          'Al aceptar, ve al restaurante. Toca «Ya lo recogí» cuando tengas la comida y «Entregado» en la puerta del cliente.',
+          'Toca «Cómo llegar» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
         ],
       },
@@ -319,11 +373,18 @@ const es: SeccionDocs[] = [
         titulo: 'Niveles: Bronce, Plata, Oro y Diamante',
         resumen:
           'Los niveles altos ven primero los pedidos grandes. Se suben con entregas y buenas notas.',
+        capturas: [
+          {
+            src: '/docs/nivel-repartidor-es.webp',
+            alt: 'Tarjeta «Tu nivel» en la app de repartidores con el nivel, los puntos, lo que falta para el siguiente nivel y la barra de avance en verde.',
+            pie: 'Tu nivel en la pantalla de inicio, con la barra verde de avance.',
+          },
+        ],
         pasos: [
           'Cada entrega completada suma puntos. Las buenas calificaciones y la puntualidad también.',
           'Si el cliente te califica bajo por culpa del restaurante (comida tardía, pedido incompleto), esa nota no te cuenta.',
           'A igual cercanía, el pedido se le ofrece primero al repartidor de nivel más alto.',
-          'En «Mi nivel» ves tus puntos y cuánto te falta para el siguiente.',
+          'En la pantalla de inicio, la tarjeta «Tu nivel» muestra tus puntos, cuánto te falta para el siguiente y una barra verde con tu avance.',
         ],
       },
       {
@@ -569,6 +630,18 @@ const en: SeccionDocs[] = [
         titulo: 'How to place your first order',
         resumen:
           'Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.',
+        capturas: [
+          {
+            src: '/docs/menu-cliente-en.webp',
+            alt: 'A restaurant menu in the Tumbite app, grouped by category, with the items already in the cart marked in green and the “View cart” button.',
+            pie: 'Pick your items: the ones already in your cart turn green.',
+          },
+          {
+            src: '/docs/carrito-en.webp',
+            alt: 'Tumbite cart with the delivery address, the chosen tip, and the breakdown of food, delivery, service fee, tip, and total before paying.',
+            pie: 'Before paying you see everything: food, delivery, service, and tip.',
+          },
+        ],
         pasos: [
           'Open the Tumbite app and allow location: you’ll see the restaurants in your area, closest first.',
           'Tap a restaurant, pick your dishes, and adjust quantities with the plus and minus buttons.',
@@ -583,6 +656,13 @@ const en: SeccionDocs[] = [
         titulo: 'Track your order live',
         resumen:
           'Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.',
+        capturas: [
+          {
+            src: '/docs/seguimiento-en.webp',
+            alt: 'Order tracking in the Tumbite app: “Your driver is on the way,” the progress bar in green, the estimated arrival time, the map with the driver, and the time of the last location update.',
+            pie: 'Your order live: the bar moves in green and you see the driver on the map.',
+          },
+        ],
         pasos: [
           'After paying, the order screen shows five steps: payment received, in the kitchen, ready, on the way, and delivered.',
           'When the driver picks up your food, they appear on the map heading to your door, with the estimated arrival time.',
@@ -659,6 +739,13 @@ const en: SeccionDocs[] = [
         id: 'rate',
         titulo: 'Rate the food and the driver',
         resumen: 'Two separate ratings. If the food was late, it’s not the driver’s fault.',
+        capturas: [
+          {
+            src: '/docs/calificar-en.webp',
+            alt: 'Delivered order in the Tumbite app with the full green bar and star ratings for the food and the driver.',
+            pie: 'When it arrives, you rate the food and the driver separately.',
+          },
+        ],
         pasos: [
           'When the order arrives, the order screen shows “How was everything?”',
           'Rate the food (the restaurant) and your driver separately, with stars.',
@@ -690,10 +777,17 @@ const en: SeccionDocs[] = [
         id: 'menu',
         titulo: 'Your menu: items, prices, and photos',
         resumen: 'Every item in English and Spanish, with its price, category, and photo.',
+        capturas: [
+          {
+            src: '/docs/menu-restaurante-en.webp',
+            alt: 'Menu in the Tumbite restaurant dashboard with each item, its category and price, and the available or sold-out checkbox.',
+            pie: 'Your menu in the dashboard: every item with its category, price, and availability.',
+          },
+        ],
         pasos: [
           'In “Menu,” tap “Add item.”',
           'Write the name and description in English and Spanish. Customers see the language they chose.',
-          'Set the category (for example “Starters”) to group the menu, and the price in dollars.',
+          'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in dollars.',
           'Upload the item photo. No photo yet? Add it later: the item is published either way.',
           'Save. What you type is saved as you go: if the window closes, it’s still there when you’re back.',
         ],
@@ -702,6 +796,13 @@ const en: SeccionDocs[] = [
         id: 'sold-out',
         titulo: 'Mark an item as sold out',
         resumen: 'Out of chicken? Turn it off for today in one tap and nobody can order it.',
+        capturas: [
+          {
+            src: '/docs/menu-restaurante-en.webp',
+            alt: 'Restaurant menu with one item marked “Sold out.”',
+            pie: 'One tap and the item is “Sold out”: customers no longer see it.',
+          },
+        ],
         pasos: [
           'In “Menu,” each item has an “Available / Sold out” switch.',
           'Tap it to turn the item off. It disappears from the customer app instantly.',
@@ -712,6 +813,13 @@ const en: SeccionDocs[] = [
         id: 'orders',
         titulo: 'Receiving orders and the alarm',
         resumen: 'It rings loud until someone accepts. No order gets forgotten at rush hour.',
+        capturas: [
+          {
+            src: '/docs/semaforo-restaurante-en.webp',
+            alt: 'Restaurant order list with the alarm, the traffic light on each order, and buttons to accept with 10, 20, or 30 minutes.',
+            pie: 'Orders with their traffic light and the accept buttons.',
+          },
+        ],
         pasos: [
           'In “Orders,” tap “Turn on alarm” once (the browser asks permission for sound).',
           'When a paid order comes in, it rings until you accept. Choose the prep time in minutes.',
@@ -841,6 +949,13 @@ const en: SeccionDocs[] = [
         titulo: 'Offers: see what you earn before you accept',
         resumen:
           'You see the pay, the distance, and the pickup spot. Declining never counts against you.',
+        capturas: [
+          {
+            src: '/docs/oferta-repartidor-en.webp',
+            alt: 'New offer in the driver app: what you earn including the tip, pickup, drop-off, and distance.',
+            pie: 'The offer: what you earn and where you’re going, before you accept.',
+          },
+        ],
         pasos: [
           'When there’s an order nearby, you get an offer with the pay in dollars, the distance, and the restaurant.',
           'You have 60 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t count against you.',
@@ -854,11 +969,18 @@ const en: SeccionDocs[] = [
         titulo: 'Levels: Bronze, Silver, Gold, and Diamond',
         resumen:
           'Higher levels see bigger orders first. You level up with deliveries and good ratings.',
+        capturas: [
+          {
+            src: '/docs/nivel-repartidor-en.webp',
+            alt: '“Your level” card in the driver app with the level, points, how many points to the next level, and the progress bar in green.',
+            pie: 'Your level on the home screen, with the green progress bar.',
+          },
+        ],
         pasos: [
           'Every completed delivery earns points. Good ratings and punctuality add more.',
           'If a customer rates you low because of the restaurant (late food, missing items), that rating doesn’t count.',
           'At equal distance, the order is offered first to the higher-level driver.',
-          'In “My level” you see your points and how far you are from the next level.',
+          'On the home screen, the “Your level” card shows your points, how far you are from the next level, and a green bar with your progress.',
         ],
       },
       {

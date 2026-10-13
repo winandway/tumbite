@@ -10,4 +10,10 @@ describe('niveles', () => {
     expect(nivelDe(9999)).toMatchObject({ clave: 'diamante', siguiente: null });
     expect(nivelDe(-5).clave).toBe('bronce');
   });
+  it('dice cuánto lleva del camino al siguiente nivel', () => {
+    expect(nivelDe(0).avance).toBe(0);
+    expect(nivelDe(250).avance).toBe(0.5);
+    expect(nivelDe(1000).avance).toBe(0.5);
+    expect(nivelDe(5000).avance).toBe(1);
+  });
 });

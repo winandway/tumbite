@@ -16,6 +16,8 @@ export type Nivel = {
   en: string;
   puntos: number;
   siguiente: { es: string; en: string; faltan: number } | null;
+  /** Cuánto lleva del camino al siguiente nivel, de 0 a 1 (1 en el nivel más alto). */
+  avance: number;
 };
 
 export function nivelDe(puntos: number): Nivel {
@@ -33,5 +35,6 @@ export function nivelDe(puntos: number): Nivel {
     en: actual.en,
     puntos: p,
     siguiente: sig ? { es: sig.es, en: sig.en, faltan: sig.minimo - p } : null,
+    avance: sig ? (p - actual.minimo) / (sig.minimo - actual.minimo) : 1,
   };
 }

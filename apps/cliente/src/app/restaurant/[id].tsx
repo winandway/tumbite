@@ -124,7 +124,12 @@ export default function MenuRestaurante() {
                     accessibilityRole="button"
                     accessibilityLabel={`${t.agregar} ${nombrePlato(p, idioma)}`}
                     style={{
-                      backgroundColor: datos.restaurante.abierto ? C.primario : '#ccc',
+                      // Ya en el carrito = salió bien: verde (C-VERDE-EXITO). Agregar sigue en el color de la marca.
+                      backgroundColor: !datos.restaurante.abierto
+                        ? '#ccc'
+                        : enCarrito
+                          ? C.exito
+                          : C.primario,
                       borderRadius: 999,
                       paddingHorizontal: 14,
                       paddingVertical: 8,
