@@ -9,7 +9,7 @@
 
 ## Guides (Docs)
 
-- [Docs · Tumbite](https://tumbite.com/docs): Short guides for ordering, for restaurants, and for drivers.
+- [Docs · Tumbite](https://tumbite.com/docs): Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.
 - [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingHow to place your first orderPick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.Track your order liv
 - [How to place your first order · Tumbite](https://tumbite.com/docs/ordering/first-order): Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.
 - [Track your order live · Tumbite](https://tumbite.com/docs/ordering/track-order): Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.
@@ -32,12 +32,14 @@
 - [Offers: see what you earn before you accept · Tumbite](https://tumbite.com/docs/drivers/offers): You see the pay, the distance, and the pickup spot. Declining never counts against you.
 - [Levels: Bronze, Silver, Gold, and Diamond · Tumbite](https://tumbite.com/docs/drivers/levels): Higher levels see bigger orders first. You level up with deliveries and good ratings.
 - [Your wallet: what you earn and how you cash out · Tumbite](https://tumbite.com/docs/drivers/wallet): Like a banking app: your balance, earnings, tips, and every movement with its order. Cash out to your bank whenever you want.
-- [How we look after every order · Tumbite](https://tumbite.com/docs/trust): ⌘K← Docs How we look after every orderThe Manager: no order gets forgottenAn automatic watcher follows every order from payment to the door, and steps in o
+- [How we look after every order · Tumbite](https://tumbite.com/docs/trust): ⌘K← Docs How we look after every orderAn order from start to finishWhat happens from the moment the customer pays until the food reaches the door, who does
+- [An order from start to finish · Tumbite](https://tumbite.com/docs/trust/order-journey): What happens from the moment the customer pays until the food reaches the door, who does what at each step, and how the money is split.
 - [The Manager: no order gets forgotten · Tumbite](https://tumbite.com/docs/trust/manager): An automatic watcher follows every order from payment to the door, and steps in only when something runs late.
 - [The traffic light on every order · Tumbite](https://tumbite.com/docs/trust/traffic-light): Green, yellow, or red: at a glance you know which order is fine and which one needs attention.
 - [Verified restaurants and drivers · Tumbite](https://tumbite.com/docs/trust/verification): Every restaurant is a real business and every driver is who they say they are. A person on our team checks it.
 - [For entrepreneurs · Tumbite](https://tumbite.com/docs/business): ⌘K← Docs For entrepreneursFranchises: bring Tumbite to your cityEvery new city opens with a local partner. What you pay for isn’t a brand: it’s a complete 
 - [Franchises: bring Tumbite to your city](https://tumbite.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
+- [Launch team training · Tumbite](https://tumbite.com/docs/business/team-training): The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.
 - [Your account · Tumbite](https://tumbite.com/docs/account): ⌘K← Docs Your accountForgot my passwordWe email you a link. It works once and expires in 30 minutes.Confirm your emailWhen you sign up, you get a link to c
 - [Forgot my password · Tumbite](https://tumbite.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Tumbite](https://tumbite.com/docs/account/confirm-email): When you sign up, you get a link to confirm the email is yours.
