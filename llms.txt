@@ -13,6 +13,7 @@
 - [Para pedir · Tumbite](https://tumbite.com/docs/comensales): ⌘K← Docs Para pedirCómo hacer tu primer pedidoElige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.Seguir tu pedido en 
 - [Cómo hacer tu primer pedido · Tumbite](https://tumbite.com/docs/comensales/pedir): Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.
 - [Seguir tu pedido en vivo · Tumbite](https://tumbite.com/docs/comensales/seguir): Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.
+- [Cancelar un pedido y recibir tu dinero · Tumbite](https://tumbite.com/docs/comensales/cancelar): Mientras el restaurante no lo acepte, cancelas en un toque y te devolvemos todo. Y si el restaurante no responde, lo cancelamos nosotros.
 - [Regalos: cumpleaños, sellos y bienvenida · Tumbite](https://tumbite.com/docs/comensales/regalos): Los restaurantes premian que vuelvas. Los regalos aparecen solos en el carrito.
 - [Calificar la comida y al repartidor · Tumbite](https://tumbite.com/docs/comensales/calificar): Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.
 - [Para restaurantes · Tumbite](https://tumbite.com/docs/restaurantes): ⌘K← Docs Para restaurantesPoner tu restaurante en TumbiteCrea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.Tu menú: pl
@@ -20,13 +21,19 @@
 - [Tu menú: platos, precios y fotos · Tumbite](https://tumbite.com/docs/restaurantes/menu): Cada plato en español e inglés, con su precio, su categoría y su foto.
 - [Marcar un plato como agotado · Tumbite](https://tumbite.com/docs/restaurantes/agotado): Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.
 - [Recibir pedidos y la alarma · Tumbite](https://tumbite.com/docs/restaurantes/pedidos): Suena fuerte hasta que alguien acepta. Ningún pedido se queda olvidado en hora pico.
+- [Verificar tu restaurante · Tumbite](https://tumbite.com/docs/restaurantes/verificar): Cuatro fotos desde el celular: tu documento, tu cara y el frente del local. Así tus clientes saben que eres real.
 - [Regalos y marketing · Tumbite](https://tumbite.com/docs/restaurantes/regalos): Aparta un porcentaje de tus ventas para premiar a tus clientes fieles.
 - [Resumen del día y tu billetera · Tumbite](https://tumbite.com/docs/restaurantes/beneficios): Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.
-- [Para repartidores · Tumbite](https://tumbite.com/docs/repartidores): ⌘K← Docs Para repartidoresEmpezar a repartirCrea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.Las ofertas: cuánto ganas antes de ac
+- [Para repartidores · Tumbite](https://tumbite.com/docs/repartidores): ⌘K← Docs Para repartidoresEmpezar a repartirCrea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.Verificar tu identidadTu documento y 
 - [Empezar a repartir · Tumbite](https://tumbite.com/docs/repartidores/empezar): Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.
+- [Verificar tu identidad · Tumbite](https://tumbite.com/docs/repartidores/verificar): Tu documento y una foto de tu cara, desde la app. Es lo que les da confianza a los clientes que te abren la puerta.
 - [Las ofertas: cuánto ganas antes de aceptar · Tumbite](https://tumbite.com/docs/repartidores/ofertas): Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.
 - [Niveles: Bronce, Plata, Oro y Diamante · Tumbite](https://tumbite.com/docs/repartidores/niveles): Los niveles altos ven primero los pedidos grandes. Se suben con entregas y buenas notas.
 - [Tu billetera y los retiros · Tumbite](https://tumbite.com/docs/repartidores/billetera): Saldo, historial del día y retiro a tu banco cuando quieras.
+- [Cómo cuidamos cada pedido · Tumbite](https://tumbite.com/docs/confianza): ⌘K← Docs Cómo cuidamos cada pedidoEl Manager: ningún pedido se queda olvidadoUn vigilante automático acompaña cada pedido desde que se paga hasta que llega
+- [El Manager: ningún pedido se queda olvidado · Tumbite](https://tumbite.com/docs/confianza/manager): Un vigilante automático acompaña cada pedido desde que se paga hasta que llega a la puerta, y actúa solo cuando algo se atrasa.
+- [El semáforo de cada pedido · Tumbite](https://tumbite.com/docs/confianza/semaforo): Verde, amarillo o rojo: de un vistazo se sabe qué pedido va bien y cuál necesita atención.
+- [Restaurantes y repartidores verificados · Tumbite](https://tumbite.com/docs/confianza/verificacion): Cada restaurante es un negocio real y cada repartidor es quien dice ser. Lo revisa una persona de nuestro equipo.
 - [Tu cuenta · Tumbite](https://tumbite.com/docs/cuenta): ⌘K← Docs Tu cuentaOlvidé mi contraseñaTe mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.Confirmar tu correoAl registrarte te llega 
 - [Olvidé mi contraseña · Tumbite](https://tumbite.com/docs/cuenta/contrasena): Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.
 - [Confirmar tu correo · Tumbite](https://tumbite.com/docs/cuenta/confirmar-correo): Al registrarte te llega un enlace para confirmar que el correo es tuyo.

@@ -12,6 +12,7 @@
   <url><loc>https://tumbite.com/docs/comensales</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/comensales/pedir</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/comensales/seguir</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/comensales/cancelar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/comensales/regalos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/comensales/calificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurantes</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -19,13 +20,19 @@
   <url><loc>https://tumbite.com/docs/restaurantes/menu</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurantes/agotado</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurantes/pedidos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/restaurantes/verificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurantes/regalos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurantes/beneficios</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/repartidores</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/repartidores/empezar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/repartidores/verificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/repartidores/ofertas</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/repartidores/niveles</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/repartidores/billetera</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/confianza</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/confianza/manager</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/confianza/semaforo</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/confianza/verificacion</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/cuenta</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/cuenta/contrasena</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/cuenta/confirmar-correo</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -91,6 +98,7 @@
   <url><loc>https://tumbite.com/en/docs/comensales</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/comensales/pedir</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/comensales/seguir</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/comensales/cancelar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/comensales/regalos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/comensales/calificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/restaurantes</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -98,13 +106,19 @@
   <url><loc>https://tumbite.com/en/docs/restaurantes/menu</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/restaurantes/agotado</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/restaurantes/pedidos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/restaurantes/verificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/restaurantes/regalos</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/restaurantes/beneficios</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/repartidores</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/repartidores/empezar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/repartidores/verificar</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/repartidores/ofertas</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/repartidores/niveles</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/repartidores/billetera</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/confianza</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/confianza/manager</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/confianza/semaforo</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/en/docs/confianza/verificacion</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/cuenta</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/cuenta/contrasena</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/en/docs/cuenta/confirmar-correo</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
