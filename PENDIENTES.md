@@ -4,6 +4,23 @@
 
 ## 👤 Lo que solo puede hacer Richard
 
+### Lo primero para lanzar (al 12 oct 2026, noche), en orden
+
+- [ ] 👤 **Compra real de 1 dólar** desde la app web y, en la misma prueba, **cancelar otro pedido de 1 dólar antes de que el restaurante lo acepte** (tiene que verse la devolución en Stripe). Es lo único que falta para dar los pagos por probados (`VERIFICAR-PAGOS.md`).
+- [ ] 👤 **Prueba en la calle** con tres cuentas: cliente, restaurante y repartidor (`docs/PLAN-DE-PRUEBA-EN-CALLE.md`).
+- [ ] 👤 Decidir el primer pedido de 7.18 dólares: marcarlo entregado o devolverlo.
+- [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas.
+- [ ] 👤 Número de WhatsApp de soporte.
+- [ ] 👤 Llave de Google Places para que la dirección se complete sola.
+- [ ] 👤 Abogado: revisar los textos legales y la marca.
+- [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos.
+- [ ] 👤 Cuándo se vuelve obligatoria la verificación de identidad (interruptor `KYC_OBLIGATORIO`).
+- [ ] 👤 Nombre público del negocio en Stripe (hoy sale «Windoce, LLC» en el cobro).
+- [ ] 👤 Tope mensual de gasto en IA (propuesto 20 dólares prepago) y si el Manager puede dar regalos de disculpa.
+- [ ] 👤 Mirar las ideas de «Lo que viene» en la página Cómo funciona.
+- [ ] 👤 Antes del lanzamiento abierto: apagar o borrar los datos de prueba (Orlando y Tampa de prueba, cuentas `prueba.%@ejemplo.com`; la consulta está en `CANDADOS.md`).
+- [ ] 👤 Sí o no a un reloj exacto en Cloudflare (hoy el reloj de GitHub es impuntual; el Manager ya no depende de él para cancelar a tiempo).
+
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
 - [x] Sitio de pruebas `tumbite-pruebas` creado por la IA con el acceso para IA (11 oct 2026). Semáforo activo (`URL_PRUEBAS` en GitHub).
@@ -52,5 +69,5 @@
 - [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).
 - [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.
-- [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). La Fase A (Manager con reglas, costo cero) arranca al cerrar la Etapa 1.
+- [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). Fase A, primera parte hecha el 12 oct (C-MANAGER-1: recordatorios, cancelación con devolución, alerta sin repartidor, bitácora). Falta el semáforo en la lista de pedidos.
 - [ ] 👤 Tumbite AI: tope mensual de gasto en IA (propuesto 20 USD prepago) y si el Manager puede dar regalos de disculpa solo y hasta cuánto.

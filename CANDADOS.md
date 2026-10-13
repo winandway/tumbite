@@ -292,3 +292,7 @@ Fallos encontrados y arreglados:
 - **Pruebas (comprobadas en rojo):** `operacion.test.ts` bloque C-MANAGER-1 (cancelar, no cancelar ajeno ni aceptado, Stripe caído no cancela, recordatorios una vez, cancelación a los 10 con una sola devolución, seguimiento dispara la regla, alerta sin repartidor una vez, bitácora solo admin), `cancelarApp.test.ts`, `SuperPedido.test.tsx`.
 - **No tocar:** el orden «apartar → devolver → si falla, volver atrás». Al revés, una carrera dejaba el dinero devuelto y el pedido aceptado.
 - **Sin probar con Stripe real:** anotado en rojo en `VERIFICAR-PAGOS.md`.
+
+### Datos de relleno en producción (12 oct 2026)
+
+Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactivas y con «(pruebas)» en el nombre), seis repartidores y cinco clientes por ciudad, todos con correo `prueba.<rep|cli>.<ciudad>.<n>@ejemplo.com` y «(prueba)» en el nombre. Para borrarlos antes del lanzamiento abierto (con el sí de Richard): primero sus filas en `repartidores`, `repartidor_datos`, `sesiones` y `pedidos`, después `DELETE FROM usuarios WHERE correo LIKE 'prueba.%@ejemplo.com'`, y por último las zonas `US-FL-ORLANDO` y `US-FL-TAMPA` si siguen sin restaurantes reales.

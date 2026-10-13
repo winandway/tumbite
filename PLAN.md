@@ -5,4 +5,4 @@
 - [x] Paso 3: Manager con reglas (sin IA, sin costo): recordatorio al restaurante a los 3 y 6 minutos, cancelación con reembolso a los 10, aviso a los administradores si un pedido lleva 15 minutos sin repartidor. Corre en el reloj y también cuando el cliente mira su seguimiento.
 - [x] Paso 4: Bitácora del pedido en el superadmin (ruta + pantalla) con estados, horas y avisos del Manager; enlace desde la ficha del cliente.
 - [x] Paso 5: Pruebas (cancelar, no cancelar si ya aceptó, otro cliente no puede, reglas del Manager, bitácora solo admin) comprobadas en rojo; candados y documentos al día.
-- [ ] Paso 6: verify completo, commit, push, publicación y comprobación en vivo.
+- [x] Paso 6: verify completo, commit, push, publicación y comprobación en vivo.
