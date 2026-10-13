@@ -5,4 +5,4 @@
 - [x] Paso 3: Cuenta: la página para recuperar la contraseña, el estado del correo en «Configuración» y la página para borrar la cuenta. En español e inglés.
 - [x] Paso 4: Repartidor: la pantalla para crear la cuenta y empezar. En español e inglés.
 - [x] Paso 5: Originales en la carpeta de capturas, versiones web en Docs, cada captura en su guía con texto alternativo y pie, y revisar que la guía diga lo mismo que la pantalla. Arreglar lo que aparezca.
-- [ ] Paso 6: Pruebas, verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 6: Pruebas, verify, commit, push, publicación y comprobación en vivo.
