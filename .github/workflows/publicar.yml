@@ -50,7 +50,8 @@ jobs:
 
       - name: Semáforo — pruebas debe servir esta versión y responder 200
         if: ${{ vars.URL_PRUEBAS != '' }}
-        run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}"
+        run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
+        timeout-minutes: 30
 
       - name: Publicar en producción (rama yapanel-build)
         uses: peaceiris/actions-gh-pages@v4

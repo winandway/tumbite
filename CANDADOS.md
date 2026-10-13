@@ -363,3 +363,10 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 
 - El Manager lleva la captura nueva del pedido que canceló solo porque el restaurante no confirmó a tiempo (`manager-cancela-es/en`, sacada de un pedido local cancelado por el Manager), más la del semáforo del restaurante. La verificación reutiliza las capturas del restaurante y del repartidor.
 - Con esto ninguna guía pública de Docs queda solo con texto.
+
+## C-SEMAFORO-PACIENCIA: la publicación ya no se frena sola cuando pruebas tarda (13 oct 2026)
+
+- **Qué pasaba:** dos veces el mismo día, el sitio de pruebas tardó más de 12 minutos en servir la versión nueva; el semáforo daba rojo y producción no se publicaba hasta repetir a mano (al repetir, pruebas ya la servía en dos minutos).
+- **Arreglo:** `scripts/semaforo.sh` espera hasta 25 minutos (100 vueltas de 15 s) y en la vuelta 32 (8 minutos) da un empujón: un commit vacío en `yapanel-pruebas`, hecho en un worktree aparte para no tocar `out-deploy` ni la rama de trabajo. Si el empujón falla, deja un aviso y sigue esperando. El paso del flujo tiene `timeout-minutes: 30`.
+- **Se comprobó** con un repositorio de prueba local: el commit vacío llegó a la rama y la carpeta de trabajo quedó intacta.
+- **Candado:** `apps/servidor/src/semaforoPublicacion.test.ts`, comprobado en rojo. Las rutas críticas y el chequeo del prerender no cambiaron: el semáforo sigue frenando si algo responde mal.
