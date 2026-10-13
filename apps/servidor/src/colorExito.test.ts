@@ -21,6 +21,14 @@ describe('verde para el éxito', () => {
       /'entregado' \? \{ color: C\.exito/,
     );
   });
+  it('el plato ya en el carrito y el regalo aplicado salen en verde', () => {
+    expect(leer('apps', 'cliente', 'src', 'app', 'restaurant', '[id].tsx')).toMatch(
+      /enCarrito\s*\? C\.exito/,
+    );
+    const carrito = leer('apps', 'cliente', 'src', 'app', 'cart.tsx');
+    expect(carrito).toMatch(/borderColor: regaloElegido === r\.tipo \? C\.exito/);
+    expect(carrito).not.toMatch(/regaloElegido === r\.tipo \? C\.acento/);
+  });
   it('la barra de nivel del repartidor avanza en verde', () => {
     expect(leer('apps', 'repartidor', 'src', 'Inicio.tsx')).toMatch(
       /accessibilityRole="progressbar"[\s\S]*backgroundColor: C\.exito/,
@@ -31,5 +39,7 @@ describe('verde para el éxito', () => {
     const css = leer('apps', 'panel', 'src', 'estilos.css');
     expect(css).toMatch(/\.ticket-respondido,\s*\.ticket-cerrado \{\s*background: #e3f6ea/);
     expect(css).toMatch(/\.insignia \{[^}]*background: #f1f1f1/);
+    // Lo que le toca al restaurante en el día también va en verde.
+    expect(css).toMatch(/\.metrica-fuerte \{[^}]*background: #0d7a3a/);
   });
 });

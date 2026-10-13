@@ -160,11 +160,17 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
             </div>
             <div>
               <span>{t.regalos}</span>
-              <strong>−{formatearDolares(hoy.regalos, idioma)}</strong>
+              <strong>
+                {hoy.regalos > 0 ? '−' : ''}
+                {formatearDolares(hoy.regalos, idioma)}
+              </strong>
             </div>
             <div>
               <span>{t.comision}</span>
-              <strong>−{formatearDolares(hoy.comision, idioma)}</strong>
+              <strong>
+                {hoy.comision > 0 ? '−' : ''}
+                {formatearDolares(hoy.comision, idioma)}
+              </strong>
             </div>
             <div className="metrica-fuerte">
               <span>{t.neto}</span>
@@ -226,7 +232,7 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
                 <strong>{t.conceptos[m.concepto] ?? m.concepto}</strong>
                 <span>
                   {new Date(`${m.fecha}Z`).toLocaleString(idioma === 'en' ? 'en-US' : 'es-US')}
-                  {m.pedidoId ? ` · ${t.pedido} ${m.pedidoId.slice(0, 6)}` : ''}
+                  {m.pedidoId ? ` · ${t.pedido} #${m.pedidoId.slice(0, 4).toUpperCase()}` : ''}
                 </span>
               </div>
               <strong className={m.monto < 0 ? 'negativo' : 'positivo'}>

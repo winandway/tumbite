@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { Icono } from './Icono';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   type TipoEspera,
@@ -109,7 +110,7 @@ export function FormEspera({
       {campo('correo', v.correo, t.correo, {
         type: 'email',
         autoComplete: 'email',
-        placeholder: 'correo@ejemplo.com',
+        placeholder: correoEjemplo(idioma),
       })}
       {tipo !== 'comensal' &&
         campo('telefono', v.telefono, t.telefono, { type: 'tel', autoComplete: 'tel' })}

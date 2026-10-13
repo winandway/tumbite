@@ -56,3 +56,7 @@ export function esIdioma(valor: unknown): valor is Idioma {
 export function enIdioma<T>(valores: Record<Idioma, T>, idioma: Idioma): T {
   return idioma === 'en' ? valores.en : valores.es;
 }
+
+/** Correo de muestra para las casillas: en inglés no puede salir «correo@ejemplo.com». */
+export const correoEjemplo = (idioma: Idioma) =>
+  idioma === 'en' ? 'email@example.com' : 'correo@ejemplo.com';

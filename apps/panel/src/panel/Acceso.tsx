@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   type Usuario,
@@ -86,7 +87,7 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
           valor={v.correo}
           cambiar={(x) => b.cambiar('correo', x)}
           autoComplete="email"
-          placeholder="correo@ejemplo.com"
+          placeholder={correoEjemplo(idioma)}
           error={errorDe('correo')}
         />
         {modo === 'registro' && (

@@ -350,3 +350,11 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 
 - Guías con capturas nuevas en los dos idiomas: primer pedido (menú y carrito), seguir el pedido, calificar, menú y agotado del restaurante, recibir pedidos, ofertas y niveles del repartidor. Originales en `docs/capturas/` (34 en total).
 - Arreglos que salieron al sacarlas: el plato ya agregado al carrito se marca en verde (antes rojo); el repartidor tiene una **barra verde de avance** a su siguiente nivel (`nivelDe(...).avance`, de 0 a 1; pruebas en `niveles.test.ts` y `colorExito.test.ts`); la tarjeta «Conectado» usa el verde de la marca; las guías ahora dicen los botones reales («Ya lo recogí», «Cómo llegar», la tarjeta «Tu nivel») y la categoría del plato en los dos idiomas.
+
+## Capturas en las últimas guías de texto, regalo aplicado en verde y correo de muestra en inglés (13 oct 2026)
+
+- **Qué se rompía:** el regalo ya aplicado en el carrito salía en rojo (borde `C.acento`), y en inglés las casillas de correo mostraban «correo@ejemplo.com» (nueve formularios: entrar, registro de las apps, olvidé, configuración, mi empresa, lista de espera, franquicias y superadmin). La guía de beneficios decía «Conectar mi banco» y «tu neto», que no existen en la pantalla.
+- **Arreglo:** el regalo aplicado lleva borde y monto en `C.exito` con fondo verde suave; el correo de muestra sale de `correoEjemplo(idioma)` en `packages/compartido/src/idiomas.ts`; las guías usan las palabras exactas de la pantalla («Conectar mi cuenta bancaria», «Te toca» / «Your payout», «Volver a mandar el enlace»).
+- **Candados:** `colorExito.test.ts` (el plato en el carrito y el regalo aplicado en verde) y `correoEjemplo.test.ts` (nadie escribe «correo@ejemplo.com» a mano en las apps ni en el panel). Los dos comprobados en rojo.
+- **Capturas nuevas** (originales en `docs/capturas/`, web en `apps/panel/public/docs/`, español e inglés): mi-restaurante, regalos-restaurante, billetera-restaurante, regalo-carrito, registro-repartidor, olvide-clave, cambiar-clave, correo-estado, borrar-cuenta. Para el estado del correo, el correo de prueba local se cambió solo en pantalla por uno neutro antes de capturar.
+- **No tocar:** el correo de muestra nunca se escribe a mano; siempre `correoEjemplo(idioma)`.

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   type Usuario,
@@ -340,7 +341,7 @@ export function Configuracion({
           valor={v.correoNuevo}
           cambiar={(x) => b.cambiar('correoNuevo', x)}
           autoComplete="email"
-          placeholder="correo@ejemplo.com"
+          placeholder={correoEjemplo(idioma)}
           error={errorDe('correo')}
         />
         <CampoClave

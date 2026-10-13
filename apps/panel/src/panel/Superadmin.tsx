@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   type Usuario,
@@ -534,7 +535,7 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
               <input
                 type="email"
                 defaultValue={f.duenoCorreo}
-                placeholder="correo@ejemplo.com"
+                placeholder={correoEjemplo(idioma)}
                 onBlur={(e) => void guardar(f, { duenoCorreo: e.target.value })}
               />
             </label>
@@ -579,7 +580,7 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
           <input
             type="email"
             value={b.valores.duenoCorreo}
-            placeholder="correo@ejemplo.com"
+            placeholder={correoEjemplo(idioma)}
             onChange={(e) => b.cambiar('duenoCorreo', e.target.value)}
           />
         </label>

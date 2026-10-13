@@ -281,13 +281,16 @@ export default function PantallaCarrito() {
             e.tarjeta,
             {
               borderWidth: 2,
-              borderColor: regaloElegido === r.tipo ? C.acento : 'transparent',
-              backgroundColor: '#FFF1EE',
+              // Regalo aplicado = salió bien: verde (C-VERDE-EXITO).
+              borderColor: regaloElegido === r.tipo ? C.exito : '#2a2a2a',
+              backgroundColor: regaloElegido === r.tipo ? '#E8F5EC' : '#fff',
             },
           ]}
         >
           <Text style={{ fontWeight: '800' }}>{enIdioma(NOMBRE_REGALO, idioma)[r.tipo]}</Text>
-          <Text>
+          <Text
+            style={{ color: regaloElegido === r.tipo ? C.exito : undefined, fontWeight: '700' }}
+          >
             −{formatearDolares(r.valorCentavos, idioma)} {regaloElegido === r.tipo ? '✓' : ''}
           </Text>
         </Pressable>

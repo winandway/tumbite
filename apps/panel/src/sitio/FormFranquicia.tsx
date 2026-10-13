@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   almacenNavegador,
@@ -205,7 +206,7 @@ export function FormFranquicia({ idioma, pais }: { idioma: Idioma; pais?: string
       {texto('correo', t.correo, {
         type: 'email',
         autoComplete: 'email',
-        placeholder: 'correo@ejemplo.com',
+        placeholder: correoEjemplo(idioma),
       })}
       {texto('telefono', t.telefono, { type: 'tel', autoComplete: 'tel' })}
       <div className="ld-dos">

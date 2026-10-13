@@ -1754,7 +1754,8 @@ html {
   stroke: #191919;
 }
 .metrica-fuerte {
-  background: var(--primario) !important;
+  /* Lo que te toca es una buena noticia: verde (C-VERDE-EXITO). */
+  background: #0d7a3a !important;
 }
 .metrica-fuerte span,
 .metrica-fuerte strong {

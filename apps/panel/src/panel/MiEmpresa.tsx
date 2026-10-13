@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   type Usuario,
@@ -105,7 +106,7 @@ export function MiEmpresa({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
       valor={new Map(Object.entries(b.valores)).get(clave) ?? ''}
       cambiar={(x) => b.cambiar(clave, x)}
       error={error?.campo === clave ? error.mensaje : undefined}
-      placeholder={tipo === 'email' ? 'correo@ejemplo.com' : etiqueta}
+      placeholder={tipo === 'email' ? correoEjemplo(idioma) : etiqueta}
     />
   );
 

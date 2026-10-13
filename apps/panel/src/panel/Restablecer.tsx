@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  correoEjemplo,
   ErrorApi,
   type Idioma,
   almacenNavegador,
@@ -99,7 +100,7 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
             valor={b.valores.correo}
             cambiar={(x) => b.cambiar('correo', x)}
             autoComplete="email"
-            placeholder="correo@ejemplo.com"
+            placeholder={correoEjemplo(idioma)}
             error={error || undefined}
           />
           <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>

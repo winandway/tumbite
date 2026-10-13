@@ -131,6 +131,13 @@ const es: SeccionDocs[] = [
         id: 'rewards',
         titulo: 'Regalos: cumpleaños, sellos y bienvenida',
         resumen: 'Los restaurantes premian que vuelvas. Los regalos aparecen solos en el carrito.',
+        capturas: [
+          {
+            src: '/docs/regalo-carrito-es.webp',
+            alt: 'Carrito de la app de Tumbite con el regalo de cumpleaños aplicado en verde y el descuento en el detalle del total.',
+            pie: 'Cuando te toca un regalo, aparece en el carrito y se descuenta del total.',
+          },
+        ],
         pasos: [
           'Pon tu fecha de nacimiento en tu cuenta para recibir el regalo de cumpleaños de tus restaurantes favoritos.',
           'Cada pedido suma un sello en los restaurantes que tienen tarjeta de sellos. Al completarla, un plato gratis.',
@@ -169,6 +176,13 @@ const es: SeccionDocs[] = [
         titulo: 'Poner tu restaurante en Tumbite',
         resumen:
           'Crea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.',
+        capturas: [
+          {
+            src: '/docs/mi-restaurante-es.webp',
+            alt: 'Pantalla «Mi restaurante» del panel de Tumbite con el estado aprobado, el botón para recibir o cerrar pedidos y la ficha con foto, nombre, tipo de comida y teléfono.',
+            pie: '«Mi restaurante»: tu ficha, tu foto de portada y el botón para abrir o cerrar.',
+          },
+        ],
         pasos: [
           'Entra a tumbite.com, toca «Panel» y crea tu cuenta de restaurante con tu correo.',
           'En «Mi restaurante» completa el nombre, el tipo de comida, el teléfono y la dirección. Usa «Usar la ubicación de esta computadora» si estás en el local.',
@@ -288,6 +302,13 @@ const es: SeccionDocs[] = [
         id: 'gifts',
         titulo: 'Regalos y marketing',
         resumen: 'Aparta un porcentaje de tus ventas para premiar a tus clientes fieles.',
+        capturas: [
+          {
+            src: '/docs/regalos-restaurante-es.webp',
+            alt: 'Pantalla «Regalos y marketing» del panel de Tumbite con lo acumulado, lo regalado y lo disponible, el porcentaje para regalos y los regalos de cumpleaños y tarjeta de sellos con su plato.',
+            pie: 'Eliges el porcentaje, los regalos que enciendes y el plato de cada uno.',
+          },
+        ],
         pasos: [
           'En «Regalos y marketing», elige el porcentaje de tus ventas que apartas para regalos (recomendamos 3 %).',
           'Enciende los regalos que quieras: cumpleaños, tarjeta de sellos y bienvenida para clientes que no vuelven.',
@@ -300,10 +321,17 @@ const es: SeccionDocs[] = [
         titulo: 'Resumen del día y tu billetera',
         resumen:
           'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
+        capturas: [
+          {
+            src: '/docs/billetera-restaurante-es.webp',
+            alt: 'Pantalla «Beneficios» del panel de Tumbite con los pedidos del día, las ventas, los regalos, la comisión, lo que te toca en verde, el saldo disponible y los movimientos.',
+            pie: '«Beneficios»: el día de hoy, tu saldo y cada venta con su número de pedido.',
+          },
+        ],
         pasos: [
-          'En «Beneficios» ves el día de hoy: pedidos entregados, ventas, regalos, comisión y tu neto.',
-          'La primera vez, toca «Conectar mi banco»: Stripe te pide tus datos una sola vez, en su página segura.',
-          'Tu saldo se acumula con cada pedido entregado. Retira cuando quieras, desde un dólar.',
+          'En «Beneficios» ves el día de hoy: pedidos entregados, ventas, regalos, comisión y, en verde, lo que te toca.',
+          'La primera vez, toca «Conectar mi cuenta bancaria»: Stripe te pide tus datos una sola vez, en su página segura.',
+          'Tu saldo disponible se acumula con cada pedido entregado y abajo ves cada venta con su número de pedido. Retira cuando quieras, desde un dólar.',
           'Tu plan (Inicial, Crece o Élite) define la comisión. Puedes pedir cambio de plan escribiéndonos.',
         ],
       },
@@ -318,9 +346,16 @@ const es: SeccionDocs[] = [
         id: 'get-started',
         titulo: 'Empezar a repartir',
         resumen: 'Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.',
+        capturas: [
+          {
+            src: '/docs/registro-repartidor-es.webp',
+            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Tumbite con nombre y apellido, correo, celular y contraseña.',
+            pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
+          },
+        ],
         pasos: [
           'Descarga la app de Tumbite para repartidores y crea tu cuenta.',
-          'Conecta tu banco desde «Billetera» (Stripe, una sola vez) para poder retirar tus ganancias.',
+          'Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.',
           'Toca «Conectarme» cuando quieras trabajar. La app usa tu ubicación solo mientras estás conectado.',
           'No hay horarios ni mínimos: te conectas y desconectas cuando quieras.',
         ],
@@ -563,6 +598,18 @@ const es: SeccionDocs[] = [
         id: 'password',
         titulo: 'Olvidé mi contraseña',
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
+        capturas: [
+          {
+            src: '/docs/olvide-clave-es.webp',
+            alt: 'Página «Olvidé mi contraseña» de Tumbite con la casilla del correo y el botón «Mandarme el enlace».',
+            pie: 'Escribe tu correo y te mandamos el enlace.',
+          },
+          {
+            src: '/docs/cambiar-clave-es.webp',
+            alt: 'Tarjeta «Contraseña» en la configuración de Tumbite con la contraseña actual, la nueva y su repetición, cada una con el ojito para verla.',
+            pie: 'Si la recuerdas, la cambias en «Configuración» con el ojito para ver lo que escribes.',
+          },
+        ],
         pasos: [
           'En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».',
           'Escribe tu correo. Si tiene cuenta en Tumbite, te llega un enlace (revisa también la carpeta de spam).',
@@ -574,9 +621,16 @@ const es: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirmar tu correo',
         resumen: 'Al registrarte te llega un enlace para confirmar que el correo es tuyo.',
+        capturas: [
+          {
+            src: '/docs/correo-estado-es.webp',
+            alt: 'Tarjeta «Correo» en la configuración de Tumbite con el aviso «Tu correo todavía no está confirmado» y el enlace «Volver a mandar el enlace».',
+            pie: 'En «Configuración» ves si tu correo está confirmado y pides el enlace otra vez.',
+          },
+        ],
         pasos: [
           'Después de crear tu cuenta, busca el correo «Confirma tu correo de Tumbite».',
-          'Toca el enlace. Vence en dos días; si venció, pide otro desde tu cuenta.',
+          'Toca el enlace. Vence en dos días; si venció, entra a «Configuración» y toca «Volver a mandar el enlace».',
           'Confirmar el correo no bloquea nada: puedes usar la app mientras tanto. Sirve para que te lleguen los recibos y para recuperar tu contraseña.',
         ],
       },
@@ -584,6 +638,13 @@ const es: SeccionDocs[] = [
         id: 'delete',
         titulo: 'Borrar tu cuenta',
         resumen: 'Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.',
+        capturas: [
+          {
+            src: '/docs/borrar-cuenta-es.webp',
+            alt: 'Página «Borrar tu cuenta de Tumbite» con el botón «Borrar mi cuenta ahora» y la primera opción explicada.',
+            pie: 'La página para borrar tu cuenta, con o sin la app.',
+          },
+        ],
         pasos: [
           'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/delete-account.',
           'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
@@ -727,6 +788,13 @@ const en: SeccionDocs[] = [
         id: 'rewards',
         titulo: 'Gifts: birthday, punch card, and win-back',
         resumen: 'Restaurants reward you for coming back. Gifts show up in your cart on their own.',
+        capturas: [
+          {
+            src: '/docs/regalo-carrito-en.webp',
+            alt: 'Cart in the Tumbite app with the birthday gift applied in green and the discount in the total breakdown.',
+            pie: 'When a gift is yours, it shows up in the cart and comes off the total.',
+          },
+        ],
         pasos: [
           'Add your birthday to your account to get the birthday gift from your favorite restaurants.',
           'Every order earns a punch at restaurants with a punch card. Complete it and get a free dish.',
@@ -765,6 +833,13 @@ const en: SeccionDocs[] = [
         titulo: 'Put your restaurant on Tumbite',
         resumen:
           'Create your account, complete your profile, and wait for approval. No lock-in contracts.',
+        capturas: [
+          {
+            src: '/docs/mi-restaurante-en.webp',
+            alt: '“My restaurant” screen in the Tumbite dashboard with the approved status, the button to take or pause orders, and the profile with photo, name, cuisine, and phone.',
+            pie: '“My restaurant”: your profile, your cover photo, and the button to open or close.',
+          },
+        ],
         pasos: [
           'Go to tumbite.com, tap “Dashboard,” and create a restaurant account with your email.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
@@ -883,6 +958,13 @@ const en: SeccionDocs[] = [
         id: 'gifts',
         titulo: 'Gifts and marketing',
         resumen: 'Set aside a share of your sales to reward loyal customers.',
+        capturas: [
+          {
+            src: '/docs/regalos-restaurante-en.webp',
+            alt: '“Gifts and marketing” screen in the Tumbite dashboard with accumulated, given, and available amounts, the gift percentage, and the birthday and punch card gifts with their items.',
+            pie: 'You pick the percentage, the gifts you turn on, and the item for each one.',
+          },
+        ],
         pasos: [
           'In “Gifts and marketing,” choose the share of sales you set aside for gifts (we recommend 3%).',
           'Turn on the gifts you want: birthday, punch card, and win-back for customers who stopped ordering.',
@@ -894,10 +976,17 @@ const en: SeccionDocs[] = [
         id: 'earnings',
         titulo: 'Daily summary and your wallet',
         resumen: 'Orders, sales, commission, and your payout. Cash out to your bank.',
+        capturas: [
+          {
+            src: '/docs/billetera-restaurante-en.webp',
+            alt: '“Earnings” screen in the Tumbite dashboard with today’s orders, sales, gifts, commission, your payout in green, the available balance, and the activity list.',
+            pie: '“Earnings”: today, your balance, and every sale with its order number.',
+          },
+        ],
         pasos: [
-          'In “Earnings” you see today: delivered orders, sales, gifts, commission, and your net.',
-          'The first time, tap “Connect my bank”: Stripe asks for your details once, on its secure page.',
-          'Your balance grows with every delivered order. Cash out anytime, from one dollar.',
+          'In “Earnings” you see today: delivered orders, sales, gifts, commission, and, in green, your payout.',
+          'The first time, tap “Connect my bank account”: Stripe asks for your details once, on its secure page.',
+          'Your available balance grows with every delivered order, and below you see each sale with its order number. Cash out anytime, from one dollar.',
           'Your plan (Starter, Growth, or Elite) sets the commission. Ask us to change plans anytime.',
         ],
       },
@@ -913,9 +1002,16 @@ const en: SeccionDocs[] = [
         titulo: 'Start delivering',
         resumen:
           'Create your account, go online when you want, and accept only what works for you.',
+        capturas: [
+          {
+            src: '/docs/registro-repartidor-en.webp',
+            alt: '“Create account” screen in the Tumbite driver app with full name, email, mobile phone, and password.',
+            pie: 'You create your account in the app with your name, email, phone, and a password.',
+          },
+        ],
         pasos: [
           'Download the Tumbite driver app and create your account.',
-          'Connect your bank from “Wallet” (Stripe, once) so you can cash out your earnings.',
+          'Connect your bank from your wallet with “Connect my bank account” (Stripe, once) so you can cash out your earnings.',
           'Tap “Go online” when you want to work. The app uses your location only while you’re online.',
           'No schedules, no minimums: go online and offline whenever you like.',
         ],
@@ -1159,6 +1255,18 @@ const en: SeccionDocs[] = [
         id: 'password',
         titulo: 'Forgot my password',
         resumen: 'We email you a link. It works once and expires in 30 minutes.',
+        capturas: [
+          {
+            src: '/docs/olvide-clave-en.webp',
+            alt: 'Tumbite “Forgot my password” page with the email field and the “Send me the link” button.',
+            pie: 'Enter your email and we send you the link.',
+          },
+          {
+            src: '/docs/cambiar-clave-en.webp',
+            alt: '“Password” card in Tumbite settings with the current password, the new one, and its repeat, each with the eye icon to show it.',
+            pie: 'If you remember it, change it in “Settings,” with the eye icon to see what you type.',
+          },
+        ],
         pasos: [
           'On the sign-in screen, tap “Forgot your password?”',
           'Enter your email. If it has a Tumbite account, you get a link (check spam too).',
@@ -1170,9 +1278,16 @@ const en: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirm your email',
         resumen: 'When you sign up, you get a link to confirm the email is yours.',
+        capturas: [
+          {
+            src: '/docs/correo-estado-en.webp',
+            alt: '“Email” card in Tumbite settings with the notice “Your email isn’t confirmed yet” and the “Send the link again” link.',
+            pie: 'In “Settings” you see whether your email is confirmed and can ask for the link again.',
+          },
+        ],
         pasos: [
           'After creating your account, look for the email “Confirm your Tumbite email.”',
-          'Tap the link. It expires in two days; if it did, request a new one from your account.',
+          'Tap the link. It expires in two days; if it did, go to “Settings” and tap “Send the link again.”',
           'Confirming doesn’t block anything: you can use the app meanwhile. It makes sure receipts reach you and lets you recover your password.',
         ],
       },
@@ -1180,6 +1295,13 @@ const en: SeccionDocs[] = [
         id: 'delete',
         titulo: 'Delete your account',
         resumen: 'From the account menu, in the three dots. Your personal data is removed.',
+        capturas: [
+          {
+            src: '/docs/borrar-cuenta-en.webp',
+            alt: '“Delete your Tumbite account” page with the “Delete my account now” button and the first option explained.',
+            pie: 'The page to delete your account, with or without the app.',
+          },
+        ],
         pasos: [
           'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/delete-account.',
           'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',

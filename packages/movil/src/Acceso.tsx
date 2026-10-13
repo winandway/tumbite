@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Linking, Text } from 'react-native';
-import { ErrorApi, enIdioma, enIdiomaDireccion, useBorrador } from '@tumbite/compartido';
+import {
+  correoEjemplo,
+  ErrorApi,
+  enIdioma,
+  enIdiomaDireccion,
+  useBorrador,
+} from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
@@ -96,7 +102,7 @@ export function Acceso({
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
-        placeholder="correo@ejemplo.com"
+        placeholder={correoEjemplo(idioma)}
         error={errorDe('correo')}
       />
       {registro && (
