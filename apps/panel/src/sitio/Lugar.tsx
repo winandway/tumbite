@@ -10,7 +10,9 @@ import {
   type Lugar as DatosLugar,
   ciudadDe,
   cocinaDe,
+  ciudadEnIdioma,
   paisDe,
+  paisEnFrase,
 } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 
@@ -54,6 +56,8 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
     );
   }
   const nombre = enIdioma(lugar.nombre, idioma);
+  // Dentro de una frase en inglés: «in the Netherlands», no «in Netherlands».
+  const frase = pais ? paisEnFrase(pais, idioma) : nombre;
   const activo = lugar.estado === 'activo';
   const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug) : [];
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
@@ -71,20 +75,22 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
       <span className={`ld-etiqueta ${activo ? 'lugar-activo' : 'lugar-pronto'}`}>
         <Icono nombre={activo ? 'listo' : 'reloj'} tamano={14} /> {activo ? t.activo : t.pronto}
       </span>
-      <h1>{(activo ? t.tituloActivo : t.tituloPronto).replace('{lugar}', nombre)}</h1>
+      <h1>{(activo ? t.tituloActivo : t.tituloPronto).replace('{lugar}', frase)}</h1>
       <p className="ld-entrada">
-        {(activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, nombre)}
-        {paisDeCiudad
-          ? ` ${t.enPais.replace('{pais}', enIdioma(paisDeCiudad.nombre, idioma))}`
-          : ''}
+        {(activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, frase)}
+        {paisDeCiudad ? ` ${t.enPais.replace('{pais}', paisEnFrase(paisDeCiudad, idioma))}` : ''}
       </p>
       {pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
         <section className="lugar-datos">
-          <h2>{t.primerasCiudades.replace('{lugar}', nombre)}</h2>
+          <h2>{t.primerasCiudades.replace('{lugar}', frase)}</h2>
           <p>
-            {t.primerasCiudadesTexto
-              .replace('{lugar}', nombre)
-              .replace('{ciudades}', listaHumana(pais.primerasCiudades, idioma))}
+            {t.primerasCiudadesTexto.replace('{lugar}', frase).replace(
+              '{ciudades}',
+              listaHumana(
+                pais.primerasCiudades.map((c) => ciudadEnIdioma(c, idioma)),
+                idioma,
+              ),
+            )}
           </p>
           <dl>
             {pais.idioma && (
@@ -110,7 +116,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
       )}
       {ciudadesDelPais.length > 0 && (
         <section className="lugar-ciudades">
-          <h2>{t.ciudadesDe.replace('{lugar}', nombre)}</h2>
+          <h2>{t.ciudadesDe.replace('{lugar}', frase)}</h2>
           <ul>
             {ciudadesDelPais.map((c) => (
               <li key={c.slug} className={c.estado}>

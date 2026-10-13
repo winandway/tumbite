@@ -1,4 +1,4 @@
-import type { Idioma } from '@tumbite/compartido';
+import { type Idioma, enIdioma } from '@tumbite/compartido';
 
 /**
  * Dónde está Tumbite y a dónde va. Un solo lugar: el pie de página, las páginas por país y
@@ -386,3 +386,45 @@ export const COCINAS: { slug: string; nombre: Record<Idioma, string> }[] = [
 export const paisDe = (slug: string) => PAISES.find((p) => p.slug === slug) ?? null;
 export const ciudadDe = (slug: string) => CIUDADES.find((c) => c.slug === slug) ?? null;
 export const cocinaDe = (slug: string) => COCINAS.find((c) => c.slug === slug) ?? null;
+
+/** Nombre en inglés de las ciudades que en español se escriben distinto (Berlín → Berlin). */
+const CIUDAD_EN = new Map([
+  ['Ciudad de México', 'Mexico City'],
+  ['La Habana', 'Havana'],
+  ['Ciudad de Guatemala', 'Guatemala City'],
+  ['Antigua Guatemala', 'Antigua'],
+  ['Ciudad de Panamá', 'Panama City'],
+  ['Río de Janeiro', 'Rio de Janeiro'],
+  ['Brasilia', 'Brasília'],
+  ['Lisboa', 'Lisbon'],
+  ['Oporto', 'Porto'],
+  ['Roma', 'Rome'],
+  ['Milán', 'Milan'],
+  ['Nápoles', 'Naples'],
+  ['París', 'Paris'],
+  ['Marsella', 'Marseille'],
+  ['Berlín', 'Berlin'],
+  ['Múnich', 'Munich'],
+  ['Hamburgo', 'Hamburg'],
+  ['Ámsterdam', 'Amsterdam'],
+  ['Róterdam', 'Rotterdam'],
+  ['La Haya', 'The Hague'],
+  ['Londres', 'London'],
+  ['Mánchester', 'Manchester'],
+  ['Bucarest', 'Bucharest'],
+  ['Ebebiyín', 'Ebebiyin'],
+  ['Santa Cruz de la Sierra', 'Santa Cruz'],
+  ['Santiago de los Caballeros', 'Santiago'],
+]);
+export const ciudadEnIdioma = (ciudad: string, idioma: Idioma) =>
+  idioma === 'en' ? (CIUDAD_EN.get(ciudad) ?? ciudad) : ciudad;
+
+/** En inglés algunos países van con «the» dentro de una frase: «in the Netherlands». */
+const CON_ARTICULO = new Set([
+  'united-states',
+  'dominican-republic',
+  'netherlands',
+  'united-kingdom',
+]);
+export const paisEnFrase = (p: Lugar, idioma: Idioma) =>
+  idioma === 'en' && CON_ARTICULO.has(p.slug) ? `the ${p.nombre.en}` : enIdioma(p.nombre, idioma);

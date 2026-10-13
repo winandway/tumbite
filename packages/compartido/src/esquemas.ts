@@ -24,7 +24,7 @@ export const esquemaRegistro = z
     rol: z.enum(ROLES_PUBLICOS),
     telefono: z.string().trim().max(30).optional(),
     fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).optional(),
-    idioma: z.enum(['es', 'en']).default('es'),
+    idioma: z.enum(['es', 'en']).default('en'),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

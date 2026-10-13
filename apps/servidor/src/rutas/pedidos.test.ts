@@ -125,7 +125,7 @@ describe('pedidos y pagos', () => {
     const { m, cliente, pedidoBase } = await escenario({});
     const r = await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
     expect(r.estado).toBe(422);
-    expect(r.datos.error).toContain('pagos todavía no están activados');
+    expect(r.datos.error).toContain('Payments aren’t turned on yet');
   });
 
   it('no se puede pedir en un restaurante cerrado ni un plato agotado', async () => {

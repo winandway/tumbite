@@ -55,7 +55,7 @@ describe('correos que el sitio manda solo', () => {
       .correo as string;
     const c = de(enviados, correo)[0];
     expect(c?.from.address).toBe(REMITENTES.avisos.address);
-    expect(c?.subject).toContain('Confirma');
+    expect(c?.subject).toContain('Confirm your Tumbite email');
     const token = c?.text.match(/confirm-email\?token=(\S+)/)?.[1] ?? '';
     expect((await m.llamar('POST', '/datos/cuentas/confirmar', { token })).estado).toBe(200);
     const f = await m.DB.prepare('SELECT correo_confirmado_en FROM usuarios WHERE id = ?')
@@ -180,7 +180,7 @@ describe('correos que el sitio manda solo', () => {
     expect(recibo?.text).toContain('2 × Cubano');
     expect(recibo?.text).toContain('Total:');
     const aviso = nuevos.find((e) => e !== recibo);
-    expect(aviso?.subject).toContain('Pedido nuevo pagado');
+    expect(aviso?.subject).toContain('New paid order');
     expect(aviso?.text).toContain('Sin cebolla');
   });
 });

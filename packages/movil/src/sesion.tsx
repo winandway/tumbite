@@ -37,11 +37,21 @@ type Sesion = {
 
 const Contexto = createContext<Sesion | null>(null);
 
+/** El inglés es el principal: español solo si el teléfono está en español (hasta que la persona elija). */
+function idiomaDelTelefono(): Idioma {
+  try {
+    const local = Intl.DateTimeFormat().resolvedOptions().locale ?? '';
+    return local.toLowerCase().startsWith('es') ? 'es' : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
 export function SesionProvider({ roles, children }: { roles: Rol[]; children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [idioma, setIdioma] = useState<Idioma>('es');
+  const [idioma, setIdioma] = useState<Idioma>(idiomaDelTelefono);
 
   const api = useMemo(
     () => crearApi({ base: URL_SERVIDOR, token: () => token, idioma: () => idioma }),

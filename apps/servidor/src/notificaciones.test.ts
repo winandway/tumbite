@@ -136,7 +136,7 @@ describe('avisos al celular', () => {
     );
     expect(mandados.at(-1)).toMatchObject({
       to: 'ExponentPushToken[cliente]',
-      title: 'Tu pedido está en cocina',
+      title: 'Your order is being prepared',
     });
 
     await m.llamar(
@@ -147,17 +147,17 @@ describe('avisos al celular', () => {
     );
     await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     const oferta = mandados.find((x) => x.to === 'ExponentPushToken[rep]');
-    expect(oferta?.title).toContain('Entrega nueva');
+    expect(oferta?.title).toContain('New delivery');
 
     await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
     await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
     expect(mandados.at(-1)).toMatchObject({
       to: 'ExponentPushToken[cliente]',
-      body: 'Pedro ya recogió tu comida.',
+      body: 'Pedro picked up your food.',
     });
     await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token);
-    expect(mandados.at(-1)?.title).toContain('Entregado');
+    expect(mandados.at(-1)?.title).toContain('Delivered');
     expect(mandados.at(-1)?.data.pedidoId).toBe(id);
   });
 

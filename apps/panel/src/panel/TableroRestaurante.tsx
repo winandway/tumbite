@@ -22,6 +22,7 @@ const T = {
     calificacion: 'Calificación de tus clientes',
     sinCalificacion: 'Todavía no hay calificaciones.',
     opiniones: 'opiniones',
+    opinion: 'opinión',
   },
   en: {
     hola: 'Hi',
@@ -41,6 +42,7 @@ const T = {
     calificacion: 'Your customers’ rating',
     sinCalificacion: 'No ratings yet.',
     opiniones: 'reviews',
+    opinion: 'review',
   },
 };
 
@@ -146,7 +148,7 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
                   <>
                     {x.calificacion} / 5{' '}
                     <small>
-                      ({x.calificaciones} {t.opiniones})
+                      ({x.calificaciones} {x.calificaciones === 1 ? t.opinion : t.opiniones})
                     </small>
                   </>
                 )}

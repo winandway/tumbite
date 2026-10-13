@@ -37,6 +37,11 @@ describe('Docs públicos', () => {
       'ordering/cancel-order',
       'restaurants/verify',
       'drivers/verify',
+      'restaurants/dashboard',
+      'ordering/my-account',
+      'business/franchises',
+      'drivers/wallet',
+      'account/support',
     ])
       expect(todas).toContain(g);
   });

@@ -10,7 +10,7 @@ export function leerIdioma(): Idioma {
   } catch {
     // Almacenamiento bloqueado (ventana privada): no es un error, se usa el idioma por defecto.
   }
-  return navigator.language?.startsWith('en') ? 'en' : IDIOMA_POR_DEFECTO;
+  return navigator.language?.startsWith('es') ? 'es' : IDIOMA_POR_DEFECTO;
 }
 
 export function guardarIdioma(idioma: Idioma): void {

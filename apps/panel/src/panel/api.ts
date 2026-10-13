@@ -1,10 +1,10 @@
 import { crearApi } from '@tumbite/compartido';
-import { leerIdioma } from '../idioma';
 
 /** El panel vive en el mismo sitio que el servidor: la sesión viaja en una cookie segura. */
 export const api = crearApi({
   base: '',
-  idioma: leerIdioma,
+  // El idioma que se está viendo: en las páginas públicas lo decide la dirección (/es o no).
+  idioma: () => (document.documentElement.lang === 'es' ? 'es' : 'en'),
   pase: () => (window as unknown as { tumbitePase?: string }).tumbitePase,
 });
 

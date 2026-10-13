@@ -100,6 +100,7 @@ try {
   ];
 
   let n = 0;
+  const espanolEnIngles = [];
   // Cada página sale dos veces: en inglés, el idioma principal (/country/brazil), y en español
   // (/es/country/brazil). Cada versión dice cuál es la otra (hreflang). Candado C-INGLES-PRINCIPAL.
   const enEspanol = (ruta) => (ruta === '/' ? '/es' : `/es${ruta}`);
@@ -180,6 +181,16 @@ try {
               .join('') +
             '</head>',
         );
+      // Candado C-INGLES-PRINCIPAL: una página en inglés no puede traer frases en español.
+      if (lengua === 'en') {
+        const palabras =
+          /\b(el|la|los|las|del|para|con|tus|que|una|por|pedido|pedidos|restaurante|repartidor|comida|está|más|también|aquí|nuestro|nuestra)\b/gi;
+        for (const trozo of html.replace(/<[^>]+>/g, '\n').split('\n')) {
+          const t = trozo.trim();
+          if (t.length > 3 && (t.match(palabras) ?? []).length >= 2)
+            espanolEnIngles.push(`${url}: ${t.slice(0, 90)}`);
+        }
+      }
       paginas.push({ ruta: url, base: ruta, lengua, titulo, descripcion });
       // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /country/colombia
       // tal cual, sin redirigir a /country/colombia/ (una barra de más rompe la canónica y el SEO).
@@ -189,6 +200,11 @@ try {
       n++;
     }
   console.log(`prerender: ${n} páginas públicas escritas en dist/`);
+  if (espanolEnIngles.length) {
+    throw new Error(
+      `Hay texto en español en páginas en inglés (C-INGLES-PRINCIPAL):\n${espanolEnIngles.join('\n')}`,
+    );
+  }
 
   // Mapa del sitio: sale de la misma lista de páginas (nunca más a mano ni desactualizado).
   const hoy = new Date().toISOString().slice(0, 10);

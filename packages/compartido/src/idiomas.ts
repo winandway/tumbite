@@ -9,7 +9,8 @@ export const IDIOMAS = [
 
 export type Idioma = (typeof IDIOMAS)[number]['codigo'];
 
-export const IDIOMA_POR_DEFECTO: Idioma = 'es';
+/** El inglés es el idioma principal de Tumbite (regla de Richard, 13 oct 2026). */
+export const IDIOMA_POR_DEFECTO: Idioma = 'en';
 
 const TEXTOS = {
   es: {

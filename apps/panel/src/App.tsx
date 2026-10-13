@@ -42,7 +42,8 @@ export function App() {
   // En las páginas públicas manda la dirección; en el panel, lo que la persona eligió.
   const ruta = sinIdioma(rutaReal);
   const [idiomaGuardado, guardarIdioma] = useIdioma();
-  const publica = !ruta.startsWith('/panel');
+  // El panel y las conversaciones privadas (/t/…) no tienen versión /es: usan lo que la persona eligió.
+  const publica = !ruta.startsWith('/panel') && !ruta.startsWith('/t/');
   const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
     document.documentElement.lang = idioma;

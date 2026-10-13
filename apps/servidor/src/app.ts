@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
+import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
@@ -69,7 +70,7 @@ app.use(
   '/datos/*',
   cors({
     origin: (origen) => (/^http:\/\/localhost:(8081|8082|8083)$/.test(origen) ? origen : null),
-    allowHeaders: ['content-type', 'authorization', 'cf-turnstile-response'],
+    allowHeaders: ['content-type', 'authorization', 'cf-turnstile-response', 'x-idioma'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   }),
@@ -199,7 +200,16 @@ export function raizDeApp(ruta: string): string {
 }
 
 app.notFound(async (c) => {
-  if (c.req.path.startsWith('/datos/')) return c.json({ error: 'Esta dirección no existe.' }, 404);
+  if (c.req.path.startsWith('/datos/'))
+    return c.json(
+      {
+        error: enIdiomaDePeticion(
+          'Esta dirección no existe.',
+          idiomaDeLaPeticion((n) => c.req.header(n)),
+        ),
+      },
+      404,
+    );
   if (!c.env.ASSETS) return c.text('No encontrado', 404);
   let res = await c.env.ASSETS.fetch(c.req.raw);
   const esPagina =
@@ -246,8 +256,15 @@ app.route('/', media);
 app.route('/datos', respaldo);
 
 app.onError((err, c) => {
+  // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).
+  const idioma = idiomaDeLaPeticion((n) => c.req.header(n));
   if (err instanceof ErrorDatos)
-    return c.json({ error: err.message, campo: err.campo }, err.estado);
+    return c.json({ error: enIdiomaDePeticion(err.message, idioma), campo: err.campo }, err.estado);
   console.error('error no controlado', err);
-  return c.json({ error: 'Algo salió mal de nuestro lado. Ya lo estamos revisando.' }, 500);
+  return c.json(
+    {
+      error: enIdiomaDePeticion('Algo salió mal de nuestro lado. Ya lo estamos revisando.', idioma),
+    },
+    500,
+  );
 });

@@ -325,3 +325,12 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **Quien eligió español** en el selector vuelve solo a `/es/…` al entrar sin prefijo.
 - **Pruebas (comprobadas en rojo):** `rutasPublicas.test.ts`, `rutaIdioma.test.tsx`, `app.test.ts` bloque C-INGLES-PRINCIPAL (cada dirección vieja con su 301 y lo nuevo sin redirigir), Landing, Pie y Docs con las direcciones nuevas.
 - **No tocar:** las rutas internas de la API bajo `/datos` siguen como estaban (no se ven en el navegador y las apps ya las usan). La regla de nombres «Soporte» para nuestras cuentas tampoco cambia.
+
+### C-INGLES-PRINCIPAL, segunda parte: nada solo en español dentro de las pantallas (13 oct 2026)
+
+- **Mensajes del servidor:** se escriben en español en el código y salen en inglés cuando la app o el panel lo piden (cabecera `x-idioma`, que ahora manda el cliente de la API en cada petición; sin cabecera manda `accept-language` y, si no, inglés). Tabla en `apps/servidor/src/mensajesEn.ts`; la traducción se hace en `app.onError`, en el 404 de `/datos` y en el límite de intentos. **Prueba `mensajesEn.test.ts`** (comprobada en rojo): busca cada `new ErrorDatos('…')` y cada mensaje de validación y falla si alguno no tiene su inglés.
+- **Idioma por defecto = inglés:** `IDIOMA_POR_DEFECTO` en compartido, el registro (`esquemaRegistro`), el panel (español solo si el navegador está en español) y las apps (idioma del teléfono; si no es español, inglés).
+- **Páginas de países en inglés:** ciudades con su nombre en inglés (Berlin, Mexico City, The Hague…) y «the» delante de los países que lo llevan (`ciudadEnIdioma`, `paisEnFrase` en `cobertura.ts`).
+- **Candado en la publicación:** `scripts/prerender.mjs` detiene el build si una página en inglés trae una frase en español (comprobado en rojo).
+- **Conversaciones privadas `/t/…`:** salen en el idioma que la persona eligió (antes siempre en inglés).
+- **Docs nuevas:** tablero del restaurante, «Mi cuenta» del cliente, billetera del repartidor, ayuda con enlace privado y franquicias (sección «Para emprendedores»), con capturas en los dos idiomas.

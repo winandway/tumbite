@@ -18,7 +18,7 @@ export type Guia = {
   nota?: string;
 };
 export type SeccionDocs = {
-  id: 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'account';
+  id: 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'business' | 'account';
   titulo: string;
   icono: NombreIcono;
   guias: Guia[];
@@ -84,6 +84,29 @@ const es: SeccionDocs[] = [
           'La devolución sale de inmediato a la misma tarjeta. Según tu banco, puede tardar de 5 a 10 días hábiles en verse en tu estado de cuenta.',
         ],
         nota: 'Si el restaurante no confirma tu pedido en 10 minutos, lo cancelamos y te devolvemos el dinero sin que tengas que hacer nada.',
+      },
+      {
+        id: 'my-account',
+        titulo: 'Mi cuenta: tus pedidos, tus tarjetas y tus datos',
+        resumen:
+          'Todos tus pedidos con su estado, las tarjetas que guardaste y tus datos, en un solo lugar dentro de la app.',
+        explicacion: [
+          'En «Mi cuenta» tienes el historial completo: cada pedido con el restaurante, la fecha, el total y cómo terminó. Tócalo para volver a verlo o para reportar un problema con ese pedido.',
+          'Ahí también están las tarjetas que guardaste al pagar, para pedir más rápido la próxima vez. Puedes quitar una cuando quieras desde los tres puntos; se te pide confirmar antes.',
+        ],
+        capturas: [
+          {
+            src: '/docs/mi-cuenta-es.webp',
+            alt: 'Pantalla «Mi cuenta» de la app de Tumbite con el nombre y el correo del cliente y la lista de sus pedidos con restaurante, fecha, estado y total.',
+            pie: 'Mi cuenta: tus datos arriba y todos tus pedidos debajo.',
+          },
+        ],
+        pasos: [
+          'En la pantalla de inicio de la app, toca «Mi cuenta».',
+          'Baja para ver tus pedidos. Toca cualquiera para abrirlo.',
+          'En «Mis tarjetas», abre los tres puntos de una tarjeta y elige «Quitar esta tarjeta» si ya no la usas.',
+          'Para borrar tu cuenta por completo, abre el menú de los tres puntos de la app y elige «Borrar mi cuenta».',
+        ],
       },
       {
         id: 'rewards',
@@ -163,6 +186,30 @@ const es: SeccionDocs[] = [
           'Si nadie acepta un pedido, te avisamos al celular a los 3 y a los 6 minutos. A los 10 lo cancelamos y le devolvemos el dinero al cliente: es mejor un pedido cancelado a tiempo que un cliente esperando.',
           'Si no puedes atender un pedido, abre los tres puntos y elige «Rechazar pedido». El cliente recibe todo su dinero de vuelta.',
           'También puedes usar la app de Tumbite para restaurantes en una tablet o un celular: misma alarma, mismos pedidos.',
+        ],
+      },
+      {
+        id: 'dashboard',
+        titulo: 'Tu tablero: cómo va tu restaurante',
+        resumen:
+          'Pedidos, ventas, lo que recibes, lo que más se vende, el tiempo real de tu cocina y lo que opinan tus clientes, de un vistazo.',
+        explicacion: [
+          'Al entrar a tu panel lo primero que ves es tu tablero. Está pensado para que en diez segundos sepas cómo va el negocio, sin sacar cuentas.',
+          'Arriba, cuántos pedidos están esperando ahora mismo, con un enlace directo a ellos. Debajo, los últimos 7 y 30 días: pedidos, ventas, lo que recibes después de la comisión y el ticket promedio.',
+          'Más abajo, los platos que más se venden y el tiempo real de tu cocina comparado con el que prometes al aceptar. Si cocinas más rápido de lo que prometes, tus clientes reciben antes y te califican mejor.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tablero-restaurante-es.webp',
+            alt: 'Tablero del restaurante en Tumbite con pedidos esperando, ventas de 7 y 30 días, lo que recibe, ticket promedio, platos más vendidos, tiempo real de cocina y calificación.',
+            pie: 'Tu tablero al entrar al panel: lo importante del negocio en una sola pantalla.',
+          },
+        ],
+        pasos: [
+          'Entra a tu panel. El tablero aparece en «Inicio».',
+          'Si hay pedidos esperando, toca «Ver pedidos» para atenderlos.',
+          'Revisa una vez por semana lo que más se vende: es la mejor pista para tus promociones y tus regalos.',
+          'Compara tu tiempo real de cocina con el prometido. Si siempre tardas más, promete unos minutos más al aceptar: el semáforo y tus clientes lo agradecen.',
         ],
       },
       {
@@ -281,12 +328,25 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'wallet',
-        titulo: 'Tu billetera y los retiros',
-        resumen: 'Saldo, historial del día y retiro a tu banco cuando quieras.',
+        titulo: 'Tu billetera: lo que ganas y cómo lo retiras',
+        resumen:
+          'Como la app de un banco: tu saldo, lo ganado, las propinas y cada movimiento con su pedido. Retiras a tu banco cuando quieras.',
+        explicacion: [
+          'Cada entrega suma dos movimientos: el pago de la entrega y la propina, que es 100 % tuya y nunca se usa para completar tu pago. Todo queda anotado con la fecha y el número del pedido, para que puedas revisarlo cuando quieras.',
+          'Arriba ves lo disponible para retirar y, debajo, lo ganado, las propinas y lo retirado en el mes. Tus datos bancarios los escribes en Stripe, el procesador de pagos: Tumbite nunca los ve.',
+        ],
+        capturas: [
+          {
+            src: '/docs/billetera-repartidor-es.webp',
+            alt: 'Billetera del repartidor en la app de Tumbite con el saldo disponible, lo ganado, las propinas y lo retirado en el mes, y la lista de movimientos con propina y entrega de cada pedido.',
+            pie: 'Tu billetera: saldo arriba y cada movimiento con su pedido.',
+          },
+        ],
         pasos: [
-          'En «Billetera» ves tu saldo y cada movimiento: pago del pedido, propina y complementos.',
+          'Abre el menú de arriba a la izquierda y toca «Mi billetera», o toca «Ver mi billetera» en la pantalla de inicio.',
+          'La primera vez, toca «Conectar mi cuenta bancaria» y completa tus datos en Stripe. Se hace una sola vez.',
           'Retira cuando quieras, desde un dólar. El dinero llega a tu banco por Stripe.',
-          'Si algo no cuadra, escríbenos desde el menú de la cuenta: te contesta una persona.',
+          'Si un movimiento no cuadra, toca «Tengo un problema» y te contesta una persona.',
         ],
       },
     ],
@@ -349,6 +409,36 @@ const es: SeccionDocs[] = [
     ],
   },
   {
+    id: 'business',
+    titulo: 'Para emprendedores',
+    icono: 'resumen',
+    guias: [
+      {
+        id: 'franchises',
+        titulo: 'Franquicias: lleva Tumbite a tu ciudad',
+        resumen:
+          'Cada ciudad nueva abre con un socio local. Lo que pagas no es una marca: es un lanzamiento completo, con flota, entrenamiento, tablets y los primeros clientes.',
+        explicacion: [
+          'Tumbite crece ciudad por ciudad, en cualquier país. Cada ciudad se abre con una franquicia: un socio que conoce su ciudad y pone el capital del lanzamiento.',
+          'Con ese dinero se compra un arranque completo: una flota propia de 25 a 50 motos para que ningún pedido se quede sin repartidor, repartidores entrenados en seguridad vial, higiene y trato al cliente, una tablet lista para cada restaurante con el menú cargado en dos idiomas, y la búsqueda de los primeros clientes con lista de espera y promociones de lanzamiento.',
+          'El franquiciado tiene su propio panel con los números de su ciudad: pedidos, ventas, restaurantes, repartidores y casos de soporte. El valor de cada franquicia depende del tamaño de la ciudad.',
+        ],
+        capturas: [
+          {
+            src: '/docs/franquicias-es.webp',
+            alt: 'Sección de franquicias de Tumbite: un local con la marca Tumbite y las cuatro cosas que paga la franquicia: flota propia, repartidores entrenados, kit para cada restaurante y los primeros clientes.',
+            pie: 'Lo que incluye una franquicia de Tumbite en cada ciudad.',
+          },
+        ],
+        pasos: [
+          'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
+          'Llena el formulario «Quiero una franquicia de Tumbite»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
+          'Te llega un correo con el enlace privado a tu caso. Nuestro equipo te prepara los números de tu ciudad y te responde por ahí.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'account',
     titulo: 'Tu cuenta',
     icono: 'proteccion',
@@ -387,12 +477,26 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'support',
-        titulo: 'Soporte humano',
-        resumen: 'Personas reales, rápido. Por WhatsApp o por correo.',
+        titulo: 'Ayuda de una persona real, con tu propio enlace',
+        resumen:
+          'Reporta un problema desde la app o escríbenos: cada caso tiene su conversación privada, y te avisamos por correo cada vez que respondemos.',
+        explicacion: [
+          'Cuando algo sale mal, lo último que quieres es repetir la historia. Por eso cada reporte abre un caso con su propio enlace privado: ahí ves lo que escribiste, lo que te respondemos y puedes contestar cuando quieras, desde cualquier dispositivo.',
+          'El enlace es largo a propósito, para que nadie lo pueda adivinar, y no aparece en los buscadores. Si el reporte es de un pedido, el número del pedido viaja solo: no hace falta explicarlo.',
+          'Los restaurantes tienen además una burbuja de ayuda en su panel, con respuestas al instante y la opción de hablar con una persona.',
+        ],
+        capturas: [
+          {
+            src: '/docs/ticket-es.webp',
+            alt: 'Conversación privada de un reporte en Tumbite: el mensaje del cliente y la respuesta del equipo de Tumbite, con la casilla para responder.',
+            pie: 'Tu caso tiene su propia página privada: ves la respuesta y contestas desde ahí.',
+          },
+        ],
         pasos: [
-          'En la landing y en el menú de la cuenta de las apps está el botón de WhatsApp de soporte.',
+          'Desde un pedido, toca «¿Problemas con tu pedido? Cuéntanos». Repartidores: «Tengo un problema». Restaurantes: los tres puntos del pedido, «Reportar un problema».',
+          'Escribe qué pasó y envíalo. Te llega un correo con el enlace a tu caso.',
+          'Cuando respondamos, te avisamos por correo. Abre el enlace para leer y contestar.',
           'También puedes escribir a support@tumbite.com.',
-          'Para un problema con un pedido, usa el botón «¿Problemas con tu pedido?» en la pantalla del pedido: el número del pedido viaja solo.',
         ],
       },
     ],
@@ -460,6 +564,29 @@ const en: SeccionDocs[] = [
           'The refund goes out immediately to the same card. Depending on your bank, it can take 5 to 10 business days to show on your statement.',
         ],
         nota: 'If the restaurant doesn’t confirm your order within 10 minutes, we cancel it and refund you without you lifting a finger.',
+      },
+      {
+        id: 'my-account',
+        titulo: 'My account: your orders, cards, and details',
+        resumen:
+          'All your orders and their status, the cards you saved, and your details, in one place in the app.',
+        explicacion: [
+          'In “My account” you have your full history: every order with the restaurant, date, total, and how it ended. Tap one to see it again or to report a problem with that order.',
+          'That’s also where your saved cards are, so you can order faster next time. You can remove one anytime from the three-dot menu; you’ll be asked to confirm first.',
+        ],
+        capturas: [
+          {
+            src: '/docs/mi-cuenta-en.webp',
+            alt: '“My account” screen in the Tumbite app with the customer’s name and email and the list of orders with restaurant, date, status, and total.',
+            pie: 'My account: your details at the top and all your orders below.',
+          },
+        ],
+        pasos: [
+          'On the app’s home screen, tap “My account.”',
+          'Scroll down to see your orders. Tap any one to open it.',
+          'Under “My cards,” open a card’s three-dot menu and choose “Remove this card” if you no longer use it.',
+          'To delete your account completely, open the app’s three-dot menu and choose “Delete my account.”',
+        ],
       },
       {
         id: 'rewards',
@@ -541,6 +668,30 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'dashboard',
+        titulo: 'Your dashboard: how your restaurant is doing',
+        resumen:
+          'Orders, sales, your payout, best sellers, your real kitchen time, and what customers think, at a glance.',
+        explicacion: [
+          'When you open your dashboard, the first thing you see is your overview. It’s designed so you know how business is going in ten seconds, without doing the math.',
+          'At the top, how many orders are waiting right now, with a direct link to them. Below, the last 7 and 30 days: orders, sales, what you receive after commission, and your average order.',
+          'Further down, your best-selling items and your real kitchen time compared with the time you promise when accepting. Cook faster than you promise and customers get their food sooner and rate you higher.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tablero-restaurante-en.webp',
+            alt: 'Tumbite restaurant dashboard showing orders waiting, 7- and 30-day sales, payout, average order, best sellers, real kitchen time, and rating.',
+            pie: 'Your dashboard when you sign in: the essentials of your business on one screen.',
+          },
+        ],
+        pasos: [
+          'Open your dashboard. The overview is under “Home.”',
+          'If orders are waiting, tap “See orders” to handle them.',
+          'Check your best sellers once a week: they’re the best guide for your promotions and gifts.',
+          'Compare your real kitchen time with the promised time. If you’re always slower, promise a few more minutes when accepting: the traffic light and your customers will thank you.',
+        ],
+      },
+      {
         id: 'verify',
         titulo: 'Verify your restaurant',
         resumen:
@@ -581,7 +732,7 @@ const en: SeccionDocs[] = [
         titulo: 'Daily summary and your wallet',
         resumen: 'Orders, sales, commission, and your payout. Cash out to your bank.',
         pasos: [
-          'In “Benefits” you see today: delivered orders, sales, gifts, commission, and your net.',
+          'In “Earnings” you see today: delivered orders, sales, gifts, commission, and your net.',
           'The first time, tap “Connect my bank”: Stripe asks for your details once, on its secure page.',
           'Your balance grows with every delivered order. Cash out anytime, from one dollar.',
           'Your plan (Starter, Growth, or Elite) sets the commission. Ask us to change plans anytime.',
@@ -657,12 +808,25 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'wallet',
-        titulo: 'Your wallet and cash-outs',
-        resumen: 'Balance, today’s history, and cash-out to your bank whenever you want.',
+        titulo: 'Your wallet: what you earn and how you cash out',
+        resumen:
+          'Like a banking app: your balance, earnings, tips, and every movement with its order. Cash out to your bank whenever you want.',
+        explicacion: [
+          'Every delivery adds two movements: the delivery pay and the tip, which is 100% yours and never used to top up your pay. Everything is logged with the date and order number, so you can check it anytime.',
+          'At the top you see what’s available to withdraw and, below, what you earned, your tips, and what you withdrew this month. You enter your bank details in Stripe, our payment processor: Tumbite never sees them.',
+        ],
+        capturas: [
+          {
+            src: '/docs/billetera-repartidor-en.webp',
+            alt: 'Driver wallet in the Tumbite app showing the available balance, monthly earnings, tips, and withdrawals, and the list of tip and delivery movements for each order.',
+            pie: 'Your wallet: balance at the top and every movement with its order.',
+          },
+        ],
         pasos: [
-          'In “Wallet” you see your balance and every movement: order pay, tip, and top-ups.',
-          'Cash out anytime, from one dollar. The money reaches your bank through Stripe.',
-          'If something’s off, write to us from the account menu: a real person answers.',
+          'Open the menu at the top left and tap “My wallet,” or tap “See my wallet” on the home screen.',
+          'The first time, tap “Connect my bank account” and fill in your details in Stripe. You only do this once.',
+          'Cash out whenever you want, from one dollar. The money reaches your bank through Stripe.',
+          'If a movement doesn’t look right, tap “I have a problem” and a real person will answer.',
         ],
       },
     ],
@@ -725,6 +889,36 @@ const en: SeccionDocs[] = [
     ],
   },
   {
+    id: 'business',
+    titulo: 'For entrepreneurs',
+    icono: 'resumen',
+    guias: [
+      {
+        id: 'franchises',
+        titulo: 'Franchises: bring Tumbite to your city',
+        resumen:
+          'Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers.',
+        explicacion: [
+          'Tumbite grows city by city, in any country. Each city opens with a franchise: a partner who knows the city and invests the launch capital.',
+          'That money buys a complete launch: our own fleet of 25 to 50 motorbikes so no order goes without a driver, drivers trained in road safety, food hygiene, and customer service, a ready-to-use tablet for every restaurant with the menu in two languages, and finding the first customers with a waitlist and launch promotions.',
+          'The franchisee gets their own dashboard with their city’s numbers: orders, sales, restaurants, drivers, and support cases. Each franchise is priced by the size of the city.',
+        ],
+        capturas: [
+          {
+            src: '/docs/franquicias-en.webp',
+            alt: 'Tumbite franchise section: a Tumbite-branded restaurant and the four things the franchise pays for: own fleet, trained drivers, a kit for every restaurant, and the first customers.',
+            pie: 'What a Tumbite franchise includes in each city.',
+          },
+        ],
+        pasos: [
+          'Open the “How it works” page and scroll to “Franchises,” or open your country’s page.',
+          'Fill in the “I want a Tumbite franchise” form: your city, available capital, your experience, and when you’d like to start.',
+          'You get an email with the private link to your case. Our team prepares your city’s numbers and replies there.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'account',
     titulo: 'Your account',
     icono: 'proteccion',
@@ -763,12 +957,26 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'support',
-        titulo: 'Human support',
-        resumen: 'Real people, fast. On WhatsApp or by email.',
+        titulo: 'Help from a real person, with your own link',
+        resumen:
+          'Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.',
+        explicacion: [
+          'When something goes wrong, the last thing you want is to repeat the story. That’s why every report opens a case with its own private link: there you see what you wrote and what we answered, and you can reply anytime, from any device.',
+          'The link is long on purpose so nobody can guess it, and it never shows up in search engines. If the report is about an order, the order number travels with it: no need to explain.',
+          'Restaurants also have a help bubble in their dashboard, with instant answers and the option to talk to a person.',
+        ],
+        capturas: [
+          {
+            src: '/docs/ticket-en.webp',
+            alt: 'Private conversation of a Tumbite report: the customer’s message and the Tumbite team’s reply, with the box to answer.',
+            pie: 'Your case has its own private page: read our reply and answer right there.',
+          },
+        ],
         pasos: [
-          'The WhatsApp support button is on the landing page and in the account menu of the apps.',
+          'From an order, tap “Problems with your order? Tell us.” Drivers: “I have a problem.” Restaurants: the order’s three-dot menu, “Report a problem.”',
+          'Describe what happened and send it. You get an email with the link to your case.',
+          'When we reply, we email you. Open the link to read and answer.',
           'You can also write to support@tumbite.com.',
-          'For a problem with an order, use “Problems with your order?” on the order screen: the order number travels with it.',
         ],
       },
     ],

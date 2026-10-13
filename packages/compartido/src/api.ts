@@ -38,6 +38,9 @@ export function crearApi(op: OpcionesApi) {
   ): Promise<T> {
     const headers: Record<string, string> = { accept: 'application/json' };
     if (cuerpo !== undefined) headers['content-type'] = 'application/json';
+    // El servidor contesta los avisos y errores en este idioma (el inglés es el principal).
+    const idioma = op.idioma?.();
+    if (idioma) headers['x-idioma'] = idioma;
     const token = op.token?.();
     if (token) headers.authorization = `Bearer ${token}`;
     const pase = op.pase?.();
@@ -62,7 +65,14 @@ export function crearApi(op: OpcionesApi) {
     const datos: unknown = await res.json().catch(() => null);
     if (!res.ok) {
       const d = (datos ?? {}) as { error?: string; campo?: string };
-      throw new ErrorApi(d.error ?? 'Algo salió mal. Intenta de nuevo.', res.status, d.campo);
+      throw new ErrorApi(
+        d.error ??
+          (op.idioma?.() === 'es'
+            ? 'Algo salió mal. Intenta de nuevo.'
+            : 'Something went wrong. Try again.'),
+        res.status,
+        d.campo,
+      );
     }
     return datos as T;
   }
@@ -76,6 +86,8 @@ export function crearApi(op: OpcionesApi) {
       accept: 'application/json',
       'content-type': foto.type || 'application/octet-stream',
     };
+    const idioma = op.idioma?.();
+    if (idioma) headers['x-idioma'] = idioma;
     const token = op.token?.();
     if (token) headers.authorization = `Bearer ${token}`;
     let res: Response;
@@ -100,7 +112,14 @@ export function crearApi(op: OpcionesApi) {
       campo?: string;
     } | null;
     if (!res.ok || !datos?.url)
-      throw new ErrorApi(datos?.error ?? 'No se pudo subir la foto.', res.status, datos?.campo);
+      throw new ErrorApi(
+        datos?.error ??
+          (op.idioma?.() === 'es'
+            ? 'No se pudo subir la foto.'
+            : 'The photo couldn’t be uploaded.'),
+        res.status,
+        datos?.campo,
+      );
     return { url: datos.url };
   }
 

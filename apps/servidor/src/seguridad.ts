@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
+import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
 
 /** Cabeceras de seguridad en TODAS las respuestas. */
 export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
@@ -38,7 +39,16 @@ export function limiteIntentos(maximo: number, ventanaMs: number): MiddlewareHan
     if (!r || ahora - r.desde > ventanaMs) {
       registro.set(llave, { cuenta: 1, desde: ahora });
     } else if (++r.cuenta > maximo) {
-      return c.json({ error: 'Demasiados intentos. Espera un momento y vuelve a probar.' }, 429);
+      const mensaje = 'Demasiados intentos. Espera un momento y vuelve a probar.';
+      return c.json(
+        {
+          error: enIdiomaDePeticion(
+            mensaje,
+            idiomaDeLaPeticion((n) => c.req.header(n)),
+          ),
+        },
+        429,
+      );
     }
     await next();
   };
