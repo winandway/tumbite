@@ -1,3 +1,4 @@
+import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -38,6 +39,42 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS pedidos_repartidor_fecha ON pedidos(repartidor_id, creado_en)',
 ];
 
+/**
+ * Precios de fábrica nuevos (13 oct 2026, C-EQUILIBRIO): si la configuración de dinero guardada
+ * es EXACTAMENTE la de fábrica anterior, pasa a la nueva. Si alguien ya la cambió a mano en el
+ * superadmin, no se toca: lo que decidió una persona manda sobre la fábrica.
+ */
+async function preciosDeFabrica(db: D1Database): Promise<void> {
+  const f = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'dinero'")
+    .first<{ valor: string }>()
+    .catch(() => null);
+  if (!f) return;
+  let guardada: unknown;
+  try {
+    guardada = JSON.parse(f.valor);
+  } catch {
+    return;
+  }
+  // Comparación completa, sin importar el orden de las claves (también las de adentro).
+  const ordenar = (v: unknown): unknown =>
+    v && typeof v === 'object'
+      ? Object.fromEntries(
+          Object.entries(v as Record<string, unknown>)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, x]) => [k, ordenar(x)]),
+        )
+      : v;
+  const igual = (a: unknown, b: unknown) =>
+    JSON.stringify(ordenar(a)) === JSON.stringify(ordenar(b));
+  if (!igual(guardada, CONFIG_DINERO_ANTERIOR)) return;
+  await db
+    .prepare("UPDATE config SET valor = ?, actualizado_en = datetime('now') WHERE clave = 'dinero'")
+    .bind(JSON.stringify(CONFIG_DINERO_INICIAL))
+    .run();
+  console.warn('esquema: precios de fábrica actualizados al punto de equilibrio');
+}
+
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
@@ -53,6 +90,7 @@ async function migrar(db: D1Database): Promise<void> {
     }
   }
   for (const sql of INDICES) await db.prepare(sql).run();
+  await preciosDeFabrica(db);
 }
 
 export function asegurarEsquema(db: D1Database): Promise<void> {

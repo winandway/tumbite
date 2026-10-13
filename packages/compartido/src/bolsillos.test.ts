@@ -12,12 +12,13 @@ describe('los cuatro bolsillos', () => {
     expect(d.subtotal).toBe(3000);
     expect(d.comisionRestaurante).toBe(225);
     expect(d.pagoRestaurante).toBe(2775);
-    expect(d.servicio).toBe(150);
-    expect(d.envio).toBe(299);
-    expect(d.totalCliente).toBe(3000 + 299 + 150 + 400);
+    // Servicio: el 5 % (1,50) no llega al mínimo de 1,99 (precios del 13 oct 2026, C-EQUILIBRIO).
+    expect(d.servicio).toBe(199);
+    expect(d.envio).toBe(399);
+    expect(d.totalCliente).toBe(3000 + 399 + 199 + 400);
     // El repartidor cobra su mínimo + la propina entera.
     expect(d.pagoRepartidor).toBe(500 + 400);
-    expect(d.complementoRepartidor).toBe(201);
+    expect(d.complementoRepartidor).toBe(101);
   });
 
   it('todo el dinero cuadra: lo que paga el cliente = restaurante + repartidor + plataforma', () => {
@@ -64,10 +65,10 @@ describe('los cuatro bolsillos', () => {
   });
 
   it('el envío sube con la distancia y tiene techo', () => {
-    expect(calcularEnvio(CONFIG_DINERO_INICIAL, 1)).toBe(299);
-    expect(calcularEnvio(CONFIG_DINERO_INICIAL, 5)).toBe(399);
+    expect(calcularEnvio(CONFIG_DINERO_INICIAL, 1)).toBe(399);
+    expect(calcularEnvio(CONFIG_DINERO_INICIAL, 5)).toBe(499);
     expect(calcularEnvio(CONFIG_DINERO_INICIAL, 50)).toBe(799);
-    expect(calcularEnvio(CONFIG_DINERO_INICIAL, null)).toBe(299);
+    expect(calcularEnvio(CONFIG_DINERO_INICIAL, null)).toBe(399);
   });
 
   it('pedido pequeño lleva su cargo y la tarifa de servicio tiene mínimo y máximo', () => {
@@ -78,7 +79,7 @@ describe('los cuatro bolsillos', () => {
       distanciaKm: 1,
     });
     expect(chico.cargoPedidoPequeno).toBe(200);
-    expect(chico.servicio).toBe(99);
+    expect(chico.servicio).toBe(199);
     const grande = calcularPedido({
       lineas: [{ precioCentavos: 50000, cantidad: 1 }],
       plan: 'inicial',

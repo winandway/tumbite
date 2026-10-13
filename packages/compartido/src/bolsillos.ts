@@ -19,18 +19,30 @@ export type ConfigDinero = {
   pagoMinimoRepartidor: Centavos;
 };
 
+/**
+ * Valores de fábrica, en punto de equilibrio desde el primer pedido (aprobados por Richard el
+ * 13 oct 2026; números en docs/MODELO-DE-DINERO.md y candado C-EQUILIBRIO). Envío desde 3,99 y
+ * servicio con mínimo de 1,99: así ningún pedido normal deja pérdida después de Stripe.
+ */
 export const CONFIG_DINERO_INICIAL: ConfigDinero = {
   comisionPb: { inicial: 750, crece: 1250, elite: 1500 },
-  envioBase: 299,
+  envioBase: 399,
   envioKmIncluidos: 3,
   envioPorKm: 50,
   envioMaximo: 799,
   servicioPb: 500,
-  servicioMinimo: 99,
+  servicioMinimo: 199,
   servicioMaximo: 499,
   pedidoMinimo: 1000,
   cargoPedidoPequeno: 200,
   pagoMinimoRepartidor: 500,
+};
+
+/** Los valores de fábrica anteriores (hasta el 13 oct 2026), para la actualización segura. */
+export const CONFIG_DINERO_ANTERIOR: ConfigDinero = {
+  ...CONFIG_DINERO_INICIAL,
+  envioBase: 299,
+  servicioMinimo: 99,
 };
 
 export type LineaPedido = { precioCentavos: Centavos; cantidad: number };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
 import { app } from './app';
 import { asegurarEsquema, reiniciarEsquema } from './esquema';
 import { crearBasePruebas } from './pruebas/d1';
@@ -46,5 +47,42 @@ describe('migraciones seguras', () => {
     const DB = crearBasePruebas();
     const z = await DB.prepare("SELECT activa, moneda FROM zonas WHERE id = 'US-FL-MIAMI'").first();
     expect(z).toEqual({ activa: 1, moneda: 'USD' });
+  });
+
+  it('los precios guardados de fábrica pasan al punto de equilibrio; los cambiados a mano no se tocan (C-EQUILIBRIO)', async () => {
+    const leer = async (DB: ReturnType<typeof crearBasePruebas>) =>
+      JSON.parse(
+        (
+          await DB.prepare("SELECT valor FROM config WHERE clave = 'dinero'").first<{
+            valor: string;
+          }>()
+        )?.valor ?? 'null',
+      );
+    // 1) Guardada igual a la fábrica vieja (en otro orden de claves): se actualiza.
+    const vieja = crearBasePruebas();
+    const desordenada = Object.fromEntries(Object.entries(CONFIG_DINERO_ANTERIOR).reverse());
+    await vieja
+      .prepare("INSERT INTO config (clave, valor) VALUES ('dinero', ?)")
+      .bind(JSON.stringify(desordenada))
+      .run();
+    reiniciarEsquema();
+    await asegurarEsquema(vieja);
+    expect(await leer(vieja)).toEqual(CONFIG_DINERO_INICIAL);
+    // 2) Cambiada a mano en el superadmin: se respeta.
+    const amano = crearBasePruebas();
+    const propia = { ...CONFIG_DINERO_ANTERIOR, envioBase: 349 };
+    await amano
+      .prepare("INSERT INTO config (clave, valor) VALUES ('dinero', ?)")
+      .bind(JSON.stringify(propia))
+      .run();
+    reiniciarEsquema();
+    await asegurarEsquema(amano);
+    expect(await leer(amano)).toEqual(propia);
+    // 3) Sin nada guardado: no se escribe nada (manda la fábrica nueva desde el código).
+    const vacia = crearBasePruebas();
+    reiniciarEsquema();
+    await asegurarEsquema(vacia);
+    expect(await leer(vacia)).toBeNull();
+    reiniciarEsquema();
   });
 });

@@ -560,7 +560,7 @@ const es: SeccionDocs[] = [
           'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, el pedido llega al restaurante con una alarma y un semáforo en verde.',
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
           'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor la recoge, la lleva y marca «Entregado». El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
-          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 26.18 dólares (comida 18.50, envío 2.99, servicio 0.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 0.37.',
+          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
           'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 10 minutos, cancela y devuelve el dinero solo.',
         ],
         capturas: [
@@ -697,6 +697,30 @@ const es: SeccionDocs[] = [
         preguntas: ['¿Los restaurantes y repartidores están verificados?'],
         pasos: [],
         nota: 'Si eres restaurante o repartidor, mira las guías «Verificar tu restaurante» y «Verificar tu identidad»: son cuatro y tres fotos desde el celular.',
+      },
+      {
+        id: 'compare',
+        titulo: 'Tumbite comparado con otras apps de reparto',
+        resumen:
+          'Cuánto se queda cada app del restaurante, qué paga el cliente y qué recibe el repartidor. Con números públicos, para que cada uno decida.',
+        explicacion: [
+          'Creemos que cada persona tiene que poder comparar antes de elegir. Por eso publicamos lo que cobra Tumbite al lado de lo que DoorDash y Uber Eats publican en sus propias páginas.',
+          'Al restaurante, por cada pedido a domicilio: Tumbite cobra 7,5 % en el plan Inicial, 12,5 % en Crece y 15 % en Élite. DoorDash publica 15 % (Basic), 25 % (Plus) y 30 % (Premier). Uber Eats publica 20 % (Lite, desde 15 % en algunas ciudades), 25 % (Plus) y 30 % (Premium).',
+          'Un ejemplo con un pedido de 30 dólares de comida: con Tumbite Inicial el restaurante recibe 27,75; con DoorDash Basic, 25,50; con Uber Eats Lite, 24,00. Con los planes más altos la diferencia crece: 26,25 con Tumbite Crece frente a 22,50 con DoorDash Plus o Uber Eats Plus.',
+          'Al cliente: Tumbite cobra un envío desde 3,99 dólares (sube 50 centavos por kilómetro después de los primeros 3, con un tope de 7,99) y una tarifa de servicio del 5 % del pedido, con un mínimo de 1,99 y un máximo de 4,99. Si el pedido es de menos de 10 dólares, se suma un cargo por pedido pequeño de 2 dólares. DoorDash publica una tarifa de servicio del 15 % del pedido en varias ciudades y una variable en las demás, más un envío que depende del restaurante. Uber Eats publica una tarifa de servicio que es un porcentaje del pedido con un mínimo y un máximo según la región, más un envío que cambia según la zona y los repartidores disponibles.',
+          'Al repartidor: en Tumbite cada entrega paga al menos 5 dólares, y la propina es 100 % suya y nunca se usa para completar ese mínimo. DoorDash publica un pago base por oferta de 2 a más de 10 dólares, y que la propina es 100 % del repartidor.',
+        ],
+        preguntas: [
+          '¿Cuánto cobra Tumbite a los restaurantes comparado con DoorDash y Uber Eats?',
+          '¿Cuánto paga el cliente en Tumbite?',
+          '¿Cuánto gana un repartidor por entrega en Tumbite?',
+        ],
+        pasos: [
+          'Restaurante: compara tu comisión actual con el plan de Tumbite que te corresponde y calcula cuánto te queda en tus pedidos de un mes.',
+          'Cliente: en Tumbite ves el desglose completo antes de pagar (comida, envío, servicio, propina), sin sorpresas al final.',
+          'Repartidor: antes de aceptar cada oferta ves cuánto ganas, con la propina incluida.',
+        ],
+        nota: 'Los datos de DoorDash y Uber Eats son los que publican en sus páginas oficiales de precios y de ayuda, consultadas en octubre de 2026; pueden cambiar y variar por ciudad. Los de Tumbite son los vigentes en la app.',
       },
     ],
   },
@@ -1424,7 +1448,7 @@ const en: SeccionDocs[] = [
           'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. Once they pay, the order reaches the restaurant with an alarm and a green traffic light.',
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
           'When the food is ready, the restaurant taps “Ready!” The driver picks it up, delivers it, and taps “Delivered.” The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
-          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $26.18 (food $18.50, delivery $2.99, service $0.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $0.37.',
+          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $2.37, out of which it pays the card processing fee.',
           'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 10 minutes, it cancels and refunds automatically.',
         ],
         capturas: [
@@ -1561,6 +1585,30 @@ const en: SeccionDocs[] = [
         preguntas: ['Are restaurants and drivers verified?'],
         pasos: [],
         nota: 'If you’re a restaurant or a driver, see the guides “Verify your restaurant” and “Verify your identity”: four and three photos from your phone.',
+      },
+      {
+        id: 'compare',
+        titulo: 'Tumbite compared with other delivery apps',
+        resumen:
+          'How much each app keeps from the restaurant, what the customer pays, and what the driver gets. With public numbers, so everyone can decide.',
+        explicacion: [
+          'We believe everyone should be able to compare before choosing. That’s why we publish what Tumbite charges next to what DoorDash and Uber Eats publish on their own pages.',
+          'To the restaurant, per delivery order: Tumbite charges 7.5% on the Starter plan, 12.5% on Growth, and 15% on Elite. DoorDash publishes 15% (Basic), 25% (Plus), and 30% (Premier). Uber Eats publishes 20% (Lite, from 15% in some cities), 25% (Plus), and 30% (Premium).',
+          'An example with a $30 food order: with Tumbite Starter the restaurant receives $27.75; with DoorDash Basic, $25.50; with Uber Eats Lite, $24.00. On higher plans the gap grows: $26.25 with Tumbite Growth versus $22.50 with DoorDash Plus or Uber Eats Plus.',
+          'To the customer: Tumbite charges delivery from $3.99 (up 50 cents per kilometer after the first 3, capped at $7.99) and a service fee of 5% of the order, with a $1.99 minimum and a $4.99 maximum. Orders under $10 add a $2 small order fee. DoorDash publishes a service fee of 15% of the order in several cities and a variable one elsewhere, plus a delivery fee that depends on the restaurant. Uber Eats publishes a service fee that is a percentage of the order with a minimum and maximum by region, plus a delivery fee that changes with the area and available drivers.',
+          'To the driver: on Tumbite every delivery pays at least $5, and the tip is 100% theirs and is never used to reach that minimum. DoorDash publishes base pay per offer of $2 to $10+, and that drivers keep 100% of tips.',
+        ],
+        preguntas: [
+          'How much does Tumbite charge restaurants compared with DoorDash and Uber Eats?',
+          'How much does the customer pay on Tumbite?',
+          'How much does a driver earn per delivery on Tumbite?',
+        ],
+        pasos: [
+          'Restaurants: compare your current commission with the Tumbite plan that fits you and work out what you keep on a month of orders.',
+          'Customers: on Tumbite you see the full breakdown before paying (food, delivery, service, tip), with no surprises at the end.',
+          'Drivers: before accepting each offer you see what you earn, tip included.',
+        ],
+        nota: 'DoorDash and Uber Eats figures are the ones they publish on their official pricing and help pages, checked in October 2026; they may change and vary by city. Tumbite figures are the ones currently in the app.',
       },
     ],
   },

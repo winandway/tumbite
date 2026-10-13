@@ -1,51 +1,59 @@
-# Modelo de dinero: cuánto gana cada uno por pedido (para aprobar)
+# Modelo de dinero: punto de equilibrio desde el primer pedido
 
-Hecho el 13 oct 2026 con la misma calculadora que usa la app (`packages/compartido/src/bolsillos.ts`) y el costo oficial de Stripe. Todos los montos en dólares. Es una decisión de Richard: aquí van los números y una recomendación.
+Aplicado el 13 oct 2026 por pedido de Richard («punto de equilibrio económico donde ganamos, todo el mundo gana y competimos a la vez»). Calculado con la misma calculadora de la app (`packages/compartido/src/bolsillos.ts`). Candado: `packages/compartido/src/equilibrio.test.ts` (C-EQUILIBRIO).
 
-## Lo que cobra Stripe (fuente oficial, consultada el 13 oct 2026)
+## Lo que quedó aplicado
 
-- Cada pago con tarjeta en EE.UU.: **2,9 % + 30 centavos** (stripe.com/pricing).
-- Pagarles a restaurantes y repartidores (Connect, «tú manejas los precios»): **2 dólares al mes por cada cuenta que recibe dinero ese mes** y **0,25 % + 25 centavos por cada retiro** (stripe.com/connect/pricing).
-- Esos costos los paga Tumbite. En la tabla se resta solo el del cobro con tarjeta; los de Connect van aparte, abajo.
+| Concepto                  | Antes                                         | Ahora                                                    |
+| ------------------------- | --------------------------------------------- | -------------------------------------------------------- |
+| Envío (cliente)           | desde 2,99                                    | **desde 3,99** (+0,50 por km después de 3 km, tope 7,99) |
+| Servicio (cliente)        | 5 %, mínimo 0,99, máximo 4,99                 | 5 %, **mínimo 1,99**, máximo 4,99                        |
+| Pedido pequeño (cliente)  | 2,00 bajo 10 dólares                          | igual                                                    |
+| Comisión al restaurante   | 7,5 % / 12,5 % / 15 %                         | igual                                                    |
+| Pago mínimo al repartidor | 5,00 por entrega, propina aparte y 100 % suya | igual                                                    |
 
-## Hoy (valores iniciales: envío desde 2,99, servicio 5 % con mínimo 0,99, repartidor con mínimo garantizado de 5,00)
+Cómo llegó a producción: son los nuevos valores de fábrica, y una actualización segura al arrancar el servidor pasa la configuración guardada a estos valores **solo si era exactamente la de fábrica anterior** (si alguien la cambió a mano en el superadmin, se respeta). Se cambian cuando se quiera desde el superadmin, sección Dinero, sin publicar.
 
-| Pedido                                     | Plan          | Cliente paga | Restaurante | Repartidor | Tumbite antes de Stripe | Stripe (tarjeta) | **Tumbite neto** |
-| ------------------------------------------ | ------------- | ------------ | ----------- | ---------- | ----------------------- | ---------------- | ---------------- |
-| Prueba: comida 18,50, 2 km, propina 20 %   | Inicial 7,5 % | 26,18        | 17,11       | 8,70       | 0,37                    | 1,06             | **−0,69**        |
-|                                            | Crece 12,5 %  | 26,18        | 16,19       | 8,70       | 1,29                    | 1,06             | **0,23**         |
-|                                            | Élite 15 %    | 26,18        | 15,72       | 8,70       | 1,76                    | 1,06             | **0,70**         |
-| Chico: comida 8,00, 2 km, propina 15 %     | Inicial       | 15,18        | 7,40        | 6,20       | 1,58                    | 0,74             | **0,84**         |
-| Mediano: comida 30,00, 5 km, propina 20 %  | Inicial       | 41,49        | 27,75       | 11,00      | 2,74                    | 1,50             | **1,24**         |
-|                                            | Crece         | 41,49        | 26,25       | 11,00      | 4,24                    | 1,50             | **2,74**         |
-| Familiar: comida 60,00, 4 km, propina 15 % | Inicial       | 75,49        | 55,50       | 14,00      | 5,99                    | 2,49             | **3,50**         |
-|                                            | Crece         | 75,49        | 52,50       | 14,00      | 8,99                    | 2,49             | **6,50**         |
+## La competencia (fuentes oficiales, consultadas el 13 oct 2026)
 
-**Lo que dice la tabla:** con el plan Inicial, en un pedido normal de unos 18 dólares de comida, **Tumbite pierde 69 centavos**. La razón: el repartidor tiene un pago mínimo de 5 dólares; el envío que paga el cliente (2,99) no llega, y la diferencia (2,01) la pone Tumbite. Lo que queda de la comisión y el servicio no alcanza para el cobro de Stripe.
+|                                     | Tumbite                                       | DoorDash                                                                     | Uber Eats                                                             |
+| ----------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Comisión al restaurante (domicilio) | 7,5 / 12,5 / 15 %                             | 15 / 25 / 30 % (Basic, Plus, Premier)                                        | 20 / 25 / 30 % (Lite —desde 15 % en algunas ciudades—, Plus, Premium) |
+| Comisión por recoger en el local    | todavía no hay recogida                       | 6 %                                                                          | 7 % (10 % sin precios del local validados)                            |
+| Servicio al cliente                 | 5 %, mín. 1,99, máx. 4,99                     | 15 % del pedido en varias ciudades; variable en el resto; puede haber mínimo | porcentaje del pedido con mínimo y máximo según la región             |
+| Envío al cliente                    | desde 3,99 según distancia                    | fijo por pedido, varía por restaurante                                       | dinámico, según zona y repartidores                                   |
+| Pedido pequeño                      | 2,00 bajo 10 dólares                          | «puede cobrarse» bajo cierto monto (sin cifra oficial)                       | varía por ciudad                                                      |
+| Repartidor                          | mínimo 5,00 por entrega + 100 % de la propina | pago base de 2 a más de 10 por oferta + 100 % de la propina                  | (no consultado)                                                       |
 
-## Recomendación: dos ajustes chicos, los dos ya se cambian desde el panel sin publicar
+**Grubhub:** no publica una página oficial de precios legible; las fuentes de terceros no coinciden (marketing del 5 al 20 % más cerca del 10 % por usar sus repartidores). Queda fuera de la comparación pública hasta tener un dato oficial.
 
-1. **Envío desde 3,99** en vez de 2,99 (antes de aprobar, conviene comparar con lo que cobran hoy DoorDash y Uber Eats en Miami: ese dato no está comprobado aquí).
-2. **Servicio con mínimo de 1,99** en vez de 0,99 (se queda el 5 %; en pedidos grandes no cambia nada).
+## Cuánto gana cada uno, con los precios nuevos
 
-| Pedido                 | Plan    | Cliente paga  | Restaurante | Repartidor | **Tumbite neto** |
-| ---------------------- | ------- | ------------- | ----------- | ---------- | ---------------- |
-| Prueba: comida 18,50   | Inicial | 28,18 (+2,00) | 17,11       | 8,70       | **1,25**         |
-|                        | Crece   | 28,18         | 16,19       | 8,70       | **2,17**         |
-| Chico: comida 8,00     | Inicial | 17,18 (+2,00) | 7,40        | 6,20       | **2,78**         |
-| Mediano: comida 30,00  | Inicial | 42,98 (+1,49) | 27,75       | 11,00      | **2,68**         |
-| Familiar: comida 60,00 | Inicial | 76,49 (+1,00) | 55,50       | 14,00      | **4,47**         |
+Restando a Tumbite el cobro de la tarjeta de Stripe (2,9 % + 30 centavos).
 
-Al restaurante y al repartidor no se les toca nada: el ajuste lo paga el cliente.
+| Pedido                                     | Plan    | Cliente paga | Restaurante | Repartidor | **Tumbite neto** |
+| ------------------------------------------ | ------- | ------------ | ----------- | ---------- | ---------------- |
+| Prueba: comida 18,50, 2 km, propina 20 %   | Inicial | 28,18        | 17,11       | 8,70       | **1,25**         |
+|                                            | Crece   | 28,18        | 16,19       | 8,70       | **2,17**         |
+| Chico: comida 8,00, 2 km, propina 15 %     | Inicial | 17,18        | 7,40        | 6,20       | **2,78**         |
+| Mediano: comida 30,00, 5 km, propina 20 %  | Inicial | 42,98        | 27,75       | 11,00      | **2,68**         |
+| Familiar: comida 60,00, 4 km, propina 15 % | Inicial | 76,49        | 55,50       | 14,00      | **4,47**         |
 
-## Costos fijos de pagarles a todos (Connect)
+Con los precios anteriores, el pedido de la prueba dejaba a Tumbite en **−0,69** y 307 combinaciones de pedido (de 10 a 150 dólares, cualquier distancia y propina, los tres planes) quedaban en pérdida. Con los nuevos, **ninguna**: lo comprueba el candado en cada publicación.
 
-- 2 dólares al mes por cada restaurante o repartidor que retire dinero ese mes. Con 20 restaurantes y 40 repartidores activos: unos 120 dólares al mes.
-- Por cada retiro, 0,25 % + 25 centavos. Un repartidor que retira 300 dólares: 1 dólar.
-- Hoy la app permite retirar desde 1 dólar: muchos retiros chicos suben ese costo. A decidir: retiro mínimo de 10 o 20 dólares, o un retiro gratis por semana.
+**Todos ganan:** el restaurante se queda con más que en DoorDash o Uber Eats (en 30 dólares: 27,75 frente a 25,50 o 24,00); el repartidor tiene un mínimo de 5 dólares y la propina entera; el cliente paga un servicio del 5 % (con mínimo de 1,99) frente al 15 % que DoorDash publica en varias ciudades.
 
-## Decisiones para Richard
+## Costos de pagarles a todos (Stripe Connect, «tú manejas los precios»)
 
-1. Aprobar o cambiar el envío desde 3,99 y el servicio con mínimo de 1,99.
-2. Retiro mínimo (hoy 1 dólar).
-3. El regalo que cubre todo el plato: ¿se perdona el cargo por pedido pequeño? (anotado en PENDIENTES.md).
+- 2 dólares al mes por cada cuenta que recibe dinero ese mes. Con 20 restaurantes y 40 repartidores activos: unos 120 dólares al mes.
+- 0,25 % + 25 centavos por retiro. Hoy se puede retirar desde 1 dólar: un retiro de 1 dólar le cuesta a Tumbite 25 centavos.
+- **Pendiente de Richard:** retiro mínimo (recomendado 10 dólares) o un retiro gratis por semana.
+
+## Fuentes
+
+- Stripe, precios: https://stripe.com/pricing — Connect: https://stripe.com/connect/pricing
+- DoorDash para restaurantes: https://merchants.doordash.com/en-us/pricing
+- DoorDash, tarifas al cliente: https://help.doordash.com/en-us/consumers/article/what-fees-do-i-pay
+- DoorDash, pago a repartidores: https://dasher.doordash.com/en-us/about/pay
+- Uber Eats para restaurantes: https://merchants.ubereats.com/us/en/pricing/
+- Uber Eats, tarifas al cliente: https://help.uber.com/ubereats/restaurants/article/what-fees-might-my-order-include?nodeId=2d43ee3b-6c5f-4501-a28d-6cc229428efb
