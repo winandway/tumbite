@@ -44,7 +44,7 @@ const T = {
       listo: 'Tu comida está lista. Buscando repartidor…',
       en_camino: 'Tu repartidor va en camino.',
       entregado: '¡Entregado! Buen provecho.',
-      cancelado: 'Pedido cancelado.',
+      cancelado: 'Pedido cancelado. Si ya habías pagado, te devolvimos todo el dinero.',
     } as Record<string, string>,
     repartidor: 'Tu repartidor',
     ubicacion: 'Ubicación actualizada',
@@ -57,6 +57,10 @@ const T = {
     culpa: 'El problema fue de la comida o la demora del restaurante',
     enviar: 'Enviar calificación',
     gracias: '¡Gracias por tu calificación!',
+    cancelar: 'Cancelar el pedido',
+    seguro: 'Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?',
+    siCancelar: 'Sí, cancelar',
+    noCancelar: 'No, seguir esperando',
   },
   en: {
     titulo: 'Your order',
@@ -70,7 +74,7 @@ const T = {
       listo: 'Your food is ready. Finding a driver…',
       en_camino: 'Your driver is on the way.',
       entregado: 'Delivered! Enjoy your meal.',
-      cancelado: 'Order canceled.',
+      cancelado: 'Order canceled. If you had paid, we refunded all your money.',
     } as Record<string, string>,
     repartidor: 'Your driver',
     ubicacion: 'Location updated',
@@ -83,6 +87,10 @@ const T = {
     culpa: 'The problem was the food or the restaurant’s delay',
     enviar: 'Send rating',
     gracias: 'Thanks for your rating!',
+    cancelar: 'Cancel order',
+    seguro: 'We’ll refund all your money to your card. Cancel it?',
+    siCancelar: 'Yes, cancel',
+    noCancelar: 'No, keep waiting',
   },
 };
 
@@ -128,6 +136,22 @@ export default function SeguirPedido() {
   const [estRep, setEstRep] = useState(0);
   const [culpa, setCulpa] = useState(false);
   const [calificado, setCalificado] = useState(false);
+  const [confirmar, setConfirmar] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+
+  // Mientras el restaurante no acepte, el cliente puede arrepentirse y el dinero vuelve solo.
+  async function cancelar() {
+    setCancelando(true);
+    try {
+      await api.pedir('POST', `/datos/pedidos/${id}/cancelar`, {});
+      setP((x) => (x ? { ...x, estado: 'cancelado' } : x));
+      setConfirmar(false);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setCancelando(false);
+    }
+  }
 
   async function calificar() {
     try {
@@ -263,6 +287,22 @@ export default function SeguirPedido() {
               )}
             </View>
           )}
+          {(p.estado === 'pagado' || p.estado === 'pago_pendiente') &&
+            (confirmar ? (
+              <View style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
+                <Text style={{ fontWeight: '700', marginBottom: 8 }}>{t.seguro}</Text>
+                <Boton texto={t.siCancelar} alTocar={() => void cancelar()} cargando={cancelando} />
+                <Boton texto={t.noCancelar} alTocar={() => setConfirmar(false)} secundario />
+              </View>
+            ) : (
+              <Text
+                style={[e.enlace, { marginBottom: 8 }]}
+                onPress={() => setConfirmar(true)}
+                accessibilityRole="button"
+              >
+                {t.cancelar}
+              </Text>
+            ))}
           {/* Abre un ticket atado a este pedido (antes era un correo a una cuenta personal). */}
           <ReportarProblema pedidoId={p.id} textoBoton={t.ayuda} />
         </>

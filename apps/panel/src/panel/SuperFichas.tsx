@@ -806,8 +806,10 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         <ul className="super-lista">
           {c.compras.map((p) => (
             <li key={p.id}>
-              {fechaCorta(p.fecha, idioma)} · {p.restaurante} · {formatearDolares(p.total, idioma)}{' '}
-              · {p.estado}
+              <Enlace a={`${base}/pedidos/${p.id}`}>
+                {fechaCorta(p.fecha, idioma)} · {p.restaurante} ·{' '}
+                {formatearDolares(p.total, idioma)} · {p.estado}
+              </Enlace>
               {p.repartidorCodigo ? (
                 <>
                   {' · '}
@@ -964,7 +966,9 @@ export function SuperRestaurante({
         <ul className="super-lista">
           {r.ultimosPedidos.map((p) => (
             <li key={p.id}>
-              {fechaCorta(p.fecha, idioma)} · {p.cliente} · {dinero(p.total)} · {p.estado}
+              <Enlace a={`${base}/pedidos/${p.id}`}>
+                {fechaCorta(p.fecha, idioma)} · {p.cliente} · {dinero(p.total)} · {p.estado}
+              </Enlace>
             </li>
           ))}
         </ul>

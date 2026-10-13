@@ -17,23 +17,27 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 ## Estado por pieza
 
-| Pieza                                         | Construida  | Pruebas automáticas         | Probada con Stripe real            |
-| --------------------------------------------- | ----------- | --------------------------- | ---------------------------------- |
-| Cálculo de bolsillos                          | ✅          | ✅ cuadra al centavo        | ✅ (pedido de $7.18)               |
-| Pago con salto (Checkout, ya retirado)        | ✅          | ✅                          | ✅ 10 oct 2026                     |
-| Pago dentro de la app, web (PaymentElement)   | ✅          | ✅ candado C-PAGO-SIN-SALTO | 🔴 NO — falta la compra de $1      |
-| Pago dentro de la app, celular (hoja de pago) | ✅          | ✅ candado                  | 🔴 NO — falta la app en el celular |
-| Tarjetas guardadas (CustomerSession)          | ✅          | ✅ cliente se crea una vez  | 🔴 NO — se ve en la segunda compra |
-| Aviso `payment_intent.succeeded`              | ✅          | ✅ monto e intento en rojo  | 🔴 NO                              |
-| Apple Pay / Google Pay                        | ✅ (Stripe) | —                           | 🔴 NO                              |
-| Alta de billetera (Connect Express)           | ✅          | ✅ (simulado)               | 🔴 NO                              |
-| Retiro a banco                                | ✅          | ✅ (simulado)               | 🔴 NO                              |
+| Pieza                                         | Construida  | Pruebas automáticas                         | Probada con Stripe real            |
+| --------------------------------------------- | ----------- | ------------------------------------------- | ---------------------------------- |
+| Cálculo de bolsillos                          | ✅          | ✅ cuadra al centavo                        | ✅ (pedido de $7.18)               |
+| Pago con salto (Checkout, ya retirado)        | ✅          | ✅                                          | ✅ 10 oct 2026                     |
+| Pago dentro de la app, web (PaymentElement)   | ✅          | ✅ candado C-PAGO-SIN-SALTO                 | 🔴 NO — falta la compra de $1      |
+| Pago dentro de la app, celular (hoja de pago) | ✅          | ✅ candado                                  | 🔴 NO — falta la app en el celular |
+| Tarjetas guardadas (CustomerSession)          | ✅          | ✅ cliente se crea una vez                  | 🔴 NO — se ve en la segunda compra |
+| Aviso `payment_intent.succeeded`              | ✅          | ✅ monto e intento en rojo                  | 🔴 NO                              |
+| Apple Pay / Google Pay                        | ✅ (Stripe) | —                                           | 🔴 NO                              |
+| Alta de billetera (Connect Express)           | ✅          | ✅ (simulado)                               | 🔴 NO                              |
+| Retiro a banco                                | ✅          | ✅ (simulado)                               | 🔴 NO                              |
+| Devolución al rechazar (restaurante)          | ✅          | ✅                                          | 🔴 NO                              |
+| Cancelación del cliente antes de que acepten  | ✅ 12 oct   | ✅ dinero vuelve; Stripe falla → no cancela | 🔴 NO                              |
+| Cancelación sola del Manager (10 min)         | ✅ 12 oct   | ✅ una sola devolución                      | 🔴 NO                              |
 
 ## Lo que falta para probar (en orden)
 
 1. Compra de $1 (Carne Asada, Restaurante el Beef USA, zona Novi) desde `https://tumbite.com/app/`: el formulario de tarjeta tiene que salir dentro del carrito, cobrar, y llevar solo al pedido. Mirar en Stripe el cobro y en el panel del restaurante el pedido.
 2. Segunda compra: la tarjeta guardada tiene que aparecer sola.
-3. Alta de billetera y retiro (prueba en la calle, `docs/PLAN-DE-PRUEBA-EN-CALLE.md`).
+3. Cancelar un pedido pagado de $1 desde la app antes de que el restaurante lo acepte: en Stripe tiene que aparecer la devolución completa y el pedido como «Cancelado».
+4. Alta de billetera y retiro (prueba en la calle, `docs/PLAN-DE-PRUEBA-EN-CALLE.md`).
 
 ## Configuración en vivo
 

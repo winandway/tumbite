@@ -15,6 +15,7 @@ Lo que el superadmin maneja y por qué, tomando como referencia lo que DoorDash 
 | Vehículo, licencia, seguro, antecedentes, seguro de Tumbite                                 | `repartidor_datos`                                         | Repartidor y superadmin                  |
 | Empresa del restaurante: nombre legal, tipo, dirección fiscal, dueño, manager, horario, web | `restaurante_empresa`                                      | Restaurante y superadmin                 |
 | KYC: documento, cara, foto del local con ubicación                                          | `kyc` + almacén privado `kyc/<usuario>/…`                  | Solo superadmin (ruta propia, sin caché) |
+| Bitácora de cada pedido: estados, quién, hora y lo que hizo el Manager                      | `historial_estados` + `bitacora_pedidos`                   | Solo superadmin (`…/pedidos/<id>`)       |
 | Número de seguro social, EIN y banco                                                        | **Stripe Connect** (no en Tumbite)                         | Stripe                                   |
 
 El código de ciudad usa tres letras (MIA, NOV, ORL, TPA) en vez de dos para que no choquen ciudades del mismo país (Miami y Michigan empiezan igual). El código de cada zona se puede fijar en `zonas.codigo_ciudad`.

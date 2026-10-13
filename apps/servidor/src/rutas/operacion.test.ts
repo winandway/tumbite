@@ -419,3 +419,133 @@ describe('tablero del restaurante (C-TABLERO-REST)', () => {
     ).toBe(403);
   });
 });
+
+describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Cuenta las devoluciones pedidas a Stripe sin dejar de responder como Stripe. */
+  function contarReembolsos(falla = false) {
+    const llamadas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      llamadas.push(url);
+      if (url.includes('/refunds') && falla)
+        return new Response(JSON.stringify({ error: { message: 'caído' } }), { status: 500 });
+      return new Response(JSON.stringify({ id: 're_1', data: [] }), { status: 200 });
+    });
+    return () => llamadas.filter((u) => u.includes('/refunds')).length;
+  }
+
+  const atrasar = (m: { DB: D1Database }, id: string, campo: string, minutos: number) =>
+    m.DB.prepare(`UPDATE pedidos SET ${campo} = datetime('now', ?) WHERE id = ?`)
+      .bind(`-${minutos} minutes`, id)
+      .run();
+
+  it('el cliente cancela antes de que acepten y el dinero vuelve', async () => {
+    const { m, cliente, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    const reembolsos = contarReembolsos();
+    const r = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, cliente.token);
+    expect(r.estado).toBe(200);
+    expect(reembolsos()).toBe(1);
+    const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
+    expect(f?.estado).toBe('cancelado');
+  });
+
+  it('no se puede cancelar si el restaurante ya aceptó, ni el pedido de otro', async () => {
+    const { m, cliente, dueno, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    const otro = await m.cuenta('cliente', 'Otro');
+    const ajeno = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, otro.token);
+    expect(ajeno.estado).toBe(409);
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 15 },
+      dueno.token,
+    );
+    const tarde = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, cliente.token);
+    expect(tarde.estado).toBe(409);
+  });
+
+  it('si Stripe no devuelve el dinero, el pedido NO queda cancelado', async () => {
+    const { m, cliente, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    contarReembolsos(true);
+    const r = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, cliente.token);
+    expect(r.estado).toBe(422);
+    const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
+    expect(f?.estado).toBe('pagado');
+  });
+
+  it('recuerda a los 3 y 6 minutos (una sola vez cada uno) y cancela con reembolso a los 10', async () => {
+    const { m, pedidoPagado } = await escenario();
+    const { vigilarPedidos } = await import('../manager');
+    const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    const id = await pedidoPagado();
+    const reembolsos = contarReembolsos();
+    expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(0);
+    await atrasar(m, id, 'pagado_en', 4);
+    expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(1);
+    expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(0);
+    await atrasar(m, id, 'pagado_en', 7);
+    expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(1);
+    await atrasar(m, id, 'pagado_en', 11);
+    expect((await vigilarPedidos(env, m.DB)).cancelados).toBe(1);
+    expect(reembolsos()).toBe(1);
+    const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
+    expect(f?.estado).toBe('cancelado');
+    const { results } = await m.DB.prepare(
+      'SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? ORDER BY id',
+    )
+      .bind(id)
+      .all();
+    expect(results.map((x) => x.evento)).toEqual([
+      'recordatorio_1',
+      'recordatorio_2',
+      'cancelado_sin_respuesta',
+    ]);
+  });
+
+  it('el seguimiento del cliente también dispara la cancelación a tiempo', async () => {
+    const { m, cliente, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    contarReembolsos();
+    await atrasar(m, id, 'pagado_en', 12);
+    const s = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(s.datos.pedido.estado).toBe('cancelado');
+  });
+
+  it('un pedido aceptado sin repartidor avisa una sola vez a los 15 minutos', async () => {
+    const { m, dueno, pedidoPagado } = await escenario();
+    const { vigilarPedidos } = await import('../manager');
+    const env = { DB: m.DB } as never;
+    const id = await pedidoPagado();
+    contarReembolsos();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 15 },
+      dueno.token,
+    );
+    expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(0);
+    await atrasar(m, id, 'aceptado_en', 16);
+    expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(1);
+    expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(0);
+  });
+
+  it('la bitácora del pedido solo la ve el administrador y trae todo en orden', async () => {
+    const { m, cliente, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    contarReembolsos();
+    await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, cliente.token);
+    const nadie = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, cliente.token);
+    expect(nadie.estado).toBe(403);
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
+    expect(r.estado).toBe(200);
+    const eventos = r.datos.pedido.bitacora.map((b: { evento: string }) => b.evento);
+    expect(eventos[0]).toBe('creado');
+    expect(eventos).toContain('cancelado');
+    expect(eventos).toContain('cancelado_por_cliente');
+  });
+});

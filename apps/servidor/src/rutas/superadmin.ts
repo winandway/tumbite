@@ -617,6 +617,75 @@ superadmin.get('/admin/clientes/:id', async (c) => {
   });
 });
 
+// ───────────────────────── Superadmin: bitácora del pedido ─────────────────────────
+
+/** Todo lo que le pasó a un pedido, en orden: estados, quién los cambió y lo que hizo el Manager. */
+superadmin.get('/admin/pedidos/:id', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const p = await db
+    .prepare(
+      `SELECT p.id, p.estado, p.total, p.propina, p.direccion, p.notas, p.lineas_json, p.creado_en, p.stripe_pago,
+        p.cliente_id, uc.nombre AS cliente, p.restaurante_id, r.nombre AS restaurante,
+        p.repartidor_id, ur.nombre AS repartidor, d.codigo AS repartidor_codigo, z.nombre AS ciudad
+       FROM pedidos p JOIN usuarios uc ON uc.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
+       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
+       LEFT JOIN zonas z ON z.id = p.zona_id WHERE p.id = ?`,
+    )
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!p) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  const { results: estados } = await db
+    .prepare(
+      `SELECT h.estado AS evento, h.creado_en AS fecha, COALESCE(u.nombre, r.nombre) AS quien, 'estado' AS tipo
+       FROM historial_estados h LEFT JOIN usuarios u ON u.id = h.actor_id LEFT JOIN restaurantes r ON r.id = h.actor_id
+       WHERE h.pedido_id = ? ORDER BY h.id`,
+    )
+    .bind(id)
+    .all<{ evento: string; fecha: string; quien: string | null; tipo: string }>();
+  const { results: manager } = await db
+    .prepare(
+      "SELECT evento, creado_en AS fecha, detalle AS quien, 'manager' AS tipo FROM bitacora_pedidos WHERE pedido_id = ? ORDER BY id",
+    )
+    .bind(id)
+    .all<{ evento: string; fecha: string; quien: string | null; tipo: string }>();
+  const bitacora = [
+    { evento: 'creado', fecha: String(p.creado_en), quien: String(p.cliente), tipo: 'estado' },
+    ...estados,
+    ...manager,
+  ].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  let lineas: { nombreEs: string; cantidad: number }[] = [];
+  try {
+    lineas = JSON.parse(String(p.lineas_json)) as typeof lineas;
+  } catch {
+    console.error('superadmin: lineas_json ilegible', id);
+  }
+  return c.json({
+    pedido: {
+      id: String(p.id),
+      estado: String(p.estado),
+      total: Number(p.total),
+      propina: Number(p.propina),
+      direccion: String(p.direccion),
+      notas: String(p.notas ?? ''),
+      ciudad: p.ciudad ? String(p.ciudad) : null,
+      pagoStripe: p.stripe_pago ? String(p.stripe_pago) : null,
+      lineas: lineas.map((l) => ({ nombre: l.nombreEs, cantidad: Number(l.cantidad) })),
+      cliente: { id: String(p.cliente_id), nombre: String(p.cliente) },
+      restaurante: { id: String(p.restaurante_id), nombre: String(p.restaurante) },
+      repartidor: p.repartidor_id
+        ? {
+            id: String(p.repartidor_id),
+            nombre: String(p.repartidor),
+            codigo: p.repartidor_codigo ? String(p.repartidor_codigo) : null,
+          }
+        : null,
+      bitacora,
+    },
+  });
+});
+
 // ───────────────────────── Superadmin: ficha del restaurante ─────────────────────────
 
 superadmin.get('/admin/restaurantes/:id', async (c) => {

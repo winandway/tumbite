@@ -6,12 +6,12 @@ import { kycAprobado } from './kyc';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { crearStripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { type FilaPedido, aPedido } from './pedidos';
 import { zonaPara } from './zonas';
 import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
+import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
 import { formatearDolares } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -97,36 +97,13 @@ operacion.post('/restaurante/pedidos/:id/listo', async (c) => {
 /** Rechazar un pedido pagado: se cancela y se le devuelve TODO el dinero al cliente. */
 operacion.post('/restaurante/pedidos/:id/rechazar', async (c) => {
   const rid = await miRestauranteId(c);
-  const db = base(c);
-  const p = await db
-    .prepare(
-      "SELECT stripe_pago FROM pedidos WHERE id = ? AND restaurante_id = ? AND estado IN ('pagado','aceptado')",
-    )
-    .bind(c.req.param('id'), rid)
-    .first<{ stripe_pago: string | null }>();
-  if (!p) throw new ErrorDatos('Este pedido ya no se puede rechazar.', undefined, 409);
-  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-  if (p.stripe_pago) {
-    if (!stripe)
-      throw new ErrorDatos(
-        'No se puede devolver el dinero ahora mismo. Escríbenos.',
-        undefined,
-        422,
-      );
-    await stripe.post(
-      '/refunds',
-      { payment_intent: p.stripe_pago, metadata: { pedido_id: c.req.param('id') } },
-      `reembolso-${c.req.param('id')}`,
-    );
-  }
-  await cambiarEstado(
-    db,
-    c.req.param('id'),
-    rid,
-    ['pagado', 'aceptado'],
-    'cancelado',
-    ", cancelado_en = datetime('now')",
-  );
+  const ok = await cancelarConReembolso(c.env, base(c), c.req.param('id'), {
+    desde: ['pagado', 'aceptado'],
+    actorId: rid,
+    restauranteId: rid,
+  });
+  if (!ok) throw new ErrorDatos('Este pedido ya no se puede rechazar.', undefined, 409);
+  await anotarEvento(base(c), c.req.param('id'), 'rechazado_por_restaurante');
   return c.json({ ok: true });
 });
 
@@ -629,12 +606,18 @@ operacion.post('/reloj', async (c) => {
     throw new ErrorDatos('No encontrado.', undefined, 404);
   const db = base(c);
   await repartirOfertas(db, c.env);
+  const manager = await vigilarPedidos(c.env, db);
   const pendientes = await db
     .prepare(
       "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
     )
     .first<{ n: number }>();
-  return c.json({ ok: true, sinRepartidor: pendientes?.n ?? 0, cuando: new Date().toISOString() });
+  return c.json({
+    ok: true,
+    manager,
+    sinRepartidor: pendientes?.n ?? 0,
+    cuando: new Date().toISOString(),
+  });
 });
 
 async function igualesSeguro(a: string, b: string): Promise<boolean> {
@@ -646,8 +629,32 @@ async function igualesSeguro(a: string, b: string): Promise<boolean> {
 
 // ======================= Cliente: seguimiento =======================
 
+/** El cliente cancela mientras el restaurante no haya aceptado; el dinero vuelve completo. */
+operacion.post('/pedidos/:id/cancelar', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const id = c.req.param('id');
+  const ok = await cancelarConReembolso(c.env, db, id, {
+    desde: ['pago_pendiente', 'pagado'],
+    actorId: u.id,
+    clienteId: u.id,
+  });
+  if (!ok)
+    throw new ErrorDatos(
+      'El restaurante ya está preparando tu pedido y no se puede cancelar. Si hay un problema, repórtalo y te ayudamos.',
+      undefined,
+      409,
+    );
+  await anotarEvento(db, id, 'cancelado_por_cliente');
+  return c.json({ ok: true });
+});
+
 operacion.get('/pedidos/:id/seguimiento', async (c) => {
   const u = exigir(c);
+  // El Manager también mira aquí: la app pregunta cada pocos segundos, más puntual que el reloj.
+  await vigilarPedidos(c.env, base(c), c.req.param('id')).catch((e: unknown) =>
+    console.error('manager: seguimiento', e),
+  );
   const f = await base(c)
     .prepare(
       `SELECT p.*, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en

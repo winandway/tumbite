@@ -252,6 +252,17 @@ CREATE TABLE IF NOT EXISTS historial_estados (
 );
 CREATE INDEX IF NOT EXISTS historial_pedido ON historial_estados(pedido_id, creado_en);
 
+-- Bitácora del Manager (reglas sin IA): recordatorios, cancelaciones automáticas y alertas.
+-- Un evento por pedido y tipo: así un aviso no se repite aunque el reloj pase muchas veces.
+CREATE TABLE IF NOT EXISTS bitacora_pedidos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  evento TEXT NOT NULL,
+  detalle TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (pedido_id, evento)
+);
+
 -- Lista de espera de la landing: comensales, restaurantes y repartidores.
 CREATE TABLE IF NOT EXISTS lista_espera (
   id TEXT PRIMARY KEY,

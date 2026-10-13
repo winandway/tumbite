@@ -3169,3 +3169,38 @@ button {
   font-weight: 600;
   margin-bottom: 4px;
 }
+
+/* Bitácora del pedido (superadmin): línea de tiempo sobria, el Manager en gris oscuro. */
+.super-bitacora {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid #d6d6d6;
+}
+.super-bitacora li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0 8px 14px;
+  position: relative;
+}
+.super-bitacora li::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff3008;
+}
+.super-bitacora li.super-bitacora-manager::before {
+  background: #191919;
+}
+.super-bitacora time {
+  font-size: 0.8rem;
+  color: #5e5e5e;
+}
+.super-bitacora span {
+  font-size: 0.85rem;
+  color: #5e5e5e;
+}
