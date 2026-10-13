@@ -9,3 +9,4 @@ export * from './bolsillos';
 export * from './niveles';
 export * from './geohash';
 export * from './espera';
+export * from './semaforo';

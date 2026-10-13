@@ -548,4 +548,31 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     expect(eventos).toContain('cancelado');
     expect(eventos).toContain('cancelado_por_cliente');
   });
+
+  it('pedidos en curso: solo admin, los rojos primero, y la ficha trae el estado del KYC', async () => {
+    const { m, pedidoPagado } = await escenario();
+    contarReembolsos();
+    const nuevo = await pedidoPagado();
+    const viejo = await pedidoPagado();
+    await atrasar(m, viejo, 'pagado_en', 7);
+    const cliente = await m.cuenta('cliente');
+    expect((await m.llamar('GET', '/datos/admin/pedidos', undefined, cliente.token)).estado).toBe(
+      403,
+    );
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar('GET', '/datos/admin/pedidos', undefined, admin.token);
+    expect(r.datos.pedidos.map((p: { id: string }) => p.id)).toEqual([viejo, nuevo]);
+    expect(r.datos.pedidos[0].luz).toBe('rojo');
+    expect(r.datos.pedidos[1].luz).toBe('verde');
+    const rest = await m.DB.prepare('SELECT restaurante_id FROM pedidos WHERE id = ?')
+      .bind(nuevo)
+      .first();
+    const ficha = await m.llamar(
+      'GET',
+      `/datos/admin/restaurantes/${rest?.restaurante_id}`,
+      undefined,
+      admin.token,
+    );
+    expect(ficha.datos.restaurante.kyc.estado).toBe('sin_enviar');
+  });
 });

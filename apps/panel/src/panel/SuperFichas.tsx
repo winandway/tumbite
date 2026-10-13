@@ -319,7 +319,7 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   };
 }
 
-function SelectorCiudad({
+export function SelectorCiudad({
   zona,
   cambiar,
   idioma,
@@ -429,7 +429,57 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
   );
 }
 
+type Kyc = {
+  usuarioId: string;
+  estado: string;
+  enviadoEn: string | null;
+  revisadoEn: string | null;
+};
+
+const TK = {
+  es: {
+    titulo: 'Verificación de identidad',
+    estados: {
+      sin_enviar: 'Sin enviar',
+      pendiente: 'Esperando revisión',
+      aprobado: 'Verificado',
+      rechazado: 'Rechazado: tiene que repetir las fotos',
+    } as Record<string, string>,
+    revisar: 'Ver las fotos y revisar',
+  },
+  en: {
+    titulo: 'Identity verification',
+    estados: {
+      sin_enviar: 'Not sent',
+      pendiente: 'Waiting for review',
+      aprobado: 'Verified',
+      rechazado: 'Rejected: needs to retake the photos',
+    } as Record<string, string>,
+    revisar: 'See the photos and review',
+  },
+};
+
+/** Estado del KYC dentro de la ficha, con el enlace a la revisión cuando hay fotos. */
+function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idioma }) {
+  const t = enIdioma(TK, idioma);
+  return (
+    <p className="super-kyc">
+      {t.titulo}:{' '}
+      <span className={`insignia ${kyc.estado === 'aprobado' ? 'insignia-aprobado' : ''}`}>
+        {t.estados[kyc.estado] ?? kyc.estado}
+      </span>
+      {kyc.estado !== 'sin_enviar' && (
+        <>
+          {' · '}
+          <Enlace a={`${base}/kyc/${kyc.usuarioId}`}>{t.revisar}</Enlace>
+        </>
+      )}
+    </p>
+  );
+}
+
 type Repartidor = {
+  kyc: Kyc;
   id: string;
   codigo: string;
   nombre: string;
@@ -540,6 +590,7 @@ export function SuperRepartidor({
         <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
         {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
       </p>
+      <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.entregas}</span>
@@ -825,6 +876,7 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
 }
 
 type Restaurante = {
+  kyc: Kyc;
   id: string;
   nombre: string;
   categoria: string;
@@ -878,6 +930,7 @@ export function SuperRestaurante({
         {r.categoria} · {r.ciudad} · {t.plan} {r.plan} · {t.estado} {r.estado} ·{' '}
         {r.abierto ? t.enLinea : t.fueraLinea}
       </p>
+      <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.pedidos30}</span>

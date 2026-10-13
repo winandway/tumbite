@@ -105,6 +105,12 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
         ? { ok: true }
         : {
             repartidor: {
+              kyc: {
+                usuarioId: REP_ID,
+                estado: 'pendiente',
+                enviadoEn: '2026-10-12 10:00:00',
+                revisadoEn: null,
+              },
               id: REP_ID,
               codigo: 'US-MIA-000001',
               nombre: 'Carla Veloz',
@@ -160,6 +166,10 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     );
     render(<SuperRepartidor base="/panel/control-x" id={REP_ID} idioma="es" />);
     expect(await screen.findByText('Carla Veloz')).toBeInTheDocument();
+    expect(screen.getByText('Esperando revisión')).toBeInTheDocument();
+    expect(screen.getByText('Ver las fotos y revisar').closest('a')?.getAttribute('href')).toBe(
+      `/panel/control-x/kyc/${REP_ID}`,
+    );
     expect(screen.getByText('Honda Navi')).toBeInTheDocument();
     expect(screen.getByText('Llegó frío')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Aprobar antecedentes' }));
@@ -232,6 +242,7 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
       sitioWeb: '',
     };
     const base = {
+      kyc: { usuarioId: 'dueno-1', estado: 'sin_enviar', enviadoEn: null, revisadoEn: null },
       id: REP_ID,
       nombre: 'Sabor',
       categoria: 'Cubana',
@@ -267,6 +278,9 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     );
     expect(await screen.findByText('Sabor LLC')).toBeInTheDocument();
     expect(screen.getByText('Leo')).toBeInTheDocument();
+    // Sin fotos enviadas no hay nada que revisar: se dice y no hay enlace.
+    expect(screen.getByText('Sin enviar')).toBeInTheDocument();
+    expect(screen.queryByText('Ver las fotos y revisar')).toBeNull();
     unmount();
     servidor(() => ({
       restaurante: {

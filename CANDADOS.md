@@ -296,3 +296,11 @@ Fallos encontrados y arreglados:
 ### Datos de relleno en producción (12 oct 2026)
 
 Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactivas y con «(pruebas)» en el nombre), seis repartidores y cinco clientes por ciudad, todos con correo `prueba.<rep|cli>.<ciudad>.<n>@ejemplo.com` y «(prueba)» en el nombre. Para borrarlos antes del lanzamiento abierto (con el sí de Richard): primero sus filas en `repartidores`, `repartidor_datos`, `sesiones` y `pedidos`, después `DELETE FROM usuarios WHERE correo LIKE 'prueba.%@ejemplo.com'`, y por último las zonas `US-FL-ORLANDO` y `US-FL-TAMPA` si siguen sin restaurantes reales.
+
+### C-MANAGER-1, segunda parte: semáforo, pedidos en curso y KYC en las fichas (12 oct 2026, noche)
+
+- **Semáforo** (`packages/compartido/src/semaforo.ts`, `semaforoPedido`): una sola pieza que usan el servidor y el panel. Sin aceptar: amarillo a los 3 min, rojo a los 6 (a los 10 el Manager cancela). En cocina: amarillo al pasar el tiempo prometido, rojo 10 min después. Lista sin repartidor: amarillo a los 5, rojo a los 15. En camino: amarillo a los 30, rojo a los 45. Las fechas de la base son UTC sin zona (`fechaBase`). Se muestra con `LuzSemaforo.tsx` (punto de color, minutos u horas, y el porqué si no va bien).
+- **Dónde se ve:** en la lista de pedidos del restaurante y en el superadmin «Pedidos en curso» (`GET /datos/admin/pedidos?zona=`, hasta 300 pedidos vivos, rojos primero, se refresca cada 15 s, cada uno enlaza a su bitácora).
+- **KYC en las fichas:** la ficha del repartidor y la del restaurante (el KYC es del dueño) traen `kyc` con el estado; si hay fotos, enlace a la revisión.
+- **Pruebas (comprobadas en rojo):** `semaforo.test.ts`, `operacion.test.ts` (pedidos en curso solo admin y ordenados, KYC en la ficha), `SuperPedido.test.tsx` (tablero y semáforo del restaurante), `SuperFichas.test.tsx` (estado y enlace del KYC).
+- **No tocar:** las reglas del semáforo y las de `REGLAS` en `manager.ts` van juntas; si se cambia una, se cambia la otra.

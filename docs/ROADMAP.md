@@ -106,7 +106,7 @@
 Estudio completo en `docs/TUMBITE-AI.md`: dónde va la IA momento por momento, el Manager que vigila
 cada pedido, APIs y costos, alarmas y fases. Resumen del orden:
 
-- ✅ **Primera parte de la Fase A hecha (12 oct 2026, candado C-MANAGER-1):** recordatorios al restaurante, cancelación con devolución a los 10 minutos, alerta sin repartidor y bitácora en el superadmin. Falta el semáforo en la lista de pedidos.
+- ✅ **Primera parte de la Fase A hecha (12 oct 2026, candado C-MANAGER-1):** recordatorios al restaurante, cancelación con devolución a los 10 minutos, alerta sin repartidor y bitácora en el superadmin. Semáforo en la lista del restaurante y tablero «Pedidos en curso» en el superadmin hechos el mismo día. La Fase A con reglas queda completa.
 - 🤖 **Fase A — Manager con reglas, costo cero:** reloj de tiempos esperados por pedido, semáforo
   verde/amarillo/rojo, avisos automáticos y bitácora en el panel. Puede empezar apenas se cierre la
   Etapa 1 (no gasta en IA ni toca dinero).

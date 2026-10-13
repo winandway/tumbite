@@ -9,6 +9,7 @@ import {
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
+import { LuzSemaforo } from './LuzSemaforo';
 import { pedir } from './api';
 
 type Pedido = {
@@ -17,6 +18,11 @@ type Pedido = {
   subtotal: number;
   notas: string;
   creadoEn: string;
+  pagadoEn: string | null;
+  aceptadoEn: string | null;
+  listoEn: string | null;
+  recogidoEn: string | null;
+  tiempoPrepMin: number | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 
@@ -142,6 +148,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                 #{p.id.slice(0, 4).toUpperCase()} · {t.estados[p.estado] ?? p.estado} ·{' '}
                 {formatearDolares(p.subtotal, idioma)}
               </strong>
+              <LuzSemaforo pedido={p} idioma={idioma} />
               {p.lineas.map((l) => (
                 <span key={l.platoId}>
                   {l.cantidad} × {nombrePlato(l, idioma)}

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { SuperPedido } from './SuperPedido';
+import { SuperPedido, SuperPedidos } from './SuperPedido';
+import { Pedidos } from './Pedidos';
 
 const ID = '11111111-2222-3333-4444-555555555555';
 
@@ -70,5 +71,79 @@ describe('bitácora del pedido en el superadmin (C-MANAGER-1)', () => {
     );
     render(<SuperPedido base="/panel/control-x" id={ID} idioma="en" />);
     expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+});
+
+describe('pedidos en curso y semáforo (C-MANAGER-1)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const hace = (min: number) =>
+    new Date(Date.now() - min * 60000).toISOString().slice(0, 19).replace('T', ' ');
+
+  it('lista los pedidos vivos con su semáforo, cuenta los rojos y enlaza a la bitácora', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('/admin/ciudades')
+        ? new Response(JSON.stringify({ ciudades: [] }), { status: 200 })
+        : new Response(
+            JSON.stringify({
+              pedidos: [
+                {
+                  id: ID,
+                  estado: 'pagado',
+                  creadoEn: hace(7),
+                  pagadoEn: hace(7),
+                  aceptadoEn: null,
+                  listoEn: null,
+                  recogidoEn: null,
+                  tiempoPrepMin: null,
+                  total: 2000,
+                  restaurante: 'La Esquina',
+                  cliente: 'Ana',
+                  repartidorCodigo: null,
+                  ciudad: 'Miami',
+                  luz: 'rojo',
+                },
+              ],
+            }),
+            { status: 200 },
+          ),
+    );
+    render(<SuperPedidos base="/panel/control-x" idioma="es" />);
+    expect(await screen.findByText(/En problemas · hace 7 min · sin aceptar/)).toBeTruthy();
+    expect(screen.getByText(/1 en problemas/)).toBeTruthy();
+    expect(
+      screen
+        .getByText(/La Esquina/)
+        .closest('a')
+        ?.getAttribute('href'),
+    ).toBe(`/panel/control-x/pedidos/${ID}`);
+  });
+
+  it('el restaurante ve el semáforo en su lista de pedidos', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            pedidos: [
+              {
+                id: ID,
+                estado: 'aceptado',
+                subtotal: 1500,
+                notas: '',
+                creadoEn: hace(40),
+                pagadoEn: hace(40),
+                aceptadoEn: hace(35),
+                listoEn: null,
+                recogidoEn: null,
+                tiempoPrepMin: 15,
+                lineas: [],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    render(<Pedidos idioma="es" />);
+    expect(await screen.findByText(/En problemas · hace 35 min · la cocina pasó/)).toBeTruthy();
   });
 });

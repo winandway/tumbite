@@ -40,6 +40,7 @@ const es = {
   menuAdmin: {
     inicio: 'Resumen',
     tickets: 'Tickets',
+    pedidos: 'Pedidos en curso',
     franquicias: 'Franquicias',
     ciudades: 'Ciudades',
     kyc: 'Verificaciones',
@@ -100,6 +101,7 @@ const en: T = {
   menuAdmin: {
     inicio: 'Overview',
     tickets: 'Tickets',
+    pedidos: 'Live orders',
     franquicias: 'Franchises',
     ciudades: 'Cities',
     kyc: 'Verifications',

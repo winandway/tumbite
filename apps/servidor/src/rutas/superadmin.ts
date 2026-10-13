@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { semaforoPedido } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -442,8 +443,10 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
     )
     .bind(id, id)
     .all();
+  const kyc = await kycResumen(db, id);
   return c.json({
     repartidor: {
+      kyc,
       id: String(r.id),
       codigo: String(r.codigo ?? ''),
       nombre: String(r.nombre),
@@ -617,6 +620,68 @@ superadmin.get('/admin/clientes/:id', async (c) => {
   });
 });
 
+/** Estado de la verificación de identidad para mostrar en las fichas (sin las fotos). */
+async function kycResumen(db: D1Database, usuarioId: string) {
+  const k = await db
+    .prepare('SELECT estado, enviado_en, revisado_en FROM kyc WHERE usuario_id = ?')
+    .bind(usuarioId)
+    .first<{ estado: string; enviado_en: string | null; revisado_en: string | null }>();
+  return {
+    usuarioId,
+    estado: k?.estado ?? 'sin_enviar',
+    enviadoEn: k?.enviado_en ?? null,
+    revisadoEn: k?.revisado_en ?? null,
+  };
+}
+
+// ───────────────────────── Superadmin: pedidos en curso ─────────────────────────
+
+/** Todos los pedidos vivos (de una ciudad o de todas), los que están en problemas primero. */
+superadmin.get('/admin/pedidos', async (c) => {
+  exigir(c, 'admin');
+  const zona = c.req.query('zona') ?? '';
+  const { results } = await base(c)
+    .prepare(
+      `SELECT p.id, p.estado, p.total, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
+        r.nombre AS restaurante, uc.nombre AS cliente, d.codigo AS repartidor_codigo, z.nombre AS ciudad
+       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios uc ON uc.id = p.cliente_id
+       LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id LEFT JOIN zonas z ON z.id = p.zona_id
+       WHERE p.estado IN ('pagado','aceptado','listo','en_camino') AND (? = '' OR p.zona_id = ?)
+       ORDER BY p.creado_en LIMIT 300`,
+    )
+    .bind(zona, zona)
+    .all<Record<string, unknown>>();
+  const orden = new Map([
+    ['rojo', 0],
+    ['amarillo', 1],
+    ['verde', 2],
+  ]);
+  const pedidos = results
+    .map((f) => {
+      const fechas = {
+        estado: String(f.estado),
+        creadoEn: String(f.creado_en),
+        pagadoEn: (f.pagado_en as string | null) ?? null,
+        aceptadoEn: (f.aceptado_en as string | null) ?? null,
+        listoEn: (f.listo_en as string | null) ?? null,
+        recogidoEn: (f.recogido_en as string | null) ?? null,
+        tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
+      };
+      return {
+        id: String(f.id),
+        ...fechas,
+        total: Number(f.total),
+        restaurante: String(f.restaurante),
+        cliente: String(f.cliente),
+        repartidorCodigo: f.repartidor_codigo ? String(f.repartidor_codigo) : null,
+        ciudad: f.ciudad ? String(f.ciudad) : null,
+        luz: semaforoPedido(fechas)?.luz ?? 'verde',
+      };
+    })
+    .sort((a, b) => (orden.get(a.luz) ?? 2) - (orden.get(b.luz) ?? 2));
+  return c.json({ pedidos });
+});
+
 // ───────────────────────── Superadmin: bitácora del pedido ─────────────────────────
 
 /** Todo lo que le pasó a un pedido, en orden: estados, quién los cambió y lo que hizo el Manager. */
@@ -736,8 +801,10 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
     )
     .bind(id, String(r.dueno_id))
     .all();
+  const kyc = await kycResumen(db, String(r.dueno_id));
   return c.json({
     restaurante: {
+      kyc,
       id: String(r.id),
       nombre: String(r.nombre),
       categoria: String(r.categoria ?? ''),

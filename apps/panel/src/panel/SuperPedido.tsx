@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { LuzSemaforo } from './LuzSemaforo';
+import { SelectorCiudad } from './SuperFichas';
 
 /** Bitácora de un pedido en el superadmin: quién hizo qué y a qué hora, incluido el Manager. */
 const T = {
@@ -197,6 +199,99 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           </ol>
         </div>
       </div>
+    </section>
+  );
+}
+
+const TL = {
+  es: {
+    titulo: 'Pedidos en curso',
+    ayuda:
+      'Todos los pedidos vivos, los que están en problemas primero. Se actualiza solo cada 15 segundos.',
+    vacio: 'No hay pedidos en curso.',
+    rojos: 'en problemas',
+    amarillos: 'atrasándose',
+    sinRepartidor: 'sin repartidor',
+  },
+  en: {
+    titulo: 'Live orders',
+    ayuda: 'Every live order, the ones in trouble first. Refreshes every 15 seconds.',
+    vacio: 'No live orders.',
+    rojos: 'in trouble',
+    amarillos: 'running late',
+    sinRepartidor: 'no driver',
+  },
+};
+
+type EnCurso = Parameters<typeof LuzSemaforo>[0]['pedido'] & {
+  id: string;
+  total: number;
+  restaurante: string;
+  cliente: string;
+  repartidorCodigo: string | null;
+  ciudad: string | null;
+  luz: 'verde' | 'amarillo' | 'rojo';
+};
+
+/** Tablero del Manager para el superadmin: cada pedido vivo con su semáforo. Candado C-MANAGER-1. */
+export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma }) {
+  const t = enIdioma(TL, idioma);
+  const te = enIdioma(T, idioma);
+  const [zona, setZona] = useState(
+    () => new URLSearchParams(window.location.search).get('zona') ?? '',
+  );
+  const [lista, setLista] = useState<EnCurso[] | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let vivo = true;
+    const cargar = () =>
+      pedir<{ pedidos: EnCurso[] }>('GET', `/datos/admin/pedidos?zona=${encodeURIComponent(zona)}`)
+        .then((r) => vivo && (setLista(r.pedidos), setError('')))
+        .catch((e: unknown) => vivo && setError(e instanceof ErrorApi ? e.message : String(e)));
+    void cargar();
+    const reloj = setInterval(() => void cargar(), 15000);
+    return () => {
+      vivo = false;
+      clearInterval(reloj);
+    };
+  }, [zona]);
+  const rojos = lista?.filter((p) => p.luz === 'rojo').length ?? 0;
+  const amarillos = lista?.filter((p) => p.luz === 'amarillo').length ?? 0;
+  return (
+    <section className="super">
+      <h1>{t.titulo}</h1>
+      <p>{t.ayuda}</p>
+      <div className="super-filtros">
+        <SelectorCiudad zona={zona} cambiar={setZona} idioma={idioma} />
+      </div>
+      {error && (
+        <p className="error-general" role="alert">
+          {error}
+        </p>
+      )}
+      {lista && (
+        <p>
+          <strong>{lista.length}</strong> · {rojos} {t.rojos} · {amarillos} {t.amarillos}
+        </p>
+      )}
+      {lista?.length === 0 && <p>{t.vacio}</p>}
+      <ul className="super-bandeja super-encurso">
+        {lista?.map((p) => (
+          <li key={p.id}>
+            <Enlace a={`${base}/pedidos/${p.id}`}>
+              <strong>
+                #{p.id.slice(0, 6).toUpperCase()} · {p.restaurante} ·{' '}
+                {formatearDolares(p.total, idioma)}
+              </strong>
+              <span>
+                {te.estados[p.estado] ?? p.estado} · {p.cliente}
+                {p.ciudad ? ` · ${p.ciudad}` : ''} · {p.repartidorCodigo ?? t.sinRepartidor}
+              </span>
+              <LuzSemaforo pedido={p} idioma={idioma} />
+            </Enlace>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

@@ -69,5 +69,5 @@
 - [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).
 - [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.
-- [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). Fase A, primera parte hecha el 12 oct (C-MANAGER-1: recordatorios, cancelación con devolución, alerta sin repartidor, bitácora). Falta el semáforo en la lista de pedidos.
+- [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). Fase A, primera parte hecha el 12 oct (C-MANAGER-1: recordatorios, cancelación con devolución, alerta sin repartidor, bitácora). Semáforo y «Pedidos en curso» hechos el mismo día: Fase A completa.
 - [ ] 👤 Tumbite AI: tope mensual de gasto en IA (propuesto 20 USD prepago) y si el Manager puede dar regalos de disculpa solo y hasta cuánto.

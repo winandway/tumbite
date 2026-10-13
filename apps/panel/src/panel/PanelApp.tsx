@@ -27,7 +27,7 @@ import { PanelFranquicia } from './PanelFranquicia';
 import { TableroRestaurante } from './TableroRestaurante';
 import { MiEmpresa } from './MiEmpresa';
 import { SuperKyc } from './SuperKyc';
-import { SuperPedido } from './SuperPedido';
+import { SuperPedido, SuperPedidos } from './SuperPedido';
 import {
   SuperCiudades,
   SuperCliente,
@@ -57,6 +57,7 @@ function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' 
   if (sub === '/repartidores') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/clientes') return <SuperClientes base={base} idioma={idioma} />;
   if (sub === '/restaurantes') return <AdminRestaurantes idioma={idioma} base={base} />;
+  if (sub === '/pedidos') return <SuperPedidos base={base} idioma={idioma} />;
   const pedidoId = /^\/pedidos\/([0-9a-f-]{36})$/.exec(sub);
   if (pedidoId?.[1]) return <SuperPedido base={base} id={pedidoId[1]} idioma={idioma} />;
   const ficha = /^\/(repartidores|clientes|restaurantes)\/([0-9a-f-]{36})$/.exec(sub);
