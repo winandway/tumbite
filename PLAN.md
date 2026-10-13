@@ -9,4 +9,4 @@
 - [x] Paso 6: Los textos legales dicen que rige la versión en inglés; la española es traducción de cortesía.
 - [x] Paso 7: Documentos (tiendas, legales para tiendas, candados) con las direcciones nuevas en inglés.
 - [x] Paso 8: Pruebas (direcciones en inglés, redirecciones viejas, prerender en los dos idiomas) comprobadas en rojo; prueba en pantalla en celular y computadora.
-- [ ] Paso 9: verify, commit, push, publicación y comprobación en vivo de cada dirección nueva y de cada redirección.
+- [x] Paso 9: verify, commit, push, publicación y comprobación en vivo de cada dirección nueva y de cada redirección.
