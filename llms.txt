@@ -10,6 +10,7 @@
 ## Guides (Docs)
 
 - [Docs · Tumbite](https://tumbite.com/docs): Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.
+- [How do I…? · Tumbite](https://tumbite.com/docs/how-to): The questions we get asked most, each with a step-by-step guide and real screenshots.
 - [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingHow to place your first orderPick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.Track your order liv
 - [How to place your first order · Tumbite](https://tumbite.com/docs/ordering/first-order): Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.
 - [Track your order live · Tumbite](https://tumbite.com/docs/ordering/track-order): Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.
@@ -40,7 +41,8 @@
 - [For entrepreneurs · Tumbite](https://tumbite.com/docs/business): ⌘K← Docs For entrepreneursFranchises: bring Tumbite to your cityEvery new city opens with a local partner. What you pay for isn’t a brand: it’s a complete 
 - [Franchises: bring Tumbite to your city](https://tumbite.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
 - [Launch team training · Tumbite](https://tumbite.com/docs/business/team-training): The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.
-- [Your account · Tumbite](https://tumbite.com/docs/account): ⌘K← Docs Your accountForgot my passwordWe email you a link. It works once and expires in 30 minutes.Confirm your emailWhen you sign up, you get a link to c
+- [Your account · Tumbite](https://tumbite.com/docs/account): ⌘K← Docs Your accountCreate your accountOne account to order, one for your restaurant, and one to deliver. Each takes a minute.Forgot my passwordWe email y
+- [Create your account · Tumbite](https://tumbite.com/docs/account/create-account): One account to order, one for your restaurant, and one to deliver. Each takes a minute.
 - [Forgot my password · Tumbite](https://tumbite.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Tumbite](https://tumbite.com/docs/account/confirm-email): When you sign up, you get a link to confirm the email is yours.
 - [Delete your account · Tumbite](https://tumbite.com/docs/account/delete): From the account menu, in the three dots. Your personal data is removed.

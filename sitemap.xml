@@ -9,6 +9,7 @@
   <url><loc>https://tumbite.com/delete-account</loc><lastmod>2026-10-13</lastmod><priority>0.3</priority></url>
   <url><loc>https://tumbite.com/support</loc><lastmod>2026-10-13</lastmod><priority>0.3</priority></url>
   <url><loc>https://tumbite.com/docs</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/how-to</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/first-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/track-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -40,6 +41,7 @@
   <url><loc>https://tumbite.com/docs/business/franchises</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/business/team-training</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/account/create-account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account/password</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account/confirm-email</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/account/delete</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -101,6 +103,7 @@
   <url><loc>https://tumbite.com/es/delete-account</loc><lastmod>2026-10-13</lastmod><priority>0.3</priority></url>
   <url><loc>https://tumbite.com/es/support</loc><lastmod>2026-10-13</lastmod><priority>0.3</priority></url>
   <url><loc>https://tumbite.com/es/docs</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/how-to</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/first-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/track-order</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
@@ -132,6 +135,7 @@
   <url><loc>https://tumbite.com/es/docs/business/franchises</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/business/team-training</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/account/create-account</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account/password</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account/confirm-email</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/account/delete</loc><lastmod>2026-10-13</lastmod><priority>0.7</priority></url>
