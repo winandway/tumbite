@@ -6,4 +6,4 @@
 - [x] Paso 4: Docs: guía nueva «Crear tu cuenta» y capturas reales del recorrido en las guías de pedir, seguir el pedido, calificar, menú, pedidos del restaurante, empezar a repartir, ofertas y entregar.
 - [x] Paso 5: Docs «¿Cómo hago…?»: cada guía con las preguntas que la gente hace, una página que las junta con su enlace, y el buscador de Docs que también encuentra por pregunta. En los dos idiomas.
 - [x] Paso 6: Que corra solo en cada publicación (revisión automática en GitHub) y su candado y documento.
-- [ ] Paso 7: Verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 7: Verify, commit, push, publicación y comprobación en vivo.
