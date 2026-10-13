@@ -323,10 +323,30 @@ export function Inicio() {
       ) : null}
     </View>
   );
+  // El resultado de un botón (retirar, conectar el banco) se ve en la pantalla donde se tocó,
+  // también en la billetera: antes ahí no salía ni el «Retiro en camino» ni el error.
+  const mensajes = (
+    <>
+      {error || errorCarga ? (
+        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+          {error || errorCarga}
+        </Text>
+      ) : null}
+      {aviso ? (
+        <Text
+          style={{ color: '#0d7a3a', fontWeight: '700', marginBottom: 8 }}
+          accessibilityRole="alert"
+        >
+          {aviso}
+        </Text>
+      ) : null}
+    </>
+  );
   if (vista === 'billetera' && billetera)
     return (
       <Pantalla titulo={t.vistaBilletera}>
         {menuCabecera}
+        {mensajes}
         <BilleteraRepartidor
           datos={billetera}
           idioma={idioma}
@@ -375,14 +395,7 @@ export function Inicio() {
           </Text>
         </Pressable>
       )}
-      {error || errorCarga ? (
-        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
-          {error || errorCarga}
-        </Text>
-      ) : null}
-      {aviso ? (
-        <Text style={{ color: '#0d7a3a', fontWeight: '700', marginBottom: 8 }}>{aviso}</Text>
-      ) : null}
+      {mensajes}
 
       {activo ? (
         <View style={e.tarjeta}>

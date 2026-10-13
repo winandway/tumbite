@@ -19,7 +19,9 @@ Una prueba que hace dos trabajos a la vez:
 10. El cliente paga ese pedido y lo cancela antes de que el restaurante acepte: ve la devolución.
 11. Otro pedido: el restaurante lo rechaza desde los tres puntos; el cliente ve que no se pudo atender y la devolución.
 12. Otro pedido que nadie confirma: a los 7 minutos sale en rojo en el panel y a los 10 el Manager lo cancela solo (el reloj se adelanta en la base de prueba, no se espera).
-13. En cada pago, el dinero cuadra al centavo: restaurante + repartidor + Tumbite = lo que pagó el cliente.
+13. El dinero de cada uno: el restaurante ve en «Beneficios» que le toca justo lo de su venta entregada; el repartidor abre su billetera, conecta su banco (la confirmación de Stripe va simulada) y retira todo, y su saldo queda en cero.
+14. Otro pedido: el repartidor rechaza la oferta con «No, gracias», sigue buscando y el pedido no se le asigna; al final el restaurante lo rechaza y el cliente recibe su dinero (así no queda nada colgado).
+15. En cada pago, el dinero cuadra al centavo: restaurante + repartidor + Tumbite = lo que pagó el cliente.
 
 ## Cómo se corre
 

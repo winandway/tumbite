@@ -389,9 +389,9 @@ const es: SeccionDocs[] = [
           'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
         capturas: [
           {
-            src: '/docs/billetera-restaurante-es.webp',
-            alt: 'Pantalla «Beneficios» del panel de Tumbite con los pedidos del día, las ventas, los regalos, la comisión, lo que te toca en verde, el saldo disponible y los movimientos.',
-            pie: '«Beneficios»: el día de hoy, tu saldo y cada venta con su número de pedido.',
+            src: '/docs/recorrido-restaurante-beneficios-es.webp',
+            alt: 'Pantalla «Beneficios» del panel de Tumbite con el día de hoy: pedidos entregados, ventas, regalos, la comisión, lo que te toca en verde, el saldo disponible y cada venta con su número de pedido.',
+            pie: '«Beneficios»: tu día, tu saldo y cada venta con su número de pedido.',
           },
         ],
         preguntas: [
@@ -526,9 +526,14 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/billetera-repartidor-es.webp',
-            alt: 'Billetera del repartidor en la app de Tumbite con el saldo disponible, lo ganado, las propinas y lo retirado en el mes, y la lista de movimientos con propina y entrega de cada pedido.',
-            pie: 'Tu billetera: saldo arriba y cada movimiento con su pedido.',
+            src: '/docs/recorrido-repartidor-billetera-es.webp',
+            alt: 'Billetera de la app de repartidores de Tumbite con el saldo disponible, lo ganado, las propinas y lo retirado del mes, y cada entrega y propina con su pedido.',
+            pie: 'Tu billetera: cuánto tienes, cuánto ganaste en el mes y cada movimiento.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-retiro-es.webp',
+            alt: 'Billetera del repartidor después de retirar: «Retiro en camino a tu banco», el saldo en cero y el retiro en los movimientos.',
+            pie: 'Retiras todo con un toque y el dinero va camino a tu banco.',
           },
         ],
         preguntas: ['¿Cómo retiro mis ganancias?', '¿Me quedo con toda la propina?'],
@@ -555,7 +560,7 @@ const es: SeccionDocs[] = [
           'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, el pedido llega al restaurante con una alarma y un semáforo en verde.',
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
           'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor la recoge, la lleva y marca «Entregado». El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
-          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 26.18 dólares (comida 18.50, envío 2.99, servicio 0.99 y propina 3.70). El restaurante recibió 16.19, que es su comida menos la comisión. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 1.29.',
+          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 26.18 dólares (comida 18.50, envío 2.99, servicio 0.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 0.37.',
           'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 10 minutos, cancela y devuelve el dinero solo.',
         ],
         capturas: [
@@ -1246,9 +1251,9 @@ const en: SeccionDocs[] = [
         resumen: 'Orders, sales, commission, and your payout. Cash out to your bank.',
         capturas: [
           {
-            src: '/docs/billetera-restaurante-en.webp',
-            alt: '“Earnings” screen in the Tumbite dashboard with today’s orders, sales, gifts, commission, your payout in green, the available balance, and the activity list.',
-            pie: '“Earnings”: today, your balance, and every sale with its order number.',
+            src: '/docs/recorrido-restaurante-beneficios-en.webp',
+            alt: '“Earnings” screen in the Tumbite dashboard with today: orders delivered, sales, gifts, commission, your payout in green, the available balance, and each sale with its order number.',
+            pie: '“Earnings”: your day, your balance, and every sale with its order number.',
           },
         ],
         preguntas: [
@@ -1385,9 +1390,14 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/billetera-repartidor-en.webp',
-            alt: 'Driver wallet in the Tumbite app showing the available balance, monthly earnings, tips, and withdrawals, and the list of tip and delivery movements for each order.',
-            pie: 'Your wallet: balance at the top and every movement with its order.',
+            src: '/docs/recorrido-repartidor-billetera-en.webp',
+            alt: 'Wallet in the Tumbite driver app with the available balance, earnings, tips, and withdrawals for the month, and each delivery and tip with its order.',
+            pie: 'Your wallet: what you have, what you earned this month, and every transaction.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-retiro-en.webp',
+            alt: 'Driver wallet after cashing out: “Cash-out on its way to your bank,” the balance at zero, and the withdrawal in the activity.',
+            pie: 'Cash out everything with one tap and the money heads to your bank.',
           },
         ],
         preguntas: ['How do I cash out my earnings?', 'Do I keep the whole tip?'],
@@ -1414,7 +1424,7 @@ const en: SeccionDocs[] = [
           'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. Once they pay, the order reaches the restaurant with an alarm and a green traffic light.',
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
           'When the food is ready, the restaurant taps “Ready!” The driver picks it up, delivers it, and taps “Delivered.” The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
-          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $26.18 (food $18.50, delivery $2.99, service $0.99, and a $3.70 tip). The restaurant received $16.19, its food minus commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $1.29.',
+          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $26.18 (food $18.50, delivery $2.99, service $0.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $0.37.',
           'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 10 minutes, it cancels and refunds automatically.',
         ],
         capturas: [

@@ -231,7 +231,13 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
               <div className="lista-texto">
                 <strong>{t.conceptos[m.concepto] ?? m.concepto}</strong>
                 <span>
-                  {new Date(`${m.fecha}Z`).toLocaleString(idioma === 'en' ? 'en-US' : 'es-US')}
+                  {/* Igual que en la billetera del repartidor: «13 oct, 19:27», sin segundos. */}
+                  {new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleString(idioma, {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
                   {m.pedidoId ? ` · ${t.pedido} #${m.pedidoId.slice(0, 4).toUpperCase()}` : ''}
                 </span>
               </div>

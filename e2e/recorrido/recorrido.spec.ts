@@ -75,6 +75,44 @@ for (const idioma of ['en', 'es'] as const) {
       );
     };
 
+    /** Consulta a la base de prueba (solo la local de .recorrido; nunca otra). */
+    const sql = (comando: string): Record<string, unknown>[] => {
+      const salida = execFileSync(
+        'npx',
+        [
+          'wrangler',
+          'd1',
+          'execute',
+          'tumbite-local',
+          '--local',
+          '--persist-to',
+          '.recorrido/estado',
+          '-c',
+          '.recorrido/wrangler.jsonc',
+          '--json',
+          '--command',
+          comando,
+        ],
+        { cwd: RAIZ, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+      );
+      return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
+    };
+    /** Un aviso de Stripe firmado como el de verdad (el pago aprobado, la cuenta del banco lista). */
+    const avisoStripe = async (tipo: string, objeto: Record<string, unknown>) => {
+      const cuerpo = JSON.stringify({
+        id: `evt_${tipo}_${String(objeto.id)}`,
+        type: tipo,
+        data: { object: objeto },
+      });
+      const t = Math.floor(Date.now() / 1000);
+      const firma = createHmac('sha256', DATOS.secretoAviso).update(`${t}.${cuerpo}`).digest('hex');
+      const r = await request.post('/datos/stripe/aviso', {
+        headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${firma}` },
+        data: cuerpo,
+      });
+      expect(r.status()).toBe(200);
+    };
+
     // 1. El restaurante se registra en el panel y arma su ficha.
     const panelCtx = await nuevoContexto('computadora');
     const panel = await panelCtx.newPage();
@@ -234,6 +272,22 @@ for (const idioma of ['en', 'es'] as const) {
         gananciaPlataforma: number;
       };
     };
+    /** El restaurante rechaza un pedido desde los tres puntos de su fila (el cliente recibe su dinero). */
+    const rechazarEnPanel = async (pedidoId: string) => {
+      await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+      const codigo = pedidoId.slice(0, 4).toUpperCase();
+      // La fila de ESE pedido: el ⋮ que está junto a su número.
+      const fila = panel
+        .locator('strong', { hasText: `#${codigo}` })
+        .locator(`xpath=ancestor::*[.//button[@aria-label="${L.masOpciones}"]][1]`);
+      await expect(fila).toBeVisible({ timeout: 20_000 });
+      panel.once('dialog', (d) => void d.accept());
+      await fila.getByRole('button', { name: L.masOpciones }).click();
+      await panel.getByRole('menuitem', { name: L.rechazar }).click();
+      await expect(panel.locator('strong', { hasText: `#${codigo}` })).toContainText(
+        /Canceled|Cancelado/,
+      );
+    };
     /** Del menú al pago: agrega los platos, va al carrito, paga y el banco aprueba (simulado). */
     const pedirYPagar = async (platos: string[], fotoCarrito?: string): Promise<Cobro> => {
       if (!cli.url().includes('/restaurant/')) {
@@ -271,24 +325,11 @@ for (const idioma of ['en', 'es'] as const) {
       expect(respuesta.status()).toBe(201);
       const c = (await respuesta.json()) as Cobro;
       // El banco aprueba: aviso firmado de Stripe, como el de verdad.
-      const cuerpo = JSON.stringify({
-        id: `evt_${c.pedidoId}`,
-        type: 'payment_intent.succeeded',
-        data: {
-          object: {
-            id: c.clientSecret.split('_secret')[0],
-            amount_received: c.desglose.totalCliente,
-            metadata: { pedido_id: c.pedidoId },
-          },
-        },
+      await avisoStripe('payment_intent.succeeded', {
+        id: c.clientSecret.split('_secret')[0],
+        amount_received: c.desglose.totalCliente,
+        metadata: { pedido_id: c.pedidoId },
       });
-      const t = Math.floor(Date.now() / 1000);
-      const firma = createHmac('sha256', DATOS.secretoAviso).update(`${t}.${cuerpo}`).digest('hex');
-      const aviso = await request.post('/datos/stripe/aviso', {
-        headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${firma}` },
-        data: cuerpo,
-      });
-      expect(aviso.status()).toBe(200);
       // El dinero cuadra al centavo: lo que paga el cliente se reparte entero.
       const d = c.desglose;
       expect(d.pagoRestaurante + d.pagoRepartidor + d.gananciaPlataforma).toBe(d.totalCliente);
@@ -374,15 +415,7 @@ for (const idioma of ['en', 'es'] as const) {
     // 11. El restaurante no puede atender un pedido y lo rechaza: el cliente recibe su dinero.
     const rechazado = await pedirYPagar([plato.pizza]);
     await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
-    const codigo = rechazado.pedidoId.slice(0, 4).toUpperCase();
-    // La fila de ESE pedido: el ⋮ que está junto a su número.
-    const fila = panel
-      .locator('strong', { hasText: `#${codigo}` })
-      .locator(`xpath=ancestor::*[.//button[@aria-label="${L.masOpciones}"]][1]`);
-    await expect(fila).toBeVisible({ timeout: 20_000 });
-    panel.once('dialog', (d) => void d.accept());
-    await fila.getByRole('button', { name: L.masOpciones }).click();
-    await panel.getByRole('menuitem', { name: L.rechazar }).click();
+    await rechazarEnPanel(rechazado.pedidoId);
     await cli.goto(`/app/order/${rechazado.pedidoId}`);
     await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-rechazado');
@@ -391,22 +424,8 @@ for (const idioma of ['en', 'es'] as const) {
     //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
     const olvidado = await pedirYPagar([plato.pizza]);
     const atrasar = (minutos: number) =>
-      execFileSync(
-        'npx',
-        [
-          'wrangler',
-          'd1',
-          'execute',
-          'tumbite-local',
-          '--local',
-          '--persist-to',
-          '.recorrido/estado',
-          '-c',
-          '.recorrido/wrangler.jsonc',
-          '--command',
-          `UPDATE pedidos SET pagado_en = datetime('now','-${minutos} minutes') WHERE id = '${olvidado.pedidoId}'`,
-        ],
-        { cwd: RAIZ, stdio: 'ignore' },
+      sql(
+        `UPDATE pedidos SET pagado_en = datetime('now','-${minutos} minutes') WHERE id = '${olvidado.pedidoId}'`,
       );
     atrasar(7);
     await panel.reload();
@@ -420,6 +439,69 @@ for (const idioma of ['en', 'es'] as const) {
       timeout: 20_000,
     });
     await foto(cli, 'cliente-manager-cancela');
+
+    // 13. El dinero de cada uno. El restaurante ve su día: lo que le toca es lo de su venta entregada.
+    await panel.getByRole('link', { name: L.beneficios, exact: true }).click();
+    const pagoRest = new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cobro.desglose.pagoRestaurante / 100);
+    await expect(panel.getByText(L.teToca).locator('..')).toContainText(pagoRest);
+    await foto(panel, 'restaurante-beneficios');
+
+    // El repartidor ve su billetera, conecta su banco (en Stripe) y retira todo.
+    await rep.goto('/driver/');
+    await rep.getByText(L.verBilletera).filter({ visible: true }).click();
+    await expect(rep.getByText(L.disponible).filter({ visible: true })).toBeVisible();
+    await foto(rep, 'repartidor-billetera');
+    const [stripePagina] = await Promise.all([
+      repCtx.waitForEvent('page'),
+      rep.getByText(L.conectarBanco).filter({ visible: true }).click(),
+    ]);
+    await stripePagina.close(); // la página de Stripe (simulada) no se carga en la prueba
+    const cuenta = sql(
+      `SELECT c.stripe_cuenta AS id FROM cuentas_stripe c JOIN usuarios u ON u.id = c.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
+    )[0]?.id;
+    expect(cuenta, 'la cuenta del banco del repartidor quedó creada').toBeTruthy();
+    await avisoStripe('account.updated', {
+      id: cuenta,
+      payouts_enabled: true,
+      charges_enabled: true,
+    });
+    await rep.goto('/driver/');
+    await rep.getByText(L.verBilletera).filter({ visible: true }).click();
+    await rep.getByText(L.retirar).filter({ visible: true }).click();
+    await expect(rep.getByText(L.retiroEnCamino).filter({ visible: true })).toBeVisible();
+    await foto(rep, 'repartidor-retiro');
+    const saldo = sql(
+      `SELECT COALESCE(SUM(m.monto), 0) AS s FROM movimientos m JOIN usuarios u ON u.id = m.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
+    )[0]?.s;
+    expect(Number(saldo), 'después de retirar todo, el saldo queda en cero').toBe(0);
+
+    // 14. Rechazar una oferta no castiga: la oferta se va y el repartidor sigue buscando.
+    await rep.goto('/driver/');
+    await rep
+      .getByRole('switch')
+      .or(rep.getByRole('button', { name: L.conectarme }))
+      .first()
+      .click();
+    const otro = await pedirYPagar([plato.pizza]);
+    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel
+      .getByRole('button', { name: `${L.aceptar} · 10` })
+      .first()
+      .click();
+    await expect(rep.getByRole('button', { name: L.noGracias })).toBeVisible({ timeout: 30_000 });
+    await rep.getByRole('button', { name: L.noGracias }).click();
+    await expect(rep.getByText(L.buscando).filter({ visible: true })).toBeVisible();
+    const sinRepartidor = sql(
+      `SELECT repartidor_id AS r FROM pedidos WHERE id = '${otro.pedidoId}'`,
+    )[0]?.r;
+    expect(sinRepartidor ?? null, 'el pedido rechazado no se le asigna').toBeNull();
+    await rep.getByText(L.desconectarme).filter({ visible: true }).click();
+    // Nadie más lo toma: el restaurante lo rechaza y el cliente recibe su dinero. Así no queda
+    // ningún pedido colgado para la corrida siguiente.
+    await rechazarEnPanel(otro.pedidoId);
 
     await Promise.all([panelCtx.close(), repCtx.close(), cliCtx.close()]);
   });
