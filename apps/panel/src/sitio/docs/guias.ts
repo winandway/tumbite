@@ -14,6 +14,8 @@ export type Guia = {
   explicacion?: string[];
   /** Capturas reales de la pantalla, con texto alternativo para lectores y para Google. */
   capturas?: Captura[];
+  /** Las preguntas que la gente hace y que esta guía responde («¿Cómo hago…?»). */
+  preguntas?: string[];
   pasos: string[];
   nota?: string;
 };
@@ -37,15 +39,25 @@ const es: SeccionDocs[] = [
           'Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.',
         capturas: [
           {
-            src: '/docs/menu-cliente-es.webp',
-            alt: 'Menú de un restaurante en la app de Tumbite, agrupado por categorías, con los platos ya agregados al carrito marcados en verde y el botón «Ver carrito».',
-            pie: 'Elige tus platos: los que ya están en el carrito se marcan en verde.',
+            src: '/docs/recorrido-cliente-menu-es.webp',
+            alt: 'Menú de un restaurante en la app de Tumbite con cada plato, su categoría, su precio y el botón «Agregar».',
+            pie: 'Eliges tus platos con «Agregar».',
           },
           {
-            src: '/docs/carrito-es.webp',
-            alt: 'Carrito de Tumbite con la dirección de entrega, la propina elegida y el desglose de comida, envío, tarifa de servicio, propina y total antes de pagar.',
-            pie: 'Antes de pagar ves todo: comida, envío, servicio y propina.',
+            src: '/docs/recorrido-cliente-carrito-es.webp',
+            alt: 'Carrito con la dirección de entrega, la propina para el repartidor y el desglose completo antes de pagar.',
+            pie: 'Antes de pagar ves el total exacto: comida, envío, servicio y propina.',
           },
+          {
+            src: '/docs/recorrido-cliente-pagado-es.webp',
+            alt: 'Pedido pagado en la app de Tumbite, esperando que el restaurante lo acepte, con la barra de progreso.',
+            pie: 'Pagas y el pedido le llega al restaurante al instante.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo pido comida en Tumbite?',
+          '¿Cómo pago mi pedido?',
+          '¿Puedo pagar con Apple Pay o Google Pay?',
         ],
         pasos: [
           'Abre la app de Tumbite y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
@@ -62,10 +74,14 @@ const es: SeccionDocs[] = [
         resumen: 'Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.',
         capturas: [
           {
-            src: '/docs/seguimiento-es.webp',
-            alt: 'Seguimiento del pedido en la app de Tumbite: «Tu repartidor va en camino», la barra de avance en verde, el tiempo estimado de llegada, el mapa con el repartidor y la hora de la última ubicación.',
-            pie: 'Tu pedido en vivo: la barra avanza en verde y ves al repartidor en el mapa.',
+            src: '/docs/recorrido-cliente-en-camino-es.webp',
+            alt: 'Seguimiento en vivo: «Tu repartidor va en camino», la barra en verde, el mapa con el repartidor y la hora estimada.',
+            pie: 'Sigues al repartidor en el mapa hasta tu puerta.',
           },
+        ],
+        preguntas: [
+          '¿Dónde veo por dónde va mi pedido?',
+          '¿Cuánto falta para que llegue mi comida?',
         ],
         pasos: [
           'Después de pagar, la pantalla del pedido muestra cinco pasos: pago recibido, en cocina, listo, en camino y entregado.',
@@ -96,6 +112,7 @@ const es: SeccionDocs[] = [
             pie: 'La app te dice por qué se canceló y que el dinero vuelve a tu tarjeta.',
           },
         ],
+        preguntas: ['¿Cómo cancelo un pedido?', '¿Me devuelven el dinero si cancelo?'],
         pasos: [
           'Abre tu pedido en la app. Mientras diga «Pago recibido. Esperando que el restaurante lo acepte», verás «Cancelar el pedido».',
           'Tócalo. La app te pregunta si estás seguro y te recuerda que te devolvemos todo.',
@@ -120,6 +137,7 @@ const es: SeccionDocs[] = [
             pie: 'Mi cuenta: tus datos arriba y todos tus pedidos debajo.',
           },
         ],
+        preguntas: ['¿Dónde veo mis pedidos anteriores?', '¿Cómo quito una tarjeta guardada?'],
         pasos: [
           'En la pantalla de inicio de la app, toca «Mi cuenta».',
           'Baja para ver tus pedidos. Toca cualquiera para abrirlo.',
@@ -138,6 +156,10 @@ const es: SeccionDocs[] = [
             pie: 'Cuando te toca un regalo, aparece en el carrito y se descuenta del total.',
           },
         ],
+        preguntas: [
+          '¿Cómo recibo mi regalo de cumpleaños?',
+          '¿Cómo funciona la tarjeta de sellos?',
+        ],
         pasos: [
           'Pon tu fecha de nacimiento en tu cuenta para recibir el regalo de cumpleaños de tus restaurantes favoritos.',
           'Cada pedido suma un sello en los restaurantes que tienen tarjeta de sellos. Al completarla, un plato gratis.',
@@ -152,10 +174,14 @@ const es: SeccionDocs[] = [
         resumen: 'Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.',
         capturas: [
           {
-            src: '/docs/calificar-es.webp',
-            alt: 'Pedido entregado en la app de Tumbite con la barra completa en verde y la calificación de la comida y del repartidor con estrellas.',
+            src: '/docs/recorrido-cliente-calificar-es.webp',
+            alt: 'Pedido entregado con la calificación de la comida y del repartidor con estrellas.',
             pie: 'Al llegar, calificas la comida y al repartidor por separado.',
           },
+        ],
+        preguntas: [
+          '¿Cómo califico la comida y al repartidor?',
+          '¿Qué hago si la comida llegó tarde por culpa del restaurante?',
         ],
         pasos: [
           'Cuando el pedido llega, en la pantalla del pedido aparece «¿Qué tal todo?».',
@@ -178,10 +204,25 @@ const es: SeccionDocs[] = [
           'Crea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.',
         capturas: [
           {
-            src: '/docs/mi-restaurante-es.webp',
-            alt: 'Pantalla «Mi restaurante» del panel de Tumbite con el estado aprobado, el botón para recibir o cerrar pedidos y la ficha con foto, nombre, tipo de comida y teléfono.',
-            pie: '«Mi restaurante»: tu ficha, tu foto de portada y el botón para abrir o cerrar.',
+            src: '/docs/recorrido-restaurante-registro-es.webp',
+            alt: 'Formulario para crear la cuenta de restaurante en el panel de Tumbite, con tu nombre, correo, celular y contraseña.',
+            pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
           },
+          {
+            src: '/docs/recorrido-restaurante-ficha-es.webp',
+            alt: 'Pantalla «Mi restaurante» con el nombre, el tipo de comida, el teléfono, la dirección y la descripción en los dos idiomas, en revisión.',
+            pie: 'Completas tu ficha y queda en revisión hasta que nuestro equipo la aprueba.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-abierto-es.webp',
+            alt: 'Restaurante aprobado en el panel de Tumbite, recibiendo pedidos, con el botón para cerrar por ahora.',
+            pie: 'Aprobado: abres con un toque y empiezas a recibir pedidos.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo pongo mi restaurante en Tumbite?',
+          '¿Cuánto tarda la aprobación?',
+          '¿Cómo abro y cierro mi restaurante?',
         ],
         pasos: [
           'Entra a tumbite.com, toca «Panel» y crea tu cuenta de restaurante con tu correo.',
@@ -197,11 +238,12 @@ const es: SeccionDocs[] = [
         resumen: 'Cada plato en español e inglés, con su precio, su categoría y su foto.',
         capturas: [
           {
-            src: '/docs/menu-restaurante-es.webp',
-            alt: 'Menú en el panel del restaurante de Tumbite con cada plato, su categoría y precio, y la casilla de disponible o agotado.',
-            pie: 'Tu menú en el panel: cada plato con su categoría, su precio y su disponibilidad.',
+            src: '/docs/recorrido-restaurante-menu-es.webp',
+            alt: 'Menú del restaurante en el panel con sus platos, categorías y precios.',
+            pie: 'Tu menú en el panel, con cada plato, su categoría y su precio.',
           },
         ],
+        preguntas: ['¿Cómo agrego un plato al menú?', '¿Cómo cambio un precio o una foto?'],
         pasos: [
           'En «Menú», toca «Agregar plato».',
           'Escribe el nombre y la descripción en español y en inglés. Tus clientes ven el idioma que eligieron.',
@@ -221,6 +263,7 @@ const es: SeccionDocs[] = [
             pie: 'Un toque y el plato queda «Agotado»: deja de aparecer para los clientes.',
           },
         ],
+        preguntas: ['¿Cómo marco un plato como agotado?'],
         pasos: [
           'En «Menú», cada plato tiene un interruptor «Disponible / Agotado».',
           'Tócalo para apagarlo. Desaparece de la app de los clientes al instante.',
@@ -238,6 +281,21 @@ const es: SeccionDocs[] = [
             alt: 'Lista de pedidos del restaurante con la alarma, el semáforo de cada pedido y los botones para aceptar con 10, 20 o 30 minutos.',
             pie: 'Los pedidos con su semáforo y los botones para aceptar.',
           },
+          {
+            src: '/docs/recorrido-restaurante-pedido-nuevo-es.webp',
+            alt: 'Pedido nuevo en el panel con el semáforo en verde y los botones para aceptar en 10, 20 o 30 minutos.',
+            pie: 'Llega un pedido: lo aceptas eligiendo en cuánto estará listo.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-pedido-aceptado-es.webp',
+            alt: 'Pedido aceptado y en preparación, con el botón «¡Listo!».',
+            pie: 'Cuando la comida está lista, tocas «¡Listo!» y avisamos al repartidor.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo acepto un pedido?',
+          '¿Cómo aviso que la comida está lista?',
+          '¿Cómo rechazo un pedido?',
         ],
         pasos: [
           'En «Pedidos», toca «Activar alarma» una vez (el navegador pide permiso para el sonido).',
@@ -266,6 +324,7 @@ const es: SeccionDocs[] = [
             pie: 'Tu tablero al entrar al panel: lo importante del negocio en una sola pantalla.',
           },
         ],
+        preguntas: ['¿Dónde veo cuánto vendí hoy?'],
         pasos: [
           'Entra a tu panel. El tablero aparece en «Inicio».',
           'Si hay pedidos esperando, toca «Ver pedidos» para atenderlos.',
@@ -290,6 +349,7 @@ const es: SeccionDocs[] = [
             pie: 'Todo se hace desde «Mi empresa», con la cámara del celular.',
           },
         ],
+        preguntas: ['¿Cómo verifico mi restaurante?', '¿Qué fotos necesito para la verificación?'],
         pasos: [
           'Entra a tu panel desde el celular y abre «Mi empresa». Baja hasta «Verificación del dueño y del local».',
           'Elige el documento del dueño: licencia de conducir, identificación oficial o pasaporte.',
@@ -309,6 +369,7 @@ const es: SeccionDocs[] = [
             pie: 'Eliges el porcentaje, los regalos que enciendes y el plato de cada uno.',
           },
         ],
+        preguntas: ['¿Cómo premio a mis clientes fieles?', '¿Cuánto me cuesta un regalo?'],
         pasos: [
           'En «Regalos y marketing», elige el porcentaje de tus ventas que apartas para regalos (recomendamos 3 %).',
           'Enciende los regalos que quieras: cumpleaños, tarjeta de sellos y bienvenida para clientes que no vuelven.',
@@ -327,6 +388,11 @@ const es: SeccionDocs[] = [
             alt: 'Pantalla «Beneficios» del panel de Tumbite con los pedidos del día, las ventas, los regalos, la comisión, lo que te toca en verde, el saldo disponible y los movimientos.',
             pie: '«Beneficios»: el día de hoy, tu saldo y cada venta con su número de pedido.',
           },
+        ],
+        preguntas: [
+          '¿Cuándo y cómo cobro?',
+          '¿Cómo conecto mi cuenta bancaria?',
+          '¿Cuánto me cobra Tumbite?',
         ],
         pasos: [
           'En «Beneficios» ves el día de hoy: pedidos entregados, ventas, regalos, comisión y, en verde, lo que te toca.',
@@ -352,6 +418,16 @@ const es: SeccionDocs[] = [
             alt: 'Pantalla «Crear cuenta» de la app de repartidores de Tumbite con nombre y apellido, correo, celular y contraseña.',
             pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
           },
+          {
+            src: '/docs/recorrido-repartidor-conectado-es.webp',
+            alt: 'App de repartidores de Tumbite conectada: «Conectado: recibiendo pedidos», con el nivel y el saldo.',
+            pie: 'Te conectas cuando quieres trabajar y te desconectas cuando quieres.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo empiezo a repartir con Tumbite?',
+          '¿Tengo horario fijo?',
+          '¿Cómo me conecto para recibir pedidos?',
         ],
         pasos: [
           'Descarga la app de Tumbite para repartidores y crea tu cuenta.',
@@ -376,6 +452,7 @@ const es: SeccionDocs[] = [
             pie: 'Está en el menú, en «Mis datos y vehículo».',
           },
         ],
+        preguntas: ['¿Cómo verifico mi identidad?'],
         pasos: [
           'Abre la app de repartidores, toca el menú de arriba a la izquierda y entra a «Mis datos y vehículo».',
           'En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.',
@@ -390,10 +467,20 @@ const es: SeccionDocs[] = [
         resumen: 'Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.',
         capturas: [
           {
-            src: '/docs/oferta-repartidor-es.webp',
-            alt: 'Oferta nueva en la app de repartidores: lo que ganas con la propina incluida, dónde recoger, dónde entregar y la distancia.',
-            pie: 'La oferta: cuánto ganas y a dónde vas, antes de aceptar.',
+            src: '/docs/recorrido-repartidor-oferta-es.webp',
+            alt: 'Oferta nueva en la app de repartidores: cuánto ganas con la propina incluida, dónde recoger, dónde entregar y la distancia.',
+            pie: 'Antes de aceptar ves cuánto ganas y a dónde vas.',
           },
+          {
+            src: '/docs/recorrido-repartidor-en-camino-es.webp',
+            alt: 'Pedido recogido, en camino a la entrega, con los botones «Cómo llegar» y «Entregado».',
+            pie: 'Recoges, llegas con «Cómo llegar» y marcas «Entregado».',
+          },
+        ],
+        preguntas: [
+          '¿Cómo acepto un pedido para repartir?',
+          '¿Me bajan de nivel si rechazo una oferta?',
+          '¿Cómo marco que recogí y entregué?',
         ],
         pasos: [
           'Cuando hay un pedido cerca, te llega una oferta con el pago en dólares, la distancia y el restaurante.',
@@ -415,6 +502,7 @@ const es: SeccionDocs[] = [
             pie: 'Tu nivel en la pantalla de inicio, con la barra verde de avance.',
           },
         ],
+        preguntas: ['¿Cómo subo de nivel?', '¿Para qué sirven los niveles?'],
         pasos: [
           'Cada entrega completada suma puntos. Las buenas calificaciones y la puntualidad también.',
           'Si el cliente te califica bajo por culpa del restaurante (comida tardía, pedido incompleto), esa nota no te cuenta.',
@@ -438,6 +526,7 @@ const es: SeccionDocs[] = [
             pie: 'Tu billetera: saldo arriba y cada movimiento con su pedido.',
           },
         ],
+        preguntas: ['¿Cómo retiro mis ganancias?', '¿Me quedo con toda la propina?'],
         pasos: [
           'Abre el menú de arriba a la izquierda y toca «Mi billetera», o toca «Ver mi billetera» en la pantalla de inicio.',
           'La primera vez, toca «Conectar mi cuenta bancaria» y completa tus datos en Stripe. Se hace una sola vez.',
@@ -466,15 +555,49 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/oferta-repartidor-es.webp',
-            alt: 'Oferta nueva en la app de repartidores de Tumbite: «Ganas $8.70, incluye propina de $3.70», con dónde recoger, dónde entregar, la distancia y los botones «Aceptar» y «No, gracias».',
-            pie: 'Lo que ve el repartidor: cuánto gana y a dónde va, antes de aceptar.',
+            src: '/docs/recorrido-cliente-carrito-es.webp',
+            alt: 'Carrito con la dirección de entrega, la propina para el repartidor y el desglose completo antes de pagar.',
+            pie: 'Antes de pagar ves el total exacto: comida, envío, servicio y propina.',
           },
           {
-            src: '/docs/semaforo-restaurante-es.webp',
-            alt: 'Lista de pedidos del restaurante con el semáforo de cada pedido.',
-            pie: 'Lo que ve el restaurante: cada pedido con su semáforo y sus botones.',
+            src: '/docs/recorrido-cliente-pagado-es.webp',
+            alt: 'Pedido pagado en la app de Tumbite, esperando que el restaurante lo acepte, con la barra de progreso.',
+            pie: 'Pagas y el pedido le llega al restaurante al instante.',
           },
+          {
+            src: '/docs/recorrido-restaurante-pedido-nuevo-es.webp',
+            alt: 'Pedido nuevo en el panel con el semáforo en verde y los botones para aceptar en 10, 20 o 30 minutos.',
+            pie: 'Llega un pedido: lo aceptas eligiendo en cuánto estará listo.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-pedido-aceptado-es.webp',
+            alt: 'Pedido aceptado y en preparación, con el botón «¡Listo!».',
+            pie: 'Cuando la comida está lista, tocas «¡Listo!» y avisamos al repartidor.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-oferta-es.webp',
+            alt: 'Oferta nueva en la app de repartidores: cuánto ganas con la propina incluida, dónde recoger, dónde entregar y la distancia.',
+            pie: 'Antes de aceptar ves cuánto ganas y a dónde vas.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-en-camino-es.webp',
+            alt: 'Pedido recogido, en camino a la entrega, con los botones «Cómo llegar» y «Entregado».',
+            pie: 'Recoges, llegas con «Cómo llegar» y marcas «Entregado».',
+          },
+          {
+            src: '/docs/recorrido-cliente-en-camino-es.webp',
+            alt: 'Seguimiento en vivo: «Tu repartidor va en camino», la barra en verde, el mapa con el repartidor y la hora estimada.',
+            pie: 'Sigues al repartidor en el mapa hasta tu puerta.',
+          },
+          {
+            src: '/docs/recorrido-cliente-calificar-es.webp',
+            alt: 'Pedido entregado con la calificación de la comida y del repartidor con estrellas.',
+            pie: 'Al llegar, calificas la comida y al repartidor por separado.',
+          },
+        ],
+        preguntas: [
+          '¿Qué pasa con mi pedido después de pagar?',
+          '¿Cómo se reparte el dinero de un pedido?',
         ],
         pasos: [
           'Cliente: elige, paga y sigue su pedido en vivo.',
@@ -506,6 +629,7 @@ const es: SeccionDocs[] = [
             pie: 'En el restaurante, el semáforo muestra lo que el Manager vigila en cada pedido.',
           },
         ],
+        preguntas: ['¿Qué pasa si el restaurante no acepta mi pedido?'],
         pasos: [],
         nota: 'Esta primera versión del Manager trabaja con reglas fijas y claras, iguales para todos. Las mismas reglas que ves en el semáforo de cada pedido.',
       },
@@ -526,6 +650,7 @@ const es: SeccionDocs[] = [
             pie: 'Así lo ve el restaurante en su lista de pedidos: el color, los minutos y el motivo.',
           },
         ],
+        preguntas: ['¿Qué significan los colores de cada pedido?'],
         pasos: [
           'Restaurantes: abran «Pedidos» en el panel o en la tablet. El semáforo aparece debajo de cada pedido.',
           'Atiendan primero los rojos y después los amarillos. Un pedido nuevo en amarillo se acepta con un toque eligiendo los minutos de preparación.',
@@ -554,6 +679,7 @@ const es: SeccionDocs[] = [
             pie: 'El repartidor verifica su identidad con su documento y una foto de su cara.',
           },
         ],
+        preguntas: ['¿Los restaurantes y repartidores están verificados?'],
         pasos: [],
         nota: 'Si eres restaurante o repartidor, mira las guías «Verificar tu restaurante» y «Verificar tu identidad»: son cuatro y tres fotos desde el celular.',
       },
@@ -581,6 +707,7 @@ const es: SeccionDocs[] = [
             pie: 'Lo que incluye una franquicia de Tumbite en cada ciudad.',
           },
         ],
+        preguntas: ['¿Cómo llevo Tumbite a mi ciudad?', '¿Cuánto cuesta una franquicia?'],
         pasos: [
           'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
           'Llena el formulario «Quiero una franquicia de Tumbite»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
@@ -603,6 +730,7 @@ const es: SeccionDocs[] = [
             pie: 'Ejemplo de lo que el equipo enseña en la visita al restaurante.',
           },
         ],
+        preguntas: ['¿Qué tiene que leer cada persona del equipo antes de un lanzamiento?'],
         pasos: [
           'Todo el equipo: «Un pedido de punta a punta», «El Manager», «El semáforo de cada pedido» y «Restaurantes y repartidores verificados».',
           'Quien visita restaurantes: «Poner tu restaurante en Tumbite», «Verificar tu restaurante», «Tu menú», «Recibir pedidos y la alarma», «Tu tablero», «Regalos y marketing» y «Resumen del día y tu billetera».',
@@ -619,6 +747,44 @@ const es: SeccionDocs[] = [
     icono: 'proteccion',
     guias: [
       {
+        id: 'create-account',
+        titulo: 'Crear tu cuenta',
+        resumen:
+          'Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.',
+        explicacion: [
+          'En Tumbite hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Tumbite. El restaurante crea su cuenta en el panel, desde la computadora. Quien reparte se registra en la app Tumbite Driver.',
+          'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-registro-es.webp',
+            alt: 'Pantalla «Crear cuenta» de la app de Tumbite con nombre y apellido, correo, celular, fecha de cumpleaños y contraseña.',
+            pie: 'Te registras con tu nombre, tu correo, tu celular y una contraseña.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-registro-es.webp',
+            alt: 'Formulario para crear la cuenta de restaurante en el panel de Tumbite, con tu nombre, correo, celular y contraseña.',
+            pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
+          },
+          {
+            src: '/docs/registro-repartidor-es.webp',
+            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Tumbite con nombre y apellido, correo, celular y contraseña.',
+            pie: 'Quien reparte se registra en la app Tumbite Driver.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo me registro en Tumbite?',
+          '¿Cómo creo una cuenta de restaurante?',
+          '¿Cómo creo una cuenta de repartidor?',
+        ],
+        pasos: [
+          'Para pedir: abre la app de Tumbite, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos y toca «Crear cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
+          'Para tu restaurante: entra a tumbite.com, toca «Panel», luego «¿Tu restaurante aún no está en Tumbite? Crea tu cuenta», y completa tus datos.',
+          'Para repartir: abre la app Tumbite Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
+          'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Tumbite.',
+        ],
+      },
+      {
         id: 'password',
         titulo: 'Olvidé mi contraseña',
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
@@ -634,6 +800,7 @@ const es: SeccionDocs[] = [
             pie: 'Si la recuerdas, la cambias en «Configuración» con el ojito para ver lo que escribes.',
           },
         ],
+        preguntas: ['¿Qué hago si olvidé mi contraseña?', '¿Cómo cambio mi contraseña?'],
         pasos: [
           'En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».',
           'Escribe tu correo. Si tiene cuenta en Tumbite, te llega un enlace (revisa también la carpeta de spam).',
@@ -652,6 +819,10 @@ const es: SeccionDocs[] = [
             pie: 'En «Configuración» ves si tu correo está confirmado y pides el enlace otra vez.',
           },
         ],
+        preguntas: [
+          '¿Cómo confirmo mi correo?',
+          'No me llegó el correo de confirmación, ¿qué hago?',
+        ],
         pasos: [
           'Después de crear tu cuenta, busca el correo «Confirma tu correo de Tumbite».',
           'Toca el enlace. Vence en dos días; si venció, entra a «Configuración» y toca «Volver a mandar el enlace».',
@@ -669,6 +840,7 @@ const es: SeccionDocs[] = [
             pie: 'La página para borrar tu cuenta, con o sin la app.',
           },
         ],
+        preguntas: ['¿Cómo borro mi cuenta?'],
         pasos: [
           'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/delete-account.',
           'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
@@ -692,6 +864,10 @@ const es: SeccionDocs[] = [
             alt: 'Conversación privada de un reporte en Tumbite: el mensaje del cliente y la respuesta del equipo de Tumbite, con la casilla para responder.',
             pie: 'Tu caso tiene su propia página privada: ves la respuesta y contestas desde ahí.',
           },
+        ],
+        preguntas: [
+          '¿Cómo hablo con una persona de Tumbite?',
+          '¿Cómo reporto un problema con un pedido?',
         ],
         pasos: [
           'Desde un pedido, toca «¿Problemas con tu pedido? Cuéntanos». Repartidores: «Tengo un problema». Restaurantes: los tres puntos del pedido, «Reportar un problema».',
@@ -717,15 +893,25 @@ const en: SeccionDocs[] = [
           'Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.',
         capturas: [
           {
-            src: '/docs/menu-cliente-en.webp',
-            alt: 'A restaurant menu in the Tumbite app, grouped by category, with the items already in the cart marked in green and the “View cart” button.',
-            pie: 'Pick your items: the ones already in your cart turn green.',
+            src: '/docs/recorrido-cliente-menu-en.webp',
+            alt: 'A restaurant’s menu in the Tumbite app with each item, its category, its price, and the “Add” button.',
+            pie: 'Pick your items with “Add.”',
           },
           {
-            src: '/docs/carrito-en.webp',
-            alt: 'Tumbite cart with the delivery address, the chosen tip, and the breakdown of food, delivery, service fee, tip, and total before paying.',
-            pie: 'Before paying you see everything: food, delivery, service, and tip.',
+            src: '/docs/recorrido-cliente-carrito-en.webp',
+            alt: 'Cart with the delivery address, the driver tip, and the full breakdown before paying.',
+            pie: 'Before paying you see the exact total: food, delivery, service, and tip.',
           },
+          {
+            src: '/docs/recorrido-cliente-pagado-en.webp',
+            alt: 'Paid order in the Tumbite app, waiting for the restaurant to accept, with the progress bar.',
+            pie: 'You pay and the order reaches the restaurant instantly.',
+          },
+        ],
+        preguntas: [
+          'How do I order food on Tumbite?',
+          'How do I pay for my order?',
+          'Can I pay with Apple Pay or Google Pay?',
         ],
         pasos: [
           'Open the Tumbite app and allow location: you’ll see the restaurants in your area, closest first.',
@@ -743,11 +929,12 @@ const en: SeccionDocs[] = [
           'Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.',
         capturas: [
           {
-            src: '/docs/seguimiento-en.webp',
-            alt: 'Order tracking in the Tumbite app: “Your driver is on the way,” the progress bar in green, the estimated arrival time, the map with the driver, and the time of the last location update.',
-            pie: 'Your order live: the bar moves in green and you see the driver on the map.',
+            src: '/docs/recorrido-cliente-en-camino-en.webp',
+            alt: 'Live tracking: “Your driver is on the way,” the green bar, the map with the driver, and the estimated time.',
+            pie: 'Follow your driver on the map all the way to your door.',
           },
         ],
+        preguntas: ['Where can I see where my order is?', 'How long until my food arrives?'],
         pasos: [
           'After paying, the order screen shows five steps: payment received, in the kitchen, ready, on the way, and delivered.',
           'When the driver picks up your food, they appear on the map heading to your door, with the estimated arrival time.',
@@ -777,6 +964,7 @@ const en: SeccionDocs[] = [
             pie: 'The app tells you why it was canceled and that the money goes back to your card.',
           },
         ],
+        preguntas: ['How do I cancel an order?', 'Do I get my money back if I cancel?'],
         pasos: [
           'Open your order in the app. While it says “Payment received. Waiting for the restaurant to accept,” you’ll see “Cancel order.”',
           'Tap it. The app asks if you’re sure and reminds you that you get everything back.',
@@ -801,6 +989,7 @@ const en: SeccionDocs[] = [
             pie: 'My account: your details at the top and all your orders below.',
           },
         ],
+        preguntas: ['Where can I see my past orders?', 'How do I remove a saved card?'],
         pasos: [
           'On the app’s home screen, tap “My account.”',
           'Scroll down to see your orders. Tap any one to open it.',
@@ -819,6 +1008,7 @@ const en: SeccionDocs[] = [
             pie: 'When a gift is yours, it shows up in the cart and comes off the total.',
           },
         ],
+        preguntas: ['How do I get my birthday gift?', 'How does the punch card work?'],
         pasos: [
           'Add your birthday to your account to get the birthday gift from your favorite restaurants.',
           'Every order earns a punch at restaurants with a punch card. Complete it and get a free dish.',
@@ -833,10 +1023,14 @@ const en: SeccionDocs[] = [
         resumen: 'Two separate ratings. If the food was late, it’s not the driver’s fault.',
         capturas: [
           {
-            src: '/docs/calificar-en.webp',
-            alt: 'Delivered order in the Tumbite app with the full green bar and star ratings for the food and the driver.',
+            src: '/docs/recorrido-cliente-calificar-en.webp',
+            alt: 'Delivered order with star ratings for the food and the driver.',
             pie: 'When it arrives, you rate the food and the driver separately.',
           },
+        ],
+        preguntas: [
+          'How do I rate the food and the driver?',
+          'What if the food was late because of the restaurant?',
         ],
         pasos: [
           'When the order arrives, the order screen shows “How was everything?”',
@@ -859,10 +1053,25 @@ const en: SeccionDocs[] = [
           'Create your account, complete your profile, and wait for approval. No lock-in contracts.',
         capturas: [
           {
-            src: '/docs/mi-restaurante-en.webp',
-            alt: '“My restaurant” screen in the Tumbite dashboard with the approved status, the button to take or pause orders, and the profile with photo, name, cuisine, and phone.',
-            pie: '“My restaurant”: your profile, your cover photo, and the button to open or close.',
+            src: '/docs/recorrido-restaurante-registro-en.webp',
+            alt: 'Form to create a restaurant account in the Tumbite dashboard, with your name, email, phone, and password.',
+            pie: 'Restaurants create their account in the dashboard, from a computer.',
           },
+          {
+            src: '/docs/recorrido-restaurante-ficha-en.webp',
+            alt: '“My restaurant” screen with the name, cuisine, phone, address, and description in both languages, under review.',
+            pie: 'You fill in your profile and it stays under review until our team approves it.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-abierto-en.webp',
+            alt: 'Approved restaurant in the Tumbite dashboard, taking orders, with the button to close for now.',
+            pie: 'Approved: open with one tap and start taking orders.',
+          },
+        ],
+        preguntas: [
+          'How do I put my restaurant on Tumbite?',
+          'How long does approval take?',
+          'How do I open and close my restaurant?',
         ],
         pasos: [
           'Go to tumbite.com, tap “Dashboard,” and create a restaurant account with your email.',
@@ -878,11 +1087,12 @@ const en: SeccionDocs[] = [
         resumen: 'Every item in English and Spanish, with its price, category, and photo.',
         capturas: [
           {
-            src: '/docs/menu-restaurante-en.webp',
-            alt: 'Menu in the Tumbite restaurant dashboard with each item, its category and price, and the available or sold-out checkbox.',
-            pie: 'Your menu in the dashboard: every item with its category, price, and availability.',
+            src: '/docs/recorrido-restaurante-menu-en.webp',
+            alt: 'The restaurant’s menu in the dashboard with its items, categories, and prices.',
+            pie: 'Your menu in the dashboard, with each item, its category, and its price.',
           },
         ],
+        preguntas: ['How do I add an item to my menu?', 'How do I change a price or a photo?'],
         pasos: [
           'In “Menu,” tap “Add item.”',
           'Write the name and description in English and Spanish. Customers see the language they chose.',
@@ -902,6 +1112,7 @@ const en: SeccionDocs[] = [
             pie: 'One tap and the item is “Sold out”: customers no longer see it.',
           },
         ],
+        preguntas: ['How do I mark an item as sold out?'],
         pasos: [
           'In “Menu,” each item has an “Available / Sold out” switch.',
           'Tap it to turn the item off. It disappears from the customer app instantly.',
@@ -918,6 +1129,21 @@ const en: SeccionDocs[] = [
             alt: 'Restaurant order list with the alarm, the traffic light on each order, and buttons to accept with 10, 20, or 30 minutes.',
             pie: 'Orders with their traffic light and the accept buttons.',
           },
+          {
+            src: '/docs/recorrido-restaurante-pedido-nuevo-en.webp',
+            alt: 'New order in the dashboard with a green traffic light and buttons to accept in 10, 20, or 30 minutes.',
+            pie: 'An order comes in: accept it by choosing when it will be ready.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-pedido-aceptado-en.webp',
+            alt: 'Accepted order being prepared, with the “Ready!” button.',
+            pie: 'When the food is ready, tap “Ready!” and we let the driver know.',
+          },
+        ],
+        preguntas: [
+          'How do I accept an order?',
+          'How do I let the driver know the food is ready?',
+          'How do I decline an order?',
         ],
         pasos: [
           'In “Orders,” tap “Turn on alarm” once (the browser asks permission for sound).',
@@ -946,6 +1172,7 @@ const en: SeccionDocs[] = [
             pie: 'Your dashboard when you sign in: the essentials of your business on one screen.',
           },
         ],
+        preguntas: ['Where can I see how much I sold today?'],
         pasos: [
           'Open your dashboard. The overview is under “Home.”',
           'If orders are waiting, tap “See orders” to handle them.',
@@ -970,6 +1197,7 @@ const en: SeccionDocs[] = [
             pie: 'Everything happens in “My company,” with your phone camera.',
           },
         ],
+        preguntas: ['How do I verify my restaurant?', 'Which photos do I need for verification?'],
         pasos: [
           'Open your dashboard on your phone and go to “My company.” Scroll down to “Owner and storefront verification.”',
           'Choose the owner’s document: driver’s license, government ID, or passport.',
@@ -989,6 +1217,7 @@ const en: SeccionDocs[] = [
             pie: 'You pick the percentage, the gifts you turn on, and the item for each one.',
           },
         ],
+        preguntas: ['How do I reward my loyal customers?', 'How much does a gift cost me?'],
         pasos: [
           'In “Gifts and marketing,” choose the share of sales you set aside for gifts (we recommend 3%).',
           'Turn on the gifts you want: birthday, punch card, and win-back for customers who stopped ordering.',
@@ -1006,6 +1235,11 @@ const en: SeccionDocs[] = [
             alt: '“Earnings” screen in the Tumbite dashboard with today’s orders, sales, gifts, commission, your payout in green, the available balance, and the activity list.',
             pie: '“Earnings”: today, your balance, and every sale with its order number.',
           },
+        ],
+        preguntas: [
+          'When and how do I get paid?',
+          'How do I connect my bank account?',
+          'How much does Tumbite charge?',
         ],
         pasos: [
           'In “Earnings” you see today: delivered orders, sales, gifts, commission, and, in green, your payout.',
@@ -1032,6 +1266,16 @@ const en: SeccionDocs[] = [
             alt: '“Create account” screen in the Tumbite driver app with full name, email, mobile phone, and password.',
             pie: 'You create your account in the app with your name, email, phone, and a password.',
           },
+          {
+            src: '/docs/recorrido-repartidor-conectado-en.webp',
+            alt: 'Tumbite driver app online: “Online: receiving orders,” with the level and the balance.',
+            pie: 'Go online when you want to work, and offline whenever you like.',
+          },
+        ],
+        preguntas: [
+          'How do I start delivering with Tumbite?',
+          'Do I have a fixed schedule?',
+          'How do I go online to get orders?',
         ],
         pasos: [
           'Download the Tumbite driver app and create your account.',
@@ -1056,6 +1300,7 @@ const en: SeccionDocs[] = [
             pie: 'You’ll find it in the menu, under “My details and vehicle.”',
           },
         ],
+        preguntas: ['How do I verify my identity?'],
         pasos: [
           'Open the driver app, tap the menu at the top left, and go to “My details and vehicle.”',
           'Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.',
@@ -1071,10 +1316,20 @@ const en: SeccionDocs[] = [
           'You see the pay, the distance, and the pickup spot. Declining never counts against you.',
         capturas: [
           {
-            src: '/docs/oferta-repartidor-en.webp',
-            alt: 'New offer in the driver app: what you earn including the tip, pickup, drop-off, and distance.',
-            pie: 'The offer: what you earn and where you’re going, before you accept.',
+            src: '/docs/recorrido-repartidor-oferta-en.webp',
+            alt: 'New offer in the driver app: what you earn including the tip, where to pick up, where to deliver, and the distance.',
+            pie: 'Before accepting you see what you earn and where you’re going.',
           },
+          {
+            src: '/docs/recorrido-repartidor-en-camino-en.webp',
+            alt: 'Picked-up order on the way to delivery, with the “Directions” and “Delivered” buttons.',
+            pie: 'Pick up, get there with “Directions,” and tap “Delivered.”',
+          },
+        ],
+        preguntas: [
+          'How do I accept a delivery?',
+          'Does declining an offer lower my level?',
+          'How do I mark pickup and delivery?',
         ],
         pasos: [
           'When there’s an order nearby, you get an offer with the pay in dollars, the distance, and the restaurant.',
@@ -1096,6 +1351,7 @@ const en: SeccionDocs[] = [
             pie: 'Your level on the home screen, with the green progress bar.',
           },
         ],
+        preguntas: ['How do I level up?', 'What are levels for?'],
         pasos: [
           'Every completed delivery earns points. Good ratings and punctuality add more.',
           'If a customer rates you low because of the restaurant (late food, missing items), that rating doesn’t count.',
@@ -1119,6 +1375,7 @@ const en: SeccionDocs[] = [
             pie: 'Your wallet: balance at the top and every movement with its order.',
           },
         ],
+        preguntas: ['How do I cash out my earnings?', 'Do I keep the whole tip?'],
         pasos: [
           'Open the menu at the top left and tap “My wallet,” or tap “See my wallet” on the home screen.',
           'The first time, tap “Connect my bank account” and fill in your details in Stripe. You only do this once.',
@@ -1147,15 +1404,49 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/oferta-repartidor-en.webp',
-            alt: 'New offer in the Tumbite driver app: “You earn $8.70, includes a tip of $3.70,” with pickup, drop-off, distance, and the “Accept” and “No, thanks” buttons.',
-            pie: 'What the driver sees: what they earn and where they’re going, before accepting.',
+            src: '/docs/recorrido-cliente-carrito-en.webp',
+            alt: 'Cart with the delivery address, the driver tip, and the full breakdown before paying.',
+            pie: 'Before paying you see the exact total: food, delivery, service, and tip.',
           },
           {
-            src: '/docs/semaforo-restaurante-en.webp',
-            alt: 'Restaurant order list with the traffic light on each order.',
-            pie: 'What the restaurant sees: every order with its traffic light and buttons.',
+            src: '/docs/recorrido-cliente-pagado-en.webp',
+            alt: 'Paid order in the Tumbite app, waiting for the restaurant to accept, with the progress bar.',
+            pie: 'You pay and the order reaches the restaurant instantly.',
           },
+          {
+            src: '/docs/recorrido-restaurante-pedido-nuevo-en.webp',
+            alt: 'New order in the dashboard with a green traffic light and buttons to accept in 10, 20, or 30 minutes.',
+            pie: 'An order comes in: accept it by choosing when it will be ready.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-pedido-aceptado-en.webp',
+            alt: 'Accepted order being prepared, with the “Ready!” button.',
+            pie: 'When the food is ready, tap “Ready!” and we let the driver know.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-oferta-en.webp',
+            alt: 'New offer in the driver app: what you earn including the tip, where to pick up, where to deliver, and the distance.',
+            pie: 'Before accepting you see what you earn and where you’re going.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-en-camino-en.webp',
+            alt: 'Picked-up order on the way to delivery, with the “Directions” and “Delivered” buttons.',
+            pie: 'Pick up, get there with “Directions,” and tap “Delivered.”',
+          },
+          {
+            src: '/docs/recorrido-cliente-en-camino-en.webp',
+            alt: 'Live tracking: “Your driver is on the way,” the green bar, the map with the driver, and the estimated time.',
+            pie: 'Follow your driver on the map all the way to your door.',
+          },
+          {
+            src: '/docs/recorrido-cliente-calificar-en.webp',
+            alt: 'Delivered order with star ratings for the food and the driver.',
+            pie: 'When it arrives, you rate the food and the driver separately.',
+          },
+        ],
+        preguntas: [
+          'What happens to my order after I pay?',
+          'How is the money from an order split?',
         ],
         pasos: [
           'Customer: chooses, pays, and follows the order live.',
@@ -1187,6 +1478,7 @@ const en: SeccionDocs[] = [
             pie: 'At the restaurant, the traffic light shows what the Manager watches on every order.',
           },
         ],
+        preguntas: ['What happens if the restaurant doesn’t accept my order?'],
         pasos: [],
         nota: 'This first version of the Manager works with fixed, clear rules that are the same for everyone. The same rules you see in each order’s traffic light.',
       },
@@ -1207,6 +1499,7 @@ const en: SeccionDocs[] = [
             pie: 'This is how restaurants see it in their order list: the color, the minutes, and the reason.',
           },
         ],
+        preguntas: ['What do the colors on each order mean?'],
         pasos: [
           'Restaurants: open “Orders” on the dashboard or the tablet. The traffic light shows under each order.',
           'Handle the red ones first, then the yellow ones. A new order in yellow is accepted in one tap by choosing the prep time.',
@@ -1235,6 +1528,7 @@ const en: SeccionDocs[] = [
             pie: 'Drivers verify their identity with their ID and a photo of their face.',
           },
         ],
+        preguntas: ['Are restaurants and drivers verified?'],
         pasos: [],
         nota: 'If you’re a restaurant or a driver, see the guides “Verify your restaurant” and “Verify your identity”: four and three photos from your phone.',
       },
@@ -1262,6 +1556,7 @@ const en: SeccionDocs[] = [
             pie: 'What a Tumbite franchise includes in each city.',
           },
         ],
+        preguntas: ['How do I bring Tumbite to my city?', 'How much does a franchise cost?'],
         pasos: [
           'Open the “How it works” page and scroll to “Franchises,” or open your country’s page.',
           'Fill in the “I want a Tumbite franchise” form: your city, available capital, your experience, and when you’d like to start.',
@@ -1284,6 +1579,7 @@ const en: SeccionDocs[] = [
             pie: 'An example of what the team teaches during the restaurant visit.',
           },
         ],
+        preguntas: ['What should each team member read before a launch?'],
         pasos: [
           'Whole team: “An order from start to finish,” “The Manager,” “The traffic light on every order,” and “Verified restaurants and drivers.”',
           'Restaurant visits: “Put your restaurant on Tumbite,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
@@ -1300,6 +1596,44 @@ const en: SeccionDocs[] = [
     icono: 'proteccion',
     guias: [
       {
+        id: 'create-account',
+        titulo: 'Create your account',
+        resumen:
+          'One account to order, one for your restaurant, and one to deliver. Each takes a minute.',
+        explicacion: [
+          'Tumbite has three front doors, one for each way to use it. People who order food sign up in the Tumbite app. Restaurants create their account in the dashboard, from a computer. Drivers sign up in the Tumbite Driver app.',
+          'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-registro-en.webp',
+            alt: '“Create account” screen in the Tumbite app with full name, email, mobile phone, birthday, and password.',
+            pie: 'You sign up with your name, email, phone, and a password.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-registro-en.webp',
+            alt: 'Form to create a restaurant account in the Tumbite dashboard, with your name, email, phone, and password.',
+            pie: 'Restaurants create their account in the dashboard, from a computer.',
+          },
+          {
+            src: '/docs/registro-repartidor-en.webp',
+            alt: '“Create account” screen in the Tumbite driver app with full name, email, mobile phone, and password.',
+            pie: 'Drivers sign up in the Tumbite Driver app.',
+          },
+        ],
+        preguntas: [
+          'How do I sign up for Tumbite?',
+          'How do I create a restaurant account?',
+          'How do I create a driver account?',
+        ],
+        pasos: [
+          'To order: open the Tumbite app, tap “New here? Create your account,” fill in your details, and tap “Create account.” If you add your birthday, your favorite restaurants can send you a gift.',
+          'For your restaurant: go to tumbite.com, tap “Dashboard,” then “Restaurant not on Tumbite yet? Create your account,” and fill in your details.',
+          'To deliver: open the Tumbite Driver app, tap “New here? Create your account,” and fill in your details.',
+          'We email you a link to confirm it’s yours. Meanwhile, you can already use Tumbite.',
+        ],
+      },
+      {
         id: 'password',
         titulo: 'Forgot my password',
         resumen: 'We email you a link. It works once and expires in 30 minutes.',
@@ -1315,6 +1649,7 @@ const en: SeccionDocs[] = [
             pie: 'If you remember it, change it in “Settings,” with the eye icon to see what you type.',
           },
         ],
+        preguntas: ['What if I forgot my password?', 'How do I change my password?'],
         pasos: [
           'On the sign-in screen, tap “Forgot your password?”',
           'Enter your email. If it has a Tumbite account, you get a link (check spam too).',
@@ -1333,6 +1668,10 @@ const en: SeccionDocs[] = [
             pie: 'In “Settings” you see whether your email is confirmed and can ask for the link again.',
           },
         ],
+        preguntas: [
+          'How do I confirm my email?',
+          'I didn’t get the confirmation email. What do I do?',
+        ],
         pasos: [
           'After creating your account, look for the email “Confirm your Tumbite email.”',
           'Tap the link. It expires in two days; if it did, go to “Settings” and tap “Send the link again.”',
@@ -1350,6 +1689,7 @@ const en: SeccionDocs[] = [
             pie: 'The page to delete your account, with or without the app.',
           },
         ],
+        preguntas: ['How do I delete my account?'],
         pasos: [
           'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/delete-account.',
           'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',
@@ -1373,6 +1713,10 @@ const en: SeccionDocs[] = [
             alt: 'Private conversation of a Tumbite report: the customer’s message and the Tumbite team’s reply, with the box to answer.',
             pie: 'Your case has its own private page: read our reply and answer right there.',
           },
+        ],
+        preguntas: [
+          'How do I talk to a person at Tumbite?',
+          'How do I report a problem with an order?',
         ],
         pasos: [
           'From an order, tap “Problems with your order? Tell us.” Drivers: “I have a problem.” Restaurants: the order’s three-dot menu, “Report a problem.”',
@@ -1402,6 +1746,11 @@ export const TEXTOS_DOCS = {
     siguiente: 'Siguiente',
     enEstaSeccion: 'En esta sección',
     menu: 'Secciones de Docs',
+    comoHago: '¿Cómo hago…?',
+    comoHagoInvita: '¿Tienes una pregunta? Mira «¿Cómo hago…?»',
+    comoHagoResumen:
+      'Las preguntas que más nos hacen, cada una con su guía paso a paso y capturas reales de la pantalla.',
+    responde: 'Esta guía responde',
   },
   en: {
     titulo: 'Docs',
@@ -1417,5 +1766,10 @@ export const TEXTOS_DOCS = {
     siguiente: 'Next',
     enEstaSeccion: 'In this section',
     menu: 'Docs sections',
+    comoHago: 'How do I…?',
+    comoHagoInvita: 'Have a question? See “How do I…?”',
+    comoHagoResumen:
+      'The questions we get asked most, each with a step-by-step guide and real screenshots.',
+    responde: 'This guide answers',
   },
 };

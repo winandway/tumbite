@@ -93,6 +93,7 @@ try {
     '/delete-account',
     '/support',
     '/docs',
+    '/docs/how-to',
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
     ...PAISES.map((p) => `/country/${p.slug}`),
     ...CIUDADES.map((c) => `/city/${c.slug}`),

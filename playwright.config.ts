@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 /** Prueba de humo del panel web: las rutas principales deben responder 200. */
 export default defineConfig({
   testDir: './e2e',
+  // El recorrido completo tiene su propia configuración (playwright.recorrido.config.ts).
+  testIgnore: ['**/recorrido/**'],
   use: { baseURL: process.env.URL_BASE ?? 'http://localhost:4173' },
   projects: [{ name: 'celular', use: { ...devices['Pixel 7'] } }],
   webServer: process.env.URL_BASE

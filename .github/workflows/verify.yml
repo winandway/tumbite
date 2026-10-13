@@ -23,3 +23,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
+      # El recorrido completo en el navegador (restaurante, cliente, repartidor, pago simulado,
+      # entrega y calificación, en inglés y en español). Si se rompe, no se publica.
+      - name: Recorrido completo de un pedido
+        run: npm run recorrido
+        timeout-minutes: 20
+      - name: Rastros del recorrido si falló
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recorrido-rastros
+          path: test-results/
+          retention-days: 7

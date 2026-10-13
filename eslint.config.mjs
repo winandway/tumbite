@@ -18,12 +18,20 @@ export default tseslint.config(
       '**/.wrangler/**',
       '**/coverage/**',
       'out-deploy/**',
+      '.recorrido/**',
+      'playwright-report/**',
+      'test-results/**',
       '**/*.config.js',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   security.configs.recommended,
+  {
+    // Scripts de la casa en Node (preparar el recorrido, Stripe simulado).
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node } },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },

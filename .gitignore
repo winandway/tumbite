@@ -26,3 +26,6 @@ android/
 
 # Kit de marca original (PNG pesados, se queda en la computadora; las versiones web están en apps/panel/public/marca)
 /logo-imagenes-banner-marketing/
+
+# Recorrido completo en el navegador (sitio armado en local, se rehace en cada corrida)
+/.recorrido/

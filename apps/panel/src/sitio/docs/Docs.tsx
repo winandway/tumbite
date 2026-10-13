@@ -13,6 +13,8 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_DOCS, idioma);
   const secciones = enIdioma(DOCS, idioma);
   const [seccionId, guiaId] = ruta.replace(/^\/docs\/?/, '').split('/');
+  // «¿Cómo hago…?»: todas las preguntas de la gente, cada una con el enlace a su guía.
+  const comoHago = seccionId === 'how-to';
   const seccion = secciones.find((s) => s.id === seccionId) ?? null;
   const guia = seccion?.guias.find((g) => g.id === guiaId) ?? null;
   // Lo escrito en el buscador se guarda, como en todo formulario de la casa.
@@ -43,9 +45,13 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
     ? secciones.flatMap((s) =>
         s.guias
           .filter((g) =>
-            [g.titulo, g.resumen, ...(g.explicacion ?? []), ...g.pasos].some((x) =>
-              x.toLowerCase().includes(q),
-            ),
+            [
+              g.titulo,
+              g.resumen,
+              ...(g.preguntas ?? []),
+              ...(g.explicacion ?? []),
+              ...g.pasos,
+            ].some((x) => x.toLowerCase().includes(q)),
           )
           .map((g) => ({ seccion: s, guia: g })),
       )
@@ -69,12 +75,15 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   return (
     <div className="docs">
       <aside className="docs-barra">
-        <Enlace a="/docs" className={`docs-inicio${!seccion ? ' activo' : ''}`}>
+        <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
           <Icono nombre="libro" tamano={18} /> {t.titulo}
+        </Enlace>
+        <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
+          <Icono nombre="soporte" tamano={18} /> {t.comoHago}
         </Enlace>
         <nav aria-label={t.menu}>
           {secciones.map((s) => (
-            <details key={s.id} open={!seccion || s.id === seccion.id}>
+            <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
               <summary className={s.id === seccion?.id ? 'activo' : undefined}>
                 <Icono nombre={s.icono} tamano={18} /> {s.titulo}
               </summary>
@@ -112,6 +121,8 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
               </div>
             )}
           </>
+        ) : comoHago ? (
+          <ComoHago secciones={secciones} t={t} />
         ) : guia && seccion ? (
           <PaginaGuia seccion={seccion} guia={guia} t={t} />
         ) : seccion ? (
@@ -132,6 +143,11 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
           <>
             <h1>{t.titulo}</h1>
             <p className="docs-sub">{t.subtitulo}</p>
+            <p>
+              <Enlace a="/docs/how-to" className="docs-comohago">
+                {t.comoHagoInvita} →
+              </Enlace>
+            </p>
             {secciones.map((s) => (
               <section key={s.id} className="docs-seccion">
                 <h2>
@@ -150,6 +166,35 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
         )}
       </main>
     </div>
+  );
+}
+
+/** Cada pregunta de la gente, agrupada por sección, con el enlace directo a la guía que la responde. */
+function ComoHago({ secciones, t }: { secciones: SeccionDocs[]; t: (typeof TEXTOS_DOCS)['es'] }) {
+  return (
+    <article className="docs-guia">
+      <Enlace a="/docs" className="docs-volver">
+        {t.volver}
+      </Enlace>
+      <h1>{t.comoHago}</h1>
+      <p className="docs-resumen">{t.comoHagoResumen}</p>
+      {secciones.map((s) => (
+        <section key={s.id} className="docs-preguntas">
+          <h2>
+            <Icono nombre={s.icono} tamano={22} /> {s.titulo}
+          </h2>
+          <ul>
+            {s.guias.flatMap((g) =>
+              (g.preguntas ?? []).map((x) => (
+                <li key={`${g.id}-${x}`}>
+                  <Enlace a={`/docs/${s.id}/${g.id}`}>{x}</Enlace>
+                </li>
+              )),
+            )}
+          </ul>
+        </section>
+      ))}
+    </article>
   );
 }
 
@@ -213,6 +258,16 @@ function PaginaGuia({
         </>
       )}
       {guia.nota && <p className="docs-nota">{guia.nota}</p>}
+      {guia.preguntas && guia.preguntas.length > 0 && (
+        <section className="docs-preguntas">
+          <h2>{t.responde}</h2>
+          <ul>
+            {guia.preguntas.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <nav className="docs-pies" aria-label={t.enEstaSeccion}>
         {anterior && anterior !== guia && (
           <Enlace a={`/docs/${seccion.id}/${anterior.id}`}>

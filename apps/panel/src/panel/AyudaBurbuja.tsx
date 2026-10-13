@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
+import { conIdioma } from '../rutaIdioma';
 import { pedir } from './api';
 import { ReportarPanel } from './ReportarPanel';
 
@@ -15,6 +16,7 @@ const T = {
     buscar: 'Escribe tu pregunta',
     persona: 'Hablar con una persona',
     otra: 'Otra pregunta',
+    guias: 'Ver todas las guías: ¿Cómo hago…?',
     cargando: 'Revisando tu cuenta…',
     sinCoincidencia:
       'No tengo esa respuesta a mano. Toca «Hablar con una persona» y te responde alguien del equipo.',
@@ -26,6 +28,7 @@ const T = {
     buscar: 'Type your question',
     persona: 'Talk to a person',
     otra: 'Another question',
+    guias: 'See every guide: How do I…?',
     cargando: 'Checking your account…',
     sinCoincidencia:
       'I don’t have that answer handy. Tap “Talk to a person” and someone from our team will reply.',
@@ -226,6 +229,10 @@ export function AyudaBurbuja({ idioma }: { idioma: Idioma }) {
                 {t.persona}
               </button>
             )}
+            {/* Las guías con capturas reales, en el idioma del panel. */}
+            <Enlace a={conIdioma('/docs/how-to', idioma)} className="burbuja-guias">
+              {t.guias} →
+            </Enlace>
           </div>
         </div>
       )}

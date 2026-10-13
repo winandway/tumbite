@@ -44,6 +44,7 @@ describe('Docs públicos', () => {
       'account/support',
       'trust/order-journey',
       'business/team-training',
+      'account/create-account',
     ])
       expect(todas).toContain(g);
   });
@@ -61,5 +62,29 @@ describe('Docs públicos', () => {
             expect(c.src).toContain(`-${idioma}.`);
           }
         }
+  });
+
+  it('cada guía dice qué preguntas responde («¿Cómo hago…?»), en los dos idiomas', () => {
+    for (const idioma of ['es', 'en'] as const)
+      for (const s of DOCS[idioma])
+        for (const g of s.guias) {
+          expect(g.preguntas?.length ?? 0, `${idioma} ${s.id}/${g.id}`).toBeGreaterThan(0);
+          for (const q of g.preguntas ?? []) expect(q, `${idioma} ${g.id}`).toMatch(/\?$/);
+        }
+  });
+
+  it('las capturas del recorrido completo están en sus guías', () => {
+    const srcs = (i: 'es' | 'en') =>
+      DOCS[i].flatMap((s) => s.guias.flatMap((g) => (g.capturas ?? []).map((c) => c.src)));
+    for (const i of ['es', 'en'] as const) {
+      const lista = srcs(i);
+      for (const n of [
+        'cliente-carrito',
+        'restaurante-pedido-nuevo',
+        'repartidor-oferta',
+        'cliente-registro',
+      ])
+        expect(lista).toContain(`/docs/recorrido-${n}-${i}.webp`);
+    }
   });
 });

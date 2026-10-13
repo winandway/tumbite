@@ -1,8 +1,9 @@
-# Plan: ningún texto en inglés en las pantallas en español (13 oct 2026)
+# Plan: el recorrido completo en el navegador, que prueba y saca las capturas de Docs (13 oct 2026)
 
-- [x] Paso 1: App del cliente en español: inicio, restaurante, carrito, pedidos (entregado, cancelado, por pagar), mi cuenta, entrar y crear cuenta con sus errores.
-- [x] Paso 2: App del repartidor en español: inicio, menús, billetera, mis datos y vehículo.
-- [x] Paso 3: App del restaurante y panel del restaurante en español, con la burbuja de ayuda.
-- [x] Paso 4: Barrido del código: fechas, horas y números con formato fijo en inglés, y textos en inglés sin su versión en español.
-- [x] Paso 5: Arreglar de raíz lo que salga, con su prueba comprobada en rojo.
-- [x] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: Montar el sitio como en producción en esta computadora (panel, app del cliente, app del repartidor y servidor en una sola dirección), con base de datos nueva en cada corrida y Stripe simulado. Un solo comando lo arma.
+- [x] Paso 2: La prueba del recorrido: restaurante se registra, arma su ficha y su menú; nuestro equipo lo aprueba; cliente se registra, pide, paga (pago simulado) y sigue el pedido; restaurante acepta y marca listo; repartidor se registra, se conecta, acepta, recoge y entrega; cliente califica. Comprueba el dinero al centavo.
+- [x] Paso 3: La misma prueba, en inglés y en español, guarda las capturas originales en la carpeta de capturas cuando se le pide (en la revisión automática solo comprueba).
+- [x] Paso 4: Docs: guía nueva «Crear tu cuenta» y capturas reales del recorrido en las guías de pedir, seguir el pedido, calificar, menú, pedidos del restaurante, empezar a repartir, ofertas y entregar.
+- [x] Paso 5: Docs «¿Cómo hago…?»: cada guía con las preguntas que la gente hace, una página que las junta con su enlace, y el buscador de Docs que también encuentra por pregunta. En los dos idiomas.
+- [x] Paso 6: Que corra solo en cada publicación (revisión automática en GitHub) y su candado y documento.
+- [ ] Paso 7: Verify, commit, push, publicación y comprobación en vivo.

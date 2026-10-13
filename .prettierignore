@@ -6,3 +6,4 @@ out-deploy
 .dist-worker
 package-lock.json
 apps/*/AGENTS.md
+.recorrido

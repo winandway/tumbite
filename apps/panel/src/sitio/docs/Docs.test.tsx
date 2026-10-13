@@ -46,6 +46,24 @@ describe('Docs', () => {
     expect(screen.getByText(/No encontramos nada|Nothing matched/)).toBeInTheDocument();
   });
 
+  it('«¿Cómo hago…?» junta las preguntas y cada una lleva a su guía', async () => {
+    window.history.pushState(null, '', '/docs/how-to');
+    render(<App />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/How do I|Cómo hago/);
+    await userEvent.click(screen.getByRole('link', { name: 'How do I cancel an order?' }));
+    expect(window.location.pathname).toBe('/docs/ordering/cancel-order');
+    expect(screen.getByText('This guide answers')).toBeInTheDocument();
+  });
+
+  it('el buscador también encuentra por pregunta', async () => {
+    window.history.pushState(null, '', '/docs');
+    render(<App />);
+    await userEvent.type(screen.getByRole('searchbox'), 'fixed schedule');
+    expect(document.querySelector('.docs-contenido .docs-tarjeta')).toHaveTextContent(
+      /Start delivering/,
+    );
+  });
+
   it('las dos lenguas tienen las mismas guías', () => {
     const ids = (i: 'es' | 'en') => DOCS[i].flatMap((s) => s.guias.map((g) => `${s.id}/${g.id}`));
     expect(ids('en')).toEqual(ids('es'));
