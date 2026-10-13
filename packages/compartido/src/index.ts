@@ -10,3 +10,4 @@ export * from './niveles';
 export * from './geohash';
 export * from './espera';
 export * from './semaforo';
+export * from './rutasPublicas';

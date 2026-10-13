@@ -61,7 +61,7 @@ export function Inicio() {
       {/* Mi cuenta: historial, tarjetas, datos y ayuda. */}
       <Boton
         texto={idioma === 'en' ? 'My account' : 'Mi cuenta'}
-        alTocar={() => router.push('/cuenta')}
+        alTocar={() => router.push('/account')}
         secundario
       />
       <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario, marginBottom: 8 }}>
@@ -78,7 +78,7 @@ export function Inicio() {
       {lista?.map((r) => (
         <Pressable
           key={r.id}
-          onPress={() => router.push(`/restaurante/${r.id}`)}
+          onPress={() => router.push(`/restaurant/${r.id}`)}
           accessibilityRole="button"
           accessibilityLabel={r.nombre}
           style={({ pressed }) => [
@@ -123,10 +123,7 @@ export function Inicio() {
         </Pressable>
       ))}
       {cantidadTotal > 0 && (
-        <Boton
-          texto={`${t.verCarrito} (${cantidadTotal})`}
-          alTocar={() => router.push('/carrito')}
-        />
+        <Boton texto={`${t.verCarrito} (${cantidadTotal})`} alTocar={() => router.push('/cart')} />
       )}
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
       <MenuCuenta />

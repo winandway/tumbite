@@ -41,7 +41,7 @@ const FRANQUICIA = {
   duenoCorreo: 'socio@ejemplo.com',
   motos: 30,
   notas: '',
-  ruta: 'franquicia-miami-0123456789abcdef0123',
+  ruta: 'franchise-miami-0123456789abcdef0123',
   metricas: METRICAS,
 };
 const RESUMEN = {
@@ -187,14 +187,14 @@ describe('panel del franquiciado', () => {
       repartidores: [{ nombre: 'Leo', conectado: true, puntos: 120 }],
       quejas: [],
     }));
-    const { unmount } = render(<PanelFranquicia ruta="franquicia-miami-x" idioma="es" />);
+    const { unmount } = render(<PanelFranquicia ruta="franchise-miami-x" idioma="es" />);
     expect(await screen.findByText('Tu franquicia en Miami')).toBeInTheDocument();
     expect(screen.getByText(/No hay quejas/)).toBeInTheDocument();
     unmount();
     servidor(
       () => new Response(JSON.stringify({ error: 'Esta página no existe.' }), { status: 404 }),
     );
-    render(<PanelFranquicia ruta="franquicia-miami-y" idioma="es" />);
+    render(<PanelFranquicia ruta="franchise-miami-y" idioma="es" />);
     expect(await screen.findByText('Esta página no existe.')).toBeInTheDocument();
   });
 });

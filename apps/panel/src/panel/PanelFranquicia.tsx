@@ -64,7 +64,7 @@ type Resumen = {
 };
 
 /**
- * Panel del franquiciado: su ciudad completa, en /panel/franquicia-<ciudad>-<codigo>. Si la cuenta
+ * Panel del franquiciado: su ciudad completa, en /panel/franchise-<ciudad>-<codigo>. Si la cuenta
  * no es la dueña (o el admin), el servidor dice que no existe y aquí también.
  */
 export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma }) {

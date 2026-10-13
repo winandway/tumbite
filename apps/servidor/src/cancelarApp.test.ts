@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 /** Candado C-MANAGER-1: la app del cliente ofrece cancelar mientras el restaurante no acepta. */
 describe('cancelar desde la app del cliente', () => {
   const pantalla = readFileSync(
-    join(__dirname, '..', '..', 'cliente', 'src', 'app', 'pedido', '[id].tsx'),
+    join(__dirname, '..', '..', 'cliente', 'src', 'app', 'order', '[id].tsx'),
     'utf8',
   );
   it('llama a la ruta de cancelar y solo se ofrece antes de que acepten, con confirmación', () => {

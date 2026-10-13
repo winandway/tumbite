@@ -54,14 +54,14 @@ const PREGUNTAS: Pregunta[] = [
             idioma === 'en'
               ? `You can’t get paid yet: your bank account isn’t connected. Your balance (${saldo}) is safe and waiting. Connect your bank in Earnings; you enter your details on Stripe, never with us.`
               : `Todavía no puedes cobrar: te falta conectar tu cuenta bancaria. Tu saldo (${saldo}) está guardado esperándote. Conecta tu banco en Beneficios; los datos los escribes en Stripe, nunca con nosotros.`,
-          enlace: ['/panel/beneficios', idioma === 'en' ? 'Go to Earnings →' : 'Ir a Beneficios →'],
+          enlace: ['/panel/earnings', idioma === 'en' ? 'Go to Earnings →' : 'Ir a Beneficios →'],
         };
       return {
         texto:
           idioma === 'en'
             ? `Your bank is connected. Each sale (minus your commission) is credited when the order is delivered. Your balance today is ${saldo}, and you can withdraw it any time from Earnings. Stripe sends it to your bank.`
             : `Tu banco ya está conectado. Cada venta (menos tu comisión) se acredita cuando el pedido se entrega. Hoy tienes ${saldo} y lo puedes retirar cuando quieras desde Beneficios. Stripe lo manda a tu banco.`,
-        enlace: ['/panel/beneficios', idioma === 'en' ? 'Go to Earnings →' : 'Ir a Beneficios →'],
+        enlace: ['/panel/earnings', idioma === 'en' ? 'Go to Earnings →' : 'Ir a Beneficios →'],
       };
     },
   },
@@ -96,7 +96,7 @@ const PREGUNTAS: Pregunta[] = [
         idioma === 'en'
           ? 'In Orders, each new order rings until someone accepts it. Tap «Accept» with the minutes it will take, then «Ready!» when it’s done. Turn on the alarm sound once per device.'
           : 'En Pedidos, cada pedido nuevo suena hasta que alguien lo acepta. Toca «Aceptar» con los minutos que vas a tardar y después «¡Listo!» cuando esté hecho. Activa el sonido de alarma una vez en cada equipo.',
-      enlace: ['/panel/pedidos', idioma === 'en' ? 'Go to Orders →' : 'Ir a Pedidos →'],
+      enlace: ['/panel/orders', idioma === 'en' ? 'Go to Orders →' : 'Ir a Pedidos →'],
     }),
   },
   {
@@ -127,7 +127,7 @@ const PREGUNTAS: Pregunta[] = [
           ? 'In My restaurant, switch «Open» on or off. While it’s off, customers see you as closed and no orders come in.'
           : 'En Mi restaurante, prende o apaga «Abierto». Mientras está apagado, los clientes te ven cerrado y no entran pedidos.',
       enlace: [
-        '/panel/restaurante',
+        '/panel/restaurant',
         idioma === 'en' ? 'Go to My restaurant →' : 'Ir a Mi restaurante →',
       ],
     }),

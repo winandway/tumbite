@@ -14,12 +14,14 @@ Versión de tienda: **1.0.0** el primer envío (en `app.json` dice 0.1.0; se sub
 
 ## Direcciones que piden las tiendas (ya están en vivo)
 
-- Política de privacidad: `https://tumbite.com/privacidad`
-- Términos: `https://tumbite.com/terminos`
-- Términos para restaurantes: `https://tumbite.com/terminos-restaurantes`
-- Términos para repartidores: `https://tumbite.com/terminos-repartidores`
-- Borrar la cuenta (Google Play → Seguridad de los datos → «enlace para borrar la cuenta»): `https://tumbite.com/borrar-cuenta`
-- Soporte: `https://tumbite.com/soporte`
+Todas en inglés, que es el idioma principal y el que rige en los textos legales. La misma página en español está bajo `/es` (por ejemplo `https://tumbite.com/es/privacy`). A las tiendas se les dan las de abajo.
+
+- Política de privacidad: `https://tumbite.com/privacy`
+- Términos: `https://tumbite.com/terms`
+- Términos para restaurantes: `https://tumbite.com/restaurant-terms`
+- Términos para repartidores: `https://tumbite.com/driver-terms`
+- Borrar la cuenta (Google Play → Seguridad de los datos → «enlace para borrar la cuenta»): `https://tumbite.com/delete-account`
+- Soporte: `https://tumbite.com/support`
 - Guías públicas (sirven de «marketing URL»): `https://tumbite.com/docs`
 - Sitio: `https://tumbite.com`
 
@@ -148,7 +150,7 @@ Datos que se recogen, todos **ligados a la cuenta**, **ninguno para rastrear** n
 | Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí               | Sí                 | Avisos del pedido                                  |
 | Mensajes de soporte                              | Sí                                                     | Sí               | Sí                 | Atender quejas                                     |
 
-Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://tumbite.com/borrar-cuenta`).
+Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://tumbite.com/delete-account`).
 
 ### Notas para el revisor (se pegan en «App Review Information»)
 
@@ -173,7 +175,7 @@ Las de Docs (`apps/panel/public/docs/`) sirven de referencia del encuadre.
 - **Ubicación:** solo «mientras se usa la app» en las tres. (La ubicación en segundo plano queda para después del lanzamiento: Apple la revisa muy duro y exige video.)
 - **Permisos con su motivo:** ver la tabla de arriba; textos genéricos eliminados.
 - **Pagos:** comida y entregas son bienes físicos, así que se cobran con Stripe, no con las compras dentro de la app de Apple ni de Google.
-- **Borrar la cuenta:** dentro de la app (menú de 3 puntos → «Borrar mi cuenta») y página web `/borrar-cuenta`. Borra también las fotos de verificación (candado C-BORRADO-COMPLETO).
+- **Borrar la cuenta:** dentro de la app (menú de 3 puntos → «Borrar mi cuenta») y página web `/delete-account`. Borra también las fotos de verificación (candado C-BORRADO-COMPLETO).
 - **Cancelar y devolver:** el cliente cancela antes de que acepten y recibe todo; a los 10 minutos sin respuesta se cancela solo (candado C-MANAGER-1). Coincide con los términos publicados.
 - **Cuenta de prueba para el revisor:** se crea el día del envío.
 

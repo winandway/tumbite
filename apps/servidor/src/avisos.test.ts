@@ -56,7 +56,7 @@ describe('correos que el sitio manda solo', () => {
     const c = de(enviados, correo)[0];
     expect(c?.from.address).toBe(REMITENTES.avisos.address);
     expect(c?.subject).toContain('Confirma');
-    const token = c?.text.match(/confirmar\?token=(\S+)/)?.[1] ?? '';
+    const token = c?.text.match(/confirm-email\?token=(\S+)/)?.[1] ?? '';
     expect((await m.llamar('POST', '/datos/cuentas/confirmar', { token })).estado).toBe(200);
     const f = await m.DB.prepare('SELECT correo_confirmado_en FROM usuarios WHERE id = ?')
       .bind(u.id)

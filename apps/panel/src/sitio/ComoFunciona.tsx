@@ -4,7 +4,7 @@ import { Icono } from './Icono';
 import { FormFranquicia } from './FormFranquicia';
 
 /**
- * «Cómo funciona Tumbite» (/como-funciona): el modelo completo de la empresa en una sola página,
+ * «Cómo funciona Tumbite» (/how-it-works): el modelo completo de la empresa en una sola página,
  * para clientes, restaurantes, repartidores, futuros franquiciados y buscadores (Google y los de IA).
  * Dictado por Richard el 12 oct 2026. Las cifras de dinero son las ya publicadas en la portada;
  * el precio de cada franquicia NO se publica: lo decide Richard por ciudad.
@@ -20,7 +20,7 @@ const T = {
       titulo: 'Tres personas, una sola entrega',
       partes: [
         {
-          id: 'clientes',
+          id: 'customers',
           img: '/marca/app-inicio.webp',
           alt: 'La app de Tumbite mostrando los restaurantes cercanos',
           titulo: 'Si tienes hambre',
@@ -33,7 +33,7 @@ const T = {
           ],
         },
         {
-          id: 'restaurantes',
+          id: 'restaurants',
           img: '/marca/entrega-restaurante.webp',
           alt: 'Un repartidor de Tumbite recogiendo un pedido en un restaurante',
           titulo: 'Si tienes un restaurante',
@@ -46,7 +46,7 @@ const T = {
           ],
         },
         {
-          id: 'repartidores',
+          id: 'drivers',
           img: '/marca/repartidor.webp',
           alt: 'Repartidor de Tumbite en su moto',
           titulo: 'Si repartes',
@@ -211,7 +211,7 @@ const T = {
       titulo: 'Three people, one delivery',
       partes: [
         {
-          id: 'clientes',
+          id: 'customers',
           img: '/marca/app-inicio.webp',
           alt: 'The Tumbite app showing nearby restaurants',
           titulo: 'If you’re hungry',
@@ -224,7 +224,7 @@ const T = {
           ],
         },
         {
-          id: 'restaurantes',
+          id: 'restaurants',
           img: '/marca/entrega-restaurante.webp',
           alt: 'A Tumbite driver picking up an order at a restaurant',
           titulo: 'If you own a restaurant',
@@ -237,7 +237,7 @@ const T = {
           ],
         },
         {
-          id: 'repartidores',
+          id: 'drivers',
           img: '/marca/repartidor.webp',
           alt: 'A Tumbite driver on a motorbike',
           titulo: 'If you deliver',
@@ -463,7 +463,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
         <p className="como-nota">{t.dinero.nota}</p>
       </section>
 
-      <section id="franquicias" className="como-seccion">
+      <section id="franchises" className="como-seccion">
         <h2>{t.franquicias.titulo}</h2>
         <div className="como-franquicia">
           <div>
@@ -492,7 +492,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
         <FormFranquicia idioma={idioma} />
       </section>
 
-      <section id="arranque" className="como-seccion">
+      <section id="launch" className="como-seccion">
         <h2>{t.frio.titulo}</h2>
         <p>{t.frio.texto}</p>
         <ol className="como-pasos">
@@ -510,7 +510,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
         </ol>
       </section>
 
-      <section id="sinergia" className="como-seccion">
+      <section id="synergy" className="como-seccion">
         <h2>{t.sinergia.titulo}</h2>
         <div className="como-sinergia">
           <p>{t.sinergia.texto}</p>
@@ -539,7 +539,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
         </ul>
       </section>
 
-      <section id="preguntas" className="como-seccion">
+      <section id="faq" className="como-seccion">
         <h2>{t.preguntas.titulo}</h2>
         {t.preguntas.items.map(([p, r]) => (
           <details key={p} className="como-pregunta">
@@ -550,7 +550,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
       </section>
 
       <p className="como-cta">
-        <Enlace a="/#comensales" className="boton">
+        <Enlace a="/#customers" className="boton">
           {t.cta}
         </Enlace>
       </p>

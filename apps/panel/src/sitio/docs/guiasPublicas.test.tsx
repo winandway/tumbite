@@ -31,12 +31,12 @@ describe('Docs públicos', () => {
   it('las guías nuevas del Manager, el semáforo, cancelar y verificarse están publicadas', () => {
     const todas = DOCS.es.flatMap((s) => s.guias.map((g) => `${s.id}/${g.id}`));
     for (const g of [
-      'confianza/manager',
-      'confianza/semaforo',
-      'confianza/verificacion',
-      'comensales/cancelar',
-      'restaurantes/verificar',
-      'repartidores/verificar',
+      'trust/manager',
+      'trust/traffic-light',
+      'trust/verification',
+      'ordering/cancel-order',
+      'restaurants/verify',
+      'drivers/verify',
     ])
       expect(todas).toContain(g);
   });

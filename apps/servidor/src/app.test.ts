@@ -44,14 +44,14 @@ describe('servidor', () => {
           : new Response('no', { status: 404 });
       },
     };
-    const terminos = await app.request('/terminos', {}, { ASSETS });
+    const terminos = await app.request('/terms', {}, { ASSETS });
     expect(terminos.status).toBe(200);
     expect(await terminos.text()).toContain('tumbite');
     expect(terminos.headers.get('Cache-Control')).toContain('s-maxage');
-    const panel = await app.request('/panel/pedidos', {}, { ASSETS });
+    const panel = await app.request('/panel/orders', {}, { ASSETS });
     expect(panel.status).toBe(200);
     expect(panel.headers.get('Cache-Control')).toBeNull();
-    const cabeza = await app.request('/privacidad', { method: 'HEAD' }, { ASSETS });
+    const cabeza = await app.request('/privacy', { method: 'HEAD' }, { ASSETS });
     expect(cabeza.status).toBe(200);
     const archivo = await app.request('/no-existe.png', {}, { ASSETS });
     expect(archivo.status).toBe(404);
@@ -113,12 +113,58 @@ describe('app del cliente en versión web (/app)', () => {
   });
 });
 
-describe('app del repartidor en versión web (/repartidor)', () => {
+describe('app del repartidor en versión web (/driver)', () => {
   it('sus rutas internas caen en su propia raíz, no en la portada ni en la del cliente', () => {
-    expect(raizDeApp('/repartidor')).toBe('/repartidor/');
-    expect(raizDeApp('/repartidor/billetera')).toBe('/repartidor/');
+    expect(raizDeApp('/driver')).toBe('/driver/');
+    expect(raizDeApp('/driver/billetera')).toBe('/driver/');
     expect(raizDeApp('/app/pedido/1')).toBe('/app/');
     expect(raizDeApp('/repartidores')).toBe('/');
-    expect(raizDeApp('/privacidad')).toBe('/');
+    expect(raizDeApp('/privacy')).toBe('/');
+  });
+});
+
+describe('inglés como idioma principal: las direcciones viejas no se rompen (C-INGLES-PRINCIPAL)', () => {
+  const pedir = (ruta: string, metodo = 'GET') =>
+    app.request(
+      ruta,
+      { method: metodo, redirect: 'manual' },
+      { ASSETS: { fetch: async () => new Response('ok') } },
+    );
+  it('cada dirección vieja lleva con 301 a la nueva en inglés, con sus parámetros', async () => {
+    const casos: [string, string][] = [
+      ['/privacidad', '/es/privacy'],
+      ['/terminos-restaurantes', '/es/restaurant-terms'],
+      ['/borrar-cuenta', '/es/delete-account'],
+      ['/confirmar?token=abc', '/es/confirm-email?token=abc'],
+      ['/pais/brasil', '/es/country/brazil'],
+      ['/docs/comensales/cancelar', '/es/docs/ordering/cancel-order'],
+      ['/en/terminos', '/terms'],
+      ['/en/privacy', '/privacy'],
+      ['/en', '/'],
+      ['/es/terminos', '/es/terms'],
+      ['/panel/pedidos', '/panel/orders'],
+      ['/panel/control-ab12/kyc', '/panel/control-ab12/verifications'],
+      ['/repartidor/', '/driver/'],
+    ];
+    for (const [vieja, nueva] of casos) {
+      const r = await pedir(vieja);
+      expect(r.status, vieja).toBe(301);
+      expect(
+        new URL(r.headers.get('location') ?? '', 'https://tumbite.com').pathname +
+          new URL(r.headers.get('location') ?? '', 'https://tumbite.com').search,
+        vieja,
+      ).toBe(nueva);
+    }
+  });
+  it('lo que ya está en inglés, el español bajo /es y los envíos no se redirigen', async () => {
+    for (const ruta of [
+      '/privacy',
+      '/es/privacy',
+      '/docs/trust/traffic-light',
+      '/panel/orders',
+      '/driver/',
+    ])
+      expect((await pedir(ruta)).status, ruta).toBe(200);
+    expect((await pedir('/privacidad', 'POST')).status).not.toBe(301);
   });
 });

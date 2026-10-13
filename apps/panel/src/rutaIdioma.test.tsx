@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { conIdioma, enIngles, sinIdioma } from './rutaIdioma';
+import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
 
-/** Candado C-INGLES-SEO: la versión en inglés de cada página pública vive bajo /en. */
+/** Candado C-INGLES-PRINCIPAL: el inglés va sin prefijo y el español bajo /es. */
 describe('direcciones por idioma', () => {
   it('pasa de un idioma al otro sin tocar el panel ni las apps', () => {
-    expect(conIdioma('/pais/brasil', 'en')).toBe('/en/pais/brasil');
-    expect(conIdioma('/', 'en')).toBe('/en');
-    expect(conIdioma('/en/pais/brasil', 'es')).toBe('/pais/brasil');
-    expect(conIdioma('/en', 'es')).toBe('/');
-    expect(conIdioma('/panel/pedidos', 'en')).toBe('/panel/pedidos');
-    expect(conIdioma('/app/', 'en')).toBe('/app/');
-    expect(conIdioma('/repartidor/', 'en')).toBe('/repartidor/');
-    expect(conIdioma('/en/docs', 'en')).toBe('/en/docs');
-    expect(enIngles('/enlaces')).toBe(false);
-    expect(sinIdioma('/en/como-funciona')).toBe('/como-funciona');
+    expect(conIdioma('/country/brazil', 'es')).toBe('/es/country/brazil');
+    expect(conIdioma('/', 'es')).toBe('/es');
+    expect(conIdioma('/es/country/brazil', 'en')).toBe('/country/brazil');
+    expect(conIdioma('/es', 'en')).toBe('/');
+    expect(conIdioma('/panel/orders', 'es')).toBe('/panel/orders');
+    expect(conIdioma('/app/', 'es')).toBe('/app/');
+    expect(conIdioma('/repartidor/', 'es')).toBe('/repartidor/');
+    expect(conIdioma('/es/docs', 'es')).toBe('/es/docs');
+    expect(enEspanol('/estados')).toBe(false);
+    expect(sinIdioma('/es/how-it-works')).toBe('/how-it-works');
   });
 });

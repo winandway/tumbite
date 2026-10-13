@@ -27,18 +27,18 @@ export function Pie({ idioma }: { idioma: Idioma }) {
   const lista =
     pestana === 'ciudades'
       ? CIUDADES.map((c) => ({
-          a: `/ciudad/${c.slug}`,
+          a: `/city/${c.slug}`,
           nombre: enIdioma(c.nombre, idioma),
           estado: c.estado,
         }))
       : pestana === 'paises'
         ? PAISES.map((p) => ({
-            a: `/pais/${p.slug}`,
+            a: `/country/${p.slug}`,
             nombre: enIdioma(p.nombre, idioma),
             estado: p.estado,
           }))
         : COCINAS.map((c) => ({
-            a: `/comida/${c.slug}`,
+            a: `/food/${c.slug}`,
             nombre: enIdioma(c.nombre, idioma),
             estado: null,
           }));
@@ -73,7 +73,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
                   <ul className="pie-lugares">
                     {deRegion.map((p) => (
                       <li key={p.slug} className={p.estado}>
-                        <Enlace a={`/pais/${p.slug}`}>{enIdioma(p.nombre, idioma)}</Enlace>
+                        <Enlace a={`/country/${p.slug}`}>{enIdioma(p.nombre, idioma)}</Enlace>
                         {p.estado === 'activo' ? activo : pronto}
                       </li>
                     ))}
@@ -95,17 +95,17 @@ export function Pie({ idioma }: { idioma: Idioma }) {
         {/* Para el SEO, las tres listas van completas en el HTML aunque solo una se vea. */}
         <nav className="pie-oculto" aria-label={t.cobertura}>
           {CIUDADES.map((c) => (
-            <a key={c.slug} href={`/ciudad/${c.slug}`}>
+            <a key={c.slug} href={`/city/${c.slug}`}>
               {enIdioma(c.nombre, idioma)}
             </a>
           ))}
           {PAISES.map((p) => (
-            <a key={p.slug} href={`/pais/${p.slug}`}>
+            <a key={p.slug} href={`/country/${p.slug}`}>
               {enIdioma(p.nombre, idioma)}
             </a>
           ))}
           {COCINAS.map((c) => (
-            <a key={c.slug} href={`/comida/${c.slug}`}>
+            <a key={c.slug} href={`/food/${c.slug}`}>
               {enIdioma(c.nombre, idioma)}
             </a>
           ))}
@@ -115,28 +115,28 @@ export function Pie({ idioma }: { idioma: Idioma }) {
       <div className="pie-columnas">
         <nav aria-label={t.conocenos}>
           <h3>{t.conocenos}</h3>
-          <Enlace a="/como-funciona">{t.sobre}</Enlace>
+          <Enlace a="/how-it-works">{t.sobre}</Enlace>
           <Enlace a="/docs">{t.docs}</Enlace>
-          <Enlace a="/pais/estados-unidos">{t.ciudadesTodas}</Enlace>
-          <Enlace a="/soporte">{t.soporte}</Enlace>
+          <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>
+          <Enlace a="/support">{t.soporte}</Enlace>
           <a href="mailto:hello@tumbite.com">{t.contacto}</a>
         </nav>
         <nav aria-label={t.ayuda}>
           <h3>{t.ayuda}</h3>
-          <Enlace a="/docs/comensales/pedir">{t.comoPedir}</Enlace>
-          <Enlace a="/docs/comensales/seguir">{t.seguir}</Enlace>
-          <Enlace a="/docs/cuenta/contrasena">{t.clave}</Enlace>
-          <Enlace a="/docs/cuenta/soporte">{t.soporteHumano}</Enlace>
+          <Enlace a="/docs/ordering/first-order">{t.comoPedir}</Enlace>
+          <Enlace a="/docs/ordering/track-order">{t.seguir}</Enlace>
+          <Enlace a="/docs/account/password">{t.clave}</Enlace>
+          <Enlace a="/docs/account/support">{t.soporteHumano}</Enlace>
           <Enlace a="/panel">{t.panel}</Enlace>
         </nav>
         <nav aria-label={t.negocios}>
           <h3>{t.negocios}</h3>
-          <Enlace a="/#restaurantes">{t.restaurante}</Enlace>
-          <Enlace a="/#repartidores">{t.repartir}</Enlace>
-          <Enlace a="/docs/restaurantes/empezar">{t.guiaRestaurante}</Enlace>
-          <Enlace a="/docs/repartidores/empezar">{t.guiaRepartidor}</Enlace>
-          <Enlace a="/como-funciona#franquicias">{t.franquicias}</Enlace>
-          <Enlace a="/como-funciona#arranque">{t.arranque}</Enlace>
+          <Enlace a="/#restaurants">{t.restaurante}</Enlace>
+          <Enlace a="/#drivers">{t.repartir}</Enlace>
+          <Enlace a="/docs/restaurants/get-started">{t.guiaRestaurante}</Enlace>
+          <Enlace a="/docs/drivers/get-started">{t.guiaRepartidor}</Enlace>
+          <Enlace a="/how-it-works#franchises">{t.franquicias}</Enlace>
+          <Enlace a="/how-it-works#launch">{t.arranque}</Enlace>
         </nav>
         <div className="pie-apps">
           <h3>{t.apps}</h3>
@@ -149,18 +149,18 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <small>{t.tiendas}</small>
           {/* Mientras llegan las tiendas, las apps ya funcionan en el navegador. */}
           <a href="/app/">{t.appWeb}</a>
-          <a href="/repartidor/">{t.repartidorWeb}</a>
+          <a href="/driver/">{t.repartidorWeb}</a>
         </div>
       </div>
 
       <div className="pie-legal">
         <nav aria-label="Legal">
-          <Enlace a="/privacidad">{t.privacidad}</Enlace>
-          <Enlace a="/terminos">{t.terminos}</Enlace>
-          <Enlace a="/terminos-restaurantes">{t.terminosRestaurantes}</Enlace>
-          <Enlace a="/terminos-repartidores">{t.terminosRepartidores}</Enlace>
-          <Enlace a="/borrar-cuenta">{t.borrarCuenta}</Enlace>
-          <Enlace a="/soporte">{t.soporte}</Enlace>
+          <Enlace a="/privacy">{t.privacidad}</Enlace>
+          <Enlace a="/terms">{t.terminos}</Enlace>
+          <Enlace a="/restaurant-terms">{t.terminosRestaurantes}</Enlace>
+          <Enlace a="/driver-terms">{t.terminosRepartidores}</Enlace>
+          <Enlace a="/delete-account">{t.borrarCuenta}</Enlace>
+          <Enlace a="/support">{t.soporte}</Enlace>
         </nav>
         <p>
           © {new Date().getFullYear()} tumbite.com | {t.derechos} {t.desarrollo}{' '}

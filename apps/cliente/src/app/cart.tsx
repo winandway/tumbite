@@ -323,7 +323,7 @@ export default function PantallaCarrito() {
             alPagar={() => {
               void b.limpiar();
               vaciar();
-              router.replace(`/pedido/${cobro.pedidoId}`);
+              router.replace(`/order/${cobro.pedidoId}`);
             }}
           />
         </>

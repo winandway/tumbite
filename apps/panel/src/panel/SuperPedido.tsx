@@ -142,16 +142,16 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           <dl className="super-dl">
             <dt>{t.cliente}</dt>
             <dd>
-              <Enlace a={`${base}/clientes/${p.cliente.id}`}>{p.cliente.nombre}</Enlace>
+              <Enlace a={`${base}/customers/${p.cliente.id}`}>{p.cliente.nombre}</Enlace>
             </dd>
             <dt>{t.restaurante}</dt>
             <dd>
-              <Enlace a={`${base}/restaurantes/${p.restaurante.id}`}>{p.restaurante.nombre}</Enlace>
+              <Enlace a={`${base}/restaurants/${p.restaurante.id}`}>{p.restaurante.nombre}</Enlace>
             </dd>
             <dt>{t.repartidor}</dt>
             <dd>
               {p.repartidor ? (
-                <Enlace a={`${base}/repartidores/${p.repartidor.id}`}>
+                <Enlace a={`${base}/drivers/${p.repartidor.id}`}>
                   {p.repartidor.codigo ?? ''} {p.repartidor.nombre}
                 </Enlace>
               ) : (
@@ -278,7 +278,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
       <ul className="super-bandeja super-encurso">
         {lista?.map((p) => (
           <li key={p.id}>
-            <Enlace a={`${base}/pedidos/${p.id}`}>
+            <Enlace a={`${base}/orders/${p.id}`}>
               <strong>
                 #{p.id.slice(0, 6).toUpperCase()} · {p.restaurante} ·{' '}
                 {formatearDolares(p.total, idioma)}

@@ -34,7 +34,7 @@ export const REGIONES: { id: Region; nombre: Record<Idioma, string> }[] = [
 
 export const PAISES: Lugar[] = [
   {
-    slug: 'estados-unidos',
+    slug: 'united-states',
     nombre: { es: 'Estados Unidos', en: 'United States' },
     estado: 'activo',
     codigo: 'US',
@@ -64,7 +64,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'dólar', en: 'US dollar' },
   },
   {
-    slug: 'republica-dominicana',
+    slug: 'dominican-republic',
     nombre: { es: 'República Dominicana', en: 'Dominican Republic' },
     estado: 'pronto',
     codigo: 'DO',
@@ -234,7 +234,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'guaraní', en: 'guaraní' },
   },
   {
-    slug: 'brasil',
+    slug: 'brazil',
     nombre: { es: 'Brasil', en: 'Brazil' },
     estado: 'pronto',
     codigo: 'BR',
@@ -254,7 +254,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'dólar guyanés', en: 'Guyanese dollar' },
   },
   {
-    slug: 'surinam',
+    slug: 'suriname',
     nombre: { es: 'Surinam', en: 'Suriname' },
     estado: 'pronto',
     codigo: 'SR',
@@ -264,7 +264,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'dólar surinamés', en: 'Surinamese dollar' },
   },
   {
-    slug: 'espana',
+    slug: 'spain',
     nombre: { es: 'España', en: 'Spain' },
     estado: 'pronto',
     codigo: 'ES',
@@ -284,7 +284,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'euro', en: 'euro' },
   },
   {
-    slug: 'italia',
+    slug: 'italy',
     nombre: { es: 'Italia', en: 'Italy' },
     estado: 'pronto',
     codigo: 'IT',
@@ -294,7 +294,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'euro', en: 'euro' },
   },
   {
-    slug: 'francia',
+    slug: 'france',
     nombre: { es: 'Francia', en: 'France' },
     estado: 'pronto',
     codigo: 'FR',
@@ -304,7 +304,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'euro', en: 'euro' },
   },
   {
-    slug: 'alemania',
+    slug: 'germany',
     nombre: { es: 'Alemania', en: 'Germany' },
     estado: 'pronto',
     codigo: 'DE',
@@ -314,7 +314,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'euro', en: 'euro' },
   },
   {
-    slug: 'paises-bajos',
+    slug: 'netherlands',
     nombre: { es: 'Países Bajos', en: 'Netherlands' },
     estado: 'pronto',
     codigo: 'NL',
@@ -324,7 +324,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'euro', en: 'euro' },
   },
   {
-    slug: 'reino-unido',
+    slug: 'united-kingdom',
     nombre: { es: 'Reino Unido', en: 'United Kingdom' },
     estado: 'pronto',
     codigo: 'GB',
@@ -334,7 +334,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'libra esterlina', en: 'pound sterling' },
   },
   {
-    slug: 'rumania',
+    slug: 'romania',
     nombre: { es: 'Rumanía', en: 'Romania' },
     estado: 'pronto',
     codigo: 'RO',
@@ -344,7 +344,7 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'leu', en: 'leu' },
   },
   {
-    slug: 'guinea-ecuatorial',
+    slug: 'equatorial-guinea',
     nombre: { es: 'Guinea Ecuatorial', en: 'Equatorial Guinea' },
     estado: 'pronto',
     codigo: 'GQ',
@@ -356,31 +356,31 @@ export const PAISES: Lugar[] = [
 ];
 
 export const CIUDADES: Lugar[] = [
-  { slug: 'miami', nombre: { es: 'Miami', en: 'Miami' }, estado: 'activo', pais: 'estados-unidos' },
+  { slug: 'miami', nombre: { es: 'Miami', en: 'Miami' }, estado: 'activo', pais: 'united-states' },
   {
     slug: 'orlando',
     nombre: { es: 'Orlando', en: 'Orlando' },
     estado: 'pronto',
-    pais: 'estados-unidos',
+    pais: 'united-states',
   },
-  { slug: 'tampa', nombre: { es: 'Tampa', en: 'Tampa' }, estado: 'pronto', pais: 'estados-unidos' },
-  { slug: 'ocala', nombre: { es: 'Ocala', en: 'Ocala' }, estado: 'pronto', pais: 'estados-unidos' },
+  { slug: 'tampa', nombre: { es: 'Tampa', en: 'Tampa' }, estado: 'pronto', pais: 'united-states' },
+  { slug: 'ocala', nombre: { es: 'Ocala', en: 'Ocala' }, estado: 'pronto', pais: 'united-states' },
 ];
 
 /** Tipos de comida que la gente busca (sirven de enlaces internos para el SEO). */
 export const COCINAS: { slug: string; nombre: Record<Idioma, string> }[] = [
   { slug: 'pizza', nombre: { es: 'Pizza', en: 'Pizza' } },
-  { slug: 'hamburguesas', nombre: { es: 'Hamburguesas', en: 'Burgers' } },
+  { slug: 'burgers', nombre: { es: 'Hamburguesas', en: 'Burgers' } },
   { slug: 'sushi', nombre: { es: 'Sushi', en: 'Sushi' } },
-  { slug: 'cubana', nombre: { es: 'Comida cubana', en: 'Cuban food' } },
-  { slug: 'venezolana', nombre: { es: 'Comida venezolana', en: 'Venezuelan food' } },
-  { slug: 'colombiana', nombre: { es: 'Comida colombiana', en: 'Colombian food' } },
-  { slug: 'mexicana', nombre: { es: 'Comida mexicana', en: 'Mexican food' } },
-  { slug: 'pollo', nombre: { es: 'Pollo', en: 'Chicken' } },
-  { slug: 'saludable', nombre: { es: 'Saludable', en: 'Healthy' } },
-  { slug: 'postres', nombre: { es: 'Postres', en: 'Desserts' } },
-  { slug: 'cafe', nombre: { es: 'Café y desayunos', en: 'Coffee and breakfast' } },
-  { slug: 'mariscos', nombre: { es: 'Mariscos', en: 'Seafood' } },
+  { slug: 'cuban', nombre: { es: 'Comida cubana', en: 'Cuban food' } },
+  { slug: 'venezuelan', nombre: { es: 'Comida venezolana', en: 'Venezuelan food' } },
+  { slug: 'colombian', nombre: { es: 'Comida colombiana', en: 'Colombian food' } },
+  { slug: 'mexican', nombre: { es: 'Comida mexicana', en: 'Mexican food' } },
+  { slug: 'chicken', nombre: { es: 'Pollo', en: 'Chicken' } },
+  { slug: 'healthy', nombre: { es: 'Saludable', en: 'Healthy' } },
+  { slug: 'desserts', nombre: { es: 'Postres', en: 'Desserts' } },
+  { slug: 'coffee', nombre: { es: 'Café y desayunos', en: 'Coffee and breakfast' } },
+  { slug: 'seafood', nombre: { es: 'Mariscos', en: 'Seafood' } },
 ];
 
 export const paisDe = (slug: string) => PAISES.find((p) => p.slug === slug) ?? null;

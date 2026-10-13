@@ -251,17 +251,17 @@ export function SuperCiudades({ base, idioma }: { base: string; idioma: Idioma }
             </h2>
             <ul className="super-lista">
               <li>
-                <Enlace a={`${base}/restaurantes?zona=${z.id}`}>
+                <Enlace a={`${base}/restaurants?zona=${z.id}`}>
                   {t.restaurantes}: {z.restaurantes}
                 </Enlace>
               </li>
               <li>
-                <Enlace a={`${base}/repartidores?zona=${z.id}`}>
+                <Enlace a={`${base}/drivers?zona=${z.id}`}>
                   {t.repartidores}: {z.repartidores} ({z.conectados} {t.conectados})
                 </Enlace>
               </li>
               <li>
-                <Enlace a={`${base}/clientes?zona=${z.id}`}>
+                <Enlace a={`${base}/customers?zona=${z.id}`}>
                   {t.clientes}: {z.clientes}
                 </Enlace>
               </li>
@@ -401,7 +401,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
               {b.filas.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <Enlace a={`${base}/repartidores/${r.id}`}>{r.codigo || '—'}</Enlace>
+                    <Enlace a={`${base}/drivers/${r.id}`}>{r.codigo || '—'}</Enlace>
                   </td>
                   <td>
                     <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
@@ -471,7 +471,7 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
       {kyc.estado !== 'sin_enviar' && (
         <>
           {' · '}
-          <Enlace a={`${base}/kyc/${kyc.usuarioId}`}>{t.revisar}</Enlace>
+          <Enlace a={`${base}/verifications/${kyc.usuarioId}`}>{t.revisar}</Enlace>
         </>
       )}
     </p>
@@ -773,7 +773,7 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
       <ul className="super-bandeja">
         {b.filas?.map((c) => (
           <li key={c.id}>
-            <Enlace a={`${base}/clientes/${c.id}`}>
+            <Enlace a={`${base}/customers/${c.id}`}>
               <strong>{c.nombre}</strong> · {c.correo}
               <small>
                 {c.telefono || '—'} · {t.alta} {fechaCorta(c.alta, idioma)}
@@ -857,7 +857,7 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         <ul className="super-lista">
           {c.compras.map((p) => (
             <li key={p.id}>
-              <Enlace a={`${base}/pedidos/${p.id}`}>
+              <Enlace a={`${base}/orders/${p.id}`}>
                 {fechaCorta(p.fecha, idioma)} · {p.restaurante} ·{' '}
                 {formatearDolares(p.total, idioma)} · {p.estado}
               </Enlace>
@@ -921,7 +921,7 @@ export function SuperRestaurante({
       <button
         type="button"
         className="enlace docs-volver"
-        onClick={() => ir(`${base}/restaurantes`)}
+        onClick={() => ir(`${base}/restaurants`)}
       >
         {t.volver}
       </button>
@@ -1019,7 +1019,7 @@ export function SuperRestaurante({
         <ul className="super-lista">
           {r.ultimosPedidos.map((p) => (
             <li key={p.id}>
-              <Enlace a={`${base}/pedidos/${p.id}`}>
+              <Enlace a={`${base}/orders/${p.id}`}>
                 {fechaCorta(p.fecha, idioma)} · {p.cliente} · {dinero(p.total)} · {p.estado}
               </Enlace>
             </li>

@@ -15,15 +15,15 @@ import {
 import { TEXTOS_SITIO } from './textos';
 
 /**
- * Páginas por país, por ciudad y por tipo de comida (/pais/x, /ciudad/x, /comida/x).
+ * Páginas por país, por ciudad y por tipo de comida (/country/x, /city/x, /food/x).
  * Cada una es su propia página para el SEO: título claro, estado, texto y la lista de espera.
  */
 export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma).lugar;
   const [, tipo, slug] = ruta.split('/');
-  const pais = tipo === 'pais' ? paisDe(slug ?? '') : null;
-  const ciudad = tipo === 'ciudad' ? ciudadDe(slug ?? '') : null;
-  const cocina = tipo === 'comida' ? cocinaDe(slug ?? '') : null;
+  const pais = tipo === 'country' ? paisDe(slug ?? '') : null;
+  const ciudad = tipo === 'city' ? ciudadDe(slug ?? '') : null;
+  const cocina = tipo === 'food' ? cocinaDe(slug ?? '') : null;
 
   if (cocina) {
     const nombre = enIdioma(cocina.nombre, idioma);
@@ -114,7 +114,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           <ul>
             {ciudadesDelPais.map((c) => (
               <li key={c.slug} className={c.estado}>
-                <Enlace a={`/ciudad/${c.slug}`}>{enIdioma(c.nombre, idioma)}</Enlace>
+                <Enlace a={`/city/${c.slug}`}>{enIdioma(c.nombre, idioma)}</Enlace>
                 <span>{c.estado === 'activo' ? t.activo : t.pronto}</span>
               </li>
             ))}
@@ -133,7 +133,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
         <section className="lugar-franquicia">
           <h2>{t.franquiciaTitulo.replace('{lugar}', nombre)}</h2>
           <p>{t.franquiciaTexto}</p>
-          <Enlace a="/como-funciona#franquicias">{t.franquiciaEnlace}</Enlace>
+          <Enlace a="/how-it-works#franchises">{t.franquiciaEnlace}</Enlace>
         </section>
       )}
       {pais && !activo && <FormFranquicia idioma={idioma} pais={enIdioma(pais.nombre, idioma)} />}
@@ -146,7 +146,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           <ul>
             {vecinos.map((v) => (
               <li key={v.slug}>
-                <Enlace a={`/pais/${v.slug}`}>{enIdioma(v.nombre, idioma)}</Enlace>
+                <Enlace a={`/country/${v.slug}`}>{enIdioma(v.nombre, idioma)}</Enlace>
               </li>
             ))}
           </ul>

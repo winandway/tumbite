@@ -125,7 +125,7 @@ export default function MiCuenta() {
       {pedidos?.map((p) => (
         <Pressable
           key={p.id}
-          onPress={() => router.push(`/pedido/${p.id}`)}
+          onPress={() => router.push(`/order/${p.id}`)}
           accessibilityRole="link"
           style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between', gap: 8 }]}
         >
@@ -181,7 +181,7 @@ export default function MiCuenta() {
       <Text style={estilos.subtitulo}>{t.datos}</Text>
       <Boton
         texto={t.editarDatos}
-        alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/configuracion`)}
+        alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/settings`)}
         secundario
       />
 

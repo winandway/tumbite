@@ -124,8 +124,8 @@ describe('configuración de la cuenta', () => {
         );
       return new Response('{}', { status: 404 });
     });
-    window.history.pushState(null, '', '/panel/configuracion');
-    render(<PanelApp ruta="/panel/configuracion" />);
+    window.history.pushState(null, '', '/panel/settings');
+    render(<PanelApp ruta="/panel/settings" />);
     expect(await screen.findByRole('heading', { name: /Configuración/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Borrar mi cuenta' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Más opciones' }));

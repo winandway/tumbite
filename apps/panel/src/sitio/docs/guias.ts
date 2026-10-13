@@ -18,7 +18,7 @@ export type Guia = {
   nota?: string;
 };
 export type SeccionDocs = {
-  id: 'comensales' | 'restaurantes' | 'repartidores' | 'confianza' | 'cuenta';
+  id: 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'account';
   titulo: string;
   icono: NombreIcono;
   guias: Guia[];
@@ -26,12 +26,12 @@ export type SeccionDocs = {
 
 const es: SeccionDocs[] = [
   {
-    id: 'comensales',
+    id: 'ordering',
     titulo: 'Para pedir',
     icono: 'pizza',
     guias: [
       {
-        id: 'pedir',
+        id: 'first-order',
         titulo: 'Cómo hacer tu primer pedido',
         resumen:
           'Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.',
@@ -45,7 +45,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'seguir',
+        id: 'track-order',
         titulo: 'Seguir tu pedido en vivo',
         resumen: 'Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.',
         pasos: [
@@ -56,7 +56,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'cancelar',
+        id: 'cancel-order',
         titulo: 'Cancelar un pedido y recibir tu dinero',
         resumen:
           'Mientras el restaurante no lo acepte, cancelas en un toque y te devolvemos todo. Y si el restaurante no responde, lo cancelamos nosotros.',
@@ -86,7 +86,7 @@ const es: SeccionDocs[] = [
         nota: 'Si el restaurante no confirma tu pedido en 10 minutos, lo cancelamos y te devolvemos el dinero sin que tengas que hacer nada.',
       },
       {
-        id: 'regalos',
+        id: 'rewards',
         titulo: 'Regalos: cumpleaños, sellos y bienvenida',
         resumen: 'Los restaurantes premian que vuelvas. Los regalos aparecen solos en el carrito.',
         pasos: [
@@ -98,7 +98,7 @@ const es: SeccionDocs[] = [
         nota: 'Los regalos los paga el restaurante con una parte de sus ventas, no Tumbite. Por eso cada restaurante decide los suyos.',
       },
       {
-        id: 'calificar',
+        id: 'rate',
         titulo: 'Calificar la comida y al repartidor',
         resumen: 'Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.',
         pasos: [
@@ -111,12 +111,12 @@ const es: SeccionDocs[] = [
     ],
   },
   {
-    id: 'restaurantes',
+    id: 'restaurants',
     titulo: 'Para restaurantes',
     icono: 'chef',
     guias: [
       {
-        id: 'empezar',
+        id: 'get-started',
         titulo: 'Poner tu restaurante en Tumbite',
         resumen:
           'Crea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.',
@@ -141,7 +141,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'agotado',
+        id: 'sold-out',
         titulo: 'Marcar un plato como agotado',
         resumen: 'Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.',
         pasos: [
@@ -151,7 +151,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'pedidos',
+        id: 'orders',
         titulo: 'Recibir pedidos y la alarma',
         resumen:
           'Suena fuerte hasta que alguien acepta. Ningún pedido se queda olvidado en hora pico.',
@@ -166,7 +166,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificar',
+        id: 'verify',
         titulo: 'Verificar tu restaurante',
         resumen:
           'Cuatro fotos desde el celular: tu documento, tu cara y el frente del local. Así tus clientes saben que eres real.',
@@ -191,7 +191,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'regalos',
+        id: 'gifts',
         titulo: 'Regalos y marketing',
         resumen: 'Aparta un porcentaje de tus ventas para premiar a tus clientes fieles.',
         pasos: [
@@ -202,7 +202,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'beneficios',
+        id: 'earnings',
         titulo: 'Resumen del día y tu billetera',
         resumen:
           'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
@@ -216,12 +216,12 @@ const es: SeccionDocs[] = [
     ],
   },
   {
-    id: 'repartidores',
+    id: 'drivers',
     titulo: 'Para repartidores',
     icono: 'moto',
     guias: [
       {
-        id: 'empezar',
+        id: 'get-started',
         titulo: 'Empezar a repartir',
         resumen: 'Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.',
         pasos: [
@@ -232,7 +232,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificar',
+        id: 'verify',
         titulo: 'Verificar tu identidad',
         resumen:
           'Tu documento y una foto de tu cara, desde la app. Es lo que les da confianza a los clientes que te abren la puerta.',
@@ -256,7 +256,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'ofertas',
+        id: 'offers',
         titulo: 'Las ofertas: cuánto ganas antes de aceptar',
         resumen: 'Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.',
         pasos: [
@@ -268,7 +268,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'niveles',
+        id: 'levels',
         titulo: 'Niveles: Bronce, Plata, Oro y Diamante',
         resumen:
           'Los niveles altos ven primero los pedidos grandes. Se suben con entregas y buenas notas.',
@@ -280,7 +280,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'billetera',
+        id: 'wallet',
         titulo: 'Tu billetera y los retiros',
         resumen: 'Saldo, historial del día y retiro a tu banco cuando quieras.',
         pasos: [
@@ -292,7 +292,7 @@ const es: SeccionDocs[] = [
     ],
   },
   {
-    id: 'confianza',
+    id: 'trust',
     titulo: 'Cómo cuidamos cada pedido',
     icono: 'listo',
     guias: [
@@ -311,7 +311,7 @@ const es: SeccionDocs[] = [
         nota: 'Esta primera versión del Manager trabaja con reglas fijas y claras, iguales para todos. Las mismas reglas que ves en el semáforo de cada pedido.',
       },
       {
-        id: 'semaforo',
+        id: 'traffic-light',
         titulo: 'El semáforo de cada pedido',
         resumen:
           'Verde, amarillo o rojo: de un vistazo se sabe qué pedido va bien y cuál necesita atención.',
@@ -334,7 +334,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificacion',
+        id: 'verification',
         titulo: 'Restaurantes y repartidores verificados',
         resumen:
           'Cada restaurante es un negocio real y cada repartidor es quien dice ser. Lo revisa una persona de nuestro equipo.',
@@ -349,12 +349,12 @@ const es: SeccionDocs[] = [
     ],
   },
   {
-    id: 'cuenta',
+    id: 'account',
     titulo: 'Tu cuenta',
     icono: 'proteccion',
     guias: [
       {
-        id: 'contrasena',
+        id: 'password',
         titulo: 'Olvidé mi contraseña',
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
         pasos: [
@@ -365,7 +365,7 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'confirmar-correo',
+        id: 'confirm-email',
         titulo: 'Confirmar tu correo',
         resumen: 'Al registrarte te llega un enlace para confirmar que el correo es tuyo.',
         pasos: [
@@ -375,18 +375,18 @@ const es: SeccionDocs[] = [
         ],
       },
       {
-        id: 'borrar',
+        id: 'delete',
         titulo: 'Borrar tu cuenta',
         resumen: 'Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.',
         pasos: [
-          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/borrar-cuenta.',
+          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/delete-account.',
           'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
           'Se borran tu nombre, correo, teléfono, fecha de nacimiento, las direcciones de tus pedidos y el texto de tus calificaciones. Los importes de los pedidos quedan sin tu nombre, por obligaciones de impuestos. No se puede deshacer.',
           'Sin la app: escribe a support@tumbite.com desde el correo de tu cuenta y la borramos en un máximo de 30 días.',
         ],
       },
       {
-        id: 'soporte',
+        id: 'support',
         titulo: 'Soporte humano',
         resumen: 'Personas reales, rápido. Por WhatsApp o por correo.',
         pasos: [
@@ -401,12 +401,12 @@ const es: SeccionDocs[] = [
 
 const en: SeccionDocs[] = [
   {
-    id: 'comensales',
+    id: 'ordering',
     titulo: 'Ordering',
     icono: 'pizza',
     guias: [
       {
-        id: 'pedir',
+        id: 'first-order',
         titulo: 'How to place your first order',
         resumen:
           'Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.',
@@ -420,7 +420,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'seguir',
+        id: 'track-order',
         titulo: 'Track your order live',
         resumen:
           'Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.',
@@ -432,7 +432,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'cancelar',
+        id: 'cancel-order',
         titulo: 'Cancel an order and get your money back',
         resumen:
           'Until the restaurant accepts it, you cancel in one tap and get a full refund. And if the restaurant doesn’t answer, we cancel it for you.',
@@ -462,7 +462,7 @@ const en: SeccionDocs[] = [
         nota: 'If the restaurant doesn’t confirm your order within 10 minutes, we cancel it and refund you without you lifting a finger.',
       },
       {
-        id: 'regalos',
+        id: 'rewards',
         titulo: 'Gifts: birthday, punch card, and win-back',
         resumen: 'Restaurants reward you for coming back. Gifts show up in your cart on their own.',
         pasos: [
@@ -474,7 +474,7 @@ const en: SeccionDocs[] = [
         nota: 'Gifts are funded by the restaurant from a share of its sales, not by Tumbite. That’s why each restaurant chooses its own.',
       },
       {
-        id: 'calificar',
+        id: 'rate',
         titulo: 'Rate the food and the driver',
         resumen: 'Two separate ratings. If the food was late, it’s not the driver’s fault.',
         pasos: [
@@ -487,12 +487,12 @@ const en: SeccionDocs[] = [
     ],
   },
   {
-    id: 'restaurantes',
+    id: 'restaurants',
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
       {
-        id: 'empezar',
+        id: 'get-started',
         titulo: 'Put your restaurant on Tumbite',
         resumen:
           'Create your account, complete your profile, and wait for approval. No lock-in contracts.',
@@ -517,7 +517,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'agotado',
+        id: 'sold-out',
         titulo: 'Mark an item as sold out',
         resumen: 'Out of chicken? Turn it off for today in one tap and nobody can order it.',
         pasos: [
@@ -527,7 +527,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'pedidos',
+        id: 'orders',
         titulo: 'Receiving orders and the alarm',
         resumen: 'It rings loud until someone accepts. No order gets forgotten at rush hour.',
         pasos: [
@@ -541,7 +541,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificar',
+        id: 'verify',
         titulo: 'Verify your restaurant',
         resumen:
           'Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.',
@@ -566,7 +566,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'regalos',
+        id: 'gifts',
         titulo: 'Gifts and marketing',
         resumen: 'Set aside a share of your sales to reward loyal customers.',
         pasos: [
@@ -577,7 +577,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'beneficios',
+        id: 'earnings',
         titulo: 'Daily summary and your wallet',
         resumen: 'Orders, sales, commission, and your payout. Cash out to your bank.',
         pasos: [
@@ -590,12 +590,12 @@ const en: SeccionDocs[] = [
     ],
   },
   {
-    id: 'repartidores',
+    id: 'drivers',
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
       {
-        id: 'empezar',
+        id: 'get-started',
         titulo: 'Start delivering',
         resumen:
           'Create your account, go online when you want, and accept only what works for you.',
@@ -607,7 +607,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificar',
+        id: 'verify',
         titulo: 'Verify your identity',
         resumen:
           'Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.',
@@ -631,7 +631,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'ofertas',
+        id: 'offers',
         titulo: 'Offers: see what you earn before you accept',
         resumen:
           'You see the pay, the distance, and the pickup spot. Declining never counts against you.',
@@ -644,7 +644,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'niveles',
+        id: 'levels',
         titulo: 'Levels: Bronze, Silver, Gold, and Diamond',
         resumen:
           'Higher levels see bigger orders first. You level up with deliveries and good ratings.',
@@ -656,7 +656,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'billetera',
+        id: 'wallet',
         titulo: 'Your wallet and cash-outs',
         resumen: 'Balance, today’s history, and cash-out to your bank whenever you want.',
         pasos: [
@@ -668,7 +668,7 @@ const en: SeccionDocs[] = [
     ],
   },
   {
-    id: 'confianza',
+    id: 'trust',
     titulo: 'How we look after every order',
     icono: 'listo',
     guias: [
@@ -687,7 +687,7 @@ const en: SeccionDocs[] = [
         nota: 'This first version of the Manager works with fixed, clear rules that are the same for everyone. The same rules you see in each order’s traffic light.',
       },
       {
-        id: 'semaforo',
+        id: 'traffic-light',
         titulo: 'The traffic light on every order',
         resumen:
           'Green, yellow, or red: at a glance you know which order is fine and which one needs attention.',
@@ -710,7 +710,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'verificacion',
+        id: 'verification',
         titulo: 'Verified restaurants and drivers',
         resumen:
           'Every restaurant is a real business and every driver is who they say they are. A person on our team checks it.',
@@ -725,12 +725,12 @@ const en: SeccionDocs[] = [
     ],
   },
   {
-    id: 'cuenta',
+    id: 'account',
     titulo: 'Your account',
     icono: 'proteccion',
     guias: [
       {
-        id: 'contrasena',
+        id: 'password',
         titulo: 'Forgot my password',
         resumen: 'We email you a link. It works once and expires in 30 minutes.',
         pasos: [
@@ -741,7 +741,7 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'confirmar-correo',
+        id: 'confirm-email',
         titulo: 'Confirm your email',
         resumen: 'When you sign up, you get a link to confirm the email is yours.',
         pasos: [
@@ -751,18 +751,18 @@ const en: SeccionDocs[] = [
         ],
       },
       {
-        id: 'borrar',
+        id: 'delete',
         titulo: 'Delete your account',
         resumen: 'From the account menu, in the three dots. Your personal data is removed.',
         pasos: [
-          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/borrar-cuenta.',
+          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/delete-account.',
           'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',
           'Your name, email, phone, birthday, order addresses, and rating comments are deleted. Order amounts remain without your name, for tax obligations. This can’t be undone.',
           'Without the app: email support@tumbite.com from your account’s email and we’ll delete it within 30 days.',
         ],
       },
       {
-        id: 'soporte',
+        id: 'support',
         titulo: 'Human support',
         resumen: 'Real people, fast. On WhatsApp or by email.',
         pasos: [

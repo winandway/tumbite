@@ -20,3 +20,13 @@ export function guardarIdioma(idioma: Idioma): void {
     // Sin almacenamiento: el cambio vale solo para esta visita.
   }
 }
+
+/** Solo lo que la persona eligió a propósito en el selector (null si nunca eligió). */
+export function idiomaElegido(): Idioma | null {
+  try {
+    const guardado = localStorage.getItem(LLAVE);
+    return esIdioma(guardado) ? guardado : null;
+  } catch {
+    return null;
+  }
+}

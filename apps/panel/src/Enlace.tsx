@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ir } from './ruta';
-import { conIdioma, enIngles } from './rutaIdioma';
+import { conIdioma, enEspanol } from './rutaIdioma';
 
 /** Enlace interno: cambia de página sin recargar. */
 export function Enlace({
@@ -12,9 +12,9 @@ export function Enlace({
   children: ReactNode;
   className?: string;
 }) {
-  // Dentro de la versión en inglés (/en/...), los enlaces internos se quedan en inglés.
+  // Dentro de la versión en español (/es/...), los enlaces internos se quedan en español.
   const destino =
-    typeof window !== 'undefined' && enIngles(window.location.pathname) ? conIdioma(a, 'en') : a;
+    typeof window !== 'undefined' && enEspanol(window.location.pathname) ? conIdioma(a, 'es') : a;
   return (
     <a
       href={destino}

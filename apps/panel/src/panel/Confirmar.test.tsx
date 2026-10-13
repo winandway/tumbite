@@ -6,7 +6,7 @@ describe('confirmar el correo', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('manda el token del enlace y dice que quedó confirmado', async () => {
-    window.history.pushState(null, '', '/confirmar?token=enlace-de-prueba-de-la-pantalla');
+    window.history.pushState(null, '', '/confirm-email?token=enlace-de-prueba-de-la-pantalla');
     const llamadas: string[] = [];
     vi.stubGlobal('fetch', async (_u: string, init: RequestInit) => {
       llamadas.push(String(init.body));
@@ -18,7 +18,7 @@ describe('confirmar el correo', () => {
   });
 
   it('si el enlace venció lo dice en palabras claras', async () => {
-    window.history.pushState(null, '', '/confirmar?token=enlace-de-prueba-de-la-pantalla');
+    window.history.pushState(null, '', '/confirm-email?token=enlace-de-prueba-de-la-pantalla');
     vi.stubGlobal(
       'fetch',
       async () =>

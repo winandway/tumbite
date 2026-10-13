@@ -181,7 +181,7 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
     <section className="super">
       <h1>{t.resumen}</h1>
       <ul className="super-tarjetas">
-        {tarjeta(t.franquicias, r.totales.franquicias, `${base}/franquicias`)}
+        {tarjeta(t.franquicias, r.totales.franquicias, `${base}/franchises`)}
         {tarjeta(t.vendidas, r.totales.vendidas)}
         {tarjeta(t.activas, r.totales.activas)}
         {tarjeta(t.interesados, r.totales.interesados, `${base}/tickets?tipo=franquicia`)}

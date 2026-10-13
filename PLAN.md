@@ -1,8 +1,12 @@
-# Plan: Docs públicos de lo nuevo + apps listas para las tiendas (12 oct 2026, noche)
+# Plan: inglés como idioma principal de Tumbite (13 oct 2026)
 
-- [x] Paso 1: Las guías aceptan capturas (con texto alternativo y pie) y párrafos de «cómo funciona»; se ven bien en celular y entran en el mapa del sitio.
-- [x] Paso 2: Capturas reales con datos neutros: lista de pedidos del restaurante con semáforo, cancelar un pedido en la app, pedido cancelado, verificación de identidad del restaurante y del repartidor.
-- [x] Paso 3: Sección nueva «Cómo cuidamos cada pedido» con las guías del Manager, del semáforo y de la verificación de identidad; guía «Cancelar un pedido» para clientes; guías de cómo verificarse para restaurantes y repartidores. Todo en español e inglés.
-- [x] Paso 4: Corregir las guías viejas que quedaron desactualizadas (el pago ya no salta a otra página; los pedidos del restaurante tienen semáforo y se cancelan solos a los 10 minutos).
-- [x] Paso 5: Apps listas para las tiendas: textos de ficha en inglés y español para las tres apps, permisos explicados, lista de revisión de Apple y Google, en un documento.
-- [x] Paso 6: Pruebas (las guías nuevas existen en los dos idiomas, sin palabras internas, con imágenes que existen), verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: Mapa único de direcciones (en `packages/compartido`): cada página pública con su dirección en inglés y la vieja en español, para redirigir.
+- [x] Paso 2: El sitio en inglés por defecto: «/» y todas las páginas sin prefijo en inglés; el español bajo «/es/». El selector de idioma cambia entre las dos direcciones.
+- [x] Paso 3: Todas las direcciones en inglés: legales, soporte, borrar cuenta, cómo funciona, recuperar contraseña, confirmar correo, países, ciudades, comidas, Docs (secciones y guías) y las páginas de vuelta de Stripe.
+- [x] Paso 4: Redirecciones 301 en el servidor: cada dirección vieja en español lleva a la nueva (la versión en español), y lo viejo bajo «/en» lleva a la dirección sin prefijo. Con el resto de la dirección y sus parámetros.
+- [x] Paso 5: Cambiar cada enlace que apuntaba a lo viejo: pie de página, apps (borrar cuenta, términos), correos (confirmar, recuperar), Stripe (vuelta de la billetera), semáforo de publicación, mapa del sitio, robots y llms.txt.
+- [x] Paso 5b: Direcciones del panel y de las apps web también en inglés (/panel/orders, /panel/company, /panel/settings, /app/order/…, /app/cart, /driver), con las viejas redirigidas; y arreglar el enlace del correo del recibo, que llevaba a una dirección que no existe.
+- [x] Paso 6: Los textos legales dicen que rige la versión en inglés; la española es traducción de cortesía.
+- [x] Paso 7: Documentos (tiendas, legales para tiendas, candados) con las direcciones nuevas en inglés.
+- [x] Paso 8: Pruebas (direcciones en inglés, redirecciones viejas, prerender en los dos idiomas) comprobadas en rojo; prueba en pantalla en celular y computadora.
+- [ ] Paso 9: verify, commit, push, publicación y comprobación en vivo de cada dirección nueva y de cada redirección.

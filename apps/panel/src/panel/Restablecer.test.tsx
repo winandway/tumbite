@@ -21,7 +21,7 @@ describe('recuperar la contraseña', () => {
   });
 
   it('las dos contraseñas deben coincidir y el token viaja al servidor', async () => {
-    window.history.pushState(null, '', '/restablecer?token=enlace-de-prueba-de-la-pantalla');
+    window.history.pushState(null, '', '/reset-password?token=enlace-de-prueba-de-la-pantalla');
     const llamadas: string[] = [];
     vi.stubGlobal('fetch', async (_u: string, init: RequestInit) => {
       llamadas.push(String(init.body));
@@ -41,7 +41,7 @@ describe('recuperar la contraseña', () => {
   });
 
   it('sin token en el enlace lo dice y manda a pedir uno nuevo', () => {
-    window.history.pushState(null, '', '/restablecer');
+    window.history.pushState(null, '', '/reset-password');
     render(<Restablecer idioma="es" />);
     expect(screen.getByRole('alert')).toHaveTextContent('incompleto');
   });

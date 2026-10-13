@@ -1,5 +1,12 @@
 import { Hono } from 'hono';
-import { esquemaEntrar, esquemaRegistro, type Rol, type Usuario } from '@tumbite/compartido';
+import {
+  PAGINAS,
+  enIdiomaDireccion,
+  esquemaEntrar,
+  esquemaRegistro,
+  type Rol,
+  type Usuario,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
 import { hashClave, nuevoId, nuevoToken, sha256, verificarClave } from '../cripto';
 import { z } from 'zod';
@@ -305,12 +312,16 @@ cuentas.post('/recuperar', async (c) => {
       .bind(await sha256(token), fila.id, `+${MINUTOS_RECUPERACION} minutes`)
       .run();
     const base_ = (c.env.SITIO_URL ?? 'https://tumbite.com').replace(/\/$/, '');
-    const t = TEXTOS_RECUPERAR[d.idioma ?? fila.idioma];
+    const lengua = d.idioma ?? fila.idioma;
+    const t = lengua === 'en' ? TEXTOS_RECUPERAR.en : TEXTOS_RECUPERAR.es;
     await enviarCorreo(c.env, {
       de: 'avisos',
       para: d.correo,
       asunto: t.asunto,
-      texto: t.cuerpo(fila.nombre, `${base_}/restablecer?token=${token}`),
+      texto: t.cuerpo(
+        fila.nombre,
+        `${base_}${enIdiomaDireccion(PAGINAS.resetPassword, lengua)}?token=${token}`,
+      ),
     });
   }
   return c.json({ ok: true });
@@ -403,7 +414,7 @@ cuentas.delete('/yo', async (c) => {
     db
       .prepare('UPDATE repartidores SET conectado = 0, lat = NULL, lng = NULL WHERE usuario_id = ?')
       .bind(u.id),
-    // Lo que prometen la política de privacidad y la página /borrar-cuenta: se quitan direcciones,
+    // Lo que prometen la política de privacidad y la página /delete-account: se quitan direcciones,
     // indicaciones y ubicación de sus pedidos y el texto de sus calificaciones. Los importes se
     // guardan (impuestos y contabilidad). Candado C-BORRADO-COMPLETO.
     db

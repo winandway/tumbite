@@ -143,7 +143,7 @@ export function Restablecer({ idioma }: { idioma: Idioma }) {
       {!token ? (
         <p className="error-general" role="alert">
           {t.sinToken}{' '}
-          <button type="button" className="enlace" onClick={() => ir('/olvide')}>
+          <button type="button" className="enlace" onClick={() => ir('/forgot-password')}>
             {t.olvide}
           </button>
         </p>

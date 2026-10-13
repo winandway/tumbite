@@ -7,6 +7,7 @@ export function Legal({ doc, volver }: { doc: DocumentoLegal; volver: string }) 
       <Enlace a="/">{volver}</Enlace>
       <h1>{doc.titulo}</h1>
       <p className="fecha">{doc.actualizado}</p>
+      {doc.idiomaQueRige ? <p className="legal-rige">{doc.idiomaQueRige}</p> : null}
       {doc.intro ? <p className="legal-intro">{doc.intro}</p> : null}
       {doc.accion ? (
         <p>

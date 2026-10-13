@@ -26,7 +26,7 @@ describe('política de privacidad lista para las tiendas', () => {
       expect(PRIVACIDAD[idioma].secciones.some((s) => s.id && /tiempo|long/i.test(s.titulo))).toBe(
         true,
       );
-      expect(p).toContain('/borrar-cuenta');
+      expect(p).toContain('/delete-account');
       expect(p).toMatch(/30 (días|days)/);
     });
     it(`(${idioma}) explica ubicación, terceros con igual protección y que no se venden datos`, () => {
@@ -42,7 +42,7 @@ describe('página pública para borrar la cuenta (Google Play)', () => {
   for (const idioma of ['es', 'en'] as const) {
     const b = BORRAR_CUENTA[idioma];
     it(`(${idioma}) tiene el botón directo, el pedido por correo y qué se borra y qué se guarda`, () => {
-      expect(b.accion?.href).toBe('/panel/configuracion');
+      expect(b.accion?.href).toBe('/panel/settings');
       const t = texto(b);
       expect(t).toContain('Tumbite');
       expect(t).toContain('support@tumbite.com');

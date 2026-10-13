@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { MARCA } from '@tumbite/compartido';
+import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
@@ -34,6 +34,34 @@ app.use('*', async (c, next) => {
     return c.redirect(url.toString(), 301);
   }
   await next();
+});
+// El inglés es el idioma principal y todas las direcciones van en inglés (regla de Richard,
+// 13 oct 2026). Lo viejo que ya circuló sigue funcionando con 301, con sus parámetros:
+// «/privacidad» (que era la página en español) → «/es/privacy»; «/en/terminos» → «/terms».
+// Candado C-INGLES-PRINCIPAL.
+app.use('*', async (c, next) => {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD') return next();
+  const url = new URL(c.req.url);
+  const ruta = url.pathname;
+  // El panel también va en inglés: «/panel/pedidos» → «/panel/orders».
+  const panel = panelNuevo(ruta);
+  if (panel) return c.redirect(`${panel}${url.search}`, 301);
+  // La app web del repartidor se llama /driver (antes /repartidor).
+  if (ruta === '/repartidor' || ruta.startsWith('/repartidor/'))
+    return c.redirect(`/driver${ruta.slice(11)}${url.search}`, 301);
+  if (/^\/(datos|media|panel|app|driver|t)(\/|$)/.test(ruta)) return next();
+  let destino: string | null = null;
+  if (ruta === '/en' || ruta.startsWith('/en/')) {
+    const resto = ruta.slice(3) || '/';
+    destino = direccionNueva(resto) ?? resto;
+  } else {
+    const espanol = ruta === '/es' || ruta.startsWith('/es/');
+    const base = espanol ? ruta.slice(3) || '/' : ruta;
+    const nueva = direccionNueva(base);
+    if (nueva) destino = enIdiomaDireccion(nueva, 'es');
+  }
+  if (!destino) return next();
+  return c.redirect(`${destino}${url.search}`, 301);
 });
 // Las apps nativas no mandan «Origin». Esto solo abre la puerta a la vista web de las apps en la
 // computadora del programador. Nunca se abre a sitios ajenos.
@@ -127,22 +155,22 @@ app.get('/datos/publico', (c) =>
 
 const RUTAS_PUBLICAS = new Set([
   '/',
-  '/como-funciona',
-  '/privacidad',
-  '/terminos',
-  '/terminos-restaurantes',
-  '/terminos-repartidores',
-  '/borrar-cuenta',
-  '/soporte',
+  '/how-it-works',
+  '/privacy',
+  '/terms',
+  '/restaurant-terms',
+  '/driver-terms',
+  '/delete-account',
+  '/support',
   '/docs',
 ]);
 const esRutaPublica = (rutaConIdioma: string) => {
-  // /en/... es la misma página pública en inglés.
+  // /es/... es la misma página pública en español (el inglés va sin prefijo).
   const ruta =
-    rutaConIdioma === '/en' || rutaConIdioma.startsWith('/en/')
+    rutaConIdioma === '/es' || rutaConIdioma.startsWith('/es/')
       ? rutaConIdioma.slice(3) || '/'
       : rutaConIdioma;
-  return RUTAS_PUBLICAS.has(ruta) || /^\/(docs|pais|ciudad|comida)\//.test(ruta);
+  return RUTAS_PUBLICAS.has(ruta) || /^\/(docs|country|city|food)\//.test(ruta);
 };
 const DOMINIO = 'tumbite.com';
 
@@ -165,7 +193,7 @@ export function conCanonica(res: Response, href: string): Response {
  */
 /** A qué raíz cae una ruta de página que no existe como archivo. */
 export function raizDeApp(ruta: string): string {
-  for (const base of ['/app', '/repartidor'])
+  for (const base of ['/app', '/driver'])
     if (ruta === base || ruta.startsWith(`${base}/`)) return `${base}/`;
   return '/';
 }
@@ -179,7 +207,7 @@ app.notFound(async (c) => {
   if (res.status === 404 && esPagina) {
     // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
     // y eso mandaba a la persona a la portada en vez de a la página que pidió.
-    // Las apps web viven en /app (cliente) y /repartidor: sus rutas internas caen en su raíz.
+    // Las apps web viven en /app (cliente) y /driver: sus rutas internas caen en su raíz.
     const raiz = raizDeApp(c.req.path);
     res = await c.env.ASSETS.fetch(
       new Request(new URL(raiz, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),

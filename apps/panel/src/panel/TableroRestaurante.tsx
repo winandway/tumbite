@@ -105,7 +105,7 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
           <div className={`tablero-ahora ${x.pedidosAhora > 0 ? 'hay' : ''}`}>
             <span>{t.ahora}</span>
             <strong>{x.pedidosAhora}</strong>
-            <Enlace a="/panel/pedidos">{t.verPedidos}</Enlace>
+            <Enlace a="/panel/orders">{t.verPedidos}</Enlace>
           </div>
           <div className="super-dos">
             {periodo(t.semana, x.semana)}

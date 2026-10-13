@@ -57,7 +57,7 @@ const usuario = {
 describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
   beforeEach(() => {
     localStorage.clear();
-    window.history.pushState(null, '', '/panel/control-x/repartidores');
+    window.history.pushState(null, '', '/panel/control-x/drivers');
   });
   afterEach(() => vi.unstubAllGlobals());
 
@@ -67,7 +67,7 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     expect(await screen.findByText('Miami')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Repartidores: 6/ })).toHaveAttribute(
       'href',
-      '/panel/control-x/repartidores?zona=US-FL-MIAMI',
+      '/panel/control-x/drivers?zona=US-FL-MIAMI',
     );
   });
 
@@ -168,7 +168,7 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     expect(await screen.findByText('Carla Veloz')).toBeInTheDocument();
     expect(screen.getByText('Esperando revisión')).toBeInTheDocument();
     expect(screen.getByText('Ver las fotos y revisar').closest('a')?.getAttribute('href')).toBe(
-      `/panel/control-x/kyc/${REP_ID}`,
+      `/panel/control-x/verifications/${REP_ID}`,
     );
     expect(screen.getByText('Honda Navi')).toBeInTheDocument();
     expect(screen.getByText('Llegó frío')).toBeInTheDocument();

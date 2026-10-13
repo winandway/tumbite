@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Linking, Text } from 'react-native';
-import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, enIdiomaDireccion, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
@@ -66,7 +66,9 @@ export function Acceso({
   }
 
   const registro = modo === 'registro' && rolRegistro;
-  const abrir = (ruta: string) => void Linking.openURL(`${URL_SERVIDOR}${ruta}`);
+  // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
+  const abrir = (ruta: string) =>
+    void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
   return (
     <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>
       {b.recuperado && (
@@ -134,7 +136,7 @@ export function Acceso({
         // Aceptación visible antes de crear la cuenta (Apple y Google la revisan).
         <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 10 }}>
           {t.aceptas}{' '}
-          <Text style={e.enlaceLinea} onPress={() => abrir('/terminos')} accessibilityRole="link">
+          <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
             {t.terminos}
           </Text>
           {rolRegistro === 'repartidor' ? (
@@ -142,7 +144,7 @@ export function Acceso({
               ,{' '}
               <Text
                 style={e.enlaceLinea}
-                onPress={() => abrir('/terminos-repartidores')}
+                onPress={() => abrir('/driver-terms')}
                 accessibilityRole="link"
               >
                 {t.terminosRepartidores}
@@ -150,7 +152,7 @@ export function Acceso({
             </>
           ) : null}{' '}
           {t.yLa}{' '}
-          <Text style={e.enlaceLinea} onPress={() => abrir('/privacidad')} accessibilityRole="link">
+          <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">
             {t.privacidad}
           </Text>
           .
@@ -164,7 +166,7 @@ export function Acceso({
       {modo === 'entrar' ? (
         <Text
           style={e.enlace}
-          onPress={() => void Linking.openURL(`${URL_SERVIDOR}/olvide`)}
+          onPress={() => void Linking.openURL(`${URL_SERVIDOR}/forgot-password`)}
           accessibilityRole="link"
         >
           {t.olvide}

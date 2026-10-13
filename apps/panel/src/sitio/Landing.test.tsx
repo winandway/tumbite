@@ -17,7 +17,9 @@ describe('sitio público', () => {
     render(<App />);
     await cambiarIdioma('es');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Comida rica');
-    expect(screen.getByRole('link', { name: 'Privacidad' })).toHaveAttribute('href', '/privacidad');
+    // En español la página vive bajo /es y sus enlaces se quedan en español (C-INGLES-PRINCIPAL).
+    expect(window.location.pathname).toBe('/es');
+    expect(screen.getByRole('link', { name: 'Privacidad' })).toHaveAttribute('href', '/es/privacy');
     await cambiarIdioma('en');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Great food');
   });
@@ -26,14 +28,14 @@ describe('sitio público', () => {
     window.history.pushState(null, '', '/');
     render(<App />);
     await userEvent.click(screen.getByRole('link', { name: /Privacy|Privacidad/ }));
-    expect(window.location.pathname).toBe('/privacidad');
+    expect(window.location.pathname).toBe('/privacy');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       /Privacy Policy|Política de privacidad/,
     );
   });
 
   it('las páginas de términos y soporte existen', () => {
-    for (const ruta of ['/terminos', '/soporte']) {
+    for (const ruta of ['/terms', '/support']) {
       window.history.pushState(null, '', ruta);
       const { unmount } = render(<App />);
       expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();

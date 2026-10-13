@@ -119,7 +119,7 @@ export function SuperKyc({
       <ul className="super-bandeja">
         {lista?.map((s) => (
           <li key={s.id}>
-            <Enlace a={`${base}/kyc/${s.id}`}>
+            <Enlace a={`${base}/verifications/${s.id}`}>
               <span className="insignia">
                 {s.rol === 'repartidor' ? t.repartidor : t.restaurante}
               </span>{' '}
@@ -189,7 +189,7 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
   const tiene = new Map(Object.entries(d.kyc.tiene));
   return (
     <section className="super">
-      <Enlace a={`${base}/kyc`} className="docs-volver">
+      <Enlace a={`${base}/verifications`} className="docs-volver">
         {t.volver}
       </Enlace>
       <h1>{d.persona.nombre}</h1>

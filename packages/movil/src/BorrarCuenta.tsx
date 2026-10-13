@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { enIdioma } from '@tumbite/compartido';
+import { enIdioma, enIdiomaDireccion } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { C } from './ui';
 import { useSoporte } from './soporte';
@@ -38,7 +38,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}/docs`);
+            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/docs', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}
@@ -62,7 +62,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}/privacidad`);
+            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/privacy', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}
@@ -75,7 +75,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}/panel/configuracion`);
+            void Linking.openURL(`${URL_SERVIDOR}/panel/settings`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}
@@ -89,7 +89,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}/borrar-cuenta`);
+            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/delete-account', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}

@@ -49,7 +49,7 @@ try {
     logo: `${DOMINIO}/marca/logo.webp`,
     email: 'support@tumbite.com',
     description:
-      'Tumbite es una app de comida a domicilio con comisiones justas para los restaurantes y el 100 % de la propina para el repartidor. Empieza en Miami y abre ciudad por ciudad con franquicias locales.',
+      'Tumbite is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
     areaServed: 'Miami, Florida, United States',
     parentOrganization: {
       '@type': 'Organization',
@@ -62,18 +62,18 @@ try {
     '@type': 'WebSite',
     name: 'Tumbite',
     url: `${DOMINIO}/`,
-    inLanguage: ['es', 'en'],
+    inLanguage: ['en', 'es'],
   };
-  const datosDe = (ruta) =>
+  const datosDe = (ruta, lengua) =>
     ruta === '/'
       ? [ORGANIZACION, SITIO_WEB]
-      : ruta === '/como-funciona'
+      : ruta === '/how-it-works'
         ? [
             ORGANIZACION,
             {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
-              mainEntity: PREGUNTAS_COMO_FUNCIONA.es.map(([q, a]) => ({
+              mainEntity: PREGUNTAS_COMO_FUNCIONA[lengua === 'es' ? 'es' : 'en'].map(([q, a]) => ({
                 '@type': 'Question',
                 name: q,
                 acceptedAnswer: { '@type': 'Answer', text: a },
@@ -85,27 +85,27 @@ try {
 
   const rutas = [
     '/',
-    '/como-funciona',
-    '/privacidad',
-    '/terminos',
-    '/terminos-restaurantes',
-    '/terminos-repartidores',
-    '/borrar-cuenta',
-    '/soporte',
+    '/how-it-works',
+    '/privacy',
+    '/terms',
+    '/restaurant-terms',
+    '/driver-terms',
+    '/delete-account',
+    '/support',
     '/docs',
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
-    ...PAISES.map((p) => `/pais/${p.slug}`),
-    ...CIUDADES.map((c) => `/ciudad/${c.slug}`),
-    ...COCINAS.map((c) => `/comida/${c.slug}`),
+    ...PAISES.map((p) => `/country/${p.slug}`),
+    ...CIUDADES.map((c) => `/city/${c.slug}`),
+    ...COCINAS.map((c) => `/food/${c.slug}`),
   ];
 
   let n = 0;
-  // Cada página sale dos veces: en español (/pais/brasil) y en inglés (/en/pais/brasil), para que
-  // Google indexe los dos idiomas. Cada versión dice cuál es la otra (hreflang).
-  const enIngles = (ruta) => (ruta === '/' ? '/en' : `/en${ruta}`);
-  for (const lengua of ['es', 'en'])
+  // Cada página sale dos veces: en inglés, el idioma principal (/country/brazil), y en español
+  // (/es/country/brazil). Cada versión dice cuál es la otra (hreflang). Candado C-INGLES-PRINCIPAL.
+  const enEspanol = (ruta) => (ruta === '/' ? '/es' : `/es${ruta}`);
+  for (const lengua of ['en', 'es'])
     for (const ruta of rutas) {
-      const url = lengua === 'en' ? enIngles(ruta) : ruta;
+      const url = lengua === 'es' ? enEspanol(ruta) : ruta;
       dom.reconfigure({ url: `${DOMINIO}${url}` });
       dom.window.localStorage.clear();
       dom.window.localStorage.setItem('tumbite.idioma', lengua);
@@ -169,10 +169,10 @@ try {
         .replace(
           '</head>',
           () =>
-            `<link rel="alternate" hreflang="es" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
-            `<link rel="alternate" hreflang="en" href="${DOMINIO}${enIngles(ruta)}" />` +
+            `<link rel="alternate" hreflang="en" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
+            `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />` +
             `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
-            datosDe(ruta)
+            datosDe(ruta, lengua)
               .map(
                 (d) =>
                   `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`,
@@ -181,8 +181,8 @@ try {
             '</head>',
         );
       paginas.push({ ruta: url, base: ruta, lengua, titulo, descripcion });
-      // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /pais/colombia
-      // tal cual, sin redirigir a /pais/colombia/ (una barra de más rompe la canónica y el SEO).
+      // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /country/colombia
+      // tal cual, sin redirigir a /country/colombia/ (una barra de más rompe la canónica y el SEO).
       const destino = url === '/' ? join(dist, 'index.html') : join(dist, `${url}.html`);
       mkdirSync(dirname(destino), { recursive: true });
       writeFileSync(destino, pagina);
@@ -195,11 +195,11 @@ try {
   const prioridad = (r) =>
     r === '/'
       ? '1.0'
-      : r === '/como-funciona'
+      : r === '/how-it-works'
         ? '0.9'
         : r.startsWith('/docs')
           ? '0.7'
-          : /^\/(pais|ciudad|comida)\//.test(r)
+          : /^\/(country|city|food)\//.test(r)
             ? '0.6'
             : '0.3';
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -211,26 +211,26 @@ ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</lo
 
   // llms.txt: el resumen para los buscadores y asistentes de IA (formato llmstxt.org).
   const grupo = (titulo, filtro) => {
-    const xs = paginas.filter((p) => p.lengua === 'es' && filtro(p.ruta));
+    const xs = paginas.filter((p) => p.lengua === 'en' && filtro(p.ruta));
     return xs.length
       ? `## ${titulo}\n\n${xs.map((p) => `- [${p.titulo}](${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}): ${p.descripcion}`).join('\n')}\n`
       : '';
   };
   const llms = `# Tumbite
 
-> Tumbite es una app de comida a domicilio de Windoce LLC (Florida, Estados Unidos). Conecta a clientes, restaurantes locales y repartidores: los restaurantes pagan entre 7,5 % y 15 % de comisión según su plan, sin contratos de permanencia; el repartidor se queda con el 100 % de la propina y ve cuánto gana antes de aceptar; el cliente ve el desglose completo antes de pagar y sigue su pedido en vivo. Empieza en Miami y abre ciudad por ciudad, en cualquier país, con franquicias locales que financian el arranque (flota de motos, entrenamiento, una tablet para cada restaurante y la búsqueda de los primeros clientes). La app es bilingüe (español e inglés). Contacto: support@tumbite.com · franquicias: sales@tumbite.com.
+> Tumbite is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@tumbite.com · franchises: sales@tumbite.com.
 
-${grupo('Lo principal', (r) => r === '/' || r === '/como-funciona')}
-${grupo('Guías (Docs)', (r) => r.startsWith('/docs'))}
-${grupo('Países', (r) => r.startsWith('/pais/'))}
-${grupo('Ciudades', (r) => r.startsWith('/ciudad/'))}
-${grupo('Tipos de comida', (r) => r.startsWith('/comida/'))}
-${grupo('Legal y soporte', (r) => /^\/(privacidad|terminos|borrar-cuenta|soporte)/.test(r))}
-## In English
+${grupo('Main pages', (r) => r === '/' || r === '/how-it-works')}
+${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}
+${grupo('Countries', (r) => r.startsWith('/country/'))}
+${grupo('Cities', (r) => r.startsWith('/city/'))}
+${grupo('Food types', (r) => r.startsWith('/food/'))}
+${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|delete-account|support)$/.test(r))}
+## En español
 
-Every page above also exists in English under ${DOMINIO}/en (for example ${DOMINIO}/en/como-funciona).
+Every page above also exists in Spanish under ${DOMINIO}/es (for example ${DOMINIO}/es/how-it-works).
 ${paginas
-  .filter((p) => p.lengua === 'en' && (p.base === '/' || p.base === '/como-funciona'))
+  .filter((p) => p.lengua === 'es' && (p.base === '/' || p.base === '/how-it-works'))
   .map((p) => `- [${p.titulo}](${DOMINIO}${p.ruta}): ${p.descripcion}`)
   .join('\n')}
 `;

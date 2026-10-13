@@ -18,7 +18,7 @@ describe('franquicias y superadmin (C-FRANQUICIAS)', () => {
       admin.token,
     );
     expect(r.estado).toBe(201);
-    expect(r.datos.franquicia.ruta).toMatch(/^franquicia-miami-[0-9a-f]{20}$/);
+    expect(r.datos.franquicia.ruta).toMatch(/^franchise-miami-[0-9a-f]{20}$/);
     // Una sola por ciudad.
     expect(
       (await m.llamar('POST', '/datos/admin/franquicias', { zonaId: 'US-FL-MIAMI' }, admin.token))

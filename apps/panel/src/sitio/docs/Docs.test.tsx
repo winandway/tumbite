@@ -22,7 +22,7 @@ describe('Docs', () => {
         name: /Cómo hacer tu primer pedido|How to place your first order/,
       })[0]!,
     );
-    expect(window.location.pathname).toBe('/docs/comensales/pedir');
+    expect(window.location.pathname).toBe('/docs/ordering/first-order');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       /primer pedido|first order/,
     );
@@ -31,7 +31,7 @@ describe('Docs', () => {
       screen.getByRole('navigation', { name: /Secciones de Docs|Docs sections/ }),
     ).toBeInTheDocument();
     const activo = document.querySelector('.docs-barra a.activo');
-    expect(activo).toHaveAttribute('href', '/docs/comensales/pedir');
+    expect(activo).toHaveAttribute('href', '/docs/ordering/first-order');
   });
 
   it('el buscador filtra mientras se escribe', async () => {

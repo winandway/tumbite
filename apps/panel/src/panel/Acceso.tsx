@@ -117,15 +117,15 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
         {modo === 'registro' && (
           <p className="nota-legal">
             {t.aceptas}{' '}
-            <a href="/terminos" target="_blank" rel="noopener noreferrer">
+            <a href="/terms" target="_blank" rel="noopener noreferrer">
               {t.terminos}
             </a>
             ,{' '}
-            <a href="/terminos-restaurantes" target="_blank" rel="noopener noreferrer">
+            <a href="/restaurant-terms" target="_blank" rel="noopener noreferrer">
               {t.terminosRestaurantes}
             </a>{' '}
             {t.yLa}{' '}
-            <a href="/privacidad" target="_blank" rel="noopener noreferrer">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer">
               {t.privacidad}
             </a>
             .
@@ -146,7 +146,7 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
         {modo === 'entrar' ? t.noTengo : t.yaTengo}
       </button>
       {modo === 'entrar' && (
-        <button type="button" className="enlace" onClick={() => ir('/olvide')}>
+        <button type="button" className="enlace" onClick={() => ir('/forgot-password')}>
           {t.olvide}
         </button>
       )}

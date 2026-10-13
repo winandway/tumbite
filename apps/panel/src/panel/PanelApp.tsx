@@ -49,41 +49,41 @@ function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' 
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
   const t = /^\/tickets\/([0-9a-f-]{36})$/.exec(sub);
   if (t?.[1]) return <SuperTickets base={base} idioma={idioma} ticketId={t[1]} />;
-  if (sub === '/franquicias') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
-  if (sub === '/ciudades') return <SuperCiudades base={base} idioma={idioma} />;
-  if (sub === '/kyc') return <SuperKyc base={base} idioma={idioma} id={null} />;
-  const kycId = /^\/kyc\/([0-9a-f-]{36})$/.exec(sub);
+  if (sub === '/franchises') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
+  if (sub === '/cities') return <SuperCiudades base={base} idioma={idioma} />;
+  if (sub === '/verifications') return <SuperKyc base={base} idioma={idioma} id={null} />;
+  const kycId = /^\/verifications\/([0-9a-f-]{36})$/.exec(sub);
   if (kycId?.[1]) return <SuperKyc base={base} idioma={idioma} id={kycId[1]} />;
-  if (sub === '/repartidores') return <SuperRepartidores base={base} idioma={idioma} />;
-  if (sub === '/clientes') return <SuperClientes base={base} idioma={idioma} />;
-  if (sub === '/restaurantes') return <AdminRestaurantes idioma={idioma} base={base} />;
-  if (sub === '/pedidos') return <SuperPedidos base={base} idioma={idioma} />;
+  if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
+  if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;
+  if (sub === '/restaurants') return <AdminRestaurantes idioma={idioma} base={base} />;
+  if (sub === '/orders') return <SuperPedidos base={base} idioma={idioma} />;
   const pedidoId = /^\/pedidos\/([0-9a-f-]{36})$/.exec(sub);
   if (pedidoId?.[1]) return <SuperPedido base={base} id={pedidoId[1]} idioma={idioma} />;
-  const ficha = /^\/(repartidores|clientes|restaurantes)\/([0-9a-f-]{36})$/.exec(sub);
-  if (ficha?.[1] === 'repartidores' && ficha[2])
+  const ficha = /^\/(drivers|customers|restaurants)\/([0-9a-f-]{36})$/.exec(sub);
+  if (ficha?.[1] === 'drivers' && ficha[2])
     return <SuperRepartidor base={base} id={ficha[2]} idioma={idioma} />;
-  if (ficha?.[1] === 'clientes' && ficha[2])
+  if (ficha?.[1] === 'customers' && ficha[2])
     return <SuperCliente base={base} id={ficha[2]} idioma={idioma} />;
-  if (ficha?.[1] === 'restaurantes' && ficha[2])
+  if (ficha?.[1] === 'restaurants' && ficha[2])
     return <SuperRestaurante base={base} id={ficha[2]} idioma={idioma} />;
   return seccion(`/panel${sub}`, usuario, idioma);
 }
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
   if (usuario.rol === 'restaurante') {
-    if (ruta === '/panel/restaurante') return <MiRestaurante usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/restaurant') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/empresa') return <MiEmpresa usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/beneficios') return <Billetera usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/regalos') return <Regalos usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/pedidos') return <Pedidos idioma={idioma} />;
+    if (ruta === '/panel/company') return <MiEmpresa usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/earnings') return <Billetera usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/gifts') return <Regalos usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {
-    if (ruta === '/panel/restaurantes') return <AdminRestaurantes idioma={idioma} />;
-    if (ruta === '/panel/dinero') return <AdminDinero usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/zonas') return <AdminZonas usuario={usuario} idioma={idioma} />;
-    if (ruta === '/panel/espera') return <AdminEspera idioma={idioma} />;
+    if (ruta === '/panel/restaurants') return <AdminRestaurantes idioma={idioma} />;
+    if (ruta === '/panel/money') return <AdminDinero usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/zones') return <AdminZonas usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/waitlist') return <AdminEspera idioma={idioma} />;
   }
   return null;
 }
@@ -148,7 +148,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
   }, [baseAdmin, ruta]);
 
   const esControl = ruta.startsWith('/panel/control-');
-  const esFranquicia = ruta.startsWith('/panel/franquicia-');
+  const esFranquicia = ruta.startsWith('/panel/franchise-');
   // La dirección del superadmin no existe para nadie más (ni siquiera muestra el login).
   if (
     esControl &&
@@ -190,7 +190,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
               <div className="cuenta-menu">
                 <p>{usuario.correo}</p>
                 {/* Borrar la cuenta vive en Configuración, escondido y con confirmación escrita. */}
-                <Enlace a="/panel/configuracion" className="boton secundario">
+                <Enlace a="/panel/settings" className="boton secundario">
                   <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
                 </Enlace>
                 <button type="button" onClick={() => void salir(usuario)}>
@@ -213,7 +213,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
         <main className="contenido">
           <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
         </main>
-      ) : menu.length === 0 && ruta === '/panel/configuracion' ? (
+      ) : menu.length === 0 && ruta === '/panel/settings' ? (
         <main className="contenido">
           <Configuracion
             usuario={usuario}
@@ -236,7 +236,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
             <a className="boton" href="/app/">
               {t.irApp}
             </a>
-            <Enlace a="/panel/configuracion" className="boton secundario">
+            <Enlace a="/panel/settings" className="boton secundario">
               <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
             </Enlace>
           </div>
@@ -255,7 +255,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
             })}
           </nav>
           <main className="panel-contenido">
-            {ruta === '/panel/configuracion' ? (
+            {ruta === '/panel/settings' ? (
               <Configuracion
                 usuario={usuario}
                 idioma={idioma}

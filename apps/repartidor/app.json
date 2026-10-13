@@ -77,7 +77,7 @@
     "description": "Deliver with Tumbite and earn. Keep 100% of your tips.",
     "owner": "windoce-llc",
     "experiments": {
-      "baseUrl": "/repartidor"
+      "baseUrl": "/driver"
     },
     "locales": {
       "es": "./idiomas/es.json"

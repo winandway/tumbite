@@ -113,8 +113,8 @@ describe('recuperar la contraseña por correo', () => {
   });
 
   it('la plantilla escapa HTML y vuelve botón los enlaces', () => {
-    const html = aHtml('Hola <b>\n\nhttps://tumbite.com/restablecer?token=abc');
+    const html = aHtml('Hola <b>\n\nhttps://tumbite.com/reset-password?token=abc');
     expect(html).toContain('&lt;b&gt;');
-    expect(html).toContain('href="https://tumbite.com/restablecer?token=abc"');
+    expect(html).toContain('href="https://tumbite.com/reset-password?token=abc"');
   });
 });

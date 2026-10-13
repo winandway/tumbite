@@ -28,10 +28,10 @@ export function Sitio({
           />
         </Enlace>
         <nav className="ld-nav" aria-label={t.menu.como}>
-          <a href="/#comensales">{t.menu.comensales}</a>
-          <a href="/#restaurantes">{t.menu.restaurantes}</a>
-          <a href="/#repartidores">{t.menu.repartidores}</a>
-          <a href="/como-funciona">{t.menu.como}</a>
+          <a href="/#customers">{t.menu.comensales}</a>
+          <a href="/#restaurants">{t.menu.restaurantes}</a>
+          <a href="/#drivers">{t.menu.repartidores}</a>
+          <a href="/how-it-works">{t.menu.como}</a>
           <Enlace a="/docs">{t.menu.docs}</Enlace>
         </nav>
         <div className="cabecera-derecha">

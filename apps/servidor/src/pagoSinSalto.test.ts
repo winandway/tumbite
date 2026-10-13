@@ -11,7 +11,7 @@ const leer = (r: string) => readFileSync(join(CLIENTE, r), 'utf8');
 
 describe('pago dentro de la app', () => {
   it('el carrito no salta a una página de pago', () => {
-    const carrito = leer('app/carrito.tsx');
+    const carrito = leer('app/cart.tsx');
     expect(carrito).not.toMatch(/Linking\.openURL|urlPago/);
     expect(carrito).toMatch(/<PagoTarjeta/);
   });
@@ -24,7 +24,7 @@ describe('pago dentro de la app', () => {
 
 describe('el botón de pagar nunca gira para siempre', () => {
   it('no depende de una consulta aparte de la clave pública', () => {
-    const carrito = leer('app/carrito.tsx');
+    const carrito = leer('app/cart.tsx');
     expect(carrito).not.toMatch(/datos\/publico/);
     expect(carrito).toMatch(/cargando=\{pagando\}/);
   });

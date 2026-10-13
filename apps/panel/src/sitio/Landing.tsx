@@ -76,7 +76,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             <a className="ld-cta" href="/panel">
               <Icono nombre="chef" tamano={18} /> {t.hero.restaurante}
             </a>
-            <a className="ld-cta" href="#repartidores">
+            <a className="ld-cta" href="#drivers">
               <Icono nombre="moto" tamano={18} /> {t.hero.repartir}
             </a>
           </div>
@@ -112,7 +112,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       {/* Los tres caminos, claros y arriba: nadie tiene que adivinar ni bajar. */}
       <section className="ld-entradas" aria-label={t.hero.pedir}>
         {t.hero.entradas.map(([titulo, texto, boton], i) => {
-          const destino = ['/app/', '/panel', '#repartidores'].at(i) ?? '/';
+          const destino = ['/app/', '/panel', '#drivers'].at(i) ?? '/';
           const icono = (['pizza', 'chef', 'moto'] as const).at(i) ?? 'pizza';
           return (
             <a key={titulo} className="ld-entrada-tarjeta" href={destino}>
@@ -150,7 +150,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       </div>
 
       {/* 2 · Comensales: los tres pasos con las pantallas reales */}
-      <section id="comensales" className="ld-seccion">
+      <section id="customers" className="ld-seccion">
         <span className="ld-etiqueta">{t.comensales.etiqueta}</span>
         <h2>{t.comensales.titulo}</h2>
         <ol className="ld-pasos">
@@ -179,7 +179,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       </section>
 
       {/* 3 · Restaurantes */}
-      <section id="restaurantes" className="ld-seccion ld-clara">
+      <section id="restaurants" className="ld-seccion ld-clara">
         <span className="ld-etiqueta">{t.restaurantes.etiqueta}</span>
         <h2>{t.restaurantes.titulo}</h2>
         <p className="ld-entrada">{t.restaurantes.texto}</p>
@@ -225,7 +225,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       </section>
 
       {/* 4 · Repartidores */}
-      <section id="repartidores" className="ld-seccion">
+      <section id="drivers" className="ld-seccion">
         <span className="ld-etiqueta">{t.repartidores.etiqueta}</span>
         <h2>{t.repartidores.titulo}</h2>
         <div className="ld-con-foto">

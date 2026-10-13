@@ -7,7 +7,7 @@ const leer = (...r: string[]) => readFileSync(join(__dirname, '..', '..', '..', 
 
 describe('quejas desde las tres apps', () => {
   it('el cliente reporta desde su pedido (con el pedido atado) y ya no hay correo a una cuenta personal', () => {
-    const pedido = leer('apps', 'cliente', 'src', 'app', 'pedido', '[id].tsx');
+    const pedido = leer('apps', 'cliente', 'src', 'app', 'order', '[id].tsx');
     expect(pedido).toMatch(/<ReportarProblema pedidoId=\{p\.id\}/);
     expect(pedido).not.toMatch(/mailto:/);
   });

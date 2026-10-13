@@ -7,7 +7,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 
 /**
  * Franquicias y superadmin. Cada ciudad (zona) puede tener una franquicia; su dueño ve su ciudad
- * en /panel/franquicia-<ciudad>-<codigo>. El superadmin (solo admin) ve todas. Candado C-FRANQUICIAS.
+ * en /panel/franchise-<ciudad>-<codigo>. El superadmin (solo admin) ve todas. Candado C-FRANQUICIAS.
  */
 export const franquicias = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -25,7 +25,7 @@ const codigoNuevo = () =>
     .join('');
 
 export const rutaFranquicia = (zonaNombre: string, codigo: string) =>
-  `franquicia-${slug(zonaNombre)}-${codigo}`;
+  `franchise-${slug(zonaNombre)}-${codigo}`;
 
 type Metricas = {
   pedidosHoy: number;
@@ -281,7 +281,9 @@ franquicias.get('/franquicia/:ruta/resumen', async (c) => {
   // Para cualquiera que no sea el dueño o el admin, la página simplemente no existe.
   if (!f || (!esDueno && u.rol !== 'admin'))
     throw new ErrorDatos('Esta página no existe.', undefined, 404);
-  if (c.req.param('ruta') !== rutaFranquicia(f.zona_nombre, f.codigo))
+  // La dirección vieja empezaba con «franquicia-»: sigue valiendo para quien ya la tenía guardada.
+  const pedida = c.req.param('ruta').replace(/^franquicia-/, 'franchise-');
+  if (pedida !== rutaFranquicia(f.zona_nombre, f.codigo))
     throw new ErrorDatos('Esta página no existe.', undefined, 404);
   const { results: restaurantes } = await db
     .prepare(

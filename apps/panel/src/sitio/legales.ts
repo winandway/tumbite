@@ -13,9 +13,11 @@ export type DocumentoLegal = {
   titulo: string;
   actualizado: string;
   intro?: string;
-  /** Botón principal de la página (en /borrar-cuenta lleva directo a borrarla). */
+  /** Botón principal de la página (en /delete-account lleva directo a borrarla). */
   accion?: { texto: string; href: string };
   secciones: Seccion[];
+  /** Qué idioma rige (los acuerdos rigen en inglés; el español es traducción de cortesía). */
+  idiomaQueRige?: string;
 };
 
 const FECHA = { es: 'Actualizado: 12 de octubre de 2026', en: 'Last updated: October 12, 2026' };
@@ -88,8 +90,8 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'borrar',
         titulo: '7. Cómo borrar tu cuenta o retirar tu consentimiento',
         parrafos: [
-          'En la app: menú de los tres puntos → «Borrar mi cuenta». En la web: tumbite.com/panel/configuracion → tres puntos junto al título → «Borrar mi cuenta».',
-          `Sin la app: escríbenos a ${CONTACTO} desde el correo de tu cuenta y la borramos en un máximo de 30 días. No hace falta reinstalar nada. Todos los detalles están en ${SITIO}/borrar-cuenta.`,
+          'En la app: menú de los tres puntos → «Borrar mi cuenta». En la web: tumbite.com/panel/settings → tres puntos junto al título → «Borrar mi cuenta».',
+          `Sin la app: escríbenos a ${CONTACTO} desde el correo de tu cuenta y la borramos en un máximo de 30 días. No hace falta reinstalar nada. Todos los detalles están en ${SITIO}/delete-account.`,
           'Para retirar tu consentimiento sin borrar la cuenta: quita el permiso de ubicación o de avisos en los ajustes del teléfono, borra tu fecha de nacimiento en Configuración, o pídenos por correo que dejemos de usar algún dato.',
         ],
       },
@@ -190,8 +192,8 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'delete',
         titulo: '7. How to delete your account or withdraw consent',
         parrafos: [
-          'In the app: three-dot menu → “Delete my account”. On the web: tumbite.com/panel/configuracion → three dots next to the title → “Delete my account”.',
-          `Without the app: email ${CONTACTO} from your account’s email address and we’ll delete it within 30 days. No need to reinstall anything. Full details at ${SITIO}/borrar-cuenta.`,
+          'In the app: three-dot menu → “Delete my account”. On the web: tumbite.com/panel/settings → three dots next to the title → “Delete my account”.',
+          `Without the app: email ${CONTACTO} from your account’s email address and we’ll delete it within 30 days. No need to reinstall anything. Full details at ${SITIO}/delete-account.`,
           'To withdraw consent without deleting your account: turn off location or notification access in your phone’s settings, remove your birthday in Settings, or email us to stop using any piece of data.',
         ],
       },
@@ -248,7 +250,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Tu cuenta',
         parrafos: [
-          'Para usar Tumbite debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en tumbite.com/borrar-cuenta.',
+          'Para usar Tumbite debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en tumbite.com/delete-account.',
         ],
       },
       {
@@ -320,7 +322,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Your account',
         parrafos: [
-          'To use Tumbite you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at tumbite.com/borrar-cuenta.',
+          'To use Tumbite you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at tumbite.com/delete-account.',
         ],
       },
       {
@@ -590,7 +592,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Borrar tu cuenta de Tumbite',
     actualizado: FECHA.es,
-    accion: { texto: 'Borrar mi cuenta ahora', href: '/panel/configuracion' },
+    accion: { texto: 'Borrar mi cuenta ahora', href: '/panel/settings' },
     intro: `Así borras tu cuenta de Tumbite (app de clientes, Tumbite Driver o Tumbite para restaurantes), de ${EMPRESA}. No hace falta tener la app instalada.`,
     secciones: [
       {
@@ -627,7 +629,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   en: {
     titulo: 'Delete your Tumbite account',
     actualizado: FECHA.en,
-    accion: { texto: 'Delete my account now', href: '/panel/configuracion' },
+    accion: { texto: 'Delete my account now', href: '/panel/settings' },
     intro: `Here’s how to delete your Tumbite account (customer app, Tumbite Driver, or Tumbite for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
     secciones: [
       {
@@ -688,7 +690,7 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
       },
       {
         titulo: 'Borrar tu cuenta',
-        parrafos: [`Todos los pasos en ${SITIO}/borrar-cuenta.`],
+        parrafos: [`Todos los pasos en ${SITIO}/delete-account.`],
       },
     ],
   },
@@ -711,8 +713,20 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
       },
       {
         titulo: 'Delete your account',
-        parrafos: [`All the steps at ${SITIO}/borrar-cuenta.`],
+        parrafos: [`All the steps at ${SITIO}/delete-account.`],
       },
     ],
   },
 };
+
+// ─────────────────────── El inglés es el que rige ───────────────────────
+// Tumbite es una empresa de EE.UU. y el inglés es su idioma principal (regla de Richard, 13 oct
+// 2026). En los acuerdos, la versión en inglés es la que vale; la española es una traducción.
+const RIGE = {
+  es: 'Esta es una traducción de cortesía. Si hay alguna diferencia, rige la versión en inglés.',
+  en: 'This English version is the governing version. Any translation is provided for convenience only.',
+};
+for (const doc of [PRIVACIDAD, TERMINOS, TERMINOS_RESTAURANTES, TERMINOS_REPARTIDORES]) {
+  doc.es.idiomaQueRige = RIGE.es;
+  doc.en.idiomaQueRige = RIGE.en;
+}

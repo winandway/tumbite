@@ -29,14 +29,14 @@ jobs:
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
       # La app del cliente también en versión web, en tumbite.com/app (para probar sin tiendas).
       - run: npm run build:app-web
-      # La app del repartidor en versión web, en tumbite.com/repartidor (para la prueba en la calle).
+      # La app del repartidor en versión web, en tumbite.com/driver (para la prueba en la calle).
       - run: npm run build:repartidor-web
       - run: |
           mkdir out-deploy
           cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
           cp -r apps/panel/dist/* out-deploy/
           mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
-          mkdir -p out-deploy/repartidor && cp -r apps/repartidor/dist-web/* out-deploy/repartidor/
+          mkdir -p out-deploy/driver && cp -r apps/repartidor/dist-web/* out-deploy/driver/
           cp schema.sql out-deploy/
           echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
           test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }

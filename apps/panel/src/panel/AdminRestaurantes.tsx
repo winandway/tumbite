@@ -99,7 +99,7 @@ export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: str
           <li key={r.id}>
             <div className="lista-texto">
               <strong>
-                {base ? <Enlace a={`${base}/restaurantes/${r.id}`}>{r.nombre}</Enlace> : r.nombre}
+                {base ? <Enlace a={`${base}/restaurants/${r.id}`}>{r.nombre}</Enlace> : r.nombre}
               </strong>
               <span>
                 {r.duenoNombre} · {r.duenoCorreo}

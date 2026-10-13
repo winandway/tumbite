@@ -7,9 +7,10 @@ import { ComoFunciona } from './sitio/ComoFunciona';
 import { TicketPublico } from './sitio/TicketPublico';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
-import { conIdioma, enIngles, sinIdioma } from './rutaIdioma';
+import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
 import { useEffect } from 'react';
 import { useIdioma } from './usarIdioma';
+import { idiomaElegido } from './idioma';
 import { Landing } from './sitio/Landing';
 import { Legal } from './sitio/Legal';
 import {
@@ -26,24 +27,35 @@ import { TEXTOS_SITIO } from './sitio/textos';
 
 /** Páginas legales públicas (las tiendas de Apple y Google piden que existan y sean públicas). */
 const LEGALES = new Map([
-  ['/privacidad', PRIVACIDAD],
-  ['/terminos', TERMINOS],
-  ['/terminos-restaurantes', TERMINOS_RESTAURANTES],
-  ['/terminos-repartidores', TERMINOS_REPARTIDORES],
-  ['/borrar-cuenta', BORRAR_CUENTA],
-  ['/soporte', SOPORTE],
+  ['/privacy', PRIVACIDAD],
+  ['/terms', TERMINOS],
+  ['/restaurant-terms', TERMINOS_RESTAURANTES],
+  ['/driver-terms', TERMINOS_REPARTIDORES],
+  ['/delete-account', BORRAR_CUENTA],
+  ['/support', SOPORTE],
 ]);
 
 export function App() {
   const rutaReal = useRuta();
-  const ingles = enIngles(rutaReal);
-  // /en/... es la misma página en inglés (para que Google indexe el inglés).
+  const espanol = enEspanol(rutaReal);
+  // El inglés es el principal: sin prefijo es inglés y /es/... es la misma página en español.
+  // En las páginas públicas manda la dirección; en el panel, lo que la persona eligió.
   const ruta = sinIdioma(rutaReal);
   const [idiomaGuardado, guardarIdioma] = useIdioma();
-  const idioma = ingles ? 'en' : idiomaGuardado;
+  const publica = !ruta.startsWith('/panel');
+  const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
     document.documentElement.lang = idioma;
   }, [idioma]);
+  // Quien ya eligió español en el selector vuelve a su idioma solo, sin perder el resto de la
+  // dirección (los enlaces de los correos traen el código después del «?»).
+  useEffect(() => {
+    if (!publica || espanol || idiomaElegido() !== 'es') return;
+    const destino = conIdioma(ruta, 'es');
+    if (destino === ruta) return;
+    window.history.replaceState(null, '', destino + window.location.search + window.location.hash);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [publica, espanol, ruta]);
   const cambiar = (nuevo: typeof idioma) => {
     guardarIdioma(nuevo);
     if (ruta.startsWith('/panel')) return;
@@ -53,7 +65,7 @@ export function App() {
   };
 
   if (ruta.startsWith('/panel')) return <PanelApp ruta={ruta} />;
-  if (/^\/(pais|ciudad|comida)\/[a-z-]+$/.test(ruta))
+  if (/^\/(country|city|food)\/[a-z-]+$/.test(ruta))
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <PaginaLugar ruta={ruta} idioma={idioma} />
@@ -73,25 +85,25 @@ export function App() {
         <TicketPublico codigo={ticket[1]} idioma={idioma} />
       </Sitio>
     );
-  if (ruta === '/como-funciona')
+  if (ruta === '/how-it-works')
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <ComoFunciona idioma={idioma} />
       </Sitio>
     );
-  if (ruta === '/olvide')
+  if (ruta === '/forgot-password')
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Olvide idioma={idioma} />
       </Sitio>
     );
-  if (ruta === '/confirmar')
+  if (ruta === '/confirm-email')
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Confirmar idioma={idioma} />
       </Sitio>
     );
-  if (ruta === '/restablecer')
+  if (ruta === '/reset-password')
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Restablecer idioma={idioma} />

@@ -56,7 +56,7 @@ describe('bitácora del pedido en el superadmin (C-MANAGER-1)', () => {
     render(<SuperPedido base="/panel/control-x" id={ID} idioma="es" />);
     expect(await screen.findByText('#111111')).toBeTruthy();
     expect(screen.getAllByText('Ana Cliente')[0]?.closest('a')?.getAttribute('href')).toBe(
-      '/panel/control-x/clientes/c1',
+      '/panel/control-x/customers/c1',
     );
     expect(screen.getByText('Sin repartidor')).toBeTruthy();
     expect(screen.getByText(/Recordatorio al restaurante/)).toBeTruthy();
@@ -115,7 +115,7 @@ describe('pedidos en curso y semáforo (C-MANAGER-1)', () => {
         .getByText(/La Esquina/)
         .closest('a')
         ?.getAttribute('href'),
-    ).toBe(`/panel/control-x/pedidos/${ID}`);
+    ).toBe(`/panel/control-x/orders/${ID}`);
   });
 
   it('el restaurante ve el semáforo en su lista de pedidos', async () => {

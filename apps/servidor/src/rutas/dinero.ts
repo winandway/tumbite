@@ -133,8 +133,8 @@ dinero.post('/billetera/conectar', async (c) => {
   const enlace = await stripe.post<{ url: string }>('/account_links', {
     account: fila.stripe_cuenta,
     type: 'account_onboarding',
-    refresh_url: `${sitio}/billetera/conectar`,
-    return_url: `${sitio}/billetera/lista`,
+    refresh_url: `${sitio}/wallet/connect`,
+    return_url: `${sitio}/wallet/ready`,
   });
   return c.json({ url: enlace.url });
 });

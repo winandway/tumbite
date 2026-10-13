@@ -60,11 +60,11 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 
 ## C-ESTATICOS-1 · Las páginas que no son la portada no pueden dar error 500
 
-- Qué se rompió (10 oct 2026, primera versión en vivo): `tumbite.com/privacidad`, `/panel`, `/og.png` y todo lo que no era la portada daba 500.
+- Qué se rompió (10 oct 2026, primera versión en vivo): `tumbite.com/privacy`, `/panel`, `/og.png` y todo lo que no era la portada daba 500.
 - Causa: la respuesta de los estáticos trae cabeceras de solo lectura y el middleware de seguridad intentaba escribirles.
 - Arreglo: `cabecerasSeguridad` copia la respuesta antes de tocar las cabeceras, y la ruta de estáticos devuelve una copia (`new Response(res.body, res)`).
 - Candado: `apps/servidor/src/seguridad.test.ts` (comprobado en rojo).
-- Cómo comprobar en vivo: las rutas `/`, `/privacidad`, `/terminos`, `/soporte`, `/panel`, `/og.png`, `/robots.txt` deben dar 200.
+- Cómo comprobar en vivo: las rutas `/`, `/privacy`, `/terms`, `/support`, `/panel`, `/og.png`, `/robots.txt` deben dar 200.
 
 ## C-ESQUEMA-1 · Migraciones seguras al arrancar
 
@@ -201,7 +201,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Cómo se comprueba a mano:** en local, servidor con las llaves de Stripe por `--var`, app web en el 8081, carrito → «Continuar al pago» → tiene que salir Tarjeta/Banco/Cash App Pay con la casilla «Guardar los datos de pago».
 - **No tocar:** no quitar `setup_future_usage` ni `payment_method_save`; van juntos.
 
-## C-REPARTIDOR-WEB — la app del repartidor en tumbite.com/repartidor (12 oct 2026)
+## C-REPARTIDOR-WEB — la app del repartidor en tumbite.com/driver (12 oct 2026)
 
 - **Para qué:** la segunda prueba en la calle necesita al repartidor y Expo Go no abre la sesión. La app del repartidor se exporta a la web igual que la del cliente.
 - **Cómo quedó:** `apps/repartidor/app.json` con `experiments.baseUrl = "/repartidor"`; script `npm run build:repartidor-web` (usa el mismo `claro.mjs` del cliente, que ahora recibe la carpeta); el Action la copia a `out-deploy/repartidor`; el servidor manda las rutas internas a `/repartidor/` con `raizDeApp()`; el semáforo exige 200 en `/app/` y `/repartidor/`.
@@ -212,12 +212,12 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 
 ## C-LEGALES-TIENDAS y C-BORRADO-COMPLETO — legales para Apple y Google (12 oct 2026)
 
-- **Qué hay:** privacidad completa, términos para clientes, restaurantes y repartidores, página pública `/borrar-cuenta` y soporte, en español e inglés (`apps/panel/src/sitio/legales.ts`). Prerenderizadas, en el sitemap, con su canónica y en el pie. Mapa de requisitos en `docs/LEGALES-TIENDAS.md`.
+- **Qué hay:** privacidad completa, términos para clientes, restaurantes y repartidores, página pública `/delete-account` y soporte, en español e inglés (`apps/panel/src/sitio/legales.ts`). Prerenderizadas, en el sitemap, con su canónica y en el pie. Mapa de requisitos en `docs/LEGALES-TIENDAS.md`.
 - **Fallo encontrado y arreglado:** borrar la cuenta dejaba la dirección, las indicaciones y la ubicación en los pedidos viejos, el texto de las calificaciones, los teléfonos de avisos y la anotación en la lista de espera. Ahora se limpian; los importes quedan sin nombre.
 - **Aviso al crear cuenta** en las apps y en el panel, con enlaces a los términos que tocan.
-- **Menú de 3 puntos de las apps:** «Términos y privacidad» y «Borrar mi cuenta» (va a `/borrar-cuenta`, que tiene el botón directo).
+- **Menú de 3 puntos de las apps:** «Términos y privacidad» y «Borrar mi cuenta» (va a `/delete-account`, que tiene el botón directo).
 - **Prueba:** `apps/panel/src/sitio/legales.test.tsx` (rojo comprobado quitando el botón de borrar) y `cuentas.test.ts` «borrar la cuenta también limpia…» (rojo comprobado antes del arreglo).
-- **No tocar:** si se cambia lo que guarda o borra el servidor, se cambia el texto de privacidad y de `/borrar-cuenta` en el mismo trabajo.
+- **No tocar:** si se cambia lo que guarda o borra el servidor, se cambia el texto de privacidad y de `/delete-account` en el mismo trabajo.
 
 ## C-SESION-APP y C-ENSAYO-CALLE — ensayo general de la prueba en la calle, en local (12 oct 2026)
 
@@ -243,11 +243,11 @@ Fallos encontrados y arreglados:
 ## C-PIE-ENLACES, C-PAISES, C-SEO-IA y «Cómo funciona» (12 oct 2026, noche)
 
 - **Países:** 32, por región (Norteamérica, Caribe, Centroamérica, Sudamérica, Europa, África): todos los de habla hispana, Brasil y toda Sudamérica, España, Portugal, Italia, Francia, Alemania, Países Bajos, Reino Unido y Rumanía. Cada uno con su página `/pais/<slug>` y texto propio (primeras ciudades, idioma, moneda, región, franquicia y vecinos). Datos en `apps/panel/src/sitio/cobertura.ts`.
-- **«Cómo funciona Tumbite»** en `/como-funciona` (`ComoFunciona.tsx`): los tres públicos, a dónde va cada dólar (cifras de la portada), franquicias y arranque en frío (25 a 50 motos, entrenamiento, kit con tablet por restaurante, primeros clientes), la rueda de la sinergia, lo que nos hace distintos, ideas («Lo que viene») y preguntas frecuentes. **El precio de la franquicia no se publica** (lo decide Richard por ciudad).
+- **«Cómo funciona Tumbite»** en `/how-it-works` (`ComoFunciona.tsx`): los tres públicos, a dónde va cada dólar (cifras de la portada), franquicias y arranque en frío (25 a 50 motos, entrenamiento, kit con tablet por restaurante, primeros clientes), la rueda de la sinergia, lo que nos hace distintos, ideas («Lo que viene») y preguntas frecuentes. **El precio de la franquicia no se publica** (lo decide Richard por ciudad).
 - **Mapa del sitio y `llms.txt` se generan solos** en el prerender con la misma lista de páginas (79 hoy). Se quitó `public/sitemap.xml` (estaba a mano). Datos estructurados: Organization y WebSite en la portada, FAQPage en «Cómo funciona». `robots.txt` invita por nombre a GPTBot, ClaudeBot, PerplexityBot, Google-Extended y demás.
 - **Pie:** «Cómo funciona», «Franquicias por ciudad» y «Cómo abrimos una ciudad» ya llevan a la página nueva; «Pide/Reparte desde el navegador» llevan a /app y /repartidor. Prueba `Pie.test.tsx` «ningún enlace del pie lleva a una página que no existe» (rojo comprobado).
 - **Auditoría (375 y 1280):** sin desplazamiento lateral, un solo h1 por página, todas las imágenes con texto alternativo. Se agrandaron los enlaces del pie y «← Volver» (eran difíciles de tocar) y el código postal ya no corta su ayuda.
-- El semáforo exige 200 también en `/como-funciona` y `/llms.txt`.
+- El semáforo exige 200 también en `/how-it-works` y `/llms.txt`.
 
 ## C-INGLES-SEO — cada página pública también en inglés bajo /en (12 oct 2026, noche)
 
@@ -312,3 +312,16 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **Prueba `guiasPublicas.test.tsx`** (comprobada en rojo borrando una captura): mismas guías en los dos idiomas, las nuevas publicadas, ninguna palabra interna (superadmin, rutas internas, variables), cada captura con su archivo, su texto alternativo y su idioma.
 - **Verificación del restaurante:** los botones de subir foto eran los del navegador (salían en el idioma de la computadora, en español sobre la página en inglés). Ahora es un botón propio «Tomar foto / Take photo».
 - **Permisos de las apps** (`tiendasPermisos.test.ts`, comprobada en rojo): fuera los textos genéricos de Face ID, ubicación siempre, movimiento y micrófono; fuera almacenamiento y grabación en Android; cámara del repartidor con su motivo; textos de permisos en español (`apps/<app>/idiomas/es.json`). Detalle en `docs/TIENDAS.md`.
+
+## C-INGLES-PRINCIPAL: el inglés es el idioma principal y todas las direcciones van en inglés (13 oct 2026)
+
+- **Qué estaba mal:** el sitio salía en español por defecto, el inglés vivía bajo `/en`, y las direcciones estaban en español (`/privacidad`, `/terminos-restaurantes`, `/borrar-cuenta`, `/pais/brasil`, `/docs/comensales/…`, `/panel/pedidos`, `/repartidor`). Eso es lo que íbamos a dar a Apple y Google. Richard: «estás haciendo una página web en los Estados Unidos… todo va en inglés como idioma principal».
+- **Cómo quedó:** sin prefijo = inglés; `/es/…` = la misma página en español (`apps/panel/src/rutaIdioma.ts`). Mapa único de direcciones en `packages/compartido/src/rutasPublicas.ts` (`PAGINAS`, `direccionNueva`, `panelNuevo`, `enIdiomaDireccion`). Países, comidas, Docs, panel, anclas de la portada, la app web del cliente (`/app/order/…`, `/app/cart`, `/app/account`, `/app/restaurant/…`) y la del repartidor (`/driver`) en inglés. La dirección privada del franquiciado empieza con `franchise-` (la vieja `franquicia-` sigue valiendo).
+- **Redirecciones 301 en el servidor** (`apps/servidor/src/app.ts`, primer `app.use`): dirección vieja en español sin prefijo → `/es/<nueva>` (era la página en español); `/en/<lo que sea>` → `/<nueva>`; `/panel/<viejo>` → `/panel/<nuevo>`; `/repartidor/…` → `/driver/…`. Conservan los parámetros (los enlaces de confirmar correo y recuperar clave traen el código después del «?»). Solo GET y HEAD.
+- **Correos:** confirmar correo y recuperar clave llevan a la página en el idioma de la persona; el recibo lleva a `/app/order/<id>` (antes llevaba a `/pedido/<id>`, que no existía y caía en la portada).
+- **Apps:** los enlaces a términos, privacidad, Docs y borrar cuenta abren la versión en el idioma de la app.
+- **Legales:** privacidad y los tres términos dicen arriba que rige el inglés y que el español es traducción de cortesía (`idiomaQueRige` en `legales.ts`).
+- **Prerender:** inglés primero; `hreflang` en/es y `x-default` = inglés; `llms.txt` en inglés; base `index.html` con `lang="en"`.
+- **Quien eligió español** en el selector vuelve solo a `/es/…` al entrar sin prefijo.
+- **Pruebas (comprobadas en rojo):** `rutasPublicas.test.ts`, `rutaIdioma.test.tsx`, `app.test.ts` bloque C-INGLES-PRINCIPAL (cada dirección vieja con su 301 y lo nuevo sin redirigir), Landing, Pie y Docs con las direcciones nuevas.
+- **No tocar:** las rutas internas de la API bajo `/datos` siguen como estaban (no se ven en el navegador y las apps ya las usan). La regla de nombres «Soporte» para nuestras cuentas tampoco cambia.

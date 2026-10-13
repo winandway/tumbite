@@ -16,13 +16,12 @@ describe('pie de página y páginas por lugar', () => {
     window.history.pushState(null, '', '/');
     render(<App />);
     const pie = screen.getByRole('contentinfo');
-    for (const p of PAISES) expect(pie.querySelector(`a[href="/pais/${p.slug}"]`)).not.toBeNull();
-    for (const c of CIUDADES)
-      expect(pie.querySelector(`a[href="/ciudad/${c.slug}"]`)).not.toBeNull();
-    for (const c of COCINAS)
-      expect(pie.querySelector(`a[href="/comida/${c.slug}"]`)).not.toBeNull();
+    for (const p of PAISES)
+      expect(pie.querySelector(`a[href="/country/${p.slug}"]`)).not.toBeNull();
+    for (const c of CIUDADES) expect(pie.querySelector(`a[href="/city/${c.slug}"]`)).not.toBeNull();
+    for (const c of COCINAS) expect(pie.querySelector(`a[href="/food/${c.slug}"]`)).not.toBeNull();
     expect(PAISES.filter((p) => p.estado === 'activo').map((p) => p.slug)).toEqual([
-      'estados-unidos',
+      'united-states',
     ]);
     expect(pie.querySelector('a[href="https://windoce.com"]')).not.toBeNull();
   });
@@ -32,31 +31,31 @@ describe('pie de página y páginas por lugar', () => {
     render(<App />);
     await userEvent.click(screen.getByRole('tab', { name: /Países|Countries/ }));
     const panel = screen.getByRole('tabpanel');
-    const rumania = panel.querySelector('a[href="/pais/rumania"]')?.parentElement;
+    const rumania = panel.querySelector('a[href="/country/romania"]')?.parentElement;
     expect(rumania).toHaveClass('pronto');
     expect(rumania).toHaveTextContent(/Muy pronto|Coming soon/);
-    const eeuu = panel.querySelector('a[href="/pais/estados-unidos"]')?.parentElement;
+    const eeuu = panel.querySelector('a[href="/country/united-states"]')?.parentElement;
     expect(eeuu).toHaveClass('activo');
   });
 
   it('cada país tiene su propia página con los tres formularios de lista de espera y el de franquicia', async () => {
-    window.history.pushState(null, '', '/pais/colombia');
+    window.history.pushState(null, '', '/country/colombia');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Colombia/);
     expect(screen.getAllByRole('form')).toHaveLength(4);
     expect(screen.getByRole('form', { name: /franquicia|franchise/i })).toBeInTheDocument();
-    window.history.pushState(null, '', '/ciudad/miami');
+    window.history.pushState(null, '', '/city/miami');
   });
 
   it('una ciudad activa dice que está activa y de qué país es', () => {
-    window.history.pushState(null, '', '/ciudad/miami');
+    window.history.pushState(null, '', '/city/miami');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Miami/);
     expect(screen.getAllByText(/Estados Unidos|United States/).length).toBeGreaterThan(0);
   });
 
   it('un lugar que no existe lo dice y no rompe', () => {
-    window.history.pushState(null, '', '/pais/atlantida');
+    window.history.pushState(null, '', '/country/atlantida');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/no existe|doesn’t exist/);
   });
@@ -67,24 +66,24 @@ describe('pie de página y páginas por lugar', () => {
     const pie = screen.getByRole('contentinfo');
     const existen = new Set([
       '/',
-      '/como-funciona',
-      '/privacidad',
-      '/terminos',
-      '/terminos-restaurantes',
-      '/terminos-repartidores',
-      '/borrar-cuenta',
-      '/soporte',
+      '/how-it-works',
+      '/privacy',
+      '/terms',
+      '/restaurant-terms',
+      '/driver-terms',
+      '/delete-account',
+      '/support',
       '/docs',
       '/panel',
       '/app/',
-      '/repartidor/',
+      '/driver/',
       ...DOCS.es.flatMap((sec) => [
         `/docs/${sec.id}`,
         ...sec.guias.map((g) => `/docs/${sec.id}/${g.id}`),
       ]),
-      ...PAISES.map((p) => `/pais/${p.slug}`),
-      ...CIUDADES.map((c) => `/ciudad/${c.slug}`),
-      ...COCINAS.map((c) => `/comida/${c.slug}`),
+      ...PAISES.map((p) => `/country/${p.slug}`),
+      ...CIUDADES.map((c) => `/city/${c.slug}`),
+      ...COCINAS.map((c) => `/food/${c.slug}`),
     ]);
     const internos = [...pie.querySelectorAll('a[href^="/"]')].map(
       (a) => (a.getAttribute('href') ?? '').split('#')[0],
@@ -104,13 +103,13 @@ describe('pie de página y páginas por lugar', () => {
     expect(PAISES.length).toBeGreaterThanOrEqual(30);
     // Todos los de habla hispana, Brasil y España.
     for (const s of [
-      'espana',
-      'brasil',
+      'spain',
+      'brazil',
       'argentina',
       'chile',
       'peru',
-      'republica-dominicana',
-      'guinea-ecuatorial',
+      'dominican-republic',
+      'equatorial-guinea',
     ])
       expect(PAISES.some((p) => p.slug === s)).toBe(true);
   });

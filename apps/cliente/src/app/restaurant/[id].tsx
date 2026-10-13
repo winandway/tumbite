@@ -133,10 +133,7 @@ export default function MenuRestaurante() {
         </View>
       ))}
       {cantidadTotal > 0 && (
-        <Boton
-          texto={`${t.verCarrito} (${cantidadTotal})`}
-          alTocar={() => router.push('/carrito')}
-        />
+        <Boton texto={`${t.verCarrito} (${cantidadTotal})`} alTocar={() => router.push('/cart')} />
       )}
     </Pantalla>
   );
