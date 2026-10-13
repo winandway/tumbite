@@ -5,4 +5,4 @@
 - [x] Paso 3: App del restaurante en inglés: sus pantallas.
 - [x] Paso 4: Panel en inglés: restaurante (todas sus secciones), configuración, ayuda, administración y franquicia.
 - [x] Paso 5: Arreglar de raíz todo lo que salga en español, con su prueba comprobada en rojo.
-- [ ] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
