@@ -10,6 +10,7 @@ import {
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
+import { AvisoBorrador } from './AvisoBorrador';
 import { Boton, Campo, CampoClave, Pantalla, e } from './ui';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', fechaNacimiento: '', clave: '' };
@@ -77,14 +78,7 @@ export function Acceso({
     void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
   return (
     <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>
-      {b.recuperado && (
-        <Text style={e.aviso}>
-          {t.recuperado}{' '}
-          <Text style={{ textDecorationLine: 'underline' }} onPress={() => void b.empezarDeNuevo()}>
-            {t.empezarDeNuevo}
-          </Text>
-        </Text>
-      )}
+      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {registro && (
         <Campo
           etiqueta={t.nombre}

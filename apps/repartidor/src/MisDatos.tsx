@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
-import { Boton, C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
+import {
+  AvisoBorrador,
+  Boton,
+  C,
+  Campo,
+  alSalirTelefono,
+  almacenTelefono,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 
 const T = {
   es: {
@@ -29,7 +38,6 @@ const T = {
     poliza: 'Número de póliza',
     guardar: 'Guardar mis datos',
     guardado: 'Guardado. Lo revisa el equipo de Tumbite.',
-    recuperado: 'Recuperamos lo que estabas escribiendo.',
     privado:
       'Solo lo ves tú y el equipo de Tumbite. Tus datos bancarios van en Stripe, nunca aquí.',
   },
@@ -58,7 +66,6 @@ const T = {
     poliza: 'Policy number',
     guardar: 'Save my details',
     guardado: 'Saved. The Tumbite team will review it.',
-    recuperado: 'We restored what you were typing.',
     privado:
       'Only you and the Tumbite team can see this. Your bank details go in Stripe, never here.',
   },
@@ -160,7 +167,7 @@ export function MisDatos() {
         </Text>
         <Text style={{ color: '#BDBDBD', fontSize: 13 }}>{t.idAyuda}</Text>
       </View>
-      {b.recuperado ? <Text style={e.aviso}>{t.recuperado}</Text> : null}
+      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       <Text style={estilo.sub}>{t.vehiculo}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         {Object.entries(t.tipos).map(([valor, nombre]) => (

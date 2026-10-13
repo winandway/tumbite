@@ -184,6 +184,19 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     listo.current = true;
   }, [almacen, llave]);
 
+  /**
+   * «Empezar de nuevo»: tira solo el borrador y vuelve a lo que ya estaba guardado (lo que vino
+   * del servidor), no a un formulario vacío. Vaciarlo haría creer que se perdieron los datos y
+   * se podrían guardar casillas en blanco encima. Si no hay nada guardado, queda vacío.
+   */
+  const empezarDeNuevo = useCallback(async () => {
+    pendiente.current = null;
+    await almacen.borrar(llave);
+    setValores(baseRef.current);
+    recuperadoRef.current = false;
+    setRecuperado(false);
+  }, [almacen, llave]);
+
   return {
     valores,
     cambiar,
@@ -192,7 +205,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     cargarBase,
     recuperado,
     limpiar,
-    empezarDeNuevo: limpiar,
+    empezarDeNuevo,
   };
 }
 

@@ -1,8 +1,8 @@
-# Plan: ningún texto en español en las pantallas en inglés (13 oct 2026)
+# Plan: ningún texto en inglés en las pantallas en español (13 oct 2026)
 
-- [x] Paso 1: App del cliente en inglés: inicio, restaurante, carrito, pedido (en curso, entregado, cancelado), mi cuenta, mis datos, entrar, crear cuenta y olvidé la contraseña.
-- [x] Paso 2: App del repartidor en inglés: inicio conectado y desconectado, billetera, mis datos, verificación, nivel, entrar y crear cuenta.
-- [x] Paso 3: App del restaurante en inglés: sus pantallas.
-- [x] Paso 4: Panel en inglés: restaurante (todas sus secciones), configuración, ayuda, administración y franquicia.
-- [x] Paso 5: Arreglar de raíz todo lo que salga en español, con su prueba comprobada en rojo.
-- [x] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: App del cliente en español: inicio, restaurante, carrito, pedidos (entregado, cancelado, por pagar), mi cuenta, entrar y crear cuenta con sus errores.
+- [x] Paso 2: App del repartidor en español: inicio, menús, billetera, mis datos y vehículo.
+- [x] Paso 3: App del restaurante y panel del restaurante en español, con la burbuja de ayuda.
+- [x] Paso 4: Barrido del código: fechas, horas y números con formato fijo en inglés, y textos en inglés sin su versión en español.
+- [x] Paso 5: Arreglar de raíz lo que salga, con su prueba comprobada en rojo.
+- [ ] Paso 6: Verify, commit, push, publicación y comprobación en vivo.

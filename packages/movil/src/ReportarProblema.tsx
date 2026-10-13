@@ -3,6 +3,7 @@ import { Linking, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
+import { AvisoBorrador } from './AvisoBorrador';
 import { Boton, Campo, e } from './ui';
 
 const T = {
@@ -15,7 +16,6 @@ const T = {
     cancelar: 'Cancelar',
     listo: 'Recibimos tu mensaje. Te respondemos por correo.',
     ver: 'Ver mi conversación',
-    recuperado: 'Recuperamos lo que estabas escribiendo.',
   },
   en: {
     abrir: 'I have a problem',
@@ -26,7 +26,6 @@ const T = {
     cancelar: 'Cancel',
     listo: 'We got your message. We’ll reply by email.',
     ver: 'See my conversation',
-    recuperado: 'We restored what you were typing.',
   },
 };
 
@@ -91,7 +90,7 @@ export function ReportarProblema({
     <View style={e.tarjeta}>
       <Text style={{ fontWeight: '800', fontSize: 17, marginBottom: 4 }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
-      {b.recuperado ? <Text style={e.aviso}>{t.recuperado}</Text> : null}
+      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       <Campo
         etiqueta={t.texto}
         value={b.valores.texto}

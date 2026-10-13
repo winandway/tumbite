@@ -24,6 +24,7 @@ import {
 import { Sitio } from './sitio/Sitio';
 import { RUTAS_VUELTA, Vuelta } from './sitio/Vuelta';
 import { TEXTOS_SITIO } from './sitio/textos';
+import { tituloPagina } from './tituloPagina';
 
 /** Páginas legales públicas (las tiendas de Apple y Google piden que existan y sean públicas). */
 const LEGALES = new Map([
@@ -48,6 +49,22 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = idioma;
   }, [idioma]);
+  // La pestaña sigue a la página y al idioma (C-TITULO-IDIOMA). Se mira después de pintar y otra
+  // vez un poco después, porque algunas pantallas del panel arman su encabezado al cargar datos.
+  useEffect(() => {
+    const poner = () =>
+      (document.title = tituloPagina(
+        document.querySelector('main h1, h1')?.textContent ?? '',
+        ruta === '/',
+        idioma,
+      ));
+    const a = requestAnimationFrame(poner);
+    const b = window.setTimeout(poner, 600);
+    return () => {
+      cancelAnimationFrame(a);
+      window.clearTimeout(b);
+    };
+  }, [rutaReal, ruta, idioma]);
   // Quien ya eligió español en el selector vuelve a su idioma solo, sin perder el resto de la
   // dirección (los enlaces de los correos traen el código después del «?»).
   useEffect(() => {

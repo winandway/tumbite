@@ -122,6 +122,19 @@ describe('useBorrador: ningún formulario pierde lo escrito', () => {
     expect(result.current.valores.nombre).toBe('Mi cambio');
   });
 
+  it('«Empezar de nuevo» tira el borrador y vuelve a lo guardado, no a un formulario vacío', async () => {
+    localStorage.setItem(llaveBorrador('volver'), JSON.stringify({ nombre: 'Mi cambio' }));
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'volver', inicial, almacen: almacenNavegador }),
+    );
+    await waitFor(() => expect(result.current.recuperado).toBe(true));
+    act(() => result.current.cargarBase({ nombre: 'Del servidor', correo: 's@b.com', clave: '' }));
+    await act(() => result.current.empezarDeNuevo());
+    expect(result.current.valores.nombre).toBe('Del servidor');
+    expect(result.current.recuperado).toBe(false);
+    expect(localStorage.getItem(llaveBorrador('volver'))).toBeNull();
+  });
+
   it('cada cuenta tiene su propio borrador', async () => {
     localStorage.setItem(llaveBorrador('plato', 'cuenta-a'), JSON.stringify({ nombre: 'De A' }));
     const { result } = renderHook(() =>
