@@ -1,0 +1,4 @@
+{
+  "NSLocationWhenInUseUsageDescription": "Tumbite usa tu ubicación para ofrecerte pedidos cercanos y mostrarte la ruta al restaurante y al cliente.",
+  "NSCameraUsageDescription": "Tumbite usa la cámara para tomar la foto de tu documento y de tu cara cuando verificas tu identidad."
+}

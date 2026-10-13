@@ -42,7 +42,11 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const resultados = q
     ? secciones.flatMap((s) =>
         s.guias
-          .filter((g) => [g.titulo, g.resumen, ...g.pasos].some((x) => x.toLowerCase().includes(q)))
+          .filter((g) =>
+            [g.titulo, g.resumen, ...(g.explicacion ?? []), ...g.pasos].some((x) =>
+              x.toLowerCase().includes(q),
+            ),
+          )
           .map((g) => ({ seccion: s, guia: g })),
       )
     : null;
@@ -180,12 +184,34 @@ function PaginaGuia({
       </p>
       <h1>{guia.titulo}</h1>
       <p className="docs-resumen">{guia.resumen}</p>
-      <h2>{t.pasos}</h2>
-      <ol>
-        {guia.pasos.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
-      </ol>
+      {guia.explicacion && (
+        <>
+          <h2>{t.comoFunciona}</h2>
+          {guia.explicacion.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+        </>
+      )}
+      {guia.capturas && (
+        <div className="docs-capturas">
+          {guia.capturas.map((c) => (
+            <figure key={c.src} className="docs-captura">
+              <img src={c.src} alt={c.alt} loading="lazy" />
+              <figcaption>{c.pie}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+      {guia.pasos.length > 0 && (
+        <>
+          <h2>{t.pasos}</h2>
+          <ol>
+            {guia.pasos.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ol>
+        </>
+      )}
       {guia.nota && <p className="docs-nota">{guia.nota}</p>}
       <nav className="docs-pies" aria-label={t.enEstaSeccion}>
         {anterior && anterior !== guia && (

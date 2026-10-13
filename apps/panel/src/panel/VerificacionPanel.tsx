@@ -20,6 +20,7 @@ const T = {
     local:
       'Foto del frente del local, con el letrero (tómala estando allí: usamos la ubicación del celular)',
     tomar: 'Tomar foto',
+    otra: 'Tomar otra',
     lista: 'Lista',
     enviar: 'Enviar para revisión',
     sinUbicacion: 'Activa la ubicación del navegador para la foto del local.',
@@ -43,6 +44,7 @@ const T = {
     local:
       'Photo of the storefront with the sign (take it while you’re there: we use the phone’s location)',
     tomar: 'Take photo',
+    otra: 'Retake',
     lista: 'Done',
     enviar: 'Send for review',
     sinUbicacion: 'Turn on browser location for the storefront photo.',
@@ -161,15 +163,24 @@ export function VerificacionPanel({ idioma }: { idioma: Idioma }) {
           <ul className="verificacion-piezas">
             {piezas.map(([pieza, etiqueta, camara]) => (
               <li key={pieza}>
-                <label htmlFor={`${id}-${pieza}`}>
+                <span>
                   {etiqueta} {tiene.get(pieza) ? <strong>· {t.lista}</strong> : null}
+                </span>
+                {/* Botón propio: el del navegador sale en el idioma de la computadora, no en el de la página. */}
+                <label
+                  htmlFor={`${id}-${pieza}`}
+                  className={`boton boton-secundario verificacion-tomar${subiendo !== '' ? ' deshabilitado' : ''}`}
+                >
+                  {subiendo === pieza ? '…' : tiene.get(pieza) ? t.otra : t.tomar}
                 </label>
                 <input
                   id={`${id}-${pieza}`}
+                  className="solo-lector"
                   type="file"
                   accept="image/*"
                   capture={camara}
                   disabled={subiendo !== ''}
+                  aria-label={etiqueta}
                   onChange={(e) => void subir(pieza, e.target.files?.[0])}
                 />
               </li>

@@ -304,3 +304,11 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **KYC en las fichas:** la ficha del repartidor y la del restaurante (el KYC es del dueño) traen `kyc` con el estado; si hay fotos, enlace a la revisión.
 - **Pruebas (comprobadas en rojo):** `semaforo.test.ts`, `operacion.test.ts` (pedidos en curso solo admin y ordenados, KYC en la ficha), `SuperPedido.test.tsx` (tablero y semáforo del restaurante), `SuperFichas.test.tsx` (estado y enlace del KYC).
 - **No tocar:** las reglas del semáforo y las de `REGLAS` en `manager.ts` van juntas; si se cambia una, se cambia la otra.
+
+## C-DOCS-PUBLICOS y C-TIENDAS-PERMISOS (12 oct 2026, noche)
+
+- **Regla de Richard:** todo lo nuevo se explica al público en Docs, en español e inglés, con capturas y sin nada técnico ni privado. Las guías aceptan `explicacion` (párrafos de «Cómo funciona») y `capturas` (imagen + texto alternativo + pie), en `apps/panel/src/sitio/docs/guias.ts`; las imágenes van en `apps/panel/public/docs/<nombre>-<es|en>.webp`.
+- **Guías nuevas:** sección «Cómo cuidamos cada pedido» (`/docs/confianza/…`: el Manager, el semáforo, restaurantes y repartidores verificados), «Cancelar un pedido» para clientes y «Verificar tu restaurante» / «Verificar tu identidad». Corregidas las viejas: el pago ya no salta a otra página; los pedidos del restaurante tienen semáforo y se cancelan solos a los 10 minutos.
+- **Prueba `guiasPublicas.test.tsx`** (comprobada en rojo borrando una captura): mismas guías en los dos idiomas, las nuevas publicadas, ninguna palabra interna (superadmin, rutas internas, variables), cada captura con su archivo, su texto alternativo y su idioma.
+- **Verificación del restaurante:** los botones de subir foto eran los del navegador (salían en el idioma de la computadora, en español sobre la página en inglés). Ahora es un botón propio «Tomar foto / Take photo».
+- **Permisos de las apps** (`tiendasPermisos.test.ts`, comprobada en rojo): fuera los textos genéricos de Face ID, ubicación siempre, movimiento y micrófono; fuera almacenamiento y grabación en Android; cámara del repartidor con su motivo; textos de permisos en español (`apps/<app>/idiomas/es.json`). Detalle en `docs/TIENDAS.md`.

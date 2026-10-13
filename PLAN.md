@@ -1,8 +1,8 @@
-# Plan: semáforo del Manager y verificación en las fichas (12 oct 2026, noche)
+# Plan: Docs públicos de lo nuevo + apps listas para las tiendas (12 oct 2026, noche)
 
-- [x] Paso 1: Pieza compartida `semaforoPedido` (verde, amarillo o rojo según el estado y los minutos, con las mismas reglas del Manager) con sus pruebas.
-- [x] Paso 2: Semáforo en la lista de pedidos del restaurante (punto de color + «hace X min» + motivo cuando está en rojo).
-- [x] Paso 3: Superadmin «Pedidos en curso»: ruta y pantalla con todos los pedidos activos (filtro por ciudad), los rojos primero, cada uno con su semáforo y enlace a su bitácora; entrada en el menú.
-- [x] Paso 4: Estado de la verificación de identidad (KYC) en la ficha del repartidor y del restaurante, con enlace a la revisión.
-- [x] Paso 5: Pruebas comprobadas en rojo, candados y documentos al día.
-- [x] Paso 6: verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: Las guías aceptan capturas (con texto alternativo y pie) y párrafos de «cómo funciona»; se ven bien en celular y entran en el mapa del sitio.
+- [x] Paso 2: Capturas reales con datos neutros: lista de pedidos del restaurante con semáforo, cancelar un pedido en la app, pedido cancelado, verificación de identidad del restaurante y del repartidor.
+- [x] Paso 3: Sección nueva «Cómo cuidamos cada pedido» con las guías del Manager, del semáforo y de la verificación de identidad; guía «Cancelar un pedido» para clientes; guías de cómo verificarse para restaurantes y repartidores. Todo en español e inglés.
+- [x] Paso 4: Corregir las guías viejas que quedaron desactualizadas (el pago ya no salta a otra página; los pedidos del restaurante tienen semáforo y se cancelan solos a los 10 minutos).
+- [x] Paso 5: Apps listas para las tiendas: textos de ficha en inglés y español para las tres apps, permisos explicados, lista de revisión de Apple y Google, en un documento.
+- [ ] Paso 6: Pruebas (las guías nuevas existen en los dos idiomas, sin palabras internas, con imágenes que existen), verify, commit, push, publicación y comprobación en vivo.
