@@ -10,6 +10,12 @@ on:
     types: [completed]
     branches: [main]
 
+# Una publicación a la vez: si llegan dos juntas, la segunda espera (13 oct 2026 chocaron dos
+# y una falló al empujar la rama de pruebas).
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
 permissions:
   contents: write
 

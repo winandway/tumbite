@@ -21,6 +21,9 @@ describe('semáforo de la publicación', () => {
     expect(script).toMatch(/git worktree add/);
     expect(script).not.toMatch(/git checkout/);
   });
+  it('dos publicaciones nunca corren a la vez', () => {
+    expect(flujo).toMatch(/concurrency:\n\s+group: publicar\n\s+cancel-in-progress: false/);
+  });
   it('la publicación le pasa la rama de pruebas y le da tiempo de sobra', () => {
     expect(flujo).toMatch(
       /semaforo\.sh "\$\{\{ vars\.URL_PRUEBAS \}\}" "\$\{VERSION:0:7\}" yapanel-pruebas/,
