@@ -5,4 +5,4 @@
 - [x] Paso 3: App del restaurante y panel del restaurante en español, con la burbuja de ayuda.
 - [x] Paso 4: Barrido del código: fechas, horas y números con formato fijo en inglés, y textos en inglés sin su versión en español.
 - [x] Paso 5: Arreglar de raíz lo que salga, con su prueba comprobada en rojo.
-- [ ] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 6: Verify, commit, push, publicación y comprobación en vivo.
