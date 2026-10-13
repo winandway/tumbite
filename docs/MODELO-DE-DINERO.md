@@ -25,7 +25,7 @@ Hecho el 13 oct 2026 con la misma calculadora que usa la app (`packages/comparti
 
 ## Recomendación: dos ajustes chicos, los dos ya se cambian desde el panel sin publicar
 
-1. **Envío desde 3,99** en vez de 2,99 (DoorDash y Uber Eats cobran entre 0,99 y 5,99 según la distancia y el restaurante).
+1. **Envío desde 3,99** en vez de 2,99 (antes de aprobar, conviene comparar con lo que cobran hoy DoorDash y Uber Eats en Miami: ese dato no está comprobado aquí).
 2. **Servicio con mínimo de 1,99** en vez de 0,99 (se queda el 5 %; en pedidos grandes no cambia nada).
 
 | Pedido                 | Plan    | Cliente paga  | Restaurante | Repartidor | **Tumbite neto** |
@@ -36,7 +36,7 @@ Hecho el 13 oct 2026 con la misma calculadora que usa la app (`packages/comparti
 | Mediano: comida 30,00  | Inicial | 42,98 (+1,49) | 27,75       | 11,00      | **2,68**         |
 | Familiar: comida 60,00 | Inicial | 76,49 (+1,00) | 55,50       | 14,00      | **4,47**         |
 
-Al restaurante y al repartidor no se les toca nada: el ajuste lo paga el cliente, y sigue por debajo de lo que cobran los grandes.
+Al restaurante y al repartidor no se les toca nada: el ajuste lo paga el cliente.
 
 ## Costos fijos de pagarles a todos (Connect)
 
