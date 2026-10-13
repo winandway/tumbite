@@ -17,7 +17,7 @@ const archivos = (dir: string): string[] =>
   });
 
 const ESPANOL =
-  /[ñáéíóú¿¡]|\b(el|la|de|que|tu|un|una|no|para|ya|se|es|esa|ese|este|esta|los|las|con|en)\b/;
+  /[ñáéíóú¿¡]|\b(el|la|de|que|tu|un|una|no|para|ya|se|es|esa|ese|este|esta|los|las|con|en|debe|ser|fecha)\b/i;
 
 /** Los textos entre comillas dentro de cada «new ErrorDatos(…)». */
 function deErrorDatos(s: string): string[] {
@@ -41,7 +41,7 @@ function deErrorDatos(s: string): string[] {
 function deEsquemas(s: string): string[] {
   const out: string[] = [];
   for (const m of s.matchAll(
-    /(?:message:\s*|\.(?:min|max|email|regex|length|url|int|positive|nonnegative|gte|lte|refine)\([^'`)]*?)'((?:[^'\\]|\\.)+)'/g,
+    /(?:(?:message|error):\s*|\.(?:min|max|email|regex|length|url|int|positive|nonnegative|gte|lte|refine)\([^'`)]*?)'((?:[^'\\]|\\.)+)'/g,
   ))
     if (m[1] && m[1].includes(' ') && ESPANOL.test(m[1])) out.push(m[1]);
   return out;

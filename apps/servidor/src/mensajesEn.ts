@@ -45,7 +45,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   [
     'El restaurante ya está preparando tu pedido y no se puede cancelar. Si hay un problema, repórtalo y te ayudamos.',
-    'The restaurant is already preparing your order, so it can’t be cancelled. If something is wrong, report it and we’ll help you.',
+    'The restaurant is already preparing your order, so it can’t be canceled. If something is wrong, report it and we’ll help you.',
   ],
   ['El retiro mínimo es de 1 dólar.', 'The minimum withdrawal is $1.'],
   [
@@ -194,6 +194,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Ya existe una cuenta con ese correo. Entra con tu contraseña.',
     'An account with that email already exists. Sign in with your password.',
   ],
+  ['La fecha debe ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
+  ['Ese token de avisos no es válido.', 'That notification token isn’t valid.'],
+  ['firma inválida', 'invalid signature'],
+  ['Escribe el nombre de tu restaurante.', 'Enter your restaurant’s name.'],
+  ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

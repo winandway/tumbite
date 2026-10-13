@@ -35,3 +35,26 @@ describe('correo de muestra en el idioma de la persona', () => {
     expect(malos).toEqual([]);
   });
 });
+
+describe('inglés de Estados Unidos', () => {
+  it('se escribe «canceled» (una sola ele), nunca «cancelled», salvo en la dirección vieja de pago', () => {
+    const malos = [
+      'apps/panel/src',
+      'apps/cliente/src',
+      'apps/repartidor/src',
+      'apps/restaurante/src',
+      'apps/servidor/src',
+      'packages/movil/src',
+      'packages/compartido/src',
+    ]
+      .flatMap((d) => archivos(join(raiz, d)))
+      .filter((f) =>
+        /[Cc]ancell(ed|ing)/.test(
+          readFileSync(f, 'utf8')
+            .replaceAll('/payment/cancelled', '')
+            .replaceAll('paymentCancelled', ''),
+        ),
+      );
+    expect(malos).toEqual([]);
+  });
+});

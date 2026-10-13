@@ -99,7 +99,7 @@ const TEXTOS = {
     i === 'en'
       ? {
           titulo: `Order #${corto} is waiting`,
-          cuerpo: `The customer paid ${min} minutes ago. Accept it or it will be cancelled.`,
+          cuerpo: `The customer paid ${min} minutes ago. Accept it or it will be canceled.`,
         }
       : {
           titulo: `El pedido #${corto} está esperando`,
@@ -108,7 +108,7 @@ const TEXTOS = {
   canceladoAlCliente: (i: string, rest: string) =>
     i === 'en'
       ? {
-          titulo: 'Order cancelled, money back',
+          titulo: 'Order canceled, money back',
           cuerpo: `${rest} didn’t confirm in time. We refunded your money in full.`,
         }
       : {
@@ -118,7 +118,7 @@ const TEXTOS = {
   canceladoAlRestaurante: (i: string, corto: string) =>
     i === 'en'
       ? {
-          titulo: `Order #${corto} was cancelled`,
+          titulo: `Order #${corto} was canceled`,
           cuerpo: 'Nobody accepted it in 10 minutes. The customer got a refund.',
         }
       : {

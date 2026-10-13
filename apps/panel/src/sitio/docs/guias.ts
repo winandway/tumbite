@@ -763,24 +763,24 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Ordering food should feel easy. So while the restaurant hasn’t started cooking your order, you can change your mind, no questions asked: we refund the full amount, delivery and tip included.',
           'If the restaurant is slow to confirm, you don’t have to wait or complain. After ten minutes with no answer, Tumbite cancels the order on its own, refunds you, and lets you know on your phone.',
-          'Once the restaurant accepts, the food is in the kitchen and the order can’t be cancelled from the app. If something is wrong, tap “Problems with your order?” and a real person will help you.',
+          'Once the restaurant accepts, the food is in the kitchen and the order can’t be canceled from the app. If something is wrong, tap “Problems with your order?” and a real person will help you.',
         ],
         capturas: [
           {
             src: '/docs/cancelar-pedido-en.webp',
             alt: 'Order screen in the Tumbite app asking “We’ll refund all your money to your card. Cancel it?” with the buttons “Yes, cancel” and “No, keep waiting.”',
-            pie: 'The app asks before cancelling. Nothing gets cancelled by an accidental tap.',
+            pie: 'The app asks before canceling. Nothing gets canceled by an accidental tap.',
           },
           {
             src: '/docs/pedido-cancelado-en.webp',
-            alt: 'Cancelled order in the Tumbite app with the message “You cancelled this order. We refunded all your money to your card.”',
-            pie: 'The app tells you why it was cancelled and that the money goes back to your card.',
+            alt: 'Canceled order in the Tumbite app with the message “You canceled this order. We refunded all your money to your card.”',
+            pie: 'The app tells you why it was canceled and that the money goes back to your card.',
           },
         ],
         pasos: [
           'Open your order in the app. While it says “Payment received. Waiting for the restaurant to accept,” you’ll see “Cancel order.”',
           'Tap it. The app asks if you’re sure and reminds you that you get everything back.',
-          'Tap “Yes, cancel.” The order is cancelled right away.',
+          'Tap “Yes, cancel.” The order is canceled right away.',
           'The refund goes out immediately to the same card. Depending on your bank, it can take 5 to 10 business days to show on your statement.',
         ],
         nota: 'If the restaurant doesn’t confirm your order within 10 minutes, we cancel it and refund you without you lifting a finger.',
@@ -924,7 +924,7 @@ const en: SeccionDocs[] = [
           'When a paid order comes in, it rings until you accept. Choose the prep time in minutes.',
           'Prepare the food and tap “Ready” when it’s done: that’s when we find the closest driver.',
           'Every order has its traffic light: green is on time, yellow is running late, and red needs attention now. Next to it you see how long ago it came in and why it’s late.',
-          'If nobody accepts an order, we alert you on your phone at 3 and 6 minutes. At 10 we cancel it and refund the customer: an order cancelled in time beats a customer left waiting.',
+          'If nobody accepts an order, we alert you on your phone at 3 and 6 minutes. At 10 we cancel it and refund the customer: an order canceled in time beats a customer left waiting.',
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
           'You can also use the Tumbite restaurant app on a tablet or phone: same alarm, same orders.',
         ],
@@ -1178,7 +1178,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/manager-cancela-en.webp',
-            alt: 'Order in the Tumbite app that the Manager cancelled on its own because the restaurant didn’t confirm in time, with the notice that all the money was refunded to the card.',
+            alt: 'Order in the Tumbite app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the notice that all the money was refunded to the card.',
             pie: 'If the restaurant doesn’t confirm within 10 minutes, the Manager cancels the order and refunds the money.',
           },
           {

@@ -371,3 +371,9 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **Se comprobó** con un repositorio de prueba local: el commit vacío llegó a la rama y la carpeta de trabajo quedó intacta.
 - **Candado:** `apps/servidor/src/semaforoPublicacion.test.ts`, comprobado en rojo. Las rutas críticas y el chequeo del prerender no cambiaron: el semáforo sigue frenando si algo responde mal.
 - **Además (mismo día):** dos publicaciones arrancaron a la vez y una falló al empujar la rama de pruebas («cannot lock ref»). `publicar.yml` lleva `concurrency: publicar` sin cancelar: la segunda espera a la primera. Lo vigila la misma prueba.
+
+## Revisión de las pantallas en inglés (13 oct 2026)
+
+- **Cómo se revisó:** las apps del cliente, del repartidor y del restaurante y el panel del restaurante, en inglés, con un detector de frases en español sobre el texto de cada pantalla (comprobado que sí detecta), más un barrido del código que ignora los diccionarios en español y los textos con su versión en inglés al lado. El panel de administración y el de franquicias se cubrieron con el barrido del código.
+- **Qué salió en español y se arregló:** «La fecha debe ser AAAA-MM-DD.» al registrarse (y otros cuatro mensajes del servidor sin traducción: token de avisos, firma, nombre del restaurante y celular). La prueba `mensajesEn.test.ts` no los veía porque solo reconocía mensajes escritos con `message:` y su detector de español no miraba mayúsculas; ahora reconoce `error:` y no distingue mayúsculas. Comprobado en rojo: con la regla nueva salieron justo esos cinco.
+- **Inglés de EE.UU.:** «canceled» con una sola ele en todo el texto (la dirección vieja `/payment/cancelled` se queda: ya circuló). Lo vigila `correoEjemplo.test.ts`, comprobado en rojo. Las capturas de Docs con la palabra se volvieron a tomar.

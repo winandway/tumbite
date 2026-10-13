@@ -1,8 +1,8 @@
-# Plan: capturas para las últimas ocho guías de texto (13 oct 2026)
+# Plan: ningún texto en español en las pantallas en inglés (13 oct 2026)
 
-- [x] Paso 1: Restaurante en el panel: «Mi restaurante» (registrar el local), «Regalos y marketing» y «Beneficios» (billetera). En español e inglés.
-- [x] Paso 2: Cliente: el regalo que aparece en el carrito (regalos del cliente). En español e inglés.
-- [x] Paso 3: Cuenta: la página para recuperar la contraseña, el estado del correo en «Configuración» y la página para borrar la cuenta. En español e inglés.
-- [x] Paso 4: Repartidor: la pantalla para crear la cuenta y empezar. En español e inglés.
-- [x] Paso 5: Originales en la carpeta de capturas, versiones web en Docs, cada captura en su guía con texto alternativo y pie, y revisar que la guía diga lo mismo que la pantalla. Arreglar lo que aparezca.
-- [x] Paso 6: Pruebas, verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: App del cliente en inglés: inicio, restaurante, carrito, pedido (en curso, entregado, cancelado), mi cuenta, mis datos, entrar, crear cuenta y olvidé la contraseña.
+- [x] Paso 2: App del repartidor en inglés: inicio conectado y desconectado, billetera, mis datos, verificación, nivel, entrar y crear cuenta.
+- [x] Paso 3: App del restaurante en inglés: sus pantallas.
+- [x] Paso 4: Panel en inglés: restaurante (todas sus secciones), configuración, ayuda, administración y franquicia.
+- [x] Paso 5: Arreglar de raíz todo lo que salga en español, con su prueba comprobada en rojo.
+- [ ] Paso 6: Verify, commit, push, publicación y comprobación en vivo.

@@ -96,11 +96,11 @@ const T = {
     enviar: 'Send rating',
     gracias: 'Thanks for your rating!',
     motivos: {
-      cliente: 'You cancelled this order. We refunded all your money to your card.',
+      cliente: 'You canceled this order. We refunded all your money to your card.',
       restaurante:
         'The restaurant couldn’t take your order. We refunded all your money to your card.',
       sin_respuesta:
-        'The restaurant didn’t confirm in time, so we cancelled it. We refunded all your money to your card.',
+        'The restaurant didn’t confirm in time, so we canceled it. We refunded all your money to your card.',
     } as Record<string, string>,
     cancelar: 'Cancel order',
     seguro: 'We’ll refund all your money to your card. Cancel it?',
