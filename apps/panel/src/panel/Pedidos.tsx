@@ -5,11 +5,12 @@ import {
   type Idioma,
   enIdioma,
   formatearDolares,
-  nombrePlato,
   type RepartidorEnPedido,
   avisoLlegada,
   fotoSinConfirmar,
   lineaRepartidor,
+  textoLinea,
+  type OpcionElegida,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
@@ -38,7 +39,13 @@ type Pedido = {
     devolucion: number | null;
     creadoEn: string;
   } | null;
-  lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
+  lineas: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    cantidad: number;
+    opciones?: OpcionElegida[];
+  }[];
 };
 
 const T = {
@@ -244,7 +251,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               )}
               {p.lineas.map((l) => (
                 <span key={l.platoId}>
-                  {l.cantidad} × {nombrePlato(l, idioma)}
+                  {l.cantidad} × {textoLinea(l, idioma)}
                 </span>
               ))}
               {p.notas && (
@@ -300,7 +307,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                       <option value="">—</option>
                       {p.lineas.map((l) => (
                         <option key={l.platoId} value={l.platoId}>
-                          {nombrePlato(l, idioma)}
+                          {textoLinea(l, idioma)}
                         </option>
                       ))}
                     </select>

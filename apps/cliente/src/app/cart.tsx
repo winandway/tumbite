@@ -9,9 +9,9 @@ import {
   dolaresACentavos,
   enIdioma,
   formatearDolares,
-  nombrePlato,
   porcentajeDe,
   useBorrador,
+  textoLinea,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -162,7 +162,11 @@ export default function PantallaCarrito() {
     try {
       const r = await api.pedir<Cobro>('POST', '/datos/pedidos', {
         restauranteId: carrito.restauranteId,
-        lineas: carrito.lineas.map((l) => ({ platoId: l.platoId, cantidad: l.cantidad })),
+        lineas: carrito.lineas.map((l) => ({
+          platoId: l.platoId,
+          cantidad: l.cantidad,
+          opciones: (l.opciones ?? []).map((o) => o.id),
+        })),
         propinaCentavos: propina,
         direccion: b.valores.direccion,
         notas: b.valores.notas,
@@ -215,15 +219,15 @@ export default function PantallaCarrito() {
       </Text>
       {carrito.lineas.map((l) => (
         <View
-          key={l.platoId}
+          key={l.clave ?? l.platoId}
           style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
         >
           <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '700' }}>{nombrePlato(l, idioma)}</Text>
+            <Text style={{ fontWeight: '700' }}>{textoLinea(l, idioma)}</Text>
             <Text>{formatearDolares(l.precioCentavos * l.cantidad, idioma)}</Text>
           </View>
           <Pressable
-            onPress={() => cambiarCantidad(l.platoId, l.cantidad - 1)}
+            onPress={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
             accessibilityRole="button"
             accessibilityLabel={t.menos}
             style={{ padding: 8 }}
@@ -232,7 +236,7 @@ export default function PantallaCarrito() {
           </Pressable>
           <Text style={{ fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{l.cantidad}</Text>
           <Pressable
-            onPress={() => cambiarCantidad(l.platoId, Math.min(99, l.cantidad + 1))}
+            onPress={() => cambiarCantidad(l.clave ?? l.platoId, Math.min(99, l.cantidad + 1))}
             accessibilityRole="button"
             accessibilityLabel={t.mas}
             style={{ padding: 8 }}

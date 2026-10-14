@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ErrorApi, type Restaurante, descripcion, enIdioma } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Restaurante,
+  descripcion,
+  enIdioma,
+  proximaApertura,
+  textoApertura,
+} from '@tumbite/compartido';
 import {
   Boton,
   C,
@@ -95,7 +102,7 @@ export function Inicio() {
           accessibilityLabel={r.nombre}
           style={({ pressed }) => [
             e.tarjeta,
-            !r.abierto && { opacity: 0.55 },
+            !(r.abiertoAhora ?? r.abierto) && { opacity: 0.55 },
             pressed && { opacity: 0.8 },
           ]}
         >
@@ -128,9 +135,20 @@ export function Inicio() {
             </Text>
           ) : null}
           <Text
-            style={{ marginTop: 6, fontWeight: '700', color: r.abierto ? '#0d7a3a' : '#8a0014' }}
+            style={{
+              marginTop: 6,
+              fontWeight: '700',
+              color: (r.abiertoAhora ?? r.abierto) ? '#0d7a3a' : '#8a0014',
+            }}
           >
-            {r.abierto ? t.abierto : t.cerrado}
+            {(r.abiertoAhora ?? r.abierto)
+              ? t.abierto
+              : r.abierto && r.horarios?.length
+                ? textoApertura(
+                    proximaApertura(r.horarios, r.zonaHoraria ?? 'America/New_York'),
+                    idioma,
+                  )
+                : t.cerrado}
           </Text>
         </Pressable>
       ))}

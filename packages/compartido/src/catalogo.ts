@@ -31,6 +31,48 @@ export const esquemaMiRestaurante = z.object({
 });
 export type DatosMiRestaurante = z.input<typeof esquemaMiRestaurante>;
 
+const texto40 = z.string().trim().max(40);
+export const esquemaGrupos = z.object({
+  grupos: z
+    .array(
+      z.object({
+        nombreEs: z.string().trim().min(1, { error: 'Escribe el nombre del grupo.' }).max(40),
+        nombreEn: texto40.default(''),
+        minimo: z.number().int().min(0).max(20).default(0),
+        maximo: z.number().int().min(1).max(20).default(1),
+        opciones: z
+          .array(
+            z.object({
+              nombreEs: z
+                .string()
+                .trim()
+                .min(1, { error: 'Escribe el nombre de la opción.' })
+                .max(60),
+              nombreEn: z.string().trim().max(60).default(''),
+              precioCentavos: z.number().int().min(0).max(100_00).default(0),
+              disponible: z.boolean().default(true),
+            }),
+          )
+          .min(1, { error: 'Cada grupo necesita al menos una opción.' })
+          .max(30),
+      }),
+    )
+    .max(10),
+});
+export type DatosGrupos = z.input<typeof esquemaGrupos>;
+
+export const esquemaHorarios = z.object({
+  turnos: z
+    .array(
+      z.object({
+        dia: z.number().int().min(0).max(6),
+        abre: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'Hora como 09:30.' }),
+        cierra: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'Hora como 22:00.' }),
+      }),
+    )
+    .max(21),
+});
+
 export const esquemaPlato = z.object({
   nombreEs: z.string().trim().min(2, { error: 'Escribe el nombre del plato.' }).max(80),
   nombreEn: texto(80).default(''),
@@ -47,6 +89,11 @@ export type DatosPlato = z.input<typeof esquemaPlato>;
 export type Restaurante = {
   id: string;
   nombre: string;
+  /** Horarios por día; sin turnos, manda solo el botón de abrir/pausar. */
+  horarios?: { dia: number; abre: string; cierra: string }[];
+  zonaHoraria?: string;
+  /** Abierto de verdad: el botón encendido Y dentro del horario. */
+  abiertoAhora?: boolean;
   descripcionEs: string;
   descripcionEn: string;
   categoria: string;
@@ -63,6 +110,41 @@ export type Restaurante = {
   distanciaKm?: number;
 };
 
+/** Una opción dentro de un grupo (Grande +$4, Extra queso +$1.50, Sin cebolla). */
+export type Opcion = {
+  id: string;
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+  disponible: boolean;
+};
+/** Un grupo de opciones de un plato (Tamaño: elige 1; Extras: hasta 3; Sin…: hasta 5). */
+export type GrupoOpciones = {
+  id: string;
+  nombreEs: string;
+  nombreEn: string;
+  minimo: number;
+  maximo: number;
+  opciones: Opcion[];
+};
+/** Lo elegido en una línea del pedido (nombre y precio congelados al pedir). */
+export type OpcionElegida = {
+  id: string;
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+};
+
+/** «Pizza margarita (Grande, Extra queso)». */
+export function textoLinea(
+  l: { nombreEs: string; nombreEn: string; opciones?: OpcionElegida[] | null },
+  idioma: 'es' | 'en',
+): string {
+  const base = nombrePlato(l, idioma);
+  const extras = (l.opciones ?? []).map((o) => nombrePlato(o, idioma)).filter(Boolean);
+  return extras.length ? `${base} (${extras.join(', ')})` : base;
+}
+
 export type Plato = {
   id: string;
   restauranteId: string;
@@ -75,6 +157,7 @@ export type Plato = {
   precioCentavos: number;
   imagen: string | null;
   disponible: boolean;
+  grupos?: GrupoOpciones[];
 };
 
 /** Categoría del plato en el idioma pedido; si falta el inglés, cae al español. */

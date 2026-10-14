@@ -11,7 +11,8 @@ import {
   formatearDolares,
   llego,
   metrosEntre,
-  nombrePlato,
+  textoLinea,
+  type OpcionElegida,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { MisDatos } from './MisDatos';
@@ -55,7 +56,13 @@ type Pedido = {
   noApareceEn?: string | null;
   entrega?: 'puerta' | 'mano';
   pinRequerido?: boolean;
-  lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
+  lineas: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    cantidad: number;
+    opciones?: OpcionElegida[];
+  }[];
 };
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
 type Billetera = DatosBilletera;
@@ -630,7 +637,7 @@ export function Inicio() {
           </Text>
           {activo.lineas.map((l) => (
             <Text key={l.platoId}>
-              {l.cantidad} × {nombrePlato(l, idioma)}
+              {l.cantidad} × {textoLinea(l, idioma)}
             </Text>
           ))}
           {activo.estado !== 'en_camino' ? (

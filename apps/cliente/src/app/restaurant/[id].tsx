@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Alert, Image, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ErrorApi,
+  type GrupoOpciones,
+  type OpcionElegida,
   type Plato,
   type Restaurante,
   descripcion,
+  proximaApertura,
+  textoApertura,
   enIdioma,
   formatearDolares,
   nombrePlato,
@@ -32,6 +36,25 @@ export default function MenuRestaurante() {
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
   const [datos, setDatos] = useState<{ restaurante: Restaurante; platos: Plato[] } | null>(null);
   const [error, setError] = useState('');
+  // El plato que está eligiendo opciones (tamaño, extras…) antes de ir al carrito.
+  const [eligiendo, setEligiendo] = useState<Plato | null>(null);
+  const [elegidas, setElegidas] = useState<Record<string, string[]>>({});
+  const TO =
+    idioma === 'en'
+      ? {
+          elegir: 'Choose',
+          requerido: 'required',
+          hasta: 'up to',
+          agregar: 'Add to cart',
+          cerrar: 'Cancel',
+        }
+      : {
+          elegir: 'Elige',
+          requerido: 'obligatorio',
+          hasta: 'hasta',
+          agregar: 'Agregar al carrito',
+          cerrar: 'Cancelar',
+        };
 
   useEffect(() => {
     api
@@ -40,18 +63,56 @@ export default function MenuRestaurante() {
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
   }, [api, id]);
 
-  async function alAgregar(p: Plato) {
+  async function alAgregar(p: Plato, opciones: OpcionElegida[] = []) {
     if (!datos) return;
+    // Con grupos de opciones, primero se eligen (tamaño, extras…).
+    if (!opciones.length && (p.grupos?.length ?? 0) > 0) {
+      setElegidas({});
+      setEligiendo(p);
+      return;
+    }
     const r = datos.restaurante;
     const rest = { id: r.id, nombre: r.nombre, plan: r.plan, lat: r.lat, lng: r.lng };
     if (
-      agregar(rest, p) === 'otro-restaurante' &&
+      agregar(rest, p, opciones) === 'otro-restaurante' &&
       (await confirmar(t.otroRestaurante, t.siEmpezar, t.no))
     ) {
       vaciar();
-      setTimeout(() => agregar(rest, p), 0);
+      setTimeout(() => agregar(rest, p, opciones), 0);
     }
   }
+  const grupoCompleto = (g: GrupoOpciones) => {
+    const n = (elegidas[g.id] ?? []).length;
+    return n >= g.minimo && n <= g.maximo;
+  };
+  function alternarOpcion(g: GrupoOpciones, id: string) {
+    setElegidas((e) => {
+      const actual = e[g.id] ?? [];
+      if (actual.includes(id)) return { ...e, [g.id]: actual.filter((x) => x !== id) };
+      if (g.maximo === 1) return { ...e, [g.id]: [id] };
+      if (actual.length >= g.maximo) return e;
+      return { ...e, [g.id]: [...actual, id] };
+    });
+  }
+  function confirmarOpciones() {
+    if (!eligiendo) return;
+    const grupos = eligiendo.grupos ?? [];
+    if (!grupos.every(grupoCompleto)) return;
+    const opciones: OpcionElegida[] = grupos.flatMap((g) =>
+      g.opciones
+        .filter((o) => (elegidas[g.id] ?? []).includes(o.id))
+        .map((o) => ({
+          id: o.id,
+          nombreEs: o.nombreEs,
+          nombreEn: o.nombreEn,
+          precioCentavos: o.precioCentavos,
+        })),
+    );
+    const p = eligiendo;
+    setEligiendo(null);
+    void alAgregar(p, opciones);
+  }
+  const abierto = datos?.restaurante.abiertoAhora ?? datos?.restaurante.abierto ?? false;
 
   const categorias = [...new Set(datos?.platos.map((p) => p.categoria) ?? [])];
   return (
@@ -67,7 +128,14 @@ export default function MenuRestaurante() {
           style={{ width: '100%', aspectRatio: 16 / 9, borderRadius: 14, marginBottom: 12 }}
         />
       ) : null}
-      {datos && !datos.restaurante.abierto && <Text style={[e.aviso]}>{t.cerradoAhora}</Text>}
+      {datos && !abierto && (
+        <Text style={[e.aviso]}>
+          {t.cerradoAhora}
+          {datos.restaurante.abierto && datos.restaurante.horarios?.length
+            ? ` ${textoApertura(proximaApertura(datos.restaurante.horarios, datos.restaurante.zonaHoraria ?? 'America/New_York'), idioma)}.`
+            : ''}
+        </Text>
+      )}
       {categorias.map((cat) => (
         <View key={cat || 'general'}>
           {cat ? (
@@ -120,16 +188,12 @@ export default function MenuRestaurante() {
                   </View>
                   <Pressable
                     onPress={() => void alAgregar(p)}
-                    disabled={!datos.restaurante.abierto}
+                    disabled={!abierto}
                     accessibilityRole="button"
                     accessibilityLabel={`${t.agregar} ${nombrePlato(p, idioma)}`}
                     style={{
                       // Ya en el carrito = salió bien: verde (C-VERDE-EXITO). Agregar sigue en el color de la marca.
-                      backgroundColor: !datos.restaurante.abierto
-                        ? '#ccc'
-                        : enCarrito
-                          ? C.exito
-                          : C.primario,
+                      backgroundColor: !abierto ? '#ccc' : enCarrito ? C.exito : C.primario,
                       borderRadius: 999,
                       paddingHorizontal: 14,
                       paddingVertical: 8,
@@ -147,6 +211,72 @@ export default function MenuRestaurante() {
       {cantidadTotal > 0 && (
         <Boton texto={`${t.verCarrito} (${cantidadTotal})`} alTocar={() => router.push('/cart')} />
       )}
+      <Modal visible={!!eligiendo} animationType="slide" onRequestClose={() => setEligiendo(null)}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: '#fff' }}
+          contentContainerStyle={{ padding: 20 }}
+        >
+          {eligiendo ? (
+            <>
+              <Text style={{ fontSize: 22, fontWeight: '800', marginBottom: 12 }}>
+                {nombrePlato(eligiendo, idioma)}
+              </Text>
+              {(eligiendo.grupos ?? []).map((g) => (
+                <View key={g.id} style={{ marginBottom: 16 }}>
+                  <Text style={{ fontWeight: '800', fontSize: 16 }}>
+                    {nombrePlato(g, idioma)}{' '}
+                    <Text style={{ color: '#5E5E5E', fontWeight: '400', fontSize: 13 }}>
+                      {g.minimo > 0 ? `· ${TO.requerido}` : ''}
+                      {g.maximo > 1 ? ` · ${TO.hasta} ${g.maximo}` : ''}
+                    </Text>
+                  </Text>
+                  {g.opciones
+                    .filter((o) => o.disponible)
+                    .map((o) => {
+                      const marcada = (elegidas[g.id] ?? []).includes(o.id);
+                      return (
+                        <Pressable
+                          key={o.id}
+                          onPress={() => alternarOpcion(g, o.id)}
+                          accessibilityRole={g.maximo === 1 ? 'radio' : 'checkbox'}
+                          accessibilityState={{ checked: marcada }}
+                          accessibilityLabel={nombrePlato(o, idioma)}
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            paddingVertical: 10,
+                            paddingHorizontal: 12,
+                            marginTop: 6,
+                            borderRadius: 10,
+                            borderWidth: marcada ? 2 : 1,
+                            borderColor: marcada ? C.exito : '#D6D6D6',
+                            backgroundColor: marcada ? '#E8F5EE' : '#fff',
+                          }}
+                        >
+                          <Text style={{ fontWeight: marcada ? '800' : '500' }}>
+                            {nombrePlato(o, idioma)}
+                          </Text>
+                          <Text style={{ color: '#5E5E5E' }}>
+                            {o.precioCentavos
+                              ? `+ ${formatearDolares(o.precioCentavos, idioma)}`
+                              : ''}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                </View>
+              ))}
+              <Boton
+                texto={TO.agregar}
+                alTocar={confirmarOpciones}
+                exito={(eligiendo.grupos ?? []).every(grupoCompleto)}
+                secundario={!(eligiendo.grupos ?? []).every(grupoCompleto)}
+              />
+              <Boton texto={TO.cerrar} alTocar={() => setEligiendo(null)} secundario />
+            </>
+          ) : null}
+        </ScrollView>
+      </Modal>
     </Pantalla>
   );
 }

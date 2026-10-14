@@ -12,6 +12,7 @@ import {
   nombrePlato,
   useBorrador,
   categoriaPlato,
+  type GrupoOpciones,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -43,6 +44,20 @@ const T = {
     empezar: 'Empezar de nuevo',
     opciones: 'Más opciones',
     foto: 'Foto del plato',
+    grupos: 'Opciones del plato (tamaño, extras, sin…)',
+    gruposAyuda:
+      'Cada grupo es una pregunta al cliente. «Tamaño» con mínimo 1 y máximo 1 obliga a elegir uno; «Extras» con mínimo 0 y máximo 3 deja elegir hasta tres. El precio es lo que suma cada opción.',
+    nuevoGrupo: '+ Grupo de opciones',
+    nombreGrupoEs: 'Nombre del grupo (español)',
+    nombreGrupoEn: 'Nombre del grupo (inglés)',
+    minimo: 'Mínimo',
+    maximo: 'Máximo',
+    nuevaOpcion: '+ Opción',
+    opcionEs: 'Opción (español)',
+    opcionEn: 'Opción (inglés)',
+    precioExtra: 'Precio extra',
+    quitar: 'Quitar',
+    conOpciones: 'con opciones',
   },
   en: {
     titulo: 'Menu',
@@ -68,6 +83,20 @@ const T = {
     empezar: 'Start over',
     opciones: 'More options',
     foto: 'Item photo',
+    grupos: 'Item options (size, extras, no…)',
+    gruposAyuda:
+      'Each group is a question for the customer. “Size” with min 1 and max 1 forces one choice; “Extras” with min 0 and max 3 allows up to three. The price is what each option adds.',
+    nuevoGrupo: '+ Option group',
+    nombreGrupoEs: 'Group name (Spanish)',
+    nombreGrupoEn: 'Group name (English)',
+    minimo: 'Min',
+    maximo: 'Max',
+    nuevaOpcion: '+ Option',
+    opcionEs: 'Option (Spanish)',
+    opcionEn: 'Option (English)',
+    precioExtra: 'Extra price',
+    quitar: 'Remove',
+    conOpciones: 'with options',
   },
 };
 
@@ -81,7 +110,37 @@ const VACIO = {
   categoriaEn: '',
   precio: '',
   imagen: '',
+  grupos: '',
 };
+
+type GrupoForm = {
+  nombreEs: string;
+  nombreEn: string;
+  minimo: string;
+  maximo: string;
+  opciones: { nombreEs: string; nombreEn: string; precio: string; disponible: boolean }[];
+};
+const leerGrupos = (texto: string): GrupoForm[] => {
+  try {
+    const v = JSON.parse(texto) as unknown;
+    return Array.isArray(v) ? (v as GrupoForm[]) : [];
+  } catch {
+    return [];
+  }
+};
+const gruposAForm = (grupos: GrupoOpciones[] | undefined): GrupoForm[] =>
+  (grupos ?? []).map((g) => ({
+    nombreEs: g.nombreEs,
+    nombreEn: g.nombreEn,
+    minimo: String(g.minimo),
+    maximo: String(g.maximo),
+    opciones: g.opciones.map((o) => ({
+      nombreEs: o.nombreEs,
+      nombreEn: o.nombreEn,
+      precio: centavosATexto(o.precioCentavos),
+      disponible: o.disponible,
+    })),
+  }));
 
 export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
@@ -120,9 +179,12 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       categoriaEn: p.categoriaEn,
       precio: centavosATexto(p.precioCentavos),
       imagen: p.imagen ?? '',
+      grupos: JSON.stringify(gruposAForm(p.grupos)),
     });
     setEditando(true);
   }
+  const grupos = leerGrupos(v.grupos);
+  const ponerGrupos = (gs: GrupoForm[]) => b.cambiar('grupos', JSON.stringify(gs));
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
@@ -140,9 +202,32 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       imagen: v.imagen || null,
     };
     try {
-      const r = v.id
+      let r = v.id
         ? await pedir<{ plato: Plato }>('PUT', `/datos/mi-restaurante/platos/${v.id}`, cuerpo)
         : await pedir<{ plato: Plato }>('POST', '/datos/mi-restaurante/platos', cuerpo);
+      // Las opciones van aparte, todas de una vez (si el plato ya las tenía, se reemplazan).
+      const gruposLimpios = grupos
+        .filter((g) => g.nombreEs.trim())
+        .map((g) => ({
+          nombreEs: g.nombreEs.trim(),
+          nombreEn: g.nombreEn.trim(),
+          minimo: Number(g.minimo) || 0,
+          maximo: Math.max(1, Number(g.maximo) || 1),
+          opciones: g.opciones
+            .filter((o) => o.nombreEs.trim())
+            .map((o) => ({
+              nombreEs: o.nombreEs.trim(),
+              nombreEn: o.nombreEn.trim(),
+              precioCentavos: dolaresACentavos(o.precio || '0') ?? 0,
+              disponible: o.disponible,
+            })),
+        }));
+      if (gruposLimpios.length || (r.plato.grupos?.length ?? 0) > 0)
+        r = await pedir<{ plato: Plato }>(
+          'PUT',
+          `/datos/mi-restaurante/platos/${r.plato.id}/opciones`,
+          { grupos: gruposLimpios },
+        );
       setPlatos((ps) =>
         v.id
           ? (ps ?? []).map((p) => (p.id === r.plato.id ? r.plato : p))
@@ -267,6 +352,191 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             idioma={idioma}
             formato="cuadrado"
           />
+          <fieldset className="grupos-opciones">
+            <legend>{t.grupos}</legend>
+            <p className="suave">{t.gruposAyuda}</p>
+            {grupos.map((g, gi) => (
+              <div key={gi} className="grupo-opciones">
+                <div className="fila-campos">
+                  <Campo
+                    etiqueta={t.nombreGrupoEs}
+                    valor={g.nombreEs}
+                    cambiar={(x) =>
+                      ponerGrupos(grupos.map((y, j) => (j === gi ? { ...y, nombreEs: x } : y)))
+                    }
+                    placeholder="Tamaño"
+                  />
+                  <Campo
+                    etiqueta={t.nombreGrupoEn}
+                    valor={g.nombreEn}
+                    cambiar={(x) =>
+                      ponerGrupos(grupos.map((y, j) => (j === gi ? { ...y, nombreEn: x } : y)))
+                    }
+                    placeholder="Size"
+                  />
+                  <Campo
+                    etiqueta={t.minimo}
+                    tipo="number"
+                    valor={g.minimo}
+                    cambiar={(x) =>
+                      ponerGrupos(grupos.map((y, j) => (j === gi ? { ...y, minimo: x } : y)))
+                    }
+                  />
+                  <Campo
+                    etiqueta={t.maximo}
+                    tipo="number"
+                    valor={g.maximo}
+                    cambiar={(x) =>
+                      ponerGrupos(grupos.map((y, j) => (j === gi ? { ...y, maximo: x } : y)))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="enlace"
+                    onClick={() => ponerGrupos(grupos.filter((_, j) => j !== gi))}
+                  >
+                    {t.quitar}
+                  </button>
+                </div>
+                {g.opciones.map((o, oi) => (
+                  <div key={oi} className="fila-campos opcion">
+                    <Campo
+                      etiqueta={t.opcionEs}
+                      valor={o.nombreEs}
+                      cambiar={(x) =>
+                        ponerGrupos(
+                          grupos.map((y, j) =>
+                            j === gi
+                              ? {
+                                  ...y,
+                                  opciones: y.opciones.map((z, k) =>
+                                    k === oi ? { ...z, nombreEs: x } : z,
+                                  ),
+                                }
+                              : y,
+                          ),
+                        )
+                      }
+                      placeholder="Grande"
+                    />
+                    <Campo
+                      etiqueta={t.opcionEn}
+                      valor={o.nombreEn}
+                      cambiar={(x) =>
+                        ponerGrupos(
+                          grupos.map((y, j) =>
+                            j === gi
+                              ? {
+                                  ...y,
+                                  opciones: y.opciones.map((z, k) =>
+                                    k === oi ? { ...z, nombreEn: x } : z,
+                                  ),
+                                }
+                              : y,
+                          ),
+                        )
+                      }
+                      placeholder="Large"
+                    />
+                    <Campo
+                      etiqueta={t.precioExtra}
+                      valor={o.precio}
+                      cambiar={(x) =>
+                        ponerGrupos(
+                          grupos.map((y, j) =>
+                            j === gi
+                              ? {
+                                  ...y,
+                                  opciones: y.opciones.map((z, k) =>
+                                    k === oi ? { ...z, precio: x } : z,
+                                  ),
+                                }
+                              : y,
+                          ),
+                        )
+                      }
+                      placeholder="0.00"
+                    />
+                    <label className="interruptor">
+                      <input
+                        type="checkbox"
+                        checked={o.disponible}
+                        onChange={() =>
+                          ponerGrupos(
+                            grupos.map((y, j) =>
+                              j === gi
+                                ? {
+                                    ...y,
+                                    opciones: y.opciones.map((z, k) =>
+                                      k === oi ? { ...z, disponible: !z.disponible } : z,
+                                    ),
+                                  }
+                                : y,
+                            ),
+                          )
+                        }
+                      />
+                      {o.disponible ? t.disponible : t.agotado}
+                    </label>
+                    <button
+                      type="button"
+                      className="enlace"
+                      onClick={() =>
+                        ponerGrupos(
+                          grupos.map((y, j) =>
+                            j === gi
+                              ? { ...y, opciones: y.opciones.filter((_, k) => k !== oi) }
+                              : y,
+                          ),
+                        )
+                      }
+                    >
+                      {t.quitar}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="boton secundario chico"
+                  onClick={() =>
+                    ponerGrupos(
+                      grupos.map((y, j) =>
+                        j === gi
+                          ? {
+                              ...y,
+                              opciones: [
+                                ...y.opciones,
+                                { nombreEs: '', nombreEn: '', precio: '', disponible: true },
+                              ],
+                            }
+                          : y,
+                      ),
+                    )
+                  }
+                >
+                  {t.nuevaOpcion}
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="boton secundario chico"
+              onClick={() =>
+                ponerGrupos([
+                  ...grupos,
+                  {
+                    nombreEs: '',
+                    nombreEn: '',
+                    minimo: '1',
+                    maximo: '1',
+                    opciones: [{ nombreEs: '', nombreEn: '', precio: '', disponible: true }],
+                  },
+                ])
+              }
+            >
+              {t.nuevoGrupo}
+            </button>
+          </fieldset>
           {error && !error.campo && (
             <p className="error-general" role="alert">
               {error.mensaje}
@@ -296,7 +566,11 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
               <div className="lista-texto">
                 <strong>{nombrePlato(p, idioma)}</strong>
                 <span>
-                  {[categoriaPlato(p, idioma), formatearDolares(p.precioCentavos, idioma)]
+                  {[
+                    categoriaPlato(p, idioma),
+                    formatearDolares(p.precioCentavos, idioma),
+                    (p.grupos?.length ?? 0) > 0 ? t.conOpciones : '',
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>

@@ -52,6 +52,7 @@ const AGENTE = {
 const PARA_TIENDA = new Map<string, [string, string]>([
   ['cliente-inicio', ['Tumbite (cliente)', '01-inicio-restaurantes-cercanos']],
   ['cliente-menu', ['Tumbite (cliente)', '02-menu-del-restaurante']],
+  ['cliente-opciones', ['Tumbite (cliente)', '02b-elige-tamano-y-extras']],
   ['cliente-carrito', ['Tumbite (cliente)', '03-carrito-con-el-precio-completo']],
   ['cliente-pagado', ['Tumbite (cliente)', '04-pago-recibido']],
   ['cliente-en-camino', ['Tumbite (cliente)', '05-pedido-en-vivo-en-el-mapa']],
@@ -226,6 +227,17 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(panel.getByText(/Under review|En revisión/)).toBeVisible();
     await foto(panel, 'restaurante-ficha');
 
+    // 1b. El horario: abierto todo el día, todos los días (el recorrido corre a cualquier hora).
+    const horario = panel.locator('form.horarios');
+    await horario.getByRole('button', { name: L.turno }).nth(1).click(); // lunes
+    await horario.getByLabel(L.abre).fill('00:00');
+    await horario.getByLabel(L.cierra).fill('23:59');
+    await horario.getByRole('button', { name: L.copiarLunes }).click();
+    await expect(horario.getByLabel(L.abre)).toHaveCount(7);
+    await foto(panel, 'restaurante-horarios');
+    await horario.getByRole('button', { name: L.guardarHorario }).click();
+    await expect(horario.getByText(L.horarioGuardado)).toBeVisible();
+
     // 2. El menú: dos platos con su categoría en los dos idiomas.
     await panel.getByRole('link', { name: L.menu, exact: true }).click();
     for (const [es, en, catEs, catEn, precio] of [
@@ -242,6 +254,26 @@ for (const idioma of ['en', 'es'] as const) {
       await panel.getByRole('button', { name: L.guardarPlato }).click();
       await expect(panel.getByText(idioma === 'en' ? en! : es!).first()).toBeVisible();
     }
+    // 2b. Opciones de la pizza: tamaño mediana o grande (+4).
+    const pizzaNombre = idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita';
+    const filaPizza = panel
+      .locator('li', { hasText: pizzaNombre })
+      .filter({ has: panel.getByRole('button', { name: L.masOpciones }) })
+      .first();
+    await filaPizza.getByRole('button', { name: L.masOpciones }).click();
+    await panel.getByRole('menuitem', { name: L.editar }).click();
+    await panel.getByRole('button', { name: L.nuevoGrupo, exact: true }).click();
+    await panel.getByLabel(L.nombreGrupoEs).fill('Tamaño');
+    await panel.getByLabel(L.nombreGrupoEn).fill('Size');
+    await panel.getByLabel(L.opcionEs).first().fill('Mediana');
+    await panel.getByLabel(L.opcionEn).first().fill('Medium');
+    await panel.getByRole('button', { name: L.nuevaOpcion, exact: true }).click();
+    await panel.getByLabel(L.opcionEs).nth(1).fill('Grande');
+    await panel.getByLabel(L.opcionEn).nth(1).fill('Large');
+    await panel.getByLabel(L.precioExtra).nth(1).fill('4.00');
+    await foto(panel, 'restaurante-opciones');
+    await panel.getByRole('button', { name: L.guardarPlato }).click();
+    await expect(panel.getByText(/with options|con opciones/).first()).toBeVisible();
     await foto(panel, 'restaurante-menu');
 
     // 3. Nuestro equipo lo aprueba (pantalla privada: se hace por la API, sin capturas).
@@ -491,11 +523,20 @@ for (const idioma of ['en', 'es'] as const) {
           throw e;
         }
       }
-      for (const p of platos)
+      for (const p of platos) {
         await cli
           .getByRole('button', { name: `${L.agregar} ${p}` })
           .filter({ visible: true })
           .click();
+        // La pizza pide tamaño: se elige «Grande» (+4) y se agrega.
+        if (p === plato.pizza) {
+          const grande = cli.getByRole('radio', { name: L.grande });
+          await expect(grande).toBeVisible({ timeout: 10_000 });
+          if (fotoCarrito) await foto(cli, 'cliente-opciones');
+          await grande.click();
+          await cli.getByRole('button', { name: L.agregarAlCarrito }).click();
+        }
+      }
       await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
       await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
       if (fotoCarrito) {

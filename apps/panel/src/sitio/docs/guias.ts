@@ -33,6 +33,34 @@ const es: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'choose-options',
+        titulo: 'Elige el tamaño y los extras al pedir',
+        resumen:
+          'Si un plato tiene opciones, al agregarlo eliges tamaño, extras o lo que el restaurante ofrezca, y ves cuánto suma cada una.',
+        explicacion: [
+          'Al tocar «Agregar» en un plato con opciones, se abre una ventana con las preguntas del restaurante: tamaño, extras, sin cebolla…',
+          'Las obligatorias dicen «obligatorio»; las demás puedes dejarlas vacías. Cada opción muestra lo que suma al precio.',
+          'El mismo plato con distintas opciones son líneas distintas en tu carrito, cada una con su precio.',
+          'Lo elegido se ve en tu pedido, en el restaurante y en la app del repartidor, para que no haya confusiones.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-opciones-es.webp',
+            alt: 'Ventana de opciones de la pizza en la app del cliente: grupo «Tamaño» obligatorio con Mediana y Grande (+4 dólares) y el botón «Agregar al carrito».',
+            pie: 'Eliges el tamaño y ves cuánto suma antes de agregar.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo elijo el tamaño o los extras de un plato?',
+          '¿Por qué no me deja agregar un plato?',
+        ],
+        pasos: [
+          'Toca «Agregar» en el plato.',
+          'Elige en cada grupo; los obligatorios piden al menos una opción.',
+          'Toca «Agregar al carrito».',
+        ],
+      },
+      {
         id: 'out-of-stock-item',
         titulo: 'Si al restaurante le falta un plato de tu pedido',
         resumen:
@@ -311,6 +339,63 @@ const es: SeccionDocs[] = [
     titulo: 'Para restaurantes',
     icono: 'chef',
     guias: [
+      {
+        id: 'hours',
+        titulo: 'Tu horario: abres y cierras solo',
+        resumen:
+          'Cargas tus turnos por día y Tumbite abre y cierra tu restaurante a esa hora. Fuera de horario el cliente ve a qué hora abres.',
+        explicacion: [
+          'En «Mi restaurante», abajo, está «Horario». Cada día puede tener uno o más turnos (por ejemplo, de 11:00 a 15:00 y de 18:00 a 23:00). Un turno puede terminar después de medianoche.',
+          'Con el horario cargado, tu restaurante aparece abierto solo dentro de esos turnos y con el botón de recibir pedidos encendido. Si pausas con el botón, se cierra aunque sea tu horario.',
+          'Fuera de horario, en la app el cliente ve «Abre hoy a las 6:00 p. m.» o «Abre mañana a las 11:00 a. m.», y no puede pedir hasta esa hora.',
+          'Sin horario cargado manda solo el botón: así funcionaba antes. La lista de activación del restaurante va a pedir el horario.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-horarios-es.webp',
+            alt: 'El horario del restaurante en el panel: un renglón por día con sus turnos de apertura y cierre y el botón para copiar el lunes a toda la semana.',
+            pie: 'Un turno por día, o varios; y «copiar el lunes a toda la semana» para no repetir.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo pongo mi horario?',
+          '¿Qué ve el cliente cuando estoy cerrado?',
+          '¿Puedo cerrar después de medianoche?',
+        ],
+        pasos: [
+          'Mi restaurante → Horario → «+ Turno» en cada día, con la hora de abrir y de cerrar.',
+          'Si todos los días son iguales, carga el lunes y toca «Copiar el lunes a toda la semana».',
+          'Guarda. Desde ese momento abres y cierras solo.',
+        ],
+      },
+      {
+        id: 'item-options',
+        titulo: 'Opciones de tus platos: tamaño, extras, sin cebolla',
+        resumen:
+          'Cada plato puede tener grupos de opciones: el cliente elige al pedir y el precio se suma solo.',
+        explicacion: [
+          'Al crear o editar un plato, abajo está «Opciones del plato». Cada grupo es una pregunta: «Tamaño», «Extras», «Sin…».',
+          'El mínimo y el máximo dicen cuántas puede elegir el cliente. «Tamaño» con mínimo 1 y máximo 1 obliga a elegir uno. «Extras» con mínimo 0 y máximo 3 deja elegir hasta tres o ninguno.',
+          'Cada opción tiene nombre en español e inglés y su precio extra (puede ser 0). Una opción se puede marcar agotada sin borrarla.',
+          'En el pedido, tú y el repartidor ven lo elegido junto al plato: «Pizza margarita (Grande, Extra queso)».',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-opciones-es.webp',
+            alt: 'Editor de opciones del plato en el panel: grupo «Tamaño» con mínimo 1 y máximo 1, opciones Mediana y Grande con precio extra de 4 dólares.',
+            pie: 'Un grupo «Tamaño» con dos opciones; Grande suma 4 dólares.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo pongo tamaños o extras a un plato?',
+          '¿Cómo obligo al cliente a elegir un tamaño?',
+        ],
+        pasos: [
+          'Menú → editar el plato → «+ Grupo de opciones».',
+          'Nombre del grupo, mínimo y máximo, y sus opciones con precio.',
+          'Guarda el plato. El cliente ve las opciones al agregarlo al carrito.',
+        ],
+      },
       {
         id: 'out-of-stock-and-more-time',
         titulo: 'Si te falta un plato o necesitas más tiempo',
@@ -1251,6 +1336,34 @@ const en: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'choose-options',
+        titulo: 'Choose size and extras when ordering',
+        resumen:
+          'If an item has options, when you add it you choose the size, extras or whatever the restaurant offers, and see what each adds.',
+        explicacion: [
+          'When you tap “Add” on an item with options, a window opens with the restaurant’s questions: size, extras, no onions…',
+          'Required ones say “required”; the rest can be left empty. Each option shows what it adds to the price.',
+          'The same item with different options are separate lines in your cart, each with its price.',
+          'Your choices show in your order, at the restaurant and in the driver’s app, so there’s no confusion.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-opciones-en.webp',
+            alt: 'Pizza options window in the customer app: required “Size” group with Medium and Large (+4 dollars) and the “Add to cart” button.',
+            pie: 'Pick the size and see what it adds before adding.',
+          },
+        ],
+        preguntas: [
+          'How do I pick the size or extras of an item?',
+          'Why won’t it let me add an item?',
+        ],
+        pasos: [
+          'Tap “Add” on the item.',
+          'Choose in each group; required ones need at least one option.',
+          'Tap “Add to cart.”',
+        ],
+      },
+      {
         id: 'out-of-stock-item',
         titulo: 'If the restaurant is out of an item in your order',
         resumen:
@@ -1524,6 +1637,63 @@ const en: SeccionDocs[] = [
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
+      {
+        id: 'hours',
+        titulo: 'Your hours: open and close on their own',
+        resumen:
+          'Set your shifts per day and Tumbite opens and closes your restaurant at those times. Outside of them customers see when you open.',
+        explicacion: [
+          'Under “My restaurant,” at the bottom, is “Hours.” Each day can have one or more shifts (for example, 11:00 to 15:00 and 18:00 to 23:00). A shift can end after midnight.',
+          'With hours set, your restaurant shows as open only within those shifts and with the take-orders button on. If you pause with the button, you’re closed even during your hours.',
+          'Outside your hours, customers see “Opens today at 6:00 PM” or “Opens tomorrow at 11:00 AM” in the app, and can’t order until then.',
+          'Without hours set, only the button applies: that’s how it worked before. The restaurant activation checklist will ask for hours.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-horarios-en.webp',
+            alt: 'The restaurant hours in the panel: one row per day with opening and closing shifts and the button to copy Monday to the whole week.',
+            pie: 'One shift per day, or several; and “copy Monday to the whole week” so you don’t repeat yourself.',
+          },
+        ],
+        preguntas: [
+          'How do I set my hours?',
+          'What do customers see when I’m closed?',
+          'Can I close after midnight?',
+        ],
+        pasos: [
+          'My restaurant → Hours → “+ Shift” on each day, with the opening and closing time.',
+          'If every day is the same, set Monday and tap “Copy Monday to the whole week.”',
+          'Save. From then on you open and close automatically.',
+        ],
+      },
+      {
+        id: 'item-options',
+        titulo: 'Item options: size, extras, no onions',
+        resumen:
+          'Each item can have option groups: the customer chooses when ordering and the price adds up automatically.',
+        explicacion: [
+          'When creating or editing an item, “Item options” is at the bottom. Each group is a question: “Size,” “Extras,” “No…”.',
+          'Min and max say how many the customer can choose. “Size” with min 1 and max 1 forces one choice. “Extras” with min 0 and max 3 allows up to three or none.',
+          'Each option has a Spanish and English name and its extra price (can be 0). An option can be marked sold out without deleting it.',
+          'On the order, you and the driver see what was chosen next to the item: “Margherita pizza (Large, Extra cheese).”',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-opciones-en.webp',
+            alt: 'Item options editor in the panel: “Size” group with min 1 and max 1, Medium and Large options with a 4-dollar extra price.',
+            pie: 'A “Size” group with two options; Large adds 4 dollars.',
+          },
+        ],
+        preguntas: [
+          'How do I add sizes or extras to an item?',
+          'How do I force the customer to pick a size?',
+        ],
+        pasos: [
+          'Menu → edit the item → “+ Option group.”',
+          'Group name, min and max, and its options with prices.',
+          'Save the item. Customers see the options when adding it to the cart.',
+        ],
+      },
       {
         id: 'out-of-stock-and-more-time',
         titulo: 'If you’re out of an item or need more time',

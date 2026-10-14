@@ -7,16 +7,25 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { Plan, Plato } from '@tumbite/compartido';
+import type { OpcionElegida, Plan, Plato } from '@tumbite/compartido';
 import { almacenTelefono, useSesion } from '@tumbite/movil';
 
 export type LineaCarrito = {
+  /** Plato + opciones elegidas: el mismo plato con otras opciones es otra línea. */
+  clave?: string;
   platoId: string;
   nombreEs: string;
   nombreEn: string;
+  /** Precio por unidad con las opciones sumadas. */
   precioCentavos: number;
   cantidad: number;
+  opciones?: OpcionElegida[];
 };
+export const claveDeLinea = (platoId: string, opciones: { id: string }[]) =>
+  `${platoId}:${opciones
+    .map((o) => o.id)
+    .sort()
+    .join('+')}`;
 export type Carrito = {
   restauranteId: string | null;
   restauranteNombre: string;
@@ -41,8 +50,9 @@ type Ctx = {
   agregar: (
     rest: { id: string; nombre: string; plan: Plan; lat: number | null; lng: number | null },
     p: Plato,
+    opciones?: OpcionElegida[],
   ) => 'ok' | 'otro-restaurante';
-  cambiarCantidad: (platoId: string, cantidad: number) => void;
+  cambiarCantidad: (clave: string, cantidad: number) => void;
   vaciar: () => void;
 };
 
@@ -72,7 +82,8 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     Promise.resolve(guardar).catch((e) => console.warn('carrito: no se pudo guardar', e));
   }, [carrito, cargado, llave]);
 
-  const agregar = useCallback<Ctx['agregar']>((rest, p) => {
+  const agregar = useCallback<Ctx['agregar']>((rest, p, opciones = []) => {
+    const clave = claveDeLinea(p.id, opciones);
     let resultado: 'ok' | 'otro-restaurante' = 'ok';
     setCarrito((c) => {
       if (c.restauranteId && c.restauranteId !== rest.id && c.lineas.length) {
@@ -90,19 +101,27 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               restLat: rest.lat,
               restLng: rest.lng,
             };
-      const existe = base.lineas.find((l) => l.platoId === p.id);
+      // Carritos guardados antes de las opciones: se les pone la clave para que no se pierdan.
+      const conClave = base.lineas.map((l) => ({
+        ...l,
+        opciones: l.opciones ?? [],
+        clave: l.clave ?? claveDeLinea(l.platoId, l.opciones ?? []),
+      }));
+      const existe = conClave.find((l) => l.clave === clave);
       const lineas = existe
-        ? base.lineas.map((l) =>
-            l.platoId === p.id ? { ...l, cantidad: Math.min(99, l.cantidad + 1) } : l,
+        ? conClave.map((l) =>
+            l.clave === clave ? { ...l, cantidad: Math.min(99, l.cantidad + 1) } : l,
           )
         : [
-            ...base.lineas,
+            ...conClave,
             {
+              clave,
               platoId: p.id,
               nombreEs: p.nombreEs,
               nombreEn: p.nombreEn,
-              precioCentavos: p.precioCentavos,
+              precioCentavos: p.precioCentavos + opciones.reduce((s, o) => s + o.precioCentavos, 0),
               cantidad: 1,
+              opciones,
             },
           ];
       return { ...base, lineas };
@@ -110,11 +129,13 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     return resultado;
   }, []);
 
-  const cambiarCantidad = useCallback((platoId: string, cantidad: number) => {
+  const cambiarCantidad = useCallback((clave: string, cantidad: number) => {
     setCarrito((c) => ({
       ...c,
       lineas: c.lineas
-        .map((l) => (l.platoId === platoId ? { ...l, cantidad } : l))
+        .map((l) =>
+          (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [])) === clave ? { ...l, cantidad } : l,
+        )
         .filter((l) => l.cantidad > 0),
     }));
   }, []);

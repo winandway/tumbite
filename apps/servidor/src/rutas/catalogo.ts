@@ -6,6 +6,11 @@ import {
   type Plato,
   type Restaurante,
   distanciaKm,
+  abiertoPorHorario,
+  esquemaGrupos,
+  esquemaHorarios,
+  type Turno,
+  type GrupoOpciones,
   geohash,
   esquemaMiRestaurante,
   esquemaPlato,
@@ -23,9 +28,14 @@ export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 type FilaRest = Record<string, unknown>;
 
 export function aRestaurante(f: FilaRest): Restaurante {
+  const horarios = (f.horarios as Turno[] | undefined) ?? [];
+  const zonaHoraria = String(f.zona_horaria ?? 'America/New_York');
   return {
     id: String(f.id),
     nombre: String(f.nombre),
+    horarios,
+    zonaHoraria,
+    abiertoAhora: Number(f.abierto) === 1 && abiertoPorHorario(horarios, zonaHoraria),
     descripcionEs: String(f.descripcion_es ?? ''),
     descripcionEn: String(f.descripcion_en ?? ''),
     categoria: String(f.categoria ?? ''),
@@ -58,6 +68,81 @@ export function aPlato(f: FilaRest): Plato {
   };
 }
 
+/** Los turnos de uno o varios restaurantes, y la zona horaria de su zona. */
+export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<FilaRest[]> {
+  if (!filas.length) return filas;
+  const ids = filas.map((f) => String(f.id));
+  const { results: turnos } = await db
+    .prepare(
+      `SELECT restaurante_id, dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id IN (${ids.map(() => '?').join(',')}) ORDER BY dia, abre`,
+    )
+    .bind(...ids)
+    .all<{ restaurante_id: string; dia: number; abre: string; cierra: string }>();
+  const { results: zonas } = await db
+    .prepare('SELECT id, zona_horaria FROM zonas')
+    .all<{ id: string; zona_horaria: string }>();
+  const tz = new Map(zonas.map((z) => [z.id, z.zona_horaria]));
+  return filas.map((f) => ({
+    ...f,
+    horarios: turnos
+      .filter((t) => t.restaurante_id === String(f.id))
+      .map((t) => ({ dia: Number(t.dia), abre: t.abre, cierra: t.cierra })),
+    zona_horaria: tz.get(String(f.zona_id)) ?? 'America/New_York',
+  }));
+}
+
+/** Los grupos de opciones de varios platos, listos para pegar en cada plato. */
+export async function gruposDe(
+  db: D1Database,
+  platoIds: string[],
+): Promise<Map<string, GrupoOpciones[]>> {
+  const mapa = new Map<string, GrupoOpciones[]>();
+  if (!platoIds.length) return mapa;
+  const { results: grupos } = await db
+    .prepare(
+      `SELECT * FROM grupos_opciones WHERE plato_id IN (${platoIds.map(() => '?').join(',')}) ORDER BY orden`,
+    )
+    .bind(...platoIds)
+    .all<FilaRest>();
+  if (!grupos.length) return mapa;
+  const gids = grupos.map((g) => String(g.id));
+  const { results: opciones } = await db
+    .prepare(
+      `SELECT * FROM opciones WHERE grupo_id IN (${gids.map(() => '?').join(',')}) ORDER BY orden`,
+    )
+    .bind(...gids)
+    .all<FilaRest>();
+  for (const g of grupos) {
+    const lista = mapa.get(String(g.plato_id)) ?? [];
+    lista.push({
+      id: String(g.id),
+      nombreEs: String(g.nombre_es),
+      nombreEn: String(g.nombre_en ?? ''),
+      minimo: Number(g.minimo),
+      maximo: Number(g.maximo),
+      opciones: opciones
+        .filter((o) => String(o.grupo_id) === String(g.id))
+        .map((o) => ({
+          id: String(o.id),
+          nombreEs: String(o.nombre_es),
+          nombreEn: String(o.nombre_en ?? ''),
+          precioCentavos: Number(o.precio_centavos),
+          disponible: Number(o.disponible) === 1,
+        })),
+    });
+    mapa.set(String(g.plato_id), lista);
+  }
+  return mapa;
+}
+
+async function platosConGrupos(db: D1Database, filas: FilaRest[]): Promise<Plato[]> {
+  const grupos = await gruposDe(
+    db,
+    filas.map((f) => String(f.id)),
+  );
+  return filas.map((f) => ({ ...aPlato(f), grupos: grupos.get(String(f.id)) ?? [] }));
+}
+
 // ---------- Público ----------
 
 catalogo.get('/restaurantes', async (c) => {
@@ -79,7 +164,7 @@ catalogo.get('/restaurantes', async (c) => {
     )
     .bind(zona.id)
     .all<FilaRest>();
-  let lista = results.map(aRestaurante);
+  let lista = (await conHorarios(db, results)).map(aRestaurante);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     lista = lista
       .map((r) =>
@@ -93,7 +178,8 @@ catalogo.get('/restaurantes', async (c) => {
       )
       .sort(
         (a, b) =>
-          Number(b.abierto) - Number(a.abierto) || (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999),
+          Number(b.abiertoAhora) - Number(a.abiertoAhora) ||
+          (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999),
       );
   }
   return c.json({ restaurantes: lista, zona: { id: zona.id }, fueraDeZona: false });
@@ -112,7 +198,8 @@ catalogo.get('/restaurantes/:id', async (c) => {
     )
     .bind(f.id)
     .all<FilaRest>();
-  return c.json({ restaurante: aRestaurante(f), platos: results.map(aPlato) });
+  const [conH] = await conHorarios(db, [f]);
+  return c.json({ restaurante: aRestaurante(conH!), platos: await platosConGrupos(db, results) });
 });
 
 // ---------- Dueño del restaurante ----------
@@ -135,7 +222,82 @@ catalogo.get('/mi-restaurante', async (c) => {
     )
     .bind(f.id)
     .all<FilaRest>();
-  return c.json({ restaurante: aRestaurante(f), platos: results.map(aPlato) });
+  const [conH] = await conHorarios(db, [f]);
+  return c.json({ restaurante: aRestaurante(conH!), platos: await platosConGrupos(db, results) });
+});
+
+/** Horarios por día: se reemplazan todos de una vez. */
+catalogo.put('/mi-restaurante/horarios', async (c) => {
+  const u = exigir(c, 'restaurante');
+  const db = base(c);
+  const f = await miRestaurante(db, u.id);
+  if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);
+  const { turnos } = await leerCuerpo(c, esquemaHorarios);
+  for (const t of turnos)
+    if (t.abre === t.cierra)
+      throw new ErrorDatos('Un turno no puede abrir y cerrar a la misma hora.', 'turnos', 422);
+  await db.batch([
+    db.prepare('DELETE FROM horarios_restaurante WHERE restaurante_id = ?').bind(f.id),
+    ...turnos.map((t) =>
+      db
+        .prepare(
+          'INSERT OR REPLACE INTO horarios_restaurante (restaurante_id, dia, abre, cierra) VALUES (?, ?, ?, ?)',
+        )
+        .bind(f.id, t.dia, t.abre, t.cierra),
+    ),
+  ]);
+  const [conH] = await conHorarios(db, [f]);
+  return c.json({ restaurante: aRestaurante(conH!) });
+});
+
+/** Los grupos de opciones de un plato: se reemplazan todos de una vez. */
+catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
+  const rid = await exigirMiRestaurante(c);
+  const db = base(c);
+  const plato = await db
+    .prepare('SELECT id FROM platos WHERE id = ? AND restaurante_id = ? AND eliminado = 0')
+    .bind(c.req.param('id'), rid)
+    .first<{ id: string }>();
+  if (!plato) throw new ErrorDatos('Ese plato no existe.', undefined, 404);
+  const { grupos } = await leerCuerpo(c, esquemaGrupos);
+  for (const g of grupos)
+    if (g.minimo > g.maximo)
+      throw new ErrorDatos('El mínimo no puede ser mayor que el máximo.', 'grupos', 422);
+  const viejos = await db
+    .prepare('SELECT id FROM grupos_opciones WHERE plato_id = ?')
+    .bind(plato.id)
+    .all<{ id: string }>();
+  const borrar = viejos.results.flatMap((g) => [
+    db.prepare('DELETE FROM opciones WHERE grupo_id = ?').bind(g.id),
+  ]);
+  const inserts: D1PreparedStatement[] = [];
+  grupos.forEach((g, gi) => {
+    const gid = nuevoId();
+    inserts.push(
+      db
+        .prepare(
+          'INSERT INTO grupos_opciones (id, plato_id, nombre_es, nombre_en, minimo, maximo, orden) VALUES (?,?,?,?,?,?,?)',
+        )
+        .bind(gid, plato.id, g.nombreEs, g.nombreEn, g.minimo, g.maximo, gi),
+    );
+    g.opciones.forEach((o, oi) =>
+      inserts.push(
+        db
+          .prepare(
+            'INSERT INTO opciones (id, grupo_id, nombre_es, nombre_en, precio_centavos, disponible, orden) VALUES (?,?,?,?,?,?,?)',
+          )
+          .bind(nuevoId(), gid, o.nombreEs, o.nombreEn, o.precioCentavos, o.disponible ? 1 : 0, oi),
+      ),
+    );
+  });
+  await db.batch([
+    ...borrar,
+    db.prepare('DELETE FROM grupos_opciones WHERE plato_id = ?').bind(plato.id),
+    ...inserts,
+  ]);
+  const f = await db.prepare('SELECT * FROM platos WHERE id = ?').bind(plato.id).first<FilaRest>();
+  const [p] = await platosConGrupos(db, [f as FilaRest]);
+  return c.json({ plato: p });
 });
 
 catalogo.put('/mi-restaurante', async (c) => {

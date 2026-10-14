@@ -17,3 +17,4 @@ export * from './calculadora';
 export * from './llegada';
 export * from './despacho';
 export * from './mostrador';
+export * from './horarios';

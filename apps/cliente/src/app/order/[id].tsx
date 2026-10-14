@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  enIdioma,
+  formatearDolares,
+  textoLinea,
+  type OpcionElegida,
+} from '@tumbite/compartido';
 import {
   Boton,
   C,
@@ -48,6 +54,7 @@ type Pedido = {
     nombreEn: string;
     cantidad: number;
     precioCentavos: number;
+    opciones?: OpcionElegida[];
   }[];
   repartidor?: {
     nombre: string;
@@ -472,7 +479,7 @@ export default function SeguirPedido() {
           <View style={e.tarjeta}>
             {p.lineas.map((l) => (
               <Text key={l.platoId}>
-                {l.cantidad} × {nombrePlato(l, idioma)}
+                {l.cantidad} × {textoLinea(l, idioma)}
               </Text>
             ))}
             <Text style={{ fontWeight: '800', marginTop: 8 }}>

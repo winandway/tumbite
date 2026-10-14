@@ -62,6 +62,23 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa foto no es válida. Vuelve a subirla.', 'That photo isn’t valid. Please upload it again.'],
   ['Falta la foto. Tómala y vuelve a intentar.', 'The photo is missing. Take it and try again.'],
   [
+    'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
+    'The restaurant is closed at this hour. Check when it opens.',
+  ],
+  [
+    'Un turno no puede abrir y cerrar a la misma hora.',
+    'A shift can’t open and close at the same time.',
+  ],
+  ['Ese plato no existe.', 'That item doesn’t exist.'],
+  ['El mínimo no puede ser mayor que el máximo.', 'The minimum can’t be greater than the maximum.'],
+  ['Una de las opciones ya no está disponible.', 'One of the options is no longer available.'],
+  ['Una de las opciones no es de este plato.', 'One of the options doesn’t belong to this item.'],
+  ['Escribe el nombre del grupo.', 'Enter the group name.'],
+  ['Escribe el nombre de la opción.', 'Enter the option name.'],
+  ['Cada grupo necesita al menos una opción.', 'Each group needs at least one option.'],
+  ['Hora como 09:30.', 'A time like 09:30.'],
+  ['Hora como 22:00.', 'A time like 22:00.'],
+  [
     'El PIN no es correcto. Pídeselo a quien recibe el pedido: está en su app.',
     'That PIN isn’t right. Ask the person receiving the order: it’s in their app.',
   ],

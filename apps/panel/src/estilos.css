@@ -3517,3 +3517,71 @@ button {
   color: #191919;
   border: 1px solid #d6d6d6;
 }
+
+/* Horario del restaurante: un renglón por día con sus turnos. */
+.horarios h2 {
+  margin: 0 0 4px;
+}
+.horario-dia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.horario-dia strong {
+  width: 90px;
+}
+.horario-turno {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.horario-turno label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+.horario-turno input[type='time'] {
+  padding: 4px 6px;
+  font: inherit;
+  border: 1px solid #d6d6d6;
+  border-radius: 6px;
+}
+.boton.chico {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+/* Grupos de opciones del plato. */
+.grupos-opciones {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+.grupos-opciones legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.grupo-opciones {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+.fila-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+.fila-campos .campo {
+  flex: 1 1 140px;
+  margin-bottom: 4px;
+}
+.fila-campos.opcion {
+  padding-left: 12px;
+  border-left: 3px solid #eee;
+  margin-top: 6px;
+}

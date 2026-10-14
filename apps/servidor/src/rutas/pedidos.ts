@@ -1,6 +1,14 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { type Plan, calcularPedido, distanciaKm } from '@tumbite/compartido';
+import {
+  type OpcionElegida,
+  type Plan,
+  type Turno,
+  abiertoPorHorario,
+  calcularPedido,
+  distanciaKm,
+} from '@tumbite/compartido';
+import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
@@ -19,7 +27,14 @@ export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 const esquemaNuevoPedido = z.object({
   restauranteId: z.string().min(1),
   lineas: z
-    .array(z.object({ platoId: z.string().min(1), cantidad: z.number().int().min(1).max(99) }))
+    .array(
+      z.object({
+        platoId: z.string().min(1),
+        cantidad: z.number().int().min(1).max(99),
+        // Opciones elegidas (ids): el servidor valida mínimos, máximos y precios.
+        opciones: z.array(z.string().min(1)).max(40).default([]),
+      }),
+    )
     .min(1, { error: 'Tu carrito está vacío.' })
     .max(50),
   propinaCentavos: z.number().int().min(0).max(50_000),
@@ -190,6 +205,7 @@ export function aPedido(f: FilaPedido) {
       nombreEn: string;
       precioCentavos: number;
       cantidad: number;
+      opciones?: OpcionElegida[];
     }[],
     subtotal: Number(f.subtotal),
     envio: Number(f.envio),
@@ -253,6 +269,13 @@ pedidos.post('/pedidos', async (c) => {
   if (!rest) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
   if (Number(rest.abierto) !== 1)
     throw new ErrorDatos('El restaurante acaba de cerrar. Intenta más tarde.', undefined, 409);
+  const [restConHorario] = await conHorarios(db, [rest]);
+  if (!abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria)))
+    throw new ErrorDatos(
+      'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
+      undefined,
+      409,
+    );
 
   const ids = [...new Set(d.lineas.map((l) => l.platoId))];
   const { results: platos } = await db
@@ -262,6 +285,7 @@ pedidos.post('/pedidos', async (c) => {
     .bind(rest.id, ...ids)
     .all<Record<string, unknown>>();
   const porId = new Map(platos.map((p) => [String(p.id), p]));
+  const grupos = await gruposDe(db, ids);
   const lineas = d.lineas.map((l) => {
     const p = porId.get(l.platoId);
     if (!p || Number(p.disponible) !== 1)
@@ -270,12 +294,38 @@ pedidos.post('/pedidos', async (c) => {
         'lineas',
         409,
       );
+    // Opciones: cada grupo dentro de su mínimo y máximo, solo opciones disponibles, precio sumado.
+    const elegidas: OpcionElegida[] = [];
+    for (const g of grupos.get(l.platoId) ?? []) {
+      const delGrupo = g.opciones.filter((o) => l.opciones.includes(o.id));
+      if (delGrupo.length < g.minimo || delGrupo.length > g.maximo)
+        throw new ErrorDatos(
+          `Elige entre ${g.minimo} y ${g.maximo} en «${g.nombreEs}».`,
+          'lineas',
+          409,
+        );
+      for (const o of delGrupo) {
+        if (!o.disponible)
+          throw new ErrorDatos('Una de las opciones ya no está disponible.', 'lineas', 409);
+        elegidas.push({
+          id: o.id,
+          nombreEs: o.nombreEs,
+          nombreEn: o.nombreEn,
+          precioCentavos: o.precioCentavos,
+        });
+      }
+    }
+    const conocidas = new Set(elegidas.map((o) => o.id));
+    if (l.opciones.some((id) => !conocidas.has(id)))
+      throw new ErrorDatos('Una de las opciones no es de este plato.', 'lineas', 409);
     return {
       platoId: l.platoId,
       nombreEs: String(p.nombre_es),
       nombreEn: String(p.nombre_en),
-      precioCentavos: Number(p.precio_centavos),
+      precioCentavos:
+        Number(p.precio_centavos) + elegidas.reduce((s, o) => s + o.precioCentavos, 0),
       cantidad: l.cantidad,
+      opciones: elegidas,
     };
   });
 

@@ -1543,3 +1543,165 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     expect(seg2.pinRequerido).toBe(false);
   });
 });
+
+describe('horarios reales y opciones de los platos (C-HORARIOS, C-OPCIONES)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('fuera del horario no se puede pedir aunque el botón esté abierto; dentro sí', async () => {
+    const e = await escenario();
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const plato = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Arepa', nombreEn: 'Arepa', precioCentavos: 800 },
+      e.dueno.token,
+    );
+    // Un horario de un solo minuto en un día que no es hoy: cerrado ahora.
+    const hoy = new Date().getUTCDay();
+    const otroDia = (hoy + 3) % 7;
+    const r1 = await e.m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/horarios',
+      { turnos: [{ dia: otroDia, abre: '10:00', cierra: '10:01' }] },
+      e.dueno.token,
+    );
+    expect(r1.estado).toBe(200);
+    expect(r1.datos.restaurante.abiertoAhora).toBe(false);
+    const pedido = {
+      restauranteId: rest.id,
+      lineas: [{ platoId: plato.datos.plato.id, cantidad: 1 }],
+      propinaCentavos: 0,
+      direccion: '300 Calle Prueba',
+      lat: 25.78,
+      lng: -80.2,
+    };
+    expect((await e.m.llamar('POST', '/datos/pedidos', pedido, e.cliente.token)).estado).toBe(409);
+    // Abierto las 24 horas todos los días: se puede pedir.
+    const todos = [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: '00:00', cierra: '23:59' }));
+    const r2 = await e.m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/horarios',
+      { turnos: todos },
+      e.dueno.token,
+    );
+    expect(r2.datos.restaurante.abiertoAhora).toBe(true);
+    expect(r2.datos.restaurante.horarios).toHaveLength(7);
+    expect((await e.m.llamar('POST', '/datos/pedidos', pedido, e.cliente.token)).estado).toBe(201);
+    // Un cliente ve «abiertoAhora» en la lista.
+    const lista = await e.m.llamar(
+      'GET',
+      `/datos/restaurantes?lat=25.77&lng=-80.19`,
+      undefined,
+      e.cliente.token,
+    );
+    expect(
+      lista.datos.restaurantes.find((x: { id: string }) => x.id === rest.id)?.abiertoAhora,
+    ).toBe(true);
+    // Un turno mal escrito no entra.
+    expect(
+      (
+        await e.m.llamar(
+          'PUT',
+          '/datos/mi-restaurante/horarios',
+          { turnos: [{ dia: 1, abre: '9:00', cierra: '22:00' }] },
+          e.dueno.token,
+        )
+      ).estado,
+    ).toBe(400);
+  });
+
+  it('las opciones suman al precio, respetan mínimo y máximo, y quedan guardadas en la línea', async () => {
+    const e = await escenario();
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const plato = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Pizza', nombreEn: 'Pizza', precioCentavos: 1400 },
+      e.dueno.token,
+    );
+    const pid = plato.datos.plato.id as string;
+    const r = await e.m.llamar(
+      'PUT',
+      `/datos/mi-restaurante/platos/${pid}/opciones`,
+      {
+        grupos: [
+          {
+            nombreEs: 'Tamaño',
+            nombreEn: 'Size',
+            minimo: 1,
+            maximo: 1,
+            opciones: [
+              { nombreEs: 'Mediana', nombreEn: 'Medium', precioCentavos: 0 },
+              { nombreEs: 'Grande', nombreEn: 'Large', precioCentavos: 400 },
+            ],
+          },
+          {
+            nombreEs: 'Extras',
+            nombreEn: 'Extras',
+            minimo: 0,
+            maximo: 2,
+            opciones: [
+              { nombreEs: 'Extra queso', nombreEn: 'Extra cheese', precioCentavos: 150 },
+              {
+                nombreEs: 'Champiñones',
+                nombreEn: 'Mushrooms',
+                precioCentavos: 100,
+                disponible: false,
+              },
+            ],
+          },
+        ],
+      },
+      e.dueno.token,
+    );
+    expect(r.estado).toBe(200);
+    const grupos = r.datos.plato.grupos;
+    expect(grupos).toHaveLength(2);
+    const grande = grupos[0].opciones[1].id;
+    const queso = grupos[1].opciones[0].id;
+    const champi = grupos[1].opciones[1].id;
+    const publico = await e.m.llamar(
+      'GET',
+      `/datos/restaurantes/${rest.id}`,
+      undefined,
+      e.cliente.token,
+    );
+    expect(publico.datos.platos.find((x: { id: string }) => x.id === pid).grupos[0].nombreEn).toBe(
+      'Size',
+    );
+    const pedir = (opciones: string[]) =>
+      e.m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: rest.id,
+          lineas: [{ platoId: pid, cantidad: 2, opciones }],
+          propinaCentavos: 0,
+          direccion: '300 Calle Prueba',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        e.cliente.token,
+      );
+    // Sin tamaño (mínimo 1): no.
+    expect((await pedir([])).estado).toBe(409);
+    // Una opción agotada: no.
+    expect((await pedir([grande, champi])).estado).toBe(409);
+    // Grande + extra queso: 14.00 + 4.00 + 1.50 = 19.50 por unidad, 2 unidades.
+    const ok = await pedir([grande, queso]);
+    expect(ok.estado).toBe(201);
+    expect(ok.datos.desglose.subtotal).toBe(3900);
+    const seg = await e.m.llamar(
+      'GET',
+      `/datos/pedidos/${ok.datos.pedidoId}`,
+      undefined,
+      e.cliente.token,
+    );
+    expect(seg.datos.pedido.lineas[0].precioCentavos).toBe(1950);
+    expect(
+      seg.datos.pedido.lineas[0].opciones.map((o: { nombreEn: string }) => o.nombreEn),
+    ).toEqual(['Large', 'Extra cheese']);
+  });
+});

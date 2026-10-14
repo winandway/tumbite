@@ -10,6 +10,7 @@ import {
   useBorrador,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
+import { Horarios } from './Horarios';
 import { pedir } from './api';
 import { SubirFoto } from './SubirFoto';
 
@@ -288,6 +289,9 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           {t.guardar}
         </button>
       </form>
+      {rest ? (
+        <Horarios restaurante={rest} cuenta={usuario.id} idioma={idioma} alGuardar={setRest} />
+      ) : null}
     </section>
   );
 }

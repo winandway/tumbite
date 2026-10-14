@@ -8,11 +8,12 @@ import {
   type Restaurante,
   enIdioma,
   formatearDolares,
-  nombrePlato,
   type RepartidorEnPedido,
   avisoLlegada,
   fotoSinConfirmar,
   lineaRepartidor,
+  textoLinea,
+  type OpcionElegida,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -44,7 +45,13 @@ type Pedido = {
     devolucion: number | null;
     creadoEn: string;
   } | null;
-  lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
+  lineas: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    cantidad: number;
+    opciones?: OpcionElegida[];
+  }[];
 };
 
 const T = {
@@ -264,7 +271,7 @@ export function Inicio() {
       </View>
       {p.lineas.map((l) => (
         <Text key={l.platoId} style={{ fontSize: 17, marginTop: 4 }}>
-          {l.cantidad} × {nombrePlato(l, idioma)}
+          {l.cantidad} × {textoLinea(l, idioma)}
         </Text>
       ))}
       {p.notas ? (
@@ -302,7 +309,7 @@ export function Inicio() {
                   void accion(`/datos/restaurante/pedidos/${p.id}/falta`, { platoId: l.platoId })
                 }
                 accessibilityRole="button"
-                accessibilityLabel={`${t.faltaPlato} ${nombrePlato(l, idioma)}`}
+                accessibilityLabel={`${t.faltaPlato} ${textoLinea(l, idioma)}`}
                 style={{
                   borderWidth: 1,
                   borderColor: '#D6D6D6',
@@ -311,7 +318,7 @@ export function Inicio() {
                   paddingVertical: 6,
                 }}
               >
-                <Text style={{ fontSize: 13 }}>{nombrePlato(l, idioma)}</Text>
+                <Text style={{ fontSize: 13 }}>{textoLinea(l, idioma)}</Text>
               </Pressable>
             ))}
           </View>

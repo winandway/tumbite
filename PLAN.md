@@ -4,7 +4,7 @@ Ver `docs/ROADMAP.md`, «Etapa 2¾». Se ejecuta punto por punto sin preguntar; 
 
 - [x] Punto 1: autorizar al pedir y capturar al entregar.
 - [x] Punto 2: PIN opcional en mano.
-- [ ] Punto 3: horarios reales y modificadores de platos.
+- [x] Punto 3: horarios reales y modificadores de platos.
 - [ ] Punto 4: GPS serio con excepción autorizada por soporte.
 - [ ] Punto 5: checklist de activación del restaurante y cola sin red del repartidor.
 - [ ] Punto 6: despacho completo (oferta abierta con bono, aviso al equipo a 5 min, preparación promedio, cocina ocupada).
