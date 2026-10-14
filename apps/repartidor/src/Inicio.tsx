@@ -54,6 +54,7 @@ type Pedido = {
   llegoCliente?: boolean;
   noApareceEn?: string | null;
   entrega?: 'puerta' | 'mano';
+  pinRequerido?: boolean;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
@@ -114,6 +115,7 @@ const T = {
       mano: 'El cliente pidió: entregar en mano',
     } as Record<string, string>,
     enMano: 'Entregado en mano',
+    pinPedir: 'PIN de 4 dígitos (lo tiene quien recibe, en su app)',
     noAparece: 'El cliente no aparece',
     esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
     dejarSeguro: 'Dejar en lugar seguro (con foto)',
@@ -184,6 +186,7 @@ const T = {
       mano: 'Customer chose: hand it to them',
     } as Record<string, string>,
     enMano: 'Handed to the customer',
+    pinPedir: '4-digit PIN (the person receiving has it in their app)',
     noAparece: 'Customer isn’t here',
     esperando5: 'We told the customer. Message them in the chat and wait',
     dejarSeguro: 'Leave in a safe spot (with photo)',
@@ -246,6 +249,7 @@ export function Inicio() {
   const [codigo, setCodigo] = useState('');
   const [motivo, setMotivo] = useState('');
   const [nota, setNota] = useState('');
+  const [pinEntrega, setPinEntrega] = useState('');
   const [tic, setTic] = useState(() => Date.now());
   useEffect(() => {
     const reloj = setInterval(() => setTic(Date.now()), 1000);
@@ -420,7 +424,9 @@ export function Inicio() {
         lat: p.coords.latitude,
         lng: p.coords.longitude,
         modo: 'mano',
+        ...(estado.activo.pinRequerido ? { pin: pinEntrega.trim() } : {}),
       });
+      setPinEntrega('');
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -783,6 +789,16 @@ export function Inicio() {
                       secundario={enMano}
                     />
                     <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                    {activo.pinRequerido ? (
+                      <TextInput
+                        value={pinEntrega}
+                        onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
+                        placeholder={t.pinPedir}
+                        accessibilityLabel={t.pinPedir}
+                        keyboardType="number-pad"
+                        style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
+                      />
+                    ) : null}
                     <Boton
                       texto={t.enMano}
                       alTocar={() => void entregarEnMano()}

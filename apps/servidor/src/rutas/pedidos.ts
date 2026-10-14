@@ -30,6 +30,8 @@ const esquemaNuevoPedido = z.object({
   regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
   // Cómo quiere recibir: en la puerta (foto obligatoria) o en mano (foto opcional).
   entrega: z.enum(['puerta', 'mano']).default('puerta'),
+  // Si es en mano: PIN de 4 dígitos que da quien recibe (se apaga si va a recibir otra persona).
+  pin: z.boolean().default(true),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -40,7 +42,9 @@ export const CON_EVIDENCIAS = `(SELECT creada_en FROM evidencias e WHERE e.pedid
   (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '') AS ev_entrega,
   (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo,
   (SELECT nota FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_nota,
-  (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega`;
+  (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega,
+  (SELECT 1 FROM pines_entrega pe WHERE pe.pedido_id = p.id) AS pin_requerido,
+  (SELECT capturado_en FROM cobros co WHERE co.pedido_id = p.id) AS cobro_capturado_en`;
 
 /** Para sumar a un SELECT con el pedido como «p»: el plato agotado pendiente de decisión. */
 export const CON_AJUSTE = `(SELECT plato_id FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_plato,
@@ -112,7 +116,12 @@ export async function aplicarAjuste(
     await anotarEvento(db, pedidoId, 'cancelado_por_plato_agotado');
     return { devolucion: Number(f.total), cancelado: true };
   }
-  if (devolucion > 0 && f.stripe_pago) {
+  const capturado = await db
+    .prepare('SELECT capturado_en FROM cobros WHERE pedido_id = ?')
+    .bind(pedidoId)
+    .first<{ capturado_en: string | null }>();
+  // Con el cobro solo autorizado, no hay nada que devolver: al entregar se captura el total nuevo.
+  if (devolucion > 0 && f.stripe_pago && capturado?.capturado_en) {
     const stripe = crearStripe(env.STRIPE_SECRET_KEY);
     if (!stripe)
       throw new ErrorDatos('No pudimos hacer la devolución en este momento.', undefined, 503);
@@ -213,6 +222,8 @@ export function aPedido(f: FilaPedido) {
     entrega: (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
     entregadoComo: (f.ev_entrega_modo as string | null) ?? null,
     notaEntrega: String(f.ev_entrega_nota ?? ''),
+    // El PIN mismo solo lo ve el cliente (va aparte, en el seguimiento).
+    pinRequerido: f.pin_requerido != null,
     // Plato agotado: qué falta, qué se devolvería y si el cliente ya decidió.
     ajuste: f.aj_plato
       ? {
@@ -338,6 +349,13 @@ pedidos.post('/pedidos', async (c) => {
     .prepare('INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, ?)')
     .bind(id, d.entrega)
     .run();
+  if (d.entrega === 'mano' && d.pin) {
+    const pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0]! % 9000));
+    await db
+      .prepare('INSERT OR REPLACE INTO pines_entrega (pedido_id, pin) VALUES (?, ?)')
+      .bind(id, pin)
+      .run();
+  }
   await anotar(db, id, 'pago_pendiente', u.id);
 
   const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
@@ -375,6 +393,9 @@ pedidos.post('/pedidos', async (c) => {
       currency: 'usd',
       customer: clienteStripe,
       automatic_payment_methods: { enabled: true },
+      // Se AUTORIZA al pedir y se CAPTURA al entregar: si el restaurante no acepta, se anula la
+      // autorización sin reembolso (Stripe no devuelve su comisión en un reembolso).
+      capture_method: 'manual',
       // Obligatorio cuando la sesión del cliente permite guardar la tarjeta: sin esto, Stripe
       // se niega a pintar el formulario (y lo hace en silencio). Candado C-PAGO-FORMULARIO.
       setup_future_usage: 'off_session',
@@ -465,6 +486,40 @@ pedidos.post('/stripe/aviso', async (c) => {
       await correosDePedidoPagado(c.env, db, pedidoId as string);
     }
   }
+  if (evento.type === 'payment_intent.amount_capturable_updated') {
+    // La tarjeta quedó AUTORIZADA por el total: el pedido pasa a pagado y se cobra al entregar.
+    const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+    const pedido = pedidoId
+      ? await db
+          .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+          .bind(pedidoId)
+          .first<{ total: number; stripe_sesion: string; estado: string }>()
+      : null;
+    if (!pedido) {
+      if (pedidoId) console.error('aviso de autorización sin pedido conocido', pedidoId);
+    } else if (
+      pedido.stripe_sesion !== obj.id ||
+      Number(obj.amount_capturable) !== Number(pedido.total)
+    ) {
+      console.error(
+        'aviso de autorización que no cuadra con el pedido',
+        pedidoId,
+        obj.amount_capturable,
+        pedido.total,
+      );
+    } else if (pedido.estado === 'pago_pendiente') {
+      await db.batch([
+        db
+          .prepare(
+            "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+          )
+          .bind(String(obj.id), pedidoId),
+        db.prepare('INSERT OR IGNORE INTO cobros (pedido_id) VALUES (?)').bind(pedidoId),
+      ]);
+      await anotar(db, pedidoId as string, 'pagado', null);
+      await correosDePedidoPagado(c.env, db, pedidoId as string);
+    }
+  }
   if (evento.type === 'payment_intent.succeeded') {
     const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
     const pedido = pedidoId
@@ -486,14 +541,29 @@ pedidos.post('/stripe/aviso', async (c) => {
         pedido.total,
       );
     } else if (pedido.estado === 'pago_pendiente') {
-      await db
-        .prepare(
-          "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
-        )
-        .bind(String(obj.id), pedidoId)
-        .run();
+      // Cobro inmediato (sin autorización previa): se guarda ya capturado.
+      await db.batch([
+        db
+          .prepare(
+            "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+          )
+          .bind(String(obj.id), pedidoId),
+        db
+          .prepare(
+            "INSERT OR REPLACE INTO cobros (pedido_id, capturado_en, capturado) VALUES (?, datetime('now'), ?)",
+          )
+          .bind(pedidoId, Number(obj.amount_received)),
+      ]);
       await anotar(db, pedidoId as string, 'pagado', null);
       await correosDePedidoPagado(c.env, db, pedidoId as string);
+    } else {
+      // Captura confirmada por Stripe (al entregar): queda anotada aunque el servidor ya lo supiera.
+      await db
+        .prepare(
+          "UPDATE cobros SET capturado_en = COALESCE(capturado_en, datetime('now')), capturado = COALESCE(capturado, ?) WHERE pedido_id = ?",
+        )
+        .bind(Number(obj.amount_received), pedidoId)
+        .run();
     }
   }
   if (evento.type === 'account.updated') {

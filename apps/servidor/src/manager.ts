@@ -74,13 +74,26 @@ export async function cancelarConReembolso(
   if (!apartado.meta.changes) return false;
   if (antes.stripe_pago) {
     const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+    const cobro = await db
+      .prepare('SELECT capturado_en FROM cobros WHERE pedido_id = ?')
+      .bind(pedidoId)
+      .first<{ capturado_en: string | null }>();
     try {
       if (!stripe) throw new Error('Stripe no está configurado');
-      await stripe.post(
-        '/refunds',
-        { payment_intent: antes.stripe_pago, metadata: { pedido_id: pedidoId } },
-        `reembolso-${pedidoId}`,
-      );
+      if (cobro && !cobro.capturado_en) {
+        // Solo autorizado: se anula la autorización. Sin reembolso y sin comisión de Stripe.
+        await stripe.post(`/payment_intents/${antes.stripe_pago}/cancel`, {}, `anular-${pedidoId}`);
+        await db
+          .prepare("UPDATE cobros SET cancelado_en = datetime('now') WHERE pedido_id = ?")
+          .bind(pedidoId)
+          .run();
+      } else {
+        await stripe.post(
+          '/refunds',
+          { payment_intent: antes.stripe_pago, metadata: { pedido_id: pedidoId } },
+          `reembolso-${pedidoId}`,
+        );
+      }
     } catch (e) {
       await db
         .prepare(

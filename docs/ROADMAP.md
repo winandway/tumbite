@@ -102,8 +102,8 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md` (DoorDash y Uber Eats frente a nosotr
 
 Sale de `docs/COMPARACION-CICLO-PEDIDO.md`, sección «Los estudios de Richard». En orden; sin los puntos 1 a 5 no se prueba en la calle.
 
-1. 🤖 **Autorizar al pedir y capturar al entregar** (captura manual en Stripe): las cancelaciones dejan de costar la comisión de Stripe. Cambia el circuito de pagos: se prueba completo antes de publicar y se anota en `VERIFICAR-PAGOS.md`.
-2. 🤖 **PIN de 4 dígitos para la entrega en mano**, en la app del cliente.
+1. ✅ (14 oct, sin probar en real) **Autorizar al pedir y capturar al entregar** (captura manual en Stripe): las cancelaciones dejan de costar la comisión de Stripe. Cambia el circuito de pagos: se prueba completo antes de publicar y se anota en `VERIFICAR-PAGOS.md`.
+2. ✅ (14 oct) **PIN de 4 dígitos para la entrega en mano**, opcional con interruptor (decisión de Richard: se apaga si recibe otra persona).
 3. 🤖 **Horarios reales del restaurante** (por día, cierre automático) y **modificadores de platos**.
 4. 🤖 **GPS serio**: precisión, dos muestras coherentes, excepción «no puedo confirmar mi ubicación» con autorización de soporte.
 5. 🤖 **Checklist de activación** del restaurante y **cola sin red** en la app del repartidor.

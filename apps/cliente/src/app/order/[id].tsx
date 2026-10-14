@@ -32,6 +32,8 @@ type Pedido = {
   entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
   notaEntrega?: string;
   llegaAMasTardar?: string | null;
+  pin?: string | null;
+  pinRequerido?: boolean;
   ajuste?: {
     platoId: string;
     nombreEs: string;
@@ -80,6 +82,9 @@ const T = {
     llega: 'Llega en unos',
     minutos: 'min',
     aMasTardar: 'A más tardar a las',
+    tuPin: 'Tu PIN para recibir',
+    tuPinAyuda:
+      'Díselo solo a quien reciba el pedido. El repartidor lo necesita para entregarlo en mano.',
     faltaTitulo: 'El restaurante no tiene «{plato}»',
     faltaTexto:
       'Elige qué hacer. Si no respondes en 5 minutos, lo quitamos y te devolvemos su parte.',
@@ -138,6 +143,9 @@ const T = {
     llega: 'Arriving in about',
     minutos: 'min',
     aMasTardar: 'Latest arrival by',
+    tuPin: 'Your PIN to receive',
+    tuPinAyuda:
+      'Share it only with whoever receives the order. The driver needs it to hand it over.',
     faltaTitulo: 'The restaurant is out of “{plato}”',
     faltaTexto:
       'Choose what to do. If you don’t answer in 5 minutes, we remove it and refund that part.',
@@ -384,6 +392,13 @@ export default function SeguirPedido() {
                     .replace('{monto}', formatearDolares(p.ajuste.devolucion ?? 0, idioma))}
                 </Text>
               ) : null}
+            </View>
+          ) : null}
+          {p.pin && p.estado !== 'entregado' && p.estado !== 'cancelado' ? (
+            <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.exito }]}>
+              <Text style={{ fontWeight: '700' }}>{t.tuPin}</Text>
+              <Text style={{ fontSize: 34, fontWeight: '800', letterSpacing: 6 }}>{p.pin}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.tuPinAyuda}</Text>
             </View>
           ) : null}
           {p.estado === 'en_camino' && (p.repartidor?.llego || p.repartidor?.casiLlega) ? (

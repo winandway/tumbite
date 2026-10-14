@@ -22,6 +22,7 @@ import { CON_AJUSTE, CON_EVIDENCIAS, type FilaPedido, aPedido, calcularSinPlato 
 import { zonaPara } from './zonas';
 import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
+import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
 import { formatearDolares } from '@tumbite/compartido';
 
@@ -86,6 +87,36 @@ function repartidorParaRestaurante(f: FilaPedido) {
     verificado: f.h_verificado != null,
     salio: estado === 'en_camino' || estado === 'entregado',
   };
+}
+
+/**
+ * Captura el cobro autorizado al pedir, por el total vigente. Si Stripe falla, la entrega no se
+ * cierra (se reintenta): nunca se acredita dinero a nadie sin haber cobrado.
+ */
+async function capturarCobro(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  pi: string,
+  total: number,
+) {
+  const cobro = await db
+    .prepare('SELECT capturado_en FROM cobros WHERE pedido_id = ?')
+    .bind(pedidoId)
+    .first<{ capturado_en: string | null }>();
+  if (!cobro || cobro.capturado_en || !pi) return;
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos('No pudimos cobrar en este momento. Intenta otra vez.', undefined, 503);
+  await stripe.post(
+    `/payment_intents/${pi}/capture`,
+    { amount_to_capture: total },
+    `captura-${pedidoId}`,
+  );
+  await db
+    .prepare("UPDATE cobros SET capturado_en = datetime('now'), capturado = ? WHERE pedido_id = ?")
+    .bind(total, pedidoId)
+    .run();
 }
 
 /** Quita al repartidor de un pedido sin entregar: vuelve a la fila de ofertas (a otros repartidores). */
@@ -1041,11 +1072,29 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         lng: z.number().min(-180).max(180),
         modo: z.literal('mano'),
         nota: z.string().trim().max(300).default(''),
+        pin: z.string().trim().optional(),
       }),
     );
     donde = { lat: d.lat, lng: d.lng };
     modo = 'mano';
     nota = d.nota;
+    // Si el cliente pidió PIN, quien recibe se lo da al repartidor; sin PIN correcto no se entrega.
+    const pinFila = await db
+      .prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ pin: string }>();
+    if (pinFila) {
+      if (!d.pin || d.pin !== pinFila.pin)
+        throw new ErrorDatos(
+          'El PIN no es correcto. Pídeselo a quien recibe el pedido: está en su app.',
+          'pin',
+          409,
+        );
+      await db
+        .prepare("UPDATE pines_entrega SET usado_en = datetime('now') WHERE pedido_id = ?")
+        .bind(id)
+        .run();
+    }
   }
   const casa = comoPunto(p.lat, p.lng);
   const metros = casa ? metrosEntre(donde, casa) : null;
@@ -1073,6 +1122,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       )
       .bind(id, donde.lat, donde.lng, metros, modo, nota)
       .run();
+  // Ahora sí se COBRA la tarjeta, por el total vigente (si se quitó un plato, menos).
+  await capturarCobro(c.env, db, id, String(p.stripe_pago ?? ''), Number(p.total));
   const entrega = Number(p.envio) + Number(p.complemento);
   await db.batch([
     db
@@ -1235,6 +1286,16 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
       restaurante: rest,
       minutosEstimados,
       llegaAMasTardar,
+      // Solo el cliente ve su PIN: se lo da a quien reciba el pedido.
+      pin:
+        f.cliente_id === u.id
+          ? ((
+              await base(c)
+                .prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
+                .bind(c.req.param('id'))
+                .first<{ pin: string }>()
+            )?.pin ?? null)
+          : null,
       repartidor: f.repartidor_id
         ? {
             // Solo el nombre de pila: la privacidad del repartidor también cuenta.

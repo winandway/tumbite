@@ -1263,3 +1263,283 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
     ).toBe(409);
   });
 });
+
+describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Registra cada llamada a Stripe (la red de mentira del escenario sigue respondiendo). */
+  function espiarStripe() {
+    const llamadas: { url: string; cuerpo: string }[] = [];
+    const original = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string | URL | Request, init?: RequestInit) => {
+      llamadas.push({ url: String(url), cuerpo: String(init?.body ?? '') });
+      return original(url, init);
+    });
+    return llamadas;
+  }
+
+  /** Un pedido como lo hace la app: se crea y la tarjeta queda AUTORIZADA (aviso firmado). */
+  async function pedidoAutorizado(
+    e: Awaited<ReturnType<typeof escenario>>,
+    entrega = 'puerta',
+    pin = true,
+  ) {
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const plato = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Sopa', nombreEn: 'Soup', precioCentavos: 900 },
+      e.dueno.token,
+    );
+    const p = await e.m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: rest.id,
+        lineas: [{ platoId: plato.datos.plato.id, cantidad: 2 }],
+        propinaCentavos: 300,
+        direccion: '300 Calle Prueba',
+        lat: 25.78,
+        lng: -80.2,
+        entrega,
+        pin,
+      },
+      e.cliente.token,
+    );
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'payment_intent.amount_capturable_updated',
+      data: {
+        object: {
+          id: 'cs_1',
+          amount_capturable: p.datos.desglose.totalCliente,
+          metadata: { pedido_id: p.datos.pedidoId },
+        },
+      },
+    });
+    const res = await e.m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cuerpo),
+      },
+      body: cuerpo,
+    });
+    expect(res.status).toBe(200);
+    return {
+      id: p.datos.pedidoId as string,
+      total: p.datos.desglose.totalCliente as number,
+      platoId: plato.datos.plato.id as string,
+    };
+  }
+  const estadoDe = async (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    (
+      await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ estado: string }>()
+    )?.estado;
+
+  it('la autorización marca pagado; cancelar antes de entregar anula la autorización, no reembolsa', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e);
+    expect(await estadoDe(e.m, id)).toBe('pagado');
+    const llamadas = espiarStripe();
+    expect(
+      (await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/rechazar`, {}, e.dueno.token))
+        .estado,
+    ).toBe(200);
+    expect(llamadas.some((l) => l.url.includes('/payment_intents/cs_1/cancel'))).toBe(true);
+    expect(llamadas.some((l) => l.url.includes('/refunds'))).toBe(false);
+    expect(await estadoDe(e.m, id)).toBe('cancelado');
+  });
+
+  it('entregar captura el total; si se quitó un plato, captura menos y no reembolsa', async () => {
+    const e = await escenario();
+    const { id, total, platoId } = await pedidoAutorizado(e);
+    // El restaurante marca el plato (2 unidades): queda vacío → se cancela todo. Mejor: pedido con dos platos.
+    const otro = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Pan', nombreEn: 'Bread', precioCentavos: 400 },
+      e.dueno.token,
+    );
+    void otro;
+    const llamadas = espiarStripe();
+    const rep = await e.repartidor('Rep Captura', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    expect(llamadas.some((l) => l.url.includes('/capture'))).toBe(false);
+    expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
+    const captura = llamadas.find((l) => l.url.includes('/payment_intents/cs_1/capture'));
+    expect(captura?.cuerpo).toContain(`amount_to_capture=${total}`);
+    expect(await estadoDe(e.m, id)).toBe('entregado');
+    expect(llamadas.some((l) => l.url.includes('/refunds'))).toBe(false);
+    void platoId;
+  });
+
+  it('plato quitado con cobro solo autorizado: no hay reembolso, y al entregar se captura el total nuevo', async () => {
+    const e = await escenario();
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const a = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Arroz', nombreEn: 'Rice', precioCentavos: 1500 },
+      e.dueno.token,
+    );
+    const b = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Jugo', nombreEn: 'Juice', precioCentavos: 500 },
+      e.dueno.token,
+    );
+    const p = await e.m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: rest.id,
+        lineas: [
+          { platoId: a.datos.plato.id, cantidad: 1 },
+          { platoId: b.datos.plato.id, cantidad: 1 },
+        ],
+        propinaCentavos: 300,
+        direccion: '300 Calle Prueba',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      e.cliente.token,
+    );
+    const id = p.datos.pedidoId as string;
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'payment_intent.amount_capturable_updated',
+      data: {
+        object: {
+          id: 'cs_1',
+          amount_capturable: p.datos.desglose.totalCliente,
+          metadata: { pedido_id: id },
+        },
+      },
+    });
+    await e.m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cuerpo),
+      },
+      body: cuerpo,
+    });
+    const llamadas = espiarStripe();
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/falta`,
+      { platoId: b.datos.plato.id },
+      e.dueno.token,
+    );
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/ajuste`,
+          { decision: 'quitar' },
+          e.cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(llamadas.some((l) => l.url.includes('/refunds'))).toBe(false);
+    const totalNuevo = Number(
+      (
+        await e.m.DB.prepare('SELECT total FROM pedidos WHERE id = ?')
+          .bind(id)
+          .first<{ total: number }>()
+      )?.total,
+    );
+    expect(totalNuevo).toBeLessThan(p.datos.desglose.totalCliente);
+    const rep = await e.repartidor('Rep Menos', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
+    const captura = llamadas.find((l) => l.url.includes('/capture'));
+    expect(captura?.cuerpo).toContain(`amount_to_capture=${totalNuevo}`);
+  });
+
+  it('PIN en mano: el cliente lo ve, el repartidor no; sin PIN correcto no se entrega; sin PIN pedido, en mano directo', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const seg = (
+      await e.m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, e.cliente.token)
+    ).datos.pedido;
+    expect(seg.pin).toMatch(/^\d{4}$/);
+    expect(seg.pinRequerido).toBe(true);
+    const rep = await e.repartidor('Rep Pin', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    const activo = (await e.m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token)).datos
+      .activo;
+    expect(activo.pinRequerido).toBe(true);
+    expect(activo.pin).toBeUndefined();
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001, modo: 'mano' };
+    expect(
+      (await e.m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, enCasa, rep.token))
+        .estado,
+    ).toBe(409);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/entregado`,
+          { ...enCasa, pin: '0000' },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(409);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/entregado`,
+          { ...enCasa, pin: seg.pin },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(200);
+
+    const e2 = await escenario();
+    const sinPin = await pedidoAutorizado(e2, 'mano', false);
+    const seg2 = (
+      await e2.m.llamar(
+        'GET',
+        `/datos/pedidos/${sinPin.id}/seguimiento`,
+        undefined,
+        e2.cliente.token,
+      )
+    ).datos.pedido;
+    expect(seg2.pin).toBeNull();
+    expect(seg2.pinRequerido).toBe(false);
+  });
+});

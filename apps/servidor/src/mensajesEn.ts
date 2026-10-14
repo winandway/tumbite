@@ -61,6 +61,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa foto no corresponde.', 'That photo isn’t valid here.'],
   ['Esa foto no es válida. Vuelve a subirla.', 'That photo isn’t valid. Please upload it again.'],
   ['Falta la foto. Tómala y vuelve a intentar.', 'The photo is missing. Take it and try again.'],
+  [
+    'El PIN no es correcto. Pídeselo a quien recibe el pedido: está en su app.',
+    'That PIN isn’t right. Ask the person receiving the order: it’s in their app.',
+  ],
+  [
+    'No pudimos cobrar en este momento. Intenta otra vez.',
+    'We couldn’t charge the card right now. Try again.',
+  ],
   ['Este pedido ya no tiene nada que decidir.', 'There’s nothing left to decide on this order.'],
   ['Este pedido ya cambió de estado.', 'This order already changed status.'],
   ['Este pedido ya no se puede cancelar.', 'This order can no longer be canceled.'],

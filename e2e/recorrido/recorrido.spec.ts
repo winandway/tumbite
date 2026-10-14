@@ -500,6 +500,12 @@ for (const idioma of ['en', 'es'] as const) {
       await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
       if (fotoCarrito) {
         await mapaListo(cli);
+        // Para Docs: cómo se ve «En mano» con el interruptor del PIN; luego vuelve a «En la puerta».
+        await cli.getByRole('radio', { name: L.enMano }).click();
+        await expect(cli.getByRole('switch', { name: L.pinTitulo })).toBeVisible();
+        await cli.getByRole('switch', { name: L.pinTitulo }).scrollIntoViewIfNeeded();
+        await foto(cli, 'cliente-carrito-mano');
+        await cli.getByRole('radio', { name: L.enPuerta }).click();
         await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
         await foto(cli, fotoCarrito);
       }
@@ -511,10 +517,10 @@ for (const idioma of ['en', 'es'] as const) {
       ]);
       expect(respuesta.status()).toBe(201);
       const c = (await respuesta.json()) as Cobro;
-      // El banco aprueba: aviso firmado de Stripe, como el de verdad.
-      await avisoStripe('payment_intent.succeeded', {
+      // El banco AUTORIZA la tarjeta (se cobra al entregar): aviso firmado de Stripe, como el de verdad.
+      await avisoStripe('payment_intent.amount_capturable_updated', {
         id: c.clientSecret.split('_secret')[0],
-        amount_received: c.desglose.totalCliente,
+        amount_capturable: c.desglose.totalCliente,
         metadata: { pedido_id: c.pedidoId },
       });
       // El dinero cuadra al centavo: lo que paga el cliente se reparte entero.

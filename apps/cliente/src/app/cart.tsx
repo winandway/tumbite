@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
@@ -37,6 +37,9 @@ const TE = {
     puertaAyuda: 'Sin contacto. El repartidor lo deja y te manda la foto.',
     mano: 'En mano',
     manoAyuda: 'Te lo entrega a ti. Sal a recibirlo cuando te avise.',
+    pinTitulo: 'Pedir un PIN de 4 dígitos al entregar',
+    pinAyuda:
+      'El PIN aparece en tu pedido y quien reciba se lo dice al repartidor. Apágalo si va a recibir otra persona y no quieres pasarle el PIN.',
   },
   en: {
     como: 'How do you want to receive it?',
@@ -44,6 +47,9 @@ const TE = {
     puertaAyuda: 'Contactless. The driver leaves it and sends you a photo.',
     mano: 'Hand it to me',
     manoAyuda: 'The driver hands it to you. Come out when they let you know.',
+    pinTitulo: 'Ask for a 4-digit PIN at delivery',
+    pinAyuda:
+      'The PIN shows in your order and whoever receives it tells the driver. Turn it off if someone else will receive it and you don’t want to pass the PIN along.',
   },
 } as const;
 
@@ -80,7 +86,7 @@ export default function PantallaCarrito() {
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
-    inicial: { direccion: '', notas: '', propinaOtra: '', entrega: 'puerta' },
+    inicial: { direccion: '', notas: '', propinaOtra: '', entrega: 'puerta', pin: 'si' },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
@@ -161,6 +167,7 @@ export default function PantallaCarrito() {
         direccion: b.valores.direccion,
         notas: b.valores.notas,
         entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
+        pin: b.valores.pin !== 'no',
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
@@ -283,6 +290,31 @@ export default function PantallaCarrito() {
           );
         })}
       </View>
+      {(b.valores.entrega || 'puerta') === 'mano' ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 12,
+            padding: 12,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#D6D6D6',
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontWeight: '800' }}>{te.pinTitulo}</Text>
+            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{te.pinAyuda}</Text>
+          </View>
+          <Switch
+            value={b.valores.pin !== 'no'}
+            onValueChange={(v) => b.cambiar('pin', v ? 'si' : 'no')}
+            accessibilityLabel={te.pinTitulo}
+            trackColor={{ true: C.exito, false: '#D6D6D6' }}
+          />
+        </View>
+      ) : null}
 
       <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.propina}</Text>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>

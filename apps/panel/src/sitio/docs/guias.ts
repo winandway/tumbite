@@ -68,10 +68,16 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En el carrito, antes de pagar, eliges «En la puerta» o «En mano».',
           'En la puerta: sin contacto. El repartidor lo deja y toma la foto de dónde quedó; tú la ves en tu pedido.',
-          'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto.',
+          'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto: la prueba es un PIN de 4 dígitos que aparece en tu pedido y que quien recibe le dice al repartidor. Sin el PIN correcto no se entrega.',
+          'El PIN es opcional: si va a recibir otra persona (un familiar, el portero) y no quieres pasarle el PIN, apágalo con el interruptor al pedir. Entonces se entrega en mano sin PIN.',
           'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido.',
         ],
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-carrito-mano-es.webp',
+            alt: 'Carrito con «En mano» elegido y el interruptor «Pedir un PIN de 4 dígitos al entregar» encendido.',
+            pie: 'En mano: puedes pedir un PIN o apagarlo si recibe otra persona.',
+          },
           {
             src: '/docs/recorrido-cliente-chat-es.webp',
             alt: 'Pedido en camino en la app del cliente, con el chat para escribirle al repartidor y la hora de llegada a más tardar.',
@@ -80,6 +86,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: [
           '¿Pueden dejar mi pedido en la puerta?',
+          '¿Qué es el PIN de entrega y cómo lo apago?',
           '¿Cómo pido que me lo entreguen en mano?',
           '¿Qué pasa si no estoy cuando llega el repartidor?',
         ],
@@ -836,7 +843,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Qué pasa desde que el cliente paga hasta que la comida llega a su puerta, quién hace qué en cada momento y cómo se reparte el dinero.',
         explicacion: [
-          'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, el pedido llega al restaurante con una alarma y un semáforo en verde.',
+          'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, la tarjeta solo queda autorizada: el cobro de verdad se hace cuando te entregan (si el pedido se cancela antes, no hay nada que devolver). El pedido llega al restaurante con una alarma y un semáforo en verde.',
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
           'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor toma la foto del pedido cerrado y el restaurante la confirma en su pantalla: recién ahí sale. Al llegar a la puerta, el repartidor toma la foto de la entrega. El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
           'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
@@ -1279,10 +1286,16 @@ const en: SeccionDocs[] = [
         explicacion: [
           'In the cart, before paying, choose “Leave at my door” or “Hand it to me.”',
           'At the door: contactless. The driver leaves it and photographs where it was left; you see the photo in your order.',
-          'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case.',
+          'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case: the proof is a 4-digit PIN that shows in your order and that whoever receives tells the driver. Without the right PIN it isn’t handed over.',
+          'The PIN is optional: if someone else will receive it (a relative, the doorman) and you don’t want to pass the PIN along, turn it off with the switch when ordering. Then it’s handed over without a PIN.',
           'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order.',
         ],
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-carrito-mano-en.webp',
+            alt: 'Cart with “Hand it to me” selected and the “Ask for a 4-digit PIN at delivery” switch on.',
+            pie: 'In hand: ask for a PIN, or turn it off if someone else receives it.',
+          },
           {
             src: '/docs/recorrido-cliente-chat-en.webp',
             alt: 'Order on the way in the customer app, with the chat to message the driver and the latest arrival time.',
@@ -1291,6 +1304,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: [
           'Can they leave my order at the door?',
+          'What is the delivery PIN and how do I turn it off?',
           'How do I ask for it to be handed to me?',
           'What if I’m not there when the driver arrives?',
         ],
@@ -2042,7 +2056,7 @@ const en: SeccionDocs[] = [
         resumen:
           'What happens from the moment the customer pays until the food reaches the door, who does what at each step, and how the money is split.',
         explicacion: [
-          'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. Once they pay, the order reaches the restaurant with an alarm and a green traffic light.',
+          'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. When they pay, the card is only authorized: the actual charge happens when the order is delivered (if it’s canceled before that, there’s nothing to refund). The order reaches the restaurant with an alarm and a green traffic light.',
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
           'When the food is ready, the restaurant taps “Ready!” The driver takes a photo of the closed order and the restaurant confirms it on their screen: only then does it go out. At the door, the driver takes the delivery photo. The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
           'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $2.37, out of which it pays the card processing fee.',
