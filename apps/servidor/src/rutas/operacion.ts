@@ -2,7 +2,11 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   type Muestra,
+  BONO_OFERTA_ABIERTA,
+  OPCIONES_COCINA_OCUPADA,
+  PEDIDOS_PARA_PROMEDIO,
   RADIO_LLEGADA_M,
+  RECHAZOS_PARA_ABRIR,
   celdasVecinas,
   llegadaConfiable,
   saltoImposible,
@@ -13,6 +17,7 @@ import {
   minutosDeViaje,
   minutosParaListo,
   nivelDe,
+  prepSugerida,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
@@ -48,6 +53,9 @@ const CON_HITOS = `(SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.i
   (SELECT valor FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'espera_evitable') AS h_espera,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'verificado') AS h_verificado,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'no_aparece') AS h_no_aparece`;
+
+/** Bono de la oferta abierta (centavos), si el pedido lo tiene. */
+const CON_BONO = `COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0) AS bono`;
 
 /** «No puedo confirmar mi ubicación»: pedida (sin autorizar) o autorizada por soporte. */
 const CON_EXCEPCION = `(SELECT CASE WHEN x.autorizado_en IS NULL THEN 'pedida' ELSE 'autorizada' END FROM excepciones_ubicacion x WHERE x.pedido_id = p.id) AS excepcion_ubicacion`;
@@ -318,7 +326,59 @@ operacion.get('/restaurante/pedidos', async (c) => {
     .all<FilaPedido>();
   return c.json({
     pedidos: results.map((f) => ({ ...aPedido(f), repartidor: repartidorParaRestaurante(f) })),
+    ...(await cocinaDe(base(c), rid)),
   });
+});
+
+/**
+ * El tiempo sugerido al aceptar (promedio real de los últimos pedidos, de aceptado a listo) y los
+ * minutos de «cocina ocupada» que el restaurante tenga puestos.
+ */
+async function cocinaDe(db: D1Database, rid: string) {
+  const { results } = await db
+    .prepare(
+      `SELECT (julianday(listo_en) - julianday(aceptado_en)) * 1440 AS minutos FROM pedidos
+       WHERE restaurante_id = ? AND listo_en IS NOT NULL AND aceptado_en IS NOT NULL ORDER BY listo_en DESC LIMIT ?`,
+    )
+    .bind(rid, PEDIDOS_PARA_PROMEDIO)
+    .all<{ minutos: number }>();
+  const r = await db
+    .prepare(
+      'SELECT r.tiempo_prep_min, COALESCE((SELECT extra_min FROM cocina_ocupada c WHERE c.restaurante_id = r.id), 0) AS extra FROM restaurantes r WHERE r.id = ?',
+    )
+    .bind(rid)
+    .first<{ tiempo_prep_min: number; extra: number }>();
+  const extra = Number(r?.extra ?? 0);
+  return {
+    cocinaOcupada: extra,
+    prepSugerida: prepSugerida(
+      results.map((x) => Number(x.minutos)),
+      Number(r?.tiempo_prep_min ?? 20),
+      extra,
+    ),
+  };
+}
+
+/** «Cocina ocupada»: 0, 10 o 20 minutos extra sobre el tiempo sugerido de los pedidos nuevos. */
+operacion.patch('/restaurante/cocina', async (c) => {
+  const rid = await miRestauranteId(c);
+  const { extraMin } = await leerCuerpo(
+    c,
+    z.object({
+      extraMin: z
+        .number()
+        .int()
+        .refine((n) => OPCIONES_COCINA_OCUPADA.includes(n as 0)),
+    }),
+  );
+  const db = base(c);
+  await db
+    .prepare(
+      "INSERT OR REPLACE INTO cocina_ocupada (restaurante_id, extra_min, desde) VALUES (?, ?, datetime('now'))",
+    )
+    .bind(rid, extraMin)
+    .run();
+  return c.json(await cocinaDe(db, rid));
 });
 
 async function cambiarEstado(
@@ -644,7 +704,7 @@ async function miFicha(c: Ctx) {
 async function entregaActiva(db: D1Database, repartidorId: string) {
   return db
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_EXCEPCION}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_EXCEPCION}, ${CON_BONO}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
     )
     .bind(repartidorId)
@@ -804,34 +864,54 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
       : [];
     if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
-    const elegido = candidatos[0];
-    if (!elegido) continue;
-    ocupados.add(elegido.id);
-    await db
-      .prepare(
-        "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado) VALUES (?, ?, 'ofrecida')",
-      )
-      .bind(p.id, elegido.id)
-      .run();
-    if (env) {
-      const rep = await db
-        .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-        .bind(elegido.id)
-        .first<{ idioma: string }>();
-      const i = rep?.idioma === 'en' ? 'en' : 'es';
-      const km =
-        p.lat != null && p.lng != null
-          ? distanciaKm(
-              { lat: elegido.lat, lng: elegido.lng },
-              { lat: Number(p.lat), lng: Number(p.lng) },
-            )
-          : 0;
-      await notificar(
-        env,
-        db,
-        elegido.id,
-        AVISOS.ofertaNueva(i, formatearDolares(Number(p.pago_repartidor ?? 0), i), km.toFixed(1)),
-      );
+    if (!candidatos.length) continue;
+    // Oferta abierta: a los 3 rechazos (o vencimientos) se ofrece a todos a la vez con un bono
+    // que paga Tumbite. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
+    let bono = 0;
+    if (vistos.size >= RECHAZOS_PARA_ABRIR) {
+      bono = BONO_OFERTA_ABIERTA;
+      const r = await db
+        .prepare(
+          "INSERT OR IGNORE INTO bonos_pedido (pedido_id, centavos, motivo) VALUES (?, ?, 'oferta_abierta')",
+        )
+        .bind(p.id, bono)
+        .run();
+      if (r.meta.changes)
+        await anotarEvento(db, p.id, 'oferta_abierta', `${vistos.size} rechazos, bono $1`);
+    }
+    const elegidos = bono ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
+    for (const elegido of elegidos) {
+      ocupados.add(elegido.id);
+      await db
+        .prepare(
+          "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado) VALUES (?, ?, 'ofrecida')",
+        )
+        .bind(p.id, elegido.id)
+        .run();
+      if (env) {
+        const rep = await db
+          .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+          .bind(elegido.id)
+          .first<{ idioma: string }>();
+        const i = rep?.idioma === 'en' ? 'en' : 'es';
+        const km =
+          p.lat != null && p.lng != null
+            ? distanciaKm(
+                { lat: elegido.lat, lng: elegido.lng },
+                { lat: Number(p.lat), lng: Number(p.lng) },
+              )
+            : 0;
+        await notificar(
+          env,
+          db,
+          elegido.id,
+          AVISOS.ofertaNueva(
+            i,
+            formatearDolares(Number(p.pago_repartidor ?? 0) + bono, i),
+            km.toFixed(1),
+          ),
+        );
+      }
     }
   }
 }
@@ -866,7 +946,9 @@ function conDatosRestaurante(f: FilaPedido) {
       lat: f.rest_lat == null ? null : Number(f.rest_lat),
       lng: f.rest_lng == null ? null : Number(f.rest_lng),
     },
-    pagoRepartidor: Number(f.pago_repartidor),
+    // El bono de la oferta abierta se suma a lo que gana (lo paga Tumbite al entregar).
+    pagoRepartidor: Number(f.pago_repartidor) + Number(f.bono ?? 0),
+    bono: Number(f.bono ?? 0),
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
     // Lo que la app del repartidor necesita saber de sus propios pasos.
     verificado: f.h_verificado != null,
@@ -887,7 +969,7 @@ operacion.get('/repartidor/ofertas', async (c) => {
   await repartirOfertas(db, c.env);
   const { results } = await db
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono, o.creada_en AS oferta_en
+      `SELECT p.*, ${CON_BONO}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono, o.creada_en AS oferta_en
       FROM ofertas o JOIN pedidos p ON p.id = o.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE o.repartidor_id = ? AND o.estado = 'ofrecida' AND p.repartidor_id IS NULL`,
     )
@@ -922,10 +1004,17 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     .bind(u.id, id)
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Otro repartidor ya tomó este pedido.', undefined, 409);
-  await db
-    .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
-    .bind(id, u.id)
-    .run();
+  await db.batch([
+    db
+      .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
+      .bind(id, u.id),
+    // En la oferta abierta la vieron varios: a los demás se les quita.
+    db
+      .prepare(
+        "UPDATE ofertas SET estado = 'vencida' WHERE pedido_id = ? AND estado = 'ofrecida' AND repartidor_id != ?",
+      )
+      .bind(id, u.id),
+  ]);
   const v = await db
     .prepare('SELECT vehiculo_tipo, color, placa FROM repartidor_datos WHERE usuario_id = ?')
     .bind(u.id)
@@ -1159,7 +1248,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   const id = c.req.param('id');
   const p = await db
     .prepare(
-      `SELECT p.*, ${CON_HITOS}, ${CON_EXCEPCION}, r.dueno_id, (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'`,
+      `SELECT p.*, ${CON_HITOS}, ${CON_EXCEPCION}, ${CON_BONO}, r.dueno_id, (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'`,
     )
     .bind(id, u.id)
     .first<Record<string, unknown>>();
@@ -1246,7 +1335,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       .run();
   // Ahora sí se COBRA la tarjeta, por el total vigente (si se quitó un plato, menos).
   await capturarCobro(c.env, db, id, String(p.stripe_pago ?? ''), Number(p.total));
-  const entrega = Number(p.envio) + Number(p.complemento);
+  // Lo que gana el repartidor: envío + complemento + el bono de la oferta abierta (si lo hubo).
+  const entrega = Number(p.envio) + Number(p.complemento) + Number(p.bono ?? 0);
   await db.batch([
     db
       .prepare(

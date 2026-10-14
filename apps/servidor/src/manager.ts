@@ -25,7 +25,7 @@ export const REGLAS = {
   /** Minutos que tiene el cliente para decidir sobre un plato agotado; después se quita solo. */
   ajusteSinRespuesta: 5,
   /** Minutos desde que el restaurante aceptó sin que ningún repartidor tome el pedido. */
-  sinRepartidor: 15,
+  sinRepartidor: 5,
 } as const;
 
 /** Anota un evento del Manager; devuelve false si ya estaba (así el aviso no se repite). */

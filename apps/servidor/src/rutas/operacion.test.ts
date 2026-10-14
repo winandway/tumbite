@@ -489,7 +489,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     expect(s.datos.pedido.motivoCancelacion).toBe('sin_respuesta');
   });
 
-  it('un pedido aceptado sin repartidor avisa una sola vez a los 15 minutos', async () => {
+  it('un pedido aceptado sin repartidor avisa al equipo una sola vez a los 5 minutos', async () => {
     const { m, dueno, pedidoPagado } = await escenario();
     const { vigilarPedidos } = await import('../manager');
     const env = { DB: m.DB } as never;
@@ -497,7 +497,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     contarReembolsos();
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(0);
-    await atrasar(m, id, 'aceptado_en', 16);
+    await atrasar(m, id, 'aceptado_en', 6);
     expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(1);
     expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(0);
   });
@@ -1804,5 +1804,101 @@ describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de
     expect(ficha2.datos.pedido.bitacora.map((b: { evento: string }) => b.evento)).toEqual(
       expect.arrayContaining(['ubicacion_sin_confirmar', 'ubicacion_autorizada']),
     );
+  });
+});
+
+describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina ocupada (C-DESPACHO-COMPLETO)', () => {
+  it('a los 3 rechazos se ofrece a todos con bono de $1, uno acepta y lo cobra al entregar', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const reps = [];
+    for (const n of ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco'])
+      reps.push(await repartidor(`${n} Rechaza`, 25.771, -80.191));
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    const ofertasDe = async (token: string) =>
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, token)).datos.ofertas;
+    // Tres rechazan, uno por uno (cada GET reparte al siguiente).
+    for (let i = 0; i < 3; i++) {
+      let quien = null;
+      for (const r of reps) {
+        const o = await ofertasDe(r.token);
+        if (o.length) {
+          quien = r;
+          expect(o[0].bono).toBe(0);
+          break;
+        }
+      }
+      expect(quien).toBeTruthy();
+      await m.llamar('POST', `/datos/repartidor/ofertas/${id}/rechazar`, {}, quien!.token);
+    }
+    // Ahora la ven todos los que quedan, con bono.
+    await ofertasDe(reps[0]!.token); // dispara el reparto
+    const abiertas = [];
+    for (const r of reps) {
+      const o = await ofertasDe(r.token);
+      if (o.length) abiertas.push({ r, o: o[0] });
+    }
+    expect(abiertas).toHaveLength(2);
+    expect(abiertas[0]!.o.bono).toBe(100);
+    const sinBono = (await m.DB.prepare('SELECT pago_repartidor FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ pago_repartidor: number }>())!.pago_repartidor;
+    expect(abiertas[0]!.o.pagoRepartidor).toBe(sinBono + 100);
+    const gana = abiertas[0]!.r;
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, gana.token);
+    // Al otro se le quita.
+    expect(await ofertasDe(abiertas[1]!.r.token)).toHaveLength(0);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, gana.token, dueno.token);
+    expect((await m.entregar(id, gana.token)).estado).toBe(200);
+    const mov = await m.DB.prepare(
+      "SELECT monto FROM movimientos WHERE pedido_id = ? AND usuario_id = ? AND concepto = 'entrega'",
+    )
+      .bind(id, gana.id)
+      .first<{ monto: number }>();
+    const p = await m.DB.prepare('SELECT envio, complemento FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ envio: number; complemento: number }>();
+    expect(mov!.monto).toBe(p!.envio + p!.complemento + 100);
+    const bitacora = await m.DB.prepare(
+      "SELECT 1 FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'oferta_abierta'",
+    )
+      .bind(id)
+      .first();
+    expect(bitacora).toBeTruthy();
+  });
+
+  it('el tiempo sugerido sale del promedio real y «cocina ocupada» le suma minutos', async () => {
+    const { m, dueno, pedidoPagado } = await escenario();
+    // Sin historial: el configurado del restaurante (20).
+    let lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    expect(lista.datos).toMatchObject({ prepSugerida: 20, cocinaOcupada: 0 });
+    // Tres pedidos que tardaron 27, 23 y 25 minutos de verdad.
+    for (const min of [27, 23, 25]) {
+      const id = await pedidoPagado();
+      await m.llamar(
+        'POST',
+        `/datos/restaurante/pedidos/${id}/aceptar`,
+        { minutos: 15 },
+        dueno.token,
+      );
+      await m.DB.prepare(
+        `UPDATE pedidos SET aceptado_en = datetime('now','-${min} minutes'), listo_en = datetime('now'), estado = 'listo' WHERE id = ?`,
+      )
+        .bind(id)
+        .run();
+    }
+    lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    expect(lista.datos.prepSugerida).toBe(25);
+    const ocupada = await m.llamar(
+      'PATCH',
+      '/datos/restaurante/cocina',
+      { extraMin: 10 },
+      dueno.token,
+    );
+    expect(ocupada.datos).toMatchObject({ prepSugerida: 35, cocinaOcupada: 10 });
+    expect(
+      (await m.llamar('PATCH', '/datos/restaurante/cocina', { extraMin: 7 }, dueno.token)).estado,
+    ).toBe(400);
   });
 });

@@ -618,6 +618,17 @@ for (const idioma of ['en', 'es'] as const) {
         await foto(p, nombre);
       }
     };
+    // Cocina ocupada: +10 minutos sube el tiempo sugerido (20 → 30); después vuelve a normal.
+    const cocina = panel.getByLabel(L.cocina);
+    await cocina.getByRole('button', { name: `+10 ${L.min}` }).click();
+    await expect(
+      panel.getByRole('button', { name: `${L.aceptar} · 30 ${L.min} · ${L.sugerido}` }),
+    ).toBeVisible({ timeout: 20_000 });
+    await foto(panel, 'restaurante-cocina-ocupada');
+    await cocina.getByRole('button', { name: idioma === 'en' ? 'Normal' : 'Normal' }).click();
+    await expect(
+      panel.getByRole('button', { name: `${L.aceptar} · 20 ${L.min} · ${L.sugerido}` }),
+    ).toBeVisible({ timeout: 20_000 });
     await panel.getByRole('button', { name: `${L.aceptar} · 20` }).click();
     await expect(panel.getByRole('button', { name: L.listo })).toBeVisible();
     await foto(panel, 'restaurante-pedido-aceptado');
@@ -629,6 +640,13 @@ for (const idioma of ['en', 'es'] as const) {
       timeout: 30_000,
     });
     await foto(rep, 'repartidor-oferta');
+    // Oferta abierta con bono: cuando tres repartidores la dejaron pasar, se ofrece a todos con
+    // $1 extra (aquí se simula el bono en la base para verla en pantalla).
+    sql(
+      `INSERT OR IGNORE INTO bonos_pedido (pedido_id, centavos, motivo) VALUES ('${cobro.pedidoId}', 100, 'oferta_abierta')`,
+    );
+    await expect(rep.getByText(L.bono, { exact: false })).toBeVisible({ timeout: 20_000 });
+    await foto(rep, 'repartidor-oferta-bono');
     await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
     const tomarFoto = async (boton: string, archivo: string) => {
       const [selector] = await Promise.all([

@@ -33,3 +33,26 @@ export function minutosParaListo(
 export function debeOfrecer(minutosQueFaltan: number, km: number): boolean {
   return minutosQueFaltan <= minutosDeViaje(km) + MARGEN_DESPACHO_MIN;
 }
+
+/** Rechazos (o vencimientos) seguidos a partir de los cuales el pedido se ofrece a todos con bono. */
+export const RECHAZOS_PARA_ABRIR = 3;
+/** Bono (centavos) que paga Tumbite al repartidor que toma un pedido que nadie quiso. */
+export const BONO_OFERTA_ABIERTA = 100;
+/** Minutos extra que el restaurante puede sumar con «cocina ocupada». */
+export const OPCIONES_COCINA_OCUPADA = [0, 10, 20] as const;
+/** Cuántos pedidos entregados se miran para el promedio real de cocina. */
+export const PEDIDOS_PARA_PROMEDIO = 20;
+
+/**
+ * Tiempo de preparación sugerido al aceptar: el promedio real de los últimos pedidos (de aceptado
+ * a listo), redondeado a 5 y entre 10 y 60; con menos de 3 pedidos de historial, el que el
+ * restaurante tiene configurado. «Cocina ocupada» le suma sus minutos.
+ */
+export function prepSugerida(minutosReales: number[], porDefecto = 20, extra = 0): number {
+  const base =
+    minutosReales.length >= 3
+      ? minutosReales.reduce((a, b) => a + b, 0) / minutosReales.length
+      : porDefecto;
+  const redondo = Math.round(base / 5) * 5;
+  return Math.min(120, Math.min(60, Math.max(10, redondo)) + extra);
+}

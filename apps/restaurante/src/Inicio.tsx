@@ -15,6 +15,7 @@ import {
   textoLinea,
   type OpcionElegida,
   textoActivacion,
+  OPCIONES_COCINA_OCUPADA,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -96,6 +97,10 @@ const T = {
     estados: { entregado: 'Entregado', cancelado: 'Cancelado' } as Record<string, string>,
     sinRest: 'Completa tu restaurante en tumbite.com/panel para empezar.',
     tiempo: '¿En cuánto estará listo?',
+    sugerido: 'sugerido',
+    cocina: 'Cocina ocupada',
+    cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
+    normal: 'Normal',
   },
   en: {
     titulo: 'Orders',
@@ -137,6 +142,10 @@ const T = {
     estados: { entregado: 'Delivered', cancelado: 'Canceled' } as Record<string, string>,
     sinRest: 'Set up your restaurant at tumbite.com/panel to get started.',
     tiempo: 'Ready in how long?',
+    sugerido: 'suggested',
+    cocina: 'Busy kitchen',
+    cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
+    normal: 'Normal',
   },
 };
 
@@ -160,6 +169,7 @@ export function Inicio() {
   const alarma = useAudioPlayer(sonidoAlarma);
   const estadoAlarma = useAudioPlayerStatus(alarma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
   const [rest, setRest] = useState<Restaurante | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [menuDe, setMenuDe] = useState<string | null>(null);
@@ -167,10 +177,14 @@ export function Inicio() {
   const cargar = useCallback(async () => {
     try {
       const [p, r] = await Promise.all([
-        api.pedir<{ pedidos: Pedido[] }>('GET', '/datos/restaurante/pedidos'),
+        api.pedir<{ pedidos: Pedido[]; prepSugerida: number; cocinaOcupada: number }>(
+          'GET',
+          '/datos/restaurante/pedidos',
+        ),
         api.pedir<{ restaurante: Restaurante | null }>('GET', '/datos/mi-restaurante'),
       ]);
       setPedidos(p.pedidos);
+      setCocina({ prepSugerida: p.prepSugerida, cocinaOcupada: p.cocinaOcupada });
       setRest(r.restaurante);
       setError('');
     } catch (x) {
@@ -420,6 +434,48 @@ export function Inicio() {
             ))}
         </View>
       ) : null}
+      {rest ? (
+        <View style={e.tarjeta}>
+          <Text style={{ fontWeight: '800' }}>{t.cocina}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cocinaAyuda}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+            {OPCIONES_COCINA_OCUPADA.map((min) => (
+              <Pressable
+                key={min}
+                onPress={() =>
+                  void api
+                    .pedir<{ prepSugerida: number; cocinaOcupada: number }>(
+                      'PATCH',
+                      '/datos/restaurante/cocina',
+                      { extraMin: min },
+                    )
+                    .then(setCocina)
+                    .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`${t.cocina}: ${min ? `+${min} ${t.minutos}` : t.normal}`}
+                style={{
+                  borderWidth: 1,
+                  borderColor: cocina.cocinaOcupada === min ? C.primario : '#D6D6D6',
+                  backgroundColor: cocina.cocinaOcupada === min ? C.primario : '#fff',
+                  borderRadius: 999,
+                  paddingHorizontal: 14,
+                  paddingVertical: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    fontWeight: '700',
+                    color: cocina.cocinaOcupada === min ? '#fff' : C.secundario,
+                  }}
+                >
+                  {min ? `+${min} ${t.minutos}` : t.normal}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
       {error ? <Text style={e.error}>{error}</Text> : null}
       {pedidos.length === 0 && <Text style={e.tarjeta}>{t.vacio}</Text>}
       {seccion(
@@ -430,26 +486,29 @@ export function Inicio() {
             <>
               <Text style={{ fontWeight: '700' }}>{t.tiempo}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {TIEMPOS.map((m) => (
-                  <Pressable
-                    key={m}
-                    onPress={() =>
-                      void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t.aceptar} ${m} ${t.minutos}`}
-                    style={{
-                      backgroundColor: C.primario,
-                      borderRadius: 12,
-                      paddingVertical: 14,
-                      paddingHorizontal: 16,
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-                      {t.aceptar} · {m} {t.minutos}
-                    </Text>
-                  </Pressable>
-                ))}
+                {[cocina.prepSugerida, ...TIEMPOS.filter((m) => m !== cocina.prepSugerida)].map(
+                  (m) => (
+                    <Pressable
+                      key={m}
+                      onPress={() =>
+                        void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t.aceptar} ${m} ${t.minutos}${m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}`}
+                      style={{
+                        backgroundColor: m === cocina.prepSugerida ? '#0D7A3A' : C.primario,
+                        borderRadius: 12,
+                        paddingVertical: 14,
+                        paddingHorizontal: 16,
+                      }}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
+                        {t.aceptar} · {m} {t.minutos}
+                        {m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}
+                      </Text>
+                    </Pressable>
+                  ),
+                )}
               </View>
             </>
           ),

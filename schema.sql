@@ -532,3 +532,19 @@ CREATE TABLE IF NOT EXISTS excepciones_ubicacion (
   autorizado_en TEXT,
   autorizado_por TEXT
 );
+
+-- Oferta abierta con bono: cuando tres repartidores rechazaron (o dejaron vencer) un pedido, se
+-- ofrece a todos a la vez con un bono que paga Tumbite. Se acredita al entregar.
+CREATE TABLE IF NOT EXISTS bonos_pedido (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  centavos INTEGER NOT NULL,
+  motivo TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- «Cocina ocupada»: minutos extra que el restaurante suma al tiempo sugerido de los pedidos nuevos.
+CREATE TABLE IF NOT EXISTS cocina_ocupada (
+  restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
+  extra_min INTEGER NOT NULL DEFAULT 0,
+  desde TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -368,6 +368,34 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'busy-kitchen-and-suggested-time',
+        titulo: 'El tiempo sugerido al aceptar y «Cocina ocupada»',
+        resumen:
+          'Al aceptar un pedido, el primer botón (en verde) es el tiempo sugerido: el promedio real de tu cocina. Si estás a tope, «Cocina ocupada» suma 10 o 20 minutos a todos los pedidos nuevos.',
+        explicacion: [
+          'Cuando entra un pedido eliges en cuánto estará listo. El primer botón, en verde y marcado «sugerido», es lo que tu cocina tarda de verdad: el promedio de tus últimos 20 pedidos, de aceptado a listo, redondeado a 5 minutos. Mientras no tengas historial, es el tiempo que configuraste en tu ficha.',
+          'Con el tiempo bien puesto, el repartidor llega justo cuando la comida está lista: ni espera en tu local ni la comida se enfría en el mostrador.',
+          'Si la cocina está a tope (viernes por la noche, un evento), toca «Cocina ocupada» y elige +10 o +20 minutos: se suman al tiempo sugerido de los pedidos nuevos hasta que vuelvas a «Normal». Lo ves en el panel y en la app.',
+          'Si después de aceptar necesitas más tiempo, sigues teniendo el botón «+5 min» mientras no haya repartidor asignado.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-cocina-ocupada-es.webp',
+            alt: 'Panel de pedidos del restaurante con «Cocina ocupada» en +10 min y el botón verde «Aceptar · 30 min · sugerido» en el pedido nuevo.',
+            pie: 'Con «Cocina ocupada» en +10, el tiempo sugerido sube solo.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo sé cuántos minutos poner al aceptar un pedido?',
+          '¿Qué hago si la cocina está a tope?',
+        ],
+        pasos: [
+          'Al aceptar, toca el botón verde «sugerido» (o elige otro tiempo).',
+          'Si estás a tope, toca «Cocina ocupada» → «+10 min» o «+20 min».',
+          'Cuando se calme, vuelve a «Normal».',
+        ],
+      },
+      {
         id: 'hours',
         titulo: 'Tu horario: abres y cierras solo',
         resumen:
@@ -927,6 +955,31 @@ const es: SeccionDocs[] = [
           'Toma la foto de la entrega como siempre.',
           'Si no hay señal, verás «Pendiente de confirmar». Sigue con tu día.',
           'Al volver la señal, la app la envía sola y te avisa.',
+        ],
+      },
+      {
+        id: 'open-offer-bonus',
+        titulo: 'Bono por tomar un pedido que otros dejaron pasar',
+        resumen:
+          'Si tres repartidores rechazan o dejan vencer un pedido, se ofrece a todos a la vez con 1 dólar extra. Quien lo entrega, lo cobra.',
+        explicacion: [
+          'Normalmente cada pedido se ofrece a un solo repartidor a la vez, el más cercano, con 60 segundos para aceptar. Rechazar no castiga.',
+          'Si tres lo dejan pasar, el pedido pasa a «oferta abierta»: lo ven todos los repartidores libres de la zona al mismo tiempo, con un bono de 1 dólar que paga Tumbite. En la tarjeta de la oferta dice «Incluye un bono de $1».',
+          'El primero que acepta se lo lleva; a los demás se les quita de la pantalla. El bono se suma a tu ganancia cuando entregas.',
+          'Además, si un pedido lleva 5 minutos sin repartidor, nuestro equipo recibe una alerta para ayudar a resolverlo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-oferta-bono-es.webp',
+            alt: 'Oferta en la app del repartidor con lo que gana y la línea verde «Incluye un bono de $1.00 por tomar un pedido que otros dejaron pasar».',
+            pie: 'La oferta abierta muestra el bono antes de aceptar.',
+          },
+        ],
+        preguntas: ['¿Por qué una oferta trae un bono?', '¿Qué pasa si nadie acepta un pedido?'],
+        pasos: [
+          'Mira la oferta: si dice «Incluye un bono», ganas 1 dólar más.',
+          'Acepta antes que los demás: el primero se lo lleva.',
+          'Entrega como siempre; el bono entra con tu pago.',
         ],
       },
       {
@@ -1748,6 +1801,34 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'busy-kitchen-and-suggested-time',
+        titulo: 'The suggested time when accepting, and “Busy kitchen”',
+        resumen:
+          'When you accept an order, the first button (in green) is the suggested time: your kitchen’s real average. If you’re slammed, “Busy kitchen” adds 10 or 20 minutes to every new order.',
+        explicacion: [
+          'When an order comes in you choose how soon it will be ready. The first button, in green and marked “suggested,” is what your kitchen really takes: the average of your last 20 orders, from accepted to ready, rounded to 5 minutes. Until you have history, it’s the time set on your profile.',
+          'With the time set right, the driver arrives just as the food is ready: no waiting at your counter and no food getting cold.',
+          'If the kitchen is slammed (Friday night, an event), tap “Busy kitchen” and choose +10 or +20 minutes: they’re added to the suggested time for new orders until you switch back to “Normal.” You see it in the panel and in the app.',
+          'If you need more time after accepting, you still have the “+5 min” button as long as no driver has been assigned.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-cocina-ocupada-en.webp',
+            alt: 'Restaurant orders panel with “Busy kitchen” set to +10 min and the green “Accept · 30 min · suggested” button on the new order.',
+            pie: 'With “Busy kitchen” at +10, the suggested time goes up on its own.',
+          },
+        ],
+        preguntas: [
+          'How do I know how many minutes to set when accepting an order?',
+          'What do I do if the kitchen is slammed?',
+        ],
+        pasos: [
+          'When accepting, tap the green “suggested” button (or pick another time).',
+          'If you’re slammed, tap “Busy kitchen” → “+10 min” or “+20 min.”',
+          'When things calm down, switch back to “Normal.”',
+        ],
+      },
+      {
         id: 'hours',
         titulo: 'Your hours: open and close on their own',
         resumen:
@@ -2307,6 +2388,34 @@ const en: SeccionDocs[] = [
           'Take the delivery photo as usual.',
           'If there’s no signal, you’ll see “Pending confirmation.” Carry on with your day.',
           'When the signal is back, the app sends it on its own and lets you know.',
+        ],
+      },
+      {
+        id: 'open-offer-bonus',
+        titulo: 'Bonus for taking an order others passed on',
+        resumen:
+          'If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.',
+        explicacion: [
+          'Normally each order is offered to one driver at a time, the closest one, with 60 seconds to accept. Declining doesn’t count against you.',
+          'If three drivers pass on it, the order becomes an “open offer”: every available driver in the area sees it at the same time, with a 1-dollar bonus paid by Tumbite. The offer card says “Includes a bonus of $1.”',
+          'The first to accept takes it; it disappears from everyone else’s screen. The bonus is added to your earnings when you deliver.',
+          'Also, if an order goes 5 minutes without a driver, our team gets an alert to help sort it out.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-oferta-bono-en.webp',
+            alt: 'Offer in the driver app showing the earnings and the green line “Includes a bonus of $1.00 for taking an order others passed on.”',
+            pie: 'The open offer shows the bonus before you accept.',
+          },
+        ],
+        preguntas: [
+          'Why does an offer include a bonus?',
+          'What happens if nobody accepts an order?',
+        ],
+        pasos: [
+          'Check the offer: if it says “Includes a bonus,” you earn 1 dollar more.',
+          'Accept before the others: the first one takes it.',
+          'Deliver as usual; the bonus comes with your pay.',
         ],
       },
       {

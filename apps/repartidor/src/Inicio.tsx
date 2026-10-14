@@ -50,6 +50,7 @@ type Pedido = {
   lng: number | null;
   propina: number;
   pagoRepartidor: number;
+  bono?: number;
   distanciaKm: number | null;
   restaurante: Lugar;
   segundos?: number;
@@ -121,6 +122,8 @@ const T = {
       'Soporte está revisando tu caso. Mientras tanto, si el GPS te confirma, el botón aparece solo.',
     autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     fotoEntrega: 'Tomar foto de la entrega',
+    bono: 'Incluye un bono de',
+    bonoPorque: 'por tomar un pedido que otros dejaron pasar.',
     pendienteConfirmar:
       'Sin señal: guardamos tu entrega en el celular. Pendiente de confirmar: se envía sola cuando vuelva la señal. No la repitas.',
     pendientes: 'Pendiente de confirmar',
@@ -206,6 +209,8 @@ const T = {
       'Support is reviewing your case. Meanwhile, if GPS confirms you, the button appears on its own.',
     autorizado: 'Support authorized the delivery without GPS confirmation.',
     fotoEntrega: 'Take the delivery photo',
+    bono: 'Includes a bonus of',
+    bonoPorque: 'for taking an order others passed on.',
     pendienteConfirmar:
       'No signal: we saved your delivery on the phone. Pending confirmation: it’s sent on its own when the signal is back. Don’t redo it.',
     pendientes: 'Pending confirmation',
@@ -1038,6 +1043,11 @@ export function Inicio() {
               {o.propina > 0 ? (
                 <Text style={{ color: '#5E5E5E' }}>
                   {t.propinaIncluida} {formatearDolares(o.propina, idioma)}
+                </Text>
+              ) : null}
+              {o.bono ? (
+                <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>
+                  {t.bono} {formatearDolares(o.bono, idioma)} {t.bonoPorque}
                 </Text>
               ) : null}
               <Text style={{ marginTop: 6 }}>

@@ -55,6 +55,10 @@ const T = {
     sonidoOk: 'Alarma activada',
     vacio: 'Sin pedidos por ahora.',
     aceptar: 'Aceptar',
+    sugerido: 'sugerido',
+    cocina: 'Cocina ocupada',
+    cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
+    normal: 'Normal',
     min: 'min',
     listo: '¡Listo!',
     rechazar: 'Rechazar pedido',
@@ -96,6 +100,10 @@ const T = {
     sonidoOk: 'Alarm on',
     vacio: 'No orders right now.',
     aceptar: 'Accept',
+    sugerido: 'suggested',
+    cocina: 'Busy kitchen',
+    cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
+    normal: 'Normal',
     min: 'min',
     listo: 'Ready!',
     rechazar: 'Reject order',
@@ -140,6 +148,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [platoFalta, setPlatoFalta] = useState('');
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
   const [error, setError] = useState('');
   const [sonido, setSonido] = useState(false);
   // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
@@ -148,7 +157,12 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
 
   const cargar = useCallback(async () => {
     try {
-      setPedidos((await pedir<{ pedidos: Pedido[] }>('GET', '/datos/restaurante/pedidos')).pedidos);
+      const r = await pedir<{ pedidos: Pedido[]; prepSugerida: number; cocinaOcupada: number }>(
+        'GET',
+        '/datos/restaurante/pedidos',
+      );
+      setPedidos(r.pedidos);
+      setCocina({ prepSugerida: r.prepSugerida, cocinaOcupada: r.cocinaOcupada });
       setError('');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -228,6 +242,31 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
         )}
       </div>
       {error && <p className="error-general">{error}</p>}
+      <div className="cocina" aria-label={t.cocina}>
+        <strong>{t.cocina}</strong>
+        <span className="suave"> {t.cocinaAyuda}</span>
+        <div className="cocina-opciones">
+          {[0, 10, 20].map((min) => (
+            <button
+              key={min}
+              type="button"
+              className={cocina.cocinaOcupada === min ? 'boton chico' : 'boton secundario chico'}
+              aria-pressed={cocina.cocinaOcupada === min}
+              onClick={() =>
+                void pedir<{ prepSugerida: number; cocinaOcupada: number }>(
+                  'PATCH',
+                  '/datos/restaurante/cocina',
+                  { extraMin: min },
+                )
+                  .then(setCocina)
+                  .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+              }
+            >
+              {min ? `+${min} ${t.min}` : t.normal}
+            </button>
+          ))}
+        </div>
+      </div>
       {pedidos.length === 0 && <p>{t.vacio}</p>}
       <ul className="lista">
         {pedidos.map((p) => (
@@ -331,18 +370,21 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               )}
               {p.estado === 'pagado' &&
                 p.ajuste?.estado !== 'pendiente' &&
-                [10, 20, 30].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className="boton"
-                    onClick={() =>
-                      void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
-                    }
-                  >
-                    {t.aceptar} · {m} {t.min}
-                  </button>
-                ))}
+                [cocina.prepSugerida, ...[10, 20, 30].filter((m) => m !== cocina.prepSugerida)].map(
+                  (m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={m === cocina.prepSugerida ? 'boton exito' : 'boton'}
+                      onClick={() =>
+                        void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
+                      }
+                    >
+                      {t.aceptar} · {m} {t.min}
+                      {m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}
+                    </button>
+                  ),
+                )}
               {p.estado === 'aceptado' && (
                 <button
                   type="button"
