@@ -31,6 +31,20 @@ const T = {
     metros: 'metros',
     aprobar: 'Aprobar',
     rechazar: 'Rechazar',
+    antecedentes: 'Antecedentes (Checkr)',
+    antecedentesEstados: {
+      sin_pedir: 'Sin empezar',
+      invitado: 'Invitación enviada',
+      en_proceso: 'En proceso',
+      aprobado: 'Aprobados',
+      revisar: 'Para revisar (Checkr no dio «clear»)',
+    } as Record<string, string>,
+    controles: 'Fotos de control (identidad continua)',
+    sinControles: 'Todavía no se le pidió ninguna.',
+    pedida: 'Pedida',
+    sinTomar: 'sin tomar',
+    coincide: 'Coincide',
+    noCoincide: 'No coincide',
     motivo: 'Motivo del rechazo (le llega a la persona)',
     compara:
       'Compara la cara con la foto del documento, el nombre y la fecha de nacimiento, y que el documento no esté vencido.',
@@ -55,6 +69,20 @@ const T = {
     metros: 'meters',
     aprobar: 'Approve',
     rechazar: 'Reject',
+    antecedentes: 'Background check (Checkr)',
+    antecedentesEstados: {
+      sin_pedir: 'Not started',
+      invitado: 'Invitation sent',
+      en_proceso: 'In progress',
+      aprobado: 'Approved',
+      revisar: 'Needs review (Checkr didn’t return “clear”)',
+    } as Record<string, string>,
+    controles: 'Identity check photos',
+    sinControles: 'None requested yet.',
+    pedida: 'Requested',
+    sinTomar: 'not taken',
+    coincide: 'Matches',
+    noCoincide: 'Doesn’t match',
     motivo: 'Rejection reason (the person receives it)',
     compara:
       'Compare the face with the document photo, the name and date of birth, and check the document isn’t expired.',
@@ -139,6 +167,15 @@ export function SuperKyc({
 }
 
 type Detalle = {
+  antecedentes?: { estado: string; url: string };
+  selfiesControl?: {
+    id: string;
+    pedidaEn: string;
+    tomadaEn: string | null;
+    revisadaEn: string | null;
+    resultado: string;
+    conFoto: boolean;
+  }[];
   persona: {
     nombre: string;
     correo: string;
@@ -185,6 +222,14 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
     }
   }
 
+  async function calificar(cid: string, resultado: 'coincide' | 'no_coincide') {
+    try {
+      await pedir('PATCH', `/datos/admin/kyc/${id}/control/${cid}`, { resultado });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   if (!d) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const tiene = new Map(Object.entries(d.kyc.tiene));
   return (
@@ -208,6 +253,56 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
             </figure>
           ))}
       </div>
+      {d.antecedentes ? (
+        <p>
+          <strong>{t.antecedentes}:</strong>{' '}
+          {t.antecedentesEstados[d.antecedentes.estado] ?? d.antecedentes.estado}
+        </p>
+      ) : null}
+      {d.selfiesControl ? (
+        <div className="kyc-controles">
+          <h2>{t.controles}</h2>
+          {d.selfiesControl.length === 0 ? <p className="suave">{t.sinControles}</p> : null}
+          <div className="kyc-fotos">
+            {d.selfiesControl.map((c) => (
+              <figure key={c.id}>
+                {c.conFoto ? (
+                  <img
+                    src={`/datos/admin/kyc/${id}/control/${c.id}`}
+                    alt={t.controles}
+                    loading="lazy"
+                  />
+                ) : null}
+                <figcaption>
+                  {t.pedida} {c.pedidaEn}
+                  {c.tomadaEn ? '' : ` · ${t.sinTomar}`}
+                  {c.resultado
+                    ? ` · ${c.resultado === 'coincide' ? t.coincide : t.noCoincide}`
+                    : ''}
+                </figcaption>
+                {c.tomadaEn && !c.resultado ? (
+                  <div className="fila-botones">
+                    <button
+                      type="button"
+                      className="boton chico"
+                      onClick={() => void calificar(c.id, 'coincide')}
+                    >
+                      {t.coincide}
+                    </button>
+                    <button
+                      type="button"
+                      className="boton secundario chico"
+                      onClick={() => void calificar(c.id, 'no_coincide')}
+                    >
+                      {t.noCoincide}
+                    </button>
+                  </div>
+                ) : null}
+              </figure>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {d.kyc.localDistanciaM != null && (
         <p className={d.kyc.lejos ? 'error-general' : 'ok'}>
           {t.distancia}: {d.kyc.localDistanciaM} {t.metros}

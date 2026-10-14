@@ -457,6 +457,21 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByLabel(L.celular).fill('3055550102');
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await rep.getByRole('button', { name: L.crearCuenta }).click();
+    // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
+    // recorrido se pide siempre). La toma y recién ahí se conecta.
+    await rep
+      .getByRole('switch')
+      .or(rep.getByRole('button', { name: L.conectarme }))
+      .first()
+      .click();
+    await expect(rep.getByRole('button', { name: L.tomarSelfie })).toBeVisible({ timeout: 20_000 });
+    await foto(rep, 'repartidor-foto-identidad');
+    const [selectorSelfie] = await Promise.all([
+      rep.waitForEvent('filechooser'),
+      rep.getByRole('button', { name: L.tomarSelfie }).click(),
+    ]);
+    await selectorSelfie.setFiles(FOTO_RECOGIDA);
+    await expect(rep.getByText(L.selfieLista)).toBeVisible({ timeout: 20_000 });
     await rep
       .getByRole('switch')
       .or(rep.getByRole('button', { name: L.conectarme }))

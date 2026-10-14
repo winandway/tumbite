@@ -146,6 +146,23 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Este pedido no tiene una excepción pendiente.', 'This order has no pending exception.'],
   ['Este pedido no está en marcha contigo.', 'This order isn’t in progress with you.'],
   [
+    'La verificación de antecedentes se activa muy pronto. Te avisamos en la app.',
+    'Background checks are coming very soon. We’ll let you know in the app.',
+  ],
+  [
+    'No pudimos conectar con la verificación de antecedentes. Intenta más tarde.',
+    'We couldn’t reach the background check service. Try again later.',
+  ],
+  ['No tienes ninguna foto de control pendiente.', 'You have no identity check photo pending.'],
+  [
+    'Esa foto de control no existe o no se tomó.',
+    'That check photo doesn’t exist or wasn’t taken.',
+  ],
+  [
+    'Antes de conectarte, tómate la foto de control: es rápida y confirma que eres tú.',
+    'Before going online, take the identity check photo: it’s quick and confirms it’s you.',
+  ],
+  [
     'Las llamadas todavía no están activas. Escríbele por el chat del pedido.',
     'Calls aren’t active yet. Message them through the order chat.',
   ],

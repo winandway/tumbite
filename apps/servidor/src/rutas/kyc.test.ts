@@ -94,3 +94,156 @@ describe('KYC (C-KYC)', () => {
     expect(cola.datos.solicitudes[0].lejos).toBe(true);
   });
 });
+
+describe('identidad continua y antecedentes con Checkr (C-ANTECEDENTES)', () => {
+  it('al conectarse se pide la selfie de control; sin tomarla no se conecta; el equipo la ve y la califica', async () => {
+    const { m, r2 } = conAlmacen({ SELFIE_CONTROL_SIEMPRE: '1' });
+    const rep = await m.cuenta('repartidor', 'Rita Control');
+    const admin = await m.cuenta('admin');
+    const intento = await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.77, lng: -80.19 },
+      rep.token,
+    );
+    expect(intento.estado).toBe(409);
+    expect(intento.datos.campo).toBe('selfie');
+    const estado = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(estado.datos.selfieControlPendiente).toBe(true);
+    expect(
+      (await m.llamar('GET', '/datos/kyc', undefined, rep.token)).datos.selfieControl.pendiente,
+    ).toBe(true);
+    const foto = await m.crudo('/datos/kyc/selfie-control', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${rep.token}`, 'content-type': 'image/jpeg' },
+      body: JPEG,
+    });
+    expect(foto.status).toBe(201);
+    expect([...r2.datos.keys()].some((k) => k.startsWith(`kyc/${rep.id}/control-`))).toBe(true);
+    // Ya se conecta, y en los próximos 7 días no se le vuelve a pedir.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/repartidor/conectar',
+          { conectado: true, lat: 25.77, lng: -80.19 },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const detalle = await m.llamar('GET', `/datos/admin/kyc/${rep.id}`, undefined, admin.token);
+    expect(detalle.datos.selfiesControl).toHaveLength(1);
+    const cid = detalle.datos.selfiesControl[0].id as string;
+    expect(
+      (
+        await m.crudo(`/datos/admin/kyc/${rep.id}/control/${cid}`, {
+          headers: { authorization: `Bearer ${admin.token}` },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await m.llamar(
+          'PATCH',
+          `/datos/admin/kyc/${rep.id}/control/${cid}`,
+          { resultado: 'coincide' },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    // Un extraño no ve la foto.
+    expect(
+      (
+        await m.crudo(`/datos/admin/kyc/${rep.id}/control/${cid}`, {
+          headers: { authorization: `Bearer ${rep.token}` },
+        })
+      ).status,
+    ).toBe(403);
+  });
+
+  it('antecedentes: sin Checkr se dice claro; con Checkr se invita, y el aviso firmado «clear» aprueba', async () => {
+    const sin = conAlmacen();
+    const rep0 = await sin.m.cuenta('repartidor', 'Sin Checkr');
+    expect(
+      (await sin.m.llamar('POST', '/datos/kyc/antecedentes/pedir', {}, rep0.token)).estado,
+    ).toBe(409);
+
+    const LLAVE = 'llave-checkr-de-prueba-larga';
+    const { m } = conAlmacen({ CHECKR_API_KEY: LLAVE, ADMIN_CORREOS: 'equipo@ejemplo.com' });
+    const rep = await m.cuenta('repartidor', 'Ana Antecedentes');
+    const pedidas: { url: string; cuerpo: URLSearchParams }[] = [];
+    const fetchReal = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init?: RequestInit) => {
+      pedidas.push({ url: String(url), cuerpo: new URLSearchParams(String(init?.body)) });
+      return new Response(
+        JSON.stringify(
+          String(url).endsWith('/candidates')
+            ? { id: 'cand_1' }
+            : { id: 'inv_1', invitation_url: 'https://checkr.test/invitacion/1' },
+        ),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+    try {
+      const r = await m.llamar('POST', '/datos/kyc/antecedentes/pedir', {}, rep.token);
+      expect(r.estado).toBe(200);
+      expect(r.datos.url).toBe('https://checkr.test/invitacion/1');
+      expect(pedidas.map((p) => p.url)).toEqual([
+        'https://api.checkr.com/v1/candidates',
+        'https://api.checkr.com/v1/invitations',
+      ]);
+      expect(pedidas[1]!.cuerpo.get('package')).toBe('driver_pro');
+      // Pedir otra vez no crea otra invitación: devuelve la misma.
+      expect(
+        (await m.llamar('POST', '/datos/kyc/antecedentes/pedir', {}, rep.token)).datos.url,
+      ).toBe('https://checkr.test/invitacion/1');
+      expect(pedidas).toHaveLength(2);
+    } finally {
+      globalThis.fetch = fetchReal;
+    }
+    expect(
+      (await m.llamar('GET', '/datos/kyc', undefined, rep.token)).datos.antecedentes,
+    ).toMatchObject({ estado: 'invitado' });
+    const firmar = async (cuerpo: string) => {
+      const k = await crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(LLAVE),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign'],
+      );
+      return Array.from(
+        new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(cuerpo))),
+      )
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    };
+    const cuerpo = JSON.stringify({
+      type: 'report.completed',
+      data: { object: { id: 'rep_1', candidate_id: 'cand_1', result: 'clear' } },
+    });
+    // Sin firma válida, nada.
+    expect(
+      (
+        await m.crudo('/datos/checkr/aviso', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-checkr-signature': 'mala' },
+          body: cuerpo,
+        })
+      ).status,
+    ).toBe(400);
+    const ok = await m.crudo('/datos/checkr/aviso', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-checkr-signature': await firmar(cuerpo) },
+      body: cuerpo,
+    });
+    expect(ok.status).toBe(200);
+    const d = await m.DB.prepare('SELECT antecedentes FROM repartidor_datos WHERE usuario_id = ?')
+      .bind(rep.id)
+      .first<{ antecedentes: string }>();
+    expect(d?.antecedentes).toBe('aprobado');
+    expect(
+      (await m.llamar('GET', '/datos/kyc', undefined, rep.token)).datos.antecedentes.estado,
+    ).toBe('aprobado');
+  });
+});

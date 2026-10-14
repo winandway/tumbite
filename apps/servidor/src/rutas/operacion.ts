@@ -47,6 +47,8 @@ import { formatearDolares } from '@tumbite/compartido';
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const SEGUNDOS_OFERTA = 45;
+/** Probabilidad de pedir la selfie de control en cada conexión (como la identidad continua de los grandes). */
+const PROBABILIDAD_SELFIE = 0.2;
 const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
 /** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
 const puntoConPrecision = punto.extend({
@@ -742,7 +744,12 @@ async function entregaActiva(db: D1Database, repartidorId: string) {
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
+  const selfiePendiente = await db
+    .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
+    .bind(u.id)
+    .first();
   return c.json({
+    selfieControlPendiente: Boolean(selfiePendiente),
     conectado: Number(ficha.conectado) === 1,
     tipo: ficha.tipo,
     puntos: Number(ficha.puntos),
@@ -768,6 +775,41 @@ operacion.post('/repartidor/conectar', async (c) => {
       'kyc',
       403,
     );
+  // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no
+  // más de una por semana). Mientras esté pendiente, no se conecta.
+  if (d.conectado) {
+    const pendiente = await db
+      .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
+      .bind(u.id)
+      .first();
+    if (!pendiente) {
+      const reciente = await db
+        .prepare(
+          "SELECT 1 FROM selfies_control WHERE usuario_id = ? AND pedida_en > datetime('now','-7 days')",
+        )
+        .bind(u.id)
+        .first();
+      // «1» = siempre (pruebas, recorrido); «0» = nunca (las demás pruebas); sin valor = al azar.
+      const toca =
+        c.env.SELFIE_CONTROL_SIEMPRE === '1' ||
+        (c.env.SELFIE_CONTROL_SIEMPRE !== '0' && Math.random() < PROBABILIDAD_SELFIE);
+      if (!reciente && toca)
+        await db
+          .prepare('INSERT INTO selfies_control (id, usuario_id) VALUES (?, ?)')
+          .bind(nuevoId(), u.id)
+          .run();
+    }
+    const debe = await db
+      .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
+      .bind(u.id)
+      .first();
+    if (debe)
+      throw new ErrorDatos(
+        'Antes de conectarte, tómate la foto de control: es rápida y confirma que eres tú.',
+        'selfie',
+        409,
+      );
+  }
   await db
     .prepare(
       "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",

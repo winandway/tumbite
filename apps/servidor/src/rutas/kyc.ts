@@ -8,6 +8,12 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
+import {
+  checkrConfigurado,
+  firmaCheckrValida,
+  pedirAntecedentes,
+  procesarAvisoCheckr,
+} from '../antecedentes';
 
 /**
  * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Tumbite.
@@ -81,13 +87,112 @@ export async function kycAprobado(db: D1Database, usuarioId: string): Promise<bo
 
 // ───────────────────────── La persona ─────────────────────────
 
+/** Antecedentes y selfie de control del repartidor, como los ve su app. */
+async function extrasRepartidor(db: D1Database, usuarioId: string) {
+  const a = await db
+    .prepare('SELECT estado, invitacion_url FROM antecedentes_checkr WHERE usuario_id = ?')
+    .bind(usuarioId)
+    .first<{ estado: string; invitacion_url: string }>();
+  const d = await db
+    .prepare('SELECT antecedentes FROM repartidor_datos WHERE usuario_id = ?')
+    .bind(usuarioId)
+    .first<{ antecedentes: string }>();
+  const sc = await db
+    .prepare(
+      'SELECT id, pedida_en FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL ORDER BY pedida_en DESC LIMIT 1',
+    )
+    .bind(usuarioId)
+    .first<{ id: string; pedida_en: string }>();
+  return {
+    antecedentes: {
+      estado: d?.antecedentes === 'aprobado' ? 'aprobado' : (a?.estado ?? 'sin_pedir'),
+      url: a?.estado === 'invitado' ? a.invitacion_url : '',
+    },
+    selfieControl: sc
+      ? { pendiente: true, pedidaEn: sc.pedida_en }
+      : { pendiente: false, pedidaEn: null },
+  };
+}
+
 kyc.get('/kyc', async (c) => {
   const u = exigir(c, 'repartidor', 'restaurante');
-  const f = await base(c)
-    .prepare('SELECT * FROM kyc WHERE usuario_id = ?')
+  const db = base(c);
+  const f = await db.prepare('SELECT * FROM kyc WHERE usuario_id = ?').bind(u.id).first<FilaKyc>();
+  return c.json({
+    kyc: aKyc(f),
+    pideLocal: u.rol === 'restaurante',
+    ...(u.rol === 'repartidor' ? await extrasRepartidor(db, u.id) : {}),
+  });
+});
+
+/**
+ * Antecedentes con Checkr: el repartidor pide la invitación y llena sus datos en la página de
+ * Checkr. Sin Checkr configurado se dice claro; nunca se piden datos sensibles aquí.
+ */
+kyc.post('/kyc/antecedentes/pedir', async (c) => {
+  const u = exigir(c, 'repartidor');
+  if (!checkrConfigurado(c.env))
+    throw new ErrorDatos(
+      'La verificación de antecedentes se activa muy pronto. Te avisamos en la app.',
+      undefined,
+      409,
+    );
+  const db = base(c);
+  const f = await db
+    .prepare('SELECT nombre, correo, telefono FROM usuarios WHERE id = ?')
     .bind(u.id)
-    .first<FilaKyc>();
-  return c.json({ kyc: aKyc(f), pideLocal: u.rol === 'restaurante' });
+    .first<{ nombre: string; correo: string; telefono: string | null }>();
+  if (!f) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  try {
+    return c.json(await pedirAntecedentes(c.env, db, { id: u.id, ...f }));
+  } catch (e) {
+    console.error('checkr', e);
+    throw new ErrorDatos(
+      'No pudimos conectar con la verificación de antecedentes. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  }
+});
+
+/** Aviso de Checkr (firmado con la llave de la API). Sin firma válida no se toca nada. */
+kyc.post('/checkr/aviso', async (c) => {
+  const llave = c.env.CHECKR_API_KEY;
+  const cuerpo = await c.req.text();
+  if (!llave || !(await firmaCheckrValida(cuerpo, c.req.header('x-checkr-signature'), llave))) {
+    console.error('aviso de checkr con firma inválida o sin llave');
+    return c.json({ error: 'firma inválida' }, 400);
+  }
+  const aviso = JSON.parse(cuerpo) as { type: string; data?: { object?: Record<string, unknown> } };
+  return c.json({ ok: true, ...(await procesarAvisoCheckr(c.env, base(c), aviso)) });
+});
+
+/** La selfie de control pedida al conectarse: se guarda aparte y el equipo la compara. */
+kyc.post('/kyc/selfie-control', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
+  if (bytes.byteLength > MAX_FOTO_BYTES)
+    throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
+  const tipo = tipoReal(bytes);
+  if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  const db = base(c);
+  const sc = await db
+    .prepare(
+      'SELECT id FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL ORDER BY pedida_en DESC LIMIT 1',
+    )
+    .bind(u.id)
+    .first<{ id: string }>();
+  if (!sc) throw new ErrorDatos('No tienes ninguna foto de control pendiente.', undefined, 409);
+  const clave = `kyc/${u.id}/control-${sc.id}`;
+  await almacen(c.env).put(clave, bytes, {
+    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  });
+  await db
+    .prepare("UPDATE selfies_control SET clave = ?, tomada_en = datetime('now') WHERE id = ?")
+    .bind(clave, sc.id)
+    .run();
+  return c.json({ ok: true, url: `/datos/kyc/selfie-control` }, 201);
 });
 
 /** Sube una pieza (foto) del KYC. Solo imágenes de verdad, máximo 3 MB. Va a la carpeta privada. */
@@ -216,13 +321,64 @@ kyc.get('/admin/kyc/:id', async (c) => {
     .bind(id)
     .first<Record<string, unknown>>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  const { results: controles } = await db
+    .prepare(
+      'SELECT id, pedida_en, tomada_en, revisada_en, resultado, clave FROM selfies_control WHERE usuario_id = ? ORDER BY pedida_en DESC LIMIT 10',
+    )
+    .bind(id)
+    .all<Record<string, unknown>>();
   return c.json({
     persona: u,
     kyc: {
       ...aKyc(f),
       lejos: f?.local_distancia_m != null && f.local_distancia_m > DISTANCIA_MAXIMA_M,
     },
+    ...(u.rol === 'repartidor' ? await extrasRepartidor(db, id) : {}),
+    selfiesControl: controles.map((x) => ({
+      id: String(x.id),
+      pedidaEn: String(x.pedida_en),
+      tomadaEn: (x.tomada_en as string | null) ?? null,
+      revisadaEn: (x.revisada_en as string | null) ?? null,
+      resultado: String(x.resultado ?? ''),
+      conFoto: Boolean(x.clave),
+    })),
   });
+});
+
+/** Una selfie de control, solo para el admin. */
+kyc.get('/admin/kyc/:id/control/:cid', async (c) => {
+  exigir(c, 'admin');
+  const f = await base(c)
+    .prepare('SELECT clave FROM selfies_control WHERE id = ? AND usuario_id = ?')
+    .bind(c.req.param('cid'), c.req.param('id'))
+    .first<{ clave: string }>();
+  if (!f?.clave) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
+  const obj = await almacen(c.env).get(f.clave);
+  if (!obj) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, no-store');
+  headers.set('x-content-type-options', 'nosniff');
+  headers.set('x-robots-tag', 'noindex');
+  return new Response(obj.body, { headers });
+});
+
+/** El equipo dice si la selfie de control coincide con la del registro. */
+kyc.patch('/admin/kyc/:id/control/:cid', async (c) => {
+  exigir(c, 'admin');
+  const { resultado } = await leerCuerpo(
+    c,
+    z.object({ resultado: z.enum(['coincide', 'no_coincide']) }),
+  );
+  const r = await base(c)
+    .prepare(
+      "UPDATE selfies_control SET resultado = ?, revisada_en = datetime('now') WHERE id = ? AND usuario_id = ? AND tomada_en IS NOT NULL",
+    )
+    .bind(resultado, c.req.param('cid'), c.req.param('id'))
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('Esa foto de control no existe o no se tomó.', undefined, 409);
+  return c.json({ ok: true });
 });
 
 /** La foto, solo para el admin: nunca pasa por la carpeta pública ni por el caché. */

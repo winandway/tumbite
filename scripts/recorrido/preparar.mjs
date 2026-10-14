@@ -79,6 +79,9 @@ writeFileSync(
     'TWILIO_AUTH_TOKEN=token-recorrido-de-prueba-largo',
     'TWILIO_FROM=+13055550000',
     `TWILIO_API_URL=http://localhost:${process.env.PUERTO_TWILIO ?? 12112}`,
+    'CHECKR_API_KEY=checkr-recorrido-de-prueba-larga',
+    `CHECKR_API_URL=http://localhost:${process.env.PUERTO_TWILIO ?? 12112}`,
+    'SELFIE_CONTROL_SIEMPRE=1',
   ].join('\n') + '\n',
 );
 writeFileSync(join(dir, 'datos.json'), JSON.stringify(datos, null, 2));

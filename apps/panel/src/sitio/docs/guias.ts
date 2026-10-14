@@ -1097,6 +1097,34 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'background-check-and-identity',
+        titulo: 'Antecedentes con Checkr y la foto de control',
+        resumen:
+          'Como en las grandes plataformas: revisamos antecedentes penales y récord de manejo con un proveedor, y de vez en cuando te pedimos una foto de tu cara antes de conectarte.',
+        explicacion: [
+          'Antecedentes: en «Mis datos y vehículo» toca «Iniciar la verificación de antecedentes». Se abre el formulario de Checkr, un proveedor especializado, donde escribes tus datos sensibles (nunca en Tumbite). Suele tardar de 1 a 3 días. Cuando el resultado es limpio, tu cuenta queda aprobada sola; si hay algo que revisar, lo mira nuestro equipo.',
+          'Foto de control: de vez en cuando (no más de una vez por semana, al azar), al tocar «Conectarme» la app te pide una foto de tu cara. Es rápida: de frente y con buena luz. Nuestro equipo la compara con la foto de tu registro para confirmar que quien reparte eres tú.',
+          'Mientras la foto de control esté pendiente, no puedes conectarte. Apenas la envías, puedes seguir.',
+          'Estas dos medidas protegen a los clientes, a los restaurantes y a ti: nadie puede repartir con la cuenta de otro.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-es.webp',
+            alt: 'App del repartidor con la tarjeta «Foto de control: confirma que eres tú» y el botón «Tomarme la foto ahora» antes de conectarse.',
+            pie: 'Antes de conectarte, a veces te pedimos una foto de control.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué me piden una foto antes de conectarme?',
+          '¿Cómo hago la verificación de antecedentes?',
+        ],
+        pasos: [
+          'En «Mis datos y vehículo», toca «Iniciar la verificación de antecedentes» y completa el formulario de Checkr.',
+          'Si al conectarte aparece «Foto de control», toca «Tomarme la foto ahora».',
+          'Enviada la foto, toca «Conectarme» otra vez.',
+        ],
+      },
+      {
         id: 'gps-arrival',
         titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
         resumen:
@@ -2650,6 +2678,34 @@ const en: SeccionDocs[] = [
           'Read the notice: it says why it was rejected.',
           'Open “Wallet” and fix your account details.',
           'Tap “Withdraw” again.',
+        ],
+      },
+      {
+        id: 'background-check-and-identity',
+        titulo: 'Background check with Checkr and the identity check photo',
+        resumen:
+          'Like the big platforms: we check criminal records and driving history with a provider, and every so often we ask for a photo of your face before you go online.',
+        explicacion: [
+          'Background check: under “My details and vehicle,” tap “Start the background check.” The Checkr form opens, a specialized provider, where you enter your sensitive details (never in Tumbite). It usually takes 1 to 3 days. When the result is clear, your account is approved automatically; if something needs review, our team looks at it.',
+          'Identity check photo: every so often (no more than once a week, at random), when you tap “Go online” the app asks for a photo of your face. It’s quick: face the camera in good light. Our team compares it with the photo on file to confirm the person delivering is you.',
+          'While the check photo is pending, you can’t go online. As soon as you send it, you can continue.',
+          'These two measures protect customers, restaurants and you: nobody can deliver using someone else’s account.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-en.webp',
+            alt: 'Driver app with the “Identity check photo: confirm it’s you” card and the “Take my photo now” button before going online.',
+            pie: 'Before going online, we sometimes ask for an identity check photo.',
+          },
+        ],
+        preguntas: [
+          'Why am I asked for a photo before going online?',
+          'How do I do the background check?',
+        ],
+        pasos: [
+          'Under “My details and vehicle,” tap “Start the background check” and complete the Checkr form.',
+          'If “Identity check photo” shows up when going online, tap “Take my photo now.”',
+          'Once the photo is sent, tap “Go online” again.',
         ],
       },
       {

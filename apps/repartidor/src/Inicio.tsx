@@ -71,7 +71,13 @@ type Pedido = {
     opciones?: OpcionElegida[];
   }[];
 };
-type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
+type Estado = {
+  conectado: boolean;
+  puntos: number;
+  nivel: Nivel;
+  activo: Pedido | null;
+  selfieControlPendiente?: boolean;
+};
 type Billetera = DatosBilletera;
 
 /** La ubicación con un tope de 15 segundos: si el GPS no responde, se usa la última conocida. */
@@ -124,6 +130,11 @@ const T = {
     fotoEntrega: 'Tomar foto de la entrega',
     bono: 'Incluye un bono de',
     llamarCliente: 'Llamar al cliente (número oculto)',
+    selfieControl: 'Foto de control: confirma que eres tú',
+    selfieControlAyuda:
+      'De vez en cuando, antes de conectarte, te pedimos una foto de tu cara. Nuestro equipo la compara con la de tu registro. De frente y con buena luz.',
+    tomarSelfie: 'Tomarme la foto ahora',
+    selfieLista: 'Foto enviada. Ya puedes conectarte.',
     llamandoCliente:
       'Te estamos llamando. Contesta y te conectamos con el cliente; ninguno ve el número del otro.',
     bonoPorque: 'por tomar un pedido que otros dejaron pasar.',
@@ -214,6 +225,11 @@ const T = {
     fotoEntrega: 'Take the delivery photo',
     bono: 'Includes a bonus of',
     llamarCliente: 'Call the customer (masked number)',
+    selfieControl: 'Identity check photo: confirm it’s you',
+    selfieControlAyuda:
+      'Every so often, before you go online, we ask for a photo of your face. Our team compares it with the one on file. Face the camera in good light.',
+    tomarSelfie: 'Take my photo now',
+    selfieLista: 'Photo sent. You can go online now.',
     llamandoCliente:
       'We’re calling you now. Answer and we’ll connect you with the customer; neither of you sees the other’s number.',
     bonoPorque: 'for taking an order others passed on.',
@@ -449,13 +465,17 @@ export function Inicio() {
   }, [enCamino, api]);
 
   /** Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó. */
-  async function tomarFoto(ruta: string) {
+  async function tomarFoto(ruta: string, frontal = false) {
     if (subiendo) return;
     setError('');
     try {
       const permiso = await ImagePicker.requestCameraPermissionsAsync();
       if (!permiso.granted) return setError(t.permisoCamara);
-      const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
+      const r = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.5,
+        ...(frontal ? { cameraType: ImagePicker.CameraType.front } : {}),
+      });
       const foto = r.canceled ? null : r.assets[0];
       if (!foto) return;
       setSubiendo(true);
@@ -688,6 +708,21 @@ export function Inicio() {
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error || errorCarga}
         </Text>
+      ) : null}
+      {estado?.selfieControlPendiente ? (
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>
+          <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieControl}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+            {t.selfieControlAyuda}
+          </Text>
+          <Boton
+            texto={subiendo ? t.subiendo : t.tomarSelfie}
+            alTocar={() =>
+              void tomarFoto('/datos/kyc/selfie-control', true).then(() => setAviso(t.selfieLista))
+            }
+            cargando={subiendo}
+          />
+        </View>
       ) : null}
       {pendientes.length ? (
         <View style={[e.tarjeta, { borderColor: '#B26A00' }]}>

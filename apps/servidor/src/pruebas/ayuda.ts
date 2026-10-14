@@ -11,7 +11,8 @@ export const FOTO_PRUEBA = new Uint8Array([
 export function mundo(extraDado: Record<string, unknown> = {}) {
   const DB = crearBasePruebas();
   // Almacén de fotos de mentira por defecto (las entregas llevan foto).
-  const extra = { BUCKET: crearAlmacenPruebas().bucket, ...extraDado };
+  // La selfie de control al azar se apaga en las pruebas (cada prueba la enciende si la necesita).
+  const extra = { BUCKET: crearAlmacenPruebas().bucket, SELFIE_CONTROL_SIEMPRE: '0', ...extraDado };
   let ip = 0;
   // Cada mundo con su propia red de mentira: el límite de intentos vive en memoria y, si no,
   // las pruebas de un mismo archivo chocaban entre sí.

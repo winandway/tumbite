@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion } from '@tumbite/movil';
 
 const T = {
   es: {
+    antecedentes: 'Antecedentes',
+    antecedentesAyuda:
+      'Como en las grandes plataformas, revisamos antecedentes penales y récord de manejo con un proveedor (Checkr). Tus datos sensibles los escribes en la página del proveedor, nunca en Tumbite.',
+    antecedentesEstados: {
+      sin_pedir: 'Sin empezar',
+      invitado: 'Invitación enviada: completa el formulario de Checkr',
+      en_proceso: 'En proceso (suele tardar 1 a 3 días)',
+      aprobado: 'Aprobados',
+      revisar: 'En revisión por nuestro equipo',
+    } as Record<string, string>,
+    pedirAntecedentes: 'Iniciar la verificación de antecedentes',
+    abrirCheckr: 'Abrir el formulario de Checkr',
     titulo: 'Verifica tu identidad',
     ayuda:
       'Para repartir con Tumbite verificamos que eres tú. Toma las fotos con tu cámara; solo las ve el equipo de Tumbite.',
@@ -32,6 +44,18 @@ const T = {
     permiso: 'Necesitamos permiso para usar la cámara.',
   },
   en: {
+    antecedentes: 'Background check',
+    antecedentesAyuda:
+      'Like the big platforms, we check criminal records and driving history with a provider (Checkr). You enter your sensitive details on the provider’s page, never in Tumbite.',
+    antecedentesEstados: {
+      sin_pedir: 'Not started',
+      invitado: 'Invitation sent: complete the Checkr form',
+      en_proceso: 'In progress (usually 1 to 3 days)',
+      aprobado: 'Approved',
+      revisar: 'Under review by our team',
+    } as Record<string, string>,
+    pedirAntecedentes: 'Start the background check',
+    abrirCheckr: 'Open the Checkr form',
     titulo: 'Verify your identity',
     ayuda:
       'To deliver with Tumbite we verify it’s really you. Take the photos with your camera; only the Tumbite team sees them.',
@@ -55,6 +79,7 @@ const T = {
   },
 };
 
+type Antecedentes = { estado: string; url: string };
 type Kyc = {
   estado: 'sin_enviar' | 'pendiente' | 'aprobado' | 'rechazado';
   motivo: string;
@@ -70,14 +95,18 @@ export function Verificacion() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const [k, setK] = useState<Kyc | null>(null);
+  const [antecedentes, setAntecedentes] = useState<Antecedentes>({ estado: 'sin_pedir', url: '' });
   const [docTipo, setDocTipo] = useState<'licencia' | 'identificacion' | 'pasaporte'>('licencia');
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
 
   const cargar = useCallback(() => {
     api
-      .pedir<{ kyc: Kyc }>('GET', '/datos/kyc')
-      .then((r) => setK(r.kyc))
+      .pedir<{ kyc: Kyc; antecedentes?: Antecedentes }>('GET', '/datos/kyc')
+      .then((r) => {
+        setK(r.kyc);
+        if (r.antecedentes) setAntecedentes(r.antecedentes);
+      })
       .catch(() => {});
   }, [api]);
   useEffect(cargar, [cargar]);
@@ -102,6 +131,17 @@ export function Verificacion() {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setSubiendo('');
+    }
+  }
+
+  async function pedirAntecedentes() {
+    setError('');
+    try {
+      const r = await api.pedir<Antecedentes>('POST', '/datos/kyc/antecedentes/pedir', {});
+      setAntecedentes(r);
+      if (r.url) await Linking.openURL(r.url);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
@@ -193,6 +233,28 @@ export function Verificacion() {
           <Boton texto={t.enviar} alTocar={() => void enviar()} />
         </>
       ) : null}
+      <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E6E6', paddingTop: 8 }}>
+        <Text style={{ fontWeight: '800' }}>{t.antecedentes}</Text>
+        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.antecedentesAyuda}</Text>
+        <Text
+          style={{
+            marginTop: 4,
+            fontWeight: '700',
+            color: antecedentes.estado === 'aprobado' ? '#0D7A3A' : C.secundario,
+          }}
+        >
+          {t.antecedentesEstados[antecedentes.estado] ?? antecedentes.estado}
+        </Text>
+        {antecedentes.estado === 'sin_pedir' ? (
+          <Boton texto={t.pedirAntecedentes} alTocar={() => void pedirAntecedentes()} secundario />
+        ) : antecedentes.estado === 'invitado' && antecedentes.url ? (
+          <Boton
+            texto={t.abrirCheckr}
+            alTocar={() => void Linking.openURL(antecedentes.url)}
+            secundario
+          />
+        ) : null}
+      </View>
     </View>
   );
 }
