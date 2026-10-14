@@ -5,4 +5,4 @@
 - [x] Paso 3: Enlaces: menú del sitio, pie, Docs, mapa del sitio y prerender.
 - [x] Paso 4: Guía pública en Docs «Calculadora: cuánto ganas y cuánto ahorras con Tumbite», con capturas y preguntas, en los dos idiomas.
 - [x] Paso 5: Documento interno con los supuestos y las fuentes (docs/MODELO-DE-DINERO.md), pendiente de Richard sobre la parte del franquiciado, y nota del chat con IA en el roadmap.
-- [ ] Paso 6: Probar en pantalla, candados, verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 6: Probar en pantalla, candados, verify, commit, push, publicación y comprobación en vivo.
