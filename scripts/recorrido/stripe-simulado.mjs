@@ -24,6 +24,7 @@ createServer((req, res) => {
         payouts_enabled: true,
         details_submitted: true,
         status: 'succeeded',
+        payment_method: 'pm_simulado',
       }),
     );
   });

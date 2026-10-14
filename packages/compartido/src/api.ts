@@ -6,6 +6,8 @@ export class ErrorApi extends Error {
     message: string,
     public readonly estado: number,
     public readonly campo?: string,
+    /** Lo demás que vino en la respuesta (p. ej. el nuevo total al cambiar la dirección). */
+    public readonly datos?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -72,6 +74,7 @@ export function crearApi(op: OpcionesApi) {
             : 'Something went wrong. Try again.'),
         res.status,
         d.campo,
+        (datos ?? undefined) as Record<string, unknown> | undefined,
       );
     }
     return datos as T;

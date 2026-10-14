@@ -81,6 +81,28 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'pickup-address-change-and-extra-tip',
+        titulo: 'Recoger en el local, cambiar la dirección y dejar propina después',
+        resumen:
+          'Tres cosas que puedes hacer con tu pedido: recogerlo tú mismo sin costo de envío, cambiar la dirección antes de que salga el repartidor (viendo el nuevo total) y dejar una propina extra después de la entrega.',
+        explicacion: [
+          'Recoger en el local: en el carrito elige «Recojo en el local». No pagas envío. Cuando el restaurante lo marque listo, la app te avisa; pasas a buscarlo y muestras tu PIN de 4 dígitos en el mostrador.',
+          'Cambiar la dirección: mientras el repartidor no haya salido del restaurante, en tu pedido toca «Cambiar la dirección de entrega», escribe la nueva o usa tu ubicación actual. Si el envío cambia, te mostramos el nuevo total y lo aplicamos solo si lo aceptas. Cuando el repartidor ya salió, escríbele por el chat.',
+          'Propina después: si el servicio te gustó, al terminar tu pedido puedes dejar 1, 2 o 5 dólares extra. Se cobra con tu tarjeta guardada, sin volver a escribirla, y va entera al repartidor. Una vez por pedido, hasta 7 días después.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Puedo recoger mi pedido en el restaurante?',
+          '¿Puedo cambiar la dirección después de pedir?',
+          '¿Puedo dejar propina después de la entrega?',
+        ],
+        pasos: [
+          'Para recoger: en el carrito elige «Recojo en el local» y muestra tu PIN al retirar.',
+          'Para cambiar la dirección: en tu pedido, toca «Cambiar la dirección de entrega» y acepta el nuevo total si cambia.',
+          'Para la propina extra: en tu pedido entregado, toca $1, $2 o $5.',
+        ],
+      },
+      {
         id: 'choose-options',
         titulo: 'Elige el tamaño y los extras al pedir',
         resumen:
@@ -460,6 +482,28 @@ const es: SeccionDocs[] = [
           'Lee el aviso: dice el motivo del rechazo.',
           'Entra a «Billetera» y corrige los datos de tu cuenta.',
           'Vuelve a tocar «Retirar».',
+        ],
+      },
+      {
+        id: 'pickup-orders-and-age-restricted-items',
+        titulo: 'Pedidos para recoger en el local y productos para mayores de 21',
+        resumen:
+          'Un pedido «para recoger» no lleva repartidor: tú lo entregas en el mostrador con el PIN del cliente y pagas solo el 5 % de comisión. Los productos para mayores de 21 se marcan en el menú y solo se entregan en mano con documento.',
+        explicacion: [
+          'Recoger en el local: el cliente lo elige al pedir. Lo ves en Pedidos con la marca «El cliente lo recoge». Lo aceptas y lo marcas listo como siempre; cuando el cliente llega, le pides su PIN de 4 dígitos (está en su app) y tocas «Entregado al cliente». La comisión de estos pedidos es del 5 %, porque no hay reparto.',
+          'Mayores de 21: en el menú, al editar un plato, marca «Solo para mayores de 21». Esos pedidos se entregan únicamente en mano y quien entrega (el repartidor, o tú si es recogida) revisa el documento y lo confirma en la app antes de marcar la entrega.',
+          'Así cumples la ley sin complicarte: la app no deja marcar entregado sin esa confirmación.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Cómo entrego un pedido que el cliente recoge en el local?',
+          '¿Cuánto es la comisión de los pedidos para recoger?',
+          '¿Cómo vendo productos para mayores de 21?',
+        ],
+        pasos: [
+          'Pedido para recoger: acéptalo, márcalo listo y, cuando el cliente llegue, pide su PIN y toca «Entregado al cliente».',
+          'Producto para mayores: en el menú, marca «Solo para mayores de 21» en ese plato.',
+          'Al entregar en mano, revisa el documento y confirma en la app.',
         ],
       },
       {
@@ -1125,6 +1169,23 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'grouped-orders-and-age-check',
+        titulo: 'Dos pedidos en un viaje y la revisión de mayoría de edad',
+        resumen:
+          'Si ya tienes un pedido sin recoger y entra otro del mismo restaurante con entrega cerca, te lo ofrecemos para llevarlo en el mismo viaje. Los pedidos con productos para mayores de 21 solo se entregan en mano revisando el documento.',
+        explicacion: [
+          'Pedidos agrupados: cuando todavía no recogiste tu pedido y el mismo restaurante tiene otro listo para una dirección a menos de 5 minutos de desvío, te llega la oferta. Si la aceptas, los dos salen juntos al confirmar la recogida del principal y en tu pantalla ves cada uno con su dirección, su «Cómo llegar» y su foto de entrega. Cobras los dos.',
+          'Mayoría de edad: si un pedido tiene productos para mayores de 21, lo ves marcado. Solo se entrega en mano: pide el documento, confirma en la app «Revisé el documento: mayor de 21» y recién ahí toca «Entregado en mano». Sin esa confirmación la app no deja entregar.',
+        ],
+        capturas: [],
+        preguntas: ['¿Puedo llevar dos pedidos a la vez?', '¿Qué hago si el pedido es de alcohol?'],
+        pasos: [
+          'Acepta la segunda oferta del mismo restaurante si te conviene.',
+          'Recoge los dos y entrega cada uno en su dirección.',
+          'En pedidos para mayores de 21: revisa el documento, confirma en la app y entrega en mano.',
+        ],
+      },
+      {
         id: 'gps-arrival',
         titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
         resumen:
@@ -1664,6 +1725,28 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'pickup-address-change-and-extra-tip',
+        titulo: 'Pick up in store, change the address, and tip after delivery',
+        resumen:
+          'Three things you can do with your order: pick it up yourself with no delivery fee, change the address before the driver leaves (seeing the new total), and leave an extra tip after delivery.',
+        explicacion: [
+          'Pick up in store: in the cart choose “I’ll pick it up.” No delivery fee. When the restaurant marks it ready, the app lets you know; you go get it and show your 4-digit PIN at the counter.',
+          'Change the address: as long as the driver hasn’t left the restaurant, open your order, tap “Change the delivery address,” type the new one or use your current location. If the delivery fee changes, we show you the new total and apply it only if you accept. Once the driver has left, message them through the chat.',
+          'Tip after delivery: if you liked the service, once your order is done you can leave 1, 2 or 5 dollars extra. It’s charged to your saved card, without typing it again, and goes in full to the driver. Once per order, up to 7 days later.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Can I pick up my order at the restaurant?',
+          'Can I change the address after ordering?',
+          'Can I tip after delivery?',
+        ],
+        pasos: [
+          'To pick up: in the cart choose “I’ll pick it up” and show your PIN when collecting.',
+          'To change the address: in your order, tap “Change the delivery address” and accept the new total if it changes.',
+          'For the extra tip: on your delivered order, tap $1, $2 or $5.',
+        ],
+      },
+      {
         id: 'choose-options',
         titulo: 'Choose size and extras when ordering',
         resumen:
@@ -2038,6 +2121,28 @@ const en: SeccionDocs[] = [
           'Read the notice: it says why it was rejected.',
           'Open “Wallet” and fix your account details.',
           'Tap “Withdraw” again.',
+        ],
+      },
+      {
+        id: 'pickup-orders-and-age-restricted-items',
+        titulo: 'Pickup orders and 21+ items',
+        resumen:
+          'A pickup order has no driver: you hand it over at the counter with the customer’s PIN and pay only a 5% commission. 21+ items are flagged in the menu and are only handed over in person with an ID check.',
+        explicacion: [
+          'Pickup: the customer chooses it when ordering. You see it in Orders marked “Customer picks up.” Accept it and mark it ready as usual; when the customer arrives, ask for their 4-digit PIN (it’s in their app) and tap “Handed to the customer.” The commission on these orders is 5%, since there’s no delivery.',
+          '21+ items: in the menu, when editing a dish, check “21+ only.” Those orders are delivered in hand only, and whoever hands them over (the driver, or you for pickup) checks the ID and confirms it in the app before marking it delivered.',
+          'That way you stay within the law without hassle: the app won’t let you mark it delivered without that confirmation.',
+        ],
+        capturas: [],
+        preguntas: [
+          'How do I hand over a pickup order?',
+          'What is the commission on pickup orders?',
+          'How do I sell 21+ items?',
+        ],
+        pasos: [
+          'Pickup order: accept it, mark it ready and, when the customer arrives, ask for their PIN and tap “Handed to the customer.”',
+          '21+ item: in the menu, check “21+ only” on that dish.',
+          'When handing over, check the ID and confirm in the app.',
         ],
       },
       {
@@ -2706,6 +2811,23 @@ const en: SeccionDocs[] = [
           'Under “My details and vehicle,” tap “Start the background check” and complete the Checkr form.',
           'If “Identity check photo” shows up when going online, tap “Take my photo now.”',
           'Once the photo is sent, tap “Go online” again.',
+        ],
+      },
+      {
+        id: 'grouped-orders-and-age-check',
+        titulo: 'Two orders in one trip and the age check',
+        resumen:
+          'If you already have an order you haven’t picked up and another comes in from the same restaurant with a nearby delivery, we offer it to you for the same trip. Orders with 21+ items are handed over in person only, with an ID check.',
+        explicacion: [
+          'Grouped orders: when you haven’t picked up your order yet and the same restaurant has another one ready for an address less than 5 minutes out of the way, you get the offer. If you accept, both leave together when the main pickup is confirmed, and your screen shows each one with its address, its “Directions” and its delivery photo. You get paid for both.',
+          'Age check: if an order has 21+ items, you’ll see it flagged. Hand delivery only: ask for the ID, confirm in the app “I checked the ID: the recipient is 21 or older,” and only then tap “Handed to the customer.” Without that confirmation the app won’t let you deliver.',
+        ],
+        capturas: [],
+        preguntas: ['Can I carry two orders at once?', 'What do I do if the order has alcohol?'],
+        pasos: [
+          'Accept the second offer from the same restaurant if it works for you.',
+          'Pick up both and deliver each to its own address.',
+          'For 21+ orders: check the ID, confirm in the app and hand it over in person.',
         ],
       },
       {

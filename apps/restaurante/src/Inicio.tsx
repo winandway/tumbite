@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, Text, TextInput, View, Switch } from 'react-native';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -32,6 +32,8 @@ import {
 type Pedido = {
   id: string;
   estado: string;
+  entrega?: 'puerta' | 'mano' | 'recoger';
+  requiereEdad?: boolean;
   total: number;
   subtotal: number;
   notas: string;
@@ -89,6 +91,10 @@ const T = {
     abierto: 'Recibiendo pedidos',
     cerrado: 'Cerrado',
     activacion: 'Para abrir te falta:',
+    recoge: 'El cliente lo recoge en el local (sin repartidor)',
+    pinCliente: 'PIN del cliente (4 dígitos, está en su app)',
+    mayorEdad: 'Revisé el documento: mayor de 21',
+    entregadoLocal: 'Entregado al cliente',
     abrir: 'Abrir',
     pausar: 'Pausar',
     vacio: 'Sin pedidos por ahora. La alarma sonará cuando entre uno.',
@@ -134,6 +140,10 @@ const T = {
     abierto: 'Taking orders',
     cerrado: 'Closed',
     activacion: 'To open, you still need:',
+    recoge: 'Customer picks up in store (no driver)',
+    pinCliente: 'Customer PIN (4 digits, in their app)',
+    mayorEdad: 'I checked the ID: 21 or older',
+    entregadoLocal: 'Handed to the customer',
     abrir: 'Open',
     pausar: 'Pause',
     vacio: 'No orders right now. The alarm will ring when one comes in.',
@@ -173,6 +183,8 @@ export function Inicio() {
   const [rest, setRest] = useState<Restaurante | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [menuDe, setMenuDe] = useState<string | null>(null);
+  const [pinLocal, setPinLocal] = useState('');
+  const [edadLocal, setEdadLocal] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -544,7 +556,45 @@ export function Inicio() {
         t.listos,
         pedidos.filter((p) => p.estado === 'listo'),
         (p) =>
-          p.fotoRecogida ? (
+          p.entrega === 'recoger' ? (
+            <>
+              <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>{t.recoge}</Text>
+              <TextInput
+                value={pinLocal}
+                onChangeText={(x) => setPinLocal(x.replace(/\D/g, '').slice(0, 4))}
+                placeholder={t.pinCliente}
+                accessibilityLabel={t.pinCliente}
+                keyboardType="number-pad"
+                style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
+              />
+              {p.requiereEdad ? (
+                <Pressable
+                  onPress={() => setEdadLocal((v) => !v)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: edadLocal }}
+                  accessibilityLabel={t.mayorEdad}
+                  style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 6 }}
+                >
+                  <Switch
+                    value={edadLocal}
+                    onValueChange={setEdadLocal}
+                    accessibilityLabel={t.mayorEdad}
+                  />
+                  <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
+                </Pressable>
+              ) : null}
+              <Boton
+                texto={t.entregadoLocal}
+                alTocar={() =>
+                  void accion(`/datos/restaurante/pedidos/${p.id}/entregado-local`, {
+                    pin: pinLocal,
+                    mayorEdad: edadLocal,
+                  }).then(() => setPinLocal(''))
+                }
+                exito
+              />
+            </>
+          ) : p.fotoRecogida ? (
             <>
               <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
               <FotoPedido

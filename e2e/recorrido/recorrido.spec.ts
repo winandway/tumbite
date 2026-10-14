@@ -214,6 +214,8 @@ for (const idioma of ['en', 'es'] as const) {
     sql(
       "UPDATE pedidos SET estado = 'cancelado' WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
     );
+    // Y ningún repartidor de un recorrido anterior se queda conectado (se llevaría la oferta).
+    sql('UPDATE repartidores SET conectado = 0');
 
     // 1. El restaurante se registra en el panel y arma su ficha.
     const panelCtx = await nuevoContexto('computadora');
@@ -541,7 +543,11 @@ for (const idioma of ['en', 'es'] as const) {
       );
     };
     /** Del menú al pago: agrega los platos, va al carrito, paga y el banco aprueba (simulado). */
-    const pedirYPagar = async (platos: string[], fotoCarrito?: string): Promise<Cobro> => {
+    const pedirYPagar = async (
+      platos: string[],
+      fotoCarrito?: string,
+      modo?: 'recoger',
+    ): Promise<Cobro> => {
       if (!cli.url().includes('/restaurant/')) {
         await cli.goto('/app/');
         try {
@@ -574,7 +580,11 @@ for (const idioma of ['en', 'es'] as const) {
         }
       }
       await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
-      await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+      if (modo === 'recoger') {
+        // Recogida en el local: sin dirección ni envío.
+        await cli.getByRole('radio', { name: L.recojo }).click();
+        await expect(cli.getByLabel(L.direccionEntrega)).toHaveCount(0);
+      } else await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
       if (fotoCarrito) {
         await mapaListo(cli);
         // Para Docs: cómo se ve «En mano» con el interruptor del PIN; luego vuelve a «En la puerta».
@@ -806,6 +816,14 @@ for (const idioma of ['en', 'es'] as const) {
       })
       .toBe('entregado');
     await expect(rep.getByText(`${L.pendientes}: 1`)).toHaveCount(0, { timeout: 20_000 });
+    // Propina después de entregar: el cliente deja $2 extra con su tarjeta guardada.
+    await cli.goto(`/app/order/${cobro.pedidoId}`);
+    const dosDolares = cli.getByRole('button', { name: /\$2\.00/ }).first();
+    await expect(dosDolares).toBeVisible({ timeout: 20_000 });
+    await dosDolares.scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-propina-despues');
+    await dosDolares.click();
+    await expect(cli.getByText(L.propinaGracias)).toBeVisible({ timeout: 20_000 });
     await repCtx.setGeolocation(MIAMI);
 
     // El repartidor termina su turno: así no se queda «libre» para el recorrido siguiente.
@@ -890,6 +908,12 @@ for (const idioma of ['en', 'es'] as const) {
     // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 6 minutos se cancela
     //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
     const olvidado = await pedirYPagar([plato.pizza]);
+    // Antes de que el restaurante lo acepte, el cliente cambia la dirección de entrega.
+    await cli.goto(`/app/order/${olvidado.pedidoId}`);
+    await cli.getByLabel(L.nuevaDireccion).fill('350 NE 2nd Ave, Miami');
+    await cli.getByRole('button', { name: L.aplicarDireccion }).click();
+    await expect(cli.getByText(L.direccionCambiada)).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-cambiar-direccion');
     const atrasar = (minutos: number) =>
       sql(
         `UPDATE pedidos SET pagado_en = datetime('now','-${minutos} minutes') WHERE id = '${olvidado.pedidoId}'`,
@@ -905,7 +929,31 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(L.managerCancela, { exact: false })).toBeVisible({
       timeout: 20_000,
     });
+
     await foto(cli, 'cliente-manager-cancela');
+    // 16. Recogida en el local: sin repartidor; el restaurante entrega en el mostrador con el PIN.
+    const recogida = await pedirYPagar([plato.pizza], undefined, 'recoger');
+    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel
+      .getByRole('button', { name: `${L.aceptar} · 20` })
+      .first()
+      .click();
+    await panel.getByRole('button', { name: L.listo }).first().click();
+    await expect(panel.getByLabel(L.pinCliente)).toBeVisible({ timeout: 20_000 });
+    await foto(panel, 'restaurante-recoger');
+    await cli.goto(`/app/order/${recogida.pedidoId}`);
+    await expect(cli.getByText(L.recogerEnLocal)).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-recoger');
+    const pinRecogida = String(
+      sql(`SELECT pin FROM pines_entrega WHERE pedido_id = '${recogida.pedidoId}'`)[0]?.pin ?? '',
+    );
+    await panel.getByLabel(L.pinCliente).fill(pinRecogida);
+    await panel.getByRole('button', { name: L.entregadoLocal }).click();
+    await expect
+      .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${recogida.pedidoId}'`)[0]?.estado, {
+        timeout: 20_000,
+      })
+      .toBe('entregado');
 
     // 16. El dinero de cada uno. El restaurante ve su día: lo que le toca es lo de su venta entregada.
     await panel.getByRole('link', { name: L.beneficios, exact: true }).click();

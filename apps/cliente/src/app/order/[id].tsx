@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Location from 'expo-location';
 import {
   ErrorApi,
   enIdioma,
@@ -34,7 +35,9 @@ type Pedido = {
   minutosEstimados: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   fotoEntrega?: { tomadaEn: string } | null;
-  entrega?: 'puerta' | 'mano';
+  entrega?: 'puerta' | 'mano' | 'recoger';
+  propinaExtra?: number | null;
+  requiereEdad?: boolean;
   entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
   notaEntrega?: string;
   llegaAMasTardar?: string | null;
@@ -102,6 +105,20 @@ const T = {
     enPuerta: 'Tu repartidor está en tu puerta.',
     casiLlega: 'Tu repartidor está a un minuto.',
     llegaEn5: 'Tu repartidor llega en unos 5 minutos.',
+    cambiarDireccion: 'Cambiar la dirección de entrega',
+    cambiarDireccionAyuda:
+      'Hasta que el repartidor salga del restaurante. Si el envío cambia, te mostramos el nuevo total antes de aplicarlo.',
+    nuevaDireccion: 'Nueva dirección',
+    usarUbicacion: 'Usar mi ubicación actual',
+    aplicarDireccion: 'Cambiar la dirección',
+    nuevoTotal: 'El total pasa de {antes} a {despues}. ¿Lo aceptas?',
+    aceptarTotal: 'Sí, acepto el nuevo total',
+    direccionCambiada: 'Dirección cambiada.',
+    propinaDespues: '¿Te gustó el servicio? Deja una propina extra al repartidor',
+    propinaDespuesAyuda: 'Se cobra con tu tarjeta guardada y va entera al repartidor.',
+    propinaGracias: 'Propina enviada. ¡Gracias!',
+    recogerEnLocal: 'Recoges en el local',
+    recogerListo: 'Tu pedido está listo: pasa a buscarlo y muestra tu PIN.',
     llamar: 'Llamar al repartidor (número oculto)',
     llamando:
       'Te estamos llamando. Contesta y te conectamos con tu repartidor; ninguno ve el número del otro.',
@@ -167,6 +184,20 @@ const T = {
     enPuerta: 'Your driver is at your door.',
     casiLlega: 'Your driver is a minute away.',
     llegaEn5: 'Your driver arrives in about 5 minutes.',
+    cambiarDireccion: 'Change the delivery address',
+    cambiarDireccionAyuda:
+      'Until the driver leaves the restaurant. If the delivery fee changes, we show you the new total before applying it.',
+    nuevaDireccion: 'New address',
+    usarUbicacion: 'Use my current location',
+    aplicarDireccion: 'Change the address',
+    nuevoTotal: 'The total goes from {antes} to {despues}. Do you accept?',
+    aceptarTotal: 'Yes, I accept the new total',
+    direccionCambiada: 'Address changed.',
+    propinaDespues: 'Enjoyed the service? Leave the driver an extra tip',
+    propinaDespuesAyuda: 'Charged to your saved card and paid in full to the driver.',
+    propinaGracias: 'Tip sent. Thank you!',
+    recogerEnLocal: 'You’re picking it up',
+    recogerListo: 'Your order is ready: come pick it up and show your PIN.',
     llamar: 'Call the driver (masked number)',
     llamando:
       'We’re calling you now. Answer and we’ll connect you with your driver; neither of you sees the other’s number.',
@@ -248,6 +279,11 @@ export default function SeguirPedido() {
   const [estRep, setEstRep] = useState(0);
   const [culpa, setCulpa] = useState(false);
   const [calificado, setCalificado] = useState(false);
+  const [nuevaDireccion, setNuevaDireccion] = useState('');
+  const [nuevoPunto, setNuevoPunto] = useState<{ lat: number; lng: number } | null>(null);
+  const [propuesta, setPropuesta] = useState<{ antes: number; despues: number } | null>(null);
+  const [avisoCambio, setAvisoCambio] = useState('');
+  const [propinaEnviada, setPropinaEnviada] = useState(false);
   const [confirmar, setConfirmar] = useState(false);
   const [cancelando, setCancelando] = useState(false);
 
@@ -281,6 +317,61 @@ export default function SeguirPedido() {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setCancelando(false);
+    }
+  }
+
+  async function cambiarDireccion(aceptarTotal = false) {
+    setError('');
+    try {
+      await api.pedir('PATCH', `/datos/pedidos/${id}/direccion`, {
+        direccion: nuevaDireccion.trim(),
+        lat: nuevoPunto?.lat ?? null,
+        lng: nuevoPunto?.lng ?? null,
+        aceptarTotal,
+      });
+      setPropuesta(null);
+      setAvisoCambio(t.direccionCambiada);
+      setNuevaDireccion('');
+      const r = await api.pedir<{ pedido: Pedido }>('GET', `/datos/pedidos/${id}/seguimiento`);
+      setP(r.pedido);
+    } catch (x) {
+      const info =
+        x instanceof ErrorApi
+          ? (x.datos as { totalActual?: number; nuevoTotal?: number } | undefined)
+          : undefined;
+      if (x instanceof ErrorApi && x.campo === 'total' && info?.nuevoTotal != null)
+        setPropuesta({ antes: info.totalActual ?? 0, despues: info.nuevoTotal });
+      else setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  async function usarUbicacion() {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const pos = await Location.getCurrentPositionAsync({});
+      setNuevoPunto({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      const [dir] = await Location.reverseGeocodeAsync({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      }).catch(() => []);
+      if (dir)
+        setNuevaDireccion(
+          [dir.streetNumber, dir.street, dir.city].filter(Boolean).join(' ').trim() ||
+            nuevaDireccion,
+        );
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  async function propinaExtra(centavos: number) {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/pedidos/${id}/propina`, { centavos });
+      setPropinaEnviada(true);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
@@ -488,6 +579,45 @@ export default function SeguirPedido() {
               ) : null}
             </View>
           )}
+          {p.entrega === 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
+            <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.exito }]}>
+              <Text style={{ fontWeight: '800' }}>{t.recogerEnLocal}</Text>
+              {p.estado === 'listo' ? (
+                <Text style={{ color: C.exito, fontWeight: '700' }}>{t.recogerListo}</Text>
+              ) : null}
+            </View>
+          ) : null}
+          {p.entrega !== 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
+            <View style={e.tarjeta}>
+              <Text style={{ fontWeight: '800' }}>{t.cambiarDireccion}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cambiarDireccionAyuda}</Text>
+              <TextInput
+                value={nuevaDireccion}
+                onChangeText={setNuevaDireccion}
+                placeholder={t.nuevaDireccion}
+                accessibilityLabel={t.nuevaDireccion}
+                style={[e.input, { marginTop: 6 }]}
+              />
+              <Boton texto={t.usarUbicacion} alTocar={() => void usarUbicacion()} secundario />
+              {propuesta ? (
+                <>
+                  <Text style={{ fontWeight: '700', marginTop: 6 }}>
+                    {t.nuevoTotal
+                      .replace('{antes}', formatearDolares(propuesta.antes, idioma))
+                      .replace('{despues}', formatearDolares(propuesta.despues, idioma))}
+                  </Text>
+                  <Boton texto={t.aceptarTotal} alTocar={() => void cambiarDireccion(true)} exito />
+                </>
+              ) : nuevaDireccion.trim().length >= 5 ? (
+                <Boton texto={t.aplicarDireccion} alTocar={() => void cambiarDireccion(false)} />
+              ) : null}
+              {avisoCambio ? (
+                <Text style={{ color: C.exito, fontWeight: '700' }} accessibilityRole="alert">
+                  {avisoCambio}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
           {p.repartidor && ['aceptado', 'listo', 'en_camino'].includes(p.estado) ? (
             <>
               {avisoLlamada ? (
@@ -522,6 +652,43 @@ export default function SeguirPedido() {
             </Text>
             <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{p.direccion}</Text>
           </View>
+          {p.estado === 'entregado' && p.repartidor && !p.propinaExtra && !propinaEnviada ? (
+            <View style={e.tarjeta}>
+              <Text style={{ fontWeight: '800' }}>{t.propinaDespues}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+                {t.propinaDespuesAyuda}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {[100, 200, 500].map((c) => (
+                  <Pressable
+                    key={c}
+                    onPress={() => void propinaExtra(c)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.propinaDespues} ${formatearDolares(c, idioma)}`}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: C.exito,
+                      borderRadius: 999,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: '800', color: C.exito }}>
+                      {formatearDolares(c, idioma)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null}
+          {propinaEnviada ? (
+            <Text
+              style={{ color: C.exito, fontWeight: '700', marginBottom: 8 }}
+              accessibilityRole="alert"
+            >
+              {t.propinaGracias}
+            </Text>
+          ) : null}
           {p.estado === 'entregado' && (
             <View style={e.tarjeta}>
               {calificado ? (

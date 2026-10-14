@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Linking, Modal, Platform, Pressable, Text, TextInput, View, Switch } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
@@ -63,6 +63,8 @@ type Pedido = {
   excepcionUbicacion?: 'pedida' | 'autorizada' | null;
   entrega?: 'puerta' | 'mano';
   pinRequerido?: boolean;
+  requiereEdad?: boolean;
+  grupoId?: string | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -77,6 +79,8 @@ type Estado = {
   nivel: Nivel;
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  /** Otros pedidos del mismo restaurante que lleva en este viaje. */
+  agrupados?: Pedido[];
 };
 type Billetera = DatosBilletera;
 
@@ -131,6 +135,10 @@ const T = {
     bono: 'Incluye un bono de',
     llamarCliente: 'Llamar al cliente (número oculto)',
     selfieControl: 'Foto de control: confirma que eres tú',
+    agrupado: 'Pedido agrupado (mismo restaurante, mismo viaje)',
+    agrupadoAyuda: 'Lo recoges junto con el principal y lo entregas en su propia dirección.',
+    mayorEdad: 'Revisé el documento: quien recibe es mayor de 21',
+    mayorEdadAyuda: 'Este pedido tiene productos para mayores de 21: solo en mano y con documento.',
     selfieControlAyuda:
       'De vez en cuando, antes de conectarte, te pedimos una foto de tu cara. Nuestro equipo la compara con la de tu registro. De frente y con buena luz.',
     tomarSelfie: 'Tomarme la foto ahora',
@@ -226,6 +234,10 @@ const T = {
     bono: 'Includes a bonus of',
     llamarCliente: 'Call the customer (masked number)',
     selfieControl: 'Identity check photo: confirm it’s you',
+    agrupado: 'Grouped order (same restaurant, same trip)',
+    agrupadoAyuda: 'You pick it up with the main one and deliver it to its own address.',
+    mayorEdad: 'I checked the ID: the recipient is 21 or older',
+    mayorEdadAyuda: 'This order has 21+ items: hand delivery only, with an ID check.',
     selfieControlAyuda:
       'Every so often, before you go online, we ask for a photo of your face. Our team compares it with the one on file. Face the camera in good light.',
     tomarSelfie: 'Take my photo now',
@@ -331,6 +343,7 @@ export function Inicio() {
   const [motivo, setMotivo] = useState('');
   const [nota, setNota] = useState('');
   const [pinEntrega, setPinEntrega] = useState('');
+  const [mayorEdad, setMayorEdad] = useState(false);
   const [tic, setTic] = useState(() => Date.now());
   useEffect(() => {
     const reloj = setInterval(() => setTic(Date.now()), 1000);
@@ -571,6 +584,7 @@ export function Inicio() {
         lng: p.coords.longitude,
         modo: 'mano',
         ...(estado.activo.pinRequerido ? { pin: pinEntrega.trim() } : {}),
+        ...(estado.activo.requiereEdad ? { mayorEdad } : {}),
       };
       try {
         await api.pedir('POST', ruta, cuerpo);
@@ -798,291 +812,370 @@ export function Inicio() {
       {mensajes}
 
       {activo ? (
-        <View style={e.tarjeta}>
-          <Text style={{ fontWeight: '800', fontSize: 18 }}>
-            {t.pedido} #{activo.id.slice(0, 4).toUpperCase()} ·{' '}
-            {formatearDolares(activo.pagoRepartidor, idioma)}
-          </Text>
-          {activo.lineas.map((l) => (
-            <Text key={l.platoId}>
-              {l.cantidad} × {textoLinea(l, idioma)}
+        <>
+          <View style={e.tarjeta}>
+            <Text style={{ fontWeight: '800', fontSize: 18 }}>
+              {t.pedido} #{activo.id.slice(0, 4).toUpperCase()} ·{' '}
+              {formatearDolares(activo.pagoRepartidor, idioma)}
             </Text>
-          ))}
-          {activo.estado !== 'en_camino' ? (
-            <>
-              <Text style={{ marginTop: 10, fontWeight: '700' }}>
-                {t.recoger}: {activo.restaurante.nombre}
+            {activo.lineas.map((l) => (
+              <Text key={l.platoId}>
+                {l.cantidad} × {textoLinea(l, idioma)}
               </Text>
-              <Text>{activo.restaurante.direccion}</Text>
-              <Boton
-                texto={t.comoLlegar}
-                alTocar={() =>
-                  abrirMapa(
-                    activo.restaurante.lat,
-                    activo.restaurante.lng,
-                    activo.restaurante.direccion,
-                  )
-                }
-                secundario
-              />
-              {activo.restaurante.telefono ? (
+            ))}
+            {activo.estado !== 'en_camino' ? (
+              <>
+                <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                  {t.recoger}: {activo.restaurante.nombre}
+                </Text>
+                <Text>{activo.restaurante.direccion}</Text>
                 <Boton
-                  texto={t.llamar}
-                  alTocar={() => void Linking.openURL(`tel:${activo.restaurante.telefono}`)}
+                  texto={t.comoLlegar}
+                  alTocar={() =>
+                    abrirMapa(
+                      activo.restaurante.lat,
+                      activo.restaurante.lng,
+                      activo.restaurante.direccion,
+                    )
+                  }
                   secundario
                 />
-              ) : null}
-              {activo.estado === 'listo' && activo.fotoRecogida ? (
-                <>
-                  {bloqueCodigo}
-                  <Text
-                    style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
-                    accessibilityRole="alert"
-                  >
-                    {activo.verificado ? t.verificadoOk : t.esperaConfirmacion}
-                  </Text>
+                {activo.restaurante.telefono ? (
                   <Boton
-                    texto={subiendo ? t.subiendo : t.repetirFoto}
-                    alTocar={() =>
-                      void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
-                    }
-                    cargando={subiendo}
-                    secundario
-                  />
-                </>
-              ) : activo.estado === 'listo' ? (
-                <>
-                  {bloqueCodigo}
-                  <Boton
-                    texto={subiendo ? t.subiendo : t.fotoRecogida}
-                    alTocar={() =>
-                      void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
-                    }
-                    cargando={subiendo}
-                    exito={!!activo.verificado}
-                    secundario={!activo.verificado}
-                  />
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
-                </>
-              ) : (
-                <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
-                  {t.esperando}
-                  {activo.minutosParaListo ? ` ${t.listoEn} ${activo.minutosParaListo} min.` : ''}
-                </Text>
-              )}
-              {/* Soltar antes de recoger: vuelve a la fila de ofertas, sin castigo. */}
-              <View
-                style={{
-                  marginTop: 14,
-                  borderTopWidth: 1,
-                  borderTopColor: '#E6E6E6',
-                  paddingTop: 8,
-                }}
-              >
-                <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
-                <TextInput
-                  value={motivo}
-                  onChangeText={setMotivo}
-                  placeholder={t.motivo}
-                  accessibilityLabel={t.motivo}
-                  style={[e.input, { marginTop: 6 }]}
-                />
-                {motivo.trim() ? (
-                  <Boton
-                    texto={t.soltar}
-                    alTocar={() =>
-                      void accion(`/datos/repartidor/pedidos/${activo.id}/soltar`, {
-                        motivo: motivo.trim(),
-                      }).then(() => setMotivo(''))
-                    }
+                    texto={t.llamar}
+                    alTocar={() => void Linking.openURL(`tel:${activo.restaurante.telefono}`)}
                     secundario
                   />
                 ) : null}
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
-              <Text>{activo.direccion}</Text>
-              {activo.notas ? (
-                <Text style={{ color: '#5E5E5E' }}>
-                  {t.notas}: {activo.notas}
+                {activo.estado === 'listo' && activo.fotoRecogida ? (
+                  <>
+                    {bloqueCodigo}
+                    <Text
+                      style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
+                      accessibilityRole="alert"
+                    >
+                      {activo.verificado ? t.verificadoOk : t.esperaConfirmacion}
+                    </Text>
+                    <Boton
+                      texto={subiendo ? t.subiendo : t.repetirFoto}
+                      alTocar={() =>
+                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                      }
+                      cargando={subiendo}
+                      secundario
+                    />
+                  </>
+                ) : activo.estado === 'listo' ? (
+                  <>
+                    {bloqueCodigo}
+                    <Boton
+                      texto={subiendo ? t.subiendo : t.fotoRecogida}
+                      alTocar={() =>
+                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                      }
+                      cargando={subiendo}
+                      exito={!!activo.verificado}
+                      secundario={!activo.verificado}
+                    />
+                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
+                  </>
+                ) : (
+                  <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
+                    {t.esperando}
+                    {activo.minutosParaListo ? ` ${t.listoEn} ${activo.minutosParaListo} min.` : ''}
+                  </Text>
+                )}
+                {/* Soltar antes de recoger: vuelve a la fila de ofertas, sin castigo. */}
+                <View
+                  style={{
+                    marginTop: 14,
+                    borderTopWidth: 1,
+                    borderTopColor: '#E6E6E6',
+                    paddingTop: 8,
+                  }}
+                >
+                  <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
+                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
+                  <TextInput
+                    value={motivo}
+                    onChangeText={setMotivo}
+                    placeholder={t.motivo}
+                    accessibilityLabel={t.motivo}
+                    style={[e.input, { marginTop: 6 }]}
+                  />
+                  {motivo.trim() ? (
+                    <Boton
+                      texto={t.soltar}
+                      alTocar={() =>
+                        void accion(`/datos/repartidor/pedidos/${activo.id}/soltar`, {
+                          motivo: motivo.trim(),
+                        }).then(() => setMotivo(''))
+                      }
+                      secundario
+                    />
+                  ) : null}
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
+                <Text>{activo.direccion}</Text>
+                {activo.notas ? (
+                  <Text style={{ color: '#5E5E5E' }}>
+                    {t.notas}: {activo.notas}
+                  </Text>
+                ) : null}
+                <Text style={{ fontWeight: '700', marginTop: 4 }}>
+                  {t.pidio[activo.entrega ?? 'puerta']}
                 </Text>
-              ) : null}
-              <Text style={{ fontWeight: '700', marginTop: 4 }}>
-                {t.pidio[activo.entrega ?? 'puerta']}
-              </Text>
-              {(() => {
-                const casa =
-                  activo.lat != null && activo.lng != null
-                    ? { lat: activo.lat, lng: activo.lng }
+                {(() => {
+                  const casa =
+                    activo.lat != null && activo.lng != null
+                      ? { lat: activo.lat, lng: activo.lng }
+                      : null;
+                  // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
+                  // Lo decide el servidor (dos lecturas precisas del GPS) o soporte con la excepción.
+                  const enPuerta =
+                    Boolean(activo.llegoCliente) || activo.excepcionUbicacion === 'autorizada';
+                  if (!enPuerta) {
+                    const m = aqui && casa ? metrosEntre(aqui, casa) : null;
+                    const cerca = llego(aqui, casa);
+                    const falta =
+                      m == null
+                        ? ''
+                        : idioma === 'en'
+                          ? `${(m / 1609.34).toFixed(1)} mi`
+                          : m < 1000
+                            ? `${m} m`
+                            : `${(m / 1000).toFixed(1)} km`;
+                    return (
+                      <>
+                        <Boton
+                          texto={t.comoLlegar}
+                          alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
+                          exito
+                        />
+                        {cerca ? (
+                          <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
+                            {t.confirmandoGps}
+                            {precision != null && precision > PRECISION_MAXIMA_M
+                              ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
+                              : ''}
+                          </Text>
+                        ) : (
+                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                            {falta ? `${t.teFaltan} ${falta}. ` : ''}
+                            {t.alLlegar}
+                          </Text>
+                        )}
+                        {activo.excepcionUbicacion === 'pedida' ? (
+                          <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
+                            {t.esperandoSoporte}
+                          </Text>
+                        ) : (
+                          <View style={{ marginTop: 10 }}>
+                            <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
+                            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.sinGpsAyuda}</Text>
+                            <TextInput
+                              value={motivoGps}
+                              onChangeText={setMotivoGps}
+                              placeholder={t.sinGpsAyuda}
+                              accessibilityLabel={t.sinGpsAyuda}
+                              style={[e.input, { marginTop: 6 }]}
+                            />
+                            {motivoGps.trim().length >= 5 ? (
+                              <Boton
+                                texto={t.pedirExcepcion}
+                                alTocar={() =>
+                                  void accion(
+                                    `/datos/repartidor/pedidos/${activo.id}/no-puedo-confirmar`,
+                                    { motivo: motivoGps.trim() },
+                                  ).then(() => setMotivoGps(''))
+                                }
+                                secundario
+                              />
+                            ) : null}
+                          </View>
+                        )}
+                      </>
+                    );
+                  }
+                  // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
+                  const enMano = activo.entrega === 'mano';
+                  const avisoMs = activo.noApareceEn
+                    ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
                     : null;
-                // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
-                // Lo decide el servidor (dos lecturas precisas del GPS) o soporte con la excepción.
-                const enPuerta =
-                  Boolean(activo.llegoCliente) || activo.excepcionUbicacion === 'autorizada';
-                if (!enPuerta) {
-                  const m = aqui && casa ? metrosEntre(aqui, casa) : null;
-                  const cerca = llego(aqui, casa);
-                  const falta =
-                    m == null
-                      ? ''
-                      : idioma === 'en'
-                        ? `${(m / 1609.34).toFixed(1)} mi`
-                        : m < 1000
-                          ? `${m} m`
-                          : `${(m / 1000).toFixed(1)} km`;
+                  const faltanSeg =
+                    avisoMs == null
+                      ? null
+                      : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
                   return (
                     <>
-                      <Boton
-                        texto={t.comoLlegar}
-                        alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
-                        exito
-                      />
-                      {cerca ? (
+                      {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
                         <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
-                          {t.confirmandoGps}
-                          {precision != null && precision > PRECISION_MAXIMA_M
-                            ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
-                            : ''}
+                          {t.autorizado}
+                        </Text>
+                      ) : null}
+                      <Boton
+                        texto={subiendo ? t.subiendo : t.fotoEntrega}
+                        alTocar={() =>
+                          void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
+                        }
+                        cargando={subiendo}
+                        exito={!enMano}
+                        secundario={enMano}
+                      />
+                      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                      {activo.pinRequerido ? (
+                        <TextInput
+                          value={pinEntrega}
+                          onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
+                          placeholder={t.pinPedir}
+                          accessibilityLabel={t.pinPedir}
+                          keyboardType="number-pad"
+                          style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
+                        />
+                      ) : null}
+                      {activo.requiereEdad ? (
+                        <Pressable
+                          onPress={() => setMayorEdad((v) => !v)}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: mayorEdad }}
+                          accessibilityLabel={t.mayorEdad}
+                          style={{
+                            flexDirection: 'row',
+                            gap: 8,
+                            alignItems: 'center',
+                            marginTop: 8,
+                          }}
+                        >
+                          <Switch
+                            value={mayorEdad}
+                            onValueChange={setMayorEdad}
+                            accessibilityLabel={t.mayorEdad}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
+                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                              {t.mayorEdadAyuda}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      ) : null}
+                      <Boton
+                        texto={t.enMano}
+                        alTocar={() => void entregarEnMano()}
+                        cargando={subiendo}
+                        exito={enMano}
+                        secundario={!enMano}
+                      />
+                      {faltanSeg == null ? (
+                        <Boton
+                          texto={t.noAparece}
+                          alTocar={() =>
+                            void accion(`/datos/repartidor/pedidos/${activo.id}/no-aparece`)
+                          }
+                          secundario
+                        />
+                      ) : faltanSeg > 0 ? (
+                        <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
+                          {t.esperando5} {Math.floor(faltanSeg / 60)}:
+                          {String(faltanSeg % 60).padStart(2, '0')}
                         </Text>
                       ) : (
-                        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                          {falta ? `${t.teFaltan} ${falta}. ` : ''}
-                          {t.alLlegar}
-                        </Text>
-                      )}
-                      {activo.excepcionUbicacion === 'pedida' ? (
-                        <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
-                          {t.esperandoSoporte}
-                        </Text>
-                      ) : (
-                        <View style={{ marginTop: 10 }}>
-                          <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
-                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.sinGpsAyuda}</Text>
+                        <>
                           <TextInput
-                            value={motivoGps}
-                            onChangeText={setMotivoGps}
-                            placeholder={t.sinGpsAyuda}
-                            accessibilityLabel={t.sinGpsAyuda}
+                            value={nota}
+                            onChangeText={setNota}
+                            placeholder={t.dondeLoDejas}
+                            accessibilityLabel={t.dondeLoDejas}
                             style={[e.input, { marginTop: 6 }]}
                           />
-                          {motivoGps.trim().length >= 5 ? (
+                          {nota.trim() ? (
                             <Boton
-                              texto={t.pedirExcepcion}
+                              texto={subiendo ? t.subiendo : t.dejarSeguro}
                               alTocar={() =>
-                                void accion(
-                                  `/datos/repartidor/pedidos/${activo.id}/no-puedo-confirmar`,
-                                  { motivo: motivoGps.trim() },
-                                ).then(() => setMotivoGps(''))
+                                void tomarFoto(
+                                  `/datos/repartidor/pedidos/${activo.id}/entregado?modo=seguro&nota=${encodeURIComponent(nota.trim())}`,
+                                )
                               }
-                              secundario
+                              cargando={subiendo}
+                              exito
                             />
                           ) : null}
-                        </View>
+                        </>
                       )}
                     </>
                   );
+                })()}
+              </>
+            )}
+            {activo.estado === 'en_camino' || activo.estado === 'listo' ? (
+              <Boton
+                texto={t.llamarCliente}
+                alTocar={() =>
+                  void api
+                    .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
+                    .then(() => setAviso(t.llamandoCliente))
+                    .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
                 }
-                // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
-                const enMano = activo.entrega === 'mano';
-                const avisoMs = activo.noApareceEn
-                  ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
-                  : null;
-                const faltanSeg =
-                  avisoMs == null
-                    ? null
-                    : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
-                return (
-                  <>
-                    {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
-                      <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
-                        {t.autorizado}
-                      </Text>
-                    ) : null}
-                    <Boton
-                      texto={subiendo ? t.subiendo : t.fotoEntrega}
-                      alTocar={() =>
-                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
-                      }
-                      cargando={subiendo}
-                      exito={!enMano}
-                      secundario={enMano}
-                    />
-                    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
-                    {activo.pinRequerido ? (
-                      <TextInput
-                        value={pinEntrega}
-                        onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
-                        placeholder={t.pinPedir}
-                        accessibilityLabel={t.pinPedir}
-                        keyboardType="number-pad"
-                        style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
-                      />
-                    ) : null}
-                    <Boton
-                      texto={t.enMano}
-                      alTocar={() => void entregarEnMano()}
-                      cargando={subiendo}
-                      exito={enMano}
-                      secundario={!enMano}
-                    />
-                    {faltanSeg == null ? (
+                secundario
+              />
+            ) : null}
+            <ChatPedido pedidoId={activo.id} />
+          </View>
+          {(estado?.agrupados ?? []).map((g) => {
+            const casaG = g.lat != null && g.lng != null ? { lat: g.lat, lng: g.lng } : null;
+            const enPuertaG = Boolean(g.llegoCliente) || g.excepcionUbicacion === 'autorizada';
+            return (
+              <View key={g.id} style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
+                <Text style={{ fontWeight: '800', color: C.primario }}>{t.agrupado}</Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
+                <Text style={{ fontWeight: '800', fontSize: 16, marginTop: 4 }}>
+                  {t.pedido} #{g.id.slice(0, 4).toUpperCase()} ·{' '}
+                  {formatearDolares(g.pagoRepartidor, idioma)}
+                </Text>
+                {g.lineas.map((l) => (
+                  <Text key={l.platoId}>
+                    {l.cantidad} × {textoLinea(l, idioma)}
+                  </Text>
+                ))}
+                <Text style={{ marginTop: 6, fontWeight: '700' }}>{t.entregar}:</Text>
+                <Text>{g.direccion}</Text>
+                {g.estado === 'en_camino' ? (
+                  enPuertaG ? (
+                    <>
                       <Boton
-                        texto={t.noAparece}
+                        texto={subiendo ? t.subiendo : t.fotoEntrega}
                         alTocar={() =>
-                          void accion(`/datos/repartidor/pedidos/${activo.id}/no-aparece`)
+                          void tomarFoto(`/datos/repartidor/pedidos/${g.id}/entregado`)
                         }
-                        secundario
+                        cargando={subiendo}
+                        exito
                       />
-                    ) : faltanSeg > 0 ? (
-                      <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
-                        {t.esperando5} {Math.floor(faltanSeg / 60)}:
-                        {String(faltanSeg % 60).padStart(2, '0')}
+                      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Boton
+                        texto={t.comoLlegar}
+                        alTocar={() => abrirMapa(g.lat, g.lng, g.direccion)}
+                        exito
+                      />
+                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                        {aqui && casaG ? `${t.teFaltan} ${metrosEntre(aqui, casaG)} m. ` : ''}
+                        {t.alLlegar}
                       </Text>
-                    ) : (
-                      <>
-                        <TextInput
-                          value={nota}
-                          onChangeText={setNota}
-                          placeholder={t.dondeLoDejas}
-                          accessibilityLabel={t.dondeLoDejas}
-                          style={[e.input, { marginTop: 6 }]}
-                        />
-                        {nota.trim() ? (
-                          <Boton
-                            texto={subiendo ? t.subiendo : t.dejarSeguro}
-                            alTocar={() =>
-                              void tomarFoto(
-                                `/datos/repartidor/pedidos/${activo.id}/entregado?modo=seguro&nota=${encodeURIComponent(nota.trim())}`,
-                              )
-                            }
-                            cargando={subiendo}
-                            exito
-                          />
-                        ) : null}
-                      </>
-                    )}
-                  </>
-                );
-              })()}
-            </>
-          )}
-          {activo.estado === 'en_camino' || activo.estado === 'listo' ? (
-            <Boton
-              texto={t.llamarCliente}
-              alTocar={() =>
-                void api
-                  .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
-                  .then(() => setAviso(t.llamandoCliente))
-                  .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
-              }
-              secundario
-            />
-          ) : null}
-          <ChatPedido pedidoId={activo.id} />
-        </View>
+                    </>
+                  )
+                ) : (
+                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.esperando}</Text>
+                )}
+                <ChatPedido pedidoId={g.id} />
+              </View>
+            );
+          })}
+        </>
       ) : estado?.conectado ? (
         ofertas.length === 0 ? (
           <Text style={e.tarjeta}>{t.buscando}</Text>

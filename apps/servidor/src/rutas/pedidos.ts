@@ -40,13 +40,13 @@ const esquemaNuevoPedido = z.object({
     .min(1, { error: 'Tu carrito está vacío.' })
     .max(50),
   propinaCentavos: z.number().int().min(0).max(50_000),
-  direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
+  direccion: z.string().trim().max(200).default(''),
   notas: z.string().trim().max(300).default(''),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
   // Cómo quiere recibir: en la puerta (foto obligatoria) o en mano (foto opcional).
-  entrega: z.enum(['puerta', 'mano']).default('puerta'),
+  entrega: z.enum(['puerta', 'mano', 'recoger']).default('puerta'),
   // Si es en mano: PIN de 4 dígitos que da quien recibe (se apaga si va a recibir otra persona).
   pin: z.boolean().default(true),
 });
@@ -60,6 +60,9 @@ export const CON_EVIDENCIAS = `(SELECT creada_en FROM evidencias e WHERE e.pedid
   (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo,
   (SELECT nota FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_nota,
   (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega,
+  (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id) AS recogida,
+  (SELECT centavos FROM propinas_extra px WHERE px.pedido_id = p.id) AS propina_extra,
+  (SELECT grupo_id FROM grupos_pedido gp WHERE gp.pedido_id = p.id) AS grupo_id,
   (SELECT 1 FROM pines_entrega pe WHERE pe.pedido_id = p.id) AS pin_requerido,
   (SELECT capturado_en FROM cobros co WHERE co.pedido_id = p.id) AS cobro_capturado_en`;
 
@@ -195,6 +198,24 @@ export async function aplicarAjuste(
   return { devolucion, cancelado: false };
 }
 
+/** Las líneas del pedido tal como se congelaron al pedir (nombres, precios, opciones, edad). */
+export function lineasDe(f: FilaPedido): {
+  platoId: string;
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+  cantidad: number;
+  opciones?: OpcionElegida[];
+  requiereEdad?: boolean;
+}[] {
+  try {
+    const v = JSON.parse(String(f.lineas_json ?? '[]')) as unknown;
+    return Array.isArray(v) ? (v as ReturnType<typeof lineasDe>) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function aPedido(f: FilaPedido) {
   return {
     id: String(f.id),
@@ -237,7 +258,10 @@ export function aPedido(f: FilaPedido) {
       : null,
     fotoEntrega: f.ev_entrega ? { tomadaEn: String(f.ev_entrega) } : null,
     // Cómo pidió recibirlo y cómo se entregó de verdad (en mano, en la puerta, en lugar seguro).
-    entrega: (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
+    entrega: f.recogida ? 'recoger' : (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
+    propinaExtra: f.propina_extra == null ? null : Number(f.propina_extra),
+    grupoId: (f.grupo_id as string | null) ?? null,
+    requiereEdad: lineasDe(f).some((l) => l.requiereEdad),
     entregadoComo: (f.ev_entrega_modo as string | null) ?? null,
     notaEntrega: String(f.ev_entrega_nota ?? ''),
     // El PIN mismo solo lo ve el cliente (va aparte, en el seguimiento).
@@ -328,9 +352,19 @@ pedidos.post('/pedidos', async (c) => {
         Number(p.precio_centavos) + elegidas.reduce((s, o) => s + o.precioCentavos, 0),
       cantidad: l.cantidad,
       opciones: elegidas,
+      // Congelado al pedir: si el plato es para mayores de 21, la entrega lo exige en mano.
+      requiereEdad: Number(p.requiere_edad ?? 0) === 1,
     };
   });
 
+  const recogida = d.entrega === 'recoger';
+  if (recogida) {
+    // Recogida en el local: la «dirección de entrega» es el propio restaurante.
+    d.direccion = String(rest.direccion ?? '');
+    d.lat = rest.lat == null ? null : Number(rest.lat);
+    d.lng = rest.lng == null ? null : Number(rest.lng);
+  } else if (d.direccion.length < 5)
+    throw new ErrorDatos('Escribe la dirección de entrega.', 'direccion', 422);
   const km =
     d.lat != null && d.lng != null && rest.lat != null && rest.lng != null
       ? distanciaKm({ lat: d.lat, lng: d.lng }, { lat: Number(rest.lat), lng: Number(rest.lng) })
@@ -360,6 +394,7 @@ pedidos.post('/pedidos', async (c) => {
     distanciaKm: km,
     config,
     regalo,
+    recogida,
   });
 
   const id = nuevoId();
@@ -399,9 +434,12 @@ pedidos.post('/pedidos', async (c) => {
     .run();
   await db
     .prepare('INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, ?)')
-    .bind(id, d.entrega)
+    .bind(id, recogida ? 'mano' : d.entrega)
     .run();
-  if (d.entrega === 'mano' && d.pin) {
+  if (recogida)
+    await db.prepare('INSERT OR IGNORE INTO recogidas (pedido_id) VALUES (?)').bind(id).run();
+  // PIN también en la recogida en el local: el cliente lo muestra en el mostrador.
+  if ((d.entrega === 'mano' || recogida) && d.pin) {
     const pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0]! % 9000));
     await db
       .prepare('INSERT OR REPLACE INTO pines_entrega (pedido_id, pin) VALUES (?, ?)')
@@ -819,4 +857,203 @@ pedidos.post('/mis-tarjetas/:id/quitar', async (c) => {
     throw new ErrorDatos('Esa tarjeta no existe.', undefined, 404);
   await stripe.post(`/payment_methods/${id}/detach`, {});
   return c.json({ ok: true });
+});
+
+/**
+ * Cambio de dirección por el cliente (como permiten los grandes): se recalcula la cobertura, el
+ * envío y el total; si el total cambia, el cliente tiene que aceptar el nuevo antes de aplicarlo.
+ * Solo antes de que el repartidor salga del restaurante y nunca en una recogida en el local.
+ */
+pedidos.patch('/pedidos/:id/direccion', async (c) => {
+  const u = exigir(c, 'cliente');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
+      lat: z.number().min(-90).max(90).nullable().default(null),
+      lng: z.number().min(-180).max(180).nullable().default(null),
+      aceptarTotal: z.boolean().default(false),
+    }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      `SELECT p.*, r.lat AS rest_lat, r.lng AS rest_lng, (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id) AS recogida FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.cliente_id = ?`,
+    )
+    .bind(id, u.id)
+    .first<FilaPedido>();
+  if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  if (f.recogida)
+    throw new ErrorDatos('Este pedido se recoge en el local: no lleva dirección.', undefined, 409);
+  if (!['pago_pendiente', 'pagado', 'aceptado', 'listo'].includes(String(f.estado)))
+    throw new ErrorDatos(
+      'El repartidor ya salió con tu pedido: ya no se puede cambiar la dirección. Escríbele por el chat.',
+      undefined,
+      409,
+    );
+  const km =
+    d.lat != null && d.lng != null && f.rest_lat != null && f.rest_lng != null
+      ? distanciaKm(
+          { lat: d.lat, lng: d.lng },
+          { lat: Number(f.rest_lat), lng: Number(f.rest_lng) },
+        )
+      : null;
+  if (km != null && km > 25)
+    throw new ErrorDatos(
+      'Esa dirección está fuera del área de entrega de este restaurante.',
+      'direccion',
+      409,
+    );
+  const config = await leerConfigDinero(db);
+  const lineas = lineasDe(f);
+  const desglose = calcularPedido({
+    lineas,
+    plan: String(f.plan) as Plan,
+    propina: Number(f.propina),
+    distanciaKm: km,
+    config,
+    regalo: Number(f.regalo ?? 0),
+  });
+  const nuevoTotal = desglose.totalCliente;
+  if (nuevoTotal !== Number(f.total) && !d.aceptarTotal)
+    return c.json(
+      {
+        error: 'El envío cambia con la nueva dirección. Acepta el nuevo total para aplicarla.',
+        campo: 'total',
+        totalActual: Number(f.total),
+        nuevoTotal,
+        envio: desglose.envio,
+      },
+      409,
+    );
+  // El cobro sigue autorizado (no capturado): se actualiza el monto en Stripe antes de tocar nada.
+  if (nuevoTotal !== Number(f.total) && f.stripe_pago && String(f.estado) !== 'pago_pendiente') {
+    const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+    if (stripe)
+      await stripe.post(`/payment_intents/${String(f.stripe_pago)}`, { amount: nuevoTotal });
+  }
+  await db
+    .prepare(
+      'UPDATE pedidos SET direccion = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+    )
+    .bind(
+      d.direccion,
+      d.lat,
+      d.lng,
+      km,
+      desglose.envio,
+      desglose.servicio,
+      nuevoTotal,
+      desglose.pagoRepartidor,
+      desglose.complementoRepartidor,
+      desglose.gananciaPlataforma,
+      id,
+    )
+    .run();
+  await anotarEvento(db, id, 'direccion_cambiada', d.direccion);
+  return c.json({ ok: true, total: nuevoTotal, envio: desglose.envio });
+});
+
+/**
+ * Propina después de entregar: se cobra aparte con la tarjeta guardada (sin que el cliente la
+ * vuelva a escribir) y va entera al repartidor. Una sola vez por pedido, hasta 7 días después.
+ */
+pedidos.post('/pedidos/:id/propina', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { centavos } = await leerCuerpo(
+    c,
+    z.object({ centavos: z.number().int().min(100).max(10_000) }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      `SELECT p.*, (SELECT centavos FROM propinas_extra px WHERE px.pedido_id = p.id) AS propina_extra, u.stripe_cliente
+       FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id WHERE p.id = ? AND p.cliente_id = ?`,
+    )
+    .bind(id, u.id)
+    .first<FilaPedido>();
+  if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  if (String(f.estado) !== 'entregado' || !f.repartidor_id)
+    throw new ErrorDatos(
+      'La propina extra se agrega cuando el pedido ya fue entregado.',
+      undefined,
+      409,
+    );
+  if (f.propina_extra != null)
+    throw new ErrorDatos('Ya agregaste una propina a este pedido.', undefined, 409);
+  const entregado = Date.parse(`${String(f.entregado_en).replace(' ', 'T')}Z`);
+  if (Date.now() - entregado > 7 * 86_400_000)
+    throw new ErrorDatos(
+      'La propina extra se puede agregar hasta 7 días después de la entrega.',
+      undefined,
+      409,
+    );
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos(
+      'Los pagos todavía no están activados. Te avisamos muy pronto.',
+      undefined,
+      422,
+    );
+  // La tarjeta con la que pagó, guardada en su cliente de Stripe.
+  const original = await stripe.get<{ payment_method?: string | null }>(
+    `/payment_intents/${String(f.stripe_pago)}`,
+  );
+  if (!original.payment_method || !f.stripe_cliente)
+    throw new ErrorDatos(
+      'No encontramos una tarjeta guardada para cobrar la propina.',
+      undefined,
+      409,
+    );
+  let cobro: { id: string; status?: string };
+  try {
+    cobro = await stripe.post<{ id: string; status?: string }>(
+      '/payment_intents',
+      {
+        amount: centavos,
+        currency: 'usd',
+        customer: String(f.stripe_cliente),
+        payment_method: original.payment_method,
+        off_session: true,
+        confirm: true,
+        description: `Tumbite · propina extra`,
+        metadata: { pedido_id: id, propina_extra: '1' },
+      },
+      `propina-${id}`,
+    );
+  } catch (e) {
+    console.error('propina extra', e);
+    throw new ErrorDatos(
+      'No pudimos cobrar la propina con tu tarjeta guardada. Intenta más tarde.',
+      undefined,
+      409,
+    );
+  }
+  await db.batch([
+    db
+      .prepare('INSERT INTO propinas_extra (pedido_id, centavos, stripe_pago) VALUES (?, ?, ?)')
+      .bind(id, centavos, cobro.id),
+    db
+      .prepare(
+        "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, ?, ?, 'ajuste', 'propina-extra')",
+      )
+      .bind(nuevoId(), String(f.repartidor_id), id, centavos),
+  ]);
+  await notificar(
+    c.env,
+    db,
+    String(f.repartidor_id),
+    AVISOS.propinaExtra(
+      (
+        await db
+          .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+          .bind(String(f.repartidor_id))
+          .first<{ idioma: string }>()
+      )?.idioma ?? 'es',
+      formatearDolares(centavos, 'es'),
+    ),
+  ).catch((e: unknown) => console.error('propina extra: aviso', e));
+  return c.json({ ok: true, centavos });
 });

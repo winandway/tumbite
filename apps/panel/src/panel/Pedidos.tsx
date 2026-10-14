@@ -21,6 +21,8 @@ import { pedir } from './api';
 type Pedido = {
   id: string;
   estado: string;
+  entrega?: 'puerta' | 'mano' | 'recoger';
+  requiereEdad?: boolean;
   subtotal: number;
   notas: string;
   creadoEn: string;
@@ -55,6 +57,10 @@ const T = {
     sonidoOk: 'Alarma activada',
     vacio: 'Sin pedidos por ahora.',
     aceptar: 'Aceptar',
+    recoge: 'El cliente lo recoge en el local (sin repartidor)',
+    pinCliente: 'PIN del cliente (4 dígitos, está en su app)',
+    mayorEdad: 'Revisé el documento: quien recibe es mayor de 21',
+    entregadoLocal: 'Entregado al cliente',
     sugerido: 'sugerido',
     cocina: 'Cocina ocupada',
     cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
@@ -100,6 +106,10 @@ const T = {
     sonidoOk: 'Alarm on',
     vacio: 'No orders right now.',
     aceptar: 'Accept',
+    recoge: 'Customer picks up in store (no driver)',
+    pinCliente: 'Customer PIN (4 digits, in their app)',
+    mayorEdad: 'I checked the ID: the recipient is 21 or older',
+    entregadoLocal: 'Handed to the customer',
     sugerido: 'suggested',
     cocina: 'Busy kitchen',
     cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
@@ -149,6 +159,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
+  const [pinLocal, setPinLocal] = useState<Record<string, string>>({});
+  const [edadLocal, setEdadLocal] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [sonido, setSonido] = useState(false);
   // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
@@ -298,7 +310,54 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.notas}: {p.notas}
                 </span>
               )}
-              {p.estado === 'listo' && qrs[p.id] && (
+              {p.entrega === 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
+                <p className="ok">
+                  <strong>{t.recoge}</strong>
+                </p>
+              ) : null}
+              {p.estado === 'listo' && p.entrega === 'recoger' && (
+                <div className="recoger-local">
+                  <label className="campo">
+                    <span>{t.pinCliente}</span>
+                    <input
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={pinLocal[p.id] ?? ''}
+                      onChange={(ev) =>
+                        setPinLocal((x) => ({
+                          ...x,
+                          [p.id]: ev.target.value.replace(/\D/g, '').slice(0, 4),
+                        }))
+                      }
+                    />
+                  </label>
+                  {p.requiereEdad ? (
+                    <label className="interruptor">
+                      <input
+                        type="checkbox"
+                        checked={edadLocal[p.id] ?? false}
+                        onChange={(ev) =>
+                          setEdadLocal((x) => ({ ...x, [p.id]: ev.target.checked }))
+                        }
+                      />
+                      {t.mayorEdad}
+                    </label>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="boton exito"
+                    onClick={() =>
+                      void accion(`/datos/restaurante/pedidos/${p.id}/entregado-local`, {
+                        pin: pinLocal[p.id] ?? '',
+                        mayorEdad: edadLocal[p.id] ?? false,
+                      })
+                    }
+                  >
+                    {t.entregadoLocal}
+                  </button>
+                </div>
+              )}
+              {p.estado === 'listo' && p.entrega !== 'recoger' && qrs[p.id] && (
                 <figure className="qr-pedido">
                   <img src={qrs[p.id]} alt={`QR ${p.id.slice(0, 4).toUpperCase()}`} />
                   <strong>{p.id.slice(0, 4).toUpperCase()}</strong>

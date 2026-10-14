@@ -36,6 +36,7 @@ const T = {
     guardar: 'Guardar plato',
     cancelar: 'Cancelar',
     disponible: 'Disponible',
+    mayores21: 'Solo para mayores de 21 (se entrega en mano con documento)',
     agotado: 'Agotado',
     vacio: 'Tu menú está vacío. Agrega tu primer plato.',
     precioMal: 'Escribe un precio como 12.50',
@@ -75,6 +76,7 @@ const T = {
     guardar: 'Save item',
     cancelar: 'Cancel',
     disponible: 'Available',
+    mayores21: '21+ only (handed over in person with an ID check)',
     agotado: 'Sold out',
     vacio: 'Your menu is empty. Add your first item.',
     precioMal: 'Enter a price like 12.50',
@@ -111,6 +113,8 @@ const VACIO = {
   precio: '',
   imagen: '',
   grupos: '',
+  /** «si» cuando el plato es solo para mayores de 21 (se guarda como texto en el borrador). */
+  requiereEdad: '',
 };
 
 type GrupoForm = {
@@ -172,6 +176,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
     b.cargar({
       id: p.id,
       nombreEs: p.nombreEs,
+      requiereEdad: p.requiereEdad ? 'si' : '',
       nombreEn: p.nombreEn,
       descripcionEs: p.descripcionEs,
       descripcionEn: p.descripcionEn,
@@ -200,6 +205,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       categoriaEn: v.categoriaEn,
       precioCentavos,
       imagen: v.imagen || null,
+      requiereEdad: v.requiereEdad === 'si',
     };
     try {
       let r = v.id
@@ -345,6 +351,14 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             placeholder="0.00"
             error={errorDe('precioCentavos')}
           />
+          <label className="interruptor">
+            <input
+              type="checkbox"
+              checked={v.requiereEdad === 'si'}
+              onChange={(ev) => b.cambiar('requiereEdad', ev.target.checked ? 'si' : '')}
+            />
+            {t.mayores21}
+          </label>
           <SubirFoto
             etiqueta={t.foto}
             valor={v.imagen}

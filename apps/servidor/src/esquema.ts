@@ -21,6 +21,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['platos', 'categoria_en', "TEXT NOT NULL DEFAULT ''"],
   // Retención de fotos (14 oct 2026): a los 30 días se borra el archivo y queda cuándo.
   ['evidencias', 'borrada_en', 'TEXT'],
+  // Mayoría de edad (14 oct 2026): platos que solo se entregan en mano a un adulto con documento.
+  ['platos', 'requiere_edad', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

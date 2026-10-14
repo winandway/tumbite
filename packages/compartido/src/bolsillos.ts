@@ -79,6 +79,9 @@ export function calcularEnvio(config: ConfigDinero, distanciaKm: number | null):
  * La propina es 100 % del repartidor y NUNCA se usa para completar su pago mínimo:
  * el mínimo se completa con dinero de la plataforma.
  */
+/** Comisión de la recogida en el local, en puntos base (5 %): sin repartidor que pagar. */
+export const COMISION_RECOGIDA_PB = 500;
+
 export function calcularPedido(p: {
   lineas: LineaPedido[];
   plan: Plan;
@@ -87,6 +90,8 @@ export function calcularPedido(p: {
   config?: ConfigDinero;
   /** Lo que el restaurante regala en este pedido (cumpleaños, sellos). Sale de su pago. */
   regalo?: Centavos;
+  /** Recogida en el local: sin envío ni repartidor; comisión del 5 % (como los grandes). */
+  recogida?: boolean;
 }): Desglose {
   const c = p.config ?? CONFIG_DINERO_INICIAL;
   entero(p.propina, 'propina');
@@ -102,7 +107,7 @@ export function calcularPedido(p: {
   if (subtotal === 0) throw new Error('calcularPedido: el pedido está vacío');
   const aCobrar = Math.max(0, subtotal - regalo);
 
-  const envio = calcularEnvio(c, p.distanciaKm);
+  const envio = p.recogida ? 0 : calcularEnvio(c, p.distanciaKm);
   const servicio = Math.min(
     Math.max(porcentajeDe(aCobrar, c.servicioPb), c.servicioMinimo),
     c.servicioMaximo,
@@ -110,10 +115,13 @@ export function calcularPedido(p: {
   const cargoPedidoPequeno = subtotal < c.pedidoMinimo ? c.cargoPedidoPequeno : 0;
   const totalCliente = aCobrar + envio + servicio + cargoPedidoPequeno + p.propina;
 
-  const comisionRestaurante = porcentajeDe(aCobrar, c.comisionPb[p.plan]);
-  const pagoRestaurante = aCobrar - comisionRestaurante;
-  const complementoRepartidor = Math.max(0, c.pagoMinimoRepartidor - envio);
-  const pagoRepartidor = envio + complementoRepartidor + p.propina;
+  const comisionRestaurante = porcentajeDe(
+    aCobrar,
+    p.recogida ? COMISION_RECOGIDA_PB : c.comisionPb[p.plan],
+  );
+  const pagoRestaurante = aCobrar - comisionRestaurante + (p.recogida ? p.propina : 0);
+  const complementoRepartidor = p.recogida ? 0 : Math.max(0, c.pagoMinimoRepartidor - envio);
+  const pagoRepartidor = p.recogida ? 0 : envio + complementoRepartidor + p.propina;
   const gananciaPlataforma =
     comisionRestaurante + servicio + cargoPedidoPequeno - complementoRepartidor;
 

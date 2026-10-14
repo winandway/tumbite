@@ -155,6 +155,52 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No tienes ninguna foto de control pendiente.', 'You have no identity check photo pending.'],
   [
+    'Este pedido no es una recogida lista para entregar.',
+    'This order isn’t a pickup ready to hand over.',
+  ],
+  [
+    'El PIN no es correcto. Pídeselo al cliente: está en su app.',
+    'The PIN isn’t correct. Ask the customer: it’s in their app.',
+  ],
+  [
+    'Revisa el documento de quien recibe y confirma que es mayor de 21 antes de entregar.',
+    'Check the recipient’s ID and confirm they’re 21 or older before handing it over.',
+  ],
+  [
+    'Este pedido tiene productos para mayores de 21: entrégalo en mano y revisa el documento.',
+    'This order has 21+ items: hand it over in person and check the ID.',
+  ],
+  [
+    'Este pedido se recoge en el local: no lleva dirección.',
+    'This order is picked up in store: it has no delivery address.',
+  ],
+  [
+    'El repartidor ya salió con tu pedido: ya no se puede cambiar la dirección. Escríbele por el chat.',
+    'The driver already left with your order: the address can’t be changed now. Message them in the chat.',
+  ],
+  [
+    'La propina extra se agrega cuando el pedido ya fue entregado.',
+    'The extra tip can be added once the order is delivered.',
+  ],
+  ['Ya agregaste una propina a este pedido.', 'You already added a tip to this order.'],
+  [
+    'La propina extra se puede agregar hasta 7 días después de la entrega.',
+    'The extra tip can be added up to 7 days after delivery.',
+  ],
+  [
+    'No encontramos una tarjeta guardada para cobrar la propina.',
+    'We couldn’t find a saved card to charge the tip.',
+  ],
+  [
+    'No pudimos cobrar la propina con tu tarjeta guardada. Intenta más tarde.',
+    'We couldn’t charge the tip to your saved card. Try again later.',
+  ],
+  ['Escribe la dirección de entrega.', 'Enter the delivery address.'],
+  [
+    'El envío cambia con la nueva dirección. Acepta el nuevo total para aplicarla.',
+    'The delivery fee changes with the new address. Accept the new total to apply it.',
+  ],
+  [
     'Esa foto de control no existe o no se tomó.',
     'That check photo doesn’t exist or wasn’t taken.',
   ],

@@ -66,3 +66,9 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 - Web: el formulario de Stripe muestra Apple Pay / Google Pay solo cuando el método está encendido en el panel de Stripe y el dominio está registrado (`POST /datos/admin/stripe/dominio`, botón del superadmin). No probado con una compra real.
 - App: la hoja de pago nativa lleva `applePay` y `googlePay`; Apple Pay requiere el identificador de comercio en la cuenta de Apple (pendiente de Richard). No probado.
 - Conciliación diaria y abono fallido: probados solo con Stripe simulado (`operacion.test.ts`, C-DINERO-VIGILADO); el aviso real `payout.failed` llega por el webhook de cuentas conectadas, que hay que tener activo en Stripe (evento `payout.failed` marcado).
+
+## 🔴 Propina después de entregar y cambio de dirección (14 oct 2026): SIN probar en real
+
+- La propina extra cobra un PaymentIntent `off_session` con la tarjeta guardada del primer pago (`POST /datos/pedidos/:id/propina`). Probado solo con Stripe simulado. En real hay que comprobar que el primer pago guardó el método (`setup_future_usage: off_session`) y que el cobro aparte sale sin pedir la tarjeta.
+- El cambio de dirección actualiza el monto del PaymentIntent autorizado (`POST /payment_intents/:id {amount}`) antes de capturar. Probado solo simulado: en real, comprobar que la autorización acepta subir el monto (si el banco no lo permite, Stripe responde error y la dirección no cambia).
+- La recogida en el local captura el cobro al marcar «Entregado al cliente». Mismo circuito de captura que la entrega; sin probar en real.

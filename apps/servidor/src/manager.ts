@@ -267,7 +267,8 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
       `SELECT p.id, r.nombre AS restaurante, p.direccion,
         CAST((julianday('now') - julianday(p.aceptado_en)) * 1440 AS INTEGER) AS minutos
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL AND p.aceptado_en <= datetime('now', ?)${solo}
+       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL AND p.aceptado_en <= datetime('now', ?)
+       AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)${solo}
        LIMIT 50`,
     )
     .bind(`-${REGLAS.sinRepartidor} minutes`, ...(pedidoId ? [pedidoId] : []))

@@ -210,6 +210,26 @@ async function salirEnCamino(env: Env, db: D1Database, id: string, actorId: stri
     .bind(id)
     .first<{ nombre: string }>();
   await avisarAlCliente(env, db, id, (i) => AVISOS.enCamino(i, rep?.nombre.split(' ')[0] ?? ''));
+  // Pedidos agrupados: los que ya estén listos salen en el mismo viaje.
+  const { results: hermanos } = await db
+    .prepare(
+      `SELECT p.id FROM pedidos p JOIN grupos_pedido g ON g.pedido_id = p.id
+       WHERE g.grupo_id = (SELECT grupo_id FROM grupos_pedido WHERE pedido_id = ?) AND p.id != ? AND p.estado = 'listo'`,
+    )
+    .bind(id, id)
+    .all<{ id: string }>();
+  for (const h of hermanos) {
+    await db
+      .prepare(
+        "UPDATE pedidos SET estado = 'en_camino', recogido_en = datetime('now') WHERE id = ? AND estado = 'listo'",
+      )
+      .bind(h.id)
+      .run();
+    await anotar(db, h.id, 'en_camino', actorId);
+    await avisarAlCliente(env, db, h.id, (i) =>
+      AVISOS.enCamino(i, rep?.nombre.split(' ')[0] ?? ''),
+    );
+  }
 }
 
 /**
@@ -271,15 +291,16 @@ async function registrarHitos(
   donde: { lat: number; lng: number },
   muestras: Muestra[] = [],
 ) {
-  const p = await db
+  // Con pedidos agrupados lleva más de uno: los hitos se marcan para cada uno.
+  const { results: activos } = await db
     .prepare(
       `SELECT p.id, p.estado, p.lat, p.lng, r.lat AS rest_lat, r.lng AS rest_lng,
         (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-      WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
+      WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 5`,
     )
     .bind(repartidorId)
-    .first<{
+    .all<{
       id: string;
       estado: string;
       lat: number | null;
@@ -288,7 +309,24 @@ async function registrarHitos(
       rest_lng: number | null;
       entrega: string | null;
     }>();
-  if (!p) return;
+  for (const p of activos) await hitosDeUno(env, db, p, donde, muestras);
+}
+
+async function hitosDeUno(
+  env: Env,
+  db: D1Database,
+  p: {
+    id: string;
+    estado: string;
+    lat: number | null;
+    lng: number | null;
+    rest_lat: number | null;
+    rest_lng: number | null;
+    entrega: string | null;
+  },
+  donde: { lat: number; lng: number },
+  muestras: Muestra[],
+) {
   const marcar = async (hito: string) => {
     const r = await db
       .prepare('INSERT OR IGNORE INTO hitos_pedido (pedido_id, hito) VALUES (?, ?)')
@@ -741,6 +779,20 @@ async function entregaActiva(db: D1Database, repartidorId: string) {
     .first<FilaPedido>();
 }
 
+/** Los demás pedidos del mismo grupo que lleva este repartidor (agrupados), ya con sus datos. */
+async function agrupadosDe(db: D1Database, repartidorId: string, activo: FilaPedido | null) {
+  if (!activo?.grupo_id) return [];
+  const { results } = await db
+    .prepare(
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_EXCEPCION}, ${CON_BONO}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
+      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN grupos_pedido g ON g.pedido_id = p.id
+      WHERE p.repartidor_id = ? AND g.grupo_id = ? AND p.id != ? AND p.estado IN ('aceptado','listo','en_camino') ORDER BY p.creado_en`,
+    )
+    .bind(repartidorId, String(activo.grupo_id), String(activo.id))
+    .all<FilaPedido>();
+  return results.map(conDatosRestaurante);
+}
+
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
@@ -755,6 +807,7 @@ operacion.get('/repartidor/estado', async (c) => {
     puntos: Number(ficha.puntos),
     nivel: nivelDe(Number(ficha.puntos)),
     activo: activo ? conDatosRestaurante(activo) : null,
+    agrupados: await agrupadosDe(db, u.id, activo),
   });
 });
 
@@ -877,6 +930,46 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
   return results;
 }
 
+/** Desvío máximo entre dos entregas para agruparlas (≈ 5 minutos de ciudad). */
+const KM_DESVIO_AGRUPAR = 2;
+
+/**
+ * Repartidores ocupados que pueden llevar este pedido junto con el que ya tienen: mismo
+ * restaurante, el suyo todavía sin recoger, sin oferta abierta, y las dos entregas cerca.
+ */
+async function agrupablesPara(db: D1Database, pedidoId: string): Promise<Libre[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos, q.lat AS q_lat, q.lng AS q_lng, p.lat AS p_lat, p.lng AS p_lng
+       FROM pedidos p JOIN pedidos q ON q.restaurante_id = p.restaurante_id AND q.id != p.id
+       JOIN repartidores d ON d.usuario_id = q.repartidor_id
+       WHERE p.id = ? AND q.estado IN ('aceptado','listo') AND q.repartidor_id IS NOT NULL
+       AND d.conectado = 1 AND d.lat IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = q.id)
+       AND NOT EXISTS (SELECT 1 FROM grupos_pedido g WHERE g.pedido_id = q.id)
+       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
+       LIMIT 10`,
+    )
+    .bind(pedidoId)
+    .all<
+      Libre & {
+        q_lat: number | null;
+        q_lng: number | null;
+        p_lat: number | null;
+        p_lng: number | null;
+      }
+    >();
+  return results.filter(
+    (r) =>
+      r.q_lat != null &&
+      r.q_lng != null &&
+      r.p_lat != null &&
+      r.p_lng != null &&
+      distanciaKm({ lat: r.q_lat, lng: r.q_lng }, { lat: r.p_lat, lng: r.p_lng }) <=
+        KM_DESVIO_AGRUPAR,
+  );
+}
+
 export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> {
   await db
     .prepare(
@@ -888,6 +981,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     .prepare(
       `SELECT p.id, p.zona_id, p.pago_repartidor, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
+      AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.pedido_id = p.id AND o.estado = 'ofrecida') ORDER BY p.pagado_en LIMIT 20`,
     )
     .all<{
@@ -934,6 +1028,9 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
       : [];
     if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
+    // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
+    // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
+    if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
     if (!candidatos.length) continue;
     // Oferta abierta: a los 3 rechazos (o vencimientos) se ofrece a todos a la vez con un bono
     // que paga Tumbite. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
@@ -1072,8 +1169,22 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     .bind(id, u.id)
     .first();
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
-  if (await entregaActiva(db, u.id))
-    throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
+  const activa = await entregaActiva(db, u.id);
+  let grupo: string | null = null;
+  if (activa) {
+    // Solo se agrupa con un pedido del mismo restaurante que todavía no recogió.
+    const nuevo = await db
+      .prepare('SELECT restaurante_id FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ restaurante_id: string }>();
+    const puede =
+      nuevo?.restaurante_id === String(activa.restaurante_id) &&
+      ['aceptado', 'listo'].includes(String(activa.estado)) &&
+      !activa.grupo_id;
+    if (!puede)
+      throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
+    grupo = nuevoId();
+  }
   // Atómico: si dos tocan a la vez, solo uno se lo lleva.
   const r = await db
     .prepare(
@@ -1082,6 +1193,17 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     .bind(u.id, id)
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Otro repartidor ya tomó este pedido.', undefined, 409);
+  if (grupo && activa) {
+    await db.batch([
+      db
+        .prepare('INSERT OR REPLACE INTO grupos_pedido (pedido_id, grupo_id) VALUES (?, ?)')
+        .bind(String(activa.id), grupo),
+      db
+        .prepare('INSERT OR REPLACE INTO grupos_pedido (pedido_id, grupo_id) VALUES (?, ?)')
+        .bind(id, grupo),
+    ]);
+    await anotarEvento(db, id, 'agrupado', `con #${String(activa.id).slice(0, 6).toUpperCase()}`);
+  }
   await db.batch([
     db
       .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
@@ -1331,9 +1453,17 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     .bind(id, u.id)
     .first<Record<string, unknown>>();
   if (!p) throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  // Mayoría de edad: si algún plato lo exige, solo en mano y con el documento revisado.
+  const requiereEdad = lineasConEdad(p);
   // En la puerta: con foto. En mano: sin foto (el cliente lo recibió). En lugar seguro: foto y nota,
   // después de avisar que el cliente no aparece y esperar 5 minutos.
   const esFoto = (c.req.header('content-type') ?? '').startsWith('image/');
+  if (requiereEdad && esFoto)
+    throw new ErrorDatos(
+      'Este pedido tiene productos para mayores de 21: entrégalo en mano y revisa el documento.',
+      'edad',
+      409,
+    );
   const modoPedido = String(c.req.query('modo') ?? '');
   let donde: { lat: number; lng: number };
   let modo: 'puerta' | 'mano' | 'seguro';
@@ -1354,8 +1484,16 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         modo: z.literal('mano'),
         nota: z.string().trim().max(300).default(''),
         pin: z.string().trim().optional(),
+        /** El repartidor revisó el documento y la persona es mayor de 21 (solo si el pedido lo exige). */
+        mayorEdad: z.boolean().optional(),
       }),
     );
+    if (requiereEdad && d.mayorEdad !== true)
+      throw new ErrorDatos(
+        'Revisa el documento de quien recibe y confirma que es mayor de 21 antes de entregar.',
+        'edad',
+        409,
+      );
     donde = { lat: d.lat, lng: d.lng };
     modo = 'mano';
     nota = d.nota;
@@ -1688,6 +1826,76 @@ operacion.post('/pedidos/:id/llamar', async (c) => {
     soyCliente ? 'cliente → repartidor' : 'repartidor → cliente',
   );
   return c.json({ ok: true, estado: 'llamando' });
+});
+
+/** ¿Alguna línea del pedido exige mayoría de edad? (queda congelado en lineas_json al pedir). */
+function lineasConEdad(f: Record<string, unknown>): boolean {
+  try {
+    const lineas = JSON.parse(String(f.lineas_json ?? '[]')) as { requiereEdad?: boolean }[];
+    return lineas.some((l) => l.requiereEdad === true);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Recogida en el local: el cliente llega y el restaurante marca la entrega (con el PIN del cliente
+ * si lo pidió). Se cobra la tarjeta en ese momento, como en una entrega normal.
+ */
+operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
+  const rid = await miRestauranteId(c);
+  const db = base(c);
+  const id = c.req.param('id');
+  const { pin } = await leerCuerpo(c, z.object({ pin: z.string().trim().optional() }));
+  const p = await db
+    .prepare(
+      `SELECT p.*, r.dueno_id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+       WHERE p.id = ? AND p.restaurante_id = ? AND p.estado = 'listo' AND EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)`,
+    )
+    .bind(id, rid)
+    .first<Record<string, unknown>>();
+  if (!p)
+    throw new ErrorDatos('Este pedido no es una recogida lista para entregar.', undefined, 409);
+  const pinFila = await db
+    .prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
+    .bind(id)
+    .first<{ pin: string }>();
+  if (pinFila && (!pin || pin !== pinFila.pin))
+    throw new ErrorDatos('El PIN no es correcto. Pídeselo al cliente: está en su app.', 'pin', 409);
+  if (lineasConEdad(p)) {
+    // Mayoría de edad: el restaurante confirma que revisó el documento.
+    const { mayorEdad } = await c.req
+      .json<{ mayorEdad?: boolean }>()
+      .catch(() => ({ mayorEdad: false }));
+    if (mayorEdad !== true)
+      throw new ErrorDatos(
+        'Revisa el documento de quien recibe y confirma que es mayor de 21 antes de entregar.',
+        'edad',
+        409,
+      );
+  }
+  await capturarCobro(c.env, db, id, String(p.stripe_pago ?? ''), Number(p.total));
+  const dueno = String(p.dueno_id);
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ?",
+      )
+      .bind(id),
+    anotarEstado(db, id, 'entregado', dueno),
+    db
+      .prepare(
+        "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
+      )
+      .bind(nuevoId(), dueno, id, Number(p.pago_restaurante)),
+    db
+      .prepare(
+        "INSERT OR IGNORE INTO evidencias (pedido_id, tipo, clave, modo, confirmada_en) VALUES (?, 'entrega', '', 'local', datetime('now'))",
+      )
+      .bind(id),
+  ]);
+  await avisarAlCliente(c.env, db, id, (i) => AVISOS.entregado(i));
+  return c.json({ ok: true });
 });
 
 /** El puente de Twilio: con el pase válido, marca al otro número con el de Tumbite como remitente. */

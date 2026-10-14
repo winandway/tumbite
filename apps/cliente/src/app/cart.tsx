@@ -37,6 +37,8 @@ const TE = {
     puertaAyuda: 'Sin contacto. El repartidor lo deja y te manda la foto.',
     mano: 'En mano',
     manoAyuda: 'Te lo entrega a ti. Sal a recibirlo cuando te avise.',
+    recoger: 'Recojo en el local',
+    recogerAyuda: 'Sin costo de envío. Pasas a buscarlo cuando esté listo.',
     pinTitulo: 'Pedir un PIN de 4 dígitos al entregar',
     pinAyuda:
       'El PIN aparece en tu pedido y quien reciba se lo dice al repartidor. Apágalo si va a recibir otra persona y no quieres pasarle el PIN.',
@@ -47,6 +49,8 @@ const TE = {
     puertaAyuda: 'Contactless. The driver leaves it and sends you a photo.',
     mano: 'Hand it to me',
     manoAyuda: 'The driver hands it to you. Come out when they let you know.',
+    recoger: 'I’ll pick it up',
+    recogerAyuda: 'No delivery fee. You pick it up when it’s ready.',
     pinTitulo: 'Ask for a 4-digit PIN at delivery',
     pinAyuda:
       'The PIN shows in your order and whoever receives it tells the driver. Turn it off if someone else will receive it and you don’t want to pass the PIN along.',
@@ -170,7 +174,12 @@ export default function PantallaCarrito() {
         propinaCentavos: propina,
         direccion: b.valores.direccion,
         notas: b.valores.notas,
-        entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
+        entrega:
+          b.valores.entrega === 'recoger'
+            ? 'recoger'
+            : b.valores.entrega === 'mano'
+              ? 'mano'
+              : 'puerta',
         pin: b.valores.pin !== 'no',
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
@@ -246,12 +255,14 @@ export default function PantallaCarrito() {
         </View>
       ))}
 
-      <ElegirEnMapa
-        punto={punto}
-        cambiarPunto={setPunto}
-        cambiarDireccion={(x) => b.cambiar('direccion', x)}
-        textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
-      />
+      {(b.valores.entrega || 'puerta') !== 'recoger' ? (
+        <ElegirEnMapa
+          punto={punto}
+          cambiarPunto={setPunto}
+          cambiarDireccion={(x) => b.cambiar('direccion', x)}
+          textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
+        />
+      ) : null}
       <Campo
         etiqueta={t.direccion}
         value={b.valores.direccion}
@@ -268,7 +279,7 @@ export default function PantallaCarrito() {
       {/* Cómo recibir: en la puerta (el repartidor deja foto) o en mano (te lo entrega a ti). */}
       <Text style={{ fontWeight: '700', marginBottom: 6 }}>{te.como}</Text>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-        {(['puerta', 'mano'] as const).map((modo) => {
+        {(['puerta', 'mano', 'recoger'] as const).map((modo) => {
           const activo = (b.valores.entrega || 'puerta') === modo;
           return (
             <Pressable
@@ -276,7 +287,9 @@ export default function PantallaCarrito() {
               onPress={() => b.cambiar('entrega', modo)}
               accessibilityRole="radio"
               accessibilityState={{ checked: activo }}
-              accessibilityLabel={modo === 'mano' ? te.mano : te.puerta}
+              accessibilityLabel={
+                modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta
+              }
               style={{
                 flex: 1,
                 padding: 12,
@@ -286,9 +299,15 @@ export default function PantallaCarrito() {
                 backgroundColor: activo ? '#E8F5EE' : '#fff',
               }}
             >
-              <Text style={{ fontWeight: '800' }}>{modo === 'mano' ? te.mano : te.puerta}</Text>
+              <Text style={{ fontWeight: '800' }}>
+                {modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta}
+              </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                {modo === 'mano' ? te.manoAyuda : te.puertaAyuda}
+                {modo === 'recoger'
+                  ? te.recogerAyuda
+                  : modo === 'mano'
+                    ? te.manoAyuda
+                    : te.puertaAyuda}
               </Text>
             </Pressable>
           );

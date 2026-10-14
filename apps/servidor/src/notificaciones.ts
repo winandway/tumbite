@@ -152,6 +152,16 @@ export const AVISOS = {
           titulo: `Quitamos ${plato}`,
           cuerpo: `Te devolvimos $${(centavos / 100).toFixed(2)}. El resto de tu pedido sigue.`,
         },
+  propinaExtra: (i: string, monto: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `Extra tip: ${monto}`,
+          cuerpo: 'A customer added a tip after delivery. It’s in your balance.',
+        }
+      : {
+          titulo: `Propina extra: ${monto}`,
+          cuerpo: 'Un cliente te dejó propina después de la entrega. Ya está en tu saldo.',
+        },
   abonoFallido: (i: string, monto: string): Aviso =>
     i === 'en'
       ? {

@@ -84,6 +84,8 @@ export const esquemaPlato = z.object({
   precioCentavos: z.number().int({ error: 'El precio va en centavos.' }).min(0).max(100_000_00),
   disponible: z.boolean().default(true),
   imagen: foto,
+  /** Solo para mayores de 21 (alcohol): se entrega en mano con documento revisado. */
+  requiereEdad: z.boolean().default(false),
 });
 export type DatosPlato = z.input<typeof esquemaPlato>;
 
@@ -160,6 +162,7 @@ export type Plato = {
   precioCentavos: number;
   imagen: string | null;
   disponible: boolean;
+  requiereEdad?: boolean;
   grupos?: GrupoOpciones[];
 };
 
