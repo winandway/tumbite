@@ -83,16 +83,37 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
     if (f.estado !== 200) return f;
     return llamar('POST', `/datos/restaurante/pedidos/${id}/confirmar-recogida`, {}, tokenDueno);
   }
-  /** Entregar parado en la puerta, con la foto de la entrega. */
+  /** El celular manda su ubicación con la precisión del GPS (metros). */
+  function ubicar(token: string, donde: { lat: number; lng: number }, precision = 10) {
+    return llamar('POST', '/datos/repartidor/ubicacion', { ...donde, precision }, token);
+  }
+  /**
+   * Como si pasara un minuto: las lecturas guardadas del repartidor envejecen, así la próxima no
+   * parece un salto imposible (en las pruebas todo ocurre en el mismo segundo).
+   */
+  async function envejecerGps(id: string, segundos = 60) {
+    await DB.prepare(
+      `UPDATE ubicaciones_recientes SET creado_en = datetime(creado_en, '-${segundos} seconds') WHERE usuario_id = (SELECT repartidor_id FROM pedidos WHERE id = ?)`,
+    )
+      .bind(id)
+      .run();
+  }
+  /**
+   * Entregar parado en la puerta, con la foto de la entrega. Como un celular de verdad, antes
+   * manda dos lecturas precisas del GPS en ese lugar (la regla de llegada confiable las exige).
+   */
   async function entregar(
     id: string,
     tokenRepartidor: string,
     donde?: { lat: number; lng: number },
   ) {
     const enCasa = donde ?? (await lugar('SELECT lat, lng FROM pedidos WHERE id = ?', id));
+    await envejecerGps(id);
+    await ubicar(tokenRepartidor, enCasa);
+    await ubicar(tokenRepartidor, enCasa);
     return foto(`/datos/repartidor/pedidos/${id}/entregado`, tokenRepartidor, enCasa);
   }
-  return { DB, llamar, cuenta, crudo, foto, recoger, entregar, extra };
+  return { DB, llamar, cuenta, crudo, foto, recoger, entregar, extra, ubicar, envejecerGps };
 }
 
 export const RESTAURANTE_BASE = {

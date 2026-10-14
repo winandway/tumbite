@@ -9,6 +9,7 @@ import {
   type Nivel,
   enIdioma,
   formatearDolares,
+  PRECISION_MAXIMA_M,
   llego,
   metrosEntre,
   textoLinea,
@@ -54,6 +55,7 @@ type Pedido = {
   verificado?: boolean;
   llegoCliente?: boolean;
   noApareceEn?: string | null;
+  excepcionUbicacion?: 'pedida' | 'autorizada' | null;
   entrega?: 'puerta' | 'mano';
   pinRequerido?: boolean;
   lineas: {
@@ -104,6 +106,16 @@ const T = {
     repetirFoto: 'Repetir la foto',
     teFaltan: 'Te faltan',
     alLlegar: 'El botón para entregar aparece cuando llegues a la puerta.',
+    confirmandoGps:
+      'Estás en la puerta. Confirmando tu ubicación con el GPS (unos segundos, con el celular quieto).',
+    gpsImpreciso: 'Tu GPS está impreciso aquí',
+    sinGps: '¿El GPS no te marca en la puerta?',
+    sinGpsAyuda:
+      'Cuéntanos qué pasa (edificio, garaje, celular sin señal). Soporte lo revisa y te autoriza entregar.',
+    pedirExcepcion: 'No puedo confirmar mi ubicación',
+    esperandoSoporte:
+      'Soporte está revisando tu caso. Mientras tanto, si el GPS te confirma, el botón aparece solo.',
+    autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     fotoEntrega: 'Tomar foto de la entrega',
     sinCaras:
       'No le tomes foto a la cara de nadie. Deja la comida en la puerta o en las manos del cliente y toma la foto de lado: que se vean solo las manos, la comida y la entrada de la casa.',
@@ -175,6 +187,16 @@ const T = {
     repetirFoto: 'Retake the photo',
     teFaltan: 'Still',
     alLlegar: 'The button to deliver appears when you reach the door.',
+    confirmandoGps:
+      'You’re at the door. Confirming your location with GPS (a few seconds, keep the phone still).',
+    gpsImpreciso: 'Your GPS is imprecise here',
+    sinGps: 'GPS not placing you at the door?',
+    sinGpsAyuda:
+      'Tell us what’s going on (tall building, garage, no signal). Support reviews it and authorizes the delivery.',
+    pedirExcepcion: 'I can’t confirm my location',
+    esperandoSoporte:
+      'Support is reviewing your case. Meanwhile, if GPS confirms you, the button appears on its own.',
+    autorizado: 'Support authorized the delivery without GPS confirmation.',
     fotoEntrega: 'Take the delivery photo',
     sinCaras:
       'Never take a photo of anyone’s face. Leave the food at the door or in the customer’s hands and take the photo from the side: only the hands, the food, and the home’s entrance should show.',
@@ -249,6 +271,9 @@ export function Inicio() {
   const vigilante = useRef<Location.LocationSubscription | null>(null);
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
+  // Precisión del GPS en metros (la reporta el celular); se manda con cada ubicación.
+  const [precision, setPrecision] = useState<number | null>(null);
+  const [motivoGps, setMotivoGps] = useState('');
   const [subiendo, setSubiendo] = useState(false);
   // Verificar el pedido en el restaurante (QR o número), soltarlo, y la entrega en la puerta.
   const [escaneando, setEscaneando] = useState(false);
@@ -300,10 +325,12 @@ export function Inicio() {
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+        setPrecision(p.coords.accuracy ?? null);
         void api
           .pedir('POST', '/datos/repartidor/ubicacion', {
             lat: p.coords.latitude,
             lng: p.coords.longitude,
+            precision: p.coords.accuracy ?? null,
           })
           .catch(() => undefined);
       },
@@ -327,10 +354,12 @@ export function Inicio() {
       const p = await ubicacionConLimite();
       if (!vivo || !p) return;
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+      setPrecision(p.coords.accuracy ?? null);
       await api
         .pedir('POST', '/datos/repartidor/ubicacion', {
           lat: p.coords.latitude,
           lng: p.coords.longitude,
+          precision: p.coords.accuracy ?? null,
         })
         .catch(() => undefined);
     };
@@ -751,8 +780,12 @@ export function Inicio() {
                     ? { lat: activo.lat, lng: activo.lng }
                     : null;
                 // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
-                if (!llego(aqui, casa)) {
+                // Lo decide el servidor (dos lecturas precisas del GPS) o soporte con la excepción.
+                const enPuerta =
+                  Boolean(activo.llegoCliente) || activo.excepcionUbicacion === 'autorizada';
+                if (!enPuerta) {
                   const m = aqui && casa ? metrosEntre(aqui, casa) : null;
+                  const cerca = llego(aqui, casa);
                   const falta =
                     m == null
                       ? ''
@@ -768,10 +801,48 @@ export function Inicio() {
                         alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
                         exito
                       />
-                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                        {falta ? `${t.teFaltan} ${falta}. ` : ''}
-                        {t.alLlegar}
-                      </Text>
+                      {cerca ? (
+                        <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
+                          {t.confirmandoGps}
+                          {precision != null && precision > PRECISION_MAXIMA_M
+                            ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
+                            : ''}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                          {falta ? `${t.teFaltan} ${falta}. ` : ''}
+                          {t.alLlegar}
+                        </Text>
+                      )}
+                      {activo.excepcionUbicacion === 'pedida' ? (
+                        <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
+                          {t.esperandoSoporte}
+                        </Text>
+                      ) : (
+                        <View style={{ marginTop: 10 }}>
+                          <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
+                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.sinGpsAyuda}</Text>
+                          <TextInput
+                            value={motivoGps}
+                            onChangeText={setMotivoGps}
+                            placeholder={t.sinGpsAyuda}
+                            accessibilityLabel={t.sinGpsAyuda}
+                            style={[e.input, { marginTop: 6 }]}
+                          />
+                          {motivoGps.trim().length >= 5 ? (
+                            <Boton
+                              texto={t.pedirExcepcion}
+                              alTocar={() =>
+                                void accion(
+                                  `/datos/repartidor/pedidos/${activo.id}/no-puedo-confirmar`,
+                                  { motivo: motivoGps.trim() },
+                                ).then(() => setMotivoGps(''))
+                              }
+                              secundario
+                            />
+                          ) : null}
+                        </View>
+                      )}
                     </>
                   );
                 }
@@ -786,6 +857,11 @@ export function Inicio() {
                     : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
                 return (
                   <>
+                    {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
+                      <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
+                        {t.autorizado}
+                      </Text>
+                    ) : null}
                     <Boton
                       texto={subiendo ? t.subiendo : t.fotoEntrega}
                       alTocar={() =>

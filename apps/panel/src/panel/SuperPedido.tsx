@@ -22,6 +22,12 @@ const T = {
     pago: 'Pago en Stripe',
     bitacora: 'Bitácora',
     manager: 'Manager',
+    excepcion: 'El repartidor no puede confirmar su ubicación',
+    motivo: 'Motivo',
+    pedidaEn: 'Pedida',
+    autorizar: 'Autorizar la entrega sin GPS',
+    autorizada: 'Autorizada por',
+    autorizadaOk: 'Autorizada. El repartidor ya puede entregar.',
     eventos: {
       creado: 'Pedido creado',
       pago_pendiente: 'Esperando el pago',
@@ -37,6 +43,9 @@ const T = {
       sin_repartidor: 'Alerta: 15 min sin repartidor',
       cancelado_por_cliente: 'El cliente lo canceló',
       rechazado_por_restaurante: 'El restaurante lo rechazó',
+      gps_salto: 'GPS sospechoso: salto imposible (no se contó)',
+      ubicacion_sin_confirmar: 'El repartidor pidió entregar sin confirmación del GPS',
+      ubicacion_autorizada: 'Soporte autorizó la entrega sin GPS',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Esperando pago',
@@ -63,6 +72,12 @@ const T = {
     pago: 'Stripe payment',
     bitacora: 'Timeline',
     manager: 'Manager',
+    excepcion: 'The driver can’t confirm their location',
+    motivo: 'Reason',
+    pedidaEn: 'Requested',
+    autorizar: 'Authorize delivery without GPS',
+    autorizada: 'Authorized by',
+    autorizadaOk: 'Authorized. The driver can now deliver.',
     eventos: {
       creado: 'Order created',
       pago_pendiente: 'Awaiting payment',
@@ -78,6 +93,9 @@ const T = {
       sin_repartidor: 'Alert: 15 min without a driver',
       cancelado_por_cliente: 'The customer canceled it',
       rechazado_por_restaurante: 'The restaurant rejected it',
+      gps_salto: 'Suspicious GPS: impossible jump (not counted)',
+      ubicacion_sin_confirmar: 'Driver asked to deliver without GPS confirmation',
+      ubicacion_autorizada: 'Support authorized delivery without GPS',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Awaiting payment',
@@ -105,6 +123,12 @@ type Pedido = {
   restaurante: { id: string; nombre: string };
   repartidor: { id: string; nombre: string; codigo: string | null } | null;
   bitacora: { evento: string; fecha: string; quien: string | null; tipo: string }[];
+  excepcionUbicacion: {
+    motivo: string;
+    pedidaEn: string;
+    autorizadaEn: string | null;
+    autorizadaPor: string | null;
+  } | null;
 };
 
 const hora = (f: string, idioma: Idioma) =>
@@ -117,11 +141,26 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
   const t = enIdioma(T, idioma);
   const [p, setP] = useState<Pedido | null>(null);
   const [error, setError] = useState('');
-  useEffect(() => {
+  const [aviso, setAviso] = useState('');
+  const cargar = () =>
     pedir<{ pedido: Pedido }>('GET', `/datos/admin/pedidos/${id}`)
       .then((r) => setP(r.pedido))
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
+  useEffect(() => {
+    void cargar();
+    // Solo al abrir la ficha.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+  async function autorizar() {
+    setError('');
+    try {
+      await pedir('POST', `/datos/admin/pedidos/${id}/autorizar-ubicacion`);
+      setAviso(t.autorizadaOk);
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
   if (!p) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const dinero = (c: number) => formatearDolares(c, idioma);
   return (
@@ -184,6 +223,37 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           </ul>
         </div>
         <div className="tarjeta-form">
+          {p.excepcionUbicacion ? (
+            <div className="super-excepcion">
+              <h2>{t.excepcion}</h2>
+              <p>
+                <strong>{t.motivo}:</strong> {p.excepcionUbicacion.motivo}
+              </p>
+              <p className="suave">
+                {t.pedidaEn}: {hora(p.excepcionUbicacion.pedidaEn, idioma)}
+              </p>
+              {p.excepcionUbicacion.autorizadaEn ? (
+                <p className="ok">
+                  {t.autorizada} {p.excepcionUbicacion.autorizadaPor} ·{' '}
+                  {hora(p.excepcionUbicacion.autorizadaEn, idioma)}
+                </p>
+              ) : (
+                <button type="button" className="boton" onClick={() => void autorizar()}>
+                  {t.autorizar}
+                </button>
+              )}
+              {aviso && (
+                <p className="ok" role="status">
+                  {aviso}
+                </p>
+              )}
+              {error && (
+                <p className="error-general" role="alert">
+                  {error}
+                </p>
+              )}
+            </div>
+          ) : null}
           <h2>{t.bitacora}</h2>
           <ol className="super-bitacora">
             {p.bitacora.map((b, i) => (

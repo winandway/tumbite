@@ -18,3 +18,4 @@ export * from './llegada';
 export * from './despacho';
 export * from './mostrador';
 export * from './horarios';
+export * from './gps';

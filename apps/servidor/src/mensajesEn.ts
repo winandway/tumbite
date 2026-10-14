@@ -139,6 +139,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Todavía no llegas a la dirección de entrega. El botón se activa cuando estés en la puerta.',
     'You haven’t reached the delivery address yet. The button turns on when you’re at the door.',
   ],
+  [
+    'Todavía no confirmamos tu ubicación en la puerta. Espera unos segundos con el GPS encendido o pide la excepción a soporte.',
+    'We haven’t confirmed your location at the door yet. Wait a few seconds with GPS on, or request the exception from support.',
+  ],
+  ['Este pedido no tiene una excepción pendiente.', 'This order has no pending exception.'],
   ['Esa foto no existe.', 'That photo doesn’t exist.'],
   ['Esa franquicia no existe.', 'That franchise doesn’t exist.'],
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],

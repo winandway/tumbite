@@ -76,6 +76,11 @@ export const TEXTOS = {
     quitadoOk: 'We removed',
     comoLlegar: 'Directions',
     fotoEntrega: 'Take the delivery photo',
+    sinGpsAyuda:
+      'Tell us what’s going on (tall building, garage, no signal). Support reviews it and authorizes the delivery.',
+    pedirExcepcion: 'I can’t confirm my location',
+    esperandoSoporte: 'Support is reviewing your case.',
+    autorizado: 'Support authorized the delivery without GPS confirmation.',
     desconectarme: 'Go offline',
     cumple: 'Birthday (optional, YYYY-MM-DD)',
     regalos: 'Gifts and marketing',
@@ -175,6 +180,11 @@ export const TEXTOS = {
     quitadoOk: 'Quitamos',
     comoLlegar: 'Cómo llegar',
     fotoEntrega: 'Tomar foto de la entrega',
+    sinGpsAyuda:
+      'Cuéntanos qué pasa (edificio, garaje, celular sin señal). Soporte lo revisa y te autoriza entregar.',
+    pedirExcepcion: 'No puedo confirmar mi ubicación',
+    esperandoSoporte: 'Soporte está revisando tu caso.',
+    autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     desconectarme: 'Desconectarme',
     cumple: 'Fecha de cumpleaños (opcional, AAAA-MM-DD)',
     regalos: 'Regalos y marketing',

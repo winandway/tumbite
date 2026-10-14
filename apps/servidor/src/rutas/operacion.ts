@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
+  type Muestra,
   RADIO_LLEGADA_M,
   celdasVecinas,
+  llegadaConfiable,
+  saltoImposible,
   debeOfrecer,
   distanciaKm,
   geohash,
@@ -24,12 +27,17 @@ import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
+import { enviarCorreo } from '../correo';
 import { formatearDolares } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const SEGUNDOS_OFERTA = 60;
 const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
+/** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
+const puntoConPrecision = punto.extend({
+  precision: z.number().min(0).max(100_000).nullable().optional(),
+});
 
 // ======================= Restaurante =======================
 
@@ -40,6 +48,9 @@ const CON_HITOS = `(SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.i
   (SELECT valor FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'espera_evitable') AS h_espera,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'verificado') AS h_verificado,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'no_aparece') AS h_no_aparece`;
+
+/** «No puedo confirmar mi ubicación»: pedida (sin autorizar) o autorizada por soporte. */
+const CON_EXCEPCION = `(SELECT CASE WHEN x.autorizado_en IS NULL THEN 'pedida' ELSE 'autorizada' END FROM excepciones_ubicacion x WHERE x.pedido_id = p.id) AS excepcion_ubicacion`;
 
 /** Hora UTC de la base («YYYY-MM-DD HH:MM:SS») en milisegundos. */
 function msDeBase(t: unknown): number | null {
@@ -186,11 +197,59 @@ async function salirEnCamino(env: Env, db: D1Database, id: string, actorId: stri
  * restaurante (200 m), «casi llega» (500 m de la casa, se avisa al cliente) y llegó a la puerta.
  * Lo marca la ubicación, no un botón: nadie puede decir «llegué» desde otro lado.
  */
+/**
+ * Guarda la lectura del GPS entre las recientes del repartidor y devuelve las últimas (2 minutos).
+ * Una lectura con un salto imposible respecto a la anterior (más de 180 km/h) no se guarda: es un
+ * GPS simulado o roto, y queda anotada en la bitácora de su pedido activo.
+ */
+async function guardarMuestra(
+  db: D1Database,
+  repartidorId: string,
+  d: { lat: number; lng: number; precision?: number | null },
+): Promise<{ muestras: Muestra[]; salto: boolean }> {
+  const leer = async () => {
+    const { results } = await db
+      .prepare(
+        "SELECT lat, lng, precision_m, creado_en FROM ubicaciones_recientes WHERE usuario_id = ? AND creado_en >= datetime('now','-2 minutes') ORDER BY id DESC LIMIT 5",
+      )
+      .bind(repartidorId)
+      .all<{ lat: number; lng: number; precision_m: number | null; creado_en: string }>();
+    return results.map<Muestra>((r) => ({
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      precisionM: r.precision_m == null ? null : Number(r.precision_m),
+      en: msDeBase(r.creado_en) ?? 0,
+    }));
+  };
+  const previas = await leer();
+  const nueva: Muestra = {
+    lat: d.lat,
+    lng: d.lng,
+    precisionM: d.precision ?? null,
+    en: Date.now(),
+  };
+  if (saltoImposible(previas[0] ?? null, nueva)) return { muestras: previas, salto: true };
+  await db.batch([
+    db
+      .prepare(
+        'INSERT INTO ubicaciones_recientes (usuario_id, lat, lng, precision_m) VALUES (?, ?, ?, ?)',
+      )
+      .bind(repartidorId, d.lat, d.lng, d.precision ?? null),
+    db
+      .prepare(
+        "DELETE FROM ubicaciones_recientes WHERE usuario_id = ? AND creado_en < datetime('now','-2 minutes')",
+      )
+      .bind(repartidorId),
+  ]);
+  return { muestras: [nueva, ...previas], salto: false };
+}
+
 async function registrarHitos(
   env: Env,
   db: D1Database,
   repartidorId: string,
   donde: { lat: number; lng: number },
+  muestras: Muestra[] = [],
 ) {
   const p = await db
     .prepare(
@@ -224,8 +283,10 @@ async function registrarHitos(
     return;
   }
   if (p.lat == null || p.lng == null) return;
-  const m = metrosEntre(donde, { lat: p.lat, lng: p.lng });
-  if (m <= RADIO_LLEGADA_M) {
+  const casa = { lat: p.lat, lng: p.lng };
+  const m = metrosEntre(donde, casa);
+  // «Llegó a la puerta» exige dos lecturas precisas y coherentes dentro del radio, no un punto suelto.
+  if (llegadaConfiable(muestras, casa).llego) {
     if (await marcar('llego_cliente')) await avisarAlCliente(env, db, p.id, (i) => AVISOS.llego(i));
   } else if (m <= 500) {
     if (await marcar('casi_llega'))
@@ -583,7 +644,7 @@ async function miFicha(c: Ctx) {
 async function entregaActiva(db: D1Database, repartidorId: string) {
   return db
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_EXCEPCION}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
     )
     .bind(repartidorId)
@@ -637,14 +698,29 @@ operacion.post('/repartidor/conectar', async (c) => {
 
 operacion.post('/repartidor/ubicacion', async (c) => {
   const { u, db } = await miFicha(c);
-  const d = await leerCuerpo(c, punto);
+  const d = await leerCuerpo(c, puntoConPrecision);
+  const { muestras, salto } = await guardarMuestra(db, u.id, d);
+  if (salto) {
+    // No se mueve la ficha ni cuenta para los hitos; queda anotado en el pedido activo.
+    const activo = await db
+      .prepare(
+        "SELECT id FROM pedidos WHERE repartidor_id = ? AND estado IN ('aceptado','listo','en_camino') LIMIT 1",
+      )
+      .bind(u.id)
+      .first<{ id: string }>();
+    if (activo)
+      await anotarEvento(db, activo.id, 'gps_salto', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
+    return c.json({ ok: true, salto: true });
+  }
   await db
     .prepare(
       "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
     )
     .bind(d.lat, d.lng, (await zonaPara(db, d.lat, d.lng))?.id ?? null, geohash(d.lat, d.lng), u.id)
     .run();
-  await registrarHitos(c.env, db, u.id, d).catch((e: unknown) => console.error('hitos', e));
+  await registrarHitos(c.env, db, u.id, d, muestras).catch((e: unknown) =>
+    console.error('hitos', e),
+  );
   return c.json({ ok: true });
 });
 
@@ -796,6 +872,7 @@ function conDatosRestaurante(f: FilaPedido) {
     verificado: f.h_verificado != null,
     llegoCliente: f.h_llego_cli != null,
     noApareceEn: (f.h_no_aparece as string | null) ?? null,
+    excepcionUbicacion: (f.excepcion_ubicacion as 'pedida' | 'autorizada' | null) ?? null,
     // Para que el repartidor sepa cuánto falta en cocina (0 = ya está listo).
     minutosParaListo: minutosParaListo(
       String(f.estado),
@@ -1040,12 +1117,49 @@ operacion.post('/repartidor/pedidos/:id/verificar', async (c) => {
  * Entregado: solo en la puerta (a menos de 200 m de la dirección) y con la foto de la entrega.
  * Se acredita a cada billetera, una sola vez (el libro no permite repetir pedido + concepto).
  */
+/**
+ * «No puedo confirmar mi ubicación»: el GPS no da en la puerta (edificio, túnel, celular viejo). El
+ * repartidor explica por qué, soporte lo autoriza desde el panel y queda quién y cuándo. Solo con
+ * la autorización se puede entregar sin la comprobación del GPS.
+ */
+operacion.post('/repartidor/pedidos/:id/no-puedo-confirmar', async (c) => {
+  const { u, db } = await miFicha(c);
+  const id = c.req.param('id');
+  const d = await leerCuerpo(c, z.object({ motivo: z.string().trim().min(5).max(300) }));
+  const p = await db
+    .prepare(
+      "SELECT r.nombre AS restaurante FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'",
+    )
+    .bind(id, u.id)
+    .first<{ restaurante: string }>();
+  if (!p) throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  await db
+    .prepare(
+      'INSERT INTO excepciones_ubicacion (pedido_id, motivo) VALUES (?, ?) ON CONFLICT(pedido_id) DO UPDATE SET motivo = excluded.motivo',
+    )
+    .bind(id, d.motivo)
+    .run();
+  await anotarEvento(db, id, 'ubicacion_sin_confirmar', d.motivo);
+  const corto = id.slice(0, 6).toUpperCase();
+  for (const para of (c.env.ADMIN_CORREOS ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean))
+    await enviarCorreo(c.env, {
+      de: 'avisos',
+      para,
+      asunto: `Pedido #${corto}: el repartidor no puede confirmar su ubicación`,
+      texto: `El repartidor del pedido #${corto} de ${p.restaurante} pide entregar sin la comprobación del GPS. Motivo: «${d.motivo}». Revísalo en el panel (Pedidos → #${corto}) y autoriza si corresponde.`,
+    }).catch((e: unknown) => console.error('excepción ubicación: correo', e));
+  return c.json({ ok: true, estado: 'pedida' });
+});
+
 operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
   const p = await db
     .prepare(
-      `SELECT p.*, ${CON_HITOS}, r.dueno_id, (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'`,
+      `SELECT p.*, ${CON_HITOS}, ${CON_EXCEPCION}, r.dueno_id, (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'`,
     )
     .bind(id, u.id)
     .first<Record<string, unknown>>();
@@ -1102,6 +1216,14 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     throw new ErrorDatos(
       'Todavía no llegas a la dirección de entrega. El botón se activa cuando estés en la puerta.',
       undefined,
+      409,
+    );
+  // GPS serio: la llegada la confirman dos lecturas precisas (hito «llegó»), o soporte autorizó la
+  // excepción «No puedo confirmar mi ubicación». Un punto suelto no alcanza.
+  if (p.h_llego_cli == null && p.excepcion_ubicacion !== 'autorizada' && !esRevisor(c, u.correo))
+    throw new ErrorDatos(
+      'Todavía no confirmamos tu ubicación en la puerta. Espera unos segundos con el GPS encendido o pide la excepción a soporte.',
+      'gps',
       409,
     );
   if (modo === 'seguro') {

@@ -699,8 +699,30 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByRole('button', { name: L.chatEnviar }).click();
     await expect(cli.getByText(respuesta)).toBeVisible({ timeout: 20_000 });
 
-    // 10. Llega a la puerta: se quita «Cómo llegar» y aparece la foto de la entrega.
+    // 10. GPS serio: en un edificio el GPS no marca la puerta. El repartidor pide la excepción
+    // «No puedo confirmar mi ubicación» con su motivo; soporte la autoriza desde el panel y
+    // queda en la bitácora. Mientras, el GPS también llega a la puerta (dos lecturas precisas).
+    await rep
+      .getByLabel(L.sinGpsAyuda)
+      .fill(
+        idioma === 'en'
+          ? 'Tall building, GPS shows the next street'
+          : 'Edificio alto, el GPS marca la otra calle',
+      );
+    await rep.getByRole('button', { name: L.pedirExcepcion }).click();
+    await expect(rep.getByText(L.esperandoSoporte, { exact: false })).toBeVisible({
+      timeout: 20_000,
+    });
+    await foto(rep, 'repartidor-sin-gps');
+    expect(
+      (
+        await request.post(`/datos/admin/pedidos/${cobro.pedidoId}/autorizar-ubicacion`, {
+          headers: auth,
+        })
+      ).status(),
+    ).toBe(200);
     await repCtx.setGeolocation(CASA);
+    // Llega a la puerta: se quita «Cómo llegar» y aparece la foto de la entrega.
     await expect(
       rep.getByRole('button', { name: L.fotoEntrega }).filter({ visible: true }),
     ).toBeVisible({

@@ -874,6 +874,35 @@ const es: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'gps-arrival',
+        titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
+        resumen:
+          'El botón de entregar aparece cuando el GPS confirma que estás en la dirección. Si en un edificio o garaje no te marca, pides la excepción y soporte te autoriza.',
+        explicacion: [
+          'Para proteger al cliente y a ti, «entregado» solo se puede marcar en la puerta. No basta un punto suelto en el mapa: la app manda tu ubicación con la precisión del GPS y hacen falta dos lecturas seguidas, precisas (menos de 60 metros de error) y coherentes, dentro de los 200 metros de la dirección. Con el celular quieto unos segundos, alcanza.',
+          'Si el celular reporta una ubicación imposible (un salto de kilómetros en segundos, típico de un GPS simulado o roto), esa lectura no cuenta y queda anotada en el pedido.',
+          'En un edificio alto, un garaje o una zona sin señal, el GPS puede marcarte en otra calle. Para eso está «No puedo confirmar mi ubicación»: escribes qué pasa, soporte lo revisa y te autoriza entregar. Queda registrado quién autorizó y cuándo.',
+          'Mientras soporte revisa, si el GPS te confirma, el botón aparece solo. Al llegar también le avisamos al cliente que estás en su puerta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-gps-es.webp',
+            alt: 'App del repartidor en camino: debajo de «Cómo llegar», el aviso «Soporte está revisando tu caso» después de pedir la excepción «No puedo confirmar mi ubicación».',
+            pie: 'Pediste la excepción: soporte la revisa y te autoriza.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no me aparece el botón de entregar si ya estoy en la puerta?',
+          '¿Qué hago si el GPS no me marca en la dirección?',
+          '¿Qué pasa si mi ubicación da un salto raro?',
+        ],
+        pasos: [
+          'Llega a la dirección y deja el celular quieto unos segundos: el GPS confirma con dos lecturas.',
+          'Si no confirma, escribe qué pasa y toca «No puedo confirmar mi ubicación».',
+          'Soporte revisa y autoriza; la app te avisa y aparece el botón para entregar.',
+        ],
+      },
+      {
         id: 'pickup-and-delivery-photos',
         titulo: 'Recogida con foto y entrega en la puerta',
         resumen:
@@ -882,7 +911,7 @@ const es: SeccionDocs[] = [
           'Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar.',
           'En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante.',
           'El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
-          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
+          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
           'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
           'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
         ],
@@ -2172,6 +2201,35 @@ const en: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'gps-arrival',
+        titulo: 'How we know you reached the door (and what to do if GPS fails)',
+        resumen:
+          'The deliver button appears once GPS confirms you’re at the address. If a building or garage throws it off, request the exception and support authorizes you.',
+        explicacion: [
+          'To protect the customer and you, “delivered” can only be marked at the door. A single point on the map isn’t enough: the app sends your location with the GPS accuracy, and it takes two consecutive readings, precise (under 60 meters of error) and consistent, within 200 meters of the address. Keeping the phone still for a few seconds is enough.',
+          'If the phone reports an impossible location (a jump of several miles in seconds, typical of a spoofed or broken GPS), that reading doesn’t count and is noted on the order.',
+          'In a tall building, a garage, or an area with no signal, GPS may place you on another street. That’s what “I can’t confirm my location” is for: you write what’s going on, support reviews it and authorizes the delivery. Who authorized it and when is recorded.',
+          'While support reviews, if GPS confirms you, the button appears on its own. When you arrive we also let the customer know you’re at their door.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-gps-en.webp',
+            alt: 'Driver app on the way: under “Directions,” the notice “Support is reviewing your case” after requesting the “I can’t confirm my location” exception.',
+            pie: 'You requested the exception: support reviews and authorizes it.',
+          },
+        ],
+        preguntas: [
+          'Why doesn’t the deliver button show up if I’m already at the door?',
+          'What do I do if GPS doesn’t place me at the address?',
+          'What happens if my location jumps around?',
+        ],
+        pasos: [
+          'Reach the address and keep the phone still for a few seconds: GPS confirms with two readings.',
+          'If it doesn’t confirm, write what’s going on and tap “I can’t confirm my location.”',
+          'Support reviews and authorizes; the app notifies you and the deliver button appears.',
+        ],
+      },
+      {
         id: 'pickup-and-delivery-photos',
         titulo: 'Photo at pickup, delivery at the door',
         resumen:
@@ -2180,7 +2238,7 @@ const en: SeccionDocs[] = [
           'That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else.',
           'At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant.',
           'The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
-          'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
+          'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
           'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
           'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
         ],

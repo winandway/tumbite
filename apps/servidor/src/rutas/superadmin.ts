@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { semaforoPedido } from '@tumbite/compartido';
 import type { Env } from '../env';
+import { anotarEvento } from '../manager';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
@@ -715,6 +716,17 @@ superadmin.get('/admin/pedidos/:id', async (c) => {
     )
     .bind(id)
     .all<{ evento: string; fecha: string; quien: string | null; tipo: string }>();
+  const excepcion = await db
+    .prepare(
+      'SELECT motivo, creado_en, autorizado_en, autorizado_por FROM excepciones_ubicacion WHERE pedido_id = ?',
+    )
+    .bind(id)
+    .first<{
+      motivo: string;
+      creado_en: string;
+      autorizado_en: string | null;
+      autorizado_por: string | null;
+    }>();
   const bitacora = [
     { evento: 'creado', fecha: String(p.creado_en), quien: String(p.cliente), tipo: 'estado' },
     ...estados,
@@ -747,8 +759,33 @@ superadmin.get('/admin/pedidos/:id', async (c) => {
           }
         : null,
       bitacora,
+      excepcionUbicacion: excepcion
+        ? {
+            motivo: excepcion.motivo,
+            pedidaEn: excepcion.creado_en,
+            autorizadaEn: excepcion.autorizado_en,
+            autorizadaPor: excepcion.autorizado_por,
+          }
+        : null,
     },
   });
+});
+
+/** Soporte autoriza entregar sin la comprobación del GPS; queda quién y cuándo en la bitácora. */
+superadmin.post('/admin/pedidos/:id/autorizar-ubicacion', async (c) => {
+  const u = exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      "UPDATE excepciones_ubicacion SET autorizado_en = datetime('now'), autorizado_por = ? WHERE pedido_id = ? AND autorizado_en IS NULL",
+    )
+    .bind(u.nombre, id)
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('Este pedido no tiene una excepción pendiente.', undefined, 409);
+  await anotarEvento(db, id, 'ubicacion_autorizada', u.nombre);
+  return c.json({ ok: true });
 });
 
 // ───────────────────────── Superadmin: ficha del restaurante ─────────────────────────

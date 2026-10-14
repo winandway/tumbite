@@ -3585,3 +3585,15 @@ button {
   border-left: 3px solid #eee;
   margin-top: 6px;
 }
+
+/* Ficha del pedido (soporte): la excepción «no puedo confirmar mi ubicación» */
+.super-excepcion {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.super-excepcion h2 {
+  margin-top: 0;
+  font-size: 1rem;
+}

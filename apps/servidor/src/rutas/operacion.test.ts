@@ -822,7 +822,10 @@ describe('el restaurante ve venir al repartidor y el cliente sabe cuando llega (
     await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.7836, lng: -80.2 }, rep.token);
     let seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(seg.datos.pedido.repartidor).toMatchObject({ casiLlega: true, llego: false });
-    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.7804, lng: -80.2 }, rep.token);
+    // A 50 m, con dos lecturas precisas (la regla de GPS serio no cree en un punto suelto).
+    await m.envejecerGps(id);
+    await m.ubicar(rep.token, { lat: 25.7804, lng: -80.2 });
+    await m.ubicar(rep.token, { lat: 25.7804, lng: -80.2 });
     seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(seg.datos.pedido.repartidor).toMatchObject({ casiLlega: true, llego: true });
     const hitos = await m.DB.prepare(
@@ -920,6 +923,9 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
       rep.token,
     );
     expect(lejos.estado).toBe(409);
+    // Parado en la puerta: el celular ya mandó dos lecturas precisas ahí.
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2001 });
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2001 });
     const ok = await m.llamar(
       'POST',
       `/datos/repartidor/pedidos/${id}/entregado`,
@@ -946,9 +952,10 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
     await m.llamar(
       'POST',
       '/datos/repartidor/ubicacion',
-      { lat: 25.7801, lng: -80.2001 },
+      { lat: 25.7801, lng: -80.2001, precision: 10 },
       rep.token,
     );
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2001 });
     const aviso = await m.llamar(
       'POST',
       `/datos/repartidor/pedidos/${id}/no-aparece`,
@@ -1504,6 +1511,8 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
     await e.m.recoger(id, rep.token, e.dueno.token);
     const enCasa = { lat: 25.7801, lng: -80.2001, modo: 'mano' };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
     expect(
       (await e.m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, enCasa, rep.token))
         .estado,
@@ -1703,5 +1712,97 @@ describe('horarios reales y opciones de los platos (C-HORARIOS, C-OPCIONES)', ()
     expect(
       seg.datos.pedido.lineas[0].opciones.map((o: { nombreEn: string }) => o.nombreEn),
     ).toEqual(['Large', 'Extra cheese']);
+  });
+});
+
+describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de soporte (C-GPS-SERIO)', () => {
+  async function enCamino() {
+    const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Gus Gps', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    const seguimiento = async () =>
+      (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)).datos
+        .pedido.repartidor;
+    const estado = async () =>
+      (await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token)).datos.activo;
+    return { m, rep, id, cliente, seguimiento, estado };
+  }
+  // La casa del pedido de prueba: 25.78, -80.2.
+  const casa = { lat: 25.7801, lng: -80.2 };
+
+  it('una lectura sola o imprecisa no marca «llegó»; dos precisas y coherentes sí', async () => {
+    const { m, rep, seguimiento } = await enCamino();
+    await m.ubicar(rep.token, casa);
+    expect((await seguimiento()).llego).toBe(false);
+    await m.ubicar(rep.token, casa, 150); // en un edificio el GPS da ±150 m: no cuenta
+    expect((await seguimiento()).llego).toBe(false);
+    await m.ubicar(rep.token, casa, 8);
+    expect((await seguimiento()).llego).toBe(false); // la anterior era imprecisa
+    await m.ubicar(rep.token, casa, 12);
+    expect((await seguimiento()).llego).toBe(true);
+  });
+
+  it('entregar sin la llegada confirmada no se puede, aunque la foto diga que está en la puerta', async () => {
+    const { m, rep, id } = await enCamino();
+    const r = await m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, casa);
+    expect(r.estado).toBe(409);
+    expect(r.datos.error).toMatch(/no confirmamos tu ubicación|haven’t confirmed your location/);
+    // Con sus dos lecturas en la puerta (como un celular de verdad), entrega.
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+  });
+
+  it('un salto imposible no mueve al repartidor y queda en la bitácora', async () => {
+    const { m, rep, id, seguimiento } = await enCamino();
+    await m.ubicar(rep.token, { lat: 25.9, lng: -80.3 }); // a 15 km
+    const r = await m.ubicar(rep.token, casa); // un segundo después, en la puerta: imposible
+    expect(r.datos.salto).toBe(true);
+    await m.ubicar(rep.token, casa);
+    expect((await seguimiento()).llego).toBe(false);
+    const anotado = await m.DB.prepare(
+      "SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'gps_salto'",
+    )
+      .bind(id)
+      .first();
+    expect(anotado).toBeTruthy();
+  });
+
+  it('«No puedo confirmar mi ubicación»: soporte autoriza con su nombre y recién ahí se entrega', async () => {
+    const { m, rep, id, estado } = await enCamino();
+    const admin = await m.cuenta('admin', 'Soporte Tumbite');
+    const pedida = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-puedo-confirmar`,
+      { motivo: 'Edificio de 30 pisos, el GPS marca otra calle' },
+      rep.token,
+    );
+    expect(pedida.estado).toBe(200);
+    expect((await estado()).excepcionUbicacion).toBe('pedida');
+    // Todavía no: sin autorización no se entrega.
+    expect(
+      (await m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, casa)).estado,
+    ).toBe(409);
+    const ficha = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
+    expect(ficha.datos.pedido.excepcionUbicacion).toMatchObject({
+      motivo: 'Edificio de 30 pisos, el GPS marca otra calle',
+      autorizadaEn: null,
+    });
+    expect(
+      (await m.llamar('POST', `/datos/admin/pedidos/${id}/autorizar-ubicacion`, {}, admin.token))
+        .estado,
+    ).toBe(200);
+    expect((await estado()).excepcionUbicacion).toBe('autorizada');
+    expect(
+      (await m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, casa)).estado,
+    ).toBe(200);
+    const ficha2 = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
+    expect(ficha2.datos.pedido.excepcionUbicacion.autorizadaPor).toBe('Soporte Tumbite');
+    expect(ficha2.datos.pedido.bitacora.map((b: { evento: string }) => b.evento)).toEqual(
+      expect.arrayContaining(['ubicacion_sin_confirmar', 'ubicacion_autorizada']),
+    );
   });
 });
