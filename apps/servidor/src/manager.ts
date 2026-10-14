@@ -4,6 +4,8 @@ import { anotar } from './historial';
 import { notificar } from './notificaciones';
 import { crearStripe } from './stripe';
 import { ErrorDatos } from './validar';
+import { soltarPedido } from './rutas/operacion';
+import { aplicarAjuste } from './rutas/pedidos';
 
 /**
  * El Manager de Tumbite, fase de reglas (sin IA y sin costo): vigila que ningún pedido pagado
@@ -18,6 +20,10 @@ export const REGLAS = {
   recordatorio2: 6,
   /** Cancelación con devolución automática del dinero. */
   cancelar: 10,
+  /** Minutos sin señal del repartidor (con pedido asignado y sin haber llegado): se reasigna. */
+  repartidorPerdido: 10,
+  /** Minutos que tiene el cliente para decidir sobre un plato agotado; después se quita solo. */
+  ajusteSinRespuesta: 5,
   /** Minutos desde que el restaurante aceptó sin que ningún repartidor tome el pedido. */
   sinRepartidor: 15,
 } as const;
@@ -139,15 +145,25 @@ type Vigilado = {
 
 /** Una vuelta del Manager. Con pedidoId, solo mira ese pedido (lo usa el seguimiento). */
 export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string) {
-  const resumen = { recordatorios: 0, cancelados: 0, sinRepartidor: 0, abandonados: 0 };
+  const resumen = {
+    recordatorios: 0,
+    cancelados: 0,
+    sinRepartidor: 0,
+    abandonados: 0,
+    perdidos: 0,
+    ajustes: 0,
+  };
   const solo = pedidoId ? ' AND p.id = ?' : '';
+  // La espera del restaurante cuenta desde el pago o, si hubo un plato agotado, desde que el
+  // cliente decidió (el restaurante recién ahí puede aceptar).
   const { results: esperando } = await db
     .prepare(
       `SELECT p.id, p.cliente_id, r.dueno_id, r.nombre AS restaurante, uc.idioma AS idioma_cliente, ud.idioma AS idioma_dueno,
-        CAST((julianday('now') - julianday(COALESCE(p.pagado_en, p.creado_en))) * 1440 AS INTEGER) AS minutos
+        CAST((julianday('now') - julianday(COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), p.pagado_en, p.creado_en))) * 1440 AS INTEGER) AS minutos
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
        JOIN usuarios uc ON uc.id = p.cliente_id JOIN usuarios ud ON ud.id = r.dueno_id
-       WHERE p.estado = 'pagado' AND COALESCE(p.pagado_en, p.creado_en) <= datetime('now', ?)${solo}
+       WHERE p.estado = 'pagado' AND COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), p.pagado_en, p.creado_en) <= datetime('now', ?)
+       AND NOT EXISTS (SELECT 1 FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'pendiente')${solo}
        ORDER BY p.pagado_en LIMIT 50`,
     )
     .bind(`-${REGLAS.recordatorio1} minutes`, ...(pedidoId ? [pedidoId] : []))
@@ -184,6 +200,53 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
       // Un pedido con problema no frena la vuelta: queda en el registro y se reintenta en la próxima.
       console.error('manager: pedido', p.id, e);
     }
+  }
+
+  // Plato agotado sin respuesta del cliente en 5 minutos: se quita y se le devuelve esa parte.
+  const { results: ajustes } = await db
+    .prepare(
+      `SELECT a.pedido_id AS id FROM ajustes_pedido a JOIN pedidos p ON p.id = a.pedido_id
+       WHERE a.estado = 'pendiente' AND a.creado_en <= datetime('now', ?)${solo} LIMIT 20`,
+    )
+    .bind(`-${REGLAS.ajusteSinRespuesta} minutes`, ...(pedidoId ? [pedidoId] : []))
+    .all<{ id: string }>();
+  for (const a of ajustes) {
+    try {
+      await aplicarAjuste(env, db, a.id, 'quitar', 'manager');
+      resumen.ajustes++;
+    } catch (e) {
+      console.error('manager: ajuste sin respuesta', a.id, e);
+    }
+  }
+
+  // Repartidor perdido: aceptó, no ha llegado al restaurante y su celular lleva 10 minutos sin
+  // mandar ubicación. Se le quita el pedido y vuelve a la fila de ofertas; se avisa al equipo.
+  const { results: perdidos } = await db
+    .prepare(
+      `SELECT p.id, p.repartidor_id AS repartidor, r.nombre AS restaurante
+       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN repartidores d ON d.usuario_id = p.repartidor_id
+       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NOT NULL
+       AND d.ubicacion_en <= datetime('now', ?)
+       AND NOT EXISTS (SELECT 1 FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'llego_restaurante')${solo}
+       LIMIT 20`,
+    )
+    .bind(`-${REGLAS.repartidorPerdido} minutes`, ...(pedidoId ? [pedidoId] : []))
+    .all<{ id: string; repartidor: string; restaurante: string }>();
+  for (const p of perdidos) {
+    await soltarPedido(db, p.id, p.repartidor);
+    await anotarEvento(db, p.id, 'repartidor_perdido', `${REGLAS.repartidorPerdido} min sin señal`);
+    resumen.perdidos++;
+    const corto = p.id.slice(0, 6).toUpperCase();
+    for (const para of (env.ADMIN_CORREOS ?? '')
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean))
+      await enviarCorreo(env, {
+        de: 'avisos',
+        para,
+        asunto: `Pedido #${corto}: el repartidor se perdió, se volvió a ofrecer`,
+        texto: `El repartidor del pedido #${corto} de ${p.restaurante} llevaba ${REGLAS.repartidorPerdido} minutos sin mandar su ubicación y no había llegado al restaurante. Se le quitó el pedido y se está ofreciendo a otros.`,
+      }).catch((e: unknown) => console.error('manager: correo repartidor perdido', e));
   }
 
   const { results: solos } = await db

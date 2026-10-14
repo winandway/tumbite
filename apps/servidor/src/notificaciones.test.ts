@@ -128,12 +128,7 @@ describe('avisos al celular', () => {
       .bind(id)
       .run();
 
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     expect(mandados.at(-1)).toMatchObject({
       to: 'ExponentPushToken[cliente]',
       title: 'Your order is being prepared',

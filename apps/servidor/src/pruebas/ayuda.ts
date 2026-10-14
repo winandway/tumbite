@@ -53,7 +53,7 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
   /** Sube una foto (bytes crudos) con la ubicación en la dirección, como lo hace la app. */
   async function foto(ruta: string, token: string, donde?: { lat: number; lng: number }) {
     ip++;
-    const q = donde ? `?lat=${donde.lat}&lng=${donde.lng}` : '';
+    const q = donde ? `${ruta.includes('?') ? '&' : '?'}lat=${donde.lat}&lng=${donde.lng}` : '';
     const res = await app.request(
       `${ruta}${q}`,
       {

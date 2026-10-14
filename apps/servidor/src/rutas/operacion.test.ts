@@ -139,12 +139,7 @@ describe('ciclo del pedido', () => {
     expect(
       (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas,
     ).toHaveLength(0);
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     expect(ofertas.datos.ofertas[0].id).toBe(id);
     expect(ofertas.datos.ofertas[0].pagoRepartidor).toBe(900);
@@ -200,12 +195,7 @@ describe('ciclo del pedido', () => {
   it('la oferta va primero al más cercano; rechazar no castiga y pasa al siguiente', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const id = await pedidoPagado();
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     const lejos = await repartidor('Lejos', 25.85, -80.25);
     const cerca = await repartidor('Cerca', 25.7702, -80.1902);
     expect(
@@ -232,12 +222,7 @@ describe('ciclo del pedido', () => {
       .bind(veterano.id)
       .run();
     const id = await pedidoPagado();
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     expect(
       (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, novato.token)).datos.ofertas,
     ).toHaveLength(0);
@@ -272,7 +257,7 @@ describe('ciclo del pedido', () => {
         await m.llamar(
           'POST',
           `/datos/restaurante/pedidos/${id}/aceptar`,
-          { minutos: 10 },
+          { minutos: 5 },
           otro.token,
         )
       ).estado,
@@ -319,12 +304,7 @@ describe('recorrido completo como en la calle (C-ENSAYO-CALLE)', () => {
     // El restaurante lo ve pagado, lo acepta y al repartidor cercano le llega la oferta.
     const lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
     expect(lista.datos.pedidos.find((p: { id: string }) => p.id === id)?.estado).toBe('pagado');
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 10 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     expect(ofertas.datos.ofertas[0]?.id).toBe(id);
     expect(ofertas.datos.ofertas[0]?.pagoRepartidor).toBe(desglose.pagoRepartidor);
@@ -389,12 +369,7 @@ describe('tablero del restaurante (C-TABLERO-REST)', () => {
     const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();
     const rep = await repartidor('Rep Tablero', 25.771, -80.191);
     const id = await pedidoPagado();
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
@@ -459,12 +434,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     const otro = await m.cuenta('cliente', 'Otro');
     const ajeno = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, otro.token);
     expect(ajeno.estado).toBe(409);
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     const tarde = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, cliente.token);
     expect(tarde.estado).toBe(409);
   });
@@ -525,12 +495,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     const env = { DB: m.DB } as never;
     const id = await pedidoPagado();
     contarReembolsos();
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 15 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(0);
     await atrasar(m, id, 'aceptado_en', 16);
     expect((await vigilarPedidos(env, m.DB)).sinRepartidor).toBe(1);
@@ -629,7 +594,7 @@ describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-E
     await e.m.llamar(
       'POST',
       `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 10 },
+      { minutos: 5 },
       e.dueno.token,
     );
     await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
@@ -751,5 +716,550 @@ describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-E
         })
       ).status,
     ).toBe(200);
+  });
+});
+
+describe('despacho con reloj (C-DESPACHO-RELOJ)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('un pedido con 30 minutos de cocina no se ofrece todavía; al marcar «Listo» se ofrece ya', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Rep Reloj', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 30 },
+      dueno.token,
+    );
+    let ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    expect(ofertas.datos.ofertas).toHaveLength(0);
+    // El reloj avanza: aceptó hace 26 minutos → faltan 4 → ya es hora (2 de viaje + 3 de margen).
+    await m.DB.prepare(
+      "UPDATE pedidos SET aceptado_en = datetime('now','-26 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    expect(ofertas.datos.ofertas[0]?.id).toBe(id);
+    expect(ofertas.datos.ofertas[0]?.minutosParaListo).toBe(4);
+  });
+
+  it('si el restaurante toca «Listo» antes de tiempo, la oferta sale al instante', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Rep Listo', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 45 },
+      dueno.token,
+    );
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas,
+    ).toHaveLength(0);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    expect(ofertas.datos.ofertas[0]?.id).toBe(id);
+    expect(ofertas.datos.ofertas[0]?.minutosParaListo).toBe(0);
+  });
+});
+
+describe('el restaurante ve venir al repartidor y el cliente sabe cuando llega (C-LLEGADAS)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('llegó al restaurante lo marca la ubicación; la espera cuenta desde la hora de listo', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Luis Llega', 25.78, -80.2); // lejos: 1,5 km
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    let lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    let p = lista.datos.pedidos.find((x: { id: string }) => x.id === id);
+    expect(p.repartidor).toMatchObject({ nombre: 'Luis', llego: false });
+    expect(p.repartidor.minutosParaLlegar).toBeGreaterThanOrEqual(2);
+    // Se acerca hasta la puerta del restaurante.
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.7701, lng: -80.1901 },
+      rep.token,
+    );
+    lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    p = lista.datos.pedidos.find((x: { id: string }) => x.id === id);
+    expect(p.repartidor.llego).toBe(true);
+    // Llegó antes de la hora de listo: la espera empieza a la hora de listo, no ahora.
+    expect(Date.parse(p.repartidor.esperandoDesde)).toBeGreaterThan(Date.now() + 3 * 60_000);
+    // Llegó hace 6 minutos; la hora de listo prometida fue hace 4: el restaurante se atrasó 4 minutos.
+    await m.DB.prepare("UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = ?")
+      .bind(id)
+      .run();
+    await m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now','-6 minutes') WHERE pedido_id = ? AND hito = 'llego_restaurante'",
+    )
+      .bind(id)
+      .run();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    p = lista.datos.pedidos.find((x: { id: string }) => x.id === id);
+    expect(p.repartidor.esperaEvitableSeg).toBeGreaterThanOrEqual(230);
+    expect(p.repartidor.salio).toBe(true);
+  });
+
+  it('casi llega y llegó a la puerta: el cliente recibe los dos avisos una sola vez', async () => {
+    const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Ana Puerta', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    // A 400 m de la casa (25.78, -80.2): casi llega. A 50 m: llegó.
+    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.7836, lng: -80.2 }, rep.token);
+    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.7836, lng: -80.2 }, rep.token);
+    let seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.repartidor).toMatchObject({ casiLlega: true, llego: false });
+    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.7804, lng: -80.2 }, rep.token);
+    seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.repartidor).toMatchObject({ casiLlega: true, llego: true });
+    const hitos = await m.DB.prepare(
+      'SELECT hito FROM hitos_pedido WHERE pedido_id = ? ORDER BY hito',
+    )
+      .bind(id)
+      .all<{ hito: string }>();
+    expect(hitos.results.map((h) => h.hito).filter((h) => h !== 'espera_evitable')).toEqual([
+      'casi_llega',
+      'llego_cliente',
+      'llego_restaurante',
+    ]);
+  });
+});
+
+describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que se baja', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function hastaListo(prep = 5) {
+    const e = await escenario();
+    const rep = await e.repartidor('Luis Prueba', 25.771, -80.191);
+    const id = await e.pedidoPagado();
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: prep },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    return { ...e, rep, id };
+  }
+  const estado = async (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    (
+      await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ estado: string }>()
+    )?.estado;
+
+  it('con el código de la pantalla verificado, la foto hace salir el pedido sin que el restaurante toque nada (C-QR)', async () => {
+    const { m, rep, id } = await hastaListo();
+    const malo = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/verificar`,
+      { codigo: 'ZZZZ' },
+      rep.token,
+    );
+    expect(malo.estado).toBe(409);
+    const bueno = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/verificar`,
+      { codigo: `tumbite:pedido:${id}` },
+      rep.token,
+    );
+    expect(bueno.estado).toBe(200);
+    const f = await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+      lat: 25.7701,
+      lng: -80.1901,
+    });
+    expect(f.datos.salio).toBe(true);
+    expect(await estado(m, id)).toBe('en_camino');
+  });
+
+  it('los 4 caracteres del número también valen; si la foto ya estaba, el código hace salir el pedido', async () => {
+    const { m, rep, id } = await hastaListo();
+    await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+      lat: 25.7701,
+      lng: -80.1901,
+    });
+    expect(await estado(m, id)).toBe('listo');
+    const r = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/verificar`,
+      { codigo: id.slice(0, 4).toLowerCase() },
+      rep.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.salio).toBe(true);
+    expect(await estado(m, id)).toBe('en_camino');
+  });
+
+  it('en mano: sin foto, pero solo en la puerta; queda anotado cómo se entregó', async () => {
+    const { m, dueno, cliente, rep, id } = await hastaListo();
+    await m.DB.prepare(
+      "INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, 'mano')",
+    )
+      .bind(id)
+      .run();
+    await m.recoger(id, rep.token, dueno.token);
+    const lejos = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/entregado`,
+      { lat: 25.771, lng: -80.191, modo: 'mano' },
+      rep.token,
+    );
+    expect(lejos.estado).toBe(409);
+    const ok = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/entregado`,
+      { lat: 25.7801, lng: -80.2001, modo: 'mano' },
+      rep.token,
+    );
+    expect(ok.estado).toBe(200);
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido).toMatchObject({
+      estado: 'entregado',
+      entrega: 'mano',
+      entregadoComo: 'mano',
+      fotoEntrega: null,
+    });
+  });
+
+  it('cliente no aparece: aviso desde la puerta, 5 minutos de espera y lugar seguro con foto y nota', async () => {
+    const { m, dueno, cliente, rep, id } = await hastaListo();
+    await m.recoger(id, rep.token, dueno.token);
+    // Lejos de la puerta no se puede avisar.
+    expect(
+      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token)).estado,
+    ).toBe(409);
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.7801, lng: -80.2001 },
+      rep.token,
+    );
+    const aviso = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-aparece`,
+      {},
+      rep.token,
+    );
+    expect(aviso.estado).toBe(200);
+    expect(Date.parse(aviso.datos.esperaHasta)).toBeGreaterThan(Date.now() + 4 * 60_000);
+    // Antes de los 5 minutos, no.
+    const pronto = await m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=seguro&nota=En%20la%20recepci%C3%B3n`,
+      rep.token,
+      { lat: 25.7801, lng: -80.2001 },
+    );
+    expect(pronto.estado).toBe(409);
+    await m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now','-6 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    const sinNota = await m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=seguro`,
+      rep.token,
+      { lat: 25.7801, lng: -80.2001 },
+    );
+    expect(sinNota.estado).toBe(422);
+    const ok = await m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=seguro&nota=En%20la%20recepci%C3%B3n`,
+      rep.token,
+      { lat: 25.7801, lng: -80.2001 },
+    );
+    expect(ok.estado).toBe(200);
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido).toMatchObject({
+      entregadoComo: 'seguro',
+      notaEntrega: 'En la recepción',
+    });
+    expect(seg.datos.pedido.fotoEntrega).toBeTruthy();
+  });
+
+  it('el chat: cliente y repartidor se escriben; un extraño no; al terminar se cierra (C-CHAT)', async () => {
+    const { m, dueno, cliente, rep, id } = await hastaListo();
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/mensajes`,
+          { texto: 'Hola, estoy en el portón' },
+          cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/mensajes`,
+          { texto: 'Voy en 2 minutos' },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const extrano = await m.cuenta('cliente', 'Otra Persona');
+    expect(
+      (await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, extrano.token)).estado,
+    ).toBe(404);
+    const chat = await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, cliente.token);
+    expect(chat.datos.abierto).toBe(true);
+    expect(
+      chat.datos.mensajes.map((x: { texto: string; mio: boolean }) => [x.texto, x.mio]),
+    ).toEqual([
+      ['Hola, estoy en el portón', true],
+      ['Voy en 2 minutos', false],
+    ]);
+    await m.recoger(id, rep.token, dueno.token);
+    await m.entregar(id, rep.token);
+    expect(
+      (await m.llamar('POST', `/datos/pedidos/${id}/mensajes`, { texto: 'tarde' }, cliente.token))
+        .estado,
+    ).toBe(409);
+    expect(
+      (await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, rep.token)).datos.abierto,
+    ).toBe(false);
+  });
+
+  it('el repartidor se baja antes de recoger: el pedido vuelve a la fila y otro lo toma (C-SOLTAR)', async () => {
+    const { m, dueno, rep, repartidor, id } = await hastaListo();
+    const otro = await repartidor('Otro Repartidor', 25.772, -80.192);
+    const r = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/soltar`,
+      { motivo: 'Se me pinchó la llanta' },
+      rep.token,
+    );
+    expect(r.estado).toBe(200);
+    const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, otro.token);
+    expect(ofertas.datos.ofertas[0]?.id).toBe(id);
+    // El que se bajó no lo vuelve a ver.
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas,
+    ).toHaveLength(0);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, otro.token);
+    await m.recoger(id, otro.token, dueno.token);
+    // Ya recogido, no se puede soltar.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/soltar`,
+          { motivo: 'x' },
+          otro.token,
+        )
+      ).estado,
+    ).toBe(409);
+  });
+
+  it('el Manager reasigna el pedido de un repartidor sin señal por 10 minutos (C-PERDIDO)', async () => {
+    const { m, rep, id } = await hastaListo();
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now','-11 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    const { vigilarPedidos } = await import('../manager');
+    await vigilarPedidos({} as never, m.DB);
+    const fila = await m.DB.prepare('SELECT repartidor_id FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ repartidor_id: string | null }>();
+    expect(fila?.repartidor_id).toBeNull();
+    const ev = await m.DB.prepare(
+      "SELECT 1 FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'repartidor_perdido'",
+    )
+      .bind(id)
+      .first();
+    expect(ev).toBeTruthy();
+  });
+});
+
+describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Un pedido pagado con DOS platos (así quitar uno no cancela todo). */
+  async function conDosPlatos() {
+    const e = await escenario();
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const extra = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Jugo', nombreEn: 'Juice', precioCentavos: 500 },
+      e.dueno.token,
+    );
+    const primeroPlato = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Arroz', nombreEn: 'Rice', precioCentavos: 1500 },
+      e.dueno.token,
+    );
+    const primero = primeroPlato.datos.plato.id as string;
+    const p = await e.m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: rest.id,
+        lineas: [
+          { platoId: primero, cantidad: 2 },
+          { platoId: extra.datos.plato.id, cantidad: 1 },
+        ],
+        propinaCentavos: 400,
+        direccion: '200 Calle Prueba',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      e.cliente.token,
+    );
+    await e.m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+    )
+      .bind(p.datos.pedidoId)
+      .run();
+    return { ...e, id: p.datos.pedidoId as string, platoId: extra.datos.plato.id as string };
+  }
+
+  it('el restaurante marca el plato; el cliente lo quita y se le devuelve esa parte', async () => {
+    const { m, dueno, cliente, id, platoId } = await conDosPlatos();
+    const antes = (
+      await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)
+    ).datos.pedido;
+    const falta = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/falta`,
+      { platoId },
+      dueno.token,
+    );
+    expect(falta.estado).toBe(200);
+    expect(falta.datos.devolucion).toBeGreaterThan(0);
+    // Mientras el cliente decide, el restaurante no puede aceptar y el Manager no lo cancela.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/restaurante/pedidos/${id}/aceptar`,
+          { minutos: 5 },
+          dueno.token,
+        )
+      ).estado,
+    ).toBe(409);
+    await m.DB.prepare("UPDATE pedidos SET pagado_en = datetime('now','-11 minutes') WHERE id = ?")
+      .bind(id)
+      .run();
+    const { vigilarPedidos } = await import('../manager');
+    await vigilarPedidos({} as never, m.DB);
+    let seg = (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token))
+      .datos.pedido;
+    expect(seg.estado).toBe('pagado');
+    expect(seg.ajuste).toMatchObject({
+      platoId,
+      estado: 'pendiente',
+      devolucion: falta.datos.devolucion,
+    });
+    // El cliente lo quita: total nuevo, devolución igual a la diferencia, y el pedido sigue.
+    const r = await m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/ajuste`,
+      { decision: 'quitar' },
+      cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    seg = (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token))
+      .datos.pedido;
+    expect(seg.ajuste.estado).toBe('quitado');
+    expect(seg.total).toBe(antes.total - falta.datos.devolucion);
+    expect(seg.lineas.find((l: { platoId: string }) => l.platoId === platoId)).toBeUndefined();
+    const acepta = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      dueno.token,
+    );
+    expect(acepta.datos).toEqual({ ok: true });
+  });
+
+  it('si el cliente no responde en 5 minutos, se quita solo; si cancela, se devuelve todo', async () => {
+    const { m, dueno, cliente, id, platoId } = await conDosPlatos();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/falta`, { platoId }, dueno.token);
+    await m.DB.prepare(
+      "UPDATE ajustes_pedido SET creado_en = datetime('now','-6 minutes') WHERE pedido_id = ?",
+    )
+      .bind(id)
+      .run();
+    const { vigilarPedidos } = await import('../manager');
+    await vigilarPedidos({} as never, m.DB);
+    const seg = (
+      await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)
+    ).datos.pedido;
+    expect(seg.ajuste.estado).toBe('quitado');
+    expect(seg.estado).toBe('pagado');
+
+    const e2 = await conDosPlatos();
+    const id2 = e2.id;
+    await e2.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id2}/falta`,
+      { platoId: e2.platoId },
+      e2.dueno.token,
+    );
+    const r = await e2.m.llamar(
+      'POST',
+      `/datos/pedidos/${id2}/ajuste`,
+      { decision: 'cancelar' },
+      e2.cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.cancelado).toBe(true);
+    const seg2 = (
+      await e2.m.llamar('GET', `/datos/pedidos/${id2}/seguimiento`, undefined, e2.cliente.token)
+    ).datos.pedido;
+    expect(seg2.estado).toBe('cancelado');
+  });
+
+  it('el tiempo de preparación se puede subir después de aceptar solo mientras no haya repartidor', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    expect(
+      (
+        await m.llamar(
+          'PATCH',
+          `/datos/restaurante/pedidos/${id}/tiempo`,
+          { minutos: 15 },
+          dueno.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const rep = await repartidor('Rep Tiempo', 25.771, -80.191);
+    await m.DB.prepare(
+      "UPDATE pedidos SET aceptado_en = datetime('now','-12 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    expect(
+      (
+        await m.llamar(
+          'PATCH',
+          `/datos/restaurante/pedidos/${id}/tiempo`,
+          { minutos: 25 },
+          dueno.token,
+        )
+      ).estado,
+    ).toBe(409);
   });
 });

@@ -10,6 +10,7 @@ import { leerConfigDinero } from './dinero';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { anotar } from '../historial';
+import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
 
@@ -27,6 +28,8 @@ const esquemaNuevoPedido = z.object({
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
+  // Cómo quiere recibir: en la puerta (foto obligatoria) o en mano (foto opcional).
+  entrega: z.enum(['puerta', 'mano']).default('puerta'),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -34,7 +37,137 @@ export type FilaPedido = Record<string, unknown>;
 /** Para sumar a un SELECT con el pedido como «p»: si hay foto de recogida y de entrega. */
 export const CON_EVIDENCIAS = `(SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida,
   (SELECT confirmada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida_ok,
-  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega`;
+  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '') AS ev_entrega,
+  (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo,
+  (SELECT nota FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_nota,
+  (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega`;
+
+/** Para sumar a un SELECT con el pedido como «p»: el plato agotado pendiente de decisión. */
+export const CON_AJUSTE = `(SELECT plato_id FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_plato,
+  (SELECT nombre_es FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_es,
+  (SELECT nombre_en FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_en,
+  (SELECT estado FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_estado,
+  (SELECT devolucion FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_devolucion,
+  (SELECT creado_en FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_en_fecha`;
+
+type Linea = {
+  platoId: string;
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+  cantidad: number;
+};
+
+/** Lo que se le devolvería al cliente si se quita ese plato (el resto del pedido se recalcula). */
+export async function calcularSinPlato(db: D1Database, f: FilaPedido, platoId: string) {
+  const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
+  const nuevas = lineas.filter((l) => l.platoId !== platoId);
+  const config = await leerConfigDinero(db);
+  if (!nuevas.length) return { nuevas, desglose: null, devolucion: Number(f.total) };
+  const subtotal = nuevas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
+  const desglose = calcularPedido({
+    lineas: nuevas,
+    plan: String(f.plan) as Plan,
+    propina: Number(f.propina),
+    distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
+    config,
+    regalo: Math.min(Number(f.regalo ?? 0), subtotal),
+  });
+  return { nuevas, desglose, devolucion: Math.max(0, Number(f.total) - desglose.totalCliente) };
+}
+
+/**
+ * El cliente decidió (o pasaron 5 minutos): quitar el plato agotado y devolverle esa parte, o
+ * cancelar todo. La devolución parcial se hace en Stripe ANTES de tocar el pedido; si Stripe
+ * falla, el pedido queda como estaba y se avisa.
+ */
+export async function aplicarAjuste(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  decision: 'quitar' | 'cancelar',
+  actorId: string,
+) {
+  const f = await db
+    .prepare(`SELECT p.*, ${CON_AJUSTE} FROM pedidos p WHERE p.id = ?`)
+    .bind(pedidoId)
+    .first<FilaPedido>();
+  if (!f || f.aj_estado !== 'pendiente')
+    throw new ErrorDatos('Este pedido ya no tiene nada que decidir.', undefined, 409);
+  if (!['pagado', 'aceptado'].includes(String(f.estado)))
+    throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
+  const { nuevas, desglose, devolucion } = await calcularSinPlato(db, f, String(f.aj_plato));
+  if (decision === 'cancelar' || !desglose) {
+    const ok = await cancelarConReembolso(env, db, pedidoId, {
+      desde: ['pagado', 'aceptado'],
+      actorId,
+    });
+    if (!ok) throw new ErrorDatos('Este pedido ya no se puede cancelar.', undefined, 409);
+    await db
+      .prepare(
+        "UPDATE ajustes_pedido SET estado = 'cancelado', devolucion = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
+      )
+      .bind(Number(f.total), pedidoId)
+      .run();
+    await anotarEvento(db, pedidoId, 'cancelado_por_plato_agotado');
+    return { devolucion: Number(f.total), cancelado: true };
+  }
+  if (devolucion > 0 && f.stripe_pago) {
+    const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+    if (!stripe)
+      throw new ErrorDatos('No pudimos hacer la devolución en este momento.', undefined, 503);
+    await stripe.post(
+      '/refunds',
+      {
+        payment_intent: String(f.stripe_pago),
+        amount: devolucion,
+        metadata: { pedido_id: pedidoId, motivo: 'plato_agotado' },
+      },
+      `ajuste-${pedidoId}`,
+    );
+  }
+  await db.batch([
+    db
+      .prepare(
+        'UPDATE pedidos SET lineas_json = ?, subtotal = ?, envio = ?, servicio = ?, cargo_pequeno = ?, propina = ?, total = ?, comision = ?, pago_restaurante = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+      )
+      .bind(
+        JSON.stringify(nuevas),
+        desglose.subtotal,
+        desglose.envio,
+        desglose.servicio,
+        desglose.cargoPedidoPequeno,
+        desglose.propina,
+        desglose.totalCliente,
+        desglose.comisionRestaurante,
+        desglose.pagoRestaurante,
+        desglose.pagoRepartidor,
+        desglose.complementoRepartidor,
+        desglose.gananciaPlataforma,
+        pedidoId,
+      ),
+    db
+      .prepare(
+        "UPDATE ajustes_pedido SET estado = 'quitado', devolucion = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
+      )
+      .bind(devolucion, pedidoId),
+  ]);
+  await anotarEvento(db, pedidoId, 'plato_quitado', `${devolucion} centavos`);
+  const cli = await db
+    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+    .bind(String(f.cliente_id))
+    .first<{ idioma: string }>();
+  const i = cli?.idioma === 'en' ? 'en' : 'es';
+  await notificar(env, db, String(f.cliente_id), {
+    ...AVISOS.platoQuitado(
+      i,
+      i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es),
+      devolucion,
+    ),
+    datos: { pedidoId },
+  });
+  return { devolucion, cancelado: false };
+}
 
 export function aPedido(f: FilaPedido) {
   return {
@@ -76,6 +209,21 @@ export function aPedido(f: FilaPedido) {
         }
       : null,
     fotoEntrega: f.ev_entrega ? { tomadaEn: String(f.ev_entrega) } : null,
+    // Cómo pidió recibirlo y cómo se entregó de verdad (en mano, en la puerta, en lugar seguro).
+    entrega: (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
+    entregadoComo: (f.ev_entrega_modo as string | null) ?? null,
+    notaEntrega: String(f.ev_entrega_nota ?? ''),
+    // Plato agotado: qué falta, qué se devolvería y si el cliente ya decidió.
+    ajuste: f.aj_plato
+      ? {
+          platoId: String(f.aj_plato),
+          nombreEs: String(f.aj_es ?? ''),
+          nombreEn: String(f.aj_en ?? ''),
+          estado: String(f.aj_estado) as 'pendiente' | 'quitado' | 'cancelado',
+          devolucion: f.aj_devolucion == null ? null : Number(f.aj_devolucion),
+          creadoEn: String(f.aj_en_fecha ?? ''),
+        }
+      : null,
   };
 }
 
@@ -185,6 +333,10 @@ pedidos.post('/pedidos', async (c) => {
       d.regalo,
       String(rest.zona_id ?? ZONA_INICIAL),
     )
+    .run();
+  await db
+    .prepare('INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, ?)')
+    .bind(id, d.entrega)
     .run();
   await anotar(db, id, 'pago_pendiente', u.id);
 
@@ -422,7 +574,7 @@ pedidos.get('/pedidos/:id', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?`,
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?`,
     )
     .bind(c.req.param('id'))
     .first<FilaPedido>();
@@ -431,6 +583,19 @@ pedidos.get('/pedidos/:id', async (c) => {
     (u.rol === 'admin' || f.cliente_id === u.id || f.dueno_id === u.id || f.repartidor_id === u.id);
   if (!f || !puede) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   return c.json({ pedido: aPedido(f) });
+});
+
+/** El cliente decide qué hacer con el plato agotado. */
+pedidos.post('/pedidos/:id/ajuste', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { decision } = await leerCuerpo(c, z.object({ decision: z.enum(['quitar', 'cancelar']) }));
+  const f = await base(c)
+    .prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
+    .bind(c.req.param('id'))
+    .first<{ cliente_id: string }>();
+  if (!f || f.cliente_id !== u.id) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  const r = await aplicarAjuste(c.env, base(c), c.req.param('id'), decision, u.id);
+  return c.json({ ok: true, ...r });
 });
 
 // ======================= Tarjetas guardadas (Mi cuenta) =======================

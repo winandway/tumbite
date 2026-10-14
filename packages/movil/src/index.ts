@@ -11,3 +11,5 @@ export * from './ConSesion';
 export * from './ReportarProblema';
 export * from './AvisoBorrador';
 export * from './FotoPedido';
+export * from './ChatPedido';
+export * from './CodigoQR';

@@ -167,11 +167,11 @@ Se sacan solas con `npm run recorrido:tiendas`: corre el recorrido completo (App
 
 Tamaños: Apple, iPhone 6,9" 1320 × 2868 y iPad 13" acostado 2752 × 2064 (solo Tumbite Restaurants, que funciona en tableta); Google, celular 1080 × 1920 y tableta 1920 × 1080 (9:16 y 16:9; Google no acepta un lado más del doble del otro).
 
-| App         | Capturas (en este orden)                                                                                                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Cliente     | Inicio con restaurantes cercanos · Menú · Carrito con el precio completo · Pago recibido · Pedido en vivo en el mapa · Calificar |
-| Repartidor  | Conectado buscando pedidos · Oferta con el pago antes de aceptar · Entrega en camino · Billetera · Retiro al banco               |
-| Restaurante | Pedido nuevo con los tiempos para aceptar · En preparación · Listo para el repartidor · Entrar                                   |
+| App         | Capturas (en este orden)                                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cliente     | Inicio con restaurantes cercanos · Menú · Carrito con el precio completo · Pago recibido · Pedido en vivo en el mapa · Pedido sellado con foto · Chat con el repartidor · Entregado con foto y calificar |
+| Repartidor  | Conectado buscando pedidos · Oferta con el pago antes de aceptar · Entrega en camino · Billetera · Retiro al banco                                                                                       |
+| Restaurante | Pedido nuevo con los tiempos para aceptar · En preparación · Listo para el repartidor · Entrar                                                                                                           |
 
 La app del restaurante es el tablero de pedidos; el menú, los regalos, el semáforo y los beneficios están en el panel web, por eso no salen en sus capturas. En el modo de tiendas el inicio muestra además tres restaurantes de prueba (Sakura Sushi Bar, Taquería El Sol, Green Bowl Kitchen) que solo existen en la base local. Son las mismas apps en su versión web (la que también está en tumbite.com/app y /driver); cuando el simulador de iPhone funcione en esta Mac se pueden repetir desde ahí con la barra de estado del teléfono.
 

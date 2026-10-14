@@ -33,6 +33,113 @@ const es: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'out-of-stock-item',
+        titulo: 'Si al restaurante le falta un plato de tu pedido',
+        resumen:
+          'No se cancela todo: tú decides si lo quitas (te devolvemos esa parte) o cancelas el pedido entero.',
+        explicacion: [
+          'Antes de empezar a cocinar, el restaurante puede avisar que no tiene uno de tus platos. Te llega un aviso y en tu pedido aparecen dos opciones.',
+          '«Quitarlo y seguir»: se saca ese plato, el total se recalcula y te devolvemos la diferencia a tu tarjeta. El resto sigue como siempre.',
+          '«Cancelar todo el pedido»: te devolvemos el total completo.',
+          'Si no respondes en 5 minutos, quitamos el plato y te devolvemos su parte, para que el resto no se enfríe esperando.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-falta-plato-es.webp',
+            alt: 'Pedido en la app del cliente con el aviso «El restaurante no tiene Limonada de coco» y los botones «Quitarlo y seguir (te devolvemos $…)» y «Cancelar todo el pedido».',
+            pie: 'Tú eliges: quitar el plato o cancelar todo.',
+          },
+        ],
+        preguntas: [
+          '¿Qué pasa si el restaurante no tiene un plato que pedí?',
+          '¿Me devuelven el dinero del plato que faltó?',
+        ],
+        pasos: [
+          'Te llega el aviso; abre tu pedido.',
+          'Toca «Quitarlo y seguir» o «Cancelar todo el pedido».',
+          'La devolución sale a tu tarjeta en el momento; el banco la refleja en unos días.',
+        ],
+      },
+      {
+        id: 'door-or-hand',
+        titulo: 'En la puerta o en mano: tú eliges cómo recibir',
+        resumen:
+          'Al pedir, dices si quieres que lo dejen en tu puerta o que te lo entreguen en mano. El repartidor lo ve y actúa según eso.',
+        explicacion: [
+          'En el carrito, antes de pagar, eliges «En la puerta» o «En mano».',
+          'En la puerta: sin contacto. El repartidor lo deja y toma la foto de dónde quedó; tú la ves en tu pedido.',
+          'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto.',
+          'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-chat-es.webp',
+            alt: 'Pedido en camino en la app del cliente, con el chat para escribirle al repartidor y la hora de llegada a más tardar.',
+            pie: 'Pediste en la puerta o en mano, y puedes escribirle al repartidor desde aquí.',
+          },
+        ],
+        preguntas: [
+          '¿Pueden dejar mi pedido en la puerta?',
+          '¿Cómo pido que me lo entreguen en mano?',
+          '¿Qué pasa si no estoy cuando llega el repartidor?',
+        ],
+        pasos: [
+          'En el carrito, debajo de la dirección, elige «En la puerta» o «En mano».',
+          'Si eliges en mano, atento al aviso «Tu repartidor está en tu puerta».',
+          'Si no te encuentra, respóndele por el chat; si no, a los 5 minutos lo deja en un lugar seguro y te manda la foto.',
+        ],
+      },
+      {
+        id: 'chat-with-your-driver',
+        titulo: 'El chat con tu repartidor',
+        resumen:
+          'Desde que tu pedido tiene repartidor hasta que llega, puedes escribirle desde la app, sin compartir tu número.',
+        explicacion: [
+          'El chat aparece en la pantalla de tu pedido en cuanto un repartidor lo toma. Sirve para avisarle dónde dejarlo, el código del portón o que ya vas saliendo.',
+          'Nadie ve tu número de teléfono ni el del repartidor. Lo que se escribe queda guardado y nuestro equipo puede leerlo solo si hay un reclamo.',
+          'Cuando el pedido se entrega o se cancela, el chat se cierra solo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-chat-es.webp',
+            alt: 'Chat del pedido en la app del cliente: un mensaje del cliente y la respuesta del repartidor.',
+            pie: 'Le escribes y te responde, todo dentro de la app.',
+          },
+        ],
+        preguntas: ['¿Cómo le escribo al repartidor?', '¿El repartidor ve mi número de teléfono?'],
+        pasos: [
+          'Abre tu pedido en la app.',
+          'Baja hasta «Chat del pedido», escribe y toca «Enviar».',
+          'Al repartidor le llega un aviso en su celular y te responde ahí mismo.',
+        ],
+      },
+      {
+        id: 'when-will-it-arrive',
+        titulo: 'Cuándo llega tu pedido: la hora estimada y la hora a más tardar',
+        resumen:
+          'Ves dos horas: en cuántos minutos llega y la hora a más tardar. Y te avisamos cuando el repartidor está a un minuto y cuando está en tu puerta.',
+        explicacion: [
+          '«Llega en unos X min» se recalcula todo el tiempo con lo que falta de cocina y el camino del repartidor.',
+          '«A más tardar a las…» se fija cuando el restaurante acepta: su tiempo de preparación, más el viaje, más un margen. Es nuestro compromiso.',
+          'Cuando el repartidor está a un minuto te llega «Casi llega», y cuando está a menos de 200 metros de tu dirección, «Tu repartidor está en tu puerta». Lo detecta su ubicación, no un botón.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-sellado-es.webp',
+            alt: 'Pedido en camino con «Llega en unos 5 min», la hora a más tardar y la foto del pedido cerrado.',
+            pie: 'La hora estimada, la hora a más tardar y tu pedido sellado.',
+          },
+        ],
+        preguntas: [
+          '¿A qué hora llega mi pedido?',
+          '¿Me avisan cuando el repartidor está llegando?',
+        ],
+        pasos: [
+          'Abre tu pedido: arriba ves los minutos y la hora a más tardar.',
+          'Deja las notificaciones encendidas para recibir «Casi llega» y «En tu puerta».',
+        ],
+      },
+      {
         id: 'first-order',
         titulo: 'Cómo hacer tu primer pedido',
         resumen:
@@ -197,6 +304,63 @@ const es: SeccionDocs[] = [
     titulo: 'Para restaurantes',
     icono: 'chef',
     guias: [
+      {
+        id: 'out-of-stock-and-more-time',
+        titulo: 'Si te falta un plato o necesitas más tiempo',
+        resumen:
+          'Marca el plato que no tienes y el cliente decide en su app; y si vas atrasado, suma minutos antes de que salga el repartidor.',
+        explicacion: [
+          'En el pedido, abre los tres puntos y toca «Me falta un plato». Elige cuál y «Avisar al cliente». Al cliente le llega el aviso y decide: quitarlo (se le devuelve esa parte) o cancelar todo. Mientras decide, el pedido espera y el Manager no te cuenta ese tiempo.',
+          'Si el cliente lo quita, el pedido vuelve con el resto de los platos y lo aceptas como siempre. Si no responde en 5 minutos, se quita solo.',
+          'Si ya aceptaste y vas atrasado, toca «+5 min» mientras no haya salido un repartidor: así el repartidor llega a la hora correcta y el cliente ve la hora nueva. Cuando ya hay repartidor en camino, el tiempo no se cambia: avísale por la app.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-falta-plato-es.webp',
+            alt: 'Panel del restaurante con «Me falta un plato»: la lista para elegir el plato y el botón «Avisar al cliente».',
+            pie: 'Eliges el plato que falta y avisas al cliente con un toque.',
+          },
+        ],
+        preguntas: [
+          '¿Qué hago si no tengo un plato de un pedido?',
+          '¿Puedo cambiar el tiempo de preparación después de aceptar?',
+        ],
+        pasos: [
+          'Tres puntos del pedido → «Me falta un plato» → elige el plato → «Avisar al cliente».',
+          'Espera la respuesta (máximo 5 minutos) y acepta el pedido con el resto.',
+          'Si vas atrasado, «+5 min» antes de que salga el repartidor.',
+        ],
+      },
+      {
+        id: 'your-counter',
+        titulo: 'Tu mostrador: ves venir al repartidor, el código QR y la espera',
+        resumen:
+          'En tu pantalla ves quién viene por cada pedido, en cuántos minutos llega, cuándo llegó y cuánto espera. Junto a cada pedido listo aparece un código QR para que el repartidor confirme que es el suyo. Si su foto espera más de 2 minutos, suena la alarma.',
+        explicacion: [
+          'Cuando un repartidor acepta tu pedido, en la tarjeta aparece su nombre y «llega en X min». Cuando está a 5 minutos, suena un aviso corto; cuando llega, otro.',
+          'Si llega antes de la hora que prometiste, la tarjeta dice «ya llegó · listo en X min» y esa espera no cuenta en tu contra. Si pasó tu hora de listo, dice «está esperando · X min después de tu hora de listo»: esa es la espera evitable, como la miden las demás apps, y la guardamos por pedido.',
+          'No te buscamos repartidor apenas aceptas: lo llamamos para que llegue cuando la comida esté lista, según los minutos que diste. Si terminas antes, toca «¡Listo!» y sale de inmediato.',
+          'Junto a cada pedido listo aparece un código QR grande y el número de 4 letras. El repartidor lo escanea desde su app: así confirma que se lleva el pedido correcto. Si además toma la foto de la bolsa, el pedido sale en camino sin que toques nada.',
+          'Si no escaneó, ves su foto con el botón verde «Confirmar: se lo entregué al repartidor». Si esa foto lleva más de 2 minutos sin confirmar, la tarjeta se pone amarilla y suena la alarma: el repartidor te está esperando.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-confirmar-recogida-es.webp',
+            alt: 'Panel del restaurante con el pedido listo: el código QR, el número, la foto del repartidor y el botón verde de confirmar.',
+            pie: 'El código QR para el repartidor, su foto y el botón de confirmar por si no escaneó.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo sé si el repartidor ya viene?',
+          '¿Qué es el código QR que sale junto al pedido?',
+          '¿Por qué el pedido se puso amarillo?',
+        ],
+        pasos: [
+          'Acepta con el tiempo real de preparación: con eso llamamos al repartidor a la hora justa.',
+          'Cuando esté listo, toca «¡Listo!» aunque el repartidor no haya llegado.',
+          'Muéstrale el código QR de la pantalla; si no escanea, mira su foto y toca «Confirmar».',
+        ],
+      },
       {
         id: 'get-started',
         titulo: 'Poner tu restaurante en Tumbite',
@@ -415,6 +579,71 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'offer-timing-and-pickup-code',
+        titulo: 'Cuándo te llega una oferta y cómo recoges con el código',
+        resumen:
+          'Las ofertas te llegan para que llegues cuando la comida esté lista, no antes. En el restaurante, escaneas el código de la pantalla y tomas la foto: el pedido sale solo.',
+        explicacion: [
+          'No te ofrecemos un pedido apenas el restaurante lo acepta: calculamos tu viaje y te lo ofrecemos cuando falten esos minutos más tres para la hora de listo. Así no esperas sin cobrar. En la oferta ves «Listo en X min».',
+          'Si el restaurante termina antes y toca «Listo», la oferta sale en ese momento.',
+          'Al llegar, la pantalla del restaurante muestra un código QR junto al pedido. Lo escaneas desde tu app (o escribes las 4 letras o números) y la app confirma que es tu pedido.',
+          'Después tomas la foto de la bolsa cerrada. Con el código verificado, el pedido sale en camino sin que el restaurante tenga que tocar nada. Si no pudiste escanear, el restaurante confirma viendo tu foto.',
+          'Tu llegada al restaurante la marca tu ubicación: el restaurante ve en cuántos minutos llegas y, si tiene que esperar, cuánto; y si el que espera eres tú, también queda registrado.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-oferta-es.webp',
+            alt: 'Oferta nueva con el pago, el restaurante, la dirección, la distancia y «Listo en X min».',
+            pie: 'La oferta te dice cuánto ganas y cuánto falta para que esté listo.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-foto-recogida-es.webp',
+            alt: 'App del repartidor en el restaurante: campo para escribir el número del pedido, botón de verificar y la foto de la bolsa enviada.',
+            pie: 'Escaneas o escribes el código, tomas la foto y sales.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué me llegó la oferta tan tarde?',
+          '¿Qué es el código QR del restaurante?',
+          '¿Qué hago si no puedo escanear el código?',
+        ],
+        pasos: [
+          'Acepta la oferta y ve al restaurante: llegarás cuando esté listo.',
+          'Toca «Escanear el código del restaurante» y apunta al código de su pantalla. Sin cámara, escribe las 4 letras o números.',
+          'Toca «Tomar foto del pedido» con la bolsa cerrada. Listo: ya vas en camino.',
+        ],
+      },
+      {
+        id: 'cant-continue',
+        titulo: 'Si no puedes seguir con un pedido o el cliente no aparece',
+        resumen:
+          'Antes de recoger puedes soltar el pedido con un motivo, sin castigo. En la puerta, si el cliente no aparece, hay un protocolo de 5 minutos.',
+        explicacion: [
+          'Se te pinchó la llanta, te llamaron de urgencia: antes de recoger, escribe el motivo y toca «Soltar el pedido». Se le ofrece a otro repartidor y tu nivel no cambia.',
+          'Ya recogido no se puede soltar: la comida es del cliente. Si hay un problema, repórtalo desde «Tengo un problema».',
+          'Si tu celular se queda 10 minutos sin mandar ubicación antes de llegar al restaurante, el pedido se reasigna solo.',
+          'En la puerta, si nadie sale: toca «El cliente no aparece». Le llega un aviso y puedes escribirle por el chat. Pasados 5 minutos, escribe dónde lo dejas, toma la foto y toca «Dejar en lugar seguro». Cobras igual.',
+          'Si el cliente pidió «en mano» y te lo recibe, toca «Entregado en mano»: no hace falta foto. Solo funciona estando en la puerta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llegada-es.webp',
+            alt: 'App del repartidor en la puerta: botones «Tomar foto de la entrega», «Entregado en mano» y «El cliente no aparece».',
+            pie: 'En la puerta: foto, en mano, o avisar que el cliente no aparece.',
+          },
+        ],
+        preguntas: [
+          '¿Puedo rechazar un pedido que ya acepté?',
+          '¿Qué hago si el cliente no sale?',
+          '¿Tengo que tomar foto si se lo entrego en la mano?',
+        ],
+        pasos: [
+          'Antes de recoger: escribe el motivo y toca «Soltar el pedido».',
+          'En la puerta sin respuesta: «El cliente no aparece», escríbele, espera 5 minutos.',
+          'Luego: nota de dónde lo dejas, foto y «Dejar en lugar seguro».',
+        ],
+      },
+      {
         id: 'get-started',
         titulo: 'Empezar a repartir',
         resumen: 'Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.',
@@ -560,8 +789,8 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar.',
           'En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante.',
-          'El restaurante ve esa foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
-          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar.',
+          'El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
+          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
           'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
           'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
         ],
@@ -1015,6 +1244,113 @@ const en: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'out-of-stock-item',
+        titulo: 'If the restaurant is out of an item in your order',
+        resumen:
+          'Nothing gets canceled outright: you decide whether to remove it (we refund that part) or cancel the whole order.',
+        explicacion: [
+          'Before cooking starts, the restaurant can flag that it’s out of one of your items. You get a notice and two options appear in your order.',
+          '“Remove it and continue”: that item is taken out, the total is recalculated and we refund the difference to your card. The rest continues as usual.',
+          '“Cancel the whole order”: we refund the full total.',
+          'If you don’t answer within 5 minutes, we remove the item and refund its part so the rest doesn’t sit around waiting.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-falta-plato-en.webp',
+            alt: 'Order in the customer app with the notice “The restaurant is out of Coconut lemonade” and the buttons “Remove it and continue (we refund $…)” and “Cancel the whole order.”',
+            pie: 'You choose: remove the item or cancel everything.',
+          },
+        ],
+        preguntas: [
+          'What happens if the restaurant is out of something I ordered?',
+          'Do I get a refund for the missing item?',
+        ],
+        pasos: [
+          'You get the notice; open your order.',
+          'Tap “Remove it and continue” or “Cancel the whole order.”',
+          'The refund goes back to your card right away; your bank shows it within a few days.',
+        ],
+      },
+      {
+        id: 'door-or-hand',
+        titulo: 'Leave at door or hand it to me: you choose',
+        resumen:
+          'When you order, you say whether to leave it at your door or hand it to you. The driver sees it and acts accordingly.',
+        explicacion: [
+          'In the cart, before paying, choose “Leave at my door” or “Hand it to me.”',
+          'At the door: contactless. The driver leaves it and photographs where it was left; you see the photo in your order.',
+          'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case.',
+          'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-chat-en.webp',
+            alt: 'Order on the way in the customer app, with the chat to message the driver and the latest arrival time.',
+            pie: 'You chose door or hand, and you can message the driver from here.',
+          },
+        ],
+        preguntas: [
+          'Can they leave my order at the door?',
+          'How do I ask for it to be handed to me?',
+          'What if I’m not there when the driver arrives?',
+        ],
+        pasos: [
+          'In the cart, below the address, choose “Leave at my door” or “Hand it to me.”',
+          'If you chose in hand, watch for “Your driver is at your door.”',
+          'If they can’t find you, reply in the chat; otherwise after 5 minutes they leave it in a safe spot and send you the photo.',
+        ],
+      },
+      {
+        id: 'chat-with-your-driver',
+        titulo: 'Chat with your driver',
+        resumen:
+          'From the moment your order has a driver until it arrives, you can message them from the app, without sharing your number.',
+        explicacion: [
+          'The chat appears on your order screen as soon as a driver takes it. Use it to say where to leave it, the gate code, or that you’re coming out.',
+          'Nobody sees your phone number or the driver’s. What’s written is saved, and our team can read it only if there’s a claim.',
+          'When the order is delivered or canceled, the chat closes on its own.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-chat-en.webp',
+            alt: 'Order chat in the customer app: a message from the customer and the driver’s reply.',
+            pie: 'You write, they answer, all inside the app.',
+          },
+        ],
+        preguntas: ['How do I message the driver?', 'Does the driver see my phone number?'],
+        pasos: [
+          'Open your order in the app.',
+          'Scroll to “Order chat,” write, and tap “Send.”',
+          'The driver gets a notification on their phone and replies right there.',
+        ],
+      },
+      {
+        id: 'when-will-it-arrive',
+        titulo: 'When your order arrives: the estimate and the latest arrival time',
+        resumen:
+          'You see two times: in how many minutes it arrives and the latest arrival time. And we tell you when the driver is a minute away and at your door.',
+        explicacion: [
+          '“Arriving in about X min” is recalculated constantly with what’s left in the kitchen and the driver’s route.',
+          '“Latest arrival by…” is set when the restaurant accepts: its prep time, plus the trip, plus a margin. It’s our commitment.',
+          'When the driver is a minute away you get “Almost here,” and when they’re within 200 meters of your address, “Your driver is at your door.” Their location triggers it, not a button.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-sellado-en.webp',
+            alt: 'Order on the way with “Arriving in about 5 min,” the latest arrival time and the photo of the closed order.',
+            pie: 'The estimate, the latest arrival time and your sealed order.',
+          },
+        ],
+        preguntas: [
+          'What time will my order arrive?',
+          'Do I get notified when the driver is arriving?',
+        ],
+        pasos: [
+          'Open your order: at the top you see the minutes and the latest arrival time.',
+          'Keep notifications on to receive “Almost here” and “At your door.”',
+        ],
+      },
+      {
         id: 'first-order',
         titulo: 'How to place your first order',
         resumen:
@@ -1174,6 +1510,63 @@ const en: SeccionDocs[] = [
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
+      {
+        id: 'out-of-stock-and-more-time',
+        titulo: 'If you’re out of an item or need more time',
+        resumen:
+          'Flag the item you’re out of and the customer decides in their app; and if you’re running late, add minutes before the driver leaves.',
+        explicacion: [
+          'On the order, open the three dots and tap “I’m out of an item.” Pick which one and “Notify the customer.” The customer gets a notice and decides: remove it (that part is refunded) or cancel everything. While they decide, the order waits and the Manager doesn’t count that time against you.',
+          'If the customer removes it, the order comes back with the remaining items and you accept it as usual. If they don’t answer in 5 minutes, it’s removed automatically.',
+          'If you already accepted and you’re running late, tap “+5 min” as long as no driver has left: the driver then arrives at the right time and the customer sees the new time. Once a driver is on the way, the time can’t change: let them know in the app.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-falta-plato-en.webp',
+            alt: 'Restaurant panel with “I’m out of an item”: the list to pick the item and the “Notify the customer” button.',
+            pie: 'Pick the missing item and notify the customer with one tap.',
+          },
+        ],
+        preguntas: [
+          'What do I do if I’m out of an item on an order?',
+          'Can I change the prep time after accepting?',
+        ],
+        pasos: [
+          'Order’s three dots → “I’m out of an item” → pick the item → “Notify the customer.”',
+          'Wait for the answer (up to 5 minutes) and accept the order with the rest.',
+          'Running late? “+5 min” before the driver leaves.',
+        ],
+      },
+      {
+        id: 'your-counter',
+        titulo: 'Your counter: see the driver coming, the QR code and the wait',
+        resumen:
+          'On your screen you see who’s coming for each order, how many minutes away they are, when they arrived and how long they wait. Next to each ready order there’s a QR code so the driver confirms it’s theirs. If their photo waits more than 2 minutes, the alarm sounds.',
+        explicacion: [
+          'When a driver accepts your order, the card shows their name and “arrives in X min.” When they’re 5 minutes away a short alert sounds; when they arrive, another.',
+          'If they arrive before the time you promised, the card says “is here · ready in X min” and that wait doesn’t count against you. If your ready time has passed, it says “is waiting · X min past your ready time”: that’s avoidable wait, as the other apps measure it, and we save it per order.',
+          'We don’t look for a driver the moment you accept: we call them so they arrive when the food is ready, based on the minutes you gave. If you finish early, tap “Ready!” and it goes out right away.',
+          'Next to each ready order there’s a large QR code and the 4-character number. The driver scans it from their app: that confirms they’re taking the right order. If they also photograph the bag, the order goes out without you touching anything.',
+          'If they didn’t scan, you see their photo with the green “Confirm: I handed it to the driver” button. If that photo waits more than 2 minutes, the card turns yellow and the alarm sounds: the driver is waiting on you.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-confirmar-recogida-en.webp',
+            alt: 'Restaurant panel with the ready order: the QR code, the number, the driver’s photo and the green confirm button.',
+            pie: 'The QR code for the driver, their photo and the confirm button in case they didn’t scan.',
+          },
+        ],
+        preguntas: [
+          'How do I know the driver is on the way?',
+          'What’s the QR code next to the order?',
+          'Why did the order turn yellow?',
+        ],
+        pasos: [
+          'Accept with the real prep time: that’s how we call the driver at the right moment.',
+          'When it’s ready, tap “Ready!” even if the driver hasn’t arrived.',
+          'Show them the QR code on the screen; if they don’t scan, look at their photo and tap “Confirm.”',
+        ],
+      },
       {
         id: 'get-started',
         titulo: 'Put your restaurant on Tumbite',
@@ -1390,6 +1783,71 @@ const en: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'offer-timing-and-pickup-code',
+        titulo: 'When an offer reaches you and how you pick up with the code',
+        resumen:
+          'Offers reach you so you arrive when the food is ready, not before. At the restaurant you scan the code on their screen and take the photo: the order goes out on its own.',
+        explicacion: [
+          'We don’t offer you an order the moment the restaurant accepts it: we calculate your trip and offer it when that many minutes plus three remain until it’s ready. So you don’t wait unpaid. The offer shows “Ready in X min.”',
+          'If the restaurant finishes early and taps “Ready,” the offer goes out right then.',
+          'When you arrive, the restaurant’s screen shows a QR code next to the order. Scan it from your app (or type the 4 characters) and the app confirms it’s your order.',
+          'Then photograph the closed bag. With the code verified, the order goes out without the restaurant touching anything. If you couldn’t scan, the restaurant confirms by looking at your photo.',
+          'Your arrival at the restaurant is set by your location: the restaurant sees how many minutes away you are and, if they keep you waiting, how long; if you’re the one who’s early, that’s recorded too.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-oferta-en.webp',
+            alt: 'New offer with the pay, the restaurant, the address, the distance and “Ready in X min.”',
+            pie: 'The offer tells you what you earn and how long until it’s ready.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-foto-recogida-en.webp',
+            alt: 'Driver app at the restaurant: field to type the order number, verify button and the bag photo sent.',
+            pie: 'Scan or type the code, take the photo and go.',
+          },
+        ],
+        preguntas: [
+          'Why did the offer arrive so late?',
+          'What is the restaurant’s QR code?',
+          'What if I can’t scan the code?',
+        ],
+        pasos: [
+          'Accept the offer and head to the restaurant: you’ll arrive when it’s ready.',
+          'Tap “Scan the restaurant’s code” and point at the code on their screen. Without a camera, type the 4 characters.',
+          'Tap “Take a photo of the order” with the bag closed. Done: you’re on your way.',
+        ],
+      },
+      {
+        id: 'cant-continue',
+        titulo: 'If you can’t continue with an order or the customer isn’t there',
+        resumen:
+          'Before pickup you can release the order with a reason, no penalty. At the door, if the customer isn’t there, there’s a 5-minute protocol.',
+        explicacion: [
+          'Flat tire, an emergency call: before pickup, write the reason and tap “Release the order.” It’s offered to another driver and your level doesn’t change.',
+          'Once picked up it can’t be released: the food belongs to the customer. If there’s a problem, report it from “I have a problem.”',
+          'If your phone goes 10 minutes without sending its location before you reach the restaurant, the order is reassigned automatically.',
+          'At the door, if nobody comes out: tap “Customer isn’t here.” They get a notice and you can message them in the chat. After 5 minutes, write where you’re leaving it, take the photo and tap “Leave in a safe spot.” You get paid the same.',
+          'If the customer chose “hand it to me” and takes it from you, tap “Handed to the customer”: no photo needed. It only works at the door.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llegada-en.webp',
+            alt: 'Driver app at the door: “Take the delivery photo,” “Handed to the customer” and “Customer isn’t here” buttons.',
+            pie: 'At the door: photo, in hand, or report the customer isn’t there.',
+          },
+        ],
+        preguntas: [
+          'Can I decline an order I already accepted?',
+          'What do I do if the customer doesn’t come out?',
+          'Do I need a photo if I hand it to them?',
+        ],
+        pasos: [
+          'Before pickup: write the reason and tap “Release the order.”',
+          'At the door with no answer: “Customer isn’t here,” message them, wait 5 minutes.',
+          'Then: note where you leave it, photo and “Leave in a safe spot.”',
+        ],
+      },
+      {
         id: 'get-started',
         titulo: 'Start delivering',
         resumen:
@@ -1537,8 +1995,8 @@ const en: SeccionDocs[] = [
         explicacion: [
           'That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else.',
           'At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant.',
-          'The restaurant sees that photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
-          'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away.',
+          'The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
+          'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
           'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
           'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
         ],

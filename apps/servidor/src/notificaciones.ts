@@ -92,6 +92,80 @@ export const AVISOS = {
     i === 'en'
       ? { titulo: 'Your driver is on the way', cuerpo: `${nombre} picked up your food.` }
       : { titulo: 'Tu repartidor va en camino', cuerpo: `${nombre} ya recogió tu comida.` },
+  repartidorAsignado: (i: string, nombre: string, vehiculo: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `${nombre} will deliver your order`,
+          cuerpo: vehiculo
+            ? `Heading to the restaurant · ${vehiculo}`
+            : 'Heading to the restaurant.',
+        }
+      : {
+          titulo: `${nombre} lleva tu pedido`,
+          cuerpo: vehiculo ? `Va al restaurante · ${vehiculo}` : 'Va al restaurante.',
+        },
+  listo: (i: string, rest: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Your food is ready',
+          cuerpo: `${rest} finished your order. Finding your driver.`,
+        }
+      : {
+          titulo: 'Tu comida está lista',
+          cuerpo: `${rest} terminó tu pedido. Buscando tu repartidor.`,
+        },
+  noAparece: (i: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Your driver can’t find you',
+          cuerpo:
+            'They’re at your door. Reply in the chat or they’ll leave it in a safe spot in 5 minutes.',
+        }
+      : {
+          titulo: 'Tu repartidor no te encuentra',
+          cuerpo:
+            'Está en tu puerta. Respóndele por el chat o en 5 minutos lo deja en un lugar seguro.',
+        },
+  mensaje: (i: string, nombre: string, texto: string): Aviso =>
+    i === 'en'
+      ? { titulo: `Message from ${nombre}`, cuerpo: texto.slice(0, 120) }
+      : { titulo: `Mensaje de ${nombre}`, cuerpo: texto.slice(0, 120) },
+  faltaPlato: (i: string, plato: string, rest: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `${rest} is out of ${plato}`,
+          cuerpo:
+            'Choose in the app: remove it (we refund that part) or cancel everything. In 5 minutes we remove it.',
+        }
+      : {
+          titulo: `${rest} no tiene ${plato}`,
+          cuerpo:
+            'Elige en la app: quitarlo (te devolvemos su parte) o cancelar todo. En 5 minutos lo quitamos.',
+        },
+  platoQuitado: (i: string, plato: string, centavos: number): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `${plato} removed`,
+          cuerpo: `We refunded $${(centavos / 100).toFixed(2)}. The rest of your order continues.`,
+        }
+      : {
+          titulo: `Quitamos ${plato}`,
+          cuerpo: `Te devolvimos $${(centavos / 100).toFixed(2)}. El resto de tu pedido sigue.`,
+        },
+  casiLlega: (i: string): Aviso =>
+    i === 'en'
+      ? { titulo: 'Almost here', cuerpo: 'Your driver is about a minute away.' }
+      : { titulo: 'Casi llega', cuerpo: 'Tu repartidor está a un minuto.' },
+  llego: (i: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Your driver is at your door',
+          cuerpo: 'Go meet them or check your delivery note.',
+        }
+      : {
+          titulo: 'Tu repartidor está en tu puerta',
+          cuerpo: 'Sal a recibirlo o revisa tus indicaciones de entrega.',
+        },
   entregado: (i: string): Aviso =>
     i === 'en'
       ? { titulo: 'Delivered. Enjoy!', cuerpo: 'Tap to rate your order.' }

@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
-import { Boton, C, FotoPedido, Pantalla, ReportarProblema, e, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  ChatPedido,
+  FotoPedido,
+  Pantalla,
+  ReportarProblema,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { MapaEntrega } from '../../MapaEntrega';
 
@@ -19,6 +28,18 @@ type Pedido = {
   minutosEstimados: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   fotoEntrega?: { tomadaEn: string } | null;
+  entrega?: 'puerta' | 'mano';
+  entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
+  notaEntrega?: string;
+  llegaAMasTardar?: string | null;
+  ajuste?: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    estado: 'pendiente' | 'quitado' | 'cancelado';
+    devolucion: number | null;
+    creadoEn: string;
+  } | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -31,6 +52,8 @@ type Pedido = {
     lat: number | null;
     lng: number | null;
     actualizado: string | null;
+    casiLlega?: boolean;
+    llego?: boolean;
   } | null;
 };
 
@@ -56,6 +79,24 @@ const T = {
     ubicacion: 'Ubicación actualizada',
     llega: 'Llega en unos',
     minutos: 'min',
+    aMasTardar: 'A más tardar a las',
+    faltaTitulo: 'El restaurante no tiene «{plato}»',
+    faltaTexto:
+      'Elige qué hacer. Si no respondes en 5 minutos, lo quitamos y te devolvemos su parte.',
+    quitar: 'Quitarlo y seguir (te devolvemos {monto})',
+    cancelarTodo: 'Cancelar todo el pedido',
+    quitadoOk: 'Quitamos «{plato}» y te devolvimos {monto}. El resto sigue.',
+    enPuerta: 'Tu repartidor está en tu puerta.',
+    casiLlega: 'Tu repartidor está a un minuto.',
+    pediste: { puerta: 'Pediste: en la puerta', mano: 'Pediste: en mano' } as Record<
+      string,
+      string
+    >,
+    entregadoComo: {
+      puerta: 'Lo dejaron en tu puerta.',
+      mano: 'Te lo entregaron en mano.',
+      seguro: 'No te encontraron y lo dejaron en un lugar seguro:',
+    } as Record<string, string>,
     tuCasa: 'Tu dirección',
     elRestaurante: 'El restaurante',
     calificar: '¿Qué tal todo?',
@@ -96,6 +137,24 @@ const T = {
     ubicacion: 'Location updated',
     llega: 'Arriving in about',
     minutos: 'min',
+    aMasTardar: 'Latest arrival by',
+    faltaTitulo: 'The restaurant is out of “{plato}”',
+    faltaTexto:
+      'Choose what to do. If you don’t answer in 5 minutes, we remove it and refund that part.',
+    quitar: 'Remove it and continue (we refund {monto})',
+    cancelarTodo: 'Cancel the whole order',
+    quitadoOk: 'We removed “{plato}” and refunded {monto}. The rest continues.',
+    enPuerta: 'Your driver is at your door.',
+    casiLlega: 'Your driver is a minute away.',
+    pediste: { puerta: 'You chose: leave at door', mano: 'You chose: hand it to me' } as Record<
+      string,
+      string
+    >,
+    entregadoComo: {
+      puerta: 'It was left at your door.',
+      mano: 'It was handed to you.',
+      seguro: 'They couldn’t find you and left it in a safe spot:',
+    } as Record<string, string>,
     tuCasa: 'Your address',
     elRestaurante: 'The restaurant',
     calificar: 'How was everything?',
@@ -168,6 +227,22 @@ export default function SeguirPedido() {
   const [cancelando, setCancelando] = useState(false);
 
   // Mientras el restaurante no acepte, el cliente puede arrepentirse y el dinero vuelve solo.
+  const [decidiendo, setDecidiendo] = useState(false);
+  async function decidirAjuste(decision: 'quitar' | 'cancelar') {
+    if (decidiendo) return;
+    setDecidiendo(true);
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/pedidos/${id}/ajuste`, { decision });
+      const r = await api.pedir<{ pedido: Pedido }>('GET', `/datos/pedidos/${id}/seguimiento`);
+      setP(r.pedido);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setDecidiendo(false);
+    }
+  }
+
   async function cancelar() {
     setCancelando(true);
     try {
@@ -257,10 +332,68 @@ export default function SeguirPedido() {
             </View>
           </View>
           {p.minutosEstimados != null && (
-            <Text style={{ fontSize: 17, fontWeight: '800', color: C.secundario, marginBottom: 8 }}>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: C.secundario, marginBottom: 2 }}>
               {t.llega} {p.minutosEstimados} {t.minutos}
             </Text>
           )}
+          {p.llegaAMasTardar && p.estado !== 'entregado' && p.estado !== 'cancelado' ? (
+            <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>
+              {t.aMasTardar}{' '}
+              {new Date(p.llegaAMasTardar).toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+              {p.entrega ? ` · ${t.pediste[p.entrega]}` : ''}
+            </Text>
+          ) : null}
+          {p.ajuste &&
+          (p.ajuste.estado === 'pendiente' || p.estado === 'pagado' || p.estado === 'aceptado') ? (
+            <View style={[e.tarjeta, { borderWidth: 3, borderColor: '#E0A000' }]}>
+              {p.ajuste.estado === 'pendiente' ? (
+                <>
+                  <Text style={{ fontWeight: '800', fontSize: 17 }}>
+                    {t.faltaTitulo.replace(
+                      '{plato}',
+                      idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+                    )}
+                  </Text>
+                  <Text style={{ color: '#5E5E5E', marginVertical: 6 }}>{t.faltaTexto}</Text>
+                  <Boton
+                    texto={t.quitar.replace(
+                      '{monto}',
+                      formatearDolares(p.ajuste.devolucion ?? 0, idioma),
+                    )}
+                    alTocar={() => void decidirAjuste('quitar')}
+                    cargando={decidiendo}
+                    exito
+                  />
+                  <Boton
+                    texto={t.cancelarTodo}
+                    alTocar={() => void decidirAjuste('cancelar')}
+                    cargando={decidiendo}
+                    secundario
+                  />
+                </>
+              ) : p.ajuste.estado === 'quitado' ? (
+                <Text style={{ fontWeight: '700' }}>
+                  {t.quitadoOk
+                    .replace(
+                      '{plato}',
+                      idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+                    )
+                    .replace('{monto}', formatearDolares(p.ajuste.devolucion ?? 0, idioma))}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+          {p.estado === 'en_camino' && (p.repartidor?.llego || p.repartidor?.casiLlega) ? (
+            <Text
+              style={{ color: C.exito, fontWeight: '800', fontSize: 17, marginBottom: 8 }}
+              accessibilityRole="alert"
+            >
+              {p.repartidor?.llego ? t.enPuerta : t.casiLlega}
+            </Text>
+          ) : null}
           {p.estado !== 'entregado' && p.estado !== 'cancelado' && (
             <MapaEntrega
               restaurante={p.restaurante}
@@ -300,16 +433,27 @@ export default function SeguirPedido() {
               />
             </View>
           )}
-          {p.estado === 'entregado' && p.fotoEntrega && (
+          {p.estado === 'entregado' && (p.fotoEntrega || p.entregadoComo) && (
             <View style={e.tarjeta}>
-              <FotoPedido
-                pedidoId={p.id}
-                tipo="entrega"
-                version={p.fotoEntrega.tomadaEn}
-                pie={t.fotoEntregado}
-              />
+              {p.entregadoComo ? (
+                <Text style={{ fontWeight: '700' }}>
+                  {t.entregadoComo[p.entregadoComo]}
+                  {p.entregadoComo === 'seguro' && p.notaEntrega ? ` ${p.notaEntrega}` : ''}
+                </Text>
+              ) : null}
+              {p.fotoEntrega ? (
+                <FotoPedido
+                  pedidoId={p.id}
+                  tipo="entrega"
+                  version={p.fotoEntrega.tomadaEn}
+                  pie={t.fotoEntregado}
+                />
+              ) : null}
             </View>
           )}
+          {p.repartidor && ['aceptado', 'listo', 'en_camino'].includes(p.estado) ? (
+            <ChatPedido pedidoId={p.id} />
+          ) : null}
           <View style={e.tarjeta}>
             {p.lineas.map((l) => (
               <Text key={l.platoId}>

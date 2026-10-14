@@ -6,10 +6,15 @@ import {
   enIdioma,
   formatearDolares,
   nombrePlato,
+  type RepartidorEnPedido,
+  avisoLlegada,
+  fotoSinConfirmar,
+  lineaRepartidor,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
 import { LuzSemaforo } from './LuzSemaforo';
+import QRCode from 'qrcode';
 import { pedir } from './api';
 
 type Pedido = {
@@ -24,6 +29,15 @@ type Pedido = {
   recogidoEn: string | null;
   tiempoPrepMin: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  repartidor?: RepartidorEnPedido | null;
+  ajuste?: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    estado: 'pendiente' | 'quitado' | 'cancelado';
+    devolucion: number | null;
+    creadoEn: string;
+  } | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 
@@ -42,6 +56,20 @@ const T = {
     mas: 'Más opciones',
     notas: 'Notas',
     esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
+    sinConfirmar: 'La foto lleva más de 2 minutos sin confirmar. El repartidor te está esperando.',
+    faltaPlato: 'Me falta un plato',
+    cualFalta:
+      '¿Cuál plato no tienes? Al cliente le avisamos y decide: quitarlo (se le devuelve esa parte) o cancelar todo.',
+    avisarFalta: 'Avisar al cliente',
+    esperandoCliente:
+      'Avisamos al cliente que no tienes «{plato}». Esperando su respuesta (máximo 5 minutos)…',
+    quitado: 'El cliente quitó «{plato}». Prepara el resto.',
+    masTiempo: '+5 min',
+    masTiempoAyuda: 'Puedes subir el tiempo mientras no haya salido un repartidor.',
+    qrAyuda:
+      'Muéstrale este código al repartidor: lo escanea desde su app y así confirma que es su pedido.',
+    verificado:
+      'Código verificado por el repartidor. Cuando tome la foto de la bolsa, el pedido sale solo.',
     fotoDelRepartidor: 'Foto que tomó el repartidor',
     confirmarRecogida: 'Confirmar: se lo entregué al repartidor',
     ayudaConfirmar:
@@ -69,6 +97,20 @@ const T = {
     mas: 'More options',
     notas: 'Notes',
     esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
+    sinConfirmar: 'The photo has been waiting over 2 minutes. The driver is waiting on you.',
+    faltaPlato: 'I’m out of an item',
+    cualFalta:
+      'Which item are you out of? We notify the customer and they decide: remove it (that part is refunded) or cancel everything.',
+    avisarFalta: 'Notify the customer',
+    esperandoCliente:
+      'We told the customer you’re out of “{plato}”. Waiting for their answer (up to 5 minutes)…',
+    quitado: 'The customer removed “{plato}”. Prepare the rest.',
+    masTiempo: '+5 min',
+    masTiempoAyuda: 'You can add time as long as no driver has left yet.',
+    qrAyuda:
+      'Show this code to the driver: they scan it from their app to confirm it’s their order.',
+    verificado:
+      'Code verified by the driver. Once they photograph the bag, the order goes out on its own.',
     fotoDelRepartidor: 'Photo taken by the driver',
     confirmarRecogida: 'Confirm: I handed it to the driver',
     ayudaConfirmar:
@@ -86,10 +128,15 @@ const T = {
 
 export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [reportando, setReportando] = useState<string | null>(null);
+  // «Me falta un plato»: el pedido donde se está eligiendo el plato.
+  const [faltando, setFaltando] = useState<string | null>(null);
+  const [platoFalta, setPlatoFalta] = useState('');
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [error, setError] = useState('');
   const [sonido, setSonido] = useState(false);
+  // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
+  const [qrs, setQrs] = useState<Record<string, string>>({});
   const audio = useRef<HTMLAudioElement | null>(null);
 
   const cargar = useCallback(async () => {
@@ -110,13 +157,37 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
     };
   }, [cargar]);
 
-  const hayNuevos = pedidos.some((p) => p.estado === 'pagado');
+  useEffect(() => {
+    for (const p of pedidos) {
+      if (p.estado !== 'listo' || qrs[p.id]) continue;
+      void QRCode.toDataURL(`tumbite:pedido:${p.id}`, { margin: 1, width: 180 }).then((url) =>
+        setQrs((q) => (q[p.id] ? q : { ...q, [p.id]: url })),
+      );
+    }
+  }, [pedidos, qrs]);
+  // Mientras el cliente decide sobre un plato agotado, el pedido no cuenta como «nuevo sin atender».
+  const hayNuevos = pedidos.some((p) => p.estado === 'pagado' && p.ajuste?.estado !== 'pendiente');
+  // Amarillo con alarma: la foto del repartidor lleva más de 2 minutos sin confirmar.
+  const hayUrgente = pedidos.some((p) => fotoSinConfirmar(p));
   useEffect(() => {
     const a = audio.current;
     if (!a || !sonido) return;
-    if (hayNuevos) void a.play().catch(() => undefined);
+    if (hayNuevos || hayUrgente) void a.play().catch(() => undefined);
     else a.pause();
-  }, [hayNuevos, sonido]);
+  }, [hayNuevos, hayUrgente, sonido]);
+  // Un sonido corto, una sola vez por pedido, cuando el repartidor está a 5 minutos y cuando llega.
+  const avisados = useRef(new Set<string>());
+  useEffect(() => {
+    if (!sonido) return;
+    for (const p of pedidos) {
+      const aviso = avisoLlegada(p.repartidor);
+      if (!aviso) continue;
+      const clave = `${p.id}:${aviso}`;
+      if (avisados.current.has(clave)) continue;
+      avisados.current.add(clave);
+      void new Audio('/alarma.wav').play().catch(() => undefined);
+    }
+  }, [pedidos, sonido]);
 
   function activarSonido() {
     // Los navegadores solo dejan sonar después de un toque de la persona.
@@ -153,13 +224,24 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
       {pedidos.length === 0 && <p>{t.vacio}</p>}
       <ul className="lista">
         {pedidos.map((p) => (
-          <li key={p.id} className={p.estado === 'pagado' ? 'resaltado' : ''}>
+          <li
+            key={p.id}
+            className={p.estado === 'pagado' ? 'resaltado' : fotoSinConfirmar(p) ? 'atencion' : ''}
+          >
             <div className="lista-texto">
               <strong>
                 #{p.id.slice(0, 4).toUpperCase()} · {t.estados[p.estado] ?? p.estado} ·{' '}
                 {formatearDolares(p.subtotal, idioma)}
               </strong>
               <LuzSemaforo pedido={p} idioma={idioma} />
+              {lineaRepartidor(p.repartidor, idioma) && (
+                <span className="repartidor-linea">{lineaRepartidor(p.repartidor, idioma)}</span>
+              )}
+              {fotoSinConfirmar(p) && (
+                <span className="atencion-texto" role="alert">
+                  {t.sinConfirmar}
+                </span>
+              )}
               {p.lineas.map((l) => (
                 <span key={l.platoId}>
                   {l.cantidad} × {nombrePlato(l, idioma)}
@@ -170,7 +252,17 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.notas}: {p.notas}
                 </span>
               )}
-              {p.estado === 'listo' && !p.fotoRecogida && (
+              {p.estado === 'listo' && qrs[p.id] && (
+                <figure className="qr-pedido">
+                  <img src={qrs[p.id]} alt={`QR ${p.id.slice(0, 4).toUpperCase()}`} />
+                  <strong>{p.id.slice(0, 4).toUpperCase()}</strong>
+                  <figcaption>{t.qrAyuda}</figcaption>
+                </figure>
+              )}
+              {p.estado === 'listo' && p.repartidor?.verificado && !p.fotoRecogida && (
+                <span className="repartidor-linea">{t.verificado}</span>
+              )}
+              {p.estado === 'listo' && !p.fotoRecogida && !p.repartidor?.verificado && (
                 <span className="suave">{t.esperandoFoto}</span>
               )}
               {p.estado === 'listo' && p.fotoRecogida && (
@@ -184,7 +276,54 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               )}
             </div>
             <div className="fila-botones">
+              {p.ajuste?.estado === 'pendiente' && (
+                <span className="atencion-texto" role="status">
+                  {t.esperandoCliente.replace(
+                    '{plato}',
+                    idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+                  )}
+                </span>
+              )}
+              {p.ajuste?.estado === 'quitado' && p.estado === 'pagado' && (
+                <span className="repartidor-linea">
+                  {t.quitado.replace(
+                    '{plato}',
+                    idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+                  )}
+                </span>
+              )}
+              {faltando === p.id && (
+                <div className="falta-plato">
+                  <label>
+                    {t.cualFalta}
+                    <select value={platoFalta} onChange={(ev) => setPlatoFalta(ev.target.value)}>
+                      <option value="">—</option>
+                      {p.lineas.map((l) => (
+                        <option key={l.platoId} value={l.platoId}>
+                          {nombrePlato(l, idioma)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="boton"
+                    disabled={!platoFalta}
+                    onClick={() =>
+                      void accion(`/datos/restaurante/pedidos/${p.id}/falta`, {
+                        platoId: platoFalta,
+                      }).then(() => {
+                        setFaltando(null);
+                        setPlatoFalta('');
+                      })
+                    }
+                  >
+                    {t.avisarFalta}
+                  </button>
+                </div>
+              )}
               {p.estado === 'pagado' &&
+                p.ajuste?.estado !== 'pendiente' &&
                 [10, 20, 30].map((m) => (
                   <button
                     key={m}
@@ -206,6 +345,22 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.listo}
                 </button>
               )}
+              {p.estado === 'aceptado' && !p.repartidor && (
+                <button
+                  type="button"
+                  className="boton secundario"
+                  title={t.masTiempoAyuda}
+                  onClick={() =>
+                    void pedir('PATCH', `/datos/restaurante/pedidos/${p.id}/tiempo`, {
+                      minutos: Math.min(120, (p.tiempoPrepMin ?? 20) + 5),
+                    })
+                      .then(cargar)
+                      .catch((x) => setError(x instanceof ErrorApi ? x.message : String(x)))
+                  }
+                >
+                  {t.masTiempo}
+                </button>
+              )}
               {p.estado === 'listo' && p.fotoRecogida && (
                 <button
                   type="button"
@@ -222,6 +377,9 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               etiqueta={t.mas}
               opciones={[
                 { texto: t.reportar, alTocar: () => setReportando(p.id) },
+                ...((p.estado === 'pagado' || p.estado === 'aceptado') && !p.repartidor && !p.ajuste
+                  ? [{ texto: t.faltaPlato, alTocar: () => setFaltando(p.id) }]
+                  : []),
                 ...(p.estado === 'pagado' || p.estado === 'aceptado'
                   ? [
                       {

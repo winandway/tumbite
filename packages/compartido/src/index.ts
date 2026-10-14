@@ -15,3 +15,5 @@ export * from './limite';
 export * from './competencia';
 export * from './calculadora';
 export * from './llegada';
+export * from './despacho';
+export * from './mostrador';

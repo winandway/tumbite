@@ -111,12 +111,7 @@ describe('zonas: pueblo en pueblo', () => {
     )
       .bind(id)
       .run();
-    await m.llamar(
-      'POST',
-      `/datos/restaurante/pedidos/${id}/aceptar`,
-      { minutos: 10 },
-      dueno.token,
-    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
     // Zona vecina pegada a Miami: su repartidor está a pocos km del restaurante, pero es de otra zona.
     await m.llamar(
       'PUT',

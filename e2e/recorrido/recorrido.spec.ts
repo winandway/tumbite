@@ -56,7 +56,8 @@ const PARA_TIENDA = new Map<string, [string, string]>([
   ['cliente-pagado', ['Tumbite (cliente)', '04-pago-recibido']],
   ['cliente-en-camino', ['Tumbite (cliente)', '05-pedido-en-vivo-en-el-mapa']],
   ['cliente-sellado', ['Tumbite (cliente)', '06-pedido-sellado-con-foto']],
-  ['cliente-calificar', ['Tumbite (cliente)', '07-entregado-con-foto-y-calificar']],
+  ['cliente-chat', ['Tumbite (cliente)', '07-chat-con-el-repartidor']],
+  ['cliente-calificar', ['Tumbite (cliente)', '08-entregado-con-foto-y-calificar']],
   ['repartidor-conectado', ['Tumbite Driver (repartidor)', '01-conectado-buscando-pedidos']],
   ['repartidor-oferta', ['Tumbite Driver (repartidor)', '02-oferta-con-el-pago-antes-de-aceptar']],
   [
@@ -194,6 +195,12 @@ for (const idioma of ['en', 'es'] as const) {
       });
       expect(r.status()).toBe(200);
     };
+
+    // Si el recorrido del otro idioma se cayó a medias, sus pedidos sin repartidor no se le deben
+    // ofrecer al repartidor de este: se cierran antes de empezar.
+    sql(
+      "UPDATE pedidos SET estado = 'cancelado' WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
+    );
 
     // 1. El restaurante se registra en el panel y arma su ficha.
     const panelCtx = await nuevoContexto('computadora');
@@ -590,8 +597,17 @@ for (const idioma of ['en', 'es'] as const) {
     const confirmar = panel.getByRole('button', { name: L.confirmarRecogida });
     await expect(confirmar).toBeVisible({ timeout: 20_000 });
     await expect(panel.locator('.foto-recogida img')).toBeVisible();
+    await expect(panel.locator('.qr-pedido img')).toBeVisible();
     await foto(panel, 'restaurante-confirmar-recogida');
-    await confirmar.click();
+    // El repartidor escribe el número de la pantalla (en el celular lo escanea): con el código
+    // verificado y la foto ya tomada, el pedido sale solo, sin que el restaurante toque nada.
+    await rep.getByLabel(L.escribirCodigo).fill(cobro.pedidoId.slice(0, 4).toUpperCase());
+    await rep.getByRole('button', { name: L.verificar }).click();
+    await expect
+      .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado, {
+        timeout: 20_000,
+      })
+      .toBe('en_camino');
 
     // 9. En camino: «Cómo llegar» mientras está lejos; el cliente ve su pedido sellado.
     // Espera la pantalla de entrega (en la de recogida también hay un «Cómo llegar», al restaurante).
@@ -616,8 +632,22 @@ for (const idioma of ['en', 'es'] as const) {
       /Your order left the restaurant|Tu pedido salió del restaurante/,
     );
     await expect(sellado.first()).toBeVisible({ timeout: 20_000 });
+    await expect(cli.getByText(L.aMasTardar, { exact: false })).toBeVisible();
     await sellado.first().scrollIntoViewIfNeeded();
     await foto(cli, 'cliente-sellado');
+    // El chat del pedido: el cliente escribe, el repartidor lo lee (sin números de teléfono).
+    const textoChat =
+      idioma === 'en' ? 'Ring the bell twice, please' : 'Toca el timbre dos veces, por favor';
+    await cli.getByLabel(L.chatEscribe).fill(textoChat);
+    await cli.getByRole('button', { name: L.chatEnviar }).click();
+    await expect(cli.getByText(textoChat)).toBeVisible({ timeout: 20_000 });
+    await cli.getByText(textoChat).scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-chat');
+    await expect(rep.getByText(textoChat)).toBeVisible({ timeout: 20_000 });
+    const respuesta = idioma === 'en' ? 'On my way, 3 minutes' : 'Voy en camino, 3 minutos';
+    await rep.getByLabel(L.chatEscribe).fill(respuesta);
+    await rep.getByRole('button', { name: L.chatEnviar }).click();
+    await expect(cli.getByText(respuesta)).toBeVisible({ timeout: 20_000 });
 
     // 10. Llega a la puerta: se quita «Cómo llegar» y aparece la foto de la entrega.
     await repCtx.setGeolocation(CASA);
@@ -690,6 +720,30 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.goto(`/app/order/${rechazado.pedidoId}`);
     await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-rechazado');
+
+    // 14b. Algo agotado: el restaurante marca el plato que no tiene; el cliente lo quita y se le
+    //      devuelve esa parte; el resto del pedido sigue.
+    const agotado = await pedirYPagar([plato.pizza, plato.limonada]);
+    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    const filaAgotado = panel
+      .locator('strong', { hasText: `#${agotado.pedidoId.slice(0, 4).toUpperCase()}` })
+      .locator(`xpath=ancestor::*[.//button[@aria-label="${L.masOpciones}"]][1]`);
+    await expect(filaAgotado).toBeVisible({ timeout: 20_000 });
+    await filaAgotado.getByRole('button', { name: L.masOpciones }).click();
+    await panel.getByRole('menuitem', { name: L.faltaPlato }).click();
+    await filaAgotado.getByRole('combobox').selectOption({ label: plato.limonada });
+    await foto(panel, 'restaurante-falta-plato');
+    await filaAgotado.getByRole('button', { name: L.avisarFalta }).click();
+    await cli.goto(`/app/order/${agotado.pedidoId}`);
+    const quitar = cli.getByRole('button', { name: L.quitarPlato, exact: false });
+    await expect(quitar).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-falta-plato');
+    await quitar.click();
+    await expect(cli.getByText(L.quitadoOk, { exact: false })).toBeVisible({ timeout: 20_000 });
+    expect(
+      Number(sql(`SELECT total FROM pedidos WHERE id = '${agotado.pedidoId}'`)[0]?.total),
+    ).toBeLessThan(agotado.desglose.totalCliente);
+    await rechazarEnPanel(agotado.pedidoId);
 
     // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 10 minutos se cancela
     //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
@@ -769,6 +823,11 @@ for (const idioma of ['en', 'es'] as const) {
       .getByRole('button', { name: `${L.aceptar} · 10` })
       .first()
       .click();
+    // Con el despacho con reloj, la oferta sale cuando falta poco para la hora de listo: el reloj
+    // se adelanta en la base (así el pedido sigue «aceptado» y el restaurante lo puede rechazar).
+    sql(
+      `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${otro.pedidoId}'`,
+    );
     await expect(rep.getByRole('button', { name: L.noGracias })).toBeVisible({ timeout: 30_000 });
     await rep.getByRole('button', { name: L.noGracias }).click();
     await expect(rep.getByText(L.buscando).filter({ visible: true })).toBeVisible();

@@ -65,6 +65,14 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Tumbite uses the camera to scan the order code at the restaurant, to photograph the order when you pick it up and deliver it, and to take a photo of your ID and your face when you verify your identity.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Tumbite uses the camera to photograph the order when you pick it up and deliver it, and to take a photo of your ID and your face when you verify your identity.",

@@ -3449,3 +3449,71 @@ button {
 .suave {
   color: #5e5e5e;
 }
+
+/* El repartidor en el mostrador: en verde cuando viene o llegó; amarillo cuando la foto espera. */
+.repartidor-linea {
+  color: #0d7a3a;
+  font-weight: 700;
+}
+.lista li.atencion {
+  border: 3px solid #e0a000;
+  background: #fff8e1;
+}
+.atencion-texto {
+  color: #b26a00;
+  font-weight: 700;
+}
+
+/* El código QR del pedido listo: grande para que el repartidor lo escanee desde el mostrador. */
+.qr-pedido {
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.qr-pedido img {
+  width: 180px;
+  height: 180px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+}
+.qr-pedido strong {
+  font-size: 22px;
+  letter-spacing: 3px;
+}
+.qr-pedido figcaption {
+  font-size: 13px;
+  color: #5e5e5e;
+  max-width: 360px;
+}
+
+/* «Me falta un plato»: elegir el plato y avisar al cliente. */
+.falta-plato {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  max-width: 420px;
+}
+.falta-plato label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+.falta-plato select {
+  padding: 8px;
+  font: inherit;
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+}
+.boton.secundario {
+  background: #fff;
+  color: #191919;
+  border: 1px solid #d6d6d6;
+}

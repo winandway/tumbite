@@ -47,3 +47,9 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 ## Canario
 
 `GET /datos/salud` → `stripe` y `webhookStripe` dicen `ok` o `pendiente`; `base` dice `ok`/`error`.
+
+## 🔴 Sin probar en real (14 oct 2026): devolución parcial por plato agotado
+
+- Qué es: cuando el restaurante marca un plato que no tiene y el cliente lo quita, Tumbite recalcula el pedido y le devuelve la diferencia con un reembolso parcial en Stripe (`POST /refunds` con `amount`), con clave de idempotencia `ajuste-<pedido>`.
+- Estado: construido y probado con Stripe simulado (`operacion.test.ts`, «algo agotado»). **NO probado con una compra real.** Antes de anunciarlo: una compra de prueba con dos platos, marcar uno como agotado desde el panel, quitarlo desde la app, y ver en Stripe el reembolso parcial por la diferencia exacta.
+- Cómo se prueba: igual que la compra real de 1 dólar pendiente, pero con dos platos.

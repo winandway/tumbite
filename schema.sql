@@ -410,7 +410,52 @@ CREATE TABLE IF NOT EXISTS evidencias (
   lat REAL,
   lng REAL,
   distancia_m INTEGER,
+  -- Cómo se entregó: en mano, en la puerta, o en lugar seguro (con la nota de dónde quedó).
+  modo TEXT,
+  nota TEXT NOT NULL DEFAULT '',
   creada_en TEXT NOT NULL DEFAULT (datetime('now')),
   confirmada_en TEXT,
   PRIMARY KEY (pedido_id, tipo)
+);
+
+-- Hitos del repartidor en un pedido (los marca el servidor con la ubicación del celular, no el
+-- repartidor): llegó al restaurante, llegó a la puerta del cliente, «casi llega» (aviso al cliente),
+-- y la espera evitable en segundos (lo que esperó después de la hora de listo), como DoorDash.
+CREATE TABLE IF NOT EXISTS hitos_pedido (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  hito TEXT NOT NULL CHECK (hito IN ('llego_restaurante', 'casi_llega', 'llego_cliente', 'espera_evitable', 'verificado', 'no_aparece')),
+  valor INTEGER,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, hito)
+);
+
+-- Cómo quiere recibir el cliente: en la puerta (foto obligatoria) o en mano (foto opcional).
+CREATE TABLE IF NOT EXISTS preferencias_entrega (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  modo TEXT NOT NULL CHECK (modo IN ('puerta', 'mano'))
+);
+
+-- Chat entre el cliente y el repartidor de un pedido, solo mientras el pedido está activo.
+-- Sin números de teléfono: queda registrado y nuestro equipo puede leerlo si hay un reclamo.
+CREATE TABLE IF NOT EXISTS mensajes_pedido (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  de_usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  texto TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS mensajes_pedido_idx ON mensajes_pedido(pedido_id, id);
+
+
+-- Algo agotado: el restaurante marca el plato que no tiene; el cliente decide en su app si lo
+-- quita (se le devuelve esa parte) o cancela todo. Si no responde en 5 minutos, se quita.
+CREATE TABLE IF NOT EXISTS ajustes_pedido (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  plato_id TEXT NOT NULL,
+  nombre_es TEXT NOT NULL DEFAULT '',
+  nombre_en TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'quitado', 'cancelado')),
+  devolucion INTEGER,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelto_en TEXT
 );

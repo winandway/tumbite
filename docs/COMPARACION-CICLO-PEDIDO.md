@@ -68,7 +68,11 @@ Leyenda de la columna Tumbite: ✅ lo tenemos · 🟡 lo tenemos a medias · ❌
 - Foto de entrega obligatoria y bloqueo a más de 200 m (Uber permite entregar sin foto).
 - Mapa en vivo del repartidor para el cliente, nombre de pila, calificación separada.
 
-## Las brechas, por orden de importancia
+## Qué se cerró el mismo 14 de octubre (Etapa 2½ del roadmap)
+
+Las brechas 1 a 7 quedaron construidas y probadas ese día (ver `CANDADOS.md`, «Etapa 2½»): despacho con reloj, el restaurante ve venir al repartidor con la espera evitable y el amarillo con alarma, código QR en la pantalla del restaurante, chat dentro de la app, «en la puerta» o «en mano» con el protocolo de cliente que no aparece, avisos de asignado / listo / casi llega / en tu puerta y la hora a más tardar, repartidor que se baja o se pierde, plato agotado con devolución parcial, y más tiempo después de aceptar. Quedan para después: «cocina ocupada», varios pedidos por repartidor, firma/PIN/edad, y las llamadas con número oculto (decisión de Richard: cuesta un servicio externo).
+
+## Las brechas, por orden de importancia (tal como se encontraron)
 
 1. **Despacho a ciegas (dinero y repartidores).** Ofrecer el pedido sin reloj hace esperar al repartidor sin cobrar o deja el pedido sin nadie. Arreglo: ofrecer cuando falten _tiempo de viaje del repartidor + 3 minutos_ para la hora de «listo» (la regla de los 7 minutos de Uber), y si el restaurante toca «Listo» antes, ofrecer en ese momento. Mostrarle al repartidor «listo en X min».
 2. **El restaurante no ve venir al repartidor (comida y clientes).** Falta el estado «va al restaurante / llegó», el aviso «a 5 minutos» con sonido, el indicador de «esperando» y el cronómetro que mide la espera evitable. Sin esto, el restaurante tampoco sabe cuándo tocar el botón verde de confirmar la foto (la alarma y el amarillo que propuse van aquí).

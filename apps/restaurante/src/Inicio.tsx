@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, Text, View } from 'react-native';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
@@ -9,10 +9,15 @@ import {
   enIdioma,
   formatearDolares,
   nombrePlato,
+  type RepartidorEnPedido,
+  avisoLlegada,
+  fotoSinConfirmar,
+  lineaRepartidor,
 } from '@tumbite/compartido';
 import {
   Boton,
   C,
+  CodigoQR,
   FotoPedido,
   MenuCuenta,
   Pantalla,
@@ -30,6 +35,15 @@ type Pedido = {
   creadoEn: string;
   tiempoPrepMin: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  repartidor?: RepartidorEnPedido | null;
+  ajuste?: {
+    platoId: string;
+    nombreEs: string;
+    nombreEn: string;
+    estado: 'pendiente' | 'quitado' | 'cancelado';
+    devolucion: number | null;
+    creadoEn: string;
+  } | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 
@@ -41,6 +55,16 @@ const T = {
     listos: 'Listos para recoger',
     camino: 'En camino',
     esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
+    sinConfirmar: 'La foto lleva más de 2 minutos sin confirmar. El repartidor te está esperando.',
+    faltaPlato: '¿Te falta un plato? Tócalo:',
+    esperandoCliente:
+      'Avisamos al cliente que no tienes «{plato}». Esperando su respuesta (máximo 5 minutos)…',
+    quitado: 'El cliente quitó «{plato}». Prepara el resto.',
+    masTiempo: '+5 min',
+    qrAyuda:
+      'Muéstrale este código al repartidor: lo escanea desde su app y así confirma que es su pedido.',
+    verificado:
+      'Código verificado por el repartidor. Cuando tome la foto de la bolsa, el pedido sale solo.',
     confirmarRecogida: 'Confirmar: se lo entregué al repartidor',
     ayudaConfirmar:
       'Foto que tomó el repartidor. Revisa que sea tu pedido y confirma: recién ahí sale en camino.',
@@ -71,6 +95,16 @@ const T = {
     listos: 'Ready for pickup',
     camino: 'On the way',
     esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
+    sinConfirmar: 'The photo has been waiting over 2 minutes. The driver is waiting on you.',
+    faltaPlato: 'Out of an item? Tap it:',
+    esperandoCliente:
+      'We told the customer you’re out of “{plato}”. Waiting for their answer (up to 5 minutes)…',
+    quitado: 'The customer removed “{plato}”. Prepare the rest.',
+    masTiempo: '+5 min',
+    qrAyuda:
+      'Show this code to the driver: they scan it from their app to confirm it’s their order.',
+    verificado:
+      'Code verified by the driver. Once they photograph the bag, the order goes out on its own.',
     confirmarRecogida: 'Confirm: I handed it to the driver',
     ayudaConfirmar:
       'Photo taken by the driver. Check that it’s your order and confirm: only then does it go out.',
@@ -147,7 +181,10 @@ export function Inicio() {
 
   const nuevos = pedidos.filter((p) => p.estado === 'pagado');
   // La alarma suena sin parar mientras haya un pedido sin aceptar.
-  const hayNuevos = nuevos.length > 0;
+  // …y también mientras una foto del repartidor lleve más de 2 minutos sin confirmar (amarillo).
+  const hayNuevos =
+    nuevos.some((p) => p.ajuste?.estado !== 'pendiente') ||
+    pedidos.some((p) => fotoSinConfirmar(p));
   useEffect(() => {
     if (hayNuevos) alarma.play();
     else alarma.pause();
@@ -158,6 +195,18 @@ export function Inicio() {
       void alarma.seekTo(0).then(() => alarma.play());
     }
   }, [estadoAlarma.didJustFinish, hayNuevos, alarma]);
+  // Un toque de alarma, una sola vez por pedido, cuando el repartidor está a 5 minutos y al llegar.
+  const avisados = useRef(new Set<string>());
+  useEffect(() => {
+    for (const p of pedidos) {
+      const aviso = avisoLlegada(p.repartidor);
+      if (!aviso) continue;
+      const clave = `${p.id}:${aviso}`;
+      if (avisados.current.has(clave)) continue;
+      avisados.current.add(clave);
+      if (!hayNuevos) void alarma.seekTo(0).then(() => alarma.play());
+    }
+  }, [pedidos, hayNuevos, alarma]);
 
   async function accion(ruta: string, cuerpo: unknown = {}) {
     setError('');
@@ -195,7 +244,18 @@ export function Inicio() {
   }
 
   const tarjeta = (p: Pedido, botones: React.ReactNode, resaltar = false) => (
-    <View key={p.id} style={[e.tarjeta, resaltar && { borderWidth: 3, borderColor: C.primario }]}>
+    <View
+      key={p.id}
+      style={[
+        e.tarjeta,
+        resaltar && { borderWidth: 3, borderColor: C.primario },
+        fotoSinConfirmar(p) && {
+          borderWidth: 3,
+          borderColor: '#E0A000',
+          backgroundColor: '#FFF8E1',
+        },
+      ]}
+    >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontWeight: '800', fontSize: 18 }}>
           {t.pedido} #{p.id.slice(0, 4).toUpperCase()}
@@ -210,6 +270,64 @@ export function Inicio() {
       {p.notas ? (
         <Text style={{ marginTop: 6, color: '#5E5E5E' }}>
           {t.notas}: {p.notas}
+        </Text>
+      ) : null}
+      {p.ajuste?.estado === 'pendiente' ? (
+        <Text
+          style={{ marginTop: 6, color: '#B26A00', fontWeight: '800' }}
+          accessibilityRole="alert"
+        >
+          {t.esperandoCliente.replace(
+            '{plato}',
+            idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+          )}
+        </Text>
+      ) : null}
+      {p.ajuste?.estado === 'quitado' && p.estado === 'pagado' ? (
+        <Text style={{ marginTop: 6, color: C.exito, fontWeight: '800' }}>
+          {t.quitado.replace(
+            '{plato}',
+            idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+          )}
+        </Text>
+      ) : null}
+      {(p.estado === 'pagado' || p.estado === 'aceptado') && !p.repartidor && !p.ajuste ? (
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.faltaPlato}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            {p.lineas.map((l) => (
+              <Pressable
+                key={l.platoId}
+                onPress={() =>
+                  void accion(`/datos/restaurante/pedidos/${p.id}/falta`, { platoId: l.platoId })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`${t.faltaPlato} ${nombrePlato(l, idioma)}`}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#D6D6D6',
+                  borderRadius: 8,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                }}
+              >
+                <Text style={{ fontSize: 13 }}>{nombrePlato(l, idioma)}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {lineaRepartidor(p.repartidor, idioma) ? (
+        <Text style={{ marginTop: 6, color: C.exito, fontWeight: '800' }}>
+          {lineaRepartidor(p.repartidor, idioma)}
+        </Text>
+      ) : null}
+      {fotoSinConfirmar(p) ? (
+        <Text
+          style={{ marginTop: 4, color: '#B26A00', fontWeight: '800' }}
+          accessibilityRole="alert"
+        >
+          {t.sinConfirmar}
         </Text>
       ) : null}
       <View style={{ marginTop: 10, gap: 8 }}>{botones}</View>
@@ -287,43 +405,60 @@ export function Inicio() {
       {seccion(
         t.nuevos,
         nuevos,
-        (p) => (
-          <>
-            <Text style={{ fontWeight: '700' }}>{t.tiempo}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {TIEMPOS.map((m) => (
-                <Pressable
-                  key={m}
-                  onPress={() =>
-                    void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`${t.aceptar} ${m} ${t.minutos}`}
-                  style={{
-                    backgroundColor: C.primario,
-                    borderRadius: 12,
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-                    {t.aceptar} · {m} {t.minutos}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        ),
+        (p) =>
+          p.ajuste?.estado === 'pendiente' ? null : (
+            <>
+              <Text style={{ fontWeight: '700' }}>{t.tiempo}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {TIEMPOS.map((m) => (
+                  <Pressable
+                    key={m}
+                    onPress={() =>
+                      void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.aceptar} ${m} ${t.minutos}`}
+                    style={{
+                      backgroundColor: C.primario,
+                      borderRadius: 12,
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
+                      {t.aceptar} · {m} {t.minutos}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ),
         true,
       )}
       {seccion(
         t.preparando,
         pedidos.filter((p) => p.estado === 'aceptado'),
         (p) => (
-          <Boton
-            texto={t.listo}
-            alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
-          />
+          <>
+            <Boton
+              texto={t.listo}
+              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
+            />
+            {!p.repartidor ? (
+              <Boton
+                texto={t.masTiempo}
+                alTocar={() =>
+                  void api
+                    .pedir('PATCH', `/datos/restaurante/pedidos/${p.id}/tiempo`, {
+                      minutos: Math.min(120, (p.tiempoPrepMin ?? 20) + 5),
+                    })
+                    .then(() => cargar())
+                    .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+                }
+                secundario
+              />
+            ) : null}
+          </>
         ),
       )}
       {seccion(
@@ -332,6 +467,7 @@ export function Inicio() {
         (p) =>
           p.fotoRecogida ? (
             <>
+              <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
               <FotoPedido
                 pedidoId={p.id}
                 tipo="recogida"
@@ -345,7 +481,12 @@ export function Inicio() {
               />
             </>
           ) : (
-            <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.esperandoFoto}</Text>
+            <>
+              <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
+              <Text style={{ color: '#5E5E5E', marginTop: 6 }}>
+                {p.repartidor?.verificado ? t.verificado : t.qrAyuda}
+              </Text>
+            </>
           ),
         true,
       )}

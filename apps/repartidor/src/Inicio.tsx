@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Linking, Platform, Pressable, Text, View } from 'react-native';
+import { Linking, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -18,6 +19,7 @@ import { Verificacion } from './Verificacion';
 import {
   Boton,
   C,
+  ChatPedido,
   MenuCuenta,
   Pantalla,
   ReportarProblema,
@@ -47,6 +49,11 @@ type Pedido = {
   segundos?: number;
   ofertaEn?: string;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  minutosParaListo?: number;
+  verificado?: boolean;
+  llegoCliente?: boolean;
+  noApareceEn?: string | null;
+  entrega?: 'puerta' | 'mano';
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
@@ -93,8 +100,28 @@ const T = {
     sinCaras:
       'No le tomes foto a la cara de nadie. Deja la comida en la puerta o en las manos del cliente y toma la foto de lado: que se vean solo las manos, la comida y la entrada de la casa.',
     subiendo: 'Enviando la foto…',
+    escanear: 'Escanear el código del restaurante',
+    escribirCodigo: 'O escribe el número del pedido (4 letras o números)',
+    verificar: 'Verificar',
+    verificadoOk:
+      'Código verificado: es tu pedido. Ahora toma la foto de la bolsa y sales de una, sin esperar al restaurante.',
+    cerrar: 'Cerrar',
+    noPuedo: 'No puedo seguir con este pedido',
+    motivo: 'Cuéntanos por qué. Se le ofrece a otro repartidor y no te baja de nivel.',
+    soltar: 'Soltar el pedido',
+    pidio: {
+      puerta: 'El cliente pidió: dejar en la puerta',
+      mano: 'El cliente pidió: entregar en mano',
+    } as Record<string, string>,
+    enMano: 'Entregado en mano',
+    noAparece: 'El cliente no aparece',
+    esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
+    dejarSeguro: 'Dejar en lugar seguro (con foto)',
+    dondeLoDejas: 'Escribe dónde lo dejas (con el portero, detrás de la maceta…)',
     permisoCamara: 'Para tomar la foto necesitamos permiso para usar la cámara.',
     esperando: 'El restaurante lo está terminando…',
+    listoEn: 'Listo en',
+    listoYa: 'Ya está listo para recoger.',
     nivel: 'Tu nivel',
     puntos: 'puntos',
     faltan: 'Te faltan',
@@ -143,8 +170,28 @@ const T = {
     sinCaras:
       'Never take a photo of anyone’s face. Leave the food at the door or in the customer’s hands and take the photo from the side: only the hands, the food, and the home’s entrance should show.',
     subiendo: 'Sending the photo…',
+    escanear: 'Scan the restaurant’s code',
+    escribirCodigo: 'Or type the order number (4 characters)',
+    verificar: 'Verify',
+    verificadoOk:
+      'Code verified: it’s your order. Now photograph the bag and you’re on your way, no need to wait for the restaurant.',
+    cerrar: 'Close',
+    noPuedo: 'I can’t continue with this order',
+    motivo: 'Tell us why. It’s offered to another driver and your level isn’t affected.',
+    soltar: 'Release the order',
+    pidio: {
+      puerta: 'Customer chose: leave at the door',
+      mano: 'Customer chose: hand it to them',
+    } as Record<string, string>,
+    enMano: 'Handed to the customer',
+    noAparece: 'Customer isn’t here',
+    esperando5: 'We told the customer. Message them in the chat and wait',
+    dejarSeguro: 'Leave in a safe spot (with photo)',
+    dondeLoDejas: 'Where are you leaving it (with the doorman, behind the planter…)',
     permisoCamara: 'To take the photo, we need permission to use the camera.',
     esperando: 'The restaurant is finishing it…',
+    listoEn: 'Ready in',
+    listoYa: 'Ready for pickup now.',
     nivel: 'Your level',
     puntos: 'points',
     faltan: 'You need',
@@ -193,6 +240,17 @@ export function Inicio() {
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
   const [subiendo, setSubiendo] = useState(false);
+  // Verificar el pedido en el restaurante (QR o número), soltarlo, y la entrega en la puerta.
+  const [escaneando, setEscaneando] = useState(false);
+  const [permisoCamara, pedirCamara] = useCameraPermissions();
+  const [codigo, setCodigo] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [nota, setNota] = useState('');
+  const [tic, setTic] = useState(() => Date.now());
+  useEffect(() => {
+    const reloj = setInterval(() => setTic(Date.now()), 1000);
+    return () => clearInterval(reloj);
+  }, []);
 
   const cargar = useCallback(async () => {
     try {
@@ -256,7 +314,14 @@ export function Inicio() {
     let vivo = true;
     const leer = async () => {
       const p = await ubicacionConLimite();
-      if (vivo && p) setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+      if (!vivo || !p) return;
+      setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+      await api
+        .pedir('POST', '/datos/repartidor/ubicacion', {
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+        })
+        .catch(() => undefined);
     };
     void leer();
     const reloj = setInterval(() => void leer(), 5000);
@@ -264,7 +329,7 @@ export function Inicio() {
       vivo = false;
       clearInterval(reloj);
     };
-  }, [enCamino]);
+  }, [enCamino, api]);
 
   /** Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó. */
   async function tomarFoto(ruta: string) {
@@ -281,7 +346,10 @@ export function Inicio() {
       if (!p) return setError(t.ubicacionTarda);
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
       const blob = await (await fetch(foto.uri)).blob();
-      await api.subirFoto(blob, `${ruta}?lat=${p.coords.latitude}&lng=${p.coords.longitude}`);
+      await api.subirFoto(
+        blob,
+        `${ruta}${ruta.includes('?') ? '&' : '?'}lat=${p.coords.latitude}&lng=${p.coords.longitude}`,
+      );
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -318,10 +386,53 @@ export function Inicio() {
     }
   }
 
-  async function accion(ruta: string) {
+  async function verificar(texto: string) {
+    if (!estado?.activo) return;
     setError('');
     try {
-      await api.pedir('POST', ruta, {});
+      await api.pedir('POST', `/datos/repartidor/pedidos/${estado.activo.id}/verificar`, {
+        codigo: texto.trim(),
+      });
+      setCodigo('');
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  async function escanear() {
+    if (!permisoCamara?.granted) {
+      const r = await pedirCamara();
+      if (!r.granted) return setError(t.permisoCamara);
+    }
+    setEscaneando(true);
+  }
+
+  /** Entregado en mano: el cliente lo recibió; sin foto, pero solo en la puerta. */
+  async function entregarEnMano() {
+    if (!estado?.activo || subiendo) return;
+    setError('');
+    setSubiendo(true);
+    try {
+      const p = await ubicacionConLimite();
+      if (!p) return setError(t.ubicacionTarda);
+      await api.pedir('POST', `/datos/repartidor/pedidos/${estado.activo.id}/entregado`, {
+        lat: p.coords.latitude,
+        lng: p.coords.longitude,
+        modo: 'mano',
+      });
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  async function accion(ruta: string, cuerpo: unknown = {}) {
+    setError('');
+    try {
+      await api.pedir('POST', ruta, cuerpo);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -350,6 +461,38 @@ export function Inicio() {
   }
 
   const activo = estado?.activo;
+  // Verificar el pedido en el restaurante: escanear el QR de su pantalla o escribir el número.
+  const bloqueCodigo =
+    activo && activo.estado === 'listo' ? (
+      activo.verificado ? (
+        <Text
+          style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
+          accessibilityRole="alert"
+        >
+          {t.verificadoOk}
+        </Text>
+      ) : (
+        <>
+          {Platform.OS !== 'web' ? (
+            <Boton texto={t.escanear} alTocar={() => void escanear()} exito />
+          ) : null}
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TextInput
+              value={codigo}
+              onChangeText={(x) => setCodigo(x.toUpperCase().slice(0, 4))}
+              placeholder="A1B2"
+              accessibilityLabel={t.escribirCodigo}
+              autoCapitalize="characters"
+              style={[e.input, { flex: 1, letterSpacing: 4 }]}
+            />
+            <View style={{ width: 120 }}>
+              <Boton texto={t.verificar} alTocar={() => void verificar(codigo)} secundario />
+            </View>
+          </View>
+        </>
+      )
+    ) : null;
   // Menú de tres rayas: la billetera completa vive en su propia vista, como en una app de banco.
   const menuCabecera = (
     <View style={{ marginBottom: 8 }}>
@@ -510,11 +653,12 @@ export function Inicio() {
               ) : null}
               {activo.estado === 'listo' && activo.fotoRecogida ? (
                 <>
+                  {bloqueCodigo}
                   <Text
                     style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
                     accessibilityRole="alert"
                   >
-                    {t.esperaConfirmacion}
+                    {activo.verificado ? t.verificadoOk : t.esperaConfirmacion}
                   </Text>
                   <Boton
                     texto={subiendo ? t.subiendo : t.repetirFoto}
@@ -527,19 +671,54 @@ export function Inicio() {
                 </>
               ) : activo.estado === 'listo' ? (
                 <>
+                  {bloqueCodigo}
                   <Boton
                     texto={subiendo ? t.subiendo : t.fotoRecogida}
                     alTocar={() =>
                       void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
                     }
                     cargando={subiendo}
-                    exito
+                    exito={!!activo.verificado}
+                    secundario={!activo.verificado}
                   />
                   <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
                 </>
               ) : (
-                <Text style={{ marginTop: 8, color: '#5E5E5E' }}>{t.esperando}</Text>
+                <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
+                  {t.esperando}
+                  {activo.minutosParaListo ? ` ${t.listoEn} ${activo.minutosParaListo} min.` : ''}
+                </Text>
               )}
+              {/* Soltar antes de recoger: vuelve a la fila de ofertas, sin castigo. */}
+              <View
+                style={{
+                  marginTop: 14,
+                  borderTopWidth: 1,
+                  borderTopColor: '#E6E6E6',
+                  paddingTop: 8,
+                }}
+              >
+                <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
+                <TextInput
+                  value={motivo}
+                  onChangeText={setMotivo}
+                  placeholder={t.motivo}
+                  accessibilityLabel={t.motivo}
+                  style={[e.input, { marginTop: 6 }]}
+                />
+                {motivo.trim() ? (
+                  <Boton
+                    texto={t.soltar}
+                    alTocar={() =>
+                      void accion(`/datos/repartidor/pedidos/${activo.id}/soltar`, {
+                        motivo: motivo.trim(),
+                      }).then(() => setMotivo(''))
+                    }
+                    secundario
+                  />
+                ) : null}
+              </View>
             </>
           ) : (
             <>
@@ -550,6 +729,9 @@ export function Inicio() {
                   {t.notas}: {activo.notas}
                 </Text>
               ) : null}
+              <Text style={{ fontWeight: '700', marginTop: 4 }}>
+                {t.pidio[activo.entrega ?? 'puerta']}
+              </Text>
               {(() => {
                 const casa =
                   activo.lat != null && activo.lng != null
@@ -580,6 +762,15 @@ export function Inicio() {
                     </>
                   );
                 }
+                // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
+                const enMano = activo.entrega === 'mano';
+                const avisoMs = activo.noApareceEn
+                  ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
+                  : null;
+                const faltanSeg =
+                  avisoMs == null
+                    ? null
+                    : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
                 return (
                   <>
                     <Boton
@@ -588,14 +779,59 @@ export function Inicio() {
                         void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
                       }
                       cargando={subiendo}
-                      exito
+                      exito={!enMano}
+                      secundario={enMano}
                     />
                     <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                    <Boton
+                      texto={t.enMano}
+                      alTocar={() => void entregarEnMano()}
+                      cargando={subiendo}
+                      exito={enMano}
+                      secundario={!enMano}
+                    />
+                    {faltanSeg == null ? (
+                      <Boton
+                        texto={t.noAparece}
+                        alTocar={() =>
+                          void accion(`/datos/repartidor/pedidos/${activo.id}/no-aparece`)
+                        }
+                        secundario
+                      />
+                    ) : faltanSeg > 0 ? (
+                      <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
+                        {t.esperando5} {Math.floor(faltanSeg / 60)}:
+                        {String(faltanSeg % 60).padStart(2, '0')}
+                      </Text>
+                    ) : (
+                      <>
+                        <TextInput
+                          value={nota}
+                          onChangeText={setNota}
+                          placeholder={t.dondeLoDejas}
+                          accessibilityLabel={t.dondeLoDejas}
+                          style={[e.input, { marginTop: 6 }]}
+                        />
+                        {nota.trim() ? (
+                          <Boton
+                            texto={subiendo ? t.subiendo : t.dejarSeguro}
+                            alTocar={() =>
+                              void tomarFoto(
+                                `/datos/repartidor/pedidos/${activo.id}/entregado?modo=seguro&nota=${encodeURIComponent(nota.trim())}`,
+                              )
+                            }
+                            cargando={subiendo}
+                            exito
+                          />
+                        ) : null}
+                      </>
+                    )}
                   </>
                 );
               })()}
             </>
           )}
+          <ChatPedido pedidoId={activo.id} />
         </View>
       ) : estado?.conectado ? (
         ofertas.length === 0 ? (
@@ -614,6 +850,9 @@ export function Inicio() {
               ) : null}
               <Text style={{ marginTop: 6 }}>
                 {t.recoger}: {o.restaurante.nombre}
+                {o.minutosParaListo
+                  ? ` · ${t.listoEn} ${o.minutosParaListo} min`
+                  : ` · ${t.listoYa}`}
               </Text>
               <Text>
                 {t.entregar}: {o.direccion}
@@ -691,6 +930,22 @@ export function Inicio() {
       <ReportarProblema pedidoId={estado?.activo?.id} />
       <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
       <MenuCuenta />
+      <Modal visible={escaneando} animationType="slide" onRequestClose={() => setEscaneando(false)}>
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <CameraView
+            style={{ flex: 1 }}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={({ data }) => {
+              setEscaneando(false);
+              void verificar(data);
+            }}
+          />
+          <View style={{ padding: 16 }}>
+            <Boton texto={t.cerrar} alTocar={() => setEscaneando(false)} secundario />
+          </View>
+        </View>
+      </Modal>
     </Pantalla>
   );
 }

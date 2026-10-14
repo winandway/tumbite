@@ -7,9 +7,9 @@
 ### Lo primero para lanzar (al 12 oct 2026, noche), en orden
 
 - [ ] 👤 **Compra real de 1 dólar** desde la app web y, en la misma prueba, **cancelar otro pedido de 1 dólar antes de que el restaurante lo acepte** (tiene que verse la devolución en Stripe). Es lo único que falta para dar los pagos por probados (`VERIFICAR-PAGOS.md`).
-- [ ] 👤 **Prueba en la calle** con tres cuentas: cliente, restaurante y repartidor (`docs/PLAN-DE-PRUEBA-EN-CALLE.md`). **En pausa por decisión de Richard (14 oct):** primero se cierran las brechas 1 a 5 de `docs/COMPARACION-CICLO-PEDIDO.md` (Etapa 2½ del roadmap).
+- [ ] 👤 **Prueba en la calle** con tres cuentas: cliente, restaurante y repartidor (`docs/PLAN-DE-PRUEBA-EN-CALLE.md`). **Destrancada el 14 oct:** las brechas 1 a 7 de `docs/COMPARACION-CICLO-PEDIDO.md` quedaron cerradas; la prueba en la calle ahora también comprueba el radio de 200 m, el código QR, el chat y la entrega en mano.
 - [ ] 👤 Decidir el primer pedido de 7.18 dólares: marcarlo entregado o devolverlo.
-- [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas. (El envío a las tiendas espera a la Etapa 2½; las cuentas se pueden ir abriendo porque Apple tarda semanas.) Guía paso a paso con croquis en `docs/Guia-publicar-apps-Apple-Google.pdf` (Apple como organización con correo @windoce.com, llave Admin; Google: comprobar que la cuenta sea de organización; Expo: organización windoce-llc y su llave).
+- [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas. (La Etapa 2½ quedó cerrada el 14 oct; solo falta la prueba en la calle.) Guía paso a paso con croquis en `docs/Guia-publicar-apps-Apple-Google.pdf` (Apple como organización con correo @windoce.com, llave Admin; Google: comprobar que la cuenta sea de organización; Expo: organización windoce-llc y su llave).
 - [ ] 👤 Número de WhatsApp de soporte.
 - [ ] 👤 Llave de Google Places para que la dirección se complete sola.
 - [ ] 👤 Abogado: revisar los textos legales y la marca.

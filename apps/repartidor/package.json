@@ -7,6 +7,7 @@
     "@tumbite/compartido": "0.1.0",
     "@tumbite/movil": "0.1.0",
     "expo": "~57.0.27",
+    "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.21",
     "expo-device": "~57.0.2",
     "expo-image-picker": "~57.0.20",

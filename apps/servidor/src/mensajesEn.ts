@@ -61,6 +61,43 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa foto no corresponde.', 'That photo isn’t valid here.'],
   ['Esa foto no es válida. Vuelve a subirla.', 'That photo isn’t valid. Please upload it again.'],
   ['Falta la foto. Tómala y vuelve a intentar.', 'The photo is missing. Take it and try again.'],
+  ['Este pedido ya no tiene nada que decidir.', 'There’s nothing left to decide on this order.'],
+  ['Este pedido ya cambió de estado.', 'This order already changed status.'],
+  ['Este pedido ya no se puede cancelar.', 'This order can no longer be canceled.'],
+  ['No pudimos hacer la devolución en este momento.', 'We couldn’t process the refund right now.'],
+  [
+    'Este pedido ya salió o ya cambió de estado: no se puede quitar un plato.',
+    'This order already went out or changed status: an item can’t be removed.',
+  ],
+  ['Ya avisaste de un plato en este pedido.', 'You already flagged an item on this order.'],
+  ['Ese plato no está en este pedido.', 'That item isn’t on this order.'],
+  [
+    'Espera a que el cliente decida sobre el plato que falta.',
+    'Wait for the customer to decide about the missing item.',
+  ],
+  [
+    'Ya hay un repartidor en camino: el tiempo no se puede cambiar. Avísale por la app si va a tardar.',
+    'A driver is already on the way: the time can’t be changed. Let them know in the app if it’ll take longer.',
+  ],
+  [
+    'Ese código no es de este pedido. Escanea el de la pantalla del restaurante.',
+    'That code isn’t for this order. Scan the one on the restaurant’s screen.',
+  ],
+  [
+    'Primero avisa que el cliente no aparece y espera 5 minutos.',
+    'First report that the customer isn’t there and wait 5 minutes.',
+  ],
+  ['Todavía no estás en la puerta del cliente.', 'You’re not at the customer’s door yet.'],
+  ['Escribe dónde dejaste el pedido.', 'Write where you left the order.'],
+  [
+    'Este pedido ya no está activo: el chat se cerró.',
+    'This order is no longer active: the chat is closed.',
+  ],
+  [
+    'Ya recogiste el pedido: ahora hay que entregarlo. Si tienes un problema, repórtalo.',
+    'You already picked up the order: now it has to be delivered. If there’s a problem, report it.',
+  ],
+  ['Este pedido no está contigo.', 'This order isn’t assigned to you.'],
   [
     'Necesitamos tu ubicación para confirmar que estás en el lugar. Revisa que el GPS esté encendido.',
     'We need your location to confirm you’re there. Check that your GPS is on.',

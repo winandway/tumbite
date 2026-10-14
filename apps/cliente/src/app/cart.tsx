@@ -30,6 +30,23 @@ import { ElegirEnMapa } from '../ElegirEnMapa';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 
+const TE = {
+  es: {
+    como: '¿Cómo quieres recibirlo?',
+    puerta: 'En la puerta',
+    puertaAyuda: 'Sin contacto. El repartidor lo deja y te manda la foto.',
+    mano: 'En mano',
+    manoAyuda: 'Te lo entrega a ti. Sal a recibirlo cuando te avise.',
+  },
+  en: {
+    como: 'How do you want to receive it?',
+    puerta: 'Leave at my door',
+    puertaAyuda: 'Contactless. The driver leaves it and sends you a photo.',
+    mano: 'Hand it to me',
+    manoAyuda: 'The driver hands it to you. Come out when they let you know.',
+  },
+} as const;
+
 const PROPINAS = [0, 1500, 2000, 2500]; // puntos básicos: 0 %, 15 %, 20 %, 25 %
 
 type Regalo = { tipo: 'cumpleanos' | 'sellos' | 'vuelve'; valorCentavos: number };
@@ -49,6 +66,7 @@ const NOMBRE_REGALO = {
 export default function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
+  const te = idioma === 'en' ? TE.en : TE.es;
   const { carrito, cambiarCantidad, vaciar } = useCarrito();
   const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
   const [punto, setPunto] = useState<Punto | null>(null);
@@ -62,7 +80,7 @@ export default function PantallaCarrito() {
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
-    inicial: { direccion: '', notas: '', propinaOtra: '' },
+    inicial: { direccion: '', notas: '', propinaOtra: '', entrega: 'puerta' },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
@@ -142,6 +160,7 @@ export default function PantallaCarrito() {
         propinaCentavos: propina,
         direccion: b.valores.direccion,
         notas: b.valores.notas,
+        entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
@@ -235,6 +254,35 @@ export default function PantallaCarrito() {
         onChangeText={(x) => b.cambiar('notas', x)}
         placeholder={t.notas}
       />
+      {/* Cómo recibir: en la puerta (el repartidor deja foto) o en mano (te lo entrega a ti). */}
+      <Text style={{ fontWeight: '700', marginBottom: 6 }}>{te.como}</Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+        {(['puerta', 'mano'] as const).map((modo) => {
+          const activo = (b.valores.entrega || 'puerta') === modo;
+          return (
+            <Pressable
+              key={modo}
+              onPress={() => b.cambiar('entrega', modo)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: activo }}
+              accessibilityLabel={modo === 'mano' ? te.mano : te.puerta}
+              style={{
+                flex: 1,
+                padding: 12,
+                borderRadius: 12,
+                borderWidth: activo ? 2 : 1,
+                borderColor: activo ? C.exito : '#D6D6D6',
+                backgroundColor: activo ? '#E8F5EE' : '#fff',
+              }}
+            >
+              <Text style={{ fontWeight: '800' }}>{modo === 'mano' ? te.mano : te.puerta}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                {modo === 'mano' ? te.manoAyuda : te.puertaAyuda}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.propina}</Text>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
