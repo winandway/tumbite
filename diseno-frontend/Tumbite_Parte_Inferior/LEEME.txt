@@ -1,0 +1,8 @@
+TUMBITE - ASSETS PARTE INFERIOR
+
+21 PNG recortados de la pantalla aprobada, más manifiesto.
+Los banners y fotografías tienen transparencia FUERA de sus esquinas redondeadas; sus fondos interiores siguen siendo opacos porque forman parte de la fotografía.
+Los iconos pequeños tienen transparencia estimada, no son vectores originales. Revisar bordes.
+Para código: reconstruir textos, precios, botones, etiquetas, ratings y tarjetas como HTML/CSS, no incrustarlos en imágenes.
+Las tarjetas completas son referencias visuales opcionales, NO componentes interactivos.
+Los nombres y precios son datos de ejemplo, no ofertas verificadas.

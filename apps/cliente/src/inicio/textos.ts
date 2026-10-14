@@ -1,0 +1,113 @@
+import type { Idioma } from '@tumbite/compartido';
+
+/** Textos de la pantalla de inicio nueva (diseño aprobado el 14 oct 2026), en los dos idiomas. */
+const es = {
+  hola: '¡Hola',
+  buscar: '¿Qué se te antoja hoy?',
+  soloAbiertos: 'Solo abiertos',
+  servicios: {
+    comida: 'Comida',
+    mercado: 'Mercado',
+    envios: 'Envíos',
+    farmacia: 'Farmacia',
+    moto: 'Moto',
+    licores: 'Licores',
+    promos: 'Promos',
+    mas: 'Más',
+  },
+  prontoTitulo: '¡Muy pronto en Tumbite!',
+  prontoTexto: 'Estamos preparando nuevos servicios para ti.',
+  entendido: 'Entendido',
+  pendienteTitulo: 'Tienes {monto} en tu carrito sin pagar',
+  pendienteTexto: 'Termina tu pedido cuando quieras.',
+  pagar: 'Pagar',
+  ofertas: 'Ofertas del día',
+  verTodas: 'Ver todas',
+  ejemplo: 'Ejemplo',
+  cerca: 'Restaurantes cerca de ti',
+  verTodos: 'Ver todos',
+  envio: 'Envío',
+  min: 'min',
+  abierto: 'Abierto',
+  cerrado: 'Cerrado',
+  sinUbicacion: 'Activa la ubicación para ver los más cercanos.',
+  sinRestaurantes: 'Todavía no hay restaurantes en tu zona. ¡Muy pronto!',
+  reintentar: 'Intentar de nuevo',
+  nav: { inicio: 'Inicio', pedidos: 'Pedidos', favoritos: 'Favoritos', cuenta: 'Mi cuenta' },
+  campana: 'Avisos',
+  cupon: 'Cupones y regalos',
+  relleno: {
+    ofertas: [
+      { nombre: 'Hamburguesa clásica', precio: 899, antes: 1499, descuento: '40% OFF' },
+      { nombre: 'Sushi mix 12 piezas', precio: 1299, antes: 2199, descuento: '40% OFF' },
+    ],
+    combo: {
+      titulo: 'Combo familiar',
+      detalle: 'Pizza grande + 1 bebida 1.5L',
+      precio: 1299,
+      antes: 2299,
+    },
+    restaurantes: [
+      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199 },
+      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249 },
+      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199 },
+    ],
+  },
+};
+
+const en: typeof es = {
+  hola: 'Hi',
+  buscar: 'What are you craving today?',
+  soloAbiertos: 'Open now',
+  servicios: {
+    comida: 'Food',
+    mercado: 'Grocery',
+    envios: 'Deliveries',
+    farmacia: 'Pharmacy',
+    moto: 'Ride',
+    licores: 'Liquor',
+    promos: 'Deals',
+    mas: 'More',
+  },
+  prontoTitulo: 'Coming soon to Tumbite!',
+  prontoTexto: 'We’re getting new services ready for you.',
+  entendido: 'Got it',
+  pendienteTitulo: 'You have {monto} in your cart, unpaid',
+  pendienteTexto: 'Finish your order whenever you like.',
+  pagar: 'Pay',
+  ofertas: 'Today’s deals',
+  verTodas: 'See all',
+  ejemplo: 'Sample',
+  cerca: 'Restaurants near you',
+  verTodos: 'See all',
+  envio: 'Delivery',
+  min: 'min',
+  abierto: 'Open',
+  cerrado: 'Closed',
+  sinUbicacion: 'Turn on location to see the closest ones.',
+  sinRestaurantes: 'No restaurants in your area yet. Coming soon!',
+  reintentar: 'Try again',
+  nav: { inicio: 'Home', pedidos: 'Orders', favoritos: 'Favorites', cuenta: 'My account' },
+  campana: 'Notifications',
+  cupon: 'Coupons and gifts',
+  relleno: {
+    ofertas: [
+      { nombre: 'Classic burger', precio: 899, antes: 1499, descuento: '40% OFF' },
+      { nombre: 'Sushi mix, 12 pieces', precio: 1299, antes: 2199, descuento: '40% OFF' },
+    ],
+    combo: {
+      titulo: 'Family combo',
+      detalle: 'Large pizza + 1.5L drink',
+      precio: 1299,
+      antes: 2299,
+    },
+    restaurantes: [
+      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199 },
+      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249 },
+      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199 },
+    ],
+  },
+};
+
+export const TEXTOS_INICIO = { es, en };
+export const textosInicio = (idioma: Idioma) => (idioma === 'en' ? en : es);

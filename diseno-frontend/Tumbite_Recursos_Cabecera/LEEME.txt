@@ -1,0 +1,1 @@
+Tumbite: recortes raster de la pantalla aprobada. PNG con canal alfa aproximado, no archivos fuente. Revisar bordes y fidelidad del logo antes de produccion. El archivo 00 es referencia sin transparencia.

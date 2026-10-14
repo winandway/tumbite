@@ -976,8 +976,13 @@ for (const idioma of ['en', 'es'] as const) {
     const compara = panel.getByRole('region', {
       name: /Compared with other apps|Comparado con otras apps/,
     });
-    await expect(compara).toContainText(pagoRest);
+    // La comparación usa el plan sobre TODAS sus ventas (la recogida al 5 % la mejora aún más):
+    // lo que importa es que con Tumbite le queda más que con los otros.
     await expect(compara).toContainText(/DoorDash Basic/);
+    const textoCompara = await compara.innerText();
+    const montoTumbite = Number(/Tumbite[^$]*\$(\d+\.\d\d)/.exec(textoCompara)?.[1] ?? '0');
+    const montoDoorDash = Number(/DoorDash Basic[^$]*\$(\d+\.\d\d)/.exec(textoCompara)?.[1] ?? '0');
+    expect(montoTumbite).toBeGreaterThan(montoDoorDash);
     await expect(compara).toContainText(/Uber Eats Lite/);
     await foto(panel, 'restaurante-beneficios');
 

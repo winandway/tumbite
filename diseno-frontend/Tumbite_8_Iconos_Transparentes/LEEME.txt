@@ -1,0 +1,3 @@
+TUMBITE - 8 iconos PNG RGBA transparentes, 512 x 512 px.
+Extraidos de la maqueta aprobada. Son recortes rasterizados, no archivos vectoriales ni originales 3D.
+Verificar los bordes en produccion.

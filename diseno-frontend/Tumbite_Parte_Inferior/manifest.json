@@ -1,0 +1,112 @@
+{
+  "fuente": "Pantalla aprobada de Tumbite",
+  "ancho_referencia": 852,
+  "alto_referencia": 1846,
+  "assets": {
+    "01_aviso_pago_completo": {
+      "box_original": [24, 742, 808, 865],
+      "size_png": [1568, 246],
+      "transparencia": "exterior de esquinas"
+    },
+    "02_icono_billetera": {
+      "box_original": [49, 751, 163, 855],
+      "size_png": [228, 208],
+      "transparencia": "exterior de esquinas"
+    },
+    "03_banner_combo_familiar_completo": {
+      "box_original": [435, 939, 812, 1293],
+      "size_png": [754, 708],
+      "transparencia": "exterior de esquinas"
+    },
+    "04_foto_hamburguesa_oferta": {
+      "box_original": [39, 957, 204, 1102],
+      "size_png": [330, 290],
+      "transparencia": "exterior de esquinas"
+    },
+    "05_foto_sushi_oferta": {
+      "box_original": [39, 1130, 204, 1276],
+      "size_png": [330, 292],
+      "transparencia": "exterior de esquinas"
+    },
+    "06_tarjeta_oferta_hamburguesa": {
+      "box_original": [24, 940, 426, 1117],
+      "size_png": [804, 354],
+      "transparencia": "exterior de esquinas"
+    },
+    "07_tarjeta_oferta_sushi": {
+      "box_original": [24, 1116, 426, 1291],
+      "size_png": [804, 350],
+      "transparencia": "exterior de esquinas"
+    },
+    "08_restaurante_hamburguesas_foto": {
+      "box_original": [33, 1362, 296, 1511],
+      "size_png": [526, 298],
+      "transparencia": "exterior de esquinas"
+    },
+    "09_restaurante_sushi_foto": {
+      "box_original": [305, 1362, 562, 1511],
+      "size_png": [514, 298],
+      "transparencia": "exterior de esquinas"
+    },
+    "10_restaurante_pizza_foto": {
+      "box_original": [570, 1362, 826, 1511],
+      "size_png": [512, 298],
+      "transparencia": "exterior de esquinas"
+    },
+    "11_restaurante_hamburguesas_tarjeta": {
+      "box_original": [33, 1362, 296, 1590],
+      "size_png": [526, 456],
+      "transparencia": "exterior de esquinas"
+    },
+    "12_restaurante_sushi_tarjeta": {
+      "box_original": [305, 1362, 562, 1590],
+      "size_png": [514, 456],
+      "transparencia": "exterior de esquinas"
+    },
+    "13_restaurante_pizza_tarjeta": {
+      "box_original": [570, 1362, 826, 1590],
+      "size_png": [512, 456],
+      "transparencia": "exterior de esquinas"
+    },
+    "14_nav_inicio": {
+      "box_original": [91, 1634, 152, 1695],
+      "size_png": [244, 244],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "15_nav_pedidos": {
+      "box_original": [293, 1634, 353, 1695],
+      "size_png": [240, 244],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "16_nav_favoritos": {
+      "box_original": [480, 1634, 544, 1695],
+      "size_png": [256, 244],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "17_nav_cuenta": {
+      "box_original": [680, 1625, 759, 1697],
+      "size_png": [316, 288],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "18_corazon_favorito": {
+      "box_original": [242, 1373, 281, 1414],
+      "size_png": [156, 164],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "19_estrella_rating": {
+      "box_original": [47, 1544, 78, 1575],
+      "size_png": [124, 124],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "20_icono_envio": {
+      "box_original": [197, 1547, 226, 1570],
+      "size_png": [116, 92],
+      "transparencia": "aproximada; verificar bordes"
+    },
+    "00_referencia_inferior": {
+      "box_original": [0, 729, 852, 1810],
+      "size_png": [852, 1081],
+      "transparencia": "PNG RGBA, fotografía interior opaca"
+    }
+  }
+}
