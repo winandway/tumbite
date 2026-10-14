@@ -38,6 +38,7 @@
 - [The Manager: no order gets forgotten · Tumbite](https://tumbite.com/docs/trust/manager): An automatic watcher follows every order from payment to the door, and steps in only when something runs late.
 - [The traffic light on every order · Tumbite](https://tumbite.com/docs/trust/traffic-light): Green, yellow, or red: at a glance you know which order is fine and which one needs attention.
 - [Verified restaurants and drivers · Tumbite](https://tumbite.com/docs/trust/verification): Every restaurant is a real business and every driver is who they say they are. A person on our team checks it.
+- [Tumbite compared with other delivery apps](https://tumbite.com/docs/trust/compare): How much each app keeps from the restaurant, what the customer pays, and what the driver gets. With public numbers, so everyone can decide.
 - [For entrepreneurs · Tumbite](https://tumbite.com/docs/business): ⌘K← Docs For entrepreneursFranchises: bring Tumbite to your cityEvery new city opens with a local partner. What you pay for isn’t a brand: it’s a complete 
 - [Franchises: bring Tumbite to your city](https://tumbite.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
 - [Launch team training · Tumbite](https://tumbite.com/docs/business/team-training): The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.
