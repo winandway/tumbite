@@ -6,13 +6,13 @@ const hace = (min: number) =>
   new Date(AHORA - min * 60000).toISOString().slice(0, 19).replace('T', ' ');
 
 describe('semáforo del pedido (C-MANAGER-1)', () => {
-  it('pagado sin aceptar: verde, amarillo a los 3 y rojo a los 6 minutos', () => {
+  it('pagado sin aceptar: verde, amarillo al minuto y rojo a los 3 minutos', () => {
     const p = (m: number) =>
       semaforoPedido({ estado: 'pagado', creadoEn: hace(m), pagadoEn: hace(m) }, AHORA);
-    expect(p(2)?.luz).toBe('verde');
-    expect(p(3)?.luz).toBe('amarillo');
-    expect(p(6)?.luz).toBe('rojo');
-    expect(p(6)?.motivo).toBe('restaurante');
+    expect(p(0)?.luz).toBe('verde');
+    expect(p(1)?.luz).toBe('amarillo');
+    expect(p(3)?.luz).toBe('rojo');
+    expect(p(3)?.motivo).toBe('restaurante');
   });
   it('en cocina se compara con el tiempo que prometió el restaurante', () => {
     const p = (m: number) =>

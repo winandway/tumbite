@@ -453,19 +453,19 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     expect(f?.estado).toBe('pagado');
   });
 
-  it('recuerda a los 3 y 6 minutos (una sola vez cada uno) y cancela con reembolso a los 10', async () => {
+  it('recuerda al minuto y a los 3 (una sola vez cada uno) y cancela con reembolso a los 6', async () => {
     const { m, pedidoPagado } = await escenario();
     const { vigilarPedidos } = await import('../manager');
     const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
     const id = await pedidoPagado();
     const reembolsos = contarReembolsos();
     expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(0);
-    await atrasar(m, id, 'pagado_en', 4);
+    await atrasar(m, id, 'pagado_en', 2);
     expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(1);
     expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(0);
-    await atrasar(m, id, 'pagado_en', 7);
+    await atrasar(m, id, 'pagado_en', 4);
     expect((await vigilarPedidos(env, m.DB)).recordatorios).toBe(1);
-    await atrasar(m, id, 'pagado_en', 11);
+    await atrasar(m, id, 'pagado_en', 7);
     expect((await vigilarPedidos(env, m.DB)).cancelados).toBe(1);
     expect(reembolsos()).toBe(1);
     const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();

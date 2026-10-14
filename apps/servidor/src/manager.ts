@@ -15,11 +15,11 @@ import { aplicarAjuste } from './rutas/pedidos';
  */
 export const REGLAS = {
   /** Minutos sin que el restaurante acepte: primer recordatorio. */
-  recordatorio1: 3,
+  recordatorio1: 1,
   /** Segundo recordatorio. */
-  recordatorio2: 6,
+  recordatorio2: 3,
   /** Cancelación con devolución automática del dinero. */
-  cancelar: 10,
+  cancelar: 6,
   /** Minutos sin señal del repartidor (con pedido asignado y sin haber llegado): se reasigna. */
   repartidorPerdido: 10,
   /** Minutos que tiene el cliente para decidir sobre un plato agotado; después se quita solo. */
@@ -138,11 +138,11 @@ const TEXTOS = {
     i === 'en'
       ? {
           titulo: `Order #${corto} was canceled`,
-          cuerpo: 'Nobody accepted it in 10 minutes. The customer got a refund.',
+          cuerpo: 'Nobody accepted it in 6 minutes. The customer got a refund.',
         }
       : {
           titulo: `Se canceló el pedido #${corto}`,
-          cuerpo: 'Nadie lo aceptó en 10 minutos. Al cliente le devolvimos el dinero.',
+          cuerpo: 'Nadie lo aceptó en 6 minutos. Al cliente le devolvimos el dinero.',
         },
 };
 

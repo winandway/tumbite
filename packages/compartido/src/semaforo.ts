@@ -33,9 +33,9 @@ export function semaforoPedido(p: PedidoParaSemaforo, ahora = Date.now()): Semaf
     Math.max(0, Math.floor((ahora - fechaBase(f ?? p.creadoEn)) / 60000));
   switch (p.estado) {
     case 'pagado': {
-      // Recordatorios a los 3 y 6 minutos; a los 10 el Manager lo cancela.
+      // Recordatorios al minuto y a los 3; a los 6 el Manager lo cancela (tiempos de los grandes).
       const m = desde(p.pagadoEn);
-      return { luz: luz(m, 3, 6), minutos: m, motivo: 'restaurante' };
+      return { luz: luz(m, 1, 3), minutos: m, motivo: 'restaurante' };
     }
     case 'aceptado': {
       const m = desde(p.aceptadoEn);

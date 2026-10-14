@@ -45,7 +45,7 @@ import { formatearDolares } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const SEGUNDOS_OFERTA = 60;
+const SEGUNDOS_OFERTA = 45;
 const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
 /** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
 const puntoConPrecision = punto.extend({

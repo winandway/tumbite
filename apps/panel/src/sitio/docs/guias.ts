@@ -290,7 +290,7 @@ const es: SeccionDocs[] = [
           'Toca «Sí, cancelar». El pedido queda cancelado al instante.',
           'La devolución sale de inmediato a la misma tarjeta. Según tu banco, puede tardar de 5 a 10 días hábiles en verse en tu estado de cuenta.',
         ],
-        nota: 'Si el restaurante no confirma tu pedido en 10 minutos, lo cancelamos y te devolvemos el dinero sin que tengas que hacer nada.',
+        nota: 'Si el restaurante no confirma tu pedido en 6 minutos, lo cancelamos y te devolvemos el dinero sin que tengas que hacer nada.',
       },
       {
         id: 'my-account',
@@ -648,7 +648,7 @@ const es: SeccionDocs[] = [
           'Cuando entra un pedido pagado, suena hasta que lo aceptes. Elige los minutos de preparación.',
           'Prepara la comida y toca «Listo» cuando esté lista: en ese momento buscamos al repartidor más cercano.',
           'Cada pedido lleva su semáforo: verde va a tiempo, amarillo se está atrasando y rojo necesita atención ya. Al lado ves hace cuánto entró y por qué se atrasa.',
-          'Si nadie acepta un pedido, te avisamos al celular a los 3 y a los 6 minutos. A los 10 lo cancelamos y le devolvemos el dinero al cliente: es mejor un pedido cancelado a tiempo que un cliente esperando.',
+          'Si nadie acepta un pedido, te avisamos al celular al minuto y a los 3 minutos. A los 6 lo cancelamos y le devolvemos el dinero al cliente: es mejor un pedido cancelado a tiempo que un cliente esperando.',
           'Si no puedes atender un pedido, abre los tres puntos y elige «Rechazar pedido». El cliente recibe todo su dinero de vuelta.',
           'También puedes usar la app de Tumbite para restaurantes en una tablet o un celular: misma alarma, mismos pedidos.',
         ],
@@ -896,7 +896,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Cuando hay un pedido cerca, te llega una oferta con el pago en dólares, la distancia y el restaurante.',
-          'Tienes 60 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no cuenta en tu contra.',
+          'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no cuenta en tu contra.',
           'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
           'Toca «Cómo llegar» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
@@ -992,7 +992,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Si tres repartidores rechazan o dejan vencer un pedido, se ofrece a todos a la vez con 1 dólar extra. Quien lo entrega, lo cobra.',
         explicacion: [
-          'Normalmente cada pedido se ofrece a un solo repartidor a la vez, el más cercano, con 60 segundos para aceptar. Rechazar no castiga.',
+          'Normalmente cada pedido se ofrece a un solo repartidor a la vez, el más cercano, con 45 segundos para aceptar. Rechazar no castiga.',
           'Si tres lo dejan pasar, el pedido pasa a «oferta abierta»: lo ven todos los repartidores libres de la zona al mismo tiempo, con un bono de 1 dólar que paga Tumbite. En la tarjeta de la oferta dice «Incluye un bono de $1».',
           'El primero que acepta se lo lleva; a los demás se les quita de la pantalla. El bono se suma a tu ganancia cuando entregas.',
           'Además, si un pedido lleva 5 minutos sin repartidor, nuestro equipo recibe una alerta para ayudar a resolverlo.',
@@ -1127,7 +1127,7 @@ const es: SeccionDocs[] = [
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
           'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor toma la foto del pedido cerrado y el restaurante la confirma en su pantalla: recién ahí sale. Al llegar a la puerta, el repartidor toma la foto de la entrega. El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
           'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
-          'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 10 minutos, cancela y devuelve el dinero solo.',
+          'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 6 minutos, cancela y devuelve el dinero solo.',
         ],
         capturas: [
           {
@@ -1189,20 +1189,20 @@ const es: SeccionDocs[] = [
           'Un vigilante automático acompaña cada pedido desde que se paga hasta que llega a la puerta, y actúa solo cuando algo se atrasa.',
         explicacion: [
           'En un servicio de comida, lo que más enoja no es un error: es la espera sin respuesta. Por eso en Tumbite cada pedido tiene un Manager que lo acompaña de principio a fin, minuto a minuto, sin descanso.',
-          'El Manager conoce los tiempos que esperamos en cada etapa. Si el restaurante no confirma, le avisa a los 3 minutos y otra vez a los 6. Si a los 10 minutos sigue sin respuesta, cancela el pedido y le devuelve el dinero al cliente, para que nadie se quede con la comida pagada y sin noticias.',
+          'El Manager conoce los tiempos que esperamos en cada etapa. Si el restaurante no confirma, le avisa al minuto y otra vez a los 3. Si a los 6 minutos sigue sin respuesta, cancela el pedido y le devuelve el dinero al cliente, para que nadie se quede con la comida pagada y sin noticias.',
           'Cuando el pedido está listo y ningún repartidor lo ha tomado, el Manager avisa a nuestro equipo de operaciones para que busque a alguien de la zona. Y todo lo que pasa queda anotado con su hora: quién aceptó, cuándo salió, cuándo llegó.',
           'Para el cliente significa tranquilidad. Para el restaurante, un asistente que le recuerda lo urgente en la hora pico. Para el repartidor, pedidos que no se quedan colgados. Y para nuestro equipo, un tablero con todos los pedidos vivos donde los que necesitan ayuda aparecen primero.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
-            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 7 minutos sin aceptar (se cancela solo a los 10 minutos)».',
+            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 4 minutos sin aceptar (se cancela solo a los 6 minutos)».',
             pie: 'Un pedido sin aceptar se pone en rojo y dice cuánto falta para que se cancele solo.',
           },
           {
             src: '/docs/recorrido-cliente-manager-cancela-es.webp',
             alt: 'Pedido en la app de Tumbite que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de la devolución.',
-            pie: 'Si el restaurante no confirma en 10 minutos, el Manager cancela el pedido y devuelve el dinero.',
+            pie: 'Si el restaurante no confirma en 6 minutos, el Manager cancela el pedido y devuelve el dinero.',
           },
         ],
         preguntas: ['¿Qué pasa si el restaurante no acepta mi pedido?'],
@@ -1217,7 +1217,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En la hora pico, una cocina puede tener diez pedidos a la vez. El semáforo ordena esa urgencia: cada pedido muestra un punto de color, cuántos minutos lleva en su etapa y, si se está atrasando, el motivo.',
           'Verde: va a tiempo. Amarillo: se está atrasando y conviene mirarlo. Rojo: necesita atención ya.',
-          'Los tiempos dependen de la etapa. Un pedido nuevo pasa a amarillo a los 3 minutos sin aceptar y a rojo a los 6. En la cocina se compara con el tiempo que el propio restaurante prometió al aceptar: amarillo al pasarse, rojo diez minutos después. Un pedido listo sin repartidor pasa a amarillo a los 5 minutos y a rojo a los 15. Y en camino, amarillo a los 30 y rojo a los 45.',
+          'Los tiempos dependen de la etapa. Un pedido nuevo pasa a amarillo al minuto sin aceptar y a rojo a los 3. En la cocina se compara con el tiempo que el propio restaurante prometió al aceptar: amarillo al pasarse, rojo diez minutos después. Un pedido listo sin repartidor pasa a amarillo a los 5 minutos y a rojo a los 15. Y en camino, amarillo a los 30 y rojo a los 45.',
         ],
         capturas: [
           {
@@ -1227,7 +1227,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
-            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 7 minutos sin aceptar (se cancela solo a los 10 minutos)».',
+            alt: 'Pedidos del restaurante con un pedido en rojo «En problemas, hace 4 minutos sin aceptar (se cancela solo a los 6 minutos)».',
             pie: 'Un pedido sin aceptar se pone en rojo y dice cuánto falta para que se cancele solo.',
           },
         ],
@@ -1786,7 +1786,7 @@ const en: SeccionDocs[] = [
           'Tap “Yes, cancel.” The order is canceled right away.',
           'The refund goes out immediately to the same card. Depending on your bank, it can take 5 to 10 business days to show on your statement.',
         ],
-        nota: 'If the restaurant doesn’t confirm your order within 10 minutes, we cancel it and refund you without you lifting a finger.',
+        nota: 'If the restaurant doesn’t confirm your order within 6 minutes, we cancel it and refund you without you lifting a finger.',
       },
       {
         id: 'my-account',
@@ -2137,7 +2137,7 @@ const en: SeccionDocs[] = [
           'When a paid order comes in, it rings until you accept. Choose the prep time in minutes.',
           'Prepare the food and tap “Ready” when it’s done: that’s when we find the closest driver.',
           'Every order has its traffic light: green is on time, yellow is running late, and red needs attention now. Next to it you see how long ago it came in and why it’s late.',
-          'If nobody accepts an order, we alert you on your phone at 3 and 6 minutes. At 10 we cancel it and refund the customer: an order canceled in time beats a customer left waiting.',
+          'If nobody accepts an order, we alert you on your phone at 1 and 3 minutes. At 6 we cancel it and refund the customer: an order canceled in time beats a customer left waiting.',
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
           'You can also use the Tumbite restaurant app on a tablet or phone: same alarm, same orders.',
         ],
@@ -2386,7 +2386,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'When there’s an order nearby, you get an offer with the pay in dollars, the distance, and the restaurant.',
-          'You have 60 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t count against you.',
+          'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t count against you.',
           'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
           'Tap “Directions” to open Google Maps, Apple Maps, or Waze with the address already set.',
           'The customer’s tip is 100% yours: it never tops up your pay.',
@@ -2482,7 +2482,7 @@ const en: SeccionDocs[] = [
         resumen:
           'If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.',
         explicacion: [
-          'Normally each order is offered to one driver at a time, the closest one, with 60 seconds to accept. Declining doesn’t count against you.',
+          'Normally each order is offered to one driver at a time, the closest one, with 45 seconds to accept. Declining doesn’t count against you.',
           'If three drivers pass on it, the order becomes an “open offer”: every available driver in the area sees it at the same time, with a 1-dollar bonus paid by Tumbite. The offer card says “Includes a bonus of $1.”',
           'The first to accept takes it; it disappears from everyone else’s screen. The bonus is added to your earnings when you deliver.',
           'Also, if an order goes 5 minutes without a driver, our team gets an alert to help sort it out.',
@@ -2620,7 +2620,7 @@ const en: SeccionDocs[] = [
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
           'When the food is ready, the restaurant taps “Ready!” The driver takes a photo of the closed order and the restaurant confirms it on their screen: only then does it go out. At the door, the driver takes the delivery photo. The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
           'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $2.37, out of which it pays the card processing fee.',
-          'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 10 minutes, it cancels and refunds automatically.',
+          'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 6 minutes, it cancels and refunds automatically.',
         ],
         capturas: [
           {
@@ -2682,20 +2682,20 @@ const en: SeccionDocs[] = [
           'An automatic watcher follows every order from payment to the door, and steps in only when something runs late.',
         explicacion: [
           'In food delivery, what upsets people most isn’t a mistake: it’s waiting with no answer. That’s why every Tumbite order has a Manager that follows it from start to finish, minute by minute, around the clock.',
-          'The Manager knows how long each stage should take. If the restaurant doesn’t confirm, it sends a reminder at 3 minutes and again at 6. If there’s still no answer at 10 minutes, it cancels the order and refunds the customer, so nobody is left with a paid order and no news.',
+          'The Manager knows how long each stage should take. If the restaurant doesn’t confirm, it sends a reminder at 1 minute and again at 3. If there’s still no answer at 6 minutes, it cancels the order and refunds the customer, so nobody is left with a paid order and no news.',
           'When an order is ready and no driver has picked it up, the Manager alerts our operations team so they can find someone nearby. And everything that happens is logged with its time: who accepted, when it left, when it arrived.',
           'For customers, that means peace of mind. For restaurants, an assistant that flags what’s urgent at rush hour. For drivers, orders that don’t get stuck. And for our team, a live board of every order where the ones that need help show up first.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
-            alt: 'Restaurant orders with one in red: “In trouble, 7 min without being accepted (cancels on its own at 10 min).”',
+            alt: 'Restaurant orders with one in red: “In trouble, 4 min without being accepted (cancels on its own at 6 min).”',
             pie: 'An unaccepted order turns red and says how long until it cancels on its own.',
           },
           {
             src: '/docs/recorrido-cliente-manager-cancela-en.webp',
             alt: 'Order in the Tumbite app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the refund notice.',
-            pie: 'If the restaurant doesn’t confirm within 10 minutes, the Manager cancels the order and refunds the money.',
+            pie: 'If the restaurant doesn’t confirm within 6 minutes, the Manager cancels the order and refunds the money.',
           },
         ],
         preguntas: ['What happens if the restaurant doesn’t accept my order?'],
@@ -2710,7 +2710,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'At rush hour a kitchen can have ten orders at once. The traffic light sorts out that urgency: each order shows a colored dot, how many minutes it has been in its stage, and, if it’s running late, why.',
           'Green: on time. Yellow: running late, worth a look. Red: needs attention now.',
-          'The times depend on the stage. A new order turns yellow after 3 minutes without being accepted and red at 6. In the kitchen it’s measured against the time the restaurant itself promised when accepting: yellow once it’s past, red ten minutes later. A ready order with no driver turns yellow at 5 minutes and red at 15. And on the way, yellow at 30 and red at 45.',
+          'The times depend on the stage. A new order turns yellow after 1 minute without being accepted and red at 3. In the kitchen it’s measured against the time the restaurant itself promised when accepting: yellow once it’s past, red ten minutes later. A ready order with no driver turns yellow at 5 minutes and red at 15. And on the way, yellow at 30 and red at 45.',
         ],
         capturas: [
           {
@@ -2720,7 +2720,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
-            alt: 'Restaurant orders with one in red: “In trouble, 7 min without being accepted (cancels on its own at 10 min).”',
+            alt: 'Restaurant orders with one in red: “In trouble, 4 min without being accepted (cancels on its own at 6 min).”',
             pie: 'An unaccepted order turns red and says how long until it cancels on its own.',
           },
         ],

@@ -7,7 +7,7 @@ const T = {
     h: 'h',
     luces: { verde: 'A tiempo', amarillo: 'Atrasándose', rojo: 'En problemas' },
     motivos: {
-      restaurante: 'sin aceptar (se cancela solo a los 10 min)',
+      restaurante: 'sin aceptar (se cancela solo a los 6 min)',
       cocina: 'la cocina pasó el tiempo prometido',
       repartidor: 'lista y sin repartidor',
       entrega: 'la entrega está tardando',
@@ -19,7 +19,7 @@ const T = {
     h: 'h ago',
     luces: { verde: 'On time', amarillo: 'Running late', rojo: 'In trouble' },
     motivos: {
-      restaurante: 'not accepted (auto-cancels at 10 min)',
+      restaurante: 'not accepted (auto-cancels at 6 min)',
       cocina: 'kitchen is past the promised time',
       repartidor: 'ready with no driver',
       entrega: 'delivery is taking long',

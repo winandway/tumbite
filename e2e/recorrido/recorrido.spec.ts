@@ -860,20 +860,20 @@ for (const idioma of ['en', 'es'] as const) {
     ).toBeLessThan(agotado.desglose.totalCliente);
     await rechazarEnPanel(agotado.pedidoId);
 
-    // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 10 minutos se cancela
+    // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 6 minutos se cancela
     //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
     const olvidado = await pedirYPagar([plato.pizza]);
     const atrasar = (minutos: number) =>
       sql(
         `UPDATE pedidos SET pagado_en = datetime('now','-${minutos} minutes') WHERE id = '${olvidado.pedidoId}'`,
       );
-    atrasar(7);
+    atrasar(4);
     await panel.reload();
     await expect(panel.getByText(/In trouble|En problemas/).first()).toBeVisible({
       timeout: 20_000,
     });
     await foto(panel, 'restaurante-semaforo-rojo');
-    atrasar(11);
+    atrasar(7);
     await cli.goto(`/app/order/${olvidado.pedidoId}`);
     await expect(cli.getByText(L.managerCancela, { exact: false })).toBeVisible({
       timeout: 20_000,
