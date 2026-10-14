@@ -548,3 +548,55 @@ CREATE TABLE IF NOT EXISTS cocina_ocupada (
   extra_min INTEGER NOT NULL DEFAULT 0,
   desde TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- SMS de respaldo (Twilio): el push no garantiza sonido. Queda cada envío con su resultado.
+CREATE TABLE IF NOT EXISTS sms_enviados (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pedido_id TEXT REFERENCES pedidos(id),
+  tipo TEXT NOT NULL,
+  estado TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Llamadas con número oculto entre repartidor y cliente (Twilio puentea con el número de Tumbite).
+CREATE TABLE IF NOT EXISTS llamadas (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  de_usuario TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Avisos por tiempo al cliente (llega en 5, sal a recibir): uno por pedido y tipo. Tabla aparte de
+-- hitos_pedido porque esa tiene lista cerrada de valores y ya existe en producción.
+CREATE TABLE IF NOT EXISTS avisos_pedido (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  aviso TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, aviso)
+);
+
+-- Conciliación diaria del dinero (como piden los estudios): por día, lo que se vendió, se cobró,
+-- se devolvió y se abonó a restaurantes y repartidores; «cuadra» = 1 si todo coincide.
+CREATE TABLE IF NOT EXISTS conciliaciones (
+  dia TEXT PRIMARY KEY,
+  pedidos INTEGER NOT NULL,
+  vendido INTEGER NOT NULL,
+  capturado INTEGER NOT NULL,
+  devuelto INTEGER NOT NULL,
+  abonado INTEGER NOT NULL,
+  retirado INTEGER NOT NULL,
+  cuadra INTEGER NOT NULL,
+  detalle TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Abonos (payouts) de Stripe que fallaron: se avisa al dueño del dinero y al equipo.
+CREATE TABLE IF NOT EXISTS abonos_fallidos (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT REFERENCES usuarios(id),
+  stripe_cuenta TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
