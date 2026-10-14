@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { type Idioma, formatearDolares } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
@@ -32,6 +32,8 @@ export function Ofertas({
   alTocarEjemplo: () => void;
 }) {
   const t = textosInicio(idioma);
+  // Anchos en números: en la web, el ancho en porcentaje no sirve para calcular la foto.
+  const anchoCombo = Math.round((useWindowDimensions().width - 32 - 10) * 0.46);
   const tarjeta = {
     backgroundColor: '#fff',
     borderRadius: 18,
@@ -112,11 +114,16 @@ export function Ofertas({
           onPress={alTocarEjemplo}
           accessibilityRole="button"
           accessibilityLabel={`${t.ejemplo}: ${t.relleno.combo.titulo}`}
-          style={[tarjeta, { width: '46%', overflow: 'hidden' }]}
+          style={[tarjeta, { width: anchoCombo, overflow: 'hidden', justifyContent: 'center' }]}
         >
           <Image
             source={IMG.relleno.combo}
-            style={{ width: '100%', aspectRatio: 754 / 708, borderRadius: 18 }}
+            style={{
+              width: anchoCombo,
+              height: Math.round((anchoCombo * 708) / 754),
+              borderRadius: 18,
+            }}
+            resizeMode="cover"
             accessibilityIgnoresInvertColors
           />
           <Etiqueta texto={t.ejemplo} />

@@ -54,7 +54,7 @@ export function BarraInferior({
             <View>
               <Image
                 source={ICONO_NAV.get(p) ?? IMG.nav.inicio}
-                style={{ width: 28, height: 28, opacity: esta ? 1 : 0.55 }}
+                style={{ width: 34, height: 34, opacity: esta ? 1 : 0.7 }}
                 resizeMode="contain"
                 accessibilityIgnoresInvertColors
               />

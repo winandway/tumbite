@@ -45,6 +45,7 @@ export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Se
                 backgroundColor: '#fff',
                 alignItems: 'center',
                 justifyContent: 'center',
+                overflow: 'hidden',
                 shadowColor: '#191919',
                 shadowOpacity: 0.08,
                 shadowRadius: 8,
@@ -54,7 +55,8 @@ export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Se
             >
               <Image
                 source={ICONO_SERVICIO.get(s) ?? IMG.servicios.comida}
-                style={{ width: 46, height: 46 }}
+                // El recorte trae mucho aire alrededor: se agranda y la caja lo recorta.
+                style={{ width: 104, height: 104 }}
                 resizeMode="contain"
                 accessibilityIgnoresInvertColors
               />
