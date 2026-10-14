@@ -934,11 +934,20 @@ for (const idioma of ['en', 'es'] as const) {
     // 16. Recogida en el local: sin repartidor; el restaurante entrega en el mostrador con el PIN.
     const recogida = await pedirYPagar([plato.pizza], undefined, 'recoger');
     await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
-    await panel
-      .getByRole('button', { name: `${L.aceptar} · 20` })
-      .first()
-      .click();
-    await panel.getByRole('button', { name: L.listo }).first().click();
+    await expect(
+      panel.getByText(`#${recogida.pedidoId.slice(0, 4).toUpperCase()}`).first(),
+    ).toBeVisible({ timeout: 20_000 });
+    // La lista se refresca cada 5 s: si el clic cae en medio del refresco, se repite una vez.
+    const aceptarRecogida = panel.getByRole('button', { name: `${L.aceptar} · 20` }).first();
+    const listoRecogida = panel.getByRole('button', { name: L.listo }).first();
+    await aceptarRecogida.click();
+    try {
+      await expect(listoRecogida).toBeVisible({ timeout: 15_000 });
+    } catch {
+      await aceptarRecogida.click();
+      await expect(listoRecogida).toBeVisible({ timeout: 15_000 });
+    }
+    await listoRecogida.click();
     await expect(panel.getByLabel(L.pinCliente)).toBeVisible({ timeout: 20_000 });
     await foto(panel, 'restaurante-recoger');
     await cli.goto(`/app/order/${recogida.pedidoId}`);
