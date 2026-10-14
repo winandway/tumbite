@@ -964,12 +964,13 @@ for (const idioma of ['en', 'es'] as const) {
       })
       .toBe('entregado');
 
-    // 16. El dinero de cada uno. El restaurante ve su día: lo que le toca es lo de su venta entregada.
+    // 17. El dinero de cada uno. El restaurante ve su día: lo entregado (la entrega a domicilio y
+    //     la recogida en el local, con su comisión del 5 %).
     await panel.getByRole('link', { name: L.beneficios, exact: true }).click();
     const pagoRest = new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(cobro.desglose.pagoRestaurante / 100);
+    }).format((cobro.desglose.pagoRestaurante + recogida.desglose.pagoRestaurante) / 100);
     await expect(panel.getByText(L.teToca).locator('..')).toContainText(pagoRest);
     // La calculadora «Comparado con otras apps» usa sus ventas reales y lo propio sale primero.
     const compara = panel.getByRole('region', {
