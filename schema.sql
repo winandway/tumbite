@@ -398,3 +398,19 @@ CREATE TABLE IF NOT EXISTS kyc (
   proxima_revision TEXT
 );
 CREATE INDEX IF NOT EXISTS kyc_estado ON kyc(estado, enviado_en);
+
+-- Pruebas de recogida y de entrega. El repartidor toma la foto del pedido en el restaurante y el
+-- restaurante la confirma en su pantalla: recién ahí el pedido sale «en camino». Al entregar, la
+-- foto se toma en la puerta (a menos de 200 m de la dirección). Las fotos van al almacén en
+-- evidencias/<pedido>/… y solo las ven el cliente, el restaurante, el repartidor y nuestro equipo.
+CREATE TABLE IF NOT EXISTS evidencias (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('recogida', 'entrega')),
+  clave TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  distancia_m INTEGER,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  confirmada_en TEXT,
+  PRIMARY KEY (pedido_id, tipo)
+);
