@@ -11,14 +11,20 @@
 
 - [Docs · Tumbite](https://tumbite.com/docs): Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.
 - [How do I…? · Tumbite](https://tumbite.com/docs/how-to): The questions we get asked most, each with a step-by-step guide and real screenshots.
-- [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingHow to place your first orderPick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.Track your order liv
+- [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingIf the restaurant is out of an item in your orderNothing gets canceled outright: you decide whether to remove it (we refund that part) or 
+- [If the restaurant is out of an item in your order · Tumbite](https://tumbite.com/docs/ordering/out-of-stock-item): Nothing gets canceled outright: you decide whether to remove it (we refund that part) or cancel the whole order.
+- [Leave at door or hand it to me: you choose · Tumbite](https://tumbite.com/docs/ordering/door-or-hand): When you order, you say whether to leave it at your door or hand it to you. The driver sees it and acts accordingly.
+- [Chat with your driver · Tumbite](https://tumbite.com/docs/ordering/chat-with-your-driver): From the moment your order has a driver until it arrives, you can message them from the app, without sharing your number.
+- [When your order arrives: the estimate and the latest arrival time · Tumbite](https://tumbite.com/docs/ordering/when-will-it-arrive): You see two times: in how many minutes it arrives and the latest arrival time. And we tell you when the driver is a minute away and at your door.
 - [How to place your first order · Tumbite](https://tumbite.com/docs/ordering/first-order): Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.
 - [Track your order live · Tumbite](https://tumbite.com/docs/ordering/track-order): Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.
 - [Cancel an order and get your money back · Tumbite](https://tumbite.com/docs/ordering/cancel-order): Until the restaurant accepts it, you cancel in one tap and get a full refund. And if the restaurant doesn’t answer, we cancel it for you.
 - [My account: your orders, cards, and details · Tumbite](https://tumbite.com/docs/ordering/my-account): All your orders and their status, the cards you saved, and your details, in one place in the app.
 - [Gifts: birthday, punch card, and win-back · Tumbite](https://tumbite.com/docs/ordering/rewards): Restaurants reward you for coming back. Gifts show up in your cart on their own.
 - [Rate the food and the driver · Tumbite](https://tumbite.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
-- [For restaurants · Tumbite](https://tumbite.com/docs/restaurants): ⌘K← Docs For restaurantsPut your restaurant on TumbiteCreate your account, complete your profile, and wait for approval. No lock-in contracts.Your menu: it
+- [For restaurants · Tumbite](https://tumbite.com/docs/restaurants): ⌘K← Docs For restaurantsIf you’re out of an item or need more timeFlag the item you’re out of and the customer decides in their app; and if you’re running 
+- [If you’re out of an item or need more time · Tumbite](https://tumbite.com/docs/restaurants/out-of-stock-and-more-time): Flag the item you’re out of and the customer decides in their app; and if you’re running late, add minutes before the driver leaves.
+- [Your counter: see the driver coming, the QR code and the wait · Tumbite](https://tumbite.com/docs/restaurants/your-counter): On your screen you see who’s coming for each order, how many minutes away they are, when they arrived and how long they wait. Next to each ready order ther
 - [Put your restaurant on Tumbite](https://tumbite.com/docs/restaurants/get-started): Create your account, complete your profile, and wait for approval. No lock-in contracts.
 - [Your menu: items, prices, and photos · Tumbite](https://tumbite.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Tumbite](https://tumbite.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
@@ -27,7 +33,9 @@
 - [Verify your restaurant · Tumbite](https://tumbite.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Tumbite](https://tumbite.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Tumbite](https://tumbite.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
-- [For drivers · Tumbite](https://tumbite.com/docs/drivers): ⌘K← Docs For driversStart deliveringCreate your account, go online when you want, and accept only what works for you.Verify your identityYour ID and a phot
+- [For drivers · Tumbite](https://tumbite.com/docs/drivers): ⌘K← Docs For driversWhen an offer reaches you and how you pick up with the codeOffers reach you so you arrive when the food is ready, not before. At the re
+- [When an offer reaches you and how you pick up with the code · Tumbite](https://tumbite.com/docs/drivers/offer-timing-and-pickup-code): Offers reach you so you arrive when the food is ready, not before. At the restaurant you scan the code on their screen and take the photo: the order goes o
+- [If you can’t continue with an order or the customer isn’t there · Tumbite](https://tumbite.com/docs/drivers/cant-continue): Before pickup you can release the order with a reason, no penalty. At the door, if the customer isn’t there, there’s a 5-minute protocol.
 - [Start delivering · Tumbite](https://tumbite.com/docs/drivers/get-started): Create your account, go online when you want, and accept only what works for you.
 - [Verify your identity · Tumbite](https://tumbite.com/docs/drivers/verify): Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.
 - [Offers: see what you earn before you accept · Tumbite](https://tumbite.com/docs/drivers/offers): You see the pay, the distance, and the pickup spot. Declining never counts against you.
