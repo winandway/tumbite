@@ -18,9 +18,8 @@
 - [ ] 👤 Cuándo se vuelve obligatoria la verificación de identidad (interruptor `KYC_OBLIGATORIO`).
 - [ ] 👤 **Regalo que cubre todo el plato:** hoy el cliente igual paga envío, servicio y el cargo por pedido pequeño (en la prueba, un regalo de 3 dólares dejó el pedido en 6.58). Decidir si el cargo por pedido pequeño se perdona cuando el regalo cubre la comida.
 - [ ] 👤 **Parte del franquiciado:** qué porcentaje de lo que deja la plataforma en su ciudad le toca a quien abre Tumbite allí (cuota de entrada, porcentaje y derechos). La calculadora pública ya muestra lo que mueve una ciudad y dice que esa parte se acuerda por contrato.
-- [ ] 👤 **SMS de respaldo** para los avisos críticos del cliente (en tu puerta, no te encuentran): cuesta un servicio externo (centavos por mensaje). Sí o no.
-- [ ] 👤 **Antecedentes de repartidores con proveedor** (tipo Checkr, cobra por verificación): sí o no, y desde cuándo.
-- [ ] 👤 **Tiempos del Manager:** hoy recordatorios a los 3 y 6 minutos y cancela a los 10; los estudios proponen cerrar a los 2 minutos. ¿Bajamos a 5?
+- [ ] 👤 **Cuenta de Twilio** a nombre de Windoce LLC (SMS de respaldo y llamadas con número oculto, aprobados el 14 oct). Se pide con croquis cuando se llegue al punto 7 de la Etapa 2¾.
+- [ ] 👤 **Cuenta de Checkr** a nombre de Windoce LLC (antecedentes de repartidores). Se pide con croquis cuando se llegue al punto 10.
 - [ ] 👤 Nombre público del negocio en Stripe (hoy sale «Windoce, LLC» en el cobro).
 - [ ] 👤 Tope mensual de gasto en IA (propuesto 20 dólares prepago) y si el Manager puede dar regalos de disculpa.
 - [ ] 👤 Mirar las ideas de «Lo que viene» en la página Cómo funciona.

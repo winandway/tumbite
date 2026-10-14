@@ -98,18 +98,24 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md` (DoorDash y Uber Eats frente a nosotr
 7. ✅ (14 oct) Cambiar un pedido por ingrediente agotado sin cancelarlo todo; ajustar el tiempo de preparación después de aceptar y «cocina ocupada».
 8. Después del lanzamiento: varios pedidos por repartidor; firma, PIN y mayoría de edad (cuando haya alcohol).
 
-## Etapa 2¾ — Lo que faltaba según los estudios de Richard (14 oct 2026)
+## Etapa 2¾ — Todo lo que los estudios de Richard dicen que hay que tener (14 oct 2026)
 
-Sale de `docs/COMPARACION-CICLO-PEDIDO.md`, sección «Los estudios de Richard». En orden; sin los puntos 1 a 5 no se prueba en la calle.
+Fuente: `docs/COMPARACION-CICLO-PEDIDO.md`, sección «Los estudios de Richard». Regla de Richard: se copian las herramientas que los grandes ya tienen, con interruptor para que el usuario final elija; la IA decide cómo encajan y ejecuta; a Richard solo se le pide lo que únicamente él puede dar (cuentas, claves, dinero). **Ninguna se descarta.** Orden de ejecución:
 
-1. ✅ (14 oct, sin probar en real) **Autorizar al pedir y capturar al entregar** (captura manual en Stripe): las cancelaciones dejan de costar la comisión de Stripe. Cambia el circuito de pagos: se prueba completo antes de publicar y se anota en `VERIFICAR-PAGOS.md`.
-2. ✅ (14 oct) **PIN de 4 dígitos para la entrega en mano**, opcional con interruptor (decisión de Richard: se apaga si recibe otra persona).
-3. 🤖 **Horarios reales del restaurante** (por día, cierre automático) y **modificadores de platos**.
-4. 🤖 **GPS serio**: precisión, dos muestras coherentes, excepción «no puedo confirmar mi ubicación» con autorización de soporte.
-5. 🤖 **Checklist de activación** del restaurante y **cola sin red** en la app del repartidor.
-6. 🤖 Oferta abierta con bono tras 3 rechazos; aviso al equipo a los 5 minutos; aviso «llega en 5 min»; cocina ocupada; retención de fotos 30 días; conciliación diaria con canario; Apple Pay y Google Pay.
-7. 👤 Decisiones: SMS de respaldo (costo), antecedentes con proveedor (costo), tiempos del Manager más cortos, 1099 e impuestos con el contador.
-8. Después del piloto: cambio de dirección por el cliente, recogida en el local, propina después de entregar.
+1. ✅ (14 oct, sin probar en real) **Autorizar al pedir y capturar al entregar.** Richard ya agregó el evento en Stripe.
+2. ✅ (14 oct) **PIN de 4 dígitos en mano**, con interruptor del cliente.
+3. 🤖 **Horarios reales del restaurante** (por día, varios turnos, cierre automático, «abre a las…» en la app) y **modificadores de platos** (grupos: tamaño, extras, sin…; obligatorios u opcionales; mínimo y máximo; precio por opción), con el carrito y el pedido mostrando lo elegido.
+4. 🤖 **GPS serio:** precisión reportada, dos lecturas coherentes, detección de saltos imposibles, y «No puedo confirmar mi ubicación» que soporte autoriza con motivo y queda en la bitácora.
+5. 🤖 **Checklist de activación del restaurante** (precios, horario, dirección con pin, cuenta de cobro, teléfono, al menos 5 platos con foto) visible para el restaurante y bloqueante; **cola sin red** en la app del repartidor (la foto y la entrega se guardan y se reintentan; «pendiente de confirmar»).
+6. 🤖 **Despacho completo:** oferta abierta a todos con +$1 tras 3 rechazos; aviso al equipo a los 5 minutos sin repartidor; tiempo de preparación por defecto = promedio real de los últimos 20 pedidos del restaurante; **cocina ocupada** (+10/+20 a los pedidos nuevos).
+7. 🤖 **Avisos completos al cliente:** «llega en 5 min» y «sal a recibir» a 2 min (en mano); **SMS de respaldo** para en-puerta y no-te-encuentran (Twilio; Richard aprobó el costo); **llamadas y mensajes con número oculto** entre repartidor y cliente (Twilio; Richard aprobó).
+8. 🤖 **Manager a los tiempos de los grandes:** recordatorio a 1 y 3 minutos, cancelación a los 6 (decisión de la IA entre los 3-8 de DoorDash y los 11,5 de Uber); oferta de 45 s.
+9. 🤖 **Dinero vigilado:** conciliación diaria (pedidos, cobros, capturas, anulaciones, reembolsos, transferencias, abonos) con canario en `/datos/salud`; abono fallido avisa al beneficiario y al equipo; retención de fotos 30 días salvo reclamo; **Apple Pay y Google Pay** en el formulario de pago.
+10. 🤖 **Antecedentes de repartidores con proveedor** (Checkr: antecedentes penales y récord de manejo, como DoorDash) + **selfie aleatoria** de identidad continua. Necesita la cuenta de Checkr a nombre de Windoce LLC (se le pide a Richard al llegar aquí, con croquis).
+11. 🤖 **Recogida en el local (pickup)** con comisión del 5 %; **cambio de dirección** por el cliente con recálculo y consentimiento; **propina después de entregar**; **agrupar pedidos** del mismo local con desvío menor a 5 min; **firma y verificación de edad** (para cuando haya alcohol).
+12. 👤 Lo que solo Richard puede dar, cuando se llegue a cada punto: cuenta de Twilio (7), cuenta de Checkr (10), 1099 e impuestos con el contador (ya en la lista).
+
+Lo de Sudamérica (efectivo, Rappi, Mercado Pago, leyes de Colombia y México) se construye cuando se decida salir de EE.UU., como herramientas que se encienden por país.
 
 ## Etapa 3 — Tiendas y lanzamiento cerrado en Miami
 

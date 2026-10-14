@@ -7,6 +7,7 @@ Las reglas globales de Richard aplican; estas se suman.
 
 - Carpeta `Proyectos Para estudiar y copiar clonar ideas /` (con espacio al final del nombre; se queda en el repo). Tiene estudios profundos, con fuentes, de cómo funcionan DoorDash, Uber Eats, Rappi y el reparto de comida en general. Richard los suma cuando encuentra más.
 - **Se consultan cada vez que se va a construir una parte, cuando se sospecha que algo no está bien, o cuando llega una orden de desarrollar algo:** se busca en los estudios qué dicen de esa parte y se compara con lo que ya tenemos. Lo que no tengamos se anota como brecha; lo que coincide se confirma. Se sigue sacando información de ahí hasta que una comparación salga sin diferencias.
+- **No se le pregunta a Richard si quiere una herramienta que los grandes ya tienen (dictado el 14 oct 2026).** Se copia como la hacen ellos, con interruptor para que el usuario final decida (PIN sí/no, en la puerta o en mano), se decide cómo encaja y se le presenta el plan. Se le pregunta solo lo que únicamente él puede dar: una cuenta, una clave, dinero, un dato legal. Todas las herramientas de los estudios son importantes; ninguna se descarta por «menos prioritaria».
 - La comparación viva está en `docs/COMPARACION-CICLO-PEDIDO.md` (sección «Los estudios de Richard»). Cada hallazgo nuevo se anota ahí con la página del estudio de donde salió.
 
 ## Leer antes de trabajar

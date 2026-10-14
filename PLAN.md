@@ -1,7 +1,15 @@
-# Plan: cobrar al entregar y PIN opcional en la entrega en mano (14 oct 2026)
+# Plan: Etapa 2¾ completa, en orden (14 oct 2026)
 
-Brechas 1 y 2 de los estudios (`docs/COMPARACION-CICLO-PEDIDO.md`). Richard: el PIN va con un interruptor que el cliente apaga si otra persona va a recibir.
+Ver `docs/ROADMAP.md`, «Etapa 2¾». Se ejecuta punto por punto sin preguntar; cada punto lleva pruebas en rojo, recorrido, guía en Docs (ES/EN), CANDADOS y publicación.
 
-- [x] Paso 1: Cobro con captura manual. El intento de pago se crea con `capture_method: manual`; el aviso `payment_intent.amount_capturable_updated` (y `succeeded` como respaldo) marca el pedido pagado. Tabla `cobros` (autorizado, capturado, monto, cancelado). Al entregar se captura por el total vigente (menos si se quitó un plato). Cancelar antes de entregar = cancelar la autorización (sin reembolso ni comisión); después de capturar = reembolso. El ajuste por plato agotado ya no reembolsa: captura menos. Pruebas en rojo.
-- [x] Paso 1: PIN opcional. Tabla `pines_entrega`. En el carrito, al elegir «En mano», interruptor «Pedir un PIN de 4 dígitos al entregar» (encendido por defecto; se apaga si otra persona recibe). El cliente ve su PIN en el pedido. El repartidor, al tocar «Entregado en mano», escribe el PIN si el pedido lo tiene; sin PIN correcto no se entrega. Candado en rojo.
-- [x] Paso 1: Recorrido completo con el aviso nuevo de Stripe y captura del cobro; captura del carrito «en mano» con el interruptor. Guías de Docs (ES/EN) al día. `VERIFICAR-PAGOS.md` en rojo: circuito cambiado, sin probar en real. CANDADOS, ROADMAP. Verify, commit, push, publicación y comprobación en vivo.
+- [x] Punto 1: autorizar al pedir y capturar al entregar.
+- [x] Punto 2: PIN opcional en mano.
+- [ ] Punto 3: horarios reales y modificadores de platos.
+- [ ] Punto 4: GPS serio con excepción autorizada por soporte.
+- [ ] Punto 5: checklist de activación del restaurante y cola sin red del repartidor.
+- [ ] Punto 6: despacho completo (oferta abierta con bono, aviso al equipo a 5 min, preparación promedio, cocina ocupada).
+- [ ] Punto 7: avisos completos, SMS de respaldo y número oculto (Twilio; necesita la cuenta de Richard).
+- [ ] Punto 8: Manager a 1/3/6 minutos y oferta de 45 s.
+- [ ] Punto 9: conciliación diaria con canario, abono fallido, retención de fotos, Apple Pay y Google Pay.
+- [ ] Punto 10: antecedentes con Checkr y selfie aleatoria (necesita la cuenta de Richard).
+- [ ] Punto 11: pickup, cambio de dirección, propina después, agrupar pedidos, firma y edad.
