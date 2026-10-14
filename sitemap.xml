@@ -12,6 +12,7 @@
   <url><loc>https://tumbite.com/docs</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/how-to</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/ordering/order-alerts-and-calls</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -49,6 +50,7 @@
   <url><loc>https://tumbite.com/docs/trust</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/no-signal-delivery</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/open-offer-bonus</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/trust/call-customer-masked</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/gps-arrival</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/pickup-and-delivery-photos</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/order-journey</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -126,6 +128,7 @@
   <url><loc>https://tumbite.com/es/docs</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/how-to</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/ordering/order-alerts-and-calls</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -163,6 +166,7 @@
   <url><loc>https://tumbite.com/es/docs/trust</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/no-signal-delivery</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/open-offer-bonus</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/trust/call-customer-masked</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/gps-arrival</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/pickup-and-delivery-photos</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/order-journey</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>

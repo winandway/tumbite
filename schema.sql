@@ -548,3 +548,31 @@ CREATE TABLE IF NOT EXISTS cocina_ocupada (
   extra_min INTEGER NOT NULL DEFAULT 0,
   desde TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- SMS de respaldo (Twilio): el push no garantiza sonido. Queda cada envío con su resultado.
+CREATE TABLE IF NOT EXISTS sms_enviados (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pedido_id TEXT REFERENCES pedidos(id),
+  tipo TEXT NOT NULL,
+  estado TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Llamadas con número oculto entre repartidor y cliente (Twilio puentea con el número de Tumbite).
+CREATE TABLE IF NOT EXISTS llamadas (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  de_usuario TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Avisos por tiempo al cliente (llega en 5, sal a recibir): uno por pedido y tipo. Tabla aparte de
+-- hitos_pedido porque esa tiene lista cerrada de valores y ya existe en producción.
+CREATE TABLE IF NOT EXISTS avisos_pedido (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  aviso TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, aviso)
+);

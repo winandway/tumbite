@@ -11,7 +11,8 @@
 
 - [Docs · Tumbite](https://tumbite.com/docs): Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.
 - [How do I…? · Tumbite](https://tumbite.com/docs/how-to): The questions we get asked most, each with a step-by-step guide and real screenshots.
-- [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingChoose size and extras when orderingIf an item has options, when you add it you choose the size, extras or whatever the restaurant offers,
+- [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingYour order alerts and how to call the driver without sharing your numberWe let you know when the driver is 5 minutes away, when to come ou
+- [Your order alerts and how to call the driver without sharing your number · Tumbite](https://tumbite.com/docs/ordering/order-alerts-and-calls): We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can ca
 - [Choose size and extras when ordering · Tumbite](https://tumbite.com/docs/ordering/choose-options): If an item has options, when you add it you choose the size, extras or whatever the restaurant offers, and see what each adds.
 - [If the restaurant is out of an item in your order · Tumbite](https://tumbite.com/docs/ordering/out-of-stock-item): Nothing gets canceled outright: you decide whether to remove it (we refund that part) or cancel the whole order.
 - [Leave at door or hand it to me: you choose · Tumbite](https://tumbite.com/docs/ordering/door-or-hand): When you order, you say whether to leave it at your door or hand it to you. The driver sees it and acts accordingly.
@@ -49,6 +50,7 @@
 - [How we look after every order · Tumbite](https://tumbite.com/docs/trust): ⌘K← Docs How we look after every orderIf you lose signal when deliveringThe delivery photo (or “Handed to the customer”) is saved on your phone and sent on
 - [If you lose signal when delivering · Tumbite](https://tumbite.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
 - [Bonus for taking an order others passed on · Tumbite](https://tumbite.com/docs/trust/open-offer-bonus): If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.
+- [Call the customer without seeing their number (or showing yours) · Tumbite](https://tumbite.com/docs/trust/call-customer-masked): On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Tumbite’s number.
 - [How we know you reached the door (and what to do if GPS fails) · Tumbite](https://tumbite.com/docs/trust/gps-arrival): The deliver button appears once GPS confirms you’re at the address. If a building or garage throws it off, request the exception and support authorizes you
 - [Photo at pickup, delivery at the door · Tumbite](https://tumbite.com/docs/trust/pickup-and-delivery-photos): Every order leaves two photos: the closed order as it leaves the restaurant, confirmed by the restaurant, and the delivery at the door.
 - [An order from start to finish · Tumbite](https://tumbite.com/docs/trust/order-journey): What happens from the moment the customer pays until the food reaches the door, who does what at each step, and how the money is split.
