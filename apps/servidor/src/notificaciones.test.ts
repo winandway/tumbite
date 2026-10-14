@@ -101,13 +101,13 @@ describe('avisos al celular', () => {
       { estado: 'aprobado' },
       admin.token,
     );
-    await m.llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, dueno.token);
     const p = await m.llamar(
       'POST',
       '/datos/mi-restaurante/platos',
       { nombreEs: 'Cubano', precioCentavos: 1500 },
       dueno.token,
     );
+    await m.abrir(dueno.token);
     const pedido = await m.llamar(
       'POST',
       '/datos/pedidos',

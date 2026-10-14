@@ -7,6 +7,7 @@ import {
   type Restaurante,
   distanciaKm,
   abiertoPorHorario,
+  listaActivacion,
   esquemaGrupos,
   esquemaHorarios,
   type Turno,
@@ -211,6 +212,28 @@ async function miRestaurante(db: D1Database, duenoId: string) {
     .first<FilaRest>();
 }
 
+/** La lista de activación: qué le falta al restaurante antes de poder abrir. */
+async function activacionDe(db: D1Database, f: FilaRest) {
+  const n = await db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM horarios_restaurante h WHERE h.restaurante_id = ?1) AS turnos,
+        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0) AS vendibles,
+        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0 AND p.imagen IS NOT NULL AND p.imagen != '') AS con_foto,
+        (SELECT COUNT(*) FROM cuentas_stripe s WHERE s.usuario_id = ?2) AS cobro`,
+    )
+    .bind(String(f.id), String(f.dueno_id))
+    .first<{ turnos: number; vendibles: number; con_foto: number; cobro: number }>();
+  return listaActivacion({
+    telefono: String(f.telefono ?? ''),
+    lat: f.lat == null ? null : Number(f.lat),
+    lng: f.lng == null ? null : Number(f.lng),
+    turnos: Number(n?.turnos ?? 0),
+    platosVendibles: Number(n?.vendibles ?? 0),
+    platosConFoto: Number(n?.con_foto ?? 0),
+    cobroConectado: Number(n?.cobro ?? 0) > 0,
+  });
+}
+
 catalogo.get('/mi-restaurante', async (c) => {
   const u = exigir(c, 'restaurante');
   const db = base(c);
@@ -223,7 +246,10 @@ catalogo.get('/mi-restaurante', async (c) => {
     .bind(f.id)
     .all<FilaRest>();
   const [conH] = await conHorarios(db, [f]);
-  return c.json({ restaurante: aRestaurante(conH!), platos: await platosConGrupos(db, results) });
+  return c.json({
+    restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) },
+    platos: await platosConGrupos(db, results),
+  });
 });
 
 /** Horarios por día: se reemplazan todos de una vez. */
@@ -247,7 +273,7 @@ catalogo.put('/mi-restaurante/horarios', async (c) => {
     ),
   ]);
   const [conH] = await conHorarios(db, [f]);
-  return c.json({ restaurante: aRestaurante(conH!) });
+  return c.json({ restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) } });
 });
 
 /** Los grupos de opciones de un plato: se reemplazan todos de una vez. */
@@ -345,8 +371,12 @@ catalogo.put('/mi-restaurante', async (c) => {
       categoria: d.categoria,
     });
   }
-  const f = await miRestaurante(db, u.id);
-  return c.json({ restaurante: aRestaurante(f as FilaRest) }, actual ? 200 : 201);
+  const f = (await miRestaurante(db, u.id)) as FilaRest;
+  const [conH] = await conHorarios(db, [f]);
+  return c.json(
+    { restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) } },
+    actual ? 200 : 201,
+  );
 });
 
 catalogo.patch('/mi-restaurante/abierto', async (c) => {
@@ -359,6 +389,13 @@ catalogo.patch('/mi-restaurante/abierto', async (c) => {
     throw new ErrorDatos(
       'Tu restaurante todavía está en revisión. Te avisamos al aprobarlo.',
       undefined,
+      409,
+    );
+  // Lista de activación bloqueante: sin teléfono, pin, horario y un plato vendible no se abre.
+  if (abierto && !(await activacionDe(db, f)).lista)
+    throw new ErrorDatos(
+      'Antes de abrir, completa la lista de activación: te falta algo (mírala en «Mi restaurante»).',
+      'activacion',
       409,
     );
   await db

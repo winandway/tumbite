@@ -3597,3 +3597,29 @@ button {
   margin-top: 0;
   font-size: 1rem;
 }
+
+/* Lista de activación del restaurante (qué falta antes de abrir) */
+.activacion {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0;
+}
+.activacion h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.activacion ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.activacion li {
+  padding: 3px 0;
+}
+.activacion-ok {
+  color: #0d7a3a;
+}
+.activacion-falta {
+  color: #191919;
+}

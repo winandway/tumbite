@@ -1,3 +1,4 @@
+import type { Activacion } from './activacion';
 import { z } from 'zod';
 
 /** Restaurantes y platos. Los textos que ve el público van en español e inglés. */
@@ -108,6 +109,8 @@ export type Restaurante = {
   tiempoPrepMin: number;
   regalosPb: number;
   distanciaKm?: number;
+  /** Solo para el dueño: la lista de activación (qué falta antes de abrir). */
+  activacion?: Activacion;
 };
 
 /** Una opción dentro de un grupo (Grande +$4, Extra queso +$1.50, Sin cebolla). */

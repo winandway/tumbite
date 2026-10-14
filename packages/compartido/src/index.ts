@@ -19,3 +19,5 @@ export * from './despacho';
 export * from './mostrador';
 export * from './horarios';
 export * from './gps';
+export * from './activacion';
+export * from './colaEntrega';

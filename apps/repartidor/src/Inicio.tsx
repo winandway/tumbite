@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
 import {
   ErrorApi,
@@ -14,6 +15,9 @@ import {
   metrosEntre,
   textoLinea,
   type OpcionElegida,
+  type Pendiente,
+  crearCola,
+  esFalloDeRed,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { MisDatos } from './MisDatos';
@@ -117,6 +121,10 @@ const T = {
       'Soporte está revisando tu caso. Mientras tanto, si el GPS te confirma, el botón aparece solo.',
     autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     fotoEntrega: 'Tomar foto de la entrega',
+    pendienteConfirmar:
+      'Sin señal: guardamos tu entrega en el celular. Pendiente de confirmar: se envía sola cuando vuelva la señal. No la repitas.',
+    pendientes: 'Pendiente de confirmar',
+    pendienteEnviado: 'Entrega enviada: ya quedó confirmada.',
     sinCaras:
       'No le tomes foto a la cara de nadie. Deja la comida en la puerta o en las manos del cliente y toma la foto de lado: que se vean solo las manos, la comida y la entrada de la casa.',
     subiendo: 'Enviando la foto…',
@@ -198,6 +206,10 @@ const T = {
       'Support is reviewing your case. Meanwhile, if GPS confirms you, the button appears on its own.',
     autorizado: 'Support authorized the delivery without GPS confirmation.',
     fotoEntrega: 'Take the delivery photo',
+    pendienteConfirmar:
+      'No signal: we saved your delivery on the phone. Pending confirmation: it’s sent on its own when the signal is back. Don’t redo it.',
+    pendientes: 'Pending confirmation',
+    pendienteEnviado: 'Delivery sent: it’s now confirmed.',
     sinCaras:
       'Never take a photo of anyone’s face. Leave the food at the door or in the customer’s hands and take the photo from the side: only the hands, the food, and the home’s entrance should show.',
     subiendo: 'Sending the photo…',
@@ -268,6 +280,16 @@ export function Inicio() {
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
   const [aviso, setAviso] = useState('');
+  // Cola sin señal: lo que no se pudo mandar se guarda en el celular y se reintenta solo.
+  const cola = useMemo(
+    () =>
+      crearCola({
+        leer: () => AsyncStorage.getItem('tumbite.cola-entregas'),
+        escribir: (v) => AsyncStorage.setItem('tumbite.cola-entregas', v),
+      }),
+    [],
+  );
+  const [pendientes, setPendientes] = useState<Pendiente[]>([]);
   const vigilante = useRef<Location.LocationSubscription | null>(null);
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
@@ -312,6 +334,50 @@ export function Inicio() {
       clearInterval(reloj);
     };
   }, [cargar]);
+
+  // Lo pendiente se reintenta cada 10 segundos; lo que el servidor rechaza se muestra y se descarta.
+  const reintentar = useCallback(async () => {
+    const r = await cola.reintentar(async (p) => {
+      if (p.tipo === 'foto') {
+        const blob = await (await fetch(p.cuerpo)).blob();
+        await api.subirFoto(blob, p.ruta);
+      } else await api.pedir('POST', p.ruta, JSON.parse(p.cuerpo) as unknown);
+    });
+    setPendientes(await cola.listar());
+    if (r.enviados.length) {
+      setAviso(t.pendienteEnviado);
+      await cargar();
+    }
+    if (r.rechazados.length) setError(r.rechazados.map((x) => x.error).join(' '));
+  }, [api, cargar, cola, t.pendienteEnviado]);
+  useEffect(() => {
+    void cola.listar().then(setPendientes);
+    const reloj = setInterval(() => void reintentar(), 10_000);
+    return () => clearInterval(reloj);
+  }, [cola, reintentar]);
+
+  /** La foto como «data:» para guardarla en el celular si no hay señal. */
+  const comoDataUrl = (blob: Blob) =>
+    new Promise<string>((ok, mal) => {
+      type Lector = {
+        result: unknown;
+        onload: (() => void) | null;
+        onerror: (() => void) | null;
+        readAsDataURL: (b: Blob) => void;
+      };
+      const lector = new (globalThis as unknown as { FileReader: new () => Lector }).FileReader();
+      lector.onload = () => ok(String(lector.result));
+      lector.onerror = () => mal(new Error('foto'));
+      lector.readAsDataURL(blob);
+    });
+
+  /** Si no hay señal, la entrega se guarda en la cola y se avisa; si es otro error, se muestra. */
+  async function guardarSiSinSenal(x: unknown, p: Omit<Pendiente, 'id' | 'creadoEn'>) {
+    if (!esFalloDeRed(x)) return false;
+    await cola.agregar(p);
+    setPendientes(await cola.listar()); // la tarjeta «Pendiente de confirmar» lo explica
+    return true;
+  }
 
   // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta).
   useEffect(() => {
@@ -386,10 +452,22 @@ export function Inicio() {
       if (!p) return setError(t.ubicacionTarda);
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
       const blob = await (await fetch(foto.uri)).blob();
-      await api.subirFoto(
-        blob,
-        `${ruta}${ruta.includes('?') ? '&' : '?'}lat=${p.coords.latitude}&lng=${p.coords.longitude}`,
-      );
+      const rutaCompleta = `${ruta}${ruta.includes('?') ? '&' : '?'}lat=${p.coords.latitude}&lng=${p.coords.longitude}`;
+      try {
+        await api.subirFoto(blob, rutaCompleta);
+      } catch (x) {
+        // Solo la entrega se guarda sin señal (la recogida la confirma el restaurante en persona).
+        const esEntrega = ruta.includes('/entregado');
+        if (
+          !esEntrega ||
+          !(await guardarSiSinSenal(x, {
+            ruta: rutaCompleta,
+            tipo: 'foto',
+            cuerpo: await comoDataUrl(blob),
+          }))
+        )
+          throw x;
+      }
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -456,12 +534,19 @@ export function Inicio() {
     try {
       const p = await ubicacionConLimite();
       if (!p) return setError(t.ubicacionTarda);
-      await api.pedir('POST', `/datos/repartidor/pedidos/${estado.activo.id}/entregado`, {
+      const ruta = `/datos/repartidor/pedidos/${estado.activo.id}/entregado`;
+      const cuerpo = {
         lat: p.coords.latitude,
         lng: p.coords.longitude,
         modo: 'mano',
         ...(estado.activo.pinRequerido ? { pin: pinEntrega.trim() } : {}),
-      });
+      };
+      try {
+        await api.pedir('POST', ruta, cuerpo);
+      } catch (x) {
+        if (!(await guardarSiSinSenal(x, { ruta, tipo: 'json', cuerpo: JSON.stringify(cuerpo) })))
+          throw x;
+      }
       setPinEntrega('');
       await cargar();
     } catch (x) {
@@ -592,6 +677,14 @@ export function Inicio() {
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error || errorCarga}
         </Text>
+      ) : null}
+      {pendientes.length ? (
+        <View style={[e.tarjeta, { borderColor: '#B26A00' }]}>
+          <Text style={{ color: '#B26A00', fontWeight: '800' }}>
+            {t.pendientes}: {pendientes.length}
+          </Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.pendienteConfirmar}</Text>
+        </View>
       ) : null}
       {aviso ? (
         <Text

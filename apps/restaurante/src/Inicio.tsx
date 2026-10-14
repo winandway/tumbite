@@ -14,6 +14,7 @@ import {
   lineaRepartidor,
   textoLinea,
   type OpcionElegida,
+  textoActivacion,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -86,6 +87,7 @@ const T = {
     mas: 'Más opciones',
     abierto: 'Recibiendo pedidos',
     cerrado: 'Cerrado',
+    activacion: 'Para abrir te falta:',
     abrir: 'Abrir',
     pausar: 'Pausar',
     vacio: 'Sin pedidos por ahora. La alarma sonará cuando entre uno.',
@@ -126,6 +128,7 @@ const T = {
     mas: 'More options',
     abierto: 'Taking orders',
     cerrado: 'Closed',
+    activacion: 'To open, you still need:',
     abrir: 'Open',
     pausar: 'Pause',
     vacio: 'No orders right now. The alarm will ring when one comes in.',
@@ -407,6 +410,16 @@ export function Inicio() {
           </Pressable>
         </View>
       )}
+      {rest?.activacion && !rest.activacion.lista ? (
+        <View style={e.tarjeta}>
+          <Text style={{ fontWeight: '800' }}>{t.activacion}</Text>
+          {rest.activacion.items
+            .filter((i) => !i.listo && i.obligatorio)
+            .map((i) => (
+              <Text key={i.clave}>○ {textoActivacion(i.clave, idioma)}</Text>
+            ))}
+        </View>
+      ) : null}
       {error ? <Text style={e.error}>{error}</Text> : null}
       {pedidos.length === 0 && <Text style={e.tarjeta}>{t.vacio}</Text>}
       {seccion(

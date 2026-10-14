@@ -57,13 +57,13 @@ async function escenario(
     { estado: 'aprobado' },
     admin.token,
   );
-  await m.llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, dueno.token);
   const p = await m.llamar(
     'POST',
     '/datos/mi-restaurante/platos',
     { nombreEs: 'Cubano', precioCentavos: 1500 },
     dueno.token,
   );
+  await m.abrir(dueno.token);
   const pedidoBase = {
     restauranteId: r.datos.restaurante.id,
     lineas: [{ platoId: p.datos.plato.id, cantidad: 2 }],

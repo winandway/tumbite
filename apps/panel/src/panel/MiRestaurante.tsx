@@ -8,6 +8,7 @@ import {
   almacenNavegador,
   enIdioma,
   useBorrador,
+  textoActivacion,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { Horarios } from './Horarios';
@@ -34,6 +35,10 @@ const T = {
     cerrado: 'Cerrado',
     abrir: 'Abrir y recibir pedidos',
     cerrar: 'Cerrar por ahora',
+    activacion: 'Lista para abrir',
+    activacionAyuda:
+      'Antes de recibir pedidos hace falta lo marcado como obligatorio. Lo recomendado ayuda a vender más.',
+    activacionLista: 'Todo listo para abrir.',
     estados: {
       pendiente: 'En revisión: te avisamos al aprobarlo.',
       aprobado: 'Aprobado',
@@ -62,6 +67,10 @@ const T = {
     cerrado: 'Closed',
     abrir: 'Open and take orders',
     cerrar: 'Close for now',
+    activacion: 'Ready to open',
+    activacionAyuda:
+      'Before taking orders you need everything marked as required. The recommended items help you sell more.',
+    activacionLista: 'Everything is ready to open.',
     estados: {
       pendiente: 'Under review: we’ll let you know when it’s approved.',
       aprobado: 'Approved',
@@ -207,6 +216,20 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
               {rest.abierto ? `${t.abierto} · ${t.cerrar}` : t.abrir}
             </button>
           )}
+        </div>
+      )}
+      {rest?.activacion && (
+        <div className="activacion" aria-label={t.activacion}>
+          <h2>{t.activacion}</h2>
+          <p className="suave">{rest.activacion.lista ? t.activacionLista : t.activacionAyuda}</p>
+          <ul>
+            {rest.activacion.items.map((i) => (
+              <li key={i.clave} className={i.listo ? 'activacion-ok' : 'activacion-falta'}>
+                <span aria-hidden="true">{i.listo ? '✓' : '○'}</span>{' '}
+                {textoActivacion(i.clave, idioma)}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {b.recuperado && (

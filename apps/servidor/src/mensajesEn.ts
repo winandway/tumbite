@@ -144,6 +144,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'We haven’t confirmed your location at the door yet. Wait a few seconds with GPS on, or request the exception from support.',
   ],
   ['Este pedido no tiene una excepción pendiente.', 'This order has no pending exception.'],
+  [
+    'Antes de abrir, completa la lista de activación: te falta algo (mírala en «Mi restaurante»).',
+    'Before opening, complete the activation checklist: something is missing (see “My restaurant”).',
+  ],
   ['Esa foto no existe.', 'That photo doesn’t exist.'],
   ['Esa franquicia no existe.', 'That franchise doesn’t exist.'],
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],

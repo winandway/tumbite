@@ -16,7 +16,6 @@ async function escenario() {
   const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
   const rid = r.datos.restaurante.id as string;
   await m.llamar('PATCH', `/datos/admin/restaurantes/${rid}`, { estado: 'aprobado' }, admin.token);
-  await m.llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, dueno.token);
   const plato = (
     await m.llamar(
       'POST',
@@ -25,6 +24,7 @@ async function escenario() {
       dueno.token,
     )
   ).datos.plato.id as string;
+  await m.abrir(dueno.token);
   const linea = [{ platoId: plato, cantidad: 1 }];
   /** Deja N pedidos entregados del cliente (con fecha opcional) para armar el historial. */
   async function historial(n: number, hace = "datetime('now')") {

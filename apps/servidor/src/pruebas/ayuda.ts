@@ -113,7 +113,29 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
     await ubicar(tokenRepartidor, enCasa);
     return foto(`/datos/repartidor/pedidos/${id}/entregado`, tokenRepartidor, enCasa);
   }
-  return { DB, llamar, cuenta, crudo, foto, recoger, entregar, extra, ubicar, envejecerGps };
+  /** El dueño abre con la lista de activación completa: horario toda la semana + lo que ya tenga. */
+  async function abrir(tokenDueno: string) {
+    await llamar(
+      'PUT',
+      '/datos/mi-restaurante/horarios',
+      { turnos: [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: '00:00', cierra: '23:59' })) },
+      tokenDueno,
+    );
+    return llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, tokenDueno);
+  }
+  return {
+    DB,
+    llamar,
+    cuenta,
+    crudo,
+    foto,
+    recoger,
+    entregar,
+    extra,
+    ubicar,
+    envejecerGps,
+    abrir,
+  };
 }
 
 export const RESTAURANTE_BASE = {
@@ -122,4 +144,5 @@ export const RESTAURANTE_BASE = {
   lat: 25.77,
   lng: -80.19,
   categoria: 'Cubana',
+  telefono: '3055550100',
 };

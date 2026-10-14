@@ -340,6 +340,34 @@ const es: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'activation-checklist',
+        titulo: 'Lista para abrir: qué necesitas antes de recibir pedidos',
+        resumen:
+          'Antes de encender «Recibiendo pedidos», tu restaurante necesita teléfono, dirección con pin, horario y al menos un plato con precio. La lista te dice qué falta.',
+        explicacion: [
+          'En «Mi restaurante» ves la lista «Lista para abrir». Cada punto aparece con una marca verde cuando está cumplido.',
+          'Lo obligatorio: el teléfono del restaurante (para que el repartidor o nuestro equipo te ubiquen), la dirección con el pin en el mapa (para que el repartidor llegue), el horario cargado (al menos un turno) y al menos un plato disponible con precio. Sin eso, el botón de abrir no enciende y te dice por qué.',
+          'Lo recomendado: al menos 5 platos con foto (los restaurantes con fotos venden mucho más) y la cuenta de cobro conectada para retirar tu dinero (mientras tanto, tus ventas se acumulan en tu billetera).',
+          'Cuando todo lo obligatorio está listo, la lista dice «Todo listo para abrir» y puedes recibir pedidos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-activacion-es.webp',
+            alt: 'Tarjeta «Lista para abrir» en el panel del restaurante: teléfono y dirección con marca verde; horario, platos, fotos y cuenta de cobro todavía pendientes.',
+            pie: 'La lista te muestra qué falta antes de abrir.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no puedo abrir mi restaurante?',
+          '¿Qué necesito para empezar a recibir pedidos?',
+        ],
+        pasos: [
+          'Entra a «Mi restaurante» y mira la lista «Lista para abrir».',
+          'Completa lo que falte: teléfono, dirección con pin, horario y un plato con precio.',
+          'Toca «Abrir y recibir pedidos».',
+        ],
+      },
+      {
         id: 'hours',
         titulo: 'Tu horario: abres y cierras solo',
         resumen:
@@ -873,6 +901,34 @@ const es: SeccionDocs[] = [
     titulo: 'Cómo cuidamos cada pedido',
     icono: 'listo',
     guias: [
+      {
+        id: 'no-signal-delivery',
+        titulo: 'Si te quedas sin señal al entregar',
+        resumen:
+          'La foto de la entrega (o «Entregado en mano») se guarda en tu celular y se envía sola cuando vuelve la señal. No la repitas.',
+        explicacion: [
+          'En un sótano, un ascensor o una zona sin cobertura, la foto de la entrega puede no llegar. La app no la pierde: la guarda en tu celular y te muestra «Pendiente de confirmar».',
+          'Cuando vuelve la señal, la app la envía sola, en segundo plano, y te avisa «Entrega enviada: ya quedó confirmada». No hace falta volver a tomar la foto ni tocar nada.',
+          'Si el servidor la rechaza (por ejemplo, porque todavía no se confirmó tu llegada), la app te muestra el motivo para que lo resuelvas.',
+          'Lo mismo pasa con «Entregado en mano»: queda guardado y se confirma al volver la señal.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-senal-es.webp',
+            alt: 'App del repartidor con la tarjeta «Pendiente de confirmar: 1» y el aviso de que la entrega se guardó en el celular y se envía sola al volver la señal.',
+            pie: 'Sin señal, la entrega queda guardada y se envía sola.',
+          },
+        ],
+        preguntas: [
+          '¿Qué pasa si no tengo señal cuando entrego?',
+          '¿Tengo que repetir la foto si falló por la conexión?',
+        ],
+        pasos: [
+          'Toma la foto de la entrega como siempre.',
+          'Si no hay señal, verás «Pendiente de confirmar». Sigue con tu día.',
+          'Al volver la señal, la app la envía sola y te avisa.',
+        ],
+      },
       {
         id: 'gps-arrival',
         titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
@@ -1667,6 +1723,31 @@ const en: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'activation-checklist',
+        titulo: 'Ready to open: what you need before taking orders',
+        resumen:
+          'Before turning on “Taking orders,” your restaurant needs a phone number, an address with a pin, hours, and at least one dish with a price. The checklist tells you what’s missing.',
+        explicacion: [
+          'In “My restaurant” you’ll see the “Ready to open” checklist. Each item gets a green check when it’s done.',
+          'Required: the restaurant’s phone number (so the driver or our team can reach you), the address with the pin on the map (so the driver can get there), hours set (at least one shift), and at least one available dish with a price. Without those, the open button doesn’t turn on and tells you why.',
+          'Recommended: at least 5 dishes with a photo (restaurants with photos sell much more) and the payout account connected to withdraw your money (in the meantime, your sales accumulate in your wallet).',
+          'Once everything required is done, the checklist says “Everything is ready to open” and you can take orders.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-activacion-en.webp',
+            alt: '“Ready to open” card in the restaurant panel: phone and address checked in green; hours, dishes, photos, and payout account still pending.',
+            pie: 'The checklist shows you what’s missing before opening.',
+          },
+        ],
+        preguntas: ['Why can’t I open my restaurant?', 'What do I need to start taking orders?'],
+        pasos: [
+          'Go to “My restaurant” and look at the “Ready to open” checklist.',
+          'Complete what’s missing: phone, address with pin, hours, and a dish with a price.',
+          'Tap “Open and take orders.”',
+        ],
+      },
+      {
         id: 'hours',
         titulo: 'Your hours: open and close on their own',
         resumen:
@@ -2200,6 +2281,34 @@ const en: SeccionDocs[] = [
     titulo: 'How we look after every order',
     icono: 'listo',
     guias: [
+      {
+        id: 'no-signal-delivery',
+        titulo: 'If you lose signal when delivering',
+        resumen:
+          'The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.',
+        explicacion: [
+          'In a basement, an elevator, or an area with no coverage, the delivery photo may not go through. The app doesn’t lose it: it saves it on your phone and shows “Pending confirmation.”',
+          'When the signal is back, the app sends it on its own, in the background, and tells you “Delivery sent: it’s now confirmed.” No need to retake the photo or tap anything.',
+          'If the server rejects it (for example, because your arrival wasn’t confirmed yet), the app shows you the reason so you can sort it out.',
+          'The same goes for “Handed to the customer”: it’s saved and confirmed once the signal is back.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-senal-en.webp',
+            alt: 'Driver app with the “Pending confirmation: 1” card and the notice that the delivery was saved on the phone and will be sent on its own when the signal is back.',
+            pie: 'With no signal, the delivery is saved and sent on its own.',
+          },
+        ],
+        preguntas: [
+          'What happens if I have no signal when I deliver?',
+          'Do I have to retake the photo if it failed because of the connection?',
+        ],
+        pasos: [
+          'Take the delivery photo as usual.',
+          'If there’s no signal, you’ll see “Pending confirmation.” Carry on with your day.',
+          'When the signal is back, the app sends it on its own and lets you know.',
+        ],
+      },
       {
         id: 'gps-arrival',
         titulo: 'How we know you reached the door (and what to do if GPS fails)',

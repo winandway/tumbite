@@ -39,7 +39,7 @@ describe('restaurantes y menús', () => {
       admin.token,
     );
     expect(ap.datos.restaurante.plan).toBe('crece');
-    await m.llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, dueno.token);
+    await m.abrir(dueno.token);
     const lista = await m.llamar('GET', '/datos/restaurantes?lat=25.78&lng=-80.2');
     expect(lista.datos.restaurantes[0].abierto).toBe(true);
     expect(lista.datos.restaurantes[0].distanciaKm).toBeLessThan(3);
@@ -160,7 +160,8 @@ describe('restaurantes y menús', () => {
       { estado: 'aprobado' },
       admin.token,
     );
-    await m.llamar('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }, dueno.token);
+    await m.llamar('POST', '/datos/mi-restaurante/platos', PLATO, dueno.token);
+    await m.abrir(dueno.token);
     const p = await m.llamar(
       'PATCH',
       `/datos/admin/restaurantes/${r.datos.restaurante.id}`,
@@ -170,5 +171,44 @@ describe('restaurantes y menús', () => {
     expect(p.datos.restaurante.abierto).toBe(false);
     const det = await m.llamar('GET', `/datos/restaurantes/${r.datos.restaurante.id}`);
     expect(det.estado).toBe(404);
+  });
+});
+
+describe('lista de activación del restaurante (C-ACTIVACION)', () => {
+  it('sin horario o sin un plato vendible no se abre; la lista dice qué falta', async () => {
+    const m = mundo();
+    const dueno = await m.cuenta('restaurante');
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/restaurantes/${r.datos.restaurante.id}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    let mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    const faltan = (x: { items: { clave: string; listo: boolean }[] }) =>
+      x.items.filter((i) => !i.listo).map((i) => i.clave);
+    expect(mio.datos.restaurante.activacion.lista).toBe(false);
+    expect(faltan(mio.datos.restaurante.activacion)).toEqual([
+      'horario',
+      'platos',
+      'fotos',
+      'cobro',
+    ]);
+    const cerrado = await m.llamar(
+      'PATCH',
+      '/datos/mi-restaurante/abierto',
+      { abierto: true },
+      dueno.token,
+    );
+    expect(cerrado.estado).toBe(409);
+    expect(cerrado.datos.campo).toBe('activacion');
+    await m.llamar('POST', '/datos/mi-restaurante/platos', PLATO, dueno.token);
+    // Con horario y un plato vendible ya abre; las fotos y la cuenta de cobro solo se recomiendan.
+    expect((await m.abrir(dueno.token)).estado).toBe(200);
+    mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.restaurante.activacion.lista).toBe(true);
+    expect(faltan(mio.datos.restaurante.activacion)).toEqual(['fotos', 'cobro']);
   });
 });

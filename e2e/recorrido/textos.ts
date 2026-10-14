@@ -79,6 +79,8 @@ export const TEXTOS = {
     sinGpsAyuda:
       'Tell us what’s going on (tall building, garage, no signal). Support reviews it and authorizes the delivery.',
     pedirExcepcion: 'I can’t confirm my location',
+    pendientes: 'Pending confirmation',
+    activacion: 'Ready to open',
     esperandoSoporte: 'Support is reviewing your case.',
     autorizado: 'Support authorized the delivery without GPS confirmation.',
     desconectarme: 'Go offline',
@@ -183,6 +185,8 @@ export const TEXTOS = {
     sinGpsAyuda:
       'Cuéntanos qué pasa (edificio, garaje, celular sin señal). Soporte lo revisa y te autoriza entregar.',
     pedirExcepcion: 'No puedo confirmar mi ubicación',
+    pendientes: 'Pendiente de confirmar',
+    activacion: 'Lista para abrir',
     esperandoSoporte: 'Soporte está revisando tu caso.',
     autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     desconectarme: 'Desconectarme',

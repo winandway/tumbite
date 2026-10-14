@@ -226,6 +226,12 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByRole('button', { name: L.guardar, exact: true }).click();
     await expect(panel.getByText(/Under review|En revisión/)).toBeVisible();
     await foto(panel, 'restaurante-ficha');
+    // La lista de activación: todavía faltan el horario y los platos (y lo recomendado).
+    const activacion = panel.getByLabel(L.activacion);
+    await expect(activacion.locator('.activacion-ok')).toHaveCount(2);
+    await expect(activacion.locator('.activacion-falta')).toHaveCount(4);
+    await activacion.scrollIntoViewIfNeeded();
+    await foto(panel, 'restaurante-activacion');
 
     // 1b. El horario: abierto todo el día, todos los días (el recorrido corre a cualquier hora).
     const horario = panel.locator('form.horarios');
@@ -730,12 +736,22 @@ for (const idioma of ['en', 'es'] as const) {
     });
     await expect(rep.getByRole('button', { name: L.comoLlegar })).toHaveCount(0);
     await foto(rep, 'repartidor-llegada');
+    // 11. Sin señal al entregar: la foto se guarda en el celular, «pendiente de confirmar», y se
+    // manda sola cuando vuelve la señal. El pedido NO queda entregado hasta entonces.
+    await repCtx.setOffline(true);
     await tomarFoto(L.fotoEntrega, FOTO_ENTREGA);
+    await expect(rep.getByText(`${L.pendientes}: 1`)).toBeVisible({ timeout: 20_000 });
+    expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
+      'en_camino',
+    );
+    await foto(rep, 'repartidor-sin-senal');
+    await repCtx.setOffline(false);
     await expect
       .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado, {
-        timeout: 20_000,
+        timeout: 40_000,
       })
       .toBe('entregado');
+    await expect(rep.getByText(`${L.pendientes}: 1`)).toHaveCount(0, { timeout: 20_000 });
     await repCtx.setGeolocation(MIAMI);
 
     // El repartidor termina su turno: así no se queda «libre» para el recorrido siguiente.
