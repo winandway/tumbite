@@ -1,13 +1,21 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { celdasVecinas, distanciaKm, geohash, nivelDe } from '@tumbite/compartido';
+import {
+  RADIO_LLEGADA_M,
+  celdasVecinas,
+  distanciaKm,
+  geohash,
+  metrosEntre,
+  nivelDe,
+} from '@tumbite/compartido';
+import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
 import { kycAprobado } from './kyc';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { type FilaPedido, aPedido } from './pedidos';
+import { CON_EVIDENCIAS, type FilaPedido, aPedido } from './pedidos';
 import { zonaPara } from './zonas';
 import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
@@ -35,8 +43,8 @@ operacion.get('/restaurante/pedidos', async (c) => {
   const rid = await miRestauranteId(c);
   const { results } = await base(c)
     .prepare(
-      `SELECT * FROM pedidos WHERE restaurante_id = ? AND (estado IN ('pagado','aceptado','listo','en_camino')
-      OR (estado IN ('entregado','cancelado') AND creado_en > datetime('now','-1 day'))) ORDER BY creado_en DESC`,
+      `SELECT p.*, ${CON_EVIDENCIAS} FROM pedidos p WHERE p.restaurante_id = ? AND (p.estado IN ('pagado','aceptado','listo','en_camino')
+      OR (p.estado IN ('entregado','cancelado') AND p.creado_en > datetime('now','-1 day'))) ORDER BY p.creado_en DESC`,
     )
     .bind(rid)
     .all<FilaPedido>();
@@ -288,7 +296,7 @@ async function miFicha(c: Ctx) {
 async function entregaActiva(db: D1Database, repartidorId: string) {
   return db
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
+      `SELECT p.*, ${CON_EVIDENCIAS}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
     )
     .bind(repartidorId)
@@ -552,24 +560,132 @@ operacion.post('/repartidor/ofertas/:id/rechazar', async (c) => {
   return c.json({ ok: true });
 });
 
-operacion.post('/repartidor/pedidos/:id/recogido', async (c) => {
-  const { u, db } = await miFicha(c);
-  const r = await db
+/** La foto que manda el celular y dónde estaba al tomarla (en la dirección: ?lat=…&lng=…). */
+async function leerFoto(c: Ctx) {
+  if (!c.env.BUCKET)
+    throw new ErrorDatos(
+      'El almacén de fotos no está disponible en este momento. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0)
+    throw new ErrorDatos('Falta la foto. Tómala y vuelve a intentar.', 'foto', 400);
+  if (bytes.byteLength > MAX_FOTO_BYTES)
+    throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
+  const tipo = tipoReal(bytes);
+  if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  const lat = Number(c.req.query('lat'));
+  const lng = Number(c.req.query('lng'));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+    throw new ErrorDatos(
+      'Necesitamos tu ubicación para confirmar que estás en el lugar. Revisa que el GPS esté encendido.',
+      undefined,
+      422,
+    );
+  return { bytes, tipo, donde: { lat, lng }, bucket: c.env.BUCKET };
+}
+
+async function guardarEvidencia(
+  db: D1Database,
+  foto: Awaited<ReturnType<typeof leerFoto>>,
+  pedidoId: string,
+  tipo: 'recogida' | 'entrega',
+  distanciaM: number | null,
+  confirmada: boolean,
+) {
+  const clave = `evidencias/${pedidoId}/${tipo}-${nuevoId()}`;
+  await foto.bucket.put(clave, foto.bytes, {
+    httpMetadata: { contentType: foto.tipo, cacheControl: 'private, no-store' },
+  });
+  await db
     .prepare(
-      "UPDATE pedidos SET estado = 'en_camino', recogido_en = datetime('now') WHERE id = ? AND repartidor_id = ? AND estado = 'listo'",
+      `INSERT OR REPLACE INTO evidencias (pedido_id, tipo, clave, lat, lng, distancia_m, creada_en, confirmada_en)
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ${confirmada ? "datetime('now')" : 'NULL'})`,
     )
-    .bind(c.req.param('id'), u.id)
+    .bind(pedidoId, tipo, clave, foto.donde.lat, foto.donde.lng, distanciaM)
     .run();
-  if (!r.meta.changes)
+}
+
+const lejos = (metros: number | null) => metros != null && metros > RADIO_LLEGADA_M;
+/** Las cuentas de los revisores de las tiendas prueban desde otra ciudad: sin regla de distancia. */
+const esRevisor = (c: Ctx, correo: string) =>
+  (c.env.CORREOS_REVISOR ?? '')
+    .split(',')
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(correo.toLowerCase());
+const comoPunto = (lat: unknown, lng: unknown) =>
+  lat == null || lng == null ? null : { lat: Number(lat), lng: Number(lng) };
+
+/**
+ * Recoger: el repartidor, en el restaurante, toma la foto del pedido cerrado. El pedido NO sale
+ * todavía: el restaurante ve la foto en su pantalla y confirma que se lo entregó a esa persona.
+ * Así nadie se lleva una bolsa sin dejar rastro. Se puede repetir la foto antes de que confirmen.
+ */
+operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
+  const { u, db } = await miFicha(c);
+  const id = c.req.param('id');
+  const p = await db
+    .prepare(
+      "SELECT r.lat, r.lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'listo'",
+    )
+    .bind(id, u.id)
+    .first<{ lat: number | null; lng: number | null }>();
+  if (!p)
     throw new ErrorDatos('El restaurante todavía no marcó el pedido como listo.', undefined, 409);
-  await anotar(db, c.req.param('id'), 'en_camino', u.id);
-  await avisarAlCliente(c.env, db, c.req.param('id'), (i) =>
-    AVISOS.enCamino(i, u.nombre.split(' ')[0] ?? ''),
-  );
+  const foto = await leerFoto(c);
+  const rest = comoPunto(p.lat, p.lng);
+  const metros = rest ? metrosEntre(foto.donde, rest) : null;
+  if (lejos(metros) && !esRevisor(c, u.correo))
+    throw new ErrorDatos(
+      'Todavía no estás en el restaurante. Acércate y vuelve a tomar la foto.',
+      undefined,
+      409,
+    );
+  await guardarEvidencia(db, foto, id, 'recogida', metros, false);
+  await anotarEvento(db, id, 'foto_recogida');
+  return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/recogida` });
+});
+
+/** El restaurante confirma que le entregó el pedido a ese repartidor: ahora sí sale en camino. */
+operacion.post('/restaurante/pedidos/:id/confirmar-recogida', async (c) => {
+  const rid = await miRestauranteId(c);
+  const db = base(c);
+  const id = c.req.param('id');
+  const ev = await db
+    .prepare(
+      "SELECT 1 FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id WHERE e.pedido_id = ? AND e.tipo = 'recogida' AND p.restaurante_id = ? AND p.estado = 'listo'",
+    )
+    .bind(id, rid)
+    .first();
+  if (!ev)
+    throw new ErrorDatos(
+      'El repartidor todavía no tomó la foto del pedido. Pídele que la tome en su app.',
+      undefined,
+      409,
+    );
+  await cambiarEstado(db, id, rid, ['listo'], 'en_camino', ", recogido_en = datetime('now')");
+  await db
+    .prepare(
+      "UPDATE evidencias SET confirmada_en = datetime('now') WHERE pedido_id = ? AND tipo = 'recogida'",
+    )
+    .bind(id)
+    .run();
+  const rep = await db
+    .prepare(
+      'SELECT u.nombre FROM pedidos p JOIN usuarios u ON u.id = p.repartidor_id WHERE p.id = ?',
+    )
+    .bind(id)
+    .first<{ nombre: string }>();
+  await avisarAlCliente(c.env, db, id, (i) => AVISOS.enCamino(i, rep?.nombre.split(' ')[0] ?? ''));
   return c.json({ ok: true });
 });
 
-/** Entregado: se acredita a cada billetera, una sola vez (el libro no permite repetir pedido + concepto). */
+/**
+ * Entregado: solo en la puerta (a menos de 200 m de la dirección) y con la foto de la entrega.
+ * Se acredita a cada billetera, una sola vez (el libro no permite repetir pedido + concepto).
+ */
 operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
@@ -580,6 +696,16 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     .bind(id, u.id)
     .first<Record<string, unknown>>();
   if (!p) throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  const foto = await leerFoto(c);
+  const casa = comoPunto(p.lat, p.lng);
+  const metros = casa ? metrosEntre(foto.donde, casa) : null;
+  if (lejos(metros) && !esRevisor(c, u.correo))
+    throw new ErrorDatos(
+      'Todavía no llegas a la dirección de entrega. El botón se activa cuando estés en la puerta.',
+      undefined,
+      409,
+    );
+  await guardarEvidencia(db, foto, id, 'entrega', metros, true);
   const entrega = Number(p.envio) + Number(p.complemento);
   await db.batch([
     db
@@ -606,7 +732,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
   ]);
   await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
-  return c.json({ ok: true });
+  return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
 });
 
 // ======================= Reloj externo =======================
@@ -674,7 +800,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   );
   const f = await base(c)
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en
+      `SELECT p.*, ${CON_EVIDENCIAS}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id WHERE p.id = ?`,
     )
@@ -743,6 +869,29 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
         : null,
     },
   });
+});
+
+/** La foto de la recogida o de la entrega: solo el cliente, el restaurante, el repartidor y el equipo. */
+operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
+  const u = exigir(c);
+  const tipo = c.req.param('tipo');
+  if (tipo !== 'recogida' && tipo !== 'entrega') return c.text('No encontrado', 404);
+  const f = await base(c)
+    .prepare(
+      'SELECT e.clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE e.pedido_id = ? AND e.tipo = ?',
+    )
+    .bind(c.req.param('id'), tipo)
+    .first<{ clave: string; cliente_id: string; repartidor_id: string | null; dueno_id: string }>();
+  const puede =
+    f && (u.rol === 'admin' || [f.cliente_id, f.repartidor_id, f.dueno_id].includes(u.id));
+  if (!f || !puede || !c.env.BUCKET) return c.text('No encontrado', 404);
+  const obj = await c.env.BUCKET.get(f.clave);
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, no-store');
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(obj.body, { headers });
 });
 
 operacion.post('/pedidos/:id/calificar', async (c) => {

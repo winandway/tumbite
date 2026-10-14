@@ -135,11 +135,14 @@ export function Boton({
   alTocar,
   cargando,
   secundario,
+  exito,
 }: {
   texto: string;
   alTocar: () => void;
   cargando?: boolean;
   secundario?: boolean;
+  /** Verde: aceptar, avanzar, terminar bien (regla «lo que sale bien va en verde»). */
+  exito?: boolean;
 }) {
   return (
     <Pressable
@@ -150,6 +153,7 @@ export function Boton({
       style={({ pressed }) => [
         e.boton,
         secundario && e.botonSecundario,
+        exito && !secundario && { backgroundColor: C.exito },
         pressed && { opacity: 0.85 },
       ]}
     >

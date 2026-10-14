@@ -151,12 +151,12 @@ describe('avisos al celular', () => {
 
     await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
+    await m.recoger(id, rep.token, dueno.token);
     expect(mandados.at(-1)).toMatchObject({
       to: 'ExponentPushToken[cliente]',
       body: 'Pedro picked up your food.',
     });
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token);
+    await m.entregar(id, rep.token);
     expect(mandados.at(-1)?.title).toContain('Delivered');
     expect(mandados.at(-1)?.data.pedidoId).toBe(id);
   });

@@ -14,3 +14,4 @@ export * from './rutasPublicas';
 export * from './limite';
 export * from './competencia';
 export * from './calculadora';
+export * from './llegada';

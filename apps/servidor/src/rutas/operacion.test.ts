@@ -154,10 +154,15 @@ describe('ciclo del pedido', () => {
 
     // No se puede recoger antes de que esté listo.
     expect(
-      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token)).estado,
+      (
+        await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+          lat: 25.77,
+          lng: -80.19,
+        })
+      ).estado,
     ).toBe(409);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
+    await m.recoger(id, rep.token, dueno.token);
     await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.775, lng: -80.195 }, rep.token);
 
     const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
@@ -168,12 +173,8 @@ describe('ciclo del pedido', () => {
     expect(seg.datos.pedido.minutosEstimados).toBeGreaterThanOrEqual(5);
     expect(seg.datos.pedido.minutosEstimados).toBeLessThan(20);
 
-    expect(
-      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
-    ).toBe(200);
-    expect(
-      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
-    ).toBe(409);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    expect((await m.entregar(id, rep.token)).estado).toBe(409);
     const resumen = await m.llamar('GET', '/datos/restaurante/resumen', undefined, dueno.token);
     expect(resumen.datos.resumen).toMatchObject({
       entregados: 1,
@@ -329,16 +330,14 @@ describe('recorrido completo como en la calle (C-ENSAYO-CALLE)', () => {
     expect(ofertas.datos.ofertas[0]?.pagoRepartidor).toBe(desglose.pagoRepartidor);
     await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
+    await m.recoger(id, rep.token, dueno.token);
 
     // El cliente lo sigue en camino.
     const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
     expect(seg.datos.pedido.estado).toBe('en_camino');
 
     // Entrega: el dinero cuadra al centavo con el desglose que vio el cliente.
-    expect(
-      (await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token)).estado,
-    ).toBe(200);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
     expect((await m.llamar('GET', '/datos/billetera', undefined, dueno.token)).datos.saldo).toBe(
       desglose.pagoRestaurante,
     );
@@ -399,8 +398,8 @@ describe('tablero del restaurante (C-TABLERO-REST)', () => {
     await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/recogido`, {}, rep.token);
-    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/entregado`, {}, rep.token);
+    await m.recoger(id, rep.token, dueno.token);
+    await m.entregar(id, rep.token);
     await m.llamar(
       'POST',
       `/datos/pedidos/${id}/calificar`,
@@ -617,5 +616,140 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     expect(llamadas.some((u) => /\/payment_intents\/.+\/cancel$/.test(u))).toBe(true);
     const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
     expect(f?.estado).toBe('cancelado');
+  });
+});
+
+describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-EN-PUERTA)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function hastaListo() {
+    const e = await escenario();
+    const rep = await e.repartidor('Luis Prueba', 25.771, -80.191);
+    const id = await e.pedidoPagado();
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 10 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    return { ...e, rep, id };
+  }
+  const estado = async (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    (
+      await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ estado: string }>()
+    )?.estado;
+
+  it('sin la foto del repartidor el restaurante no puede soltar el pedido', async () => {
+    const { m, dueno, id } = await hastaListo();
+    const r = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/confirmar-recogida`,
+      {},
+      dueno.token,
+    );
+    expect(r.estado).toBe(409);
+    expect(await estado(m, id)).toBe('listo');
+  });
+
+  it('la foto lejos del restaurante o sin ubicación no vale', async () => {
+    const { m, rep, id } = await hastaListo();
+    const ruta = `/datos/repartidor/pedidos/${id}/foto-recogida`;
+    expect((await m.foto(ruta, rep.token, { lat: 25.8, lng: -80.25 })).estado).toBe(409);
+    expect((await m.foto(ruta, rep.token)).estado).toBe(422);
+  });
+
+  it('con la foto, el pedido sigue en el restaurante hasta que el restaurante confirma', async () => {
+    const { m, dueno, rep, cliente, id } = await hastaListo();
+    const f = await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+      lat: 25.7701,
+      lng: -80.1901,
+    });
+    expect(f.estado).toBe(200);
+    expect(await estado(m, id)).toBe('listo');
+    const lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    const p = lista.datos.pedidos.find((x: { id: string }) => x.id === id);
+    expect(p.fotoRecogida).toMatchObject({ confirmadaEn: null });
+    // El restaurante ve la foto; un cliente cualquiera no.
+    expect(
+      (
+        await m.crudo(`/datos/pedidos/${id}/evidencia/recogida`, {
+          headers: { authorization: `Bearer ${dueno.token}` },
+        })
+      ).status,
+    ).toBe(200);
+    const extrano = await m.cuenta('cliente', 'Otra Persona');
+    expect(
+      (
+        await m.crudo(`/datos/pedidos/${id}/evidencia/recogida`, {
+          headers: { authorization: `Bearer ${extrano.token}` },
+        })
+      ).status,
+    ).toBe(404);
+    expect((await m.crudo(`/datos/pedidos/${id}/evidencia/recogida`, {})).status).toBe(401);
+
+    const ok = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/confirmar-recogida`,
+      {},
+      dueno.token,
+    );
+    expect(ok.estado).toBe(200);
+    expect(await estado(m, id)).toBe('en_camino');
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.fotoRecogida.confirmadaEn).toBeTruthy();
+    expect(
+      (
+        await m.crudo(`/datos/pedidos/${id}/evidencia/recogida`, {
+          headers: { authorization: `Bearer ${cliente.token}` },
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  it('la cuenta del revisor de las tiendas prueba desde lejos, pero igual con foto', async () => {
+    const { m, dueno, rep, id } = await hastaListo();
+    const fila = await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(rep.id)
+      .first<{ correo: string }>();
+    (m.extra as Record<string, unknown>).CORREOS_REVISOR = `otro@ejemplo.com, ${fila!.correo}`;
+    const lejos = { lat: 37.33, lng: -122.03 };
+    expect(
+      (await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, lejos)).estado,
+    ).toBe(200);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/confirmar-recogida`, {}, dueno.token);
+    expect((await m.entregar(id, rep.token, lejos)).estado).toBe(200);
+  });
+
+  it('entregar lejos de la casa no se puede ni acredita dinero; en la puerta sí, con su foto', async () => {
+    const { m, dueno, rep, cliente, id } = await hastaListo();
+    await m.recoger(id, rep.token, dueno.token);
+    const lejos = await m.entregar(id, rep.token, { lat: 25.771, lng: -80.191 });
+    expect(lejos.estado).toBe(409);
+    expect(await estado(m, id)).toBe('en_camino');
+    expect((await m.llamar('GET', '/datos/billetera', undefined, rep.token)).datos.saldo).toBe(0);
+    // Sin foto tampoco.
+    const sinFoto = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/entregado`,
+      {},
+      rep.token,
+    );
+    expect(sinFoto.estado).not.toBe(200);
+    expect((await m.entregar(id, rep.token, { lat: 25.7801, lng: -80.2001 })).estado).toBe(200);
+    expect(await estado(m, id)).toBe('entregado');
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.fotoEntrega).toBeTruthy();
+    expect(
+      (
+        await m.crudo(`/datos/pedidos/${id}/evidencia/entrega`, {
+          headers: { authorization: `Bearer ${cliente.token}` },
+        })
+      ).status,
+    ).toBe(200);
   });
 });

@@ -3424,3 +3424,28 @@ button {
   margin-bottom: 6px;
   color: #444;
 }
+
+/* Lo que sale bien va en verde: confirmar la recogida. Y la foto del repartidor, grande y clara. */
+.boton.exito {
+  background: #0d7a3a;
+  color: #fff;
+}
+.foto-recogida {
+  margin: 10px 0 0;
+}
+.foto-recogida img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+}
+.foto-recogida figcaption {
+  font-size: 13px;
+  color: #5e5e5e;
+  margin-top: 6px;
+}
+
+.suave {
+  color: #5e5e5e;
+}

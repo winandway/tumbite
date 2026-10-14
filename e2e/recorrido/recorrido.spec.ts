@@ -55,18 +55,30 @@ const PARA_TIENDA = new Map<string, [string, string]>([
   ['cliente-carrito', ['Tumbite (cliente)', '03-carrito-con-el-precio-completo']],
   ['cliente-pagado', ['Tumbite (cliente)', '04-pago-recibido']],
   ['cliente-en-camino', ['Tumbite (cliente)', '05-pedido-en-vivo-en-el-mapa']],
-  ['cliente-calificar', ['Tumbite (cliente)', '06-calificar-comida-y-repartidor']],
+  ['cliente-sellado', ['Tumbite (cliente)', '06-pedido-sellado-con-foto']],
+  ['cliente-calificar', ['Tumbite (cliente)', '07-entregado-con-foto-y-calificar']],
   ['repartidor-conectado', ['Tumbite Driver (repartidor)', '01-conectado-buscando-pedidos']],
   ['repartidor-oferta', ['Tumbite Driver (repartidor)', '02-oferta-con-el-pago-antes-de-aceptar']],
-  ['repartidor-en-camino', ['Tumbite Driver (repartidor)', '03-entrega-en-camino']],
-  ['repartidor-billetera', ['Tumbite Driver (repartidor)', '04-billetera']],
-  ['repartidor-retiro', ['Tumbite Driver (repartidor)', '05-retiro-al-banco']],
+  [
+    'repartidor-foto-recogida',
+    ['Tumbite Driver (repartidor)', '03-foto-del-pedido-en-el-restaurante'],
+  ],
+  ['repartidor-en-camino', ['Tumbite Driver (repartidor)', '04-en-camino-como-llegar']],
+  ['repartidor-llegada', ['Tumbite Driver (repartidor)', '05-en-la-puerta-foto-de-la-entrega']],
+  ['repartidor-billetera', ['Tumbite Driver (repartidor)', '06-billetera']],
+  ['repartidor-retiro', ['Tumbite Driver (repartidor)', '07-retiro-al-banco']],
   ['restapp-nuevo', ['Tumbite Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
   ['restapp-preparando', ['Tumbite Restaurants (restaurante)', '02-pedido-en-preparacion']],
-  ['restapp-listo', ['Tumbite Restaurants (restaurante)', '03-pedido-listo-para-el-repartidor']],
+  [
+    'restapp-listo',
+    ['Tumbite Restaurants (restaurante)', '03-confirmar-con-la-foto-del-repartidor'],
+  ],
   ['restapp-entrar', ['Tumbite Restaurants (restaurante)', '04-entrar']],
 ]);
 const MIAMI = { latitude: 25.7743, longitude: -80.1937 };
+// Las «fotos» que toma el repartidor: la bolsa cerrada al recoger y al entregar (sin caras).
+const FOTO_RECOGIDA = join(__dirname, 'fotos', 'bolsa-recogida.jpg');
+const FOTO_ENTREGA = join(__dirname, 'fotos', 'bolsa-entrega.jpg');
 const CASA = { latitude: 25.7725, longitude: -80.187 };
 
 for (const idioma of ['en', 'es'] as const) {
@@ -548,17 +560,51 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(panel, 'restaurante-pedido-aceptado');
     await fotoRestApps('restapp-preparando');
     await panel.getByRole('button', { name: L.listo }).click();
-    await fotoRestApps('restapp-listo');
-    await Promise.all(restApps.map((p) => p.context().close()));
 
-    // 7. El repartidor recibe la oferta, la acepta, recoge y entrega.
+    // 7. El repartidor acepta y, en el restaurante, toma la foto del pedido cerrado.
     await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
       timeout: 30_000,
     });
     await foto(rep, 'repartidor-oferta');
     await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
-    await rep.getByRole('button', { name: L.recogido }).click();
-    await expect(rep.getByRole('button', { name: L.entregar, exact: true })).toBeVisible();
+    const tomarFoto = async (boton: string, archivo: string) => {
+      const [selector] = await Promise.all([
+        rep.waitForEvent('filechooser'),
+        rep.getByRole('button', { name: boton }).filter({ visible: true }).click(),
+      ]);
+      await selector.setFiles(archivo);
+    };
+    await tomarFoto(L.fotoRecogida, FOTO_RECOGIDA);
+    await expect(rep.getByText(L.esperaConfirmacion).filter({ visible: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await foto(rep, 'repartidor-foto-recogida');
+    // Sin la confirmación del restaurante, el pedido NO sale.
+    expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
+      'listo',
+    );
+
+    // 8. El restaurante ve la foto en su pantalla y confirma que se lo entregó.
+    await fotoRestApps('restapp-listo');
+    await Promise.all(restApps.map((p) => p.context().close()));
+    const confirmar = panel.getByRole('button', { name: L.confirmarRecogida });
+    await expect(confirmar).toBeVisible({ timeout: 20_000 });
+    await expect(panel.locator('.foto-recogida img')).toBeVisible();
+    await foto(panel, 'restaurante-confirmar-recogida');
+    await confirmar.click();
+
+    // 9. En camino: «Cómo llegar» mientras está lejos; el cliente ve su pedido sellado.
+    // Espera la pantalla de entrega (en la de recogida también hay un «Cómo llegar», al restaurante).
+    await expect(rep.getByText(/^(Deliver to|Entrega en):$/).filter({ visible: true })).toBeVisible(
+      {
+        timeout: 20_000,
+      },
+    );
+    const irCasa = rep.getByRole('button', { name: L.comoLlegar }).filter({ visible: true });
+    await expect(irCasa).toBeVisible();
+    // Lejos de la casa: «Cómo llegar» en verde y todavía no hay botón de entregar.
+    await expect(irCasa).toHaveCSS('background-color', 'rgb(13, 122, 58)');
+    await expect(rep.getByRole('button', { name: L.fotoEntrega })).toHaveCount(0);
     await foto(rep, 'repartidor-en-camino');
     await cli.reload();
     await expect(
@@ -566,20 +612,45 @@ for (const idioma of ['en', 'es'] as const) {
     ).toBeVisible();
     await mapaListo(cli);
     await foto(cli, 'cliente-en-camino');
-    await rep.getByRole('button', { name: L.entregar, exact: true }).click();
+    const sellado = cli.getByLabel(
+      /Your order left the restaurant|Tu pedido salió del restaurante/,
+    );
+    await expect(sellado.first()).toBeVisible({ timeout: 20_000 });
+    await sellado.first().scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-sellado');
+
+    // 10. Llega a la puerta: se quita «Cómo llegar» y aparece la foto de la entrega.
+    await repCtx.setGeolocation(CASA);
+    await expect(
+      rep.getByRole('button', { name: L.fotoEntrega }).filter({ visible: true }),
+    ).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(rep.getByRole('button', { name: L.comoLlegar })).toHaveCount(0);
+    await foto(rep, 'repartidor-llegada');
+    await tomarFoto(L.fotoEntrega, FOTO_ENTREGA);
+    await expect
+      .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado, {
+        timeout: 20_000,
+      })
+      .toBe('entregado');
+    await repCtx.setGeolocation(MIAMI);
 
     // El repartidor termina su turno: así no se queda «libre» para el recorrido siguiente.
     await rep.getByText(L.desconectarme).filter({ visible: true }).click();
 
-    // 8. El cliente lo ve entregado y califica.
+    // 11. El cliente lo ve entregado y califica.
     await cli.reload();
     await expect(cli.getByText(L.entregado)).toBeVisible({ timeout: 20_000 });
+    await expect(cli.getByLabel(/How your order was left|Así quedó tu pedido/).first()).toBeVisible(
+      { timeout: 20_000 },
+    );
     await cli.getByRole('button', { name: L.estrellas(L.laComida, 5) }).click();
     await cli.getByRole('button', { name: L.estrellas(`${L.tuRepartidor}: Luis`, 5) }).click();
     await foto(cli, 'cliente-calificar');
     await cli.getByRole('button', { name: L.enviarCalificacion }).click();
 
-    // 9. Regalo de cumpleaños: el restaurante aparta el 20 % y regala los nudos de ajo.
+    // 12. Regalo de cumpleaños: el restaurante aparta el 20 % y regala los nudos de ajo.
     await panel.getByRole('link', { name: L.regalos, exact: true }).click();
     await panel.getByLabel(L.porcentajeRegalos).fill('20');
     const elegir = panel.getByLabel(L.platoRegalo).first();
@@ -603,7 +674,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
     await foto(cli, 'cliente-regalo');
 
-    // 10. El cliente paga y se arrepiente: cancela antes de que el restaurante acepte.
+    // 13. El cliente paga y se arrepiente: cancela antes de que el restaurante acepte.
     const conRegalo = await pedirYPagar([]);
     await cli.goto(`/app/order/${conRegalo.pedidoId}`);
     await cli.getByText(L.cancelarPedido).filter({ visible: true }).click();
@@ -612,7 +683,7 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(L.cancelasteTu, { exact: false })).toBeVisible();
     await foto(cli, 'cliente-cancelado');
 
-    // 11. El restaurante no puede atender un pedido y lo rechaza: el cliente recibe su dinero.
+    // 14. El restaurante no puede atender un pedido y lo rechaza: el cliente recibe su dinero.
     const rechazado = await pedirYPagar([plato.pizza]);
     await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
     await rechazarEnPanel(rechazado.pedidoId);
@@ -620,7 +691,7 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-rechazado');
 
-    // 12. El Manager: un pedido que nadie confirma se pone en rojo y a los 10 minutos se cancela
+    // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 10 minutos se cancela
     //     solo, con la devolución. El reloj se adelanta en la base de prueba, no se espera.
     const olvidado = await pedirYPagar([plato.pizza]);
     const atrasar = (minutos: number) =>
@@ -640,7 +711,7 @@ for (const idioma of ['en', 'es'] as const) {
     });
     await foto(cli, 'cliente-manager-cancela');
 
-    // 13. El dinero de cada uno. El restaurante ve su día: lo que le toca es lo de su venta entregada.
+    // 16. El dinero de cada uno. El restaurante ve su día: lo que le toca es lo de su venta entregada.
     await panel.getByRole('link', { name: L.beneficios, exact: true }).click();
     const pagoRest = new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-US', {
       style: 'currency',
@@ -685,7 +756,7 @@ for (const idioma of ['en', 'es'] as const) {
     )[0]?.s;
     expect(Number(saldo), 'después de retirar todo, el saldo queda en cero').toBe(0);
 
-    // 14. Rechazar una oferta no castiga: la oferta se va y el repartidor sigue buscando.
+    // 17. Rechazar una oferta no castiga: la oferta se va y el repartidor sigue buscando.
     await rep.goto('/driver/');
     await rep
       .getByRole('switch')

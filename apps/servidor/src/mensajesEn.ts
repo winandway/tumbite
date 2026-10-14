@@ -60,6 +60,23 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa foto no corresponde.', 'That photo isn’t valid here.'],
   ['Esa foto no es válida. Vuelve a subirla.', 'That photo isn’t valid. Please upload it again.'],
+  ['Falta la foto. Tómala y vuelve a intentar.', 'The photo is missing. Take it and try again.'],
+  [
+    'Necesitamos tu ubicación para confirmar que estás en el lugar. Revisa que el GPS esté encendido.',
+    'We need your location to confirm you’re there. Check that your GPS is on.',
+  ],
+  [
+    'Todavía no estás en el restaurante. Acércate y vuelve a tomar la foto.',
+    'You’re not at the restaurant yet. Get closer and take the photo again.',
+  ],
+  [
+    'El repartidor todavía no tomó la foto del pedido. Pídele que la tome en su app.',
+    'The driver hasn’t taken the photo of the order yet. Ask them to take it in their app.',
+  ],
+  [
+    'Todavía no llegas a la dirección de entrega. El botón se activa cuando estés en la puerta.',
+    'You haven’t reached the delivery address yet. The button turns on when you’re at the door.',
+  ],
   ['Esa foto no existe.', 'That photo doesn’t exist.'],
   ['Esa franquicia no existe.', 'That franchise doesn’t exist.'],
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],

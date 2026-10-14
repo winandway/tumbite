@@ -29,11 +29,11 @@ Todas en inglés, que es el idioma principal y el que rige en los textos legales
 
 Comprobado el 12 oct 2026 con la configuración final de Expo (lo que de verdad va dentro de la app):
 
-| App         | iPhone pide                        | Android pide                     | Para qué (texto que ve la persona, en inglés y en español)                                    |
-| ----------- | ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
-| Cliente     | Ubicación mientras se usa          | Ubicación                        | Mostrar los restaurantes cercanos y entregar el pedido                                        |
-| Repartidor  | Ubicación mientras se usa · Cámara | Ubicación · Cámara               | Ofrecer pedidos cercanos y mostrar la ruta · Foto del documento y de la cara para verificarse |
-| Restaurante | Nada                               | Nada (solo el volumen del aviso) | —                                                                                             |
+| App         | iPhone pide                        | Android pide                     | Para qué (texto que ve la persona, en inglés y en español)                                                                            |
+| ----------- | ---------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Cliente     | Ubicación mientras se usa          | Ubicación                        | Mostrar los restaurantes cercanos y entregar el pedido                                                                                |
+| Repartidor  | Ubicación mientras se usa · Cámara | Ubicación · Cámara               | Ofrecer pedidos cercanos y mostrar la ruta · Foto del pedido al recogerlo y al entregarlo, y del documento y la cara para verificarse |
+| Restaurante | Nada                               | Nada (solo el volumen del aviso) | —                                                                                                                                     |
 
 - Se apagaron los textos genéricos que meten las librerías sin preguntar (Face ID, ubicación siempre, movimiento, micrófono) y los permisos de almacenamiento y grabación de Android. Apple rechaza los textos genéricos y Google pregunta por cada permiso de más.
 - La app del restaurante no suena con la pantalla bloqueada (eso pediría «audio en segundo plano», que Apple revisa con lupa): con la app cerrada, el pedido llega como notificación con sonido.
@@ -139,24 +139,25 @@ Sin violencia, sin contenido sexual, sin apuestas, sin compras de alcohol o taba
 
 Datos que se recogen, todos **ligados a la cuenta**, **ninguno para rastrear** ni para publicidad de terceros:
 
-| Dato                                             | Cliente                                                | Repartidor       | Restaurante        | Para qué                                           |
-| ------------------------------------------------ | ------------------------------------------------------ | ---------------- | ------------------ | -------------------------------------------------- |
-| Nombre, correo, teléfono                         | Sí                                                     | Sí               | Sí                 | La cuenta y el soporte                             |
-| Dirección de entrega                             | Sí                                                     | —                | Sí (local)         | Entregar el pedido                                 |
-| Ubicación precisa (solo con la app abierta)      | Sí                                                     | Sí               | —                  | Restaurantes cercanos, ruta                        |
-| Historial de compras                             | Sí                                                     | —                | Sí (ventas)        | El servicio y los recibos                          |
-| Pagos                                            | Lo maneja Stripe; Tumbite no guarda números de tarjeta | Banco por Stripe | Banco por Stripe   | Cobrar y pagar                                     |
-| Fotos (documento y cara)                         | —                                                      | Sí               | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo |
-| Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí               | Sí                 | Avisos del pedido                                  |
-| Mensajes de soporte                              | Sí                                                     | Sí               | Sí                 | Atender quejas                                     |
+| Dato                                             | Cliente                                                | Repartidor       | Restaurante        | Para qué                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------ | ---------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| Nombre, correo, teléfono                         | Sí                                                     | Sí               | Sí                 | La cuenta y el soporte                                                                            |
+| Dirección de entrega                             | Sí                                                     | —                | Sí (local)         | Entregar el pedido                                                                                |
+| Ubicación precisa (solo con la app abierta)      | Sí                                                     | Sí               | —                  | Restaurantes cercanos, ruta                                                                       |
+| Historial de compras                             | Sí                                                     | —                | Sí (ventas)        | El servicio y los recibos                                                                         |
+| Pagos                                            | Lo maneja Stripe; Tumbite no guarda números de tarjeta | Banco por Stripe | Banco por Stripe   | Cobrar y pagar                                                                                    |
+| Fotos (documento y cara)                         | —                                                      | Sí               | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo                                                |
+| Fotos del pedido (al recogerlo y al entregarlo)  | —                                                      | Sí               | —                  | Probar la recogida y la entrega; las ven el cliente, el restaurante y el repartidor de ese pedido |
+| Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí               | Sí                 | Avisos del pedido                                                                                 |
+| Mensajes de soporte                              | Sí                                                     | Sí               | Sí                 | Atender quejas                                                                                    |
 
 Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://tumbite.com/delete-account`).
 
 ### Notas para el revisor (se pegan en «App Review Information»)
 
-EN: Tumbite is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Location is only used while the app is open. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.”
+EN: Tumbite is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Location is only used while the app is open. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.” Drivers photograph the closed order at pickup (the restaurant confirms it on its screen) and the delivery at the door; delivery is only allowed near the address, so the reviewer driver account is exempt from the distance check (it still needs the photos).
 
-Cuentas de prueba para el revisor: una de cliente, una de repartidor y una de restaurante, con un restaurante de prueba aprobado. **Se crean el día del envío** con contraseñas nuevas que van solo en el formulario de Apple y Google, nunca en el repositorio.
+Cuentas de prueba para el revisor: una de cliente, una de repartidor y una de restaurante, con un restaurante de prueba aprobado. El correo de la de repartidor va en la variable `CORREOS_REVISOR` del sitio (YaDominios Cloud → Variables de entorno), para que pueda recoger y entregar desde otra ciudad. **Se crean el día del envío** con contraseñas nuevas que van solo en el formulario de Apple y Google, nunca en el repositorio.
 
 ## Capturas de pantalla de la tienda
 

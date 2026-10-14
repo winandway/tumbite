@@ -123,9 +123,40 @@ export function crearApi(op: OpcionesApi) {
     return { url: datos.url };
   }
 
+  /**
+   * Una foto privada (con la sesión) lista para mostrar: la recogida o la entrega de un pedido.
+   * Vuelve como «data:» para que sirva igual en el celular y en la web.
+   */
+  async function verFoto(ruta: string): Promise<string> {
+    const headers: Record<string, string> = {};
+    const token = op.token?.();
+    if (token) headers.authorization = `Bearer ${token}`;
+    const res = await hacer(`${op.base}${ruta}`, {
+      headers,
+      credentials: credenciales,
+    } as Parameters<typeof fetch>[1]);
+    if (!res.ok) throw new ErrorApi('', res.status);
+    const blob = await res.blob();
+    // FileReader existe en el celular y en el navegador (no en el servidor, que nunca lo usa).
+    type Lector = {
+      result: unknown;
+      onload: (() => void) | null;
+      onerror: (() => void) | null;
+      readAsDataURL: (b: Blob) => void;
+    };
+    const ClaseLector = (globalThis as unknown as { FileReader: new () => Lector }).FileReader;
+    return await new Promise<string>((ok, mal) => {
+      const lector = new ClaseLector();
+      lector.onload = () => ok(String(lector.result));
+      lector.onerror = () => mal(new ErrorApi('', 0));
+      lector.readAsDataURL(blob);
+    });
+  }
+
   return {
     pedir,
     subirFoto,
+    verFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
     entrar: (d: DatosEntrar) => pedir<RespuestaSesion>('POST', '/datos/cuentas/entrar', d),
     salir: () => pedir<{ ok: true }>('POST', '/datos/cuentas/salir', {}),

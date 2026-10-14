@@ -28,6 +28,9 @@ export const esquemaEnv = z.object({
   EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
   RELOJ_SECRETO: z.string().min(24).optional(),
+  // Cuentas de prueba para los revisores de Apple y Google (correos separados por coma): prueban
+  // desde otra ciudad, así que no se les exige estar a 200 m. La foto sí se les pide igual.
+  CORREOS_REVISOR: z.string().optional(),
   /** Dirección pública del sitio, para las vueltas desde Stripe. */
   SITIO_URL: z.url().optional(),
 });

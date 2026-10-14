@@ -23,6 +23,7 @@ type Pedido = {
   listoEn: string | null;
   recogidoEn: string | null;
   tiempoPrepMin: number | null;
+  fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 
@@ -40,6 +41,11 @@ const T = {
     confirmar: '¿Rechazar este pedido? Se le devuelve todo el dinero al cliente.',
     mas: 'Más opciones',
     notas: 'Notas',
+    esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
+    fotoDelRepartidor: 'Foto que tomó el repartidor',
+    confirmarRecogida: 'Confirmar: se lo entregué al repartidor',
+    ayudaConfirmar:
+      'Revisa que sea tu pedido y confirma. Recién ahí sale en camino y el cliente ve la foto.',
     estados: {
       pagado: 'Nuevo',
       aceptado: 'Preparando',
@@ -62,6 +68,11 @@ const T = {
     confirmar: 'Reject this order? The customer gets a full refund.',
     mas: 'More options',
     notas: 'Notes',
+    esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
+    fotoDelRepartidor: 'Photo taken by the driver',
+    confirmarRecogida: 'Confirm: I handed it to the driver',
+    ayudaConfirmar:
+      'Check that it’s your order and confirm. Only then does it go out, and the customer sees the photo.',
     estados: {
       pagado: 'New',
       aceptado: 'Preparing',
@@ -159,6 +170,18 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.notas}: {p.notas}
                 </span>
               )}
+              {p.estado === 'listo' && !p.fotoRecogida && (
+                <span className="suave">{t.esperandoFoto}</span>
+              )}
+              {p.estado === 'listo' && p.fotoRecogida && (
+                <figure className="foto-recogida">
+                  <img
+                    src={`/datos/pedidos/${p.id}/evidencia/recogida?v=${encodeURIComponent(p.fotoRecogida.tomadaEn)}`}
+                    alt={t.fotoDelRepartidor}
+                  />
+                  <figcaption>{t.ayudaConfirmar}</figcaption>
+                </figure>
+              )}
             </div>
             <div className="fila-botones">
               {p.estado === 'pagado' &&
@@ -181,6 +204,17 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   onClick={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
                 >
                   {t.listo}
+                </button>
+              )}
+              {p.estado === 'listo' && p.fotoRecogida && (
+                <button
+                  type="button"
+                  className="boton exito"
+                  onClick={() =>
+                    void accion(`/datos/restaurante/pedidos/${p.id}/confirmar-recogida`)
+                  }
+                >
+                  {t.confirmarRecogida}
                 </button>
               )}
             </div>

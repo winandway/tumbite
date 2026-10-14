@@ -10,7 +10,16 @@ import {
   formatearDolares,
   nombrePlato,
 } from '@tumbite/compartido';
-import { Boton, C, MenuCuenta, Pantalla, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  FotoPedido,
+  MenuCuenta,
+  Pantalla,
+  TEXTOS_MOVIL,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 
 type Pedido = {
   id: string;
@@ -20,6 +29,7 @@ type Pedido = {
   notas: string;
   creadoEn: string;
   tiempoPrepMin: number | null;
+  fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 
@@ -30,6 +40,10 @@ const T = {
     preparando: 'Preparando',
     listos: 'Listos para recoger',
     camino: 'En camino',
+    esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
+    confirmarRecogida: 'Confirmar: se lo entregué al repartidor',
+    ayudaConfirmar:
+      'Foto que tomó el repartidor. Revisa que sea tu pedido y confirma: recién ahí sale en camino.',
     hechos: 'Hoy',
     aceptar: 'Aceptar',
     listo: '¡Listo!',
@@ -56,6 +70,10 @@ const T = {
     preparando: 'Preparing',
     listos: 'Ready for pickup',
     camino: 'On the way',
+    esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
+    confirmarRecogida: 'Confirm: I handed it to the driver',
+    ayudaConfirmar:
+      'Photo taken by the driver. Check that it’s your order and confirm: only then does it go out.',
     hechos: 'Today',
     aceptar: 'Accept',
     listo: 'Ready!',
@@ -311,7 +329,25 @@ export function Inicio() {
       {seccion(
         t.listos,
         pedidos.filter((p) => p.estado === 'listo'),
-        () => null,
+        (p) =>
+          p.fotoRecogida ? (
+            <>
+              <FotoPedido
+                pedidoId={p.id}
+                tipo="recogida"
+                version={p.fotoRecogida.tomadaEn}
+                pie={t.ayudaConfirmar}
+              />
+              <Boton
+                texto={t.confirmarRecogida}
+                alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/confirmar-recogida`)}
+                exito
+              />
+            </>
+          ) : (
+            <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.esperandoFoto}</Text>
+          ),
+        true,
       )}
       {seccion(
         t.camino,

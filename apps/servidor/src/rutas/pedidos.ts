@@ -31,6 +31,11 @@ const esquemaNuevoPedido = z.object({
 
 export type FilaPedido = Record<string, unknown>;
 
+/** Para sumar a un SELECT con el pedido como «p»: si hay foto de recogida y de entrega. */
+export const CON_EVIDENCIAS = `(SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida,
+  (SELECT confirmada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida_ok,
+  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega`;
+
 export function aPedido(f: FilaPedido) {
   return {
     id: String(f.id),
@@ -63,6 +68,14 @@ export function aPedido(f: FilaPedido) {
     recogidoEn: (f.recogido_en as string | null) ?? null,
     entregadoEn: (f.entregado_en as string | null) ?? null,
     repartidorId: (f.repartidor_id as string | null) ?? null,
+    // Las fotos se piden aparte, con sesión (GET /datos/pedidos/:id/evidencia/:tipo).
+    fotoRecogida: f.ev_recogida
+      ? {
+          tomadaEn: String(f.ev_recogida),
+          confirmadaEn: (f.ev_recogida_ok as string | null) ?? null,
+        }
+      : null,
+    fotoEntrega: f.ev_entrega ? { tomadaEn: String(f.ev_entrega) } : null,
   };
 }
 
@@ -409,7 +422,7 @@ pedidos.get('/pedidos/:id', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      'SELECT p.*, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?',
+      `SELECT p.*, ${CON_EVIDENCIAS}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?`,
     )
     .bind(c.req.param('id'))
     .first<FilaPedido>();

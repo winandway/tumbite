@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, Text, View } from 'react-native';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
 import { useKeepAwake } from 'expo-keep-awake';
-import { ErrorApi, type Nivel, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Nivel,
+  enIdioma,
+  formatearDolares,
+  llego,
+  metrosEntre,
+  nombrePlato,
+} from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
@@ -37,6 +46,7 @@ type Pedido = {
   restaurante: Lugar;
   segundos?: number;
   ofertaEn?: string;
+  fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
 };
 type Estado = { conectado: boolean; puntos: number; nivel: Nivel; activo: Pedido | null };
@@ -72,8 +82,18 @@ const T = {
     recoger: 'Recoge en',
     entregar: 'Entrega en',
     comoLlegar: 'Cómo llegar',
-    recogido: 'Ya lo recogí',
-    entregado: 'Entregado',
+    fotoRecogida: 'Tomar foto del pedido',
+    fotoRecogidaAyuda:
+      'Toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. El restaurante la confirma en su pantalla y ahí empieza tu entrega.',
+    esperaConfirmacion: 'Foto enviada. Espera que el restaurante confirme en su pantalla.',
+    repetirFoto: 'Repetir la foto',
+    teFaltan: 'Te faltan',
+    alLlegar: 'El botón para entregar aparece cuando llegues a la puerta.',
+    fotoEntrega: 'Tomar foto de la entrega',
+    sinCaras:
+      'No le tomes foto a la cara de nadie. Deja la comida en la puerta o en las manos del cliente y toma la foto de lado: que se vean solo las manos, la comida y la entrada de la casa.',
+    subiendo: 'Enviando la foto…',
+    permisoCamara: 'Para tomar la foto necesitamos permiso para usar la cámara.',
     esperando: 'El restaurante lo está terminando…',
     nivel: 'Tu nivel',
     puntos: 'puntos',
@@ -112,8 +132,18 @@ const T = {
     recoger: 'Pick up at',
     entregar: 'Deliver to',
     comoLlegar: 'Directions',
-    recogido: 'Picked up',
-    entregado: 'Delivered',
+    fotoRecogida: 'Take a photo of the order',
+    fotoRecogidaAyuda:
+      'Take a photo of the closed bag with the seal or receipt showing. The restaurant confirms it on their screen, and then your delivery starts.',
+    esperaConfirmacion: 'Photo sent. Wait for the restaurant to confirm it on their screen.',
+    repetirFoto: 'Retake the photo',
+    teFaltan: 'Still',
+    alLlegar: 'The button to deliver appears when you reach the door.',
+    fotoEntrega: 'Take the delivery photo',
+    sinCaras:
+      'Never take a photo of anyone’s face. Leave the food at the door or in the customer’s hands and take the photo from the side: only the hands, the food, and the home’s entrance should show.',
+    subiendo: 'Sending the photo…',
+    permisoCamara: 'To take the photo, we need permission to use the camera.',
     esperando: 'The restaurant is finishing it…',
     nivel: 'Your level',
     puntos: 'points',
@@ -160,6 +190,9 @@ export function Inicio() {
   const [errorCarga, setErrorCarga] = useState('');
   const [aviso, setAviso] = useState('');
   const vigilante = useRef<Location.LocationSubscription | null>(null);
+  // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
+  const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -197,6 +230,7 @@ export function Inicio() {
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
+        setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         void api
           .pedir('POST', '/datos/repartidor/ubicacion', {
             lat: p.coords.latitude,
@@ -214,6 +248,48 @@ export function Inicio() {
       vigilante.current = null;
     };
   }, [estado?.conectado, api]);
+
+  // En camino: la ubicación se revisa cada 5 segundos para saber si ya llegó a la puerta.
+  const enCamino = estado?.activo?.estado === 'en_camino';
+  useEffect(() => {
+    if (!enCamino) return;
+    let vivo = true;
+    const leer = async () => {
+      const p = await ubicacionConLimite();
+      if (vivo && p) setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+    };
+    void leer();
+    const reloj = setInterval(() => void leer(), 5000);
+    return () => {
+      vivo = false;
+      clearInterval(reloj);
+    };
+  }, [enCamino]);
+
+  /** Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó. */
+  async function tomarFoto(ruta: string) {
+    if (subiendo) return;
+    setError('');
+    try {
+      const permiso = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permiso.granted) return setError(t.permisoCamara);
+      const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
+      const foto = r.canceled ? null : r.assets[0];
+      if (!foto) return;
+      setSubiendo(true);
+      const p = await ubicacionConLimite();
+      if (!p) return setError(t.ubicacionTarda);
+      setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+      const blob = await (await fetch(foto.uri)).blob();
+      await api.subirFoto(blob, `${ruta}?lat=${p.coords.latitude}&lng=${p.coords.longitude}`);
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+      await cargar();
+    } finally {
+      setSubiendo(false);
+    }
+  }
 
   // Nunca en silencio: mientras busca la ubicación lo dice, y si algo falla se ve en pantalla.
   async function alternar() {
@@ -432,11 +508,35 @@ export function Inicio() {
                   secundario
                 />
               ) : null}
-              {activo.estado === 'listo' ? (
-                <Boton
-                  texto={t.recogido}
-                  alTocar={() => void accion(`/datos/repartidor/pedidos/${activo.id}/recogido`)}
-                />
+              {activo.estado === 'listo' && activo.fotoRecogida ? (
+                <>
+                  <Text
+                    style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
+                    accessibilityRole="alert"
+                  >
+                    {t.esperaConfirmacion}
+                  </Text>
+                  <Boton
+                    texto={subiendo ? t.subiendo : t.repetirFoto}
+                    alTocar={() =>
+                      void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                    }
+                    cargando={subiendo}
+                    secundario
+                  />
+                </>
+              ) : activo.estado === 'listo' ? (
+                <>
+                  <Boton
+                    texto={subiendo ? t.subiendo : t.fotoRecogida}
+                    alTocar={() =>
+                      void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                    }
+                    cargando={subiendo}
+                    exito
+                  />
+                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
+                </>
               ) : (
                 <Text style={{ marginTop: 8, color: '#5E5E5E' }}>{t.esperando}</Text>
               )}
@@ -450,15 +550,50 @@ export function Inicio() {
                   {t.notas}: {activo.notas}
                 </Text>
               ) : null}
-              <Boton
-                texto={t.comoLlegar}
-                alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
-                secundario
-              />
-              <Boton
-                texto={t.entregado}
-                alTocar={() => void accion(`/datos/repartidor/pedidos/${activo.id}/entregado`)}
-              />
+              {(() => {
+                const casa =
+                  activo.lat != null && activo.lng != null
+                    ? { lat: activo.lat, lng: activo.lng }
+                    : null;
+                // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
+                if (!llego(aqui, casa)) {
+                  const m = aqui && casa ? metrosEntre(aqui, casa) : null;
+                  const falta =
+                    m == null
+                      ? ''
+                      : idioma === 'en'
+                        ? `${(m / 1609.34).toFixed(1)} mi`
+                        : m < 1000
+                          ? `${m} m`
+                          : `${(m / 1000).toFixed(1)} km`;
+                  return (
+                    <>
+                      <Boton
+                        texto={t.comoLlegar}
+                        alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
+                        exito
+                      />
+                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                        {falta ? `${t.teFaltan} ${falta}. ` : ''}
+                        {t.alLlegar}
+                      </Text>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <Boton
+                      texto={subiendo ? t.subiendo : t.fotoEntrega}
+                      alTocar={() =>
+                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
+                      }
+                      cargando={subiendo}
+                      exito
+                    />
+                    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                  </>
+                );
+              })()}
             </>
           )}
         </View>
@@ -489,6 +624,7 @@ export function Inicio() {
               <Boton
                 texto={t.aceptar}
                 alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/aceptar`)}
+                exito
               />
               <Boton
                 texto={t.rechazar}

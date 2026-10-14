@@ -10,3 +10,4 @@ export * from './soporte';
 export * from './ConSesion';
 export * from './ReportarProblema';
 export * from './AvisoBorrador';
+export * from './FotoPedido';

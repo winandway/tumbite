@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ErrorApi, enIdioma, formatearDolares, nombrePlato } from '@tumbite/compartido';
-import { Boton, C, Pantalla, ReportarProblema, e, useSesion } from '@tumbite/movil';
+import { Boton, C, FotoPedido, Pantalla, ReportarProblema, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { MapaEntrega } from '../../MapaEntrega';
 
@@ -17,6 +17,8 @@ type Pedido = {
   lng: number | null;
   restaurante: { lat: number; lng: number } | null;
   minutosEstimados: number | null;
+  fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  fotoEntrega?: { tomadaEn: string } | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -48,6 +50,9 @@ const T = {
       cancelado: 'Pedido cancelado. Si ya habías pagado, te devolvimos todo el dinero.',
     } as Record<string, string>,
     repartidor: 'Tu repartidor',
+    fotoSellado:
+      'Tu pedido salió del restaurante cerrado y en buen estado. El restaurante confirmó que se lo entregó a tu repartidor.',
+    fotoEntregado: 'Así quedó tu pedido al entregarlo.',
     ubicacion: 'Ubicación actualizada',
     llega: 'Llega en unos',
     minutos: 'min',
@@ -85,6 +90,9 @@ const T = {
       cancelado: 'Order canceled. If you had paid, we refunded all your money.',
     } as Record<string, string>,
     repartidor: 'Your driver',
+    fotoSellado:
+      'Your order left the restaurant closed and in good shape. The restaurant confirmed it handed it to your driver.',
+    fotoEntregado: 'How your order was left at delivery.',
     ubicacion: 'Location updated',
     llega: 'Arriving in about',
     minutos: 'min',
@@ -280,6 +288,26 @@ export default function SeguirPedido() {
                   )}
                 </Text>
               ) : null}
+            </View>
+          )}
+          {p.estado === 'en_camino' && p.fotoRecogida?.confirmadaEn && (
+            <View style={e.tarjeta}>
+              <FotoPedido
+                pedidoId={p.id}
+                tipo="recogida"
+                version={p.fotoRecogida.tomadaEn}
+                pie={t.fotoSellado}
+              />
+            </View>
+          )}
+          {p.estado === 'entregado' && p.fotoEntrega && (
+            <View style={e.tarjeta}>
+              <FotoPedido
+                pedidoId={p.id}
+                tipo="entrega"
+                version={p.fotoEntrega.tomadaEn}
+                pie={t.fotoEntregado}
+              />
             </View>
           )}
           <View style={e.tarjeta}>

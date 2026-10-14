@@ -1,9 +1,17 @@
 import { app } from '../app';
 import { crearBasePruebas } from './d1';
+import { crearAlmacenPruebas } from './r2';
+
+/** Cabecera mínima de un WebP de verdad: sirve como «foto» en las pruebas. */
+export const FOTO_PRUEBA = new Uint8Array([
+  0x52, 0x49, 0x46, 0x46, 0x10, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20, 1, 2, 3, 4,
+]);
 
 /** Ayudas para las pruebas del servidor: una base nueva y llamadas con IP distinta cada vez. */
-export function mundo(extra: Record<string, unknown> = {}) {
+export function mundo(extraDado: Record<string, unknown> = {}) {
   const DB = crearBasePruebas();
+  // Almacén de fotos de mentira por defecto (las entregas llevan foto).
+  const extra = { BUCKET: crearAlmacenPruebas().bucket, ...extraDado };
   let ip = 0;
   // Cada mundo con su propia red de mentira: el límite de intentos vive en memoria y, si no,
   // las pruebas de un mismo archivo chocaban entre sí.
@@ -42,7 +50,49 @@ export function mundo(extra: Record<string, unknown> = {}) {
   }
   /** Petición cruda (con cabeceras propias, p. ej. la firma de un aviso de Stripe). */
   const crudo = (ruta: string, init: RequestInit) => app.request(ruta, init, { DB, ...extra });
-  return { DB, llamar, cuenta, crudo };
+  /** Sube una foto (bytes crudos) con la ubicación en la dirección, como lo hace la app. */
+  async function foto(ruta: string, token: string, donde?: { lat: number; lng: number }) {
+    ip++;
+    const q = donde ? `?lat=${donde.lat}&lng=${donde.lng}` : '';
+    const res = await app.request(
+      `${ruta}${q}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'image/webp',
+          'cf-connecting-ip': `10.${red}.${Math.floor(ip / 250)}.${ip % 250}`,
+        },
+        body: FOTO_PRUEBA as BodyInit,
+      },
+      { DB, ...extra },
+    );
+    return { res, datos: (await res.json().catch(() => ({}))) as any, estado: res.status };
+  }
+  const lugar = async (sql: string, id: string) => {
+    const f = await DB.prepare(sql).bind(id).first<{ lat: number | null; lng: number | null }>();
+    return f?.lat != null && f.lng != null ? { lat: f.lat, lng: f.lng } : { lat: 0, lng: 0 };
+  };
+  /** Recoger como manda el flujo: foto en el restaurante y el restaurante la confirma. */
+  async function recoger(id: string, tokenRepartidor: string, tokenDueno: string) {
+    const enRest = await lugar(
+      'SELECT r.lat, r.lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?',
+      id,
+    );
+    const f = await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokenRepartidor, enRest);
+    if (f.estado !== 200) return f;
+    return llamar('POST', `/datos/restaurante/pedidos/${id}/confirmar-recogida`, {}, tokenDueno);
+  }
+  /** Entregar parado en la puerta, con la foto de la entrega. */
+  async function entregar(
+    id: string,
+    tokenRepartidor: string,
+    donde?: { lat: number; lng: number },
+  ) {
+    const enCasa = donde ?? (await lugar('SELECT lat, lng FROM pedidos WHERE id = ?', id));
+    return foto(`/datos/repartidor/pedidos/${id}/entregado`, tokenRepartidor, enCasa);
+  }
+  return { DB, llamar, cuenta, crudo, foto, recoger, entregar, extra };
 }
 
 export const RESTAURANTE_BASE = {

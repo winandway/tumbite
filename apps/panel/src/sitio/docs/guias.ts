@@ -479,8 +479,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-en-camino-es.webp',
-            alt: 'Pedido recogido, en camino a la entrega, con los botones «Cómo llegar» y «Entregado».',
-            pie: 'Recoges, llegas con «Cómo llegar» y marcas «Entregado».',
+            alt: 'Pedido en camino a la entrega, con el botón verde «Cómo llegar» y lo que falta para llegar.',
+            pie: 'En camino, «Cómo llegar» te lleva a la puerta del cliente.',
           },
         ],
         preguntas: [
@@ -491,7 +491,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Cuando hay un pedido cerca, te llega una oferta con el pago en dólares, la distancia y el restaurante.',
           'Tienes 60 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no cuenta en tu contra.',
-          'Al aceptar, ve al restaurante. Toca «Ya lo recogí» cuando tengas la comida y «Entregado» en la puerta del cliente.',
+          'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
           'Toca «Cómo llegar» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
         ],
@@ -553,6 +553,55 @@ const es: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'pickup-and-delivery-photos',
+        titulo: 'Recogida con foto y entrega en la puerta',
+        resumen:
+          'Cada pedido deja dos fotos: la del pedido cerrado al salir del restaurante, confirmada por el restaurante, y la de la entrega en la puerta.',
+        explicacion: [
+          'Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar.',
+          'En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante.',
+          'El restaurante ve esa foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
+          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar.',
+          'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
+          'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-recogida-es.webp',
+            alt: 'Foto del pedido cerrado tomada por el repartidor en el restaurante, con el aviso «Foto enviada. Espera que el restaurante confirme en su pantalla».',
+            pie: 'El repartidor toma la foto de la bolsa cerrada en el restaurante.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-confirmar-recogida-es.webp',
+            alt: 'Panel del restaurante con la foto del repartidor y el botón verde «Confirmar: se lo entregué al repartidor».',
+            pie: 'El restaurante ve la foto y confirma. Recién ahí sale el pedido.',
+          },
+          {
+            src: '/docs/recorrido-cliente-sellado-es.webp',
+            alt: 'Pedido en camino en la app del cliente, con la foto del pedido cerrado que confirmó el restaurante.',
+            pie: 'El cliente ve que su pedido salió cerrado y en buen estado.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-llegada-es.webp',
+            alt: 'App del repartidor en la puerta del cliente: ya no está «Cómo llegar» y aparece el botón verde «Tomar foto de la entrega», con la advertencia de no fotografiar caras.',
+            pie: 'En la puerta aparece el botón para entregar con foto.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué el repartidor toma una foto del pedido?',
+          '¿Cómo confirmo que le entregué el pedido al repartidor?',
+          '¿Por qué no me deja marcar entregado?',
+          '¿Quién ve la foto de la entrega?',
+        ],
+        pasos: [
+          'Repartidor: en el restaurante, toca «Tomar foto del pedido» y fotografía la bolsa cerrada.',
+          'Restaurante: mira la foto en tu pantalla y toca «Confirmar: se lo entregué al repartidor».',
+          'Repartidor: sigue «Cómo llegar» hasta la puerta del cliente.',
+          'Repartidor: en la puerta, toca «Tomar foto de la entrega». Sin caras: de lado, con las manos, la comida y la entrada.',
+          'Cliente: ve la foto de su pedido cerrado al salir y la de la entrega al llegar.',
+        ],
+      },
+      {
         id: 'order-journey',
         titulo: 'Un pedido de punta a punta',
         resumen:
@@ -560,7 +609,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, el pedido llega al restaurante con una alarma y un semáforo en verde.',
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
-          'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor la recoge, la lleva y marca «Entregado». El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
+          'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor toma la foto del pedido cerrado y el restaurante la confirma en su pantalla: recién ahí sale. Al llegar a la puerta, el repartidor toma la foto de la entrega. El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
           'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
           'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 10 minutos, cancela y devuelve el dinero solo.',
         ],
@@ -592,8 +641,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-en-camino-es.webp',
-            alt: 'Pedido recogido, en camino a la entrega, con los botones «Cómo llegar» y «Entregado».',
-            pie: 'Recoges, llegas con «Cómo llegar» y marcas «Entregado».',
+            alt: 'Pedido en camino a la entrega, con el botón verde «Cómo llegar» y lo que falta para llegar.',
+            pie: 'En camino, «Cómo llegar» te lleva a la puerta del cliente.',
           },
           {
             src: '/docs/recorrido-cliente-en-camino-es.webp',
@@ -613,7 +662,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Cliente: elige, paga y sigue su pedido en vivo.',
           'Restaurante: acepta con el tiempo de preparación y marca «¡Listo!».',
-          'Repartidor: acepta la oferta, recoge y marca «Entregado».',
+          'Repartidor: acepta la oferta, toma la foto del pedido en el restaurante y la de la entrega en la puerta.',
           'Cliente: califica. Cada uno ve su dinero en su billetera.',
         ],
       },
@@ -1407,8 +1456,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-en-camino-en.webp',
-            alt: 'Picked-up order on the way to delivery, with the “Directions” and “Delivered” buttons.',
-            pie: 'Pick up, get there with “Directions,” and tap “Delivered.”',
+            alt: 'Order on the way to delivery, with the green “Directions” button and how far there is left to go.',
+            pie: 'On the way, “Directions” takes you to the customer’s door.',
           },
         ],
         preguntas: [
@@ -1419,7 +1468,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'When there’s an order nearby, you get an offer with the pay in dollars, the distance, and the restaurant.',
           'You have 60 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t count against you.',
-          'After accepting, head to the restaurant. Tap “Picked up” when you have the food and “Delivered” at the customer’s door.',
+          'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
           'Tap “Directions” to open Google Maps, Apple Maps, or Waze with the address already set.',
           'The customer’s tip is 100% yours: it never tops up your pay.',
         ],
@@ -1481,6 +1530,55 @@ const en: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'pickup-and-delivery-photos',
+        titulo: 'Photo at pickup, delivery at the door',
+        resumen:
+          'Every order leaves two photos: the closed order as it leaves the restaurant, confirmed by the restaurant, and the delivery at the door.',
+        explicacion: [
+          'That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else.',
+          'At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant.',
+          'The restaurant sees that photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
+          'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away.',
+          'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
+          'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-recogida-en.webp',
+            alt: 'Photo of the closed order taken by the driver at the restaurant, with the notice “Photo sent. Wait for the restaurant to confirm it on their screen.”',
+            pie: 'The driver photographs the closed bag at the restaurant.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-confirmar-recogida-en.webp',
+            alt: 'Restaurant panel with the driver’s photo and the green “Confirm: I handed it to the driver” button.',
+            pie: 'The restaurant sees the photo and confirms. Only then does the order go out.',
+          },
+          {
+            src: '/docs/recorrido-cliente-sellado-en.webp',
+            alt: 'Order on the way in the customer app, with the photo of the closed order confirmed by the restaurant.',
+            pie: 'The customer sees their order left closed and in good shape.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-llegada-en.webp',
+            alt: 'Driver app at the customer’s door: “Directions” is gone and the green “Take the delivery photo” button appears, with the reminder not to photograph faces.',
+            pie: 'At the door, the button to deliver with a photo appears.',
+          },
+        ],
+        preguntas: [
+          'Why does the driver take a photo of the order?',
+          'How do I confirm I handed the order to the driver?',
+          'Why can’t I mark the order delivered?',
+          'Who can see the delivery photo?',
+        ],
+        pasos: [
+          'Driver: at the restaurant, tap “Take a photo of the order” and photograph the closed bag.',
+          'Restaurant: look at the photo on your screen and tap “Confirm: I handed it to the driver.”',
+          'Driver: follow “Directions” to the customer’s door.',
+          'Driver: at the door, tap “Take the delivery photo.” No faces: from the side, with the hands, the food, and the entrance.',
+          'Customer: sees the photo of the closed order when it leaves and the delivery photo when it arrives.',
+        ],
+      },
+      {
         id: 'order-journey',
         titulo: 'An order from start to finish',
         resumen:
@@ -1488,7 +1586,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. Once they pay, the order reaches the restaurant with an alarm and a green traffic light.',
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
-          'When the food is ready, the restaurant taps “Ready!” The driver picks it up, delivers it, and taps “Delivered.” The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
+          'When the food is ready, the restaurant taps “Ready!” The driver takes a photo of the closed order and the restaurant confirms it on their screen: only then does it go out. At the door, the driver takes the delivery photo. The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
           'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $2.37, out of which it pays the card processing fee.',
           'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 10 minutes, it cancels and refunds automatically.',
         ],
@@ -1520,8 +1618,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-en-camino-en.webp',
-            alt: 'Picked-up order on the way to delivery, with the “Directions” and “Delivered” buttons.',
-            pie: 'Pick up, get there with “Directions,” and tap “Delivered.”',
+            alt: 'Order on the way to delivery, with the green “Directions” button and how far there is left to go.',
+            pie: 'On the way, “Directions” takes you to the customer’s door.',
           },
           {
             src: '/docs/recorrido-cliente-en-camino-en.webp',
@@ -1541,7 +1639,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Customer: chooses, pays, and follows the order live.',
           'Restaurant: accepts with a prep time and taps “Ready!”',
-          'Driver: accepts the offer, picks up, and taps “Delivered.”',
+          'Driver: accepts the offer, takes the order photo at the restaurant and the delivery photo at the door.',
           'Customer: rates. Everyone sees their money in their wallet.',
         ],
       },
