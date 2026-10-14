@@ -476,3 +476,37 @@ CREATE TABLE IF NOT EXISTS pines_entrega (
   pin TEXT NOT NULL,
   usado_en TEXT
 );
+
+-- Horarios reales del restaurante: uno o más turnos por día (0 = domingo … 6 = sábado), en la
+-- hora de su zona. Si cierra después de medianoche, «cierra» es menor que «abre». Sin turnos
+-- cargados, manda solo el botón de abrir/pausar (hasta que la lista de activación los exija).
+CREATE TABLE IF NOT EXISTS horarios_restaurante (
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  dia INTEGER NOT NULL CHECK (dia BETWEEN 0 AND 6),
+  abre TEXT NOT NULL,
+  cierra TEXT NOT NULL,
+  PRIMARY KEY (restaurante_id, dia, abre)
+);
+
+-- Modificadores de los platos: grupos (tamaño, extras, sin…) con mínimo y máximo de elección,
+-- y opciones con su precio extra. Lo elegido se guarda dentro de cada línea del pedido.
+CREATE TABLE IF NOT EXISTS grupos_opciones (
+  id TEXT PRIMARY KEY,
+  plato_id TEXT NOT NULL REFERENCES platos(id),
+  nombre_es TEXT NOT NULL,
+  nombre_en TEXT NOT NULL DEFAULT '',
+  minimo INTEGER NOT NULL DEFAULT 0,
+  maximo INTEGER NOT NULL DEFAULT 1,
+  orden INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS grupos_opciones_plato ON grupos_opciones(plato_id, orden);
+CREATE TABLE IF NOT EXISTS opciones (
+  id TEXT PRIMARY KEY,
+  grupo_id TEXT NOT NULL REFERENCES grupos_opciones(id),
+  nombre_es TEXT NOT NULL,
+  nombre_en TEXT NOT NULL DEFAULT '',
+  precio_centavos INTEGER NOT NULL DEFAULT 0,
+  disponible INTEGER NOT NULL DEFAULT 1,
+  orden INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS opciones_grupo ON opciones(grupo_id, orden);

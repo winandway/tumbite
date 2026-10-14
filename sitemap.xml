@@ -12,6 +12,7 @@
   <url><loc>https://tumbite.com/docs</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/how-to</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/chat-with-your-driver</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -23,6 +24,8 @@
   <url><loc>https://tumbite.com/docs/ordering/rewards</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/rate</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/restaurants/hours</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/restaurants/item-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/out-of-stock-and-more-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/your-counter</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/get-started</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -118,6 +121,7 @@
   <url><loc>https://tumbite.com/es/docs</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/how-to</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/chat-with-your-driver</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -129,6 +133,8 @@
   <url><loc>https://tumbite.com/es/docs/ordering/rewards</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/rate</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/restaurants/hours</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/restaurants/item-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/out-of-stock-and-more-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/your-counter</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/get-started</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
