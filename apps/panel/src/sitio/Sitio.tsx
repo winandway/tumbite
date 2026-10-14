@@ -32,6 +32,7 @@ export function Sitio({
           <a href="/#restaurants">{t.menu.restaurantes}</a>
           <a href="/#drivers">{t.menu.repartidores}</a>
           <a href="/how-it-works">{t.menu.como}</a>
+          <Enlace a="/calculator">{t.menu.calculadora}</Enlace>
           <Enlace a="/docs">{t.menu.docs}</Enlace>
         </nav>
         <div className="cabecera-derecha">

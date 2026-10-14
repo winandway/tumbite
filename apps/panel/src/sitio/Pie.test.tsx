@@ -73,6 +73,7 @@ describe('pie de página y páginas por lugar', () => {
       '/driver-terms',
       '/delete-account',
       '/support',
+      '/calculator',
       '/docs',
       '/panel',
       '/app/',

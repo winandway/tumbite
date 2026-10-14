@@ -13,3 +13,4 @@ export * from './semaforo';
 export * from './rutasPublicas';
 export * from './limite';
 export * from './competencia';
+export * from './calculadora';

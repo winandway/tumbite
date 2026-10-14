@@ -49,6 +49,22 @@ Con los precios anteriores, el pedido de la prueba dejaba a Tumbite en **−0,69
 - 0,25 % + 25 centavos por retiro. Hoy se puede retirar desde 1 dólar: un retiro de 1 dólar le cuesta a Tumbite 25 centavos.
 - **Pendiente de Richard:** retiro mínimo (recomendado 10 dólares) o un retiro gratis por semana.
 
+## Supuestos de la calculadora pública (consultados el 13 oct 2026)
+
+La página «Calculadora» del sitio usa los mismos precios de la app y estos supuestos del mercado, que la persona puede mover. Viven en `SUPUESTOS_MERCADO` (`packages/compartido/src/calculadora.ts`), con pruebas en `calculadora.test.ts`.
+
+| Supuesto                        | Valor      | De dónde sale                                                                                                         |
+| ------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| Adultos que usan apps de comida | 28 %       | YouGov, encuesta en EE.UU., enero de 2025                                                                             |
+| Pedidos por usuario al mes      | 4          | DoorDash, informe anual 2025: 3.172 millones de pedidos al año entre 56 millones de usuarios activos al mes (≈ 4,7)   |
+| Comida promedio por pedido      | 28 dólares | DoorDash 2025: 102.018 millones de dólares en pedidos entre 3.172 millones de pedidos (≈ 32, se usa 28 por prudencia) |
+| Propina                         | 15 %       | supuesto nuestro, prudente                                                                                            |
+| Entregas por repartidor al día  | 16         | supuesto nuestro (8 horas a 2 por hora)                                                                               |
+
+Ejemplo de franquicia: ciudad de 10.000 habitantes, 50 restaurantes, 10 % del mercado → 2.800 personas piden por apps, 11.200 pedidos al mes en el mercado, 1.120 de Tumbite, unos 22 por restaurante y 3 repartidores.
+
+**Son proyecciones, no promesas**, y la página lo dice. La parte del franquiciado no está definida (pendiente de Richard) y la página dice que se acuerda por contrato.
+
 ## Fuentes
 
 - Stripe, precios: https://stripe.com/pricing — Connect: https://stripe.com/connect/pricing
@@ -57,3 +73,5 @@ Con los precios anteriores, el pedido de la prueba dejaba a Tumbite en **−0,69
 - DoorDash, pago a repartidores: https://dasher.doordash.com/en-us/about/pay
 - Uber Eats para restaurantes: https://merchants.ubereats.com/us/en/pricing/
 - Uber Eats, tarifas al cliente: https://help.uber.com/ubereats/restaurants/article/what-fees-might-my-order-include?nodeId=2d43ee3b-6c5f-4501-a28d-6cc229428efb
+- YouGov, uso de apps de comida en EE.UU. (enero de 2025)
+- DoorDash, informe anual 2025 (10-K): pedidos totales, valor bruto de pedidos y usuarios activos al mes

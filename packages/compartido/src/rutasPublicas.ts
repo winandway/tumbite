@@ -12,6 +12,7 @@ export const PAGINAS = {
   deleteAccount: '/delete-account',
   support: '/support',
   howItWorks: '/how-it-works',
+  calculator: '/calculator',
   forgotPassword: '/forgot-password',
   confirmEmail: '/confirm-email',
   resetPassword: '/reset-password',

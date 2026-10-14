@@ -3365,3 +3365,62 @@ button {
   color: #0d7a3a;
   font-weight: 700;
 }
+
+/* Calculadora pública (/calculator): pestañas sobrias, resultados en verde (es lo que ganas). */
+.calc-aviso {
+  border-left: 3px solid #191919;
+  padding: 8px 12px;
+  background: #f6f6f6;
+  border-radius: 8px;
+}
+.calc-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+.calc-pestanas button {
+  border: 1px solid #2a2a2a;
+  background: #fff;
+  color: #191919;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.calc-pestanas button.activa {
+  background: #191919;
+  color: #fff;
+}
+.calc-panel {
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+.calc-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 16px;
+}
+.calc-lista {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.calc-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+.calc-lista li.propio strong,
+.calc-resultado {
+  color: #0d7a3a;
+  font-weight: 700;
+}
+.calc-fuentes li {
+  margin-bottom: 6px;
+  color: #444;
+}

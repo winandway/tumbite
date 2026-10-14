@@ -731,6 +731,45 @@ const es: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'calculator',
+        titulo: 'Calculadora: cuánto ganas y cuánto ahorras con Tumbite',
+        resumen:
+          'Una calculadora para cada quien: el restaurante, el repartidor, el cliente y quien quiere abrir Tumbite en su ciudad.',
+        explicacion: [
+          'En la página «Calculadora» eliges quién eres y mueves los números. Todo se calcula con los precios que Tumbite usa hoy en la app y con datos públicos del mercado, y abajo se dice de dónde sale cada uno.',
+          'Restaurante: escribes lo que vendes al mes por apps de reparto y ves cuánto te queda con Tumbite, con DoorDash y con Uber Eats en el plan equivalente. Con el tamaño de tu ciudad, cuántos restaurantes hay en Tumbite y qué parte del mercado logramos, ves también cuántos pedidos al mes te podemos traer.',
+          'Repartidor: eliges horas por día, días por semana, cuántas entregas haces por hora, tu propina promedio y la distancia, y ves lo que ganas por entrega, por día, por semana y por mes. Tumbite paga lo mismo en todas las ciudades; lo que cambia es cuántos pedidos hay por hora.',
+          'Cliente: con cuántos pedidos haces al mes y cuánto gastas en comida, ves cuánto ahorras en la tarifa de servicio frente al 15 % que DoorDash publica en varias ciudades.',
+          'Franquicia: con los habitantes de la ciudad, los restaurantes y la parte del mercado, ves cuánta gente pide por apps, cuántos pedidos tendría Tumbite, cuánto reciben los restaurantes y los repartidores, cuántos repartidores hacen falta y lo que le queda a la plataforma.',
+        ],
+        capturas: [
+          {
+            src: '/docs/calculadora-restaurante-es.webp',
+            alt: 'Calculadora de Tumbite para restaurantes: con 10.000 dólares de ventas al mes, le quedan 9.250 con Tumbite, 8.500 con DoorDash Basic y 8.000 con Uber Eats Lite, y los pedidos que Tumbite le puede traer según su ciudad.',
+            pie: 'Restaurante: cuánto te queda en cada app y cuántos pedidos te podemos traer.',
+          },
+          {
+            src: '/docs/calculadora-franquicia-es.webp',
+            alt: 'Calculadora de Tumbite para franquicias: en una ciudad de 100.000 habitantes con 100 restaurantes y el 5 % del mercado, los pedidos al mes, lo que reciben restaurantes y repartidores, los repartidores necesarios y lo que le queda a la plataforma.',
+            pie: 'Franquicia: el tamaño del negocio en tu ciudad, con los supuestos a la vista.',
+          },
+        ],
+        preguntas: [
+          '¿Cuánto gana un restaurante con Tumbite?',
+          '¿Cuántos clientes le puede traer Tumbite a mi restaurante?',
+          '¿Cuánto gana un repartidor al día con Tumbite?',
+          '¿Cuánto me ahorro pidiendo con Tumbite?',
+          '¿Cuánto mueve Tumbite en una ciudad?',
+        ],
+        pasos: [
+          'Entra a tumbite.com y toca «Calculadora» en el menú de arriba.',
+          'Elige tu pestaña: Restaurante, Repartidor, Cliente o Franquicia.',
+          'Cambia los números por los tuyos. Lo que escribes se guarda solo en tu navegador.',
+          'Si quieres compartir una pestaña, copia la dirección: lleva la pestaña al final.',
+        ],
+        nota: 'Son proyecciones, no promesas: dependen de cuánta gente pida en cada ciudad y de cómo crezca Tumbite allí. La parte del franquiciado se acuerda en su contrato.',
+      },
+      {
         id: 'franchises',
         titulo: 'Franquicias: lleva Tumbite a tu ciudad',
         resumen:
@@ -1619,6 +1658,45 @@ const en: SeccionDocs[] = [
     titulo: 'For entrepreneurs',
     icono: 'resumen',
     guias: [
+      {
+        id: 'calculator',
+        titulo: 'Calculator: how much you earn and save with Tumbite',
+        resumen:
+          'A calculator for everyone: the restaurant, the driver, the customer, and whoever wants to open Tumbite in their city.',
+        explicacion: [
+          'On the “Calculator” page you pick who you are and move the numbers. Everything is calculated with the prices Tumbite uses in the app today and with public market data, and the page shows where each number comes from.',
+          'Restaurant: enter what you sell per month on delivery apps and see what you keep with Tumbite, DoorDash, and Uber Eats on the equivalent plan. With your city’s size, how many restaurants are on Tumbite, and the share of the market we reach, you also see how many monthly orders we can bring you.',
+          'Driver: choose hours per day, days per week, deliveries per hour, your average tip, and distance, and see what you earn per delivery, per day, per week, and per month. Tumbite pays the same in every city; what changes is how many orders there are per hour.',
+          'Customer: with how many orders you place per month and how much you spend on food, see how much you save on the service fee versus the 15% DoorDash publishes in several cities.',
+          'Franchise: with the city’s population, restaurants, and market share, see how many people order on apps, how many orders Tumbite would have, what restaurants and drivers receive, how many drivers are needed, and what the platform keeps.',
+        ],
+        capturas: [
+          {
+            src: '/docs/calculadora-restaurante-en.webp',
+            alt: 'Tumbite calculator for restaurants: with $10,000 in monthly sales, the restaurant keeps $9,250 with Tumbite, $8,500 with DoorDash Basic, and $8,000 with Uber Eats Lite, plus the orders Tumbite can bring based on its city.',
+            pie: 'Restaurant: what you keep on each app and how many orders we can bring you.',
+          },
+          {
+            src: '/docs/calculadora-franquicia-en.webp',
+            alt: 'Tumbite calculator for franchises: in a city of 100,000 people with 100 restaurants and a 5% market share, the monthly orders, what restaurants and drivers receive, the drivers needed, and what the platform keeps.',
+            pie: 'Franchise: the size of the business in your city, with the assumptions in plain view.',
+          },
+        ],
+        preguntas: [
+          'How much does a restaurant earn with Tumbite?',
+          'How many customers can Tumbite bring to my restaurant?',
+          'How much does a driver earn per day with Tumbite?',
+          'How much do I save ordering with Tumbite?',
+          'How much does Tumbite move in a city?',
+        ],
+        pasos: [
+          'Go to tumbite.com and tap “Calculator” in the top menu.',
+          'Pick your tab: Restaurant, Driver, Customer, or Franchise.',
+          'Replace the numbers with yours. What you type is saved in your browser.',
+          'To share a tab, copy the address: it carries the tab at the end.',
+        ],
+        nota: 'These are projections, not promises: they depend on how many people order in each city and how Tumbite grows there. The franchisee’s share is set in their contract.',
+      },
       {
         id: 'franchises',
         titulo: 'Franchises: bring Tumbite to your city',

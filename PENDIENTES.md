@@ -17,6 +17,7 @@
 - [ ] 👤 Retiro mínimo para restaurantes y repartidores (hoy 1 dólar; recomendado 10, porque Stripe cobra 25 centavos por retiro).
 - [ ] 👤 Cuándo se vuelve obligatoria la verificación de identidad (interruptor `KYC_OBLIGATORIO`).
 - [ ] 👤 **Regalo que cubre todo el plato:** hoy el cliente igual paga envío, servicio y el cargo por pedido pequeño (en la prueba, un regalo de 3 dólares dejó el pedido en 6.58). Decidir si el cargo por pedido pequeño se perdona cuando el regalo cubre la comida.
+- [ ] 👤 **Parte del franquiciado:** qué porcentaje de lo que deja la plataforma en su ciudad le toca a quien abre Tumbite allí (cuota de entrada, porcentaje y derechos). La calculadora pública ya muestra lo que mueve una ciudad y dice que esa parte se acuerda por contrato.
 - [ ] 👤 Nombre público del negocio en Stripe (hoy sale «Windoce, LLC» en el cobro).
 - [ ] 👤 Tope mensual de gasto en IA (propuesto 20 dólares prepago) y si el Manager puede dar regalos de disculpa.
 - [ ] 👤 Mirar las ideas de «Lo que viene» en la página Cómo funciona.

@@ -86,6 +86,7 @@ try {
   const rutas = [
     '/',
     '/how-it-works',
+    '/calculator',
     '/privacy',
     '/terms',
     '/restaurant-terms',

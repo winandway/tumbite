@@ -113,7 +113,9 @@ cada pedido, APIs y costos, alarmas y fases. Resumen del orden:
 - 👤 + 🤖 **Fase C' — Asistentes de soporte con IA (decisión de Richard, 12 oct):** uno para el cliente
   («¿dónde está mi comida?»), otro para el repartidor y otro para el restaurante («¿cuándo cobro?»),
   que leen la base solo de esa persona; y chat repartidor ↔ cliente con traducción en vivo. Va
-  después de la Fase A y antes de la B. Necesita el tope de gasto aprobado por Richard.
+  después de la Fase A y antes de la B. Necesita el tope de gasto aprobado por Richard. Además,
+  un chat público en el sitio que responde con lo publicado en Docs y en la Calculadora (precios,
+  comparación, cuánto gana cada quien), sin inventar cifras: si no está en Docs, lo dice.
 - 🤖 **Fase B — Tiempo real de ruta** (OSRM): repartidor por minutos, oferta anticipada, juntar pedidos.
 - 👤 + 🤖 **Fase C — El cerebro que habla:** primero la guardia de modelos y el tope de gasto
   (👤 Richard aprueba el tope); luego mensajes, resumen del día y de reseñas.
