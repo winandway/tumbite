@@ -181,6 +181,9 @@ describe('ciclo del pedido', () => {
       comision: 225,
       neto: 2775,
     });
+    // Para la calculadora «cuánto te queda con otras apps»: los últimos 30 días y el plan.
+    expect(resumen.datos.mes).toEqual({ ventas: 3000, regalos: 0, pedidos: 1 });
+    expect(resumen.datos.plan).toBe('inicial');
     const bRest = await m.llamar('GET', '/datos/billetera', undefined, dueno.token);
     expect(bRest.datos.saldo).toBe(3000 - 225);
     const bRep = await m.llamar('GET', '/datos/billetera', undefined, rep.token);

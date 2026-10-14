@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
+  type Plan,
+  compararConOtras,
+  planesEquivalentes,
   type Usuario,
   almacenNavegador,
   dolaresACentavos,
@@ -55,6 +58,16 @@ const T = {
     neto: 'Te toca',
     enCurso: 'en curso',
     cancelados: 'cancelados',
+    comparaTitulo: 'Comparado con otras apps',
+    comparaMes: (n: number) =>
+      `Con tus ventas de los últimos 30 días (${n} ${n === 1 ? 'pedido' : 'pedidos'}), esto es lo que te queda en cada app:`,
+    comparaEjemplo: 'Por cada 1.000 dólares de ventas, esto es lo que te queda en cada app:',
+    conTumbite: (plan: string) => `Tumbite, plan ${plan}`,
+    planes: { inicial: 'Inicial', crece: 'Crece', elite: 'Élite' } as Record<string, string>,
+    masQue: (a: string, b: string) =>
+      `Con Tumbite te quedan ${a} más que con DoorDash y ${b} más que con Uber Eats.`,
+    fuente:
+      'Comisiones que DoorDash y Uber Eats publican en sus páginas oficiales (octubre de 2026), con el plan equivalente al tuyo.',
   },
   en: {
     titulo: 'Earnings',
@@ -85,6 +98,16 @@ const T = {
     neto: 'Your payout',
     enCurso: 'in progress',
     cancelados: 'canceled',
+    comparaTitulo: 'Compared with other apps',
+    comparaMes: (n: number) =>
+      `With your sales from the last 30 days (${n} ${n === 1 ? 'order' : 'orders'}), here’s what you keep on each app:`,
+    comparaEjemplo: 'For every $1,000 in sales, here’s what you keep on each app:',
+    conTumbite: (plan: string) => `Tumbite, ${plan} plan`,
+    planes: { inicial: 'Starter', crece: 'Growth', elite: 'Elite' } as Record<string, string>,
+    masQue: (a: string, b: string) =>
+      `With Tumbite you keep ${a} more than with DoorDash and ${b} more than with Uber Eats.`,
+    fuente:
+      'Commissions DoorDash and Uber Eats publish on their official pages (October 2026), on the plan equivalent to yours.',
   },
 };
 
@@ -92,6 +115,8 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
   const t = enIdioma(T, idioma);
   const [d, setD] = useState<Datos | null>(null);
   const [hoy, setHoy] = useState<Resumen | null>(null);
+  const [mes, setMes] = useState<{ ventas: number; regalos: number; pedidos: number } | null>(null);
+  const [plan, setPlan] = useState<Plan>('inicial');
   const b = useBorrador({
     formulario: 'retiro',
     cuenta: usuario.id,
@@ -108,8 +133,16 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   useEffect(() => {
     void cargar();
-    pedir<{ resumen: Resumen }>('GET', '/datos/restaurante/resumen')
-      .then((r) => setHoy(r.resumen))
+    pedir<{
+      resumen: Resumen;
+      mes?: { ventas: number; regalos: number; pedidos: number };
+      plan?: Plan;
+    }>('GET', '/datos/restaurante/resumen')
+      .then((r) => {
+        setHoy(r.resumen);
+        setMes(r.mes ?? null);
+        if (r.plan) setPlan(r.plan);
+      })
       .catch(() => setHoy(null));
   }, []);
 
@@ -179,6 +212,7 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
           </div>
         </>
       )}
+      {mes && <Comparar mes={mes} plan={plan} idioma={idioma} t={t} />}
       <div className="saldo">
         <span>{t.saldo}</span>
         <strong>{formatearDolares(d.saldo, idioma)}</strong>
@@ -248,6 +282,51 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/**
+ * «Cuánto te queda con Tumbite y con otras apps», con las ventas reales del restaurante de los
+ * últimos 30 días (o con 1.000 dólares de ejemplo si todavía no vendió). Candado C-COMPARA-REST.
+ */
+function Comparar({
+  mes,
+  plan,
+  idioma,
+  t,
+}: {
+  mes: { ventas: number; regalos: number; pedidos: number };
+  plan: Plan;
+  idioma: Idioma;
+  t: (typeof T)['es'];
+}) {
+  const conVentas = mes.ventas > 0;
+  const c = compararConOtras(conVentas ? mes.ventas : 100000, conVentas ? mes.regalos : 0, plan);
+  const $ = (x: number) => formatearDolares(x, idioma);
+  const equivalentes = planesEquivalentes(plan);
+  const nombrePlan = new Map(Object.entries(t.planes)).get(plan) ?? plan;
+  const filas: [string, number, boolean][] = [
+    [t.conTumbite(nombrePlan), c.tumbite, true],
+    [`DoorDash ${equivalentes.doordash}`, c.doordash, false],
+    [`Uber Eats ${equivalentes.ubereats}`, c.ubereats, false],
+  ];
+  return (
+    <section className="tarjeta comparar" aria-label={t.comparaTitulo}>
+      <h2>{t.comparaTitulo}</h2>
+      <p>{conVentas ? t.comparaMes(mes.pedidos) : t.comparaEjemplo}</p>
+      <ul>
+        {filas.map(([nombre, monto, propio]) => (
+          <li key={nombre} className={propio ? 'propio' : undefined}>
+            <span>{nombre}</span>
+            <strong>{$(monto)}</strong>
+          </li>
+        ))}
+      </ul>
+      <p className="comparar-resultado">
+        {t.masQue($(c.tumbite - c.doordash), $(c.tumbite - c.ubereats))}
+      </p>
+      <p className="ayuda">{t.fuente}</p>
     </section>
   );
 }

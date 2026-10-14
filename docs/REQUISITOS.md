@@ -46,23 +46,25 @@ Reglas extra:
 - **Tarifa de pedido pequeño** si el pedido no llega a un monto mínimo.
 - **Recoger en el local (pickup):** sin envío, comisión más baja. Otra fuente de pedidos.
 
-### Ejemplo con valores iniciales sugeridos (todos editables)
+### Ejemplo con los valores vigentes (punto de equilibrio, 13 oct 2026; todos editables)
 
-Pedido de 30 dólares, restaurante en plan Inicial, propina de 4 dólares:
+Pedido de 30 dólares de comida, a 2 km, restaurante en plan Inicial, propina de 4 dólares. Detalle, competencia y fuentes en `docs/MODELO-DE-DINERO.md`.
 
-|                                              | Monto                             |
-| -------------------------------------------- | --------------------------------- |
-| Comida                                       | 30,00                             |
-| Envío (cliente)                              | 2,99                              |
-| Servicio 5 % (cliente)                       | 1,50                              |
-| Propina (cliente)                            | 4,00                              |
-| **Cliente paga**                             | **38,49**                         |
-| Repartidor recibe (envío + propina)          | 6,99                              |
-| Comisión 7,5 % (restaurante)                 | 2,25                              |
-| Restaurante recibe                           | 27,75                             |
-| Nuestra ganancia bruta (comisión + servicio) | 3,75, menos la comisión de Stripe |
+|                                                                 | Monto     |
+| --------------------------------------------------------------- | --------- |
+| Comida                                                          | 30,00     |
+| Envío (cliente, desde 3,99)                                     | 3,99      |
+| Servicio 5 %, mínimo 1,99 (cliente)                             | 1,99      |
+| Propina (cliente)                                               | 4,00      |
+| **Cliente paga**                                                | **39,98** |
+| Repartidor recibe (mínimo 5,00 + propina)                       | 9,00      |
+| Comisión 7,5 % (restaurante)                                    | 2,25      |
+| Restaurante recibe                                              | 27,75     |
+| Tumbite (comisión + servicio − 1,01 que completa al repartidor) | 3,23      |
+| Cobro de la tarjeta de Stripe (2,9 % + 0,30)                    | 1,46      |
+| **Tumbite neto**                                                | **1,77**  |
 
-> La comisión exacta de Stripe por cobro y por retiro instantáneo se confirma en la documentación oficial de Stripe antes de construir. No se escribe de memoria.
+> Hasta el 13 oct 2026 el envío arrancaba en 2,99 y el servicio mínimo era 0,99: con eso, el pedido normal del plan Inicial dejaba pérdida. Lo vigila el candado C-EQUILIBRIO.
 
 ### Planes para restaurantes (mitad de DoorDash, editables)
 

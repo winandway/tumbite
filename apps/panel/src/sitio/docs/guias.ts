@@ -404,6 +404,7 @@ const es: SeccionDocs[] = [
           'La primera vez, toca «Conectar mi cuenta bancaria»: Stripe te pide tus datos una sola vez, en su página segura.',
           'Tu saldo disponible se acumula con cada pedido entregado y abajo ves cada venta con su número de pedido. Retira cuando quieras, desde un dólar.',
           'Tu plan (Inicial, Crece o Élite) define la comisión. Puedes pedir cambio de plan escribiéndonos.',
+          'En «Comparado con otras apps» ves, con tus ventas reales de los últimos 30 días, cuánto te queda con Tumbite y cuánto te quedaría con DoorDash o Uber Eats en el plan equivalente.',
         ],
       },
     ],
@@ -716,7 +717,7 @@ const es: SeccionDocs[] = [
           '¿Cuánto gana un repartidor por entrega en Tumbite?',
         ],
         pasos: [
-          'Restaurante: compara tu comisión actual con el plan de Tumbite que te corresponde y calcula cuánto te queda en tus pedidos de un mes.',
+          'Restaurante: en tu panel, en «Beneficios», ves esta comparación hecha con tus propias ventas de los últimos 30 días.',
           'Cliente: en Tumbite ves el desglose completo antes de pagar (comida, envío, servicio, propina), sin sorpresas al final.',
           'Repartidor: antes de aceptar cada oferta ves cuánto ganas, con la propina incluida.',
         ],
@@ -1290,6 +1291,7 @@ const en: SeccionDocs[] = [
           'The first time, tap “Connect my bank account”: Stripe asks for your details once, on its secure page.',
           'Your available balance grows with every delivered order, and below you see each sale with its order number. Cash out anytime, from one dollar.',
           'Your plan (Starter, Growth, or Elite) sets the commission. Ask us to change plans anytime.',
+          'In “Compared with other apps” you see, with your real sales from the last 30 days, what you keep with Tumbite and what you’d keep with DoorDash or Uber Eats on the equivalent plan.',
         ],
       },
     ],
@@ -1604,7 +1606,7 @@ const en: SeccionDocs[] = [
           'How much does a driver earn per delivery on Tumbite?',
         ],
         pasos: [
-          'Restaurants: compare your current commission with the Tumbite plan that fits you and work out what you keep on a month of orders.',
+          'Restaurants: in your dashboard, under “Earnings,” you see this comparison worked out with your own sales from the last 30 days.',
           'Customers: on Tumbite you see the full breakdown before paying (food, delivery, service, tip), with no surprises at the end.',
           'Drivers: before accepting each offer you see what you earn, tip included.',
         ],

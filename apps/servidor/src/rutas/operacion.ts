@@ -158,7 +158,24 @@ operacion.get('/restaurante/resumen', async (c) => {
     )
     .bind(rid, desde, hasta)
     .first<Record<string, number>>();
+  // Los últimos 30 días y el plan: con eso el panel compara lo que le queda con Tumbite y con
+  // otras apps (calculadora de «Beneficios», C-COMPARA-REST).
+  const mes = await db
+    .prepare(
+      `SELECT COALESCE(SUM(p.subtotal), 0) AS ventas, COALESCE(SUM(p.regalo), 0) AS regalos,
+      COUNT(p.id) AS pedidos, r.plan AS plan
+      FROM restaurantes r LEFT JOIN pedidos p ON p.restaurante_id = r.id AND p.estado = 'entregado'
+      AND p.pagado_en >= datetime('now','-30 days') WHERE r.id = ?`,
+    )
+    .bind(rid)
+    .first<{ ventas: number; regalos: number; pedidos: number; plan: string }>();
   return c.json({
+    plan: mes?.plan ?? 'inicial',
+    mes: {
+      ventas: Number(mes?.ventas ?? 0),
+      regalos: Number(mes?.regalos ?? 0),
+      pedidos: Number(mes?.pedidos ?? 0),
+    },
     resumen: {
       entregados: Number(f?.entregados ?? 0),
       enCurso: Number(f?.en_curso ?? 0),

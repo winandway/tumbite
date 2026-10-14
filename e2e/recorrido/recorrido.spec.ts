@@ -447,6 +447,13 @@ for (const idioma of ['en', 'es'] as const) {
       currency: 'USD',
     }).format(cobro.desglose.pagoRestaurante / 100);
     await expect(panel.getByText(L.teToca).locator('..')).toContainText(pagoRest);
+    // La calculadora «Comparado con otras apps» usa sus ventas reales y lo propio sale primero.
+    const compara = panel.getByRole('region', {
+      name: /Compared with other apps|Comparado con otras apps/,
+    });
+    await expect(compara).toContainText(pagoRest);
+    await expect(compara).toContainText(/DoorDash Basic/);
+    await expect(compara).toContainText(/Uber Eats Lite/);
     await foto(panel, 'restaurante-beneficios');
 
     // El repartidor ve su billetera, conecta su banco (en Stripe) y retira todo.

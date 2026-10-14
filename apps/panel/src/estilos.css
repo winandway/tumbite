@@ -3347,3 +3347,21 @@ button {
 .ok + .boton {
   margin-left: 12px;
 }
+
+/* «Comparado con otras apps» en Beneficios: lo propio en verde (es lo que te queda de más). */
+.comparar ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+.comparar li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+.comparar li.propio strong,
+.comparar-resultado {
+  color: #0d7a3a;
+  font-weight: 700;
+}

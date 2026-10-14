@@ -63,11 +63,19 @@ const T = {
     dinero: {
       titulo: 'A dónde va cada dólar',
       texto:
-        'La transparencia es nuestra ventaja. Así se reparte un pedido típico de 30 dólares en un restaurante del plan Inicial, con 4 dólares de propina:',
+        'La transparencia es nuestra ventaja. Así se reparte un pedido típico de 30 dólares de comida en un restaurante del plan Inicial, a 2 km y con 4 dólares de propina. El cliente paga 39,98 USD: comida 30,00, envío 3,99, servicio 1,99 y propina 4,00.',
       filas: [
         ['El restaurante recibe', 'la comida menos su comisión del 7,5 %', '27,75 USD'],
-        ['El repartidor recibe', 'el envío más el 100 % de la propina', '6,99 USD'],
-        ['Tumbite recibe', 'la comisión y la tarifa de servicio', '3,24 USD'],
+        [
+          'El repartidor recibe',
+          'su pago mínimo de 5 dólares más el 100 % de la propina',
+          '9,00 USD',
+        ],
+        [
+          'Tumbite recibe',
+          'la comisión y el servicio, menos lo que completa al repartidor (de ahí paga la tarjeta)',
+          '3,23 USD',
+        ],
       ],
       nota: 'Ejemplo con los valores de lanzamiento. Cada pedido muestra su propio desglose antes de pagar.',
     },
@@ -254,11 +262,15 @@ const T = {
     dinero: {
       titulo: 'Where every dollar goes',
       texto:
-        'Transparency is our edge. Here’s how a typical $30 order from a Starter-plan restaurant, with a $4 tip, is split:',
+        'Transparency is our edge. Here’s how a typical $30 food order from a Starter-plan restaurant, 2 km away with a $4 tip, is split. The customer pays $39.98: food $30.00, delivery $3.99, service $1.99, and a $4.00 tip.',
       filas: [
         ['The restaurant gets', 'the food minus its 7.5% commission', '$27.75'],
-        ['The driver gets', 'the delivery fee plus 100% of the tip', '$6.99'],
-        ['Tumbite gets', 'the commission and the service fee', '$3.24'],
+        ['The driver gets', 'their $5 minimum pay plus 100% of the tip', '$9.00'],
+        [
+          'Tumbite gets',
+          'the commission and service fee, minus what it adds to the driver’s pay (card processing comes out of this)',
+          '$3.23',
+        ],
       ],
       nota: 'Example with launch values. Every order shows its own breakdown before you pay.',
     },
