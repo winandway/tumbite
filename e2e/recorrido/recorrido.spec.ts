@@ -696,12 +696,21 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(irCasa).toHaveCSS('background-color', 'rgb(13, 122, 58)');
     await expect(rep.getByRole('button', { name: L.fotoEntrega })).toHaveCount(0);
     await foto(rep, 'repartidor-en-camino');
+    // Llamada con número oculto (Twilio simulado): el repartidor toca «Llamar al cliente».
+    await rep.getByRole('button', { name: L.llamarCliente }).filter({ visible: true }).click();
+    await expect(rep.getByText(L.llamando, { exact: false })).toBeVisible({ timeout: 20_000 });
+    await foto(rep, 'repartidor-llamar');
     await cli.reload();
     await expect(
       cli.getByText(/Your driver is on the way|Tu repartidor va en camino/),
     ).toBeVisible();
     await mapaListo(cli);
     await foto(cli, 'cliente-en-camino');
+    // …y el cliente también puede llamar al repartidor, sin ver su número.
+    await cli.getByRole('button', { name: L.llamarRepartidor }).scrollIntoViewIfNeeded();
+    await cli.getByRole('button', { name: L.llamarRepartidor }).click();
+    await expect(cli.getByText(L.llamando, { exact: false })).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-llamar');
     const sellado = cli.getByLabel(
       /Your order left the restaurant|Tu pedido salió del restaurante/,
     );

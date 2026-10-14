@@ -152,6 +152,20 @@ export const AVISOS = {
           titulo: `Quitamos ${plato}`,
           cuerpo: `Te devolvimos $${(centavos / 100).toFixed(2)}. El resto de tu pedido sigue.`,
         },
+  llega5: (i: string): Aviso =>
+    i === 'en'
+      ? { titulo: 'Arriving in 5 minutes', cuerpo: 'Your driver is about 5 minutes away.' }
+      : { titulo: 'Llega en 5 minutos', cuerpo: 'Tu repartidor está a unos 5 minutos.' },
+  salARecibir: (i: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Come out to meet your driver',
+          cuerpo: 'About 2 minutes away. You chose hand delivery.',
+        }
+      : {
+          titulo: 'Sal a recibir tu pedido',
+          cuerpo: 'Llega en unos 2 minutos. Pediste entrega en mano.',
+        },
   casiLlega: (i: string): Aviso =>
     i === 'en'
       ? { titulo: 'Almost here', cuerpo: 'Your driver is about a minute away.' }

@@ -33,6 +33,14 @@ import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
 import { enviarCorreo } from '../correo';
+import {
+  abrirPase,
+  enviarSms,
+  llamarConNumeroOculto,
+  smsConfigurado,
+  telefonoE164,
+  twimlPuente,
+} from '../sms';
 import { formatearDolares } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -50,6 +58,7 @@ const puntoConPrecision = punto.extend({
 const CON_HITOS = `(SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'llego_restaurante') AS h_llego_rest,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'llego_cliente') AS h_llego_cli,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'casi_llega') AS h_casi,
+  (SELECT creado_en FROM avisos_pedido a WHERE a.pedido_id = p.id AND a.aviso = 'llega_5') AS h_llega5,
   (SELECT valor FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'espera_evitable') AS h_espera,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'verificado') AS h_verificado,
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'no_aparece') AS h_no_aparece`;
@@ -261,7 +270,9 @@ async function registrarHitos(
 ) {
   const p = await db
     .prepare(
-      `SELECT p.id, p.estado, p.lat, p.lng, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.id, p.estado, p.lat, p.lng, r.lat AS rest_lat, r.lng AS rest_lng,
+        (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega
+       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
     )
     .bind(repartidorId)
@@ -272,6 +283,7 @@ async function registrarHitos(
       lng: number | null;
       rest_lat: number | null;
       rest_lng: number | null;
+      entrega: string | null;
     }>();
   if (!p) return;
   const marcar = async (hito: string) => {
@@ -294,8 +306,23 @@ async function registrarHitos(
   const casa = { lat: p.lat, lng: p.lng };
   const m = metrosEntre(donde, casa);
   // «Llegó a la puerta» exige dos lecturas precisas y coherentes dentro del radio, no un punto suelto.
+  // Avisos por tiempo, como los grandes: «llega en 5 minutos» y, en mano, «sal a recibir» a 2.
+  const faltan = minutosDeViaje(m / 1000);
+  const marcarAviso = async (aviso: string) => {
+    const r = await db
+      .prepare('INSERT OR IGNORE INTO avisos_pedido (pedido_id, aviso) VALUES (?, ?)')
+      .bind(p.id, aviso)
+      .run();
+    return r.meta.changes > 0;
+  };
+  if (faltan <= 5 && (await marcarAviso('llega_5')))
+    await avisarAlCliente(env, db, p.id, (i) => AVISOS.llega5(i));
+  if (faltan <= 2 && p.entrega === 'mano' && (await marcarAviso('sal_a_recibir')))
+    await avisarAlCliente(env, db, p.id, (i) => AVISOS.salARecibir(i));
   if (llegadaConfiable(muestras, casa).llego) {
-    if (await marcar('llego_cliente')) await avisarAlCliente(env, db, p.id, (i) => AVISOS.llego(i));
+    // En la puerta: push y, de respaldo, SMS (el push no garantiza sonido).
+    if (await marcar('llego_cliente'))
+      await avisarAlCliente(env, db, p.id, (i) => AVISOS.llego(i), 'llego');
   } else if (m <= 500) {
     if (await marcar('casi_llega'))
       await avisarAlCliente(env, db, p.id, (i) => AVISOS.casiLlega(i));
@@ -922,18 +949,26 @@ async function avisarAlCliente(
   db: D1Database,
   pedidoId: string,
   aviso: (idioma: string, f: { restaurante: string }) => { titulo: string; cuerpo: string },
+  /** Con un tipo, el mismo aviso también va por SMS de respaldo (si Twilio está configurado). */
+  smsTipo: string | null = null,
 ) {
   const f = await db
     .prepare(
-      'SELECT p.cliente_id, u.idioma, r.nombre AS restaurante FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?',
+      'SELECT p.cliente_id, u.idioma, u.telefono, r.nombre AS restaurante FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?',
     )
     .bind(pedidoId)
-    .first<{ cliente_id: string; idioma: string; restaurante: string }>();
+    .first<{ cliente_id: string; idioma: string; telefono: string | null; restaurante: string }>();
   if (!f) return;
-  await notificar(env, db, f.cliente_id, {
-    ...aviso(f.idioma, { restaurante: f.restaurante }),
-    datos: { pedidoId },
-  });
+  const texto = aviso(f.idioma, { restaurante: f.restaurante });
+  await notificar(env, db, f.cliente_id, { ...texto, datos: { pedidoId } });
+  if (smsTipo)
+    await enviarSms(env, db, {
+      usuarioId: f.cliente_id,
+      pedidoId,
+      tipo: smsTipo,
+      telefono: f.telefono,
+      texto: `Tumbite: ${texto.titulo}. ${texto.cuerpo}`,
+    }).catch((e: unknown) => console.error('sms respaldo', e));
 }
 
 function conDatosRestaurante(f: FilaPedido) {
@@ -1515,12 +1550,95 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
             lat: repLat,
             lng: repLng,
             actualizado: enRuta ? ((f.rep_en as string | null) ?? null) : null,
+            llegaEn5: f.h_llega5 != null,
             casiLlega: f.h_casi != null,
             llego: f.h_llego_cli != null,
           }
         : null,
     },
   });
+});
+
+/**
+ * Llamada con número oculto: el repartidor o el cliente de un pedido en marcha toca «Llamar»;
+ * Twilio lo llama a él primero y, al contestar, marca al otro. Los dos ven el número de Tumbite.
+ */
+operacion.post('/pedidos/:id/llamar', async (c) => {
+  const u = exigir(c, 'cliente', 'repartidor');
+  const db = base(c);
+  const id = c.req.param('id');
+  const p = await db
+    .prepare(
+      `SELECT p.cliente_id, p.repartidor_id, uc.telefono AS tel_cliente, ur.telefono AS tel_repartidor
+       FROM pedidos p JOIN usuarios uc ON uc.id = p.cliente_id LEFT JOIN usuarios ur ON ur.id = p.repartidor_id
+       WHERE p.id = ? AND p.estado IN ('aceptado','listo','en_camino')`,
+    )
+    .bind(id)
+    .first<{
+      cliente_id: string;
+      repartidor_id: string | null;
+      tel_cliente: string | null;
+      tel_repartidor: string | null;
+    }>();
+  if (!p || (u.id !== p.cliente_id && u.id !== p.repartidor_id))
+    throw new ErrorDatos('Este pedido no está en marcha contigo.', undefined, 409);
+  if (!smsConfigurado(c.env))
+    throw new ErrorDatos(
+      'Las llamadas todavía no están activas. Escríbele por el chat del pedido.',
+      undefined,
+      409,
+    );
+  if (!p.repartidor_id) throw new ErrorDatos('Todavía no hay repartidor asignado.', undefined, 409);
+  const soyCliente = u.id === p.cliente_id;
+  const yo = telefonoE164(soyCliente ? p.tel_cliente : p.tel_repartidor);
+  const otro = telefonoE164(soyCliente ? p.tel_repartidor : p.tel_cliente);
+  if (!yo)
+    throw new ErrorDatos(
+      'Agrega tu número de celular en tu cuenta para poder llamar.',
+      undefined,
+      409,
+    );
+  if (!otro)
+    throw new ErrorDatos(
+      'La otra persona no tiene celular registrado. Escríbele por el chat del pedido.',
+      undefined,
+      409,
+    );
+  const llamadaId = nuevoId();
+  try {
+    await llamarConNumeroOculto(c.env, yo, otro);
+  } catch (e) {
+    console.error('llamada', e);
+    await db
+      .prepare("INSERT INTO llamadas (id, pedido_id, de_usuario, estado) VALUES (?, ?, ?, 'error')")
+      .bind(llamadaId, id, u.id)
+      .run();
+    throw new ErrorDatos(
+      'No pudimos conectar la llamada. Intenta otra vez o escribe por el chat.',
+      undefined,
+      503,
+    );
+  }
+  await db
+    .prepare(
+      "INSERT INTO llamadas (id, pedido_id, de_usuario, estado) VALUES (?, ?, ?, 'llamando')",
+    )
+    .bind(llamadaId, id, u.id)
+    .run();
+  await anotarEvento(
+    db,
+    id,
+    'llamada',
+    soyCliente ? 'cliente → repartidor' : 'repartidor → cliente',
+  );
+  return c.json({ ok: true, estado: 'llamando' });
+});
+
+/** El puente de Twilio: con el pase válido, marca al otro número con el de Tumbite como remitente. */
+operacion.get('/twilio/puente', async (c) => {
+  const a = await abrirPase(c.env, c.req.query('t') ?? '');
+  if (!a || !c.env.TWILIO_FROM) throw new ErrorDatos('No encontrado.', undefined, 404);
+  return c.body(twimlPuente(a, c.env.TWILIO_FROM), 200, { 'content-type': 'text/xml' });
 });
 
 /** El cliente no aparece: el repartidor avisa desde la puerta; a los 5 minutos puede dejarlo en lugar seguro. */
@@ -1542,7 +1660,7 @@ operacion.post('/repartidor/pedidos/:id/no-aparece', async (c) => {
     .run();
   if (r.meta.changes) {
     await anotarEvento(db, id, 'cliente_no_aparece');
-    await avisarAlCliente(c.env, db, id, (i) => AVISOS.noAparece(i));
+    await avisarAlCliente(c.env, db, id, (i) => AVISOS.noAparece(i), 'no_aparece');
   }
   const desde = (
     await db

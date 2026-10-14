@@ -61,6 +61,7 @@ type Pedido = {
     lat: number | null;
     lng: number | null;
     actualizado: string | null;
+    llegaEn5?: boolean;
     casiLlega?: boolean;
     llego?: boolean;
   } | null;
@@ -100,6 +101,10 @@ const T = {
     quitadoOk: 'Quitamos «{plato}» y te devolvimos {monto}. El resto sigue.',
     enPuerta: 'Tu repartidor está en tu puerta.',
     casiLlega: 'Tu repartidor está a un minuto.',
+    llegaEn5: 'Tu repartidor llega en unos 5 minutos.',
+    llamar: 'Llamar al repartidor (número oculto)',
+    llamando:
+      'Te estamos llamando. Contesta y te conectamos con tu repartidor; ninguno ve el número del otro.',
     pediste: { puerta: 'Pediste: en la puerta', mano: 'Pediste: en mano' } as Record<
       string,
       string
@@ -161,6 +166,10 @@ const T = {
     quitadoOk: 'We removed “{plato}” and refunded {monto}. The rest continues.',
     enPuerta: 'Your driver is at your door.',
     casiLlega: 'Your driver is a minute away.',
+    llegaEn5: 'Your driver arrives in about 5 minutes.',
+    llamar: 'Call the driver (masked number)',
+    llamando:
+      'We’re calling you now. Answer and we’ll connect you with your driver; neither of you sees the other’s number.',
     pediste: { puerta: 'You chose: leave at door', mano: 'You chose: hand it to me' } as Record<
       string,
       string
@@ -234,6 +243,7 @@ export default function SeguirPedido() {
   const { vaciar } = useCarrito();
   const [p, setP] = useState<Pedido | null>(null);
   const [error, setError] = useState('');
+  const [avisoLlamada, setAvisoLlamada] = useState('');
   const [estRest, setEstRest] = useState(0);
   const [estRep, setEstRep] = useState(0);
   const [culpa, setCulpa] = useState(false);
@@ -408,12 +418,17 @@ export default function SeguirPedido() {
               <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.tuPinAyuda}</Text>
             </View>
           ) : null}
-          {p.estado === 'en_camino' && (p.repartidor?.llego || p.repartidor?.casiLlega) ? (
+          {p.estado === 'en_camino' &&
+          (p.repartidor?.llego || p.repartidor?.casiLlega || p.repartidor?.llegaEn5) ? (
             <Text
               style={{ color: C.exito, fontWeight: '800', fontSize: 17, marginBottom: 8 }}
               accessibilityRole="alert"
             >
-              {p.repartidor?.llego ? t.enPuerta : t.casiLlega}
+              {p.repartidor?.llego
+                ? t.enPuerta
+                : p.repartidor?.casiLlega
+                  ? t.casiLlega
+                  : t.llegaEn5}
             </Text>
           ) : null}
           {p.estado !== 'entregado' && p.estado !== 'cancelado' && (
@@ -474,7 +489,27 @@ export default function SeguirPedido() {
             </View>
           )}
           {p.repartidor && ['aceptado', 'listo', 'en_camino'].includes(p.estado) ? (
-            <ChatPedido pedidoId={p.id} />
+            <>
+              {avisoLlamada ? (
+                <Text
+                  style={{ color: C.exito, fontWeight: '700', marginBottom: 6 }}
+                  accessibilityRole="alert"
+                >
+                  {avisoLlamada}
+                </Text>
+              ) : null}
+              <Boton
+                texto={t.llamar}
+                alTocar={() =>
+                  void api
+                    .pedir('POST', `/datos/pedidos/${p.id}/llamar`, {})
+                    .then(() => setAvisoLlamada(t.llamando))
+                    .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+                }
+                secundario
+              />
+              <ChatPedido pedidoId={p.id} />
+            </>
           ) : null}
           <View style={e.tarjeta}>
             {p.lineas.map((l) => (

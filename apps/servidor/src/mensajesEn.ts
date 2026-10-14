@@ -144,6 +144,24 @@ export const MENSAJES_EN = new Map<string, string>([
     'We haven’t confirmed your location at the door yet. Wait a few seconds with GPS on, or request the exception from support.',
   ],
   ['Este pedido no tiene una excepción pendiente.', 'This order has no pending exception.'],
+  ['Este pedido no está en marcha contigo.', 'This order isn’t in progress with you.'],
+  [
+    'Las llamadas todavía no están activas. Escríbele por el chat del pedido.',
+    'Calls aren’t active yet. Message them through the order chat.',
+  ],
+  ['Todavía no hay repartidor asignado.', 'No driver has been assigned yet.'],
+  [
+    'Agrega tu número de celular en tu cuenta para poder llamar.',
+    'Add your mobile number to your account to be able to call.',
+  ],
+  [
+    'La otra persona no tiene celular registrado. Escríbele por el chat del pedido.',
+    'The other person has no mobile number on file. Message them through the order chat.',
+  ],
+  [
+    'No pudimos conectar la llamada. Intenta otra vez o escribe por el chat.',
+    'We couldn’t connect the call. Try again or use the chat.',
+  ],
   [
     'Antes de abrir, completa la lista de activación: te falta algo (mírala en «Mi restaurante»).',
     'Before opening, complete the activation checklist: something is missing (see “My restaurant”).',

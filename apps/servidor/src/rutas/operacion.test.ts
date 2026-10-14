@@ -18,7 +18,7 @@ async function avisoFirmado(cuerpo: string) {
   return `t=${t},v1=${v1}`;
 }
 
-async function escenario() {
+async function escenario(extraEnv: Record<string, string> = {}) {
   vi.stubGlobal('fetch', async (url: string) =>
     /\/(payment_intents|customers|customer_sessions)/.test(url)
       ? new Response(JSON.stringify({ id: 'cs_1', client_secret: 'cs_1_secret_x' }), {
@@ -26,7 +26,11 @@ async function escenario() {
         })
       : new Response(JSON.stringify({ id: 're_1' }), { status: 200 }),
   );
-  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBHOOK_SECRET: SECRETO_AVISO });
+  const m = mundo({
+    STRIPE_SECRET_KEY: 'sk_test_x',
+    STRIPE_WEBHOOK_SECRET: SECRETO_AVISO,
+    ...extraEnv,
+  });
   const dueno = await m.cuenta('restaurante');
   const admin = await m.cuenta('admin');
   const cliente = await m.cuenta('cliente', 'Ana Cliente');
@@ -1900,5 +1904,153 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(
       (await m.llamar('PATCH', '/datos/restaurante/cocina', { extraMin: 7 }, dueno.token)).estado,
     ).toBe(400);
+  });
+});
+
+describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto (C-AVISOS-COMPLETOS)', () => {
+  const TWILIO = {
+    TWILIO_ACCOUNT_SID: 'ACprueba0000000000000000000000000',
+    TWILIO_AUTH_TOKEN: 'token-de-prueba-largo-123',
+    TWILIO_FROM: '+13055550000',
+    SITIO_URL: 'https://tumbite.test',
+  };
+  /** Captura lo que se le manda a Twilio y responde como Twilio (Stripe sigue simulado). */
+  function espiarTwilio() {
+    const llamadas: { url: string; cuerpo: URLSearchParams }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (String(url).includes('api.twilio.com')) {
+        llamadas.push({ url: String(url), cuerpo: new URLSearchParams(String(init?.body)) });
+        return new Response(JSON.stringify({ sid: `SM${llamadas.length}` }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ id: 'x', client_secret: 'x_secret', data: [] }), {
+        status: 200,
+      });
+    });
+    return llamadas;
+  }
+  async function enCamino(extra: Record<string, string> = {}) {
+    const e = await escenario(extra);
+    const rep = await e.repartidor('Rita Llama', 25.771, -80.191);
+    const id = await e.pedidoPagado();
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const telefonos = async () => {
+      await e.m.DB.prepare("UPDATE usuarios SET telefono = '3055551234' WHERE id = ?")
+        .bind(e.cliente.id)
+        .run();
+      await e.m.DB.prepare("UPDATE usuarios SET telefono = '(305) 555-9999' WHERE id = ?")
+        .bind(rep.id)
+        .run();
+    };
+    return { ...e, rep, id, telefonos };
+  }
+  afterEach(() => vi.unstubAllGlobals());
+  const hitosDe = async (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    (
+      await m.DB.prepare('SELECT aviso FROM avisos_pedido WHERE pedido_id = ?')
+        .bind(id)
+        .all<{ aviso: string }>()
+    ).results.map((h) => h.aviso);
+
+  it('«llega en 5 minutos» al estar a 5 min de viaje; «sal a recibir» a 2 min solo en mano', async () => {
+    const { m, rep, id, cliente } = await enCamino();
+    await m.DB.prepare(
+      "INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, 'mano')",
+    )
+      .bind(id)
+      .run();
+    // La casa está en 25.78,-80.2. A ~1,9 km (≈ 4,5 min a 25 km/h): llega en 5.
+    await m.ubicar(rep.token, { lat: 25.763, lng: -80.2 });
+    expect(await hitosDe(m, id)).toContain('llega_5');
+    expect(await hitosDe(m, id)).not.toContain('sal_a_recibir');
+    const seg = await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token);
+    expect(seg.datos.pedido.repartidor.llegaEn5).toBe(true);
+    // A ~700 m (≈ 1,7 min): sal a recibir (porque pidió en mano).
+    await m.envejecerGps(id);
+    await m.ubicar(rep.token, { lat: 25.7737, lng: -80.2 });
+    expect(await hitosDe(m, id)).toContain('sal_a_recibir');
+  });
+
+  it('sin Twilio no sale ningún SMS ni falla nada', async () => {
+    const { m, rep, id, telefonos } = await enCamino();
+    await telefonos();
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    expect(
+      await m.DB.prepare('SELECT COUNT(*) AS n FROM sms_enviados').first<{ n: number }>(),
+    ).toMatchObject({ n: 0 });
+    expect((await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, rep.token)).estado).toBe(409);
+  });
+
+  it('con Twilio: «en tu puerta» y «no te encuentran» también van por SMS al celular del cliente', async () => {
+    const { m, rep, id, telefonos } = await enCamino(TWILIO);
+    await telefonos();
+    const twilio = espiarTwilio();
+    await m.envejecerGps(id);
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });
+    const sms = () => twilio.filter((x) => x.url.endsWith('/Messages.json'));
+    expect(sms()).toHaveLength(1);
+    expect(sms()[0]!.cuerpo.get('To')).toBe('+13055551234');
+    expect(sms()[0]!.cuerpo.get('From')).toBe('+13055550000');
+    expect(sms()[0]!.cuerpo.get('Body')).toMatch(/Tumbite/);
+    await m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token);
+    expect(sms()).toHaveLength(2);
+    const filas = (
+      await m.DB.prepare(
+        'SELECT tipo, estado FROM sms_enviados WHERE pedido_id = ? ORDER BY creado_en',
+      )
+        .bind(id)
+        .all<{ tipo: string; estado: string }>()
+    ).results;
+    expect(filas).toEqual([
+      { tipo: 'llego', estado: 'enviado' },
+      { tipo: 'no_aparece', estado: 'enviado' },
+    ]);
+  });
+
+  it('llamada con número oculto: Twilio llama a quien pidió y el puente marca al otro con el número de Tumbite', async () => {
+    const { m, rep, id, cliente, telefonos } = await enCamino(TWILIO);
+    const twilio = espiarTwilio();
+    // Sin celular registrado no hay a quién conectar.
+    expect((await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, rep.token)).estado).toBe(409);
+    await telefonos();
+    const r = await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, rep.token);
+    expect(r.estado).toBe(200);
+    const llamada = twilio.find((x) => x.url.endsWith('/Calls.json'))!;
+    expect(llamada.cuerpo.get('To')).toBe('+13055559999'); // primero al repartidor
+    expect(llamada.cuerpo.get('From')).toBe('+13055550000');
+    const url = new URL(llamada.cuerpo.get('Url')!);
+    expect(url.origin + url.pathname).toBe('https://tumbite.test/datos/twilio/puente');
+    // Twilio pide el puente con el pase: marca al cliente con el número de Tumbite.
+    const puente = await m.crudo(`/datos/twilio/puente?t=${url.searchParams.get('t')}`, {
+      method: 'GET',
+    });
+    expect(puente.status).toBe(200);
+    const xml = await puente.text();
+    expect(xml).toContain('<Dial callerId="+13055550000"');
+    expect(xml).toContain('+13055551234');
+    // Un pase inventado no abre nada; el cliente también puede llamar; un extraño, no.
+    expect((await m.crudo('/datos/twilio/puente?t=abc.def', { method: 'GET' })).status).toBe(404);
+    expect((await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, cliente.token)).estado).toBe(
+      200,
+    );
+    const extrano = await m.cuenta('cliente', 'Otro Cliente');
+    expect((await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, extrano.token)).estado).toBe(
+      409,
+    );
+    const anotadas = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM llamadas WHERE pedido_id = ? AND estado = 'llamando'",
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(anotadas).toMatchObject({ n: 2 });
   });
 });

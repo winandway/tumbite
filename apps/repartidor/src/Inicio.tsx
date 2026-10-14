@@ -123,6 +123,9 @@ const T = {
     autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     fotoEntrega: 'Tomar foto de la entrega',
     bono: 'Incluye un bono de',
+    llamarCliente: 'Llamar al cliente (número oculto)',
+    llamandoCliente:
+      'Te estamos llamando. Contesta y te conectamos con el cliente; ninguno ve el número del otro.',
     bonoPorque: 'por tomar un pedido que otros dejaron pasar.',
     pendienteConfirmar:
       'Sin señal: guardamos tu entrega en el celular. Pendiente de confirmar: se envía sola cuando vuelva la señal. No la repitas.',
@@ -210,6 +213,9 @@ const T = {
     autorizado: 'Support authorized the delivery without GPS confirmation.',
     fotoEntrega: 'Take the delivery photo',
     bono: 'Includes a bonus of',
+    llamarCliente: 'Call the customer (masked number)',
+    llamandoCliente:
+      'We’re calling you now. Answer and we’ll connect you with the customer; neither of you sees the other’s number.',
     bonoPorque: 'for taking an order others passed on.',
     pendienteConfirmar:
       'No signal: we saved your delivery on the phone. Pending confirmation: it’s sent on its own when the signal is back. Don’t redo it.',
@@ -1028,6 +1034,18 @@ export function Inicio() {
               })()}
             </>
           )}
+          {activo.estado === 'en_camino' || activo.estado === 'listo' ? (
+            <Boton
+              texto={t.llamarCliente}
+              alTocar={() =>
+                void api
+                  .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
+                  .then(() => setAviso(t.llamandoCliente))
+                  .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+              }
+              secundario
+            />
+          ) : null}
           <ChatPedido pedidoId={activo.id} />
         </View>
       ) : estado?.conectado ? (

@@ -75,6 +75,10 @@ writeFileSync(
     `ADMIN_CORREOS=${datos.correoEquipo}`,
     `ADMIN_SEMILLA=${datos.semilla}`,
     `SITIO_URL=${url}`,
+    'TWILIO_ACCOUNT_SID=ACrecorrido000000000000000000000',
+    'TWILIO_AUTH_TOKEN=token-recorrido-de-prueba-largo',
+    'TWILIO_FROM=+13055550000',
+    `TWILIO_API_URL=http://localhost:${process.env.PUERTO_TWILIO ?? 12112}`,
   ].join('\n') + '\n',
 );
 writeFileSync(join(dir, 'datos.json'), JSON.stringify(datos, null, 2));

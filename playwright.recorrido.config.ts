@@ -19,6 +19,11 @@ export default defineConfig({
       reuseExistingServer: true,
     },
     {
+      command: 'node scripts/recorrido/twilio-simulado.mjs',
+      port: Number(process.env.PUERTO_TWILIO ?? 12112),
+      reuseExistingServer: true,
+    },
+    {
       command: `npx wrangler dev -c .recorrido/wrangler.jsonc --port ${puerto} --persist-to .recorrido/estado`,
       url: `http://localhost:${puerto}/datos/salud`,
       reuseExistingServer: true,

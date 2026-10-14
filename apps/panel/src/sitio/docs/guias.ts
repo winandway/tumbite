@@ -33,6 +33,35 @@ const es: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'order-alerts-and-calls',
+        titulo: 'Los avisos de tu pedido y cómo llamar al repartidor sin dar tu número',
+        resumen:
+          'Te avisamos cuando el repartidor está a 5 minutos, cuando debes salir a recibir (si pediste en mano) y cuando está en tu puerta, también por SMS. Y puedes llamarlo con número oculto.',
+        explicacion: [
+          'Mientras tu pedido viene en camino, la app te avisa: «Llega en 5 minutos» cuando el repartidor está a unos 5 minutos; «Sal a recibir tu pedido» a 2 minutos si elegiste entrega en mano; «Casi llega» a una cuadra; y «Tu repartidor está en tu puerta» al llegar.',
+          'Los avisos de «en tu puerta» y «no te encuentran» también te llegan por mensaje de texto (SMS) al celular de tu cuenta, por si el celular está en silencio o sin datos.',
+          'Si necesitas hablar con el repartidor, toca «Llamar al repartidor (número oculto)»: te llamamos a ti primero y, al contestar, te conectamos con él. Ninguno de los dos ve el número del otro: los dos ven el número de Tumbite. El repartidor puede llamarte igual.',
+          'El chat del pedido sigue disponible para escribir sin llamar.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-llamar-es.webp',
+            alt: 'Pedido en camino en la app del cliente con el botón «Llamar al repartidor (número oculto)» y el aviso «Te estamos llamando. Contesta y te conectamos con tu repartidor».',
+            pie: 'Llamas sin dar tu número: Tumbite los conecta.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo sé cuándo llega mi pedido?',
+          '¿Puedo llamar al repartidor?',
+          '¿El repartidor ve mi número de teléfono?',
+        ],
+        pasos: [
+          'Ten el celular de tu cuenta a mano: los avisos llegan por la app y por SMS.',
+          'Si pediste en mano, sal cuando veas «Sal a recibir tu pedido».',
+          'Para hablar, toca «Llamar al repartidor (número oculto)» y contesta la llamada.',
+        ],
+      },
+      {
         id: 'choose-options',
         titulo: 'Elige el tamaño y los extras al pedir',
         resumen:
@@ -983,6 +1012,34 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'call-customer-masked',
+        titulo: 'Llamar al cliente sin ver su número (ni que vea el tuyo)',
+        resumen:
+          'En camino, toca «Llamar al cliente (número oculto)»: te llamamos y te conectamos con el cliente. Los dos ven el número de Tumbite.',
+        explicacion: [
+          'Si no encuentras la dirección o el cliente no contesta el chat, toca «Llamar al cliente (número oculto)». Tumbite te llama a tu celular y, cuando contestas, marca al cliente. Él ve el número de Tumbite, no el tuyo, y tú no ves el suyo.',
+          'Para eso tu cuenta necesita tu número de celular (está en «Mis datos»). Si el cliente no tiene celular registrado, la app te lo dice y te deja el chat.',
+          'El cliente también puede llamarte de la misma forma. Cada llamada queda anotada en el pedido, por si hay un reclamo.',
+          'Además, el cliente recibe sus avisos solos: «llega en 5 minutos», «sal a recibir» (en mano) y «en tu puerta», también por SMS.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llamar-es.webp',
+            alt: 'App del repartidor en camino con el botón «Llamar al cliente (número oculto)» y el aviso «Te estamos llamando. Contesta y te conectamos con el cliente».',
+            pie: 'Tumbite te llama y te conecta: nadie ve el número del otro.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo llamo al cliente si no lo encuentro?',
+          '¿El cliente ve mi número de teléfono?',
+        ],
+        pasos: [
+          'En camino, toca «Llamar al cliente (número oculto)».',
+          'Contesta la llamada de Tumbite: te conecta con el cliente.',
+          'Si no tiene celular, escríbele por el chat del pedido.',
+        ],
+      },
+      {
         id: 'gps-arrival',
         titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
         resumen:
@@ -1473,6 +1530,35 @@ const en: SeccionDocs[] = [
     titulo: 'Ordering',
     icono: 'pizza',
     guias: [
+      {
+        id: 'order-alerts-and-calls',
+        titulo: 'Your order alerts and how to call the driver without sharing your number',
+        resumen:
+          'We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can call them with a masked number.',
+        explicacion: [
+          'While your order is on the way, the app alerts you: “Arriving in 5 minutes” when the driver is about 5 minutes away; “Come out to meet your driver” at 2 minutes if you chose hand delivery; “Almost here” a block away; and “Your driver is at your door” on arrival.',
+          'The “at your door” and “can’t find you” alerts also reach you by text message (SMS) on your account’s mobile number, in case your phone is on silent or has no data.',
+          'If you need to talk to the driver, tap “Call the driver (masked number)”: we call you first and, when you answer, connect you with them. Neither of you sees the other’s number: you both see Tumbite’s number. The driver can call you the same way.',
+          'The order chat is still there to write without calling.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-llamar-en.webp',
+            alt: 'Order on the way in the customer app with the “Call the driver (masked number)” button and the notice “We’re calling you now. Answer and we’ll connect you with your driver.”',
+            pie: 'You call without sharing your number: Tumbite connects you.',
+          },
+        ],
+        preguntas: [
+          'How do I know when my order arrives?',
+          'Can I call the driver?',
+          'Does the driver see my phone number?',
+        ],
+        pasos: [
+          'Keep your account’s phone nearby: alerts come through the app and by SMS.',
+          'If you chose hand delivery, come out when you see “Come out to meet your driver.”',
+          'To talk, tap “Call the driver (masked number)” and answer the call.',
+        ],
+      },
       {
         id: 'choose-options',
         titulo: 'Choose size and extras when ordering',
@@ -2416,6 +2502,34 @@ const en: SeccionDocs[] = [
           'Check the offer: if it says “Includes a bonus,” you earn 1 dollar more.',
           'Accept before the others: the first one takes it.',
           'Deliver as usual; the bonus comes with your pay.',
+        ],
+      },
+      {
+        id: 'call-customer-masked',
+        titulo: 'Call the customer without seeing their number (or showing yours)',
+        resumen:
+          'On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Tumbite’s number.',
+        explicacion: [
+          'If you can’t find the address or the customer isn’t answering the chat, tap “Call the customer (masked number).” Tumbite calls your phone and, when you answer, dials the customer. They see Tumbite’s number, not yours, and you don’t see theirs.',
+          'For that, your account needs your mobile number (it’s under “My details”). If the customer has no mobile number on file, the app tells you and leaves you the chat.',
+          'The customer can call you the same way. Every call is noted on the order in case of a claim.',
+          'The customer also gets their alerts automatically: “arriving in 5 minutes,” “come out to meet your driver” (hand delivery) and “at your door,” by SMS as well.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llamar-en.webp',
+            alt: 'Driver app on the way with the “Call the customer (masked number)” button and the notice “We’re calling you now. Answer and we’ll connect you with the customer.”',
+            pie: 'Tumbite calls you and connects you: nobody sees the other’s number.',
+          },
+        ],
+        preguntas: [
+          'How do I call the customer if I can’t find them?',
+          'Does the customer see my phone number?',
+        ],
+        pasos: [
+          'On the way, tap “Call the customer (masked number).”',
+          'Answer Tumbite’s call: it connects you with the customer.',
+          'If they have no mobile number, message them through the order chat.',
         ],
       },
       {
