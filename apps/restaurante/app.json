@@ -63,6 +63,9 @@
     ],
     "privacy": "public",
     "description": "Receive and manage your Tumbite orders.",
-    "owner": "windoce-llc"
+    "owner": "windoce-llc",
+    "experiments": {
+      "baseUrl": "/restaurant"
+    }
   }
 }

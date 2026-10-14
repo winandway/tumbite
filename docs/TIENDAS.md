@@ -160,15 +160,19 @@ Cuentas de prueba para el revisor: una de cliente, una de repartidor y una de re
 
 ## Capturas de pantalla de la tienda
 
-Tamaños: iPhone 6.9" (1320 × 2868) obligatoria; iPad 13" (2064 × 2752) solo para Tumbite Restaurants; Google, celular (mínimo 1080 de ancho) y, para el restaurante, tablet de 10". Se sacan del simulador con la app compilada para la tienda, en inglés y en español, con datos neutros (como «Pizzería Napoli»).
+Se sacan solas con `npm run recorrido:tiendas`: corre el recorrido completo (Apple y Google, inglés y español) con las apps armadas como en producción y la base de prueba local, y guarda cada foto al tamaño exacto. Quedan en la carpeta `capturas-tiendas/` del proyecto (fuera de git por peso):
 
-| App         | Capturas (en este orden)                                                                                                                 |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Cliente     | Inicio con restaurantes cercanos · Menú de un restaurante · Carrito con el desglose · Pago dentro de la app · Pedido en vivo con el mapa |
-| Repartidor  | Conectado recibiendo pedidos · Oferta con el pago antes de aceptar · Billetera · Verificación de identidad                               |
-| Restaurante | Pedidos con el semáforo y la alarma · Tablero del día · Menú con «agotado» · Regalos                                                     |
+`capturas-tiendas/<app>/<Apple App Store | Google Play>/<English | Español>/<Celular | Tableta>/NN-que-pantalla-es.png`
 
-Las de Docs (`apps/panel/public/docs/`) sirven de referencia del encuadre.
+Tamaños: Apple, iPhone 6,9" 1320 × 2868 y iPad 13" acostado 2752 × 2064 (solo Tumbite Restaurants, que funciona en tableta); Google, celular 1080 × 1920 y tableta 1920 × 1080 (9:16 y 16:9; Google no acepta un lado más del doble del otro).
+
+| App         | Capturas (en este orden)                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Cliente     | Inicio con restaurantes cercanos · Menú · Carrito con el precio completo · Pago recibido · Pedido en vivo en el mapa · Calificar |
+| Repartidor  | Conectado buscando pedidos · Oferta con el pago antes de aceptar · Entrega en camino · Billetera · Retiro al banco               |
+| Restaurante | Pedido nuevo con los tiempos para aceptar · En preparación · Listo para el repartidor · Entrar                                   |
+
+La app del restaurante es el tablero de pedidos; el menú, los regalos, el semáforo y los beneficios están en el panel web, por eso no salen en sus capturas. En el modo de tiendas el inicio muestra además tres restaurantes de prueba (Sakura Sushi Bar, Taquería El Sol, Green Bowl Kitchen) que solo existen en la base local. Son las mismas apps en su versión web (la que también está en tumbite.com/app y /driver); cuando el simulador de iPhone funcione en esta Mac se pueden repetir desde ahí con la barra de estado del teléfono.
 
 ## Lo que Apple y Google revisan con lupa (ya resuelto)
 

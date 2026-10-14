@@ -18,6 +18,7 @@
     "build": "npm run build -w @tumbite/panel && npm run build -w @tumbite/servidor",
     "build:app-web": "cd apps/cliente && EXPO_PUBLIC_API_URL=${URL_API:-https://tumbite.com} EXPO_NO_TELEMETRY=1 CI=1 npx expo export --platform web --output-dir dist-web && node scripts/claro.mjs",
     "build:repartidor-web": "cd apps/repartidor && EXPO_PUBLIC_API_URL=${URL_API:-https://tumbite.com} EXPO_NO_TELEMETRY=1 CI=1 npx expo export --platform web --output-dir dist-web && node ../cliente/scripts/claro.mjs dist-web",
+    "build:restaurante-web": "cd apps/restaurante && EXPO_PUBLIC_API_URL=${URL_API:-https://tumbite.com} EXPO_NO_TELEMETRY=1 CI=1 npx expo export --platform web --output-dir dist-web && node ../cliente/scripts/claro.mjs dist-web",
     "audit": "npm audit --audit-level=high --omit=dev -w @tumbite/servidor -w @tumbite/panel -w @tumbite/compartido",
     "secrets": "gitleaks git --no-banner --redact .",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run audit",
@@ -25,6 +26,7 @@
     "audit:apps": "npm audit --omit=dev -w @tumbite/cliente -w @tumbite/repartidor -w @tumbite/restaurante || true",
     "recorrido": "node scripts/recorrido/preparar.mjs && playwright test -c playwright.recorrido.config.ts",
     "recorrido:capturas": "node scripts/recorrido/preparar.mjs && CAPTURAS=1 playwright test -c playwright.recorrido.config.ts && node scripts/recorrido/a-docs.mjs",
+    "recorrido:tiendas": "node scripts/recorrido/tiendas.mjs",
     "recorrido:docs": "node scripts/recorrido/a-docs.mjs"
   },
   "devDependencies": {

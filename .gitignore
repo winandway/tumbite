@@ -29,3 +29,5 @@ android/
 
 # Recorrido completo en el navegador (sitio armado en local, se rehace en cada corrida)
 /.recorrido/
+# Capturas para la App Store y Google Play (npm run recorrido:tiendas): pesan mucho para git.
+capturas-tiendas/

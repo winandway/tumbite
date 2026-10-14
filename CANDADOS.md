@@ -429,3 +429,10 @@ Cuatro ciudades con código (MIA, NOV, ORL, TPA; Orlando y Tampa creadas inactiv
 - **De dónde salen los números:** `packages/compartido/src/calculadora.ts` usa la misma `calcularPedido` de la app y `COMPETENCIA` de `competencia.ts`; los supuestos del mercado con su fuente están en `SUPUESTOS_MERCADO` y en `docs/MODELO-DE-DINERO.md`. Si cambian los precios en la app, la calculadora cambia sola.
 - **Candados:** `calculadora.test.ts` (las cuentas: con 10.000 de ventas quedan 9.250 / 8.500 / 8.000; ciudad de ejemplo de 10.000 habitantes) y `apps/panel/src/sitio/Calculadora.test.tsx` (la página abre en las dos lenguas, tiene cuatro pestañas y cambia de pestaña; comprobado en rojo quitando la ruta). `Pie.test.tsx` exige que el enlace del pie lleve a una página que existe.
 - **Qué NO tocar:** el aviso de que son proyecciones y no promesas, la línea de que la parte del franquiciado se acuerda por contrato, y las fuentes al pie de la página.
+
+## C-CAPTURAS-TIENDAS: las capturas de la App Store y Google Play salen solas (14 oct 2026)
+
+- **Qué es:** `npm run recorrido:tiendas` corre el recorrido completo dos veces (Apple y Google, inglés y español) con `TIENDA=apple|google` y guarda cada foto al tamaño exacto de la tienda en `capturas-tiendas/<app>/<tienda>/<idioma>/<Celular|Tableta>/NN-que-pantalla-es.png` (fuera de git; nota para Richard en `capturas-tiendas/LEEME.txt`).
+- **Cómo funciona:** los tamaños están en `PANTALLAS` y el nombre de cada foto en `PARA_TIENDA` (`e2e/recorrido/recorrido.spec.ts`). En ese modo el inicio suma tres restaurantes de prueba locales, la app del restaurante se arma para web en «/restaurant» (`build:restaurante-web`, solo en la base local) y no se tocan las capturas de Docs.
+- **Comprobado:** 76 capturas, las dos corridas en verde; Apple 1320 × 2868 y 2752 × 2064, Google 1080 × 1920 y 1920 × 1080. El recorrido normal sigue pasando.
+- **Qué NO tocar:** el lado de Google no puede pasar del doble del otro (por eso 1080 × 1920 y no 1080 × 2400); el iPad va acostado.

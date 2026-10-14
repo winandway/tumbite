@@ -22,7 +22,50 @@ const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'u
   secretoAviso: string;
   clave: string;
 };
-const CAPTURAS = process.env.CAPTURAS === '1';
+/**
+ * Con TIENDA=apple o TIENDA=google, las fotos salen al tamaño exacto de cada tienda y van a
+ * capturas-tiendas/<app>/<tienda>/<idioma>/ con un nombre que dice qué pantalla es. Ahí no se
+ * guardan las de Docs (son de otro tamaño).
+ */
+const TIENDA = (process.env.TIENDA ?? '') as '' | 'apple' | 'google';
+const CAPTURAS = process.env.CAPTURAS === '1' || TIENDA !== '';
+// Apple: iPhone de 6,9" (1320 × 2868) y iPad de 13" acostado (2752 × 2064).
+// Google: celular y tableta en 9:16 y 16:9 (1080 × 1920 y 1920 × 1080).
+const PANTALLAS = {
+  apple: {
+    celular: { viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, ua: 'iPhone' },
+    tableta: { viewport: { width: 1376, height: 1032 }, deviceScaleFactor: 2, ua: 'iPad' },
+  },
+  google: {
+    celular: { viewport: { width: 360, height: 640 }, deviceScaleFactor: 3, ua: 'Android' },
+    tableta: { viewport: { width: 960, height: 540 }, deviceScaleFactor: 2, ua: 'Android' },
+  },
+} as const;
+const AGENTE = {
+  iPhone:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  iPad: 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  Android:
+    'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
+} as const;
+/** Qué foto del recorrido va a qué app de la tienda, en qué orden y con qué nombre. */
+const PARA_TIENDA = new Map<string, [string, string]>([
+  ['cliente-inicio', ['Tumbite (cliente)', '01-inicio-restaurantes-cercanos']],
+  ['cliente-menu', ['Tumbite (cliente)', '02-menu-del-restaurante']],
+  ['cliente-carrito', ['Tumbite (cliente)', '03-carrito-con-el-precio-completo']],
+  ['cliente-pagado', ['Tumbite (cliente)', '04-pago-recibido']],
+  ['cliente-en-camino', ['Tumbite (cliente)', '05-pedido-en-vivo-en-el-mapa']],
+  ['cliente-calificar', ['Tumbite (cliente)', '06-calificar-comida-y-repartidor']],
+  ['repartidor-conectado', ['Tumbite Driver (repartidor)', '01-conectado-buscando-pedidos']],
+  ['repartidor-oferta', ['Tumbite Driver (repartidor)', '02-oferta-con-el-pago-antes-de-aceptar']],
+  ['repartidor-en-camino', ['Tumbite Driver (repartidor)', '03-entrega-en-camino']],
+  ['repartidor-billetera', ['Tumbite Driver (repartidor)', '04-billetera']],
+  ['repartidor-retiro', ['Tumbite Driver (repartidor)', '05-retiro-al-banco']],
+  ['restapp-nuevo', ['Tumbite Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
+  ['restapp-preparando', ['Tumbite Restaurants (restaurante)', '02-pedido-en-preparacion']],
+  ['restapp-listo', ['Tumbite Restaurants (restaurante)', '03-pedido-listo-para-el-repartidor']],
+  ['restapp-entrar', ['Tumbite Restaurants (restaurante)', '04-entrar']],
+]);
 const MIAMI = { latitude: 25.7743, longitude: -80.1937 };
 const CASA = { latitude: 25.7725, longitude: -80.187 };
 
@@ -34,9 +77,20 @@ for (const idioma of ['en', 'es'] as const) {
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
     const restaurante = idioma === 'en' ? 'Bella Pizza' : 'Pizza Bella';
 
-    const nuevoContexto = async (tipo: 'computadora' | 'celular', donde = MIAMI) => {
+    const nuevoContexto = async (tipo: 'computadora' | 'celular' | 'tableta', donde = MIAMI) => {
+      const t = TIENDA && tipo !== 'computadora' ? PANTALLAS[TIENDA][tipo] : null;
       const ctx: BrowserContext = await browser.newContext({
-        ...(tipo === 'celular' ? devices['Pixel 7'] : { viewport: { width: 1100, height: 900 } }),
+        ...(t
+          ? {
+              viewport: t.viewport,
+              deviceScaleFactor: t.deviceScaleFactor,
+              isMobile: true,
+              hasTouch: true,
+              userAgent: AGENTE[t.ua],
+            }
+          : tipo === 'celular'
+            ? devices['Pixel 7']
+            : { viewport: { width: 1100, height: 900 } }),
         baseURL: DATOS.url,
         geolocation: donde,
         permissions: ['geolocation'],
@@ -65,9 +119,25 @@ for (const idioma of ['en', 'es'] as const) {
           .querySelectorAll<HTMLElement>('[class*=burbuja]')
           .forEach((e) => (e.style.visibility = 'hidden')),
       );
-      const dir = join(RAIZ, 'docs', 'capturas', 'recorrido');
-      mkdirSync(dir, { recursive: true });
-      await pagina.screenshot({ path: join(dir, `${nombre}-${idioma}.png`) });
+      if (TIENDA) {
+        const destino = PARA_TIENDA.get(nombre);
+        if (destino) {
+          const dir = join(
+            RAIZ,
+            'capturas-tiendas',
+            destino[0],
+            TIENDA === 'apple' ? 'Apple App Store' : 'Google Play',
+            idioma === 'en' ? 'English' : 'Español',
+            pagina.viewportSize()!.width > pagina.viewportSize()!.height ? 'Tableta' : 'Celular',
+          );
+          mkdirSync(dir, { recursive: true });
+          await pagina.screenshot({ path: join(dir, `${destino[1]}.png`) });
+        }
+      } else {
+        const dir = join(RAIZ, 'docs', 'capturas', 'recorrido');
+        mkdirSync(dir, { recursive: true });
+        await pagina.screenshot({ path: join(dir, `${nombre}-${idioma}.png`) });
+      }
       await pagina.evaluate(() =>
         document
           .querySelectorAll<HTMLElement>('[class*=burbuja]')
@@ -198,6 +268,101 @@ for (const idioma of ['en', 'es'] as const) {
       ).status(),
     ).toBe(200);
 
+    // Para las tiendas, el inicio muestra más de un restaurante cerca (cuentas de prueba locales).
+    if (TIENDA) {
+      const otros = [
+        [
+          'Sakura Sushi Bar',
+          'Sushi',
+          'Sushi y rolls hechos al momento.',
+          'Fresh sushi and rolls made to order.',
+          [
+            ['Roll de salmón', 'Salmon roll', 1200],
+            ['Edamame', 'Edamame', 550],
+          ],
+          25.7762,
+          -80.1917,
+        ],
+        [
+          'Taquería El Sol',
+          'Mexican',
+          'Tacos al pastor y salsas de la casa.',
+          'Al pastor tacos and house-made salsas.',
+          [
+            ['Tacos al pastor', 'Al pastor tacos', 1100],
+            ['Guacamole', 'Guacamole', 750],
+          ],
+          25.7716,
+          -80.1951,
+        ],
+        [
+          'Green Bowl Kitchen',
+          'Healthy',
+          'Bowls y ensaladas frescas.',
+          'Fresh bowls and salads.',
+          [
+            ['Bowl de pollo', 'Chicken bowl', 1350],
+            ['Jugo verde', 'Green juice', 600],
+          ],
+          25.7781,
+          -80.1889,
+        ],
+      ] as const;
+      const yaEstan = new Set(lista.restaurantes.map((r) => r.nombre));
+      for (const [nombre, cat, descEs, descEn, platos, lat, lng] of otros) {
+        if (yaEstan.has(nombre)) continue;
+        const reg = await request.post('/datos/cuentas/registro', {
+          data: {
+            nombre: 'Dueño de prueba',
+            correo: `${nombre.toLowerCase().replace(/[^a-z]+/g, '')}.${id}@recorrido.test`,
+            clave: DATOS.clave,
+            rol: 'restaurante',
+          },
+        });
+        const h = { authorization: `Bearer ${((await reg.json()) as { token: string }).token}` };
+        await request.put('/datos/mi-restaurante', {
+          headers: h,
+          data: {
+            nombre,
+            categoria: cat,
+            descripcionEs: descEs,
+            descripcionEn: descEn,
+            direccion: 'Miami, FL',
+            telefono: '3055550199',
+            lat,
+            lng,
+          },
+        });
+        for (const [es, en, precio] of platos)
+          await request.post('/datos/mi-restaurante/platos', {
+            headers: h,
+            data: {
+              nombreEs: es,
+              nombreEn: en,
+              categoria: 'Menú',
+              categoriaEn: 'Menu',
+              precioCentavos: precio,
+            },
+          });
+        const todos = (await (
+          await request.get('/datos/admin/restaurantes', { headers: auth })
+        ).json()) as { restaurantes: { id: string; nombre: string }[] };
+        const nuevo = todos.restaurantes.find((r) => r.nombre === nombre)!;
+        await request.patch(`/datos/admin/restaurantes/${nuevo.id}`, {
+          headers: auth,
+          data: { estado: 'aprobado' },
+        });
+        expect(
+          (
+            await request.patch('/datos/mi-restaurante/abierto', {
+              headers: h,
+              data: { abierto: true },
+            })
+          ).status(),
+        ).toBe(200);
+      }
+    }
+
     await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
     await panel.getByRole('button', { name: L.abrir }).click();
     await foto(panel, 'restaurante-abierto');
@@ -252,6 +417,9 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
     await cli.getByRole('button', { name: L.crearCuenta }).click();
+    await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
+    await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
+    await foto(cli, 'cliente-inicio');
     await cli.getByText(restaurante).click();
     await expect(
       cli.getByText(idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita'),
@@ -346,10 +514,42 @@ for (const idioma of ['en', 'es'] as const) {
       timeout: 20_000,
     });
     await foto(panel, 'restaurante-pedido-nuevo');
+    // Para las tiendas: la app del restaurante en celular y en tableta, con el mismo pedido.
+    const restApps: Page[] = [];
+    if (TIENDA) {
+      for (const tipo of ['celular', 'tableta'] as const) {
+        const ctx = await nuevoContexto(tipo);
+        const p = await ctx.newPage();
+        await p.goto('/restaurant/');
+        await expect(p.getByLabel(L.correo)).toBeVisible({ timeout: 20_000 });
+        await foto(p, 'restapp-entrar');
+        await p.getByLabel(L.correo).fill(correo('restaurante'));
+        await p.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await p.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
+        await expect(
+          p.getByText(`#${cobro.pedidoId.slice(0, 4).toUpperCase()}`).first(),
+        ).toBeVisible({ timeout: 20_000 });
+        await foto(p, 'restapp-nuevo');
+        restApps.push(p);
+      }
+    }
+    const fotoRestApps = async (nombre: string) => {
+      for (const p of restApps) {
+        await p.reload();
+        await expect(
+          p.getByText(`#${cobro.pedidoId.slice(0, 4).toUpperCase()}`).first(),
+        ).toBeVisible({ timeout: 20_000 });
+        await p.waitForTimeout(800);
+        await foto(p, nombre);
+      }
+    };
     await panel.getByRole('button', { name: `${L.aceptar} · 20` }).click();
     await expect(panel.getByRole('button', { name: L.listo })).toBeVisible();
     await foto(panel, 'restaurante-pedido-aceptado');
+    await fotoRestApps('restapp-preparando');
     await panel.getByRole('button', { name: L.listo }).click();
+    await fotoRestApps('restapp-listo');
+    await Promise.all(restApps.map((p) => p.context().close()));
 
     // 7. El repartidor recibe la oferta, la acepta, recoge y entrega.
     await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
@@ -510,6 +710,8 @@ for (const idioma of ['en', 'es'] as const) {
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
 
+    // Para las tiendas: el restaurante de este idioma se cierra, así no sale en las fotos del otro.
+    if (TIENDA) sql(`UPDATE restaurantes SET abierto = 0 WHERE nombre = '${restaurante}'`);
     await Promise.all([panelCtx.close(), repCtx.close(), cliCtx.close()]);
   });
 }
