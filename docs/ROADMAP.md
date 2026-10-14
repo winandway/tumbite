@@ -85,6 +85,19 @@
 4. 🤖 **Ubicación del repartidor en segundo plano** (requiere build propio y un video para Apple).
 5. 🤖 **Marcar la dirección en un mapa** dentro de la app del cliente.
 
+## Etapa 2½ — El ciclo del pedido como lo hacen los grandes (dictado por Richard, 14 oct 2026)
+
+Sale de `docs/COMPARACION-CICLO-PEDIDO.md` (DoorDash y Uber Eats frente a nosotros, con fuentes oficiales). Richard: «no quiero ir a probar nada todavía si no lo tenemos claro». **Nada de esto se salta: sin los puntos 1 a 5 no hay prueba en la calle ni envío a las tiendas.** Es la próxima actualización.
+
+1. 🤖 **Despacho con reloj.** Ofrecer el pedido cuando falten «viaje del repartidor + 3 minutos» para la hora de listo (la regla de los 7 minutos de Uber), no al aceptar. Si el restaurante toca «Listo» antes, ofrecer ya. El repartidor ve «listo en X min».
+2. 🤖 **El restaurante ve venir al repartidor.** Estados «va al restaurante» y «llegó» (por GPS), aviso con sonido a 5 minutos, indicador «esperando» con cronómetro que empieza cuando pasó el tiempo de preparación (espera evitable, como DoorDash). Aquí entra lo propuesto el 14 oct: **si el repartidor ya mandó la foto y el restaurante no confirma en 2 minutos, el pedido se pone en amarillo y suena la alarma en la tableta.**
+3. 🤖 **Hablar entre repartidor y cliente** con número enmascarado (llamar y escribir), y protocolo de «cliente no aparece» (llamar, esperar, dejar en lugar seguro con nota).
+4. 🤖 **«Dejar en la puerta» o «en mano»** al pedir; botón «Entregado en mano» que no exige la foto de la bolsa en el piso.
+5. 🤖 **Avisos al cliente**: repartidor asignado, «casi llega» (1 minuto por GPS), «llegó»; hora «a más tardar» fijada al aceptar.
+6. 🤖 **Repartidor que se baja o desaparece**: soltar con motivo, reasignación sola, y el Manager vigila pedidos asignados sin movimiento.
+7. 🤖 Cambiar un pedido por ingrediente agotado sin cancelarlo todo; ajustar el tiempo de preparación después de aceptar y «cocina ocupada».
+8. Después del lanzamiento: varios pedidos por repartidor; firma, PIN y mayoría de edad (cuando haya alcohol).
+
 ## Etapa 3 — Tiendas y lanzamiento cerrado en Miami
 
 - 👤 Cuentas de Apple y Google a nombre de Windoce LLC; abrir Xcode una vez.

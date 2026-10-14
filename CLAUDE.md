@@ -12,6 +12,7 @@ Las reglas globales de Richard aplican; estas se suman.
 - `CANDADOS.md` — lo que funciona y no se toca.
 - `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
+- `docs/COMPARACION-CICLO-PEDIDO.md` — cómo funciona de verdad un pedido en DoorDash y Uber Eats frente al nuestro, con las brechas por orden. Se lee antes de tocar el ciclo del pedido.
 
 ## Colores corporativos (dictado por Richard, 10 oct 2026) — SOLO estos
 
