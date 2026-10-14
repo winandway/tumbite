@@ -532,7 +532,10 @@ for (const idioma of ['en', 'es'] as const) {
         if (p === plato.pizza) {
           const grande = cli.getByRole('radio', { name: L.grande });
           await expect(grande).toBeVisible({ timeout: 10_000 });
-          if (fotoCarrito) await foto(cli, 'cliente-opciones');
+          if (fotoCarrito) {
+            await cli.waitForTimeout(900); // la ventana termina de subir
+            await foto(cli, 'cliente-opciones');
+          }
           await grande.click();
           await cli.getByRole('button', { name: L.agregarAlCarrito }).click();
         }
