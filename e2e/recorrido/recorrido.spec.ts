@@ -584,7 +584,11 @@ for (const idioma of ['en', 'es'] as const) {
         // Recogida en el local: sin dirección ni envío.
         await cli.getByRole('radio', { name: L.recojo }).click();
         await expect(cli.getByLabel(L.direccionEntrega)).toHaveCount(0);
-      } else await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+      } else {
+        // El borrador del carrito recuerda la última elección: se vuelve a «En la puerta».
+        await cli.getByRole('radio', { name: L.enPuerta }).click();
+        await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+      }
       if (fotoCarrito) {
         await mapaListo(cli);
         // Para Docs: cómo se ve «En mano» con el interruptor del PIN; luego vuelve a «En la puerta».

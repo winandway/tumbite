@@ -81,6 +81,37 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'home-screen',
+        titulo: 'La pantalla de inicio: qué hay y qué hace cada cosa',
+        resumen:
+          'Arriba, tu saludo, los avisos y los cupones. Luego el buscador, los ocho servicios (hoy funciona Comida), las ofertas, los restaurantes cerca de ti y la barra de abajo.',
+        explicacion: [
+          'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos y el cupón de regalos. El selector de idioma (español o inglés) está ahí mismo.',
+          'Buscador: escribe el nombre de un restaurante o un tipo de comida y la lista se filtra al instante. El botón de filtros muestra solo los que están abiertos ahora.',
+          'Servicios: hoy funciona «Comida». Mercado, envíos, farmacia, moto, licores, promos y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
+          'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
+          'Ofertas del día: mientras los restaurantes cargan sus promociones, ves ejemplos marcados «Ejemplo» (no se pueden comprar).',
+          'Restaurantes cerca de ti: tarjetas con la foto, el tiempo estimado, el costo de envío y si está abierto. Toca una para ver el menú.',
+          'Barra de abajo: Inicio, Pedidos (tu historial), Favoritos (muy pronto) y Mi cuenta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-inicio-es.webp',
+            alt: 'Pantalla de inicio de la app del cliente: logotipo, saludo, buscador, cuadrícula de ocho servicios, ofertas del día y restaurantes cerca de ti, con la barra de navegación abajo.',
+            pie: 'Todo lo importante a un toque desde el inicio.',
+          },
+        ],
+        preguntas: [
+          '¿Qué significa cada ícono del inicio?',
+          '¿Por qué un servicio dice «muy pronto»?',
+        ],
+        pasos: [
+          'Busca un restaurante o toca uno de los cercanos.',
+          'Si ves el aviso de pago, toca «Pagar» para terminar tu pedido.',
+          'Usa la barra de abajo para ir a tus pedidos o a tu cuenta.',
+        ],
+      },
+      {
         id: 'pickup-address-change-and-extra-tip',
         titulo: 'Recoger en el local, cambiar la dirección y dejar propina después',
         resumen:
@@ -351,7 +382,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Dónde veo mis pedidos anteriores?', '¿Cómo quito una tarjeta guardada?'],
         pasos: [
-          'En la pantalla de inicio de la app, toca «Mi cuenta».',
+          'En la pantalla de inicio de la app, toca «Mi cuenta» en la barra de abajo.',
           'Baja para ver tus pedidos. Toca cualquiera para abrirlo.',
           'En «Mis tarjetas», abre los tres puntos de una tarjeta y elige «Quitar esta tarjeta» si ya no la usas.',
           'Para borrar tu cuenta por completo, abre el menú de los tres puntos de la app y elige «Borrar mi cuenta».',
@@ -1725,6 +1756,37 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'home-screen',
+        titulo: 'The home screen: what’s there and what each thing does',
+        resumen:
+          'At the top, your greeting, notifications and coupons. Then the search bar, the eight services (Food works today), the deals, restaurants near you and the bottom bar.',
+        explicacion: [
+          'Header: the Tumbite logo, your name, the notifications bell and the gifts coupon. The language selector (Spanish or English) is right there.',
+          'Search: type a restaurant name or a type of food and the list filters instantly. The filter button shows only the ones open right now.',
+          'Services: “Food” works today. Grocery, deliveries, pharmacy, ride, liquor, deals and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
+          'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
+          'Today’s deals: while restaurants load their promotions, you see samples marked “Sample” (they can’t be bought).',
+          'Restaurants near you: cards with the photo, the estimated time, the delivery fee and whether it’s open. Tap one to see the menu.',
+          'Bottom bar: Home, Orders (your history), Favorites (coming soon) and My account.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-inicio-en.webp',
+            alt: 'Customer app home screen: logo, greeting, search bar, grid of eight services, today’s deals and restaurants near you, with the navigation bar at the bottom.',
+            pie: 'Everything that matters, one tap away from home.',
+          },
+        ],
+        preguntas: [
+          'What does each icon on the home screen mean?',
+          'Why does a service say “coming soon”?',
+        ],
+        pasos: [
+          'Search for a restaurant or tap one of the nearby ones.',
+          'If you see the payment notice, tap “Pay” to finish your order.',
+          'Use the bottom bar to go to your orders or your account.',
+        ],
+      },
+      {
         id: 'pickup-address-change-and-extra-tip',
         titulo: 'Pick up in store, change the address, and tip after delivery',
         resumen:
@@ -1993,7 +2055,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['Where can I see my past orders?', 'How do I remove a saved card?'],
         pasos: [
-          'On the app’s home screen, tap “My account.”',
+          'On the app’s home screen, tap “My account” in the bottom bar.',
           'Scroll down to see your orders. Tap any one to open it.',
           'Under “My cards,” open a card’s three-dot menu and choose “Remove this card” if you no longer use it.',
           'To delete your account completely, open the app’s three-dot menu and choose “Delete my account.”',
