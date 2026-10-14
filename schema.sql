@@ -600,3 +600,30 @@ CREATE TABLE IF NOT EXISTS abonos_fallidos (
   motivo TEXT NOT NULL DEFAULT '',
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Antecedentes con proveedor (Checkr): el repartidor recibe una invitación de Checkr, llena sus
+-- datos allá (nunca aquí) y el resultado llega por aviso firmado.
+CREATE TABLE IF NOT EXISTS antecedentes_checkr (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  candidato_id TEXT NOT NULL,
+  invitacion_id TEXT NOT NULL DEFAULT '',
+  invitacion_url TEXT NOT NULL DEFAULT '',
+  reporte_id TEXT NOT NULL DEFAULT '',
+  resultado TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'invitado',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Selfie de control (identidad continua): al conectarse, a algunos repartidores se les pide una
+-- foto de la cara al azar y el equipo la compara con la del registro.
+CREATE TABLE IF NOT EXISTS selfies_control (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  clave TEXT NOT NULL DEFAULT '',
+  pedida_en TEXT NOT NULL DEFAULT (datetime('now')),
+  tomada_en TEXT,
+  revisada_en TEXT,
+  resultado TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS selfies_control_usuario ON selfies_control(usuario_id, pedida_en);
