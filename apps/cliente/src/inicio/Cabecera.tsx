@@ -86,7 +86,7 @@ export function Cabecera({
         </Text>
         <Image
           source={IMG.heroHamburguesa}
-          style={{ width: 150, height: 93, marginRight: -8 }}
+          style={{ width: 176, height: 109, marginRight: -16, marginBottom: -14 }}
           resizeMode="contain"
           accessibilityIgnoresInvertColors
         />

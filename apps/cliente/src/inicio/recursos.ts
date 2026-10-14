@@ -11,6 +11,7 @@ import iconoLupa from '../../assets/inicio/icono-lupa.png';
 import iconoFiltros from '../../assets/inicio/icono-filtros.png';
 import iconoBilletera from '../../assets/inicio/icono-billetera.png';
 import iconoEstrella from '../../assets/inicio/icono-estrella.png';
+import iconoCorazon from '../../assets/inicio/icono-corazon.png';
 import iconoEnvio from '../../assets/inicio/icono-envio.png';
 import navInicio from '../../assets/inicio/nav-inicio.png';
 import navPedidos from '../../assets/inicio/nav-pedidos.png';
@@ -40,6 +41,7 @@ export const IMG = {
   iconoFiltros,
   iconoBilletera,
   iconoEstrella,
+  iconoCorazon,
   iconoEnvio,
   nav: { inicio: navInicio, pedidos: navPedidos, favoritos: navFavoritos, cuenta: navCuenta },
   servicios: {

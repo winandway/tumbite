@@ -48,9 +48,9 @@ const es = {
       antes: 2299,
     },
     restaurantes: [
-      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199 },
-      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249 },
-      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199 },
+      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199, estrellas: '4.8', votos: 320 },
+      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249, estrellas: '4.7', votos: 189 },
+      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199, estrellas: '4.6', votos: 412 },
     ],
   },
 };
@@ -102,9 +102,9 @@ const en: typeof es = {
       antes: 2299,
     },
     restaurantes: [
-      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199 },
-      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249 },
-      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199 },
+      { nombre: 'Burger House', tiempo: '20-30 min', envio: 199, estrellas: '4.8', votos: 320 },
+      { nombre: 'Sushi Place', tiempo: '25-35 min', envio: 249, estrellas: '4.7', votos: 189 },
+      { nombre: 'Pizza Corner', tiempo: '20-30 min', envio: 199, estrellas: '4.6', votos: 412 },
     ],
   },
 };

@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import {
   CONFIG_DINERO_INICIAL,
   type Idioma,
@@ -12,10 +12,7 @@ import { C, urlFoto } from '@tumbite/movil';
 import { IMG, fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
 
-const ANCHO = 196;
-
 const tarjeta = {
-  width: ANCHO,
   backgroundColor: '#fff',
   borderRadius: 18,
   overflow: 'hidden',
@@ -25,6 +22,33 @@ const tarjeta = {
   shadowOffset: { width: 0, height: 2 },
   elevation: 2,
 } as const;
+
+const Corazon = ({ alTocar, etiqueta }: { alTocar: () => void; etiqueta: string }) => (
+  <Pressable
+    onPress={alTocar}
+    accessibilityRole="button"
+    accessibilityLabel={etiqueta}
+    hitSlop={6}
+    style={{
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: '#fff',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
+    <Image
+      source={IMG.iconoCorazon}
+      style={{ width: 16, height: 16 }}
+      resizeMode="contain"
+      accessibilityIgnoresInvertColors
+    />
+  </Pressable>
+);
 
 const Tiempo = ({ texto }: { texto: string }) => (
   <View
@@ -61,6 +85,8 @@ export function Restaurantes({
   cargando: boolean;
 }) {
   const t = textosInicio(idioma);
+  // Tres tarjetas a la vista, como en la pantalla aprobada.
+  const ANCHO = Math.floor((useWindowDimensions().width - 32 - 20) / 3);
   const envioDe = (r: Restaurante) =>
     formatearDolares(calcularEnvio(CONFIG_DINERO_INICIAL, r.distanciaKm ?? null), idioma);
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
@@ -103,10 +129,15 @@ export function Restaurantes({
                     ? { uri: urlFoto(r.imagen) ?? undefined }
                     : fotoDeRelleno(r.categoria, i)
                 }
-                style={{ width: ANCHO, height: 112, backgroundColor: '#f1f1f1' }}
+                style={{
+                  width: ANCHO,
+                  height: Math.round(ANCHO * 0.72),
+                  backgroundColor: '#f1f1f1',
+                }}
                 accessibilityIgnoresInvertColors
               />
               <Tiempo texto={`${r.tiempoPrepMin + 10}-${r.tiempoPrepMin + 20} ${t.min}`} />
+              <Corazon alTocar={alTocarEjemplo} etiqueta={t.nav.favoritos} />
             </View>
             <View style={{ padding: 10 }}>
               <Text
@@ -165,15 +196,16 @@ export function Restaurantes({
                 onPress={alTocarEjemplo}
                 accessibilityRole="button"
                 accessibilityLabel={`${t.ejemplo}: ${r.nombre}`}
-                style={tarjeta}
+                style={[tarjeta, { width: ANCHO }]}
               >
                 <View>
                   <Image
                     source={IMG.relleno.restaurantes.at(i)}
-                    style={{ width: ANCHO, height: 112 }}
+                    style={{ width: ANCHO, height: Math.round(ANCHO * 0.72) }}
                     accessibilityIgnoresInvertColors
                   />
                   <Tiempo texto={r.tiempo} />
+                  <Corazon alTocar={alTocarEjemplo} etiqueta={t.nav.favoritos} />
                   <View
                     style={{
                       position: 'absolute',

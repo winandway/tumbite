@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { ICONO_SERVICIO, IMG } from './recursos';
@@ -20,8 +20,29 @@ const ORDEN: Servicio[] = [
 export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Servicio) => void }) {
   const t = textosInicio(idioma);
   const nombres = new Map(Object.entries(t.servicios) as [Servicio, string][]);
+  // Como en la pantalla aprobada: cuatro losetas por fila, el ícono 3D grande llenando la loseta
+  // y el nombre adentro, todo dentro de un panel claro redondeado.
+  const ancho = useWindowDimensions().width;
+  const loseta = Math.floor((ancho - 32 - 16 - 3 * 8) / 4);
+  const icono = Math.round(loseta * 1.45);
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 10, marginTop: 18 }}>
+    <View
+      style={{
+        marginHorizontal: 16,
+        marginTop: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 8,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        shadowColor: '#191919',
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+      }}
+    >
       {ORDEN.map((s) => {
         const nombre = nombres.get(s) ?? s;
         return (
@@ -31,39 +52,30 @@ export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Se
             accessibilityRole="button"
             accessibilityLabel={nombre}
             style={({ pressed }) => ({
-              width: '25%',
+              width: loseta,
+              height: Math.round(loseta * 1.05),
+              borderRadius: 18,
+              backgroundColor: '#F4F7FB',
               alignItems: 'center',
-              paddingVertical: 8,
+              justifyContent: 'flex-end',
+              overflow: 'hidden',
+              paddingBottom: 8,
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <View
+            <Image
+              source={ICONO_SERVICIO.get(s) ?? IMG.servicios.comida}
+              // El recorte trae aire alrededor: se agranda y la loseta lo recorta.
               style={{
-                width: 64,
-                height: 64,
-                borderRadius: 18,
-                backgroundColor: '#fff',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                shadowColor: '#191919',
-                shadowOpacity: 0.08,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 2,
+                position: 'absolute',
+                top: -Math.round(icono * 0.22),
+                width: icono,
+                height: icono,
               }}
-            >
-              <Image
-                source={ICONO_SERVICIO.get(s) ?? IMG.servicios.comida}
-                // El recorte trae mucho aire alrededor: se agranda y la caja lo recorta.
-                style={{ width: 104, height: 104 }}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
-            </View>
-            <Text style={{ marginTop: 6, fontWeight: '700', fontSize: 13, color: C.secundario }}>
-              {nombre}
-            </Text>
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
+            <Text style={{ fontWeight: '700', fontSize: 14, color: C.secundario }}>{nombre}</Text>
           </Pressable>
         );
       })}
