@@ -459,3 +459,20 @@ CREATE TABLE IF NOT EXISTS ajustes_pedido (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   resuelto_en TEXT
 );
+
+-- El cobro de cada pedido: se AUTORIZA al pedir y se CAPTURA al entregar (por el total vigente).
+-- Cancelar antes de capturar anula la autorización: sin reembolso y sin comisión de Stripe.
+CREATE TABLE IF NOT EXISTS cobros (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  autorizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  capturado_en TEXT,
+  capturado INTEGER,
+  cancelado_en TEXT
+);
+
+-- PIN de 4 dígitos para la entrega en mano, si el cliente lo pidió (lo apaga si recibe otra persona).
+CREATE TABLE IF NOT EXISTS pines_entrega (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  pin TEXT NOT NULL,
+  usado_en TEXT
+);
