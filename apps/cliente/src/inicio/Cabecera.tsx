@@ -29,11 +29,13 @@ export function Cabecera({
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       hitSlop={6}
+      // Máscara redonda: el recorte es cuadrado y trae un pedacito del fondo en las esquinas.
+      style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden' }}
     >
       <Image
         source={imagen}
         style={{ width: 46, height: 46 }}
-        resizeMode="contain"
+        resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
     </Pressable>
