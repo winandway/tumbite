@@ -24,7 +24,8 @@ export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Se
   // y el nombre adentro, todo dentro de un panel claro redondeado.
   const ancho = useWindowDimensions().width;
   const loseta = Math.floor((ancho - 32 - 16 - 3 * 8) / 4);
-  const icono = Math.round(loseta * 1.45);
+  // Los íconos ya vienen recortados al borde: ocupan tres cuartos de la loseta, como en la maqueta.
+  const icono = Math.round(loseta * 0.74);
   return (
     <View
       style={{
@@ -58,20 +59,13 @@ export function Servicios({ idioma, alTocar }: { idioma: Idioma; alTocar: (s: Se
               backgroundColor: '#F4F7FB',
               alignItems: 'center',
               justifyContent: 'flex-end',
-              overflow: 'hidden',
               paddingBottom: 8,
               opacity: pressed ? 0.7 : 1,
             })}
           >
             <Image
               source={ICONO_SERVICIO.get(s) ?? IMG.servicios.comida}
-              // El recorte trae aire alrededor: se agranda y la loseta lo recorta.
-              style={{
-                position: 'absolute',
-                top: -Math.round(icono * 0.22),
-                width: icono,
-                height: icono,
-              }}
+              style={{ width: icono, height: icono, marginBottom: 2 }}
               resizeMode="contain"
               accessibilityIgnoresInvertColors
             />
