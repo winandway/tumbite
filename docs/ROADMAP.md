@@ -98,6 +98,19 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md` (DoorDash y Uber Eats frente a nosotr
 7. ✅ (14 oct) Cambiar un pedido por ingrediente agotado sin cancelarlo todo; ajustar el tiempo de preparación después de aceptar y «cocina ocupada».
 8. Después del lanzamiento: varios pedidos por repartidor; firma, PIN y mayoría de edad (cuando haya alcohol).
 
+## Etapa 2¾ — Lo que faltaba según los estudios de Richard (14 oct 2026)
+
+Sale de `docs/COMPARACION-CICLO-PEDIDO.md`, sección «Los estudios de Richard». En orden; sin los puntos 1 a 5 no se prueba en la calle.
+
+1. 🤖 **Autorizar al pedir y capturar al entregar** (captura manual en Stripe): las cancelaciones dejan de costar la comisión de Stripe. Cambia el circuito de pagos: se prueba completo antes de publicar y se anota en `VERIFICAR-PAGOS.md`.
+2. 🤖 **PIN de 4 dígitos para la entrega en mano**, en la app del cliente.
+3. 🤖 **Horarios reales del restaurante** (por día, cierre automático) y **modificadores de platos**.
+4. 🤖 **GPS serio**: precisión, dos muestras coherentes, excepción «no puedo confirmar mi ubicación» con autorización de soporte.
+5. 🤖 **Checklist de activación** del restaurante y **cola sin red** en la app del repartidor.
+6. 🤖 Oferta abierta con bono tras 3 rechazos; aviso al equipo a los 5 minutos; aviso «llega en 5 min»; cocina ocupada; retención de fotos 30 días; conciliación diaria con canario; Apple Pay y Google Pay.
+7. 👤 Decisiones: SMS de respaldo (costo), antecedentes con proveedor (costo), tiempos del Manager más cortos, 1099 e impuestos con el contador.
+8. Después del piloto: cambio de dirección por el cliente, recogida en el local, propina después de entregar.
+
 ## Etapa 3 — Tiendas y lanzamiento cerrado en Miami
 
 - 👤 Cuentas de Apple y Google a nombre de Windoce LLC; abrir Xcode una vez.

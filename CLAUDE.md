@@ -3,6 +3,12 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## Los estudios de Richard se consultan SIEMPRE (dictado el 14 oct 2026)
+
+- Carpeta `Proyectos Para estudiar y copiar clonar ideas /` (con espacio al final del nombre; se queda en el repo). Tiene estudios profundos, con fuentes, de cómo funcionan DoorDash, Uber Eats, Rappi y el reparto de comida en general. Richard los suma cuando encuentra más.
+- **Se consultan cada vez que se va a construir una parte, cuando se sospecha que algo no está bien, o cuando llega una orden de desarrollar algo:** se busca en los estudios qué dicen de esa parte y se compara con lo que ya tenemos. Lo que no tengamos se anota como brecha; lo que coincide se confirma. Se sigue sacando información de ahí hasta que una comparación salga sin diferencias.
+- La comparación viva está en `docs/COMPARACION-CICLO-PEDIDO.md` (sección «Los estudios de Richard»). Cada hallazgo nuevo se anota ahí con la página del estudio de donde salió.
+
 ## Leer antes de trabajar
 
 - `docs/REQUISITOS.md` — documento madre (modelo de dinero, planes, regalos, niveles, fases).
