@@ -159,8 +159,20 @@ for (const idioma of ['en', 'es'] as const) {
       );
     };
 
-    /** Consulta a la base de prueba (solo la local de .recorrido; nunca otra). */
-    const sql = (comando: string): Record<string, unknown>[] => {
+    /**
+     * Consulta a la base de prueba (solo la local de .recorrido; nunca otra). Si wrangler falla un
+     * instante (la base ocupada por el servidor, pasa en GitHub), se reintenta hasta tres veces.
+     */
+    const sql = (comando: string, intento = 1): Record<string, unknown>[] => {
+      try {
+        return sqlUnaVez(comando);
+      } catch (e) {
+        if (intento >= 3) throw e;
+        execFileSync('sleep', ['1']);
+        return sql(comando, intento + 1);
+      }
+    };
+    const sqlUnaVez = (comando: string): Record<string, unknown>[] => {
       const salida = execFileSync(
         'npx',
         [

@@ -60,3 +60,9 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 - Estado: probado con Stripe simulado (`operacion.test.ts`, «cobrar al entregar y PIN en mano») y con el recorrido completo. **NO probado con una compra real.** Antes de anunciar nada: una compra real de 1 dólar y verla en Stripe como «sin capturar» al pedir, «capturada» al entregar; otra cancelada por el restaurante que quede «cancelada» sin reembolso; y una con dos platos quitando uno, capturada por el total nuevo.
 - Ojo: una autorización vence a los 7 días; los pedidos nuestros se entregan en la hora. Apple Pay/Google Pay con captura manual: validar cuando se activen.
 - El webhook de Stripe en el panel debe incluir el evento `payment_intent.amount_capturable_updated` (además de `payment_intent.succeeded`). Sin ese evento, los pedidos se quedan en «esperando el pago».
+
+## 🔴 Apple Pay y Google Pay (14 oct 2026): construidos, SIN probar en real
+
+- Web: el formulario de Stripe muestra Apple Pay / Google Pay solo cuando el método está encendido en el panel de Stripe y el dominio está registrado (`POST /datos/admin/stripe/dominio`, botón del superadmin). No probado con una compra real.
+- App: la hoja de pago nativa lleva `applePay` y `googlePay`; Apple Pay requiere el identificador de comercio en la cuenta de Apple (pendiente de Richard). No probado.
+- Conciliación diaria y abono fallido: probados solo con Stripe simulado (`operacion.test.ts`, C-DINERO-VIGILADO); el aviso real `payout.failed` llega por el webhook de cuentas conectadas, que hay que tener activo en Stripe (evento `payout.failed` marcado).

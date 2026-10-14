@@ -11,6 +11,7 @@ import {
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
+import { formatearDolares } from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -21,6 +22,7 @@ import { anotar } from '../historial';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
+import { enviarCorreo } from '../correo';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -495,6 +497,8 @@ pedidos.post('/stripe/aviso', async (c) => {
   const evento = JSON.parse(cuerpo) as {
     id: string;
     type: string;
+    /** En los avisos de cuentas conectadas, la cuenta a la que pertenece. */
+    account?: string;
     data: { object: Record<string, unknown> };
   };
   const db = base(c);
@@ -622,6 +626,54 @@ pedidos.post('/stripe/aviso', async (c) => {
       .prepare('UPDATE cuentas_stripe SET pagos_activos = ? WHERE stripe_cuenta = ?')
       .bind(activo, String(obj.id))
       .run();
+  }
+  // Abono fallido (el banco rechazó el depósito): se avisa a quien es el dinero y al equipo.
+  if (evento.type === 'payout.failed') {
+    const cuentaStripe = String(evento.account ?? '');
+    const duenio = await db
+      .prepare(
+        'SELECT s.usuario_id, u.nombre, u.correo, u.idioma FROM cuentas_stripe s JOIN usuarios u ON u.id = s.usuario_id WHERE s.stripe_cuenta = ?',
+      )
+      .bind(cuentaStripe)
+      .first<{ usuario_id: string; nombre: string; correo: string; idioma: string }>();
+    const motivo = String(obj.failure_message ?? obj.failure_code ?? '');
+    await db
+      .prepare(
+        'INSERT INTO abonos_fallidos (id, usuario_id, stripe_cuenta, motivo) VALUES (?, ?, ?, ?)',
+      )
+      .bind(nuevoId(), duenio?.usuario_id ?? null, cuentaStripe, motivo)
+      .run();
+    const monto = formatearDolares(Number(obj.amount ?? 0), duenio?.idioma === 'en' ? 'en' : 'es');
+    if (duenio) {
+      await notificar(
+        c.env,
+        db,
+        duenio.usuario_id,
+        AVISOS.abonoFallido(duenio.idioma, monto),
+      ).catch((e: unknown) => console.error('abono fallido: aviso', e));
+      await enviarCorreo(c.env, {
+        de: 'avisos',
+        para: duenio.correo,
+        asunto:
+          duenio.idioma === 'en'
+            ? `Your ${monto} payout didn’t go through`
+            : `Tu abono de ${monto} no llegó al banco`,
+        texto:
+          duenio.idioma === 'en'
+            ? `The bank rejected your ${monto} payout${motivo ? ` (${motivo})` : ''}. Open “Wallet” in your app and check your bank details; the money is still in your Tumbite balance.`
+            : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Tumbite.`,
+      }).catch((e: unknown) => console.error('abono fallido: correo', e));
+    }
+    for (const para of (c.env.ADMIN_CORREOS ?? '')
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean))
+      await enviarCorreo(c.env, {
+        de: 'avisos',
+        para,
+        asunto: `Abono fallido: ${duenio?.nombre ?? cuentaStripe} (${monto})`,
+        texto: `Stripe no pudo depositar ${monto} a ${duenio?.nombre ?? 'una cuenta sin dueño en la base'} (${cuentaStripe}). Motivo: ${motivo || 'sin detalle'}. Queda en abonos_fallidos.`,
+      }).catch((e: unknown) => console.error('abono fallido: correo equipo', e));
   }
   return c.json({ ok: true });
 });

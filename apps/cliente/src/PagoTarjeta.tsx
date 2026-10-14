@@ -28,6 +28,10 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
           customerSessionClientSecret: cobro.sesionCliente,
           returnURL: 'tumbite-cliente://stripe-redirect',
           allowsDelayedPaymentMethods: false,
+          // Apple Pay y Google Pay dentro de la misma hoja (si el celular los tiene). El de Apple
+          // se activa cuando la app tenga su identificador de comercio (cuenta de Apple de Richard).
+          applePay: { merchantCountryCode: 'US' },
+          googlePay: { merchantCountryCode: 'US', testEnv: __DEV__, currencyCode: 'USD' },
         });
         if (!vivo) return;
         clearTimeout(reloj);

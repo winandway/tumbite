@@ -152,6 +152,16 @@ export const AVISOS = {
           titulo: `Quitamos ${plato}`,
           cuerpo: `Te devolvimos $${(centavos / 100).toFixed(2)}. El resto de tu pedido sigue.`,
         },
+  abonoFallido: (i: string, monto: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `Your ${monto} payout didn’t go through`,
+          cuerpo: 'Check your bank details in “Wallet.” The money is still in your balance.',
+        }
+      : {
+          titulo: `Tu abono de ${monto} no llegó al banco`,
+          cuerpo: 'Revisa los datos de tu cuenta en «Billetera». El dinero sigue en tu saldo.',
+        },
   llega5: (i: string): Aviso =>
     i === 'en'
       ? { titulo: 'Arriving in 5 minutes', cuerpo: 'Your driver is about 5 minutes away.' }

@@ -16,6 +16,12 @@ import { pedir } from './api';
 const T = {
   es: {
     resumen: 'Resumen',
+    dinero: 'Dinero de ayer',
+    cuadra: 'Cuadra',
+    noCuadra: 'NO cuadra: revisar',
+    sinConciliar: 'Todavía sin conciliar',
+    activarWallets: 'Activar Apple Pay y Google Pay en la web',
+    walletsOk: 'Dominio registrado en Stripe. Apple Pay:',
     franquicias: 'Franquicias',
     vendidas: 'Vendidas',
     activas: 'Activas',
@@ -67,6 +73,12 @@ const T = {
   },
   en: {
     resumen: 'Overview',
+    dinero: 'Yesterday’s money',
+    cuadra: 'Adds up',
+    noCuadra: 'Does NOT add up: review',
+    sinConciliar: 'Not reconciled yet',
+    activarWallets: 'Enable Apple Pay and Google Pay on the web',
+    walletsOk: 'Domain registered with Stripe. Apple Pay:',
     franquicias: 'Franchises',
     vendidas: 'Sold',
     activas: 'Active',
@@ -165,11 +177,31 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
   const t = enIdioma(T, idioma);
   const [r, setR] = useState<Resumen | null>(null);
   const [error, setError] = useState('');
+  const [conciliacion, setConciliacion] = useState<{ dia: string; cuadra: boolean } | null>(null);
+  const [wallets, setWallets] = useState('');
   useEffect(() => {
     pedir<Resumen>('GET', '/datos/admin/resumen')
       .then(setR)
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+    pedir<{ conciliaciones: { dia: string; cuadra: boolean }[] }>(
+      'GET',
+      '/datos/admin/conciliacion',
+    )
+      .then((c) => setConciliacion(c.conciliaciones[0] ?? null))
+      .catch(() => setConciliacion(null));
   }, []);
+  async function activarWallets() {
+    try {
+      const w = await pedir<{ applePay: string; googlePay: string }>(
+        'POST',
+        '/datos/admin/stripe/dominio',
+        { dominio: window.location.hostname.replace(/^www\./, '') },
+      );
+      setWallets(`${t.walletsOk} ${w.applePay} · Google Pay: ${w.googlePay}`);
+    } catch (x) {
+      setWallets(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   if (!r) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const tarjeta = (titulo: string, valor: string | number, a?: string) => (
     <li className="super-tarjeta">
@@ -188,6 +220,18 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
         {tarjeta(t.interesados, r.totales.interesados, `${base}/tickets?tipo=franquicia`)}
         {tarjeta(t.tickets, r.totales.ticketsAbiertos, `${base}/tickets`)}
         {tarjeta(t.motos, r.totales.motos)}
+        <li
+          className={`super-tarjeta ${conciliacion && !conciliacion.cuadra ? 'super-tarjeta-alerta' : ''}`}
+        >
+          <span>{t.dinero}</span>
+          <strong>
+            {!conciliacion ? t.sinConciliar : conciliacion.cuadra ? t.cuadra : t.noCuadra}
+          </strong>
+          <button type="button" className="enlace" onClick={() => void activarWallets()}>
+            {t.activarWallets}
+          </button>
+          {wallets ? <span className="suave">{wallets}</span> : null}
+        </li>
       </ul>
       <h2>{t.franquicias}</h2>
       <div className="tabla-ancha">

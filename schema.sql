@@ -576,3 +576,27 @@ CREATE TABLE IF NOT EXISTS avisos_pedido (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (pedido_id, aviso)
 );
+
+-- Conciliación diaria del dinero (como piden los estudios): por día, lo que se vendió, se cobró,
+-- se devolvió y se abonó a restaurantes y repartidores; «cuadra» = 1 si todo coincide.
+CREATE TABLE IF NOT EXISTS conciliaciones (
+  dia TEXT PRIMARY KEY,
+  pedidos INTEGER NOT NULL,
+  vendido INTEGER NOT NULL,
+  capturado INTEGER NOT NULL,
+  devuelto INTEGER NOT NULL,
+  abonado INTEGER NOT NULL,
+  retirado INTEGER NOT NULL,
+  cuadra INTEGER NOT NULL,
+  detalle TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Abonos (payouts) de Stripe que fallaron: se avisa al dueño del dinero y al equipo.
+CREATE TABLE IF NOT EXISTS abonos_fallidos (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT REFERENCES usuarios(id),
+  stripe_cuenta TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

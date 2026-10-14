@@ -3637,3 +3637,7 @@ button {
   margin-top: 8px;
   flex-wrap: wrap;
 }
+
+.super-tarjeta-alerta {
+  border-color: #ff3008;
+}

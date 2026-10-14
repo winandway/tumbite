@@ -2054,3 +2054,123 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
     expect(anotadas).toMatchObject({ n: 2 });
   });
 });
+
+describe('dinero vigilado: conciliación diaria, abono fallido y retención de fotos (C-DINERO-VIGILADO)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const hoy = () => new Date().toISOString().slice(0, 10);
+
+  it('después de una entrega la conciliación del día cuadra; si alguien altera el libro, NO cuadra', async () => {
+    const { conciliar } = await import('../conciliacion');
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Caja Cuadra', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    const r = await conciliar(m.DB, hoy());
+    expect(r.pedidos).toBe(1);
+    expect(r.cuadra).toBe(true);
+    expect(r.detalle.cuadraRepartidores).toBe('sí');
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect(salud.datos.piezas.dinero).toBe('ok');
+    // Alguien le suma 1 dólar de más al restaurante por fuera: el canario se pone en rojo.
+    await m.DB.prepare(
+      "UPDATE movimientos SET monto = monto + 100 WHERE pedido_id = ? AND concepto = 'venta'",
+    )
+      .bind(id)
+      .run();
+    const r2 = await conciliar(m.DB, hoy());
+    expect(r2.cuadra).toBe(false);
+    expect(r2.detalle.cuadraRestaurantes).toBe('NO');
+    expect((await m.llamar('GET', '/datos/salud')).datos.piezas.dinero).toBe('error');
+  });
+
+  it('las fotos de más de 30 días se borran del almacén, salvo con un reclamo abierto', async () => {
+    const { depurarFotos } = await import('../conciliacion');
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Foto Vieja', 25.771, -80.191);
+    const ids: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      const id = await pedidoPagado();
+      await m.llamar(
+        'POST',
+        `/datos/restaurante/pedidos/${id}/aceptar`,
+        { minutos: 5 },
+        dueno.token,
+      );
+      await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+      await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+      await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+      await m.recoger(id, rep.token, dueno.token);
+      await m.entregar(id, rep.token);
+      ids.push(id);
+    }
+    await m.DB.prepare("UPDATE evidencias SET creada_en = datetime('now','-31 days')").run();
+    // El segundo pedido tiene un reclamo abierto: sus fotos se quedan.
+    await m.DB.prepare(
+      "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto, pedido_id) VALUES ('t1', 'T-1', 'queja', 'Ana', 'ana@ejemplo.com', 'Llegó frío', ?)",
+    )
+      .bind(ids[1])
+      .run();
+    const bucket = (m.extra as { BUCKET: R2Bucket }).BUCKET;
+    const clavesAntes = (
+      await m.DB.prepare('SELECT clave FROM evidencias WHERE pedido_id = ? ORDER BY tipo')
+        .bind(ids[0])
+        .all<{ clave: string }>()
+    ).results.map((x) => x.clave);
+    expect(clavesAntes.every((k) => k)).toBe(true);
+    expect(await depurarFotos(m.DB, bucket)).toBe(2);
+    for (const k of clavesAntes) expect(await bucket.get(k)).toBeNull();
+    const borradas = await m.DB.prepare(
+      'SELECT clave, borrada_en FROM evidencias WHERE pedido_id = ?',
+    )
+      .bind(ids[0])
+      .all<{ clave: string; borrada_en: string | null }>();
+    expect(borradas.results.every((x) => x.clave === '' && x.borrada_en)).toBe(true);
+    const guardadas = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM evidencias WHERE pedido_id = ? AND clave != ''",
+    )
+      .bind(ids[1])
+      .first<{ n: number }>();
+    expect(guardadas).toMatchObject({ n: 2 });
+    // La foto borrada ya no se puede ver: se dice, no se cuelga.
+    expect(
+      (await m.llamar('GET', `/datos/pedidos/${ids[0]}/evidencia/entrega`, undefined, rep.token))
+        .estado,
+    ).toBe(404);
+  });
+
+  it('un abono fallido de Stripe queda anotado y se avisa a quien es el dinero', async () => {
+    const { m } = await escenario();
+    const rep = await m.cuenta('repartidor', 'Banco Rechaza');
+    await m.DB.prepare(
+      "INSERT INTO cuentas_stripe (usuario_id, stripe_cuenta, pagos_activos) VALUES (?, 'acct_rechazo', 1)",
+    )
+      .bind(rep.id)
+      .run();
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'payout.failed',
+      account: 'acct_rechazo',
+      data: { object: { id: 'po_1', amount: 2550, failure_message: 'account_closed' } },
+    });
+    const res = await m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cuerpo),
+      },
+      body: cuerpo,
+    });
+    expect(res.status).toBe(200);
+    const fila = await m.DB.prepare(
+      'SELECT usuario_id, motivo FROM abonos_fallidos WHERE stripe_cuenta = ?',
+    )
+      .bind('acct_rechazo')
+      .first();
+    expect(fila).toMatchObject({ usuario_id: rep.id, motivo: 'account_closed' });
+  });
+});

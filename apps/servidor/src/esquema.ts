@@ -19,6 +19,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'codigo', 'TEXT'],
   // Inglés como idioma principal (13 oct 2026): la categoría del plato también va en inglés.
   ['platos', 'categoria_en', "TEXT NOT NULL DEFAULT ''"],
+  // Retención de fotos (14 oct 2026): a los 30 días se borra el archivo y queda cuándo.
+  ['evidencias', 'borrada_en', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

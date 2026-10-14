@@ -70,8 +70,8 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "",
-          "enableGooglePay": false
+          "merchantIdentifier": "merchant.com.tumbite.cliente",
+          "enableGooglePay": true
         }
       ]
     ],

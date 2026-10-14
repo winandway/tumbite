@@ -62,6 +62,25 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'apple-pay-google-pay',
+        titulo: 'Paga con Apple Pay o Google Pay',
+        resumen:
+          'En la pantalla de pago, además de tu tarjeta, aparece Apple Pay (iPhone) o Google Pay (Android y Chrome) si tu celular los tiene configurados. Un toque y listo.',
+        explicacion: [
+          'Al confirmar tu pedido se abre el formulario de pago dentro de la app. Si tu celular tiene Apple Pay o Google Pay, aparece como primera opción; si no, pagas con tu tarjeta como siempre.',
+          'Es el mismo cobro: se autoriza al pedir y se cobra al entregar (si cancelas antes de que el restaurante acepte, no se te cobra nada).',
+          'Tus datos de pago los guarda Apple, Google o Stripe; Tumbite nunca ve el número de tu tarjeta.',
+          'Si no te aparece Apple Pay o Google Pay, revisa que tengas una tarjeta agregada en la billetera de tu celular.',
+        ],
+        capturas: [],
+        preguntas: ['¿Puedo pagar con Apple Pay?', '¿Puedo pagar con Google Pay?'],
+        pasos: [
+          'Arma tu carrito y toca «Pagar».',
+          'Elige Apple Pay o Google Pay (o tu tarjeta).',
+          'Confirma con tu huella, tu cara o tu clave.',
+        ],
+      },
+      {
         id: 'choose-options',
         titulo: 'Elige el tamaño y los extras al pedir',
         resumen:
@@ -422,6 +441,25 @@ const es: SeccionDocs[] = [
           'Al aceptar, toca el botón verde «sugerido» (o elige otro tiempo).',
           'Si estás a tope, toca «Cocina ocupada» → «+10 min» o «+20 min».',
           'Cuando se calme, vuelve a «Normal».',
+        ],
+      },
+      {
+        id: 'payout-failed',
+        titulo: 'Si un abono a tu banco falla',
+        resumen:
+          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Tumbite. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
+        explicacion: [
+          'Cuando retiras tu saldo, el dinero sale hacia tu cuenta bancaria. A veces el banco lo rechaza: cuenta cerrada, número mal escrito, nombre que no coincide.',
+          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Tumbite.',
+          'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
+          'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
+        ],
+        capturas: [],
+        preguntas: ['¿Por qué no me llegó mi retiro?', '¿Qué hago si el banco rechazó mi abono?'],
+        pasos: [
+          'Lee el aviso: dice el motivo del rechazo.',
+          'Entra a «Billetera» y corrige los datos de tu cuenta.',
+          'Vuelve a tocar «Retirar».',
         ],
       },
       {
@@ -1040,6 +1078,25 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'payout-failed',
+        titulo: 'Si un abono a tu banco falla',
+        resumen:
+          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Tumbite. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
+        explicacion: [
+          'Cuando retiras tu saldo, el dinero sale hacia tu cuenta bancaria. A veces el banco lo rechaza: cuenta cerrada, número mal escrito, nombre que no coincide.',
+          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Tumbite.',
+          'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
+          'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
+        ],
+        capturas: [],
+        preguntas: ['¿Por qué no me llegó mi retiro?', '¿Qué hago si el banco rechazó mi abono?'],
+        pasos: [
+          'Lee el aviso: dice el motivo del rechazo.',
+          'Entra a «Billetera» y corrige los datos de tu cuenta.',
+          'Vuelve a tocar «Retirar».',
+        ],
+      },
+      {
         id: 'gps-arrival',
         titulo: 'Cómo sabemos que llegaste a la puerta (y qué hacer si el GPS falla)',
         resumen:
@@ -1560,6 +1617,25 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'apple-pay-google-pay',
+        titulo: 'Pay with Apple Pay or Google Pay',
+        resumen:
+          'On the payment screen, besides your card, Apple Pay (iPhone) or Google Pay (Android and Chrome) shows up if your phone has it set up. One tap and done.',
+        explicacion: [
+          'When you confirm your order, the payment form opens inside the app. If your phone has Apple Pay or Google Pay, it shows as the first option; otherwise you pay with your card as usual.',
+          'It’s the same charge: authorized when you order and charged when it’s delivered (if you cancel before the restaurant accepts, you’re not charged at all).',
+          'Your payment details are held by Apple, Google or Stripe; Tumbite never sees your card number.',
+          'If Apple Pay or Google Pay doesn’t show up, check that you have a card added to your phone’s wallet.',
+        ],
+        capturas: [],
+        preguntas: ['Can I pay with Apple Pay?', 'Can I pay with Google Pay?'],
+        pasos: [
+          'Build your cart and tap “Pay.”',
+          'Choose Apple Pay or Google Pay (or your card).',
+          'Confirm with your fingerprint, your face or your passcode.',
+        ],
+      },
+      {
         id: 'choose-options',
         titulo: 'Choose size and extras when ordering',
         resumen:
@@ -1912,6 +1988,28 @@ const en: SeccionDocs[] = [
           'When accepting, tap the green “suggested” button (or pick another time).',
           'If you’re slammed, tap “Busy kitchen” → “+10 min” or “+20 min.”',
           'When things calm down, switch back to “Normal.”',
+        ],
+      },
+      {
+        id: 'payout-failed',
+        titulo: 'If a payout to your bank fails',
+        resumen:
+          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Tumbite balance. Check your bank details under “Wallet” and withdraw again.',
+        explicacion: [
+          'When you withdraw your balance, the money goes out to your bank account. Sometimes the bank rejects it: closed account, mistyped number, name mismatch.',
+          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Tumbite balance.',
+          'Open “Wallet,” check or fix your bank account details and withdraw again.',
+          'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Why didn’t my withdrawal arrive?',
+          'What do I do if the bank rejected my payout?',
+        ],
+        pasos: [
+          'Read the notice: it says why it was rejected.',
+          'Open “Wallet” and fix your account details.',
+          'Tap “Withdraw” again.',
         ],
       },
       {
@@ -2530,6 +2628,28 @@ const en: SeccionDocs[] = [
           'On the way, tap “Call the customer (masked number).”',
           'Answer Tumbite’s call: it connects you with the customer.',
           'If they have no mobile number, message them through the order chat.',
+        ],
+      },
+      {
+        id: 'payout-failed',
+        titulo: 'If a payout to your bank fails',
+        resumen:
+          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Tumbite balance. Check your bank details under “Wallet” and withdraw again.',
+        explicacion: [
+          'When you withdraw your balance, the money goes out to your bank account. Sometimes the bank rejects it: closed account, mistyped number, name mismatch.',
+          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Tumbite balance.',
+          'Open “Wallet,” check or fix your bank account details and withdraw again.',
+          'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Why didn’t my withdrawal arrive?',
+          'What do I do if the bank rejected my payout?',
+        ],
+        pasos: [
+          'Read the notice: it says why it was rejected.',
+          'Open “Wallet” and fix your account details.',
+          'Tap “Withdraw” again.',
         ],
       },
       {

@@ -33,6 +33,7 @@ import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
 import { enviarCorreo } from '../correo';
+import { conciliarAyer, depurarFotos } from '../conciliacion';
 import {
   abrirPase,
   enviarSms,
@@ -1420,10 +1421,23 @@ operacion.post('/reloj', async (c) => {
       "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
     )
     .first<{ n: number }>();
+  // Dinero vigilado: la conciliación de ayer (una vez al día) y la retención de fotos (30 días).
+  const conciliacion = await conciliarAyer(c.env, db).catch((e: unknown) => {
+    console.error('conciliación', e);
+    return null;
+  });
+  const fotosBorradas = c.env.BUCKET
+    ? await depurarFotos(db, c.env.BUCKET).catch((e: unknown) => {
+        console.error('retención de fotos', e);
+        return 0;
+      })
+    : 0;
   return c.json({
     ok: true,
     manager,
     sinRepartidor: pendientes?.n ?? 0,
+    conciliacion: conciliacion ? { dia: conciliacion.dia, cuadra: conciliacion.cuadra } : null,
+    fotosBorradas,
     cuando: new Date().toISOString(),
   });
 });

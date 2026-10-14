@@ -24,6 +24,7 @@ import { fotos, media } from './rutas/fotos';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
+import { ultimaConciliacion } from './conciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -140,6 +141,10 @@ app.get('/datos/salud', async (c) => {
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
+  if (c.env.DB) {
+    const ult = await ultimaConciliacion(c.env.DB).catch(() => null);
+    piezas.dinero = !ult ? 'pendiente' : Number(ult.cuadra) === 1 ? 'ok' : 'error';
+  }
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {

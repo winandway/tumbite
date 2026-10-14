@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { semaforoPedido } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento } from '../manager';
+import { conciliar } from '../conciliacion';
+import { crearStripe } from '../stripe';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
@@ -786,6 +788,67 @@ superadmin.post('/admin/pedidos/:id/autorizar-ubicacion', async (c) => {
     throw new ErrorDatos('Este pedido no tiene una excepción pendiente.', undefined, 409);
   await anotarEvento(db, id, 'ubicacion_autorizada', u.nombre);
   return c.json({ ok: true });
+});
+
+// ───────────────────────── Superadmin: dinero vigilado ─────────────────────────
+
+/** Las conciliaciones de los últimos días; con ?dia= se vuelve a calcular ese día. */
+superadmin.get('/admin/conciliacion', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const dia = c.req.query('dia');
+  if (dia && /^\d{4}-\d{2}-\d{2}$/.test(dia)) await conciliar(db, dia);
+  const { results } = await db
+    .prepare('SELECT * FROM conciliaciones ORDER BY dia DESC LIMIT 14')
+    .all<Record<string, unknown>>();
+  return c.json({
+    conciliaciones: results.map((r) => ({
+      dia: String(r.dia),
+      pedidos: Number(r.pedidos),
+      vendido: Number(r.vendido),
+      capturado: Number(r.capturado),
+      devuelto: Number(r.devuelto),
+      abonado: Number(r.abonado),
+      retirado: Number(r.retirado),
+      cuadra: Number(r.cuadra) === 1,
+      detalle: JSON.parse(String(r.detalle ?? '{}')) as Record<string, unknown>,
+    })),
+  });
+});
+
+/**
+ * Apple Pay y Google Pay en la web: Stripe exige registrar el dominio una vez. Se hace desde aquí
+ * con la llave del servidor (nunca desde el navegador).
+ */
+superadmin.post('/admin/stripe/dominio', async (c) => {
+  exigir(c, 'admin');
+  const { dominio } = await leerCuerpo(
+    c,
+    z.object({
+      dominio: z
+        .string()
+        .trim()
+        .regex(/^[a-z0-9.-]+\.[a-z]{2,}$/i),
+    }),
+  );
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos(
+      'Los pagos todavía no están activados. Te avisamos muy pronto.',
+      undefined,
+      422,
+    );
+  const r = await stripe.post<{
+    id: string;
+    apple_pay?: { status?: string };
+    google_pay?: { status?: string };
+  }>('/payment_method_domains', { domain_name: dominio });
+  return c.json({
+    ok: true,
+    id: r.id,
+    applePay: r.apple_pay?.status ?? 'desconocido',
+    googlePay: r.google_pay?.status ?? 'desconocido',
+  });
 });
 
 // ───────────────────────── Superadmin: ficha del restaurante ─────────────────────────
