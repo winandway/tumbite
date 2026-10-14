@@ -263,13 +263,15 @@ export default function PantallaCarrito() {
           textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
         />
       ) : null}
-      <Campo
-        etiqueta={t.direccion}
-        value={b.valores.direccion}
-        onChangeText={(x) => b.cambiar('direccion', x)}
-        placeholder={t.direccionAyuda}
-        autoComplete="street-address"
-      />
+      {(b.valores.entrega || 'puerta') !== 'recoger' ? (
+        <Campo
+          etiqueta={t.direccion}
+          value={b.valores.direccion}
+          onChangeText={(x) => b.cambiar('direccion', x)}
+          placeholder={t.direccionAyuda}
+          autoComplete="street-address"
+        />
+      ) : null}
       <Campo
         etiqueta={t.notas}
         value={b.valores.notas}
