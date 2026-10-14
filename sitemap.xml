@@ -14,6 +14,8 @@
   <url><loc>https://tumbite.com/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/order-alerts-and-calls</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/apple-pay-google-pay</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/ordering/home-screen</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/ordering/pickup-address-change-and-extra-tip</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -29,6 +31,7 @@
   <url><loc>https://tumbite.com/docs/restaurants/activation-checklist</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/busy-kitchen-and-suggested-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/payout-failed</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/restaurants/pickup-orders-and-age-restricted-items</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/hours</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/item-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/restaurants/out-of-stock-and-more-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -55,6 +58,7 @@
   <url><loc>https://tumbite.com/docs/trust/call-customer-masked</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/payout-failed</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/background-check-and-identity</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/docs/trust/grouped-orders-and-age-check</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/gps-arrival</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/pickup-and-delivery-photos</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/docs/trust/order-journey</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -134,6 +138,8 @@
   <url><loc>https://tumbite.com/es/docs/ordering</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/order-alerts-and-calls</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/apple-pay-google-pay</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/ordering/home-screen</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/ordering/pickup-address-change-and-extra-tip</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/choose-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/out-of-stock-item</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/ordering/door-or-hand</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -149,6 +155,7 @@
   <url><loc>https://tumbite.com/es/docs/restaurants/activation-checklist</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/busy-kitchen-and-suggested-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/payout-failed</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/restaurants/pickup-orders-and-age-restricted-items</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/hours</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/item-options</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/restaurants/out-of-stock-and-more-time</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
@@ -175,6 +182,7 @@
   <url><loc>https://tumbite.com/es/docs/trust/call-customer-masked</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/payout-failed</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/background-check-and-identity</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://tumbite.com/es/docs/trust/grouped-orders-and-age-check</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/gps-arrival</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/pickup-and-delivery-photos</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>
   <url><loc>https://tumbite.com/es/docs/trust/order-journey</loc><lastmod>2026-10-14</lastmod><priority>0.7</priority></url>

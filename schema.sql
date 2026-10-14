@@ -627,3 +627,26 @@ CREATE TABLE IF NOT EXISTS selfies_control (
   resultado TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS selfies_control_usuario ON selfies_control(usuario_id, pedida_en);
+
+-- Recogida en el local (pickup): sin repartidor; el cliente pasa a buscarlo y el restaurante marca
+-- la entrega. La comisión es menor (5 %).
+CREATE TABLE IF NOT EXISTS recogidas (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Propina agregada después de la entrega (cobro aparte con la tarjeta guardada).
+CREATE TABLE IF NOT EXISTS propinas_extra (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  centavos INTEGER NOT NULL,
+  stripe_pago TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Pedidos agrupados: dos pedidos del mismo restaurante que lleva el mismo repartidor en un viaje.
+CREATE TABLE IF NOT EXISTS grupos_pedido (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  grupo_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS grupos_pedido_grupo ON grupos_pedido(grupo_id);
