@@ -181,9 +181,15 @@ Las de Docs (`apps/panel/public/docs/`) sirven de referencia del encuadre.
 
 ## Pasos (quién hace qué)
 
-1. 👤 Richard: Apple Developer Program y Google Play Console a nombre de Windoce LLC (con su número D-U-N-S).
-2. 👤 Richard: crear la cuenta de Expo (EAS) de la empresa e invitarme, o darme acceso.
-3. 👤 Richard: llave de Google Maps para Android (sin ella el mapa del cliente solo se ve en iPhone).
-4. Yo: `eas init` en cada app (llena el `owner` y el `projectId`), versión 1.0.0, `eas build --profile production` para iOS y Android.
-5. Yo: capturas desde el simulador, fichas con los textos de arriba, cuestionarios con las respuestas de arriba, cuentas de prueba del revisor.
-6. Yo: `eas submit` a TestFlight y a la prueba interna de Google Play; pruebas en teléfonos reales; enviar a revisión.
+Guía para Richard, paso a paso y con croquis de cada formulario: `docs/Guia-publicar-apps-Apple-Google.pdf` (fuente en `docs/pdf/guia-tiendas.html`; se rehace con Playwright en horizontal). Comprobado en las páginas oficiales el 13 oct 2026.
+
+1. 👤 Richard: cuenta de Apple nueva con un correo `@windoce.com` (Apple exige correo del dominio de la empresa y sitio funcionando; windoce.com cumple) e inscripción de Windoce LLC como organización con su D-U-N-S. 99 dólares al año. Apple puede llamar al teléfono de D&B.
+2. 👤 Richard: en App Store Connect, «Request Access» a la API y una llave de equipo con acceso **Admin** (`Tumbite EAS`). Me pasa Team ID, Issuer ID, Key ID y deja el archivo `.p8` en Descargas.
+3. 👤 Richard: comprobar que la cuenta de Google Play es de **organización** a nombre de Windoce LLC (si es personal creada después del 13 nov 2023, Google exige 12 probadores por 14 días: mejor cuenta nueva de organización). Crear las tres apps y la llave de servicio JSON (`tumbite-eas`) con los permisos de la guía.
+4. 👤 Richard: cuenta de Expo y organización `windoce-llc` (plan gratis: 15 fabricaciones de iPhone y 15 de Android al mes) y una llave de acceso para mí.
+5. 👤 Richard: llave de Google Maps para Android (sin ella el mapa del cliente solo se ve en iPhone).
+6. Yo: `eas init` en cada app, versión 1.0.0, credenciales con la llave de Apple (variables `EXPO_ASC_API_KEY_PATH`, `EXPO_ASC_KEY_ID`, `EXPO_ASC_ISSUER_ID`, `EXPO_APPLE_TEAM_ID`, `EXPO_APPLE_TEAM_TYPE=COMPANY_OR_ORGANIZATION`) y la de Google cargada en Expo; `eas build --profile production` para iOS y Android. Las llaves nunca van al repositorio.
+7. 👤 Richard, después de mi primera fabricación de iPhone (que registra los identificadores): crear las tres apps en App Store Connect (Name, English (U.S.), Bundle ID, SKU).
+8. Yo: capturas desde el simulador, fichas, cuestionarios, cuentas de prueba del revisor; `eas submit` a TestFlight y a la prueba interna de Google Play; pruebas en teléfonos reales; enviar a revisión.
+
+Apple no exige «Sign in with Apple»: las apps no tienen entrada con Google ni con otras redes (comprobado el 13 oct 2026).

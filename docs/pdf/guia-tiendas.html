@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tumbite · Guía para publicar las apps en Apple y Google</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --rojo: #ff3008;
+        --rojo-osc: #eb1700;
+        --gris: #191919;
+        --texto: #2b2b2b;
+        --suave: #6b6b6b;
+        --borde: #d9d9d9;
+        --fondo: #f6f5f3;
+        --verde: #0f8a4a;
+        --verde-fondo: #e8f5ee;
+        --ambar: #b26a00;
+        --ambar-fondo: #fff5e5;
+      }
+      body {
+        font-family: 'Montserrat', sans-serif;
+        color: var(--texto);
+        font-size: 9.6pt;
+        line-height: 1.4;
+      }
+      .hoja {
+        width: 297mm;
+        height: 210mm;
+        padding: 10mm 14mm 14mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+        background: #fff;
+      }
+      .hoja:last-child {
+        page-break-after: auto;
+      }
+      h1,
+      h2,
+      h3,
+      .poppins {
+        font-family: 'Poppins', sans-serif;
+        color: var(--gris);
+      }
+      h2 {
+        font-size: 17pt;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        margin-bottom: 1.5mm;
+      }
+      h3 {
+        font-size: 11pt;
+        font-weight: 600;
+        margin: 0 0 1.5mm;
+      }
+      .entrada {
+        color: var(--suave);
+        font-size: 10.5pt;
+        margin-bottom: 3.5mm;
+        max-width: 250mm;
+        font-size: 9.6pt;
+      }
+      .cinta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 7.5pt;
+        color: var(--suave);
+        margin-bottom: 3mm;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .cinta b {
+        color: var(--rojo);
+      }
+      .pie {
+        position: absolute;
+        bottom: 6mm;
+        left: 15mm;
+        right: 15mm;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.5pt;
+        color: #9a9a9a;
+      }
+      .cols {
+        display: grid;
+        gap: 7mm;
+      }
+      .c2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .c3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .c23 {
+        grid-template-columns: 1.05fr 1fr;
+      }
+      .tarjeta {
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 5mm;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .num {
+        display: inline-flex;
+        width: 7mm;
+        height: 7mm;
+        border-radius: 50%;
+        background: var(--gris);
+        color: #fff;
+        font-family: 'Poppins';
+        font-weight: 600;
+        font-size: 9pt;
+        align-items: center;
+        justify-content: center;
+        margin-right: 2mm;
+        flex: none;
+      }
+      .paso {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 2.6mm;
+      }
+      .paso p {
+        margin-top: 0.6mm;
+      }
+      ul.lista {
+        list-style: none;
+      }
+      ul.lista li {
+        padding-left: 5mm;
+        position: relative;
+        margin-bottom: 1.6mm;
+      }
+      ul.lista li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 2.1mm;
+        width: 2mm;
+        height: 2mm;
+        border-radius: 50%;
+        background: var(--rojo);
+      }
+      ul.ok li::before {
+        background: var(--verde);
+      }
+      .nota {
+        border-left: 3px solid var(--ambar);
+        background: var(--ambar-fondo);
+        padding: 2mm 3.2mm;
+        border-radius: 0 6px 6px 0;
+        font-size: 8.8pt;
+        margin-top: 2.5mm;
+      }
+      .bien {
+        border-left: 3px solid var(--verde);
+        background: var(--verde-fondo);
+        padding: 2mm 3.2mm;
+        border-radius: 0 6px 6px 0;
+        font-size: 8.8pt;
+        margin-top: 2.5mm;
+      }
+      .no {
+        font-weight: 700;
+        color: var(--gris);
+      }
+      code,
+      .mono {
+        font-family: 'SF Mono', Menlo, monospace;
+        font-size: 9pt;
+        background: var(--fondo);
+        padding: 0.3mm 1.4mm;
+        border-radius: 3px;
+      }
+      /* Croquis: el formulario dibujado casilla por casilla */
+      .croquis {
+        border: 1px solid #bdbdbd;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+      }
+      .barra {
+        background: #ececec;
+        padding: 1.4mm 3.5mm;
+        display: flex;
+        align-items: center;
+        gap: 1.4mm;
+        font-size: 8pt;
+        color: #555;
+        border-bottom: 1px solid #d5d5d5;
+      }
+      .barra i {
+        width: 2.6mm;
+        height: 2.6mm;
+        border-radius: 50%;
+        background: #cfcfcf;
+        display: inline-block;
+      }
+      .barra span {
+        margin-left: 2mm;
+        font-weight: 600;
+      }
+      .forma {
+        padding: 3mm 4mm 3.2mm;
+      }
+      .forma .titulo {
+        font-family: 'Poppins';
+        font-weight: 600;
+        font-size: 10.5pt;
+        color: #111;
+        margin-bottom: 2mm;
+      }
+      .campo {
+        margin-bottom: 1.7mm;
+      }
+      .campo .et {
+        font-size: 8pt;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 0.8mm;
+        display: flex;
+        align-items: center;
+        gap: 1.5mm;
+      }
+      .campo .et .n {
+        width: 4.4mm;
+        height: 4.4mm;
+        border-radius: 50%;
+        background: var(--rojo);
+        color: #fff;
+        font-size: 7pt;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      .campo .et .n.gris {
+        background: #9e9e9e;
+      }
+      .caja {
+        border: 1px solid #c8c8c8;
+        border-radius: 6px;
+        padding: 1.2mm 2.4mm;
+        font-size: 9pt;
+        color: #222;
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .caja.cambia {
+        border: 2px solid var(--rojo);
+        background: #fff6f3;
+        font-weight: 600;
+      }
+      .caja.tuyo {
+        color: #8a8a8a;
+        font-style: italic;
+        font-weight: 500;
+      }
+      .caja .chev {
+        color: #888;
+        font-size: 8pt;
+      }
+      .opciones {
+        display: flex;
+        gap: 2mm;
+        flex-wrap: wrap;
+      }
+      .op {
+        border: 1px solid #c8c8c8;
+        border-radius: 6px;
+        padding: 1.1mm 2.4mm;
+        font-size: 8.6pt;
+        display: flex;
+        align-items: center;
+        gap: 1.5mm;
+      }
+      .op .r {
+        width: 3.2mm;
+        height: 3.2mm;
+        border-radius: 50%;
+        border: 1.5px solid #888;
+      }
+      .op.si {
+        border: 2px solid var(--rojo);
+        background: #fff6f3;
+        font-weight: 600;
+      }
+      .op.si .r {
+        border: 1.5px solid var(--rojo);
+        background: radial-gradient(var(--rojo) 45%, transparent 50%);
+      }
+      .op .cb {
+        width: 3.2mm;
+        height: 3.2mm;
+        border-radius: 2px;
+        border: 1.5px solid #888;
+      }
+      .op.si .cb {
+        border-color: var(--rojo);
+        background: var(--rojo);
+      }
+      .boton {
+        display: inline-block;
+        background: #0071e3;
+        color: #fff;
+        font-weight: 600;
+        font-size: 9pt;
+        padding: 1.4mm 4.5mm;
+        border-radius: 6px;
+        margin-top: 1mm;
+      }
+      .boton.g {
+        background: #1a73e8;
+      }
+      .boton.x {
+        background: #000;
+      }
+      .boton.r {
+        background: var(--rojo);
+      }
+      table.t {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.3pt;
+      }
+      table.t th {
+        text-align: left;
+        font-family: 'Poppins';
+        font-weight: 600;
+        font-size: 8.5pt;
+        color: #fff;
+        background: var(--gris);
+        padding: 2mm 2.6mm;
+      }
+      table.t th:first-child {
+        border-radius: 6px 0 0 0;
+      }
+      table.t th:last-child {
+        border-radius: 0 6px 0 0;
+      }
+      table.t td {
+        padding: 1.5mm 2.4mm;
+        border-bottom: 1px solid #e6e6e6;
+        vertical-align: top;
+      }
+      table.t tr:nth-child(even) td {
+        background: #fafafa;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 7.5pt;
+        font-weight: 700;
+        padding: 0.6mm 2mm;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .chip.tu {
+        background: var(--rojo);
+        color: #fff;
+      }
+      .chip.yo {
+        background: var(--gris);
+        color: #fff;
+      }
+      .chip.ok {
+        background: var(--verde);
+        color: #fff;
+      }
+      /* Portada */
+      .portada {
+        background: var(--gris);
+        color: #fff;
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 12mm;
+        padding: 18mm 18mm 14mm;
+      }
+      .portada h1 {
+        color: #fff;
+        font-size: 31pt;
+        line-height: 1.12;
+        font-weight: 800;
+        letter-spacing: -0.6px;
+        margin: 6mm 0 5mm;
+      }
+      .portada h1 em {
+        font-style: normal;
+        color: var(--rojo);
+      }
+      .portada .sub {
+        color: #cfcfcf;
+        font-size: 12pt;
+        max-width: 145mm;
+      }
+      .portada .marca {
+        font-family: 'Poppins';
+        font-weight: 700;
+        font-size: 13pt;
+        letter-spacing: 0.5px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+      }
+      .portada .marca img {
+        height: 13mm;
+      }
+      .portada .resumen {
+        background: #fff;
+        color: var(--texto);
+        border-radius: 12px;
+        padding: 7mm;
+        align-self: center;
+      }
+      .portada .resumen h3 {
+        margin-bottom: 3mm;
+      }
+      .portada .fila {
+        display: grid;
+        grid-template-columns: 22mm 1fr;
+        gap: 3mm;
+        padding: 2.6mm 0;
+        border-bottom: 1px solid #eee;
+        font-size: 9.5pt;
+      }
+      .portada .fila:last-child {
+        border-bottom: 0;
+      }
+      .portada .fila b {
+        font-family: 'Poppins';
+        color: var(--gris);
+      }
+      .portada .para {
+        position: absolute;
+        bottom: 12mm;
+        left: 18mm;
+        color: #9a9a9a;
+        font-size: 9pt;
+      }
+      .gran {
+        font-family: 'Poppins';
+        font-weight: 700;
+        font-size: 22pt;
+        color: var(--gris);
+      }
+      .grande-rojo {
+        color: var(--rojo);
+      }
+      .mini {
+        font-size: 8.5pt;
+        color: var(--suave);
+      }
+      .linea-tiempo {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 3mm;
+        margin-top: 2mm;
+      }
+      .linea-tiempo .t2 {
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 3mm;
+        font-size: 9pt;
+      }
+      .linea-tiempo .t2 .d {
+        font-family: 'Poppins';
+        font-weight: 700;
+        color: var(--rojo);
+        font-size: 10pt;
+        margin-bottom: 1mm;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1. PORTADA -->
+    <section class="hoja portada">
+      <div>
+        <div class="marca">
+          <img
+            src="../../apps/panel/public/marca/mascota.webp"
+            onerror="this.style.display = 'none'"
+            alt=""
+          />TUMBITE
+        </div>
+        <h1>Publicar las tres apps en <em>Apple</em> y <em>Google</em>, paso a paso</h1>
+        <p class="sub">
+          Lo que tienes que hacer tú, casilla por casilla, para que Tumbite, Tumbite Driver y
+          Tumbite Restaurants lleguen a la App Store y a Google Play. Todo lo técnico lo hago yo: tú
+          solo abres las cuentas y me pasas tres llaves.
+        </p>
+        <p class="sub" style="margin-top: 5mm; font-size: 10pt; color: #9a9a9a">
+          No necesitas instalar Xcode ni Android Studio, ni programar, ni conectar el iPhone a la
+          Mac. Las apps se fabrican en los servidores de Expo.
+        </p>
+      </div>
+      <div class="resumen">
+        <h3>En una mirada</h3>
+        <div class="fila">
+          <b>Apple</b
+          ><span
+            >Inscribir a Windoce LLC como empresa, pagar 99 dólares al año y crear una llave. Es lo
+            único nuevo para ti y lo que más tarda: <b>empieza por aquí</b>.</span
+          >
+        </div>
+        <div class="fila">
+          <b>Google</b
+          ><span
+            >Ya tienes cuenta. Compruebas que sea <b>de organización</b>, creas las tres apps y una
+            llave de servicio.</span
+          >
+        </div>
+        <div class="fila">
+          <b>Expo</b
+          ><span
+            >Gratis. Creas la organización <span class="mono">windoce-llc</span> y una llave.</span
+          >
+        </div>
+        <div class="fila">
+          <b>Yo</b
+          ><span
+            >Fabrico las apps, hago las capturas, lleno las fichas y los cuestionarios, las subo a
+            prueba y las mando a revisión.</span
+          >
+        </div>
+        <div class="fila">
+          <b>Tiempo</b
+          ><span
+            >Tu parte: unas dos horas repartidas. La espera de Apple para aprobar la empresa:
+            normalmente de unos días a dos semanas.</span
+          >
+        </div>
+      </div>
+      <div class="para">
+        Preparada para Richard · 13 de octubre de 2026 · Datos comprobados ese día en las páginas
+        oficiales de Apple, Google y Expo
+      </div>
+    </section>
+
+    <!-- 2. ANTES DE EMPEZAR -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Antes de empezar</b> · lo que hay que tener a mano</span><span>Página 2</span>
+      </div>
+      <h2>Antes de empezar: seis cosas a mano</h2>
+      <p class="entrada">
+        Apple revisa a mano que la empresa sea real. Si alguna de estas seis cosas falla, la
+        inscripción se demora. Las comprobé las que se pueden comprobar desde aquí.
+      </p>
+      <div class="cols c3">
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">1</span>
+            <div>
+              <h3>Número D-U-N-S de Windoce LLC</h3>
+              <p>
+                Ya lo tienes. Tiene que estar a nombre de <b>Windoce LLC</b> como sociedad (LLC), no
+                como negocio de una persona. El nombre que escribas en Apple debe ser
+                <b>idéntico</b> al que tiene Dun &amp; Bradstreet.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">2</span>
+            <div>
+              <h3>Un correo de la empresa</h3>
+              <p>
+                Apple exige un correo <b>del dominio de la empresa</b>, terminado en
+                <span class="mono">@windoce.com</span>. No sirve uno de Gmail.
+                <span class="chip ok">Comprobado</span> windoce.com ya recibe correo.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">3</span>
+            <div>
+              <h3>Un sitio web que funcione</h3>
+              <p>
+                Apple pide un sitio público y con contenido, del mismo dominio.
+                <span class="chip ok">Comprobado</span> windoce.com abre bien y dice Windoce LLC.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">4</span>
+            <div>
+              <h3>Tu nombre legal</h3>
+              <p>
+                En la cuenta de Apple van tu nombre y apellido <b>legales</b>, tal como salen en tus
+                documentos. Un apodo o el nombre de la empresa en esos campos demora la aprobación.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">5</span>
+            <div>
+              <h3>Tu iPhone a mano</h3>
+              <p>
+                La cuenta de Apple necesita verificación en dos pasos. Llega un código a tu iPhone o
+                por mensaje de texto. Ten también a mano el teléfono que pusiste en Dun &amp;
+                Bradstreet: Apple puede llamar para confirmar.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="paso">
+            <span class="num">6</span>
+            <div>
+              <h3>Una tarjeta para 99 dólares</h3>
+              <p>
+                Es lo que cuesta Apple cada año. Google ya lo pagaste (25 dólares, una sola vez).
+                Expo es gratis para empezar: 15 fabricaciones de iPhone y 15 de Android al mes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bien">
+        <b>Lo que ya está hecho de nuestro lado:</b> las tres apps tienen su identificador fijo, sus
+        íconos, permisos solo de lo que usan, borrar la cuenta desde la app, privacidad, términos y
+        soporte publicados en inglés, y las fichas de la tienda escritas en inglés y español. Las
+        apps no tienen entrada con Google ni con Facebook, así que Apple no va a exigir «entrar con
+        Apple».
+      </div>
+      <div class="pie">
+        <span>Tumbite · Guía para publicar las apps</span
+        ><span>© 2026 tumbite.com | All rights reserved. Developed by Windoce LLC</span>
+      </div>
+    </section>
+
+    <!-- 3. APPLE 1 y 2 -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Apple</b> · pasos 1 y 2 de 5 · lo haces tú</span><span>Página 3</span>
+      </div>
+      <h2>Apple: la cuenta y la inscripción de la empresa</h2>
+      <p class="entrada">
+        Hazlo en la Mac, en Safari. La dirección de inicio es
+        <span class="mono">developer.apple.com/programs/enroll</span> y ahí tocas «Start your
+        enrollment».
+      </p>
+      <div class="cols c2">
+        <div>
+          <h3><span class="num">1</span>Una cuenta de Apple nueva, con el correo de la empresa</h3>
+          <p class="mini" style="margin-bottom: 3mm">
+            Te recomiendo no usar la del iPhone personal: así la empresa queda separada de tus fotos
+            y compras. Si Safari te pide entrar, toca «Create yours now».
+          </p>
+          <div class="croquis">
+            <div class="barra">
+              <i></i><i></i><i></i><span>account.apple.com · Create Your Apple Account</span>
+            </div>
+            <div class="forma">
+              <div class="titulo">Create Your Apple Account</div>
+              <div class="cols c2" style="gap: 3mm">
+                <div class="campo">
+                  <div class="et"><span class="n">1</span>First Name</div>
+                  <div class="caja tuyo">tu nombre legal</div>
+                </div>
+                <div class="campo">
+                  <div class="et"><span class="n">2</span>Last Name</div>
+                  <div class="caja tuyo">tu apellido legal</div>
+                </div>
+              </div>
+              <div class="cols c2" style="gap: 3mm">
+                <div class="campo">
+                  <div class="et"><span class="n gris">3</span>Country/Region</div>
+                  <div class="caja">United States <span class="chev">▾</span></div>
+                </div>
+                <div class="campo">
+                  <div class="et"><span class="n">4</span>Birthday</div>
+                  <div class="caja tuyo">tu fecha</div>
+                </div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">5</span>Email (será tu usuario de Apple)</div>
+                <div class="caja cambia">apps@windoce.com</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">6</span>Password</div>
+                <div class="caja tuyo">una contraseña nueva, solo para esto ··· 👁</div>
+              </div>
+              <div class="campo">
+                <div class="et">
+                  <span class="n">7</span>Phone Number · Verify with: Text message
+                </div>
+                <div class="caja tuyo">tu celular</div>
+              </div>
+              <span class="boton">Continue</span>
+            </div>
+          </div>
+          <div class="nota">
+            Si todavía no existe <span class="mono">apps@windoce.com</span>, créalo en el Google
+            Workspace de Windoce (o usa otro buzón tuyo de @windoce.com). Llegan dos códigos: uno al
+            correo y otro al celular.
+          </div>
+        </div>
+        <div>
+          <h3><span class="num">2</span>Inscribir a Windoce LLC como organización</h3>
+          <p class="mini" style="margin-bottom: 3mm">
+            Entra con la cuenta nueva y llena la inscripción.
+          </p>
+          <div class="croquis">
+            <div class="barra">
+              <i></i><i></i><i></i><span>developer.apple.com · Enrollment</span>
+            </div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n">1</span>I develop apps as</div>
+                <div class="opciones">
+                  <div class="op"><span class="r"></span>Individual / Sole Proprietor</div>
+                  <div class="op si"><span class="r"></span>Company / Organization</div>
+                </div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">2</span>Legal Entity Name</div>
+                <div class="caja cambia">Windoce LLC</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">3</span>D-U-N-S Number</div>
+                <div class="caja cambia">los 9 dígitos de Windoce LLC</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">4</span>Headquarters address · Phone</div>
+                <div class="caja tuyo">los mismos que tiene Dun &amp; Bradstreet</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">5</span>Website</div>
+                <div class="caja cambia">https://windoce.com</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">6</span>Work Email · Job title</div>
+                <div class="caja tuyo">apps@windoce.com · Owner</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">7</span>Legal binding authority</div>
+                <div class="opciones">
+                  <div class="op si">
+                    <span class="cb"></span>I have the legal authority to bind my organization to
+                    Apple’s legal agreements
+                  </div>
+                </div>
+              </div>
+              <span class="boton">Continue</span>
+            </div>
+          </div>
+          <div class="nota">
+            <b>No toques nada más.</b> Si sale «Your organization is not listed as a legal entity»,
+            el nombre no coincide con el de Dun &amp; Bradstreet: escríbelo idéntico, o pide a
+            D&amp;B que corrija el registro (tarda hasta dos días hábiles en llegarle a Apple).
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Fuente: Apple Developer · Program enrollment y D-U-N-S Number</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 4. APPLE 3 y 4 -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Apple</b> · pasos 3 y 4 de 5 · lo haces tú</span><span>Página 4</span>
+      </div>
+      <h2>Apple: el pago, la espera y la llave para que yo trabaje</h2>
+      <div class="cols c2">
+        <div>
+          <h3><span class="num">3</span>Esperar la verificación y pagar</h3>
+          <ul class="lista" style="margin-bottom: 3mm">
+            <li>
+              Apple revisa los datos de la empresa. <b>Puede llamarte</b> al teléfono de Dun &amp;
+              Bradstreet para confirmar que tú puedes firmar por Windoce LLC. Contesta: es parte del
+              trámite.
+            </li>
+            <li>
+              A veces pide <b>documentos de la empresa</b> (los papeles de la LLC). Si los pide, se
+              mandan desde el mismo correo.
+            </li>
+            <li>
+              Cuando aprueban, llega un correo con el siguiente paso: aceptas el acuerdo de licencia
+              y pagas <b>99 dólares</b>.
+            </li>
+            <li>
+              Después del pago llega la confirmación. Si en 24 horas no llega, se escribe a Apple
+              con el número de inscripción (Enrollment ID).
+            </li>
+          </ul>
+          <div class="bien">
+            Las apps de Tumbite son <b>gratis</b> y cobran comida con Stripe, que es un bien físico.
+            Por eso no hace falta llenar cuentas bancarias ni impuestos en Apple: eso solo se pide a
+            quien vende dentro de la app.
+          </div>
+          <h3 style="margin-top: 5mm">El dato que vas a encontrar al entrar</h3>
+          <div class="croquis">
+            <div class="barra">
+              <i></i><i></i><i></i><span>developer.apple.com/account · Membership details</span>
+            </div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n gris">·</span>Entity Name</div>
+                <div class="caja">Windoce LLC</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">A</span>Team ID — anótalo y me lo pasas</div>
+                <div class="caja cambia">10 letras y números</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3><span class="num">4</span>La llave de App Store Connect</h3>
+          <p class="mini" style="margin-bottom: 2.5mm">
+            Con esta llave yo fabrico y subo las apps sin tu contraseña. Se hace en
+            <span class="mono">appstoreconnect.apple.com</span> → Users and Access → Integrations.
+            La primera vez tocas <b>Request Access</b>, aceptas y esperas el visto bueno de Apple.
+            Luego Team Keys → <b>Generate API Key</b>. Va con «Admin» porque la llave tiene que
+            firmar las apps:
+          </p>
+          <div class="croquis">
+            <div class="barra">
+              <i></i><i></i><i></i><span>App Store Connect · Generate API Key</span>
+            </div>
+            <div class="forma">
+              <div class="titulo">Generate API Key</div>
+              <div class="campo">
+                <div class="et"><span class="n">1</span>Name</div>
+                <div class="caja cambia">Tumbite EAS</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">2</span>Access</div>
+                <div class="caja cambia">Admin <span class="chev">▾</span></div>
+              </div>
+              <span class="boton">Generate</span>
+              <div style="margin-top: 3.5mm; border-top: 1px dashed #ccc; padding-top: 3mm">
+                <div class="campo">
+                  <div class="et"><span class="n">B</span>Issuer ID (arriba de la lista)</div>
+                  <div class="caja cambia">8-4-4-4-12 letras y números</div>
+                </div>
+                <div class="campo">
+                  <div class="et"><span class="n">C</span>Key ID (en la fila de la llave)</div>
+                  <div class="caja cambia">10 letras y números</div>
+                </div>
+                <div class="campo">
+                  <div class="et"><span class="n">D</span>Download API Key</div>
+                  <div class="caja cambia">AuthKey_XXXXXXXXXX.p8 ⤓</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="nota">
+            <b>El archivo se descarga una sola vez.</b> Déjalo en la carpeta Descargas de esta Mac y
+            dime «ya está la llave de Apple». Yo lo cargo en Expo, lo saco de Descargas y nunca va
+            al repositorio. Los datos A, B y C me los dices en el chat.
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Fuente: Apple · App Store Connect API · Expo · Building on CI</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 5. APPLE 5 -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Apple</b> · paso 5 de 5 · lo haces tú, cuando yo te avise</span
+        ><span>Página 5</span>
+      </div>
+      <h2>Apple: crear las tres apps en App Store Connect</h2>
+      <p class="entrada">
+        Este paso va <b>después</b> de mi primera fabricación: la fabricación registra los
+        identificadores de las apps en Apple, y solo así aparecen en la lista «Bundle ID». Te aviso
+        cuando estén. En App Store Connect → Apps → botón <b>+</b> → <b>New App</b>, tres veces:
+      </p>
+      <div class="cols c3">
+        <div class="croquis">
+          <div class="barra"><i></i><i></i><i></i><span>New App · 1 de 3</span></div>
+          <div class="forma">
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Platforms</div>
+              <div class="opciones">
+                <div class="op si"><span class="cb"></span>iOS</div>
+              </div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">2</span>Name</div>
+              <div class="caja cambia">Tumbite</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">3</span>Primary Language</div>
+              <div class="caja cambia">English (U.S.) <span class="chev">▾</span></div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">4</span>Bundle ID</div>
+              <div class="caja cambia">com.windoce.tumbite <span class="chev">▾</span></div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">5</span>SKU</div>
+              <div class="caja cambia">tumbite-ios</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">6</span>User Access</div>
+              <div class="opciones">
+                <div class="op si"><span class="r"></span>Full Access</div>
+              </div>
+            </div>
+            <span class="boton">Create</span>
+          </div>
+        </div>
+        <div class="croquis">
+          <div class="barra"><i></i><i></i><i></i><span>New App · 2 de 3</span></div>
+          <div class="forma">
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Platforms</div>
+              <div class="opciones">
+                <div class="op si"><span class="cb"></span>iOS</div>
+              </div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">2</span>Name</div>
+              <div class="caja cambia">Tumbite Driver</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">3</span>Primary Language</div>
+              <div class="caja cambia">English (U.S.) <span class="chev">▾</span></div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">4</span>Bundle ID</div>
+              <div class="caja cambia">com.windoce.tumbite.driver <span class="chev">▾</span></div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">5</span>SKU</div>
+              <div class="caja cambia">tumbite-driver-ios</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">6</span>User Access</div>
+              <div class="opciones">
+                <div class="op si"><span class="r"></span>Full Access</div>
+              </div>
+            </div>
+            <span class="boton">Create</span>
+          </div>
+        </div>
+        <div class="croquis">
+          <div class="barra"><i></i><i></i><i></i><span>New App · 3 de 3</span></div>
+          <div class="forma">
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Platforms</div>
+              <div class="opciones">
+                <div class="op si"><span class="cb"></span>iOS</div>
+              </div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">2</span>Name</div>
+              <div class="caja cambia">Tumbite Restaurants</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">3</span>Primary Language</div>
+              <div class="caja cambia">English (U.S.) <span class="chev">▾</span></div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">4</span>Bundle ID</div>
+              <div class="caja cambia">
+                com.windoce.tumbite.restaurants <span class="chev">▾</span>
+              </div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">5</span>SKU</div>
+              <div class="caja cambia">tumbite-restaurants-ios</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">6</span>User Access</div>
+              <div class="opciones">
+                <div class="op si"><span class="r"></span>Full Access</div>
+              </div>
+            </div>
+            <span class="boton">Create</span>
+          </div>
+        </div>
+      </div>
+      <div class="cols c2" style="margin-top: 4mm">
+        <div class="nota">
+          <b>Si Apple dice que el nombre está ocupado</b> (otra app ya se llama así), usa «Tumbite:
+          Food Delivery», «Tumbite Driver: Deliver &amp; Earn» o «Tumbite for Restaurants». El
+          nombre se puede cambiar en cada versión.
+        </div>
+        <div class="bien">
+          <b>Y ahí termina tu parte en Apple.</b> El resto de la ficha (textos, capturas,
+          privacidad, edad, notas para el revisor y cuentas de prueba) lo lleno yo con lo que ya
+          está escrito.
+        </div>
+      </div>
+      <div class="pie">
+        <span>Fuente: Apple · App Store Connect · Add a new app</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 6. GOOGLE 1 y 2 -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Google Play</b> · pasos 1 y 2 de 3 · lo haces tú</span><span>Página 6</span>
+      </div>
+      <h2>Google: comprobar el tipo de cuenta y crear las apps</h2>
+      <div class="cols c2">
+        <div>
+          <h3><span class="num">1</span>¿Tu cuenta es de organización o personal?</h3>
+          <p class="mini" style="margin-bottom: 3mm">
+            Es lo más importante de Google. En Play Console → <b>Settings</b> (Configuración) →
+            <b>Developer account</b> → <b>Account details</b>:
+          </p>
+          <div class="croquis">
+            <div class="barra">
+              <i></i><i></i><i></i><span>play.google.com/console · Account details</span>
+            </div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n">1</span>Account type</div>
+                <div class="caja cambia">Organization ✓</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">2</span>Organization name</div>
+                <div class="caja cambia">Windoce LLC</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n gris">3</span>D-U-N-S number</div>
+                <div class="caja">el de Windoce LLC</div>
+              </div>
+            </div>
+          </div>
+          <table class="t" style="margin-top: 4mm">
+            <tr>
+              <th>Si dice…</th>
+              <th>Qué pasa</th>
+            </tr>
+            <tr>
+              <td><b>Organization</b> · Windoce LLC</td>
+              <td>
+                <span class="chip ok">Perfecto</span> Se usa esa cuenta. Se puede publicar sin la
+                prueba obligatoria.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Personal</b>, creada antes del 13 de noviembre de 2023</td>
+              <td>
+                Se puede publicar, pero en la tienda saldría tu nombre y no Windoce LLC. Mejor la
+                opción de abajo.
+              </td>
+            </tr>
+            <tr>
+              <td><b>Personal</b>, creada después de esa fecha</td>
+              <td>
+                Google exige una prueba cerrada con
+                <b>12 personas durante 14 días seguidos</b> antes de publicar cada app. Recomiendo
+                abrir una cuenta nueva de organización a nombre de Windoce LLC con el mismo D-U-N-S
+                (25 dólares, una vez).
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h3><span class="num">2</span>Crear las tres apps</h3>
+          <p class="mini" style="margin-bottom: 3mm">
+            Play Console → Home → <b>Create app</b>. Tres veces, cambiando solo el nombre:
+          </p>
+          <div class="croquis">
+            <div class="barra"><i></i><i></i><i></i><span>Play Console · Create app</span></div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n">1</span>App name</div>
+                <div class="caja cambia">Tumbite</div>
+              </div>
+              <div class="mini" style="margin: -1mm 0 2.4mm 6mm">
+                luego «Tumbite Driver» y luego «Tumbite Restaurants»
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">2</span>Default language</div>
+                <div class="caja cambia">
+                  English (United States) – en-US <span class="chev">▾</span>
+                </div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">3</span>App or game</div>
+                <div class="opciones">
+                  <div class="op si"><span class="r"></span>App</div>
+                  <div class="op"><span class="r"></span>Game</div>
+                </div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">4</span>Free or paid</div>
+                <div class="opciones">
+                  <div class="op si"><span class="r"></span>Free</div>
+                  <div class="op"><span class="r"></span>Paid</div>
+                </div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n">5</span>Declarations</div>
+                <div class="opciones">
+                  <div class="op si"><span class="cb"></span>Developer Program Policies</div>
+                  <div class="op si"><span class="cb"></span>US export laws</div>
+                </div>
+              </div>
+              <span class="boton g">Create app</span>
+            </div>
+          </div>
+          <div class="nota">
+            Google no pide el identificador de la app aquí: lo toma de la primera versión que yo
+            suba (<span class="mono">com.windoce.tumbite</span>, <span class="mono">.driver</span> y
+            <span class="mono">.restaurants</span>). <b>No toques nada más</b> de la ficha: lo lleno
+            yo.
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span
+          >Fuente: Google Play Console Help · App testing requirements for new personal developer
+          accounts</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 7. GOOGLE 3 -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Google Play</b> · paso 3 de 3 · lo haces tú</span><span>Página 7</span>
+      </div>
+      <h2>Google: la llave de servicio para que yo suba las apps</h2>
+      <p class="entrada">
+        Es el equivalente de la llave de Apple. Se crea en Google Cloud y se le da permiso en Play
+        Console. Son cuatro pantallas.
+      </p>
+      <div class="cols c3">
+        <div>
+          <div class="paso">
+            <span class="num">1</span>
+            <div>
+              <h3>Un proyecto y una cuenta de servicio</h3>
+              <p>
+                En <span class="mono">console.cloud.google.com</span>, con la misma cuenta de Google
+                de Play Console: crea el proyecto <b>tumbite-publicar</b>. Luego IAM &amp; Admin →
+                <b>Service Accounts</b> → <b>Create service account</b>.
+              </p>
+            </div>
+          </div>
+          <div class="croquis">
+            <div class="barra"><i></i><i></i><i></i><span>Create service account</span></div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n">1</span>Service account name</div>
+                <div class="caja cambia">tumbite-eas</div>
+              </div>
+              <div class="campo">
+                <div class="et"><span class="n gris">2</span>Service account ID</div>
+                <div class="caja">tumbite-eas (se llena solo)</div>
+              </div>
+              <span class="boton g">Create and close</span>
+            </div>
+          </div>
+          <p class="mini" style="margin-top: 2mm">
+            Copia el correo que aparece: termina en
+            <span class="mono">iam.gserviceaccount.com</span>.
+          </p>
+        </div>
+        <div>
+          <div class="paso">
+            <span class="num">2</span>
+            <div>
+              <h3>El archivo de la llave</h3>
+              <p>
+                En la fila de <b>tumbite-eas</b>, menú de 3 puntos → <b>Manage keys</b> → Add key →
+                <b>Create new key</b>:
+              </p>
+            </div>
+          </div>
+          <div class="croquis">
+            <div class="barra"><i></i><i></i><i></i><span>Create private key</span></div>
+            <div class="forma">
+              <div class="campo">
+                <div class="et"><span class="n">1</span>Key type</div>
+                <div class="opciones">
+                  <div class="op si"><span class="r"></span>JSON</div>
+                  <div class="op"><span class="r"></span>P12</div>
+                </div>
+              </div>
+              <span class="boton g">Create</span>
+              <div class="campo" style="margin-top: 3mm">
+                <div class="et"><span class="n">↓</span>Se descarga</div>
+                <div class="caja cambia">tumbite-publicar-xxxxxxxx.json</div>
+              </div>
+            </div>
+          </div>
+          <div class="paso" style="margin-top: 4mm">
+            <span class="num">3</span>
+            <div>
+              <h3>Encender la API</h3>
+              <p>
+                Busca <b>Google Play Android Developer API</b> en la barra de arriba y toca
+                <b>Enable</b>.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="paso">
+            <span class="num">4</span>
+            <div>
+              <h3>Darle permiso en Play Console</h3>
+              <p>
+                Play Console → <b>Users and permissions</b> → <b>Invite new users</b>. Pega el
+                correo de la cuenta de servicio. En <b>App permissions</b> agrega las tres apps y
+                marca:
+              </p>
+            </div>
+          </div>
+          <div class="croquis">
+            <div class="barra"><i></i><i></i><i></i><span>Invite user · App permissions</span></div>
+            <div class="forma" style="padding-top: 3mm">
+              <div class="opciones" style="flex-direction: column; gap: 1.4mm">
+                <div class="op si"><span class="cb"></span>View app information (read-only)</div>
+                <div class="op si"><span class="cb"></span>Edit and delete draft apps</div>
+                <div class="op si">
+                  <span class="cb"></span>Release to production, exclude devices, and use Play App
+                  Signing
+                </div>
+                <div class="op si"><span class="cb"></span>Release apps to testing tracks</div>
+                <div class="op si">
+                  <span class="cb"></span>Manage testing tracks and edit tester lists
+                </div>
+                <div class="op si"><span class="cb"></span>Manage store presence</div>
+              </div>
+              <span class="boton g" style="margin-top: 2.5mm">Invite user</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nota" style="margin-top: 4mm">
+        <b>El archivo JSON es una llave: no se manda por correo ni por WhatsApp.</b> Déjalo en
+        Descargas de esta Mac y dime «ya está la llave de Google». Yo lo cargo en Expo y lo saco de
+        Descargas. Si quieres, sirve también para las notificaciones de Android, que Expo manda con
+        la misma llave.
+      </div>
+      <div class="pie">
+        <span
+          >Fuente: Expo · Creating a Google Service Account key · Submit to the Google Play
+          Store</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 8. EXPO -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Expo</b> · la fábrica de las apps · lo haces tú</span><span>Página 8</span>
+      </div>
+      <h2>Expo: la organización de la empresa y su llave</h2>
+      <p class="entrada">
+        Expo es el servicio que fabrica las apps de iPhone y Android en sus servidores y las sube a
+        las tiendas. Por eso no necesitas Xcode. Entra a <span class="mono">expo.dev</span> y crea
+        la cuenta con el correo de la empresa.
+      </p>
+      <div class="cols c3">
+        <div class="croquis">
+          <div class="barra"><i></i><i></i><i></i><span>expo.dev · Sign up</span></div>
+          <div class="forma">
+            <div class="titulo">1 · Crear la cuenta</div>
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Email</div>
+              <div class="caja cambia">apps@windoce.com</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">2</span>Username</div>
+              <div class="caja cambia">soporte-windoce</div>
+            </div>
+            <div class="campo">
+              <div class="et"><span class="n">3</span>Password</div>
+              <div class="caja tuyo">una contraseña nueva ··· 👁</div>
+            </div>
+            <span class="boton x">Sign up</span>
+          </div>
+        </div>
+        <div class="croquis">
+          <div class="barra"><i></i><i></i><i></i><span>expo.dev · Create organization</span></div>
+          <div class="forma">
+            <div class="titulo">2 · Crear la organización</div>
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Organization name</div>
+              <div class="caja cambia">windoce-llc</div>
+            </div>
+            <span class="boton x">Create</span>
+            <p class="mini" style="margin-top: 3mm">
+              Tiene que ser <b>exactamente</b> <span class="mono">windoce-llc</span>, en minúsculas
+              y con guion: las tres apps ya dicen que su dueño es esa organización. Si Expo dice que
+              ya existe, usa <span class="mono">windoce</span> y avísame: yo lo cambio en las apps.
+            </p>
+            <p class="mini" style="margin-top: 2mm">
+              Plan: <b>Free</b>. Alcanza para empezar (15 fabricaciones de iPhone y 15 de Android al
+              mes).
+            </p>
+          </div>
+        </div>
+        <div class="croquis">
+          <div class="barra">
+            <i></i><i></i><i></i><span>windoce-llc · Settings · Access tokens</span>
+          </div>
+          <div class="forma">
+            <div class="titulo">3 · La llave para mí</div>
+            <div class="campo">
+              <div class="et"><span class="n">1</span>Token name</div>
+              <div class="caja cambia">tumbite-publicar</div>
+            </div>
+            <span class="boton x">Create token</span>
+            <div class="campo" style="margin-top: 3mm">
+              <div class="et"><span class="n">↓</span>Se muestra una sola vez</div>
+              <div class="caja cambia">una cadena larga de letras</div>
+            </div>
+            <p class="mini">
+              Cópiala y pégamela en el chat. Yo la guardo en la Mac fuera del repositorio y como
+              secreto en GitHub, nunca en un archivo del proyecto.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="bien" style="margin-top: 5mm">
+        <b>Con estas tres cosas termina tu parte:</b> la llave de Apple (archivo y tres datos), la
+        llave de Google (archivo) y la llave de Expo. Desde ahí, cada versión nueva se fabrica y se
+        sube sola, sin que tengas que tocar nada.
+      </div>
+      <div class="pie">
+        <span>Fuente: Expo · Pricing · Submit to the Apple App Store</span
+        ><span>Tumbite · Guía para publicar las apps</span>
+      </div>
+    </section>
+
+    <!-- 9. LO QUE HAGO YO + CALENDARIO + RIESGOS -->
+    <section class="hoja">
+      <div class="cinta">
+        <span><b>Después</b> · lo que hago yo, cuánto tarda y qué puede salir mal</span
+        ><span>Página 9</span>
+      </div>
+      <h2>Lo que hago yo, y el calendario</h2>
+      <div class="linea-tiempo">
+        <div class="t2">
+          <div class="d">Día 1</div>
+          Tú: cuenta de Apple, inscripción, Expo y revisar Google. Yo: dejo todo listo para
+          fabricar.
+        </div>
+        <div class="t2">
+          <div class="d">Días 2 a 14</div>
+          Apple verifica Windoce LLC. Mientras, yo fabrico Android y lo subo a la prueba interna de
+          Google.
+        </div>
+        <div class="t2">
+          <div class="d">Apple aprueba</div>
+          Tú: pagas, pides acceso a la API y creas la llave. Yo: fabrico las tres de iPhone.
+        </div>
+        <div class="t2">
+          <div class="d">Mismo día</div>
+          Tú: creas las tres apps en App Store Connect. Yo: las subo a TestFlight y lleno las
+          fichas.
+        </div>
+        <div class="t2">
+          <div class="d">1 a 3 días</div>
+          Las probamos en teléfonos reales y las mando a revisión. Apple y Google responden.
+        </div>
+      </div>
+      <div class="cols c23" style="margin-top: 5mm">
+        <div>
+          <table class="t">
+            <tr>
+              <th>Lo que hago yo</th>
+              <th>Cómo se comprueba</th>
+            </tr>
+            <tr>
+              <td>Fabricar las tres apps para iPhone y Android, versión 1.0.0</td>
+              <td>Aparecen en TestFlight y en la prueba interna de Google</td>
+            </tr>
+            <tr>
+              <td>Capturas de pantalla reales en inglés y español, en los tamaños que piden</td>
+              <td>Se ven en la ficha antes de enviar</td>
+            </tr>
+            <tr>
+              <td>Fichas, privacidad, clasificación por edad y notas para el revisor</td>
+              <td>Ya están escritas en el documento de tiendas del proyecto</td>
+            </tr>
+            <tr>
+              <td>Cuentas de prueba para el revisor (cliente, repartidor y restaurante)</td>
+              <td>Entran y hacen un pedido completo</td>
+            </tr>
+            <tr>
+              <td>Enviar a revisión y responder lo que pidan</td>
+              <td>Te aviso con cada respuesta</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h3>Qué puede salir mal, y qué se hace</h3>
+          <ul class="lista">
+            <li>
+              <b>«Not listed as a legal entity»</b> en Apple: el nombre no coincide con Dun &amp;
+              Bradstreet. Se corrige allá y se reintenta.
+            </li>
+            <li>
+              <b>Apple no llama o no aprueba</b> en dos semanas: se escribe a soporte de Apple con
+              el número de inscripción.
+            </li>
+            <li>
+              <b>El revisor pide cambios:</b> es normal en la primera versión. Casi siempre son
+              textos o permisos, y se arreglan en un día.
+            </li>
+            <li>
+              <b>Cuenta personal de Google</b> nueva: o la prueba de 12 personas por 14 días, o una
+              cuenta de organización.
+            </li>
+            <li><b>Nombre ocupado:</b> se usa el nombre alternativo de la página 5.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tarjeta" style="margin-top: 5mm">
+        <h3>Lo que me pasas a mí, en resumen</h3>
+        <table class="t">
+          <tr>
+            <th>Qué</th>
+            <th>De dónde sale</th>
+            <th>Cómo me lo das</th>
+          </tr>
+          <tr>
+            <td><b>Team ID</b> de Apple</td>
+            <td>Página 4, dato A</td>
+            <td>En el chat</td>
+          </tr>
+          <tr>
+            <td><b>Issuer ID</b> y <b>Key ID</b> de Apple</td>
+            <td>Página 4, datos B y C</td>
+            <td>En el chat</td>
+          </tr>
+          <tr>
+            <td><b>Archivo de la llave de Apple</b> (termina en .p8)</td>
+            <td>Página 4, dato D</td>
+            <td>En Descargas de esta Mac, y me avisas</td>
+          </tr>
+          <tr>
+            <td><b>Archivo de la llave de Google</b> (termina en .json)</td>
+            <td>Página 7, paso 2</td>
+            <td>En Descargas de esta Mac, y me avisas</td>
+          </tr>
+          <tr>
+            <td><b>Llave de Expo</b></td>
+            <td>Página 8, paso 3</td>
+            <td>En el chat</td>
+          </tr>
+        </table>
+      </div>
+      <div class="pie">
+        <span>Tumbite · Guía para publicar las apps · 13 de octubre de 2026</span
+        ><span>© 2026 tumbite.com | All rights reserved. Developed by Windoce LLC</span>
+      </div>
+    </section>
+  </body>
+</html>

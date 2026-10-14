@@ -1,8 +1,6 @@
-# Plan: calculadora pública de Tumbite para cada quien (13 oct 2026)
+# Plan: guía en PDF para publicar las apps en Apple y Google (13 oct 2026)
 
-- [x] Paso 1: La cuenta, en una sola pieza compartida y con pruebas: franquicia (mercado de la ciudad, pedidos, ventas, pedidos por restaurante, repartidores necesarios, lo que mueve la plataforma), restaurante (cuánto le queda con Tumbite, DoorDash y Uber Eats, y pedidos que se le pueden proyectar), repartidor (por día, semana y mes según horas, entregas por hora y propina) y cliente (cuánto ahorra en la tarifa de servicio). Supuestos del mercado con su fuente y fecha.
-- [x] Paso 2: La página pública «Calculadora» (/calculator y /es/calculator) con cuatro pestañas, en inglés y en español, que guarda lo escrito (useBorrador), con el texto de que son proyecciones y no promesas, y los supuestos a la vista para moverlos.
-- [x] Paso 3: Enlaces: menú del sitio, pie, Docs, mapa del sitio y prerender.
-- [x] Paso 4: Guía pública en Docs «Calculadora: cuánto ganas y cuánto ahorras con Tumbite», con capturas y preguntas, en los dos idiomas.
-- [x] Paso 5: Documento interno con los supuestos y las fuentes (docs/MODELO-DE-DINERO.md), pendiente de Richard sobre la parte del franquiciado, y nota del chat con IA en el roadmap.
-- [x] Paso 6: Probar en pantalla, candados, verify, commit, push, publicación y comprobación en vivo.
+- [x] Paso 1: Leer las páginas oficiales de hoy: inscripción de Apple como organización, D-U-N-S, llave de la API de App Store Connect, app nueva en App Store Connect, regla de 12 probadores de Google, llave de servicio de Google para Expo, subir con Expo y precios de Expo.
+- [x] Paso 2: Escribir la guía paso a paso para Richard, con croquis de cada formulario casilla por casilla: antes de empezar, Apple (cuenta, inscripción, pago, llave, las tres apps), Google (tipo de cuenta, las tres apps, llave de servicio), Expo (organización y llave), lo que hago yo, tiempos, costos y qué puede salir mal.
+- [x] Paso 3: Sacar el PDF en horizontal, revisarlo página por página y guardarlo en el proyecto.
+- [x] Paso 4: Poner al día docs/TIENDAS.md (pasos y fuentes) y PENDIENTES.md, commit y push.

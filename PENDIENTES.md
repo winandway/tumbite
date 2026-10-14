@@ -9,7 +9,7 @@
 - [ ] 👤 **Compra real de 1 dólar** desde la app web y, en la misma prueba, **cancelar otro pedido de 1 dólar antes de que el restaurante lo acepte** (tiene que verse la devolución en Stripe). Es lo único que falta para dar los pagos por probados (`VERIFICAR-PAGOS.md`).
 - [ ] 👤 **Prueba en la calle** con tres cuentas: cliente, restaurante y repartidor (`docs/PLAN-DE-PRUEBA-EN-CALLE.md`).
 - [ ] 👤 Decidir el primer pedido de 7.18 dólares: marcarlo entregado o devolverlo.
-- [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas.
+- [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas. Guía paso a paso con croquis en `docs/Guia-publicar-apps-Apple-Google.pdf` (Apple como organización con correo @windoce.com, llave Admin; Google: comprobar que la cuenta sea de organización; Expo: organización windoce-llc y su llave).
 - [ ] 👤 Número de WhatsApp de soporte.
 - [ ] 👤 Llave de Google Places para que la dirección se complete sola.
 - [ ] 👤 Abogado: revisar los textos legales y la marca.
