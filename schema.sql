@@ -510,3 +510,25 @@ CREATE TABLE IF NOT EXISTS opciones (
   orden INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS opciones_grupo ON opciones(grupo_id, orden);
+
+-- Últimas ubicaciones del repartidor (con la precisión que reporta el celular): para decir «llegó»
+-- hacen falta dos lecturas coherentes y precisas, no una sola. Se limpian solas (2 minutos).
+CREATE TABLE IF NOT EXISTS ubicaciones_recientes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  precision_m REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS ubicaciones_recientes_idx ON ubicaciones_recientes(usuario_id, id);
+
+-- «No puedo confirmar mi ubicación»: el repartidor lo pide con motivo y soporte lo autoriza
+-- (queda quién y cuándo). Solo entonces se puede entregar sin la comprobación del GPS.
+CREATE TABLE IF NOT EXISTS excepciones_ubicacion (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  motivo TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  autorizado_en TEXT,
+  autorizado_por TEXT
+);
