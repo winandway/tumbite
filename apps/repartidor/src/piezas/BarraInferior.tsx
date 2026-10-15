@@ -21,7 +21,7 @@ export function BarraInferior({
   const iconos = new Map<Pestana, number | null>([
     ['inicio', IMG.navInicio],
     ['pedidos', IMG.navPedidos],
-    ['ganancias', null],
+    ['ganancias', IMG.navGanancias],
     ['perfil', IMG.navCuenta],
   ]);
   const pestanas: Pestana[] = ['inicio', 'pedidos', 'ganancias', 'perfil'];

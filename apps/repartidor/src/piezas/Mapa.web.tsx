@@ -49,7 +49,10 @@ export function Mapa({
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const todos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
-    if (todos.length > 1)
+    const separados =
+      todos.length > 1 &&
+      todos.some((p) => Math.abs(p.lat - todos[0]!.lat) + Math.abs(p.lng - todos[0]!.lng) > 0.0005);
+    if (separados)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 16 },
