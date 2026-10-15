@@ -1,0 +1,69 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mundo } from '../pruebas/ayuda';
+
+/**
+ * DIAGNÓSTICO (arquitectura V1.2, no es un candado): demuestra con la ruta REAL de retiros que,
+ * si Stripe hace la transferencia y la respuesta se pierde, el saldo vuelve a la billetera y el
+ * mismo dinero se puede retirar otra vez. Base en memoria y Stripe simulado: nada real.
+ */
+describe('diagnóstico: retiro con respuesta perdida', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function preparar() {
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_PUBLISHABLE_KEY: 'pk_test_x' });
+    const rep = await m.cuenta('repartidor');
+    await m.DB.prepare(
+      "INSERT INTO cuentas_stripe (usuario_id, stripe_cuenta, pagos_activos) VALUES (?, 'acct_rep', 1)",
+    )
+      .bind(rep.id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO movimientos (id, usuario_id, monto, concepto) VALUES ('m1', ?, 1000, 'ajuste')",
+    )
+      .bind(rep.id)
+      .run();
+    return { m, rep };
+  }
+
+  it('Stripe transfiere, la respuesta se pierde, el saldo vuelve y se paga DOS veces', async () => {
+    const transferencias: { clave: string; monto: string }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url.includes('/transfers')) {
+        const h = new Headers(init?.headers);
+        // Stripe SÍ crea la transferencia…
+        transferencias.push({
+          clave: h.get('idempotency-key') ?? '',
+          monto: new URLSearchParams(String(init?.body)).get('amount') ?? '',
+        });
+        // …pero la respuesta no llega (corte de red / tiempo agotado).
+        throw new TypeError('fetch failed');
+      }
+      return new Response('{}', { status: 404 });
+    });
+    const { m, rep } = await preparar();
+    const primero = await m.llamar('POST', '/datos/billetera/retirar', { montoCentavos: 1000 }, rep.token);
+    const saldoTras1 = (await m.llamar('GET', '/datos/billetera', undefined, rep.token)).datos.saldo;
+    const segundo = await m.llamar('POST', '/datos/billetera/retirar', { montoCentavos: 1000 }, rep.token);
+    console.info('DIAGNOSTICO', JSON.stringify({ primero: primero.estado, saldoTras1, segundo: segundo.estado, transferencias }));
+    // Lo que pasa HOY con el código real:
+    expect(saldoTras1).toBe(1000); // el saldo volvió aunque Stripe transfirió
+    expect(transferencias).toHaveLength(2); // dos transferencias reales de 10.00
+    expect(transferencias[0]!.clave).not.toBe(transferencias[1]!.clave); // con claves distintas: Stripe no las une
+  });
+
+  it('Stripe responde 500 después de procesar: también devuelve el saldo', async () => {
+    let n = 0;
+    vi.stubGlobal('fetch', async (url: string) => {
+      if (url.includes('/transfers')) {
+        n++;
+        return new Response(JSON.stringify({ error: { message: 'An unknown error occurred' } }), { status: 500 });
+      }
+      return new Response('{}', { status: 404 });
+    });
+    const { m, rep } = await preparar();
+    await m.llamar('POST', '/datos/billetera/retirar', { montoCentavos: 1000 }, rep.token);
+    const saldo = (await m.llamar('GET', '/datos/billetera', undefined, rep.token)).datos.saldo;
+    console.info('DIAGNOSTICO_500', JSON.stringify({ llamadas: n, saldo }));
+    expect(saldo).toBe(1000); // un 500 de Stripe es ambiguo, pero el código lo trata como fallo seguro
+  });
+});
