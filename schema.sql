@@ -1008,6 +1008,29 @@ CREATE TABLE IF NOT EXISTS cumplimientos (
   CHECK (estado != 'aprobado' OR fuente IN ('kyc', 'checkr', 'sistema') OR aprobado_por IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS cumplimientos_vence ON cumplimientos(vence_en) WHERE estado = 'aprobado';
+-- La identidad solo se aprueba con una verificación REAL (Fase 2, 15 oct 2026): fuente «kyc» y, en
+-- la tabla kyc, aprobada por una persona admin, con foto del documento y selfie, y sin vencer.
+-- Vale para la migración M5 y para cualquier otro camino: nadie la escribe a mano.
+CREATE TRIGGER IF NOT EXISTS cumplimientos_identidad_exige_kyc
+BEFORE INSERT ON cumplimientos
+WHEN NEW.requisito = 'identidad' AND NEW.estado = 'aprobado' AND (NEW.fuente != 'kyc' OR NOT EXISTS (
+  SELECT 1 FROM kyc k JOIN usuarios a ON a.id = k.revisado_por AND a.rol = 'admin'
+   WHERE k.usuario_id = NEW.conductor_id AND k.estado = 'aprobado'
+     AND k.doc_frente IS NOT NULL AND k.selfie IS NOT NULL AND k.revisado_en IS NOT NULL
+     AND (k.proxima_revision IS NULL OR k.proxima_revision >= date('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'identidad_sin_verificacion');
+END;
+CREATE TRIGGER IF NOT EXISTS cumplimientos_identidad_exige_kyc_cambio
+BEFORE UPDATE ON cumplimientos
+WHEN NEW.requisito = 'identidad' AND NEW.estado = 'aprobado' AND (NEW.fuente != 'kyc' OR NOT EXISTS (
+  SELECT 1 FROM kyc k JOIN usuarios a ON a.id = k.revisado_por AND a.rol = 'admin'
+   WHERE k.usuario_id = NEW.conductor_id AND k.estado = 'aprobado'
+     AND k.doc_frente IS NOT NULL AND k.selfie IS NOT NULL AND k.revisado_en IS NOT NULL
+     AND (k.proxima_revision IS NULL OR k.proxima_revision >= date('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'identidad_sin_verificacion');
+END;
 
 -- ----- Habilitaciones, preferencias y bloqueos -----
 CREATE TABLE IF NOT EXISTS habilitaciones (

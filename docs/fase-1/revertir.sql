@@ -4,5 +4,5 @@ UPDATE repartidores SET vehiculo_activo_id = NULL WHERE vehiculo_activo_id LIKE 
 DELETE FROM preferencias_servicio WHERE servicio_id = 'comida'
    AND conductor_id IN (SELECT conductor_id FROM habilitaciones WHERE servicio_id = 'comida' AND origen = 'migracion');
 DELETE FROM habilitaciones WHERE servicio_id = 'comida' AND origen = 'migracion';
-DELETE FROM cumplimientos WHERE fuente = 'kyc' AND requisito = 'identidad' AND fuente_id LIKE 'kyc:%';
+DELETE FROM cumplimientos WHERE fuente = 'kyc' AND requisito = 'identidad' AND fuente_id LIKE 'kyc-mig:%';
 UPDATE vehiculos SET estado = 'retirado', motivo = 'Migración revertida' WHERE origen = 'migracion' AND estado != 'retirado';

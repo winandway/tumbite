@@ -44,8 +44,16 @@ describe('migraciones preparadas de la Fase 1 (M4 y M5)', () => {
       )
         .bind(id, tipo, placa)
         .run();
+    // Verificación REAL: aprobada por una persona admin, con documento y selfie.
+    const revisor = await m.cuenta('admin', 'Soporte Revisión');
+    await m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado, doc_frente, selfie, revisado_en, revisado_por) VALUES (?, 'aprobado', 'kyc/doc.jpg', 'kyc/selfie.jpg', datetime('now'), ?)",
+    )
+      .bind(conCarro.id, revisor.id)
+      .run();
+    // «Aprobada» sin evidencia (sin fotos ni revisor): NO cuenta como identidad verificada.
     await m.DB.prepare("INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado')")
-      .bind(conCarro.id)
+      .bind(enBici.id)
       .run();
 
     for (let vez = 0; vez < 2; vez++) {
@@ -70,7 +78,7 @@ describe('migraciones preparadas de la Fase 1 (M4 y M5)', () => {
     const habs = await m.DB.prepare(
       "SELECT COUNT(*) AS n FROM habilitaciones WHERE servicio_id = 'comida'",
     ).first<{ n: number }>();
-    expect(habs?.n).toBe(6);
+    expect(habs?.n).toBe(6); // solo repartidores; la cuenta admin de revisión no cuenta
 
     const activo = await m.DB.prepare(
       'SELECT vehiculo_activo_id AS v FROM repartidores WHERE usuario_id = ?',
@@ -84,6 +92,25 @@ describe('migraciones preparadas de la Fase 1 (M4 y M5)', () => {
       .bind(conCarro.id)
       .first<{ estado: string }>();
     expect(kyc?.estado).toBe('aprobado');
+    const sinEvidencia = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM cumplimientos WHERE conductor_id = ? AND requisito = 'identidad'",
+    )
+      .bind(enBici.id)
+      .first<{ n: number }>();
+    expect(sinEvidencia?.n).toBe(0);
+    // Y la base no deja escribirla a mano, ni con otra fuente.
+    for (const fuente of ['kyc', 'sistema'])
+      await expect(
+        m.DB.prepare(
+          "INSERT INTO cumplimientos (conductor_id, requisito, estado, fuente) VALUES (?, 'identidad', 'aprobado', ?)",
+        )
+          .bind(enBici.id, fuente)
+          .run(),
+      ).rejects.toThrow(/identidad_sin_verificacion/);
+    const identidades = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM cumplimientos WHERE requisito = 'identidad'",
+    ).first<{ n: number }>();
+    expect(identidades?.n).toBe(1);
 
     // Comida sigue igual para todos, incluido quien no tenía vehículo.
     const r = await m.llamar('GET', '/datos/conductor/servicios', undefined, sinVehiculo.token);

@@ -14,3 +14,9 @@ SELECT COUNT(*) AS sin_comida FROM usuarios u
 -- 4) Moto y Carro siguen apagados.
 SELECT id, estado FROM servicios WHERE transporta_personas = 1;
 SELECT servicio_id FROM servicios_implementados;
+-- 5) Ninguna identidad aprobada sin evidencia de verificación real (tiene que dar 0).
+SELECT COUNT(*) AS identidad_sin_evidencia FROM cumplimientos c
+ WHERE c.requisito = 'identidad' AND c.estado = 'aprobado' AND NOT EXISTS (
+   SELECT 1 FROM kyc k JOIN usuarios a ON a.id = k.revisado_por AND a.rol = 'admin'
+    WHERE k.usuario_id = c.conductor_id AND k.estado = 'aprobado'
+      AND k.doc_frente IS NOT NULL AND k.selfie IS NOT NULL AND k.revisado_en IS NOT NULL);

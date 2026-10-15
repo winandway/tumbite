@@ -399,8 +399,19 @@ describe('habilitaciones', () => {
           )
         ).estado,
       ).toBe(200);
-    // Identidad, antecedentes e historial vienen de sus proveedores (aquí, simulados como «sistema»).
-    for (const r of ['identidad', 'antecedentes_pasajeros', 'historial_manejo'])
+    // La identidad viene de una verificación real revisada por el equipo (kyc con evidencia).
+    await m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado, doc_frente, selfie, revisado_en, revisado_por) VALUES (?, 'aprobado', 'kyc/d.jpg', 'kyc/s.jpg', datetime('now'), ?)",
+    )
+      .bind(rep.id, admin.id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO cumplimientos (conductor_id, requisito, estado, fuente) VALUES (?, 'identidad', 'aprobado', 'kyc')",
+    )
+      .bind(rep.id)
+      .run();
+    // Antecedentes e historial vienen de su proveedor (aquí, simulados como «sistema»).
+    for (const r of ['antecedentes_pasajeros', 'historial_manejo'])
       await m.DB.prepare(
         "INSERT INTO cumplimientos (conductor_id, requisito, estado, fuente) VALUES (?, ?, 'aprobado', 'sistema')",
       )
