@@ -37,12 +37,15 @@ jobs:
       - run: npm run build:app-web
       # La app del repartidor en versión web, en tumbite.com/driver (para la prueba en la calle).
       - run: npm run build:repartidor-web
+      # La app del restaurante en versión web, en tumbite.com/restaurant (para verla y probarla en el celular o la tableta).
+      - run: npm run build:restaurante-web
       - run: |
           mkdir out-deploy
           cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
           cp -r apps/panel/dist/* out-deploy/
           mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
           mkdir -p out-deploy/driver && cp -r apps/repartidor/dist-web/* out-deploy/driver/
+          mkdir -p out-deploy/restaurant && cp -r apps/restaurante/dist-web/* out-deploy/restaurant/
           cp schema.sql out-deploy/
           echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
           test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }

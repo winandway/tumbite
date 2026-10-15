@@ -70,7 +70,7 @@ app.use('*', async (c, next) => {
   // La app web del repartidor se llama /driver (antes /repartidor).
   if (ruta === '/repartidor' || ruta.startsWith('/repartidor/'))
     return c.redirect(`/driver${ruta.slice(11)}${url.search}`, 301);
-  if (/^\/(datos|media|panel|app|driver|t)(\/|$)/.test(ruta)) return next();
+  if (/^\/(datos|media|panel|app|driver|restaurant|t)(\/|$)/.test(ruta)) return next();
   let destino: string | null = null;
   if (ruta === '/en' || ruta.startsWith('/en/')) {
     const resto = ruta.slice(3) || '/';
@@ -219,7 +219,7 @@ export function conCanonica(res: Response, href: string): Response {
  */
 /** A qué raíz cae una ruta de página que no existe como archivo. */
 export function raizDeApp(ruta: string): string {
-  for (const base of ['/app', '/driver'])
+  for (const base of ['/app', '/driver', '/restaurant'])
     if (ruta === base || ruta.startsWith(`${base}/`)) return `${base}/`;
   return '/';
 }
@@ -242,7 +242,7 @@ app.notFound(async (c) => {
   if (res.status === 404 && esPagina) {
     // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
     // y eso mandaba a la persona a la portada en vez de a la página que pidió.
-    // Las apps web viven en /app (cliente) y /driver: sus rutas internas caen en su raíz.
+    // Las apps web viven en /app (cliente), /driver y /restaurant: sus rutas internas caen en su raíz.
     const raiz = raizDeApp(c.req.path);
     res = await c.env.ASSETS.fetch(
       new Request(new URL(raiz, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),

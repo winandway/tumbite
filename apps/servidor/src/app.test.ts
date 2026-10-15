@@ -120,6 +120,9 @@ describe('app del cliente en versión web (/app)', () => {
 describe('app del repartidor en versión web (/driver)', () => {
   it('sus rutas internas caen en su propia raíz, no en la portada ni en la del cliente', () => {
     expect(raizDeApp('/driver')).toBe('/driver/');
+    expect(raizDeApp('/restaurant/pedido')).toBe('/restaurant/');
+    // Las páginas legales con nombre parecido siguen siendo de la portada.
+    expect(raizDeApp('/restaurant-terms')).toBe('/');
     expect(raizDeApp('/driver/billetera')).toBe('/driver/');
     expect(raizDeApp('/app/pedido/1')).toBe('/app/');
     expect(raizDeApp('/repartidores')).toBe('/');

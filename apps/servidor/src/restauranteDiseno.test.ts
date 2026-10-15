@@ -48,6 +48,14 @@ describe('app del restaurante con el diseño aprobado', () => {
     expect(menu).toMatch(/menuDe === p\.id \?/);
     expect(menu).toMatch(/await confirmar\(/);
   });
+  it('la app del restaurante se publica en la web en /restaurant', () => {
+    expect(JSON.parse(leer('apps', 'restaurante', 'app.json')).expo.experiments.baseUrl).toBe(
+      '/restaurant',
+    );
+    const publicar = leer('.github', 'workflows', 'publicar.yml');
+    expect(publicar).toMatch(/npm run build:restaurante-web/);
+    expect(publicar).toMatch(/out-deploy\/restaurant\//);
+  });
   it('el acceso del restaurante tiene su portada sin cambiar el de cliente y repartidor', () => {
     expect(leer(...APP, 'app', 'index.tsx')).toMatch(/<Acceso portada=\{<Portada \/>\} \/>/);
     expect(leer('packages', 'movil', 'src', 'Acceso.tsx')).toMatch(/portada \?/);
