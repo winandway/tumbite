@@ -127,6 +127,15 @@ for (const idioma of ['en', 'es'] as const) {
     };
     const foto = async (pagina: Page, nombre: string) => {
       if (!CAPTURAS) return;
+      // La app del repartidor (diseño del 14 oct) tiene cabecera, mapa y progreso arriba: la foto
+      // se toma desde el principio de la pantalla, no desde donde quedó el último desplazamiento.
+      if (nombre.startsWith('repartidor-'))
+        await pagina.evaluate(() => {
+          window.scrollTo(0, 0);
+          document.querySelectorAll('div').forEach((d) => {
+            if (d.scrollHeight > d.clientHeight + 4) d.scrollTop = 0;
+          });
+        });
       // La burbuja de ayuda se esconde solo durante la foto (no se quita: la pantalla la sigue usando).
       await pagina.evaluate(() =>
         document

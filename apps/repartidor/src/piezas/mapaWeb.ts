@@ -11,7 +11,7 @@ export type Punto = { lat: number; lng: number };
 export const COLORES = { restaurante: '#191919', casa: '#FF3008', repartidor: '#FF3008' };
 
 export function crearMapa(div: HTMLDivElement, centro: Punto, zoom = 15): L.Map {
-  const mapa = L.map(div, { zoomControl: true, attributionControl: true }).setView(
+  const mapa = L.map(div, { zoomControl: false, attributionControl: true }).setView(
     [centro.lat, centro.lng],
     zoom,
   );

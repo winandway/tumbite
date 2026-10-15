@@ -565,6 +565,7 @@ export function Inicio() {
   async function alternar() {
     if (cambiando) return;
     setError('');
+    setAviso('');
     setCambiando(true);
     try {
       if (estado?.conectado) {
