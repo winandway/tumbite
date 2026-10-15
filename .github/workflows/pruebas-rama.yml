@@ -66,7 +66,7 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         run: node scripts/staging/probar-staging.mjs
       - name: Tiempo real en vivo (WebSocket, GPS, firmas, reconexión, lote y reloj externo)
-        if: ${{ vars.URL_PRUEBAS != '' && vars.TIEMPO_REAL_URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' && vars.TIEMPO_REAL_URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           TIEMPO_REAL_URL: ${{ vars.TIEMPO_REAL_URL_PRUEBAS }}
@@ -75,7 +75,7 @@ jobs:
           AVISOS_SECRETO: ${{ secrets.AVISOS_SECRETO_PRUEBAS }}
         run: node scripts/staging/probar-tiempo-real.mjs
       - name: Recorrido completo de Comida en el sitio de pruebas (Stripe en modo prueba)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
           RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
@@ -83,7 +83,7 @@ jobs:
           npx playwright install --with-deps chromium
           npx playwright test -c playwright.recorrido-staging.config.ts
       - name: Conciliación de saldos contra Stripe (modo prueba)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}

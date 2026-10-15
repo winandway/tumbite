@@ -509,6 +509,14 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
       casos,
       cuenta,
     });
+  } catch (e) {
+    // Lo que diga Stripe, tal cual (sin llaves), para saber qué falta en la cuenta de prueba.
+    casos.push({
+      nombre: 'Stripe respondió con un error',
+      ok: false,
+      detalle: String(e instanceof Error ? e.message : e).slice(0, 400),
+    });
+    return c.json({ prueba: 'S11', ok: false, casos });
   } finally {
     await db.batch([
       db.prepare('DELETE FROM retiros WHERE usuario_id = ?').bind(u),

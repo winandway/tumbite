@@ -18,7 +18,7 @@ const pedir = async (ruta, cuerpo) => {
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   });
   const datos = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(`${ruta}: ${r.status} ${JSON.stringify(datos)}`);
+  if (!r.ok) return { prueba: ruta, ok: false, error: `${r.status} ${JSON.stringify(datos)}` };
   return datos;
 };
 
