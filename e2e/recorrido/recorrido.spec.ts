@@ -51,6 +51,7 @@ const AGENTE = {
 /** Qué foto del recorrido va a qué app de la tienda, en qué orden y con qué nombre. */
 const PARA_TIENDA = new Map<string, [string, string]>([
   ['cliente-inicio', ['Tumbite (cliente)', '01-inicio-restaurantes-cercanos']],
+  ['cliente-restaurantes', ['Tumbite (cliente)', '01b-restaurantes-de-comida']],
   ['cliente-menu', ['Tumbite (cliente)', '02-menu-del-restaurante']],
   ['cliente-opciones', ['Tumbite (cliente)', '02b-elige-tamano-y-extras']],
   ['cliente-carrito', ['Tumbite (cliente)', '03-carrito-con-el-precio-completo']],
@@ -522,7 +523,13 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
     await foto(cli, 'cliente-inicio');
-    await cli.getByText(restaurante).click();
+    // «Comida» abre la lista de restaurantes (diseño aprobado del 14 oct) y de ahí, el menú.
+    await cli.getByRole('button', { name: /^(Comida|Food)$/ }).click();
+    await expect(cli.getByLabel(/Buscar restaurantes|Search restaurants/)).toBeVisible();
+    const enLista = cli.getByText(restaurante).filter({ visible: true });
+    await expect(enLista).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-restaurantes');
+    await enLista.click();
     await expect(
       cli.getByText(idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita'),
     ).toBeVisible();
@@ -636,9 +643,13 @@ for (const idioma of ['en', 'es'] as const) {
       return c;
     };
     const cobro = await pedirYPagar([plato.pizza, plato.limonada], 'cliente-carrito');
-    await cli.goto(`/app/order/${cobro.pedidoId}`);
+    // Al pagar, la app abre el pedido con la confirmación «¡Pedido realizado!» (diseño del 14 oct).
+    await cli.goto(`/app/order/${cobro.pedidoId}?nuevo=1`);
     await expect(cli.getByText(/Payment received|Recibimos tu pago|Pago recibido/)).toBeVisible();
+    await expect(cli.getByText(/Order placed!|¡Pedido realizado!/)).toBeVisible();
     await foto(cli, 'cliente-pagado');
+    await cli.getByRole('button', { name: /Track order|Ver seguimiento/ }).click();
+    await expect(cli.getByText(/Confirmed|Confirmado/)).toBeVisible();
 
     // 6. El restaurante acepta con su tiempo y avisa que está listo.
     await panel.getByRole('link', { name: L.pedidos, exact: true }).click();

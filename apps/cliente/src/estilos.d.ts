@@ -5,3 +5,7 @@ declare module '*.png' {
   const imagen: number;
   export default imagen;
 }
+declare module '*.webp' {
+  const imagen: number;
+  export default imagen;
+}

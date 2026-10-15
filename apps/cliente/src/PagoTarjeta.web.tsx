@@ -76,7 +76,9 @@ function Formulario({
       elements,
       redirect: 'if_required',
       // Solo se usa si el banco pide verificar fuera (3D Secure de algunos bancos).
-      confirmParams: { return_url: `${window.location.origin}/app/order/${cobro.pedidoId}` },
+      confirmParams: {
+        return_url: `${window.location.origin}/app/order/${cobro.pedidoId}?nuevo=1`,
+      },
     });
     setPagando(false);
     if (r.error) return setError(r.error.message ?? '');

@@ -8,6 +8,7 @@ import {
   proximaApertura,
   textoApertura,
 } from '@tumbite/compartido';
+import { router } from 'expo-router';
 import { C, urlFoto } from '@tumbite/movil';
 import { IMG, fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
@@ -102,7 +103,13 @@ export function Restaurantes({
       >
         <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.cerca}</Text>
         {lista.length > 3 ? (
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verTodos} ›</Text>
+          <Text
+            style={{ color: '#5E5E5E', fontWeight: '600' }}
+            onPress={() => router.push('/restaurants')}
+            accessibilityRole="link"
+          >
+            {t.verTodos} ›
+          </Text>
         ) : null}
       </View>
       <ScrollView

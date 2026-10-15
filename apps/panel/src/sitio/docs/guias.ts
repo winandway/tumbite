@@ -88,7 +88,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos y el cupón de regalos. El selector de idioma (español o inglés) está ahí mismo.',
           'Buscador: escribe el nombre de un restaurante o un tipo de comida y la lista se filtra al instante. El botón de filtros muestra solo los que están abiertos ahora.',
-          'Servicios: hoy funciona «Comida». Mercado, envíos, farmacia, moto, licores, carro y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
+          'Servicios: hoy funciona «Comida»: al tocarla ves todos los restaurantes, con buscador y botones por tipo de comida. Mercado, envíos, farmacia, moto, licores, carro y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
           'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
           'Ofertas del día: mientras los restaurantes cargan sus promociones, ves ejemplos marcados «Ejemplo» (no se pueden comprar).',
           'Restaurantes cerca de ti: tarjetas con la foto, el tiempo estimado, el costo de envío y si está abierto. Toca una para ver el menú.',
@@ -282,9 +282,14 @@ const es: SeccionDocs[] = [
           'Elige un restaurante cercano, arma tu carrito y paga con tarjeta, Apple Pay o Google Pay.',
         capturas: [
           {
+            src: '/docs/recorrido-cliente-restaurantes-es.webp',
+            alt: 'Lista de restaurantes de Comida en la app de Tumbite: buscador, botones por tipo de comida y tarjetas con foto, distancia, tiempo y si está abierto.',
+            pie: 'Toca «Comida» y elige entre todos los restaurantes de tu zona.',
+          },
+          {
             src: '/docs/recorrido-cliente-menu-es.webp',
-            alt: 'Menú de un restaurante en la app de Tumbite con cada plato, su categoría, su precio y el botón «Agregar».',
-            pie: 'Eliges tus platos con «Agregar».',
+            alt: 'Menú de un restaurante en la app de Tumbite: foto grande, pestañas Menú e Información, botones por categoría y cada plato con su precio y el botón +.',
+            pie: 'Eliges tus platos con el botón +; al tocar un plato ves su detalle.',
           },
           {
             src: '/docs/recorrido-cliente-carrito-es.webp',
@@ -293,7 +298,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-es.webp',
-            alt: 'Pedido pagado en la app de Tumbite, esperando que el restaurante lo acepte, con la barra de progreso.',
+            alt: 'Confirmación «¡Pedido realizado!» en la app de Tumbite, con el número del pedido, el total y los botones «Ver seguimiento» y «Volver al inicio».',
             pie: 'Pagas y el pedido le llega al restaurante al instante.',
           },
         ],
@@ -304,11 +309,11 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Abre la app de Tumbite y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
-          'Toca un restaurante, elige tus platos y ajusta la cantidad con los botones de más y menos.',
+          'Toca «Comida» y luego un restaurante. Toca un plato para ver su detalle: elige el tamaño, los extras y la cantidad, y toca «Agregar al carrito».',
           'Ve al carrito. Marca tu dirección en el mapa o escríbela, y agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
           'Revisa el desglose: comida, envío, servicio y propina. Lo que ves es lo que pagas.',
-          'Toca «Continuar al pago». El formulario de la tarjeta aparece ahí mismo, dentro de la app, protegido por Stripe. Al pagar, pasas directo a tu pedido en vivo.',
+          'Toca «Continuar al pago». El formulario de la tarjeta aparece ahí mismo, dentro de la app, protegido por Stripe. Al pagar ves «¡Pedido realizado!» con el número y el total; toca «Ver seguimiento» para seguirlo en vivo.',
         ],
       },
       {
@@ -327,7 +332,7 @@ const es: SeccionDocs[] = [
           '¿Cuánto falta para que llegue mi comida?',
         ],
         pasos: [
-          'Después de pagar, la pantalla del pedido muestra cinco pasos: pago recibido, en cocina, listo, en camino y entregado.',
+          'Después de pagar, la pantalla del pedido muestra cuatro pasos: confirmado, en preparación, en camino y entregado. Lo que ya pasó se marca en verde.',
           'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta, con el tiempo estimado de llegada.',
           'Te llega un aviso al celular en cada paso importante, si los tienes encendidos.',
           'Si algo no cuadra, toca «¿Problemas con tu pedido?» y escríbenos: te contesta una persona.',
@@ -1763,7 +1768,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Header: the Tumbite logo, your name, the notifications bell and the gifts coupon. The language selector (Spanish or English) is right there.',
           'Search: type a restaurant name or a type of food and the list filters instantly. The filter button shows only the ones open right now.',
-          'Services: “Food” works today. Grocery, deliveries, pharmacy, ride, liquor, car and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
+          'Services: “Food” works today: tapping it shows every restaurant, with a search bar and buttons by type of food. Grocery, deliveries, pharmacy, ride, liquor, car and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
           'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
           'Today’s deals: while restaurants load their promotions, you see samples marked “Sample” (they can’t be bought).',
           'Restaurants near you: cards with the photo, the estimated time, the delivery fee and whether it’s open. Tap one to see the menu.',
@@ -1957,9 +1962,14 @@ const en: SeccionDocs[] = [
           'Pick a nearby restaurant, build your cart, and pay with a card, Apple Pay, or Google Pay.',
         capturas: [
           {
+            src: '/docs/recorrido-cliente-restaurantes-en.webp',
+            alt: 'The Food restaurant list in the Tumbite app: search bar, buttons by type of food, and cards with photo, distance, time, and whether it’s open.',
+            pie: 'Tap “Food” and choose from every restaurant in your area.',
+          },
+          {
             src: '/docs/recorrido-cliente-menu-en.webp',
-            alt: 'A restaurant’s menu in the Tumbite app with each item, its category, its price, and the “Add” button.',
-            pie: 'Pick your items with “Add.”',
+            alt: 'A restaurant’s menu in the Tumbite app: big photo, Menu and Info tabs, category buttons, and each item with its price and the + button.',
+            pie: 'Pick your items with the + button; tap an item to see its details.',
           },
           {
             src: '/docs/recorrido-cliente-carrito-en.webp',
@@ -1968,7 +1978,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-en.webp',
-            alt: 'Paid order in the Tumbite app, waiting for the restaurant to accept, with the progress bar.',
+            alt: '“Order placed!” confirmation in the Tumbite app, with the order number, the total, and the “Track order” and “Back to home” buttons.',
             pie: 'You pay and the order reaches the restaurant instantly.',
           },
         ],
@@ -1979,11 +1989,11 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'Open the Tumbite app and allow location: you’ll see the restaurants in your area, closest first.',
-          'Tap a restaurant, pick your dishes, and adjust quantities with the plus and minus buttons.',
+          'Tap “Food” and then a restaurant. Tap a dish to see its details: choose the size, the extras, and the quantity, and tap “Add to cart.”',
           'Go to the cart. Mark your address on the map or type it, and add notes if needed (for example, “ring twice”).',
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',
           'Review the breakdown: food, delivery, service, and tip. What you see is what you pay.',
-          'Tap “Continue to payment.” The card form appears right there, inside the app, secured by Stripe. Once you pay, you go straight to your live order.',
+          'Tap “Continue to payment.” The card form appears right there, inside the app, secured by Stripe. Once you pay, you see “Order placed!” with the number and the total; tap “Track order” to follow it live.',
         ],
       },
       {
@@ -2000,7 +2010,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['Where can I see where my order is?', 'How long until my food arrives?'],
         pasos: [
-          'After paying, the order screen shows five steps: payment received, in the kitchen, ready, on the way, and delivered.',
+          'After paying, the order screen shows four steps: confirmed, preparing, on the way, and delivered. What’s done turns green.',
           'When the driver picks up your food, they appear on the map heading to your door, with the estimated arrival time.',
           'You get a phone notification at each key step, if notifications are on.',
           'If something’s off, tap “Problems with your order?” and write to us: a real person answers.',

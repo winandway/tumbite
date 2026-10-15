@@ -93,7 +93,8 @@ export function Inicio() {
   const carritoCentavos = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
 
   const servicio = (s: Servicio) => {
-    if (s === 'comida') return;
+    // «Comida» abre la lista de restaurantes; los demás servicios llegan después.
+    if (s === 'comida') return router.push('/restaurants');
     setPronto(true);
   };
   const pestana = (p: Pestana) => {

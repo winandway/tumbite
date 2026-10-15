@@ -20,6 +20,8 @@ export type LineaCarrito = {
   precioCentavos: number;
   cantidad: number;
   opciones?: OpcionElegida[];
+  /** Foto del plato para el carrito (solo para mostrar; el precio lo recalcula el servidor). */
+  imagen?: string | null;
 };
 export const claveDeLinea = (platoId: string, opciones: { id: string }[]) =>
   `${platoId}:${opciones
@@ -122,6 +124,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               precioCentavos: p.precioCentavos + opciones.reduce((s, o) => s + o.precioCentavos, 0),
               cantidad: 1,
               opciones,
+              imagen: p.imagen,
             },
           ];
       return { ...base, lineas };

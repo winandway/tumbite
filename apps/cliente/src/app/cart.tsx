@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import type React from 'react';
+import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
@@ -17,12 +19,14 @@ import {
   Boton,
   C,
   Campo,
-  Pantalla,
   alSalirTelefono,
   almacenTelefono,
   e,
+  urlFoto,
   useSesion,
 } from '@tumbite/movil';
+import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
+import { textosComida } from '../comida/textos';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -77,6 +81,7 @@ export default function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const te = idioma === 'en' ? TE.en : TE.es;
+  const tc = textosComida(idioma);
   const { carrito, cambiarCantidad, vaciar } = useCarrito();
   const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
   const [punto, setPunto] = useState<Punto | null>(null);
@@ -198,91 +203,119 @@ export default function PantallaCarrito() {
   // Si el total cambió después de crear el cobro, ese cobro ya no sirve: se crea otro.
   const cobro = cobroGuardado && d && cobroGuardado.total === d.totalCliente ? cobroGuardado : null;
 
+  const volver = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const marco = (cuerpo: React.ReactNode) => (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+      <Encabezado titulo={tc.tuCarrito} alVolver={volver} etiquetaVolver={tc.volver} />
+      <ScrollView
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 32,
+          width: '100%',
+          maxWidth: ANCHO_MAX,
+          alignSelf: 'center',
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {cuerpo}
+      </ScrollView>
+    </SafeAreaView>
+  );
+
   if (!d) {
-    return (
-      <Pantalla titulo={t.carrito}>
-        <Text style={e.enlace} onPress={() => router.back()}>
-          {t.volver}
-        </Text>
-        <Text style={e.tarjeta}>{t.vacio}</Text>
-      </Pantalla>
+    return marco(
+      <Tarjeta>
+        <Text>{t.vacio}</Text>
+      </Tarjeta>,
     );
   }
 
   const fila = (texto: string, monto: number, fuerte = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 }}>
-      <Text style={fuerte ? { fontWeight: '800', fontSize: 17 } : undefined}>{texto}</Text>
-      <Text style={fuerte ? { fontWeight: '800', fontSize: 17 } : undefined}>
+      <Text
+        style={
+          fuerte ? { fontWeight: '900', fontSize: 19, color: C.secundario } : { color: '#5E5E5E' }
+        }
+      >
+        {texto}
+      </Text>
+      <Text
+        style={
+          fuerte
+            ? { fontWeight: '900', fontSize: 19, color: C.secundario }
+            : { color: C.secundario }
+        }
+      >
         {formatearDolares(monto, idioma)}
       </Text>
     </View>
   );
+  const titulo = (texto: string) => (
+    <Text
+      style={{
+        fontWeight: '800',
+        fontSize: 16,
+        color: C.secundario,
+        marginTop: 8,
+        marginBottom: 8,
+      }}
+    >
+      {texto}
+    </Text>
+  );
+  const modoActual = b.valores.entrega || 'puerta';
 
-  return (
-    <Pantalla titulo={t.carrito}>
-      <Text style={e.enlace} onPress={() => router.back()} accessibilityRole="button">
-        {t.volver}
-      </Text>
-      <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario, marginBottom: 8 }}>
+  return marco(
+    <>
+      <Text style={{ fontWeight: '800', fontSize: 15, color: '#5E5E5E', marginBottom: 8 }}>
         {carrito.restauranteNombre}
       </Text>
-      {carrito.lineas.map((l) => (
-        <View
-          key={l.clave ?? l.platoId}
-          style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '700' }}>{textoLinea(l, idioma)}</Text>
-            <Text>{formatearDolares(l.precioCentavos * l.cantidad, idioma)}</Text>
-          </View>
-          <Pressable
-            onPress={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
-            accessibilityRole="button"
-            accessibilityLabel={t.menos}
-            style={{ padding: 8 }}
+      {carrito.lineas.map((l) => {
+        const foto = urlFoto(l.imagen);
+        return (
+          <Tarjeta
+            key={l.clave ?? l.platoId}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10 }}
           >
-            <Text style={{ fontSize: 22 }}>−</Text>
-          </Pressable>
-          <Text style={{ fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{l.cantidad}</Text>
-          <Pressable
-            onPress={() => cambiarCantidad(l.clave ?? l.platoId, Math.min(99, l.cantidad + 1))}
-            accessibilityRole="button"
-            accessibilityLabel={t.mas}
-            style={{ padding: 8 }}
-          >
-            <Text style={{ fontSize: 22 }}>+</Text>
-          </Pressable>
-        </View>
-      ))}
+            {foto ? (
+              <Image
+                source={{ uri: foto }}
+                style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                accessibilityIgnoresInvertColors
+              />
+            ) : null}
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {textoLinea(l, idioma)}
+              </Text>
+              <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+                {formatearDolares(l.precioCentavos * l.cantidad, idioma)}
+              </Text>
+            </View>
+            <BotonRedondo
+              texto="−"
+              lleno={false}
+              alTocar={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
+              etiqueta={t.menos}
+            />
+            <Text style={{ fontWeight: '800', minWidth: 20, textAlign: 'center' }}>
+              {l.cantidad}
+            </Text>
+            <BotonRedondo
+              texto="+"
+              lleno={false}
+              alTocar={() => cambiarCantidad(l.clave ?? l.platoId, Math.min(99, l.cantidad + 1))}
+              etiqueta={t.mas}
+            />
+          </Tarjeta>
+        );
+      })}
 
-      {(b.valores.entrega || 'puerta') !== 'recoger' ? (
-        <ElegirEnMapa
-          punto={punto}
-          cambiarPunto={setPunto}
-          cambiarDireccion={(x) => b.cambiar('direccion', x)}
-          textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
-        />
-      ) : null}
-      {(b.valores.entrega || 'puerta') !== 'recoger' ? (
-        <Campo
-          etiqueta={t.direccion}
-          value={b.valores.direccion}
-          onChangeText={(x) => b.cambiar('direccion', x)}
-          placeholder={t.direccionAyuda}
-          autoComplete="street-address"
-        />
-      ) : null}
-      <Campo
-        etiqueta={t.notas}
-        value={b.valores.notas}
-        onChangeText={(x) => b.cambiar('notas', x)}
-        placeholder={t.notas}
-      />
-      {/* Cómo recibir: en la puerta (el repartidor deja foto) o en mano (te lo entrega a ti). */}
-      <Text style={{ fontWeight: '700', marginBottom: 6 }}>{te.como}</Text>
+      {/* Cómo recibir: en la puerta (el repartidor deja foto), en mano o recoger en el local. */}
+      {titulo(te.como)}
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
         {(['puerta', 'mano', 'recoger'] as const).map((modo) => {
-          const activo = (b.valores.entrega || 'puerta') === modo;
+          const activo = modoActual === modo;
           return (
             <Pressable
               key={modo}
@@ -295,16 +328,16 @@ export default function PantallaCarrito() {
               style={{
                 flex: 1,
                 padding: 12,
-                borderRadius: 12,
+                borderRadius: 14,
                 borderWidth: activo ? 2 : 1,
-                borderColor: activo ? C.exito : '#D6D6D6',
-                backgroundColor: activo ? '#E8F5EE' : '#fff',
+                borderColor: activo ? C.primario : '#DADADA',
+                backgroundColor: '#fff',
               }}
             >
-              <Text style={{ fontWeight: '800' }}>
+              <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
                 {modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
                 {modo === 'recoger'
                   ? te.recogerAyuda
                   : modo === 'mano'
@@ -315,19 +348,8 @@ export default function PantallaCarrito() {
           );
         })}
       </View>
-      {(b.valores.entrega || 'puerta') === 'mano' ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-            marginBottom: 12,
-            padding: 12,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: '#D6D6D6',
-          }}
-        >
+      {modoActual === 'mano' ? (
+        <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: '800' }}>{te.pinTitulo}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{te.pinAyuda}</Text>
@@ -338,10 +360,35 @@ export default function PantallaCarrito() {
             accessibilityLabel={te.pinTitulo}
             trackColor={{ true: C.exito, false: '#D6D6D6' }}
           />
-        </View>
+        </Tarjeta>
       ) : null}
 
-      <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.propina}</Text>
+      {modoActual !== 'recoger' ? (
+        <>
+          {titulo(t.direccion)}
+          <ElegirEnMapa
+            punto={punto}
+            cambiarPunto={setPunto}
+            cambiarDireccion={(x) => b.cambiar('direccion', x)}
+            textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
+          />
+          <Campo
+            etiqueta={t.direccion}
+            value={b.valores.direccion}
+            onChangeText={(x) => b.cambiar('direccion', x)}
+            placeholder={t.direccionAyuda}
+            autoComplete="street-address"
+          />
+        </>
+      ) : null}
+      <Campo
+        etiqueta={t.notas}
+        value={b.valores.notas}
+        onChangeText={(x) => b.cambiar('notas', x)}
+        placeholder={t.notas}
+      />
+
+      {titulo(t.propina)}
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
         {[...PROPINAS, 'otra' as const].map((pb) => (
           <Pressable
@@ -351,15 +398,17 @@ export default function PantallaCarrito() {
             accessibilityLabel={`${t.propina}: ${pb === 'otra' ? t.otra : `${pb / 100}%`}`}
             accessibilityState={{ selected: propinaPb === pb }}
             style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 999,
+              flexGrow: 1,
+              alignItems: 'center',
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              borderRadius: 12,
               borderWidth: 1,
-              borderColor: propinaPb === pb ? C.primario : '#D6D6D6',
+              borderColor: propinaPb === pb ? C.primario : '#DADADA',
               backgroundColor: propinaPb === pb ? C.primario : '#fff',
             }}
           >
-            <Text style={{ color: propinaPb === pb ? '#fff' : C.texto, fontWeight: '700' }}>
+            <Text style={{ color: propinaPb === pb ? '#fff' : C.texto, fontWeight: '800' }}>
               {pb === 'otra' ? t.otra : `${pb / 100}%`}
             </Text>
           </Pressable>
@@ -374,7 +423,7 @@ export default function PantallaCarrito() {
           placeholder="0.00"
         />
       )}
-      <Text style={{ color: '#5E5E5E', marginBottom: 12 }}>{t.propinaNota}</Text>
+      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>{t.propinaNota}</Text>
 
       {regalos.map((r) => (
         <Pressable
@@ -400,17 +449,17 @@ export default function PantallaCarrito() {
           </Text>
         </Pressable>
       ))}
-      <View style={e.tarjeta}>
+      <Tarjeta>
         {fila(t.subtotal, d.subtotal)}
         {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
         {fila(t.envio, d.envio)}
         {fila(t.servicio, d.servicio)}
         {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
         {fila(t.propina, d.propina)}
-        <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 6 }}>
+        <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
           {fila(t.total, d.totalCliente, true)}
         </View>
-      </View>
+      </Tarjeta>
       {error ? (
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error}
@@ -432,7 +481,8 @@ export default function PantallaCarrito() {
             alPagar={() => {
               void b.limpiar();
               vaciar();
-              router.replace(`/order/${cobro.pedidoId}`);
+              // Llega al pedido con la confirmación «¡Pedido realizado!».
+              router.replace(`/order/${cobro.pedidoId}?nuevo=1`);
             }}
           />
         </>
@@ -443,6 +493,6 @@ export default function PantallaCarrito() {
           cargando={pagando}
         />
       )}
-    </Pantalla>
+    </>,
   );
 }

@@ -1,8 +1,12 @@
-# Plan: rediseño visual de Tumbite Driver (solo apps/repartidor)
+# Plan: Tumbite Cliente, rediseño de las pantallas de Comida
 
-- [x] Paso 1: dependencias de mapa (react-native-maps + leaflet, las mismas del cliente), llave de Google Maps en app.json, recursos gráficos (logotipo, mascota, íconos).
-- [x] Paso 2: piezas nuevas: cabecera Driver, barra inferior, mapa (celular + web), resumen del día, interruptor de conexión, tarjeta de oferta con reloj real, progreso Recoger→Entregar→Completar, botones redondos, modal «Muy pronto».
-- [x] Paso 3: pantalla Inicio (desconectado y disponible) con mapa, resumen y oferta flotante; conservando conectar/desconectar y ofertas reales.
-- [x] Paso 4: pedido activo: cabecera roja con distancia real, mapa con ruta, tarjeta Recoge/Entrega, progreso; recogida (foto + QR) y entrega (todos los casos actuales) con el estilo nuevo.
-- [x] Paso 5: Ganancias (Hoy/Semana/Mes desde los movimientos reales + billetera), Pedidos (historial real), Perfil (vehículo, documentos, idioma, soporte, cerrar sesión; «Mis lugares» y «Preferencias» = Muy pronto).
-- [x] Paso 6: tipos, lint, pruebas, recorrido ES/EN con capturas, capturas de tiendas, comparación con la imagen aprobada, candado, commit y publicación.
+Referencia: imagen de diez pantallas (14 oct 2026). Solo frontend en `apps/cliente`. El inicio «¡Hola, Richard!» no se toca, salvo que el ícono «Comida» ahora abre la lista de restaurantes.
+
+- [x] Paso 1: auditoría y documento `docs/PLAN-DISENO-COMIDA.md` (qué existe, qué se rediseña, qué falta).
+- [x] Paso 2: piezas comunes de Comida (encabezado con flecha, tarjetas, textos ES/EN, íconos).
+- [x] Paso 3: pantalla nueva de Restaurantes (buscador, categorías reales, tarjetas, barra inferior) y «Comida» la abre.
+- [x] Paso 4: Menú del restaurante (foto grande, Abierto, pestañas Menú / Información, categorías, botón + redondo).
+- [x] Paso 5: Detalle del producto (foto, tamaños en losetas, extras con casillas, cantidad, «Agregar al carrito · $»).
+- [x] Paso 6: Carrito y pago (líneas con foto, tipo de entrega con íconos, propina en botones, resumen, botón rojo).
+- [x] Paso 7: Pedido: confirmación «¡Pedido realizado!», seguimiento con pasos, mapa, tarjeta del repartidor con llamar y chat, detalle del pedido, entregado y calificación.
+- [x] Paso 8: tipos, lint, pruebas, recorrido ES/EN con capturas, candado, commit, publicación y comprobación en vivo.
