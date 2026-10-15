@@ -1,0 +1,20 @@
+// Fase 2 · Worker de tiempo real (Durable Object por zona). NO desplegado todavía.
+// Secretos (nunca aquí): INTERNO_LLAVE_ID, INTERNO_SECRETO, AVISOS_LLAVE_ID, AVISOS_SECRETO_ACTUAL,
+// AVISOS_LLAVE_ID_ANTERIOR, AVISOS_SECRETO_ANTERIOR, PASE_LLAVE_ID, PASE_SECRETO_ACTUAL,
+// PASE_LLAVE_ID_ANTERIOR, PASE_SECRETO_ANTERIOR → `wrangler secret put <NOMBRE>`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "tumbite-tiempo-real",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [{ "name": "ZONAS", "class_name": "ZonaTiempoReal" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ZonaTiempoReal"] }],
+  "vars": {
+    // Primero el sitio de pruebas. Producción solo con la aprobación de Richard.
+    "BACKEND_URL": "https://staging.tumbite.com",
+  },
+  "observability": { "enabled": true },
+}

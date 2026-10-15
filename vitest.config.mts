@@ -19,6 +19,13 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'tiempo-real',
+          include: ['apps/tiempo-real/src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.tsx'],
           environment: 'jsdom',
@@ -28,8 +35,18 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['packages/compartido/src/**', 'apps/servidor/src/**', 'apps/panel/src/**'],
-      exclude: ['**/*.test.*', '**/index.ts', 'apps/panel/src/main.tsx'],
+      include: [
+        'packages/compartido/src/**',
+        'apps/servidor/src/**',
+        'apps/panel/src/**',
+        'apps/tiempo-real/src/**',
+      ],
+      exclude: [
+        '**/*.test.*',
+        '**/index.ts',
+        'apps/panel/src/main.tsx',
+        'apps/tiempo-real/src/pruebas.ts',
+      ],
       // Umbral global de la casa. Lo que toca dinero se exige al 90 %.
       thresholds: {
         lines: 60,

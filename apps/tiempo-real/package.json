@@ -1,0 +1,19 @@
+{
+  "name": "@tumbite/tiempo-real",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workers externos de Cloudflare (Fase 2): reloj cada minuto y tiempo real con Durable Objects. NO se despliegan todavía.",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build:tiempo-real": "wrangler deploy --dry-run --outdir=.dist-tiempo-real",
+    "build:reloj": "wrangler deploy --dry-run -c wrangler.reloj.jsonc --outdir=.dist-reloj"
+  },
+  "dependencies": {
+    "@tumbite/compartido": "0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261010.1",
+    "wrangler": "^4.149.0"
+  }
+}

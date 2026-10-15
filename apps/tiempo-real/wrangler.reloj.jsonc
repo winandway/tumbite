@@ -1,0 +1,12 @@
+// Fase 2 · Worker del reloj: cada minuto llama a /datos/interno/reloj con firma. NO desplegado.
+// Secretos (nunca aquí): INTERNO_LLAVE_ID, INTERNO_SECRETO → `wrangler secret put <NOMBRE> -c wrangler.reloj.jsonc`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "tumbite-reloj",
+  "main": "src/reloj.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": { "BACKEND_URL": "https://staging.tumbite.com" },
+  "observability": { "enabled": true },
+}

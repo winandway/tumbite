@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/dist/**',
       '**/.expo/**',
       '**/.dist-worker/**',
+      '**/.dist-tiempo-real/**',
+      '**/.dist-reloj/**',
       '**/.wrangler/**',
       '**/coverage/**',
       'out-deploy/**',

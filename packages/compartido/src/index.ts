@@ -22,3 +22,4 @@ export * from './gps';
 export * from './activacion';
 export * from './colaEntrega';
 export * from './firmaInterna';
+export * from './tiempoReal';

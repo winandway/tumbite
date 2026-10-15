@@ -7,3 +7,5 @@ out-deploy
 package-lock.json
 apps/*/AGENTS.md
 .recorrido
+.dist-tiempo-real
+.dist-reloj
