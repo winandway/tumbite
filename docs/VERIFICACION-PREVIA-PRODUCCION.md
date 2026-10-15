@@ -23,3 +23,10 @@ Los 2 carritos en «pago pendiente» no estorban: no tienen pago ni se ofrecen a
 ## ¿Es seguro autorizar la publicación controlada?
 
 **Sí, con una condición previa: resolver el pedido abierto (cancelarlo).** Todo lo demás está en verde: respaldo hecho y comprobado, sin retiros previos, sin cuentas conectadas, entornos separados, retiros apagados por defecto, paquete de producción revisado limpio y la versión anterior lista para volver.
+
+## Repetición del 15 de octubre, 23:52 UTC (después de cerrar el pedido viejo)
+
+- Por orden de Richard, el pedido `95fce528` (su compra de prueba del 12 oct) se marcó como **entregado** en producción, con su anotación en el historial. No se reembolsó (decisión suya). Los pedidos no tienen disparadores: el cambio no movió dinero.
+- Pedidos activos: **0**. Repartidores conectados: **0**. Retiros: **0**. Bandera `retiros_activos`: **sin fila** (nacerán apagados).
+- Salud de producción: todo `ok` (solo `sms: pendiente`), `respaldo: ok` del 15 oct.
+- **Resultado: no queda ningún bloqueo. Se puede autorizar la publicación controlada.**
