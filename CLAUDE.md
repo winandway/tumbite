@@ -60,7 +60,7 @@ Las reglas globales de Richard aplican; estas se suman.
 ## Todas las pruebas: solo en el sitio de pruebas y con Stripe en modo prueba (regla permanente, Richard, 15 oct 2026)
 
 - Toda prueba nueva de Tumbite se hace en el sitio de pruebas (staging.tumbite.com), **exclusivamente con Stripe en modo prueba**.
-- **Prohibido usar tarjetas reales o generar cobros reales para probar**, también en tumbite.com. Lo que pasó: una compra de prueba real de 7,18 dólares quedó abierta desde el 12 oct y hubo que reembolsarla a mano.
+- **Prohibido usar tarjetas reales o generar cobros reales para probar**, también en tumbite.com. Lo que pasó: una compra de prueba real de 7,18 dólares quedó abierta desde el 12 oct; Richard decidió no reembolsarla y se marcó como entregada el 15 oct.
 - Nada se publica en producción sin la autorización explícita de Richard.
 
 ## Perímetro
