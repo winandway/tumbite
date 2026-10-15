@@ -66,7 +66,12 @@ export function crearBasePruebas(): D1Database {
       try {
         const r = lista.map((s) => s.__ejecutar());
         db.exec('COMMIT');
-        return r.map(() => ({ success: true, meta: {}, results: [] }));
+        // Como D1: cada resultado del lote dice cuántas filas cambió.
+        return r.map((x) => ({
+          success: true,
+          meta: { changes: Number(x.changes), last_row_id: Number(x.lastInsertRowid) },
+          results: [],
+        }));
       } catch (e) {
         db.exec('ROLLBACK');
         throw e;

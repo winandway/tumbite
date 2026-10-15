@@ -49,6 +49,23 @@ export const esquemaEnv = z.object({
   CHECKR_API_URL: z.string().optional(),
   /** «1» = apagar los retiros de inmediato, sin tocar la base (emergencia). Manda sobre la bandera. */
   RETIROS_APAGADOS: z.enum(['0', '1']).optional(),
+  // Fase 2 · Tiempo real (docs/FASE-2-TIEMPO-REAL.md). Sin estas variables todo sigue como hoy:
+  // las apps consultan al servidor y mandan la ubicación por la ruta actual.
+  /** Llave con la que los Workers externos firman lo que mandan aquí (actual y anterior). */
+  INTERNO_LLAVE_ID: z.string().min(1).max(32).optional(),
+  INTERNO_SECRETO_ACTUAL: z.string().min(32).optional(),
+  INTERNO_LLAVE_ID_ANTERIOR: z.string().min(1).max(32).optional(),
+  INTERNO_SECRETO_ANTERIOR: z.string().min(32).optional(),
+  /** Llave con la que este servidor firma lo que le manda al Worker de tiempo real. */
+  AVISOS_LLAVE_ID: z.string().min(1).max(32).optional(),
+  AVISOS_SECRETO: z.string().min(32).optional(),
+  /** Llave de los pases cortos (15 min) para el WebSocket (actual y anterior). */
+  PASE_LLAVE_ID: z.string().min(1).max(32).optional(),
+  PASE_SECRETO_ACTUAL: z.string().min(32).optional(),
+  PASE_LLAVE_ID_ANTERIOR: z.string().min(1).max(32).optional(),
+  PASE_SECRETO_ANTERIOR: z.string().min(32).optional(),
+  /** Dirección del Worker de tiempo real (https://…). Vacía = tiempo real apagado. */
+  TIEMPO_REAL_URL: z.url().optional(),
   /** «1» = la selfie de control se pide en cada conexión (pruebas y recorrido). */
   SELFIE_CONTROL_SIEMPRE: z.enum(['0', '1']).optional(),
 });

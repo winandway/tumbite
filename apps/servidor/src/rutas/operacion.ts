@@ -1594,21 +1594,28 @@ operacion.post('/reloj', async (c) => {
   const dado = c.req.header('x-reloj-secreto') ?? '';
   if (!secreto || dado.length !== secreto.length || !(await igualesSeguro(dado, secreto)))
     throw new ErrorDatos('No encontrado.', undefined, 404);
-  const db = base(c);
-  await repartirOfertas(db, c.env);
-  const manager = await vigilarPedidos(c.env, db);
+  return c.json(await correrReloj(c.env, base(c)));
+});
+
+/**
+ * Las tareas del reloj. Las llaman el reloj actual (GitHub Actions, /datos/reloj) y, desde la
+ * Fase 2, el Worker externo con firma (/datos/interno/reloj). Cada tarea ya es repetible.
+ */
+export async function correrReloj(env: Env, db: D1Database) {
+  await repartirOfertas(db, env);
+  const manager = await vigilarPedidos(env, db);
   const pendientes = await db
     .prepare(
       "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
     )
     .first<{ n: number }>();
   // Dinero vigilado: la conciliación de ayer (una vez al día) y la retención de fotos (30 días).
-  const conciliacion = await conciliarAyer(c.env, db).catch((e: unknown) => {
+  const conciliacion = await conciliarAyer(env, db).catch((e: unknown) => {
     console.error('conciliación', e);
     return null;
   });
   // Fase 0: retiros dudosos o atascados se reintentan (misma clave) y una vez al día se concilian.
-  const stripeReloj = crearStripe(c.env.STRIPE_SECRET_KEY);
+  const stripeReloj = crearStripe(env.STRIPE_SECRET_KEY);
   const retiros = stripeReloj
     ? await procesarRetirosPendientes(db, stripeReloj).catch((e: unknown) => {
         console.error('retiros: reloj', e);
@@ -1621,13 +1628,13 @@ operacion.post('/reloj', async (c) => {
         return null;
       })
     : null;
-  const fotosBorradas = c.env.BUCKET
-    ? await depurarFotos(db, c.env.BUCKET).catch((e: unknown) => {
+  const fotosBorradas = env.BUCKET
+    ? await depurarFotos(db, env.BUCKET).catch((e: unknown) => {
         console.error('retención de fotos', e);
         return 0;
       })
     : 0;
-  return c.json({
+  return {
     ok: true,
     manager,
     sinRepartidor: pendientes?.n ?? 0,
@@ -1636,8 +1643,8 @@ operacion.post('/reloj', async (c) => {
     retiros,
     conciliacionRetiros: conciliacionRetiros ? { cuadra: conciliacionRetiros.cuadra } : null,
     cuando: new Date().toISOString(),
-  });
-});
+  };
+}
 
 async function igualesSeguro(a: string, b: string): Promise<boolean> {
   const h = async (x: string) =>

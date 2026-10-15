@@ -24,6 +24,7 @@ import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
 import { saludServicios, servicios } from './rutas/servicios';
+import { interno, saludTiempoReal } from './rutas/interno';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
@@ -160,6 +161,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: servicios', e);
       return 'error' as const;
     });
+  // Fase 2: tiempo real (apagado = «pendiente»; las apps siguen con la consulta normal).
+  if (c.env.DB)
+    piezas.tiempoReal = await saludTiempoReal(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: tiempo real', e);
+      return 'pendiente' as const;
+    });
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -284,6 +291,7 @@ app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);
 app.route('/datos', servicios);
+app.route('/datos', interno);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
 app.route('/datos', regalos);

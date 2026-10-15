@@ -1133,3 +1133,38 @@ CREATE TABLE IF NOT EXISTS auditoria_admin (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS auditoria_admin_objeto ON auditoria_admin(objeto, id);
+
+-- =====================================================================================
+-- FASE 2 · TIEMPO REAL (15 oct 2026, rama multiservicio-fase-2). Diseño: ARQUITECTURA-
+-- MULTISERVICIO-V1.2 §3.6 y §4. Los Workers externos NO tocan la base: todo pasa por las rutas
+-- /datos/interno/* con firma. Estas tablas solo sirven para que nada se haga dos veces.
+-- =====================================================================================
+
+-- Cada tarea programada corre UNA vez por ventana, aunque el reloj llame dos veces.
+CREATE TABLE IF NOT EXISTS tareas_programadas (
+  clave TEXT PRIMARY KEY,
+  tarea TEXT NOT NULL,
+  empezada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  terminada_en TEXT,
+  resultado TEXT NOT NULL DEFAULT '',
+  CHECK (terminada_en IS NULL OR terminada_en >= empezada_en)
+);
+CREATE INDEX IF NOT EXISTS tareas_programadas_viejas ON tareas_programadas(empezada_en);
+
+-- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
+CREATE TABLE IF NOT EXISTS peticiones_internas (
+  nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),
+  llave_id TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS peticiones_internas_viejas ON peticiones_internas(recibida_en);
+
+-- Lotes de ubicaciones que manda el tiempo real: un lote repetido no se aplica dos veces.
+CREATE TABLE IF NOT EXISTS lotes_ubicacion (
+  lote_id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL,
+  muestras INTEGER NOT NULL CHECK (muestras >= 0),
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS lotes_ubicacion_viejos ON lotes_ubicacion(recibido_en);

@@ -461,6 +461,15 @@ export const MENSAJES_EN = new Map<string, string>([
     'Faltan datos obligatorios para ese cambio (por ejemplo, la placa).',
     'Required details are missing for that change (for example, the license plate).',
   ],
+  ['Petición demasiado grande.', 'Request too large.'],
+  ['Firma no válida.', 'Invalid signature.'],
+  ['Cuerpo no válido.', 'Invalid body.'],
+  ['Ventana fuera de tiempo.', 'Time window out of range.'],
+  [
+    'El seguimiento en vivo no está disponible ahora; la app sigue funcionando como siempre.',
+    'Live tracking isn’t available right now; the app keeps working as usual.',
+  ],
+  ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
