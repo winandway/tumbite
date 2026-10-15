@@ -43,6 +43,10 @@ describe('diagnóstico del sitio de pruebas', () => {
     const s2 = await pedir('s2');
     expect(s2.datos.ok, JSON.stringify(s2.datos)).toBe(true);
     expect((await pedir('s3')).datos.ok).toBe(true);
+    const s4 = (await pedir('s4')).datos;
+    expect(Object.keys(s4.tiempos)).toEqual(['despacho', 'saldo', 'restaurantes', 'retiros']);
+    expect(s4.tiempos.saldo).toHaveProperty('baseMediana');
+    expect(s4.tiempos.saldo).toHaveProperty('viajeMediana');
     expect((await pedir('s7')).datos).toMatchObject({
       ok: true,
       loteFallo: true,

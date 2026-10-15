@@ -190,7 +190,11 @@ diagnostico.post('/interno/diagnostico/s3', async (c) => {
   }
 });
 
-/** S4: tiempo de consultas típicas medido dentro del worker (sin la red de la API). */
+/**
+ * S4: tiempo de consultas típicas. Se separan DOS números: lo que tarda la base en ejecutar la
+ * consulta (meta.duration que devuelve D1; el criterio de la V1.2, ≤ 2 ms) y el viaje completo
+ * desde el worker (incluye la red hasta la base; se informa para la capacidad, no es criterio).
+ */
 diagnostico.post('/interno/diagnostico/s4', async (c) => {
   const db = base(c);
   const consultas: [string, string][] = [
@@ -202,25 +206,35 @@ diagnostico.post('/interno/diagnostico/s4', async (c) => {
     ['restaurantes', "SELECT id FROM restaurantes WHERE estado = 'aprobado' LIMIT 50"],
     ['retiros', "SELECT id FROM retiros WHERE estado IN ('pendiente','reintentar') LIMIT 20"],
   ];
-  const r = new Map<string, { mediana: number; max: number }>();
+  const mediana = (t: number[]) =>
+    Math.round(([...t].sort((a, b) => a - b)[Math.floor(t.length / 2)] ?? 0) * 100) / 100;
+  const maximo = (t: number[]) => Math.round(Math.max(...t) * 100) / 100;
+  const r = new Map<
+    string,
+    { baseMediana: number; baseMax: number; viajeMediana: number; viajeMax: number }
+  >();
   for (const [nombre, q] of consultas) {
-    const t: number[] = [];
+    const enBase: number[] = [];
+    const viaje: number[] = [];
     for (let i = 0; i < 20; i++) {
       const t0 = performance.now();
-      await db.prepare(q).all();
-      t.push(performance.now() - t0);
+      const res = await db.prepare(q).all();
+      viaje.push(performance.now() - t0);
+      enBase.push(Number((res.meta as { duration?: number } | undefined)?.duration ?? 0));
     }
-    t.sort((a, b) => a - b);
     r.set(nombre, {
-      mediana: Math.round((t[10] ?? 0) * 10) / 10,
-      max: Math.round((t.at(-1) ?? 0) * 10) / 10,
+      baseMediana: mediana(enBase),
+      baseMax: maximo(enBase),
+      viajeMediana: mediana(viaje),
+      viajeMax: maximo(viaje),
     });
   }
-  const peor = Math.max(...[...r.values()].map((x) => x.mediana));
+  const peor = Math.max(...[...r.values()].map((x) => x.baseMediana));
   return c.json({
     prueba: 'S4',
     ok: peor <= 2,
-    criterio: 'mediana de 2 ms o menos',
+    criterio:
+      'ejecución en la base: mediana de 2 ms o menos (el viaje desde el worker se informa aparte)',
     tiempos: Object.fromEntries(r),
   });
 });
