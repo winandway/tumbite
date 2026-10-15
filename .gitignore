@@ -31,3 +31,6 @@ android/
 /.recorrido/
 # Capturas para la App Store y Google Play (npm run recorrido:tiendas): pesan mucho para git.
 capturas-tiendas/
+
+# Cuentas de prueba y demo con contraseñas: solo en esta computadora, nunca en git
+docs/CUENTAS-DE-PRUEBA.md
