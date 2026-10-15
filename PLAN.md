@@ -1,15 +1,8 @@
-# Plan: Etapa 2¾ completa, en orden (14 oct 2026)
+# Plan: rediseño visual de Tumbite Driver (solo apps/repartidor)
 
-Ver `docs/ROADMAP.md`, «Etapa 2¾». Se ejecuta punto por punto sin preguntar; cada punto lleva pruebas en rojo, recorrido, guía en Docs (ES/EN), CANDADOS y publicación.
-
-- [x] Punto 1: autorizar al pedir y capturar al entregar.
-- [x] Punto 2: PIN opcional en mano.
-- [x] Punto 3: horarios reales y modificadores de platos.
-- [x] Punto 4: GPS serio con excepción autorizada por soporte.
-- [x] Punto 5: checklist de activación del restaurante y cola sin red del repartidor.
-- [x] Punto 6: despacho completo (oferta abierta con bono, aviso al equipo a 5 min, preparación promedio, cocina ocupada).
-- [x] Punto 7: avisos completos, SMS de respaldo y número oculto (Twilio; necesita la cuenta de Richard).
-- [x] Punto 8: Manager a 1/3/6 minutos y oferta de 45 s.
-- [x] Punto 9: conciliación diaria con canario, abono fallido, retención de fotos, Apple Pay y Google Pay.
-- [x] Punto 10: antecedentes con Checkr y selfie aleatoria (necesita la cuenta de Richard).
-- [x] Punto 11: pickup, cambio de dirección, propina después, agrupar pedidos, firma y edad.
+- [x] Paso 1: dependencias de mapa (react-native-maps + leaflet, las mismas del cliente), llave de Google Maps en app.json, recursos gráficos (logotipo, mascota, íconos).
+- [ ] Paso 2: piezas nuevas: cabecera Driver, barra inferior, mapa (celular + web), resumen del día, interruptor de conexión, tarjeta de oferta con reloj real, progreso Recoger→Entregar→Completar, botones redondos, modal «Muy pronto».
+- [ ] Paso 3: pantalla Inicio (desconectado y disponible) con mapa, resumen y oferta flotante; conservando conectar/desconectar y ofertas reales.
+- [ ] Paso 4: pedido activo: cabecera roja con distancia real, mapa con ruta, tarjeta Recoge/Entrega, progreso; recogida (foto + QR) y entrega (todos los casos actuales) con el estilo nuevo.
+- [ ] Paso 5: Ganancias (Hoy/Semana/Mes desde los movimientos reales + billetera), Pedidos (historial real), Perfil (vehículo, documentos, idioma, soporte, cerrar sesión; «Mis lugares» y «Preferencias» = Muy pronto).
+- [ ] Paso 6: tipos, lint, pruebas, recorrido ES/EN con capturas, capturas de tiendas, comparación con la imagen aprobada, candado, commit y publicación.

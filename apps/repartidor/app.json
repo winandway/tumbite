@@ -28,6 +28,11 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.windoce.tumbite.driver",
+      "config": {
+        "googleMaps": {
+          "apiKey": "PON_AQUI_LA_LLAVE_DE_GOOGLE_MAPS"
+        }
+      },
       "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "CAMERA"],
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",

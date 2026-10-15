@@ -1,5 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Modal, Platform, Pressable, Text, TextInput, View, Switch } from 'react-native';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,12 +35,20 @@ import {
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
+import { BarraInferior, type Pestana } from './piezas/BarraInferior';
+import { BotonRedondo } from './piezas/BotonRedondo';
+import { CabeceraDriver } from './piezas/CabeceraDriver';
+import { Mapa } from './piezas/Mapa';
+import { ModalMuyPronto } from './piezas/ModalMuyPronto';
+import { Progreso } from './piezas/Progreso';
+import { ResumenDia } from './piezas/ResumenDia';
+import { IMG } from './piezas/recursos';
+import { textosDriver } from './piezas/textos';
 import {
   Boton,
   C,
   ChatPedido,
   MenuCuenta,
-  Pantalla,
   ReportarProblema,
   TEXTOS_MOVIL,
   e,
@@ -306,7 +327,10 @@ function abrirMapa(lat: number | null, lng: number | null, direccion: string) {
 
 export function Inicio() {
   useKeepAwake();
-  const { api, idioma, salir } = useSesion();
+  const { api, idioma, salir, cambiarIdioma, usuario } = useSesion();
+  const td = textosDriver(idioma);
+  // El mapa ocupa lo que queda de pantalla: la mitad en celulares normales.
+  const alturaMapa = Math.max(240, Math.round(useWindowDimensions().height * 0.42));
   const t = enIdioma(T, idioma);
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
@@ -314,7 +338,16 @@ export function Inicio() {
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
-  const [vista, setVista] = useState<'inicio' | 'billetera' | 'datos'>('inicio');
+  const [vista, setVista] = useState<'inicio' | 'billetera' | 'datos' | 'pedidos'>('inicio');
+  const [pronto, setPronto] = useState(false);
+  const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
+  const [seccionPerfil, setSeccionPerfil] = useState<'vehiculo' | 'documentos' | 'soporte' | null>(
+    null,
+  );
+  const [mostrarChat, setMostrarChat] = useState(true);
+  // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
+  const [conectadoDesde, setConectadoDesde] = useState<number | null>(null);
+  const [kycAprobado, setKycAprobado] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
@@ -354,12 +387,18 @@ export function Inicio() {
     try {
       const s = await api.pedir<Estado>('GET', '/datos/repartidor/estado');
       setEstado(s);
+      if (s.conectado) setConectadoDesde((d) => d ?? Date.now());
+      else setConectadoDesde(null);
       if (s.conectado && !s.activo)
         setOfertas(
           (await api.pedir<{ ofertas: Pedido[] }>('GET', '/datos/repartidor/ofertas')).ofertas,
         );
       else setOfertas([]);
       setBilletera(await api.pedir<Billetera>('GET', '/datos/billetera'));
+      api
+        .pedir<{ kyc: { estado: string } }>('GET', '/datos/kyc')
+        .then((k) => setKycAprobado(k.kyc.estado === 'aprobado'))
+        .catch(() => undefined);
       setErrorCarga('');
     } catch (x) {
       setErrorCarga(x instanceof ErrorApi ? x.message : String(x));
@@ -376,25 +415,26 @@ export function Inicio() {
   }, [cargar]);
 
   // Lo pendiente se reintenta cada 10 segundos; lo que el servidor rechaza se muestra y se descarta.
-  const reintentar = useCallback(async () => {
-    const r = await cola.reintentar(async (p) => {
-      if (p.tipo === 'foto') {
-        const blob = await (await fetch(p.cuerpo)).blob();
-        await api.subirFoto(blob, p.ruta);
-      } else await api.pedir('POST', p.ruta, JSON.parse(p.cuerpo) as unknown);
-    });
-    setPendientes(await cola.listar());
-    if (r.enviados.length) {
-      setAviso(t.pendienteEnviado);
-      await cargar();
-    }
-    if (r.rechazados.length) setError(r.rechazados.map((x) => x.error).join(' '));
-  }, [api, cargar, cola, t.pendienteEnviado]);
+  const textoEnviado = t.pendienteEnviado;
   useEffect(() => {
+    const reintentar = async () => {
+      const r = await cola.reintentar(async (p) => {
+        if (p.tipo === 'foto') {
+          const blob = await (await fetch(p.cuerpo)).blob();
+          await api.subirFoto(blob, p.ruta);
+        } else await api.pedir('POST', p.ruta, JSON.parse(p.cuerpo) as unknown);
+      });
+      setPendientes(await cola.listar());
+      if (r.enviados.length) {
+        setAviso(textoEnviado);
+        await cargar();
+      }
+      if (r.rechazados.length) setError(r.rechazados.map((x) => x.error).join(' '));
+    };
     void cola.listar().then(setPendientes);
     const reloj = setInterval(() => void reintentar(), 10_000);
     return () => clearInterval(reloj);
-  }, [cola, reintentar]);
+  }, [api, cargar, cola, textoEnviado]);
 
   /** La foto como «data:» para guardarla en el celular si no hay señal. */
   const comoDataUrl = (blob: Blob) =>
@@ -665,57 +705,6 @@ export function Inicio() {
         </>
       )
     ) : null;
-  // Menú de tres rayas: la billetera completa vive en su propia vista, como en una app de banco.
-  const menuCabecera = (
-    <View style={{ marginBottom: 8 }}>
-      <Pressable
-        onPress={() => setMenuAbierto((x) => !x)}
-        accessibilityRole="button"
-        accessibilityLabel={t.menu}
-        hitSlop={8}
-        style={{ alignSelf: 'flex-start', padding: 6 }}
-      >
-        {/* Tres rayas dibujadas (sin emojis ni símbolos raros). */}
-        {[0, 1, 2].map((i) => (
-          <View
-            key={i}
-            style={{
-              width: 24,
-              height: 3,
-              borderRadius: 2,
-              backgroundColor: C.secundario,
-              marginVertical: 2.5,
-            }}
-          />
-        ))}
-      </Pressable>
-      {menuAbierto ? (
-        <View style={e.tarjeta}>
-          {(
-            [
-              ['inicio', t.vistaInicio],
-              ['billetera', t.vistaBilletera],
-              ['datos', t.vistaDatos],
-            ] as const
-          ).map(([v, texto]) => (
-            <Text
-              key={v}
-              style={{ paddingVertical: 10, fontWeight: vista === v ? '800' : '600' }}
-              onPress={() => {
-                setVista(v);
-                setMenuAbierto(false);
-              }}
-              accessibilityRole="button"
-            >
-              {texto}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-  // El resultado de un botón (retirar, conectar el banco) se ve en la pantalla donde se tocó,
-  // también en la billetera: antes ahí no salía ni el «Retiro en camino» ni el error.
   const mensajes = (
     <>
       {error || errorCarga ? (
@@ -756,528 +745,98 @@ export function Inicio() {
       ) : null}
     </>
   );
-  if (vista === 'billetera' && billetera)
-    return (
-      <Pantalla titulo={t.vistaBilletera}>
-        {menuCabecera}
-        {mensajes}
-        <BilleteraRepartidor
-          datos={billetera}
-          idioma={idioma}
-          retirar={() => void retirar()}
-          conectar={() => void banco()}
-        />
-        <Text style={e.enlace} onPress={() => setVista('inicio')} accessibilityRole="button">
-          {t.volverInicio}
-        </Text>
-      </Pantalla>
-    );
-  if (vista === 'datos')
-    return (
-      <Pantalla titulo={t.vistaDatos}>
-        {menuCabecera}
-        <Verificacion />
-        <MisDatos />
-        <Text style={e.enlace} onPress={() => setVista('inicio')} accessibilityRole="button">
-          {t.volverInicio}
-        </Text>
-      </Pantalla>
-    );
-  return (
-    <Pantalla>
-      {menuCabecera}
-      {estado && (
-        <Pressable
-          onPress={() => void alternar()}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: estado.conectado }}
-          style={[e.tarjeta, { backgroundColor: estado.conectado ? C.exito : C.secundario }]}
-        >
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>
-            {estado.conectado ? t.conectado : t.desconectado}
-          </Text>
-          <Text
-            style={{
-              // Blanco subrayado sobre verde; el rojo no se leía. Sobre gris oscuro sí va el escarlata.
-              color: estado.conectado ? '#fff' : C.acento,
-              textDecorationLine: estado.conectado ? 'underline' : 'none',
-              fontWeight: '700',
-              marginTop: 4,
-            }}
-          >
-            {cambiando ? t.buscandoUbicacion : estado.conectado ? t.desconectar : t.conectar}
-          </Text>
-        </Pressable>
-      )}
-      {mensajes}
 
-      {activo ? (
-        <>
-          <View style={e.tarjeta}>
-            <Text style={{ fontWeight: '800', fontSize: 18 }}>
-              {t.pedido} #{activo.id.slice(0, 4).toUpperCase()} ·{' '}
-              {formatearDolares(activo.pagoRepartidor, idioma)}
-            </Text>
-            {activo.lineas.map((l) => (
-              <Text key={l.platoId}>
-                {l.cantidad} × {textoLinea(l, idioma)}
-              </Text>
-            ))}
-            {activo.estado !== 'en_camino' ? (
-              <>
-                <Text style={{ marginTop: 10, fontWeight: '700' }}>
-                  {t.recoger}: {activo.restaurante.nombre}
-                </Text>
-                <Text>{activo.restaurante.direccion}</Text>
-                <Boton
-                  texto={t.comoLlegar}
-                  alTocar={() =>
-                    abrirMapa(
-                      activo.restaurante.lat,
-                      activo.restaurante.lng,
-                      activo.restaurante.direccion,
-                    )
-                  }
-                  secundario
-                />
-                {activo.restaurante.telefono ? (
-                  <Boton
-                    texto={t.llamar}
-                    alTocar={() => void Linking.openURL(`tel:${activo.restaurante.telefono}`)}
-                    secundario
-                  />
-                ) : null}
-                {activo.estado === 'listo' && activo.fotoRecogida ? (
-                  <>
-                    {bloqueCodigo}
-                    <Text
-                      style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
-                      accessibilityRole="alert"
-                    >
-                      {activo.verificado ? t.verificadoOk : t.esperaConfirmacion}
-                    </Text>
-                    <Boton
-                      texto={subiendo ? t.subiendo : t.repetirFoto}
-                      alTocar={() =>
-                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
-                      }
-                      cargando={subiendo}
-                      secundario
-                    />
-                  </>
-                ) : activo.estado === 'listo' ? (
-                  <>
-                    {bloqueCodigo}
-                    <Boton
-                      texto={subiendo ? t.subiendo : t.fotoRecogida}
-                      alTocar={() =>
-                        void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
-                      }
-                      cargando={subiendo}
-                      exito={!!activo.verificado}
-                      secundario={!activo.verificado}
-                    />
-                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
-                  </>
-                ) : (
-                  <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
-                    {t.esperando}
-                    {activo.minutosParaListo ? ` ${t.listoEn} ${activo.minutosParaListo} min.` : ''}
-                  </Text>
-                )}
-                {/* Soltar antes de recoger: vuelve a la fila de ofertas, sin castigo. */}
-                <View
-                  style={{
-                    marginTop: 14,
-                    borderTopWidth: 1,
-                    borderTopColor: '#E6E6E6',
-                    paddingTop: 8,
-                  }}
-                >
-                  <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
-                  <TextInput
-                    value={motivo}
-                    onChangeText={setMotivo}
-                    placeholder={t.motivo}
-                    accessibilityLabel={t.motivo}
-                    style={[e.input, { marginTop: 6 }]}
-                  />
-                  {motivo.trim() ? (
-                    <Boton
-                      texto={t.soltar}
-                      alTocar={() =>
-                        void accion(`/datos/repartidor/pedidos/${activo.id}/soltar`, {
-                          motivo: motivo.trim(),
-                        }).then(() => setMotivo(''))
-                      }
-                      secundario
-                    />
-                  ) : null}
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
-                <Text>{activo.direccion}</Text>
-                {activo.notas ? (
-                  <Text style={{ color: '#5E5E5E' }}>
-                    {t.notas}: {activo.notas}
-                  </Text>
-                ) : null}
-                <Text style={{ fontWeight: '700', marginTop: 4 }}>
-                  {t.pidio[activo.entrega ?? 'puerta']}
-                </Text>
-                {(() => {
-                  const casa =
-                    activo.lat != null && activo.lng != null
-                      ? { lat: activo.lat, lng: activo.lng }
-                      : null;
-                  // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
-                  // Lo decide el servidor (dos lecturas precisas del GPS) o soporte con la excepción.
-                  const enPuerta =
-                    Boolean(activo.llegoCliente) || activo.excepcionUbicacion === 'autorizada';
-                  if (!enPuerta) {
-                    const m = aqui && casa ? metrosEntre(aqui, casa) : null;
-                    const cerca = llego(aqui, casa);
-                    const falta =
-                      m == null
-                        ? ''
-                        : idioma === 'en'
-                          ? `${(m / 1609.34).toFixed(1)} mi`
-                          : m < 1000
-                            ? `${m} m`
-                            : `${(m / 1000).toFixed(1)} km`;
-                    return (
-                      <>
-                        <Boton
-                          texto={t.comoLlegar}
-                          alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
-                          exito
-                        />
-                        {cerca ? (
-                          <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
-                            {t.confirmandoGps}
-                            {precision != null && precision > PRECISION_MAXIMA_M
-                              ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
-                              : ''}
-                          </Text>
-                        ) : (
-                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                            {falta ? `${t.teFaltan} ${falta}. ` : ''}
-                            {t.alLlegar}
-                          </Text>
-                        )}
-                        {activo.excepcionUbicacion === 'pedida' ? (
-                          <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
-                            {t.esperandoSoporte}
-                          </Text>
-                        ) : (
-                          <View style={{ marginTop: 10 }}>
-                            <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
-                            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.sinGpsAyuda}</Text>
-                            <TextInput
-                              value={motivoGps}
-                              onChangeText={setMotivoGps}
-                              placeholder={t.sinGpsAyuda}
-                              accessibilityLabel={t.sinGpsAyuda}
-                              style={[e.input, { marginTop: 6 }]}
-                            />
-                            {motivoGps.trim().length >= 5 ? (
-                              <Boton
-                                texto={t.pedirExcepcion}
-                                alTocar={() =>
-                                  void accion(
-                                    `/datos/repartidor/pedidos/${activo.id}/no-puedo-confirmar`,
-                                    { motivo: motivoGps.trim() },
-                                  ).then(() => setMotivoGps(''))
-                                }
-                                secundario
-                              />
-                            ) : null}
-                          </View>
-                        )}
-                      </>
-                    );
-                  }
-                  // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
-                  const enMano = activo.entrega === 'mano';
-                  const avisoMs = activo.noApareceEn
-                    ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
-                    : null;
-                  const faltanSeg =
-                    avisoMs == null
-                      ? null
-                      : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
-                  return (
-                    <>
-                      {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
-                        <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
-                          {t.autorizado}
-                        </Text>
-                      ) : null}
-                      <Boton
-                        texto={subiendo ? t.subiendo : t.fotoEntrega}
-                        alTocar={() =>
-                          void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
-                        }
-                        cargando={subiendo}
-                        exito={!enMano}
-                        secundario={enMano}
-                      />
-                      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
-                      {activo.pinRequerido ? (
-                        <TextInput
-                          value={pinEntrega}
-                          onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
-                          placeholder={t.pinPedir}
-                          accessibilityLabel={t.pinPedir}
-                          keyboardType="number-pad"
-                          style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
-                        />
-                      ) : null}
-                      {activo.requiereEdad ? (
-                        <Pressable
-                          onPress={() => setMayorEdad((v) => !v)}
-                          accessibilityRole="checkbox"
-                          accessibilityState={{ checked: mayorEdad }}
-                          accessibilityLabel={t.mayorEdad}
-                          style={{
-                            flexDirection: 'row',
-                            gap: 8,
-                            alignItems: 'center',
-                            marginTop: 8,
-                          }}
-                        >
-                          <Switch
-                            value={mayorEdad}
-                            onValueChange={setMayorEdad}
-                            accessibilityLabel={t.mayorEdad}
-                          />
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
-                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
-                              {t.mayorEdadAyuda}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      ) : null}
-                      <Boton
-                        texto={t.enMano}
-                        alTocar={() => void entregarEnMano()}
-                        cargando={subiendo}
-                        exito={enMano}
-                        secundario={!enMano}
-                      />
-                      {faltanSeg == null ? (
-                        <Boton
-                          texto={t.noAparece}
-                          alTocar={() =>
-                            void accion(`/datos/repartidor/pedidos/${activo.id}/no-aparece`)
-                          }
-                          secundario
-                        />
-                      ) : faltanSeg > 0 ? (
-                        <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
-                          {t.esperando5} {Math.floor(faltanSeg / 60)}:
-                          {String(faltanSeg % 60).padStart(2, '0')}
-                        </Text>
-                      ) : (
-                        <>
-                          <TextInput
-                            value={nota}
-                            onChangeText={setNota}
-                            placeholder={t.dondeLoDejas}
-                            accessibilityLabel={t.dondeLoDejas}
-                            style={[e.input, { marginTop: 6 }]}
-                          />
-                          {nota.trim() ? (
-                            <Boton
-                              texto={subiendo ? t.subiendo : t.dejarSeguro}
-                              alTocar={() =>
-                                void tomarFoto(
-                                  `/datos/repartidor/pedidos/${activo.id}/entregado?modo=seguro&nota=${encodeURIComponent(nota.trim())}`,
-                                )
-                              }
-                              cargando={subiendo}
-                              exito
-                            />
-                          ) : null}
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-              </>
-            )}
-            {activo.estado === 'en_camino' || activo.estado === 'listo' ? (
-              <Boton
-                texto={t.llamarCliente}
-                alTocar={() =>
-                  void api
-                    .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
-                    .then(() => setAviso(t.llamandoCliente))
-                    .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
-                }
-                secundario
-              />
-            ) : null}
-            <ChatPedido pedidoId={activo.id} />
-          </View>
-          {(estado?.agrupados ?? []).map((g) => {
-            const casaG = g.lat != null && g.lng != null ? { lat: g.lat, lng: g.lng } : null;
-            const enPuertaG = Boolean(g.llegoCliente) || g.excepcionUbicacion === 'autorizada';
-            return (
-              <View key={g.id} style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
-                <Text style={{ fontWeight: '800', color: C.primario }}>{t.agrupado}</Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
-                <Text style={{ fontWeight: '800', fontSize: 16, marginTop: 4 }}>
-                  {t.pedido} #{g.id.slice(0, 4).toUpperCase()} ·{' '}
-                  {formatearDolares(g.pagoRepartidor, idioma)}
-                </Text>
-                {g.lineas.map((l) => (
-                  <Text key={l.platoId}>
-                    {l.cantidad} × {textoLinea(l, idioma)}
-                  </Text>
-                ))}
-                <Text style={{ marginTop: 6, fontWeight: '700' }}>{t.entregar}:</Text>
-                <Text>{g.direccion}</Text>
-                {g.estado === 'en_camino' ? (
-                  enPuertaG ? (
-                    <>
-                      <Boton
-                        texto={subiendo ? t.subiendo : t.fotoEntrega}
-                        alTocar={() =>
-                          void tomarFoto(`/datos/repartidor/pedidos/${g.id}/entregado`)
-                        }
-                        cargando={subiendo}
-                        exito
-                      />
-                      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
-                    </>
-                  ) : (
-                    <>
-                      <Boton
-                        texto={t.comoLlegar}
-                        alTocar={() => abrirMapa(g.lat, g.lng, g.direccion)}
-                        exito
-                      />
-                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                        {aqui && casaG ? `${t.teFaltan} ${metrosEntre(aqui, casaG)} m. ` : ''}
-                        {t.alLlegar}
-                      </Text>
-                    </>
-                  )
-                ) : (
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.esperando}</Text>
-                )}
-                <ChatPedido pedidoId={g.id} />
-              </View>
-            );
-          })}
-        </>
-      ) : estado?.conectado ? (
-        ofertas.length === 0 ? (
-          <Text style={e.tarjeta}>{t.buscando}</Text>
-        ) : (
-          ofertas.map((o) => (
-            <View key={o.id} style={[e.tarjeta, { borderWidth: 3, borderColor: C.primario }]}>
-              <Text style={{ color: C.primario, fontWeight: '800' }}>{t.oferta}</Text>
-              <Text style={{ fontSize: 28, fontWeight: '800', marginVertical: 4 }}>
-                {t.ganas} {formatearDolares(o.pagoRepartidor, idioma)}
-              </Text>
-              {o.propina > 0 ? (
-                <Text style={{ color: '#5E5E5E' }}>
-                  {t.propinaIncluida} {formatearDolares(o.propina, idioma)}
-                </Text>
-              ) : null}
-              {o.bono ? (
-                <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>
-                  {t.bono} {formatearDolares(o.bono, idioma)} {t.bonoPorque}
-                </Text>
-              ) : null}
-              <Text style={{ marginTop: 6 }}>
-                {t.recoger}: {o.restaurante.nombre}
-                {o.minutosParaListo
-                  ? ` · ${t.listoEn} ${o.minutosParaListo} min`
-                  : ` · ${t.listoYa}`}
-              </Text>
-              <Text>
-                {t.entregar}: {o.direccion}
-                {o.distanciaKm != null
-                  ? ` · ${(idioma === 'en' ? o.distanciaKm * 0.621371 : o.distanciaKm).toFixed(1)} ${idioma === 'en' ? 'mi' : 'km'}`
-                  : ''}
-              </Text>
-              <Boton
-                texto={t.aceptar}
-                alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/aceptar`)}
-                exito
-              />
-              <Boton
-                texto={t.rechazar}
-                alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/rechazar`)}
-                secundario
-              />
-              <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.sinCastigo}</Text>
-            </View>
-          ))
-        )
-      ) : null}
-
-      {estado && (
-        <View style={e.tarjeta}>
-          <Text style={{ fontWeight: '800' }}>
-            {t.nivel}: {enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)} ·{' '}
-            {estado.puntos} {t.puntos}
-          </Text>
-          {estado.nivel.siguiente ? (
-            <Text style={{ color: '#5E5E5E' }}>
-              {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
-              {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
-            </Text>
-          ) : null}
-          {/* Barra de avance al siguiente nivel, en verde: cada entrega es un paso hacia adelante. */}
-          <View
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.nivel.avance * 100) }}
-            style={{
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: '#ECECEC',
-              marginTop: 8,
-              overflow: 'hidden',
-            }}
-          >
-            <View
-              style={{
-                width: `${Math.max(2, Math.round(estado.nivel.avance * 100))}%`,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: C.exito,
+  // ───────── Diseño nuevo (14 oct 2026): datos reales de hoy, tiempo conectado en esta sesión ─────────
+  const hoyLocal = new Date().toLocaleDateString('en-CA');
+  const deHoy = (billetera?.movimientos ?? []).filter(
+    (m) => new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleDateString('en-CA') === hoyLocal,
+  );
+  const gananciasHoy = deHoy
+    .filter((m) => m.concepto !== 'retiro' && m.monto > 0)
+    .reduce((x, m) => x + m.monto, 0);
+  const entregasHoy = new Set(deHoy.filter((m) => m.concepto === 'entrega').map((m) => m.pedidoId))
+    .size;
+  const segundosConectado =
+    estado?.conectado && conectadoDesde
+      ? Math.max(0, Math.floor((tic - conectadoDesde) / 1000))
+      : 0;
+  const objetivo =
+    activo?.estado === 'en_camino'
+      ? activo.lat != null && activo.lng != null
+        ? { lat: activo.lat, lng: activo.lng }
+        : null
+      : activo?.restaurante.lat != null && activo?.restaurante.lng != null
+        ? { lat: activo.restaurante.lat, lng: activo.restaurante.lng }
+        : null;
+  const metrosObjetivo = aqui && objetivo ? metrosEntre(aqui, objetivo) : null;
+  const distanciaTexto =
+    metrosObjetivo == null
+      ? ''
+      : idioma === 'en'
+        ? `${(metrosObjetivo / 1609.34).toFixed(1)} mi`
+        : metrosObjetivo < 1000
+          ? `${metrosObjetivo} ${td.metros}`
+          : `${(metrosObjetivo / 1000).toFixed(1)} ${td.km}`;
+  const pasoActivo: 0 | 1 | 2 = activo?.estado === 'en_camino' ? (activo.llegoCliente ? 2 : 1) : 0;
+  const marcadoresOfertas = ofertas
+    .filter((o) => o.restaurante.lat != null && o.restaurante.lng != null)
+    .map((o) => ({
+      id: o.id,
+      punto: { lat: o.restaurante.lat as number, lng: o.restaurante.lng as number },
+      nombre: o.restaurante.nombre,
+    }));
+  const etiquetasMapa = { yo: td.tuUbicacion, restaurante: t.recoger, casa: t.entregar };
+  const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false) => (
+    <SafeAreaView
+      style={[e.fondo, { backgroundColor: '#F4F6F9' }]}
+      edges={['top', 'left', 'right']}
+    >
+      <CabeceraDriver
+        idioma={idioma}
+        cambiarIdioma={cambiarIdioma}
+        alMenu={() => setMenuAbierto((x) => !x)}
+        alCampana={() => setPronto(true)}
+        punto={Boolean(estado?.selfieControlPendiente || pendientes.length)}
+      />
+      {menuAbierto ? (
+        <View style={[e.tarjeta, { marginHorizontal: 16, marginTop: 8 }]}>
+          {(
+            [
+              ['inicio', t.vistaInicio],
+              ['billetera', t.vistaBilletera],
+              ['datos', t.vistaDatos],
+            ] as const
+          ).map(([v, texto]) => (
+            <Text
+              key={v}
+              style={{ paddingVertical: 10, fontWeight: vista === v ? '800' : '600' }}
+              onPress={() => {
+                setVista(v);
+                setMenuAbierto(false);
               }}
-            />
-          </View>
+              accessibilityRole="button"
+            >
+              {texto}
+            </Text>
+          ))}
         </View>
-      )}
-      {billetera && (
-        <Pressable
-          onPress={() => setVista('billetera')}
-          accessibilityRole="link"
-          style={[e.tarjeta, { backgroundColor: C.secundario }]}
+      ) : null}
+      {sinScroll ? (
+        <View style={{ flex: 1 }}>{cuerpo}</View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 16 }}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
-          <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
-            {formatearDolares(billetera.saldo, idioma)}
-          </Text>
-          <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
-            {t.verBilletera}
-          </Text>
-        </Pressable>
+          {cuerpo}
+        </ScrollView>
       )}
-      {/* Quejas y ayuda: si hay una entrega activa, el ticket va atado a ese pedido. */}
-      <ReportarProblema pedidoId={estado?.activo?.id} />
-      <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
-      <MenuCuenta />
+      <BarraInferior
+        idioma={idioma}
+        activa={pestana}
+        alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
+      />
+      <ModalMuyPronto visible={pronto} cerrar={() => setPronto(false)} idioma={idioma} />
       <Modal visible={escaneando} animationType="slide" onRequestClose={() => setEscaneando(false)}>
         <View style={{ flex: 1, backgroundColor: '#000' }}>
           <CameraView
@@ -1294,6 +853,925 @@ export function Inicio() {
           </View>
         </View>
       </Modal>
-    </Pantalla>
+    </SafeAreaView>
+  );
+
+  // ───────── Ganancias: Hoy / Semana / Mes con los movimientos reales, y la billetera ─────────
+  if (vista === 'billetera' && billetera) {
+    const ahora = new Date();
+    const inicioSemana = new Date(ahora);
+    inicioSemana.setDate(ahora.getDate() - ((ahora.getDay() + 6) % 7));
+    inicioSemana.setHours(0, 0, 0, 0);
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    const movs = (billetera.movimientos ?? []).filter(
+      (m) => m.concepto !== 'retiro' && m.monto > 0,
+    );
+    const fechaDe = (m: { fecha: string }) => new Date(`${m.fecha.replace(' ', 'T')}Z`);
+    const enPeriodo = movs.filter((m) =>
+      periodo === 'hoy'
+        ? fechaDe(m).toLocaleDateString('en-CA') === hoyLocal
+        : periodo === 'semana'
+          ? fechaDe(m) >= inicioSemana
+          : fechaDe(m) >= inicioMes,
+    );
+    const total = enPeriodo.reduce((x, m) => x + m.monto, 0);
+    const porPedido = new Map<string, { monto: number; fecha: string }>();
+    for (const m of enPeriodo) {
+      const k = m.pedidoId ?? m.id;
+      const prev = porPedido.get(k);
+      porPedido.set(k, { monto: (prev?.monto ?? 0) + m.monto, fecha: prev?.fecha ?? m.fecha });
+    }
+    return lienzo(
+      'ganancias',
+      <View style={{ padding: 16, gap: 12 }}>
+        {mensajes}
+        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{td.ganancias}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {(['hoy', 'semana', 'mes'] as const).map((pz) => (
+            <Pressable
+              key={pz}
+              onPress={() => setPeriodo(pz)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: periodo === pz }}
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 8,
+                borderRadius: 999,
+                backgroundColor: periodo === pz ? C.primario : '#fff',
+              }}
+            >
+              <Text style={{ fontWeight: '700', color: periodo === pz ? '#fff' : C.secundario }}>
+                {pz === 'hoy' ? td.hoy : pz === 'semana' ? td.semana : td.mes}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <View style={e.tarjeta}>
+          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>
+            {periodo === 'hoy'
+              ? td.totalDe.hoy
+              : periodo === 'semana'
+                ? td.totalDe.semana
+                : td.totalDe.mes}
+          </Text>
+          <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
+            {formatearDolares(total, idioma)}
+          </Text>
+          <Text style={{ color: '#5E5E5E' }}>
+            {porPedido.size} {td.entregas.toLowerCase()}
+            {periodo === 'hoy' && segundosConectado
+              ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
+              : ''}
+          </Text>
+        </View>
+        {porPedido.size === 0 ? (
+          <Text style={{ color: '#5E5E5E' }}>{td.sinMovimientos}</Text>
+        ) : (
+          [...porPedido.entries()].map(([k, v]) => (
+            <View
+              key={k}
+              style={[
+                e.tarjeta,
+                { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+              ]}
+            >
+              <View>
+                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  #{k.slice(0, 4).toUpperCase()}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  {fechaDe(v).toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontWeight: '900', color: C.secundario }}>
+                  {formatearDolares(v.monto, idioma)}
+                </Text>
+                <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
+                  {td.completado}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
+        <BilleteraRepartidor
+          datos={billetera}
+          idioma={idioma}
+          retirar={() => void retirar()}
+          conectar={() => void banco()}
+        />
+      </View>,
+    );
+  }
+
+  // ───────── Pedidos: el historial real de entregas ─────────
+  if (vista === 'pedidos') {
+    const entregas = (billetera?.movimientos ?? []).filter((m) => m.concepto === 'entrega');
+    return lienzo(
+      'pedidos',
+      <View style={{ padding: 16, gap: 12 }}>
+        {mensajes}
+        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+          {td.nav.pedidos}
+        </Text>
+        {entregas.length === 0 ? (
+          <Text style={{ color: '#5E5E5E' }}>{td.sinPedidos}</Text>
+        ) : (
+          entregas.map((m) => (
+            <View
+              key={m.id}
+              style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+            >
+              <View>
+                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  #{(m.pedidoId ?? m.id).slice(0, 4).toUpperCase()}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  {new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleString(
+                    idioma === 'en' ? 'en-US' : 'es-US',
+                    { dateStyle: 'medium', timeStyle: 'short' },
+                  )}
+                </Text>
+              </View>
+              <Text style={{ fontWeight: '900', color: C.secundario }}>
+                {formatearDolares(m.monto, idioma)}
+              </Text>
+            </View>
+          ))
+        )}
+      </View>,
+    );
+  }
+
+  // ───────── Perfil: datos, vehículo, documentos, idioma, soporte, salir ─────────
+  if (vista === 'datos') {
+    const iniciales = (usuario?.nombre ?? '')
+      .split(' ')
+      .slice(0, 2)
+      .map((x) => x[0] ?? '')
+      .join('')
+      .toUpperCase();
+    const fila = (nombre: string, alTocar: () => void, abierto = false, detalle?: string) => (
+      <Pressable
+        onPress={alTocar}
+        accessibilityRole="button"
+        accessibilityLabel={nombre}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: '#EEF0F3',
+        }}
+      >
+        <View>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>{nombre}</Text>
+          {detalle ? <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{detalle}</Text> : null}
+        </View>
+        <Text style={{ color: '#8A8A8A', fontSize: 18 }}>{abierto ? '˅' : '›'}</Text>
+      </Pressable>
+    );
+    return lienzo(
+      'perfil',
+      <View style={{ padding: 16, gap: 12 }}>
+        {mensajes}
+        <View style={{ alignItems: 'center', marginTop: 4 }}>
+          <View
+            style={{
+              width: 92,
+              height: 92,
+              borderRadius: 46,
+              backgroundColor: C.primario,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 34, fontWeight: '900' }}>{iniciales}</Text>
+          </View>
+          <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginTop: 8 }}>
+            {usuario?.nombre}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <Text style={{ color: '#5E5E5E' }}>{td.repartidor}</Text>
+            <View
+              style={{
+                backgroundColor: kycAprobado ? '#E6F4EC' : '#F4F5F7',
+                borderRadius: 999,
+                paddingHorizontal: 10,
+                paddingVertical: 2,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '700',
+                  color: kycAprobado ? C.exito : '#5E5E5E',
+                }}
+              >
+                {kycAprobado ? td.verificado : td.sinVerificar}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={[e.tarjeta, { paddingVertical: 2 }]}>
+          {fila(
+            td.miVehiculo,
+            () => setSeccionPerfil((x) => (x === 'vehiculo' ? null : 'vehiculo')),
+            seccionPerfil === 'vehiculo',
+          )}
+          {seccionPerfil === 'vehiculo' ? <MisDatos /> : null}
+          {fila(
+            td.documentos,
+            () => setSeccionPerfil((x) => (x === 'documentos' ? null : 'documentos')),
+            seccionPerfil === 'documentos',
+          )}
+          {seccionPerfil === 'documentos' ? <Verificacion /> : null}
+          {fila(td.misLugares, () => setPronto(true))}
+          {fila(td.preferencias, () => setPronto(true))}
+          {fila(
+            td.idioma,
+            () => cambiarIdioma(idioma === 'es' ? 'en' : 'es'),
+            false,
+            idioma === 'es' ? 'Español' : 'English',
+          )}
+          {fila(
+            td.soporte,
+            () => setSeccionPerfil((x) => (x === 'soporte' ? null : 'soporte')),
+            seccionPerfil === 'soporte',
+          )}
+          {seccionPerfil === 'soporte' ? (
+            <View style={{ paddingVertical: 8 }}>
+              <ReportarProblema pedidoId={estado?.activo?.id} />
+              <MenuCuenta />
+            </View>
+          ) : null}
+        </View>
+        <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+      </View>,
+    );
+  }
+
+  // ───────── Inicio: pedido activo (cabecera roja con distancia, mapa, progreso) o mapa con ofertas ─────────
+  if (activo) {
+    const casaActivo =
+      activo.lat != null && activo.lng != null ? { lat: activo.lat, lng: activo.lng } : null;
+    const restActivo =
+      activo.restaurante.lat != null && activo.restaurante.lng != null
+        ? { lat: activo.restaurante.lat, lng: activo.restaurante.lng }
+        : null;
+    return lienzo(
+      'inicio',
+      <View>
+        <View style={{ backgroundColor: C.primario, paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text style={{ color: '#fff', fontSize: 30, fontWeight: '900' }}>
+            {distanciaTexto || (activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn)}
+          </Text>
+          <Text style={{ color: '#fff', fontWeight: '700' }} numberOfLines={1}>
+            {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.direccion}
+          </Text>
+        </View>
+        <Mapa
+          yo={aqui}
+          restaurante={restActivo}
+          casa={activo.estado === 'en_camino' ? casaActivo : null}
+          alto={220}
+          etiquetas={etiquetasMapa}
+        />
+        <View
+          style={{
+            backgroundColor: '#fff',
+            borderTopLeftRadius: 22,
+            borderTopRightRadius: 22,
+            marginTop: -18,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
+            <Image
+              source={IMG.comida}
+              style={{ width: 54, height: 54, borderRadius: 12, backgroundColor: '#F4F5F7' }}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                {activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn}
+              </Text>
+              <Text
+                style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}
+                numberOfLines={1}
+              >
+                {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.nombre}
+              </Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }} numberOfLines={1}>
+                {activo.estado === 'en_camino' ? activo.notas || '' : activo.restaurante.direccion}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 8 }}>
+            <BotonRedondo
+              glifo="mapa"
+              nombre={td.abrirMapas}
+              alTocar={() =>
+                activo.estado === 'en_camino'
+                  ? abrirMapa(activo.lat, activo.lng, activo.direccion)
+                  : abrirMapa(
+                      activo.restaurante.lat,
+                      activo.restaurante.lng,
+                      activo.restaurante.direccion,
+                    )
+              }
+            />
+            <BotonRedondo
+              glifo="llamar"
+              nombre={td.llamar}
+              alTocar={() =>
+                activo.estado === 'en_camino' || activo.estado === 'listo'
+                  ? void api
+                      .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
+                      .then(() => setAviso(t.llamandoCliente))
+                      .catch((x: unknown) =>
+                        setError(x instanceof ErrorApi ? x.message : String(x)),
+                      )
+                  : activo.restaurante.telefono
+                    ? void Linking.openURL(`tel:${activo.restaurante.telefono}`)
+                    : undefined
+              }
+            />
+            <BotonRedondo
+              glifo="mensaje"
+              nombre={td.mensaje}
+              alTocar={() => setMostrarChat((x) => !x)}
+            />
+          </View>
+          <Progreso idioma={idioma} paso={pasoActivo} />
+        </View>
+        <View style={{ padding: 16 }}>
+          {mensajes}
+          <>
+            <View style={e.tarjeta}>
+              <Text style={{ fontWeight: '800', fontSize: 18 }}>
+                {t.pedido} #{activo.id.slice(0, 4).toUpperCase()} ·{' '}
+                {formatearDolares(activo.pagoRepartidor, idioma)}
+              </Text>
+              {activo.lineas.map((l) => (
+                <Text key={l.platoId}>
+                  {l.cantidad} × {textoLinea(l, idioma)}
+                </Text>
+              ))}
+              {activo.estado !== 'en_camino' ? (
+                <>
+                  <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                    {t.recoger}: {activo.restaurante.nombre}
+                  </Text>
+                  <Text>{activo.restaurante.direccion}</Text>
+                  <Boton
+                    texto={t.comoLlegar}
+                    alTocar={() =>
+                      abrirMapa(
+                        activo.restaurante.lat,
+                        activo.restaurante.lng,
+                        activo.restaurante.direccion,
+                      )
+                    }
+                    secundario
+                  />
+                  {activo.restaurante.telefono ? (
+                    <Boton
+                      texto={t.llamar}
+                      alTocar={() => void Linking.openURL(`tel:${activo.restaurante.telefono}`)}
+                      secundario
+                    />
+                  ) : null}
+                  {activo.estado === 'listo' && activo.fotoRecogida ? (
+                    <>
+                      {bloqueCodigo}
+                      <Text
+                        style={{ marginTop: 10, color: C.exito, fontWeight: '700' }}
+                        accessibilityRole="alert"
+                      >
+                        {activo.verificado ? t.verificadoOk : t.esperaConfirmacion}
+                      </Text>
+                      <Boton
+                        texto={subiendo ? t.subiendo : t.repetirFoto}
+                        alTocar={() =>
+                          void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                        }
+                        cargando={subiendo}
+                        secundario
+                      />
+                    </>
+                  ) : activo.estado === 'listo' ? (
+                    <>
+                      {bloqueCodigo}
+                      <Boton
+                        texto={subiendo ? t.subiendo : t.fotoRecogida}
+                        alTocar={() =>
+                          void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                        }
+                        cargando={subiendo}
+                        exito={!!activo.verificado}
+                        secundario={!activo.verificado}
+                      />
+                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
+                    </>
+                  ) : (
+                    <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
+                      {t.esperando}
+                      {activo.minutosParaListo
+                        ? ` ${t.listoEn} ${activo.minutosParaListo} min.`
+                        : ''}
+                    </Text>
+                  )}
+                  {/* Soltar antes de recoger: vuelve a la fila de ofertas, sin castigo. */}
+                  <View
+                    style={{
+                      marginTop: 14,
+                      borderTopWidth: 1,
+                      borderTopColor: '#E6E6E6',
+                      paddingTop: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
+                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
+                    <TextInput
+                      value={motivo}
+                      onChangeText={setMotivo}
+                      placeholder={t.motivo}
+                      accessibilityLabel={t.motivo}
+                      style={[e.input, { marginTop: 6 }]}
+                    />
+                    {motivo.trim() ? (
+                      <Boton
+                        texto={t.soltar}
+                        alTocar={() =>
+                          void accion(`/datos/repartidor/pedidos/${activo.id}/soltar`, {
+                            motivo: motivo.trim(),
+                          }).then(() => setMotivo(''))
+                        }
+                        secundario
+                      />
+                    ) : null}
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
+                  <Text>{activo.direccion}</Text>
+                  {activo.notas ? (
+                    <Text style={{ color: '#5E5E5E' }}>
+                      {t.notas}: {activo.notas}
+                    </Text>
+                  ) : null}
+                  <Text style={{ fontWeight: '700', marginTop: 4 }}>
+                    {t.pidio[activo.entrega ?? 'puerta']}
+                  </Text>
+                  {(() => {
+                    const casa =
+                      activo.lat != null && activo.lng != null
+                        ? { lat: activo.lat, lng: activo.lng }
+                        : null;
+                    // Al llegar a la puerta se quita «Cómo llegar» y aparece la foto de la entrega.
+                    // Lo decide el servidor (dos lecturas precisas del GPS) o soporte con la excepción.
+                    const enPuerta =
+                      Boolean(activo.llegoCliente) || activo.excepcionUbicacion === 'autorizada';
+                    if (!enPuerta) {
+                      const m = aqui && casa ? metrosEntre(aqui, casa) : null;
+                      const cerca = llego(aqui, casa);
+                      const falta =
+                        m == null
+                          ? ''
+                          : idioma === 'en'
+                            ? `${(m / 1609.34).toFixed(1)} mi`
+                            : m < 1000
+                              ? `${m} m`
+                              : `${(m / 1000).toFixed(1)} km`;
+                      return (
+                        <>
+                          <Boton
+                            texto={t.comoLlegar}
+                            alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
+                            exito
+                          />
+                          {cerca ? (
+                            <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
+                              {t.confirmandoGps}
+                              {precision != null && precision > PRECISION_MAXIMA_M
+                                ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
+                                : ''}
+                            </Text>
+                          ) : (
+                            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                              {falta ? `${t.teFaltan} ${falta}. ` : ''}
+                              {t.alLlegar}
+                            </Text>
+                          )}
+                          {activo.excepcionUbicacion === 'pedida' ? (
+                            <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
+                              {t.esperandoSoporte}
+                            </Text>
+                          ) : (
+                            <View style={{ marginTop: 10 }}>
+                              <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
+                              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                                {t.sinGpsAyuda}
+                              </Text>
+                              <TextInput
+                                value={motivoGps}
+                                onChangeText={setMotivoGps}
+                                placeholder={t.sinGpsAyuda}
+                                accessibilityLabel={t.sinGpsAyuda}
+                                style={[e.input, { marginTop: 6 }]}
+                              />
+                              {motivoGps.trim().length >= 5 ? (
+                                <Boton
+                                  texto={t.pedirExcepcion}
+                                  alTocar={() =>
+                                    void accion(
+                                      `/datos/repartidor/pedidos/${activo.id}/no-puedo-confirmar`,
+                                      { motivo: motivoGps.trim() },
+                                    ).then(() => setMotivoGps(''))
+                                  }
+                                  secundario
+                                />
+                              ) : null}
+                            </View>
+                          )}
+                        </>
+                      );
+                    }
+                    // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
+                    const enMano = activo.entrega === 'mano';
+                    const avisoMs = activo.noApareceEn
+                      ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
+                      : null;
+                    const faltanSeg =
+                      avisoMs == null
+                        ? null
+                        : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
+                    return (
+                      <>
+                        {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
+                          <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
+                            {t.autorizado}
+                          </Text>
+                        ) : null}
+                        <Boton
+                          texto={subiendo ? t.subiendo : t.fotoEntrega}
+                          alTocar={() =>
+                            void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
+                          }
+                          cargando={subiendo}
+                          exito={!enMano}
+                          secundario={enMano}
+                        />
+                        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                        {activo.pinRequerido ? (
+                          <TextInput
+                            value={pinEntrega}
+                            onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
+                            placeholder={t.pinPedir}
+                            accessibilityLabel={t.pinPedir}
+                            keyboardType="number-pad"
+                            style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
+                          />
+                        ) : null}
+                        {activo.requiereEdad ? (
+                          <Pressable
+                            onPress={() => setMayorEdad((v) => !v)}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: mayorEdad }}
+                            accessibilityLabel={t.mayorEdad}
+                            style={{
+                              flexDirection: 'row',
+                              gap: 8,
+                              alignItems: 'center',
+                              marginTop: 8,
+                            }}
+                          >
+                            <Switch
+                              value={mayorEdad}
+                              onValueChange={setMayorEdad}
+                              accessibilityLabel={t.mayorEdad}
+                            />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
+                              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                                {t.mayorEdadAyuda}
+                              </Text>
+                            </View>
+                          </Pressable>
+                        ) : null}
+                        <Boton
+                          texto={t.enMano}
+                          alTocar={() => void entregarEnMano()}
+                          cargando={subiendo}
+                          exito={enMano}
+                          secundario={!enMano}
+                        />
+                        {faltanSeg == null ? (
+                          <Boton
+                            texto={t.noAparece}
+                            alTocar={() =>
+                              void accion(`/datos/repartidor/pedidos/${activo.id}/no-aparece`)
+                            }
+                            secundario
+                          />
+                        ) : faltanSeg > 0 ? (
+                          <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
+                            {t.esperando5} {Math.floor(faltanSeg / 60)}:
+                            {String(faltanSeg % 60).padStart(2, '0')}
+                          </Text>
+                        ) : (
+                          <>
+                            <TextInput
+                              value={nota}
+                              onChangeText={setNota}
+                              placeholder={t.dondeLoDejas}
+                              accessibilityLabel={t.dondeLoDejas}
+                              style={[e.input, { marginTop: 6 }]}
+                            />
+                            {nota.trim() ? (
+                              <Boton
+                                texto={subiendo ? t.subiendo : t.dejarSeguro}
+                                alTocar={() =>
+                                  void tomarFoto(
+                                    `/datos/repartidor/pedidos/${activo.id}/entregado?modo=seguro&nota=${encodeURIComponent(nota.trim())}`,
+                                  )
+                                }
+                                cargando={subiendo}
+                                exito
+                              />
+                            ) : null}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
+              {activo.estado === 'en_camino' || activo.estado === 'listo' ? (
+                <Boton
+                  texto={t.llamarCliente}
+                  alTocar={() =>
+                    void api
+                      .pedir('POST', `/datos/pedidos/${activo.id}/llamar`, {})
+                      .then(() => setAviso(t.llamandoCliente))
+                      .catch((x: unknown) =>
+                        setError(x instanceof ErrorApi ? x.message : String(x)),
+                      )
+                  }
+                  secundario
+                />
+              ) : null}
+              {mostrarChat ? <ChatPedido pedidoId={activo.id} /> : null}
+            </View>
+            {(estado?.agrupados ?? []).map((g) => {
+              const casaG = g.lat != null && g.lng != null ? { lat: g.lat, lng: g.lng } : null;
+              const enPuertaG = Boolean(g.llegoCliente) || g.excepcionUbicacion === 'autorizada';
+              return (
+                <View key={g.id} style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
+                  <Text style={{ fontWeight: '800', color: C.primario }}>{t.agrupado}</Text>
+                  <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
+                  <Text style={{ fontWeight: '800', fontSize: 16, marginTop: 4 }}>
+                    {t.pedido} #{g.id.slice(0, 4).toUpperCase()} ·{' '}
+                    {formatearDolares(g.pagoRepartidor, idioma)}
+                  </Text>
+                  {g.lineas.map((l) => (
+                    <Text key={l.platoId}>
+                      {l.cantidad} × {textoLinea(l, idioma)}
+                    </Text>
+                  ))}
+                  <Text style={{ marginTop: 6, fontWeight: '700' }}>{t.entregar}:</Text>
+                  <Text>{g.direccion}</Text>
+                  {g.estado === 'en_camino' ? (
+                    enPuertaG ? (
+                      <>
+                        <Boton
+                          texto={subiendo ? t.subiendo : t.fotoEntrega}
+                          alTocar={() =>
+                            void tomarFoto(`/datos/repartidor/pedidos/${g.id}/entregado`)
+                          }
+                          cargando={subiendo}
+                          exito
+                        />
+                        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Boton
+                          texto={t.comoLlegar}
+                          alTocar={() => abrirMapa(g.lat, g.lng, g.direccion)}
+                          exito
+                        />
+                        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                          {aqui && casaG ? `${t.teFaltan} ${metrosEntre(aqui, casaG)} m. ` : ''}
+                          {t.alLlegar}
+                        </Text>
+                      </>
+                    )
+                  ) : (
+                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.esperando}</Text>
+                  )}
+                  <ChatPedido pedidoId={g.id} />
+                </View>
+              );
+            })}
+          </>
+        </View>
+      </View>,
+    );
+  }
+
+  return lienzo(
+    'inicio',
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, zIndex: 2 }}>
+        <ResumenDia
+          idioma={idioma}
+          ganancias={gananciasHoy}
+          entregas={entregasHoy}
+          segundosConectado={segundosConectado}
+        />
+        {estado?.conectado ? (
+          <View
+            style={{
+              alignSelf: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: '#E6F4EC',
+              borderRadius: 999,
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              marginTop: 10,
+            }}
+          >
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.exito }} />
+            <Text style={{ fontWeight: '700', color: C.secundario }}>{td.disponiblePedidos}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={{ marginTop: -10 }}>
+        <Mapa
+          yo={aqui}
+          marcadores={marcadoresOfertas}
+          alto={alturaMapa}
+          etiquetas={etiquetasMapa}
+        />
+        {aqui ? (
+          <View
+            style={{
+              position: 'absolute',
+              top: 24,
+              left: 16,
+              backgroundColor: '#fff',
+              borderRadius: 999,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.primario }} />
+            <Text style={{ fontWeight: '700', fontSize: 12 }}>{td.tuUbicacion}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
+        {mensajes}
+        {estado?.conectado ? (
+          ofertas.length === 0 ? (
+            <Text style={e.tarjeta}>{t.buscando}</Text>
+          ) : (
+            ofertas.map((o) => (
+              <View key={o.id} style={[e.tarjeta, { borderWidth: 3, borderColor: C.primario }]}>
+                <Text style={{ color: C.primario, fontWeight: '800' }}>{t.oferta}</Text>
+                <Text style={{ fontSize: 28, fontWeight: '800', marginVertical: 4 }}>
+                  {t.ganas} {formatearDolares(o.pagoRepartidor, idioma)}
+                </Text>
+                {o.propina > 0 ? (
+                  <Text style={{ color: '#5E5E5E' }}>
+                    {t.propinaIncluida} {formatearDolares(o.propina, idioma)}
+                  </Text>
+                ) : null}
+                {o.bono ? (
+                  <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>
+                    {t.bono} {formatearDolares(o.bono, idioma)} {t.bonoPorque}
+                  </Text>
+                ) : null}
+                <Text style={{ marginTop: 6 }}>
+                  {t.recoger}: {o.restaurante.nombre}
+                  {o.minutosParaListo
+                    ? ` · ${t.listoEn} ${o.minutosParaListo} min`
+                    : ` · ${t.listoYa}`}
+                </Text>
+                <Text>
+                  {t.entregar}: {o.direccion}
+                  {o.distanciaKm != null
+                    ? ` · ${(idioma === 'en' ? o.distanciaKm * 0.621371 : o.distanciaKm).toFixed(1)} ${idioma === 'en' ? 'mi' : 'km'}`
+                    : ''}
+                </Text>
+                <Boton
+                  texto={t.aceptar}
+                  alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/aceptar`)}
+                  exito
+                />
+                <Boton
+                  texto={t.rechazar}
+                  alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/rechazar`)}
+                  secundario
+                />
+                <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.sinCastigo}</Text>
+              </View>
+            ))
+          )
+        ) : null}
+        {estado && (
+          <Pressable
+            onPress={() => void alternar()}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: estado.conectado }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              backgroundColor: estado.conectado ? C.exito : '#6B6B6B',
+              borderRadius: 999,
+              padding: 8,
+              paddingRight: 20,
+            }}
+          >
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff' }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 17 }}>
+                {estado.conectado ? t.conectado : t.desconectado}
+              </Text>
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>
+                {cambiando
+                  ? t.buscandoUbicacion
+                  : estado.conectado
+                    ? t.desconectar
+                    : td.tocaDisponible}
+              </Text>
+            </View>
+          </Pressable>
+        )}
+        {estado && (
+          <View style={e.tarjeta}>
+            <Text style={{ fontWeight: '800' }}>
+              {t.nivel}: {enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)} ·{' '}
+              {estado.puntos} {t.puntos}
+            </Text>
+            {estado.nivel.siguiente ? (
+              <Text style={{ color: '#5E5E5E' }}>
+                {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
+                {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
+              </Text>
+            ) : null}
+            {/* Barra de avance al siguiente nivel, en verde: cada entrega es un paso hacia adelante. */}
+            <View
+              accessibilityRole="progressbar"
+              accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.nivel.avance * 100) }}
+              style={{
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: '#ECECEC',
+                marginTop: 8,
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  width: `${Math.max(2, Math.round(estado.nivel.avance * 100))}%`,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: C.exito,
+                }}
+              />
+            </View>
+          </View>
+        )}
+        {billetera && (
+          <Pressable
+            onPress={() => setVista('billetera')}
+            accessibilityRole="link"
+            style={[e.tarjeta, { backgroundColor: C.secundario }]}
+          >
+            <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
+              {formatearDolares(billetera.saldo, idioma)}
+            </Text>
+            <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
+              {t.verBilletera}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </View>,
   );
 }

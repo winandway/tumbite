@@ -13,6 +13,7 @@ describe('billetera del repartidor', () => {
       join(__dirname, '..', '..', 'repartidor', 'src', 'Inicio.tsx'),
       'utf8',
     );
-    expect(inicio).toMatch(/\{menuCabecera\}\s*\{mensajes\}\s*<BilleteraRepartidor/);
+    // La pantalla de ganancias (diseño del 14 oct 2026) pinta los mensajes antes de la billetera.
+    expect(inicio).toMatch(/'ganancias',[\s\S]*?\{mensajes\}[\s\S]*?<BilleteraRepartidor/);
   });
 });
