@@ -60,6 +60,8 @@ describe('diagnóstico del sitio de pruebas', () => {
     );
     expect(r.filter((x) => x.datos.gano).length).toBe(1);
     expect((await pedir('s5/cerrar', { tabla: p.tabla })).datos.ganador).toMatch(/^c\d+$/);
+    const mp = await pedir('migraciones-prueba');
+    expect(mp.datos.ok, JSON.stringify(mp.datos.casos)).toBe(true);
     const restos = await m.DB.prepare(
       "SELECT COUNT(*) AS n FROM sqlite_master WHERE name LIKE 'zz_%' UNION ALL SELECT COUNT(*) FROM usuarios WHERE id LIKE 'zz-%'",
     ).all<{ n: number }>();

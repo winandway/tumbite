@@ -64,6 +64,7 @@ resultados.MIGRACIONES = {
   m5: m5.cambios,
   despues: despues.resultados,
 };
+resultados.MIGRACIONES_PRUEBA = await pedir('migraciones-prueba');
 resultados.F2 = await pedir('f2');
 
 let todo = true;

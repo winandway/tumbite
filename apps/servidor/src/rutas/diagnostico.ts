@@ -763,19 +763,32 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
       .bind(ocupado),
   ]);
   // «Ocupado» con un pedido en curso sintético (sin dinero: no hay cobro ni movimientos).
-  const rest = await db.prepare('SELECT id FROM restaurantes LIMIT 1').first<{ id: string }>();
+  // Restaurante y dueño temporales (el sitio de pruebas puede no tener ninguno).
+  const dueno = `zz-f2d-${sufijo()}`;
+  const rest = { id: `zz-f2r-${sufijo()}` };
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F2', 'restaurante', 'x')",
+      )
+      .bind(dueno, `${dueno}@prueba.invalid`),
+    db
+      .prepare(
+        "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES (?, ?, 'Prueba F2', 'pendiente')",
+      )
+      .bind(rest.id, dueno),
+  ]);
   const pedido = `zz-f2p-${sufijo()}`;
   const loteId = `zz-lote-${sufijo()}`;
   try {
-    if (rest)
-      await db
-        .prepare(
-          `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+    await db
+      .prepare(
+        `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
              propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion)
            VALUES (?, ?, ?, ?, 'en_camino', '[]', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'basico', 'Diagnóstico')`,
-        )
-        .bind(pedido, libre, rest.id, ocupado)
-        .run();
+      )
+      .bind(pedido, libre, rest.id, ocupado)
+      .run();
     const dineroAntes = await db
       .prepare('SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos')
       .first<{ n: number; s: number }>();
@@ -835,10 +848,150 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
   } finally {
     await db.batch([
       db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
+      db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest.id),
       db.prepare('DELETE FROM lotes_ubicacion WHERE lote_id IN (?, ?)').bind(loteId, `${loteId}-v`),
       db.prepare('DELETE FROM repartidores WHERE usuario_id IN (?, ?)').bind(libre, ocupado),
-      db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(libre, ocupado),
+      db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(libre, ocupado, dueno),
     ]);
   }
   return c.json({ prueba: 'F2', ok: casos.every((x) => x.ok), casos });
+});
+
+/**
+ * M4 y M5 sobre repartidores TEMPORALES del sitio de pruebas (que no tiene repartidores reales):
+ * carro con placa, bicicleta, moto sin placa, dos con la misma placa, uno con identidad verificada
+ * de verdad y otro «aprobado» sin evidencia. Corre las migraciones dos veces y borra todo al final.
+ */
+diagnostico.post('/interno/diagnostico/migraciones-prueba', async (c) => {
+  const db = base(c);
+  const k = sufijo();
+  const ids = ['carro', 'bici', 'moto', 'dupa', 'dupb', 'nada'].map((x) => `zz-mig-${x}-${k}`);
+  const [carro, bici, moto, dupa, dupb] = ids as [string, string, string, string, string];
+  const revisor = `zz-mig-admin-${k}`;
+  const placaDup = `ZZD${k.slice(0, 5).toUpperCase()}`;
+  const casos: Caso[] = [];
+  await db.batch([
+    ...ids.map((id) =>
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba M', 'repartidor', 'x')",
+        )
+        .bind(id, `${id}@prueba.invalid`),
+    ),
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Soporte Prueba', 'admin', 'x')",
+      )
+      .bind(revisor, `${revisor}@prueba.invalid`),
+    db
+      .prepare(
+        "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, placa) VALUES (?, 'carro', ?)",
+      )
+      .bind(carro, `ZZC${k.slice(0, 5).toUpperCase()}`),
+    db
+      .prepare(
+        "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, placa) VALUES (?, 'bicicleta', '')",
+      )
+      .bind(bici),
+    db
+      .prepare(
+        "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, placa) VALUES (?, 'moto', '')",
+      )
+      .bind(moto),
+    db
+      .prepare(
+        "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, placa) VALUES (?, 'carro', ?)",
+      )
+      .bind(dupa, placaDup),
+    db
+      .prepare(
+        "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, placa) VALUES (?, 'moto', ?)",
+      )
+      .bind(dupb, placaDup.toLowerCase()),
+    db
+      .prepare(
+        "INSERT INTO kyc (usuario_id, estado, doc_frente, selfie, revisado_en, revisado_por) VALUES (?, 'aprobado', 'kyc/d.jpg', 'kyc/s.jpg', datetime('now'), ?)",
+      )
+      .bind(carro, revisor),
+    db.prepare("INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado')").bind(bici),
+  ]);
+  try {
+    for (let vez = 0; vez < 2; vez++)
+      for (const sql of [...sentencias(MIGRACIONES_FASE1.m4), ...sentencias(MIGRACIONES_FASE1.m5)])
+        await db.prepare(sql).run();
+    const marcas = ids.map(() => '?').join(',');
+    const veh = await db
+      .prepare(
+        `SELECT conductor_id, estado FROM vehiculos WHERE origen = 'migracion' AND conductor_id IN (${marcas})`,
+      )
+      .bind(...ids)
+      .all<{ conductor_id: string; estado: string }>();
+    const v = new Map(veh.results.map((x) => [x.conductor_id, x.estado]));
+    casos.push({
+      nombre: 'M4 copia 3 vehículos y no copia las placas repetidas',
+      ok: veh.results.length === 3 && !v.has(dupa) && !v.has(dupb),
+    });
+    casos.push({
+      nombre: 'carro con placa y bicicleta quedan aprobados; moto sin placa, registrada',
+      ok: v.get(carro) === 'aprobado' && v.get(bici) === 'aprobado' && v.get(moto) === 'registrado',
+    });
+    const hab = await db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM habilitaciones WHERE servicio_id = 'comida' AND estado = 'aprobada' AND conductor_id IN (${marcas})`,
+      )
+      .bind(...ids)
+      .first<{ n: number }>();
+    casos.push({
+      nombre: 'M5 habilita Comida a los 6, sin duplicar al repetir',
+      ok: Number(hab?.n) === 6,
+    });
+    const idt = await db
+      .prepare(
+        `SELECT conductor_id FROM cumplimientos WHERE requisito = 'identidad' AND conductor_id IN (${marcas})`,
+      )
+      .bind(...ids)
+      .all<{ conductor_id: string }>();
+    casos.push({
+      nombre:
+        'identidad solo para quien tiene verificación real (no para el «aprobado» sin evidencia)',
+      ok: idt.results.length === 1 && idt.results[0]?.conductor_id === carro,
+    });
+    const act = await db
+      .prepare('SELECT vehiculo_activo_id AS v FROM repartidores WHERE usuario_id = ?')
+      .bind(carro)
+      .first<{ v: string }>();
+    casos.push({ nombre: 'el vehículo copiado queda como activo', ok: act?.v === `mig-${carro}` });
+  } finally {
+    const marcas = ids.map(() => '?').join(',');
+    await db.batch([
+      db
+        .prepare(
+          `UPDATE repartidores SET vehiculo_activo_id = NULL WHERE usuario_id IN (${marcas})`,
+        )
+        .bind(...ids),
+      db
+        .prepare(
+          `DELETE FROM vehiculo_revisiones WHERE vehiculo_id IN (SELECT id FROM vehiculos WHERE conductor_id IN (${marcas}))`,
+        )
+        .bind(...ids),
+      db.prepare(`DELETE FROM vehiculos WHERE conductor_id IN (${marcas})`).bind(...ids),
+      db
+        .prepare(`DELETE FROM habilitaciones_historial WHERE conductor_id IN (${marcas})`)
+        .bind(...ids),
+      db.prepare(`DELETE FROM habilitaciones WHERE conductor_id IN (${marcas})`).bind(...ids),
+      db
+        .prepare(`DELETE FROM preferencias_servicio WHERE conductor_id IN (${marcas})`)
+        .bind(...ids),
+      db.prepare(`DELETE FROM cumplimientos WHERE conductor_id IN (${marcas})`).bind(...ids),
+      db.prepare(`DELETE FROM kyc WHERE usuario_id IN (${marcas})`).bind(...ids),
+      db.prepare(`DELETE FROM repartidor_datos WHERE usuario_id IN (${marcas})`).bind(...ids),
+      db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...ids),
+      db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas}, ?)`).bind(...ids, revisor),
+    ]);
+  }
+  return c.json({
+    prueba: 'M4/M5 con repartidores temporales',
+    ok: casos.every((x) => x.ok),
+    casos,
+  });
 });
