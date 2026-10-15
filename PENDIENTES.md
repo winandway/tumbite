@@ -108,6 +108,7 @@
 - [x] Ramas integradas solo en staging; S2–S7, F1, M4/M5 (también con datos temporales) y F2 en D1 real, todo en verde.
 - [x] Los dos relojes comparten el candado por minuto (C-RELOJ-UNA-VEZ).
 - [x] Sesión de Cloudflare de windoce1 en la sesión aparte; los dos Workers desplegados SOLO para pruebas (15 oct).
-- [ ] 👤 Copiar al panel del sitio de pruebas los 7 valores del archivo del escritorio «tumbite-pruebas-variables», republicar y borrar el archivo → tiempo real conectado a pruebas.
-- [ ] 👤 Llaves de modo prueba de Stripe y su aviso en el panel del sitio de pruebas → S11 y el recorrido de Comida en staging.
+- [x] Variables del tiempo real cargadas en el sitio de pruebas por su API; prueba en vivo en verde (15 oct).
+- [ ] 👤 Correr `bash scripts/staging/cargar-stripe-prueba.sh` y pegar las dos llaves de PRUEBA de Stripe (no se ven) → S11 y el recorrido de Comida en staging.
+- [ ] 👤 Revocar la llave de Acceso para IA del sitio de pruebas que pasó por el chat y crear otra cuando termine la validación.
 - [ ] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.

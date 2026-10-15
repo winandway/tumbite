@@ -113,13 +113,33 @@ Cuando estén, se corren solas:
 - Las llaves de prueba se generaron en esta computadora sin mostrarse. Están en los secretos de los Workers y de GitHub, y en un archivo privado para el panel.
 - **Falta**: los 7 valores en el panel del sitio de pruebas y republicar. Hasta entonces el reloj externo recibe 404, sin efecto. Después, correr el workflow `tiempo-real-staging`.
 
+### Prueba en vivo del tiempo real (15 oct, corrida `38787195501`): TODO EN VERDE
+
+Con los Workers desplegados para pruebas y las variables cargadas por la API del sitio de pruebas (llave de «Acceso para IA» del sitio de pruebas, comprobada antes de guardarla; la de esta computadora abre **producción** y no se usó):
+
+| Prueba                                                                                                                                  | Resultado |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| El sitio de pruebas emite pases (repartidor y cliente)                                                                                  | ✅        |
+| Un pase falso no conecta · el pase en la dirección no sirve · un cliente no entra como repartidor · un cliente no sigue un pedido ajeno | ✅        |
+| Los tres WebSocket conectan                                                                                                             | ✅        |
+| Ubicación aceptada, la repetida se marca duplicada, el salto de GPS se descarta                                                         | ✅        |
+| El cliente ve la posición de SU repartidor y no la de otro                                                                              | ✅        |
+| Un aviso sin firma no entra; el firmado llega una sola vez aunque se mande dos; no le llega a otro                                      | ✅        |
+| Al reconectar recupera solo lo que se perdió                                                                                            | ✅        |
+| La posición del repartidor libre llega a la base en menos de 20 s; la del que tiene un pedido en curso, no                              | ✅        |
+| El reloj externo corre (10 de 10 vueltas recientes) y nunca hay dos vueltas en el mismo minuto                                          | ✅        |
+
+La salud del sitio de pruebas dice `tiempoReal: ok`. **Falta solo Stripe en modo prueba** (S11 y el recorrido completo de Comida en staging): está listo `scripts/staging/cargar-stripe-prueba.sh`. Richard pega las dos llaves de prueba sin que se vean; el script rechaza las reales, crea el aviso de prueba, carga las tres variables en el sitio de pruebas y republica.
+
+**Seguridad:** la llave de «Acceso para IA» del sitio de pruebas llegó por el chat. Se recomienda revocarla y crear otra (se guarda con `guardar-llave-pruebas.sh`) cuando termine la validación.
+
 ## 5. Decisión técnica sobre la Fase 3
 
 **Todavía no.** Todo lo que se pudo probar está en verde, pero la Fase 3 (exclusividad) **pone disparadores sobre la tabla de pedidos de Comida**. Antes de tocar esa tabla hacen falta tres cosas en staging:
 
 1. **El recorrido completo de Comida en staging, con pago de prueba**, con las tres fases integradas. Es la referencia de que Comida funciona antes de la Fase 3, para poder comparar después.
 2. **S11**: el retiro en modo prueba de Stripe, pendiente desde la Fase 0.
-3. **Los Workers desplegados y la prueba en vivo en verde**, para que la Fase 3 se apoye en un tiempo real comprobado y no solo simulado.
+3. ~~Los Workers desplegados y la prueba en vivo en verde~~ ✅ **Hecho el 15 oct.**
 
 Con esas tres cosas en verde, la recomendación técnica es **comenzar la Fase 3**. No hay ningún hallazgo que obligue a cambiar la arquitectura V1.2.
 
