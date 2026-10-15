@@ -106,10 +106,24 @@ try {
   // Seguridad de la conexión.
   const malo = await abrir('/v1/conexion', 'no.vale');
   caso('un pase falso no conecta', !malo.ok);
-  const enUrl = await fetch(new URL(`/v1/conexion?pase=${pLibre.datos.pase}`, TIEMPO_REAL_URL), {
-    headers: { upgrade: 'websocket' },
+  const enUrl = await new Promise((resolver) => {
+    const ws = new WebSocket(
+      new URL(`/v1/conexion?pase=${pLibre.datos.pase}`, TIEMPO_REAL_URL)
+        .toString()
+        .replace(/^http/, 'ws'),
+    );
+    const t = setTimeout(() => resolver(false), 8000);
+    ws.onopen = () => {
+      clearTimeout(t);
+      ws.close();
+      resolver(true);
+    };
+    ws.onerror = () => {
+      clearTimeout(t);
+      resolver(false);
+    };
   });
-  caso('el pase en la dirección no sirve', enUrl.status === 401, String(enUrl.status));
+  caso('el pase en la dirección no sirve', !enUrl);
   const clienteComoRep = await abrir('/v1/conexion', pCliente.datos.pase);
   caso('un cliente no entra como repartidor', !clienteComoRep.ok);
   const ajeno = await abrir('/v1/seguir/otro-pedido', pCliente.datos.pase);
