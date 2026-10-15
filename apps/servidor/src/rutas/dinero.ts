@@ -5,7 +5,6 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
-import { nuevoId } from '../cripto';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -227,31 +226,4 @@ dinero.put('/admin/retiros', async (c) => {
     .bind(activos ? '1' : '0')
     .run();
   return c.json({ activos: await retirosActivos(c.env, base(c)) });
-});
-
-/**
- * Diagnóstico S7 (Fase 0): comprueba EN LA BASE REAL que un batch que falla a la mitad se deshace
- * entero. Solo administradores; usa una tabla temporal con nombre aleatorio y la borra al terminar.
- */
-dinero.post('/admin/diagnostico/lote-atomico', async (c) => {
-  exigir(c, 'admin');
-  const db = base(c);
-  const tabla = `zz_diag_${nuevoId()
-    .replace(/[^a-z0-9]/gi, '')
-    .slice(0, 16)
-    .toLowerCase()}`;
-  await db.prepare(`CREATE TABLE ${tabla} (id INTEGER PRIMARY KEY, v TEXT NOT NULL)`).run();
-  let loteFallo = false;
-  try {
-    await db.batch([
-      db.prepare(`INSERT INTO ${tabla} (id, v) VALUES (1, 'primera')`),
-      db.prepare(`INSERT INTO ${tabla} (id, v) VALUES (1, 'repetida: debe fallar')`),
-    ]);
-  } catch {
-    loteFallo = true;
-  }
-  const quedaron = await db.prepare(`SELECT COUNT(*) AS n FROM ${tabla}`).first<{ n: number }>();
-  await db.prepare(`DROP TABLE ${tabla}`).run();
-  const filas = Number(quedaron?.n ?? -1);
-  return c.json({ loteFallo, filasQuedaron: filas, atomico: loteFallo && filas === 0 });
 });

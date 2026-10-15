@@ -14,6 +14,10 @@ export type DatosBilletera = {
   cuentaConectada: boolean;
   pagosActivos: boolean;
   movimientos?: Movimiento[];
+  /** Fase 0: false = retiros en pausa (la billetera lo dice en vez del botón). */
+  retirosActivos?: boolean;
+  /** Fase 0: retiros que Stripe todavía está confirmando. */
+  retirosEnProceso?: { id: string; monto: number; estado: string; fecha: string }[];
 };
 
 const T = {
@@ -37,6 +41,11 @@ const T = {
       regalo: 'Regalo',
     },
     pedido: 'Pedido',
+    enProcesoTitulo: 'Retiros en proceso',
+    enProceso: 'En proceso',
+    enProcesoAyuda:
+      'Ya salió de tu saldo y Stripe lo está confirmando. Llega a tu banco en cuanto se confirme.',
+    pausa: 'Los retiros están en pausa por mantenimiento. Tu saldo está a salvo.',
   },
   en: {
     disponible: 'Available to withdraw',
@@ -58,6 +67,11 @@ const T = {
       regalo: 'Gift',
     },
     pedido: 'Order',
+    enProcesoTitulo: 'Withdrawals in progress',
+    enProceso: 'In progress',
+    enProcesoAyuda:
+      'It already left your balance and Stripe is confirming it. It reaches your bank once confirmed.',
+    pausa: 'Withdrawals are paused for maintenance. Your balance is safe.',
   },
 };
 
@@ -121,7 +135,24 @@ export function BilleteraRepartidor({
           ))}
         </View>
       </View>
-      {datos.pagosActivos ? (
+      {datos.retirosEnProceso?.length ? (
+        <View style={e.tarjeta} accessibilityLabel={t.enProcesoTitulo}>
+          <Text style={{ fontWeight: '800', marginBottom: 4 }}>{t.enProcesoTitulo}</Text>
+          {datos.retirosEnProceso.map((r) => (
+            <View
+              key={r.id}
+              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+            >
+              <Text>{dinero(r.monto)}</Text>
+              <Text style={{ fontWeight: '700', color: '#B26A00' }}>{t.enProceso}</Text>
+            </View>
+          ))}
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>{t.enProcesoAyuda}</Text>
+        </View>
+      ) : null}
+      {datos.pagosActivos && datos.retirosActivos === false ? (
+        <Text style={{ color: '#5E5E5E', marginBottom: 12 }}>{t.pausa}</Text>
+      ) : datos.pagosActivos ? (
         datos.saldo >= 100 ? (
           <Boton texto={t.retirar} alTocar={retirar} />
         ) : (

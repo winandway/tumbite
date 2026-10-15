@@ -26,13 +26,15 @@ export type ResultadoRetiro = 'confirmado' | 'en_proceso' | 'fallido' | 'revisio
 
 export const claveRetiro = (id: string) => `retiro:${id}`;
 
-/** ¿Se puede pedir un retiro ahora? Variable de entorno (emergencia) y bandera en la base. */
+/** ¿Se puede pedir un retiro ahora? Variable de entorno (emergencia) y bandera en la base (apagados si no hay bandera). */
 export async function retirosActivos(env: Env, db: D1Database): Promise<boolean> {
   if (env.RETIROS_APAGADOS === '1') return false;
   const f = await db
     .prepare("SELECT valor FROM config WHERE clave = 'retiros_activos'")
     .first<{ valor: string }>();
-  return f?.valor !== '0';
+  // Apagados por defecto (Fase 0, decisión del 15 oct 2026): un admin los enciende cuando
+  // termine la validación con Stripe en modo prueba.
+  return f?.valor === '1';
 }
 
 /** Crea el retiro y descuenta el saldo en UNA sentencia. Devuelve el id, o null si no alcanza. */

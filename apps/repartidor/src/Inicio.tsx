@@ -213,6 +213,7 @@ const T = {
     llamar: 'Llamar al restaurante',
     notas: 'Indicaciones',
     retirado: 'Retiro en camino a tu banco.',
+    retiroEnProceso: 'Retiro en proceso: Stripe lo está confirmando. Ya salió de tu saldo.',
     pedido: 'Pedido',
   },
   en: {
@@ -312,6 +313,8 @@ const T = {
     llamar: 'Call the restaurant',
     notas: 'Instructions',
     retirado: 'Cash-out on its way to your bank.',
+    retiroEnProceso:
+      'Withdrawal in progress: Stripe is confirming it. It already left your balance.',
     pedido: 'Order',
   },
 };
@@ -665,8 +668,15 @@ export function Inicio() {
   async function retirar() {
     if (!billetera) return;
     try {
-      await api.pedir('POST', '/datos/billetera/retirar', { montoCentavos: billetera.saldo });
-      setAviso(t.retirado);
+      const r = await api.pedir<{ retiro?: { estado?: string } }>(
+        'POST',
+        '/datos/billetera/retirar',
+        {
+          montoCentavos: billetera.saldo,
+        },
+      );
+      // Fase 0: si Stripe todavía no confirmó, se dice «en proceso», no «retirado».
+      setAviso(r.retiro?.estado === 'en_proceso' ? t.retiroEnProceso : t.retirado);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));

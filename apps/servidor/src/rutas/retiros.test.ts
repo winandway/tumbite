@@ -108,6 +108,8 @@ async function escenario(extra: Record<string, unknown> = {}) {
   )
     .bind(rep.id)
     .run();
+  // Los retiros nacen apagados (Fase 0): en estas pruebas se encienden con la bandera.
+  await m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1')").run();
   const { app } = await import('../app');
   const base = { DB: m.DB, ...env };
   const retirar = (monto = 1000) =>
@@ -417,6 +419,14 @@ describe('retiros sin doble pago (C-RETIROS-SEGUROS)', () => {
     expect((await e2.retirar()).estado).toBe(409);
   });
 
+  it('sin bandera, los retiros nacen APAGADOS (decisión del 15 oct 2026)', async () => {
+    const st = stripeSimulado();
+    const e = await escenario();
+    await e.m.DB.prepare("DELETE FROM config WHERE clave = 'retiros_activos'").run();
+    expect((await e.retirar()).estado).toBe(409);
+    expect(st.posts).toHaveLength(0);
+  });
+
   it('salud: si falta un disparador de los retiros, la pieza se pone en rojo (prueba S1)', async () => {
     stripeSimulado();
     const e = await escenario();
@@ -435,19 +445,5 @@ describe('retiros sin doble pago (C-RETIROS-SEGUROS)', () => {
     expect(b.datos.pagosActivos).toBe(true);
     expect(b.datos.retirosEnProceso).toHaveLength(1);
     expect(b.datos.retirosEnProceso[0].estado).toBe('reintentar');
-  });
-
-  it('diagnóstico S7: un batch que falla a la mitad no deja nada (solo admin)', async () => {
-    stripeSimulado();
-    const e = await escenario();
-    expect(
-      (await e.m.llamar('POST', '/datos/admin/diagnostico/lote-atomico', {}, e.rep.token)).estado,
-    ).toBe(403);
-    const r = await e.m.llamar('POST', '/datos/admin/diagnostico/lote-atomico', {}, e.admin.token);
-    expect(r.datos).toEqual({ loteFallo: true, filasQuedaron: 0, atomico: true });
-    const quedan = await e.m.DB.prepare(
-      "SELECT COUNT(*) AS n FROM sqlite_master WHERE name LIKE 'zz_diag_%'",
-    ).first<{ n: number }>();
-    expect(quedan?.n).toBe(0);
   });
 });

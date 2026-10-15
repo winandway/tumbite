@@ -22,6 +22,7 @@ import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
 import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
+import { diagnostico } from './rutas/diagnostico';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
@@ -274,6 +275,7 @@ app.notFound(async (c) => {
 app.route('/datos/cuentas', cuentas);
 app.route('/datos', catalogo);
 app.route('/datos', dinero);
+app.route('/datos', diagnostico);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
 app.route('/datos', regalos);

@@ -2,7 +2,7 @@ import { enviarCorreo } from './correo';
 import type { Env } from './env';
 import { anotar } from './historial';
 import { notificar } from './notificaciones';
-import { crearStripe } from './stripe';
+import { crearStripe, type Stripe } from './stripe';
 import { ErrorDatos } from './validar';
 import { soltarPedido } from './rutas/operacion';
 import { aplicarAjuste } from './rutas/pedidos';
@@ -47,6 +47,31 @@ export async function anotarEvento(
  * después devuelve el dinero en Stripe y, si Stripe falla, lo deja como estaba y avisa del error.
  * Nunca queda un pedido cancelado con el dinero sin devolver.
  */
+/**
+ * ¿Stripe ya devolvió el dinero de este pago? Se consulta tras un error (p. ej. respuesta perdida).
+ * Autorizado: el cobro quedó anulado. Capturado: existe un reembolso que no falló. Si la consulta
+ * misma falla, se responde «no»: el pedido vuelve a su estado y reintentar es seguro (misma clave).
+ */
+async function devolucionHecha(
+  stripe: Stripe,
+  pi: string,
+  soloAutorizado: boolean,
+): Promise<boolean> {
+  try {
+    if (soloAutorizado) {
+      const r = await stripe.get<{ status?: string }>(`/payment_intents/${pi}`);
+      return r.status === 'canceled';
+    }
+    const r = await stripe.get<{ data?: { status?: string }[] }>('/refunds', {
+      payment_intent: pi,
+      limit: 10,
+    });
+    return (r.data ?? []).some((x) => x.status !== 'failed' && x.status !== 'canceled');
+  } catch {
+    return false;
+  }
+}
+
 export async function cancelarConReembolso(
   env: Env,
   db: D1Database,
@@ -95,6 +120,25 @@ export async function cancelarConReembolso(
         );
       }
     } catch (e) {
+      // Candado C-ANULACION-VERIFICADA (Fase 0): una respuesta perdida no es un «no». Antes de
+      // revivir el pedido se le pregunta a Stripe si la anulación o el reembolso SÍ ocurrieron.
+      if (
+        stripe &&
+        (await devolucionHecha(stripe, antes.stripe_pago, Boolean(cobro && !cobro.capturado_en)))
+      ) {
+        console.error(
+          'manager: Stripe sí devolvió el dinero aunque la respuesta se perdió',
+          pedidoId,
+          e,
+        );
+        if (cobro && !cobro.capturado_en)
+          await db
+            .prepare("UPDATE cobros SET cancelado_en = datetime('now') WHERE pedido_id = ?")
+            .bind(pedidoId)
+            .run();
+        await anotar(db, pedidoId, 'cancelado', p.actorId);
+        return true;
+      }
       await db
         .prepare(
           "UPDATE pedidos SET estado = ?, cancelado_en = NULL WHERE id = ? AND estado = 'cancelado'",

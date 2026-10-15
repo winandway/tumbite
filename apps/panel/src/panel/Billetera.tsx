@@ -25,7 +25,14 @@ type Resumen = {
   comision: number;
   neto: number;
 };
-type Datos = { saldo: number; movimientos: Mov[]; cuentaConectada: boolean; pagosActivos: boolean };
+type Datos = {
+  saldo: number;
+  movimientos: Mov[];
+  cuentaConectada: boolean;
+  pagosActivos: boolean;
+  retirosActivos?: boolean;
+  retirosEnProceso?: { id: string; monto: number; estado: string; fecha: string }[];
+};
 
 const T = {
   es: {
@@ -38,6 +45,10 @@ const T = {
     retirar: 'Retirar',
     monto: 'Monto a retirar',
     retirado: 'Listo: el retiro va en camino a tu banco.',
+    retiroEnProceso: 'Retiro en proceso: Stripe lo está confirmando. Ya salió de tu saldo.',
+    enProcesoTitulo: 'Retiros en proceso',
+    enProceso: 'En proceso',
+    pausa: 'Los retiros están en pausa por mantenimiento. Tu saldo está a salvo.',
     movimientos: 'Movimientos',
     vacio: 'Todavía no hay movimientos.',
     conceptos: {
@@ -78,6 +89,11 @@ const T = {
     retirar: 'Cash out',
     monto: 'Amount to cash out',
     retirado: 'Done: your cash-out is on its way to your bank.',
+    retiroEnProceso:
+      'Withdrawal in progress: Stripe is confirming it. It already left your balance.',
+    enProcesoTitulo: 'Withdrawals in progress',
+    enProceso: 'In progress',
+    pausa: 'Withdrawals are paused for maintenance. Your balance is safe.',
     movimientos: 'Activity',
     vacio: 'No activity yet.',
     conceptos: {
@@ -163,9 +179,12 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
     const c = dolaresACentavos(monto);
     if (c === null) return setError(t.montoMal);
     try {
-      await pedir('POST', '/datos/billetera/retirar', { montoCentavos: c });
+      const r = await pedir<{ retiro?: { estado?: string } }>('POST', '/datos/billetera/retirar', {
+        montoCentavos: c,
+      });
       await b.limpiar();
-      setAviso(t.retirado);
+      // Fase 0: si Stripe todavía no confirmó, se dice «en proceso», no «retirado».
+      setAviso(r.retiro?.estado === 'en_proceso' ? t.retiroEnProceso : t.retirado);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -217,7 +236,21 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
         <span>{t.saldo}</span>
         <strong>{formatearDolares(d.saldo, idioma)}</strong>
       </div>
-      {!d.pagosActivos ? (
+      {d.retirosEnProceso?.length ? (
+        <div className="tarjeta-form" aria-label={t.enProcesoTitulo}>
+          <h2>{t.enProcesoTitulo}</h2>
+          <ul>
+            {d.retirosEnProceso.map((r) => (
+              <li key={r.id}>
+                {formatearDolares(r.monto, idioma)} · <strong>{t.enProceso}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {d.pagosActivos && d.retirosActivos === false ? (
+        <p className="tarjeta-form">{t.pausa}</p>
+      ) : !d.pagosActivos ? (
         <div className="tarjeta-form">
           <p>{t.conectarAyuda}</p>
           <button type="button" className="boton" onClick={() => void conectar()}>

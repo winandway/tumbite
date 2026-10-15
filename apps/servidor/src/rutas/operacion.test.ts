@@ -1365,6 +1365,51 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     expect(await estadoDe(e.m, id)).toBe('cancelado');
   });
 
+  /** Stripe anula de verdad pero la respuesta se pierde; `anulado` dice qué responde la consulta. */
+  function anulacionPerdida(anulado: boolean | 'red') {
+    const original = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/payment_intents/cs_1/cancel')) throw new TypeError('fetch failed');
+      if (u.endsWith('/payment_intents/cs_1') && (init?.method ?? 'GET') === 'GET') {
+        if (anulado === 'red') throw new TypeError('fetch failed');
+        return new Response(
+          JSON.stringify({ id: 'cs_1', status: anulado ? 'canceled' : 'requires_capture' }),
+        );
+      }
+      return original(url, init);
+    });
+  }
+
+  it('C-ANULACION-VERIFICADA: respuesta perdida pero Stripe SÍ anuló → el pedido queda cancelado', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e);
+    anulacionPerdida(true);
+    expect(
+      (await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/rechazar`, {}, e.dueno.token))
+        .estado,
+    ).toBe(200);
+    expect(await estadoDe(e.m, id)).toBe('cancelado');
+    const cobro = await e.m.DB.prepare('SELECT cancelado_en FROM cobros WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ cancelado_en: string | null }>();
+    expect(cobro?.cancelado_en).toBeTruthy();
+  });
+
+  it('C-ANULACION-VERIFICADA: si Stripe NO anuló (o no se puede saber) el pedido vuelve y se avisa', async () => {
+    for (const caso of [false, 'red'] as const) {
+      const e = await escenario();
+      const { id } = await pedidoAutorizado(e);
+      anulacionPerdida(caso);
+      expect(
+        (await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/rechazar`, {}, e.dueno.token))
+          .estado,
+      ).toBe(422);
+      expect(await estadoDe(e.m, id)).toBe('pagado');
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('entregar captura el total; si se quitó un plato, captura menos y no reembolsa', async () => {
     const e = await escenario();
     const { id, total, platoId } = await pedidoAutorizado(e);

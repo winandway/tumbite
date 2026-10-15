@@ -300,6 +300,8 @@ describe('pedidos y pagos', () => {
     );
     expect(sinActivar.estado).toBe(409);
     await m.DB.prepare('UPDATE cuentas_stripe SET pagos_activos = 1').run();
+    // Fase 0: los retiros nacen apagados; aquí se encienden con la bandera.
+    await m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1')").run();
     await m.DB.prepare(
       "INSERT INTO movimientos (id, usuario_id, monto, concepto) VALUES ('m1', ?, 1000, 'ajuste')",
     )

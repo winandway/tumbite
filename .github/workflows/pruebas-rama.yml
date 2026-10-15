@@ -5,6 +5,7 @@ name: pruebas-rama
 on:
   push:
     branches: ['fase-*']
+  workflow_dispatch:
 
 # La misma fila que «publicar»: si llegan dos a la vez, la segunda espera.
 concurrency:
@@ -58,3 +59,9 @@ jobs:
         if: ${{ vars.URL_PRUEBAS != '' }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
         timeout-minutes: 30
+      - name: Pruebas S de la Fase 0 dentro del sitio de pruebas (S2–S5, S7, S11)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        run: node scripts/staging/probar-staging.mjs

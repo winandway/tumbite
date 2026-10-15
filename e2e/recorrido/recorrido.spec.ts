@@ -1072,6 +1072,16 @@ for (const idioma of ['en', 'es'] as const) {
       payouts_enabled: true,
       charges_enabled: true,
     });
+    // Fase 0: los retiros nacen APAGADOS. La billetera lo dice y no hay botón de retirar.
+    sql("DELETE FROM config WHERE clave = 'retiros_activos'"); // sin bandera = apagados
+    await rep.goto('/driver/');
+    await rep.getByText(L.verBilletera).filter({ visible: true }).click();
+    await expect(rep.getByText(L.retirosPausa).filter({ visible: true })).toBeVisible();
+    await expect(rep.getByText(L.retirar).filter({ visible: true })).toHaveCount(0);
+    // En esta computadora (Stripe simulado) se encienden para recorrer el retiro completo.
+    sql(
+      "INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'",
+    );
     await rep.goto('/driver/');
     await rep.getByText(L.verBilletera).filter({ visible: true }).click();
     await rep.getByText(L.retirar).filter({ visible: true }).click();
