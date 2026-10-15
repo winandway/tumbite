@@ -125,3 +125,11 @@
 - [ ] `publicar.yml`: construir las apps de pruebas con la dirección de pruebas (hoy la copia de pruebas apunta a producción).
 - [ ] 👤 Twilio también en el sitio de pruebas (la llamada con número oculto no se prueba allí).
 - [ ] 👤 Autorizar la Fase 3 (exclusividad y asignación).
+
+## Verificación previa a producción (15 oct 2026, `docs/VERIFICACION-PREVIA-PRODUCCION.md`)
+
+- [x] Etapa A (corrección de publicación) validada en pruebas: corrida 38822612288, todo en verde.
+- [x] Respaldo completo de producción (51 tablas, 166 filas) y verificaciones de solo lectura.
+- [ ] 👤 Decidir el pedido abierto en «listo» desde el 12 oct (7,18 USD autorizados): recomendado cancelarlo antes de publicar.
+- [ ] 👤 Autorizar la publicación controlada (PLAN-PUBLICACION-PRODUCCION.md).
+- [ ] 👤 Autorizar la Fase 3 (en pausa por orden de Richard).

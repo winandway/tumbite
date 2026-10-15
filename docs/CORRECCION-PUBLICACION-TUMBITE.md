@@ -58,8 +58,23 @@ Un solo paquete para dos entornos, sin revisión antes de publicar, y una direcc
 
 ## 6. Resultado en el sitio de pruebas
 
-Ver §7 (se completa con la corrida de GitHub).
+✅ **Todo en verde.** Ver §7.
 
 ## 7. Corrida en el sitio de pruebas
 
-PENDIENTE_CORRIDA
+Corrida **38822612288** (workflow `pruebas-rama`, rama `fase-correccion-publicacion`, versión `82baaa2`):
+
+| Paso                                                                                     | Resultado                                                       |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Paquete de PRUEBAS armado y revisado                                                     | ✅ 269 archivos, sin direcciones cruzadas ni secretos           |
+| Paquete de PRODUCCIÓN armado y revisado (no publicado)                                   | ✅ 269 archivos, sin direcciones cruzadas ni secretos           |
+| Semáforo del sitio de pruebas                                                            | ✅                                                              |
+| Salud del sitio de pruebas                                                               | ✅ `entorno: ok` (llaves de prueba de Stripe, dirección propia) |
+| Pruebas S de la Fase 0 (incluido el retiro con Stripe de prueba), F1, migraciones y F2   | ✅ todas                                                        |
+| Tiempo real en vivo                                                                      | ✅                                                              |
+| Recorrido completo de Comida en el sitio de pruebas (inglés y español, Stripe de prueba) | ✅ 2 de 2                                                       |
+| Conciliación de saldos contra Stripe                                                     | ✅                                                              |
+
+**Problemas encontrados durante la validación y corregidos:** (1) el recorrido adelantaba el reloj del pedido antes de que llegara la aceptación del restaurante (solo en pruebas, por la demora de red): ahora espera; (2) la prueba F2 corría el reloj real con sus repartidores temporales ya creados, el reloj les ofrecía un pedido y la limpieza fallaba: ahora el reloj se prueba antes y se limpian sus ofertas.
+
+**Producción no se modificó** (sigue en `e5a2ff0`).
