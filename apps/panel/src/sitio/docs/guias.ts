@@ -446,6 +446,60 @@ const es: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'restaurant-app',
+        titulo: 'La app del restaurante: pedidos, tiempos, código y tu menú',
+        resumen:
+          'Desde el celular o la tableta del mostrador: la alarma te avisa de cada pedido nuevo, lo aceptas con su tiempo, sigues cada uno en cocina, muestras el código al repartidor y editas tu menú, con tus ventas del día, la semana y el mes.',
+        explicacion: [
+          'Inicio: arriba ves tu restaurante y si está recibiendo pedidos (con el botón para pausar), y tres números: pedidos nuevos, en preparación y completados hoy. Cada pedido nuevo llega con alarma, un reloj de cuánto lleva esperando, lo que pidieron y el precio.',
+          'Aceptar: elige el tiempo de preparación (el sugerido viene marcado en verde) y toca «Aceptar pedido». Si te falta un producto, tócalo en «¿Te falta un producto?» y le preguntamos al cliente qué prefiere.',
+          'En preparación: al abrir el pedido ves los pasos (confirmado, en preparación, listo, recogido), el tiempo que lleva y el que le queda. Con «+5 min» pides más tiempo y con «Marcar como listo» avisas que está para salir.',
+          'Listo para recoger: aparece el código grande con el número del pedido. El repartidor lo escanea desde su app, toma la foto de la bolsa y tú la ves en tu pantalla para confirmar que es tu pedido.',
+          'Pedidos: los que están en curso y los de las últimas 24 horas, por grupos. Mi menú: tus platos con foto, precio y si están activos o agotados; con «Añadir» creas uno nuevo y desde los tres puntos lo editas, lo marcas agotado o lo eliminas. Estadísticas: ventas, pedidos, ticket promedio y lo que te queda, de hoy, la semana y el mes.',
+          'En la tableta, los pedidos nuevos quedan a la izquierda y los que están en cocina a la derecha, con botones grandes para usar con las manos ocupadas.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restapp-nuevo-es.webp',
+            alt: 'Inicio de la app del restaurante: el restaurante abierto, los contadores de pedidos nuevos, en preparación y completados hoy, y un pedido nuevo con su reloj, el tiempo de preparación y el botón «Aceptar pedido».',
+            pie: 'Cada pedido nuevo llega con alarma y su tiempo sugerido.',
+          },
+          {
+            src: '/docs/recorrido-restapp-preparando-es.webp',
+            alt: 'Pedido en preparación: pasos del pedido, tiempo transcurrido y tiempo restante, y los botones «+5 min» y «Marcar como listo».',
+            pie: 'Ves cuánto lleva y cuánto le queda a cada pedido.',
+          },
+          {
+            src: '/docs/recorrido-restapp-listo-es.webp',
+            alt: 'Pedido listo para recoger con el código grande para el repartidor y la foto de la bolsa que tomó el repartidor.',
+            pie: 'El repartidor escanea el código: así se confirma que es su pedido.',
+          },
+          {
+            src: '/docs/recorrido-restapp-menu-es.webp',
+            alt: 'Mi menú en la app del restaurante: platos con precio, la marca «Activo» y los tres puntos para editar, agotar o eliminar.',
+            pie: 'Tu menú, editable desde el celular.',
+          },
+          {
+            src: '/docs/recorrido-restapp-estadisticas-es.webp',
+            alt: 'Estadísticas de la app del restaurante con ventas, pedidos, ticket promedio y lo que te queda, por día, semana y mes.',
+            pie: 'Cómo te va, de un vistazo.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo acepto un pedido desde el celular?',
+          '¿Cómo marco un plato como agotado?',
+          '¿Dónde veo cuánto vendí hoy?',
+        ],
+        pasos: [
+          'Entra a la app del restaurante con el mismo correo y contraseña del panel.',
+          'Cuando suene la alarma, revisa el pedido, elige el tiempo y toca «Aceptar pedido».',
+          'Cuando esté listo, abre el pedido y toca «Marcar como listo».',
+          'Muestra el código al repartidor y confirma la foto de la bolsa.',
+          'Usa «Menú» para cambiar precios o agotar un plato, y «Estadísticas» para ver tus ventas.',
+        ],
+        nota: 'Los tamaños y extras de cada plato se siguen editando en el panel web.',
+      },
+      {
         id: 'activation-checklist',
         titulo: 'Lista para abrir: qué necesitas antes de recibir pedidos',
         resumen:
@@ -2120,6 +2174,60 @@ const en: SeccionDocs[] = [
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
+      {
+        id: 'restaurant-app',
+        titulo: 'The restaurant app: orders, timing, the pickup code, and your menu',
+        resumen:
+          'From the counter phone or tablet: the alarm tells you about every new order, you accept it with its prep time, follow each one in the kitchen, show the code to the driver, and edit your menu, with your sales for today, the week, and the month.',
+        explicacion: [
+          'Home: at the top you see your restaurant and whether it’s taking orders (with the button to pause), plus three numbers: new orders, preparing, and completed today. Each new order arrives with an alarm, a timer showing how long it has been waiting, what was ordered, and the price.',
+          'Accept: choose the prep time (the suggested one is marked in green) and tap “Accept order.” If you’re out of an item, tap it under “Out of an item?” and we ask the customer what they’d like to do.',
+          'Preparing: when you open the order you see the steps (confirmed, preparing, ready, picked up), the time elapsed, and the time left. Tap “+5 min” for more time and “Mark as ready” when it’s good to go.',
+          'Ready for pickup: a large code with the order number appears. The driver scans it from their app, takes a photo of the bag, and you see it on your screen to confirm it’s your order.',
+          'Orders: the ones in progress and those from the last 24 hours, by group. My menu: your dishes with photo, price, and whether they’re active or sold out; tap “Add” to create one and use the three dots to edit, mark sold out, or delete. Stats: sales, orders, average ticket, and what you keep, for today, the week, and the month.',
+          'On a tablet, new orders stay on the left and the ones in the kitchen on the right, with large buttons you can use with busy hands.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restapp-nuevo-en.webp',
+            alt: 'Restaurant app home: the restaurant open, counters for new, preparing, and completed today, and a new order with its timer, the prep time, and the “Accept order” button.',
+            pie: 'Every new order arrives with an alarm and a suggested time.',
+          },
+          {
+            src: '/docs/recorrido-restapp-preparando-en.webp',
+            alt: 'Order being prepared: order steps, time elapsed and time left, and the “+5 min” and “Mark as ready” buttons.',
+            pie: 'See how long each order has been cooking and how much time is left.',
+          },
+          {
+            src: '/docs/recorrido-restapp-listo-en.webp',
+            alt: 'Order ready for pickup with the large code for the driver and the photo of the bag the driver took.',
+            pie: 'The driver scans the code to confirm it’s their order.',
+          },
+          {
+            src: '/docs/recorrido-restapp-menu-en.webp',
+            alt: 'My menu in the restaurant app: dishes with price, the “Active” tag, and the three dots to edit, mark sold out, or delete.',
+            pie: 'Your menu, editable from your phone.',
+          },
+          {
+            src: '/docs/recorrido-restapp-estadisticas-en.webp',
+            alt: 'Restaurant app stats with sales, orders, average ticket, and what you keep, by day, week, and month.',
+            pie: 'How you’re doing, at a glance.',
+          },
+        ],
+        preguntas: [
+          'How do I accept an order from my phone?',
+          'How do I mark a dish as sold out?',
+          'Where can I see how much I sold today?',
+        ],
+        pasos: [
+          'Sign in to the restaurant app with the same email and password you use for the dashboard.',
+          'When the alarm rings, review the order, choose the time, and tap “Accept order.”',
+          'When it’s ready, open the order and tap “Mark as ready.”',
+          'Show the code to the driver and confirm the photo of the bag.',
+          'Use “Menu” to change prices or mark a dish sold out, and “Stats” to see your sales.',
+        ],
+        nota: 'Sizes and extras for each dish are still edited in the web dashboard.',
+      },
       {
         id: 'activation-checklist',
         titulo: 'Ready to open: what you need before taking orders',

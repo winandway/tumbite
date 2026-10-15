@@ -53,6 +53,17 @@ describe('permisos de las apps para las tiendas', () => {
     expect(e.android.blockedPermissions).toContain('android.permission.RECORD_AUDIO');
   });
 
+  it('el restaurante explica las fotos (para el menú) en los dos idiomas y no pide cámara', () => {
+    const e = leer('restaurante', 'app.json').expo;
+    expect(e.ios.infoPlist.NSPhotoLibraryUsageDescription).toMatch(/photo/);
+    expect(plugin(e, 'expo-image-picker')?.[1]).toMatchObject({
+      cameraPermission: false,
+      microphonePermission: false,
+    });
+    expect(e.locales).toEqual({ es: './idiomas/es.json' });
+    expect(leer('restaurante', 'idiomas/es.json').NSPhotoLibraryUsageDescription).toMatch(/fotos/);
+  });
+
   it('el cliente y el repartidor explican la ubicación también en español', () => {
     for (const app of ['cliente', 'repartidor']) {
       expect(leer(app, 'app.json').expo.locales).toEqual({ es: './idiomas/es.json' });

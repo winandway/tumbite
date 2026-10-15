@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Linking, Text } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Linking, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
   ErrorApi,
@@ -11,7 +12,8 @@ import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
-import { Boton, Campo, CampoClave, Pantalla, e } from './ui';
+import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
+import { SelectorIdioma } from './SelectorIdioma';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', fechaNacimiento: '', clave: '' };
 
@@ -22,11 +24,17 @@ const INICIAL = { nombre: '', correo: '', telefono: '', fechaNacimiento: '', cla
 export function Acceso({
   rolRegistro,
   pideCumple,
+  portada,
 }: {
   rolRegistro?: 'cliente' | 'repartidor';
   pideCumple?: boolean;
+  /**
+   * Portada propia (logotipo, título): la usa solo la app del restaurante con su diseño blanco.
+   * Sin ella, el acceso se ve como siempre en cliente y repartidor.
+   */
+  portada?: ReactNode;
 }) {
-  const { api, idioma, alEntrar, rolesPermitidos } = useSesion();
+  const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma } = useSesion();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const [modo, setModo] = useState<'entrar' | 'registro'>('entrar');
   const b = useBorrador({
@@ -76,8 +84,32 @@ export function Acceso({
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
   const abrir = (ruta: string) =>
     void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
-  return (
-    <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>
+  const marco = (cuerpo: ReactNode) =>
+    portada ? (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 }}>
+          <View style={{ backgroundColor: C.primario, borderRadius: 999, paddingHorizontal: 4 }}>
+            <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
+          </View>
+        </View>
+        <ScrollView
+          contentContainerStyle={{
+            padding: 24,
+            width: '100%',
+            maxWidth: 460,
+            alignSelf: 'center',
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {portada}
+          {cuerpo}
+        </ScrollView>
+      </SafeAreaView>
+    ) : (
+      <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>{cuerpo}</Pantalla>
+    );
+  return marco(
+    <>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {registro && (
         <Campo
@@ -186,6 +218,6 @@ export function Acceso({
       ) : (
         <Text style={[e.enlace, { textDecorationLine: 'none' }]}>{t.soloPanel}</Text>
       )}
-    </Pantalla>
+    </>,
   );
 }

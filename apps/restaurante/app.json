@@ -13,7 +13,8 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Tumbite uses your photos so you can add a photo of each dish to your menu."
       }
     },
     "android": {
@@ -59,6 +60,14 @@
           "color": "#FF3008",
           "defaultChannel": "pedidos"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tumbite uses your photos so you can add a photo of each dish to your menu.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "privacy": "public",
@@ -66,6 +75,9 @@
     "owner": "windoce-llc",
     "experiments": {
       "baseUrl": "/restaurant"
+    },
+    "locales": {
+      "es": "./idiomas/es.json"
     }
   }
 }

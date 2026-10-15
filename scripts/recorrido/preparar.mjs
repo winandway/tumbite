@@ -18,8 +18,8 @@ if (!process.env.SIN_COMPILAR) {
   correr('npm run build -w @tumbite/panel');
   correr('npm run build:app-web', { URL_API: url });
   correr('npm run build:repartidor-web', { URL_API: url });
-  // La app del restaurante solo hace falta para las capturas de las tiendas.
-  if (process.env.TIENDA) correr('npm run build:restaurante-web', { URL_API: url });
+  // La app del restaurante se prueba en cada recorrido (acepta, marca listo y ve la recogida).
+  correr('npm run build:restaurante-web', { URL_API: url });
 }
 for (const d of ['apps/panel/dist', 'apps/cliente/dist-web', 'apps/repartidor/dist-web']) {
   // Rutas fijas de este mismo repositorio.
@@ -33,7 +33,7 @@ mkdirSync(sitio, { recursive: true });
 cpSync(join(raiz, 'apps/panel/dist'), sitio, { recursive: true });
 cpSync(join(raiz, 'apps/cliente/dist-web'), join(sitio, 'app'), { recursive: true });
 cpSync(join(raiz, 'apps/repartidor/dist-web'), join(sitio, 'driver'), { recursive: true });
-if (process.env.TIENDA && existsSync(join(raiz, 'apps/restaurante/dist-web')))
+if (existsSync(join(raiz, 'apps/restaurante/dist-web')))
   cpSync(join(raiz, 'apps/restaurante/dist-web'), join(sitio, 'restaurant'), { recursive: true });
 
 writeFileSync(

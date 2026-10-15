@@ -658,9 +658,11 @@ for (const idioma of ['en', 'es'] as const) {
     });
     await foto(panel, 'restaurante-pedido-nuevo');
     // Para las tiendas: la app del restaurante en celular y en tableta, con el mismo pedido.
+    // La app del restaurante (diseño del 14 oct) se maneja en cada corrida, en celular; en el modo
+    // de tiendas también en tableta. La de celular acepta, marca listo y ve la recogida.
     const restApps: Page[] = [];
-    if (TIENDA) {
-      for (const tipo of ['celular', 'tableta'] as const) {
+    {
+      for (const tipo of TIENDA ? (['celular', 'tableta'] as const) : (['celular'] as const)) {
         const ctx = await nuevoContexto(tipo);
         const p = await ctx.newPage();
         await p.goto('/restaurant/');
@@ -676,12 +678,18 @@ for (const idioma of ['en', 'es'] as const) {
         restApps.push(p);
       }
     }
+    const rapp = restApps[0]!;
+    const filaRapp = (p: Page) =>
+      p.getByRole('button', { name: `#${cobro.pedidoId.slice(0, 4).toUpperCase()}` });
+    /** Abre el pedido en la app del restaurante (desde «En cocina») y le toma la foto. */
     const fotoRestApps = async (nombre: string) => {
       for (const p of restApps) {
-        await p.reload();
-        await expect(
-          p.getByText(`#${cobro.pedidoId.slice(0, 4).toUpperCase()}`).first(),
-        ).toBeVisible({ timeout: 20_000 });
+        if (p !== rapp) await p.reload();
+        // La lista se refresca cada 5 s: si un toque cae justo en el refresco, se repite.
+        await expect(async () => {
+          if (!(await p.getByRole('progressbar').count())) await filaRapp(p).first().click();
+          await expect(p.getByRole('progressbar').first()).toBeVisible({ timeout: 3_000 });
+        }).toPass({ timeout: 30_000 });
         await p.waitForTimeout(800);
         await foto(p, nombre);
       }
@@ -697,11 +705,31 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(
       panel.getByRole('button', { name: `${L.aceptar} · 20 ${L.min} · ${L.sugerido}` }),
     ).toBeVisible({ timeout: 20_000 });
-    await panel.getByRole('button', { name: `${L.aceptar} · 20` }).click();
-    await expect(panel.getByRole('button', { name: L.listo })).toBeVisible();
+    // El pedido se acepta desde la app del restaurante con el tiempo sugerido (20 min).
+    await expect(
+      rapp.getByRole('button', { name: `${L.aceptar} · 20 ${L.min} · ${L.sugerido}` }),
+    ).toBeVisible({ timeout: 20_000 });
+    await rapp.getByRole('button', { name: `${L.aceptar} · 20` }).click();
+    await expect(panel.getByRole('button', { name: L.listo })).toBeVisible({ timeout: 20_000 });
     await foto(panel, 'restaurante-pedido-aceptado');
     await fotoRestApps('restapp-preparando');
-    await panel.getByRole('button', { name: L.listo }).click();
+    await expect(rapp.getByText(/Time elapsed|Tiempo transcurrido/)).toBeVisible();
+    // Las otras pestañas de la app del restaurante: pedidos, mi menú y estadísticas.
+    for (const [pestana, nombre] of [
+      [/^(Orders|Pedidos)$/, 'restapp-pedidos'],
+      [/^(Menu|Menú)$/, 'restapp-menu'],
+      [/^(Stats|Estadísticas)$/, 'restapp-estadisticas'],
+    ] as const) {
+      await rapp.getByRole('tab', { name: pestana }).click();
+      await rapp.waitForTimeout(1200);
+      await foto(rapp, nombre);
+    }
+    await rapp.getByRole('tab', { name: /^(Home|Inicio)$/ }).click();
+    await filaRapp(rapp).first().click();
+    await rapp.getByRole('button', { name: L.listo }).click();
+    await expect(rapp.getByText(/Order ready for pickup|Pedido listo para recoger/)).toBeVisible({
+      timeout: 20_000,
+    });
 
     // 7. El repartidor acepta y, en el restaurante, toma la foto del pedido cerrado.
     await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
@@ -734,8 +762,11 @@ for (const idioma of ['en', 'es'] as const) {
     );
 
     // 8. El restaurante ve la foto en su pantalla y confirma que se lo entregó.
+    // La app del restaurante muestra el código, la foto del repartidor y «Marcar como recogido».
+    await expect(rapp.getByRole('button', { name: L.confirmarRecogida })).toBeVisible({
+      timeout: 20_000,
+    });
     await fotoRestApps('restapp-listo');
-    await Promise.all(restApps.map((p) => p.context().close()));
     const confirmar = panel.getByRole('button', { name: L.confirmarRecogida });
     await expect(confirmar).toBeVisible({ timeout: 20_000 });
     await expect(panel.locator('.foto-recogida img')).toBeVisible();
@@ -750,6 +781,11 @@ for (const idioma of ['en', 'es'] as const) {
         timeout: 20_000,
       })
       .toBe('en_camino');
+    // En la app del restaurante el pedido queda «Recogido» (los cuatro pasos en verde).
+    await expect(rapp.getByText(/^(On the way|En camino)$/).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await Promise.all(restApps.map((p) => p.context().close()));
 
     // 9. En camino: «Cómo llegar» mientras está lejos; el cliente ve su pedido sellado.
     // Espera la pantalla de entrega (en la de recogida también hay un «Cómo llegar», al restaurante).

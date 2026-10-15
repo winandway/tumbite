@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, Text, TextInput, View, Switch } from 'react-native';
+import type React from 'react';
+import {
+  Alert,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -14,6 +27,7 @@ import {
   lineaRepartidor,
   textoLinea,
   type OpcionElegida,
+  type Plato,
   textoActivacion,
   OPCIONES_COCINA_OCUPADA,
 } from '@tumbite/compartido';
@@ -26,8 +40,23 @@ import {
   Pantalla,
   TEXTOS_MOVIL,
   e,
+  urlFoto,
   useSesion,
 } from '@tumbite/movil';
+import { Estadisticas } from './Estadisticas';
+import { MiMenu } from './MiMenu';
+import type { Pestana } from './piezas/recursos';
+import { textosRest } from './piezas/textos';
+import {
+  BarraInferior,
+  BotonGrande,
+  Cabecera,
+  CabeceraInterna,
+  Insignia,
+  Pasos,
+  Pildora,
+  Tarjeta,
+} from './piezas/ui';
 
 type Pedido = {
   id: string;
@@ -38,6 +67,7 @@ type Pedido = {
   subtotal: number;
   notas: string;
   creadoEn: string;
+  aceptadoEn?: string | null;
   tiempoPrepMin: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   repartidor?: RepartidorEnPedido | null;
@@ -54,6 +84,7 @@ type Pedido = {
     nombreEs: string;
     nombreEn: string;
     cantidad: number;
+    precioCentavos?: number;
     opciones?: OpcionElegida[];
   }[];
 };
@@ -173,8 +204,24 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
 
 export function Inicio() {
   useKeepAwake(); // La tablet del mostrador no se apaga mientras la app está abierta.
-  const { api, idioma, salir } = useSesion();
+  const { api, idioma, salir, cambiarIdioma } = useSesion();
   const t = enIdioma(T, idioma);
+  const tr = textosRest(idioma);
+  const { width } = useWindowDimensions();
+  const ancha = width >= 768;
+  const [vista, setVista] = useState<Pestana>('inicio');
+  const [detalleId, setDetalleId] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<'todos' | 'preparando' | 'listos' | 'completados'>('todos');
+  const [platos, setPlatos] = useState<Plato[]>([]);
+  // Minutos elegidos para aceptar cada pedido nuevo (por defecto, el sugerido).
+  const [elegido, setElegido] = useState<Record<string, number>>({});
+  const [faltaDe, setFaltaDe] = useState<string | null>(null);
+  // Reloj de la pantalla: los tiempos de espera y de cocina avanzan cada segundo.
+  const [ahora, setAhora] = useState(() => Date.now());
+  useEffect(() => {
+    const r = setInterval(() => setAhora(Date.now()), 1000);
+    return () => clearInterval(r);
+  }, []);
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const alarma = useAudioPlayer(sonidoAlarma);
   const estadoAlarma = useAudioPlayerStatus(alarma);
@@ -193,8 +240,12 @@ export function Inicio() {
           'GET',
           '/datos/restaurante/pedidos',
         ),
-        api.pedir<{ restaurante: Restaurante | null }>('GET', '/datos/mi-restaurante'),
+        api.pedir<{ restaurante: Restaurante | null; platos?: Plato[] }>(
+          'GET',
+          '/datos/mi-restaurante',
+        ),
       ]);
+      setPlatos(r.platos ?? []);
       setPedidos(p.pedidos);
       setCocina({ prepSugerida: p.prepSugerida, cocinaOcupada: p.cocinaOcupada });
       setRest(r.restaurante);
@@ -279,265 +330,550 @@ export function Inicio() {
     );
   }
 
-  const tarjeta = (p: Pedido, botones: React.ReactNode, resaltar = false) => (
-    <View
-      key={p.id}
-      style={[
-        e.tarjeta,
-        resaltar && { borderWidth: 3, borderColor: C.primario },
-        fotoSinConfirmar(p) && {
-          borderWidth: 3,
-          borderColor: '#E0A000',
-          backgroundColor: '#FFF8E1',
-        },
-      ]}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontWeight: '800', fontSize: 18 }}>
-          {t.pedido} #{p.id.slice(0, 4).toUpperCase()}
-        </Text>
-        <Text style={{ fontWeight: '700' }}>{formatearDolares(p.subtotal, idioma)}</Text>
+  // ---------- Ayudas de presentación (los datos y las acciones son los de siempre) ----------
+  const numero = (p: Pedido) => `#${p.id.slice(0, 4).toUpperCase()}`;
+  const fotoDe = (p: Pedido) => {
+    const id = p.lineas[0]?.platoId;
+    return urlFoto(platos.find((x) => x.id === id)?.imagen ?? null);
+  };
+  const reloj = (seg: number) => {
+    const s = Math.max(0, Math.floor(Math.abs(seg)));
+    return `${seg < 0 ? '-' : ''}${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  };
+  const segundosDesde = (iso?: string | null) =>
+    iso ? (ahora - new Date(`${iso.endsWith('Z') ? iso : `${iso}Z`}`).getTime()) / 1000 : 0;
+  const nombreAjuste = (p: Pedido) =>
+    idioma === 'en' ? p.ajuste?.nombreEn || p.ajuste?.nombreEs || '' : (p.ajuste?.nombreEs ?? '');
+  const PASO = new Map([
+    ['pagado', 0],
+    ['aceptado', 1],
+    ['listo', 2],
+    ['en_camino', 3],
+    ['entregado', 3],
+  ]);
+  const enCocina = pedidos.filter((p) => ['aceptado', 'listo', 'en_camino'].includes(p.estado));
+  const hoyHechos = pedidos.filter((p) => p.estado === 'entregado').length;
+  const detalle = detalleId ? pedidos.find((p) => p.id === detalleId) : undefined;
+
+  const foto = (p: Pedido, lado = 64) => {
+    const f = fotoDe(p);
+    return f ? (
+      <Image
+        source={{ uri: f }}
+        style={{ width: lado, height: lado, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+        accessibilityIgnoresInvertColors
+      />
+    ) : null;
+  };
+
+  /** Líneas, notas, faltantes y repartidor: lo mismo que antes, con el diseño nuevo. */
+  const cuerpoPedido = (p: Pedido) => (
+    <>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {foto(p)}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+              {numero(p)}
+            </Text>
+            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+              {formatearDolares(p.subtotal, idioma)}
+            </Text>
+          </View>
+          {p.lineas.map((l) => (
+            <Text
+              key={`${l.platoId}-${textoLinea(l, idioma)}`}
+              style={{ fontSize: 16, marginTop: 3, color: C.secundario }}
+            >
+              {l.cantidad} × {textoLinea(l, idioma)}
+            </Text>
+          ))}
+        </View>
       </View>
-      {p.lineas.map((l) => (
-        <Text key={l.platoId} style={{ fontSize: 17, marginTop: 4 }}>
-          {l.cantidad} × {textoLinea(l, idioma)}
-        </Text>
-      ))}
       {p.notas ? (
-        <Text style={{ marginTop: 6, color: '#5E5E5E' }}>
+        <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
           {t.notas}: {p.notas}
         </Text>
       ) : null}
       {p.ajuste?.estado === 'pendiente' ? (
         <Text
-          style={{ marginTop: 6, color: '#B26A00', fontWeight: '800' }}
+          style={{ marginTop: 8, color: '#B26A00', fontWeight: '800' }}
           accessibilityRole="alert"
         >
-          {t.esperandoCliente.replace(
-            '{plato}',
-            idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
-          )}
+          {t.esperandoCliente.replace('{plato}', nombreAjuste(p))}
         </Text>
       ) : null}
       {p.ajuste?.estado === 'quitado' && p.estado === 'pagado' ? (
-        <Text style={{ marginTop: 6, color: C.exito, fontWeight: '800' }}>
-          {t.quitado.replace(
-            '{plato}',
-            idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
-          )}
+        <Text style={{ marginTop: 8, color: C.exito, fontWeight: '800' }}>
+          {t.quitado.replace('{plato}', nombreAjuste(p))}
         </Text>
       ) : null}
       {(p.estado === 'pagado' || p.estado === 'aceptado') && !p.repartidor && !p.ajuste ? (
-        <View style={{ marginTop: 8 }}>
-          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.faltaPlato}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {p.lineas.map((l) => (
-              <Pressable
-                key={l.platoId}
-                onPress={() =>
-                  void accion(`/datos/restaurante/pedidos/${p.id}/falta`, { platoId: l.platoId })
-                }
-                accessibilityRole="button"
-                accessibilityLabel={`${t.faltaPlato} ${textoLinea(l, idioma)}`}
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#D6D6D6',
-                  borderRadius: 8,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                }}
-              >
-                <Text style={{ fontSize: 13 }}>{textoLinea(l, idioma)}</Text>
-              </Pressable>
-            ))}
-          </View>
+        <View style={{ marginTop: 10 }}>
+          <Pressable
+            onPress={() => setFaltaDe(faltaDe === p.id ? null : p.id)}
+            accessibilityRole="button"
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              backgroundColor: '#F7F8FA',
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 9,
+            }}
+          >
+            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{tr.faltaProducto}</Text>
+            <Text style={{ color: '#5E5E5E' }}>{faltaDe === p.id ? '▾' : '›'}</Text>
+          </Pressable>
+          {faltaDe === p.id ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {p.lineas.map((l) => (
+                <Pressable
+                  key={l.platoId}
+                  onPress={() =>
+                    void accion(`/datos/restaurante/pedidos/${p.id}/falta`, { platoId: l.platoId })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t.faltaPlato} ${textoLinea(l, idioma)}`}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#D6D6D6',
+                    borderRadius: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                  }}
+                >
+                  <Text style={{ fontSize: 13 }}>{textoLinea(l, idioma)}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
       {lineaRepartidor(p.repartidor, idioma) ? (
-        <Text style={{ marginTop: 6, color: C.exito, fontWeight: '800' }}>
+        <Text style={{ marginTop: 8, color: C.exito, fontWeight: '800' }}>
           {lineaRepartidor(p.repartidor, idioma)}
         </Text>
       ) : null}
       {fotoSinConfirmar(p) ? (
         <Text
-          style={{ marginTop: 4, color: '#B26A00', fontWeight: '800' }}
+          style={{ marginTop: 6, color: '#B26A00', fontWeight: '800' }}
           accessibilityRole="alert"
         >
           {t.sinConfirmar}
         </Text>
       ) : null}
-      <View style={{ marginTop: 10, gap: 8 }}>{botones}</View>
-      {(p.estado === 'pagado' || p.estado === 'aceptado') && (
-        <View style={{ alignItems: 'flex-end' }}>
-          <Pressable
-            onPress={() => setMenuDe(menuDe === p.id ? null : p.id)}
-            accessibilityRole="button"
-            accessibilityLabel={t.mas}
-            style={{ padding: 8 }}
-          >
-            <Text style={{ fontSize: 22 }}>⋮</Text>
-          </Pressable>
-          {menuDe === p.id && (
-            <Pressable
-              onPress={() => void rechazar(p)}
-              accessibilityRole="button"
-              style={{ padding: 10 }}
-            >
-              <Text style={{ color: '#c4001d', fontWeight: '700' }}>{t.rechazar}</Text>
-            </Pressable>
-          )}
-        </View>
-      )}
-    </View>
+    </>
   );
 
-  const seccion = (
-    titulo: string,
-    lista: Pedido[],
-    botones: (p: Pedido) => React.ReactNode,
-    resaltar = false,
-  ) =>
-    lista.length ? (
+  /** Tres puntos con «Rechazar pedido», solo mientras se puede (como antes). */
+  const tresPuntos = (p: Pedido) =>
+    p.estado === 'pagado' || p.estado === 'aceptado' ? (
       <View>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario, marginVertical: 8 }}>
-          {titulo} ({lista.length})
-        </Text>
-        {lista.map((p) => tarjeta(p, botones(p), resaltar))}
+        <Pressable
+          onPress={() => setMenuDe(menuDe === p.id ? null : p.id)}
+          accessibilityRole="button"
+          accessibilityLabel={t.mas}
+          hitSlop={8}
+          style={{ padding: 8 }}
+        >
+          <Text style={{ fontSize: 22, color: C.secundario }}>⋮</Text>
+        </Pressable>
+        {menuDe === p.id && (
+          <Pressable
+            onPress={() => void rechazar(p)}
+            accessibilityRole="button"
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 40,
+              backgroundColor: '#fff',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#E5E5E5',
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              zIndex: 10,
+              minWidth: 170,
+            }}
+          >
+            <Text style={{ color: '#B3261E', fontWeight: '700' }}>{t.rechazar}</Text>
+          </Pressable>
+        )}
       </View>
     ) : null;
 
-  return (
-    <Pantalla titulo={rest?.nombre ?? t.titulo}>
-      {rest && (
+  /** Elegir el tiempo y aceptar: el sugerido viene marcado en verde. */
+  const aceptarBloque = (p: Pedido) => {
+    if (p.ajuste?.estado === 'pendiente') return null;
+    const opciones = [
+      cocina.prepSugerida,
+      ...TIEMPOS.filter((m) => m !== cocina.prepSugerida),
+    ].sort((a, b) => a - b);
+    const m = elegido[p.id] ?? cocina.prepSugerida;
+    return (
+      <View style={{ marginTop: 12 }}>
+        <Text style={{ fontWeight: '800', color: C.secundario, marginBottom: 8 }}>
+          {tr.tiempoPrep}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {opciones.map((x) => (
+            <Pildora
+              key={x}
+              texto={`${x} ${t.minutos}`}
+              activa={x === m}
+              verde
+              etiqueta={`${tr.tiempoPrep}: ${x} ${t.minutos}${x === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}`}
+              alTocar={() => setElegido((v) => ({ ...v, [p.id]: x }))}
+            />
+          ))}
+        </View>
+        <BotonGrande
+          texto={`${tr.aceptarPedido} · ${m} ${t.minutos}`}
+          etiqueta={`${t.aceptar} · ${m} ${t.minutos}${m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}`}
+          alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })}
+        />
+      </View>
+    );
+  };
+
+  // ---------- Inicio ----------
+  const tarjetaRestaurante = rest ? (
+    <View
+      style={{
+        backgroundColor: C.secundario,
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+      }}
+    >
+      {urlFoto(rest.imagen) ? (
+        <Image
+          source={{ uri: urlFoto(rest.imagen) ?? undefined }}
+          style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#333' }}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '900' }} numberOfLines={1}>
+          {rest.nombre}
+        </Text>
+        {rest.categoria ? (
+          <Text style={{ color: '#CFCFCF', marginTop: 2 }}>{rest.categoria}</Text>
+        ) : null}
         <View
-          style={[
-            e.tarjeta,
-            { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-          ]}
+          style={{
+            alignSelf: 'flex-start',
+            marginTop: 6,
+            backgroundColor: rest.abierto ? C.exito : '#5E5E5E',
+            borderRadius: 8,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+          }}
         >
-          <Text style={{ fontWeight: '800', color: rest.abierto ? '#0d7a3a' : '#8a0014' }}>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
             {rest.abierto ? t.abierto : t.cerrado}
           </Text>
-          <Pressable
-            onPress={() => void alternarAbierto()}
-            accessibilityRole="button"
-            style={{
-              backgroundColor: rest.abierto ? '#fff' : C.primario,
-              borderWidth: 1,
-              borderColor: '#D6D6D6',
-              borderRadius: 999,
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-            }}
-          >
-            <Text style={{ fontWeight: '700', color: rest.abierto ? C.secundario : '#fff' }}>
-              {rest.abierto ? t.pausar : t.abrir}
-            </Text>
-          </Pressable>
         </View>
-      )}
+      </View>
+      <Pressable
+        onPress={() => void alternarAbierto()}
+        accessibilityRole="button"
+        style={{
+          backgroundColor: rest.abierto ? '#fff' : C.primario,
+          borderRadius: 999,
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+        }}
+      >
+        <Text style={{ fontWeight: '800', color: rest.abierto ? C.secundario : '#fff' }}>
+          {rest.abierto ? t.pausar : t.abrir}
+        </Text>
+      </Pressable>
+    </View>
+  ) : null;
+
+  const contadores = (
+    <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+      {(
+        [
+          [nuevos.length, tr.contadores.nuevos, C.primario],
+          [
+            pedidos.filter((p) => p.estado === 'aceptado').length,
+            tr.contadores.preparando,
+            C.secundario,
+          ],
+          [hoyHechos, tr.contadores.hoy, C.exito],
+        ] as const
+      ).map(([n, nombre, color]) => (
+        <Tarjeta
+          key={nombre}
+          style={{ flex: 1, marginBottom: 0, alignItems: 'center', paddingVertical: 12 }}
+        >
+          <Text style={{ fontSize: 28, fontWeight: '900', color }}>{n}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 12, textAlign: 'center' }}>{nombre}</Text>
+        </Tarjeta>
+      ))}
+    </View>
+  );
+
+  const avisosRest = (
+    <>
       {rest?.activacion && !rest.activacion.lista ? (
-        <View style={e.tarjeta}>
+        <Tarjeta>
           <Text style={{ fontWeight: '800' }}>{t.activacion}</Text>
           {rest.activacion.items
             .filter((i) => !i.listo && i.obligatorio)
             .map((i) => (
               <Text key={i.clave}>○ {textoActivacion(i.clave, idioma)}</Text>
             ))}
-        </View>
+        </Tarjeta>
       ) : null}
       {rest ? (
-        <View style={e.tarjeta}>
+        <Tarjeta>
           <Text style={{ fontWeight: '800' }}>{t.cocina}</Text>
           <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cocinaAyuda}</Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {OPCIONES_COCINA_OCUPADA.map((min) => (
-              <Pressable
+              <Pildora
                 key={min}
-                onPress={() =>
+                texto={min ? `+${min} ${t.minutos}` : t.normal}
+                etiqueta={`${t.cocina}: ${min ? `+${min} ${t.minutos}` : t.normal}`}
+                activa={cocina.cocinaOcupada === min}
+                alTocar={() =>
                   void api
                     .pedir<{ prepSugerida: number; cocinaOcupada: number }>(
                       'PATCH',
                       '/datos/restaurante/cocina',
-                      { extraMin: min },
+                      {
+                        extraMin: min,
+                      },
                     )
                     .then(setCocina)
                     .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
                 }
-                accessibilityRole="button"
-                accessibilityLabel={`${t.cocina}: ${min ? `+${min} ${t.minutos}` : t.normal}`}
-                style={{
-                  borderWidth: 1,
-                  borderColor: cocina.cocinaOcupada === min ? C.primario : '#D6D6D6',
-                  backgroundColor: cocina.cocinaOcupada === min ? C.primario : '#fff',
-                  borderRadius: 999,
-                  paddingHorizontal: 14,
-                  paddingVertical: 6,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: '700',
-                    color: cocina.cocinaOcupada === min ? '#fff' : C.secundario,
-                  }}
-                >
-                  {min ? `+${min} ${t.minutos}` : t.normal}
-                </Text>
-              </Pressable>
+              />
             ))}
+          </View>
+        </Tarjeta>
+      ) : null}
+    </>
+  );
+
+  const columnaNuevos = (
+    <View style={{ flex: 1 }}>
+      {tarjetaRestaurante}
+      {contadores}
+      {nuevos.length ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginVertical: 6,
+          }}
+        >
+          <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+            {tr.nuevoPedido} ({nuevos.length})
+          </Text>
+          <View
+            style={{
+              backgroundColor: C.primario,
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 5,
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '800' }}>
+              {reloj(segundosDesde(nuevos[nuevos.length - 1]?.creadoEn))}
+            </Text>
           </View>
         </View>
       ) : null}
-      {error ? <Text style={e.error}>{error}</Text> : null}
-      {pedidos.length === 0 && <Text style={e.tarjeta}>{t.vacio}</Text>}
-      {seccion(
-        t.nuevos,
-        nuevos,
-        (p) =>
-          p.ajuste?.estado === 'pendiente' ? null : (
-            <>
-              <Text style={{ fontWeight: '700' }}>{t.tiempo}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {[cocina.prepSugerida, ...TIEMPOS.filter((m) => m !== cocina.prepSugerida)].map(
-                  (m) => (
-                    <Pressable
-                      key={m}
-                      onPress={() =>
-                        void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t.aceptar} ${m} ${t.minutos}${m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}`}
-                      style={{
-                        backgroundColor: m === cocina.prepSugerida ? '#0D7A3A' : C.primario,
-                        borderRadius: 12,
-                        paddingVertical: 14,
-                        paddingHorizontal: 16,
-                      }}
-                    >
-                      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
-                        {t.aceptar} · {m} {t.minutos}
-                        {m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}
-                      </Text>
-                    </Pressable>
-                  ),
-                )}
+      {nuevos.map((p) => (
+        <Tarjeta key={p.id} style={{ borderWidth: 2, borderColor: C.primario }}>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ flex: 1 }}>{cuerpoPedido(p)}</View>
+            {tresPuntos(p)}
+          </View>
+          {aceptarBloque(p)}
+        </Tarjeta>
+      ))}
+      {pedidos.length === 0 ? (
+        <Tarjeta>
+          <Text>{t.vacio}</Text>
+        </Tarjeta>
+      ) : null}
+      {/* En la tableta, los avisos y la cocina ocupada van en la columna derecha. */}
+      {ancha ? null : avisosRest}
+    </View>
+  );
+
+  const filaPedido = (p: Pedido) => (
+    <Pressable
+      key={p.id}
+      onPress={() => setDetalleId(p.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`${tr.pedido} ${numero(p)}`}
+    >
+      <Tarjeta
+        style={[
+          { flexDirection: 'row', gap: 12, alignItems: 'center', padding: 10 },
+          fotoSinConfirmar(p) && {
+            borderWidth: 3,
+            borderColor: '#E0A000',
+            backgroundColor: '#FFF8E1',
+          },
+        ]}
+      >
+        {foto(p, 56)}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>
+              {numero(p)}
+            </Text>
+            <Text style={{ fontWeight: '800', color: C.secundario }}>
+              {formatearDolares(p.subtotal, idioma)}
+            </Text>
+          </View>
+          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+            {new Date(p.creadoEn.endsWith('Z') ? p.creadoEn : `${p.creadoEn}Z`).toLocaleTimeString(
+              idioma === 'en' ? 'en-US' : 'es-US',
+              { hour: 'numeric', minute: '2-digit' },
+            )}
+          </Text>
+          <Text style={{ color: C.secundario, fontSize: 13 }} numberOfLines={2}>
+            {p.lineas.map((l) => `${l.cantidad} × ${textoLinea(l, idioma)}`).join(', ')}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: 4,
+            }}
+          >
+            <Insignia estado={p.estado} texto={tr.insignia[p.estado] ?? p.estado} />
+            {p.estado === 'aceptado' && p.tiempoPrepMin ? (
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {reloj(p.tiempoPrepMin * 60 - segundosDesde(p.aceptadoEn ?? p.creadoEn))}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </Tarjeta>
+    </Pressable>
+  );
+
+  const columnaCocina = enCocina.length ? (
+    <View style={{ flex: 1 }}>
+      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario, marginVertical: 8 }}>
+        {tr.enCocina} ({enCocina.length})
+      </Text>
+      {enCocina.map(filaPedido)}
+    </View>
+  ) : null;
+
+  // ---------- Detalle del pedido (en preparación, listo, recogido) ----------
+  const vistaDetalle = (p: Pedido) => {
+    const paso = PASO.get(p.estado) ?? -1;
+    const total = (p.tiempoPrepMin ?? 0) * 60;
+    const pasado = segundosDesde(p.aceptadoEn ?? p.creadoEn);
+    const resta = total - pasado;
+    return (
+      <View>
+        {p.estado !== 'cancelado' ? <Pasos nombres={tr.pasos} paso={paso} /> : null}
+        {p.estado === 'aceptado' && total > 0 ? (
+          <Tarjeta>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#5E5E5E' }}>{tr.transcurrido}</Text>
+                <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
+                  {reloj(pasado)}{' '}
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: '#5E5E5E' }}>
+                    {tr.de} {p.tiempoPrepMin} {t.minutos}
+                  </Text>
+                </Text>
               </View>
-            </>
-          ),
-        true,
-      )}
-      {seccion(
-        t.preparando,
-        pedidos.filter((p) => p.estado === 'aceptado'),
-        (p) => (
-          <>
-            <Boton
-              texto={t.listo}
-              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
-            />
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ color: '#5E5E5E' }}>{tr.restante}</Text>
+                <Text
+                  style={{
+                    fontSize: 34,
+                    fontWeight: '900',
+                    color: resta < 0 ? '#B3261E' : C.exito,
+                  }}
+                >
+                  {reloj(resta)}
+                </Text>
+              </View>
+            </View>
+            <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F2F3F5', marginTop: 10 }}>
+              <View
+                style={{
+                  width: `${Math.min(100, Math.round((pasado / total) * 100))}%`,
+                  height: 8,
+                  borderRadius: 4,
+                  // Avance en verde; si se pasó del tiempo prometido, en rojo (es un problema).
+                  backgroundColor: resta < 0 ? '#B3261E' : C.exito,
+                }}
+              />
+            </View>
+          </Tarjeta>
+        ) : null}
+        {p.estado === 'listo' ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              backgroundColor: '#E8F5EE',
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 12,
+            }}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: C.exito,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>✓</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: C.exito, fontWeight: '900', fontSize: 17 }}>
+                {p.entrega === 'recoger' ? t.recoge : tr.listoParaRecoger}
+              </Text>
+              {p.entrega !== 'recoger' ? (
+                <Text style={{ color: '#3E5E4A', marginTop: 2 }}>
+                  {p.repartidor?.verificado ? t.verificado : t.qrAyuda}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+        {p.estado === 'listo' && p.entrega !== 'recoger' ? (
+          <Tarjeta style={{ alignItems: 'center' }}>
+            <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
+          </Tarjeta>
+        ) : null}
+        <Tarjeta>{cuerpoPedido(p)}</Tarjeta>
+        {p.estado === 'pagado' ? <Tarjeta>{aceptarBloque(p)}</Tarjeta> : null}
+        {p.estado === 'aceptado' ? (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             {!p.repartidor ? (
-              <Boton
+              <BotonGrande
                 texto={t.masTiempo}
+                tipo="borde"
+                flex={1}
                 alTocar={() =>
                   void api
                     .pedir('PATCH', `/datos/restaurante/pedidos/${p.id}/tiempo`, {
@@ -546,93 +882,198 @@ export function Inicio() {
                     .then(() => cargar())
                     .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
                 }
-                secundario
               />
             ) : null}
-          </>
-        ),
-      )}
-      {seccion(
-        t.listos,
-        pedidos.filter((p) => p.estado === 'listo'),
-        (p) =>
-          p.entrega === 'recoger' ? (
-            <>
-              <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>{t.recoge}</Text>
-              <TextInput
-                value={pinLocal}
-                onChangeText={(x) => setPinLocal(x.replace(/\D/g, '').slice(0, 4))}
-                placeholder={t.pinCliente}
-                accessibilityLabel={t.pinCliente}
-                keyboardType="number-pad"
-                style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
-              />
-              {p.requiereEdad ? (
-                <Pressable
-                  onPress={() => setEdadLocal((v) => !v)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: edadLocal }}
+            <BotonGrande
+              texto={tr.marcarListo}
+              etiqueta={t.listo}
+              flex={2}
+              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
+            />
+          </View>
+        ) : null}
+        {p.estado === 'listo' && p.entrega === 'recoger' ? (
+          <Tarjeta>
+            <TextInput
+              value={pinLocal}
+              onChangeText={(x) => setPinLocal(x.replace(/\D/g, '').slice(0, 4))}
+              placeholder={t.pinCliente}
+              accessibilityLabel={t.pinCliente}
+              keyboardType="number-pad"
+              style={[e.input, { letterSpacing: 6, fontSize: 20 }]}
+            />
+            {p.requiereEdad ? (
+              <Pressable
+                onPress={() => setEdadLocal((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: edadLocal }}
+                accessibilityLabel={t.mayorEdad}
+                style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}
+              >
+                <Switch
+                  value={edadLocal}
+                  onValueChange={setEdadLocal}
                   accessibilityLabel={t.mayorEdad}
-                  style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 6 }}
-                >
-                  <Switch
-                    value={edadLocal}
-                    onValueChange={setEdadLocal}
-                    accessibilityLabel={t.mayorEdad}
-                  />
-                  <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
-                </Pressable>
-              ) : null}
-              <Boton
-                texto={t.entregadoLocal}
-                alTocar={() =>
-                  void accion(`/datos/restaurante/pedidos/${p.id}/entregado-local`, {
-                    pin: pinLocal,
-                    mayorEdad: edadLocal,
-                  }).then(() => setPinLocal(''))
-                }
-                exito
-              />
-            </>
-          ) : p.fotoRecogida ? (
-            <>
-              <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
-              <FotoPedido
-                pedidoId={p.id}
-                tipo="recogida"
-                version={p.fotoRecogida.tomadaEn}
-                pie={t.ayudaConfirmar}
-              />
-              <Boton
-                texto={t.confirmarRecogida}
-                alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/confirmar-recogida`)}
-                exito
-              />
-            </>
-          ) : (
-            <>
-              <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
-              <Text style={{ color: '#5E5E5E', marginTop: 6 }}>
-                {p.repartidor?.verificado ? t.verificado : t.qrAyuda}
-              </Text>
-            </>
-          ),
-        true,
+                />
+                <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
+              </Pressable>
+            ) : null}
+            <BotonGrande
+              texto={t.entregadoLocal}
+              tipo="verde"
+              alTocar={() =>
+                void accion(`/datos/restaurante/pedidos/${p.id}/entregado-local`, {
+                  pin: pinLocal,
+                  mayorEdad: edadLocal,
+                }).then(() => setPinLocal(''))
+              }
+            />
+          </Tarjeta>
+        ) : null}
+        {p.estado === 'listo' && p.entrega !== 'recoger' && p.fotoRecogida ? (
+          <Tarjeta>
+            <FotoPedido
+              pedidoId={p.id}
+              tipo="recogida"
+              version={p.fotoRecogida.tomadaEn}
+              pie={t.ayudaConfirmar}
+            />
+            <BotonGrande
+              texto={tr.marcarRecogido}
+              etiqueta={t.confirmarRecogida}
+              tipo="verde"
+              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/confirmar-recogida`)}
+            />
+          </Tarjeta>
+        ) : null}
+        {p.estado === 'listo' && p.entrega !== 'recoger' && !p.fotoRecogida ? (
+          <Text style={{ color: '#5E5E5E', textAlign: 'center', marginBottom: 8 }}>
+            {t.esperandoFoto}
+          </Text>
+        ) : null}
+        {p.estado === 'en_camino' ? (
+          <Text
+            style={{ color: C.exito, fontWeight: '800', textAlign: 'center', marginVertical: 8 }}
+          >
+            {t.camino}
+          </Text>
+        ) : null}
+        {t.estados[p.estado] ? (
+          <Text style={{ color: '#5E5E5E', textAlign: 'center', marginVertical: 8 }}>
+            {t.estados[p.estado]}
+          </Text>
+        ) : null}
+        <BotonGrande texto={tr.volver} tipo="claro" alTocar={() => setDetalleId(null)} />
+      </View>
+    );
+  };
+
+  // ---------- Pedidos (historial de las últimas 24 horas) ----------
+  const GRUPO = new Map<typeof filtro, (p: Pedido) => boolean>([
+    ['todos', () => true],
+    ['preparando', (p) => p.estado === 'pagado' || p.estado === 'aceptado'],
+    ['listos', (p) => p.estado === 'listo' || p.estado === 'en_camino'],
+    ['completados', (p) => p.estado === 'entregado' || p.estado === 'cancelado'],
+  ]);
+  const vistaPedidos = (
+    <View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
+        {(
+          [
+            ['todos', tr.filtros.todos],
+            ['preparando', tr.filtros.preparando],
+            ['listos', tr.filtros.listos],
+            ['completados', tr.filtros.completados],
+          ] as const
+        ).map(([f, nombre]) => (
+          <Pildora key={f} texto={nombre} activa={filtro === f} alTocar={() => setFiltro(f)} />
+        ))}
+      </View>
+      <Text style={{ color: '#5E5E5E', fontSize: 12, marginBottom: 10 }}>{tr.historialAyuda}</Text>
+      {pedidos.filter(GRUPO.get(filtro) ?? (() => true)).map(filaPedido)}
+      {pedidos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{tr.sinPedidos}</Text> : null}
+    </View>
+  );
+
+  // ---------- Más ----------
+  const vistaMas = (
+    <View>
+      <Text
+        accessibilityRole="header"
+        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 12 }}
+      >
+        {tr.mas}
+      </Text>
+      <BotonGrande texto={tm.salir} tipo="claro" alTocar={() => void salir()} />
+      <View style={{ marginTop: 12 }}>
+        <MenuCuenta />
+      </View>
+    </View>
+  );
+
+  const cuerpo = detalle ? (
+    vistaDetalle(detalle)
+  ) : vista === 'pedidos' ? (
+    vistaPedidos
+  ) : vista === 'menu' ? (
+    <MiMenu platos={platos} recargar={cargar} />
+  ) : vista === 'estadisticas' ? (
+    <Estadisticas />
+  ) : vista === 'mas' ? (
+    vistaMas
+  ) : ancha ? (
+    <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+      {columnaNuevos}
+      <View style={{ flex: 1 }}>
+        {columnaCocina}
+        {avisosRest}
+      </View>
+    </View>
+  ) : (
+    <>
+      {columnaNuevos}
+      {columnaCocina}
+    </>
+  );
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+      {detalle ? (
+        <CabeceraInterna
+          titulo={`${tr.pedido} ${numero(detalle)}`}
+          alVolver={() => setDetalleId(null)}
+          etiquetaVolver={tr.volver}
+          derecha={tresPuntos(detalle)}
+        />
+      ) : (
+        <Cabecera idioma={idioma} cambiarIdioma={cambiarIdioma} />
       )}
-      {seccion(
-        t.camino,
-        pedidos.filter((p) => p.estado === 'en_camino'),
-        () => null,
-      )}
-      {seccion(
-        t.hechos,
-        pedidos.filter((p) => p.estado === 'entregado' || p.estado === 'cancelado'),
-        (p) => (
-          <Text style={{ color: '#5E5E5E' }}>{t.estados[p.estado]}</Text>
-        ),
-      )}
-      <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
-      <MenuCuenta />
-    </Pantalla>
+      <ScrollView
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 32,
+          width: '100%',
+          maxWidth: ancha && !detalle && vista === 'inicio' ? 1200 : 720,
+          alignSelf: 'center',
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {error ? (
+          <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
+        {cuerpo}
+      </ScrollView>
+      <BarraInferior
+        idioma={idioma}
+        activa={vista}
+        aviso={nuevos.length}
+        alTocar={(p) => {
+          setDetalleId(null);
+          setVista(p);
+        }}
+      />
+    </SafeAreaView>
   );
 }
