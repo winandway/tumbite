@@ -151,16 +151,33 @@ async function sincronizarServicios(db: D1Database): Promise<void> {
  */
 export let columnasFaltantes: string[] = [];
 async function revisarColumnas(db: D1Database): Promise<void> {
-  const { results } = await db
-    .prepare(
-      "SELECT m.name AS t, p.name AS c FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table'",
-    )
-    .all<{ t: string; c: string }>();
-  const reales = new Set(results.map((r) => `${r.t}.${r.c}`));
-  const tablas = new Set(results.map((r) => r.t));
-  columnasFaltantes = Object.entries(COLUMNAS_DEL_ESQUEMA).flatMap(([t, cols]) =>
-    tablas.has(t) ? cols.filter((c) => !reales.has(`${t}.${c}`)).map((c) => `${t}.${c}`) : [],
+  // D1 no deja cruzar sqlite_master con pragma_table_info: se arma UNA consulta con una parte por
+  // tabla (pragma_table_info('…') solo sí está permitido). Los nombres salen del propio esquema.
+  const tablasEsquema = Object.keys(COLUMNAS_DEL_ESQUEMA).filter((t) =>
+    /^[a-z_][a-z0-9_]*$/.test(t),
   );
+  try {
+    // D1 acepta hasta 5 partes por consulta: bloques de 5, todos en un solo lote (un viaje).
+    const bloques: string[][] = [];
+    for (let i = 0; i < tablasEsquema.length; i += 5) bloques.push(tablasEsquema.slice(i, i + 5));
+    const respuestas = await db.batch(
+      bloques.map((b) =>
+        db.prepare(
+          b
+            .map((t) => `SELECT '${t}' AS t, name AS c FROM pragma_table_info('${t}')`)
+            .join(' UNION ALL '),
+        ),
+      ),
+    );
+    const results = respuestas.flatMap((r) => (r.results ?? []) as { t: string; c: string }[]);
+    const reales = new Set(results.map((r) => `${r.t}.${r.c}`));
+    const tablas = new Set(results.map((r) => r.t));
+    columnasFaltantes = Object.entries(COLUMNAS_DEL_ESQUEMA).flatMap(([t, cols]) =>
+      tablas.has(t) ? cols.filter((c) => !reales.has(`${t}.${c}`)).map((c) => `${t}.${c}`) : [],
+    );
+  } catch (e) {
+    columnasFaltantes = [`no se pudo revisar: ${String(e).slice(0, 120)}`];
+  }
   if (columnasFaltantes.length)
     console.error('esquema: faltan columnas en la base', columnasFaltantes.join(', '));
 }
@@ -180,9 +197,9 @@ async function migrar(db: D1Database): Promise<void> {
     }
   }
   for (const sql of INDICES) await db.prepare(sql).run();
-  await revisarColumnas(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db);
+  await revisarColumnas(db);
 }
 
 export function asegurarEsquema(db: D1Database): Promise<void> {

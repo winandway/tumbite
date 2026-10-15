@@ -53,7 +53,15 @@ export function crearBasePruebas(): D1Database {
           .map((f: object) => Object.values(f));
       },
       __ejecutar() {
-        return db.prepare(sql).run(...params);
+        const st = db.prepare(sql);
+        // Como D1: un SELECT dentro de un lote devuelve sus filas.
+        if (/^\s*(SELECT|WITH)/i.test(sql))
+          return {
+            changes: 0,
+            lastInsertRowid: 0,
+            filas: st.all(...params).map((f: object) => ({ ...f })),
+          };
+        return { ...st.run(...params), filas: [] as object[] };
       },
     };
     return s;
@@ -70,7 +78,7 @@ export function crearBasePruebas(): D1Database {
         return r.map((x) => ({
           success: true,
           meta: { changes: Number(x.changes), last_row_id: Number(x.lastInsertRowid) },
-          results: [],
+          results: x.filas,
         }));
       } catch (e) {
         db.exec('ROLLBACK');

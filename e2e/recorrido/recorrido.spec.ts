@@ -109,7 +109,8 @@ for (const idioma of ['en', 'es'] as const) {
     const L = TEXTOS[idioma];
     const id = `${idioma}${Date.now().toString(36)}`;
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
-    const restaurante = idioma === 'en' ? 'Bella Pizza' : 'Pizza Bella';
+    // En el sitio de pruebas los datos de corridas anteriores se quedan: el nombre lleva la corrida.
+    const restaurante = `${idioma === 'en' ? 'Bella Pizza' : 'Pizza Bella'}${STAGING ? ` ${id.slice(-5)}` : ''}`;
 
     const nuevoContexto = async (tipo: 'computadora' | 'celular' | 'tableta', donde = MIAMI) => {
       const t = TIENDA && tipo !== 'computadora' ? PANTALLAS[TIENDA][tipo] : null;
