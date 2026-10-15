@@ -709,3 +709,462 @@ WHEN NEW.estado <> OLD.estado AND NOT (
 BEGIN
   SELECT RAISE(ABORT, 'retiro_transicion_no_permitida');
 END;
+
+-- =====================================================================================
+-- FASE 1 · MULTISERVICIO (15 oct 2026, rama multiservicio-fase-1). Diseño: docs/ARQUITECTURA-
+-- MULTISERVICIO-V1.md §8 y V1.1 punto 1. Solo tablas NUEVAS: Comida no lee ninguna todavía.
+-- Moto y Carro existen en el catálogo pero NO se pueden encender: el código solo declara Comida
+-- como implementada (servicios_implementados) y los disparadores lo exigen.
+-- =====================================================================================
+
+CREATE TABLE IF NOT EXISTS servicios (
+  id TEXT PRIMARY KEY CHECK (length(id) BETWEEN 2 AND 32 AND id = lower(id)),
+  tipo_operacion TEXT NOT NULL CHECK (tipo_operacion IN
+    ('pedido_comercio', 'viaje_pasajero', 'envio_paquete', 'compra_encargo', 'enlace')),
+  nombre_es TEXT NOT NULL,
+  nombre_en TEXT NOT NULL,
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  icono TEXT NOT NULL,
+  orden INTEGER NOT NULL DEFAULT 100,
+  estado TEXT NOT NULL DEFAULT 'proximamente'
+    CHECK (estado IN ('disponible', 'proximamente', 'suspendido', 'oculto')),
+  transporta_personas INTEGER NOT NULL DEFAULT 0 CHECK (transporta_personas IN (0, 1)),
+  version_min_cliente TEXT NOT NULL DEFAULT '0.0.0',
+  version_min_driver TEXT NOT NULL DEFAULT '0.0.0',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_por TEXT REFERENCES usuarios(id)
+);
+
+-- Lo que el CÓDIGO desplegado sabe atender. Lo escribe el servidor al arrancar (esquema.ts,
+-- SERVICIOS_IMPLEMENTADOS); ninguna ruta del panel lo toca.
+CREATE TABLE IF NOT EXISTS servicios_implementados (
+  servicio_id TEXT PRIMARY KEY REFERENCES servicios(id),
+  contrato INTEGER NOT NULL CHECK (contrato >= 1),
+  desplegado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS servicios_zona (
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  estado TEXT NOT NULL DEFAULT 'proximamente'
+    CHECK (estado IN ('disponible', 'proximamente', 'suspendido', 'no_disponible')),
+  activo_desde TEXT,
+  activo_hasta TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  PRIMARY KEY (servicio_id, zona_id),
+  CHECK (activo_hasta IS NULL OR activo_desde IS NULL OR activo_hasta > activo_desde)
+);
+CREATE INDEX IF NOT EXISTS servicios_zona_zona ON servicios_zona(zona_id, estado);
+
+CREATE TABLE IF NOT EXISTS requisitos_def (
+  requisito TEXT PRIMARY KEY,
+  nivel TEXT NOT NULL CHECK (nivel IN ('conductor', 'vehiculo')),
+  verifica TEXT NOT NULL CHECK (verifica IN ('kyc', 'antecedentes', 'documento', 'edad', 'revision_manual')),
+  doc_tipo TEXT,
+  vigencia_max_dias INTEGER CHECK (vigencia_max_dias IS NULL OR vigencia_max_dias > 0),
+  CHECK (verifica != 'documento' OR doc_tipo IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS servicio_requisitos (
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  requisito TEXT NOT NULL REFERENCES requisitos_def(requisito),
+  obligatorio INTEGER NOT NULL DEFAULT 1 CHECK (obligatorio IN (0, 1)),
+  PRIMARY KEY (servicio_id, requisito)
+);
+
+CREATE TABLE IF NOT EXISTS servicio_vehiculos (
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  vehiculo_tipo TEXT NOT NULL CHECK (vehiculo_tipo IN ('carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),
+  anio_minimo INTEGER,
+  PRIMARY KEY (servicio_id, vehiculo_tipo)
+);
+
+-- Un servicio (o su zona) solo pasa a «disponible» si el código lo declara implementado.
+CREATE TRIGGER IF NOT EXISTS servicios_exige_implementado
+BEFORE UPDATE OF estado ON servicios
+WHEN NEW.estado = 'disponible'
+  AND NOT EXISTS (SELECT 1 FROM servicios_implementados WHERE servicio_id = NEW.id)
+BEGIN
+  SELECT RAISE(ABORT, 'servicio_no_implementado');
+END;
+CREATE TRIGGER IF NOT EXISTS servicios_exige_implementado_alta
+BEFORE INSERT ON servicios
+WHEN NEW.estado = 'disponible'
+  AND NOT EXISTS (SELECT 1 FROM servicios_implementados WHERE servicio_id = NEW.id)
+BEGIN
+  SELECT RAISE(ABORT, 'servicio_no_implementado');
+END;
+CREATE TRIGGER IF NOT EXISTS servicios_zona_exige_implementado
+BEFORE UPDATE OF estado ON servicios_zona
+WHEN NEW.estado = 'disponible'
+  AND NOT EXISTS (SELECT 1 FROM servicios_implementados WHERE servicio_id = NEW.servicio_id)
+BEGIN
+  SELECT RAISE(ABORT, 'servicio_no_implementado');
+END;
+CREATE TRIGGER IF NOT EXISTS servicios_zona_exige_implementado_alta
+BEFORE INSERT ON servicios_zona
+WHEN NEW.estado = 'disponible'
+  AND NOT EXISTS (SELECT 1 FROM servicios_implementados WHERE servicio_id = NEW.servicio_id)
+BEGIN
+  SELECT RAISE(ABORT, 'servicio_no_implementado');
+END;
+-- Un servicio que lleva personas no se enciende sin su piso mínimo de requisitos (V1.1).
+CREATE TRIGGER IF NOT EXISTS servicios_zona_piso_pasajeros
+BEFORE UPDATE OF estado ON servicios_zona
+WHEN NEW.estado = 'disponible'
+  AND (SELECT transporta_personas FROM servicios WHERE id = NEW.servicio_id) = 1
+  AND (SELECT COUNT(*) FROM servicio_requisitos
+        WHERE servicio_id = NEW.servicio_id AND obligatorio = 1
+          AND requisito IN ('identidad', 'antecedentes_pasajeros', 'historial_manejo', 'seguro_pasajeros')) < 4
+BEGIN
+  SELECT RAISE(ABORT, 'servicio_pasajeros_sin_requisitos_minimos');
+END;
+
+-- ----- Catálogo inicial (INSERT OR IGNORE: lo que el admin cambie después no se pisa) -----
+INSERT OR IGNORE INTO requisitos_def (requisito, nivel, verifica, doc_tipo, vigencia_max_dias) VALUES
+  ('identidad',              'conductor', 'kyc',             NULL,               365),
+  ('antecedentes',           'conductor', 'antecedentes',    NULL,               365),
+  ('antecedentes_pasajeros', 'conductor', 'antecedentes',    NULL,               365),
+  ('historial_manejo',       'conductor', 'antecedentes',    NULL,               365),
+  ('licencia',               'conductor', 'documento',       'licencia',         NULL),
+  ('licencia_moto',          'conductor', 'documento',       'licencia_moto',    NULL),
+  ('edad_minima_21',         'conductor', 'edad',            NULL,               NULL),
+  ('capacitacion',           'conductor', 'revision_manual', NULL,               NULL),
+  ('seguro_vehiculo',        'vehiculo',  'documento',       'seguro',           NULL),
+  ('seguro_pasajeros',       'vehiculo',  'documento',       'seguro_pasajeros', NULL),
+  ('inspeccion_vehiculo',    'vehiculo',  'documento',       'inspeccion',       365),
+  ('casco_pasajero',         'vehiculo',  'revision_manual', NULL,               NULL);
+
+-- Comida nace «próximamente» en la tabla y el servidor la pasa a «disponible» al arrancar, después
+-- de declararla implementada (los disparadores de arriba no dejan hacerlo al revés).
+INSERT OR IGNORE INTO servicios (id, tipo_operacion, nombre_es, nombre_en, descripcion_es, descripcion_en, icono, orden, estado, transporta_personas) VALUES
+  ('comida',   'pedido_comercio', 'Comida',   'Food',     'Pide a tus restaurantes favoritos.',           'Order from your favorite restaurants.',     'servicio-comida',   10, 'proximamente', 0),
+  ('moto',     'viaje_pasajero',  'Moto',     'Moto',     'Viajes rápidos en moto.',                       'Quick rides by motorcycle.',                'servicio-moto',     20, 'proximamente', 1),
+  ('carro',    'viaje_pasajero',  'Carro',    'Car',      'Viajes en carro a donde necesites.',           'Car rides wherever you need to go.',        'servicio-carro',    30, 'proximamente', 1),
+  ('mercado',  'compra_encargo',  'Mercado',  'Grocery',  'El mercado de la semana, sin salir de casa.',  'Your weekly groceries, without leaving home.', 'servicio-mercado', 40, 'proximamente', 0),
+  ('envios',   'envio_paquete',   'Envíos',   'Delivery', 'Envía paquetes por la ciudad.',                'Send packages across town.',                'servicio-envios',   50, 'proximamente', 0),
+  ('farmacia', 'compra_encargo',  'Farmacia', 'Pharmacy', 'Productos de farmacia de venta libre.',        'Over-the-counter pharmacy products.',       'servicio-farmacia', 60, 'proximamente', 0);
+
+INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
+  SELECT s.id, z.id, 'proximamente' FROM servicios s CROSS JOIN zonas z;
+
+INSERT OR IGNORE INTO servicio_vehiculos (servicio_id, vehiculo_tipo) VALUES
+  ('comida', 'carro'), ('comida', 'moto'), ('comida', 'scooter'), ('comida', 'bicicleta'), ('comida', 'a_pie'),
+  ('moto', 'moto'),
+  ('carro', 'carro'),
+  ('mercado', 'carro'), ('mercado', 'moto'), ('mercado', 'scooter'), ('mercado', 'bicicleta'),
+  ('envios', 'carro'), ('envios', 'moto'), ('envios', 'scooter'), ('envios', 'bicicleta'),
+  ('farmacia', 'carro'), ('farmacia', 'moto'), ('farmacia', 'scooter'), ('farmacia', 'bicicleta');
+
+-- Comida: la identidad es informativa (obligatoria = 0) para no cambiar quién reparte hoy.
+INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES
+  ('comida', 'identidad', 0),
+  ('moto', 'identidad', 1), ('moto', 'antecedentes_pasajeros', 1), ('moto', 'historial_manejo', 1),
+  ('moto', 'licencia_moto', 1), ('moto', 'edad_minima_21', 1), ('moto', 'seguro_pasajeros', 1),
+  ('moto', 'casco_pasajero', 1),
+  ('carro', 'identidad', 1), ('carro', 'antecedentes_pasajeros', 1), ('carro', 'historial_manejo', 1),
+  ('carro', 'licencia', 1), ('carro', 'edad_minima_21', 1), ('carro', 'seguro_pasajeros', 1),
+  ('carro', 'inspeccion_vehiculo', 1),
+  ('mercado', 'identidad', 1), ('mercado', 'antecedentes', 1),
+  ('envios', 'identidad', 1), ('envios', 'antecedentes', 1),
+  ('farmacia', 'identidad', 1), ('farmacia', 'antecedentes', 1);
+
+-- Una ciudad nueva nace con todo el catálogo «próximamente» y con Comida abierta si la ciudad
+-- está activa (como funciona Comida hoy). Prender una ciudad abre Comida, salvo que una persona
+-- del equipo ya haya decidido otra cosa para esa ciudad (actualizado_por con valor).
+CREATE TRIGGER IF NOT EXISTS zonas_catalogo_alta
+AFTER INSERT ON zonas
+BEGIN
+  INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
+  SELECT s.id, NEW.id,
+         CASE WHEN s.id = 'comida' AND NEW.activa = 1
+                   AND EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = 'comida')
+              THEN 'disponible' ELSE 'proximamente' END
+    FROM servicios s;
+END;
+CREATE TRIGGER IF NOT EXISTS zonas_catalogo_activa
+AFTER UPDATE OF activa ON zonas
+WHEN NEW.activa = 1 AND OLD.activa != 1
+BEGIN
+  INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
+  SELECT s.id, NEW.id, 'proximamente' FROM servicios s;
+  UPDATE servicios_zona SET estado = 'disponible', actualizado_en = datetime('now')
+   WHERE servicio_id = 'comida' AND zona_id = NEW.id AND estado = 'proximamente' AND actualizado_por IS NULL
+     AND EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = 'comida');
+END;
+
+-- ----- Vehículos -----
+CREATE TABLE IF NOT EXISTS vehiculos (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),
+  marca TEXT NOT NULL DEFAULT '',
+  modelo TEXT NOT NULL DEFAULT '',
+  anio INTEGER CHECK (anio IS NULL OR anio BETWEEN 1980 AND 2100),
+  color TEXT NOT NULL DEFAULT '',
+  placa TEXT NOT NULL DEFAULT '',
+  placa_estado TEXT NOT NULL DEFAULT '',
+  plazas INTEGER CHECK (plazas IS NULL OR plazas BETWEEN 1 AND 8),
+  estado TEXT NOT NULL DEFAULT 'registrado' CHECK (estado IN
+    ('registrado', 'en_revision', 'aprobado', 'rechazado', 'suspendido', 'vencido', 'retirado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  aprobado_en TEXT,
+  aprobado_por TEXT REFERENCES usuarios(id),
+  origen TEXT NOT NULL DEFAULT 'app' CHECK (origen IN ('app', 'migracion')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (estado != 'aprobado' OR tipo IN ('bicicleta', 'a_pie') OR placa != '')
+);
+CREATE INDEX IF NOT EXISTS vehiculos_conductor ON vehiculos(conductor_id, estado);
+CREATE INDEX IF NOT EXISTS vehiculos_revision ON vehiculos(estado, actualizado_en);
+CREATE UNIQUE INDEX IF NOT EXISTS vehiculos_placa_unica
+  ON vehiculos(placa_estado, upper(placa))
+  WHERE placa != '' AND estado NOT IN ('rechazado', 'retirado');
+
+CREATE TABLE IF NOT EXISTS vehiculo_documentos (
+  id TEXT PRIMARY KEY,
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  tipo TEXT NOT NULL CHECK (tipo IN
+    ('registro', 'seguro', 'seguro_pasajeros', 'inspeccion', 'foto_frente', 'foto_lado', 'foto_placa', 'foto_interior')),
+  clave TEXT NOT NULL,
+  vence_en TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'vencido', 'reemplazado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  revisado_por TEXT REFERENCES usuarios(id),
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS vehiculo_documentos_vehiculo ON vehiculo_documentos(vehiculo_id, tipo, estado);
+CREATE INDEX IF NOT EXISTS vehiculo_documentos_vence ON vehiculo_documentos(vence_en) WHERE estado = 'aprobado';
+-- Un documento nuevo del mismo tipo reemplaza al anterior (queda el historial, no se borra).
+CREATE TRIGGER IF NOT EXISTS vehiculo_documentos_reemplaza
+AFTER INSERT ON vehiculo_documentos
+BEGIN
+  UPDATE vehiculo_documentos SET estado = 'reemplazado'
+   WHERE vehiculo_id = NEW.vehiculo_id AND tipo = NEW.tipo AND id != NEW.id
+     AND estado IN ('pendiente', 'aprobado', 'rechazado');
+END;
+
+CREATE TABLE IF NOT EXISTS vehiculo_revisiones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  estado_anterior TEXT NOT NULL,
+  estado_nuevo TEXT NOT NULL,
+  actor_id TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS vehiculo_revisiones_vehiculo ON vehiculo_revisiones(vehiculo_id, id);
+
+-- Cada cambio de estado de un vehículo queda en su historial, en la misma sentencia.
+CREATE TRIGGER IF NOT EXISTS vehiculos_historial
+AFTER UPDATE OF estado ON vehiculos
+WHEN NEW.estado != OLD.estado
+BEGIN
+  INSERT INTO vehiculo_revisiones (vehiculo_id, estado_anterior, estado_nuevo, actor_id, motivo)
+  VALUES (NEW.id, OLD.estado, NEW.estado, NEW.aprobado_por, NEW.motivo);
+END;
+-- Transiciones permitidas de un vehículo.
+CREATE TRIGGER IF NOT EXISTS vehiculos_transicion_valida
+BEFORE UPDATE OF estado ON vehiculos
+WHEN NEW.estado != OLD.estado AND NOT (
+     (OLD.estado = 'registrado'  AND NEW.estado IN ('en_revision', 'retirado'))
+  OR (OLD.estado = 'en_revision' AND NEW.estado IN ('aprobado', 'rechazado', 'retirado'))
+  OR (OLD.estado = 'rechazado'   AND NEW.estado IN ('en_revision', 'retirado'))
+  OR (OLD.estado = 'aprobado'    AND NEW.estado IN ('suspendido', 'vencido', 'retirado'))
+  OR (OLD.estado = 'suspendido'  AND NEW.estado IN ('aprobado', 'retirado'))
+  OR (OLD.estado = 'vencido'     AND NEW.estado IN ('en_revision', 'retirado')))
+BEGIN
+  SELECT RAISE(ABORT, 'vehiculo_transicion_invalida');
+END;
+-- Un vehículo motorizado no se aprueba sin su registro y su seguro aprobados.
+CREATE TRIGGER IF NOT EXISTS vehiculos_aprobar_exige_documentos
+BEFORE UPDATE OF estado ON vehiculos
+WHEN NEW.estado = 'aprobado' AND OLD.estado = 'en_revision'
+  AND NEW.tipo IN ('carro', 'moto', 'scooter')
+  AND (SELECT COUNT(DISTINCT tipo) FROM vehiculo_documentos
+        WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo IN ('registro', 'seguro')
+          AND (vence_en IS NULL OR vence_en > datetime('now'))) < 2
+BEGIN
+  SELECT RAISE(ABORT, 'vehiculo_sin_documentos_aprobados');
+END;
+
+-- ----- Requisitos cumplidos (V1.1 punto 1) -----
+CREATE TABLE IF NOT EXISTS cumplimientos (
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  vehiculo_id TEXT NOT NULL DEFAULT '',
+  requisito TEXT NOT NULL REFERENCES requisitos_def(requisito),
+  estado TEXT NOT NULL CHECK (estado IN ('aprobado', 'rechazado', 'pendiente', 'vencido', 'revocado')),
+  fuente TEXT NOT NULL CHECK (fuente IN ('kyc', 'checkr', 'documento_conductor', 'documento_vehiculo', 'sistema', 'revision_manual')),
+  fuente_id TEXT NOT NULL DEFAULT '',
+  vence_en TEXT,
+  aprobado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (conductor_id, vehiculo_id, requisito),
+  CHECK (estado != 'aprobado' OR fuente IN ('kyc', 'checkr', 'sistema') OR aprobado_por IS NOT NULL)
+);
+CREATE INDEX IF NOT EXISTS cumplimientos_vence ON cumplimientos(vence_en) WHERE estado = 'aprobado';
+-- La identidad solo se aprueba con una verificación REAL (Fase 2, 15 oct 2026): fuente «kyc» y, en
+-- la tabla kyc, aprobada por una persona admin, con foto del documento y selfie, y sin vencer.
+-- Vale para la migración M5 y para cualquier otro camino: nadie la escribe a mano.
+CREATE TRIGGER IF NOT EXISTS cumplimientos_identidad_exige_kyc
+BEFORE INSERT ON cumplimientos
+WHEN NEW.requisito = 'identidad' AND NEW.estado = 'aprobado' AND (NEW.fuente != 'kyc' OR NOT EXISTS (
+  SELECT 1 FROM kyc k JOIN usuarios a ON a.id = k.revisado_por AND a.rol = 'admin'
+   WHERE k.usuario_id = NEW.conductor_id AND k.estado = 'aprobado'
+     AND k.doc_frente IS NOT NULL AND k.selfie IS NOT NULL AND k.revisado_en IS NOT NULL
+     AND (k.proxima_revision IS NULL OR k.proxima_revision >= date('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'identidad_sin_verificacion');
+END;
+CREATE TRIGGER IF NOT EXISTS cumplimientos_identidad_exige_kyc_cambio
+BEFORE UPDATE ON cumplimientos
+WHEN NEW.requisito = 'identidad' AND NEW.estado = 'aprobado' AND (NEW.fuente != 'kyc' OR NOT EXISTS (
+  SELECT 1 FROM kyc k JOIN usuarios a ON a.id = k.revisado_por AND a.rol = 'admin'
+   WHERE k.usuario_id = NEW.conductor_id AND k.estado = 'aprobado'
+     AND k.doc_frente IS NOT NULL AND k.selfie IS NOT NULL AND k.revisado_en IS NOT NULL
+     AND (k.proxima_revision IS NULL OR k.proxima_revision >= date('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'identidad_sin_verificacion');
+END;
+
+-- ----- Habilitaciones, preferencias y bloqueos -----
+CREATE TABLE IF NOT EXISTS habilitaciones (
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN
+    ('pendiente', 'aprobada', 'rechazada', 'suspendida', 'vencida')),
+  motivo TEXT NOT NULL DEFAULT '',
+  aprobado_por TEXT REFERENCES usuarios(id),
+  aprobado_en TEXT,
+  vence_en TEXT,
+  origen TEXT NOT NULL DEFAULT 'app' CHECK (origen IN ('app', 'migracion')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (conductor_id, servicio_id),
+  CHECK (estado != 'aprobada' OR aprobado_por IS NOT NULL OR servicio_id = 'comida')
+);
+CREATE INDEX IF NOT EXISTS habilitaciones_servicio ON habilitaciones(servicio_id, estado);
+
+CREATE TABLE IF NOT EXISTS habilitaciones_historial (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  estado_anterior TEXT NOT NULL,
+  estado_nuevo TEXT NOT NULL,
+  actor_id TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS habilitaciones_historial_conductor ON habilitaciones_historial(conductor_id, id);
+
+CREATE TRIGGER IF NOT EXISTS habilitaciones_historial_alta
+AFTER INSERT ON habilitaciones
+BEGIN
+  INSERT INTO habilitaciones_historial (conductor_id, servicio_id, estado_anterior, estado_nuevo, actor_id, motivo)
+  VALUES (NEW.conductor_id, NEW.servicio_id, '', NEW.estado, NEW.aprobado_por, NEW.motivo);
+END;
+CREATE TRIGGER IF NOT EXISTS habilitaciones_historial_cambio
+AFTER UPDATE OF estado ON habilitaciones
+WHEN NEW.estado != OLD.estado
+BEGIN
+  INSERT INTO habilitaciones_historial (conductor_id, servicio_id, estado_anterior, estado_nuevo, actor_id, motivo)
+  VALUES (NEW.conductor_id, NEW.servicio_id, OLD.estado, NEW.estado, NEW.aprobado_por, NEW.motivo);
+END;
+-- Nadie aprueba una habilitación si a la persona le falta un requisito obligatorio de nivel
+-- «conductor» (los del vehículo se comprueban con el vehículo activo al ofrecer y al aceptar).
+CREATE TRIGGER IF NOT EXISTS habilitaciones_exigen_requisitos
+BEFORE UPDATE OF estado ON habilitaciones
+WHEN NEW.estado = 'aprobada' AND EXISTS (
+  SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
+   WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
+     AND NOT EXISTS (SELECT 1 FROM cumplimientos c
+                      WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
+                        AND c.requisito = sr.requisito AND c.estado = 'aprobado'
+                        AND (c.vence_en IS NULL OR c.vence_en > datetime('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'habilitacion_con_requisitos_faltantes');
+END;
+CREATE TRIGGER IF NOT EXISTS habilitaciones_exigen_requisitos_alta
+BEFORE INSERT ON habilitaciones
+WHEN NEW.estado = 'aprobada' AND EXISTS (
+  SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
+   WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
+     AND NOT EXISTS (SELECT 1 FROM cumplimientos c
+                      WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
+                        AND c.requisito = sr.requisito AND c.estado = 'aprobado'
+                        AND (c.vence_en IS NULL OR c.vence_en > datetime('now'))))
+BEGIN
+  SELECT RAISE(ABORT, 'habilitacion_con_requisitos_faltantes');
+END;
+
+CREATE TABLE IF NOT EXISTS preferencias_servicio (
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (conductor_id, servicio_id)
+);
+
+CREATE TABLE IF NOT EXISTS conductor_bloqueos (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT REFERENCES servicios(id),
+  motivo TEXT NOT NULL,
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  hasta TEXT,
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  levantado_en TEXT,
+  levantado_por TEXT REFERENCES usuarios(id)
+);
+CREATE INDEX IF NOT EXISTS conductor_bloqueos_vivos ON conductor_bloqueos(conductor_id) WHERE levantado_en IS NULL;
+
+-- ----- Auditoría de los cambios del panel sobre el catálogo, vehículos y habilitaciones -----
+CREATE TABLE IF NOT EXISTS auditoria_admin (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor_id TEXT NOT NULL REFERENCES usuarios(id),
+  accion TEXT NOT NULL,
+  objeto TEXT NOT NULL,
+  antes_json TEXT,
+  despues_json TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS auditoria_admin_objeto ON auditoria_admin(objeto, id);
+
+-- =====================================================================================
+-- FASE 2 · TIEMPO REAL (15 oct 2026, rama multiservicio-fase-2). Diseño: ARQUITECTURA-
+-- MULTISERVICIO-V1.2 §3.6 y §4. Los Workers externos NO tocan la base: todo pasa por las rutas
+-- /datos/interno/* con firma. Estas tablas solo sirven para que nada se haga dos veces.
+-- =====================================================================================
+
+-- Cada tarea programada corre UNA vez por ventana, aunque el reloj llame dos veces.
+CREATE TABLE IF NOT EXISTS tareas_programadas (
+  clave TEXT PRIMARY KEY,
+  tarea TEXT NOT NULL,
+  empezada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  terminada_en TEXT,
+  resultado TEXT NOT NULL DEFAULT '',
+  CHECK (terminada_en IS NULL OR terminada_en >= empezada_en)
+);
+CREATE INDEX IF NOT EXISTS tareas_programadas_viejas ON tareas_programadas(empezada_en);
+
+-- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
+CREATE TABLE IF NOT EXISTS peticiones_internas (
+  nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),
+  llave_id TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS peticiones_internas_viejas ON peticiones_internas(recibida_en);
+
+-- Lotes de ubicaciones que manda el tiempo real: un lote repetido no se aplica dos veces.
+CREATE TABLE IF NOT EXISTS lotes_ubicacion (
+  lote_id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL,
+  muestras INTEGER NOT NULL CHECK (muestras >= 0),
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS lotes_ubicacion_viejos ON lotes_ubicacion(recibido_en);
