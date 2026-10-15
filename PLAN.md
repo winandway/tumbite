@@ -5,4 +5,4 @@
 - [x] Paso 3: pantalla Inicio (desconectado y disponible) con mapa, resumen y oferta flotante; conservando conectar/desconectar y ofertas reales.
 - [x] Paso 4: pedido activo: cabecera roja con distancia real, mapa con ruta, tarjeta Recoge/Entrega, progreso; recogida (foto + QR) y entrega (todos los casos actuales) con el estilo nuevo.
 - [x] Paso 5: Ganancias (Hoy/Semana/Mes desde los movimientos reales + billetera), Pedidos (historial real), Perfil (vehículo, documentos, idioma, soporte, cerrar sesión; «Mis lugares» y «Preferencias» = Muy pronto).
-- [ ] Paso 6: tipos, lint, pruebas, recorrido ES/EN con capturas, capturas de tiendas, comparación con la imagen aprobada, candado, commit y publicación.
+- [x] Paso 6: tipos, lint, pruebas, recorrido ES/EN con capturas, capturas de tiendas, comparación con la imagen aprobada, candado, commit y publicación.

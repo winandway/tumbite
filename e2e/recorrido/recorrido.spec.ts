@@ -432,6 +432,13 @@ for (const idioma of ['en', 'es'] as const) {
           headers: auth,
           data: { estado: 'aprobado' },
         });
+        // La lista de activación exige horario (y teléfono) antes de abrir.
+        await request.put('/datos/mi-restaurante/horarios', {
+          headers: h,
+          data: {
+            turnos: [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: '00:00', cierra: '23:59' })),
+          },
+        });
         expect(
           (
             await request.patch('/datos/mi-restaurante/abierto', {
