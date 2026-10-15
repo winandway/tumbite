@@ -82,6 +82,7 @@
 
 - [x] Retiros sin doble pago, bandera de seguridad, conciliación y pruebas (rama `fase-0-seguridad-financiera`, `docs/FASE-0-SEGURIDAD-FINANCIERA.md`).
 - [ ] 👤 Aprobar la Fase 0 para fusionarla a `main` y publicarla en producción.
-- [ ] 👤 Del sitio de pruebas en YaDominios Cloud: su nombre exacto y su token de base de datos (panel → tarjeta del sitio de pruebas → «Ver token»), para correr S2 a S8 (`scripts/staging/probar-staging.mjs`).
-- [ ] 👤 Una cuenta admin en el sitio de pruebas (para S7).
-- [ ] 👤 Llaves de **modo prueba** de Stripe en el sitio de pruebas y el evento `transfer.created` activado, para el retiro de prueba (S11).
+- [x] S2, S3, S5 y S7 en la base real del sitio de pruebas, sin compartir ningún token (corren desde GitHub con el secreto del reloj).
+- [x] «En proceso» en la app y en el panel; retiros apagados por defecto.
+- [x] Anulación del Manager verificada en Stripe antes de revivir un pedido (C-ANULACION-VERIFICADA).
+- [ ] 👤 Cargar en el panel de YaDominios, **en el sitio de pruebas**, las llaves de **modo prueba** de Stripe y su aviso de prueba (con `transfer.created`). Destraba S11 y el recorrido completo de Comida en pruebas. Nunca en el chat.

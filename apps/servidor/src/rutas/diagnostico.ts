@@ -174,17 +174,27 @@ diagnostico.post('/interno/diagnostico/s3', async (c) => {
       })),
     );
     const t0 = Date.now();
-    await db
+    const res = await db
       .prepare(
         `UPDATE ${t} SET lat = m.lat, t = m.t FROM (SELECT json_extract(value, '$.c') AS c, json_extract(value, '$.lat') AS lat, json_extract(value, '$.t') AS t FROM json_each(?)) AS m WHERE ${t}.id = m.c AND m.t > ${t}.t`,
       )
       .bind(muestras)
       .run();
-    const ms = Date.now() - t0;
+    const viajeMs = Date.now() - t0;
+    const baseMs =
+      Math.round(Number((res.meta as { duration?: number } | undefined)?.duration ?? 0) * 10) / 10;
     const n = await db
       .prepare(`SELECT COUNT(*) AS n FROM ${t} WHERE lat = 25.7`)
       .first<{ n: number }>();
-    return c.json({ prueba: 'S3', ok: n?.n === 10000, ms, criterio: 'menos de 100 ms' });
+    return c.json({
+      prueba: 'S3',
+      ok: n?.n === 10000 && baseMs < 100,
+      filas: n?.n ?? 0,
+      baseMs,
+      viajeMs,
+      criterio:
+        'las 10.000 filas actualizadas y menos de 100 ms de ejecución en la base (el viaje se informa aparte)',
+    });
   } finally {
     await db.prepare(`DROP TABLE ${t}`).run();
   }
