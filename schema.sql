@@ -24,8 +24,6 @@ CREATE TABLE IF NOT EXISTS trabajos_en_proceso (
   trabajo TEXT NOT NULL,
   estado TEXT NOT NULL CHECK (estado IN ('en_proceso', 'terminado', 'apagado')),
   activo INTEGER NOT NULL DEFAULT 1,
-  correo_confirmado_en TEXT,
-  stripe_cliente TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
