@@ -95,3 +95,10 @@
 - [ ] Prueba de los disparadores del catálogo en D1 real (después de publicar en pruebas).
 - [ ] M6: el despacho de Comida lee la elegibilidad (con bandera), más la edad por estado y la licencia y el seguro según el vehículo (brechas de los estudios).
 - [ ] Permisos finos y doble aprobación del panel (obligatorio antes de encender pasajeros).
+
+## Fase 2 · Tiempo real (15 oct 2026, rama `multiservicio-fase-2`, solo local)
+
+- [x] M5 corregida: identidad solo con verificación real, y la base lo exige siempre.
+- [x] Puerta interna firmada, reloj por minuto, lote de ubicaciones, pases cortos, Workers externos y conexión de apps con recuperación (`docs/FASE-2-TIEMPO-REAL.md`). Sin desplegar.
+- [ ] 👤 Revisar la Fase 2 y aprobar: publicar en pruebas y desplegar los dos Workers en la cuenta de Cloudflare de Tumbite, apuntando solo a pruebas.
+- [ ] Conectar las apps al tiempo real (repartidor y seguimiento del cliente) y los avisos de Comida, con el recorrido completo.

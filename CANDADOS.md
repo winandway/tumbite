@@ -493,3 +493,17 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Una ciudad que se prende abre Comida sola (disparadores `zonas_catalogo_alta` y `zonas_catalogo_activa`), salvo que el equipo ya la haya tocado (`actualizado_por`).
   - Pruebas: `servicios.test.ts`, `migracionFase1.test.ts` y el recorrido completo, comprobadas en rojo.
   - **Qué NO tocar:** el despacho de Comida solo pasa a leer la elegibilidad con M6, con bandera y su propia prueba.
+
+- **C-IDENTIDAD-VERIFICADA (15 oct 2026, Fase 2):** la identidad de un repartidor solo queda «aprobada» con verificación real.
+  - Es decir: fila `kyc` aprobada por un usuario admin, con `doc_frente`, `selfie` y `revisado_en`, y sin vencer.
+  - La base lo exige siempre, con los disparadores `cumplimientos_identidad_exige_kyc` y `_cambio` en `schema.sql`.
+  - La M5 solo copia esas identidades, con el vencimiento de la propia revisión.
+  - Pruebas: `migracionFase1.test.ts`, comprobadas en rojo.
+  - **Qué NO tocar:** nunca aprobar identidad con fuente distinta de `kyc` ni sin evidencia.
+- **C-PUERTA-INTERNA (15 oct 2026, Fase 2):** `apps/servidor/src/rutas/interno.ts`.
+  - Solo `RUTAS_INTERNAS` aceptan la llave interna, con firma HMAC, 60 s de margen y un nonce de una sola vez (`peticiones_internas`).
+  - El reloj interno corre una vez por minuto (`tareas_programadas`).
+  - El lote solo mueve a repartidores conectados y **sin pedido en curso**, hacia adelante en el tiempo.
+  - Pruebas: `interno.test.ts` e `integracion.test.ts`, comprobadas en rojo.
+  - **Qué NO tocar:** no agregar rutas de dinero a `RUTAS_INTERNAS`; no quitar el filtro de pedido en curso (la ubicación de Comida durante la entrega sigue por la ruta actual).
+- **C-TIEMPO-REAL (15 oct 2026, Fase 2):** `apps/tiempo-real/src/nucleo.ts`. Avisos sin duplicar y sin colarse a otra persona (etiquetas `|usuario|`). Saltos de GPS descartados (más de 70 m/s). Límite de mensajes por conexión. El pase va en el protocolo y nunca en la dirección. Pruebas: `nucleo.test.ts` e `index.test.ts`, comprobadas en rojo. **NO desplegado.**
