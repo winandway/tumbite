@@ -1,3 +1,4 @@
+import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -34,6 +35,11 @@ import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } fr
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cabecerasSeguridad);
+// C-ENTORNOS-SEPARADOS: el sitio de pruebas nunca usa una llave real de Stripe.
+app.use('*', async (c, next) => {
+  blindarStripeEnPruebas(new URL(c.req.url).host, c.env);
+  await next();
+});
 // Stripe simulado solo en la computadora del programador (ver stripe.ts). En producción no existe.
 app.use('*', async (c, next) => {
   usarStripeLocal((c.env as unknown as Record<string, unknown>).STRIPE_API_URL);
@@ -136,6 +142,9 @@ app.get('/datos/salud', async (c) => {
   }
 
   piezas.almacen = c.env.BUCKET ? 'ok' : 'pendiente';
+  const entorno = problemasDeEntorno(new URL(c.req.url).host, c.env);
+  if (entorno.length) console.error('salud: entorno', entorno.join(' · '));
+  piezas.entorno = entorno.length ? 'error' : 'ok';
   if (c.env.DB) piezas.esquema = ultimoErrorEsquema || columnasFaltantes.length ? 'error' : 'ok';
 
   const env = revisarEnv(c.env as unknown as Record<string, unknown>);

@@ -1141,7 +1141,7 @@ diagnostico.post('/interno/diagnostico/confirmar-pago', async (c) => {
     `/payment_intents/${p.stripe_sesion}/confirm`,
     {
       payment_method: 'pm_card_visa',
-      return_url: c.env.SITIO_URL ?? 'https://staging.tumbite.com',
+      return_url: c.env.SITIO_URL ?? new URL(c.req.url).origin,
     },
     `diag-confirmar-${pedidoId}`,
   );

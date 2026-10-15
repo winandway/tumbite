@@ -11,7 +11,8 @@ const leer = (...r: string[]) => readFileSync(join(__dirname, '..', '..', ...r),
 describe('app del repartidor en la web', () => {
   it('se exporta con la base /driver y se publica en esa carpeta', () => {
     expect(JSON.parse(leer('repartidor', 'app.json')).expo.experiments.baseUrl).toBe('/driver');
-    expect(leer('..', '.github', 'workflows', 'publicar.yml')).toMatch(/out-deploy\/driver/);
+    expect(leer('..', '.github', 'workflows', 'publicar.yml')).toMatch(/scripts\/empaquetar\.sh/);
+    expect(leer('..', 'scripts', 'empaquetar.sh')).toMatch(/\$SALIDA\/driver/);
   });
 
   it('«Conectarme» tiene tope de tiempo, atrapa errores y no los borra la recarga', () => {

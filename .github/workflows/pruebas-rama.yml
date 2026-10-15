@@ -36,35 +36,18 @@ jobs:
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2 (fijado al commit)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Las apps del sitio de pruebas hablan con el SITIO DE PRUEBAS (antes salían apuntando a
-      # producción y producción las rechazaba; nunca deben escribir allí).
-      - run: npm run build:app-web
-        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
-      - run: npm run build:repartidor-web
-        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
-      - run: npm run build:restaurante-web
-        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
-      - name: Las apps de pruebas no apuntan a producción
-        run: |
-          if grep -rl "https://tumbite.com/datos\|\"https://tumbite.com\"" apps/cliente/dist-web apps/repartidor/dist-web apps/restaurante/dist-web | head -1 | grep -q .; then
-            echo "::error::Una app de pruebas apunta a producción"; exit 1; fi
-          grep -rlq "staging.tumbite.com" apps/repartidor/dist-web || { echo "::error::La app del repartidor no apunta al sitio de pruebas"; exit 1; }
-      - run: |
-          mkdir out-deploy
-          cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
-          cp -r apps/panel/dist/* out-deploy/
-          mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
-          mkdir -p out-deploy/driver && cp -r apps/repartidor/dist-web/* out-deploy/driver/
-          mkdir -p out-deploy/restaurant && cp -r apps/restaurante/dist-web/* out-deploy/restaurant/
-          cp schema.sql out-deploy/
-          echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
-          test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }
+      # C-ENTORNOS-SEPARADOS: el paquete de pruebas se arma con la dirección de pruebas y se revisa;
+      # el de producción también se arma y se revisa (NO se publica), para probar que sale limpio.
+      - name: Paquete de PRUEBAS (revisado)
+        run: bash scripts/empaquetar.sh pruebas
+      - name: Paquete de PRODUCCIÓN (solo se revisa, no se publica)
+        run: bash scripts/empaquetar.sh produccion
       - name: Publicar SOLO en pruebas (rama yapanel-pruebas)
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4 (fijado al commit)
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: yapanel-pruebas
-          publish_dir: ./out-deploy
+          publish_dir: ./out-pruebas
       - name: Semáforo — pruebas debe servir esta versión y responder 200
         if: ${{ vars.URL_PRUEBAS != '' }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas

@@ -36,3 +36,6 @@ capturas-tiendas/
 docs/CUENTAS-DE-PRUEBA.md
 .dist-tiempo-real/
 .dist-reloj/
+out-pruebas/
+out-produccion/
+out-deploy/

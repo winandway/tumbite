@@ -11,3 +11,6 @@ apps/*/AGENTS.md
 .dist-reloj
 apps/servidor/src/migraciones/fase1.ts
 apps/servidor/src/esquemaColumnas.ts
+out-pruebas
+out-produccion
+out-deploy

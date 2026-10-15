@@ -17,6 +17,9 @@ export default tseslint.config(
       '**/.dist-worker/**',
       '**/.dist-tiempo-real/**',
       '**/.dist-reloj/**',
+      'out-pruebas/**',
+      'out-produccion/**',
+      'out-deploy/**',
       '**/.wrangler/**',
       '**/coverage/**',
       'out-deploy/**',
@@ -42,6 +45,12 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'no-console': ['warn', { allow: ['error', 'warn'] }],
     },
+  },
+  {
+    // El revisor de paquetes recorre la carpeta del paquete que arma CI (out-pruebas, out-produccion):
+    // leer rutas variables es su trabajo. Solo esta regla y solo este archivo (C-ENTORNOS-SEPARADOS).
+    files: ['scripts/verificar-paquete.mjs'],
+    rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },
   {
     // Código de pruebas: no viaja a producción. Se permite leer archivos y usar tipos sueltos en respuestas.

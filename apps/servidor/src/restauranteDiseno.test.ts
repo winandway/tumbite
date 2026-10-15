@@ -52,9 +52,13 @@ describe('app del restaurante con el diseño aprobado', () => {
     expect(JSON.parse(leer('apps', 'restaurante', 'app.json')).expo.experiments.baseUrl).toBe(
       '/restaurant',
     );
-    const publicar = leer('.github', 'workflows', 'publicar.yml');
-    expect(publicar).toMatch(/npm run build:restaurante-web/);
-    expect(publicar).toMatch(/out-deploy\/restaurant\//);
+    // Desde el 15 oct cada entorno se arma con scripts/empaquetar.sh (C-ENTORNOS-SEPARADOS).
+    expect(leer('.github', 'workflows', 'publicar.yml')).toMatch(
+      /scripts\/empaquetar\.sh produccion/,
+    );
+    const empaquetar = leer('scripts', 'empaquetar.sh');
+    expect(empaquetar).toMatch(/npm run build:restaurante-web/);
+    expect(empaquetar).toMatch(/\$SALIDA\/restaurant/);
   });
   it('el acceso del restaurante tiene su portada sin cambiar el de cliente y repartidor', () => {
     expect(leer(...APP, 'app', 'index.tsx')).toMatch(/<Acceso portada=\{<Portada \/>\} \/>/);

@@ -23,3 +23,4 @@ export * from './activacion';
 export * from './colaEntrega';
 export * from './firmaInterna';
 export * from './tiempoReal';
+export * from './entornos';

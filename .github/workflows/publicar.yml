@@ -33,38 +33,34 @@ jobs:
       - run: npm run build
         env:
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
-      # La app del cliente también en versión web, en tumbite.com/app (para probar sin tiendas).
-      - run: npm run build:app-web
-      # La app del repartidor en versión web, en tumbite.com/driver (para la prueba en la calle).
-      - run: npm run build:repartidor-web
-      # La app del restaurante en versión web, en tumbite.com/restaurant (para verla y probarla en el celular o la tableta).
-      - run: npm run build:restaurante-web
-      - run: |
-          mkdir out-deploy
-          cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
-          cp -r apps/panel/dist/* out-deploy/
-          mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
-          mkdir -p out-deploy/driver && cp -r apps/repartidor/dist-web/* out-deploy/driver/
-          mkdir -p out-deploy/restaurant && cp -r apps/restaurante/dist-web/* out-deploy/restaurant/
-          cp schema.sql out-deploy/
-          echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
-          test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }
-
+      # C-ENTORNOS-SEPARADOS: un paquete por entorno, desde cero y con SU dirección, revisado
+      # antes de publicar (sin direcciones cruzadas ni secretos). Nunca se copia uno al otro.
+      - name: Paquete de PRUEBAS (revisado)
+        run: bash scripts/empaquetar.sh pruebas
       - name: Publicar en pruebas (rama yapanel-pruebas)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: yapanel-pruebas
-          publish_dir: ./out-deploy
+          publish_dir: ./out-pruebas
 
       - name: Semáforo — pruebas debe servir esta versión y responder 200
         if: ${{ vars.URL_PRUEBAS != '' }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
         timeout-minutes: 30
 
+      - name: Paquete de PRODUCCIÓN (revisado; nunca el de pruebas)
+        run: bash scripts/empaquetar.sh produccion
+
       - name: Publicar en producción (rama yapanel-build)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: yapanel-build
-          publish_dir: ./out-deploy
+          publish_dir: ./out-produccion
+
+      # Después de publicar: producción tiene que servir ESTA versión y su salud (con la pieza
+      # «entorno») responder 200. Si no, queda en rojo para actuar de inmediato.
+      - name: Semáforo de producción (solo lectura)
+        run: bash scripts/semaforo.sh "https://tumbite.com" "${VERSION:0:7}" yapanel-build
+        timeout-minutes: 30

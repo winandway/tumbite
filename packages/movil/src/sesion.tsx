@@ -14,6 +14,7 @@ import {
   type Usuario,
   borrarBorradoresDe,
   crearApi,
+  elegirServidor,
   esIdioma,
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
@@ -22,7 +23,12 @@ import { darDeBajaAvisos, useAvisosCelular } from './avisos';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
 const LLAVE_IDIOMA = 'tumbite.idioma';
-export const URL_SERVIDOR = process.env.EXPO_PUBLIC_API_URL ?? 'https://tumbite.com';
+// En la web, la app habla con el sitio que la sirvió (pruebas con pruebas, producción con
+// producción); en el celular, con la dirección fijada al construir (C-ENTORNOS-SEPARADOS).
+export const URL_SERVIDOR = elegirServidor(
+  typeof window !== 'undefined' && window.location?.origin ? window.location.origin : null,
+  process.env.EXPO_PUBLIC_API_URL,
+);
 
 type Sesion = {
   cargando: boolean;
