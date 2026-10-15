@@ -23,6 +23,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['evidencias', 'borrada_en', 'TEXT'],
   // Mayoría de edad (14 oct 2026): platos que solo se entregan en mano a un adulto con documento.
   ['platos', 'requiere_edad', 'INTEGER NOT NULL DEFAULT 0'],
+  // Multiservicio, Fase 1 (15 oct 2026): el vehículo con el que el conductor trabaja ahora.
+  // Nadie lo lee todavía para Comida; queda vacío hasta la migración M5 (docs/fase-1/).
+  ['repartidores', 'vehiculo_activo_id', 'TEXT REFERENCES vehiculos(id)'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
@@ -79,6 +82,62 @@ async function preciosDeFabrica(db: D1Database): Promise<void> {
   console.warn('esquema: precios de fábrica actualizados al punto de equilibrio');
 }
 
+/**
+ * Multiservicio, Fase 1 (C-SERVICIOS-IMPLEMENTADOS): los servicios que ESTE código sabe atender,
+ * con la versión de su contrato. Solo Comida. Moto, Carro, Mercado, Envíos y Farmacia están en el
+ * catálogo pero, sin fila aquí, los disparadores de schema.sql no dejan encenderlos. Agregar un
+ * servicio a esta lista exige su fase aprobada (V1.2 §11).
+ */
+export const SERVICIOS_IMPLEMENTADOS = new Map<string, number>([['comida', 1]]);
+
+async function sincronizarServicios(db: D1Database): Promise<void> {
+  const hay = await db
+    .prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'servicios_implementados'",
+    )
+    .first();
+  if (!hay) return;
+  const ids = [...SERVICIOS_IMPLEMENTADOS.keys()];
+  const marcas = ids.map(() => '?').join(',');
+  await db.batch([
+    ...[...SERVICIOS_IMPLEMENTADOS].map(([id, contrato]) =>
+      db
+        .prepare(
+          'INSERT INTO servicios_implementados (servicio_id, contrato) SELECT id, ? FROM servicios WHERE id = ? ' +
+            "ON CONFLICT(servicio_id) DO UPDATE SET contrato = excluded.contrato, desplegado_en = datetime('now')",
+        )
+        .bind(contrato, id),
+    ),
+    // Lo que este código ya no sabe atender se suspende antes de dejar de declararlo.
+    db
+      .prepare(
+        `UPDATE servicios SET estado = 'suspendido', actualizado_en = datetime('now') WHERE estado = 'disponible' AND id NOT IN (${marcas})`,
+      )
+      .bind(...ids),
+    db
+      .prepare(
+        `UPDATE servicios_zona SET estado = 'suspendido', motivo = 'no implementado en esta versión', actualizado_en = datetime('now') WHERE estado = 'disponible' AND servicio_id NOT IN (${marcas})`,
+      )
+      .bind(...ids),
+    db
+      .prepare(`DELETE FROM servicios_implementados WHERE servicio_id NOT IN (${marcas})`)
+      .bind(...ids),
+  ]);
+  // La primera vez, Comida queda disponible en las zonas activas (como funciona hoy). Después
+  // manda lo que decida el panel: esto no vuelve a correr.
+  const primera = await db.prepare("SELECT 1 FROM config WHERE clave = 'servicios_inicio'").first();
+  if (!primera)
+    await db.batch([
+      db.prepare(
+        "UPDATE servicios SET estado = 'disponible' WHERE id = 'comida' AND estado = 'proximamente'",
+      ),
+      db.prepare(
+        "UPDATE servicios_zona SET estado = 'disponible' WHERE servicio_id = 'comida' AND estado = 'proximamente' AND zona_id IN (SELECT id FROM zonas WHERE activa = 1)",
+      ),
+      db.prepare("INSERT OR IGNORE INTO config (clave, valor) VALUES ('servicios_inicio', '1')"),
+    ]);
+}
+
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
@@ -95,6 +154,7 @@ async function migrar(db: D1Database): Promise<void> {
   }
   for (const sql of INDICES) await db.prepare(sql).run();
   await preciosDeFabrica(db);
+  await sincronizarServicios(db);
 }
 
 export function asegurarEsquema(db: D1Database): Promise<void> {

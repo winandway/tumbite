@@ -23,6 +23,7 @@ import { superadmin } from './rutas/superadmin';
 import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
+import { saludServicios, servicios } from './rutas/servicios';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
@@ -153,6 +154,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: retiros', e);
       return 'error' as const;
     });
+  // Fase 1: catálogo de servicios (Moto y Carro apagados, disparadores puestos).
+  if (c.env.DB)
+    piezas.servicios = await saludServicios(c.env.DB).catch((e: unknown) => {
+      console.error('salud: servicios', e);
+      return 'error' as const;
+    });
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -276,6 +283,7 @@ app.route('/datos/cuentas', cuentas);
 app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);
+app.route('/datos', servicios);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
 app.route('/datos', regalos);

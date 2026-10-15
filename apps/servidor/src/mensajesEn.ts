@@ -376,6 +376,91 @@ export const MENSAJES_EN = new Map<string, string>([
   ['firma inválida', 'invalid signature'],
   ['Escribe el nombre de tu restaurante.', 'Enter your restaurant’s name.'],
   ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],
+  ['Ese servicio no existe.', 'That service doesn’t exist.'],
+  ['Este servicio todavía no está disponible para ti.', 'This service isn’t available to you yet.'],
+  ['No encontramos ese vehículo.', 'We couldn’t find that vehicle.'],
+  ['Puedes tener hasta 5 vehículos registrados.', 'You can have up to 5 registered vehicles.'],
+  [
+    'Este vehículo ya está en revisión o aprobado; no se puede editar.',
+    'This vehicle is already under review or approved, so it can’t be edited.',
+  ],
+  ['Este vehículo no acepta documentos nuevos.', 'This vehicle can’t take new documents.'],
+  ['Elige qué documento estás subiendo.', 'Choose which document you’re uploading.'],
+  ['El archivo pesa demasiado. El máximo es 5 MB.', 'The file is too large. The maximum is 5 MB.'],
+  ['No llegó ningún archivo.', 'No file was received.'],
+  [
+    'Sube el documento en JPG, PNG, WebP o PDF.',
+    'Upload the document as a JPG, PNG, WebP, or PDF.',
+  ],
+  [
+    'Escribe la placa y el estado que la emitió.',
+    'Enter the license plate and the state that issued it.',
+  ],
+  [
+    'Sube el registro y el seguro del vehículo antes de enviarlo.',
+    'Upload the vehicle’s registration and insurance before submitting it.',
+  ],
+  [
+    'Termina tu entrega en curso antes de cambiar de vehículo.',
+    'Finish your current delivery before switching vehicles.',
+  ],
+  ['Ese vehículo todavía no está aprobado.', 'That vehicle isn’t approved yet.'],
+  [
+    'No se pudo cambiar el vehículo. Intenta otra vez.',
+    'We couldn’t switch your vehicle. Please try again.',
+  ],
+  [
+    'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
+    'Passenger services (Moto and Car) can’t be turned on yet.',
+  ],
+  ['No encontramos ese documento.', 'We couldn’t find that document.'],
+  [
+    'Escribe el motivo para que la persona sepa qué corregir.',
+    'Enter the reason so the person knows what to fix.',
+  ],
+  ['No encontramos esa persona o ese servicio.', 'We couldn’t find that person or that service.'],
+  ['Ese requisito no existe.', 'That requirement doesn’t exist.'],
+  [
+    'Este requisito lo aprueba la verificación automática, no el panel.',
+    'This requirement is approved by automatic verification, not from the dashboard.',
+  ],
+  ['Elige el vehículo de esta persona.', 'Choose this person’s vehicle.'],
+  [
+    'La placa solo lleva letras, números, espacios o guiones.',
+    'License plates can only contain letters, numbers, spaces, or hyphens.',
+  ],
+  [
+    'El estado de la placa son dos letras (por ejemplo, FL).',
+    'The plate’s state is two letters (for example, FL).',
+  ],
+  [
+    'Este servicio todavía no está programado; no se puede encender.',
+    'This service hasn’t been built yet, so it can’t be turned on.',
+  ],
+  [
+    'Un servicio de pasajeros no se puede encender sin sus requisitos mínimos de seguridad.',
+    'A passenger service can’t be turned on without its minimum safety requirements.',
+  ],
+  [
+    'Ese cambio de estado no está permitido para este vehículo.',
+    'That status change isn’t allowed for this vehicle.',
+  ],
+  [
+    'Primero aprueba el registro y el seguro vigentes del vehículo.',
+    'First approve the vehicle’s current registration and insurance.',
+  ],
+  [
+    'A esta persona todavía le faltan requisitos para este servicio.',
+    'This person is still missing requirements for this service.',
+  ],
+  [
+    'Esa placa ya está registrada en otra cuenta.',
+    'That license plate is already registered to another account.',
+  ],
+  [
+    'Faltan datos obligatorios para ese cambio (por ejemplo, la placa).',
+    'Required details are missing for that change (for example, the license plate).',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
