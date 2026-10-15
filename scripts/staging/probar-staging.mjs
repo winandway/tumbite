@@ -48,6 +48,23 @@ resultados.S4 = await pedir('s4');
 }
 resultados.S7 = await pedir('s7');
 resultados.S11 = await pedir('s11');
+// Fases 1 y 2 (validación del 15 oct 2026).
+resultados.F1 = await pedir('f1');
+const antes = await pedir('migraciones', { paso: 'verificar' });
+const m4 = await pedir('migraciones', { paso: 'm4' });
+const m5 = await pedir('migraciones', { paso: 'm5' });
+const despues = await pedir('migraciones', { paso: 'verificar' });
+const sinComida = despues.resultados?.[2]?.[0]?.sin_comida;
+const identidadSinEvidencia = despues.resultados?.at(-1)?.[0]?.identidad_sin_evidencia;
+resultados.MIGRACIONES = {
+  prueba: 'M4 y M5 en la base de pruebas',
+  ok: sinComida === 0 && identidadSinEvidencia === 0,
+  antes: antes.resultados,
+  m4: m4.cambios,
+  m5: m5.cambios,
+  despues: despues.resultados,
+};
+resultados.F2 = await pedir('f2');
 
 let todo = true;
 for (const [k, v] of Object.entries(resultados)) {

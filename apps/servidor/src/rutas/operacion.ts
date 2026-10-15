@@ -1594,8 +1594,57 @@ operacion.post('/reloj', async (c) => {
   const dado = c.req.header('x-reloj-secreto') ?? '';
   if (!secreto || dado.length !== secreto.length || !(await igualesSeguro(dado, secreto)))
     throw new ErrorDatos('No encontrado.', undefined, 404);
-  return c.json(await correrReloj(c.env, base(c)));
+  // Comparte el candado por minuto con el reloj nuevo (/datos/interno/reloj): si los dos llegan
+  // en el mismo minuto, las tareas corren una sola vez (C-RELOJ-UNA-VEZ).
+  return c.json(
+    await correrRelojUnaVez(c.env, base(c), new Date().toISOString().slice(0, 16), 'github'),
+  );
 });
+
+/**
+ * Corre las tareas del reloj UNA vez por minuto, venga de donde venga (reloj actual de GitHub o
+ * Worker externo). La fila de tareas_programadas se crea en una sola sentencia: el segundo que
+ * llega en el mismo minuto encuentra la fila y no corre nada.
+ */
+export async function correrRelojUnaVez(
+  env: Env,
+  db: D1Database,
+  ventana: string,
+  origen: 'github' | 'externo',
+) {
+  const clave = `reloj:${ventana}`;
+  const nueva = await db
+    .prepare(
+      "INSERT OR IGNORE INTO tareas_programadas (clave, tarea, resultado) VALUES (?, 'reloj', ?)",
+    )
+    .bind(clave, `origen:${origen}`)
+    .run();
+  if (!nueva.meta.changes) return { ok: true as const, yaHecho: true as const, ventana };
+  let resultado: Awaited<ReturnType<typeof correrReloj>>;
+  try {
+    resultado = await correrReloj(env, db);
+  } catch (e) {
+    console.error('reloj', origen, e);
+    await db
+      .prepare('UPDATE tareas_programadas SET resultado = ? WHERE clave = ?')
+      .bind(`origen:${origen} error`, clave)
+      .run();
+    throw e;
+  }
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
+      )
+      .bind(`origen:${origen} ${JSON.stringify(resultado)}`.slice(0, 2000), clave),
+    db.prepare(
+      "DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')",
+    ),
+    db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
+    db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
+  ]);
+  return { ...resultado, ventana };
+}
 
 /**
  * Las tareas del reloj. Las llaman el reloj actual (GitHub Actions, /datos/reloj) y, desde la

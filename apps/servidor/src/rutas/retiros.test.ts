@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { firmarPeticion } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 
 /**
@@ -125,6 +126,8 @@ async function escenario(extra: Record<string, unknown> = {}) {
     await m.DB.prepare(
       "UPDATE retiros SET proximo_intento_en = datetime('now', '-1 second')",
     ).run();
+    // Cada vuelta representa un minuto nuevo: el candado por minuto (C-RELOJ-UNA-VEZ) se libera.
+    await m.DB.prepare('DELETE FROM tareas_programadas').run();
     const r = await app.request(
       '/datos/reloj',
       { method: 'POST', headers: { 'x-reloj-secreto': SECRETO_RELOJ } },
@@ -191,6 +194,44 @@ describe('retiros sin doble pago (C-RETIROS-SEGUROS)', () => {
     expect((await e.retiro()).estado).toBe('confirmado');
     expect(st.transferencias.size).toBe(1);
     expect(st.posts).toHaveLength(1); // verificó antes de reenviar
+  });
+
+  it('C-RELOJ-UNA-VEZ: el reloj actual y el nuevo en el mismo minuto hacen UNA sola transferencia', async () => {
+    const st = stripeSimulado();
+    st.fallas.push('red_antes');
+    const llave = { id: 'int-1', secreto: `${crypto.randomUUID()}${crypto.randomUUID()}` };
+    const e = await escenario({
+      INTERNO_LLAVE_ID: llave.id,
+      INTERNO_SECRETO_ACTUAL: llave.secreto,
+    });
+    expect((await e.retirar()).datos.retiro.estado).toBe('en_proceso');
+    await e.m.DB.prepare(
+      "UPDATE retiros SET proximo_intento_en = datetime('now', '-1 second')",
+    ).run();
+    const ventana = new Date().toISOString().slice(0, 16);
+    const cuerpo = JSON.stringify({ ventana });
+    const h = await firmarPeticion(llave, 'POST', '/datos/interno/reloj', cuerpo);
+    const [github, externo] = await Promise.all([
+      e.app.request(
+        '/datos/reloj',
+        { method: 'POST', headers: { 'x-reloj-secreto': SECRETO_RELOJ } },
+        e.base,
+      ),
+      e.app.request(
+        '/datos/interno/reloj',
+        { method: 'POST', headers: { 'content-type': 'application/json', ...h }, body: cuerpo },
+        e.base,
+      ),
+    ]);
+    const respuestas = [await github.json(), await externo.json()] as { yaHecho?: boolean }[];
+    expect(respuestas.filter((r) => r.yaHecho)).toHaveLength(1);
+    expect((await e.retiro()).estado).toBe('confirmado');
+    expect(st.transferencias.size).toBe(1);
+    expect(st.posts).toHaveLength(2); // el intento que no llegó + UN solo reintento
+    const t = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tareas_programadas WHERE tarea = 'reloj'",
+    ).first<{ n: number }>();
+    expect(t?.n).toBe(1);
   });
 
   it('la llamada no llegó a Stripe: reintento con la misma clave y una sola transferencia', async () => {

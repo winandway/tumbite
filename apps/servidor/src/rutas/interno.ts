@@ -10,7 +10,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
-import { correrReloj } from './operacion';
+import { correrRelojUnaVez } from './operacion';
 
 /**
  * Fase 2 · Puerta interna entre YaDominios Cloud y los Workers externos de Cloudflare
@@ -88,38 +88,8 @@ interno.post('/interno/reloj', async (c) => {
   // No se aceptan ventanas inventadas: a lo sumo 5 minutos de diferencia con la hora real.
   if (Math.abs(Date.parse(`${ventana}:00Z`) - Date.now()) > 5 * 60_000)
     throw new ErrorDatos('Ventana fuera de tiempo.', 'ventana', 409);
-  const db = base(c);
-  const clave = `reloj:${ventana}`;
-  const nueva = await db
-    .prepare("INSERT OR IGNORE INTO tareas_programadas (clave, tarea) VALUES (?, 'reloj')")
-    .bind(clave)
-    .run();
-  if (!nueva.meta.changes) return c.json({ ok: true, yaHecho: true, ventana });
-  let resultado: Awaited<ReturnType<typeof correrReloj>>;
-  try {
-    resultado = await correrReloj(c.env, db);
-  } catch (e) {
-    console.error('reloj interno', e);
-    await db
-      .prepare("UPDATE tareas_programadas SET resultado = 'error' WHERE clave = ?")
-      .bind(clave)
-      .run();
-    throw e;
-  }
-  // Limpieza: nonces de más de 10 minutos, tareas y lotes de más de 7 días.
-  await db.batch([
-    db
-      .prepare(
-        "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
-      )
-      .bind(JSON.stringify(resultado).slice(0, 2000), clave),
-    db.prepare(
-      "DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')",
-    ),
-    db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
-    db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
-  ]);
-  return c.json({ ok: true, ventana, resultado });
+  const r = await correrRelojUnaVez(c.env, base(c), ventana, 'externo');
+  return c.json('yaHecho' in r ? r : { ok: true, ventana, resultado: r });
 });
 
 // ---------------------------------------------------------------- lote de ubicaciones
@@ -146,12 +116,25 @@ interno.post('/interno/ubicaciones/lote', async (c) => {
     }),
     f.cuerpo,
   );
+  return c.json({ ok: true, ...(await aplicarLote(base(c), d)) });
+});
+
+export type LoteUbicacion = {
+  loteId: string;
+  zona: string;
+  muestras: { c: string; lat: number; lng: number; t: number }[];
+};
+
+/**
+ * Aplica un lote: registra el lote (si ya existía, nada) y mueve en una sola sentencia a los
+ * repartidores conectados de esa zona SIN pedido en curso, solo hacia adelante en el tiempo.
+ */
+export async function aplicarLote(db: D1Database, d: LoteUbicacion) {
   const ahora = Date.now();
   // Ni del futuro (más de 60 s) ni viejas (más de 10 minutos): esas no mueven a nadie.
   const utiles = d.muestras
     .filter((m) => m.t <= ahora + 60_000 && m.t >= ahora - 10 * 60_000)
     .map((m) => ({ c: m.c, lat: m.lat, lng: m.lng, g: geohash(m.lat, m.lng), t: aSql(m.t) }));
-  const db = base(c);
   const [lote, cambio] = await db.batch([
     db
       .prepare(
@@ -176,13 +159,12 @@ interno.post('/interno/ubicaciones/lote', async (c) => {
       )
       .bind(d.zona, JSON.stringify(utiles)),
   ]);
-  return c.json({
-    ok: true,
+  return {
     loteNuevo: Boolean(lote?.meta.changes),
     aplicadas: cambio?.meta.changes ?? 0,
     descartadas: d.muestras.length - utiles.length,
-  });
-});
+  };
+}
 
 // ---------------------------------------------------------------- pase corto para las apps
 

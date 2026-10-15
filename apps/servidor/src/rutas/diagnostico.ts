@@ -6,6 +6,11 @@ import { type Variables, base } from '../sesion';
 import { crearStripe, type Stripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
+import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
+import { sentencias } from '../migraciones/sentencias';
+import { aplicarLote } from './interno';
+import { correrRelojUnaVez } from './operacion';
+import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
 
 /**
  * Diagnóstico del SITIO DE PRUEBAS (Fase 0, 15 oct 2026): las pruebas S2–S5, S7 y S11 de
@@ -500,4 +505,340 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
       db.prepare('DELETE FROM usuarios WHERE id = ?').bind(u),
     ]);
   }
+});
+
+// =====================================================================================
+// Validación en staging de las fases 1 y 2 (15 oct 2026). Mismo doble cerrojo de arriba.
+// Todo lo que crean estas pruebas lleva «zz» y se borra al terminar.
+// =====================================================================================
+
+/** F1: disparadores del catálogo, vehículos, habilitaciones e identidad, en la base real. */
+diagnostico.post('/interno/diagnostico/f1', async (c) => {
+  const db = base(c);
+  const z1 = `zz-f1a-${sufijo()}`;
+  const z2 = `zz-f1b-${sufijo()}`;
+  const zona = `ZZ-DIAG-${sufijo().toUpperCase().slice(0, 8)}`;
+  const casos: Caso[] = [];
+  const fallaCon = async (p: Promise<unknown>, motivo: string) => {
+    try {
+      await p;
+      return false;
+    } catch (e) {
+      return String(e instanceof Error ? e.message : e).includes(motivo);
+    }
+  };
+  const disparadores = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${[...DISPARADORES_SERVICIOS, 'cumplimientos_identidad_exige_kyc', 'cumplimientos_identidad_exige_kyc_cambio', 'zonas_catalogo_alta', 'zonas_catalogo_activa', 'vehiculos_historial', 'vehiculo_documentos_reemplaza', 'habilitaciones_historial_alta', 'habilitaciones_historial_cambio'].map(() => '?').join(',')})`,
+    )
+    .bind(
+      ...DISPARADORES_SERVICIOS,
+      'cumplimientos_identidad_exige_kyc',
+      'cumplimientos_identidad_exige_kyc_cambio',
+      'zonas_catalogo_alta',
+      'zonas_catalogo_activa',
+      'vehiculos_historial',
+      'vehiculo_documentos_reemplaza',
+      'habilitaciones_historial_alta',
+      'habilitaciones_historial_cambio',
+    )
+    .first<{ n: number }>();
+  casos.push({
+    nombre: 'los 17 disparadores de las fases 1 y 2 existen en la base real',
+    ok: Number(disparadores?.n) === DISPARADORES_SERVICIOS.length + 8,
+    detalle: String(disparadores?.n),
+  });
+  const impl = await db
+    .prepare('SELECT servicio_id FROM servicios_implementados ORDER BY servicio_id')
+    .all<{ servicio_id: string }>();
+  casos.push({
+    nombre: 'solo Comida está implementada',
+    ok: impl.results.map((r) => r.servicio_id).join(',') === 'comida',
+  });
+  casos.push({ nombre: 'la salud del catálogo dice ok', ok: (await saludServicios(db)) === 'ok' });
+  for (const id of ['moto', 'carro'])
+    casos.push({
+      nombre: `la base no deja encender ${id} (ni en una ciudad)`,
+      ok:
+        (await fallaCon(
+          db.prepare("UPDATE servicios SET estado = 'disponible' WHERE id = ?").bind(id).run(),
+          'servicio_no_implementado',
+        )) &&
+        (await fallaCon(
+          db
+            .prepare("UPDATE servicios_zona SET estado = 'disponible' WHERE servicio_id = ?")
+            .bind(id)
+            .run(),
+          'servicio_no_implementado',
+        )),
+    });
+  const estadoMoto = await db
+    .prepare("SELECT estado FROM servicios WHERE id = 'moto'")
+    .first<{ estado: string }>();
+  casos.push({ nombre: 'Moto sigue «próximamente»', ok: estadoMoto?.estado === 'proximamente' });
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F1', 'repartidor', 'x')",
+      )
+      .bind(z1, `${z1}@prueba.invalid`),
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F1', 'repartidor', 'x')",
+      )
+      .bind(z2, `${z2}@prueba.invalid`),
+  ]);
+  try {
+    casos.push({
+      nombre: 'habilitar Moto sin requisitos: la base lo rechaza',
+      ok: await fallaCon(
+        db
+          .prepare(
+            "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por) VALUES (?, 'moto', 'aprobada', ?)",
+          )
+          .bind(z1, z1)
+          .run(),
+        'habilitacion_con_requisitos_faltantes',
+      ),
+    });
+    casos.push({
+      nombre: 'identidad sin verificación real: la base lo rechaza',
+      ok:
+        (await fallaCon(
+          db
+            .prepare(
+              "INSERT INTO cumplimientos (conductor_id, requisito, estado, fuente) VALUES (?, 'identidad', 'aprobado', 'kyc')",
+            )
+            .bind(z1)
+            .run(),
+          'identidad_sin_verificacion',
+        )) &&
+        (await fallaCon(
+          db
+            .prepare(
+              "INSERT INTO cumplimientos (conductor_id, requisito, estado, fuente) VALUES (?, 'identidad', 'aprobado', 'sistema')",
+            )
+            .bind(z1)
+            .run(),
+          'identidad_sin_verificacion',
+        )),
+    });
+    await db
+      .prepare(
+        "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, motivo) VALUES (?, 'comida', 'aprobada', 'diagnóstico')",
+      )
+      .bind(z1)
+      .run();
+    const hist = await db
+      .prepare('SELECT COUNT(*) AS n FROM habilitaciones_historial WHERE conductor_id = ?')
+      .bind(z1)
+      .first<{ n: number }>();
+    casos.push({ nombre: 'habilitar Comida funciona y deja historial', ok: Number(hist?.n) === 1 });
+    await db
+      .prepare(
+        "INSERT INTO vehiculos (id, conductor_id, tipo, placa, placa_estado) VALUES (?, ?, 'carro', 'ZZ1234', 'FL')",
+      )
+      .bind(`${z1}-v`, z1)
+      .run();
+    casos.push({
+      nombre: 'una placa no vive en dos cuentas',
+      ok: await fallaCon(
+        db
+          .prepare(
+            "INSERT INTO vehiculos (id, conductor_id, tipo, placa, placa_estado) VALUES (?, ?, 'carro', 'zz1234', 'FL')",
+          )
+          .bind(`${z2}-v`, z2)
+          .run(),
+        'UNIQUE',
+      ),
+    });
+    casos.push({
+      nombre: 'un vehículo no salta de registrado a aprobado',
+      ok: await fallaCon(
+        db.prepare("UPDATE vehiculos SET estado = 'aprobado' WHERE id = ?").bind(`${z1}-v`).run(),
+        'vehiculo_transicion_invalida',
+      ),
+    });
+    await db
+      .prepare("UPDATE vehiculos SET estado = 'en_revision' WHERE id = ?")
+      .bind(`${z1}-v`)
+      .run();
+    casos.push({
+      nombre: 'un carro no se aprueba sin registro y seguro aprobados',
+      ok: await fallaCon(
+        db.prepare("UPDATE vehiculos SET estado = 'aprobado' WHERE id = ?").bind(`${z1}-v`).run(),
+        'vehiculo_sin_documentos_aprobados',
+      ),
+    });
+    await db
+      .prepare(
+        "INSERT INTO zonas (id, nombre, pais, lat, lng, activa) VALUES (?, 'Diagnóstico', 'US', 0, 0, 0)",
+      )
+      .bind(zona)
+      .run();
+    const antes = await db
+      .prepare("SELECT estado FROM servicios_zona WHERE servicio_id = 'comida' AND zona_id = ?")
+      .bind(zona)
+      .first<{ estado: string }>();
+    await db.prepare('UPDATE zonas SET activa = 1 WHERE id = ?').bind(zona).run();
+    const despues = await db
+      .prepare(
+        'SELECT servicio_id, estado FROM servicios_zona WHERE zona_id = ? ORDER BY servicio_id',
+      )
+      .bind(zona)
+      .all<{ servicio_id: string; estado: string }>();
+    casos.push({
+      nombre: 'una ciudad nueva nace con el catálogo y al prenderla abre solo Comida',
+      ok:
+        antes?.estado === 'proximamente' &&
+        despues.results.length >= 6 &&
+        despues.results.every(
+          (r) => r.estado === (r.servicio_id === 'comida' ? 'disponible' : 'proximamente'),
+        ),
+    });
+  } finally {
+    await db.batch([
+      db.prepare('DELETE FROM servicios_zona WHERE zona_id = ?').bind(zona),
+      db.prepare('DELETE FROM zonas WHERE id = ?').bind(zona),
+      db
+        .prepare('DELETE FROM vehiculo_revisiones WHERE vehiculo_id IN (?, ?)')
+        .bind(`${z1}-v`, `${z2}-v`),
+      db.prepare('DELETE FROM vehiculos WHERE conductor_id IN (?, ?)').bind(z1, z2),
+      db.prepare('DELETE FROM habilitaciones_historial WHERE conductor_id IN (?, ?)').bind(z1, z2),
+      db.prepare('DELETE FROM habilitaciones WHERE conductor_id IN (?, ?)').bind(z1, z2),
+      db.prepare('DELETE FROM cumplimientos WHERE conductor_id IN (?, ?)').bind(z1, z2),
+      db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(z1, z2),
+    ]);
+  }
+  return c.json({ prueba: 'F1', ok: casos.every((x) => x.ok), casos });
+});
+
+/** Migraciones preparadas de la Fase 1, SOLO sobre la base del sitio de pruebas. */
+diagnostico.post('/interno/diagnostico/migraciones', async (c) => {
+  const { paso } = await leerCuerpo(c, z.object({ paso: z.enum(['verificar', 'm4', 'm5']) }));
+  const db = base(c);
+  const archivos = new Map<string, string>([
+    ['verificar', MIGRACIONES_FASE1.verificar],
+    ['m4', MIGRACIONES_FASE1.m4],
+    ['m5', MIGRACIONES_FASE1.m5],
+  ]);
+  const lista = sentencias(archivos.get(paso) ?? '');
+  if (paso === 'verificar') {
+    const resultados = [];
+    for (const s of lista) resultados.push((await db.prepare(s).all()).results);
+    return c.json({ paso, resultados });
+  }
+  const cambios = [];
+  for (const s of lista) cambios.push(Number((await db.prepare(s).run()).meta.changes ?? 0));
+  return c.json({ paso, cambios });
+});
+
+/** F2: lote de ubicaciones y candado del reloj por minuto, contra la base real. */
+diagnostico.post('/interno/diagnostico/f2', async (c) => {
+  const db = base(c);
+  const libre = `zz-f2a-${sufijo()}`;
+  const ocupado = `zz-f2b-${sufijo()}`;
+  const casos: Caso[] = [];
+  const ahora = Date.now();
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F2', 'repartidor', 'x')",
+      )
+      .bind(libre, `${libre}@prueba.invalid`),
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F2', 'repartidor', 'x')",
+      )
+      .bind(ocupado, `${ocupado}@prueba.invalid`),
+    db
+      .prepare(
+        "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES (?, 1, 25.7, -80.2, datetime('now', '-1 minute'), 'US-FL-MIAMI')",
+      )
+      .bind(libre),
+    db
+      .prepare(
+        "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES (?, 1, 25.7, -80.2, datetime('now', '-1 minute'), 'US-FL-MIAMI')",
+      )
+      .bind(ocupado),
+  ]);
+  // «Ocupado» con un pedido en curso sintético (sin dinero: no hay cobro ni movimientos).
+  const rest = await db.prepare('SELECT id FROM restaurantes LIMIT 1').first<{ id: string }>();
+  const pedido = `zz-f2p-${sufijo()}`;
+  const loteId = `zz-lote-${sufijo()}`;
+  try {
+    if (rest)
+      await db
+        .prepare(
+          `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+             propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion)
+           VALUES (?, ?, ?, ?, 'en_camino', '[]', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'basico', 'Diagnóstico')`,
+        )
+        .bind(pedido, libre, rest.id, ocupado)
+        .run();
+    const dineroAntes = await db
+      .prepare('SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos')
+      .first<{ n: number; s: number }>();
+    const muestras = [libre, ocupado].map((id) => ({ c: id, lat: 25.81, lng: -80.13, t: ahora }));
+    const r1 = await aplicarLote(db, { loteId, zona: 'US-FL-MIAMI', muestras });
+    const r2 = await aplicarLote(db, { loteId, zona: 'US-FL-MIAMI', muestras });
+    const vieja = await aplicarLote(db, {
+      loteId: `${loteId}-v`,
+      zona: 'US-FL-MIAMI',
+      muestras: [{ c: libre, lat: 10, lng: -80, t: ahora - 30_000 }],
+    });
+    const pos = await db
+      .prepare('SELECT usuario_id, lat, geohash FROM repartidores WHERE usuario_id IN (?, ?)')
+      .bind(libre, ocupado)
+      .all<{ usuario_id: string; lat: number; geohash: string | null }>();
+    const p = new Map(pos.results.map((x) => [x.usuario_id, x]));
+    casos.push({
+      nombre: 'el lote mueve al repartidor libre (con su celda del mapa)',
+      ok: r1.loteNuevo && p.get(libre)?.lat === 25.81 && Boolean(p.get(libre)?.geohash),
+    });
+    casos.push({
+      nombre: 'no mueve al repartidor con un pedido en curso',
+      ok: !rest || p.get(ocupado)?.lat === 25.7,
+      detalle: rest ? '' : 'sin restaurantes en pruebas: no se pudo armar el pedido',
+    });
+    casos.push({
+      nombre: 'el mismo lote otra vez no cambia nada',
+      ok: !r2.loteNuevo && r2.aplicadas === 0,
+    });
+    casos.push({ nombre: 'una muestra más vieja no hace retroceder', ok: vieja.aplicadas === 0 });
+    const dineroDespues = await db
+      .prepare('SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos')
+      .first<{ n: number; s: number }>();
+    casos.push({
+      nombre: 'el dinero no se movió',
+      ok: dineroAntes?.n === dineroDespues?.n && dineroAntes?.s === dineroDespues?.s,
+    });
+    // Candado del reloj: dos llamadas a la vez con la misma ventana corren las tareas UNA vez.
+    const ventana = `diag-${sufijo()}`;
+    const [a, b] = await Promise.all([
+      correrRelojUnaVez(c.env, db, ventana, 'github'),
+      correrRelojUnaVez(c.env, db, ventana, 'externo'),
+    ]);
+    const yaHecho = [a, b].filter((x) => 'yaHecho' in x).length;
+    const filas = await db
+      .prepare('SELECT COUNT(*) AS n FROM tareas_programadas WHERE clave = ?')
+      .bind(`reloj:${ventana}`)
+      .first<{ n: number }>();
+    casos.push({
+      nombre: 'el reloj actual y el nuevo en el mismo minuto corren las tareas una sola vez',
+      ok: yaHecho === 1 && Number(filas?.n) === 1,
+    });
+    await db
+      .prepare('DELETE FROM tareas_programadas WHERE clave = ?')
+      .bind(`reloj:${ventana}`)
+      .run();
+  } finally {
+    await db.batch([
+      db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
+      db.prepare('DELETE FROM lotes_ubicacion WHERE lote_id IN (?, ?)').bind(loteId, `${loteId}-v`),
+      db.prepare('DELETE FROM repartidores WHERE usuario_id IN (?, ?)').bind(libre, ocupado),
+      db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(libre, ocupado),
+    ]);
+  }
+  return c.json({ prueba: 'F2', ok: casos.every((x) => x.ok), casos });
 });

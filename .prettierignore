@@ -9,3 +9,4 @@ apps/*/AGENTS.md
 .recorrido
 .dist-tiempo-real
 .dist-reloj
+apps/servidor/src/migraciones/fase1.ts

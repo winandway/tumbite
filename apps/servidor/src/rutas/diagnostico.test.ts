@@ -78,3 +78,36 @@ describe('diagnóstico del sitio de pruebas', () => {
     expect(r.datos.omitido).toBeTruthy();
   });
 });
+
+describe('diagnóstico de las fases 1 y 2 (validación en staging)', () => {
+  it('F1, F2 y las migraciones pasan contra la base y no dejan rastro', async () => {
+    const { m, pedir } = preparar();
+    const dueno = await m.cuenta('restaurante');
+    await m.DB.prepare(
+      "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES ('r-diag', ?, 'Rest', 'aprobado')",
+    )
+      .bind(dueno.id)
+      .run();
+    const f1 = await pedir('f1');
+    expect(f1.datos.ok, JSON.stringify(f1.datos.casos)).toBe(true);
+    const f2 = await pedir('f2');
+    expect(f2.datos.ok, JSON.stringify(f2.datos.casos)).toBe(true);
+    const rep = await m.cuenta('repartidor', 'Rep Migra');
+    await m.DB.prepare(
+      "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo) VALUES (?, 'bicicleta')",
+    )
+      .bind(rep.id)
+      .run();
+    expect((await pedir('migraciones', { paso: 'verificar' })).estado).toBe(200);
+    expect((await pedir('migraciones', { paso: 'm4' })).datos.cambios).toEqual([1]);
+    expect((await pedir('migraciones', { paso: 'm5' })).estado).toBe(200);
+    const v = await pedir('migraciones', { paso: 'verificar' });
+    expect(v.datos.resultados[2]).toEqual([{ sin_comida: 0 }]);
+    expect(v.datos.resultados.at(-1)).toEqual([{ identidad_sin_evidencia: 0 }]);
+    expect((await pedir('migraciones', { paso: 'revertir' })).estado).toBe(400); // la vuelta atrás no se corre desde aquí
+    const restos = await m.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM usuarios WHERE id LIKE 'zz-%') + (SELECT COUNT(*) FROM zonas WHERE id LIKE 'ZZ-%') + (SELECT COUNT(*) FROM pedidos WHERE id LIKE 'zz-%') AS n",
+    ).first<{ n: number }>();
+    expect(restos?.n).toBe(0);
+  });
+});
