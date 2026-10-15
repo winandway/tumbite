@@ -1,99 +1,86 @@
-# Arquitectura multiservicio de Tumbite — versión 1.2 (revisión de seguridad transaccional)
+# Arquitectura multiservicio de Tumbite — versión 1.2
 
-Fecha: 15 de octubre de 2026. Estado: **diseño para revisión**. No se modificó código del producto, no se ejecutaron migraciones, no se tocaron pagos reales, no se desplegó ni se publicó nada.
+Fecha: 15 de octubre de 2026. Estado: **diseño para aprobación**. No se modificó código del producto, no se ejecutaron migraciones, no se tocaron pagos reales, no se publicó nada y **no se desplegó ningún Worker externo**.
 
-La V1.1 queda como base aceptada; esta versión revisa los seis puntos pedidos y **reemplaza** de la V1.1: `aceptar-viaje.sql`, `liberar-viaje.sql`, la tabla `contexto_transicion` (se elimina), las tablas `operaciones` y `viajes` (se amplían) y `03-exclusividad.sql` (se amplía). El resto de la V1.1 se conserva sin cambios (requisitos y elegibilidad, bandeja de pagos, libro de partida doble, comercios).
+Esta versión incorpora la **respuesta técnica oficial de YaDominios Cloud** y reemplaza el borrador anterior de la V1.2 (que sigue en el historial del repositorio, en el commit `3bdde1e2`). Conserva todo lo aceptado de la V1.1.
 
-> 🔴 **Riesgo financiero activo en producción (punto 4).** El retiro a banco del sistema actual puede pagar dos veces el mismo saldo si Stripe transfiere y su respuesta se pierde. Está demostrado con la ruta real en una prueba aislada. Stripe está en **modo real** desde el 10 de octubre (`VERIFICAR-PAGOS.md`). El retiro todavía no se ha usado con dinero real, pero el código publicado ya lo permitiría. **No se modificó nada** porque así se pidió. Recomendación en §6.
+> 🔴 **Riesgo financiero activo en producción: retiro con doble pago** (§7). Demostrado con la ruta real. Stripe está en modo real desde el 10 de octubre; el retiro todavía no se ha usado con dinero real, pero el código publicado ya lo permitiría. No se tocó nada. **Decisión pendiente y urgente: apagar el botón de retirar** hasta implementar la corrección.
 
-## Cómo se verificó
+## Resumen
 
-| Qué                                                        | Dónde                                                                                                                                                        | Resultado                                                 |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| Pruebas del diseño V1.2 (SQLite local + Stripe simulado)   | `docs/arquitectura-v1.2/probar.py`                                                                                                                           | **76 bien, 0 mal**                                        |
-| Comprobación en rojo: se quita cada protección a propósito | `MUTAR=<nombre> python3 docs/arquitectura-v1.2/probar.py`                                                                                                    | **las 12 protecciones** ponen al menos una prueba en rojo |
-| Pruebas de la V1.1 (siguen valiendo)                       | `docs/arquitectura-v1.1/probar.py`                                                                                                                           | 52 bien, 0 mal                                            |
-| Diagnóstico del retiro con la ruta REAL del servidor       | `docs/arquitectura-v1.2/diagnostico-retiro.test.ts.txt` (se ejecutó con vitest en una base en memoria y luego se sacó de la carpeta de pruebas del producto) | 2 de 2: el defecto existe                                 |
+| Tema                | Decisión                                                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base de datos       | D1 nativo de Cloudflare, operado por YaDominios: disparadores, `RAISE(ABORT)`, llaves foráneas, `batch` atómico, `RETURNING`, índices únicos y ejecución secuencial **confirmados por el proveedor**.           |
+| Reloj y tiempo real | **Fuera** de YaDominios: un Worker propio de Tumbite en Cloudflare con Cron Trigger cada minuto y Durable Objects para ubicación, ofertas y seguimiento. Se comunica con el backend solo por **HTTPS firmado**. |
+| Viajes              | Una acción = una sentencia; los efectos van en disparadores. La aceptación usa `RETURNING`: una sola ida a la base.                                                                                             |
+| Exclusividad        | `conductor_ocupacion` con una fila por conductor y disparadores en `pedidos` y `operaciones`, incluida la reversa de cancelación del Manager.                                                                   |
+| Pagos               | Bandeja `pagos_intentos`: primero la base, después Stripe. **Un resultado incierto nunca devuelve saldo**: se verifica en Stripe.                                                                               |
+| Escala              | La ubicación sale de D1: vive en los Durable Objects y llega a D1 en un lote cada 15 segundos. D1 queda para lo transaccional.                                                                                  |
+| Pruebas             | **98 de 98** locales (SQLite + Stripe simulado + cálculo), las protecciones comprobadas en rojo y el diagnóstico del retiro con la ruta real. Lo que exige el staging de YaDominios está en §8.                 |
 
-```bash
-cd /Users/windocellc/tumbite && python3 docs/arquitectura-v1.2/probar.py
+## 1. Arquitectura actualizada
+
+### 1.1 Capacidades confirmadas por YaDominios Cloud y su efecto en el diseño
+
+| #   | Capacidad                                  | Confirmada | Efecto en el diseño                                                                                                                                                                                                                    |
+| --- | ------------------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | D1 nativo de Cloudflare                    | Sí         | Valen los límites oficiales de D1: 10 GB por base, una consulta a la vez, 100 parámetros por consulta, 100 KB por sentencia, 2 MB por fila o texto.                                                                                    |
+| 2   | `CREATE TRIGGER`                           | Sí         | Se mantiene «una acción = una sentencia» con efectos en disparadores.                                                                                                                                                                  |
+| 3   | `RAISE(ABORT)`                             | Sí         | La base rechaza transiciones no permitidas, cambios sin clave nueva, ocupación doble y pagos confirmados que retroceden.                                                                                                               |
+| 4   | Llaves foráneas activas                    | Sí         | Se confía en `REFERENCES`; la conciliación igual busca huérfanos.                                                                                                                                                                      |
+| 5   | `batch()` atómico                          | Sí         | Se usa donde hacen falta dos sentencias (lote de ubicaciones). El problema P2 del borrador (contexto colgado) **no ocurriría** en producción; igual se elimina `contexto_transicion` porque la V1.2 es más simple y no depende de eso. |
+| 6   | `UPDATE … RETURNING`                       | Sí         | La aceptación sabe en una sola ida si tomó el viaje.                                                                                                                                                                                   |
+| 7   | `UNIQUE` contra concurrencia               | Sí         | Es la última red de la exclusividad y de los pagos.                                                                                                                                                                                    |
+| 8   | Ejecución secuencial por base              | Sí         | Dos aceptaciones simultáneas no se cruzan; también es el **techo de escala** (§9).                                                                                                                                                     |
+| 9   | Sin Cron                                   | —          | El reloj pasa al Worker externo (hoy es GitHub Actions cada 5 minutos).                                                                                                                                                                |
+| 10  | Sin Durable Objects propios                | —          | El tiempo real vive en el Worker externo.                                                                                                                                                                                              |
+| 11  | Cron y Durable Objects en Workers externos | Sí         | Cuenta de Cloudflare de Tumbite.                                                                                                                                                                                                       |
+| 12  | Comunicación por HTTPS autenticado         | Sí         | Firma HMAC con llaves rotables (§4).                                                                                                                                                                                                   |
+
+**Pendiente de comprobar en el staging** (no lo dijo el proveedor): que el ejecutor de `schema.sql` acepte cuerpos de disparador con `;` dentro de `BEGIN … END`, que `UPDATE … FROM json_each(...)` funcione en la versión de SQLite de D1, y el tiempo real por consulta en la base de Tumbite.
+
+### 1.2 Piezas
+
+| Pieza                                                | Dónde corre                     | Qué hace                                                                                                                   | Estado      |
+| ---------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Backend `_worker.js` + D1 + R2                       | YaDominios Cloud                | Toda la lógica, el estado y el dinero; única fuente de verdad                                                              | Existe      |
+| Apps cliente, repartidor, restaurante                | Teléfonos y web                 | Hablan con el backend; el repartidor y el cliente también con el tiempo real                                               | Existen     |
+| **`tumbite-reloj`** (Worker)                         | Cuenta de Cloudflare de Tumbite | Cron cada minuto: llama al backend con firma                                                                               | **Nuevo**   |
+| **`tumbite-tiempo-real`** (Worker + Durable Objects) | Cuenta de Cloudflare de Tumbite | Ubicación en memoria por zona o celda, WebSocket con apps, ofertas empujadas, alarma de despacho, lote de ubicaciones a D1 | **Nuevo**   |
+| Stripe, Expo, Twilio, Checkr                         | Externos                        | Igual que hoy                                                                                                              | Existen     |
+| Proveedor de rutas y tiempos                         | Externo                         | Distancia y duración de manejo                                                                                             | Por decidir |
+
+Los dos Workers nuevos **no tienen acceso a D1**: toda lectura o escritura pasa por el backend con una petición firmada. Así D1 sigue teniendo un solo dueño y una sola puerta.
+
+## 2. Diagrama de infraestructura
+
+```text
+                    Apps (cliente · repartidor · restaurante)
+            HTTPS + sesión │                         │ WebSocket + token corto (15 min)
+                           ▼                         ▼
+ ┌─────────────── YaDominios Cloud ───────────────┐   ┌──────── Cloudflare (cuenta Tumbite) ────────┐
+ │  _worker.js (Hono)  /datos/...                  │   │  tumbite-tiempo-real (Worker)               │
+ │   · reglas, sesión, pagos, despacho (SQL)       │◄──┤   · Durable Object por zona (o por celda)   │
+ │   · /datos/interno/*  (solo firmas HMAC)        │──►│     - posiciones en memoria                 │
+ │  D1 (SQLite): única fuente de verdad            │   │     - WebSocket con apps (ofertas, estado)  │
+ │  R2: fotos y documentos                         │   │     - alarma de despacho cada 3 s           │
+ └──────────────────────▲──────────────────────────┘   │     - lote de ubicaciones a D1 cada 15 s    │
+                        │ HTTPS firmado                  │     - rastro del viaje (SQLite del objeto) │
+                        │                                └─────────────────────────────────────────────┘
+               ┌────────┴─────────┐
+               │ tumbite-reloj    │  Cron Trigger cada minuto (UTC)
+               │ (Worker)         │──► POST /datos/interno/reloj  (firmado, idempotente por minuto)
+               └──────────────────┘
+   Stripe · Expo push · Twilio · Checkr  ◄── solo desde el backend (llaves en el panel de YaDominios)
 ```
 
-Las pruebas marcadas **[SQLite]** corren en una base SQLite local (en memoria o en un archivo temporal). Las **[Stripe simulado]** usan un Stripe falso que imita lo que dice la documentación oficial (fuentes en §6). **Ninguna** de ellas demuestra cómo se comporta la base de YaDominios Cloud: eso lo dirá su respuesta oficial (matriz en §7).
+**Regla de dirección:** el tiempo real **nunca decide** nada de dinero ni de estado. Guarda posiciones y reparte mensajes. Las decisiones (quién recibe una oferta, quién la toma, cuánto se cobra) se toman en el backend con SQL en D1.
 
-## 1. Problemas encontrados
+## 3. SQL corregido
 
-| #   | Problema                                                                                                                                                                                                                                                                                                                                                           | Gravedad    | Dónde                                                                                         |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------- |
-| P1  | En V1.1, una aceptación repetida por el mismo conductor afecta 0 filas en la primera sentencia, pero las siguientes **sí** se ejecutan, porque su condición es «el conductor es este». El `batch` termina en error por el índice único de asignaciones: no se duplica nada **solo si el batch es atómico**, y la app recibe un error 500 en lugar de «ya es tuyo». | Alta        | `docs/arquitectura-v1.1/aceptar-viaje.sql`                                                    |
-| P2  | En V1.1, si el `batch` **no** fuera atómico en YaDominios Cloud, ese caso deja una fila colgada en `contexto_transicion`. Con eso, la siguiente transición legítima (por ejemplo, cancelar el pasajero) falla para siempre por clave duplicada. Demostrado en la prueba 1b.                                                                                        | Alta        | `contexto_transicion` (V1.1)                                                                  |
-| P3  | `contexto_transicion` permite que un actor declarado y no consumido lo herede otro cambio de estado.                                                                                                                                                                                                                                                               | Media       | V1.1                                                                                          |
-| P4  | El Manager **revierte** un pedido de «cancelado» a su estado anterior cuando Stripe no pudo devolver el dinero. Con los disparadores de V1.1, el repartidor quedaba **libre** aunque el pedido volvía a estar activo, y podía aceptar un viaje.                                                                                                                    | Alta        | `apps/servidor/src/manager.ts` (`cancelarConReembolso`, la reversa con `cancelado_en = NULL`) |
-| P5  | V1.1 no cubría un cambio directo de repartidor en un pedido (de uno a otro). Hoy ninguna ruta lo hace, pero soporte o una ruta futura podrían.                                                                                                                                                                                                                     | Baja        | —                                                                                             |
-| P6  | **Retiro con doble pago** en el sistema actual.                                                                                                                                                                                                                                                                                                                    | **Crítica** | `apps/servidor/src/rutas/dinero.ts`, ruta `POST /datos/billetera/retirar`                     |
-| P7  | La V1.1 dependía de que `batch` sea una transacción en YaDominios Cloud, y eso **no está confirmado**.                                                                                                                                                                                                                                                             | Alta        | Todo el diseño V1.1                                                                           |
+Se conservan de la V1.1: `01-requisitos-y-elegibilidad.sql`, `05-pagos.sql`, `06-libro.sql`, `07-comercios.sql`. La V1.2 reemplaza o agrega lo siguiente (todo en `docs/arquitectura-v1.2/`).
 
-## 2. Evidencia del código
-
-**Aceptación V1.1 (P1, P2).** Las sentencias 2 a 6 de `aceptar-viaje.sql` llevan la condición `EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND conductor_id = ?2)`. Esa condición es verdadera tanto cuando esta solicitud tomó la operación como cuando **ya era suya** de antes. La prueba 1b lo reproduce: se corren las sentencias de V1.1 por separado (como si el batch no fuera una transacción) y queda un `contexto_transicion` colgado; después el pasajero no puede cancelar.
-
-**Rutas que cambian `pedidos.repartidor_id` o `pedidos.estado`** (revisadas una por una en el código actual):
-
-| Archivo y línea                                        | Sentencia                                                        | ¿Pasa por los disparadores de V1.2?                     |
-| ------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------- |
-| `rutas/operacion.ts:1191`                              | aceptar pedido (`SET repartidor_id = ? … repartidor_id IS NULL`) | Sí: ocupa                                               |
-| `rutas/operacion.ts:158`                               | `soltarPedido` (`SET repartidor_id = NULL`)                      | Sí: libera                                              |
-| `rutas/operacion.ts:183`, `:224`                       | listo → en camino                                                | Sí (no cambia la ocupación)                             |
-| `rutas/operacion.ts:463`                               | cambios del restaurante (aceptar, listo, rechazar)               | Sí                                                      |
-| `rutas/operacion.ts:1559`, `:1882`                     | entregado (repartidor y en el local)                             | Sí: libera                                              |
-| `manager.ts:70`, `:310`                                | cancelar                                                         | Sí: libera                                              |
-| `manager.ts:100`                                       | **revertir la cancelación**                                      | **Antes no** (P4) → **sí** con `pedidos_reactiva_ocupa` |
-| `rutas/pedidos.ts:573`, `:606`, `:640`                 | pagado (sin repartidor)                                          | No aplica                                               |
-| `rutas/pedidos.ts:161`, `:938`, `rutas/cuentas.ts:422` | montos, dirección, borrar datos                                  | No tocan repartidor ni estado                           |
-
-Nadie se salta los disparadores, porque viven en la base: también los cumplen la API de consultas de YaDominios (`/api/hosting/db/query`) y cualquier SQL que corra soporte. La única forma de saltarlos sería borrarlos. El Manager compara cada minuto la vista `inconsistencias_operaciones` y avisa si algo no cuadra.
-
-**Retiro (P6).** En `POST /datos/billetera/retirar`, un mismo bloque `try … catch` envuelve **dos** cosas: la llamada `POST /transfers` a Stripe y la escritura `UPDATE movimientos SET referencia`. Cualquier error en cualquiera de las dos lleva al `catch`, que **devuelve el saldo** con un movimiento `ajuste` (`retiro-fallido-<id>`). La clave de idempotencia es `retiro-<id del movimiento>`, y cada nuevo intento del conductor crea un movimiento nuevo, así que **la clave cambia y Stripe no reconoce la repetición**. El cliente de Stripe (`apps/servidor/src/stripe.ts`) trata cualquier respuesta que no sea 2xx como error, incluidos los 500, y una red caída como excepción. Detalle en §6.
-
-## 3. Correcciones propuestas
-
-### 3.1 Principio nuevo: una acción = una sentencia
-
-Cada acción (aceptar, liberar, llegar, iniciar, terminar, cancelar, no presentado, sin conductor) es **una sola sentencia** `UPDATE`. Todo lo que debe acompañarla lo hacen **disparadores dentro de esa misma sentencia**: la cabecera derivada, el evento, la asignación, las ofertas, la ocupación y la salida del conductor. En SQLite **una sentencia es atómica**, con o sin `batch`. Por eso la V1.2 **ya no depende** de que el `batch` de YaDominios Cloud sea una transacción (P7). Sí depende de que la base acepte disparadores (matriz §7).
-
-### 3.2 Aceptación (P1)
-
-- La aceptación pone conductor, vehículo y la **clave de la app** (`ultima_clave`) en una sola sentencia, solo si la operación sigue buscando, la oferta es de ese conductor y está vigente, y el conductor es elegible **en ese instante** (vista `conductores_elegibles` de V1.1).
-- Si afecta **0 filas, nada más ocurre**: los efectos viven en el disparador `operaciones_al_asignar`, que no se dispara.
-- La respuesta se decide con **una lectura** (`respuesta-aceptar.sql`): «ya es tuya» (200, el mismo cuerpo que el éxito, sirve para la respuesta perdida y el doble toque), «otro conductor» (409) o «no disponible» (409).
-- Una aceptación no crea ninguna operación financiera: el cobro se autorizó al pedir.
-- La clave de la aceptación es única en `asignaciones_operacion` y en `eventos_operacion`: aunque algo se escapara, la base rechaza un segundo registro con la misma clave.
-
-### 3.3 Transiciones sin `contexto_transicion` (P2, P3)
-
-- El actor, su id y la clave viajan **en la misma sentencia** del cambio, como columnas del viaje (`ultimo_actor`, `ultimo_actor_id`, `ultima_clave`, `motivo_transicion`).
-- La base rechaza: una transición que no está en `transiciones_viaje` para ese actor; un cambio **sin clave nueva** (impide que un actor viejo se herede); cambiar el actor sin cambiar el estado; escribir `operaciones.estado_general` en contra del viaje; y pasar un viaje de un conductor a otro a mano.
-- Repetir una transición con su misma clave afecta 0 filas: el estado ya no es el esperado.
-- La vista `inconsistencias_operaciones` lista cualquier desacuerdo entre viaje, cabecera, asignación y ocupación. En un sistema sano devuelve cero filas, y la prueba aleatoria lo comprueba después de **cada una** de 4.000 acciones mezcladas.
-
-### 3.4 Exclusividad (P4, P5)
-
-Se conserva `conductor_ocupacion` de V1.1 y se agregan dos disparadores:
-
-- `pedidos_reactiva_ocupa`: cuando un pedido vuelve de «cancelado» o «entregado» a un estado activo con repartidor, el repartidor vuelve a quedar ocupado. Si mientras tanto tomó un viaje, **la base aborta la reversa** y el Manager debe resolverlo de otra forma: el pedido sigue cancelado y se reintenta la devolución por la bandeja de pagos de V1.1.
-- `pedidos_reasigna_ocupa`: un cambio directo de repartidor mueve la ocupación, o aborta si el nuevo está en un viaje.
-
-La migración con pedidos activos (`12-migracion-ocupacion.sql`) crea la tabla, la llena con los pedidos activos de ese instante y recién entonces crea los disparadores, todo con el reparto en pausa unos segundos.
-
-### 3.5 Retiros sin doble pago (P6) — ver §6
-
-### 3.6 Lo que sigue igual de V1.1
-
-Requisitos y elegibilidad, bandeja de pagos `pagos_intentos`, libro de partida doble, comercios sobre restaurantes y platos.
-
-## 4. SQL corregido
-
-### 4.1 Operaciones y viajes (`10-operaciones-y-viajes.sql`)
+### 3.1 Operaciones y viajes (`10-operaciones-y-viajes.sql`)
 
 ```sql
 -- V1.2 · Operaciones y viajes. Principio: UNA ACCIÓN = UNA SENTENCIA. Lo que acompaña a cada
@@ -318,13 +305,11 @@ SELECT 'repartidor_con_pedido_sin_ocupacion', p.repartidor_id FROM pedidos p
    AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = p.repartidor_id AND c.tipo = 'comida');
 ```
 
-### 4.2 Acciones (una sentencia cada una)
-
-Aceptar (`aceptar-viaje.sql`):
+### 3.2 Aceptar con `RETURNING` (`aceptar-viaje-returning.sql`)
 
 ```sql
--- Aceptar un viaje: UNA sentencia. ?1 operación · ?2 conductor · ?3 vehículo · ?4 clave de la app.
--- Si afecta 0 filas, NADA más ocurre (los efectos viven en disparadores que no se disparan).
+-- Aceptar con RETURNING (confirmado por YaDominios): UNA ida a la base. Si devuelve una fila,
+-- esta solicitud tomó el viaje; si no devuelve nada, se decide con respuesta-aceptar.sql.
 UPDATE operaciones
    SET conductor_id = ?2, vehiculo_id = ?3, ultima_clave = ?4, actualizado_en = datetime('now')
  WHERE id = ?1 AND estado_general = 'buscando' AND conductor_id IS NULL
@@ -333,10 +318,11 @@ UPDATE operaciones
                   AND o.estado = 'ofrecida' AND o.expira_en > datetime('now'))
    AND EXISTS (SELECT 1 FROM conductores_elegibles e
                 WHERE e.conductor_id = ?2 AND e.vehiculo_id = ?3
-                  AND e.servicio_id = operaciones.servicio_id AND e.zona_id = operaciones.zona_id);
+                  AND e.servicio_id = operaciones.servicio_id AND e.zona_id = operaciones.zona_id)
+RETURNING id, conductor_id, vehiculo_id, estado_general, version;
 ```
 
-Respuesta cuando la aceptación afectó 0 filas (`respuesta-aceptar.sql`):
+Si no devuelve filas, la respuesta se decide con una lectura (`respuesta-aceptar.sql`):
 
 ```sql
 -- Si la aceptación afectó 0 filas, el servidor decide la respuesta con UNA lectura:
@@ -349,7 +335,7 @@ SELECT CASE
   FROM operaciones o WHERE o.id = ?1;
 ```
 
-Liberar (`liberar-viaje.sql`):
+### 3.3 Liberar y demás transiciones (una sentencia cada una)
 
 ```sql
 -- El conductor se baja antes de iniciar: UNA sentencia. ?1 operación · ?2 conductor · ?3 motivo · ?4 clave.
@@ -360,8 +346,6 @@ UPDATE viajes
    AND (SELECT conductor_id FROM operaciones WHERE id = ?1) = ?2;
 ```
 
-Cualquier otra transición (`cambiar-estado-viaje.sql`):
-
 ```sql
 -- Cualquier otra transición (llegó, inició, terminó, canceló, no se presentó, sin conductor):
 -- UNA sentencia. ?1 operación · ?2 estado nuevo · ?3 actor · ?4 actor_id · ?5 clave · ?6 motivo · ?7 estado esperado.
@@ -371,7 +355,7 @@ UPDATE viajes
  WHERE operacion_id = ?1 AND estado = ?7;
 ```
 
-### 4.3 Exclusividad (`11-exclusividad.sql`)
+### 3.4 Exclusividad (`11-exclusividad.sql`) y su migración (`12-migracion-ocupacion.sql`)
 
 ```sql
 -- V1.2 · Exclusividad entre comida y operaciones (V1.1 + dos casos del código real).
@@ -485,8 +469,6 @@ BEGIN
 END;
 ```
 
-### 4.4 Migración de la exclusividad (`12-migracion-ocupacion.sql`)
-
 ```sql
 -- Migración de la exclusividad con pedidos activos. TODO en una sola transacción y con el reparto
 -- en pausa (bandera en config que lee repartirOfertas): primero la tabla, luego el llenado con los
@@ -505,7 +487,7 @@ SELECT problema, referencia FROM inconsistencias_operaciones
  WHERE problema IN ('conteo_de_comida', 'repartidor_con_pedido_sin_ocupacion');
 ```
 
-### 4.5 Retiros (`13-retiros.sql` y `pedir-retiro.sql`)
+### 3.5 Retiros (`13-retiros.sql`, `pedir-retiro.sql`)
 
 ```sql
 -- V1.2 · Retiros sin doble pago (diseño; NO cambia el sistema actual todavía).
@@ -547,149 +529,269 @@ SELECT ?1, 'retiro:' || ?1, 'retiro', ?2, 'transferir', ?3
    AND EXISTS (SELECT 1 FROM cuentas_stripe WHERE usuario_id = ?2 AND pagos_activos = 1);
 ```
 
-Requisitos y elegibilidad, pagos, libro y comercios: sin cambios, en `docs/arquitectura-v1.1/01, 05, 06 y 07`.
+### 3.6 Servicios externos (`14-servicios-externos.sql`) y lote de ubicaciones (`aplicar-lote-ubicacion.sql`)
 
-## 5. Pruebas y resultados
+```sql
+-- V1.2 · Integración con el Worker externo de Cloudflare (reloj y tiempo real).
+-- Todo vive en la base de YaDominios (D1): el Worker externo NO tiene acceso directo a ella.
 
-Todas en `docs/arquitectura-v1.2/probar.py`. **76 bien, 0 mal.**
+-- Cada tarea programada se ejecuta UNA vez por ventana, aunque el reloj llame dos veces
+-- (Cloudflare no documenta «exactamente una vez» para Cron Triggers: se diseña para repeticiones).
+CREATE TABLE IF NOT EXISTS tareas_programadas (
+  clave TEXT PRIMARY KEY,                     -- '<tarea>:<ventana>', p. ej. 'pagos:2026-10-15T14:07'
+  tarea TEXT NOT NULL,
+  empezada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  terminada_en TEXT,
+  resultado TEXT NOT NULL DEFAULT '',
+  CHECK (terminada_en IS NULL OR terminada_en >= empezada_en)
+);
+CREATE INDEX IF NOT EXISTS tareas_programadas_viejas ON tareas_programadas(empezada_en);
 
-| Grupo | Qué se prueba                                                                                                                                                                                                                                                  | Tipo             | Resultado                  |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------- |
-| 1     | Aceptación; la misma solicitud repetida (respuesta perdida); doble toque con otra clave; un solo registro de cada cosa; ninguna operación financiera; otro conductor después                                                                                   | SQLite           | 8 / 8                      |
-| 1b    | El problema de V1.1 si el batch no es atómico: contexto colgado y pasajero trabado                                                                                                                                                                             | SQLite (V1.1)    | 2 / 2 (reproduce el fallo) |
-| 2     | Transición repetida con la misma clave; fuera de orden; clave reutilizada; actor no permitido; actor sin transición; cabecera escrita a mano; cambio de conductor a mano; orden correcto; claves distintas                                                     | SQLite           | 11 / 11                    |
-| 2b    | Error en un paso intermedio: la sentencia entera se deshace y se puede reintentar                                                                                                                                                                              | SQLite           | 3 / 3                      |
-| 2c    | El proceso muere en medio de la aceptación: al volver no hay rastro y se reintenta                                                                                                                                                                             | SQLite (archivo) | 2 / 2                      |
-| 3     | Dos conductores aceptan a la vez desde dos conexiones: la segunda espera y pierde                                                                                                                                                                              | SQLite (archivo) | 2 / 2                      |
-| 4     | Cancelación antes y después de la aceptación                                                                                                                                                                                                                   | SQLite           | 2 / 2                      |
-| 5     | Liberación, liberación repetida, reasignación con oferta nueva, historia de asignaciones; segunda asignación abierta imposible; liberar un viaje ajeno                                                                                                         | SQLite           | 7 / 7                      |
-| 6     | Exclusividad con las sentencias **reales** de comida: agrupados, cancelación y **reversa** del Manager, soltar, entregar, reversa hacia un conductor que ya tomó un viaje, cambio directo de repartidor, cancelar y soltar en la misma sentencia               | SQLite           | 13 / 13                    |
-| 7     | Migración con repartidores que tienen pedidos activos                                                                                                                                                                                                          | SQLite           | 2 / 2                      |
-| 8     | **4.000 acciones al azar** mezclando viajes y comida (268 rechazadas por la base): cero inconsistencias después de cada una; nunca un conductor con dos cosas                                                                                                  | SQLite           | 2 / 2                      |
-| 9     | Retiro sin pasarse del saldo; dos retiros a la vez                                                                                                                                                                                                             | SQLite (archivo) | 3 / 3                      |
-| 10    | Retiro: respuesta perdida, verificación caída, llamada que no llegó, 500 tras transferir, rechazo definitivo, aviso duplicado, aviso antes que la respuesta, proceso que muere, clave borrada a las 24 h, demasiados intentos, proceso atrasado tras confirmar | Stripe simulado  | 18 / 18                    |
-| 11    | Reconciliación diaria de retiros contra Stripe                                                                                                                                                                                                                 | Stripe simulado  | 1 / 1                      |
+-- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
+CREATE TABLE IF NOT EXISTS peticiones_internas (
+  nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),
+  llave_id TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS peticiones_internas_viejas ON peticiones_internas(recibida_en);
 
-**Comprobación en rojo** (cada protección quitada a propósito; número de pruebas que fallan):
+-- Lotes de ubicaciones que manda el tiempo real: un lote repetido no se aplica dos veces.
+CREATE TABLE IF NOT EXISTS lotes_ubicacion (
+  lote_id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL,
+  muestras INTEGER NOT NULL CHECK (muestras >= 0),
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
 
-| Protección                         | En rojo |
-| ---------------------------------- | ------- |
-| `operaciones_al_asignar`           | 22      |
-| `operaciones_ocupa_conductor`      | 14      |
-| `viajes_transicion_valida`         | 6       |
-| `pedidos_ocupa_conductor`          | 4       |
-| `pedidos_reactiva_ocupa`           | 2       |
-| `pedidos_reasigna_ocupa`           | 2       |
-| `retiro_fallido_devuelve`          | 2       |
-| `viajes_actor_solo_con_transicion` | 1       |
-| `operaciones_estado_coherente`     | 1       |
-| `operaciones_conductor_coherente`  | 1       |
-| `pagos_confirmado_es_final`        | 1       |
-| `asignaciones_una_abierta`         | 1       |
+```sql
+-- El tiempo real manda cada 15 s, por zona, UN lote con la última posición de cada conductor.
+-- Dos sentencias en un batch (atómico, confirmado por YaDominios): registrar el lote (auditoría)
+-- y actualizar todas las fichas en UNA sentencia. Nunca retrocede en el tiempo.
+-- ?1 lote_id · ?2 zona · ?3 JSON [{"c":"<conductor>","lat":..,"lng":..,"t":"<ISO>"}, …]
+INSERT INTO lotes_ubicacion (lote_id, zona_id, muestras)
+SELECT ?1, ?2, json_array_length(?3)
+ WHERE NOT EXISTS (SELECT 1 FROM lotes_ubicacion WHERE lote_id = ?1);
+UPDATE repartidores
+   SET lat = m.lat, lng = m.lng, ubicacion_en = m.t
+  FROM (SELECT json_extract(value, '$.c') AS c, json_extract(value, '$.lat') AS lat,
+               json_extract(value, '$.lng') AS lng, json_extract(value, '$.t') AS t
+          FROM json_each(?3)) AS m
+ WHERE repartidores.usuario_id = m.c AND repartidores.zona_id = ?2
+   AND (repartidores.ubicacion_en IS NULL OR m.t > repartidores.ubicacion_en)
+   AND m.lat BETWEEN -90 AND 90 AND m.lng BETWEEN -180 AND 180;
+-- Repetir un lote no cambia nada: cada muestra trae su hora y nunca se aplica una más vieja.
+```
 
-### Pruebas que necesitan YaDominios Cloud o Stripe de verdad (no se pueden hacer aquí)
+## 4. Contratos de API
 
-| Prueba                                                       | Por qué no es local                                 | Cómo se hará                                                                                                  |
-| ------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Disparadores, llaves foráneas y `RAISE` en la base del sitio | Depende del motor de YaDominios                     | Sitio de pruebas de YaDominios: correr `probar.py` adaptado contra la API de consultas, con una base vacía    |
-| `schema.sql` con disparadores (cuerpos con `;`)              | Depende de cómo YaDominios divide el archivo        | Publicar en el sitio de pruebas un `schema.sql` con un disparador y comprobar que existe                      |
-| Concurrencia real entre dos peticiones al mismo tiempo       | Depende de cómo YaDominios serializa las escrituras | Dos peticiones simultáneas desde el recorrido contra el sitio de pruebas                                      |
-| Atomicidad de `batch`                                        | Sin confirmar                                       | Ya no es necesaria para viajes; sí para lo que quede en batches                                               |
-| Respuesta perdida y 500 de Stripe en modo prueba             | El simulador imita la documentación, no a Stripe    | Stripe en modo prueba con una cuenta conectada de prueba, cortando la conexión del servidor después de enviar |
-| Webhook `transfer.created` real                              | Necesita Stripe                                     | Activar el evento en el modo prueba de Stripe                                                                 |
+Todas las rutas del backend van bajo `/datos` (regla del proyecto). Las internas, bajo `/datos/interno/`, **solo** aceptan peticiones firmadas.
 
-## 6. Riesgos financieros
+### 4.1 Autenticación entre servicios (backend ↔ Workers externos)
 
-### 6.1 Retiro con doble pago — análisis del código real
+- **Firma**: HMAC-SHA256 sobre `MÉTODO \n RUTA \n TIEMPO \n NONCE \n SHA256(cuerpo)`.
+- **Cabeceras**: `x-tumbite-llave` (id de la llave), `x-tumbite-tiempo` (segundos Unix), `x-tumbite-nonce` (aleatorio de 16 a 64 caracteres) y `x-tumbite-firma`.
+- **Se rechaza**: una llave desconocida; más de 60 segundos de diferencia; una firma que no coincide (se compara en tiempo constante); y un nonce ya usado, porque queda en `peticiones_internas` y el reloj borra los de más de 10 minutos.
+- **Una llave por dirección**: una para lo que el Worker manda al backend y otra para lo que el backend manda al Worker. Si se filtra una, la otra sigue segura.
+- **Rotación**: cada lado acepta la llave **actual** y la **anterior**. Primero se agrega la nueva en los dos lados, después se empieza a firmar con ella y por último se retira la anterior. No hace falta cortar el servicio.
+- **Secretos**: en YaDominios, en el panel (sitio → Variables de entorno): `INTERNO_LLAVE_ID`, `INTERNO_SECRETO_ACTUAL`, `INTERNO_SECRETO_ANTERIOR`, `TIEMPO_REAL_SECRETO`. En Cloudflare, como secretos del Worker (`wrangler secret put`), con los mismos nombres. Nunca en el repositorio ni en `yadominios.json`, que según el proveedor ignora todo salvo dos claves.
+- **Tokens de las apps para el tiempo real**: el backend emite un token corto de 15 minutos, firmado con `TIEMPO_REAL_SECRETO`, que dice quién es, qué rol tiene, en qué zona está y, si sigue un viaje, cuál. El Worker lo verifica **sin llamar al backend**. Un repartidor solo puede mandar ubicaciones de su zona; un cliente solo puede seguir su propia operación.
 
-**¿Existe?** Sí. Demostrado con la ruta real `POST /datos/billetera/retirar`, en una base en memoria y con Stripe simulado (`diagnostico-retiro.test.ts.txt`, 2 de 2):
+### 4.2 Rutas nuevas del backend (YaDominios)
 
-1. Stripe crea la transferencia de 10.00 y la respuesta se pierde (`fetch failed`). El saldo **vuelve** a 10.00. El conductor retira otra vez y Stripe recibe **otra transferencia** de 10.00 con una **clave distinta**: dos transferencias reales por el mismo saldo.
-2. Stripe responde 500. El código lo trata como fallo seguro y devuelve el saldo, aunque un 500 de Stripe es un resultado **desconocido**.
+| Ruta                                                                 | Quién llama                                                     | Qué hace                                                                                                                                                                   | Idempotencia                                                                                                 |
+| -------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `POST /datos/interno/reloj` `{ ventana }`                            | `tumbite-reloj` cada minuto                                     | Corre las tareas del minuto: reintentos de pagos y retiros, atascados de más de 5 min, vencimientos, inconsistencias, ofertas vencidas, limpieza de nonces y tareas viejas | `tareas_programadas` con clave `<tarea>:<minuto>`: dos llamadas en el mismo minuto corren cada tarea una vez |
+| `POST /datos/interno/despacho/tick` `{ zona, candidatos:[{c, km}] }` | Durable Object de la zona, cada 3 s si hay operaciones buscando | Filtra los candidatos con `conductores_elegibles` en D1, crea las ofertas y devuelve a quién avisar                                                                        | Ofertas con clave `(operación, conductor)`: un tick repetido no duplica                                      |
+| `POST /datos/interno/ubicaciones/lote` `{ loteId, zona, muestras }`  | Durable Object, cada 15 s                                       | `aplicar-lote-ubicacion.sql` en un `batch`                                                                                                                                 | Cada muestra trae su hora y nunca se aplica una más vieja: repetir no cambia nada                            |
+| `POST /datos/tiempo-real/token`                                      | Apps, con sesión                                                | Emite el token corto                                                                                                                                                       | No hace falta                                                                                                |
+| `POST /datos/repartidor/ubicacion`                                   | Apps viejas                                                     | **Se mantiene** mientras haya apps sin tiempo real                                                                                                                         | Como hoy                                                                                                     |
+| `/datos/reloj` (actual, secreto en cabecera)                         | GitHub Actions                                                  | **Se mantiene** hasta que el reloj nuevo funcione y luego se retira                                                                                                        | Como hoy                                                                                                     |
 
-**Condiciones que lo producen:**
+### 4.3 Rutas del Worker `tumbite-tiempo-real`
 
-- La red entre el servidor y Stripe se corta **después** de que Stripe recibió la orden.
-- La respuesta tarda más que el límite de la petición del servidor.
-- Stripe responde 500, 502, 503 o 504 habiendo ejecutado la orden.
-- Stripe transfiere bien pero falla la escritura `UPDATE movimientos SET referencia` (está dentro del mismo `try`).
-- Stripe devuelve 2xx con un cuerpo que no se puede leer: `t.id` queda vacío y la escritura falla dentro del `try`.
-- Si el proceso del servidor **muere** después de enviar, no se devuelve nada, pero el movimiento queda sin referencia y nadie lo revisa: el conductor pierde el dinero hasta que alguien lo note.
+| Ruta                                     | Quién llama                              | Qué hace                                                               |
+| ---------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| `GET /v1/conexion` → WebSocket           | App del repartidor (token)               | Manda ubicación y recibe ofertas y cambios de estado                   |
+| `GET /v1/seguir/:operacion` → WebSocket  | App del cliente (token de esa operación) | Recibe la posición del conductor y los cambios de estado               |
+| `POST /v1/interno/zona/:zona/avisar`     | Backend (firmado)                        | Empuja ofertas y cambios a las conexiones indicadas                    |
+| `POST /v1/interno/zona/:zona/candidatos` | Backend (firmado)                        | Devuelve los conductores más cercanos a un punto (solo id y distancia) |
 
-**Código que lo provoca:** el `catch` de esa ruta anota `INSERT INTO movimientos … 'ajuste' … retiro-fallido-<id>` ante cualquier error. La clave `retiro-<id>` depende del movimiento, y cada intento nuevo del conductor genera un movimiento nuevo.
+### 4.4 Contratos de viajes para las apps
 
-**Impacto económico:** cada vez que ocurre, Tumbite paga dos veces el monto retirado, hasta el saldo completo del conductor o del restaurante. El dinero sale de la cuenta de Tumbite en Stripe hacia la cuenta conectada, y de ahí al banco del conductor. Recuperarlo exige revertir la transferencia (si el saldo de la cuenta conectada todavía lo permite) o cobrárselo al conductor. No se estima una frecuencia: depende de cuántos cortes de red haya, y eso no se puede medir sin datos de producción. **Exposición hoy:** Stripe está en modo real, pero el retiro no se ha usado todavía con dinero real (`VERIFICAR-PAGOS.md`: «Retiro a banco — Probada con Stripe real: NO»). La exposición empieza con el **primer retiro real**.
+Los de la V1 se mantienen. Cambia la aceptación: `POST /datos/conductor/operaciones/:id/aceptar` con `{ vehiculoId, idempotencia }` responde 200 si la tomó **o si ya era suya** (mismo cuerpo), y 409 con `otro_conductor` o `no_disponible`. Las demás transiciones llevan `idempotencia` y responden 409 `transicion_de_viaje_no_permitida` si no corresponden.
 
-### 6.2 Corrección propuesta (sin duplicar transferencias)
+### 4.5 Reintentos y errores entre servicios
 
-Usa la bandeja `pagos_intentos` y el libro de partida doble de V1.1, más `13-retiros.sql`:
+| Falla                                           | Qué pasa                                         | Qué se hace                                                                                                                                                    |
+| ----------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| El reloj no llega al backend                    | Una ventana de un minuto sin tareas              | La ventana siguiente hace lo pendiente (las tareas leen «lo atrasado», no «lo de este minuto»). GitHub Actions sigue como respaldo mientras dure la transición |
+| El backend tarda o falla en un tick de despacho | No salen ofertas en ese tick                     | El objeto reintenta en el tick siguiente (3 s). Las ofertas tienen clave única                                                                                 |
+| Falla el lote de ubicaciones                    | D1 queda con posiciones de hasta 15 s más viejas | El objeto conserva la última posición de cada conductor y la manda en el lote siguiente (es la más nueva, así que reemplaza)                                   |
+| El tiempo real está caído                       | Sin WebSocket                                    | Las apps vuelven a consultar el backend cada 15 s y a mandar la ubicación por la ruta actual. El despacho usa las posiciones de D1. `/datos/salud` lo muestra  |
+| Firma vencida por reloj desfasado               | 401                                              | Se reintenta con una firma nueva (tiempo y nonce nuevos)                                                                                                       |
+| Llamada duplicada                               | Nonce repetido o clave de tarea repetida         | Se responde «ya hecho» sin repetir efectos                                                                                                                     |
 
-1. **Pedir el retiro** = una sentencia (`pedir-retiro.sql`): crea el intento **solo si hay saldo**, y un disparador descuenta el saldo en el libro en esa misma sentencia. La clave de idempotencia y el `transfer_group` de Stripe son **la misma**: `retiro:<id del intento>`. El id del intento lo genera el servidor **una vez**, y la app manda su propia clave para que un doble toque no cree dos intentos.
-2. **Reclamar**: `UPDATE … SET estado = 'enviando'`. Solo un proceso gana.
-3. **Enviar** a Stripe `POST /v1/transfers` con `Idempotency-Key: retiro:<id>`, `transfer_group: retiro:<id>` y `metadata[intento_id]`.
-4. **Clasificar la respuesta:**
-   - 2xx con id: confirmado.
-   - 400, 402, 403 o 404 (rechazo de Stripe): primero se **verifica** que no exista la transferencia; si no existe, queda «fallido» y un disparador devuelve el saldo **una sola vez**.
-   - Red caída, tiempo agotado, 429, 409 de concurrencia o 5xx: es **resultado desconocido**. Se **verifica** en Stripe y nunca se devuelve el saldo. Si existe, se confirma; si no, queda «reintentar».
-5. **Verificar** = `GET /v1/transfers?transfer_group=retiro:<id>`. Funciona aunque Stripe ya haya borrado la clave de idempotencia (después de 24 horas).
-6. **Reintentar** con la **misma** clave; antes de cada reintento, verificar.
-7. **Atascados**: el reloj recupera los «enviando» de más de 5 minutos.
-8. **Demasiados intentos dudosos** (8): pasa a «revisión» de soporte con el saldo **descontado**. Nunca se devuelve dinero sin confirmar en Stripe que la transferencia no existe.
-9. **Avisos**: `transfer.created` se deduplica por id de evento (`avisos_stripe`, ya existe) y confirma el intento. Si llega sobre un intento «fallido», alerta a soporte, porque significa que Stripe sí transfirió.
-10. **Un intento confirmado no vuelve atrás**: un proceso atrasado no puede marcarlo «fallido» (`pagos_confirmado_es_final`).
+## 5. Estrategia de concurrencia
 
-### 6.3 Reconciliación de saldos
+1. **D1 ejecuta una consulta a la vez por base** (confirmado). Toda la concurrencia se resuelve en sentencias únicas con condiciones (`WHERE estado = …`, `conductor_id IS NULL`) y en restricciones únicas.
+2. **Una acción = una sentencia.** Lo que la acompaña va en disparadores dentro de esa sentencia. Si algo falla, no queda nada a medias (prueba 2b).
+3. **Aceptar viaje**: una sentencia con `RETURNING`. La misma solicitud repetida, un doble toque o la respuesta perdida no producen una segunda asignación, ni un segundo evento, ni un segundo registro de aceptación, ni ninguna operación financiera (pruebas 1 y 12). El conductor recibe siempre la misma respuesta: «ya es tuya».
+4. **Exclusividad comida ↔ viaje**: `conductor_ocupacion` tiene una fila por conductor. La sentencia **actual** de comida queda protegida sin cambiarla, y también la reversa de cancelación del Manager y el cambio directo de repartidor (prueba 6). Se probó con 4.000 acciones al azar sin una sola inconsistencia (prueba 8).
+5. **Claves únicas como última red**: asignación abierta por operación, clave de aceptación, clave de evento, una captura o anulación por pedido u operación, clave de evento financiero.
+6. **Vigilancia**: la vista `inconsistencias_operaciones` la consulta el reloj cada minuto. Cero filas es la condición sana; cualquier fila es una alerta para el equipo.
 
-- **Diaria**: listar en Stripe las transferencias del día anterior (`GET /v1/transfers?created[gte]=…`, con paginación) y cruzarlas con los intentos por `transfer_group`. Una transferencia sin intento confirmado es una alerta, igual que un intento confirmado sin transferencia.
-- **Al cambiar el sistema actual**: revisar los movimientos `retiro` y `ajuste … retiro-fallido-*` históricos. Por cada `retiro-fallido`, buscar en Stripe por `metadata[movimiento]` (lo manda el código actual) si la transferencia existió. Hoy no debería haber ninguno, porque el retiro no se ha usado en real.
+## 6. Estrategia de tiempo real
 
-### 6.4 Recomendación urgente (para decidir; no se hizo nada)
+- **Un Durable Object por zona** mientras la zona reciba menos de unos 300 mensajes por segundo, el 30 % del límite blando oficial de 1.000 por objeto. Por encima, **un objeto por celda geográfica**, con las mismas celdas que ya usa el despacho (`geohash`), y el despacho consulta la celda y sus vecinas.
+- **Ubicación**: el repartidor la manda por WebSocket cada 10 s en espera y cada 4 s en viaje. Queda **en memoria**. A D1 llega solo la última de cada conductor, en un lote por zona cada 15 s.
+- **Rastro del viaje** (para disputas): en el SQLite del propio objeto, una muestra cada 60 s (cada 15 s cuesta seis veces más; §9) y un resumen a D1 al terminar el viaje.
+- **Ofertas y estados**: el backend decide y pide al objeto que **empuje** el mensaje. Las apps consultan el backend solo como respaldo: cada 2 minutos con WebSocket abierto y cada 15 s sin él.
+- **Seguimiento del cliente**: WebSocket con el token de su operación. Los mensajes que salen del objeto no se cobran.
+- **Hibernación**: se usa la API de WebSocket con hibernación para no pagar tiempo de objetos sin mensajes.
+- **Segundo plano**: la ubicación en segundo plano del repartidor (pedida para viajes en la V1) sigue siendo una decisión de producto y de permisos de las tiendas. Este diseño funciona con la app abierta y mejora con el segundo plano.
 
-Mientras no se implemente 6.2, hay dos opciones. Una es **apagar el botón de retirar** en producción, con un mensaje claro. La otra es **no permitir retiros** hasta la prueba en la calle. Las dos son cambios del sistema de pagos y **necesitan su autorización**.
+## 7. Estrategia de pagos seguros
 
-### 6.5 Fuentes oficiales de Stripe consultadas (15 oct 2026)
+### 7.1 El riesgo del retiro (código real)
 
-- Idempotencia (API v1): Stripe guarda el código y el cuerpo de la primera petición con una clave «después de que empieza la ejecución», y los reintentos con la misma clave devuelven la respuesta guardada, **incluidos los 500**. Las claves pueden borrarse después de **24 horas**, y entonces la misma clave crea una petición nueva. Si los parámetros fallan la validación, o la petición choca con otra que se está ejecutando al mismo tiempo, no se guarda el resultado y se puede reintentar. Fuente: docs.stripe.com/api/idempotent_requests
-- Lista de transferencias con filtro `transfer_group` («solo devuelve transferencias del grupo indicado») y `created`. Fuente: docs.stripe.com/api/transfers/list
+`POST /datos/billetera/retirar` en `apps/servidor/src/rutas/dinero.ts` envuelve en un mismo `try … catch` la llamada `POST /transfers` y la escritura de la referencia. **Cualquier** error devuelve el saldo con un `ajuste` `retiro-fallido-<id>`. Cada intento nuevo del conductor genera un movimiento nuevo, así que **la clave de idempotencia cambia** y Stripe no reconoce la repetición. Demostrado con la ruta real (`diagnostico-retiro.test.ts.txt`, 2 de 2):
+
+- Stripe transfiere, la respuesta se pierde, el saldo vuelve y el conductor recibe **dos** transferencias.
+- Stripe responde 500, y un 500 es un resultado incierto: el código lo trata igual como fallo y devuelve el saldo.
+
+**Impacto**: hasta el monto del retiro por cada caso, que se paga dos veces. La frecuencia no se puede estimar sin datos de producción. **Exposición actual**: empieza con el primer retiro real.
+
+### 7.2 La corrección: un resultado incierto nunca devuelve saldo
+
+1. Pedir el retiro es **una sentencia**: crea el intento solo si hay saldo, y un disparador lo descuenta del libro en esa misma sentencia. Clave de idempotencia y `transfer_group` iguales: `retiro:<id>`.
+2. Un solo proceso reclama el intento (`UPDATE … SET estado = 'enviando'`).
+3. Se envía a Stripe con esa clave fija.
+4. **2xx** → confirmado. **Rechazo de Stripe** (400, 402, 403, 404) → se verifica que no exista; si no existe, «fallido» y el saldo vuelve **una vez**. **Red caída, tiempo agotado, 409 de concurrencia, 429 o 5xx** → **incierto**: se verifica con `GET /v1/transfers?transfer_group=retiro:<id>`. Si existe, se confirma; si no, «reintentar». El saldo no vuelve.
+5. Los reintentos usan la misma clave y verifican antes. La verificación por `transfer_group` sirve aunque Stripe ya haya borrado la clave, cosa que puede hacer después de 24 horas.
+6. El reloj recupera los intentos atascados de más de 5 minutos. Después de 8 intentos dudosos, pasan a revisión de soporte **con el saldo descontado**.
+7. Los avisos `transfer.created` se deduplican (`avisos_stripe`) y confirman el intento. Si uno llega sobre un intento «fallido», se alerta, porque Stripe sí transfirió.
+8. Un intento confirmado no retrocede (`pagos_confirmado_es_final`).
+9. **Reconciliación diaria**: las transferencias del día en Stripe contra los intentos confirmados.
+
+Probado con Stripe simulado (pruebas 9 a 11): respuesta perdida, verificación caída, llamada que no llegó, 500 después de transferir, rechazo, aviso duplicado, aviso antes de la respuesta, proceso que muere, clave borrada a las 24 h, demasiados intentos, proceso atrasado y reconciliación. **En todos los casos hay una sola transferencia y el saldo solo vuelve ante un rechazo real.**
+
+### 7.3 El resto de los pagos
+
+Se usa la misma bandeja (`pagos_intentos`, V1.1) para capturar, anular, reembolsar y cobrar propinas extra, y el libro de partida doble (V1.1) para los asientos. La reversa de cancelación del Manager se reemplaza por un intento de anulación que se reintenta, en lugar de devolver el pedido a su estado anterior.
+
+### 7.4 Fuentes oficiales de Stripe (consultadas el 15 oct 2026)
+
+- Idempotencia v1: guarda la primera respuesta, **incluidos los 500**; las claves pueden borrarse después de 24 horas; las validaciones fallidas y los choques por concurrencia no se guardan. Fuente: docs.stripe.com/api/idempotent_requests
+- Lista de transferencias con el filtro `transfer_group`. Fuente: docs.stripe.com/api/transfers/list
 - Eventos `transfer.created`, `transfer.reversed` y `transfer.updated`. Fuente: docs.stripe.com/api/events/types
 
-### 6.6 Otros riesgos financieros revisados
+## 8. Pruebas ejecutadas y pendientes
 
-- La **reversa de cancelación** del Manager (P4) también tiene un riesgo de dinero: si el proceso muere entre marcar «cancelado» y la llamada a Stripe, el pedido queda cancelado y la autorización sin anular. Se libera sola en Stripe tras unos días, pero el cliente ve el dinero retenido. Se corrige con la bandeja de V1.1.
-- La **captura al entregar** (`capturarCobro`) ya usa una clave fija por pedido (`captura-<pedido>`): un reintento no cobra dos veces. Le falta el registro de intentos y la reconciliación (V1.1).
+### 8.1 Ejecutadas (locales y aisladas)
 
-## 7. Matriz de compatibilidad con YaDominios Cloud
+`python3 docs/arquitectura-v1.2/probar.py` → **98 bien, 0 mal**.
 
-**Qué dice hoy su documentación pública** (consultada el 15 oct 2026 con la guía del proyecto): la base es SQLite propia del sitio (`env.DB`); `schema.sql` se ejecuta en cada publicación; hay una API de consultas por HTTP; **no existen todavía** cron, KV, colas ni Durable Objects (los Durable Objects se **rechazan** al publicar, y un `scheduled()` nunca se dispara). **No dice nada** sobre disparadores, llaves foráneas, atomicidad de `batch`, concurrencia ni límites. No se supone nada de eso: esta matriz deja la columna «Respuesta oficial» para llenarla.
+| Grupo     | Qué                                                                                                                          | Tipo                     | Resultado |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------ | --------- |
+| 1, 12     | Aceptación, solicitud repetida, doble toque, respuesta perdida, `RETURNING`, otro conductor                                  | SQLite                   | 10 / 10   |
+| 1b        | El problema de la V1.1 con un `batch` no atómico (ya no aplica: YaDominios confirmó la atomicidad)                           | SQLite                   | 2 / 2     |
+| 2, 2b, 2c | Transiciones repetidas, fuera de orden, claves reutilizadas, error intermedio, proceso que muere                             | SQLite                   | 16 / 16   |
+| 3, 4, 5   | Dos conductores a la vez, cancelación durante la aceptación, liberación y reasignación                                       | SQLite                   | 11 / 11   |
+| 6, 7, 8   | Exclusividad con las sentencias reales de comida, reversa del Manager, migración con pedidos activos, 4.000 acciones al azar | SQLite                   | 17 / 17   |
+| 9, 10, 11 | Retiros: saldo, concurrencia y 18 casos con Stripe simulado; reconciliación                                                  | SQLite + Stripe simulado | 22 / 22   |
+| 13        | Lote de ubicaciones: válidos, repetido, viejo, otra zona                                                                     | SQLite                   | 4 / 4     |
+| 14        | Reloj: una vez por minuto                                                                                                    | SQLite                   | 2 / 2     |
+| 15        | Firma HMAC: válida, repetida, alterada, otra ruta, vencida, rotación, llave falsa                                            | SQLite + cálculo         | 7 / 7     |
+| 16        | Token de tiempo real: zona, operación, rol, alterado, vencido                                                                | Cálculo                  | 6 / 6     |
+| 17        | Medición local con 10.000 conductores                                                                                        | SQLite                   | 1 / 1     |
 
-| Dependencia                             | Funcionalidad requerida                                                                                                                                                                                        | Dónde se usa                                                                                   | Si no está disponible                                                  | Alternativa técnica                                                                                                                                                                        | Impacto en la arquitectura                                                                                                          | Respuesta oficial |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `CREATE TRIGGER` con `RAISE(ABORT)`     | Disparadores de fila `BEFORE`/`AFTER`, y que un disparador pueda actualizar otras tablas y disparar a su vez **otros** disparadores (anidados, con `recursive_triggers` apagado, como hace SQLite por defecto) | Toda la V1.2: aceptación, transiciones, exclusividad, libro, retiros                           | Se cae el principio «una acción = una sentencia»                       | Volver a `batch` con cada efecto condicionado a la clave de la acción (en lugar de a «el conductor es este») + conciliación cada minuto                                                    | **Alto**: sin disparadores la exclusividad entre comida y viajes deja de estar garantizada por la base y pasa a depender del código | _pendiente_       |
-| `schema.sql` con cuerpos `BEGIN … END;` | Que el ejecutor de `schema.sql` no corte el archivo por cada `;`                                                                                                                                               | Crear disparadores al publicar                                                                 | Los disparadores no se crean o la publicación falla                    | Crear los disparadores con una ruta de administración que los mande completos por la API de consultas, una vez por migración                                                               | Medio: cambia cómo se despliega, no el diseño                                                                                       | _pendiente_       |
-| Llaves foráneas aplicadas               | `PRAGMA foreign_keys` encendido en cada conexión                                                                                                                                                               | Todas las relaciones (`REFERENCES`)                                                            | Pueden quedar filas huérfanas                                          | Validar en el servidor + vista de huérfanos en la conciliación                                                                                                                             | Medio                                                                                                                               | _pendiente_       |
-| Atomicidad de `env.DB.batch()`          | Que un `batch` sea una transacción que se deshace entera si una sentencia falla                                                                                                                                | Lo que quede en varias sentencias (por ejemplo, la entrega de comida actual y sus movimientos) | Escrituras a medias                                                    | La V1.2 ya no lo necesita para viajes ni retiros; para comida, la bandeja de pagos y la conciliación                                                                                       | Bajo para el diseño nuevo; **revisar el código actual de comida**, que sí usa `batch`                                               | _pendiente_       |
-| Concurrencia / aislamiento              | Que dos escrituras simultáneas se serialicen (una espera a la otra) y cada sentencia vea lo confirmado                                                                                                         | Aceptación simultánea, retiros simultáneos                                                     | Dos aceptaciones podrían cruzarse                                      | Las claves únicas (`conductor_ocupacion`, `operaciones_una_activa`, asignación abierta) siguen impidiendo el doble resultado aunque el aislamiento fuera menor: la segunda sentencia falla | Bajo si las restricciones únicas se respetan                                                                                        | _pendiente_       |
-| Índices parciales y por expresión       | `CREATE INDEX … WHERE …`, `upper(placa)`                                                                                                                                                                       | Exclusividad, placas, búsquedas                                                                | Restricciones que no se aplican                                        | Columnas auxiliares + índice completo                                                                                                                                                      | Medio                                                                                                                               | _pendiente_       |
-| Vistas                                  | `CREATE VIEW`                                                                                                                                                                                                  | Elegibilidad, faltantes, saldos, inconsistencias                                               | La elegibilidad no puede vivir dentro de la sentencia de aceptación    | Copiar la condición completa dentro de la sentencia (más largo, mismo efecto)                                                                                                              | Bajo                                                                                                                                | _pendiente_       |
-| Funciones JSON                          | `json_object`                                                                                                                                                                                                  | Evento con motivo                                                                              | El evento no guarda el motivo                                          | Texto plano                                                                                                                                                                                | Muy bajo                                                                                                                            | _pendiente_       |
-| `ALTER TABLE … ADD COLUMN` con `CHECK`  | Agregar `tipo_comercio` y `vehiculo_activo_id`                                                                                                                                                                 | Comercios, vehículo activo                                                                     | No se puede agregar la columna                                         | Tabla aparte 1 a 1                                                                                                                                                                         | Bajo                                                                                                                                | _pendiente_       |
-| Cron                                    | Tareas cada minuto                                                                                                                                                                                             | Reintentos de pagos, retiros atascados, vencimientos, inconsistencias, despachador             | Según su documentación, **no existe** (`scheduled()` nunca se dispara) | El reloj externo actual (GitHub Actions cada 5 minutos a `/datos/reloj`, ya existe) o un Cron Trigger de la cuenta de Cloudflare de Tumbite llamando a una ruta con secreto                | Medio: GitHub Actions no garantiza cada minuto; para viajes hace falta un reloj más fino                                            | _pendiente_       |
-| Durable Objects                         | Estado en memoria por zona, WebSocket, alarmas                                                                                                                                                                 | Tiempo real de viajes y despachador por zona (V1)                                              | Según su documentación, **no existen** y se rechazan al publicar       | Durable Objects en la cuenta de Cloudflare de Tumbite (excepción de la regla de Richard), que hablen con el sitio por HTTP con secreto                                                     | Alto para viajes; nulo para comida                                                                                                  | _pendiente_       |
-| Límites operativos                      | CPU y tiempo por petición, llamadas externas por petición, tamaño de base, filas por consulta, peticiones por segundo, escrituras por segundo                                                                  | Llamadas a Stripe dentro de una petición, prueba aleatoria de carga, capacidad (V1 §17)        | Peticiones cortadas a medias (justo el caso del retiro)                | Bandeja de pagos (ninguna llamada externa queda a medias sin registro) + carga repartida                                                                                                   | Alto para dimensionar viajes                                                                                                        | _pendiente_       |
-| API de consultas por HTTP               | Que respete disparadores y llaves foráneas                                                                                                                                                                     | Soporte, migraciones                                                                           | Un cambio manual podría saltarse reglas                                | Prohibir escrituras manuales y hacerlas por rutas de administración                                                                                                                        | Medio                                                                                                                               | _pendiente_       |
+Comprobación en rojo: con `MUTAR=<protección>`, cada una de las 12 protecciones de la V1.2 pone al menos una prueba en rojo. Diagnóstico del retiro con la ruta real: el defecto existe (2 de 2).
 
-**Cómo se llena:** cuando llegue la respuesta, se completa la última columna. Cada «no» activa su alternativa, y la V1.3 ajusta el diseño solo en esa fila.
+Medición local, **indicativa** (SQLite en esta computadora, **no es D1**): un lote de 10.000 ubicaciones en una sentencia tarda unos 23 ms, y una aceptación con 10.003 conductores en la base unos 0,5 ms.
 
-## 8. Decisiones pendientes
+### 8.2 Pendientes en el staging de YaDominios Cloud
 
-1. **Urgente:** ¿se apaga el botón de retirar en producción hasta implementar 6.2? Es un cambio de pagos y necesita su sí.
-2. ¿Se implementa 6.2 (retiros por la bandeja de pagos) **antes** que cualquier pieza de multiservicio? Recomendación: sí, porque es dinero real y no depende del resto.
-3. Cuando el Manager no puede revertir una cancelación porque el repartidor ya tomó un viaje (P4), ¿el pedido queda cancelado y se reintenta la devolución por la bandeja? Recomendación: sí.
-4. Reloj de un minuto para viajes: ¿Cron Trigger en la cuenta de Cloudflare de Tumbite? Depende de la respuesta de YaDominios.
-5. Las decisiones abiertas de V1 y V1.1 (liberaciones máximas, requisitos exactos, migración del libro, legales) siguen abiertas.
+| #   | Prueba                                                                                  | Qué se mide o confirma                       | Criterio para aprobar                             |
+| --- | --------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------- |
+| S1  | Publicar un `schema.sql` con un disparador de varias sentencias                         | Que el ejecutor no corte en los `;` internos | El disparador existe (`sqlite_master`) y funciona |
+| S2  | Correr `probar.py` adaptado contra la API de consultas, con una base vacía              | Mismo resultado que local                    | 98 de 98                                          |
+| S3  | `UPDATE … FROM json_each(...)` con 10.000 muestras                                      | Versión de SQLite de D1 y tiempo             | Funciona y tarda menos de 100 ms                  |
+| S4  | Tiempo medio de las consultas principales (aceptar, tick de despacho, sondeo de estado) | El techo real de consultas por segundo       | Medio de 2 ms o menos                             |
+| S5  | 50 aceptaciones simultáneas del mismo viaje desde peticiones distintas                  | Serialización real                           | Una gana y 49 reciben «otro conductor»            |
+| S6  | Comida y viaje simultáneos para el mismo conductor                                      | Exclusividad real                            | Una gana; 0 inconsistencias                       |
+| S7  | Cortar un `batch` a mitad (con una sentencia que falla)                                 | Atomicidad real                              | Nada aplicado                                     |
+| S8  | Recorrido completo de comida con los disparadores puestos                               | Que comida no cambia                         | El recorrido ES/EN en verde                       |
+| S9  | Reloj externo llamando dos veces el mismo minuto                                        | Idempotencia                                 | Cada tarea una vez                                |
+| S10 | Firma: llave rotada, repetición, reloj desfasado                                        | Seguridad                                    | Como las pruebas 15                               |
+| S11 | Retiro en **modo prueba de Stripe** con respuesta cortada a propósito                   | Corrección del retiro                        | Una transferencia; saldo correcto                 |
+| S12 | Carga: 1.000 conductores simulados mandando ubicación al tiempo real                    | Lotes y techo de D1                          | Menos del 30 % del techo medido en S4             |
 
-## 9. Recomendación
+## 9. Escalabilidad y costos estimados
 
-- **Diseño de viajes y exclusividad (V1.2): aprobar como diseño**, condicionado a que YaDominios Cloud confirme **disparadores** (fila 1 de la matriz) y que `schema.sql` acepte sus cuerpos (fila 2). Si no hay disparadores, se aplica la alternativa de la matriz y la V1.3 lo recoge, sin cambiar el modelo de datos.
-- **Retiros: aprobar la corrección 6.2 para implementarla primero**, aparte del multiservicio, con sus pruebas en rojo y una prueba real en modo prueba de Stripe antes del primer retiro real. Mientras tanto, **decidir ya** si se apaga el retiro (decisión 1).
-- **Implementación del multiservicio: todavía no.** Faltan la respuesta oficial de YaDominios y las decisiones legales.
+### 9.1 Supuestos explícitos
+
+Conductores conectados 12 horas al día, 30 días al mes. El 20 % del tiempo está en una operación. Ubicación cada 10 s en espera y cada 4 s en viaje (0,13 mensajes por segundo por conductor). Cada conductor hace 1,5 operaciones por hora, con 8 cambios de estado y 2 ofertas cada una. Tick de despacho cada 3 s por zona; lote de ubicaciones cada 15 s; rastro del viaje cada 60 s; 128 MB facturados por objeto. Una sola zona (Miami). Precios oficiales de Cloudflare del plan Workers Paid, consultados hoy: base de 5 USD al mes; Durable Objects a 0,15 USD por millón de peticiones (1 millón incluido); tiempo de objeto a 12,50 USD por millón de GB-s (400.000 incluidos); mensajes entrantes de WebSocket cobrados 20 a 1; filas escritas del objeto a 1 USD por millón (50 millones incluidas); Workers a 0,30 USD por millón de peticiones (10 millones incluidas).
+
+### 9.2 Carga sobre D1
+
+| Conductores | Diseño de hoy     | Nuevo, sondeo cada 30 s | Nuevo, estado empujado (respaldo cada 120 s) | Techo oficial de D1                                           |
+| ----------- | ----------------- | ----------------------- | -------------------------------------------- | ------------------------------------------------------------- |
+| 100         | ~230 consultas/s  | ~13                     | ~5                                           | ~1.000/s con consultas de 1 ms; ~10/s con consultas de 100 ms |
+| 1.000       | ~2.300 (no cabe)  | ~107                    | ~32                                          | igual                                                         |
+| 10.000      | ~23.000 (no cabe) | ~1.050 (en el techo)    | ~300 (30 %)                                  | igual                                                         |
+
+El diseño de hoy se estimó leyendo el código: la ubicación cada 10 s hace unas 5 consultas, y el estado más las ofertas cada 5 s hacen unas 9, porque el reparto corre dentro de la consulta de ofertas. **Conclusión**: con 100 conductores el diseño de hoy alcanza, aunque ya usa cerca de una cuarta parte del techo. Con 1.000 o más hace falta separar la ubicación. Con 10.000 hace falta además que el estado llegue empujado y que el tiempo medio por consulta sea de 1 a 2 ms (prueba S4). Si no alcanza, el siguiente paso es una segunda base D1 en la cuenta de Cloudflare de Tumbite **solo para datos de alto volumen y bajo valor** (rastros, muestras), nunca para dinero ni estado.
+
+### 9.3 Costo mensual del Worker externo y los Durable Objects (estimado)
+
+```text
+mensajes de ubicación por conductor: 0.130/s
+   100 conductores | D1 hoy ≈    230 q/s | D1 nuevo ≈  12.6 q/s | ubic     13 msg/s | objetos  1 | DO req   1.49 M | GB-s  0.16 M | filas    1.7 M | USD/mes ≈    5.07 (req 0.07, dur 0.00, filas 0.00, worker 0.00)
+  1000 conductores | D1 hoy ≈   2300 q/s | D1 nuevo ≈ 106.7 q/s | ubic    130 msg/s | objetos  1 | DO req  11.02 M | GB-s  0.16 M | filas   17.3 M | USD/mes ≈    6.50 (req 1.50, dur 0.00, filas 0.00, worker 0.00)
+ 10000 conductores | D1 hoy ≈  23000 q/s | D1 nuevo ≈1048.5 q/s | ubic   1300 msg/s | objetos  5 | DO req 106.27 M | GB-s  0.81 M | filas  172.8 M | USD/mes ≈  148.72 (req 15.79, dur 5.12, filas 122.80, worker 0.00)
+```
+
+| Conductores | Objetos        | Costo mensual estimado (Cloudflare)                              | Lo que pesa               |
+| ----------- | -------------- | ---------------------------------------------------------------- | ------------------------- |
+| 100         | 1              | ~5 USD (la base del plan)                                        | nada fuera de lo incluido |
+| 1.000       | 1              | ~6,50 USD                                                        | peticiones                |
+| 10.000      | 5 (por celdas) | ~149 USD con rastro cada 15 s · **~26 USD con rastro cada 60 s** | el rastro de los viajes   |
+
+**No incluido, porque no tenemos el dato**: el precio que cobra YaDominios por D1, por peticiones y por CPU del backend; el proveedor de rutas y tiempos; Expo, Twilio y Stripe por transacción. Para el costo real hacen falta esos precios y el consumo medido en el staging (S4 y S12).
+
+## 10. Riesgos
+
+| Riesgo                                           | Probabilidad               | Impacto                                 | Mitigación                                                                              |
+| ------------------------------------------------ | -------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| 🔴 Doble pago en retiros (código actual)         | Baja por retiro, pero real | Pérdida directa                         | Apagar retiros ya; implementar §7.2 primero                                             |
+| `schema.sql` no acepta disparadores multilínea   | Desconocida (S1)           | No se pueden desplegar las protecciones | Crear los disparadores con una ruta de administración que los mande completos           |
+| Techo de D1 con 10.000 conductores               | Media                      | Lentitud general                        | Estado empujado, tiempo medio de consulta bajo, segunda base para datos de alto volumen |
+| El tiempo real se cae                            | Baja                       | Ofertas más lentas                      | Respaldo por consultas y posiciones en D1                                               |
+| Filtración de un secreto interno                 | Baja                       | Llamadas falsas al backend              | Una llave por dirección, rotación sin corte, nonce y ventana de 60 s                    |
+| Reloj de Cloudflare duplicado o atrasado         | Baja                       | Tareas dobles o tarde                   | Idempotencia por minuto; las tareas leen lo atrasado                                    |
+| Migración de la exclusividad con pedidos activos | Media                      | Repartidor mal contado                  | Pausa breve, llenado en la misma transacción, vista de inconsistencias                  |
+| Costo del rastro de viajes                       | Media con escala           | Factura                                 | Muestra cada 60 s; revisar al llegar a 1.000 conductores                                |
+| Requisitos legales de pasajeros                  | Alta                       | Bloquea Moto y Carro                    | Abogado antes de encender (V1)                                                          |
+
+## 11. Plan de implementación por fases (Comida funciona en todo momento)
+
+| Fase | Qué                                                                                         | Toca Comida               | Cómo se comprueba                              | Vuelta atrás                                             |
+| ---- | ------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| 0    | **Retiros por la bandeja de pagos** (§7.2) + apagar el retiro mientras tanto                | Sí (solo retiros)         | Pruebas en rojo + S11 en modo prueba de Stripe | Bandera para apagar retiros                              |
+| 1    | Staging de YaDominios: pruebas S1 a S8 con el SQL de la V1.2                                | No                        | Tabla §8.2                                     | No se publica nada en producción                         |
+| 2    | Worker `tumbite-reloj` + `/datos/interno/reloj` firmado (GitHub Actions como respaldo)      | No (mismas tareas)        | S9, S10                                        | Volver a GitHub Actions                                  |
+| 3    | Exclusividad y `conductor_ocupacion` (disparadores en `pedidos`) + vista de inconsistencias | Sí, sin cambiar su código | S6, S8, recorrido completo                     | Borrar los disparadores (la tabla queda sin uso)         |
+| 4    | Catálogo de servicios, vehículos, requisitos, habilitaciones (V1 y V1.1)                    | No                        | Pruebas V1.1 en staging                        | Servicios apagados                                       |
+| 5    | Tiempo real: ubicación y lote, con la ruta actual de ubicación como respaldo                | Sí (ubicación)            | S3, S12                                        | Apagar el tiempo real: las apps vuelven a la ruta actual |
+| 6    | Despacho desde el objeto de zona (comida primero)                                           | Sí                        | Recorrido completo + carga                     | Bandera para volver al reparto actual                    |
+| 7    | Viajes de Moto y Carro con el servicio **apagado al público**                               | No                        | Recorridos de viaje + prueba en la calle       | Servicio apagado                                         |
+| 8    | Encender Moto o Carro en una zona (doble aprobación + aprobación legal)                     | No                        | Supervisión del primer mes                     | Suspender el servicio                                    |
+
+## 12. Recomendación final
+
+1. **Aprobar ya la fase 0**: corregir los retiros y, mientras tanto, apagar el botón de retirar. Es dinero real y no depende de nada más.
+2. **Aprobar la arquitectura V1.2 como diseño definitivo**, con la condición de que las pruebas S1 a S8 pasen en el staging de YaDominios. Si S1 falla, se aplica la alternativa (disparadores por una ruta de administración) sin cambiar el modelo.
+3. **Aprobar la fase 2** (reloj externo) en cuanto se apruebe el diseño: es bajo riesgo, mejora el reloj de 5 minutos a 1 minuto y deja lista la conexión firmada.
+4. **No aprobar todavía** viajes de pasajeros (fases 7 y 8): faltan las decisiones legales y las pruebas de carga.

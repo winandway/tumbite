@@ -30,6 +30,7 @@ def base(ruta=':memory:'):
         db.executescript(leer(os.path.join(V11, f)))
     db.executescript(mios('11-exclusividad.sql'))
     db.executescript(mios('13-retiros.sql'))
+    db.executescript(mios('14-servicios-externos.sql'))
     for m in filter(None, os.environ.get('MUTAR', '').split(',')):
         tipo = db.execute("SELECT type FROM sqlite_master WHERE name=?", (m,)).fetchone()[0]
         db.execute(f'DROP {tipo.upper()} {m}')
@@ -461,6 +462,110 @@ for iid, clave in pendientes:
     if t: db.execute("UPDATE pagos_intentos SET estado='confirmado', stripe_objeto=? WHERE id=?", (t[0]['id'], iid))
 caso('la reconciliación encuentra en Stripe el retiro dudoso y lo confirma; el libro y Stripe coinciden',
      estado_w(db) == 'confirmado' and len(s.transfer) == 1 and uno(db, "SELECT SUM(monto_centavos) FROM pagos_intentos WHERE estado='confirmado' AND accion='transferir'") == sum(t['amount'] for t in s.transfer.values()), 'Stripe simulado')
+
+# ============================ 12. Integración con el Worker externo ============================
+import hmac, hashlib, json, base64, time as _t
+print('== 12. Aceptación con RETURNING (una ida a la base) [SQLite]')
+db = mundo(); viaje(db)
+q = re.sub(r'\?(\d)', lambda m: ':p' + m.group(1), sentencia('aceptar-viaje-returning.sql')[0])
+r1 = db.execute(q, {'p1': 'o1', 'p2': 'c1', 'p3': 'vc1', 'p4': 'k1'}).fetchall()
+r2 = db.execute(q, {'p1': 'o1', 'p2': 'c1', 'p3': 'vc1', 'p4': 'k1'}).fetchall()
+r3 = db.execute(q, {'p1': 'o1', 'p2': 'c2', 'p3': 'vc2', 'p4': 'k2'}).fetchall()
+caso('la primera devuelve la fila tomada; la repetida y la de otro conductor no devuelven nada', len(r1) == 1 and r1[0][1] == 'c1' and r2 == [] and r3 == [])
+caso('…y sigue habiendo una sola asignación y un solo evento', cuenta(db, 'asignaciones_operacion') == 1 and cuenta(db, "eventos_operacion WHERE estado_nuevo='asignado'") == 1 and inconsistencias(db) == [])
+
+print('== 13. Lotes de ubicación desde el tiempo real [SQLite]')
+db = mundo()
+db.execute("UPDATE repartidores SET ubicacion_en='2026-10-15 10:00:00', zona_id='US-FL-MIAMI'")
+def lote(db, lid, zona, muestras):
+    sts = sentencia('aplicar-lote-ubicacion.sql'); total = 0
+    db.execute('BEGIN')
+    for st in sts:
+        c = db.execute(re.sub(r'\?(\d)', lambda m: ':p' + m.group(1), st), {k: v for k, v in {'p1': lid, 'p2': zona, 'p3': json.dumps(muestras)}.items() if '?' + k[1:] in st})
+        total = c.rowcount
+    db.execute('COMMIT'); return total
+m1 = [{'c': 'c1', 'lat': 25.8, 'lng': -80.2, 't': '2026-10-15 10:00:15'}, {'c': 'c2', 'lat': 25.9, 'lng': -80.3, 't': '2026-10-15 10:00:15'},
+      {'c': 'no-existe', 'lat': 1, 'lng': 1, 't': '2026-10-15 10:00:15'}, {'c': 'c3', 'lat': 999, 'lng': 1, 't': '2026-10-15 10:00:15'}]
+caso('un lote actualiza en UNA sentencia a los conductores válidos (2 de 4: ignora el desconocido y la coordenada imposible)', lote(db, 'L1', 'US-FL-MIAMI', m1) == 2 and uno(db, "SELECT lat FROM repartidores WHERE usuario_id='c1'") == 25.8)
+caso('el mismo lote repetido no cambia nada', lote(db, 'L1', 'US-FL-MIAMI', m1) == 0)
+caso('una muestra más vieja que la guardada no retrocede la posición', lote(db, 'L2', 'US-FL-MIAMI', [{'c': 'c1', 'lat': 1.0, 'lng': 1.0, 't': '2026-10-15 09:59:00'}]) == 0 and uno(db, "SELECT lat FROM repartidores WHERE usuario_id='c1'") == 25.8)
+caso('un lote de otra zona no toca a estos conductores', lote(db, 'L3', 'US-NY-NYC', [{'c': 'c1', 'lat': 40.7, 'lng': -74.0, 't': '2026-10-15 10:01:00'}]) == 0)
+
+print('== 14. Reloj externo: cada tarea una vez por ventana [SQLite]')
+db = mundo()
+reclamar = "INSERT OR IGNORE INTO tareas_programadas (clave, tarea) VALUES (?, ?)"
+caso('el reloj llama dos veces en el mismo minuto: la tarea corre una sola vez', db.execute(reclamar, ('pagos:2026-10-15T14:07', 'pagos')).rowcount == 1 and db.execute(reclamar, ('pagos:2026-10-15T14:07', 'pagos')).rowcount == 0)
+caso('el minuto siguiente sí corre', db.execute(reclamar, ('pagos:2026-10-15T14:08', 'pagos')).rowcount == 1)
+
+print('== 15. Firma entre servicios (HMAC con rotación de llaves y sin repetición) [SQLite + cálculo]')
+SECRETOS = {'k2026a': b'secreto-actual-de-prueba-32-bytes!!', 'k2025z': b'secreto-anterior-de-prueba-32-byte'}
+def firmar(llave_id, metodo, ruta, ts, nonce, cuerpo):
+    base_ = '\n'.join([metodo, ruta, str(ts), nonce, hashlib.sha256(cuerpo).hexdigest()]).encode()
+    return hmac.new(SECRETOS[llave_id], base_, hashlib.sha256).hexdigest()
+def verificar(db, metodo, ruta, h, cuerpo, ahora):
+    llave = h.get('x-tumbite-llave'); ts = int(h.get('x-tumbite-tiempo', '0')); nonce = h.get('x-tumbite-nonce', '')
+    if llave not in SECRETOS: return 'llave_desconocida'
+    if abs(ahora - ts) > 60: return 'fuera_de_tiempo'
+    base_ = '\n'.join([metodo, ruta, str(ts), nonce, hashlib.sha256(cuerpo).hexdigest()]).encode()
+    if not hmac.compare_digest(hmac.new(SECRETOS[llave], base_, hashlib.sha256).hexdigest(), h.get('x-tumbite-firma', '')): return 'firma_invalida'
+    try: db.execute('INSERT INTO peticiones_internas (nonce, llave_id, ruta) VALUES (?, ?, ?)', (nonce, llave, ruta))
+    except sqlite3.IntegrityError: return 'repetida'
+    return 'ok'
+db = mundo(); ahora = int(_t.time()); cuerpo = b'{"zona":"US-FL-MIAMI"}'
+def cab(llave='k2026a', ts=None, nonce=None, ruta='/datos/interno/despacho/tick', c=cuerpo):
+    ts = ts or ahora; nonce = nonce or uuid.uuid4().hex
+    return {'x-tumbite-llave': llave, 'x-tumbite-tiempo': str(ts), 'x-tumbite-nonce': nonce, 'x-tumbite-firma': firmar(llave, 'POST', ruta, ts, nonce, c)}
+h = cab()
+caso('una llamada firmada correcta se acepta', verificar(db, 'POST', '/datos/interno/despacho/tick', h, cuerpo, ahora) == 'ok')
+caso('la MISMA llamada repetida (reenvío o captura) se rechaza', verificar(db, 'POST', '/datos/interno/despacho/tick', h, cuerpo, ahora) == 'repetida')
+caso('cuerpo alterado: firma inválida', verificar(db, 'POST', '/datos/interno/despacho/tick', cab(), b'{"zona":"OTRA"}', ahora) == 'firma_invalida')
+caso('firmada para otra ruta: firma inválida', verificar(db, 'POST', '/datos/interno/ubicaciones/lote', cab(), cuerpo, ahora) == 'firma_invalida')
+caso('con más de 60 s de diferencia: rechazada', verificar(db, 'POST', '/datos/interno/despacho/tick', cab(ts=ahora - 120), cuerpo, ahora) == 'fuera_de_tiempo')
+caso('con la llave anterior (rotación en curso): aceptada', verificar(db, 'POST', '/datos/interno/despacho/tick', cab(llave='k2025z'), cuerpo, ahora) == 'ok')
+caso('llave que no existe: rechazada', verificar(db, 'POST', '/datos/interno/despacho/tick', {**cab(), 'x-tumbite-llave': 'k-falsa'}, cuerpo, ahora) == 'llave_desconocida')
+
+print('== 16. Permiso de tiempo real (token corto que emite el backend y verifica el Worker) [cálculo]')
+SECRETO_TR = b'secreto-tiempo-real-de-prueba-32by'
+def b64(x): return base64.urlsafe_b64encode(x).rstrip(b'=').decode()
+def emitir(datos): cuerpo_ = b64(json.dumps(datos, separators=(',', ':')).encode()); return cuerpo_ + '.' + b64(hmac.new(SECRETO_TR, cuerpo_.encode(), hashlib.sha256).digest())
+def leer_token(tok, ahora):
+    try: cuerpo_, firma = tok.split('.')
+    except ValueError: return None
+    if not hmac.compare_digest(b64(hmac.new(SECRETO_TR, cuerpo_.encode(), hashlib.sha256).digest()), firma): return None
+    d = json.loads(base64.urlsafe_b64decode(cuerpo_ + '=' * (-len(cuerpo_) % 4)))
+    return d if d['exp'] > ahora else None
+def puede(tok, accion, zona=None, operacion=None, ahora=None):
+    d = leer_token(tok, ahora or int(_t.time()))
+    if not d: return False
+    if accion == 'enviar_ubicacion': return d['rol'] == 'repartidor' and d['zona'] == zona
+    if accion == 'seguir_operacion': return d.get('op') == operacion and d['rol'] in ('cliente', 'repartidor')
+    return False
+t_rep = emitir({'u': 'c1', 'rol': 'repartidor', 'zona': 'US-FL-MIAMI', 'exp': int(_t.time()) + 900})
+t_cli = emitir({'u': 'cl', 'rol': 'cliente', 'op': 'o1', 'exp': int(_t.time()) + 900})
+caso('el repartidor manda su ubicación a su zona', puede(t_rep, 'enviar_ubicacion', zona='US-FL-MIAMI'), 'cálculo')
+caso('…pero no a otra zona', not puede(t_rep, 'enviar_ubicacion', zona='US-NY-NYC'), 'cálculo')
+caso('el pasajero sigue SU viaje y no otro', puede(t_cli, 'seguir_operacion', operacion='o1') and not puede(t_cli, 'seguir_operacion', operacion='o2'), 'cálculo')
+caso('un pasajero no puede mandar ubicaciones de conductor', not puede(t_cli, 'enviar_ubicacion', zona='US-FL-MIAMI'), 'cálculo')
+partes = t_rep.split('.'); falso = b64(json.dumps({'u': 'c1', 'rol': 'repartidor', 'zona': 'US-NY-NYC', 'exp': 9999999999}).encode()) + '.' + partes[1]
+caso('token con la zona cambiada a mano: rechazado', not puede(falso, 'enviar_ubicacion', zona='US-NY-NYC'), 'cálculo')
+caso('token vencido: rechazado', not puede(t_rep, 'enviar_ubicacion', zona='US-FL-MIAMI', ahora=int(_t.time()) + 1000), 'cálculo')
+
+print('== 17. Medición local (indicativa, SQLite en esta computadora, NO es D1)')
+db = mundo()
+db.execute("UPDATE servicios_zona SET estado='disponible' WHERE servicio_id='moto'")
+N = 10000
+filas = [(f'x{i}', f'x{i}@x.com') for i in range(N)]
+db.execute('BEGIN')
+db.executemany("INSERT INTO usuarios (id,correo,nombre,rol,clave_hash) VALUES (?,?,'X','repartidor','h')", filas)
+db.executemany("INSERT INTO vehiculos (id,conductor_id,tipo,placa,placa_estado,estado) VALUES (?,?,'moto',?,'FL','aprobado')", [('v' + u, u, 'P' + u) for u, _ in filas])
+db.executemany("INSERT INTO repartidores (usuario_id,conectado,lat,lng,ubicacion_en,vehiculo_activo_id) VALUES (?,1,25.7,-80.1,datetime('now'),?)", [(u, 'v' + u) for u, _ in filas])
+db.execute('COMMIT')
+muestras = [{'c': u, 'lat': 25.71, 'lng': -80.11, 't': '2099-01-01 00:00:00'} for u, _ in filas]
+t0 = _t.perf_counter(); n = lote(db, 'G1', 'US-FL-MIAMI', muestras); t1 = _t.perf_counter()
+viaje(db, 'oz')
+t2 = _t.perf_counter(); aceptar(db, 'oz', 'c1', 'kz'); t3 = _t.perf_counter()
+print(f'   lote de {n} ubicaciones en una sentencia: {(t1 - t0) * 1000:.0f} ms · aceptación con 10.003 conductores: {(t3 - t2) * 1000:.1f} ms')
+caso('el lote de 10.000 ubicaciones se aplicó completo', n == N)
 
 print(f'\n{ok} pruebas bien, {mal} mal')
 sys.exit(1 if mal else 0)
