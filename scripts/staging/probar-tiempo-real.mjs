@@ -43,15 +43,23 @@ const pase = async (token, cuerpo = {}) => {
   });
   return { estado: r.status, datos: await r.json().catch(() => ({})) };
 };
-/** Abre un WebSocket y junta lo que llega. */
-function abrir(ruta, paseTexto) {
+/** Abre un WebSocket (hasta 3 intentos: el objeto de la zona puede estar despertando). */
+async function abrir(ruta, paseTexto) {
+  for (let i = 1; i <= 3; i++) {
+    const r = await abrirUnaVez(ruta, paseTexto);
+    if (r.ok || paseTexto === 'no.vale') return r;
+    await espera(1500 * i);
+  }
+  return abrirUnaVez(ruta, paseTexto);
+}
+function abrirUnaVez(ruta, paseTexto) {
   return new Promise((resolver) => {
     const ws = new WebSocket(new URL(ruta, TIEMPO_REAL_URL).toString().replace(/^http/, 'ws'), [
       'tumbite-v1',
       paseTexto,
     ]);
     const llegados = [];
-    const t = setTimeout(() => resolver({ ws, llegados, ok: false }), 8000);
+    const t = setTimeout(() => resolver({ ws, llegados, ok: false }), 15000);
     ws.onmessage = (ev) => llegados.push(JSON.parse(String(ev.data)));
     ws.onopen = () => {
       clearTimeout(t);

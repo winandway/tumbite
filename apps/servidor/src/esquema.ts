@@ -1,4 +1,5 @@
 import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
+import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -23,6 +24,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['evidencias', 'borrada_en', 'TEXT'],
   // Mayoría de edad (14 oct 2026): platos que solo se entregan en mano a un adulto con documento.
   ['platos', 'requiere_edad', 'INTEGER NOT NULL DEFAULT 0'],
+  // Cómo se entregó (14 oct 2026). Se agregaron al CREATE de una tabla que ya existía y nunca
+  // llegaron a la base: el estado del repartidor y las fotos de recogida y entrega fallaban
+  // (encontrado en la validación del 15 oct; candado C-ESQUEMA-COMPLETO).
+  ['evidencias', 'modo', 'TEXT'],
+  ['evidencias', 'nota', "TEXT NOT NULL DEFAULT ''"],
   // Multiservicio, Fase 1 (15 oct 2026): el vehículo con el que el conductor trabaja ahora.
   // Nadie lo lee todavía para Comida; queda vacío hasta la migración M5 (docs/fase-1/).
   ['repartidores', 'vehiculo_activo_id', 'TEXT REFERENCES vehiculos(id)'],
@@ -138,6 +144,27 @@ async function sincronizarServicios(db: D1Database): Promise<void> {
     ]);
 }
 
+/**
+ * C-ESQUEMA-COMPLETO: cada columna de schema.sql tiene que existir en la base real. Una columna
+ * nueva en una tabla que ya existe NO la crea schema.sql: va en COLUMNAS. Si falta alguna, la
+ * salud dice «esquema: error» y el semáforo frena la publicación antes de producción.
+ */
+export let columnasFaltantes: string[] = [];
+async function revisarColumnas(db: D1Database): Promise<void> {
+  const { results } = await db
+    .prepare(
+      "SELECT m.name AS t, p.name AS c FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table'",
+    )
+    .all<{ t: string; c: string }>();
+  const reales = new Set(results.map((r) => `${r.t}.${r.c}`));
+  const tablas = new Set(results.map((r) => r.t));
+  columnasFaltantes = Object.entries(COLUMNAS_DEL_ESQUEMA).flatMap(([t, cols]) =>
+    tablas.has(t) ? cols.filter((c) => !reales.has(`${t}.${c}`)).map((c) => `${t}.${c}`) : [],
+  );
+  if (columnasFaltantes.length)
+    console.error('esquema: faltan columnas en la base', columnasFaltantes.join(', '));
+}
+
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
@@ -153,6 +180,7 @@ async function migrar(db: D1Database): Promise<void> {
     }
   }
   for (const sql of INDICES) await db.prepare(sql).run();
+  await revisarColumnas(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db);
 }

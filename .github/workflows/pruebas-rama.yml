@@ -92,6 +92,13 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npx playwright test -c playwright.recorrido-staging.config.ts
+      - name: Guardar capturas y rastro del recorrido si falló
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: recorrido-staging
+          path: test-results/
+          retention-days: 7
       - name: Conciliación de saldos contra Stripe (modo prueba)
         if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:

@@ -11,5 +11,9 @@ export default defineConfig({
   timeout: 600_000,
   expect: { timeout: 20_000 },
   reporter: [['list']],
-  use: { baseURL: process.env.RECORRIDO_URL, trace: 'retain-on-failure' },
+  use: {
+    baseURL: process.env.RECORRIDO_URL,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
 });

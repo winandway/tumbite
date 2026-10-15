@@ -10,3 +10,4 @@ apps/*/AGENTS.md
 .dist-tiempo-real
 .dist-reloj
 apps/servidor/src/migraciones/fase1.ts
+apps/servidor/src/esquemaColumnas.ts

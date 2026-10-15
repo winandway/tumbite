@@ -8,7 +8,7 @@ import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
 import { cabecerasSeguridad, limiteIntentos } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
-import { asegurarEsquema, ultimoErrorEsquema } from './esquema';
+import { asegurarEsquema, columnasFaltantes, ultimoErrorEsquema } from './esquema';
 import { cuentas } from './rutas/cuentas';
 import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
@@ -136,7 +136,7 @@ app.get('/datos/salud', async (c) => {
   }
 
   piezas.almacen = c.env.BUCKET ? 'ok' : 'pendiente';
-  if (c.env.DB) piezas.esquema = ultimoErrorEsquema ? 'error' : 'ok';
+  if (c.env.DB) piezas.esquema = ultimoErrorEsquema || columnasFaltantes.length ? 'error' : 'ok';
 
   const env = revisarEnv(c.env as unknown as Record<string, unknown>);
   piezas.variables = env.ok ? 'ok' : 'error';
