@@ -112,3 +112,8 @@
 - [ ] 👤 Correr `bash scripts/staging/cargar-stripe-prueba.sh` y pegar las dos llaves de PRUEBA de Stripe (no se ven) → S11 y el recorrido de Comida en staging.
 - [ ] 👤 Revocar la llave de Acceso para IA del sitio de pruebas que pasó por el chat y crear otra cuando termine la validación.
 - [ ] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.
+
+## Stripe Connect (15 oct 2026)
+
+- [ ] Alta de restaurantes y repartidores con los **componentes de onboarding integrados** de Stripe (dentro de la app y del panel, con los colores de Tumbite), en lugar de mandarlos a la página de Stripe. Decisión de Richard del 15 oct. Hoy funciona con la página alojada por Stripe (`/datos/billetera/conectar`, enlace de cuenta). Requiere sesión de cuenta en el servidor, el componente en el panel web y en las apps, guía en Docs y su prueba.
+- [ ] 👤 Terminar la activación de Connect en la cuenta de prueba «Tumbite test» (modelo: los clientes le compran a Tumbite, transferencias divididas, servicios on demand, alta integrada). Destraba S11.
