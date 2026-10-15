@@ -102,3 +102,12 @@
 - [x] Puerta interna firmada, reloj por minuto, lote de ubicaciones, pases cortos, Workers externos y conexión de apps con recuperación (`docs/FASE-2-TIEMPO-REAL.md`). Sin desplegar.
 - [ ] 👤 Revisar la Fase 2 y aprobar: publicar en pruebas y desplegar los dos Workers en la cuenta de Cloudflare de Tumbite, apuntando solo a pruebas.
 - [ ] Conectar las apps al tiempo real (repartidor y seguimiento del cliente) y los avisos de Comida, con el recorrido completo.
+
+## Validación en staging de las fases 0, 1 y 2 (15 oct 2026, `docs/VALIDACION-STAGING-FASES-0-1-2.md`)
+
+- [x] Ramas integradas solo en staging; S2–S7, F1, M4/M5 (también con datos temporales) y F2 en D1 real, todo en verde.
+- [x] Los dos relojes comparten el candado por minuto (C-RELOJ-UNA-VEZ).
+- [ ] 👤 Iniciar sesión en Cloudflare con la cuenta de Tumbite, en la sesión aparte, y decir el correo de esa cuenta → se despliegan los Workers para pruebas.
+- [ ] 👤 Copiar al panel del sitio de pruebas los 7 valores del archivo privado que deja el despliegue, y republicar → tiempo real conectado a pruebas.
+- [ ] 👤 Llaves de modo prueba de Stripe y su aviso en el panel del sitio de pruebas → S11 y el recorrido de Comida en staging.
+- [ ] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.
