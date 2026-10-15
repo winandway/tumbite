@@ -487,4 +487,27 @@ describe('retiros sin doble pago (C-RETIROS-SEGUROS)', () => {
     expect(b.datos.retirosEnProceso).toHaveLength(1);
     expect(b.datos.retirosEnProceso[0].estado).toBe('reintentar');
   });
+
+  it('la conciliación ignora las transferencias de las cuentas temporales del diagnóstico (zz-)', async () => {
+    const st = stripeSimulado();
+    st.transferencias.set('tr_zz', {
+      id: 'tr_zz',
+      amount: 300,
+      destination: 'acct_zz',
+      transfer_group: 'retiro:no-existe-zz',
+      metadata: { retiro_id: 'no-existe-zz', usuario_id: 'zz-s11-abc' },
+    } as never);
+    const e = await escenario();
+    const { conciliarRetiros } = await import('../retiros');
+    const { crearStripe } = await import('../stripe');
+    expect((await conciliarRetiros(e.m.DB, crearStripe('sk_test_x')!)).cuadra).toBe(true);
+    st.transferencias.set('tr_otro', {
+      id: 'tr_otro',
+      amount: 300,
+      destination: 'acct_x',
+      transfer_group: 'retiro:no-existe',
+      metadata: { retiro_id: 'no-existe', usuario_id: 'real-1' },
+    } as never);
+    expect((await conciliarRetiros(e.m.DB, crearStripe('sk_test_x')!)).cuadra).toBe(false);
+  });
 });

@@ -216,6 +216,9 @@ export async function conciliarRetiros(
         t.metadata?.retiro_id ??
         (t.transfer_group?.startsWith('retiro:') ? t.transfer_group.slice(7) : null);
       if (!rid) continue;
+      // Las cuentas temporales del diagnóstico del sitio de pruebas («zz-…», S11) borran sus filas al
+      // terminar: sus transferencias de prueba no son un descuadre. Ningún usuario real empieza así.
+      if (t.metadata?.usuario_id?.startsWith('zz-')) continue;
       const f = await db
         .prepare('SELECT estado, monto_centavos, stripe_transferencia FROM retiros WHERE id = ?')
         .bind(rid)
