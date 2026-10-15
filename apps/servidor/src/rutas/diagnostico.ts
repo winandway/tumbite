@@ -760,6 +760,24 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
   const ocupado = `zz-f2b-${sufijo()}`;
   const casos: Caso[] = [];
   const ahora = Date.now();
+  // El reloj se prueba ANTES de crear los repartidores temporales: así sus tareas reales (ofertas,
+  // Manager) nunca los ven y la limpieza no choca con nada (falló así el 15 oct).
+  // Candado del reloj: dos llamadas a la vez con la misma ventana corren las tareas UNA vez.
+  const ventana = `diag-${sufijo()}`;
+  const [a, b] = await Promise.all([
+    correrRelojUnaVez(c.env, db, ventana, 'github'),
+    correrRelojUnaVez(c.env, db, ventana, 'externo'),
+  ]);
+  const yaHecho = [a, b].filter((x) => 'yaHecho' in x).length;
+  const filas = await db
+    .prepare('SELECT COUNT(*) AS n FROM tareas_programadas WHERE clave = ?')
+    .bind(`reloj:${ventana}`)
+    .first<{ n: number }>();
+  casos.push({
+    nombre: 'el reloj actual y el nuevo en el mismo minuto corren las tareas una sola vez',
+    ok: yaHecho === 1 && Number(filas?.n) === 1,
+  });
+  await db.prepare('DELETE FROM tareas_programadas WHERE clave = ?').bind(`reloj:${ventana}`).run();
   await db.batch([
     db
       .prepare(
@@ -846,30 +864,12 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
       nombre: 'el dinero no se movió',
       ok: dineroAntes?.n === dineroDespues?.n && dineroAntes?.s === dineroDespues?.s,
     });
-    // Candado del reloj: dos llamadas a la vez con la misma ventana corren las tareas UNA vez.
-    const ventana = `diag-${sufijo()}`;
-    const [a, b] = await Promise.all([
-      correrRelojUnaVez(c.env, db, ventana, 'github'),
-      correrRelojUnaVez(c.env, db, ventana, 'externo'),
-    ]);
-    const yaHecho = [a, b].filter((x) => 'yaHecho' in x).length;
-    const filas = await db
-      .prepare('SELECT COUNT(*) AS n FROM tareas_programadas WHERE clave = ?')
-      .bind(`reloj:${ventana}`)
-      .first<{ n: number }>();
-    casos.push({
-      nombre: 'el reloj actual y el nuevo en el mismo minuto corren las tareas una sola vez',
-      ok: yaHecho === 1 && Number(filas?.n) === 1,
-    });
-    await db
-      .prepare('DELETE FROM tareas_programadas WHERE clave = ?')
-      .bind(`reloj:${ventana}`)
-      .run();
   } finally {
     await db.batch([
       db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
       db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest.id),
       db.prepare('DELETE FROM lotes_ubicacion WHERE lote_id IN (?, ?)').bind(loteId, `${loteId}-v`),
+      db.prepare('DELETE FROM ofertas WHERE repartidor_id IN (?, ?)').bind(libre, ocupado),
       db.prepare('DELETE FROM repartidores WHERE usuario_id IN (?, ?)').bind(libre, ocupado),
       db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(libre, ocupado, dueno),
     ]);
