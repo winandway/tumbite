@@ -126,7 +126,8 @@ Las 21 pruebas de retiros cubren:
 4. **El reloj corre cada 5 minutos** (GitHub Actions). Un retiro dudoso puede tardar hasta unos 5 minutos más la espera creciente en confirmarse. Se acorta con el reloj externo de la fase 2.
 5. **Las apps muestran «retirado» también cuando el retiro queda en proceso.** Es correcto, pero no dice «en proceso». Queda para una fase de apps.
 6. **Los demás cobros** (captura, anulación, reembolso, propina extra) siguen con su flujo actual. La captura ya usa una clave fija. La anulación del Manager todavía revierte el estado del pedido si Stripe falla (riesgo P4 de la V1.2). Va en la fase de pagos.
-7. **Las pruebas S2 a S7 contra el motor real** necesitan el token de base de datos del sitio de pruebas y una sesión de admin ahí (§7).
+7. **Las acciones externas de GitHub en `verify.yml` y `publicar.yml`** (gitleaks y la publicación de ramas) están fijadas por etiqueta y no por commit. En el workflow nuevo `pruebas-rama.yml` ya quedaron fijadas al commit exacto (lo señaló la revisión automática de seguridad); las otras dos se fijan en una fase de mantenimiento.
+8. **Las pruebas S2 a S7 contra el motor real** necesitan el token de base de datos del sitio de pruebas y una sesión de admin ahí (§7).
 
 ## 7. Instrucciones para probar en staging
 

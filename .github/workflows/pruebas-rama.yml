@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.sha }}
       - run: npm run audit
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2 (fijado al commit)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build:app-web
@@ -49,7 +49,7 @@ jobs:
           echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
           test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }
       - name: Publicar SOLO en pruebas (rama yapanel-pruebas)
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4 (fijado al commit)
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: yapanel-pruebas
