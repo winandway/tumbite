@@ -28,3 +28,9 @@ jobs:
       - name: Copia de seguridad diaria (producción)
         run: |
           curl -fsS -X POST "https://tumbite.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }
+      # A mano, con «respaldo» marcado: una copia completa NUEVA aunque hoy ya haya otra (antes de
+      # publicar en producción; PLAN-PUBLICACION-PRODUCCION.md §1).
+      - name: Copia de seguridad completa a pedido (producción)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.respaldo }}
+        run: |
+          curl -fsS -X POST "https://tumbite.com/datos/respaldo" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad a pedido falló"; exit 1; }
