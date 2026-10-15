@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
-import { nuevoId } from '../cripto';
+import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Variables, base } from '../sesion';
 import { crearStripe, type Stripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -994,4 +994,101 @@ diagnostico.post('/interno/diagnostico/migraciones-prueba', async (c) => {
     ok: casos.every((x) => x.ok),
     casos,
   });
+});
+
+/**
+ * Prueba EN VIVO del tiempo real (con los Workers desplegados para pruebas). Arma, solo en el
+ * sitio de pruebas, dos repartidores y un cliente temporales con sesión de 30 minutos y un pedido
+ * en curso sintético; «leer» devuelve posiciones y vueltas del reloj; «borrar» limpia todo.
+ */
+diagnostico.post('/interno/diagnostico/vivo', async (c) => {
+  const { accion, k } = await leerCuerpo(
+    c,
+    z.object({
+      accion: z.enum(['armar', 'leer', 'borrar']),
+      k: z.string().regex(/^[a-z0-9]{6,24}$/),
+    }),
+  );
+  const db = base(c);
+  const ids = {
+    repLibre: `zz-vivo-a-${k}`,
+    repPedido: `zz-vivo-b-${k}`,
+    cliente: `zz-vivo-c-${k}`,
+    dueno: `zz-vivo-d-${k}`,
+  };
+  const rest = `zz-vivo-r-${k}`;
+  const pedido = `zz-vivo-p-${k}`;
+  if (accion === 'armar') {
+    const tokens = new Map<string, string>();
+    const sentenciasArmar = [];
+    for (const [rol, id] of Object.entries(ids)) {
+      const tipo = rol === 'cliente' ? 'cliente' : rol === 'dueno' ? 'restaurante' : 'repartidor';
+      sentenciasArmar.push(
+        db
+          .prepare(
+            "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba en vivo', ?, 'x')",
+          )
+          .bind(id, `${id}@prueba.invalid`, tipo),
+      );
+      if (tipo !== 'restaurante') {
+        const token = nuevoToken();
+        tokens.set(rol, token);
+        sentenciasArmar.push(
+          db
+            .prepare(
+              "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+30 minutes'))",
+            )
+            .bind(await sha256(token), id),
+        );
+      }
+    }
+    sentenciasArmar.push(
+      db
+        .prepare(
+          "INSERT INTO repartidores (usuario_id, conectado, zona_id) VALUES (?, 1, 'US-FL-MIAMI'), (?, 1, 'US-FL-MIAMI')",
+        )
+        .bind(ids.repLibre, ids.repPedido),
+      db
+        .prepare(
+          "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES (?, ?, 'Prueba en vivo', 'pendiente')",
+        )
+        .bind(rest, ids.dueno),
+      db
+        .prepare(
+          `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+             propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion)
+           VALUES (?, ?, ?, ?, 'en_camino', '[]', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'basico', 'Prueba en vivo')`,
+        )
+        .bind(pedido, ids.cliente, rest, ids.repPedido),
+    );
+    await db.batch(sentenciasArmar);
+    return c.json({ ids, pedido, tokens: Object.fromEntries(tokens) });
+  }
+  if (accion === 'leer') {
+    const pos = await db
+      .prepare(
+        'SELECT usuario_id, lat, lng, ubicacion_en FROM repartidores WHERE usuario_id IN (?, ?)',
+      )
+      .bind(ids.repLibre, ids.repPedido)
+      .all();
+    const reloj = await db
+      .prepare(
+        "SELECT clave, resultado FROM tareas_programadas WHERE tarea = 'reloj' ORDER BY empezada_en DESC LIMIT 10",
+      )
+      .all<{ clave: string; resultado: string }>();
+    return c.json({
+      posiciones: pos.results,
+      reloj: reloj.results.map((r) => ({ clave: r.clave, origen: r.resultado.split(' ')[0] })),
+    });
+  }
+  const todos = Object.values(ids);
+  const marcas = todos.map(() => '?').join(',');
+  await db.batch([
+    db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
+    db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
+    db.prepare(`DELETE FROM sesiones WHERE usuario_id IN (${marcas})`).bind(...todos),
+    db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...todos),
+    db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...todos),
+  ]);
+  return c.json({ borrado: true });
 });

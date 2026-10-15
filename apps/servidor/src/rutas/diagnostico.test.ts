@@ -113,3 +113,31 @@ describe('diagnóstico de las fases 1 y 2 (validación en staging)', () => {
     expect(restos?.n).toBe(0);
   });
 });
+
+describe('prueba en vivo del tiempo real (armado en staging)', () => {
+  it('arma cuentas temporales con sesión, el pase sale para el repartidor y el cliente, y se borra todo', async () => {
+    const secreto = `${crypto.randomUUID()}${crypto.randomUUID()}`;
+    const { m, pedir } = preparar({
+      PASE_LLAVE_ID: 'p1',
+      PASE_SECRETO_ACTUAL: secreto,
+      TIEMPO_REAL_URL: 'https://tr.ejemplo.com',
+    });
+    const a = await pedir('vivo', { accion: 'armar', k: 'abc123' });
+    expect(a.estado).toBe(200);
+    const rep = await m.llamar('POST', '/datos/tiempo-real/pase', {}, a.datos.tokens.repLibre);
+    expect(rep.estado).toBe(200);
+    const cli = await m.llamar(
+      'POST',
+      '/datos/tiempo-real/pase',
+      { pedidoId: a.datos.pedido },
+      a.datos.tokens.cliente,
+    );
+    expect(cli.estado).toBe(200);
+    expect((await pedir('vivo', { accion: 'leer', k: 'abc123' })).datos.posiciones).toHaveLength(2);
+    await pedir('vivo', { accion: 'borrar', k: 'abc123' });
+    const restos = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM usuarios WHERE id LIKE 'zz-vivo-%'",
+    ).first<{ n: number }>();
+    expect(restos?.n).toBe(0);
+  });
+});

@@ -1,0 +1,24 @@
+name: tiempo-real-staging
+# Fase 2 · Prueba EN VIVO del tiempo real: sitio de pruebas + Workers desplegados para pruebas.
+# Solo a mano. Nunca toca producción (el guion se niega).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vivo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Tiempo real en vivo (WebSocket, GPS, firmas, reconexión, lote y reloj)
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          TIEMPO_REAL_URL: ${{ vars.TIEMPO_REAL_URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          AVISOS_LLAVE_ID: ${{ secrets.AVISOS_LLAVE_ID_PRUEBAS }}
+          AVISOS_SECRETO: ${{ secrets.AVISOS_SECRETO_PRUEBAS }}
+        run: node scripts/staging/probar-tiempo-real.mjs
