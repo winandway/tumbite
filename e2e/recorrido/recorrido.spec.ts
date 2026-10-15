@@ -1189,6 +1189,12 @@ for (const idioma of ['en', 'es'] as const) {
       .click();
     // Con el despacho con reloj, la oferta sale cuando falta poco para la hora de listo: el reloj
     // se adelanta en la base (así el pedido sigue «aceptado» y el restaurante lo puede rechazar).
+    // Primero se espera que la aceptación haya llegado: si no, la escribe encima (pasó en pruebas).
+    await expect
+      .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${otro.pedidoId}'`)[0]?.estado, {
+        timeout: 20_000,
+      })
+      .toBe('aceptado');
     sql(
       `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${otro.pedidoId}'`,
     );
