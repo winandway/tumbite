@@ -106,6 +106,13 @@ Cuando estén, se corren solas:
 - el workflow `tiempo-real-staging`, que lanza la prueba en vivo. Comprueba que un pase falso, un pase en la dirección, un cliente como repartidor y un pedido ajeno no conectan. Comprueba que la ubicación se acepta, que la repetida se marca, que el salto se descarta y que el cliente ve a su repartidor y no a otro. También que un aviso sin firma no entra, que el firmado llega una vez aunque se mande dos y que al reconectar se recupera solo lo perdido. Y que en menos de 20 s llega a la base la posición del libre y no la del ocupado, y que el reloj externo corre sin repetir minuto;
 - el recorrido completo de Comida contra staging.
 
+### Actualización (15 oct, tarde)
+
+- Richard abrió la sesión de Cloudflare de **windoce1@gmail.com** (la cuenta que él indicó para Tumbite) en la sesión aparte. Se comprobó la cuenta y que los nombres estaban libres antes de crear nada.
+- **Desplegados solo para pruebas**: `tumbite-tiempo-real` (salud `ok`, el WebSocket sin pase responde 426, una llamada interna sin firma responde 401) y `tumbite-reloj` (cada minuto, hacia `staging.tumbite.com`).
+- Las llaves de prueba se generaron en esta computadora sin mostrarse. Están en los secretos de los Workers y de GitHub, y en un archivo privado para el panel.
+- **Falta**: los 7 valores en el panel del sitio de pruebas y republicar. Hasta entonces el reloj externo recibe 404, sin efecto. Después, correr el workflow `tiempo-real-staging`.
+
 ## 5. Decisión técnica sobre la Fase 3
 
 **Todavía no.** Todo lo que se pudo probar está en verde, pero la Fase 3 (exclusividad) **pone disparadores sobre la tabla de pedidos de Comida**. Antes de tocar esa tabla hacen falta tres cosas en staging:

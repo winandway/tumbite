@@ -107,7 +107,7 @@
 
 - [x] Ramas integradas solo en staging; S2–S7, F1, M4/M5 (también con datos temporales) y F2 en D1 real, todo en verde.
 - [x] Los dos relojes comparten el candado por minuto (C-RELOJ-UNA-VEZ).
-- [ ] 👤 Iniciar sesión en Cloudflare con la cuenta de Tumbite, en la sesión aparte, y decir el correo de esa cuenta → se despliegan los Workers para pruebas.
-- [ ] 👤 Copiar al panel del sitio de pruebas los 7 valores del archivo privado que deja el despliegue, y republicar → tiempo real conectado a pruebas.
+- [x] Sesión de Cloudflare de windoce1 en la sesión aparte; los dos Workers desplegados SOLO para pruebas (15 oct).
+- [ ] 👤 Copiar al panel del sitio de pruebas los 7 valores del archivo del escritorio «tumbite-pruebas-variables», republicar y borrar el archivo → tiempo real conectado a pruebas.
 - [ ] 👤 Llaves de modo prueba de Stripe y su aviso en el panel del sitio de pruebas → S11 y el recorrido de Comida en staging.
 - [ ] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.
