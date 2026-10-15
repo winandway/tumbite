@@ -5,7 +5,8 @@ import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Variables, base } from '../sesion';
 import { crearStripe, type Stripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
+import { conciliarRetiros, pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
+import { conciliar } from '../conciliacion';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
@@ -471,6 +472,17 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
     casos.push({
       nombre: 'repetir con la misma clave devuelve la misma transferencia (idempotencia real)',
       ok: rep.id === t1?.t && (await contar(r1)) === 1,
+    });
+    // 3b) dos procesos a la vez sobre el mismo retiro: una sola transferencia
+    const r3 = (await pedirRetiro(db, u, cuenta, 300))!;
+    const [p1, p2] = await Promise.all([
+      procesarRetiro(db, stripe, r3),
+      procesarRetiro(db, stripe, r3),
+    ]);
+    casos.push({
+      nombre: 'dos procesos a la vez sobre el mismo retiro: una sola transferencia',
+      ok: [p1, p2].includes('confirmado') && (await contar(r3)) === 1,
+      detalle: `${p1}/${p2}`,
     });
     // 4) bandera
     const antes = await db
@@ -1091,4 +1103,107 @@ diagnostico.post('/interno/diagnostico/vivo', async (c) => {
     db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...todos),
   ]);
   return c.json({ borrado: true });
+});
+
+// =====================================================================================
+// Recorrido de Comida y conciliación EN EL SITIO DE PRUEBAS con Stripe en MODO PRUEBA.
+// =====================================================================================
+
+/** Consulta a la base del sitio de pruebas (el recorrido la usa como en local). */
+diagnostico.post('/interno/diagnostico/sql', async (c) => {
+  const { sql } = await leerCuerpo(c, z.object({ sql: z.string().min(1).max(4000) }));
+  const r = await base(c).prepare(sql).all();
+  return c.json({ results: r.results });
+});
+
+/** Paga un pedido con la tarjeta de prueba de Stripe (solo con llaves sk_test_). El aviso real
+ * de Stripe llega después al sitio de pruebas y deja el pedido «pagado». */
+diagnostico.post('/interno/diagnostico/confirmar-pago', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const { pedidoId } = await leerCuerpo(c, z.object({ pedidoId: z.string().min(1).max(64) }));
+  const p = await base(c)
+    .prepare('SELECT stripe_sesion FROM pedidos WHERE id = ?')
+    .bind(pedidoId)
+    .first<{ stripe_sesion: string | null }>();
+  if (!p?.stripe_sesion?.startsWith('pi_')) throw new ErrorDatos('No encontrado.', undefined, 404);
+  const stripe = crearStripe(llave)!;
+  const r = await stripe.post<{ status: string; amount_capturable?: number }>(
+    `/payment_intents/${p.stripe_sesion}/confirm`,
+    {
+      payment_method: 'pm_card_visa',
+      return_url: c.env.SITIO_URL ?? 'https://staging.tumbite.com',
+    },
+    `diag-confirmar-${pedidoId}`,
+  );
+  return c.json({ estado: r.status, autorizado: r.amount_capturable ?? 0 });
+});
+
+/** Conciliación de saldos en pruebas: el libro del día cuadra por dentro, y cada cobro, captura y
+ * devolución coincide con lo que Stripe (modo prueba) tiene registrado. También los retiros. */
+diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const db = base(c);
+  const stripe = crearStripe(llave)!;
+  const casos: Caso[] = [];
+  const hoy = new Date().toISOString().slice(0, 10);
+  const libro = await conciliar(db, hoy);
+  // No queda guardada: la del día la hace el reloj mañana, completa.
+  await db.prepare('DELETE FROM conciliaciones WHERE dia = ?').bind(hoy).run();
+  casos.push({
+    nombre: 'el libro del día cuadra por dentro (restaurantes, repartidores y plataforma)',
+    ok: libro.cuadra,
+    detalle: JSON.stringify(libro.detalle),
+  });
+  const { results } = await db
+    .prepare(
+      `SELECT p.id, p.stripe_sesion AS pi, p.estado, c.capturado, c.capturado_en, c.cancelado_en
+         FROM pedidos p JOIN cobros c ON c.pedido_id = p.id
+        WHERE p.creado_en >= ? AND p.stripe_sesion LIKE 'pi_%' ORDER BY p.creado_en LIMIT 40`,
+    )
+    .bind(`${hoy} 00:00:00`)
+    .all<{
+      id: string;
+      pi: string;
+      estado: string;
+      capturado: number | null;
+      capturado_en: string | null;
+      cancelado_en: string | null;
+    }>();
+  const difs: string[] = [];
+  for (const f of results) {
+    const pi = await stripe.get<{
+      status: string;
+      amount_received: number;
+      latest_charge?: string;
+    }>(`/payment_intents/${f.pi}`);
+    if (f.capturado_en && (pi.status !== 'succeeded' || pi.amount_received !== Number(f.capturado)))
+      difs.push(`${f.id}: base capturó ${f.capturado}, Stripe ${pi.status} ${pi.amount_received}`);
+    if (f.cancelado_en && pi.status !== 'canceled')
+      difs.push(`${f.id}: base anuló, Stripe ${pi.status}`);
+    if (f.estado === 'cancelado' && !f.cancelado_en && f.capturado_en) {
+      const rf = await stripe.get<{ data?: { amount: number; status: string }[] }>('/refunds', {
+        payment_intent: f.pi,
+        limit: 10,
+      });
+      if (!(rf.data ?? []).some((x) => x.status === 'succeeded' || x.status === 'pending'))
+        difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
+    }
+    if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
+  }
+  casos.push({
+    nombre: `cada cobro de hoy coincide con Stripe (${results.length} pedidos)`,
+    ok: difs.length === 0,
+    detalle: difs.join(' | '),
+  });
+  const retiros = await conciliarRetiros(db, stripe);
+  casos.push({
+    nombre: 'los retiros cuadran con las transferencias de Stripe',
+    ok: retiros.cuadra,
+    detalle: JSON.stringify(retiros).slice(0, 300),
+  });
+  return c.json({ prueba: 'CONCILIACION', ok: casos.every((x) => x.ok), casos });
 });

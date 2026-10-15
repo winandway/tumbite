@@ -74,3 +74,17 @@ jobs:
           AVISOS_LLAVE_ID: ${{ secrets.AVISOS_LLAVE_ID_PRUEBAS }}
           AVISOS_SECRETO: ${{ secrets.AVISOS_SECRETO_PRUEBAS }}
         run: node scripts/staging/probar-tiempo-real.mjs
+      - name: Recorrido completo de Comida en el sitio de pruebas (Stripe en modo prueba)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
+          RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test -c playwright.recorrido-staging.config.ts
+      - name: Conciliación de saldos contra Stripe (modo prueba)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        run: node scripts/staging/conciliar-staging.mjs

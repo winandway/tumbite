@@ -141,3 +141,18 @@ describe('prueba en vivo del tiempo real (armado en staging)', () => {
     expect(restos?.n).toBe(0);
   });
 });
+
+describe('recorrido y conciliación en staging', () => {
+  it('la consulta responde; pagar y conciliar se niegan sin Stripe de prueba', async () => {
+    const { pedir } = preparar({ STRIPE_SECRET_KEY: 'sk_live_x' });
+    expect(
+      (await pedir('sql', { sql: "SELECT id FROM servicios WHERE id = 'comida'" })).datos.results,
+    ).toEqual([{ id: 'comida' }]);
+    expect((await pedir('confirmar-pago', { pedidoId: 'x' })).estado).toBe(409);
+    expect((await pedir('conciliacion')).estado).toBe(409);
+  });
+  it('en tumbite.com tampoco existen', async () => {
+    const { pedir } = preparar();
+    expect((await pedir('sql', { sql: 'SELECT 1' }, 'https://tumbite.com')).estado).toBe(404);
+  });
+});

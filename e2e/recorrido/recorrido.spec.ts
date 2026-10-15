@@ -15,7 +15,26 @@ import { TEXTOS } from './textos';
  * las capturas reales para Docs (docs/capturas/<nombre>-<idioma>.png).
  */
 const RAIZ = join(__dirname, '..', '..');
-const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8')) as {
+/**
+ * EN EL SITIO DE PRUEBAS (RECORRIDO_URL=https://staging.tumbite.com y RECORRIDO_SECRETO): el
+ * mismo recorrido contra el sitio publicado, con Stripe en MODO PRUEBA de verdad. El pago se hace
+ * con la tarjeta de prueba de Stripe y el aviso (webhook) es el real de Stripe. La base se lee por
+ * la ruta de diagnóstico del sitio de pruebas (solo existe allí). Nunca contra producción.
+ */
+const STAGING = Boolean(process.env.RECORRIDO_URL);
+if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
+  throw new Error('El recorrido remoto solo corre contra el sitio de pruebas.');
+const DATOS = (
+  STAGING
+    ? {
+        url: process.env.RECORRIDO_URL,
+        correoEquipo: `soporte.recorrido.${Date.now().toString(36)}@recorrido.test`,
+        semilla: '',
+        secretoAviso: '',
+        clave: `Recorrido-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`,
+      }
+    : JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'))
+) as {
   url: string;
   correoEquipo: string;
   semilla: string;
@@ -86,7 +105,7 @@ const CASA = { latitude: 25.7725, longitude: -80.187 };
 
 for (const idioma of ['en', 'es'] as const) {
   test(`recorrido completo de un pedido (${idioma})`, async ({ browser, request }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(STAGING ? 900_000 : 240_000);
     const L = TEXTOS[idioma];
     const id = `${idioma}${Date.now().toString(36)}`;
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
@@ -183,6 +202,26 @@ for (const idioma of ['en', 'es'] as const) {
       }
     };
     const sqlUnaVez = (comando: string): Record<string, unknown>[] => {
+      if (STAGING) {
+        const r = execFileSync(
+          'curl',
+          [
+            '-s',
+            '-f',
+            '-X',
+            'POST',
+            `${DATOS.url}/datos/interno/diagnostico/sql`,
+            '-H',
+            'content-type: application/json',
+            '-H',
+            `x-reloj-secreto: ${process.env.RECORRIDO_SECRETO ?? ''}`,
+            '--data',
+            JSON.stringify({ sql: comando }),
+          ],
+          { encoding: 'utf8' },
+        );
+        return (JSON.parse(r) as { results: Record<string, unknown>[] }).results;
+      }
       const salida = execFileSync(
         'npx',
         [
@@ -205,6 +244,23 @@ for (const idioma of ['en', 'es'] as const) {
     };
     /** Un aviso de Stripe firmado como el de verdad (el pago aprobado, la cuenta del banco lista). */
     const avisoStripe = async (tipo: string, objeto: Record<string, unknown>) => {
+      if (STAGING) {
+        // Stripe de verdad (modo prueba): se paga con la tarjeta de prueba y se espera el aviso real.
+        if (tipo !== 'payment_intent.amount_capturable_updated') return;
+        const pedidoId = (objeto.metadata as { pedido_id: string }).pedido_id;
+        const r = await request.post('/datos/interno/diagnostico/confirmar-pago', {
+          headers: { 'x-reloj-secreto': process.env.RECORRIDO_SECRETO ?? '' },
+          data: { pedidoId },
+        });
+        expect(r.status(), await r.text()).toBe(200);
+        await expect
+          .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${pedidoId}'`)[0]?.estado, {
+            timeout: 60_000,
+            message: 'el aviso real de Stripe deja el pedido pagado',
+          })
+          .toBe('pagado');
+        return;
+      }
       const cuerpo = JSON.stringify({
         id: `evt_${tipo}_${String(objeto.id)}`,
         type: tipo,
@@ -325,14 +381,18 @@ for (const idioma of ['en', 'es'] as const) {
       tokenEquipo = ((await r.json()) as { token: string }).token;
     }
     const auth = { authorization: `Bearer ${tokenEquipo}` };
-    expect(
-      (
-        await request.post('/datos/cuentas/hacer-admin', {
-          headers: auth,
-          data: { semilla: DATOS.semilla },
-        })
-      ).status(),
-    ).toBe(200);
+    if (STAGING)
+      // En el sitio de pruebas la cuenta del equipo se vuelve admin en SU base (no se usa la semilla).
+      sql(`UPDATE usuarios SET rol = 'admin' WHERE correo = '${correoEquipo}'`);
+    else
+      expect(
+        (
+          await request.post('/datos/cuentas/hacer-admin', {
+            headers: auth,
+            data: { semilla: DATOS.semilla },
+          })
+        ).status(),
+      ).toBe(200);
     const lista = (await (
       await request.get('/datos/admin/restaurantes', { headers: auth })
     ).json()) as {
@@ -1067,6 +1127,7 @@ for (const idioma of ['en', 'es'] as const) {
       `SELECT c.stripe_cuenta AS id FROM cuentas_stripe c JOIN usuarios u ON u.id = c.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
     )[0]?.id;
     expect(cuenta, 'la cuenta del banco del repartidor quedó creada').toBeTruthy();
+    if (STAGING) expect(String(cuenta)).toMatch(/^acct_/); // cuenta de prueba real en Stripe
     await avisoStripe('account.updated', {
       id: cuenta,
       payouts_enabled: true,
@@ -1078,19 +1139,22 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByText(L.verBilletera).filter({ visible: true }).click();
     await expect(rep.getByText(L.retirosPausa).filter({ visible: true })).toBeVisible();
     await expect(rep.getByText(L.retirar).filter({ visible: true })).toHaveCount(0);
-    // En esta computadora (Stripe simulado) se encienden para recorrer el retiro completo.
-    sql(
-      "INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'",
-    );
-    await rep.goto('/driver/');
-    await rep.getByText(L.verBilletera).filter({ visible: true }).click();
-    await rep.getByText(L.retirar).filter({ visible: true }).click();
-    await expect(rep.getByText(L.retiroEnCamino).filter({ visible: true })).toBeVisible();
-    await foto(rep, 'repartidor-retiro');
-    const saldo = sql(
-      `SELECT COALESCE(SUM(m.monto), 0) AS s FROM movimientos m JOIN usuarios u ON u.id = m.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
-    )[0]?.s;
-    expect(Number(saldo), 'después de retirar todo, el saldo queda en cero').toBe(0);
+    // En esta computadora (Stripe simulado) se encienden para recorrer el retiro completo. En el
+    // sitio de pruebas NO: el retiro con Stripe de prueba lo cubre S11, y los retiros siguen apagados.
+    if (!STAGING) {
+      sql(
+        "INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'",
+      );
+      await rep.goto('/driver/');
+      await rep.getByText(L.verBilletera).filter({ visible: true }).click();
+      await rep.getByText(L.retirar).filter({ visible: true }).click();
+      await expect(rep.getByText(L.retiroEnCamino).filter({ visible: true })).toBeVisible();
+      await foto(rep, 'repartidor-retiro');
+      const saldo = sql(
+        `SELECT COALESCE(SUM(m.monto), 0) AS s FROM movimientos m JOIN usuarios u ON u.id = m.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
+      )[0]?.s;
+      expect(Number(saldo), 'después de retirar todo, el saldo queda en cero').toBe(0);
+    }
 
     // 17. Rechazar una oferta no castiga: la oferta se va y el repartidor sigue buscando.
     await rep.goto('/driver/');

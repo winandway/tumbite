@@ -470,6 +470,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'Live tracking isn’t available right now; the app keeps working as usual.',
   ],
   ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
+  ['Solo con Stripe en modo prueba.', 'Only with Stripe in test mode.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
