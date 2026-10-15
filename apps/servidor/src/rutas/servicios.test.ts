@@ -456,3 +456,54 @@ describe('salud del catálogo (canario)', () => {
     expect(await pieza()).toBe('error');
   });
 });
+
+describe('ciudades nuevas', () => {
+  it('una ciudad activa nueva abre Comida sola; Moto y Carro quedan próximamente', async () => {
+    const { m, admin } = await escenario();
+    const zona = {
+      id: 'US-FL-ORLANDO',
+      nombre: 'Orlando',
+      pais: 'US',
+      moneda: 'USD',
+      zonaHoraria: 'America/New_York',
+      lat: 28.5384,
+      lng: -81.3789,
+      radioKm: 30,
+      activa: false,
+    };
+    expect((await m.llamar('PUT', '/datos/admin/zonas', zona, admin.token)).estado).toBe(200);
+    const estado = async (s: string) =>
+      (
+        await m.DB.prepare(
+          'SELECT estado FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?',
+        )
+          .bind(s, zona.id)
+          .first<{ estado: string }>()
+      )?.estado;
+    expect(await estado('comida')).toBe('proximamente');
+    expect(
+      (await m.llamar('PATCH', `/datos/admin/zonas/${zona.id}`, { activa: true }, admin.token))
+        .estado,
+    ).toBe(200);
+    expect(await estado('comida')).toBe('disponible');
+    expect(await estado('moto')).toBe('proximamente');
+    const r = await m.llamar('GET', `/datos/servicios?lat=${zona.lat}&lng=${zona.lng}`);
+    expect(r.datos.servicios.find((s: { id: string }) => s.id === 'comida').accion).toBe('abrir');
+  });
+
+  it('si el equipo pausó Comida en una ciudad, volver a prenderla no la abre sola', async () => {
+    const { m, admin } = await escenario();
+    await m.llamar(
+      'PUT',
+      '/datos/admin/servicios/comida/zonas/US-FL-MIAMI',
+      { estado: 'suspendido', motivo: 'Huracán' },
+      admin.token,
+    );
+    await m.llamar('PATCH', '/datos/admin/zonas/US-FL-MIAMI', { activa: false }, admin.token);
+    await m.llamar('PATCH', '/datos/admin/zonas/US-FL-MIAMI', { activa: true }, admin.token);
+    const f = await m.DB.prepare(
+      "SELECT estado FROM servicios_zona WHERE servicio_id = 'comida' AND zona_id = 'US-FL-MIAMI'",
+    ).first<{ estado: string }>();
+    expect(f?.estado).toBe('suspendido');
+  });
+});

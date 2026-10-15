@@ -873,6 +873,30 @@ INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) 
   ('envios', 'identidad', 1), ('envios', 'antecedentes', 1),
   ('farmacia', 'identidad', 1), ('farmacia', 'antecedentes', 1);
 
+-- Una ciudad nueva nace con todo el catálogo «próximamente» y con Comida abierta si la ciudad
+-- está activa (como funciona Comida hoy). Prender una ciudad abre Comida, salvo que una persona
+-- del equipo ya haya decidido otra cosa para esa ciudad (actualizado_por con valor).
+CREATE TRIGGER IF NOT EXISTS zonas_catalogo_alta
+AFTER INSERT ON zonas
+BEGIN
+  INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
+  SELECT s.id, NEW.id,
+         CASE WHEN s.id = 'comida' AND NEW.activa = 1
+                   AND EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = 'comida')
+              THEN 'disponible' ELSE 'proximamente' END
+    FROM servicios s;
+END;
+CREATE TRIGGER IF NOT EXISTS zonas_catalogo_activa
+AFTER UPDATE OF activa ON zonas
+WHEN NEW.activa = 1 AND OLD.activa != 1
+BEGIN
+  INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
+  SELECT s.id, NEW.id, 'proximamente' FROM servicios s;
+  UPDATE servicios_zona SET estado = 'disponible', actualizado_en = datetime('now')
+   WHERE servicio_id = 'comida' AND zona_id = NEW.id AND estado = 'proximamente' AND actualizado_por IS NULL
+     AND EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = 'comida');
+END;
+
 -- ----- Vehículos -----
 CREATE TABLE IF NOT EXISTS vehiculos (
   id TEXT PRIMARY KEY,

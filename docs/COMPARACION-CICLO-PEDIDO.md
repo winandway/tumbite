@@ -110,6 +110,12 @@ Carpeta `Proyectos Para estudiar y copiar clonar ideas /`: «Del primer registro
 
 Lo de Sudamérica (efectivo, Rappi, leyes laborales de Colombia y México, Mercado Pago) queda documentado en los estudios para cuando se decida salir de EE.UU.; no se construye ahora.
 
+### Repartidores, vehículos y habilitaciones (comparado el 15 oct 2026, Fase 1 multiservicio)
+
+- **Coincide**: estados separados del repartidor y del vehículo (registrado, en revisión, aprobado, suspendido) y la idea de que tener Stripe no prueba que la persona pueda repartir (E1, «Nuestra compuerta de activación»). También coinciden los documentos privados, nunca visibles para restaurantes ni clientes (E1, mismo cuadro), la elección de modalidad (carro, scooter, bicicleta o a pie, como en Uber, E1 «Registro») y la selfie que se repite al azar (E2 p.3, ya existía).
+- **Brecha 1, edad por estado y por vehículo**: DoorDash pide 18+, 19 en Texas y Florida y 21 en California para nuevos; Uber pide 18+ en bici o a pie y 19+ en moto o carro (E2 p.3, «Repartidor: requisitos»). Hoy solo existe `edad_minima_21` para pasajeros. Queda para M6 (cuando el despacho de Comida lea la elegibilidad), con la fecha de nacimiento que ya trae la verificación de identidad.
+- **Brecha 2, licencia y seguro según el vehículo en Comida**: DoorDash pide licencia y seguro **si va en carro** (E2 p.3). Los requisitos del catálogo son por servicio, no por tipo de vehículo. Queda para M6 una tabla de requisitos por servicio y vehículo, con interruptor por zona, para no cambiar hoy quién reparte.
+
 ## Qué se cerró el mismo 14 de octubre (Etapa 2½ del roadmap)
 
 Las brechas 1 a 7 quedaron construidas y probadas ese día (ver `CANDADOS.md`, «Etapa 2½»): despacho con reloj, el restaurante ve venir al repartidor con la espera evitable y el amarillo con alarma, código QR en la pantalla del restaurante, chat dentro de la app, «en la puerta» o «en mano» con el protocolo de cliente que no aparece, avisos de asignado / listo / casi llega / en tu puerta y la hora a más tardar, repartidor que se baja o se pierde, plato agotado con devolución parcial, y más tiempo después de aceptar. Quedan para después: «cocina ocupada», varios pedidos por repartidor, firma/PIN/edad, y las llamadas con número oculto (decisión de Richard: cuesta un servicio externo).

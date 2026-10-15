@@ -478,3 +478,18 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **C-RETIROS-APAGADOS-POR-DEFECTO (15 oct 2026, Fase 0):** sin la fila `config.retiros_activos = '1'` los retiros están apagados (`retirosActivos` en `apps/servidor/src/retiros.ts`). La billetera manda `retirosActivos` y `retirosEnProceso`; la app del repartidor y el panel muestran «en pausa» en lugar del botón y «En proceso» para un retiro pendiente, nunca «Retirado». Pruebas: `retiros.test.ts` («sin bandera nacen APAGADOS»), `apps/panel/src/panel/BilleteraRetiro.test.tsx` (3, comprobadas en rojo) y el recorrido completo. **Qué NO tocar:** no cambiar el valor por defecto a encendido.
 - **C-ANULACION-VERIFICADA (15 oct 2026, Fase 0):** en `cancelarConReembolso` (`apps/servidor/src/manager.ts`), si la llamada a Stripe falla, `devolucionHecha` consulta a Stripe (cobro `canceled` si estaba autorizado; reembolso vivo si estaba capturado) **antes** de revivir el pedido. Si Stripe ya devolvió, el pedido queda cancelado. Antes, una respuesta perdida dejaba vivo un pedido con la autorización anulada: el restaurante cocinaba y la captura fallaba al entregar. Pruebas: `rutas/operacion.test.ts` («C-ANULACION-VERIFICADA», 2), comprobadas en rojo. **Qué NO tocar:** nunca revertir el estado sin consultar; nunca cambiar las claves fijas `anular-<pedido>` y `reembolso-<pedido>`.
 - **C-DIAGNOSTICO-PRUEBAS (15 oct 2026, Fase 0):** `apps/servidor/src/rutas/diagnostico.ts` corre S2–S5, S7 y S11 dentro del worker. Responde **solo** en el dominio de pruebas (o localhost) y con el secreto del reloj; en tumbite.com siempre es 404. S11 se niega si la llave de Stripe no empieza con `sk_test_`. Lo llama `scripts/staging/probar-staging.mjs` desde `pruebas-rama.yml`. Pruebas: `diagnostico.test.ts` (4; el cerrojo de dominio, comprobado en rojo). **Qué NO tocar:** nunca agregar tumbite.com a la lista de dominios; nunca quitar la condición de modo prueba de S11.
+
+- **C-SERVICIOS-IMPLEMENTADOS (15 oct 2026, Fase 1, rama `multiservicio-fase-1`): Moto y Carro no se pueden encender.**
+  - Tres capas:
+    1. `SERVICIOS_IMPLEMENTADOS` en `apps/servidor/src/esquema.ts` (solo `comida`) escribe `servicios_implementados` al arrancar.
+    2. Los disparadores `servicios_exige_implementado(_alta)` y `servicios_zona_exige_implementado(_alta)` de `schema.sql` no dejan encender lo que no esté ahí.
+    3. `bloquearPasajeros` en `rutas/servicios.ts` rechaza encender un servicio de pasajeros en esta fase.
+  - Canario: pieza `servicios` de `/datos/salud`.
+  - Pruebas: `rutas/servicios.test.ts`, comprobadas en rojo.
+  - **Qué NO tocar:** no agregar un servicio a la lista sin su fase aprobada; no quitar los disparadores; no escribir `servicios_implementados` desde el panel.
+- **C-COMIDA-INTACTA (15 oct 2026, Fase 1):**
+  - Ninguna ruta de Comida lee las tablas del catálogo.
+  - Un repartidor sin filas nuevas sale habilitado y activo en Comida («legado»).
+  - Una ciudad que se prende abre Comida sola (disparadores `zonas_catalogo_alta` y `zonas_catalogo_activa`), salvo que el equipo ya la haya tocado (`actualizado_por`).
+  - Pruebas: `servicios.test.ts`, `migracionFase1.test.ts` y el recorrido completo, comprobadas en rojo.
+  - **Qué NO tocar:** el despacho de Comida solo pasa a leer la elegibilidad con M6, con bandera y su propia prueba.

@@ -86,3 +86,12 @@
 - [x] «En proceso» en la app y en el panel; retiros apagados por defecto.
 - [x] Anulación del Manager verificada en Stripe antes de revivir un pedido (C-ANULACION-VERIFICADA).
 - [ ] 👤 Cargar en el panel de YaDominios, **en el sitio de pruebas**, las llaves de **modo prueba** de Stripe y su aviso de prueba (con `transfer.created`). Destraba S11 y el recorrido completo de Comida en pruebas. Nunca en el chat.
+
+## Fase 1 · Multiservicio (15 oct 2026, rama `multiservicio-fase-1`, solo local)
+
+- [x] Catálogo de servicios, vehículos, habilitaciones, requisitos y preferencias, con Moto y Carro bloqueados (`docs/FASE-1-MULTISERVICIO.md`).
+- [x] Migraciones M4 y M5 preparadas y probadas sobre una base de prueba (no ejecutadas sobre datos reales).
+- [ ] 👤 Revisar la Fase 1 y decidir si se publica en el sitio de pruebas.
+- [ ] Prueba de los disparadores del catálogo en D1 real (después de publicar en pruebas).
+- [ ] M6: el despacho de Comida lee la elegibilidad (con bandera), más la edad por estado y la licencia y el seguro según el vehículo (brechas de los estudios).
+- [ ] Permisos finos y doble aprobación del panel (obligatorio antes de encender pasajeros).
