@@ -1033,9 +1033,15 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-falta-plato');
     await quitar.click();
     await expect(cli.getByText(L.quitadoOk, { exact: false })).toBeVisible({ timeout: 20_000 });
-    expect(
-      Number(sql(`SELECT total FROM pedidos WHERE id = '${agotado.pedidoId}'`)[0]?.total),
-    ).toBeLessThan(agotado.desglose.totalCliente);
+    await expect
+      .poll(
+        () => Number(sql(`SELECT total FROM pedidos WHERE id = '${agotado.pedidoId}'`)[0]?.total),
+        {
+          timeout: 20_000,
+          message: 'al quitar el plato agotado, el total baja',
+        },
+      )
+      .toBeLessThan(agotado.desglose.totalCliente);
     await rechazarEnPanel(agotado.pedidoId);
 
     // 15. El Manager: un pedido que nadie confirma se pone en rojo y a los 6 minutos se cancela
@@ -1139,6 +1145,12 @@ for (const idioma of ['en', 'es'] as const) {
       payouts_enabled: true,
       charges_enabled: true,
     });
+    // En el sitio de pruebas la cuenta de prueba de Stripe no termina el alta: se marca aprobada en
+    // la base, como lo haría el aviso de Stripe al verificarla (en local lo hace el aviso simulado).
+    if (STAGING)
+      sql(
+        `UPDATE cuentas_stripe SET pagos_activos = 1 WHERE usuario_id = (SELECT id FROM usuarios WHERE correo = '${correo('repartidor')}')`,
+      );
     // Fase 0: los retiros nacen APAGADOS. La billetera lo dice y no hay botón de retirar.
     sql("DELETE FROM config WHERE clave = 'retiros_activos'"); // sin bandera = apagados
     await rep.goto('/driver/');
