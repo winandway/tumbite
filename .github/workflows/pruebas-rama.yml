@@ -1,0 +1,60 @@
+name: pruebas-rama
+# Publica una rama de trabajo («fase-*») SOLO en el sitio de pruebas (rama yapanel-pruebas →
+# tumbite-pruebas, con su propia base y su propio almacén, sin llaves de Stripe). NUNCA toca
+# producción: no hay ningún paso que empuje a yapanel-build. Fase 0 (15 oct 2026).
+on:
+  push:
+    branches: ['fase-*']
+
+# La misma fila que «publicar»: si llegan dos a la vez, la segunda espera.
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+      - run: npm run audit
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm run build:app-web
+      - run: npm run build:repartidor-web
+      - run: npm run build:restaurante-web
+      - run: |
+          mkdir out-deploy
+          cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
+          cp -r apps/panel/dist/* out-deploy/
+          mkdir -p out-deploy/app && cp -r apps/cliente/dist-web/* out-deploy/app/
+          mkdir -p out-deploy/driver && cp -r apps/repartidor/dist-web/* out-deploy/driver/
+          mkdir -p out-deploy/restaurant && cp -r apps/restaurante/dist-web/* out-deploy/restaurant/
+          cp schema.sql out-deploy/
+          echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' > out-deploy/yadominios.json
+          test -s out-deploy/_worker.js || { echo "::error::No se generó el _worker.js"; exit 1; }
+      - name: Publicar SOLO en pruebas (rama yapanel-pruebas)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: yapanel-pruebas
+          publish_dir: ./out-deploy
+      - name: Semáforo — pruebas debe servir esta versión y responder 200
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
+        timeout-minutes: 30

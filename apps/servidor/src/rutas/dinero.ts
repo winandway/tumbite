@@ -2,9 +2,10 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { CONFIG_DINERO_INICIAL, type ConfigDinero, PLANES } from '@tumbite/compartido';
 import type { Env } from '../env';
-import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
+import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
+import { nuevoId } from '../cripto';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -87,6 +88,16 @@ dinero.get('/billetera', async (c) => {
     movimientos: results,
     cuentaConectada: Boolean(cuenta),
     pagosActivos: cuenta?.pagos_activos === 1,
+    // Fase 0: la app puede apagar el botón y mostrar los retiros que siguen en proceso.
+    retirosActivos: await retirosActivos(c.env, db),
+    retirosEnProceso: (
+      await db
+        .prepare(
+          "SELECT id, monto_centavos AS monto, estado, creado_en AS fecha FROM retiros WHERE usuario_id = ? AND estado IN ('pendiente', 'enviando', 'reintentar', 'revision') ORDER BY creado_en DESC LIMIT 10",
+        )
+        .bind(u.id)
+        .all()
+    ).results,
   });
 });
 
@@ -139,7 +150,11 @@ dinero.post('/billetera/conectar', async (c) => {
   return c.json({ url: enlace.url });
 });
 
-/** Retirar el saldo a la cuenta de Stripe (de ahí Stripe lo manda al banco). */
+/**
+ * Retirar el saldo a la cuenta de Stripe (de ahí Stripe lo manda al banco). Fase 0 (15 oct 2026):
+ * un resultado incierto de Stripe NUNCA devuelve el saldo (antes sí, y se podía pagar dos veces).
+ * Ver retiros.ts y el candado C-RETIROS-SEGUROS.
+ */
 dinero.post('/billetera/retirar', async (c) => {
   const u = exigir(c, 'restaurante', 'repartidor');
   const { montoCentavos } = await leerCuerpo(
@@ -148,47 +163,95 @@ dinero.post('/billetera/retirar', async (c) => {
       montoCentavos: z.number().int().min(100, { error: 'El retiro mínimo es de 1 dólar.' }),
     }),
   );
-  const stripe = exigirStripe(c);
   const db = base(c);
+  if (!(await retirosActivos(c.env, db)))
+    throw new ErrorDatos(
+      'Los retiros están en pausa por mantenimiento. Tu saldo está a salvo; vuelve a intentarlo más tarde.',
+      undefined,
+      409,
+    );
+  const stripe = exigirStripe(c);
   const cuenta = await db
     .prepare('SELECT stripe_cuenta, pagos_activos FROM cuentas_stripe WHERE usuario_id = ?')
     .bind(u.id)
     .first<{ stripe_cuenta: string; pagos_activos: number }>();
   if (!cuenta || cuenta.pagos_activos !== 1)
     throw new ErrorDatos('Primero conecta tu cuenta bancaria en «Billetera».', undefined, 409);
-  const id = nuevoId();
-  // Revisar el saldo y anotar el retiro en UNA sola operación: si llegan dos retiros a la vez,
-  // el segundo ya ve el saldo rebajado y no pasa. Así nunca se retira más de lo que hay.
-  const anotado = await db
-    .prepare(
-      `INSERT INTO movimientos (id, usuario_id, monto, concepto)
-       SELECT ?, ?, ?, 'retiro' WHERE (SELECT COALESCE(SUM(monto), 0) FROM movimientos WHERE usuario_id = ?) >= ?`,
-    )
-    .bind(id, u.id, -montoCentavos, u.id, montoCentavos)
-    .run();
-  if (!anotado.meta.changes)
+  // Revisar el saldo, anotar el retiro y descontarlo en UNA sentencia: si llegan dos retiros a la
+  // vez, el segundo ya ve el saldo rebajado y no pasa. Así nunca se retira más de lo que hay.
+  const id = await pedirRetiro(db, u.id, cuenta.stripe_cuenta, montoCentavos);
+  if (!id)
     throw new ErrorDatos('No tienes saldo suficiente para ese retiro.', 'montoCentavos', 409);
-  try {
-    const t = await stripe.post<{ id: string }>(
-      '/transfers',
-      {
-        amount: montoCentavos,
-        currency: 'usd',
-        destination: cuenta.stripe_cuenta,
-        metadata: { movimiento: id },
-      },
-      `retiro-${id}`,
+  const resultado = await procesarRetiro(db, stripe, id);
+  if (resultado === 'fallido')
+    // El detalle técnico de Stripe queda en retiros.ultimo_error para soporte.
+    throw new ErrorDatos(
+      'Stripe no aceptó el retiro. El dinero volvió a tu saldo.',
+      'montoCentavos',
+      422,
     );
-    await db.prepare('UPDATE movimientos SET referencia = ? WHERE id = ?').bind(t.id, id).run();
-  } catch (e) {
-    // El libro no se borra: se anota la devolución para que el saldo vuelva a cuadrar.
-    await db
-      .prepare(
-        "INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia) VALUES (?, ?, ?, 'ajuste', ?)",
-      )
-      .bind(nuevoId(), u.id, montoCentavos, `retiro-fallido-${id}`)
-      .run();
-    throw e;
+  return c.json({
+    ok: true,
+    saldo: await saldo(db, u.id),
+    retiro: { id, estado: resultado === 'confirmado' ? 'enviado' : 'en_proceso' },
+  });
+});
+
+/** Bandera de seguridad de los retiros (Fase 0). La variable RETIROS_APAGADOS=1 manda sobre ella. */
+dinero.get('/admin/retiros', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const { results } = await db
+    .prepare(
+      'SELECT estado, COUNT(*) AS n, COALESCE(SUM(monto_centavos), 0) AS monto FROM retiros GROUP BY estado',
+    )
+    .all<{ estado: string; n: number; monto: number }>();
+  const conc = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'retiros_conciliacion'")
+    .first<{ valor: string }>();
+  return c.json({
+    activos: await retirosActivos(c.env, db),
+    apagadosPorVariable: c.env.RETIROS_APAGADOS === '1',
+    porEstado: results,
+    conciliacion: conc ? (JSON.parse(conc.valor) as unknown) : null,
+  });
+});
+
+dinero.put('/admin/retiros', async (c) => {
+  exigir(c, 'admin');
+  const { activos } = await leerCuerpo(c, z.object({ activos: z.boolean() }));
+  await base(c)
+    .prepare(
+      "INSERT INTO config (clave, valor) VALUES ('retiros_activos', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+    )
+    .bind(activos ? '1' : '0')
+    .run();
+  return c.json({ activos: await retirosActivos(c.env, base(c)) });
+});
+
+/**
+ * Diagnóstico S7 (Fase 0): comprueba EN LA BASE REAL que un batch que falla a la mitad se deshace
+ * entero. Solo administradores; usa una tabla temporal con nombre aleatorio y la borra al terminar.
+ */
+dinero.post('/admin/diagnostico/lote-atomico', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const tabla = `zz_diag_${nuevoId()
+    .replace(/[^a-z0-9]/gi, '')
+    .slice(0, 16)
+    .toLowerCase()}`;
+  await db.prepare(`CREATE TABLE ${tabla} (id INTEGER PRIMARY KEY, v TEXT NOT NULL)`).run();
+  let loteFallo = false;
+  try {
+    await db.batch([
+      db.prepare(`INSERT INTO ${tabla} (id, v) VALUES (1, 'primera')`),
+      db.prepare(`INSERT INTO ${tabla} (id, v) VALUES (1, 'repetida: debe fallar')`),
+    ]);
+  } catch {
+    loteFallo = true;
   }
-  return c.json({ ok: true, saldo: await saldo(db, u.id) });
+  const quedaron = await db.prepare(`SELECT COUNT(*) AS n FROM ${tabla}`).first<{ n: number }>();
+  await db.prepare(`DROP TABLE ${tabla}`).run();
+  const filas = Number(quedaron?.n ?? -1);
+  return c.json({ loteFallo, filasQuedaron: filas, atomico: loteFallo && filas === 0 });
 });

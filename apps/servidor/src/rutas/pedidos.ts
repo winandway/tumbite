@@ -1,3 +1,4 @@
+import { avisoDeTransferencia } from '../retiros';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -664,6 +665,22 @@ pedidos.post('/stripe/aviso', async (c) => {
       .prepare('UPDATE cuentas_stripe SET pagos_activos = ? WHERE stripe_cuenta = ?')
       .bind(activo, String(obj.id))
       .run();
+  }
+  // Fase 0: el aviso de transferencia confirma el retiro; si Stripe transfirió un retiro marcado
+  // «fallido» (saldo ya devuelto) o revirtió una transferencia, se avisa al equipo.
+  if (evento.type === 'transfer.created' || evento.type === 'transfer.reversed') {
+    const r = await avisoDeTransferencia(db, evento.type, obj);
+    if (r === 'alerta')
+      for (const para of (c.env.ADMIN_CORREOS ?? '')
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean))
+        await enviarCorreo(c.env, {
+          de: 'avisos',
+          para,
+          asunto: `Revisar retiro: ${evento.type} ${String(obj.id ?? '')}`,
+          texto: `Stripe envió ${evento.type} para la transferencia ${String(obj.id ?? '')} (${String(obj.transfer_group ?? '')}). El retiro quedó en revisión: compruébalo en Stripe antes de tocar el saldo.`,
+        }).catch((e: unknown) => console.error('retiro: correo equipo', e));
   }
   // Abono fallido (el banco rechazó el depósito): se avisa a quien es el dinero y al equipo.
   if (evento.type === 'payout.failed') {

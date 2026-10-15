@@ -320,6 +320,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No se pudo hacer la copia de seguridad.', 'The backup couldn’t be completed.'],
   [
+    'Los retiros están en pausa por mantenimiento. Tu saldo está a salvo; vuelve a intentarlo más tarde.',
+    'Withdrawals are paused for maintenance. Your balance is safe; please try again later.',
+  ],
+  [
+    'Stripe no aceptó el retiro. El dinero volvió a tu saldo.',
+    'Stripe didn’t accept the withdrawal. The money is back in your balance.',
+  ],
+  [
     'No tienes saldo suficiente para ese retiro.',
     'You don’t have enough balance for that withdrawal.',
   ],

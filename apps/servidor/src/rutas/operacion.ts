@@ -1,3 +1,4 @@
+import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -1606,6 +1607,20 @@ operacion.post('/reloj', async (c) => {
     console.error('conciliación', e);
     return null;
   });
+  // Fase 0: retiros dudosos o atascados se reintentan (misma clave) y una vez al día se concilian.
+  const stripeReloj = crearStripe(c.env.STRIPE_SECRET_KEY);
+  const retiros = stripeReloj
+    ? await procesarRetirosPendientes(db, stripeReloj).catch((e: unknown) => {
+        console.error('retiros: reloj', e);
+        return null;
+      })
+    : null;
+  const conciliacionRetiros = stripeReloj
+    ? await conciliarRetirosSiToca(db, stripeReloj).catch((e: unknown) => {
+        console.error('retiros: conciliación', e);
+        return null;
+      })
+    : null;
   const fotosBorradas = c.env.BUCKET
     ? await depurarFotos(db, c.env.BUCKET).catch((e: unknown) => {
         console.error('retención de fotos', e);
@@ -1618,6 +1633,8 @@ operacion.post('/reloj', async (c) => {
     sinRepartidor: pendientes?.n ?? 0,
     conciliacion: conciliacion ? { dia: conciliacion.dia, cuadra: conciliacion.cuadra } : null,
     fotosBorradas,
+    retiros,
+    conciliacionRetiros: conciliacionRetiros ? { cuadra: conciliacionRetiros.cuadra } : null,
     cuando: new Date().toISOString(),
   });
 });

@@ -47,6 +47,8 @@ export const esquemaEnv = z.object({
   CHECKR_API_KEY: z.string().min(16).optional(),
   /** Solo para el recorrido: Checkr simulado en localhost (en producción se ignora). */
   CHECKR_API_URL: z.string().optional(),
+  /** «1» = apagar los retiros de inmediato, sin tocar la base (emergencia). Manda sobre la bandera. */
+  RETIROS_APAGADOS: z.enum(['0', '1']).optional(),
   /** «1» = la selfie de control se pide en cada conexión (pruebas y recorrido). */
   SELFIE_CONTROL_SIEMPRE: z.enum(['0', '1']).optional(),
 });

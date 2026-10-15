@@ -77,3 +77,11 @@
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.
 - [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). Fase A, primera parte hecha el 12 oct (C-MANAGER-1: recordatorios, cancelación con devolución, alerta sin repartidor, bitácora). Semáforo y «Pedidos en curso» hechos el mismo día: Fase A completa.
 - [ ] 👤 Tumbite AI: tope mensual de gasto en IA (propuesto 20 USD prepago) y si el Manager puede dar regalos de disculpa solo y hasta cuánto.
+
+## Fase 0 · Seguridad financiera (15 oct 2026)
+
+- [x] Retiros sin doble pago, bandera de seguridad, conciliación y pruebas (rama `fase-0-seguridad-financiera`, `docs/FASE-0-SEGURIDAD-FINANCIERA.md`).
+- [ ] 👤 Aprobar la Fase 0 para fusionarla a `main` y publicarla en producción.
+- [ ] 👤 Del sitio de pruebas en YaDominios Cloud: su nombre exacto y su token de base de datos (panel → tarjeta del sitio de pruebas → «Ver token»), para correr S2 a S8 (`scripts/staging/probar-staging.mjs`).
+- [ ] 👤 Una cuenta admin en el sitio de pruebas (para S7).
+- [ ] 👤 Llaves de **modo prueba** de Stripe en el sitio de pruebas y el evento `transfer.created` activado, para el retiro de prueba (S11).

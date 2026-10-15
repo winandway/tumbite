@@ -650,3 +650,62 @@ CREATE TABLE IF NOT EXISTS grupos_pedido (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS grupos_pedido_grupo ON grupos_pedido(grupo_id);
+
+-- ===================== Fase 0 · Retiros sin doble pago (15 oct 2026) =====================
+-- Cada retiro es una fila con su estado. Pedir el retiro es UNA sentencia: crea la fila solo si
+-- hay saldo y un disparador descuenta el saldo en ese mismo instante. Stripe se llama DESPUÉS,
+-- siempre con la misma clave (retiro:<id>), que es también su transfer_group. Un resultado
+-- incierto (red caída, 5xx, 429…) NUNCA devuelve el saldo: se verifica en Stripe y se reintenta.
+-- Solo un rechazo comprobado de Stripe lo devuelve, una sola vez. Candado C-RETIROS-SEGUROS.
+CREATE TABLE IF NOT EXISTS retiros (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  stripe_cuenta TEXT NOT NULL,
+  monto_centavos INTEGER NOT NULL CHECK (monto_centavos >= 100),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN
+    ('pendiente', 'enviando', 'confirmado', 'reintentar', 'fallido', 'revision')),
+  intentos INTEGER NOT NULL DEFAULT 0 CHECK (intentos >= 0),
+  proximo_intento_en TEXT NOT NULL DEFAULT (datetime('now')),
+  enviando_desde TEXT,
+  stripe_transferencia TEXT,
+  ultimo_error TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (estado != 'confirmado' OR stripe_transferencia IS NOT NULL)
+);
+CREATE INDEX IF NOT EXISTS retiros_usuario ON retiros(usuario_id, creado_en);
+CREATE INDEX IF NOT EXISTS retiros_por_procesar ON retiros(proximo_intento_en) WHERE estado IN ('pendiente', 'reintentar', 'enviando');
+CREATE UNIQUE INDEX IF NOT EXISTS retiros_transferencia ON retiros(stripe_transferencia) WHERE stripe_transferencia IS NOT NULL;
+-- La devolución de un retiro rechazado existe UNA sola vez en el libro.
+CREATE UNIQUE INDEX IF NOT EXISTS movimientos_retiro_revertido ON movimientos(referencia) WHERE referencia LIKE 'retiro-revertido:%';
+
+-- Pedir el retiro descuenta el saldo en la misma sentencia (el libro de siempre: movimientos).
+CREATE TRIGGER IF NOT EXISTS retiros_descuenta_saldo
+AFTER INSERT ON retiros
+BEGIN
+  INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+  VALUES ('mov-retiro-' || NEW.id, NEW.usuario_id, -NEW.monto_centavos, 'retiro', 'retiro:' || NEW.id);
+END;
+
+-- Solo un rechazo comprobado devuelve el saldo, una vez (índice único de arriba).
+CREATE TRIGGER IF NOT EXISTS retiros_fallido_devuelve
+AFTER UPDATE OF estado ON retiros
+WHEN NEW.estado = 'fallido' AND OLD.estado <> 'fallido'
+BEGIN
+  INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+  VALUES ('mov-revertido-' || NEW.id, NEW.usuario_id, NEW.monto_centavos, 'ajuste', 'retiro-revertido:' || NEW.id);
+END;
+
+-- Estados permitidos. Un retiro confirmado no vuelve atrás; uno fallido solo pasa a revisión
+-- (si Stripe avisa que sí transfirió, el equipo lo revisa).
+CREATE TRIGGER IF NOT EXISTS retiros_transicion_valida
+BEFORE UPDATE OF estado ON retiros
+WHEN NEW.estado <> OLD.estado AND NOT (
+     (OLD.estado = 'pendiente'  AND NEW.estado IN ('enviando', 'revision'))
+  OR (OLD.estado = 'enviando'   AND NEW.estado IN ('confirmado', 'reintentar', 'fallido', 'revision'))
+  OR (OLD.estado = 'reintentar' AND NEW.estado IN ('enviando', 'confirmado', 'revision'))
+  OR (OLD.estado = 'revision'   AND NEW.estado IN ('confirmado', 'fallido'))
+  OR (OLD.estado = 'fallido'    AND NEW.estado = 'revision'))
+BEGIN
+  SELECT RAISE(ABORT, 'retiro_transicion_no_permitida');
+END;

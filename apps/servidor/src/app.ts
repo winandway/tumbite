@@ -1,3 +1,4 @@
+import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/compartido';
@@ -145,6 +146,12 @@ app.get('/datos/salud', async (c) => {
     const ult = await ultimaConciliacion(c.env.DB).catch(() => null);
     piezas.dinero = !ult ? 'pendiente' : Number(ult.cuadra) === 1 ? 'ok' : 'error';
   }
+  // Fase 0: retiros sin doble pago (disparadores puestos, conciliación al día, nada en revisión).
+  if (c.env.DB)
+    piezas.retiros = await saludRetiros(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: retiros', e);
+      return 'error' as const;
+    });
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
