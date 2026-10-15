@@ -36,9 +36,19 @@ jobs:
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2 (fijado al commit)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Las apps del sitio de pruebas hablan con el SITIO DE PRUEBAS (antes salían apuntando a
+      # producción y producción las rechazaba; nunca deben escribir allí).
       - run: npm run build:app-web
+        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
       - run: npm run build:repartidor-web
+        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
       - run: npm run build:restaurante-web
+        env: { URL_API: '${{ vars.URL_PRUEBAS }}' }
+      - name: Las apps de pruebas no apuntan a producción
+        run: |
+          if grep -rl "https://tumbite.com/datos\|\"https://tumbite.com\"" apps/cliente/dist-web apps/repartidor/dist-web apps/restaurante/dist-web | head -1 | grep -q .; then
+            echo "::error::Una app de pruebas apunta a producción"; exit 1; fi
+          grep -rlq "staging.tumbite.com" apps/repartidor/dist-web || { echo "::error::La app del repartidor no apunta al sitio de pruebas"; exit 1; }
       - run: |
           mkdir out-deploy
           cp apps/servidor/.dist-worker/index.js out-deploy/_worker.js
