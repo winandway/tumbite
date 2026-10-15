@@ -117,3 +117,11 @@
 
 - [ ] Alta de restaurantes y repartidores con los **componentes de onboarding integrados** de Stripe (dentro de la app y del panel, con los colores de Tumbite), en lugar de mandarlos a la página de Stripe. Decisión de Richard del 15 oct. Hoy funciona con la página alojada por Stripe (`/datos/billetera/conectar`, enlace de cuenta). Requiere sesión de cuenta en el servidor, el componente en el panel web y en las apps, guía en Docs y su prueba.
 - [ ] 👤 Terminar la activación de Connect en la cuenta de prueba «Tumbite test» (modelo: los clientes le compran a Tumbite, transferencias divididas, servicios on demand, alta integrada). Destraba S11.
+
+## Después de la validación (15 oct 2026)
+
+- [x] Validación en pruebas de las fases 0, 1 y 2: TODO EN VERDE (corrida 38812353874).
+- [ ] 👤 Aprobar publicar en producción la Fase 0 + el arreglo de `evidencias.modo/nota` (producción hoy no puede completar una entrega).
+- [ ] `publicar.yml`: construir las apps de pruebas con la dirección de pruebas (hoy la copia de pruebas apunta a producción).
+- [ ] 👤 Twilio también en el sitio de pruebas (la llamada con número oculto no se prueba allí).
+- [ ] 👤 Autorizar la Fase 3 (exclusividad y asignación).
