@@ -88,7 +88,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos y el cupón de regalos. El selector de idioma (español o inglés) está ahí mismo.',
           'Buscador: escribe el nombre de un restaurante o un tipo de comida y la lista se filtra al instante. El botón de filtros muestra solo los que están abiertos ahora.',
-          'Servicios: hoy funciona «Comida». Mercado, envíos, farmacia, moto, licores, promos y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
+          'Servicios: hoy funciona «Comida». Mercado, envíos, farmacia, moto, licores, carro y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
           'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
           'Ofertas del día: mientras los restaurantes cargan sus promociones, ves ejemplos marcados «Ejemplo» (no se pueden comprar).',
           'Restaurantes cerca de ti: tarjetas con la foto, el tiempo estimado, el costo de envío y si está abierto. Toca una para ver el menú.',
@@ -1763,7 +1763,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Header: the Tumbite logo, your name, the notifications bell and the gifts coupon. The language selector (Spanish or English) is right there.',
           'Search: type a restaurant name or a type of food and the list filters instantly. The filter button shows only the ones open right now.',
-          'Services: “Food” works today. Grocery, deliveries, pharmacy, ride, liquor, deals and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
+          'Services: “Food” works today. Grocery, deliveries, pharmacy, ride, liquor, car and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
           'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
           'Today’s deals: while restaurants load their promotions, you see samples marked “Sample” (they can’t be bought).',
           'Restaurants near you: cards with the photo, the estimated time, the delivery fee and whether it’s open. Tap one to see the menu.',

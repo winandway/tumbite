@@ -1,0 +1,11 @@
+TUMBITE - ACTUALIZACION VISUAL DEL MENU CLIENTE
+
+Recurso: carro_3d_transparente.png
+
+Trabajar solamente en apps/cliente.
+Sustituir la tarjeta 'Promos' por una tarjeta 'Carro', usando este PNG como icono.
+Mantener el estilo, dimensiones, bordes, tipografia y distribucion actual de la cuadricula.
+La tarjeta 'Carro' debe mostrar el mismo modal '¡Muy pronto en Tumbite!' que las demas categorias no activas.
+No modificar backend, APIs, autenticacion, base de datos, rutas ni otras aplicaciones.
+Conservar las funciones existentes y las traducciones ES/EN (Carro / Car).
+Antes de editar, indicar el archivo a modificar y esperar autorizacion.

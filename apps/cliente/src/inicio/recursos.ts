@@ -23,7 +23,7 @@ import servicioEnvios from '../../assets/inicio/servicio-envios.png';
 import servicioFarmacia from '../../assets/inicio/servicio-farmacia.png';
 import servicioMoto from '../../assets/inicio/servicio-moto.png';
 import servicioLicores from '../../assets/inicio/servicio-licores.png';
-import servicioPromos from '../../assets/inicio/servicio-promos.png';
+import servicioCarro from '../../assets/inicio/servicio-carro.png';
 import servicioMas from '../../assets/inicio/servicio-mas.png';
 import rellenoCombo from '../../assets/inicio/relleno-combo-familiar.png';
 import rellenoOfertaHamburguesa from '../../assets/inicio/relleno-oferta-hamburguesa.png';
@@ -51,7 +51,7 @@ export const IMG = {
     farmacia: servicioFarmacia,
     moto: servicioMoto,
     licores: servicioLicores,
-    promos: servicioPromos,
+    carro: servicioCarro,
     mas: servicioMas,
   },
   relleno: {

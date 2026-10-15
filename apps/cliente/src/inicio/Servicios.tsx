@@ -12,7 +12,7 @@ const ORDEN: Servicio[] = [
   'farmacia',
   'moto',
   'licores',
-  'promos',
+  'carro',
   'mas',
 ];
 
