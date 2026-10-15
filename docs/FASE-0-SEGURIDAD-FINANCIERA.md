@@ -112,6 +112,17 @@ Las 21 pruebas de retiros cubren:
 | Bandera ignorada                                        | 1               |
 | Un confirmado puede volver a fallido                    | 1               |
 
+### 4.1 En el sitio de pruebas de YaDominios Cloud (D1 real)
+
+La rama se publicó **solo** en el sitio de pruebas con el workflow `pruebas-rama` (corrida 38762345665: verificación completa, publicación en `yapanel-pruebas` y semáforo en verde). Producción siguió en su versión anterior (`e5a2ff0`) y su salud no cambió.
+
+| Prueba                                                      | Resultado                                                                                                                                                    |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **S1** · `schema.sql` con disparadores de varias sentencias | ✅ La salud de pruebas dice `retiros: ok`. Esa pieza comprueba en `sqlite_master` que existen los 3 disparadores: el ejecutor de YaDominios los creó enteros |
+| **S8** (parcial) · Comida responde con los cambios puestos  | ✅ `/`, `/app/`, `/driver/`, `/restaurant/`, `/panel`, `/datos/salud` y `/datos/restaurantes` responden 200 (semáforo y comprobación manual)                 |
+| **S2 a S7**                                                 | ⏳ Pendientes: necesitan el token de base de datos del sitio de pruebas y una sesión de admin ahí (§7). El guion está listo                                  |
+| **S6**                                                      | Pertenece a la fase 3 (exclusividad), no a esta                                                                                                              |
+
 ## 5. Resultados
 
 - **Ningún escenario de las pruebas paga dos veces.** En todos hay como máximo **una** transferencia por retiro.
