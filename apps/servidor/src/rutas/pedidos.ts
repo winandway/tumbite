@@ -541,136 +541,210 @@ pedidos.post('/stripe/aviso', async (c) => {
     data: { object: Record<string, unknown> };
   };
   const db = base(c);
+  // C-FALLOS-CRITICOS 1 (idempotencia persistente): la marca del aviso tiene estado. Solo quien
+  // la crea («procesando») procesa; «hecho» responde repetido sin tocar nada; una marca a medias
+  // ajena responde 409 para que Stripe reintente más tarde; una marca a medias abandonada (el
+  // servidor murió hace más de 5 minutos) se reclama y se vuelve a procesar.
   const nuevo = await db
-    .prepare('INSERT OR IGNORE INTO avisos_stripe (id, tipo) VALUES (?, ?)')
+    .prepare("INSERT OR IGNORE INTO avisos_stripe (id, tipo, estado) VALUES (?, ?, 'procesando')")
     .bind(evento.id, evento.type)
     .run();
-  if (!nuevo.meta.changes) return c.json({ ok: true, repetido: true });
-
-  const obj = evento.data.object;
-  if (evento.type === 'checkout.session.completed' && obj.payment_status === 'paid') {
-    const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
-    const pedido = pedidoId
-      ? await db
-          .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
-          .bind(pedidoId)
-          .first<{ total: number; stripe_sesion: string; estado: string }>()
-      : null;
-    if (!pedido) {
-      console.error('aviso de pago sin pedido conocido', pedidoId);
-    } else if (
-      pedido.stripe_sesion !== obj.id ||
-      Number(obj.amount_total) !== Number(pedido.total)
-    ) {
-      console.error(
-        'aviso de pago que no cuadra con el pedido',
-        pedidoId,
-        obj.amount_total,
-        pedido.total,
-      );
-    } else if (pedido.estado === 'pago_pendiente') {
-      await db
-        .prepare(
-          "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
-        )
-        .bind(String(obj.payment_intent ?? ''), pedidoId)
-        .run();
-      await anotar(db, pedidoId as string, 'pagado', null);
-      await correosDePedidoPagado(c.env, db, pedidoId as string);
-    }
-  }
-  if (evento.type === 'payment_intent.amount_capturable_updated') {
-    // La tarjeta quedó AUTORIZADA por el total: el pedido pasa a pagado y se cobra al entregar.
-    const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
-    const pedido = pedidoId
-      ? await db
-          .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
-          .bind(pedidoId)
-          .first<{ total: number; stripe_sesion: string; estado: string }>()
-      : null;
-    if (!pedido) {
-      if (pedidoId) console.error('aviso de autorización sin pedido conocido', pedidoId);
-    } else if (
-      pedido.stripe_sesion !== obj.id ||
-      Number(obj.amount_capturable) !== Number(pedido.total)
-    ) {
-      console.error(
-        'aviso de autorización que no cuadra con el pedido',
-        pedidoId,
-        obj.amount_capturable,
-        pedido.total,
-      );
-    } else if (pedido.estado === 'pago_pendiente') {
-      await db.batch([
-        db
-          .prepare(
-            "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
-          )
-          .bind(String(obj.id), pedidoId),
-        db.prepare('INSERT OR IGNORE INTO cobros (pedido_id) VALUES (?)').bind(pedidoId),
-      ]);
-      await anotar(db, pedidoId as string, 'pagado', null);
-      await correosDePedidoPagado(c.env, db, pedidoId as string);
-    }
-  }
-  if (evento.type === 'payment_intent.succeeded') {
-    const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
-    const pedido = pedidoId
-      ? await db
-          .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
-          .bind(pedidoId)
-          .first<{ total: number; stripe_sesion: string; estado: string }>()
-      : null;
-    if (!pedido) {
-      if (pedidoId) console.error('aviso de pago sin pedido conocido', pedidoId);
-    } else if (
-      pedido.stripe_sesion !== obj.id ||
-      Number(obj.amount_received) !== Number(pedido.total)
-    ) {
-      console.error(
-        'aviso de pago que no cuadra con el pedido',
-        pedidoId,
-        obj.amount_received,
-        pedido.total,
-      );
-    } else if (pedido.estado === 'pago_pendiente') {
-      // Cobro inmediato (sin autorización previa): se guarda ya capturado.
-      await db.batch([
-        db
-          .prepare(
-            "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
-          )
-          .bind(String(obj.id), pedidoId),
-        db
-          .prepare(
-            "INSERT OR REPLACE INTO cobros (pedido_id, capturado_en, capturado) VALUES (?, datetime('now'), ?)",
-          )
-          .bind(pedidoId, Number(obj.amount_received)),
-      ]);
-      await anotar(db, pedidoId as string, 'pagado', null);
-      await correosDePedidoPagado(c.env, db, pedidoId as string);
-    } else {
-      // Captura confirmada por Stripe (al entregar): queda anotada aunque el servidor ya lo supiera.
-      await db
-        .prepare(
-          "UPDATE cobros SET capturado_en = COALESCE(capturado_en, datetime('now')), capturado = COALESCE(capturado, ?) WHERE pedido_id = ?",
-        )
-        .bind(Number(obj.amount_received), pedidoId)
-        .run();
-    }
-  }
-  if (evento.type === 'account.updated') {
-    const activo = obj.payouts_enabled === true && obj.charges_enabled !== false ? 1 : 0;
-    await db
-      .prepare('UPDATE cuentas_stripe SET pagos_activos = ? WHERE stripe_cuenta = ?')
-      .bind(activo, String(obj.id))
+  if (!nuevo.meta.changes) {
+    const reclamada = await db
+      .prepare(
+        "UPDATE avisos_stripe SET recibido_en = datetime('now') WHERE id = ? AND estado = 'procesando' AND recibido_en < datetime('now', '-5 minutes')",
+      )
+      .bind(evento.id)
       .run();
+    if (!reclamada.meta.changes) {
+      const marca = await db
+        .prepare('SELECT estado FROM avisos_stripe WHERE id = ?')
+        .bind(evento.id)
+        .first<{ estado: string }>();
+      if (marca?.estado === 'procesando') return c.json({ ok: false, enCurso: true }, 409);
+      return c.json({ ok: true, repetido: true });
+    }
+    console.error('aviso de Stripe a medias abandonado; se vuelve a procesar', evento.id);
   }
-  // Fase 0: el aviso de transferencia confirma el retiro; si Stripe transfirió un retiro marcado
-  // «fallido» (saldo ya devuelto) o revirtió una transferencia, se avisa al equipo.
-  if (evento.type === 'transfer.created' || evento.type === 'transfer.reversed') {
-    const r = await avisoDeTransferencia(db, evento.type, obj);
-    if (r === 'alerta')
+
+  // Si el aviso falla a medias, se suelta SU marca (solo si sigue «procesando») para que el
+  // reintento de Stripe (mismo id de evento) sí lo aplique. Un aviso perdido es dinero sin acreditar.
+  try {
+    const obj = evento.data.object;
+    if (evento.type === 'checkout.session.completed' && obj.payment_status === 'paid') {
+      const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+      const pedido = pedidoId
+        ? await db
+            .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+            .bind(pedidoId)
+            .first<{ total: number; stripe_sesion: string; estado: string }>()
+        : null;
+      if (!pedido) {
+        console.error('aviso de pago sin pedido conocido', pedidoId);
+      } else if (
+        pedido.stripe_sesion !== obj.id ||
+        Number(obj.amount_total) !== Number(pedido.total)
+      ) {
+        console.error(
+          'aviso de pago que no cuadra con el pedido',
+          pedidoId,
+          obj.amount_total,
+          pedido.total,
+        );
+      } else if (pedido.estado === 'pago_pendiente') {
+        await db
+          .prepare(
+            "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+          )
+          .bind(String(obj.payment_intent ?? ''), pedidoId)
+          .run();
+        await anotar(db, pedidoId as string, 'pagado', null);
+        await correosDePedidoPagado(c.env, db, pedidoId as string);
+      }
+    }
+    if (evento.type === 'payment_intent.amount_capturable_updated') {
+      // La tarjeta quedó AUTORIZADA por el total: el pedido pasa a pagado y se cobra al entregar.
+      const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+      const pedido = pedidoId
+        ? await db
+            .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+            .bind(pedidoId)
+            .first<{ total: number; stripe_sesion: string; estado: string }>()
+        : null;
+      if (!pedido) {
+        if (pedidoId) console.error('aviso de autorización sin pedido conocido', pedidoId);
+      } else if (
+        pedido.stripe_sesion !== obj.id ||
+        Number(obj.amount_capturable) !== Number(pedido.total)
+      ) {
+        console.error(
+          'aviso de autorización que no cuadra con el pedido',
+          pedidoId,
+          obj.amount_capturable,
+          pedido.total,
+        );
+      } else if (pedido.estado === 'pago_pendiente') {
+        await db.batch([
+          db
+            .prepare(
+              "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+            )
+            .bind(String(obj.id), pedidoId),
+          db.prepare('INSERT OR IGNORE INTO cobros (pedido_id) VALUES (?)').bind(pedidoId),
+        ]);
+        await anotar(db, pedidoId as string, 'pagado', null);
+        await correosDePedidoPagado(c.env, db, pedidoId as string);
+      }
+    }
+    if (evento.type === 'payment_intent.succeeded') {
+      const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+      const pedido = pedidoId
+        ? await db
+            .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+            .bind(pedidoId)
+            .first<{ total: number; stripe_sesion: string; estado: string }>()
+        : null;
+      if (!pedido) {
+        if (pedidoId) console.error('aviso de pago sin pedido conocido', pedidoId);
+      } else if (
+        pedido.stripe_sesion !== obj.id ||
+        Number(obj.amount_received) !== Number(pedido.total)
+      ) {
+        console.error(
+          'aviso de pago que no cuadra con el pedido',
+          pedidoId,
+          obj.amount_received,
+          pedido.total,
+        );
+      } else if (pedido.estado === 'pago_pendiente') {
+        // Cobro inmediato (sin autorización previa): se guarda ya capturado.
+        await db.batch([
+          db
+            .prepare(
+              "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = ? WHERE id = ?",
+            )
+            .bind(String(obj.id), pedidoId),
+          db
+            .prepare(
+              "INSERT OR REPLACE INTO cobros (pedido_id, capturado_en, capturado) VALUES (?, datetime('now'), ?)",
+            )
+            .bind(pedidoId, Number(obj.amount_received)),
+        ]);
+        await anotar(db, pedidoId as string, 'pagado', null);
+        await correosDePedidoPagado(c.env, db, pedidoId as string);
+      } else {
+        // Captura confirmada por Stripe (al entregar): queda anotada aunque el servidor ya lo supiera.
+        await db
+          .prepare(
+            "UPDATE cobros SET capturado_en = COALESCE(capturado_en, datetime('now')), capturado = COALESCE(capturado, ?) WHERE pedido_id = ?",
+          )
+          .bind(Number(obj.amount_received), pedidoId)
+          .run();
+      }
+    }
+    if (evento.type === 'account.updated') {
+      const activo = obj.payouts_enabled === true && obj.charges_enabled !== false ? 1 : 0;
+      await db
+        .prepare('UPDATE cuentas_stripe SET pagos_activos = ? WHERE stripe_cuenta = ?')
+        .bind(activo, String(obj.id))
+        .run();
+    }
+    // Fase 0: el aviso de transferencia confirma el retiro; si Stripe transfirió un retiro marcado
+    // «fallido» (saldo ya devuelto) o revirtió una transferencia, se avisa al equipo.
+    if (evento.type === 'transfer.created' || evento.type === 'transfer.reversed') {
+      const r = await avisoDeTransferencia(db, evento.type, obj);
+      if (r === 'alerta')
+        for (const para of (c.env.ADMIN_CORREOS ?? '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean))
+          await enviarCorreo(c.env, {
+            de: 'avisos',
+            para,
+            asunto: `Revisar retiro: ${evento.type} ${String(obj.id ?? '')}`,
+            texto: `Stripe envió ${evento.type} para la transferencia ${String(obj.id ?? '')} (${String(obj.transfer_group ?? '')}). El retiro quedó en revisión: compruébalo en Stripe antes de tocar el saldo.`,
+          }).catch((e: unknown) => console.error('retiro: correo equipo', e));
+    }
+    // Abono fallido (el banco rechazó el depósito): se avisa a quien es el dinero y al equipo.
+    if (evento.type === 'payout.failed') {
+      const cuentaStripe = String(evento.account ?? '');
+      const duenio = await db
+        .prepare(
+          'SELECT s.usuario_id, u.nombre, u.correo, u.idioma FROM cuentas_stripe s JOIN usuarios u ON u.id = s.usuario_id WHERE s.stripe_cuenta = ?',
+        )
+        .bind(cuentaStripe)
+        .first<{ usuario_id: string; nombre: string; correo: string; idioma: string }>();
+      const motivo = String(obj.failure_message ?? obj.failure_code ?? '');
+      await db
+        .prepare(
+          'INSERT INTO abonos_fallidos (id, usuario_id, stripe_cuenta, motivo) VALUES (?, ?, ?, ?)',
+        )
+        .bind(nuevoId(), duenio?.usuario_id ?? null, cuentaStripe, motivo)
+        .run();
+      const monto = formatearDolares(
+        Number(obj.amount ?? 0),
+        duenio?.idioma === 'en' ? 'en' : 'es',
+      );
+      if (duenio) {
+        await notificar(
+          c.env,
+          db,
+          duenio.usuario_id,
+          AVISOS.abonoFallido(duenio.idioma, monto),
+        ).catch((e: unknown) => console.error('abono fallido: aviso', e));
+        await enviarCorreo(c.env, {
+          de: 'avisos',
+          para: duenio.correo,
+          asunto:
+            duenio.idioma === 'en'
+              ? `Your ${monto} payout didn’t go through`
+              : `Tu abono de ${monto} no llegó al banco`,
+          texto:
+            duenio.idioma === 'en'
+              ? `The bank rejected your ${monto} payout${motivo ? ` (${motivo})` : ''}. Open “Wallet” in your app and check your bank details; the money is still in your Tumbite balance.`
+              : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Tumbite.`,
+        }).catch((e: unknown) => console.error('abono fallido: correo', e));
+      }
       for (const para of (c.env.ADMIN_CORREOS ?? '')
         .split(',')
         .map((x) => x.trim())
@@ -678,58 +752,19 @@ pedidos.post('/stripe/aviso', async (c) => {
         await enviarCorreo(c.env, {
           de: 'avisos',
           para,
-          asunto: `Revisar retiro: ${evento.type} ${String(obj.id ?? '')}`,
-          texto: `Stripe envió ${evento.type} para la transferencia ${String(obj.id ?? '')} (${String(obj.transfer_group ?? '')}). El retiro quedó en revisión: compruébalo en Stripe antes de tocar el saldo.`,
-        }).catch((e: unknown) => console.error('retiro: correo equipo', e));
-  }
-  // Abono fallido (el banco rechazó el depósito): se avisa a quien es el dinero y al equipo.
-  if (evento.type === 'payout.failed') {
-    const cuentaStripe = String(evento.account ?? '');
-    const duenio = await db
-      .prepare(
-        'SELECT s.usuario_id, u.nombre, u.correo, u.idioma FROM cuentas_stripe s JOIN usuarios u ON u.id = s.usuario_id WHERE s.stripe_cuenta = ?',
-      )
-      .bind(cuentaStripe)
-      .first<{ usuario_id: string; nombre: string; correo: string; idioma: string }>();
-    const motivo = String(obj.failure_message ?? obj.failure_code ?? '');
-    await db
-      .prepare(
-        'INSERT INTO abonos_fallidos (id, usuario_id, stripe_cuenta, motivo) VALUES (?, ?, ?, ?)',
-      )
-      .bind(nuevoId(), duenio?.usuario_id ?? null, cuentaStripe, motivo)
-      .run();
-    const monto = formatearDolares(Number(obj.amount ?? 0), duenio?.idioma === 'en' ? 'en' : 'es');
-    if (duenio) {
-      await notificar(
-        c.env,
-        db,
-        duenio.usuario_id,
-        AVISOS.abonoFallido(duenio.idioma, monto),
-      ).catch((e: unknown) => console.error('abono fallido: aviso', e));
-      await enviarCorreo(c.env, {
-        de: 'avisos',
-        para: duenio.correo,
-        asunto:
-          duenio.idioma === 'en'
-            ? `Your ${monto} payout didn’t go through`
-            : `Tu abono de ${monto} no llegó al banco`,
-        texto:
-          duenio.idioma === 'en'
-            ? `The bank rejected your ${monto} payout${motivo ? ` (${motivo})` : ''}. Open “Wallet” in your app and check your bank details; the money is still in your Tumbite balance.`
-            : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Tumbite.`,
-      }).catch((e: unknown) => console.error('abono fallido: correo', e));
+          asunto: `Abono fallido: ${duenio?.nombre ?? cuentaStripe} (${monto})`,
+          texto: `Stripe no pudo depositar ${monto} a ${duenio?.nombre ?? 'una cuenta sin dueño en la base'} (${cuentaStripe}). Motivo: ${motivo || 'sin detalle'}. Queda en abonos_fallidos.`,
+        }).catch((e: unknown) => console.error('abono fallido: correo equipo', e));
     }
-    for (const para of (c.env.ADMIN_CORREOS ?? '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean))
-      await enviarCorreo(c.env, {
-        de: 'avisos',
-        para,
-        asunto: `Abono fallido: ${duenio?.nombre ?? cuentaStripe} (${monto})`,
-        texto: `Stripe no pudo depositar ${monto} a ${duenio?.nombre ?? 'una cuenta sin dueño en la base'} (${cuentaStripe}). Motivo: ${motivo || 'sin detalle'}. Queda en abonos_fallidos.`,
-      }).catch((e: unknown) => console.error('abono fallido: correo equipo', e));
+  } catch (e) {
+    await db
+      .prepare("DELETE FROM avisos_stripe WHERE id = ? AND estado = 'procesando'")
+      .bind(evento.id)
+      .run();
+    console.error('aviso de Stripe sin terminar; se deja reintentar', evento.id, evento.type, e);
+    throw e;
   }
+  await db.prepare("UPDATE avisos_stripe SET estado = 'hecho' WHERE id = ?").bind(evento.id).run();
   return c.json({ ok: true });
 });
 
@@ -1042,6 +1077,15 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
     );
   } catch (e) {
     console.error('propina extra', e);
+    throw new ErrorDatos(
+      'No pudimos cobrar la propina con tu tarjeta guardada. Intenta más tarde.',
+      undefined,
+      409,
+    );
+  }
+  // C-FALLOS-CRITICOS 3: el movimiento al repartidor solo existe si Stripe confirmó el cobro.
+  if (cobro.status !== 'succeeded') {
+    console.error('propina extra: Stripe no confirmó el cobro', id, cobro.id, cobro.status);
     throw new ErrorDatos(
       'No pudimos cobrar la propina con tu tarjeta guardada. Intenta más tarde.',
       undefined,

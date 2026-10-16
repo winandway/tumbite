@@ -170,6 +170,8 @@ export async function soltarPedido(db: D1Database, pedidoId: string, repartidorI
       )
       .bind(pedidoId),
     db.prepare("DELETE FROM evidencias WHERE pedido_id = ? AND tipo = 'recogida'").bind(pedidoId),
+    // C-FALLOS-CRITICOS 5: un pedido suelto ya no viaja agrupado con los del repartidor que lo dejó.
+    db.prepare('DELETE FROM grupos_pedido WHERE pedido_id = ?').bind(pedidoId),
   ]);
 }
 
@@ -776,7 +778,8 @@ async function entregaActiva(db: D1Database, repartidorId: string) {
   return db
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_EXCEPCION}, ${CON_BONO}, r.nombre AS restaurante_nombre, r.direccion AS restaurante_direccion, r.lat AS rest_lat, r.lng AS rest_lng, r.telefono AS restaurante_telefono
-      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino') LIMIT 1`,
+      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino')
+      ORDER BY (SELECT MIN(o.rowid) FROM ofertas o WHERE o.pedido_id = p.id AND o.repartidor_id = p.repartidor_id), p.creado_en, p.id LIMIT 1`,
     )
     .bind(repartidorId)
     .first<FilaPedido>();

@@ -48,6 +48,7 @@ resultados.S4 = await pedir('s4');
 }
 resultados.S7 = await pedir('s7');
 resultados.S11 = await pedir('s11');
+resultados.S12 = await pedir('s12');
 // Fases 1 y 2 (validación del 15 oct 2026).
 resultados.F1 = await pedir('f1');
 const antes = await pedir('migraciones', { paso: 'verificar' });

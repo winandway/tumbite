@@ -33,6 +33,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Multiservicio, Fase 1 (15 oct 2026): el vehículo con el que el conductor trabaja ahora.
   // Nadie lo lee todavía para Comida; queda vacío hasta la migración M5 (docs/fase-1/).
   ['repartidores', 'vehiculo_activo_id', 'TEXT REFERENCES vehiculos(id)'],
+  // Idempotencia persistente de los avisos de Stripe (16 oct 2026, C-FALLOS-CRITICOS 1): los
+  // avisos ya guardados estaban aplicados, por eso nacen como 'hecho'.
+  ['avisos_stripe', 'estado', "TEXT NOT NULL DEFAULT 'hecho'"],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
