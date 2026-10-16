@@ -373,6 +373,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "proximo_en",
     "error",
     "capturado_en",
+    "alertado_en",
     "creado_en",
     "actualizado_en"
   ],

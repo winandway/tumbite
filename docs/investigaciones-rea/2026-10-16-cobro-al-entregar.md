@@ -180,3 +180,59 @@ Después de publicar el reloj seguro, y con autorización:
 - correr una prueba **L1** contra Stripe en modo prueba, que cree un PaymentIntent con captura manual, registre la entrega, capture con la clave por intento, intente capturar otra vez y compruebe que Stripe lo rechaza y la liquidación sigue `capturada` (pendiente de escribir en el diagnóstico).
 
 **Producción:** la tabla `liquidaciones` es nueva y no hace falta ninguna migración. Los pedidos ya entregados no tienen liquidación y no se tocan.
+
+## 7. Prueba L1 contra Stripe en modo prueba y decisión de negocio (16 oct 2026)
+
+### Decisión de Richard: un cobro en revisión
+
+Implementada tal cual (`liquidaciones.ts`, `retiros.ts`, `rutas/dinero.ts`):
+
+- **se conserva el saldo anotado**: no se borra ni se descuenta ningún movimiento;
+- **se bloquea su retiro**: `saldoRetirable` y `pedirRetiro` usan `SOLO_LO_COBRADO`;
+- **se avisa al administrador UNA vez**: `alertado_en` con un `UPDATE` condicional, aunque el reloj pase muchas veces;
+- **no se intenta cobrar otra tarjeta** ni se vuelve a pedir nada a Stripe: el reloj no toca una liquidación en revisión;
+- **la resolución final es administrativa**: `GET /datos/admin/liquidaciones`, solo para administradores, lista las que están en revisión y las atrasadas.
+
+Pruebas:
+
+- «decisión de Richard · en revisión…»: el reloj pasa 3 veces sin peticiones a Stripe ni cambios en los movimientos, y el saldo retirable es 0;
+- «el administrador ve las liquidaciones en revisión (y nadie más)»: 403 para un repartidor.
+
+### L1 (`POST /datos/interno/diagnostico/l1`, en `probar-staging.mjs`)
+
+**Barreras:**
+
+1. el secreto del reloj;
+2. llaves `sk_test_`;
+3. el dominio del sitio de pruebas;
+4. en el dominio de producción, las pruebas de diagnóstico ni existen: responden «Not found».
+
+**Seguridad y repetición:**
+
+- usa pedidos propios `zz-l1-…` con un sufijo distinto en cada corrida;
+- no manda correos (ADMIN_CORREOS vacío);
+- al terminar anula cualquier autorización de prueba que quede abierta y borra todo lo que creó.
+
+| Caso | Qué comprueba                                                                                                                                                                                 |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A    | Captura manual correcta: autorizado (`requires_capture`) → la liquidación nace `pendiente` en el lote de la entrega → `liquidar` captura → `capturada`, y el cobro queda anotado con el monto |
+| B    | Intento duplicado: `liquidar` otra vez no hace nada; una captura con otra clave la rechaza Stripe y el monto no cambia                                                                        |
+| C    | Idempotencia: la misma clave devuelve la respuesta guardada sin cobrar de nuevo; registrar la misma entrega otra vez se rechaza en la base                                                    |
+| D    | Recuperación tras «servidor caído» después de cobrar: se cierra preguntando a Stripe, sin segundo cobro                                                                                       |
+| E    | Recuperación tras un **error real de Stripe guardado bajo la clave** (capturar más de lo autorizado): el reintento usa una clave nueva y cobra                                                |
+| F    | Autorización anulada: `revision`, marcada como avisada, sin cobro                                                                                                                             |
+| G    | El saldo retirable excluye lo de la entrega en revisión                                                                                                                                       |
+
+**Ejecutada hoy en la computadora** (`l1Diagnostico.test.ts`), contra un Stripe simulado con varios pagos:
+
+- 13 casos en verde;
+- la limpieza no deja nada;
+- no queda ninguna autorización abierta;
+- las barreras se niegan con `sk_live_` y en el dominio de producción.
+
+**Comprobada en rojo:**
+
+- sin la regla «solo lo cobrado» falla G;
+- con la clave de siempre en el reintento falla E. Al principio no fallaba: el caso E no tenía un error guardado bajo la clave. Se agregó el error real de Stripe para que lo detecte.
+
+**Falta:** correrla contra Stripe en modo prueba en el sitio de pruebas. Eso requiere la integración autorizada.

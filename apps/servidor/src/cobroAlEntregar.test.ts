@@ -373,4 +373,45 @@ describe('cobro al entregar: protecciones', () => {
     };
     expect(salud.piezas.cobros).toBe('ok');
   });
+
+  it('decisión de Richard · en revisión: conserva el saldo, bloquea el retiro, avisa UNA vez y no vuelve a intentar cobrar', async () => {
+    const e = await escenario();
+    e.st.pi.status = 'canceled';
+    await e.m.entregar(e.id, e.rep.token);
+    expect((await e.liquidacion())?.estado).toBe('revision');
+    const movsAntes = await e.movimientos();
+    expect(movsAntes.length).toBeGreaterThan(0);
+    const alerta = await e.m.DB.prepare('SELECT alertado_en FROM liquidaciones WHERE pedido_id = ?')
+      .bind(e.id)
+      .first<{ alertado_en: string | null }>();
+    expect(alerta?.alertado_en).toBeTruthy();
+    // El reloj pasa varias veces: nada cambia, nadie le pide nada a Stripe, no se descuenta.
+    const peticiones = e.st.intentos.length;
+    for (let i = 0; i < 3; i++) {
+      await e.vencerEsperas();
+      await e.reloj();
+    }
+    expect(e.st.intentos.length).toBe(peticiones);
+    expect(await e.movimientos()).toEqual(movsAntes);
+    expect((await e.liquidacion())?.estado).toBe('revision');
+    const { saldoRetirable } = await import('./retiros');
+    const ganado = movsAntes
+      .filter((x) => x.usuario_id === e.rep.id)
+      .reduce((s, x) => s + Number(x.monto), 0);
+    expect(await saldoRetirable(e.m.DB, e.rep.id)).toBe(0);
+    expect(ganado).toBeGreaterThan(0);
+  });
+
+  it('el administrador ve las liquidaciones en revisión (y nadie más)', async () => {
+    const e = await escenario();
+    e.st.pi.status = 'canceled';
+    await e.m.entregar(e.id, e.rep.token);
+    const admin = await e.m.cuenta('admin');
+    const r = await e.m.llamar('GET', '/datos/admin/liquidaciones', undefined, admin.token);
+    expect(r.estado).toBe(200);
+    expect(r.datos.revision.map((x: { pedidoId: string }) => x.pedidoId)).toContain(e.id);
+    expect(
+      (await e.m.llamar('GET', '/datos/admin/liquidaciones', undefined, e.rep.token)).estado,
+    ).toBe(403);
+  });
 });

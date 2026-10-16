@@ -98,7 +98,18 @@ async function programar(
       f.pedido_id,
     )
     .run();
-  if (aRevision) await alertar(env, f, error);
+  if (aRevision) {
+    // Decisión de Richard (16 oct 2026): en revisión se CONSERVA el saldo anotado, se BLOQUEA su
+    // retiro (SOLO_LO_COBRADO), se avisa al equipo UNA vez, no se descuenta nada y no se intenta
+    // cobrar otra tarjeta. La resolución final es de un administrador.
+    const marca = await db
+      .prepare(
+        "UPDATE liquidaciones SET alertado_en = datetime('now') WHERE pedido_id = ? AND alertado_en IS NULL",
+      )
+      .bind(f.pedido_id)
+      .run();
+    if (marca.meta.changes) await alertar(env, f, error);
+  }
   return aRevision ? 'revision' : 'reintentar';
 }
 
@@ -223,3 +234,30 @@ export async function saludCobros(db: D1Database): Promise<'ok' | 'error'> {
 /** Retiro: solo cuenta lo de pedidos con el cobro capturado (o sin cobro de Stripe). */
 export const SOLO_LO_COBRADO = `NOT EXISTS (SELECT 1 FROM liquidaciones l WHERE l.pedido_id = movimientos.pedido_id
   AND l.estado NOT IN ('capturada', 'no_aplica'))`;
+
+/** Para el administrador: las liquidaciones que esperan su revisión y las que llevan atraso. */
+export async function liquidacionesParaRevisar(db: D1Database) {
+  const { results } = await db
+    .prepare(
+      `SELECT l.pedido_id, l.estado, l.pi, l.monto, l.intentos, l.error, l.creado_en, l.alertado_en, p.entregado_en
+         FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id
+        WHERE l.estado = 'revision'
+           OR (l.estado IN ('pendiente', 'capturando', 'reintentar') AND l.creado_en < datetime('now', '-2 hours'))
+        ORDER BY l.creado_en LIMIT 200`,
+    )
+    .all<Record<string, unknown>>();
+  const fila = (r: Record<string, unknown>) => ({
+    pedidoId: String(r.pedido_id),
+    estado: String(r.estado),
+    paymentIntent: r.pi ? String(r.pi) : null,
+    monto: Number(r.monto),
+    intentos: Number(r.intentos),
+    error: r.error ? String(r.error) : null,
+    entregadoEn: r.entregado_en ? String(r.entregado_en) : null,
+    alertadoEn: r.alertado_en ? String(r.alertado_en) : null,
+  });
+  return {
+    revision: results.filter((r) => r.estado === 'revision').map(fila),
+    atrasadas: results.filter((r) => r.estado !== 'revision').map(fila),
+  };
+}

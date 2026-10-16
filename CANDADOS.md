@@ -549,7 +549,9 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
     - **Aviso de Stripe:** `payment_intent.succeeded` también cierra la liquidación.
     - **Retiros:** solo cuentan lo cobrado (`SOLO_LO_COBRADO`).
     - **Salud:** pieza `cobros`.
-  - **Pruebas:** `cobroAlEntregar.test.ts` (13), con un Stripe simulado fiel a su documentación: una sola captura por pago y la respuesta guardada por clave, incluidos los 500.
+  - **Decisión de Richard en revisión:** se conserva el saldo, se bloquea su retiro, se avisa una vez (`alertado_en`), no se cobra otra tarjeta y la resuelve un administrador (`GET /datos/admin/liquidaciones`).
+  - **L1:** `POST /datos/interno/diagnostico/l1` (Stripe TEST, solo en el sitio de pruebas), ejecutada en la computadora con `l1Diagnostico.test.ts`.
+  - **Pruebas:** `cobroAlEntregar.test.ts` (15), con un Stripe simulado fiel a su documentación: una sola captura por pago y la respuesta guardada por clave, incluidos los 500.
   - **Qué NO tocar:**
     - nunca volver a capturar antes de registrar la entrega;
     - nunca reintentar una captura con una clave que ya devolvió error;

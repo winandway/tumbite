@@ -38,6 +38,20 @@ export async function retirosActivos(env: Env, db: D1Database): Promise<boolean>
   return f?.valor === '1';
 }
 
+/**
+ * Lo que una persona puede retirar: su saldo SIN lo de pedidos cuyo cobro no está capturado
+ * (C-COBRO-AL-ENTREGAR). Es la misma condición que usa pedirRetiro.
+ */
+export async function saldoRetirable(db: D1Database, usuarioId: string): Promise<number> {
+  const f = await db
+    .prepare(
+      `SELECT COALESCE(SUM(monto), 0) AS saldo FROM movimientos WHERE usuario_id = ? AND ${SOLO_LO_COBRADO}`,
+    )
+    .bind(usuarioId)
+    .first<{ saldo: number }>();
+  return Number(f?.saldo ?? 0);
+}
+
 /** Crea el retiro y descuenta el saldo en UNA sentencia. Devuelve el id, o null si no alcanza. */
 export async function pedirRetiro(
   db: D1Database,

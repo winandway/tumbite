@@ -480,6 +480,8 @@ CREATE TABLE IF NOT EXISTS liquidaciones (
   proximo_en TEXT,
   error TEXT,
   capturado_en TEXT,
+  -- Cuándo se avisó al equipo de que quedó en revisión (una sola vez; la resuelve un administrador).
+  alertado_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
