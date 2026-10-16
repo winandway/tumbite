@@ -7,6 +7,7 @@ import { crearStripe, type Stripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { conciliarRetiros, pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
 import { conciliar } from '../conciliacion';
+import { cancelarConReembolso } from '../manager';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
@@ -1469,4 +1470,142 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
     .first<{ n: number }>();
   casos.push({ nombre: 'la limpieza no dejó nada temporal', ok: Number(resto?.n) === 0 });
   return c.json({ prueba: 'F3', ok: casos.every((x) => x.ok), casos });
+});
+
+/**
+ * S12 (16 oct 2026, C-FALLOS-CRITICOS 2): cancelar con el pago AUTORIZADO, contra Stripe en MODO
+ * PRUEBA de verdad. Comprueba lo que el código da por sentado: que lo guardado en stripe_sesion es
+ * el PaymentIntent (pi_…) con captura manual; que cancelarlo lo deja «canceled» en Stripe; que una
+ * segunda cancelación la rechaza Stripe y la verificación la reconoce; y que la misma clave de
+ * idempotencia no cancela dos veces. Con llaves reales se niega. Limpia todo lo que crea.
+ */
+diagnostico.post('/interno/diagnostico/s12', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    return c.json({
+      prueba: 'S12',
+      ok: false,
+      omitido: 'el sitio de pruebas no tiene llaves de Stripe de modo prueba',
+    });
+  const stripe = crearStripe(llave)!;
+  const db = base(c);
+  const corrida = sufijo();
+  const cliente = `zz-s12c-${corrida}`;
+  const dueno = `zz-s12d-${corrida}`;
+  const rest = `zz-s12r-${corrida}`;
+  const pedido = `zz-s12p-${corrida}`;
+  const casos: Caso[] = [];
+  let pi = '';
+  try {
+    // 1. Un PaymentIntent como el que crea /datos/pedidos: captura manual, tarjeta de prueba.
+    const intento = await stripe.post<{ id: string; status: string }>(
+      '/payment_intents',
+      {
+        amount: 1234,
+        currency: 'usd',
+        capture_method: 'manual',
+        payment_method: 'pm_card_visa',
+        confirm: true,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        metadata: { pedido_id: pedido, prueba: 's12' },
+      },
+      `s12-pi-${corrida}`,
+    );
+    pi = intento.id;
+    casos.push({
+      nombre: 'el PaymentIntent queda autorizado (requires_capture) con id pi_…',
+      ok: intento.status === 'requires_capture' && pi.startsWith('pi_'),
+      detalle: `${pi} ${intento.status}`,
+    });
+    // 2. El pedido como queda antes del aviso: pago_pendiente y SOLO stripe_sesion con ese id.
+    await db.batch([
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba S12', 'cliente', 'x')",
+        )
+        .bind(cliente, `${cliente}@prueba.invalid`),
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba S12', 'restaurante', 'x')",
+        )
+        .bind(dueno, `${dueno}@prueba.invalid`),
+      db
+        .prepare(
+          "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES (?, ?, 'Prueba S12', 'pendiente')",
+        )
+        .bind(rest, dueno),
+      db
+        .prepare(
+          `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng, stripe_sesion)
+           VALUES (?, ?, ?, 'pago_pendiente', '[]', 1234, 0, 0, 0, 0, 1234, 0, 0, 0, 0, 0, 'basico', 'Prueba S12', 25.7, -80.2, ?)`,
+        )
+        .bind(pedido, cliente, rest, pi),
+    ]);
+    // 3. Cancelar ANTES del aviso: el código real, contra Stripe real.
+    const cancelado = await cancelarConReembolso(c.env, db, pedido, {
+      desde: ['pago_pendiente', 'pagado'],
+      actorId: cliente,
+      clienteId: cliente,
+    });
+    const fila = await db
+      .prepare('SELECT estado FROM pedidos WHERE id = ?')
+      .bind(pedido)
+      .first<{ estado: string }>();
+    const enStripe = await stripe.get<{ status: string }>(`/payment_intents/${pi}`);
+    casos.push({
+      nombre:
+        'cancelar en pago_pendiente deja el pedido cancelado y el PaymentIntent «canceled» en Stripe',
+      ok: cancelado && fila?.estado === 'cancelado' && enStripe.status === 'canceled',
+      detalle: `${String(cancelado)} ${fila?.estado} ${enStripe.status}`,
+    });
+    // 4. Misma clave de idempotencia: Stripe devuelve la misma respuesta, no una segunda acción.
+    let mismaClave = false;
+    try {
+      const r = await stripe.post<{ id: string; status: string }>(
+        `/payment_intents/${pi}/cancel`,
+        {},
+        `anular-${pedido}`,
+      );
+      mismaClave = r.id === pi && r.status === 'canceled';
+    } catch (e) {
+      casos.push({ nombre: 'misma clave: Stripe respondió error', ok: false, detalle: String(e) });
+    }
+    casos.push({
+      nombre: 'la misma clave de idempotencia no es una segunda cancelación',
+      ok: mismaClave,
+    });
+    // 5. Cancelar otra vez SIN clave: Stripe lo rechaza; la verificación (GET) lo reconoce.
+    let rechazo = '';
+    try {
+      await stripe.post(`/payment_intents/${pi}/cancel`, {});
+    } catch (e) {
+      rechazo = String((e as Error).message ?? e);
+    }
+    const verificado = await stripe.get<{ status: string }>(`/payment_intents/${pi}`);
+    casos.push({
+      nombre: 'una segunda cancelación la rechaza Stripe y la verificación la confirma como hecha',
+      ok: rechazo.length > 0 && verificado.status === 'canceled',
+      detalle: rechazo.slice(0, 80),
+    });
+    // 6. El pedido ya cancelado no se vuelve a tocar.
+    const otraVez = await cancelarConReembolso(c.env, db, pedido, {
+      desde: ['pago_pendiente', 'pagado'],
+      actorId: cliente,
+      clienteId: cliente,
+    });
+    casos.push({ nombre: 'cancelar un pedido ya cancelado no hace nada', ok: otraVez === false });
+    return c.json({ prueba: 'S12', ok: casos.every((x) => x.ok), casos, pi });
+  } catch (e) {
+    casos.push({ nombre: 'error inesperado', ok: false, detalle: String(e) });
+    return c.json({ prueba: 'S12', ok: false, casos, pi });
+  } finally {
+    await db.batch([
+      db.prepare('DELETE FROM bitacora_pedidos WHERE pedido_id = ?').bind(pedido),
+      db.prepare('DELETE FROM historial_estados WHERE pedido_id = ?').bind(pedido),
+      db.prepare('DELETE FROM cobros WHERE pedido_id = ?').bind(pedido),
+      db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
+      db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
+      db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(cliente, dueno),
+    ]);
+  }
 });

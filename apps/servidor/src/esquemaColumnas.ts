@@ -158,7 +158,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "avisos_stripe": [
     "id",
     "tipo",
-    "recibido_en"
+    "recibido_en",
+    "estado"
   ],
   "repartidores": [
     "usuario_id",

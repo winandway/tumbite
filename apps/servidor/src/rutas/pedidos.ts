@@ -541,14 +541,34 @@ pedidos.post('/stripe/aviso', async (c) => {
     data: { object: Record<string, unknown> };
   };
   const db = base(c);
+  // C-FALLOS-CRITICOS 1 (idempotencia persistente): la marca del aviso tiene estado. Solo quien
+  // la crea («procesando») procesa; «hecho» responde repetido sin tocar nada; una marca a medias
+  // ajena responde 409 para que Stripe reintente más tarde; una marca a medias abandonada (el
+  // servidor murió hace más de 5 minutos) se reclama y se vuelve a procesar.
   const nuevo = await db
-    .prepare('INSERT OR IGNORE INTO avisos_stripe (id, tipo) VALUES (?, ?)')
+    .prepare("INSERT OR IGNORE INTO avisos_stripe (id, tipo, estado) VALUES (?, ?, 'procesando')")
     .bind(evento.id, evento.type)
     .run();
-  if (!nuevo.meta.changes) return c.json({ ok: true, repetido: true });
+  if (!nuevo.meta.changes) {
+    const reclamada = await db
+      .prepare(
+        "UPDATE avisos_stripe SET recibido_en = datetime('now') WHERE id = ? AND estado = 'procesando' AND recibido_en < datetime('now', '-5 minutes')",
+      )
+      .bind(evento.id)
+      .run();
+    if (!reclamada.meta.changes) {
+      const marca = await db
+        .prepare('SELECT estado FROM avisos_stripe WHERE id = ?')
+        .bind(evento.id)
+        .first<{ estado: string }>();
+      if (marca?.estado === 'procesando') return c.json({ ok: false, enCurso: true }, 409);
+      return c.json({ ok: true, repetido: true });
+    }
+    console.error('aviso de Stripe a medias abandonado; se vuelve a procesar', evento.id);
+  }
 
-  // C-FALLOS-CRITICOS 1: si el aviso falla a medias, se suelta su marca para que el reintento
-  // de Stripe (mismo id de evento) sí lo aplique. Un aviso perdido es dinero sin acreditar.
+  // Si el aviso falla a medias, se suelta SU marca (solo si sigue «procesando») para que el
+  // reintento de Stripe (mismo id de evento) sí lo aplique. Un aviso perdido es dinero sin acreditar.
   try {
     const obj = evento.data.object;
     if (evento.type === 'checkout.session.completed' && obj.payment_status === 'paid') {
@@ -737,10 +757,14 @@ pedidos.post('/stripe/aviso', async (c) => {
         }).catch((e: unknown) => console.error('abono fallido: correo equipo', e));
     }
   } catch (e) {
-    await db.prepare('DELETE FROM avisos_stripe WHERE id = ?').bind(evento.id).run();
+    await db
+      .prepare("DELETE FROM avisos_stripe WHERE id = ? AND estado = 'procesando'")
+      .bind(evento.id)
+      .run();
     console.error('aviso de Stripe sin terminar; se deja reintentar', evento.id, evento.type, e);
     throw e;
   }
+  await db.prepare("UPDATE avisos_stripe SET estado = 'hecho' WHERE id = ?").bind(evento.id).run();
   return c.json({ ok: true });
 });
 
