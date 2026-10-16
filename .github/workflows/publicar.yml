@@ -27,7 +27,7 @@ jobs:
       VERSION: ${{ github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: 24, cache: npm }
       - run: npm ci
       - run: npm run build
