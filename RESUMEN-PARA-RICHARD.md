@@ -11,7 +11,7 @@
 
 ## El documento que tiene que leer ahora
 
-**RELOJ-SEGURO-RESULTADOS**, en la carpeta docs (rama `fase-reloj-seguro`): las dos correcciones del reloj hechas y probadas solo en el sitio de pruebas, todo en verde. Producción intacta. La Fase 3 sigue esperando la conciliación del 16 (después de las 8 p. m. de Miami).
+**INTEGRACION-RELOJ-TRAS-FASE-3**, en la carpeta docs (rama `fase-reloj-seguro`): cierre del reloj seguro y cómo se une con la Fase 3 después de publicarla. La incidencia de la pantalla de carga quedó registrada en `docs/incidencias/`. **Fase 3: BLOQUEADA** solo por la conciliación del 16, que llega después de las 8 p. m. de Miami.
 
 ## Lo que le toca a usted
 
