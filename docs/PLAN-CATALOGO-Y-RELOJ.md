@@ -155,3 +155,51 @@ Si la sesión se cierra, en la siguiente reviso a mano la conciliación con una 
 - `main` está en `f5b2b1a`.
 - La rama `fase-3-exclusividad` **no** está dentro de `main`.
 - No hubo movimientos de dinero.
+
+## Hito 1 del cliente: catálogo y sesión (decidido por Richard el 16 oct 2026)
+
+Un solo hito con **dos correcciones independientes**. Cada una tiene sus pruebas y su comprobación en rojo, y se pueden revisar por separado. No se implementa hasta que llegue su turno: Fase 3 → reloj seguro → reloj de producción → **este hito** → validar el MVP de Comida.
+
+### Corrección 1: el catálogo
+
+Es lo descrito en la sección A de este documento. Causa comprobada: respuestas viejas que pisan a las nuevas, consultas repetidas y ningún aviso cuando la zona está vacía. Sus pruebas son las del punto A.6.
+
+### Corrección 2: la comprobación de la sesión
+
+Diagnóstico aprobado en `docs/incidencias/2026-10-16-pantalla-de-carga.md`. Causa comprobada en la app: la comprobación de la sesión guardada no tiene tiempo máximo. La causa del lado del servidor sigue sin determinarse.
+
+**Requisitos:**
+
+1. **Tiempo máximo** para comprobar la sesión. Propuesta: 8 segundos, como la espera del GPS. El número exacto se fija con la medición del sitio de pruebas, donde la más lenta tardó 2,5 segundos.
+2. Si vence, la app **sale de la pantalla de carga**.
+3. Muestra un mensaje claro, en los dos idiomas: «No pudimos confirmar tu sesión.» / «We couldn’t confirm your session.», con **«Reintentar»** / **«Try again»**.
+4. **Una sesión sin verificar no cuenta como sesión abierta.** La app no muestra la cuenta como si hubiera entrado.
+5. **Nada protegido mientras esté sin confirmar:** ni pedir, ni pagar, ni ver los pedidos, ni la cuenta. Puede ver el inicio y los restaurantes, que son públicos.
+6. **La sesión guardada se conserva** para el reintento. Solo se borra si el servidor dice que es inválida (respuesta 401) o que es de otro papel, como hoy.
+7. Si la respuesta llega bien, todo funciona exactamente como hoy.
+
+**Pruebas propias, independientes de las del catálogo.** Van en las pruebas de la sesión de `packages/movil`, con el servidor simulado, y cada una en español e inglés:
+
+| #   | Caso                                            | Qué tiene que pasar                                                                                                                                                      |
+| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | La comprobación nunca responde                  | Al vencer el tiempo sale el mensaje con «Reintentar». No queda cargando. La sesión no se da por abierta y la guardada no se borra. _Hoy falla: así se comprueba en rojo_ |
+| 2   | Respuesta lenta pero válida (3 s)               | Entra con la sesión, como hoy                                                                                                                                            |
+| 3   | Error de red                                    | Sale el mensaje con «Reintentar». La sesión guardada se conserva                                                                                                         |
+| 4   | Reintento que funciona                          | Después de un fallo o del tiempo vencido, «Reintentar» confirma la sesión y entra normalmente                                                                            |
+| 5   | Sesión inválida (401)                           | Se borra la sesión guardada y pide entrar, como hoy                                                                                                                      |
+| 6   | Operación protegida con la sesión sin confirmar | Bloqueada, con el mensaje de confirmar la sesión                                                                                                                         |
+
+**En el sitio de pruebas:**
+
+- el recorrido completo de Comida en español e inglés;
+- una prueba de punta a punta que retrasa a propósito la comprobación de la sesión más allá del tiempo máximo y comprueba que sale el mensaje y que «Reintentar» entra;
+- 100 aperturas repetidas con sesión, como en la medición del 16 de octubre, sin ninguna pantalla de carga atrapada.
+
+### Cómo se entrega el hito
+
+- Dos commits separados, uno por corrección, cada uno con sus pruebas, en una rama propia.
+- Validación en el sitio de pruebas.
+- Las capturas de los estados nuevos a 375 px, en los dos idiomas.
+- La guía pública en Docs.
+- La publicación, con su autorización.
+- Las dos van gratis: son fallos nuestros.
