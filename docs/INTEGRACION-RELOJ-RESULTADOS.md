@@ -65,5 +65,3 @@ El mismo de la Fase 3:
 3. Fusionar `fase-reloj-seguro` en `main`, con un commit de fusión normal (no `[skip ci]`), y dejar correr `verify` y `publicar`.
 4. `verificar-publicacion.mjs despues <versión>`, al que se le agrega la pieza `reloj`, que tiene que estar en `ok` o en `atrasado`, nunca en `error`. Con VERDE se queda; con ROJO se revierte.
 5. Vuelta atrás: revertir el commit de la fusión (vuelve `36f4e35`), en unos 40 minutos. La tabla `reloj_tareas` queda sin uso.
-   EOF
-   echo ok
