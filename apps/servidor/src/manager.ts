@@ -85,10 +85,10 @@ export async function cancelarConReembolso(
   const extra = [p.restauranteId, p.clienteId].filter((x): x is string => Boolean(x));
   const antes = await db
     .prepare(
-      `SELECT estado, stripe_pago FROM pedidos WHERE id = ?${filtros} AND estado IN (${p.desde.map(() => '?').join(',')})`,
+      `SELECT estado, stripe_pago, stripe_sesion FROM pedidos WHERE id = ?${filtros} AND estado IN (${p.desde.map(() => '?').join(',')})`,
     )
     .bind(pedidoId, ...extra, ...p.desde)
-    .first<{ estado: string; stripe_pago: string | null }>();
+    .first<{ estado: string; stripe_pago: string | null; stripe_sesion: string | null }>();
   if (!antes) return false;
   const apartado = await db
     .prepare(
@@ -97,17 +97,23 @@ export async function cancelarConReembolso(
     .bind(pedidoId, antes.estado)
     .run();
   if (!apartado.meta.changes) return false;
-  if (antes.stripe_pago) {
+  // C-FALLOS-CRITICOS 2: antes del aviso de Stripe el pago vive en stripe_sesion (el PaymentIntent
+  // recién creado). También se anula, para que la tarjeta no quede retenida por un pedido cancelado.
+  const intento =
+    antes.stripe_pago ||
+    (antes.estado === 'pago_pendiente' && env.STRIPE_SECRET_KEY ? antes.stripe_sesion : null);
+  if (intento) {
     const stripe = crearStripe(env.STRIPE_SECRET_KEY);
     const cobro = await db
       .prepare('SELECT capturado_en FROM cobros WHERE pedido_id = ?')
       .bind(pedidoId)
       .first<{ capturado_en: string | null }>();
+    const soloAutorizado = !antes.stripe_pago || Boolean(cobro && !cobro.capturado_en);
     try {
       if (!stripe) throw new Error('Stripe no está configurado');
-      if (cobro && !cobro.capturado_en) {
+      if (soloAutorizado) {
         // Solo autorizado: se anula la autorización. Sin reembolso y sin comisión de Stripe.
-        await stripe.post(`/payment_intents/${antes.stripe_pago}/cancel`, {}, `anular-${pedidoId}`);
+        await stripe.post(`/payment_intents/${intento}/cancel`, {}, `anular-${pedidoId}`);
         await db
           .prepare("UPDATE cobros SET cancelado_en = datetime('now') WHERE pedido_id = ?")
           .bind(pedidoId)
@@ -115,23 +121,20 @@ export async function cancelarConReembolso(
       } else {
         await stripe.post(
           '/refunds',
-          { payment_intent: antes.stripe_pago, metadata: { pedido_id: pedidoId } },
+          { payment_intent: intento, metadata: { pedido_id: pedidoId } },
           `reembolso-${pedidoId}`,
         );
       }
     } catch (e) {
       // Candado C-ANULACION-VERIFICADA (Fase 0): una respuesta perdida no es un «no». Antes de
       // revivir el pedido se le pregunta a Stripe si la anulación o el reembolso SÍ ocurrieron.
-      if (
-        stripe &&
-        (await devolucionHecha(stripe, antes.stripe_pago, Boolean(cobro && !cobro.capturado_en)))
-      ) {
+      if (stripe && (await devolucionHecha(stripe, intento, soloAutorizado))) {
         console.error(
           'manager: Stripe sí devolvió el dinero aunque la respuesta se perdió',
           pedidoId,
           e,
         );
-        if (cobro && !cobro.capturado_en)
+        if (soloAutorizado)
           await db
             .prepare("UPDATE cobros SET cancelado_en = datetime('now') WHERE pedido_id = ?")
             .bind(pedidoId)
