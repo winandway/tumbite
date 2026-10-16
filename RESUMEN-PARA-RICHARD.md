@@ -1,6 +1,6 @@
 # Resumen para Richard
 
-Última actualización: 15 de octubre de 2026, 21:30 (hora de Miami).
+Última actualización: 15 de octubre de 2026, 23:00 (hora de Miami).
 
 ## Dónde estamos
 

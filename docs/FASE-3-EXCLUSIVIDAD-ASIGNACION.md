@@ -55,7 +55,23 @@ La regla vive en la base, no en el código de cada pantalla. Así se cumple aunq
 
 ## 6. Resultados de concurrencia
 
-RESULTADOS_STAGING
+Corrida final en el sitio de pruebas: **38837721721, toda en verde** (versión `8764694`), contra la base D1 real, con Stripe en modo prueba.
+
+| Prueba                                                                                                                           | Resultado                                                |
+| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Carrera:** 20 conductores aceptan la misma operación a la vez (20 peticiones en paralelo al servidor)                          | ✅ 1 ganador, 19 rechazados                              |
+| **Reintentos duplicados:** la misma aceptación cinco veces a la vez                                                              | ✅ las cinco responden «ya es tuya», una sola asignación |
+| **Un conductor contra dos viajes y un pedido de comida, a la vez**                                                               | ✅ se lleva uno solo                                     |
+| **Soltar el viaje en el motor real**                                                                                             | ✅ vuelve a «buscando» y el conductor queda libre        |
+| **Inconsistencias en toda la base de pruebas**                                                                                   | ✅ cero                                                  |
+| **Limpieza**                                                                                                                     | ✅ no quedó nada temporal                                |
+| **Tiempo de la carrera completa**                                                                                                | 1,3 segundos                                             |
+| S2–S5, S7, S11 (Fase 0), F1, M4 y M5, F2                                                                                         | ✅ todas en verde                                        |
+| Tiempo real en vivo (WebSocket, GPS, firmas, reconexión, lote y reloj externo)                                                   | ✅                                                       |
+| **Recorrido completo de Comida en inglés y en español** (pedido, pago de prueba, restaurante, repartidor, entrega, calificación) | ✅ los dos                                               |
+| Conciliación de saldos contra Stripe en modo prueba                                                                              | ✅                                                       |
+
+Antes de esta corrida hubo tres en rojo, y cada una destapó algo real que quedó corregido y con su prueba: el divisor de la plataforma (disparadores fuera de `schema.sql`), el límite de cinco consultas por unión de D1, los pedidos que nacen con repartidor o se borran, y el arranque lento que cortaba el tiempo real (más el lote que se atascaba sin rastro).
 
 ## 7. Compatibilidad con Comida
 
