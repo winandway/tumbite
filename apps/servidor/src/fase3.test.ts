@@ -13,6 +13,7 @@ import {
   DISPARADORES_EXCLUSIVIDAD,
 } from './operaciones';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
+import { asegurarEsquema, reiniciarEsquema } from './esquema';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md). Candado
@@ -969,5 +970,22 @@ describe('Fase 3 · pedidos que nacen con repartidor o se borran', () => {
       await uno(m, 'SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toBeNull();
     expect(await inconsistencias(m)).toEqual([]);
+  });
+});
+
+describe('Fase 3 · arranque rápido', () => {
+  it('si los disparadores ya existen, el arranque no vuelve a crearlos (una sola consulta)', async () => {
+    const m = mundo();
+    await m.cuenta('cliente'); // primer arranque: los crea
+    const creados: string[] = [];
+    const original = m.DB.prepare.bind(m.DB);
+    (m.DB as { prepare: (sql: string) => unknown }).prepare = (sql: string) => {
+      if (/^\s*CREATE (TRIGGER|VIEW)/.test(sql)) creados.push(sql.slice(0, 40));
+      return original(sql);
+    };
+    reiniciarEsquema();
+    await asegurarEsquema(m.DB);
+    expect(creados).toEqual([]);
+    expect(await saludExclusividad(m.DB)).toBe('ok');
   });
 });

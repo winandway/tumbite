@@ -523,8 +523,11 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Cada arranque cuadra el conteo con los pedidos activos (idempotente; los disparadores ya existen antes del cuadre).
   - La salud cuenta los 17 disparadores (`DISPARADORES_EXCLUSIVIDAD`) además de las inconsistencias.
   - Un pedido que nace con repartidor cuenta y uno que se borra libera (`pedidos_ocupa_al_crear`, `pedidos_libera_al_borrar`): sin ellos, borrar un pedido en curso dejaba al conductor «ocupado» para siempre (lo destapó la limpieza de la prueba en vivo del 16 oct).
+  - **Arranque rápido:** `asegurarFase3` (esquema.ts) hace UNA consulta y solo crea si falta algo, en un lote. Creándolos uno por uno, la primera respuesta tardaba más de 5 s y el tiempo real se cortaba (16 oct). Prueba «si los disparadores ya existen, el arranque no vuelve a crearlos», en rojo comprobado.
   - D1 acepta como máximo 5 partes por consulta compuesta: la vista de inconsistencias se arma con dos vistas de 4 (falló así en el sitio de pruebas el 16 oct; prueba «ninguna sentencia de la Fase 3 une más de 5 consultas»).
   - Canario: pieza `exclusividad` de `/datos/salud` (vista `inconsistencias_operaciones` en cero).
   - Pruebas: `fase3.test.ts` (21 casos, 2.000 acciones al azar) y F3 en D1 real (`diagnostico.ts`, `probar-staging.mjs`), comprobadas en rojo.
   - Vuelta atrás: `docs/fase-3/revertir.sql` (y vaciar `ESQUEMA_FASE3`).
   - **Qué NO tocar:** no aceptar pedidos de Comida con otra sentencia; no quitar la condición de conteo ni la de ocupación; no crear operaciones desde una ruta pública hasta la fase de Moto y Carro.
+
+- **C-LOTE-NO-SE-ATASCA (16 oct 2026):** `apps/tiempo-real/src/nucleo.ts`. Un lote que el servidor rechaza (4xx, salvo 408 y 429) se descarta y queda en el registro con su código; un fallo de red o 5xx se reintenta. Lo pendiente de más de 10 minutos se suelta. Pruebas en `nucleo.test.ts`, en rojo comprobado. **Qué NO tocar:** nunca volver a reintentar sin límite ni a fallar sin registro.

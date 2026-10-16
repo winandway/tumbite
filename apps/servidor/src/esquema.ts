@@ -183,6 +183,27 @@ async function revisarColumnas(db: D1Database): Promise<void> {
     console.error('esquema: faltan columnas en la base', columnasFaltantes.join(', '));
 }
 
+/**
+ * Fase 3: disparadores, vistas y cuadre de la ocupación (después de las columnas nuevas). Una
+ * consulta comprueba si ya están todos; solo si falta alguno se crean, todos en UN lote (una
+ * transacción: el cuadre ve los disparadores ya puestos). Antes corrían uno por uno en cada
+ * arranque: la primera respuesta tardaba más de 5 s y el tiempo real se cortaba (16 oct 2026).
+ */
+async function asegurarFase3(db: D1Database): Promise<void> {
+  const nombres = ESQUEMA_FASE3.map(
+    (sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1],
+  ).filter((n): n is string => Boolean(n));
+  const { results } = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM sqlite_master WHERE name IN (${nombres.map(() => '?').join(',')})`,
+    )
+    .bind(...nombres)
+    .all<{ n: number }>();
+  if (Number(results[0]?.n) === nombres.length) return;
+  await db.batch(ESQUEMA_FASE3.map((sql) => db.prepare(sql)));
+  console.warn('esquema: disparadores y vistas de la Fase 3 creados');
+}
+
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
@@ -197,9 +218,9 @@ async function migrar(db: D1Database): Promise<void> {
       console.warn(`esquema: columna agregada ${tabla}.${columna}`);
     }
   }
-  for (const sql of INDICES) await db.prepare(sql).run();
-  // Fase 3: disparadores, vistas y cuadre de la ocupación (después de las columnas nuevas).
-  for (const sql of ESQUEMA_FASE3) await db.prepare(sql).run();
+  // Un solo viaje a la base para todos los índices (antes, uno por índice en cada arranque).
+  await db.batch(INDICES.map((sql) => db.prepare(sql)));
+  await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db);
   await revisarColumnas(db);
