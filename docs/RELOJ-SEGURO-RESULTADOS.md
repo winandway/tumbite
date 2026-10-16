@@ -74,7 +74,7 @@ Las pruebas de la Fase 3 y de la exclusividad viven en su propia rama. El sitio 
 2. **Fusión con la Fase 3:** las dos ramas tocan la lista de tareas del reloj. La Fase 3 agrega «operaciones». Después de publicar la Fase 3, esta rama se actualiza y se agrega esa tarea como crítica, con las pruebas otra vez.
 3. **Producción más estricta al publicar esto:** si alguna tarea crítica falla hoy en silencio en producción (antes se tragaban los errores), la salud se pondrá en rojo. Es lo correcto, pero puede frenar el semáforo de esa publicación.
 4. **El respaldo diario** sigue dependiendo del reloj de GitHub, que corre una vez al día como mínimo.
-5. **Página en blanco una vez** en la app del cliente del sitio de pruebas (ver §E). No se repitió; se revisará en el hito del catálogo.
+5. **Pantalla de carga sin avanzar una vez** en la app del cliente del sitio de pruebas (ver §E). No se repitió; se revisará en el hito del catálogo.
 6. Cuando se crucen dos vueltas, un pedido puede ofrecerse a dos repartidores a la vez. Uno solo se lo lleva. Ya pasaba antes.
 
 ## D. Producción permanece intacta
@@ -90,4 +90,4 @@ Las pruebas de la Fase 3 y de la exclusividad viven en su propia rama. El sitio 
 ## E. Conciliación del 16 y sitio de pruebas
 
 - **Conciliación:** a las 12:05 UTC, la del 16 todavía no existe (corre después de las 00:00 UTC del 17). La del 15 sigue intacta (`cuadra = 0`). La vigilancia de solo lectura sigue activa.
-- **Sitio de pruebas:** como esta rama se publicó en el sitio de pruebas, se volvió a publicar ahí la rama de la Fase 3 (corrida 38898083294), para que quede validado con lo que espera publicarse. **Resultado: en verde** en el segundo intento: F3, el tiempo real en vivo, el recorrido completo de Comida en inglés y en español, y la conciliación. En el primer intento, el recorrido en español falló una vez porque la app del cliente se quedó en una **página en blanco** al volver al inicio (no fue el catálogo: no había texto en la pantalla). El mismo paso había pasado en todas las corridas anteriores y pasó al repetir. Queda anotado como riesgo para vigilar en el hito del catálogo.
+- **Sitio de pruebas:** como esta rama se publicó en el sitio de pruebas, se volvió a publicar ahí la rama de la Fase 3 (corrida 38898083294), para que quede validado con lo que espera publicarse. **Resultado: en verde** en el segundo intento: F3, el tiempo real en vivo, el recorrido completo de Comida en inglés y en español, y la conciliación. En el primer intento, el recorrido en español falló una vez porque la app del cliente se quedó en una **pantalla de carga sin avanzar** (escarlata, con el círculo girando) al volver al inicio (no hubo lista vacía: la app no pasó de su pantalla de carga; registro en `docs/incidencias/2026-10-16-pantalla-de-carga.md`). El mismo paso había pasado en todas las corridas anteriores y pasó al repetir. Queda anotado como riesgo para vigilar en el hito del catálogo.
