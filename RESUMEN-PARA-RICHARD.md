@@ -11,14 +11,15 @@
 
 ## El documento que tiene que leer ahora
 
-**PREPARACION-PUBLICACION-FASE-3**, en la carpeta docs. Resultado: **BLOQUEADO hasta esta noche.** Falta solo que corra la conciliación del 16 (después de las 8 p. m. de Miami). La del 15 queda intacta como excepción, por decisión suya. Ojo: la salud mira solo la última conciliación, así que pasará a verde aunque la del 15 siga sin cuadrar; en el informe hay una propuesta para que eso no pase.
+**PLAN-CATALOGO-Y-RELOJ**, en la carpeta docs: el plan del catálogo (sin código), por qué el reloj de producción se atrasa y qué hacer, y el estado de la conciliación. La Fase 3 sigue sin publicar: espera la conciliación del 16, que llega esta noche.
 
 ## Lo que le toca a usted
 
 1. Autorizar la publicación de la Fase 3 cuando la conciliación del 16 haya cuadrado.
-2. Decidir si la salud debe seguir avisando de discrepancias viejas sin revisar (propuesta en el informe).
-3. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba y no creé ninguna).
-4. Cambiar la llave del sitio de pruebas que pasó por el chat.
+2. Decidir si la zona de pruebas de Novi se muestra al público o se apaga y se dan de alta restaurantes reales en Miami.
+3. Autorizar (o no) pasar el reloj de producción a Cloudflare antes de recibir clientes reales.
+4. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba y no creé ninguna).
+5. Cambiar la llave del sitio de pruebas que pasó por el chat.
 
 ## Regla permanente
 
