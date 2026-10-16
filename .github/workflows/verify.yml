@@ -18,7 +18,7 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npm run audit
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npx playwright install --with-deps chromium
