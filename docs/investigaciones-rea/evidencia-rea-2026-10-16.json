@@ -1,0 +1,2643 @@
+{
+  "artifacts": [],
+  "captures": [],
+  "environments": [
+    {
+      "architecture": "unknown",
+      "id": "Chromium@155.0.8059.80",
+      "isolation": "process",
+      "platform": "unknown"
+    }
+  ],
+  "providers": [
+    {
+      "id": "rea-playwright-browser-scenario",
+      "name": "REA Playwright browser scenario capture provider",
+      "version": "1"
+    }
+  ],
+  "records": [
+    {
+      "analysis_profile": null,
+      "authority": "controlled-replay",
+      "confidence": "observed",
+      "environment": {
+        "architecture": "unknown",
+        "id": "Chromium@155.0.8059.80",
+        "isolation": "process",
+        "platform": "unknown"
+      },
+      "evidence_id": "ev_aeb0a7f4f8bc3736471cd928220603e43d017dd18573e8afb5557bfb5a1cbd88",
+      "evidence_links": [],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Some network requests had not completed when capture ended; later activity is unknown.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "locations": [],
+      "normalized_result": {
+        "browser": {
+          "cleanup": "terminated-owned-process",
+          "mode": "launch",
+          "process_ownership": "provider-owned",
+          "product": "Chromium",
+          "version": "155.0.8059.80"
+        },
+        "completeness": {
+          "equality_eligible": false,
+          "missing_sections": ["events"],
+          "status": "incomplete",
+          "truncated_sections": []
+        },
+        "duration_ms": 5807,
+        "events": {
+          "dropped": 0,
+          "items": [
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 1,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["location"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 2,
+              "status": 307,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 3,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": "request-1",
+              "resource_type": "document",
+              "sequence": 4,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-ch",
+                "alt-svc",
+                "cf-mitigated",
+                "cf-ray",
+                "content-encoding",
+                "content-security-policy",
+                "content-type",
+                "critical-ch",
+                "cross-origin-embedder-policy",
+                "cross-origin-opener-policy",
+                "cross-origin-resource-policy",
+                "date",
+                "origin-agent-cluster",
+                "permissions-policy",
+                "priority",
+                "referrer-policy",
+                "server",
+                "server-timing",
+                "strict-transport-security",
+                "vary",
+                "x-content-type-options",
+                "x-frame-options"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": "request-1",
+              "resource_type": "document",
+              "sequence": 5,
+              "status": 403,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 6,
+              "step_index": 0,
+              "text": "Failed to load resource: the server responded with a status of 403 ()",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-arch",
+                "sec-ch-ua-bitness",
+                "sec-ch-ua-full-version",
+                "sec-ch-ua-full-version-list",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-model",
+                "sec-ch-ua-platform",
+                "sec-ch-ua-platform-version",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 7,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": ["ray"],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1?ray=a4b9053c3b12b33c"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": "request-1",
+              "resource_type": "document",
+              "sequence": 8,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cache-control",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 9,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": ["ray"],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1?ray=a4b9053c3b12b33c"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-arch",
+                "sec-ch-ua-bitness",
+                "sec-ch-ua-full-version",
+                "sec-ch-ua-full-version-list",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-model",
+                "sec-ch-ua-platform",
+                "sec-ch-ua-platform-version",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 10,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": ["ray"],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1?ray=a4b9053c3b12b33c"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 11,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-4",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://www.doordash.com/15d4175b-ad15-449b-af0a-6b369c3fdffe"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "origin",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 12,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["onload", "render"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/turnstile/v0/b/d2d3316b729e/api.js?onload=DraY9&render=explicit"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "access-control-allow-origin",
+                "alt-svc",
+                "cache-control",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "cross-origin-resource-policy",
+                "date",
+                "etag",
+                "priority",
+                "server",
+                "server-timing",
+                "timing-allow-origin",
+                "x-content-type-options"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 13,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["onload", "render"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/turnstile/v0/b/d2d3316b729e/api.js?onload=DraY9&render=explicit"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "origin",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 14,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["onload", "render"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/turnstile/v0/b/d2d3316b729e/api.js?onload=DraY9&render=explicit"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 15,
+              "step_index": 0,
+              "text": "Failed to load resource: the server responded with a status of 403 ()",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/favicon.ico"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 16,
+              "step_index": 1,
+              "text": "Failed to load resource: the server responded with a status of 403 ()",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/favicon.ico"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-arch",
+                "sec-ch-ua-bitness",
+                "sec-ch-ua-full-version",
+                "sec-ch-ua-full-version-list",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-model",
+                "sec-ch-ua-platform",
+                "sec-ch-ua-platform-version",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 17,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-6",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/fo/36127575:1792170023:UYjjys6a2BWdYmpmG5QsyZ8VM8niynkVUs5Ii0qJxeM/a4b9053c3b12b33c/iMX91Vztlxiiw.Ek4UDrwdRWxkhLR3huN.IRLe39PuQ-1792174227-1.2.1.1-UoPX9AL4KibyBqFueEZcCvmwrfCA.PQrSK9FqI7epusZqmSKoL81tvaswjxUg08v"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cf-chl-gen",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing",
+                "timing-allow-origin"
+              ],
+              "kind": "response",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 18,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-6",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/fo/36127575:1792170023:UYjjys6a2BWdYmpmG5QsyZ8VM8niynkVUs5Ii0qJxeM/a4b9053c3b12b33c/iMX91Vztlxiiw.Ek4UDrwdRWxkhLR3huN.IRLe39PuQ-1792174227-1.2.1.1-UoPX9AL4KibyBqFueEZcCvmwrfCA.PQrSK9FqI7epusZqmSKoL81tvaswjxUg08v"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 19,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-7",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://www.doordash.com/d3d4c801-7739-42e0-bf95-c2fcdf580b23"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 20,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-8",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-arch",
+                "sec-ch-ua-bitness",
+                "sec-ch-ua-full-version",
+                "sec-ch-ua-full-version-list",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-model",
+                "sec-ch-ua-platform",
+                "sec-ch-ua-platform-version",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 21,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-6",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://www.doordash.com/cdn-cgi/challenge-platform/h/b/fo/36127575:1792170023:UYjjys6a2BWdYmpmG5QsyZ8VM8niynkVUs5Ii0qJxeM/a4b9053c3b12b33c/iMX91Vztlxiiw.Ek4UDrwdRWxkhLR3huN.IRLe39PuQ-1792174227-1.2.1.1-UoPX9AL4KibyBqFueEZcCvmwrfCA.PQrSK9FqI7epusZqmSKoL81tvaswjxUg08v"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["content-length", "content-type"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 22,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-7",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://www.doordash.com/d3d4c801-7739-42e0-bf95-c2fcdf580b23"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 23,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-7",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://www.doordash.com/d3d4c801-7739-42e0-bf95-c2fcdf580b23"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-ch",
+                "alt-svc",
+                "cache-control",
+                "cf-ray",
+                "content-encoding",
+                "content-security-policy",
+                "content-type",
+                "critical-ch",
+                "cross-origin-embedder-policy",
+                "cross-origin-opener-policy",
+                "cross-origin-resource-policy",
+                "date",
+                "document-policy",
+                "origin-agent-cluster",
+                "permissions-policy",
+                "priority",
+                "referrer-policy",
+                "server",
+                "server-timing"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 24,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-8",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 25,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-8",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 26,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-9",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/a294faee-2234-49eb-81fe-53469d477baa"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 27,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-10",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cf-chl-gen",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing",
+                "timing-allow-origin"
+              ],
+              "kind": "response",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 28,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-10",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 29,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-11",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 30,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-10",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["content-length", "content-type"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 31,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-11",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 32,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-11",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["referer", "user-agent"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 33,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-12",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/pat/a4b90540c8d74ccb/1792174229100/f4d096118cc95a159d18276de4dccd3fc46d541bab2d06a5ea12f7cb392326a9/IqVqYa7x4qM0m9UnMtW1m9UZqn9kP9CRekN8umnO1dU-1792174229-1.3.1.1-5Iu.8js1dHi3k7Nv6Kqoirm.YuGvV1ePxtNGE6IIXvNB.3EWcRrc4e9TMmBwoAaV9vJgRln_I5UWAgwfFeBs1KuzZHjvXkkRGMW18T.ZVZ71Kg.9nnhFDpwNXBwY_qBsMUHL1djdByMzXcOTKPF9vsA6ov9juNq0zp_9CXiNcTPdbHvvaOS2_FcEhT4p6v1pdKci1I1T2JuzWkmO7xwJppQlU7jIlYEbrrBXfcnn3eQqZ64Bfl19Pzi0aSGNsxwPcd7CTpCePujnnMD9OGzTroHOyQHri0Qb7RqtYc_ys78AaGPStgmc5RRQu9rUcZCUSkkbh8yp39qCBrgDiekzH0EBtI0QmiNXhUA.uiAeiJWSSQRlFDsh8ctQMQTHmS1J5oacLh82ho8FrdgKaJivnZYojklRC6QnOdsPlwDgLI.OGtgj_jaaxPJyGrbO6NFzxSxsF.Bexcwvu3nGveuiE0pBTt.9Bks8pVL8oFqHws8Ygo50xygV14yePR23DEu60.KAOLePfQrwcE6LCdLJ5teZ0ECsJRWUAZh.p6us2HNMIqMYkeQ7Ye4cIsPLpATt1qELTYhf_BMVDlrmIRBI95GaYbf19HeKsbh8lEg5MGrnZJdbRNo_Yq3mrB2BbhTPRbkj1xL0Rf0qasIxDcQvX4Ctk.vjaK.HK8r67Xfj1ctUSjLYCSbEsWnqisz8WpM752Xv63XBBUZOEeWS0wNUSnMGqqfFHmQOsiBVpd.tQi99orTWLPcE5TGj_ATdn67JtxETY0139tObD_P_3J_qxjmi1v8LASd8AR4mWYKMYLnafuzDx_8vVSIYBnfjr_yufN4q4.0XsetsN1efwADyXQ"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["referer", "user-agent"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 34,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-13",
+              "url": {
+                "origin": "https://hagen.challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://hagen.challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/i/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cf-ray",
+                "content-length",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing",
+                "www-authenticate"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 35,
+              "status": 401,
+              "step_index": 1,
+              "transaction_id": "request-12",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/pat/a4b90540c8d74ccb/1792174229100/f4d096118cc95a159d18276de4dccd3fc46d541bab2d06a5ea12f7cb392326a9/IqVqYa7x4qM0m9UnMtW1m9UZqn9kP9CRekN8umnO1dU-1792174229-1.3.1.1-5Iu.8js1dHi3k7Nv6Kqoirm.YuGvV1ePxtNGE6IIXvNB.3EWcRrc4e9TMmBwoAaV9vJgRln_I5UWAgwfFeBs1KuzZHjvXkkRGMW18T.ZVZ71Kg.9nnhFDpwNXBwY_qBsMUHL1djdByMzXcOTKPF9vsA6ov9juNq0zp_9CXiNcTPdbHvvaOS2_FcEhT4p6v1pdKci1I1T2JuzWkmO7xwJppQlU7jIlYEbrrBXfcnn3eQqZ64Bfl19Pzi0aSGNsxwPcd7CTpCePujnnMD9OGzTroHOyQHri0Qb7RqtYc_ys78AaGPStgmc5RRQu9rUcZCUSkkbh8yp39qCBrgDiekzH0EBtI0QmiNXhUA.uiAeiJWSSQRlFDsh8ctQMQTHmS1J5oacLh82ho8FrdgKaJivnZYojklRC6QnOdsPlwDgLI.OGtgj_jaaxPJyGrbO6NFzxSxsF.Bexcwvu3nGveuiE0pBTt.9Bks8pVL8oFqHws8Ygo50xygV14yePR23DEu60.KAOLePfQrwcE6LCdLJ5teZ0ECsJRWUAZh.p6us2HNMIqMYkeQ7Ye4cIsPLpATt1qELTYhf_BMVDlrmIRBI95GaYbf19HeKsbh8lEg5MGrnZJdbRNo_Yq3mrB2BbhTPRbkj1xL0Rf0qasIxDcQvX4Ctk.vjaK.HK8r67Xfj1ctUSjLYCSbEsWnqisz8WpM752Xv63XBBUZOEeWS0wNUSnMGqqfFHmQOsiBVpd.tQi99orTWLPcE5TGj_ATdn67JtxETY0139tObD_P_3J_qxjmi1v8LASd8AR4mWYKMYLnafuzDx_8vVSIYBnfjr_yufN4q4.0XsetsN1efwADyXQ"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["referer", "user-agent"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 36,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-12",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/pat/a4b90540c8d74ccb/1792174229100/f4d096118cc95a159d18276de4dccd3fc46d541bab2d06a5ea12f7cb392326a9/IqVqYa7x4qM0m9UnMtW1m9UZqn9kP9CRekN8umnO1dU-1792174229-1.3.1.1-5Iu.8js1dHi3k7Nv6Kqoirm.YuGvV1ePxtNGE6IIXvNB.3EWcRrc4e9TMmBwoAaV9vJgRln_I5UWAgwfFeBs1KuzZHjvXkkRGMW18T.ZVZ71Kg.9nnhFDpwNXBwY_qBsMUHL1djdByMzXcOTKPF9vsA6ov9juNq0zp_9CXiNcTPdbHvvaOS2_FcEhT4p6v1pdKci1I1T2JuzWkmO7xwJppQlU7jIlYEbrrBXfcnn3eQqZ64Bfl19Pzi0aSGNsxwPcd7CTpCePujnnMD9OGzTroHOyQHri0Qb7RqtYc_ys78AaGPStgmc5RRQu9rUcZCUSkkbh8yp39qCBrgDiekzH0EBtI0QmiNXhUA.uiAeiJWSSQRlFDsh8ctQMQTHmS1J5oacLh82ho8FrdgKaJivnZYojklRC6QnOdsPlwDgLI.OGtgj_jaaxPJyGrbO6NFzxSxsF.Bexcwvu3nGveuiE0pBTt.9Bks8pVL8oFqHws8Ygo50xygV14yePR23DEu60.KAOLePfQrwcE6LCdLJ5teZ0ECsJRWUAZh.p6us2HNMIqMYkeQ7Ye4cIsPLpATt1qELTYhf_BMVDlrmIRBI95GaYbf19HeKsbh8lEg5MGrnZJdbRNo_Yq3mrB2BbhTPRbkj1xL0Rf0qasIxDcQvX4Ctk.vjaK.HK8r67Xfj1ctUSjLYCSbEsWnqisz8WpM752Xv63XBBUZOEeWS0wNUSnMGqqfFHmQOsiBVpd.tQi99orTWLPcE5TGj_ATdn67JtxETY0139tObD_P_3J_qxjmi1v8LASd8AR4mWYKMYLnafuzDx_8vVSIYBnfjr_yufN4q4.0XsetsN1efwADyXQ"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 37,
+              "step_index": 1,
+              "text": "Connecting to 'data:,' violates the following Content Security Policy directive: \"connect-src 'self' https://hagen.challenges.cloudflare.com https://brunhild.challenges.cloudflare.com https://valid.alg13.dnstest.challenges.cloudflare.com https://invalid.alg13.dnstest.challenges.cloudflare.com https://dual-valid.mldsa44.dnstest.challenges.cloudflare.com https://valid.mldsa44.dnstest.challenges.cloudflare.com https://dnstest.dev\". The action has been blocked.",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 38,
+              "step_index": 1,
+              "text": "Connecting to 'data:,' violates the following Content Security Policy directive: \"connect-src 'self' https://hagen.challenges.cloudflare.com https://brunhild.challenges.cloudflare.com https://valid.alg13.dnstest.challenges.cloudflare.com https://invalid.alg13.dnstest.challenges.cloudflare.com https://dual-valid.mldsa44.dnstest.challenges.cloudflare.com https://valid.mldsa44.dnstest.challenges.cloudflare.com https://dnstest.dev\". The action has been blocked.",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 39,
+              "step_index": 1,
+              "text": "Fetch API cannot load data:,. Refused to connect because it violates the document's Content Security Policy.",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "access-control-allow-origin",
+                "access-control-expose-headers",
+                "cache-control",
+                "cf-chl-peek",
+                "cf-ray",
+                "cross-origin-resource-policy",
+                "date",
+                "server",
+                "timing-allow-origin",
+                "vary",
+                "x-content-type-options"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 40,
+              "status": 204,
+              "step_index": 1,
+              "transaction_id": "request-13",
+              "url": {
+                "origin": "https://hagen.challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://hagen.challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/i/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": "net::ERR_ABORTED",
+              "header_names": ["referer", "user-agent"],
+              "kind": "request-failed",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "fetch",
+              "sequence": 41,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-13",
+              "url": {
+                "origin": "https://hagen.challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://hagen.challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/i/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "warning",
+              "sequence": 42,
+              "step_index": 1,
+              "text": "OTS parsing error: Size of decompressed WOFF 2.0 is less than compressed size",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "image",
+              "sequence": 43,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-14",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/ci/a4b90540c8d74ccb/1792174229107/W4v5PGGEj1_HmkDewgPfS7ACGbg0Q0yXFwWDXUAHHcs-1792174229-1.3.1.1-9rQAax1X5Bu.73uSEhGDeNRwuYYtcH2zVl5xOaXzdDfHyYaPS_mMfgdDG8amqfp0iBED7sfBWGvtqBwR5jTWClamWUOOcuSerpUVH5fuL1oIFHntNvvfrgj1wfYR3Gu9y92ncdUR.KG8EMV.fb9KgnWATNLmDwLo_ttzltlXTTocLilAgMRp7ZSPhnT.5FU0YKIENxP6XjQhYTRrhk9F0eb_zxb5ZYkbjybm1hTvgluph2nuloNPj.2CVCV6.9KvdLHaIeYF87NN3L7O9hwyNFk7UKYfK_Sh_KFkSvpPrPq_8dYcVYpl6mtWpBT8ohi9xh2bkoRtH9pNtxpfjihF2ahPQYi2E4SBj4nSTlthxG5f2xaN5_hKkSBDObGMndVriSnvf1iIl6PgH32jh4vEpWn3RAOgF_h2GxFFeA39Qm2t6fpAbaKwiNmy9tJyOBtVg.NrPp4lEhrXrN8nVsfQuCE4uhyD5Jj30R595KsXK8ZM.mLx.V7WTnvQIOS8ohp.zUiOsG22R3VfDVfoX3m4MJ0YLPx_7HLR6ahhnX4t8TZUg3gA2r6HOy6mmhX5mn_QlQNhrUB.cyps_r_a1uc7VXATKzoVoyaHeub3akG9KgzdokJQJroo2lNvIZVPwkghFaSd9VrodTX5RLmWtZRqR4eSy.Qc85KnYHsrEXIDfGkYszQum3DLu7goXATlD3NG2TNBLB9jYYsZgfwi1BRST7njGJ0cxn.qo..EnAtqJkiLcM43RkT8xbjoXuHRNy6q"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cf-ray",
+                "content-length",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "image",
+              "sequence": 44,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-14",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/ci/a4b90540c8d74ccb/1792174229107/W4v5PGGEj1_HmkDewgPfS7ACGbg0Q0yXFwWDXUAHHcs-1792174229-1.3.1.1-9rQAax1X5Bu.73uSEhGDeNRwuYYtcH2zVl5xOaXzdDfHyYaPS_mMfgdDG8amqfp0iBED7sfBWGvtqBwR5jTWClamWUOOcuSerpUVH5fuL1oIFHntNvvfrgj1wfYR3Gu9y92ncdUR.KG8EMV.fb9KgnWATNLmDwLo_ttzltlXTTocLilAgMRp7ZSPhnT.5FU0YKIENxP6XjQhYTRrhk9F0eb_zxb5ZYkbjybm1hTvgluph2nuloNPj.2CVCV6.9KvdLHaIeYF87NN3L7O9hwyNFk7UKYfK_Sh_KFkSvpPrPq_8dYcVYpl6mtWpBT8ohi9xh2bkoRtH9pNtxpfjihF2ahPQYi2E4SBj4nSTlthxG5f2xaN5_hKkSBDObGMndVriSnvf1iIl6PgH32jh4vEpWn3RAOgF_h2GxFFeA39Qm2t6fpAbaKwiNmy9tJyOBtVg.NrPp4lEhrXrN8nVsfQuCE4uhyD5Jj30R595KsXK8ZM.mLx.V7WTnvQIOS8ohp.zUiOsG22R3VfDVfoX3m4MJ0YLPx_7HLR6ahhnX4t8TZUg3gA2r6HOy6mmhX5mn_QlQNhrUB.cyps_r_a1uc7VXATKzoVoyaHeub3akG9KgzdokJQJroo2lNvIZVPwkghFaSd9VrodTX5RLmWtZRqR4eSy.Qc85KnYHsrEXIDfGkYszQum3DLu7goXATlD3NG2TNBLB9jYYsZgfwi1BRST7njGJ0cxn.qo..EnAtqJkiLcM43RkT8xbjoXuHRNy6q"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "image",
+              "sequence": 45,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-14",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/ci/a4b90540c8d74ccb/1792174229107/W4v5PGGEj1_HmkDewgPfS7ACGbg0Q0yXFwWDXUAHHcs-1792174229-1.3.1.1-9rQAax1X5Bu.73uSEhGDeNRwuYYtcH2zVl5xOaXzdDfHyYaPS_mMfgdDG8amqfp0iBED7sfBWGvtqBwR5jTWClamWUOOcuSerpUVH5fuL1oIFHntNvvfrgj1wfYR3Gu9y92ncdUR.KG8EMV.fb9KgnWATNLmDwLo_ttzltlXTTocLilAgMRp7ZSPhnT.5FU0YKIENxP6XjQhYTRrhk9F0eb_zxb5ZYkbjybm1hTvgluph2nuloNPj.2CVCV6.9KvdLHaIeYF87NN3L7O9hwyNFk7UKYfK_Sh_KFkSvpPrPq_8dYcVYpl6mtWpBT8ohi9xh2bkoRtH9pNtxpfjihF2ahPQYi2E4SBj4nSTlthxG5f2xaN5_hKkSBDObGMndVriSnvf1iIl6PgH32jh4vEpWn3RAOgF_h2GxFFeA39Qm2t6fpAbaKwiNmy9tJyOBtVg.NrPp4lEhrXrN8nVsfQuCE4uhyD5Jj30R595KsXK8ZM.mLx.V7WTnvQIOS8ohp.zUiOsG22R3VfDVfoX3m4MJ0YLPx_7HLR6ahhnX4t8TZUg3gA2r6HOy6mmhX5mn_QlQNhrUB.cyps_r_a1uc7VXATKzoVoyaHeub3akG9KgzdokJQJroo2lNvIZVPwkghFaSd9VrodTX5RLmWtZRqR4eSy.Qc85KnYHsrEXIDfGkYszQum3DLu7goXATlD3NG2TNBLB9jYYsZgfwi1BRST7njGJ0cxn.qo..EnAtqJkiLcM43RkT8xbjoXuHRNy6q"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 46,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-15",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["content-length", "content-type"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 47,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-15",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 48,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-15",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "warning",
+              "sequence": 49,
+              "step_index": 1,
+              "text": "No available adapters.",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "startGroupCollapsed",
+              "sequence": 50,
+              "step_index": 1,
+              "text": "",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "debug",
+              "sequence": 51,
+              "step_index": 1,
+              "text": "Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 52,
+              "step_index": 1,
+              "text": "/.*.*=.*/",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 53,
+              "step_index": 1,
+              "text": "/.*.*=.*/",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 54,
+              "step_index": 1,
+              "text": "function(){return Zt(ss,sn)}",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 55,
+              "step_index": 1,
+              "text": "function(){return Zt(ss,sn)}",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 56,
+              "step_index": 1,
+              "text": "JSHandle@node",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 57,
+              "step_index": 1,
+              "text": "JSHandle@node",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "count",
+              "sequence": 58,
+              "step_index": 1,
+              "text": "\u0000: 1",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "count",
+              "sequence": 59,
+              "step_index": 1,
+              "text": "\u0000: 1",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "debug",
+              "sequence": 60,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "debug",
+              "sequence": 61,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "dir",
+              "sequence": 62,
+              "step_index": 1,
+              "text": " Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "dir",
+              "sequence": 63,
+              "step_index": 1,
+              "text": " Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "dirxml",
+              "sequence": 64,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "dirxml",
+              "sequence": 65,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 66,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "error",
+              "sequence": 67,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "info",
+              "sequence": 68,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "info",
+              "sequence": 69,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 70,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "log",
+              "sequence": 71,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "table",
+              "sequence": 72,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "table",
+              "sequence": 73,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent Error",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "trace",
+              "sequence": 74,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "trace",
+              "sequence": 75,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "warning",
+              "sequence": 76,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "warning",
+              "sequence": 77,
+              "step_index": 1,
+              "text": "%c%d font-size:0;color:transparent NaN",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "endGroup",
+              "sequence": 78,
+              "step_index": 1,
+              "text": "console.groupEnd",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": ["lang"],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/turnstile/f/av0/rch/h3zsp/0x4AAAAAAADnPIDROrmt1Wwj/light/fbE/new/normal?lang=auto"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 79,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-16",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["content-length", "content-type"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 80,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-16",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 81,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-16",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/fe76cdd3-575d-446a-a0f4-099d905e5451"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 82,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-17",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cf-chl-gen",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "priority",
+                "server",
+                "server-timing",
+                "timing-allow-origin"
+              ],
+              "kind": "response",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 83,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-17",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 84,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-18",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/ee006951-db34-4fe3-9fa3-3f4959b3b01f"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "cf-chl",
+                "cf-chl-ra",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 85,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-17",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/fo/2571913195:1792170026:AJ8kpvW9gJCOzkKE-XrdsF4QdJseU3-bbbMr61A1Rq0/a4b90540c8d74ccb/kBF.nT6cJeWZkrdrkPCttz3atLqK1KNybCJUO57hlgU-1792174228-1.2.1.1-EIGeRekxpQigLRyql2Vi6dWO1Hbje.xbPmKszF0TmGKhfpycoqLevrpxATJ5tENp"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["content-length", "content-type"],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 86,
+              "status": 200,
+              "step_index": 1,
+              "transaction_id": "request-18",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/ee006951-db34-4fe3-9fa3-3f4959b3b01f"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 87,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-18",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/ee006951-db34-4fe3-9fa3-3f4959b3b01f"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-unfinished",
+              "method": "GET",
+              "reason": "capture-ended",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 88,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-4",
+              "url": {
+                "origin": "https://www.doordash.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://www.doordash.com/15d4175b-ad15-449b-af0a-6b369c3fdffe"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": ["accept", "accept-language"],
+              "kind": "request-unfinished",
+              "method": "GET",
+              "reason": "capture-ended",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 89,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-9",
+              "url": {
+                "origin": "https://challenges.cloudflare.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "blob:https://challenges.cloudflare.com/a294faee-2234-49eb-81fe-53469d477baa"
+              }
+            }
+          ],
+          "retained": 89
+        },
+        "limitations": [
+          "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+          "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+          "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+          "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+          "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+          "Storage values are hashed only after declared-secret redaction.",
+          "Some network requests had not completed when capture ended; later activity is unknown."
+        ],
+        "scenario": {
+          "action_count": 1,
+          "event_families": ["console", "network"],
+          "network_content": {
+            "header_values": false,
+            "request_body": false,
+            "response_body": false
+          },
+          "secret_references": [],
+          "start_origin": "https://www.doordash.com"
+        },
+        "steps": [
+          {
+            "action": "goto_start",
+            "after_url": {
+              "origin": "https://www.doordash.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.doordash.com/"
+            },
+            "artifacts": {
+              "accessibility": { "state": "not_requested" },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": { "state": "not_requested" }
+            },
+            "before_url": {
+              "origin": null,
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "about:blank"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 1664,
+            "error": null,
+            "event_sequence_end": 15,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "scenario_start",
+            "step_index": 0
+          },
+          {
+            "action": "wait_for_timeout",
+            "after_url": {
+              "origin": "https://www.doordash.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.doordash.com/"
+            },
+            "artifacts": {
+              "accessibility": {
+                "state": "captured",
+                "value": {
+                  "bytes": 656,
+                  "sha256": "612137061d8bf64ace20ce7b68199f3cad3448b29fc1e24bd752a33c97eb5523",
+                  "text": "- document:\n  - main:\n    - heading \"www.doordash.com\" [level=1]\n    - heading \"Performing security verification\" [level=2]\n    - paragraph: This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\n  - contentinfo:\n    - text: \"Ray ID:\"\n    - code: a4b9053c3b12b33c\n    - text: Performance and Security by\n    - link \"Cloudflare, opens in a new tab\":\n      - /url: https://www.cloudflare.com?utm_source=challenge&utm_campaign=m\n      - text: Cloudflare\n    - link \"Privacy, opens in a new tab\":\n      - /url: https://www.cloudflare.com/privacypolicy/\n      - text: Privacy"
+                }
+              },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": {
+                "state": "captured",
+                "value": {
+                  "bytes": 37292,
+                  "data_base64": "iVBORw0KGgoAAAANSUhEUgAABQAAAAOECAIAAABxdwtUAAAQAElEQVR4nOzdBbwsdf0//qFLGkRCQlLpki4RkO5uUCRVRFJKukMQBINGupVUUFpAQEW6u+GCCJe4/5fn83d++909Z++5hfc6z+eDx2XP7OzkZ3bmNe/ZmTEHDRpUAQAAwP+60SsAAABoAAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGGLMCRj4XXXTRI488Uv+50EILrbLKKtX/uldfffW0005r7fKDH/xgookmqkYCp59++iuvvFL/udxyyy211FIVAACjFAEYRka33nrr7bffXv/52WefNSEAv/baa1dccUVrl2222WYkCcDXXnvts88+W/851VRTCcAAAKMcl0ADAADQCAIwAAAAjSAAAwAA0AgCMAAAAI0gAAMAANAI7gLNMHn99dfffffd+s+JJproi1/8Yls/H3zwwUsvvVT/OcYYY8w000ydg3rqqac+++yz+s8vf/nLAwYMGEUHPs4441SD8/HHH997773PP//8yy+/nP6/0mOWWWaphtx77733wAMPvPrqq6+88srAgQOnnHLKL33pS7POOuuMM87Y/4E88sgjmZHXXnvtjTfemHDCCbM0MpAFFligy7w888wzn3zySf3ndNNNN+644/7zn/+85ZZbnn766Y8++uirX/1q582rM8sPPfTQiy+++M4772RZZZHOPvvsQ3Gr58zvfffdlxaY4Xz66aeTTjrp5JNPPt98800//fT9+XgWVKb/iSeeePLJJ7P6JplkkqmmmmqhhRaaYoopqiGR4dx5552ZqUzPeOONl4U2zzzzDN16bJXG+eCDD2aFZrBpKpm1rNb5559/6qmn7ucQ0nQffvjhV3uk6WbCsk4zbZNNNllfH2nbnDPSLNW8ePvtt++4444XXnghK3fmmWfO3M0xxxwZZutn33///cceeyzLM4si7SejW3LJJbuMCwDgv0IAZpgcfvjhSTv1nwsvvHDbc1zjmmuuOeKII1q73HTTTW1Hxskw6623XmuXk08++ZJLLhlFB7744otXfUvcuvjii3/xi1+89dZbbW8ttdRSe+yxx7TTTlv1T8Lbeeed1/booFrS4EYbbbTiiit2GUKi4+WXX37BBRck/Xa+O8EEE6y99tqbbrppwmHVMRfrrLNOa5dDDjkkIW3vvfeu5ysT0BqAk4p//vOf33jjjZ1j+eEPf7jmmmtW/ZPAecoppyRF9/ruDDPM8L3vfW+55Zbr6+OJ+oceemhfH09L2HXXXRPwqn646KKLTjrppMTCzoHsu+++iffVkEuMzDq9+uqre303GXj77bfP8LsM4fbbb88KbX2MVquVVlopK3SuuebqfOuAAw6466676j+zfvfZZ5+ssl/+8pdtfc4999yHHXZYaaiDBg3K1B599NGdy2GrrbbaZZddRhtttAoAYOTgEmiGSSpmrX/ec889CVRt/aRjW5eUttq6/OMf/2jrkgP0UXfgVd9Szdtvv/2OPPLIzvRb9Tz+d/XVV7///vurfvjtb3+7/vrr95V+I2Xhvfba68c//vG//vWvXnt48803d9hhhySZXtNvJNKce+65Sfh33313NTjPPvtscmyv81UmZosttuhMv2UsBx98cD7bWkjvVXpIzN5pp536iq9lMnbbbbc999yzc4UmqiUZbrLJJl0+npWeHs4///xqcBL5cn6kM/XVA/n73/9eDaGszZyz6Cv9RtrGd7/73Yy6c+4iBfljjz02mbOv9BvXX399VkRWa5ZG1VWWdtpqZ/qNv/3tb2moKaFnIDllc+CBB/a6HM4888wTTjihAgAYaQjADJPOSlRblMoxdGtNqbj33nvburRFhdSXJppoolF34FXfUnu89tprq65233331157rXs/Z511VsJJ1Q8Z3XbbbTdw4MC27m+//faGG27YOUedkm2Sk3//+9937y017V5TUNVTqd5mm236erf405/+9Otf/7rqKsHvsssuq/ohSfvwww9v63jccccdddRR/fn4Mccck6DYpYdrrrnmN7/5TZceMrNZj32deujVr371q4MOOqg/fWbUmcK2jmmxSf6pHvdnCFkUicrd+0ka795WTz311GT17g3jnHPOOf300ysAgJGDAMwwmXnmmSeYYILWLm0V0SeeeKIz9txxxx1tXdoqq0ssscQoPfC+/OUvf7nqqquqwUkR9fHHH+/SQwqYJ554YtVv6T9ZpbVLCncpuvZarW1bLLVU+V599dVqyGVc/YydKYB3efeRRx658MILO7tngjuv0I5E5dbF+NJLL3WGw3KV+KabbjrrrLO2vZWw/dFHH1V9ePHFF6vByeLqTyW5SE31Zz/7Wa9v9bpGsijakmeK270uwL5WaKat+wIfrJxlSKsYbG8///nP33vvvQoAYCQgADNMRh999G984xutXXIc3/pn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CF1aRedbnesIAOB/lQDMcDD++OO3llJzOP78888/+uijdZfUM0tRq/VXsuXHtG2/R11kkUX+ZwbeZuKJJ279s/Ouv7XPPvusr/TVWWB84YUXqj50VmsnmWSS+t9WfdUAq46bJ3d+trvUXdu6tF3C3WVcrQYOHLjZZpt13lC6ljU1wwwzVIOz4oor3nzzzfvuu2+X+3VXPS1hm2226ef12MNoiNZpr9qaVtV1IXeePuj8OADA/yoBmOFj8cUXb/3zH//4R+tzdJdccslyL9nWGy+/+uqrOUxve45u252ZR/WBt2qrvCUA9/UI1i4VzjHHHLOtrvvEE0/01fPTTz/d1qVUXzsLjM8880xfA2m70Vdfl/72ZdJJJ23r8uSTT/bV82OPPdbXW9ddd13bYplqqqmSYy+++OKcj/jLX/5y6623Xn755dttt101OMl766yzzjnnnHP11Vcffvjhm2yySa8330oGvuiii6oRb4jWaa86S/1t98Rq1bn8O9cRAMD/KjfBYvho+zFtUlNrFWuxxRYrL770pS+lTFcXP5NbWp82NOuss/Z6feyoO/BWnT0k5/Rah+xeeEwEbb290MMPP5yKceuzamqdUaeE8M6LYNNnr3d1evvtt9sur2174M1gdYartmdH1TIXDz74YNWHtvskp96bBNs5I0NUsy13ci73W04N/IorrvjZz37W2kPbDbdHnP6v0yOOOKL1zMuWW26Z6e88o9ElQrctooTnJPAKAKAZVIAZPmafffbW+zYlrqQiV//ZGq6WWGKJ+nXKd635qvWt/42Bt5p//vnbuiTMDBw4sK1jklj3J+IutdRSrX9mMhIFO3tLUfe8885r7ZKwV27Y2/bL5zj99NPfeeedzoG0BcKqf3PaKrG/7Xk8Wbw333xzZ59nnnlml8vC264KXnrppTvT74cffvinP/2p14/nrf3222/fFm3V5kzntttuu8IKK7R2TM258+e1I0I/12lOEKQo/UiL8rPzNOC21nXjjTf2ejYhhfTOByZVAACNIQAzfIwxxhhLLrlk/WfrQXZqhq0RqPW3sm2X1/b1M9pRa+Cp3V122WXbbbfdJptscuKJJ9YJqjxgqdVDDz10wgkntHb59NNP99lnn+7Pj2kLaZGxlBtT15L39txzz7beVl999Tovrbzyyq1vZYzJh5ny1o7XX399ZqRtIG1RrT86J3j//fdvC7Qpp5988sldBtL2nJ5UOLOsWrt8/PHHhx9+eF8fz1r+7W9/+7sWBx98cNsQqp46f1uX8cYbrxp++mob/Vmn+exxxx3X1lt9j+5VV1217a3ddtut7RlUOSeS1tXWW68PHAYA+F/lyjeGm8UWWyyRqbN76/2Tq97Kj7V55533f2DgqdEdddRR5XVqdKk0ljrqxBNPnGpb222cLrjggpQ911prrXHHHTdxJTXbwd58eKaZZlp44YXbrs7dZZddkm+T5DOWe++9N7PTOZzWjLTuuutee+21re/efvvt3/nOdxKH5plnnldeeSWl1CuuuKJtCOuvv35fz2fqIuku1d3WLgl+G2+88ZZbbjnLLLMkmqbqfv7553cfyHTTTdf6bKrMXbLcGmusscACC3zyySf/+Mc/zjrrrLvuuquvj4811lipXZe7lxU5+/Dzn//829/+dh2tUzVtC/xzzjlnr9chD7W+2kZf63SHHXbIGYexxx472TVV+rbTLosuumj9DN7ll1/++OOPb61X56TGFltskVaRszM5O3DHHXdcddVVbdMzwwwzZAFWAACNIQAz3PT6I9Kqo/Q64YQTJkm2VbeqnqP5hMBq1B/4JZdc0vrunXfe+eqrr5afzn7ve9/rvI/xnT2qIXHAAQesttpqrV2SfC7o0ddH9tprr9ZqdmLPpptu2naN9P09+hpCZiHTXw25VCmTVNvSVyb4lFNO6f9AEvDaAvmNPap+22qrrVoDcPzqV7/KEpttttkSwlP57yy8b7bZZtVw1aVt9LpOj+nR19B23HHH+nVOfBx00EGp+rb28OKLL/68R19DSM28nw/7BQD43+ASaIabckuhzu6dJaa2Gy8Xrc8ZGqUH3vlj2vq5uzPOOOPOO+9cDc6ss87a+YPhVtNMM83RRx9d9VvquinetnXcaaedutS026TwmzEORfm3SDGz807FnTbYYIO+3kqVfumll64Gp9f7ORc5zdE5/ITMZP7UljvT78orr9x5ZfIw6tI2sk7r4nB/7LfffnPNNVdrl+WWW26IEvvee+/dZXEBAPxPEoAZnjojSo6wO58y2nbj5aLzJ7Kj6MDb6skJjfV1qrHNNtt0r6OmHnjkkUeOP/74VVepiJ511ln9SZUJn4ceemj59W+rVK1TG+ySOWtf+cpXzj///La4NUQmn3zyc889t/tzerfccsvOH7LWRh999NRC11xzzS5DSBG17ar1Nnvsscfmm29e9cOBBx6YhTZ8r3+uBtc2vvnNb55xxhmDXaf51MEHH7z22mt3vvXDH/5w//33rwYnQzj55JM7z4kAAPzPE4AZnjpvNNV6f6la57N/ckQ+22yzVf8TA//BD37QmvQOO+ywths4bbXVVr/61a96vZtU3rr00ktTKB5rrLFau4899tidPc8999yXXXbZnnvu2WuwzIRtvPHGF1100dZbb91XkMtg99prr1//+tdrrLFGrz1kFAcddFCya2tOKzoTda8TWfvSl7509tlnJ413lpETsDMN3//+99vmuur57W79eswxx0y6+9GPftRZHl922WWvuOKKxOO2J/q0TVKWw6677nrhhRemuttXNTtV3yzVzgXSNqi+Hh3Uuahb+xxs25h33nnTABLUe12nycap8V5yySVdzhSstdZaV155Zc6z9DqDOb2SVZBl1eu1DG3Lv3N1VL3NeGdLqHpOrwx2UAAAn7/RBg0aVAHD1cCBAx9//PFkoWmnnXaiiSbqq7c33njjxRdffOuttxIhpu8xdE9kzVb8yiuvvNYjQ0j1+Itf/OI000zTFq66++CDD1566aXXX3/9ww8/zJ9TTjllwlLnA2aHXRbO888/n3F98sknqbHPNNNMnc8KHqx89oknnnjvvffy2YTzIZrT4tNPP806evvttwcMGJB4liFkULPMMkv3GD/s+tk22tZp8mTWRZZV/3+ym0WUhZyPZynl9ZQ9pp566uFe1gYAGIUIwAAAADSCUgAAAACNIAADAADQCAIwAAAAjSAAAwAA0AgCMAAAAI0gAAMAANAIAjAAAACNIAADAADQCAIwAAAAjSAAAwAA0AgCMAAAAI0gAAMAANAIAjAAAACNIAADAADQCAIwAAAAjSAAAwAA0AgCMAAAAI0gAAMAANAIAjAAAACNIAADAADQCAIwAAAAjSAAAwAA0AhjVjBs3nnnnTfffPOpp54ad9xxp5lmmtJxggkm+NKXvlSNMP/4xz+eeOKJ559/fqyxxlpzzTWnmmqq6r/qL3/5y89+9rPM8q677jrFFFNU9O2yyy675JJLFl100Z133nn00UfVc3B9rfEXX3wxjfPpp5/+9NNPF1988XnnnfeVV145/vjjs5nssssuc801V/V5+eSTT0488cT77rtv0003XXXVVSsAAARght0FF1xw+umnd3afbLLJFllkkaTTr3/969XwM2jQoKOPPjojrbsssMAC//UAfOSRRz7++ON5Mf3003/3u9+t6MNbb711yCGH5MUjjzyy2GKLLbzwwtWoqdc1fuutt37/+9+v+xljjDESgM8777wbb7wxfx533HG//vWvq8/LbbfdllHnxX777bfsssvmnFQFANB4LoFmREnUufbaa7fffvubb765Gn6efPLJ1vQ77bTTjj/++NV/2+STT15eTDrppBV9G3fcceskNskkk5QX55577lI99txzz2oU0bnGc2pmn332qXvICaDyVl60fWT4SqX3m9/8ZlmAKT7X3esJywIfa6yxKgAAVIAZvjbffPP8++GHHz7xxBP3339/6bjbbrv96le/mn/++avh4bHHHqtfX3/99VNOOWU1EkiR7aqrrkrkWGONNSr6lrMVp5xySiqiaQ+zzjpr6fjBBx/885//zIv33nuvGkV0rvGXXnqpzEWcdNJJSyyxRHm94YYbjjPOOO+///7aa69djQAJ3jnZVF5//PHHdfcUn4844oiHHnpo5ZVXHnvssSsAAARghqP55ptv1113rf984IEHttlmm/L6D3/4Q2cA/uyzz/r5E9BBPUrPr732Wum4/PLL95V+h27InT799NMxxhijPx2nnnrqwV75nKkarUf3fobuZ7H9/GCvE9+p+2IZOvUUzt2jGpn0c7FULXPRucbfeOON8iIV18UXX7zunsy/ySab9GeYw2siayv26OvdIV3LQ904AQBGHgIwI0rycAJw+dHjnXfeWXd/9dVXy68i82KyySYrPwRNmq2vjE2trP4h5UEHHXTppZdee+216flnP/vZL3/5y2effba8ddddd2277bZVTy1uxhlnzIuUnW+77bZ77rkno8uQl1xyyQUWWGC55ZabcMIJuw85/7788sup2qX7FFNMkQGeeeaZt9xyy1NPPZUq5ZZbbrnKKqvk6P+SSy7JRx5//PGpppoqk/3tb3+7vunXscceW64+TdTJvLSO6Oijj77jjjtyCiADzDzONttsO+yww0ILLdS6rJ577rkskD/96U9/+9vfZphhhm9961sZaea3dZi9LuRnnnnm3HPPTW+PPPJIBj7PPPPkRMMWW2zRVvH7+9//fs4559x3330pFWb4KU5mApZZZpm2NP76669nIu+9995McP7M0FJFXHfddetrd1PJL29lgaR7/cFMfLkufc455/zhD3+YFwceeODzzz+fF9ttt90LL7yQ5ZYpPPLIIzMj22+/fbJc6eedd9454YQTOtfpMccck9l/+umny2S0/rA29t1336yvvMiCWn/99VvfymotQ8s81udfYuDAgTvvvHMZbyZpkUUW6c9iyUmculXk4yz0c5sAABAASURBVGnMN9100ySTTHL11Ve3rvFll102w3z33XfLp1IHTtvIi4022miFFVb47W9/e9lll+XPBRdccMcdd6wnKQ3p1ltvzdLOXKe5LthjnXXWGXPM//O1nJbz+9//PuPKfKXhZWkkXa+55pr1/KYN1D0ffPDBE088caZn8803z/BTAa56LjvPwqz7efPNN8tazsaSP7P1lbmedtpp635aV1/K11dccUV6zlKaY445UsfOqpeEAYBRlADMCFRf45ok+eGHH+ZAPBFrq622SuYs3XNI/dse11xzzcknn1xiW7JKffl0Ol5//fXl9XvvvVd3r3piRvnzgw8+yL8PPvjg1ltvXb+bIV/VI9HrlFNOKem6ryEn3L799tvlrUSR/fffPwmhvJUUkbiVQlkCw5VXXlk6ZvoTCRKzk5PL/bceffTR8vEEnrYRnXHGGeVeRPU0J1QkFdeZ9pVXXtl0003rq2eTc0477bS777676glg9TA7ZSJL2qwHfmePP/7xj8cdd1xdHs+UZ4x1b8/2OP/885MPE+rq7lk1Sc71qql6TlvE5Zdffuqpp5ZTDMlaZb4SjFunJGX50j1hqXRJtsxKz4ssqHo5f/zxx2VJ1hOcANy6TqP8mQX4xS9+seTGdMkpgzrSZ1y/+93vyuuSM1tlrjPGMptpD61Rth7vV77ylX4ultZWccABB5TV8YUvfKH6v2s8M9XrXHzjG9/Iv8nq5c9E07qHpO7vfOc79Z9prjf2yLo76qijSnP95JNP0k4uvvjiuresndJbJj7NMkv7oYceKvfiKsoyn3nmmauO7aVI+s0G+OKLL9ZdbumRVXz22WfPNNNMpWO9+pK9c96n7jlnMQ4//PA0g913370CABgFOYvPCFRfFJr8kPSbI/JEizpipTZb/04yB/Q//vGPS4GuVZ2dEgkmmmiilKrqGz6ny0I9EkhyXN6a5VJ8rstZqakmJX700UddhtxazkoUKaXalATrjqkJl/Sb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jRNy3nzzzdSWq577SEVrbyeeeGK5rVGqx4nTmYyqp2qaHN7a27HHHjvhhBNWPVe515fRVi2P5J1hhhm61x67a70Z8hU9Uoqsf6n79a9/vb7fddXzy+fyWKnu2k55rLXWWq13e+7nYhlB0lxTd61vcH3mmWfWb2Wuf/KTn1Q9D81K6C2r9W89Sg+9LuqcL0h6L0PLTK233nq9BuAst9R+N99886pnLdenS4rjjz++dUUAAPxPcgk0w2qIbi6V2tSvfvWrVVddtfV+V3PMMcdJJ52UmnD5szWotL5uG13beFO8SpJM7bcunU077bRJAkm/9b24ugy5vo60/plr25+to+u8/3D9bnmr+yy0DSTZMnW5E044YcMNN0z1L3Xyww8//Ljjjqvrcn3d7viAAw448MAD2x7PkyGcddZZrT/G3mSTTdJb/dzXIgsqkan1cTg5+3DGGWesscYarasmcTfTVlfmUzA8+uijWwuwWdr7779//WDkejnUc93X7LfOV9ZUMmdfRdfWh99WLQ8H7i4JtvVK6fr651p/FktfraLqWONV36up1xa7wQYbHHLIIa3NNYs9iTfnbup4f9BBB2255ZZ1D3mx11577bjjjuXP1gW70047pdm0jbfX6UkwTvNoXcsZbFZoNsDWXwX3tfrqYY6ct5QDABis0dp+cQefm1SrPvroo6mnnnq88carhp/PPvvsueeey2H953xzo6Hz2GOPlRuDfeELX0i0qwPGgw8+WErlcf7553e/51MW40svvZRMkqjfJXB++umnWTLpIcu8r6c9FVk16Xm66abrK9SVQSUWTjPNNF3GOKRef/31VPIzwOmnn74edVbozjvvXJedr7vuuraHXQ2j/i+vWsysAAAQAElEQVSWESFjf/7557MJtN6bus1rr72W3tJD92dxffjhh1mAAwcOnGKKKbrcXLqWNlPWsjQLADSHAAz/Tc8880xdrU0hbrXVVpt00knvvvvuK664otwGKZW6G264YaifQjxKu//++7N8En1vvPHG0mXTTTfdbbfdKgAAGCoCMPyXHXnkkRdeeGFf7x577LFDfW+wUd2BBx7YeoetnAvIgvKcHgAAhprfAMN/2Z577pkM3PrL22Luuee++OKLG5t+26Q8fumll0q/AAAMCxVgGFm89dZbzz333IABA6aeeuoZZ5zx8/896sgmi+Ldd98dZ5xxppxySr9TBQBg2AnAAAAANIJLoAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEAZgR66qrrnrkkUd6fevGG2+8+eabq8/FW2+9lSl5/fXXh+hTn+cUNsRDDz10wQUXfPrpp9VIyRr/LxrJ20b9VZavkbPPPvvNN9/s0vPHH398/vnn9/XVNxzdeeedt956azWS6fJ925+lNzIY9jX47rvvZiG8+uqr1TC37aHbfw2Fu++++49//GM1VLo0xdbv1S6HBMM+os/HUMzCSPLl1raD+/vf/37ppZeWLvZ9NI0AzDDJN+YCfchRTno48MADb7nlls4PfvbZZ3vuuef+++9ffS5efPHFTMlTTz3V/4+0TeEzzzyTnW46VgyDX/ziF0cdddTTTz+d1++8804Waf6tRg7Dt01maJm7NJvqv2S4TMDnORetbWMojOjmVH+V5UjxhBNO6H6w+MQTTxxzzDFnnHFGNYKde+65QzeWB3tUQ2u99dbr65u/6vp925+lNzIY9jX48ssvZyE89thj1TC37aHYfw2dCy+88LTTTquGSl9Nse17ta9Dgi7a2upQt/nhZShmYWTY8bWtiGyJW2yxRTbGBx544HM+HoORwZgVDIPpp5/+u9/9bnl9zTXX5Dt9s802K3/OM888XT44+uijn3766WOOOfK2wLYpvO666/LnHXfcMe6441YMrd12222VVVaZeeaZ8/rRRx/9/ve/f+qppy6yyCLVSGD4tsmBAwdm7rbbbrvtt9+++m8YLhPwec5Fa9sYCp9bc1pjjTW+8IUvLL/88l36mX322Q8//PC55pqrGlmdeOKJ+ffXv/51NVQ22GCDt99+Oy9S4bziiiuWW2652WabLX+ONtpo3T/Yn6U3Mhi+a3AY2/Yobdi/V4exrY4MRoYdX9uKuO2226qeGFwOaUby4zEY7jR3hsnMPcrrhx9++Nlnn63z8GAttNBCbV0GDRo02OOnEaptAjqn8HMY6fD6SD8HO4LG3tenvtyjGh5GxJT3usb/682yVyNoqoZl5VbDpq+20dfAh8ukDsXAk9+S4qqucqy50korVZ+v4bIW+jmQBODyIl/7CcDf+ta3Vlhhhf4MsNelN7J9WVV9rMGhHtpw/N4b9on5/H0+e9KRStvaGRENYIiU6WldEa+88sp8881Xn9AfonU0CrU96ItLoBnhPv3005/+9Kff7PGTn/zkww8/LN333Xffww47rLz+y1/+kirTggsuuPrqqx9//PF1P7WcjM851PrPxOwf//jH9Z/bbLNNzl/mxT//+c+Ma+21115qqaUyrrZLN999992DDjoob2Us6a0ey0cffXTsscemYyZg2223feCBB9qmcJdddjnvvPPyYuONN95pp53Ku6kGZ5IWWGCBjP3CCy/sbdb/PZ2tV5Tdeuut6623XnY8XUbaZchdPtLqd7/73SabbJJ+shxOOumkXn93NBRjj4suuig95yObb775JZdcUjrecsstmanW36dlcZ188sl5cd999+Wtm2++Ocshn8pYMoR0qXouCStrMP+my2uvvZZhHnXUUfVAPv7448xFTpMP45SnSWT4l112Wdbm0ksv/atf/eroo49OD61Xsx9wwAFltba2yb7mt+q5Hr40pCzhVCc++OCDtom8/fbb01TyIs0mYy+/WMtBwwUXXJABZgqzQFoH2GrPPffMcrj++usz8PSZP//+97+XtzqXZxlXmesNN9wwi7206l4noMvWUd5KnxnsjjvueO+99/Y1kFapD2cFZYBlEV1zzTX1WykMZkmWrf5nP/vZVVddlSFkLHnrjTfe2G+//dI9k5FxPfTQQ/XSLm2jXgjpUgae3p577rkuDaCtObX9WrK0geS0rLW0gZVXXvmmm25Kk8tyK985WS91z4PdfP72t79laOXS1tIYDjnkkDKnmeyydWfJpJ8rr7yynoC0k3TJLKefu+++u3Tvsu2UZZiel+qRF+XXpL0qXyyZ5h/84Af33HNP64x3jvett95Klwd65EX5gurnd8sQeeeddzLSLPAsyfqa1ball60g7TYjzb/ZSDsHUtp8ZiprNr3ldb7q65XSV1uKzMLuu+9e1m+2pjSnTEz9bppWvgSy1fzwhz/M90bneNvW4GD3UFXPni7TVjbbTG3ram1t232t1i4bftuEdW50aYQZfppu3dsjjzySLuUHvV02/KyOjCijy7vXXXdd1Zuy8b733nvlz2zO+fNf//pX+TNLI4227jnTkFWZAaZjvc22fa/Wuu+vqz7aapcRVf3YL/d/dro0kuw+0qRLw8u3ygsvvFC/1WuT7mvHVxrJYHco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e70OxykfOl3mtz8rIq06JehMT30skgGmnbfeGa5NZj9VuBwUZuA5gBjsvWSKzHUOKDtvyt05AV22jqyIlE06x9g5kFpZPm3rPYcyKX/l8KiUa9JPDgTTPOrr37LS33nnnb620P7oa+G3Naeh08/Np1VOQ2Qpdf9IJiyT3WvBpMu208+JycCzWnttV13G+9FHH2XgdbPpdam2/op4RMjkZR77agw53E8uKo/qSW+pA7ctpV7bUvLSww8/vO6665b6UhZvKWG1Xu5Rmm65arTqh37uobKlpDF0/1qoelut/d/we93oiiyonApJtOv8bUWXDT8LMFMy7HveodN9f11ra6vdDa+9QPdGkhWd1psV0da9e5MuOr+p+rND6WIYP96pr3nvz4aQJZOzMCnddz5NoMsesMuREgx3AjAwUsgxUAJSDuBeffXVVNqHV4Id5dTHwdUoK4fv5RlIa621VmL5H//4x5zX2HHHHb/97W9XMCRaA3D/P5XC7zbbbJOCfMr4aY35Ysm3SmpKQ/2D1c/BMG74zzzzTJbV6aefntRRav7wX3H99ddfe+21f/rTn84777z+PxcDPmcugQZGCq+99trxxx9fLh1sbPqteu6mUz80aBSValJqUKeeeuptt9323nvv5Rgolbcuv7GEvqS8Nueccw7pF8J88833i1/84swzz7zkkktSp5pnnnkSL/v6BfVIYhg3/Pvvv/+ss86qf8sK/y05/5L6cPbj0i8jMxVgAAAAGsFjkAAAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARj+n6uuuuqRRx6pAACA/0UCMP8jPvvss1tvvfWZZ56phsGBBx54yy23VENouIwaAAAY0QRg/kcMHDjw+9///nXXXVd97v6LowYAAPpPAGa4GTRo0FC8NdTDHEkGCAAAjCoEYIZV6p+nnnrq2muvveCCC26++ebXXHNN6X7fffett956N99883e/+9289cADD6TjHXfcsdtuuy2wwALbbLPNhRde2OsA99xzz6OOOuqiiy4qw9xxxx2fe+65+t3bb7+9DGHDDTc8+eSTP/zww9Jx4403zovzzjsvI7311lv7OZGdPvvsszPOOOOb3/zmUkstddBBB73wwgv1W08//XS65K2VV175kEMOef755/szagAAYCQxxoEHHljBMEhYPeecc5ZeeulvfOMbiYgXX3zx1772tRlmmOHJJ5/8zW9+c8MNN0w77bQrrbRSkudTTz2VMDzWWGOtv/76AwYMOP/88yeccMK55567bYDJn/fcc88//vGPVVZZ5Qtf+EIS5ptvvrnCCivkrXRPHh599NE32GCDMcccMyE5w8xbSa1jjDHGvffeO9dcc+XP/DvZZJP1ZyLbRn3aaac9+uijGfXqq6/+5S9/+fLLL7/77rtXW221TPPrr7++5ZZbPvbYY3lrxhln/N3vfvf73/8+SThvdR81AAAwkhizgmGToJhyaMJqXqcqu9xyy915550pn5Z3k3X33nvv8voHP/jBV77ylTPPPHO88cYbNGjQPvvsc8wxx6y77rrjjDNO2zD/+c9/JtxOPfXUeZ2i6xVXXPGTn/xk3HHHPeywwxKnM4QE47w122yznXDCCXfdddfiiy+eum5qvAsvvPBWW201pBPZNuqzzz57pplmyutFFlkk5eiUi5O3E8vfeuuthPY55pgjb6244opbb711qr4777xz91EDAAAjCZdAM6w222yzBMtXXnnlkUceefzxx9Pl1Vdfrd9N7be8+OCDD1KtTXx95plnHn744fScUJru6dg5zJSFS/qtelJo/n3iiScSTZ999tk111yzpN9Ye+21829/HlzUfSJbLbvssiX9Riq6E0wwQRn+3/72t4UWWqik35h33nnzOrXiCgAAGEWoADOsbrnllhRXUx2tu3z66af16/HHH7+8KL/jvbVH68fT/atf/WrbMCeffPL69UQTTVRelN/cTjfddPVbE044YQLq008/XQ3bRLZquy56xhlnfPLJJ/PioYceWmedddr6vOeeeyoAAGAUIQAzTN55550f/vCHKdj+5Cc/mW222ZJI119//c5LmmOqqabKv9/5znc22WST1u51Qh6sUhNurdx++OGHKQu3RuJhnMhIlbj1z5dffrmUoGeddda2onH+nH766SsAAGAU4RJohkm5nHjdddddYoklppxyykTNF198sdc+J5100mTgBx544Atf+MLEPQYMGPDHP/4x/1b9k49kCDfddNMnn3xSuuTjVc8vgfPv6KP/uzG//fbbwzKRcdttt7355pvldaY2RePZZ589r+ecc878WWfglKPzZzr2OuqBAwf2f74AAIDPhwoww6SEz7PPPjsF1Y8//vi0007r0vP222+fGuwee+yx0korvf/++6ecckrVczepqt922GGHAw88sAzhpZdeOumkkxJBF1tssbw19thj5/Xvfve7mWeeeamllqp/QjykE5mS8i677LLRRhv961//+sUvfjHZZJOtvPLK6b7xxhtfccUV3/ve9/LWoEGDzjnnnAkmmCChutdRb7XVVo888kiyujtCAwDAyEMAZpikKnvkkUcedNBB5VbP3//+95MD++p5zTXXTLy8+OKL99prr/y50EIL7bPPPuOOO25nn6ONNlr9utRXizXWWCO59IILLiijW3bZZX/84x/XQ9h2220POeSQI444IkXm1gA8RBO55ZZbpupbHg8299xz/+hHP0rRuOq5BDrJ+dRTTz344IPz5/zzz59+Zpxxxl5HnXJ34vGYY9q+AABgJDJaalkVDJu0ooTGCSecMLXQ/vT/7rvvphjba/TtpwwhUXOMMcZo6/7ZZ58NHDgwA2+N0EMxkYnZn3zySXru9a38O95443UZdcZVHk1cAQAAIw0BGAAAgEZwEywAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARxqxgGAwYMODVV18dNGhQBXy+RhtttKmmmmqiiSaqAADoHwGYYZL0O/XUU4811lgV8Pn6+OOPX375ZQEYAKD/BGCGSWq/0i/8V2TTc/EFAMAQ8RtgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARxqwA+Bw8/+dBt5+U/w967s/5d7Tpv159eZHRlti5AgDg8yIAA4xwgy7YvOTe/9clfz7370g82hK7iMEAAJ8PARhgxOpMv//n3Z6ysAwMAPA5EIABRqDu6ff/70cGBgD4XLgJFsCIMuj2kwebfv/T50nV8/3qEwCAoaYCDDD89Nzp6v+/zdUSu5TSbj/lU6N9+esVAAAjjAowwHDz2W/+3wXPQ5R+/+35uysAAEYkFWCA4WPQ7SdXw+LLi4z++HmjPXbuoMnnqSaf57NZN60AABiuBGBGoNNPP/36668fNGhQNeRGG220lVZaabvttqtgFDHEJd8OSb///vfNv1Zv/nWMJOHZNhODAQCGI5dAM6Ik/V533XVDl34jH8zHM5AKRgnP/3m06Yf+F7zlacD/rv22dnzs3H+HYQAAhhMVYEaU1H6rnhg87bTTVkPuxRdfTPk3A1EEZiT371s9D1vtN8m5r2cgjfb4eW2pGACAoSYAM6KU2u/Qpd/6g0NdQIbPR1/pt89q8JcX6aXP/9z8+bNFjxz98fP+/aqn8Jvyb/lPBgYAGC5cAg0wlLrUfnt//G9H+u3p+P+i8r+z7mRzV//3sufRSiQGAGCYqQADjBC9ZOBeU/Hzd4+20Tn5f7kFdAUAwAijAkxzvf/++6eccsoHH3xQ/nzsscdOP/30u+66qxqVPfPMMxdffHHF52N4PLm35OQu6dd9sAAAhhcBmFHVZZddNuuss37yySetHY844ogVV1yxn0N49tlnTz311BdeeKHqyY3LL7/8gw8++NFHH1Wjsr/97W+HH354xeei9+uch0qX2q8fAAMADC8ugWZUtcoqq/zgBz+45ZZbvvnNb9YdL7300u23376fQ5hzzjkTF8vrO+6448tf/vLPfvazCvpt9D0erYaTT1e9tgIAYARTAWZUNe6446655ppJvHWXBx544Lnnnlt77bXzOrXczTbbbJZZZll33XUTbksPV1xxxeabb/6LX/wi0fekk0569dVXF1xwwXfffffAHk8//XT+POuss/bbb7+f/OQn9WBPP/30HXbYoXXUV1555RprrFH/+Ze//GXJJZccOHBg1VOXXnXVVWeeeeZNNtkk3UsPZ5999k477VT3f8ABBxx77LFts/Phhx/uvffec80112yzzbbNNtsMGDAgHZ9//vlM0u9///slllhio402Spe33357l112+epXv5p6dQZb9eHqq69edNFF55hjjn322afcSbuvaSjLJO/OPffc888//80335zFldHNNNNMOZVQZip+/etfL7LIIjPMMEPm7uGHHy4dV1555WuuuSYTllL8zjvv/Nhjj1UAADASE4AZhW2wwQa//e1v64uWE4ZXWGGFySab7PXXX0/+TAq9+OKLkwMT8J599tn08N577/2px09/+tPk5E8++SSh97PPPtt222233HLLRL4zzjgjheV85De/+U39BKaLLrpooYUWah1v4u5dd931+OOPlz+vuuqqJMCxxx476TE5MJH7kksu+cpXvrLxxhuX66uTsV9++eX642+88cZbb73VNi9HH310qtmnnHJK8nmmNmE4HT/++ONMYd7aY489Elkzqd/+9rdfe+21M888c8cdd0xQz+x3Lpb0cPnll5988sn51DnnnHPeeed1mYYsk9tuuy2V8HPPPTfznuEffPDBGeMvf/nLm266qWTszNf++++/5557ZrCpk5coHjndkKnKn4nHyeqtZw1GFWkM1eeoNL8KAID/EgGYUViC6MQTT3z99ddXPU8MTjzbcMMN8/rCCy9M7Td5LCXN3Xff/etf/3rrfaGSclM+nW666eouCXX5c/zxx59nnnmmnHLKb37zm6nH3nfffXnHUlC7AAAQAElEQVTrlVdeSThMqbl1vJNPPvkyyyxTh8/f/e53Cb15ceqpp6ZWnPptxnvIIYeklpspqfon5dYbb7xx6aWXzpAzkNZ7cR122GGZgFR9U9a+5557SjE2Y0y+TUztHFQm/sQTT0xoz5Qsu+yyd989mBs1jTbaaEceeeS8886bRJ2cnELx4osvnkWUPPzXv/779kupQmfU66yzzgILLJBSebLuSy+9VD6bMvtaa6211FJLZTknwGfU1X/ViiuuOG6PvKijZvmzrc+soNI9/+Z16ZiP5M/ywdJDeV26dw65tXtbz70G3RV7tL5VxtI2hNYZKSoAAIYHvwFmFJbktv7666fwu8Yaa9x5550ffPBByTl/+MMfbr311n322af0loQ8+uj//7melIXHHHMwzX6cccZZffXVk2+TIa+99trE7CmmmKKtn+TPX/3qVz/4wQ9SB3711VdTea56bkCVYnLdT4J3CZD9keB9++23//nPf079NnOUCm391uyzz15eZPjvv//+oYceWv5M5fbvf/9756CmnXbaCSecsLyea665kl27j3rGGWcsyydBKwtnmmmmKd0nmWSSzFpeTDTRRI8++mimKiXf0uWf//xn27TNPffc//rXv/LuDDPMUP2XJEwmQC7d45AeN9xwQ199RukzH6lfdx/+vvvuW3+2dcjpXj7bfQh1zO6csF6HnKGV7gAADC8qwIzaUvJNYHjvvfcSz1ImTXateq4c/sIXvjDNf+y5556lQlv1ZOb+DDbVztR1q5bqbptVV131oYceSt5LD6uttloZ70cffVReFGOPPXav95SuL65utffeeyc8v/DCC4mvSyyxROtb9TSXJzbV85VpSJW7c2hjjDFG/bpO/l2mYbDL5Morr8yZhVSSU/pONbj1rfpsQj8X7AhVcmzaQ3JjatGDTY+lzzp8VoNTEmnJzK1V3BKh+zOEMpBeL4TujND1YF01DQAwvKgAM2pLBXKOOeZIQrvqqqvOOeec0jE128kmm2znnXeuhlZyyDvvvHP//fenJJtKb2cPKbGm6pv6cAJwAnbpmCpoirTLLrts+TOv0yUvJphggmeeeab+7MsvvzzppJO2Di2J/cwzzzzvvPO+8Y1v5M/MSH3jrlYp56YWveOOO9axNjm2n8lzsNPQxRlnnJFwvv/+++f1U089VZfWRzZt6bHkxl6rsvW1yvW7fRVvO7uXBFsNuZLP6wloHXIdnttG15/CMgAA/acCzChvgw02OPDAA1PyXWSRRUqX1Vdf/Q9/+EPyZAqwTzzxxGKLLXbyyScPySD/XURNPXn99ddP9phoool67SeV4eSWp59+us4nmZLjjjvurrvuSvkxY880lJtFJ7gmfF5xxRUDBw787W9/2/r73mKsscaaeOKJE3rTwyOPPHLKKaf0OsZUX9PbXnvt9VaPrbfeeuONN676Z7DT0EUKvzkX8O67777xxhsj852uSjRd8T+q/xsdW6upperbV5+lY2dFtww83etrnov8eUOPtp5bx9g2tLY/89lek3Y9qAoAgOFBAGaUt9566w0YMGDDDTesa6Ff+9rXTj311J/+9KfTTjttqsFLLbVU23OM+iP5NiGz1+ufi2Sh9JCIW18GvOmmm2ZEyaXTTTfdiSeeeNppp5UK8Ne//vXtt98+b00zzTTnnntu8nnn0I499thf//rX+eBmm222xRZb9DrG8cYb74ILLnjwwQczg7POOmtq1CeddFLVP/2Zhr7svffeL7300iyzzLLwwguvttpq1ciqXM9cF35bL4Fui6OtFzOXq6brWmv5VN29dfgltdZXTXd3yH/Uf5YB1lG5LdZ2XoldT3M/L64GAGCwRuv154jQT4899lhfNz1aZ5118m+vz+npp1VXXbXqebJuNbTefvvtVIZTX62G3G233ZYg+tBDDyV29tpDUnfy7aWXXtr2kKSq55lDKdW2dUw5OpXhzu61bIxvvvlmyq2Dvar5n//8Z/oZf/zxqyE02GnoImk/xfDB3kKMz9Ozzz4722yzVQAA9I9jWf6X9f9nrq0++eSTFG/POOOM733ve32l3yuvvDI9pCLamX6j14Q5To+qb8m0nbeb7tUEE0xQDZXBTkMXk002WQUAAKMyARjapRL78ssv77XXXuutt15f/bz44osrrbTSVlttVQEAAKMIARjajTXWWIP91eWOO+5YAQAAoxQ3wWJEKT9kTaW0GirlgyPD02UBAID/DSrAjCgrrbTSddddt91221XDIAOpAAAAhgcVYEaURN9vfetbQ13CzQfz8WHMz9DFeuutt/322+++++5//etfW7tfccUVV199dTViZOAvvfRSed3rA58PP/zw119/vQIAYARQAWYE2q5HBSOlTz/99LDDDnvyySd33XXXG2+8cfTR//8TgmuttVY1wiRszzHHHNNMM01e33rrrZ0/Jn/nnXc+++yzCgCAEUAABhpq3HHHnazHDDPM8Oabbx5zzDFjjjnm/PPPP8444+RF/n311Vc33njjQw45ZPPNNz/33HPfe++9V1555fjjj5944on333//Tz75JGH1yCOP/NGPfnTaaacNGDDg0EMPPfroo6sh9NZbbx1wwAETTjjhlFNOmSheOl5++eXJ5BNNNFEGe+yxx/b1OC4AAIaIS6CBhrr//vtPOOGEPffcc4IJJkj4/OCDD3beeef11ltv4MCBCbdLL730zTffnGLsM888k4S87bbbrrzyyv/85z/vvffefHCSSSY54ogjElw//vjjRRdd9Pbbb7/yyitXW2211uHffffdyy+/fPJt23gTkn/U4/HHH8+fJ5988tRTT73MMstceumlydiln0zDggsumFEst9xy1157bQUAwPCgAgw01KyzzrrBBhsk/aaiW7rkdf1uisAzzjjjb37zm5VWWumjjz7aaaedfvCDH3zlK19JNh40aNAYY4yRflIlzov1118/td9k4y222KJ1+Im1Sy21VOswi913332OOebIi5SX8+/oo48+zTTTfPGLX0yld+yxx26dgPLvp59+WgEAMDwIwEBDfeELXyi/xe3Lpptuuuaaa6aQO1aPG264ody/av75508w3nvvvfPn8ccfP9lkk73//vvJxm23fJt++ukPPPDAanC+853v/PjHP37sscdSgl544YXr7n/4wx8eeeSRl19+OSXiCgCA4WG0lDIqGFo5ap9hhhkqGNWkkFtKrP2XOnBKvvWfAwcOLAXbAQMG/OhHPzrkkENSxU0duLPkW/vss8/qW211H/iFF1444YQTfvOb32ytCXd69tlnZ5tttgoAgP5RAQaaaJ999vnlL39ZDT+XXHJJ/j3xxBM333zzvvq544471lhjjWrIdf6QGACAoaACzDBRAWYU9eGHH4477rjV8DbUFeChowIMADBEVICBJhoR6bf6v7fR6jR80y8AAEPK0RgAAACNIAADAADQCAIwAAAAjSAAAwAA0AgCMAAAAI0gAAMAANAIAjAAAACNIAADAADQCAIwAAAAjSAAM0xGG220jz/+uAI+d9n0sgFWAAD025gVDIOppprq5ZdfHjRoUAV8vpJ+swFWAAD022iiCwAAAE3gEmgAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGAACgEQRgAAAAGkEABgAAoBEEYAAAABpBAAYAAKARBGAAAAAaQQAGqAAAaAIBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACA4EGWXQAAEABJREFURhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAAaAQBGAAAgEYQgAEAAGgEARgAAIBGEIABAABoBAEYAACARhCAAQAA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",
+                  "media_type": "image/png",
+                  "sha256": "316acea4aa07da918acbe4b2b7eaf1a3723db742a93d995f33228b5edae19577"
+                }
+              },
+              "storage": { "state": "not_requested" },
+              "url": {
+                "state": "captured",
+                "value": {
+                  "origin": "https://www.doordash.com",
+                  "query_parameter_names": [],
+                  "redacted": false,
+                  "url": "https://www.doordash.com/"
+                }
+              }
+            },
+            "before_url": {
+              "origin": "https://www.doordash.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.doordash.com/"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 4055,
+            "error": null,
+            "event_sequence_end": 87,
+            "event_sequence_start": 16,
+            "status": "completed",
+            "step_id": "settle",
+            "step_index": 1
+          }
+        ]
+      },
+      "operation": "capture_browser_scenario",
+      "parameters": {
+        "actions": [{ "action": "wait_for_timeout", "duration_ms": 4000, "step_id": "settle" }],
+        "browser": {
+          "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "headless": true,
+          "mode": "launch"
+        },
+        "capture": {
+          "after_each_step": [],
+          "at_end": ["url", "screenshot", "accessibility"],
+          "events": ["network", "console"],
+          "network": { "header_values": false, "request_body": false, "response_body": false }
+        },
+        "environment": {
+          "color_scheme": "light",
+          "locale": "en-US",
+          "reduced_motion": "reduce",
+          "service_workers": "block",
+          "timezone": "America/New_York",
+          "viewport": { "device_scale_factor": 1, "height": 900, "width": 1280 }
+        },
+        "scenario_sha256": "56f2fb4597e70766c88b314a7fce560489c63bed5bba7cf0849cfc4c8a20a286",
+        "secrets": [],
+        "start_url": { "query": [], "url": "https://www.doordash.com/" },
+        "storage": { "cookies": [], "local_storage": [], "session_storage": [] }
+      },
+      "predicate_type": "rea.browser-scenario-capture",
+      "provider": {
+        "id": "rea-playwright-browser-scenario",
+        "name": "REA Playwright browser scenario capture provider",
+        "version": "1"
+      },
+      "raw_result": null,
+      "relationship_coverage": null,
+      "subject": null
+    },
+    {
+      "analysis_profile": null,
+      "authority": "controlled-replay",
+      "confidence": "observed",
+      "environment": {
+        "architecture": "unknown",
+        "id": "Chromium@155.0.8059.80",
+        "isolation": "process",
+        "platform": "unknown"
+      },
+      "evidence_id": "ev_c6382f0a0a9d2b1c99d90699c7239976548f3a8f8698d3ce7246faeea7697c77",
+      "evidence_links": [],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "locations": [],
+      "normalized_result": {
+        "browser": {
+          "cleanup": "terminated-owned-process",
+          "mode": "launch",
+          "process_ownership": "provider-owned",
+          "product": "Chromium",
+          "version": "155.0.8059.80"
+        },
+        "completeness": {
+          "equality_eligible": true,
+          "missing_sections": [],
+          "status": "complete",
+          "truncated_sections": []
+        },
+        "duration_ms": 8277,
+        "events": {
+          "dropped": 0,
+          "items": [
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 1,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cache-control",
+                "cf-cache-status",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "nel",
+                "priority",
+                "report-to",
+                "server",
+                "server-timing",
+                "strict-transport-security",
+                "x-yad-cache"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 2,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "stylesheet",
+              "sequence": 3,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/css/leaflet-df687fead8c4838a4e6b8bcb2f176a0e.css"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 4,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/js/web/entry-b93ef5cf3741188073256ced8344c385.js"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "origin",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 5,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-4",
+              "url": {
+                "origin": "https://static.cloudflareinsights.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "upgrade-insecure-requests",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "document",
+              "sequence": 6,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-1",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cache-control",
+                "cf-cache-status",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "etag",
+                "nel",
+                "priority",
+                "report-to",
+                "server",
+                "server-timing",
+                "strict-transport-security",
+                "x-yad-cache"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "stylesheet",
+              "sequence": 7,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/css/leaflet-df687fead8c4838a4e6b8bcb2f176a0e.css"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "stylesheet",
+              "sequence": 8,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-2",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/css/leaflet-df687fead8c4838a4e6b8bcb2f176a0e.css"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "access-control-allow-origin",
+                "cache-control",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "cross-origin-resource-policy",
+                "date",
+                "etag",
+                "last-modified",
+                "server"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 9,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-4",
+              "url": {
+                "origin": "https://static.cloudflareinsights.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "origin",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 10,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-4",
+              "url": {
+                "origin": "https://static.cloudflareinsights.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "alt-svc",
+                "cache-control",
+                "cf-cache-status",
+                "cf-ray",
+                "content-encoding",
+                "content-type",
+                "date",
+                "etag",
+                "nel",
+                "priority",
+                "report-to",
+                "server",
+                "server-timing",
+                "strict-transport-security",
+                "x-yad-cache"
+              ],
+              "kind": "response",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 11,
+              "status": 200,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/js/web/entry-b93ef5cf3741188073256ced8344c385.js"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "GET",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "script",
+              "sequence": 12,
+              "status": null,
+              "step_index": 0,
+              "transaction_id": "request-3",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/_expo/static/js/web/entry-b93ef5cf3741188073256ced8344c385.js"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 13,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/cdn-cgi/rum?"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "access-control-allow-credentials",
+                "access-control-allow-methods",
+                "access-control-allow-origin",
+                "access-control-max-age",
+                "alt-svc",
+                "cf-ray",
+                "content-type",
+                "date",
+                "nel",
+                "priority",
+                "report-to",
+                "server",
+                "server-timing",
+                "strict-transport-security",
+                "vary"
+              ],
+              "kind": "response",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 14,
+              "status": 204,
+              "step_index": 1,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/cdn-cgi/rum?"
+              }
+            },
+            {
+              "failure": null,
+              "header_names": [
+                "accept-language",
+                "content-type",
+                "referer",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "user-agent"
+              ],
+              "kind": "request-finished",
+              "method": "POST",
+              "redirected_from_transaction_id": null,
+              "redirected_from_transaction_state": "root",
+              "resource_type": "xhr",
+              "sequence": 15,
+              "status": null,
+              "step_index": 1,
+              "transaction_id": "request-5",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/cdn-cgi/rum?"
+              }
+            },
+            {
+              "kind": "console",
+              "level": "verbose",
+              "sequence": 16,
+              "step_index": 1,
+              "text": "[DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o",
+              "url": {
+                "origin": "https://staging.tumbite.com",
+                "query_parameter_names": [],
+                "redacted": false,
+                "url": "https://staging.tumbite.com/app/"
+              }
+            }
+          ],
+          "retained": 16
+        },
+        "limitations": [
+          "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+          "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+          "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+          "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+          "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+          "Storage values are hashed only after declared-secret redaction."
+        ],
+        "scenario": {
+          "action_count": 1,
+          "event_families": ["console", "network", "websockets"],
+          "network_content": {
+            "header_values": false,
+            "request_body": false,
+            "response_body": false
+          },
+          "secret_references": [],
+          "start_origin": "https://staging.tumbite.com"
+        },
+        "steps": [
+          {
+            "action": "goto_start",
+            "after_url": {
+              "origin": "https://staging.tumbite.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://staging.tumbite.com/app/"
+            },
+            "artifacts": {
+              "accessibility": { "state": "not_requested" },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": { "state": "not_requested" }
+            },
+            "before_url": {
+              "origin": null,
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "about:blank"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 2185,
+            "error": null,
+            "event_sequence_end": 12,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "scenario_start",
+            "step_index": 0
+          },
+          {
+            "action": "wait_for_timeout",
+            "after_url": {
+              "origin": "https://staging.tumbite.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://staging.tumbite.com/app/"
+            },
+            "artifacts": {
+              "accessibility": {
+                "state": "captured",
+                "value": {
+                  "bytes": 324,
+                  "sha256": "abb468df3d66daf693d9eb66008f7c3f11457cce47baa04492ce9cbf7e347cc3",
+                  "text": "- document:\n  - text: Tumbite\n  - button \"Change language\": 🇺🇸 EN ▾\n  - text: Sign in Email\n  - textbox \"Email\":\n    - /placeholder: email@example.com\n  - text: Password\n  - textbox \"Password\"\n  - button \"Show password\"\n  - button \"Sign in\"\n  - link \"Forgot your password?\"\n  - button \"New here? Create your account\""
+                }
+              },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": {
+                "state": "captured",
+                "value": { "cookies": [], "local_storage": [], "session_storage": [] }
+              },
+              "url": {
+                "state": "captured",
+                "value": {
+                  "origin": "https://staging.tumbite.com",
+                  "query_parameter_names": [],
+                  "redacted": false,
+                  "url": "https://staging.tumbite.com/app/"
+                }
+              }
+            },
+            "before_url": {
+              "origin": "https://staging.tumbite.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://staging.tumbite.com/app/"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 6015,
+            "error": null,
+            "event_sequence_end": 16,
+            "event_sequence_start": 13,
+            "status": "completed",
+            "step_id": "settle",
+            "step_index": 1
+          }
+        ]
+      },
+      "operation": "capture_browser_scenario",
+      "parameters": {
+        "actions": [{ "action": "wait_for_timeout", "duration_ms": 6000, "step_id": "settle" }],
+        "browser": {
+          "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "headless": true,
+          "mode": "launch"
+        },
+        "capture": {
+          "after_each_step": [],
+          "at_end": ["url", "accessibility", "storage"],
+          "events": ["network", "console", "websockets"],
+          "network": { "header_values": false, "request_body": false, "response_body": false }
+        },
+        "environment": {
+          "color_scheme": "light",
+          "locale": "en-US",
+          "reduced_motion": "reduce",
+          "service_workers": "block",
+          "timezone": "America/New_York",
+          "viewport": { "device_scale_factor": 2, "height": 812, "width": 375 }
+        },
+        "scenario_sha256": "40122c56c8414246b66616151fa50414c3c2485ebfcb055098a91797965e85a9",
+        "secrets": [],
+        "start_url": { "query": [], "url": "https://staging.tumbite.com/app/" },
+        "storage": { "cookies": [], "local_storage": [], "session_storage": [] }
+      },
+      "predicate_type": "rea.browser-scenario-capture",
+      "provider": {
+        "id": "rea-playwright-browser-scenario",
+        "name": "REA Playwright browser scenario capture provider",
+        "version": "1"
+      },
+      "raw_result": null,
+      "relationship_coverage": null,
+      "subject": null
+    }
+  ],
+  "scenarios": [
+    {
+      "authority": "controlled-replay",
+      "evidence_id": "ev_aeb0a7f4f8bc3736471cd928220603e43d017dd18573e8afb5557bfb5a1cbd88",
+      "operation": "capture_browser_scenario"
+    },
+    {
+      "authority": "controlled-replay",
+      "evidence_id": "ev_c6382f0a0a9d2b1c99d90699c7239976548f3a8f8698d3ce7246faeea7697c77",
+      "operation": "capture_browser_scenario"
+    }
+  ],
+  "unknowns": []
+}

@@ -712,6 +712,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "distancia_m_real",
     "asignado_en"
   ],
+  "transiciones_pedido": [
+    "desde"
+  ],
   "transiciones_viaje": [
     "desde"
   ],
