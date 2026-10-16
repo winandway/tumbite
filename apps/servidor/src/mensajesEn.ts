@@ -6,6 +6,21 @@
  */
 export const MENSAJES_EN = new Map<string, string>([
   [
+    'Falta la clave de la solicitud. Actualiza la app.',
+    'This request is missing its key. Please update the app.',
+  ],
+  ['Este viaje ya no está asignado a ti.', 'This trip is no longer assigned to you.'],
+  ['Otro conductor ya tomó este viaje.', 'Another driver already took this trip.'],
+  ['Este viaje ya no se puede soltar.', 'This trip can no longer be released.'],
+  [
+    'El código no coincide. Pídeselo otra vez a tu pasajero.',
+    'The code doesn’t match. Ask your rider for it again.',
+  ],
+  [
+    'Este paso ya no corresponde. Actualiza la pantalla.',
+    'This step no longer applies. Refresh the screen.',
+  ],
+  [
     'Algo salió mal de nuestro lado. Ya lo estamos revisando.',
     'Something went wrong on our end. We’re already looking into it.',
   ],

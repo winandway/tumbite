@@ -513,3 +513,14 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 
 - **C-ESQUEMA-COMPLETO (15 oct 2026):** `revisarColumnas` en `apps/servidor/src/esquema.ts` compara al arrancar cada columna de `schema.sql` (lista generada en `esquemaColumnas.ts` con `node scripts/generar-columnas.mjs`) con la base real; si falta una, la salud dice `esquema: error` y el semáforo frena la publicación. Nació por `evidencias.modo` y `evidencias.nota`, que nunca llegaron a la base (repartidor sin «Conectarme», fotos de entrega fallando). D1: no se puede cruzar `sqlite_master` con `pragma_table_info` y acepta hasta 5 partes por consulta (por eso bloques de 5 en un lote). Pruebas: `esquemaCompleto.test.ts` (en rojo comprobado). **Qué NO tocar:** una columna nueva en una tabla que ya existe va SIEMPRE en COLUMNAS; regenerar la lista al cambiar `schema.sql`.
 - **C-APPS-APUNTAN-BIEN (15 oct 2026):** las apps web se construyen sin caché (`expo export --clear`) y en `pruebas-rama` con la dirección del sitio de pruebas, con un paso que falla si una app de pruebas apunta a producción. **Pendiente** en `publicar.yml`.
+
+- **C-EXCLUSIVIDAD (16 oct 2026, Fase 3, rama `fase-3-exclusividad`, NO publicado en producción):** un conductor nunca tiene dos cosas incompatibles a la vez y dos conductores nunca se llevan la misma operación.
+  - La base lo garantiza: `conductor_ocupacion` (una fila por conductor ocupado; la clave primaria impide dos ocupaciones), los disparadores `pedidos_*ocupa*` / `pedidos_libera_*` sobre `pedidos` y `operaciones_*` / `viajes_*` en `schema.sql`, y el índice único `operaciones_una_activa`.
+  - Comida toma pedidos con `tomarPedidoComida` (`rutas/operacion.ts`): una sentencia que exige que el repartidor siga con los pedidos que se vieron (0, o 1 al agrupar) y que no esté en una operación.
+  - Aceptar una operación es UNA sentencia con `RETURNING` (`aceptarOperacion` en `operaciones.ts`); el reintento con la misma clave responde «ya es tuya» sin repetir nada.
+  - El disparador del vehículo fijo y la vista `conductores_elegibles` se crean en `esquema.ts` (INDICES), DESPUÉS de la columna `repartidores.vehiculo_activo_id`: en `schema.sql` romperían una base vieja (SQLite revisa disparadores y vistas al tocar columnas).
+  - La publicación cuadra sola el conteo de los pedidos activos (sentencia idempotente al final del bloque de la Fase 3 en `schema.sql`).
+  - Canario: pieza `exclusividad` de `/datos/salud` (vista `inconsistencias_operaciones` en cero).
+  - Pruebas: `fase3.test.ts` (21 casos, 2.000 acciones al azar) y F3 en D1 real (`diagnostico.ts`, `probar-staging.mjs`), comprobadas en rojo.
+  - Vuelta atrás: `docs/fase-3/revertir.sql` (y quitar los nombres de `schema.sql` y `esquema.ts`).
+  - **Qué NO tocar:** no aceptar pedidos de Comida con otra sentencia; no quitar la condición de conteo ni la de ocupación; no crear operaciones desde una ruta pública hasta la fase de Moto y Carro.

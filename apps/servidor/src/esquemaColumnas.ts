@@ -672,5 +672,77 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "muestras",
     "recibido_en"
+  ],
+  "operaciones": [
+    "id",
+    "servicio_id",
+    "tipo_operacion",
+    "cliente_id",
+    "conductor_id",
+    "vehiculo_id",
+    "zona_id",
+    "estado_general",
+    "ultima_clave",
+    "version",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "viajes": [
+    "operacion_id",
+    "estado",
+    "ultimo_actor",
+    "ultimo_actor_id",
+    "ultima_clave",
+    "motivo_transicion",
+    "origen_lat",
+    "destino_lat",
+    "pasajeros",
+    "pin_recogida",
+    "liberaciones",
+    "distancia_m_real",
+    "asignado_en"
+  ],
+  "transiciones_viaje": [
+    "desde"
+  ],
+  "ofertas_operacion": [
+    "operacion_id",
+    "conductor_id",
+    "vehiculo_id",
+    "estado",
+    "ganancia_centavos",
+    "creada_en",
+    "expira_en",
+    "respondida_en"
+  ],
+  "eventos_operacion": [
+    "id",
+    "operacion_id",
+    "tipo",
+    "estado_anterior",
+    "estado_nuevo",
+    "actor_id",
+    "actor_rol",
+    "datos_json",
+    "idempotencia",
+    "creado_en"
+  ],
+  "asignaciones_operacion": [
+    "id",
+    "operacion_id",
+    "conductor_id",
+    "vehiculo_id",
+    "clave",
+    "inicio",
+    "fin",
+    "resultado",
+    "motivo"
+  ],
+  "conductor_ocupacion": [
+    "conductor_id",
+    "tipo",
+    "operacion_id",
+    "pedidos",
+    "desde"
   ]
 };

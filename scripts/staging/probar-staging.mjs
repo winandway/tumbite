@@ -66,6 +66,69 @@ resultados.MIGRACIONES = {
 };
 resultados.MIGRACIONES_PRUEBA = await pedir('migraciones-prueba');
 resultados.F2 = await pedir('f2');
+// Fase 3 (16 oct 2026): concurrencia REAL — peticiones en paralelo al worker contra D1.
+{
+  const p = await pedir('f3/preparar', { conductores: 20 });
+  if (!p.carrera) resultados.F3 = { prueba: 'F3', ok: false, error: JSON.stringify(p) };
+  else {
+    const t0 = Date.now();
+    const r = await Promise.all(
+      p.conductores.map((k, i) =>
+        pedir('f3/aceptar', {
+          operacion: p.carrera,
+          conductor: k.id,
+          vehiculo: k.vehiculo,
+          clave: `c${i}`,
+        }),
+      ),
+    );
+    const ganadores = r.filter((x) => x.resultado === 'tomada').length;
+    const k0 = p.conductores[0];
+    // Reintentos duplicados: la misma clave cinco veces a la vez.
+    const rep = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        pedir('f3/aceptar', {
+          operacion: p.carrera,
+          conductor: k0.id,
+          vehiculo: k0.vehiculo,
+          clave: 'c0',
+        }),
+      ),
+    );
+    const ganoK0 = r[0]?.resultado === 'tomada';
+    const d = await Promise.all([
+      pedir('f3/aceptar', {
+        operacion: p.dobleA,
+        conductor: k0.id,
+        vehiculo: k0.vehiculo,
+        clave: 'a',
+      }),
+      pedir('f3/aceptar', {
+        operacion: p.dobleB,
+        conductor: k0.id,
+        vehiculo: k0.vehiculo,
+        clave: 'b',
+      }),
+      pedir('f3/comida', { pedido: p.pedido, conductor: k0.id }),
+    ]);
+    const exitos =
+      d.filter((x) => x.resultado === 'tomada').length + (d[2]?.tomado ? 1 : 0) + (ganoK0 ? 1 : 0);
+    const fin = await pedir('f3/cerrar', { sufijo: p.sufijo });
+    resultados.F3 = {
+      prueba: 'F3',
+      ok:
+        ganadores === 1 &&
+        exitos === 1 &&
+        (!ganoK0 || rep.every((x) => x.resultado === 'ya_es_tuya')) &&
+        Boolean(fin.ok),
+      ganadores,
+      exitosDelMismoConductor: exitos,
+      reintentos: rep.map((x) => x.resultado),
+      ms: Date.now() - t0,
+      casos: fin.casos,
+    };
+  }
+}
 
 let todo = true;
 for (const [k, v] of Object.entries(resultados)) {

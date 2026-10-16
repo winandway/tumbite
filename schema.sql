@@ -1166,3 +1166,363 @@ CREATE TABLE IF NOT EXISTS lotes_ubicacion (
   recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS lotes_ubicacion_viejos ON lotes_ubicacion(recibido_en);
+
+-- =====================================================================================
+-- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN (16 oct 2026, rama fase-3-exclusividad). Diseño:
+-- docs/ARQUITECTURA-MULTISERVICIO-V1.2.md §3.1–§3.4 y §5. Comida NO cambia su código de
+-- aceptación: los disparadores sobre `pedidos` cuentan su ocupación y la base rechaza lo
+-- incompatible. Las operaciones (viajes de Moto y Carro) existen en la base pero NINGUNA ruta
+-- pública las crea: Moto y Carro siguen apagados (servicios_implementados solo tiene Comida).
+-- Vuelta atrás: docs/fase-3/revertir.sql (borra los disparadores; las tablas quedan sin uso).
+-- =====================================================================================
+
+-- ----- Operaciones y viajes (V1.2 §3.1). Una acción = una sentencia; el resto, disparadores -----
+CREATE TABLE IF NOT EXISTS operaciones (
+  id TEXT PRIMARY KEY,
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  tipo_operacion TEXT NOT NULL CHECK (tipo_operacion IN ('viaje_pasajero', 'envio_paquete', 'compra_encargo', 'pedido_comercio')),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT REFERENCES usuarios(id),
+  vehiculo_id TEXT REFERENCES vehiculos(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  estado_general TEXT NOT NULL CHECK (estado_general IN
+    ('pago_pendiente', 'buscando', 'asignada', 'en_curso', 'terminada', 'cancelada', 'sin_conductor')),
+  ultima_clave TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (estado_general NOT IN ('asignada', 'en_curso') OR (conductor_id IS NOT NULL AND vehiculo_id IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS operaciones_cliente ON operaciones(cliente_id, creado_en);
+CREATE INDEX IF NOT EXISTS operaciones_busqueda ON operaciones(zona_id, servicio_id, creado_en) WHERE estado_general = 'buscando';
+CREATE UNIQUE INDEX IF NOT EXISTS operaciones_una_activa ON operaciones(conductor_id) WHERE estado_general IN ('asignada', 'en_curso');
+
+CREATE TABLE IF NOT EXISTS viajes (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  estado TEXT NOT NULL CHECK (estado IN (
+    'pago_pendiente', 'buscando', 'asignado', 'conductor_llego', 'en_curso',
+    'terminado', 'cancelado', 'no_show', 'sin_conductor')),
+  ultimo_actor TEXT NOT NULL CHECK (ultimo_actor IN ('cliente', 'conductor', 'soporte', 'sistema')),
+  ultimo_actor_id TEXT REFERENCES usuarios(id),
+  ultima_clave TEXT NOT NULL,
+  motivo_transicion TEXT NOT NULL DEFAULT '',
+  origen_lat REAL NOT NULL, origen_lng REAL NOT NULL, origen_direccion TEXT NOT NULL,
+  destino_lat REAL NOT NULL, destino_lng REAL NOT NULL, destino_direccion TEXT NOT NULL,
+  pasajeros INTEGER NOT NULL DEFAULT 1 CHECK (pasajeros BETWEEN 1 AND 6),
+  pin_recogida TEXT NOT NULL CHECK (length(pin_recogida) = 4),
+  liberaciones INTEGER NOT NULL DEFAULT 0 CHECK (liberaciones >= 0),
+  distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
+  asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
+);
+
+CREATE TABLE IF NOT EXISTS transiciones_viaje (
+  desde TEXT NOT NULL, hacia TEXT NOT NULL, actor TEXT NOT NULL,
+  PRIMARY KEY (desde, hacia, actor)
+);
+INSERT OR IGNORE INTO transiciones_viaje (desde, hacia, actor) VALUES
+  ('pago_pendiente', 'buscando', 'sistema'),
+  ('pago_pendiente', 'cancelado', 'cliente'), ('pago_pendiente', 'cancelado', 'sistema'),
+  ('buscando', 'asignado', 'conductor'),
+  ('buscando', 'sin_conductor', 'sistema'),
+  ('buscando', 'cancelado', 'cliente'), ('buscando', 'cancelado', 'soporte'),
+  ('asignado', 'conductor_llego', 'conductor'), ('asignado', 'conductor_llego', 'sistema'),
+  ('asignado', 'buscando', 'conductor'), ('asignado', 'buscando', 'sistema'), ('asignado', 'buscando', 'soporte'),
+  ('asignado', 'cancelado', 'cliente'), ('asignado', 'cancelado', 'soporte'),
+  ('conductor_llego', 'en_curso', 'conductor'),
+  ('conductor_llego', 'no_show', 'conductor'),
+  ('conductor_llego', 'buscando', 'conductor'), ('conductor_llego', 'buscando', 'soporte'),
+  ('conductor_llego', 'cancelado', 'cliente'), ('conductor_llego', 'cancelado', 'soporte'),
+  ('en_curso', 'terminado', 'conductor'), ('en_curso', 'terminado', 'soporte');
+
+CREATE TABLE IF NOT EXISTS ofertas_operacion (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  estado TEXT NOT NULL CHECK (estado IN ('ofrecida', 'aceptada', 'rechazada', 'vencida', 'retirada')),
+  ganancia_centavos INTEGER NOT NULL DEFAULT 0 CHECK (ganancia_centavos >= 0),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL,
+  respondida_en TEXT,
+  PRIMARY KEY (operacion_id, conductor_id)
+);
+CREATE INDEX IF NOT EXISTS ofertas_operacion_conductor ON ofertas_operacion(conductor_id, estado);
+CREATE INDEX IF NOT EXISTS ofertas_operacion_vencer ON ofertas_operacion(expira_en) WHERE estado = 'ofrecida';
+
+CREATE TABLE IF NOT EXISTS eventos_operacion (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  tipo TEXT NOT NULL,
+  estado_anterior TEXT,
+  estado_nuevo TEXT,
+  actor_id TEXT REFERENCES usuarios(id),
+  actor_rol TEXT NOT NULL CHECK (actor_rol IN ('cliente', 'conductor', 'soporte', 'sistema')),
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  idempotencia TEXT UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS eventos_operacion_op ON eventos_operacion(operacion_id, id);
+
+CREATE TABLE IF NOT EXISTS asignaciones_operacion (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  clave TEXT NOT NULL UNIQUE,
+  inicio TEXT NOT NULL DEFAULT (datetime('now')),
+  fin TEXT,
+  resultado TEXT CHECK (resultado IS NULL OR resultado IN
+    ('completada', 'liberada_conductor', 'liberada_sistema', 'reasignada_soporte', 'cancelada', 'no_show')),
+  motivo TEXT NOT NULL DEFAULT '',
+  CHECK ((fin IS NULL) = (resultado IS NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS asignaciones_una_abierta ON asignaciones_operacion(operacion_id) WHERE fin IS NULL;
+CREATE INDEX IF NOT EXISTS asignaciones_conductor ON asignaciones_operacion(conductor_id, inicio);
+
+-- ----- Exclusividad (V1.2 §3.4): UNA fila por conductor ocupado -----
+CREATE TABLE IF NOT EXISTS conductor_ocupacion (
+  conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('comida', 'operacion')),
+  operacion_id TEXT REFERENCES operaciones(id),
+  pedidos INTEGER NOT NULL DEFAULT 0,
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK ((tipo = 'comida' AND operacion_id IS NULL AND pedidos >= 1)
+      OR (tipo = 'operacion' AND operacion_id IS NOT NULL AND pedidos = 0))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_operacion ON conductor_ocupacion(operacion_id) WHERE operacion_id IS NOT NULL;
+
+-- ----- Guardas de coherencia del viaje -----
+CREATE TRIGGER IF NOT EXISTS viajes_transicion_valida
+BEFORE UPDATE OF estado ON viajes
+WHEN NEW.estado <> OLD.estado
+BEGIN
+  SELECT RAISE(ABORT, 'transicion_de_viaje_no_permitida')
+   WHERE NOT EXISTS (SELECT 1 FROM transiciones_viaje
+                      WHERE desde = OLD.estado AND hacia = NEW.estado AND actor = NEW.ultimo_actor);
+  SELECT RAISE(ABORT, 'transicion_sin_clave_nueva')
+   WHERE NEW.ultima_clave IS OLD.ultima_clave;
+END;
+CREATE TRIGGER IF NOT EXISTS viajes_actor_solo_con_transicion
+BEFORE UPDATE OF ultimo_actor, ultimo_actor_id, ultima_clave ON viajes
+WHEN NEW.estado = OLD.estado
+ AND (NEW.ultimo_actor IS NOT OLD.ultimo_actor OR NEW.ultimo_actor_id IS NOT OLD.ultimo_actor_id
+      OR NEW.ultima_clave IS NOT OLD.ultima_clave)
+BEGIN
+  SELECT RAISE(ABORT, 'actor_sin_transicion');
+END;
+CREATE TRIGGER IF NOT EXISTS operaciones_estado_coherente
+BEFORE UPDATE OF estado_general ON operaciones
+WHEN EXISTS (SELECT 1 FROM viajes WHERE operacion_id = NEW.id)
+ AND NEW.estado_general IS NOT (SELECT CASE estado
+       WHEN 'pago_pendiente' THEN 'pago_pendiente' WHEN 'buscando' THEN 'buscando'
+       WHEN 'asignado' THEN 'asignada' WHEN 'conductor_llego' THEN 'asignada'
+       WHEN 'en_curso' THEN 'en_curso' WHEN 'terminado' THEN 'terminada' WHEN 'no_show' THEN 'terminada'
+       WHEN 'cancelado' THEN 'cancelada' WHEN 'sin_conductor' THEN 'sin_conductor' END
+     FROM viajes WHERE operacion_id = NEW.id)
+BEGIN
+  SELECT RAISE(ABORT, 'estado_general_incoherente');
+END;
+CREATE TRIGGER IF NOT EXISTS operaciones_conductor_coherente
+BEFORE UPDATE OF conductor_id ON operaciones
+WHEN NEW.conductor_id IS NOT OLD.conductor_id
+BEGIN
+  SELECT RAISE(ABORT, 'cambio_de_conductor_no_permitido')
+   WHERE NOT (
+     (OLD.conductor_id IS NULL AND NEW.conductor_id IS NOT NULL AND OLD.estado_general = 'buscando')
+     OR (OLD.conductor_id IS NOT NULL AND NEW.conductor_id IS NULL AND NEW.estado_general = 'buscando'));
+  SELECT RAISE(ABORT, 'aceptacion_sin_clave_nueva')
+   WHERE NEW.conductor_id IS NOT NULL AND (NEW.ultima_clave IS NULL OR NEW.ultima_clave IS OLD.ultima_clave);
+END;
+
+-- ----- Efectos (dentro de la misma sentencia) -----
+-- Aceptar: ocupa al conductor PRIMERO (si ya tiene comida u otra operación, la base aborta todo).
+CREATE TRIGGER IF NOT EXISTS operaciones_ocupa_conductor
+AFTER UPDATE OF conductor_id ON operaciones
+WHEN NEW.conductor_id IS NOT NULL AND OLD.conductor_id IS NULL
+BEGIN
+  INSERT INTO conductor_ocupacion (conductor_id, tipo, operacion_id) VALUES (NEW.conductor_id, 'operacion', NEW.id);
+END;
+CREATE TRIGGER IF NOT EXISTS operaciones_al_asignar
+AFTER UPDATE OF conductor_id ON operaciones
+WHEN OLD.conductor_id IS NULL AND NEW.conductor_id IS NOT NULL
+BEGIN
+  UPDATE viajes SET estado = 'asignado', asignado_en = datetime('now'),
+         ultimo_actor = 'conductor', ultimo_actor_id = NEW.conductor_id,
+         ultima_clave = NEW.ultima_clave, motivo_transicion = ''
+   WHERE operacion_id = NEW.id AND estado = 'buscando';
+  INSERT INTO asignaciones_operacion (operacion_id, conductor_id, vehiculo_id, clave)
+  VALUES (NEW.id, NEW.conductor_id, NEW.vehiculo_id, NEW.ultima_clave);
+  UPDATE ofertas_operacion SET estado = 'aceptada', respondida_en = datetime('now')
+   WHERE operacion_id = NEW.id AND conductor_id = NEW.conductor_id;
+  UPDATE ofertas_operacion SET estado = 'retirada', respondida_en = datetime('now')
+   WHERE operacion_id = NEW.id AND conductor_id <> NEW.conductor_id AND estado = 'ofrecida';
+  -- Las demás ofertas abiertas de ESTE conductor (comida y operaciones) se retiran: ya está ocupado.
+  UPDATE ofertas_operacion SET estado = 'retirada', respondida_en = datetime('now')
+   WHERE conductor_id = NEW.conductor_id AND operacion_id <> NEW.id AND estado = 'ofrecida';
+  UPDATE ofertas SET estado = 'vencida' WHERE repartidor_id = NEW.conductor_id AND estado = 'ofrecida';
+END;
+CREATE TRIGGER IF NOT EXISTS operaciones_libera_conductor
+AFTER UPDATE OF conductor_id ON operaciones
+WHEN OLD.conductor_id IS NOT NULL AND (NEW.conductor_id IS NULL OR NEW.conductor_id <> OLD.conductor_id)
+BEGIN
+  DELETE FROM conductor_ocupacion WHERE conductor_id = OLD.conductor_id AND operacion_id = OLD.id;
+END;
+CREATE TRIGGER IF NOT EXISTS operaciones_libera_al_terminar
+AFTER UPDATE OF estado_general ON operaciones
+WHEN NEW.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
+BEGIN
+  DELETE FROM conductor_ocupacion WHERE operacion_id = NEW.id;
+END;
+CREATE TRIGGER IF NOT EXISTS viajes_al_cambiar_estado
+AFTER UPDATE OF estado ON viajes
+WHEN NEW.estado <> OLD.estado
+BEGIN
+  UPDATE operaciones
+     SET estado_general = CASE NEW.estado
+           WHEN 'pago_pendiente' THEN 'pago_pendiente' WHEN 'buscando' THEN 'buscando'
+           WHEN 'asignado' THEN 'asignada' WHEN 'conductor_llego' THEN 'asignada'
+           WHEN 'en_curso' THEN 'en_curso' WHEN 'terminado' THEN 'terminada' WHEN 'no_show' THEN 'terminada'
+           WHEN 'cancelado' THEN 'cancelada' WHEN 'sin_conductor' THEN 'sin_conductor' END,
+         version = version + 1, actualizado_en = datetime('now')
+   WHERE id = NEW.operacion_id;
+  INSERT INTO eventos_operacion (operacion_id, tipo, estado_anterior, estado_nuevo, actor_id, actor_rol, idempotencia, datos_json)
+  VALUES (NEW.operacion_id, 'transicion', OLD.estado, NEW.estado, NEW.ultimo_actor_id, NEW.ultimo_actor,
+          NEW.ultima_clave, json_object('motivo', NEW.motivo_transicion));
+  UPDATE viajes SET llego_en = datetime('now') WHERE operacion_id = NEW.operacion_id AND NEW.estado = 'conductor_llego';
+  UPDATE viajes SET iniciado_en = datetime('now') WHERE operacion_id = NEW.operacion_id AND NEW.estado = 'en_curso';
+  UPDATE viajes SET terminado_en = datetime('now')
+   WHERE operacion_id = NEW.operacion_id AND NEW.estado IN ('terminado', 'cancelado', 'no_show', 'sin_conductor');
+  UPDATE asignaciones_operacion
+     SET fin = datetime('now'), motivo = NEW.motivo_transicion,
+         resultado = CASE
+           WHEN NEW.estado = 'buscando' THEN CASE NEW.ultimo_actor
+                WHEN 'conductor' THEN 'liberada_conductor' WHEN 'soporte' THEN 'reasignada_soporte'
+                ELSE 'liberada_sistema' END
+           WHEN NEW.estado = 'terminado' THEN 'completada'
+           WHEN NEW.estado = 'no_show' THEN 'no_show'
+           ELSE 'cancelada' END
+   WHERE operacion_id = NEW.operacion_id AND fin IS NULL
+     AND NEW.estado IN ('buscando', 'terminado', 'no_show', 'cancelado', 'sin_conductor');
+  UPDATE ofertas_operacion SET estado = 'rechazada'
+   WHERE operacion_id = NEW.operacion_id AND estado = 'aceptada'
+     AND NEW.estado = 'buscando' AND OLD.estado IN ('asignado', 'conductor_llego');
+  UPDATE ofertas_operacion SET estado = 'retirada', respondida_en = datetime('now')
+   WHERE operacion_id = NEW.operacion_id AND estado = 'ofrecida'
+     AND NEW.estado IN ('cancelado', 'sin_conductor');
+  UPDATE operaciones SET conductor_id = NULL, vehiculo_id = NULL
+   WHERE id = NEW.operacion_id
+     AND NEW.estado = 'buscando' AND OLD.estado IN ('asignado', 'conductor_llego');
+END;
+
+-- ----- Comida: su código NO cambia; estos disparadores cuentan su ocupación -----
+CREATE TRIGGER IF NOT EXISTS pedidos_ocupa_conductor
+AFTER UPDATE OF repartidor_id ON pedidos
+WHEN NEW.repartidor_id IS NOT NULL AND OLD.repartidor_id IS NULL
+ AND NEW.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  SELECT RAISE(ABORT, 'conductor_ocupado_en_otra_operacion')
+   WHERE EXISTS (SELECT 1 FROM conductor_ocupacion
+                  WHERE conductor_id = NEW.repartidor_id AND tipo <> 'comida');
+  UPDATE conductor_ocupacion SET pedidos = pedidos + 1
+   WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida';
+  INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
+  SELECT NEW.repartidor_id, 'comida', 1
+   WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id);
+  -- Sus ofertas abiertas de operaciones se retiran: ya va con comida.
+  UPDATE ofertas_operacion SET estado = 'retirada', respondida_en = datetime('now')
+   WHERE conductor_id = NEW.repartidor_id AND estado = 'ofrecida';
+END;
+CREATE TRIGGER IF NOT EXISTS pedidos_libera_por_estado
+AFTER UPDATE OF estado ON pedidos
+WHEN NEW.repartidor_id IS NOT NULL
+ AND OLD.estado IN ('aceptado', 'listo', 'en_camino') AND NEW.estado NOT IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  DELETE FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida' AND pedidos <= 1;
+  UPDATE conductor_ocupacion SET pedidos = pedidos - 1 WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida';
+END;
+CREATE TRIGGER IF NOT EXISTS pedidos_libera_al_soltar
+AFTER UPDATE OF repartidor_id ON pedidos
+WHEN OLD.repartidor_id IS NOT NULL AND NEW.repartidor_id IS NULL
+ AND OLD.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  DELETE FROM conductor_ocupacion WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida' AND pedidos <= 1;
+  UPDATE conductor_ocupacion SET pedidos = pedidos - 1 WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida';
+END;
+CREATE TRIGGER IF NOT EXISTS pedidos_reactiva_ocupa
+AFTER UPDATE OF estado ON pedidos
+WHEN NEW.repartidor_id IS NOT NULL
+ AND OLD.estado NOT IN ('aceptado', 'listo', 'en_camino') AND NEW.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  SELECT RAISE(ABORT, 'conductor_ocupado_en_otra_operacion')
+   WHERE EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id AND tipo <> 'comida');
+  UPDATE conductor_ocupacion SET pedidos = pedidos + 1 WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida';
+  INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
+  SELECT NEW.repartidor_id, 'comida', 1
+   WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id);
+END;
+CREATE TRIGGER IF NOT EXISTS pedidos_reasigna_ocupa
+AFTER UPDATE OF repartidor_id ON pedidos
+WHEN OLD.repartidor_id IS NOT NULL AND NEW.repartidor_id IS NOT NULL
+ AND OLD.repartidor_id <> NEW.repartidor_id AND NEW.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  SELECT RAISE(ABORT, 'conductor_ocupado_en_otra_operacion')
+   WHERE EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id AND tipo <> 'comida');
+  DELETE FROM conductor_ocupacion WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida' AND pedidos <= 1;
+  UPDATE conductor_ocupacion SET pedidos = pedidos - 1 WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida';
+  UPDATE conductor_ocupacion SET pedidos = pedidos + 1 WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida';
+  INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
+  SELECT NEW.repartidor_id, 'comida', 1
+   WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id);
+END;
+
+-- (El disparador que fija el vehículo activo y la vista de elegibles usan
+-- repartidores.vehiculo_activo_id, que llega por esquema.ts: se crean ahí, después de la columna.)
+
+-- MIGRACIÓN con pedidos activos (V1.2 §3.4, corregida): los disparadores ya existen arriba, así
+-- que esta sentencia CUADRA el conteo de cada repartidor con sus pedidos activos de este instante.
+-- Es idempotente (corre en cada publicación) y segura aunque entre un pedido en medio: fija el
+-- conteo real. Solo toca filas de comida; nunca la de una operación.
+INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
+SELECT repartidor_id, 'comida', COUNT(*) FROM pedidos
+ WHERE repartidor_id IS NOT NULL AND estado IN ('aceptado', 'listo', 'en_camino')
+ GROUP BY repartidor_id
+ON CONFLICT(conductor_id) DO UPDATE SET pedidos = excluded.pedidos
+ WHERE conductor_ocupacion.tipo = 'comida' AND conductor_ocupacion.pedidos <> excluded.pedidos;
+DELETE FROM conductor_ocupacion
+ WHERE tipo = 'comida' AND NOT EXISTS (
+   SELECT 1 FROM pedidos p WHERE p.repartidor_id = conductor_ocupacion.conductor_id
+     AND p.estado IN ('aceptado', 'listo', 'en_camino'));
+
+-- ----- Vigilancia: en un sistema sano devuelve CERO filas (la salud la consulta) -----
+CREATE VIEW IF NOT EXISTS inconsistencias_operaciones AS
+SELECT 'estado_general' AS problema, o.id AS referencia FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+ WHERE o.estado_general IS NOT CASE v.estado
+       WHEN 'pago_pendiente' THEN 'pago_pendiente' WHEN 'buscando' THEN 'buscando'
+       WHEN 'asignado' THEN 'asignada' WHEN 'conductor_llego' THEN 'asignada'
+       WHEN 'en_curso' THEN 'en_curso' WHEN 'terminado' THEN 'terminada' WHEN 'no_show' THEN 'terminada'
+       WHEN 'cancelado' THEN 'cancelada' WHEN 'sin_conductor' THEN 'sin_conductor' END
+UNION ALL
+SELECT 'asignada_sin_asignacion_abierta', o.id FROM operaciones o
+ WHERE o.estado_general IN ('asignada', 'en_curso')
+   AND NOT EXISTS (SELECT 1 FROM asignaciones_operacion a WHERE a.operacion_id = o.id AND a.fin IS NULL AND a.conductor_id = o.conductor_id)
+UNION ALL
+SELECT 'asignacion_abierta_sin_operacion_activa', a.operacion_id FROM asignaciones_operacion a
+  JOIN operaciones o ON o.id = a.operacion_id
+ WHERE a.fin IS NULL AND (o.estado_general NOT IN ('asignada', 'en_curso') OR o.conductor_id IS NOT a.conductor_id)
+UNION ALL
+SELECT 'buscando_con_conductor', o.id FROM operaciones o WHERE o.estado_general = 'buscando' AND o.conductor_id IS NOT NULL
+UNION ALL
+SELECT 'operacion_activa_sin_ocupacion', o.id FROM operaciones o
+ WHERE o.estado_general IN ('asignada', 'en_curso')
+   AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.operacion_id = o.id AND c.conductor_id = o.conductor_id)
+UNION ALL
+SELECT 'ocupacion_de_operacion_inactiva', c.conductor_id FROM conductor_ocupacion c
+ WHERE c.tipo = 'operacion'
+   AND NOT EXISTS (SELECT 1 FROM operaciones o WHERE o.id = c.operacion_id AND o.estado_general IN ('asignada', 'en_curso') AND o.conductor_id = c.conductor_id)
+UNION ALL
+SELECT 'conteo_de_comida', c.conductor_id FROM conductor_ocupacion c
+ WHERE c.tipo = 'comida'
+   AND c.pedidos <> (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = c.conductor_id AND p.estado IN ('aceptado', 'listo', 'en_camino'))
+UNION ALL
+SELECT 'repartidor_con_pedido_sin_ocupacion', p.repartidor_id FROM pedidos p
+ WHERE p.repartidor_id IS NOT NULL AND p.estado IN ('aceptado', 'listo', 'en_camino')
+   AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = p.repartidor_id AND c.tipo = 'comida');

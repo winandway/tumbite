@@ -50,6 +50,60 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS usuarios_rol_zona ON usuarios(rol, zona_id, creado_en)',
   'CREATE INDEX IF NOT EXISTS usuarios_telefono ON usuarios(telefono)',
   'CREATE INDEX IF NOT EXISTS pedidos_repartidor_fecha ON pedidos(repartidor_id, creado_en)',
+  // Fase 3 (16 oct 2026): usan repartidores.vehiculo_activo_id, que llega por COLUMNAS. En
+  // schema.sql romperían la base vieja (SQLite revisa disparadores y vistas al tocar columnas).
+  // El vehículo activo no cambia con un pedido u operación en curso (aunque llegue a la vez):
+  `CREATE TRIGGER IF NOT EXISTS repartidores_vehiculo_fijo_en_operacion
+BEFORE UPDATE OF vehiculo_activo_id ON repartidores
+WHEN NEW.vehiculo_activo_id IS NOT OLD.vehiculo_activo_id
+ AND EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.usuario_id)
+BEGIN
+  SELECT RAISE(ABORT, 'no_se_cambia_vehiculo_en_operacion');
+END`,
+  // Quién puede recibir una operación de cada servicio (servicio, zona, vehículo aprobado con
+  // documentos vigentes, habilitación, requisitos, preferencia, sin bloqueo y conectado).
+  `CREATE VIEW IF NOT EXISTS conductores_elegibles AS
+SELECT d.usuario_id AS conductor_id, s.id AS servicio_id, v.id AS vehiculo_id, d.zona_id,
+       d.lat, d.lng, d.ubicacion_en, d.puntos
+  FROM repartidores d
+  JOIN usuarios u              ON u.id = d.usuario_id AND u.activo = 1 AND u.rol = 'repartidor'
+  JOIN vehiculos v             ON v.id = d.vehiculo_activo_id AND v.conductor_id = d.usuario_id
+                              AND v.estado = 'aprobado'
+  JOIN servicios_zona sz       ON sz.zona_id = d.zona_id AND sz.estado = 'disponible'
+                              AND (sz.activo_desde IS NULL OR sz.activo_desde <= datetime('now'))
+                              AND (sz.activo_hasta IS NULL OR sz.activo_hasta > datetime('now'))
+  JOIN servicios s             ON s.id = sz.servicio_id AND s.estado = 'disponible'
+  JOIN servicios_implementados si ON si.servicio_id = s.id
+  JOIN servicio_vehiculos sv   ON sv.servicio_id = s.id AND sv.vehiculo_tipo = v.tipo
+                              AND (sv.anio_minimo IS NULL OR v.anio >= sv.anio_minimo)
+  JOIN habilitaciones h        ON h.conductor_id = d.usuario_id AND h.servicio_id = s.id
+                              AND h.estado = 'aprobada'
+                              AND (h.vence_en IS NULL OR h.vence_en > datetime('now'))
+  JOIN preferencias_servicio p ON p.conductor_id = d.usuario_id AND p.servicio_id = s.id AND p.activa = 1
+ WHERE d.conectado = 1
+   AND NOT EXISTS (
+         SELECT 1 FROM conductor_bloqueos b
+          WHERE b.conductor_id = d.usuario_id AND b.levantado_en IS NULL
+            AND (b.servicio_id IS NULL OR b.servicio_id = s.id)
+            AND (b.hasta IS NULL OR b.hasta > datetime('now')))
+   AND (v.tipo NOT IN ('carro', 'moto', 'scooter') OR (
+         SELECT COUNT(DISTINCT tipo) FROM vehiculo_documentos
+          WHERE vehiculo_id = v.id AND estado = 'aprobado' AND tipo IN ('registro', 'seguro')
+            AND (vence_en IS NULL OR vence_en > datetime('now'))) = 2)
+   AND (s.transporta_personas = 0 OR EXISTS (
+         SELECT 1 FROM vehiculo_documentos
+          WHERE vehiculo_id = v.id AND estado = 'aprobado' AND tipo = 'seguro_pasajeros'
+            AND (vence_en IS NULL OR vence_en > datetime('now'))))
+   AND NOT EXISTS (
+         SELECT 1 FROM servicio_requisitos sr
+           JOIN requisitos_def rd ON rd.requisito = sr.requisito
+          WHERE sr.servicio_id = s.id AND sr.obligatorio = 1
+            AND NOT EXISTS (
+                  SELECT 1 FROM cumplimientos c
+                   WHERE c.conductor_id = d.usuario_id
+                     AND c.vehiculo_id = CASE rd.nivel WHEN 'vehiculo' THEN v.id ELSE '' END
+                     AND c.requisito = sr.requisito AND c.estado = 'aprobado'
+                     AND (c.vence_en IS NULL OR c.vence_en > datetime('now'))))`,
 ];
 
 /**
