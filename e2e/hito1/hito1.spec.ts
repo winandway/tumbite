@@ -146,11 +146,17 @@ for (const idioma of ['en', 'es'] as const) {
 test('100 aperturas seguidas: siempre llega al inicio o a una pantalla con salida', async ({
   browser,
 }) => {
-  test.setTimeout(900_000);
+  test.setTimeout(1_800_000);
   const ctx = await celular(browser, 'en');
   const p = await ctx.newPage();
+  // Lo que respondió el servidor al comprobar la sesión en cada apertura.
+  const codigos = new Map<number, number>();
+  p.on('response', (r) => {
+    if (r.url().includes('/datos/cuentas/yo'))
+      codigos.set(r.status(), (codigos.get(r.status()) ?? 0) + 1);
+  });
   await registrar(p, 'en');
-  const inicio = p.getByRole('button', { name: /^Food$/ });
+  const inicio = p.getByRole('button', { name: 'Food', exact: true });
   await expect(inicio).toBeVisible({ timeout: 30_000 });
   let alInicio = 0;
   let sinConfirmar = 0;
@@ -159,11 +165,13 @@ test('100 aperturas seguidas: siempre llega al inicio o a una pantalla con salid
     await expect(inicio.or(p.getByTestId('sesion-sin-confirmar'))).toBeVisible({ timeout: 15_000 });
     if (await inicio.isVisible()) alInicio++;
     else sinConfirmar++;
+    // Al ritmo de una persona apurada (una apertura cada ~2 s), por debajo del límite de intentos.
+    await p.waitForTimeout(1500);
   }
-  test.info().annotations.push({
-    type: 'aperturas',
-    description: `100 aperturas: ${alInicio} al inicio, ${sinConfirmar} con «Reintentar»`,
-  });
+  const resumen = `100 aperturas: ${alInicio} al inicio, ${sinConfirmar} con «Reintentar»; servidor: ${JSON.stringify(Object.fromEntries(codigos))}`;
+  console.warn(resumen);
   expect(alInicio + sinConfirmar).toBe(100);
+  // Con el servidor sano, todas llegan al inicio: «Reintentar» solo aparece si falla la conexión.
+  if ([...codigos.keys()].every((c) => c === 200)) expect(alInicio).toBe(100);
   await ctx.close();
 });
