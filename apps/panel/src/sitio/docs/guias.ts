@@ -123,7 +123,13 @@ const es: SeccionDocs[] = [
           '«No pudimos cargar los restaurantes»: falló la conexión. Toca «Intentar de nuevo». Si ya tenías una lista, la seguimos mostrando y te avisamos que no se pudo actualizar.',
           'Al abrir la app comprobamos tu sesión. Si el internet está lento, no te dejamos esperando para siempre: después de unos segundos ves «No pudimos confirmar tu sesión», con «Reintentar» y «Entrar con otra cuenta». Tu sesión no se borra por un problema de conexión.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-es.webp',
+            alt: 'Pantalla de la app del cliente que dice «No pudimos confirmar tu sesión», con los botones «Reintentar» y «Entrar con otra cuenta».',
+            pie: 'Si la conexión falla al abrir, la app te deja reintentar sin cerrar tu sesión.',
+          },
+        ],
         preguntas: [
           '¿Por qué no veo restaurantes en mi zona?',
           '¿Por qué desaparecen los restaurantes de la lista?',
@@ -1882,7 +1888,13 @@ const en: SeccionDocs[] = [
           '“We couldn’t load the restaurants”: the connection failed. Tap “Try again.” If you already had a list, we keep showing it and let you know it couldn’t be refreshed.',
           'When the app opens, we verify your session. If your internet is slow, we don’t leave you waiting forever: after a few seconds you’ll see “We couldn’t confirm your session,” with “Try again” and “Sign in with another account.” A connection problem never signs you out.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-en.webp',
+            alt: 'Customer app screen reading “We couldn’t confirm your session,” with the buttons “Try again” and “Sign in with another account.”',
+            pie: 'If the connection fails when the app opens, you can try again without being signed out.',
+          },
+        ],
         preguntas: [
           'Why don’t I see restaurants in my area?',
           'Why do restaurants disappear from the list?',
