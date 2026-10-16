@@ -147,3 +147,46 @@ export const RESTAURANTE_BASE = {
   categoria: 'Cubana',
   telefono: '3055550100',
 };
+
+/**
+ * Solo para pruebas (C-TRANSICIONES-PEDIDO): lleva un pedido a un estado caminando las
+ * transiciones permitidas, paso a paso, como lo haría el sistema. La base rechaza los saltos
+ * (pedidos_transicion_valida), así que las pruebas ya no pueden poner un estado «a mano».
+ * `extra` se aplica en el último paso (p. ej. fechas: "entregado_en = datetime('now')").
+ */
+const CAMINO: Record<string, string> = {
+  pago_pendiente: 'pagado',
+  pagado: 'aceptado',
+  aceptado: 'listo',
+  listo: 'en_camino',
+  en_camino: 'entregado',
+};
+export async function llevarA(DB: D1Database, id: string, hacia: string, extra = '') {
+  const leer = async () =>
+    (await DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first<{
+      estado: string;
+    }>())!.estado;
+  let actual = await leer();
+  if (hacia === 'cancelado') {
+    if (actual === 'listo' || actual === 'en_camino' || actual === 'entregado')
+      throw new Error(`llevarA: un pedido en «${actual}» no se puede cancelar`);
+    await DB.prepare(
+      `UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now')${extra ? `, ${extra}` : ''} WHERE id = ?`,
+    )
+      .bind(id)
+      .run();
+    return;
+  }
+  for (let i = 0; actual !== hacia && i < 6; i++) {
+    const siguiente = CAMINO[actual];
+    if (!siguiente) throw new Error(`llevarA: no hay camino de «${actual}» a «${hacia}»`);
+    const ultimo = siguiente === hacia;
+    await DB.prepare(
+      `UPDATE pedidos SET estado = ?${ultimo && extra ? `, ${extra}` : ''} WHERE id = ?`,
+    )
+      .bind(siguiente, id)
+      .run();
+    actual = siguiente;
+  }
+  if (actual !== hacia) throw new Error(`llevarA: no se llegó a «${hacia}»`);
+}

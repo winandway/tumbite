@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { mundo } from './pruebas/ayuda';
+import { llevarA, mundo } from './pruebas/ayuda';
 import { soltarPedido, tomarPedidoComida } from './rutas/operacion';
 import {
   aceptarOperacion,
@@ -349,11 +349,11 @@ describe('Fase 3 · exclusividad entre Comida y operaciones', () => {
     expect(
       await uno(m, 'SELECT tipo, pedidos FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toEqual({ tipo: 'comida', pedidos: 2 });
-    await q(m, "UPDATE pedidos SET estado = 'entregado' WHERE id = ?", p1);
+    await llevarA(m.DB, p1, 'entregado');
     expect(
       await uno(m, 'SELECT pedidos FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toEqual({ pedidos: 1 });
-    await q(m, "UPDATE pedidos SET estado = 'entregado' WHERE id = ?", p2);
+    await llevarA(m.DB, p2, 'entregado');
     expect(
       await uno(m, 'SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toBeNull();
@@ -389,12 +389,13 @@ describe('Fase 3 · exclusividad entre Comida y operaciones', () => {
     expect(
       await uno(m, 'SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?', d.id),
     ).toBeNull();
-    await q(m, "UPDATE pedidos SET estado = 'cancelado' WHERE id = ?", ped);
+    await llevarA(m.DB, ped, 'cancelado');
     expect(
       await uno(m, 'SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toBeNull();
-    // Reversa del Manager (Stripe no devolvió): el pedido vuelve y el repartidor vuelve a contar.
-    await q(m, "UPDATE pedidos SET estado = 'listo' WHERE id = ?", ped);
+    // Reversa del Manager (Stripe no devolvió): el pedido vuelve a su estado anterior, borrando
+    // cancelado_en, como manager.ts, y el repartidor vuelve a contar.
+    await q(m, "UPDATE pedidos SET estado = 'aceptado', cancelado_en = NULL WHERE id = ?", ped);
     expect(
       await uno(m, 'SELECT pedidos FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
     ).toEqual({ pedidos: 1 });
@@ -759,7 +760,8 @@ describe('Fase 3 · migración y vuelta atrás', () => {
     const p2 = await pedidoComida(m, cliente.id, rest);
     const p3 = await pedidoComida(m, cliente.id, rest);
     await q(m, 'UPDATE pedidos SET repartidor_id = ? WHERE id IN (?, ?)', a.id, p1, p2);
-    await q(m, "UPDATE pedidos SET repartidor_id = ?, estado = 'en_camino' WHERE id = ?", b.id, p3);
+    await q(m, 'UPDATE pedidos SET repartidor_id = ? WHERE id = ?', b.id, p3);
+    await llevarA(m.DB, p3, 'en_camino');
     expect((await inconsistencias(m)).length).toBeGreaterThan(0);
     for (let vez = 0; vez < 2; vez++) await publicar(m);
     expect(
@@ -784,7 +786,7 @@ describe('Fase 3 · migración y vuelta atrás', () => {
     expect(quedan?.n).toBe(0);
     const ped = await pedidoComida(m, cliente.id, rest);
     expect((await tomarComida(m, ped, c.id)).meta.changes).toBe(1);
-    await q(m, "UPDATE pedidos SET estado = 'entregado' WHERE id = ?", ped);
+    await llevarA(m.DB, ped, 'entregado');
   });
 });
 

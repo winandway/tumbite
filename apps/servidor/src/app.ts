@@ -33,6 +33,7 @@ import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { ultimaConciliacion } from './conciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
+import { saludTransiciones } from './esquemaPedidos';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -182,6 +183,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.exclusividad = await saludExclusividad(c.env.DB).catch((e: unknown) => {
       console.error('salud: exclusividad', e);
+      return 'error' as const;
+    });
+  // C-TRANSICIONES-PEDIDO: el disparador que impide los saltos de estado de los pedidos existe.
+  if (c.env.DB)
+    piezas.transiciones = await saludTransiciones(c.env.DB).catch((e: unknown) => {
+      console.error('salud: transiciones', e);
       return 'error' as const;
     });
   let fechaRespaldo: string | null = null;

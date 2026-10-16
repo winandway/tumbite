@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
+import { RESTAURANTE_BASE, llevarA, mundo } from '../pruebas/ayuda';
 
 const SECRETO_AVISO = `whsec_${crypto.randomUUID()}`;
 
@@ -285,7 +285,7 @@ describe('ciclo del pedido', () => {
       cliente.token,
     );
     expect(antes.estado).toBe(409);
-    await m.DB.prepare("UPDATE pedidos SET estado = 'entregado' WHERE id = ?").bind(id).run();
+    await llevarA(m.DB, id, 'entregado');
     const ok = await m.llamar(
       'POST',
       `/datos/pedidos/${id}/calificar`,
@@ -2322,7 +2322,7 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
     expect(despues.total).toBe(r1.datos.nuevoTotal);
     // Ya en camino no se puede.
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
-    await m.DB.prepare("UPDATE pedidos SET estado = 'en_camino' WHERE id = ?").bind(id).run();
+    await llevarA(m.DB, id, 'en_camino');
     expect(
       (await m.llamar('PATCH', `/datos/pedidos/${id}/direccion`, lejos, cliente.token)).estado,
     ).toBe(409);

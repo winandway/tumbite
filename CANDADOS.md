@@ -531,3 +531,17 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - **Qué NO tocar:** no aceptar pedidos de Comida con otra sentencia; no quitar la condición de conteo ni la de ocupación; no crear operaciones desde una ruta pública hasta la fase de Moto y Carro.
 
 - **C-LOTE-NO-SE-ATASCA (16 oct 2026):** `apps/tiempo-real/src/nucleo.ts`. Un lote que el servidor rechaza (4xx, salvo 408 y 429) se descarta y queda en el registro con su código; un fallo de red o 5xx se reintenta. Lo pendiente de más de 10 minutos se suelta. Pruebas en `nucleo.test.ts`, en rojo comprobado. **Qué NO tocar:** nunca volver a reintentar sin límite ni a fallar sin registro.
+
+- **C-TRANSICIONES-PEDIDO (16 oct 2026, Entrega 1, rama `transiciones-pedido`, NO publicado):** la base rechaza cualquier cambio de estado de un pedido de Comida que no esté en `transiciones_pedido` (12 filas en `schema.sql`: 9 normales y 3 de vuelta atrás). Antes, la regla vivía solo en el `WHERE estado = …` de cada `UPDATE`, y la base dejaba, por ejemplo, aceptar un pedido sin pagar o cancelar uno entregado.
+  - El disparador `pedidos_transicion_valida` vive en `apps/servidor/src/esquemaPedidos.ts`. **No va en `schema.sql`** (C-EXCLUSIVIDAD). Lo crea `asegurarFase3` al arrancar, con la misma consulta única que la Fase 3.
+  - Vuelta atrás del Manager (cuando Stripe falla al devolver): solo vale si el mismo `UPDATE` borra `cancelado_en` y la cancelación tiene 2 minutos o menos.
+  - Salud: pieza `transiciones` (disparador presente y 12 filas).
+  - Pruebas:
+    - `transicionesPedido.test.ts`: las 49 parejas de estados, las vueltas atrás y 2.000 cambios al azar;
+    - `transicionesRutas.test.ts`: aceptar y rechazar a la vez, cancelar y aceptar a la vez, reintentos, cancelar desde «en camino», un lote con dinero que se deshace entero, y registros viejos en cada estado.
+    - Siete de las doce se comprobaron en rojo quitando el disparador.
+  - Las pruebas ya no pueden poner un estado «a mano»: usan `llevarA` (`pruebas/ayuda.ts`), que camina las transiciones legales.
+  - **Qué NO tocar:**
+    - no abrir una excepción en el disparador para las pruebas;
+    - toda transición nueva se agrega a la tabla Y a la prueba de las 49 parejas;
+    - no mover el disparador a `schema.sql`.

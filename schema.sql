@@ -1215,6 +1215,27 @@ CREATE TABLE IF NOT EXISTS viajes (
   asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
 );
 
+-- C-TRANSICIONES-PEDIDO (16 oct 2026): las transiciones de estado permitidas de un pedido de
+-- Comida. El disparador que las hace cumplir NO va aquí: lo crea esquema.ts al arrancar
+-- (esquemaPedidos.ts). reversion = 1: vuelta atrás del Manager si Stripe falla (≤ 2 minutos).
+CREATE TABLE IF NOT EXISTS transiciones_pedido (
+  desde TEXT NOT NULL, hacia TEXT NOT NULL, reversion INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (desde, hacia)
+);
+INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES
+  ('pago_pendiente', 'pagado', 0),
+  ('pago_pendiente', 'cancelado', 0),
+  ('pagado', 'aceptado', 0),
+  ('pagado', 'cancelado', 0),
+  ('aceptado', 'listo', 0),
+  ('aceptado', 'cancelado', 0),
+  ('listo', 'en_camino', 0),
+  ('listo', 'entregado', 0),
+  ('en_camino', 'entregado', 0),
+  ('cancelado', 'pago_pendiente', 1),
+  ('cancelado', 'pagado', 1),
+  ('cancelado', 'aceptado', 1);
+
 CREATE TABLE IF NOT EXISTS transiciones_viaje (
   desde TEXT NOT NULL, hacia TEXT NOT NULL, actor TEXT NOT NULL,
   PRIMARY KEY (desde, hacia, actor)

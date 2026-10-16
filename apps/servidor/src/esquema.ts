@@ -1,6 +1,7 @@
 import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
 import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
+import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -190,9 +191,12 @@ async function revisarColumnas(db: D1Database): Promise<void> {
  * arranque: la primera respuesta tardaba más de 5 s y el tiempo real se cortaba (16 oct 2026).
  */
 async function asegurarFase3(db: D1Database): Promise<void> {
-  const nombres = ESQUEMA_FASE3.map(
-    (sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1],
-  ).filter((n): n is string => Boolean(n));
+  // Una sola consulta para los disparadores de la Fase 3 y los de los pedidos
+  // (C-TRANSICIONES-PEDIDO): el arranque sigue barato.
+  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS];
+  const nombres = todo
+    .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
+    .filter((n): n is string => Boolean(n));
   const { results } = await db
     .prepare(
       `SELECT COUNT(*) AS n FROM sqlite_master WHERE name IN (${nombres.map(() => '?').join(',')})`,
@@ -200,8 +204,8 @@ async function asegurarFase3(db: D1Database): Promise<void> {
     .bind(...nombres)
     .all<{ n: number }>();
   if (Number(results[0]?.n) === nombres.length) return;
-  await db.batch(ESQUEMA_FASE3.map((sql) => db.prepare(sql)));
-  console.warn('esquema: disparadores y vistas de la Fase 3 creados');
+  await db.batch(todo.map((sql) => db.prepare(sql)));
+  console.warn('esquema: disparadores y vistas de la Fase 3 y de los pedidos creados');
 }
 
 let listo: Promise<void> | null = null;
