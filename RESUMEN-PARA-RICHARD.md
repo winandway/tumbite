@@ -4,22 +4,20 @@
 
 ## Dónde estamos
 
-✅ **Publicado en tumbite.com y comprobado en vivo.** Producción tiene las correcciones aprobadas (doble pago en retiros y fotos de entrega). Salud toda en verde. Retiros reales apagados. Moto y Carro apagados. Respaldo completo hecho antes de publicar.
-✅ **Fase 3 aprobada técnicamente** y probada solo en el sitio de pruebas. Un conductor nunca tiene dos trabajos incompatibles a la vez, y dos conductores nunca se llevan el mismo viaje. Comida sigue igual.
-⛔ **La Fase 3 NO está en tumbite.com.** Espera su aprobación.
-⏸️ Fase 4: no se empezó.
+✅ **Fase 3 publicada en tumbite.com** (16 oct, versión `36f4e35`), con su autorización única. El verificador «después» dio VERDE: la exclusividad está en `ok`, los 17 disparadores puestos, 0 inconsistencias, solo Comida, retiros apagados.
+⏳ La pieza «dinero» sigue en rojo SOLO por la conciliación conocida del 15 (sin tocar). La del 16 corre después de las 8 p. m. de Miami.
+✅ Reloj seguro: aprobado y listo en su rama. Sigue integrarlo con la Fase 3 y probarlo en el sitio de pruebas.
+⏸️ Fases 4 y 5: no se empezaron.
 
 ## El documento que tiene que leer ahora
 
-**2026-10-16-pantalla-de-carga**, en la carpeta docs/incidencias (rama `fase-reloj-seguro`): la app esperó una comprobación de sesión que no respondió, y esa espera no tiene límite de tiempo. No se repitió en 100 aperturas. **Fase 3: BLOQUEADA** solo por la conciliación del 16, que llega después de las 8 p. m. de Miami.
+**2026-10-16-excepcion-publicacion-fase-3**, en docs/autorizaciones: la autorización firmada y el resultado de la publicación.
 
 ## Lo que le toca a usted
 
-1. Autorizar la publicación de la Fase 3 cuando la conciliación del 16 haya cuadrado.
-2. Decidir si la zona de pruebas de Novi se muestra al público o se apaga y se dan de alta restaurantes reales en Miami.
-3. Autorizar (o no) activar el reloj de Cloudflare en producción (los dos arreglos ya están hechos y probados en el sitio de pruebas; falta el trabajador nuevo).
-4. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba y no creé ninguna).
-5. Cambiar la llave del sitio de pruebas que pasó por el chat.
+1. Decidir qué hacemos con la zona de pruebas de Novi.
+2. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya.
+3. Cambiar la llave del sitio de pruebas que pasó por el chat.
 
 ## Regla permanente
 

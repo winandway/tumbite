@@ -38,6 +38,6 @@ Publicar en producción la rama `fase-3-exclusividad`, ya validada en el sitio d
 
 ## Resultado (se completa después de publicar)
 
-- Versión publicada: _______________
-- Verificación después de publicar: _______________
-- Conciliación del 16: _______________
+- Versión publicada: `36f4e35` (fusión de `fase-3-exclusividad` en `main`; flujo `publicar` 38919092406). Producción la sirve desde el 16 oct a las 15:3x UTC.
+- Verificación después de publicar: **VERDE** (`verificar-publicacion.mjs despues 36f4e35`). Todas las piezas de la salud en `ok`, incluida `exclusividad`; `sms`, `retiros` y `tiempoReal` en «pendiente», como estaba previsto. «Dinero» en error SOLO por la conciliación conocida del 15. Los 17 disparadores puestos, 0 inconsistencias, 0 operaciones, solo Comida, retiros apagados. Las 15 rutas críticas en 200. El semáforo de GitHub falló únicamente por `/datos/salud → 503`, como estaba previsto.
+- Conciliación del 16: pendiente (corre después de las 00:00 UTC del 17).
