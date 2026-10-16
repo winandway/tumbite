@@ -112,6 +112,37 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'no-restaurants-or-app-not-opening',
+        titulo: '¿Por qué no veo restaurantes? ¿Y si la app no termina de abrir?',
+        resumen:
+          'La app siempre te dice qué pasa: si en tu zona todavía no hay restaurantes, si no llegamos aún a tu ciudad o si falló la conexión. Y si no puede comprobar tu sesión, te deja intentar de nuevo sin perder tu cuenta.',
+        explicacion: [
+          'Los restaurantes que ves dependen de tu ubicación. La app usa, en este orden: el punto que elegiste en el mapa del carrito, la última ubicación que guardaste y, si no hay ninguna, la de tu teléfono. Tu lista no cambia sola por moverte un poco ni por cambiar el idioma.',
+          '«Todavía no hay restaurantes en tu zona»: Tumbite ya funciona en tu zona, pero aún no hay restaurantes abiertos ahí. Estamos sumando más cada semana.',
+          '«Todavía no llegamos a tu zona»: tu ubicación está fuera de las ciudades donde trabajamos hoy. Pronto estaremos en más.',
+          '«No pudimos cargar los restaurantes»: falló la conexión. Toca «Intentar de nuevo». Si ya tenías una lista, la seguimos mostrando y te avisamos que no se pudo actualizar.',
+          'Al abrir la app comprobamos tu sesión. Si el internet está lento, no te dejamos esperando para siempre: después de unos segundos ves «No pudimos confirmar tu sesión», con «Reintentar» y «Entrar con otra cuenta». Tu sesión no se borra por un problema de conexión.',
+        ],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-es.webp',
+            alt: 'Pantalla de la app del cliente que dice «No pudimos confirmar tu sesión», con los botones «Reintentar» y «Entrar con otra cuenta».',
+            pie: 'Si la conexión falla al abrir, la app te deja reintentar sin cerrar tu sesión.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no veo restaurantes en mi zona?',
+          '¿Por qué desaparecen los restaurantes de la lista?',
+          '¿Qué hago si la app se queda cargando al abrir?',
+        ],
+        pasos: [
+          'Si no ves restaurantes, revisa el mensaje que aparece arriba de la lista.',
+          'Si dice que falló la conexión, toca «Intentar de nuevo».',
+          'Para ver otra zona, cambia el punto de entrega en el mapa del carrito.',
+          'Si la app no termina de abrir, toca «Reintentar»; tu cuenta sigue guardada.',
+        ],
+      },
+      {
         id: 'pickup-address-change-and-extra-tip',
         titulo: 'Recoger en el local, cambiar la dirección y dejar propina después',
         resumen:
@@ -1843,6 +1874,37 @@ const en: SeccionDocs[] = [
           'Search for a restaurant or tap one of the nearby ones.',
           'If you see the payment notice, tap “Pay” to finish your order.',
           'Use the bottom bar to go to your orders or your account.',
+        ],
+      },
+      {
+        id: 'no-restaurants-or-app-not-opening',
+        titulo: 'Why don’t I see restaurants? What if the app won’t finish opening?',
+        resumen:
+          'The app always tells you what’s going on: no restaurants in your area yet, we’re not in your city yet, or the connection failed. And if it can’t verify your session, it lets you try again without losing your account.',
+        explicacion: [
+          'The restaurants you see depend on your location. The app uses, in this order: the spot you picked on the map in your cart, the last location you saved and, if there’s none, your phone’s location. Your list doesn’t change on its own when you move a little or switch languages.',
+          '“No restaurants in your area yet”: Tumbite already works in your area, but no restaurants are open there yet. We’re adding more every week.',
+          '“We’re not in your area yet”: your location is outside the cities we serve today. We’re coming to more soon.',
+          '“We couldn’t load the restaurants”: the connection failed. Tap “Try again.” If you already had a list, we keep showing it and let you know it couldn’t be refreshed.',
+          'When the app opens, we verify your session. If your internet is slow, we don’t leave you waiting forever: after a few seconds you’ll see “We couldn’t confirm your session,” with “Try again” and “Sign in with another account.” A connection problem never signs you out.',
+        ],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-en.webp',
+            alt: 'Customer app screen reading “We couldn’t confirm your session,” with the buttons “Try again” and “Sign in with another account.”',
+            pie: 'If the connection fails when the app opens, you can try again without being signed out.',
+          },
+        ],
+        preguntas: [
+          'Why don’t I see restaurants in my area?',
+          'Why do restaurants disappear from the list?',
+          'What do I do if the app keeps loading when it opens?',
+        ],
+        pasos: [
+          'If you don’t see restaurants, read the message above the list.',
+          'If it says the connection failed, tap “Try again.”',
+          'To see another area, change the delivery spot on the map in your cart.',
+          'If the app won’t finish opening, tap “Try again”; your account stays saved.',
         ],
       },
       {

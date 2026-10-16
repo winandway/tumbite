@@ -31,6 +31,7 @@ import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { ElegirEnMapa } from '../ElegirEnMapa';
+import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 
@@ -368,7 +369,11 @@ export default function PantallaCarrito() {
           {titulo(t.direccion)}
           <ElegirEnMapa
             punto={punto}
-            cambiarPunto={setPunto}
+            cambiarPunto={(p) => {
+              setPunto(p);
+              // Hito 1: la dirección elegida también ordena la lista de restaurantes al volver.
+              if (p) void guardarUbicacion(p);
+            }}
             cambiarDireccion={(x) => b.cambiar('direccion', x)}
             textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
           />

@@ -10,6 +10,46 @@ Las reglas globales de Richard aplican; estas se suman.
 - **No se le pregunta a Richard si quiere una herramienta que los grandes ya tienen (dictado el 14 oct 2026).** Se copia como la hacen ellos, con interruptor para que el usuario final decida (PIN sí/no, en la puerta o en mano), se decide cómo encaja y se le presenta el plan. Se le pregunta solo lo que únicamente él puede dar: una cuenta, una clave, dinero, un dato legal. Todas las herramientas de los estudios son importantes; ninguna se descarta por «menos prioritaria».
 - La comparación viva está en `docs/COMPARACION-CICLO-PEDIDO.md` (sección «Los estudios de Richard»). Cada hallazgo nuevo se anota ahí con la página del estudio de donde salió.
 
+## Ingeniería con REA: regla permanente (dictada por Richard, 16 oct 2026)
+
+Método completo: `docs/METODOLOGIA-INGENIERIA-REA.md`. Se lee antes de diseñar o modificar cualquier función importante. Aprobada por Richard el 16 oct 2026.
+
+**Toda función nueva importante empieza así, en este orden:**
+
+INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN CON TUMBITE → DECISIÓN DE ARQUITECTURA → IMPLEMENTACIÓN → PRUEBAS
+
+**No frena lo urgente ni lo simple:** una emergencia (algo roto que afecta usuarios o dinero), un arreglo con causa clara, un texto o un estilo van directo a la prueba en rojo y al arreglo. La ficha, si hace falta, se escribe después. Las restricciones de producción, pagos y publicación siguen intactas: nada se publica sin la autorización de Richard.
+
+- **Antes de diseñar o cambiar una función importante**, en este orden:
+  1. Identificar las referencias.
+  2. Investigar cómo lo resuelven. REA se usa solo si hay un artefacto **autorizado** y compatible.
+  3. Completar con documentación técnica pública y observación directa.
+  4. Hacer diagramas de arquitectura, estados, componentes y flujos.
+  5. Comparar con nuestro código.
+  6. Decidir qué mejorar, reutilizar o simplificar.
+  7. Diseñar la solución propia, compatible con la arquitectura actual.
+  8. Implementar con pruebas, la primera en rojo, y validar en staging.
+- **Referencias:**
+  - Comida: DoorDash, Uber Eats y Grubhub.
+  - Repartidores: DoorDash Dasher y Uber Driver.
+  - Restaurantes: DoorDash Merchant y Uber Eats Manager.
+  - Otras plataformas cuando aporten algo.
+  - Además, los estudios de Richard (sección de arriba).
+- **REA va primero en:** arquitectura de apps, experiencia del cliente, catálogo y carrito, ciclo del pedido, despacho y asignación, tiempo real, apps de restaurante y de repartidor, rendimiento y escala.
+  - No se impone en arreglos simples: ahí la prueba directa es mejor evidencia.
+- **Cada hallazgo lleva su etiqueta**, y una inferencia nunca se presenta como componente interno confirmado:
+  - [REA]: evidencia de REA, con su hash.
+  - [OBS]: observación pública.
+  - [DOC]: documentación publicada.
+  - [INF]: inferencia.
+  - [NV]: no verificable.
+- **Límite legal (no se negocia):**
+  - Nunca se descompila ni se analiza con REA una app o un paquete de terceros sin autorización. Sus términos lo prohíben y REA solo autoriza software propio o con permiso.
+  - Nunca se entra a sistemas privados, se usan cuentas, se saltan verificaciones anti-robots o se captura tráfico ajeno.
+  - REA se usa sobre nuestras propias apps, el sitio de pruebas y bibliotecas con licencia que lo permita.
+  - Los competidores se estudian con su documentación pública y observando su web como visitante.
+- **Cada función investigada deja su ficha** en `docs/investigaciones-rea/`, con la plantilla de la metodología: referencia, evidencia y límites, diagrama, comparación, decisión y pruebas de aceptación.
+
 ## Leer antes de trabajar
 
 - `docs/REQUISITOS.md` — documento madre (modelo de dinero, planes, regalos, niveles, fases).

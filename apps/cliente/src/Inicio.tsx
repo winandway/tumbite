@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ErrorApi, type Restaurante, enIdioma } from '@tumbite/compartido';
+import { enIdioma } from '@tumbite/compartido';
 import { Boton, MenuCuenta, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
-import { type Punto, miUbicacion } from './ubicacion';
+import { useRestaurantes } from './comida/useRestaurantes';
+import { EstadoCatalogo } from './comida/EstadoCatalogo';
 import { AvisoPago } from './inicio/AvisoPago';
 import { BarraInferior, type Pestana } from './inicio/BarraInferior';
 import { Buscador } from './inicio/Buscador';
@@ -29,35 +30,11 @@ export function Inicio() {
   const ti = textosInicio(idioma);
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const { carrito, cantidadTotal } = useCarrito();
-  const [lista, setLista] = useState<Restaurante[] | null>(null);
-  const [error, setError] = useState('');
-  const [puntoGps, setPuntoGps] = useState<Punto | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [pronto, setPronto] = useState(false);
   // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
-
-  const cargar = useCallback(
-    async (p: Punto | null) => {
-      try {
-        const q = p ? `?lat=${p.lat}&lng=${p.lng}` : '';
-        const r = await api.pedir<{ restaurantes: Restaurante[] }>(
-          'GET',
-          `/datos/restaurantes${q}`,
-        );
-        setError('');
-        setLista(r.restaurantes);
-      } catch (x) {
-        setError(x instanceof ErrorApi ? x.message : String(x));
-      }
-    },
-    [api],
-  );
-
-  // Los restaurantes salen enseguida, sin esperar la ubicación; cuando llega, se ordenan por
-  // cercanía. Antes se esperaba la ubicación primero y, si el teléfono no contestaba, la lista no
-  // aparecía nunca (candado C-UBICACION-NO-FRENA, lo destapó el recorrido completo).
   const deUrl = useMemo(
     () =>
       params.lat && params.lng && Number.isFinite(Number(params.lat))
@@ -65,19 +42,12 @@ export function Inicio() {
         : null,
     [params.lat, params.lng],
   );
-  const punto = deUrl ?? puntoGps;
-  useEffect(() => {
-    void (async () => {
-      if (deUrl) return cargar(deUrl);
-      // Primero la lista, sin esperar; la ubicación llega cuando llegue (o no llega).
-      const primera = cargar(null);
-      const p = await miUbicacion();
-      await primera;
-      if (!p) return;
-      setPuntoGps(p);
-      await cargar(p);
-    })();
-  }, [cargar, deUrl]);
+  // C-CATALOGO-ESTABLE: una sola lista compartida con «Comida»; ni respuestas viejas que pisan a
+  // las nuevas ni consultas repetidas (comida/useRestaurantes).
+  const catalogo = useRestaurantes(api, deUrl);
+  const lista =
+    catalogo.estado === 'cargando' && !catalogo.restaurantes.length ? null : catalogo.restaurantes;
+  const punto = catalogo.punto;
 
   // El buscador filtra los restaurantes reales por nombre o tipo de comida; el filtro, solo abiertos.
   const filtrados = useMemo(() => {
@@ -135,12 +105,7 @@ export function Inicio() {
             {ti.sinUbicacion}
           </Text>
         )}
-        {error ? (
-          <View style={{ marginHorizontal: 16, marginTop: 10 }}>
-            <Text style={e.error}>{error}</Text>
-            <Boton texto={t.reintentar} alTocar={() => void cargar(punto)} secundario />
-          </View>
-        ) : null}
+        <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
         <Restaurantes
           idioma={idioma}
           lista={filtrados}
@@ -148,9 +113,6 @@ export function Inicio() {
           alTocar={(r) => router.push(`/restaurant/${r.id}`)}
           alTocarEjemplo={() => setPronto(true)}
         />
-        {lista && lista.length === 0 && (
-          <Text style={{ color: '#5E5E5E', marginHorizontal: 16 }}>{ti.sinRestaurantes}</Text>
-        )}
         <View style={{ marginHorizontal: 16, marginTop: 8 }}>
           {cantidadTotal > 0 && (
             <Boton
