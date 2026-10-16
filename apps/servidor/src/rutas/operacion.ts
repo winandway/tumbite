@@ -1,4 +1,5 @@
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
+import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -1611,18 +1612,23 @@ export async function correrRelojUnaVez(
   db: D1Database,
   ventana: string,
   origen: 'github' | 'externo',
+  /** Solo para las pruebas: otra lista de tareas y otro nombre (la salud solo mira «reloj»). */
+  prueba?: { tareas: readonly TareaReloj[]; tarea: string },
 ) {
-  const clave = `reloj:${ventana}`;
+  const tarea = prueba?.tarea ?? 'reloj';
+  const clave = `${tarea}:${ventana}`;
+  // C-RELOJ-UNA-VEZ: una fila por minuto, creada en una sola sentencia. El segundo que llega en
+  // ese minuto (GitHub o Cloudflare, o un reintento) no corre nada.
   const nueva = await db
-    .prepare(
-      "INSERT OR IGNORE INTO tareas_programadas (clave, tarea, resultado) VALUES (?, 'reloj', ?)",
-    )
-    .bind(clave, `origen:${origen}`)
+    .prepare('INSERT OR IGNORE INTO tareas_programadas (clave, tarea, resultado) VALUES (?, ?, ?)')
+    .bind(clave, tarea, `origen:${origen}`)
     .run();
   if (!nueva.meta.changes) return { ok: true as const, yaHecho: true as const, ventana };
   let resultado: Awaited<ReturnType<typeof correrReloj>>;
   try {
-    resultado = await correrReloj(env, db);
+    // C-RELOJ-AISLADO: cada tarea con su propio manejo de errores; esto ya no lanza por una tarea.
+    resultado = await correrReloj(env, db, prueba?.tareas);
+    await anotarTareas(db, clave, resultado.vuelta);
   } catch (e) {
     console.error('reloj', origen, e);
     await db
@@ -1636,63 +1642,96 @@ export async function correrRelojUnaVez(
       .prepare(
         "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
       )
-      .bind(`origen:${origen} ${JSON.stringify(resultado)}`.slice(0, 2000), clave),
+      .bind(
+        `origen:${origen} ${resultado.vuelta.estado} ${JSON.stringify(resultado.resumen)}`.slice(
+          0,
+          2000,
+        ),
+        clave,
+      ),
     db.prepare(
       "DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')",
     ),
     db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
+    db.prepare("DELETE FROM reloj_tareas WHERE creado_en < datetime('now', '-7 days')"),
     db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
   ]);
-  return { ...resultado, ventana };
+  return { ok: true as const, ...resultado.resumen, fallidas: resultado.vuelta.fallidas, ventana };
 }
 
 /**
- * Las tareas del reloj. Las llaman el reloj actual (GitHub Actions, /datos/reloj) y, desde la
- * Fase 2, el Worker externo con firma (/datos/interno/reloj). Cada tarea ya es repetible.
+ * Las tareas del reloj, en orden. Las llaman el reloj de GitHub (/datos/reloj) y el externo de
+ * Cloudflare (/datos/interno/reloj), siempre a través de correrRelojUnaVez. Cada una es repetible
+ * y corre aunque la anterior falle (C-RELOJ-AISLADO). Crítica = toca pedidos o dinero.
  */
-export async function correrReloj(env: Env, db: D1Database) {
-  await repartirOfertas(db, env);
-  const manager = await vigilarPedidos(env, db);
-  const pendientes = await db
-    .prepare(
-      "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
-    )
-    .first<{ n: number }>();
-  // Dinero vigilado: la conciliación de ayer (una vez al día) y la retención de fotos (30 días).
-  const conciliacion = await conciliarAyer(env, db).catch((e: unknown) => {
-    console.error('conciliación', e);
-    return null;
-  });
+export const TAREAS_RELOJ: readonly TareaReloj[] = [
+  { nombre: 'ofertas', critica: true, correr: (env, db) => repartirOfertas(db, env) },
+  { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  {
+    nombre: 'sin_repartidor',
+    critica: false,
+    correr: async (_env, db) =>
+      (
+        await db
+          .prepare(
+            "SELECT count(*) AS n FROM pedidos WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
+          )
+          .first<{ n: number }>()
+      )?.n ?? 0,
+  },
+  // Dinero vigilado: la conciliación de ayer (una vez al día).
+  {
+    nombre: 'conciliacion',
+    critica: true,
+    correr: async (env, db) => {
+      const r = await conciliarAyer(env, db);
+      return r ? { dia: r.dia, cuadra: r.cuadra } : null;
+    },
+  },
   // Fase 0: retiros dudosos o atascados se reintentan (misma clave) y una vez al día se concilian.
-  const stripeReloj = crearStripe(env.STRIPE_SECRET_KEY);
-  const retiros = stripeReloj
-    ? await procesarRetirosPendientes(db, stripeReloj).catch((e: unknown) => {
-        console.error('retiros: reloj', e);
-        return null;
-      })
-    : null;
-  const conciliacionRetiros = stripeReloj
-    ? await conciliarRetirosSiToca(db, stripeReloj).catch((e: unknown) => {
-        console.error('retiros: conciliación', e);
-        return null;
-      })
-    : null;
-  const fotosBorradas = env.BUCKET
-    ? await depurarFotos(db, env.BUCKET).catch((e: unknown) => {
-        console.error('retención de fotos', e);
-        return 0;
-      })
-    : 0;
-  return {
-    ok: true,
-    manager,
-    sinRepartidor: pendientes?.n ?? 0,
-    conciliacion: conciliacion ? { dia: conciliacion.dia, cuadra: conciliacion.cuadra } : null,
-    fotosBorradas,
-    retiros,
-    conciliacionRetiros: conciliacionRetiros ? { cuadra: conciliacionRetiros.cuadra } : null,
+  {
+    nombre: 'retiros',
+    critica: true,
+    correr: (env, db) => {
+      const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+      return stripe ? procesarRetirosPendientes(db, stripe) : Promise.resolve(null);
+    },
+  },
+  {
+    nombre: 'conciliacion_retiros',
+    critica: true,
+    correr: async (env, db) => {
+      const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+      const r = stripe ? await conciliarRetirosSiToca(db, stripe) : null;
+      return r ? { cuadra: r.cuadra } : null;
+    },
+  },
+  // Retención de fotos (30 días). Puede esperar: no es crítica.
+  {
+    nombre: 'fotos',
+    critica: false,
+    correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
+  },
+];
+
+export async function correrReloj(
+  env: Env,
+  db: D1Database,
+  tareas: readonly TareaReloj[] = TAREAS_RELOJ,
+) {
+  const vuelta = await correrTareas(env, db, tareas);
+  const de = (n: string) => vuelta.tareas.find((t) => t.nombre === n);
+  const resumen = {
+    manager: de('manager')?.datos ?? null,
+    sinRepartidor: (de('sin_repartidor')?.datos as number | undefined) ?? 0,
+    conciliacion: de('conciliacion')?.datos ?? null,
+    fotosBorradas: (de('fotos')?.datos as number | undefined) ?? 0,
+    retiros: de('retiros')?.datos ?? null,
+    conciliacionRetiros: de('conciliacion_retiros')?.datos ?? null,
+    tareas: Object.fromEntries(vuelta.tareas.map((t) => [t.nombre, t.ok ? 'ok' : 'error'])),
     cuando: new Date().toISOString(),
   };
+  return { vuelta, resumen };
 }
 
 async function igualesSeguro(a: string, b: string): Promise<boolean> {

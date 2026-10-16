@@ -66,6 +66,9 @@ resultados.MIGRACIONES = {
 };
 resultados.MIGRACIONES_PRUEBA = await pedir('migraciones-prueba');
 resultados.F2 = await pedir('f2');
+// Reloj seguro (16 oct 2026): tareas aisladas, vueltas cruzadas, reintentos y el Manager real con
+// Stripe en modo prueba, contra la base D1 real.
+resultados.RELOJ = await pedir('reloj');
 
 let todo = true;
 for (const [k, v] of Object.entries(resultados)) {

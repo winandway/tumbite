@@ -661,6 +661,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "terminada_en",
     "resultado"
   ],
+  "reloj_tareas": [
+    "clave",
+    "tarea",
+    "critica",
+    "ok",
+    "ms",
+    "error",
+    "creado_en"
+  ],
   "peticiones_internas": [
     "nonce",
     "llave_id",
