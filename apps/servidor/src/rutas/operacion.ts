@@ -35,6 +35,7 @@ import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
+import { anotarSenal, pausarSinSenal } from '../pausa';
 import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import {
@@ -387,6 +388,8 @@ async function miRestauranteId(c: Ctx): Promise<string> {
 
 operacion.get('/restaurante/pedidos', async (c) => {
   const rid = await miRestauranteId(c);
+  // C-PAUSA-SIN-SENAL: la app o el panel están escuchando. Una escritura cada 30 s como mucho.
+  await anotarSenal(base(c), rid);
   const { results } = await base(c)
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng
@@ -1756,6 +1759,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     },
   },
   // Retención de fotos (30 días). Puede esperar: no es crítica.
+  // Pausa sin señal (C-PAUSA-SIN-SENAL): solo avisa. La pausa misma se calcula al leer, así que
+  // si esta tarea falla, los clientes igual no pueden pedir a una tienda sin señal.
+  { nombre: 'pausa_sin_senal', critica: false, correr: (env, db) => pausarSinSenal(env, db) },
   {
     nombre: 'fotos',
     critica: false,

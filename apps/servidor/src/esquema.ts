@@ -37,6 +37,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Idempotencia persistente de los avisos de Stripe (16 oct 2026, C-FALLOS-CRITICOS 1): los
   // avisos ya guardados estaban aplicados, por eso nacen como 'hecho'.
   ['avisos_stripe', 'estado', "TEXT NOT NULL DEFAULT 'hecho'"],
+  // Pausa automática sin señal (16 oct 2026, C-PAUSA-SIN-SENAL): la última vez que la app o el
+  // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.
+  ['restaurantes', 'senal_en', 'TEXT'],
+  ['restaurantes', 'pausa_aviso_en', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

@@ -6,6 +6,10 @@
  */
 export const MENSAJES_EN = new Map<string, string>([
   [
+    'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
+    'This restaurant isn’t taking orders right now. Try again in a few minutes.',
+  ],
+  [
     'Falta la clave de la solicitud. Actualiza la app.',
     'This request is missing its key. Please update the app.',
   ],

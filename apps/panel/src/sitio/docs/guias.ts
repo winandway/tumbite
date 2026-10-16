@@ -477,6 +477,29 @@ const es: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'store-not-receiving-orders',
+        titulo: '¿Por qué mi tienda aparece sin recibir pedidos?',
+        resumen:
+          'Si tu app o tu panel de Tumbite no responden durante 5 minutos, tu tienda deja de recibir pedidos para que ningún cliente espere en vano. Vuelve sola en cuanto los abres otra vez.',
+        explicacion: [
+          'Mientras tu app o tu panel de Tumbite están abiertos, le avisan a Tumbite cada pocos segundos que estás listo para recibir pedidos.',
+          'Si durante 5 minutos no llega ese aviso (se apagó la tableta, se cayó el internet o se cerró la app), los clientes ven tu tienda como cerrada y no pueden pedirte. Así evitamos que un pedido llegue a una pantalla que nadie mira y se cancele.',
+          'Te avisamos al celular y por correo. No tienes que hacer nada más: en cuanto abres la app o el panel otra vez, tu tienda vuelve a aparecer abierta, sola, y te avisamos que ya recibes pedidos.',
+          'Si cierras tu tienda a propósito con el botón de abrir o cerrar, eso no es una pausa: sigue cerrada hasta que la abras.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Por qué los clientes ven mi tienda cerrada si yo la abrí?',
+          '¿Qué pasa si se me va el internet?',
+          '¿Cómo vuelvo a recibir pedidos?',
+        ],
+        pasos: [
+          'Deja la app o el panel de Tumbite abiertos mientras tu tienda está abierta.',
+          'Si recibes el aviso «Tu tienda no está recibiendo pedidos», revisa la conexión y abre la app o el panel.',
+          'En cuanto lo abres, tu tienda vuelve sola y te llega el aviso «Ya recibes pedidos otra vez».',
+        ],
+      },
+      {
         id: 'restaurant-app',
         titulo: 'La app del restaurante: pedidos, tiempos, código y tu menú',
         resumen:
@@ -2236,6 +2259,29 @@ const en: SeccionDocs[] = [
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
+      {
+        id: 'store-not-receiving-orders',
+        titulo: 'Why does my store show as not receiving orders?',
+        resumen:
+          'If your Tumbite app or panel doesn’t check in for 5 minutes, your store stops receiving orders so no customer waits for nothing. It comes back on its own as soon as you open it again.',
+        explicacion: [
+          'While your Tumbite app or panel is open, it tells Tumbite every few seconds that you’re ready for orders.',
+          'If that check-in doesn’t arrive for 5 minutes (the tablet turned off, the internet dropped, or the app closed), customers see your store as closed and can’t order. That way an order never lands on a screen nobody is watching and gets canceled.',
+          'We let you know by phone notification and email. You don’t need to do anything else: as soon as you open the app or panel again, your store shows as open on its own, and we let you know you’re receiving orders again.',
+          'If you close your store on purpose with the open/close switch, that isn’t a pause: it stays closed until you open it.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Why do customers see my store as closed when I opened it?',
+          'What happens if my internet goes down?',
+          'How do I start receiving orders again?',
+        ],
+        pasos: [
+          'Keep the Tumbite app or panel open while your store is open.',
+          'If you get the “Your store isn’t receiving orders” notification, check your connection and open the app or panel.',
+          'As soon as you open it, your store comes back on its own and you get the “You’re receiving orders again” notification.',
+        ],
+      },
       {
         id: 'restaurant-app',
         titulo: 'The restaurant app: orders, timing, the pickup code, and your menu',

@@ -579,3 +579,17 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
     - no abrir una excepción en el disparador para las pruebas;
     - toda transición nueva se agrega a la tabla, a `PERMITIDAS` de la prueba y la detecta `transicionesCodigo.test.ts`;
     - no mover el disparador a `schema.sql`.
+
+- **C-PAUSA-SIN-SENAL (16 oct 2026, Entrega 3, rama `pausa-sin-senal`, NO publicado):** como el «Tablet Heartbeat» de DoorDash. Si la app o el panel del restaurante no preguntan por pedidos en 5 minutos, la tienda no recibe pedidos, y vuelve sola cuando vuelven a preguntar.
+  - **La señal:** `GET /datos/restaurante/pedidos` anota `restaurantes.senal_en`, con una escritura cada 30 s como mucho (`anotarSenal` en `apps/servidor/src/pausa.ts`).
+  - **La pausa se calcula al leer**, sin depender del reloj: `conSenal` (`packages/compartido/src/senal.ts`) dentro de `abiertoAhora` (`aRestaurante`, `catalogo.ts`) y al crear el pedido (`pedidos.ts`), que responde 409 con el motivo en los dos idiomas.
+  - **Sin marca todavía (NULL) cuenta como con señal:** al publicar no se cierra ninguna tienda de golpe.
+  - **Interruptor:** `config.pausa_sin_senal_minutos` (5 por defecto; 0 la apaga).
+  - **Avisos:** la tarea del reloj `pausa_sin_senal` (**no crítica**) avisa UNA vez al dueño, al celular y por correo, y al equipo; avisa la vuelta; usa `UPDATE` condicionales sobre `pausa_aviso_en`.
+  - **Columnas por COLUMNAS:** `senal_en` y `pausa_aviso_en`.
+  - **Pruebas:** `pausaSinSenal.test.ts` (6) y `senal.test.ts` (5), comprobadas en rojo de dos formas: con la regla siempre «con señal» y sin anotar la señal.
+  - **Guía pública:** Docs → restaurantes → «¿Por qué mi tienda aparece sin recibir pedidos?».
+  - **Qué NO tocar:**
+    - no mover la pausa solo al reloj (en producción el reloj es impuntual);
+    - no tratar NULL como «sin señal» sin una migración que siembre la marca;
+    - no tocar `abierto` desde la pausa (el dueño no tiene que reabrir a mano).
