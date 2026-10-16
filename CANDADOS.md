@@ -555,3 +555,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Sin compilación (la computadora del equipo, las pruebas), dice «local»: nunca un commit inventado.
   - Candado: `verificar-paquete.mjs <carpeta> <entorno> <commit>` frena el paquete si el servidor, la web o UNA de las tres apps no lleva el commit de ESTA publicación. Pruebas: `version.test.ts` (compartido y servidor) y `publicacion.test.ts`, comprobadas en rojo.
   - **Qué NO tocar:** no leer la versión de GitHub ni de una variable del panel; no quitar el tercer argumento del revisor en `empaquetar.sh`.
+- **C-FALLOS-CRITICOS (16 oct 2026, rama `fallos-criticos`, NO publicado):** cinco fallos encontrados leyendo el código y **reproducidos en rojo** antes de tocar nada (`apps/servidor/src/fallosCriticos.test.ts`; detalle en `docs/RESULTADOS-FALLOS-CRITICOS.md`).
+  1. Un aviso de Stripe que falla a medias suelta su marca en `avisos_stripe` (`pedidos.ts`, `catch` del manejador) y el reintento de Stripe con el mismo id sí lo aplica. Los repetidos con éxito siguen respondiendo `repetido`.
+  2. Cancelar en `pago_pendiente` anula el PaymentIntent de `stripe_sesion` (`manager.ts`, `intento`), con la misma clave `anular-{id}` y la verificación C-ANULACION-VERIFICADA.
+  3. La propina posterior solo se anota con `status = 'succeeded'`; si no, 409 y nada en la base (`pedidos.ts`).
+  4. `entregaActiva` ordena por la oferta aceptada más antigua, después `creado_en` e `id`: nunca `LIMIT 1` sin `ORDER BY` (`operacion.ts`). Dos pedidos del mismo segundo empatan por `creado_en`: por eso manda la oferta.
+  5. `soltarPedido` borra la fila de `grupos_pedido` en el mismo lote.
+  - **Qué NO tocar:** no marcar un aviso como procesado fuera del `try`; no anotar movimientos de dinero sin el `status` de Stripe; no quitar el `ORDER BY`.
