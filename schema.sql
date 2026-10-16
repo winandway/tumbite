@@ -1166,3 +1166,126 @@ CREATE TABLE IF NOT EXISTS lotes_ubicacion (
   recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS lotes_ubicacion_viejos ON lotes_ubicacion(recibido_en);
+
+-- =====================================================================================
+-- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN (16 oct 2026, rama fase-3-exclusividad). Diseño:
+-- docs/ARQUITECTURA-MULTISERVICIO-V1.2.md §3.1–§3.4 y §5. Aquí solo van TABLAS e ÍNDICES.
+-- Los disparadores, las vistas y el cuadre de la ocupación los crea el servidor al arrancar
+-- (apps/servidor/src/esquemaFase3.ts), una sentencia a la vez: el divisor de sentencias de la
+-- plataforma corta mal los disparadores con CASE y la publicación se detenía (16 oct 2026).
+-- Moto y Carro siguen apagados: ninguna ruta pública crea operaciones.
+-- =====================================================================================
+
+-- ----- Operaciones y viajes (V1.2 §3.1). Una acción = una sentencia; el resto, disparadores -----
+CREATE TABLE IF NOT EXISTS operaciones (
+  id TEXT PRIMARY KEY,
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  tipo_operacion TEXT NOT NULL CHECK (tipo_operacion IN ('viaje_pasajero', 'envio_paquete', 'compra_encargo', 'pedido_comercio')),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT REFERENCES usuarios(id),
+  vehiculo_id TEXT REFERENCES vehiculos(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  estado_general TEXT NOT NULL CHECK (estado_general IN
+    ('pago_pendiente', 'buscando', 'asignada', 'en_curso', 'terminada', 'cancelada', 'sin_conductor')),
+  ultima_clave TEXT,
+  version INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (estado_general NOT IN ('asignada', 'en_curso') OR (conductor_id IS NOT NULL AND vehiculo_id IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS operaciones_cliente ON operaciones(cliente_id, creado_en);
+CREATE INDEX IF NOT EXISTS operaciones_busqueda ON operaciones(zona_id, servicio_id, creado_en) WHERE estado_general = 'buscando';
+CREATE UNIQUE INDEX IF NOT EXISTS operaciones_una_activa ON operaciones(conductor_id) WHERE estado_general IN ('asignada', 'en_curso');
+
+CREATE TABLE IF NOT EXISTS viajes (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  estado TEXT NOT NULL CHECK (estado IN (
+    'pago_pendiente', 'buscando', 'asignado', 'conductor_llego', 'en_curso',
+    'terminado', 'cancelado', 'no_show', 'sin_conductor')),
+  ultimo_actor TEXT NOT NULL CHECK (ultimo_actor IN ('cliente', 'conductor', 'soporte', 'sistema')),
+  ultimo_actor_id TEXT REFERENCES usuarios(id),
+  ultima_clave TEXT NOT NULL,
+  motivo_transicion TEXT NOT NULL DEFAULT '',
+  origen_lat REAL NOT NULL, origen_lng REAL NOT NULL, origen_direccion TEXT NOT NULL,
+  destino_lat REAL NOT NULL, destino_lng REAL NOT NULL, destino_direccion TEXT NOT NULL,
+  pasajeros INTEGER NOT NULL DEFAULT 1 CHECK (pasajeros BETWEEN 1 AND 6),
+  pin_recogida TEXT NOT NULL CHECK (length(pin_recogida) = 4),
+  liberaciones INTEGER NOT NULL DEFAULT 0 CHECK (liberaciones >= 0),
+  distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
+  asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
+);
+
+CREATE TABLE IF NOT EXISTS transiciones_viaje (
+  desde TEXT NOT NULL, hacia TEXT NOT NULL, actor TEXT NOT NULL,
+  PRIMARY KEY (desde, hacia, actor)
+);
+INSERT OR IGNORE INTO transiciones_viaje (desde, hacia, actor) VALUES
+  ('pago_pendiente', 'buscando', 'sistema'),
+  ('pago_pendiente', 'cancelado', 'cliente'), ('pago_pendiente', 'cancelado', 'sistema'),
+  ('buscando', 'asignado', 'conductor'),
+  ('buscando', 'sin_conductor', 'sistema'),
+  ('buscando', 'cancelado', 'cliente'), ('buscando', 'cancelado', 'soporte'),
+  ('asignado', 'conductor_llego', 'conductor'), ('asignado', 'conductor_llego', 'sistema'),
+  ('asignado', 'buscando', 'conductor'), ('asignado', 'buscando', 'sistema'), ('asignado', 'buscando', 'soporte'),
+  ('asignado', 'cancelado', 'cliente'), ('asignado', 'cancelado', 'soporte'),
+  ('conductor_llego', 'en_curso', 'conductor'),
+  ('conductor_llego', 'no_show', 'conductor'),
+  ('conductor_llego', 'buscando', 'conductor'), ('conductor_llego', 'buscando', 'soporte'),
+  ('conductor_llego', 'cancelado', 'cliente'), ('conductor_llego', 'cancelado', 'soporte'),
+  ('en_curso', 'terminado', 'conductor'), ('en_curso', 'terminado', 'soporte');
+
+CREATE TABLE IF NOT EXISTS ofertas_operacion (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  estado TEXT NOT NULL CHECK (estado IN ('ofrecida', 'aceptada', 'rechazada', 'vencida', 'retirada')),
+  ganancia_centavos INTEGER NOT NULL DEFAULT 0 CHECK (ganancia_centavos >= 0),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL,
+  respondida_en TEXT,
+  PRIMARY KEY (operacion_id, conductor_id)
+);
+CREATE INDEX IF NOT EXISTS ofertas_operacion_conductor ON ofertas_operacion(conductor_id, estado);
+CREATE INDEX IF NOT EXISTS ofertas_operacion_vencer ON ofertas_operacion(expira_en) WHERE estado = 'ofrecida';
+
+CREATE TABLE IF NOT EXISTS eventos_operacion (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  tipo TEXT NOT NULL,
+  estado_anterior TEXT,
+  estado_nuevo TEXT,
+  actor_id TEXT REFERENCES usuarios(id),
+  actor_rol TEXT NOT NULL CHECK (actor_rol IN ('cliente', 'conductor', 'soporte', 'sistema')),
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  idempotencia TEXT UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS eventos_operacion_op ON eventos_operacion(operacion_id, id);
+
+CREATE TABLE IF NOT EXISTS asignaciones_operacion (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  clave TEXT NOT NULL UNIQUE,
+  inicio TEXT NOT NULL DEFAULT (datetime('now')),
+  fin TEXT,
+  resultado TEXT CHECK (resultado IS NULL OR resultado IN
+    ('completada', 'liberada_conductor', 'liberada_sistema', 'reasignada_soporte', 'cancelada', 'no_show')),
+  motivo TEXT NOT NULL DEFAULT '',
+  CHECK ((fin IS NULL) = (resultado IS NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS asignaciones_una_abierta ON asignaciones_operacion(operacion_id) WHERE fin IS NULL;
+CREATE INDEX IF NOT EXISTS asignaciones_conductor ON asignaciones_operacion(conductor_id, inicio);
+
+-- ----- Exclusividad (V1.2 §3.4): UNA fila por conductor ocupado -----
+CREATE TABLE IF NOT EXISTS conductor_ocupacion (
+  conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('comida', 'operacion')),
+  operacion_id TEXT REFERENCES operaciones(id),
+  pedidos INTEGER NOT NULL DEFAULT 0,
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK ((tipo = 'comida' AND operacion_id IS NULL AND pedidos >= 1)
+      OR (tipo = 'operacion' AND operacion_id IS NOT NULL AND pedidos = 0))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_operacion ON conductor_ocupacion(operacion_id) WHERE operacion_id IS NOT NULL;

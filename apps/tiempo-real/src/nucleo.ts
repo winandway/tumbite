@@ -304,6 +304,8 @@ export class NucleoZona {
     this.estado.sql.exec('DELETE FROM nonces WHERE recibido < ?', ahora - 10 * 60_000);
     let enviadas = 0;
     let ok = true;
+    // Posiciones de más de 10 minutos ya no mueven a nadie en el servidor: no se guardan para siempre.
+    for (const [c, p] of this.pendientes) if (p.t < ahora - 10 * 60_000) this.pendientes.delete(c);
     if (!this.enviando && this.pendientes.size) {
       this.enviando = true;
       try {
@@ -315,8 +317,12 @@ export class NucleoZona {
           zona: this.zona,
           muestras: lista.map(([c, p]) => ({ c, lat: p.lat, lng: p.lng, t: p.t })),
         });
-        ok = await this.mandarAlServidor('/datos/interno/ubicaciones/lote', cuerpo);
-        if (ok) {
+        const r = await this.mandarAlServidor('/datos/interno/ubicaciones/lote', cuerpo);
+        ok = r === 'ok';
+        // Un lote que el servidor RECHAZA (4xx) no se reintenta para siempre: se descarta y queda en
+        // el registro con su código. Antes se reintentaba sin rastro y el tiempo real dejaba de
+        // llegar a la base (sitio de pruebas, 16 oct 2026).
+        if (r === 'ok' || r === 'rechazado') {
           // Se borra solo lo que se mandó y no cambió mientras tanto (lo nuevo va en el próximo).
           for (const [c, p] of lista)
             if (this.pendientes.get(c)?.t === p.t) this.pendientes.delete(c);
@@ -332,8 +338,11 @@ export class NucleoZona {
     return { enviadas, ok };
   }
 
-  private async mandarAlServidor(ruta: string, cuerpo: string): Promise<boolean> {
-    if (!this.env.INTERNO_LLAVE_ID || !this.env.INTERNO_SECRETO) return false;
+  private async mandarAlServidor(
+    ruta: string,
+    cuerpo: string,
+  ): Promise<'ok' | 'reintentar' | 'rechazado'> {
+    if (!this.env.INTERNO_LLAVE_ID || !this.env.INTERNO_SECRETO) return 'reintentar';
     const llave: LlaveFirma = { id: this.env.INTERNO_LLAVE_ID, secreto: this.env.INTERNO_SECRETO };
     try {
       const h = await firmarPeticion(llave, 'POST', ruta, cuerpo, Math.floor(this.ahora() / 1000));
@@ -343,10 +352,15 @@ export class NucleoZona {
         body: cuerpo,
         signal: AbortSignal.timeout(5000),
       });
-      return r.ok;
+      if (r.ok) return 'ok';
+      const texto = (await r.text().catch(() => '')).slice(0, 200);
+      console.error('tiempo real: lote rechazado', r.status, texto);
+      return r.status >= 400 && r.status < 500 && r.status !== 408 && r.status !== 429
+        ? 'rechazado'
+        : 'reintentar';
     } catch (e) {
       console.error('tiempo real: lote', e);
-      return false;
+      return 'reintentar';
     }
   }
 }
