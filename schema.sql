@@ -193,10 +193,7 @@ CREATE TABLE IF NOT EXISTS cuentas_stripe (
 CREATE TABLE IF NOT EXISTS avisos_stripe (
   id TEXT PRIMARY KEY,
   tipo TEXT NOT NULL,
-  recibido_en TEXT NOT NULL DEFAULT (datetime('now')),
-  -- 'procesando' mientras se aplica; 'hecho' al terminar (C-FALLOS-CRITICOS 1). Los avisos de
-  -- antes de esta columna ya estaban aplicados: por eso el valor por defecto es 'hecho'.
-  estado TEXT NOT NULL DEFAULT 'hecho' CHECK (estado IN ('procesando', 'hecho'))
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS repartidores (
