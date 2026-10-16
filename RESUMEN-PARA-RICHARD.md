@@ -11,13 +11,14 @@
 
 ## El documento que tiene que leer ahora
 
-**PREPARACION-PUBLICACION-FASE-3**, en la carpeta docs. Resultado: **BLOQUEADO hasta esta noche.** La salud de producción marca «dinero» en rojo porque la conciliación del 15 de octubre contó como venta el pedido de prueba que yo marqué entregado. Se arregla sola esta noche, cuando corra la conciliación del 16. Todo lo demás está listo.
+**PREPARACION-PUBLICACION-FASE-3**, en la carpeta docs. Resultado: **BLOQUEADO hasta esta noche.** Falta solo que corra la conciliación del 16 (después de las 8 p. m. de Miami). La del 15 queda intacta como excepción, por decisión suya. Ojo: la salud mira solo la última conciliación, así que pasará a verde aunque la del 15 siga sin cuadrar; en el informe hay una propuesta para que eso no pase.
 
 ## Lo que le toca a usted
 
-1. Elegir: esperar a esta noche (recomendado, sin tocar datos) o autorizar que marque la conciliación del 15 como excepción revisada. Después, autorizar la publicación de la Fase 3.
-2. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba y no creé ninguna).
-3. Cambiar la llave del sitio de pruebas que pasó por el chat.
+1. Autorizar la publicación de la Fase 3 cuando la conciliación del 16 haya cuadrado.
+2. Decidir si la salud debe seguir avisando de discrepancias viejas sin revisar (propuesta en el informe).
+3. Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba y no creé ninguna).
+4. Cambiar la llave del sitio de pruebas que pasó por el chat.
 
 ## Regla permanente
 
