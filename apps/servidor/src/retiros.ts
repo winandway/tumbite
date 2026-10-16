@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { SOLO_LO_COBRADO } from './liquidaciones';
 import { nuevoId } from './cripto';
 import { ErrorStripe, type Stripe } from './stripe';
 
@@ -48,7 +49,8 @@ export async function pedirRetiro(
   const r = await db
     .prepare(
       `INSERT INTO retiros (id, usuario_id, stripe_cuenta, monto_centavos)
-       SELECT ?, ?, ?, ? WHERE (SELECT COALESCE(SUM(monto), 0) FROM movimientos WHERE usuario_id = ?) >= ?`,
+       SELECT ?, ?, ?, ? WHERE (SELECT COALESCE(SUM(monto), 0) FROM movimientos
+         WHERE usuario_id = ? AND ${SOLO_LO_COBRADO}) >= ?`,
     )
     .bind(id, usuarioId, stripeCuenta, monto, usuarioId, monto)
     .run();

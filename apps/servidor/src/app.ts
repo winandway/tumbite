@@ -34,6 +34,7 @@ import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { ultimaConciliacion } from './conciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
+import { saludCobros } from './liquidaciones';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -189,6 +190,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.reloj = await saludReloj(c.env, c.env.DB).catch((e: unknown) => {
       console.error('salud: reloj', e);
+      return 'error' as const;
+    });
+  // C-COBRO-AL-ENTREGAR: ningún cobro de una entrega en revisión ni atrasado más de 2 horas.
+  if (c.env.DB)
+    piezas.cobros = await saludCobros(c.env.DB).catch((e: unknown) => {
+      console.error('salud: cobros', e);
       return 'error' as const;
     });
   let fechaRespaldo: string | null = null;

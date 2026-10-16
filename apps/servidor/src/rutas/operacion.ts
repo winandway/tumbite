@@ -35,6 +35,13 @@ import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
+import {
+  esEntregaRepetida,
+  estadoInicial,
+  liquidar,
+  liquidarPendientes,
+  sentenciaLiquidacion,
+} from '../liquidaciones';
 import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import {
@@ -121,36 +128,6 @@ function repartidorParaRestaurante(f: FilaPedido) {
     verificado: f.h_verificado != null,
     salio: estado === 'en_camino' || estado === 'entregado',
   };
-}
-
-/**
- * Captura el cobro autorizado al pedir, por el total vigente. Si Stripe falla, la entrega no se
- * cierra (se reintenta): nunca se acredita dinero a nadie sin haber cobrado.
- */
-async function capturarCobro(
-  env: Env,
-  db: D1Database,
-  pedidoId: string,
-  pi: string,
-  total: number,
-) {
-  const cobro = await db
-    .prepare('SELECT capturado_en FROM cobros WHERE pedido_id = ?')
-    .bind(pedidoId)
-    .first<{ capturado_en: string | null }>();
-  if (!cobro || cobro.capturado_en || !pi) return;
-  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
-  if (!stripe)
-    throw new ErrorDatos('No pudimos cobrar en este momento. Intenta otra vez.', undefined, 503);
-  await stripe.post(
-    `/payment_intents/${pi}/capture`,
-    { amount_to_capture: total },
-    `captura-${pedidoId}`,
-  );
-  await db
-    .prepare("UPDATE cobros SET capturado_en = datetime('now'), capturado = ? WHERE pedido_id = ?")
-    .bind(total, pedidoId)
-    .run();
 }
 
 /** Quita al repartidor de un pedido sin entregar: vuelve a la fila de ofertas (a otros repartidores). */
@@ -1593,34 +1570,45 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       )
       .bind(id, donde.lat, donde.lng, metros, modo, nota)
       .run();
-  // Ahora sí se COBRA la tarjeta, por el total vigente (si se quitó un plato, menos).
-  await capturarCobro(c.env, db, id, String(p.stripe_pago ?? ''), Number(p.total));
+  // C-COBRO-AL-ENTREGAR: primero se REGISTRA la entrega (con su liquidación y los abonos, en un
+  // lote), después se cobra. Si Stripe falla, la entrega ya quedó y el reloj termina el cobro.
+  const pi = String(p.stripe_pago ?? '');
+  const inicial = await estadoInicial(db, id, pi);
   // Lo que gana el repartidor: envío + complemento + el bono de la oferta abierta (si lo hubo).
   const entrega = Number(p.envio) + Number(p.complemento) + Number(p.bono ?? 0);
-  await db.batch([
-    db
-      .prepare(
-        "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ?",
-      )
-      .bind(id),
-    anotarEstado(db, id, 'entregado', u.id),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
-      )
-      .bind(nuevoId(), p.dueno_id, id, Number(p.pago_restaurante)),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'entrega')",
-      )
-      .bind(nuevoId(), u.id, id, entrega),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'propina')",
-      )
-      .bind(nuevoId(), u.id, id, Number(p.propina)),
-    db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
-  ]);
+  try {
+    await db.batch([
+      sentenciaLiquidacion(db, id, pi, Number(p.total), inicial),
+      db
+        .prepare(
+          "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ? AND estado = 'en_camino'",
+        )
+        .bind(id),
+      anotarEstado(db, id, 'entregado', u.id),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
+        )
+        .bind(nuevoId(), p.dueno_id, id, Number(p.pago_restaurante)),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'entrega')",
+        )
+        .bind(nuevoId(), u.id, id, entrega),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'propina')",
+        )
+        .bind(nuevoId(), u.id, id, Number(p.propina)),
+      db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
+    ]);
+  } catch (e) {
+    if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
+    throw e;
+  }
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('entrega: el cobro queda para el reloj', id, e),
+  );
   await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
   return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
 });
@@ -1713,6 +1701,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
   { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
+  { nombre: 'liquidaciones', critica: true, correr: (env, db) => liquidarPendientes(env, db) },
   {
     nombre: 'sin_repartidor',
     critica: false,
@@ -2033,26 +2023,37 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
         409,
       );
   }
-  await capturarCobro(c.env, db, id, String(p.stripe_pago ?? ''), Number(p.total));
+  // C-COBRO-AL-ENTREGAR: primero se registra la entrega, después se cobra (ver la entrega normal).
+  const pi = String(p.stripe_pago ?? '');
+  const inicial = await estadoInicial(db, id, pi);
   const dueno = String(p.dueno_id);
-  await db.batch([
-    db
-      .prepare(
-        "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ?",
-      )
-      .bind(id),
-    anotarEstado(db, id, 'entregado', dueno),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
-      )
-      .bind(nuevoId(), dueno, id, Number(p.pago_restaurante)),
-    db
-      .prepare(
-        "INSERT OR IGNORE INTO evidencias (pedido_id, tipo, clave, modo, confirmada_en) VALUES (?, 'entrega', '', 'local', datetime('now'))",
-      )
-      .bind(id),
-  ]);
+  try {
+    await db.batch([
+      sentenciaLiquidacion(db, id, pi, Number(p.total), inicial),
+      db
+        .prepare(
+          "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ? AND estado = 'listo'",
+        )
+        .bind(id),
+      anotarEstado(db, id, 'entregado', dueno),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
+        )
+        .bind(nuevoId(), dueno, id, Number(p.pago_restaurante)),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO evidencias (pedido_id, tipo, clave, modo, confirmada_en) VALUES (?, 'entrega', '', 'local', datetime('now'))",
+        )
+        .bind(id),
+    ]);
+  } catch (e) {
+    if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
+    throw e;
+  }
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('recogida: el cobro queda para el reloj', id, e),
+  );
   await avisarAlCliente(c.env, db, id, (i) => AVISOS.entregado(i));
   return c.json({ ok: true });
 });

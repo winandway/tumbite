@@ -468,6 +468,23 @@ CREATE TABLE IF NOT EXISTS cobros (
   cancelado_en TEXT
 );
 
+-- C-COBRO-AL-ENTREGAR (16 oct 2026, Entrega 1b): la liquidación de cada entrega. Nace en el MISMO
+-- lote que pasa el pedido a «entregado» y anota los abonos; su clave primaria impide entregar (y
+-- abonar) dos veces. Guarda el estado de la captura en Stripe para reintentarla con seguridad.
+CREATE TABLE IF NOT EXISTS liquidaciones (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  estado TEXT NOT NULL CHECK (estado IN ('pendiente', 'capturando', 'capturada', 'reintentar', 'revision', 'no_aplica')),
+  pi TEXT,
+  monto INTEGER NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  proximo_en TEXT,
+  error TEXT,
+  capturado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS liquidaciones_por_cobrar ON liquidaciones(estado, proximo_en);
+
 -- PIN de 4 dígitos para la entrega en mano, si el cliente lo pidió (lo apaga si recibe otra persona).
 CREATE TABLE IF NOT EXISTS pines_entrega (
   pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
