@@ -246,7 +246,7 @@ ON CONFLICT(conductor_id) DO UPDATE SET pedidos = excluded.pedidos
  WHERE tipo = 'comida' AND NOT EXISTS (
    SELECT 1 FROM pedidos p WHERE p.repartidor_id = conductor_ocupacion.conductor_id
      AND p.estado IN ('aceptado', 'listo', 'en_camino'))`,
-  `CREATE VIEW IF NOT EXISTS inconsistencias_operaciones AS
+  `CREATE VIEW IF NOT EXISTS inconsistencias_operaciones_viajes AS
 SELECT 'estado_general' AS problema, o.id AS referencia FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
  WHERE o.estado_general IS NOT CASE v.estado
        WHEN 'pago_pendiente' THEN 'pago_pendiente' WHEN 'buscando' THEN 'buscando'
@@ -262,9 +262,9 @@ SELECT 'asignacion_abierta_sin_operacion_activa', a.operacion_id FROM asignacion
   JOIN operaciones o ON o.id = a.operacion_id
  WHERE a.fin IS NULL AND (o.estado_general NOT IN ('asignada', 'en_curso') OR o.conductor_id IS NOT a.conductor_id)
 UNION ALL
-SELECT 'buscando_con_conductor', o.id FROM operaciones o WHERE o.estado_general = 'buscando' AND o.conductor_id IS NOT NULL
-UNION ALL
-SELECT 'operacion_activa_sin_ocupacion', o.id FROM operaciones o
+SELECT 'buscando_con_conductor', o.id FROM operaciones o WHERE o.estado_general = 'buscando' AND o.conductor_id IS NOT NULL`,
+  `CREATE VIEW IF NOT EXISTS inconsistencias_operaciones_ocupacion AS
+SELECT 'operacion_activa_sin_ocupacion' AS problema, o.id AS referencia FROM operaciones o
  WHERE o.estado_general IN ('asignada', 'en_curso')
    AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.operacion_id = o.id AND c.conductor_id = o.conductor_id)
 UNION ALL
@@ -279,4 +279,9 @@ UNION ALL
 SELECT 'repartidor_con_pedido_sin_ocupacion', p.repartidor_id FROM pedidos p
  WHERE p.repartidor_id IS NOT NULL AND p.estado IN ('aceptado', 'listo', 'en_camino')
    AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = p.repartidor_id AND c.tipo = 'comida')`,
+  // D1 acepta como máximo 5 partes por consulta compuesta: la vista se arma con dos de 4.
+  `CREATE VIEW IF NOT EXISTS inconsistencias_operaciones AS
+SELECT problema, referencia FROM inconsistencias_operaciones_viajes
+UNION ALL
+SELECT problema, referencia FROM inconsistencias_operaciones_ocupacion`,
 ];

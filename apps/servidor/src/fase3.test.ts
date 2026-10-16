@@ -936,3 +936,12 @@ describe('Fase 3 · el esquema se publica entero', () => {
     expect(n?.n).toBe(DISPARADORES_EXCLUSIVIDAD.length);
   });
 });
+
+describe('Fase 3 · límites de D1', () => {
+  it('ninguna sentencia de la Fase 3 une más de 5 consultas (D1 rechaza más)', () => {
+    for (const sql of ESQUEMA_FASE3) {
+      const partes = sql.split(/\bUNION\s+ALL\b|\bUNION\b/i).length;
+      expect(partes, sql.slice(0, 60)).toBeLessThanOrEqual(5);
+    }
+  });
+});
