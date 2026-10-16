@@ -10,6 +10,9 @@ case "$ENTORNO" in
   *) echo "Entorno desconocido: $ENTORNO" >&2; exit 1 ;;
 esac
 export URL_API
+# El commit de ESTA publicación, grabado dentro de cada app web (C-VERSION-DEL-ARTEFACTO).
+COMMIT="${VERSION:-${GITHUB_SHA:-local}}"
+export COMMIT
 SALIDA="out-${ENTORNO}"
 rm -rf "$SALIDA" apps/cliente/dist-web apps/repartidor/dist-web apps/restaurante/dist-web
 npm run build:app-web >/dev/null
@@ -24,4 +27,4 @@ cp -r apps/restaurante/dist-web/* "$SALIDA/restaurant/"
 cp schema.sql "$SALIDA/"
 echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' >"$SALIDA/yadominios.json"
 echo "$ENTORNO" >"$SALIDA/.entorno"
-node scripts/verificar-paquete.mjs "$SALIDA" "$ENTORNO"
+node scripts/verificar-paquete.mjs "$SALIDA" "$ENTORNO" "$COMMIT"

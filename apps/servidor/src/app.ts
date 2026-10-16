@@ -34,6 +34,7 @@ import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { ultimaConciliacion } from './conciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
+import { VERSION_SERVIDOR } from './version';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -205,10 +206,16 @@ app.get('/datos/salud', async (c) => {
       ok: !algunError,
       piezas,
       ultimoRespaldo: fechaRespaldo,
+      version: VERSION_SERVIDOR,
     },
     algunError ? 503 : 200,
   );
 });
+
+/** Versión y commit con que se COMPILÓ este servidor (C-VERSION-DEL-ARTEFACTO). Público: no lleva secretos. */
+app.get('/datos/version', (c) =>
+  c.json({ servidor: VERSION_SERVIDOR }, 200, { 'Cache-Control': 'no-store' }),
+);
 
 /** Datos públicos que la landing y las apps leen sin sesión (el WhatsApp de soporte, por ahora). */
 app.get('/datos/publico', (c) =>
