@@ -5,13 +5,29 @@
 ## 1. Referencia estudiada
 
 - **DoorDash Merchant (tablet):** «Tablet Heartbeat».
-- **Uber Eats Manager:** cómo trata una tableta sin conexión.
+- **Uber Eats Manager y Uber Eats Orders:** cómo pausa y reanuda una tienda.
 
 ## 2. Evidencia y sus limitaciones
 
 - **[DOC]** DoorDash: si la tablet no puede recibir pedidos durante **5 minutos o más**, la tienda se **pausa sola**. Para reabrir: tablet → Change status, o en el portal → Store Availability. Fuente 16 de `EVIDENCIA-DOORDASH-FUENTES-PUBLICAS.md` (centro de ayuda de comercios, «Temporary deactivation»).
 - **[DOC]** DoorDash también pausa por calidad: dos cancelaciones evitables en un día (misma fuente). **Fuera de esta entrega.**
-- **[NV]** Uber Eats Manager: no encontré en fuentes públicas leídas hoy una regla con cifra. No se usa como referencia.
+- **[DOC]** Uber Eats (centro de comercios, «Store integration»):
+  - **pausa la tienda tras «two unfulfilled orders»**: un pedido sin respuesta del POS durante **11,5 minutos** se marca no aceptado;
+  - **dos cancelaciones seguidas del repartidor** porque el pedido no estaba también la pausan;
+  - menciona además una pausa «after experiencing an unusual amount of time not receiving orders», sin cifra;
+  - para reanudar: el endpoint _Set Store Status_ o el Order Manager.
+
+  Fuente: https://merchants.ubereats.com/ar/en/resources/learning-center/store-integration
+
+- **[DOC]** Uber Eats (blog «Automatic pausing for merchants»):
+  - pausa cuando «multiple orders in a row go unaccepted»;
+  - se reanuda a mano (barra «Paused» → «Resume orders», o Uber Eats Manager) o **sola a las 6:00 a. m. del día siguiente**;
+  - sugiere «Busy Mode» para no llegar a la pausa.
+
+  Fuente: https://www.uber.com/au/en/blog/automatic-pausing-for-merchants
+
+- **[NV]** Uber Eats no publica una pausa basada solo en que la tableta deje de reportar. Su mecanismo es por **pedidos sin atender**, que detecta la misma falla, pero tarde: después de que dos clientes ya esperaron.
+- **[INF] Comparación de las dos:** DoorDash pausa **antes** de que un cliente pierda tiempo (5 minutos sin la tableta). Uber pausa **después** de dos pedidos perdidos. Tumbite copia la de DoorDash, que protege al cliente. La de Uber queda anotada como brecha: pausar tras pedidos sin respuesta es un castigo de calidad, y es decisión de negocio.
 - **[INF]** El motivo de negocio: un pedido que llega a una tienda que no está mirando se vence, el Manager lo cancela a los 6 minutos y el cliente pierde 6 minutos y la confianza. Es mejor no dejar pedir.
 - **[REA]** No aplica: regla del servidor, sin artefacto de terceros.
 
@@ -106,6 +122,18 @@ Cada prueba se comprueba primero en rojo.
 - Hoy una tienda abierta sigue recibiendo pedidos aunque nadie mire su app ni su panel. El Manager los cancela a los 6 minutos y el cliente espera en vano.
 - Ahora el servidor anota la señal y la tienda sin señal no aparece abierta ni acepta pedidos.
 - La tienda vuelve sola en cuanto la app o el panel vuelven a preguntar.
+
+### Requisitos de Richard (16 oct 2026) y dónde se cumplen
+
+| Requisito                                                          | Cómo                                                                                        | Prueba                               |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Detectar la pérdida de conexión                                    | `senal_en` al preguntar por pedidos; 5 minutos sin señal                                    | «sin señal de 6 minutos…»            |
+| No asignar pedidos nuevos a un restaurante que no puede recibirlos | No aparece abierto y crear el pedido da 409                                                 | ídem                                 |
+| No interrumpir pedidos ya aceptados                                | La pausa solo mira los pedidos nuevos; aceptar, listo, repartidor y entrega no la consultan | «no interrumpe pedidos ya aceptados» |
+| Recuperar de forma segura                                          | Vuelve sola, pero solo con la señal del propio restaurante con sesión                       | «recuperación segura»                |
+| Evitar pausas por fallos momentáneos                               | 5 minutos de margen: una consulta perdida (cada 5 s) no cuenta                              | «no pausa por fallos momentáneos»    |
+| Conexiones simultáneas                                             | `UPDATE` condicional: una escritura cada 30 s aunque pregunten la app y el panel a la vez   | «conexiones simultáneas»             |
+| Reintentos                                                         | Marca `pausa_aviso_en` con `UPDATE` condicional: un aviso por pausa y por vuelta            | «reintentos del reloj»               |
 
 ### Pruebas
 
