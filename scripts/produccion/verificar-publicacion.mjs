@@ -1,9 +1,17 @@
 // Verificación de SOLO LECTURA de producción, antes y después de publicar (docs/PUBLICACION-ANTICIPADA-FASE-3.md).
 // Revisa cada pieza de la salud por separado y acepta UN solo error conocido: la conciliación del
 // 15 oct 2026 (compra de prueba de 7,18 USD). Cualquier otro error = ROJO = condición de reversión.
-// Uso: YADOMINIOS_LLAVE=… node scripts/produccion/verificar-publicacion.mjs <antes|despues> <version>
-const [modo = 'antes', version = ''] = process.argv.slice(2);
-const SITIO = 'https://tumbite.com';
+// Uso: YADOMINIOS_LLAVE=… node scripts/produccion/verificar-publicacion.mjs <antes|despues|despues-reloj> <version>
+// «despues-reloj» = «despues» + el reloj seguro: pieza «reloj» en ok o atrasado (NUNCA error) y la
+// última vuelta del reloj sin tareas críticas fallidas.
+const [modoPedido = 'antes', version = ''] = process.argv.slice(2);
+const conReloj = modoPedido === 'despues-reloj';
+const modo = conReloj ? 'despues' : modoPedido;
+if (!['antes', 'despues'].includes(modo)) {
+  console.error(`Modo desconocido: ${modoPedido}`);
+  process.exit(2);
+}
+const SITIO = process.env.VERIFICAR_SITIO ?? 'https://tumbite.com';
 const LLAVE = process.env.YADOMINIOS_LLAVE;
 if (!LLAVE) {
   console.error('Falta YADOMINIOS_LLAVE (solo lectura de la base de producción).');
@@ -73,6 +81,17 @@ for (const k of ['sms', 'retiros', 'tiempoReal'])
   exigir(
     pieza.get(k) === 'pendiente',
     `salud · ${k} = pendiente, apagado a propósito (está «${pieza.get(k)}»)`,
+  );
+// La pieza «reloj» (reloj seguro): ok, o «atrasado» solo con el programador de GitHub. Error nunca.
+if (conReloj)
+  exigir(
+    ['ok', 'atrasado'].includes(pieza.get('reloj')),
+    `salud · reloj = ok o atrasado (está «${pieza.get('reloj')}»)`,
+  );
+else if (pieza.has('reloj'))
+  exigir(
+    pieza.get('reloj') !== 'error',
+    `salud · reloj no está en error (está «${pieza.get('reloj')}»)`,
   );
 const otrasEnError = Object.entries(p).filter(([k, v]) => v === 'error' && k !== 'dinero');
 exigir(
@@ -161,6 +180,29 @@ if (modo === 'despues') {
     );
   } catch (e) {
     fallas.push(`no se pudo leer la Fase 3 en la base: ${String(e?.message ?? e).slice(0, 160)}`);
+  }
+}
+
+// 5b. Con el reloj seguro: la última vuelta registrada no tiene tareas críticas fallidas.
+if (conReloj) {
+  try {
+    const [r] = await consultar(
+      `SELECT (SELECT COUNT(*) FROM reloj_tareas) filas,
+              (SELECT COUNT(*) FROM reloj_tareas WHERE critica = 1 AND ok = 0
+                 AND clave = (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj' AND terminada_en IS NOT NULL ORDER BY terminada_en DESC LIMIT 1)) criticas_ultima,
+              (SELECT group_concat(tarea) FROM reloj_tareas WHERE ok = 0 AND creado_en > datetime('now', '-1 day')) fallidas_dia`,
+    );
+    exigir(
+      Number(r.criticas_ultima) === 0,
+      `última vuelta del reloj sin tareas críticas fallidas (${r.criticas_ultima})`,
+    );
+    avisos.push(
+      `info · reloj: ${r.filas} resultados de tareas guardados; fallidas en 24 h: ${r.fallidas_dia ?? 'ninguna'}`,
+    );
+  } catch (e) {
+    fallas.push(
+      `no se pudo leer el reloj seguro en la base: ${String(e?.message ?? e).slice(0, 160)}`,
+    );
   }
 }
 
