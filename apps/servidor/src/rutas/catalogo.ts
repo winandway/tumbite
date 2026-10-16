@@ -15,6 +15,8 @@ import {
   geohash,
   esquemaMiRestaurante,
   esquemaPlato,
+  conSenal,
+  PAUSA_SIN_SENAL_MINUTOS,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -23,12 +25,13 @@ import { ZONA_INICIAL, zonaPara } from './zonas';
 import { kycAprobado } from './kyc';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin } from '../avisos';
+import { minutosPausa } from '../pausa';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 type FilaRest = Record<string, unknown>;
 
-export function aRestaurante(f: FilaRest): Restaurante {
+export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS): Restaurante {
   const horarios = (f.horarios as Turno[] | undefined) ?? [];
   const zonaHoraria = String(f.zona_horaria ?? 'America/New_York');
   return {
@@ -36,7 +39,11 @@ export function aRestaurante(f: FilaRest): Restaurante {
     nombre: String(f.nombre),
     horarios,
     zonaHoraria,
-    abiertoAhora: Number(f.abierto) === 1 && abiertoPorHorario(horarios, zonaHoraria),
+    // C-PAUSA-SIN-SENAL: abierto, en horario y con su app o panel escuchando pedidos.
+    abiertoAhora:
+      Number(f.abierto) === 1 &&
+      abiertoPorHorario(horarios, zonaHoraria) &&
+      conSenal(f.senal_en as string | null, new Date(), minutosPausa),
     descripcionEs: String(f.descripcion_es ?? ''),
     descripcionEn: String(f.descripcion_en ?? ''),
     categoria: String(f.categoria ?? ''),
@@ -166,7 +173,8 @@ catalogo.get('/restaurantes', async (c) => {
     )
     .bind(zona.id)
     .all<FilaRest>();
-  let lista = (await conHorarios(db, results)).map(aRestaurante);
+  const minutos = await minutosPausa(db);
+  let lista = (await conHorarios(db, results)).map((f) => aRestaurante(f, minutos));
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     lista = lista
       .map((r) =>
@@ -201,7 +209,10 @@ catalogo.get('/restaurantes/:id', async (c) => {
     .bind(f.id)
     .all<FilaRest>();
   const [conH] = await conHorarios(db, [f]);
-  return c.json({ restaurante: aRestaurante(conH!), platos: await platosConGrupos(db, results) });
+  return c.json({
+    restaurante: aRestaurante(conH!, await minutosPausa(db)),
+    platos: await platosConGrupos(db, results),
+  });
 });
 
 // ---------- Dueño del restaurante ----------

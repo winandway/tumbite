@@ -8,7 +8,9 @@ import {
   abiertoPorHorario,
   calcularPedido,
   distanciaKm,
+  conSenal,
 } from '@tumbite/compartido';
+import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -300,6 +302,13 @@ pedidos.post('/pedidos', async (c) => {
   if (!abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria)))
     throw new ErrorDatos(
       'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
+      undefined,
+      409,
+    );
+  // C-PAUSA-SIN-SENAL: si su app o su panel no están escuchando, el pedido no le llegaría a nadie.
+  if (!conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
+    throw new ErrorDatos(
+      'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
       undefined,
       409,
     );

@@ -33,6 +33,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Multiservicio, Fase 1 (15 oct 2026): el vehículo con el que el conductor trabaja ahora.
   // Nadie lo lee todavía para Comida; queda vacío hasta la migración M5 (docs/fase-1/).
   ['repartidores', 'vehiculo_activo_id', 'TEXT REFERENCES vehiculos(id)'],
+  // Pausa automática sin señal (16 oct 2026, C-PAUSA-SIN-SENAL): la última vez que la app o el
+  // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.
+  ['restaurantes', 'senal_en', 'TEXT'],
+  ['restaurantes', 'pausa_aviso_en', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
