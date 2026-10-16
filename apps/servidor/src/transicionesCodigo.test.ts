@@ -97,9 +97,12 @@ describe('la tabla de transiciones coincide con el código real (C-TRANSICIONES-
       expect(tabla.reversiones, `el código revierte ${p}`).toContain(p);
   });
 
-  it('los cambios sin guarda en el WHERE son exactamente los revisados', () => {
+  it('los cambios sin guarda en el WHERE son solo los revisados (uno nuevo hace fallar)', () => {
+    // Que un cambio revisado pase a tener guarda (p. ej. la Entrega 1b pone «AND estado =
+    // 'en_camino'» en la entrega) está bien; que aparezca uno nuevo sin guarda, no.
     const unicos = [...new Set(codigo.sinGuarda)].sort();
-    expect(unicos).toEqual(Object.keys(SIN_GUARDA_REVISADOS).sort());
+    for (const x of unicos)
+      expect(Object.keys(SIN_GUARDA_REVISADOS), `cambio sin guarda nuevo: ${x}`).toContain(x);
     for (const p of Object.values(SIN_GUARDA_REVISADOS)) expect(tabla.normales).toContain(p);
     expect(tabla.normales).toContain(par('listo', 'entregado'));
   });
