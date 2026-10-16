@@ -1,5 +1,6 @@
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
+import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -925,7 +926,9 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
       WHERE d.zona_id = ? AND d.conectado = 1 ${filtroCeldas} AND d.lat IS NOT NULL
       AND d.ubicacion_en > datetime('now','-10 minutes')
       AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
-      AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')`,
+      AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
+      AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = d.usuario_id)
+      AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')`,
     )
     .bind(zonaId, ...(celdas ?? []))
     .all<Libre>();
@@ -950,6 +953,8 @@ async function agrupablesPara(db: D1Database, pedidoId: string): Promise<Libre[]
        AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = q.id)
        AND NOT EXISTS (SELECT 1 FROM grupos_pedido g WHERE g.pedido_id = q.id)
        AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
+       AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = d.usuario_id AND c.tipo <> 'comida')
+       AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')
        LIMIT 10`,
     )
     .bind(pedidoId)
@@ -1161,6 +1166,28 @@ operacion.get('/repartidor/ofertas', async (c) => {
   });
 });
 
+/**
+ * Fase 3 · La sentencia con la que un repartidor toma un pedido de Comida. Atómica: solo entra si
+ * el pedido sigue sin repartidor, si el repartidor sigue con los pedidos que se vieron al decidir
+ * (0, o 1 cuando se agrupa) y si no está en una operación de otro servicio. La base además lo
+ * cuenta en conductor_ocupacion (y aborta si choca). Candado C-EXCLUSIVIDAD.
+ */
+export function tomarPedidoComida(
+  db: D1Database,
+  pedidoId: string,
+  repartidorId: string,
+  pedidosQueTiene: number,
+) {
+  return db
+    .prepare(
+      `UPDATE pedidos SET repartidor_id = ?1 WHERE id = ?2 AND repartidor_id IS NULL AND estado IN ('aceptado','listo')
+        AND (SELECT COUNT(*) FROM pedidos q WHERE q.repartidor_id = ?1 AND q.estado IN ('aceptado','listo','en_camino')) = ?3
+        AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = ?1 AND c.tipo <> 'comida')`,
+    )
+    .bind(repartidorId, pedidoId, pedidosQueTiene)
+    .run();
+}
+
 operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
@@ -1187,14 +1214,29 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
       throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
     grupo = nuevoId();
   }
-  // Atómico: si dos tocan a la vez, solo uno se lo lleva.
-  const r = await db
-    .prepare(
-      "UPDATE pedidos SET repartidor_id = ? WHERE id = ? AND repartidor_id IS NULL AND estado IN ('aceptado','listo')",
-    )
-    .bind(u.id, id)
-    .run();
-  if (!r.meta.changes) throw new ErrorDatos('Otro repartidor ya tomó este pedido.', undefined, 409);
+  // Atómico: si dos tocan a la vez, solo uno se lo lleva. Fase 3: en la MISMA sentencia se
+  // exige que el repartidor siga como lo vimos arriba (sin pedido, o con el único que se agrupa)
+  // y la base (conductor_ocupacion) aborta si está en una operación de otro servicio.
+  let r: D1Result;
+  try {
+    r = await tomarPedidoComida(db, id, u.id, activa ? 1 : 0);
+  } catch (e) {
+    if (esConductorOcupado(e))
+      throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
+    throw e;
+  }
+  if (!r.meta.changes) {
+    const tomado = await db
+      .prepare('SELECT repartidor_id, estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ repartidor_id: string | null; estado: string }>();
+    if (tomado?.repartidor_id === u.id) return c.json({ ok: true }); // doble toque: ya es tuyo
+    if (tomado && !tomado.repartidor_id && ['aceptado', 'listo'].includes(tomado.estado))
+      throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
+    if (tomado && !tomado.repartidor_id)
+      throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
+    throw new ErrorDatos('Otro repartidor ya tomó este pedido.', undefined, 409);
+  }
   if (grupo && activa) {
     await db.batch([
       db
@@ -1666,6 +1708,10 @@ export async function correrRelojUnaVez(
  */
 export const TAREAS_RELOJ: readonly TareaReloj[] = [
   { nombre: 'ofertas', critica: true, correr: (env, db) => repartirOfertas(db, env) },
+  // Fase 3: operaciones de otros servicios (en producción no hay ninguna: no hace nada). Crítica:
+  // ofrece viajes y devuelve a «buscando» los de un conductor sin señal. Sin catch propio: si falla,
+  // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
+  { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
   {
     nombre: 'sin_repartidor',
@@ -1728,6 +1774,7 @@ export async function correrReloj(
     fotosBorradas: (de('fotos')?.datos as number | undefined) ?? 0,
     retiros: de('retiros')?.datos ?? null,
     conciliacionRetiros: de('conciliacion_retiros')?.datos ?? null,
+    operaciones: de('operaciones')?.datos ?? null,
     tareas: Object.fromEntries(vuelta.tareas.map((t) => [t.nombre, t.ok ? 'ok' : 'error'])),
     cuando: new Date().toISOString(),
   };

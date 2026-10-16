@@ -258,6 +258,44 @@ export async function avisarTiempoReal(
   }
 }
 
+/**
+ * Fase 3: los repartidores más cercanos a un punto, según el tiempo real (posiciones en memoria
+ * de los últimos 2 minutos). Devuelve null si el tiempo real no está o falla: quien llama usa
+ * entonces la última ubicación guardada en la base (el mecanismo de siempre).
+ */
+export async function candidatosCercanos(
+  env: Env,
+  zona: string,
+  lat: number,
+  lng: number,
+  limite = 10,
+  hacer: typeof fetch = fetch,
+): Promise<{ c: string; km: number }[] | null> {
+  if (!env.TIEMPO_REAL_URL || !env.AVISOS_LLAVE_ID || !env.AVISOS_SECRETO) return null;
+  const ruta = `/v1/interno/zona/${encodeURIComponent(zona)}/candidatos`;
+  const cuerpo = JSON.stringify({ lat, lng, limite });
+  try {
+    const h = await firmarPeticion(
+      { id: env.AVISOS_LLAVE_ID, secreto: env.AVISOS_SECRETO },
+      'POST',
+      ruta,
+      cuerpo,
+    );
+    const r = await hacer(new URL(ruta, env.TIEMPO_REAL_URL).toString(), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...h },
+      body: cuerpo,
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!r.ok) return null;
+    const d = (await r.json()) as { candidatos?: { c: string; km: number }[] };
+    return Array.isArray(d.candidatos) ? d.candidatos : null;
+  } catch (e) {
+    console.error('tiempo real: candidatos', e);
+    return null;
+  }
+}
+
 /** Pieza «tiempoReal» de la salud: apagado (pendiente), o al día con el reloj externo. */
 export async function saludTiempoReal(
   env: Env,

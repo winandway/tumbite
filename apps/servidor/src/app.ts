@@ -27,6 +27,8 @@ import { diagnostico } from './rutas/diagnostico';
 import { saludServicios, servicios } from './rutas/servicios';
 import { interno, saludTiempoReal } from './rutas/interno';
 import { saludReloj } from './reloj';
+import { viajes } from './rutas/viajes';
+import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
@@ -177,6 +179,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: tiempo real', e);
       return 'pendiente' as const;
     });
+  // Fase 3: exclusividad (cero inconsistencias entre pedidos, operaciones y ocupación).
+  if (c.env.DB)
+    piezas.exclusividad = await saludExclusividad(c.env.DB).catch((e: unknown) => {
+      console.error('salud: exclusividad', e);
+      return 'error' as const;
+    });
   // Reloj seguro: vueltas buenas a tiempo, sin rachas de errores ni tareas críticas fallidas.
   if (c.env.DB)
     piezas.reloj = await saludReloj(c.env, c.env.DB).catch((e: unknown) => {
@@ -307,6 +315,7 @@ app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);
 app.route('/datos', servicios);
+app.route('/datos', viajes);
 app.route('/datos', interno);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);

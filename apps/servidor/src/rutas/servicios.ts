@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -572,7 +573,8 @@ async function conPedidoEnCurso(db: Db, conductorId: string) {
   return Boolean(
     await db
       .prepare(
-        "SELECT 1 FROM pedidos WHERE repartidor_id = ? AND estado IN ('aceptado', 'listo', 'en_camino') LIMIT 1",
+        `SELECT 1 FROM pedidos WHERE repartidor_id = ?1 AND estado IN ('aceptado', 'listo', 'en_camino')
+          UNION ALL SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?1 LIMIT 1`,
       )
       .bind(conductorId)
       .first(),
@@ -630,14 +632,26 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
   }
   await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
   // Una sola sentencia: solo cambia si el vehículo sigue aprobado y es suyo en ese instante.
-  const r = await db
-    .prepare(
-      `UPDATE repartidores SET vehiculo_activo_id = ?
-        WHERE usuario_id = ? AND (? IS NULL OR EXISTS (
-          SELECT 1 FROM vehiculos WHERE id = ? AND conductor_id = ? AND estado = 'aprobado'))`,
-    )
-    .bind(vehiculoId, u.id, vehiculoId, vehiculoId, u.id)
-    .run();
+  // Fase 3: la base además lo impide con un pedido u operación en curso (aunque llegue a la vez).
+  let r: D1Result;
+  try {
+    r = await db
+      .prepare(
+        `UPDATE repartidores SET vehiculo_activo_id = ?
+          WHERE usuario_id = ? AND (? IS NULL OR EXISTS (
+            SELECT 1 FROM vehiculos WHERE id = ? AND conductor_id = ? AND estado = 'aprobado'))`,
+      )
+      .bind(vehiculoId, u.id, vehiculoId, vehiculoId, u.id)
+      .run();
+  } catch (e) {
+    if (esConductorOcupado(e))
+      throw new ErrorDatos(
+        'Termina tu entrega en curso antes de cambiar de vehículo.',
+        undefined,
+        409,
+      );
+    throw e;
+  }
   if (!r.meta.changes)
     throw new ErrorDatos('No se pudo cambiar el vehículo. Intenta otra vez.', undefined, 409);
   return c.json({ vehiculoActivoId: vehiculoId });

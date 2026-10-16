@@ -245,6 +245,34 @@ describe('lote al servidor (cada 15 s)', () => {
     expect(nucleo.pendientes.size).toBe(0);
   });
 
+  it('un lote que el servidor rechaza (4xx) se descarta y no atasca a los siguientes', async () => {
+    let estadoHttp = 400;
+    const { nucleo, conectar, mandar, avanzar, ahora } = armar(
+      async () => new Response('{"error":"datos"}', { status: estadoHttp }),
+    );
+    const rep = conectar({ u: 'rep1' });
+    await mandar(rep, ubic(25.7, -80.19, ahora()));
+    expect(await nucleo.alarma()).toEqual({ enviadas: 1, ok: false });
+    expect(nucleo.pendientes.size).toBe(0);
+    estadoHttp = 200;
+    avanzar(10_000);
+    await mandar(rep, ubic(25.701, -80.19, ahora()));
+    expect(await nucleo.alarma()).toEqual({ enviadas: 1, ok: true });
+  });
+
+  it('lo pendiente de más de 10 minutos se suelta (el servidor ya no lo usaría)', async () => {
+    const { nucleo, conectar, mandar, avanzar, ahora } = armar(
+      async () => new Response('{}', { status: 503 }),
+    );
+    const rep = conectar({ u: 'rep1' });
+    await mandar(rep, ubic(25.7, -80.19, ahora()));
+    await nucleo.alarma();
+    expect(nucleo.pendientes.size).toBe(1);
+    avanzar(11 * 60_000);
+    await nucleo.alarma();
+    expect(nucleo.pendientes.size).toBe(0);
+  });
+
   it('con muchos repartidores a la vez, cada lote lleva a lo sumo 500 y no se pierde ninguno', async () => {
     const { nucleo, conectar, mandar, llamadas, ahora } = armar();
     const reps = Array.from({ length: 650 }, (_, i) => conectar({ u: `r${i}` }));

@@ -157,6 +157,53 @@ describe('recorrido y conciliación en staging', () => {
   });
 });
 
+describe('diagnóstico F3 (exclusividad en el motor real)', () => {
+  it('carrera de conductores, un conductor contra dos viajes y un pedido, y limpieza total', async () => {
+    const { m, pedir } = preparar();
+    await m.cuenta('cliente'); // la base queda migrada (vista de elegibles)
+    const p = await pedir('f3/preparar', { conductores: 8 });
+    expect(p.estado).toBe(200);
+    const { carrera, dobleA, dobleB, pedido, conductores, sufijo } = p.datos;
+    const r = await Promise.all(
+      conductores.map((k: { id: string; vehiculo: string }, i: number) =>
+        pedir('f3/aceptar', {
+          operacion: carrera,
+          conductor: k.id,
+          vehiculo: k.vehiculo,
+          clave: `c${i}`,
+        }),
+      ),
+    );
+    expect(r.filter((x) => x.datos.resultado === 'tomada')).toHaveLength(1);
+    const k0 = conductores[0];
+    const ganador = r.findIndex((x) => x.datos.resultado === 'tomada');
+    // Si el primero ya ganó la carrera, el doble se prueba con el mismo: todo debe salir rechazado.
+    const d = await Promise.all([
+      pedir('f3/aceptar', {
+        operacion: dobleA,
+        conductor: k0.id,
+        vehiculo: k0.vehiculo,
+        clave: 'a',
+      }),
+      pedir('f3/aceptar', {
+        operacion: dobleB,
+        conductor: k0.id,
+        vehiculo: k0.vehiculo,
+        clave: 'b',
+      }),
+      pedir('f3/comida', { pedido, conductor: k0.id }),
+    ]);
+    const exitos =
+      d.filter((x) => x.datos.resultado === 'tomada').length +
+      (d[2]!.datos.tomado ? 1 : 0) +
+      (ganador === 0 ? 1 : 0);
+    expect(exitos).toBe(1);
+    const fin = await pedir('f3/cerrar', { sufijo });
+    expect(fin.datos.casos.filter((x: { ok: boolean }) => !x.ok)).toEqual([]);
+    expect(fin.datos.ok).toBe(true);
+  });
+});
+
 describe('diagnóstico del reloj seguro', () => {
   it('corre los casos con Stripe de prueba simulado y deja todo limpio', async () => {
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {

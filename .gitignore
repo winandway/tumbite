@@ -34,6 +34,7 @@ capturas-tiendas/
 
 # Cuentas de prueba y demo con contraseñas: solo en esta computadora, nunca en git
 docs/CUENTAS-DE-PRUEBA.md
+/password_apps.md
 .dist-tiempo-real/
 .dist-reloj/
 out-pruebas/

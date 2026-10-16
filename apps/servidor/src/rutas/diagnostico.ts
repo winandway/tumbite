@@ -10,7 +10,8 @@ import { conciliar } from '../conciliacion';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
-import { correrRelojUnaVez } from './operacion';
+import { correrRelojUnaVez, tomarPedidoComida } from './operacion';
+import { aceptarOperacion, liberarViaje } from '../operaciones';
 import { type TareaReloj } from '../reloj';
 import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
@@ -1216,6 +1217,260 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     detalle: JSON.stringify(retiros).slice(0, 300),
   });
   return c.json({ prueba: 'CONCILIACION', ok: casos.every((x) => x.ok), casos });
+});
+
+// ---------------------------------------------------------------- Fase 3 (exclusividad)
+// Concurrencia REAL contra la base D1 del sitio de pruebas: el script de GitHub manda las
+// aceptaciones en paralelo (peticiones distintas al worker). Las operaciones de prueba usan el
+// servicio Comida (el único implementado): Moto y Carro NO se encienden ni en pruebas.
+
+const ID_F3 = /^zz-f3[a-z]-[a-z0-9]{6,24}$/;
+
+diagnostico.post('/interno/diagnostico/f3/preparar', async (c) => {
+  const db = base(c);
+  const { conductores } = await leerCuerpo(
+    c,
+    z.object({ conductores: z.number().int().min(2).max(30) }),
+  );
+  const s = sufijo();
+  const cliente = `zz-f3c-${s}`;
+  const dueno = `zz-f3d-${s}`;
+  const rest = `zz-f3r-${s}`;
+  const usuario = (id: string, rol: string) =>
+    db
+      .prepare(
+        "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba F3', ?, 'x')",
+      )
+      .bind(id, `${id}@prueba.invalid`, rol);
+  await db.batch([
+    usuario(cliente, 'cliente'),
+    usuario(dueno, 'restaurante'),
+    db
+      .prepare(
+        "INSERT INTO restaurantes (id, dueno_id, nombre, lat, lng, zona_id) VALUES (?, ?, 'Prueba F3', 25.7, -80.2, 'US-FL-MIAMI')",
+      )
+      .bind(rest, dueno),
+  ]);
+  const lista: { id: string; vehiculo: string }[] = [];
+  for (let i = 0; i < conductores; i++) {
+    const id = `zz-f3k-${s}${i}`;
+    const veh = `zz-f3v-${s}${i}`;
+    await db.batch([
+      usuario(id, 'repartidor'),
+      db
+        .prepare(
+          "INSERT INTO vehiculos (id, conductor_id, tipo, placa, placa_estado, anio, estado) VALUES (?, ?, 'moto', ?, 'ZZ', 2022, 'aprobado')",
+        )
+        .bind(veh, id, `ZZ${s}${i}`.slice(0, 20)),
+      ...['registro', 'seguro'].map((t) =>
+        db
+          .prepare(
+            "INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES (?, ?, ?, 'zz', 'aprobado', datetime('now', '+1 day'))",
+          )
+          .bind(`zz-f3o-${s}${i}${t}`, veh, t),
+      ),
+      // Sin ubicación reciente: el reparto real de Comida no los ve (no les ofrece nada).
+      db
+        .prepare(
+          "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id, vehiculo_activo_id) VALUES (?, 1, 25.7, -80.2, datetime('now', '-1 hour'), 'US-FL-MIAMI', ?)",
+        )
+        .bind(id, veh),
+      db
+        .prepare(
+          "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_en) VALUES (?, 'comida', 'aprobada', datetime('now'))",
+        )
+        .bind(id),
+      db
+        .prepare(
+          "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', 1)",
+        )
+        .bind(id),
+    ]);
+    lista.push({ id, vehiculo: veh });
+  }
+  let nOp = 0;
+  const operacion = async () => {
+    const op = `zz-f3p-${s}${nOp++}`;
+    await db.batch([
+      db
+        .prepare(
+          "INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general) VALUES (?, 'comida', 'pedido_comercio', ?, 'US-FL-MIAMI', 'buscando')",
+        )
+        .bind(op, cliente),
+      db
+        .prepare(
+          "INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion, pin_recogida) VALUES (?, 'buscando', 'sistema', ?, 25.7, -80.2, 'Origen F3', 25.71, -80.21, 'Destino F3', '1234')",
+        )
+        .bind(op, `alta:${op}`),
+    ]);
+    return op;
+  };
+  const carrera = await operacion();
+  const dobleA = await operacion();
+  const dobleB = await operacion();
+  const pedido = `zz-f3q-${s}`;
+  await db
+    .prepare(
+      `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng, aceptado_en, pagado_en)
+       VALUES (?, ?, ?, 'aceptado', '[]', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'basico', 'Prueba F3', 25.7, -80.2, datetime('now'), datetime('now'))`,
+    )
+    .bind(pedido, cliente, rest)
+    .run();
+  // Ofertas: la carrera a TODOS; las dos operaciones del «doble» solo al primero.
+  const ofertas = [
+    ...lista.map((k) => [carrera, k] as const),
+    [dobleA, lista[0]!] as const,
+    [dobleB, lista[0]!] as const,
+  ];
+  await db.batch(
+    ofertas.map(([op, k]) =>
+      db
+        .prepare(
+          "INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en) VALUES (?, ?, ?, 'ofrecida', datetime('now', '+5 minutes'))",
+        )
+        .bind(op, k.id, k.vehiculo),
+    ),
+  );
+  return c.json({ sufijo: s, conductores: lista, carrera, dobleA, dobleB, pedido });
+});
+
+diagnostico.post('/interno/diagnostico/f3/aceptar', async (c) => {
+  const a = await leerCuerpo(
+    c,
+    z.object({
+      operacion: z.string().regex(ID_F3),
+      conductor: z.string().regex(ID_F3),
+      vehiculo: z.string().regex(ID_F3),
+      clave: z.string().min(1).max(80),
+    }),
+  );
+  const r = await aceptarOperacion(base(c), {
+    operacionId: a.operacion,
+    conductorId: a.conductor,
+    vehiculoId: a.vehiculo,
+    clave: `f3:${a.clave}`,
+  });
+  return c.json(r);
+});
+
+diagnostico.post('/interno/diagnostico/f3/comida', async (c) => {
+  const a = await leerCuerpo(
+    c,
+    z.object({ pedido: z.string().regex(ID_F3), conductor: z.string().regex(ID_F3) }),
+  );
+  try {
+    const r = await tomarPedidoComida(base(c), a.pedido, a.conductor, 0);
+    return c.json({ tomado: Boolean(r.meta.changes) });
+  } catch (e) {
+    return c.json({ tomado: false, rechazo: String(e).slice(0, 120) });
+  }
+});
+
+/** Revisa el resultado, prueba soltar y reintentos, y BORRA todo lo temporal. */
+diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
+  const db = base(c);
+  const { sufijo: s } = await leerCuerpo(
+    c,
+    z.object({ sufijo: z.string().regex(/^[a-z0-9]{6,24}$/) }),
+  );
+  const casos: Caso[] = [];
+  const like = `zz-f3_-${s}%`;
+  const asign = await db
+    .prepare(
+      'SELECT operacion_id, conductor_id FROM asignaciones_operacion WHERE operacion_id LIKE ? AND fin IS NULL',
+    )
+    .bind(like)
+    .all<{ operacion_id: string; conductor_id: string }>();
+  const porConductor = new Map<string, number>();
+  for (const a of asign.results)
+    porConductor.set(a.conductor_id, (porConductor.get(a.conductor_id) ?? 0) + 1);
+  const comida = await db
+    .prepare('SELECT repartidor_id FROM pedidos WHERE id = ?')
+    .bind(`zz-f3q-${s}`)
+    .first<{ repartidor_id: string | null }>();
+  if (comida?.repartidor_id)
+    porConductor.set(comida.repartidor_id, (porConductor.get(comida.repartidor_id) ?? 0) + 1);
+  casos.push({
+    nombre: 'ningún conductor terminó con dos cosas a la vez (viajes y comida)',
+    ok: [...porConductor.values()].every((n) => n === 1),
+    detalle: JSON.stringify([...porConductor]),
+  });
+  const inc = await db
+    .prepare('SELECT problema, referencia FROM inconsistencias_operaciones')
+    .all<{ problema: string; referencia: string }>();
+  casos.push({
+    nombre: 'la vista de inconsistencias está en cero en toda la base de pruebas',
+    ok: inc.results.length === 0,
+    detalle: JSON.stringify(inc.results.slice(0, 5)),
+  });
+  // Soltar y volver a buscar, en el motor real.
+  const una = asign.results[0];
+  if (una) {
+    const libre = await liberarViaje(db, {
+      operacionId: una.operacion_id,
+      conductorId: una.conductor_id,
+      motivo: 'diagnóstico',
+      clave: `f3-libera-${s}`,
+    });
+    const op = await db
+      .prepare('SELECT estado_general, conductor_id FROM operaciones WHERE id = ?')
+      .bind(una.operacion_id)
+      .first<{ estado_general: string; conductor_id: string | null }>();
+    const ocup = await db
+      .prepare('SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?')
+      .bind(una.conductor_id)
+      .first();
+    casos.push({
+      nombre: 'soltar el viaje lo devuelve a «buscando» y libera al conductor (motor real)',
+      ok: libre && op?.estado_general === 'buscando' && !op.conductor_id && !ocup,
+    });
+  }
+  // Limpieza completa de lo temporal (en orden, por las llaves foráneas).
+  const ids = await db
+    .prepare("SELECT id FROM usuarios WHERE id LIKE ? AND id LIKE 'zz-f3%'")
+    .bind(like)
+    .all<{ id: string }>();
+  const usuarios = ids.results.map((r) => r.id);
+  const marcas = usuarios.map(() => '?').join(',') || "''";
+  await db.batch([
+    db.prepare('DELETE FROM ofertas_operacion WHERE operacion_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM eventos_operacion WHERE operacion_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM asignaciones_operacion WHERE operacion_id LIKE ?').bind(like),
+    db
+      .prepare(`DELETE FROM conductor_ocupacion WHERE conductor_id IN (${marcas})`)
+      .bind(...usuarios),
+    db.prepare('DELETE FROM viajes WHERE operacion_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM operaciones WHERE id LIKE ?').bind(like),
+    db.prepare('DELETE FROM ofertas WHERE pedido_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM historial_estados WHERE pedido_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM bitacora_pedidos WHERE pedido_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM pedidos WHERE id LIKE ?').bind(like),
+    db.prepare(`DELETE FROM ofertas WHERE repartidor_id IN (${marcas})`).bind(...usuarios),
+    db
+      .prepare(`UPDATE repartidores SET vehiculo_activo_id = NULL WHERE usuario_id IN (${marcas})`)
+      .bind(...usuarios),
+    db.prepare('DELETE FROM vehiculo_documentos WHERE vehiculo_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM vehiculo_revisiones WHERE vehiculo_id LIKE ?').bind(like),
+    db.prepare('DELETE FROM vehiculos WHERE id LIKE ?').bind(like),
+    db
+      .prepare(`DELETE FROM habilitaciones_historial WHERE conductor_id IN (${marcas})`)
+      .bind(...usuarios),
+    db.prepare(`DELETE FROM habilitaciones WHERE conductor_id IN (${marcas})`).bind(...usuarios),
+    db
+      .prepare(`DELETE FROM preferencias_servicio WHERE conductor_id IN (${marcas})`)
+      .bind(...usuarios),
+    db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...usuarios),
+    db.prepare('DELETE FROM restaurantes WHERE id LIKE ?').bind(like),
+    db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...usuarios),
+  ]);
+  const resto = await db
+    .prepare(
+      'SELECT (SELECT COUNT(*) FROM usuarios WHERE id LIKE ?1) + (SELECT COUNT(*) FROM operaciones WHERE id LIKE ?1) + (SELECT COUNT(*) FROM pedidos WHERE id LIKE ?1) AS n',
+    )
+    .bind(like)
+    .first<{ n: number }>();
+  casos.push({ nombre: 'la limpieza no dejó nada temporal', ok: Number(resto?.n) === 0 });
+  return c.json({ prueba: 'F3', ok: casos.every((x) => x.ok), casos });
 });
 
 // ---------------------------------------------------------------- reloj seguro (C-RELOJ-AISLADO)

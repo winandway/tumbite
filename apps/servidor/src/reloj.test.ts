@@ -263,3 +263,40 @@ describe('reloj · pieza de la salud', () => {
     expect(r.estado).toBe(503);
   });
 });
+
+describe('reloj · integración con la Fase 3', () => {
+  it('la tarea «operaciones» de la Fase 3 está en la lista y es crítica', () => {
+    const op = TAREAS_RELOJ.find((t) => t.nombre === 'operaciones');
+    expect(op?.critica).toBe(true);
+    const nombres = TAREAS_RELOJ.map((t) => t.nombre);
+    expect(nombres.indexOf('operaciones')).toBe(nombres.indexOf('ofertas') + 1);
+  });
+
+  it('si «operaciones» falla (por ejemplo, faltan sus tablas), las demás corren, queda registrado y la salud marca error', async () => {
+    const m = mundo({ INTERNO_LLAVE_ID: 'int-1', INTERNO_SECRETO_ACTUAL: 'x'.repeat(40) });
+    await m.cuenta('cliente');
+    // Como pasó en el sitio de pruebas el 16 oct: la tabla de ofertas de viajes no está.
+    await m.DB.exec('DROP TABLE ofertas_operacion');
+    const cuenta = new Map<string, number>();
+    const tareas = [
+      ...TAREAS_RELOJ.filter((t) => t.nombre === 'operaciones'),
+      contadora('despues', cuenta),
+    ];
+    const r = await vueltaReal(m, '2026-10-16T11:00', tareas);
+    expect('fallidas' in r && r.fallidas).toEqual(['operaciones']);
+    expect(cuenta.get('despues')).toBe(1);
+    expect(await saludReloj(m.extra as never, m.DB)).toBe('error');
+  });
+
+  it('la vuelta del reloj ya no traga el error de ninguna tarea con un catch propio', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const fuente = readFileSync(join(__dirname, 'rutas', 'operacion.ts'), 'utf8');
+    const lista = fuente.slice(
+      fuente.indexOf('export const TAREAS_RELOJ'),
+      fuente.indexOf('export async function correrReloj'),
+    );
+    expect(lista).not.toMatch(/\.catch\(/);
+    expect(fuente).not.toMatch(/repartirOperaciones\(env, db\)\.catch/);
+  });
+});
