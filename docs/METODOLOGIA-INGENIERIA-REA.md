@@ -4,6 +4,26 @@
 
 REA (Reverse Engineer Anything) es un servidor MCP instalado en Claude Code: el registro `rea` en `~/.claude.json`, versión fijada 6.5.0, con la guía `reverse-engineer-anything`. Analiza aplicaciones compiladas, páginas web y capturas de red, y entrega **evidencia con hash y con sus límites escritos**.
 
+## 0. El flujo obligatorio (aprobado el 16 oct 2026)
+
+```text
+INVESTIGACIÓN
+    ↓
+EVIDENCIA [REA] / [OBS] / [DOC]
+    ↓
+DIAGRAMA
+    ↓
+COMPARACIÓN CON TUMBITE
+    ↓
+DECISIÓN DE ARQUITECTURA
+    ↓
+IMPLEMENTACIÓN
+    ↓
+PRUEBAS
+```
+
+Toda función nueva importante empieza así. **No frena las correcciones urgentes ni las tareas simples** (ver §1): esas van directo a la prueba en rojo y al arreglo. Siguen vigentes todas las restricciones de producción, pagos y publicación.
+
 ## 1. Cuándo se aplica
 
 **Sí:** antes de diseñar o modificar una función importante:

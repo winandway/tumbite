@@ -12,7 +12,13 @@ Las reglas globales de Richard aplican; estas se suman.
 
 ## Ingeniería con REA: regla permanente (dictada por Richard, 16 oct 2026)
 
-Método completo: `docs/METODOLOGIA-INGENIERIA-REA.md`. Se lee antes de diseñar o modificar cualquier función importante.
+Método completo: `docs/METODOLOGIA-INGENIERIA-REA.md`. Se lee antes de diseñar o modificar cualquier función importante. Aprobada por Richard el 16 oct 2026.
+
+**Toda función nueva importante empieza así, en este orden:**
+
+INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN CON TUMBITE → DECISIÓN DE ARQUITECTURA → IMPLEMENTACIÓN → PRUEBAS
+
+**No frena lo urgente ni lo simple:** una emergencia (algo roto que afecta usuarios o dinero), un arreglo con causa clara, un texto o un estilo van directo a la prueba en rojo y al arreglo. La ficha, si hace falta, se escribe después. Las restricciones de producción, pagos y publicación siguen intactas: nada se publica sin la autorización de Richard.
 
 - **Antes de diseñar o cambiar una función importante**, en este orden:
   1. Identificar las referencias.
