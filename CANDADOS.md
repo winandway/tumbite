@@ -536,3 +536,15 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Pieza `reloj` de la salud (`saludReloj`): con el reloj externo configurado, `error` si no hubo una vuelta buena en 5 minutos, si hubo 3 o más vueltas con error en 15 minutos, o si la última vuelta tuvo una tarea crítica fallida. Solo con GitHub, `atrasado` pasadas 6 horas (nunca error por la impuntualidad). Se recupera sola con la siguiente vuelta buena.
   - Pruebas: `reloj.test.ts` (14) y el diagnóstico `reloj` en el sitio de pruebas (D1 real y Stripe de prueba), comprobadas en rojo.
   - **Qué NO tocar:** ninguna tarea del reloj se llama fuera de `correrRelojUnaVez`; no volver a encadenar tareas sin su `try`; no tragar errores con `catch` vacío dentro de una tarea (la tarea tiene que fallar para que se vea).
+
+- **C-CATALOGO-ESTABLE (16 oct 2026, Hito 1, rama `hito1-catalogo-sesion`, NO publicado):** la lista de restaurantes del cliente no desaparece ni se pisa con una respuesta vieja. Lo que pasaba: el inicio y la pantalla de Comida pedían cada uno su lista, primero sin ubicación y después con ella; si la respuesta sin ubicación llegaba tarde, borraba la buena. Además se repetía la consulta al cambiar la sesión o el idioma.
+  - Una sola lista compartida: `crearListaRestaurantes` (`packages/compartido/src/listaRestaurantes.ts`), que usan `apps/cliente/src/comida/useRestaurantes.ts`, el inicio y Comida. Solo vale la última consulta de cada tipo; una sin ubicación nunca pisa a una con ubicación; consultas iguales en curso se comparten; recuerdo de 60 s.
+  - La ubicación sale de la dirección, después de la guardada (el mapa del carrito la guarda) y al final del GPS.
+  - Estados claros en los dos idiomas (`EstadoCatalogo.tsx`): zona sin restaurantes, fuera de zona, error con «Intentar de nuevo», y «no se pudo actualizar» conservando la lista.
+  - Pruebas: `listaRestaurantes.test.ts` (7), comprobadas en rojo. Guía pública: Docs → «¿Por qué no veo restaurantes?».
+  - **Qué NO tocar:** no volver a pedir la lista desde cada pantalla; no hacer depender la consulta de la sesión ni del idioma.
+
+- **C-SESION-CON-LIMITE (16 oct 2026, Hito 1, rama `hito1-catalogo-sesion`, NO publicado):** al abrir una app, la comprobación de la sesión guardada tiene un tiempo máximo (8 s, `confirmarSesion` en `packages/compartido/src/confirmarSesion.ts`). Lo que pasaba: si el servidor no respondía, la pantalla de carga escarlata se quedaba para siempre.
+  - 401 o 403: la sesión no vale y se borra. Tiempo agotado, sin red o error del servidor: la sesión NO se da por buena ni se borra; se ve «No pudimos confirmar tu sesión» con «Reintentar» y «Entrar con otra cuenta» (`ConSesion.tsx`), y nada protegido se abre mientras tanto.
+  - Pruebas: `confirmarSesion.test.ts` (6), comprobadas en rojo.
+  - **Qué NO tocar:** nunca autenticar una sesión sin respuesta del servidor; nunca borrar la sesión guardada por un fallo de conexión.
