@@ -93,7 +93,7 @@ describe('transiciones del pedido forzadas por la base (C-TRANSICIONES-PEDIDO)',
     }
   });
 
-  it('las 49 parejas: todo lo que no está en la tabla falla con el error tipado', async () => {
+  it('las 42 parejas de cambio real (49 menos las 7 de quedarse igual): las 33 que no están en la tabla fallan con el error tipado', async () => {
     const { pedido, mover } = await base();
     let probadas = 0;
     for (const desde of ESTADOS)

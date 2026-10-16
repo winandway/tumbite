@@ -234,4 +234,33 @@ describe('transiciones del pedido por las rutas reales (C-TRANSICIONES-PEDIDO)',
     await llevarA(m.DB, 'viejo-pago_pendiente', 'entregado');
     expect(await estado('viejo-pago_pendiente')).toBe('entregado');
   });
+
+  it('dinero · dos entregas simultáneas del mismo pedido: una sola entrega, una sola captura y la billetera una sola vez', async () => {
+    const { m, dueno, pedidoPagado, estado, veces } = await escenario();
+    const id = await pedidoPagado();
+    const rep = await m.cuenta('repartidor');
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.771, lng: -80.191 },
+      rep.token,
+    );
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    const capturasAntes = veces(/\/payment_intents\/[^/]+\/capture$/);
+    const [a, b] = await Promise.all([m.entregar(id, rep.token), m.entregar(id, rep.token)]);
+    expect([a.estado, b.estado].sort()).toEqual([200, 409]);
+    expect(await estado(id)).toBe('entregado');
+    expect(veces(/\/payment_intents\/[^/]+\/capture$/) - capturasAntes).toBe(1);
+    const movs = await m.DB.prepare(
+      'SELECT concepto, COUNT(*) AS n FROM movimientos WHERE pedido_id = ? GROUP BY concepto',
+    )
+      .bind(id)
+      .all<{ concepto: string; n: number }>();
+    for (const x of movs.results) expect(x.n, `movimiento «${x.concepto}» repetido`).toBe(1);
+    expect(movs.results.length).toBeGreaterThan(0);
+  });
 });

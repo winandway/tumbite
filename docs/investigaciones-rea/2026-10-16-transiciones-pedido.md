@@ -59,7 +59,7 @@ Prohibido todo lo demás. Por ejemplo:
 
 ## 5. Decisión de implementación
 
-- Tabla `transiciones_pedido (desde, hacia, reversion)` en `schema.sql`, con las 13 filas del diagrama.
+- Tabla `transiciones_pedido (desde, hacia, reversion)` en `schema.sql`, con las **12 filas** del diagrama: 9 transiciones normales y 3 vueltas atrás.
 - Disparador `pedidos_transicion_valida` (`BEFORE UPDATE OF estado ON pedidos`) que aborta con `transicion_de_pedido_no_permitida` si la pareja no está en la tabla. Las filas de **reversión** solo valen si el mismo `UPDATE` borra `cancelado_en` y la cancelación tiene **2 minutos o menos**.
 - El disparador **no va en `schema.sql`** (C-EXCLUSIVIDAD: la plataforma parte mal los disparadores). Va en una lista nueva `ESQUEMA_PEDIDOS` que `esquema.ts` crea al arrancar, en un solo lote y solo si falta.
 - Pieza nueva de la salud: `transiciones`, que vale `ok` si el disparador existe y `error` si no.
@@ -68,8 +68,8 @@ Prohibido todo lo demás. Por ejemplo:
 
 ## 6. Pruebas de aceptación
 
-1. Cada transición permitida pasa (11 normales + 3 reversiones dentro de 2 minutos), como prueba en la base de pruebas.
-2. Cada pareja **no** permitida falla con `transicion_de_pedido_no_permitida`. Se prueban las 49 parejas posibles entre los 7 estados.
+1. Cada transición permitida pasa (**9 normales + 3 vueltas atrás** dentro de 2 minutos = 12), como prueba en la base de pruebas.
+2. Cada pareja **no** permitida falla con `transicion_de_pedido_no_permitida`. Entre los 7 estados hay 49 parejas; 7 son «quedarse igual» (el disparador no actúa), quedan **42 cambios reales**: 9 permitidos y 33 rechazados (las 3 vueltas atrás se rechazan si no cumplen sus condiciones y se prueban aparte).
 3. La reversión con más de 2 minutos falla, y la reversión que no borra `cancelado_en` también.
 4. 2.000 cambios al azar: la base nunca queda en un estado al que no se pueda llegar por la tabla.
 5. Toda la suite del servidor sigue en verde, incluido el recorrido simulado y las Fases 0 y 3.
@@ -89,7 +89,8 @@ Cada prueba se comprueba primero en rojo.
 
 | Prueba                                                                                                                                                                                                                                     | Resultado                                                                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `transicionesPedido.test.ts` (6): 49 parejas, vueltas atrás, 2.000 cambios al azar, salud, disparador fuera de `schema.sql`                                                                                                                | ✅ (5 en rojo sin el disparador)                                                                                                                                   |
+| `transicionesPedido.test.ts` (6): las 42 parejas de cambio real, vueltas atrás, 2.000 cambios al azar, salud, disparador fuera de `schema.sql`                                                                                             | ✅ (5 en rojo sin el disparador)                                                                                                                                   |
+| `transicionesCodigo.test.ts` (4): lee el código real y compara cada cambio de estado con la tabla, en los dos sentidos; 12 filas = 9 + 3                                                                                                   | ✅ (en rojo: un salto nuevo en el código, y una fila de más en la tabla)                                                                                           |
 | `transicionesRutas.test.ts` (6): aceptar y rechazar a la vez (5 vueltas), cancelar y aceptar a la vez (5 vueltas), reintentos de aceptar, listo y rechazar, cancelar desde en camino, listo o entregado, lote con dinero, registros viejos | ✅ (2 en rojo sin el disparador; las 4 de simultaneidad, reintentos y compatibilidad ya pasaban por las guardas de cada ruta y quedan como red contra regresiones) |
 | Toda la suite del servidor                                                                                                                                                                                                                 | ✅ 324                                                                                                                                                             |
 | `npm run verify` completo                                                                                                                                                                                                                  | ✅ 547 pruebas, 0 vulnerabilidades                                                                                                                                 |
@@ -119,7 +120,22 @@ Ninguna columna nueva en tablas que ya existen.
 
 ### Riesgos que quedan
 
-1. **Captura antes del cambio de estado.** En la entrega, `capturarCobro` cobra en Stripe y después el lote pasa el pedido a «entregado». Si el disparador rechazara ese cambio, el dinero quedaría capturado sin el pedido entregado. Hoy no puede pasar, porque la ruta exige «en camino» antes y «en camino → entregado» está permitido. Pero el orden «primero cobrar, después cambiar el estado» es anterior a esta entrega. Se anota para la Entrega 1b.
+1. **Se cobra antes de confirmar la entrega (documentado; Stripe NO se modificó en esta entrega).**
+   - **Dónde:** `rutas/operacion.ts`, en la entrega del repartidor (`await capturarCobro`, línea 1596) y en la recogida en el local (línea 1998). Las dos siguen el mismo orden:
+     1. leen el pedido y comprueban su estado («en camino» o «listo») y quién lo entrega;
+     2. **capturan el cobro en Stripe** (`capturarCobro`, línea 129: `POST /payment_intents/:id/capture` con la clave `captura-{pedido}`, y después marcan `cobros.capturado_en`);
+     3. en **un lote**, pasan el pedido a «entregado» (`UPDATE … WHERE id = ?`, **sin** `estado` en la condición) y anotan los movimientos de la billetera.
+   - **Qué puede salir mal:**
+     - **(a) Doble entrega simultánea del mismo pedido: comprobado que NO duplica.** Prueba «dos entregas simultáneas del mismo pedido» (`transicionesRutas.test.ts`): una responde 200 y la otra 409, hay una sola captura en Stripe y cada movimiento de la billetera queda una sola vez. La guarda está en las lecturas previas de la ruta. Queda como candado.
+     - **(b)** El lote del paso 3 falla, por un corte de D1 o porque el disparador rechaza un salto. Entonces **el dinero queda capturado en Stripe con el pedido sin entregar** y sin movimientos. La conciliación diaria lo detecta (cobro capturado sin pedido entregado), pero no lo corrige.
+     - **(c)** La captura falla. El pedido no pasa a «entregado» y el repartidor puede reintentar. Es correcto.
+   - **Lo que hace el disparador nuevo:** impide que el lote del paso 3 deje un estado ilegal. No arregla el orden: si el lote se rechaza, el dinero ya está capturado.
+   - **Propuesta (Entrega 1b, no hecha):**
+     - primero «reservar» la entrega con un `UPDATE … SET estado = 'entregado' WHERE id = ? AND estado = 'en_camino'`, que exige un cambio, en el mismo lote que los movimientos;
+     - después capturar;
+     - si la captura falla, marcar el cobro para reintento y avisar, sin revertir la entrega física.
+     - Es lo que hacen las plataformas con un registro de «captura pendiente» [INF].
+   - Requiere su prueba en rojo, con Stripe simulado, y una prueba en el sitio de pruebas con Stripe en modo prueba.
 2. **Sin columna de actor.** La base sabe que la transición es legal, no quién la hizo. La bitácora sí lo guarda.
 3. **La prueba de propiedades de la Fase 3** (`fase3.test.ts`, acciones al azar) ahora ve rechazados algunos de sus cambios aleatorios ilegales. Sigue en verde porque tolera fallos, pero ejercita menos combinaciones que antes.
 4. **La ventana de 2 minutos** de la vuelta atrás. Si Stripe tardara más de 2 minutos en fallar, el pedido quedaría cancelado sin devolución. Hoy la llamada a Stripe tiene su propio tiempo de espera, mucho menor.

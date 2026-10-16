@@ -537,11 +537,12 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Vuelta atrás del Manager (cuando Stripe falla al devolver): solo vale si el mismo `UPDATE` borra `cancelado_en` y la cancelación tiene 2 minutos o menos.
   - Salud: pieza `transiciones` (disparador presente y 12 filas).
   - Pruebas:
-    - `transicionesPedido.test.ts`: las 49 parejas de estados, las vueltas atrás y 2.000 cambios al azar;
+    - `transicionesPedido.test.ts`: las 42 parejas de cambio real (9 permitidas, 33 rechazadas), las vueltas atrás y 2.000 cambios al azar;
+    - `transicionesCodigo.test.ts`: cada cambio de estado que escribe el código está en la tabla, y cada fila de la tabla la usa el código;
     - `transicionesRutas.test.ts`: aceptar y rechazar a la vez, cancelar y aceptar a la vez, reintentos, cancelar desde «en camino», un lote con dinero que se deshace entero, y registros viejos en cada estado.
     - Siete de las doce se comprobaron en rojo quitando el disparador.
   - Las pruebas ya no pueden poner un estado «a mano»: usan `llevarA` (`pruebas/ayuda.ts`), que camina las transiciones legales.
   - **Qué NO tocar:**
     - no abrir una excepción en el disparador para las pruebas;
-    - toda transición nueva se agrega a la tabla Y a la prueba de las 49 parejas;
+    - toda transición nueva se agrega a la tabla, a `PERMITIDAS` de la prueba y la detecta `transicionesCodigo.test.ts`;
     - no mover el disparador a `schema.sql`.
