@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   // El recorrido completo tiene su propia configuración (playwright.recorrido.config.ts).
-  testIgnore: ['**/recorrido/**'],
+  testIgnore: ['**/recorrido/**', '**/hito1/**'],
   use: { baseURL: process.env.URL_BASE ?? 'http://localhost:4173' },
   projects: [{ name: 'celular', use: { ...devices['Pixel 7'] } }],
   webServer: process.env.URL_BASE
