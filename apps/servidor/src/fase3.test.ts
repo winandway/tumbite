@@ -10,7 +10,9 @@ import {
   liberarViaje,
   repartirOperaciones,
   saludExclusividad,
+  DISPARADORES_EXCLUSIVIDAD,
 } from './operaciones';
+import { ESQUEMA_FASE3 } from './esquemaFase3';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md). Candado
@@ -733,9 +735,8 @@ describe('Fase 3 · rutas del conductor', () => {
 
 describe('Fase 3 · migración y vuelta atrás', () => {
   const raiz = join(__dirname, '..', '..', '..');
-  const fase3 = () => {
-    const s = readFileSync(join(raiz, 'schema.sql'), 'utf8');
-    return s.slice(s.indexOf('-- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN'));
+  const publicar = async (m: Mundo) => {
+    for (const sql of ESQUEMA_FASE3) await m.DB.prepare(sql).run();
   };
 
   it('con pedidos activos de antes, publicar deja el conteo exacto (y repetirlo no cambia nada)', async () => {
@@ -759,7 +760,7 @@ describe('Fase 3 · migración y vuelta atrás', () => {
     await q(m, 'UPDATE pedidos SET repartidor_id = ? WHERE id IN (?, ?)', a.id, p1, p2);
     await q(m, "UPDATE pedidos SET repartidor_id = ?, estado = 'en_camino' WHERE id = ?", b.id, p3);
     expect((await inconsistencias(m)).length).toBeGreaterThan(0);
-    for (let vez = 0; vez < 2; vez++) await m.DB.exec(fase3());
+    for (let vez = 0; vez < 2; vez++) await publicar(m);
     expect(
       await uno(m, 'SELECT pedidos FROM conductor_ocupacion WHERE conductor_id = ?', a.id),
     ).toEqual({ pedidos: 2 });
@@ -773,9 +774,11 @@ describe('Fase 3 · migración y vuelta atrás', () => {
     const { m, cliente, rest } = await escenario();
     const c = await conductor(m);
     await m.DB.exec(readFileSync(join(raiz, 'docs', 'fase-3', 'revertir.sql'), 'utf8'));
+    expect(await saludExclusividad(m.DB)).toBe('error'); // la salud avisa que faltan
     const quedan = await uno<{ n: number }>(
       m,
-      "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND (name LIKE 'pedidos_%ocupa%' OR name LIKE 'pedidos_libera%' OR name LIKE 'operaciones_%' OR name LIKE 'viajes_%' OR name = 'repartidores_vehiculo_fijo_en_operacion')",
+      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
+      ...DISPARADORES_EXCLUSIVIDAD,
     );
     expect(quedan?.n).toBe(0);
     const ped = await pedidoComida(m, cliente.id, rest);
@@ -907,5 +910,29 @@ describe('Fase 3 · miles de acciones al azar', () => {
       "SELECT COUNT(*) AS n FROM conductor_ocupacion c WHERE c.tipo = 'operacion' AND EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = c.conductor_id AND p.estado IN ('aceptado','listo','en_camino'))",
     );
     expect(dobles?.n).toBe(0);
+  });
+});
+
+describe('Fase 3 · el esquema se publica entero', () => {
+  it('el bloque de la Fase 3 en schema.sql solo trae tablas, índices y datos (ni disparadores ni vistas)', () => {
+    const s = readFileSync(join(__dirname, '..', '..', '..', 'schema.sql'), 'utf8');
+    const bloque = s.slice(s.indexOf('-- FASE 3 · EXCLUSIVIDAD'));
+    const sinComentarios = bloque
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('--'))
+      .join('\n');
+    expect(sinComentarios).not.toMatch(/CREATE\s+(TRIGGER|VIEW)|\bBEGIN\b|\bCASE\b/i);
+  });
+
+  it('el servidor crea los disparadores y la salud los cuenta', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    expect(await saludExclusividad(m.DB)).toBe('ok');
+    const n = await uno<{ n: number }>(
+      m,
+      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
+      ...DISPARADORES_EXCLUSIVIDAD,
+    );
+    expect(n?.n).toBe(DISPARADORES_EXCLUSIVIDAD.length);
   });
 });

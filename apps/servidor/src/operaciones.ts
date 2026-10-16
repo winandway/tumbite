@@ -305,8 +305,34 @@ export async function repartirOperaciones(
   return { ofrecidas, liberados };
 }
 
-/** Pieza «exclusividad» de la salud: cero inconsistencias = ok. */
+/** Los disparadores que sostienen la exclusividad (esquemaFase3.ts). Si falta uno, la salud lo dice. */
+export const DISPARADORES_EXCLUSIVIDAD = [
+  'pedidos_ocupa_conductor',
+  'pedidos_libera_por_estado',
+  'pedidos_libera_al_soltar',
+  'pedidos_reactiva_ocupa',
+  'pedidos_reasigna_ocupa',
+  'operaciones_ocupa_conductor',
+  'operaciones_al_asignar',
+  'operaciones_libera_conductor',
+  'operaciones_libera_al_terminar',
+  'operaciones_estado_coherente',
+  'operaciones_conductor_coherente',
+  'viajes_transicion_valida',
+  'viajes_actor_solo_con_transicion',
+  'viajes_al_cambiar_estado',
+  'repartidores_vehiculo_fijo_en_operacion',
+] as const;
+
+/** Pieza «exclusividad» de la salud: todos los disparadores puestos y cero inconsistencias. */
 export async function saludExclusividad(db: D1Database): Promise<'ok' | 'error'> {
+  const d = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
+    )
+    .bind(...DISPARADORES_EXCLUSIVIDAD)
+    .first<{ n: number }>();
+  if (Number(d?.n) !== DISPARADORES_EXCLUSIVIDAD.length) return 'error';
   const f = await db
     .prepare('SELECT COUNT(*) AS n FROM inconsistencias_operaciones')
     .first<{ n: number }>();

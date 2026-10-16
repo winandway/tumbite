@@ -515,12 +515,14 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **C-APPS-APUNTAN-BIEN (15 oct 2026):** las apps web se construyen sin caché (`expo export --clear`) y en `pruebas-rama` con la dirección del sitio de pruebas, con un paso que falla si una app de pruebas apunta a producción. **Pendiente** en `publicar.yml`.
 
 - **C-EXCLUSIVIDAD (16 oct 2026, Fase 3, rama `fase-3-exclusividad`, NO publicado en producción):** un conductor nunca tiene dos cosas incompatibles a la vez y dos conductores nunca se llevan la misma operación.
-  - La base lo garantiza: `conductor_ocupacion` (una fila por conductor ocupado; la clave primaria impide dos ocupaciones), los disparadores `pedidos_*ocupa*` / `pedidos_libera_*` sobre `pedidos` y `operaciones_*` / `viajes_*` en `schema.sql`, y el índice único `operaciones_una_activa`.
+  - La base lo garantiza: `conductor_ocupacion` (una fila por conductor ocupado; la clave primaria impide dos ocupaciones), los disparadores `pedidos_*ocupa*` / `pedidos_libera_*` sobre `pedidos` y `operaciones_*` / `viajes_*`, y el índice único `operaciones_una_activa`.
   - Comida toma pedidos con `tomarPedidoComida` (`rutas/operacion.ts`): una sentencia que exige que el repartidor siga con los pedidos que se vieron (0, o 1 al agrupar) y que no esté en una operación.
   - Aceptar una operación es UNA sentencia con `RETURNING` (`aceptarOperacion` en `operaciones.ts`); el reintento con la misma clave responde «ya es tuya» sin repetir nada.
-  - El disparador del vehículo fijo y la vista `conductores_elegibles` se crean en `esquema.ts` (INDICES), DESPUÉS de la columna `repartidores.vehiculo_activo_id`: en `schema.sql` romperían una base vieja (SQLite revisa disparadores y vistas al tocar columnas).
-  - La publicación cuadra sola el conteo de los pedidos activos (sentencia idempotente al final del bloque de la Fase 3 en `schema.sql`).
+  - **Los disparadores, las vistas y el cuadre NO van en `schema.sql`:** viven en `apps/servidor/src/esquemaFase3.ts` y los crea `esquema.ts` al arrancar, una sentencia a la vez, después de las columnas nuevas. Lo que pasó (16 oct 2026): con ellos en `schema.sql`, la plataforma dividió mal el archivo (disparadores con CASE), aplicó 101 de 183 sentencias y se detuvo; faltaron las tablas, el reparto de Comida falló en el sitio de pruebas y el semáforo frenó la publicación. Además, el del vehículo fijo y la vista de elegibles usan `repartidores.vehiculo_activo_id`, que llega por COLUMNAS.
+  - Prueba que lo fija: «el bloque de la Fase 3 en schema.sql solo trae tablas, índices y datos» (`fase3.test.ts`).
+  - Cada arranque cuadra el conteo con los pedidos activos (idempotente; los disparadores ya existen antes del cuadre).
+  - La salud cuenta los 15 disparadores (`DISPARADORES_EXCLUSIVIDAD`) además de las inconsistencias.
   - Canario: pieza `exclusividad` de `/datos/salud` (vista `inconsistencias_operaciones` en cero).
   - Pruebas: `fase3.test.ts` (21 casos, 2.000 acciones al azar) y F3 en D1 real (`diagnostico.ts`, `probar-staging.mjs`), comprobadas en rojo.
-  - Vuelta atrás: `docs/fase-3/revertir.sql` (y quitar los nombres de `schema.sql` y `esquema.ts`).
+  - Vuelta atrás: `docs/fase-3/revertir.sql` (y vaciar `ESQUEMA_FASE3`).
   - **Qué NO tocar:** no aceptar pedidos de Comida con otra sentencia; no quitar la condición de conteo ni la de ocupación; no crear operaciones desde una ruta pública hasta la fase de Moto y Carro.

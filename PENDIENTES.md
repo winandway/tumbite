@@ -11,7 +11,7 @@
 - [ ] 👤 **Cuenta de Twilio** para los SMS de respaldo y las llamadas con número oculto (ya construidos y probados con Twilio simulado; en producción están apagados hasta tener las llaves). Hace falta: abrir la cuenta en Twilio con la tarjeta de Windoce LLC, comprar UN número de Estados Unidos (unos 1,15 dólares al mes; los SMS cuestan cerca de 0,008 y las llamadas cerca de 0,014 por minuto) y pegar tres valores en YaDominios Cloud → sitio tumbite → Variables de entorno: `TWILIO_ACCOUNT_SID` (empieza por AC), `TWILIO_AUTH_TOKEN` y `TWILIO_FROM` (el número comprado, con +1). Al republicar, el canario `datos/salud` pasa `sms` de «pendiente» a «ok». Destranca: SMS de «en tu puerta» y «no te encuentran», y los botones «Llamar» de las dos apps (hoy responden «Las llamadas todavía no están activas»).
 - [ ] 👤 **Apple Pay y Google Pay:** (1) en el panel de Stripe → Configuración → Métodos de pago, encender Apple Pay y Google Pay (dos interruptores); (2) el dominio tumbite.com se registra solo con el botón «Activar Apple Pay y Google Pay en la web» del superadmin (o lo hago yo cuando digas); (3) Apple Pay en la app del iPhone necesita el identificador de comercio `merchant.com.tumbite.cliente` creado en la cuenta de Apple Developer (la misma que falta para publicar). Google Pay ya queda listo con la app.
 - [ ] 👤 **Cuenta de Checkr** (antecedentes de repartidores, como DoorDash): abrir la cuenta a nombre de Windoce LLC en Checkr, elegir el paquete con antecedentes penales y récord de manejo (cuesta por repartidor verificado, del orden de 30 a 50 dólares cada uno; lo paga Tumbite), y pegar UN valor en YaDominios Cloud → sitio tumbite → Variables de entorno: `CHECKR_API_KEY` (la llave secreta de producción). En Checkr → Developer → Webhooks, poner la dirección de avisos `https://tumbite.com/datos/checkr/aviso`. Destranca: el botón «Iniciar la verificación de antecedentes» de la app del repartidor (hoy dice que se activa pronto).
-- [ ] 👤 Decidir el primer pedido de 7.18 dólares: marcarlo entregado o devolverlo.
+- [x] 👤 Decidir el primer pedido de 7.18 dólares: marcado entregado por decisión de Richard (15 oct), sin reembolso.
 - [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas. (La Etapa 2½ quedó cerrada el 14 oct; solo falta la prueba en la calle.) Guía paso a paso con croquis en `docs/Guia-publicar-apps-Apple-Google.pdf` (Apple como organización con correo @windoce.com, llave Admin; Google: comprobar que la cuenta sea de organización; Expo: organización windoce-llc y su llave).
 - [ ] 👤 Número de WhatsApp de soporte.
 - [ ] 👤 Llave de Google Places para que la dirección se complete sola.
@@ -111,7 +111,7 @@
 - [x] Variables del tiempo real cargadas en el sitio de pruebas por su API; prueba en vivo en verde (15 oct).
 - [ ] 👤 Correr `bash scripts/staging/cargar-stripe-prueba.sh` y pegar las dos llaves de PRUEBA de Stripe (no se ven) → S11 y el recorrido de Comida en staging.
 - [ ] 👤 Revocar la llave de Acceso para IA del sitio de pruebas que pasó por el chat y crear otra cuando termine la validación.
-- [ ] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.
+- [x] Con lo anterior: prueba en vivo del tiempo real, S11 y el recorrido de Comida en staging → decisión de empezar la Fase 3.
 
 ## Stripe Connect (15 oct 2026)
 
@@ -124,7 +124,7 @@
 - [ ] 👤 Aprobar publicar en producción la Fase 0 + el arreglo de `evidencias.modo/nota` (producción hoy no puede completar una entrega).
 - [ ] `publicar.yml`: construir las apps de pruebas con la dirección de pruebas (hoy la copia de pruebas apunta a producción).
 - [ ] 👤 Twilio también en el sitio de pruebas (la llamada con número oculto no se prueba allí).
-- [ ] 👤 Autorizar la Fase 3 (exclusividad y asignación).
+- [x] 👤 Autorizar la Fase 3 (exclusividad y asignación). Autorizada el 15 oct; hecha en la rama fase-3-exclusividad, solo en el sitio de pruebas.
 
 ## Verificación previa a producción (15 oct 2026, `docs/VERIFICACION-PREVIA-PRODUCCION.md`)
 
@@ -132,4 +132,7 @@
 - [x] Respaldo completo de producción (51 tablas, 166 filas) y verificaciones de solo lectura.
 - [ ] 👤 Decidir el pedido abierto en «listo» desde el 12 oct (7,18 USD autorizados): recomendado cancelarlo antes de publicar.
 - [ ] 👤 Autorizar la publicación controlada (PLAN-PUBLICACION-PRODUCCION.md).
-- [ ] 👤 Autorizar la Fase 3 (en pausa por orden de Richard).
+- [x] Publicación controlada a producción (16 oct, versión f5b2b1a, docs/RESULTADO-PUBLICACION-CONTROLADA.md).
+- [ ] 👤 Revisar y aprobar la Fase 3 (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md) y autorizar, aparte, publicarla en producción.
+- [ ] 👤 Revocar y volver a crear la llave del sitio de pruebas que pasó por el chat.
+- [ ] 👤 Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba de repartidor).
