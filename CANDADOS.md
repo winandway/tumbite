@@ -536,3 +536,21 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Pieza `reloj` de la salud (`saludReloj`): con el reloj externo configurado, `error` si no hubo una vuelta buena en 5 minutos, si hubo 3 o más vueltas con error en 15 minutos, o si la última vuelta tuvo una tarea crítica fallida. Solo con GitHub, `atrasado` pasadas 6 horas (nunca error por la impuntualidad). Se recupera sola con la siguiente vuelta buena.
   - Pruebas: `reloj.test.ts` (14) y el diagnóstico `reloj` en el sitio de pruebas (D1 real y Stripe de prueba), comprobadas en rojo.
   - **Qué NO tocar:** ninguna tarea del reloj se llama fuera de `correrRelojUnaVez`; no volver a encadenar tareas sin su `try`; no tragar errores con `catch` vacío dentro de una tarea (la tarea tiene que fallar para que se vea).
+
+- **C-COBRO-AL-ENTREGAR (16 oct 2026, Entrega 1b, rama `cobro-al-entregar`, NO publicado):** la entrega se **registra primero y se cobra después**.
+  - **Lo que pasaba antes:**
+    - se capturaba en Stripe antes de registrar la entrega: si el registro fallaba, el dinero quedaba cobrado y el pedido sin entregar;
+    - un 500 de Stripe bloqueaba la entrega.
+  - **Cómo funciona ahora:**
+    - **Registro:** un lote con `INSERT liquidaciones` (clave única por pedido, deshace una entrega repetida), el pedido a «entregado» con su estado en el WHERE, y los abonos.
+    - **Captura:** `liquidar` (`apps/servidor/src/liquidaciones.ts`) reclama la liquidación con un UPDATE condicional y captura con una clave por intento (Stripe guarda los 500 con su clave durante 24 h). Si algo falla, consulta el estado con GET.
+    - **Reintentos:** espera creciente; a los 6 intentos pasa a `revision` y avisa al equipo.
+    - **Reloj:** tarea crítica `liquidaciones`.
+    - **Aviso de Stripe:** `payment_intent.succeeded` también cierra la liquidación.
+    - **Retiros:** solo cuentan lo cobrado (`SOLO_LO_COBRADO`).
+    - **Salud:** pieza `cobros`.
+  - **Pruebas:** `cobroAlEntregar.test.ts` (13), con un Stripe simulado fiel a su documentación: una sola captura por pago y la respuesta guardada por clave, incluidos los 500.
+  - **Qué NO tocar:**
+    - nunca volver a capturar antes de registrar la entrega;
+    - nunca reintentar una captura con una clave que ya devolvió error;
+    - no quitar la liquidación del lote de la entrega.

@@ -127,3 +127,56 @@ stateDiagram-v2
 - **Cinco fallos:** la propina posterior y los avisos no se tocan.
 - **Reloj seguro:** una tarea crítica nueva, `liquidaciones`.
 - **Producción:** los pedidos ya entregados no tienen liquidación y no se tocan; la tabla es nueva.
+
+## 6. Resultados (16 oct 2026)
+
+### Fallos reproducidos contra el código actual (las 12 pruebas en rojo antes de implementar)
+
+- **A2, el más grave: si falla el registro de la entrega, Stripe ya cobró.** La prueba vio el cobro hecho (2.398 centavos) con el pedido todavía «en camino» y sin abonos. Hoy se cobra antes de registrar.
+- **A1:** Stripe cobra y falla la escritura del cobro. El repartidor recibe un error 500 y el pedido no se entrega.
+- **B1:** un 500 de Stripe bloquea la entrega: el repartidor no puede terminarla aunque la comida esté en la puerta. Además, reintentar con la misma clave devolvería el mismo 500 durante 24 horas.
+- **C:** lo abonado se podía retirar sin cobro confirmado.
+
+### Solución implementada (rama `cobro-al-entregar`)
+
+| Pieza                                                                                               | Dónde                                                               |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Tabla `liquidaciones` (nueva)                                                                       | `schema.sql`, junto a `cobros`                                      |
+| Registrar primero, en un lote: liquidación + pedido → entregado (con `estado` en el WHERE) + abonos | `rutas/operacion.ts`, entrega del repartidor y recogida en el local |
+| Entrega repetida → 409, sin efectos (la clave de la liquidación deshace el lote)                    | `esEntregaRepetida`                                                 |
+| Captura con reclamo, GET y una clave por intento; espera creciente; 6 intentos → revisión + correo  | `liquidaciones.ts` (`liquidar`)                                     |
+| Tarea crítica del reloj `liquidaciones`                                                             | `TAREAS_RELOJ`                                                      |
+| El aviso `payment_intent.succeeded` cierra la liquidación                                           | `rutas/pedidos.ts` (`liquidarDesdeAviso`)                           |
+| Retiro solo de lo cobrado                                                                           | `retiros.ts` (`SOLO_LO_COBRADO`)                                    |
+| Salud `cobros`                                                                                      | `app.ts` (`saludCobros`)                                            |
+| Se quitó `capturarCobro` (cobraba antes de registrar)                                               | `rutas/operacion.ts`                                                |
+
+### Pruebas
+
+| Prueba                                                                                                                                                                           | Resultado                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cobroAlEntregar.test.ts` (13): A1, A2, B1 a B5, doble entrega simultánea, dos vueltas del reloj a la vez, retiro (C), aviso de Stripe, tarea crítica, salud                     | ✅ (las 12 primeras, en rojo contra el código anterior)                                                                                                                                                                                                                                                                      |
+| Roturas a propósito                                                                                                                                                              | Misma clave en el reintento → 3 fallan. Retiro sin la condición → 1. Sin límite de intentos → 1. Sin reclamo condicional → 1 (tras endurecer la prueba: al principio no lo detectaba, porque Stripe impedía el doble cobro igual). Sin el GET previo → 0: es una defensa doble, porque después de un error se consulta igual |
+| Suite del servidor en la rama                                                                                                                                                    | ✅ 349                                                                                                                                                                                                                                                                                                                       |
+| `npm run verify` en la rama                                                                                                                                                      | ✅ (ver el commit)                                                                                                                                                                                                                                                                                                           |
+| **Compatibilidad:** unión local, sin subir y borrada al terminar, de esta rama + Entrega 1 (`transiciones-pedido`) + los cinco fallos (`fallos-criticos`), sobre el reloj seguro | ✅ verificación completa con 603 pruebas, 0 vulnerabilidades. Destapó un ajuste en la prueba de la Entrega 1: ahora la entrega lleva el estado en el WHERE. Se corrigió en esa rama (`feb54fee`)                                                                                                                             |
+
+### Riesgos que quedan
+
+1. **Abono anotado antes del cobro.** Los abonos se anotan con la entrega, para que la conciliación del día cuadre. Si el cobro termina en `revision`, por una autorización vencida o un banco que rechaza, el restaurante y el repartidor tienen un saldo que **no se puede retirar** (C), pero sigue anotado. Decidir qué se hace con ese saldo es de negocio (👤): ¿lo absorbe Tumbite, se descuenta, se cobra de nuevo con la tarjeta guardada?
+2. **Fuera de la ventana de 7 días** Stripe ya no deja capturar: `revision` y alerta. Con entregas en la hora, solo pasaría con Stripe caído varios días.
+3. **El reloj de producción es impuntual** (GitHub, cada 2 a 5 horas) hasta encender el de Cloudflare. Un cobro que falla en el momento se reintenta tarde. El aviso de Stripe y la salud lo cubren en parte.
+4. **La billetera muestra el saldo total**, no el retirable. Falta una línea en la pantalla: «X pendiente de cobro».
+5. **La captura de Apple Pay y Google Pay** con captura manual sigue sin probarse con dinero real (ver `VERIFICAR-PAGOS.md`).
+6. **La conciliación** sigue con sus tres reglas. Una liquidación en `revision` hace que la regla 3 no cuadre ese día: es lo correcto, porque es dinero sin cobrar, y se ve.
+
+### Requisitos para validar en el sitio de pruebas
+
+Después de publicar el reloj seguro, y con autorización:
+
+- llevar esta rama, junto con la Entrega 1 y los fallos, a una integración del sitio de pruebas;
+- correr el recorrido completo en los dos idiomas: la entrega ya pasa por la liquidación;
+- correr S2 a S12, F3 y el reloj;
+- correr una prueba **L1** contra Stripe en modo prueba, que cree un PaymentIntent con captura manual, registre la entrega, capture con la clave por intento, intente capturar otra vez y compruebe que Stripe lo rechaza y la liquidación sigue `capturada` (pendiente de escribir en el diagnóstico).
+
+**Producción:** la tabla `liquidaciones` es nueva y no hace falta ninguna migración. Los pedidos ya entregados no tienen liquidación y no se tocan.

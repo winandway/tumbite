@@ -323,7 +323,10 @@ describe('cobro al entregar: protecciones', () => {
     e.st.fallar('500');
     await e.m.entregar(e.id, e.rep.token);
     await e.vencerEsperas();
+    const antes = e.st.intentos.length;
     await Promise.all([e.reloj(), e.reloj()]);
+    // Una sola petición de captura a Stripe (el reclamo condicional), no solo un solo cobro.
+    expect(e.st.intentos.length - antes).toBe(1);
     expect(e.st.capturasReales).toEqual([e.total]);
     expect((await e.liquidacion())?.estado).toBe('capturada');
   });
