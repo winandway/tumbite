@@ -1,6 +1,6 @@
 # Autorización única: publicar la Fase 3 antes de la conciliación del 16 de octubre
 
-**Estado: PENDIENTE DE FIRMA.** Este documento no cambia el sistema, ni la conciliación, ni sus registros. Solo deja escrito quién autorizó qué, por qué y con qué límites.
+**Estado: FIRMADA por Richard.** Este documento no cambia el sistema, ni la conciliación, ni sus registros. Solo deja escrito quién autorizó qué, por qué y con qué límites.
 
 ## Qué se autoriza
 
@@ -32,9 +32,9 @@ Publicar en producción la rama `fase-3-exclusividad`, ya validada en el sitio d
 
 ## Firma
 
-- Autorizado por: _______________ (Richard)
-- Fecha y hora: _______________
-- Mensaje con la autorización: _______________
+- Autorizado por: Richard
+- Fecha y hora: 2026-10-16 14:42 UTC
+- Mensaje con la autorización: «Sí, autorizo», en el chat, en respuesta a «LISTO PARA AUTORIZACIÓN FINAL» (verificador en modo antes: VERDE a las 14:39 UTC)
 
 ## Resultado (se completa después de publicar)
 
