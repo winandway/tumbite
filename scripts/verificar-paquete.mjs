@@ -3,11 +3,12 @@
 //   - referencias del sitio de pruebas en producción, o de producción como servidor en pruebas;
 //   - cualquier secreto dentro del paquete (llaves de Stripe, avisos, tokens de YaDominios…);
 //   - piezas que faltan (_worker.js, schema.sql, las tres apps, el panel).
-// Uso: node scripts/verificar-paquete.mjs <carpeta> <pruebas|produccion>
+//   - (con <commit>) una pieza que no lleve grabado el commit de ESTA publicación (C-VERSION-DEL-ARTEFACTO).
+// Uso: node scripts/verificar-paquete.mjs <carpeta> <pruebas|produccion> [commit]
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const [carpeta, entorno] = process.argv.slice(2);
+const [carpeta, entorno, commitPedido = ''] = process.argv.slice(2);
 if (!carpeta || !['pruebas', 'produccion'].includes(entorno)) {
   console.error('Uso: node scripts/verificar-paquete.mjs <carpeta> <pruebas|produccion>');
   process.exit(2);
@@ -68,6 +69,25 @@ for (const app of ['app', 'driver', 'restaurant']) {
   );
   if (!js.some((a) => esperado.test(readFileSync(a, 'utf8'))))
     problemas.push(`${app}: no trae la dirección de ${entorno}`);
+}
+// C-VERSION-DEL-ARTEFACTO: el servidor, la web y las tres apps llevan el commit de ESTA publicación.
+if (/^[0-9a-f]{7,40}$/i.test(commitPedido)) {
+  const c = commitPedido.slice(0, 7).toLowerCase();
+  // El commit entero o sus 7 primeros: los dos empiezan igual.
+  const lleva = (a) => readFileSync(a, 'utf8').includes(`"${c}`);
+  if (existsSync(join(carpeta, '_worker.js')) && !lleva(join(carpeta, '_worker.js')))
+    problemas.push(`_worker.js: el servidor no lleva grabado el commit ${c}`);
+  if (
+    existsSync(join(carpeta, 'index.html')) &&
+    !readFileSync(join(carpeta, 'index.html'), 'utf8').includes(`name="version" content="${c}"`)
+  )
+    problemas.push(`index.html: la web no lleva el commit ${c}`);
+  for (const app of ['app', 'driver', 'restaurant']) {
+    const js = archivos.filter(
+      (a) => relative(carpeta, a).startsWith(`${app}/`) && a.endsWith('.js'),
+    );
+    if (!js.some(lleva)) problemas.push(`${app}: la app no lleva grabado el commit ${c}`);
+  }
 }
 if (
   existsSync(join(carpeta, '.entorno')) &&

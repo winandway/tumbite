@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { VersionPublicada } from '../VersionPublicada';
 import {
   MARCA,
   type Usuario,
@@ -196,6 +197,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 <button type="button" onClick={() => void salir(usuario)}>
                   {t.salir}
                 </button>
+                <VersionPublicada idioma={idioma} conServidor />
               </div>
             </details>
           )}

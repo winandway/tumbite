@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "wrangler deploy --dry-run --outdir=.dist-worker --minify",
+    "build": "node ../../scripts/construir-servidor.mjs",
     "dev": "wrangler dev"
   },
   "dependencies": {

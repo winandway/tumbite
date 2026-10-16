@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { enIdioma, enIdiomaDireccion } from '@tumbite/compartido';
+import { enIdioma, enIdiomaDireccion, textoVersion } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { C } from './ui';
 import { useSoporte } from './soporte';
 import { TEXTOS_MOVIL } from './textos';
+import { VERSION_APP } from './version';
 
 const T = {
   es: {
@@ -15,7 +16,7 @@ const T = {
   },
 };
 
-/** Menú de la cuenta (3 puntos): guías, soporte, términos y privacidad, Configuración y borrar la cuenta. */
+/** Menú de la cuenta (3 puntos): guías, soporte, términos y privacidad, Configuración, borrar la cuenta y la versión instalada. */
 export function MenuCuenta() {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
@@ -96,6 +97,12 @@ export function MenuCuenta() {
         >
           <Text style={{ fontWeight: '700', color: C.primario }}>{tm.borrarCuenta}</Text>
         </Pressable>
+      )}
+      {abierto && (
+        // La versión instalada, discreta, para saber en el teléfono qué se está probando.
+        <Text testID="version-app" style={{ padding: 10, fontSize: 11, color: '#9a9a9a' }}>
+          {textoVersion(VERSION_APP, idioma)}
+        </Text>
       )}
     </View>
   );
