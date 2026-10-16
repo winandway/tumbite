@@ -365,6 +365,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "capturado",
     "cancelado_en"
   ],
+  "liquidaciones": [
+    "pedido_id",
+    "estado",
+    "pi",
+    "monto",
+    "intentos",
+    "proximo_en",
+    "error",
+    "capturado_en",
+    "alertado_en",
+    "creado_en",
+    "actualizado_en"
+  ],
   "pines_entrega": [
     "pedido_id",
     "pin",

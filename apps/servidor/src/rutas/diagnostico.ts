@@ -8,6 +8,15 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { conciliarRetiros, pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
 import { conciliar } from '../conciliacion';
 import { cancelarConReembolso } from '../manager';
+import { entornoDeHost } from '@tumbite/compartido';
+import {
+  esEntregaRepetida,
+  estadoInicial,
+  liquidar,
+  liquidarPendientes,
+  sentenciaLiquidacion,
+} from '../liquidaciones';
+import { saldoRetirable } from '../retiros';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
@@ -1817,5 +1826,286 @@ diagnostico.post('/interno/diagnostico/s12', async (c) => {
       db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
       db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(cliente, dueno),
     ]);
+  }
+});
+
+/**
+ * L1 (16 oct 2026, C-COBRO-AL-ENTREGAR): el cobro al entregar contra Stripe en MODO PRUEBA de
+ * verdad. Dos barreras: llaves sk_test_ y el dominio del sitio de pruebas; si no, se niega.
+ * Usa el código real (sentenciaLiquidacion, liquidar, liquidarPendientes, saldoRetirable) sobre
+ * pedidos propios zz-l1-…, y lo borra todo al terminar. Ningún correo al equipo (ADMIN_CORREOS vacío).
+ */
+diagnostico.post('/interno/diagnostico/l1', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    return c.json({
+      prueba: 'L1',
+      ok: false,
+      omitido: 'el sitio no tiene llaves de Stripe de modo prueba',
+    });
+  if (entornoDeHost(new URL(c.req.url).host) !== 'pruebas')
+    return c.json({ prueba: 'L1', ok: false, omitido: 'L1 solo corre en el sitio de pruebas' });
+  const stripe = crearStripe(llave)!;
+  const db = base(c);
+  const env = { ...c.env, ADMIN_CORREOS: '' };
+  const k = sufijo();
+  const cliente = `zz-l1c-${k}`;
+  const dueno = `zz-l1d-${k}`;
+  const rep = `zz-l1r-${k}`;
+  const rest = `zz-l1t-${k}`;
+  const pedidos: string[] = [];
+  const intentos: string[] = [];
+  const casos: Caso[] = [];
+  const caso = (nombre: string, ok: boolean, detalle?: string) =>
+    casos.push({ nombre, ok, detalle });
+  type PI = { id: string; status: string; amount_received?: number };
+  const leerPI = (id: string) => stripe.get<PI>(`/payment_intents/${id}`);
+  const autorizado = async (letra: string, monto: number) => {
+    const pi = await stripe.post<PI>(
+      '/payment_intents',
+      {
+        amount: monto,
+        currency: 'usd',
+        capture_method: 'manual',
+        payment_method: 'pm_card_visa',
+        confirm: true,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        metadata: { prueba: 'l1', caso: letra },
+      },
+      `l1-pi-${letra}-${k}`,
+    );
+    intentos.push(pi.id);
+    return pi;
+  };
+  /** Un pedido «en camino» con su cobro autorizado, y la entrega registrada como lo hace la ruta. */
+  const registrar = async (letra: string, pi: string, monto: number, abono: number) => {
+    const id = `zz-l1p-${letra}-${k}`;
+    pedidos.push(id);
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng, stripe_sesion, stripe_pago, pagado_en, aceptado_en)
+           VALUES (?, ?, ?, ?, 'en_camino', '[]', ?, 0, 0, 0, 0, ?, 0, 0, ?, 0, 0, 'basico', 'Prueba L1', 25.7, -80.2, ?, ?, datetime('now'), datetime('now'))`,
+        )
+        .bind(id, cliente, rest, rep, monto, monto, abono, pi, pi),
+      db.prepare('INSERT INTO cobros (pedido_id) VALUES (?)').bind(id),
+    ]);
+    const inicial = await estadoInicial(db, id, pi);
+    await db.batch([
+      sentenciaLiquidacion(db, id, pi, monto, inicial),
+      db
+        .prepare(
+          "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ? AND estado = 'en_camino'",
+        )
+        .bind(id),
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'entrega')",
+        )
+        .bind(`zz-l1m-${letra}-${k}`, rep, id, abono),
+    ]);
+    return { id, inicial };
+  };
+  const estadoLiq = async (id: string) =>
+    (await db
+      .prepare('SELECT estado, intentos, alertado_en FROM liquidaciones WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ estado: string; intentos: number; alertado_en: string | null }>()) ?? null;
+  try {
+    await db.batch([
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba L1', 'cliente', 'x')",
+        )
+        .bind(cliente, `${cliente}@prueba.invalid`),
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba L1', 'restaurante', 'x')",
+        )
+        .bind(dueno, `${dueno}@prueba.invalid`),
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba L1', 'repartidor', 'x')",
+        )
+        .bind(rep, `${rep}@prueba.invalid`),
+      db
+        .prepare(
+          "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES (?, ?, 'Prueba L1', 'pendiente')",
+        )
+        .bind(rest, dueno),
+    ]);
+
+    // 1. Captura manual correcta.
+    const a = await autorizado('a', 1234);
+    caso(
+      'A · el pago queda autorizado sin cobrar (requires_capture)',
+      a.status === 'requires_capture',
+      a.status,
+    );
+    const A = await registrar('a', a.id, 1234, 500);
+    caso(
+      'A · la liquidación nace «pendiente» en el mismo lote que la entrega',
+      A.inicial === 'pendiente',
+    );
+    const rA = await liquidar(env, db, A.id);
+    const piA = await leerPI(a.id);
+    caso(
+      'A · liquidar captura en Stripe y la liquidación queda «capturada»',
+      rA === 'capturada' &&
+        piA.status === 'succeeded' &&
+        piA.amount_received === 1234 &&
+        (await estadoLiq(A.id))?.estado === 'capturada',
+      `${rA} ${piA.status} ${piA.amount_received}`,
+    );
+    const cobroA = await db
+      .prepare('SELECT capturado FROM cobros WHERE pedido_id = ?')
+      .bind(A.id)
+      .first<{ capturado: number }>();
+    caso('A · el cobro queda anotado con el monto capturado', Number(cobroA?.capturado) === 1234);
+
+    // 2. Intento duplicado de captura.
+    caso(
+      'B · liquidar otra vez no hace nada (ya está capturada)',
+      (await liquidar(env, db, A.id)) === null,
+    );
+    let rechazo = '';
+    try {
+      await stripe.post(
+        `/payment_intents/${a.id}/capture`,
+        { amount_to_capture: 1234 },
+        `l1-dup-${k}`,
+      );
+    } catch (e) {
+      rechazo = String((e as Error).message ?? e);
+    }
+    const piA2 = await leerPI(a.id);
+    caso(
+      'B · Stripe rechaza una segunda captura con otra clave y el monto cobrado no cambia',
+      rechazo.length > 0 && piA2.amount_received === 1234,
+      rechazo.slice(0, 80),
+    );
+
+    // 3. Idempotencia.
+    const mismo = await stripe.post<PI>(
+      `/payment_intents/${a.id}/capture`,
+      { amount_to_capture: 1234 },
+      `captura-${A.id}`,
+    );
+    const piA3 = await leerPI(a.id);
+    caso(
+      'C · la misma clave devuelve la respuesta guardada, sin cobrar de nuevo',
+      mismo.id === a.id && piA3.amount_received === 1234,
+    );
+    let repetida = false;
+    try {
+      await db.batch([sentenciaLiquidacion(db, A.id, a.id, 1234, 'pendiente')]);
+    } catch (e) {
+      repetida = esEntregaRepetida(e);
+    }
+    caso('C · registrar la misma entrega otra vez se rechaza en la base (clave única)', repetida);
+
+    // 4. Recuperación: Stripe cobró, pero el servidor «murió» antes de anotarlo.
+    const b = await autorizado('b', 2345);
+    const B = await registrar('b', b.id, 2345, 600);
+    await stripe.post(
+      `/payment_intents/${b.id}/capture`,
+      { amount_to_capture: 2345 },
+      `captura-${B.id}`,
+    );
+    await db
+      .prepare(
+        "UPDATE liquidaciones SET estado = 'capturando', intentos = 1, actualizado_en = datetime('now', '-10 minutes') WHERE pedido_id = ?",
+      )
+      .bind(B.id)
+      .run();
+    await liquidarPendientes(env, db);
+    const piB = await leerPI(b.id);
+    caso(
+      'D · una captura a medias se cierra preguntando a Stripe, sin cobrar dos veces',
+      (await estadoLiq(B.id))?.estado === 'capturada' && piB.amount_received === 2345,
+      `${(await estadoLiq(B.id))?.estado} ${piB.amount_received}`,
+    );
+
+    // 5. Recuperación tras un error de Stripe: reintento con clave nueva.
+    const cc = await autorizado('c', 3456);
+    const C = await registrar('c', cc.id, 3456, 700);
+    // Un error REAL de Stripe guardado bajo la clave del primer intento: capturar más de lo
+    // autorizado. Reusar esa clave devolvería ese error para siempre (24 h); el reintento tiene
+    // que usar una clave nueva.
+    let errorGuardado = '';
+    try {
+      await stripe.post(
+        `/payment_intents/${cc.id}/capture`,
+        { amount_to_capture: 999_999 },
+        `captura-${C.id}`,
+      );
+    } catch (e) {
+      errorGuardado = String((e as Error).message ?? e);
+    }
+    caso(
+      'E · Stripe rechaza capturar más de lo autorizado (error guardado bajo la clave)',
+      errorGuardado.length > 0,
+      errorGuardado.slice(0, 80),
+    );
+    await db
+      .prepare(
+        "UPDATE liquidaciones SET estado = 'reintentar', intentos = 1, proximo_en = datetime('now', '-1 minute') WHERE pedido_id = ?",
+      )
+      .bind(C.id)
+      .run();
+    const rC = await liquidar(env, db, C.id);
+    const piC = await leerPI(cc.id);
+    caso(
+      'E · tras un error, el reintento verifica y captura con una clave nueva',
+      rC === 'capturada' &&
+        piC.amount_received === 3456 &&
+        Number((await estadoLiq(C.id))?.intentos) === 2,
+      `${rC} ${piC.amount_received}`,
+    );
+
+    // 6. Autorización anulada: revisión, sin cobrar, con la marca de aviso.
+    const d = await autorizado('d', 4567);
+    await stripe.post(`/payment_intents/${d.id}/cancel`, {}, `l1-cancel-${k}`);
+    const D = await registrar('d', d.id, 4567, 800);
+    const rD = await liquidar(env, db, D.id);
+    const liqD = await estadoLiq(D.id);
+    caso(
+      'F · una autorización anulada pasa a «revision», marcada como avisada, sin cobrar',
+      rD === 'revision' && liqD?.alertado_en != null && (await leerPI(d.id)).status === 'canceled',
+      `${rD}`,
+    );
+
+    // 7. Retiro: solo lo cobrado (A, B y C capturados; D en revisión).
+    const retirable = await saldoRetirable(db, rep);
+    caso(
+      'G · el saldo retirable excluye lo de la entrega en revisión',
+      retirable === 500 + 600 + 700,
+      `retirable ${retirable}, sin contar 800 de D`,
+    );
+    return c.json({ prueba: 'L1', ok: casos.every((x) => x.ok), casos });
+  } catch (e) {
+    caso('error inesperado', false, String((e as Error)?.message ?? e).slice(0, 200));
+    return c.json({ prueba: 'L1', ok: false, casos });
+  } finally {
+    // Ninguna autorización de prueba queda abierta.
+    for (const id of intentos) {
+      const pi = await leerPI(id).catch(() => null);
+      if (pi?.status === 'requires_capture')
+        await stripe.post(`/payment_intents/${id}/cancel`, {}, `l1-limpia-${id}`).catch(() => null);
+    }
+    const lote = [];
+    for (const id of pedidos)
+      for (const t of [
+        'movimientos',
+        'liquidaciones',
+        'cobros',
+        'historial_estados',
+        'bitacora_pedidos',
+      ])
+        lote.push(db.prepare(`DELETE FROM ${t} WHERE pedido_id = ?`).bind(id));
+    for (const id of pedidos) lote.push(db.prepare('DELETE FROM pedidos WHERE id = ?').bind(id));
+    lote.push(db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest));
+    lote.push(db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(cliente, dueno, rep));
+    await db.batch(lote).catch((e: unknown) => console.error('L1: limpieza', e));
   }
 });

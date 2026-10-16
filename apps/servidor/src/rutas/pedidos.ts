@@ -10,6 +10,7 @@ import {
   distanciaKm,
   conSenal,
 } from '@tumbite/compartido';
+import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
@@ -682,13 +683,9 @@ pedidos.post('/stripe/aviso', async (c) => {
         await anotar(db, pedidoId as string, 'pagado', null);
         await correosDePedidoPagado(c.env, db, pedidoId as string);
       } else {
-        // Captura confirmada por Stripe (al entregar): queda anotada aunque el servidor ya lo supiera.
-        await db
-          .prepare(
-            "UPDATE cobros SET capturado_en = COALESCE(capturado_en, datetime('now')), capturado = COALESCE(capturado, ?) WHERE pedido_id = ?",
-          )
-          .bind(Number(obj.amount_received), pedidoId)
-          .run();
+        // Captura confirmada por Stripe (al entregar): queda anotada aunque el servidor ya lo supiera,
+        // y cierra la liquidación si quedó a medias (C-COBRO-AL-ENTREGAR).
+        await liquidarDesdeAviso(db, pedidoId as string, Number(obj.amount_received));
       }
     }
     if (evento.type === 'account.updated') {

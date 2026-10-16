@@ -5,6 +5,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
+import { liquidacionesParaRevisar } from '../liquidaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -194,6 +195,15 @@ dinero.post('/billetera/retirar', async (c) => {
     saldo: await saldo(db, u.id),
     retiro: { id, estado: resultado === 'confirmado' ? 'enviado' : 'en_proceso' },
   });
+});
+
+/**
+ * C-COBRO-AL-ENTREGAR: las entregas cuyo cobro quedó en revisión o atrasado. Su saldo sigue anotado
+ * pero bloqueado para retirar; la resolución es de un administrador (decisión de Richard).
+ */
+dinero.get('/admin/liquidaciones', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await liquidacionesParaRevisar(base(c)));
 });
 
 /** Bandera de seguridad de los retiros (Fase 0). La variable RETIROS_APAGADOS=1 manda sobre ella. */
