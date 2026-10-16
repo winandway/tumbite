@@ -11,7 +11,7 @@
 
 ## El documento que tiene que leer ahora
 
-**INTEGRACION-RELOJ-TRAS-FASE-3**, en la carpeta docs (rama `fase-reloj-seguro`): cierre del reloj seguro y cómo se une con la Fase 3 después de publicarla. La incidencia de la pantalla de carga quedó registrada en `docs/incidencias/`. **Fase 3: BLOQUEADA** solo por la conciliación del 16, que llega después de las 8 p. m. de Miami.
+**2026-10-16-pantalla-de-carga**, en la carpeta docs/incidencias (rama `fase-reloj-seguro`): la app esperó una comprobación de sesión que no respondió, y esa espera no tiene límite de tiempo. No se repitió en 100 aperturas. **Fase 3: BLOQUEADA** solo por la conciliación del 16, que llega después de las 8 p. m. de Miami.
 
 ## Lo que le toca a usted
 
