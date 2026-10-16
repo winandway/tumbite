@@ -521,7 +521,8 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - **Los disparadores, las vistas y el cuadre NO van en `schema.sql`:** viven en `apps/servidor/src/esquemaFase3.ts` y los crea `esquema.ts` al arrancar, una sentencia a la vez, después de las columnas nuevas. Lo que pasó (16 oct 2026): con ellos en `schema.sql`, la plataforma dividió mal el archivo (disparadores con CASE), aplicó 101 de 183 sentencias y se detuvo; faltaron las tablas, el reparto de Comida falló en el sitio de pruebas y el semáforo frenó la publicación. Además, el del vehículo fijo y la vista de elegibles usan `repartidores.vehiculo_activo_id`, que llega por COLUMNAS.
   - Prueba que lo fija: «el bloque de la Fase 3 en schema.sql solo trae tablas, índices y datos» (`fase3.test.ts`).
   - Cada arranque cuadra el conteo con los pedidos activos (idempotente; los disparadores ya existen antes del cuadre).
-  - La salud cuenta los 15 disparadores (`DISPARADORES_EXCLUSIVIDAD`) además de las inconsistencias.
+  - La salud cuenta los 17 disparadores (`DISPARADORES_EXCLUSIVIDAD`) además de las inconsistencias.
+  - Un pedido que nace con repartidor cuenta y uno que se borra libera (`pedidos_ocupa_al_crear`, `pedidos_libera_al_borrar`): sin ellos, borrar un pedido en curso dejaba al conductor «ocupado» para siempre (lo destapó la limpieza de la prueba en vivo del 16 oct).
   - D1 acepta como máximo 5 partes por consulta compuesta: la vista de inconsistencias se arma con dos vistas de 4 (falló así en el sitio de pruebas el 16 oct; prueba «ninguna sentencia de la Fase 3 une más de 5 consultas»).
   - Canario: pieza `exclusividad` de `/datos/salud` (vista `inconsistencias_operaciones` en cero).
   - Pruebas: `fase3.test.ts` (21 casos, 2.000 acciones al azar) y F3 en D1 real (`diagnostico.ts`, `probar-staging.mjs`), comprobadas en rojo.

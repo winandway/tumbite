@@ -9,6 +9,8 @@ DROP TRIGGER IF EXISTS pedidos_libera_por_estado;
 DROP TRIGGER IF EXISTS pedidos_libera_al_soltar;
 DROP TRIGGER IF EXISTS pedidos_reactiva_ocupa;
 DROP TRIGGER IF EXISTS pedidos_reasigna_ocupa;
+DROP TRIGGER IF EXISTS pedidos_ocupa_al_crear;
+DROP TRIGGER IF EXISTS pedidos_libera_al_borrar;
 DROP TRIGGER IF EXISTS repartidores_vehiculo_fijo_en_operacion;
 DROP TRIGGER IF EXISTS operaciones_ocupa_conductor;
 DROP TRIGGER IF EXISTS operaciones_al_asignar;

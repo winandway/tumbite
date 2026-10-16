@@ -236,6 +236,25 @@ BEGIN
   SELECT NEW.repartidor_id, 'comida', 1
    WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id);
 END`,
+  // Un pedido que NACE con repartidor (soporte, pruebas) también cuenta; uno que se BORRA libera.
+  `CREATE TRIGGER IF NOT EXISTS pedidos_ocupa_al_crear
+AFTER INSERT ON pedidos
+WHEN NEW.repartidor_id IS NOT NULL AND NEW.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  SELECT RAISE(ABORT, 'conductor_ocupado_en_otra_operacion')
+   WHERE EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id AND tipo <> 'comida');
+  UPDATE conductor_ocupacion SET pedidos = pedidos + 1 WHERE conductor_id = NEW.repartidor_id AND tipo = 'comida';
+  INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
+  SELECT NEW.repartidor_id, 'comida', 1
+   WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.repartidor_id);
+END`,
+  `CREATE TRIGGER IF NOT EXISTS pedidos_libera_al_borrar
+AFTER DELETE ON pedidos
+WHEN OLD.repartidor_id IS NOT NULL AND OLD.estado IN ('aceptado', 'listo', 'en_camino')
+BEGIN
+  DELETE FROM conductor_ocupacion WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida' AND pedidos <= 1;
+  UPDATE conductor_ocupacion SET pedidos = pedidos - 1 WHERE conductor_id = OLD.repartidor_id AND tipo = 'comida';
+END`,
   `INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos)
 SELECT repartidor_id, 'comida', COUNT(*) FROM pedidos
  WHERE repartidor_id IS NOT NULL AND estado IN ('aceptado', 'listo', 'en_camino')

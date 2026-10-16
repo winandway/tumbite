@@ -945,3 +945,29 @@ describe('Fase 3 · límites de D1', () => {
     }
   });
 });
+
+describe('Fase 3 · pedidos que nacen con repartidor o se borran', () => {
+  it('cuentan al crearse y liberan al borrarse (soporte y pruebas)', async () => {
+    const { m, cliente, rest } = await escenario();
+    const c = await conductor(m);
+    const p = id('ped');
+    await q(
+      m,
+      `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion)
+       VALUES (?, ?, ?, ?, 'en_camino', '[]', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'basico', 'Prueba')`,
+      p,
+      cliente.id,
+      rest,
+      c.id,
+    );
+    expect(
+      await uno(m, 'SELECT pedidos FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
+    ).toEqual({ pedidos: 1 });
+    expect(await inconsistencias(m)).toEqual([]);
+    await q(m, 'DELETE FROM pedidos WHERE id = ?', p);
+    expect(
+      await uno(m, 'SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?', c.id),
+    ).toBeNull();
+    expect(await inconsistencias(m)).toEqual([]);
+  });
+});

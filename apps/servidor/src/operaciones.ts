@@ -312,6 +312,8 @@ export const DISPARADORES_EXCLUSIVIDAD = [
   'pedidos_libera_al_soltar',
   'pedidos_reactiva_ocupa',
   'pedidos_reasigna_ocupa',
+  'pedidos_ocupa_al_crear',
+  'pedidos_libera_al_borrar',
   'operaciones_ocupa_conductor',
   'operaciones_al_asignar',
   'operaciones_libera_conductor',
