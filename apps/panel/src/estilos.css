@@ -3649,3 +3649,30 @@ button {
   color: #9a9a9a;
   margin-top: 6px;
 }
+
+/* Áreas de cobertura (C-TERRITORIO): el mapa del editor del superadmin. */
+.areas-ciudad {
+  flex-basis: 100%;
+  margin-top: 12px;
+}
+.editor-area-mapa {
+  height: 360px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  margin: 8px 0;
+  cursor: crosshair;
+}
+.pista {
+  color: #6b6b6b;
+  font-size: 0.9rem;
+}
+.gestion-franquicia .casilla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.gestion-franquicia .casilla input {
+  width: auto;
+  margin: 0;
+}

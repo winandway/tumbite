@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { areaPara } from '../territorio';
 import { z } from 'zod';
 import {
   ESTADOS_RESTAURANTE,
@@ -169,7 +170,10 @@ catalogo.get('/restaurantes', async (c) => {
   if (!zona) return c.json({ restaurantes: [], zona: null, fueraDeZona: true });
   const { results } = await db
     .prepare(
-      "SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado' ORDER BY abierto DESC, nombre",
+      `SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado'
+       AND (NOT EXISTS (SELECT 1 FROM areas WHERE zona_id = ?1 AND estado <> 'borrador')
+            OR area_id IN (SELECT id FROM areas WHERE zona_id = ?1 AND estado = 'activa'))
+       ORDER BY abierto DESC, nombre`,
     )
     .bind(zona.id)
     .all<FilaRest>();
@@ -347,6 +351,8 @@ catalogo.put('/mi-restaurante', async (c) => {
   const zona = d.lat != null && d.lng != null ? await zonaPara(db, d.lat, d.lng, false) : null;
   const zonaId = zona?.id ?? (actual?.zona_id as string | undefined) ?? ZONA_INICIAL;
   const celda = d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null;
+  // Área de cobertura en la que cae el local (C-TERRITORIO): define qué franquicia lo ve.
+  const areaId = d.lat != null && d.lng != null ? await areaPara(db, d.lat, d.lng) : null;
   const valores = [
     d.nombre,
     d.descripcionEs,
@@ -360,18 +366,19 @@ catalogo.put('/mi-restaurante', async (c) => {
     d.imagen,
     zonaId,
     celda,
+    areaId,
   ];
   if (actual) {
     await db
       .prepare(
-        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=?, zona_id=?, geohash=? WHERE id=?',
+        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=?, zona_id=?, geohash=?, area_id=? WHERE id=?',
       )
       .bind(...valores, actual.id)
       .run();
   } else {
     await db
       .prepare(
-        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen, zona_id, geohash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen, zona_id, geohash, area_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       )
       .bind(nuevoId(), u.id, ...valores)
       .run();

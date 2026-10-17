@@ -2,6 +2,7 @@ import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
+import { cobertura } from '../territorio';
 import { z } from 'zod';
 import {
   type Muestra,
@@ -30,7 +31,6 @@ import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { CON_AJUSTE, CON_EVIDENCIAS, type FilaPedido, aPedido, calcularSinPlato } from './pedidos';
-import { zonaPara } from './zonas';
 import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
@@ -849,15 +849,18 @@ operacion.post('/repartidor/conectar', async (c) => {
         409,
       );
   }
+  // Ciudad y área de cobertura donde está ahora (C-TERRITORIO): define qué franquicia lo ve.
+  const aqui = await cobertura(db, d.lat, d.lng);
   await db
     .prepare(
-      "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",
     )
     .bind(
       d.conectado ? 1 : 0,
       d.lat,
       d.lng,
-      (await zonaPara(db, d.lat, d.lng))?.id ?? null,
+      aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
+      aqui.area?.id ?? null,
       d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null,
       u.id,
     )
@@ -881,11 +884,19 @@ operacion.post('/repartidor/ubicacion', async (c) => {
       await anotarEvento(db, activo.id, 'gps_salto', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
     return c.json({ ok: true, salto: true });
   }
+  const aqui = await cobertura(db, d.lat, d.lng);
   await db
     .prepare(
-      "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
     )
-    .bind(d.lat, d.lng, (await zonaPara(db, d.lat, d.lng))?.id ?? null, geohash(d.lat, d.lng), u.id)
+    .bind(
+      d.lat,
+      d.lng,
+      aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
+      aqui.area?.id ?? null,
+      geohash(d.lat, d.lng),
+      u.id,
+    )
     .run();
   await registrarHitos(c.env, db, u.id, d, muestras).catch((e: unknown) =>
     console.error('hitos', e),

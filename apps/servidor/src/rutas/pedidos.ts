@@ -22,6 +22,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
+import { exigirCobertura } from '../territorio';
 import { anotar } from '../historial';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
@@ -386,6 +387,7 @@ pedidos.post('/pedidos', async (c) => {
       'direccion',
       409,
     );
+  await exigirCobertura(db, String(rest.zona_id ?? ZONA_INICIAL), d.lat, d.lng, recogida);
   const plan = rest.plan as Plan;
   const config = await leerConfigDinero(db);
   let regalo = 0;
@@ -412,8 +414,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -441,6 +443,7 @@ pedidos.post('/pedidos', async (c) => {
       regalo,
       d.regalo,
       String(rest.zona_id ?? ZONA_INICIAL),
+      (rest.area_id as string | null) ?? null,
     )
     .run();
   await db
@@ -963,6 +966,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       'direccion',
       409,
     );
+  await exigirCobertura(db, String(f.zona_id ?? ZONA_INICIAL), d.lat, d.lng);
   const config = await leerConfigDinero(db);
   const lineas = lineasDe(f);
   const desglose = calcularPedido({

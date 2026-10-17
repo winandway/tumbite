@@ -7,6 +7,7 @@ import {
   enIdioma,
   useBorrador,
 } from '@tumbite/compartido';
+import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
@@ -62,6 +63,9 @@ const T = {
     todos: 'Todos',
     vacio: 'Nadie anotado todavía.',
     sinZona: 'Sin zona',
+    areas: 'Áreas',
+    ocultar: 'Ocultar áreas',
+    region: 'Estado o provincia (ej. FL)',
   },
   en: {
     zonas: 'Zones',
@@ -88,10 +92,13 @@ const T = {
     todos: 'All',
     vacio: 'No one signed up yet.',
     sinZona: 'No zone',
+    areas: 'Areas',
+    ocultar: 'Hide areas',
+    region: 'State or province (e.g. FL)',
   },
 };
 
-const ZONA_VACIA = { id: '', nombre: '', lat: '', lng: '', radio: '30' };
+const ZONA_VACIA = { id: '', nombre: '', region: '', lat: '', lng: '', radio: '30' };
 
 export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
@@ -105,6 +112,7 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   const nueva = b.valores;
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
+  const [conAreas, setConAreas] = useState<string | null>(null);
 
   const cargar = () =>
     pedir<{ zonas: Zona[] }>('GET', '/datos/admin/zonas')
@@ -131,6 +139,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
         lat: Number(nueva.lat),
         lng: Number(nueva.lng),
         radioKm: Number(nueva.radio),
+        region: nueva.region,
+        // Una ciudad nueva nace apagada: se enciende a mano cuando esté lista.
         activa: false,
       });
       setAviso(t.guardada);
@@ -168,6 +178,15 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
             >
               {z.activa ? t.apagar : t.activar}
             </button>
+            <button
+              type="button"
+              className="boton secundario"
+              aria-expanded={conAreas === z.id}
+              onClick={() => setConAreas(conAreas === z.id ? null : z.id)}
+            >
+              {conAreas === z.id ? t.ocultar : t.areas}
+            </button>
+            {conAreas === z.id && <AreasCiudad zona={z} usuario={usuario} idioma={idioma} />}
           </li>
         ))}
       </ul>
@@ -178,18 +197,20 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
           idioma={idioma}
           empezar={() => void b.empezarDeNuevo()}
         />
-        {(['id', 'nombre', 'lat', 'lng', 'radio'] as const).map((k) => (
+        {(['id', 'nombre', 'region', 'lat', 'lng', 'radio'] as const).map((k) => (
           <label className="campo" key={k}>
             <span>
               {k === 'id'
                 ? t.codigo
                 : k === 'nombre'
                   ? t.nombre
-                  : k === 'lat'
-                    ? t.lat
-                    : k === 'lng'
-                      ? t.lng
-                      : t.radio}
+                  : k === 'region'
+                    ? t.region
+                    : k === 'lat'
+                      ? t.lat
+                      : k === 'lng'
+                        ? t.lng
+                        : t.radio}
             </span>
             <input
               value={
@@ -197,11 +218,13 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
                   ? nueva.id
                   : k === 'nombre'
                     ? nueva.nombre
-                    : k === 'lat'
-                      ? nueva.lat
-                      : k === 'lng'
-                        ? nueva.lng
-                        : nueva.radio
+                    : k === 'region'
+                      ? nueva.region
+                      : k === 'lat'
+                        ? nueva.lat
+                        : k === 'lng'
+                          ? nueva.lng
+                          : nueva.radio
               }
               onChange={(e) => b.cambiar(k, e.target.value)}
             />

@@ -29,3 +29,4 @@ export * from './confirmarSesion';
 export * from './version';
 export * from './senal';
 export * from './avisosCanal';
+export * from './territorio';

@@ -1,5 +1,6 @@
 import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
 import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
+import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 /**
@@ -41,6 +42,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.
   ['restaurantes', 'senal_en', 'TEXT'],
   ['restaurantes', 'pausa_aviso_en', 'TEXT'],
+  // Territorio (17 oct 2026, C-TERRITORIO): estado o provincia e idioma de cada ciudad, y el área
+  // de cobertura (polígono) en la que cae cada restaurante, repartidor y pedido.
+  ['zonas', 'region', "TEXT NOT NULL DEFAULT ''"],
+  ['zonas', 'idioma', "TEXT NOT NULL DEFAULT 'en'"],
+  ['restaurantes', 'area_id', 'TEXT'],
+  ['repartidores', 'area_id', 'TEXT'],
+  ['pedidos', 'area_id', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
@@ -59,6 +67,9 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS usuarios_rol_zona ON usuarios(rol, zona_id, creado_en)',
   'CREATE INDEX IF NOT EXISTS usuarios_telefono ON usuarios(telefono)',
   'CREATE INDEX IF NOT EXISTS pedidos_repartidor_fecha ON pedidos(repartidor_id, creado_en)',
+  'CREATE INDEX IF NOT EXISTS restaurantes_area ON restaurantes(area_id)',
+  'CREATE INDEX IF NOT EXISTS repartidores_area ON repartidores(area_id, conectado)',
+  'CREATE INDEX IF NOT EXISTS pedidos_area_estado ON pedidos(area_id, estado, creado_en)',
 ];
 
 /**
@@ -219,6 +230,7 @@ let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
 async function migrar(db: D1Database): Promise<void> {
+  await rehacerFranquicias(db);
   for (const [tabla, columna, definicion] of COLUMNAS) {
     const { results } = await db
       .prepare(`SELECT name FROM pragma_table_info('${tabla}')`)

@@ -4,6 +4,9 @@
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Condiciones comerciales de las franquicias** (cuota de entrada, porcentaje sobre ingresos, cuota mensual, plazo y exclusividad territorial). El sistema ya las guarda por franquicia, pero quedan «pendientes de definición comercial» y ningún cobro las usa. Detalle en `docs/TERRITORIO-Y-FRANQUICIAS.md`.
+- [ ] 👤 **Autorizar en producción la arquitectura multiciudad** (áreas, varias franquicias por ciudad y managers). Validada en staging; Miami no cambia mientras no se le dibujen áreas.
+
 - [ ] 👤 **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
 
 - [ ] 👤 **URGENTE — cambiar las contraseñas de prueba** que estaban en el archivo de contraseñas de las apps (la de Expo y las de las cuentas de prueba de cliente, repartidor y restaurante). El archivo entró por error en una rama del repositorio público el 16 oct; no llegó a main ni a producción. Detalle en `docs/PUBLICACION-RELOJ-SEGURO-2026-10-17.md`. Borrarlo del historial de GitHub es destructivo y espera su decisión.

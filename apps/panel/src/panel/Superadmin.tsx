@@ -11,6 +11,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
+import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
 
 const T = {
@@ -36,7 +37,20 @@ const T = {
     restaurantes: 'Restaurantes',
     repartidores: 'Repartidores',
     sinFranquicia: 'Ciudades sin franquicia',
-    estados: { prospecto: 'Prospecto', vendida: 'Vendida', activa: 'Activa', pausada: 'Pausada' },
+    estados: {
+      prospecto: 'Prospecto',
+      vendida: 'Vendida',
+      activa: 'Activa',
+      pausada: 'Pausada',
+      cerrada: 'Cerrada',
+    },
+    nombreFranquicia: 'Nombre de la franquicia (ej. Miami Norte)',
+    gestionar: 'Territorio y equipo',
+    ocultarGestion: 'Ocultar territorio y equipo',
+    porCiudad: 'Resultados por ciudad',
+    franquiciasCol: 'Franquicias',
+    areasCol: 'Áreas',
+    areasLibres: 'Áreas sin franquicia',
     nueva: 'Nueva franquicia',
     zona: 'Ciudad (zona)',
     elegir: 'Elige una ciudad',
@@ -93,7 +107,20 @@ const T = {
     restaurantes: 'Restaurants',
     repartidores: 'Drivers',
     sinFranquicia: 'Cities without a franchise',
-    estados: { prospecto: 'Prospect', vendida: 'Sold', activa: 'Active', pausada: 'Paused' },
+    estados: {
+      prospecto: 'Prospect',
+      vendida: 'Sold',
+      activa: 'Active',
+      pausada: 'Paused',
+      cerrada: 'Closed',
+    },
+    nombreFranquicia: 'Franchise name (e.g. Miami North)',
+    gestionar: 'Territory and team',
+    ocultarGestion: 'Hide territory and team',
+    porCiudad: 'Results by city',
+    franquiciasCol: 'Franchises',
+    areasCol: 'Areas',
+    areasLibres: 'Areas without a franchise',
     nueva: 'New franchise',
     zona: 'City (zone)',
     elegir: 'Choose a city',
@@ -143,10 +170,12 @@ type Metricas = {
 };
 type Franquicia = {
   id: string;
+  nombre: string;
+  areas: number;
   zonaId: string;
   ciudad: string;
   pais: string;
-  estado: 'prospecto' | 'vendida' | 'activa' | 'pausada';
+  estado: 'prospecto' | 'vendida' | 'activa' | 'pausada' | 'cerrada';
   duenoCorreo: string;
   motos: number;
   notas: string;
@@ -163,6 +192,16 @@ type Resumen = {
     motos: number;
   };
   franquicias: Franquicia[];
+  ciudades: {
+    id: string;
+    ciudad: string;
+    pais: string;
+    activa: boolean;
+    franquicias: number;
+    areas: number;
+    areasLibres: number;
+    metricas: Metricas;
+  }[];
   sinFranquicia: {
     id: string;
     ciudad: string;
@@ -253,7 +292,8 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
             {r.franquicias.map((f) => (
               <tr key={f.id}>
                 <td>
-                  <Enlace a={`/panel/${f.ruta}`}>{f.ciudad}</Enlace>
+                  <Enlace a={`/panel/${f.ruta}`}>{f.nombre}</Enlace>
+                  {f.nombre !== f.ciudad ? <small> · {f.ciudad}</small> : null}
                 </td>
                 <td>{t.estados[f.estado]}</td>
                 <td>{f.metricas.pedidos30}</td>
@@ -272,15 +312,39 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
           </tbody>
         </table>
       </div>
-      <h2>{t.sinFranquicia}</h2>
-      <ul className="super-libres">
-        {r.sinFranquicia.map((z) => (
-          <li key={z.id}>
-            <strong>{z.ciudad}</strong> · {t.pedidos30}: {z.metricas.pedidos30} · {t.restaurantes}:{' '}
-            {z.metricas.restaurantes} · {t.repartidores}: {z.metricas.repartidores}
-          </li>
-        ))}
-      </ul>
+      <h2>{t.porCiudad}</h2>
+      <div className="tabla-ancha">
+        <table className="tabla">
+          <thead>
+            <tr>
+              <th>{t.ciudad}</th>
+              <th>{t.franquiciasCol}</th>
+              <th>{t.areasCol}</th>
+              <th>{t.areasLibres}</th>
+              <th>{t.pedidos30}</th>
+              <th>{t.ventas30}</th>
+              <th>{t.restaurantes}</th>
+              <th>{t.repartidores}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {r.ciudades.map((z) => (
+              <tr key={z.id}>
+                <td>
+                  {z.ciudad} <small>({z.pais})</small>
+                </td>
+                <td>{z.franquicias}</td>
+                <td>{z.areas}</td>
+                <td>{z.areasLibres}</td>
+                <td>{z.metricas.pedidos30}</td>
+                <td>{dinero(z.metricas.ventas30)}</td>
+                <td>{z.metricas.restaurantes}</td>
+                <td>{z.metricas.repartidores}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -498,10 +562,18 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
+  const [abierta, setAbierta] = useState<string | null>(null);
   const b = useBorrador({
     formulario: 'nueva-franquicia',
     cuenta: usuario.id,
-    inicial: { zonaId: '', estado: 'prospecto', duenoCorreo: '', motos: '0', notas: '' },
+    inicial: {
+      zonaId: '',
+      nombre: '',
+      estado: 'prospecto',
+      duenoCorreo: '',
+      motos: '0',
+      notas: '',
+    },
     almacen: almacenNavegador,
   });
   const cargar = useCallback(() => {
@@ -535,7 +607,6 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
     cargar();
   }
 
-  const libres = zonas.filter((z) => !r?.franquicias.some((f) => f.zonaId === z.id));
   return (
     <section className="super">
       <h1>{t.franquicias}</h1>
@@ -548,8 +619,18 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
         {r?.franquicias.map((f) => (
           <li key={f.id} className="tarjeta-form">
             <h2>
-              {f.ciudad} <small>({f.pais})</small>
+              {f.nombre}{' '}
+              <small>
+                ({f.ciudad}, {f.pais})
+              </small>
             </h2>
+            <label className="campo">
+              <span>{t.nombreFranquicia}</span>
+              <input
+                defaultValue={f.nombre === f.ciudad ? '' : f.nombre}
+                onBlur={(e) => void guardar(f, { nombre: e.target.value })}
+              />
+            </label>
             <label className="campo">
               <span>{t.estado}</span>
               <select
@@ -587,6 +668,15 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
               {t.suPanel}:{' '}
               <Enlace a={`/panel/${f.ruta}`}>{`/panel/${f.ruta.slice(0, 32)}…`}</Enlace>
             </p>
+            <button
+              type="button"
+              className="boton secundario"
+              aria-expanded={abierta === f.id}
+              onClick={() => setAbierta(abierta === f.id ? null : f.id)}
+            >
+              {abierta === f.id ? t.ocultarGestion : t.gestionar}
+            </button>
+            {abierta === f.id && <GestionFranquicia id={f.id} usuario={usuario} idioma={idioma} />}
           </li>
         ))}
       </ul>
@@ -602,12 +692,16 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
           <span>{t.zona}</span>
           <select value={b.valores.zonaId} onChange={(e) => b.cambiar('zonaId', e.target.value)}>
             <option value="">{t.elegir}</option>
-            {libres.map((z) => (
+            {zonas.map((z) => (
               <option key={z.id} value={z.id}>
                 {z.nombre}
               </option>
             ))}
           </select>
+        </label>
+        <label className="campo">
+          <span>{t.nombreFranquicia}</span>
+          <input value={b.valores.nombre} onChange={(e) => b.cambiar('nombre', e.target.value)} />
         </label>
         <label className="campo">
           <span>{t.estado}</span>
@@ -654,6 +748,7 @@ export function SuperFranquicias({ usuario, idioma }: { usuario: Usuario; idioma
           {t.crear}
         </button>
       </form>
+      <SolicitudesFranquicia zonas={zonas} idioma={idioma} alCrear={cargar} />
     </section>
   );
 }

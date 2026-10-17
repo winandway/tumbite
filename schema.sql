@@ -319,16 +319,66 @@ CREATE INDEX IF NOT EXISTS ticket_mensajes_ticket ON ticket_mensajes(ticket_id, 
 -- (/panel/franquicia-<ciudad>-<codigo>); el código es largo y no se adivina.
 CREATE TABLE IF NOT EXISTS franquicias (
   id TEXT PRIMARY KEY,
-  zona_id TEXT NOT NULL UNIQUE REFERENCES zonas(id),
+  -- La ciudad (zona). Desde el 17 oct 2026 una ciudad puede tener VARIAS franquicias: cada una
+  -- administra las áreas que se le asignan en franquicia_areas (C-TERRITORIO).
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
   codigo TEXT NOT NULL UNIQUE,
-  estado TEXT NOT NULL DEFAULT 'prospecto' CHECK (estado IN ('prospecto', 'vendida', 'activa', 'pausada')),
+  estado TEXT NOT NULL DEFAULT 'prospecto' CHECK (estado IN ('prospecto', 'vendida', 'activa', 'pausada', 'cerrada')),
   dueno_id TEXT REFERENCES usuarios(id),
   dueno_correo TEXT NOT NULL DEFAULT '',
   motos INTEGER NOT NULL DEFAULT 0,
   notas TEXT NOT NULL DEFAULT '',
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  vendida_en TEXT
+  vendida_en TEXT,
+  nombre TEXT NOT NULL DEFAULT '',
+  -- La solicitud del formulario «Quiero una franquicia» de la que salió (si salió de una).
+  ticket_id TEXT REFERENCES tickets(id),
+  -- Condiciones comerciales (cuota, porcentajes, derechos): JSON con valores null hasta que el
+  -- negocio las defina. Ningún cálculo de dinero las lee todavía.
+  condiciones_json TEXT NOT NULL DEFAULT '{}'
 );
+CREATE INDEX IF NOT EXISTS franquicias_zona ON franquicias(zona_id, estado);
+-- Áreas de cobertura dentro de una ciudad, dibujadas como polígonos [[lng, lat], …] (C-TERRITORIO).
+-- Una ciudad SIN áreas publicadas sigue con su círculo (radio_km), como Miami hasta hoy.
+CREATE TABLE IF NOT EXISTS areas (
+  id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  nombre TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'borrador'
+    CHECK (estado IN ('borrador', 'proximamente', 'activa', 'pausada', 'cerrada')),
+  poligono TEXT NOT NULL,
+  min_lat REAL NOT NULL,
+  max_lat REAL NOT NULL,
+  min_lng REAL NOT NULL,
+  max_lng REAL NOT NULL,
+  -- Conflicto en el borde compartido: gana la mayor prioridad, luego la más antigua.
+  prioridad INTEGER NOT NULL DEFAULT 0,
+  apertura_prevista TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_por TEXT REFERENCES usuarios(id)
+);
+CREATE INDEX IF NOT EXISTS areas_zona_estado ON areas(zona_id, estado);
+CREATE INDEX IF NOT EXISTS areas_caja ON areas(min_lat, max_lat, min_lng, max_lng);
+-- Cada área la administra UNA sola franquicia (clave primaria = área).
+CREATE TABLE IF NOT EXISTS franquicia_areas (
+  area_id TEXT PRIMARY KEY REFERENCES areas(id),
+  franquicia_id TEXT NOT NULL REFERENCES franquicias(id),
+  asignada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  asignada_por TEXT REFERENCES usuarios(id)
+);
+CREATE INDEX IF NOT EXISTS franquicia_areas_franquicia ON franquicia_areas(franquicia_id);
+-- Quién entra al panel de una franquicia: su dueño y sus managers. Se asigna por correo; si la
+-- cuenta todavía no existe, queda esperando y vale apenas la persona se registre con ese correo.
+CREATE TABLE IF NOT EXISTS franquicia_miembros (
+  franquicia_id TEXT NOT NULL REFERENCES franquicias(id),
+  correo TEXT NOT NULL COLLATE NOCASE,
+  rol TEXT NOT NULL CHECK (rol IN ('dueno', 'manager')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  creado_por TEXT REFERENCES usuarios(id),
+  PRIMARY KEY (franquicia_id, correo)
+);
+CREATE INDEX IF NOT EXISTS franquicia_miembros_correo ON franquicia_miembros(correo);
 
 -- Datos del repartidor que pide cualquier plataforma seria (como DoorDash): vehículo, licencia,
 -- seguro y verificación de antecedentes. El número de seguro social y el banco NO se guardan aquí:

@@ -262,7 +262,39 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motos",
     "notas",
     "creado_en",
-    "vendida_en"
+    "vendida_en",
+    "nombre",
+    "ticket_id",
+    "condiciones_json"
+  ],
+  "areas": [
+    "id",
+    "zona_id",
+    "nombre",
+    "estado",
+    "poligono",
+    "min_lat",
+    "max_lat",
+    "min_lng",
+    "max_lng",
+    "prioridad",
+    "apertura_prevista",
+    "creado_en",
+    "actualizado_en",
+    "actualizado_por"
+  ],
+  "franquicia_areas": [
+    "area_id",
+    "franquicia_id",
+    "asignada_en",
+    "asignada_por"
+  ],
+  "franquicia_miembros": [
+    "franquicia_id",
+    "correo",
+    "rol",
+    "creado_en",
+    "creado_por"
   ],
   "repartidor_datos": [
     "usuario_id",
