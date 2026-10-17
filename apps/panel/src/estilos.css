@@ -3641,3 +3641,11 @@ button {
 .super-tarjeta-alerta {
   border-color: #ff3008;
 }
+
+/* Versión del artefacto publicado (C-VERSION-DEL-ARTEFACTO): discreta, al pie y en el menú de la cuenta. */
+.version-publicada {
+  display: block;
+  font-size: 0.72rem;
+  color: #9a9a9a;
+  margin-top: 6px;
+}

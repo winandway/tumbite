@@ -34,6 +34,9 @@ import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { ultimaConciliacion } from './conciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
+import { VERSION_SERVIDOR } from './version';
+import { saludTransiciones } from './esquemaPedidos';
+import { saludCobros } from './liquidaciones';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -191,6 +194,18 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: reloj', e);
       return 'error' as const;
     });
+  // C-TRANSICIONES-PEDIDO: el disparador que impide los saltos de estado de los pedidos existe.
+  if (c.env.DB)
+    piezas.transiciones = await saludTransiciones(c.env.DB).catch((e: unknown) => {
+      console.error('salud: transiciones', e);
+      return 'error' as const;
+    });
+  // C-COBRO-AL-ENTREGAR: ningún cobro de una entrega en revisión ni atrasado más de 2 horas.
+  if (c.env.DB)
+    piezas.cobros = await saludCobros(c.env.DB).catch((e: unknown) => {
+      console.error('salud: cobros', e);
+      return 'error' as const;
+    });
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -205,10 +220,16 @@ app.get('/datos/salud', async (c) => {
       ok: !algunError,
       piezas,
       ultimoRespaldo: fechaRespaldo,
+      version: VERSION_SERVIDOR,
     },
     algunError ? 503 : 200,
   );
 });
+
+/** Versión y commit con que se COMPILÓ este servidor (C-VERSION-DEL-ARTEFACTO). Público: no lleva secretos. */
+app.get('/datos/version', (c) =>
+  c.json({ servidor: VERSION_SERVIDOR }, 200, { 'Cache-Control': 'no-store' }),
+);
 
 /** Datos públicos que la landing y las apps leen sin sesión (el WhatsApp de soporte, por ahora). */
 app.get('/datos/publico', (c) =>

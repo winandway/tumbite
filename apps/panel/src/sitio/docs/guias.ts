@@ -112,6 +112,37 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'no-restaurants-or-app-not-opening',
+        titulo: '¿Por qué no veo restaurantes? ¿Y si la app no termina de abrir?',
+        resumen:
+          'La app siempre te dice qué pasa: si en tu zona todavía no hay restaurantes, si no llegamos aún a tu ciudad o si falló la conexión. Y si no puede comprobar tu sesión, te deja intentar de nuevo sin perder tu cuenta.',
+        explicacion: [
+          'Los restaurantes que ves dependen de tu ubicación. La app usa, en este orden: el punto que elegiste en el mapa del carrito, la última ubicación que guardaste y, si no hay ninguna, la de tu teléfono. Tu lista no cambia sola por moverte un poco ni por cambiar el idioma.',
+          '«Todavía no hay restaurantes en tu zona»: Tumbite ya funciona en tu zona, pero aún no hay restaurantes abiertos ahí. Estamos sumando más cada semana.',
+          '«Todavía no llegamos a tu zona»: tu ubicación está fuera de las ciudades donde trabajamos hoy. Pronto estaremos en más.',
+          '«No pudimos cargar los restaurantes»: falló la conexión. Toca «Intentar de nuevo». Si ya tenías una lista, la seguimos mostrando y te avisamos que no se pudo actualizar.',
+          'Al abrir la app comprobamos tu sesión. Si el internet está lento, no te dejamos esperando para siempre: después de unos segundos ves «No pudimos confirmar tu sesión», con «Reintentar» y «Entrar con otra cuenta». Tu sesión no se borra por un problema de conexión.',
+        ],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-es.webp',
+            alt: 'Pantalla de la app del cliente que dice «No pudimos confirmar tu sesión», con los botones «Reintentar» y «Entrar con otra cuenta».',
+            pie: 'Si la conexión falla al abrir, la app te deja reintentar sin cerrar tu sesión.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no veo restaurantes en mi zona?',
+          '¿Por qué desaparecen los restaurantes de la lista?',
+          '¿Qué hago si la app se queda cargando al abrir?',
+        ],
+        pasos: [
+          'Si no ves restaurantes, revisa el mensaje que aparece arriba de la lista.',
+          'Si dice que falló la conexión, toca «Intentar de nuevo».',
+          'Para ver otra zona, cambia el punto de entrega en el mapa del carrito.',
+          'Si la app no termina de abrir, toca «Reintentar»; tu cuenta sigue guardada.',
+        ],
+      },
+      {
         id: 'pickup-address-change-and-extra-tip',
         titulo: 'Recoger en el local, cambiar la dirección y dejar propina después',
         resumen:
@@ -445,6 +476,29 @@ const es: SeccionDocs[] = [
     titulo: 'Para restaurantes',
     icono: 'chef',
     guias: [
+      {
+        id: 'store-not-receiving-orders',
+        titulo: '¿Por qué mi tienda aparece sin recibir pedidos?',
+        resumen:
+          'Si tu app o tu panel de Tumbite no responden durante 5 minutos, tu tienda deja de recibir pedidos para que ningún cliente espere en vano. Vuelve sola en cuanto los abres otra vez.',
+        explicacion: [
+          'Mientras tu app o tu panel de Tumbite están abiertos, le avisan a Tumbite cada pocos segundos que estás listo para recibir pedidos.',
+          'Si durante 5 minutos no llega ese aviso (se apagó la tableta, se cayó el internet o se cerró la app), los clientes ven tu tienda como cerrada y no pueden pedirte. Así evitamos que un pedido llegue a una pantalla que nadie mira y se cancele.',
+          'Te avisamos al celular y por correo. No tienes que hacer nada más: en cuanto abres la app o el panel otra vez, tu tienda vuelve a aparecer abierta, sola, y te avisamos que ya recibes pedidos.',
+          'Si cierras tu tienda a propósito con el botón de abrir o cerrar, eso no es una pausa: sigue cerrada hasta que la abras.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Por qué los clientes ven mi tienda cerrada si yo la abrí?',
+          '¿Qué pasa si se me va el internet?',
+          '¿Cómo vuelvo a recibir pedidos?',
+        ],
+        pasos: [
+          'Deja la app o el panel de Tumbite abiertos mientras tu tienda está abierta.',
+          'Si recibes el aviso «Tu tienda no está recibiendo pedidos», revisa la conexión y abre la app o el panel.',
+          'En cuanto lo abres, tu tienda vuelve sola y te llega el aviso «Ya recibes pedidos otra vez».',
+        ],
+      },
       {
         id: 'restaurant-app',
         titulo: 'La app del restaurante: pedidos, tiempos, código y tu menú',
@@ -1846,6 +1900,37 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'no-restaurants-or-app-not-opening',
+        titulo: 'Why don’t I see restaurants? What if the app won’t finish opening?',
+        resumen:
+          'The app always tells you what’s going on: no restaurants in your area yet, we’re not in your city yet, or the connection failed. And if it can’t verify your session, it lets you try again without losing your account.',
+        explicacion: [
+          'The restaurants you see depend on your location. The app uses, in this order: the spot you picked on the map in your cart, the last location you saved and, if there’s none, your phone’s location. Your list doesn’t change on its own when you move a little or switch languages.',
+          '“No restaurants in your area yet”: Tumbite already works in your area, but no restaurants are open there yet. We’re adding more every week.',
+          '“We’re not in your area yet”: your location is outside the cities we serve today. We’re coming to more soon.',
+          '“We couldn’t load the restaurants”: the connection failed. Tap “Try again.” If you already had a list, we keep showing it and let you know it couldn’t be refreshed.',
+          'When the app opens, we verify your session. If your internet is slow, we don’t leave you waiting forever: after a few seconds you’ll see “We couldn’t confirm your session,” with “Try again” and “Sign in with another account.” A connection problem never signs you out.',
+        ],
+        capturas: [
+          {
+            src: '/docs/sesion-sin-confirmar-en.webp',
+            alt: 'Customer app screen reading “We couldn’t confirm your session,” with the buttons “Try again” and “Sign in with another account.”',
+            pie: 'If the connection fails when the app opens, you can try again without being signed out.',
+          },
+        ],
+        preguntas: [
+          'Why don’t I see restaurants in my area?',
+          'Why do restaurants disappear from the list?',
+          'What do I do if the app keeps loading when it opens?',
+        ],
+        pasos: [
+          'If you don’t see restaurants, read the message above the list.',
+          'If it says the connection failed, tap “Try again.”',
+          'To see another area, change the delivery spot on the map in your cart.',
+          'If the app won’t finish opening, tap “Try again”; your account stays saved.',
+        ],
+      },
+      {
         id: 'pickup-address-change-and-extra-tip',
         titulo: 'Pick up in store, change the address, and tip after delivery',
         resumen:
@@ -2174,6 +2259,29 @@ const en: SeccionDocs[] = [
     titulo: 'For restaurants',
     icono: 'chef',
     guias: [
+      {
+        id: 'store-not-receiving-orders',
+        titulo: 'Why does my store show as not receiving orders?',
+        resumen:
+          'If your Tumbite app or panel doesn’t check in for 5 minutes, your store stops receiving orders so no customer waits for nothing. It comes back on its own as soon as you open it again.',
+        explicacion: [
+          'While your Tumbite app or panel is open, it tells Tumbite every few seconds that you’re ready for orders.',
+          'If that check-in doesn’t arrive for 5 minutes (the tablet turned off, the internet dropped, or the app closed), customers see your store as closed and can’t order. That way an order never lands on a screen nobody is watching and gets canceled.',
+          'We let you know by phone notification and email. You don’t need to do anything else: as soon as you open the app or panel again, your store shows as open on its own, and we let you know you’re receiving orders again.',
+          'If you close your store on purpose with the open/close switch, that isn’t a pause: it stays closed until you open it.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Why do customers see my store as closed when I opened it?',
+          'What happens if my internet goes down?',
+          'How do I start receiving orders again?',
+        ],
+        pasos: [
+          'Keep the Tumbite app or panel open while your store is open.',
+          'If you get the “Your store isn’t receiving orders” notification, check your connection and open the app or panel.',
+          'As soon as you open it, your store comes back on its own and you get the “You’re receiving orders again” notification.',
+        ],
+      },
       {
         id: 'restaurant-app',
         titulo: 'The restaurant app: orders, timing, the pickup code, and your menu',

@@ -28,6 +28,10 @@ const es = {
   empezarDeNuevo: 'Empezar de nuevo',
   enviando: 'Un momento…',
   salir: 'Cerrar sesión',
+  sesionSinConfirmar: 'No pudimos confirmar tu sesión.',
+  sesionSinConfirmarDetalle: 'Puede ser la conexión. Tu sesión sigue guardada en este teléfono.',
+  reintentarSesion: 'Reintentar',
+  otraCuenta: 'Entrar con otra cuenta',
   hola: 'Hola',
   rolEquivocado:
     'Esta cuenta no es de esta app. Descarga la app de Tumbite que corresponde a tu cuenta.',
@@ -64,6 +68,11 @@ const en: T = {
   empezarDeNuevo: 'Start over',
   enviando: 'One moment…',
   salir: 'Sign out',
+  sesionSinConfirmar: 'We couldn’t confirm your session.',
+  sesionSinConfirmarDetalle:
+    'It may be your connection. Your session is still saved on this phone.',
+  reintentarSesion: 'Try again',
+  otraCuenta: 'Sign in with another account',
   hola: 'Hi',
   rolEquivocado:
     'This account doesn’t belong to this app. Please download the Tumbite app for your account type.',

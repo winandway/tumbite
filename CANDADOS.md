@@ -536,3 +536,80 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
   - Pieza `reloj` de la salud (`saludReloj`): con el reloj externo configurado, `error` si no hubo una vuelta buena en 5 minutos, si hubo 3 o más vueltas con error en 15 minutos, o si la última vuelta tuvo una tarea crítica fallida. Solo con GitHub, `atrasado` pasadas 6 horas (nunca error por la impuntualidad). Se recupera sola con la siguiente vuelta buena.
   - Pruebas: `reloj.test.ts` (14) y el diagnóstico `reloj` en el sitio de pruebas (D1 real y Stripe de prueba), comprobadas en rojo.
   - **Qué NO tocar:** ninguna tarea del reloj se llama fuera de `correrRelojUnaVez`; no volver a encadenar tareas sin su `try`; no tragar errores con `catch` vacío dentro de una tarea (la tarea tiene que fallar para que se vea).
+
+- **C-CATALOGO-ESTABLE (16 oct 2026, Hito 1, rama `hito1-catalogo-sesion`, NO publicado):** la lista de restaurantes del cliente no desaparece ni se pisa con una respuesta vieja. Lo que pasaba: el inicio y la pantalla de Comida pedían cada uno su lista, primero sin ubicación y después con ella; si la respuesta sin ubicación llegaba tarde, borraba la buena. Además se repetía la consulta al cambiar la sesión o el idioma.
+  - Una sola lista compartida: `crearListaRestaurantes` (`packages/compartido/src/listaRestaurantes.ts`), que usan `apps/cliente/src/comida/useRestaurantes.ts`, el inicio y Comida. Solo vale la última consulta de cada tipo; una sin ubicación nunca pisa a una con ubicación; consultas iguales en curso se comparten; recuerdo de 60 s.
+  - La ubicación sale de la dirección, después de la guardada (el mapa del carrito la guarda) y al final del GPS.
+  - Estados claros en los dos idiomas (`EstadoCatalogo.tsx`): zona sin restaurantes, fuera de zona, error con «Intentar de nuevo», y «no se pudo actualizar» conservando la lista.
+  - Pruebas: `listaRestaurantes.test.ts` (7), comprobadas en rojo. Guía pública: Docs → «¿Por qué no veo restaurantes?».
+  - **Qué NO tocar:** no volver a pedir la lista desde cada pantalla; no hacer depender la consulta de la sesión ni del idioma.
+
+- **C-SESION-CON-LIMITE (16 oct 2026, Hito 1, rama `hito1-catalogo-sesion`, NO publicado):** al abrir una app, la comprobación de la sesión guardada tiene un tiempo máximo (8 s, `confirmarSesion` en `packages/compartido/src/confirmarSesion.ts`). Lo que pasaba: si el servidor no respondía, la pantalla de carga escarlata se quedaba para siempre.
+  - 401 o 403: la sesión no vale y se borra. Tiempo agotado, sin red o error del servidor: la sesión NO se da por buena ni se borra; se ve «No pudimos confirmar tu sesión» con «Reintentar» y «Entrar con otra cuenta» (`ConSesion.tsx`), y nada protegido se abre mientras tanto.
+  - Pruebas: `confirmarSesion.test.ts` (6), comprobadas en rojo.
+  - **Qué NO tocar:** nunca autenticar una sesión sin respuesta del servidor; nunca borrar la sesión guardada por un fallo de conexión.
+
+- **C-VERSION-DEL-ARTEFACTO (16 oct 2026, rama `versionado-visible`, NO publicado):** cada pieza dice la versión y el commit con que SE COMPILÓ, nunca el último de GitHub.
+  - Servidor: `scripts/construir-servidor.mjs` compila con `wrangler --define COMMIT_PUBLICADO / VERSION_PUBLICADA` (commit de `VERSION` o `GITHUB_SHA`). Se lee en `/datos/version` (público, `no-store`, sin secretos) y en el campo `version` de `/datos/salud`.
+  - Web y panel (la misma compilación de Vite): `define: VERSION_WEB` en `apps/panel/vite.config.ts`, además del `<meta name="version">` de siempre. Se ve en el pie del sitio (`VersionPublicada`) y en el menú de la cuenta del panel, junto con la del servidor: si no coinciden, se ve a simple vista.
+  - Apps: `EXPO_PUBLIC_COMMIT` lo pega Expo dentro del paquete; en la web lo pone `scripts/empaquetar.sh` y en las tiendas el gancho `eas-build-post-install` (`scripts/version-app.mjs`, con `EAS_BUILD_GIT_COMMIT_HASH`). El número es el de `app.json`. Se ve en el menú de tres puntos de la cuenta. Sin actualizaciones por aire, así que lo que dice es lo instalado. **El gancho de las tiendas todavía no se probó en una compilación de EAS.**
+  - Sin compilación (la computadora del equipo, las pruebas), dice «local»: nunca un commit inventado.
+  - Candado: `verificar-paquete.mjs <carpeta> <entorno> <commit>` frena el paquete si el servidor, la web o UNA de las tres apps no lleva el commit de ESTA publicación. Pruebas: `version.test.ts` (compartido y servidor) y `publicacion.test.ts`, comprobadas en rojo.
+  - **Qué NO tocar:** no leer la versión de GitHub ni de una variable del panel; no quitar el tercer argumento del revisor en `empaquetar.sh`.
+
+- **C-FALLOS-CRITICOS (16 oct 2026, rama `fallos-criticos`, NO publicado):** cinco fallos encontrados leyendo el código y **reproducidos en rojo** antes de tocar nada (`apps/servidor/src/fallosCriticos.test.ts`; detalle en `docs/RESULTADOS-FALLOS-CRITICOS.md`).
+  1. Idempotencia persistente de los avisos de Stripe: `avisos_stripe.estado` (`procesando` → `hecho`; columna nueva por COLUMNAS, con `hecho` por defecto para los avisos viejos). Solo quien crea la marca procesa; `hecho` responde `repetido` sin tocar nada; una marca `procesando` ajena responde **409** para que Stripe reintente (nunca «repetido» con los efectos sin aplicar); una marca `procesando` abandonada hace más de 5 minutos se reclama y se vuelve a procesar; si el procesamiento falla, se borra SOLO la marca propia (`AND estado = 'procesando'`) y se relanza (5xx). Pruebas de cruce real en `avisosConcurrencia.test.ts` (7, tres de ellas en rojo con el diseño anterior).
+  2. Cancelar en `pago_pendiente` anula el PaymentIntent de `stripe_sesion` (`manager.ts`, `intento`; `stripe_sesion` guarda el `pi_…` que devolvió Stripe al crear el pedido), con la misma clave `anular-{id}` y la verificación C-ANULACION-VERIFICADA (respuesta perdida, ya cancelado, fallo temporal). Pruebas: `cancelacionAutorizaciones.test.ts` (8, cinco en rojo con el código anterior) y **S12** en el sitio de pruebas contra Stripe en modo prueba.
+  3. La propina posterior solo se anota con `status = 'succeeded'`; si no, 409 y nada en la base (`pedidos.ts`).
+  4. `entregaActiva` ordena por la oferta aceptada más antigua, después `creado_en` e `id`: nunca `LIMIT 1` sin `ORDER BY` (`operacion.ts`). Dos pedidos del mismo segundo empatan por `creado_en`: por eso manda la oferta.
+  5. `soltarPedido` borra la fila de `grupos_pedido` en el mismo lote.
+  - **Qué NO tocar:** no marcar un aviso como procesado fuera del `try`; no anotar movimientos de dinero sin el `status` de Stripe; no quitar el `ORDER BY`.
+
+- **C-TRANSICIONES-PEDIDO (16 oct 2026, Entrega 1, rama `transiciones-pedido`, NO publicado):** la base rechaza cualquier cambio de estado de un pedido de Comida que no esté en `transiciones_pedido` (12 filas en `schema.sql`: 9 normales y 3 de vuelta atrás). Antes, la regla vivía solo en el `WHERE estado = …` de cada `UPDATE`, y la base dejaba, por ejemplo, aceptar un pedido sin pagar o cancelar uno entregado.
+  - El disparador `pedidos_transicion_valida` vive en `apps/servidor/src/esquemaPedidos.ts`. **No va en `schema.sql`** (C-EXCLUSIVIDAD). Lo crea `asegurarFase3` al arrancar, con la misma consulta única que la Fase 3.
+  - Vuelta atrás del Manager (cuando Stripe falla al devolver): solo vale si el mismo `UPDATE` borra `cancelado_en` y la cancelación tiene 2 minutos o menos.
+  - Salud: pieza `transiciones` (disparador presente y 12 filas).
+  - Pruebas:
+    - `transicionesPedido.test.ts`: las 42 parejas de cambio real (9 permitidas, 33 rechazadas), las vueltas atrás y 2.000 cambios al azar;
+    - `transicionesCodigo.test.ts`: cada cambio de estado que escribe el código está en la tabla, y cada fila de la tabla la usa el código;
+    - `transicionesRutas.test.ts`: aceptar y rechazar a la vez, cancelar y aceptar a la vez, reintentos, cancelar desde «en camino», un lote con dinero que se deshace entero, y registros viejos en cada estado.
+    - Siete de las doce se comprobaron en rojo quitando el disparador.
+  - Las pruebas ya no pueden poner un estado «a mano»: usan `llevarA` (`pruebas/ayuda.ts`), que camina las transiciones legales.
+  - **Qué NO tocar:**
+    - no abrir una excepción en el disparador para las pruebas;
+    - toda transición nueva se agrega a la tabla, a `PERMITIDAS` de la prueba y la detecta `transicionesCodigo.test.ts`;
+    - no mover el disparador a `schema.sql`.
+
+- **C-PAUSA-SIN-SENAL (16 oct 2026, Entrega 3, rama `pausa-sin-senal`, NO publicado):** como el «Tablet Heartbeat» de DoorDash. Si la app o el panel del restaurante no preguntan por pedidos en 5 minutos, la tienda no recibe pedidos, y vuelve sola cuando vuelven a preguntar.
+  - **La señal:** `GET /datos/restaurante/pedidos` anota `restaurantes.senal_en`, con una escritura cada 30 s como mucho (`anotarSenal` en `apps/servidor/src/pausa.ts`).
+  - **La pausa se calcula al leer**, sin depender del reloj: `conSenal` (`packages/compartido/src/senal.ts`) dentro de `abiertoAhora` (`aRestaurante`, `catalogo.ts`) y al crear el pedido (`pedidos.ts`), que responde 409 con el motivo en los dos idiomas.
+  - **Sin marca todavía (NULL) cuenta como con señal:** al publicar no se cierra ninguna tienda de golpe.
+  - **Interruptor:** `config.pausa_sin_senal_minutos` (5 por defecto; 0 la apaga).
+  - **Avisos:** la tarea del reloj `pausa_sin_senal` (**no crítica**) avisa UNA vez al dueño, al celular y por correo, y al equipo; avisa la vuelta; usa `UPDATE` condicionales sobre `pausa_aviso_en`.
+  - **Columnas por COLUMNAS:** `senal_en` y `pausa_aviso_en`.
+  - **Pruebas:** `pausaSinSenal.test.ts` (6) y `senal.test.ts` (5), comprobadas en rojo de dos formas: con la regla siempre «con señal» y sin anotar la señal.
+  - **Guía pública:** Docs → restaurantes → «¿Por qué mi tienda aparece sin recibir pedidos?».
+  - **Qué NO tocar:**
+    - no mover la pausa solo al reloj (en producción el reloj es impuntual);
+    - no tratar NULL como «sin señal» sin una migración que siembre la marca;
+    - no tocar `abierto` desde la pausa (el dueño no tiene que reabrir a mano).
+
+- **C-COBRO-AL-ENTREGAR (16 oct 2026, Entrega 1b, rama `cobro-al-entregar`, NO publicado):** la entrega se **registra primero y se cobra después**.
+  - **Lo que pasaba antes:**
+    - se capturaba en Stripe antes de registrar la entrega: si el registro fallaba, el dinero quedaba cobrado y el pedido sin entregar;
+    - un 500 de Stripe bloqueaba la entrega.
+  - **Cómo funciona ahora:**
+    - **Registro:** un lote con `INSERT liquidaciones` (clave única por pedido, deshace una entrega repetida), el pedido a «entregado» con su estado en el WHERE, y los abonos.
+    - **Captura:** `liquidar` (`apps/servidor/src/liquidaciones.ts`) reclama la liquidación con un UPDATE condicional y captura con una clave por intento (Stripe guarda los 500 con su clave durante 24 h). Si algo falla, consulta el estado con GET.
+    - **Reintentos:** espera creciente; a los 6 intentos pasa a `revision` y avisa al equipo.
+    - **Reloj:** tarea crítica `liquidaciones`.
+    - **Aviso de Stripe:** `payment_intent.succeeded` también cierra la liquidación.
+    - **Retiros:** solo cuentan lo cobrado (`SOLO_LO_COBRADO`).
+    - **Salud:** pieza `cobros`.
+  - **Decisión de Richard en revisión:** se conserva el saldo, se bloquea su retiro, se avisa una vez (`alertado_en`), no se cobra otra tarjeta y la resuelve un administrador (`GET /datos/admin/liquidaciones`).
+  - **L1:** `POST /datos/interno/diagnostico/l1` (Stripe TEST, solo en el sitio de pruebas), ejecutada en la computadora con `l1Diagnostico.test.ts`.
+  - **Pruebas:** `cobroAlEntregar.test.ts` (15), con un Stripe simulado fiel a su documentación: una sola captura por pago y la respuesta guardada por clave, incluidos los 500.
+  - **Qué NO tocar:**
+    - nunca volver a capturar antes de registrar la entrega;
+    - nunca reintentar una captura con una clave que ya devolvió error;
+    - no quitar la liquidación del lote de la entrega.

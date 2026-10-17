@@ -162,6 +162,26 @@ export const AVISOS = {
           titulo: `Propina extra: ${monto}`,
           cuerpo: 'Un cliente te dejó propina después de la entrega. Ya está en tu saldo.',
         },
+  // C-PAUSA-SIN-SENAL: la tienda dejó de recibir pedidos porque su app o su panel no responden.
+  tiendaSinSenal: (i: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Your store isn’t receiving orders',
+          cuerpo:
+            'Your Tumbite app or panel hasn’t checked in for 5 minutes, so customers can’t order. Open it to start receiving orders again.',
+        }
+      : {
+          titulo: 'Tu tienda no está recibiendo pedidos',
+          cuerpo:
+            'Tu app o tu panel de Tumbite no responden hace 5 minutos y los clientes no pueden pedirte. Ábrelo para volver a recibir pedidos.',
+        },
+  tiendaConSenal: (i: string): Aviso =>
+    i === 'en'
+      ? { titulo: 'You’re receiving orders again', cuerpo: 'Your store is back on Tumbite.' }
+      : {
+          titulo: 'Ya recibes pedidos otra vez',
+          cuerpo: 'Tu tienda volvió a aparecer en Tumbite.',
+        },
   abonoFallido: (i: string, monto: string): Aviso =>
     i === 'en'
       ? {

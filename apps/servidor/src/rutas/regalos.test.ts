@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
+import { RESTAURANTE_BASE, llevarA, mundo } from '../pruebas/ayuda';
 
 async function escenario() {
   vi.stubGlobal(
@@ -40,11 +40,12 @@ async function escenario() {
         },
         cliente.token,
       );
-      await m.DB.prepare(
-        `UPDATE pedidos SET estado = 'entregado', creado_en = ${hace}, entregado_en = ${hace} WHERE id = ?`,
-      )
-        .bind(p.datos.pedidoId)
-        .run();
+      await llevarA(
+        m.DB,
+        p.datos.pedidoId,
+        'entregado',
+        `creado_en = ${hace}, entregado_en = ${hace}`,
+      );
     }
   }
   const config = (extra: object) =>

@@ -48,6 +48,9 @@ resultados.S4 = await pedir('s4');
 }
 resultados.S7 = await pedir('s7');
 resultados.S11 = await pedir('s11');
+resultados.S12 = await pedir('s12');
+// Entrega 1b: cobro al entregar contra Stripe en modo prueba.
+resultados.L1 = await pedir('l1');
 // Fases 1 y 2 (validación del 15 oct 2026).
 resultados.F1 = await pedir('f1');
 const antes = await pedir('migraciones', { paso: 'verificar' });

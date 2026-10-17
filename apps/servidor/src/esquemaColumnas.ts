@@ -158,7 +158,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "avisos_stripe": [
     "id",
     "tipo",
-    "recibido_en"
+    "recibido_en",
+    "estado"
   ],
   "repartidores": [
     "usuario_id",
@@ -363,6 +364,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "capturado_en",
     "capturado",
     "cancelado_en"
+  ],
+  "liquidaciones": [
+    "pedido_id",
+    "estado",
+    "pi",
+    "monto",
+    "intentos",
+    "proximo_en",
+    "error",
+    "capturado_en",
+    "alertado_en",
+    "creado_en",
+    "actualizado_en"
   ],
   "pines_entrega": [
     "pedido_id",
@@ -710,6 +724,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "liberaciones",
     "distancia_m_real",
     "asignado_en"
+  ],
+  "transiciones_pedido": [
+    "desde"
   ],
   "transiciones_viaje": [
     "desde"

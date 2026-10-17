@@ -13,6 +13,7 @@ import {
   type Rol,
   type Usuario,
   borrarBorradoresDe,
+  confirmarSesion,
   crearApi,
   elegirServidor,
   esIdioma,
@@ -32,6 +33,14 @@ export const URL_SERVIDOR = elegirServidor(
 
 type Sesion = {
   cargando: boolean;
+  /**
+   * C-SESION-CON-LIMITE: la sesión guardada no se pudo confirmar (tiempo vencido, sin conexión o
+   * fallo del servidor). NO cuenta como abierta: no hay usuario ni llave en la API, así que nada
+   * protegido funciona; la sesión guardada se conserva para «Reintentar».
+   */
+  sinConfirmar: 'tiempo' | 'red' | 'servidor' | null;
+  reintentarSesion: () => Promise<void>;
+  usarOtraCuenta: () => void;
   usuario: Usuario | null;
   api: Api;
   idioma: Idioma;
@@ -57,11 +66,43 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [sinConfirmar, setSinConfirmar] = useState<Sesion['sinConfirmar']>(null);
   const [idioma, setIdioma] = useState<Idioma>(idiomaDelTelefono);
 
   const api = useMemo(
     () => crearApi({ base: URL_SERVIDOR, token: () => token, idioma: () => idioma }),
     [token, idioma],
+  );
+
+  // Confirma con el servidor la sesión guardada, con tiempo máximo (C-SESION-CON-LIMITE). Antes no
+  // había límite: si el servidor no contestaba, la app quedaba para siempre en la pantalla de carga.
+  const confirmar = useCallback(
+    async (guardado: string) => {
+      const r = await confirmarSesion(() =>
+        crearApi({ base: URL_SERVIDOR, token: () => guardado }).yo(),
+      );
+      if (r.estado === 'valida') {
+        // Una sesión de otro papel (p. ej. un restaurante en la app del cliente) no se abre.
+        if (!roles.includes(r.usuario.rol)) {
+          await llavero.borrar(LLAVE_TOKEN);
+          setSinConfirmar(null);
+          return;
+        }
+        setToken(guardado);
+        setUsuario(r.usuario);
+        setSinConfirmar(null);
+      } else if (r.estado === 'invalida') {
+        // El servidor la rechazó: se borra y se pide entrar (antes se quedaba guardada).
+        await llavero.borrar(LLAVE_TOKEN);
+        setSinConfirmar(null);
+      } else {
+        console.warn('sesión: no se pudo confirmar', r.motivo);
+        setSinConfirmar(r.motivo);
+      }
+    },
+    // Los papeles permitidos de cada app no cambian.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   useEffect(() => {
@@ -70,29 +111,28 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
         const i = await almacenTelefono.leer(LLAVE_IDIOMA);
         if (esIdioma(i)) setIdioma(i);
         const guardado = await llavero.leer(LLAVE_TOKEN);
-        if (guardado) {
-          try {
-            const r = await crearApi({ base: URL_SERVIDOR, token: () => guardado }).yo();
-            // Una sesión de otro papel (p. ej. un restaurante en la app del cliente) no se abre.
-            if (!roles.includes(r.usuario.rol)) {
-              await llavero.borrar(LLAVE_TOKEN);
-              return;
-            }
-            setToken(guardado);
-            setUsuario(r.usuario);
-          } catch (e) {
-            console.warn('sesión: no se pudo confirmar, se pide entrar de nuevo', e);
-          }
-        }
+        if (guardado) await confirmar(guardado);
       } catch (e) {
         console.error('sesión: no se pudo arrancar; se muestra la pantalla de entrar', e);
       } finally {
         setCargando(false);
       }
     })();
-    // Solo al abrir la app: los papeles permitidos de cada app no cambian.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [confirmar]);
+
+  const reintentarSesion = useCallback(async () => {
+    setCargando(true);
+    try {
+      const guardado = await llavero.leer(LLAVE_TOKEN);
+      if (guardado) await confirmar(guardado);
+      else setSinConfirmar(null);
+    } finally {
+      setCargando(false);
+    }
+  }, [confirmar]);
+
+  // Entrar con otra cuenta: se muestra la pantalla de entrar; la sesión guardada se reemplaza al entrar.
+  const usarOtraCuenta = useCallback(() => setSinConfirmar(null), []);
 
   const alEntrar = useCallback(async (t: string, u: Usuario) => {
     setToken(t);
@@ -123,6 +163,9 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
 
   const valor: Sesion = {
     cargando,
+    sinConfirmar,
+    reintentarSesion,
+    usarOtraCuenta,
     usuario,
     api,
     idioma,

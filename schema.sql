@@ -193,7 +193,10 @@ CREATE TABLE IF NOT EXISTS cuentas_stripe (
 CREATE TABLE IF NOT EXISTS avisos_stripe (
   id TEXT PRIMARY KEY,
   tipo TEXT NOT NULL,
-  recibido_en TEXT NOT NULL DEFAULT (datetime('now'))
+  recibido_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- 'procesando' mientras se aplica; 'hecho' al terminar (C-FALLOS-CRITICOS 1). Los avisos de
+  -- antes de esta columna ya estaban aplicados: por eso el valor por defecto es 'hecho'.
+  estado TEXT NOT NULL DEFAULT 'hecho' CHECK (estado IN ('procesando', 'hecho'))
 );
 
 CREATE TABLE IF NOT EXISTS repartidores (
@@ -467,6 +470,25 @@ CREATE TABLE IF NOT EXISTS cobros (
   capturado INTEGER,
   cancelado_en TEXT
 );
+
+-- C-COBRO-AL-ENTREGAR (16 oct 2026, Entrega 1b): la liquidación de cada entrega. Nace en el MISMO
+-- lote que pasa el pedido a «entregado» y anota los abonos; su clave primaria impide entregar (y
+-- abonar) dos veces. Guarda el estado de la captura en Stripe para reintentarla con seguridad.
+CREATE TABLE IF NOT EXISTS liquidaciones (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  estado TEXT NOT NULL CHECK (estado IN ('pendiente', 'capturando', 'capturada', 'reintentar', 'revision', 'no_aplica')),
+  pi TEXT,
+  monto INTEGER NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  proximo_en TEXT,
+  error TEXT,
+  capturado_en TEXT,
+  -- Cuándo se avisó al equipo de que quedó en revisión (una sola vez; la resuelve un administrador).
+  alertado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS liquidaciones_por_cobrar ON liquidaciones(estado, proximo_en);
 
 -- PIN de 4 dígitos para la entrega en mano, si el cliente lo pidió (lo apaga si recibe otra persona).
 CREATE TABLE IF NOT EXISTS pines_entrega (
@@ -1228,6 +1250,27 @@ CREATE TABLE IF NOT EXISTS viajes (
   distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
   asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
 );
+
+-- C-TRANSICIONES-PEDIDO (16 oct 2026): las transiciones de estado permitidas de un pedido de
+-- Comida. El disparador que las hace cumplir NO va aquí: lo crea esquema.ts al arrancar
+-- (esquemaPedidos.ts). reversion = 1: vuelta atrás del Manager si Stripe falla (≤ 2 minutos).
+CREATE TABLE IF NOT EXISTS transiciones_pedido (
+  desde TEXT NOT NULL, hacia TEXT NOT NULL, reversion INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (desde, hacia)
+);
+INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES
+  ('pago_pendiente', 'pagado', 0),
+  ('pago_pendiente', 'cancelado', 0),
+  ('pagado', 'aceptado', 0),
+  ('pagado', 'cancelado', 0),
+  ('aceptado', 'listo', 0),
+  ('aceptado', 'cancelado', 0),
+  ('listo', 'en_camino', 0),
+  ('listo', 'entregado', 0),
+  ('en_camino', 'entregado', 0),
+  ('cancelado', 'pago_pendiente', 1),
+  ('cancelado', 'pagado', 1),
+  ('cancelado', 'aceptado', 1);
 
 CREATE TABLE IF NOT EXISTS transiciones_viaje (
   desde TEXT NOT NULL, hacia TEXT NOT NULL, actor TEXT NOT NULL,

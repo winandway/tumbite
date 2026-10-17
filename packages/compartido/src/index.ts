@@ -24,3 +24,7 @@ export * from './colaEntrega';
 export * from './firmaInterna';
 export * from './tiempoReal';
 export * from './entornos';
+export * from './listaRestaurantes';
+export * from './confirmarSesion';
+export * from './version';
+export * from './senal';

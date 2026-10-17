@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { VersionPublicada } from '../VersionPublicada';
 import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
@@ -169,6 +170,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
             {MARCA.empresa}
           </a>
         </p>
+        <VersionPublicada idioma={idioma} />
       </div>
     </footer>
   );

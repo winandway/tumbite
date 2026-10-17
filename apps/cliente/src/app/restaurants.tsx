@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ErrorApi, type Restaurante, proximaApertura, textoApertura } from '@tumbite/compartido';
-import { C, e, urlFoto, useSesion } from '@tumbite/movil';
+import { type Restaurante, proximaApertura, textoApertura } from '@tumbite/compartido';
+import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
-import { miUbicacion } from '../ubicacion';
+import { useRestaurantes } from '../comida/useRestaurantes';
+import { EstadoCatalogo } from '../comida/EstadoCatalogo';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { ModalMuyPronto } from '../inicio/ModalMuyPronto';
 import { IMG, fotoDeRelleno } from '../inicio/recursos';
@@ -20,36 +21,15 @@ import { textosComida } from '../comida/textos';
 export default function Restaurantes() {
   const { api, idioma } = useSesion();
   const t = textosComida(idioma);
-  const [lista, setLista] = useState<Restaurante[] | null>(null);
-  const [error, setError] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
 
-  const cargar = useCallback(
-    async (p: { lat: number; lng: number } | null) => {
-      try {
-        const q = p ? `?lat=${p.lat}&lng=${p.lng}` : '';
-        const r = await api.pedir<{ restaurantes: Restaurante[] }>(
-          'GET',
-          `/datos/restaurantes${q}`,
-        );
-        setError('');
-        setLista(r.restaurantes);
-      } catch (x) {
-        setError(x instanceof ErrorApi ? x.message : String(x));
-      }
-    },
-    [api],
-  );
-  useEffect(() => {
-    void (async () => {
-      const primera = cargar(null);
-      const p = await miUbicacion();
-      await primera;
-      if (p) await cargar(p);
-    })();
-  }, [cargar]);
+  // C-CATALOGO-ESTABLE: la misma lista que el inicio (comida/useRestaurantes): no se vuelve a
+  // pedir al entrar desde el inicio y una respuesta vieja nunca borra la nueva.
+  const catalogo = useRestaurantes(api, null);
+  const lista =
+    catalogo.estado === 'cargando' && !catalogo.restaurantes.length ? null : catalogo.restaurantes;
 
   const categorias = useMemo(
     () => [...new Set((lista ?? []).map((r) => r.categoria).filter(Boolean))],
@@ -122,7 +102,7 @@ export default function Restaurantes() {
           />
         )}
       />
-      {error ? <Text style={e.error}>{error}</Text> : null}
+      <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
     </View>
   );
 
@@ -141,10 +121,8 @@ export default function Restaurantes() {
         }}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          lista ? (
-            <Text style={{ color: '#5E5E5E', marginTop: 12 }}>
-              {busqueda || categoria ? t.sinResultados : t.sinRestaurantes}
-            </Text>
+          lista && lista.length && (busqueda || categoria) ? (
+            <Text style={{ color: '#5E5E5E', marginTop: 12 }}>{t.sinResultados}</Text>
           ) : null
         }
         renderItem={({ item: r, index }) => (

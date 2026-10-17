@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  ['Este pedido ya se entregó.', 'This order was already delivered.'],
+  [
+    'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
+    'This restaurant isn’t taking orders right now. Try again in a few minutes.',
+  ],
   [
     'Falta la clave de la solicitud. Actualiza la app.',
     'This request is missing its key. Please update the app.',
