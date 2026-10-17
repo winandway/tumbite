@@ -69,7 +69,8 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "../../plugins/escenas-ios"
     ],
     "description": "Receive and manage your Tumbite orders.",
     "owner": "windoce-llc",

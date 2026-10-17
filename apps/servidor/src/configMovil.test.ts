@@ -64,3 +64,41 @@ describe('configuración de las apps móviles', () => {
       );
   });
 });
+
+describe('C-ESCENAS-IOS: iOS 27 exige el ciclo de escenas', () => {
+  // La plantilla de AppDelegate de Expo 57 (la que genera «expo prebuild»).
+  const PLANTILLA = `class AppDelegate: ExpoAppDelegate {
+  var window: UIWindow?
+  public override func application() -> Bool {
+#if os(iOS) || os(tvOS)
+    window = UIWindow(frame: UIScreen.main.bounds)
+    factory.startReactNative(
+      withModuleName: "main",
+      in: window,
+      launchOptions: launchOptions)
+#endif
+
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}`;
+
+  it('el complemento deja el arranque sin ventana propia y declara la escena', async () => {
+    const plugin = (await import('../../../plugins/escenas-ios.js')) as unknown as {
+      conEscenas: (c: string) => string;
+      MANIFIESTO: Record<string, any>;
+    };
+    const p = (plugin as any).default ?? plugin;
+    const nuevo = p.conEscenas(PLANTILLA);
+    expect(nuevo).toContain('ExpoAppDelegate, ExpoReactNativeFactoryProvider');
+    expect(nuevo).not.toContain('UIWindow(frame:');
+    expect(nuevo).toContain('return super.application');
+    expect(
+      p.MANIFIESTO.UISceneConfigurations.UIWindowSceneSessionRoleApplication[0]
+        .UISceneDelegateClassName,
+    ).toBe('$(PRODUCT_MODULE_NAME).SceneDelegate');
+  });
+
+  it.each(APPS)('%s usa el complemento de escenas', (app) => {
+    expect((leer(app, 'app.json') as Conf).expo.plugins).toContain('../../plugins/escenas-ios');
+  });
+});

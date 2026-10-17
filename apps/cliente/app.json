@@ -73,7 +73,8 @@
           "merchantIdentifier": "merchant.com.tumbite.cliente",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "../../plugins/escenas-ios"
     ],
     "description": "Food delivery in Miami. Order from local restaurants and track your driver live.",
     "owner": "windoce-llc",
