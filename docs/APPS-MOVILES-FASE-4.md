@@ -52,3 +52,19 @@ cd /Users/windocellc/tumbite/apps/cliente && EXPO_PUBLIC_API_URL=https://staging
 ```
 
 (Igual para `repartidor` y `restaurante`.) El APK queda en `android/app/build/outputs/apk/release/app-release.apk`. Las carpetas `android/` e `ios/` son generadas: no van a GitHub ni a la revisión de estilo.
+
+## Publicación y los seis APK (17 oct 2026)
+
+- Producción publicada con el flujo permanente: commit `f77122e0` (paquete yapanel-build `66f81e54`), idéntico al código aprobado en staging (`db176dac`; solo cambian documentos). Etiquetas de restauración: `restauracion-antes-apps-main` (ed0250ee) y `restauracion-antes-apps-paquete` (4a74590e). Verificador «despues» en VERDE.
+- Los seis APK, en la carpeta `apks-pruebas/` del proyecto (fuera de GitHub):
+
+| App         | Producción (tumbite.com)             | Pruebas (staging.tumbite.com)     |
+| ----------- | ------------------------------------ | --------------------------------- |
+| Cliente     | `tumbite-cliente-produccion.apk`     | `tumbite-cliente-pruebas.apk`     |
+| Repartidor  | `tumbite-repartidor-produccion.apk`  | `tumbite-repartidor-pruebas.apk`  |
+| Restaurante | `tumbite-restaurante-produccion.apk` | `tumbite-restaurante-pruebas.apk` |
+
+- Comprobado dentro de cada paquete: los de producción no contienen la dirección de staging; los de pruebas llevan staging como servidor configurado (la única mención de tumbite.com es la dirección de respaldo del código, que no se usa cuando hay servidor configurado).
+- **Ojo:** la versión de pruebas y la de producción de una misma app tienen el mismo identificador. En un mismo teléfono, instalar una reemplaza a la otra.
+- **No pagar desde los APK de producción:** usan Stripe real.
+- Para rehacerlos: `bash apks.sh https://tumbite.com produccion` o `bash apks.sh https://staging.tumbite.com pruebas` (guion descrito arriba: prebuild + gradlew assembleRelease por app).

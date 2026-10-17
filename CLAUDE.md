@@ -18,7 +18,7 @@ Método completo: `docs/METODOLOGIA-INGENIERIA-REA.md`. Se lee antes de diseñar
 
 INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN CON TUMBITE → DECISIÓN DE ARQUITECTURA → IMPLEMENTACIÓN → PRUEBAS
 
-**No frena lo urgente ni lo simple:** una emergencia (algo roto que afecta usuarios o dinero), un arreglo con causa clara, un texto o un estilo van directo a la prueba en rojo y al arreglo. La ficha, si hace falta, se escribe después. Las restricciones de producción, pagos y publicación siguen intactas: nada se publica sin la autorización de Richard.
+**No frena lo urgente ni lo simple:** una emergencia (algo roto que afecta usuarios o dinero), un arreglo con causa clara, un texto o un estilo van directo a la prueba en rojo y al arreglo. La ficha, si hace falta, se escribe después. Las restricciones de pagos siguen intactas, y la publicación sigue el flujo permanente (ver «Flujo permanente de publicación»).
 
 - **Antes de diseñar o cambiar una función importante**, en este orden:
   1. Identificar las referencias.
@@ -101,7 +101,16 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 
 - Toda prueba nueva de Tumbite se hace en el sitio de pruebas (staging.tumbite.com), **exclusivamente con Stripe en modo prueba**.
 - **Prohibido usar tarjetas reales o generar cobros reales para probar**, también en tumbite.com. Lo que pasó: una compra de prueba real de 7,18 dólares quedó abierta desde el 12 oct; Richard decidió no reembolsarla y se marcó como entregada el 15 oct.
-- Nada se publica en producción sin la autorización explícita de Richard.
+- Nada se publica en producción sin pasar antes por staging (flujo permanente, abajo).
+
+## Flujo permanente de publicación (dictado por Richard, 17 oct 2026)
+
+DESARROLLO → STAGING → PRUEBAS → PRODUCCIÓN. **Toda versión aprobada en staging continúa a producción como parte normal del ciclo**, sin esperar otra autorización. Entregas frecuentes: nada aprobado se queda acumulado sin publicar.
+
+- En producción NO se repite la batería completa que ya pasó en staging: control previo («antes»), puntos de restauración (etiquetas), publicar, y verificación breve («despues») con el verificador de producción.
+- Se comprueba que lo publicado sea idéntico al código aprobado en staging (solo pueden diferir documentos).
+- Siguen prohibidos sin orden expresa: cambiar configuraciones financieras, activar retiros, activar servicios pendientes (Moto, Carro, reloj de Cloudflare en producción) y cualquier operación con dinero real.
+- Si aparece un fallo real, se corrige y se sigue el flujo habitual (vuelve a pasar por staging).
 
 ## Perímetro
 
