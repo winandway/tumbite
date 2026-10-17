@@ -136,3 +136,27 @@
 - [ ] 👤 Revisar y aprobar la Fase 3 (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md) y autorizar, aparte, publicarla en producción.
 - [ ] 👤 Revocar y volver a crear la llave del sitio de pruebas que pasó por el chat.
 - [ ] 👤 Probar «Conectarme» en tumbite.com con una cuenta de repartidor suya (en producción no hay cuenta de prueba de repartidor).
+
+## Orden aprobado desde el 16 oct 2026 (Richard)
+
+- [x] Publicar la Fase 3. Versión `36f4e35`, 16 oct; verificador «después» VERDE.
+- [ ] Integrar el reloj seguro con la Fase 3 (rama `fase-reloj-seguro`) y validarlo en el sitio de pruebas. Sin publicar.
+- [ ] 👤 Autorizar la publicación del reloj seguro.
+- [ ] 👤 Autorizar el trabajador del reloj de producción (`docs/EVALUACION-RELOJ-CLOUDFLARE.md` §B).
+- [ ] Hito 1 del cliente: catálogo y sesión, dos correcciones independientes (`docs/PLAN-CATALOGO-Y-RELOJ.md`).
+- [ ] Validar el MVP de Comida.
+- [ ] Tarea aparte (aprobada en concepto): la salud no oculta discrepancias viejas; excepciones auditables en una tabla propia, sin tocar las conciliaciones. Incluye los 10 pedidos de prueba de Novi del 11 y 12 oct, que nunca se conciliaron.
+
+## Requisitos registrados para próximos hitos (16 oct 2026, Richard; NO implementar todavía)
+
+- [ ] **A. Versionado automático y visible** en la web, el panel y las tres apps:
+  - el mismo número de versión en todas, que salga solo de cada publicación (hoy existe la etiqueta `version` de la web, con el commit);
+  - visible para la persona en un lugar discreto: el pie de la web, «Acerca de» del panel y la pantalla de cuenta de cada app;
+  - en las apps de celular, también el número de compilación de la tienda.
+  - Sirve para soporte («¿qué versión tienes?») y para comprobar que una publicación llegó.
+- [ ] **B. Optimización automática de imágenes al subirlas:**
+  - pasarlas a WebP con buena calidad y en varios tamaños adaptados (miniatura, tarjeta, pantalla completa);
+  - quitar los datos ocultos de la foto (ubicación y cámara), salvo las fotos de entrega, cuya ubicación se usa como prueba y se guarda aparte;
+  - conservar el original solo donde hace falta como evidencia;
+  - aplica a las fotos de platos, de restaurantes, de documentos y de entregas.
+  - Hay que decidir dónde se convierte: en el teléfono antes de subir, en el servidor o con un servicio de imágenes. Va con su prueba de peso y de calidad.

@@ -26,6 +26,7 @@ import { fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
 import { saludServicios, servicios } from './rutas/servicios';
 import { interno, saludTiempoReal } from './rutas/interno';
+import { saludReloj } from './reloj';
 import { viajes } from './rutas/viajes';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
@@ -182,6 +183,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.exclusividad = await saludExclusividad(c.env.DB).catch((e: unknown) => {
       console.error('salud: exclusividad', e);
+      return 'error' as const;
+    });
+  // Reloj seguro: vueltas buenas a tiempo, sin rachas de errores ni tareas críticas fallidas.
+  if (c.env.DB)
+    piezas.reloj = await saludReloj(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: reloj', e);
       return 'error' as const;
     });
   let fechaRespaldo: string | null = null;

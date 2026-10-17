@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { app } from '../app';
 import { mundo } from '../pruebas/ayuda';
 
@@ -201,5 +201,27 @@ describe('diagnóstico F3 (exclusividad en el motor real)', () => {
     const fin = await pedir('f3/cerrar', { sufijo });
     expect(fin.datos.casos.filter((x: { ok: boolean }) => !x.ok)).toEqual([]);
     expect(fin.datos.ok).toBe(true);
+  });
+});
+
+describe('diagnóstico del reloj seguro', () => {
+  it('corre los casos con Stripe de prueba simulado y deja todo limpio', async () => {
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      const m = init?.method ?? 'GET';
+      if (u.includes('/refunds')) return Response.json({ data: [] });
+      if (u.endsWith('/cancel')) return Response.json({ id: 'pi_diag', status: 'canceled' });
+      if (m === 'POST' && u.endsWith('/payment_intents'))
+        return Response.json({ id: 'pi_diag', status: 'requires_capture' });
+      if (m === 'GET' && u.includes('/payment_intents/pi_diag'))
+        return Response.json({ id: 'pi_diag', status: 'canceled' });
+      return Response.json({});
+    });
+    const { m, pedir } = preparar({ STRIPE_SECRET_KEY: 'sk_test_diag' });
+    await m.cuenta('cliente');
+    const r = await pedir('reloj');
+    expect(r.datos.casos?.filter((x: { ok: boolean }) => !x.ok)).toEqual([]);
+    expect(r.datos.ok).toBe(true);
+    vi.unstubAllGlobals();
   });
 });

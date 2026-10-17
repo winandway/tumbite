@@ -1149,6 +1149,20 @@ CREATE TABLE IF NOT EXISTS tareas_programadas (
 );
 CREATE INDEX IF NOT EXISTS tareas_programadas_viejas ON tareas_programadas(empezada_en);
 
+-- Reloj seguro (16 oct 2026, C-RELOJ-AISLADO): el resultado de CADA tarea de cada vuelta. Una tarea
+-- que falla no frena a las demás y queda aquí; la pieza «reloj» de la salud lo lee.
+CREATE TABLE IF NOT EXISTS reloj_tareas (
+  clave TEXT NOT NULL,
+  tarea TEXT NOT NULL,
+  critica INTEGER NOT NULL DEFAULT 0 CHECK (critica IN (0, 1)),
+  ok INTEGER NOT NULL CHECK (ok IN (0, 1)),
+  ms INTEGER NOT NULL DEFAULT 0,
+  error TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (clave, tarea)
+);
+CREATE INDEX IF NOT EXISTS reloj_tareas_fallidas ON reloj_tareas(creado_en) WHERE ok = 0;
+
 -- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
 CREATE TABLE IF NOT EXISTS peticiones_internas (
   nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),

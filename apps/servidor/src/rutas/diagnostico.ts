@@ -12,6 +12,8 @@ import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
 import { correrRelojUnaVez, tomarPedidoComida } from './operacion';
 import { aceptarOperacion, liberarViaje } from '../operaciones';
+import { type TareaReloj } from '../reloj';
+import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
 
 /**
@@ -1469,4 +1471,212 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
     .first<{ n: number }>();
   casos.push({ nombre: 'la limpieza no dejó nada temporal', ok: Number(resto?.n) === 0 });
   return c.json({ prueba: 'F3', ok: casos.every((x) => x.ok), casos });
+});
+
+// ---------------------------------------------------------------- reloj seguro (C-RELOJ-AISLADO)
+// Contra la base D1 REAL del sitio de pruebas y Stripe en MODO PRUEBA. Las vueltas de prueba usan
+// el nombre «reloj-diag» (la salud solo mira «reloj») y todo lo temporal lleva «zz-» y se borra.
+
+diagnostico.post('/interno/diagnostico/reloj', async (c) => {
+  const db = base(c);
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const stripe = crearStripe(llave)!;
+  const s = sufijo();
+  const casos: Caso[] = [];
+  const tabla = `zz_reloj_${s}`;
+  const cliente = `zz-rel-c-${s}`;
+  const dueno = `zz-rel-d-${s}`;
+  const rest = `zz-rel-r-${s}`;
+  const pedido = `zz-rel-p-${s}`;
+  const base0 = Date.UTC(2020, 0, 1) + Math.floor(Math.random() * 1e6) * 60_000;
+  const ventana = (n: number) => new Date(base0 + n * 60_000).toISOString().slice(0, 16);
+  const vuelta = (n: number, tareas: TareaReloj[], origen: 'github' | 'externo' = 'externo') =>
+    correrRelojUnaVez(c.env, db, ventana(n), origen, { tareas, tarea: 'reloj-diag' });
+  const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  await db.exec(`CREATE TABLE ${tabla} (nombre TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`);
+  const cuenta = (nombre: string, ms = 0): TareaReloj => ({
+    nombre,
+    critica: false,
+    correr: async (_e, d) => {
+      if (ms) await espera(ms);
+      await d
+        .prepare(
+          `INSERT INTO ${tabla} (nombre, n) VALUES (?, 1) ON CONFLICT(nombre) DO UPDATE SET n = n + 1`,
+        )
+        .bind(nombre)
+        .run();
+    },
+  });
+  const leer = async (nombre: string) =>
+    Number(
+      (
+        await db
+          .prepare(`SELECT n FROM ${tabla} WHERE nombre = ?`)
+          .bind(nombre)
+          .first<{ n: number }>()
+      )?.n ?? 0,
+    );
+  let pi: string | undefined;
+  try {
+    // 1. GitHub y Cloudflare en el mismo minuto.
+    const [a, b] = await Promise.all([
+      vuelta(1, [cuenta('mismo', 300)], 'github'),
+      vuelta(1, [cuenta('mismo', 300)], 'externo'),
+    ]);
+    casos.push({
+      nombre: 'GitHub y Cloudflare en el mismo minuto: una sola vuelta',
+      ok: [a, b].filter((x) => 'yaHecho' in x).length === 1 && (await leer('mismo')) === 1,
+    });
+    // 2. Una vuelta lenta (más de lo normal) se cruza con la del minuto siguiente; el «dinero» se
+    //    decide con una sentencia condicionada, como en las tareas reales.
+    await db.prepare(`INSERT INTO ${tabla} (nombre, n) VALUES ('cobro', 0)`).run();
+    let movidos = 0;
+    const dinero = (ms: number): TareaReloj => ({
+      nombre: 'dinero',
+      critica: true,
+      correr: async (_e, d) => {
+        if (ms) await espera(ms);
+        const r = await d
+          .prepare(`UPDATE ${tabla} SET n = 1 WHERE nombre = 'cobro' AND n = 0`)
+          .run();
+        if (r.meta.changes) movidos++;
+      },
+    });
+    const [lenta, siguiente] = await Promise.all([
+      vuelta(2, [dinero(3000)]),
+      vuelta(3, [dinero(0)]),
+    ]);
+    casos.push({
+      nombre:
+        'vueltas cruzadas (una lenta y la siguiente): las dos corren y el dinero se mueve una vez',
+      ok: !('yaHecho' in lenta) && !('yaHecho' in siguiente) && movidos === 1,
+      detalle: `movidos=${movidos}`,
+    });
+    // 3. Una tarea que falla a mitad: las demás corren y todo queda registrado.
+    const fallona: TareaReloj = {
+      nombre: 'falla',
+      critica: true,
+      correr: async () => {
+        throw new Error('falla de prueba');
+      },
+    };
+    const r3 = await vuelta(4, [cuenta('antes'), fallona, cuenta('despues')]);
+    const filas = await db
+      .prepare('SELECT tarea, ok FROM reloj_tareas WHERE clave = ? ORDER BY tarea')
+      .bind(`reloj-diag:${ventana(4)}`)
+      .all<{ tarea: string; ok: number }>();
+    casos.push({
+      nombre: 'una tarea que falla no frena a las demás y cada resultado queda guardado',
+      ok:
+        (await leer('antes')) === 1 &&
+        (await leer('despues')) === 1 &&
+        'fallidas' in r3 &&
+        JSON.stringify(r3.fallidas) === '["falla"]' &&
+        filas.results.length === 3 &&
+        filas.results.some((f) => f.tarea === 'falla' && f.ok === 0),
+    });
+    // 4. Respuesta perdida: el reloj reintenta la MISMA ventana y no se repite nada.
+    const repetida = await vuelta(4, [cuenta('antes'), fallona, cuenta('despues')]);
+    casos.push({
+      nombre: 'reintento tras una respuesta perdida: «ya hecho», nada se repite',
+      ok: 'yaHecho' in repetida && (await leer('antes')) === 1,
+    });
+    // 5. El Manager REAL sobre un pedido con un pago REAL de modo prueba, con dos vueltas cruzadas
+    //    y un reintento: un solo pedido cancelado, una sola anulación, ninguna devolución.
+    const intento = await stripe.post<{ id: string; status: string }>(
+      '/payment_intents',
+      {
+        amount: 500,
+        currency: 'usd',
+        capture_method: 'manual',
+        payment_method: 'pm_card_visa',
+        confirm: 'true',
+        'automatic_payment_methods[enabled]': 'true',
+        'automatic_payment_methods[allow_redirects]': 'never',
+        'metadata[pedido_id]': pedido,
+      },
+      `diag-reloj-${s}`,
+    );
+    pi = intento.id;
+    const usuario = (id: string, rol: string) =>
+      db
+        .prepare(
+          "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, 'Prueba reloj', ?, 'x')",
+        )
+        .bind(id, `${id}@prueba.invalid`, rol);
+    await db.batch([
+      usuario(cliente, 'cliente'),
+      usuario(dueno, 'restaurante'),
+      db
+        .prepare(
+          "INSERT INTO restaurantes (id, dueno_id, nombre, estado) VALUES (?, ?, 'Prueba reloj', 'pendiente')",
+        )
+        .bind(rest, dueno),
+      db
+        .prepare(
+          `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, stripe_pago, pagado_en)
+           VALUES (?, ?, ?, 'pagado', '[]', 500, 0, 0, 0, 0, 500, 0, 0, 0, 0, 0, 'basico', 'Prueba reloj', ?, datetime('now', '-30 minutes'))`,
+        )
+        .bind(pedido, cliente, rest, pi),
+      db.prepare('INSERT INTO cobros (pedido_id) VALUES (?)').bind(pedido),
+    ]);
+    const manager: TareaReloj = {
+      nombre: 'manager',
+      critica: true,
+      correr: (env, d) => vigilarPedidos(env, d, pedido),
+    };
+    await Promise.all([vuelta(5, [manager]), vuelta(6, [manager])]);
+    await vuelta(7, [manager]);
+    const ped = await db
+      .prepare(
+        "SELECT p.estado, c.cancelado_en, (SELECT COUNT(*) FROM historial_estados h WHERE h.pedido_id = p.id AND h.estado = 'cancelado') AS cancelados FROM pedidos p JOIN cobros c ON c.pedido_id = p.id WHERE p.id = ?",
+      )
+      .bind(pedido)
+      .first<{ estado: string; cancelado_en: string | null; cancelados: number }>();
+    const enStripe = await stripe.get<{ status: string }>(`/payment_intents/${pi}`);
+    const devoluciones = await stripe.get<{ data: unknown[] }>('/refunds', { payment_intent: pi });
+    casos.push({
+      nombre:
+        'Manager real con dos vueltas cruzadas y un reintento: un pedido cancelado, anulado en Stripe, sin devoluciones',
+      ok:
+        ped?.estado === 'cancelado' &&
+        Boolean(ped.cancelado_en) &&
+        Number(ped.cancelados) === 1 &&
+        enStripe.status === 'canceled' &&
+        devoluciones.data.length === 0,
+      detalle: JSON.stringify({
+        ped,
+        stripe: enStripe.status,
+        devoluciones: devoluciones.data.length,
+      }),
+    });
+  } finally {
+    const like = `%${s}%`;
+    await db
+      .batch([
+        db.prepare('DELETE FROM historial_estados WHERE pedido_id = ?').bind(pedido),
+        db.prepare('DELETE FROM bitacora_pedidos WHERE pedido_id = ?').bind(pedido),
+        db.prepare('DELETE FROM avisos_pedido WHERE pedido_id = ?').bind(pedido),
+        db.prepare('DELETE FROM cobros WHERE pedido_id = ?').bind(pedido),
+        db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
+        db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
+        db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(cliente, dueno),
+        db.prepare(
+          "DELETE FROM reloj_tareas WHERE clave LIKE 'reloj-diag:%' AND clave IN (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj-diag' AND empezada_en > datetime('now', '-1 hour'))",
+        ),
+        db.prepare("DELETE FROM tareas_programadas WHERE tarea = 'reloj-diag'"),
+      ])
+      .catch((e: unknown) => console.error('diagnóstico reloj: limpieza', e, like));
+    await db.exec(`DROP TABLE IF EXISTS ${tabla}`).catch(() => undefined);
+  }
+  const resto = await db
+    .prepare(
+      'SELECT (SELECT COUNT(*) FROM pedidos WHERE id = ?) + (SELECT COUNT(*) FROM usuarios WHERE id IN (?, ?)) AS n',
+    )
+    .bind(pedido, cliente, dueno)
+    .first<{ n: number }>();
+  casos.push({ nombre: 'la limpieza no dejó nada temporal', ok: Number(resto?.n) === 0 });
+  return c.json({ prueba: 'RELOJ', ok: casos.every((x) => x.ok), casos, pi: pi ?? null });
 });
