@@ -1,6 +1,7 @@
 // Candado de la configuración de las tres apps (C-APPS-MOVILES). Lee los app.json y eas.json
 // reales: si alguien rompe un permiso, el sonido del restaurante o el perfil de pruebas, salta.
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canalPedidos } from '@tumbite/compartido';
@@ -62,5 +63,43 @@ describe('configuración de las apps móviles', () => {
       expect((leer(a, 'app.json') as Conf).expo.android.permissions ?? []).not.toContain(
         'RECORD_AUDIO',
       );
+  });
+});
+
+describe('C-ESCENAS-IOS: iOS 27 exige el ciclo de escenas', () => {
+  // La plantilla de AppDelegate de Expo 57 (la que genera «expo prebuild»).
+  const PLANTILLA = `class AppDelegate: ExpoAppDelegate {
+  var window: UIWindow?
+  public override func application() -> Bool {
+#if os(iOS) || os(tvOS)
+    window = UIWindow(frame: UIScreen.main.bounds)
+    factory.startReactNative(
+      withModuleName: "main",
+      in: window,
+      launchOptions: launchOptions)
+#endif
+
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}`;
+
+  it('el complemento deja el arranque sin ventana propia y declara la escena', () => {
+    // El complemento es de Node con módulos clásicos: se carga como lo carga «expo prebuild».
+    const p = createRequire(join(RAIZ, 'package.json'))('./plugins/escenas-ios.js') as {
+      conEscenas: (c: string) => string;
+      MANIFIESTO: Record<string, any>;
+    };
+    const nuevo = p.conEscenas(PLANTILLA);
+    expect(nuevo).toContain('ExpoAppDelegate, ExpoReactNativeFactoryProvider');
+    expect(nuevo).not.toContain('UIWindow(frame:');
+    expect(nuevo).toContain('return super.application');
+    expect(
+      p.MANIFIESTO.UISceneConfigurations.UIWindowSceneSessionRoleApplication[0]
+        .UISceneDelegateClassName,
+    ).toBe('$(PRODUCT_MODULE_NAME).SceneDelegate');
+  });
+
+  it.each(APPS)('%s usa el complemento de escenas', (app) => {
+    expect((leer(app, 'app.json') as Conf).expo.plugins).toContain('../../plugins/escenas-ios');
   });
 });
