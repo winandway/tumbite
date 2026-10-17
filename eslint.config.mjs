@@ -14,6 +14,9 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/.expo/**',
+      // Proyectos nativos generados por «expo prebuild» al compilar los APK (no son código nuestro).
+      'apps/*/android/**',
+      'apps/*/ios/**',
       '**/.dist-worker/**',
       '**/.dist-tiempo-real/**',
       '**/.dist-reloj/**',

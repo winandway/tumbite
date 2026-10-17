@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import type { Api, Usuario } from '@tumbite/compartido';
+import { CANAL_AVISOS, canalPedidos, type Api, type Usuario } from '@tumbite/compartido';
 
 /**
  * Avisos al celular: pide permiso y registra el token del teléfono en el servidor.
@@ -40,11 +40,10 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null) {
         const estado = permiso.granted ? permiso : await Notifications.requestPermissionsAsync();
         if (!estado.granted) return;
         if (Platform.OS === 'android')
-          await Notifications.setNotificationChannelAsync('pedidos', {
-            name: 'Pedidos',
-            importance: Notifications.AndroidImportance.MAX,
-            sound: 'default',
-          });
+          await Notifications.setNotificationChannelAsync(
+            CANAL_AVISOS,
+            canalPedidos(Constants.expoConfig?.extra, Notifications.AndroidImportance.MAX),
+          );
         const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: proyecto });
         if (!vivo) return;
         await api.pedir('POST', '/datos/cuentas/dispositivo', { token, plataforma: Platform.OS });

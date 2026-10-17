@@ -105,12 +105,16 @@ type Estado = {
 };
 type Billetera = DatosBilletera;
 
-/** La ubicación con un tope de 15 segundos: si el GPS no responde, se usa la última conocida. */
+/**
+ * La ubicación con un tope de 15 segundos. Si la precisión alta falla (en Android, cuando la
+ * persona no activa la «precisión de ubicación» de Google), se pide con precisión normal; si el
+ * GPS no responde, se usa la última conocida.
+ */
 async function ubicacionConLimite(): Promise<Location.LocationObject | null> {
   const tope = new Promise<null>((r) => setTimeout(() => r(null), 15000));
-  const actual = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }).catch(
-    () => null,
-  );
+  const actual = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+    .catch(() => Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }))
+    .catch(() => null);
   const p = await Promise.race([actual, tope]);
   return p ?? (await Location.getLastKnownPositionAsync().catch(() => null));
 }
@@ -124,7 +128,7 @@ const T = {
     sinUbicacion: 'Para recibir pedidos necesitamos tu ubicación mientras usas la app.',
     buscandoUbicacion: 'Buscando tu ubicación…',
     ubicacionTarda:
-      'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que el navegador tenga permiso, y vuelve a intentar.',
+      'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que Tumbite tenga permiso de ubicación, y vuelve a intentar.',
     buscando: 'Buscando pedidos cerca de ti…',
     oferta: 'Nueva oferta',
     ganas: 'Ganas',
@@ -224,7 +228,7 @@ const T = {
     sinUbicacion: 'To receive orders we need your location while you use the app.',
     buscandoUbicacion: 'Finding your location…',
     ubicacionTarda:
-      'We couldn’t read your location. Make sure GPS is on and your browser has permission, then try again.',
+      'We couldn’t read your location. Make sure GPS is on and Tumbite has location permission, then try again.',
     buscando: 'Looking for orders near you…',
     oferta: 'New offer',
     ganas: 'You earn',

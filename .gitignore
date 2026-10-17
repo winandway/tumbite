@@ -41,3 +41,6 @@ out-pruebas/
 out-produccion/
 out-deploy/
 registros/
+
+# APK de pruebas compilados en esta computadora (pesan ~100 MB; no van a GitHub)
+/apks-pruebas/

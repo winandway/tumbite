@@ -28,3 +28,4 @@ export * from './listaRestaurantes';
 export * from './confirmarSesion';
 export * from './version';
 export * from './senal';
+export * from './avisosCanal';

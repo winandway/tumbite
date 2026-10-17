@@ -17,7 +17,16 @@ export function usarTransporteAvisos(t: Transporte | null) {
   ultimoErrorAviso = null;
 }
 
-export type Aviso = { titulo: string; cuerpo: string; datos?: Record<string, string> };
+/**
+ * `sonido`: archivo de sonido incluido en la app (iOS lo toma del aviso; Android, del canal).
+ * Sin él suena el sonido normal del teléfono.
+ */
+export type Aviso = {
+  titulo: string;
+  cuerpo: string;
+  datos?: Record<string, string>;
+  sonido?: string;
+};
 
 export async function notificar(env: Env, db: D1Database, usuarioId: string, aviso: Aviso) {
   const { results } = await db
@@ -30,8 +39,11 @@ export async function notificar(env: Env, db: D1Database, usuarioId: string, avi
     title: aviso.titulo,
     body: aviso.cuerpo,
     data: aviso.datos ?? {},
-    sound: 'default',
+    sound: aviso.sonido ?? 'default',
     priority: 'high',
+    // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
+    // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL).
+    channelId: 'pedidos',
   }));
   try {
     const headers: Record<string, string> = {
@@ -233,9 +245,11 @@ export const AVISOS = {
       ? {
           titulo: `New paid order #${corto}`,
           cuerpo: 'Accept it before the alarm wakes the block.',
+          sonido: 'alarma.wav',
         }
       : {
           titulo: `Pedido nuevo pagado #${corto}`,
           cuerpo: 'Acéptalo antes de que la alarma despierte al barrio.',
+          sonido: 'alarma.wav',
         },
 };
