@@ -491,6 +491,30 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
   ['Solo con Stripe en modo prueba.', 'Only with Stripe in test mode.'],
+  ['Esa ciudad no existe.', 'That city doesn’t exist.'],
+  ['Esa área no existe.', 'That area doesn’t exist.'],
+  ['Esa solicitud no existe.', 'That request doesn’t exist.'],
+  ['Esa solicitud ya tiene su franquicia.', 'That request already has its franchise.'],
+  [
+    'Solo se asignan áreas de la ciudad de la franquicia.',
+    'You can only assign areas from the franchise’s city.',
+  ],
+  [
+    'Esa área ya es de otra franquicia. Quítasela primero.',
+    'That area already belongs to another franchise. Remove it from that one first.',
+  ],
+  [
+    'Esa dirección está fuera de la zona de cobertura de Tumbite.',
+    'That address is outside Tumbite’s coverage area.',
+  ],
+  [
+    'El área no es válida: revisa que tenga al menos 3 puntos y que su borde no se cruce.',
+    'That area isn’t valid: it needs at least 3 points and its border can’t cross itself.',
+  ],
+  [
+    'Esta área se pisa con otra área publicada de la ciudad. Ajusta el borde (pueden compartirlo) o deja una de las dos en borrador.',
+    'This area overlaps another published area in the city. Adjust the border (they can share it) or keep one of them as a draft.',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

@@ -19,14 +19,14 @@ describe('franquicias y superadmin (C-FRANQUICIAS)', () => {
     );
     expect(r.estado).toBe(201);
     expect(r.datos.franquicia.ruta).toMatch(/^franchise-miami-[0-9a-f]{20}$/);
-    // Una sola por ciudad.
+    // Desde el 17 oct 2026 una ciudad puede tener varias franquicias (C-TERRITORIO).
     expect(
       (await m.llamar('POST', '/datos/admin/franquicias', { zonaId: 'US-FL-MIAMI' }, admin.token))
         .estado,
-    ).toBe(409);
+    ).toBe(201);
     const resumen = await m.llamar('GET', '/datos/admin/resumen', undefined, admin.token);
     expect(resumen.datos.totales).toMatchObject({
-      franquicias: 1,
+      franquicias: 2,
       activas: 1,
       vendidas: 1,
       motos: 30,
