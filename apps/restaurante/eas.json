@@ -15,6 +15,9 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://tumbite.com"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
@@ -25,6 +28,18 @@
     },
     "pruebas": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "simulador": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
       }

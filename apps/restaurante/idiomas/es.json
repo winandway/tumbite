@@ -1,3 +1,5 @@
 {
-  "NSPhotoLibraryUsageDescription": "Tumbite usa tus fotos para que agregues la foto de cada plato a tu menú."
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Tumbite usa tus fotos para que agregues la foto de cada plato a tu menú."
+  }
 }

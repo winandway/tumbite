@@ -1,4 +1,6 @@
 {
-  "NSLocationWhenInUseUsageDescription": "Tumbite usa tu ubicación para ofrecerte pedidos cercanos y mostrarte la ruta al restaurante y al cliente.",
-  "NSCameraUsageDescription": "Tumbite usa la cámara para la foto del pedido al recogerlo y al entregarlo, y para la foto de tu documento y de tu cara cuando verificas tu identidad."
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "Tumbite usa tu ubicación para ofrecerte pedidos cercanos y mostrarte la ruta al restaurante y al cliente.",
+    "NSCameraUsageDescription": "Tumbite usa la cámara para la foto del pedido al recogerlo y al entregarlo, y para la foto de tu documento y de tu cara cuando verificas tu identidad."
+  }
 }

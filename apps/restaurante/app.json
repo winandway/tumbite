@@ -58,7 +58,8 @@
         {
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#FF3008",
-          "defaultChannel": "pedidos"
+          "defaultChannel": "pedidos",
+          "sounds": ["./assets/sonidos/alarma.wav"]
         }
       ],
       [
@@ -70,7 +71,6 @@
         }
       ]
     ],
-    "privacy": "public",
     "description": "Receive and manage your Tumbite orders.",
     "owner": "windoce-llc",
     "experiments": {
@@ -78,6 +78,9 @@
     },
     "locales": {
       "es": "./idiomas/es.json"
+    },
+    "extra": {
+      "sonidoAvisos": "alarma.wav"
     }
   }
 }

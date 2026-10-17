@@ -3,7 +3,14 @@ import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { usarTransporteAvisos } from './notificaciones';
 import { usarTransporteCorreo } from './correo';
 
-type Mensaje = { to: string; title: string; body: string; data: Record<string, string> };
+type Mensaje = {
+  to: string;
+  title: string;
+  body: string;
+  data: Record<string, string>;
+  channelId?: string;
+  sound?: string;
+};
 
 function expoFalso(respuesta?: (m: Mensaje[]) => object) {
   const mandados: Mensaje[] = [];
@@ -179,5 +186,19 @@ describe('avisos al celular', () => {
       .first<{ activo: number }>();
     expect(f?.activo).toBe(0);
     expect((await m.llamar('GET', '/datos/salud')).datos.piezas.avisosCelular).toBe('ok');
+  });
+
+  it('todo aviso va por el canal «pedidos» y el pedido nuevo suena con la alarma del restaurante', async () => {
+    const mandados = expoFalso();
+    const m = mundo();
+    const u = await m.cuenta('restaurante');
+    await m.llamar('POST', '/datos/cuentas/dispositivo', { token: TOKEN }, u.token);
+    const { notificar, AVISOS } = await import('./notificaciones');
+    await notificar({} as never, m.DB, u.id, { titulo: 'a', cuerpo: 'b' });
+    expect(mandados.at(-1)).toMatchObject({ channelId: 'pedidos', sound: 'default' });
+    await notificar({} as never, m.DB, u.id, AVISOS.pedidoNuevo('es', 'ABC12345'));
+    expect(mandados.at(-1)).toMatchObject({ channelId: 'pedidos', sound: 'alarma.wav' });
+    await notificar({} as never, m.DB, u.id, AVISOS.pedidoNuevo('en', 'ABC12345'));
+    expect(mandados.at(-1)?.sound).toBe('alarma.wav');
   });
 });

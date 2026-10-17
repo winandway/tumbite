@@ -41,7 +41,7 @@ describe('permisos de las apps para las tiendas', () => {
     const e = leer('repartidor', 'app.json').expo;
     expect(e.ios.infoPlist.NSCameraUsageDescription).toMatch(/camera/);
     expect(plugin(e, 'expo-image-picker')?.[1]).toMatchObject({ photosPermission: false });
-    expect(leer('repartidor', 'idiomas/es.json').NSCameraUsageDescription).toMatch(/cámara/);
+    expect(leer('repartidor', 'idiomas/es.json').ios.NSCameraUsageDescription).toMatch(/cámara/);
   });
 
   it('el restaurante no pide micrófono ni audio en segundo plano', () => {
@@ -61,13 +61,17 @@ describe('permisos de las apps para las tiendas', () => {
       microphonePermission: false,
     });
     expect(e.locales).toEqual({ es: './idiomas/es.json' });
-    expect(leer('restaurante', 'idiomas/es.json').NSPhotoLibraryUsageDescription).toMatch(/fotos/);
+    expect(leer('restaurante', 'idiomas/es.json').ios.NSPhotoLibraryUsageDescription).toMatch(
+      /fotos/,
+    );
   });
 
   it('el cliente y el repartidor explican la ubicación también en español', () => {
     for (const app of ['cliente', 'repartidor']) {
       expect(leer(app, 'app.json').expo.locales).toEqual({ es: './idiomas/es.json' });
-      expect(leer(app, 'idiomas/es.json').NSLocationWhenInUseUsageDescription).toMatch(/ubicación/);
+      expect(leer(app, 'idiomas/es.json').ios.NSLocationWhenInUseUsageDescription).toMatch(
+        /ubicación/,
+      );
     }
   });
 });

@@ -90,14 +90,16 @@ describe('C-VERSION-DEL-ARTEFACTO: todas las piezas llevan el commit de la publi
 });
 
 describe('perfiles de construcción del celular', () => {
-  it('pruebas apunta a pruebas; el resto, a producción', () => {
+  it('pruebas y simulador apuntan a pruebas; el resto, a producción', () => {
     for (const app of ['cliente', 'repartidor', 'restaurante']) {
       const eas = JSON.parse(readFileSync(join(RAIZ, 'apps', app, 'eas.json'), 'utf8')) as {
         build: Record<string, { env?: Record<string, string> }>;
       };
       for (const [perfil, c] of Object.entries(eas.build))
         expect(c.env?.EXPO_PUBLIC_API_URL, `${app}/${perfil}`).toBe(
-          perfil === 'pruebas' ? 'https://staging.tumbite.com' : 'https://tumbite.com',
+          perfil === 'pruebas' || perfil === 'simulador'
+            ? 'https://staging.tumbite.com'
+            : 'https://tumbite.com',
         );
     }
   });
