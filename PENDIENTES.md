@@ -4,6 +4,8 @@
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
+
 - [ ] 👤 **URGENTE — cambiar las contraseñas de prueba** que estaban en el archivo de contraseñas de las apps (la de Expo y las de las cuentas de prueba de cliente, repartidor y restaurante). El archivo entró por error en una rama del repositorio público el 16 oct; no llegó a main ni a producción. Detalle en `docs/PUBLICACION-RELOJ-SEGURO-2026-10-17.md`. Borrarlo del historial de GitHub es destructivo y espera su decisión.
 
 ### Lo primero para lanzar (al 12 oct 2026, noche), en orden
@@ -74,7 +76,7 @@
 - [ ] 👤 **Franquicias por ciudad:** investigación en la sesión de Laboratorio AI (prompt entregado el 12 oct). Con el resultado se construye la página de franquicias y la calculadora por ciudad. Decisiones de dinero (cuota, porcentaje, derechos) son de Richard.
 - [ ] Etapa 1: prueba del circuito de pagos completo en el sitio de pruebas (espera Stripe).
 - [x] Etapa 2 (11 oct 2026): mapa en vivo del repartidor, pin de dirección en el mapa, WhatsApp cableado, avisos al celular preparados (candado C-ETAPA-2). Falta: ubicación del repartidor en segundo plano (requiere build propio).
-- [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple).
+- [ ] Ubicación del repartidor en segundo plano (build propio con EAS + video para Apple). Revisado el 17 oct: hoy solo con la app abierta; es función nueva, espera orden.
 - [x] Fotos de restaurantes y platos (11 oct 2026; se adelantó a la Etapa 0).
 - [ ] Etapas 3 y 4: tiendas, lanzamiento cerrado, entrar con Google/Apple/teléfono, impresora, música, zonas nuevas.
 - [ ] Etapa 5 — Tumbite AI (estudio hecho el 12 oct 2026, `docs/TUMBITE-AI.md`). Fase A, primera parte hecha el 12 oct (C-MANAGER-1: recordatorios, cancelación con devolución, alerta sin repartidor, bitácora). Semáforo y «Pedidos en curso» hechos el mismo día: Fase A completa.
