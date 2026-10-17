@@ -3666,3 +3666,13 @@ button {
   color: #6b6b6b;
   font-size: 0.9rem;
 }
+.gestion-franquicia .casilla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.gestion-franquicia .casilla input {
+  width: auto;
+  margin: 0;
+}

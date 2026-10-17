@@ -60,6 +60,13 @@ const T = {
     observaciones: 'Observaciones',
     guardarCondiciones: 'Guardar condiciones',
     guardado: 'Guardado',
+    estadosArea: {
+      borrador: 'borrador',
+      proximamente: 'próximamente',
+      activa: 'activa',
+      pausada: 'pausada',
+      cerrada: 'cerrada',
+    } as Record<string, string>,
   },
   en: {
     territorio: 'Territory',
@@ -89,6 +96,13 @@ const T = {
     observaciones: 'Notes',
     guardarCondiciones: 'Save terms',
     guardado: 'Saved',
+    estadosArea: {
+      borrador: 'draft',
+      proximamente: 'coming soon',
+      activa: 'live',
+      pausada: 'paused',
+      cerrada: 'closed',
+    } as Record<string, string>,
   },
 };
 
@@ -194,7 +208,7 @@ export function GestionFranquicia({
               />{' '}
               {a.nombre}{' '}
               <small>
-                ({a.estado}
+                ({new Map(Object.entries(t.estadosArea)).get(a.estado) ?? a.estado}
                 {a.deOtra ? ` · ${t.deOtra}` : ''})
               </small>
             </label>
