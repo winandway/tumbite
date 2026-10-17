@@ -1632,7 +1632,9 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Tumbite crece ciudad por ciudad, en cualquier país. Cada ciudad se abre con una franquicia: un socio que conoce su ciudad y pone el capital del lanzamiento.',
           'Con ese dinero se compra un arranque completo: una flota propia de 25 a 50 motos para que ningún pedido se quede sin repartidor, repartidores entrenados en seguridad vial, higiene y trato al cliente, una tablet lista para cada restaurante con el menú cargado en dos idiomas, y la búsqueda de los primeros clientes con lista de espera y promociones de lanzamiento.',
-          'El franquiciado tiene su propio panel con los números de su ciudad: pedidos, ventas, restaurantes, repartidores y casos de soporte. El valor de cada franquicia depende del tamaño de la ciudad.',
+          'Una ciudad grande se puede dividir en varias zonas, cada una con su propia franquicia. El franquiciado tiene su panel con los números de su territorio: pedidos, ventas, restaurantes, repartidores e incidencias, y ve solo lo suyo. El valor de cada franquicia depende del tamaño de su territorio.',
+          'El dueño de la franquicia puede trabajar con managers de su equipo: cada uno entra al mismo panel con su propio correo, supervisa los pedidos y atiende las incidencias de su territorio.',
+          'Si escribes tu dirección en Tumbite y todavía no llegamos ahí, la app te dice en qué ciudades ya estamos y qué zonas abren pronto.',
         ],
         capturas: [
           {
@@ -1646,6 +1648,7 @@ const es: SeccionDocs[] = [
           'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
           'Llena el formulario «Quiero una franquicia de Tumbite»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
           'Te llega un correo con el enlace privado a tu caso. Nuestro equipo te prepara los números de tu ciudad y te responde por ahí.',
+          'Cuando se firma, nuestro equipo te da acceso a tu panel con tu correo, y también a los managers de tu equipo que nos indiques.',
         ],
       },
       {
@@ -3421,7 +3424,9 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Tumbite grows city by city, in any country. Each city opens with a franchise: a partner who knows the city and invests the launch capital.',
           'That money buys a complete launch: our own fleet of 25 to 50 motorbikes so no order goes without a driver, drivers trained in road safety, food hygiene, and customer service, a ready-to-use tablet for every restaurant with the menu in two languages, and finding the first customers with a waitlist and launch promotions.',
-          'The franchisee gets their own dashboard with their city’s numbers: orders, sales, restaurants, drivers, and support cases. Each franchise is priced by the size of the city.',
+          'A large city can be split into several zones, each with its own franchise. The franchisee gets a dashboard with their territory’s numbers: orders, sales, restaurants, drivers, and incidents, and sees only their own. Each franchise is priced by the size of its territory.',
+          'The franchise owner can work with managers from their team: each one signs in to the same dashboard with their own email, oversees orders, and handles incidents in their territory.',
+          'If you enter your address in Tumbite and we’re not there yet, the app tells you which cities we’re already in and which zones are opening soon.',
         ],
         capturas: [
           {
@@ -3435,6 +3440,7 @@ const en: SeccionDocs[] = [
           'Open the “How it works” page and scroll to “Franchises,” or open your country’s page.',
           'Fill in the “I want a Tumbite franchise” form: your city, available capital, your experience, and when you’d like to start.',
           'You get an email with the private link to your case. Our team prepares your city’s numbers and replies there.',
+          'Once it’s signed, our team gives you access to your dashboard with your email, and to the managers on your team you tell us about.',
         ],
       },
       {

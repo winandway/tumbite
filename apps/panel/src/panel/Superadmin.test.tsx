@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
 import { PanelFranquicia } from './PanelFranquicia';
+import { GestionFranquicia } from './GestionFranquicia';
 import { TableroRestaurante } from './TableroRestaurante';
 import { AyudaBurbuja } from './AyudaBurbuja';
 import { ReportarPanel } from './ReportarPanel';
@@ -34,6 +35,8 @@ const METRICAS = {
 };
 const FRANQUICIA = {
   id: 'f1',
+  nombre: 'Miami Norte',
+  areas: 1,
   zonaId: 'US-FL-MIAMI',
   ciudad: 'Miami',
   pais: 'US',
@@ -54,6 +57,28 @@ const RESUMEN = {
     motos: 30,
   },
   franquicias: [FRANQUICIA],
+  ciudades: [
+    {
+      id: 'US-FL-MIAMI',
+      ciudad: 'Miami',
+      pais: 'US',
+      activa: true,
+      franquicias: 1,
+      areas: 2,
+      areasLibres: 1,
+      metricas: METRICAS,
+    },
+    {
+      id: 'US-FL-TAMPA',
+      ciudad: 'Tampa',
+      pais: 'US',
+      activa: false,
+      franquicias: 0,
+      areas: 0,
+      areasLibres: 0,
+      metricas: METRICAS,
+    },
+  ],
   sinFranquicia: [
     { id: 'US-FL-TAMPA', ciudad: 'Tampa', pais: 'US', activa: false, metricas: METRICAS },
   ],
@@ -73,9 +98,10 @@ describe('superadmin', () => {
   it('el resumen muestra totales, la producción de cada franquicia y las ciudades libres', async () => {
     servidor(() => RESUMEN);
     render(<SuperResumen base="/panel/control-x" idioma="es" />);
-    expect(await screen.findByText('Miami')).toBeInTheDocument();
-    expect(screen.getByText('Tampa')).toBeInTheDocument();
-    expect(screen.getByText('$1,200.00')).toBeInTheDocument();
+    expect(await screen.findByText('Miami Norte')).toBeInTheDocument();
+    // Resultados por ciudad: también las que todavía no tienen franquicia.
+    expect(screen.getAllByText(/Tampa/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$1,200.00').length).toBeGreaterThan(0);
   });
 
   it('la bandeja filtra por estado y el ticket se responde y se cierra', async () => {
@@ -155,7 +181,7 @@ describe('superadmin', () => {
       return RESUMEN;
     });
     render(<SuperFranquicias usuario={usuario} idioma="es" />);
-    await screen.findByText('Miami', { selector: 'h2' });
+    await screen.findByText(/Miami Norte/, { selector: 'h2' });
     await userEvent.selectOptions(
       await screen.findByRole('combobox', { name: 'Ciudad (zona)' }),
       'US-FL-TAMPA',
@@ -181,14 +207,24 @@ describe('panel del franquiciado', () => {
 
   it('muestra su ciudad, y si no es suya dice que no existe', async () => {
     servidor(() => ({
-      franquicia: { ciudad: 'Miami', pais: 'US', estado: 'activa', motos: 30 },
+      franquicia: {
+        nombre: 'Miami Norte',
+        ciudad: 'Miami',
+        pais: 'US',
+        estado: 'activa',
+        motos: 30,
+      },
+      rol: 'manager',
+      areas: [{ id: 'a1', nombre: 'Miami Norte', estado: 'activa' }],
+      pedidos: [],
       metricas: METRICAS,
       restaurantes: [{ nombre: 'Sabor', estado: 'aprobado', abierto: true, plan: 'inicial' }],
       repartidores: [{ nombre: 'Leo', conectado: true, puntos: 120 }],
       quejas: [],
     }));
     const { unmount } = render(<PanelFranquicia ruta="franchise-miami-x" idioma="es" />);
-    expect(await screen.findByText('Tu franquicia en Miami')).toBeInTheDocument();
+    expect(await screen.findByText('Miami Norte', { selector: 'h1' })).toBeInTheDocument();
+    expect(screen.getByText('Manager')).toBeInTheDocument();
     expect(screen.getByText(/No hay quejas/)).toBeInTheDocument();
     unmount();
     servidor(
@@ -262,5 +298,54 @@ describe('tablero y ayuda del restaurante', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     expect(await screen.findByText(/Recibimos tu mensaje/)).toBeInTheDocument();
     expect(llamadas[0]?.cuerpo).toMatchObject({ tipo: 'queja', texto: 'El repartidor no llegó' });
+  });
+});
+
+describe('territorio y equipo de una franquicia (C-TERRITORIO)', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('guarda sus áreas, no deja tomar las de otra y da acceso a un manager', async () => {
+    const llamadas = servidor((url, init) => {
+      if (init?.method && init.method !== 'GET') return { ok: true };
+      return {
+        franquicia: {
+          id: 'f1',
+          nombre: 'Miami Norte',
+          ciudad: 'Miami',
+          condiciones: {
+            cuotaEntradaCentavos: null,
+            porcentajeIngresos: null,
+            cuotaMensualCentavos: null,
+            plazoMeses: null,
+            exclusividadTerritorial: null,
+            observaciones: '',
+          },
+        },
+        areas: [
+          { id: 'a1', nombre: 'Norte', estado: 'activa', asignada: true, deOtra: false },
+          { id: 'a2', nombre: 'Sur', estado: 'activa', asignada: false, deOtra: true },
+          { id: 'a3', nombre: 'Playa', estado: 'borrador', asignada: false, deOtra: false },
+        ],
+        miembros: [],
+      };
+    });
+    render(<GestionFranquicia id="f1" usuario={usuario} idioma="es" />);
+    const sur = await screen.findByRole('checkbox', { name: /Sur/ });
+    expect(sur).toBeDisabled();
+    await userEvent.click(screen.getByRole('checkbox', { name: /Playa/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar territorio' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toEqual({ areaIds: ['a1', 'a3'] }),
+    );
+    // Las condiciones comerciales nacen pendientes, sin números inventados.
+    expect(screen.getAllByPlaceholderText('Pendiente de definición comercial').length).toBe(4);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Correo' }), 'manager@ejemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Dar acceso' }));
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.metodo === 'POST' && l.url.endsWith('/miembros'))?.cuerpo,
+      ).toEqual({ correo: 'manager@ejemplo.com', rol: 'manager' }),
+    );
   });
 });
