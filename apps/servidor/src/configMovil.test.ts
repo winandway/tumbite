@@ -3,7 +3,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { canalPedidos } from './avisosCanal';
+import { canalPedidos } from '@tumbite/compartido';
 
 const RAIZ = join(__dirname, '../../..');
 type Conf = { expo: Record<string, any> };
