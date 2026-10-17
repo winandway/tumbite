@@ -1,6 +1,7 @@
 // Candado de la configuración de las tres apps (C-APPS-MOVILES). Lee los app.json y eas.json
 // reales: si alguien rompe un permiso, el sonido del restaurante o el perfil de pruebas, salta.
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { canalPedidos } from '@tumbite/compartido';
@@ -82,12 +83,12 @@ describe('C-ESCENAS-IOS: iOS 27 exige el ciclo de escenas', () => {
   }
 }`;
 
-  it('el complemento deja el arranque sin ventana propia y declara la escena', async () => {
-    const plugin = (await import('../../../plugins/escenas-ios.js')) as unknown as {
+  it('el complemento deja el arranque sin ventana propia y declara la escena', () => {
+    // El complemento es de Node con módulos clásicos: se carga como lo carga «expo prebuild».
+    const p = createRequire(join(RAIZ, 'package.json'))('./plugins/escenas-ios.js') as {
       conEscenas: (c: string) => string;
       MANIFIESTO: Record<string, any>;
     };
-    const p = (plugin as any).default ?? plugin;
     const nuevo = p.conEscenas(PLANTILLA);
     expect(nuevo).toContain('ExpoAppDelegate, ExpoReactNativeFactoryProvider');
     expect(nuevo).not.toContain('UIWindow(frame:');
