@@ -6,7 +6,7 @@
     "@expo/metro-runtime": "~57.0.16",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@stripe/react-stripe-js": "^7.0.0",
-    "@stripe/stripe-js": "^10.0.0",
+    "@stripe/stripe-js": "^10.1.0",
     "@stripe/stripe-react-native": "0.64.0",
     "@tumbite/compartido": "0.1.0",
     "@tumbite/movil": "0.1.0",
