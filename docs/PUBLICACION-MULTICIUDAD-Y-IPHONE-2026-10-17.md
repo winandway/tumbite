@@ -37,3 +37,9 @@ No se repitieron en producción las pruebas que ya pasaron en staging.
 
 - 👤 Cuenta de Apple Developer de Windoce LLC: sin ella no se instala en un iPhone físico ni en TestFlight.
 - 👤 Organización de Expo y Firebase: activan los avisos al celular.
+
+## 4. Versión final en producción
+
+- El arreglo de escenas siguió el flujo permanente: staging `fase-escenas-ios` `018e9e36` en verde, y después producción.
+- Commit `ce3ab37e`, con el verificador posterior en VERDE. Restauración: `restauracion-antes-escenas-main` y `restauracion-antes-escenas-paquete`.
+- El código del servidor es idéntico al de `bac14e2a`: este paso solo cambia la configuración de las apps y las pruebas.
