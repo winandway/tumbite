@@ -670,3 +670,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Pruebas:** `apps/servidor/src/turnstileApps.test.ts` (3), `apps/panel/src/panel/Turnstile.test.tsx` (2).
 - **Cómo se comprueba:** con las dos llaves en el sitio de pruebas, la pantalla de entrar muestra el recuadro de Cloudflare y se entra normal; sin llaves, nada cambia.
 - **Qué NO tocar:** las dos llaves van juntas (👤 Richard, PENDIENTES); el dominio `tumbite.com` (y `staging.tumbite.com`) tiene que estar en la lista de dominios del widget en Cloudflare, si no el widget falla en las apps.
+
+## C-VERSION-APP: las apps dicen quiénes son, el servidor puede pedir «actualiza» y el idioma vive en la cuenta (F16, 18 oct 2026)
+
+- **Qué faltaba:** las apps no mandaban su nombre ni su versión; el servidor no podía retirar una versión rota; el idioma elegido en la app del cliente no llegaba a la cuenta (los avisos salían en el idioma viejo).
+- **Qué se hizo:** `crearApi` manda `x-tumbite-app: <app>/<versión>` (`app:` en `packages/movil/src/sesion.tsx`, versión de `expo-constants`); `apps/servidor/src/versionApp.ts` responde 426 `{ actualizar: true }` en toda la API (menos `/datos/publico`, `/datos/version`, `/datos/salud`) cuando `APP_VERSION_MINIMA` («cliente=0.2.0,repartidor=0.1.5» o «0.2.0») dice que esa versión ya no sirve; `cambiarIdioma` de la sesión móvil hace `PUT /datos/cuentas/idioma` si hay sesión.
+- **Pruebas:** `apps/servidor/src/versionApp.test.ts` (3).
+- **Qué NO tocar:** la web no manda cabecera y nunca recibe 426; la variable vacía no cambia nada.

@@ -11,6 +11,8 @@ export const esquemaEnv = z.object({
   /** Secreto del SEGUNDO endpoint de Stripe, el de «cuentas conectadas» (account.updated, payout.failed). */
   STRIPE_WEBHOOK_SECRET_CONECTADAS: z.string().startsWith('whsec_').optional(),
   TURNSTILE_SECRET_KEY: z.string().min(10).optional(),
+  /** Versión mínima de las apps: «cliente=0.2.0,repartidor=0.1.5» o «0.2.0» para todas. Vacío = nada. */
+  APP_VERSION_MINIMA: z.string().optional(),
   /** Clave PÚBLICA del escudo (la pintan la web y las apps). Va junto con la secreta o nada. */
   TURNSTILE_SITE_KEY: z.string().min(10).optional(),
   /** Correos (separados por coma) que PUEDEN volverse administradores con la semilla. */

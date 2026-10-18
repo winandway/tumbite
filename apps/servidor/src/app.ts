@@ -31,6 +31,7 @@ import { repartidorGrandes } from './rutas/repartidorGrandes';
 import { interno, saludTiempoReal } from './rutas/interno';
 import { saludReloj } from './reloj';
 import { alertarCanario } from './canario';
+import { versionMinimaApp } from './versionApp';
 import { viajes } from './rutas/viajes';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
@@ -126,6 +127,12 @@ app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
+// F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
+app.use('/datos/*', (c, next) =>
+  ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
+    ? next()
+    : versionMinimaApp(c, next),
+);
 app.use('/datos/*', async (c, next) => {
   if (c.env.DB) await asegurarEsquema(c.env.DB);
   await next();

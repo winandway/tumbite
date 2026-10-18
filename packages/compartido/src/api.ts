@@ -22,6 +22,8 @@ export type OpcionesApi = {
   idioma?: () => 'es' | 'en';
   /** Pase del escudo anti-robots (Turnstile). Viaja en una cabecera, no en el cuerpo. */
   pase?: () => string | null | undefined;
+  /** Nombre y versión de la app («cliente/0.1.0»): el servidor puede pedir actualizar (426). */
+  app?: () => string | null | undefined;
   fetch?: typeof fetch;
 };
 
@@ -47,6 +49,8 @@ export function crearApi(op: OpcionesApi) {
     if (token) headers.authorization = `Bearer ${token}`;
     const pase = op.pase?.();
     if (pase) headers['cf-turnstile-response'] = pase;
+    const app = op.app?.();
+    if (app) headers['x-tumbite-app'] = app;
     let res: Response;
     try {
       const init = {

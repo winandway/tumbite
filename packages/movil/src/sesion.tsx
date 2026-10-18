@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { paseTurnstile } from './Turnstile';
 import {
   createContext,
@@ -63,6 +64,11 @@ function idiomaDelTelefono(): Idioma {
   }
 }
 
+/** Versión de la app instalada (app.json → version), para la cabecera x-tumbite-app. */
+function versionApp(): string {
+  return Constants.expoConfig?.version ?? '0.0.0';
+}
+
 export function SesionProvider({ roles, children }: { roles: Rol[]; children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -77,8 +83,9 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
         token: () => token,
         idioma: () => idioma,
         pase: paseTurnstile,
+        app: () => `${roles[0] ?? 'cliente'}/${versionApp()}`,
       }),
-    [token, idioma],
+    [token, idioma, roles],
   );
 
   // Confirma con el servidor la sesión guardada, con tiempo máximo (C-SESION-CON-LIMITE). Antes no
@@ -163,10 +170,16 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
 
   useAvisosCelular(api, usuario);
 
-  const cambiarIdioma = useCallback((i: Idioma) => {
-    setIdioma(i);
-    void almacenTelefono.guardar(LLAVE_IDIOMA, i);
-  }, []);
+  const cambiarIdioma = useCallback(
+    (i: Idioma) => {
+      setIdioma(i);
+      void almacenTelefono.guardar(LLAVE_IDIOMA, i);
+      // F16: el idioma elegido también vive en la cuenta (los avisos y correos salen en ese idioma).
+      if (token)
+        void api.pedir('PUT', '/datos/cuentas/idioma', { idioma: i }).catch(() => undefined);
+    },
+    [api, token],
+  );
 
   const valor: Sesion = {
     cargando,

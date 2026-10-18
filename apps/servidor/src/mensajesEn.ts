@@ -227,6 +227,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'The total changed. Check your cart and try again.',
   ],
   [
+    'Hay una versión nueva de la app. Actualízala desde la tienda para seguir.',
+    'There is a new version of the app. Update it from the store to continue.',
+  ],
+  [
     'Demasiados intentos con el PIN. Pídele al cliente que confirme la entrega desde su app o escribe a soporte.',
     'Too many PIN attempts. Ask the customer to confirm the delivery from their app, or contact support.',
   ],
