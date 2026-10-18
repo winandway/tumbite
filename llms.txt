@@ -13,6 +13,11 @@
 - [How do I…? · Tumbite](https://tumbite.com/docs/how-to): The questions we get asked most, each with a step-by-step guide and real screenshots.
 - [Ordering · Tumbite](https://tumbite.com/docs/ordering): ⌘K← Docs OrderingYour order alerts and how to call the driver without sharing your numberWe let you know when the driver is 5 minutes away, when to come ou
 - [Your order alerts and how to call the driver without sharing your number · Tumbite](https://tumbite.com/docs/ordering/order-alerts-and-calls): We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can ca
+- [Your orders: history, receipt and reorder · Tumbite](https://tumbite.com/docs/ordering/my-orders-and-reorder): In the Orders tab you see each order with its status and total, open the full receipt and order the same again with one tap.
+- [Favorites: save your restaurants · Tumbite](https://tumbite.com/docs/ordering/favorites): Tap a restaurant’s heart to save it to Favorites and find it instantly next time.
+- [Saved addresses and delivery instructions · Tumbite](https://tumbite.com/docs/ordering/saved-addresses): Save home, work or wherever you order often, with instructions for the driver, and pick them with one tap in the cart.
+- [Coupons and promotions · Tumbite](https://tumbite.com/docs/ordering/coupons): Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.
+- [Reporting a problem with your order · Tumbite](https://tumbite.com/docs/ordering/report-a-problem): Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded
 - [Pay on delivery: cash or a transfer to the driver · Tumbite](https://tumbite.com/docs/ordering/pay-on-delivery): In cities where it’s active, you can choose to pay when your order arrives: in cash to the driver, or with a transfer to the account they have published. Y
 - [Pay with Apple Pay or Google Pay (coming soon) · Tumbite](https://tumbite.com/docs/ordering/apple-pay-google-pay): Today you pay with your card inside the app. Soon, on the same payment screen, Apple Pay (iPhone) or Google Pay (Android and Chrome) will show up if your p
 - [The home screen: what’s there and what each thing does · Tumbite](https://tumbite.com/docs/ordering/home-screen): Like the big delivery apps: at the top the logo, your greeting, the notifications bell and the gifts coupon. Then the search bar, the eight services in ord
@@ -32,7 +37,11 @@
 - [My account: your orders, cards, and details · Tumbite](https://tumbite.com/docs/ordering/my-account): All your orders and their status, the cards you saved, and your details, in one place in the app.
 - [Gifts: birthday, punch card, and win-back · Tumbite](https://tumbite.com/docs/ordering/rewards): Restaurants reward you for coming back. Gifts show up in your cart on their own.
 - [Rate the food and the driver · Tumbite](https://tumbite.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
-- [For restaurants · Tumbite](https://tumbite.com/docs/restaurants): ⌘K← Docs For restaurantsWhy does my store show as not receiving orders?If your Tumbite app or panel doesn’t check in for 5 minutes, your store stops receiv
+- [For restaurants · Tumbite](https://tumbite.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
+- [Your customers’ reviews and how to reply · Tumbite](https://tumbite.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
+- [Holidays and closures · Tumbite](https://tumbite.com/docs/restaurants/holidays-and-closures): Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.
+- [Your team: managers and staff · Tumbite](https://tumbite.com/docs/restaurants/team-and-roles): Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.
+- [Your menu order · Tumbite](https://tumbite.com/docs/restaurants/menu-order): Decide the order customers see your categories and items: with the up and down arrows under Menu.
 - [Why does my store show as not receiving orders? · Tumbite](https://tumbite.com/docs/restaurants/store-not-receiving-orders): If your Tumbite app or panel doesn’t check in for 5 minutes, your store stops receiving orders so no customer waits for nothing. It comes back on its own a
 - [The restaurant app: orders, timing, the pickup code, and your menu · Tumbite](https://tumbite.com/docs/restaurants/restaurant-app): From the counter phone or tablet: the alarm tells you about every new order, you accept it with its prep time, follow each one in the kitchen, show the cod
 - [Ready to open: what you need before taking orders · Tumbite](https://tumbite.com/docs/restaurants/activation-checklist): Before turning on “Taking orders,” your restaurant needs a phone number, an address with a pin, hours, and at least one dish with a price. The checklist te
@@ -51,7 +60,9 @@
 - [Verify your restaurant · Tumbite](https://tumbite.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Tumbite](https://tumbite.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Tumbite](https://tumbite.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
-- [For drivers · Tumbite](https://tumbite.com/docs/drivers): ⌘K← Docs For driversOrders collected in person and your balance for feesIn cities where it’s active, some orders are paid on delivery: the customer pays yo
+- [For drivers · Tumbite](https://tumbite.com/docs/drivers): ⌘K← Docs For driversYour location with the screen offWhile you’re online, Tumbite keeps sending your position even if you lock the phone or open the map: t
+- [Your location with the screen off · Tumbite](https://tumbite.com/docs/drivers/background-location): While you’re online, Tumbite keeps sending your position even if you lock the phone or open the map: the customer and the restaurant see where you are with
+- [Deliveries with an age check · Tumbite](https://tumbite.com/docs/drivers/id-check-deliveries): If the order has items for people over 21, you hand it over in person, check the ID and note the ID type, its last four digits and the name of the person r
 - [Orders collected in person and your balance for fees · Tumbite](https://tumbite.com/docs/drivers/cash-orders-and-top-ups): In cities where it’s active, some orders are paid on delivery: the customer pays you in cash or by transfer, you pay for the food at the counter, and Tumbi
 - [When an offer reaches you and how you pick up with the code · Tumbite](https://tumbite.com/docs/drivers/offer-timing-and-pickup-code): Offers reach you so you arrive when the food is ready, not before. At the restaurant you scan the code on their screen and take the photo: the order goes o
 - [If you can’t continue with an order or the customer isn’t there · Tumbite](https://tumbite.com/docs/drivers/cant-continue): Before pickup you can release the order with a reason, no penalty. At the door, if the customer isn’t there, there’s a 5-minute protocol.
@@ -126,7 +137,7 @@
 
 ## Cities
 
-- [Food delivery in Miami with Tumbite](https://tumbite.com/city/miami): Order from Miami restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver. Part of ou
+- [Tumbite is coming soon to Miami](https://tumbite.com/city/miami): We’re getting ready to launch in Miami: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
 - [Tumbite is coming soon to Orlando](https://tumbite.com/city/orlando): We’re getting ready to launch in Orlando: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in
 - [Tumbite is coming soon to Tampa](https://tumbite.com/city/tampa): We’re getting ready to launch in Tampa: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
 - [Tumbite is coming soon to Ocala](https://tumbite.com/city/ocala): We’re getting ready to launch in Ocala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
@@ -153,7 +164,7 @@
 - [Restaurant Terms · Tumbite](https://tumbite.com/restaurant-terms): These terms add to the Terms of Service and apply to businesses selling on Tumbite. By registering your restaurant you accept them on behalf of the busines
 - [Driver Terms · Tumbite](https://tumbite.com/driver-terms): These terms add to the Terms of Service and apply to anyone delivering with Tumbite Driver. By creating a driver account you accept them.
 - [Delete your Tumbite account](https://tumbite.com/delete-account): Here’s how to delete your Tumbite account (customer app, Tumbite Driver, or Tumbite for Restaurants), by Windoce LLC. You don’t need the app installed.
-- [Support · Tumbite](https://tumbite.com/support): Last updated: October 12, 2026
+- [Support · Tumbite](https://tumbite.com/support): Last updated: October 18, 2026
 
 ## En español
 

@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS restaurantes (
   regalos_pb INTEGER NOT NULL DEFAULT 300,
   zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   geohash TEXT,
+  -- Orden de las categorías del menú (JSON de nombres), lo fija el restaurante.
+  categorias_orden TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS restaurantes_estado ON restaurantes(estado);
@@ -144,6 +146,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   total INTEGER NOT NULL,
   -- Impuesto de ventas recaudado (dentro del total). 0 hasta que el contador fije la tasa.
   impuesto INTEGER NOT NULL DEFAULT 0,
+  -- Cupón aplicado y su descuento (lo absorbe Tumbite: baja su ganancia).
+  cupon TEXT,
+  descuento INTEGER NOT NULL DEFAULT 0,
   -- Fase 2 · cobro directo: cómo paga el cliente y los TRES estados separados (entrega física =
   -- estado, cobro confirmado y conciliación). 'tarjeta' = Stripe como siempre.
   metodo_pago TEXT NOT NULL DEFAULT 'tarjeta' CHECK (metodo_pago IN ('tarjeta', 'efectivo', 'transferencia_repartidor')),
@@ -254,6 +259,9 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   estrellas_repartidor INTEGER CHECK (estrellas_repartidor BETWEEN 1 AND 5),
   culpa_restaurante INTEGER NOT NULL DEFAULT 0,
   comentario TEXT NOT NULL DEFAULT '',
+  -- Respuesta pública del restaurante (como en DoorDash Merchant y Uber Eats Manager).
+  respuesta TEXT,
+  respondida_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -1544,6 +1552,9 @@ CREATE TABLE IF NOT EXISTS recargas (
 CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
 -- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
 INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);
+-- Soporte cancela un pedido ya listo (el superadmin lo ofrecía y la base lo rechazaba con un error
+-- interno; 18 oct 2026). En cobro directo, si el repartidor ya pagó la comida queda la pérdida escrita.
+INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('listo', 'cancelado', 0);
 
 -- Cuentas a las que el cliente le transfiere al repartidor (cobro directo por transferencia). Se
 -- muestran con el nombre del beneficiario; un cambio exige la contraseña, queda en el historial,
@@ -1571,4 +1582,89 @@ CREATE TABLE IF NOT EXISTS cuentas_cobro_historial (
   cambio TEXT NOT NULL,
   autor_id TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Favoritos del cliente (auditoría final, punto 13): restaurantes guardados con el corazón.
+CREATE TABLE IF NOT EXISTS favoritos (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, restaurante_id)
+);
+
+-- Direcciones guardadas del cliente (auditoría final, punto 14): casa, trabajo… con instrucciones.
+CREATE TABLE IF NOT EXISTS direcciones_cliente (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  etiqueta TEXT NOT NULL DEFAULT '',
+  direccion TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  instrucciones TEXT NOT NULL DEFAULT '',
+  entrega TEXT NOT NULL DEFAULT 'puerta' CHECK (entrega IN ('puerta', 'mano')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS direcciones_cliente_usuario ON direcciones_cliente(usuario_id, usada_en);
+
+-- Cupones (auditoría final, punto 15). Quién los paga (Tumbite o el restaurante) lo fija cada cupón;
+-- de fábrica los paga Tumbite (baja su ganancia), decisión de Richard por cupón.
+CREATE TABLE IF NOT EXISTS cupones (
+  codigo TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('monto', 'porcentaje', 'envio_gratis')),
+  valor INTEGER NOT NULL DEFAULT 0,
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  minimo_subtotal INTEGER NOT NULL DEFAULT 0,
+  usos_max INTEGER,
+  usos_por_cliente INTEGER NOT NULL DEFAULT 1,
+  solo_primer_pedido INTEGER NOT NULL DEFAULT 0,
+  restaurante_id TEXT REFERENCES restaurantes(id),
+  zona_id TEXT,
+  destacado INTEGER NOT NULL DEFAULT 0,
+  vence_en TEXT,
+  activo INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS usos_cupon (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  codigo TEXT NOT NULL REFERENCES cupones(codigo),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  descuento INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS usos_cupon_codigo ON usos_cupon(codigo, usuario_id);
+
+-- Restaurante como los grandes (auditoría final, puntos 19 a 21): equipo, festivos y orden de categorías.
+CREATE TABLE IF NOT EXISTS miembros_restaurante (
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  rol TEXT NOT NULL DEFAULT 'staff' CHECK (rol IN ('manager', 'staff')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (restaurante_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS miembros_restaurante_usuario ON miembros_restaurante(usuario_id);
+CREATE TABLE IF NOT EXISTS cierres_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  fecha TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (restaurante_id, fecha)
+);
+
+-- Fase 2 · cobro directo (C-COBRO-DIRECTO-LOCAL): el repartidor paga la comida en el mostrador con su
+-- propio dinero y registra cuánto pagó y cuánto decía el ticket. Tumbite no financia esa compra.
+CREATE TABLE IF NOT EXISTS pagos_local (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL,
+  monto_esperado INTEGER NOT NULL,
+  monto_pagado INTEGER NOT NULL CHECK (monto_pagado > 0),
+  importe_ticket INTEGER NOT NULL CHECK (importe_ticket > 0),
+  metodo TEXT NOT NULL CHECK (metodo IN ('efectivo', 'tarjeta_propia')),
+  diferencia_pago INTEGER NOT NULL DEFAULT 0,
+  diferencia_ticket INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  confirmado_restaurante_en TEXT,
+  confirmado_por TEXT
 );
