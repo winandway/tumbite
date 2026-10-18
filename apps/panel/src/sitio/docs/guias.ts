@@ -416,7 +416,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-cliente-carrito-es.webp',
             alt: 'Carrito con la dirección de entrega, la propina para el repartidor y el desglose completo antes de pagar.',
-            pie: 'Antes de pagar ves el total exacto: comida, envío, servicio y propina.',
+            pie: 'Antes de pagar ves el total exacto: comida, envío, servicio, propina y, cuando aplica en tu ciudad, el impuesto de ventas.',
           },
           {
             src: '/docs/recorrido-cliente-pagado-es.webp',
@@ -577,6 +577,7 @@ const es: SeccionDocs[] = [
           'Si durante 5 minutos no llega ese aviso (se apagó la tableta, se cayó el internet o se cerró la app), los clientes ven tu tienda como cerrada y no pueden pedirte. Así evitamos que un pedido llegue a una pantalla que nadie mira y se cancele.',
           'Te avisamos al celular y por correo. No tienes que hacer nada más: en cuanto abres la app o el panel otra vez, tu tienda vuelve a aparecer abierta, sola, y te avisamos que ya recibes pedidos.',
           'Si cierras tu tienda a propósito con el botón de abrir o cerrar, eso no es una pausa: sigue cerrada hasta que la abras.',
+          'La etiqueta verde «Recibiendo pedidos» sale solo cuando de verdad recibes: abierta, dentro de tu horario y con la app o el panel escuchando. Si está abierta pero fuera de tu horario, verás «Abierto, fuera de horario» en gris: los clientes no pueden pedir hasta que empiece tu turno.',
         ],
         capturas: [],
         preguntas: [
@@ -652,7 +653,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En «Mi restaurante» ves la lista «Lista para abrir». Cada punto aparece con una marca verde cuando está cumplido.',
           'Lo obligatorio: el teléfono del restaurante (para que el repartidor o nuestro equipo te ubiquen), la dirección con el pin en el mapa (para que el repartidor llegue), el horario cargado (al menos un turno) y al menos un plato disponible con precio. Sin eso, el botón de abrir no enciende y te dice por qué.',
-          'Lo recomendado: al menos 5 platos con foto (los restaurantes con fotos venden mucho más) y la cuenta de cobro conectada para retirar tu dinero (mientras tanto, tus ventas se acumulan en tu billetera).',
+          'Lo recomendado: al menos 5 platos con foto (los restaurantes con fotos venden mucho más) y la cuenta de cobro conectada y activada para retirar tu dinero (el punto se marca listo cuando Stripe confirma tu cuenta; mientras tanto, tus ventas se acumulan en tu billetera).',
           'Cuando todo lo obligatorio está listo, la lista dice «Todo listo para abrir» y puedes recibir pedidos.',
         ],
         capturas: [
@@ -2422,7 +2423,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-cliente-carrito-en.webp',
             alt: 'Cart with the delivery address, the driver tip, and the full breakdown before paying.',
-            pie: 'Before paying you see the exact total: food, delivery, service, and tip.',
+            pie: 'Before paying you see the exact total: food, delivery, service, tip and, where it applies in your city, sales tax.',
           },
           {
             src: '/docs/recorrido-cliente-pagado-en.webp',
@@ -2578,6 +2579,7 @@ const en: SeccionDocs[] = [
           'If that check-in doesn’t arrive for 5 minutes (the tablet turned off, the internet dropped, or the app closed), customers see your store as closed and can’t order. That way an order never lands on a screen nobody is watching and gets canceled.',
           'We let you know by phone notification and email. You don’t need to do anything else: as soon as you open the app or panel again, your store shows as open on its own, and we let you know you’re receiving orders again.',
           'If you close your store on purpose with the open/close switch, that isn’t a pause: it stays closed until you open it.',
+          'The green “Taking orders” label shows only when you really are: open, within your hours, and with the app or panel checking in. If you’re open but outside your hours, you’ll see “Open, outside hours” in gray: customers can’t order until your shift starts.',
         ],
         capturas: [],
         preguntas: [
@@ -2653,7 +2655,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'In “My restaurant” you’ll see the “Ready to open” checklist. Each item gets a green check when it’s done.',
           'Required: the restaurant’s phone number (so the driver or our team can reach you), the address with the pin on the map (so the driver can get there), hours set (at least one shift), and at least one available dish with a price. Without those, the open button doesn’t turn on and tells you why.',
-          'Recommended: at least 5 dishes with a photo (restaurants with photos sell much more) and the payout account connected to withdraw your money (in the meantime, your sales accumulate in your wallet).',
+          'Recommended: at least 5 dishes with a photo (restaurants with photos sell much more) and the payout account connected and activated to withdraw your money (the item is checked once Stripe confirms your account; in the meantime, your sales accumulate in your wallet).',
           'Once everything required is done, the checklist says “Everything is ready to open” and you can take orders.',
         ],
         capturas: [
