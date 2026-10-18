@@ -35,4 +35,11 @@ describe('aviso de borrador recuperado', () => {
       });
     expect(malos).toEqual([]);
   });
+
+  it('«Empezar de nuevo» es un botón de verdad (Pressable), no un texto anidado con onPress', () => {
+    // En el iPhone un Text anidado con onPress no respondía al toque (18 oct 2026).
+    const s = readFileSync(join(raiz, 'packages/movil/src/AvisoBorrador.tsx'), 'utf8');
+    expect(s).toMatch(/<Pressable[\s\S]*onPress=\{\(\) => void empezar\(\)\}/);
+    expect(s).not.toMatch(/<Text[^>]*onPress=/);
+  });
 });

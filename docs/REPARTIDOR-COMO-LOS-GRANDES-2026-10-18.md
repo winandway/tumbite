@@ -29,3 +29,14 @@ Nueve pruebas del servidor escritas en rojo y luego en verde; todas las pruebas 
 ## Fase 2 (fichas aparte, no se construyó ahora)
 
 GPS en segundo plano (trabajo nativo con prueba en teléfono real), navegación dentro de la app (necesita proveedor de rutas y la llave de Google Maps), compartir el viaje. Después del piloto: modos de ganancia por hora, turnos programados, zonas calientes, retos y pago extra en hora pico (decisiones de negocio pendientes).
+
+## Publicado (flujo permanente)
+
+- Staging: rama `fase-repartidor-grandes` `a5f6081a`, flujo de pruebas en verde.
+- Producción: commit `824bc7cc` (código idéntico al de staging). Control previo VERDE, etiquetas `restauracion-antes-repartidor-grandes-main` y `-paquete`, verificación posterior VERDE: sin pedidos activos, sin cobros abiertos, retiros apagados, solo Comida.
+- En vivo: las rutas nuevas del repartidor responden (protegidas con sesión) y las guías nuevas de Docs cargan en los dos idiomas.
+- Simulador de iPhone: las apps del cliente y del repartidor recompiladas contra staging e instaladas; la del repartidor abierta con la cuenta demo.
+
+## Arreglo aparte encontrado en la prueba
+
+El enlace «Empezar de nuevo» del aviso de borrador no respondía al toque en el iPhone (texto anidado con toque). Ahora es un botón real para las tres apps, con su candado en la prueba del aviso de borrador; va por su propia rama `fase-aviso-borrador` por el flujo permanente.
