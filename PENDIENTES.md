@@ -7,7 +7,11 @@
 Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o en la rama lista para publicar): F1–F8, F10, F11, F13, F14, F16, F19, F21; puntos 7, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 26, 27, 28, 32, 33, 34; bloque B (libro, prepago, cobro directo, cuentas del repartidor, recargas); impuesto, devoluciones y disputas; pantallas del cobro directo y guías.
 
 - [ ] B.7 Conectores reales por país (Wompi/dLocal, pago móvil): solo con contrato y decisión de Richard.
-- [ ] 11. Cancelado tras la compra con foto del ticket (decisión de quién absorbe pendiente).
+- [x] Recorrido internacional completo (18 oct, noche): pago de la comida en el local con monto, ticket y método; diferencias, excedente, transferencia por verificar y comida comprada sin entregar en el libro (C-COBRO-DIRECTO-LOCAL). Quién absorbe la comida comprada es la decisión 20 (👤).
+- [x] F9 llamada con número oculto (método del puente) y F18 notas por culpa del restaurante (18 oct, noche). F9 se prueba de verdad con la cuenta de Twilio (👤).
+- [ ] Foto del ticket del restaurante en el pago en el local (hoy se anota el monto).
+- [ ] Montos en moneda local en las apps (pesos y bolívares) antes de cualquier piloto fuera de EE. UU.
+- [ ] F17: ciudades de la web desde el servidor, con un interruptor público de lanzamiento por ciudad (hoy la lista fija es intencional; Miami «muy pronto»).
 - [x] Panel del superadmin para países, puntos de venta y libro (18 oct, en la rama fase-2-bloque-c; probado a mano en local).
 - [x] E.2 Recorrido visual de lo nuevo con capturas en Docs (18 oct, 1ff9eb6f): reseñas con respuesta, equipo, festivos, orden del menú, favoritos, direcciones, cupón, pago al recibir y saldo prepago. Lo que falta es verlo en un celular real (Expo, 👤).
 - [ ] 35 / E.4 Fichas de App Store y Google Play con capturas del recorrido (al final).
