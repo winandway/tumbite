@@ -834,6 +834,11 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(rep.getByText(L.bono, { exact: false })).toBeVisible({ timeout: 20_000 });
     await foto(rep, 'repartidor-oferta-bono');
     await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
+    // Como los grandes (18 oct): «Llegué al restaurante» confirma la llegada con la posición.
+    await expect(rep.getByRole('button', { name: L.llegue })).toBeVisible({ timeout: 20_000 });
+    await foto(rep, 'repartidor-llegue');
+    await rep.getByRole('button', { name: L.llegue }).click();
+    await expect(rep.getByText(L.llegueOk, { exact: false })).toBeVisible({ timeout: 20_000 });
     const tomarFoto = async (boton: string, archivo: string) => {
       const [selector] = await Promise.all([
         rep.waitForEvent('filechooser'),
@@ -1158,6 +1163,9 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.goto('/driver/');
     await rep.getByText(L.verBilletera).filter({ visible: true }).click();
     await expect(rep.getByText(L.disponible).filter({ visible: true })).toBeVisible();
+    // Ganancias con desglose (base, bonos y propinas) arriba de la billetera.
+    await expect(rep.getByTestId('ganancias-desglose')).toBeVisible({ timeout: 20_000 });
+    await foto(rep, 'repartidor-ganancias');
     await foto(rep, 'repartidor-billetera');
     const [stripePagina] = await Promise.all([
       repCtx.waitForEvent('page'),
@@ -1197,6 +1205,14 @@ for (const idioma of ['en', 'es'] as const) {
       await rep.getByText(L.retirar).filter({ visible: true }).click();
       await expect(rep.getByText(L.retiroEnCamino).filter({ visible: true })).toBeVisible();
       await foto(rep, 'repartidor-retiro');
+      // Calificaciones visibles y la campana real (como los grandes, 18 oct).
+      await rep.getByRole('tab', { name: L.perfil }).click();
+      await rep.getByRole('button', { name: L.misCalificaciones }).click();
+      await expect(rep.getByTestId('calificaciones')).toBeVisible({ timeout: 20_000 });
+      await foto(rep, 'repartidor-calificaciones');
+      await rep.getByRole('button', { name: L.campana }).click();
+      await expect(rep.getByText(L.tusAvisos)).toBeVisible({ timeout: 20_000 });
+      await foto(rep, 'repartidor-avisos');
       const saldo = sql(
         `SELECT COALESCE(SUM(m.monto), 0) AS s FROM movimientos m JOIN usuarios u ON u.id = m.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
       )[0]?.s;

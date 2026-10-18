@@ -1014,6 +1014,18 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     )
     .run();
   await anotarEvento(db, id, 'direccion_cambiada', d.direccion);
+  // El repartidor asignado se entera en el momento (C-REPARTIDOR-GRANDES).
+  const asignado = await db
+    .prepare(
+      'SELECT p.repartidor_id, u.idioma FROM pedidos p JOIN usuarios u ON u.id = p.repartidor_id WHERE p.id = ?',
+    )
+    .bind(id)
+    .first<{ repartidor_id: string; idioma: string }>();
+  if (asignado)
+    await notificar(c.env, db, asignado.repartidor_id, {
+      ...AVISOS.repDireccion(asignado.idioma, d.direccion),
+      datos: { pedidoId: id },
+    }).catch((e: unknown) => console.error('aviso dirección al repartidor', e));
   return c.json({ ok: true, total: nuevoTotal, envio: desglose.envio });
 });
 

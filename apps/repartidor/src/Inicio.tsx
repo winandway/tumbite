@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
 import {
   ErrorApi,
+  type Idioma,
   type Nivel,
   enIdioma,
   formatearDolares,
@@ -44,6 +45,13 @@ import { Progreso } from './piezas/Progreso';
 import { ResumenDia } from './piezas/ResumenDia';
 import { IMG } from './piezas/recursos';
 import { textosDriver } from './piezas/textos';
+import { Oferta } from './grandes/Oferta';
+import { Calificaciones } from './grandes/Calificaciones';
+import { Ganancias } from './grandes/Ganancias';
+import { Avisos } from './grandes/Avisos';
+import { AyudaPedido } from './grandes/Ayuda';
+import { Alta } from './grandes/Alta';
+import { textosGrandes } from './grandes/textos';
 import {
   Boton,
   C,
@@ -79,7 +87,12 @@ type Pedido = {
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   minutosParaListo?: number;
   verificado?: boolean;
+  llegoRestaurante?: boolean;
   llegoCliente?: boolean;
+  distanciaAlLocalKm?: number | null;
+  distanciaTotalKm?: number | null;
+  minutosEstimados?: number | null;
+  articulos?: number;
   noApareceEn?: string | null;
   excepcionUbicacion?: 'pedida' | 'autorizada' | null;
   entrega?: 'puerta' | 'mano';
@@ -96,6 +109,7 @@ type Pedido = {
 };
 type Estado = {
   conectado: boolean;
+  pausado?: boolean;
   puntos: number;
   nivel: Nivel;
   activo: Pedido | null;
@@ -334,7 +348,15 @@ function abrirMapa(lat: number | null, lng: number | null, direccion: string) {
 
 export function Inicio() {
   useKeepAwake();
-  const { api, idioma, salir, cambiarIdioma, usuario } = useSesion();
+  const { api, idioma, salir, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
+  // El idioma de los avisos al celular sigue al de la app (antes se quedaba el del registro).
+  const cambiarIdioma = useCallback(
+    (i: Idioma) => {
+      cambiarIdiomaSesion(i);
+      void api.pedir('PUT', '/datos/cuentas/idioma', { idioma: i }).catch(() => undefined);
+    },
+    [api, cambiarIdiomaSesion],
+  );
   const td = textosDriver(idioma);
   // El mapa ocupa lo que queda de pantalla: la mitad en celulares normales.
   const alturaMapa = Math.max(240, Math.round(useWindowDimensions().height * 0.42));
@@ -345,7 +367,11 @@ export function Inicio() {
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
-  const [vista, setVista] = useState<'inicio' | 'billetera' | 'datos' | 'pedidos'>('inicio');
+  const [vista, setVista] = useState<
+    'inicio' | 'billetera' | 'datos' | 'pedidos' | 'calificaciones' | 'avisos' | 'alta'
+  >('inicio');
+  const [ayudaAbierta, setAyudaAbierta] = useState(false);
+  const tg = textosGrandes(idioma);
   const [pronto, setPronto] = useState(false);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [seccionPerfil, setSeccionPerfil] = useState<'vehiculo' | 'documentos' | 'soporte' | null>(
@@ -583,11 +609,12 @@ export function Inicio() {
       if (status !== 'granted') return setError(t.sinUbicacion);
       const p = await ubicacionConLimite();
       if (!p) return setError(t.ubicacionTarda);
-      await api.pedir('POST', '/datos/repartidor/conectar', {
-        conectado: true,
-        lat: p.coords.latitude,
-        lng: p.coords.longitude,
-      });
+      const r = await api.pedir<{ conectado: boolean; cobertura?: string }>(
+        'POST',
+        '/datos/repartidor/conectar',
+        { conectado: true, lat: p.coords.latitude, lng: p.coords.longitude },
+      );
+      if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
@@ -657,6 +684,25 @@ export function Inicio() {
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
       await cargar();
+    }
+  }
+
+  /** «Llegué al restaurante»: manda la posición de ahora; si está lejos, dice a cuántos metros. */
+  async function llegue(pedidoId: string) {
+    setError('');
+    try {
+      const p = await ubicacionConLimite();
+      if (!p) return setError(t.ubicacionTarda);
+      const r = await api.pedir<{ llegue: boolean; metros: number }>(
+        'POST',
+        `/datos/repartidor/pedidos/${pedidoId}/llegue`,
+        { lat: p.coords.latitude, lng: p.coords.longitude },
+      );
+      if (r.llegue) setAviso(tg.pedido.llegueOk);
+      else setError(tg.pedido.llegueLejos.replace('{m}', String(r.metros)));
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
@@ -810,7 +856,7 @@ export function Inicio() {
         idioma={idioma}
         cambiarIdioma={cambiarIdioma}
         alMenu={() => setMenuAbierto((x) => !x)}
-        alCampana={() => setPronto(true)}
+        alCampana={() => setVista('avisos')}
         punto={Boolean(estado?.selfieControlPendiente || pendientes.length)}
       />
       {menuAbierto ? (
@@ -939,39 +985,7 @@ export function Inicio() {
               : ''}
           </Text>
         </View>
-        {porPedido.size === 0 ? (
-          <Text style={{ color: '#5E5E5E' }}>{td.sinMovimientos}</Text>
-        ) : (
-          [...porPedido.entries()].map(([k, v]) => (
-            <View
-              key={k}
-              style={[
-                e.tarjeta,
-                { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-              ]}
-            >
-              <View>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
-                  #{k.slice(0, 4).toUpperCase()}
-                </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
-                  {fechaDe(v).toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontWeight: '900', color: C.secundario }}>
-                  {formatearDolares(v.monto, idioma)}
-                </Text>
-                <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
-                  {td.completado}
-                </Text>
-              </View>
-            </View>
-          ))
-        )}
+        <Ganancias api={api} idioma={idioma} periodo={periodo} />
         <BilleteraRepartidor
           datos={billetera}
           idioma={idioma}
@@ -981,6 +995,27 @@ export function Inicio() {
       </View>,
     );
   }
+
+  // ───────── Como los grandes (18 oct 2026): calificaciones, avisos y alta guiada ─────────
+  if (vista === 'calificaciones')
+    return lienzo('perfil', <Calificaciones api={api} idioma={idioma} />);
+  if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
+  if (vista === 'alta')
+    return lienzo(
+      'perfil',
+      <Alta
+        api={api}
+        idioma={idioma}
+        abrir={(paso) => {
+          if (paso === 'banco') {
+            setVista('billetera');
+            return;
+          }
+          setVista('datos');
+          setSeccionPerfil(paso === 'datos' ? 'vehiculo' : 'documentos');
+        }}
+      />,
+    );
 
   // ───────── Pedidos: el historial real de entregas ─────────
   if (vista === 'pedidos') {
@@ -1105,8 +1140,8 @@ export function Inicio() {
             seccionPerfil === 'documentos',
           )}
           {seccionPerfil === 'documentos' ? <Verificacion /> : null}
-          {fila(td.misLugares, () => setPronto(true))}
-          {fila(td.preferencias, () => setPronto(true))}
+          {fila(tg.calif.titulo, () => setVista('calificaciones'))}
+          {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(
             td.idioma,
             () => cambiarIdioma(idioma === 'es' ? 'en' : 'es'),
@@ -1237,6 +1272,33 @@ export function Inicio() {
                   {l.cantidad} × {textoLinea(l, idioma)}
                 </Text>
               ))}
+              {activo.estado !== 'en_camino' && !activo.llegoRestaurante ? (
+                <Boton texto={tg.pedido.llegue} alTocar={() => void llegue(activo.id)} exito />
+              ) : null}
+              {activo.estado === 'aceptado' && activo.llegoRestaurante ? (
+                <Boton
+                  texto={tg.pedido.noListo}
+                  alTocar={() =>
+                    void api
+                      .pedir('POST', `/datos/repartidor/pedidos/${activo.id}/no-esta-listo`, {})
+                      .then(() => setAviso(tg.pedido.noListoOk))
+                      .catch((x: unknown) =>
+                        setError(x instanceof ErrorApi ? x.message : String(x)),
+                      )
+                  }
+                  secundario
+                />
+              ) : null}
+              {ayudaAbierta ? (
+                <AyudaPedido
+                  api={api}
+                  idioma={idioma}
+                  pedidoId={activo.id}
+                  alCerrar={() => setAyudaAbierta(false)}
+                />
+              ) : (
+                <Boton texto={tg.pedido.ayuda} alTocar={() => setAyudaAbierta(true)} secundario />
+              )}
               {activo.estado !== 'en_camino' ? (
                 <>
                   <Text style={{ marginTop: 10, fontWeight: '700' }}>
@@ -1660,51 +1722,15 @@ export function Inicio() {
       <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
         {mensajes}
         {estado?.conectado ? (
-          ofertas.length === 0 ? (
-            <Text style={e.tarjeta}>{t.buscando}</Text>
-          ) : (
-            ofertas.map((o) => (
-              <View key={o.id} style={[e.tarjeta, { borderWidth: 3, borderColor: C.primario }]}>
-                <Text style={{ color: C.primario, fontWeight: '800' }}>{t.oferta}</Text>
-                <Text style={{ fontSize: 28, fontWeight: '800', marginVertical: 4 }}>
-                  {t.ganas} {formatearDolares(o.pagoRepartidor, idioma)}
-                </Text>
-                {o.propina > 0 ? (
-                  <Text style={{ color: '#5E5E5E' }}>
-                    {t.propinaIncluida} {formatearDolares(o.propina, idioma)}
-                  </Text>
-                ) : null}
-                {o.bono ? (
-                  <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>
-                    {t.bono} {formatearDolares(o.bono, idioma)} {t.bonoPorque}
-                  </Text>
-                ) : null}
-                <Text style={{ marginTop: 6 }}>
-                  {t.recoger}: {o.restaurante.nombre}
-                  {o.minutosParaListo
-                    ? ` · ${t.listoEn} ${o.minutosParaListo} min`
-                    : ` · ${t.listoYa}`}
-                </Text>
-                <Text>
-                  {t.entregar}: {o.direccion}
-                  {o.distanciaKm != null
-                    ? ` · ${(idioma === 'en' ? o.distanciaKm * 0.621371 : o.distanciaKm).toFixed(1)} ${idioma === 'en' ? 'mi' : 'km'}`
-                    : ''}
-                </Text>
-                <Boton
-                  texto={t.aceptar}
-                  alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/aceptar`)}
-                  exito
-                />
-                <Boton
-                  texto={t.rechazar}
-                  alTocar={() => void accion(`/datos/repartidor/ofertas/${o.id}/rechazar`)}
-                  secundario
-                />
-                <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.sinCastigo}</Text>
-              </View>
-            ))
-          )
+          <Text style={e.tarjeta}>{estado.pausado ? tg.pausa.enPausa : t.buscando}</Text>
+        ) : null}
+        {ofertas[0] ? (
+          <Oferta
+            oferta={ofertas[0]}
+            idioma={idioma}
+            alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/aceptar`)}
+            alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/rechazar`)}
+          />
         ) : null}
         {estado && (
           <Pressable
@@ -1736,6 +1762,13 @@ export function Inicio() {
             </View>
           </Pressable>
         )}
+        {estado?.conectado && !activo ? (
+          <Boton
+            texto={estado.pausado ? tg.pausa.reanudar : tg.pausa.pausar}
+            alTocar={() => void accion('/datos/repartidor/pausar', { pausado: !estado.pausado })}
+            secundario
+          />
+        ) : null}
         {estado && (
           <View style={e.tarjeta}>
             <Text style={{ fontWeight: '800' }}>

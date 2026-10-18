@@ -132,8 +132,19 @@ function repartidorParaRestaurante(f: FilaPedido) {
 }
 
 /** Quita al repartidor de un pedido sin entregar: vuelve a la fila de ofertas (a otros repartidores). */
-export async function soltarPedido(db: D1Database, pedidoId: string, repartidorId: string) {
+export async function soltarPedido(
+  db: D1Database,
+  pedidoId: string,
+  repartidorId: string,
+  motivo = '',
+) {
   await db.batch([
+    // Para su tasa de finalización (C-REPARTIDOR-GRANDES): aceptó y no entregó.
+    db
+      .prepare(
+        'INSERT OR IGNORE INTO abandonos_repartidor (pedido_id, repartidor_id, motivo) VALUES (?, ?, ?)',
+      )
+      .bind(pedidoId, repartidorId, motivo),
     db
       .prepare(
         "UPDATE pedidos SET repartidor_id = NULL WHERE id = ? AND repartidor_id = ? AND estado IN ('aceptado','listo')",
@@ -495,6 +506,9 @@ operacion.post('/restaurante/pedidos/:id/listo', async (c) => {
   await avisarAlCliente(c.env, base(c), c.req.param('id'), (i, f) =>
     AVISOS.listo(i, f.restaurante),
   );
+  await avisarAlRepartidor(c.env, base(c), c.req.param('id'), (i, f) =>
+    AVISOS.repListo(i, f.restaurante),
+  );
   return c.json({ ok: true });
 });
 
@@ -573,6 +587,10 @@ operacion.post('/restaurante/pedidos/:id/rechazar', async (c) => {
   });
   if (!ok) throw new ErrorDatos('Este pedido ya no se puede rechazar.', undefined, 409);
   await anotarEvento(base(c), c.req.param('id'), 'rechazado_por_restaurante');
+  // El repartidor que ya iba hacia el local se entera en el momento (C-REPARTIDOR-GRANDES).
+  await avisarAlRepartidor(c.env, base(c), c.req.param('id'), (i, f) =>
+    AVISOS.repCancelado(i, f.restaurante),
+  );
   return c.json({ ok: true });
 });
 
@@ -789,6 +807,7 @@ operacion.get('/repartidor/estado', async (c) => {
   return c.json({
     selfieControlPendiente: Boolean(selfiePendiente),
     conectado: Number(ficha.conectado) === 1,
+    pausado: Number(ficha.pausado ?? 0) === 1,
     tipo: ficha.tipo,
     puntos: Number(ficha.puntos),
     nivel: nivelDe(Number(ficha.puntos)),
@@ -865,7 +884,11 @@ operacion.post('/repartidor/conectar', async (c) => {
       u.id,
     )
     .run();
-  return c.json({ conectado: d.conectado });
+  // Al conectarse se sale de la pausa; y si está fuera de cobertura, se le dice (como «no puedes
+  // conectarte en esta zona» de Dasher): queda conectado en su ciudad de siempre, sin ofertas aquí.
+  if (d.conectado)
+    await db.prepare('UPDATE repartidores SET pausado = 0 WHERE usuario_id = ?').bind(u.id).run();
+  return c.json({ conectado: d.conectado, cobertura: aqui.estado });
 });
 
 operacion.post('/repartidor/ubicacion', async (c) => {
@@ -917,7 +940,7 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
   const { results } = await db
     .prepare(
       `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos FROM repartidores d
-      WHERE d.zona_id = ? AND d.conectado = 1 ${filtroCeldas} AND d.lat IS NOT NULL
+      WHERE d.zona_id = ? AND d.conectado = 1 AND d.pausado = 0 ${filtroCeldas} AND d.lat IS NOT NULL
       AND d.ubicacion_en > datetime('now','-10 minutes')
       AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
@@ -1112,6 +1135,26 @@ async function avisarAlCliente(
     }).catch((e: unknown) => console.error('sms respaldo', e));
 }
 
+/** Aviso al celular del repartidor asignado a un pedido, en su idioma. Nunca frena la operación. */
+export async function avisarAlRepartidor(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  aviso: (idioma: string, f: { restaurante: string }) => { titulo: string; cuerpo: string },
+) {
+  const f = await db
+    .prepare(
+      'SELECT p.repartidor_id, u.idioma, r.nombre AS restaurante FROM pedidos p JOIN usuarios u ON u.id = p.repartidor_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.repartidor_id IS NOT NULL',
+    )
+    .bind(pedidoId)
+    .first<{ repartidor_id: string; idioma: string; restaurante: string }>();
+  if (!f) return;
+  await notificar(env, db, f.repartidor_id, {
+    ...aviso(f.idioma, { restaurante: f.restaurante }),
+    datos: { pedidoId },
+  }).catch((e: unknown) => console.error('aviso al repartidor', e));
+}
+
 function conDatosRestaurante(f: FilaPedido) {
   return {
     ...aPedido(f),
@@ -1128,6 +1171,7 @@ function conDatosRestaurante(f: FilaPedido) {
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
     // Lo que la app del repartidor necesita saber de sus propios pasos.
     verificado: f.h_verificado != null,
+    llegoRestaurante: f.h_llego_rest != null,
     llegoCliente: f.h_llego_cli != null,
     noApareceEn: (f.h_no_aparece as string | null) ?? null,
     excepcionUbicacion: (f.excepcion_ubicacion as 'pedida' | 'autorizada' | null) ?? null,
@@ -1141,7 +1185,7 @@ function conDatosRestaurante(f: FilaPedido) {
 }
 
 operacion.get('/repartidor/ofertas', async (c) => {
-  const { u, db } = await miFicha(c);
+  const { u, db, ficha } = await miFicha(c);
   await repartirOfertas(db, c.env);
   const { results } = await db
     .prepare(
@@ -1151,12 +1195,38 @@ operacion.get('/repartidor/ofertas', async (c) => {
     )
     .bind(u.id)
     .all<FilaPedido>();
+  // Como en DoorDash y Uber: la oferta trae el viaje completo (hasta el local y hasta la casa),
+  // los minutos estimados y cuántos artículos lleva, para decidir en 45 segundos con todo a la vista.
+  const yo =
+    ficha.lat != null && ficha.lng != null
+      ? { lat: Number(ficha.lat), lng: Number(ficha.lng) }
+      : null;
   return c.json({
-    ofertas: results.map((f) => ({
-      ...conDatosRestaurante(f),
-      ofertaEn: String(f.oferta_en),
-      segundos: SEGUNDOS_OFERTA,
-    })),
+    ofertas: results.map((f) => {
+      const base = conDatosRestaurante(f);
+      const rest =
+        base.restaurante.lat != null && base.restaurante.lng != null
+          ? { lat: base.restaurante.lat, lng: base.restaurante.lng }
+          : null;
+      const alLocal = yo && rest ? Math.round(distanciaKm(yo, rest) * 10) / 10 : null;
+      const total =
+        alLocal != null && base.distanciaKm != null
+          ? Math.round((alLocal + base.distanciaKm) * 10) / 10
+          : null;
+      const viajeAlLocal = alLocal != null ? minutosDeViaje(alLocal) : 0;
+      // Si la comida tarda más que el viaje al local, esa espera también cuenta.
+      const espera = Math.max(0, (base.minutosParaListo ?? 0) - viajeAlLocal);
+      const articulos = base.lineas.reduce((n, l) => n + Number(l.cantidad ?? 1), 0);
+      return {
+        ...base,
+        distanciaAlLocalKm: alLocal,
+        distanciaTotalKm: total,
+        minutosEstimados: total != null ? minutosDeViaje(total) + espera : null,
+        articulos,
+        ofertaEn: String(f.oferta_en),
+        segundos: SEGUNDOS_OFERTA,
+      };
+    }),
   });
 });
 
@@ -2132,7 +2202,7 @@ operacion.post('/repartidor/pedidos/:id/soltar', async (c) => {
       undefined,
       409,
     );
-  await soltarPedido(db, id, u.id);
+  await soltarPedido(db, id, u.id, motivo);
   await anotarEvento(db, id, 'repartidor_solto', motivo);
   return c.json({ ok: true });
 });

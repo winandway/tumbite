@@ -96,6 +96,35 @@ export async function notificar(env: Env, db: D1Database, usuarioId: string, avi
 
 /** Los textos de cada aviso, en el idioma de la persona. */
 export const AVISOS = {
+  // ── Al repartidor (18 oct 2026, C-REPARTIDOR-GRANDES) ──
+  repListo: (i: string, rest: string): Aviso =>
+    i === 'en'
+      ? { titulo: 'Order ready for pickup', cuerpo: `${rest} finished the order. Pick it up.` }
+      : { titulo: 'Pedido listo para recoger', cuerpo: `${rest} terminó el pedido. Pasa por él.` },
+  repCancelado: (i: string, rest: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'Order canceled by the restaurant',
+          cuerpo: `${rest} canceled the order. You’re free for the next one.`,
+        }
+      : {
+          titulo: 'Pedido cancelado por el restaurante',
+          cuerpo: `${rest} canceló el pedido. Quedas libre para el siguiente.`,
+        },
+  repDireccion: (i: string, direccion: string): Aviso =>
+    i === 'en'
+      ? { titulo: 'Delivery address changed', cuerpo: `New address: ${direccion}` }
+      : { titulo: 'Cambió la dirección de entrega', cuerpo: `Nueva dirección: ${direccion}` },
+  restNoListo: (i: string, codigo: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `Driver is waiting for order #${codigo}`,
+          cuerpo: 'The driver is at your door and the order isn’t ready yet.',
+        }
+      : {
+          titulo: `El repartidor espera el pedido #${codigo}`,
+          cuerpo: 'El repartidor ya llegó y el pedido todavía no está listo.',
+        },
   pedidoAceptado: (i: string, rest: string): Aviso =>
     i === 'en'
       ? { titulo: 'Your order is being prepared', cuerpo: `${rest} accepted your order.` }

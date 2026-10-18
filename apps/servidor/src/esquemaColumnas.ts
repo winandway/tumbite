@@ -171,6 +171,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "puntos",
     "zona_id",
     "geohash",
+    "pausado",
+    "creado_en"
+  ],
+  "abandonos_repartidor": [
+    "pedido_id",
+    "repartidor_id",
+    "motivo",
     "creado_en"
   ],
   "ofertas": [

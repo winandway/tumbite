@@ -1160,6 +1160,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Descarga la app de Tumbite para repartidores y crea tu cuenta.',
+          'En Perfil → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.',
           'Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.',
           'Toca «Conectarme» cuando quieras trabajar. La app usa tu ubicación solo mientras estás conectado.',
           'No hay horarios ni mínimos: te conectas y desconectas cuando quieras.',
@@ -1211,12 +1212,135 @@ const es: SeccionDocs[] = [
           '¿Me bajan de nivel si rechazo una oferta?',
           '¿Cómo marco que recogí y entregué?',
         ],
+        explicacion: [
+          'La oferta ocupa toda la pantalla, como en las grandes apps de reparto: arriba la ganancia garantizada en grande (con la propina incluida y el bono si lo hay), y debajo cuatro datos para decidir de un vistazo: la distancia hasta el restaurante, el viaje total, los minutos aproximados y cuántos artículos lleva.',
+          'Tienes 45 segundos y los ves correr en la pantalla; el celular vibra cuando llega la oferta. Si no respondes, la oferta pasa al siguiente repartidor y cuenta como rechazo en tu tasa de aceptación, pero no te baja de nivel.',
+          'La ganancia que ves es la mínima garantizada: si el cliente agrega propina después de entregar, la ves sumada en Ganancias y te llega un aviso.',
+        ],
         pasos: [
-          'Cuando hay un pedido cerca, te llega una oferta con el pago en dólares, la distancia y el restaurante.',
-          'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no cuenta en tu contra.',
+          'Cuando hay un pedido cerca, la app vibra y te muestra la oferta en pantalla completa: ganancia, distancia al local, viaje total, minutos y artículos.',
+          'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no te baja de nivel.',
           'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
           'Toca «Cómo llegar» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
+        ],
+      },
+      {
+        id: 'ratings',
+        titulo: 'Mis calificaciones: lo que ven los clientes de ti',
+        resumen:
+          'En Perfil → «Mis calificaciones» ves tu calificación de clientes, tu tasa de aceptación, de finalización y de puntualidad, y cuántas entregas llevas. Con la referencia de las grandes apps al lado.',
+        explicacion: [
+          'Calificación de clientes: el promedio de estrellas de tus últimas 100 entregas calificadas. Si el cliente no califica, no afecta. Las grandes apps piden 4,2 o más.',
+          'Tasa de aceptación: de las últimas 100 ofertas, cuántas aceptaste. Dejar vencer una cuenta como rechazo. No tiene mínimo: cuenta para tu nivel.',
+          'Tasa de finalización: de los pedidos que aceptaste, cuántos entregaste. Soltar un pedido cuenta en contra. Las grandes apps piden 90 % o más.',
+          'Puntualidad: cuántas entregas llegaron dentro de la hora prometida al cliente. Si el restaurante se demora y tú llegaste a tiempo, no es culpa tuya.',
+          'Entregas en 30 días y totales: tu historial de un vistazo.',
+          'En Tumbite estos números son tu guía y cuentan para tu nivel; no se desactiva a nadie por ellos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-calificaciones-es.webp',
+            alt: 'Pantalla «Mis calificaciones» de la app de repartidores con la calificación de clientes, la tasa de aceptación, la de finalización, la puntualidad y las entregas.',
+            pie: 'Tus números, con la referencia del mercado al lado.',
+          },
+        ],
+        preguntas: [
+          '¿Dónde veo mi calificación como repartidor?',
+          '¿Rechazar ofertas afecta mi calificación?',
+          '¿Qué es la tasa de finalización?',
+        ],
+        pasos: [
+          'Entra en Perfil y toca «Mis calificaciones».',
+          'Revisa cada tarjeta: el número grande es el tuyo y abajo está la referencia del mercado.',
+          'Para subir: entrega lo que aceptas, llega a tiempo y cuida la entrega.',
+        ],
+      },
+      {
+        id: 'earnings-breakdown',
+        titulo: 'Ganancias con desglose: base, bonos y propinas',
+        resumen:
+          'En Ganancias ves por día, semana o mes cuánto fue pago base, cuánto bonos y cuánto propinas, y cada pedido con su desglose. La propina que llega después de entregar también se suma ahí.',
+        explicacion: [
+          'Arriba, el total del periodo separado en pago base, bonos y propinas, y el número de entregas. El pago base nunca cambia por la propina: la propina se suma encima.',
+          'Debajo, cada pedido con el restaurante, la hora y su total. Toca «Ver desglose» para ver base, bono y propina de ese pedido.',
+          'Si el cliente da propina después de entregar, te llega un aviso y aparece como «propina después de entregar» en ese pedido y en el total de propinas.',
+          'Más abajo sigue tu billetera: saldo disponible, retiros y movimientos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-ganancias-es.webp',
+            alt: 'Pestaña Ganancias de la app de repartidores con el total del periodo separado en pago base, bonos y propinas, y un pedido con su desglose abierto.',
+            pie: 'Cada pedido con su pago base, su bono y su propina.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo se calcula lo que gano por pedido?',
+          '¿Dónde veo las propinas?',
+          '¿Qué pasa si el cliente da propina después?',
+        ],
+        pasos: [
+          'Toca Ganancias en la barra de abajo y elige Hoy, Semana o Mes.',
+          'Toca un pedido y «Ver desglose».',
+          'Retira desde tu billetera cuando quieras.',
+        ],
+      },
+      {
+        id: 'alerts-and-pause',
+        titulo: 'La campana y la pausa: tus avisos y cuándo no recibir ofertas',
+        resumen:
+          'La campana te muestra los avisos reales de tus últimos siete días: pedido listo, cancelaciones, cambios de dirección, propinas, foto de control. Y con «Pausar ofertas» sigues conectado sin que te lleguen ofertas.',
+        explicacion: [
+          'Avisos que te llegan al celular y quedan en la campana: el restaurante terminó tu pedido («Pedido listo para recoger»), el restaurante o el cliente cancelaron (quedas libre para el siguiente), el cliente cambió la dirección de entrega (con la nueva dirección), soporte autorizó tu entrega sin GPS, una propina que llegó después de entregar, ofertas que se te vencieron hoy y la foto de control pendiente.',
+          'Los avisos llegan en el idioma que tienes en la app: si la cambias a inglés, también cambian.',
+          'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. «Reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
+          'Si te conectas fuera de nuestra zona de cobertura, la app te lo dice: quedas conectado, pero ahí no llegan ofertas.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-avisos-es.webp',
+            alt: 'Pantalla «Tus avisos» de la app de repartidores con un pedido listo para recoger y otros avisos recientes.',
+            pie: 'Todo lo que te pasó con tus pedidos, en un solo lugar.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo dejo de recibir ofertas sin desconectarme?',
+          '¿Me avisan si el restaurante cancela?',
+          '¿Qué hay en la campana de la app de repartidores?',
+        ],
+        pasos: [
+          'Toca la campana arriba a la derecha para ver tus avisos.',
+          'En el inicio, conectado y sin pedido, toca «Pausar ofertas» cuando necesites un descanso.',
+          'Toca «Reanudar ofertas» para volver a recibir.',
+        ],
+      },
+      {
+        id: 'arrived-not-ready-and-help',
+        titulo: '«Llegué al restaurante», «el pedido no está listo» y ayuda con el pedido',
+        resumen:
+          'En el pedido activo tienes tres botones nuevos: para avisar que llegaste al restaurante, para registrar que el pedido no está listo, y para pedir ayuda con motivos claros o llamar a emergencias.',
+        explicacion: [
+          '«Llegué al restaurante»: confirma tu llegada con tu posición. Funciona a menos de 200 metros del local; si estás más lejos, la app te dice a cuántos metros. El GPS también marca la llegada solo, pero con el botón queda registrada en el momento y el restaurante sabe que estás ahí.',
+          '«El pedido no está listo»: si llegaste y el restaurante todavía no termina, tócalo. Le llega un aviso al restaurante y queda en la bitácora del pedido: esa espera no cuenta en tu contra.',
+          '«Ayuda con este pedido»: elige el motivo (el restaurante está cerrado, el pedido está incorrecto o incompleto, no encuentro la dirección, tuve un accidente o un problema con el vehículo, otro), cuenta más si quieres y se abre tu conversación con soporte con el pedido ya adjunto.',
+          'Emergencia: llama al 911 desde la app y Tumbite queda avisado.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llegue-es.webp',
+            alt: 'Pedido activo en la app de repartidores con los botones «Llegué al restaurante», «Ayuda con este pedido» y la lista de artículos.',
+            pie: 'Llegaste: tócalo y el restaurante lo sabe.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo aviso que llegué al restaurante?',
+          '¿Qué hago si el pedido no está listo?',
+          '¿Cómo pido ayuda durante una entrega?',
+        ],
+        pasos: [
+          'Al llegar al restaurante, toca «Llegué al restaurante».',
+          'Si no está listo, toca «El pedido no está listo».',
+          'Ante cualquier problema, toca «Ayuda con este pedido» y elige el motivo.',
         ],
       },
       {
@@ -2761,6 +2885,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'Go to tumbite.com, tap “Dashboard,” and create a restaurant account with your email.',
+          'Under Profile → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
           'Save. Your restaurant is “under review”: our team approves it and emails you.',
@@ -3088,12 +3213,135 @@ const en: SeccionDocs[] = [
           'Does declining an offer lower my level?',
           'How do I mark pickup and delivery?',
         ],
+        explicacion: [
+          'The offer takes the whole screen, like in the big delivery apps: the guaranteed earnings big at the top (tip included, and the bonus if there is one), and below it four facts to decide at a glance: the distance to the restaurant, the total trip, the approximate minutes, and how many items it carries.',
+          'You have 45 seconds and you see them counting down; the phone vibrates when the offer arrives. If you don’t answer, the offer goes to the next driver and counts as a decline in your acceptance rate, but it doesn’t lower your level.',
+          'The earnings you see are the guaranteed minimum: if the customer adds a tip after delivery, you see it added under Earnings and you get a notification.',
+        ],
         pasos: [
-          'When there’s an order nearby, you get an offer with the pay in dollars, the distance, and the restaurant.',
-          'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t count against you.',
+          'When there’s an order nearby, the app vibrates and shows you the offer full screen: earnings, distance to the store, total trip, minutes, and items.',
+          'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t lower your level.',
           'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
           'Tap “Directions” to open Google Maps, Apple Maps, or Waze with the address already set.',
           'The customer’s tip is 100% yours: it never tops up your pay.',
+        ],
+      },
+      {
+        id: 'ratings',
+        titulo: 'My ratings: what customers see about you',
+        resumen:
+          'Under Profile → “My ratings” you see your customer rating, your acceptance, completion, and on-time rates, and how many deliveries you have. With the big apps’ reference next to each.',
+        explicacion: [
+          'Customer rating: the average stars from your last 100 rated deliveries. If the customer doesn’t rate, it doesn’t count. The big apps ask for 4.2 or higher.',
+          'Acceptance rate: out of the last 100 offers, how many you accepted. Letting one expire counts as a decline. No minimum: it counts toward your level.',
+          'Completion rate: of the orders you accepted, how many you delivered. Dropping an order counts against you. The big apps ask for 90% or higher.',
+          'On-time rate: how many deliveries arrived within the time promised to the customer. If the restaurant runs late and you arrived on time, it’s not on you.',
+          'Deliveries in 30 days and lifetime: your history at a glance.',
+          'At Tumbite these numbers are your guide and count toward your level; nobody is deactivated because of them.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-calificaciones-en.webp',
+            alt: '“My ratings” screen in the driver app with customer rating, acceptance rate, completion rate, on-time rate, and deliveries.',
+            pie: 'Your numbers, with the market reference next to them.',
+          },
+        ],
+        preguntas: [
+          'Where do I see my rating as a driver?',
+          'Does declining offers affect my rating?',
+          'What is the completion rate?',
+        ],
+        pasos: [
+          'Go to Profile and tap “My ratings”.',
+          'Check each card: the big number is yours and the market reference is below.',
+          'To go up: deliver what you accept, arrive on time, and take care of the delivery.',
+        ],
+      },
+      {
+        id: 'earnings-breakdown',
+        titulo: 'Earnings breakdown: base pay, bonuses, and tips',
+        resumen:
+          'Under Earnings you see, by day, week, or month, how much was base pay, how much bonuses, and how much tips, and every order with its breakdown. A tip that arrives after delivery is added there too.',
+        explicacion: [
+          'At the top, the period total split into base pay, bonuses, and tips, plus the number of deliveries. Base pay never changes because of the tip: the tip is added on top.',
+          'Below, every order with the restaurant, the time, and its total. Tap “See breakdown” for that order’s base, bonus, and tip.',
+          'If the customer tips after delivery, you get a notification and it shows as “tip after delivery” on that order and in the tips total.',
+          'Further down is your wallet: available balance, payouts, and activity.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-ganancias-en.webp',
+            alt: 'Earnings tab in the driver app with the period total split into base pay, bonuses, and tips, and an order with its breakdown open.',
+            pie: 'Every order with its base pay, bonus, and tip.',
+          },
+        ],
+        preguntas: [
+          'How is my pay per order calculated?',
+          'Where do I see tips?',
+          'What happens if the customer tips later?',
+        ],
+        pasos: [
+          'Tap Earnings in the bottom bar and pick Today, Week, or Month.',
+          'Tap an order and “See breakdown”.',
+          'Withdraw from your wallet whenever you want.',
+        ],
+      },
+      {
+        id: 'alerts-and-pause',
+        titulo: 'The bell and pause: your notifications and when not to receive offers',
+        resumen:
+          'The bell shows your real notifications from the last seven days: order ready, cancellations, address changes, tips, check-in photo. And with “Pause offers” you stay online without receiving offers.',
+        explicacion: [
+          'Notifications that reach your phone and stay in the bell: the restaurant finished your order (“Order ready for pickup”), the restaurant or the customer canceled (you’re free for the next one), the customer changed the delivery address (with the new address), support approved your delivery without GPS, a tip that came after delivery, offers that expired on you today, and a pending check-in photo.',
+          'Notifications arrive in the language you have in the app: switch to English and they switch too.',
+          'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. “Resume offers” puts you back in line. Going online again clears the pause.',
+          'If you go online outside our coverage area, the app tells you: you’re online, but no offers arrive there.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-avisos-en.webp',
+            alt: '“Your notifications” screen in the driver app with an order ready for pickup and other recent notifications.',
+            pie: 'Everything that happened with your orders, in one place.',
+          },
+        ],
+        preguntas: [
+          'How do I stop receiving offers without going offline?',
+          'Do I get notified if the restaurant cancels?',
+          'What’s in the bell of the driver app?',
+        ],
+        pasos: [
+          'Tap the bell at the top right to see your notifications.',
+          'On the home screen, online with no order, tap “Pause offers” when you need a break.',
+          'Tap “Resume offers” to receive again.',
+        ],
+      },
+      {
+        id: 'arrived-not-ready-and-help',
+        titulo: '“I’m at the restaurant”, “order isn’t ready”, and help with the order',
+        resumen:
+          'The active order has three new buttons: to say you arrived at the restaurant, to record that the order isn’t ready, and to get help with clear reasons or call emergency services.',
+        explicacion: [
+          '“I’m at the restaurant”: confirms your arrival with your position. It works within 200 meters of the store; if you’re farther, the app tells you how many meters. GPS also marks the arrival on its own, but with the button it’s recorded right away and the restaurant knows you’re there.',
+          '“Order isn’t ready”: if you arrived and the restaurant hasn’t finished, tap it. The restaurant gets a notification and it goes on the order’s record: that wait doesn’t count against you.',
+          '“Help with this order”: pick the reason (the restaurant is closed, the order is wrong or incomplete, I can’t find the address, I had an accident or a vehicle problem, something else), add details if you want, and your conversation with support opens with the order attached.',
+          'Emergency: calls 911 from the app and Tumbite is notified.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-llegue-en.webp',
+            alt: 'Active order in the driver app with the “I’m at the restaurant” and “Help with this order” buttons and the item list.',
+            pie: 'You arrived: tap it and the restaurant knows.',
+          },
+        ],
+        preguntas: [
+          'How do I say I arrived at the restaurant?',
+          'What do I do if the order isn’t ready?',
+          'How do I get help during a delivery?',
+        ],
+        pasos: [
+          'When you get to the restaurant, tap “I’m at the restaurant”.',
+          'If it isn’t ready, tap “Order isn’t ready”.',
+          'For any problem, tap “Help with this order” and pick the reason.',
         ],
       },
       {

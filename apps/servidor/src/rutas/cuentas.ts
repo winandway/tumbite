@@ -485,6 +485,14 @@ cuentas.patch('/yo', async (c) => {
   return c.json({ usuario: { ...u, nombre: d.nombre, idioma: d.idioma } });
 });
 
+/** El idioma de los avisos sigue al de la app (C-REPARTIDOR-GRANDES): antes se quedaba el del registro. */
+cuentas.put('/idioma', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, z.object({ idioma: z.enum(['es', 'en']) }));
+  await base(c).prepare('UPDATE usuarios SET idioma = ? WHERE id = ?').bind(d.idioma, u.id).run();
+  return c.json({ idioma: d.idioma });
+});
+
 /** Cambiar la contraseña sabiendo la actual. Cierra las demás sesiones; la de ahora sigue. */
 cuentas.post('/clave', async (c) => {
   const u = exigir(c);

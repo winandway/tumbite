@@ -49,6 +49,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['restaurantes', 'area_id', 'TEXT'],
   ['repartidores', 'area_id', 'TEXT'],
   ['pedidos', 'area_id', 'TEXT'],
+  // Repartidor como los grandes (18 oct 2026, C-REPARTIDOR-GRANDES): pausa sin desconectarse.
+  ['repartidores', 'pausado', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
