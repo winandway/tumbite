@@ -113,12 +113,33 @@ export function SuperKyc({
   const t = enIdioma(T, idioma);
   const [estado, setEstado] = useState('pendiente');
   const [lista, setLista] = useState<Solicitud[] | null>(null);
+  const [siguiente, setSiguiente] = useState<string | null>(null);
+  const [totales, setTotales] = useState<Record<string, number>>({});
   useEffect(() => {
     if (id) return;
-    pedir<{ solicitudes: Solicitud[] }>('GET', `/datos/admin/kyc?estado=${estado}`)
-      .then((r) => setLista(r.solicitudes))
+    pedir<{ solicitudes: Solicitud[]; siguiente: string | null; totales: Record<string, number> }>(
+      'GET',
+      `/datos/admin/kyc?estado=${estado}`,
+    )
+      .then((r) => {
+        setLista(r.solicitudes);
+        setSiguiente(r.siguiente);
+        setTotales(r.totales ?? {});
+      })
       .catch(() => setLista([]));
   }, [estado, id]);
+  // Punto 27: la bandeja pagina (antes se quedaba en 50 sin avisar).
+  const verMas = () =>
+    siguiente &&
+    pedir<{ solicitudes: Solicitud[]; siguiente: string | null }>(
+      'GET',
+      `/datos/admin/kyc?estado=${estado}&despues=${encodeURIComponent(siguiente)}`,
+    )
+      .then((r) => {
+        setLista((l) => [...(l ?? []), ...r.solicitudes]);
+        setSiguiente(r.siguiente);
+      })
+      .catch(() => undefined);
   if (id) return <RevisarKyc base={base} idioma={idioma} id={id} />;
   return (
     <section className="super">
@@ -140,6 +161,9 @@ export function SuperKyc({
             onClick={() => setEstado(v)}
           >
             {n}
+            {new Map(Object.entries(totales)).has(v)
+              ? ` (${new Map(Object.entries(totales)).get(v)})`
+              : ''}
           </button>
         ))}
       </div>
@@ -162,6 +186,11 @@ export function SuperKyc({
           </li>
         ))}
       </ul>
+      {siguiente ? (
+        <button type="button" className="boton secundario" onClick={() => void verMas()}>
+          {idioma === 'en' ? 'Show more' : 'Ver más'}
+        </button>
+      ) : null}
     </section>
   );
 }

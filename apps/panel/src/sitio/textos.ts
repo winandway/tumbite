@@ -67,8 +67,13 @@ const es = {
       'Sin contratos de permanencia y con el desglose exacto de cada pedido. Recibes los pedidos en una tablet, en tu celular o en la computadora.',
     planes: [
       ['Inicial', '7,5 %', '15 %', 'Tu restaurante en la app, pedidos en línea y entregas.'],
-      ['Crece', '12,5 %', '25 %', 'Más alcance en tu zona y más visibilidad.'],
-      ['Élite', '15 %', '30 %', 'El mayor alcance, ayuda con fotos y marketing.'],
+      [
+        'Crece',
+        '12,5 %',
+        '25 %',
+        'Todo lo del Inicial. Promociones destacadas en el inicio de la app: muy pronto.',
+      ],
+      ['Élite', '15 %', '30 %', 'Todo lo del Crece. Ayuda con fotos y marketing: muy pronto.'],
     ],
     comision: 'comisión',
     otros: 'en otras plataformas',
@@ -121,7 +126,7 @@ const es = {
     etiqueta: 'Dónde estamos',
     titulo: 'Empezamos en Miami. Tu ciudad puede ser la siguiente.',
     texto:
-      'Tumbite crece pueblo a pueblo. Cada ciudad tiene sus restaurantes, sus repartidores y su soporte local. Anótate y cuando haya suficientes vecinos en tu zona, llegamos.',
+      'Tumbite crece pueblo a pueblo. Cada ciudad tiene sus restaurantes y sus repartidores, con soporte en tu idioma. Anótate y cuando haya suficientes vecinos en tu zona, llegamos.',
     activa: 'Activa',
     proxima: 'Próximamente',
   },
@@ -129,7 +134,7 @@ const es = {
     etiqueta: 'Música en vivo, de verdad',
     titulo: 'Premiamos a los mejores restaurantes con bandas en vivo',
     texto:
-      'Una parte de lo que gana Tumbite va a llevar músicos de verdad a los restaurantes mejor calificados. Creemos en la música hecha por personas y en el arte de nuestra ciudad.',
+      'Es lo que viene: una parte de lo que gane Tumbite irá a llevar músicos de verdad a los restaurantes mejor calificados. Creemos en la música hecha por personas y en el arte de nuestra ciudad.',
   },
   preguntas: {
     titulo: 'Preguntas frecuentes',
@@ -351,8 +356,13 @@ const en: Textos = {
       'No long-term contracts and an exact breakdown of every order. Get orders on a tablet, your phone, or your computer.',
     planes: [
       ['Starter', '7.5%', '15%', 'Your restaurant in the app, online orders, and delivery.'],
-      ['Growth', '12.5%', '25%', 'More reach in your area and more visibility.'],
-      ['Pro', '15%', '30%', 'The widest reach, plus help with photos and marketing.'],
+      [
+        'Growth',
+        '12.5%',
+        '25%',
+        'Everything in Starter. Featured promotions on the app’s home: coming soon.',
+      ],
+      ['Elite', '15%', '30%', 'Everything in Growth. Help with photos and marketing: coming soon.'],
     ],
     comision: 'commission',
     otros: 'on other platforms',
@@ -405,7 +415,7 @@ const en: Textos = {
     etiqueta: 'Where we are',
     titulo: 'We start in Miami. Your city could be next.',
     texto:
-      'Tumbite grows town by town. Each city has its own restaurants, its own drivers, and local support. Sign up, and once enough neighbors in your area join, we’ll be there.',
+      'Tumbite grows town by town. Each city has its own restaurants and its own drivers, with support in your language. Sign up, and once enough neighbors in your area join, we’ll be there.',
     activa: 'Live',
     proxima: 'Coming soon',
   },
@@ -413,7 +423,7 @@ const en: Textos = {
     etiqueta: 'Live music, for real',
     titulo: 'We reward the best restaurants with live bands',
     texto:
-      'Part of what Tumbite earns brings real musicians to the best-rated restaurants. We believe in music made by people and in our city’s art.',
+      'It’s what’s coming: part of what Tumbite earns will bring real musicians to the best-rated restaurants. We believe in music made by people and in our city’s art.',
   },
   preguntas: {
     titulo: 'Frequently asked questions',

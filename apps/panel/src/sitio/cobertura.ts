@@ -356,7 +356,8 @@ export const PAISES: Lugar[] = [
 ];
 
 export const CIUDADES: Lugar[] = [
-  { slug: 'miami', nombre: { es: 'Miami', en: 'Miami' }, estado: 'activo', pais: 'united-states' },
+  // Miami pasa a «activo» el día del lanzamiento público (hoy la portada dice «muy pronto»; decisión de Richard).
+  { slug: 'miami', nombre: { es: 'Miami', en: 'Miami' }, estado: 'pronto', pais: 'united-states' },
   {
     slug: 'orlando',
     nombre: { es: 'Orlando', en: 'Orlando' },

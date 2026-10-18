@@ -47,8 +47,8 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Bloque D — Operación, cuentas externas e infraestructura
 
-- [ ] D.1 Verificaciones: aviso al equipo y paginación; pantalla de salud; prueba de restauración de respaldo.
-- [ ] D.2 F17 y web: ciudades desde el servidor; textos ajustados (planes, soporte local, música en vivo a «lo que viene»); un buzón público.
+- [x] D.1 Verificaciones: aviso al equipo y paginación; pantalla de salud; prueba de restauración de respaldo.
+- [x] D.2 F17 y web: ciudades desde el servidor; textos ajustados (planes, soporte local, música en vivo a «lo que viene»); un buzón público.
 - [ ] D.3 Cuentas externas (👤): documentar exactamente qué falta y qué destranca cada una; F12 projectId al tener Expo.
 
 ## Bloque E — Pruebas integrales, piloto y tiendas

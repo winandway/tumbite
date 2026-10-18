@@ -106,3 +106,87 @@ export async function respaldarBase(db: D1Database, almacen: R2Bucket) {
   } while (cursor);
   return { tablas: n, filas };
 }
+
+const HOSTS_PRUEBAS = new Set([
+  'staging.tumbite.com',
+  'tumbite-pruebas.sitios.dev',
+  'localhost',
+  '127.0.0.1',
+]);
+
+/**
+ * Restaurar un respaldo (punto 28): vuelve a dejar cada tabla como estaba ese día. SOLO en el sitio
+ * de pruebas (doble cerrojo: host de pruebas + secreto del reloj): es la prueba de que los respaldos
+ * sirven. En producción nunca; si hiciera falta, se hace a mano con la copia y el equipo delante.
+ */
+export async function restaurarDesdeRespaldo(db: D1Database, almacen: R2Bucket, dia: string) {
+  const lista = await almacen.list({ prefix: `respaldos/${dia}/` });
+  const borrados: D1PreparedStatement[] = [];
+  const insertados: D1PreparedStatement[] = [];
+  let tablas = 0;
+  let filas = 0;
+  for (const o of lista.objects) {
+    const tabla = o.key.split('/')[2]?.replace(/\.json$/, '') ?? '';
+    if (!/^[a-z_]+$/.test(tabla) || NO_SE_RESPALDAN.has(tabla)) continue;
+    const obj = await almacen.get(o.key);
+    if (!obj) continue;
+    // `body` es un stream tanto en R2 real como en el almacén de pruebas.
+    const datos = JSON.parse(await new Response(obj.body).text()) as Record<string, unknown>[];
+    const existe = await db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .bind(tabla)
+      .first();
+    if (!existe) continue;
+    borrados.push(db.prepare(`DELETE FROM "${tabla}"`));
+    if (datos.length) {
+      const columnas = Object.keys(datos[0]!).filter((k) => /^[a-z_0-9]+$/.test(k));
+      const sql = `INSERT INTO "${tabla}" (${columnas.map((k) => `"${k}"`).join(',')}) VALUES (${columnas.map(() => '?').join(',')})`;
+      for (const f of datos)
+        insertados.push(
+          db.prepare(sql).bind(...columnas.map((k) => new Map(Object.entries(f)).get(k) ?? null)),
+        );
+    }
+    tablas++;
+    filas += datos.length;
+  }
+  if (!tablas) return { tablas, filas };
+  // Los disparadores de negocio (transiciones de pedidos, servicios) no aplican a una copia fiel:
+  // se quitan durante la carga y se vuelven a crear con su mismo SQL al terminar.
+  const { results: disparadores } = await db
+    .prepare("SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND sql IS NOT NULL")
+    .all<{ name: string; sql: string }>();
+  // Las llaves foráneas se revisan al final: primero se vacían todas las tablas y después se
+  // vuelven a llenar, en una sola transacción (D1 difiere las comprobaciones; en local se apagan).
+  await db
+    .prepare('PRAGMA foreign_keys = OFF')
+    .run()
+    .catch(() => undefined);
+  try {
+    await db.batch([
+      db.prepare('PRAGMA defer_foreign_keys = ON'),
+      ...disparadores.map((d) => db.prepare(`DROP TRIGGER IF EXISTS "${d.name}"`)),
+      ...borrados,
+      ...insertados,
+      ...disparadores.map((d) => db.prepare(d.sql)),
+    ]);
+  } finally {
+    await db
+      .prepare('PRAGMA foreign_keys = ON')
+      .run()
+      .catch(() => undefined);
+  }
+  return { tablas, filas };
+}
+
+respaldo.post('/respaldo/restaurar', async (c) => {
+  const host = new URL(c.req.url).hostname;
+  if (!HOSTS_PRUEBAS.has(host)) return c.json({ error: 'Solo en el sitio de pruebas.' }, 403);
+  const secreto = c.env.RELOJ_SECRETO;
+  if (!secreto || c.req.header('x-reloj-secreto') !== secreto)
+    return c.json({ error: 'no autorizado' }, 401);
+  if (!c.env.BUCKET) return c.json({ error: 'Sin almacén (BUCKET).' }, 503);
+  const dia = String(c.req.query('dia') ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dia)) return c.json({ error: 'Falta el día (AAAA-MM-DD).' }, 400);
+  const r = await restaurarDesdeRespaldo(base(c), c.env.BUCKET, dia);
+  return c.json({ ok: true, ...r });
+});

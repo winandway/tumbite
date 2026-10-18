@@ -120,7 +120,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/docs">{t.docs}</Enlace>
           <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>
           <Enlace a="/support">{t.soporte}</Enlace>
-          <a href="mailto:hello@tumbite.com">{t.contacto}</a>
+          <a href="mailto:support@tumbite.com">{t.contacto}</a>
         </nav>
         <nav aria-label={t.ayuda}>
           <h3>{t.ayuda}</h3>

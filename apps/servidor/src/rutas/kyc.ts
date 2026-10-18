@@ -278,6 +278,17 @@ kyc.post('/kyc/enviar', async (c) => {
     )
     .bind(docTipo, distancia, u.id)
     .run();
+  // Punto 27: el equipo se entera en el momento (antes nadie avisaba y la bandeja se miraba a mano).
+  for (const para of (c.env.ADMIN_CORREOS ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean))
+    await enviarCorreo(c.env, {
+      de: 'avisos',
+      para,
+      asunto: `Verificación enviada: ${u.nombre} (${u.rol})`,
+      texto: `${u.nombre} (${u.correo}, ${u.rol}) envió su verificación de identidad${distancia != null ? ` · local a ${distancia} m de la dirección registrada` : ''}. Revísala en el superadmin → Verificaciones.`,
+    }).catch((e: unknown) => console.error('kyc: correo al equipo', e));
   return c.json({ ok: true, distanciaM: distancia });
 });
 

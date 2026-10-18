@@ -761,3 +761,14 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se hizo:** `apps/repartidor/src/ubicacionFondo.ts` (tarea `tumbite-ubicacion-fondo` con `expo-task-manager`: pide el permiso «Siempre», `startLocationUpdatesAsync` cada 30 m o 15 s con servicio en primer plano en Android, y manda la posición a `/datos/repartidor/ubicacion` con el token guardado; `leerTokenGuardado` en `@tumbite/movil`); se enciende al conectarse y se apaga al desconectarse; `app.json` con `UIBackgroundModes: location`, permisos de fondo y el plugin de `expo-location` en modo fondo. Entrega en mano con edad: el servidor exige `documento` (licencia, pasaporte, otro), `documentoUltimos4` y `nombreRecibe`, y los deja en la nota de la evidencia («ID licencia ••1234 · recibió …»); la app los pide debajo del interruptor. La navegación sigue abriendo Google Maps o Apple Maps (como DoorDash).
 - **Pruebas:** `apps/servidor/src/repartidorFondo.test.ts`, `operacion.test.ts` (entrega con edad).
 - **Qué NO tocar:** sin el permiso de fondo la app sigue mandando posición con la pantalla abierta (nunca se bloquea al repartidor); los últimos 4 dígitos nunca son el documento completo.
+
+## C-OPERACION-D1: aviso de verificaciones, bandeja paginada, salud en el panel y restauración de respaldos (puntos 27 y 28, 18 oct 2026)
+
+- **Qué faltaba:** al enviar una verificación nadie avisaba al equipo; la bandeja mostraba 50 y callaba; el canario no se veía en el panel; nunca se había probado restaurar un respaldo.
+- **Qué se hizo:** correo a `ADMIN_CORREOS` en `POST /datos/kyc/enviar`; `SuperKyc` muestra totales por pestaña y «Ver más» con `siguiente`; `SaludPiezas` en el Resumen del superadmin lee `/datos/salud`; `restaurarDesdeRespaldo` + `POST /datos/respaldo/restaurar?dia=` (solo hosts de pruebas y con el secreto del reloj): vacía y vuelve a llenar cada tabla de la copia en una sola transacción, con las llaves foráneas diferidas y los disparadores quitados y recreados.
+- **Pruebas:** `apps/servidor/src/respaldoRestaurar.test.ts` (respaldar → dañar → restaurar), `tiendasPermisos.test.ts` ajustada (el repartidor pide ubicación «Siempre»).
+- **Qué NO tocar:** restaurar en producción NO existe por diseño (se hace a mano con el equipo delante); el cerrojo de host de pruebas no se quita.
+
+## C-WEB-HONESTA: la web solo promete lo que existe (punto 33 y F17, 18 oct 2026)
+
+- Planes Crece y Élite: «promociones destacadas» y «ayuda con fotos y marketing» dicen **muy pronto** (el plan hoy no cambia el orden del catálogo); «soporte local» pasó a «soporte en tu idioma»; «música en vivo» se presenta como lo que viene; un solo buzón público `support@tumbite.com` (antes hello@ y sales@); Miami en `cobertura.ts` queda «muy pronto» hasta el lanzamiento público (decisión de Richard el día que lance).

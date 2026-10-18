@@ -14,9 +14,49 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
 
+/** Punto 28: el canario de /datos/salud dentro del panel (antes solo se veía por la API). */
+function SaludPiezas() {
+  const [piezas, setPiezas] = useState<Record<string, string> | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    fetch('/datos/salud', { credentials: 'include' })
+      .then((r) => r.json() as Promise<{ piezas: Record<string, string> }>)
+      .then((r) => {
+        if (vivo) setPiezas(r.piezas);
+      })
+      .catch(() => {
+        if (vivo) setPiezas({});
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  if (!piezas) return null;
+  return (
+    <ul className="super-tarjetas" aria-label="salud">
+      {Object.entries(piezas).map(([pieza, estado]) => (
+        <li
+          key={pieza}
+          className={`super-tarjeta ${estado === 'error' ? 'super-tarjeta-alerta' : ''}`}
+        >
+          <span>{pieza}</span>
+          <strong
+            className={estado === 'ok' ? 'ok' : estado === 'error' ? 'error-general' : 'suave'}
+          >
+            {estado}
+          </strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const T = {
   es: {
     resumen: 'Resumen',
+    salud: 'Salud del sistema (canario)',
+    saludAyuda:
+      'Cada pieza dice ok, pendiente (apagada a propósito), atrasado o error. Si algo está en error, el equipo ya recibió el correo del canario.',
     dinero: 'Dinero de ayer',
     cuadra: 'Cuadra',
     noCuadra: 'NO cuadra: revisar',
@@ -87,6 +127,9 @@ const T = {
   },
   en: {
     resumen: 'Overview',
+    salud: 'System health (canary)',
+    saludAyuda:
+      'Each piece says ok, pending (turned off on purpose), delayed or error. If something is in error, the team already got the canary email.',
     dinero: 'Yesterday’s money',
     cuadra: 'Adds up',
     noCuadra: 'Does NOT add up: review',
@@ -272,6 +315,9 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
           {wallets ? <span className="suave">{wallets}</span> : null}
         </li>
       </ul>
+      <h2>{t.salud}</h2>
+      <p className="suave">{t.saludAyuda}</p>
+      <SaludPiezas />
       <h2>{t.franquicias}</h2>
       <div className="tabla-ancha">
         <table className="tabla">
