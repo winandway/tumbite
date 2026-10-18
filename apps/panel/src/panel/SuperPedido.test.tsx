@@ -146,4 +146,52 @@ describe('pedidos en curso y semáforo (C-MANAGER-1)', () => {
     render(<Pedidos idioma="es" />);
     expect(await screen.findByText(/En problemas · hace 35 min · la cocina pasó/)).toBeTruthy();
   });
+
+  it('soporte puede cancelar con devolución y quitar al repartidor desde la ficha (C-SUPER-OPERACION)', async () => {
+    const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      llamadas.push({
+        url,
+        metodo: init?.method ?? 'GET',
+        cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
+      });
+      if (init?.method === 'POST') return new Response('{"ok":true}', { status: 200 });
+      return new Response(
+        JSON.stringify({
+          pedido: {
+            id: ID,
+            estado: 'aceptado',
+            total: 3400,
+            propina: 400,
+            direccion: 'x',
+            notas: '',
+            ciudad: 'Miami',
+            pagoStripe: 'pi_1',
+            lineas: [],
+            cliente: { id: 'c1', nombre: 'Ana Cliente' },
+            restaurante: { id: 'r1', nombre: 'La Esquina' },
+            repartidor: { id: 'd1', nombre: 'Rafa', codigo: 'US-MIA-000001' },
+            bitacora: [],
+            excepcionUbicacion: null,
+          },
+        }),
+        { status: 200 },
+      );
+    });
+    vi.spyOn(window, 'prompt').mockReturnValue('El cliente llamó');
+    render(<SuperPedido base="/panel/control-x" id={ID} idioma="es" />);
+    const { default: userEvent } = await import('@testing-library/user-event');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Quitar al repartidor y volver a ofrecer' }),
+    );
+    expect(await screen.findByText(/volvió a la fila/)).toBeTruthy();
+    expect(
+      llamadas.find((l) => l.url.endsWith(`/datos/admin/pedidos/${ID}/soltar-repartidor`))?.cuerpo,
+    ).toEqual({ motivo: 'El cliente llamó' });
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar y devolver el dinero' }));
+    expect(await screen.findByText(/vuelve a la tarjeta/)).toBeTruthy();
+    expect(
+      llamadas.find((l) => l.url.endsWith(`/datos/admin/pedidos/${ID}/cancelar`))?.cuerpo,
+    ).toEqual({ motivo: 'El cliente llamó' });
+  });
 });

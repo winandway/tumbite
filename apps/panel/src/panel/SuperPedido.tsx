@@ -28,6 +28,13 @@ const T = {
     autorizar: 'Autorizar la entrega sin GPS',
     autorizada: 'Autorizada por',
     autorizadaOk: 'Autorizada. El repartidor ya puede entregar.',
+    soporte: 'Acciones de soporte',
+    cancelar: 'Cancelar y devolver el dinero',
+    motivoCancelar: 'Motivo de la cancelación (le queda en la bitácora):',
+    canceladoOk: 'Cancelado. El dinero vuelve a la tarjeta del cliente.',
+    soltar: 'Quitar al repartidor y volver a ofrecer',
+    motivoSoltar: 'Motivo (opcional):',
+    soltadoOk: 'El pedido volvió a la fila: se le ofrece a otro repartidor.',
     eventos: {
       creado: 'Pedido creado',
       pago_pendiente: 'Esperando el pago',
@@ -46,6 +53,8 @@ const T = {
       gps_salto: 'GPS sospechoso: salto imposible (no se contó)',
       ubicacion_sin_confirmar: 'El repartidor pidió entregar sin confirmación del GPS',
       ubicacion_autorizada: 'Soporte autorizó la entrega sin GPS',
+      cancelado_por_soporte: 'Soporte lo canceló y devolvió el dinero',
+      repartidor_quitado_por_soporte: 'Soporte le quitó el pedido al repartidor',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Esperando pago',
@@ -78,6 +87,13 @@ const T = {
     autorizar: 'Authorize delivery without GPS',
     autorizada: 'Authorized by',
     autorizadaOk: 'Authorized. The driver can now deliver.',
+    soporte: 'Support actions',
+    cancelar: 'Cancel and refund',
+    motivoCancelar: 'Reason for the cancellation (it stays in the log):',
+    canceladoOk: 'Canceled. The money goes back to the customer’s card.',
+    soltar: 'Remove the driver and offer it again',
+    motivoSoltar: 'Reason (optional):',
+    soltadoOk: 'The order went back to the queue: it’s offered to another driver.',
     eventos: {
       creado: 'Order created',
       pago_pendiente: 'Awaiting payment',
@@ -96,6 +112,8 @@ const T = {
       gps_salto: 'Suspicious GPS: impossible jump (not counted)',
       ubicacion_sin_confirmar: 'Driver asked to deliver without GPS confirmation',
       ubicacion_autorizada: 'Support authorized delivery without GPS',
+      cancelado_por_soporte: 'Support canceled it and refunded the money',
+      repartidor_quitado_por_soporte: 'Support removed the order from the driver',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Awaiting payment',
@@ -161,6 +179,22 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
       setError(e instanceof ErrorApi ? e.message : String(e));
     }
   }
+  // Acciones de soporte (auditoría final, punto 26): cancelar con devolución y quitar al repartidor.
+  async function accion(ruta: string, pregunta: string, ok: string, obligatorio: boolean) {
+    const motivo = window.prompt(pregunta) ?? '';
+    if (obligatorio && motivo.trim().length < 3) return;
+    setError('');
+    try {
+      await pedir('POST', `/datos/admin/pedidos/${id}/${ruta}`, { motivo });
+      setAviso(ok);
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
+  const vivo = ['pago_pendiente', 'pagado', 'aceptado', 'listo', 'en_camino'].includes(
+    p?.estado ?? '',
+  );
   if (!p) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const dinero = (c: number) => formatearDolares(c, idioma);
   return (
@@ -223,6 +257,39 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           </ul>
         </div>
         <div className="tarjeta-form">
+          {vivo ? (
+            <div className="super-acciones">
+              <h2>{t.soporte}</h2>
+              {aviso && (
+                <p className="ok" role="status">
+                  {aviso}
+                </p>
+              )}
+              {error && (
+                <p className="error-general" role="alert">
+                  {error}
+                </p>
+              )}
+              <button
+                type="button"
+                className="boton secundario"
+                onClick={() => void accion('cancelar', t.motivoCancelar, t.canceladoOk, true)}
+              >
+                {t.cancelar}
+              </button>{' '}
+              {p.repartidor && ['aceptado', 'listo'].includes(p.estado) ? (
+                <button
+                  type="button"
+                  className="boton secundario"
+                  onClick={() =>
+                    void accion('soltar-repartidor', t.motivoSoltar, t.soltadoOk, false)
+                  }
+                >
+                  {t.soltar}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {p.excepcionUbicacion ? (
             <div className="super-excepcion">
               <h2>{t.excepcion}</h2>
@@ -279,6 +346,8 @@ const TL = {
     ayuda:
       'Todos los pedidos vivos, los que están en problemas primero. Se actualiza solo cada 15 segundos.',
     vacio: 'No hay pedidos en curso.',
+    cerrados: 'Ver los pedidos cerrados (entregados y cancelados)',
+    buscar: 'Buscar por número, cliente o restaurante',
     rojos: 'en problemas',
     amarillos: 'atrasándose',
     sinRepartidor: 'sin repartidor',
@@ -287,6 +356,8 @@ const TL = {
     titulo: 'Live orders',
     ayuda: 'Every live order, the ones in trouble first. Refreshes every 15 seconds.',
     vacio: 'No live orders.',
+    cerrados: 'Show closed orders (delivered and canceled)',
+    buscar: 'Search by number, customer or restaurant',
     rojos: 'in trouble',
     amarillos: 'running late',
     sinRepartidor: 'no driver',
@@ -312,10 +383,15 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
   );
   const [lista, setLista] = useState<EnCurso[] | null>(null);
   const [error, setError] = useState('');
+  const [cerrados, setCerrados] = useState(false);
+  const [q, setQ] = useState('');
   useEffect(() => {
     let vivo = true;
     const cargar = () =>
-      pedir<{ pedidos: EnCurso[] }>('GET', `/datos/admin/pedidos?zona=${encodeURIComponent(zona)}`)
+      pedir<{ pedidos: EnCurso[] }>(
+        'GET',
+        `/datos/admin/pedidos?zona=${encodeURIComponent(zona)}${cerrados ? '&cerrados=1' : ''}&q=${encodeURIComponent(q)}`,
+      )
         .then((r) => vivo && (setLista(r.pedidos), setError('')))
         .catch((e: unknown) => vivo && setError(e instanceof ErrorApi ? e.message : String(e)));
     void cargar();
@@ -324,7 +400,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
       vivo = false;
       clearInterval(reloj);
     };
-  }, [zona]);
+  }, [zona, cerrados, q]);
   const rojos = lista?.filter((p) => p.luz === 'rojo').length ?? 0;
   const amarillos = lista?.filter((p) => p.luz === 'amarillo').length ?? 0;
   return (
@@ -333,6 +409,20 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
       <p>{t.ayuda}</p>
       <div className="super-filtros">
         <SelectorCiudad zona={zona} cambiar={setZona} idioma={idioma} />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t.buscar}
+          aria-label={t.buscar}
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={cerrados}
+            onChange={(e) => setCerrados(e.target.checked)}
+          />{' '}
+          {t.cerrados}
+        </label>
       </div>
       {error && (
         <p className="error-general" role="alert">

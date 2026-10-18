@@ -207,6 +207,67 @@ const fechaCorta = (f: string | null | undefined, idioma: Idioma) =>
     ? new Date(`${f.replace(' ', 'T')}${f.includes('T') ? '' : 'Z'}`).toLocaleDateString(idioma)
     : '—';
 
+const T_SUSPENDER = {
+  es: {
+    suspender: 'Suspender la cuenta',
+    reactivar: 'Reactivar la cuenta',
+    suspendida: 'Cuenta suspendida: no puede entrar.',
+    pregunta: 'Motivo de la suspensión (queda en el registro):',
+    confirmarReactivar: '¿Reactivar esta cuenta?',
+  },
+  en: {
+    suspender: 'Suspend account',
+    reactivar: 'Reactivate account',
+    suspendida: 'Account suspended: they can’t sign in.',
+    pregunta: 'Reason for the suspension (kept in the log):',
+    confirmarReactivar: 'Reactivate this account?',
+  },
+};
+
+/** Suspender o reactivar una cuenta desde su ficha (auditoría final, punto 26). */
+function BotonSuspender({
+  id,
+  activo,
+  idioma,
+  recargar,
+}: {
+  id: string;
+  activo: boolean;
+  idioma: Idioma;
+  recargar: () => void;
+}) {
+  const t = enIdioma(T_SUSPENDER, idioma);
+  const [error, setError] = useState('');
+  async function cambiar() {
+    let motivo = '';
+    if (activo) {
+      motivo = window.prompt(t.pregunta) ?? '';
+      if (motivo.trim().length < 3) return;
+    } else if (!window.confirm(t.confirmarReactivar)) return;
+    setError('');
+    try {
+      await pedir('PATCH', `/datos/admin/usuarios/${id}`, { activo: !activo, motivo });
+      recargar();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
+  return (
+    <p className="super-suspender">
+      {!activo ? <strong className="error-general">{t.suspendida}</strong> : null}{' '}
+      <button type="button" className="enlace" onClick={() => void cambiar()}>
+        {activo ? t.suspender : t.reactivar}
+      </button>
+      {error ? (
+        <span className="error-general" role="alert">
+          {' '}
+          {error}
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
 function useCargar<T>(url: string | null) {
   const [x, setX] = useState<T | null>(null);
   const [error, setError] = useState('');
@@ -479,6 +540,7 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
 }
 
 type Repartidor = {
+  activo?: boolean;
   kyc: Kyc;
   id: string;
   codigo: string;
@@ -586,6 +648,7 @@ export function SuperRepartidor({
       <h1>
         {r.nombre} <small className="super-id">{r.codigo}</small>
       </h1>
+      <BotonSuspender id={r.id} activo={r.activo !== false} idioma={idioma} recargar={recargar} />
       <p>
         <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
         {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
@@ -792,6 +855,7 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
 }
 
 type Cliente = {
+  activo?: boolean;
   id: string;
   nombre: string;
   correo: string;
@@ -815,7 +879,7 @@ type Cliente = {
 
 export function SuperCliente({ base, id, idioma }: { base: string; id: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
-  const { x, error } = useCargar<{ cliente: Cliente }>(`/datos/admin/clientes/${id}`);
+  const { x, error, recargar } = useCargar<{ cliente: Cliente }>(`/datos/admin/clientes/${id}`);
   if (!x) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const c = x.cliente;
   return (
@@ -824,6 +888,7 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         {t.volver}
       </button>
       <h1>{c.nombre}</h1>
+      <BotonSuspender id={c.id} activo={c.activo !== false} idioma={idioma} recargar={recargar} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.compras}</span>

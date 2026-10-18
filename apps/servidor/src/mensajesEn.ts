@@ -226,6 +226,12 @@ export const MENSAJES_EN = new Map<string, string>([
     'El total cambió. Revisa tu carrito y vuelve a intentar.',
     'The total changed. Check your cart and try again.',
   ],
+  ['Escribe el motivo.', 'Enter the reason.'],
+  [
+    'Este pedido no tiene repartidor asignado o ya salió.',
+    'This order has no driver assigned or already left.',
+  ],
+  ['Esa cuenta no existe.', 'That account doesn’t exist.'],
   [
     'Esa liquidación no existe o ya se cobró.',
     'That settlement doesn’t exist or was already charged.',

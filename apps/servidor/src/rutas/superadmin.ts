@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { semaforoPedido } from '@tumbite/compartido';
 import type { Env } from '../env';
-import { anotarEvento } from '../manager';
+import { anotarEvento, cancelarConReembolso } from '../manager';
+import { soltarPedido } from './operacion';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
 import { type Variables, base, exigir } from '../sesion';
@@ -403,7 +404,7 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
   await asegurarCodigoRepartidor(db, id);
   const r = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en,
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.activo,
         d.codigo, d.zona_id, d.conectado, d.puntos, d.lat, d.lng, d.ubicacion_en, d.tipo, z.nombre AS ciudad
        FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id LEFT JOIN zonas z ON z.id = d.zona_id WHERE u.id = ?`,
     )
@@ -459,6 +460,7 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       idioma: String(r.idioma),
       alta: String(r.creado_en),
       correoConfirmado: Boolean(r.correo_confirmado_en),
+      activo: Number(r.activo ?? 1) === 1,
       ciudad: String(r.ciudad ?? r.zona_id),
       tipo: String(r.tipo),
       conectado: Boolean(r.conectado),
@@ -577,7 +579,7 @@ superadmin.get('/admin/clientes/:id', async (c) => {
   const id = c.req.param('id');
   const u = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.zona_id, z.nombre AS ciudad
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.zona_id, u.activo, z.nombre AS ciudad
        FROM usuarios u LEFT JOIN zonas z ON z.id = u.zona_id WHERE u.id = ? AND u.rol = 'cliente'`,
     )
     .bind(id)
@@ -614,6 +616,7 @@ superadmin.get('/admin/clientes/:id', async (c) => {
       idioma: String(u.idioma),
       alta: String(u.creado_en),
       correoConfirmado: Boolean(u.correo_confirmado_en),
+      activo: Number(u.activo ?? 1) === 1,
       ciudad: u.ciudad ? String(u.ciudad) : null,
       pedidos: Number(t?.n ?? 0),
       gastado: Number(t?.gastado ?? 0),
@@ -643,16 +646,20 @@ async function kycResumen(db: D1Database, usuarioId: string) {
 superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
   const zona = c.req.query('zona') ?? '';
+  // Auditoría final (punto 26): también los pedidos ya cerrados, buscando por número, cliente o restaurante.
+  const cerrados = c.req.query('cerrados') === '1';
+  const q = (c.req.query('q') ?? '').trim().toLowerCase();
   const { results } = await base(c)
     .prepare(
       `SELECT p.id, p.estado, p.total, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
         r.nombre AS restaurante, uc.nombre AS cliente, d.codigo AS repartidor_codigo, z.nombre AS ciudad
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios uc ON uc.id = p.cliente_id
        LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id LEFT JOIN zonas z ON z.id = p.zona_id
-       WHERE p.estado IN ('pagado','aceptado','listo','en_camino') AND (? = '' OR p.zona_id = ?)
-       ORDER BY p.creado_en LIMIT 300`,
+       WHERE p.estado IN (${cerrados ? "'entregado','cancelado'" : "'pagado','aceptado','listo','en_camino'"}) AND (?1 = '' OR p.zona_id = ?1)
+         AND (?2 = '' OR lower(p.id) LIKE ?2 || '%' OR lower(uc.nombre) LIKE '%' || ?2 || '%' OR lower(r.nombre) LIKE '%' || ?2 || '%')
+       ORDER BY p.creado_en ${cerrados ? 'DESC' : ''} LIMIT 300`,
     )
-    .bind(zona, zona)
+    .bind(zona, q)
     .all<Record<string, unknown>>();
   const orden = new Map([
     ['rojo', 0],
@@ -932,4 +939,75 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
       quejas,
     },
   });
+});
+
+// ───────────────────────── Superadmin: acciones sobre pedidos y cuentas (auditoría final, punto 26) ─────────────────────────
+
+/** Cancelar un pedido vivo y devolverle el dinero al cliente (anulación o reembolso, según esté el cobro). */
+superadmin.post('/admin/pedidos/:id/cancelar', async (c) => {
+  const u = exigir(c, 'admin');
+  const { motivo } = await leerCuerpo(
+    c,
+    z.object({ motivo: z.string().trim().min(3, { error: 'Escribe el motivo.' }).max(300) }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const ok = await cancelarConReembolso(c.env, db, id, {
+    desde: ['pago_pendiente', 'pagado', 'aceptado', 'listo', 'en_camino'],
+    actorId: u.id,
+  });
+  if (!ok) throw new ErrorDatos('Este pedido ya no se puede cancelar.', undefined, 409);
+  await anotarEvento(db, id, 'cancelado_por_soporte', motivo);
+  return c.json({ ok: true });
+});
+
+/** Quitarle el pedido al repartidor asignado: vuelve a la fila y se ofrece a otro. */
+superadmin.post('/admin/pedidos/:id/soltar-repartidor', async (c) => {
+  exigir(c, 'admin');
+  const { motivo } = await leerCuerpo(
+    c,
+    z.object({ motivo: z.string().trim().max(300).default('') }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      "SELECT repartidor_id, estado FROM pedidos WHERE id = ? AND estado IN ('aceptado','listo')",
+    )
+    .bind(id)
+    .first<{ repartidor_id: string | null; estado: string }>();
+  if (!f?.repartidor_id)
+    throw new ErrorDatos('Este pedido no tiene repartidor asignado o ya salió.', undefined, 409);
+  await soltarPedido(db, id, f.repartidor_id, `soporte: ${motivo}`);
+  await anotarEvento(db, id, 'repartidor_quitado_por_soporte', motivo);
+  return c.json({ ok: true });
+});
+
+/** Suspender o reactivar una cuenta (cliente o repartidor). Suspendida: sus sesiones mueren y no puede entrar. */
+superadmin.patch('/admin/usuarios/:id', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({ activo: z.boolean(), motivo: z.string().trim().max(300).default('') }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const u = await db
+    .prepare(
+      "SELECT id, rol FROM usuarios WHERE id = ? AND rol IN ('cliente','repartidor','restaurante')",
+    )
+    .bind(id)
+    .first<{ id: string; rol: string }>();
+  if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  await db.batch([
+    db.prepare('UPDATE usuarios SET activo = ? WHERE id = ?').bind(d.activo ? 1 : 0, id),
+    ...(d.activo
+      ? []
+      : [
+          db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(id),
+          db.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?').bind(id),
+        ]),
+  ]);
+  console.warn(`cuenta ${d.activo ? 'reactivada' : 'suspendida'} por soporte`, id, d.motivo);
+  return c.json({ activo: d.activo });
 });
