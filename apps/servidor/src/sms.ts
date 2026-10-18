@@ -155,5 +155,7 @@ export async function llamarConNumeroOculto(
     To: quienLlama,
     From: env.TWILIO_FROM!,
     Url: `${base}/datos/twilio/puente?t=${pase}`,
+    // F9: sin esto Twilio pide la dirección con POST y la ruta (GET) respondía 404: la llamada caía.
+    Method: 'GET',
   });
 }

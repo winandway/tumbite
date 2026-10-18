@@ -2074,6 +2074,13 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
     expect(llamada.cuerpo.get('From')).toBe('+13055550000');
     const url = new URL(llamada.cuerpo.get('Url')!);
     expect(url.origin + url.pathname).toBe('https://tumbite.test/datos/twilio/puente');
+    // F9: Twilio pide la dirección con POST si la llamada no dice otro método. La llamada fija GET
+    // (el método de la ruta) y la ruta acepta también POST, así el puente nunca responde 404.
+    expect(llamada.cuerpo.get('Method')).toBe('GET');
+    const porPost = await m.crudo(`/datos/twilio/puente?t=${url.searchParams.get('t')}`, {
+      method: 'POST',
+    });
+    expect(porPost.status).toBe(200);
     // Twilio pide el puente con el pase: marca al cliente con el número de Tumbite.
     const puente = await m.crudo(`/datos/twilio/puente?t=${url.searchParams.get('t')}`, {
       method: 'GET',
