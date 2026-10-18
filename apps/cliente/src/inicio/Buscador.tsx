@@ -1,20 +1,20 @@
-import { Image, Pressable, TextInput, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
-/** Barra de búsqueda: filtra los restaurantes reales mientras se escribe; el filtro = solo abiertos. */
+/**
+ * Barra de búsqueda del inicio (como en los grandes): al tocarla se abre la pantalla de búsqueda
+ * real (restaurantes y platos del servidor). El botón de la derecha alterna «solo abiertos».
+ */
 export function Buscador({
   idioma,
-  valor,
-  cambiar,
+  alTocar,
   soloAbiertos,
   alternarAbiertos,
 }: {
   idioma: Idioma;
-  valor: string;
-  cambiar: (x: string) => void;
+  alTocar: () => void;
   soloAbiertos: boolean;
   alternarAbiertos: () => void;
 }) {
@@ -43,15 +43,17 @@ export function Buscador({
         resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
-      <TextInput
-        value={valor}
-        onChangeText={cambiar}
-        placeholder={t.buscar}
-        placeholderTextColor="#8A8A8A"
+      <Pressable
+        onPress={alTocar}
+        accessibilityRole="search"
         accessibilityLabel={t.buscar}
-        style={{ flex: 1, marginLeft: 10, fontSize: 16, color: C.texto }}
-        returnKeyType="search"
-      />
+        testID="abrir-busqueda"
+        style={{ flex: 1, marginLeft: 10, height: 50, justifyContent: 'center' }}
+      >
+        <Text style={{ fontSize: 16, color: '#8A8A8A' }} numberOfLines={1}>
+          {t.buscar}
+        </Text>
+      </Pressable>
       <Pressable
         onPress={alternarAbiertos}
         accessibilityRole="switch"

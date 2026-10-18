@@ -84,13 +84,13 @@ const es: SeccionDocs[] = [
         id: 'home-screen',
         titulo: 'La pantalla de inicio: qué hay y qué hace cada cosa',
         resumen:
-          'Arriba, tu saludo, los avisos y los cupones. Luego el buscador, los ocho servicios (hoy funciona Comida), las ofertas, los restaurantes cerca de ti y la barra de abajo.',
+          'Como en las grandes apps de reparto: arriba el logotipo, tu saludo, la campana de avisos y el cupón de regalos. Luego el buscador, los ocho servicios en orden (hoy funciona Comida), tus regalos o las ofertas, los restaurantes cerca de ti y la barra de abajo.',
         explicacion: [
-          'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos y el cupón de regalos. El selector de idioma (español o inglés) está ahí mismo.',
-          'Buscador: escribe el nombre de un restaurante o un tipo de comida y la lista se filtra al instante. El botón de filtros muestra solo los que están abiertos ahora.',
-          'Servicios: hoy funciona «Comida»: al tocarla ves todos los restaurantes, con buscador y botones por tipo de comida. Mercado, envíos, farmacia, moto, licores, carro y más están en camino: al tocarlos verás «¡Muy pronto en Tumbite!».',
+          'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos (con un punto rojo si tienes pedidos en curso) y el cupón, que abre tus regalos. El selector de idioma (español o inglés) está ahí mismo.',
+          'Buscador: tócalo y escribe lo que se te antoja; Tumbite busca restaurantes y platos en tu ciudad mientras escribes (guía «Buscar en Tumbite»). El botón de la derecha deja solo los abiertos ahora.',
+          'Servicios, en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona «Comida»: al tocarla ves todos los restaurantes, con buscador, categorías y filtros rápidos. Los demás abren su pantalla con una franja que dice que están en construcción (guía «Los servicios de Tumbite»).',
           'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
-          'Ofertas del día: mientras los restaurantes cargan sus promociones, ves ejemplos marcados «Ejemplo» (no se pueden comprar).',
+          'Tus regalos u ofertas del día: si ya tienes regalos en marcha (tarjeta de sellos, descuento por volver), los ves aquí; si no, ves ofertas de ejemplo marcadas «Ejemplo» (no se pueden comprar).',
           'Restaurantes cerca de ti: tarjetas con la foto, el tiempo estimado, el costo de envío y si está abierto. Toca una para ver el menú.',
           'Barra de abajo: Inicio, Pedidos (tu historial), Favoritos (muy pronto) y Mi cuenta.',
         ],
@@ -109,6 +109,97 @@ const es: SeccionDocs[] = [
           'Busca un restaurante o toca uno de los cercanos.',
           'Si ves el aviso de pago, toca «Pagar» para terminar tu pedido.',
           'Usa la barra de abajo para ir a tus pedidos o a tu cuenta.',
+        ],
+      },
+      {
+        id: 'search',
+        titulo: 'Buscar en Tumbite: restaurantes, platos y tipos de comida',
+        resumen:
+          'Toca el buscador del inicio y escribe lo que se te antoja. Mientras escribes, Tumbite busca en tu ciudad y te muestra los restaurantes y los platos que coinciden, con los abiertos primero.',
+        explicacion: [
+          'El buscador del inicio abre una pantalla propia, como en las grandes apps de reparto. Escribe al menos dos letras: el nombre de un restaurante, un plato («pizza», «sushi») o un tipo de comida («cubana»).',
+          'Los resultados llegan solos mientras escribes, sin tocar nada más, y vienen en dos pestañas: «Restaurantes» y «Platos». Cada pestaña muestra cuántos encontró.',
+          'En «Platos» ves el nombre del plato, su precio y el restaurante que lo prepara. Tocar un resultado abre ese restaurante con su menú completo.',
+          'Da igual que escribas con o sin acentos o con mayúsculas: «sandwich» encuentra «Sándwich». Solo aparecen restaurantes aprobados y abiertos al público en tu ciudad, y los que están abiertos ahora van primero.',
+          'Si todavía no llegamos a tu zona, el buscador te lo dice en vez de mostrar una lista vacía.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-buscar-es.webp',
+            alt: 'Pantalla de búsqueda de la app del cliente con la palabra escrita arriba, las pestañas Restaurantes y Platos con su cantidad, y un plato encontrado con su precio y su restaurante.',
+            pie: 'Escribes, y los resultados llegan solos: restaurantes y platos de tu ciudad.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo busco un plato en Tumbite?',
+          '¿Por qué el buscador no encuentra nada?',
+          '¿Puedo buscar por tipo de comida?',
+        ],
+        pasos: [
+          'En el inicio, toca la barra «¿Qué se te antoja hoy?».',
+          'Escribe al menos dos letras de lo que buscas.',
+          'Cambia entre «Restaurantes» y «Platos» con las pestañas.',
+          'Toca un resultado para abrir el restaurante y pedir.',
+        ],
+      },
+      {
+        id: 'alerts-and-rewards',
+        titulo: 'La campana y el cupón: tus avisos y tus regalos',
+        resumen:
+          'La campana del inicio muestra lo que pasa con tu cuenta ahora mismo: pedidos en curso, regalos en marcha y próximas aperturas en tu ciudad. El cupón abre directo tus regalos.',
+        explicacion: [
+          'Cuando tienes un pedido en curso, la campana lleva un punto rojo con el número de pedidos. Al tocarla ves cada uno con su estado («En preparación», «En camino hacia ti»…) y al tocarlo abres el seguimiento.',
+          'En la pestaña «Regalos» (la misma que abre el cupón) ves tus regalos en marcha: la tarjeta de sellos de cada restaurante donde ya pediste, con cuántos pedidos llevas y cuántos faltan para el plato de regalo, y los descuentos por volver cuando te tocan. La barra verde muestra tu avance.',
+          'También te avisamos cuando Tumbite va a abrir en una zona nueva de tu ciudad, con la fecha prevista si ya la hay.',
+          'Los avisos se calculan al momento: no hay nada que borrar ni marcar como leído. Cuando un pedido se entrega, desaparece de la campana y queda en «Pedidos».',
+          'Si no hay nada que avisar, la campana lo dice claro: nunca inventa avisos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-avisos-es.webp',
+            alt: 'Pantalla «Tus avisos» de la app del cliente con las pestañas Todos y Regalos y una tarjeta de un pedido en curso con su estado.',
+            pie: 'Un pedido en curso es un aviso; tocarlo abre el seguimiento.',
+          },
+        ],
+        preguntas: [
+          '¿Para qué sirve la campana de la app?',
+          '¿Dónde veo mis regalos y mi tarjeta de sellos?',
+          '¿Por qué la campana tiene un punto rojo?',
+        ],
+        pasos: [
+          'Toca la campana arriba a la derecha del inicio.',
+          'Toca un pedido para ver dónde va.',
+          'Toca «Regalos» (o el cupón del inicio) para ver tus tarjetas de sellos y descuentos.',
+        ],
+      },
+      {
+        id: 'services',
+        titulo: 'Los servicios de Tumbite: qué hay hoy y qué viene',
+        resumen:
+          'En el inicio ves ocho servicios en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona Comida; los demás tienen su pantalla y te dicen, con una franja discreta, que están en construcción.',
+        explicacion: [
+          'Tumbite nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Por eso los servicios ya están en el inicio, en el orden en que van a llegar.',
+          'Cada servicio tiene su propia pantalla. Si todavía no está listo, arriba ves una franja discreta: «Estamos construyendo este servicio. Pronto estará listo.» Nada de ventanas que tapen la pantalla. Debajo, una lista marcada «Ejemplo» de lo que vas a poder hacer.',
+          'En la loseta del inicio, una etiqueta pequeña dice «Pronto» cuando el servicio viene, «En pausa» si se detuvo un tiempo, o «Actualiza» si tu versión de la app es muy vieja para usarlo. Sin etiqueta, el servicio funciona.',
+          'Qué estado tiene cada servicio depende de tu ciudad: un servicio puede estar abierto en una y en construcción en otra. La app lo pregunta cada vez que entras.',
+          'Comida: pide a restaurantes de tu ciudad. Moto y Carro: viajes. Envíos: paquetes por la ciudad. Mercado y Farmacia: compras por encargo. Licores: solo para mayores de 21 años, con verificación de edad. Más: lo que venga después.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-servicio-es.webp',
+            alt: 'Pantalla del servicio Moto en la app del cliente: franja discreta «Estamos construyendo este servicio. Pronto estará listo.», el ícono grande, el nombre y una tarjeta de ejemplo con lo que se va a poder hacer.',
+            pie: 'Cada servicio tiene su pantalla; si viene en camino, una franja lo dice.',
+          },
+        ],
+        preguntas: [
+          '¿Qué servicios tiene Tumbite?',
+          '¿Por qué un servicio dice «Pronto»?',
+          '¿Cuándo llega Moto o Mercado a mi ciudad?',
+        ],
+        pasos: [
+          'En el inicio, toca cualquier servicio.',
+          'Lee la franja de arriba: te dice si funciona, si viene o si está en pausa.',
+          'Si funciona, úsalo; si viene, te avisamos por la campana cuando abra en tu ciudad.',
         ],
       },
       {
@@ -1875,13 +1966,13 @@ const en: SeccionDocs[] = [
         id: 'home-screen',
         titulo: 'The home screen: what’s there and what each thing does',
         resumen:
-          'At the top, your greeting, notifications and coupons. Then the search bar, the eight services (Food works today), the deals, restaurants near you and the bottom bar.',
+          'Like the big delivery apps: at the top the logo, your greeting, the notifications bell and the gifts coupon. Then the search bar, the eight services in order (Food works today), your gifts or the deals, restaurants near you and the bottom bar.',
         explicacion: [
-          'Header: the Tumbite logo, your name, the notifications bell and the gifts coupon. The language selector (Spanish or English) is right there.',
-          'Search: type a restaurant name or a type of food and the list filters instantly. The filter button shows only the ones open right now.',
-          'Services: “Food” works today: tapping it shows every restaurant, with a search bar and buttons by type of food. Grocery, deliveries, pharmacy, ride, liquor, car and more are on the way: tapping them shows “Coming soon to Tumbite!”.',
+          'Header: the Tumbite logo, your name, the notifications bell (with a red dot when you have active orders) and the coupon, which opens your gifts. The language selector (Spanish or English) is right there.',
+          'Search: tap it and type what you’re craving; Tumbite searches restaurants and dishes in your city as you type (guide “Searching Tumbite”). The button on the right keeps only the ones open right now.',
+          'Services, in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. “Food” works today: tapping it shows every restaurant, with search, categories, and quick filters. The others open their own screen with a strip saying they’re under construction (guide “Tumbite services”).',
           'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
-          'Today’s deals: while restaurants load their promotions, you see samples marked “Sample” (they can’t be bought).',
+          'Your gifts or today’s deals: if you already have gifts in progress (stamp card, come-back discount), you see them here; otherwise you see sample deals marked “Sample” (they can’t be bought).',
           'Restaurants near you: cards with the photo, the estimated time, the delivery fee and whether it’s open. Tap one to see the menu.',
           'Bottom bar: Home, Orders (your history), Favorites (coming soon) and My account.',
         ],
@@ -1900,6 +1991,97 @@ const en: SeccionDocs[] = [
           'Search for a restaurant or tap one of the nearby ones.',
           'If you see the payment notice, tap “Pay” to finish your order.',
           'Use the bottom bar to go to your orders or your account.',
+        ],
+      },
+      {
+        id: 'search',
+        titulo: 'Searching Tumbite: restaurants, dishes, and cuisines',
+        resumen:
+          'Tap the search bar on the home screen and type what you’re craving. As you type, Tumbite searches your city and shows matching restaurants and dishes, open ones first.',
+        explicacion: [
+          'The home search bar opens its own screen, like the big delivery apps. Type at least two letters: a restaurant name, a dish (“pizza”, “sushi”), or a cuisine (“Cuban”).',
+          'Results arrive on their own as you type, in two tabs: “Restaurants” and “Dishes”. Each tab shows how many it found.',
+          'Under “Dishes” you see the dish name, its price, and the restaurant that makes it. Tapping a result opens that restaurant with its full menu.',
+          'Accents and capital letters don’t matter: “sandwich” finds “Sándwich”. Only approved restaurants open to the public in your city show up, and the ones open right now come first.',
+          'If we’re not in your area yet, the search tells you so instead of showing an empty list.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-buscar-en.webp',
+            alt: 'Customer app search screen with the typed word at the top, the Restaurants and Dishes tabs with their counts, and a found dish with its price and restaurant.',
+            pie: 'You type, results arrive: restaurants and dishes in your city.',
+          },
+        ],
+        preguntas: [
+          'How do I search for a dish on Tumbite?',
+          'Why doesn’t the search find anything?',
+          'Can I search by type of food?',
+        ],
+        pasos: [
+          'On the home screen, tap the “What are you craving today?” bar.',
+          'Type at least two letters of what you’re looking for.',
+          'Switch between “Restaurants” and “Dishes” with the tabs.',
+          'Tap a result to open the restaurant and order.',
+        ],
+      },
+      {
+        id: 'alerts-and-rewards',
+        titulo: 'The bell and the coupon: your notifications and your gifts',
+        resumen:
+          'The bell on the home screen shows what’s happening with your account right now: active orders, gifts in progress, and upcoming openings in your city. The coupon opens your gifts directly.',
+        explicacion: [
+          'When you have an active order, the bell shows a red dot with the number of orders. Tap it to see each one with its status (“Being prepared”, “On its way to you”…) and tap an order to open tracking.',
+          'Under the “Gifts” tab (the same one the coupon opens) you see your gifts in progress: the stamp card for each restaurant you’ve ordered from, with how many orders you have and how many are left for the free dish, plus come-back discounts when they’re due. The green bar shows your progress.',
+          'We also let you know when Tumbite is about to open in a new area of your city, with the expected date when there is one.',
+          'Notifications are computed on the spot: nothing to delete or mark as read. When an order is delivered, it leaves the bell and stays under “Orders”.',
+          'If there’s nothing to report, the bell says so clearly: it never makes up notifications.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-avisos-en.webp',
+            alt: 'Customer app “Your notifications” screen with the All and Gifts tabs and a card for an active order with its status.',
+            pie: 'An active order is a notification; tapping it opens tracking.',
+          },
+        ],
+        preguntas: [
+          'What is the bell in the app for?',
+          'Where do I see my gifts and my stamp card?',
+          'Why does the bell have a red dot?',
+        ],
+        pasos: [
+          'Tap the bell at the top right of the home screen.',
+          'Tap an order to see where it is.',
+          'Tap “Gifts” (or the coupon on the home screen) to see your stamp cards and discounts.',
+        ],
+      },
+      {
+        id: 'services',
+        titulo: 'Tumbite services: what’s here today and what’s coming',
+        resumen:
+          'The home screen shows eight services in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. Food works today; the others have their own screen and tell you, with a discreet strip, that they’re under construction.',
+        explicacion: [
+          'Tumbite starts as a food delivery app and grows into an everything app, like the big players. That’s why the services are already on the home screen, in the order they’ll arrive.',
+          'Each service has its own screen. If it isn’t ready yet, a discreet strip at the top says: “We’re building this service. It will be ready soon.” No pop-ups covering the screen. Below, a list marked “Sample” of what you’ll be able to do.',
+          'On the home tile, a small label says “Soon” when the service is coming, “Paused” if it stopped for a while, or “Update” if your app version is too old to use it. No label means the service works.',
+          'Each service’s status depends on your city: a service can be open in one and under construction in another. The app checks every time you open it.',
+          'Food: order from restaurants in your city. Moto and Car: rides. Delivery: packages across town. Grocery and Pharmacy: shopping on request. Liquor: ages 21+ only, with age verification. More: whatever comes next.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-servicio-en.webp',
+            alt: 'Moto service screen in the customer app: discreet strip “We’re building this service. It will be ready soon.”, the large icon, the name, and a sample card with what you’ll be able to do.',
+            pie: 'Every service has its screen; if it’s on the way, a strip says so.',
+          },
+        ],
+        preguntas: [
+          'What services does Tumbite have?',
+          'Why does a service say “Soon”?',
+          'When does Moto or Grocery arrive in my city?',
+        ],
+        pasos: [
+          'On the home screen, tap any service.',
+          'Read the strip at the top: it tells you whether it works, is coming, or is paused.',
+          'If it works, use it; if it’s coming, we’ll let you know through the bell when it opens in your city.',
         ],
       },
       {

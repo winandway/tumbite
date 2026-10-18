@@ -85,8 +85,10 @@ describe('catálogo de servicios (GET /datos/servicios)', () => {
       r.datos.servicios.map((s: { id: string }) => [s.id, s]),
     );
     expect(por.get('comida')).toMatchObject({ estado: 'disponible', accion: 'abrir' });
-    for (const id of ['moto', 'carro', 'mercado', 'envios', 'farmacia'])
+    // Licores y Más también están en el catálogo (inicio «como los grandes», 18 oct 2026).
+    for (const id of ['moto', 'carro', 'mercado', 'envios', 'farmacia', 'licores', 'mas'])
       expect(por.get(id)?.accion).toBe('muy_pronto');
+    expect(r.datos.servicios).toHaveLength(8);
   });
 
   it('fuera de una zona activa nada se abre', async () => {

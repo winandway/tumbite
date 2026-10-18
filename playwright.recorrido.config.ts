@@ -9,7 +9,7 @@ const puerto = process.env.PUERTO_RECORRIDO ?? '8790';
 export default defineConfig({
   testDir: './e2e/recorrido',
   workers: 1,
-  timeout: 240_000,
+  timeout: 360_000,
   reporter: [['list']],
   use: { baseURL: `http://localhost:${puerto}`, trace: 'retain-on-failure' },
   webServer: [

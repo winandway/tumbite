@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { enIdioma } from '@tumbite/compartido';
+import { type ServicioCatalogo, enIdioma } from '@tumbite/compartido';
 import { Boton, MenuCuenta, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
@@ -15,13 +15,17 @@ import { Cabecera } from './inicio/Cabecera';
 import { ModalMuyPronto } from './inicio/ModalMuyPronto';
 import { Ofertas } from './inicio/Ofertas';
 import { Restaurantes } from './inicio/Restaurantes';
-import { type Servicio, Servicios } from './inicio/Servicios';
+import { Servicios } from './inicio/Servicios';
+import { useServicios } from './inicio/useServicios';
+import { useAvisos } from './inicio/useAvisos';
+import { RegalosEnMarcha } from './inicio/RegalosEnMarcha';
 import { textosInicio } from './inicio/textos';
 
 /**
  * Inicio del cliente con el diseño aprobado (14 oct 2026): cabecera con logotipo y hamburguesa,
- * saludo, buscador, ocho servicios (solo «Comida» funciona), aviso de pago solo si hay un carrito
- * sin pagar, ofertas (de muestra hasta que haya reales), restaurantes cercanos y barra inferior.
+ * saludo, buscador, ocho servicios en el orden de Richard con su estado real, aviso de pago solo si hay un carrito
+ * sin pagar, regalos reales en marcha (o las ofertas de muestra si no hay), restaurantes cercanos
+ * y barra inferior. Buscador y campana abren sus pantallas reales (/search, /notifications).
  * Los datos son reales: restaurantes, carrito y sesión. Nada falso se puede comprar.
  */
 export function Inicio() {
@@ -30,7 +34,6 @@ export function Inicio() {
   const ti = textosInicio(idioma);
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const { carrito, cantidadTotal } = useCarrito();
-  const [busqueda, setBusqueda] = useState('');
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [pronto, setPronto] = useState(false);
   // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
@@ -49,23 +52,25 @@ export function Inicio() {
     catalogo.estado === 'cargando' && !catalogo.restaurantes.length ? null : catalogo.restaurantes;
   const punto = catalogo.punto;
 
-  // El buscador filtra los restaurantes reales por nombre o tipo de comida; el filtro, solo abiertos.
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    return (lista ?? []).filter(
-      (r) =>
-        (!q || `${r.nombre} ${r.categoria}`.toLowerCase().includes(q)) &&
-        (!soloAbiertos || (r.abiertoAhora ?? r.abierto)),
-    );
-  }, [lista, busqueda, soloAbiertos]);
+  // «Solo abiertos» filtra la lista real del inicio; la búsqueda vive en su propia pantalla.
+  const filtrados = useMemo(
+    () => (lista ?? []).filter((r) => !soloAbiertos || (r.abiertoAhora ?? r.abierto)),
+    [lista, soloAbiertos],
+  );
 
   // Lo único que es un monto real pendiente: el carrito armado y sin pagar.
   const carritoCentavos = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
 
-  const servicio = (s: Servicio) => {
-    // «Comida» abre la lista de restaurantes; los demás servicios llegan después.
-    if (s === 'comida') return router.push('/restaurants');
-    setPronto(true);
+  // Catálogo de servicios de la ciudad (orden fijo, estado del servidor) y los avisos reales.
+  const servicios = useServicios(api, punto);
+  const avisos = useAvisos(api, punto).datos;
+  const regalos = (avisos?.avisos ?? []).filter((a) => a.tipo === 'regalo');
+  const servicio = (s: ServicioCatalogo) => {
+    // «Comida» disponible abre los restaurantes; todo lo demás abre la pantalla del servicio,
+    // con su franja de estado (nunca una ventana encima).
+    if (s.id === 'comida' && (s.accion === 'abrir' || !servicios))
+      return router.push('/restaurants');
+    router.push(`/service/${s.id}`);
   };
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return;
@@ -83,23 +88,32 @@ export function Inicio() {
           nombre={usuario?.nombre.split(' ')[0] ?? ''}
           idioma={idioma}
           cambiarIdioma={cambiarIdioma}
-          alCampana={() => router.push('/account')}
-          alCupon={() => router.push('/account')}
+          alCampana={() => router.push('/notifications')}
+          alCupon={() => router.push('/notifications?tab=regalos')}
+          pendientes={avisos?.pendientes ?? 0}
         />
         <Buscador
           idioma={idioma}
-          valor={busqueda}
-          cambiar={setBusqueda}
+          alTocar={() => router.push('/search')}
           soloAbiertos={soloAbiertos}
           alternarAbiertos={() => setSoloAbiertos((v) => !v)}
         />
-        <Servicios idioma={idioma} alTocar={servicio} />
+        <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
         <AvisoPago
           idioma={idioma}
           centavos={carritoCentavos}
           alPagar={() => router.push('/cart')}
         />
-        <Ofertas idioma={idioma} alTocarEjemplo={() => setPronto(true)} />
+        {regalos.length ? (
+          <RegalosEnMarcha
+            idioma={idioma}
+            regalos={regalos}
+            alVer={() => router.push('/notifications?tab=regalos')}
+          />
+        ) : (
+          // Ofertas de muestra solo mientras la persona no tenga regalos reales en marcha.
+          <Ofertas idioma={idioma} alTocarEjemplo={() => setPronto(true)} />
+        )}
         {!punto && (
           <Text style={{ color: '#5E5E5E', marginHorizontal: 16, marginTop: 14 }}>
             {ti.sinUbicacion}
