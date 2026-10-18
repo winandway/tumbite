@@ -2479,15 +2479,38 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
         )
       ).estado,
     ).toBe(409);
+    // Punto 24: sin el documento y quién recibió, tampoco (es la «firma» de una entrega con edad).
+    const sinDoc = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/entregado`,
+      { ...casa, modo: 'mano', mayorEdad: true },
+      rep.token,
+    );
+    expect(sinDoc.estado).toBe(409);
+    expect(sinDoc.datos.campo).toBe('edad');
     expect(
       (
         await m.llamar(
           'POST',
           `/datos/repartidor/pedidos/${id}/entregado`,
-          { ...casa, modo: 'mano', mayorEdad: true },
+          {
+            ...casa,
+            modo: 'mano',
+            mayorEdad: true,
+            documento: 'licencia',
+            documentoUltimos4: '1234',
+            nombreRecibe: 'Ana Cliente',
+          },
           rep.token,
         )
       ).estado,
     ).toBe(200);
+    const ev = await m.DB.prepare(
+      "SELECT nota FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega'",
+    )
+      .bind(id)
+      .first<{ nota: string }>();
+    expect(ev?.nota).toContain('ID licencia ••1234');
+    expect(ev?.nota).toContain('recibió Ana Cliente');
   });
 });

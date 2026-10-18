@@ -77,6 +77,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese restaurante no existe.', 'That restaurant doesn’t exist.'],
   ['Solo el dueño o un manager puede hacer esto.', 'Only the owner or a manager can do this.'],
   ['Esa reseña no existe.', 'That review doesn’t exist.'],
+  [
+    'Escribe el tipo de documento, sus últimos cuatro dígitos y el nombre de quien recibe.',
+    'Enter the ID type, its last four digits and the name of the person receiving.',
+  ],
   ['La fecha tiene que ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
   [
     'Esa persona todavía no tiene cuenta de restaurante en Tumbite: pídele que se registre en el panel primero.',

@@ -1638,6 +1638,13 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         pin: z.string().trim().optional(),
         /** El repartidor revisó el documento y la persona es mayor de 21 (solo si el pedido lo exige). */
         mayorEdad: z.boolean().optional(),
+        /** Qué documento vio y sus últimos 4 dígitos, y quién recibió: la «firma» de una entrega con edad (punto 24). */
+        documento: z.enum(['licencia', 'pasaporte', 'otro']).optional(),
+        documentoUltimos4: z
+          .string()
+          .regex(/^\d{4}$/)
+          .optional(),
+        nombreRecibe: z.string().trim().max(80).optional(),
       }),
     );
     if (requiereEdad && d.mayorEdad !== true)
@@ -1646,9 +1653,17 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         'edad',
         409,
       );
+    if (requiereEdad && (!d.documento || !d.documentoUltimos4 || !d.nombreRecibe))
+      throw new ErrorDatos(
+        'Escribe el tipo de documento, sus últimos cuatro dígitos y el nombre de quien recibe.',
+        'edad',
+        409,
+      );
     donde = { lat: d.lat, lng: d.lng };
     modo = 'mano';
-    nota = d.nota;
+    nota = requiereEdad
+      ? `${d.nota ? `${d.nota} · ` : ''}ID ${d.documento} ••${d.documentoUltimos4} · recibió ${d.nombreRecibe}`
+      : d.nota;
     // Si el cliente pidió PIN, quien recibe se lo da al repartidor; sin PIN correcto no se entrega.
     await verificarPinEntrega(
       db,

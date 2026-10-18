@@ -96,6 +96,20 @@ const es = {
     cobroOk: 'Cobro registrado. Lo confirmaste tú; si fue transferencia, revísala en tu banco.',
     propinaAparte: 'La propina en efectivo es tuya y no se cuenta aquí.',
   },
+  fondo: {
+    titulo: 'Tumbite está activo',
+    cuerpo: 'Seguimos mandando tu ubicación mientras estás conectado.',
+  },
+  edad: {
+    documentos: { licencia: 'Licencia', pasaporte: 'Pasaporte', otro: 'Otro documento' } as Record<
+      string,
+      string
+    >,
+    ultimos4: 'Últimos 4 dígitos del documento',
+    nombre: 'Nombre de quien recibe (como en el documento)',
+    ayuda:
+      'Queda en la evidencia de la entrega. Si la persona es menor o no muestra documento, no entregues.',
+  },
   prepago: {
     titulo: 'Saldo para comisiones',
     ayuda:
@@ -237,6 +251,20 @@ const en: T = {
       'Are you sure? The order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
     cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',
     propinaAparte: 'A cash tip is yours and isn’t counted here.',
+  },
+  fondo: {
+    titulo: 'Tumbite is active',
+    cuerpo: 'We keep sending your location while you’re online.',
+  },
+  edad: {
+    documentos: { licencia: 'Driver’s license', pasaporte: 'Passport', otro: 'Other ID' } as Record<
+      string,
+      string
+    >,
+    ultimos4: 'Last 4 digits of the ID',
+    nombre: 'Name of the person receiving (as on the ID)',
+    ayuda:
+      'It stays in the delivery evidence. If the person is underage or shows no ID, don’t deliver.',
   },
   prepago: {
     titulo: 'Balance for fees',

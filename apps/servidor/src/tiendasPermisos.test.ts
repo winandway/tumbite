@@ -27,11 +27,18 @@ describe('permisos de las apps para las tiendas', () => {
       ]);
       const loc = plugin(e, 'expo-location');
       if (loc) {
-        expect(loc[1]).toMatchObject({
-          locationAlwaysPermission: false,
-          locationAlwaysAndWhenInUsePermission: false,
-          motionUsagePermission: false,
-        });
+        // Solo el repartidor pide «Siempre» (GPS en segundo plano, punto 23) y lo explica con sus palabras.
+        if (app === 'repartidor') {
+          expect(loc[1]).toMatchObject({ motionUsagePermission: false });
+          expect(String(loc[1].locationAlwaysAndWhenInUsePermission)).toMatch(/Tumbite/);
+          expect(String(loc[1].locationAlwaysPermission)).toMatch(/Tumbite/);
+        } else {
+          expect(loc[1]).toMatchObject({
+            locationAlwaysPermission: false,
+            locationAlwaysAndWhenInUsePermission: false,
+            motionUsagePermission: false,
+          });
+        }
       }
       expect(JSON.stringify(e)).not.toContain('$(PRODUCT_NAME)');
     }

@@ -25,6 +25,15 @@ import { llavero } from './llavero';
 import { darDeBajaAvisos, useAvisosCelular } from './avisos';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
+
+/** El token guardado en el teléfono (para tareas en segundo plano que corren sin la pantalla). */
+export async function leerTokenGuardado(): Promise<string | null> {
+  try {
+    return (await llavero.leer(LLAVE_TOKEN)) ?? null;
+  } catch {
+    return null;
+  }
+}
 const LLAVE_IDIOMA = 'tumbite.idioma';
 // En la web, la app habla con el sitio que la sirvió (pruebas con pruebas, producción con
 // producción); en el celular, con la dirección fijada al construir (C-ENTORNOS-SEPARADOS).

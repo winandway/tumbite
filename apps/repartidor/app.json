@@ -13,7 +13,9 @@
         "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show the route to the restaurant and the customer while you deliver.",
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Tumbite uses the camera to photograph the order when you pick it up and deliver it, and to take a photo of your ID and your face when you verify your identity.",
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "UIBackgroundModes": ["location"],
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Tumbite keeps sending your location while you have an active delivery, even with the screen off, so the customer and the restaurant can see where you are."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -33,7 +35,14 @@
           "apiKey": "PON_AQUI_LA_LLAVE_DE_GOOGLE_MAPS"
         }
       },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "CAMERA"],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ],
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO",
@@ -56,9 +65,11 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Tumbite uses your location to offer you nearby orders and to show your route while you deliver.",
-          "locationAlwaysPermission": false,
-          "locationAlwaysAndWhenInUsePermission": false,
-          "motionUsagePermission": false
+          "locationAlwaysPermission": "Tumbite keeps sending your location while you have an active delivery, even with the screen off.",
+          "locationAlwaysAndWhenInUsePermission": "Tumbite keeps sending your location while you have an active delivery, even with the screen off, so the customer and the restaurant can see where you are.",
+          "motionUsagePermission": false,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       [

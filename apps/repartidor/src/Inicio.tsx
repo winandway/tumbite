@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
+import { detenerUbicacionFondo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -513,9 +514,12 @@ export function Inicio() {
     if (!estado?.conectado) {
       vigilante.current?.remove();
       vigilante.current = null;
+      void detenerUbicacionFondo();
       return;
     }
     let vivo = true;
+    // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del mapa.
+    void iniciarUbicacionFondo({ titulo: tg.fondo.titulo, cuerpo: tg.fondo.cuerpo });
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
@@ -538,7 +542,7 @@ export function Inicio() {
       vigilante.current?.remove();
       vigilante.current = null;
     };
-  }, [estado?.conectado, api]);
+  }, [estado?.conectado, api, tg.fondo.titulo, tg.fondo.cuerpo]);
 
   // En camino: la ubicación se revisa cada 5 segundos para saber si ya llegó a la puerta.
   const enCamino = estado?.activo?.estado === 'en_camino';
@@ -675,7 +679,14 @@ export function Inicio() {
         lng: p.coords.longitude,
         modo: 'mano',
         ...(estado.activo.pinRequerido ? { pin: pinEntrega.trim() } : {}),
-        ...(estado.activo.requiereEdad ? { mayorEdad } : {}),
+        ...(estado.activo.requiereEdad
+          ? {
+              mayorEdad,
+              documento,
+              documentoUltimos4: ultimos4.trim(),
+              nombreRecibe: nombreRecibe.trim(),
+            }
+          : {}),
       };
       try {
         await api.pedir('POST', ruta, cuerpo);
@@ -694,6 +705,10 @@ export function Inicio() {
 
   // Fase 2 · cobro directo: lo que recibió del cliente, el saldo prepago y el código de recarga.
   const [montoCobro, setMontoCobro] = useState('');
+  // Mayoría de edad (punto 24): documento revisado y quién recibió (queda en la evidencia de la entrega).
+  const [documento, setDocumento] = useState<'licencia' | 'pasaporte' | 'otro'>('licencia');
+  const [ultimos4, setUltimos4] = useState('');
+  const [nombreRecibe, setNombreRecibe] = useState('');
   const [codigoRecarga, setCodigoRecarga] = useState('');
   const [prepago, setPrepago] = useState<{
     disponible: number;
@@ -1724,6 +1739,53 @@ export function Inicio() {
                               </Text>
                             </View>
                           </Pressable>
+                        ) : null}
+                        {activo.requiereEdad && mayorEdad ? (
+                          <View style={{ gap: 6, marginTop: 6 }} testID="documento-edad">
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                              {(['licencia', 'pasaporte', 'otro'] as const).map((d) => (
+                                <Pressable
+                                  key={d}
+                                  onPress={() => setDocumento(d)}
+                                  accessibilityRole="radio"
+                                  accessibilityState={{ checked: documento === d }}
+                                  style={{
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 8,
+                                    borderRadius: 999,
+                                    borderWidth: 1,
+                                    borderColor: documento === d ? C.primario : '#DADADA',
+                                    backgroundColor: documento === d ? C.primario : '#fff',
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      color: documento === d ? '#fff' : C.secundario,
+                                      fontWeight: '700',
+                                    }}
+                                  >
+                                    {new Map(Object.entries(tg.edad.documentos)).get(d)}
+                                  </Text>
+                                </Pressable>
+                              ))}
+                            </View>
+                            <TextInput
+                              value={ultimos4}
+                              onChangeText={(x) => setUltimos4(x.replace(/\D/g, '').slice(0, 4))}
+                              placeholder={tg.edad.ultimos4}
+                              accessibilityLabel={tg.edad.ultimos4}
+                              keyboardType="number-pad"
+                              style={e.input}
+                            />
+                            <TextInput
+                              value={nombreRecibe}
+                              onChangeText={(x) => setNombreRecibe(x.slice(0, 80))}
+                              placeholder={tg.edad.nombre}
+                              accessibilityLabel={tg.edad.nombre}
+                              style={e.input}
+                            />
+                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tg.edad.ayuda}</Text>
+                          </View>
                         ) : null}
                         <Boton
                           texto={t.enMano}
