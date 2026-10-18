@@ -4,6 +4,8 @@
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Probar en el simulador las dos apps nuevas** (cliente e inicio «como los grandes»; repartidor con oferta completa, calificaciones, ganancias, campana, pausa, llegué y ayuda) y decir qué falta. Cuentas en `docs/CUENTAS-DE-PRUEBA.md`.
+
 - [ ] 👤 **Condiciones comerciales de las franquicias** (cuota de entrada, porcentaje sobre ingresos, cuota mensual, plazo y exclusividad territorial). El sistema ya las guarda por franquicia, pero quedan «pendientes de definición comercial» y ningún cobro las usa. Detalle en `docs/TERRITORIO-Y-FRANQUICIAS.md`.
 - [x] 👤 Autorizar en producción la arquitectura multiciudad: publicada el 17 oct (bac14e2a).
 - [ ] 👤 **Revisar como superadmin en tumbite.com** Zonas → Áreas y Franquicias → Territorio y equipo (solo Richard puede entrar).
