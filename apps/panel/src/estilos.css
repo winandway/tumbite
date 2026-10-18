@@ -1800,6 +1800,14 @@ button {
   height: auto;
   filter: drop-shadow(0 24px 40px rgb(0 0 0 / 35%));
 }
+/* Capturas reales de la app (recorrido): marco de celular dibujado con CSS, sin retocar la foto. */
+.ld-app-real {
+  border-radius: 28px;
+  border: 7px solid #191919;
+  background: #191919;
+  object-fit: cover;
+  aspect-ratio: 440 / 956;
+}
 .ld-hero-apps .ld-app-atras {
   transform: rotate(-6deg) translateX(28px);
   margin-bottom: 20px;

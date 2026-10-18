@@ -631,3 +631,12 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Pruebas:** `apps/servidor/src/rutas/repartidorGrandes.test.ts` (9, en rojo primero); recorrido: «Llegué al restaurante», ganancias con desglose, calificaciones y campana con fotos para Docs.
 - **Cómo se comprueba:** con la cuenta demo del repartidor en staging: al aceptar un pedido, la oferta sale en pantalla completa con los segundos corriendo; Perfil → Mis calificaciones; Ganancias → Ver desglose; la campana lista los avisos; «Pausar ofertas» deja de traer ofertas.
 - **Qué NO tocar:** los mínimos (4,2 y 90 %) son referencia, no desactivan a nadie (decisión de negocio no tomada); el orden del despacho y la oferta de 45 s no cambian; `abandonos_repartidor` es lo que alimenta la finalización: no borrar filas.
+
+## C-SUPER-PEDIDO-RUTA: la ficha del pedido abre desde las listas del superadmin (18 oct 2026)
+
+- **Qué se rompió y cómo se veía:** en el superadmin, tocar un pedido en «Pedidos en curso» o en la ficha de un cliente o restaurante dejaba la pantalla en blanco.
+- **Causa real:** los enlaces de las listas llevaban a `…/orders/<id>` (las direcciones del panel van en inglés desde el 13 oct) y `seccionAdmin` en `PanelApp.tsx` solo reconocía `…/pedidos/<id>`.
+- **Qué se hizo:** `PanelApp.tsx` acepta `/(orders|pedidos)/<id>` (la vieja sigue por si alguien la guardó). Hallado en la auditoría final (`docs/AUDITORIA-FINAL-2026-10-18.md`, F1).
+- **Prueba:** `apps/panel/src/panel/PanelApp.test.tsx` → «C-SUPER-PEDIDO-RUTA» renderiza `seccionAdmin('/orders/<id>')` y exige que pida `/datos/admin/pedidos/<id>` (en rojo antes del arreglo). `SuperPedido.test.tsx` fija que los enlaces usan `/orders/`.
+- **Cómo se comprueba:** superadmin → Pedidos en curso → tocar un pedido: se abre la bitácora.
+- **Qué NO tocar:** si se renombra la dirección, cambiar los dos lados (enlaces y `seccionAdmin`) y la prueba.

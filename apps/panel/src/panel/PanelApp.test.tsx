@@ -133,3 +133,48 @@ describe('configuración de la cuenta', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('superadmin: la ficha del pedido abre desde los enlaces de las listas (C-SUPER-PEDIDO-RUTA)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('la dirección /orders/<id> (la que usan las listas) muestra la ficha y pide el pedido', async () => {
+    const id = '11111111-2222-3333-4444-555555555555';
+    const llamadas = servidor({
+      [`/datos/admin/pedidos/${id}`]: () =>
+        new Response(
+          JSON.stringify({
+            pedido: {
+              id,
+              estado: 'pagado',
+              total: 1000,
+              propina: 0,
+              direccion: '1 Calle',
+              notas: '',
+              ciudad: 'Miami',
+              pagoStripe: null,
+              lineas: [],
+              cliente: { id: 'c1', nombre: 'Ana Cliente' },
+              restaurante: { id: 'r1', nombre: 'La Esquina' },
+              repartidor: null,
+              bitacora: [],
+            },
+          }),
+        ),
+    });
+    const { seccionAdmin } = await import('./PanelApp');
+    render(
+      <>
+        {seccionAdmin(
+          `/orders/${id}`,
+          '/panel/control-x',
+          { ...usuario, rol: 'admin' } as never,
+          'es',
+        )}
+      </>,
+    );
+    await waitFor(() =>
+      expect(llamadas.some((u) => u.endsWith(`/datos/admin/pedidos/${id}`))).toBe(true),
+    );
+    expect(await screen.findAllByText('Ana Cliente')).not.toHaveLength(0);
+  });
+});

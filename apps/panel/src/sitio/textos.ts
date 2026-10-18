@@ -52,7 +52,7 @@ const es = {
       ],
       [
         'Paga claro',
-        'Antes de pagar ves todo: comida, envío, servicio y propina. Tarjeta, Apple Pay o Google Pay.',
+        'Antes de pagar ves todo: comida, envío, servicio y propina. Pagas con tu tarjeta dentro de la app; Apple Pay y Google Pay, muy pronto.',
       ],
       ['Síguelo', 'Confirmado, en cocina, en camino y entregado. Ves a tu repartidor acercarse.'],
     ],
@@ -113,7 +113,7 @@ const es = {
         'Bronce, Plata, Oro y Diamante: los niveles altos ven primero los pedidos grandes.',
       ],
       ['billetera', 'Tu billetera', 'saldo, historial y retiro a tu banco.'],
-      ['ruta', 'Ruta en un toque', 'con Google Maps, Apple Maps o Waze.'],
+      ['ruta', 'Ruta en un toque', 'con Google Maps o Apple Maps.'],
     ],
     form: 'Quiero repartir con Tumbite',
   },
@@ -333,7 +333,7 @@ const en: Textos = {
       ],
       [
         'Pay clearly',
-        'See everything before you pay: food, delivery, service, and tip. Card, Apple Pay, or Google Pay.',
+        'See everything before you pay: food, delivery, service, and tip. Pay with your card inside the app; Apple Pay and Google Pay, coming soon.',
       ],
       [
         'Track it',
@@ -397,7 +397,7 @@ const en: Textos = {
         'Bronze, Silver, Gold, and Diamond: higher levels see bigger orders first.',
       ],
       ['billetera', 'Your wallet', 'balance, history, and cash-out to your bank.'],
-      ['ruta', 'Directions in one tap', 'with Google Maps, Apple Maps, or Waze.'],
+      ['ruta', 'Directions in one tap', 'with Google Maps or Apple Maps.'],
     ],
     form: 'I want to drive with Tumbite',
   },

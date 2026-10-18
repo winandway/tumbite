@@ -45,7 +45,7 @@ import { pedir } from './api';
  * Sección del superadmin según la parte de la dirección después de su base secreta
  * (/panel/control-<id>). Las herramientas de siempre (restaurantes, dinero…) viven también ahí.
  */
-function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
+export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
   if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
   const t = /^\/tickets\/([0-9a-f-]{36})$/.exec(sub);
@@ -59,7 +59,7 @@ function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' 
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;
   if (sub === '/restaurants') return <AdminRestaurantes idioma={idioma} base={base} />;
   if (sub === '/orders') return <SuperPedidos base={base} idioma={idioma} />;
-  const pedidoId = /^\/pedidos\/([0-9a-f-]{36})$/.exec(sub);
+  const pedidoId = /^\/(?:orders|pedidos)\/([0-9a-f-]{36})$/.exec(sub);
   if (pedidoId?.[1]) return <SuperPedido base={base} id={pedidoId[1]} idioma={idioma} />;
   const ficha = /^\/(drivers|customers|restaurants)\/([0-9a-f-]{36})$/.exec(sub);
   if (ficha?.[1] === 'drivers' && ficha[2])

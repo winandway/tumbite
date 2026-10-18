@@ -63,11 +63,11 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'apple-pay-google-pay',
-        titulo: 'Paga con Apple Pay o Google Pay',
+        titulo: 'Paga con Apple Pay o Google Pay (muy pronto)',
         resumen:
-          'En la pantalla de pago, además de tu tarjeta, aparece Apple Pay (iPhone) o Google Pay (Android y Chrome) si tu celular los tiene configurados. Un toque y listo.',
+          'Hoy pagas con tu tarjeta dentro de la app. Muy pronto, en la misma pantalla de pago, aparecerá Apple Pay (iPhone) o Google Pay (Android y Chrome) si tu celular los tiene configurados. Un toque y listo.',
         explicacion: [
-          'Al confirmar tu pedido se abre el formulario de pago dentro de la app. Si tu celular tiene Apple Pay o Google Pay, aparece como primera opción; si no, pagas con tu tarjeta como siempre.',
+          'Al confirmar tu pedido se abre el formulario de pago dentro de la app y pagas con tu tarjeta. Cuando Apple Pay y Google Pay estén activados en Tumbite, aparecerán como primera opción en esa misma pantalla; te avisaremos en la app.',
           'Es el mismo cobro: se autoriza al pedir y se cobra al entregar (si cancelas antes de que el restaurante acepte, no se te cobra nada).',
           'Tus datos de pago los guarda Apple, Google o Stripe; Tumbite nunca ve el número de tu tarjeta.',
           'Si no te aparece Apple Pay o Google Pay, revisa que tengas una tarjeta agregada en la billetera de tu celular.',
@@ -1221,7 +1221,7 @@ const es: SeccionDocs[] = [
           'Cuando hay un pedido cerca, la app vibra y te muestra la oferta en pantalla completa: ganancia, distancia al local, viaje total, minutos y artículos.',
           'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no te baja de nivel.',
           'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
-          'Toca «Cómo llegar» para abrir Google Maps, Apple Maps o Waze con la dirección ya puesta.',
+          'Toca «Cómo llegar» para abrir Google Maps o Apple Maps con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
         ],
       },
@@ -2069,11 +2069,11 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'apple-pay-google-pay',
-        titulo: 'Pay with Apple Pay or Google Pay',
+        titulo: 'Pay with Apple Pay or Google Pay (coming soon)',
         resumen:
-          'On the payment screen, besides your card, Apple Pay (iPhone) or Google Pay (Android and Chrome) shows up if your phone has it set up. One tap and done.',
+          'Today you pay with your card inside the app. Soon, on the same payment screen, Apple Pay (iPhone) or Google Pay (Android and Chrome) will show up if your phone has it set up. One tap and done.',
         explicacion: [
-          'When you confirm your order, the payment form opens inside the app. If your phone has Apple Pay or Google Pay, it shows as the first option; otherwise you pay with your card as usual.',
+          'When you confirm your order, the payment form opens inside the app and you pay with your card. Once Apple Pay and Google Pay are turned on in Tumbite, they will show as the first option on that same screen; we will let you know in the app.',
           'It’s the same charge: authorized when you order and charged when it’s delivered (if you cancel before the restaurant accepts, you’re not charged at all).',
           'Your payment details are held by Apple, Google or Stripe; Tumbite never sees your card number.',
           'If Apple Pay or Google Pay doesn’t show up, check that you have a card added to your phone’s wallet.',
@@ -3222,7 +3222,7 @@ const en: SeccionDocs[] = [
           'When there’s an order nearby, the app vibrates and shows you the offer full screen: earnings, distance to the store, total trip, minutes, and items.',
           'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t lower your level.',
           'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
-          'Tap “Directions” to open Google Maps, Apple Maps, or Waze with the address already set.',
+          'Tap “Directions” to open Google Maps or Apple Maps with the address already set.',
           'The customer’s tip is 100% yours: it never tops up your pay.',
         ],
       },
