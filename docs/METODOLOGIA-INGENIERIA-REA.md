@@ -167,3 +167,21 @@ Están en la rama `investigacion-rea`, sin fusionar todavía:
 | `docs/DIAGRAMAS-REA-TUMBITE.md`                                   | Nuestros componentes, estados y secuencias, con evidencia      |
 | `docs/RESULTADOS-FALLOS-CRITICOS.md`                              | Los cinco fallos reproducidos en rojo y su cierre de seguridad |
 | `docs/PLAN-IMPLEMENTACION-REA-V2.md`                              | El plan de entregas vigente                                    |
+
+## Metodología permanente (texto de Richard, 18 oct 2026)
+
+REA será una herramienta principal de investigación y comparación funcional durante el desarrollo. No utilizar REA únicamente cuando aparezcan dudas.
+
+Antes de desarrollar o modificar una funcionalidad importante:
+
+1. Investigar cómo la resuelven DoorDash, Uber Eats, Rappi u otras referencias relevantes.
+2. Estudiar el proceso completo, no solamente una pantalla aislada.
+3. Identificar los estándares funcionales que utilizan estas plataformas.
+4. Compararlos con el código actual de Tumbite.
+5. Reutilizar lo que ya funciona correctamente.
+6. Implementar las capacidades faltantes con nuestro propio código y diseño.
+7. Mantener coherencia entre cliente, restaurante, repartidor, servidor y paneles.
+8. Diferenciar los comportamientos observados de las reglas internas que no podemos verificar.
+9. Probar en staging y publicar en producción mediante nuestro flujo habitual.
+
+Objetivo: que Tumbite alcance los estándares funcionales de las principales plataformas del mercado. No improvisar procesos cuando existen referencias funcionales que podemos estudiar. No reconstruir componentes que ya funcionan. No limitar artificialmente las funcionalidades por el tamaño de la competencia. No atribuir al propietario restricciones o decisiones que no haya expresado.

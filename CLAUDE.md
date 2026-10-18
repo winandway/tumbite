@@ -14,6 +14,22 @@ Las reglas globales de Richard aplican; estas se suman.
 
 Se copia el **estándar del mercado** de reparto (DoorDash, Uber Eats, Rappi): la interfaz, los menús, el orden de las cosas y los flujos. Buscador arriba, «Hola, fulano», logo, campana, cupón, servicios, y abajo lo que publicó el vendedor. Cambiamos colores, marca y lo nuestro; no la estructura. Antes de diseñar una pantalla se pregunta «¿cuál es el estándar?» y se copia, salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública (no se descompilan sus apps de tienda: lo prohíben sus términos y expondría a Windoce; no hace falta).
 
+## Metodología permanente de Tumbite (dictada por Richard, 18 oct 2026)
+
+REA es una herramienta **principal** de investigación y comparación funcional durante el desarrollo, no solo cuando aparecen dudas. Antes de desarrollar o modificar una funcionalidad importante:
+
+1. Investigar cómo la resuelven DoorDash, Uber Eats, Rappi u otras referencias relevantes.
+2. Estudiar el **proceso completo**, no solamente una pantalla aislada.
+3. Identificar los estándares funcionales que usan esas plataformas.
+4. Compararlos con el código actual de Tumbite.
+5. Reutilizar lo que ya funciona correctamente.
+6. Implementar las capacidades faltantes con nuestro propio código y diseño.
+7. Mantener coherencia entre cliente, restaurante, repartidor, servidor y paneles.
+8. Diferenciar los comportamientos observados de las reglas internas que no podemos verificar ([OBS]/[DOC] frente a [INF]/[NV]).
+9. Probar en staging y publicar en producción por el flujo habitual.
+
+Objetivo: que Tumbite alcance los estándares funcionales de las principales plataformas del mercado. **No improvisar** procesos cuando existen referencias funcionales que podemos estudiar. **No reconstruir** componentes que ya funcionan. **No limitar** artificialmente las funcionalidades por el tamaño de la competencia. **No atribuir al propietario** restricciones o decisiones que no haya expresado.
+
 ## Ingeniería con REA: regla permanente (dictada por Richard, 16 oct 2026)
 
 Método completo: `docs/METODOLOGIA-INGENIERIA-REA.md`. Se lee antes de diseñar o modificar cualquier función importante. Aprobada por Richard el 16 oct 2026.
