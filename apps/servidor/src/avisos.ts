@@ -101,6 +101,69 @@ export async function avisoRestauranteNuevoAlAdmin(
     });
 }
 
+/** Al dueño, cuando el equipo aprueba, pausa o rechaza su restaurante (F14). */
+export async function correoEstadoRestaurante(
+  env: Env,
+  p: {
+    correo: string;
+    nombre: string;
+    idioma: Idioma;
+    restaurante: string;
+    estado: 'aprobado' | 'pausado' | 'rechazado' | 'pendiente';
+    motivo?: string;
+  },
+) {
+  const en = p.idioma === 'en';
+  const motivo = p.motivo?.trim();
+  const porque = motivo ? (en ? `\n\nReason: ${motivo}` : `\n\nMotivo: ${motivo}`) : '';
+  const panel = `${sitio(env)}/panel`;
+  const textos = {
+    aprobado: en
+      ? [
+          `${p.restaurante} is approved on Tumbite`,
+          `Hi ${p.nombre},\n\n${p.restaurante} is approved. Open your panel, finish the activation list and tap “Open” to start taking orders:\n\n${panel}`,
+        ]
+      : [
+          `${p.restaurante} quedó aprobado en Tumbite`,
+          `Hola, ${p.nombre}.\n\n${p.restaurante} quedó aprobado. Entra a tu panel, completa la lista de activación y toca «Abrir» para empezar a recibir pedidos:\n\n${panel}`,
+        ],
+    pausado: en
+      ? [
+          `${p.restaurante} was paused on Tumbite`,
+          `Hi ${p.nombre},\n\n${p.restaurante} was paused by our team and isn't taking orders for now.${porque}\n\nReply to this email if you have questions.`,
+        ]
+      : [
+          `${p.restaurante} quedó en pausa en Tumbite`,
+          `Hola, ${p.nombre}.\n\nNuestro equipo puso ${p.restaurante} en pausa y por ahora no recibe pedidos.${porque}\n\nResponde este correo si tienes dudas.`,
+        ],
+    rechazado: en
+      ? [
+          `About ${p.restaurante} on Tumbite`,
+          `Hi ${p.nombre},\n\nWe couldn't approve ${p.restaurante} for now.${porque}\n\nReply to this email if you'd like to review it with us.`,
+        ]
+      : [
+          `Sobre ${p.restaurante} en Tumbite`,
+          `Hola, ${p.nombre}.\n\nPor ahora no pudimos aprobar ${p.restaurante}.${porque}\n\nResponde este correo si quieres revisarlo con nosotros.`,
+        ],
+    pendiente: en
+      ? [
+          `${p.restaurante} is under review again`,
+          `Hi ${p.nombre},\n\n${p.restaurante} went back to review.${porque}`,
+        ]
+      : [
+          `${p.restaurante} vuelve a revisión`,
+          `Hola, ${p.nombre}.\n\n${p.restaurante} volvió a revisión.${porque}`,
+        ],
+  }[p.estado];
+  return enviarCorreo(env, {
+    de: 'avisos',
+    para: p.correo,
+    asunto: textos[0]!,
+    texto: textos[1]!,
+    responderA: 'support@tumbite.com',
+  });
+}
+
 export async function bienvenidaListaEspera(
   env: Env,
   p: {

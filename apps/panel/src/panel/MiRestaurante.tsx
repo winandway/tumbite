@@ -32,6 +32,7 @@ const T = {
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezar: 'Empezar de nuevo',
     abierto: 'Recibiendo pedidos',
+    fueraHorario: 'Abierto, fuera de horario',
     cerrado: 'Cerrado',
     abrir: 'Abrir y recibir pedidos',
     cerrar: 'Cerrar por ahora',
@@ -64,6 +65,7 @@ const T = {
     recuperado: 'We restored what you were typing.',
     empezar: 'Start over',
     abierto: 'Taking orders',
+    fueraHorario: 'Open, outside hours',
     cerrado: 'Closed',
     abrir: 'Open and take orders',
     cerrar: 'Close for now',
@@ -189,10 +191,15 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
   async function alternarAbierto() {
     if (!rest) return;
     try {
-      const r = await pedir<{ abierto: boolean }>('PATCH', '/datos/mi-restaurante/abierto', {
-        abierto: !rest.abierto,
-      });
-      setRest({ ...rest, abierto: r.abierto });
+      const r = await pedir<{ abierto: boolean; abiertoAhora?: boolean }>(
+        'PATCH',
+        '/datos/mi-restaurante/abierto',
+        {
+          abierto: !rest.abierto,
+        },
+      );
+      // F13: el servidor dice si de verdad está recibiendo (horario y señal); si no lo manda, se asume.
+      setRest({ ...rest, abierto: r.abierto, abiertoAhora: r.abiertoAhora ?? r.abierto });
     } catch (x) {
       setError({ mensaje: x instanceof ErrorApi ? x.message : String(x) });
     }
@@ -213,7 +220,9 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
               className={rest.abierto ? 'boton secundario' : 'boton'}
               onClick={() => void alternarAbierto()}
             >
-              {rest.abierto ? `${t.abierto} · ${t.cerrar}` : t.abrir}
+              {rest.abierto
+                ? `${rest.abiertoAhora ? t.abierto : t.fueraHorario} · ${t.cerrar}`
+                : t.abrir}
             </button>
           )}
         </div>

@@ -108,6 +108,18 @@ describe('mi restaurante', () => {
     expect(await screen.findByRole('button', { name: /Recibiendo pedidos/ })).toBeInTheDocument();
   });
 
+  it('abierto pero fuera de horario NO dice «Recibiendo pedidos» (F13)', async () => {
+    servidor((url, init) =>
+      url.endsWith('/abierto')
+        ? { abierto: JSON.parse(String(init?.body)).abierto, abiertoAhora: false }
+        : { restaurante: { ...base, estado: 'aprobado' } },
+    );
+    render(<MiRestaurante usuario={usuario} idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Abrir y recibir pedidos' }));
+    expect(await screen.findByRole('button', { name: /fuera de horario/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Recibiendo pedidos/ })).toBeNull();
+  });
+
   it('si el servidor rechaza un campo, se marca ese campo', async () => {
     servidor((_url, init) =>
       init?.method === 'PUT'

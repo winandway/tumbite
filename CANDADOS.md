@@ -677,3 +677,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se hizo:** `crearApi` manda `x-tumbite-app: <app>/<versión>` (`app:` en `packages/movil/src/sesion.tsx`, versión de `expo-constants`); `apps/servidor/src/versionApp.ts` responde 426 `{ actualizar: true }` en toda la API (menos `/datos/publico`, `/datos/version`, `/datos/salud`) cuando `APP_VERSION_MINIMA` («cliente=0.2.0,repartidor=0.1.5» o «0.2.0») dice que esa versión ya no sirve; `cambiarIdioma` de la sesión móvil hace `PUT /datos/cuentas/idioma` si hay sesión.
 - **Pruebas:** `apps/servidor/src/versionApp.test.ts` (3).
 - **Qué NO tocar:** la web no manda cabecera y nunca recibe 426; la variable vacía no cambia nada.
+
+## C-RESTAURANTE-ESTADO: «Recibiendo pedidos» de verdad, ítem de cobro real y correo al dueño (F13 y F14, 18 oct 2026)
+
+- **Qué se rompía:** la app del restaurante y el panel decían «Recibiendo pedidos» según el botón, aunque estuviera fuera de horario o sin señal; el ítem «cobro» de la activación se marcaba con solo crear la cuenta de Stripe (sin pagos activos); al aprobar, pausar o rechazar un restaurante el dueño no recibía nada.
+- **Qué se hizo:** la etiqueta usa `abiertoAhora` (verde solo si recibe de verdad; «Abierto, fuera de horario» en gris si no) en `apps/restaurante/src/Inicio.tsx` y `apps/panel/src/panel/MiRestaurante.tsx`; `PATCH /datos/mi-restaurante/abierto` devuelve `abiertoAhora`; la activación cuenta `cuentas_stripe.pagos_activos = 1`; `PATCH /datos/admin/restaurantes/:id` acepta `motivo` y manda `correoEstadoRestaurante` (es/en) al dueño en cada cambio de estado.
+- **Pruebas:** `apps/servidor/src/restauranteEstado.test.ts` (3), `apps/panel/src/panel/Admin.test.tsx` («fuera de horario»).
+- **Qué NO tocar:** el verde es solo para «recibiendo de verdad» (regla «lo que salió bien va en verde»); un cambio solo de plan no manda correo.

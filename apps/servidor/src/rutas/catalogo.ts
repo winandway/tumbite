@@ -25,7 +25,7 @@ import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { kycAprobado } from './kyc';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { avisoRestauranteNuevoAlAdmin } from '../avisos';
+import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos';
 import { minutosPausa } from '../pausa';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -235,7 +235,7 @@ async function activacionDe(db: D1Database, f: FilaRest) {
       `SELECT (SELECT COUNT(*) FROM horarios_restaurante h WHERE h.restaurante_id = ?1) AS turnos,
         (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0) AS vendibles,
         (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0 AND p.imagen IS NOT NULL AND p.imagen != '') AS con_foto,
-        (SELECT COUNT(*) FROM cuentas_stripe s WHERE s.usuario_id = ?2) AS cobro`,
+        (SELECT COUNT(*) FROM cuentas_stripe s WHERE s.usuario_id = ?2 AND s.pagos_activos = 1) AS cobro`,
     )
     .bind(String(f.id), String(f.dueno_id))
     .first<{ turnos: number; vendibles: number; con_foto: number; cobro: number }>();
@@ -421,7 +421,9 @@ catalogo.patch('/mi-restaurante/abierto', async (c) => {
     .prepare('UPDATE restaurantes SET abierto = ? WHERE id = ?')
     .bind(abierto ? 1 : 0, f.id)
     .run();
-  return c.json({ abierto });
+  // F13: la app y el panel pintan «Recibiendo pedidos» solo si de verdad recibe (horario y señal).
+  const [conH] = await conHorarios(db, [{ ...f, abierto: abierto ? 1 : 0 }]);
+  return c.json({ abierto, abiertoAhora: aRestaurante(conH!).abiertoAhora });
 });
 
 async function exigirMiRestaurante(c: Ctx) {
@@ -548,7 +550,12 @@ catalogo.patch('/admin/restaurantes/:id', async (c) => {
   exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
-    z.object({ estado: z.enum(ESTADOS_RESTAURANTE).optional(), plan: z.enum(PLANES).optional() }),
+    z.object({
+      estado: z.enum(ESTADOS_RESTAURANTE).optional(),
+      plan: z.enum(PLANES).optional(),
+      /** Por qué se pausa o se rechaza: va en el correo al dueño (F14). */
+      motivo: z.string().trim().max(500).optional(),
+    }),
   );
   const db = base(c);
   const f = await db
@@ -577,5 +584,21 @@ catalogo.patch('/admin/restaurantes/:id', async (c) => {
     .prepare('SELECT * FROM restaurantes WHERE id = ?')
     .bind(f.id)
     .first<FilaRest>();
+  // F14: el dueño se entera por correo de cada cambio de estado (antes no recibía nada).
+  if (d.estado && d.estado !== String(f.estado)) {
+    const dueno = await db
+      .prepare('SELECT nombre, correo, idioma FROM usuarios WHERE id = ?')
+      .bind(String(f.dueno_id))
+      .first<{ nombre: string; correo: string; idioma: string }>();
+    if (dueno)
+      await correoEstadoRestaurante(c.env, {
+        correo: dueno.correo,
+        nombre: dueno.nombre,
+        idioma: dueno.idioma === 'en' ? 'en' : 'es',
+        restaurante: String(f.nombre),
+        estado: d.estado,
+        motivo: d.motivo,
+      }).catch((e: unknown) => console.error('correo de estado al restaurante', e));
+  }
   return c.json({ restaurante: aRestaurante(n as FilaRest) });
 });

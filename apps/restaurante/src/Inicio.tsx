@@ -120,6 +120,7 @@ const T = {
     no: 'No',
     mas: 'Más opciones',
     abierto: 'Recibiendo pedidos',
+    fueraHorario: 'Abierto, fuera de horario',
     cerrado: 'Cerrado',
     activacion: 'Para abrir te falta:',
     recoge: 'El cliente lo recoge en el local (sin repartidor)',
@@ -169,6 +170,7 @@ const T = {
     no: 'No',
     mas: 'More options',
     abierto: 'Taking orders',
+    fueraHorario: 'Open, outside hours',
     cerrado: 'Closed',
     activacion: 'To open, you still need:',
     recoge: 'Customer picks up in store (no driver)',
@@ -568,14 +570,15 @@ export function Inicio() {
           style={{
             alignSelf: 'flex-start',
             marginTop: 6,
-            backgroundColor: rest.abierto ? C.exito : '#5E5E5E',
+            // F13: verde solo si DE VERDAD recibe pedidos (abierto, en horario y con señal).
+            backgroundColor: rest.abierto && rest.abiertoAhora ? C.exito : '#5E5E5E',
             borderRadius: 8,
             paddingHorizontal: 8,
             paddingVertical: 3,
           }}
         >
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>
-            {rest.abierto ? t.abierto : t.cerrado}
+            {rest.abierto ? (rest.abiertoAhora ? t.abierto : t.fueraHorario) : t.cerrado}
           </Text>
         </View>
       </View>
