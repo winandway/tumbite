@@ -35,6 +35,10 @@ const T = {
     soltar: 'Quitar al repartidor y volver a ofrecer',
     motivoSoltar: 'Motivo (opcional):',
     soltadoOk: 'El pedido volvió a la fila: se le ofrece a otro repartidor.',
+    devolver: 'Devolver parte del dinero',
+    montoDevolver: 'Monto a devolver, en dólares (por ejemplo 5.00):',
+    motivoDevolver: 'Motivo de la devolución (queda en la bitácora):',
+    devueltoOk: 'Devolución enviada a Stripe. El cliente la ve en su tarjeta en unos días.',
     eventos: {
       creado: 'Pedido creado',
       pago_pendiente: 'Esperando el pago',
@@ -55,6 +59,9 @@ const T = {
       ubicacion_autorizada: 'Soporte autorizó la entrega sin GPS',
       cancelado_por_soporte: 'Soporte lo canceló y devolvió el dinero',
       repartidor_quitado_por_soporte: 'Soporte le quitó el pedido al repartidor',
+      devolucion_parcial: 'Soporte devolvió parte del dinero',
+      disputa_abierta: 'El cliente disputó el cobro con su banco',
+      disputa_cerrada: 'La disputa se cerró',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Esperando pago',
@@ -94,6 +101,10 @@ const T = {
     soltar: 'Remove the driver and offer it again',
     motivoSoltar: 'Reason (optional):',
     soltadoOk: 'The order went back to the queue: it’s offered to another driver.',
+    devolver: 'Refund part of the money',
+    montoDevolver: 'Amount to refund, in dollars (for example 5.00):',
+    motivoDevolver: 'Reason for the refund (it stays in the log):',
+    devueltoOk: 'Refund sent to Stripe. The customer sees it on their card in a few days.',
     eventos: {
       creado: 'Order created',
       pago_pendiente: 'Awaiting payment',
@@ -114,6 +125,9 @@ const T = {
       ubicacion_autorizada: 'Support authorized delivery without GPS',
       cancelado_por_soporte: 'Support canceled it and refunded the money',
       repartidor_quitado_por_soporte: 'Support removed the order from the driver',
+      devolucion_parcial: 'Support refunded part of the money',
+      disputa_abierta: 'The customer disputed the charge with their bank',
+      disputa_cerrada: 'The dispute was closed',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Awaiting payment',
@@ -195,6 +209,21 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
   const vivo = ['pago_pendiente', 'pagado', 'aceptado', 'listo', 'en_camino'].includes(
     p?.estado ?? '',
   );
+  async function devolver() {
+    const texto = window.prompt(t.montoDevolver) ?? '';
+    const monto = Math.round(Number(texto.replace(',', '.')) * 100);
+    if (!Number.isFinite(monto) || monto <= 0) return;
+    const motivo = window.prompt(t.motivoDevolver) ?? '';
+    if (motivo.trim().length < 3) return;
+    setError('');
+    try {
+      await pedir('POST', `/datos/admin/pedidos/${id}/devolver`, { montoCentavos: monto, motivo });
+      setAviso(t.devueltoOk);
+      await cargar();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
   if (!p) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const dinero = (c: number) => formatearDolares(c, idioma);
   return (
@@ -257,6 +286,24 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           </ul>
         </div>
         <div className="tarjeta-form">
+          {p.estado === 'entregado' ? (
+            <div className="super-acciones">
+              <h2>{t.soporte}</h2>
+              {aviso && (
+                <p className="ok" role="status">
+                  {aviso}
+                </p>
+              )}
+              {error && (
+                <p className="error-general" role="alert">
+                  {error}
+                </p>
+              )}
+              <button type="button" className="boton secundario" onClick={() => void devolver()}>
+                {t.devolver}
+              </button>
+            </div>
+          ) : null}
           {vivo ? (
             <div className="super-acciones">
               <h2>{t.soporte}</h2>

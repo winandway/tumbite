@@ -24,6 +24,8 @@ export const esquemaConfigDinero = z.object({
   pedidoMinimo: centavos,
   cargoPedidoPequeno: centavos,
   pagoMinimoRepartidor: centavos,
+  /** 0 = apagado. Lo fija Richard con el contador (Miami-Dade: 700 = 7 %). */
+  impuestoPb: pb.optional().default(0),
 });
 
 export async function leerConfigDinero(db: D1Database): Promise<ConfigDinero> {

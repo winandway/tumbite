@@ -1011,3 +1011,114 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
   console.warn(`cuenta ${d.activo ? 'reactivada' : 'suspendida'} por soporte`, id, d.motivo);
   return c.json({ activo: d.activo });
 });
+
+/**
+ * Devolución DESPUÉS de entregar (queja atendida): reembolso parcial o total en Stripe con clave de
+ * idempotencia, registro en `devoluciones` y, si se le carga al restaurante o al repartidor, un
+ * movimiento compensatorio con autor (nunca se borra historial). Por defecto la asume Tumbite:
+ * quién paga cada tipo de queja es decisión de Richard (docs/DECISIONES-RICHARD-FASE-2.md).
+ */
+superadmin.post('/admin/pedidos/:id/devolver', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      montoCentavos: z.number().int().min(1).max(100_000),
+      motivo: z.string().trim().min(3, { error: 'Escribe el motivo.' }).max(300),
+      cargarA: z.enum(['tumbite', 'restaurante', 'repartidor']).default('tumbite'),
+    }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      `SELECT p.id, p.estado, p.total, p.stripe_pago, p.repartidor_id, r.dueno_id, c.capturado_en,
+              (SELECT COALESCE(SUM(monto), 0) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS devuelto,
+              (SELECT COUNT(*) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS n
+         FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id LEFT JOIN cobros c ON c.pedido_id = p.id
+        WHERE p.id = ?`,
+    )
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  if (String(f.estado) !== 'entregado' || !f.stripe_pago || !f.capturado_en)
+    throw new ErrorDatos(
+      'Solo se devuelve dinero de un pedido entregado y cobrado.',
+      undefined,
+      409,
+    );
+  if (Number(f.devuelto) + d.montoCentavos > Number(f.total))
+    throw new ErrorDatos('La devolución supera lo que pagó el cliente.', 'montoCentavos', 409);
+  if (d.cargarA === 'repartidor' && !f.repartidor_id)
+    throw new ErrorDatos('Este pedido no tuvo repartidor.', 'cargarA', 409);
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
+  const devId = crypto.randomUUID();
+  const reembolso = await stripe.post<{ id: string }>(
+    '/refunds',
+    {
+      payment_intent: String(f.stripe_pago),
+      amount: d.montoCentavos,
+      metadata: { pedido_id: id, devolucion: devId },
+    },
+    `devolucion-${id}-${Number(f.n) + 1}`,
+  );
+  const cargado =
+    d.cargarA === 'restaurante'
+      ? String(f.dueno_id)
+      : d.cargarA === 'repartidor'
+        ? String(f.repartidor_id)
+        : null;
+  await db.batch([
+    db
+      .prepare(
+        'INSERT INTO devoluciones (id, pedido_id, monto, motivo, cargar_a, actor_id, stripe_reembolso) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(devId, id, d.montoCentavos, d.motivo, d.cargarA, u.id, reembolso.id),
+    ...(cargado
+      ? [
+          db
+            .prepare(
+              "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, NULL, ?, 'ajuste', ?)",
+            )
+            .bind(
+              crypto.randomUUID(),
+              cargado,
+              -d.montoCentavos,
+              `devolucion:${id}:${devId}:por:${u.id}`,
+            ),
+        ]
+      : []),
+  ]);
+  await anotarEvento(
+    db,
+    id,
+    'devolucion_parcial',
+    `${d.montoCentavos} · ${d.cargarA} · ${d.motivo}`,
+  );
+  return c.json({ ok: true, devolucionId: devId, reembolso: reembolso.id });
+});
+
+/** Disputas (contracargos) abiertas o cerradas que avisó Stripe. */
+superadmin.get('/admin/disputas', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT d.id, d.pedido_id, d.monto, d.motivo, d.estado, d.vence_en, d.creado_en, u.nombre AS cliente
+         FROM disputas d LEFT JOIN pedidos p ON p.id = d.pedido_id LEFT JOIN usuarios u ON u.id = p.cliente_id
+        ORDER BY (d.estado IN ('needs_response','warning_needs_response')) DESC, d.creado_en DESC LIMIT 100`,
+    )
+    .all<Record<string, unknown>>();
+  return c.json({
+    disputas: results.map((r) => ({
+      id: String(r.id),
+      pedidoId: r.pedido_id ? String(r.pedido_id) : null,
+      cliente: r.cliente ? String(r.cliente) : null,
+      monto: Number(r.monto),
+      motivo: String(r.motivo ?? ''),
+      estado: String(r.estado ?? ''),
+      venceEn: r.vence_en ? String(r.vence_en) : null,
+      creadoEn: String(r.creado_en),
+    })),
+  });
+});

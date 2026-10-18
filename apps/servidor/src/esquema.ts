@@ -17,6 +17,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pines_entrega', 'intentos', 'INTEGER NOT NULL DEFAULT 0'],
   // Pantalla de dinero del superadmin (18 oct 2026): abonos fallidos resueltos a mano.
   ['abonos_fallidos', 'resuelto_en', 'TEXT'],
+  // Impuesto de ventas por pedido (18 oct 2026).
+  ['pedidos', 'impuesto', 'INTEGER NOT NULL DEFAULT 0'],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

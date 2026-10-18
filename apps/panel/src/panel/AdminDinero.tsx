@@ -39,6 +39,8 @@ const T = {
     cargo: 'Cargo por pedido pequeño',
     repartidor: 'Repartidor',
     pagoMin: 'Pago mínimo por entrega (sin contar propina)',
+    impuesto: 'Impuesto de ventas',
+    impuestoPct: 'Porcentaje sobre la comida (0 = apagado; lo fija el contador, Miami-Dade 7)',
     guardar: 'Guardar',
     guardado: 'Guardado',
     ejemplo: 'Ejemplo: pedido de $30, 2 km, propina $4, plan Inicial',
@@ -69,6 +71,8 @@ const T = {
     cargo: 'Small order fee',
     repartidor: 'Driver',
     pagoMin: 'Minimum pay per delivery (excluding tip)',
+    impuesto: 'Sales tax',
+    impuestoPct: 'Percentage on food (0 = off; set with the accountant, Miami-Dade 7)',
     guardar: 'Save',
     guardado: 'Saved',
     ejemplo: 'Example: $30 order, 2 km, $4 tip, Starter plan',
@@ -101,6 +105,7 @@ function aTextos(c: ConfigDinero): Texto {
     pedidoMin: centavosATexto(c.pedidoMinimo),
     cargo: centavosATexto(c.cargoPedidoPequeno),
     pagoMin: centavosATexto(c.pagoMinimoRepartidor),
+    impuestoPct: pct(c.impuestoPb ?? 0),
   };
 }
 
@@ -122,6 +127,7 @@ function aConfig(t: Texto): ConfigDinero | null {
     pedidoMinimo: d('pedidoMin'),
     cargoPedidoPequeno: d('cargo'),
     pagoMinimoRepartidor: d('pagoMin'),
+    impuestoPb: aPb(t.impuestoPct ?? '0'),
   };
   const numeros = [
     c.comisionPb.inicial,
@@ -129,6 +135,7 @@ function aConfig(t: Texto): ConfigDinero | null {
     c.comisionPb.elite,
     c.envioKmIncluidos,
     c.servicioPb,
+    c.impuestoPb,
   ];
   if (numeros.some((n) => !Number.isFinite(n) || n < 0)) return null;
   if (
@@ -246,6 +253,10 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
         <fieldset>
           <legend>{t.repartidor}</legend>
           {campo('pagoMin', t.pagoMin, '$')}
+        </fieldset>
+        <fieldset>
+          <legend>{t.impuesto}</legend>
+          {campo('impuestoPct', t.impuestoPct, '%')}
         </fieldset>
         {ejemplo && (
           <div className="ejemplo">

@@ -46,9 +46,9 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
   // Lo devuelto: pedidos cancelados ese día (devolución completa) y ajustes por plato agotado.
   const dev = await db
     .prepare(
-      `SELECT COALESCE(SUM(p.total),0) AS total FROM pedidos p
+      `SELECT COALESCE(SUM(p.total),0) + (SELECT COALESCE(SUM(dv.monto),0) FROM devoluciones dv WHERE date(dv.creado_en) = ?1) AS total FROM pedidos p
        WHERE p.estado = 'cancelado' AND p.pagado_en IS NOT NULL
-       AND date((SELECT MAX(h.creado_en) FROM historial_estados h WHERE h.pedido_id = p.id AND h.estado = 'cancelado')) = ?`,
+       AND date((SELECT MAX(h.creado_en) FROM historial_estados h WHERE h.pedido_id = p.id AND h.estado = 'cancelado')) = ?1`,
     )
     .bind(dia)
     .first<{ total: number }>();

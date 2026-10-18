@@ -464,6 +464,7 @@ export default function PantallaCarrito() {
         {fila(t.envio, d.envio)}
         {fila(t.servicio, d.servicio)}
         {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
+        {d.impuesto > 0 && fila(t.impuesto, d.impuesto)}
         {fila(t.propina, d.propina)}
         <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
           {fila(t.total, d.totalCliente, true)}

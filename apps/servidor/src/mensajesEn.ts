@@ -75,6 +75,13 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa ciudad ya tiene franquicia.', 'That city already has a franchise.'],
   ['Esa cuenta no existe.', 'That account doesn’t exist.'],
   [
+    'Solo se devuelve dinero de un pedido entregado y cobrado.',
+    'Refunds apply only to delivered and charged orders.',
+  ],
+  ['La devolución supera lo que pagó el cliente.', 'The refund exceeds what the customer paid.'],
+  ['Este pedido no tuvo repartidor.', 'This order had no driver.'],
+  ['Stripe no está configurado.', 'Stripe is not configured.'],
+  [
     'Esa dirección está fuera del área de entrega de este restaurante.',
     'That address is outside this restaurant’s delivery area.',
   ],

@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS pedidos (
   regalo_tipo TEXT,
   zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   total INTEGER NOT NULL,
+  -- Impuesto de ventas recaudado (dentro del total). 0 hasta que el contador fije la tasa.
+  impuesto INTEGER NOT NULL DEFAULT 0,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
   pago_repartidor INTEGER NOT NULL,
@@ -560,6 +562,34 @@ CREATE TABLE IF NOT EXISTS pines_entrega (
   usado_en TEXT,
   -- Equivocaciones acumuladas: a la quinta el PIN se bloquea (F19, C-INTENTOS).
   intentos INTEGER NOT NULL DEFAULT 0
+);
+
+-- Devoluciones DESPUÉS de entregar (queja atendida por soporte): reembolso parcial o total en
+-- Stripe con quién la asume. Auditoría final, punto A.12. Nunca se borra: cuadra la conciliación.
+CREATE TABLE IF NOT EXISTS devoluciones (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  monto INTEGER NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  cargar_a TEXT NOT NULL DEFAULT 'tumbite' CHECK (cargar_a IN ('tumbite', 'restaurante', 'repartidor')),
+  actor_id TEXT REFERENCES usuarios(id),
+  stripe_reembolso TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS devoluciones_pedido ON devoluciones(pedido_id);
+
+-- Disputas (contracargos) que Stripe avisa por webhook. La evidencia se manda desde el panel de
+-- Stripe; aquí se ve cuáles hay, cuánto y hasta cuándo responder.
+CREATE TABLE IF NOT EXISTS disputas (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT REFERENCES pedidos(id),
+  stripe_pago TEXT,
+  monto INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT '',
+  vence_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).

@@ -35,6 +35,8 @@ export async function reciboDePedido(
     subtotal: number;
     envio: number;
     servicio: number;
+    /** Impuesto de ventas recaudado (0 = no se muestra). */
+    impuesto?: number;
     propina: number;
     regalo: number;
     total: number;
@@ -49,8 +51,8 @@ export async function reciboDePedido(
       : `Tu pedido #${corto} en Tumbite quedó confirmado`;
   const texto =
     d === 'en'
-      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d)}\n\nSubtotal: ${formatearDolares(p.subtotal, d)}\nDelivery: ${formatearDolares(p.envio, d)}\nService: ${formatearDolares(p.servicio, d)}\nTip: ${formatearDolares(p.propina, d)}${p.regalo ? `\nGift: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
-      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d)}\n\nComida: ${formatearDolares(p.subtotal, d)}\nEnvío: ${formatearDolares(p.envio, d)}\nServicio: ${formatearDolares(p.servicio, d)}\nPropina: ${formatearDolares(p.propina, d)}${p.regalo ? `\nRegalo: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
+      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d)}\n\nSubtotal: ${formatearDolares(p.subtotal, d)}\nDelivery: ${formatearDolares(p.envio, d)}\nService: ${formatearDolares(p.servicio, d)}${p.impuesto ? `\nTax: ${formatearDolares(p.impuesto, d)}` : ''}\nTip: ${formatearDolares(p.propina, d)}${p.regalo ? `\nGift: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
+      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d)}\n\nComida: ${formatearDolares(p.subtotal, d)}\nEnvío: ${formatearDolares(p.envio, d)}\nServicio: ${formatearDolares(p.servicio, d)}${p.impuesto ? `\nImpuesto: ${formatearDolares(p.impuesto, d)}` : ''}\nPropina: ${formatearDolares(p.propina, d)}${p.regalo ? `\nRegalo: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
   return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto });
 }
 

@@ -17,6 +17,8 @@ export type ConfigDinero = {
   pedidoMinimo: Centavos;
   cargoPedidoPequeno: Centavos;
   pagoMinimoRepartidor: Centavos;
+  /** Impuesto de ventas sobre la comida, en puntos base (700 = 7 %). 0 = apagado hasta que el contador lo fije. */
+  impuestoPb?: number;
 };
 
 /**
@@ -36,6 +38,7 @@ export const CONFIG_DINERO_INICIAL: ConfigDinero = {
   pedidoMinimo: 1000,
   cargoPedidoPequeno: 200,
   pagoMinimoRepartidor: 500,
+  impuestoPb: 0,
 };
 
 /** Los valores de fábrica anteriores (hasta el 13 oct 2026), para la actualización segura. */
@@ -53,6 +56,8 @@ export type Desglose = {
   servicio: Centavos;
   cargoPedidoPequeno: Centavos;
   propina: Centavos;
+  /** Impuesto de ventas recaudado para el estado (Tumbite lo retiene y remite; no es ganancia). */
+  impuesto: Centavos;
   totalCliente: Centavos;
   comisionRestaurante: Centavos;
   pagoRestaurante: Centavos;
@@ -113,7 +118,10 @@ export function calcularPedido(p: {
     c.servicioMaximo,
   );
   const cargoPedidoPequeno = subtotal < c.pedidoMinimo ? c.cargoPedidoPequeno : 0;
-  const totalCliente = aCobrar + envio + servicio + cargoPedidoPequeno + p.propina;
+  // Impuesto de ventas (Florida: estatal + condado) solo sobre la comida cobrada. Qué más se grava
+  // (envío, servicio) lo decide el contador: hasta entonces, nada más. Se suma al total y se retiene.
+  const impuesto = porcentajeDe(aCobrar, c.impuestoPb ?? 0);
+  const totalCliente = aCobrar + envio + servicio + cargoPedidoPequeno + p.propina + impuesto;
 
   const comisionRestaurante = porcentajeDe(
     aCobrar,
@@ -131,6 +139,7 @@ export function calcularPedido(p: {
     servicio,
     cargoPedidoPequeno,
     propina: p.propina,
+    impuesto,
     totalCliente,
     comisionRestaurante,
     pagoRestaurante,

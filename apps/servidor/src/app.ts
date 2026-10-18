@@ -32,6 +32,7 @@ import { interno, saludTiempoReal } from './rutas/interno';
 import { saludReloj } from './reloj';
 import { alertarCanario } from './canario';
 import { versionMinimaApp } from './versionApp';
+import { saludDisputas } from './disputas';
 import { viajes } from './rutas/viajes';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
@@ -216,6 +217,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.transiciones = await saludTransiciones(c.env.DB).catch((e: unknown) => {
       console.error('salud: transiciones', e);
+      return 'error' as const;
+    });
+  // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
+  if (c.env.DB)
+    piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
+      console.error('salud: disputas', e);
       return 'error' as const;
     });
   // C-COBRO-AL-ENTREGAR: ningún cobro de una entrega en revisión ni atrasado más de 2 horas.

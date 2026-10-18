@@ -1,3 +1,4 @@
+import { registrarDisputa } from '../disputas';
 import { avisoDeTransferencia } from '../retiros';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -251,6 +252,7 @@ export function aPedido(f: FilaPedido) {
     subtotal: Number(f.subtotal),
     envio: Number(f.envio),
     servicio: Number(f.servicio),
+    impuesto: Number(f.impuesto ?? 0),
     cargoPedidoPequeno: Number(f.cargo_pequeno),
     propina: Number(f.propina),
     regalo: Number(f.regalo),
@@ -440,8 +442,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -470,6 +472,7 @@ pedidos.post('/pedidos', async (c) => {
       d.regalo,
       String(rest.zona_id ?? ZONA_INICIAL),
       (rest.area_id as string | null) ?? null,
+      desglose.impuesto,
     )
     .run();
   await db
@@ -801,6 +804,22 @@ pedidos.post('/stripe/aviso', async (c) => {
           texto: `Stripe no pudo depositar ${monto} a ${duenio?.nombre ?? 'una cuenta sin dueño en la base'} (${cuentaStripe}). Motivo: ${motivo || 'sin detalle'}. Queda en abonos_fallidos.`,
         }).catch((e: unknown) => console.error('abono fallido: correo equipo', e));
     }
+    // Disputas (contracargos): se anotan con su plazo y se avisa al equipo; la evidencia se manda
+    // desde el panel de Stripe (auditoría final, A.12). Nunca se tocan saldos desde aquí.
+    if (evento.type.startsWith('charge.dispute.')) {
+      const r = await registrarDisputa(db, evento.type, obj);
+      if (r?.nueva)
+        for (const para of (c.env.ADMIN_CORREOS ?? '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean))
+          await enviarCorreo(c.env, {
+            de: 'avisos',
+            para,
+            asunto: `Disputa abierta: ${formatearDolares(r.monto, 'es')} (${r.motivo || 'sin motivo'})`,
+            texto: `Un cliente disputó un cobro de ${formatearDolares(r.monto, 'es')}${r.pedidoId ? ` del pedido ${r.pedidoId}` : ''}. Motivo: ${r.motivo || 'sin detalle'}. Responder en Stripe antes de ${r.venceEn ?? 'la fecha que indique Stripe'} con la foto de entrega y la bitácora del pedido.`,
+          }).catch((e: unknown) => console.error('disputa: correo equipo', e));
+    }
   } catch (e) {
     await db
       .prepare("DELETE FROM avisos_stripe WHERE id = ? AND estado = 'procesando'")
@@ -842,6 +861,7 @@ async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string)
     subtotal: Number(f.subtotal),
     envio: Number(f.envio),
     servicio: Number(f.servicio),
+    impuesto: Number(f.impuesto ?? 0),
     propina: Number(f.propina),
     regalo: Number(f.regalo),
     total: Number(f.total),

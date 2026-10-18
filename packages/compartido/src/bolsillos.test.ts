@@ -133,3 +133,27 @@ describe('los cuatro bolsillos', () => {
     ).toThrow();
   });
 });
+
+describe('impuesto de ventas (auditoría final, A.12)', () => {
+  it('apagado por defecto: nada cambia; con 7 % se cobra sobre la comida, va al total y no es ganancia', () => {
+    const base = calcularPedido({
+      lineas: [{ precioCentavos: 1500, cantidad: 2 }],
+      plan: 'inicial',
+      propina: 400,
+      distanciaKm: 2,
+    });
+    expect(base.impuesto).toBe(0);
+    const con = calcularPedido({
+      lineas: [{ precioCentavos: 1500, cantidad: 2 }],
+      plan: 'inicial',
+      propina: 400,
+      distanciaKm: 2,
+      config: { ...CONFIG_DINERO_INICIAL, impuestoPb: 700 },
+    });
+    expect(con.impuesto).toBe(210);
+    expect(con.totalCliente).toBe(base.totalCliente + 210);
+    expect(con.gananciaPlataforma).toBe(base.gananciaPlataforma);
+    expect(con.pagoRestaurante).toBe(base.pagoRestaurante);
+    expect(con.pagoRepartidor).toBe(base.pagoRepartidor);
+  });
+});

@@ -33,6 +33,11 @@ const T = {
     fecha: 'Fecha',
     resuelto: 'Resuelto',
     marcarResuelto: 'Marcar resuelto',
+    disputas: 'Disputas (contracargos)',
+    sinDisputas: 'Ninguna disputa.',
+    disputasAyuda:
+      'La evidencia (foto de entrega, bitácora, chat) se responde en el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
+    vence: 'Responder antes de',
     conciliacion: 'Conciliación diaria (últimos 14 días)',
     recalcularHoy: 'Recalcular hoy',
     dia: 'Día',
@@ -77,6 +82,11 @@ const T = {
     fecha: 'Date',
     resuelto: 'Resolved',
     marcarResuelto: 'Mark resolved',
+    disputas: 'Disputes (chargebacks)',
+    sinDisputas: 'No disputes.',
+    disputasAyuda:
+      'Evidence (delivery photo, log, chat) is submitted in the Stripe dashboard → Payments → Disputes, before the due date.',
+    vence: 'Respond by',
     conciliacion: 'Daily reconciliation (last 14 days)',
     recalcularHoy: 'Recalculate today',
     dia: 'Day',
@@ -117,6 +127,16 @@ type Abono = {
   creadoEn: string;
   resueltoEn: string | null;
 };
+type Disputa = {
+  id: string;
+  pedidoId: string | null;
+  cliente: string | null;
+  monto: number;
+  motivo: string;
+  estado: string;
+  venceEn: string | null;
+  creadoEn: string;
+};
 type Conciliacion = {
   dia: string;
   pedidos: number;
@@ -142,12 +162,13 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   );
   const [abonos, setAbonos] = useState<Abono[] | null>(null);
   const [conc, setConc] = useState<Conciliacion[] | null>(null);
+  const [disputas, setDisputas] = useState<Disputa[] | null>(null);
   const [base, setBase] = useState('');
   const [resultado, setResultado] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
-    const [r, l, a, c] = await Promise.all([
+    const [r, l, a, c, d] = await Promise.all([
       pedir<Retiros>('GET', '/datos/admin/retiros').catch(() => null),
       pedir<{ revision: Liquidacion[]; atrasadas: Liquidacion[] }>(
         'GET',
@@ -157,7 +178,9 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
       pedir<{ conciliaciones: Conciliacion[] }>('GET', '/datos/admin/conciliacion').catch(
         () => null,
       ),
+      pedir<{ disputas: Disputa[] }>('GET', '/datos/admin/disputas').catch(() => null),
     ]);
+    setDisputas(d?.disputas ?? []);
     setRetiros(r);
     setLiq(l);
     setAbonos(a?.abonos ?? []);
@@ -347,6 +370,38 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                       </button>
                     )}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      <h2>{t.disputas}</h2>
+      <p className="suave">{t.disputasAyuda}</p>
+      {disputas && !disputas.length ? <p className="suave">{t.sinDisputas}</p> : null}
+      {disputas?.length ? (
+        <div className="tabla-ancha">
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>{t.pedido}</th>
+                <th>{t.quien}</th>
+                <th>{t.monto}</th>
+                <th>{t.motivo}</th>
+                <th>{t.resultado}</th>
+                <th>{t.vence}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {disputas.map((d) => (
+                <tr key={d.id} className={d.estado.includes('needs_response') ? 'fila-alerta' : ''}>
+                  <td>{d.pedidoId ? enlacePedido(d.pedidoId) : '—'}</td>
+                  <td>{d.cliente ?? '—'}</td>
+                  <td>{formatearDolares(d.monto, idioma)}</td>
+                  <td>{d.motivo || '—'}</td>
+                  <td>{d.estado}</td>
+                  <td>{fecha(d.venceEn)}</td>
                 </tr>
               ))}
             </tbody>

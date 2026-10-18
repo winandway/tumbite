@@ -118,6 +118,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "regalo_tipo",
     "zona_id",
     "total",
+    "impuesto",
     "comision",
     "pago_restaurante",
     "pago_repartidor",
@@ -422,6 +423,27 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pin",
     "usado_en",
     "intentos"
+  ],
+  "devoluciones": [
+    "id",
+    "pedido_id",
+    "monto",
+    "motivo",
+    "cargar_a",
+    "actor_id",
+    "stripe_reembolso",
+    "creado_en"
+  ],
+  "disputas": [
+    "id",
+    "pedido_id",
+    "stripe_pago",
+    "monto",
+    "motivo",
+    "estado",
+    "vence_en",
+    "creado_en",
+    "actualizado_en"
   ],
   "alertas_canario": [
     "pieza",
