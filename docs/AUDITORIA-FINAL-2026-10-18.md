@@ -203,3 +203,5 @@ Continúa después del MVP, en orden sugerido. Cada punto es una función que la
 - Docs: guía de Apple Pay y Google Pay marcada como «muy pronto»; guía de navegación sin Waze.
 - Superadmin: la ficha del pedido abre desde las listas (candado C-SUPER-PEDIDO-RUTA).
 - Documentos: este informe, VERIFICAR-PAGOS al día, CANDADOS y PENDIENTES actualizados.
+
+Publicado en producción el 18 oct 2026 (21a4d80e), staging en verde con recorrido completo, verificador «antes» y «después» en verde, etiqueta de restauración `restauracion-2026-10-18-auditoria` (24a7763f).
