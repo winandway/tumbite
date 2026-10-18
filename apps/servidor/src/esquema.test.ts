@@ -34,6 +34,37 @@ describe('migraciones seguras', () => {
     expect(idx).not.toBeNull();
   });
 
+  it('el arranque no hace una consulta por columna: la revisión de columnas va en un solo lote (C-ARRANQUE-RAPIDO)', async () => {
+    // Staging, 18 oct 2026: con 40 columnas en la lista, cada arranque hacía 40 viajes seguidos a la
+    // base antes de contestar. La app del cliente esperaba la sesión 8 s, se rendía y mostraba
+    // «No pudimos confirmar tu sesión» (el recorrido falló tres veces en el mismo paso).
+    const DB = crearBasePruebas();
+    await asegurarEsquema(DB);
+    let sueltas = 0;
+    const contada = new Proxy(DB, {
+      get(obj, prop, recv) {
+        if (prop === 'prepare')
+          return (sql: string) => {
+            const st = obj.prepare(sql);
+            if (!/pragma_table_info/i.test(sql)) return st;
+            return new Proxy(st, {
+              get(o, k, r) {
+                if (k === 'all' || k === 'first' || k === 'run') sueltas++;
+                const v = Reflect.get(o, k, r) as unknown;
+                return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(o) : v;
+              },
+            });
+          };
+        const v = Reflect.get(obj, prop, recv) as unknown;
+        return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(obj) : v;
+      },
+    });
+    reiniciarEsquema();
+    await asegurarEsquema(contada);
+    // Las consultas a pragma_table_info van dentro de db.batch (un viaje), nunca una por una.
+    expect(sueltas).toBe(0);
+  });
+
   it('correr la migración dos veces no rompe nada y la salud lo dice', async () => {
     const DB = crearBasePruebas();
     await asegurarEsquema(DB);

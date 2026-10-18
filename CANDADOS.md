@@ -772,3 +772,12 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 ## C-WEB-HONESTA: la web solo promete lo que existe (punto 33 y F17, 18 oct 2026)
 
 - Planes Crece y Élite: «promociones destacadas» y «ayuda con fotos y marketing» dicen **muy pronto** (el plan hoy no cambia el orden del catálogo); «soporte local» pasó a «soporte en tu idioma»; «música en vivo» se presenta como lo que viene; un solo buzón público `support@tumbite.com` (antes hello@ y sales@); Miami en `cobertura.ts` queda «muy pronto» hasta el lanzamiento público (decisión de Richard el día que lance).
+
+## C-ARRANQUE-RAPIDO: la revisión de columnas al arrancar va en un solo lote (18 oct 2026)
+
+- **Qué se rompió y cómo se veía:** en staging, con el bloque C, el recorrido falló tres veces en el mismo paso: al recargar la app del cliente salía «No pudimos confirmar tu sesión» y la búsqueda nunca cargaba. Con `curl`, `/datos/cuentas/yo` (sin token, sin consultas propias) tardaba 2 s o se colgaba más de 15 s en algunas peticiones.
+- **Causa real:** cada arranque del servidor corre `asegurarEsquema` antes de contestar. Recorría `COLUMNAS` con **una consulta a `pragma_table_info` por columna**: 40 viajes seguidos a la base. La lista creció con la Fase 2 y el primer arranque de cada copia del servidor tardaba más que los 8 s que la app espera para confirmar la sesión (C-SESION-CON-LIMITE).
+- **Qué se hizo:** `migrar` (`apps/servidor/src/esquema.ts`) lee las columnas de todas las tablas de la lista en **un solo `db.batch`** (bloques de 5 `UNION ALL`, como `revisarColumnas`) y solo hace `ALTER TABLE` de lo que falte.
+- **Prueba (comprobada en rojo):** `esquema.test.ts` «el arranque no hace una consulta por columna» cuenta las consultas sueltas a `pragma_table_info`: antes 40, ahora 0.
+- **Cómo se comprueba en vivo:** `curl` repetido a `/datos/cuentas/yo` de staging contesta en menos de 1 s y el recorrido pasa el paso del buscador.
+- **Qué NO tocar:** nada de consultas por columna o por tabla en el arranque; todo lo que corre en `asegurarEsquema` va en lotes.

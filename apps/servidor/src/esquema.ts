@@ -253,12 +253,30 @@ export let ultimoErrorEsquema: string | null = null;
 
 async function migrar(db: D1Database): Promise<void> {
   await rehacerFranquicias(db);
+  // C-ARRANQUE-RAPIDO: las columnas de TODAS las tablas de la lista en un solo lote (un viaje a la
+  // base). Antes era una consulta por columna: 40 viajes seguidos en cada arranque, y la primera
+  // respuesta tardaba tanto que la app del cliente no alcanzaba a confirmar la sesión (18 oct 2026).
+  const tablasLista = [...new Set(COLUMNAS.map(([t]) => t))];
+  const bloques: string[][] = [];
+  for (let i = 0; i < tablasLista.length; i += 5) bloques.push(tablasLista.slice(i, i + 5));
+  const respuestas = await db.batch(
+    bloques.map((b) =>
+      db.prepare(
+        b
+          .map((t) => `SELECT '${t}' AS t, name AS c FROM pragma_table_info('${t}')`)
+          .join(' UNION ALL '),
+      ),
+    ),
+  );
+  const reales = new Set(
+    respuestas
+      .flatMap((r) => (r.results ?? []) as { t: string; c: string }[])
+      .map((r) => `${r.t}.${r.c}`),
+  );
+  const existen = new Set([...reales].map((x) => x.split('.')[0]));
   for (const [tabla, columna, definicion] of COLUMNAS) {
-    const { results } = await db
-      .prepare(`SELECT name FROM pragma_table_info('${tabla}')`)
-      .all<{ name: string }>();
-    if (!results.length) continue; // la tabla aún no existe (la crea schema.sql)
-    if (!results.some((r) => r.name === columna)) {
+    if (!existen.has(tabla)) continue; // la tabla aún no existe (la crea schema.sql)
+    if (!reales.has(`${tabla}.${columna}`)) {
       await db.prepare(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${definicion}`).run();
       console.warn(`esquema: columna agregada ${tabla}.${columna}`);
     }
