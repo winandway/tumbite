@@ -14,30 +14,54 @@ export function Cabecera({
   cambiarIdioma,
   alCampana,
   alCupon,
+  pendientes = 0,
 }: {
   nombre: string;
   idioma: Idioma;
   cambiarIdioma: (i: Idioma) => void;
   alCampana: () => void;
   alCupon: () => void;
+  /** Avisos que pasan ahora (pedidos en curso): punto rojo sobre la campana. */
+  pendientes?: number;
 }) {
   const t = textosInicio(idioma);
   // Los íconos vienen ya con su círculo blanco y su sombra, recortados de la pantalla aprobada.
-  const redondo = (imagen: number, etiqueta: string, alTocar: () => void) => (
+  const redondo = (imagen: number, etiqueta: string, alTocar: () => void, punto = 0) => (
     <Pressable
       onPress={alTocar}
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       hitSlop={6}
       // Máscara redonda: el recorte es cuadrado y trae un pedacito del fondo en las esquinas.
-      style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden' }}
+      style={{ width: 46, height: 46 }}
     >
       <Image
         source={imagen}
-        style={{ width: 46, height: 46 }}
+        style={{ width: 46, height: 46, borderRadius: 23 }}
         resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
+      {punto > 0 ? (
+        <View
+          testID="campana-punto"
+          style={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            minWidth: 16,
+            height: 16,
+            borderRadius: 8,
+            paddingHorizontal: 4,
+            backgroundColor: C.primario,
+            borderWidth: 2,
+            borderColor: '#F3F6FB',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{punto}</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
   return (
@@ -57,7 +81,12 @@ export function Cabecera({
           accessibilityLabel="Tumbite"
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {redondo(IMG.iconoCampana, t.campana, alCampana)}
+          {redondo(
+            IMG.iconoCampana,
+            pendientes ? `${t.campana} (${pendientes})` : t.campana,
+            alCampana,
+            pendientes,
+          )}
           {redondo(IMG.iconoCupon, t.cupon, alCupon)}
           <View style={{ backgroundColor: C.primario, borderRadius: 999, paddingHorizontal: 2 }}>
             <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />

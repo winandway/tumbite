@@ -2,7 +2,12 @@ import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { type Restaurante, proximaApertura, textoApertura } from '@tumbite/compartido';
+import {
+  type Restaurante,
+  filtrarRestaurantes,
+  proximaApertura,
+  textoApertura,
+} from '@tumbite/compartido';
 import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -14,15 +19,17 @@ import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 
 /**
- * Restaurantes de Comida (diseño aprobado, pantalla 2): buscador, botones de categoría sacados
- * de los restaurantes reales y tarjetas con foto, tipo de comida, distancia, tiempo y si está
- * abierto. El corazón abre «Muy pronto» porque los favoritos todavía no existen.
+ * Restaurantes de Comida (diseño aprobado, pantalla 2, mejorada el 18 oct 2026 «como los grandes»):
+ * título grande con cuántos están abiertos, buscador, categorías reales, filtros rápidos (solo
+ * abiertos, más cerca, más rápido) y tarjetas con foto, tipo de comida, distancia, tiempo y estado. El corazón abre «Muy pronto» porque los favoritos todavía no existen.
  */
 export default function Restaurantes() {
   const { api, idioma } = useSesion();
   const t = textosComida(idioma);
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
+  const [soloAbiertos, setSoloAbiertos] = useState(false);
+  const [orden, setOrden] = useState<'cerca' | 'rapido' | null>(null);
   const [pronto, setPronto] = useState(false);
 
   // C-CATALOGO-ESTABLE: la misma lista que el inicio (comida/useRestaurantes): no se vuelve a
@@ -35,14 +42,15 @@ export default function Restaurantes() {
     () => [...new Set((lista ?? []).map((r) => r.categoria).filter(Boolean))],
     [lista],
   );
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    return (lista ?? []).filter(
-      (r) =>
-        (!q || `${r.nombre} ${r.categoria}`.toLowerCase().includes(q)) &&
-        (!categoria || r.categoria === categoria),
-    );
-  }, [lista, busqueda, categoria]);
+  // Filtros rápidos como los de los grandes (lógica compartida y probada: filtrarRestaurantes).
+  const filtrados = useMemo(
+    () => filtrarRestaurantes(lista ?? [], { busqueda, categoria, soloAbiertos, orden }),
+    [lista, busqueda, categoria, soloAbiertos, orden],
+  );
+  const abiertos = useMemo(
+    () => (lista ?? []).filter((r) => r.abiertoAhora ?? r.abierto).length,
+    [lista],
+  );
 
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
   const pestana = (p: Pestana) => {
@@ -88,6 +96,18 @@ export default function Restaurantes() {
           />
         </View>
       </View>
+      <View style={{ marginTop: 14 }}>
+        <Text
+          accessibilityRole="header"
+          style={{ fontSize: 28, fontWeight: '900', color: C.secundario }}
+        >
+          {t.restaurantes}
+        </Text>
+        <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>
+          {t.cercaDeTi}
+          {lista ? ` · ${t.abiertosAhora.replace('{n}', String(abiertos))}` : ''}
+        </Text>
+      </View>
       <FlatList
         horizontal
         data={[null, ...categorias]}
@@ -102,6 +122,26 @@ export default function Restaurantes() {
           />
         )}
       />
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+        <Pildora
+          texto={t.soloAbiertos}
+          activa={soloAbiertos}
+          alTocar={() => setSoloAbiertos((v) => !v)}
+          rol="radio"
+        />
+        <Pildora
+          texto={t.masCerca}
+          activa={orden === 'cerca'}
+          alTocar={() => setOrden((o) => (o === 'cerca' ? null : 'cerca'))}
+          rol="radio"
+        />
+        <Pildora
+          texto={t.masRapido}
+          activa={orden === 'rapido'}
+          alTocar={() => setOrden((o) => (o === 'rapido' ? null : 'rapido'))}
+          rol="radio"
+        />
+      </View>
       <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
     </View>
   );
@@ -121,7 +161,7 @@ export default function Restaurantes() {
         }}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          lista && lista.length && (busqueda || categoria) ? (
+          lista && lista.length && (busqueda || categoria || soloAbiertos) ? (
             <Text style={{ color: '#5E5E5E', marginTop: 12 }}>{t.sinResultados}</Text>
           ) : null
         }

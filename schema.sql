@@ -917,7 +917,9 @@ INSERT OR IGNORE INTO servicios (id, tipo_operacion, nombre_es, nombre_en, descr
   ('carro',    'viaje_pasajero',  'Carro',    'Car',      'Viajes en carro a donde necesites.',           'Car rides wherever you need to go.',        'servicio-carro',    30, 'proximamente', 1),
   ('mercado',  'compra_encargo',  'Mercado',  'Grocery',  'El mercado de la semana, sin salir de casa.',  'Your weekly groceries, without leaving home.', 'servicio-mercado', 40, 'proximamente', 0),
   ('envios',   'envio_paquete',   'Envíos',   'Delivery', 'Envía paquetes por la ciudad.',                'Send packages across town.',                'servicio-envios',   50, 'proximamente', 0),
-  ('farmacia', 'compra_encargo',  'Farmacia', 'Pharmacy', 'Productos de farmacia de venta libre.',        'Over-the-counter pharmacy products.',       'servicio-farmacia', 60, 'proximamente', 0);
+  ('farmacia', 'compra_encargo',  'Farmacia', 'Pharmacy', 'Productos de farmacia de venta libre.',        'Over-the-counter pharmacy products.',       'servicio-farmacia', 60, 'proximamente', 0),
+  ('licores',  'compra_encargo',  'Licores',  'Liquor',   'Bebidas para mayores de 21 años, con verificación de edad.', 'Drinks for ages 21+, with age verification.', 'servicio-licores', 70, 'proximamente', 0),
+  ('mas',      'enlace',          'Más',      'More',     'Todo lo que viene en Tumbite.',                'Everything coming to Tumbite.',             'servicio-mas',      80, 'proximamente', 0);
 
 INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
   SELECT s.id, z.id, 'proximamente' FROM servicios s CROSS JOIN zonas z;
@@ -928,7 +930,8 @@ INSERT OR IGNORE INTO servicio_vehiculos (servicio_id, vehiculo_tipo) VALUES
   ('carro', 'carro'),
   ('mercado', 'carro'), ('mercado', 'moto'), ('mercado', 'scooter'), ('mercado', 'bicicleta'),
   ('envios', 'carro'), ('envios', 'moto'), ('envios', 'scooter'), ('envios', 'bicicleta'),
-  ('farmacia', 'carro'), ('farmacia', 'moto'), ('farmacia', 'scooter'), ('farmacia', 'bicicleta');
+  ('farmacia', 'carro'), ('farmacia', 'moto'), ('farmacia', 'scooter'), ('farmacia', 'bicicleta'),
+  ('licores', 'carro'), ('licores', 'moto'), ('licores', 'scooter'), ('licores', 'bicicleta');
 
 -- Comida: la identidad es informativa (obligatoria = 0) para no cambiar quién reparte hoy.
 INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES

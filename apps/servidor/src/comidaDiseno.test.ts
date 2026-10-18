@@ -14,8 +14,9 @@ describe('pantallas de Comida con el diseño aprobado', () => {
     expect(
       existsSync(join(__dirname, '..', '..', 'cliente', 'src', 'app', 'restaurants.tsx')),
     ).toBe(true);
+    // Desde el 18 oct (inicio «como los grandes»): Comida disponible abre los restaurantes.
     expect(leer(...CLIENTE, 'Inicio.tsx')).toMatch(
-      /s === 'comida'\) return router\.push\('\/restaurants'\)/,
+      /s\.id === 'comida' && \(s\.accion === 'abrir' \|\| !servicios\)\)\s*return router\.push\('\/restaurants'\)/,
     );
     expect(leer(...CLIENTE, 'inicio', 'Restaurantes.tsx')).toMatch(
       /router\.push\('\/restaurants'\)/,

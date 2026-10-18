@@ -144,3 +144,24 @@ Se construye sobre lo que hay; nada se rehace desde cero.
 | Las losetas salen en el orden pedido y cada una abre su pantalla (ninguna abre «Muy pronto»)                                                 | `Servicios.test.tsx` (panel/jsdom no aplica a RN: prueba del orden en `configMovil`-estilo sobre el código, y recorrido e2e) |
 | Recorrido completo sigue en verde en staging (es/en)                                                                                         | `pruebas-rama`                                                                                                               |
 | Guía pública en Docs: «Buscar en Tumbite», «Tus avisos», «Los servicios de Tumbite», es/en                                                   | guias.ts                                                                                                                     |
+
+## 7. Principio rector: «No inventemos la rueda» (dictado por Richard, 18 oct 2026)
+
+Eslogan y regla del proyecto desde hoy: **se copia el estándar del mercado**. Lo que DoorDash, Uber Eats y Rappi hicieron igual entre ellos es el estándar, y a ellos les funcionó: la interfaz, parte del estilo, los menús, el orden de las cosas. Tumbite lo adapta con su marca y sus colores, no lo reinventa.
+
+Lo que Richard describió como el estándar del inicio, y que esta ficha implementa:
+
+- Arriba: el logotipo, «Hola, fulano», la campana de avisos y el ticket o cupón.
+- Debajo: el buscador (real, de restaurantes y platos de la ciudad).
+- Los servicios, en el orden en que van a llegar: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores, Más. Cada uno con su pantalla; lo que viene lleva una franja discreta de «en construcción», nunca una ventana.
+- Abajo: todas las opciones y órdenes que publicó el vendedor (los restaurantes y lo que ofrecen), con las ofertas reales cuando las haya.
+
+Cómo se aplica de aquí en adelante: cada ficha REA empieza preguntando «¿cuál es el estándar?» y la decisión lo copia salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública; no se descompilan sus apps de tienda (sus términos lo prohíben y expondría a Windoce) y no hace falta: lo visible alcanza para copiar el estándar.
+
+## 8. Implementación (18 oct 2026)
+
+- Servidor: `GET /datos/buscar` (rutas/buscar.ts), `GET /datos/mis-avisos` (rutas/avisos.ts); `licores` y `mas` en `schema.sql`; `/datos/servicios` y `/datos/buscar` caen en la ciudad inicial cuando no hay ubicación (como `/datos/restaurantes`).
+- Compartido: `ORDEN_SERVICIOS` + `ordenarServicios` (servicios.ts), `filtrarRestaurantes` (filtrosComida.ts).
+- App del cliente: `inicio/Servicios.tsx` con el catálogo real y etiquetas; `app/service/[id].tsx` con `FranjaEstado`; `app/search.tsx`; `app/notifications.tsx`; `inicio/RegalosEnMarcha.tsx`; Comida con título, «n abiertos ahora» y filtros rápidos.
+- Pruebas: `servicios.test.ts` (compartido y servidor), `filtrosComida.test.ts`, `buscar.test.ts`, `avisos.test.ts`, y el recorrido (servicio con franja, buscador, campana con pedido en curso).
+- Docs: guías «Buscar en Tumbite», «La campana y el cupón» y «Los servicios de Tumbite», más la del inicio actualizada, en los dos idiomas.

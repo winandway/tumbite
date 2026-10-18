@@ -3,6 +3,11 @@ import type { Idioma } from '@tumbite/compartido';
 /** Textos de las pantallas de Comida (diseño aprobado el 14 oct 2026). */
 const es = {
   restaurantes: 'Restaurantes',
+  cercaDeTi: 'Cerca de tu ubicación',
+  abiertosAhora: '{n} abiertos ahora',
+  soloAbiertos: 'Solo abiertos',
+  masCerca: 'Más cerca',
+  masRapido: 'Más rápido',
   buscar: 'Buscar restaurantes…',
   todos: 'Todos',
   abierto: 'Abierto',
@@ -50,6 +55,11 @@ const es = {
 type T = typeof es;
 const en: T = {
   restaurantes: 'Restaurants',
+  cercaDeTi: 'Near your location',
+  abiertosAhora: '{n} open now',
+  soloAbiertos: 'Open now',
+  masCerca: 'Nearest',
+  masRapido: 'Fastest',
   buscar: 'Search restaurants…',
   todos: 'All',
   abierto: 'Open',

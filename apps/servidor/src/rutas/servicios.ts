@@ -6,7 +6,7 @@ import { nuevoId } from '../cripto';
 import { SERVICIOS_IMPLEMENTADOS } from '../esquema';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { zonaPara } from './zonas';
+import { ZONA_INICIAL, zonaPara } from './zonas';
 
 /**
  * Multiservicio, Fase 1 (15 oct 2026). Catálogo de servicios, vehículos, habilitaciones y
@@ -151,6 +151,15 @@ servicios.get('/servicios', async (c) => {
         'SELECT z.id, z.nombre FROM usuarios u JOIN zonas z ON z.id = u.zona_id WHERE u.id = ?',
       )
       .bind(u.id)
+      .first<{ id: string; nombre: string }>();
+    if (f) zona = f;
+  }
+  // Sin ubicación (la web sin permiso de GPS), la ciudad inicial: lo mismo que /datos/restaurantes,
+  // así el inicio no marca «Pronto» a Comida mientras la lista de restaurantes sí carga.
+  if (!zona && lat == null && lng == null) {
+    const f = await db
+      .prepare('SELECT id, nombre FROM zonas WHERE id = ?')
+      .bind(ZONA_INICIAL)
       .first<{ id: string; nombre: string }>();
     if (f) zona = f;
   }

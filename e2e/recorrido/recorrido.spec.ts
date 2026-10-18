@@ -105,7 +105,7 @@ const CASA = { latitude: 25.7725, longitude: -80.187 };
 
 for (const idioma of ['en', 'es'] as const) {
   test(`recorrido completo de un pedido (${idioma})`, async ({ browser, request }) => {
-    test.setTimeout(STAGING ? 900_000 : 240_000);
+    test.setTimeout(STAGING ? 900_000 : 360_000);
     const L = TEXTOS[idioma];
     const id = `${idioma}${Date.now().toString(36)}`;
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
@@ -584,6 +584,28 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
     await foto(cli, 'cliente-inicio');
+    // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
+    // «en construcción» (nunca una ventana encima), el buscador es real y la campana también.
+    await cli.getByTestId('servicio-moto').click();
+    await expect(cli.getByTestId('franja-estado')).toBeVisible({ timeout: 20_000 });
+    await expect(
+      cli.getByText(/Estamos construyendo este servicio|We’re building this service/),
+    ).toBeVisible();
+    await foto(cli, 'cliente-servicio');
+    await cli.goto('/app/search');
+    await cli.getByLabel(/^(Buscar|Search)$/).fill(idioma === 'en' ? 'margh' : 'margar');
+    // Al menos un plato (la base del recorrido conserva los de la pasada anterior).
+    const platos = cli.getByRole('tab', { name: /(Platos|Dishes) \([1-9]\d*\)/ });
+    await expect(platos).toBeVisible({ timeout: 20_000 });
+    await platos.click();
+    await expect(
+      cli.getByText(idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita').first(),
+    ).toBeVisible();
+    await foto(cli, 'cliente-buscar');
+    await cli.goto('/app/notifications');
+    await expect(cli.getByTestId('avisos-vacio')).toBeVisible({ timeout: 20_000 });
+    await cli.goto('/app/');
+    await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
     // «Comida» abre la lista de restaurantes (diseño aprobado del 14 oct) y de ahí, el menú.
     await cli.getByRole('button', { name: /^(Comida|Food)$/ }).click();
     await expect(cli.getByLabel(/Buscar restaurantes|Search restaurants/)).toBeVisible();
@@ -635,7 +657,7 @@ for (const idioma of ['en', 'es'] as const) {
       if (!cli.url().includes('/restaurant/')) {
         await cli.goto('/app/');
         try {
-          await cli.getByText(restaurante).click({ timeout: 15_000 });
+          await cli.getByText(restaurante, { exact: true }).click({ timeout: 15_000 });
         } catch (e) {
           console.error(
             'DEPURAR inicio:',
@@ -709,6 +731,13 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(/Payment received|Recibimos tu pago|Pago recibido/)).toBeVisible();
     await expect(cli.getByText(/Order placed!|¡Pedido realizado!/)).toBeVisible();
     await foto(cli, 'cliente-pagado');
+    // La campana: el pedido pagado es un aviso real, con su punto en el inicio.
+    await cli.goto('/app/notifications');
+    await expect(cli.getByText(/Tu pedido en|Your order at/)).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-avisos');
+    await cli.goto('/app/');
+    await expect(cli.getByTestId('campana-punto')).toBeVisible({ timeout: 20_000 });
+    await cli.goto(`/app/order/${cobro.pedidoId}?nuevo=1`);
     await cli.getByRole('button', { name: /Track order|Ver seguimiento/ }).click();
     await expect(cli.getByText(/Confirmed|Confirmado/)).toBeVisible();
 
@@ -986,7 +1015,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // El cliente cumple años: al poner los nudos en el carrito, le aparece el regalo.
     await cli.goto('/app/');
-    await cli.getByText(restaurante).click();
+    await cli.getByText(restaurante, { exact: true }).click();
     await cli
       .getByRole('button', { name: `${L.agregar} ${plato.nudos}` })
       .filter({ visible: true })

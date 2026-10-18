@@ -5,7 +5,8 @@
 ## 👤 Lo que solo puede hacer Richard
 
 - [ ] 👤 **Condiciones comerciales de las franquicias** (cuota de entrada, porcentaje sobre ingresos, cuota mensual, plazo y exclusividad territorial). El sistema ya las guarda por franquicia, pero quedan «pendientes de definición comercial» y ningún cobro las usa. Detalle en `docs/TERRITORIO-Y-FRANQUICIAS.md`.
-- [ ] 👤 **Autorizar en producción la arquitectura multiciudad** (áreas, varias franquicias por ciudad y managers). Validada en staging; Miami no cambia mientras no se le dibujen áreas.
+- [x] 👤 Autorizar en producción la arquitectura multiciudad: publicada el 17 oct (bac14e2a).
+- [ ] 👤 **Revisar como superadmin en tumbite.com** Zonas → Áreas y Franquicias → Territorio y equipo (solo Richard puede entrar).
 
 - [ ] 👤 **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
 

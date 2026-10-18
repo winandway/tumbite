@@ -30,3 +30,5 @@ export * from './version';
 export * from './senal';
 export * from './avisosCanal';
 export * from './territorio';
+export * from './servicios';
+export * from './filtrosComida';

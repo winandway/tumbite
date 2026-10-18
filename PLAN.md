@@ -1,12 +1,15 @@
-# Plan: Tumbite Restaurante, rediseño completo (aprobado por Richard el 14 oct 2026)
+# Plan: inicio del cliente como los grandes («No inventemos la rueda»)
 
-Referencia: imagen de ocho pantallas. Plan y auditoría en docs/PLAN-DISENO-RESTAURANTE.md. Solo frontend; Mi menú usa las mismas rutas del panel web.
+Ficha: docs/investigaciones-rea/2026-10-18-inicio-cliente.md (sección 5). Rama inicio-cliente-rea.
 
-- [x] Paso 1: recursos (logotipo «Restaurante», íconos de la barra) y piezas comunes (cabecera, tarjetas, botones, pasos, barra inferior, textos ES/EN).
-- [x] Paso 2: Login con el diseño (variante del acceso compartido solo para el restaurante, sin tocar cliente ni repartidor).
-- [x] Paso 3: Inicio: tarjeta del restaurante con estado, contadores reales, cocina ocupada, pedido nuevo con reloj, tiempos y «Aceptar pedido»; en tableta dos columnas.
-- [x] Paso 4: Detalle del pedido: pasos, tiempo transcurrido y restante, +5 min, «Marcar como listo», listo con QR grande, foto del repartidor y «Marcar como recogido», recoger en el local con PIN.
-- [x] Paso 5: Pedidos (historial de 24 horas con pestañas) y Estadísticas (hoy, semana, mes).
-- [x] Paso 6: Mi menú y Añadir / Editar producto (foto, nombre, descripción ES/EN, precio, categoría, disponible; borrador guardado; borrar en los tres puntos).
-- [x] Paso 7: Más (cuenta, idioma, soporte, salir) y alarma, pantalla encendida y avisos intactos.
-- [x] Paso 8: tipos, lint, pruebas y candado; recorrido ES/EN manejando la app del restaurante (nuevo → aceptar → listo → QR → recogida) con capturas en celular y tableta; Docs; commit, publicación y comprobación en vivo.
+- [x] Paso 1: servicios en el orden de Richard (Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores, Más), alimentados por /datos/servicios; licores y mas nacen «próximamente» en schema.sql; orden fijo en @tumbite/compartido con su prueba en rojo; prueba del servidor en rojo (licores/mas = muy_pronto).
+- [x] Paso 2: pantalla de cada servicio (app/service/[id].tsx) con franja discreta «Estamos construyendo este servicio» / «En pausa» / «Todavía no llega a tu ciudad»; se quita el modal «Muy pronto» de los servicios.
+- [x] Paso 3: Comida más agradable: cabecera con título grande y dirección actual, filtros rápidos (Solo abiertos, Más cerca, Más rápido) con prueba de la lógica de filtro en compartido.
+- [x] Paso 4: buscador real: GET /datos/buscar?q= (restaurantes y platos de la ciudad, abiertos primero, zod, LIKE parametrizado) con prueba en rojo; pantalla app/search.tsx con pestañas Restaurantes / Platos y espera de 300 ms.
+- [x] Paso 5: campana real: GET /datos/mis-avisos (pedidos en curso, regalos disponibles, próximas aperturas) con prueba en rojo; pantalla app/notifications.tsx; punto rojo en la campana si hay avisos.
+- [x] Paso 6: el cupón abre la lista de regalos (misma ruta, pestaña regalos).
+- [x] Paso 7: Ofertas del día de muestra solo cuando no hay regalos reales.
+- [x] Paso 8: guías de Docs es/en («Buscar en Tumbite», «Tus avisos», «Los servicios de Tumbite») y actualizar la ficha con el principio del estándar del mercado.
+- [x] Paso 9: npm run verify en verde, candados en CANDADOS.md, commit.
+- [ ] Paso 10: staging (rama fase-inicio-cliente) con pruebas S y recorrido; producción por el flujo permanente (antes, etiquetas, publicar, despues).
+- [ ] Paso 11: recompilar la app del cliente para el simulador de iPhone e instalarla; informe breve y PENDIENTES.md.
