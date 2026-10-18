@@ -1067,9 +1067,13 @@ for (const idioma of ['en', 'es'] as const) {
     // Direcciones guardadas, cupón y pago al recibir, todo en el carrito. La dirección queda
     // guardada por la API (como si la hubiera marcado «guardar» en el primer pedido); el cupón lo
     // crea nuestro equipo; el efectivo lo enciende el superadmin en el país (interruptor Fase 2).
+    // La app guarda su pase en el almacén del navegador (AsyncStorage en la web): se usa el mismo.
+    const paseCliente = await cli.evaluate(() => localStorage.getItem('tumbite.sesion') ?? '');
+    expect(paseCliente, 'el cliente tiene sesión abierta').toBeTruthy();
     expect(
       (
-        await cli.request.post('/datos/mis-direcciones', {
+        await request.post('/datos/mis-direcciones', {
+          headers: { authorization: `Bearer ${paseCliente}` },
           data: {
             etiqueta: idioma === 'en' ? 'Home' : 'Casa',
             direccion: '200 S Biscayne Blvd, Apt 12',
