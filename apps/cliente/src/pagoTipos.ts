@@ -6,6 +6,8 @@ export type Cobro = {
   clavePublica?: string;
   /** El cálculo del servidor; su total es el que manda. */
   desglose?: { totalCliente: number };
+  /** Cobro directo (efectivo o transferencia al repartidor): no hay formulario de tarjeta. */
+  directo?: boolean;
 };
 
 export type PropsPago = {

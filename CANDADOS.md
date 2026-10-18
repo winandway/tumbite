@@ -718,3 +718,11 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se construyó:** `internacional/cuentasCobro.ts` + rutas `GET/POST /datos/repartidor/cuentas-cobro`, `POST …/:id/desactivar`, `PATCH /datos/admin/cuentas-cobro/:id`, `POST /datos/pedidos/:id/disputa-cobro`. El alta exige la contraseña, desactiva la anterior, deja historial con autor, avisa por correo y entra en vigor a las 24 h (el equipo puede confirmarla antes; «confirmada» nunca significa «verificada por el banco»). El seguimiento del pedido por transferencia muestra al cliente del pedido (solo a él) el nombre del beneficiario y la cuenta vigente. El cobro lo confirma el repartidor (`cobro_confirmado_por = 'repartidor'`); el cliente puede disputarlo (ticket de queja ligado al pedido).
 - **Pruebas:** `apps/servidor/src/cuentasCobro.test.ts` (2).
 - **Qué NO tocar:** nunca se piden credenciales de banca ni se lee el banco del repartidor; sin contraseña no hay cambio; la espera de 24 h solo la salta el equipo.
+
+## C-COBRO-DIRECTO (pantallas, C.6, 18 oct 2026)
+
+- Cliente: en el carrito, «¿Cómo pagas?» (tarjeta / efectivo al recibir / transferencia al repartidor) solo si `GET /datos/pais` lo permite; «Pedir y pagar al recibir» crea el pedido sin tarjeta; el seguimiento muestra «Pagas al recibir» con el monto sin propina o la cuenta publicada del repartidor, y «Tengo un problema con el cobro» (ticket de queja).
+- Repartidor: en la puerta, tarjeta «Cobra al cliente» con el monto sin propina, lo recibido, «Cobré» y «El cliente no pagó» (confirmación); en Ganancias, «Saldo para comisiones» (disponible, apartado, canje de código) cuando el país lo permite.
+- Restaurante: en el pedido, «El repartidor paga este pedido en el mostrador… entrégale el ticket».
+- Docs: guías `pay-on-delivery` (clientes) y `cash-orders-and-top-ups` (repartidores), es/en.
+- Prueba: `internacional.test.ts` → «pantallas del cobro directo…». Capturas del recorrido: cuando Richard encienda un país en staging (hoy todo apagado).

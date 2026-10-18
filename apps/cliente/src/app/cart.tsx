@@ -47,6 +47,14 @@ const TE = {
     pinTitulo: 'Pedir un PIN de 4 dígitos al entregar',
     pinAyuda:
       'El PIN aparece en tu pedido y quien reciba se lo dice al repartidor. Apágalo si va a recibir otra persona y no quieres pasarle el PIN.',
+    pagoTitulo: '¿Cómo pagas?',
+    pagoTarjeta: 'Tarjeta',
+    pagoTarjetaAyuda: 'Se autoriza ahora y se cobra al entregar.',
+    pagoEfectivo: 'Efectivo al recibir',
+    pagoEfectivoAyuda: 'Le pagas al repartidor cuando llegue.',
+    pagoTransfer: 'Transferencia al repartidor',
+    pagoTransferAyuda: 'Verás el nombre y la cuenta del repartidor en el seguimiento.',
+    pedirDirecto: 'Pedir y pagar al recibir',
   },
   en: {
     como: 'How do you want to receive it?',
@@ -59,6 +67,14 @@ const TE = {
     pinTitulo: 'Ask for a 4-digit PIN at delivery',
     pinAyuda:
       'The PIN shows in your order and whoever receives it tells the driver. Turn it off if someone else will receive it and you don’t want to pass the PIN along.',
+    pagoTitulo: 'How do you pay?',
+    pagoTarjeta: 'Card',
+    pagoTarjetaAyuda: 'Authorized now, charged on delivery.',
+    pagoEfectivo: 'Cash on delivery',
+    pagoEfectivoAyuda: 'You pay the driver when they arrive.',
+    pagoTransfer: 'Transfer to the driver',
+    pagoTransferAyuda: 'You’ll see the driver’s name and account in the tracking screen.',
+    pedirDirecto: 'Order and pay on delivery',
   },
 } as const;
 
@@ -85,6 +101,26 @@ export default function PantallaCarrito() {
   const tc = textosComida(idioma);
   const { carrito, cambiarCantidad, vaciar } = useCarrito();
   const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
+  // Fase 2: qué formas de pago permite el país de la zona (efectivo, transferencia). Vacío = solo tarjeta.
+  const [pais, setPais] = useState<{
+    efectivoActivo: boolean;
+    transferenciaRepartidorActiva: boolean;
+  } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ efectivoActivo: boolean; transferenciaRepartidorActiva: boolean }>(
+        'GET',
+        '/datos/pais',
+      )
+      .then((p) => {
+        if (vivo) setPais(p);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
   const [punto, setPunto] = useState<Punto | null>(null);
   const [propinaPb, setPropinaPb] = useState<number | 'otra'>(2000);
   const [error, setError] = useState('');
@@ -96,7 +132,14 @@ export default function PantallaCarrito() {
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
-    inicial: { direccion: '', notas: '', propinaOtra: '', entrega: 'puerta', pin: 'si' },
+    inicial: {
+      direccion: '',
+      notas: '',
+      propinaOtra: '',
+      entrega: 'puerta',
+      pin: 'si',
+      metodoPago: 'tarjeta',
+    },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
@@ -191,10 +234,18 @@ export default function PantallaCarrito() {
               ? 'mano'
               : 'puerta',
         pin: b.valores.pin !== 'no',
+        metodoPago,
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
       });
+      // Cobro directo: no hay tarjeta; el pedido ya quedó confirmado y se paga al recibir.
+      if (r.directo) {
+        await b.limpiar();
+        vaciar();
+        router.replace(`/order/${r.pedidoId}?nuevo=1`);
+        return;
+      }
       // La tarjeta se pide aquí mismo, sin salir de la app.
       if (!r.clavePublica) throw new Error(t.pagoNoDisponible);
       setCobro({ ...r, total: r.desglose?.totalCliente ?? d.totalCliente });
@@ -269,6 +320,10 @@ export default function PantallaCarrito() {
     </Text>
   );
   const modoActual = b.valores.entrega || 'puerta';
+  const directoPermitido =
+    modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
+  const metodoPago = (directoPermitido ? b.valores.metodoPago || 'tarjeta' : 'tarjeta') as
+    'tarjeta' | 'efectivo' | 'transferencia_repartidor';
 
   return marco(
     <>
@@ -368,6 +423,50 @@ export default function PantallaCarrito() {
         </Tarjeta>
       ) : null}
 
+      {directoPermitido ? (
+        <>
+          {titulo(te.pagoTitulo)}
+          <View style={{ gap: 8, marginBottom: 12 }}>
+            {(
+              [
+                ['tarjeta', te.pagoTarjeta, te.pagoTarjetaAyuda, true],
+                ['efectivo', te.pagoEfectivo, te.pagoEfectivoAyuda, pais?.efectivoActivo],
+                [
+                  'transferencia_repartidor',
+                  te.pagoTransfer,
+                  te.pagoTransferAyuda,
+                  pais?.transferenciaRepartidorActiva,
+                ],
+              ] as const
+            )
+              .filter(([, , , visible]) => visible)
+              .map(([valor, etiqueta, ayuda]) => {
+                const activo = metodoPago === valor;
+                return (
+                  <Pressable
+                    key={valor}
+                    onPress={() => b.cambiar('metodoPago', valor)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: activo }}
+                    accessibilityLabel={etiqueta}
+                    style={{
+                      padding: 12,
+                      borderRadius: 14,
+                      borderWidth: activo ? 2 : 1,
+                      borderColor: activo ? C.primario : '#DADADA',
+                      backgroundColor: '#fff',
+                    }}
+                  >
+                    <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
+                      {etiqueta}
+                    </Text>
+                    <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>{ayuda}</Text>
+                  </Pressable>
+                );
+              })}
+          </View>
+        </>
+      ) : null}
       {modoActual !== 'recoger' ? (
         <>
           {titulo(t.direccion)}
@@ -498,7 +597,7 @@ export default function PantallaCarrito() {
         </>
       ) : (
         <Boton
-          texto={`${t.continuarPago} · ${formatearDolares(d.totalCliente, idioma)}`}
+          texto={`${metodoPago === 'tarjeta' ? t.continuarPago : te.pedirDirecto} · ${formatearDolares(d.totalCliente, idioma)}`}
           alTocar={() => void pagar()}
           cargando={pagando}
         />

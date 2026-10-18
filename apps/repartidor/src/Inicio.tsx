@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Image,
   Linking,
   Modal,
@@ -63,6 +64,17 @@ import {
   useSesion,
 } from '@tumbite/movil';
 
+/** Pregunta sí/no al repartidor (en el celular con la ventana del sistema; en la web con la del navegador). */
+function confirmar(texto: string): Promise<boolean> {
+  if (Platform.OS === 'web') return Promise.resolve(window.confirm(texto));
+  return new Promise((resolver) =>
+    Alert.alert('Tumbite', texto, [
+      { text: 'No', style: 'cancel', onPress: () => resolver(false) },
+      { text: 'OK', onPress: () => resolver(true) },
+    ]),
+  );
+}
+
 type Lugar = {
   nombre: string;
   direccion: string;
@@ -99,6 +111,10 @@ type Pedido = {
   pinRequerido?: boolean;
   requiereEdad?: boolean;
   grupoId?: string | null;
+  /** Fase 2 · cobro directo. */
+  metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+  cobroEstado?: string;
+  total?: number;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -676,6 +692,69 @@ export function Inicio() {
     }
   }
 
+  // Fase 2 · cobro directo: lo que recibió del cliente, el saldo prepago y el código de recarga.
+  const [montoCobro, setMontoCobro] = useState('');
+  const [codigoRecarga, setCodigoRecarga] = useState('');
+  const [prepago, setPrepago] = useState<{
+    disponible: number;
+    reservado: number;
+    efectivoActivo: boolean;
+    transferenciaActiva: boolean;
+    recargasPuntoVenta: boolean;
+  } | null>(null);
+  const cargarPrepago = useCallback(async () => {
+    try {
+      setPrepago(await api.pedir('GET', '/datos/repartidor/saldo-prepago'));
+    } catch {
+      setPrepago(null);
+    }
+  }, [api]);
+  useEffect(() => {
+    if (vista !== 'billetera') return;
+    let vivo = true;
+    void (async () => {
+      try {
+        const s = await api.pedir<typeof prepago>('GET', '/datos/repartidor/saldo-prepago');
+        if (vivo) setPrepago(s);
+      } catch {
+        if (vivo) setPrepago(null);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [vista, api]);
+  async function cobre(pedidoId: string) {
+    const monto = Math.round(Number(montoCobro.replace(',', '.')) * 100);
+    if (!Number.isFinite(monto) || monto < 0) return setError(tg.prepago.codigo);
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/repartidor/pedidos/${pedidoId}/cobre`, {
+        montoRecibido: monto,
+        nota: '',
+      });
+      setAviso(tg.pedido.cobroOk);
+      setMontoCobro('');
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+  async function noPago(pedidoId: string) {
+    if (!(await confirmar(tg.pedido.noPagoConfirmar))) return;
+    await accion(`/datos/repartidor/pedidos/${pedidoId}/no-pago`, { motivo: tg.pedido.noPago });
+  }
+  async function canjear() {
+    setError('');
+    try {
+      await api.pedir('POST', '/datos/repartidor/recargar', { codigo: codigoRecarga.trim() });
+      setAviso(tg.prepago.canjeado);
+      setCodigoRecarga('');
+      await cargarPrepago();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   async function accion(ruta: string, cuerpo: unknown = {}) {
     setError('');
     try {
@@ -947,6 +1026,56 @@ export function Inicio() {
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
         <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{td.ganancias}</Text>
+        {prepago &&
+        (prepago.efectivoActivo || prepago.transferenciaActiva || prepago.recargasPuntoVenta) ? (
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: '#2a2a2a',
+              borderRadius: 12,
+              padding: 12,
+              gap: 8,
+              backgroundColor: '#fff',
+            }}
+            testID="saldo-prepago"
+          >
+            <Text style={{ fontWeight: '900', color: C.secundario }}>{tg.prepago.titulo}</Text>
+            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ color: C.secundario }}>{tg.prepago.disponible}</Text>
+              <Text
+                style={{
+                  fontWeight: '900',
+                  color: prepago.disponible > 0 ? '#0D7A3A' : C.primario,
+                }}
+              >
+                {formatearDolares(prepago.disponible, idioma)}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ color: C.secundario }}>{tg.prepago.reservado}</Text>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {formatearDolares(prepago.reservado, idioma)}
+              </Text>
+            </View>
+            {prepago.disponible <= 0 ? (
+              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
+            ) : null}
+            {prepago.recargasPuntoVenta ? (
+              <>
+                <TextInput
+                  value={codigoRecarga}
+                  onChangeText={setCodigoRecarga}
+                  placeholder={tg.prepago.codigo}
+                  accessibilityLabel={tg.prepago.codigo}
+                  autoCapitalize="characters"
+                  style={e.input}
+                />
+                <Boton texto={tg.prepago.canjear} alTocar={() => void canjear()} />
+              </>
+            ) : null}
+          </View>
+        ) : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {(['hoy', 'semana', 'mes'] as const).map((pz) => (
             <Pressable
@@ -1495,6 +1624,60 @@ export function Inicio() {
                           <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
                             {t.autorizado}
                           </Text>
+                        ) : null}
+                        {activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: '#2a2a2a',
+                              borderRadius: 12,
+                              padding: 12,
+                              gap: 8,
+                              backgroundColor: '#fff',
+                            }}
+                            testID="cobro-directo"
+                          >
+                            <Text style={{ fontWeight: '900', color: C.secundario }}>
+                              {tg.pedido.cobrar}
+                            </Text>
+                            {activo.cobroEstado && activo.cobroEstado !== 'pendiente' ? (
+                              <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>
+                                {tg.pedido.cobroOk}
+                              </Text>
+                            ) : (
+                              <>
+                                <Text style={{ color: '#5E5E5E' }}>
+                                  {activo.metodoPago === 'efectivo'
+                                    ? tg.pedido.cobrarEfectivo
+                                    : tg.pedido.cobrarTransfer}{' '}
+                                  <Text style={{ fontWeight: '900', color: C.secundario }}>
+                                    {formatearDolares((activo.total ?? 0) - activo.propina, idioma)}
+                                  </Text>
+                                </Text>
+                                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                                  {tg.pedido.propinaAparte}
+                                </Text>
+                                <TextInput
+                                  value={montoCobro}
+                                  onChangeText={setMontoCobro}
+                                  placeholder={tg.pedido.recibi}
+                                  accessibilityLabel={tg.pedido.recibi}
+                                  keyboardType="decimal-pad"
+                                  style={e.input}
+                                />
+                                <Boton
+                                  texto={tg.pedido.cobre}
+                                  alTocar={() => void cobre(activo.id)}
+                                  exito
+                                />
+                                <Boton
+                                  texto={tg.pedido.noPago}
+                                  alTocar={() => void noPago(activo.id)}
+                                  secundario
+                                />
+                              </>
+                            )}
+                          </View>
                         ) : null}
                         <Boton
                           texto={subiendo ? t.subiendo : t.fotoEntrega}

@@ -63,6 +63,8 @@ type Pedido = {
   estado: string;
   entrega?: 'puerta' | 'mano' | 'recoger';
   requiereEdad?: boolean;
+  /** Fase 2 · cobro directo: el cliente le paga al repartidor y él paga en el local. */
+  metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
   total: number;
   subtotal: number;
   notas: string;
@@ -124,6 +126,8 @@ const T = {
     cerrado: 'Cerrado',
     activacion: 'Para abrir te falta:',
     recoge: 'El cliente lo recoge en el local (sin repartidor)',
+    pagoDirecto:
+      'El repartidor paga este pedido en el mostrador (el cliente le paga a él al recibir). Entrégale el ticket.',
     pinCliente: 'PIN del cliente (4 dígitos, está en su app)',
     mayorEdad: 'Revisé el documento: mayor de 21',
     entregadoLocal: 'Entregado al cliente',
@@ -174,6 +178,8 @@ const T = {
     cerrado: 'Closed',
     activacion: 'To open, you still need:',
     recoge: 'Customer picks up in store (no driver)',
+    pagoDirecto:
+      'The driver pays this order at the counter (the customer pays them on delivery). Hand them the receipt.',
     pinCliente: 'Customer PIN (4 digits, in their app)',
     mayorEdad: 'I checked the ID: 21 or older',
     entregadoLocal: 'Handed to the customer',
@@ -390,6 +396,11 @@ export function Inicio() {
               {l.cantidad} × {textoLinea(l, idioma)}
             </Text>
           ))}
+          {p.metodoPago && p.metodoPago !== 'tarjeta' ? (
+            <Text style={{ marginTop: 6, color: C.primario, fontWeight: '800', fontSize: 13 }}>
+              {t.pagoDirecto}
+            </Text>
+          ) : null}
         </View>
       </View>
       {p.notas ? (

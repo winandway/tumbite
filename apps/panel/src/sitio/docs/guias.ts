@@ -62,6 +62,31 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'pay-on-delivery',
+        titulo: 'Pagar al recibir: efectivo o transferencia al repartidor',
+        resumen:
+          'En las ciudades donde está activo, puedes elegir pagar cuando llega tu pedido: en efectivo al repartidor, o con una transferencia a la cuenta que él tiene publicada. Tu pedido queda confirmado al instante, sin tarjeta.',
+        explicacion: [
+          'En el carrito, debajo de «¿Cómo quieres recibirlo?», aparece «¿Cómo pagas?» con las opciones que tu ciudad permite: tarjeta, efectivo al recibir o transferencia al repartidor. Si tu ciudad solo acepta tarjeta, esa pregunta no aparece.',
+          'Con efectivo: el restaurante recibe tu pedido de inmediato y el repartidor te lo trae. Al llegar le pagas el total que ves en el seguimiento (la propina que dejaste en la app no se le cobra en efectivo: es aparte y es toda para él).',
+          'Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco.',
+          'Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte.',
+          'Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Puedo pagar en efectivo?',
+          '¿Cómo le transfiero al repartidor?',
+          '¿Qué pasa si no tengo cómo pagar cuando llega?',
+        ],
+        pasos: [
+          'Arma tu carrito y elige cómo recibirlo.',
+          'En «¿Cómo pagas?», elige efectivo o transferencia al repartidor.',
+          'Toca «Pedir y pagar al recibir»: el pedido queda confirmado.',
+          'Cuando llegue, paga el total (sin la propina) en efectivo o transfiere a la cuenta que ves en el seguimiento.',
+        ],
+      },
+      {
         id: 'apple-pay-google-pay',
         titulo: 'Paga con Apple Pay o Google Pay (muy pronto)',
         resumen:
@@ -1074,6 +1099,32 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'cash-orders-and-top-ups',
+        titulo: 'Pedidos cobrados en mano y tu saldo para comisiones',
+        resumen:
+          'En las ciudades donde está activo, algunos pedidos se pagan al recibir: el cliente te paga a ti en efectivo o por transferencia, tú pagas la comida en el mostrador y la comisión de Tumbite sale de un saldo que recargas por adelantado.',
+        explicacion: [
+          'Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí).',
+          'Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera.',
+          'En el restaurante pagas la comida en el mostrador con tu dinero y te llevas el ticket. En la puerta del cliente ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya.',
+          'Si el cliente no paga, toca «El cliente no pagó»: el pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
+          'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Tumbite no entra a tu cuenta.',
+          'La propina en efectivo es tuya y no se cuenta en el cobro.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Por qué no me llegan pedidos en efectivo?',
+          '¿Cómo recargo mi saldo?',
+          '¿Qué hago si el cliente no me paga?',
+        ],
+        pasos: [
+          'Compra un código de recarga en un punto de venta y canjéalo en Ganancias.',
+          'Acepta el pedido en efectivo: la comisión se aparta de tu saldo.',
+          'Paga la comida en el mostrador y guarda el ticket.',
+          'En la puerta, cobra el total sin la propina y toca «Cobré» con lo recibido.',
+        ],
+      },
+      {
         id: 'offer-timing-and-pickup-code',
         titulo: 'Cuándo te llega una oferta y cómo recoges con el código',
         resumen:
@@ -2066,6 +2117,31 @@ const en: SeccionDocs[] = [
           'Keep your account’s phone nearby: alerts come through the app and by SMS.',
           'If you chose hand delivery, come out when you see “Come out to meet your driver.”',
           'To talk, tap “Call the driver (masked number)” and answer the call.',
+        ],
+      },
+      {
+        id: 'pay-on-delivery',
+        titulo: 'Pay on delivery: cash or a transfer to the driver',
+        resumen:
+          'In cities where it’s active, you can choose to pay when your order arrives: in cash to the driver, or with a transfer to the account they have published. Your order is confirmed instantly, no card needed.',
+        explicacion: [
+          'In the cart, under “How do you want to receive it?”, you’ll see “How do you pay?” with the options your city allows: card, cash on delivery, or a transfer to the driver. If your city only takes cards, that question doesn’t show.',
+          'With cash: the restaurant gets your order right away and the driver brings it. When they arrive you pay the total you see in the tracking screen (the tip you left in the app isn’t charged in cash: it’s separate and all theirs).',
+          'With a transfer: in the tracking screen you see the account holder’s name and the driver’s published account (for example their mobile-payment number or bank account) and the exact amount. You transfer when they’re in front of you; they confirm it in their bank.',
+          'If you don’t pay on delivery, the order is canceled and an outstanding balance stays on your account: you won’t be able to order with pay-on-delivery again until you settle it with support.',
+          'If you transferred and the driver says it didn’t arrive, or the amount doesn’t match, tap “I have a problem with the payment” in your order: support reviews the case with both of you.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Can I pay in cash?',
+          'How do I transfer to the driver?',
+          'What if I can’t pay when it arrives?',
+        ],
+        pasos: [
+          'Build your cart and choose how to receive it.',
+          'Under “How do you pay?”, choose cash or a transfer to the driver.',
+          'Tap “Order and pay on delivery”: the order is confirmed.',
+          'When it arrives, pay the total (without the tip) in cash or transfer to the account shown in the tracking screen.',
         ],
       },
       {
@@ -3074,6 +3150,32 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'cash-orders-and-top-ups',
+        titulo: 'Orders collected in person and your balance for fees',
+        resumen:
+          'In cities where it’s active, some orders are paid on delivery: the customer pays you in cash or by transfer, you pay for the food at the counter, and Tumbite’s fee comes out of a balance you top up in advance.',
+        explicacion: [
+          'Before accepting an order paid in person you need balance for the fee. You top it up by buying a code at an authorized sales point and redeeming it under Earnings → “Balance for fees”. Without balance you don’t get cash-order offers (card orders still come).',
+          'When you accept, the fee is reserved from your balance; when you deliver and confirm the payment, it’s charged. If the order is canceled or you drop it, it goes back to your balance in full.',
+          'At the restaurant you pay for the food at the counter with your own money and keep the receipt. At the customer’s door you see how much they owe you (without the tip). Tap “Collected” and enter what you received. If they paid less, the difference becomes the customer’s debt, not yours.',
+          'If the customer doesn’t pay, tap “The customer didn’t pay”: the order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
+          'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Tumbite never accesses your account.',
+          'A cash tip is yours and isn’t counted in the payment.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Why don’t I get cash orders?',
+          'How do I top up my balance?',
+          'What if the customer doesn’t pay me?',
+        ],
+        pasos: [
+          'Buy a top-up code at a sales point and redeem it under Earnings.',
+          'Accept the cash order: the fee is reserved from your balance.',
+          'Pay for the food at the counter and keep the receipt.',
+          'At the door, collect the total without the tip and tap “Collected” with what you received.',
+        ],
+      },
       {
         id: 'offer-timing-and-pickup-code',
         titulo: 'When an offer reaches you and how you pick up with the code',

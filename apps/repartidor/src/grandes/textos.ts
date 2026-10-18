@@ -84,6 +84,28 @@ const es = {
     ayuda: 'Ayuda con este pedido',
     emergencia: 'Emergencia',
     emergenciaAyuda: 'Llama al 911. Tumbite queda avisado.',
+    cobrar: 'Cobra al cliente',
+    cobrarEfectivo: 'El cliente paga en efectivo. Sin la propina, debe darte:',
+    cobrarTransfer:
+      'El cliente te transfiere a tu cuenta publicada. Sin la propina, debe llegarte:',
+    recibi: 'Lo que recibiste (sin la propina)',
+    cobre: 'Cobré',
+    noPago: 'El cliente no pagó',
+    noPagoConfirmar:
+      '¿Seguro? El pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
+    cobroOk: 'Cobro registrado. Lo confirmaste tú; si fue transferencia, revísala en tu banco.',
+    propinaAparte: 'La propina en efectivo es tuya y no se cuenta aquí.',
+  },
+  prepago: {
+    titulo: 'Saldo para comisiones',
+    ayuda:
+      'Las comisiones de los pedidos que cobras en mano salen de este saldo. Se aparta al aceptar y se cobra al entregar. Recarga en un punto de venta y canjea el código aquí.',
+    disponible: 'Disponible',
+    reservado: 'Apartado en pedidos',
+    codigo: 'Código de recarga',
+    canjear: 'Recargar con el código',
+    canjeado: 'Recarga acreditada.',
+    sinSaldo: 'Sin saldo no recibes pedidos en efectivo.',
   },
   ayuda: {
     titulo: '¿Qué pasa?',
@@ -204,6 +226,28 @@ const en: T = {
     ayuda: 'Help with this order',
     emergencia: 'Emergency',
     emergenciaAyuda: 'Calls 911. Tumbite is notified.',
+    cobrar: 'Collect from the customer',
+    cobrarEfectivo: 'The customer pays in cash. Without the tip, they owe you:',
+    cobrarTransfer:
+      'The customer transfers to your published account. Without the tip, you should receive:',
+    recibi: 'What you received (without the tip)',
+    cobre: 'Collected',
+    noPago: 'The customer didn’t pay',
+    noPagoConfirmar:
+      'Are you sure? The order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
+    cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',
+    propinaAparte: 'A cash tip is yours and isn’t counted here.',
+  },
+  prepago: {
+    titulo: 'Balance for fees',
+    ayuda:
+      'Fees for orders you collect in person come out of this balance. It’s reserved when you accept and charged when you deliver. Top up at a sales point and redeem the code here.',
+    disponible: 'Available',
+    reservado: 'Reserved in orders',
+    codigo: 'Top-up code',
+    canjear: 'Top up with the code',
+    canjeado: 'Top-up credited.',
+    sinSaldo: 'Without balance you won’t get cash orders.',
   },
   ayuda: {
     titulo: 'What’s going on?',

@@ -406,3 +406,24 @@ internacional.post('/pedidos/:id/disputa-cobro', async (c) => {
   });
   return c.json({ ticket: t }, 201);
 });
+
+/** Lo que la app del cliente necesita saber del país de su zona: qué formas de pago hay (público). */
+internacional.get('/pais', async (c) => {
+  const db = base(c);
+  const u = c.get('usuario');
+  const z = u
+    ? await db
+        .prepare('SELECT zona_id FROM usuarios WHERE id = ?')
+        .bind(u.id)
+        .first<{ zona_id: string | null }>()
+    : null;
+  const { pais, moneda } = await paisDeZona(db, z?.zona_id ?? 'US-FL-MIAMI');
+  const cfg = await leerConfigPais(db, pais);
+  return c.json({
+    pais,
+    moneda,
+    decimales: cfg.decimales,
+    efectivoActivo: cfg.efectivoActivo,
+    transferenciaRepartidorActiva: cfg.transferenciaRepartidorActiva,
+  });
+});

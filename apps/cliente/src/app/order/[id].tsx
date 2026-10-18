@@ -32,6 +32,7 @@ type Pedido = {
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
   fotoEntrega?: { tomadaEn: string } | null;
   entrega?: 'puerta' | 'mano' | 'recoger';
+  propina?: number;
   propinaExtra?: number | null;
   requiereEdad?: boolean;
   entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
@@ -39,6 +40,16 @@ type Pedido = {
   llegaAMasTardar?: string | null;
   pin?: string | null;
   pinRequerido?: boolean;
+  /** Fase 2 · cobro directo. */
+  metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+  cobroEstado?: string;
+  cuentaCobro?: {
+    tipo: string;
+    banco: string;
+    titular: string;
+    identificador: string;
+    verificacion: string;
+  } | null;
   ajuste?: {
     platoId: string;
     nombreEs: string;
@@ -71,6 +82,15 @@ const T = {
     titulo: 'Tu pedido',
     volver: '← Inicio',
     total: 'Total',
+    pagoAlRecibir: 'Pagas al recibir',
+    enEfectivo: 'En efectivo, al repartidor: {monto} (sin contar la propina).',
+    transfiereA: 'Transfiere al repartidor {monto} (sin contar la propina) a:',
+    cuentaPendiente:
+      'El repartidor todavía no tiene una cuenta publicada. Paga en efectivo o espera a que la vea aquí.',
+    cobroConfirmado: 'El repartidor confirmó tu pago.',
+    problemaCobro: 'Tengo un problema con el cobro',
+    problemaMotivo: 'El cliente reporta un problema con el cobro desde la app.',
+    problemaEnviado: 'Soporte recibió tu reclamo y te responde por correo.',
     ayuda: '¿Problemas con tu pedido? Cuéntanos',
     estados: {
       pago_pendiente: 'Esperando el pago…',
@@ -150,6 +170,15 @@ const T = {
     titulo: 'Your order',
     volver: '← Home',
     total: 'Total',
+    pagoAlRecibir: 'You pay on delivery',
+    enEfectivo: 'In cash, to the driver: {monto} (tip not included).',
+    transfiereA: 'Transfer {monto} (tip not included) to the driver at:',
+    cuentaPendiente:
+      'The driver hasn’t published an account yet. Pay in cash or wait until it shows here.',
+    cobroConfirmado: 'The driver confirmed your payment.',
+    problemaCobro: 'I have a problem with the payment',
+    problemaMotivo: 'The customer reports a payment problem from the app.',
+    problemaEnviado: 'Support received your report and will reply by email.',
     ayuda: 'Problems with your order? Tell us',
     estados: {
       pago_pendiente: 'Waiting for payment…',
@@ -273,6 +302,17 @@ const PASOS_DISENO = new Map<string, number>([
 export default function SeguirPedido() {
   const { id, nuevo } = useLocalSearchParams<{ id: string; nuevo?: string }>();
   const { api, idioma } = useSesion();
+  const [reclamoCobro, setReclamoCobro] = useState('');
+  async function disputarCobro() {
+    try {
+      await api.pedir('POST', `/datos/pedidos/${String(id)}/disputa-cobro`, {
+        motivo: t.problemaMotivo,
+      });
+      setReclamoCobro(t.problemaEnviado);
+    } catch (x) {
+      setReclamoCobro(x instanceof Error ? x.message : String(x));
+    }
+  }
   const t = enIdioma(T, idioma);
   const tc = textosComida(idioma);
   const [verSeguimiento, setVerSeguimiento] = useState(false);
@@ -579,6 +619,64 @@ export default function SeguirPedido() {
                 </View>
               ) : null}
             </View>
+            {p.metodoPago && p.metodoPago !== 'tarjeta' && p.estado !== 'cancelado' ? (
+              <View
+                style={{
+                  marginTop: 10,
+                  padding: 12,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#2a2a2a',
+                  backgroundColor: '#fff',
+                }}
+                testID="pago-al-recibir"
+              >
+                <Text style={{ fontWeight: '900', color: C.secundario }}>{t.pagoAlRecibir}</Text>
+                {p.cobroEstado === 'confirmado' || p.cobroEstado === 'parcial' ? (
+                  <Text style={{ color: C.exito, fontWeight: '700', marginTop: 4 }}>
+                    {t.cobroConfirmado}
+                  </Text>
+                ) : p.metodoPago === 'efectivo' ? (
+                  <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+                    {t.enEfectivo.replace(
+                      '{monto}',
+                      formatearDolares(p.total - (p.propina ?? 0), idioma),
+                    )}
+                  </Text>
+                ) : p.cuentaCobro ? (
+                  <>
+                    <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+                      {t.transfiereA.replace(
+                        '{monto}',
+                        formatearDolares(p.total - (p.propina ?? 0), idioma),
+                      )}
+                    </Text>
+                    <Text
+                      style={{ fontWeight: '800', marginTop: 4, color: C.secundario }}
+                      selectable
+                    >
+                      {p.cuentaCobro.titular}
+                    </Text>
+                    <Text style={{ color: C.secundario }} selectable>
+                      {p.cuentaCobro.tipo}
+                      {p.cuentaCobro.banco ? ` · ${p.cuentaCobro.banco}` : ''} ·{' '}
+                      {p.cuentaCobro.identificador}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.cuentaPendiente}</Text>
+                )}
+                {p.estado === 'entregado' || p.estado === 'en_camino' ? (
+                  <Pressable
+                    onPress={() => void disputarCobro()}
+                    accessibilityRole="button"
+                    style={{ marginTop: 8 }}
+                  >
+                    <Text style={e.enlaceLinea}>{reclamoCobro || t.problemaCobro}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
             <Text
               style={{ color: C.secundario, fontSize: 15, marginTop: 10 }}
               accessibilityLiveRegion="polite"

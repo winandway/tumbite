@@ -528,3 +528,40 @@ describe('recargas por punto de venta (C-COBRO-DIRECTO)', () => {
     ).toBe(2500);
   });
 });
+
+describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () => {
+  it('la ruta pública /datos/pais dice qué formas de pago hay, según el país de la zona', async () => {
+    const e = await escenario({ efectivoActivo: true, transferenciaRepartidorActiva: false });
+    const p = await e.m.llamar('GET', '/datos/pais', undefined, e.cliente.token);
+    expect(p.datos).toMatchObject({
+      pais: 'US',
+      moneda: 'USD',
+      efectivoActivo: true,
+      transferenciaRepartidorActiva: false,
+    });
+    expect((await e.m.crudo('/datos/pais', { method: 'GET' })).status).toBe(200);
+  });
+
+  it('las tres apps y Docs tienen las piezas: pago al recibir, «Cobré» / «No pagó», saldo prepago, ticket y guías es/en', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const raiz = join(__dirname, '..', '..', '..');
+    const leer = (r: string) => readFileSync(join(raiz, r), 'utf8');
+    const cart = leer('apps/cliente/src/app/cart.tsx');
+    expect(cart).toContain("'/datos/pais'");
+    expect(cart).toContain('metodoPago');
+    expect(cart).toContain('r.directo');
+    const orden = leer('apps/cliente/src/app/order/[id].tsx');
+    expect(orden).toContain('cuentaCobro');
+    expect(orden).toContain('/disputa-cobro');
+    const rep = leer('apps/repartidor/src/Inicio.tsx');
+    expect(rep).toContain('/cobre');
+    expect(rep).toContain('/no-pago');
+    expect(rep).toContain('/datos/repartidor/saldo-prepago');
+    expect(rep).toContain('/datos/repartidor/recargar');
+    expect(leer('apps/restaurante/src/Inicio.tsx')).toContain('pagoDirecto');
+    const guias = leer('apps/panel/src/sitio/docs/guias.ts');
+    expect(guias.match(/id: 'pay-on-delivery'/g)).toHaveLength(2);
+    expect(guias.match(/id: 'cash-orders-and-top-ups'/g)).toHaveLength(2);
+  });
+});
