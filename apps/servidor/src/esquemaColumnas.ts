@@ -521,7 +521,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "stripe_cuenta",
     "motivo",
-    "creado_en"
+    "creado_en",
+    "resuelto_en"
   ],
   "antecedentes_checkr": [
     "usuario_id",

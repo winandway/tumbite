@@ -19,7 +19,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] A.7 F5: Turnstile en las tres apps (pase en cabecera; se apaga solo si no hay llave).
 - [x] A.8 F16: idioma y versión de la app al servidor; «actualiza la app» por versión mínima.
 - [x] A.9 F13/F14: «recibiendo pedidos» real; ítem de cobro con pagos_activos; correo al dueño al aprobar/pausar/rechazar con motivo.
-- [ ] A.10 Superadmin dinero: liquidaciones en revisión con resolver, abonos fallidos, historial de conciliación con recálculo, interruptor de retiros.
+- [x] A.10 Superadmin dinero: liquidaciones en revisión con resolver, abonos fallidos, historial de conciliación con recálculo, interruptor de retiros.
 - [ ] A.11 Superadmin operación: cancelar y devolver, reasignar repartidor, buscar pedidos cerrados, suspender cuentas.
 - [ ] A.12 Impuesto de ventas, devoluciones y disputas (contracargos de Stripe) antes de cobrar en real: diseño + implementación mínima con pruebas.
 - [ ] A.13 Regresión del circuito de EE.UU. en staging (recorrido + S11) y VERIFICAR-PAGOS al día.

@@ -15,6 +15,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'stripe_cliente', 'TEXT'],
   // F19 (18 oct 2026): tope de intentos del PIN de entrega.
   ['pines_entrega', 'intentos', 'INTEGER NOT NULL DEFAULT 0'],
+  // Pantalla de dinero del superadmin (18 oct 2026): abonos fallidos resueltos a mano.
+  ['abonos_fallidos', 'resuelto_en', 'TEXT'],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

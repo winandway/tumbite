@@ -684,3 +684,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se hizo:** la etiqueta usa `abiertoAhora` (verde solo si recibe de verdad; «Abierto, fuera de horario» en gris si no) en `apps/restaurante/src/Inicio.tsx` y `apps/panel/src/panel/MiRestaurante.tsx`; `PATCH /datos/mi-restaurante/abierto` devuelve `abiertoAhora`; la activación cuenta `cuentas_stripe.pagos_activos = 1`; `PATCH /datos/admin/restaurantes/:id` acepta `motivo` y manda `correoEstadoRestaurante` (es/en) al dueño en cada cambio de estado.
 - **Pruebas:** `apps/servidor/src/restauranteEstado.test.ts` (3), `apps/panel/src/panel/Admin.test.tsx` («fuera de horario»).
 - **Qué NO tocar:** el verde es solo para «recibiendo de verdad» (regla «lo que salió bien va en verde»); un cambio solo de plan no manda correo.
+
+## C-SUPER-DINERO: el superadmin ve y resuelve el dinero que antes no tenía pantalla (18 oct 2026)
+
+- **Qué faltaba (auditoría final, punto 7):** el interruptor de retiros solo existía por API; las liquidaciones en revisión, los abonos rechazados por el banco y el historial de la conciliación vivían en la base sin pantalla.
+- **Qué se hizo:** `apps/panel/src/panel/ControlDinero.tsx` (dentro de Dinero): interruptor de retiros con confirmación (`PUT /datos/admin/retiros`), cobros en revisión con «Reintentar ahora» (`POST /datos/admin/liquidaciones/:id/reintentar` → `liquidar`) y «Ya está cobrado en Stripe» (`POST …/confirmar`: solo anota si Stripe responde `succeeded`), abonos rechazados (`GET/PATCH /datos/admin/abonos-fallidos`, columna `resuelto_en` en COLUMNAS) y conciliación de 14 días con detalle y «Recalcular hoy». Textos en inglés corregidos («Elite plan», «Km included in the base fee»).
+- **Pruebas:** `apps/servidor/src/superDinero.test.ts` (4), `apps/panel/src/panel/ControlDinero.test.tsx` (3).
+- **Qué NO tocar:** «confirmar» nunca inventa un cobro (pregunta a Stripe); encender retiros sigue siendo decisión de Richard (él es el superadmin): el botón pide confirmación y la variable `RETIROS_APAGADOS` manda sobre él.

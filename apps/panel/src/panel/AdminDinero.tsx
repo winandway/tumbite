@@ -14,6 +14,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { ControlDinero } from './ControlDinero';
 
 const T = {
   es: {
@@ -53,10 +54,10 @@ const T = {
     comision: 'Restaurant commission',
     inicial: 'Starter plan',
     crece: 'Growth plan',
-    elite: 'Pro plan',
+    elite: 'Elite plan',
     envio: 'Delivery',
     envioBase: 'Base delivery fee',
-    envioKm: 'Miles-free km included',
+    envioKm: 'Km included in the base fee',
     envioPorKm: 'Per extra km',
     envioMax: 'Maximum delivery fee',
     servicio: 'Service fee (customer)',
@@ -210,6 +211,7 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
   return (
     <section>
       <h1>{t.titulo}</h1>
+      <ControlDinero idioma={idioma} />
       <p>{t.ayuda}</p>
       <AvisoBorrador
         visible={b.recuperado}

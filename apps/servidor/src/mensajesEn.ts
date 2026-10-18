@@ -227,6 +227,12 @@ export const MENSAJES_EN = new Map<string, string>([
     'The total changed. Check your cart and try again.',
   ],
   [
+    'Esa liquidación no existe o ya se cobró.',
+    'That settlement doesn’t exist or was already charged.',
+  ],
+  ['Stripe no muestra ese cobro como capturado.', 'Stripe doesn’t show that charge as captured.'],
+  ['Ese abono fallido no existe.', 'That failed payout doesn’t exist.'],
+  [
     'Hay una versión nueva de la app. Actualízala desde la tienda para seguir.',
     'There is a new version of the app. Update it from the store to continue.',
   ],

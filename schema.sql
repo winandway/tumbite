@@ -698,7 +698,9 @@ CREATE TABLE IF NOT EXISTS abonos_fallidos (
   usuario_id TEXT REFERENCES usuarios(id),
   stripe_cuenta TEXT NOT NULL,
   motivo TEXT NOT NULL DEFAULT '',
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Cuándo lo dio por resuelto un administrador desde el panel (superadmin → Dinero).
+  resuelto_en TEXT
 );
 
 -- Antecedentes con proveedor (Checkr): el repartidor recibe una invitación de Checkr, llena sus

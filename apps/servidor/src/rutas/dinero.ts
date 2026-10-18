@@ -5,7 +5,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
-import { liquidacionesParaRevisar } from '../liquidaciones';
+import { liquidacionesParaRevisar, liquidar, liquidarDesdeAviso } from '../liquidaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -236,4 +236,85 @@ dinero.put('/admin/retiros', async (c) => {
     .bind(activos ? '1' : '0')
     .run();
   return c.json({ activos: await retirosActivos(c.env, base(c)) });
+});
+
+/**
+ * Pantalla de dinero del superadmin (auditoría final, punto 7): resolver una liquidación en
+ * revisión. «Reintentar» la vuelve a poner en la fila y la intenta ya; «confirmar» pregunta a
+ * Stripe y, solo si el cobro figura capturado, lo anota (nunca se inventa un cobro).
+ */
+dinero.post('/admin/liquidaciones/:id/reintentar', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      "UPDATE liquidaciones SET estado = 'reintentar', proximo_en = NULL, actualizado_en = datetime('now') WHERE pedido_id = ? AND estado IN ('revision', 'reintentar', 'pendiente')",
+    )
+    .bind(id)
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('Esa liquidación no existe o ya se cobró.', undefined, 404);
+  const estado = (await liquidar(c.env, db, id)) ?? 'ocupada';
+  return c.json({ estado });
+});
+
+dinero.post('/admin/liquidaciones/:id/confirmar', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare('SELECT pi, monto, estado FROM liquidaciones WHERE pedido_id = ?')
+    .bind(id)
+    .first<{ pi: string | null; monto: number; estado: string }>();
+  if (!f) throw new ErrorDatos('Esa liquidación no existe o ya se cobró.', undefined, 404);
+  if (f.estado === 'capturada') return c.json({ estado: 'capturada' });
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe || !f.pi)
+    throw new ErrorDatos('Stripe no muestra ese cobro como capturado.', undefined, 409);
+  const pi = await stripe
+    .get<{ status?: string; amount_received?: number }>(`/payment_intents/${f.pi}`)
+    .catch(() => null);
+  if (pi?.status !== 'succeeded')
+    throw new ErrorDatos('Stripe no muestra ese cobro como capturado.', undefined, 409);
+  await liquidarDesdeAviso(db, id, Number(pi.amount_received ?? f.monto));
+  return c.json({ estado: 'capturada' });
+});
+
+/** Abonos que el banco rechazó (payout.failed): la lista y el «ya lo resolví» del equipo. */
+dinero.get('/admin/abonos-fallidos', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT a.id, a.usuario_id, a.stripe_cuenta, a.motivo, a.creado_en, a.resuelto_en, u.nombre, u.correo, u.rol
+         FROM abonos_fallidos a LEFT JOIN usuarios u ON u.id = a.usuario_id
+        ORDER BY a.resuelto_en IS NOT NULL, a.creado_en DESC LIMIT 100`,
+    )
+    .all<Record<string, unknown>>();
+  return c.json({
+    abonos: results.map((r) => ({
+      id: String(r.id),
+      usuarioId: r.usuario_id ? String(r.usuario_id) : null,
+      nombre: r.nombre ? String(r.nombre) : null,
+      correo: r.correo ? String(r.correo) : null,
+      rol: r.rol ? String(r.rol) : null,
+      stripeCuenta: String(r.stripe_cuenta),
+      motivo: String(r.motivo ?? ''),
+      creadoEn: String(r.creado_en),
+      resueltoEn: r.resuelto_en ? String(r.resuelto_en) : null,
+    })),
+  });
+});
+
+dinero.patch('/admin/abonos-fallidos/:id', async (c) => {
+  exigir(c, 'admin');
+  const { resuelto } = await leerCuerpo(c, z.object({ resuelto: z.boolean() }));
+  const r = await base(c)
+    .prepare(
+      "UPDATE abonos_fallidos SET resuelto_en = CASE WHEN ? THEN datetime('now') ELSE NULL END WHERE id = ?",
+    )
+    .bind(resuelto ? 1 : 0, c.req.param('id'))
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Ese abono fallido no existe.', undefined, 404);
+  return c.json({ ok: true });
 });
