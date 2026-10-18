@@ -8,8 +8,8 @@ Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o
 
 - [ ] B.7 Conectores reales por país (Wompi/dLocal, pago móvil): solo con contrato y decisión de Richard.
 - [ ] 11. Cancelado tras la compra con foto del ticket (decisión de quién absorbe pendiente).
-- [ ] Panel del superadmin para países, puntos de venta y libro (hoy solo API).
-- [ ] E.2 Recorrido visual en celular de lo nuevo y capturas (necesita un país encendido en staging y Expo).
+- [x] Panel del superadmin para países, puntos de venta y libro (18 oct, en la rama fase-2-bloque-c; probado a mano en local).
+- [x] E.2 Recorrido visual de lo nuevo con capturas en Docs (18 oct, 1ff9eb6f): reseñas con respuesta, equipo, festivos, orden del menú, favoritos, direcciones, cupón, pago al recibir y saldo prepago. Lo que falta es verlo en un celular real (Expo, 👤).
 - [ ] 35 / E.4 Fichas de App Store y Google Play con capturas del recorrido (al final).
 - Después del MVP: puntos 36 a 67 (sección F del plan maestro).
 
