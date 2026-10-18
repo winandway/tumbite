@@ -27,7 +27,10 @@ Eslogan y regla desde hoy: **«No inventemos la rueda»**. Se copia el estándar
 - Recorrido completo en el navegador (inglés y español): servicio con franja, buscador que encuentra un plato, campana vacía y campana con un pedido pagado y punto rojo en el inicio; de ahí salen las capturas de Docs.
 - Visto en pantalla en esta computadora (app web contra el servidor local) antes de publicar.
 
-## Lo que sigue
+## Publicado (flujo permanente)
 
-- Publicar: staging (rama `fase-inicio-cliente`) y producción por el flujo permanente.
-- Rehacer la app del cliente para el simulador de iPhone con lo nuevo.
+- Staging: rama `fase-inicio-cliente` `ed429765`, flujo de pruebas en verde (pruebas S, tiempo real, recorrido en los dos idiomas, conciliación).
+- Producción: commit `7eaa110a` (unión de `fase-inicio-cliente`, código idéntico al de staging). Control previo VERDE, etiquetas `restauracion-antes-inicio-grandes-main` y `restauracion-antes-inicio-grandes-paquete`, verificación posterior VERDE: sin pedidos activos, sin cobros abiertos, retiros apagados, solo Comida encendida.
+- En vivo: tumbite.com sirve ocho servicios en el catálogo (Licores y Más incluidos), el buscador responde (en Miami todavía no hay restaurantes aprobados, así que devuelve vacío, igual que la lista) y las guías nuevas de Docs responden en los dos idiomas.
+- Simulador de iPhone: la app del cliente recompilada contra staging (`apks-pruebas/ios-simulador/tumbite-cliente.app`), instalada y abierta con la cuenta demo: inicio nuevo, Moto con su franja, campana y buscador comprobados en pantalla.
+- Nota: en staging hay varios «Bella Pizza» repetidos de pruebas anteriores; el buscador los muestra todos. Se limpian cuando Richard lo pida.

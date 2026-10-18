@@ -11,5 +11,5 @@ Ficha: docs/investigaciones-rea/2026-10-18-inicio-cliente.md (sección 5). Rama 
 - [x] Paso 7: Ofertas del día de muestra solo cuando no hay regalos reales.
 - [x] Paso 8: guías de Docs es/en («Buscar en Tumbite», «Tus avisos», «Los servicios de Tumbite») y actualizar la ficha con el principio del estándar del mercado.
 - [x] Paso 9: npm run verify en verde, candados en CANDADOS.md, commit.
-- [ ] Paso 10: staging (rama fase-inicio-cliente) con pruebas S y recorrido; producción por el flujo permanente (antes, etiquetas, publicar, despues).
-- [ ] Paso 11: recompilar la app del cliente para el simulador de iPhone e instalarla; informe breve y PENDIENTES.md.
+- [x] Paso 10: staging (rama fase-inicio-cliente) con pruebas S y recorrido; producción por el flujo permanente (antes, etiquetas, publicar, despues).
+- [x] Paso 11: recompilar la app del cliente para el simulador de iPhone e instalarla; informe breve y PENDIENTES.md.
