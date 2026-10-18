@@ -96,6 +96,7 @@ const T = {
     impuesto: 'Impuesto',
     regalo: 'Regalo',
     propina: 'Propina',
+    comentario: 'Cuéntanos más (opcional): qué estuvo bien o qué mejorar',
     pagoAlRecibir: 'Pagas al recibir',
     enEfectivo: 'En efectivo, al repartidor: {monto} (sin contar la propina).',
     transfiereA: 'Transfiere al repartidor {monto} (sin contar la propina) a:',
@@ -192,6 +193,7 @@ const T = {
     impuesto: 'Tax',
     regalo: 'Gift',
     propina: 'Tip',
+    comentario: 'Tell us more (optional): what was good or what to improve',
     pagoAlRecibir: 'You pay on delivery',
     enEfectivo: 'In cash, to the driver: {monto} (tip not included).',
     transfiereA: 'Transfer {monto} (tip not included) to the driver at:',
@@ -444,12 +446,14 @@ export default function SeguirPedido() {
     }
   }
 
+  const [comentario, setComentario] = useState('');
   async function calificar() {
     try {
       await api.pedir('POST', `/datos/pedidos/${id}/calificar`, {
         estrellasRestaurante: estRest,
         estrellasRepartidor: estRep || null,
         culpaRestaurante: culpa,
+        comentario,
       });
       setCalificado(true);
     } catch (x) {
@@ -996,6 +1000,17 @@ export default function SeguirPedido() {
                     <Text style={{ flex: 1 }}>{t.culpa}</Text>
                   </View>
                 )}
+                {estRest > 0 ? (
+                  <TextInput
+                    value={comentario}
+                    onChangeText={(x) => setComentario(x.slice(0, 500))}
+                    placeholder={t.comentario}
+                    accessibilityLabel={t.comentario}
+                    multiline
+                    numberOfLines={3}
+                    style={[e.input, { marginTop: 8, minHeight: 72 }]}
+                  />
+                ) : null}
                 {estRest > 0 && <BotonAncho texto={t.enviar} alTocar={() => void calificar()} />}
               </>
             )}

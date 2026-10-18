@@ -45,6 +45,12 @@ const T = {
     disputasAyuda:
       'La evidencia (foto de entrega, bitácora, chat) se responde en el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
     vence: 'Responder antes de',
+    quejas: 'Quejas con artículo faltante',
+    quejasAyuda:
+      'Si está encendido, cuando un cliente marca que faltó un plato en un pedido entregado y cobrado, se le devuelve solo el valor de esos platos (lo absorbe Tumbite) hasta el tope. Apagado, la queja llega al ticket con el monto propuesto.',
+    quejasAuto: 'Reembolso automático por faltante',
+    quejasTope: 'Tope por queja (dólares)',
+    guardarQuejas: 'Guardar',
     cupones: 'Cupones y promociones',
     cuponesAyuda:
       'El descuento lo absorbe Tumbite (baja su ganancia). Los destacados salen en «Ofertas del día» del inicio de la app.',
@@ -122,6 +128,12 @@ const T = {
     disputasAyuda:
       'Evidence (delivery photo, log, chat) is submitted in the Stripe dashboard → Payments → Disputes, before the due date.',
     vence: 'Respond by',
+    quejas: 'Complaints with missing items',
+    quejasAyuda:
+      'When on, if a customer marks a missing item on a delivered and charged order, the value of those items is refunded automatically (absorbed by Tumbite) up to the cap. When off, the complaint reaches the ticket with the proposed amount.',
+    quejasAuto: 'Automatic refund for missing items',
+    quejasTope: 'Cap per complaint (dollars)',
+    guardarQuejas: 'Save',
     cupones: 'Coupons and promotions',
     cuponesAyuda:
       'Tumbite absorbs the discount (lowers its margin). Featured ones show under “Today’s deals” on the app’s home.',
@@ -273,12 +285,15 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
       );
   };
   const [avisoCupon, setAvisoCupon] = useState('');
+  const [quejas, setQuejas] = useState<{ reembolsoAuto: boolean; topeCentavos: number } | null>(
+    null,
+  );
   const [base, setBase] = useState('');
   const [resultado, setResultado] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
-    const [r, l, a, c, d, k] = await Promise.all([
+    const [r, l, a, c, d, k, q] = await Promise.all([
       pedir<Retiros>('GET', '/datos/admin/retiros').catch(() => null),
       pedir<{ revision: Liquidacion[]; atrasadas: Liquidacion[] }>(
         'GET',
@@ -290,9 +305,14 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
       ),
       pedir<{ disputas: Disputa[] }>('GET', '/datos/admin/disputas').catch(() => null),
       pedir<{ cupones: Cupon[] }>('GET', '/datos/admin/cupones').catch(() => null),
+      pedir<{ config: { reembolsoAuto: boolean; topeCentavos: number } }>(
+        'GET',
+        '/datos/admin/quejas-config',
+      ).catch(() => null),
     ]);
     setDisputas(d?.disputas ?? []);
     setCupones(k?.cupones ?? []);
+    setQuejas(q?.config ?? null);
     setRetiros(r);
     setLiq(l);
     setAbonos(a?.abonos ?? []);
@@ -486,6 +506,42 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : null}
+
+      <h2>{t.quejas}</h2>
+      <p className="suave">{t.quejasAyuda}</p>
+      {quejas ? (
+        <div className="estado">
+          <label>
+            <input
+              type="checkbox"
+              checked={quejas.reembolsoAuto}
+              onChange={(ev) => setQuejas({ ...quejas, reembolsoAuto: ev.target.checked })}
+            />{' '}
+            {t.quejasAuto}
+          </label>{' '}
+          <label className="campo campo-num">
+            <span>{t.quejasTope}</span>
+            <input
+              inputMode="decimal"
+              value={String(quejas.topeCentavos / 100)}
+              onChange={(ev) =>
+                setQuejas({
+                  ...quejas,
+                  topeCentavos: Math.round(Number(ev.target.value.replace(',', '.') || '0') * 100),
+                })
+              }
+              aria-label={t.quejasTope}
+            />
+          </label>{' '}
+          <button
+            type="button"
+            className="boton secundario"
+            onClick={() => void hacer(() => pedir('PUT', '/datos/admin/quejas-config', quejas))}
+          >
+            {t.guardarQuejas}
+          </button>
         </div>
       ) : null}
 

@@ -1,3 +1,4 @@
+import { devolverParcial, guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { semaforoPedido } from '@tumbite/compartido';
@@ -1028,75 +1029,29 @@ superadmin.post('/admin/pedidos/:id/devolver', async (c) => {
       cargarA: z.enum(['tumbite', 'restaurante', 'repartidor']).default('tumbite'),
     }),
   );
-  const db = base(c);
-  const id = c.req.param('id');
-  const f = await db
-    .prepare(
-      `SELECT p.id, p.estado, p.total, p.stripe_pago, p.repartidor_id, r.dueno_id, c.capturado_en,
-              (SELECT COALESCE(SUM(monto), 0) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS devuelto,
-              (SELECT COUNT(*) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS n
-         FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id LEFT JOIN cobros c ON c.pedido_id = p.id
-        WHERE p.id = ?`,
-    )
-    .bind(id)
-    .first<Record<string, unknown>>();
-  if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  if (String(f.estado) !== 'entregado' || !f.stripe_pago || !f.capturado_en)
-    throw new ErrorDatos(
-      'Solo se devuelve dinero de un pedido entregado y cobrado.',
-      undefined,
-      409,
-    );
-  if (Number(f.devuelto) + d.montoCentavos > Number(f.total))
-    throw new ErrorDatos('La devolución supera lo que pagó el cliente.', 'montoCentavos', 409);
-  if (d.cargarA === 'repartidor' && !f.repartidor_id)
-    throw new ErrorDatos('Este pedido no tuvo repartidor.', 'cargarA', 409);
-  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-  if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
-  const devId = crypto.randomUUID();
-  const reembolso = await stripe.post<{ id: string }>(
-    '/refunds',
-    {
-      payment_intent: String(f.stripe_pago),
-      amount: d.montoCentavos,
-      metadata: { pedido_id: id, devolucion: devId },
-    },
-    `devolucion-${id}-${Number(f.n) + 1}`,
+  const r = await devolverParcial(c.env, base(c), {
+    pedidoId: c.req.param('id'),
+    monto: d.montoCentavos,
+    motivo: d.motivo,
+    cargarA: d.cargarA,
+    actorId: u.id,
+  });
+  return c.json({ ok: true, ...r });
+});
+
+/** Reembolso automático por artículo faltante (queja guiada): interruptor y tope (decisión de Richard). */
+superadmin.get('/admin/quejas-config', async (c) => {
+  exigir(c, 'admin');
+  return c.json({ config: await leerConfigQuejas(base(c)) });
+});
+superadmin.put('/admin/quejas-config', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({ reembolsoAuto: z.boolean(), topeCentavos: z.number().int().min(0).max(100_000) }),
   );
-  const cargado =
-    d.cargarA === 'restaurante'
-      ? String(f.dueno_id)
-      : d.cargarA === 'repartidor'
-        ? String(f.repartidor_id)
-        : null;
-  await db.batch([
-    db
-      .prepare(
-        'INSERT INTO devoluciones (id, pedido_id, monto, motivo, cargar_a, actor_id, stripe_reembolso) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      )
-      .bind(devId, id, d.montoCentavos, d.motivo, d.cargarA, u.id, reembolso.id),
-    ...(cargado
-      ? [
-          db
-            .prepare(
-              "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, NULL, ?, 'ajuste', ?)",
-            )
-            .bind(
-              crypto.randomUUID(),
-              cargado,
-              -d.montoCentavos,
-              `devolucion:${id}:${devId}:por:${u.id}`,
-            ),
-        ]
-      : []),
-  ]);
-  await anotarEvento(
-    db,
-    id,
-    'devolucion_parcial',
-    `${d.montoCentavos} · ${d.cargarA} · ${d.motivo}`,
-  );
-  return c.json({ ok: true, devolucionId: devId, reembolso: reembolso.id });
+  await guardarConfigQuejas(base(c), d);
+  return c.json({ config: d });
 });
 
 /** Disputas (contracargos) abiertas o cerradas que avisó Stripe. */

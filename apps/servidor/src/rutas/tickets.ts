@@ -1,3 +1,4 @@
+import { devolverParcial, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Idioma } from '@tumbite/compartido';
@@ -327,10 +328,21 @@ tickets.post('/franquicias', limiteIntentos(5, 60_000), async (c) => {
 
 // ───────────────────────── Quejas y soporte (con sesión) ─────────────────────────
 
+export const MOTIVOS_QUEJA = [
+  'articulo_faltante',
+  'pedido_incorrecto',
+  'frio_o_danado',
+  'tarde',
+  'repartidor',
+  'otro',
+] as const;
 const esquemaQueja = z.object({
   tipo: z.enum(['queja', 'soporte']).default('queja'),
   pedidoId: z.string().uuid().nullish(),
   texto: z.string().trim().min(5).max(5000),
+  /** Queja guiada (auditoría final, punto 16): el motivo y, si falta algo, qué platos. */
+  motivo: z.enum(MOTIVOS_QUEJA).default('otro'),
+  platoIds: z.array(z.string().min(1)).max(50).default([]),
 });
 
 tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
@@ -338,16 +350,51 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
   const d = await leerCuerpo(c, esquemaQueja);
   const db = base(c);
   let zonaId: string | null = null;
+  let propuesta = 0;
+  let reembolso: { monto: number } | null = null;
   if (d.pedidoId) {
     const p = await db
       .prepare(
-        `SELECT p.zona_id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+        `SELECT p.zona_id, p.cliente_id, p.estado, p.lineas_json FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
          WHERE p.id = ? AND (p.cliente_id = ? OR p.repartidor_id = ? OR r.dueno_id = ?)`,
       )
       .bind(d.pedidoId, u.id, u.id, u.id)
-      .first<{ zona_id: string }>();
+      .first<{ zona_id: string; cliente_id: string; estado: string; lineas_json: string }>();
     if (!p) throw new ErrorDatos('Ese pedido no existe.', 'pedidoId', 404);
     zonaId = p.zona_id;
+    // Queja guiada: con «artículo faltante» se calcula lo que valen esos platos; si el reembolso
+    // automático está encendido (Richard) y cabe en el tope, se devuelve ya; si no, va al ticket.
+    if (d.motivo === 'articulo_faltante' && d.platoIds.length && p.cliente_id === u.id) {
+      const lineas = JSON.parse(p.lineas_json) as {
+        platoId: string;
+        precioCentavos: number;
+        cantidad: number;
+      }[];
+      const elegidos = new Set(d.platoIds);
+      propuesta = lineas
+        .filter((l) => elegidos.has(l.platoId))
+        .reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
+      const cfg = await leerConfigQuejas(db);
+      if (
+        propuesta > 0 &&
+        cfg.reembolsoAuto &&
+        propuesta <= cfg.topeCentavos &&
+        p.estado === 'entregado'
+      ) {
+        try {
+          await devolverParcial(c.env, db, {
+            pedidoId: d.pedidoId,
+            monto: propuesta,
+            motivo: `queja automática: artículo faltante (${d.platoIds.length})`,
+            cargarA: 'tumbite',
+            actorId: null,
+          });
+          reembolso = { monto: propuesta };
+        } catch (e) {
+          console.error('queja guiada: no se pudo devolver solo, queda en el ticket', e);
+        }
+      }
+    }
   }
   const papel = {
     cliente: 'cliente',
@@ -369,12 +416,21 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
           ? 'Reporte de un problema'
           : 'Pedido de ayuda') + (d.pedidoId ? ` · #${d.pedidoId.slice(0, 4).toUpperCase()}` : ''),
     mensaje: d.texto,
-    datos: { papel },
+    datos: {
+      papel,
+      motivo: d.motivo,
+      platoIds: d.platoIds,
+      propuesta,
+      reembolsoAutomatico: reembolso?.monto ?? 0,
+    },
     usuarioId: u.id,
     pedidoId: d.pedidoId ?? null,
     zonaId,
   });
-  return c.json({ ok: true, enlace: `/t/${t.codigo}` }, 201);
+  return c.json(
+    { ok: true, enlace: `/t/${t.codigo}`, propuesta, reembolso: reembolso?.monto ?? 0 },
+    201,
+  );
 });
 
 // ───────────────────────── El equipo (superadmin) ─────────────────────────
