@@ -1,3 +1,4 @@
+import { paseTurnstile } from './Turnstile';
 import {
   createContext,
   useCallback,
@@ -70,7 +71,13 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
   const [idioma, setIdioma] = useState<Idioma>(idiomaDelTelefono);
 
   const api = useMemo(
-    () => crearApi({ base: URL_SERVIDOR, token: () => token, idioma: () => idioma }),
+    () =>
+      crearApi({
+        base: URL_SERVIDOR,
+        token: () => token,
+        idioma: () => idioma,
+        pase: paseTurnstile,
+      }),
     [token, idioma],
   );
 

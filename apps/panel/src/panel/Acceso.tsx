@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   correoEjemplo,
   ErrorApi,
@@ -11,6 +11,7 @@ import {
 import { api } from './api';
 import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
+import { Turnstile, reiniciarTurnstile } from './Turnstile';
 import { TEXTOS_PANEL } from './textos';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', clave: '' };
@@ -27,7 +28,21 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [turnstileSitio, setTurnstileSitio] = useState('');
   const v = b.valores;
+  // Escudo anti-robots (F5): la clave pública la publica el servidor; vacía = apagado.
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ turnstileSitio?: string }>('GET', '/datos/publico')
+      .then((p) => {
+        if (vivo) setTurnstileSitio(p.turnstileSitio ?? '');
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -48,7 +63,8 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
       await b.limpiar();
       alEntrar(r.usuario);
     } catch (x) {
-      // Si falla, lo escrito se queda en pantalla.
+      // Si falla, lo escrito se queda en pantalla. Un 403 del escudo pide otro pase.
+      if (x instanceof ErrorApi && x.estado === 403) reiniciarTurnstile();
       setError(
         x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
       );
@@ -132,6 +148,7 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
             .
           </p>
         )}
+        <Turnstile sitio={turnstileSitio} idioma={idioma} />
         <button type="submit" className="boton ancho" disabled={enviando}>
           {enviando ? t.enviando : modo === 'entrar' ? t.entrar : t.registrarse}
         </button>

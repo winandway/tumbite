@@ -14,6 +14,7 @@ import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
 import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
 import { SelectorIdioma } from './SelectorIdioma';
+import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', fechaNacimiento: '', clave: '' };
 
@@ -48,6 +49,7 @@ export function Acceso({
   const [enviando, setEnviando] = useState(false);
   const v = b.valores;
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
+  const turnstileSitio = useTurnstileSitio(api);
 
   async function enviar() {
     setError(null);
@@ -72,6 +74,8 @@ export function Acceso({
       await b.limpiar();
       await alEntrar(r.token, r.usuario);
     } catch (x) {
+      // Un 403 del escudo anti-robots: el pase ya no sirve, se pide otro.
+      if (x instanceof ErrorApi && x.estado === 403) olvidarPaseTurnstile();
       setError(
         x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
       );
@@ -159,6 +163,7 @@ export function Acceso({
         alEnviar={() => void enviar()}
         error={errorDe('clave')}
       />
+      <Turnstile sitio={turnstileSitio} idioma={idioma} />
       {error && !error.campo ? (
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error.mensaje}

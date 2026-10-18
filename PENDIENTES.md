@@ -90,7 +90,7 @@ Orden y detalle en `docs/AUDITORIA-FINAL-2026-10-18.md`, sección 4. Se ejecuta 
 - [x] `staging.tumbite.com` conectado al sitio de pruebas (YaDominios lo arregló el 11 oct 2026, 19:26 UTC). El semáforo (`URL_PRUEBAS`) y `SITIO_URL` de pruebas apuntan ahí.
 - [ ] 👤 **Cuentas de desarrollador** de Apple y Google a nombre de Windoce LLC, y cuenta de Expo (EAS) de la empresa. Destranca la publicación en tiendas (`docs/TIENDAS.md`).
 - [ ] 👤 **Abrir Xcode una vez** en esta Mac para que termine de instalarse. Destranca probar las apps en el simulador de iPhone.
-- [ ] 👤 Turnstile (escudo anti-robots): claves de Cloudflare para el login. Opcional; sin ellas el login funciona con el límite de intentos.
+- [ ] 👤 Turnstile (escudo anti-robots): las DOS claves de Cloudflare (pública `TURNSTILE_SITE_KEY` y secreta `TURNSTILE_SECRET_KEY`) en YaDominios Cloud → sitio tumbite → Variables, con `tumbite.com` y `staging.tumbite.com` en los dominios del widget. Desde el 18 oct la web y las tres apps ya mandan el pase (F5). Opcional; sin ellas el login funciona con el límite de intentos.
 - [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos (construido; se edita en el panel → Dinero).
 - [ ] 👤 Nombre del programa de música y porcentaje para el fondo (sugerido 5 %).
 - [ ] 👤 Nombres de los planes (hoy: Inicial / Crece / Élite) y de los cuatro niveles (hoy: Bronce / Plata / Oro / Diamante).

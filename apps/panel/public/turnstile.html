@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Tumbite</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: transparent;
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+      async
+      defer
+    ></script>
+  </head>
+  <body>
+    <!-- Escudo anti-robots para las apps (se abre dentro de una vista web). El pase se manda a la app
+         con postMessage; la app lo pone en la cabecera cf-turnstile-response al entrar o registrarse. -->
+    <div id="escudo"></div>
+    <script>
+      (function () {
+        var q = new URLSearchParams(location.search);
+        var sitio = q.get('sitio') || '';
+        var idioma = q.get('idioma') === 'es' ? 'es' : 'en';
+        function avisar(m) {
+          var texto = JSON.stringify(m);
+          if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(texto);
+          else if (window.parent !== window) window.parent.postMessage(texto, '*');
+        }
+        function pintar() {
+          if (!window.turnstile || !sitio) return setTimeout(pintar, 100);
+          window.turnstile.render('#escudo', {
+            sitekey: sitio,
+            language: idioma,
+            callback: function (pase) {
+              avisar({ tipo: 'pase', pase: pase });
+            },
+            'expired-callback': function () {
+              avisar({ tipo: 'vencido' });
+            },
+            'error-callback': function () {
+              avisar({ tipo: 'error' });
+            },
+          });
+        }
+        pintar();
+      })();
+    </script>
+  </body>
+</html>

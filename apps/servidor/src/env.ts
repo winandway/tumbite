@@ -11,6 +11,8 @@ export const esquemaEnv = z.object({
   /** Secreto del SEGUNDO endpoint de Stripe, el de «cuentas conectadas» (account.updated, payout.failed). */
   STRIPE_WEBHOOK_SECRET_CONECTADAS: z.string().startsWith('whsec_').optional(),
   TURNSTILE_SECRET_KEY: z.string().min(10).optional(),
+  /** Clave PÚBLICA del escudo (la pintan la web y las apps). Va junto con la secreta o nada. */
+  TURNSTILE_SITE_KEY: z.string().min(10).optional(),
   /** Correos (separados por coma) que PUEDEN volverse administradores con la semilla. */
   ADMIN_CORREOS: z.string().optional(),
   /** Secreto largo para /datos/cuentas/hacer-admin. Va solo en el panel de YaDominios. */

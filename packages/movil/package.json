@@ -18,7 +18,8 @@
     "expo-secure-store": "*",
     "react": "19.2.3",
     "react-native": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-webview": "*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5"

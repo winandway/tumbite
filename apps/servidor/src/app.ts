@@ -162,6 +162,12 @@ app.get('/datos/salud', async (c) => {
   piezas.stripe = c.env.STRIPE_SECRET_KEY ? 'ok' : 'pendiente';
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
   piezas.webhookStripeConectadas = c.env.STRIPE_WEBHOOK_SECRET_CONECTADAS ? 'ok' : 'pendiente';
+  // Escudo anti-robots: con la secreta sin la pública, la web y las apps no podrían entrar (F5).
+  piezas.turnstile = !c.env.TURNSTILE_SECRET_KEY
+    ? 'pendiente'
+    : c.env.TURNSTILE_SITE_KEY
+      ? 'ok'
+      : 'error';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
@@ -248,6 +254,8 @@ app.get('/datos/publico', (c) =>
       whatsapp: c.env.WHATSAPP_SOPORTE ?? '',
       correoSoporte: 'support@tumbite.com',
       stripePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
+      // Clave pública del escudo anti-robots: vacía = apagado (F5).
+      turnstileSitio: c.env.TURNSTILE_SITE_KEY ?? '',
     },
     200,
     {

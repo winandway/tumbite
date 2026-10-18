@@ -662,3 +662,11 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se hizo:** `reloj.ts` → `HORAS_ERROR_GITHUB = 24` (de 6 a 24 h «atrasado», pasado un día «error»); `canario.ts` → `alertarCanario` manda UN correo a `ADMIN_CORREOS` cuando una pieza pasa a error y otro al recuperarse (estado anterior en `alertas_canario`); `/datos/salud` lo llama al final; `.github/workflows/canario.yml` consulta la salud cada 30 min y falla (GitHub avisa) si producción no responde 200.
 - **Pruebas:** `reloj.test.ts` (GitHub: 25 h → error), `canario.test.ts` (2).
 - **Qué NO tocar:** el aviso es por cambio de color, nunca por consulta; el vigía de GitHub no reemplaza al correo del servidor (los dos juntos).
+
+## C-TURNSTILE-APPS: el escudo anti-robots viaja desde la web y las tres apps (F5, 18 oct 2026)
+
+- **Qué faltaba:** el servidor exigía el pase de Turnstile al entrar y registrarse si `TURNSTILE_SECRET_KEY` estaba puesta, pero ni la web ni las apps lo mandaban: configurar la llave habría dejado a todo el mundo afuera (403).
+- **Qué se hizo:** el servidor publica la clave pública en `/datos/publico` (`turnstileSitio`, variable `TURNSTILE_SITE_KEY`) y el canario `turnstile` se pone en error si hay secreta sin pública. Web: `apps/panel/src/panel/Turnstile.tsx` pinta el widget y deja el pase en `window.tumbitePase` (que `api.ts` ya mandaba); `Acceso.tsx` lo pinta y lo reinicia tras un 403. Apps: `packages/movil/src/Turnstile.tsx` abre `/turnstile.html` (en `apps/panel/public`) en una vista web (`react-native-webview`) y recibe el pase por `postMessage`; `sesion.tsx` lo manda con `pase: paseTurnstile`; `Acceso.tsx` lo pinta y lo olvida tras un 403. Sin clave pública no se pinta nada y el servidor no la exige.
+- **Pruebas:** `apps/servidor/src/turnstileApps.test.ts` (3), `apps/panel/src/panel/Turnstile.test.tsx` (2).
+- **Cómo se comprueba:** con las dos llaves en el sitio de pruebas, la pantalla de entrar muestra el recuadro de Cloudflare y se entra normal; sin llaves, nada cambia.
+- **Qué NO tocar:** las dos llaves van juntas (👤 Richard, PENDIENTES); el dominio `tumbite.com` (y `staging.tumbite.com`) tiene que estar en la lista de dominios del widget en Cloudflare, si no el widget falla en las apps.
