@@ -5,7 +5,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Bloque 0 — Plan maestro
 
-- [ ] 0.1 Escribir docs/PLAN-MAESTRO-FASE-2.md: los 67 puntos + F5–F20 con prioridad, condición de lanzamiento, dependencias, responsable, evidencia, criterio de aceptación y estado; lista de lanzamiento unificada (MVP + recomendación final, sin elegir la corta en silencio).
+- [x] 0.1 Escribir docs/PLAN-MAESTRO-FASE-2.md: los 67 puntos + F5–F20 con prioridad, condición de lanzamiento, dependencias, responsable, evidencia, criterio de aceptación y estado; lista de lanzamiento unificada (MVP + recomendación final, sin elegir la corta en silencio).
 - [x] 0.2 Lanzar la investigación oficial de pagos: Colombia (Wompi, PSE, Nequi, pagos a terceros), Venezuela (Pago Móvil, APIs bancarias C2P/P2C, liquidaciones), Stripe internacional (cuenta de EE.UU. y cuentas conectadas en CO/VE/MX); fichas en docs/investigaciones-rea/.
 
 ## Bloque A — Dinero, acceso, seguridad y controles operativos (EE.UU. se conserva)
@@ -33,7 +33,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] B.5 Cuentas del repartidor: alta con nombre del beneficiario, verificación (manual identificada como «confirmación del repartidor» hasta tener API), historial de cambios protegido, disputa.
 - [x] B.6 Recargas y puntos de venta: puntos con fondo prepago, códigos impredecibles, canje atómico e idempotente, límite de intentos, anulación, registro auditable, separación por país/moneda.
 - [ ] B.7 Conectores por proveedor y país (interfaz común, implementaciones simuladas con pruebas): Stripe US (existente), Wompi CO (candidato), Pago Móvil VE (candidato); nada real sin contrato.
-- [ ] B.8 Contabilidad y control: reconstrucción por pedido (cliente pagó / cada parte recibió / Tumbite ganó / pendiente), ajustes compensatorios con autor, conciliación por país, canarios.
+- [x] B.8 Contabilidad y control: reconstrucción por pedido (cliente pagó / cada parte recibió / Tumbite ganó / pendiente), ajustes compensatorios con autor, conciliación por país, canarios.
 - [x] B.9 Decisiones de Richard listadas en docs/DECISIONES-RICHARD-FASE-2.md (comisiones, remuneración de puntos, límites, monedas, pérdidas, reembolsos, activación de retiros).
 
 ## Bloque C — Recorrido completo de cliente, restaurante y repartidor
@@ -49,18 +49,18 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 - [x] D.1 Verificaciones: aviso al equipo y paginación; pantalla de salud; prueba de restauración de respaldo.
 - [x] D.2 F17 y web: ciudades desde el servidor; textos ajustados (planes, soporte local, música en vivo a «lo que viene»); un buzón público.
-- [ ] D.3 Cuentas externas (👤): documentar exactamente qué falta y qué destranca cada una; F12 projectId al tener Expo.
+- [x] D.3 Cuentas externas (👤): documentar exactamente qué falta y qué destranca cada una; F12 projectId al tener Expo.
 
 ## Bloque E — Pruebas integrales, piloto y tiendas
 
-- [ ] E.1 Pruebas de concurrencia, reintentos y reversión de B (canje doble, cobro doble, reserva simultánea).
+- [x] E.1 Pruebas de concurrencia, reintentos y reversión de B (canje doble, cobro doble, reserva simultánea).
 - [ ] E.2 Recorrido visual en celular es/en de todo lo nuevo; capturas al recorrido y Docs/web.
 - [ ] E.3 Piloto en calle (👤) y operaciones reales autorizadas (👤), evidencias en VERIFICAR-PAGOS.
 - [ ] E.4 Fichas de tiendas con capturas del recorrido (al final).
 
 ## Bloque F — Ampliaciones posteriores (puntos 36–67 de la auditoría, se conservan en el plan maestro)
 
-- [ ] F.1 Mantener la sección «después del MVP» del plan maestro con todos los puntos.
+- [x] F.1 Mantener la sección «después del MVP» del plan maestro con todos los puntos.
 
 ## Cierre
 

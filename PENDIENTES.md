@@ -2,39 +2,16 @@
 
 👤 = depende de Richard. Ordenado por importancia.
 
-## La fila de la IA — lista MVP de la auditoría final (18 oct 2026)
+## La fila de la IA — Fase 2 (18 oct 2026)
 
-Orden y detalle en `docs/AUDITORIA-FINAL-2026-10-18.md`, sección 4. Se ejecuta en fila, cada punto con prueba en rojo, staging y producción por el flujo permanente.
+Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o en la rama lista para publicar): F1–F8, F10, F11, F13, F14, F16, F19, F21; puntos 7, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 26, 27, 28, 32, 33, 34; bloque B (libro, prepago, cobro directo, cuentas del repartidor, recargas); impuesto, devoluciones y disputas; pantallas del cobro directo y guías.
 
-- [x] F1 ficha del pedido del superadmin; F2 anclas de la web; F3 Waze y Apple Pay en Docs; F4 pantallas reales en la web; F21 VERIFICAR-PAGOS (publicados el 18 oct).
-- [ ] 1. F6, F7, F8: total del carrito al recoger, cambio de dirección contra Stripe, recálculo sin plato con recogida.
-- [ ] 2. F10: webhook de cuentas conectadas de Stripe (activación de pagos y abonos fallidos).
-- [ ] 3. Prueba completa del circuito de pagos en staging con Stripe de prueba (S11 incluida), escrita en VERIFICAR-PAGOS.
-- [ ] 5. F19: tope de intentos del PIN y límite de entrada persistente.
-- [ ] 6. F11: canario rojo con reloj atrasado y alerta por correo.
-- [ ] 7. Superadmin: liquidaciones en revisión, abonos fallidos, historial de conciliación, interruptor de retiros.
-- [ ] 9. F5: Turnstile en las tres apps.
-- [ ] 10. F16: idioma y versión de la app al servidor; «actualiza la app».
-- [ ] 12. Pestaña «Pedidos» real con historial, recibo y repetir pedido (F15).
-- [ ] 13. Favoritos reales.
-- [ ] 14. Direcciones guardadas con instrucciones.
-- [ ] 15. Cupones y promociones reales.
-- [ ] 16. Comentario en la calificación y queja guiada con reembolso parcial.
-- [ ] 18. F13 y F14: «recibiendo pedidos» real, ítem de cobro, aviso al aprobar.
-- [ ] 19. Reseñas con respuesta del dueño.
-- [ ] 20. Reordenar platos; festivos.
-- [ ] 21. Varios usuarios por restaurante con roles.
-- [ ] 22. Correo al restaurante al aprobar, pausar o rechazar.
-- [ ] 23. GPS en segundo plano y navegación.
-- [ ] 24. Verificación de edad y firma en la entrega.
-- [ ] 26. Superadmin: cancelar, devolver, reasignar, buscar cerrados, suspender cuentas.
-- [ ] 27. Aviso al equipo al llegar una verificación; paginación.
-- [ ] 28. Pantalla de salud y prueba de restauración de respaldo.
-- [ ] 32. F17: Miami y ciudades desde el servidor.
-- [ ] 33. Texto de la web ajustado a lo que existe (planes, soporte local, música en vivo a «Lo que viene»).
-- [ ] 34. Un solo buzón público (o confirmar los tres).
-- [ ] 35. Fichas de App Store y Google Play con capturas del recorrido (al final).
-- Después del MVP: lista hasta la terminación final (sección 5 de la auditoría, puntos 36 a 67).
+- [ ] B.7 Conectores reales por país (Wompi/dLocal, pago móvil): solo con contrato y decisión de Richard.
+- [ ] 11. Cancelado tras la compra con foto del ticket (decisión de quién absorbe pendiente).
+- [ ] Panel del superadmin para países, puntos de venta y libro (hoy solo API).
+- [ ] E.2 Recorrido visual en celular de lo nuevo y capturas (necesita un país encendido en staging y Expo).
+- [ ] 35 / E.4 Fichas de App Store y Google Play con capturas del recorrido (al final).
+- Después del MVP: puntos 36 a 67 (sección F del plan maestro).
 
 ## 👤 Lo que solo puede hacer Richard
 
