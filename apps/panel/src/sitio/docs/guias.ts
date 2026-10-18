@@ -62,6 +62,99 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'my-orders-and-reorder',
+        titulo: 'Tus pedidos: historial, recibo y repetir',
+        resumen:
+          'En la pestaña Pedidos ves cada pedido con su estado y total, abres el recibo completo y vuelves a pedir lo mismo con un toque.',
+        explicacion: [
+          'La pestaña Pedidos (abajo, la segunda) lista todos tus pedidos, del más reciente al más viejo, con la fecha, el estado y el total. Los que van en curso dicen «En curso».',
+          '«Ver pedido y recibo» abre el pedido con el desglose: comida, envío, servicio, impuesto (si aplica en tu ciudad), propina y total, además del seguimiento y la calificación.',
+          '«Repetir pedido» arma otra vez tu carrito con los mismos platos y cantidades. Si alguno ya no está en el menú, te lo decimos y ponemos los que sí.',
+          'Si tenías otro carrito a medias, repetir lo reemplaza.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Dónde veo mis pedidos anteriores?',
+          '¿Cómo vuelvo a pedir lo mismo?',
+          '¿Dónde está el recibo?',
+        ],
+        pasos: [
+          'Toca Pedidos en la barra de abajo.',
+          'Toca «Ver pedido y recibo» o «Repetir pedido».',
+          'Si repites, revisa el carrito y paga como siempre.',
+        ],
+      },
+      {
+        id: 'favorites',
+        titulo: 'Favoritos: guarda tus restaurantes',
+        resumen:
+          'Toca el corazón de un restaurante para guardarlo en Favoritos y encontrarlo al instante la próxima vez.',
+        explicacion: [
+          'En la lista de restaurantes cada tarjeta tiene un corazón. Tocarlo guarda el restaurante; tocarlo otra vez lo quita.',
+          'La pestaña Favoritos (abajo, la tercera) muestra tus guardados con su tipo de comida y si está abierto ahora. Toca uno para ver su menú.',
+          'Tus favoritos se guardan en tu cuenta: los ves en cualquier celular donde entres.',
+        ],
+        capturas: [],
+        preguntas: ['¿Cómo guardo un restaurante?', '¿Dónde están mis favoritos?'],
+        pasos: [
+          'Toca el corazón en la tarjeta del restaurante.',
+          'Ábrelos desde la pestaña Favoritos.',
+        ],
+      },
+      {
+        id: 'saved-addresses',
+        titulo: 'Direcciones guardadas e instrucciones de entrega',
+        resumen:
+          'Guarda tu casa, tu trabajo o donde pidas seguido, con las instrucciones para el repartidor, y elígelas con un toque en el carrito.',
+        explicacion: [
+          'En el carrito, debajo de «Dirección», aparecen tus direcciones guardadas como botones (Casa, Trabajo…). Tocar una rellena la dirección, el pin del mapa, las instrucciones y cómo prefieres recibir.',
+          'Para guardar una nueva, enciende «Guardar esta dirección para la próxima» antes de pagar y ponle un nombre. Las instrucciones que escribas en «Notas» (portón, piso, timbre) se guardan con ella.',
+          'Puedes tener hasta diez. La misma dirección no se duplica: se actualiza.',
+        ],
+        capturas: [],
+        preguntas: ['¿Cómo guardo mi dirección?', '¿Puedo poner instrucciones para el repartidor?'],
+        pasos: [
+          'Escribe la dirección y las notas en el carrito.',
+          'Enciende «Guardar esta dirección para la próxima» y ponle nombre.',
+          'La próxima vez, tócala en «Tus direcciones».',
+        ],
+      },
+      {
+        id: 'coupons',
+        titulo: 'Cupones y promociones',
+        resumen:
+          'Escribe un código en el carrito y el descuento se aplica antes de pagar. Las promociones del momento salen en «Ofertas del día» del inicio.',
+        explicacion: [
+          'En el carrito, en «Cupón o código promocional», escribe el código y toca «Aplicar». Si vale, verás «Cupón aplicado» y el descuento en el desglose; si no, te decimos por qué (venció, es de otro restaurante, no llegas al mínimo, ya lo usaste).',
+          'Hay cupones de monto fijo, de porcentaje sobre la comida y de envío gratis. Algunos son solo para tu primer pedido o para un restaurante.',
+          'El descuento nunca sale del restaurante ni del repartidor: lo pone Tumbite.',
+        ],
+        capturas: [],
+        preguntas: ['¿Dónde pongo un cupón?', '¿Por qué no me acepta el código?'],
+        pasos: [
+          'Escribe el código en el carrito y toca «Aplicar».',
+          'Revisa el descuento en el desglose y paga.',
+        ],
+      },
+      {
+        id: 'report-a-problem',
+        titulo: 'Reportar un problema con tu pedido',
+        resumen:
+          'Faltó algo, llegó frío, llegó tarde: dinos qué pasó con dos toques. Si faltó un plato, marcas cuál y, cuando está activado, se te devuelve solo ese valor.',
+        explicacion: [
+          'En el pedido, toca «Tengo un problema». Elige qué pasó: faltó algo, me llegó otro pedido, llegó frío o dañado, llegó muy tarde, problema con el repartidor u otra cosa.',
+          'Si faltó algo, marca los platos que no llegaron. Tumbite calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
+          'Tu reporte queda en una conversación privada con un enlace que te llega por correo.',
+        ],
+        capturas: [],
+        preguntas: ['Faltó un plato, ¿qué hago?', '¿Me devuelven el dinero si falta algo?'],
+        pasos: [
+          'Abre el pedido y toca «Tengo un problema».',
+          'Elige el motivo y, si faltó algo, marca los platos.',
+          'Escribe lo que quieras agregar y envía.',
+        ],
+      },
+      {
         id: 'pay-on-delivery',
         titulo: 'Pagar al recibir: efectivo o transferencia al repartidor',
         resumen:
@@ -593,6 +686,74 @@ const es: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'reviews-and-replies',
+        titulo: 'Reseñas de tus clientes y cómo responder',
+        resumen:
+          'En Reseñas ves lo que cada cliente calificó y comentó, y respondes en público. Tu respuesta la ve el cliente en su pedido.',
+        explicacion: [
+          'Entra a Reseñas en el menú del panel. Arriba ves tu promedio, cuántas reseñas tienes y cuántas respondiste. Cada reseña trae las estrellas, el comentario, el nombre de pila del cliente y el número del pedido.',
+          'Toca «Responder», escribe con calma y toca «Publicar respuesta». Se publica una sola vez y el cliente la ve en el detalle de ese pedido.',
+          'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
+          'Pueden responder el dueño y los managers; el staff solo las lee.',
+        ],
+        capturas: [],
+        preguntas: ['¿Dónde veo mis reseñas?', '¿Puedo responder a un cliente?'],
+        pasos: ['Menú del panel → Reseñas.', 'Toca «Responder» en la reseña y publica.'],
+      },
+      {
+        id: 'holidays-and-closures',
+        titulo: 'Festivos y cierres',
+        resumen:
+          'Marca los días que no abres (Navidad, vacaciones, obras) y ese día tu restaurante aparece cerrado aunque esté en tu horario.',
+        explicacion: [
+          'En Mi restaurante, debajo del horario, está «Festivos y cierres». Elige la fecha, escribe un motivo (solo lo ve tu equipo) y toca «Agregar cierre».',
+          'Ese día los clientes ven tu restaurante cerrado y no pueden pedir, sin que tengas que tocar el horario ni el botón de abrir. Al día siguiente vuelve solo.',
+          'Para quitar un cierre, toca «Quitar» en la lista.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Cómo cierro un día específico?',
+          '¿Tengo que cambiar el horario para un festivo?',
+        ],
+        pasos: ['Mi restaurante → Festivos y cierres.', 'Elige la fecha y agrega el cierre.'],
+      },
+      {
+        id: 'team-and-roles',
+        titulo: 'Tu equipo: managers y staff',
+        resumen:
+          'Agrega a las personas de tu restaurante con su propia cuenta y su rol. Cada una entra al panel y a la app sin compartir tu contraseña.',
+        explicacion: [
+          'En Equipo (menú del panel) el dueño agrega a alguien por su correo. La persona tiene que registrarse antes en el panel de Tumbite como restaurante, sin crear un restaurante propio.',
+          'Roles: el manager responde reseñas, ordena el menú y pone festivos; el staff atiende pedidos y el menú del día a día. Solo el dueño agrega o quita gente, cambia el plan y maneja el dinero.',
+          'Cada quien entra con su cuenta y ve el mismo restaurante. Para quitar a alguien, «Quitar del equipo».',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Puedo darle acceso a mi encargado sin mi contraseña?',
+          '¿Qué puede hacer cada rol?',
+        ],
+        pasos: [
+          'Pídele a la persona que se registre en el panel como restaurante.',
+          'Equipo → Agregar a alguien → su correo y el rol.',
+        ],
+      },
+      {
+        id: 'menu-order',
+        titulo: 'El orden de tu menú',
+        resumen:
+          'Decide en qué orden ve el cliente tus categorías y tus platos: con las flechas de subir y bajar en Menú.',
+        explicacion: [
+          'En Menú, arriba de la lista, está «Orden de las categorías»: súbelas o bájalas con las flechas. Así aparecen en la app.',
+          'Dentro de cada categoría, cada plato tiene sus flechas para moverlo arriba o abajo. Los cambios se guardan al instante.',
+        ],
+        capturas: [],
+        preguntas: ['¿Cómo pongo mis platos estrella primero?'],
+        pasos: [
+          'Menú → flechas de las categorías.',
+          'Flechas de cada plato dentro de su categoría.',
+        ],
+      },
+      {
         id: 'store-not-receiving-orders',
         titulo: '¿Por qué mi tienda aparece sin recibir pedidos?',
         resumen:
@@ -1098,6 +1259,47 @@ const es: SeccionDocs[] = [
     titulo: 'Para repartidores',
     icono: 'moto',
     guias: [
+      {
+        id: 'background-location',
+        titulo: 'Tu ubicación con la pantalla apagada',
+        resumen:
+          'Mientras estás conectado, Tumbite sigue mandando tu posición aunque bloquees el celular o abras el mapa: el cliente y el restaurante ven dónde vas sin que tengas que volver a la app.',
+        explicacion: [
+          'La primera vez que te conectes, el celular te pedirá permitir la ubicación «Siempre» (iPhone) o «Todo el tiempo» (Android). Es solo mientras estás conectado: al desconectarte se apaga.',
+          'En Android verás una notificación fija «Tumbite está activo» mientras estés conectado: es la señal de que tu posición se sigue mandando.',
+          'Si no das el permiso, la app sigue funcionando, pero solo manda tu posición con la pantalla abierta.',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Por qué me pide ubicación «Siempre»?',
+          '¿Por qué sale una notificación fija?',
+        ],
+        pasos: [
+          'Conéctate y acepta el permiso de ubicación siempre.',
+          'Al terminar, desconéctate: la notificación desaparece.',
+        ],
+      },
+      {
+        id: 'id-check-deliveries',
+        titulo: 'Entregas con verificación de edad',
+        resumen:
+          'Si el pedido lleva productos para mayores de 21, se entrega en mano, revisas el documento y anotas de qué documento se trata, sus últimos cuatro dígitos y el nombre de quien recibe.',
+        explicacion: [
+          'La app te avisa cuando un pedido tiene productos para mayores. No se puede dejar en la puerta ni en un lugar seguro: solo en mano.',
+          'Pide el documento, enciende «Revisé el documento», elige el tipo (licencia, pasaporte, otro), escribe sus últimos cuatro dígitos y el nombre de la persona como aparece en el documento. Eso queda en la evidencia de la entrega.',
+          'Si la persona es menor, no muestra documento o parece alterado, no entregues: usa «Ayuda con este pedido».',
+        ],
+        capturas: [],
+        preguntas: [
+          '¿Qué hago si el cliente no tiene documento?',
+          '¿Por qué me pide los últimos dígitos?',
+        ],
+        pasos: [
+          'Entrega en mano y pide el documento.',
+          'Marca el tipo, los últimos cuatro dígitos y el nombre.',
+          'Toca «Entregado en mano».',
+        ],
+      },
       {
         id: 'cash-orders-and-top-ups',
         titulo: 'Pedidos cobrados en mano y tu saldo para comisiones',
@@ -2120,6 +2322,99 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'my-orders-and-reorder',
+        titulo: 'Your orders: history, receipt and reorder',
+        resumen:
+          'In the Orders tab you see each order with its status and total, open the full receipt and order the same again with one tap.',
+        explicacion: [
+          'The Orders tab (bottom bar, second one) lists all your orders, newest first, with date, status and total. The ones in progress say “In progress”.',
+          '“See order and receipt” opens the order with the breakdown: food, delivery, service, tax (where it applies in your city), tip and total, plus tracking and rating.',
+          '“Reorder” builds your cart again with the same items and quantities. If any is no longer on the menu, we tell you and add the ones that are.',
+          'If you had another cart half done, reordering replaces it.',
+        ],
+        capturas: [],
+        preguntas: [
+          'Where do I see my past orders?',
+          'How do I order the same again?',
+          'Where is the receipt?',
+        ],
+        pasos: [
+          'Tap Orders in the bottom bar.',
+          'Tap “See order and receipt” or “Reorder”.',
+          'If you reorder, review the cart and pay as usual.',
+        ],
+      },
+      {
+        id: 'favorites',
+        titulo: 'Favorites: save your restaurants',
+        resumen:
+          'Tap a restaurant’s heart to save it to Favorites and find it instantly next time.',
+        explicacion: [
+          'In the restaurant list every card has a heart. Tapping it saves the restaurant; tapping again removes it.',
+          'The Favorites tab (bottom bar, third one) shows your saved ones with their type of food and whether they’re open now. Tap one to see its menu.',
+          'Your favorites are saved to your account: you see them on any phone you sign in to.',
+        ],
+        capturas: [],
+        preguntas: ['How do I save a restaurant?', 'Where are my favorites?'],
+        pasos: ['Tap the heart on the restaurant card.', 'Open them from the Favorites tab.'],
+      },
+      {
+        id: 'saved-addresses',
+        titulo: 'Saved addresses and delivery instructions',
+        resumen:
+          'Save home, work or wherever you order often, with instructions for the driver, and pick them with one tap in the cart.',
+        explicacion: [
+          'In the cart, under “Address”, your saved addresses show as buttons (Home, Work…). Tapping one fills in the address, the map pin, the instructions and how you prefer to receive.',
+          'To save a new one, turn on “Save this address for next time” before paying and give it a name. The instructions you write under “Notes” (gate, floor, doorbell) are saved with it.',
+          'You can keep up to ten. The same address isn’t duplicated: it’s updated.',
+        ],
+        capturas: [],
+        preguntas: ['How do I save my address?', 'Can I add instructions for the driver?'],
+        pasos: [
+          'Write the address and the notes in the cart.',
+          'Turn on “Save this address for next time” and name it.',
+          'Next time, tap it under “Your addresses”.',
+        ],
+      },
+      {
+        id: 'coupons',
+        titulo: 'Coupons and promotions',
+        resumen:
+          'Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.',
+        explicacion: [
+          'In the cart, under “Coupon or promo code”, enter the code and tap “Apply”. If it’s valid you’ll see “Coupon applied” and the discount in the breakdown; if not, we tell you why (expired, another restaurant, below the minimum, already used).',
+          'There are fixed-amount coupons, percentage-off-food coupons and free-delivery coupons. Some are only for your first order or for one restaurant.',
+          'The discount never comes out of the restaurant or the driver: Tumbite covers it.',
+        ],
+        capturas: [],
+        preguntas: ['Where do I enter a coupon?', 'Why isn’t my code accepted?'],
+        pasos: [
+          'Enter the code in the cart and tap “Apply”.',
+          'Check the discount in the breakdown and pay.',
+        ],
+      },
+      {
+        id: 'report-a-problem',
+        titulo: 'Reporting a problem with your order',
+        resumen:
+          'Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded.',
+        explicacion: [
+          'In the order, tap “I have a problem”. Choose what happened: something missing, wrong order, cold or damaged, very late, problem with the driver, or something else.',
+          'If something was missing, check the items that didn’t arrive. Tumbite calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
+          'Your report stays in a private conversation with a link that reaches you by email.',
+        ],
+        capturas: [],
+        preguntas: [
+          'An item was missing, what do I do?',
+          'Do I get a refund if something is missing?',
+        ],
+        pasos: [
+          'Open the order and tap “I have a problem”.',
+          'Choose the reason and, if something was missing, check the items.',
+          'Add anything you want and send.',
+        ],
+      },
+      {
         id: 'pay-on-delivery',
         titulo: 'Pay on delivery: cash or a transfer to the driver',
         resumen:
@@ -2646,6 +2941,68 @@ const en: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'reviews-and-replies',
+        titulo: 'Your customers’ reviews and how to reply',
+        resumen:
+          'Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.',
+        explicacion: [
+          'Open Reviews in the panel menu. At the top you see your average, how many reviews you have and how many you replied to. Each review shows the stars, the comment, the customer’s first name and the order number.',
+          'Tap “Reply”, write calmly and tap “Publish reply”. It’s published once and the customer sees it in that order’s details.',
+          'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
+          'The owner and managers can reply; staff can only read them.',
+        ],
+        capturas: [],
+        preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
+        pasos: ['Panel menu → Reviews.', 'Tap “Reply” on the review and publish.'],
+      },
+      {
+        id: 'holidays-and-closures',
+        titulo: 'Holidays and closures',
+        resumen:
+          'Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.',
+        explicacion: [
+          'Under My restaurant, below the schedule, there’s “Holidays and closures”. Pick the date, write a reason (only your team sees it) and tap “Add closure”.',
+          'That day customers see your restaurant closed and can’t order, without touching the schedule or the open switch. The next day it comes back on its own.',
+          'To remove a closure, tap “Remove” in the list.',
+        ],
+        capturas: [],
+        preguntas: [
+          'How do I close on a specific day?',
+          'Do I have to change the schedule for a holiday?',
+        ],
+        pasos: ['My restaurant → Holidays and closures.', 'Pick the date and add the closure.'],
+      },
+      {
+        id: 'team-and-roles',
+        titulo: 'Your team: managers and staff',
+        resumen:
+          'Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.',
+        explicacion: [
+          'Under Team (panel menu) the owner adds someone by email. The person must first sign up in the Tumbite panel as a restaurant, without creating their own restaurant.',
+          'Roles: a manager replies to reviews, reorders the menu and sets holidays; staff handles orders and the day-to-day menu. Only the owner adds or removes people, changes the plan and manages money.',
+          'Everyone signs in with their own account and sees the same restaurant. To remove someone, “Remove from team”.',
+        ],
+        capturas: [],
+        preguntas: ['Can I give my manager access without my password?', 'What can each role do?'],
+        pasos: [
+          'Ask the person to sign up in the panel as a restaurant.',
+          'Team → Add someone → their email and role.',
+        ],
+      },
+      {
+        id: 'menu-order',
+        titulo: 'Your menu order',
+        resumen:
+          'Decide the order customers see your categories and items: with the up and down arrows under Menu.',
+        explicacion: [
+          'Under Menu, above the list, there’s “Category order”: move them up or down with the arrows. That’s how they show in the app.',
+          'Within each category, every item has arrows to move it up or down. Changes save instantly.',
+        ],
+        capturas: [],
+        preguntas: ['How do I put my star dishes first?'],
+        pasos: ['Menu → category arrows.', 'Each item’s arrows within its category.'],
+      },
+      {
         id: 'store-not-receiving-orders',
         titulo: 'Why does my store show as not receiving orders?',
         resumen:
@@ -3150,6 +3507,41 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'background-location',
+        titulo: 'Your location with the screen off',
+        resumen:
+          'While you’re online, Tumbite keeps sending your position even if you lock the phone or open the map: the customer and the restaurant see where you are without you coming back to the app.',
+        explicacion: [
+          'The first time you go online, the phone asks you to allow location “Always” (iPhone) or “All the time” (Android). It’s only while you’re online: when you go offline it turns off.',
+          'On Android you’ll see a fixed notification “Tumbite is active” while you’re online: it’s the sign your position keeps being sent.',
+          'If you don’t grant it, the app still works, but only sends your position with the screen open.',
+        ],
+        capturas: [],
+        preguntas: ['Why does it ask for location “Always”?', 'Why is there a fixed notification?'],
+        pasos: [
+          'Go online and accept the always-on location permission.',
+          'When you finish, go offline: the notification goes away.',
+        ],
+      },
+      {
+        id: 'id-check-deliveries',
+        titulo: 'Deliveries with an age check',
+        resumen:
+          'If the order has items for people over 21, you hand it over in person, check the ID and note the ID type, its last four digits and the name of the person receiving.',
+        explicacion: [
+          'The app tells you when an order has age-restricted items. It can’t be left at the door or in a safe spot: hand delivery only.',
+          'Ask for the ID, turn on “I checked the ID”, choose the type (driver’s license, passport, other), enter its last four digits and the person’s name as on the ID. That stays in the delivery evidence.',
+          'If the person is underage, shows no ID or it looks altered, don’t deliver: use “Help with this order”.',
+        ],
+        capturas: [],
+        preguntas: ['What if the customer has no ID?', 'Why does it ask for the last digits?'],
+        pasos: [
+          'Hand it over in person and ask for the ID.',
+          'Mark the type, the last four digits and the name.',
+          'Tap “Handed to the customer”.',
+        ],
+      },
       {
         id: 'cash-orders-and-top-ups',
         titulo: 'Orders collected in person and your balance for fees',
