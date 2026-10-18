@@ -45,6 +45,30 @@ const T = {
     disputasAyuda:
       'La evidencia (foto de entrega, bitácora, chat) se responde en el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
     vence: 'Responder antes de',
+    paises: 'Países y cobro directo',
+    paisesAyuda:
+      'Interruptores del modelo internacional. Todo nace apagado: en Estados Unidos se cobra con tarjeta por Stripe. Las cifras comerciales (comisión, tope de efectivo, límites de recarga) son decisiones de Richard.',
+    pais: 'País',
+    efectivo: 'Efectivo al recibir',
+    transferencia: 'Transferencia al repartidor',
+    recargasPunto: 'Recargas en puntos de venta',
+    recargasStripe: 'Recargas con tarjeta',
+    comisionPais: 'Comisión por pedido (%; vacío = la del plan)',
+    cargoFijo: 'Cargo fijo por pedido',
+    topeEfectivo: 'Tope de efectivo sin conciliar (vacío = sin tope)',
+    guardarPais: 'Guardar país',
+    comisionesCobradas: 'Comisiones cobradas',
+    puntos: 'Puntos de venta de recargas',
+    puntosAyuda:
+      'Cada punto compra saldo a Tumbite por adelantado (el comprobante del pago queda escrito) y lo vende en códigos. Su dueño entra con su cuenta y emite los códigos.',
+    nombrePunto: 'Nombre del punto',
+    usuarioPunto: 'Correo del dueño del punto (cuenta ya registrada)',
+    crearPunto: 'Crear punto',
+    fondo: 'Fondo',
+    emitidos: 'Códigos emitidos',
+    fondear: 'Cargar fondo',
+    montoFondo: 'Monto',
+    comprobante: 'Comprobante del pago',
     quejas: 'Quejas con artículo faltante',
     quejasAyuda:
       'Si está encendido, cuando un cliente marca que faltó un plato en un pedido entregado y cobrado, se le devuelve solo el valor de esos platos (lo absorbe Tumbite) hasta el tope. Apagado, la queja llega al ticket con el monto propuesto.',
@@ -128,6 +152,30 @@ const T = {
     disputasAyuda:
       'Evidence (delivery photo, log, chat) is submitted in the Stripe dashboard → Payments → Disputes, before the due date.',
     vence: 'Respond by',
+    paises: 'Countries and direct payment',
+    paisesAyuda:
+      'Switches of the international model. Everything starts off: in the United States cards are charged through Stripe. The commercial figures (fee, cash cap, top-up limits) are Richard’s decisions.',
+    pais: 'Country',
+    efectivo: 'Cash on delivery',
+    transferencia: 'Transfer to the driver',
+    recargasPunto: 'Sales-point top-ups',
+    recargasStripe: 'Card top-ups',
+    comisionPais: 'Fee per order (%; empty = the plan’s)',
+    cargoFijo: 'Fixed charge per order',
+    topeEfectivo: 'Unsettled cash cap (empty = no cap)',
+    guardarPais: 'Save country',
+    comisionesCobradas: 'Fees collected',
+    puntos: 'Top-up sales points',
+    puntosAyuda:
+      'Each point buys balance from Tumbite in advance (the payment proof is recorded) and sells it as codes. Its owner signs in with their account and issues the codes.',
+    nombrePunto: 'Point name',
+    usuarioPunto: 'Email of the point’s owner (existing account)',
+    crearPunto: 'Create point',
+    fondo: 'Fund',
+    emitidos: 'Codes issued',
+    fondear: 'Add funds',
+    montoFondo: 'Amount',
+    comprobante: 'Payment proof',
     quejas: 'Complaints with missing items',
     quejasAyuda:
       'When on, if a customer marks a missing item on a delivered and charged order, the value of those items is refunded automatically (absorbed by Tumbite) up to the cap. When off, the complaint reaches the ticket with the proposed amount.',
@@ -227,6 +275,27 @@ type Cupon = {
   usos: number;
   descontado: number;
 };
+type ConfigPais = {
+  moneda: string;
+  decimales: number;
+  efectivoActivo: boolean;
+  transferenciaRepartidorActiva: boolean;
+  recargasPuntoVentaActivas: boolean;
+  recargasStripeActivas: boolean;
+  comisionPb: number | null;
+  cargoFijo: number;
+  topeEfectivoDiario: number | null;
+};
+type Punto = {
+  id: string;
+  nombre: string;
+  pais: string;
+  moneda: string;
+  usuarioId: string | null;
+  activo: boolean;
+  fondo: number;
+  emitidos: number;
+};
 type Conciliacion = {
   dia: string;
   pedidos: number;
@@ -288,6 +357,39 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const [quejas, setQuejas] = useState<{ reembolsoAuto: boolean; topeCentavos: number } | null>(
     null,
   );
+  // Modelo internacional: interruptores por país y puntos de venta (solo API hasta hoy).
+  const PAISES = ['US', 'CO', 'VE', 'MX'] as const;
+  const [paisElegido, setPaisElegido] = useState<(typeof PAISES)[number]>('US');
+  const [pais, setPais] = useState<ConfigPais | null>(null);
+  const [comisionesPais, setComisionesPais] = useState<number | null>(null);
+  const [puntos, setPuntos] = useState<Punto[] | null>(null);
+  const [nuevoPunto, setNuevoPunto] = useState({ nombre: '', correo: '' });
+  const [fondoPunto, setFondoPunto] = useState<
+    Record<string, { monto: string; comprobante: string }>
+  >({});
+  const [recargaPuntos, setRecargaPuntos] = useState(0);
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      const [c, k, p] = await Promise.all([
+        pedir<{ config: ConfigPais }>('GET', `/datos/admin/paises/${paisElegido}`).catch(
+          () => null,
+        ),
+        pedir<{ comisiones: number }>('GET', `/datos/admin/libro/comisiones/${paisElegido}`).catch(
+          () => null,
+        ),
+        pedir<{ puntos: Punto[] }>('GET', '/datos/admin/puntos-venta').catch(() => null),
+      ]);
+      if (!vivo) return;
+      setPais(c?.config ?? null);
+      setComisionesPais(k?.comisiones ?? null);
+      setPuntos(p?.puntos ?? []);
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [paisElegido, recargaPuntos]);
+  const dinero = (n: number) => (pais?.decimales === 0 ? String(n) : (n / 100).toFixed(2));
   const [base, setBase] = useState('');
   const [resultado, setResultado] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
@@ -508,6 +610,235 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
           </table>
         </div>
       ) : null}
+
+      <h2>{t.paises}</h2>
+      <p className="suave">{t.paisesAyuda}</p>
+      <div className="super-filtros" role="tablist">
+        {PAISES.map((p) => (
+          <button
+            key={p}
+            type="button"
+            role="tab"
+            aria-selected={paisElegido === p}
+            className={paisElegido === p ? 'activa' : undefined}
+            onClick={() => setPaisElegido(p)}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+      {pais ? (
+        <div className="estado" aria-label={t.pais}>
+          <span>
+            {paisElegido} · {pais.moneda}
+            {comisionesPais != null ? ` · ${t.comisionesCobradas}: ${dinero(comisionesPais)}` : ''}
+          </span>
+          {(
+            [
+              ['efectivoActivo', t.efectivo],
+              ['transferenciaRepartidorActiva', t.transferencia],
+              ['recargasPuntoVentaActivas', t.recargasPunto],
+              ['recargasStripeActivas', t.recargasStripe],
+            ] as const
+          ).map(([clave, etiqueta]) => (
+            <label key={clave}>
+              <input
+                type="checkbox"
+                checked={Boolean(new Map(Object.entries(pais)).get(clave))}
+                onChange={(ev) => setPais({ ...pais, [clave]: ev.target.checked })}
+              />{' '}
+              {etiqueta}
+            </label>
+          ))}
+          <label className="campo campo-num">
+            <span>{t.comisionPais}</span>
+            <input
+              inputMode="decimal"
+              value={pais.comisionPb == null ? '' : String(pais.comisionPb / 100)}
+              onChange={(ev) =>
+                setPais({
+                  ...pais,
+                  comisionPb:
+                    ev.target.value === ''
+                      ? null
+                      : Math.round(Number(ev.target.value.replace(',', '.')) * 100),
+                })
+              }
+              aria-label={t.comisionPais}
+            />
+          </label>
+          <label className="campo campo-num">
+            <span>{t.cargoFijo}</span>
+            <input
+              inputMode="decimal"
+              value={dinero(pais.cargoFijo)}
+              onChange={(ev) =>
+                setPais({
+                  ...pais,
+                  cargoFijo: Math.round(
+                    Number(ev.target.value.replace(',', '.') || '0') *
+                      (pais.decimales === 0 ? 1 : 100),
+                  ),
+                })
+              }
+              aria-label={t.cargoFijo}
+            />
+          </label>
+          <label className="campo campo-num">
+            <span>{t.topeEfectivo}</span>
+            <input
+              inputMode="decimal"
+              value={pais.topeEfectivoDiario == null ? '' : dinero(pais.topeEfectivoDiario)}
+              onChange={(ev) =>
+                setPais({
+                  ...pais,
+                  topeEfectivoDiario:
+                    ev.target.value === ''
+                      ? null
+                      : Math.round(
+                          Number(ev.target.value.replace(',', '.')) *
+                            (pais.decimales === 0 ? 1 : 100),
+                        ),
+                })
+              }
+              aria-label={t.topeEfectivo}
+            />
+          </label>
+          <button
+            type="button"
+            className="boton secundario"
+            onClick={() =>
+              void hacer(() => pedir('PUT', `/datos/admin/paises/${paisElegido}`, pais))
+            }
+          >
+            {t.guardarPais}
+          </button>
+        </div>
+      ) : null}
+      <h3>{t.puntos}</h3>
+      <p className="suave">{t.puntosAyuda}</p>
+      {puntos?.length ? (
+        <div className="tabla-ancha">
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>{t.nombrePunto}</th>
+                <th>{t.pais}</th>
+                <th>{t.fondo}</th>
+                <th>{t.emitidos}</th>
+                <th>{t.fondear}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {puntos.map((p) => {
+                const f = new Map(Object.entries(fondoPunto)).get(p.id) ?? {
+                  monto: '',
+                  comprobante: '',
+                };
+                return (
+                  <tr key={p.id}>
+                    <td>{p.nombre}</td>
+                    <td>
+                      {p.pais} · {p.moneda}
+                    </td>
+                    <td>{p.moneda === 'COP' ? String(p.fondo) : (p.fondo / 100).toFixed(2)}</td>
+                    <td>{p.emitidos}</td>
+                    <td>
+                      <input
+                        inputMode="decimal"
+                        placeholder={t.montoFondo}
+                        aria-label={`${t.montoFondo} ${p.nombre}`}
+                        value={f.monto}
+                        onChange={(ev) =>
+                          setFondoPunto({ ...fondoPunto, [p.id]: { ...f, monto: ev.target.value } })
+                        }
+                      />{' '}
+                      <input
+                        placeholder={t.comprobante}
+                        aria-label={`${t.comprobante} ${p.nombre}`}
+                        value={f.comprobante}
+                        onChange={(ev) =>
+                          setFondoPunto({
+                            ...fondoPunto,
+                            [p.id]: { ...f, comprobante: ev.target.value },
+                          })
+                        }
+                      />{' '}
+                      <button
+                        type="button"
+                        className="enlace"
+                        onClick={() =>
+                          void hacer(async () => {
+                            await pedir('POST', `/datos/admin/puntos-venta/${p.id}/fondo`, {
+                              monto: Math.round(
+                                Number(f.monto.replace(',', '.')) * (p.moneda === 'COP' ? 1 : 100),
+                              ),
+                              comprobante: f.comprobante,
+                            });
+                            setFondoPunto({
+                              ...fondoPunto,
+                              [p.id]: { monto: '', comprobante: '' },
+                            });
+                            setRecargaPuntos((n) => n + 1);
+                          })
+                        }
+                      >
+                        {t.fondear}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+      <form
+        className="dinero"
+        onSubmit={(ev) => {
+          ev.preventDefault();
+          void hacer(async () => {
+            const u = nuevoPunto.correo
+              ? await pedir<{ clientes: { id: string }[] }>(
+                  'GET',
+                  `/datos/admin/clientes?q=${encodeURIComponent(nuevoPunto.correo)}`,
+                ).catch(() => null)
+              : null;
+            await pedir('POST', '/datos/admin/puntos-venta', {
+              nombre: nuevoPunto.nombre,
+              pais: paisElegido,
+              usuarioId: u?.clientes?.[0]?.id ?? null,
+            });
+            setNuevoPunto({ nombre: '', correo: '' });
+            setRecargaPuntos((n) => n + 1);
+          });
+        }}
+      >
+        <fieldset>
+          <legend>{t.crearPunto}</legend>
+          <label className="campo">
+            <span>{t.nombrePunto}</span>
+            <input
+              value={nuevoPunto.nombre}
+              onChange={(ev) => setNuevoPunto({ ...nuevoPunto, nombre: ev.target.value })}
+              aria-label={t.nombrePunto}
+              required
+            />
+          </label>
+          <label className="campo">
+            <span>{t.usuarioPunto}</span>
+            <input
+              type="email"
+              value={nuevoPunto.correo}
+              onChange={(ev) => setNuevoPunto({ ...nuevoPunto, correo: ev.target.value })}
+              aria-label={t.usuarioPunto}
+            />
+          </label>
+        </fieldset>
+        <button type="submit" className="boton secundario">
+          {t.crearPunto}
+        </button>
+      </form>
 
       <h2>{t.quejas}</h2>
       <p className="suave">{t.quejasAyuda}</p>
