@@ -6,7 +6,7 @@ import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/c
 import { type Env, revisarEnv } from './env';
 import { usarStripeLocal } from './stripe';
 import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
-import { cabecerasSeguridad, limiteIntentos } from './seguridad';
+import { cabecerasSeguridad, limiteIntentos, limiteIntentosPersistente } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
 import { asegurarEsquema, columnasFaltantes, ultimoErrorEsquema } from './esquema';
@@ -30,6 +30,7 @@ import { avisos } from './rutas/avisos';
 import { repartidorGrandes } from './rutas/repartidorGrandes';
 import { interno, saludTiempoReal } from './rutas/interno';
 import { saludReloj } from './reloj';
+import { alertarCanario } from './canario';
 import { viajes } from './rutas/viajes';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
@@ -119,11 +120,11 @@ const limiteGeneral = limiteIntentos(120, 60_000);
 app.use('/datos/*', (c, next) =>
   c.req.path === '/datos/stripe/aviso' ? next() : limiteGeneral(c, next),
 );
-app.use('/datos/cuentas/entrar', limiteIntentos(10, 60_000));
-app.use('/datos/cuentas/registro', limiteIntentos(10, 60_000));
-app.use('/datos/cuentas/recuperar', limiteIntentos(5, 60_000));
+app.use('/datos/cuentas/entrar', limiteIntentosPersistente(10, 60_000));
+app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
+app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
-app.use('/datos/cuentas/restablecer', limiteIntentos(10, 60_000));
+app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/*', async (c, next) => {
   if (c.env.DB) await asegurarEsquema(c.env.DB);
@@ -218,6 +219,11 @@ app.get('/datos/salud', async (c) => {
   }
 
   const algunError = Object.values(piezas).includes('error');
+  // F11: un correo al equipo cuando una pieza pasa a rojo y otro cuando se recupera.
+  if (c.env.DB)
+    await alertarCanario(c.env, c.env.DB, piezas).catch((e: unknown) =>
+      console.error('salud: alertas del canario', e),
+    );
   return c.json(
     {
       servicio: MARCA.nombre,

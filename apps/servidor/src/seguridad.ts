@@ -53,3 +53,53 @@ export function limiteIntentos(maximo: number, ventanaMs: number): MiddlewareHan
     await next();
   };
 }
+
+/**
+ * Límite de intentos por IP y ruta guardado en la base: sobrevive a que el aislado se reinicie
+ * o a que haya varios aislados a la vez (F19 de la auditoría, C-INTENTOS). Sin base, cae al
+ * límite en memoria. La tabla se crea sola la primera vez (corre antes del esquema).
+ */
+export function limiteIntentosPersistente(
+  maximo: number,
+  ventanaMs: number,
+): MiddlewareHandler<{ Bindings: { DB?: D1Database } }> {
+  const enMemoria = limiteIntentos(maximo, ventanaMs);
+  const tablaLista = new WeakSet<D1Database>();
+  const segundos = Math.max(1, Math.round(ventanaMs / 1000));
+  return async (c, next) => {
+    const db = c.env.DB;
+    if (!db) return enMemoria(c, next);
+    if (!tablaLista.has(db)) {
+      await db
+        .prepare(
+          "CREATE TABLE IF NOT EXISTS intentos_limite (llave TEXT PRIMARY KEY, cuenta INTEGER NOT NULL DEFAULT 0, desde TEXT NOT NULL DEFAULT (datetime('now')))",
+        )
+        .run();
+      tablaLista.add(db);
+    }
+    const ip = c.req.header('cf-connecting-ip') ?? 'desconocida';
+    const llave = `${ip}:${c.req.path}`;
+    const vencida = `datetime('now', '-${segundos} seconds')`;
+    const fila = await db
+      .prepare(
+        `INSERT INTO intentos_limite (llave, cuenta, desde) VALUES (?, 1, datetime('now'))
+         ON CONFLICT(llave) DO UPDATE SET
+           cuenta = CASE WHEN desde < ${vencida} THEN 1 ELSE cuenta + 1 END,
+           desde = CASE WHEN desde < ${vencida} THEN datetime('now') ELSE desde END
+         RETURNING cuenta`,
+      )
+      .bind(llave)
+      .first<{ cuenta: number }>();
+    if (Number(fila?.cuenta ?? 0) > maximo)
+      return c.json(
+        {
+          error: enIdiomaDePeticion(
+            'Demasiados intentos. Espera un momento y vuelve a probar.',
+            idiomaDeLaPeticion((n) => c.req.header(n)),
+          ),
+        },
+        429,
+      );
+    await next();
+  };
+}

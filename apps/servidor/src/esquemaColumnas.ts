@@ -420,7 +420,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "pines_entrega": [
     "pedido_id",
     "pin",
-    "usado_en"
+    "usado_en",
+    "intentos"
+  ],
+  "alertas_canario": [
+    "pieza",
+    "estado",
+    "cambiado_en",
+    "avisado_en"
+  ],
+  "intentos_limite": [
+    "llave",
+    "cuenta",
+    "desde"
   ],
   "horarios_restaurante": [
     "restaurante_id",

@@ -13,6 +13,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],
+  // F19 (18 oct 2026): tope de intentos del PIN de entrega.
+  ['pines_entrega', 'intentos', 'INTEGER NOT NULL DEFAULT 0'],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

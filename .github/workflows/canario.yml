@@ -1,0 +1,19 @@
+name: canario
+# Vigía externo del canario de salud (F11 de la auditoría): si producción responde distinto de
+# 200 en /datos/salud, el trabajo falla y GitHub avisa por correo a la cuenta del repositorio.
+# El servidor, además, manda su propio correo al equipo al pasar una pieza a rojo.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  mirar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Producción
+        run: |
+          curl -fsS https://tumbite.com/datos/salud -o salud.json || { echo "::error::El canario de producción está en rojo"; cat salud.json 2>/dev/null; exit 1; }
+      - name: Pruebas
+        run: |
+          curl -fsS https://staging.tumbite.com/datos/salud -o /dev/null || echo "::warning::El canario de pruebas está en rojo"

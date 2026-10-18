@@ -14,8 +14,8 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] A.2 F8: calcularSinPlato respeta recogida (prueba en rojo).
 - [x] A.3 F7: cambio de dirección antes del pago actualiza Stripe; después del pago no da 500 (prueba en rojo).
 - [x] A.4 F10: webhook de cuentas conectadas de Stripe (segundo secreto, endpoint /datos/stripe/conectadas) con pruebas.
-- [ ] A.5 F19: tope de intentos del PIN de entrega; límite de intentos de entrada persistente en la base.
-- [ ] A.6 F11: canario rojo con reloj atrasado + alerta por correo al cambiar a rojo.
+- [x] A.5 F19: tope de intentos del PIN de entrega; límite de intentos de entrada persistente en la base.
+- [x] A.6 F11: canario rojo con reloj atrasado + alerta por correo al cambiar a rojo.
 - [ ] A.7 F5: Turnstile en las tres apps (pase en cabecera; se apaga solo si no hay llave).
 - [ ] A.8 F16: idioma y versión de la app al servidor; «actualiza la app» por versión mínima.
 - [ ] A.9 F13/F14: «recibiendo pedidos» real; ítem de cobro con pagos_activos; correo al dueño al aprobar/pausar/rechazar con motivo.

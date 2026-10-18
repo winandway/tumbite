@@ -1,3 +1,4 @@
+import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
@@ -1606,22 +1607,12 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     modo = 'mano';
     nota = d.nota;
     // Si el cliente pidió PIN, quien recibe se lo da al repartidor; sin PIN correcto no se entrega.
-    const pinFila = await db
-      .prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
-      .bind(id)
-      .first<{ pin: string }>();
-    if (pinFila) {
-      if (!d.pin || d.pin !== pinFila.pin)
-        throw new ErrorDatos(
-          'El PIN no es correcto. Pídeselo a quien recibe el pedido: está en su app.',
-          'pin',
-          409,
-        );
-      await db
-        .prepare("UPDATE pines_entrega SET usado_en = datetime('now') WHERE pedido_id = ?")
-        .bind(id)
-        .run();
-    }
+    await verificarPinEntrega(
+      db,
+      id,
+      d.pin,
+      'El PIN no es correcto. Pídeselo a quien recibe el pedido: está en su app.',
+    );
   }
   const casa = comoPunto(p.lat, p.lng);
   const metros = casa ? metrosEntre(donde, casa) : null;
@@ -2095,12 +2086,12 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
     .first<Record<string, unknown>>();
   if (!p)
     throw new ErrorDatos('Este pedido no es una recogida lista para entregar.', undefined, 409);
-  const pinFila = await db
-    .prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
-    .bind(id)
-    .first<{ pin: string }>();
-  if (pinFila && (!pin || pin !== pinFila.pin))
-    throw new ErrorDatos('El PIN no es correcto. Pídeselo al cliente: está en su app.', 'pin', 409);
+  await verificarPinEntrega(
+    db,
+    id,
+    pin,
+    'El PIN no es correcto. Pídeselo al cliente: está en su app.',
+  );
   if (lineasConEdad(p)) {
     // Mayoría de edad: el restaurante confirma que revisó el documento.
     const { mayorEdad } = await c.req

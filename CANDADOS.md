@@ -640,3 +640,25 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Prueba:** `apps/panel/src/panel/PanelApp.test.tsx` → «C-SUPER-PEDIDO-RUTA» renderiza `seccionAdmin('/orders/<id>')` y exige que pida `/datos/admin/pedidos/<id>` (en rojo antes del arreglo). `SuperPedido.test.tsx` fija que los enlaces usan `/orders/`.
 - **Cómo se comprueba:** superadmin → Pedidos en curso → tocar un pedido: se abre la bitácora.
 - **Qué NO tocar:** si se renombra la dirección, cambiar los dos lados (enlaces y `seccionAdmin`) y la prueba.
+
+## C-FALLOS-DINERO: F6, F7, F8 y F10 de la auditoría final (18 oct 2026)
+
+- **Qué se rompía:** (F6) la app del cliente calculaba el total CON envío al elegir «recoger en el local» y nunca comparaba su total con el del servidor; (F7) cambiar la dirección antes del pago no actualizaba el cobro en Stripe (el intento vive en `stripe_sesion` hasta el aviso) y después del pago un rechazo de Stripe salía como 500 con la dirección ya cambiada; (F8) al quitar un plato agotado, el recálculo ignoraba la recogida y devolvía menos; (F10) los avisos de las cuentas conectadas de Stripe (`account.updated`, `payout.failed`) vienen firmados con OTRO secreto y se rechazaban: `pagos_activos` no se activaba solo.
+- **Qué se hizo:** `cart.tsx` pasa `recogida` a `calcularPedido` y manda `totalEsperado`; `POST /datos/pedidos` responde 409 con `nuevoTotal` si no coincide; `calcularSinPlato` consulta `recogidas`; `PATCH /pedidos/:id/direccion` actualiza `stripe_pago ?? stripe_sesion` (solo `pi_`) dentro de `try` y responde 409 sin tocar el pedido si Stripe rechaza; el webhook acepta `STRIPE_WEBHOOK_SECRET` y `STRIPE_WEBHOOK_SECRET_CONECTADAS` (canario `webhookStripeConectadas`).
+- **Pruebas:** `apps/servidor/src/fallosDinero.test.ts` (7, todas en rojo primero).
+- **Cómo se comprueba:** en staging, carrito con «Recojo en el local»: el total no lleva envío y coincide con el que cobra Stripe; cambiar la dirección de un pedido sin pagar y pagar: Stripe cobra el total nuevo.
+- **Qué NO tocar:** el `totalEsperado` es opcional (apps viejas siguen pidiendo) pero la app siempre lo manda; el segundo secreto es obligatorio para que la activación de pagos funcione en real (👤 Richard, `VERIFICAR-PAGOS.md`).
+
+## C-INTENTOS: tope del PIN de entrega y límite de entrada persistente (F19, 18 oct 2026)
+
+- **Qué faltaba:** el PIN de entrega (en mano y recogida) se podía probar sin límite; el límite de intentos de entrar/registro/recuperar vivía en la memoria de un aislado (se reinicia solo y no se comparte).
+- **Qué se hizo:** `apps/servidor/src/pin.ts` → `verificarPinEntrega` (a la quinta equivocación, 423 y el PIN queda bloqueado; `pines_entrega.intentos` en COLUMNAS); `limiteIntentosPersistente` en `seguridad.ts` con la tabla `intentos_limite` (UPSERT con ventana) para entrar, registro, recuperar y restablecer.
+- **Pruebas:** `apps/servidor/src/seguridadIntentos.test.ts` (5; incluye que `operacion.ts` ya no compara el PIN a mano y que `app.ts` usa el persistente).
+- **Qué NO tocar:** no volver a `pin !== pinFila.pin` suelto; la tabla se crea sola en el middleware porque corre ANTES de `asegurarEsquema`.
+
+## C-CANARIO-AVISA: el canario se pone en rojo si el reloj lleva un día sin vuelta buena y avisa al equipo (F11, 18 oct 2026)
+
+- **Qué faltaba:** solo con el reloj de GitHub, «atrasado» nunca pasaba a error, y nadie recibía nada cuando una pieza de `/datos/salud` se ponía en rojo.
+- **Qué se hizo:** `reloj.ts` → `HORAS_ERROR_GITHUB = 24` (de 6 a 24 h «atrasado», pasado un día «error»); `canario.ts` → `alertarCanario` manda UN correo a `ADMIN_CORREOS` cuando una pieza pasa a error y otro al recuperarse (estado anterior en `alertas_canario`); `/datos/salud` lo llama al final; `.github/workflows/canario.yml` consulta la salud cada 30 min y falla (GitHub avisa) si producción no responde 200.
+- **Pruebas:** `reloj.test.ts` (GitHub: 25 h → error), `canario.test.ts` (2).
+- **Qué NO tocar:** el aviso es por cambio de color, nunca por consulta; el vigía de GitHub no reemplaza al correo del servidor (los dos juntos).

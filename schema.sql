@@ -557,7 +557,24 @@ CREATE INDEX IF NOT EXISTS liquidaciones_por_cobrar ON liquidaciones(estado, pro
 CREATE TABLE IF NOT EXISTS pines_entrega (
   pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
   pin TEXT NOT NULL,
-  usado_en TEXT
+  usado_en TEXT,
+  -- Equivocaciones acumuladas: a la quinta el PIN se bloquea (F19, C-INTENTOS).
+  intentos INTEGER NOT NULL DEFAULT 0
+);
+
+-- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).
+CREATE TABLE IF NOT EXISTS alertas_canario (
+  pieza TEXT PRIMARY KEY,
+  estado TEXT NOT NULL,
+  cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  avisado_en TEXT
+);
+
+-- Límite de intentos por IP y ruta que sobrevive al aislado (entrar, registro, recuperar).
+CREATE TABLE IF NOT EXISTS intentos_limite (
+  llave TEXT PRIMARY KEY,
+  cuenta INTEGER NOT NULL DEFAULT 0,
+  desde TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Horarios reales del restaurante: uno o más turnos por día (0 = domingo … 6 = sábado), en la

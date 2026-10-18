@@ -95,6 +95,8 @@ export const FALLIDAS_MAX = 3;
 export const VENTANA_FALLIDAS_MIN = 15;
 /** Solo con GitHub (impuntual): más de esto sin vuelta buena es «atrasado», no error. */
 export const HORAS_ATRASO_GITHUB = 6;
+/** Solo con GitHub: pasado un día entero sin vuelta buena, el canario SÍ se pone en rojo (F11). */
+export const HORAS_ERROR_GITHUB = 24;
 
 /**
  * Pieza «reloj» de la salud.
@@ -149,5 +151,6 @@ export async function saludReloj(
     if (viejaHace(MINUTOS_SIN_VUELTA_BUENA)) return 'error';
     return 'ok';
   }
+  if (viejaHace(HORAS_ERROR_GITHUB * 60)) return 'error';
   return viejaHace(HORAS_ATRASO_GITHUB * 60) ? 'atrasado' : 'ok';
 }

@@ -245,13 +245,16 @@ describe('reloj · pieza de la salud', () => {
     expect(await saludReloj(EXTERNO as never, m.DB)).toBe('ok');
   });
 
-  it('solo con GitHub (impuntual): ok con horas de espera, «atrasado» pasadas 6 horas, nunca error por eso', async () => {
+  it('solo con GitHub (impuntual): ok con horas de espera, «atrasado» pasadas 6 horas y ERROR pasado un día sin vuelta buena (F11)', async () => {
     const m = mundo();
     await vuelta(m, 'reloj:a', 180);
     expect(await saludReloj({} as never, m.DB)).toBe('ok');
     const n = mundo();
     await vuelta(n, 'reloj:b', 7 * 60);
     expect(await saludReloj({} as never, n.DB)).toBe('atrasado');
+    const o = mundo();
+    await vuelta(o, 'reloj:c', 25 * 60);
+    expect(await saludReloj({} as never, o.DB)).toBe('error');
   });
 
   it('la salud completa muestra la pieza y un fallo crítico la pone en 503', async () => {
