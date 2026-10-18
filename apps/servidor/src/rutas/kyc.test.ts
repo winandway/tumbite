@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { app } from '../app';
 import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 import { crearAlmacenPruebas } from '../pruebas/r2';
+import { usarTransporteCorreo } from '../correo';
 
 // Un JPEG mínimo (los primeros bytes bastan para que el servidor lo reconozca).
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -19,6 +20,31 @@ function conAlmacen(extra: Record<string, unknown> = {}) {
 }
 
 describe('KYC (C-KYC)', () => {
+  it('punto 27: al enviar la verificación, cada correo de ADMIN_CORREOS recibe el aviso (C-OPERACION-D1)', async () => {
+    const enviados: { para: string; asunto: string }[] = [];
+    usarTransporteCorreo(async (_e, init) => {
+      const c = JSON.parse(String(init.body)) as { to: { address: string }[]; subject: string };
+      enviados.push({ para: c.to[0]!.address, asunto: c.subject });
+      return new Response('{"success":true,"message_id":"m1"}', { status: 200 });
+    });
+    try {
+      const { m, subir } = conAlmacen({
+        YAD_TOKEN: 'x'.repeat(40),
+        ADMIN_CORREOS: 'equipo@ejemplo.com, otro@ejemplo.com',
+      });
+      const rep = await m.cuenta('repartidor', 'Rep Aviso');
+      for (const p of ['doc_frente', 'doc_reverso', 'selfie']) await subir(rep.token, p);
+      expect(
+        (await m.llamar('POST', '/datos/kyc/enviar', { docTipo: 'licencia' }, rep.token)).estado,
+      ).toBe(200);
+      const avisos = enviados.filter((x) => x.asunto.startsWith('Verificación enviada'));
+      expect(avisos.map((x) => x.para).sort()).toEqual(['equipo@ejemplo.com', 'otro@ejemplo.com']);
+      expect(avisos[0]!.asunto).toContain('Rep Aviso');
+    } finally {
+      usarTransporteCorreo(null);
+    }
+  });
+
   it('el repartidor sube documento y selfie a la carpeta privada, envía, y el admin aprueba', async () => {
     const { m, r2, subir } = conAlmacen();
     const rep = await m.cuenta('repartidor', 'Rep KYC');
