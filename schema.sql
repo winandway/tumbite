@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS pedidos (
   regalo_tipo TEXT,
   zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   total INTEGER NOT NULL,
+  -- Impuesto de ventas recaudado (dentro del total). 0 hasta que el contador fije la tasa.
+  impuesto INTEGER NOT NULL DEFAULT 0,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
   pago_repartidor INTEGER NOT NULL,
@@ -557,7 +559,52 @@ CREATE INDEX IF NOT EXISTS liquidaciones_por_cobrar ON liquidaciones(estado, pro
 CREATE TABLE IF NOT EXISTS pines_entrega (
   pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
   pin TEXT NOT NULL,
-  usado_en TEXT
+  usado_en TEXT,
+  -- Equivocaciones acumuladas: a la quinta el PIN se bloquea (F19, C-INTENTOS).
+  intentos INTEGER NOT NULL DEFAULT 0
+);
+
+-- Devoluciones DESPUÉS de entregar (queja atendida por soporte): reembolso parcial o total en
+-- Stripe con quién la asume. Auditoría final, punto A.12. Nunca se borra: cuadra la conciliación.
+CREATE TABLE IF NOT EXISTS devoluciones (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  monto INTEGER NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  cargar_a TEXT NOT NULL DEFAULT 'tumbite' CHECK (cargar_a IN ('tumbite', 'restaurante', 'repartidor')),
+  actor_id TEXT REFERENCES usuarios(id),
+  stripe_reembolso TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS devoluciones_pedido ON devoluciones(pedido_id);
+
+-- Disputas (contracargos) que Stripe avisa por webhook. La evidencia se manda desde el panel de
+-- Stripe; aquí se ve cuáles hay, cuánto y hasta cuándo responder.
+CREATE TABLE IF NOT EXISTS disputas (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT REFERENCES pedidos(id),
+  stripe_pago TEXT,
+  monto INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT '',
+  vence_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).
+CREATE TABLE IF NOT EXISTS alertas_canario (
+  pieza TEXT PRIMARY KEY,
+  estado TEXT NOT NULL,
+  cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  avisado_en TEXT
+);
+
+-- Límite de intentos por IP y ruta que sobrevive al aislado (entrar, registro, recuperar).
+CREATE TABLE IF NOT EXISTS intentos_limite (
+  llave TEXT PRIMARY KEY,
+  cuenta INTEGER NOT NULL DEFAULT 0,
+  desde TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Horarios reales del restaurante: uno o más turnos por día (0 = domingo … 6 = sábado), en la
@@ -681,7 +728,9 @@ CREATE TABLE IF NOT EXISTS abonos_fallidos (
   usuario_id TEXT REFERENCES usuarios(id),
   stripe_cuenta TEXT NOT NULL,
   motivo TEXT NOT NULL DEFAULT '',
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Cuándo lo dio por resuelto un administrador desde el panel (superadmin → Dinero).
+  resuelto_en TEXT
 );
 
 -- Antecedentes con proveedor (Checkr): el repartidor recibe una invitación de Checkr, llena sus
