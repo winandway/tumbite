@@ -105,7 +105,7 @@ const CASA = { latitude: 25.7725, longitude: -80.187 };
 
 for (const idioma of ['en', 'es'] as const) {
   test(`recorrido completo de un pedido (${idioma})`, async ({ browser, request }) => {
-    test.setTimeout(STAGING ? 900_000 : 360_000);
+    test.setTimeout(STAGING ? 900_000 : 600_000);
     const L = TEXTOS[idioma];
     const id = `${idioma}${Date.now().toString(36)}`;
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
@@ -1054,7 +1054,14 @@ for (const idioma of ['en', 'es'] as const) {
       `${idioma === 'en' ? 'Save to favorites' : 'Guardar en favoritos'}: ${restaurante}`,
     );
     await expect(corazon).toBeVisible({ timeout: 20_000 });
-    await corazon.click();
+    // El corazón cambia al instante; se espera la respuesta del servidor antes de salir de la
+    // pantalla (en staging, salir enseguida cortaba la petición y el favorito no se guardaba).
+    await Promise.all([
+      cli.waitForResponse(
+        (r) => r.url().includes('/datos/favoritos/') && r.request().method() === 'PUT' && r.ok(),
+      ),
+      corazon.click(),
+    ]);
     await expect(
       cli.getByLabel(
         `${idioma === 'en' ? 'Remove from favorites' : 'Quitar de favoritos'}: ${restaurante}`,
@@ -1204,6 +1211,35 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.goto(`/app/order/${rechazado.pedidoId}`);
     await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-rechazado');
+
+    // 14b. Soporte cancela un pedido YA ACEPTADO (auditoría, punto 3): la autorización de la
+    //      tarjeta se anula en Stripe (no se cobra nada) y el pedido queda cancelado.
+    const aceptadoYCancelado = await pedirYPagar([plato.limonada]);
+    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel
+      .getByRole('button', { name: `${L.aceptar} · 10` })
+      .first()
+      .click();
+    await expect
+      .poll(
+        () =>
+          sql(`SELECT estado FROM pedidos WHERE id = '${aceptadoYCancelado.pedidoId}'`)[0]?.estado,
+        { timeout: 20_000 },
+      )
+      .toBe('aceptado');
+    expect(
+      (
+        await request.post(`/datos/admin/pedidos/${aceptadoYCancelado.pedidoId}/cancelar`, {
+          headers: auth,
+          data: { motivo: 'recorrido: soporte cancela un pedido aceptado' },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      sql(
+        `SELECT p.estado, c.cancelado_en IS NOT NULL AS anulado FROM pedidos p JOIN cobros c ON c.pedido_id = p.id WHERE p.id = '${aceptadoYCancelado.pedidoId}'`,
+      )[0],
+    ).toMatchObject({ estado: 'cancelado', anulado: 1 });
 
     // 14b. Algo agotado: el restaurante marca el plato que no tiene; el cliente lo quita y se le
     //      devuelve esa parte; el resto del pedido sigue.
@@ -1411,6 +1447,162 @@ for (const idioma of ['en', 'es'] as const) {
     // Nadie más lo toma: el restaurante lo rechaza y el cliente recibe su dinero. Así no queda
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
+
+    // 18. Cobro directo de punta a punta hasta la compra en el local (C-COBRO-DIRECTO-LOCAL), solo en
+    //     esta computadora: el país se enciende un momento y vuelve a quedar como estaba.
+    if (!STAGING) {
+      const pais = (await (
+        await request.get('/datos/admin/paises/US', { headers: auth })
+      ).json()) as { config: Record<string, unknown> };
+      const ponerPais = async (on: boolean) =>
+        expect(
+          (
+            await request.put('/datos/admin/paises/US', {
+              headers: auth,
+              data: { ...pais.config, efectivoActivo: on, recargasPuntoVentaActivas: on },
+            })
+          ).ok(),
+        ).toBe(true);
+      await ponerPais(true);
+      try {
+        const paseDe = (pg: Page) =>
+          pg.evaluate(() => localStorage.getItem('tumbite.sesion') ?? '');
+        const paseCli = await paseDe(cli);
+        const paseRep = await paseDe(rep);
+        // Saldo para comisiones: un punto de venta (su dueño, el cliente) emite un código y el
+        // repartidor lo canjea. Es saldo para comisiones, NO dinero para comprar la comida.
+        const idCli = String(
+          sql(`SELECT id FROM usuarios WHERE correo = '${correo('cliente')}'`)[0]?.id,
+        );
+        const punto = (await (
+          await request.post('/datos/admin/puntos-venta', {
+            headers: auth,
+            data: { nombre: `Punto ${id.slice(-4)}`, pais: 'US', usuarioId: idCli },
+          })
+        ).json()) as { punto: { id: string } };
+        await request.post(`/datos/admin/puntos-venta/${punto.punto.id}/fondo`, {
+          headers: auth,
+          data: { monto: 5000, comprobante: 'recorrido' },
+        });
+        const codigo = (await (
+          await request.post('/datos/punto-venta/codigos', {
+            headers: { authorization: `Bearer ${paseCli}` },
+            data: { monto: 2000 },
+          })
+        ).json()) as { codigo: string };
+        expect(
+          (
+            await request.post('/datos/repartidor/recargar', {
+              headers: { authorization: `Bearer ${paseRep}` },
+              data: { codigo: codigo.codigo },
+            })
+          ).ok(),
+        ).toBe(true);
+        // El cliente pide y elige «Efectivo al recibir».
+        await cli.goto('/app/');
+        await cli.getByText(restaurante, { exact: true }).click();
+        await cli
+          .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
+          .filter({ visible: true })
+          .click();
+        await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
+        await cli.getByRole('radio', { name: L.enPuerta }).click();
+        await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+        await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();
+        const [resp] = await Promise.all([
+          cli.waitForResponse(
+            (r) => r.url().endsWith('/datos/pedidos') && r.request().method() === 'POST',
+          ),
+          cli
+            .getByText(/^(Order and pay on delivery|Pedir y pagar al recibir) · \$/)
+            .filter({ visible: true })
+            .click(),
+        ]);
+        expect(resp.status()).toBe(201);
+        const directo = (await resp.json()) as { pedidoId: string; directo: boolean };
+        expect(directo.directo).toBe(true);
+        // El restaurante acepta; el repartidor (con saldo) recibe la oferta y la acepta.
+        await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+        await panel
+          .getByRole('button', { name: `${L.aceptar} · 10` })
+          .first()
+          .click();
+        await expect
+          .poll(
+            () => sql(`SELECT estado FROM pedidos WHERE id = '${directo.pedidoId}'`)[0]?.estado,
+            {
+              timeout: 20_000,
+            },
+          )
+          .toBe('aceptado');
+        sql(
+          `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${directo.pedidoId}'`,
+        );
+        await rep.goto('/driver/');
+        await rep
+          .getByRole('switch')
+          .or(rep.getByRole('button', { name: L.conectarme }))
+          .first()
+          .click();
+        await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
+          timeout: 30_000,
+        });
+        await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
+        // El restaurante ve cuánto le cobra al repartidor en el mostrador (su app, en celular).
+        const rappCtx = await nuevoContexto('celular');
+        const rapp = await rappCtx.newPage();
+        await rapp.goto('/restaurant/');
+        await rapp.getByLabel(L.correo).fill(correo('restaurante'));
+        await rapp.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await rapp.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
+        const filaDirecta = rapp.getByRole('button', {
+          name: `#${directo.pedidoId.slice(0, 4).toUpperCase()}`,
+        });
+        await expect(async () => {
+          if (!(await rapp.getByTestId('cobro-al-repartidor').count()))
+            await filaDirecta.first().click();
+          await expect(rapp.getByTestId('cobro-al-repartidor').first()).toBeVisible({
+            timeout: 3_000,
+          });
+        }).toPass({ timeout: 30_000 });
+        await foto(rapp, 'restapp-cobro-repartidor');
+        await rappCtx.close();
+        // Listo: el repartidor paga la comida en el mostrador y lo registra.
+        await panel.getByRole('button', { name: L.listo }).first().click();
+        const bloque = rep.getByTestId('pago-en-local');
+        await expect(bloque).toBeVisible({ timeout: 30_000 });
+        await bloque.scrollIntoViewIfNeeded();
+        await foto(rep, 'pago-local-repartidor');
+        await rep.getByRole('button', { name: /^(Record the payment|Registrar el pago)$/ }).click();
+        await expect(rep.getByText(/^(Payment recorded\.|Pago registrado\.)$/)).toBeVisible({
+          timeout: 20_000,
+        });
+        const fila = sql(
+          `SELECT monto_pagado, metodo, diferencia_pago FROM pagos_local WHERE pedido_id = '${directo.pedidoId}'`,
+        )[0];
+        expect(fila).toMatchObject({ metodo: 'efectivo', diferencia_pago: 0 });
+        // Soporte lo cancela después de la compra: la comida comprada queda escrita como pérdida
+        // pendiente de decisión (nunca se pierde el rastro de ese dinero) y el pedido no queda colgado.
+        await request.post(`/datos/admin/pedidos/${directo.pedidoId}/cancelar`, {
+          headers: auth,
+          data: { motivo: 'recorrido: cierre del pedido directo' },
+        });
+        expect(
+          sql(
+            `SELECT COUNT(*) AS n FROM libro WHERE pedido_id = '${directo.pedidoId}' AND concepto = 'comida_comprada_sin_entregar'`,
+          )[0]?.n,
+        ).toBe(1);
+        // Ya libre, el repartidor se desconecta (así no se lleva ofertas de la corrida siguiente).
+        await rep.goto('/driver/');
+        await rep
+          .getByText(L.desconectarme)
+          .filter({ visible: true })
+          .click({ timeout: 20_000 })
+          .catch(() => undefined);
+      } finally {
+        await ponerPais(false);
+      }
+    }
 
     // Para las tiendas: el restaurante de este idioma se cierra, así no sale en las fotos del otro.
     if (TIENDA) sql(`UPDATE restaurantes SET abierto = 0 WHERE nombre = '${restaurante}'`);
