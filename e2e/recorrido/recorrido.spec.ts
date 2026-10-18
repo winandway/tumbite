@@ -1135,7 +1135,7 @@ for (const idioma of ['en', 'es'] as const) {
       await efectivo.click();
       await expect(
         cli
-          .getByText(/^(Order and pay on delivery|Pedir y pagar al recibir)$/)
+          .getByText(/^(Order and pay on delivery|Pedir y pagar al recibir) · \$/)
           .filter({ visible: true }),
       ).toBeVisible();
       await efectivo.scrollIntoViewIfNeeded();
