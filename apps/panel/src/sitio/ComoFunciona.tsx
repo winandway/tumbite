@@ -21,21 +21,21 @@ const T = {
       partes: [
         {
           id: 'customers',
-          img: '/marca/app-inicio.webp',
-          alt: 'La app de Tumbite mostrando los restaurantes cercanos',
+          img: '/docs/recorrido-cliente-inicio-es.webp',
+          alt: 'Pantalla real de la app de Tumbite con los servicios y los restaurantes cercanos',
           titulo: 'Si tienes hambre',
           puntos: [
             'Abres la app, ves los restaurantes abiertos cerca de ti y eliges.',
             'Antes de pagar ves todo el desglose: comida, envío, servicio y propina. Sin sorpresas.',
-            'Pagas dentro de la app con tarjeta, Apple Pay o Google Pay. Tu tarjeta queda guardada si quieres.',
+            'Pagas dentro de la app con tu tarjeta, sin salir a otra página; queda guardada si quieres. Apple Pay y Google Pay, muy pronto.',
             'Sigues el pedido en vivo en el mapa, desde la cocina hasta tu puerta.',
             'Tu restaurante favorito te premia: regalo de cumpleaños, tarjeta de sellos y sorpresas cuando vuelves.',
           ],
         },
         {
           id: 'restaurants',
-          img: '/marca/entrega-restaurante.webp',
-          alt: 'Un repartidor de Tumbite recogiendo un pedido en un restaurante',
+          img: '/docs/recorrido-restapp-nuevo-es.webp',
+          alt: 'Pantalla real de la app del restaurante con un pedido nuevo y el tiempo para aceptarlo',
           titulo: 'Si tienes un restaurante',
           puntos: [
             'Pagas hasta la mitad de comisión que en otras plataformas: 7,5 %, 12,5 % o 15 % según tu plan.',
@@ -47,8 +47,8 @@ const T = {
         },
         {
           id: 'drivers',
-          img: '/marca/repartidor.webp',
-          alt: 'Repartidor de Tumbite en su moto',
+          img: '/docs/recorrido-repartidor-oferta-es.webp',
+          alt: 'Pantalla real de la app del repartidor con una oferta: ganancia, distancia y minutos',
           titulo: 'Si repartes',
           puntos: [
             'Ves cuánto ganas antes de aceptar cada pedido. Si no te conviene, lo rechazas y no te baja de nivel.',
@@ -220,21 +220,21 @@ const T = {
       partes: [
         {
           id: 'customers',
-          img: '/marca/app-inicio.webp',
-          alt: 'The Tumbite app showing nearby restaurants',
+          img: '/docs/recorrido-cliente-inicio-en.webp',
+          alt: 'Real Tumbite app screen with services and restaurants nearby',
           titulo: 'If you’re hungry',
           puntos: [
             'Open the app, see the restaurants open near you, and pick one.',
             'Before you pay you see the full breakdown: food, delivery, service, and tip. No surprises.',
-            'Pay inside the app by card, Apple Pay, or Google Pay. Your card is saved if you want.',
+            'Pay inside the app with your card, without leaving to another page; it stays saved if you want. Apple Pay and Google Pay, coming soon.',
             'Follow your order live on the map, from the kitchen to your door.',
             'Your favorite restaurant rewards you: a birthday gift, a punch card, and surprises when you come back.',
           ],
         },
         {
           id: 'restaurants',
-          img: '/marca/entrega-restaurante.webp',
-          alt: 'A Tumbite driver picking up an order at a restaurant',
+          img: '/docs/recorrido-restapp-nuevo-en.webp',
+          alt: 'Real restaurant app screen with a new order and the time to accept it',
           titulo: 'If you own a restaurant',
           puntos: [
             'Pay up to half the commission of other platforms: 7.5%, 12.5%, or 15% depending on your plan.',
@@ -246,8 +246,8 @@ const T = {
         },
         {
           id: 'drivers',
-          img: '/marca/repartidor.webp',
-          alt: 'A Tumbite driver on a motorbike',
+          img: '/docs/recorrido-repartidor-oferta-en.webp',
+          alt: 'Real driver app screen with an offer: earnings, distance, and minutes',
           titulo: 'If you deliver',
           puntos: [
             'See what you’ll earn before accepting each order. If it’s not worth it, decline and your level stays the same.',
@@ -413,11 +413,11 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
   const secciones: [string, string][] = [
     ['tres', t.tres.titulo],
     ['dinero', t.dinero.titulo],
-    ['franquicias', t.franquicias.titulo],
-    ['arranque', t.frio.titulo],
-    ['sinergia', t.sinergia.titulo],
+    ['franchises', t.franquicias.titulo],
+    ['launch', t.frio.titulo],
+    ['synergy', t.sinergia.titulo],
     ['distintos', t.distintos.titulo],
-    ['preguntas', t.preguntas.titulo],
+    ['faq', t.preguntas.titulo],
   ];
   return (
     <main className="como">

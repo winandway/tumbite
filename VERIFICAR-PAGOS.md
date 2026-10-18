@@ -17,20 +17,20 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 ## Estado por pieza
 
-| Pieza                                                      | Construida  | Pruebas automáticas                                                      | Probada con Stripe real            |
-| ---------------------------------------------------------- | ----------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| Cálculo de bolsillos                                       | ✅          | ✅ cuadra al centavo                                                     | ✅ (pedido de $7.18)               |
-| Pago con salto (Checkout, ya retirado)                     | ✅          | ✅                                                                       | ✅ 10 oct 2026                     |
-| Pago dentro de la app, web (PaymentElement)                | ✅          | ✅ candado C-PAGO-SIN-SALTO                                              | 🔴 NO — falta la compra de $1      |
-| Pago dentro de la app, celular (hoja de pago)              | ✅          | ✅ candado                                                               | 🔴 NO — falta la app en el celular |
-| Tarjetas guardadas (CustomerSession)                       | ✅          | ✅ cliente se crea una vez                                               | 🔴 NO — se ve en la segunda compra |
-| Aviso `payment_intent.succeeded`                           | ✅          | ✅ monto e intento en rojo                                               | 🔴 NO                              |
-| Apple Pay / Google Pay                                     | ✅ (Stripe) | —                                                                        | 🔴 NO                              |
-| Alta de billetera (Connect Express)                        | ✅          | ✅ (simulado)                                                            | 🔴 NO                              |
-| Retiro a banco (Fase 0: sin doble pago, rama sin publicar) | ✅          | ✅ (22 pruebas, Stripe simulado; S2/S3/S5/S7 en la base real de pruebas) | 🔴 NO                              |
-| Devolución al rechazar (restaurante)                       | ✅          | ✅                                                                       | 🔴 NO                              |
-| Cancelación del cliente antes de que acepten               | ✅ 12 oct   | ✅ dinero vuelve; Stripe falla → no cancela                              | 🔴 NO                              |
-| Cancelación sola del Manager (10 min)                      | ✅ 12 oct   | ✅ una sola devolución                                                   | 🔴 NO                              |
+| Pieza                                                     | Construida  | Pruebas automáticas                                                      | Probada con Stripe real            |
+| --------------------------------------------------------- | ----------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| Cálculo de bolsillos                                      | ✅          | ✅ cuadra al centavo                                                     | ✅ (pedido de $7.18)               |
+| Pago con salto (Checkout, ya retirado)                    | ✅          | ✅                                                                       | ✅ 10 oct 2026                     |
+| Pago dentro de la app, web (PaymentElement)               | ✅          | ✅ candado C-PAGO-SIN-SALTO                                              | 🔴 NO — falta la compra de $1      |
+| Pago dentro de la app, celular (hoja de pago)             | ✅          | ✅ candado                                                               | 🔴 NO — falta la app en el celular |
+| Tarjetas guardadas (CustomerSession)                      | ✅          | ✅ cliente se crea una vez                                               | 🔴 NO — se ve en la segunda compra |
+| Aviso `payment_intent.succeeded`                          | ✅          | ✅ monto e intento en rojo                                               | 🔴 NO                              |
+| Apple Pay / Google Pay                                    | ✅ (Stripe) | —                                                                        | 🔴 NO                              |
+| Alta de billetera (Connect Express)                       | ✅          | ✅ (simulado)                                                            | 🔴 NO                              |
+| Retiro a banco (Fase 0: sin doble pago, publicado 17 oct) | ✅          | ✅ (22 pruebas, Stripe simulado; S2/S3/S5/S7 en la base real de pruebas) | 🔴 NO                              |
+| Devolución al rechazar (restaurante)                      | ✅          | ✅                                                                       | 🔴 NO                              |
+| Cancelación del cliente antes de que acepten              | ✅ 12 oct   | ✅ dinero vuelve; Stripe falla → no cancela                              | 🔴 NO                              |
+| Cancelación sola del Manager (10 min)                     | ✅ 12 oct   | ✅ una sola devolución                                                   | 🔴 NO                              |
 
 ## Lo que falta para probar (en orden)
 
@@ -73,10 +73,10 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 - El cambio de dirección actualiza el monto del PaymentIntent autorizado (`POST /payment_intents/:id {amount}`) antes de capturar. Probado solo simulado: en real, comprobar que la autorización acepta subir el monto (si el banco no lo permite, Stripe responde error y la dirección no cambia).
 - La recogida en el local captura el cobro al marcar «Entregado al cliente». Mismo circuito de captura que la entrega; sin probar en real.
 
-## 🔴 Retiros (15 oct 2026): defecto de doble pago corregido en la rama `fase-0-seguridad-financiera` — SIN publicar, SIN probar en real
+## 🟡 Retiros (actualizado 18 oct 2026): corrección del doble pago PUBLICADA en producción el 17 oct (d22a9a6a) — apagados por bandera, SIN probar en real
 
-- El código **publicado hoy** en producción todavía tiene el defecto: si Stripe transfiere y la respuesta se pierde, el saldo vuelve y se puede pagar dos veces. El retiro no se ha usado con dinero real.
-- La corrección (`docs/FASE-0-SEGURIDAD-FINANCIERA.md`, candado C-RETIROS-SEGUROS) está probada con Stripe simulado (21 pruebas). **Falta**: publicarla con la aprobación de Richard, activar el aviso `transfer.created` en Stripe y hacer un retiro en **modo prueba de Stripe** en el sitio de pruebas, cortando la respuesta a propósito.
-- Mientras tanto: no anunciar retiros. En la rama, **sin bandera los retiros nacen apagados**; la app dice «en pausa».
+- La corrección (`docs/FASE-0-SEGURIDAD-FINANCIERA.md`, candado C-RETIROS-SEGUROS) está en producción desde el 17 oct: si Stripe transfiere y la respuesta se pierde, se consulta a Stripe antes de devolver el saldo. Probada con Stripe simulado (21 pruebas) y en staging.
+- **Falta**: activar el aviso `transfer.created` en el panel de Stripe (Richard), hacer un retiro en **modo prueba de Stripe** en el sitio de pruebas cortando la respuesta a propósito (S11), y encenderlos (`PUT /datos/admin/retiros`; todavía sin pantalla en el superadmin — lista MVP, punto 7 de `docs/AUDITORIA-FINAL-2026-10-18.md`).
+- Mientras tanto: no anunciar retiros. **Sin bandera los retiros nacen apagados**; la app dice «en pausa».
 - S11 (retiro en modo prueba de Stripe) está programada y corre sola desde GitHub en cuanto el sitio de pruebas tenga llaves de modo prueba cargadas en su panel.
 - Anulación de pedidos (15 oct): si se pierde la respuesta de Stripe, se consulta a Stripe antes de revivir el pedido (C-ANULACION-VERIFICADA). Probado con Stripe simulado.

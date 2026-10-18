@@ -151,6 +151,14 @@ La auditoría de seguridad cubre servidor, panel y compartido; los avisos de las
 - PROHIBIDAS las franjas gruesas de color arriba o al costado de las tarjetas (la «sonrisa» roja de los formularios). Las tarjetas llevan borde fino gris oscuro (`1px solid #2a2a2a`) y sombra suave.
 - Moderno y sobrio: nada de degradados, brillos, emojis ni adornos repetidos que se ven en todas las páginas hechas con IA.
 
+## Cada actualización pone al día Docs Y la web, con capturas originales (dictado por Richard, 18 oct 2026)
+
+- En **cada** actualización visible no basta con actualizar las capturas y las guías de Docs: **también se actualiza la web pública** (la portada, «Cómo funciona», las páginas para restaurantes, repartidores y franquicias).
+- **La web solo muestra capturas ORIGINALES de la app real** (las del recorrido, `docs/capturas/recorrido/` → WebP en `apps/panel/public/`). Mostrar pantallas que no son las de la app es engañar al público. Nada de maquetas, dibujos ni pantallas inventadas donde se presente «así es la app».
+- Cada vez que una pantalla cambia, su captura en la web y en Docs se rehace en el mismo trabajo (`npm run recorrido:capturas`).
+- El texto de la web se refuerza con información precisa de lo que la app ya hace; nunca promete lo que no existe (lo que viene se dice «muy pronto»).
+- Las capturas de las tiendas (App Store y Google Play) salen de las mismas originales, y solo se suben cuando las pantallas estén cerradas (ver `docs/AUDITORIA-FINAL-*.md`).
+
 ## Docs públicos de cada función (dictado por Richard, 12 oct 2026)
 
 - Toda función nueva visible lleva su guía en `/docs` (`apps/panel/src/sitio/docs/guias.ts`), en español e inglés, para el público (cliente, restaurante, repartidor, vendedor), con capturas en `apps/panel/public/docs/`. Nada técnico ni privado (nunca la dirección del superadmin). Regla global «TODO LO NUEVO SE EXPLICA AL PÚBLICO EN DOCS».

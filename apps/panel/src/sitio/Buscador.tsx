@@ -43,7 +43,7 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
   const [buscando, setBuscando] = useState(false);
 
   const irAlFormulario = () =>
-    document.getElementById('comensales')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('customers')?.scrollIntoView({ behavior: 'smooth' });
 
   function usarUbicacion() {
     if (!navigator.geolocation) return setMensaje(t.sinPermiso);

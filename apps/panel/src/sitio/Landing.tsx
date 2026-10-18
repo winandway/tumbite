@@ -7,11 +7,12 @@ import { LogoApple, LogoGooglePlay } from './Tiendas';
 import { MapaCobertura } from './MapaCobertura';
 import { CONTACTO, TEXTOS_SITIO } from './textos';
 
-/** Imágenes del kit de marca aprobado (logo-imagenes-banner-marketing), optimizadas en public/marca. */
+/**
+ * Fotos del kit de marca aprobado (public/marca) y, para las pantallas de la app, SOLO capturas
+ * originales del recorrido real (public/docs/recorrido-*, regla de Richard del 18 oct 2026: nada
+ * de pantallas inventadas donde se presente «así es la app»).
+ */
 const IMG = {
-  inicio: '/marca/app-inicio.webp',
-  pizzeria: '/marca/app-pizzeria.webp',
-  seguimiento: '/marca/app-seguimiento.webp',
   restaurante: '/marca/entrega-restaurante.webp',
   repartidor: '/marca/repartidor.webp',
   miami: '/marca/cartel-miami.webp',
@@ -23,9 +24,9 @@ const IMG = {
 const ALT = {
   es: {
     pantallas: [
-      'App de Tumbite: restaurantes cerca de ti',
-      'App de Tumbite: menú de una pizzería',
-      'App de Tumbite: seguimiento del pedido en el mapa',
+      'Pantalla real de la app de Tumbite: el inicio con los servicios y los restaurantes cerca de ti',
+      'Pantalla real de la app de Tumbite: el menú de un restaurante',
+      'Pantalla real de la app de Tumbite: el pedido en camino, con el repartidor en el mapa',
     ],
     banner: 'Tus antojos en minutos con Tumbite',
     restaurante: 'Un repartidor de Tumbite recoge un pedido en el mostrador de un restaurante',
@@ -36,9 +37,9 @@ const ALT = {
   },
   en: {
     pantallas: [
-      'Tumbite app: restaurants near you',
-      'Tumbite app: a pizzeria menu',
-      'Tumbite app: order tracking on the map',
+      'Real Tumbite app screen: the home with services and restaurants near you',
+      'Real Tumbite app screen: a restaurant menu',
+      'Real Tumbite app screen: the order on its way, with the driver on the map',
     ],
     banner: 'Your cravings in minutes with Tumbite',
     restaurante: 'A Tumbite driver picks up an order at a restaurant counter',
@@ -49,9 +50,17 @@ const ALT = {
   },
 };
 
+/** Las tres pantallas reales de la app del cliente, en el idioma de la página. */
+const pantallasReales = (idioma: Idioma) => ({
+  inicio: `/docs/recorrido-cliente-inicio-${idioma}.webp`,
+  menu: `/docs/recorrido-cliente-menu-${idioma}.webp`,
+  seguimiento: `/docs/recorrido-cliente-en-camino-${idioma}.webp`,
+});
+
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
   const a = enIdioma(ALT, idioma);
+  const app = pantallasReales(idioma);
   // El WhatsApp de soporte lo da el servidor (variable del sitio): aparece solo cuando exista.
   const [whatsapp, setWhatsapp] = useState('');
   useEffect(() => {
@@ -92,18 +101,18 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         </div>
         <div className="ld-hero-apps">
           <img
-            src={IMG.pizzeria}
+            src={app.menu}
             alt={a.pantallas[1]}
             width={260}
-            height={536}
-            className="ld-app ld-app-atras"
+            height={565}
+            className="ld-app ld-app-real ld-app-atras"
           />
           <img
-            src={IMG.inicio}
+            src={app.inicio}
             alt={a.pantallas[0]}
             width={260}
-            height={557}
-            className="ld-app"
+            height={565}
+            className="ld-app ld-app-real"
             fetchPriority="high"
           />
         </div>
@@ -157,11 +166,11 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           {t.comensales.pasos.map(([titulo, texto], i) => (
             <li key={titulo}>
               <img
-                className="ld-app"
-                src={[IMG.inicio, IMG.pizzeria, IMG.seguimiento].at(i)}
+                className="ld-app ld-app-real"
+                src={[app.inicio, app.menu, app.seguimiento].at(i)}
                 alt={a.pantallas.at(i) ?? ''}
                 width={240}
-                height={510}
+                height={522}
                 loading="lazy"
               />
               <div className="ld-paso-texto">
