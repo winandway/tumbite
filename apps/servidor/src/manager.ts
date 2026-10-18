@@ -293,7 +293,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     .bind(`-${REGLAS.repartidorPerdido} minutes`, ...(pedidoId ? [pedidoId] : []))
     .all<{ id: string; repartidor: string; restaurante: string }>();
   for (const p of perdidos) {
-    await soltarPedido(db, p.id, p.repartidor);
+    await soltarPedido(db, p.id, p.repartidor, 'perdido');
     await anotarEvento(db, p.id, 'repartidor_perdido', `${REGLAS.repartidorPerdido} min sin señal`);
     resumen.perdidos++;
     const corto = p.id.slice(0, 6).toUpperCase();

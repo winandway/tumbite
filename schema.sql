@@ -209,8 +209,21 @@ CREATE TABLE IF NOT EXISTS repartidores (
   puntos INTEGER NOT NULL DEFAULT 0,
   zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   geohash TEXT,
+  -- Pausa (18 oct 2026, C-REPARTIDOR-GRANDES): conectado pero sin recibir ofertas, como en Dasher.
+  pausado INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Pedidos que un repartidor aceptó y no entregó (soltó o se perdió), para su tasa de finalización
+-- (C-REPARTIDOR-GRANDES). Se guarda aparte porque al soltar el pedido deja de llevar su id.
+CREATE TABLE IF NOT EXISTS abandonos_repartidor (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, repartidor_id)
+);
+CREATE INDEX IF NOT EXISTS abandonos_repartidor_quien ON abandonos_repartidor(repartidor_id, creado_en);
 
 -- Cada oferta de un pedido a un repartidor. Rechazar NO castiga: solo pasa al siguiente.
 CREATE TABLE IF NOT EXISTS ofertas (

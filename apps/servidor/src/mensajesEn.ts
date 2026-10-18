@@ -143,6 +143,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'You already picked up the order: now it has to be delivered. If there’s a problem, report it.',
   ],
   ['Este pedido no está contigo.', 'This order isn’t assigned to you.'],
+  ['Para pausar, primero tienes que estar conectado.', 'To pause, you need to be online first.'],
+  ['El restaurante no tiene ubicación en el mapa.', 'The restaurant has no map location.'],
   [
     'Necesitamos tu ubicación para confirmar que estás en el lugar. Revisa que el GPS esté encendido.',
     'We need your location to confirm you’re there. Check that your GPS is on.',
