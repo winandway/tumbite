@@ -567,8 +567,18 @@ pedidos.post('/pedidos', async (c) => {
  */
 pedidos.post('/stripe/aviso', async (c) => {
   const cuerpo = await c.req.text();
-  const secreto = c.env.STRIPE_WEBHOOK_SECRET;
-  if (!secreto || !(await firmaValida(cuerpo, c.req.header('stripe-signature'), secreto))) {
+  // Stripe firma con un secreto distinto los avisos de la cuenta propia y los de las cuentas
+  // conectadas (son dos endpoints en su panel). C-FALLOS-DINERO (F10): se aceptan los dos.
+  const secretos = [c.env.STRIPE_WEBHOOK_SECRET, c.env.STRIPE_WEBHOOK_SECRET_CONECTADAS].filter(
+    (s): s is string => Boolean(s),
+  );
+  let firmada = false;
+  for (const secreto of secretos)
+    if (await firmaValida(cuerpo, c.req.header('stripe-signature'), secreto)) {
+      firmada = true;
+      break;
+    }
+  if (!firmada) {
     console.error('aviso de stripe con firma inválida o sin secreto configurado');
     return c.json({ error: 'firma inválida' }, 400);
   }

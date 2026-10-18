@@ -160,6 +160,7 @@ app.get('/datos/salud', async (c) => {
   piezas.variables = env.ok ? 'ok' : 'error';
   piezas.stripe = c.env.STRIPE_SECRET_KEY ? 'ok' : 'pendiente';
   piezas.webhookStripe = c.env.STRIPE_WEBHOOK_SECRET ? 'ok' : 'pendiente';
+  piezas.webhookStripeConectadas = c.env.STRIPE_WEBHOOK_SECRET_CONECTADAS ? 'ok' : 'pendiente';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';

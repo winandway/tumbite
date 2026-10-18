@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { calcularPedido } from '@tumbite/compartido';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
@@ -92,7 +93,7 @@ describe('F6: el total del carrito al recoger en el local (C-FALLOS-DINERO)', ()
   });
 
   it('la app del cliente calcula con «recogida» y manda su total para que el servidor lo compare', () => {
-    const cart = readFileSync(new URL('../../cliente/src/app/cart.tsx', import.meta.url), 'utf8');
+    const cart = readFileSync(join(__dirname, '..', '..', 'cliente/src/app/cart.tsx'), 'utf8');
     expect(cart).toMatch(/calcularPedido\(\{[\s\S]*?recogida:/);
     expect(cart).toContain('totalEsperado');
   });
@@ -100,7 +101,7 @@ describe('F6: el total del carrito al recoger en el local (C-FALLOS-DINERO)', ()
 
 describe('F8: quitar un plato de un pedido para recoger (C-FALLOS-DINERO)', () => {
   it('la devolución se calcula sin envío, como se cobró', async () => {
-    const { m, dueno, pedir, platos, lineas } = await escenario();
+    const { m, dueno, pedir, platos } = await escenario();
     const p = await pedir({ entrega: 'recoger' });
     const id = p.datos.pedidoId as string;
     const totalAntes = p.datos.desglose.totalCliente as number;
@@ -112,18 +113,17 @@ describe('F8: quitar un plato de un pedido para recoger (C-FALLOS-DINERO)', () =
     const falta = await m.llamar(
       'POST',
       `/datos/restaurante/pedidos/${id}/falta`,
-      { platoId: platos[1] },
+      { platoId: platos[1]! },
       dueno.token,
     );
     expect(falta.estado).toBe(200);
     const sinJugo = calcularPedido({
-      lineas: [{ platoId: platos[0]!, precioCentavos: 1500, cantidad: 1 }],
-      plan: 'basico',
+      lineas: [{ precioCentavos: 1500, cantidad: 1 }],
+      plan: 'inicial',
       propina: 300,
       distanciaKm: null,
       recogida: true,
     });
-    void lineas;
     expect(falta.datos.devolucion).toBe(totalAntes - sinJugo.totalCliente);
   });
 });
@@ -177,5 +177,72 @@ describe('F7: cambio de dirección y el cobro en Stripe (C-FALLOS-DINERO)', () =
       .first<{ direccion: string; total: number }>())!;
     expect(f.direccion).toBe('300 Calle Prueba');
     expect(f.total).toBe(p.datos.desglose.totalCliente);
+  });
+});
+
+describe('F10: los avisos de las cuentas conectadas de Stripe llegan con su propio secreto (C-FALLOS-DINERO)', () => {
+  const SECRETO = `whsec_${crypto.randomUUID()}`;
+  const SECRETO_CONECTADAS = `whsec_${crypto.randomUUID()}`;
+
+  async function firmar(cuerpo: string, secreto: string) {
+    const t = Math.floor(Date.now() / 1000);
+    const llave = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secreto),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    const f = await crypto.subtle.sign('HMAC', llave, new TextEncoder().encode(`${t}.${cuerpo}`));
+    const v1 = [...new Uint8Array(f)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    return `t=${t},v1=${v1}`;
+  }
+
+  async function aviso(m: ReturnType<typeof mundo>, secreto: string) {
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'account.updated',
+      account: 'acct_1',
+      data: { object: { id: 'acct_1', payouts_enabled: true, charges_enabled: true } },
+    });
+    return m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await firmar(cuerpo, secreto),
+      },
+      body: cuerpo,
+    });
+  }
+
+  it('la activación de pagos del restaurante se aplica con el secreto de cuentas conectadas, y una firma ajena se rechaza', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
+    const m = mundo({
+      STRIPE_SECRET_KEY: 'sk_test_x',
+      STRIPE_WEBHOOK_SECRET: SECRETO,
+      STRIPE_WEBHOOK_SECRET_CONECTADAS: SECRETO_CONECTADAS,
+    });
+    const dueno = await m.cuenta('restaurante');
+    await m.DB.prepare(
+      "INSERT INTO cuentas_stripe (usuario_id, stripe_cuenta, pagos_activos) VALUES (?, 'acct_1', 0)",
+    )
+      .bind(dueno.id)
+      .run();
+    expect((await aviso(m, `whsec_${crypto.randomUUID()}`)).status).toBe(400);
+    const r = await aviso(m, SECRETO_CONECTADAS);
+    expect(r.status).toBe(200);
+    const fila = await m.DB.prepare(
+      "SELECT pagos_activos FROM cuentas_stripe WHERE stripe_cuenta = 'acct_1'",
+    ).first<{ pagos_activos: number }>();
+    expect(fila?.pagos_activos).toBe(1);
+  });
+
+  it('el canario dice «pendiente» mientras falte el secreto de cuentas conectadas', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBHOOK_SECRET: SECRETO });
+    const salud = (await (await m.crudo('/datos/salud', { method: 'GET' })).json()) as {
+      piezas: Record<string, string>;
+    };
+    expect(salud.piezas.webhookStripeConectadas).toBe('pendiente');
   });
 });

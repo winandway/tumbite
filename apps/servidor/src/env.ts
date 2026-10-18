@@ -8,6 +8,8 @@ import { z } from 'zod';
 export const esquemaEnv = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
+  /** Secreto del SEGUNDO endpoint de Stripe, el de «cuentas conectadas» (account.updated, payout.failed). */
+  STRIPE_WEBHOOK_SECRET_CONECTADAS: z.string().startsWith('whsec_').optional(),
   TURNSTILE_SECRET_KEY: z.string().min(10).optional(),
   /** Correos (separados por coma) que PUEDEN volverse administradores con la semilla. */
   ADMIN_CORREOS: z.string().optional(),
