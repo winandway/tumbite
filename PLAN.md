@@ -39,7 +39,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 ## Bloque C — Recorrido completo de cliente, restaurante y repartidor
 
 - [x] C.1 Cliente: pestaña Pedidos real (historial, recibo, repetir pedido) y Favoritos reales.
-- [ ] C.2 Cliente: direcciones guardadas con instrucciones; cupones y promociones reales.
+- [x] C.2 Cliente: direcciones guardadas con instrucciones; cupones y promociones reales.
 - [ ] C.3 Cliente: comentario en calificación; queja guiada con reembolso parcial.
 - [ ] C.4 Restaurante: reseñas con respuesta; reordenar platos y categorías; festivos; varios usuarios con roles.
 - [ ] C.5 Repartidor: GPS en segundo plano y navegación; verificación de edad y firma.

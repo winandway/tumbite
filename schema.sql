@@ -144,6 +144,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   total INTEGER NOT NULL,
   -- Impuesto de ventas recaudado (dentro del total). 0 hasta que el contador fije la tasa.
   impuesto INTEGER NOT NULL DEFAULT 0,
+  -- Cupón aplicado y su descuento (lo absorbe Tumbite: baja su ganancia).
+  cupon TEXT,
+  descuento INTEGER NOT NULL DEFAULT 0,
   -- Fase 2 · cobro directo: cómo paga el cliente y los TRES estados separados (entrega física =
   -- estado, cobro confirmado y conciliación). 'tarjeta' = Stripe como siempre.
   metodo_pago TEXT NOT NULL DEFAULT 'tarjeta' CHECK (metodo_pago IN ('tarjeta', 'efectivo', 'transferencia_repartidor')),
@@ -1580,3 +1583,46 @@ CREATE TABLE IF NOT EXISTS favoritos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (usuario_id, restaurante_id)
 );
+
+-- Direcciones guardadas del cliente (auditoría final, punto 14): casa, trabajo… con instrucciones.
+CREATE TABLE IF NOT EXISTS direcciones_cliente (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  etiqueta TEXT NOT NULL DEFAULT '',
+  direccion TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  instrucciones TEXT NOT NULL DEFAULT '',
+  entrega TEXT NOT NULL DEFAULT 'puerta' CHECK (entrega IN ('puerta', 'mano')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS direcciones_cliente_usuario ON direcciones_cliente(usuario_id, usada_en);
+
+-- Cupones (auditoría final, punto 15). Quién los paga (Tumbite o el restaurante) lo fija cada cupón;
+-- de fábrica los paga Tumbite (baja su ganancia), decisión de Richard por cupón.
+CREATE TABLE IF NOT EXISTS cupones (
+  codigo TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('monto', 'porcentaje', 'envio_gratis')),
+  valor INTEGER NOT NULL DEFAULT 0,
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  minimo_subtotal INTEGER NOT NULL DEFAULT 0,
+  usos_max INTEGER,
+  usos_por_cliente INTEGER NOT NULL DEFAULT 1,
+  solo_primer_pedido INTEGER NOT NULL DEFAULT 0,
+  restaurante_id TEXT REFERENCES restaurantes(id),
+  zona_id TEXT,
+  destacado INTEGER NOT NULL DEFAULT 0,
+  vence_en TEXT,
+  activo INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS usos_cupon (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  codigo TEXT NOT NULL REFERENCES cupones(codigo),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  descuento INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS usos_cupon_codigo ON usos_cupon(codigo, usuario_id);

@@ -119,6 +119,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "total",
     "impuesto",
+    "cupon",
+    "descuento",
     "metodo_pago",
     "cobro_estado",
     "monto_recibido",
@@ -930,6 +932,42 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "favoritos": [
     "usuario_id",
     "restaurante_id",
+    "creado_en"
+  ],
+  "direcciones_cliente": [
+    "id",
+    "usuario_id",
+    "etiqueta",
+    "direccion",
+    "lat",
+    "lng",
+    "instrucciones",
+    "entrega",
+    "creado_en",
+    "usada_en"
+  ],
+  "cupones": [
+    "codigo",
+    "tipo",
+    "valor",
+    "descripcion_es",
+    "descripcion_en",
+    "minimo_subtotal",
+    "usos_max",
+    "usos_por_cliente",
+    "solo_primer_pedido",
+    "restaurante_id",
+    "zona_id",
+    "destacado",
+    "vence_en",
+    "activo",
+    "creado_en"
+  ],
+  "usos_cupon": [
+    "pedido_id",
+    "codigo",
+    "usuario_id",
+    "descuento",
     "creado_en"
   ]
 };

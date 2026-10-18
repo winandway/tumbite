@@ -58,6 +58,8 @@ export type Desglose = {
   propina: Centavos;
   /** Impuesto de ventas recaudado para el estado (Tumbite lo retiene y remite; no es ganancia). */
   impuesto: Centavos;
+  /** Lo que quitó el cupón (lo absorbe Tumbite). */
+  descuento: Centavos;
   totalCliente: Centavos;
   comisionRestaurante: Centavos;
   pagoRestaurante: Centavos;
@@ -97,6 +99,8 @@ export function calcularPedido(p: {
   regalo?: Centavos;
   /** Recogida en el local: sin envío ni repartidor; comisión del 5 % (como los grandes). */
   recogida?: boolean;
+  /** Cupón: baja el total del cliente y la ganancia de Tumbite (nunca lo que recibe el restaurante o el repartidor). */
+  descuento?: Centavos;
 }): Desglose {
   const c = p.config ?? CONFIG_DINERO_INICIAL;
   entero(p.propina, 'propina');
@@ -121,7 +125,14 @@ export function calcularPedido(p: {
   // Impuesto de ventas (Florida: estatal + condado) solo sobre la comida cobrada. Qué más se grava
   // (envío, servicio) lo decide el contador: hasta entonces, nada más. Se suma al total y se retiene.
   const impuesto = porcentajeDe(aCobrar, c.impuestoPb ?? 0);
-  const totalCliente = aCobrar + envio + servicio + cargoPedidoPequeno + p.propina + impuesto;
+  // El cupón nunca descuenta más que lo que paga el cliente sin propina (la propina es del repartidor).
+  const descuento = Math.min(
+    p.descuento ?? 0,
+    aCobrar + envio + servicio + cargoPedidoPequeno + impuesto,
+  );
+  entero(descuento, 'descuento');
+  const totalCliente =
+    aCobrar + envio + servicio + cargoPedidoPequeno + p.propina + impuesto - descuento;
 
   const comisionRestaurante = porcentajeDe(
     aCobrar,
@@ -131,7 +142,7 @@ export function calcularPedido(p: {
   const complementoRepartidor = p.recogida ? 0 : Math.max(0, c.pagoMinimoRepartidor - envio);
   const pagoRepartidor = p.recogida ? 0 : envio + complementoRepartidor + p.propina;
   const gananciaPlataforma =
-    comisionRestaurante + servicio + cargoPedidoPequeno - complementoRepartidor;
+    comisionRestaurante + servicio + cargoPedidoPequeno - complementoRepartidor - descuento;
 
   return {
     subtotal,
@@ -140,6 +151,7 @@ export function calcularPedido(p: {
     cargoPedidoPequeno,
     propina: p.propina,
     impuesto,
+    descuento,
     totalCliente,
     comisionRestaurante,
     pagoRestaurante,

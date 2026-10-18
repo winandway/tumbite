@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type React from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,6 +55,14 @@ const TE = {
     pagoTransfer: 'Transferencia al repartidor',
     pagoTransferAyuda: 'Verás el nombre y la cuenta del repartidor en el seguimiento.',
     pedirDirecto: 'Pedir y pagar al recibir',
+    guardadas: 'Tus direcciones',
+    guardar: 'Guardar esta dirección para la próxima',
+    etiqueta: 'Nombre (Casa, Trabajo…)',
+    cupon: 'Cupón o código promocional',
+    aplicar: 'Aplicar',
+    quitarCupon: 'Quitar',
+    cuponOk: 'Cupón aplicado: −{monto}',
+    descuento: 'Cupón',
   },
   en: {
     como: 'How do you want to receive it?',
@@ -75,6 +83,14 @@ const TE = {
     pagoTransfer: 'Transfer to the driver',
     pagoTransferAyuda: 'You’ll see the driver’s name and account in the tracking screen.',
     pedirDirecto: 'Order and pay on delivery',
+    guardadas: 'Your addresses',
+    guardar: 'Save this address for next time',
+    etiqueta: 'Name (Home, Work…)',
+    cupon: 'Coupon or promo code',
+    aplicar: 'Apply',
+    quitarCupon: 'Remove',
+    cuponOk: 'Coupon applied: −{monto}',
+    descuento: 'Coupon',
   },
 } as const;
 
@@ -139,6 +155,9 @@ export default function PantallaCarrito() {
       entrega: 'puerta',
       pin: 'si',
       metodoPago: 'tarjeta',
+      guardarDireccion: 'no',
+      etiquetaDireccion: '',
+      cupon: '',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -184,6 +203,63 @@ export default function PantallaCarrito() {
   }, [api, carrito.restauranteId, llaveCarrito]);
   const regalo = regalos.find((r) => r.tipo === regaloElegido)?.valorCentavos ?? 0;
 
+  // Direcciones guardadas (punto 14): chips arriba del mapa; «guardar» al pedir.
+  type Direccion = {
+    id: string;
+    etiqueta: string;
+    direccion: string;
+    lat: number | null;
+    lng: number | null;
+    instrucciones: string;
+    entrega: 'puerta' | 'mano';
+  };
+  const [direcciones, setDirecciones] = useState<Direccion[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ direcciones: Direccion[] }>('GET', '/datos/mis-direcciones')
+      .then((r) => {
+        if (vivo) setDirecciones(r.direcciones);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
+  function usarDireccion(dir: Direccion) {
+    b.cambiar('direccion', dir.direccion);
+    if (dir.instrucciones) b.cambiar('notas', dir.instrucciones);
+    b.cambiar('entrega', dir.entrega);
+    if (dir.lat != null && dir.lng != null) {
+      setPunto({ lat: dir.lat, lng: dir.lng });
+      void guardarUbicacion({ lat: dir.lat, lng: dir.lng });
+    }
+  }
+
+  // Cupón (punto 15): se valida en el servidor al aplicarlo y otra vez al pedir.
+  const [cupon, setCupon] = useState<{ codigo: string; descuento: number } | null>(null);
+  const [cuponError, setCuponError] = useState('');
+  async function aplicarCupon() {
+    setCuponError('');
+    if (!carrito.restauranteId) return;
+    try {
+      const r = await api.pedir<{ codigo: string; descuento: number }>(
+        'POST',
+        '/datos/cupones/validar',
+        {
+          codigo: b.valores.cupon,
+          restauranteId: carrito.restauranteId,
+          subtotal,
+          envio: d?.envio ?? 0,
+        },
+      );
+      setCupon(r);
+    } catch (x) {
+      setCupon(null);
+      setCuponError(x instanceof Error ? x.message : String(x));
+    }
+  }
+
   const subtotal = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   const propina =
     propinaPb === 'otra'
@@ -193,22 +269,22 @@ export default function PantallaCarrito() {
     punto && carrito.restLat != null && carrito.restLng != null
       ? distanciaKm(punto, { lat: carrito.restLat, lng: carrito.restLng })
       : null;
-  const d = useMemo(
-    () =>
-      carrito.lineas.length
-        ? calcularPedido({
-            lineas: carrito.lineas,
-            plan: carrito.plan,
-            propina,
-            distanciaKm: km,
-            config,
-            regalo,
-            // C-FALLOS-DINERO (F6): recoger en el local no lleva envío; se calcula igual que el servidor.
-            recogida: b.valores.entrega === 'recoger',
-          })
-        : null,
-    [carrito, propina, km, config, regalo, b.valores.entrega],
-  );
+  // C-FALLOS-DINERO (F6): recoger en el local no lleva envío; se calcula igual que el servidor.
+  const recogidaElegida = b.valores.entrega === 'recoger';
+  const descuentoCupon = cupon?.descuento ?? 0;
+  // Sin useMemo: el cálculo es barato y así el compilador de React no tiene que adivinar dependencias.
+  const d = carrito.lineas.length
+    ? calcularPedido({
+        lineas: carrito.lineas,
+        plan: carrito.plan,
+        propina,
+        distanciaKm: km,
+        config,
+        regalo,
+        recogida: recogidaElegida,
+        descuento: descuentoCupon,
+      })
+    : null;
 
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
@@ -235,10 +311,23 @@ export default function PantallaCarrito() {
               : 'puerta',
         pin: b.valores.pin !== 'no',
         metodoPago,
+        cupon: cupon?.codigo,
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
       });
+      // Guardar la dirección para la próxima (si lo pidió), sin frenar el pago si falla.
+      if (b.valores.guardarDireccion === 'si' && b.valores.entrega !== 'recoger')
+        void api
+          .pedir('POST', '/datos/mis-direcciones', {
+            etiqueta: b.valores.etiquetaDireccion,
+            direccion: b.valores.direccion,
+            lat: punto?.lat ?? null,
+            lng: punto?.lng ?? null,
+            instrucciones: b.valores.notas,
+            entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
+          })
+          .catch(() => undefined);
       // Cobro directo: no hay tarjeta; el pedido ya quedó confirmado y se paga al recibir.
       if (r.directo) {
         await b.limpiar();
@@ -470,6 +559,39 @@ export default function PantallaCarrito() {
       {modoActual !== 'recoger' ? (
         <>
           {titulo(t.direccion)}
+          {direcciones.length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+              {direcciones.map((dir) => {
+                const activa = dir.direccion === b.valores.direccion;
+                return (
+                  <Pressable
+                    key={dir.id}
+                    onPress={() => usarDireccion(dir)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${te.guardadas}: ${dir.etiqueta || dir.direccion}`}
+                    accessibilityState={{ selected: activa }}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: activa ? C.primario : '#DADADA',
+                      backgroundColor: activa ? C.primario : '#fff',
+                      maxWidth: '100%',
+                    }}
+                  >
+                    <Text
+                      style={{ color: activa ? '#fff' : C.secundario, fontWeight: '800' }}
+                      numberOfLines={1}
+                    >
+                      {dir.etiqueta ? `${dir.etiqueta} · ` : ''}
+                      {dir.direccion}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
           <ElegirEnMapa
             punto={punto}
             cambiarPunto={(p) => {
@@ -487,6 +609,23 @@ export default function PantallaCarrito() {
             placeholder={t.direccionAyuda}
             autoComplete="street-address"
           />
+          <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Text style={{ flex: 1, fontWeight: '800' }}>{te.guardar}</Text>
+            <Switch
+              value={b.valores.guardarDireccion === 'si'}
+              onValueChange={(v) => b.cambiar('guardarDireccion', v ? 'si' : 'no')}
+              accessibilityLabel={te.guardar}
+              trackColor={{ true: C.exito, false: '#D6D6D6' }}
+            />
+          </Tarjeta>
+          {b.valores.guardarDireccion === 'si' ? (
+            <Campo
+              etiqueta={te.etiqueta}
+              value={b.valores.etiquetaDireccion}
+              onChangeText={(x) => b.cambiar('etiquetaDireccion', x)}
+              placeholder={te.etiqueta}
+            />
+          ) : null}
         </>
       ) : null}
       <Campo
@@ -557,9 +696,60 @@ export default function PantallaCarrito() {
           </Text>
         </Pressable>
       ))}
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end', marginBottom: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Campo
+            etiqueta={te.cupon}
+            value={b.valores.cupon}
+            onChangeText={(x) => {
+              b.cambiar('cupon', x.toUpperCase());
+              if (cupon) setCupon(null);
+            }}
+            placeholder={te.cupon}
+            autoCapitalize="characters"
+          />
+        </View>
+        <Pressable
+          onPress={() => {
+            if (cupon) {
+              setCupon(null);
+              b.cambiar('cupon', '');
+            } else void aplicarCupon();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={cupon ? te.quitarCupon : te.aplicar}
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderRadius: 12,
+            backgroundColor: cupon ? '#fff' : C.secundario,
+            borderWidth: 1,
+            borderColor: C.secundario,
+            marginBottom: 12,
+          }}
+        >
+          <Text style={{ color: cupon ? C.secundario : '#fff', fontWeight: '800' }}>
+            {cupon ? te.quitarCupon : te.aplicar}
+          </Text>
+        </Pressable>
+      </View>
+      {cupon ? (
+        <Text
+          style={{ color: C.exito, fontWeight: '700', marginBottom: 8 }}
+          accessibilityLiveRegion="polite"
+        >
+          {te.cuponOk.replace('{monto}', formatearDolares(cupon.descuento, idioma))}
+        </Text>
+      ) : null}
+      {cuponError ? (
+        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+          {cuponError}
+        </Text>
+      ) : null}
       <Tarjeta>
         {fila(t.subtotal, d.subtotal)}
         {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
+        {d.descuento > 0 && fila(te.descuento, -d.descuento)}
         {fila(t.envio, d.envio)}
         {fila(t.servicio, d.servicio)}
         {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}

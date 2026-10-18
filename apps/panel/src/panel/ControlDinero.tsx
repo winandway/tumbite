@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import {
+  type Idioma,
+  almacenNavegador,
+  enIdioma,
+  formatearDolares,
+  useBorrador,
+} from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 const T = {
@@ -38,6 +45,34 @@ const T = {
     disputasAyuda:
       'La evidencia (foto de entrega, bitácora, chat) se responde en el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
     vence: 'Responder antes de',
+    cupones: 'Cupones y promociones',
+    cuponesAyuda:
+      'El descuento lo absorbe Tumbite (baja su ganancia). Los destacados salen en «Ofertas del día» del inicio de la app.',
+    codigo: 'Código',
+    tipo: 'Tipo',
+    valor: 'Valor',
+    tipos: {
+      monto: 'Monto fijo',
+      porcentaje: 'Porcentaje',
+      envio_gratis: 'Envío gratis',
+    } as Record<string, string>,
+    valorAyuda: 'Monto en dólares (5.00) o porcentaje (10) según el tipo',
+    descripcionEs: 'Descripción en español',
+    descripcionEn: 'Descripción en inglés',
+    minimo: 'Pedido mínimo (comida, en dólares)',
+    usosMax: 'Usos totales (vacío = sin tope)',
+    primerPedido: 'Solo primer pedido',
+    destacado: 'Destacado en el inicio',
+    venceCupon: 'Vence (AAAA-MM-DD, vacío = nunca)',
+    crear: 'Crear cupón',
+    creado: 'Cupón creado.',
+    usos: 'Usos',
+    descontado: 'Descontado',
+    activar: 'Activar',
+    desactivar: 'Desactivar',
+    destacar: 'Destacar',
+    quitarDestacado: 'Quitar del inicio',
+    sinCupones: 'Ningún cupón todavía.',
     conciliacion: 'Conciliación diaria (últimos 14 días)',
     recalcularHoy: 'Recalcular hoy',
     dia: 'Día',
@@ -87,6 +122,34 @@ const T = {
     disputasAyuda:
       'Evidence (delivery photo, log, chat) is submitted in the Stripe dashboard → Payments → Disputes, before the due date.',
     vence: 'Respond by',
+    cupones: 'Coupons and promotions',
+    cuponesAyuda:
+      'Tumbite absorbs the discount (lowers its margin). Featured ones show under “Today’s deals” on the app’s home.',
+    codigo: 'Code',
+    tipo: 'Type',
+    valor: 'Value',
+    tipos: {
+      monto: 'Fixed amount',
+      porcentaje: 'Percentage',
+      envio_gratis: 'Free delivery',
+    } as Record<string, string>,
+    valorAyuda: 'Amount in dollars (5.00) or percentage (10) depending on the type',
+    descripcionEs: 'Description in Spanish',
+    descripcionEn: 'Description in English',
+    minimo: 'Minimum order (food, in dollars)',
+    usosMax: 'Total uses (empty = no cap)',
+    primerPedido: 'First order only',
+    destacado: 'Featured on home',
+    venceCupon: 'Expires (YYYY-MM-DD, empty = never)',
+    crear: 'Create coupon',
+    creado: 'Coupon created.',
+    usos: 'Uses',
+    descontado: 'Discounted',
+    activar: 'Activate',
+    desactivar: 'Deactivate',
+    destacar: 'Feature',
+    quitarDestacado: 'Remove from home',
+    sinCupones: 'No coupons yet.',
     conciliacion: 'Daily reconciliation (last 14 days)',
     recalcularHoy: 'Recalculate today',
     dia: 'Day',
@@ -137,6 +200,21 @@ type Disputa = {
   venceEn: string | null;
   creadoEn: string;
 };
+type Cupon = {
+  codigo: string;
+  tipo: 'monto' | 'porcentaje' | 'envio_gratis';
+  valor: number;
+  descripcionEs: string;
+  descripcionEn: string;
+  minimoSubtotal: number;
+  usosMax: number | null;
+  soloPrimerPedido: boolean;
+  destacado: boolean;
+  venceEn: string | null;
+  activo: boolean;
+  usos: number;
+  descontado: number;
+};
 type Conciliacion = {
   dia: string;
   pedidos: number;
@@ -163,12 +241,44 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const [abonos, setAbonos] = useState<Abono[] | null>(null);
   const [conc, setConc] = useState<Conciliacion[] | null>(null);
   const [disputas, setDisputas] = useState<Disputa[] | null>(null);
+  const [cupones, setCupones] = useState<Cupon[] | null>(null);
+  // Regla global: ningún formulario pierde lo escrito (borrador en el navegador).
+  const bc = useBorrador({
+    formulario: 'cupon-nuevo',
+    inicial: {
+      codigo: '',
+      tipo: 'monto',
+      valor: '',
+      descripcionEs: '',
+      descripcionEn: '',
+      minimo: '',
+      usosMax: '',
+      soloPrimerPedido: 'no',
+      destacado: 'no',
+      venceEn: '',
+    },
+    almacen: almacenNavegador,
+  });
+  const nuevo = {
+    ...bc.valores,
+    tipo: bc.valores.tipo as Cupon['tipo'],
+    soloPrimerPedido: bc.valores.soloPrimerPedido === 'si',
+    destacado: bc.valores.destacado === 'si',
+  };
+  const setNuevo = (x: Partial<typeof nuevo>) => {
+    for (const [k, v] of Object.entries(x))
+      bc.cambiar(
+        k as keyof typeof bc.valores,
+        typeof v === 'boolean' ? (v ? 'si' : 'no') : String(v ?? ''),
+      );
+  };
+  const [avisoCupon, setAvisoCupon] = useState('');
   const [base, setBase] = useState('');
   const [resultado, setResultado] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
 
   const cargar = useCallback(async () => {
-    const [r, l, a, c, d] = await Promise.all([
+    const [r, l, a, c, d, k] = await Promise.all([
       pedir<Retiros>('GET', '/datos/admin/retiros').catch(() => null),
       pedir<{ revision: Liquidacion[]; atrasadas: Liquidacion[] }>(
         'GET',
@@ -179,8 +289,10 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
         () => null,
       ),
       pedir<{ disputas: Disputa[] }>('GET', '/datos/admin/disputas').catch(() => null),
+      pedir<{ cupones: Cupon[] }>('GET', '/datos/admin/cupones').catch(() => null),
     ]);
     setDisputas(d?.disputas ?? []);
+    setCupones(k?.cupones ?? []);
     setRetiros(r);
     setLiq(l);
     setAbonos(a?.abonos ?? []);
@@ -369,6 +481,218 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                         {t.marcarResuelto}
                       </button>
                     )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      <h2>{t.cupones}</h2>
+      <p className="suave">{t.cuponesAyuda}</p>
+      <form
+        className="dinero"
+        onSubmit={(ev) => {
+          ev.preventDefault();
+          setAvisoCupon('');
+          const esPct = nuevo.tipo === 'porcentaje';
+          const valor = esPct
+            ? Math.round(Number(nuevo.valor.replace(',', '.')) * 100)
+            : Math.round(Number(nuevo.valor.replace(',', '.')) * 100);
+          void hacer(async () => {
+            await pedir('POST', '/datos/admin/cupones', {
+              codigo: nuevo.codigo,
+              tipo: nuevo.tipo,
+              valor: nuevo.tipo === 'envio_gratis' ? 0 : valor,
+              descripcionEs: nuevo.descripcionEs,
+              descripcionEn: nuevo.descripcionEn,
+              minimoSubtotal: Math.round(Number(nuevo.minimo.replace(',', '.') || '0') * 100),
+              usosMax: nuevo.usosMax ? Number(nuevo.usosMax) : null,
+              soloPrimerPedido: nuevo.soloPrimerPedido,
+              destacado: nuevo.destacado,
+              venceEn: nuevo.venceEn ? `${nuevo.venceEn} 23:59:59` : null,
+            });
+            setAvisoCupon(t.creado);
+            await bc.limpiar();
+          });
+        }}
+      >
+        <AvisoBorrador
+          visible={bc.recuperado}
+          idioma={idioma}
+          empezar={() => void bc.empezarDeNuevo()}
+        />
+        <fieldset>
+          <legend>{t.crear}</legend>
+          <label className="campo">
+            <span>{t.codigo}</span>
+            <input
+              value={nuevo.codigo}
+              onChange={(ev) => setNuevo({ codigo: ev.target.value.toUpperCase() })}
+              aria-label={t.codigo}
+              required
+            />
+          </label>
+          <label className="campo">
+            <span>{t.tipo}</span>
+            <select
+              value={nuevo.tipo}
+              onChange={(ev) => setNuevo({ tipo: ev.target.value as Cupon['tipo'] })}
+              aria-label={t.tipo}
+            >
+              {(['monto', 'porcentaje', 'envio_gratis'] as const).map((x) => (
+                <option key={x} value={x}>
+                  {new Map(Object.entries(t.tipos)).get(x)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {nuevo.tipo !== 'envio_gratis' ? (
+            <label className="campo">
+              <span>{t.valor}</span>
+              <input
+                value={nuevo.valor}
+                onChange={(ev) => setNuevo({ valor: ev.target.value })}
+                aria-label={t.valor}
+                inputMode="decimal"
+                placeholder={t.valorAyuda}
+              />
+            </label>
+          ) : null}
+          <label className="campo">
+            <span>{t.descripcionEs}</span>
+            <input
+              value={nuevo.descripcionEs}
+              onChange={(ev) => setNuevo({ descripcionEs: ev.target.value })}
+              aria-label={t.descripcionEs}
+            />
+          </label>
+          <label className="campo">
+            <span>{t.descripcionEn}</span>
+            <input
+              value={nuevo.descripcionEn}
+              onChange={(ev) => setNuevo({ descripcionEn: ev.target.value })}
+              aria-label={t.descripcionEn}
+            />
+          </label>
+          <label className="campo">
+            <span>{t.minimo}</span>
+            <input
+              value={nuevo.minimo}
+              onChange={(ev) => setNuevo({ minimo: ev.target.value })}
+              aria-label={t.minimo}
+              inputMode="decimal"
+            />
+          </label>
+          <label className="campo">
+            <span>{t.usosMax}</span>
+            <input
+              value={nuevo.usosMax}
+              onChange={(ev) => setNuevo({ usosMax: ev.target.value })}
+              aria-label={t.usosMax}
+              inputMode="numeric"
+            />
+          </label>
+          <label className="campo">
+            <span>{t.venceCupon}</span>
+            <input
+              value={nuevo.venceEn}
+              onChange={(ev) => setNuevo({ venceEn: ev.target.value })}
+              aria-label={t.venceCupon}
+              placeholder="2026-12-31"
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={nuevo.soloPrimerPedido}
+              onChange={(ev) => setNuevo({ soloPrimerPedido: ev.target.checked })}
+            />{' '}
+            {t.primerPedido}
+          </label>{' '}
+          <label>
+            <input
+              type="checkbox"
+              checked={nuevo.destacado}
+              onChange={(ev) => setNuevo({ destacado: ev.target.checked })}
+            />{' '}
+            {t.destacado}
+          </label>
+        </fieldset>
+        <button type="submit" className="boton">
+          {t.crear}
+        </button>
+        {avisoCupon ? (
+          <p className="ok" role="status">
+            {avisoCupon}
+          </p>
+        ) : null}
+      </form>
+      {cupones && !cupones.length ? <p className="suave">{t.sinCupones}</p> : null}
+      {cupones?.length ? (
+        <div className="tabla-ancha">
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>{t.codigo}</th>
+                <th>{t.tipo}</th>
+                <th>{t.valor}</th>
+                <th>{t.usos}</th>
+                <th>{t.descontado}</th>
+                <th>{t.vence}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {cupones.map((k) => (
+                <tr key={k.codigo} className={k.activo ? '' : 'suave'}>
+                  <td>
+                    <strong>{k.codigo}</strong>
+                    {k.destacado ? ' ★' : ''}
+                    <div className="suave">
+                      {idioma === 'en' ? k.descripcionEn || k.descripcionEs : k.descripcionEs}
+                    </div>
+                  </td>
+                  <td>{new Map(Object.entries(t.tipos)).get(k.tipo)}</td>
+                  <td>
+                    {k.tipo === 'porcentaje'
+                      ? `${k.valor / 100}%`
+                      : k.tipo === 'monto'
+                        ? formatearDolares(k.valor, idioma)
+                        : '—'}
+                  </td>
+                  <td>
+                    {k.usos}
+                    {k.usosMax != null ? ` / ${k.usosMax}` : ''}
+                  </td>
+                  <td>{formatearDolares(k.descontado, idioma)}</td>
+                  <td>{fecha(k.venceEn)}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="enlace"
+                      onClick={() =>
+                        void hacer(() =>
+                          pedir('PATCH', `/datos/admin/cupones/${k.codigo}`, { activo: !k.activo }),
+                        )
+                      }
+                    >
+                      {k.activo ? t.desactivar : t.activar}
+                    </button>{' '}
+                    <button
+                      type="button"
+                      className="enlace"
+                      onClick={() =>
+                        void hacer(() =>
+                          pedir('PATCH', `/datos/admin/cupones/${k.codigo}`, {
+                            destacado: !k.destacado,
+                          }),
+                        )
+                      }
+                    >
+                      {k.destacado ? t.quitarDestacado : t.destacar}
+                    </button>
                   </td>
                 </tr>
               ))}

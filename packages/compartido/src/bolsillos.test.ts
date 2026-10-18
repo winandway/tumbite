@@ -157,3 +157,34 @@ describe('impuesto de ventas (auditoría final, A.12)', () => {
     expect(con.pagoRepartidor).toBe(base.pagoRepartidor);
   });
 });
+
+describe('cupones (auditoría final, punto 15)', () => {
+  it('el descuento baja el total del cliente y la ganancia de Tumbite; restaurante y repartidor cobran igual; nunca más que lo cobrable', () => {
+    const base = calcularPedido({
+      lineas: [{ precioCentavos: 1500, cantidad: 2 }],
+      plan: 'inicial',
+      propina: 400,
+      distanciaKm: 2,
+    });
+    const con = calcularPedido({
+      lineas: [{ precioCentavos: 1500, cantidad: 2 }],
+      plan: 'inicial',
+      propina: 400,
+      distanciaKm: 2,
+      descuento: 500,
+    });
+    expect(con.descuento).toBe(500);
+    expect(con.totalCliente).toBe(base.totalCliente - 500);
+    expect(con.gananciaPlataforma).toBe(base.gananciaPlataforma - 500);
+    expect(con.pagoRestaurante).toBe(base.pagoRestaurante);
+    expect(con.pagoRepartidor).toBe(base.pagoRepartidor);
+    const enorme = calcularPedido({
+      lineas: [{ precioCentavos: 1500, cantidad: 2 }],
+      plan: 'inicial',
+      propina: 400,
+      distanciaKm: 2,
+      descuento: 999_999,
+    });
+    expect(enorme.totalCliente).toBe(400);
+  });
+});

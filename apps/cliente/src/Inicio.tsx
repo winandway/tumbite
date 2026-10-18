@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,7 +13,7 @@ import { BarraInferior, type Pestana } from './inicio/BarraInferior';
 import { Buscador } from './inicio/Buscador';
 import { Cabecera } from './inicio/Cabecera';
 import { ModalMuyPronto } from './inicio/ModalMuyPronto';
-import { Ofertas } from './inicio/Ofertas';
+import { Ofertas, type PromoReal } from './inicio/Ofertas';
 import { Restaurantes } from './inicio/Restaurantes';
 import { Servicios } from './inicio/Servicios';
 import { useServicios } from './inicio/useServicios';
@@ -36,6 +36,20 @@ export function Inicio() {
   const { carrito, cantidadTotal } = useCarrito();
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [pronto, setPronto] = useState(false);
+  // Promociones reales destacadas (cupones del superadmin): si hay, reemplazan las de muestra.
+  const [promos, setPromos] = useState<PromoReal[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ cupones: PromoReal[] }>('GET', '/datos/cupones/destacados')
+      .then((r) => {
+        if (vivo) setPromos(r.cupones);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
   // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
   const deUrl = useMemo(
@@ -113,7 +127,12 @@ export function Inicio() {
           />
         ) : (
           // Ofertas de muestra solo mientras la persona no tenga regalos reales en marcha.
-          <Ofertas idioma={idioma} alTocarEjemplo={() => setPronto(true)} />
+          <Ofertas
+            idioma={idioma}
+            alTocarEjemplo={() => setPronto(true)}
+            reales={promos}
+            alTocarReal={() => router.push('/restaurants')}
+          />
         )}
         {!punto && (
           <Text style={{ color: '#5E5E5E', marginHorizontal: 16, marginTop: 14 }}>

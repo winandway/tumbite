@@ -1,3 +1,4 @@
+import { validarCupon } from './cupones';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
 import { acreditarRecargaStripe } from '../internacional/recargas';
 import { registrarDisputa } from '../disputas';
@@ -59,6 +60,8 @@ const esquemaNuevoPedido = z.object({
   entrega: z.enum(['puerta', 'mano', 'recoger']).default('puerta'),
   // Si es en mano: PIN de 4 dígitos que da quien recibe (se apaga si va a recibir otra persona).
   pin: z.boolean().default(true),
+  /** Cupón escrito en el carrito: el servidor lo valida otra vez y guarda su uso. */
+  cupon: z.string().trim().max(30).optional(),
   /** Fase 2: cobro directo (el cliente paga al repartidor al recibir). Solo con el interruptor del país. */
   metodoPago: z.enum(['tarjeta', 'efectivo', 'transferencia_repartidor']).default('tarjeta'),
 });
@@ -257,6 +260,8 @@ export function aPedido(f: FilaPedido) {
     envio: Number(f.envio),
     servicio: Number(f.servicio),
     impuesto: Number(f.impuesto ?? 0),
+    descuento: Number(f.descuento ?? 0),
+    cupon: f.cupon ? String(f.cupon) : null,
     metodoPago: String(f.metodo_pago ?? 'tarjeta'),
     cobroEstado: String(f.cobro_estado ?? 'no_aplica'),
     montoRecibido: f.monto_recibido == null ? null : Number(f.monto_recibido),
@@ -424,6 +429,28 @@ pedidos.post('/pedidos', async (c) => {
     if (!disponible) throw new ErrorDatos('Ese regalo ya no está disponible.', 'regalo', 409);
     regalo = disponible.valorCentavos;
   }
+  // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
+  let cupon: { codigo: string; descuento: number } | null = null;
+  if (d.cupon) {
+    const previo = calcularPedido({
+      lineas,
+      plan,
+      propina: d.propinaCentavos,
+      distanciaKm: km,
+      config,
+      regalo,
+      recogida,
+    });
+    const v = await validarCupon(db, {
+      codigo: d.cupon,
+      usuarioId: u.id,
+      restauranteId: String(rest.id),
+      subtotal: previo.subtotal,
+      envio: previo.envio,
+      zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+    });
+    cupon = { codigo: v.cupon.codigo, descuento: v.descuento };
+  }
   const desglose = calcularPedido({
     lineas,
     plan,
@@ -432,6 +459,7 @@ pedidos.post('/pedidos', async (c) => {
     config,
     regalo,
     recogida,
+    descuento: cupon?.descuento ?? 0,
   });
   // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
   // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
@@ -451,8 +479,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -482,8 +510,17 @@ pedidos.post('/pedidos', async (c) => {
       String(rest.zona_id ?? ZONA_INICIAL),
       (rest.area_id as string | null) ?? null,
       desglose.impuesto,
+      cupon?.codigo ?? null,
+      desglose.descuento,
     )
     .run();
+  if (cupon)
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO usos_cupon (pedido_id, codigo, usuario_id, descuento) VALUES (?, ?, ?, ?)',
+      )
+      .bind(id, cupon.codigo, u.id, desglose.descuento)
+      .run();
   await db
     .prepare('INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, ?)')
     .bind(id, recogida ? 'mano' : d.entrega)

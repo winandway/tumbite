@@ -24,16 +24,93 @@ const Etiqueta = ({ texto }: { texto: string }) => (
  * Ofertas del día. Mientras los restaurantes no carguen promociones reales, se muestran las de
  * muestra del diseño (marcadas «Ejemplo»); tocarlas abre «Muy pronto». Nunca se cobran.
  */
+export type PromoReal = {
+  codigo: string;
+  tipo: 'monto' | 'porcentaje' | 'envio_gratis';
+  valor: number;
+  descripcionEs: string;
+  descripcionEn: string;
+  minimoSubtotal: number;
+  venceEn: string | null;
+};
+
 export function Ofertas({
   idioma,
   alTocarEjemplo,
+  reales,
+  alTocarReal,
 }: {
   idioma: Idioma;
   alTocarEjemplo: () => void;
+  /** Cupones destacados de verdad (del superadmin). Si hay, se muestran ellos y no los de muestra. */
+  reales?: PromoReal[];
+  alTocarReal?: (codigo: string) => void;
 }) {
   const t = textosInicio(idioma);
   // Anchos en números: en la web, el ancho en porcentaje no sirve para calcular la foto.
   const anchoCombo = Math.round((useWindowDimensions().width - 32 - 10) * 0.46);
+  if (reales?.length) {
+    const texto = (p: PromoReal) =>
+      p.tipo === 'envio_gratis'
+        ? idioma === 'en'
+          ? 'Free delivery'
+          : 'Envío gratis'
+        : p.tipo === 'porcentaje'
+          ? `−${p.valor / 100}%`
+          : `−${formatearDolares(p.valor, idioma)}`;
+    return (
+      <View style={{ marginTop: 18 }} testID="promos-reales">
+        <Text
+          style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginHorizontal: 16 }}
+        >
+          {t.ofertas}
+        </Text>
+        <View style={{ marginHorizontal: 16, marginTop: 10, gap: 10 }}>
+          {reales.map((p) => (
+            <Pressable
+              key={p.codigo}
+              onPress={() => alTocarReal?.(p.codigo)}
+              accessibilityRole="button"
+              accessibilityLabel={`${p.codigo}: ${idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs}`}
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 18,
+                padding: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                borderWidth: 1,
+                borderColor: '#2a2a2a',
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: C.primario,
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{texto(p)}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
+                  {idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+                  {idioma === 'en' ? 'Code' : 'Código'}:{' '}
+                  <Text style={{ fontWeight: '900' }}>{p.codigo}</Text>
+                  {p.minimoSubtotal > 0
+                    ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearDolares(p.minimoSubtotal, idioma)}`
+                    : ''}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+  }
   const tarjeta = {
     backgroundColor: '#fff',
     borderRadius: 18,
