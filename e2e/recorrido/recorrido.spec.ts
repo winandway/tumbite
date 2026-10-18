@@ -1007,6 +1007,159 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-calificar');
     await cli.getByRole('button', { name: L.enviarCalificacion }).click();
 
+    // 11b. Lo nuevo de la Fase 2 que ve el público (capturas para Docs). Sin fotos, sirve igual
+    //      de prueba: cada pantalla carga y responde.
+    // Reseñas con respuesta: el restaurante contesta en público y el cliente la ve en su pedido.
+    await panel.getByRole('link', { name: /^(Reviews|Reseñas)$/ }).click();
+    await expect(panel.getByText('5/5').first()).toBeVisible({ timeout: 20_000 });
+    await panel
+      .getByRole('button', { name: /^(Reply|Responder)$/ })
+      .first()
+      .click();
+    await panel
+      .getByLabel(/^(Your reply|Tu respuesta)$/)
+      .fill(idioma === 'en' ? 'Thank you! See you next time.' : '¡Gracias! Te esperamos pronto.');
+    await foto(panel, 'restaurante-resenas');
+    await panel.getByRole('button', { name: /^(Publish reply|Publicar respuesta)$/ }).click();
+    await expect(panel.getByText(/^(You replied|Respondiste):/)).toBeVisible({ timeout: 20_000 });
+    // Equipo: quién entra al panel y con qué rol (dueño, encargado, personal).
+    await panel.getByRole('link', { name: /^(Team|Equipo)$/ }).click();
+    await expect(panel.getByRole('button', { name: /^(Add|Agregar)$/ })).toBeVisible({
+      timeout: 20_000,
+    });
+    await foto(panel, 'restaurante-equipo');
+    // Festivos y cierres: un día marcado cierra el restaurante aunque esté dentro del horario.
+    await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
+    const cierres = panel.getByRole('heading', {
+      name: /^(Holidays and closures|Festivos y cierres)$/,
+    });
+    await expect(cierres).toBeVisible({ timeout: 20_000 });
+    await panel.getByLabel(/^(Date \(YYYY-MM-DD\)|Fecha \(AAAA-MM-DD\))$/).fill('2026-12-25');
+    await panel.getByLabel(/^(Reason|Motivo)/).fill(idioma === 'en' ? 'Christmas' : 'Navidad');
+    await panel.getByRole('button', { name: /^(Add closure|Agregar cierre)$/ }).click();
+    await expect(panel.getByText('2026-12-25')).toBeVisible({ timeout: 20_000 });
+    await cierres.scrollIntoViewIfNeeded();
+    await foto(panel, 'restaurante-festivos');
+    // Orden del menú: categorías y platos como los ve el cliente, con flechas.
+    await panel.getByRole('link', { name: L.menu, exact: true }).click();
+    await expect(
+      panel.getByRole('heading', { name: /^(Category order|Orden de las categorías)$/ }),
+    ).toBeVisible({ timeout: 20_000 });
+    await panel.evaluate(() => window.scrollTo(0, 0));
+    await foto(panel, 'restaurante-orden-menu');
+
+    // Favoritos: el corazón en la lista guarda el restaurante en «Favoritos».
+    await cli.goto('/app/restaurants');
+    const corazon = cli.getByLabel(
+      `${idioma === 'en' ? 'Save to favorites' : 'Guardar en favoritos'}: ${restaurante}`,
+    );
+    await expect(corazon).toBeVisible({ timeout: 20_000 });
+    await corazon.click();
+    await expect(
+      cli.getByLabel(
+        `${idioma === 'en' ? 'Remove from favorites' : 'Quitar de favoritos'}: ${restaurante}`,
+      ),
+    ).toBeVisible({ timeout: 20_000 });
+    await cli.goto('/app/favorites');
+    await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
+    await foto(cli, 'cliente-favoritos');
+
+    // Direcciones guardadas, cupón y pago al recibir, todo en el carrito. La dirección queda
+    // guardada por la API (como si la hubiera marcado «guardar» en el primer pedido); el cupón lo
+    // crea nuestro equipo; el efectivo lo enciende el superadmin en el país (interruptor Fase 2).
+    expect(
+      (
+        await cli.request.post('/datos/mis-direcciones', {
+          data: {
+            etiqueta: idioma === 'en' ? 'Home' : 'Casa',
+            direccion: '200 S Biscayne Blvd, Apt 12',
+            lat: CASA.latitude,
+            lng: CASA.longitude,
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    const codigoCupon = `WELCOME${id.slice(-4).toUpperCase()}`;
+    expect(
+      (
+        await request.post('/datos/admin/cupones', {
+          headers: auth,
+          data: {
+            codigo: codigoCupon,
+            tipo: 'monto',
+            valor: 300,
+            descripcionEs: '3 dólares de regalo en tu pedido',
+            descripcionEn: '$3 off your order',
+            destacado: true,
+          },
+        })
+      ).status(),
+    ).toBe(201);
+    const paisUS = (await (
+      await request.get('/datos/admin/paises/US', { headers: auth })
+    ).json()) as { config: Record<string, unknown> };
+    const ponerEfectivo = async (activo: boolean) =>
+      expect(
+        (
+          await request.put('/datos/admin/paises/US', {
+            headers: auth,
+            data: { ...paisUS.config, efectivoActivo: activo },
+          })
+        ).ok(),
+      ).toBe(true);
+    await ponerEfectivo(true);
+    try {
+      await cli.goto('/app/');
+      await cli.getByText(restaurante, { exact: true }).click();
+      await cli
+        .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
+        .filter({ visible: true })
+        .click();
+      await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
+      await cli.getByRole('radio', { name: L.enPuerta }).click();
+      const direccionGuardada = cli.getByLabel(
+        `${idioma === 'en' ? 'Your addresses' : 'Tus direcciones'}: ${idioma === 'en' ? 'Home' : 'Casa'}`,
+      );
+      await expect(direccionGuardada).toBeVisible({ timeout: 20_000 });
+      await direccionGuardada.click();
+      await expect(cli.getByLabel(L.direccionEntrega)).toHaveValue('200 S Biscayne Blvd, Apt 12');
+      await mapaListo(cli);
+      await direccionGuardada.scrollIntoViewIfNeeded();
+      await foto(cli, 'cliente-direcciones');
+      const efectivo = cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ });
+      await expect(efectivo).toBeVisible({ timeout: 20_000 });
+      await efectivo.click();
+      await expect(
+        cli
+          .getByText(/^(Order and pay on delivery|Pedir y pagar al recibir)$/)
+          .filter({ visible: true }),
+      ).toBeVisible();
+      await efectivo.scrollIntoViewIfNeeded();
+      await foto(cli, 'cliente-pago-al-recibir');
+      await cli.getByRole('radio', { name: /^(Card|Tarjeta)$/ }).click();
+      await cli
+        .getByPlaceholder(/^(Coupon or promo code|Cupón o código promocional)$/)
+        .fill(codigoCupon);
+      await cli.getByLabel(/^(Apply|Aplicar)$/).click();
+      const cuponAplicado = cli.getByText(/^(Coupon applied|Cupón aplicado)/);
+      await expect(cuponAplicado).toBeVisible({ timeout: 20_000 });
+      await cuponAplicado.scrollIntoViewIfNeeded();
+      await foto(cli, 'cliente-cupon');
+      await cli.getByLabel(/^(Remove|Quitar)$/).click();
+      await expect(cuponAplicado).toHaveCount(0);
+      // El repartidor, con el efectivo encendido, ve su saldo para comisiones en la billetera.
+      await rep.goto('/driver/');
+      await rep.getByText(L.verBilletera).filter({ visible: true }).click();
+      const saldoPrepago = rep.getByTestId('saldo-prepago');
+      await expect(saldoPrepago).toBeVisible({ timeout: 20_000 });
+      await saldoPrepago.scrollIntoViewIfNeeded();
+      await foto(rep, 'repartidor-prepago');
+      await rep.goto('/driver/');
+    } finally {
+      // Pase lo que pase, el país vuelve a quedar como estaba (en el sitio de pruebas también).
+      await ponerEfectivo(false);
+    }
+
     // 12. Regalo de cumpleaños: el restaurante aparta el 20 % y regala los nudos de ajo.
     await panel.getByRole('link', { name: L.regalos, exact: true }).click();
     await panel.getByLabel(L.porcentajeRegalos).fill('20');

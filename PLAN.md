@@ -22,7 +22,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] A.10 Superadmin dinero: liquidaciones en revisión con resolver, abonos fallidos, historial de conciliación con recálculo, interruptor de retiros.
 - [x] A.11 Superadmin operación: cancelar y devolver, reasignar repartidor, buscar pedidos cerrados, suspender cuentas.
 - [x] A.12 Impuesto de ventas, devoluciones y disputas (contracargos de Stripe) antes de cobrar en real: diseño + implementación mínima con pruebas.
-- [ ] A.13 Regresión del circuito de EE.UU. en staging (recorrido + S11) y VERIFICAR-PAGOS al día.
+- [x] A.13 Regresión del circuito de EE.UU. en staging (recorrido + S11) y VERIFICAR-PAGOS al día.
 
 ## Bloque B — Modelo financiero internacional (en paralelo con A, cerrado antes de habilitar dinero por país)
 
