@@ -20,7 +20,7 @@ export type DocumentoLegal = {
   idiomaQueRige?: string;
 };
 
-const FECHA = { es: 'Actualizado: 12 de octubre de 2026', en: 'Last updated: October 12, 2026' };
+const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
 const EMPRESA = 'Windoce LLC';
 const SITIO = 'https://tumbite.com';
 
@@ -527,7 +527,7 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '5. Calificaciones, niveles y desactivación',
         parrafos: [
-          'Los clientes te califican. Tu nivel depende de las estrellas, los pedidos completados y la puntualidad, y te da prioridad en pedidos grandes. Podemos pausar o desactivar tu cuenta por fraude, por poner en riesgo a alguien, por quedarte con comida o dinero, o por calificaciones muy bajas sostenidas. Si crees que fue un error, escríbenos y lo revisamos. Lo que ya ganaste se te paga igual.',
+          'Los clientes te califican; si marcan que una mala nota fue culpa del restaurante, esa nota no cuenta en tu promedio. Tu nivel sube con tus entregas completadas y, a igual distancia del restaurante, te da prioridad en las ofertas. Tus estrellas, tu tasa de aceptación, tu finalización y tu puntualidad se muestran en tu app. Podemos pausar o desactivar tu cuenta por fraude, por poner en riesgo a alguien, por quedarte con comida o dinero, o por calificaciones muy bajas sostenidas. Si crees que fue un error, escríbenos y lo revisamos. Lo que ya ganaste se te paga igual.',
         ],
       },
       {
@@ -572,7 +572,7 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '5. Ratings, levels, and deactivation',
         parrafos: [
-          'Customers rate you. Your level depends on stars, completed orders, and punctuality, and gives you priority on larger orders. We may pause or deactivate your account for fraud, endangering anyone, keeping food or money, or sustained very low ratings. If you think it was a mistake, email us and we’ll review it. What you’ve already earned is still paid out.',
+          'Customers rate you; if they mark that a low rating was the restaurant’s fault, it doesn’t count toward your average. Your level goes up with completed deliveries and, at the same distance from the restaurant, gives you priority on offers. Your stars, acceptance rate, completion rate, and punctuality are shown in your app. We may pause or deactivate your account for fraud, endangering anyone, keeping food or money, or sustained very low ratings. If you think it was a mistake, email us and we’ll review it. What you’ve already earned is still paid out.',
         ],
       },
       {

@@ -146,6 +146,38 @@ describe('calificaciones visibles para el repartidor', () => {
       entregasTotales: 1,
     });
   });
+  it('F18: una mala nota que el cliente marcó como culpa del restaurante no cuenta en su promedio (ni en el superadmin)', async () => {
+    const e = await escenario();
+    const { m, cliente } = e;
+    const rep = await e.repartidor('Rep Tres');
+    const califica = async (estrellas: number, culpaRestaurante: boolean) => {
+      const id = await e.pedidoPagado();
+      await e.aceptar(id);
+      await e.ofertasDe(rep.token);
+      await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+      await llevarA(m.DB, id, 'entregado', "entregado_en = datetime('now')");
+      await m.llamar(
+        'POST',
+        `/datos/pedidos/${id}/calificar`,
+        { estrellasRestaurante: 2, estrellasRepartidor: estrellas, culpaRestaurante },
+        cliente.token,
+      );
+    };
+    await califica(5, false);
+    await califica(1, true);
+    const r = await m.llamar('GET', '/datos/repartidor/calificaciones', undefined, rep.token);
+    expect(r.datos.clientes).toMatchObject({ promedio: 5, cuantas: 1, excluidas: 1 });
+    const admin = await m.cuenta('admin');
+    const ficha = await m.llamar(
+      'GET',
+      `/datos/admin/repartidores/${rep.id}`,
+      undefined,
+      admin.token,
+    );
+    const texto = JSON.stringify(ficha.datos);
+    expect(texto).toContain('"calificacion":5');
+    expect(texto).toContain('"calificaciones":1');
+  });
   it('pide sesión de repartidor', async () => {
     const e = await escenario();
     expect(

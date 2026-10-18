@@ -30,14 +30,18 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
   const db = base(c);
   const estrellas = await db
     .prepare(
-      `SELECT c.estrellas_repartidor AS e FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
+      `SELECT c.estrellas_repartidor AS e, c.culpa_restaurante AS culpa FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
         WHERE p.repartidor_id = ? AND c.estrellas_repartidor IS NOT NULL ORDER BY c.creado_en DESC LIMIT ${ULTIMAS}`,
     )
     .bind(u.id)
-    .all<{ e: number }>();
-  const cuantas = estrellas.results.length;
+    .all<{ e: number; culpa: number | null }>();
+  // F18: si el cliente marcó que la mala nota fue culpa del restaurante, no le cuenta al repartidor
+  // (lo que prometen Docs y la web).
+  const cuentan = estrellas.results.filter((x) => !x.culpa);
+  const excluidas = estrellas.results.length - cuentan.length;
+  const cuantas = cuentan.length;
   const promedio = cuantas
-    ? Math.round((estrellas.results.reduce((s, x) => s + x.e, 0) / cuantas) * 10) / 10
+    ? Math.round((cuentan.reduce((s, x) => s + x.e, 0) / cuantas) * 10) / 10
     : null;
 
   // Aceptación: las últimas 100 ofertas respondidas (vencer cuenta como rechazo, como en Dasher).
@@ -99,7 +103,7 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
       .first<{ n: number }>(),
   ]);
   return c.json({
-    clientes: { promedio, cuantas, minimo: MINIMO_ESTRELLAS },
+    clientes: { promedio, cuantas, excluidas, minimo: MINIMO_ESTRELLAS },
     aceptacion: { porcentaje: pct(aceptadas, ofertas.results.length), de: ofertas.results.length },
     finalizacion: {
       porcentaje: pct(nEntregados, nEntregados + nAbandonos),

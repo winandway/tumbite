@@ -437,7 +437,8 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
     .first<{ s: number }>();
   const cal = await db
     .prepare(
-      'SELECT AVG(c.estrellas_repartidor) AS p, COUNT(c.estrellas_repartidor) AS n FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id WHERE p.repartidor_id = ?',
+      // F18: sin las notas que el cliente marcó como culpa del restaurante.
+      'SELECT AVG(c.estrellas_repartidor) AS p, COUNT(c.estrellas_repartidor) AS n FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id WHERE p.repartidor_id = ? AND COALESCE(c.culpa_restaurante, 0) = 0',
     )
     .bind(id)
     .first<{ p: number | null; n: number }>();
