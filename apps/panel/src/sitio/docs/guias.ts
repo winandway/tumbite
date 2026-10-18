@@ -94,7 +94,13 @@ const es: SeccionDocs[] = [
           'La pestaña Favoritos (abajo, la tercera) muestra tus guardados con su tipo de comida y si está abierto ahora. Toca uno para ver su menú.',
           'Tus favoritos se guardan en tu cuenta: los ves en cualquier celular donde entres.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-favoritos-es.webp',
+            alt: 'Pantalla Favoritos de la app del cliente con un restaurante guardado, su tipo de comida y si está abierto.',
+            pie: 'Tus restaurantes guardados, listos para pedir otra vez.',
+          },
+        ],
         preguntas: ['¿Cómo guardo un restaurante?', '¿Dónde están mis favoritos?'],
         pasos: [
           'Toca el corazón en la tarjeta del restaurante.',
@@ -111,7 +117,13 @@ const es: SeccionDocs[] = [
           'Para guardar una nueva, enciende «Guardar esta dirección para la próxima» antes de pagar y ponle un nombre. Las instrucciones que escribas en «Notas» (portón, piso, timbre) se guardan con ella.',
           'Puedes tener hasta diez. La misma dirección no se duplica: se actualiza.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-direcciones-es.webp',
+            alt: 'Carrito con la dirección guardada «Casa» como botón encima del mapa, ya seleccionada.',
+            pie: 'Un toque en «Casa» rellena la dirección y el pin del mapa.',
+          },
+        ],
         preguntas: ['¿Cómo guardo mi dirección?', '¿Puedo poner instrucciones para el repartidor?'],
         pasos: [
           'Escribe la dirección y las notas en el carrito.',
@@ -129,7 +141,13 @@ const es: SeccionDocs[] = [
           'Hay cupones de monto fijo, de porcentaje sobre la comida y de envío gratis. Algunos son solo para tu primer pedido o para un restaurante.',
           'El descuento nunca sale del restaurante ni del repartidor: lo pone Tumbite.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-cupon-es.webp',
+            alt: 'Carrito con el cupón aplicado y el descuento restado del total.',
+            pie: 'El cupón se aplica antes de pagar y el descuento se ve en el total.',
+          },
+        ],
         preguntas: ['¿Dónde pongo un cupón?', '¿Por qué no me acepta el código?'],
         pasos: [
           'Escribe el código en el carrito y toca «Aplicar».',
@@ -166,7 +184,13 @@ const es: SeccionDocs[] = [
           'Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte.',
           'Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-pago-al-recibir-es.webp',
+            alt: 'Carrito con la pregunta «¿Cómo pagas?» y la opción «Efectivo al recibir» elegida; el botón dice «Pedir y pagar al recibir».',
+            pie: 'Eliges efectivo y pagas al repartidor cuando llegue.',
+          },
+        ],
         preguntas: [
           '¿Puedo pagar en efectivo?',
           '¿Cómo le transfiero al repartidor?',
@@ -696,7 +720,13 @@ const es: SeccionDocs[] = [
           'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
           'Pueden responder el dueño y los managers; el staff solo las lee.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-resenas-es.webp',
+            alt: 'Pantalla Reseñas del panel del restaurante con una calificación de 5/5 y el cuadro «Tu respuesta» listo para publicar.',
+            pie: 'Respondes en público y el cliente ve tu respuesta en su pedido.',
+          },
+        ],
         preguntas: ['¿Dónde veo mis reseñas?', '¿Puedo responder a un cliente?'],
         pasos: ['Menú del panel → Reseñas.', 'Toca «Responder» en la reseña y publica.'],
       },
@@ -710,7 +740,13 @@ const es: SeccionDocs[] = [
           'Ese día los clientes ven tu restaurante cerrado y no pueden pedir, sin que tengas que tocar el horario ni el botón de abrir. Al día siguiente vuelve solo.',
           'Para quitar un cierre, toca «Quitar» en la lista.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-festivos-es.webp',
+            alt: 'Sección «Festivos y cierres» del panel con el 25 de diciembre marcado como cierre por Navidad.',
+            pie: 'Un día marcado cierra el restaurante aunque esté dentro del horario.',
+          },
+        ],
         preguntas: [
           '¿Cómo cierro un día específico?',
           '¿Tengo que cambiar el horario para un festivo?',
@@ -727,7 +763,13 @@ const es: SeccionDocs[] = [
           'Roles: el manager responde reseñas, ordena el menú y pone festivos; el staff atiende pedidos y el menú del día a día. Solo el dueño agrega o quita gente, cambia el plan y maneja el dinero.',
           'Cada quien entra con su cuenta y ve el mismo restaurante. Para quitar a alguien, «Quitar del equipo».',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-equipo-es.webp',
+            alt: 'Pantalla Equipo del panel del restaurante con el rol del dueño y el formulario para agregar a alguien por correo y rol.',
+            pie: 'El dueño agrega personal o encargados con su propia cuenta.',
+          },
+        ],
         preguntas: [
           '¿Puedo darle acceso a mi encargado sin mi contraseña?',
           '¿Qué puede hacer cada rol?',
@@ -746,7 +788,13 @@ const es: SeccionDocs[] = [
           'En Menú, arriba de la lista, está «Orden de las categorías»: súbelas o bájalas con las flechas. Así aparecen en la app.',
           'Dentro de cada categoría, cada plato tiene sus flechas para moverlo arriba o abajo. Los cambios se guardan al instante.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-orden-menu-es.webp',
+            alt: 'Pantalla Menú del panel con el bloque «Orden de las categorías» y las flechas para subir o bajar cada categoría y cada plato.',
+            pie: 'Las flechas ordenan el menú tal como lo ve el cliente.',
+          },
+        ],
         preguntas: ['¿Cómo pongo mis platos estrella primero?'],
         pasos: [
           'Menú → flechas de las categorías.',
@@ -1313,7 +1361,13 @@ const es: SeccionDocs[] = [
           'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Tumbite no entra a tu cuenta.',
           'La propina en efectivo es tuya y no se cuenta en el cobro.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-prepago-es.webp',
+            alt: 'Billetera de la app del repartidor con el bloque «Saldo para comisiones»: disponible, apartado en pedidos y la casilla del código de recarga.',
+            pie: 'Tu saldo para comisiones y dónde canjear un código de recarga.',
+          },
+        ],
         preguntas: [
           '¿Por qué no me llegan pedidos en efectivo?',
           '¿Cómo recargo mi saldo?',
@@ -2354,7 +2408,13 @@ const en: SeccionDocs[] = [
           'The Favorites tab (bottom bar, third one) shows your saved ones with their type of food and whether they’re open now. Tap one to see its menu.',
           'Your favorites are saved to your account: you see them on any phone you sign in to.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-favoritos-en.webp',
+            alt: 'Favorites screen in the customer app with a saved restaurant, its type of food and whether it is open.',
+            pie: 'Your saved restaurants, ready to order again.',
+          },
+        ],
         preguntas: ['How do I save a restaurant?', 'Where are my favorites?'],
         pasos: ['Tap the heart on the restaurant card.', 'Open them from the Favorites tab.'],
       },
@@ -2368,7 +2428,13 @@ const en: SeccionDocs[] = [
           'To save a new one, turn on “Save this address for next time” before paying and give it a name. The instructions you write under “Notes” (gate, floor, doorbell) are saved with it.',
           'You can keep up to ten. The same address isn’t duplicated: it’s updated.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-direcciones-en.webp',
+            alt: 'Cart with the saved address “Home” as a button above the map, already selected.',
+            pie: 'One tap on “Home” fills in the address and the map pin.',
+          },
+        ],
         preguntas: ['How do I save my address?', 'Can I add instructions for the driver?'],
         pasos: [
           'Write the address and the notes in the cart.',
@@ -2386,7 +2452,13 @@ const en: SeccionDocs[] = [
           'There are fixed-amount coupons, percentage-off-food coupons and free-delivery coupons. Some are only for your first order or for one restaurant.',
           'The discount never comes out of the restaurant or the driver: Tumbite covers it.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-cupon-en.webp',
+            alt: 'Cart with the coupon applied and the discount taken off the total.',
+            pie: 'The coupon is applied before paying and the discount shows in the total.',
+          },
+        ],
         preguntas: ['Where do I enter a coupon?', 'Why isn’t my code accepted?'],
         pasos: [
           'Enter the code in the cart and tap “Apply”.',
@@ -2426,7 +2498,13 @@ const en: SeccionDocs[] = [
           'If you don’t pay on delivery, the order is canceled and an outstanding balance stays on your account: you won’t be able to order with pay-on-delivery again until you settle it with support.',
           'If you transferred and the driver says it didn’t arrive, or the amount doesn’t match, tap “I have a problem with the payment” in your order: support reviews the case with both of you.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-pago-al-recibir-en.webp',
+            alt: 'Cart with the question “How do you pay?” and “Cash on delivery” selected; the button reads “Order and pay on delivery”.',
+            pie: 'Choose cash and pay the driver when they arrive.',
+          },
+        ],
         preguntas: [
           'Can I pay in cash?',
           'How do I transfer to the driver?',
@@ -2951,7 +3029,13 @@ const en: SeccionDocs[] = [
           'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
           'The owner and managers can reply; staff can only read them.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-resenas-en.webp',
+            alt: 'Reviews screen in the restaurant panel with a 5/5 rating and the “Your reply” box ready to publish.',
+            pie: 'You reply publicly and the customer sees it in their order.',
+          },
+        ],
         preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
         pasos: ['Panel menu → Reviews.', 'Tap “Reply” on the review and publish.'],
       },
@@ -2965,7 +3049,13 @@ const en: SeccionDocs[] = [
           'That day customers see your restaurant closed and can’t order, without touching the schedule or the open switch. The next day it comes back on its own.',
           'To remove a closure, tap “Remove” in the list.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-festivos-en.webp',
+            alt: '“Holidays and closures” section of the panel with December 25 marked as closed for Christmas.',
+            pie: 'A marked day closes the restaurant even inside its hours.',
+          },
+        ],
         preguntas: [
           'How do I close on a specific day?',
           'Do I have to change the schedule for a holiday?',
@@ -2982,7 +3072,13 @@ const en: SeccionDocs[] = [
           'Roles: a manager replies to reviews, reorders the menu and sets holidays; staff handles orders and the day-to-day menu. Only the owner adds or removes people, changes the plan and manages money.',
           'Everyone signs in with their own account and sees the same restaurant. To remove someone, “Remove from team”.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-equipo-en.webp',
+            alt: 'Team screen in the restaurant panel with the owner’s role and the form to add someone by email and role.',
+            pie: 'The owner adds staff or managers with their own account.',
+          },
+        ],
         preguntas: ['Can I give my manager access without my password?', 'What can each role do?'],
         pasos: [
           'Ask the person to sign up in the panel as a restaurant.',
@@ -2998,7 +3094,13 @@ const en: SeccionDocs[] = [
           'Under Menu, above the list, there’s “Category order”: move them up or down with the arrows. That’s how they show in the app.',
           'Within each category, every item has arrows to move it up or down. Changes save instantly.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-orden-menu-en.webp',
+            alt: 'Menu screen in the panel with the “Category order” block and the arrows to move each category and item up or down.',
+            pie: 'The arrows order the menu exactly as the customer sees it.',
+          },
+        ],
         preguntas: ['How do I put my star dishes first?'],
         pasos: ['Menu → category arrows.', 'Each item’s arrows within its category.'],
       },
@@ -3555,7 +3657,13 @@ const en: SeccionDocs[] = [
           'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Tumbite never accesses your account.',
           'A cash tip is yours and isn’t counted in the payment.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-prepago-en.webp',
+            alt: 'Wallet in the driver app with the “Balance for fees” block: available, reserved in orders and the top-up code box.',
+            pie: 'Your balance for fees and where to redeem a top-up code.',
+          },
+        ],
         preguntas: [
           'Why don’t I get cash orders?',
           'How do I top up my balance?',

@@ -54,7 +54,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 ## Bloque E — Pruebas integrales, piloto y tiendas
 
 - [x] E.1 Pruebas de concurrencia, reintentos y reversión de B (canje doble, cobro doble, reserva simultánea).
-- [ ] E.2 Recorrido visual en celular es/en de todo lo nuevo; capturas al recorrido y Docs/web.
+- [x] E.2 Recorrido visual en celular es/en de todo lo nuevo; capturas al recorrido y Docs/web.
 - [ ] E.3 Piloto en calle (👤) y operaciones reales autorizadas (👤), evidencias en VERIFICAR-PAGOS.
 - [ ] E.4 Fichas de tiendas con capturas del recorrido (al final).
 
