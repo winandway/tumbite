@@ -74,6 +74,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa ciudad ya tiene franquicia.', 'That city already has a franchise.'],
   ['Esa cuenta no existe.', 'That account doesn’t exist.'],
+  ['Ese restaurante no existe.', 'That restaurant doesn’t exist.'],
   [
     'Este país todavía no acepta pago en efectivo.',
     'This country doesn’t accept cash payment yet.',

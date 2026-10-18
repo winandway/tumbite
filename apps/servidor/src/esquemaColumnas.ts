@@ -926,5 +926,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "cambio",
     "autor_id",
     "creado_en"
+  ],
+  "favoritos": [
+    "usuario_id",
+    "restaurante_id",
+    "creado_en"
   ]
 };

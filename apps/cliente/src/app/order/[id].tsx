@@ -33,6 +33,12 @@ type Pedido = {
   fotoEntrega?: { tomadaEn: string } | null;
   entrega?: 'puerta' | 'mano' | 'recoger';
   propina?: number;
+  subtotal?: number;
+  envio?: number;
+  servicio?: number;
+  cargoPedidoPequeno?: number;
+  impuesto?: number;
+  regalo?: number;
   propinaExtra?: number | null;
   requiereEdad?: boolean;
   entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
@@ -82,6 +88,14 @@ const T = {
     titulo: 'Tu pedido',
     volver: '← Inicio',
     total: 'Total',
+    recibo: 'Recibo',
+    comida: 'Comida',
+    envio: 'Envío',
+    servicio: 'Servicio',
+    pequeno: 'Pedido pequeño',
+    impuesto: 'Impuesto',
+    regalo: 'Regalo',
+    propina: 'Propina',
     pagoAlRecibir: 'Pagas al recibir',
     enEfectivo: 'En efectivo, al repartidor: {monto} (sin contar la propina).',
     transfiereA: 'Transfiere al repartidor {monto} (sin contar la propina) a:',
@@ -170,6 +184,14 @@ const T = {
     titulo: 'Your order',
     volver: '← Home',
     total: 'Total',
+    recibo: 'Receipt',
+    comida: 'Food',
+    envio: 'Delivery',
+    servicio: 'Service',
+    pequeno: 'Small order',
+    impuesto: 'Tax',
+    regalo: 'Gift',
+    propina: 'Tip',
     pagoAlRecibir: 'You pay on delivery',
     enEfectivo: 'In cash, to the driver: {monto} (tip not included).',
     transfiereA: 'Transfer {monto} (tip not included) to the driver at:',
@@ -619,6 +641,40 @@ export default function SeguirPedido() {
                 </View>
               ) : null}
             </View>
+            {p.subtotal != null ? (
+              <View style={{ marginTop: 10 }} testID="recibo">
+                <Text style={{ fontWeight: '900', color: C.secundario }}>{t.recibo}</Text>
+                {(
+                  [
+                    [t.comida, p.subtotal],
+                    [t.regalo, -(p.regalo ?? 0)],
+                    [t.envio, p.envio ?? 0],
+                    [t.servicio, p.servicio ?? 0],
+                    [t.pequeno, p.cargoPedidoPequeno ?? 0],
+                    [t.impuesto, p.impuesto ?? 0],
+                    [t.propina, p.propina ?? 0],
+                  ] as const
+                )
+                  .filter(([, monto]) => monto !== 0)
+                  .map(([etiqueta, monto]) => (
+                    <View
+                      key={etiqueta}
+                      style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+                    >
+                      <Text style={{ color: '#5E5E5E' }}>{etiqueta}</Text>
+                      <Text style={{ color: C.secundario }}>{formatearDolares(monto, idioma)}</Text>
+                    </View>
+                  ))}
+                <View
+                  style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}
+                >
+                  <Text style={{ fontWeight: '800', color: C.secundario }}>{t.total}</Text>
+                  <Text style={{ fontWeight: '900', color: C.secundario }}>
+                    {formatearDolares(p.total, idioma)}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
             {p.metodoPago && p.metodoPago !== 'tarjeta' && p.estado !== 'cancelado' ? (
               <View
                 style={{

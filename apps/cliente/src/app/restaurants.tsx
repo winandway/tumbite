@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -13,7 +13,6 @@ import { distanciaTexto } from '../textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
 import { EstadoCatalogo } from '../comida/EstadoCatalogo';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
-import { ModalMuyPronto } from '../inicio/ModalMuyPronto';
 import { IMG, fotoDeRelleno } from '../inicio/recursos';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -21,7 +20,7 @@ import { textosComida } from '../comida/textos';
 /**
  * Restaurantes de Comida (diseño aprobado, pantalla 2, mejorada el 18 oct 2026 «como los grandes»):
  * título grande con cuántos están abiertos, buscador, categorías reales, filtros rápidos (solo
- * abiertos, más cerca, más rápido) y tarjetas con foto, tipo de comida, distancia, tiempo y estado. El corazón abre «Muy pronto» porque los favoritos todavía no existen.
+ * abiertos, más cerca, más rápido) y tarjetas con foto, tipo de comida, distancia, tiempo y estado. El corazón guarda el restaurante en Favoritos.
  */
 export default function Restaurantes() {
   const { api, idioma } = useSesion();
@@ -30,7 +29,39 @@ export default function Restaurantes() {
   const [categoria, setCategoria] = useState<string | null>(null);
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [orden, setOrden] = useState<'cerca' | 'rapido' | null>(null);
-  const [pronto, setPronto] = useState(false);
+  // Favoritos reales (auditoría final, punto 13): los ids vienen del servidor; el corazón los alterna.
+  const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ ids: string[] }>('GET', '/datos/favoritos')
+      .then((r) => {
+        if (vivo) setFavoritos(new Set(r.ids));
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
+  async function alternarFavorito(id: string) {
+    const era = favoritos.has(id);
+    setFavoritos((f) => {
+      const n = new Set(f);
+      if (era) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+    try {
+      await api.pedir(era ? 'DELETE' : 'PUT', `/datos/favoritos/${id}`);
+    } catch {
+      setFavoritos((f) => {
+        const n = new Set(f);
+        if (era) n.add(id);
+        else n.delete(id);
+        return n;
+      });
+    }
+  }
 
   // C-CATALOGO-ESTABLE: la misma lista que el inicio (comida/useRestaurantes): no se vuelve a
   // pedir al entrar desde el inicio y una respuesta vieja nunca borra la nueva.
@@ -55,7 +86,8 @@ export default function Restaurantes() {
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return router.replace('/');
-    if (p === 'favoritos') return setPronto(true);
+    if (p === 'favoritos') return router.push('/favorites');
+    if (p === 'pedidos') return router.push('/orders');
     router.push('/account');
   };
 
@@ -201,14 +233,16 @@ export default function Restaurantes() {
                   {r.nombre}
                 </Text>
                 <Pressable
-                  onPress={() => setPronto(true)}
+                  onPress={() => void alternarFavorito(r.id)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${t.favorito}: ${r.nombre}`}
+                  accessibilityLabel={`${favoritos.has(r.id) ? t.quitarFavorito : t.favorito}: ${r.nombre}`}
+                  accessibilityState={{ selected: favoritos.has(r.id) }}
                   hitSlop={8}
                 >
                   <Image
                     source={IMG.iconoCorazon}
-                    style={{ width: 20, height: 20 }}
+                    style={{ width: 20, height: 20, opacity: favoritos.has(r.id) ? 1 : 0.35 }}
+                    tintColor={favoritos.has(r.id) ? C.primario : undefined}
                     resizeMode="contain"
                     accessibilityIgnoresInvertColors
                   />
@@ -247,7 +281,6 @@ export default function Restaurantes() {
         )}
       />
       <BarraInferior idioma={idioma} activa="inicio" alTocar={pestana} />
-      <ModalMuyPronto visible={pronto} cerrar={() => setPronto(false)} idioma={idioma} />
     </SafeAreaView>
   );
 }

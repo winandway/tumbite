@@ -726,3 +726,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - Restaurante: en el pedido, «El repartidor paga este pedido en el mostrador… entrégale el ticket».
 - Docs: guías `pay-on-delivery` (clientes) y `cash-orders-and-top-ups` (repartidores), es/en.
 - Prueba: `internacional.test.ts` → «pantallas del cobro directo…». Capturas del recorrido: cuando Richard encienda un país en staging (hoy todo apagado).
+
+## C-PEDIDOS-FAVORITOS: pestaña Pedidos real, Favoritos reales y recibo (puntos 12 y 13, 18 oct 2026)
+
+- **Qué faltaba:** la pestaña «Pedidos» mandaba a Mi cuenta; «Favoritos» abría «Muy pronto»; el seguimiento no mostraba el desglose.
+- **Qué se hizo:** `apps/cliente/src/app/orders.tsx` (historial con estado, resumen de platos, «Ver pedido y recibo», «Repetir pedido» que rearma el carrito con los platos que siguen en el menú y avisa de los que no), `apps/cliente/src/app/favorites.tsx` (lista cruzada con el catálogo de la ciudad; corazón para quitar), corazón real en `restaurants.tsx` (`PUT/DELETE /datos/favoritos/:id`, `GET /datos/favoritos`, tabla `favoritos`), pestañas de la barra inferior conectadas, y «Recibo» en el seguimiento (comida, regalo, envío, servicio, pedido pequeño, impuesto, propina, total).
+- **Pruebas:** `apps/servidor/src/rutas/favoritos.test.ts` (2); `comidaDiseno.test.ts` ajustada.
+- **Qué NO tocar:** el corazón nunca vuelve a abrir un «Muy pronto»; repetir pedido vacía el carrito antes (un carrito de otro restaurante no se mezcla).

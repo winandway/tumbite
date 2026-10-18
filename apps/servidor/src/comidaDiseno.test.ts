@@ -22,10 +22,11 @@ describe('pantallas de Comida con el diseño aprobado', () => {
       /router\.push\('\/restaurants'\)/,
     );
   });
-  it('la lista filtra por las categorías de los restaurantes reales y el corazón dice «Muy pronto»', () => {
+  it('la lista filtra por las categorías de los restaurantes reales y el corazón guarda el favorito (desde el 18 oct 2026)', () => {
     const lista = leer(...CLIENTE, 'app', 'restaurants.tsx');
     expect(lista).toMatch(/new Set\(\(lista \?\? \[\]\)\.map\(\(r\) => r\.categoria\)/);
-    expect(lista).toMatch(/onPress=\{\(\) => setPronto\(true\)\}/);
+    expect(lista).toMatch(/onPress=\{\(\) => void alternarFavorito\(r\.id\)\}/);
+    expect(lista).not.toMatch(/setPronto\(true\)/);
   });
   it('el menú tiene Menú e Información con datos reales, sin una pestaña de opiniones vacía', () => {
     const menu = leer(...CLIENTE, 'app', 'restaurant', '[id].tsx');

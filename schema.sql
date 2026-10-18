@@ -1572,3 +1572,11 @@ CREATE TABLE IF NOT EXISTS cuentas_cobro_historial (
   autor_id TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Favoritos del cliente (auditoría final, punto 13): restaurantes guardados con el corazón.
+CREATE TABLE IF NOT EXISTS favoritos (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, restaurante_id)
+);

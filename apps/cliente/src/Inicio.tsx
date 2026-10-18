@@ -74,7 +74,8 @@ export function Inicio() {
   };
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return;
-    if (p === 'favoritos') return setPronto(true);
+    if (p === 'favoritos') return router.push('/favorites');
+    if (p === 'pedidos') return router.push('/orders');
     router.push('/account');
   };
 
