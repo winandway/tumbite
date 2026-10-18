@@ -30,7 +30,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] B.2 Diseño: libro mayor común por país y moneda (`movimientos` con cuenta, país, moneda, concepto, referencia, autor); separación de saldos; nada de equivalencias implícitas.
 - [x] B.3 Saldo prepago de comisiones: tabla, reserva al aceptar, cobro al entregar o liberación; sin negativo, sin crédito, sin retiro ni transferencia entre usuarios.
 - [x] B.4 Cobro directo: pedido con `modoPago = directo`; estados entrega física / cobro confirmado / conciliación separados; propina aparte; casos de excepción (sin capital, cliente ausente, cancelación antes/después de recoger, faltante, ticket distinto, devolución, cliente no paga, transferencia pendiente/rechazada/duplicada/monto erróneo, disputa).
-- [ ] B.5 Cuentas del repartidor: alta con nombre del beneficiario, verificación (manual identificada como «confirmación del repartidor» hasta tener API), historial de cambios protegido, disputa.
+- [x] B.5 Cuentas del repartidor: alta con nombre del beneficiario, verificación (manual identificada como «confirmación del repartidor» hasta tener API), historial de cambios protegido, disputa.
 - [x] B.6 Recargas y puntos de venta: puntos con fondo prepago, códigos impredecibles, canje atómico e idempotente, límite de intentos, anulación, registro auditable, separación por país/moneda.
 - [ ] B.7 Conectores por proveedor y país (interfaz común, implementaciones simuladas con pruebas): Stripe US (existente), Wompi CO (candidato), Pago Móvil VE (candidato); nada real sin contrato.
 - [ ] B.8 Contabilidad y control: reconstrucción por pedido (cliente pagó / cada parte recibió / Tumbite ganó / pendiente), ajustes compensatorios con autor, conciliación por país, canarios.

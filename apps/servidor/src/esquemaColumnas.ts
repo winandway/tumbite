@@ -124,6 +124,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "monto_recibido",
     "cobro_confirmado_en",
     "cobro_nota",
+    "cobro_confirmado_por",
     "conciliacion_estado",
     "comision",
     "pago_restaurante",
@@ -903,5 +904,27 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "referencia",
     "creado_en",
     "acreditada_en"
+  ],
+  "cuentas_cobro": [
+    "id",
+    "usuario_id",
+    "pais",
+    "moneda",
+    "tipo",
+    "banco",
+    "titular",
+    "identificador",
+    "verificacion",
+    "activa",
+    "activa_desde",
+    "creado_en"
+  ],
+  "cuentas_cobro_historial": [
+    "id",
+    "cuenta_id",
+    "usuario_id",
+    "cambio",
+    "autor_id",
+    "creado_en"
   ]
 };

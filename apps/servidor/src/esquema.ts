@@ -25,6 +25,7 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pedidos', 'monto_recibido', 'INTEGER'],
   ['pedidos', 'cobro_confirmado_en', 'TEXT'],
   ['pedidos', 'cobro_nota', 'TEXT'],
+  ['pedidos', 'cobro_confirmado_por', 'TEXT'],
   ['pedidos', 'conciliacion_estado', "TEXT NOT NULL DEFAULT 'no_aplica'"],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],

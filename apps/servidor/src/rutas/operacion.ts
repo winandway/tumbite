@@ -5,6 +5,8 @@ import {
   reservarAlAceptar,
 } from '../internacional/cobroDirecto';
 import { liberarReserva } from '../internacional/libro';
+import { cuentaVigente } from '../internacional/cuentasCobro';
+import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
@@ -2015,6 +2017,30 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
                 .bind(c.req.param('id'))
                 .first<{ pin: string }>()
             )?.pin ?? null)
+          : null,
+      // Cobro directo por transferencia: el cliente ve a quién y a dónde transferir (nombre del
+      // beneficiario y cuenta vigente), nada más. Solo el cliente del pedido y solo con repartidor.
+      cuentaCobro:
+        f.cliente_id === u.id &&
+        f.repartidor_id &&
+        String(f.metodo_pago ?? '') === 'transferencia_repartidor'
+          ? await cuentaVigente(
+              base(c),
+              String(f.repartidor_id),
+              ...(await paisDeZona(base(c), String(f.zona_id ?? 'US-FL-MIAMI')).then(
+                (z) => [z.pais, z.moneda] as const,
+              )),
+            ).then((cu) =>
+              cu
+                ? {
+                    tipo: cu.tipo,
+                    banco: cu.banco,
+                    titular: cu.titular,
+                    identificador: cu.identificador,
+                    verificacion: cu.verificacion,
+                  }
+                : null,
+            )
           : null,
       repartidor: f.repartidor_id
         ? {

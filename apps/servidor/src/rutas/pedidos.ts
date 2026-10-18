@@ -261,6 +261,7 @@ export function aPedido(f: FilaPedido) {
     cobroEstado: String(f.cobro_estado ?? 'no_aplica'),
     montoRecibido: f.monto_recibido == null ? null : Number(f.monto_recibido),
     conciliacionEstado: String(f.conciliacion_estado ?? 'no_aplica'),
+    cobroConfirmadoPor: f.cobro_confirmado_por ? String(f.cobro_confirmado_por) : null,
     cargoPedidoPequeno: Number(f.cargo_pequeno),
     propina: Number(f.propina),
     regalo: Number(f.regalo),

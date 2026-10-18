@@ -1,3 +1,13 @@
+import {
+  TIPOS_CUENTA,
+  confirmarCuentaCobro,
+  crearCuentaCobro,
+  cuentasDe,
+  desactivarCuentaCobro,
+  historialCuentas,
+} from '../internacional/cuentasCobro';
+import { verificarClave } from '../cripto';
+import { crearTicket } from './tickets';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -293,4 +303,106 @@ internacional.get('/mi-deuda', async (c) => {
     .first<{ zona_id: string | null }>();
   const { pais, moneda } = await paisDeZona(db, z?.zona_id ?? 'US-FL-MIAMI');
   return c.json({ pais, moneda, deuda: await deudaCliente(db, u.id, pais, moneda) });
+});
+
+// ───────── Repartidor: cuentas para recibir transferencias del cliente (B.5) ─────────
+async function exigirClave(db: D1Database, usuarioId: string, clave: string) {
+  const f = await db
+    .prepare('SELECT clave_hash FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ clave_hash: string }>();
+  if (!f || !(await verificarClave(clave, f.clave_hash)))
+    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 403);
+}
+
+internacional.get('/repartidor/cuentas-cobro', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  return c.json({
+    cuentas: await cuentasDe(db, u.id),
+    historial: await historialCuentas(db, u.id),
+  });
+});
+
+internacional.post('/repartidor/cuentas-cobro', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      clave: z.string().min(1, { error: 'Escribe tu contraseña.' }),
+      tipo: z.enum(TIPOS_CUENTA),
+      banco: z.string().trim().max(60).default(''),
+      titular: z.string().trim().min(3, { error: 'Escribe el nombre del titular.' }).max(80),
+      identificador: z
+        .string()
+        .trim()
+        .min(4, { error: 'Escribe el número de la cuenta o el teléfono.' })
+        .max(60),
+    }),
+  );
+  const db = base(c);
+  await exigirClave(db, u.id, d.clave);
+  const { pais, moneda } = await paisDelRepartidor(db, u.id);
+  const cuenta = await crearCuentaCobro(c.env, db, {
+    usuarioId: u.id,
+    pais,
+    moneda,
+    tipo: d.tipo,
+    banco: d.banco,
+    titular: d.titular,
+    identificador: d.identificador,
+    autorId: u.id,
+    correo: u.correo,
+    nombre: u.nombre,
+    idioma: u.idioma === 'en' ? 'en' : 'es',
+  });
+  return c.json({ cuenta }, 201);
+});
+
+internacional.post('/repartidor/cuentas-cobro/:id/desactivar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const { clave } = await leerCuerpo(c, z.object({ clave: z.string().min(1) }));
+  const db = base(c);
+  await exigirClave(db, u.id, clave);
+  await desactivarCuentaCobro(db, { id: c.req.param('id'), usuarioId: u.id, autorId: u.id });
+  return c.json({ ok: true });
+});
+
+internacional.patch('/admin/cuentas-cobro/:id', async (c) => {
+  const u = exigir(c, 'admin');
+  await confirmarCuentaCobro(base(c), { id: c.req.param('id'), autorId: u.id });
+  return c.json({ ok: true });
+});
+
+/** El cliente discute un cobro directo (transfirió y el repartidor dice que no, o el monto no cuadra): abre un ticket de queja. */
+internacional.post('/pedidos/:id/disputa-cobro', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { motivo } = await leerCuerpo(c, z.object({ motivo: z.string().trim().min(5).max(500) }));
+  const db = base(c);
+  const id = c.req.param('id');
+  const p = await db
+    .prepare(
+      "SELECT id, metodo_pago, cobro_estado, monto_recibido, total, zona_id FROM pedidos WHERE id = ? AND cliente_id = ? AND metodo_pago <> 'tarjeta'",
+    )
+    .bind(id, u.id)
+    .first<Record<string, unknown>>();
+  if (!p) throw new ErrorDatos('Ese pedido no se cobra en mano.', undefined, 409);
+  const t = await crearTicket(c.env, db, {
+    tipo: 'queja',
+    nombre: u.nombre,
+    correo: u.correo,
+    idioma: u.idioma === 'en' ? 'en' : 'es',
+    asunto: `Disputa de cobro directo · pedido #${id.slice(0, 6).toUpperCase()}`,
+    mensaje: motivo,
+    datos: {
+      metodoPago: p.metodo_pago,
+      cobroEstado: p.cobro_estado,
+      montoRecibido: p.monto_recibido,
+      total: p.total,
+    },
+    usuarioId: u.id,
+    pedidoId: id,
+    zonaId: String(p.zona_id),
+  });
+  return c.json({ ticket: t }, 201);
 });

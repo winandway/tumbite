@@ -126,6 +126,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Card top-ups aren’t active in this country.',
   ],
   ['Tu cuenta no es de un punto de venta.', 'Your account isn’t a sales point.'],
+  ['La contraseña no es correcta.', 'The password isn’t correct.'],
+  ['Escribe tu contraseña.', 'Enter your password.'],
+  ['Escribe el nombre del titular.', 'Enter the account holder’s name.'],
+  ['Escribe el número de la cuenta o el teléfono.', 'Enter the account number or phone number.'],
+  ['Esa cuenta de cobro no existe.', 'That payout account doesn’t exist.'],
   [
     'Solo se devuelve dinero de un pedido entregado y cobrado.',
     'Refunds apply only to delivered and charged orders.',

@@ -151,6 +151,8 @@ CREATE TABLE IF NOT EXISTS pedidos (
   monto_recibido INTEGER,
   cobro_confirmado_en TEXT,
   cobro_nota TEXT,
+  -- Quién confirmó el cobro: 'repartidor' (confirmación manual, nunca «el banco»), 'admin' o 'api'.
+  cobro_confirmado_por TEXT,
   conciliacion_estado TEXT NOT NULL DEFAULT 'no_aplica' CHECK (conciliacion_estado IN ('no_aplica', 'pendiente', 'conciliado', 'con_diferencia')),
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
@@ -1542,3 +1544,31 @@ CREATE TABLE IF NOT EXISTS recargas (
 CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
 -- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
 INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);
+
+-- Cuentas a las que el cliente le transfiere al repartidor (cobro directo por transferencia). Se
+-- muestran con el nombre del beneficiario; un cambio exige la contraseña, queda en el historial,
+-- avisa por correo y entra en vigor a las 24 horas (o antes si el equipo la confirma).
+CREATE TABLE IF NOT EXISTS cuentas_cobro (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('banco', 'nequi', 'daviplata', 'pago_movil', 'zelle', 'otro')),
+  banco TEXT NOT NULL DEFAULT '',
+  titular TEXT NOT NULL,
+  identificador TEXT NOT NULL,
+  -- 'declarada' = la escribió el repartidor; 'confirmada' = el equipo la revisó (nunca «verificada por el banco»).
+  verificacion TEXT NOT NULL DEFAULT 'declarada' CHECK (verificacion IN ('declarada', 'confirmada')),
+  activa INTEGER NOT NULL DEFAULT 1,
+  activa_desde TEXT NOT NULL DEFAULT (datetime('now')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS cuentas_cobro_usuario ON cuentas_cobro(usuario_id, activa);
+CREATE TABLE IF NOT EXISTS cuentas_cobro_historial (
+  id TEXT PRIMARY KEY,
+  cuenta_id TEXT NOT NULL REFERENCES cuentas_cobro(id),
+  usuario_id TEXT NOT NULL,
+  cambio TEXT NOT NULL,
+  autor_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

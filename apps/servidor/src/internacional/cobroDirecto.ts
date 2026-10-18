@@ -178,7 +178,7 @@ export async function confirmarCobro(
     p.montoRecibido >= esperado ? 'confirmado' : p.montoRecibido > 0 ? 'parcial' : 'no_pagado';
   const r = await db
     .prepare(
-      "UPDATE pedidos SET cobro_estado = ?, monto_recibido = ?, cobro_confirmado_en = datetime('now'), cobro_nota = ? WHERE id = ? AND cobro_estado = 'pendiente'",
+      "UPDATE pedidos SET cobro_estado = ?, monto_recibido = ?, cobro_confirmado_en = datetime('now'), cobro_nota = ?, cobro_confirmado_por = 'repartidor' WHERE id = ? AND cobro_estado = 'pendiente'",
     )
     .bind(estado, p.montoRecibido, p.nota.slice(0, 300), p.pedidoId)
     .run();
