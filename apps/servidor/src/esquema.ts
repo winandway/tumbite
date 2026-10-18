@@ -27,6 +27,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pedidos', 'cobro_nota', 'TEXT'],
   ['pedidos', 'cobro_confirmado_por', 'TEXT'],
   // Cupones (18 oct 2026).
+  ['calificaciones', 'respuesta', 'TEXT'],
+  ['calificaciones', 'respondida_en', 'TEXT'],
+  ['restaurantes', 'categorias_orden', 'TEXT'],
   ['pedidos', 'cupon', 'TEXT'],
   ['pedidos', 'descuento', 'INTEGER NOT NULL DEFAULT 0'],
   ['pedidos', 'conciliacion_estado', "TEXT NOT NULL DEFAULT 'no_aplica'"],

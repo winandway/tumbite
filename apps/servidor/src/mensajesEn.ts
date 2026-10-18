@@ -75,6 +75,18 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa ciudad ya tiene franquicia.', 'That city already has a franchise.'],
   ['Esa cuenta no existe.', 'That account doesn’t exist.'],
   ['Ese restaurante no existe.', 'That restaurant doesn’t exist.'],
+  ['Solo el dueño o un manager puede hacer esto.', 'Only the owner or a manager can do this.'],
+  ['Esa reseña no existe.', 'That review doesn’t exist.'],
+  ['La fecha tiene que ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
+  [
+    'Esa persona todavía no tiene cuenta de restaurante en Tumbite: pídele que se registre en el panel primero.',
+    'That person doesn’t have a restaurant account on Tumbite yet: ask them to sign up in the panel first.',
+  ],
+  ['Ya eres el dueño.', 'You are already the owner.'],
+  [
+    'Esa persona ya pertenece a otro restaurante.',
+    'That person already belongs to another restaurant.',
+  ],
   ['Ese cupón no existe o ya no está activo.', 'That coupon doesn’t exist or is no longer active.'],
   ['Ese cupón ya venció.', 'That coupon has expired.'],
   ['Ese cupón es de otro restaurante.', 'That coupon is for another restaurant.'],

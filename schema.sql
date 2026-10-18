@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS restaurantes (
   regalos_pb INTEGER NOT NULL DEFAULT 300,
   zona_id TEXT NOT NULL DEFAULT 'US-FL-MIAMI',
   geohash TEXT,
+  -- Orden de las categorías del menú (JSON de nombres), lo fija el restaurante.
+  categorias_orden TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS restaurantes_estado ON restaurantes(estado);
@@ -257,6 +259,9 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   estrellas_repartidor INTEGER CHECK (estrellas_repartidor BETWEEN 1 AND 5),
   culpa_restaurante INTEGER NOT NULL DEFAULT 0,
   comentario TEXT NOT NULL DEFAULT '',
+  -- Respuesta pública del restaurante (como en DoorDash Merchant y Uber Eats Manager).
+  respuesta TEXT,
+  respondida_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -1626,3 +1631,21 @@ CREATE TABLE IF NOT EXISTS usos_cupon (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS usos_cupon_codigo ON usos_cupon(codigo, usuario_id);
+
+-- Restaurante como los grandes (auditoría final, puntos 19 a 21): equipo, festivos y orden de categorías.
+CREATE TABLE IF NOT EXISTS miembros_restaurante (
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  rol TEXT NOT NULL DEFAULT 'staff' CHECK (rol IN ('manager', 'staff')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (restaurante_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS miembros_restaurante_usuario ON miembros_restaurante(usuario_id);
+CREATE TABLE IF NOT EXISTS cierres_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  fecha TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (restaurante_id, fecha)
+);

@@ -19,6 +19,8 @@ import { MiRestaurante } from './MiRestaurante';
 import { Menu } from './Menu';
 import { AdminRestaurantes } from './AdminRestaurantes';
 import { AdminDinero } from './AdminDinero';
+import { Resenas } from './Resenas';
+import { Equipo } from './Equipo';
 import { Billetera } from './Billetera';
 import { Regalos } from './Regalos';
 import { Pedidos } from './Pedidos';
@@ -78,6 +80,8 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/company') return <MiEmpresa usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/earnings') return <Billetera usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/gifts') return <Regalos usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/reviews') return <Resenas idioma={idioma} />;
+    if (ruta === '/panel/team') return <Equipo idioma={idioma} />;
     if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {

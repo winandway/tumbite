@@ -166,7 +166,9 @@ export async function regalosDisponibles(
 async function rid(c: Ctx): Promise<string> {
   const u = exigir(c, 'restaurante');
   const f = await base(c)
-    .prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+    .prepare(
+      'SELECT id FROM restaurantes WHERE (dueno_id = ?1 OR id IN (SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1))',
+    )
     .bind(u.id)
     .first<{ id: string }>();
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);

@@ -379,7 +379,9 @@ async function hitosDeUno(
 async function miRestauranteId(c: Ctx): Promise<string> {
   const u = exigir(c, 'restaurante');
   const f = await base(c)
-    .prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+    .prepare(
+      'SELECT id FROM restaurantes WHERE (dueno_id = ?1 OR id IN (SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1))',
+    )
     .bind(u.id)
     .first<{ id: string }>();
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);
@@ -2017,6 +2019,31 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
                 .bind(c.req.param('id'))
                 .first<{ pin: string }>()
             )?.pin ?? null)
+          : null,
+      // La reseña que dejó (con la respuesta del restaurante, si la hubo).
+      resena:
+        f.cliente_id === u.id
+          ? await base(c)
+              .prepare(
+                'SELECT estrellas_restaurante, comentario, respuesta, respondida_en FROM calificaciones WHERE pedido_id = ?',
+              )
+              .bind(c.req.param('id'))
+              .first<{
+                estrellas_restaurante: number;
+                comentario: string;
+                respuesta: string | null;
+                respondida_en: string | null;
+              }>()
+              .then((x) =>
+                x
+                  ? {
+                      estrellas: Number(x.estrellas_restaurante),
+                      comentario: x.comentario,
+                      respuesta: x.respuesta,
+                      respondidaEn: x.respondida_en,
+                    }
+                  : null,
+              )
           : null,
       // Cobro directo por transferencia: el cliente ve a quién y a dónde transferir (nombre del
       // beneficiario y cuenta vigente), nada más. Solo el cliente del pedido y solo con repartidor.

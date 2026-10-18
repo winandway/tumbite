@@ -262,7 +262,9 @@ kyc.post('/kyc/enviar', async (c) => {
   let distancia: number | null = null;
   if (u.rol === 'restaurante' && f?.local_lat != null && f.local_lng != null) {
     const r = await db
-      .prepare('SELECT lat, lng FROM restaurantes WHERE dueno_id = ?')
+      .prepare(
+        'SELECT lat, lng FROM restaurantes WHERE (dueno_id = ?1 OR id IN (SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1))',
+      )
       .bind(u.id)
       .first<{ lat: number | null; lng: number | null }>();
     if (r?.lat != null && r.lng != null)

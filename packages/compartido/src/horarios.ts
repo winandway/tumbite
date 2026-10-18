@@ -82,3 +82,17 @@ export function textoApertura(
   const nombreDia = dias.at((new Date().getDay() + proxima.enDias) % 7) ?? '';
   return idioma === 'en' ? `Opens ${nombreDia} at ${hora}` : `Abre el ${nombreDia} a las ${hora}`;
 }
+
+/** La fecha (AAAA-MM-DD) de «ahora» en la zona horaria del restaurante, para los festivos y cierres. */
+export function fechaLocal(zonaHoraria: string, ahora = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: zonaHoraria,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(ahora);
+  } catch {
+    return ahora.toISOString().slice(0, 10);
+  }
+}

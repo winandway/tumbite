@@ -36,6 +36,8 @@ const es = {
     orders: 'Pedidos',
     earnings: 'Beneficios',
     gifts: 'Regalos y marketing',
+    reviews: 'Reseñas',
+    team: 'Equipo',
   },
   menuAdmin: {
     inicio: 'Resumen',
@@ -97,6 +99,8 @@ const en: T = {
     orders: 'Orders',
     earnings: 'Earnings',
     gifts: 'Gifts and marketing',
+    reviews: 'Reviews',
+    team: 'Team',
   },
   menuAdmin: {
     inicio: 'Overview',

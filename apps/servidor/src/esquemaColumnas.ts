@@ -79,6 +79,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "regalos_pb",
     "zona_id",
     "geohash",
+    "categorias_orden",
     "creado_en"
   ],
   "platos": [
@@ -202,6 +203,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estrellas_repartidor",
     "culpa_restaurante",
     "comentario",
+    "respuesta",
+    "respondida_en",
     "creado_en"
   ],
   "regalos_config": [
@@ -968,6 +971,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "codigo",
     "usuario_id",
     "descuento",
+    "creado_en"
+  ],
+  "miembros_restaurante": [
+    "restaurante_id",
+    "usuario_id",
+    "rol",
+    "creado_en"
+  ],
+  "cierres_restaurante": [
+    "id",
+    "restaurante_id",
+    "fecha",
+    "motivo",
     "creado_en"
   ]
 };

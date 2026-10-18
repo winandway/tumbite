@@ -59,6 +59,11 @@ const T = {
     precioExtra: 'Precio extra',
     quitar: 'Quitar',
     conOpciones: 'con opciones',
+    subir: 'Subir',
+    bajar: 'Bajar',
+    ordenCategorias: 'Orden de las categorías',
+    ordenAyuda:
+      'Así ve el cliente tu menú: las categorías en este orden y, dentro, los platos como los subas o bajes.',
   },
   en: {
     titulo: 'Menu',
@@ -99,6 +104,11 @@ const T = {
     precioExtra: 'Extra price',
     quitar: 'Remove',
     conOpciones: 'with options',
+    subir: 'Move up',
+    bajar: 'Move down',
+    ordenCategorias: 'Category order',
+    ordenAyuda:
+      'This is how customers see your menu: categories in this order and, within each, the items as you move them up or down.',
   },
 };
 
@@ -149,6 +159,41 @@ const gruposAForm = (grupos: GrupoOpciones[] | undefined): GrupoForm[] =>
 export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [platos, setPlatos] = useState<Plato[] | null>(null);
+  /** Reordenar (auditoría final, punto 20): dentro de la categoría; el servidor guarda el orden completo. */
+  async function moverPlato(p: Plato, dir: -1 | 1) {
+    const lista = platos ?? [];
+    const i = lista.findIndex((x) => x.id === p.id);
+    let j = i + dir;
+    while (j >= 0 && j < lista.length && lista.at(j)?.categoria !== p.categoria) j += dir;
+    if (i < 0 || j < 0 || j >= lista.length) return;
+    const nueva = lista.map((x, k) => (k === i ? lista.at(j)! : k === j ? lista.at(i)! : x));
+    setPlatos(nueva);
+    try {
+      await pedir('PUT', '/datos/mi-restaurante/orden-platos', { ids: nueva.map((x) => x.id) });
+    } catch (e) {
+      setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) });
+      setPlatos(lista);
+    }
+  }
+  async function moverCategoria(cat: string, dir: -1 | 1) {
+    const lista = platos ?? [];
+    const cats = [...new Set(lista.map((x) => x.categoria))];
+    const i = cats.indexOf(cat);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= cats.length) return;
+    const reordenadas = cats.map((x, k) => (k === i ? cats.at(j)! : k === j ? cats.at(i)! : x));
+    const pos = new Map(reordenadas.map((c, k) => [c, k]));
+    const nueva = [...lista].sort(
+      (a, b) => (pos.get(a.categoria) ?? 0) - (pos.get(b.categoria) ?? 0),
+    );
+    setPlatos(nueva);
+    try {
+      await pedir('PUT', '/datos/mi-restaurante/orden-categorias', { categorias: reordenadas });
+    } catch (e) {
+      setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) });
+      setPlatos(lista);
+    }
+  }
   const [hayRest, setHayRest] = useState(true);
   const [editando, setEditando] = useState(false);
   const b = useBorrador({
@@ -566,6 +611,39 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
           </div>
         </form>
       )}
+      {platos.length > 1 ? (
+        <div className="tarjeta-form" aria-label={t.ordenCategorias}>
+          <h2>{t.ordenCategorias}</h2>
+          <p className="suave">{t.ordenAyuda}</p>
+          <ol className="lista">
+            {[...new Set(platos.map((x) => x.categoria))].map((cat, i, arr) => (
+              <li key={cat || '—'}>
+                <div className="lista-texto">
+                  <strong>{cat || '—'}</strong>
+                </div>
+                <button
+                  type="button"
+                  className="enlace"
+                  onClick={() => void moverCategoria(cat, -1)}
+                  disabled={i === 0}
+                  aria-label={`${t.subir}: ${cat}`}
+                >
+                  ↑ {t.subir}
+                </button>
+                <button
+                  type="button"
+                  className="enlace"
+                  onClick={() => void moverCategoria(cat, 1)}
+                  disabled={i === arr.length - 1}
+                  aria-label={`${t.bajar}: ${cat}`}
+                >
+                  ↓ {t.bajar}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
       {platos.length === 0 ? (
         <p>{t.vacio}</p>
       ) : (
@@ -589,6 +667,22 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                     .join(' · ')}
                 </span>
               </div>
+              <button
+                type="button"
+                className="enlace"
+                onClick={() => void moverPlato(p, -1)}
+                aria-label={`${t.subir}: ${nombrePlato(p, idioma)}`}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="enlace"
+                onClick={() => void moverPlato(p, 1)}
+                aria-label={`${t.bajar}: ${nombrePlato(p, idioma)}`}
+              >
+                ↓
+              </button>
               <label className="interruptor">
                 <input type="checkbox" checked={p.disponible} onChange={() => void alternar(p)} />
                 {p.disponible ? t.disponible : t.agotado}

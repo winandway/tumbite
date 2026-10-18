@@ -18,6 +18,7 @@ import {
   esquemaPlato,
   conSenal,
   PAUSA_SIN_SENAL_MINUTOS,
+  fechaLocal,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -41,8 +42,10 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
     horarios,
     zonaHoraria,
     // C-PAUSA-SIN-SENAL: abierto, en horario y con su app o panel escuchando pedidos.
+    // Festivos y cierres (auditoría final, punto 20): ese día no se recibe aunque esté en horario.
     abiertoAhora:
       Number(f.abierto) === 1 &&
+      !((f.cierres as string[] | undefined) ?? []).includes(fechaLocal(zonaHoraria)) &&
       abiertoPorHorario(horarios, zonaHoraria) &&
       conSenal(f.senal_en as string | null, new Date(), minutosPausa),
     descripcionEs: String(f.descripcion_es ?? ''),
@@ -79,9 +82,35 @@ export function aPlato(f: FilaRest): Plato {
 }
 
 /** Los turnos de uno o varios restaurantes, y la zona horaria de su zona. */
+/** El orden del menú: las categorías como las ordenó el restaurante (las demás al final) y dentro, por «orden». */
+export function ordenarPlatos(rest: FilaRest, platos: FilaRest[]): FilaRest[] {
+  const orden = ((): string[] => {
+    try {
+      return JSON.parse(String(rest.categorias_orden ?? '[]')) as string[];
+    } catch {
+      return [];
+    }
+  })();
+  const pos = new Map(orden.map((c, i) => [c, i]));
+  const indice = (p: FilaRest) => pos.get(String(p.categoria ?? '')) ?? 1_000_000;
+  return [...platos].sort(
+    (a, b) =>
+      indice(a) - indice(b) ||
+      String(a.categoria ?? '').localeCompare(String(b.categoria ?? '')) ||
+      Number(a.orden ?? 0) - Number(b.orden ?? 0) ||
+      String(a.nombre_es).localeCompare(String(b.nombre_es)),
+  );
+}
+
 export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<FilaRest[]> {
   if (!filas.length) return filas;
   const ids = filas.map((f) => String(f.id));
+  const { results: cierres } = await db
+    .prepare(
+      `SELECT restaurante_id, fecha FROM cierres_restaurante WHERE restaurante_id IN (${ids.map(() => '?').join(',')}) AND fecha >= date('now', '-1 day')`,
+    )
+    .bind(...ids)
+    .all<{ restaurante_id: string; fecha: string }>();
   const { results: turnos } = await db
     .prepare(
       `SELECT restaurante_id, dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id IN (${ids.map(() => '?').join(',')}) ORDER BY dia, abre`,
@@ -98,6 +127,7 @@ export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<Fi
       .filter((t) => t.restaurante_id === String(f.id))
       .map((t) => ({ dia: Number(t.dia), abre: t.abre, cierra: t.cierra })),
     zona_horaria: tz.get(String(f.zona_id)) ?? 'America/New_York',
+    cierres: cierres.filter((x) => x.restaurante_id === String(f.id)).map((x) => x.fecha),
   }));
 }
 
@@ -215,7 +245,7 @@ catalogo.get('/restaurantes/:id', async (c) => {
   const [conH] = await conHorarios(db, [f]);
   return c.json({
     restaurante: aRestaurante(conH!, await minutosPausa(db)),
-    platos: await platosConGrupos(db, results),
+    platos: await platosConGrupos(db, ordenarPlatos(f, results)),
   });
 });
 
@@ -223,7 +253,9 @@ catalogo.get('/restaurantes/:id', async (c) => {
 
 async function miRestaurante(db: D1Database, duenoId: string) {
   return db
-    .prepare('SELECT * FROM restaurantes WHERE dueno_id = ?')
+    .prepare(
+      'SELECT * FROM restaurantes WHERE (dueno_id = ?1 OR id IN (SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1))',
+    )
     .bind(duenoId)
     .first<FilaRest>();
 }
@@ -264,7 +296,7 @@ catalogo.get('/mi-restaurante', async (c) => {
   const [conH] = await conHorarios(db, [f]);
   return c.json({
     restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) },
-    platos: await platosConGrupos(db, results),
+    platos: await platosConGrupos(db, ordenarPlatos(f, results)),
   });
 });
 

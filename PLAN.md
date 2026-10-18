@@ -41,7 +41,7 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] C.1 Cliente: pestaña Pedidos real (historial, recibo, repetir pedido) y Favoritos reales.
 - [x] C.2 Cliente: direcciones guardadas con instrucciones; cupones y promociones reales.
 - [x] C.3 Cliente: comentario en calificación; queja guiada con reembolso parcial.
-- [ ] C.4 Restaurante: reseñas con respuesta; reordenar platos y categorías; festivos; varios usuarios con roles.
+- [x] C.4 Restaurante: reseñas con respuesta; reordenar platos y categorías; festivos; varios usuarios con roles.
 - [ ] C.5 Repartidor: GPS en segundo plano y navegación; verificación de edad y firma.
 - [x] C.6 Apps: pantallas del cobro directo y del saldo prepago (repartidor), pago al recibir (cliente), ticket (restaurante), en es/en; Docs públicos.
 
