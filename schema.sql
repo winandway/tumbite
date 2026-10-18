@@ -144,6 +144,14 @@ CREATE TABLE IF NOT EXISTS pedidos (
   total INTEGER NOT NULL,
   -- Impuesto de ventas recaudado (dentro del total). 0 hasta que el contador fije la tasa.
   impuesto INTEGER NOT NULL DEFAULT 0,
+  -- Fase 2 · cobro directo: cómo paga el cliente y los TRES estados separados (entrega física =
+  -- estado, cobro confirmado y conciliación). 'tarjeta' = Stripe como siempre.
+  metodo_pago TEXT NOT NULL DEFAULT 'tarjeta' CHECK (metodo_pago IN ('tarjeta', 'efectivo', 'transferencia_repartidor')),
+  cobro_estado TEXT NOT NULL DEFAULT 'no_aplica' CHECK (cobro_estado IN ('no_aplica', 'pendiente', 'confirmado', 'parcial', 'no_pagado')),
+  monto_recibido INTEGER,
+  cobro_confirmado_en TEXT,
+  cobro_nota TEXT,
+  conciliacion_estado TEXT NOT NULL DEFAULT 'no_aplica' CHECK (conciliacion_estado IN ('no_aplica', 'pendiente', 'conciliado', 'con_diferencia')),
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
   pago_repartidor INTEGER NOT NULL,
@@ -1461,3 +1469,76 @@ CREATE TABLE IF NOT EXISTS conductor_ocupacion (
       OR (tipo = 'operacion' AND operacion_id IS NOT NULL AND pedidos = 0))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_operacion ON conductor_ocupacion(operacion_id) WHERE operacion_id IS NOT NULL;
+
+-- ───────────── Fase 2 · Modelo internacional (18 oct 2026) ─────────────
+-- Libro mayor por país y moneda. Cada fila es un movimiento de UN bolsillo; nunca se borra ni se
+-- edita: los ajustes dejan filas compensatorias con autor. Bolsillos:
+--   prepago      saldo del repartidor para pagar comisiones (nunca negativo, sin retiro)
+--   reservado    comisión apartada al aceptar un pedido en efectivo (se cobra o se libera)
+--   comisiones   lo que Tumbite cobró (cuenta_id = 'tumbite')
+--   punto        fondo prepago de un punto de venta (cuenta_id = 'punto:<id>')
+--   deuda_cliente lo que un cliente dejó sin pagar (positivo = debe)
+--   directo      informativo: dinero que fue directo del cliente al repartidor o al restaurante
+CREATE TABLE IF NOT EXISTS libro (
+  id TEXT PRIMARY KEY,
+  cuenta_id TEXT NOT NULL,
+  bolsillo TEXT NOT NULL CHECK (bolsillo IN ('prepago', 'reservado', 'comisiones', 'punto', 'deuda_cliente', 'directo')),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  concepto TEXT NOT NULL,
+  pedido_id TEXT REFERENCES pedidos(id),
+  referencia TEXT,
+  autor_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS libro_cuenta ON libro(cuenta_id, bolsillo, pais, moneda);
+CREATE INDEX IF NOT EXISTS libro_pedido ON libro(pedido_id);
+CREATE UNIQUE INDEX IF NOT EXISTS libro_referencia_unica ON libro(referencia) WHERE referencia IS NOT NULL;
+
+-- Puntos de venta de recargas: compran saldo a Tumbite por adelantado y lo venden en códigos.
+CREATE TABLE IF NOT EXISTS puntos_venta (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  usuario_id TEXT REFERENCES usuarios(id),
+  activo INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS codigos_recarga (
+  id TEXT PRIMARY KEY,
+  codigo_hash TEXT NOT NULL UNIQUE,
+  punto_id TEXT NOT NULL REFERENCES puntos_venta(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'emitido' CHECK (estado IN ('emitido', 'canjeado', 'anulado')),
+  emitido_por TEXT,
+  canjeado_por TEXT,
+  canjeado_en TEXT,
+  anulado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS codigos_recarga_punto ON codigos_recarga(punto_id, estado);
+-- Intentos fallidos de canje por repartidor (tope por hora contra adivinar códigos).
+CREATE TABLE IF NOT EXISTS intentos_canje (
+  usuario_id TEXT PRIMARY KEY,
+  fallidos INTEGER NOT NULL DEFAULT 0,
+  ultimo_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS recargas (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  canal TEXT NOT NULL CHECK (canal IN ('codigo', 'stripe')),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'acreditada', 'fallida')),
+  referencia TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  acreditada_en TEXT
+);
+CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
+-- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
+INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);

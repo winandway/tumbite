@@ -166,9 +166,9 @@ describe('transiciones del pedido por las rutas reales (C-TRANSICIONES-PEDIDO)',
     expect(historial?.n).toBe(2);
   });
 
-  it('cancelaciones · desde «en camino» o «entregado» la base lo rechaza aunque alguien lo intente a mano', async () => {
+  it('cancelaciones · desde «entregado» o «listo» la base lo rechaza aunque alguien lo intente a mano (desde «en camino» solo lo usa el cobro directo cuando el cliente no paga, Fase 2)', async () => {
     const { m, pedidoPagado, estado } = await escenario();
-    for (const desde of ['en_camino', 'entregado', 'listo'] as const) {
+    for (const desde of ['entregado', 'listo'] as const) {
       const id = await pedidoPagado();
       await llevarA(m.DB, id, desde);
       await expect(

@@ -119,6 +119,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "total",
     "impuesto",
+    "metodo_pago",
+    "cobro_estado",
+    "monto_recibido",
+    "cobro_confirmado_en",
+    "cobro_nota",
+    "conciliacion_estado",
     "comision",
     "pago_restaurante",
     "pago_repartidor",
@@ -844,5 +850,58 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "operacion_id",
     "pedidos",
     "desde"
+  ],
+  "libro": [
+    "id",
+    "cuenta_id",
+    "bolsillo",
+    "pais",
+    "moneda",
+    "monto",
+    "concepto",
+    "pedido_id",
+    "referencia",
+    "autor_id",
+    "creado_en"
+  ],
+  "puntos_venta": [
+    "id",
+    "nombre",
+    "pais",
+    "moneda",
+    "usuario_id",
+    "activo",
+    "creado_en"
+  ],
+  "codigos_recarga": [
+    "id",
+    "codigo_hash",
+    "punto_id",
+    "pais",
+    "moneda",
+    "monto",
+    "estado",
+    "emitido_por",
+    "canjeado_por",
+    "canjeado_en",
+    "anulado_en",
+    "creado_en"
+  ],
+  "intentos_canje": [
+    "usuario_id",
+    "fallidos",
+    "ultimo_en"
+  ],
+  "recargas": [
+    "id",
+    "usuario_id",
+    "pais",
+    "moneda",
+    "monto",
+    "canal",
+    "estado",
+    "referencia",
+    "creado_en",
+    "acreditada_en"
   ]
 };

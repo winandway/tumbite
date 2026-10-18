@@ -26,12 +26,12 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Bloque B — Modelo financiero internacional (en paralelo con A, cerrado antes de habilitar dinero por país)
 
-- [ ] B.1 Ficha REA/DOC: cómo lo hacen Rappi (CO), Yummy/PedidosYa (VE) y DoorDash con efectivo; cobro directo al repartidor, capital del repartidor, recargas.
-- [ ] B.2 Diseño: libro mayor común por país y moneda (`movimientos` con cuenta, país, moneda, concepto, referencia, autor); separación de saldos; nada de equivalencias implícitas.
-- [ ] B.3 Saldo prepago de comisiones: tabla, reserva al aceptar, cobro al entregar o liberación; sin negativo, sin crédito, sin retiro ni transferencia entre usuarios.
-- [ ] B.4 Cobro directo: pedido con `modoPago = directo`; estados entrega física / cobro confirmado / conciliación separados; propina aparte; casos de excepción (sin capital, cliente ausente, cancelación antes/después de recoger, faltante, ticket distinto, devolución, cliente no paga, transferencia pendiente/rechazada/duplicada/monto erróneo, disputa).
+- [x] B.1 Ficha REA/DOC: cómo lo hacen Rappi (CO), Yummy/PedidosYa (VE) y DoorDash con efectivo; cobro directo al repartidor, capital del repartidor, recargas.
+- [x] B.2 Diseño: libro mayor común por país y moneda (`movimientos` con cuenta, país, moneda, concepto, referencia, autor); separación de saldos; nada de equivalencias implícitas.
+- [x] B.3 Saldo prepago de comisiones: tabla, reserva al aceptar, cobro al entregar o liberación; sin negativo, sin crédito, sin retiro ni transferencia entre usuarios.
+- [x] B.4 Cobro directo: pedido con `modoPago = directo`; estados entrega física / cobro confirmado / conciliación separados; propina aparte; casos de excepción (sin capital, cliente ausente, cancelación antes/después de recoger, faltante, ticket distinto, devolución, cliente no paga, transferencia pendiente/rechazada/duplicada/monto erróneo, disputa).
 - [ ] B.5 Cuentas del repartidor: alta con nombre del beneficiario, verificación (manual identificada como «confirmación del repartidor» hasta tener API), historial de cambios protegido, disputa.
-- [ ] B.6 Recargas y puntos de venta: puntos con fondo prepago, códigos impredecibles, canje atómico e idempotente, límite de intentos, anulación, registro auditable, separación por país/moneda.
+- [x] B.6 Recargas y puntos de venta: puntos con fondo prepago, códigos impredecibles, canje atómico e idempotente, límite de intentos, anulación, registro auditable, separación por país/moneda.
 - [ ] B.7 Conectores por proveedor y país (interfaz común, implementaciones simuladas con pruebas): Stripe US (existente), Wompi CO (candidato), Pago Móvil VE (candidato); nada real sin contrato.
 - [ ] B.8 Contabilidad y control: reconstrucción por pedido (cliente pagó / cada parte recibió / Tumbite ganó / pendiente), ajustes compensatorios con autor, conciliación por país, canarios.
 - [x] B.9 Decisiones de Richard listadas en docs/DECISIONES-RICHARD-FASE-2.md (comisiones, remuneración de puntos, límites, monedas, pérdidas, reembolsos, activación de retiros).

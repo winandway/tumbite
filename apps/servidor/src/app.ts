@@ -33,6 +33,8 @@ import { saludReloj } from './reloj';
 import { alertarCanario } from './canario';
 import { versionMinimaApp } from './versionApp';
 import { saludDisputas } from './disputas';
+import { internacional } from './rutas/internacional';
+import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
@@ -219,6 +221,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: transiciones', e);
       return 'error' as const;
     });
+  // Fase 2: el libro internacional nunca deja un prepago, una reserva ni un fondo de punto en negativo.
+  if (c.env.DB)
+    piezas.libro = await saludLibro(c.env.DB).catch((e: unknown) => {
+      console.error('salud: libro', e);
+      return 'error' as const;
+    });
   // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
@@ -381,6 +389,7 @@ app.route('/datos', espera);
 app.route('/datos', tickets);
 app.route('/datos', franquicias);
 app.route('/datos', superadmin);
+app.route('/datos', internacional);
 app.route('/datos', kyc);
 app.route('/datos', fotos);
 app.route('/', media);

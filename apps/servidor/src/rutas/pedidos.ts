@@ -1,3 +1,5 @@
+import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
+import { acreditarRecargaStripe } from '../internacional/recargas';
 import { registrarDisputa } from '../disputas';
 import { avisoDeTransferencia } from '../retiros';
 import { Hono } from 'hono';
@@ -57,6 +59,8 @@ const esquemaNuevoPedido = z.object({
   entrega: z.enum(['puerta', 'mano', 'recoger']).default('puerta'),
   // Si es en mano: PIN de 4 dígitos que da quien recibe (se apaga si va a recibir otra persona).
   pin: z.boolean().default(true),
+  /** Fase 2: cobro directo (el cliente paga al repartidor al recibir). Solo con el interruptor del país. */
+  metodoPago: z.enum(['tarjeta', 'efectivo', 'transferencia_repartidor']).default('tarjeta'),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -253,6 +257,10 @@ export function aPedido(f: FilaPedido) {
     envio: Number(f.envio),
     servicio: Number(f.servicio),
     impuesto: Number(f.impuesto ?? 0),
+    metodoPago: String(f.metodo_pago ?? 'tarjeta'),
+    cobroEstado: String(f.cobro_estado ?? 'no_aplica'),
+    montoRecibido: f.monto_recibido == null ? null : Number(f.monto_recibido),
+    conciliacionEstado: String(f.conciliacion_estado ?? 'no_aplica'),
     cargoPedidoPequeno: Number(f.cargo_pequeno),
     propina: Number(f.propina),
     regalo: Number(f.regalo),
@@ -491,6 +499,25 @@ pedidos.post('/pedidos', async (c) => {
   }
   await anotar(db, id, 'pago_pendiente', u.id);
 
+  // Fase 2 · cobro directo: sin Stripe. El pedido queda confirmado para el restaurante y el
+  // cliente paga al repartidor al recibir (efectivo o transferencia a su cuenta).
+  if (d.metodoPago !== 'tarjeta') {
+    const { pais, moneda } = await abrirPedidoDirecto(db, {
+      pedidoId: id,
+      zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+      clienteId: u.id,
+      metodo: d.metodoPago,
+    });
+    await anotar(db, id, 'pagado', u.id);
+    await correosDePedidoPagado(c.env, db, id).catch((e: unknown) =>
+      console.error('cobro directo: avisos', e),
+    );
+    return c.json(
+      { pedidoId: id, directo: true, metodoPago: d.metodoPago, pais, moneda, desglose },
+      201,
+    );
+  }
+
   const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
   if (!stripe) {
     // Honesto: sin llaves de Stripe no se cobra. El pedido queda sin pagar y no le llega a nadie.
@@ -689,6 +716,9 @@ pedidos.post('/stripe/aviso', async (c) => {
       }
     }
     if (evento.type === 'payment_intent.succeeded') {
+      // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).
+      if ((obj.metadata as Record<string, string> | undefined)?.recarga_id)
+        await acreditarRecargaStripe(db, obj);
       const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
       const pedido = pedidoId
         ? await db

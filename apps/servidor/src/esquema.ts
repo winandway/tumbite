@@ -19,6 +19,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['abonos_fallidos', 'resuelto_en', 'TEXT'],
   // Impuesto de ventas por pedido (18 oct 2026).
   ['pedidos', 'impuesto', 'INTEGER NOT NULL DEFAULT 0'],
+  // Fase 2 · cobro directo (18 oct 2026). En SQLite el CHECK no se puede agregar después: lo vigila el código.
+  ['pedidos', 'metodo_pago', "TEXT NOT NULL DEFAULT 'tarjeta'"],
+  ['pedidos', 'cobro_estado', "TEXT NOT NULL DEFAULT 'no_aplica'"],
+  ['pedidos', 'monto_recibido', 'INTEGER'],
+  ['pedidos', 'cobro_confirmado_en', 'TEXT'],
+  ['pedidos', 'cobro_nota', 'TEXT'],
+  ['pedidos', 'conciliacion_estado', "TEXT NOT NULL DEFAULT 'no_aplica'"],
   ['restaurantes', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['restaurantes', 'geohash', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

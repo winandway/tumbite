@@ -30,6 +30,8 @@ const PERMITIDAS: [Estado, Estado][] = [
   ['listo', 'en_camino'],
   ['listo', 'entregado'],
   ['en_camino', 'entregado'],
+  // Fase 2 · cobro directo (18 oct 2026): el cliente no pagó al recibir → cancelado aunque iba en camino.
+  ['en_camino', 'cancelado'],
 ];
 const REVERSIONES: Estado[] = ['pago_pendiente', 'pagado', 'aceptado'];
 
@@ -93,7 +95,7 @@ describe('transiciones del pedido forzadas por la base (C-TRANSICIONES-PEDIDO)',
     }
   });
 
-  it('las 42 parejas de cambio real (49 menos las 7 de quedarse igual): las 33 que no están en la tabla fallan con el error tipado', async () => {
+  it('las 42 parejas de cambio real (49 menos las 7 de quedarse igual): las 32 que no están en la tabla fallan con el error tipado', async () => {
     const { pedido, mover } = await base();
     let probadas = 0;
     for (const desde of ESTADOS)

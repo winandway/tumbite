@@ -1,3 +1,10 @@
+import {
+  conciliarPedidoDirecto,
+  esDirecto,
+  puedeTomarDirecto,
+  reservarAlAceptar,
+} from '../internacional/cobroDirecto';
+import { liberarReserva } from '../internacional/libro';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
@@ -163,6 +170,8 @@ export async function soltarPedido(
     // C-FALLOS-CRITICOS 5: un pedido suelto ya no viaja agrupado con los del repartidor que lo dejó.
     db.prepare('DELETE FROM grupos_pedido WHERE pedido_id = ?').bind(pedidoId),
   ]);
+  // Fase 2: la comisión apartada para este pedido vuelve al prepago del repartidor.
+  await liberarReserva(db, pedidoId, repartidorId, `soltado:${motivo}`.slice(0, 80));
 }
 
 /** Un pedido confirmado por el restaurante (o verificado con código y fotografiado) sale en camino. */
@@ -936,6 +945,16 @@ operacion.post('/repartidor/ubicacion', async (c) => {
 type Libre = { id: string; lat: number; lng: number; puntos: number };
 
 /** Repartidores libres de una zona (y, si se piden, solo de esas celdas del mapa). */
+async function conSaldoParaDirecto<T extends { id: string }>(
+  db: D1Database,
+  pedidoId: string,
+  candidatos: T[],
+): Promise<T[]> {
+  const fuera: T[] = [];
+  for (const d of candidatos) if ((await puedeTomarDirecto(db, pedidoId, d.id)).ok) fuera.push(d);
+  return fuera;
+}
+
 async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null): Promise<Libre[]> {
   const filtroCeldas = celdas ? `AND d.geohash IN (${celdas.map(() => '?').join(',')})` : '';
   const { results } = await db
@@ -1053,6 +1072,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
       : [];
     if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
+    // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de efectivo.
+    candidatos = await conSaldoParaDirecto(db, p.id, candidatos);
     // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
     // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
     if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
@@ -1263,6 +1284,16 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     .bind(id, u.id)
     .first();
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
+  // Fase 2 · cobro directo: sin saldo para la comisión (o pasado el tope de efectivo) no se acepta.
+  const directo = await puedeTomarDirecto(db, id, u.id);
+  if (!directo.ok)
+    throw new ErrorDatos(
+      directo.motivo === 'saldo'
+        ? 'Te falta saldo para la comisión de este pedido. Recarga y vuelve a intentar.'
+        : 'Llegaste al tope de efectivo del día. Concilia o recarga para seguir con pedidos en efectivo.',
+      undefined,
+      409,
+    );
   const activa = await entregaActiva(db, u.id);
   let grupo: string | null = null;
   if (activa) {
@@ -1301,6 +1332,14 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     if (tomado && !tomado.repartidor_id)
       throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
     throw new ErrorDatos('Otro repartidor ya tomó este pedido.', undefined, 409);
+  }
+  // La comisión se aparta en el libro; si entre la comprobación y aquí otro canje la consumió,
+  // el pedido vuelve a la fila y el repartidor recibe el aviso claro.
+  try {
+    await reservarAlAceptar(db, id, u.id);
+  } catch (e) {
+    await soltarPedido(db, id, u.id, 'sin saldo para la comisión');
+    throw e;
   }
   if (grupo && activa) {
     await db.batch([
@@ -1663,21 +1702,27 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         )
         .bind(id),
       anotarEstado(db, id, 'entregado', u.id),
-      db
-        .prepare(
-          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
-        )
-        .bind(nuevoId(), p.dueno_id, id, Number(p.pago_restaurante)),
-      db
-        .prepare(
-          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'entrega')",
-        )
-        .bind(nuevoId(), u.id, id, entrega),
-      db
-        .prepare(
-          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'propina')",
-        )
-        .bind(nuevoId(), u.id, id, Number(p.propina)),
+      // Fase 2 · cobro directo: el dinero nunca pasó por Tumbite (el cliente le pagó al repartidor y
+      // él al restaurante en el local): no se acreditan bolsillos; la conciliación lo deja en el libro.
+      ...(esDirecto(String(p.metodo_pago ?? 'tarjeta'))
+        ? []
+        : [
+            db
+              .prepare(
+                "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
+              )
+              .bind(nuevoId(), p.dueno_id, id, Number(p.pago_restaurante)),
+            db
+              .prepare(
+                "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'entrega')",
+              )
+              .bind(nuevoId(), u.id, id, entrega),
+            db
+              .prepare(
+                "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'propina')",
+              )
+              .bind(nuevoId(), u.id, id, Number(p.propina)),
+          ]),
       db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
     ]);
   } catch (e) {
@@ -1688,6 +1733,10 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     console.error('entrega: el cobro queda para el reloj', id, e),
   );
   await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
+  // Fase 2 · cobro directo: si el cobro ya estaba confirmado, la conciliación cierra aquí.
+  await conciliarPedidoDirecto(db, id).catch((e: unknown) =>
+    console.error('conciliación directa', e),
+  );
   return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
 });
 

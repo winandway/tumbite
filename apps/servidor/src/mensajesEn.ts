@@ -75,6 +75,58 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa ciudad ya tiene franquicia.', 'That city already has a franchise.'],
   ['Esa cuenta no existe.', 'That account doesn’t exist.'],
   [
+    'Este país todavía no acepta pago en efectivo.',
+    'This country doesn’t accept cash payment yet.',
+  ],
+  [
+    'Este país todavía no acepta transferencia al repartidor.',
+    'This country doesn’t accept transfers to the driver yet.',
+  ],
+  [
+    'Tienes un saldo pendiente con Tumbite. Escríbenos a soporte para resolverlo antes de pedir.',
+    'You have an outstanding balance with Tumbite. Contact support to resolve it before ordering.',
+  ],
+  [
+    'Te falta saldo para la comisión de este pedido. Recarga y vuelve a intentar.',
+    'You don’t have enough balance for this order’s fee. Top up and try again.',
+  ],
+  [
+    'Llegaste al tope de efectivo del día. Concilia o recarga para seguir con pedidos en efectivo.',
+    'You reached today’s cash limit. Settle or top up to keep taking cash orders.',
+  ],
+  ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
+  ['Ya confirmaste el cobro de este pedido.', 'You already confirmed the payment for this order.'],
+  [
+    'Confirma el cobro cuando estés con el cliente.',
+    'Confirm the payment when you’re with the customer.',
+  ],
+  ['El monto no es válido.', 'The amount isn’t valid.'],
+  ['Ese punto de venta no existe.', 'That sales point doesn’t exist.'],
+  [
+    'Las recargas en puntos de venta no están activas en este país.',
+    'Sales-point top-ups aren’t active in this country.',
+  ],
+  ['La recarga está fuera de los límites permitidos.', 'The top-up is outside the allowed limits.'],
+  [
+    'Ese punto de venta no tiene saldo suficiente.',
+    'That sales point doesn’t have enough balance.',
+  ],
+  [
+    'Ese código ya se canjeó: no se puede anular.',
+    'That code was already redeemed: it can’t be voided.',
+  ],
+  [
+    'Demasiados intentos. Espera una hora y vuelve a intentar.',
+    'Too many attempts. Wait an hour and try again.',
+  ],
+  ['Llegaste al máximo de recargas de esta semana.', 'You reached this week’s top-up limit.'],
+  ['Ese código no sirve o ya se usó.', 'That code isn’t valid or was already used.'],
+  [
+    'Las recargas con tarjeta no están activas en este país.',
+    'Card top-ups aren’t active in this country.',
+  ],
+  ['Tu cuenta no es de un punto de venta.', 'Your account isn’t a sales point.'],
+  [
     'Solo se devuelve dinero de un pedido entregado y cobrado.',
     'Refunds apply only to delivered and charged orders.',
   ],

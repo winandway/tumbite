@@ -1,3 +1,4 @@
+import { liberarReservasDe } from './internacional/libro';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 import { anotar } from './historial';
@@ -156,6 +157,9 @@ export async function cancelarConReembolso(
       );
     }
   }
+  await liberarReservasDe(db, pedidoId, 'cancelado').catch((e: unknown) =>
+    console.error('cancelación: liberar reservas', e),
+  );
   await anotar(db, pedidoId, 'cancelado', p.actorId);
   return true;
 }
