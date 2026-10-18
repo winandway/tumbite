@@ -79,6 +79,7 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - `CANDADOS.md` — lo que funciona y no se toca.
 - `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
+- `docs/PLAN-MAESTRO-FASE-2.md`, `docs/INFORME-FINAL-FASE-2.md` y `docs/DECISIONES-RICHARD-FASE-2.md` — la Fase 2 (modelo internacional): el plan, el cierre del 18 oct y lo que solo Richard decide.
 - `docs/COMPARACION-CICLO-PEDIDO.md` — cómo funciona de verdad un pedido en DoorDash y Uber Eats frente al nuestro, con las brechas por orden. Se lee antes de tocar el ciclo del pedido.
 
 ## Colores corporativos (dictado por Richard, 10 oct 2026) — SOLO estos
