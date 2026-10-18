@@ -14,7 +14,7 @@ Lista viva. Cada punto dice qué se decide, qué hay hoy por defecto (sin invent
 
 ## Modelo internacional (cobro directo, capital del repartidor, recargas)
 
-8. **Entidad por país.** Colombia: S.A.S. colombiana propia, dLocal como «merchant of record» con Windoce LLC, o franquiciado local que contrate la pasarela (Wompi necesita RUT y cuenta Bancolombia). Venezuela: el dinero del cliente NO puede pasar por Tumbite sin licencia del BCV; el modelo de cobro directo al restaurante o al repartidor es el único viable sin entidad local (ficha `docs/investigaciones-rea/2026-10-18-pagos-venezuela.md`).
+8. **Entidad por país.** Colombia: S.A.S. colombiana propia, dLocal como «merchant of record» con Windoce LLC, o franquiciado local que contrate la pasarela (Wompi necesita RUT y cuenta Bancolombia). Venezuela: **conclusión pendiente de validación profesional.** El estudio del 18 oct encontró que recaudar y repartir dinero de terceros exige autorización del BCV como proveedor no bancario (y que no se otorgan nuevas desde 2021), que la norma excluye los prepagos de servicios y que además aplican sanciones de EE. UU. Que «solo el cobro directo es viable» NO está establecido: también podrían caber el cobro con tarjeta internacional en dólares y el saldo para comisiones. Lo valida un abogado venezolano y uno de sanciones (fichas `docs/investigaciones-rea/2026-10-18-pagos-venezuela.md` y `2026-10-18-stripe-por-producto-y-bcv.md`).
 9. **Comisión de Tumbite por país y por pedido** (porcentaje sobre la comida, cargo fijo, o ambos) y **cuánto gana el repartidor** por entrega en cada país.
 10. **Remuneración de los puntos de venta** de recargas (porcentaje por recarga vendida), **límites** (recarga mínima y máxima por día, saldo máximo) y **reglas de devolución** de una recarga.
 11. **Tope de efectivo y pedidos sin capital:** si un repartidor sin saldo prepago suficiente puede aceptar un pedido en efectivo, y qué pasa con la comisión (reserva al aceptar; hoy no se habilita saldo negativo ni crédito).
@@ -22,6 +22,13 @@ Lista viva. Cada punto dice qué se decide, qué hay hoy por defecto (sin invent
 13. **Pérdidas:** quién asume la comida cuando el cliente no aparece o no paga tras la compra del repartidor (nunca se inventa: hoy queda registrado como «pendiente de decisión» en el libro).
 14. **Confirmación de transferencias al repartidor:** manual (el repartidor confirma en su banco) hasta contratar un lector autorizado (Mercantil API o Pabilo, desde 35 dólares al mes) — decidir si se contrata y con qué cuenta.
 15. **Abogados:** colombiano (retención de saldos en billetera, 4x1000, retenciones), venezolano (licencia BCV, IGTF 3 %, SUNDDE) y de EE.UU. (sanciones a Venezuela, Stripe con tarjetahabientes venezolanos).
+
+## Nuevas del recorrido internacional completo (18 oct 2026, tarde)
+
+20. **Comida comprada y no entregada.** Si el pedido se cancela (soporte, cliente que no paga, repartidor soltado por soporte) después de que el repartidor pagó la comida en el local, hoy queda escrito en el libro como «comida comprada sin entregar», pendiente de decisión. Falta decidir quién la absorbe: el repartidor, el restaurante (si la recibe de vuelta), el cliente (como deuda) o Tumbite. Es la decisión 13 aplicada al pago en el local.
+21. **Excedente del cliente.** Si el cliente paga de más (por ejemplo, una transferencia repetida), hoy queda escrito que el repartidor le debe la diferencia. Falta decidir el plazo para devolverla y qué pasa si no la devuelve.
+22. **Transferencia por verificar.** Hoy el repartidor puede entregar con la transferencia sin ver y confirmarla después (o 0 si no llegó). Falta decidir el plazo máximo antes de que soporte intervenga.
+23. **Tolerancia del ticket.** Hoy cualquier diferencia entre el ticket, lo que pagó el repartidor y lo que esperaba la app deja la conciliación «con diferencia» para soporte. Falta decidir si hay una tolerancia (por ejemplo, redondeos) que no abra revisión.
 
 ## Cuentas y accesos
 
