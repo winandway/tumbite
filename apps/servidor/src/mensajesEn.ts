@@ -223,6 +223,14 @@ export const MENSAJES_EN = new Map<string, string>([
     'The delivery fee changes with the new address. Accept the new total to apply it.',
   ],
   [
+    'El total cambió. Revisa tu carrito y vuelve a intentar.',
+    'The total changed. Check your cart and try again.',
+  ],
+  [
+    'No pudimos actualizar el cobro con el nuevo total. La dirección no cambió; intenta de nuevo.',
+    'We couldn’t update the charge to the new total. The address didn’t change; try again.',
+  ],
+  [
     'Esa foto de control no existe o no se tomó.',
     'That check photo doesn’t exist or wasn’t taken.',
   ],

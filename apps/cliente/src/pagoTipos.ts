@@ -4,6 +4,8 @@ export type Cobro = {
   sesionCliente: string;
   clienteStripe: string;
   clavePublica?: string;
+  /** El cálculo del servidor; su total es el que manda. */
+  desglose?: { totalCliente: number };
 };
 
 export type PropsPago = {

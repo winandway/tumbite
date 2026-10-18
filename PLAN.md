@@ -1,15 +1,67 @@
-# Plan: la app del repartidor como los grandes
+# Plan: Fase 2 de Tumbite — cerrar la auditoría y el modelo internacional (18 oct 2026)
 
-Ficha: docs/investigaciones-rea/2026-10-18-repartidor.md (sección 5). Rama repartidor-grandes.
+Fuente: prompt de Richard del 18 oct (modelo internacional aprobado) + docs/AUDITORIA-FINAL-2026-10-18.md.
+Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
-- [x] Paso 1: servidor — oferta completa (distancia al local, total, minutos, artículos) con prueba en rojo; app — pantalla de oferta con cuenta regresiva, vibración/sonido y desglose.
-- [x] Paso 2: servidor — GET /datos/repartidor/calificaciones con prueba en rojo; app — pantalla Calificaciones.
-- [x] Paso 3: servidor — GET /datos/repartidor/ganancias con desglose por pedido (propina posterior como propina) con prueba en rojo; app — Ganancias con desglose y detalle.
-- [x] Paso 4: servidor — GET /datos/repartidor/avisos, push al repartidor en cancelación y cambio de dirección, PUT /datos/cuentas/idioma, con pruebas en rojo; app — campana real.
-- [x] Paso 5: servidor — POST /datos/repartidor/pausar y motivo claro al conectar fuera de cobertura, con pruebas; app — botón Pausa y aviso.
-- [x] Paso 6: servidor — POST /datos/repartidor/pedidos/:id/llegue y /no-esta-listo con pruebas; app — botones.
-- [x] Paso 7: app — alta guiada «Empieza a repartir» con las rutas existentes.
-- [x] Paso 8: app — Ayuda en el pedido con motivos predefinidos (ticket con pedido); botón Emergencia.
-- [x] Paso 9: guías de Docs es/en (ofertas, calificaciones, ganancias, avisos y pausa, alta, ayuda); recorrido con capturas.
-- [x] Paso 10: npm run verify en verde; CANDADOS.md; commit.
-- [ ] Paso 11: staging (fase-repartidor-grandes) → producción por el flujo permanente; recompilar app del repartidor para el simulador; informe.
+## Bloque 0 — Plan maestro
+
+- [ ] 0.1 Escribir docs/PLAN-MAESTRO-FASE-2.md: los 67 puntos + F5–F20 con prioridad, condición de lanzamiento, dependencias, responsable, evidencia, criterio de aceptación y estado; lista de lanzamiento unificada (MVP + recomendación final, sin elegir la corta en silencio).
+- [x] 0.2 Lanzar la investigación oficial de pagos: Colombia (Wompi, PSE, Nequi, pagos a terceros), Venezuela (Pago Móvil, APIs bancarias C2P/P2C, liquidaciones), Stripe internacional (cuenta de EE.UU. y cuentas conectadas en CO/VE/MX); fichas en docs/investigaciones-rea/.
+
+## Bloque A — Dinero, acceso, seguridad y controles operativos (EE.UU. se conserva)
+
+- [x] A.1 F6: el carrito descuenta el envío al recoger y compara su total con el del servidor (prueba en rojo).
+- [x] A.2 F8: calcularSinPlato respeta recogida (prueba en rojo).
+- [x] A.3 F7: cambio de dirección antes del pago actualiza Stripe; después del pago no da 500 (prueba en rojo).
+- [ ] A.4 F10: webhook de cuentas conectadas de Stripe (segundo secreto, endpoint /datos/stripe/conectadas) con pruebas.
+- [ ] A.5 F19: tope de intentos del PIN de entrega; límite de intentos de entrada persistente en la base.
+- [ ] A.6 F11: canario rojo con reloj atrasado + alerta por correo al cambiar a rojo.
+- [ ] A.7 F5: Turnstile en las tres apps (pase en cabecera; se apaga solo si no hay llave).
+- [ ] A.8 F16: idioma y versión de la app al servidor; «actualiza la app» por versión mínima.
+- [ ] A.9 F13/F14: «recibiendo pedidos» real; ítem de cobro con pagos_activos; correo al dueño al aprobar/pausar/rechazar con motivo.
+- [ ] A.10 Superadmin dinero: liquidaciones en revisión con resolver, abonos fallidos, historial de conciliación con recálculo, interruptor de retiros.
+- [ ] A.11 Superadmin operación: cancelar y devolver, reasignar repartidor, buscar pedidos cerrados, suspender cuentas.
+- [ ] A.12 Impuesto de ventas, devoluciones y disputas (contracargos de Stripe) antes de cobrar en real: diseño + implementación mínima con pruebas.
+- [ ] A.13 Regresión del circuito de EE.UU. en staging (recorrido + S11) y VERIFICAR-PAGOS al día.
+
+## Bloque B — Modelo financiero internacional (en paralelo con A, cerrado antes de habilitar dinero por país)
+
+- [ ] B.1 Ficha REA/DOC: cómo lo hacen Rappi (CO), Yummy/PedidosYa (VE) y DoorDash con efectivo; cobro directo al repartidor, capital del repartidor, recargas.
+- [ ] B.2 Diseño: libro mayor común por país y moneda (`movimientos` con cuenta, país, moneda, concepto, referencia, autor); separación de saldos; nada de equivalencias implícitas.
+- [ ] B.3 Saldo prepago de comisiones: tabla, reserva al aceptar, cobro al entregar o liberación; sin negativo, sin crédito, sin retiro ni transferencia entre usuarios.
+- [ ] B.4 Cobro directo: pedido con `modoPago = directo`; estados entrega física / cobro confirmado / conciliación separados; propina aparte; casos de excepción (sin capital, cliente ausente, cancelación antes/después de recoger, faltante, ticket distinto, devolución, cliente no paga, transferencia pendiente/rechazada/duplicada/monto erróneo, disputa).
+- [ ] B.5 Cuentas del repartidor: alta con nombre del beneficiario, verificación (manual identificada como «confirmación del repartidor» hasta tener API), historial de cambios protegido, disputa.
+- [ ] B.6 Recargas y puntos de venta: puntos con fondo prepago, códigos impredecibles, canje atómico e idempotente, límite de intentos, anulación, registro auditable, separación por país/moneda.
+- [ ] B.7 Conectores por proveedor y país (interfaz común, implementaciones simuladas con pruebas): Stripe US (existente), Wompi CO (candidato), Pago Móvil VE (candidato); nada real sin contrato.
+- [ ] B.8 Contabilidad y control: reconstrucción por pedido (cliente pagó / cada parte recibió / Tumbite ganó / pendiente), ajustes compensatorios con autor, conciliación por país, canarios.
+- [ ] B.9 Decisiones de Richard listadas en docs/DECISIONES-RICHARD-FASE-2.md (comisiones, remuneración de puntos, límites, monedas, pérdidas, reembolsos, activación de retiros).
+
+## Bloque C — Recorrido completo de cliente, restaurante y repartidor
+
+- [ ] C.1 Cliente: pestaña Pedidos real (historial, recibo, repetir pedido) y Favoritos reales.
+- [ ] C.2 Cliente: direcciones guardadas con instrucciones; cupones y promociones reales.
+- [ ] C.3 Cliente: comentario en calificación; queja guiada con reembolso parcial.
+- [ ] C.4 Restaurante: reseñas con respuesta; reordenar platos y categorías; festivos; varios usuarios con roles.
+- [ ] C.5 Repartidor: GPS en segundo plano y navegación; verificación de edad y firma.
+- [ ] C.6 Apps: pantallas del cobro directo y del saldo prepago (repartidor), pago al recibir (cliente), ticket (restaurante), en es/en; Docs públicos.
+
+## Bloque D — Operación, cuentas externas e infraestructura
+
+- [ ] D.1 Verificaciones: aviso al equipo y paginación; pantalla de salud; prueba de restauración de respaldo.
+- [ ] D.2 F17 y web: ciudades desde el servidor; textos ajustados (planes, soporte local, música en vivo a «lo que viene»); un buzón público.
+- [ ] D.3 Cuentas externas (👤): documentar exactamente qué falta y qué destranca cada una; F12 projectId al tener Expo.
+
+## Bloque E — Pruebas integrales, piloto y tiendas
+
+- [ ] E.1 Pruebas de concurrencia, reintentos y reversión de B (canje doble, cobro doble, reserva simultánea).
+- [ ] E.2 Recorrido visual en celular es/en de todo lo nuevo; capturas al recorrido y Docs/web.
+- [ ] E.3 Piloto en calle (👤) y operaciones reales autorizadas (👤), evidencias en VERIFICAR-PAGOS.
+- [ ] E.4 Fichas de tiendas con capturas del recorrido (al final).
+
+## Bloque F — Ampliaciones posteriores (puntos 36–67 de la auditoría, se conservan en el plan maestro)
+
+- [ ] F.1 Mantener la sección «después del MVP» del plan maestro con todos los puntos.
+
+## Cierre
+
+- [ ] Z.1 Informe final: implementado y comprobado / construido sin prueba real / depende de acceso, contrato o decisión / países y métodos habilitables según evidencia.

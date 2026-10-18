@@ -44,6 +44,8 @@ const esquemaNuevoPedido = z.object({
     )
     .min(1, { error: 'Tu carrito está vacío.' })
     .max(50),
+  /** Lo que la app le mostró al cliente: si no coincide con el cálculo del servidor, no se cobra (F6). */
+  totalEsperado: z.number().int().min(0).optional(),
   propinaCentavos: z.number().int().min(0).max(50_000),
   direccion: z.string().trim().max(200).default(''),
   notas: z.string().trim().max(300).default(''),
@@ -94,6 +96,16 @@ export async function calcularSinPlato(db: D1Database, f: FilaPedido, platoId: s
   const config = await leerConfigDinero(db);
   if (!nuevas.length) return { nuevas, desglose: null, devolucion: Number(f.total) };
   const subtotal = nuevas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
+  // C-FALLOS-DINERO (F8): un pedido para recoger se cobró sin envío; se recalcula igual.
+  const recogida =
+    f.recogida != null
+      ? Boolean(f.recogida)
+      : Boolean(
+          await db
+            .prepare('SELECT 1 AS r FROM recogidas WHERE pedido_id = ?')
+            .bind(String(f.id))
+            .first(),
+        );
   const desglose = calcularPedido({
     lineas: nuevas,
     plan: String(f.plan) as Plan,
@@ -101,6 +113,7 @@ export async function calcularSinPlato(db: D1Database, f: FilaPedido, platoId: s
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
     config,
     regalo: Math.min(Number(f.regalo ?? 0), subtotal),
+    recogida,
   });
   return { nuevas, desglose, devolucion: Math.max(0, Number(f.total) - desglose.totalCliente) };
 }
@@ -409,6 +422,19 @@ pedidos.post('/pedidos', async (c) => {
     regalo,
     recogida,
   });
+  // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
+  // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
+  if (d.totalEsperado != null && d.totalEsperado !== desglose.totalCliente)
+    return c.json(
+      {
+        error: 'El total cambió. Revisa tu carrito y vuelve a intentar.',
+        campo: 'total',
+        totalActual: d.totalEsperado,
+        nuevoTotal: desglose.totalCliente,
+        desglose,
+      },
+      409,
+    );
 
   const id = nuevoId();
   await db
@@ -989,11 +1015,24 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       },
       409,
     );
-  // El cobro sigue autorizado (no capturado): se actualiza el monto en Stripe antes de tocar nada.
-  if (nuevoTotal !== Number(f.total) && f.stripe_pago && String(f.estado) !== 'pago_pendiente') {
+  // El cobro (autorizado y no capturado, o todavía sin confirmar) se actualiza en Stripe ANTES de
+  // tocar nada. C-FALLOS-DINERO (F7): antes del pago el intento vive en stripe_sesion; si Stripe
+  // rechaza el nuevo monto, la dirección no cambia y se responde 409, nunca 500.
+  const intento = String(f.stripe_pago ?? f.stripe_sesion ?? '');
+  if (nuevoTotal !== Number(f.total) && intento.startsWith('pi_')) {
     const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-    if (stripe)
-      await stripe.post(`/payment_intents/${String(f.stripe_pago)}`, { amount: nuevoTotal });
+    if (stripe) {
+      try {
+        await stripe.post(`/payment_intents/${intento}`, { amount: nuevoTotal });
+      } catch (e) {
+        console.error('cambio de dirección: Stripe no aceptó el nuevo monto', id, e);
+        throw new ErrorDatos(
+          'No pudimos actualizar el cobro con el nuevo total. La dirección no cambió; intenta de nuevo.',
+          'total',
+          409,
+        );
+      }
+    }
   }
   await db
     .prepare(

@@ -160,9 +160,11 @@ export default function PantallaCarrito() {
             distanciaKm: km,
             config,
             regalo,
+            // C-FALLOS-DINERO (F6): recoger en el local no lleva envío; se calcula igual que el servidor.
+            recogida: b.valores.entrega === 'recoger',
           })
         : null,
-    [carrito, propina, km, config, regalo],
+    [carrito, propina, km, config, regalo, b.valores.entrega],
   );
 
   async function pagar() {
@@ -178,6 +180,8 @@ export default function PantallaCarrito() {
           opciones: (l.opciones ?? []).map((o) => o.id),
         })),
         propinaCentavos: propina,
+        // El servidor compara este total con el suyo y no cobra si no coinciden.
+        totalEsperado: d.totalCliente,
         direccion: b.valores.direccion,
         notas: b.valores.notas,
         entrega:
@@ -193,7 +197,7 @@ export default function PantallaCarrito() {
       });
       // La tarjeta se pide aquí mismo, sin salir de la app.
       if (!r.clavePublica) throw new Error(t.pagoNoDisponible);
-      setCobro({ ...r, total: d.totalCliente });
+      setCobro({ ...r, total: r.desglose?.totalCliente ?? d.totalCliente });
     } catch (x) {
       setError(x instanceof Error ? x.message : String(x));
     } finally {
