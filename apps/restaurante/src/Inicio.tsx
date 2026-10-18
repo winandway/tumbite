@@ -18,6 +18,7 @@ import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
 import {
   ErrorApi,
+  type Idioma,
   type Restaurante,
   enIdioma,
   formatearDolares,
@@ -210,6 +211,67 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
   );
 }
 
+/**
+ * Cobro directo (C-COBRO-DIRECTO-LOCAL): cuánto le cobra el restaurante al repartidor en el mostrador
+ * y si el repartidor ya registró el pago. El restaurante lo confirma al entregarle la bolsa.
+ */
+function CobroAlRepartidor({
+  api,
+  idioma,
+  pedidoId,
+}: {
+  api: ReturnType<typeof useSesion>['api'];
+  idioma: Idioma;
+  pedidoId: string;
+}) {
+  const t = enIdioma(TEXTOS_LOCAL, idioma);
+  const [d, setD] = useState<{
+    montoEsperado: number;
+    registrado: { montoPagado: number; importeTicket: number; metodo: string } | null;
+  } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const r = await api.pedir<NonNullable<typeof d>>(
+          'GET',
+          `/datos/restaurante/pedidos/${pedidoId}/pago-local`,
+        );
+        if (vivo) setD(r);
+      } catch {
+        // Sin dato no se inventa nada: queda el aviso general del pedido directo.
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [api, pedidoId]);
+  if (!d) return null;
+  return (
+    <Text style={{ marginTop: 4, color: C.secundario, fontSize: 13 }} testID="cobro-al-repartidor">
+      {t.cobra}{' '}
+      <Text style={{ fontWeight: '900' }}>{formatearDolares(d.montoEsperado, idioma)}</Text>
+      {' · '}
+      {d.registrado
+        ? t.registrado.replace('{monto}', formatearDolares(d.registrado.montoPagado, idioma))
+        : t.sinRegistrar}
+    </Text>
+  );
+}
+
+const TEXTOS_LOCAL = {
+  es: {
+    cobra: 'Cobra al repartidor:',
+    registrado: 'el repartidor registró que pagó {monto}',
+    sinRegistrar: 'el repartidor todavía no registra el pago',
+  },
+  en: {
+    cobra: 'Charge the driver:',
+    registrado: 'the driver recorded paying {monto}',
+    sinRegistrar: 'the driver hasn’t recorded the payment yet',
+  },
+};
+
 export function Inicio() {
   useKeepAwake(); // La tablet del mostrador no se apaga mientras la app está abierta.
   const { api, idioma, salir, cambiarIdioma } = useSesion();
@@ -397,9 +459,14 @@ export function Inicio() {
             </Text>
           ))}
           {p.metodoPago && p.metodoPago !== 'tarjeta' ? (
-            <Text style={{ marginTop: 6, color: C.primario, fontWeight: '800', fontSize: 13 }}>
-              {t.pagoDirecto}
-            </Text>
+            <>
+              <Text style={{ marginTop: 6, color: C.primario, fontWeight: '800', fontSize: 13 }}>
+                {t.pagoDirecto}
+              </Text>
+              {p.estado === 'aceptado' || p.estado === 'listo' ? (
+                <CobroAlRepartidor api={api} idioma={idioma} pedidoId={p.id} />
+              ) : null}
+            </>
           ) : null}
         </View>
       </View>

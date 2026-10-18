@@ -52,6 +52,7 @@ import { Calificaciones } from './grandes/Calificaciones';
 import { Ganancias } from './grandes/Ganancias';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
+import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
 import {
@@ -1467,6 +1468,16 @@ export function Inicio() {
                       secundario
                     />
                   ) : null}
+                  {activo.metodoPago &&
+                  activo.metodoPago !== 'tarjeta' &&
+                  (activo.estado === 'aceptado' || activo.estado === 'listo') ? (
+                    <PagoEnLocal
+                      api={api}
+                      idioma={idioma}
+                      pedidoId={activo.id}
+                      alRegistrar={() => void cargar()}
+                    />
+                  ) : null}
                   {activo.estado === 'listo' && activo.fotoRecogida ? (
                     <>
                       {bloqueCodigo}
@@ -1685,6 +1696,18 @@ export function Inicio() {
                                   alTocar={() => void cobre(activo.id)}
                                   exito
                                 />
+                                {activo.metodoPago === 'transferencia_repartidor' ? (
+                                  <Boton
+                                    texto={tg.pedido.transferPendiente}
+                                    alTocar={() =>
+                                      void accion(
+                                        `/datos/repartidor/pedidos/${activo.id}/transferencia-pendiente`,
+                                        { nota: '' },
+                                      ).then(() => setAviso(tg.pedido.transferPendienteOk))
+                                    }
+                                    secundario
+                                  />
+                                ) : null}
                                 <Boton
                                   texto={tg.pedido.noPago}
                                   alTocar={() => void noPago(activo.id)}

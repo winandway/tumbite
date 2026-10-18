@@ -166,9 +166,12 @@ describe('transiciones del pedido por las rutas reales (C-TRANSICIONES-PEDIDO)',
     expect(historial?.n).toBe(2);
   });
 
-  it('cancelaciones · desde «entregado» o «listo» la base lo rechaza aunque alguien lo intente a mano (desde «en camino» solo lo usa el cobro directo cuando el cliente no paga, Fase 2)', async () => {
+  // 18 oct 2026: «listo → cancelado» pasó a permitida para soporte (el superadmin ofrecía cancelar un
+  // pedido listo y la base lo rechazaba con un error interno; y en cobro directo hace falta para
+  // registrar la comida ya comprada). «Entregado» sigue cerrado para siempre.
+  it('cancelaciones · desde «entregado» la base lo rechaza aunque alguien lo intente a mano (desde «listo» y «en camino» solo soporte y el cobro directo)', async () => {
     const { m, pedidoPagado, estado } = await escenario();
-    for (const desde of ['entregado', 'listo'] as const) {
+    for (const desde of ['entregado'] as const) {
       const id = await pedidoPagado();
       await llevarA(m.DB, id, desde);
       await expect(

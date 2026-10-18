@@ -95,6 +95,26 @@ const es = {
       '¿Seguro? El pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
     cobroOk: 'Cobro registrado. Lo confirmaste tú; si fue transferencia, revísala en tu banco.',
     propinaAparte: 'La propina en efectivo es tuya y no se cuenta aquí.',
+    transferPendiente: 'La transferencia aún no me llega',
+    transferPendienteOk:
+      'Quedó anotado. Puedes entregar; cuando la veas en tu banco, confirma lo que llegó (o 0 si no llegó).',
+  },
+  local: {
+    titulo: 'Paga la comida en el restaurante',
+    paga: 'Paga en el mostrador:',
+    explica:
+      'Es la comida ({comida}) menos la comisión de Tumbite. La pagas con tu dinero; el cliente te la devuelve al recibir.',
+    efectivo: 'Efectivo',
+    tarjeta: 'Mi tarjeta',
+    cuantoPagaste: 'Lo que pagaste',
+    importeTicket: 'Total del ticket del restaurante',
+    registrar: 'Registrar el pago',
+    registrado: 'Pago registrado.',
+    resumen: 'Pagaste {pagado} con {metodo}. El ticket dice {ticket}.',
+    conDiferencia: 'Hay una diferencia con lo que esperaba la app: soporte la revisará.',
+    entregaTicket: 'Entrega el ticket al cliente junto con el pedido.',
+    tuDinero: 'Tumbite no presta ni pone este dinero: es tu capital de trabajo.',
+    montoInvalido: 'Escribe los dos montos.',
   },
   fondo: {
     titulo: 'Tumbite está activo',
@@ -251,6 +271,26 @@ const en: T = {
       'Are you sure? The order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
     cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',
     propinaAparte: 'A cash tip is yours and isn’t counted here.',
+    transferPendiente: 'The transfer hasn’t reached me yet',
+    transferPendienteOk:
+      'Noted. You can deliver; when you see it in your bank, confirm what arrived (or 0 if it didn’t).',
+  },
+  local: {
+    titulo: 'Pay for the food at the restaurant',
+    paga: 'Pay at the counter:',
+    explica:
+      'It’s the food ({comida}) minus Tumbite’s fee. You pay with your own money; the customer pays you back on delivery.',
+    efectivo: 'Cash',
+    tarjeta: 'My card',
+    cuantoPagaste: 'What you paid',
+    importeTicket: 'Restaurant receipt total',
+    registrar: 'Record the payment',
+    registrado: 'Payment recorded.',
+    resumen: 'You paid {pagado} by {metodo}. The receipt says {ticket}.',
+    conDiferencia: 'There’s a difference from what the app expected: support will review it.',
+    entregaTicket: 'Hand the receipt to the customer with the order.',
+    tuDinero: 'Tumbite doesn’t lend or put up this money: it’s your working capital.',
+    montoInvalido: 'Enter both amounts.',
   },
   fondo: {
     titulo: 'Tumbite is active',

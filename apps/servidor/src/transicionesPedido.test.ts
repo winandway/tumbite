@@ -32,6 +32,8 @@ const PERMITIDAS: [Estado, Estado][] = [
   ['en_camino', 'entregado'],
   // Fase 2 · cobro directo (18 oct 2026): el cliente no pagó al recibir → cancelado aunque iba en camino.
   ['en_camino', 'cancelado'],
+  // Soporte cancela un pedido listo (18 oct 2026, C-COBRO-DIRECTO-LOCAL).
+  ['listo', 'cancelado'],
 ];
 const REVERSIONES: Estado[] = ['pago_pendiente', 'pagado', 'aceptado'];
 

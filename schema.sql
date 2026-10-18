@@ -1552,6 +1552,9 @@ CREATE TABLE IF NOT EXISTS recargas (
 CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
 -- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
 INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);
+-- Soporte cancela un pedido ya listo (el superadmin lo ofrecía y la base lo rechazaba con un error
+-- interno; 18 oct 2026). En cobro directo, si el repartidor ya pagó la comida queda la pérdida escrita.
+INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('listo', 'cancelado', 0);
 
 -- Cuentas a las que el cliente le transfiere al repartidor (cobro directo por transferencia). Se
 -- muestran con el nombre del beneficiario; un cambio exige la contraseña, queda en el historial,
@@ -1648,4 +1651,20 @@ CREATE TABLE IF NOT EXISTS cierres_restaurante (
   motivo TEXT NOT NULL DEFAULT '',
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (restaurante_id, fecha)
+);
+
+-- Fase 2 · cobro directo (C-COBRO-DIRECTO-LOCAL): el repartidor paga la comida en el mostrador con su
+-- propio dinero y registra cuánto pagó y cuánto decía el ticket. Tumbite no financia esa compra.
+CREATE TABLE IF NOT EXISTS pagos_local (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL,
+  monto_esperado INTEGER NOT NULL,
+  monto_pagado INTEGER NOT NULL CHECK (monto_pagado > 0),
+  importe_ticket INTEGER NOT NULL CHECK (importe_ticket > 0),
+  metodo TEXT NOT NULL CHECK (metodo IN ('efectivo', 'tarjeta_propia')),
+  diferencia_pago INTEGER NOT NULL DEFAULT 0,
+  diferencia_ticket INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  confirmado_restaurante_en TEXT,
+  confirmado_por TEXT
 );

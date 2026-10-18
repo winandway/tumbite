@@ -129,6 +129,28 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
   ['Ya confirmaste el cobro de este pedido.', 'You already confirmed the payment for this order.'],
   [
+    'Este pedido se pagó en mano al repartidor: no hay cobro con tarjeta que devolver. Soporte coordina la devolución con el repartidor o el restaurante.',
+    'This order was paid in hand to the driver: there is no card charge to refund. Support arranges the refund with the driver or the restaurant.',
+  ],
+  [
+    'Primero registra lo que pagaste al restaurante y el importe del ticket.',
+    'First record what you paid the restaurant and the amount on the receipt.',
+  ],
+  ['Este pedido no se paga en el local.', 'This order is not paid at the restaurant.'],
+  [
+    'Registra el pago cuando estés en el restaurante.',
+    'Record the payment when you are at the restaurant.',
+  ],
+  ['Ya registraste el pago de este pedido.', 'You already recorded the payment for this order.'],
+  [
+    'Este pedido no tiene una transferencia por verificar.',
+    'This order has no transfer waiting to be checked.',
+  ],
+  [
+    'Ya pagaste la comida de este pedido: entrégalo, o escribe a soporte si no puedes seguir.',
+    'You already paid for the food on this order: deliver it, or contact support if you can’t continue.',
+  ],
+  [
     'Confirma el cobro cuando estés con el cliente.',
     'Confirm the payment when you’re with the customer.',
   ],

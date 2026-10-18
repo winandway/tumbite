@@ -28,6 +28,8 @@ import {
   saldoLibro,
 } from '../internacional/libro';
 import { clienteNoPago, confirmarCobro, deudaCliente } from '../internacional/cobroDirecto';
+import { leerPagoLocal, registrarPagoLocal } from '../internacional/pagoLocal';
+import { anotarEvento } from '../manager';
 import {
   anularCodigo,
   canjearCodigo,
@@ -284,6 +286,73 @@ internacional.post('/repartidor/pedidos/:id/cobre', async (c) => {
     nota: d.nota,
   });
   return c.json({ cobroEstado: estado });
+});
+
+// ───────── Pago de la comida en el local (C-COBRO-DIRECTO-LOCAL) ─────────
+/** Lo que el repartidor tiene que pagar en el mostrador y lo que ya registró. */
+internacional.get('/repartidor/pedidos/:id/pago-local', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const l = await leerPagoLocal(base(c), c.req.param('id'));
+  if (!l || l.pedido.repartidor_id !== u.id)
+    throw new ErrorDatos('Este pedido no se paga en el local.', undefined, 404);
+  return c.json({ montoEsperado: l.montoEsperado, subtotal: l.subtotal, registrado: l.registrado });
+});
+
+internacional.post('/repartidor/pedidos/:id/pago-local', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      montoPagado: z.number().int().positive(),
+      importeTicket: z.number().int().positive(),
+      metodo: z.enum(['efectivo', 'tarjeta_propia']),
+    }),
+  );
+  const r = await registrarPagoLocal(base(c), {
+    pedidoId: c.req.param('id'),
+    repartidorId: u.id,
+    ...d,
+  });
+  return c.json({ registrado: r }, 201);
+});
+
+/** El restaurante ve cuánto le tiene que pagar el repartidor y si ya lo registró. */
+internacional.get('/restaurante/pedidos/:id/pago-local', async (c) => {
+  const u = exigir(c, 'restaurante');
+  const db = base(c);
+  const l = await leerPagoLocal(db, c.req.param('id'));
+  const mio = l
+    ? await db
+        .prepare(
+          'SELECT 1 FROM restaurantes r WHERE r.id = ? AND (r.dueno_id = ? OR EXISTS (SELECT 1 FROM miembros_restaurante m WHERE m.restaurante_id = r.id AND m.usuario_id = ?))',
+        )
+        .bind(l.pedido.restaurante_id, u.id, u.id)
+        .first()
+    : null;
+  if (!l || !mio) throw new ErrorDatos('Este pedido no se paga en el local.', undefined, 404);
+  return c.json({ montoEsperado: l.montoEsperado, subtotal: l.subtotal, registrado: l.registrado });
+});
+
+/**
+ * Transferencia por verificar: el cliente dice que ya transfirió y el repartidor todavía no lo ve en
+ * su banco. El pedido se puede entregar; el cobro sigue «pendiente» y la comisión apartada, hasta
+ * que el repartidor confirme lo que de verdad recibió (o 0 si nunca llegó).
+ */
+internacional.post('/repartidor/pedidos/:id/transferencia-pendiente', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const { nota } = await leerCuerpo(c, z.object({ nota: z.string().trim().max(300).default('') }));
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      "SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND metodo_pago = 'transferencia_repartidor' AND cobro_estado = 'pendiente' AND estado IN ('en_camino','entregado')",
+    )
+    .bind(id, u.id)
+    .first();
+  if (!f)
+    throw new ErrorDatos('Este pedido no tiene una transferencia por verificar.', undefined, 409);
+  await anotarEvento(db, id, 'transferencia_por_verificar', nota);
+  return c.json({ ok: true });
 });
 
 internacional.post('/repartidor/pedidos/:id/no-pago', async (c) => {

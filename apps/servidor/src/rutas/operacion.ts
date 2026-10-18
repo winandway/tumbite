@@ -4,6 +4,11 @@ import {
   puedeTomarDirecto,
   reservarAlAceptar,
 } from '../internacional/cobroDirecto';
+import {
+  confirmarPagoLocalRestaurante,
+  exigirPagoLocal,
+  registrarPerdidaComida,
+} from '../internacional/pagoLocal';
 import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
 import { paisDeZona } from '../internacional/paises';
@@ -174,6 +179,10 @@ export async function soltarPedido(
   ]);
   // Fase 2: la comisión apartada para este pedido vuelve al prepago del repartidor.
   await liberarReserva(db, pedidoId, repartidorId, `soltado:${motivo}`.slice(0, 80));
+  // Si ya había pagado la comida en el local (solo lo permite soporte), esa compra queda como
+  // pérdida pendiente de decisión y el siguiente repartidor registra su propio pago.
+  if (await registrarPerdidaComida(db, pedidoId, `soltado: ${motivo}`.slice(0, 80)))
+    await db.prepare('DELETE FROM pagos_local WHERE pedido_id = ?').bind(pedidoId).run();
 }
 
 /** Un pedido confirmado por el restaurante (o verificado con código y fotografiado) sale en camino. */
@@ -1472,6 +1481,8 @@ operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
     .first<{ lat: number | null; lng: number | null }>();
   if (!p)
     throw new ErrorDatos('El restaurante todavía no marcó el pedido como listo.', undefined, 409);
+  // Cobro directo: sin el pago de la comida registrado (monto, ticket, método), no sale.
+  await exigirPagoLocal(db, id);
   const foto = await leerFoto(c);
   const rest = comoPunto(p.lat, p.lng);
   const metros = rest ? metrosEntre(foto.donde, rest) : null;
@@ -1513,7 +1524,10 @@ operacion.post('/restaurante/pedidos/:id/confirmar-recogida', async (c) => {
       undefined,
       409,
     );
+  await exigirPagoLocal(db, id);
   await salirEnCamino(c.env, db, id, rid);
+  // Cobro directo: al confirmar la entrega, el restaurante confirma también que le pagaron.
+  await confirmarPagoLocalRestaurante(db, id, rid);
   return c.json({ ok: true });
 });
 
@@ -2257,7 +2271,8 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
 });
 
 /** El puente de Twilio: con el pase válido, marca al otro número con el de Tumbite como remitente. */
-operacion.get('/twilio/puente', async (c) => {
+// F9: la llamada pide GET, pero se acepta también POST (el método por defecto de Twilio).
+operacion.on(['GET', 'POST'], '/twilio/puente', async (c) => {
   const a = await abrirPase(c.env, c.req.query('t') ?? '');
   if (!a || !c.env.TWILIO_FROM) throw new ErrorDatos('No encontrado.', undefined, 404);
   return c.body(twimlPuente(a, c.env.TWILIO_FROM), 200, { 'content-type': 'text/xml' });
@@ -2307,6 +2322,12 @@ operacion.post('/repartidor/pedidos/:id/soltar', async (c) => {
   if (estado.estado === 'en_camino')
     throw new ErrorDatos(
       'Ya recogiste el pedido: ahora hay que entregarlo. Si tienes un problema, repórtalo.',
+      undefined,
+      409,
+    );
+  if (await db.prepare('SELECT 1 FROM pagos_local WHERE pedido_id = ?').bind(id).first())
+    throw new ErrorDatos(
+      'Ya pagaste la comida de este pedido: entrégalo, o escribe a soporte si no puedes seguir.',
       undefined,
       409,
     );

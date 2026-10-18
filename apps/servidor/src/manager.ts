@@ -1,4 +1,5 @@
 import { liberarReservasDe } from './internacional/libro';
+import { registrarPerdidaComida } from './internacional/pagoLocal';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 import { anotar } from './historial';
@@ -159,6 +160,11 @@ export async function cancelarConReembolso(
   }
   await liberarReservasDe(db, pedidoId, 'cancelado').catch((e: unknown) =>
     console.error('cancelación: liberar reservas', e),
+  );
+  // Cobro directo: si el repartidor ya había pagado la comida, queda registrada como pérdida
+  // pendiente de decisión (nunca se pierde el rastro de ese dinero).
+  await registrarPerdidaComida(db, pedidoId, 'cancelado').catch((e: unknown) =>
+    console.error('cancelación: pérdida de la comida comprada', e),
   );
   await anotar(db, pedidoId, 'cancelado', p.actorId);
   return true;

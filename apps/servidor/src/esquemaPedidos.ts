@@ -36,6 +36,7 @@ export async function saludTransiciones(db: D1Database): Promise<'ok' | 'error'>
     )
     .bind(DISPARADOR_TRANSICIONES)
     .first<{ disparador: number; filas: number }>();
-  // 12 de la Entrega 1 + 1 de la Fase 2 (en_camino → cancelado: el cliente no pagó al recibir).
-  return Number(f?.disparador) === 1 && Number(f?.filas) === 13 ? 'ok' : 'error';
+  // 12 de la Entrega 1 + 2 de la Fase 2 (en_camino → cancelado: el cliente no pagó al recibir;
+  // listo → cancelado: soporte cancela un pedido ya listo).
+  return Number(f?.disparador) === 1 && Number(f?.filas) === 14 ? 'ok' : 'error';
 }

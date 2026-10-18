@@ -781,3 +781,22 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Prueba (comprobada en rojo):** `esquema.test.ts` «el arranque no hace una consulta por columna» cuenta las consultas sueltas a `pragma_table_info`: antes 40, ahora 0.
 - **Cómo se comprueba en vivo:** `curl` repetido a `/datos/cuentas/yo` de staging contesta en menos de 1 s y el recorrido pasa el paso del buscador.
 - **Qué NO tocar:** nada de consultas por columna o por tabla en el arranque; todo lo que corre en `asegurarEsquema` va en lotes.
+
+## C-COBRO-DIRECTO-LOCAL: el repartidor paga la comida en el local y todo queda registrado (18 oct 2026)
+
+- **Qué faltaba:** el recorrido aprobado por Richard dice que el repartidor paga la comida al recoger (efectivo o su tarjeta), recibe el ticket y lo entrega con el pedido. El código suponía ese pago sin registrarlo: no había monto pagado, ni ticket, ni método; una cancelación después de comprar no dejaba rastro del dinero del repartidor; una transferencia repetida no dejaba el excedente escrito; una devolución en un pedido pagado en mano intentaba usar Stripe; y soporte no podía cancelar un pedido «listo» (la base lo rechazaba con un error interno aunque el superadmin lo ofrecía).
+- **Qué se hizo:** tabla `pagos_local` y módulo `apps/servidor/src/internacional/pagoLocal.ts`. Rutas `GET/POST /datos/repartidor/pedidos/:id/pago-local` (monto pagado, total del ticket, `efectivo` o `tarjeta_propia`; una sola vez), `GET /datos/restaurante/pedidos/:id/pago-local` y `POST /datos/repartidor/pedidos/:id/transferencia-pendiente`. Compuerta: sin el pago registrado no se acepta la foto de recogida ni la confirmación del restaurante (`exigirPagoLocal`); al confirmar, el restaurante confirma el pago. Las diferencias de pago o ticket se anotan y la conciliación sale «con diferencia». Cancelación, cliente que no paga o repartidor soltado por soporte después de comprar → `comida_comprada_sin_entregar` en el libro (pendiente de decisión, una sola vez). Excedente del cliente (sin contar la propina) → `excedente_cliente_por_devolver`. La confirmación del cobro queda como **manual del repartidor** (quién, cuánto y cuándo). `devolverParcial` rechaza los pedidos pagados en mano. Transición nueva `listo → cancelado` (14 filas en `saludTransiciones`). Apps: `apps/repartidor/src/grandes/PagoEnLocal.tsx`, botón «La transferencia aún no me llega», y «Cobra al repartidor» en la app del restaurante. Recorrido local con el pedido en efectivo hasta la compra y la cancelación por soporte.
+- **Pruebas (comprobadas en rojo quitando cada pieza):** `internacional.test.ts` (8 nuevas: compuerta en la foto y en la confirmación, ticket distinto, cancelación antes y después de comprar, cliente que no paga, transferencia pendiente/duplicada/propina, transferencia que no llegó + disputa, devolución sin Stripe, reservas simultáneas), `transicionesPedido.test.ts`, `transicionesRutas.test.ts`.
+- **Qué NO tocar:** el saldo prepago es SOLO para comisiones, nunca para comprar comida; Tumbite no presta ni financia la compra; nada de saldos negativos ni crédito; una confirmación del repartidor nunca se presenta como verificación bancaria.
+
+## C-LLAMADA-METODO: la llamada con número oculto pide el puente con GET y la ruta acepta GET y POST (F9, 18 oct 2026)
+
+- **Qué se rompía:** `llamarConNumeroOculto` creaba la llamada sin `Method`; Twilio pide la dirección con POST por defecto y la ruta solo existía en GET: la llamada habría caído con 404.
+- **Qué se hizo:** `Method: 'GET'` en la llamada (`apps/servidor/src/sms.ts`) y la ruta `/datos/twilio/puente` acepta GET y POST.
+- **Prueba (en rojo comprobado):** `operacion.test.ts`, «llamada con número oculto». **Falta:** probarla con la cuenta real de Twilio (👤).
+
+## C-NOTAS-CULPA: las malas notas por culpa del restaurante no cuentan al repartidor (F18, 18 oct 2026)
+
+- **Qué se rompía:** Docs, la web y los términos prometen que esa nota no cuenta; el promedio del repartidor (su app y el superadmin) la contaba. Los términos además decían que el nivel dependía de estrellas y puntualidad y daba prioridad «en pedidos grandes»; el sistema sube el nivel por entregas y lo usa para desempatar ofertas a igual distancia.
+- **Qué se hizo:** `GET /datos/repartidor/calificaciones` y la ficha del superadmin excluyen `culpa_restaurante = 1` (la app recibe `excluidas`); los términos del repartidor (es/en, actualizados el 18 oct) dicen exactamente lo que calcula el sistema.
+- **Prueba (en rojo comprobado, las dos partes):** `repartidorGrandes.test.ts`, «F18».

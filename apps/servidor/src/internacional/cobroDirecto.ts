@@ -3,6 +3,7 @@ import { anotarEvento } from '../manager';
 import { ErrorDatos } from '../validar';
 import { anotarLibro, cobrarReserva, liberarReserva, reservarComision, saldoLibro } from './libro';
 import { leerConfigPais, paisDeZona, type ConfigPais } from './paises';
+import { registrarPerdidaComida } from './pagoLocal';
 
 export type MetodoPago = 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
 
@@ -184,11 +185,12 @@ export async function confirmarCobro(
     .run();
   if (!r.meta.changes)
     throw new ErrorDatos('Ya confirmaste el cobro de este pedido.', undefined, 409);
+  // Confirmación MANUAL del repartidor: no es una verificación bancaria. Queda quién, cuánto y cuándo.
   await anotarEvento(
     db,
     p.pedidoId,
     'cobro_confirmado',
-    `${estado} · ${p.montoRecibido} · ${f.metodo_pago}`,
+    `${estado} · ${p.montoRecibido} · ${f.metodo_pago} · confirmación manual del repartidor ${p.repartidorId}`,
   );
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
   // Informativo: ese dinero fue del cliente al repartidor, nunca pasó por Tumbite.
@@ -230,6 +232,8 @@ export async function clienteNoPago(
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
   await liberarReserva(db, p.pedidoId, p.repartidorId, 'cliente_no_pago');
+  // La comida que el repartidor ya pagó en el local queda como pérdida pendiente de decisión.
+  await registrarPerdidaComida(db, p.pedidoId, 'cliente_no_pago');
   await anotarLibro(db, {
     cuentaId: f.cliente_id,
     bolsillo: 'deuda_cliente',
@@ -262,7 +266,19 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
   const esperado = f.total - f.propina;
   const recibido = Number(f.monto_recibido ?? 0);
   const diferencia = esperado - recibido;
-  const estado = diferencia > 0 ? 'con_diferencia' : 'conciliado';
+  // Lo que el repartidor dice que pagó en el local, y cuánto decía el ticket (C-COBRO-DIRECTO-LOCAL).
+  const local = await db
+    .prepare(
+      'SELECT monto_pagado, diferencia_pago, diferencia_ticket FROM pagos_local WHERE pedido_id = ?',
+    )
+    .bind(pedidoId)
+    .first<{ monto_pagado: number; diferencia_pago: number; diferencia_ticket: number }>();
+  const conDiferenciaLocal =
+    !!local && (Number(local.diferencia_pago) !== 0 || Number(local.diferencia_ticket) !== 0);
+  // Si el cliente entregó también la propina, eso es del repartidor y no es un excedente.
+  const excedente = Math.max(0, recibido - esperado - Number(f.propina));
+  const estado =
+    diferencia > 0 || excedente > 0 || conDiferenciaLocal ? 'con_diferencia' : 'conciliado';
   const r = await db
     .prepare(
       "UPDATE pedidos SET conciliacion_estado = ? WHERE id = ? AND conciliacion_estado = 'pendiente'",
@@ -282,13 +298,26 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
       pedidoId,
       referencia: `deuda:${pedidoId}`,
     });
+  // El cliente pagó de MÁS (por ejemplo, una transferencia repetida): el repartidor le debe la
+  // diferencia. Queda escrito; Tumbite no la devuelve porque ese dinero nunca pasó por Tumbite.
+  if (excedente > 0)
+    await anotarLibro(db, {
+      cuentaId: f.repartidor_id,
+      bolsillo: 'directo',
+      pais,
+      moneda,
+      monto: -excedente,
+      concepto: 'excedente_cliente_por_devolver',
+      pedidoId,
+      referencia: `excedente:${pedidoId}`,
+    });
   // Informativo: el restaurante recibió su parte en el local, de manos del repartidor.
   await anotarLibro(db, {
     cuentaId: `restaurante-de:${pedidoId}`,
     bolsillo: 'directo',
     pais,
     moneda,
-    monto: f.pago_restaurante,
+    monto: local ? Number(local.monto_pagado) : f.pago_restaurante,
     concepto: 'pagado_en_local_por_repartidor',
     pedidoId,
     referencia: `local:${pedidoId}`,

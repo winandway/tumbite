@@ -1356,7 +1356,10 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí).',
           'Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera.',
-          'En el restaurante pagas la comida en el mostrador con tu dinero y te llevas el ticket. En la puerta del cliente ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya.',
+          'En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Tumbite. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Tumbite no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si algo no cuadra, se anota y lo revisa soporte; no te frena.',
+          'Entrega el ticket al cliente con el pedido. En la puerta ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Es una confirmación tuya, no una verificación del banco: queda quién confirmó, cuánto y cuándo. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya; si pagó de más (por ejemplo, una transferencia repetida), queda anotado que le debes devolver la diferencia.',
+          'Si es por transferencia y todavía no la ves en tu banco, toca «La transferencia aún no me llega»: puedes entregar, el cobro queda pendiente y tu comisión apartada. Cuando la veas, confirma lo que llegó; si nunca llega, confirma 0 y el cliente queda con deuda (puede abrir un reclamo).',
+          'Si el pedido se cancela después de que pagaste la comida, ese pago queda registrado a tu nombre como pérdida pendiente de revisión; nunca desaparece. Una vez pagada la comida ya no puedes soltar el pedido tú solo: entrégalo o escribe a soporte.',
           'Si el cliente no paga, toca «El cliente no pagó»: el pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
           'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Tumbite no entra a tu cuenta.',
           'La propina en efectivo es tuya y no se cuenta en el cobro.',
@@ -1367,6 +1370,16 @@ const es: SeccionDocs[] = [
             alt: 'Billetera de la app del repartidor con el bloque «Saldo para comisiones»: disponible, apartado en pedidos y la casilla del código de recarga.',
             pie: 'Tu saldo para comisiones y dónde canjear un código de recarga.',
           },
+          {
+            src: '/docs/recorrido-pago-local-repartidor-es.webp',
+            alt: 'App del repartidor en el restaurante: «Paga la comida en el restaurante» con el monto a pagar en el mostrador, efectivo o mi tarjeta, lo que pagaste, el total del ticket y el botón «Registrar el pago».',
+            pie: 'En el mostrador: pagas con tu dinero y anotas lo que pagaste y el ticket.',
+          },
+          {
+            src: '/docs/recorrido-restapp-cobro-repartidor-es.webp',
+            alt: 'App del restaurante con un pedido pagado en mano: «Cobra al repartidor» con el monto y si el repartidor ya registró el pago.',
+            pie: 'El restaurante ve cuánto cobrarte y si ya registraste el pago.',
+          },
         ],
         preguntas: [
           '¿Por qué no me llegan pedidos en efectivo?',
@@ -1376,7 +1389,8 @@ const es: SeccionDocs[] = [
         pasos: [
           'Compra un código de recarga en un punto de venta y canjéalo en Ganancias.',
           'Acepta el pedido en efectivo: la comisión se aparta de tu saldo.',
-          'Paga la comida en el mostrador y guarda el ticket.',
+          'Paga la comida en el mostrador y anota lo que pagaste y el total del ticket.',
+          'Entrega el ticket con el pedido.',
           'En la puerta, cobra el total sin la propina y toca «Cobré» con lo recibido.',
         ],
       },
@@ -3652,7 +3666,10 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Before accepting an order paid in person you need balance for the fee. You top it up by buying a code at an authorized sales point and redeeming it under Earnings → “Balance for fees”. Without balance you don’t get cash-order offers (card orders still come).',
           'When you accept, the fee is reserved from your balance; when you deliver and confirm the payment, it’s charged. If the order is canceled or you drop it, it goes back to your balance in full.',
-          'At the restaurant you pay for the food at the counter with your own money and keep the receipt. At the customer’s door you see how much they owe you (without the tip). Tap “Collected” and enter what you received. If they paid less, the difference becomes the customer’s debt, not yours.',
+          'At the restaurant the app tells you how much to pay at the counter: the food minus Tumbite’s fee. You pay with your own money, in cash or with your card (it’s your working capital: Tumbite doesn’t lend it), and under “Pay for the food at the restaurant” you enter what you paid and the receipt total. Without that record the order can’t leave. If something doesn’t match, it’s noted and support reviews it; it doesn’t stop you.',
+          'Hand the receipt to the customer with the order. At the door you see how much they owe you (without the tip). Tap “Collected” and enter what you received. It’s your own confirmation, not a bank check: who confirmed, how much and when are recorded. If they paid less, the difference becomes the customer’s debt, not yours; if they paid more (for example, a repeated transfer), it’s recorded that you owe them the difference back.',
+          'If it’s a transfer and you don’t see it in your bank yet, tap “The transfer hasn’t reached me yet”: you can deliver, the payment stays pending and your fee stays reserved. When you see it, confirm what arrived; if it never arrives, confirm 0 and the customer gets a debt (they can file a claim).',
+          'If the order is canceled after you paid for the food, that payment stays recorded under your name as a loss pending review; it never disappears. Once you paid for the food you can’t drop the order on your own: deliver it or contact support.',
           'If the customer doesn’t pay, tap “The customer didn’t pay”: the order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
           'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Tumbite never accesses your account.',
           'A cash tip is yours and isn’t counted in the payment.',
@@ -3663,6 +3680,16 @@ const en: SeccionDocs[] = [
             alt: 'Wallet in the driver app with the “Balance for fees” block: available, reserved in orders and the top-up code box.',
             pie: 'Your balance for fees and where to redeem a top-up code.',
           },
+          {
+            src: '/docs/recorrido-pago-local-repartidor-en.webp',
+            alt: 'Driver app at the restaurant: “Pay for the food at the restaurant” with the amount to pay at the counter, cash or my card, what you paid, the receipt total, and the “Record the payment” button.',
+            pie: 'At the counter: you pay with your own money and enter what you paid and the receipt.',
+          },
+          {
+            src: '/docs/recorrido-restapp-cobro-repartidor-en.webp',
+            alt: 'Restaurant app with an order paid in hand: “Charge the driver” with the amount and whether the driver already recorded the payment.',
+            pie: 'The restaurant sees how much to charge you and whether you recorded the payment.',
+          },
         ],
         preguntas: [
           'Why don’t I get cash orders?',
@@ -3672,7 +3699,8 @@ const en: SeccionDocs[] = [
         pasos: [
           'Buy a top-up code at a sales point and redeem it under Earnings.',
           'Accept the cash order: the fee is reserved from your balance.',
-          'Pay for the food at the counter and keep the receipt.',
+          'Pay for the food at the counter and enter what you paid and the receipt total.',
+          'Hand the receipt over with the order.',
           'At the door, collect the total without the tip and tap “Collected” with what you received.',
         ],
       },

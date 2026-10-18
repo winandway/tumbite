@@ -985,5 +985,18 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "fecha",
     "motivo",
     "creado_en"
+  ],
+  "pagos_local": [
+    "pedido_id",
+    "repartidor_id",
+    "monto_esperado",
+    "monto_pagado",
+    "importe_ticket",
+    "metodo",
+    "diferencia_pago",
+    "diferencia_ticket",
+    "creado_en",
+    "confirmado_restaurante_en",
+    "confirmado_por"
   ]
 };

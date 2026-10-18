@@ -97,11 +97,47 @@ async function escenario(config: Record<string, unknown> = {}) {
     );
     return { punto: punto.datos.punto, duenoPunto, codigo: codigo.datos, canje };
   }
+  /** Paso 2 y 3 del recorrido aprobado: el repartidor paga la comida en el local y registra el ticket. */
+  async function pagarLocal(
+    id: string,
+    rep: { token: string },
+    extra: Partial<{ montoPagado: number; importeTicket: number; metodo: string }> = {},
+  ) {
+    const l = await m.llamar(
+      'GET',
+      `/datos/repartidor/pedidos/${id}/pago-local`,
+      undefined,
+      rep.token,
+    );
+    return m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/pago-local`,
+      {
+        montoPagado: l.datos.montoEsperado,
+        importeTicket: l.datos.subtotal,
+        metodo: 'efectivo',
+        ...extra,
+      },
+      rep.token,
+    );
+  }
   const ofertasDe = async (rep: { token: string }) =>
     (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas as {
       id: string;
     }[];
-  return { m, dueno, admin, cliente, rid, pedir, repartidor, recargar, ofertasDe, llamadasStripe };
+  return {
+    m,
+    dueno,
+    admin,
+    cliente,
+    rid,
+    pedir,
+    repartidor,
+    recargar,
+    pagarLocal,
+    ofertasDe,
+    llamadasStripe,
+  };
 }
 
 describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)', () => {
@@ -186,6 +222,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
     await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
     await e.m.recoger(id, rep.token, e.dueno.token);
     // Marcar entregado NO cambia el cobro (tres estados separados).
     expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
@@ -265,6 +302,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
     await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
     await e.m.recoger(id, rep.token, e.dueno.token);
     await e.m.llamar(
       'POST',
@@ -303,6 +341,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
     await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
     await e.m.recoger(id, rep.token, e.dueno.token);
     const r = await e.m.llamar(
       'POST',
@@ -354,6 +393,359 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
       { motivo: 'prueba' },
       e.admin.token,
     );
+    const salud = (await (await e.m.crudo('/datos/salud', { method: 'GET' })).json()) as {
+      piezas: Record<string, string>;
+    };
+    expect(salud.piezas.libro).toBe('ok');
+  });
+});
+
+describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)', () => {
+  /** Pedido directo aceptado por el restaurante y por un repartidor con saldo, ya listo para recoger. */
+  async function hastaListo(e: Awaited<ReturnType<typeof escenario>>, extra = {}) {
+    const p = await e.pedir(extra);
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    // Las ofertas se reparten cuando el repartidor abre la app.
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toContain(id);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    return { id, rep, total: p.datos.desglose.totalCliente as number, desglose: p.datos.desglose };
+  }
+  const conceptosDe = async (e: Awaited<ReturnType<typeof escenario>>, id: string) =>
+    (await e.m.llamar('GET', `/datos/admin/libro/pedido/${id}`, undefined, e.admin.token)).datos
+      .movimientos as { concepto: string; monto: number; cuentaId: string }[];
+
+  it('sin registrar el pago en el local no sale; el registro es único, el restaurante lo ve y lo confirma al entregar', async () => {
+    const e = await escenario();
+    const { id, rep, desglose } = await hastaListo(e);
+    // Sin el pago registrado, la foto de recogida no sirve (el pedido no sale).
+    const sinPago = await e.m.recoger(id, rep.token, e.dueno.token);
+    expect(sinPago.estado).toBe(409);
+    expect(sinPago.datos.error).toMatch(/registra lo que pagaste|record what you paid/i);
+    // Ni siquiera se guarda la foto de recogida: la compuerta está en la foto y en la confirmación.
+    expect(
+      await e.m.DB.prepare("SELECT 1 FROM evidencias WHERE pedido_id = ? AND tipo = 'recogida'")
+        .bind(id)
+        .first(),
+    ).toBeNull();
+    const ver = await e.m.llamar(
+      'GET',
+      `/datos/repartidor/pedidos/${id}/pago-local`,
+      undefined,
+      rep.token,
+    );
+    // Lo que paga en el mostrador es la comida menos la comisión de Tumbite (no la financia Tumbite).
+    expect(ver.datos).toMatchObject({
+      montoEsperado: desglose.pagoRestaurante,
+      subtotal: 3000,
+      registrado: null,
+    });
+    const r = await e.pagarLocal(id, rep, { metodo: 'tarjeta_propia' });
+    expect(r.estado).toBe(201);
+    expect(r.datos.registrado).toMatchObject({
+      metodo: 'tarjeta_propia',
+      diferenciaPago: 0,
+      diferenciaTicket: 0,
+    });
+    // Reintento: no duplica.
+    expect((await e.pagarLocal(id, rep)).estado).toBe(409);
+    const restaurante = await e.m.llamar(
+      'GET',
+      `/datos/restaurante/pedidos/${id}/pago-local`,
+      undefined,
+      e.dueno.token,
+    );
+    expect(restaurante.datos.registrado.montoPagado).toBe(desglose.pagoRestaurante);
+    expect((await e.m.recoger(id, rep.token, e.dueno.token)).estado).toBe(200);
+    const fila = await e.m.DB.prepare(
+      'SELECT confirmado_restaurante_en FROM pagos_local WHERE pedido_id = ?',
+    )
+      .bind(id)
+      .first<{ confirmado_restaurante_en: string | null }>();
+    expect(fila?.confirmado_restaurante_en).toBeTruthy();
+    // Una tarjeta ajena al pedido: otro repartidor no ve ni registra nada.
+    const otro = await e.repartidor('Otro Rep');
+    expect(
+      (await e.m.llamar('GET', `/datos/repartidor/pedidos/${id}/pago-local`, undefined, otro.token))
+        .estado,
+    ).toBe(404);
+  });
+
+  it('ticket e importe distintos: no frenan la entrega, quedan anotados y la conciliación sale «con diferencia»', async () => {
+    const e = await escenario();
+    const { id, rep, total, desglose } = await hastaListo(e);
+    const r = await e.pagarLocal(id, rep, {
+      montoPagado: desglose.pagoRestaurante + 150,
+      importeTicket: 3300,
+    });
+    expect(r.datos.registrado).toMatchObject({ diferenciaPago: 150, diferenciaTicket: 300 });
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total - 200 },
+      rep.token,
+    );
+    await e.m.entregar(id, rep.token);
+    const f = await e.m.DB.prepare(
+      'SELECT cobro_estado, conciliacion_estado FROM pedidos WHERE id = ?',
+    )
+      .bind(id)
+      .first<Record<string, string>>();
+    expect(f).toMatchObject({ cobro_estado: 'confirmado', conciliacion_estado: 'con_diferencia' });
+    const local = (await conceptosDe(e, id)).find(
+      (x) => x.concepto === 'pagado_en_local_por_repartidor',
+    );
+    expect(local?.monto).toBe(desglose.pagoRestaurante + 150);
+    const ev = await e.m.DB.prepare(
+      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'pago_local_diferencia'",
+    )
+      .bind(id)
+      .first<{ detalle: string }>();
+    expect(ev?.detalle).toMatch(/pago \+150 · ticket \+300/);
+  });
+
+  it('cancelación ANTES de comprar: solo vuelve la reserva; DESPUÉS de comprar: la comida queda como pérdida pendiente de decisión, una sola vez', async () => {
+    const e = await escenario();
+    // Antes de comprar.
+    const a = await hastaListo(e);
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${a.id}/cancelar`,
+      { motivo: 'prueba' },
+      e.admin.token,
+    );
+    expect((await conceptosDe(e, a.id)).map((x) => x.concepto)).not.toContain(
+      'comida_comprada_sin_entregar',
+    );
+    // Después de comprar (mundo nuevo: el repartidor anterior sigue libre y se llevaría la oferta).
+    const e2 = await escenario();
+    const b = await hastaListo(e2);
+    await e2.pagarLocal(b.id, b.rep);
+    // El repartidor no puede soltarlo: ya pagó la comida.
+    const soltar = await e2.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${b.id}/soltar`,
+      { motivo: 'me voy' },
+      b.rep.token,
+    );
+    expect(soltar.estado).toBe(409);
+    await e2.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${b.id}/cancelar`,
+      { motivo: 'prueba' },
+      e2.admin.token,
+    );
+    const filas = (await conceptosDe(e2, b.id)).filter(
+      (x) => x.concepto === 'comida_comprada_sin_entregar',
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.monto).toBe(-b.desglose.pagoRestaurante);
+    const saldo = await e2.m.llamar(
+      'GET',
+      '/datos/repartidor/saldo-prepago',
+      undefined,
+      b.rep.token,
+    );
+    expect(saldo.datos.reservado).toBe(0);
+    // Soporte suelta al repartidor después de comprar: también queda la pérdida y el siguiente paga lo suyo.
+    const e3 = await escenario();
+    const c = await hastaListo(e3);
+    await e3.pagarLocal(c.id, c.rep);
+    await e3.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${c.id}/soltar-repartidor`,
+      { motivo: 'se accidentó' },
+      e3.admin.token,
+    );
+    expect((await conceptosDe(e3, c.id)).map((x) => x.concepto)).toContain(
+      'comida_comprada_sin_entregar',
+    );
+    expect(
+      await e3.m.DB.prepare('SELECT 1 FROM pagos_local WHERE pedido_id = ?').bind(c.id).first(),
+    ).toBeNull();
+  });
+
+  it('cliente que no paga después de comprar la comida: deuda del cliente y pérdida del repartidor pendiente de decisión', async () => {
+    const e = await escenario();
+    const { id, rep } = await hastaListo(e);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-pago`,
+      { motivo: 'no abrió' },
+      rep.token,
+    );
+    const conceptos = (await conceptosDe(e, id)).map((x) => x.concepto);
+    expect(conceptos).toEqual(
+      expect.arrayContaining(['cliente_no_pago', 'comida_comprada_sin_entregar']),
+    );
+    const ev = await e.m.DB.prepare(
+      "SELECT 1 FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'perdida_pendiente_decision'",
+    )
+      .bind(id)
+      .first();
+    expect(ev).not.toBeNull();
+  });
+
+  it('transferencia: pendiente de verificar no cierra nada; duplicada deja el excedente escrito; la propina no cuenta como excedente; la confirmación es manual y queda quién, cuánto y cuándo', async () => {
+    const e = await escenario({ transferenciaRepartidorActiva: true });
+    const t = await hastaListo(e, { metodoPago: 'transferencia_repartidor' });
+    await e.pagarLocal(t.id, t.rep);
+    await e.m.recoger(t.id, t.rep.token, e.dueno.token);
+    const pend = await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${t.id}/transferencia-pendiente`,
+      { nota: 'dice que ya transfirió' },
+      t.rep.token,
+    );
+    expect(pend.estado).toBe(200);
+    expect((await e.m.entregar(t.id, t.rep.token)).estado).toBe(200);
+    let f = await e.m.DB.prepare(
+      'SELECT cobro_estado, conciliacion_estado FROM pedidos WHERE id = ?',
+    )
+      .bind(t.id)
+      .first<Record<string, string>>();
+    expect(f).toMatchObject({ cobro_estado: 'pendiente', conciliacion_estado: 'pendiente' });
+    expect(
+      (await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, t.rep.token)).datos
+        .reservado,
+    ).toBe(300);
+    // Llegó dos veces: el repartidor confirma lo que de verdad vio (el doble).
+    const esperado = t.total - 200;
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${t.id}/cobre`,
+      { montoRecibido: esperado * 2, nota: 'llegó repetida' },
+      t.rep.token,
+    );
+    f = await e.m.DB.prepare(
+      'SELECT cobro_estado, conciliacion_estado, cobro_confirmado_por, cobro_confirmado_en, monto_recibido FROM pedidos WHERE id = ?',
+    )
+      .bind(t.id)
+      .first<Record<string, string>>();
+    expect(f).toMatchObject({
+      cobro_estado: 'confirmado',
+      conciliacion_estado: 'con_diferencia',
+      cobro_confirmado_por: 'repartidor',
+    });
+    expect(f?.cobro_confirmado_en).toBeTruthy();
+    const ex = (await conceptosDe(e, t.id)).find(
+      (x) => x.concepto === 'excedente_cliente_por_devolver',
+    );
+    // Excedente = lo recibido − lo esperado − la propina (que es del repartidor).
+    expect(ex?.monto).toBe(-(esperado * 2 - esperado - 200));
+    const ev = await e.m.DB.prepare(
+      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'cobro_confirmado'",
+    )
+      .bind(t.id)
+      .first<{ detalle: string }>();
+    expect(ev?.detalle).toMatch(/confirmación manual del repartidor/);
+    // La comisión se cobra una sola vez (300), aunque se reintente la conciliación.
+    expect(await saldoLibro(e.m.DB, 'tumbite', 'comisiones', 'US', 'USD')).toBe(300);
+    // Con propina en mano (recibió el total con la propina): no es excedente.
+    const e2 = await escenario({ transferenciaRepartidorActiva: true });
+    const u = await hastaListo(e2);
+    await e2.pagarLocal(u.id, u.rep);
+    await e2.m.recoger(u.id, u.rep.token, e2.dueno.token);
+    await e2.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${u.id}/cobre`,
+      { montoRecibido: u.total },
+      u.rep.token,
+    );
+    await e2.m.entregar(u.id, u.rep.token);
+    const g = await e2.m.DB.prepare('SELECT conciliacion_estado FROM pedidos WHERE id = ?')
+      .bind(u.id)
+      .first<{ conciliacion_estado: string }>();
+    expect(g?.conciliacion_estado).toBe('conciliado');
+  });
+
+  it('transferencia que nunca llegó o fue a otra cuenta: el repartidor confirma 0, el cliente queda con deuda y puede abrir una disputa', async () => {
+    const e = await escenario({ transferenciaRepartidorActiva: true });
+    const t = await hastaListo(e, { metodoPago: 'transferencia_repartidor' });
+    await e.pagarLocal(t.id, t.rep);
+    await e.m.recoger(t.id, t.rep.token, e.dueno.token);
+    await e.m.entregar(t.id, t.rep.token);
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${t.id}/cobre`,
+      { montoRecibido: 0, nota: 'no llegó' },
+      t.rep.token,
+    );
+    const f = await e.m.DB.prepare(
+      'SELECT cobro_estado, conciliacion_estado FROM pedidos WHERE id = ?',
+    )
+      .bind(t.id)
+      .first<Record<string, string>>();
+    expect(f).toMatchObject({ cobro_estado: 'no_pagado', conciliacion_estado: 'con_diferencia' });
+    expect(
+      (await e.m.llamar('GET', '/datos/mi-deuda', undefined, e.cliente.token)).datos.deuda,
+    ).toBe(t.total - 200);
+    const disputa = await e.m.llamar(
+      'POST',
+      `/datos/pedidos/${t.id}/disputa-cobro`,
+      { motivo: 'transferí a la cuenta que salía en la app' },
+      e.cliente.token,
+    );
+    expect(disputa.estado).toBe(201);
+  });
+
+  it('devolución en un pedido pagado en mano: no se toca Stripe y el error lo explica', async () => {
+    const e = await escenario();
+    const { id, rep, total } = await hastaListo(e);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total - 200 },
+      rep.token,
+    );
+    await e.m.entregar(id, rep.token);
+    const antes = e.llamadasStripe.length;
+    const r = await e.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${id}/devolver`,
+      { montoCentavos: 500, motivo: 'faltó un plato', cargarA: 'tumbite' },
+      e.admin.token,
+    );
+    expect(r.estado).toBe(409);
+    expect(r.datos.error).toMatch(/pagó en mano|paid in hand/);
+    expect(e.llamadasStripe.length).toBe(antes);
+  });
+
+  it('dos aceptaciones simultáneas con saldo para una sola comisión: solo una aparta, nada queda en negativo', async () => {
+    const e = await escenario();
+    const p1 = (await e.pedir()).datos.pedidoId as string;
+    const p2 = (await e.pedir()).datos.pedidoId as string;
+    for (const id of [p1, p2])
+      await e.m.llamar(
+        'POST',
+        `/datos/restaurante/pedidos/${id}/aceptar`,
+        { minutos: 5 },
+        e.dueno.token,
+      );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 300);
+    await e.ofertasDe(rep);
+    const r = await Promise.all(
+      [p1, p2].map((id) =>
+        e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token),
+      ),
+    );
+    const saldo = await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token);
+    expect(saldo.datos).toMatchObject({ disponible: 0, reservado: 300 });
+    expect(r.filter((x) => x.estado === 200).length).toBeLessThanOrEqual(1);
     const salud = (await (await e.m.crudo('/datos/salud', { method: 'GET' })).json()) as {
       piezas: Record<string, string>;
     };
@@ -560,6 +952,15 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(rep).toContain('/datos/repartidor/saldo-prepago');
     expect(rep).toContain('/datos/repartidor/recargar');
     expect(leer('apps/restaurante/src/Inicio.tsx')).toContain('pagoDirecto');
+    // C-COBRO-DIRECTO-LOCAL: el repartidor registra el pago en el local; el restaurante ve cuánto cobrar.
+    expect(rep).toContain('<PagoEnLocal');
+    expect(rep).toContain('/transferencia-pendiente');
+    const local = leer('apps/repartidor/src/grandes/PagoEnLocal.tsx');
+    expect(local).toContain('/pago-local');
+    expect(local).toContain('tarjeta_propia');
+    expect(leer('apps/restaurante/src/Inicio.tsx')).toContain(
+      '/datos/restaurante/pedidos/${pedidoId}/pago-local',
+    );
     const guias = leer('apps/panel/src/sitio/docs/guias.ts');
     expect(guias.match(/id: 'pay-on-delivery'/g)).toHaveLength(2);
     expect(guias.match(/id: 'cash-orders-and-top-ups'/g)).toHaveLength(2);

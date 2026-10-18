@@ -22,7 +22,7 @@ export async function devolverParcial(
 ) {
   const f = await db
     .prepare(
-      `SELECT p.id, p.estado, p.total, p.stripe_pago, p.repartidor_id, r.dueno_id, c.capturado_en,
+      `SELECT p.id, p.estado, p.total, p.metodo_pago, p.stripe_pago, p.repartidor_id, r.dueno_id, c.capturado_en,
               (SELECT COALESCE(SUM(monto), 0) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS devuelto,
               (SELECT COUNT(*) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS n
          FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id LEFT JOIN cobros c ON c.pedido_id = p.id
@@ -31,6 +31,14 @@ export async function devolverParcial(
     .bind(p.pedidoId)
     .first<Record<string, unknown>>();
   if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  // Cobro directo: el cliente le pagó al repartidor, no a Tumbite. No hay cobro de Stripe que
+  // devolver; la devolución la coordina soporte con el repartidor o el restaurante.
+  if (String(f.metodo_pago ?? 'tarjeta') !== 'tarjeta')
+    throw new ErrorDatos(
+      'Este pedido se pagó en mano al repartidor: no hay cobro con tarjeta que devolver. Soporte coordina la devolución con el repartidor o el restaurante.',
+      undefined,
+      409,
+    );
   if (String(f.estado) !== 'entregado' || !f.stripe_pago || !f.capturado_en)
     throw new ErrorDatos(
       'Solo se devuelve dinero de un pedido entregado y cobrado.',
