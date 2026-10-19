@@ -1,6 +1,6 @@
 # Entrega del cierre técnico — 19 de octubre de 2026 (tarde)
 
-> **El MVP NO está terminado.** Corrige la entrega anterior (`docs/ENTREGA-RONDA-MVP-2026-10-19.md`), que decía que todo lo restante dependía de Richard aunque listaba trabajo técnico. Estado punto por punto: `docs/RECONCILIACION-FASE-2.md` (sección 10). Versión: VERSION_PENDIENTE.
+> **El MVP NO está terminado.** Corrige la entrega anterior (`docs/ENTREGA-RONDA-MVP-2026-10-19.md`), que decía que todo lo restante dependía de Richard aunque listaba trabajo técnico. Estado punto por punto: `docs/RECONCILIACION-FASE-2.md` (sección 10). Versión: publicado en 26649f68 el 19 oct (staging verde en la corrida 39310077342 con el recorrido completo en inglés y español; producción con `publicar` 39314512825 y el verificador «después» en verde; punto de restauración previo `restauracion-2026-10-19-cierre-tecnico` sobre 62a5d345).
 
 ## 1. El alcance, separado
 
@@ -18,7 +18,7 @@
 
 ### 1.2 Trabajo técnico que queda de nuestro lado
 
-- «Hoy» y la billetera del repartidor no cuentan los pedidos cobrados en mano (salen de los movimientos de Stripe); Ganancias sí. Hay que pasarlo antes de encender un país.
+- «Hoy» del repartidor ya suma los pedidos cobrados en mano (hecho en esta ronda). La billetera sigue siendo solo de Stripe a propósito (es dinero que pasa por Tumbite).
 - Topes fijos que no sirven en pesos: bono de la oferta abierta (100), precio máximo de una opción (10000), propina máxima (50000), cupones sin zona y tope de reembolso de quejas. Necesitan cifras por país: **las cifras son decisión de Richard**; el código para leerlas por país es nuestro y va junto con las tarifas.
 - Aviso de saldo bajo, motivos al cobrar, «No tengo con qué pagar», ganancias con «cobrado en mano» (no bloquean; cruce del 19 oct).
 
@@ -40,7 +40,18 @@ Teléfono real (apps compiladas con Expo), piloto en la calle, dinero real.
 
 ## 2. Recorridos comprobados
 
-RECORRIDOS_PENDIENTE
+| Recorrido                                                                                                                                                 | Local (esta computadora)                | Staging (Stripe en modo prueba) | Teléfono real | Dinero real |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------- | ------------- | ----------- |
+| Pedido con tarjeta completo, cliente, restaurante, repartidor y soporte, en celular, español e inglés                                                     | Verde                                   | Verde (corrida 39310077342)     | No            | No          |
+| Cobro en mano: recarga por código, oferta con método y adelanto, reserva de la comisión, pago en el local y ticket, entrega y «Cobré» con la conciliación | Verde                                   | Verde                           | No            | No          |
+| Transferencia «aún no me llega» (caso en la bandeja) y después confirmada                                                                                 | Verde                                   | Verde                           | No            | No          |
+| Cliente ausente: no se deja en lugar seguro, «El cliente no pagó», deuda y comida como pérdida                                                            | Verde                                   | Verde                           | No            | No          |
+| Soporte: bandeja con el caso, tomar y nota, pantalla en es/en                                                                                             | Verde                                   | Verde                           | No            | No          |
+| Restauración de un respaldo                                                                                                                               | Aislada, verde (C-RESTAURACION-AISLADA) | Espera autorización             | —             | —           |
+
+En staging el cobro en mano se enciende solo durante la corrida y solo para EE. UU. con las cuentas de la corrida; vuelve a quedar apagado. **Monedas:** las corridas son en dólares (no hay zonas de Colombia ni Venezuela); los pesos y bolívares están cubiertos por las pruebas automáticas (C-TARIFAS-PAIS, C-MONEDA-RECORRIDO).
+
+**Fallos encontrados por el sitio de pruebas en esta ronda:** la lista de restaurantes es virtual con más de cien (la prueba ahora busca por nombre, como una persona) y un corte de red dejaba la app en «No pudimos confirmar tu sesión» (arreglado en el producto: C-SESION-REINTENTA). Un rechazo interno de GitHub y un corte de conexión del alojamiento se repitieron sin cambios y pasaron.
 
 ## 3. Riesgos técnicos restantes
 
@@ -58,4 +69,4 @@ RECORRIDOS_PENDIENTE
 
 ## 5. Próxima acción
 
-De Richard: la decisión 20 y la solicitud de autorizaciones (empezando por la compra real con tarjeta). De nuestro lado: «Hoy» y la billetera del repartidor con el cobro en mano.
+De Richard: la decisión 20 y la solicitud de autorizaciones (empezando por la compra real con tarjeta). De nuestro lado: leer por país los topes fijos (bono, opción, propina, cupones, quejas) para que estén listos cuando Richard ponga las cifras.

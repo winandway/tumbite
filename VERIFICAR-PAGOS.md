@@ -2,6 +2,8 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+> **19 oct (tarde), publicado en 26649f68:** cobro en mano (efectivo y transferencia al repartidor) probado de punta a punta en staging con las cuentas de la corrida y en simulación; bandeja de soporte del cobro en mano; recarga que no cuadra abre incidencia. **Nada de esto se probó con dinero real** y el cobro en mano sigue **apagado** en todos los países. La tarjeta en EE. UU. sigue sin compra real (`docs/SOLICITUD-AUTORIZACIONES-2026-10-19.md`, fila 8).
+
 > 🟡 **Tarjeta con Stripe real (modo live): PROBADA una vez con Checkout** (pedido de $7.18, 10 oct 2026, pago `pi_3UPZrOLDByFATg8R2eLasrcQ`).
 > 🔴 **El pago DENTRO de la app (sin salto) NO está probado con dinero real todavía.** No se anuncia hasta hacer la compra de $1 por la app web.
 > Regla global: no se dice «listo» hasta una compra de punta a punta por cada método.

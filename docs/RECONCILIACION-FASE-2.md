@@ -326,7 +326,7 @@ Cada fila tiene su prueba automática comprobada en rojo y su candado. Estado de
 
 ## 10. Ronda de cierre técnico del 19 oct (tarde)
 
-Estado de publicación: VERSION_PENDIENTE. Detalle y alcance separado en cinco grupos: `docs/ENTREGA-CIERRE-TECNICO-2026-10-19.md`.
+Estado de publicación: publicado en 26649f68 el 19 oct (staging verde en la corrida 39310077342 con el recorrido completo en inglés y español; producción con `publicar` 39314512825 y el verificador «después» en verde; punto de restauración previo `restauracion-2026-10-19-cierre-tecnico` sobre 62a5d345). Detalle y alcance separado en cinco grupos: `docs/ENTREGA-CIERRE-TECNICO-2026-10-19.md`.
 
 | Arreglo                                                                                                    | Candado                                                    | Clasificación                                                                                                     |
 | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |

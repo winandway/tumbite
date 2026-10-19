@@ -96,11 +96,11 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Ronda de cierre técnico — 19 oct (tarde)
 
-- [ ] T.1 Corregir el alcance de la entrega: separar técnico ejecutable, configuración autorizada, autorizaciones pendientes, decisiones comerciales y pruebas de dispositivo, calle y dinero; la bandeja de soporte es requisito antes de encender el cobro en mano.
-- [ ] T.2 Bandeja de soporte del cobro en mano sobre el libro y los estados (transferencias por verificar, diferencias, excedentes, comida perdida, pago al restaurante sin confirmar, recargas e incidencias): importes, moneda, participantes, evidencias, historial, responsable, estado; resolución auditada e idempotente; sin plazos ni compensaciones no aprobadas; pantalla en el superadmin; Docs.
-- [ ] T.3 Moneda del pedido en todo el recorrido (cliente, restaurante, repartidor, superadmin, recibos, avisos, Docs), con tarifas del país; EE. UU. sin cambios.
-- [ ] T.4 Riesgos: recarga con monto distinto → incidencia; emitir y anular códigos; cierre de conciliación en pasos; recuperación tras interrupción; alta de miembros; purga de sesiones.
-- [ ] T.5 Recorrido del cobro en mano en staging, es/en, con datos del equipo y proveedores simulados; registro de local frente a staging.
-- [ ] T.6 Cruce con los grandes de los vacíos abiertos.
-- [ ] T.7 Dependencias externas: revisar autorizaciones; una sola solicitud; restauración de respaldo aislada y verificada.
-- [ ] T.8 Verificar, publicar por el flujo permanente y actualizar entrega, registro y pagos con la misma versión.
+- [x] T.1 Corregir el alcance de la entrega: separar técnico ejecutable, configuración autorizada, autorizaciones pendientes, decisiones comerciales y pruebas de dispositivo, calle y dinero; la bandeja de soporte es requisito antes de encender el cobro en mano.
+- [x] T.2 Bandeja de soporte del cobro en mano sobre el libro y los estados (transferencias por verificar, diferencias, excedentes, comida perdida, pago al restaurante sin confirmar, recargas e incidencias): importes, moneda, participantes, evidencias, historial, responsable, estado; resolución auditada e idempotente; sin plazos ni compensaciones no aprobadas; pantalla en el superadmin; Docs.
+- [x] T.3 Moneda del pedido en todo el recorrido (cliente, restaurante, repartidor, superadmin, recibos, avisos, Docs), con tarifas del país; EE. UU. sin cambios.
+- [x] T.4 Riesgos: recarga con monto distinto → incidencia; emitir y anular códigos; cierre de conciliación en pasos; recuperación tras interrupción; alta de miembros; purga de sesiones.
+- [x] T.5 Recorrido del cobro en mano en staging, es/en, con datos del equipo y proveedores simulados; registro de local frente a staging.
+- [x] T.6 Cruce con los grandes de los vacíos abiertos.
+- [x] T.7 Dependencias externas: revisar autorizaciones; una sola solicitud; restauración de respaldo aislada y verificada.
+- [x] T.8 Verificar, publicar por el flujo permanente y actualizar entrega, registro y pagos con la misma versión.
