@@ -159,6 +159,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   -- Quién confirmó el cobro: 'repartidor' (confirmación manual, nunca «el banco»), 'admin' o 'api'.
   cobro_confirmado_por TEXT,
   conciliacion_estado TEXT NOT NULL DEFAULT 'no_aplica' CHECK (conciliacion_estado IN ('no_aplica', 'pendiente', 'conciliado', 'con_diferencia')),
+  -- C-TARIFAS-PAIS: moneda del pedido (la de su país) y las tarifas que se le aplicaron.
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  tarifas_json TEXT,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
   pago_repartidor INTEGER NOT NULL,
@@ -607,7 +610,9 @@ CREATE TABLE IF NOT EXISTS disputas (
   estado TEXT NOT NULL DEFAULT '',
   vence_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Recarga del saldo prepago disputada (si la disputa no es de un pedido).
+  recarga_id TEXT
 );
 
 -- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).
