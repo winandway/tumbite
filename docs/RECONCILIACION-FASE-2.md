@@ -339,3 +339,18 @@ Estado de publicación: publicado en 26649f68 el 19 oct (staging verde en la cor
 | Restauración aislada de un respaldo real                                                                   | C-RESTAURACION-AISLADA                                     | Fila «Restauración probada (28)» pasa de Parcial a **aislada comprobada**; la real en staging espera autorización |
 
 **Vacíos del cruce con los grandes** (`docs/investigaciones-rea/2026-10-19-cruce-vacios-abiertos.md`): 5 y 8 cerrados hoy (el 8 se reprodujo solo cuando el repartidor acepta mientras el cliente decide un plato agotado). Abiertos y clasificados: 6, 11 y 14 (decisiones 22, 20 y 23 de Richard); 9, 10, 12, 13 y 15 no bloquean. **Topes fijos que no sirven en pesos** (bono 100, opción 10000, propina 50000, cupones sin zona, tope de quejas): el código por país es nuestro y va con las tarifas; las cifras son de Richard.
+
+## 11. Topes por país y evidencia internacional (19 oct, noche)
+
+Estado de publicación: VERSION_PENDIENTE_11.
+
+| Qué                                                                                                                                              | Candado                   | Estado y entorno                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------ |
+| Topes por país (bono, opción, propina, propina posterior, cupones, quejas); EE. UU. idéntico; país incompleto no se enciende ni activa ciudades  | C-TOPES-PAIS              | Código y pruebas; superadmin con editor por país                                                 |
+| Bandeja con páginas y totales por tipo; textos del sistema en el idioma de la pantalla                                                           | C-BANDEJA-PAGINAS         | Código y pruebas                                                                                 |
+| Una persona en un solo equipo, garantizado por la base                                                                                           | C-MIEMBRO-UNICO           | Índice único; carrera probada contra D1 local (no reproducible con el código viejo en ese motor) |
+| Cobro en mano en COP y VES, en pantalla y por API                                                                                                | C-RECORRIDO-INTERNACIONAL | **Solo local**, con cifras ficticias; staging no tiene zonas de otro país (falta permiso)        |
+| País del restaurante en el carrito; tarifas de país con montos de su moneda; moneda en la ruta del pago en el local; sin tarjeta fuera del dólar | C-PAIS-DEL-RESTAURANTE    | Defectos encontrados por el recorrido internacional; arreglados                                  |
+| Alcance de la restauración aislada                                                                                                               | C-RESTAURACION-AISLADA    | Base verificada; almacén, entorno alojado y recuperación operativa sin verificar                 |
+
+**Sigue pendiente de nuestro lado:** ninguno de los puntos técnicos de esta ronda. Para encender un país faltan: cifras de tarifas y topes (Richard), decisiones 20 y 22, el recorrido en staging con una ciudad de otro país (permiso), teléfono real, piloto y lo legal.

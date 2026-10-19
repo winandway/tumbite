@@ -2,6 +2,8 @@
 
 **Fecha:** 19 de octubre de 2026. **Tipo:** investigación (no se tocó código, no hubo commits ni publicación). **Método:** `docs/METODOLOGIA-INGENIERIA-REA.md`. **Código leído:** `main` en `eeeb90c9` (`apps/servidor/src/internacional/*.ts`, `rutas/operacion.ts`, `rutas/internacional.ts`, `schema.sql`, `apps/repartidor/src`). **Continúa:** `2026-10-19-cruce-procesos-mvp.md` (en adelante **CP**); lo que CP ya comprobó no se repite, se cita.
 
+> **Aclaración (19 oct, noche):** esta ficha no usó REA directamente. Su única etiqueta [REA] viene de la ficha anterior y es una lectura de una página pública de ayuda hecha con la herramienta REA, no una observación de la app de la competencia. Ninguna afirmación de esta ficha describe el funcionamiento interno de esas apps.
+
 **Etiquetas:** [REA] observado con herramienta REA · [DOC] documentación oficial publicada · [DOC-índice] texto oficial que solo se pudo leer a través del índice del buscador (la página se dibuja con JavaScript y no se dejó leer directamente; ver «Límites») · [OBS] observación pública (prensa, foros, publicaciones) · [INF] inferencia nuestra · [NV] no verificado · [TUMBITE] lo que hace hoy Tumbite según su código (archivo:línea). «No encontramos documentación» significa solo eso: no que ninguna plataforma lo tenga.
 
 **Clasificación para el MVP:** **(a)** requisito antes de encender el cobro en mano en un país · **(b)** no bloquea · **(c)** decisión comercial de Richard.
@@ -178,7 +180,7 @@
 
 - Uber: en las ciudades con efectivo, el estado de ganancias tiene la línea **«Cash Collected»** (la diferencia entre lo ganado por viajes y el efectivo cobrado, dentro de «Payouts»), además de «Total Earnings», «Expenses and refunds» y «Events from previous weeks»; estados los lunes [DOC, Uber Israel «How to Track Your Earnings»]. Al desconectarse, resumen de la sesión con **tiempo en línea**, lo ganado y viajes ofrecidos y completados; resumen semanal con horas activas [DOC, Uber «Earnings rate card»].
 - DoorDash: el tiempo activo va de aceptar a completar y es la base del mínimo de Nueva York [DOC, DoorDash «Guide to the New York City Earnings Standard»]; el tiempo conectado como métrica aparte solo lo describe un tercero [OBS].
-- SoyRappi: tiempo conectado y promedio por hora en «Ganancia total» [REA] (CP §7).
+- SoyRappi: tiempo conectado y promedio por hora en «Ganancia total» [REA sobre la página PÚBLICA de ayuda, no sobre la app; tomado de la ficha anterior] (CP §7).
 
 **Tumbite hoy.** `apps/repartidor/src/grandes/Ganancias.tsx` no muestra horas ni pedidos cobrados en mano (búsqueda sin resultado). En un pedido directo la ganancia nunca llega como abono (`operacion.ts`, cobro directo), así que la pantalla puede parecer incompleta [INF].
 
