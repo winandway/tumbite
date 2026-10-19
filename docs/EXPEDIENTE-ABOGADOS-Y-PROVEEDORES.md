@@ -13,6 +13,43 @@
 
 ---
 
+## 0. Hechos, supuestos y preguntas (agregado el 19 oct 2026)
+
+> **Este expediente no declara resuelta ninguna obligación legal, fiscal, laboral ni de datos.** Todo lo que diga «queda fuera», «no aplica» o «basta» es una pregunta para el abogado hasta que él lo responda por escrito. Ninguna fila de esta sección es una decisión de Richard salvo las marcadas «decisión de Richard».
+
+### 0.1 Hechos (comprobados en el sistema o en una fuente oficial)
+
+| Hecho                                                                                                                                                | Evidencia                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| La app registra pedidos con pago en efectivo o transferencia directa al repartidor; ese dinero no entra a ninguna cuenta de Windoce                  | Código del servidor (cobro directo), pruebas automáticas; candado C-COBRO-DIRECTO |
+| El repartidor registra en la app lo que pagó al restaurante y el importe del ticket, con foto opcional; sin ese registro el pedido no sale del local | Candado C-COBRO-DIRECTO-LOCAL y C-FOTO-TICKET                                     |
+| El cobro al cliente lo confirma el propio repartidor a mano; el sistema no lee ningún banco                                                          | Evento «confirmación manual del repartidor»; no hay integración bancaria          |
+| La comisión de Tumbite se descuenta de un saldo prepago del repartidor; el saldo no puede quedar negativo y no paga la comida                        | Libro por bolsillos, «descontar si alcanza»; pruebas de concurrencia              |
+| El saldo se recarga con un código vendido en un punto de venta o con tarjeta por Stripe                                                              | Módulo de recargas; ambos métodos apagados por país                               |
+| Todos los métodos fuera de la tarjeta en EE. UU. están **apagados**; en producción solo hay zonas de EE. UU.                                         | Configuración de país; consulta de solo lectura del 19 oct                        |
+| Un país distinto de EE. UU. no recibe pedidos hasta tener tarifas escritas en su moneda; la tarjeta solo cobra en dólares                            | Candado C-TARIFAS-PAIS                                                            |
+| Los servidores están fuera de Colombia y Venezuela (YaDominios Cloud)                                                                                | Contrato de publicación del proyecto                                              |
+| Windoce LLC es una sociedad de Florida                                                                                                               | Dato de Richard                                                                   |
+| Las normas, circulares, decretos y licencias citados en la sección 2 con [DOC]                                                                       | Fuentes al final; su **interpretación** no es un hecho                            |
+
+### 0.2 Supuestos (no decididos o no comprobados; el abogado debe trabajar sobre ellos como hipótesis)
+
+| Supuesto                                                                                      | Estado                                                                                         |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| En Venezuela el precio se fija en dólares y se muestra en bolívares a la tasa del BCV del día | **No construido.** El sistema no tiene tasa de cambio; es una opción de diseño                 |
+| Colombia tendrá pasarela local (Wompi, PayU, Mercado Pago, ePayco o dLocal)                   | No hay contrato ni elección: decisión de Richard                                               |
+| Los repartidores son independientes                                                           | Es el modelo de la app; su calificación legal es la pregunta 9 de Colombia y 14 de Venezuela   |
+| Estructura local: S.A.S. propia, sucursal o solo franquiciados                                | Decisión de Richard pendiente                                                                  |
+| El saldo sobrante de un repartidor que se retira no se devuelve en dinero                     | Recomendación interna, **no decidida**; es la pregunta 2 de Colombia y Venezuela               |
+| Tope de efectivo diario, plazos de deuda, tolerancia del ticket                               | Recomendaciones del documento de decisiones; **Richard no las aprobó**                         |
+| La franquicia de Bogotá                                                                       | Borrador comercial con cifras propuestas; no forma parte de este expediente ni se envía con él |
+
+### 0.3 Preguntas
+
+Las de la sección 2, una por abogado. Ninguna se considera respondida por el estudio interno; las marcas [INF] de ese estudio son hipótesis.
+
+---
+
 ## 1. Resumen del modelo (una página, para enviar al abogado)
 
 > **Tumbite** es una aplicación de pedidos y reparto de comida (cliente, restaurante y repartidor) de **Windoce LLC**, sociedad de responsabilidad limitada de EE. UU. con sede en Florida. Opera en Miami con cobro por tarjeta (Stripe). Evalúa entrar a **Colombia** y **Venezuela** con un modelo distinto, llamado **«cobro directo»**:
