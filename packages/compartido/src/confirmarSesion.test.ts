@@ -50,3 +50,45 @@ describe('confirmar la sesión guardada', () => {
     expect(r).toEqual({ estado: 'sin_confirmar', motivo: 'red' });
   });
 });
+
+describe('reintentos al confirmar la sesión (C-SESION-REINTENTA)', () => {
+  it('un corte puntual se reintenta solo; un 401 no se reintenta; tres cortes siguen sin confirmar', async () => {
+    const { confirmarSesionConReintentos } = await import('./confirmarSesion');
+    const { ErrorApi } = await import('./api');
+    const sinEspera = async () => undefined;
+    const usuario = { id: 'u1', nombre: 'Ana', correo: 'a@ejemplo.com', rol: 'cliente' } as never;
+    let n = 0;
+    const unCorte = async () => {
+      n++;
+      if (n === 1) throw new TypeError('fetch failed');
+      return { usuario };
+    };
+    expect((await confirmarSesionConReintentos(unCorte, [1, 1], 1000, sinEspera)).estado).toBe(
+      'valida',
+    );
+    expect(n).toBe(2);
+    let m = 0;
+    const vencida = async () => {
+      m++;
+      throw new ErrorApi('No', 401);
+    };
+    expect((await confirmarSesionConReintentos(vencida, [1, 1], 1000, sinEspera)).estado).toBe(
+      'invalida',
+    );
+    expect(m).toBe(1);
+    const caido = async () => {
+      throw new TypeError('fetch failed');
+    };
+    expect(await confirmarSesionConReintentos(caido, [1, 1], 1000, sinEspera)).toEqual({
+      estado: 'sin_confirmar',
+      motivo: 'red',
+    });
+  });
+});
+
+it('las apps confirman la sesión con reintentos (C-SESION-REINTENTA)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const sesion = readFileSync(join(__dirname, '..', '..', 'movil', 'src', 'sesion.tsx'), 'utf8');
+  expect(sesion).toContain('await confirmarSesionConReintentos(');
+});

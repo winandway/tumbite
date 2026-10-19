@@ -15,7 +15,7 @@ import {
   type Rol,
   type Usuario,
   borrarBorradoresDe,
-  confirmarSesion,
+  confirmarSesionConReintentos,
   crearApi,
   elegirServidor,
   esIdioma,
@@ -101,7 +101,7 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
   // había límite: si el servidor no contestaba, la app quedaba para siempre en la pantalla de carga.
   const confirmar = useCallback(
     async (guardado: string) => {
-      const r = await confirmarSesion(() =>
+      const r = await confirmarSesionConReintentos(() =>
         crearApi({ base: URL_SERVIDOR, token: () => guardado }).yo(),
       );
       if (r.estado === 'valida') {

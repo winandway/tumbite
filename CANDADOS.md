@@ -917,3 +917,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `apps/servidor/src/restauracionAislada.test.ts`: copia la base del recorrido local (una corrida completa, con pedidos, libro y cobro en mano), la respalda con el mismo `respaldarBase` de producción, la restaura con `restaurarDesdeRespaldo` en una base nueva y comprueba: mismas filas tabla por tabla (salvo `sesiones`, que no se respaldan a propósito), `PRAGMA foreign_key_check` vacío, mismos saldos del libro por cuenta, bolsillo y moneda, salud en verde, la lista de restaurantes responde y una cuenta real del recorrido entra y ve sus pedidos.
 - Corre solo si existe la base del recorrido (en CI se salta). Para repetirla: `node scripts/recorrido/preparar.mjs`, una corrida del recorrido y `npx vitest run apps/servidor/src/restauracionAislada.test.ts`.
 - Comprobado el 19 oct 2026 con la base del recorrido de ese día. **No reemplaza** una restauración en staging (con su R2 y su D1 reales), que sobrescribe los datos de pruebas y espera la autorización de Richard.
+
+## C-SESION-REINTENTA: un corte puntual no deja la app en «No pudimos confirmar tu sesión» (19 oct 2026)
+
+- **Qué pasó:** en staging, un corte de conexión del alojamiento hizo fallar una vez la consulta de la sesión al abrir el buscador; la app del cliente mostró «No pudimos confirmar tu sesión» y se quedó ahí hasta que alguien tocara «Reintentar». El recorrido se agotó por tiempo esperando.
+- **Cómo quedó:** `confirmarSesionConReintentos` (`packages/compartido/src/confirmarSesion.ts`): reintenta sola dos veces (0,8 s y 2,5 s) si no se pudo confirmar por red, servidor o tiempo; un 401 o 403 no se reintenta. `packages/movil/src/sesion.tsx` la usa. La pantalla de reintento sigue existiendo si los tres intentos fallan.
+- **Pruebas:** `confirmarSesion.test.ts` (corte puntual, 401 sin reintento, tres cortes) y la comprobación de que las apps la usan.

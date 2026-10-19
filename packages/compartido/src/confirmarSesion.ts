@@ -45,3 +45,24 @@ export function confirmarSesion(
     );
   });
 }
+
+/**
+ * C-SESION-REINTENTA (19 oct 2026): un corte puntual de la red o del servidor no deja a la persona
+ * en «No pudimos confirmar tu sesión». Se reintenta sola (con una espera creciente) antes de
+ * mostrarlo. Un 401 o 403 no se reintenta: la sesión ya no sirve. Pasó en staging: un corte de
+ * conexión dejó la app del cliente detenida en esa pantalla.
+ */
+export async function confirmarSesionConReintentos(
+  yo: () => Promise<{ usuario: Usuario }>,
+  esperasMs: readonly number[] = [800, 2500],
+  limiteMs = LIMITE_SESION_MS,
+  dormir: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+): Promise<Confirmacion> {
+  let r = await confirmarSesion(yo, limiteMs);
+  for (const espera of esperasMs) {
+    if (r.estado !== 'sin_confirmar') return r;
+    await dormir(espera);
+    r = await confirmarSesion(yo, limiteMs);
+  }
+  return r;
+}
