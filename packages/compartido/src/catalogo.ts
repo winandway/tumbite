@@ -50,7 +50,8 @@ export const esquemaGrupos = z.object({
                 .min(1, { error: 'Escribe el nombre de la opción.' })
                 .max(60),
               nombreEn: z.string().trim().max(60).default(''),
-              precioCentavos: z.number().int().min(0).max(100_00).default(0),
+              // El tope real depende del país del restaurante (C-TOPES-PAIS; EE. UU.: 100 dólares).
+              precioCentavos: z.number().int().min(0).max(100_000_00).default(0),
               disponible: z.boolean().default(true),
             }),
           )

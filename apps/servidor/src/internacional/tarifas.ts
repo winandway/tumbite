@@ -1,7 +1,8 @@
 import type { ConfigDinero } from '@tumbite/compartido';
 import { esquemaConfigDinero, leerConfigDinero } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
-import { leerConfigPais, paisDeZona } from './paises';
+import { TOPES_EEUU, type TopesPais, leerConfigPais, paisDeZona } from './paises';
+import { leerConfigQuejas } from '../devoluciones';
 
 /**
  * C-TARIFAS-PAIS (19 oct 2026): las tarifas con que se calcula un pedido salen del país de la zona
@@ -17,7 +18,7 @@ export async function tarifasDeZona(
   if (pais === 'US' && moneda === 'USD')
     return { pais, moneda, config: await leerConfigDinero(db) };
   const cfg = await leerConfigPais(db, pais);
-  if (!cfg.tarifas)
+  if (!cfg.tarifas || !cfg.topes)
     throw new ErrorDatos('Tumbite todavía no recibe pedidos en este país.', undefined, 409);
   if (cfg.moneda !== moneda)
     throw new ErrorDatos(
@@ -33,4 +34,19 @@ export function tarifasDelPedido(f: { tarifas_json?: unknown }): ConfigDinero | 
   if (f.tarifas_json == null) return null;
   const r = esquemaConfigDinero.safeParse(JSON.parse(String(f.tarifas_json)));
   return r.success ? r.data : null;
+}
+
+/**
+ * C-TOPES-PAIS: los topes que valen para un país. Estados Unidos: las cifras de siempre (y el tope
+ * de quejas que fija soporte en su configuración). Otro país: los suyos; sin ellos, null.
+ */
+export async function topesDePais(db: D1Database, pais: string): Promise<TopesPais | null> {
+  if (pais === 'US')
+    return { ...TOPES_EEUU, quejaReembolsoMax: (await leerConfigQuejas(db)).topeCentavos };
+  return (await leerConfigPais(db, pais)).topes;
+}
+
+export async function topesDeZona(db: D1Database, zonaId: string) {
+  const { pais, moneda } = await paisDeZona(db, zonaId);
+  return { pais, moneda, topes: await topesDePais(db, pais) };
 }

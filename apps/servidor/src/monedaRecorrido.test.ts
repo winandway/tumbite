@@ -1,3 +1,4 @@
+import { TOPES_PRUEBA } from './pruebas/paisPrueba';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -66,7 +67,9 @@ async function escenario() {
     await m.llamar(
       'PUT',
       '/datos/admin/paises/CO',
-      conTarifas ? { efectivoActivo: true, tarifas: TARIFAS_COP } : { efectivoActivo: true },
+      conTarifas
+        ? { efectivoActivo: true, tarifas: TARIFAS_COP, topes: TOPES_PRUEBA }
+        : { efectivoActivo: true },
       admin.token,
     );
   }

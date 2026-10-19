@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CONFIG_DINERO_INICIAL, calcularPedido } from '@tumbite/compartido';
+import { TOPES_PRUEBA } from './pruebas/paisPrueba';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 
 /**
@@ -119,7 +120,7 @@ describe('C-TARIFAS-PAIS: tarifas y moneda por país en el servidor', () => {
     const g = await e.m.llamar(
       'PUT',
       '/datos/admin/paises/CO',
-      { tarifas: TARIFAS_COP },
+      { tarifas: TARIFAS_COP, topes: TOPES_PRUEBA, efectivoActivo: true },
       e.admin.token,
     );
     expect(g.estado).toBe(200);
@@ -134,7 +135,7 @@ describe('C-TARIFAS-PAIS: tarifas y moneda por país en el servidor', () => {
     await e.m.llamar(
       'PUT',
       '/datos/admin/paises/CO',
-      { tarifas: { ...TARIFAS_COP, envioBase: 9000 } },
+      { tarifas: { ...TARIFAS_COP, envioBase: 9000 }, topes: TOPES_PRUEBA },
       e.admin.token,
     );
     expect(JSON.parse(String((await e.fila(p.datos.pedidoId))?.tarifas_json)).envioBase).toBe(5000);
@@ -150,7 +151,12 @@ describe('C-TARIFAS-PAIS: tarifas y moneda por país en el servidor', () => {
   it('la tarjeta no se ofrece en una moneda distinta del dólar: no se crea pedido ni cobro', async () => {
     const e = await escenario();
     await e.aColombia();
-    await e.m.llamar('PUT', '/datos/admin/paises/CO', { tarifas: TARIFAS_COP }, e.admin.token);
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/paises/CO',
+      { tarifas: TARIFAS_COP, topes: TOPES_PRUEBA, efectivoActivo: true },
+      e.admin.token,
+    );
     const p = await e.pedir({ metodoPago: 'tarjeta' });
     expect(p.estado).toBe(409);
     expect(e.llamadas.some((l) => l.includes('/payment_intents'))).toBe(false);

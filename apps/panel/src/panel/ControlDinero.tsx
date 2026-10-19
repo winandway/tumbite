@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
 
 const T = {
   es: {
@@ -288,6 +289,8 @@ type ConfigPais = {
   comisionPb: number | null;
   cargoFijo: number;
   topeEfectivoDiario: number | null;
+  tarifas: TarifasPais | null;
+  topes: TopesPais | null;
 };
 type Punto = {
   id: string;
@@ -716,6 +719,18 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
           >
             {t.guardarPais}
           </button>
+          <TarifasTopesPais
+            key={paisElegido}
+            pais={paisElegido}
+            moneda={pais.moneda}
+            tarifas={pais.tarifas}
+            topes={pais.topes}
+            idioma={idioma}
+            guardar={async (cambios) => {
+              await pedir('PUT', `/datos/admin/paises/${paisElegido}`, cambios);
+              setRecargaPuntos((n) => n + 1);
+            }}
+          />
         </div>
       ) : null}
       <h3>{t.puntos}</h3>

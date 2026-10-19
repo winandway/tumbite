@@ -1,3 +1,5 @@
+import { paisDeZona } from '../internacional/paises';
+import { topesDePais } from '../internacional/tarifas';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { porcentajeDe } from '@tumbite/compartido';
@@ -56,6 +58,9 @@ export async function validarCupon(
   if (c.restaurante_id && c.restaurante_id !== p.restauranteId)
     throw new ErrorDatos('Ese cupón es de otro restaurante.', 'cupon', 409);
   if (c.zona_id && c.zona_id !== p.zonaId)
+    throw new ErrorDatos('Ese cupón no vale en tu ciudad.', 'cupon', 409);
+  // C-TOPES-PAIS: un cupón sin ciudad está escrito en dólares y vale solo en Estados Unidos.
+  if (!c.zona_id && (await paisDeZona(db, p.zonaId)).pais !== 'US')
     throw new ErrorDatos('Ese cupón no vale en tu ciudad.', 'cupon', 409);
   if (p.subtotal < c.minimo_subtotal)
     throw new ErrorDatos('Tu pedido no llega al mínimo de ese cupón.', 'cupon', 409);
@@ -201,6 +206,15 @@ cupones.post('/admin/cupones', async (c) => {
   );
   if (d.tipo === 'porcentaje' && d.valor > 10000)
     throw new ErrorDatos('El porcentaje no puede pasar de 100.', 'valor', 400);
+  // C-TOPES-PAIS: el monto de un cupón no pasa del tope del país de su ciudad (sin ciudad = EE. UU.).
+  if (d.tipo === 'monto') {
+    const pais = d.zonaId ? (await paisDeZona(base(c), d.zonaId)).pais : 'US';
+    const topes = await topesDePais(base(c), pais);
+    if (!topes)
+      throw new ErrorDatos('Ese país no tiene sus topes escritos todavía.', 'zonaId', 409);
+    if (d.valor > topes.cuponMontoMax)
+      throw new ErrorDatos('El monto del cupón pasa del máximo permitido.', 'valor', 400);
+  }
   const codigo = normalizarCupon(d.codigo);
   const db = base(c);
   const existe = await db.prepare('SELECT 1 FROM cupones WHERE codigo = ?').bind(codigo).first();

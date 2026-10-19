@@ -25,7 +25,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
-import { tarifasDeZona, tarifasDelPedido } from '../internacional/tarifas';
+import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/tarifas';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -52,7 +52,8 @@ const esquemaNuevoPedido = z.object({
     .max(50),
   /** Lo que la app le mostró al cliente: si no coincide con el cálculo del servidor, no se cobra (F6). */
   totalEsperado: z.number().int().min(0).optional(),
-  propinaCentavos: z.number().int().min(0).max(50_000),
+  // El tope real es el del país (C-TOPES-PAIS; EE. UU.: 500 dólares).
+  propinaCentavos: z.number().int().min(0).max(100_000_000),
   direccion: z.string().trim().max(200).default(''),
   notas: z.string().trim().max(300).default(''),
   lat: z.number().min(-90).max(90).nullable().default(null),
@@ -427,6 +428,9 @@ pedidos.post('/pedidos', async (c) => {
   const plan = rest.plan as Plan;
   // C-TARIFAS-PAIS: tarifas y moneda del país de la zona (EE. UU. = la configuración de siempre).
   const { moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  const { topes } = await topesDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  if (d.propinaCentavos > (topes?.propinaMax ?? 0))
+    throw new ErrorDatos('La propina pasa del máximo permitido.', 'propinaCentavos', 400);
   if (d.metodoPago === 'tarjeta' && moneda !== 'USD')
     throw new ErrorDatos(
       'El pago con tarjeta todavía no está disponible en este país.',
@@ -1194,10 +1198,20 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
   const u = exigir(c, 'cliente');
   const { centavos } = await leerCuerpo(
     c,
-    z.object({ centavos: z.number().int().min(100).max(10_000) }),
+    z.object({ centavos: z.number().int().min(1).max(100_000_000) }),
   );
   const db = base(c);
   const id = c.req.param('id');
+  // C-TOPES-PAIS: mínimo y máximo de la propina posterior, los del país del pedido.
+  const zonaPed = await db
+    .prepare('SELECT zona_id FROM pedidos WHERE id = ? AND cliente_id = ?')
+    .bind(id, u.id)
+    .first<{ zona_id: string }>();
+  if (zonaPed) {
+    const { topes } = await topesDeZona(db, zonaPed.zona_id);
+    if (!topes || centavos < topes.propinaExtraMin || centavos > topes.propinaExtraMax)
+      throw new ErrorDatos('Esa propina está fuera de lo permitido.', 'centavos', 400);
+  }
   const f = await db
     .prepare(
       `SELECT p.*, (SELECT centavos FROM propinas_extra px WHERE px.pedido_id = p.id) AS propina_extra, u.stripe_cliente

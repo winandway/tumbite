@@ -1,3 +1,4 @@
+import { topesDeZona } from '../internacional/tarifas';
 import { devolverParcial, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -375,10 +376,12 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
         .filter((l) => elegidos.has(l.platoId))
         .reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
       const cfg = await leerConfigQuejas(db);
+      // C-TOPES-PAIS: el tope del país del pedido (EE. UU.: el que fija soporte, como siempre).
+      const { topes } = await topesDeZona(db, p.zona_id);
       if (
         propuesta > 0 &&
         cfg.reembolsoAuto &&
-        propuesta <= cfg.topeCentavos &&
+        propuesta <= (topes?.quejaReembolsoMax ?? 0) &&
         p.estado === 'entregado'
       ) {
         try {

@@ -1,3 +1,4 @@
+import { topesDeZona } from '../internacional/tarifas';
 import {
   conciliarPedidoDirecto,
   esDirecto,
@@ -21,7 +22,6 @@ import { cobertura } from '../territorio';
 import { z } from 'zod';
 import {
   type Muestra,
-  BONO_OFERTA_ABIERTA,
   OPCIONES_COCINA_OCUPADA,
   PEDIDOS_PARA_PROMEDIO,
   RADIO_LLEGADA_M,
@@ -1110,7 +1110,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // que paga Tumbite. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
     let bono = 0;
     if (vistos.size >= RECHAZOS_PARA_ABRIR) {
-      bono = BONO_OFERTA_ABIERTA;
+      // C-TOPES-PAIS: el bono del país de la zona (EE. UU.: el de siempre).
+      bono = (await topesDeZona(db, String(p.zona_id))).topes?.bonoOfertaAbierta ?? 0;
       const r = await db
         .prepare(
           "INSERT OR IGNORE INTO bonos_pedido (pedido_id, centavos, motivo) VALUES (?, ?, 'oferta_abierta')",
@@ -1118,7 +1119,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
         .bind(p.id, bono)
         .run();
       if (r.meta.changes)
-        await anotarEvento(db, p.id, 'oferta_abierta', `${vistos.size} rechazos, bono $1`);
+        await anotarEvento(db, p.id, 'oferta_abierta', `${vistos.size} rechazos, bono ${bono}`);
     }
     const elegidos = bono ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
     for (const elegido of elegidos) {

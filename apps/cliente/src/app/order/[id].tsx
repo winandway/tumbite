@@ -1021,7 +1021,13 @@ export default function SeguirPedido() {
             )}
           </Tarjeta>
         )}
-        {p.estado === 'entregado' && p.repartidor && !p.propinaExtra && !propinaEnviada ? (
+        {/* La propina posterior se cobra con la tarjeta guardada: solo en pedidos pagados con tarjeta
+            (en un pedido cobrado en mano la propina se da en mano). */}
+        {p.estado === 'entregado' &&
+        p.repartidor &&
+        (p.metodoPago ?? 'tarjeta') === 'tarjeta' &&
+        !p.propinaExtra &&
+        !propinaEnviada ? (
           <Tarjeta>
             <Text style={{ fontWeight: '800' }}>{t.propinaDespues}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>

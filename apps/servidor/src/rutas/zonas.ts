@@ -1,3 +1,4 @@
+import { leerConfigPais, paisIncompleto } from '../internacional/paises';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -111,6 +112,17 @@ zonas.get('/admin/zonas', async (c) => {
 zonas.put('/admin/zonas', async (c) => {
   exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaZona);
+  // C-TOPES-PAIS: una ciudad de un país incompleto (sin tarifas o sin topes) no se activa.
+  if (d.activa) {
+    const pais = d.pais.toUpperCase();
+    const falta = paisIncompleto(pais, await leerConfigPais(base(c), pais));
+    if (falta)
+      throw new ErrorDatos(
+        'Este país todavía no tiene sus tarifas y topes escritos: la ciudad no se puede activar.',
+        'activa',
+        409,
+      );
+  }
   await base(c)
     .prepare(
       `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, region, idioma) VALUES (?,?,?,?,?,?,?,?,?,?,?)

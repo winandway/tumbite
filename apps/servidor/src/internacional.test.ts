@@ -1274,6 +1274,10 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(rep).toContain('enMano={enManoHoy}');
     // C-SESION-REINTENTA: las apps confirman la sesión con reintentos ante un corte puntual.
     expect(leer('packages/movil/src/sesion.tsx')).toContain('await confirmarSesionConReintentos(');
+    // C-TOPES-PAIS: la propina posterior (con tarjeta) no se ofrece en un pedido cobrado en mano.
+    expect(leer('apps/cliente/src/app/order/[id].tsx')).toContain(
+      "(p.metodoPago ?? 'tarjeta') === 'tarjeta'",
+    );
     expect(leer('apps/repartidor/src/grandes/Oferta.tsx')).toContain(
       'testID="oferta-cobro-en-mano"',
     );

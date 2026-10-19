@@ -139,6 +139,32 @@ export const MENSAJES_EN = new Map<string, string>([
     'You reached today’s cash limit. Settle or top up to keep taking cash orders.',
   ],
   ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
+  [
+    'Este país no tiene tarifas escritas: no se puede encender ningún método de pago.',
+    'This country has no fees set: no payment method can be turned on.',
+  ],
+  [
+    'Este país no tiene sus topes escritos: no se puede encender ningún método de pago.',
+    'This country has no limits set: no payment method can be turned on.',
+  ],
+  [
+    'Este país todavía no tiene sus tarifas y topes escritos: la ciudad no se puede activar.',
+    'This country doesn’t have its fees and limits set yet: the city can’t be activated.',
+  ],
+  [
+    'El precio de una opción pasa del máximo permitido.',
+    'An option’s price is over the allowed maximum.',
+  ],
+  ['La propina pasa del máximo permitido.', 'The tip is over the allowed maximum.'],
+  ['Esa propina está fuera de lo permitido.', 'That tip is outside the allowed range.'],
+  [
+    'Ese país no tiene sus topes escritos todavía.',
+    'That country doesn’t have its limits set yet.',
+  ],
+  [
+    'El monto del cupón pasa del máximo permitido.',
+    'The coupon amount is over the allowed maximum.',
+  ],
   ['Ese caso no existe.', 'That case doesn’t exist.'],
   ['Esa acción no está permitida en este caso.', 'That action isn’t allowed for this case.'],
   ['Ese caso ya está resuelto.', 'That case is already resolved.'],

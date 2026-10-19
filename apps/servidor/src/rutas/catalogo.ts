@@ -30,6 +30,7 @@ import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos
 import { minutosPausa } from '../pausa';
 import { restauranteDe } from './restauranteMas';
 import { enTrozos } from '../trozos';
+import { topesDeZona } from '../internacional/tarifas';
 import { tarifasDeZona } from '../internacional/tarifas';
 import { leerConfigDinero } from './dinero';
 
@@ -392,6 +393,15 @@ catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
   for (const g of grupos)
     if (g.minimo > g.maximo)
       throw new ErrorDatos('El mínimo no puede ser mayor que el máximo.', 'grupos', 422);
+  // C-TOPES-PAIS: precio máximo de una opción, el del país del restaurante.
+  const zonaRest = await db
+    .prepare('SELECT zona_id FROM restaurantes WHERE id = ?')
+    .bind(rid)
+    .first<{ zona_id: string | null }>();
+  const { topes } = await topesDeZona(db, String(zonaRest?.zona_id ?? ZONA_INICIAL));
+  const topeOpcion = topes?.opcionPrecioMax ?? 0;
+  if (grupos.some((g) => g.opciones.some((o) => o.precioCentavos > topeOpcion)))
+    throw new ErrorDatos('El precio de una opción pasa del máximo permitido.', 'grupos', 422);
   const viejos = await db
     .prepare('SELECT id FROM grupos_opciones WHERE plato_id = ?')
     .bind(plato.id)

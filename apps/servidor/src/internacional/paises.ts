@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BONO_OFERTA_ABIERTA } from '@tumbite/compartido';
 import { esquemaConfigDinero } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
 
@@ -42,7 +43,42 @@ export const esquemaConfigPais = z.object({
    * este campo (sigue con la configuración global de siempre). Las cifras las fija Richard.
    */
   tarifas: esquemaConfigDinero.nullable(),
+  /**
+   * C-TOPES-PAIS: topes en la moneda del país (unidad menor). null = sin escribir: el país no se
+   * puede encender ni recibe pedidos. Estados Unidos no usa este campo (sigue con sus cifras de
+   * siempre, `TOPES_EEUU`). Las cifras las fija Richard.
+   */
+  topes: z
+    .object({
+      bonoOfertaAbierta: z.number().int().min(0),
+      opcionPrecioMax: z.number().int().min(1),
+      propinaMax: z.number().int().min(1),
+      propinaExtraMin: z.number().int().min(1),
+      propinaExtraMax: z.number().int().min(1),
+      cuponMontoMax: z.number().int().min(1),
+      quejaReembolsoMax: z.number().int().min(0),
+    })
+    .nullable(),
 });
+export type TopesPais = NonNullable<ConfigPais['topes']>;
+
+/** Las cifras de Estados Unidos, las mismas constantes de siempre (no cambian). */
+export const TOPES_EEUU: Omit<TopesPais, 'quejaReembolsoMax'> = {
+  bonoOfertaAbierta: BONO_OFERTA_ABIERTA,
+  opcionPrecioMax: 100_00,
+  propinaMax: 50_000,
+  propinaExtraMin: 100,
+  propinaExtraMax: 10_000,
+  cuponMontoMax: 1_000_000,
+};
+
+/** ¿Le falta a este país lo necesario para operar? (EE. UU. nunca: usa la configuración global.) */
+export function paisIncompleto(pais: string, cfg: ConfigPais): string | null {
+  if (pais === 'US') return null;
+  if (!cfg.tarifas) return 'tarifas';
+  if (!cfg.topes) return 'topes';
+  return null;
+}
 export type ConfigPais = z.infer<typeof esquemaConfigPais>;
 
 export function configPaisDeFabrica(pais: string): ConfigPais {
@@ -63,6 +99,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     recargasSemanaMax: 20,
     comisionPuntoPb: 0,
     tarifas: null,
+    topes: null,
   };
 }
 
@@ -88,6 +125,21 @@ export async function guardarConfigPais(
 ) {
   const nueva = { ...(await leerConfigPais(db, pais)), ...parcial };
   esquemaConfigPais.parse(nueva);
+  // Un país incompleto no se enciende: ningún método de pago ni recarga sin tarifas y topes.
+  const enciende =
+    nueva.efectivoActivo ||
+    nueva.transferenciaRepartidorActiva ||
+    nueva.recargasPuntoVentaActivas ||
+    nueva.recargasStripeActivas;
+  const falta = paisIncompleto(pais, nueva);
+  if (enciende && falta)
+    throw new ErrorDatos(
+      falta === 'tarifas'
+        ? 'Este país no tiene tarifas escritas: no se puede encender ningún método de pago.'
+        : 'Este país no tiene sus topes escritos: no se puede encender ningún método de pago.',
+      falta,
+      409,
+    );
   const t = nueva.tarifas;
   if (t && (t.servicioMinimo > t.servicioMaximo || t.envioBase > t.envioMaximo))
     throw new ErrorDatos(
