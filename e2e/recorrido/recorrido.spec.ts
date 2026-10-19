@@ -1577,6 +1577,14 @@ for (const idioma of ['en', 'es'] as const) {
         await expect(rep.getByText(/^(Payment recorded\.|Pago registrado\.)$/)).toBeVisible({
           timeout: 20_000,
         });
+        // Con el pago registrado aparece la foto del ticket (opcional, C-FOTO-TICKET).
+        await expect(
+          rep.getByRole('button', {
+            name: /^(Take a photo of the receipt \(optional\)|Tomar foto del ticket \(opcional\))$/,
+          }),
+        ).toBeVisible();
+        await rep.getByTestId('pago-en-local').scrollIntoViewIfNeeded();
+        await foto(rep, 'pago-local-registrado');
         const fila = sql(
           `SELECT monto_pagado, metodo, diferencia_pago FROM pagos_local WHERE pedido_id = '${directo.pedidoId}'`,
         )[0];
