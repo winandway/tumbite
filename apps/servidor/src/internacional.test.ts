@@ -1444,6 +1444,7 @@ describe('bandeja de soporte del cobro en mano y recuperación tras interrupcion
     casos = (await bandeja(e)).datos.casos as { clave: string; tipo: string; acciones: string[] }[];
     const comida = casos.find((c) => c.clave === `comida:${oid}`);
     expect(comida?.acciones).toEqual(['tomar', 'nota', 'resolver']);
+    expect((comida as unknown as { detalleEn: string }).detalleEn).toMatch(/decision 20/);
     const salud = (await (await e.m.crudo('/datos/salud', { method: 'GET' })).json()) as {
       piezas: Record<string, string>;
     };

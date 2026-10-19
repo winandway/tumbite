@@ -15,6 +15,7 @@ const CASO = {
   montos: { porDevolver: 12000 },
   participantes: { cliente: 'Ana', repartidor: 'Rafa', restaurante: 'Sabor' },
   detalle: 'El cliente pagó de más al repartidor.',
+  detalleEn: 'The customer overpaid the driver.',
   creadoEn: '2026-10-19 10:00:00',
   acciones: ['tomar', 'nota', 'excedente_devuelto', 'resolver'],
 };
@@ -62,6 +63,7 @@ describe('bandeja de soporte del cobro en mano', () => {
     const llamadas = servidor(true);
     render(<SuperBandeja base="/panel/control-x" idioma="en" clave={CASO.clave} />);
     expect(await screen.findByText(/Customer: Ana/)).toBeInTheDocument();
+    expect(screen.getByText('The customer overpaid the driver.')).toBeInTheDocument();
     expect(screen.getByAltText('Evidence')).toHaveAttribute(
       'src',
       CASO.montos ? `/datos/pedidos/${CASO.pedidoId}/evidencia/ticket` : '',

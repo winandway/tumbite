@@ -28,6 +28,7 @@ type Caso = {
   montos: Record<string, number>;
   participantes: { cliente: string | null; repartidor: string | null; restaurante: string | null };
   detalle: string;
+  detalleEn?: string;
   creadoEn: string;
   acciones: string[];
   esperaDecision?: string | null;
@@ -297,7 +298,7 @@ function CasoDinero({ base, idioma, clave }: { base: string; idioma: Idioma; cla
       <h1>
         {de(t.tipos, c.tipo)} · {de(t.estados, c.estado)}
       </h1>
-      <p>{c.detalle}</p>
+      <p>{idioma === 'en' ? (c.detalleEn ?? c.detalle) : c.detalle}</p>
       {c.esperaDecision ? <p className="como-nota">{t.esperaDecision}</p> : null}
       <p>
         {c.pedidoId ? (

@@ -65,6 +65,8 @@ export type Caso = {
     restaurante: string | null;
   };
   detalle: string;
+  /** El mismo texto en inglés (la pantalla elige según el idioma). */
+  detalleEn: string;
   creadoEn: string;
   acciones: readonly string[];
   /** La resolución económica la decide Richard (decisiones 20 y 22): el caso espera su regla. */
@@ -76,6 +78,22 @@ const ESPERA_DECISION = new Map<string, string>([
   ['recarga_disputada', 'recarga-disputada'],
   ['transferencia', 'decision-22'],
 ]);
+
+const DETALLE_EN: Record<string, string> = {
+  ['El repartidor todavía no ve la transferencia en su banco. La confirmación es manual: la hace el repartidor mirando su banco.']:
+    'The driver doesn’t see the transfer in their bank yet. Confirmation is manual: the driver does it by checking their bank.',
+  ['El cliente no pagó.']: 'The customer didn’t pay.',
+  ['El cobro, el pago en el local o el ticket no cuadran.']:
+    'The payment, the store payment or the receipt don’t match.',
+  ['El repartidor pagó la comida y el pedido no se entregó. Quién la absorbe está pendiente de decisión (decisión 20).']:
+    'The driver paid for the food and the order wasn’t delivered. Who covers it is pending a decision (decision 20).',
+  ['El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Tumbite.']:
+    'The customer overpaid the driver. The driver owes it back; that money never went through Tumbite.',
+  ['El restaurante no confirmó en la app que recibió el pago en el mostrador.']:
+    'The restaurant didn’t confirm in the app that it received the payment at the counter.',
+  ['Stripe no confirmó esta recarga en un día. No se acreditó nada.']:
+    'Stripe didn’t confirm this top-up within a day. Nothing was credited.',
+};
 
 type Fila = Record<string, unknown>;
 const n = (v: unknown) => Number(v ?? 0);
@@ -108,6 +126,7 @@ function base(
       restaurante: s(f.restaurante),
     },
     detalle,
+    detalleEn: new Map(Object.entries(DETALLE_EN)).get(detalle) ?? detalle,
     creadoEn: String(f.creado ?? f.pedido_creado ?? ''),
     acciones: new Map(Object.entries(ACCIONES_POR_TIPO)).get(tipo) ?? [],
     esperaDecision: ESPERA_DECISION.get(tipo) ?? null,
@@ -240,15 +259,16 @@ async function casosCrudos(db: D1Database): Promise<Omit<Caso, 'estado' | 'respo
     )
     .all<Fila>();
   for (const f of dis.results)
-    todos.push(
-      base(
+    todos.push({
+      ...base(
         'recarga_disputada',
         `recarga_disputada:${String(f.disputa)}`,
         f,
         { disputado: n(f.monto), recarga: n(f.recarga_monto) },
         `Disputa ${String(f.disputa_estado)}. El saldo de la recarga no se tocó: qué hacer con él lo decide Richard.`,
       ),
-    );
+      detalleEn: `Dispute ${String(f.disputa_estado)}. The top-up balance wasn’t touched: Richard decides what to do with it.`,
+    });
   // 8. Recargas con tarjeta pendientes desde hace más de un día (Stripe no confirmó).
   const pen = await db
     .prepare(
