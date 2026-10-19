@@ -107,10 +107,10 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Ronda de topes por país y evidencia internacional — 19 oct (noche)
 
-- [ ] P.1 Topes por país y moneda (bono de oferta, precio máximo de opciones, propina máxima, cupones por país y moneda, reembolso de quejas); EE. UU. idéntico; un país incompleto no se puede encender.
-- [ ] P.2 Bandeja: paginación sin límite oculto; textos del sistema en el idioma de la pantalla; notas históricas marcadas como originales.
-- [ ] P.3 Alta simultánea de miembros comprobada con el motor real (D1 local) y protección en la base si los datos lo permiten.
-- [ ] P.4 Recorrido local aislado en COP y VES, en pantalla y por API, distinguiendo cada uno.
-- [ ] P.5 Alcance exacto de la restauración aislada.
-- [ ] P.6 Solicitud única agrupada A–F y decisiones preparadas (20, 22, tarifas, topes, recargas disputadas).
-- [ ] P.7 Verificar, staging, producción por el flujo permanente; registro, entrega y pagos con la misma versión.
+- [x] P.1 Topes por país y moneda (bono de oferta, precio máximo de opciones, propina máxima, cupones por país y moneda, reembolso de quejas); EE. UU. idéntico; un país incompleto no se puede encender.
+- [x] P.2 Bandeja: paginación sin límite oculto; textos del sistema en el idioma de la pantalla; notas históricas marcadas como originales.
+- [x] P.3 Alta simultánea de miembros comprobada con el motor real (D1 local) y protección en la base si los datos lo permiten.
+- [x] P.4 Recorrido local aislado en COP y VES, en pantalla y por API, distinguiendo cada uno.
+- [x] P.5 Alcance exacto de la restauración aislada.
+- [x] P.6 Solicitud única agrupada A–F y decisiones preparadas (20, 22, tarifas, topes, recargas disputadas).
+- [x] P.7 Verificar, staging, producción por el flujo permanente; registro, entrega y pagos con la misma versión.

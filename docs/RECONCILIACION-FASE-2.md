@@ -342,7 +342,7 @@ Estado de publicación: publicado en 26649f68 el 19 oct (staging verde en la cor
 
 ## 11. Topes por país y evidencia internacional (19 oct, noche)
 
-Estado de publicación: VERSION_PENDIENTE_11.
+Estado de publicación: publicado en cfc1cec7 el 19 oct (staging verde en la corrida 39330638689, en inglés y español; producción con `publicar` 39334118221 y el verificador «después» en verde; punto de restauración previo `restauracion-2026-10-19-topes-pais` sobre 26649f68).
 
 | Qué                                                                                                                                              | Candado                   | Estado y entorno                                                                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------ |

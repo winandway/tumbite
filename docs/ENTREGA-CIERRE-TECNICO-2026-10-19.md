@@ -75,7 +75,7 @@ De Richard: la decisión 20 y la solicitud de autorizaciones (empezando por la c
 
 ## Actualización del 19 oct (noche): topes por país y evidencia internacional
 
-Versión: VERSION_PENDIENTE_11. **El MVP sigue sin terminar y ningún país distinto de EE. UU. está listo para encenderse.**
+Versión: publicado en cfc1cec7 el 19 oct (staging verde en la corrida 39330638689, en inglés y español; producción con `publicar` 39334118221 y el verificador «después» en verde; punto de restauración previo `restauracion-2026-10-19-topes-pais` sobre 26649f68). **El MVP sigue sin terminar y ningún país distinto de EE. UU. está listo para encenderse.**
 
 ### Qué quedó comprobado, por país y entorno
 
@@ -94,6 +94,10 @@ En pantalla se comprobó lo que la persona toca (botones y campos de las apps). 
 2. El carrito ofrecía las formas de pago de la ciudad guardada del cliente, no del restaurante.
 3. Las tarifas de un país no aceptaban montos altos en su moneda.
 4. El carrito ofrecía «Tarjeta» en pesos y bolívares, que el servidor rechaza.
+
+### Riesgo abierto de esta ronda
+
+- En una corrida de staging falló una vez la foto de recogida de un pedido de prueba y no se repitió en la siguiente. No se vio la respuesta del servidor (ahora la prueba la muestra si vuelve a pasar): **causa sin confirmar**, se vigila.
 
 ### Trabajo técnico que sigue pendiente
 
