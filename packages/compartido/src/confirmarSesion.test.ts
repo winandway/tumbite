@@ -85,10 +85,3 @@ describe('reintentos al confirmar la sesión (C-SESION-REINTENTA)', () => {
     });
   });
 });
-
-it('las apps confirman la sesión con reintentos (C-SESION-REINTENTA)', async () => {
-  const { readFileSync } = await import('node:fs');
-  const { join } = await import('node:path');
-  const sesion = readFileSync(join(__dirname, '..', '..', 'movil', 'src', 'sesion.tsx'), 'utf8');
-  expect(sesion).toContain('await confirmarSesionConReintentos(');
-});

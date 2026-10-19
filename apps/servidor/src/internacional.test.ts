@@ -1272,6 +1272,8 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(rep).toContain('/no-pago');
     expect(rep).toContain('testID="sin-lugar-seguro"');
     expect(rep).toContain('enMano={enManoHoy}');
+    // C-SESION-REINTENTA: las apps confirman la sesión con reintentos ante un corte puntual.
+    expect(leer('packages/movil/src/sesion.tsx')).toContain('await confirmarSesionConReintentos(');
     expect(leer('apps/repartidor/src/grandes/Oferta.tsx')).toContain(
       'testID="oferta-cobro-en-mano"',
     );
