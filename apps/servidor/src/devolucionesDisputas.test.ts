@@ -190,6 +190,60 @@ describe('disputas por webhook y canario (C-DEVOLUCIONES-DISPUTAS)', () => {
     usarTransporteCorreo(null);
   });
 
+  it('cuenta de Stripe compartida: una disputa de otro negocio se ignora; la de una recarga queda escrita y avisa, sin tocar el saldo', async () => {
+    const { m, admin } = await escenario();
+    const { usarTransporteCorreo } = await import('./correo');
+    const enviados: { asunto: string; texto: string }[] = [];
+    usarTransporteCorreo(async (_e, init) => {
+      const b = JSON.parse(String(init.body)) as { subject: string; text?: string };
+      enviados.push({ asunto: b.subject, texto: String(b.text ?? '') });
+      return new Response('{"ok":true}', { status: 200 });
+    });
+    const aviso = async (disputa: string, pi: string) => {
+      const cuerpo = JSON.stringify({
+        id: `evt_${crypto.randomUUID()}`,
+        type: 'charge.dispute.created',
+        data: {
+          object: {
+            id: disputa,
+            payment_intent: pi,
+            amount: 2500,
+            reason: 'fraudulent',
+            status: 'needs_response',
+            evidence_details: { due_by: Math.floor(Date.now() / 1000) + 86_400 },
+          },
+        },
+      });
+      return m.crudo('/datos/stripe/aviso', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'stripe-signature': await firmar(cuerpo) },
+        body: cuerpo,
+      });
+    };
+    expect((await aviso('dp_ajena', 'pi_de_otro_negocio')).status).toBe(200);
+    expect(
+      (await m.llamar('GET', '/datos/admin/disputas', undefined, admin.token)).datos.disputas,
+    ).toHaveLength(0);
+    expect(enviados).toHaveLength(0);
+    const salud = (await (await m.crudo('/datos/salud', { method: 'GET' })).json()) as {
+      piezas: Record<string, string>;
+    };
+    expect(salud.piezas.disputas).toBe('ok');
+    // Una recarga del saldo prepago pagada con tarjeta.
+    await m.DB.prepare(
+      "INSERT INTO recargas (id, usuario_id, pais, moneda, monto, canal, estado, referencia) VALUES ('rec_1', ?, 'US', 'USD', 2500, 'stripe', 'acreditada', 'pi_recarga')",
+    )
+      .bind(admin.id)
+      .run();
+    expect((await aviso('dp_recarga', 'pi_recarga')).status).toBe(200);
+    const f = await m.DB.prepare('SELECT recarga_id, pedido_id FROM disputas WHERE id = ?')
+      .bind('dp_recarga')
+      .first<{ recarga_id: string | null; pedido_id: string | null }>();
+    expect(f).toMatchObject({ recarga_id: 'rec_1', pedido_id: null });
+    expect(enviados.some((e) => /rec_1/.test(e.texto) && /NO se tocó/.test(e.texto))).toBe(true);
+    usarTransporteCorreo(null);
+  });
+
   it('el impuesto configurado se guarda en el pedido y viaja en el desglose', async () => {
     const { m, admin, cliente, dueno } = await escenario();
     const cfg = await m.llamar('GET', '/datos/config-dinero', undefined, admin.token);

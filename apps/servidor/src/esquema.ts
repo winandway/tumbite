@@ -76,6 +76,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-TARIFAS-PAIS (19 oct 2026): moneda del pedido y tarifas aplicadas al crearlo.
   ['pedidos', 'moneda', "TEXT NOT NULL DEFAULT 'USD'"],
   ['pedidos', 'tarifas_json', 'TEXT'],
+  // Disputa de una recarga del saldo prepago pagada con tarjeta (19 oct 2026).
+  ['disputas', 'recarga_id', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

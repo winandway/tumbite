@@ -897,7 +897,9 @@ pedidos.post('/stripe/aviso', async (c) => {
             de: 'avisos',
             para,
             asunto: `Disputa abierta: ${formatearDolares(r.monto, 'es')} (${r.motivo || 'sin motivo'})`,
-            texto: `Un cliente disputó un cobro de ${formatearDolares(r.monto, 'es')}${r.pedidoId ? ` del pedido ${r.pedidoId}` : ''}. Motivo: ${r.motivo || 'sin detalle'}. Responder en Stripe antes de ${r.venceEn ?? 'la fecha que indique Stripe'} con la foto de entrega y la bitácora del pedido.`,
+            texto: r.recarga
+              ? `Un repartidor (${r.recarga.repartidorId}) disputó la recarga ${r.recarga.id} de su saldo prepago por ${formatearDolares(r.monto, 'es')}. Motivo: ${r.motivo || 'sin detalle'}. El saldo NO se tocó: decide qué hacer con él. Responder en Stripe antes de ${r.venceEn ?? 'la fecha que indique Stripe'}.`
+              : `Un cliente disputó un cobro de ${formatearDolares(r.monto, 'es')}${r.pedidoId ? ` del pedido ${r.pedidoId}` : ''}. Motivo: ${r.motivo || 'sin detalle'}. Responder en Stripe antes de ${r.venceEn ?? 'la fecha que indique Stripe'} con la foto de entrega y la bitácora del pedido.`,
           }).catch((e: unknown) => console.error('disputa: correo equipo', e));
     }
   } catch (e) {

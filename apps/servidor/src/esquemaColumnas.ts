@@ -457,7 +457,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "vence_en",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "recarga_id"
   ],
   "alertas_canario": [
     "pieza",

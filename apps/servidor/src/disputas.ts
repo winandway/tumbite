@@ -14,6 +14,7 @@ export async function registrarDisputa(
   motivo: string;
   pedidoId: string | null;
   venceEn: string | null;
+  recarga: { id: string; repartidorId: string } | null;
 } | null> {
   const id = String(obj.id ?? '');
   if (!id) return null;
@@ -31,12 +32,23 @@ export async function registrarDisputa(
         .bind(pi)
         .first<{ id: string }>()
     : null;
+  // Una recarga del saldo prepago pagada con tarjeta también puede disputarse.
+  const recarga =
+    pi && !pedido
+      ? await db
+          .prepare("SELECT id, usuario_id FROM recargas WHERE canal = 'stripe' AND referencia = ?")
+          .bind(pi)
+          .first<{ id: string; usuario_id: string }>()
+      : null;
+  // C-STRIPE-AVISOS: la cuenta de Stripe es COMPARTIDA con otros negocios de Windoce. Una disputa
+  // que no es de un pedido ni de una recarga de Tumbite no se guarda, no avisa y no toca la salud.
+  if (!pedido && !recarga) return null;
   const r = await db
     .prepare(
-      `INSERT INTO disputas (id, pedido_id, stripe_pago, monto, motivo, estado, vence_en) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO disputas (id, pedido_id, stripe_pago, monto, motivo, estado, vence_en, recarga_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET estado = excluded.estado, monto = excluded.monto, vence_en = COALESCE(excluded.vence_en, disputas.vence_en), actualizado_en = datetime('now')`,
     )
-    .bind(id, pedido?.id ?? null, pi, monto, motivo, estado, venceEn)
+    .bind(id, pedido?.id ?? null, pi, monto, motivo, estado, venceEn, recarga?.id ?? null)
     .run();
   const nueva =
     tipo === 'charge.dispute.created' ||
@@ -47,7 +59,16 @@ export async function registrarDisputa(
     else if (tipo === 'charge.dispute.closed')
       await anotarEvento(db, pedido.id, 'disputa_cerrada', estado);
   }
-  return { nueva, monto, motivo, pedidoId: pedido?.id ?? null, venceEn };
+  return {
+    nueva,
+    monto,
+    motivo,
+    pedidoId: pedido?.id ?? null,
+    venceEn,
+    // El saldo de esa recarga NO se toca solo (no hay saldos negativos ni compensaciones
+    // automáticas): qué hacer con él es decisión de Richard. Aquí queda escrito y se avisa.
+    recarga: recarga ? { id: recarga.id, repartidorId: recarga.usuario_id } : null,
+  };
 }
 
 /** Pieza «disputas» de la salud: error si hay una disputa sin responder que vence en menos de 2 días. */
