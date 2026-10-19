@@ -623,6 +623,20 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
       expect((await ver(t)).status).toBe(200);
     const extrano = await e.m.cuenta('cliente', 'Otro');
     expect((await ver(extrano.token)).status).toBe(404);
+    // El equipo del restaurante (staff) también la ve; un restaurante ajeno, no.
+    const staff = await e.m.cuenta('restaurante', 'Beto Staff');
+    const correoStaff = (await e.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(staff.id)
+      .first<{ correo: string }>())!.correo;
+    await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/equipo',
+      { correo: correoStaff, rol: 'staff' },
+      e.dueno.token,
+    );
+    expect((await ver(staff.token)).status).toBe(200);
+    const otroRest = await e.m.cuenta('restaurante', 'Otro Dueño');
+    expect((await ver(otroRest.token)).status).toBe(404);
     const datos = await e.m.llamar(
       'GET',
       `/datos/repartidor/pedidos/${id}/pago-local`,

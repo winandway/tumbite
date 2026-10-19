@@ -2431,7 +2431,7 @@ operacion.post('/pedidos/:id/mensajes', async (c) => {
   return c.json({ ok: true });
 });
 
-/** La foto de la recogida o de la entrega: solo el cliente, el restaurante, el repartidor y el equipo. */
+/** La foto de la recogida, de la entrega o del ticket: el cliente, el restaurante (dueño y su equipo), el repartidor y soporte. */
 operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
   const u = exigir(c);
   const tipo = c.req.param('tipo');
@@ -2440,13 +2440,23 @@ operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
   const f = await base(c)
     .prepare(
       tipo === 'ticket'
-        ? 'SELECT l.ticket_clave AS clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE l.pedido_id = ? AND l.ticket_clave IS NOT NULL'
-        : 'SELECT e.clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE e.pedido_id = ? AND e.tipo = ?',
+        ? 'SELECT l.ticket_clave AS clave, p.cliente_id, p.repartidor_id, r.dueno_id, (SELECT 1 FROM miembros_restaurante mr WHERE mr.restaurante_id = r.id AND mr.usuario_id = ?) AS miembro FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE l.pedido_id = ? AND l.ticket_clave IS NOT NULL'
+        : 'SELECT e.clave, p.cliente_id, p.repartidor_id, r.dueno_id, (SELECT 1 FROM miembros_restaurante mr WHERE mr.restaurante_id = r.id AND mr.usuario_id = ?) AS miembro FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE e.pedido_id = ? AND e.tipo = ?',
     )
-    .bind(...(tipo === 'ticket' ? [c.req.param('id')] : [c.req.param('id'), tipo]))
-    .first<{ clave: string; cliente_id: string; repartidor_id: string | null; dueno_id: string }>();
+    .bind(...(tipo === 'ticket' ? [u.id, c.req.param('id')] : [u.id, c.req.param('id'), tipo]))
+    .first<{
+      clave: string;
+      cliente_id: string;
+      repartidor_id: string | null;
+      dueno_id: string;
+      miembro: number | null;
+    }>();
+  // También el equipo del restaurante (manager o staff), que opera los pedidos igual que el dueño.
   const puede =
-    f && (u.rol === 'admin' || [f.cliente_id, f.repartidor_id, f.dueno_id].includes(u.id));
+    f &&
+    (u.rol === 'admin' ||
+      [f.cliente_id, f.repartidor_id, f.dueno_id].includes(u.id) ||
+      (u.rol === 'restaurante' && f.miembro === 1));
   if (!f || !puede || !c.env.BUCKET) return c.text('No encontrado', 404);
   const obj = await c.env.BUCKET.get(f.clave);
   if (!obj) return c.text('No encontrado', 404);
