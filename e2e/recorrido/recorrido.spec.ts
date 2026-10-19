@@ -1005,7 +1005,13 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByRole('button', { name: L.estrellas(L.laComida, 5) }).click();
     await cli.getByRole('button', { name: L.estrellas(`${L.tuRepartidor}: Luis`, 5) }).click();
     await foto(cli, 'cliente-calificar');
-    await cli.getByRole('button', { name: L.enviarCalificacion }).click();
+    // Se espera que el servidor guarde la calificación antes de abrir las reseñas en el panel.
+    await Promise.all([
+      cli.waitForResponse(
+        (r) => r.url().includes('/calificar') && r.request().method() === 'POST' && r.ok(),
+      ),
+      cli.getByRole('button', { name: L.enviarCalificacion }).click(),
+    ]);
 
     // 11b. Lo nuevo de la Fase 2 que ve el público (capturas para Docs). Sin fotos, sirve igual
     //      de prueba: cada pantalla carga y responde.
