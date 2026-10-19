@@ -32,5 +32,7 @@ Restaurar la rama yapanel-build a la etiqueta `restauracion-antes-reloj-paquete`
 
 - `password_apps.md` (credenciales de prueba de Expo y de las cuentas de cliente, repartidor y restaurante) entró por error en el commit `16cdde4c` de fase-reloj-seguro, aunque `.gitignore` lo excluye.
 - El repositorio es público y el archivo sigue en el historial de varias ramas desde el 16 oct.
-- No entró en main ni en producción. La copia local sigue intacta.
+- **Corrección (19 oct 2026):** el archivo SÍ está en el historial público de main (entró por las fusiones de integración, por ejemplo `1fe7d2e3` y `c0483b1b`), aunque nunca estuvo en la versión publicada ni en producción. Ramas públicas con el archivo en su historial: main y otras ocho de trabajo.
+- **Rotación hecha el 19 oct:** se comprobaron las tres cuentas de Tumbite del archivo contra pruebas y producción sin mostrar las claves. Solo la del cliente de pruebas seguía sirviendo: se cambió por una clave aleatoria y se comprobó que la vieja ya no entra (401) y la nueva sí (200). La nueva vive solo en el registro local, fuera de git. Las cuentas de repartidor y restaurante del archivo nunca se crearon. Falta la clave de **Expo** (cuenta personal de Richard): solo él puede cambiarla.
+- La copia local sigue intacta y fuera de git.
 - Acción recomendada: cambiar esas contraseñas (👤 Richard). Borrarlo del historial es destructivo y espera su decisión.
