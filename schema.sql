@@ -610,7 +610,9 @@ CREATE TABLE IF NOT EXISTS disputas (
   estado TEXT NOT NULL DEFAULT '',
   vence_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Recarga del saldo prepago disputada (si la disputa no es de un pedido).
+  recarga_id TEXT
 );
 
 -- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).
