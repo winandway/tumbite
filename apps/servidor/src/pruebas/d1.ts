@@ -8,14 +8,20 @@ import { fileURLToPath } from 'node:url';
  */
 import { reiniciarEsquema } from '../esquema';
 
-export function crearBasePruebas(): D1Database {
+/**
+ * `archivo`: abre esa base SQLite (una COPIA) en vez de una vacía; sirve para probar una
+ * restauración aislada con datos reales del recorrido (restauracionAislada.test.ts).
+ */
+export function crearBasePruebas(archivo?: string): D1Database {
   reiniciarEsquema();
-  const db = new DatabaseSync(':memory:');
-  const schema = readFileSync(
-    fileURLToPath(new URL('../../../../schema.sql', import.meta.url).href),
-    'utf8',
-  );
-  db.exec(schema);
+  const db = new DatabaseSync(archivo ?? ':memory:');
+  if (!archivo) {
+    const schema = readFileSync(
+      fileURLToPath(new URL('../../../../schema.sql', import.meta.url).href),
+      'utf8',
+    );
+    db.exec(schema);
+  }
 
   function sentencia(sql: string, valores: unknown[] = []) {
     const params = valores.map((v) =>
