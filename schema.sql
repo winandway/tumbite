@@ -1649,6 +1649,9 @@ CREATE TABLE IF NOT EXISTS miembros_restaurante (
   PRIMARY KEY (restaurante_id, usuario_id)
 );
 CREATE INDEX IF NOT EXISTS miembros_restaurante_usuario ON miembros_restaurante(usuario_id);
+-- Una persona pertenece a UN solo equipo (19 oct 2026): la base lo garantiza aunque dos altas lleguen
+-- a la vez. Comprobado antes de agregarlo: ninguna persona estaba en dos equipos (producción y pruebas).
+CREATE UNIQUE INDEX IF NOT EXISTS miembros_restaurante_una_persona ON miembros_restaurante(usuario_id);
 CREATE TABLE IF NOT EXISTS cierres_restaurante (
   id TEXT PRIMARY KEY,
   restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
