@@ -286,6 +286,42 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     );
   });
 
+  it('la conciliación diaria no mezcla el cobro en mano con el de Stripe: el día cuadra y los pedidos en mano van aparte, por moneda (C-CONCILIACION-DIRECTA)', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    const total = p.datos.desglose.totalCliente as number;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total - 200, nota: '' },
+      rep.token,
+    );
+    // Otro pedido en mano, cancelado: en mano no hubo devolución de dinero por Tumbite.
+    const otro = await e.pedir();
+    await e.m.llamar('POST', `/datos/pedidos/${otro.datos.pedidoId}/cancelar`, {}, e.cliente.token);
+    const { conciliar } = await import('./conciliacion');
+    const c = await conciliar(e.m.DB, new Date().toISOString().slice(0, 10));
+    expect(c.cuadra).toBe(true);
+    expect(c.vendido).toBe(0);
+    expect(c.devuelto).toBe(0);
+    expect(c.detalle).toMatchObject({ directos_USD: 1, directosConDiferencia_USD: 0 });
+  });
+
   it('pago de menos → con_diferencia y deuda del cliente; el cliente con deuda no puede pedir en efectivo', async () => {
     const e = await escenario();
     const p = await e.pedir();

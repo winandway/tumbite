@@ -827,3 +827,10 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Las cifras de cada país las fija Richard.** Hoy ningún país distinto de EE. UU. tiene tarifas; en producción y staging solo hay zonas de EE. UU. (consultado el 19 oct).
 - **Prueba:** `apps/servidor/src/tarifasPais.test.ts` (5): EE. UU. idéntico a la global y guardado en USD; país sin tarifas = 409 y cero pedidos; con tarifas en pesos se calcula con ellas y guarda COP; cambiar después las tarifas no reescribe el pedido; tarjeta en pesos = 409 sin Stripe; validación de mínimos. Rojo comprobado quitando la guarda.
 - **No tocar:** no volver a leer `leerConfigDinero` directo al crear un pedido; no convertir monedas en el servidor; no encender la tarjeta fuera de USD sin construir y probar la conversión de unidades de Stripe.
+
+## C-CONCILIACION-DIRECTA: la conciliación diaria no mezcla el cobro en mano (19 oct 2026)
+
+- **Qué se rompía:** la conciliación del día sumaba los pedidos en efectivo o transferencia al repartidor como si hubieran pasado por Stripe y la billetera. Desde el primer pedido en mano el día salía «no cuadra» (se esperaba un abono al restaurante que nunca existe) y un pedido en mano cancelado contaba como «devuelto».
+- **Cómo quedó:** `apps/servidor/src/conciliacion.ts` cuenta solo `metodo_pago = 'tarjeta'` en vendido, abonos, capturado y devuelto. Los pedidos en mano van aparte en el detalle, por moneda: `directos_<MONEDA>`, `directosConDiferencia_<MONEDA>`, `directosPendientes_<MONEDA>`. Cada pedido en mano tiene su propia conciliación (`conciliacion_estado`). Estados Unidos con tarjeta no cambia.
+- **Prueba:** `internacional.test.ts`, «la conciliación diaria no mezcla el cobro en mano…». Rojo comprobado sin el arreglo (`cuadra` daba falso).
+- **No tocar:** no sumar montos de monedas distintas en una misma cifra.

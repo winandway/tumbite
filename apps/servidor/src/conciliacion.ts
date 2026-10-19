@@ -31,7 +31,7 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
         COALESCE(SUM(pago_repartidor),0) AS rep, COALESCE(SUM(propina),0) AS prop,
         COALESCE(SUM((SELECT b.centavos FROM bonos_pedido b WHERE b.pedido_id = pedidos.id)),0) AS bonos,
         COALESCE(SUM(CASE WHEN EXISTS (SELECT 1 FROM cobros c WHERE c.pedido_id = pedidos.id) THEN total ELSE 0 END),0) AS total_con_cobro
-       FROM pedidos WHERE estado = 'entregado' AND date(entregado_en) = ?`,
+       FROM pedidos WHERE estado = 'entregado' AND date(entregado_en) = ? AND metodo_pago = 'tarjeta'`,
     )
     .bind(dia)
     .first<Record<string, unknown>>();
@@ -47,7 +47,7 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
   const dev = await db
     .prepare(
       `SELECT COALESCE(SUM(p.total),0) + (SELECT COALESCE(SUM(dv.monto),0) FROM devoluciones dv WHERE date(dv.creado_en) = ?1) AS total FROM pedidos p
-       WHERE p.estado = 'cancelado' AND p.pagado_en IS NOT NULL
+       WHERE p.estado = 'cancelado' AND p.pagado_en IS NOT NULL AND p.metodo_pago = 'tarjeta'
        AND date((SELECT MAX(h.creado_en) FROM historial_estados h WHERE h.pedido_id = p.id AND h.estado = 'cancelado')) = ?1`,
     )
     .bind(dia)
@@ -60,6 +60,23 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
     .bind(dia)
     .all<{ concepto: string; monto: number }>();
   const por = new Map(mov.map((m) => [m.concepto, Number(m.monto)]));
+  // C-CONCILIACION-DIRECTA (19 oct 2026): los pedidos cobrados en mano (efectivo o transferencia al
+  // repartidor) no pasan por Stripe ni por la billetera: se cuentan aparte y por moneda, nunca se
+  // suman a lo de arriba. Cada uno tiene su propia conciliación (conciliacion_estado).
+  const { results: dir } = await db
+    .prepare(
+      `SELECT moneda, COUNT(*) AS n, SUM(CASE WHEN conciliacion_estado = 'con_diferencia' THEN 1 ELSE 0 END) AS dif,
+        SUM(CASE WHEN conciliacion_estado = 'pendiente' THEN 1 ELSE 0 END) AS pend
+       FROM pedidos WHERE estado = 'entregado' AND date(entregado_en) = ? AND metodo_pago != 'tarjeta' GROUP BY moneda`,
+    )
+    .bind(dia)
+    .all<{ moneda: string; n: number; dif: number; pend: number }>();
+  const directos: Record<string, number> = {};
+  for (const d of dir) {
+    directos[`directos_${d.moneda}`] = n(d.n);
+    directos[`directosConDiferencia_${d.moneda}`] = n(d.dif);
+    directos[`directosPendientes_${d.moneda}`] = n(d.pend);
+  }
   const venta = por.get('venta') ?? 0;
   const entrega = por.get('entrega') ?? 0;
   const propina = por.get('propina') ?? 0;
@@ -90,6 +107,7 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
       cuadraRestaurantes: cuadraRest ? 'sí' : 'NO',
       cuadraRepartidores: cuadraRep ? 'sí' : 'NO',
       cuadraStripe: cuadraStripe ? 'sí' : 'NO',
+      ...directos,
     },
   };
   await db
