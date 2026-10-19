@@ -218,6 +218,47 @@ describe('el restaurante como los grandes (C-RESTAURANTE-MAS)', () => {
     expect(
       (await e.m.llamar('GET', '/datos/mi-restaurante/equipo', undefined, staff.token)).datos.miRol,
     ).toBe('staff');
+    // Roles como DoorDash Merchant: el staff agota platos y abre o cierra, pero no cambia precios,
+    // no borra platos, no toca horarios ni los datos del negocio.
+    const plato = e.platos[0]!;
+    const cambio = { nombreEs: 'Otro nombre', precioCentavos: 1 };
+    expect(
+      (await e.m.llamar('PUT', `/datos/mi-restaurante/platos/${plato}`, cambio, staff.token))
+        .estado,
+    ).toBe(403);
+    expect(
+      (await e.m.llamar('DELETE', `/datos/mi-restaurante/platos/${plato}`, undefined, staff.token))
+        .estado,
+    ).toBe(403);
+    expect(
+      (await e.m.llamar('POST', '/datos/mi-restaurante/platos', cambio, staff.token)).estado,
+    ).toBe(403);
+    expect(
+      (await e.m.llamar('PUT', '/datos/mi-restaurante/horarios', { turnos: [] }, staff.token))
+        .estado,
+    ).toBe(403);
+    const datos = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    expect(
+      (
+        await e.m.llamar(
+          'PUT',
+          '/datos/mi-restaurante',
+          { ...datos, nombre: 'Robado' },
+          staff.token,
+        )
+      ).estado,
+    ).toBe(403);
+    expect(
+      (
+        await e.m.llamar(
+          'PATCH',
+          `/datos/mi-restaurante/platos/${plato}/disponible`,
+          { disponible: false },
+          staff.token,
+        )
+      ).estado,
+    ).toBe(200);
     expect(
       (
         await e.m.llamar(

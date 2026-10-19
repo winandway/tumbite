@@ -28,6 +28,7 @@ import { kycAprobado } from './kyc';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos';
 import { minutosPausa } from '../pausa';
+import { restauranteDe } from './restauranteMas';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -306,6 +307,7 @@ catalogo.put('/mi-restaurante/horarios', async (c) => {
   const db = base(c);
   const f = await miRestaurante(db, u.id);
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);
+  await exigirRolRestaurante(db, u.id, 'manager');
   const { turnos } = await leerCuerpo(c, esquemaHorarios);
   for (const t of turnos)
     if (t.abre === t.cierra)
@@ -326,7 +328,7 @@ catalogo.put('/mi-restaurante/horarios', async (c) => {
 
 /** Los grupos de opciones de un plato: se reemplazan todos de una vez. */
 catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
-  const rid = await exigirMiRestaurante(c);
+  const rid = await exigirMiRestaurante(c, 'manager');
   const db = base(c);
   const plato = await db
     .prepare('SELECT id FROM platos WHERE id = ? AND restaurante_id = ? AND eliminado = 0')
@@ -379,6 +381,7 @@ catalogo.put('/mi-restaurante', async (c) => {
   const d = await leerCuerpo(c, esquemaMiRestaurante);
   const db = base(c);
   const actual = await miRestaurante(db, u.id);
+  if (actual) await exigirRolRestaurante(db, u.id, 'dueno');
   // Zona y celda del mapa salen de la ubicación del restaurante.
   const zona = d.lat != null && d.lng != null ? await zonaPara(db, d.lat, d.lng, false) : null;
   const zonaId = zona?.id ?? (actual?.zona_id as string | undefined) ?? ZONA_INICIAL;
@@ -458,15 +461,42 @@ catalogo.patch('/mi-restaurante/abierto', async (c) => {
   return c.json({ abierto, abiertoAhora: aRestaurante(conH!).abiertoAhora });
 });
 
-async function exigirMiRestaurante(c: Ctx) {
+async function exigirMiRestaurante(c: Ctx, minimo: 'staff' | 'manager' | 'dueno' = 'staff') {
   const u = exigir(c, 'restaurante');
   const f = await miRestaurante(base(c), u.id);
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);
+  await exigirRolRestaurante(base(c), u.id, minimo);
   return String(f.id);
 }
 
+/**
+ * Roles del equipo como en DoorDash Merchant: el staff opera pedidos, agota platos y abre o cierra;
+ * el manager además edita el menú y los horarios; solo el dueño cambia los datos del negocio.
+ */
+async function exigirRolRestaurante(
+  db: D1Database,
+  usuarioId: string,
+  minimo: 'staff' | 'manager' | 'dueno',
+) {
+  if (minimo === 'staff') return;
+  const r = await restauranteDe(db, usuarioId);
+  const nivel = new Map([
+    ['staff', 0],
+    ['manager', 1],
+    ['dueno', 2],
+  ]);
+  if (r && (nivel.get(r.rol) ?? 0) < (nivel.get(minimo) ?? 0))
+    throw new ErrorDatos(
+      minimo === 'dueno'
+        ? 'Solo el dueño puede cambiar los datos del restaurante.'
+        : 'Solo el dueño o un manager puede hacer esto.',
+      undefined,
+      403,
+    );
+}
+
 catalogo.post('/mi-restaurante/platos', async (c) => {
-  const rid = await exigirMiRestaurante(c);
+  const rid = await exigirMiRestaurante(c, 'manager');
   const d = await leerCuerpo(c, esquemaPlato);
   const id = nuevoId();
   await base(c)
@@ -493,7 +523,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
 });
 
 catalogo.put('/mi-restaurante/platos/:id', async (c) => {
-  const rid = await exigirMiRestaurante(c);
+  const rid = await exigirMiRestaurante(c, 'manager');
   const d = await leerCuerpo(c, esquemaPlato);
   const r = await base(c)
     .prepare(
@@ -535,7 +565,7 @@ catalogo.patch('/mi-restaurante/platos/:id/disponible', async (c) => {
 
 /** Borrar = esconder. Los pedidos viejos guardan su copia del plato; nada se pierde. */
 catalogo.delete('/mi-restaurante/platos/:id', async (c) => {
-  const rid = await exigirMiRestaurante(c);
+  const rid = await exigirMiRestaurante(c, 'manager');
   const r = await base(c)
     .prepare('UPDATE platos SET eliminado=1 WHERE id=? AND restaurante_id=?')
     .bind(c.req.param('id'), rid)
