@@ -514,6 +514,9 @@ export function Inicio() {
     return true;
   }
 
+  // Al salir de la pantalla (cerrar sesión, cambiar de cuenta) el GPS de fondo se apaga.
+  useEffect(() => () => void detenerUbicacionFondo(), []);
+
   // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta).
   useEffect(() => {
     if (!estado?.conectado) {

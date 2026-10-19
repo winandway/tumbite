@@ -17,9 +17,11 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   const ultima = locations.at(-1);
   if (!ultima) return;
   const token = await leerTokenGuardado();
-  if (!token) return;
+  // Sin sesión (cerró sesión o venció): el servicio se apaga solo; no sigue gastando batería ni
+  // queda la notificación fija.
+  if (!token) return detenerUbicacionFondo();
   try {
-    await fetch(`${URL_SERVIDOR}/datos/repartidor/ubicacion`, {
+    const r = await fetch(`${URL_SERVIDOR}/datos/repartidor/ubicacion`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -28,6 +30,7 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
         precision: ultima.coords.accuracy ?? null,
       }),
     });
+    if (r.status === 401) await detenerUbicacionFondo();
   } catch {
     // Sin señal: la próxima lectura lo intenta otra vez.
   }

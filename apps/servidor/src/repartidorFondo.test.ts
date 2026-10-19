@@ -25,9 +25,13 @@ describe('GPS en segundo plano del repartidor (C-GPS-FONDO)', () => {
     expect(tarea).toContain('TaskManager.defineTask(TAREA_UBICACION');
     expect(tarea).toContain('startLocationUpdatesAsync');
     expect(tarea).toContain('/datos/repartidor/ubicacion');
+    // Sin sesión o con la sesión vencida, el servicio se apaga solo (no queda encendido tras salir).
+    expect(tarea).toContain('if (!token) return detenerUbicacionFondo();');
+    expect(tarea).toContain('if (r.status === 401) await detenerUbicacionFondo();');
     const inicio = leer('apps/repartidor/src/Inicio.tsx');
     expect(inicio).toContain('iniciarUbicacionFondo(');
     expect(inicio).toContain('detenerUbicacionFondo()');
+    expect(inicio).toContain('useEffect(() => () => void detenerUbicacionFondo(), []);');
     expect(
       JSON.parse(leer('apps/repartidor/package.json')).dependencies['expo-task-manager'],
     ).toBeTruthy();
