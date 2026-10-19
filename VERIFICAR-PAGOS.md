@@ -70,12 +70,12 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 - Qué es: cuando el restaurante marca un plato que no tiene y el cliente lo quita, Tumbite recalcula el pedido y le devuelve la diferencia con un reembolso parcial en Stripe (`POST /refunds` con `amount`), con clave de idempotencia `ajuste-<pedido>`.
 - Estado: construido y probado con Stripe simulado (`operacion.test.ts`, «algo agotado»). **NO probado con una compra real.** Antes de anunciarlo: una compra de prueba con dos platos, marcar uno como agotado desde el panel, quitarlo desde la app, y ver en Stripe el reembolso parcial por la diferencia exacta.
-- Cómo se prueba: igual que la compra real de 1 dólar pendiente, pero con dos platos.
+- Cómo se prueba: igual que la compra real con tarjeta pendiente (autoriza 4,99, devuelve 1,00; `docs/PRUEBA-REAL-1-DOLAR.md`), pero con dos platos.
 
 ## 🔴 CIRCUITO CAMBIADO el 14 oct 2026: autorizar al pedir, capturar al entregar — SIN PROBAR EN REAL
 
 - Qué cambió: el intento de pago se crea con `capture_method: manual`. El pedido pasa a «pagado» con el aviso `payment_intent.amount_capturable_updated` (la tarjeta autorizada por el total). Al entregar, el servidor captura por el total vigente (`/payment_intents/:id/capture` con `amount_to_capture`); si se quitó un plato, captura menos (ya no hay reembolso parcial). Cancelar antes de entregar anula la autorización (`/payment_intents/:id/cancel`): sin reembolso y sin comisión de Stripe. Tabla `cobros` lleva autorizado / capturado / cancelado.
-- Estado: probado con Stripe simulado (`operacion.test.ts`, «cobrar al entregar y PIN en mano») y con el recorrido completo. **NO probado con una compra real.** Antes de anunciar nada: una compra real de 1 dólar y verla en Stripe como «sin capturar» al pedir, «capturada» al entregar; otra cancelada por el restaurante que quede «cancelada» sin reembolso; y una con dos platos quitando uno, capturada por el total nuevo.
+- Estado: probado con Stripe simulado (`operacion.test.ts`, «cobrar al entregar y PIN en mano») y con el recorrido completo. **NO probado con una compra real.** Antes de anunciar nada: una compra real con tarjeta (plato de 1,00; la tarjeta autoriza 4,99) y verla en Stripe como «sin capturar» al pedir, «capturada» al entregar; otra cancelada por el restaurante que quede «cancelada» sin reembolso; y una con dos platos quitando uno, capturada por el total nuevo.
 - Ojo: una autorización vence a los 7 días; los pedidos nuestros se entregan en la hora. Apple Pay/Google Pay con captura manual: validar cuando se activen.
 - El webhook de Stripe en el panel debe incluir el evento `payment_intent.amount_capturable_updated` (además de `payment_intent.succeeded`). Sin ese evento, los pedidos se quedan en «esperando el pago».
 

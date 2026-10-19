@@ -1,4 +1,6 @@
-# Prueba real de un dólar en tumbite.com — preparada, NO autorizada todavía (19 oct 2026)
+# Prueba real con tarjeta en tumbite.com: autoriza 4,99 dólares y devuelve 1,00 — preparada, NO autorizada (19 oct 2026)
+
+> **Corrección del 19 oct:** el nombre «prueba de un dólar» engañaba. El plato cuesta 1,00, pero con el servicio mínimo y el cargo por pedido pequeño la tarjeta **autoriza y cobra 4,99 dólares**; la devolución es **parcial, de 1,00**. Lo que esta prueba demuestra y lo que NO demuestra está abajo, en «Límites».
 
 Esta prueba mueve dinero real con una tarjeta de Richard. **No se ejecuta sin su autorización escrita** para esta prueba concreta (importe, tarjeta y fecha). La automatización de tareas no la autoriza.
 
@@ -8,7 +10,20 @@ Esta prueba mueve dinero real con una tarjeta de Richard. **No se ejecuta sin su
 2. Que una cancelación antes de que el restaurante acepte anula la autorización y no cobra nada.
 3. Que una devolución después de cobrar llega a la tarjeta.
 
-Con eso, el punto 4 de la auditoría y la fila «Probado con Stripe real» de `VERIFICAR-PAGOS.md` pasan a verde. Sin eso, los pagos de Estados Unidos **no** están comercialmente probados.
+Con eso, en `VERIFICAR-PAGOS.md` pasan a verde **solo** estas tres filas: cobro real con tarjeta al recoger, anulación de una autorización real y devolución parcial real. Los pagos de Estados Unidos **siguen sin estar comercialmente probados** en todo lo que aparece en «Límites».
+
+## Límites: lo que esta prueba NO demuestra
+
+| No demuestra                                      | Por qué                                                                                                                            | Cómo se probaría después                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| La entrega con repartidor                         | El pedido es «Recojo en el local»: no hay envío, ni oferta, ni GPS, ni foto de entrega, ni pago al repartidor                      | Piloto en la calle con un repartidor del equipo                                           |
+| La liquidación al restaurante                     | Que el cobro se capture no prueba que la parte del restaurante llegue a su cuenta conectada de Stripe ni que el pago semanal salga | Restaurante con su cuenta conectada aprobada y un pago real a su banco, visto en su panel |
+| Retiros del repartidor                            | Están apagados por decisión de Richard                                                                                             | Solo con su orden expresa                                                                 |
+| Una devolución total                              | Solo se devuelve 1,00 de 4,99                                                                                                      | Otra operación autorizada, devolviendo el total                                           |
+| Otros métodos                                     | Apple Pay y Google Pay no están en la app; efectivo, transferencia y recargas no pasan por esta prueba                             | Su propio piloto (ver `docs/PILOTO-POR-PAIS.md`)                                          |
+| Disputas y contracargos                           | Requieren que el banco abra una disputa                                                                                            | Modo de prueba de Stripe (tarjetas de disputa) en staging                                 |
+| Propina extra, cambio de dirección, plato agotado | No se usan en esta compra                                                                                                          | Ya probados en staging con Stripe de prueba; con dinero real, en el piloto                |
+| Otras monedas                                     | La tarjeta solo se acepta en dólares (C-TARIFAS-PAIS)                                                                              | —                                                                                         |
 
 ## Con qué se hace (consultado en producción el 19 oct, solo lectura)
 
@@ -25,7 +40,9 @@ Con eso, el punto 4 de la auditoría y la fila «Probado con Stripe real» de `V
 | B. Segunda compra igual, cancelada antes de aceptar          | **0 dólares** (la autorización de 4,99 se anula)              | Stripe muestra el pago «cancelado», sin cargo                                                    |
 | C. Devolución de 1,00 dólar del pedido A desde el superadmin | Le vuelven **1,00 dólar**                                     | Stripe muestra el reembolso; el pedido guarda la devolución                                      |
 
-**Costo real estimado para Windoce:** la comisión de Stripe del pedido A (2,9 % + 0,30 = unos 0,44 dólares) no se recupera con la devolución. Total que sale de la tarjeta de Richard: 4,99 − 1,00 = **3,99 dólares**, que entran a la cuenta de Stripe de Windoce menos esa comisión.
+**De dónde sale cada cifra (tarifas vigentes en producción, consultadas el 19 oct):** plato 1,00; servicio 5 % de 1,00 = 0,05, que sube al mínimo de 1,99; cargo por pedido pequeño 2,00 porque la comida no llega a 10,00; envío 0 por ser recogida; impuesto apagado. Total 4,99.
+
+**Costo real estimado para Windoce:** la comisión de Stripe del pedido A (tarifa pública estándar de tarjetas en EE. UU., 2,9 % + 0,30 = unos 0,44 dólares; el contrato real de la cuenta puede ser otro) no se recupera con la devolución. La autorización anulada del pedido B no cobra comisión de procesamiento según la documentación de Stripe [pendiente de confirmar en el panel de la cuenta]. Total que sale de la tarjeta de Richard: 4,99 − 1,00 = **3,99 dólares**, que entran a la cuenta de Stripe de Windoce menos esa comisión. **Límite de dinero de la prueba: como máximo 4,99 dólares autorizados a la vez, dos veces (A y B); nada más.**
 
 ## Pasos (Richard toca la app; yo vigilo y anoto)
 
