@@ -2476,7 +2476,10 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
   if (!p) throw new ErrorDatos('Solo se califican pedidos entregados.', undefined, 409);
   await db
     .prepare(
-      'INSERT OR REPLACE INTO calificaciones (pedido_id, estrellas_restaurante, estrellas_repartidor, culpa_restaurante, comentario) VALUES (?, ?, ?, ?, ?)',
+      // Actualizar sin borrar la fila: la respuesta del restaurante y la fecha original se conservan.
+      `INSERT INTO calificaciones (pedido_id, estrellas_restaurante, estrellas_repartidor, culpa_restaurante, comentario) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(pedido_id) DO UPDATE SET estrellas_restaurante = excluded.estrellas_restaurante, estrellas_repartidor = excluded.estrellas_repartidor,
+       culpa_restaurante = excluded.culpa_restaurante, comentario = excluded.comentario`,
     )
     .bind(
       c.req.param('id'),

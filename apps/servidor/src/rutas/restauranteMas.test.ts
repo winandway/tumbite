@@ -102,7 +102,19 @@ describe('el restaurante como los grandes (C-RESTAURANTE-MAS)', () => {
     expect(
       (await e.m.llamar('GET', '/datos/mi-restaurante/resenas', undefined, e.dueno.token)).datos
         .respondidas,
-    ).toBe(1);
+    ).toBe(1); // El cliente cambia sus estrellas después: la respuesta del restaurante no se pierde.
+    await e.m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/calificar`,
+      { estrellasRestaurante: 4, comentario: 'Muy bueno' },
+      e.cliente.token,
+    );
+    const otra = await e.m.llamar('GET', '/datos/mi-restaurante/resenas', undefined, e.dueno.token);
+    expect(otra.datos.resenas[0]).toMatchObject({
+      estrellas: 4,
+      comentario: 'Muy bueno',
+      respuesta: '¡Gracias, Ana!',
+    });
   });
 
   it('orden: platos dentro de su categoría y categorías en el orden del restaurante, en el menú público', async () => {
