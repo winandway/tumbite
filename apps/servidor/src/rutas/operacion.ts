@@ -1734,6 +1734,14 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       'gps',
       409,
     );
+  // C-COBRO-DIRECTO: un pedido que se cobra en mano no se deja en un lugar seguro sin cobrar (como
+  // los pedidos en efectivo de DoorDash). Si el cliente no aparece, el camino es «No pagó».
+  if (modo === 'seguro' && esDirecto(String(p.metodo_pago ?? 'tarjeta')))
+    throw new ErrorDatos(
+      'Este pedido se cobra en mano: no se puede dejar sin entregarlo. Si el cliente no aparece, toca «El cliente no pagó».',
+      undefined,
+      409,
+    );
   if (modo === 'seguro') {
     const aviso = msDeBase(p.h_no_aparece);
     if (aviso == null || Date.now() - aviso < 5 * 60_000)

@@ -322,6 +322,48 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect(c.detalle).toMatchObject({ directos_USD: 1, directosConDiferencia_USD: 0 });
   });
 
+  it('un pedido cobrado en mano no se deja en un lugar seguro: el camino es «El cliente no pagó»', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    // El cliente no aparece desde hace 10 minutos (como si hubiera esperado lo que pide la regla).
+    await e.m.DB.prepare(
+      "INSERT OR REPLACE INTO hitos_pedido (pedido_id, hito, creado_en) VALUES (?, 'no_aparece', datetime('now', '-10 minutes'))",
+    )
+      .bind(id)
+      .run();
+    const casa = await e.m.DB.prepare('SELECT lat, lng FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ lat: number; lng: number }>();
+    await e.m.envejecerGps(id);
+    await e.m.ubicar(rep.token, casa!);
+    await e.m.ubicar(rep.token, casa!);
+    const seguro = await e.m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=seguro&nota=Recepcion`,
+      rep.token,
+      casa!,
+    );
+    expect(seguro.estado).toBe(409);
+    expect(String(seguro.datos.error)).toMatch(/paid in person/);
+    const f = await e.m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ estado: string }>();
+    expect(f?.estado).toBe('en_camino');
+  });
+
   it('pago de menos → con_diferencia y deuda del cliente; el cliente con deuda no puede pedir en efectivo', async () => {
     const e = await escenario();
     const p = await e.pedir();
@@ -1018,6 +1060,7 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     const rep = leer('apps/repartidor/src/Inicio.tsx');
     expect(rep).toContain('/cobre');
     expect(rep).toContain('/no-pago');
+    expect(rep).toContain('testID="sin-lugar-seguro"');
     expect(rep).toContain('/datos/repartidor/saldo-prepago');
     expect(rep).toContain('/datos/repartidor/recargar');
     expect(leer('apps/restaurante/src/Inicio.tsx')).toContain('pagoDirecto');

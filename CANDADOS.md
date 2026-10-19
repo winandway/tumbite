@@ -834,3 +834,9 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Cómo quedó:** `apps/servidor/src/conciliacion.ts` cuenta solo `metodo_pago = 'tarjeta'` en vendido, abonos, capturado y devuelto. Los pedidos en mano van aparte en el detalle, por moneda: `directos_<MONEDA>`, `directosConDiferencia_<MONEDA>`, `directosPendientes_<MONEDA>`. Cada pedido en mano tiene su propia conciliación (`conciliacion_estado`). Estados Unidos con tarjeta no cambia.
 - **Prueba:** `internacional.test.ts`, «la conciliación diaria no mezcla el cobro en mano…». Rojo comprobado sin el arreglo (`cuadra` daba falso).
 - **No tocar:** no sumar montos de monedas distintas en una misma cifra.
+
+## C-SIN-LUGAR-SEGURO-DIRECTO: un pedido cobrado en mano no se deja en un lugar seguro (19 oct 2026)
+
+- **Qué se rompía:** en un pedido en efectivo o por transferencia al repartidor, «Dejar en lugar seguro» marcaba el pedido como entregado sin que nadie cobrara. Rojo comprobado: la ruta respondía 200.
+- **Cómo quedó:** la entrega con `modo=seguro` de un pedido directo responde 409 y explica que el camino es «El cliente no pagó». La app del repartidor no muestra el campo del lugar seguro en esos pedidos (`testID="sin-lugar-seguro"`). Igual que DoorDash con los pedidos en efectivo.
+- **Prueba:** `internacional.test.ts`, «un pedido cobrado en mano no se deja en un lugar seguro…», y la comprobación de piezas de las apps.

@@ -91,6 +91,8 @@ const es = {
     recibi: 'Lo que recibiste (sin la propina)',
     cobre: 'Cobré',
     noPago: 'El cliente no pagó',
+    sinLugarSeguro:
+      'Este pedido se cobra en mano: no se deja en un lugar seguro. Si el cliente no aparece, toca «El cliente no pagó».',
     noPagoConfirmar:
       '¿Seguro? El pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
     cobroOk: 'Cobro registrado. Lo confirmaste tú; si fue transferencia, revísala en tu banco.',
@@ -269,6 +271,8 @@ const en: T = {
     recibi: 'What you received (without the tip)',
     cobre: 'Collected',
     noPago: 'The customer didn’t pay',
+    sinLugarSeguro:
+      'This order is paid in person, so it can’t be left in a safe place. If the customer doesn’t show up, tap “The customer didn’t pay.”',
     noPagoConfirmar:
       'Are you sure? The order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
     cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',

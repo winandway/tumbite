@@ -1841,6 +1841,14 @@ export function Inicio() {
                             {t.esperando5} {Math.floor(faltanSeg / 60)}:
                             {String(faltanSeg % 60).padStart(2, '0')}
                           </Text>
+                        ) : activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
+                          // C-COBRO-DIRECTO: se cobra en mano; no hay «lugar seguro».
+                          <Text
+                            style={{ color: '#5E5E5E', marginTop: 6 }}
+                            testID="sin-lugar-seguro"
+                          >
+                            {tg.pedido.sinLugarSeguro}
+                          </Text>
                         ) : (
                           <>
                             <TextInput
