@@ -1675,3 +1675,41 @@ CREATE TABLE IF NOT EXISTS pagos_local (
   -- Foto del ticket del restaurante (opcional), en el almacén privado de evidencias.
   ticket_clave TEXT
 );
+
+-- C-BANDEJA-DINERO (19 oct 2026): incidencias de dinero que nadie debe acreditar ni cerrar solo
+-- (por ejemplo, una recarga cuyo monto en Stripe no coincide). Una por referencia.
+CREATE TABLE IF NOT EXISTS incidencias_dinero (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  pedido_id TEXT,
+  recarga_id TEXT,
+  cuenta_id TEXT,
+  pais TEXT,
+  moneda TEXT,
+  monto_esperado INTEGER,
+  monto_recibido INTEGER,
+  detalle TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'resuelta')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+-- Seguimiento de los casos de la bandeja de soporte del cobro en mano. Los casos SALEN de los
+-- estados del pedido y del libro (no hay contabilidad aparte); aquí solo vive quién lo lleva, en
+-- qué estado está y el historial de lo que hizo soporte. Nada se borra.
+CREATE TABLE IF NOT EXISTS casos_dinero (
+  clave TEXT PRIMARY KEY,
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'en_revision', 'resuelto')),
+  responsable_id TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS casos_dinero_historial (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  clave TEXT NOT NULL,
+  accion TEXT NOT NULL,
+  nota TEXT NOT NULL DEFAULT '',
+  autor_id TEXT NOT NULL,
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS casos_dinero_historial_clave ON casos_dinero_historial(clave, creado_en);
