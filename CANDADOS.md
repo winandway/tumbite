@@ -807,6 +807,7 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se hizo:** `apps/servidor/src/rutas/stripeAvisos.ts`. `GET /datos/interno-stripe/avisos` lista los avisos (id, dirección, estado, modo prueba o real, eventos) **sin secretos** y dice si falta el de cuentas conectadas. `POST /datos/interno-stripe/avisos/conectadas` lo crea una sola vez (`connect=true`, `account.updated` y `payout.failed`, `metadata.tumbite=conectadas`, apuntando a `SITIO_URL/datos/stripe/aviso`) y devuelve su secreto **solo al crearlo**, para guardarlo directo como `STRIPE_WEBHOOK_SECRET_CONECTADAS` (variable secreta del sitio) sin mostrarlo. Solo con el secreto del reloj, comparado en tiempo constante; sin él, 404.
 - **Prueba (en rojo comprobado):** `rutas/stripeAvisos.test.ts` (4).
 - **Qué NO tocar:** la ruta nunca devuelve la llave ni el secreto de un aviso existente; crear el aviso de producción exige la autorización de Richard.
+- **19 oct, noche:** la cuenta de Stripe de Windoce es **compartida con otros negocios**; la consulta solo muestra los avisos cuya dirección es la de este sitio (perímetro de Tumbite). Prueba en rojo comprobada.
 
 ## C-FOTO-TICKET: foto del ticket del restaurante en el pago en el local (19 oct 2026)
 

@@ -52,7 +52,17 @@ const esConectadas = (a: Aviso, env: Env) =>
   a.metadata?.tumbite === 'conectadas' && a.url === urlAviso(env);
 
 stripeAvisos.get('/interno-stripe/avisos', async (c) => {
-  const { avisos } = await listar(c.env);
+  const { avisos: todos } = await listar(c.env);
+  // La cuenta de Stripe de Windoce es compartida con otros negocios: solo se muestran los avisos que
+  // apuntan a este sitio (perímetro de Tumbite).
+  const host = new URL(c.env.SITIO_URL ?? 'https://invalido.local').host;
+  const avisos = todos.filter((a) => {
+    try {
+      return new URL(a.url).host === host;
+    } catch {
+      return false;
+    }
+  });
   return c.json({
     avisos: avisos.map((a) => ({
       id: a.id,

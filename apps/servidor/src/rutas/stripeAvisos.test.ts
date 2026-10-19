@@ -52,6 +52,15 @@ describe('avisos de Stripe desde el servidor (C-STRIPE-AVISOS)', () => {
         metadata: {},
         secret: 'whsec_no_debe_salir',
       },
+      // La cuenta de Stripe es compartida con otros negocios: sus avisos nunca se muestran.
+      {
+        id: 'we_otro',
+        url: 'https://otro-negocio.example/webhook',
+        status: 'enabled',
+        livemode: false,
+        enabled_events: ['charge.succeeded'],
+        metadata: {},
+      },
     ]);
     const r = await pedir('GET', '/datos/interno-stripe/avisos');
     expect(r.status).toBe(200);
@@ -59,6 +68,8 @@ describe('avisos de Stripe desde el servidor (C-STRIPE-AVISOS)', () => {
     expect(d.faltaConectadas).toBe(true);
     expect(d.avisos[0]).toMatchObject({ id: 'we_1', estado: 'enabled', modoPrueba: true });
     expect(JSON.stringify(d)).not.toContain('whsec_');
+    expect(d.avisos).toHaveLength(1);
+    expect(JSON.stringify(d)).not.toContain('otro-negocio');
   });
 
   it('crea el de cuentas conectadas una sola vez (connect, eventos de cuentas) y entrega su secreto solo al crearlo', async () => {
