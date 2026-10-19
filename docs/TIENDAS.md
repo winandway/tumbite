@@ -41,6 +41,8 @@ Comprobado el 12 oct 2026 con la configuración final de Expo (lo que de verdad 
 
 ## Fichas de la tienda
 
+> **Revisadas el 19 oct 2026:** Apple Pay y Google Pay se quitaron de la descripción hasta que estén encendidos (prometerlos haría rechazar la app); la ubicación del repartidor en segundo plano quedó declarada en la privacidad y en las notas para el revisor. Las capturas se sacan al final, del recorrido real.
+
 Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palabras clave 100; Google, descripción corta 80. Todo lo de abajo cabe.
 
 ### Tumbite (cliente)
@@ -52,7 +54,8 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
 - **Descripción** EN:
   Tumbite brings you the best local restaurants with prices you can trust.
   • See every cost before you pay: food, delivery, service, and tip. No surprises.
-  • Pay with your card, Apple Pay, or Google Pay right inside the app.
+  • Pay with your card right inside the app.
+  • Save your favorite restaurants and your addresses, and use coupons at checkout.
   • Follow your order live: in the kitchen, on the way, and on the map until it reaches your door.
   • 100% of your tip goes to your driver.
   • Changed your mind? Cancel before the restaurant accepts and get a full refund. If a restaurant doesn’t confirm within 10 minutes, we cancel and refund you automatically.
@@ -62,7 +65,8 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
 - **Descripción** ES:
   Tumbite te trae los mejores restaurantes locales con precios en los que puedes confiar.
   • Ves cada costo antes de pagar: comida, envío, servicio y propina. Sin sorpresas.
-  • Pagas con tarjeta, Apple Pay o Google Pay dentro de la app.
+  • Pagas con tarjeta dentro de la app.
+  • Guardas tus restaurantes favoritos y tus direcciones, y usas cupones al pagar.
   • Sigues tu pedido en vivo: en la cocina, en camino y en el mapa hasta tu puerta.
   • El 100 % de la propina es para tu repartidor.
   • ¿Cambiaste de idea? Cancela antes de que el restaurante acepte y te devolvemos todo. Si un restaurante no confirma en 10 minutos, lo cancelamos y te devolvemos el dinero solos.
@@ -139,23 +143,23 @@ Sin violencia, sin contenido sexual, sin apuestas, sin compras de alcohol o taba
 
 Datos que se recogen, todos **ligados a la cuenta**, **ninguno para rastrear** ni para publicidad de terceros:
 
-| Dato                                             | Cliente                                                | Repartidor       | Restaurante        | Para qué                                                                                          |
-| ------------------------------------------------ | ------------------------------------------------------ | ---------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| Nombre, correo, teléfono                         | Sí                                                     | Sí               | Sí                 | La cuenta y el soporte                                                                            |
-| Dirección de entrega                             | Sí                                                     | —                | Sí (local)         | Entregar el pedido                                                                                |
-| Ubicación precisa (solo con la app abierta)      | Sí                                                     | Sí               | —                  | Restaurantes cercanos, ruta                                                                       |
-| Historial de compras                             | Sí                                                     | —                | Sí (ventas)        | El servicio y los recibos                                                                         |
-| Pagos                                            | Lo maneja Stripe; Tumbite no guarda números de tarjeta | Banco por Stripe | Banco por Stripe   | Cobrar y pagar                                                                                    |
-| Fotos (documento y cara)                         | —                                                      | Sí               | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo                                                |
-| Fotos del pedido (al recogerlo y al entregarlo)  | —                                                      | Sí               | —                  | Probar la recogida y la entrega; las ven el cliente, el restaurante y el repartidor de ese pedido |
-| Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí               | Sí                 | Avisos del pedido                                                                                 |
-| Mensajes de soporte                              | Sí                                                     | Sí               | Sí                 | Atender quejas                                                                                    |
+| Dato                                             | Cliente                                                | Repartidor                                           | Restaurante        | Para qué                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| Nombre, correo, teléfono                         | Sí                                                     | Sí                                                   | Sí                 | La cuenta y el soporte                                                                            |
+| Dirección de entrega                             | Sí                                                     | —                                                    | Sí (local)         | Entregar el pedido                                                                                |
+| Ubicación precisa                                | Sí, solo con la app abierta                            | Sí, también en segundo plano mientras está conectado | —                  | Restaurantes cercanos; seguimiento del pedido en curso y ofertas cercanas                         |
+| Historial de compras                             | Sí                                                     | —                                                    | Sí (ventas)        | El servicio y los recibos                                                                         |
+| Pagos                                            | Lo maneja Stripe; Tumbite no guarda números de tarjeta | Banco por Stripe                                     | Banco por Stripe   | Cobrar y pagar                                                                                    |
+| Fotos (documento y cara)                         | —                                                      | Sí                                                   | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo                                                |
+| Fotos del pedido (al recogerlo y al entregarlo)  | —                                                      | Sí                                                   | —                  | Probar la recogida y la entrega; las ven el cliente, el restaurante y el repartidor de ese pedido |
+| Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí                                                   | Sí                 | Avisos del pedido                                                                                 |
+| Mensajes de soporte                              | Sí                                                     | Sí                                                   | Sí                 | Atender quejas                                                                                    |
 
 Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://tumbite.com/delete-account`).
 
 ### Notas para el revisor (se pegan en «App Review Information»)
 
-EN: Tumbite is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Location is only used while the app is open. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.” Drivers photograph the closed order at pickup (the restaurant confirms it on its screen) and the delivery at the door; delivery is only allowed near the address, so the reviewer driver account is exempt from the distance check (it still needs the photos).
+EN: Tumbite is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Customers’ location is only used while the app is open. Drivers’ location is also used in the background, only while they are online to receive or deliver orders (shown by a persistent notification on Android); it stops when they go offline. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.” Drivers photograph the closed order at pickup (the restaurant confirms it on its screen) and the delivery at the door; delivery is only allowed near the address, so the reviewer driver account is exempt from the distance check (it still needs the photos).
 
 Cuentas de prueba para el revisor: una de cliente, una de repartidor y una de restaurante, con un restaurante de prueba aprobado. El correo de la de repartidor va en la variable `CORREOS_REVISOR` del sitio (YaDominios Cloud → Variables de entorno), para que pueda recoger y entregar desde otra ciudad. **Se crean el día del envío** con contraseñas nuevas que van solo en el formulario de Apple y Google, nunca en el repositorio.
 

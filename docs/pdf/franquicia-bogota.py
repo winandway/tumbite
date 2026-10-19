@@ -136,7 +136,8 @@ tr.total td {{ font-weight: 700; color: var(--gris); border-top: 1.5px solid var
 <section class="hoja portada">
   <div>
     <img src="../../apps/panel/public/marca/logo.webp" style="height:16mm;background:#fff;border-radius:8px;padding:2mm 3mm" alt="Tumbite">
-    <div style="margin-top:10mm" class="etq">Propuesta de franquicia · Colombia</div>
+    <div style="margin-top:6mm;display:inline-block;border:1px solid #ff3008;color:#ff3008;border-radius:6px;padding:1.5mm 3mm;font-family:Poppins;font-weight:700;font-size:8.5pt">BORRADOR PARA REVISIÓN DE RICHARD · CIFRAS PROPUESTAS, NO DEFINITIVAS</div>
+    <div style="margin-top:6mm" class="etq">Propuesta de franquicia · Colombia</div>
     <h1>Tumbite <span class="rojo">Bogotá</span>:<br>la franquicia de toda la ciudad</h1>
     <p style="margin-top:6mm;max-width:130mm">Una app de domicilios completa, ya construida y funcionando, para lanzarla en Bogotá con un socio local. Este documento explica cuánto cuesta, cómo se lanza, cómo te apoyamos, cuánto deja y cómo se recupera el capital.</p>
     <div class="datos">
@@ -411,13 +412,37 @@ tr.total td {{ font-weight: 700; color: var(--gris); border-top: 1.5px solid var
 </section>
 
 <section class="hoja">
+  <div class="etq">Lo construido y lo que falta para Bogotá</div>
+  <h2>Qué hace hoy el sistema y qué se construye antes de abrir</h2>
+  <p class="sub">Para que el socio sepa exactamente qué recibe el primer día y qué queda en el plan de trabajo de Tumbite antes del lanzamiento.</p>
+  <div class="col2">
+    <div class="tarjeta"><h3>Ya funciona hoy</h3><ul class="lista">
+      <li>Las tres apps (cliente, restaurante, repartidor) y los paneles web, en español e inglés.</li>
+      <li>El panel de la franquicia con los números de su territorio, y zonas dibujadas por mapa.</li>
+      <li>El cobro en mano: efectivo o transferencia al repartidor, el pago de la comida en el local con su ticket, y la comisión cobrada de un saldo prepago, con su libro contable.</li>
+      <li>Las recargas por punto de venta con códigos de un solo uso.</li>
+      <li>El cobro con tarjeta por Stripe (hoy en Estados Unidos).</li>
+    </ul></div>
+    <div class="tarjeta"><h3>Se construye o se contrata antes de abrir Bogotá</h3><ul class="lista">
+      <li><b>Tarifas en pesos:</b> precios, envío y comisiones en pesos colombianos (hoy la tarifa es en dólares).</li>
+      <li><b>Pasarela local:</b> tarjeta, PSE y Nequi con la empresa del socio (Wompi u otra); Stripe no ofrece PSE ni Nequi.</li>
+      <li><b>Liquidación automática 75 / 25:</b> hoy las condiciones de la franquicia se guardan, pero el reparto mensual se calcula a mano; se automatiza antes de abrir.</li>
+      <li><b>0 % de comisión los tres primeros meses:</b> hoy se haría con el plan de cada restaurante; la promoción automática por fechas se construye.</li>
+      <li><b>Revisión legal en Colombia</b> (franquicia, datos personales, Ley 2466 de repartidores, saldo prepago).</li>
+    </ul></div>
+  </div>
+  <p class="nota">Qué hace Tumbite y qué contrata el socio (por ejemplo, la pasarela y su abogado) se fija en el contrato.</p>
+  <div class="pie"><span>Tumbite Bogotá · Propuesta de franquicia</span><span></span></div>
+</section>
+
+<section class="hoja">
   <div class="etq">Condiciones</div>
   <h2>Las condiciones de la franquicia, y lo que hay que saber</h2>
   <div class="col2">
     <div class="tarjeta"><h3>Condiciones propuestas</h3><table>
       <tr><td>Territorio</td><td>Toda Bogotá, con exclusividad. Soacha y Chía se pueden sumar.</td></tr>
-      <tr><td>Cuota de franquicia</td><td>120.000 USD, en dos pagos: firma y apertura.</td></tr>
-      <tr><td>Reparto del margen</td><td>75 % franquiciado, 25 % Tumbite, liquidado cada mes.</td></tr>
+      <tr><td>Cuota de franquicia</td><td>120.000 USD, en dos pagos: firma y apertura (propuesta).</td></tr>
+      <tr><td>Reparto del margen</td><td>75 % franquiciado, 25 % Tumbite, liquidado cada mes (propuesta).</td></tr>
       <tr><td>Duración</td><td>10 años, renovables por 5.</td></tr>
       <tr><td>Metas para conservar la exclusividad</td><td>500 restaurantes activos al mes 12 y 50.000 pedidos al mes al mes 24.</td></tr>
       <tr><td>Comisión a restaurantes</td><td>Cerca del 15 %, con 0 % los 3 primeros meses para los primeros restaurantes.</td></tr>

@@ -38,6 +38,16 @@ Documentos de respaldo: la reconciliación punto por punto (`docs/RECONCILIACION
 | F18: notas por culpa del restaurante y términos del nivel                                                                                                                                      | Sí           | Sí                                  | Sí (6a2228c5, 18 oct)   | Sí (748bffe0, 18 oct)                       | —                                                              |
 | Pagos con tarjeta en EE. UU. (Stripe)                                                                                                                                                          | Sí           | Sí                                  | Sí, en cada publicación | Sí                                          | **No**: falta la compra real de un dólar y una devolución real |
 
+## 2b. Ronda del 19 de octubre (versión 5944bc25)
+
+| Pieza                                                                      | Implementado | Probado localmente                          | Aprobado en staging                                                             | Publicado      | Operación real                          |
+| -------------------------------------------------------------------------- | ------------ | ------------------------------------------- | ------------------------------------------------------------------------------- | -------------- | --------------------------------------- |
+| Ruta interna para consultar y crear los avisos de Stripe (C-STRIPE-AVISOS) | Sí           | Sí                                          | Sí (consultada en staging: falta el aviso de cuentas conectadas en modo prueba) | PENDIENTE_PROD | —                                       |
+| Foto del ticket del restaurante (C-FOTO-TICKET)                            | Sí           | Sí, botón visto en pantalla en el recorrido | Sí                                                                              | PENDIENTE_PROD | No                                      |
+| Formato de montos por moneda (C-MONEDA-LOCAL)                              | Sí           | Sí                                          | Sí                                                                              | PENDIENTE_PROD | — (se conecta con las tarifas por país) |
+| Pruebas propias de los puntos 27 y 33                                      | Sí           | Sí                                          | Sí                                                                              | PENDIENTE_PROD | —                                       |
+| Rotación de la clave expuesta del cliente de pruebas                       | Hecha        | Comprobada: la vieja da 401 y la nueva 200  | —                                                                               | —              | —                                       |
+
 ## 3. El recorrido internacional aprobado, paso por paso
 
 | Paso aprobado por Richard                                                                                      | Dónde está                                                                                                                                   | Estado                                         |
@@ -96,8 +106,7 @@ Requisitos de lanzamiento (MVP) que siguen abiertos, del más importante al meno
 9. Ciudades de la web desde el servidor (F17): la lista fija es intencional hasta que exista el interruptor público de lanzamiento por ciudad; depende de la decisión de lanzamiento.
 10. Fichas de las tiendas (al final).
 11. Pago móvil y pasarelas locales (B.7): sin contrato.
-12. Foto del ticket del restaurante en el pago en el local.
-13. Montos en moneda local en las apps antes de cualquier piloto fuera de EE. UU.
+12. Montos en moneda local en las apps antes de cualquier piloto fuera de EE. UU.
 
 Ampliaciones posteriores (puntos 36 a 67): ninguna terminada; once parciales y veintiuna pendientes, separadas del lanzamiento.
 
