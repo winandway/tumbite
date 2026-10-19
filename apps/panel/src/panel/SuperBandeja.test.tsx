@@ -30,11 +30,25 @@ function servidor(error = false) {
         ? new Response(JSON.stringify({ error: 'Sin conexión' }), { status: 503 })
         : new Response(JSON.stringify({ repetida: false, caso: CASO }), { status: 200 });
     if (url.includes('/bandeja-dinero?'))
-      return new Response(JSON.stringify({ casos: [CASO] }), { status: 200 });
+      return new Response(
+        JSON.stringify({
+          casos: url.includes('pagina=1') ? [{ ...CASO, clave: 'excedente:otro' }] : [CASO],
+          totales: { excedente: 2 },
+          hayMas: { excedente: !url.includes('pagina=1') },
+        }),
+        { status: 200 },
+      );
     return new Response(
       JSON.stringify({
         caso: CASO,
-        historial: [],
+        historial: [
+          {
+            accion: 'nota',
+            nota: 'Llamé al repartidor',
+            autor: 'Soporte',
+            en: '2026-10-19 10:05:00',
+          },
+        ],
         bitacora: [{ evento: 'cobro_efectivo', detalle: '', en: '2026-10-19 10:00:00' }],
         libro: [{ concepto: 'excedente_cliente_por_devolver', monto: -12000, moneda: 'COP' }],
         evidencias: [`/datos/pedidos/${CASO.pedidoId}/evidencia/ticket`],
@@ -64,6 +78,7 @@ describe('bandeja de soporte del cobro en mano', () => {
     render(<SuperBandeja base="/panel/control-x" idioma="en" clave={CASO.clave} />);
     expect(await screen.findByText(/Customer: Ana/)).toBeInTheDocument();
     expect(screen.getByText('The customer overpaid the driver.')).toBeInTheDocument();
+    expect(screen.getByText(/support note, as written/)).toBeInTheDocument();
     expect(screen.getByAltText('Evidence')).toHaveAttribute(
       'src',
       CASO.montos ? `/datos/pedidos/${CASO.pedidoId}/evidencia/ticket` : '',
@@ -83,5 +98,20 @@ describe('bandeja de soporte del cobro en mano', () => {
     });
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveValue('Returned in cash, receipt photo');
+  });
+
+  it('muestra el total por tipo y trae la página siguiente; las notas de soporte van como texto original', async () => {
+    servidor();
+    render(<SuperBandeja base="/panel/control-x" idioma="en" clave={null} />);
+    expect(
+      await screen.findByRole('tab', { name: /Customer overpayment \(2\)/ }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: /Customer overpayment/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Show more cases' }));
+    await waitFor(() =>
+      expect(screen.getAllByText(/Customer overpayment/, { selector: '.insignia' })).toHaveLength(
+        2,
+      ),
+    );
   });
 });

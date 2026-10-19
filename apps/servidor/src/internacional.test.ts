@@ -1697,4 +1697,81 @@ describe('bandeja de soporte del cobro en mano y recuperación tras interrupcion
     expect(await ajustarReservaDirecta(e.m.DB, id)).toBe(0);
     expect(await saldo(e.m.DB, rep.id, 'prepago', 'US', 'USD')).toBe(850);
   });
+
+  it('la bandeja no esconde casos: 120 de un tipo se ven por páginas, los más viejos primero, con su total (C-BANDEJA-DINERO)', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    // 120 pedidos copiados del primero, cada uno con su comida perdida (fechas escalonadas).
+    const cols = (
+      await e.m.DB.prepare("SELECT name FROM pragma_table_info('pedidos')").all<{ name: string }>()
+    ).results.map((c) => c.name);
+    const sel = cols.map((c) => (c === 'id' ? "'copia-' || n.i" : c)).join(', ');
+    await e.m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 120)
+       INSERT INTO pedidos (${cols.join(', ')}) SELECT ${sel} FROM pedidos, n WHERE pedidos.id = ?`,
+    )
+      .bind(id)
+      .run();
+    await e.m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 120)
+       INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, pedido_id, referencia, creado_en)
+       SELECT 'perd-' || i, 'rep', 'directo', 'US', 'USD', -1000, 'comida_comprada_sin_entregar', 'copia-' || i, 'perdida:copia-' || i,
+              datetime('2026-01-01', '+' || i || ' hours') FROM n`,
+    ).run();
+    const pagina = async (n: number) =>
+      (
+        await e.m.llamar(
+          'GET',
+          `/datos/admin/bandeja-dinero?tipo=comida&pagina=${n}`,
+          undefined,
+          e.admin.token,
+        )
+      ).datos as {
+        casos: { clave: string }[];
+        totales: Record<string, number>;
+        hayMas: Record<string, boolean>;
+      };
+    const p0 = await pagina(0);
+    expect(p0.totales.comida).toBe(120);
+    expect(p0.casos).toHaveLength(50);
+    expect(p0.casos[0]!.clave).toBe('comida:copia-1');
+    expect(p0.hayMas.comida).toBe(true);
+    const p2 = await pagina(2);
+    expect(p2.casos).toHaveLength(20);
+    expect(p2.hayMas.comida).toBe(false);
+    const todas = new Set(
+      [...p0.casos, ...(await pagina(1)).casos, ...p2.casos].map((c) => c.clave),
+    );
+    expect(todas.size).toBe(120);
+    // Resolver uno lo saca de la cuenta abierta, pero se puede ver con los resueltos.
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent('comida:copia-1')}/acciones`,
+      {
+        accion: 'resolver',
+        nota: 'Revisado con el repartidor y el ticket',
+        idempotencia: 'resolver-copia-1',
+      },
+      e.admin.token,
+    );
+    expect((await pagina(0)).totales.comida).toBe(119);
+    const conResueltos = (
+      await e.m.llamar(
+        'GET',
+        '/datos/admin/bandeja-dinero?tipo=comida&resueltos=1',
+        undefined,
+        e.admin.token,
+      )
+    ).datos as { totales: Record<string, number> };
+    expect(conResueltos.totales.comida).toBe(120);
+    // Sin tipo: el total de cada tipo, aunque la primera página traiga solo 50.
+    const todos = (await e.m.llamar('GET', '/datos/admin/bandeja-dinero', undefined, e.admin.token))
+      .datos as {
+      casos: unknown[];
+      totales: Record<string, number>;
+    };
+    expect(todos.totales.comida).toBe(119);
+    expect(todos.casos.length).toBeGreaterThanOrEqual(50);
+  });
 });

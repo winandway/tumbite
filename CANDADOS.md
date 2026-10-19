@@ -939,3 +939,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **App del cliente:** la propina posterior (con tarjeta) solo se ofrece en pedidos pagados con tarjeta.
 - **Cifras:** ninguna para Colombia o Venezuela; las fija Richard. Las de las pruebas son ficticias y viven solo en `apps/servidor/src/pruebas/paisPrueba.ts`.
 - **Pruebas:** `topesPais.test.ts` (EE. UU. idéntico; país incompleto; país con topes), `TarifasTopesPais.test.tsx`, y las de tarifas y moneda ajustadas. Rojo comprobado quitando cada parte.
+
+## C-BANDEJA-PAGINAS: la bandeja no esconde casos; textos del sistema en el idioma de la pantalla (19 oct 2026)
+
+- **Qué se rompía:** cada tipo de caso se cortaba en 500 filas sin orden y los resueltos se quitaban después: con muchos casos, uno abierto podía quedar fuera de la vista sin aviso. El detalle de una incidencia (texto del sistema) salía en español aunque la pantalla estuviera en inglés.
+- **Cómo quedó:** `listarCasos` (`internacional/bandeja.ts`) cuenta el total por tipo y pagina dentro de cada tipo (50 por página, los más viejos primero), filtrando los resueltos EN la consulta; responde `{ casos, totales, hayMas }`. Un caso se busca por su clave sin recorrer la bandeja. La pantalla muestra el total en cada pestaña, «Ver más casos» y, sin tipo elegido, avisa que hay más. El texto de una incidencia conocida se arma en los dos idiomas desde los datos; el detalle guardado queda como registro original. Las notas de soporte se muestran tal como se escribieron, marcadas como tales.
+- **Pruebas:** `internacional.test.ts` («la bandeja no esconde casos: 120 de un tipo…», rojo comprobado con la versión anterior) y `SuperBandeja.test.tsx`.

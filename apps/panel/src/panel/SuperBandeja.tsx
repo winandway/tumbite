@@ -63,6 +63,9 @@ const T = {
     nota: 'Qué pasó y con qué evidencia',
     sinHistorial: 'Todavía nadie tocó este caso.',
     esperaDecision: 'Espera la decisión de Richard',
+    verMas: 'Ver más casos',
+    porTipo: 'Hay más casos: elige un tipo para verlos todos, página por página.',
+    notaOriginal: 'nota de soporte, tal como se escribió',
     tipos: {
       transferencia: 'Transferencia por verificar',
       diferencia: 'Diferencia',
@@ -125,6 +128,9 @@ const T = {
     nota: 'What happened and what evidence you have',
     sinHistorial: 'Nobody has worked on this case yet.',
     esperaDecision: 'Waiting for Richard’s decision',
+    verMas: 'Show more cases',
+    porTipo: 'There are more cases: pick a type to see them all, page by page.',
+    notaOriginal: 'support note, as written',
     tipos: {
       transferencia: 'Transfer to verify',
       diferencia: 'Difference',
@@ -200,15 +206,41 @@ export function SuperBandeja({
   const [tipo, setTipo] = useState('');
   const [resueltos, setResueltos] = useState(false);
   const [lista, setLista] = useState<Caso[] | null>(null);
+  const [totales, setTotales] = useState<Record<string, number>>({});
+  const [hayMas, setHayMas] = useState(false);
+  const [pagina, setPagina] = useState(0);
+  type Respuesta = {
+    casos: Caso[];
+    totales: Record<string, number>;
+    hayMas: Record<string, boolean>;
+  };
+  const url = (p: number) =>
+    `/datos/admin/bandeja-dinero?tipo=${tipo}&pagina=${p}${resueltos ? '&resueltos=1' : ''}`;
   useEffect(() => {
     if (clave) return;
-    pedir<{ casos: Caso[] }>(
+    pedir<Respuesta>(
       'GET',
-      `/datos/admin/bandeja-dinero?tipo=${tipo}${resueltos ? '&resueltos=1' : ''}`,
+      `/datos/admin/bandeja-dinero?tipo=${tipo}&pagina=0${resueltos ? '&resueltos=1' : ''}`,
     )
-      .then((r) => setLista(r.casos))
+      .then((r) => {
+        setPagina(0);
+        setLista(r.casos);
+        setTotales(r.totales ?? {});
+        // Sin tipo elegido llega la primera página de cada tipo: «Ver más» va dentro de cada tipo.
+        setHayMas(Boolean(tipo && new Map(Object.entries(r.hayMas ?? {})).get(tipo)));
+      })
       .catch(() => setLista([]));
   }, [tipo, resueltos, clave]);
+  const verMas = () =>
+    pedir<Respuesta>('GET', url(pagina + 1))
+      .then((r) => {
+        setLista((l) => [...(l ?? []), ...r.casos]);
+        setPagina((p) => p + 1);
+        setHayMas(Boolean(new Map(Object.entries(r.hayMas ?? {})).get(tipo)));
+      })
+      .catch(() => undefined);
+  const total = Object.values(totales).reduce((a, b) => a + b, 0);
+  const mostrados = lista?.length ?? 0;
   if (clave) return <CasoDinero base={base} idioma={idioma} clave={clave} />;
   return (
     <section className="super">
@@ -224,7 +256,8 @@ export function SuperBandeja({
             className={tipo === v ? 'activa' : undefined}
             onClick={() => setTipo(v)}
           >
-            {v ? de(t.tipos, v) : t.todos}
+            {v ? de(t.tipos, v) : t.todos} (
+            {v ? (new Map(Object.entries(totales)).get(v) ?? 0) : total})
           </button>
         ))}
       </div>
@@ -250,6 +283,12 @@ export function SuperBandeja({
           </li>
         ))}
       </ul>
+      {!tipo && mostrados < total ? <p className="como-nota">{t.porTipo}</p> : null}
+      {hayMas ? (
+        <button type="button" className="boton secundario" onClick={() => void verMas()}>
+          {t.verMas}
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -336,7 +375,12 @@ function CasoDinero({ base, idioma, clave }: { base: string; idioma: Idioma; cla
           {d.historial.map((h, i) => (
             <li key={i}>
               {h.en} · {de(t.acciones, h.accion)} · {h.autor ?? '—'}
-              {h.nota ? ` · ${h.nota}` : ''}
+              {h.nota ? (
+                <>
+                  {' · '}
+                  <q lang="es">{h.nota}</q> <span className="suave">({t.notaOriginal})</span>
+                </>
+              ) : null}
             </li>
           ))}
         </ul>

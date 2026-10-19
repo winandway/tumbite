@@ -214,11 +214,14 @@ internacional.get('/admin/bandeja-dinero', async (c) => {
     .enum(TIPOS_CASO as [TipoCaso, ...TipoCaso[]])
     .optional()
     .safeParse(c.req.query('tipo') || undefined);
-  const casos = await listarCasos(base(c), {
-    tipo: tipo.success ? tipo.data : undefined,
-    incluirResueltos: c.req.query('resueltos') === '1',
-  });
-  return c.json({ casos });
+  const pagina = Number(c.req.query('pagina') ?? 0);
+  return c.json(
+    await listarCasos(base(c), {
+      tipo: tipo.success ? tipo.data : undefined,
+      incluirResueltos: c.req.query('resueltos') === '1',
+      pagina: Number.isSafeInteger(pagina) ? pagina : 0,
+    }),
+  );
 });
 
 internacional.get('/admin/bandeja-dinero/:clave', async (c) => {

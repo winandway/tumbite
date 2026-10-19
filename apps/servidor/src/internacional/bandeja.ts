@@ -133,40 +133,49 @@ function base(
   };
 }
 
-/** Todos los casos que salen del estado actual, sin el seguimiento. */
-async function casosCrudos(db: D1Database): Promise<Omit<Caso, 'estado' | 'responsable'>[]> {
-  const todos: Omit<Caso, 'estado' | 'responsable'>[] = [];
-  // 1. Transferencias que el repartidor marcó «aún no me llega» y siguen sin confirmar.
-  const t = await db
-    .prepare(
-      `SELECT ${CON_PEDIDO}, b.creado_en AS creado FROM pedidos p JOIN bitacora_pedidos b ON b.pedido_id = p.id AND b.evento = 'transferencia_por_verificar'
-        WHERE p.metodo_pago = 'transferencia_repartidor' AND p.cobro_estado = 'pendiente' LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of t.results)
-    todos.push(
+type Crudo = Omit<Caso, 'estado' | 'responsable'>;
+
+/**
+ * De dónde sale cada tipo de caso. Cada fuente es una consulta sobre lo que ya existe (pedidos,
+ * pagos en el local, libro, incidencias, disputas, recargas) con su clave estable. La bandeja
+ * pagina por tipo y filtra los resueltos EN la consulta (antes se cortaba en 500 y se filtraba
+ * después: un caso podía quedar fuera de la vista).
+ */
+type Fuente = {
+  tipo: TipoCaso;
+  /** SELECT … FROM … WHERE … (sin ORDER BY ni LIMIT); debe dar las columnas `clave` y `creado`. */
+  sql: string;
+  mapear: (f: Fila) => Crudo;
+};
+
+const FUENTES: readonly Fuente[] = [
+  {
+    // Transferencias que el repartidor marcó «aún no me llega» y siguen sin confirmar.
+    tipo: 'transferencia',
+    sql: `SELECT ${CON_PEDIDO}, b.creado_en AS creado, 'transferencia:' || p.id AS clave
+            FROM pedidos p JOIN bitacora_pedidos b ON b.pedido_id = p.id AND b.evento = 'transferencia_por_verificar'
+           WHERE p.metodo_pago = 'transferencia_repartidor' AND p.cobro_estado = 'pendiente'`,
+    mapear: (f) =>
       base(
         'transferencia',
-        `transferencia:${String(f.pedido_id)}`,
+        String(f.clave),
         f,
         { esperado: n(f.total) - n(f.propina) },
         'El repartidor todavía no ve la transferencia en su banco. La confirmación es manual: la hace el repartidor mirando su banco.',
       ),
-    );
-  // 2. Pedidos en mano conciliados con diferencia (cobro, pago en el local o ticket).
-  const d = await db
-    .prepare(
-      `SELECT ${CON_PEDIDO}, l.monto_pagado, l.monto_esperado AS local_esperado, l.importe_ticket, l.diferencia_pago, l.diferencia_ticket
-         FROM pedidos p LEFT JOIN pagos_local l ON l.pedido_id = p.id
-        WHERE p.metodo_pago != 'tarjeta' AND p.conciliacion_estado = 'con_diferencia' LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of d.results) {
-    const esperado = n(f.total) - n(f.propina);
-    todos.push(
-      base(
+  },
+  {
+    // Pedidos en mano conciliados con diferencia (cobro, pago en el local o ticket).
+    tipo: 'diferencia',
+    sql: `SELECT ${CON_PEDIDO}, l.monto_pagado, l.monto_esperado AS local_esperado, l.importe_ticket, l.diferencia_pago,
+                 l.diferencia_ticket, COALESCE(p.cobro_confirmado_en, p.creado_en) AS creado, 'diferencia:' || p.id AS clave
+            FROM pedidos p LEFT JOIN pagos_local l ON l.pedido_id = p.id
+           WHERE p.metodo_pago != 'tarjeta' AND p.conciliacion_estado = 'con_diferencia'`,
+    mapear: (f) => {
+      const esperado = n(f.total) - n(f.propina);
+      return base(
         'diferencia',
-        `diferencia:${String(f.pedido_id)}`,
+        String(f.clave),
         f,
         {
           cobroEsperado: esperado,
@@ -182,148 +191,205 @@ async function casosCrudos(db: D1Database): Promise<Omit<Caso, 'estado' | 'respo
         f.cobro_estado === 'no_pagado'
           ? 'El cliente no pagó.'
           : 'El cobro, el pago en el local o el ticket no cuadran.',
+      );
+    },
+  },
+  {
+    // Excedentes por devolver (saldo neto del libro todavía negativo).
+    tipo: 'excedente',
+    sql: `SELECT ${CON_PEDIDO}, SUM(l.monto) AS neto, MIN(l.creado_en) AS creado, 'excedente:' || p.id AS clave
+            FROM libro l JOIN pedidos p ON p.id = l.pedido_id
+           WHERE l.bolsillo = 'directo' AND l.concepto IN ('excedente_cliente_por_devolver', 'excedente_devuelto_al_cliente')
+           GROUP BY p.id HAVING SUM(l.monto) < 0`,
+    mapear: (f) =>
+      base(
+        'excedente',
+        String(f.clave),
+        f,
+        { porDevolver: -n(f.neto) },
+        'El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Tumbite.',
       ),
-    );
-  }
-  // 3 y 4. Excedentes por devolver y comida comprada sin entregar, desde el libro (saldo neto).
-  const lib = await db
-    .prepare(
-      `SELECT l.pedido_id, l.concepto, SUM(l.monto) AS neto, MIN(l.creado_en) AS creado, l.cuenta_id, ${CON_PEDIDO}
-         FROM libro l JOIN pedidos p ON p.id = l.pedido_id
-        WHERE l.bolsillo = 'directo' AND l.concepto IN ('excedente_cliente_por_devolver', 'excedente_devuelto_al_cliente', 'comida_comprada_sin_entregar')
-        GROUP BY l.pedido_id, CASE WHEN l.concepto = 'comida_comprada_sin_entregar' THEN 'comida' ELSE 'excedente' END
-        LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of lib.results) {
-    const comida = f.concepto === 'comida_comprada_sin_entregar';
-    if (!comida && n(f.neto) >= 0) continue; // ya devuelto: no queda caso abierto
-    todos.push(
-      comida
-        ? base(
-            'comida',
-            `comida:${String(f.pedido_id)}`,
-            f,
-            { pagadoPorRepartidor: -n(f.neto) },
-            'El repartidor pagó la comida y el pedido no se entregó. Quién la absorbe está pendiente de decisión (decisión 20).',
-          )
-        : base(
-            'excedente',
-            `excedente:${String(f.pedido_id)}`,
-            f,
-            { porDevolver: -n(f.neto) },
-            'El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Tumbite.',
-          ),
-    );
-  }
-  // 5. Pago en el local que el restaurante no confirmó y el pedido ya salió.
-  const loc = await db
-    .prepare(
-      `SELECT ${CON_PEDIDO}, l.monto_pagado, l.importe_ticket, l.creado_en AS creado FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
-        WHERE l.confirmado_restaurante_en IS NULL AND p.estado IN ('en_camino', 'entregado') LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of loc.results)
-    todos.push(
+  },
+  {
+    // Comida comprada por el repartidor y no entregada.
+    tipo: 'comida',
+    sql: `SELECT ${CON_PEDIDO}, SUM(l.monto) AS neto, MIN(l.creado_en) AS creado, 'comida:' || p.id AS clave
+            FROM libro l JOIN pedidos p ON p.id = l.pedido_id
+           WHERE l.bolsillo = 'directo' AND l.concepto = 'comida_comprada_sin_entregar'
+           GROUP BY p.id`,
+    mapear: (f) =>
+      base(
+        'comida',
+        String(f.clave),
+        f,
+        { pagadoPorRepartidor: -n(f.neto) },
+        'El repartidor pagó la comida y el pedido no se entregó. Quién la absorbe está pendiente de decisión (decisión 20).',
+      ),
+  },
+  {
+    // Pago en el local que el restaurante no confirmó y el pedido ya salió.
+    tipo: 'local',
+    sql: `SELECT ${CON_PEDIDO}, l.monto_pagado, l.importe_ticket, l.creado_en AS creado, 'local:' || p.id AS clave
+            FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
+           WHERE l.confirmado_restaurante_en IS NULL AND p.estado IN ('en_camino', 'entregado')`,
+    mapear: (f) =>
       base(
         'local',
-        `local:${String(f.pedido_id)}`,
+        String(f.clave),
         f,
         { pagado: n(f.monto_pagado), ticket: n(f.importe_ticket) },
         'El restaurante no confirmó en la app que recibió el pago en el mostrador.',
       ),
-    );
-  // 6. Incidencias de dinero abiertas (por ejemplo, recarga con monto distinto en Stripe).
-  const inc = await db
-    .prepare(
-      `SELECT i.*, i.creado_en AS creado, (SELECT nombre FROM usuarios WHERE id = i.cuenta_id) AS repartidor FROM incidencias_dinero i
-        WHERE i.estado = 'abierta' LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of inc.results)
-    todos.push(
-      base(
-        'incidencia',
-        `incidencia:${String(f.id)}`,
-        f,
-        { esperado: n(f.monto_esperado), recibido: n(f.monto_recibido) },
-        String(f.detalle ?? ''),
-      ),
-    );
-  // 7. Recargas con tarjeta disputadas (el saldo NO se toca: decisión de Richard).
-  const dis = await db
-    .prepare(
-      `SELECT d.id AS disputa, d.monto, d.estado AS disputa_estado, d.creado_en AS creado, r.moneda, r.pais, r.monto AS recarga_monto,
-        (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor
-        FROM disputas d JOIN recargas r ON r.id = d.recarga_id LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of dis.results)
-    todos.push({
+  },
+  {
+    // Incidencias de dinero abiertas. El texto se arma desde los datos, en los dos idiomas (el
+    // detalle guardado queda como registro original).
+    tipo: 'incidencia',
+    sql: `SELECT i.id, i.tipo AS incidencia_tipo, i.pedido_id, i.pais, i.moneda, i.monto_esperado, i.monto_recibido, i.detalle,
+                 i.creado_en AS creado, (SELECT nombre FROM usuarios WHERE id = i.cuenta_id) AS repartidor, 'incidencia:' || i.id AS clave
+            FROM incidencias_dinero i WHERE i.estado = 'abierta'`,
+    mapear: (f) => {
+      const conocido = f.incidencia_tipo === 'recarga_monto_distinto';
+      return {
+        ...base(
+          'incidencia',
+          String(f.clave),
+          f,
+          { esperado: n(f.monto_esperado), recibido: n(f.monto_recibido) },
+          conocido
+            ? 'Stripe confirmó un monto o una moneda distintos de la recarga pedida. No se acreditó nada.'
+            : String(f.detalle ?? ''),
+        ),
+        detalleEn: conocido
+          ? 'Stripe confirmed an amount or currency different from the requested top-up. Nothing was credited.'
+          : String(f.detalle ?? ''),
+      };
+    },
+  },
+  {
+    // Recargas con tarjeta disputadas (el saldo NO se toca: decisión de Richard).
+    tipo: 'recarga_disputada',
+    sql: `SELECT d.id AS disputa, d.monto, d.estado AS disputa_estado, d.creado_en AS creado, r.moneda, r.pais,
+                 r.monto AS recarga_monto, (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor,
+                 'recarga_disputada:' || d.id AS clave
+            FROM disputas d JOIN recargas r ON r.id = d.recarga_id`,
+    mapear: (f) => ({
       ...base(
         'recarga_disputada',
-        `recarga_disputada:${String(f.disputa)}`,
+        String(f.clave),
         f,
         { disputado: n(f.monto), recarga: n(f.recarga_monto) },
         `Disputa ${String(f.disputa_estado)}. El saldo de la recarga no se tocó: qué hacer con él lo decide Richard.`,
       ),
       detalleEn: `Dispute ${String(f.disputa_estado)}. The top-up balance wasn’t touched: Richard decides what to do with it.`,
-    });
-  // 8. Recargas con tarjeta pendientes desde hace más de un día (Stripe no confirmó).
-  const pen = await db
-    .prepare(
-      `SELECT r.id, r.moneda, r.pais, r.monto, r.creado_en AS creado, (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor
-         FROM recargas r WHERE r.canal = 'stripe' AND r.estado = 'pendiente' AND r.creado_en < datetime('now', '-1 day') LIMIT 500`,
-    )
-    .all<Fila>();
-  for (const f of pen.results)
-    todos.push(
+    }),
+  },
+  {
+    // Recargas con tarjeta pendientes desde hace más de un día (Stripe no confirmó).
+    tipo: 'recarga_pendiente',
+    sql: `SELECT r.id, r.moneda, r.pais, r.monto, r.creado_en AS creado,
+                 (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor, 'recarga_pendiente:' || r.id AS clave
+            FROM recargas r WHERE r.canal = 'stripe' AND r.estado = 'pendiente' AND r.creado_en < datetime('now', '-1 day')`,
+    mapear: (f) =>
       base(
         'recarga_pendiente',
-        `recarga_pendiente:${String(f.id)}`,
+        String(f.clave),
         f,
         { monto: n(f.monto) },
         'Stripe no confirmó esta recarga en un día. No se acreditó nada.',
       ),
-    );
-  return todos;
+  },
+];
+
+/** Casos por página dentro de un tipo. */
+export const POR_PAGINA = 50;
+
+const sinResueltos = (incluir: boolean) =>
+  incluir
+    ? ''
+    : `WHERE NOT EXISTS (SELECT 1 FROM casos_dinero cd WHERE cd.clave = x.clave AND cd.estado = 'resuelto')`;
+
+async function conSeguimiento(db: D1Database, crudos: Crudo[]): Promise<Caso[]> {
+  if (!crudos.length) return [];
+  const seg = new Map<
+    string,
+    { clave: string; estado: Caso['estado']; responsable_id: string | null; nombre: string | null }
+  >();
+  for (const c of crudos) {
+    const x = await db
+      .prepare(
+        'SELECT c.clave, c.estado, c.responsable_id, u.nombre FROM casos_dinero c LEFT JOIN usuarios u ON u.id = c.responsable_id WHERE c.clave = ?',
+      )
+      .bind(c.clave)
+      .first<{
+        clave: string;
+        estado: Caso['estado'];
+        responsable_id: string | null;
+        nombre: string | null;
+      }>();
+    if (x) seg.set(c.clave, x);
+  }
+  return crudos.map((c) => {
+    const x = seg.get(c.clave);
+    return {
+      ...c,
+      estado: x?.estado ?? 'abierto',
+      responsable: x?.responsable_id ? { id: x.responsable_id, nombre: x.nombre ?? '' } : null,
+    };
+  });
 }
 
-async function seguimiento(db: D1Database) {
-  const { results } = await db
-    .prepare(
-      'SELECT c.clave, c.estado, c.responsable_id, u.nombre FROM casos_dinero c LEFT JOIN usuarios u ON u.id = c.responsable_id',
-    )
-    .all<{
-      clave: string;
-      estado: Caso['estado'];
-      responsable_id: string | null;
-      nombre: string | null;
-    }>();
-  return new Map(results.map((r) => [r.clave, r]));
-}
-
+/**
+ * Los casos de la bandeja. Con `tipo`, una página de ese tipo (los más viejos primero). Sin
+ * `tipo`, la primera página de cada tipo. Siempre con el total por tipo, para que nada quede
+ * escondido: si hay más, `hayMas` lo dice y se pide la página siguiente.
+ */
 export async function listarCasos(
   db: D1Database,
-  filtro: { tipo?: TipoCaso; incluirResueltos?: boolean } = {},
-): Promise<Caso[]> {
-  const seg = await seguimiento(db);
-  return (await casosCrudos(db))
-    .filter((c) => !filtro.tipo || c.tipo === filtro.tipo)
-    .map((c) => {
-      const x = seg.get(c.clave);
-      return {
-        ...c,
-        estado: x?.estado ?? 'abierto',
-        responsable: x?.responsable_id ? { id: x.responsable_id, nombre: x.nombre ?? '' } : null,
-      };
-    })
-    .filter((c) => filtro.incluirResueltos || c.estado !== 'resuelto')
-    .sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+  filtro: { tipo?: TipoCaso; incluirResueltos?: boolean; pagina?: number } = {},
+): Promise<{ casos: Caso[]; totales: Record<string, number>; hayMas: Record<string, boolean> }> {
+  const incluir = Boolean(filtro.incluirResueltos);
+  const pagina = Math.max(0, filtro.pagina ?? 0);
+  const totales: Record<string, number> = {};
+  const hayMas: Record<string, boolean> = {};
+  const crudos: Crudo[] = [];
+  for (const f of FUENTES) {
+    const total = await db
+      .prepare(`SELECT COUNT(*) AS n FROM (${f.sql}) x ${sinResueltos(incluir)}`)
+      .first<{ n: number }>();
+    totales[f.tipo] = Number(total?.n ?? 0);
+    if (filtro.tipo && filtro.tipo !== f.tipo) continue;
+    const desde = filtro.tipo ? pagina * POR_PAGINA : 0;
+    const { results } = await db
+      .prepare(
+        `SELECT * FROM (${f.sql}) x ${sinResueltos(incluir)} ORDER BY x.creado, x.clave LIMIT ? OFFSET ?`,
+      )
+      .bind(POR_PAGINA, desde)
+      .all<Fila>();
+    hayMas[f.tipo] = desde + results.length < Number(total?.n ?? 0);
+    crudos.push(...results.map(f.mapear));
+  }
+  const casos = (await conSeguimiento(db, crudos)).sort((a, b) =>
+    a.creadoEn.localeCompare(b.creadoEn),
+  );
+  return { casos, totales, hayMas };
+}
+
+/** Un caso por su clave (cualquier estado), sin recorrer la bandeja entera. */
+async function casoPorClave(db: D1Database, clave: string): Promise<Caso | null> {
+  const tipo = clave.slice(0, clave.indexOf(':'));
+  const f = FUENTES.find((x) => x.tipo === tipo);
+  if (!f) return null;
+  const fila = await db
+    .prepare(`SELECT * FROM (${f.sql}) x WHERE x.clave = ?`)
+    .bind(clave)
+    .first<Fila>();
+  if (!fila) return null;
+  return (await conSeguimiento(db, [f.mapear(fila)]))[0] ?? null;
 }
 
 export async function detalleCaso(db: D1Database, clave: string) {
-  const caso = (await listarCasos(db, { incluirResueltos: true })).find((c) => c.clave === clave);
+  const caso = await casoPorClave(db, clave);
   if (!caso) throw new ErrorDatos('Ese caso no existe.', undefined, 404);
   const { results: historial } = await db
     .prepare(
@@ -449,16 +515,14 @@ export async function accionCaso(
       .bind(p.clave.slice('incidencia:'.length))
       .run();
   // Si la acción cerró el hecho (excedente devuelto, incidencia resuelta), el caso ya no sale.
-  const despues = (await listarCasos(db, { incluirResueltos: true })).find(
-    (c) => c.clave === p.clave,
-  );
+  const despues = await casoPorClave(db, p.clave);
   return { repetida: false, caso: despues ?? { ...caso, estado: 'resuelto' as const } };
 }
 
 /** Pieza «bandeja» de la salud: «pendiente» si hay casos abiertos (no es un error del sistema). */
 export async function saludBandeja(db: D1Database): Promise<'ok' | 'pendiente'> {
-  const casos = await listarCasos(db);
-  return casos.length ? 'pendiente' : 'ok';
+  const { totales } = await listarCasos(db);
+  return Object.values(totales).some((x) => x > 0) ? 'pendiente' : 'ok';
 }
 
 /** Anota una incidencia de dinero una sola vez por referencia. */
