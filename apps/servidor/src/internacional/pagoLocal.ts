@@ -21,6 +21,7 @@ export type PagoLocal = {
   diferenciaTicket: number;
   creadoEn: string;
   confirmadoRestauranteEn: string | null;
+  conFotoTicket: boolean;
 };
 
 type FilaBase = {
@@ -58,6 +59,7 @@ function aPagoLocal(r: Record<string, unknown>, f: FilaBase): PagoLocal {
     confirmadoRestauranteEn: r.confirmado_restaurante_en
       ? String(r.confirmado_restaurante_en)
       : null,
+    conFotoTicket: Boolean(r.ticket_clave),
   };
 }
 

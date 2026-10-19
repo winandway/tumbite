@@ -115,6 +115,8 @@ const es = {
     entregaTicket: 'Entrega el ticket al cliente junto con el pedido.',
     tuDinero: 'Tumbite no presta ni pone este dinero: es tu capital de trabajo.',
     montoInvalido: 'Escribe los dos montos.',
+    fotoTicket: 'Tomar foto del ticket (opcional)',
+    fotoTicketOk: 'Foto del ticket guardada.',
   },
   fondo: {
     titulo: 'Tumbite está activo',
@@ -291,6 +293,8 @@ const en: T = {
     entregaTicket: 'Hand the receipt to the customer with the order.',
     tuDinero: 'Tumbite doesn’t lend or put up this money: it’s your working capital.',
     montoInvalido: 'Enter both amounts.',
+    fotoTicket: 'Take a photo of the receipt (optional)',
+    fotoTicketOk: 'Receipt photo saved.',
   },
   fondo: {
     titulo: 'Tumbite is active',

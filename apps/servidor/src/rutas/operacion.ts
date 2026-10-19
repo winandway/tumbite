@@ -1507,6 +1507,38 @@ operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
   return c.json({ ok: true, salio: !!verificado, url: `/datos/pedidos/${id}/evidencia/recogida` });
 });
 
+/**
+ * C-COBRO-DIRECTO-LOCAL: foto del ticket del restaurante (opcional), después de registrar el pago en el
+ * local. Queda en el almacén privado; la ven el repartidor, el restaurante, el cliente y soporte.
+ */
+operacion.post('/repartidor/pedidos/:id/foto-ticket', async (c) => {
+  const { u, db } = await miFicha(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      "SELECT 1 FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.repartidor_id = ? AND p.estado IN ('aceptado','listo','en_camino')",
+    )
+    .bind(id, u.id)
+    .first();
+  if (!r)
+    throw new ErrorDatos(
+      'Primero registra lo que pagaste al restaurante y el importe del ticket.',
+      undefined,
+      409,
+    );
+  const foto = await leerFoto(c);
+  const clave = `evidencias/${id}/ticket-${nuevoId()}`;
+  await foto.bucket.put(clave, foto.bytes, {
+    httpMetadata: { contentType: foto.tipo, cacheControl: 'private, no-store' },
+  });
+  await db
+    .prepare('UPDATE pagos_local SET ticket_clave = ? WHERE pedido_id = ?')
+    .bind(clave, id)
+    .run();
+  await anotarEvento(db, id, 'foto_ticket');
+  return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/ticket` });
+});
+
 /** El restaurante confirma que le entregó el pedido a ese repartidor: ahora sí sale en camino. */
 operacion.post('/restaurante/pedidos/:id/confirmar-recogida', async (c) => {
   const rid = await miRestauranteId(c);
@@ -2395,12 +2427,15 @@ operacion.post('/pedidos/:id/mensajes', async (c) => {
 operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
   const u = exigir(c);
   const tipo = c.req.param('tipo');
-  if (tipo !== 'recogida' && tipo !== 'entrega') return c.text('No encontrado', 404);
+  if (tipo !== 'recogida' && tipo !== 'entrega' && tipo !== 'ticket')
+    return c.text('No encontrado', 404);
   const f = await base(c)
     .prepare(
-      'SELECT e.clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE e.pedido_id = ? AND e.tipo = ?',
+      tipo === 'ticket'
+        ? 'SELECT l.ticket_clave AS clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE l.pedido_id = ? AND l.ticket_clave IS NOT NULL'
+        : 'SELECT e.clave, p.cliente_id, p.repartidor_id, r.dueno_id FROM evidencias e JOIN pedidos p ON p.id = e.pedido_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE e.pedido_id = ? AND e.tipo = ?',
     )
-    .bind(c.req.param('id'), tipo)
+    .bind(...(tipo === 'ticket' ? [c.req.param('id')] : [c.req.param('id'), tipo]))
     .first<{ clave: string; cliente_id: string; repartidor_id: string | null; dueno_id: string }>();
   const puede =
     f && (u.rol === 'admin' || [f.cliente_id, f.repartidor_id, f.dueno_id].includes(u.id));

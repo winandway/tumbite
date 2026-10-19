@@ -13,6 +13,7 @@ type Datos = {
     metodo: 'efectivo' | 'tarjeta_propia';
     diferenciaPago: number;
     diferenciaTicket: number;
+    conFotoTicket?: boolean;
   } | null;
 };
 
@@ -29,11 +30,14 @@ export function PagoEnLocal({
   idioma,
   pedidoId,
   alRegistrar,
+  fotoTicket,
 }: {
   api: Api;
   idioma: Idioma;
   pedidoId: string;
   alRegistrar: () => void;
+  /** Toma la foto del ticket con la cámara y la sube (la misma función de las otras fotos). */
+  fotoTicket?: () => Promise<void>;
 }) {
   const t = textosGrandes(idioma).local;
   const [d, setD] = useState<Datos | null>(null);
@@ -122,6 +126,24 @@ export function PagoEnLocal({
             <Text style={{ color: '#c4001d', fontSize: 13 }}>{t.conDiferencia}</Text>
           ) : null}
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.entregaTicket}</Text>
+          {reg.conFotoTicket ? (
+            <Text style={{ color: C.exito, fontWeight: '700', fontSize: 13 }}>
+              {t.fotoTicketOk}
+            </Text>
+          ) : fotoTicket ? (
+            <Boton
+              texto={t.fotoTicket}
+              alTocar={() =>
+                void fotoTicket().then(async () => {
+                  const r = await api
+                    .pedir<Datos>('GET', `/datos/repartidor/pedidos/${pedidoId}/pago-local`)
+                    .catch(() => null);
+                  if (r) setD(r);
+                })
+              }
+              secundario
+            />
+          ) : null}
         </>
       ) : (
         <>

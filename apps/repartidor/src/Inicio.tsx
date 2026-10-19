@@ -1476,6 +1476,9 @@ export function Inicio() {
                       idioma={idioma}
                       pedidoId={activo.id}
                       alRegistrar={() => void cargar()}
+                      fotoTicket={() =>
+                        tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-ticket`)
+                      }
                     />
                   ) : null}
                   {activo.estado === 'listo' && activo.fotoRecogida ? (

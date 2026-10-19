@@ -997,6 +997,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "diferencia_ticket",
     "creado_en",
     "confirmado_restaurante_en",
-    "confirmado_por"
+    "confirmado_por",
+    "ticket_clave"
   ]
 };

@@ -479,6 +479,39 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
     ).toBe(404);
   });
 
+  it('foto del ticket: se sube después de registrar el pago, la ven el restaurante, el cliente y soporte, y no un extraño', async () => {
+    const e = await escenario();
+    const { id, rep } = await hastaListo(e);
+    const donde = { lat: 25.77, lng: -80.19 };
+    // Antes de registrar el pago no hay dónde guardarla.
+    expect(
+      (await e.m.foto(`/datos/repartidor/pedidos/${id}/foto-ticket`, rep.token, donde)).estado,
+    ).toBe(409);
+    await e.pagarLocal(id, rep);
+    const f = await e.m.foto(`/datos/repartidor/pedidos/${id}/foto-ticket`, rep.token, donde);
+    expect(f.estado).toBe(200);
+    const fila = await e.m.DB.prepare('SELECT ticket_clave FROM pagos_local WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ ticket_clave: string | null }>();
+    expect(fila?.ticket_clave?.startsWith(`evidencias/${id}/ticket-`)).toBe(true);
+    const ver = (token: string) =>
+      e.m.crudo(`/datos/pedidos/${id}/evidencia/ticket`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      });
+    for (const t of [e.dueno.token, e.cliente.token, e.admin.token, rep.token])
+      expect((await ver(t)).status).toBe(200);
+    const extrano = await e.m.cuenta('cliente', 'Otro');
+    expect((await ver(extrano.token)).status).toBe(404);
+    const datos = await e.m.llamar(
+      'GET',
+      `/datos/repartidor/pedidos/${id}/pago-local`,
+      undefined,
+      rep.token,
+    );
+    expect(datos.datos.registrado.conFotoTicket).toBe(true);
+  });
+
   it('ticket e importe distintos: no frenan la entrega, quedan anotados y la conciliación sale «con diferencia»', async () => {
     const e = await escenario();
     const { id, rep, total, desglose } = await hastaListo(e);
