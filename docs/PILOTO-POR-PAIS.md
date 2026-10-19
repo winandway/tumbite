@@ -37,7 +37,7 @@ Un mercado y un método pasan a «habilitable» solo con todo esto en verde:
 | Pagar a repartidores o restaurantes por Stripe        | **No disponible en autoservicio**: Connect para Colombia solo «recibir» y sin pagos entre países; Global Payouts solo en vista previa | Hablar con ventas de Stripe o pasarela local                                                             | Richard                                                              |
 | Recarga con tarjeta                                   | Posible como cobro normal **si** el saldo solo paga comisiones de Tumbite y nunca se devuelve en dinero                               | Validación del abogado colombiano (concepto de la Superintendencia Financiera sobre prepago y captación) | Richard: abogado                                                     |
 
-Guion del piloto: el mismo de EE. UU., en pesos sin decimales, con el franquiciado como empresa local. **Pendiente de producto:** las apps todavía muestran los montos con formato de dólares; antes del piloto en Colombia hay que mostrar pesos.
+Guion del piloto: el mismo de EE. UU., en pesos sin decimales, con el franquiciado como empresa local. **Desde el 19 oct** el servidor calcula cada pedido con las tarifas del país y guarda su moneda (C-TARIFAS-PAIS), y las pantallas del cobro en mano, la oferta y el saldo prepago muestran pesos. **Falta antes del piloto:** las tarifas en pesos (decisión de Richard), una zona de Colombia, pasar a pesos el resto de las pantallas (menú, carrito, historial, ganancias) y la bandeja de soporte del cobro en mano (vacío 5 del cruce con los grandes).
 
 ## 4. Venezuela
 
