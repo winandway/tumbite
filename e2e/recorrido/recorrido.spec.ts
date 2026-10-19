@@ -1059,6 +1059,8 @@ for (const idioma of ['en', 'es'] as const) {
 
     // Favoritos: el corazón en la lista guarda el restaurante en «Favoritos».
     await cli.goto('/app/restaurants');
+    // Lista virtual con muchos restaurantes en staging: se busca por su nombre, como una persona.
+    await cli.getByLabel(/Buscar restaurantes|Search restaurants/).fill(restaurante);
     const corazon = cli.getByLabel(
       `${idioma === 'en' ? 'Save to favorites' : 'Guardar en favoritos'}: ${restaurante}`,
     );
