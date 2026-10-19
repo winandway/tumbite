@@ -183,6 +183,7 @@ const es: SeccionDocs[] = [
           'Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco.',
           'Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte.',
           'Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos.',
+          'Los precios, el envío, el servicio, la propina y el total se muestran en la moneda de la ciudad del restaurante, en las ciudades donde Tumbite opere. Nada se convierte: el monto que ves en el carrito y en el seguimiento es el que pagas.',
         ],
         capturas: [
           {
@@ -1140,7 +1141,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'En «Menú», toca «Agregar plato».',
           'Escribe el nombre y la descripción en español y en inglés. Tus clientes ven el idioma que eligieron.',
-          'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en dólares.',
+          'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en la moneda de la ciudad de tu restaurante (en las ciudades donde Tumbite opere; con pesos se escribe sin decimales: 12000 son doce mil pesos).',
           'Sube la foto del plato. Si no tienes, puedes agregarla después: el plato se publica igual.',
           'Guarda. Lo que escribas se guarda solo mientras lo escribes: si se te cierra la ventana, al volver sigue ahí.',
         ],
@@ -1590,6 +1591,7 @@ const es: SeccionDocs[] = [
           'Debajo, cada pedido con el restaurante, la hora y su total. Toca «Ver desglose» para ver base, bono y propina de ese pedido.',
           'Si el cliente da propina después de entregar, te llega un aviso y aparece como «propina después de entregar» en ese pedido y en el total de propinas.',
           'Más abajo sigue tu billetera: saldo disponible, retiros y movimientos.',
+          'Cada pedido se muestra en la moneda de su ciudad, en las ciudades donde Tumbite opere. Si haces pedidos en ciudades con monedas distintas, ves un total por cada moneda: nunca se suman entre sí.',
         ],
         capturas: [
           {
@@ -2513,6 +2515,7 @@ const en: SeccionDocs[] = [
           'With a transfer: in the tracking screen you see the account holder’s name and the driver’s published account (for example their mobile-payment number or bank account) and the exact amount. You transfer when they’re in front of you; they confirm it in their bank.',
           'If you don’t pay on delivery, the order is canceled and an outstanding balance stays on your account: you won’t be able to order with pay-on-delivery again until you settle it with support.',
           'If you transferred and the driver says it didn’t arrive, or the amount doesn’t match, tap “I have a problem with the payment” in your order: support reviews the case with both of you.',
+          'Prices, delivery, service, tip, and total are shown in the local currency of the restaurant’s city, in the cities where Tumbite operates. Nothing is converted: the amount you see in the cart and in the tracking screen is what you pay.',
         ],
         capturas: [
           {
@@ -3460,7 +3463,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'In “Menu,” tap “Add item.”',
           'Write the name and description in English and Spanish. Customers see the language they chose.',
-          'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in dollars.',
+          'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in the local currency of your restaurant’s city (in the cities where Tumbite operates; currencies without cents, like pesos, are written as whole numbers: 12000 is twelve thousand pesos).',
           'Upload the item photo. No photo yet? Add it later: the item is published either way.',
           'Save. What you type is saved as you go: if the window closes, it’s still there when you’re back.',
         ],
@@ -3903,6 +3906,7 @@ const en: SeccionDocs[] = [
           'Below, every order with the restaurant, the time, and its total. Tap “See breakdown” for that order’s base, bonus, and tip.',
           'If the customer tips after delivery, you get a notification and it shows as “tip after delivery” on that order and in the tips total.',
           'Further down is your wallet: available balance, payouts, and activity.',
+          'Each order is shown in the local currency of its city, in the cities where Tumbite operates. If you deliver in cities with different currencies, you see one total per currency: they are never added together.',
         ],
         capturas: [
           {
