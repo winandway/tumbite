@@ -158,6 +158,36 @@ describe('fallo 2 · cancelar antes del aviso de pago libera la autorización', 
   });
 });
 
+describe('entrega y cancelación al mismo tiempo', () => {
+  it('si soporte cancela entre la lectura y el registro de la entrega, no queda liquidación, ni abonos, ni puntos', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Ca Rrera', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    // La cancelación llega justo antes del lote de la entrega (como otra petición en paralelo).
+    await m.DB.prepare(
+      `CREATE TRIGGER cancela_en_carrera BEFORE INSERT ON liquidaciones BEGIN
+         UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = NEW.pedido_id;
+       END`,
+    ).run();
+    const r = await m.entregar(id, rep.token);
+    await m.DB.prepare('DROP TRIGGER cancela_en_carrera').run();
+    expect(r.estado).toBe(409);
+    const n = async (sql: string) =>
+      Number((await m.DB.prepare(sql).bind(id).first<{ n: number }>())?.n);
+    expect(await n('SELECT COUNT(*) AS n FROM movimientos WHERE pedido_id = ?')).toBe(0);
+    expect(await n('SELECT COUNT(*) AS n FROM liquidaciones WHERE pedido_id = ?')).toBe(0);
+    const puntos = await m.DB.prepare('SELECT puntos FROM repartidores WHERE usuario_id = ?')
+      .bind(rep.id)
+      .first<{ puntos: number }>();
+    expect(Number(puntos?.puntos)).toBe(0);
+  });
+});
+
 describe('fallo 3 · la propina posterior solo se anota si Stripe la cobró', () => {
   it('con el cobro en «requires_action» no hay movimiento para el repartidor ni propina registrada', async () => {
     const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();

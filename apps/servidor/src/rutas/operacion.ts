@@ -1770,8 +1770,12 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     await db.batch([
       sentenciaLiquidacion(db, id, pi, Number(p.total), inicial),
       db
+        // Sin condición de estado A PROPÓSITO: si soporte canceló el pedido entre la lectura y este
+        // lote, el disparador de transiciones rechaza cancelado → entregado y el lote ENTERO se
+        // deshace (ni liquidación, ni abonos, ni puntos). Con «AND estado = 'en_camino'» el UPDATE
+        // no cambiaba nada y el resto del lote abonaba igual.
         .prepare(
-          "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ? AND estado = 'en_camino'",
+          "UPDATE pedidos SET estado = 'entregado', entregado_en = datetime('now') WHERE id = ?",
         )
         .bind(id),
       anotarEstado(db, id, 'entregado', u.id),
@@ -1800,6 +1804,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     ]);
   } catch (e) {
     if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
+    if (String(e).includes('transicion_de_pedido_no_permitida'))
+      throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
     throw e;
   }
   await liquidar(c.env, db, id).catch((e: unknown) =>
