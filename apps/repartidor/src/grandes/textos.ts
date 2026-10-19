@@ -5,6 +5,9 @@ const es = {
   oferta: {
     titulo: 'Nueva oferta',
     garantizado: 'Ganancia garantizada',
+    enEfectivo: 'El cliente paga en efectivo',
+    porTransferencia: 'El cliente paga por transferencia a tu cuenta',
+    adelantas: 'Pagas {monto} en el local con tu dinero y lo recuperas al cobrar.',
     conPropina: 'incluye propina de',
     bono: 'Incluye un bono de',
     alLocal: 'hasta el local',
@@ -184,6 +187,9 @@ const en: T = {
   oferta: {
     titulo: 'New offer',
     garantizado: 'Guaranteed earnings',
+    enEfectivo: 'The customer pays in cash',
+    porTransferencia: 'The customer pays by transfer to your account',
+    adelantas: 'You pay {monto} at the store with your own money and get it back when you collect.',
     conPropina: 'includes a tip of',
     bono: 'Includes a bonus of',
     alLocal: 'to the store',

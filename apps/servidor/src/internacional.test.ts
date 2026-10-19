@@ -219,7 +219,23 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     );
     const rep = await e.repartidor('Rafa Rep');
     await e.recargar(rep, 1000);
-    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+    // La oferta dice que se cobra en mano y cuánto se adelanta en el local, antes de aceptar.
+    const oferta = (await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token))
+      .datos.ofertas[0] as {
+      id: string;
+      metodoPago: string;
+      moneda: string;
+      adelantoLocal: number;
+    };
+    const pagoRest = await e.m.DB.prepare('SELECT pago_restaurante AS v FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ v: number }>();
+    expect(oferta).toMatchObject({
+      id,
+      metodoPago: 'efectivo',
+      moneda: 'USD',
+      adelantoLocal: pagoRest?.v,
+    });
     await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
     await e.pagarLocal(id, rep);
@@ -1212,6 +1228,9 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(rep).toContain('/cobre');
     expect(rep).toContain('/no-pago');
     expect(rep).toContain('testID="sin-lugar-seguro"');
+    expect(leer('apps/repartidor/src/grandes/Oferta.tsx')).toContain(
+      'testID="oferta-cobro-en-mano"',
+    );
     expect(rep).toContain('/datos/repartidor/saldo-prepago');
     expect(rep).toContain('/datos/repartidor/recargar');
     expect(leer('apps/restaurante/src/Inicio.tsx')).toContain('pagoDirecto');

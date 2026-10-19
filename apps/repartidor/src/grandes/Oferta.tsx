@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, Vibration, View } from 'react-native';
-import { type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, formatearDolares, formatearMonto } from '@tumbite/compartido';
 import { Boton, C } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -19,6 +19,10 @@ export type OfertaCompleta = {
   minutosParaListo?: number;
   segundos?: number;
   ofertaEn?: string;
+  /** Cobro en mano: cómo paga el cliente, en qué moneda y cuánto adelanta el repartidor en el local. */
+  metodoPago?: string;
+  moneda?: string;
+  adelantoLocal?: number;
 };
 
 const km = (v: number, i: Idioma) =>
@@ -100,6 +104,30 @@ export function Oferta({
               }}
             />
           </View>
+          {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' ? (
+            <View
+              testID="oferta-cobro-en-mano"
+              style={{
+                borderWidth: 1,
+                borderColor: '#2a2a2a',
+                borderRadius: 10,
+                padding: 10,
+                gap: 2,
+              }}
+            >
+              <Text style={{ fontWeight: '900', color: C.secundario }}>
+                {oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
+              </Text>
+              {oferta.adelantoLocal ? (
+                <Text style={{ color: '#5E5E5E' }}>
+                  {t.adelantas.replace(
+                    '{monto}',
+                    formatearMonto(oferta.adelantoLocal, oferta.moneda, idioma),
+                  )}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.garantizado}</Text>
           <Text style={{ fontSize: 40, fontWeight: '900', color: C.secundario, lineHeight: 44 }}>
             {formatearDolares(oferta.pagoRepartidor, idioma)}

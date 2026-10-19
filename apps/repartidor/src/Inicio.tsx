@@ -719,6 +719,8 @@ export function Inicio() {
   const [nombreRecibe, setNombreRecibe] = useState('');
   const [codigoRecarga, setCodigoRecarga] = useState('');
   const [prepago, setPrepago] = useState<{
+    /** Moneda del país del repartidor (el saldo va en su unidad menor). */
+    moneda?: string;
     disponible: number;
     reservado: number;
     efectivoActivo: boolean;
@@ -1072,13 +1074,13 @@ export function Inicio() {
                   color: prepago.disponible > 0 ? '#0D7A3A' : C.primario,
                 }}
               >
-                {formatearDolares(prepago.disponible, idioma)}
+                {formatearMonto(prepago.disponible, prepago.moneda, idioma)}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ color: C.secundario }}>{tg.prepago.reservado}</Text>
               <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {formatearDolares(prepago.reservado, idioma)}
+                {formatearMonto(prepago.reservado, prepago.moneda, idioma)}
               </Text>
             </View>
             {prepago.disponible <= 0 ? (

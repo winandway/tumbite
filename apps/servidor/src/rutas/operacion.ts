@@ -1260,6 +1260,11 @@ operacion.get('/repartidor/ofertas', async (c) => {
         articulos,
         ofertaEn: String(f.oferta_en),
         segundos: SEGUNDOS_OFERTA,
+        // Cobro en mano (como DiDi y Rappi en efectivo): lo que el repartidor adelanta en el local
+        // con su dinero, para que decida ANTES de aceptar.
+        adelantoLocal: esDirecto(String(f.metodo_pago ?? 'tarjeta'))
+          ? Number(f.pago_restaurante)
+          : 0,
       };
     }),
   });
