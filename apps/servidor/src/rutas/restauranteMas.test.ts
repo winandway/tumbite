@@ -315,4 +315,38 @@ describe('el restaurante como los grandes (C-RESTAURANTE-MAS)', () => {
       "'/datos/mi-restaurante/orden-categorias'",
     );
   });
+
+  it('la base impide que una persona esté en dos equipos aunque la escritura no pase por la ruta (C-MIEMBRO-UNICO)', async () => {
+    const e = await escenario();
+    const staff = await e.m.cuenta('restaurante', 'Beto Staff');
+    const otro = await e.m.cuenta('restaurante', 'Otro Dueño');
+    await e.m.llamar(
+      'PUT',
+      '/datos/mi-restaurante',
+      {
+        nombre: 'Otro',
+        direccion: '1 Calle, Miami, FL',
+        lat: 25.77,
+        lng: -80.19,
+        categoria: 'Pizza',
+        telefono: '3055550101',
+      },
+      otro.token,
+    );
+    const otroId = (await e.m.DB.prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+      .bind(otro.id)
+      .first<{ id: string }>())!.id;
+    await e.m.DB.prepare(
+      "INSERT INTO miembros_restaurante (restaurante_id, usuario_id, rol) VALUES (?, ?, 'staff')",
+    )
+      .bind(e.rid, staff.id)
+      .run();
+    await expect(
+      e.m.DB.prepare(
+        "INSERT INTO miembros_restaurante (restaurante_id, usuario_id, rol) VALUES (?, ?, 'staff')",
+      )
+        .bind(otroId, staff.id)
+        .run(),
+    ).rejects.toThrow(/UNIQUE/);
+  });
 });
