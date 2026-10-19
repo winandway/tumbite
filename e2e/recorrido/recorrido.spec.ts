@@ -610,10 +610,9 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByRole('button', { name: /^(Comida|Food)$/ }).click();
     await expect(cli.getByLabel(/Buscar restaurantes|Search restaurants/)).toBeVisible();
     const enLista = cli.getByText(restaurante).filter({ visible: true });
-    await expect(enLista).toBeVisible({ timeout: 20_000 });
+    // Con muchos restaurantes (staging tiene más de cien) la lista es virtual y el de la corrida
+    // puede no estar dibujado: como una persona, se escribe su nombre en el buscador de la lista.
     await foto(cli, 'cliente-restaurantes');
-    // Con muchos restaurantes (staging tiene más de cien) la lista es virtual: como una persona, se
-    // escribe el nombre en su buscador y se toca el resultado (sin esperar a ciegas).
     await cli.getByLabel(/Buscar restaurantes|Search restaurants/).fill(restaurante);
     await expect(enLista).toHaveCount(1, { timeout: 20_000 });
     await enLista.click();
