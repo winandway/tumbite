@@ -1666,5 +1666,7 @@ CREATE TABLE IF NOT EXISTS pagos_local (
   diferencia_ticket INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   confirmado_restaurante_en TEXT,
-  confirmado_por TEXT
+  confirmado_por TEXT,
+  -- Foto del ticket del restaurante (opcional), en el almacén privado de evidencias.
+  ticket_clave TEXT
 );
