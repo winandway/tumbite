@@ -28,6 +28,10 @@ jobs:
       - name: Copia de seguridad diaria (producción)
         run: |
           curl -fsS -X POST "https://tumbite.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }
+      # El sitio de pruebas también tiene su copia diaria (antes nunca se pedía: canario «atrasado»).
+      - name: Copia de seguridad diaria (pruebas)
+        run: |
+          curl -fsS -X POST "https://staging.tumbite.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || echo "::warning::La copia de seguridad de pruebas falló"
       # A mano, con «respaldo» marcado: una copia completa NUEVA aunque hoy ya haya otra (antes de
       # publicar en producción; PLAN-PUBLICACION-PRODUCCION.md §1).
       - name: Copia de seguridad completa a pedido (producción)

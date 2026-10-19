@@ -82,3 +82,15 @@ describe('copia de seguridad diaria', () => {
     expect((await pedir()).omitido).toBe(true);
   });
 });
+
+describe('el reloj pide la copia diaria en producción y en pruebas', () => {
+  it('reloj.yml tiene los dos pasos (en pruebas nunca se pedía y el canario quedaba «atrasado»)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const reloj = readFileSync(
+      new URL('../../../.github/workflows/reloj.yml', import.meta.url),
+      'utf8',
+    );
+    expect(reloj).toContain('https://tumbite.com/datos/respaldo?siHaceFalta=1');
+    expect(reloj).toContain('https://staging.tumbite.com/datos/respaldo?siHaceFalta=1');
+  });
+});
