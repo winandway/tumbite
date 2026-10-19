@@ -1,5 +1,7 @@
 # Tumbite — Estado del circuito de pagos
 
+> **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
+
 > 🟡 **Tarjeta con Stripe real (modo live): PROBADA una vez con Checkout** (pedido de $7.18, 10 oct 2026, pago `pi_3UPZrOLDByFATg8R2eLasrcQ`).
 > 🔴 **El pago DENTRO de la app (sin salto) NO está probado con dinero real todavía.** No se anuncia hasta hacer la compra de $1 por la app web.
 > Regla global: no se dice «listo» hasta una compra de punta a punta por cada método.
@@ -95,7 +97,7 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 ## 🟡 Retiros (actualizado 18 oct 2026): corrección del doble pago PUBLICADA en producción el 17 oct (d22a9a6a) — apagados por bandera, SIN probar en real
 
 - La corrección (`docs/FASE-0-SEGURIDAD-FINANCIERA.md`, candado C-RETIROS-SEGUROS) está en producción desde el 17 oct: si Stripe transfiere y la respuesta se pierde, se consulta a Stripe antes de devolver el saldo. Probada con Stripe simulado (21 pruebas) y en staging.
-- **Falta**: activar el aviso `transfer.created` en el panel de Stripe (Richard), hacer un retiro en **modo prueba de Stripe** en el sitio de pruebas cortando la respuesta a propósito (S11), y encenderlos (`PUT /datos/admin/retiros`; todavía sin pantalla en el superadmin — lista MVP, punto 7 de `docs/AUDITORIA-FINAL-2026-10-18.md`).
+- **Falta**: activar el aviso `transfer.created` en el panel de Stripe (Richard), hacer un retiro en **modo prueba de Stripe** en el sitio de pruebas cortando la respuesta a propósito (S11), y encenderlos (`PUT /datos/admin/retiros`; el superadmin ya tiene la pantalla de retiros; siguen apagados por decisión de Richard).
 - Mientras tanto: no anunciar retiros. **Sin bandera los retiros nacen apagados**; la app dice «en pausa».
 - S11 (retiro en modo prueba de Stripe) está programada y corre sola desde GitHub en cuanto el sitio de pruebas tenga llaves de modo prueba cargadas en su panel.
 - Anulación de pedidos (15 oct): si se pierde la respuesta de Stripe, se consulta a Stripe antes de revivir el pedido (C-ANULACION-VERIFICADA). Probado con Stripe simulado.

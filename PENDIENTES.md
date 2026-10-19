@@ -2,6 +2,8 @@
 
 👤 = depende de Richard. Ordenado por importancia.
 
+> **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
+
 ## La fila de la IA — Fase 2 (18 oct 2026)
 
 Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o en la rama lista para publicar): F1–F8, F10, F11, F13, F14, F16, F19, F21; puntos 7, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 26, 27, 28, 32, 33, 34; bloque B (libro, prepago, cobro directo, cuentas del repartidor, recargas); impuesto, devoluciones y disputas; pantallas del cobro directo y guías.
@@ -34,7 +36,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 - [ ] 👤 **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
 
-- [ ] 👤 **URGENTE — cambiar las contraseñas de prueba** que estaban en el archivo de contraseñas de las apps (la de Expo y las de las cuentas de prueba de cliente, repartidor y restaurante). El archivo entró por error en una rama del repositorio público el 16 oct; no llegó a main ni a producción. Detalle en `docs/PUBLICACION-RELOJ-SEGURO-2026-10-17.md`. Borrarlo del historial de GitHub es destructivo y espera su decisión.
+- [ ] 👤 **URGENTE — cambiar las contraseñas de prueba** que estaban en el archivo de contraseñas de las apps (la de Expo y las de las cuentas de prueba de cliente, repartidor y restaurante). El archivo entró por error al repositorio público el 16 oct y **sí está en el historial de main** (no en lo publicado). La clave del cliente de pruebas ya se cambió el 19 oct; falta la de Expo. Detalle en `docs/PUBLICACION-RELOJ-SEGURO-2026-10-17.md`. Borrarlo del historial de GitHub es destructivo y espera su decisión.
 
 ### Lo primero para lanzar (al 12 oct 2026, noche), en orden
 
