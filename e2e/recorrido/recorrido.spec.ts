@@ -1634,9 +1634,12 @@ for (const idioma of ['en', 'es'] as const) {
           });
         /** Recoge (foto en el local + el restaurante confirma) y entrega en la puerta con GPS serio. */
         const recogerYEntregar = async (pid: string) => {
-          expect(
-            (await subir(`/datos/repartidor/pedidos/${pid}/foto-recogida`, paseRep, enRest)).ok(),
-          ).toBe(true);
+          const rFoto1 = await subir(
+            `/datos/repartidor/pedidos/${pid}/foto-recogida`,
+            paseRep,
+            enRest,
+          );
+          expect(rFoto1.ok(), `${rFoto1.status()} ${await rFoto1.text()}`).toBe(true);
           expect(
             (
               await request.post(`/datos/restaurante/pedidos/${pid}/confirmar-recogida`, {
@@ -1839,9 +1842,12 @@ for (const idioma of ['en', 'es'] as const) {
         // C. Cliente ausente después de comprar la comida: «El cliente no pagó» → cancelado, deuda
         //    del cliente y la comida como pérdida pendiente de decisión, en la bandeja.
         const c = await pedirEnMano('efectivo');
-        expect(
-          (await subir(`/datos/repartidor/pedidos/${c.id}/foto-recogida`, paseRep, enRest)).ok(),
-        ).toBe(true);
+        const rFoto2 = await subir(
+          `/datos/repartidor/pedidos/${c.id}/foto-recogida`,
+          paseRep,
+          enRest,
+        );
+        expect(rFoto2.ok(), `${rFoto2.status()} ${await rFoto2.text()}`).toBe(true);
         await request.post(`/datos/restaurante/pedidos/${c.id}/confirmar-recogida`, {
           headers: hdr(tRest),
           data: {},

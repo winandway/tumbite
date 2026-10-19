@@ -70,3 +70,41 @@ En staging el cobro en mano se enciende solo durante la corrida y solo para EE. 
 ## 5. Próxima acción
 
 De Richard: la decisión 20 y la solicitud de autorizaciones (empezando por la compra real con tarjeta). De nuestro lado: leer por país los topes fijos (bono, opción, propina, cupones, quejas) para que estén listos cuando Richard ponga las cifras.
+
+---
+
+## Actualización del 19 oct (noche): topes por país y evidencia internacional
+
+Versión: VERSION_PENDIENTE_11. **El MVP sigue sin terminar y ningún país distinto de EE. UU. está listo para encenderse.**
+
+### Qué quedó comprobado, por país y entorno
+
+|                                                    | Pruebas automáticas | Local en pantalla                                                     | Staging                                     | Teléfono real | Dinero real |
+| -------------------------------------------------- | ------------------- | --------------------------------------------------------------------- | ------------------------------------------- | ------------- | ----------- |
+| EE. UU., tarjeta                                   | Sí                  | Sí (es/en)                                                            | Sí (es/en)                                  | No            | No          |
+| EE. UU., efectivo y transferencia (apagados)       | Sí                  | Sí (es/en)                                                            | Sí (es/en, solo durante la corrida)         | No            | No          |
+| Colombia, cobro en mano en COP (cifras ficticias)  | Sí                  | **Sí** (español): carrito, oferta, pago en el local, «Cobré», bandeja | **No**: staging no tiene zonas de otro país | No            | No          |
+| Venezuela, cobro en mano en VES (cifras ficticias) | Sí                  | **Sí** (inglés), mismo recorrido                                      | **No**                                      | No            | No          |
+
+En pantalla se comprobó lo que la persona toca (botones y campos de las apps). Por la API del producto se comprobaron los pasos sin pantalla propia en la prueba: aceptar, listo, recogida, llegada, entrega, transferencia, pago de menos, excedente, cliente ausente, conciliación.
+
+### Defectos reales que encontró el recorrido en pesos y bolívares (arreglados)
+
+1. La app del repartidor leía los pesos como dólares en el pago en el local (los multiplicaba por cien).
+2. El carrito ofrecía las formas de pago de la ciudad guardada del cliente, no del restaurante.
+3. Las tarifas de un país no aceptaban montos altos en su moneda.
+4. El carrito ofrecía «Tarjeta» en pesos y bolívares, que el servidor rechaza.
+
+### Trabajo técnico que sigue pendiente
+
+- Recorrido del cobro en mano en staging con una ciudad de otro país: espera permiso para crear allí un país y una ciudad de prueba (escritura en la base de staging).
+- Decidir si se respalda también el almacén de fotos (hoy el respaldo es solo de la base).
+- Lo demás de esta ronda quedó hecho.
+
+### Autorizaciones y decisiones indispensables
+
+Están en `docs/SOLICITUD-AUTORIZACIONES-2026-10-19.md` (grupos A a F) y `docs/DECISIONES-PREPARADAS-2026-10-19.md` (decisiones 20 y 22, tarifas, topes y recarga disputada, con recomendación e impacto). Ninguna está aprobada.
+
+### Próxima acción
+
+Richard: la decisión 20 y, si quiere ver el cobro en mano en staging en pesos, el permiso para crear allí un país y una ciudad de prueba con cifras ficticias, que se apagan al terminar.
