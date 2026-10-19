@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import { type Api, ErrorApi, type Idioma, formatearDolares } from '@tumbite/compartido';
+import {
+  type Api,
+  ErrorApi,
+  type Idioma,
+  formatearMonto,
+  montoATexto,
+  textoAMonto,
+} from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 type Datos = {
   montoEsperado: number;
   subtotal: number;
+  /** Moneda del pedido (USD, COP, VES…): los montos van en su unidad menor. */
+  moneda?: string;
   registrado: {
     montoPagado: number;
     importeTicket: number;
@@ -16,9 +25,6 @@ type Datos = {
     conFotoTicket?: boolean;
   } | null;
 };
-
-const aCentavos = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
-const aTexto = (c: number) => (c / 100).toFixed(2);
 
 /**
  * Cobro directo, pasos 2 y 3 del recorrido aprobado (C-COBRO-DIRECTO-LOCAL): el repartidor paga la
@@ -54,8 +60,8 @@ export function PagoEnLocal({
         const r = await api.pedir<Datos>('GET', `/datos/repartidor/pedidos/${pedidoId}/pago-local`);
         if (!vivo) return;
         setD(r);
-        setPagado(aTexto(r.montoEsperado));
-        setTicket(aTexto(r.subtotal));
+        setPagado(montoATexto(r.montoEsperado, r.moneda));
+        setTicket(montoATexto(r.subtotal, r.moneda));
       } catch (x) {
         if (vivo) setError(x instanceof ErrorApi ? x.message : String(x));
       }
@@ -66,8 +72,8 @@ export function PagoEnLocal({
   }, [api, pedidoId]);
 
   async function registrar() {
-    const montoPagado = aCentavos(pagado);
-    const importeTicket = aCentavos(ticket);
+    const montoPagado = textoAMonto(pagado, d?.moneda);
+    const importeTicket = textoAMonto(ticket, d?.moneda);
     if (!(montoPagado > 0) || !(importeTicket > 0)) return setError(t.montoInvalido);
     setError('');
     setEnviando(true);
@@ -105,11 +111,11 @@ export function PagoEnLocal({
       <Text style={{ color: '#5E5E5E' }}>
         {t.paga}{' '}
         <Text style={{ fontWeight: '900', color: C.secundario }}>
-          {formatearDolares(d.montoEsperado, idioma)}
+          {formatearMonto(d.montoEsperado, d.moneda, idioma)}
         </Text>
       </Text>
       <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
-        {t.explica.replace('{comida}', formatearDolares(d.subtotal, idioma))}
+        {t.explica.replace('{comida}', formatearMonto(d.subtotal, d.moneda, idioma))}
       </Text>
       {reg ? (
         <>
@@ -118,8 +124,8 @@ export function PagoEnLocal({
           </Text>
           <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
             {t.resumen
-              .replace('{pagado}', formatearDolares(reg.montoPagado, idioma))
-              .replace('{ticket}', formatearDolares(reg.importeTicket, idioma))
+              .replace('{pagado}', formatearMonto(reg.montoPagado, d.moneda, idioma))
+              .replace('{ticket}', formatearMonto(reg.importeTicket, d.moneda, idioma))
               .replace('{metodo}', reg.metodo === 'efectivo' ? t.efectivo : t.tarjeta)}
           </Text>
           {reg.diferenciaPago !== 0 || reg.diferenciaTicket !== 0 ? (

@@ -33,6 +33,7 @@ type FilaBase = {
   repartidor_id: string | null;
   metodo_pago: string;
   restaurante_id: string;
+  moneda: string | null;
 };
 
 const directo = (m: string) => m === 'efectivo' || m === 'transferencia_repartidor';
@@ -40,7 +41,7 @@ const directo = (m: string) => m === 'efectivo' || m === 'transferencia_repartid
 async function filaPedido(db: D1Database, pedidoId: string) {
   return db
     .prepare(
-      'SELECT id, estado, zona_id, subtotal, pago_restaurante, repartidor_id, metodo_pago, restaurante_id FROM pedidos WHERE id = ?',
+      'SELECT id, estado, zona_id, subtotal, pago_restaurante, repartidor_id, metodo_pago, restaurante_id, moneda FROM pedidos WHERE id = ?',
     )
     .bind(pedidoId)
     .first<FilaBase>();
@@ -75,6 +76,8 @@ export async function leerPagoLocal(db: D1Database, pedidoId: string) {
     // Lo que la app le dice al repartidor que pague: la comida menos la comisión de Tumbite.
     montoEsperado: Number(f.pago_restaurante),
     subtotal: Number(f.subtotal),
+    // C-TARIFAS-PAIS: los montos van en la moneda del pedido.
+    moneda: String(f.moneda ?? 'USD'),
     registrado: r ? aPagoLocal(r, f) : null,
   };
 }

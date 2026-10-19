@@ -73,6 +73,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'pausado', 'INTEGER NOT NULL DEFAULT 0'],
   // C-COBRO-DIRECTO-LOCAL (19 oct 2026): foto del ticket del restaurante.
   ['pagos_local', 'ticket_clave', 'TEXT'],
+  // C-TARIFAS-PAIS (19 oct 2026): moneda del pedido y tarifas aplicadas al crearlo.
+  ['pedidos', 'moneda', "TEXT NOT NULL DEFAULT 'USD'"],
+  ['pedidos', 'tarifas_json', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

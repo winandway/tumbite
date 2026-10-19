@@ -26,6 +26,8 @@ import {
   type Nivel,
   enIdioma,
   formatearDolares,
+  formatearMonto,
+  textoAMonto,
   PRECISION_MAXIMA_M,
   llego,
   metrosEntre,
@@ -115,6 +117,8 @@ type Pedido = {
   grupoId?: string | null;
   /** Fase 2 · cobro directo. */
   metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+  /** Moneda del pedido (C-TARIFAS-PAIS): USD, COP, VES… */
+  moneda?: string;
   cobroEstado?: string;
   total?: number;
   lineas: {
@@ -741,7 +745,7 @@ export function Inicio() {
     };
   }, [vista, api]);
   async function cobre(pedidoId: string) {
-    const monto = Math.round(Number(montoCobro.replace(',', '.')) * 100);
+    const monto = textoAMonto(montoCobro, activo?.moneda);
     if (!Number.isFinite(monto) || monto < 0) return setError(tg.prepago.codigo);
     setError('');
     try {
@@ -1680,7 +1684,11 @@ export function Inicio() {
                                     ? tg.pedido.cobrarEfectivo
                                     : tg.pedido.cobrarTransfer}{' '}
                                   <Text style={{ fontWeight: '900', color: C.secundario }}>
-                                    {formatearDolares((activo.total ?? 0) - activo.propina, idioma)}
+                                    {formatearMonto(
+                                      (activo.total ?? 0) - activo.propina,
+                                      activo.moneda,
+                                      idioma,
+                                    )}
                                   </Text>
                                 </Text>
                                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>

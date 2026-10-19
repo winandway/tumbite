@@ -22,6 +22,7 @@ import {
   type Restaurante,
   enIdioma,
   formatearDolares,
+  formatearMonto,
   type RepartidorEnPedido,
   avisoLlegada,
   fotoSinConfirmar,
@@ -227,6 +228,7 @@ function CobroAlRepartidor({
   const t = enIdioma(TEXTOS_LOCAL, idioma);
   const [d, setD] = useState<{
     montoEsperado: number;
+    moneda?: string;
     registrado: { montoPagado: number; importeTicket: number; metodo: string } | null;
   } | null>(null);
   useEffect(() => {
@@ -250,10 +252,13 @@ function CobroAlRepartidor({
   return (
     <Text style={{ marginTop: 4, color: C.secundario, fontSize: 13 }} testID="cobro-al-repartidor">
       {t.cobra}{' '}
-      <Text style={{ fontWeight: '900' }}>{formatearDolares(d.montoEsperado, idioma)}</Text>
+      <Text style={{ fontWeight: '900' }}>{formatearMonto(d.montoEsperado, d.moneda, idioma)}</Text>
       {' · '}
       {d.registrado
-        ? t.registrado.replace('{monto}', formatearDolares(d.registrado.montoPagado, idioma))
+        ? t.registrado.replace(
+            '{monto}',
+            formatearMonto(d.registrado.montoPagado, d.moneda, idioma),
+          )
         : t.sinRegistrar}
     </Text>
   );

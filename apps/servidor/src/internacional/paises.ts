@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { esquemaConfigDinero } from '../rutas/dinero';
+import { ErrorDatos } from '../validar';
 
 /**
  * Interruptores y cifras por país (Fase 2, modelo internacional). Todo nace APAGADO: en EE.UU. se
@@ -34,6 +36,12 @@ export const esquemaConfigPais = z.object({
   recargasSemanaMax: z.number().int().min(1).max(200),
   /** Lo que gana el punto de venta por cada recarga vendida, en puntos base. */
   comisionPuntoPb: z.number().int().min(0).max(5000),
+  /**
+   * C-TARIFAS-PAIS: envío, servicio, mínimos y comisión al restaurante de este país, en SU moneda
+   * (unidad menor). null = sin tarifas escritas: el país NO recibe pedidos. Estados Unidos no usa
+   * este campo (sigue con la configuración global de siempre). Las cifras las fija Richard.
+   */
+  tarifas: esquemaConfigDinero.nullable(),
 });
 export type ConfigPais = z.infer<typeof esquemaConfigPais>;
 
@@ -54,6 +62,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     recargaMax: 1_000_000_000,
     recargasSemanaMax: 20,
     comisionPuntoPb: 0,
+    tarifas: null,
   };
 }
 
@@ -79,6 +88,11 @@ export async function guardarConfigPais(
 ) {
   const nueva = { ...(await leerConfigPais(db, pais)), ...parcial };
   esquemaConfigPais.parse(nueva);
+  const t = nueva.tarifas;
+  if (t && (t.servicioMinimo > t.servicioMaximo || t.envioBase > t.envioMaximo))
+    throw new ErrorDatos(
+      'Revisa los mínimos y máximos: el mínimo no puede ser mayor que el máximo.',
+    );
   await db
     .prepare(
       "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",

@@ -60,3 +60,17 @@ describe('montos en la moneda del país (C-MONEDA-LOCAL)', () => {
     expect(() => formatearMonto(1.5, 'COP', 'es')).toThrow();
   });
 });
+
+describe('lo que se escribe, a la unidad menor de cada moneda (C-MONEDA-LOCAL)', () => {
+  it('dólares con dos decimales, pesos sin decimales, ida y vuelta', async () => {
+    const { textoAMonto, montoATexto } = await import('./dinero');
+    expect(textoAMonto('15.50', 'USD')).toBe(1550);
+    expect(textoAMonto('15,5')).toBe(1550);
+    expect(textoAMonto('12000', 'COP')).toBe(12000);
+    expect(textoAMonto('12,50', 'VES')).toBe(1250);
+    expect(Number.isNaN(textoAMonto('abc', 'USD'))).toBe(true);
+    expect(montoATexto(1550, 'USD')).toBe('15.50');
+    expect(montoATexto(12000, 'COP')).toBe('12000');
+    expect(textoAMonto(montoATexto(98765, 'COP'), 'COP')).toBe(98765);
+  });
+});

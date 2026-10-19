@@ -56,6 +56,21 @@ export function formatearMonto(
   }).format(monto / 10 ** decimales);
 }
 
+/**
+ * C-MONEDA-LOCAL: lo que escribe una persona («15.50», «12000») a la unidad menor de SU moneda, y al
+ * revés. Con pesos (0 decimales) «12000» son 12000 pesos, no 1 200 000. Devuelve NaN si no es un número.
+ */
+export function textoAMonto(texto: string, moneda: string = 'USD'): number {
+  const d = DECIMALES_MONEDA.get(moneda) ?? 2;
+  const n = Number(texto.trim().replace(',', '.'));
+  return Number.isFinite(n) ? Math.round(n * 10 ** d) : Number.NaN;
+}
+
+export function montoATexto(monto: number, moneda: string = 'USD'): string {
+  const d = DECIMALES_MONEDA.get(moneda) ?? 2;
+  return (monto / 10 ** d).toFixed(d);
+}
+
 /** Porcentaje expresado en puntos básicos (750 = 7,5 %), redondeado al centavo. */
 export function porcentajeDe(centavos: Centavos, puntosBasicos: number): Centavos {
   if (!esCentavosValidos(centavos) || !Number.isInteger(puntosBasicos) || puntosBasicos < 0) {

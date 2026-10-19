@@ -107,6 +107,18 @@ export const MENSAJES_EN = new Map<string, string>([
     'You already have the maximum number of saved addresses. Delete one to add another.',
   ],
   [
+    'Tumbite todavía no recibe pedidos en este país.',
+    'Tumbite isn’t taking orders in this country yet.',
+  ],
+  [
+    'La moneda de esta zona no coincide con la del país. Escríbenos a soporte.',
+    'This area’s currency doesn’t match the country’s. Please contact support.',
+  ],
+  [
+    'El pago con tarjeta todavía no está disponible en este país.',
+    'Card payment isn’t available in this country yet.',
+  ],
+  [
     'Este país todavía no acepta pago en efectivo.',
     'This country doesn’t accept cash payment yet.',
   ],

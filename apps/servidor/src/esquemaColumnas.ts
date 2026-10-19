@@ -129,6 +129,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "cobro_nota",
     "cobro_confirmado_por",
     "conciliacion_estado",
+    "moneda",
+    "tarifas_json",
     "comision",
     "pago_restaurante",
     "pago_repartidor",

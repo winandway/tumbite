@@ -24,6 +24,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
+import { tarifasDeZona, tarifasDelPedido } from '../internacional/tarifas';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -101,7 +102,8 @@ type Linea = {
 export async function calcularSinPlato(db: D1Database, f: FilaPedido, platoId: string) {
   const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
   const nuevas = lineas.filter((l) => l.platoId !== platoId);
-  const config = await leerConfigDinero(db);
+  // C-TARIFAS-PAIS: se recalcula con las tarifas que se aplicaron al pedido, no con las de hoy.
+  const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
   if (!nuevas.length) return { nuevas, desglose: null, devolucion: Number(f.total) };
   const subtotal = nuevas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   // C-FALLOS-DINERO (F8): un pedido para recoger se cobró sin envío; se recalcula igual.
@@ -263,6 +265,7 @@ export function aPedido(f: FilaPedido) {
     descuento: Number(f.descuento ?? 0),
     cupon: f.cupon ? String(f.cupon) : null,
     metodoPago: String(f.metodo_pago ?? 'tarjeta'),
+    moneda: String(f.moneda ?? 'USD'),
     cobroEstado: String(f.cobro_estado ?? 'no_aplica'),
     montoRecibido: f.monto_recibido == null ? null : Number(f.monto_recibido),
     conciliacionEstado: String(f.conciliacion_estado ?? 'no_aplica'),
@@ -418,7 +421,14 @@ pedidos.post('/pedidos', async (c) => {
     );
   await exigirCobertura(db, String(rest.zona_id ?? ZONA_INICIAL), d.lat, d.lng, recogida);
   const plan = rest.plan as Plan;
-  const config = await leerConfigDinero(db);
+  // C-TARIFAS-PAIS: tarifas y moneda del país de la zona (EE. UU. = la configuración de siempre).
+  const { moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  if (d.metodoPago === 'tarjeta' && moneda !== 'USD')
+    throw new ErrorDatos(
+      'El pago con tarjeta todavía no está disponible en este país.',
+      'metodoPago',
+      409,
+    );
   let regalo = 0;
   if (d.regalo) {
     const subtotal = lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
@@ -479,8 +489,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -512,6 +522,8 @@ pedidos.post('/pedidos', async (c) => {
       desglose.impuesto,
       cupon?.codigo ?? null,
       desglose.descuento,
+      moneda,
+      JSON.stringify(config),
     )
     .run();
   if (cupon)
@@ -1091,7 +1103,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       409,
     );
   await exigirCobertura(db, String(f.zona_id ?? ZONA_INICIAL), d.lat, d.lng);
-  const config = await leerConfigDinero(db);
+  const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
   const lineas = lineasDe(f);
   const desglose = calcularPedido({
     lineas,
