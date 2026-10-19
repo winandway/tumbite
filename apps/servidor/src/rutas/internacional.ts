@@ -1,4 +1,11 @@
 import {
+  TIPOS_CASO,
+  type TipoCaso,
+  accionCaso,
+  detalleCaso,
+  listarCasos,
+} from '../internacional/bandeja';
+import {
   TIPOS_CUENTA,
   confirmarCuentaCobro,
   crearCuentaCobro,
@@ -198,6 +205,38 @@ internacional.post('/punto-venta/codigos/:id/anular', async (c) => {
   const p = await miPunto(db, u.id);
   await anularCodigo(db, { codigoId: c.req.param('id'), puntoId: p.id, autorId: u.id });
   return c.json({ ok: true });
+});
+
+// ───────── Bandeja de soporte del cobro en mano (C-BANDEJA-DINERO) ─────────
+internacional.get('/admin/bandeja-dinero', async (c) => {
+  exigir(c, 'admin');
+  const tipo = z
+    .enum(TIPOS_CASO as [TipoCaso, ...TipoCaso[]])
+    .optional()
+    .safeParse(c.req.query('tipo') || undefined);
+  const casos = await listarCasos(base(c), {
+    tipo: tipo.success ? tipo.data : undefined,
+    incluirResueltos: c.req.query('resueltos') === '1',
+  });
+  return c.json({ casos });
+});
+
+internacional.get('/admin/bandeja-dinero/:clave', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await detalleCaso(base(c), decodeURIComponent(c.req.param('clave'))));
+});
+
+internacional.post('/admin/bandeja-dinero/:clave/acciones', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      accion: z.string().min(2).max(40),
+      nota: z.string().max(1000).default(''),
+      idempotencia: z.string().min(8).max(80),
+    }),
+  );
+  return c.json(await accionCaso(base(c), { clave: c.req.param('clave'), ...d, autorId: u.id }));
 });
 
 /** Soporte anula un código perdido, robado o vendido por error (también de un punto desactivado). */

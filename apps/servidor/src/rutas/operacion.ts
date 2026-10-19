@@ -1959,6 +1959,37 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
       return r ? { cuadra: r.cuadra } : null;
     },
   },
+  // C-CONCILIACION-ATOMICA: si la conciliación de un pedido en mano no corrió (se cortó la petición
+  // de la entrega o del «Cobré»), el reloj la retoma. Es idempotente.
+  {
+    nombre: 'conciliacion_directa',
+    critica: true,
+    correr: async (_env, db) => {
+      const { results } = await db
+        .prepare(
+          `SELECT id FROM pedidos WHERE metodo_pago != 'tarjeta' AND estado = 'entregado' AND conciliacion_estado = 'pendiente'
+            AND cobro_estado IN ('confirmado', 'parcial', 'no_pagado') LIMIT 50`,
+        )
+        .all<{ id: string }>();
+      let n = 0;
+      for (const r of results) if (await conciliarPedidoDirecto(db, r.id)) n++;
+      return n;
+    },
+  },
+  // Sesiones vencidas: no sirven para entrar (se valida el vencimiento), pero se borran para que la
+  // tabla no crezca sin fin.
+  {
+    nombre: 'sesiones_vencidas',
+    critica: false,
+    correr: async (_env, db) => {
+      const r = await db
+        .prepare(
+          "DELETE FROM sesiones WHERE rowid IN (SELECT rowid FROM sesiones WHERE expira_en < datetime('now', '-1 day') LIMIT 500)",
+        )
+        .run();
+      return Number(r.meta.changes ?? 0);
+    },
+  },
   // Retención de fotos (30 días). Puede esperar: no es crítica.
   // Pausa sin señal (C-PAUSA-SIN-SENAL): solo avisa. La pausa misma se calcula al leer, así que
   // si esta tarea falla, los clientes igual no pueden pedir a una tienda sin señal.

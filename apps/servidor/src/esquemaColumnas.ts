@@ -1002,5 +1002,36 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "confirmado_restaurante_en",
     "confirmado_por",
     "ticket_clave"
+  ],
+  "incidencias_dinero": [
+    "id",
+    "tipo",
+    "referencia",
+    "pedido_id",
+    "recarga_id",
+    "cuenta_id",
+    "pais",
+    "moneda",
+    "monto_esperado",
+    "monto_recibido",
+    "detalle",
+    "estado",
+    "creado_en",
+    "resuelta_en"
+  ],
+  "casos_dinero": [
+    "clave",
+    "estado",
+    "responsable_id",
+    "actualizado_en"
+  ],
+  "casos_dinero_historial": [
+    "id",
+    "clave",
+    "accion",
+    "nota",
+    "autor_id",
+    "idempotencia",
+    "creado_en"
   ]
 };

@@ -1,6 +1,7 @@
 import { ErrorDatos } from '../validar';
-import { anotarLibro, cuentaPunto, descontarSiAlcanza, saldoLibro, sentenciaLibro } from './libro';
+import { anotarLibro, cuentaPunto, saldoLibro, sentenciaDescontar, sentenciaLibro } from './libro';
 import { leerConfigPais } from './paises';
+import { abrirIncidencia } from './bandeja';
 
 const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0/O ni 1/I: se dicta por teléfono sin confusión
 const MAX_FALLIDOS_HORA = 10;
@@ -73,32 +74,39 @@ export async function emitirCodigo(
   if (p.monto < cfg.recargaMin || p.monto > cfg.recargaMax)
     throw new ErrorDatos('La recarga está fuera de los límites permitidos.', 'monto', 409);
   const id = crypto.randomUUID();
-  const ok = await descontarSiAlcanza(db, {
-    cuentaId: cuentaPunto(punto.id),
-    bolsillo: 'punto',
-    pais: punto.pais,
-    moneda: punto.moneda,
-    monto: p.monto,
-    concepto: 'codigo_emitido',
-    referencia: `codigo:${id}:emitido`,
-    autorId: p.emitidoPor,
-  });
-  if (!ok) throw new ErrorDatos('Ese punto de venta no tiene saldo suficiente.', 'monto', 409);
   const codigo = codigoNuevo();
-  await db
-    .prepare(
-      'INSERT INTO codigos_recarga (id, codigo_hash, punto_id, pais, moneda, monto, emitido_por) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    )
-    .bind(
-      id,
-      await sha256(normalizarCodigo(codigo)),
-      punto.id,
-      punto.pais,
-      punto.moneda,
-      p.monto,
-      p.emitidoPor,
-    )
-    .run();
+  // C-BANDEJA-DINERO: el fondo baja y el código nace en UN lote. El código solo se inserta si el
+  // descuento entró (si no alcanzaba, no hay ninguno); si el proceso se corta, no queda fondo
+  // descontado sin código ni código sin fondo.
+  await db.batch([
+    sentenciaDescontar(db, {
+      cuentaId: cuentaPunto(punto.id),
+      bolsillo: 'punto',
+      pais: punto.pais,
+      moneda: punto.moneda,
+      monto: p.monto,
+      concepto: 'codigo_emitido',
+      referencia: `codigo:${id}:emitido`,
+      autorId: p.emitidoPor,
+    }),
+    db
+      .prepare(
+        `INSERT INTO codigos_recarga (id, codigo_hash, punto_id, pais, moneda, monto, emitido_por)
+         SELECT ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM libro WHERE referencia = ?)`,
+      )
+      .bind(
+        id,
+        await sha256(normalizarCodigo(codigo)),
+        punto.id,
+        punto.pais,
+        punto.moneda,
+        p.monto,
+        p.emitidoPor,
+        `codigo:${id}:emitido`,
+      ),
+  ]);
+  const nacio = await db.prepare('SELECT 1 FROM codigos_recarga WHERE id = ?').bind(id).first();
+  if (!nacio) throw new ErrorDatos('Ese punto de venta no tiene saldo suficiente.', 'monto', 409);
   return { id, codigo, monto: p.monto, moneda: punto.moneda };
 }
 
@@ -277,8 +285,22 @@ export async function acreditarRecargaStripe(db: D1Database, obj: Record<string,
     console.error('recarga: aviso de Stripe sin recarga conocida', recargaId);
     return false;
   }
-  if (Number(obj.amount_received) !== r.monto) {
+  // C-BANDEJA-DINERO: si Stripe confirmó otro monto u otra moneda, NO se acredita nada y queda una
+  // incidencia abierta en la bandeja de soporte (antes solo quedaba en el registro de errores).
+  const moneda = obj.currency == null ? r.moneda.toLowerCase() : String(obj.currency);
+  if (Number(obj.amount_received) !== r.monto || moneda !== r.moneda.toLowerCase()) {
     console.error('recarga: el monto de Stripe no cuadra', recargaId, obj.amount_received, r.monto);
+    await abrirIncidencia(db, {
+      tipo: 'recarga_monto_distinto',
+      referencia: `recarga-monto:${r.id}:${String(obj.id ?? '')}`,
+      recargaId: r.id,
+      cuentaId: r.usuario_id,
+      pais: r.pais,
+      moneda: r.moneda,
+      esperado: r.monto,
+      recibido: Number(obj.amount_received ?? 0),
+      detalle: `Stripe confirmó ${String(obj.amount_received)} ${moneda.toUpperCase()} para una recarga de ${r.monto} ${r.moneda}. No se acreditó nada.`,
+    });
     return false;
   }
   await db.batch([

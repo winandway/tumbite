@@ -1,3 +1,4 @@
+import { saludBandeja } from './internacional/bandeja';
 import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
@@ -236,6 +237,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
       console.error('salud: disputas', e);
+      return 'error' as const;
+    });
+  // C-BANDEJA-DINERO: casos del cobro en mano esperando a soporte («pendiente», no es un error).
+  if (c.env.DB)
+    piezas.bandeja = await saludBandeja(c.env.DB).catch((e: unknown) => {
+      console.error('salud: bandeja', e);
       return 'error' as const;
     });
   // C-COBRO-AL-ENTREGAR: ningún cobro de una entrega en revisión ni atrasado más de 2 horas.

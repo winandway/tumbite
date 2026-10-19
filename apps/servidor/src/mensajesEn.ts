@@ -139,6 +139,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'You reached today’s cash limit. Settle or top up to keep taking cash orders.',
   ],
   ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
+  ['Ese caso no existe.', 'That case doesn’t exist.'],
+  ['Esa acción no está permitida en este caso.', 'That action isn’t allowed for this case.'],
+  ['Ese caso ya está resuelto.', 'That case is already resolved.'],
+  ['Escribe qué pasó y con qué evidencia.', 'Write what happened and what evidence you have.'],
   [
     'Ese comprobante ya se usó para este punto de venta. Escribe el número del pago nuevo.',
     'That receipt was already used for this point of sale. Enter the new payment’s number.',

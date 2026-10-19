@@ -205,32 +205,45 @@ export async function liberarReservasDe(db: D1Database, pedidoId: string, motivo
 
 /** La reserva se convierte en comisión cobrada por Tumbite. Idempotente. */
 export async function cobrarReserva(db: D1Database, pedidoId: string, repartidorId: string) {
+  const { monto, sentencias } = await sentenciasCobrarReserva(db, pedidoId, repartidorId);
+  if (sentencias.length) await db.batch(sentencias);
+  return monto;
+}
+
+/** Las sentencias de `cobrarReserva`, para meterlas en un lote con otras (referencias únicas). */
+export async function sentenciasCobrarReserva(
+  db: D1Database,
+  pedidoId: string,
+  repartidorId: string,
+): Promise<{ monto: number; sentencias: D1PreparedStatement[] }> {
   const r = await reservaVigente(db, pedidoId, repartidorId);
-  if (r.monto <= 0) return 0;
+  if (r.monto <= 0) return { monto: 0, sentencias: [] };
   const ref = `comision:${pedidoId}:${repartidorId}`;
-  await db.batch([
-    sentenciaLibro(db, {
-      cuentaId: repartidorId,
-      bolsillo: 'reservado',
-      pais: r.pais,
-      moneda: r.moneda,
-      monto: -r.monto,
-      concepto: 'comision_cobrada',
-      pedidoId,
-      referencia: `${ref}:reservado`,
-    }),
-    sentenciaLibro(db, {
-      cuentaId: CUENTA_TUMBITE,
-      bolsillo: 'comisiones',
-      pais: r.pais,
-      moneda: r.moneda,
-      monto: r.monto,
-      concepto: 'comision_cobrada',
-      pedidoId,
-      referencia: `${ref}:tumbite`,
-    }),
-  ]);
-  return r.monto;
+  return {
+    monto: r.monto,
+    sentencias: [
+      sentenciaLibro(db, {
+        cuentaId: repartidorId,
+        bolsillo: 'reservado',
+        pais: r.pais,
+        moneda: r.moneda,
+        monto: -r.monto,
+        concepto: 'comision_cobrada',
+        pedidoId,
+        referencia: `${ref}:reservado`,
+      }),
+      sentenciaLibro(db, {
+        cuentaId: CUENTA_TUMBITE,
+        bolsillo: 'comisiones',
+        pais: r.pais,
+        moneda: r.moneda,
+        monto: r.monto,
+        concepto: 'comision_cobrada',
+        pedidoId,
+        referencia: `${ref}:tumbite`,
+      }),
+    ],
+  };
 }
 
 /** Todas las filas del libro de un pedido, para reconstruir quién recibió qué. */

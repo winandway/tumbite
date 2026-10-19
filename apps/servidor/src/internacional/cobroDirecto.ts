@@ -1,7 +1,15 @@
 import { porcentajeDe } from '@tumbite/compartido';
 import { anotarEvento } from '../manager';
 import { ErrorDatos } from '../validar';
-import { anotarLibro, cobrarReserva, liberarReserva, reservarComision, saldoLibro } from './libro';
+import {
+  anotarLibro,
+  liberarReserva,
+  reservaVigente,
+  reservarComision,
+  saldoLibro,
+  sentenciaLibro,
+  sentenciasCobrarReserva,
+} from './libro';
 import { leerConfigPais, paisDeZona, type ConfigPais } from './paises';
 import { registrarPerdidaComida } from './pagoLocal';
 
@@ -159,6 +167,45 @@ export async function reservarAlAceptar(db: D1Database, pedidoId: string, repart
     );
 }
 
+/**
+ * C-RESERVA-AJUSTE (19 oct 2026): al quitar un plato agotado de un pedido en mano, la comisión
+ * baja con la comida. Lo apartado de más vuelve al saldo prepago del repartidor, una sola vez
+ * (referencia única). Antes se cobraba la comisión del pedido original.
+ */
+export async function ajustarReservaDirecta(db: D1Database, pedidoId: string) {
+  const f = await filaDirecta(db, pedidoId);
+  if (!f || !esDirecto(f.metodo_pago) || !f.repartidor_id) return 0;
+  const { pais, moneda } = await paisDeZona(db, f.zona_id);
+  const nueva = comisionDirecta(f, await leerConfigPais(db, pais));
+  const vigente = await reservaVigente(db, pedidoId, f.repartidor_id);
+  const sobra = vigente.monto - nueva;
+  if (sobra <= 0) return 0;
+  const ref = `reserva-ajuste:${pedidoId}:${f.repartidor_id}`;
+  await db.batch([
+    sentenciaLibro(db, {
+      cuentaId: f.repartidor_id,
+      bolsillo: 'reservado',
+      pais,
+      moneda,
+      monto: -sobra,
+      concepto: 'reserva_ajustada_plato_quitado',
+      pedidoId,
+      referencia: `${ref}:reservado`,
+    }),
+    sentenciaLibro(db, {
+      cuentaId: f.repartidor_id,
+      bolsillo: 'prepago',
+      pais,
+      moneda,
+      monto: sobra,
+      concepto: 'reserva_ajustada_plato_quitado',
+      pedidoId,
+      referencia: `${ref}:prepago`,
+    }),
+  ]);
+  return sobra;
+}
+
 /** El repartidor confirma lo que recibió del cliente (efectivo o transferencia que vio en su banco). */
 export async function confirmarCobro(
   db: D1Database,
@@ -282,49 +329,60 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
   const excedente = Math.max(0, recibido - esperado - Number(f.propina));
   const estado =
     diferencia > 0 || excedente > 0 || conDiferenciaLocal ? 'con_diferencia' : 'conciliado';
-  const r = await db
-    .prepare(
-      "UPDATE pedidos SET conciliacion_estado = ? WHERE id = ? AND conciliacion_estado = 'pendiente'",
-    )
-    .bind(estado, pedidoId)
-    .run();
-  if (!r.meta.changes) return null;
-  await cobrarReserva(db, pedidoId, f.repartidor_id);
-  if (diferencia > 0)
-    await anotarLibro(db, {
-      cuentaId: f.cliente_id,
-      bolsillo: 'deuda_cliente',
-      pais,
-      moneda,
-      monto: diferencia,
-      concepto: 'pago_incompleto',
-      pedidoId,
-      referencia: `deuda:${pedidoId}`,
-    });
-  // El cliente pagó de MÁS (por ejemplo, una transferencia repetida): el repartidor le debe la
-  // diferencia. Queda escrito; Tumbite no la devuelve porque ese dinero nunca pasó por Tumbite.
-  if (excedente > 0)
-    await anotarLibro(db, {
-      cuentaId: f.repartidor_id,
+  // C-CONCILIACION-ATOMICA: la comisión, la deuda, el excedente, el registro del pago en el local y
+  // el cambio de estado van en UN lote. Antes se marcaba el estado primero: si el proceso se cortaba
+  // después, el pedido quedaba «conciliado» sin la comisión cobrada y nadie lo retomaba.
+  const { sentencias: comision } = await sentenciasCobrarReserva(db, pedidoId, f.repartidor_id);
+  const resultados = await db.batch([
+    ...comision,
+    ...(diferencia > 0
+      ? [
+          sentenciaLibro(db, {
+            cuentaId: f.cliente_id,
+            bolsillo: 'deuda_cliente',
+            pais,
+            moneda,
+            monto: diferencia,
+            concepto: 'pago_incompleto',
+            pedidoId,
+            referencia: `deuda:${pedidoId}`,
+          }),
+        ]
+      : []),
+    // El cliente pagó de MÁS (por ejemplo, una transferencia repetida): el repartidor le debe la
+    // diferencia. Queda escrito; Tumbite no la devuelve porque ese dinero nunca pasó por Tumbite.
+    ...(excedente > 0
+      ? [
+          sentenciaLibro(db, {
+            cuentaId: f.repartidor_id,
+            bolsillo: 'directo',
+            pais,
+            moneda,
+            monto: -excedente,
+            concepto: 'excedente_cliente_por_devolver',
+            pedidoId,
+            referencia: `excedente:${pedidoId}`,
+          }),
+        ]
+      : []),
+    // Informativo: el restaurante recibió su parte en el local, de manos del repartidor.
+    sentenciaLibro(db, {
+      cuentaId: `restaurante-de:${pedidoId}`,
       bolsillo: 'directo',
       pais,
       moneda,
-      monto: -excedente,
-      concepto: 'excedente_cliente_por_devolver',
+      monto: local ? Number(local.monto_pagado) : f.pago_restaurante,
+      concepto: 'pagado_en_local_por_repartidor',
       pedidoId,
-      referencia: `excedente:${pedidoId}`,
-    });
-  // Informativo: el restaurante recibió su parte en el local, de manos del repartidor.
-  await anotarLibro(db, {
-    cuentaId: `restaurante-de:${pedidoId}`,
-    bolsillo: 'directo',
-    pais,
-    moneda,
-    monto: local ? Number(local.monto_pagado) : f.pago_restaurante,
-    concepto: 'pagado_en_local_por_repartidor',
-    pedidoId,
-    referencia: `local:${pedidoId}`,
-  });
+      referencia: `local:${pedidoId}`,
+    }),
+    db
+      .prepare(
+        "UPDATE pedidos SET conciliacion_estado = ? WHERE id = ? AND conciliacion_estado = 'pendiente'",
+      )
+      .bind(estado, pedidoId),
+  ]);
+  if (!resultados.at(-1)?.meta.changes) return null;
   await anotarEvento(db, pedidoId, 'conciliado', `${estado} · recibido ${recibido} de ${esperado}`);
   return estado;
 }

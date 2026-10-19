@@ -222,10 +222,18 @@ restauranteMas.post('/mi-restaurante/equipo', async (c) => {
   if (u.id === r.u.id) throw new ErrorDatos('Ya eres el dueño.', 'correo', 409);
   const otro = await restauranteDe(db, u.id);
   if (otro) throw new ErrorDatos('Esa persona ya pertenece a otro restaurante.', 'correo', 409);
-  await db
-    .prepare('INSERT INTO miembros_restaurante (restaurante_id, usuario_id, rol) VALUES (?, ?, ?)')
+  // Una sola sentencia (atómica): solo entra si la persona no es dueña ni miembro de ningún
+  // restaurante en ese momento. Dos altas a la vez desde dos restaurantes: solo una gana.
+  const alta = await db
+    .prepare(
+      `INSERT OR IGNORE INTO miembros_restaurante (restaurante_id, usuario_id, rol)
+       SELECT ?1, ?2, ?3 WHERE NOT EXISTS (SELECT 1 FROM miembros_restaurante WHERE usuario_id = ?2)
+         AND NOT EXISTS (SELECT 1 FROM restaurantes WHERE dueno_id = ?2)`,
+    )
     .bind(r.id, u.id, d.rol)
     .run();
+  if (!alta.meta.changes)
+    throw new ErrorDatos('Esa persona ya pertenece a otro restaurante.', 'correo', 409);
   return c.json({ ok: true }, 201);
 });
 

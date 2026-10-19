@@ -1284,3 +1284,402 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(guias.match(/id: 'cash-orders-and-top-ups'/g)).toHaveLength(2);
   });
 });
+
+describe('bandeja de soporte del cobro en mano y recuperación tras interrupciones (C-BANDEJA-DINERO)', () => {
+  async function entregado(e: Awaited<ReturnType<typeof escenario>>, extra = {}) {
+    const p = await e.pedir(extra);
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toContain(id);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
+    return { id, rep, total: p.datos.desglose.totalCliente as number };
+  }
+  const bandeja = (e: Awaited<ReturnType<typeof escenario>>, token = e.admin.token) =>
+    e.m.llamar('GET', '/datos/admin/bandeja-dinero', undefined, token);
+  const accion = (
+    e: Awaited<ReturnType<typeof escenario>>,
+    clave: string,
+    cuerpo: Record<string, unknown>,
+  ) =>
+    e.m.llamar(
+      'POST',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent(clave)}/acciones`,
+      cuerpo,
+      e.admin.token,
+    );
+
+  it('solo soporte la ve; un excedente muestra importes, moneda, participantes y evidencias, y «devuelto» lo escribe en el libro una sola vez', async () => {
+    const e = await escenario();
+    const { id, rep, total } = await entregado(e);
+    // El cliente pagó 5 de más (sin contar la propina, que es del repartidor).
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total + 500, nota: '' },
+      rep.token,
+    );
+    expect((await bandeja(e, rep.token)).estado).toBe(403);
+    const lista = await bandeja(e);
+    const exc = (lista.datos.casos as { clave: string; tipo: string }[]).find(
+      (c) => c.tipo === 'excedente',
+    );
+    expect(exc).toMatchObject({
+      clave: `excedente:${id}`,
+      moneda: 'USD',
+      estado: 'abierto',
+      montos: { porDevolver: 500 },
+      participantes: { cliente: 'Ana Cliente', repartidor: 'Rafa Rep' },
+    });
+    const det = await e.m.llamar(
+      'GET',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent(`excedente:${id}`)}`,
+      undefined,
+      e.admin.token,
+    );
+    expect(det.datos.evidencias.length).toBeGreaterThan(0);
+    expect(det.datos.libro.length).toBeGreaterThan(0);
+    // Sin nota no se resuelve; una acción que no corresponde, tampoco.
+    expect(
+      (
+        await accion(e, `excedente:${id}`, {
+          accion: 'excedente_devuelto',
+          nota: '',
+          idempotencia: 'aaaaaaaa1',
+        })
+      ).estado,
+    ).toBe(422);
+    expect(
+      (
+        await accion(e, `excedente:${id}`, {
+          accion: 'confirmar_restaurante',
+          nota: 'no aplica aquí',
+          idempotencia: 'aaaaaaaa2',
+        })
+      ).estado,
+    ).toBe(409);
+    const ok = {
+      accion: 'excedente_devuelto',
+      nota: 'El repartidor devolvió 5 dólares, captura en el ticket 12',
+      idempotencia: 'aaaaaaaa3',
+    };
+    expect((await accion(e, `excedente:${id}`, ok)).estado).toBe(200);
+    // Reintento con la misma clave: no repite nada.
+    expect((await accion(e, `excedente:${id}`, ok)).datos.repetida).toBe(true);
+    const devuelto = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n, SUM(monto) AS s FROM libro WHERE pedido_id = ? AND concepto = 'excedente_devuelto_al_cliente'",
+    )
+      .bind(id)
+      .first<{ n: number; s: number }>();
+    expect(devuelto).toMatchObject({ n: 1, s: 500 });
+    // Nada se borró: el asiento del excedente sigue ahí.
+    const original = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM libro WHERE pedido_id = ? AND concepto = 'excedente_cliente_por_devolver'",
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(Number(original?.n)).toBe(1);
+    const despues = (await bandeja(e)).datos.casos as { tipo: string }[];
+    expect(despues.some((c) => c.tipo === 'excedente')).toBe(false);
+    const hist = await e.m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM casos_dinero_historial WHERE clave = ?',
+    )
+      .bind(`excedente:${id}`)
+      .first<{ n: number }>();
+    expect(Number(hist?.n)).toBe(1);
+  });
+
+  it('transferencia por verificar, pago en el local sin confirmar y comida perdida aparecen; la comida solo se revisa (decisión pendiente) y la salud lo marca', async () => {
+    const e = await escenario({ transferenciaRepartidorActiva: true });
+    const { id, rep } = await entregado(e, { metodoPago: 'transferencia_repartidor' });
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/transferencia-pendiente`,
+      {},
+      rep.token,
+    );
+    // Recogida con QR y foto sin que el restaurante confirme el pago (vacío 7 del cruce).
+    await e.m.DB.prepare(
+      'UPDATE pagos_local SET confirmado_restaurante_en = NULL WHERE pedido_id = ?',
+    )
+      .bind(id)
+      .run();
+    let casos = (await bandeja(e)).datos.casos as {
+      clave: string;
+      tipo: string;
+      acciones: string[];
+    }[];
+    expect(casos.map((c) => c.tipo)).toEqual(expect.arrayContaining(['transferencia', 'local']));
+    expect(
+      (
+        await accion(e, `local:${id}`, {
+          accion: 'confirmar_restaurante',
+          nota: 'El restaurante lo confirmó por teléfono',
+          idempotencia: 'bbbbbbbb1',
+        })
+      ).estado,
+    ).toBe(200);
+    const conf = await e.m.DB.prepare('SELECT confirmado_por FROM pagos_local WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ confirmado_por: string }>();
+    expect(conf?.confirmado_por).toMatch(/^soporte:/);
+    // Comida comprada y no entregada: solo tomar, nota o resolver; nunca compensar sola.
+    const otro = await e.pedir();
+    const oid = otro.datos.pedidoId as string;
+    await e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, pedido_id, referencia) VALUES ('perd1', ?, 'directo', 'US', 'USD', -1500, 'comida_comprada_sin_entregar', ?, ?)",
+    )
+      .bind(rep.id, oid, `perdida:${oid}`)
+      .run();
+    casos = (await bandeja(e)).datos.casos as { clave: string; tipo: string; acciones: string[] }[];
+    const comida = casos.find((c) => c.clave === `comida:${oid}`);
+    expect(comida?.acciones).toEqual(['tomar', 'nota', 'resolver']);
+    const salud = (await (await e.m.crudo('/datos/salud', { method: 'GET' })).json()) as {
+      piezas: Record<string, string>;
+    };
+    expect(salud.piezas.bandeja).toBe('pendiente');
+    // Tomar el caso deja responsable y estado «en revisión».
+    await accion(e, `comida:${oid}`, { accion: 'tomar', nota: '', idempotencia: 'cccccccc1' });
+    const det = await e.m.llamar(
+      'GET',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent(`comida:${oid}`)}`,
+      undefined,
+      e.admin.token,
+    );
+    expect(det.datos.caso).toMatchObject({
+      estado: 'en_revision',
+      responsable: { id: e.admin.id },
+    });
+    expect(det.datos.historial).toHaveLength(1);
+  });
+
+  it('recarga cuyo monto en Stripe no coincide: no se acredita y queda una incidencia en la bandeja hasta que soporte la resuelve', async () => {
+    const e = await escenario({ recargasStripeActivas: true });
+    const rep = await e.repartidor('Rafa Rep');
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/repartidor/recargas/stripe',
+      { monto: 1000 },
+      rep.token,
+    );
+    const { acreditarRecargaStripe } = await import('./internacional/recargas');
+    const obj = {
+      id: 'pi_mal',
+      amount_received: 999,
+      currency: 'usd',
+      metadata: { recarga_id: r.datos.recargaId },
+    };
+    expect(await acreditarRecargaStripe(e.m.DB, obj)).toBe(false);
+    expect(await acreditarRecargaStripe(e.m.DB, obj)).toBe(false);
+    expect(
+      (await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token)).datos
+        .disponible,
+    ).toBe(0);
+    const casos = (await bandeja(e)).datos.casos as {
+      clave: string;
+      tipo: string;
+      montos: Record<string, number>;
+    }[];
+    const inc = casos.filter((c) => c.tipo === 'incidencia');
+    expect(inc).toHaveLength(1);
+    expect(inc[0]!.montos).toEqual({ esperado: 1000, recibido: 999 });
+    // Otra moneda también es incidencia.
+    const r2 = await e.m.llamar(
+      'POST',
+      '/datos/repartidor/recargas/stripe',
+      { monto: 1000 },
+      rep.token,
+    );
+    expect(
+      await acreditarRecargaStripe(e.m.DB, {
+        id: 'pi_cop',
+        amount_received: 1000,
+        currency: 'cop',
+        metadata: { recarga_id: r2.datos.recargaId },
+      }),
+    ).toBe(false);
+    expect(
+      await acreditarRecargaStripe(e.m.DB, {
+        id: 'pi_bien',
+        amount_received: 1000,
+        currency: 'usd',
+        metadata: { recarga_id: r2.datos.recargaId },
+      }),
+    ).toBe(true);
+    expect(
+      (
+        await accion(e, inc[0]!.clave, {
+          accion: 'resolver',
+          nota: 'Revisado con Stripe: el cliente pagó otra cantidad, se le devolvió',
+          idempotencia: 'dddddddd1',
+        })
+      ).estado,
+    ).toBe(200);
+    const queda = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM incidencias_dinero WHERE estado = 'abierta'",
+    ).first<{ n: number }>();
+    expect(Number(queda?.n)).toBe(1); // la de la moneda distinta sigue abierta
+  });
+
+  it('interrupciones: emitir un código y cerrar una conciliación no dejan fondos descontados sin código ni comisiones sin cobrar; el reloj retoma', async () => {
+    const e = await escenario();
+    const duenoPunto = await e.m.cuenta('cliente', 'Tienda Tres');
+    const punto = await e.m.llamar(
+      'POST',
+      '/datos/admin/puntos-venta',
+      { nombre: 'Tienda Tres', pais: 'US', usuarioId: duenoPunto.id },
+      e.admin.token,
+    );
+    const pid = punto.datos.punto.id as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/puntos-venta/${pid}/fondo`,
+      { monto: 5000, comprobante: 'pago-777' },
+      e.admin.token,
+    );
+    const { saldoLibro: saldo, cuentaPunto } = await import('./internacional/libro');
+    // El código no llega a guardarse (se corta el proceso): el fondo no se descuenta.
+    await e.m.DB.prepare(
+      "CREATE TRIGGER corte_codigo BEFORE INSERT ON codigos_recarga BEGIN SELECT RAISE(ABORT, 'corte'); END",
+    ).run();
+    expect(
+      (await e.m.llamar('POST', '/datos/punto-venta/codigos', { monto: 1000 }, duenoPunto.token))
+        .estado,
+    ).toBe(500);
+    await e.m.DB.prepare('DROP TRIGGER corte_codigo').run();
+    expect(await saldo(e.m.DB, cuentaPunto(pid), 'punto', 'US', 'USD')).toBe(5000);
+    // Conciliación que se corta al cobrar la comisión: el pedido no queda «conciliado» a medias.
+    const { id, rep, total } = await entregado(e);
+    await e.m.DB.prepare(
+      "CREATE TRIGGER corte_comision BEFORE INSERT ON libro WHEN NEW.concepto = 'comision_cobrada' BEGIN SELECT RAISE(ABORT, 'corte'); END",
+    ).run();
+    await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total - 200, nota: '' },
+      rep.token,
+    );
+    await e.m.DB.prepare('DROP TRIGGER corte_comision').run();
+    const antes = await e.m.DB.prepare('SELECT conciliacion_estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ conciliacion_estado: string }>();
+    expect(antes?.conciliacion_estado).toBe('pendiente');
+    const { TAREAS_RELOJ } = await import('./rutas/operacion');
+    const t = TAREAS_RELOJ.find((x) => x.nombre === 'conciliacion_directa')!;
+    expect(await t.correr(e.m.extra as never, e.m.DB)).toBe(1);
+    const despues = await e.m.DB.prepare('SELECT conciliacion_estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ conciliacion_estado: string }>();
+    expect(despues?.conciliacion_estado).toBe('conciliado');
+    expect(await saldo(e.m.DB, 'tumbite', 'comisiones', 'US', 'USD')).toBe(300);
+    expect(await t.correr(e.m.extra as never, e.m.DB)).toBe(0);
+  });
+
+  it('alta de un miembro desde dos restaurantes a la vez: solo uno gana; las sesiones vencidas se purgan', async () => {
+    const e = await escenario();
+    const otroDueno = await e.m.cuenta('restaurante', 'Otro Dueño');
+    await e.m.llamar(
+      'PUT',
+      '/datos/mi-restaurante',
+      { ...RESTAURANTE_BASE, nombre: 'Otro Local' },
+      otroDueno.token,
+    );
+    const staff = await e.m.cuenta('restaurante', 'Beto Staff');
+    const correo = (await e.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(staff.id)
+      .first<{ correo: string }>())!.correo;
+    const r = await Promise.all([
+      e.m.llamar('POST', '/datos/mi-restaurante/equipo', { correo, rol: 'staff' }, e.dueno.token),
+      e.m.llamar('POST', '/datos/mi-restaurante/equipo', { correo, rol: 'staff' }, otroDueno.token),
+    ]);
+    expect(r.map((x) => x.estado).sort()).toEqual([201, 409]);
+    const n = await e.m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM miembros_restaurante WHERE usuario_id = ?',
+    )
+      .bind(staff.id)
+      .first<{ n: number }>();
+    expect(Number(n?.n)).toBe(1);
+    await e.m.DB.prepare(
+      "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES ('vieja', ?, datetime('now', '-3 days'))",
+    )
+      .bind(staff.id)
+      .run();
+    const { TAREAS_RELOJ } = await import('./rutas/operacion');
+    const t = TAREAS_RELOJ.find((x) => x.nombre === 'sesiones_vencidas')!;
+    expect(await t.correr(e.m.extra as never, e.m.DB)).toBe(1);
+    // La sesión vigente del staff sigue sirviendo.
+    expect((await e.m.llamar('GET', '/datos/mi-restaurante', undefined, staff.token)).estado).toBe(
+      200,
+    );
+  });
+
+  it('quitar un plato agotado de un pedido en mano baja la comisión apartada y devuelve la diferencia al saldo, una sola vez (C-RESERVA-AJUSTE)', async () => {
+    const e = await escenario();
+    const extra = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Flan', precioCentavos: 1000 },
+      e.dueno.token,
+    );
+    const flan = extra.datos.plato.id as string;
+    const cubano = (await e.m.DB.prepare("SELECT id FROM platos WHERE nombre_es = 'Cubano'").first<{
+      id: string;
+    }>())!.id;
+    const p = await e.pedir({
+      lineas: [
+        { platoId: cubano, cantidad: 1 },
+        { platoId: flan, cantidad: 1 },
+      ],
+    });
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    // El restaurante avisa del plato agotado ANTES de que haya repartidor (la única forma que
+    // permite el servidor) y, mientras el cliente decide, un repartidor acepta el pedido.
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/restaurante/pedidos/${id}/falta`,
+          { platoId: flan },
+          e.dueno.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toContain(id);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    const { saldoLibro: saldo } = await import('./internacional/libro');
+    expect(await saldo(e.m.DB, rep.id, 'reservado', 'US', 'USD')).toBe(250);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/ajuste`,
+          { decision: 'quitar' },
+          e.cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(await saldo(e.m.DB, rep.id, 'reservado', 'US', 'USD')).toBe(150);
+    expect(await saldo(e.m.DB, rep.id, 'prepago', 'US', 'USD')).toBe(850);
+    const { ajustarReservaDirecta } = await import('./internacional/cobroDirecto');
+    expect(await ajustarReservaDirecta(e.m.DB, id)).toBe(0);
+    expect(await saldo(e.m.DB, rep.id, 'prepago', 'US', 'USD')).toBe(850);
+  });
+});

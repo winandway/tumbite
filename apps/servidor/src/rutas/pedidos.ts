@@ -1,3 +1,4 @@
+import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
 import { acreditarRecargaStripe } from '../internacional/recargas';
@@ -210,6 +211,8 @@ export async function aplicarAjuste(
       .bind(devolucion, pedidoId),
   ]);
   await anotarEvento(db, pedidoId, 'plato_quitado', `${devolucion} centavos`);
+  // Pedido en mano: la comisión apartada baja con la comida (C-RESERVA-AJUSTE).
+  await ajustarReservaDirecta(db, pedidoId);
   const cli = await db
     .prepare('SELECT idioma FROM usuarios WHERE id = ?')
     .bind(String(f.cliente_id))

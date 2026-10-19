@@ -30,6 +30,7 @@ import { PanelFranquicia } from './PanelFranquicia';
 import { TableroRestaurante } from './TableroRestaurante';
 import { MiEmpresa } from './MiEmpresa';
 import { SuperKyc } from './SuperKyc';
+import { SuperBandeja } from './SuperBandeja';
 import { SuperPedido, SuperPedidos } from './SuperPedido';
 import {
   SuperCiudades,
@@ -57,6 +58,10 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/verifications') return <SuperKyc base={base} idioma={idioma} id={null} />;
   const kycId = /^\/verifications\/([0-9a-f-]{36})$/.exec(sub);
   if (kycId?.[1]) return <SuperKyc base={base} idioma={idioma} id={kycId[1]} />;
+  if (sub === '/cash') return <SuperBandeja base={base} idioma={idioma} clave={null} />;
+  const caso = /^\/cash\/([^/]+)$/.exec(sub);
+  if (caso?.[1])
+    return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;
   if (sub === '/restaurants') return <AdminRestaurantes idioma={idioma} base={base} />;
