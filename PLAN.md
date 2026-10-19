@@ -80,3 +80,16 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] R.10 Fichas de tiendas: textos es/en listos (capturas al final).
 - [x] R.11 Staging → producción por el flujo permanente con lo que esté aprobado.
 - [x] R.12 Informe de cierre de la ronda con la clasificación A/B/C/D.
+
+## Ronda MVP 19 oct — terminar y comprobar el MVP aprobado
+
+- [ ] M.1 Registro único: reescribir RECONCILIACION con los 67 puntos y F5–F20 (alcance, estado comprobado, evidencia, dependencias, criterio, MVP/posterior/decisión) y que los demás resúmenes remitan a él.
+- [ ] M.2 Compuerta única del MVP por recorrido y por país y método, cruzando la sección 4 y la 7 de la auditoría.
+- [ ] M.3 Cruce con los grandes (REA y documentación pública) de los siete procesos, con etiquetas y vacíos del MVP.
+- [x] M.4 Tarifas y moneda por país en el servidor; EE. UU. idéntico; pantallas del cobro en mano en la moneda del pedido (C-TARIFAS-PAIS).
+- [x] M.5 Documento de la prueba real corregido: autoriza 4,99, devuelve 1,00, límites.
+- [x] M.6 Expediente legal con hechos, supuestos y preguntas.
+- [ ] M.7 Revisión de riesgos (Stripe interno, ticket, sesiones, favoritos y reseñas, dinero, roles, recargas, GPS) y arreglo de lo confirmado con prueba en rojo.
+- [ ] M.8 Vacíos del MVP que no dependan de Richard: implementar con prueba en rojo, candado y Docs.
+- [ ] M.9 Staging → recorrido en celular es/en → producción por el flujo permanente.
+- [ ] M.10 Entrega final: recorridos comprobados, conclusiones de los grandes, diferencias decididas, lo construido sin prueba real, riesgos abiertos, decisiones y autorizaciones de Richard, estado por país y método, siguiente acción.
