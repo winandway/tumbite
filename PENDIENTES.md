@@ -9,13 +9,19 @@ Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o
 - [ ] B.7 Conectores reales por país (Wompi/dLocal, pago móvil): solo con contrato y decisión de Richard.
 - [x] Recorrido internacional completo (18 oct, noche): pago de la comida en el local con monto, ticket y método; diferencias, excedente, transferencia por verificar y comida comprada sin entregar en el libro (C-COBRO-DIRECTO-LOCAL). Quién absorbe la comida comprada es la decisión 20 (👤).
 - [x] F9 llamada con número oculto (método del puente) y F18 notas por culpa del restaurante (18 oct, noche). F9 se prueba de verdad con la cuenta de Twilio (👤).
-- [ ] Foto del ticket del restaurante en el pago en el local (hoy se anota el monto).
-- [ ] Montos en moneda local en las apps (pesos y bolívares) antes de cualquier piloto fuera de EE. UU.
+- [x] Foto del ticket del restaurante en el pago en el local (19 oct, C-FOTO-TICKET).
+- [x] Ruta interna para consultar y crear los avisos de Stripe (19 oct, C-STRIPE-AVISOS). Comprobado: falta el de cuentas conectadas en prueba y en real; crearlo espera la autorización (B).
+- [x] Clave expuesta del cliente de pruebas rotada y comprobada (19 oct). Falta la de Expo (C, Richard).
+- [ ] Montos en moneda local: el formato está listo (C-MONEDA-LOCAL); falta construir las tarifas por país, que dependen de la decisión 12 (D).
 - [ ] F17: ciudades de la web desde el servidor, con un interruptor público de lanzamiento por ciudad (hoy la lista fija es intencional; Miami «muy pronto»).
 - [x] Panel del superadmin para países, puntos de venta y libro (18 oct, en la rama fase-2-bloque-c; probado a mano en local).
 - [x] E.2 Recorrido visual de lo nuevo con capturas en Docs (18 oct, 1ff9eb6f): reseñas con respuesta, equipo, festivos, orden del menú, favoritos, direcciones, cupón, pago al recibir y saldo prepago. Lo que falta es verlo en un celular real (Expo, 👤).
 - [ ] 35 / E.4 Fichas de App Store y Google Play con capturas del recorrido (al final).
 - Después del MVP: puntos 36 a 67 (sección F del plan maestro).
+
+## Clasificación por quién lo resuelve (19 oct 2026)
+
+Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado, falta una autorización), C (Richard en persona) y D (decisión o abogado).
 
 ## 👤 Lo que solo puede hacer Richard
 
