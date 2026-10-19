@@ -70,13 +70,13 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 - [x] R.1 Reconciliar RECONCILIACION, INFORME, VERIFICAR-PAGOS, PENDIENTES y PLAN-MAESTRO con la producción real (748bffe0) y lo hecho el 18 oct.
 - [x] R.2 Contraseñas expuestas: comprobar cuáles siguen sirviendo y rotar las de Tumbite (hecho: cliente de pruebas); corregir el registro (el archivo SÍ está en el historial de main).
-- [ ] R.3 Ruta interna protegida para consultar los avisos de Stripe y crear el de cuentas conectadas (prueba en rojo, staging); consultar si existe.
+- [x] R.3 Ruta interna protegida para consultar los avisos de Stripe y crear el de cuentas conectadas (prueba en rojo, staging); consultar si existe.
 - [x] R.4 Foto del ticket del restaurante en el pago en el local (servidor, app, prueba, Docs).
-- [ ] R.5 Montos en la moneda del pedido en las apps (formato por moneda; prueba).
+- [x] R.5 Montos en la moneda del pedido en las apps (formato por moneda; prueba).
 - [x] R.6 Preparar la compra real de 1 dólar y su devolución (guion, cuenta, importes, evidencias) y las recargas y pilotos.
 - [x] R.7 Recomendación para las decisiones 20–23 y lista de las abiertas (retiros, comisiones, puntos de venta, monedas).
 - [x] R.8 Expediente para abogados y proveedores (preguntas, requisitos, selección con fuentes).
 - [x] R.9 Franquicia: contrastar la propuesta con lo que el sistema implementa y dejar borrador revisable.
 - [x] R.10 Fichas de tiendas: textos es/en listos (capturas al final).
-- [ ] R.11 Staging → producción por el flujo permanente con lo que esté aprobado.
-- [ ] R.12 Informe de cierre de la ronda con la clasificación A/B/C/D.
+- [x] R.11 Staging → producción por el flujo permanente con lo que esté aprobado.
+- [x] R.12 Informe de cierre de la ronda con la clasificación A/B/C/D.
