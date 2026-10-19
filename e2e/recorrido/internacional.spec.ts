@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type Page, devices, expect, test } from '@playwright/test';
@@ -143,6 +144,25 @@ for (const P of PAISES) {
       },
     });
     expect(pais.status(), await pais.text()).toBe(200);
+    // Aislamiento: los repartidores y los pedidos colgados de corridas anteriores en esta ciudad de
+    // prueba se desconectan y se cancelan (solo en la base local de .recorrido).
+    execFileSync(
+      'npx',
+      [
+        'wrangler',
+        'd1',
+        'execute',
+        'tumbite-local',
+        '--local',
+        '--persist-to',
+        '.recorrido/estado',
+        '-c',
+        '.recorrido/wrangler.jsonc',
+        '--command',
+        `UPDATE repartidores SET conectado = 0 WHERE zona_id = '${P.zona.id}'; UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE zona_id = '${P.zona.id}' AND estado IN ('pagado', 'aceptado', 'listo')`,
+      ],
+      { cwd: RAIZ, stdio: 'ignore' },
+    );
     const zona = await request.put('/datos/admin/zonas', {
       headers: hdr(admin),
       data: {
@@ -292,6 +312,8 @@ for (const P of PAISES) {
     await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
     await cli.getByRole('radio', { name: L.enPuerta }).click();
     await cli.getByLabel(L.direccionEntrega).fill('Calle de prueba 200, apto 3');
+    // La tarjeta solo cobra en dólares: en esta moneda no se ofrece.
+    await expect(cli.getByRole('radio', { name: /^(Card|Tarjeta)$/ })).toHaveCount(0);
     await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();
     await fotos(cli, 'cliente-carrito');
     const [resp] = await Promise.all([
@@ -342,7 +364,7 @@ for (const P of PAISES) {
         headers: hdr(paseRep),
       })
     ).json()) as { montoEsperado: number; subtotal: number; moneda: string };
-    expect(local.moneda).toBe(P.moneda);
+    expect(local.moneda, JSON.stringify(local)).toBe(P.moneda);
     const pagado = bloque.getByRole('textbox').first();
     await pagado.fill(P.escribir(local.montoEsperado));
     await fotos(rep, 'repartidor-pago-local');
@@ -438,9 +460,13 @@ for (const P of PAISES) {
       .toEqual([P.moneda]);
 
     // ── Más casos por la API: diferencia, excedente, transferencia, cliente ausente ──
-    const pedirApi = async (metodoPago: 'efectivo' | 'transferencia_repartidor') => {
+    const tokenCli = await cli.evaluate(() => localStorage.getItem('tumbite.sesion') ?? '');
+    const pedirApi = async (
+      metodoPago: 'efectivo' | 'transferencia_repartidor',
+      token = tokenCli,
+    ) => {
       const r = await request.post('/datos/pedidos', {
-        headers: hdr(await cli.evaluate(() => localStorage.getItem('tumbite.sesion') ?? '')),
+        headers: hdr(token),
         data: {
           restauranteId: rid,
           lineas: [
@@ -498,10 +524,6 @@ for (const P of PAISES) {
         headers: hdr(paseRep),
         data: { montoRecibido: monto, nota: 'prueba' },
       });
-    // Diferencia: el cliente paga de menos.
-    const d = await pedirApi('efectivo');
-    await recogerYEntregar(d.id);
-    expect((await cobre(d.id, d.total - 100 * k)).ok()).toBe(true);
     // Excedente: transferencia repetida.
     const x = await pedirApi('transferencia_repartidor');
     await recogerYEntregar(x.id);
@@ -514,8 +536,14 @@ for (const P of PAISES) {
       ).ok(),
     ).toBe(true);
     expect((await cobre(x.id, x.total * 2)).ok()).toBe(true);
-    // Cliente ausente después de comprar la comida.
-    const a = await pedirApi('efectivo');
+    // Diferencia: el cliente paga de menos.
+    const d = await pedirApi('efectivo');
+    await recogerYEntregar(d.id);
+    expect((await cobre(d.id, d.total - 100 * k)).ok()).toBe(true);
+    // Cliente ausente después de comprar la comida (otro cliente: el anterior ya quedó con deuda
+    // por pagar de menos y, con razón, no puede volver a pedir en efectivo).
+    const otroCliente = await cuenta('cliente2', 'cliente');
+    const a = await pedirApi('efectivo', otroCliente.token);
     expect((await subir(`/datos/repartidor/pedidos/${a.id}/foto-recogida`, enRest)).ok()).toBe(
       true,
     );

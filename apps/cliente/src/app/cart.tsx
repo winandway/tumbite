@@ -128,6 +128,7 @@ export default function PantallaCarrito() {
   } | null>(null);
   // Fase 2: qué formas de pago permite el país de la zona (efectivo, transferencia). Vacío = solo tarjeta.
   const [pais, setPais] = useState<{
+    moneda?: string;
     efectivoActivo: boolean;
     transferenciaRepartidorActiva: boolean;
   } | null>(null);
@@ -137,7 +138,7 @@ export default function PantallaCarrito() {
   useEffect(() => {
     let vivo = true;
     api
-      .pedir<{ efectivoActivo: boolean; transferenciaRepartidorActiva: boolean }>(
+      .pedir<{ moneda?: string; efectivoActivo: boolean; transferenciaRepartidorActiva: boolean }>(
         'GET',
         ridPais ? `/datos/pais?restauranteId=${encodeURIComponent(ridPais)}` : '/datos/pais',
       )
@@ -459,8 +460,18 @@ export default function PantallaCarrito() {
   const modoActual = b.valores.entrega || 'puerta';
   const directoPermitido =
     modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
-  const metodoPago = (directoPermitido ? b.valores.metodoPago || 'tarjeta' : 'tarjeta') as
-    'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+  // C-TARIFAS-PAIS: la tarjeta solo cobra en dólares; en otra moneda no se ofrece.
+  const tarjetaPermitida = (pais?.moneda ?? 'USD') === 'USD';
+  const primeroDirecto = pais?.efectivoActivo ? 'efectivo' : 'transferencia_repartidor';
+  const metodoPago = (
+    directoPermitido
+      ? b.valores.metodoPago && (b.valores.metodoPago !== 'tarjeta' || tarjetaPermitida)
+        ? b.valores.metodoPago
+        : tarjetaPermitida
+          ? 'tarjeta'
+          : primeroDirecto
+      : 'tarjeta'
+  ) as 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
 
   return marco(
     <>
@@ -566,7 +577,7 @@ export default function PantallaCarrito() {
           <View style={{ gap: 8, marginBottom: 12 }}>
             {(
               [
-                ['tarjeta', te.pagoTarjeta, te.pagoTarjetaAyuda, true],
+                ['tarjeta', te.pagoTarjeta, te.pagoTarjetaAyuda, tarjetaPermitida],
                 ['efectivo', te.pagoEfectivo, te.pagoEfectivoAyuda, pais?.efectivoActivo],
                 [
                   'transferencia_repartidor',

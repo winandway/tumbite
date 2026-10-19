@@ -1280,6 +1280,8 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(leer('apps/cliente/src/app/order/[id].tsx')).toContain(
       "(p.metodoPago ?? 'tarjeta') === 'tarjeta'",
     );
+    // La tarjeta solo cobra en dólares: el carrito no la ofrece en otra moneda.
+    expect(cart).toContain('te.pagoTarjetaAyuda, tarjetaPermitida]');
     expect(leer('apps/repartidor/src/grandes/Oferta.tsx')).toContain(
       'testID="oferta-cobro-en-mano"',
     );
