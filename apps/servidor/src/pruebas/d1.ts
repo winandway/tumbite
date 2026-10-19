@@ -22,7 +22,12 @@ export function crearBasePruebas(): D1Database {
       v === undefined ? null : typeof v === 'boolean' ? Number(v) : v,
     ) as never[];
     const s = {
-      bind: (...nuevos: unknown[]) => sentencia(sql, nuevos),
+      bind: (...nuevos: unknown[]) => {
+        // Como Cloudflare D1 (C-LIMITE-PARAMETROS): más de 100 parámetros por consulta es un error.
+        if (nuevos.length > 100)
+          throw new Error(`D1_ERROR: too many SQL variables (${nuevos.length} > 100)`);
+        return sentencia(sql, nuevos);
+      },
       async first<T>(columna?: string) {
         const fila = db.prepare(sql).get(...params) as Record<string, unknown> | undefined;
         if (!fila) return null;

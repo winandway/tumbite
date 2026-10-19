@@ -864,3 +864,11 @@ Cada arreglo tiene su prueba, comprobada en ROJO quitando el arreglo. No tocar s
 | Reserva de comisión en dos pasos: una caída dejaba el saldo descontado sin reserva                                                        | Las dos patas en un lote; el reintento la termina (C-RESERVA-ATOMICA)                                                                       | `internacional.test.ts`, «reserva atómica…»                       |
 
 **Quedan abiertos (anotados en `docs/RECONCILIACION-FASE-2.md`):** qué hacer con el saldo de una recarga disputada (decisión de Richard; la recarga con tarjeta sigue apagada); monto de Stripe que no cuadra en una recarga (queda pendiente y en el registro de errores, sin alarma en el canario); emitir y anular un código y cerrar la conciliación de un pedido en mano siguen en dos pasos (con referencias únicas, sin duplicar dinero); sesiones vencidas sin purga; agregar un miembro al equipo no es atómico.
+
+## C-LIMITE-PARAMETROS: nunca más de 100 parámetros por consulta (19 oct 2026)
+
+- **Qué se rompió:** en staging, al pasar de 100 restaurantes en Miami, `GET /datos/restaurantes` respondía 500 y la app decía «No pudimos cargar los restaurantes». El recorrido en español falló por eso (el de inglés había pasado minutos antes, con 99). Producción tenía 5 restaurantes y habría fallado igual al llegar a 100 en una zona.
+- **Causa:** Cloudflare D1 acepta como máximo 100 parámetros por consulta; la consulta de horarios y cierres armaba `IN (?, ?, …)` con un parámetro por restaurante. Lo mismo con los grupos de opciones de un menú grande. La base de pruebas (SQLite local) no tenía ese límite, así que ninguna prueba lo veía.
+- **Cómo quedó:** `apps/servidor/src/trozos.ts` (`enTrozos`, trozos de 90) en `conHorarios` y `gruposDe` (`rutas/catalogo.ts`). **La base de pruebas ahora imita el límite de D1** (`pruebas/d1.ts`: más de 100 parámetros es un error), así cualquier consulta nueva que lo pase se pone en rojo sola.
+- **Prueba:** `limiteParametros.test.ts` (una zona con 130 restaurantes). Rojo comprobado sin el arreglo: el mismo error que en staging.
+- **No tocar:** no armar `IN (…)` con listas de largo variable sin `enTrozos`; no quitar el límite de la base de pruebas.

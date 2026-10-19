@@ -29,6 +29,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos';
 import { minutosPausa } from '../pausa';
 import { restauranteDe } from './restauranteMas';
+import { enTrozos } from '../trozos';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -106,18 +107,33 @@ export function ordenarPlatos(rest: FilaRest, platos: FilaRest[]): FilaRest[] {
 export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<FilaRest[]> {
   if (!filas.length) return filas;
   const ids = filas.map((f) => String(f.id));
-  const { results: cierres } = await db
-    .prepare(
-      `SELECT restaurante_id, fecha FROM cierres_restaurante WHERE restaurante_id IN (${ids.map(() => '?').join(',')}) AND fecha >= date('now', '-1 day')`,
+  // C-LIMITE-PARAMETROS: en trozos (D1 acepta 100 parámetros por consulta).
+  const cierres = await enTrozos(
+    ids,
+    async (trozo, marcas) =>
+      (
+        await db
+          .prepare(
+            `SELECT restaurante_id, fecha FROM cierres_restaurante WHERE restaurante_id IN (${marcas}) AND fecha >= date('now', '-1 day')`,
+          )
+          .bind(...trozo)
+          .all<{ restaurante_id: string; fecha: string }>()
+      ).results,
+  );
+  const turnos = (
+    await enTrozos(
+      ids,
+      async (trozo, marcas) =>
+        (
+          await db
+            .prepare(
+              `SELECT restaurante_id, dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id IN (${marcas})`,
+            )
+            .bind(...trozo)
+            .all<{ restaurante_id: string; dia: number; abre: string; cierra: string }>()
+        ).results,
     )
-    .bind(...ids)
-    .all<{ restaurante_id: string; fecha: string }>();
-  const { results: turnos } = await db
-    .prepare(
-      `SELECT restaurante_id, dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id IN (${ids.map(() => '?').join(',')}) ORDER BY dia, abre`,
-    )
-    .bind(...ids)
-    .all<{ restaurante_id: string; dia: number; abre: string; cierra: string }>();
+  ).sort((a, b) => Number(a.dia) - Number(b.dia) || a.abre.localeCompare(b.abre));
   const { results: zonas } = await db
     .prepare('SELECT id, zona_horaria FROM zonas')
     .all<{ id: string; zona_horaria: string }>();
@@ -139,20 +155,33 @@ export async function gruposDe(
 ): Promise<Map<string, GrupoOpciones[]>> {
   const mapa = new Map<string, GrupoOpciones[]>();
   if (!platoIds.length) return mapa;
-  const { results: grupos } = await db
-    .prepare(
-      `SELECT * FROM grupos_opciones WHERE plato_id IN (${platoIds.map(() => '?').join(',')}) ORDER BY orden`,
+  const porOrden = (a: FilaRest, b: FilaRest) => Number(a.orden) - Number(b.orden);
+  const grupos = (
+    await enTrozos(
+      platoIds,
+      async (trozo, marcas) =>
+        (
+          await db
+            .prepare(`SELECT * FROM grupos_opciones WHERE plato_id IN (${marcas})`)
+            .bind(...trozo)
+            .all<FilaRest>()
+        ).results,
     )
-    .bind(...platoIds)
-    .all<FilaRest>();
+  ).sort(porOrden);
   if (!grupos.length) return mapa;
   const gids = grupos.map((g) => String(g.id));
-  const { results: opciones } = await db
-    .prepare(
-      `SELECT * FROM opciones WHERE grupo_id IN (${gids.map(() => '?').join(',')}) ORDER BY orden`,
+  const opciones = (
+    await enTrozos(
+      gids,
+      async (trozo, marcas) =>
+        (
+          await db
+            .prepare(`SELECT * FROM opciones WHERE grupo_id IN (${marcas})`)
+            .bind(...trozo)
+            .all<FilaRest>()
+        ).results,
     )
-    .bind(...gids)
-    .all<FilaRest>();
+  ).sort(porOrden);
   for (const g of grupos) {
     const lista = mapa.get(String(g.plato_id)) ?? [];
     lista.push({
