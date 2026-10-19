@@ -159,6 +159,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   -- Quién confirmó el cobro: 'repartidor' (confirmación manual, nunca «el banco»), 'admin' o 'api'.
   cobro_confirmado_por TEXT,
   conciliacion_estado TEXT NOT NULL DEFAULT 'no_aplica' CHECK (conciliacion_estado IN ('no_aplica', 'pendiente', 'conciliado', 'con_diferencia')),
+  -- C-TARIFAS-PAIS: moneda del pedido (la de su país) y las tarifas que se le aplicaron.
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  tarifas_json TEXT,
   comision INTEGER NOT NULL,
   pago_restaurante INTEGER NOT NULL,
   pago_repartidor INTEGER NOT NULL,
