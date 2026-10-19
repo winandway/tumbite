@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { CONFIG_DINERO_INICIAL, type ConfigDinero, PLANES } from '@tumbite/compartido';
+import { CONFIG_DINERO_INICIAL, type ConfigDinero } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
@@ -41,9 +41,8 @@ export async function leerConfigDinero(db: D1Database): Promise<ConfigDinero> {
   return r.data;
 }
 
-dinero.get('/config-dinero', async (c) =>
-  c.json({ config: await leerConfigDinero(base(c)), planes: PLANES }),
-);
+// GET /datos/config-dinero vive en rutas/catalogo.ts (C-MONEDA-RECORRIDO): con ?restauranteId= da las
+// tarifas del país de ese restaurante. Aquí no, porque tarifas.ts ya importa este archivo.
 
 dinero.put('/admin/config-dinero', async (c) => {
   exigir(c, 'admin');

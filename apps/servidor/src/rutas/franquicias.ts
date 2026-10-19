@@ -5,6 +5,7 @@ import { nuevoId } from '../cripto';
 import { leerPoligono } from '../territorio';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { paisDeZona } from '../internacional/paises';
 
 /**
  * Franquicias y superadmin (C-FRANQUICIAS, C-TERRITORIO). Una ciudad puede tener VARIAS franquicias;
@@ -35,6 +36,8 @@ type Metricas = {
   pedidos30: number;
   ventas30: number;
   ganancia30: number;
+  /** C-MONEDA-RECORRIDO: la moneda de la ciudad; ventas y ganancia cuentan solo pedidos en ella. */
+  moneda: string;
   restaurantes: number;
   restaurantesAbiertos: number;
   repartidores: number;
@@ -60,18 +63,32 @@ async function metricasDe(db: D1Database, alcance: Alcance): Promise<Metricas> {
     .prepare(
       `SELECT
         SUM(CASE WHEN estado <> 'pago_pendiente' AND creado_en >= datetime('now','start of day') THEN 1 ELSE 0 END) AS hoy,
-        SUM(CASE WHEN estado = 'entregado' AND creado_en >= datetime('now','-30 days') THEN 1 ELSE 0 END) AS n30,
-        SUM(CASE WHEN estado = 'entregado' AND creado_en >= datetime('now','-30 days') THEN total ELSE 0 END) AS ventas,
-        SUM(CASE WHEN estado = 'entregado' AND creado_en >= datetime('now','-30 days') THEN ganancia ELSE 0 END) AS ganancia
+        SUM(CASE WHEN estado = 'entregado' AND creado_en >= datetime('now','-30 days') THEN 1 ELSE 0 END) AS n30
        FROM pedidos WHERE ${f.sql}`,
     )
     .bind(...f.params)
-    .first<{
-      hoy: number | null;
-      n30: number | null;
-      ventas: number | null;
-      ganancia: number | null;
-    }>();
+    .first<{ hoy: number | null; n30: number | null }>();
+  // C-MONEDA-RECORRIDO: una ciudad tiene una sola moneda (las áreas de una franquicia son de su
+  // ciudad). Las ventas se suman SOLO en esa moneda: nunca se mezclan dólares con pesos.
+  const zonaDeAlcance =
+    'zonaId' in alcance
+      ? alcance.zonaId
+      : alcance.areas.length
+        ? ((
+            await db
+              .prepare('SELECT zona_id FROM areas WHERE id = ?')
+              .bind(alcance.areas[0])
+              .first<{ zona_id: string }>()
+          )?.zona_id ?? null)
+        : null;
+  const moneda = zonaDeAlcance ? (await paisDeZona(db, zonaDeAlcance)).moneda : 'USD';
+  const v = await db
+    .prepare(
+      `SELECT COALESCE(SUM(total), 0) AS ventas, COALESCE(SUM(ganancia), 0) AS ganancia FROM pedidos
+       WHERE ${f.sql} AND estado = 'entregado' AND creado_en >= datetime('now','-30 days') AND moneda = ?`,
+    )
+    .bind(...f.params, moneda)
+    .first<{ ventas: number | null; ganancia: number | null }>();
   const r = await db
     .prepare(
       `SELECT SUM(CASE WHEN estado = 'aprobado' THEN 1 ELSE 0 END) AS n, SUM(CASE WHEN estado = 'aprobado' AND abierto = 1 THEN 1 ELSE 0 END) AS abiertos FROM restaurantes WHERE ${f.sql}`,
@@ -99,8 +116,9 @@ async function metricasDe(db: D1Database, alcance: Alcance): Promise<Metricas> {
   return {
     pedidosHoy: Number(p?.hoy ?? 0),
     pedidos30: Number(p?.n30 ?? 0),
-    ventas30: Number(p?.ventas ?? 0),
-    ganancia30: Number(p?.ganancia ?? 0),
+    ventas30: Number(v?.ventas ?? 0),
+    ganancia30: Number(v?.ganancia ?? 0),
+    moneda,
     restaurantes: Number(r?.n ?? 0),
     restaurantesAbiertos: Number(r?.abiertos ?? 0),
     repartidores: Number(d?.n ?? 0),
@@ -586,7 +604,7 @@ franquicias.get('/franquicia/:ruta/resumen', async (c) => {
     .all<{ nombre: string; conectado: number; puntos: number }>();
   const { results: pedidos } = await db
     .prepare(
-      `SELECT p.id, p.estado, p.total, p.creado_en AS creado, r.nombre AS restaurante, a.nombre AS area
+      `SELECT p.id, p.estado, p.total, p.moneda, p.creado_en AS creado, r.nombre AS restaurante, a.nombre AS area
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id LEFT JOIN areas a ON a.id = p.area_id
        WHERE ${fp.sql} AND p.estado <> 'pago_pendiente' AND p.creado_en >= datetime('now','-30 days')
        ORDER BY p.estado IN ('pagado','aceptado','listo','en_camino') DESC, p.creado_en DESC LIMIT 100`,
@@ -596,6 +614,7 @@ franquicias.get('/franquicia/:ruta/resumen', async (c) => {
       id: string;
       estado: string;
       total: number;
+      moneda: string | null;
       creado: string;
       restaurante: string;
       area: string | null;
@@ -629,6 +648,7 @@ franquicias.get('/franquicia/:ruta/resumen', async (c) => {
       codigo: p.id.slice(0, 8).toUpperCase(),
       estado: p.estado,
       total: Number(p.total),
+      moneda: p.moneda ?? 'USD',
       creado: p.creado,
       restaurante: p.restaurante,
       area: p.area,

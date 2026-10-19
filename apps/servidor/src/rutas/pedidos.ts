@@ -20,7 +20,7 @@ import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { formatearDolares } from '@tumbite/compartido';
+import { formatearDolares, formatearMonto } from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -223,6 +223,7 @@ export async function aplicarAjuste(
       i,
       i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es),
       devolucion,
+      String(f.moneda ?? 'USD'),
     ),
     datos: { pedidoId },
   });
@@ -921,7 +922,7 @@ pedidos.post('/stripe/aviso', async (c) => {
 async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) {
   const f = await db
     .prepare(
-      `SELECT p.id, p.lineas_json, p.subtotal, p.envio, p.servicio, p.propina, p.regalo, p.total, p.direccion, p.notas, p.pago_restaurante,
+      `SELECT p.id, p.lineas_json, p.subtotal, p.envio, p.servicio, p.impuesto, p.propina, p.regalo, p.total, p.direccion, p.notas, p.pago_restaurante, p.moneda,
         c.correo AS cliente_correo, c.nombre AS cliente_nombre, c.idioma AS cliente_idioma,
         r.nombre AS restaurante, d.id AS dueno_id, d.correo AS dueno_correo, d.idioma AS dueno_idioma
        FROM pedidos p JOIN usuarios c ON c.id = p.cliente_id
@@ -951,6 +952,7 @@ async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string)
     regalo: Number(f.regalo),
     total: Number(f.total),
     direccion: String(f.direccion),
+    moneda: String(f.moneda ?? 'USD'),
   });
   await avisoPedidoAlRestaurante(env, {
     correo: String(f.dueno_correo),
@@ -960,6 +962,7 @@ async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string)
     lineas,
     pagoRestaurante: Number(f.pago_restaurante),
     notas: String(f.notas ?? ''),
+    moneda: String(f.moneda ?? 'USD'),
   });
   await notificar(env, db, String(f.dueno_id), {
     ...AVISOS.pedidoNuevo(
@@ -1286,18 +1289,21 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
       )
       .bind(nuevoId(), String(f.repartidor_id), id, centavos, id),
   ]);
+  const idiomaRep =
+    (
+      await db
+        .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+        .bind(String(f.repartidor_id))
+        .first<{ idioma: string }>()
+    )?.idioma ?? 'es';
   await notificar(
     c.env,
     db,
     String(f.repartidor_id),
     AVISOS.propinaExtra(
-      (
-        await db
-          .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-          .bind(String(f.repartidor_id))
-          .first<{ idioma: string }>()
-      )?.idioma ?? 'es',
-      formatearDolares(centavos, 'es'),
+      idiomaRep,
+      // C-MONEDA-RECORRIDO: en la moneda del pedido (con tarjeta hoy siempre es USD).
+      formatearMonto(centavos, String(f.moneda ?? 'USD'), idiomaRep === 'en' ? 'en' : 'es'),
     ),
   ).catch((e: unknown) => console.error('propina extra: aviso', e));
   return c.json({ ok: true, centavos });

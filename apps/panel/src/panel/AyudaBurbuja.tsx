@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { conIdioma } from '../rutaIdioma';
 import { pedir } from './api';
@@ -50,7 +50,8 @@ const PREGUNTAS: Pregunta[] = [
     claves: ['cobr', 'pag', 'banco', 'dinero', 'retir', 'paid', 'money', 'bank', 'payout'],
     responder: async (idioma) => {
       const b = await pedir<Billetera>('GET', '/datos/billetera');
-      const saldo = formatearDolares(b.saldo, idioma);
+      // Saldo de la billetera de Stripe: solo pedidos con tarjeta, hoy siempre en USD.
+      const saldo = formatearMonto(b.saldo, 'USD', idioma);
       if (!b.cuentaConectada || !b.pagosActivos)
         return {
           texto:

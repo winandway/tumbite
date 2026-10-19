@@ -1,5 +1,5 @@
 import { Image, Pressable, Text, View } from 'react-native';
-import { type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
@@ -11,10 +11,13 @@ import { textosInicio } from './textos';
 export function AvisoPago({
   idioma,
   centavos,
+  moneda = 'USD',
   alPagar,
 }: {
   idioma: Idioma;
   centavos: number;
+  /** C-MONEDA-RECORRIDO: la moneda del restaurante del carrito. */
+  moneda?: string;
   alPagar: () => void;
 }) {
   const t = textosInicio(idioma);
@@ -41,7 +44,7 @@ export function AvisoPago({
       />
       <View style={{ flex: 1 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>
-          {t.pendienteTitulo.replace('{monto}', formatearDolares(centavos, idioma))}
+          {t.pendienteTitulo.replace('{monto}', formatearMonto(centavos, moneda, idioma))}
         </Text>
         <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pendienteTexto}</Text>
       </View>

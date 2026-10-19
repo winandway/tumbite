@@ -7,7 +7,7 @@ import * as Location from 'expo-location';
 import {
   ErrorApi,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   textoLinea,
   type OpcionElegida,
 } from '@tumbite/compartido';
@@ -24,6 +24,8 @@ type Pedido = {
   motivoCancelacion?: 'cliente' | 'restaurante' | 'sin_respuesta' | null;
   restauranteNombre?: string;
   total: number;
+  /** C-MONEDA-RECORRIDO: la moneda del pedido (los viejos no la traen: dólares). */
+  moneda?: string;
   direccion: string;
   lat: number | null;
   lng: number | null;
@@ -344,6 +346,7 @@ export default function SeguirPedido() {
   const posChat = useRef(0);
   const { vaciar } = useCarrito();
   const [p, setP] = useState<Pedido | null>(null);
+  const moneda = p?.moneda ?? 'USD';
   const [error, setError] = useState('');
   const [avisoLlamada, setAvisoLlamada] = useState('');
   const [estRest, setEstRest] = useState(0);
@@ -570,7 +573,7 @@ export default function SeguirPedido() {
         <Tarjeta style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: 20 }}>
           <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>{numero}</Text>
           <Text style={{ fontSize: 17, fontWeight: '800', color: C.secundario, marginTop: 4 }}>
-            {t.total}: {formatearDolares(p.total, idioma)}
+            {t.total}: {formatearMonto(p.total, moneda, idioma)}
           </Text>
           <Text
             style={{ color: '#5E5E5E', marginTop: 8, textAlign: 'center' }}
@@ -634,7 +637,7 @@ export default function SeguirPedido() {
                   {p.restauranteNombre}
                 </Text>
                 <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
-                  {numero} · {formatearDolares(p.total, idioma)}
+                  {numero} · {formatearMonto(p.total, moneda, idioma)}
                 </Text>
               </View>
               {p.minutosEstimados != null ? (
@@ -666,7 +669,9 @@ export default function SeguirPedido() {
                       style={{ flexDirection: 'row', justifyContent: 'space-between' }}
                     >
                       <Text style={{ color: '#5E5E5E' }}>{etiqueta}</Text>
-                      <Text style={{ color: C.secundario }}>{formatearDolares(monto, idioma)}</Text>
+                      <Text style={{ color: C.secundario }}>
+                        {formatearMonto(monto, moneda, idioma)}
+                      </Text>
                     </View>
                   ))}
                 <View
@@ -674,7 +679,7 @@ export default function SeguirPedido() {
                 >
                   <Text style={{ fontWeight: '800', color: C.secundario }}>{t.total}</Text>
                   <Text style={{ fontWeight: '900', color: C.secundario }}>
-                    {formatearDolares(p.total, idioma)}
+                    {formatearMonto(p.total, moneda, idioma)}
                   </Text>
                 </View>
               </View>
@@ -700,7 +705,7 @@ export default function SeguirPedido() {
                   <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
                     {t.enEfectivo.replace(
                       '{monto}',
-                      formatearDolares(p.total - (p.propina ?? 0), idioma),
+                      formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
                     )}
                   </Text>
                 ) : p.cuentaCobro ? (
@@ -708,7 +713,7 @@ export default function SeguirPedido() {
                     <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
                       {t.transfiereA.replace(
                         '{monto}',
-                        formatearDolares(p.total - (p.propina ?? 0), idioma),
+                        formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
                       )}
                     </Text>
                     <Text
@@ -820,7 +825,7 @@ export default function SeguirPedido() {
                 <Boton
                   texto={t.quitar.replace(
                     '{monto}',
-                    formatearDolares(p.ajuste.devolucion ?? 0, idioma),
+                    formatearMonto(p.ajuste.devolucion ?? 0, moneda, idioma),
                   )}
                   alTocar={() => void decidirAjuste('quitar')}
                   cargando={decidiendo}
@@ -840,7 +845,7 @@ export default function SeguirPedido() {
                     '{plato}',
                     idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
                   )
-                  .replace('{monto}', formatearDolares(p.ajuste.devolucion ?? 0, idioma))}
+                  .replace('{monto}', formatearMonto(p.ajuste.devolucion ?? 0, moneda, idioma))}
               </Text>
             ) : null}
           </Tarjeta>
@@ -1028,7 +1033,7 @@ export default function SeguirPedido() {
                   key={c}
                   onPress={() => void propinaExtra(c)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${t.propinaDespues} ${formatearDolares(c, idioma)}`}
+                  accessibilityLabel={`${t.propinaDespues} ${formatearMonto(c, moneda, idioma)}`}
                   style={{
                     flex: 1,
                     alignItems: 'center',
@@ -1039,7 +1044,7 @@ export default function SeguirPedido() {
                   }}
                 >
                   <Text style={{ fontWeight: '800', color: C.exito }}>
-                    {formatearDolares(c, idioma)}
+                    {formatearMonto(c, moneda, idioma)}
                   </Text>
                 </Pressable>
               ))}
@@ -1078,8 +1083,8 @@ export default function SeguirPedido() {
               <>
                 <Text style={{ fontWeight: '700', marginTop: 6 }}>
                   {t.nuevoTotal
-                    .replace('{antes}', formatearDolares(propuesta.antes, idioma))
-                    .replace('{despues}', formatearDolares(propuesta.despues, idioma))}
+                    .replace('{antes}', formatearMonto(propuesta.antes, moneda, idioma))
+                    .replace('{despues}', formatearMonto(propuesta.despues, moneda, idioma))}
                 </Text>
                 <Boton texto={t.aceptarTotal} alTocar={() => void cambiarDireccion(true)} exito />
               </>
@@ -1113,7 +1118,7 @@ export default function SeguirPedido() {
                 {l.cantidad} × {textoLinea(l, idioma)}
               </Text>
               <Text style={{ color: C.secundario }}>
-                {formatearDolares(l.precioCentavos * l.cantidad, idioma)}
+                {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
               </Text>
             </View>
           ))}
@@ -1129,7 +1134,7 @@ export default function SeguirPedido() {
           >
             <Text style={{ fontWeight: '900', fontSize: 17 }}>{t.total}</Text>
             <Text style={{ fontWeight: '900', fontSize: 17 }}>
-              {formatearDolares(p.total, idioma)}
+              {formatearMonto(p.total, moneda, idioma)}
             </Text>
           </View>
           {p.entrega !== 'recoger' && p.direccion ? (

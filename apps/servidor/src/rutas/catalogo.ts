@@ -30,6 +30,8 @@ import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos
 import { minutosPausa } from '../pausa';
 import { restauranteDe } from './restauranteMas';
 import { enTrozos } from '../trozos';
+import { tarifasDeZona } from '../internacional/tarifas';
+import { leerConfigDinero } from './dinero';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -63,6 +65,8 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
     abierto: Number(f.abierto) === 1,
     tiempoPrepMin: Number(f.tiempo_prep_min),
     regalosPb: Number(f.regalos_pb),
+    // C-MONEDA-RECORRIDO: la moneda de su zona (precios del menú y del carrito en esa unidad menor).
+    moneda: String(f.zona_moneda ?? 'USD'),
   };
 }
 
@@ -135,15 +139,17 @@ export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<Fi
     )
   ).sort((a, b) => Number(a.dia) - Number(b.dia) || a.abre.localeCompare(b.abre));
   const { results: zonas } = await db
-    .prepare('SELECT id, zona_horaria FROM zonas')
-    .all<{ id: string; zona_horaria: string }>();
+    .prepare('SELECT id, zona_horaria, moneda FROM zonas')
+    .all<{ id: string; zona_horaria: string; moneda: string | null }>();
   const tz = new Map(zonas.map((z) => [z.id, z.zona_horaria]));
+  const monedas = new Map(zonas.map((z) => [z.id, z.moneda || 'USD']));
   return filas.map((f) => ({
     ...f,
     horarios: turnos
       .filter((t) => t.restaurante_id === String(f.id))
       .map((t) => ({ dia: Number(t.dia), abre: t.abre, cierra: t.cierra })),
     zona_horaria: tz.get(String(f.zona_id)) ?? 'America/New_York',
+    zona_moneda: monedas.get(String(f.zona_id)) ?? 'USD',
     cierres: cierres.filter((x) => x.restaurante_id === String(f.id)).map((x) => x.fecha),
   }));
 }
@@ -214,6 +220,24 @@ async function platosConGrupos(db: D1Database, filas: FilaRest[]): Promise<Plato
 }
 
 // ---------- Público ----------
+
+/**
+ * Las tarifas con que la app calcula el carrito. Sin restaurante, la configuración global (EE. UU.,
+ * como siempre). Con ?restauranteId=, las del país de SU zona y su moneda (C-MONEDA-RECORRIDO):
+ * las mismas que usará el servidor al crear el pedido. Un país sin tarifas responde 409.
+ */
+catalogo.get('/config-dinero', async (c) => {
+  const db = base(c);
+  const rid = c.req.query('restauranteId');
+  if (!rid) return c.json({ config: await leerConfigDinero(db), planes: PLANES });
+  const f = await db
+    .prepare("SELECT zona_id FROM restaurantes WHERE id = ? AND estado = 'aprobado'")
+    .bind(rid)
+    .first<{ zona_id: string | null }>();
+  if (!f) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
+  const t = await tarifasDeZona(db, String(f.zona_id ?? ZONA_INICIAL));
+  return c.json({ config: t.config, moneda: t.moneda, pais: t.pais, planes: PLANES });
+});
 
 catalogo.get('/restaurantes', async (c) => {
   const lat = Number(c.req.query('lat'));
@@ -622,7 +646,7 @@ catalogo.get('/admin/restaurantes', async (c) => {
   }
   const { results } = await base(c)
     .prepare(
-      `SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
+      `SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre, (SELECT moneda FROM zonas WHERE id = r.zona_id) AS zona_moneda FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
        ${filtros.length ? `WHERE ${filtros.join(' AND ')}` : ''}
        ORDER BY CASE r.estado WHEN 'pendiente' THEN 0 ELSE 1 END, r.creado_en DESC LIMIT 300`,
     )
@@ -672,7 +696,9 @@ catalogo.patch('/admin/restaurantes/:id', async (c) => {
     .bind(estado, d.plan ?? f.plan, abierto, f.id)
     .run();
   const n = await db
-    .prepare('SELECT * FROM restaurantes WHERE id = ?')
+    .prepare(
+      'SELECT r.*, (SELECT moneda FROM zonas WHERE id = r.zona_id) AS zona_moneda FROM restaurantes r WHERE r.id = ?',
+    )
     .bind(f.id)
     .first<FilaRest>();
   // F14: el dueño se entera por correo de cada cambio de estado (antes no recibía nada).

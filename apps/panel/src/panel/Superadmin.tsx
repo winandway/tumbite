@@ -6,7 +6,7 @@ import {
   type Usuario,
   almacenNavegador,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -205,6 +205,8 @@ type Metricas = {
   pedidos30: number;
   ventas30: number;
   ganancia30: number;
+  /** C-MONEDA-RECORRIDO: la moneda de la ciudad; cada fila se muestra en la suya, sin sumar. */
+  moneda?: string;
   restaurantes: number;
   restaurantesAbiertos: number;
   repartidores: number;
@@ -291,7 +293,7 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
       <strong>{a ? <Enlace a={a}>{valor}</Enlace> : valor}</strong>
     </li>
   );
-  const dinero = (c: number) => formatearDolares(c, idioma);
+  const dinero = (c: number, moneda = 'USD') => formatearMonto(c, moneda, idioma);
   return (
     <section className="super">
       <h1>{t.resumen}</h1>
@@ -343,8 +345,8 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
                 </td>
                 <td>{t.estados[f.estado]}</td>
                 <td>{f.metricas.pedidos30}</td>
-                <td>{dinero(f.metricas.ventas30)}</td>
-                <td>{dinero(f.metricas.ganancia30)}</td>
+                <td>{dinero(f.metricas.ventas30, f.metricas.moneda)}</td>
+                <td>{dinero(f.metricas.ganancia30, f.metricas.moneda)}</td>
                 <td>
                   {f.metricas.restaurantesAbiertos}/{f.metricas.restaurantes}
                 </td>
@@ -383,7 +385,7 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
                 <td>{z.areas}</td>
                 <td>{z.areasLibres}</td>
                 <td>{z.metricas.pedidos30}</td>
-                <td>{dinero(z.metricas.ventas30)}</td>
+                <td>{dinero(z.metricas.ventas30, z.metricas.moneda)}</td>
                 <td>{z.metricas.restaurantes}</td>
                 <td>{z.metricas.repartidores}</td>
               </tr>

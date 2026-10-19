@@ -5,10 +5,10 @@ import {
   type Plato,
   type Usuario,
   almacenNavegador,
-  centavosATexto,
-  dolaresACentavos,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
+  montoATexto,
+  montoEscrito,
   nombrePlato,
   useBorrador,
   categoriaPlato,
@@ -40,6 +40,9 @@ const T = {
     agotado: 'Agotado',
     vacio: 'Tu menú está vacío. Agrega tu primer plato.',
     precioMal: 'Escribe un precio como 12.50',
+    // C-MONEDA-RECORRIDO: fuera del dólar, la moneda del restaurante.
+    precioMoneda: 'Precio en {m}',
+    precioMalMoneda: 'Escribe un precio como {ej}',
     sinRest: 'Primero completa «Mi restaurante».',
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezar: 'Empezar de nuevo',
@@ -85,6 +88,8 @@ const T = {
     agotado: 'Sold out',
     vacio: 'Your menu is empty. Add your first item.',
     precioMal: 'Enter a price like 12.50',
+    precioMoneda: 'Price in {m}',
+    precioMalMoneda: 'Enter a price like {ej}',
     sinRest: 'First complete “My restaurant”.',
     recuperado: 'We restored what you were typing.',
     empezar: 'Start over',
@@ -142,7 +147,7 @@ const leerGrupos = (texto: string): GrupoForm[] => {
     return [];
   }
 };
-const gruposAForm = (grupos: GrupoOpciones[] | undefined): GrupoForm[] =>
+const gruposAForm = (grupos: GrupoOpciones[] | undefined, moneda: string): GrupoForm[] =>
   (grupos ?? []).map((g) => ({
     nombreEs: g.nombreEs,
     nombreEn: g.nombreEn,
@@ -151,7 +156,7 @@ const gruposAForm = (grupos: GrupoOpciones[] | undefined): GrupoForm[] =>
     opciones: g.opciones.map((o) => ({
       nombreEs: o.nombreEs,
       nombreEn: o.nombreEn,
-      precio: centavosATexto(o.precioCentavos),
+      precio: montoATexto(o.precioCentavos, moneda),
       disponible: o.disponible,
     })),
   }));
@@ -195,6 +200,11 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
     }
   }
   const [hayRest, setHayRest] = useState(true);
+  // C-MONEDA-RECORRIDO: los precios se escriben y se muestran en la moneda del restaurante.
+  const [moneda, setMoneda] = useState('USD');
+  const etiquetaPrecio = moneda === 'USD' ? t.precio : t.precioMoneda.replace('{m}', moneda);
+  const precioMal =
+    moneda === 'USD' ? t.precioMal : t.precioMalMoneda.replace('{ej}', montoATexto(35000, moneda));
   const [editando, setEditando] = useState(false);
   const b = useBorrador({
     formulario: 'plato',
@@ -205,9 +215,13 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
 
   useEffect(() => {
-    pedir<{ restaurante: unknown; platos: Plato[] }>('GET', '/datos/mi-restaurante')
+    pedir<{ restaurante: { moneda?: string } | null; platos: Plato[] }>(
+      'GET',
+      '/datos/mi-restaurante',
+    )
       .then((r) => {
         setHayRest(Boolean(r.restaurante));
+        setMoneda(r.restaurante?.moneda ?? 'USD');
         setPlatos(r.platos);
       })
       .catch((e: unknown) => setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) }));
@@ -227,9 +241,9 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       descripcionEn: p.descripcionEn,
       categoria: p.categoria,
       categoriaEn: p.categoriaEn,
-      precio: centavosATexto(p.precioCentavos),
+      precio: montoATexto(p.precioCentavos, moneda),
       imagen: p.imagen ?? '',
-      grupos: JSON.stringify(gruposAForm(p.grupos)),
+      grupos: JSON.stringify(gruposAForm(p.grupos, moneda)),
     });
     setEditando(true);
   }
@@ -239,8 +253,8 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const precioCentavos = dolaresACentavos(v.precio);
-    if (precioCentavos === null) return setError({ mensaje: t.precioMal, campo: 'precioCentavos' });
+    const precioCentavos = montoEscrito(v.precio, moneda);
+    if (precioCentavos === null) return setError({ mensaje: precioMal, campo: 'precioCentavos' });
     const cuerpo = {
       nombreEs: v.nombreEs,
       nombreEn: v.nombreEn,
@@ -269,7 +283,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             .map((o) => ({
               nombreEs: o.nombreEs.trim(),
               nombreEn: o.nombreEn.trim(),
-              precioCentavos: dolaresACentavos(o.precio || '0') ?? 0,
+              precioCentavos: montoEscrito(o.precio || '0', moneda) ?? 0,
               disponible: o.disponible,
             })),
         }));
@@ -390,10 +404,10 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             placeholder={t.categoriaEn}
           />
           <Campo
-            etiqueta={t.precio}
+            etiqueta={etiquetaPrecio}
             valor={v.precio}
             cambiar={(x) => b.cambiar('precio', x)}
-            placeholder="0.00"
+            placeholder={montoATexto(0, moneda)}
             error={errorDe('precioCentavos')}
           />
           <label className="interruptor">
@@ -514,7 +528,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                           ),
                         )
                       }
-                      placeholder="0.00"
+                      placeholder={montoATexto(0, moneda)}
                     />
                     <label className="interruptor">
                       <input
@@ -660,7 +674,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                 <span>
                   {[
                     categoriaPlato(p, idioma),
-                    formatearDolares(p.precioCentavos, idioma),
+                    formatearMonto(p.precioCentavos, moneda, idioma),
                     (p.grupos?.length ?? 0) > 0 ? t.conOpciones : '',
                   ]
                     .filter(Boolean)

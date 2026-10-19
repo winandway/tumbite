@@ -78,3 +78,63 @@ describe('lo que se escribe, a la unidad menor de cada moneda (C-MONEDA-LOCAL)',
     expect(montoATexto(325)).toBe('3.25');
   });
 });
+
+describe('C-MONEDA-RECORRIDO: entrada validada y totales por moneda', () => {
+  it('montoEscrito: en dólares es igual a dolaresACentavos; con pesos los puntos son miles', async () => {
+    const { montoEscrito } = await import('./dinero');
+    for (const t of ['12.50', '12,5', '$ 12', '0.1', '', 'doce', '-5', '1.999'])
+      expect(montoEscrito(t, 'USD')).toBe(dolaresACentavos(t));
+    expect(montoEscrito('7.25', 'XYZ')).toBe(725);
+    expect(montoEscrito('7.25')).toBe(725);
+    expect(montoEscrito('12000', 'COP')).toBe(12000);
+    expect(montoEscrito('12.000', 'COP')).toBe(12000);
+    expect(montoEscrito('$ 1.250.000', 'COP')).toBe(1250000);
+    expect(montoEscrito('12,000', 'COP')).toBe(12000);
+    expect(montoEscrito('12.5', 'COP')).toBeNull();
+    expect(montoEscrito('', 'COP')).toBeNull();
+    expect(montoEscrito('12,50', 'VES')).toBe(1250);
+    expect(montoEscrito('Bs. 99.9', 'VES')).toBe(9990);
+    expect(montoEscrito('120', 'MXN')).toBe(12000);
+    expect(montoEscrito('1.2.3', 'VES')).toBeNull();
+    expect(montoEscrito('1.234', 'VES')).toBeNull();
+    expect(montoEscrito('', 'VES')).toBeNull();
+  });
+
+  it('totalesPorMoneda nunca mezcla monedas; dólares primero', async () => {
+    const { totalesPorMoneda, formatearTotales } = await import('./dinero');
+    const lista = [
+      { monto: 500, moneda: 'USD' },
+      { monto: 35000, moneda: 'COP' },
+      { monto: 250 },
+      { monto: 1000, moneda: 'VES' },
+      { monto: 5000, moneda: 'COP' },
+      { monto: 1, moneda: null },
+    ];
+    expect(totalesPorMoneda(lista)).toEqual([
+      { moneda: 'USD', monto: 751 },
+      { moneda: 'COP', monto: 40000 },
+      { moneda: 'VES', monto: 1000 },
+    ]);
+    const orden = (l: { monto: number; moneda: string }[]) =>
+      totalesPorMoneda(l).map((x) => x.moneda);
+    expect(
+      orden([
+        { monto: 1, moneda: 'VES' },
+        { monto: 2, moneda: 'COP' },
+      ]),
+    ).toEqual(['COP', 'VES']);
+    expect(
+      orden([
+        { monto: 1, moneda: 'COP' },
+        { monto: 2, moneda: 'USD' },
+      ]),
+    ).toEqual(['USD', 'COP']);
+    expect(totalesPorMoneda([])).toEqual([]);
+    expect(formatearTotales([], 'en')).toBe('$0.00');
+    expect(formatearTotales([], 'es', 'COP')).toMatch(/0/);
+    expect(formatearTotales([{ monto: 1250, moneda: 'USD' }], 'en')).toBe('$12.50');
+    const dos = formatearTotales([{ monto: 1250 }, { monto: 35000, moneda: 'COP' }], 'es');
+    expect(dos).toContain(' · ');
+    expect(dos.replace(/\s/g, ' ')).toMatch(/35\.000/);
+  });
+});

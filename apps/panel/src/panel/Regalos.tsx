@@ -7,7 +7,7 @@ import {
   type Usuario,
   almacenNavegador,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   nombrePlato,
   useBorrador,
 } from '@tumbite/compartido';
@@ -99,18 +99,24 @@ export function Regalos({ usuario, idioma }: { usuario: Usuario; idioma: Idioma 
   const setPct = (x: string) => b.cambiar('pct', x);
   const { cargarBase } = b;
   const [platos, setPlatos] = useState<Plato[]>([]);
+  // C-MONEDA-RECORRIDO: el presupuesto y los precios, en la moneda del restaurante.
+  const [moneda, setMoneda] = useState('USD');
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
 
   useEffect(() => {
     Promise.all([
       pedir<{ presupuesto: Presupuesto; config: Config }>('GET', '/datos/mi-restaurante/regalos'),
-      pedir<{ platos: Plato[] }>('GET', '/datos/mi-restaurante'),
+      pedir<{ platos: Plato[]; restaurante: { moneda?: string } | null }>(
+        'GET',
+        '/datos/mi-restaurante',
+      ),
     ])
       .then(([r, m]) => {
         setP(r.presupuesto);
         cargarBase({ cfg: r.config, pct: String(r.presupuesto.pb / 100) });
         setPlatos(m.platos);
+        setMoneda(m.restaurante?.moneda ?? 'USD');
       })
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, [cargarBase]);
@@ -145,7 +151,7 @@ export function Regalos({ usuario, idioma }: { usuario: Usuario; idioma: Idioma 
           <option value="">{t.elegir}</option>
           {platos.map((x) => (
             <option key={x.id} value={x.id}>
-              {nombrePlato(x, idioma)} · {formatearDolares(x.precioCentavos, idioma)}
+              {nombrePlato(x, idioma)} · {formatearMonto(x.precioCentavos, moneda, idioma)}
             </option>
           ))}
         </select>
@@ -159,15 +165,15 @@ export function Regalos({ usuario, idioma }: { usuario: Usuario; idioma: Idioma 
       <div className="metricas">
         <div>
           <span>{t.acumulado}</span>
-          <strong>{formatearDolares(p.acumulado, idioma)}</strong>
+          <strong>{formatearMonto(p.acumulado, moneda, idioma)}</strong>
         </div>
         <div>
           <span>{t.regalado}</span>
-          <strong>{formatearDolares(p.regalado, idioma)}</strong>
+          <strong>{formatearMonto(p.regalado, moneda, idioma)}</strong>
         </div>
         <div>
           <span>{t.disponible}</span>
-          <strong>{formatearDolares(p.disponible, idioma)}</strong>
+          <strong>{formatearMonto(p.disponible, moneda, idioma)}</strong>
         </div>
         <div>
           <span>{t.usados}</span>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { ErrorApi, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Boton, C, Pantalla, ReportarProblema, URL_SERVIDOR, e, useSesion } from '@tumbite/movil';
 
 const T = {
@@ -62,6 +62,7 @@ type Pedido = {
   estado: string;
   restauranteNombre?: string;
   total: number;
+  moneda?: string;
   creadoEn: string;
 };
 type Tarjeta = { id: string; marca: string; ultimos4: string; vence: string };
@@ -139,7 +140,9 @@ export default function MiCuenta() {
               </Text>
             </Text>
           </View>
-          <Text style={{ fontWeight: '800' }}>{formatearDolares(p.total, idioma)}</Text>
+          <Text style={{ fontWeight: '800' }}>
+            {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
+          </Text>
         </Pressable>
       ))}
 

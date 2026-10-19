@@ -8,7 +8,7 @@ import {
   type Plato,
   type Restaurante,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
 } from '@tumbite/compartido';
 import { Boton, C, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../carrito';
@@ -64,6 +64,7 @@ type Pedido = {
   restauranteId: string;
   restauranteNombre?: string;
   total: number;
+  moneda?: string;
   creadoEn: string;
   lineas: {
     platoId: string;
@@ -108,6 +109,7 @@ export default function Pedidos() {
         plan: r.restaurante.plan,
         lat: r.restaurante.lat,
         lng: r.restaurante.lng,
+        moneda: r.restaurante.moneda,
       };
       const disponibles = new Map(
         r.platos.filter((x) => x.disponible !== false).map((x) => [x.id, x]),
@@ -202,7 +204,7 @@ export default function Pedidos() {
                 </Text>
               </View>
               <Text style={{ fontWeight: '900', color: C.secundario }}>
-                {formatearDolares(p.total, idioma)}
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </Text>
             </View>
             <Text style={{ color: '#5E5E5E', marginTop: 6 }} numberOfLines={2}>

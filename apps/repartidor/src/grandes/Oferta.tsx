@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, Vibration, View } from 'react-native';
-import { type Idioma, formatearDolares, formatearMonto } from '@tumbite/compartido';
+import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { Boton, C } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -130,16 +130,16 @@ export function Oferta({
           ) : null}
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.garantizado}</Text>
           <Text style={{ fontSize: 40, fontWeight: '900', color: C.secundario, lineHeight: 44 }}>
-            {formatearDolares(oferta.pagoRepartidor, idioma)}
+            {formatearMonto(oferta.pagoRepartidor, oferta.moneda, idioma)}
           </Text>
           {oferta.propina > 0 ? (
             <Text style={{ color: '#5E5E5E' }}>
-              {t.conPropina} {formatearDolares(oferta.propina, idioma)}
+              {t.conPropina} {formatearMonto(oferta.propina, oferta.moneda, idioma)}
             </Text>
           ) : null}
           {oferta.bono ? (
             <Text style={{ color: C.exito, fontWeight: '700' }}>
-              {t.bono} {formatearDolares(oferta.bono, idioma)}
+              {t.bono} {formatearMonto(oferta.bono, oferta.moneda, idioma)}
             </Text>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>

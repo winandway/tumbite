@@ -1,3 +1,4 @@
+import { formatearMonto } from '@tumbite/compartido';
 import type { Env } from './env';
 
 /**
@@ -183,16 +184,22 @@ export const AVISOS = {
           cuerpo:
             'Elige en la app: quitarlo (te devolvemos su parte) o cancelar todo. En 5 minutos lo quitamos.',
         },
-  platoQuitado: (i: string, plato: string, centavos: number): Aviso =>
-    i === 'en'
+  platoQuitado: (i: string, plato: string, centavos: number, moneda = 'USD'): Aviso => {
+    // C-MONEDA-RECORRIDO: en la moneda del pedido; en dólares, el texto de siempre.
+    const monto =
+      moneda === 'USD'
+        ? `$${(centavos / 100).toFixed(2)}`
+        : formatearMonto(centavos, moneda, i === 'en' ? 'en' : 'es');
+    return i === 'en'
       ? {
           titulo: `${plato} removed`,
-          cuerpo: `We refunded $${(centavos / 100).toFixed(2)}. The rest of your order continues.`,
+          cuerpo: `We refunded ${monto}. The rest of your order continues.`,
         }
       : {
           titulo: `Quitamos ${plato}`,
-          cuerpo: `Te devolvimos $${(centavos / 100).toFixed(2)}. El resto de tu pedido sigue.`,
-        },
+          cuerpo: `Te devolvimos ${monto}. El resto de tu pedido sigue.`,
+        };
+  },
   propinaExtra: (i: string, monto: string): Aviso =>
     i === 'en'
       ? {

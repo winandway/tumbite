@@ -25,7 +25,6 @@ import {
   type Idioma,
   type Nivel,
   enIdioma,
-  formatearDolares,
   formatearMonto,
   textoAMonto,
   PRECISION_MAXIMA_M,
@@ -1130,7 +1129,8 @@ export function Inicio() {
                 : td.totalDe.mes}
           </Text>
           <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
-            {formatearDolares(total, idioma)}
+            {/* Billetera de Stripe: solo pedidos con tarjeta, hoy siempre en USD. */}
+            {formatearMonto(total, 'USD', idioma)}
           </Text>
           <Text style={{ color: '#5E5E5E' }}>
             {porPedido.size} {td.entregas.toLowerCase()}
@@ -1201,7 +1201,7 @@ export function Inicio() {
                 </Text>
               </View>
               <Text style={{ fontWeight: '900', color: C.secundario }}>
-                {formatearDolares(m.monto, idioma)}
+                {formatearMonto(m.monto, 'USD', idioma)}
               </Text>
             </View>
           ))
@@ -1419,7 +1419,7 @@ export function Inicio() {
             <View style={e.tarjeta}>
               <Text style={{ fontWeight: '800', fontSize: 18 }}>
                 {t.pedido} #{activo.id.slice(0, 4).toUpperCase()} ·{' '}
-                {formatearDolares(activo.pagoRepartidor, idioma)}
+                {formatearMonto(activo.pagoRepartidor, activo.moneda, idioma)}
               </Text>
               {activo.lineas.map((l) => (
                 <Text key={l.platoId}>
@@ -1907,7 +1907,7 @@ export function Inicio() {
                   <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
                   <Text style={{ fontWeight: '800', fontSize: 16, marginTop: 4 }}>
                     {t.pedido} #{g.id.slice(0, 4).toUpperCase()} ·{' '}
-                    {formatearDolares(g.pagoRepartidor, idioma)}
+                    {formatearMonto(g.pagoRepartidor, g.moneda, idioma)}
                   </Text>
                   {g.lineas.map((l) => (
                     <Text key={l.platoId}>
@@ -2104,7 +2104,7 @@ export function Inicio() {
           >
             <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
             <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
-              {formatearDolares(billetera.saldo, idioma)}
+              {formatearMonto(billetera.saldo, 'USD', idioma)}
             </Text>
             <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
               {t.verBilletera}

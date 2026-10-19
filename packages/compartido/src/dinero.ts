@@ -92,3 +92,65 @@ export function dolaresACentavos(texto: string): Centavos | null {
 export function centavosATexto(centavos: Centavos): string {
   return (centavos / 100).toFixed(2);
 }
+
+/**
+ * C-MONEDA-RECORRIDO: el importe que escribe una persona (un precio, una propina) a la unidad menor
+ * de SU moneda, con validación. En dólares es exactamente `dolaresACentavos` (EE. UU. no cambia).
+ * Con pesos (0 decimales) los puntos y comas son separadores de miles: «12.000» y «12000» son
+ * 12000 pesos. Devuelve null si no es un importe.
+ */
+export function montoEscrito(texto: string, moneda: string = 'USD'): number | null {
+  if (moneda === 'USD' || !DECIMALES_MONEDA.has(moneda)) return dolaresACentavos(texto);
+  const limpio = texto
+    .trim()
+    .replace(/[^\d.,]/g, '')
+    .replace(/^[.,]+/, '');
+  if (DECIMALES_MONEDA.get(moneda) === 0) {
+    // Sin separadores (hasta 12 cifras) o en grupos de miles: «1.250.000», «12,000».
+    const grupos = limpio.split(/[.,]/);
+    const [primero = '', ...resto] = grupos;
+    const valido = resto.length
+      ? /^\d{1,3}$/.test(primero) && resto.every((g) => /^\d{3}$/.test(g))
+      : /^\d{1,12}$/.test(primero);
+    if (!valido) return null;
+    return Number(grupos.join(''));
+  }
+  const partes = limpio.replace(',', '.').split('.');
+  if (partes.length > 2) return null;
+  const [entero = '', decimales = ''] = partes;
+  if (!/^\d{1,9}$/.test(entero) || !/^\d{0,2}$/.test(decimales)) return null;
+  return Number(entero) * 100 + Number((decimales + '00').slice(0, 2));
+}
+
+/** Un monto con su moneda (los pedidos viejos no la tienen: dólares). */
+export type MontoConMoneda = { monto: number; moneda?: string | null };
+
+/**
+ * C-MONEDA-RECORRIDO: suma por moneda, nunca mezclando. Dólares primero y después las demás en orden
+ * alfabético. Sin montos devuelve [] (la pantalla decide qué mostrar).
+ */
+export function totalesPorMoneda(lista: MontoConMoneda[]): { moneda: string; monto: number }[] {
+  const suma = new Map<string, number>();
+  for (const x of lista) {
+    const m = x.moneda || 'USD';
+    suma.set(m, (suma.get(m) ?? 0) + x.monto);
+  }
+  const peso = (m: string) => (m === 'USD' ? '0' : `1${m}`);
+  return [...suma.entries()]
+    .map(([moneda, monto]) => ({ moneda, monto }))
+    .sort((a, b) => peso(a.moneda).localeCompare(peso(b.moneda)));
+}
+
+/**
+ * Los totales por moneda en una sola línea («$12.00 · COP 35.000»). Sin montos, cero en la moneda
+ * dada (dólares si no se dice): en EE. UU. se ve igual que antes («$0.00»).
+ */
+export function formatearTotales(
+  lista: MontoConMoneda[],
+  idioma: 'es' | 'en' = 'en',
+  monedaVacia = 'USD',
+): string {
+  const t = totalesPorMoneda(lista);
+  if (!t.length) return formatearMonto(0, monedaVacia, idioma);
+  return t.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' · ');
+}

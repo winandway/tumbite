@@ -1,5 +1,5 @@
 import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
@@ -32,6 +32,8 @@ export type PromoReal = {
   descripcionEn: string;
   minimoSubtotal: number;
   venceEn: string | null;
+  /** C-MONEDA-RECORRIDO: moneda del cupón (de su zona o de su restaurante). */
+  moneda?: string;
 };
 
 export function Ofertas({
@@ -57,7 +59,7 @@ export function Ofertas({
           : 'Envío gratis'
         : p.tipo === 'porcentaje'
           ? `−${p.valor / 100}%`
-          : `−${formatearDolares(p.valor, idioma)}`;
+          : `−${formatearMonto(p.valor, p.moneda ?? 'USD', idioma)}`;
     return (
       <View style={{ marginTop: 18 }} testID="promos-reales">
         <Text
@@ -101,7 +103,7 @@ export function Ofertas({
                   {idioma === 'en' ? 'Code' : 'Código'}:{' '}
                   <Text style={{ fontWeight: '900' }}>{p.codigo}</Text>
                   {p.minimoSubtotal > 0
-                    ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearDolares(p.minimoSubtotal, idioma)}`
+                    ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearMonto(p.minimoSubtotal, p.moneda ?? 'USD', idioma)}`
                     : ''}
                 </Text>
               </View>
@@ -162,13 +164,13 @@ export function Ofertas({
                   {o.nombre}
                 </Text>
                 <Text style={{ fontSize: 20, fontWeight: '900', color: C.primario }}>
-                  {formatearDolares(o.precio, idioma)}
+                  {formatearMonto(o.precio, 'USD', idioma)}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text
                     style={{ color: '#8A8A8A', textDecorationLine: 'line-through', fontSize: 12 }}
                   >
-                    {formatearDolares(o.antes, idioma)}
+                    {formatearMonto(o.antes, 'USD', idioma)}
                   </Text>
                   <View
                     style={{

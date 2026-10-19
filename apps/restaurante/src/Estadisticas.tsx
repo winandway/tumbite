@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
-import { ErrorApi, formatearDolares, nombrePlato } from '@tumbite/compartido';
+import { ErrorApi, formatearMonto, nombrePlato } from '@tumbite/compartido';
 import { C, e, useSesion } from '@tumbite/movil';
 import { Pildora, Tarjeta } from './piezas/ui';
 import { textosRest } from './piezas/textos';
 
 type Periodo = { pedidos: number; ventas: number; neto: number; ticketPromedio: number };
 type Tablero = {
+  /** C-MONEDA-RECORRIDO: la moneda del restaurante (todas las cifras van en ella). */
+  moneda?: string;
   semana: Periodo;
   mes: Periodo;
   topPlatos: { nombreEs: string; nombreEn: string; cantidad: number }[];
@@ -43,7 +45,7 @@ export function Estadisticas() {
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
   }, [api]);
 
-  const d = (c: number) => formatearDolares(c, idioma);
+  const d = (c: number) => formatearMonto(c, tablero?.moneda ?? 'USD', idioma);
   const datos: Periodo | null =
     periodo === 'hoy'
       ? hoy

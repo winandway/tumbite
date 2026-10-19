@@ -5,12 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   CONFIG_DINERO_INICIAL,
+  ErrorApi,
   type ConfigDinero,
   calcularPedido,
   distanciaKm,
-  dolaresACentavos,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
+  montoATexto,
+  montoEscrito,
   porcentajeDe,
   useBorrador,
   textoLinea,
@@ -116,7 +118,14 @@ export default function PantallaCarrito() {
   const te = idioma === 'en' ? TE.en : TE.es;
   const tc = textosComida(idioma);
   const { carrito, cambiarCantidad, vaciar } = useCarrito();
-  const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
+  // C-MONEDA-RECORRIDO: las tarifas y la moneda del país del restaurante (las mismas del servidor).
+  // Se guardan con el restaurante para el que se pidieron: si cambia el carrito, no se mezclan.
+  const [tarifas, setTarifas] = useState<{
+    rid: string | null;
+    config: ConfigDinero;
+    moneda: string | null;
+    error: string;
+  } | null>(null);
   // Fase 2: qué formas de pago permite el país de la zona (efectivo, transferencia). Vacío = solo tarjeta.
   const [pais, setPais] = useState<{
     efectivoActivo: boolean;
@@ -173,14 +182,49 @@ export default function PantallaCarrito() {
   }, [direccionUrl]);
 
   useEffect(() => {
+    void miUbicacion().then(setPunto);
+  }, []);
+  const restauranteCarrito = carrito.restauranteId;
+  useEffect(() => {
+    let vivo = true;
     api
-      .pedir<{ config: ConfigDinero }>('GET', '/datos/config-dinero')
-      .then((r) => setConfig(r.config))
-      .catch(() => {
+      .pedir<{ config: ConfigDinero; moneda?: string }>(
+        'GET',
+        restauranteCarrito
+          ? `/datos/config-dinero?restauranteId=${encodeURIComponent(restauranteCarrito)}`
+          : '/datos/config-dinero',
+      )
+      .then((r) => {
+        if (vivo)
+          setTarifas({
+            rid: restauranteCarrito,
+            config: r.config,
+            moneda: r.moneda ?? null,
+            error: '',
+          });
+      })
+      .catch((x: unknown) => {
+        // 409: el país del restaurante todavía no recibe pedidos (sin tarifas). Se dice y no se pide.
+        if (vivo && x instanceof ErrorApi && x.estado === 409)
+          setTarifas({
+            rid: restauranteCarrito,
+            config: CONFIG_DINERO_INICIAL,
+            moneda: null,
+            error: x.message,
+          });
         // Si no responde, se muestra con los valores de siempre; el servidor recalcula al pagar.
       });
-    void miUbicacion().then(setPunto);
-  }, [api]);
+    return () => {
+      vivo = false;
+    };
+  }, [api, restauranteCarrito]);
+  const tarifasListas = tarifas?.rid === restauranteCarrito ? tarifas : null;
+  const config = tarifasListas?.config ?? CONFIG_DINERO_INICIAL;
+  const sinTarifas = tarifasListas?.error ?? '';
+  const moneda = tarifasListas?.moneda ?? carrito.moneda ?? 'USD';
+  // Fuera del dólar, el desglose solo se muestra con las tarifas de SU país ya cargadas: nunca se
+  // pintan las cifras de EE. UU. con el símbolo de otra moneda.
+  const desgloseFiable = !sinTarifas && (moneda === 'USD' || Boolean(tarifasListas?.moneda));
 
   // ¿Le toca algún regalo de este restaurante con este carrito?
   const llaveCarrito = carrito.lineas.map((l) => `${l.platoId}:${l.cantidad}`).join(',');
@@ -263,7 +307,7 @@ export default function PantallaCarrito() {
   const subtotal = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   const propina =
     propinaPb === 'otra'
-      ? (dolaresACentavos(b.valores.propinaOtra) ?? 0)
+      ? (montoEscrito(b.valores.propinaOtra, moneda) ?? 0)
       : porcentajeDe(subtotal, propinaPb);
   const km =
     punto && carrito.restLat != null && carrito.restLng != null
@@ -288,6 +332,7 @@ export default function PantallaCarrito() {
 
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
+    if (sinTarifas) return setError(sinTarifas);
     setError('');
     setPagando(true);
     try {
@@ -391,7 +436,7 @@ export default function PantallaCarrito() {
             : { color: C.secundario }
         }
       >
-        {formatearDolares(monto, idioma)}
+        {formatearMonto(monto, moneda, idioma)}
       </Text>
     </View>
   );
@@ -438,7 +483,7 @@ export default function PantallaCarrito() {
                 {textoLinea(l, idioma)}
               </Text>
               <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
-                {formatearDolares(l.precioCentavos * l.cantidad, idioma)}
+                {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
               </Text>
             </View>
             <BotonRedondo
@@ -667,7 +712,7 @@ export default function PantallaCarrito() {
           value={b.valores.propinaOtra}
           onChangeText={(x) => b.cambiar('propinaOtra', x)}
           keyboardType="decimal-pad"
-          placeholder="0.00"
+          placeholder={montoATexto(0, moneda)}
         />
       )}
       <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>{t.propinaNota}</Text>
@@ -692,7 +737,7 @@ export default function PantallaCarrito() {
           <Text
             style={{ color: regaloElegido === r.tipo ? C.exito : undefined, fontWeight: '700' }}
           >
-            −{formatearDolares(r.valorCentavos, idioma)} {regaloElegido === r.tipo ? '✓' : ''}
+            −{formatearMonto(r.valorCentavos, moneda, idioma)} {regaloElegido === r.tipo ? '✓' : ''}
           </Text>
         </Pressable>
       ))}
@@ -738,7 +783,7 @@ export default function PantallaCarrito() {
           style={{ color: C.exito, fontWeight: '700', marginBottom: 8 }}
           accessibilityLiveRegion="polite"
         >
-          {te.cuponOk.replace('{monto}', formatearDolares(cupon.descuento, idioma))}
+          {te.cuponOk.replace('{monto}', formatearMonto(cupon.descuento, moneda, idioma))}
         </Text>
       ) : null}
       {cuponError ? (
@@ -746,22 +791,28 @@ export default function PantallaCarrito() {
           {cuponError}
         </Text>
       ) : null}
-      <Tarjeta>
-        {fila(t.subtotal, d.subtotal)}
-        {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
-        {d.descuento > 0 && fila(te.descuento, -d.descuento)}
-        {fila(t.envio, d.envio)}
-        {fila(t.servicio, d.servicio)}
-        {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
-        {d.impuesto > 0 && fila(t.impuesto, d.impuesto)}
-        {fila(t.propina, d.propina)}
-        <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
-          {fila(t.total, d.totalCliente, true)}
-        </View>
-      </Tarjeta>
+      {desgloseFiable ? (
+        <Tarjeta>
+          {fila(t.subtotal, d.subtotal)}
+          {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
+          {d.descuento > 0 && fila(te.descuento, -d.descuento)}
+          {fila(t.envio, d.envio)}
+          {fila(t.servicio, d.servicio)}
+          {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
+          {d.impuesto > 0 && fila(t.impuesto, d.impuesto)}
+          {fila(t.propina, d.propina)}
+          <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
+            {fila(t.total, d.totalCliente, true)}
+          </View>
+        </Tarjeta>
+      ) : null}
       {error ? (
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error}
+        </Text>
+      ) : sinTarifas ? (
+        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+          {sinTarifas}
         </Text>
       ) : null}
       {cobro?.clavePublica ? (
@@ -772,7 +823,7 @@ export default function PantallaCarrito() {
             clavePublica={cobro.clavePublica}
             idioma={idioma}
             textos={{
-              pagar: `${t.pagar} ${formatearDolares(d.totalCliente, idioma)}`,
+              pagar: `${t.pagar} ${formatearMonto(d.totalCliente, moneda, idioma)}`,
               cargando: t.cargandoTarjeta,
               sinFormulario: t.pagoNoDisponible,
               reintentar: t.reintentarPago,
@@ -787,7 +838,7 @@ export default function PantallaCarrito() {
         </>
       ) : (
         <Boton
-          texto={`${metodoPago === 'tarjeta' ? t.continuarPago : te.pedirDirecto} · ${formatearDolares(d.totalCliente, idioma)}`}
+          texto={`${metodoPago === 'tarjeta' ? t.continuarPago : te.pedirDirecto}${desgloseFiable ? ` · ${formatearMonto(d.totalCliente, moneda, idioma)}` : ''}`}
           alTocar={() => void pagar()}
           cargando={pagando}
         />

@@ -3,7 +3,7 @@ import {
   type Idioma,
   almacenNavegador,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -103,7 +103,8 @@ const T = {
     destacar: 'Destacar',
     quitarDestacado: 'Quitar del inicio',
     sinCupones: 'Ningún cupón todavía.',
-    conciliacion: 'Conciliación diaria (últimos 14 días)',
+    // C-MONEDA-RECORRIDO: la conciliación cuenta solo la tarjeta (Stripe), que hoy solo cobra en USD.
+    conciliacion: 'Conciliación diaria con tarjeta, en USD (últimos 14 días)',
     recalcularHoy: 'Recalcular hoy',
     dia: 'Día',
     pedidos: 'Pedidos',
@@ -210,7 +211,7 @@ const T = {
     destacar: 'Feature',
     quitarDestacado: 'Remove from home',
     sinCupones: 'No coupons yet.',
-    conciliacion: 'Daily reconciliation (last 14 days)',
+    conciliacion: 'Daily card reconciliation, in USD (last 14 days)',
     recalcularHoy: 'Recalculate today',
     dia: 'Day',
     pedidos: 'Orders',
@@ -274,6 +275,8 @@ type Cupon = {
   activo: boolean;
   usos: number;
   descontado: number;
+  /** C-MONEDA-RECORRIDO: moneda del cupón (de su zona o de su restaurante; sin ninguno, USD). */
+  moneda?: string;
 };
 type ConfigPais = {
   moneda: string;
@@ -481,7 +484,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
         <p className="suave">
           {t.porEstado}:{' '}
           {retiros.porEstado
-            .map((e) => `${e.estado} ${e.n} (${formatearDolares(e.monto, idioma)})`)
+            .map((e) => `${e.estado} ${e.n} (${formatearMonto(e.monto, 'USD', idioma)})`)
             .join(' · ')}
         </p>
       ) : null}
@@ -514,7 +517,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                   {lista.map((l) => (
                     <tr key={l.pedidoId}>
                       <td>{enlacePedido(l.pedidoId)}</td>
-                      <td>{formatearDolares(l.monto, idioma)}</td>
+                      <td>{formatearMonto(l.monto, 'USD', idioma)}</td>
                       <td>{l.intentos}</td>
                       <td className="suave">{l.error ?? '—'}</td>
                       <td>
@@ -1046,14 +1049,14 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                     {k.tipo === 'porcentaje'
                       ? `${k.valor / 100}%`
                       : k.tipo === 'monto'
-                        ? formatearDolares(k.valor, idioma)
+                        ? formatearMonto(k.valor, k.moneda ?? 'USD', idioma)
                         : '—'}
                   </td>
                   <td>
                     {k.usos}
                     {k.usosMax != null ? ` / ${k.usosMax}` : ''}
                   </td>
-                  <td>{formatearDolares(k.descontado, idioma)}</td>
+                  <td>{formatearMonto(k.descontado, k.moneda ?? 'USD', idioma)}</td>
                   <td>{fecha(k.venceEn)}</td>
                   <td>
                     <button
@@ -1109,7 +1112,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 <tr key={d.id} className={d.estado.includes('needs_response') ? 'fila-alerta' : ''}>
                   <td>{d.pedidoId ? enlacePedido(d.pedidoId) : '—'}</td>
                   <td>{d.cliente ?? '—'}</td>
-                  <td>{formatearDolares(d.monto, idioma)}</td>
+                  <td>{formatearMonto(d.monto, 'USD', idioma)}</td>
                   <td>{d.motivo || '—'}</td>
                   <td>{d.estado}</td>
                   <td>{fecha(d.venceEn)}</td>
@@ -1153,11 +1156,11 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 <tr key={c.dia} className={c.cuadra ? '' : 'fila-alerta'}>
                   <td>{c.dia}</td>
                   <td>{c.pedidos}</td>
-                  <td>{formatearDolares(c.vendido, idioma)}</td>
-                  <td>{formatearDolares(c.capturado, idioma)}</td>
-                  <td>{formatearDolares(c.devuelto, idioma)}</td>
-                  <td>{formatearDolares(c.abonado, idioma)}</td>
-                  <td>{formatearDolares(c.retirado, idioma)}</td>
+                  <td>{formatearMonto(c.vendido, 'USD', idioma)}</td>
+                  <td>{formatearMonto(c.capturado, 'USD', idioma)}</td>
+                  <td>{formatearMonto(c.devuelto, 'USD', idioma)}</td>
+                  <td>{formatearMonto(c.abonado, 'USD', idioma)}</td>
+                  <td>{formatearMonto(c.retirado, 'USD', idioma)}</td>
                   <td>
                     <strong className={c.cuadra ? 'ok' : 'error-general'}>
                       {c.cuadra ? t.cuadra : t.noCuadra}

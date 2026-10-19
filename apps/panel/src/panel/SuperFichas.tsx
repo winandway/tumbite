@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  enIdioma,
+  formatearMonto,
+  formatearTotales,
+} from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { ir } from '../ruta';
 import { pedir } from './api';
@@ -575,6 +581,8 @@ type Repartidor = {
   entregas: number;
   ganado: number;
   propinas: number;
+  /** C-MONEDA-RECORRIDO: lo ganado por moneda (nunca se suman monedas distintas). */
+  porMoneda?: { moneda: string; entregas: number; ganado: number; propinas: number }[];
   saldo: number;
   calificacion: number | null;
   calificaciones: number;
@@ -584,6 +592,7 @@ type Repartidor = {
     fecha: string;
     gana: number;
     propina: number;
+    moneda?: string | null;
     km: number | null;
     restaurante: string;
   }[];
@@ -639,7 +648,19 @@ export function SuperRepartidor({
   if (!x) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const r = x.repartidor;
   const d = r.datos;
-  const dinero = (c: number) => formatearDolares(c, idioma);
+  // C-MONEDA-RECORRIDO: lo ganado y las propinas por moneda; el saldo es de Stripe (dólares).
+  const ganado = r.porMoneda
+    ? formatearTotales(
+        r.porMoneda.map((m) => ({ monto: m.ganado, moneda: m.moneda })),
+        idioma,
+      )
+    : formatearMonto(r.ganado, 'USD', idioma);
+  const propinas = r.porMoneda
+    ? formatearTotales(
+        r.porMoneda.map((m) => ({ monto: m.propinas, moneda: m.moneda })),
+        idioma,
+      )
+    : formatearMonto(r.propinas, 'USD', idioma);
   return (
     <section className="super">
       <button type="button" className="enlace docs-volver" onClick={() => window.history.back()}>
@@ -661,15 +682,15 @@ export function SuperRepartidor({
         </li>
         <li className="super-tarjeta">
           <span>{t.ganado}</span>
-          <strong>{dinero(r.ganado)}</strong>
+          <strong>{ganado}</strong>
         </li>
         <li className="super-tarjeta">
           <span>{t.propinas}</span>
-          <strong>{dinero(r.propinas)}</strong>
+          <strong>{propinas}</strong>
         </li>
         <li className="super-tarjeta">
           <span>{t.saldo}</span>
-          <strong>{dinero(r.saldo)}</strong>
+          <strong>{formatearMonto(r.saldo, 'USD', idioma)}</strong>
         </li>
         <li className="super-tarjeta">
           <span>{t.calificacion}</span>
@@ -793,7 +814,8 @@ export function SuperRepartidor({
         <ul className="super-lista">
           {r.historial.map((h) => (
             <li key={h.id}>
-              {fechaCorta(h.fecha, idioma)} · {h.restaurante} · {h.estado} · {dinero(h.gana)}
+              {fechaCorta(h.fecha, idioma)} · {h.restaurante} · {h.estado} ·{' '}
+              {formatearMonto(h.gana, h.moneda ?? 'USD', idioma)}
               {h.km != null ? ` · ${h.km.toFixed(1)} km` : ''}
             </li>
           ))}
@@ -865,10 +887,13 @@ type Cliente = {
   ciudad: string | null;
   pedidos: number;
   gastado: number;
+  /** C-MONEDA-RECORRIDO: lo gastado por moneda. */
+  gastadoPorMoneda?: { moneda: string; monto: number }[];
   compras: {
     id: string;
     estado: string;
     total: number;
+    moneda?: string | null;
     fecha: string;
     restaurante: string;
     repartidor: string | null;
@@ -896,7 +921,11 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         </li>
         <li className="super-tarjeta">
           <span>{t.gastado}</span>
-          <strong>{formatearDolares(c.gastado, idioma)}</strong>
+          <strong>
+            {c.gastadoPorMoneda
+              ? formatearTotales(c.gastadoPorMoneda, idioma)
+              : formatearMonto(c.gastado, 'USD', idioma)}
+          </strong>
         </li>
       </ul>
       <div className="super-dos">
@@ -924,7 +953,7 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
             <li key={p.id}>
               <Enlace a={`${base}/orders/${p.id}`}>
                 {fechaCorta(p.fecha, idioma)} · {p.restaurante} ·{' '}
-                {formatearDolares(p.total, idioma)} · {p.estado}
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} · {p.estado}
               </Enlace>
               {p.repartidorCodigo ? (
                 <>
@@ -956,12 +985,21 @@ type Restaurante = {
   empresa: Record<string, string>;
   platos: number;
   platosDisponibles: number;
+  /** C-MONEDA-RECORRIDO: la moneda del restaurante (ventas y comisión van en ella). */
+  moneda?: string;
   pedidos30: number;
   ventas30: number;
   comision30: number;
   calificacion: number | null;
   calificaciones: number;
-  ultimosPedidos: { id: string; estado: string; total: number; fecha: string; cliente: string }[];
+  ultimosPedidos: {
+    id: string;
+    estado: string;
+    total: number;
+    moneda?: string | null;
+    fecha: string;
+    cliente: string;
+  }[];
   quejas: { id: string; asunto: string; estado: string; fecha: string }[];
 };
 
@@ -980,7 +1018,7 @@ export function SuperRestaurante({
   const r = x.restaurante;
   const e = new Map(Object.entries(r.empresa));
   const tieneEmpresa = [...e.values()].some(Boolean);
-  const dinero = (c: number) => formatearDolares(c, idioma);
+  const dinero = (c: number, moneda = r.moneda ?? 'USD') => formatearMonto(c, moneda, idioma);
   return (
     <section className="super">
       <button
@@ -1085,7 +1123,8 @@ export function SuperRestaurante({
           {r.ultimosPedidos.map((p) => (
             <li key={p.id}>
               <Enlace a={`${base}/orders/${p.id}`}>
-                {fechaCorta(p.fecha, idioma)} · {p.cliente} · {dinero(p.total)} · {p.estado}
+                {fechaCorta(p.fecha, idioma)} · {p.cliente} · {dinero(p.total, p.moneda ?? 'USD')} ·{' '}
+                {p.estado}
               </Enlace>
             </li>
           ))}

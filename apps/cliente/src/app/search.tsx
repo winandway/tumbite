@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { type Restaurante, formatearDolares } from '@tumbite/compartido';
+import { type Restaurante, formatearMonto } from '@tumbite/compartido';
 import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -17,6 +17,7 @@ type Plato = {
   imagen: string | null;
   restauranteId: string;
   restauranteNombre: string;
+  moneda?: string;
   abiertoAhora: boolean;
 };
 type Resultado = {
@@ -258,7 +259,7 @@ export default function Buscar() {
                   }}
                 >
                   <Text style={{ fontWeight: '700', color: C.secundario }}>
-                    {formatearDolares(p.precioCentavos, idioma)}
+                    {formatearMonto(p.precioCentavos, p.moneda ?? 'USD', idioma)}
                   </Text>
                   <Estado
                     abierto={p.abiertoAhora}

@@ -35,7 +35,8 @@ describe('app del restaurante con el diseño aprobado', () => {
     expect(leer(...APP, 'piezas', 'ui.tsx')).toMatch(
       /\['inicio', 'pedidos', 'menu', 'estadisticas', 'mas'\] as const/,
     );
-    expect(inicio).toMatch(/<MiMenu platos=\{platos\} recargar=\{cargar\} \/>/);
+    // C-MONEDA-RECORRIDO: el menú recibe además la moneda del restaurante.
+    expect(inicio).toMatch(/<MiMenu platos=\{platos\} recargar=\{cargar\} moneda=\{/);
     expect(inicio).toMatch(/<Estadisticas \/>/);
   });
   it('Mi menú usa las rutas del panel, guarda el borrador y borra solo desde los tres puntos', () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { pedir } from './api';
 
 const T = {
@@ -111,6 +111,7 @@ type Resumen = {
     codigo: string;
     estado: string;
     total: number;
+    moneda?: string;
     creado: string;
     restaurante: string;
     area: string | null;
@@ -126,6 +127,8 @@ type Resumen = {
     pedidosHoy: number;
     pedidos30: number;
     ventas30: number;
+    /** C-MONEDA-RECORRIDO: la moneda de la ciudad. */
+    moneda?: string;
     restaurantes: number;
     restaurantesAbiertos: number;
     repartidores: number;
@@ -215,7 +218,7 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
         </li>
         <li className="super-tarjeta">
           <span>{t.ventas30}</span>
-          <strong>{formatearDolares(m.ventas30, idioma)}</strong>
+          <strong>{formatearMonto(m.ventas30, m.moneda ?? 'USD', idioma)}</strong>
         </li>
         <li className="super-tarjeta">
           <span>{t.motos}</span>
@@ -270,7 +273,7 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
               <span className={`insignia ${p.estado === 'entregado' ? 'insignia-aprobado' : ''}`}>
                 {nombreDe(t.estadosPedido, p.estado)}
               </span>{' '}
-              · {formatearDolares(p.total, idioma)} · {p.creado}
+              · {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} · {p.creado}
               {p.area ? ` · ${p.area}` : ''}
             </li>
           ))}

@@ -5,8 +5,9 @@ import {
   ErrorApi,
   type Plato,
   categoriaPlato,
-  dolaresACentavos,
-  formatearDolares,
+  formatearMonto,
+  montoATexto,
+  montoEscrito,
   nombrePlato,
   useBorrador,
 } from '@tumbite/compartido';
@@ -39,7 +40,16 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
  * editar, disponible / agotado y borrar (dentro de los tres puntos, con confirmación). Los tamaños
  * y extras se siguen editando en el panel; al editar aquí no se tocan.
  */
-export function MiMenu({ platos, recargar }: { platos: Plato[]; recargar: () => Promise<void> }) {
+/** C-MONEDA-RECORRIDO: los precios del menú se escriben y se muestran en la moneda del restaurante. */
+export function MiMenu({
+  platos,
+  recargar,
+  moneda = 'USD',
+}: {
+  platos: Plato[];
+  recargar: () => Promise<void>;
+  moneda?: string;
+}) {
   const { api, idioma } = useSesion();
   const t = textosRest(idioma);
   const [categoria, setCategoria] = useState<string | null>(null);
@@ -70,6 +80,7 @@ export function MiMenu({ platos, recargar }: { platos: Plato[]; recargar: () => 
         plato={editando === 'nuevo' ? null : editando}
         cerrar={() => setEditando(null)}
         recargar={recargar}
+        moneda={moneda}
       />
     );
   }
@@ -150,7 +161,7 @@ export function MiMenu({ platos, recargar }: { platos: Plato[]; recargar: () => 
                   {nombrePlato(p, idioma)}
                 </Text>
                 <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 2 }}>
-                  {formatearDolares(p.precioCentavos, idioma)}
+                  {formatearMonto(p.precioCentavos, moneda, idioma)}
                 </Text>
               </View>
               <Insignia
@@ -254,13 +265,21 @@ function FormPlato({
   plato,
   cerrar,
   recargar,
+  moneda,
 }: {
   plato: Plato | null;
   cerrar: () => void;
   recargar: () => Promise<void>;
+  moneda: string;
 }) {
   const { api, idioma, usuario } = useSesion();
   const t = textosRest(idioma);
+  // En dólares, los textos de siempre; con otra moneda, su código y un ejemplo en su unidad.
+  const etiquetaPrecio = moneda === 'USD' ? t.precio : t.precioMoneda.replace('{m}', moneda);
+  const precioMal =
+    moneda === 'USD'
+      ? t.precioMal
+      : t.precioMalMoneda.replace('{m}', moneda).replace('{ej}', montoATexto(35000, moneda));
   const b = useBorrador({
     formulario: `app-plato-${plato?.id ?? 'nuevo'}`,
     cuenta: usuario?.id,
@@ -282,11 +301,11 @@ function FormPlato({
       descripcionEn: plato.descripcionEn,
       categoria: plato.categoria,
       categoriaEn: plato.categoriaEn,
-      precio: (plato.precioCentavos / 100).toFixed(2),
+      precio: montoATexto(plato.precioCentavos, moneda),
       imagen: plato.imagen ?? '',
       disponible: plato.disponible ? 'si' : 'no',
     });
-  }, [plato, cargarBase]);
+  }, [plato, cargarBase, moneda]);
 
   async function elegirFoto() {
     setError('');
@@ -312,8 +331,8 @@ function FormPlato({
 
   async function guardar() {
     setError('');
-    const precioCentavos = dolaresACentavos(v.precio);
-    if (precioCentavos === null) return setError(t.precioMal);
+    const precioCentavos = montoEscrito(v.precio, moneda);
+    if (precioCentavos === null) return setError(precioMal);
     const cuerpo = {
       nombreEs: v.nombreEs,
       nombreEn: v.nombreEn,
@@ -447,11 +466,11 @@ function FormPlato({
         multiline
       />
       <Campo
-        etiqueta={t.precio}
+        etiqueta={etiquetaPrecio}
         value={v.precio}
         onChangeText={(x) => b.cambiar('precio', x)}
         keyboardType="decimal-pad"
-        placeholder="0.00"
+        placeholder={montoATexto(0, moneda)}
       />
       <Campo
         etiqueta={t.categoria}

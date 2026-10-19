@@ -117,6 +117,7 @@ export function Inicio() {
         <AvisoPago
           idioma={idioma}
           centavos={carritoCentavos}
+          moneda={carrito.moneda ?? 'USD'}
           alPagar={() => router.push('/cart')}
         />
         {regalos.length ? (
