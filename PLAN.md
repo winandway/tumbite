@@ -91,5 +91,5 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] M.6 Expediente legal con hechos, supuestos y preguntas.
 - [x] M.7 Revisión de riesgos (Stripe interno, ticket, sesiones, favoritos y reseñas, dinero, roles, recargas, GPS) y arreglo de lo confirmado con prueba en rojo.
 - [x] M.8 Vacíos del MVP que no dependan de Richard: implementar con prueba en rojo, candado y Docs.
-- [ ] M.9 Staging → recorrido en celular es/en → producción por el flujo permanente.
-- [ ] M.10 Entrega final: recorridos comprobados, conclusiones de los grandes, diferencias decididas, lo construido sin prueba real, riesgos abiertos, decisiones y autorizaciones de Richard, estado por país y método, siguiente acción.
+- [x] M.9 Staging → recorrido en celular es/en → producción por el flujo permanente.
+- [x] M.10 Entrega final: recorridos comprobados, conclusiones de los grandes, diferencias decididas, lo construido sin prueba real, riesgos abiertos, decisiones y autorizaciones de Richard, estado por país y método, siguiente acción.

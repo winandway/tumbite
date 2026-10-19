@@ -307,7 +307,7 @@ Ningún país ni método está «probado con dinero real». Todos pasan la misma
 
 ## 9. Ronda MVP del 19 oct (después de cd00e542)
 
-Cada fila tiene su prueba automática comprobada en rojo y su candado. Estado de publicación: **en staging (rama `fase-mvp-tarifas`)** hasta que el recorrido de staging pase y se publique por el flujo permanente; esta sección se actualiza al publicar.
+Cada fila tiene su prueba automática comprobada en rojo y su candado. Estado de publicación: **publicado en 62a5d345 el 19 oct** (staging verde con el recorrido es/en en la corrida 39266539598; producción con el flujo `publicar` 39270184438 y el verificador «después» en verde; etiqueta de restauración previa `restauracion-2026-10-19-ronda-mvp` sobre cd00e542). Nada de esto está probado con dinero real.
 
 | Arreglo                                                                                                                                                                                                                                           | Candado                            | Afecta                                            |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------- |
