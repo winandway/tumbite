@@ -12,6 +12,8 @@ export default tseslint.config(
       'apps/cliente/scripts/**',
       '**/dist-web/**',
       '**/node_modules/**',
+      // Copias de trabajo temporales de los ayudantes (otras ramas en curso).
+      '.claude/**',
       '**/dist/**',
       '**/.expo/**',
       // Proyectos nativos generados por «expo prebuild» al compilar los APK (no son código nuestro).
