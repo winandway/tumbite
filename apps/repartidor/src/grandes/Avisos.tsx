@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { type Api, type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Api, type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C, e } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -11,6 +11,8 @@ export type AvisoRep = {
   restaurante: string | null;
   detalle: string;
   centavos: number | null;
+  /** C-MONEDA-RECORRIDO: la moneda del pedido de esa propina. */
+  moneda?: string;
   en: string;
 };
 export type RespuestaAvisosRep = { avisos: AvisoRep[]; pendientes: number };
@@ -46,7 +48,7 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
             {a.restaurante ?? ''}
             {a.tipo === 'direccion_cambiada' && a.detalle ? ` · ${a.detalle}` : ''}
             {a.tipo === 'ofertas_vencidas' ? ` ${a.detalle}` : ''}
-            {a.centavos != null ? ` · +${formatearDolares(a.centavos, idioma)}` : ''}
+            {a.centavos != null ? ` · +${formatearMonto(a.centavos, a.moneda, idioma)}` : ''}
             {a.tipo === 'cancelado_por_restaurante' || a.tipo === 'cancelado_por_cliente'
               ? ` · ${t.quedasLibre}`
               : ''}

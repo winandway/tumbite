@@ -22,7 +22,7 @@ import {
   proximaApertura,
   textoApertura,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   nombrePlato,
   categoriaPlato,
 } from '@tumbite/compartido';
@@ -71,6 +71,8 @@ export default function MenuRestaurante() {
   const [eligiendo, setEligiendo] = useState<Plato | null>(null);
   const [elegidas, setElegidas] = useState<Record<string, string[]>>({});
   const [cantidad, setCantidad] = useState(1);
+  // C-MONEDA-RECORRIDO: los precios del menú en la moneda del restaurante.
+  const moneda = datos?.restaurante.moneda ?? 'USD';
 
   useEffect(() => {
     api
@@ -83,7 +85,14 @@ export default function MenuRestaurante() {
   async function meter(p: Plato, opciones: OpcionElegida[], n: number) {
     if (!datos) return;
     const r = datos.restaurante;
-    const rest = { id: r.id, nombre: r.nombre, plan: r.plan, lat: r.lat, lng: r.lng };
+    const rest = {
+      id: r.id,
+      nombre: r.nombre,
+      plan: r.plan,
+      lat: r.lat,
+      lng: r.lng,
+      moneda: r.moneda,
+    };
     if (agregar(rest, p, opciones) === 'otro-restaurante') {
       if (!(await confirmar(t.otroRestaurante, t.siEmpezar, t.no))) return;
       vaciar();
@@ -382,7 +391,7 @@ export default function MenuRestaurante() {
                               </Text>
                             ) : null}
                             <Text style={{ marginTop: 4, fontWeight: '800', color: C.secundario }}>
-                              {formatearDolares(p.precioCentavos, idioma)}
+                              {formatearMonto(p.precioCentavos, moneda, idioma)}
                             </Text>
                           </View>
                           <View style={{ alignItems: 'center', gap: 4 }}>
@@ -490,7 +499,7 @@ export default function MenuRestaurante() {
                   <Text
                     style={{ fontSize: 24, fontWeight: '900', color: C.primario, marginTop: 8 }}
                   >
-                    {formatearDolares(detalle.precioCentavos, idioma)}
+                    {formatearMonto(detalle.precioCentavos, moneda, idioma)}
                   </Text>
 
                   {(detalle.grupos ?? []).map((g) => (
@@ -538,7 +547,7 @@ export default function MenuRestaurante() {
                                   </Text>
                                   {o.precioCentavos ? (
                                     <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                                      + {formatearDolares(o.precioCentavos, idioma)}
+                                      + {formatearMonto(o.precioCentavos, moneda, idioma)}
                                     </Text>
                                   ) : null}
                                 </Pressable>
@@ -600,7 +609,7 @@ export default function MenuRestaurante() {
                                   </Text>
                                   <Text style={{ color: '#5E5E5E' }}>
                                     {o.precioCentavos
-                                      ? `+ ${formatearDolares(o.precioCentavos, idioma)}`
+                                      ? `+ ${formatearMonto(o.precioCentavos, moneda, idioma)}`
                                       : ''}
                                   </Text>
                                 </Pressable>
@@ -650,7 +659,7 @@ export default function MenuRestaurante() {
                 }}
               >
                 <BotonAncho
-                  texto={`${tc.agregarAlCarrito} · ${formatearDolares(precioDetalle, idioma)}`}
+                  texto={`${tc.agregarAlCarrito} · ${formatearMonto(precioDetalle, moneda, idioma)}`}
                   alTocar={confirmarDetalle}
                   desactivado={!completo || !abierto}
                 />

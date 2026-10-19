@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { ErrorApi, type Idioma, enIdioma, formatearMonto, textoAMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
 import { LuzSemaforo } from './LuzSemaforo';
@@ -37,6 +37,7 @@ const T = {
     soltadoOk: 'El pedido volvió a la fila: se le ofrece a otro repartidor.',
     devolver: 'Devolver parte del dinero',
     montoDevolver: 'Monto a devolver, en dólares (por ejemplo 5.00):',
+    montoDevolverMoneda: 'Monto a devolver, en {m} (por ejemplo {ej}):',
     motivoDevolver: 'Motivo de la devolución (queda en la bitácora):',
     devueltoOk: 'Devolución enviada a Stripe. El cliente la ve en su tarjeta en unos días.',
     eventos: {
@@ -103,6 +104,7 @@ const T = {
     soltadoOk: 'The order went back to the queue: it’s offered to another driver.',
     devolver: 'Refund part of the money',
     montoDevolver: 'Amount to refund, in dollars (for example 5.00):',
+    montoDevolverMoneda: 'Amount to refund, in {m} (for example {ej}):',
     motivoDevolver: 'Reason for the refund (it stays in the log):',
     devueltoOk: 'Refund sent to Stripe. The customer sees it on their card in a few days.',
     eventos: {
@@ -142,6 +144,8 @@ const T = {
 };
 
 type Pedido = {
+  /** C-MONEDA-RECORRIDO: la moneda del pedido. */
+  moneda?: string;
   id: string;
   estado: string;
   total: number;
@@ -210,8 +214,16 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
     p?.estado ?? '',
   );
   async function devolver() {
-    const texto = window.prompt(t.montoDevolver) ?? '';
-    const monto = Math.round(Number(texto.replace(',', '.')) * 100);
+    // C-MONEDA-RECORRIDO: el monto se escribe en la moneda del pedido (en dólares, como siempre).
+    const moneda = p?.moneda ?? 'USD';
+    const pregunta =
+      moneda === 'USD'
+        ? t.montoDevolver
+        : t.montoDevolverMoneda
+            .replace('{m}', moneda)
+            .replace('{ej}', moneda === 'COP' ? '5000' : '5.00');
+    const texto = window.prompt(pregunta) ?? '';
+    const monto = textoAMonto(texto, moneda);
     if (!Number.isFinite(monto) || monto <= 0) return;
     const motivo = window.prompt(t.motivoDevolver) ?? '';
     if (motivo.trim().length < 3) return;
@@ -225,7 +237,7 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
     }
   }
   if (!p) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
-  const dinero = (c: number) => formatearDolares(c, idioma);
+  const dinero = (c: number) => formatearMonto(c, p.moneda ?? 'USD', idioma);
   return (
     <section className="super">
       <button type="button" className="enlace docs-volver" onClick={() => window.history.back()}>
@@ -414,6 +426,7 @@ const TL = {
 type EnCurso = Parameters<typeof LuzSemaforo>[0]['pedido'] & {
   id: string;
   total: number;
+  moneda?: string;
   restaurante: string;
   cliente: string;
   repartidorCodigo: string | null;
@@ -488,7 +501,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
             <Enlace a={`${base}/orders/${p.id}`}>
               <strong>
                 #{p.id.slice(0, 6).toUpperCase()} · {p.restaurante} ·{' '}
-                {formatearDolares(p.total, idioma)}
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </strong>
               <span>
                 {te.estados[p.estado] ?? p.estado} · {p.cliente}

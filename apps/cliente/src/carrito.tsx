@@ -34,6 +34,8 @@ export type Carrito = {
   plan: Plan;
   restLat: number | null;
   restLng: number | null;
+  /** C-MONEDA-RECORRIDO: moneda del restaurante (los precios van en su unidad menor). */
+  moneda?: string;
   lineas: LineaCarrito[];
 };
 
@@ -50,7 +52,14 @@ type Ctx = {
   carrito: Carrito;
   cantidadTotal: number;
   agregar: (
-    rest: { id: string; nombre: string; plan: Plan; lat: number | null; lng: number | null },
+    rest: {
+      id: string;
+      nombre: string;
+      plan: Plan;
+      lat: number | null;
+      lng: number | null;
+      moneda?: string;
+    },
     p: Plato,
     opciones?: OpcionElegida[],
   ) => 'ok' | 'otro-restaurante';
@@ -102,6 +111,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               plan: rest.plan,
               restLat: rest.lat,
               restLng: rest.lng,
+              moneda: rest.moneda ?? 'USD',
             };
       // Carritos guardados antes de las opciones: se les pone la clave para que no se pierdan.
       const conClave = base.lineas.map((l) => ({

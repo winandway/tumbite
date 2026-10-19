@@ -10,6 +10,7 @@ import {
   dolaresACentavos,
   enIdioma,
   formatearDolares,
+  formatearMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -132,6 +133,9 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
   const [d, setD] = useState<Datos | null>(null);
   const [hoy, setHoy] = useState<Resumen | null>(null);
   const [mes, setMes] = useState<{ ventas: number; regalos: number; pedidos: number } | null>(null);
+  // C-MONEDA-RECORRIDO: las ventas del día y del mes van en la moneda del restaurante. El saldo, los
+  // retiros y los movimientos son de Stripe (solo pedidos con tarjeta, que hoy solo existen en USD).
+  const [moneda, setMoneda] = useState('USD');
   const [plan, setPlan] = useState<Plan>('inicial');
   const b = useBorrador({
     formulario: 'retiro',
@@ -153,9 +157,11 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
       resumen: Resumen;
       mes?: { ventas: number; regalos: number; pedidos: number };
       plan?: Plan;
+      moneda?: string;
     }>('GET', '/datos/restaurante/resumen')
       .then((r) => {
         setHoy(r.resumen);
+        setMoneda(r.moneda ?? 'USD');
         setMes(r.mes ?? null);
         if (r.plan) setPlan(r.plan);
       })
@@ -208,30 +214,30 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
             </div>
             <div>
               <span>{t.ventas}</span>
-              <strong>{formatearDolares(hoy.ventas, idioma)}</strong>
+              <strong>{formatearMonto(hoy.ventas, moneda, idioma)}</strong>
             </div>
             <div>
               <span>{t.regalos}</span>
               <strong>
                 {hoy.regalos > 0 ? '−' : ''}
-                {formatearDolares(hoy.regalos, idioma)}
+                {formatearMonto(hoy.regalos, moneda, idioma)}
               </strong>
             </div>
             <div>
               <span>{t.comision}</span>
               <strong>
                 {hoy.comision > 0 ? '−' : ''}
-                {formatearDolares(hoy.comision, idioma)}
+                {formatearMonto(hoy.comision, moneda, idioma)}
               </strong>
             </div>
             <div className="metrica-fuerte">
               <span>{t.neto}</span>
-              <strong>{formatearDolares(hoy.neto, idioma)}</strong>
+              <strong>{formatearMonto(hoy.neto, moneda, idioma)}</strong>
             </div>
           </div>
         </>
       )}
-      {mes && <Comparar mes={mes} plan={plan} idioma={idioma} t={t} />}
+      {mes && <Comparar mes={mes} plan={plan} idioma={idioma} t={t} moneda={moneda} />}
       <div className="saldo">
         <span>{t.saldo}</span>
         <strong>{formatearDolares(d.saldo, idioma)}</strong>
@@ -328,15 +334,17 @@ function Comparar({
   plan,
   idioma,
   t,
+  moneda,
 }: {
   mes: { ventas: number; regalos: number; pedidos: number };
   plan: Plan;
   idioma: Idioma;
   t: (typeof T)['es'];
+  moneda: string;
 }) {
   const conVentas = mes.ventas > 0;
   const c = compararConOtras(conVentas ? mes.ventas : 100000, conVentas ? mes.regalos : 0, plan);
-  const $ = (x: number) => formatearDolares(x, idioma);
+  const $ = (x: number) => formatearMonto(x, moneda, idioma);
   const equivalentes = planesEquivalentes(plan);
   const nombrePlan = new Map(Object.entries(t.planes)).get(plan) ?? plan;
   const filas: [string, number, boolean][] = [

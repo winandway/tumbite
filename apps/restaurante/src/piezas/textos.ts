@@ -83,6 +83,9 @@ const es = {
   disponible: 'Disponible',
   opcionesPanel: 'Los tamaños y extras del plato se editan en el panel web, en tumbite.com/panel.',
   precioMal: 'Escribe el precio en dólares, por ejemplo 14.00.',
+  // C-MONEDA-RECORRIDO: fuera del dólar, la moneda del restaurante.
+  precioMoneda: 'Precio ({m})',
+  precioMalMoneda: 'Escribe el precio en {m}, por ejemplo {ej}.',
   sinPlatos: 'Todavía no tienes platos. Toca «Añadir» para crear el primero.',
   mas: 'Más',
   idioma: 'Idioma',
@@ -159,6 +162,8 @@ const en: T = {
   disponible: 'Available',
   opcionesPanel: 'Sizes and extras are edited in the web dashboard at tumbite.com/panel.',
   precioMal: 'Enter the price in dollars, for example 14.00.',
+  precioMoneda: 'Price ({m})',
+  precioMalMoneda: 'Enter the price in {m}, for example {ej}.',
   sinPlatos: 'You don’t have any items yet. Tap “Add” to create the first one.',
   mas: 'More',
   idioma: 'Language',

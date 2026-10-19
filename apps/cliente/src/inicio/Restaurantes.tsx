@@ -4,7 +4,7 @@ import {
   type Idioma,
   type Restaurante,
   calcularEnvio,
-  formatearDolares,
+  formatearMonto,
   proximaApertura,
   textoApertura,
 } from '@tumbite/compartido';
@@ -88,8 +88,12 @@ export function Restaurantes({
   const t = textosInicio(idioma);
   // Tres tarjetas a la vista, como en la pantalla aprobada.
   const ANCHO = Math.floor((useWindowDimensions().width - 32 - 20) / 3);
+  // Envío estimado con la tarifa base de EE. UU. Fuera del dólar no se estima (C-MONEDA-RECORRIDO:
+  // nunca se muestran cifras en dólares como si fueran pesos); el carrito trae las del país.
   const envioDe = (r: Restaurante) =>
-    formatearDolares(calcularEnvio(CONFIG_DINERO_INICIAL, r.distanciaKm ?? null), idioma);
+    (r.moneda ?? 'USD') === 'USD'
+      ? formatearMonto(calcularEnvio(CONFIG_DINERO_INICIAL, r.distanciaKm ?? null), 'USD', idioma)
+      : null;
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
   return (
     <View style={{ marginTop: 20 }}>
@@ -178,17 +182,19 @@ export function Restaurantes({
                         )
                       : t.cerrado}
                 </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Image
-                    source={IMG.iconoEnvio}
-                    style={{ width: 16, height: 13 }}
-                    resizeMode="contain"
-                    accessibilityIgnoresInvertColors
-                  />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: C.secundario }}>
-                    {envioDe(r)}
-                  </Text>
-                </View>
+                {envioDe(r) ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Image
+                      source={IMG.iconoEnvio}
+                      style={{ width: 16, height: 13 }}
+                      resizeMode="contain"
+                      accessibilityIgnoresInvertColors
+                    />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: C.secundario }}>
+                      {envioDe(r)}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
               <Text style={{ fontSize: 12, color: '#5E5E5E', marginTop: 2 }} numberOfLines={1}>
                 {r.categoria}
@@ -243,7 +249,8 @@ export function Restaurantes({
                       accessibilityIgnoresInvertColors
                     />
                     <Text style={{ fontSize: 12, fontWeight: '700', color: C.secundario }}>
-                      {formatearDolares(r.envio, idioma)}
+                      {/* Ejemplo de muestra (Miami): en dólares. */}
+                      {formatearMonto(r.envio, 'USD', idioma)}
                     </Text>
                   </View>
                 </View>

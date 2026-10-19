@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
 
@@ -48,6 +48,8 @@ const T = {
 
 type Periodo = { pedidos: number; ventas: number; neto: number; ticketPromedio: number };
 type Tablero = {
+  /** C-MONEDA-RECORRIDO: la moneda del restaurante (todas las cifras van en ella). */
+  moneda?: string;
   semana: Periodo;
   mes: Periodo;
   topPlatos: { nombreEs: string; nombreEn: string; cantidad: number }[];
@@ -68,7 +70,7 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
       .then((r) => setX(r.tablero))
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, []);
-  const d = (c: number) => formatearDolares(c, idioma);
+  const d = (c: number) => formatearMonto(c, x?.moneda ?? 'USD', idioma);
   const periodo = (titulo: string, p: Periodo) => (
     <div className="tarjeta-form">
       <h2>{titulo}</h2>

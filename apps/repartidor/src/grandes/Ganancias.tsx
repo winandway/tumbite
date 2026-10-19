@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { type Api, type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Api, type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C, e } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -14,10 +14,15 @@ type PedidoGanado = {
   propina: number;
   propinaPosterior: number;
   total: number;
+  /** C-MONEDA-RECORRIDO: la moneda del pedido. */
+  moneda?: string;
 };
+type Totales = { entregas: number; base: number; bonos: number; propinas: number; total: number };
 type Datos = {
   pedidos: PedidoGanado[];
-  totales: { entregas: number; base: number; bonos: number; propinas: number; total: number };
+  totales: Totales;
+  /** Un total por moneda (nunca se suman monedas distintas). */
+  totalesPorMoneda?: (Totales & { moneda: string })[];
 };
 
 const fechaIso = (d: Date) => d.toLocaleDateString('en-CA');
@@ -57,7 +62,7 @@ export function Ganancias({
     };
   }, [api, desde]);
   if (!d) return null;
-  const linea = (nombre: string, valor: number, fuerte = false) => (
+  const linea = (nombre: string, valor: number, moneda: string, fuerte = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
       <Text
         style={{ color: fuerte ? C.secundario : '#5E5E5E', fontWeight: fuerte ? '800' : '500' }}
@@ -65,19 +70,23 @@ export function Ganancias({
         {nombre}
       </Text>
       <Text style={{ color: C.secundario, fontWeight: fuerte ? '900' : '700' }}>
-        {formatearDolares(valor, idioma)}
+        {formatearMonto(valor, moneda, idioma)}
       </Text>
     </View>
   );
   return (
     <View style={{ gap: 12 }} testID="ganancias-desglose">
-      <View style={e.tarjeta}>
-        {linea(t.base, d.totales.base)}
-        {d.totales.bonos ? linea(t.bonos, d.totales.bonos) : null}
-        {linea(t.propinas, d.totales.propinas)}
-        {linea(`${t.total} · ${d.totales.entregas} ${t.entregas}`, d.totales.total, true)}
-        <Text style={{ color: '#8A8A8A', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
-      </View>
+      {(d.totalesPorMoneda?.length ? d.totalesPorMoneda : [{ moneda: 'USD', ...d.totales }]).map(
+        (x) => (
+          <View style={e.tarjeta} key={x.moneda}>
+            {linea(t.base, x.base, x.moneda)}
+            {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
+            {linea(t.propinas, x.propinas, x.moneda)}
+            {linea(`${t.total} · ${x.entregas} ${t.entregas}`, x.total, x.moneda, true)}
+            <Text style={{ color: '#8A8A8A', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
+          </View>
+        ),
+      )}
       {d.pedidos.length === 0 ? (
         <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text>
       ) : (
@@ -102,15 +111,17 @@ export function Ganancias({
                 </Text>
               </View>
               <Text style={{ fontWeight: '900', color: C.secundario }}>
-                {formatearDolares(p.total, idioma)}
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </Text>
             </View>
             {abierto === p.pedidoId ? (
               <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#EEF0F3' }}>
-                {linea(t.base, p.base)}
-                {p.bono ? linea(t.bonos, p.bono) : null}
-                {linea(t.propinas, p.propina)}
-                {p.propinaPosterior ? linea(`+ ${t.propinaPosterior}`, p.propinaPosterior) : null}
+                {linea(t.base, p.base, p.moneda ?? 'USD')}
+                {p.bono ? linea(t.bonos, p.bono, p.moneda ?? 'USD') : null}
+                {linea(t.propinas, p.propina, p.moneda ?? 'USD')}
+                {p.propinaPosterior
+                  ? linea(`+ ${t.propinaPosterior}`, p.propinaPosterior, p.moneda ?? 'USD')
+                  : null}
               </View>
             ) : (
               <Text style={{ color: C.primario, fontSize: 12, fontWeight: '700', marginTop: 4 }}>

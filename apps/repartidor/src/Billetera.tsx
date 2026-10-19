@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { type Idioma, enIdioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 
 export type Movimiento = {
@@ -98,7 +98,8 @@ export function BilleteraRepartidor({
   const ganado = suma((m) => m.monto > 0);
   const propinas = suma((m) => m.concepto === 'propina');
   const retirado = Math.max(0, -suma((m) => m.concepto === 'retiro'));
-  const dinero = (c: number) => formatearDolares(c, idioma);
+  // Billetera de Stripe: solo pedidos con tarjeta, que hoy solo se cobran en USD (C-TARIFAS-PAIS).
+  const dinero = (c: number) => formatearMonto(c, 'USD', idioma);
   const fecha = (f: string) =>
     new Date(`${f.replace(' ', 'T')}Z`).toLocaleString(idioma, {
       day: 'numeric',

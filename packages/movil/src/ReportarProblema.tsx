@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
-import { ErrorApi, enIdioma, formatearDolares, useBorrador } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -78,6 +78,8 @@ export function ReportarProblema({
   const [lineas, setLineas] = useState<
     { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[]
   >([]);
+  // C-MONEDA-RECORRIDO: el reembolso se cuenta en la moneda del pedido.
+  const [moneda, setMoneda] = useState('USD');
   useEffect(() => {
     if (!pedidoId || !abierto) return;
     let vivo = true;
@@ -85,10 +87,13 @@ export function ReportarProblema({
       .pedir<{
         pedido: {
           lineas: { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[];
+          moneda?: string;
         };
       }>('GET', `/datos/pedidos/${pedidoId}`)
       .then((r) => {
-        if (vivo) setLineas(r.pedido.lineas ?? []);
+        if (!vivo) return;
+        setLineas(r.pedido.lineas ?? []);
+        setMoneda(r.pedido.moneda ?? 'USD');
       })
       .catch(() => undefined);
     return () => {
@@ -120,9 +125,9 @@ export function ReportarProblema({
       );
       await b.limpiar();
       if (r.reembolso)
-        setResultado(t.reembolsado.replace('{monto}', formatearDolares(r.reembolso, idioma)));
+        setResultado(t.reembolsado.replace('{monto}', formatearMonto(r.reembolso, moneda, idioma)));
       else if (r.propuesta)
-        setResultado(t.enRevision.replace('{monto}', formatearDolares(r.propuesta, idioma)));
+        setResultado(t.enRevision.replace('{monto}', formatearMonto(r.propuesta, moneda, idioma)));
       setEnlace(r.enlace);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));

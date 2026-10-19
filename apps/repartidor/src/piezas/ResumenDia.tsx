@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { type Idioma, formatearDolares } from '@tumbite/compartido';
+import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
@@ -41,7 +41,8 @@ export function ResumenDia({
         {t.hoy}
       </Text>
       <View style={{ flexDirection: 'row' }}>
-        {celda(formatearDolares(ganancias, idioma), t.ganancias)}
+        {/* Movimientos de la billetera de Stripe: solo tarjeta, en USD. */}
+        {celda(formatearMonto(ganancias, 'USD', idioma), t.ganancias)}
         <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />
         {celda(String(entregas), t.entregas)}
         <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />

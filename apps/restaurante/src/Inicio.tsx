@@ -21,7 +21,6 @@ import {
   type Idioma,
   type Restaurante,
   enIdioma,
-  formatearDolares,
   formatearMonto,
   type RepartidorEnPedido,
   avisoLlegada,
@@ -69,6 +68,8 @@ type Pedido = {
   metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
   total: number;
   subtotal: number;
+  /** C-MONEDA-RECORRIDO: la moneda del pedido. */
+  moneda?: string;
   notas: string;
   creadoEn: string;
   aceptadoEn?: string | null;
@@ -452,7 +453,7 @@ export function Inicio() {
               {numero(p)}
             </Text>
             <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
-              {formatearDolares(p.subtotal, idioma)}
+              {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
             </Text>
           </View>
           {p.lineas.map((l) => (
@@ -822,7 +823,7 @@ export function Inicio() {
               {numero(p)}
             </Text>
             <Text style={{ fontWeight: '800', color: C.secundario }}>
-              {formatearDolares(p.subtotal, idioma)}
+              {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
             </Text>
           </View>
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
@@ -1102,7 +1103,7 @@ export function Inicio() {
   ) : vista === 'pedidos' ? (
     vistaPedidos
   ) : vista === 'menu' ? (
-    <MiMenu platos={platos} recargar={cargar} />
+    <MiMenu platos={platos} recargar={cargar} moneda={rest?.moneda ?? 'USD'} />
   ) : vista === 'estadisticas' ? (
     <Estadisticas />
   ) : vista === 'mas' ? (

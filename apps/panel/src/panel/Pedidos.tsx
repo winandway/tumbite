@@ -4,7 +4,7 @@ import {
   ErrorApi,
   type Idioma,
   enIdioma,
-  formatearDolares,
+  formatearMonto,
   type RepartidorEnPedido,
   avisoLlegada,
   fotoSinConfirmar,
@@ -24,6 +24,8 @@ type Pedido = {
   entrega?: 'puerta' | 'mano' | 'recoger';
   requiereEdad?: boolean;
   subtotal: number;
+  /** C-MONEDA-RECORRIDO: la moneda del pedido. */
+  moneda?: string;
   notas: string;
   creadoEn: string;
   pagadoEn: string | null;
@@ -289,7 +291,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
             <div className="lista-texto">
               <strong>
                 #{p.id.slice(0, 4).toUpperCase()} · {t.estados[p.estado] ?? p.estado} ·{' '}
-                {formatearDolares(p.subtotal, idioma)}
+                {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
               </strong>
               <LuzSemaforo pedido={p} idioma={idioma} />
               {lineaRepartidor(p.repartidor, idioma) && (
