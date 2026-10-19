@@ -1,4 +1,4 @@
-import { PAGINAS, enIdiomaDireccion, formatearDolares } from '@tumbite/compartido';
+import { PAGINAS, enIdiomaDireccion, formatearMonto } from '@tumbite/compartido';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 
@@ -14,11 +14,11 @@ function sitio(env: Env): string {
   return (env.SITIO_URL ?? 'https://tumbite.com').replace(/\/$/, '');
 }
 
-function lineasTexto(lineas: Linea[], idioma: Idioma): string {
+function lineasTexto(lineas: Linea[], idioma: Idioma, moneda: string): string {
   return lineas
     .map(
       (l) =>
-        `${l.cantidad} × ${idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs} — ${formatearDolares(l.precioCentavos * l.cantidad, idioma)}`,
+        `${l.cantidad} × ${idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs} — ${formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}`,
     )
     .join('\n');
 }
@@ -41,18 +41,22 @@ export async function reciboDePedido(
     regalo: number;
     total: number;
     direccion: string;
+    /** C-MONEDA-RECORRIDO: la moneda del pedido (sin ella, dólares como siempre). */
+    moneda?: string;
   },
 ) {
   const corto = p.pedidoId.slice(0, 8).toUpperCase();
   const d = p.idioma;
+  const m = p.moneda ?? 'USD';
+  const fm = (x: number) => formatearMonto(x, m, d);
   const asunto =
     d === 'en'
       ? `Your Tumbite order #${corto} is confirmed`
       : `Tu pedido #${corto} en Tumbite quedó confirmado`;
   const texto =
     d === 'en'
-      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d)}\n\nSubtotal: ${formatearDolares(p.subtotal, d)}\nDelivery: ${formatearDolares(p.envio, d)}\nService: ${formatearDolares(p.servicio, d)}${p.impuesto ? `\nTax: ${formatearDolares(p.impuesto, d)}` : ''}\nTip: ${formatearDolares(p.propina, d)}${p.regalo ? `\nGift: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
-      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d)}\n\nComida: ${formatearDolares(p.subtotal, d)}\nEnvío: ${formatearDolares(p.envio, d)}\nServicio: ${formatearDolares(p.servicio, d)}${p.impuesto ? `\nImpuesto: ${formatearDolares(p.impuesto, d)}` : ''}\nPropina: ${formatearDolares(p.propina, d)}${p.regalo ? `\nRegalo: −${formatearDolares(p.regalo, d)}` : ''}\nTotal: ${formatearDolares(p.total, d)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
+      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d, m)}\n\nSubtotal: ${fm(p.subtotal)}\nDelivery: ${fm(p.envio)}\nService: ${fm(p.servicio)}${p.impuesto ? `\nTax: ${fm(p.impuesto)}` : ''}\nTip: ${fm(p.propina)}${p.regalo ? `\nGift: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
+      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d, m)}\n\nComida: ${fm(p.subtotal)}\nEnvío: ${fm(p.envio)}\nServicio: ${fm(p.servicio)}${p.impuesto ? `\nImpuesto: ${fm(p.impuesto)}` : ''}\nPropina: ${fm(p.propina)}${p.regalo ? `\nRegalo: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
   return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto });
 }
 
@@ -66,15 +70,19 @@ export async function avisoPedidoAlRestaurante(
     lineas: Linea[];
     pagoRestaurante: number;
     notas: string;
+    /** C-MONEDA-RECORRIDO: la moneda del pedido (sin ella, dólares como siempre). */
+    moneda?: string;
   },
 ) {
   const corto = p.pedidoId.slice(0, 8).toUpperCase();
   const d = p.idioma;
+  const m = p.moneda ?? 'USD';
+  const fm = (x: number) => formatearMonto(x, m, d);
   const asunto = d === 'en' ? `New paid order #${corto}` : `Pedido nuevo pagado #${corto}`;
   const texto =
     d === 'en'
-      ? `${p.restaurante}: a new order just came in and it's already paid.\n\n${lineasTexto(p.lineas, d)}${p.notas ? `\n\nCustomer notes: ${p.notas}` : ''}\n\nYou'll receive ${formatearDolares(p.pagoRestaurante, d)} for this order.\n\nAccept it in your panel (the alarm rings there until someone accepts):\n\n${sitio(env)}/panel/orders`
-      : `${p.restaurante}: acaba de entrar un pedido nuevo y ya está pagado.\n\n${lineasTexto(p.lineas, d)}${p.notas ? `\n\nNotas del cliente: ${p.notas}` : ''}\n\nPor este pedido recibes ${formatearDolares(p.pagoRestaurante, d)}.\n\nAcéptalo en tu panel (la alarma suena ahí hasta que alguien lo acepte):\n\n${sitio(env)}/panel/orders`;
+      ? `${p.restaurante}: a new order just came in and it's already paid.\n\n${lineasTexto(p.lineas, d, m)}${p.notas ? `\n\nCustomer notes: ${p.notas}` : ''}\n\nYou'll receive ${fm(p.pagoRestaurante)} for this order.\n\nAccept it in your panel (the alarm rings there until someone accepts):\n\n${sitio(env)}/panel/orders`
+      : `${p.restaurante}: acaba de entrar un pedido nuevo y ya está pagado.\n\n${lineasTexto(p.lineas, d, m)}${p.notas ? `\n\nNotas del cliente: ${p.notas}` : ''}\n\nPor este pedido recibes ${fm(p.pagoRestaurante)}.\n\nAcéptalo en tu panel (la alarma suena ahí hasta que alguien lo acepte):\n\n${sitio(env)}/panel/orders`;
   return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto });
 }
 

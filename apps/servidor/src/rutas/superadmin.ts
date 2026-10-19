@@ -418,19 +418,21 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
     .first<FilaDatos>();
   const { results: entregas } = await db
     .prepare(
-      `SELECT p.id, p.estado, p.creado_en AS fecha, p.entregado_en AS entregado, p.pago_repartidor AS gana, p.propina,
+      `SELECT p.id, p.estado, p.creado_en AS fecha, p.entregado_en AS entregado, p.pago_repartidor AS gana, p.propina, p.moneda,
         p.distancia_km AS km, r.nombre AS restaurante
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.repartidor_id = ? ORDER BY p.creado_en DESC LIMIT 50`,
     )
     .bind(id)
     .all();
-  const totales = await db
+  // C-MONEDA-RECORRIDO: lo ganado se suma por moneda (un repartidor puede trabajar en varias ciudades).
+  const { results: porMoneda } = await db
     .prepare(
-      `SELECT COUNT(*) AS entregas, COALESCE(SUM(pago_repartidor),0) AS ganado, COALESCE(SUM(propina),0) AS propinas
-       FROM pedidos WHERE repartidor_id = ? AND estado = 'entregado'`,
+      `SELECT moneda, COUNT(*) AS entregas, COALESCE(SUM(pago_repartidor),0) AS ganado, COALESCE(SUM(propina),0) AS propinas
+       FROM pedidos WHERE repartidor_id = ? AND estado = 'entregado' GROUP BY moneda`,
     )
     .bind(id)
-    .first<{ entregas: number; ganado: number; propinas: number }>();
+    .all<{ moneda: string | null; entregas: number; ganado: number; propinas: number }>();
+  const enDolares = porMoneda.find((x) => (x.moneda ?? 'USD') === 'USD');
   const saldo = await db
     .prepare('SELECT COALESCE(SUM(monto),0) AS s FROM movimientos WHERE usuario_id = ?')
     .bind(id)
@@ -476,9 +478,17 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
             }
           : null,
       datos: aDatos(datos),
-      entregas: Number(totales?.entregas ?? 0),
-      ganado: Number(totales?.ganado ?? 0),
-      propinas: Number(totales?.propinas ?? 0),
+      entregas: porMoneda.reduce((s, x) => s + Number(x.entregas), 0),
+      // En dólares (como siempre); las demás monedas van aparte en «porMoneda», nunca sumadas.
+      ganado: Number(enDolares?.ganado ?? 0),
+      propinas: Number(enDolares?.propinas ?? 0),
+      porMoneda: porMoneda.map((x) => ({
+        moneda: x.moneda ?? 'USD',
+        entregas: Number(x.entregas),
+        ganado: Number(x.ganado),
+        propinas: Number(x.propinas),
+      })),
+      // Saldo de la billetera de Stripe (solo pedidos con tarjeta: dólares).
       saldo: Number(saldo?.s ?? 0),
       calificacion: cal?.p == null ? null : Math.round(cal.p * 10) / 10,
       calificaciones: Number(cal?.n ?? 0),
@@ -589,19 +599,20 @@ superadmin.get('/admin/clientes/:id', async (c) => {
   if (!u) throw new ErrorDatos('Ese cliente no existe.', undefined, 404);
   const { results: compras } = await db
     .prepare(
-      `SELECT p.id, p.estado, p.total, p.creado_en AS fecha, p.direccion, r.nombre AS restaurante, ur.nombre AS repartidor, d.codigo AS repartidorCodigo
+      `SELECT p.id, p.estado, p.total, p.moneda, p.creado_en AS fecha, p.direccion, r.nombre AS restaurante, ur.nombre AS repartidor, d.codigo AS repartidorCodigo
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id LEFT JOIN usuarios ur ON ur.id = p.repartidor_id
        LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
        WHERE p.cliente_id = ? AND p.estado <> 'pago_pendiente' ORDER BY p.creado_en DESC LIMIT 100`,
     )
     .bind(id)
     .all();
-  const t = await db
+  // C-MONEDA-RECORRIDO: lo gastado, por moneda (nunca se suman dólares con pesos).
+  const { results: gastos } = await db
     .prepare(
-      "SELECT COUNT(*) AS n, COALESCE(SUM(total),0) AS gastado FROM pedidos WHERE cliente_id = ? AND estado = 'entregado'",
+      "SELECT moneda, COUNT(*) AS n, COALESCE(SUM(total),0) AS gastado FROM pedidos WHERE cliente_id = ? AND estado = 'entregado' GROUP BY moneda",
     )
     .bind(id)
-    .first<{ n: number; gastado: number }>();
+    .all<{ moneda: string | null; n: number; gastado: number }>();
   const { results: quejas } = await db
     .prepare(
       'SELECT id, asunto, estado, actualizado_en AS fecha FROM tickets WHERE usuario_id = ? ORDER BY actualizado_en DESC LIMIT 30',
@@ -620,8 +631,12 @@ superadmin.get('/admin/clientes/:id', async (c) => {
       correoConfirmado: Boolean(u.correo_confirmado_en),
       activo: Number(u.activo ?? 1) === 1,
       ciudad: u.ciudad ? String(u.ciudad) : null,
-      pedidos: Number(t?.n ?? 0),
-      gastado: Number(t?.gastado ?? 0),
+      pedidos: gastos.reduce((s, x) => s + Number(x.n), 0),
+      gastado: Number(gastos.find((x) => (x.moneda ?? 'USD') === 'USD')?.gastado ?? 0),
+      gastadoPorMoneda: gastos.map((x) => ({
+        moneda: x.moneda ?? 'USD',
+        monto: Number(x.gastado),
+      })),
       compras,
       quejas,
     },
@@ -653,7 +668,7 @@ superadmin.get('/admin/pedidos', async (c) => {
   const q = (c.req.query('q') ?? '').trim().toLowerCase();
   const { results } = await base(c)
     .prepare(
-      `SELECT p.id, p.estado, p.total, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
+      `SELECT p.id, p.estado, p.total, p.moneda, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
         r.nombre AS restaurante, uc.nombre AS cliente, d.codigo AS repartidor_codigo, z.nombre AS ciudad
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios uc ON uc.id = p.cliente_id
        LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id LEFT JOIN zonas z ON z.id = p.zona_id
@@ -683,6 +698,8 @@ superadmin.get('/admin/pedidos', async (c) => {
         id: String(f.id),
         ...fechas,
         total: Number(f.total),
+        // C-MONEDA-RECORRIDO: cada pedido en su moneda (la lista no suma montos).
+        moneda: String(f.moneda ?? 'USD'),
         restaurante: String(f.restaurante),
         cliente: String(f.cliente),
         repartidorCodigo: f.repartidor_codigo ? String(f.repartidor_codigo) : null,
@@ -703,7 +720,7 @@ superadmin.get('/admin/pedidos/:id', async (c) => {
   const id = c.req.param('id');
   const p = await db
     .prepare(
-      `SELECT p.id, p.estado, p.total, p.propina, p.direccion, p.notas, p.lineas_json, p.creado_en, p.stripe_pago,
+      `SELECT p.id, p.estado, p.total, p.propina, p.moneda, p.metodo_pago, p.direccion, p.notas, p.lineas_json, p.creado_en, p.stripe_pago,
         p.cliente_id, uc.nombre AS cliente, p.restaurante_id, r.nombre AS restaurante,
         p.repartidor_id, ur.nombre AS repartidor, d.codigo AS repartidor_codigo, z.nombre AS ciudad
        FROM pedidos p JOIN usuarios uc ON uc.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
@@ -755,6 +772,8 @@ superadmin.get('/admin/pedidos/:id', async (c) => {
       estado: String(p.estado),
       total: Number(p.total),
       propina: Number(p.propina),
+      moneda: String(p.moneda ?? 'USD'),
+      metodoPago: String(p.metodo_pago ?? 'tarjeta'),
       direccion: String(p.direccion),
       notas: String(p.notas ?? ''),
       ciudad: p.ciudad ? String(p.ciudad) : null,
@@ -868,7 +887,7 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
   const id = c.req.param('id');
   const r = await db
     .prepare(
-      `SELECT r.*, u.nombre AS dueno_cuenta, u.correo AS dueno_cuenta_correo, u.telefono AS dueno_cuenta_telefono, z.nombre AS ciudad
+      `SELECT r.*, u.nombre AS dueno_cuenta, u.correo AS dueno_cuenta_correo, u.telefono AS dueno_cuenta_telefono, z.nombre AS ciudad, z.moneda AS zona_moneda
        FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id LEFT JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?`,
     )
     .bind(id)
@@ -887,9 +906,10 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
   const ventas = await db
     .prepare(
       `SELECT COUNT(*) AS n, COALESCE(SUM(subtotal),0) AS ventas, COALESCE(SUM(comision),0) AS comision
-       FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND creado_en >= datetime('now','-30 days')`,
+       FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND creado_en >= datetime('now','-30 days') AND moneda = ?`,
     )
-    .bind(id)
+    // C-MONEDA-RECORRIDO: las cifras en la moneda del restaurante, sin mezclar otras.
+    .bind(id, String(r.zona_moneda ?? 'USD'))
     .first<{ n: number; ventas: number; comision: number }>();
   const cal = await db
     .prepare(
@@ -899,7 +919,7 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
     .first<{ p: number | null; n: number }>();
   const { results: pedidos } = await db
     .prepare(
-      "SELECT p.id, p.estado, p.total, p.creado_en AS fecha, u.nombre AS cliente FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id WHERE p.restaurante_id = ? AND p.estado <> 'pago_pendiente' ORDER BY p.creado_en DESC LIMIT 30",
+      "SELECT p.id, p.estado, p.total, p.moneda, p.creado_en AS fecha, u.nombre AS cliente FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id WHERE p.restaurante_id = ? AND p.estado <> 'pago_pendiente' ORDER BY p.creado_en DESC LIMIT 30",
     )
     .bind(id)
     .all();
@@ -932,6 +952,7 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
       empresa: aEmpresa(empresa),
       platos: Number(menu?.n ?? 0),
       platosDisponibles: Number(menu?.disponibles ?? 0),
+      moneda: String(r.zona_moneda ?? 'USD'),
       pedidos30: Number(ventas?.n ?? 0),
       ventas30: Number(ventas?.ventas ?? 0),
       comision30: Number(ventas?.comision ?? 0),

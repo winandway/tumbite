@@ -125,7 +125,7 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
   const hasta = q.success && q.data.hasta ? `${q.data.hasta} 23:59:59` : null;
   const { results } = await db
     .prepare(
-      `SELECT p.id, p.entregado_en, p.envio, p.complemento, p.propina, p.pago_repartidor, r.nombre AS restaurante,
+      `SELECT p.id, p.entregado_en, p.envio, p.complemento, p.propina, p.pago_repartidor, p.moneda, r.nombre AS restaurante,
               COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0) AS bono,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = p.repartidor_id AND m.concepto = 'ajuste' AND m.referencia = 'propina-extra-' || p.id), 0) AS propina_posterior
          FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
@@ -141,6 +141,7 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       complemento: number;
       propina: number;
       pago_repartidor: number;
+      moneda: string | null;
       restaurante: string;
       bono: number;
       propina_posterior: number;
@@ -155,6 +156,8 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       codigo: p.id.slice(0, 4).toUpperCase(),
       restaurante: p.restaurante,
       entregadoEn: p.entregado_en,
+      // C-MONEDA-RECORRIDO: cada pedido en su moneda.
+      moneda: p.moneda ?? 'USD',
       base,
       bono,
       propina,
@@ -162,17 +165,29 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       total: base + bono + propina + propinaPosterior,
     };
   });
-  const totales = pedidos.reduce(
-    (acc, p) => ({
-      entregas: acc.entregas + 1,
-      base: acc.base + p.base,
-      bonos: acc.bonos + p.bono,
-      propinas: acc.propinas + p.propina + p.propinaPosterior,
-      total: acc.total + p.total,
-    }),
-    { entregas: 0, base: 0, bonos: 0, propinas: 0, total: 0 },
+  // C-MONEDA-RECORRIDO: los totales se suman por moneda, nunca mezclando (dólares primero).
+  const sumar = (lista: typeof pedidos) =>
+    lista.reduce(
+      (acc, p) => ({
+        entregas: acc.entregas + 1,
+        base: acc.base + p.base,
+        bonos: acc.bonos + p.bono,
+        propinas: acc.propinas + p.propina + p.propinaPosterior,
+        total: acc.total + p.total,
+      }),
+      { entregas: 0, base: 0, bonos: 0, propinas: 0, total: 0 },
+    );
+  const monedas = [...new Set(pedidos.map((p) => p.moneda))].sort((a, b) =>
+    a === 'USD' ? -1 : b === 'USD' ? 1 : a.localeCompare(b),
   );
-  return c.json({ pedidos, totales });
+  const totalesPorMoneda = monedas.map((m) => ({
+    moneda: m,
+    ...sumar(pedidos.filter((p) => p.moneda === m)),
+  }));
+  // «totales» queda en la primera moneda (en EE. UU., los dólares de siempre); sin pedidos, ceros.
+  const primera = monedas[0];
+  const totales = sumar(primera ? pedidos.filter((p) => p.moneda === primera) : []);
+  return c.json({ pedidos, totales, totalesPorMoneda });
 });
 
 /** La campana: calculada al momento, sin tabla nueva (igual que la del cliente). */
@@ -186,6 +201,8 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
     restaurante: string | null;
     detalle: string;
     centavos: number | null;
+    /** C-MONEDA-RECORRIDO: la moneda de «centavos» (unidad menor). */
+    moneda?: string;
     en: string;
   };
   const lista: Aviso[] = [];
@@ -219,13 +236,19 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
     });
   const propinas = await db
     .prepare(
-      `SELECT m.monto, m.creado_en, substr(m.referencia, 15) AS pedido_id, r.nombre FROM movimientos m
+      `SELECT m.monto, m.creado_en, substr(m.referencia, 15) AS pedido_id, r.nombre, p.moneda FROM movimientos m
          LEFT JOIN pedidos p ON p.id = substr(m.referencia, 15) LEFT JOIN restaurantes r ON r.id = p.restaurante_id
         WHERE m.usuario_id = ? AND m.concepto = 'ajuste' AND m.referencia LIKE 'propina-extra-%'
           AND m.creado_en > datetime('now','-7 days') ORDER BY m.creado_en DESC LIMIT 20`,
     )
     .bind(u.id)
-    .all<{ monto: number; creado_en: string; pedido_id: string | null; nombre: string | null }>();
+    .all<{
+      monto: number;
+      creado_en: string;
+      pedido_id: string | null;
+      nombre: string | null;
+      moneda: string | null;
+    }>();
   for (const p of propinas.results)
     lista.push({
       tipo: 'propina_posterior',
@@ -234,6 +257,7 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
       restaurante: p.nombre,
       detalle: '',
       centavos: Number(p.monto),
+      moneda: p.moneda ?? 'USD',
       en: p.creado_en,
     });
   const listo = await db

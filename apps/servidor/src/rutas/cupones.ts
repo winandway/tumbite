@@ -134,9 +134,10 @@ cupones.post('/cupones/validar', async (c) => {
 cupones.get('/cupones/destacados', async (c) => {
   const { results } = await base(c)
     .prepare(
-      "SELECT * FROM cupones WHERE activo = 1 AND destacado = 1 AND (vence_en IS NULL OR vence_en > datetime('now')) ORDER BY creado_en DESC LIMIT 6",
+      // C-MONEDA-RECORRIDO: la moneda de su zona o de su restaurante (sin ninguno, dólares).
+      "SELECT c.*, COALESCE((SELECT moneda FROM zonas WHERE id = c.zona_id), (SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = c.restaurante_id), 'USD') AS moneda FROM cupones c WHERE c.activo = 1 AND c.destacado = 1 AND (c.vence_en IS NULL OR c.vence_en > datetime('now')) ORDER BY c.creado_en DESC LIMIT 6",
     )
-    .all<FilaCupon>();
+    .all<FilaCupon & { moneda: string }>();
   return c.json({
     cupones: results.map((x) => ({
       codigo: x.codigo,
@@ -146,6 +147,7 @@ cupones.get('/cupones/destacados', async (c) => {
       descripcionEn: x.descripcion_en,
       minimoSubtotal: Number(x.minimo_subtotal),
       venceEn: x.vence_en,
+      moneda: x.moneda,
     })),
   });
 });
@@ -155,14 +157,15 @@ cupones.get('/admin/cupones', async (c) => {
   exigir(c, 'admin');
   const { results } = await base(c)
     .prepare(
-      'SELECT c.*, (SELECT COUNT(*) FROM usos_cupon u WHERE u.codigo = c.codigo) AS usos, (SELECT COALESCE(SUM(descuento),0) FROM usos_cupon u WHERE u.codigo = c.codigo) AS descontado FROM cupones c ORDER BY c.activo DESC, c.creado_en DESC LIMIT 200',
+      "SELECT c.*, COALESCE((SELECT moneda FROM zonas WHERE id = c.zona_id), (SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = c.restaurante_id), 'USD') AS moneda, (SELECT COUNT(*) FROM usos_cupon u WHERE u.codigo = c.codigo) AS usos, (SELECT COALESCE(SUM(descuento),0) FROM usos_cupon u WHERE u.codigo = c.codigo) AS descontado FROM cupones c ORDER BY c.activo DESC, c.creado_en DESC LIMIT 200",
     )
-    .all<FilaCupon & { usos: number; descontado: number }>();
+    .all<FilaCupon & { usos: number; descontado: number; moneda: string }>();
   return c.json({
     cupones: results.map((x) => ({
       ...aCupon(x),
       usos: Number(x.usos),
       descontado: Number(x.descontado),
+      moneda: x.moneda,
     })),
   });
 });

@@ -88,6 +88,8 @@ buscar.get('/buscar', async (c) => {
     restauranteId: string;
     restauranteNombre: string;
     abiertoAhora: boolean;
+    /** C-MONEDA-RECORRIDO: la moneda del restaurante (el precio va en su unidad menor). */
+    moneda: string;
   }[] = [];
   if (todos.length) {
     // C-LIMITE-PARAMETROS: en trozos (D1 acepta 100 parámetros por consulta).
@@ -128,6 +130,7 @@ buscar.get('/buscar', async (c) => {
           restauranteId: p.restaurante_id,
           restauranteNombre: r?.nombre ?? '',
           abiertoAhora: Boolean(r?.abiertoAhora),
+          moneda: r?.moneda ?? 'USD',
         };
       })
       .sort(abiertoPrimero)

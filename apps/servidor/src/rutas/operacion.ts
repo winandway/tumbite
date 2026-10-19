@@ -68,7 +68,7 @@ import {
   telefonoE164,
   twimlPuente,
 } from '../sms';
-import { formatearDolares } from '@tumbite/compartido';
+import { formatearMonto } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -650,11 +650,13 @@ operacion.get('/restaurante/resumen', async (c) => {
   const db = base(c);
   const z = await db
     .prepare(
-      'SELECT z.zona_horaria FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+      'SELECT z.zona_horaria, z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
     )
     .bind(rid)
-    .first<{ zona_horaria: string }>();
+    .first<{ zona_horaria: string; moneda: string | null }>();
   const [desde, hasta] = limitesDelDia(z?.zona_horaria ?? 'America/New_York');
+  // C-MONEDA-RECORRIDO: solo los pedidos en la moneda del restaurante (nunca se suman monedas).
+  const moneda = z?.moneda || 'USD';
   const f = await db
     .prepare(
       `SELECT COUNT(CASE WHEN estado = 'entregado' THEN 1 END) AS entregados,
@@ -664,9 +666,9 @@ operacion.get('/restaurante/resumen', async (c) => {
       COALESCE(SUM(CASE WHEN estado = 'entregado' THEN regalo END), 0) AS regalos,
       COALESCE(SUM(CASE WHEN estado = 'entregado' THEN comision END), 0) AS comision,
       COALESCE(SUM(CASE WHEN estado = 'entregado' THEN pago_restaurante END), 0) AS neto
-      FROM pedidos WHERE restaurante_id = ? AND pagado_en >= ? AND pagado_en < ?`,
+      FROM pedidos WHERE restaurante_id = ? AND pagado_en >= ? AND pagado_en < ? AND moneda = ?`,
     )
-    .bind(rid, desde, hasta)
+    .bind(rid, desde, hasta, moneda)
     .first<Record<string, number>>();
   // Los últimos 30 días y el plan: con eso el panel compara lo que le queda con Tumbite y con
   // otras apps (calculadora de «Beneficios», C-COMPARA-REST).
@@ -675,11 +677,12 @@ operacion.get('/restaurante/resumen', async (c) => {
       `SELECT COALESCE(SUM(p.subtotal), 0) AS ventas, COALESCE(SUM(p.regalo), 0) AS regalos,
       COUNT(p.id) AS pedidos, r.plan AS plan
       FROM restaurantes r LEFT JOIN pedidos p ON p.restaurante_id = r.id AND p.estado = 'entregado'
-      AND p.pagado_en >= datetime('now','-30 days') WHERE r.id = ?`,
+      AND p.pagado_en >= datetime('now','-30 days') AND p.moneda = ? WHERE r.id = ?`,
     )
-    .bind(rid)
+    .bind(moneda, rid)
     .first<{ ventas: number; regalos: number; pedidos: number; plan: string }>();
   return c.json({
+    moneda,
     plan: mes?.plan ?? 'inicial',
     mes: {
       ventas: Number(mes?.ventas ?? 0),
@@ -705,13 +708,23 @@ operacion.get('/restaurante/resumen', async (c) => {
 operacion.get('/restaurante/tablero', async (c) => {
   const rid = await miRestauranteId(c);
   const db = base(c);
+  // C-MONEDA-RECORRIDO: las cifras en la moneda del restaurante, sin mezclar otras.
+  const moneda =
+    (
+      await db
+        .prepare(
+          'SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+        )
+        .bind(rid)
+        .first<{ moneda: string | null }>()
+    )?.moneda || 'USD';
   const periodo = async (dias: number) => {
     const f = await db
       .prepare(
         `SELECT COUNT(*) AS pedidos, COALESCE(SUM(subtotal), 0) AS ventas, COALESCE(SUM(pago_restaurante), 0) AS neto
-         FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now', ?)`,
+         FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now', ?) AND moneda = ?`,
       )
-      .bind(rid, `-${dias} days`)
+      .bind(rid, `-${dias} days`, moneda)
       .first<{ pedidos: number; ventas: number; neto: number }>();
     const pedidos = Number(f?.pedidos ?? 0);
     const ventas = Number(f?.ventas ?? 0);
@@ -768,6 +781,7 @@ operacion.get('/restaurante/tablero', async (c) => {
     .first<{ n: number }>();
   return c.json({
     tablero: {
+      moneda,
       semana: await periodo(7),
       mes: await periodo(30),
       topPlatos: [...cuenta.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5),
@@ -1036,7 +1050,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     .run();
   const { results: pendientes } = await db
     .prepare(
-      `SELECT p.id, p.zona_id, p.pago_repartidor, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
       AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.pedido_id = p.id AND o.estado = 'ofrecida') ORDER BY p.pagado_en LIMIT 20`,
@@ -1045,6 +1059,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       id: string;
       zona_id: string;
       pago_repartidor: number | null;
+      moneda: string | null;
       estado: string;
       aceptado_en: string | null;
       tiempo_prep_min: number | null;
@@ -1133,7 +1148,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
           elegido.id,
           AVISOS.ofertaNueva(
             i,
-            formatearDolares(Number(p.pago_repartidor ?? 0) + bono, i),
+            formatearMonto(Number(p.pago_repartidor ?? 0) + bono, String(p.moneda ?? 'USD'), i),
             km.toFixed(1),
           ),
         );
