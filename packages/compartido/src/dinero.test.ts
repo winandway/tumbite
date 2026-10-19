@@ -72,5 +72,9 @@ describe('lo que se escribe, a la unidad menor de cada moneda (C-MONEDA-LOCAL)',
     expect(montoATexto(1550, 'USD')).toBe('15.50');
     expect(montoATexto(12000, 'COP')).toBe('12000');
     expect(textoAMonto(montoATexto(98765, 'COP'), 'COP')).toBe(98765);
+    // Moneda desconocida: dos decimales, como el dólar.
+    expect(textoAMonto('3.25', 'XYZ')).toBe(325);
+    expect(montoATexto(325, 'XYZ')).toBe('3.25');
+    expect(montoATexto(325)).toBe('3.25');
   });
 });
