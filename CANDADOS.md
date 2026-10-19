@@ -923,3 +923,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pasó:** en staging, un corte de conexión del alojamiento hizo fallar una vez la consulta de la sesión al abrir el buscador; la app del cliente mostró «No pudimos confirmar tu sesión» y se quedó ahí hasta que alguien tocara «Reintentar». El recorrido se agotó por tiempo esperando.
 - **Cómo quedó:** `confirmarSesionConReintentos` (`packages/compartido/src/confirmarSesion.ts`): reintenta sola dos veces (0,8 s y 2,5 s) si no se pudo confirmar por red, servidor o tiempo; un 401 o 403 no se reintenta. `packages/movil/src/sesion.tsx` la usa. La pantalla de reintento sigue existiendo si los tres intentos fallan.
 - **Pruebas:** `confirmarSesion.test.ts` (corte puntual, 401 sin reintento, tres cortes) y la comprobación de que las apps la usan.
+
+## C-COBRO-DIRECTO-STAGING: el cobro en mano se recorre completo también en staging (19 oct 2026)
+
+- `e2e/recorrido/recorrido.spec.ts`, paso 18: ya no es solo local. Enciende el efectivo, la transferencia y las recargas en EE. UU. solo durante la corrida y los apaga al final (`finally`). Pantalla: recarga por código, oferta con «efectivo» y adelanto (`oferta-cobro-en-mano`), aviso de cobro del restaurante, pago en el local y ticket. Por las rutas del producto: recogida y entrega en la puerta (con la excepción autorizada si el pedido no tiene coordenadas), «Cobré» y conciliación; transferencia pendiente (caso en la bandeja) y confirmada; cliente ausente con lugar seguro rechazado, «El cliente no pagó» y pérdida; bandeja con tomar y nota, y su pantalla en es/en.
+- Con más de cien restaurantes en staging la lista es virtual: la prueba busca el restaurante por su nombre, como una persona. No se esperan tiempos fijos: se espera la condición (llegada confirmada, estado del pedido).
+- Verde en staging el 19 oct (corrida 39310077342).
