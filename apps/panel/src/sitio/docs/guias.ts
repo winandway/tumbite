@@ -1354,6 +1354,7 @@ const es: SeccionDocs[] = [
         resumen:
           'En las ciudades donde está activo, algunos pedidos se pagan al recibir: el cliente te paga a ti en efectivo o por transferencia, tú pagas la comida en el mostrador y la comisión de Tumbite sale de un saldo que recargas por adelantado.',
         explicacion: [
+          'La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista.',
           'Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí).',
           'Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera.',
           'En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Tumbite. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Tumbite no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena.',
@@ -1361,6 +1362,7 @@ const es: SeccionDocs[] = [
           'Si es por transferencia y todavía no la ves en tu banco, toca «La transferencia aún no me llega»: puedes entregar, el cobro queda pendiente y tu comisión apartada. Cuando la veas, confirma lo que llegó; si nunca llega, confirma 0 y el cliente queda con deuda (puede abrir un reclamo).',
           'Si el pedido se cancela después de que pagaste la comida, ese pago queda registrado a tu nombre como pérdida pendiente de revisión; nunca desaparece. Una vez pagada la comida ya no puedes soltar el pedido tú solo: entrégalo o escribe a soporte.',
           'Si el cliente no paga, toca «El cliente no pagó»: el pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
+          'Un pedido cobrado en mano no se deja en un lugar seguro: si el cliente no aparece, el camino es «El cliente no pagó». Y si ya confirmaste el cobro, ese botón ya no aplica.',
           'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Tumbite no entra a tu cuenta.',
           'La propina en efectivo es tuya y no se cuenta en el cobro.',
         ],
@@ -3664,6 +3666,7 @@ const en: SeccionDocs[] = [
         resumen:
           'In cities where it’s active, some orders are paid on delivery: the customer pays you in cash or by transfer, you pay for the food at the counter, and Tumbite’s fee comes out of a balance you top up in advance.',
         explicacion: [
+          'The offer tells you before you accept: whether the customer pays in cash or by transfer, and how much you’ll pay at the store with your own money. You decide with everything in view.',
           'Before accepting an order paid in person you need balance for the fee. You top it up by buying a code at an authorized sales point and redeeming it under Earnings → “Balance for fees”. Without balance you don’t get cash-order offers (card orders still come).',
           'When you accept, the fee is reserved from your balance; when you deliver and confirm the payment, it’s charged. If the order is canceled or you drop it, it goes back to your balance in full.',
           'At the restaurant the app tells you how much to pay at the counter: the food minus Tumbite’s fee. You pay with your own money, in cash or with your card (it’s your working capital: Tumbite doesn’t lend it), and under “Pay for the food at the restaurant” you enter what you paid and the receipt total. Without that record the order can’t leave. You can also take a photo of the receipt: the restaurant, the customer and support can see it if there’s a claim. If something doesn’t match, it’s noted and support reviews it; it doesn’t stop you.',
@@ -3671,6 +3674,7 @@ const en: SeccionDocs[] = [
           'If it’s a transfer and you don’t see it in your bank yet, tap “The transfer hasn’t reached me yet”: you can deliver, the payment stays pending and your fee stays reserved. When you see it, confirm what arrived; if it never arrives, confirm 0 and the customer gets a debt (they can file a claim).',
           'If the order is canceled after you paid for the food, that payment stays recorded under your name as a loss pending review; it never disappears. Once you paid for the food you can’t drop the order on your own: deliver it or contact support.',
           'If the customer doesn’t pay, tap “The customer didn’t pay”: the order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
+          'An order paid in person can’t be left in a safe place: if the customer doesn’t show up, use “The customer didn’t pay.” Once you’ve confirmed the payment, that button no longer applies.',
           'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Tumbite never accesses your account.',
           'A cash tip is yours and isn’t counted in the payment.',
         ],
