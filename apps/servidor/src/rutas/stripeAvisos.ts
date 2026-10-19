@@ -44,12 +44,25 @@ const urlAviso = (env: Env) => `${(env.SITIO_URL ?? '').replace(/\/$/, '')}/dato
 async function listar(env: Env) {
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
-  const r = await stripe.get<{ data: Aviso[] }>('/webhook_endpoints', { limit: 100 });
-  return { stripe, avisos: r.data };
+  // La cuenta es compartida: puede tener más de 100 avisos. Se recorren todas las páginas.
+  const avisos: Aviso[] = [];
+  let despues: string | undefined;
+  for (let pagina = 0; pagina < 20; pagina++) {
+    const r = await stripe.get<{ data: Aviso[]; has_more?: boolean }>('/webhook_endpoints', {
+      limit: 100,
+      ...(despues ? { starting_after: despues } : {}),
+    });
+    avisos.push(...r.data);
+    if (!r.has_more || !r.data.length) break;
+    despues = r.data.at(-1)!.id;
+  }
+  return { stripe, avisos };
 }
 
+/** El aviso de cuentas conectadas: creado por esta ruta (metadata) o a mano en el panel (sus eventos). */
 const esConectadas = (a: Aviso, env: Env) =>
-  a.metadata?.tumbite === 'conectadas' && a.url === urlAviso(env);
+  a.url === urlAviso(env) &&
+  (a.metadata?.tumbite === 'conectadas' || a.enabled_events.includes('account.updated'));
 
 stripeAvisos.get('/interno-stripe/avisos', async (c) => {
   const { avisos: todos } = await listar(c.env);

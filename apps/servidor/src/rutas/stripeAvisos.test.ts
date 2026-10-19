@@ -109,4 +109,73 @@ describe('avisos de Stripe desde el servidor (C-STRIPE-AVISOS)', () => {
       0,
     );
   });
+
+  it('reconoce el aviso de cuentas conectadas creado a mano en el panel (sin la marca), y no crea otro', async () => {
+    const { pedir, llamadas } = conStripe([
+      {
+        id: 'we_manual',
+        url: `${URL_SITIO}/datos/stripe/aviso`,
+        status: 'enabled',
+        livemode: false,
+        enabled_events: ['account.updated', 'payout.failed'],
+      },
+    ]);
+    const r = await pedir('POST', '/datos/interno-stripe/avisos/conectadas');
+    expect(await r.json()).toEqual({ id: 'we_manual', creado: false });
+    expect(llamadas.filter((l) => l.metodo === 'POST' && l.url.includes('webhook'))).toHaveLength(
+      0,
+    );
+  });
+
+  it('recorre todas las páginas de avisos de la cuenta compartida', async () => {
+    const llamadas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      llamadas.push(url);
+      const segunda = url.includes('starting_after=we_ajeno');
+      return new Response(
+        JSON.stringify(
+          segunda
+            ? {
+                data: [
+                  {
+                    id: 'we_c',
+                    url: `${URL_SITIO}/datos/stripe/aviso`,
+                    status: 'enabled',
+                    livemode: false,
+                    enabled_events: ['account.updated'],
+                    metadata: { tumbite: 'conectadas' },
+                  },
+                ],
+                has_more: false,
+              }
+            : {
+                data: [
+                  {
+                    id: 'we_ajeno',
+                    url: 'https://otro-negocio.test/hook',
+                    status: 'enabled',
+                    livemode: false,
+                    enabled_events: ['*'],
+                  },
+                ],
+                has_more: true,
+              },
+        ),
+        { status: 200 },
+      );
+    });
+    const m = mundo({
+      STRIPE_SECRET_KEY: 'sk_test_x',
+      RELOJ_SECRETO: SECRETO,
+      SITIO_URL: URL_SITIO,
+    });
+    const r = await m.crudo('/datos/interno-stripe/avisos', {
+      method: 'GET',
+      headers: { 'x-reloj-secreto': SECRETO },
+    });
+    const d = (await r.json()) as { avisos: { id: string }[]; faltaConectadas: boolean };
+    expect(d.faltaConectadas).toBe(false);
+    expect(d.avisos.map((a) => a.id)).toEqual(['we_c']);
+    expect(llamadas).toHaveLength(2);
+  });
 });
