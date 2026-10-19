@@ -612,6 +612,10 @@ for (const idioma of ['en', 'es'] as const) {
     const enLista = cli.getByText(restaurante).filter({ visible: true });
     await expect(enLista).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-restaurantes');
+    // Con muchos restaurantes (staging tiene más de cien) la lista es virtual: como una persona, se
+    // escribe el nombre en su buscador y se toca el resultado (sin esperar a ciegas).
+    await cli.getByLabel(/Buscar restaurantes|Search restaurants/).fill(restaurante);
+    await expect(enLista).toHaveCount(1, { timeout: 20_000 });
     await enLista.click();
     await expect(
       cli.getByText(idioma === 'en' ? 'Margherita pizza' : 'Pizza margarita'),
