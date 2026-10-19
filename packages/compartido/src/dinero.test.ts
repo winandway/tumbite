@@ -45,3 +45,18 @@ describe('precios escritos por personas', () => {
     expect(centavosATexto(1250)).toBe('12.50');
   });
 });
+
+describe('montos en la moneda del país (C-MONEDA-LOCAL)', () => {
+  it('dólares con dos decimales, pesos colombianos sin decimales y bolívares con dos', async () => {
+    const { formatearMonto, DECIMALES_MONEDA } = await import('./dinero');
+    expect(DECIMALES_MONEDA.get('COP')).toBe(0);
+    // La unidad menor: centavos de dólar, pesos enteros, céntimos de bolívar.
+    expect(formatearMonto(2081, 'USD', 'en')).toBe('$20.81');
+    expect(formatearMonto(35000, 'COP', 'es').replace(/\s/g, ' ')).toMatch(/35\.000/);
+    expect(formatearMonto(35000, 'COP', 'es')).toMatch(/COP|\$/);
+    expect(formatearMonto(12550, 'VES', 'es')).toMatch(/125,50/);
+    // Sin moneda conocida, se comporta como dólares (nada se rompe en EE. UU.).
+    expect(formatearMonto(100, 'XXX' as never, 'en')).toBe('$1.00');
+    expect(() => formatearMonto(1.5, 'COP', 'es')).toThrow();
+  });
+});

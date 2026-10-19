@@ -18,6 +18,44 @@ export function formatearDolares(centavos: Centavos, idioma: 'es' | 'en' = 'en')
   }).format(centavos / 100);
 }
 
+/** Decimales de cada moneda: el monto siempre va en su unidad menor (C-MONEDA-LOCAL). */
+export const DECIMALES_MONEDA = new Map<string, number>([
+  ['USD', 2],
+  ['COP', 0],
+  ['VES', 2],
+  ['MXN', 2],
+]);
+const REGION_MONEDA = new Map<string, string>([
+  ['USD', 'US'],
+  ['COP', 'CO'],
+  ['VES', 'VE'],
+  ['MXN', 'MX'],
+]);
+
+/**
+ * El monto en la moneda del país del pedido (unidad menor: centavos de dólar, pesos colombianos
+ * enteros, céntimos de bolívar). Una moneda desconocida se muestra como dólares, igual que antes.
+ */
+export function formatearMonto(
+  monto: number,
+  moneda: string = 'USD',
+  idioma: 'es' | 'en' = 'en',
+): string {
+  if (!Number.isSafeInteger(monto)) {
+    throw new Error(`Monto inválido: ${monto}. El dinero va en la unidad menor, entero.`);
+  }
+  const decimales = DECIMALES_MONEDA.get(moneda);
+  if (decimales === undefined) return formatearDolares(monto, idioma);
+  if (moneda === 'USD') return formatearDolares(monto, idioma);
+  const region = REGION_MONEDA.get(moneda) ?? 'US';
+  return new Intl.NumberFormat(`${idioma}-${region}`, {
+    style: 'currency',
+    currency: moneda,
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  }).format(monto / 10 ** decimales);
+}
+
 /** Porcentaje expresado en puntos básicos (750 = 7,5 %), redondeado al centavo. */
 export function porcentajeDe(centavos: Centavos, puntosBasicos: number): Centavos {
   if (!esCentavosValidos(centavos) || !Number.isInteger(puntosBasicos) || puntosBasicos < 0) {

@@ -800,3 +800,20 @@ Sale de `docs/COMPARACION-CICLO-PEDIDO.md`. Todo con su prueba comprobada en roj
 - **Qué se rompía:** Docs, la web y los términos prometen que esa nota no cuenta; el promedio del repartidor (su app y el superadmin) la contaba. Los términos además decían que el nivel dependía de estrellas y puntualidad y daba prioridad «en pedidos grandes»; el sistema sube el nivel por entregas y lo usa para desempatar ofertas a igual distancia.
 - **Qué se hizo:** `GET /datos/repartidor/calificaciones` y la ficha del superadmin excluyen `culpa_restaurante = 1` (la app recibe `excluidas`); los términos del repartidor (es/en, actualizados el 18 oct) dicen exactamente lo que calcula el sistema.
 - **Prueba (en rojo comprobado, las dos partes):** `repartidorGrandes.test.ts`, «F18».
+
+## C-STRIPE-AVISOS: los avisos de Stripe se consultan y se crean desde el servidor (19 oct 2026)
+
+- **Por qué:** la llave secreta de Stripe solo vive como secreto en el panel de YaDominios (nadie la ve). Para comprobar si existe el segundo aviso (cuentas conectadas, F10) y crearlo sin pedirle a Richard que entre al panel de Stripe, el servidor lo hace con su propia llave.
+- **Qué se hizo:** `apps/servidor/src/rutas/stripeAvisos.ts`. `GET /datos/interno-stripe/avisos` lista los avisos (id, dirección, estado, modo prueba o real, eventos) **sin secretos** y dice si falta el de cuentas conectadas. `POST /datos/interno-stripe/avisos/conectadas` lo crea una sola vez (`connect=true`, `account.updated` y `payout.failed`, `metadata.tumbite=conectadas`, apuntando a `SITIO_URL/datos/stripe/aviso`) y devuelve su secreto **solo al crearlo**, para guardarlo directo como `STRIPE_WEBHOOK_SECRET_CONECTADAS` (variable secreta del sitio) sin mostrarlo. Solo con el secreto del reloj, comparado en tiempo constante; sin él, 404.
+- **Prueba (en rojo comprobado):** `rutas/stripeAvisos.test.ts` (4).
+- **Qué NO tocar:** la ruta nunca devuelve la llave ni el secreto de un aviso existente; crear el aviso de producción exige la autorización de Richard.
+
+## C-FOTO-TICKET: foto del ticket del restaurante en el pago en el local (19 oct 2026)
+
+- `POST /datos/repartidor/pedidos/:id/foto-ticket` (después de registrar el pago en el local), guardada en el almacén privado; columna `pagos_local.ticket_clave` (en `COLUMNAS`); `GET /datos/pedidos/:id/evidencia/ticket` para el repartidor, el dueño del restaurante, el cliente y soporte. Botón «Tomar foto del ticket (opcional)» en la app del repartidor.
+- **Prueba (en rojo comprobado):** `internacional.test.ts`, «foto del ticket».
+
+## C-MONEDA-LOCAL: formato de montos por moneda (19 oct 2026)
+
+- `formatearMonto(monto, moneda, idioma)` en `@tumbite/compartido`: USD con dos decimales, COP sin decimales, VES con dos; moneda desconocida = dólares. Prueba en `dinero.test.ts`.
+- **Todavía no se usa en las pantallas, a propósito:** los precios del pedido se calculan con la tarifa única en dólares. Conectarlo antes de tener tarifas por país mostraría pesos sobre números en dólares. Se conecta junto con las tarifas por país, antes de cualquier piloto fuera de EE. UU.
