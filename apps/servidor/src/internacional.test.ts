@@ -364,6 +364,48 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect(f?.estado).toBe('en_camino');
   });
 
+  it('después de confirmar el cobro ya no se puede marcar «el cliente no pagó»: el pedido no se cancela y la comisión no vuelve', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    const total = p.datos.desglose.totalCliente as number;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.pagarLocal(id, rep);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const cobre = await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: total - 200, nota: '' },
+      rep.token,
+    );
+    expect(cobre.estado).toBe(200);
+    const no = await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-pago`,
+      { motivo: 'no pagó' },
+      rep.token,
+    );
+    expect(no.estado).toBe(409);
+    const f = await e.m.DB.prepare('SELECT estado, cobro_estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<Record<string, string>>();
+    expect(f).toMatchObject({ estado: 'en_camino', cobro_estado: 'confirmado' });
+    const deuda = await e.m.DB.prepare('SELECT COUNT(*) AS n FROM libro WHERE referencia = ?')
+      .bind(`deuda:${id}`)
+      .first<{ n: number }>();
+    expect(Number(deuda?.n)).toBe(0);
+  });
+
   it('pago de menos → con_diferencia y deuda del cliente; el cliente con deuda no puede pedir en efectivo', async () => {
     const e = await escenario();
     const p = await e.pedir();

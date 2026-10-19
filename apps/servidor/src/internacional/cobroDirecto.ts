@@ -223,10 +223,13 @@ export async function clienteNoPago(
     throw new ErrorDatos('Ese pedido no se cobra en mano.', undefined, 409);
   if (f.estado !== 'en_camino')
     throw new ErrorDatos('Confirma el cobro cuando estés con el cliente.', undefined, 409);
+  if (f.cobro_estado !== 'pendiente')
+    throw new ErrorDatos('Ya confirmaste el cobro de este pedido.', undefined, 409);
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
   const r = await db
     .prepare(
-      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now'), cobro_estado = 'no_pagado', monto_recibido = 0, cobro_confirmado_en = datetime('now'), cobro_nota = ?, conciliacion_estado = 'con_diferencia' WHERE id = ? AND estado = 'en_camino'",
+      // Solo si el cobro sigue pendiente: un pedido ya cobrado no se puede dar por «no pagado».
+      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now'), cobro_estado = 'no_pagado', monto_recibido = 0, cobro_confirmado_en = datetime('now'), cobro_nota = ?, conciliacion_estado = 'con_diferencia' WHERE id = ? AND estado = 'en_camino' AND cobro_estado = 'pendiente'",
     )
     .bind(p.motivo.slice(0, 300), p.pedidoId)
     .run();
