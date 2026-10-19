@@ -1454,9 +1454,10 @@ for (const idioma of ['en', 'es'] as const) {
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
 
-    // 18. Cobro directo de punta a punta hasta la compra en el local (C-COBRO-DIRECTO-LOCAL), solo en
-    //     esta computadora: el país se enciende un momento y vuelve a quedar como estaba.
-    if (!STAGING) {
+    // 18. Cobro en mano de punta a punta (C-COBRO-DIRECTO-LOCAL y C-COBRO-DIRECTO-STAGING), aquí y
+    //     en el sitio de pruebas: el país se enciende un momento, solo con las cuentas de la corrida,
+    //     y vuelve a quedar como estaba. Nunca en producción (el recorrido no corre allí).
+    {
       const pais = (await (
         await request.get('/datos/admin/paises/US', { headers: auth })
       ).json()) as { config: Record<string, unknown> };
@@ -1465,7 +1466,12 @@ for (const idioma of ['en', 'es'] as const) {
           (
             await request.put('/datos/admin/paises/US', {
               headers: auth,
-              data: { ...pais.config, efectivoActivo: on, recargasPuntoVentaActivas: on },
+              data: {
+                ...pais.config,
+                efectivoActivo: on,
+                transferenciaRepartidorActiva: on,
+                recargasPuntoVentaActivas: on,
+              },
             })
           ).ok(),
         ).toBe(true);
@@ -1553,6 +1559,9 @@ for (const idioma of ['en', 'es'] as const) {
         await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
           timeout: 30_000,
         });
+        // La oferta dice que se cobra en mano y cuánto se adelanta en el local, antes de aceptar.
+        await expect(rep.getByTestId('oferta-cobro-en-mano')).toBeVisible();
+        await foto(rep, 'oferta-cobro-en-mano');
         await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
         // El restaurante ve cuánto le cobra al repartidor en el mostrador (su app, en celular).
         const rappCtx = await nuevoContexto('celular');
@@ -1595,17 +1604,337 @@ for (const idioma of ['en', 'es'] as const) {
           `SELECT monto_pagado, metodo, diferencia_pago FROM pagos_local WHERE pedido_id = '${directo.pedidoId}'`,
         )[0];
         expect(fila).toMatchObject({ metodo: 'efectivo', diferencia_pago: 0 });
-        // Soporte lo cancela después de la compra: la comida comprada queda escrita como pérdida
-        // pendiente de decisión (nunca se pierde el rastro de ese dinero) y el pedido no queda colgado.
-        await request.post(`/datos/admin/pedidos/${directo.pedidoId}/cancelar`, {
-          headers: auth,
-          data: { motivo: 'recorrido: cierre del pedido directo' },
+        // ── El resto del cobro en mano por las rutas del producto (las mismas que usan las apps),
+        //    en esta computadora Y en el sitio de pruebas (C-COBRO-DIRECTO-STAGING, 19 oct). ──
+        const entrarComo = async (quien: string) =>
+          (
+            (await (
+              await request.post('/datos/cuentas/entrar', {
+                data: { correo: correo(quien), clave: DATOS.clave },
+              })
+            ).json()) as { token: string }
+          ).token;
+        const tRest = await entrarComo('restaurante');
+        const hdr = (t: string) => ({ authorization: `Bearer ${t}` });
+        const rest = sql(
+          `SELECT r.id, r.lat, r.lng FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo = '${correo('restaurante')}'`,
+        )[0] as { id: string; lat: number; lng: number };
+        const enRest = `lat=${rest.lat}&lng=${rest.lng}`;
+        const enCasa = `lat=${CASA.latitude}&lng=${CASA.longitude}`;
+        const bolsa = readFileSync(FOTO_ENTREGA);
+        const subir = (ruta: string, token: string, donde: string) =>
+          request.post(`${ruta}${ruta.includes('?') ? '&' : '?'}${donde}`, {
+            headers: { ...hdr(token), 'content-type': 'image/jpeg' },
+            data: bolsa,
+          });
+        /** Recoge (foto en el local + el restaurante confirma) y entrega en la puerta con GPS serio. */
+        const recogerYEntregar = async (pid: string) => {
+          expect(
+            (await subir(`/datos/repartidor/pedidos/${pid}/foto-recogida`, paseRep, enRest)).ok(),
+          ).toBe(true);
+          expect(
+            (
+              await request.post(`/datos/restaurante/pedidos/${pid}/confirmar-recogida`, {
+                headers: hdr(tRest),
+                data: {},
+              })
+            ).ok(),
+          ).toBe(true);
+          await llegarALaPuerta(pid);
+          const r = await subir(`/datos/repartidor/pedidos/${pid}/entregado`, paseRep, enCasa);
+          expect(r.status(), await r.text()).toBe(200);
+        };
+        const llegarALaPuerta = async (pid: string) => {
+          expect(filaPed(pid)?.estado, 'el pedido salió del local').toBe('en_camino');
+          // Sin coordenadas de la puerta (la dirección se escribió a mano), el GPS no puede
+          // confirmar la llegada: el repartidor pide la excepción y soporte la autoriza (paso 10).
+          const sinPuerta = sql(`SELECT lat FROM pedidos WHERE id = '${pid}'`)[0]?.lat == null;
+          if (sinPuerta) {
+            expect(
+              (
+                await request.post(`/datos/repartidor/pedidos/${pid}/no-puedo-confirmar`, {
+                  headers: hdr(paseRep),
+                  data: { motivo: 'La dirección no tiene ubicación en el mapa' },
+                })
+              ).ok(),
+            ).toBe(true);
+            expect(
+              (
+                await request.post(`/datos/admin/pedidos/${pid}/autorizar-ubicacion`, {
+                  headers: auth,
+                })
+              ).ok(),
+            ).toBe(true);
+            return;
+          }
+          // El celular del repartidor también está en la puerta (su app manda la posición sola).
+          await repCtx.setGeolocation(CASA);
+          // Dos lecturas precisas en la puerta (como un celular de verdad); se repite hasta que el
+          // servidor confirme la llegada (la app también manda su posición mientras tanto).
+          await expect
+            .poll(
+              async () => {
+                sql(
+                  `UPDATE ubicaciones_recientes SET creado_en = datetime(creado_en, '-60 seconds') WHERE usuario_id = (SELECT repartidor_id FROM pedidos WHERE id = '${pid}')`,
+                );
+                for (let n = 0; n < 2; n++)
+                  await request.post('/datos/repartidor/ubicacion', {
+                    headers: hdr(paseRep),
+                    data: { lat: CASA.latitude, lng: CASA.longitude, precision: 10 },
+                  });
+                return sql(
+                  `SELECT COUNT(*) AS n FROM hitos_pedido WHERE pedido_id = '${pid}' AND hito = 'llego_cliente'`,
+                )[0]?.n;
+              },
+              { timeout: 30_000, intervals: [1_000] },
+            )
+            .toBe(1);
+        };
+        const platoId = String(
+          sql(
+            `SELECT id FROM platos WHERE restaurante_id = '${rest.id}' AND eliminado = 0 AND disponible = 1 AND id NOT IN (SELECT plato_id FROM grupos_opciones WHERE minimo > 0) LIMIT 1`,
+          )[0]?.id,
+        );
+        /** Otro pedido en mano por la API: el cliente pide, el restaurante acepta, el repartidor toma. */
+        const pedirEnMano = async (metodoPago: 'efectivo' | 'transferencia_repartidor') => {
+          const r = await request.post('/datos/pedidos', {
+            headers: hdr(paseCli),
+            data: {
+              restauranteId: rest.id,
+              lineas: [{ platoId, cantidad: 1 }],
+              propinaCentavos: 0,
+              direccion: '200 S Biscayne Blvd, Apt 12',
+              lat: CASA.latitude,
+              lng: CASA.longitude,
+              entrega: 'puerta',
+              metodoPago,
+            },
+          });
+          expect(r.status(), await r.text()).toBe(201);
+          const p = (await r.json()) as { pedidoId: string; desglose: { totalCliente: number } };
+          await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/aceptar`, {
+            headers: hdr(tRest),
+            data: { minutos: 10 },
+          });
+          sql(
+            `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${p.pedidoId}'`,
+          );
+          await expect
+            .poll(
+              async () => {
+                const o = (await (
+                  await request.get('/datos/repartidor/ofertas', { headers: hdr(paseRep) })
+                ).json()) as {
+                  ofertas: { id: string; metodoPago?: string; adelantoLocal?: number }[];
+                };
+                return o.ofertas.find((x) => x.id === p.pedidoId)?.metodoPago ?? null;
+              },
+              { timeout: 30_000 },
+            )
+            .toBe(metodoPago);
+          expect(
+            (
+              await request.post(`/datos/repartidor/ofertas/${p.pedidoId}/aceptar`, {
+                headers: hdr(paseRep),
+                data: {},
+              })
+            ).ok(),
+          ).toBe(true);
+          await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/listo`, {
+            headers: hdr(tRest),
+            data: {},
+          });
+          const l = (await (
+            await request.get(`/datos/repartidor/pedidos/${p.pedidoId}/pago-local`, {
+              headers: hdr(paseRep),
+            })
+          ).json()) as {
+            montoEsperado: number;
+            subtotal: number;
+          };
+          expect(
+            (
+              await request.post(`/datos/repartidor/pedidos/${p.pedidoId}/pago-local`, {
+                headers: hdr(paseRep),
+                data: {
+                  montoPagado: l.montoEsperado,
+                  importeTicket: l.subtotal,
+                  metodo: 'efectivo',
+                },
+              })
+            ).ok(),
+          ).toBe(true);
+          return { id: p.pedidoId, total: p.desglose.totalCliente };
+        };
+        const filaPed = (pid: string) =>
+          sql(
+            `SELECT estado, cobro_estado, conciliacion_estado FROM pedidos WHERE id = '${pid}'`,
+          )[0];
+        const comisiones = () =>
+          Number(
+            sql(
+              `SELECT COALESCE(SUM(monto),0) AS s FROM libro WHERE concepto = 'comision_cobrada' AND bolsillo = 'comisiones'`,
+            )[0]?.s,
+          );
+
+        // A. El pedido de la pantalla: se recoge, se entrega y el repartidor confirma el cobro.
+        const antes = comisiones();
+        await recogerYEntregar(directo.pedidoId);
+        const totalA = Number(
+          sql(`SELECT total - propina AS t FROM pedidos WHERE id = '${directo.pedidoId}'`)[0]?.t,
+        );
+        expect(
+          (
+            await request.post(`/datos/repartidor/pedidos/${directo.pedidoId}/cobre`, {
+              headers: hdr(paseRep),
+              data: { montoRecibido: totalA, nota: 'recorrido' },
+            })
+          ).ok(),
+        ).toBe(true);
+        expect(filaPed(directo.pedidoId)).toMatchObject({
+          estado: 'entregado',
+          cobro_estado: 'confirmado',
+          conciliacion_estado: 'conciliado',
         });
+        expect(comisiones(), 'la comisión pasó del saldo prepago a Tumbite').toBeGreaterThan(antes);
+
+        // B. Transferencia: «aún no me llega» (pendiente, sin cerrar nada) y después confirmada.
+        const t = await pedirEnMano('transferencia_repartidor');
+        await recogerYEntregar(t.id);
+        expect(
+          (
+            await request.post(`/datos/repartidor/pedidos/${t.id}/transferencia-pendiente`, {
+              headers: hdr(paseRep),
+              data: { nota: 'recorrido' },
+            })
+          ).ok(),
+        ).toBe(true);
+        expect(filaPed(t.id)).toMatchObject({
+          estado: 'entregado',
+          cobro_estado: 'pendiente',
+          conciliacion_estado: 'pendiente',
+        });
+        const casosT = (await (
+          await request.get('/datos/admin/bandeja-dinero?tipo=transferencia', { headers: auth })
+        ).json()) as { casos: { clave: string }[] };
+        expect(casosT.casos.map((c) => c.clave)).toContain(`transferencia:${t.id}`);
+        expect(
+          (
+            await request.post(`/datos/repartidor/pedidos/${t.id}/cobre`, {
+              headers: hdr(paseRep),
+              data: { montoRecibido: t.total, nota: 'la vi en mi banco' },
+            })
+          ).ok(),
+        ).toBe(true);
+        expect(filaPed(t.id)).toMatchObject({
+          cobro_estado: 'confirmado',
+          conciliacion_estado: 'conciliado',
+        });
+
+        // C. Cliente ausente después de comprar la comida: «El cliente no pagó» → cancelado, deuda
+        //    del cliente y la comida como pérdida pendiente de decisión, en la bandeja.
+        const c = await pedirEnMano('efectivo');
+        expect(
+          (await subir(`/datos/repartidor/pedidos/${c.id}/foto-recogida`, paseRep, enRest)).ok(),
+        ).toBe(true);
+        await request.post(`/datos/restaurante/pedidos/${c.id}/confirmar-recogida`, {
+          headers: hdr(tRest),
+          data: {},
+        });
+        await llegarALaPuerta(c.id);
+        expect(
+          (
+            await request.post(`/datos/repartidor/pedidos/${c.id}/no-aparece`, {
+              headers: hdr(paseRep),
+              data: {},
+            })
+          ).ok(),
+        ).toBe(true);
+        sql(
+          `UPDATE hitos_pedido SET creado_en = datetime('now','-10 minutes') WHERE pedido_id = '${c.id}' AND hito = 'no_aparece'`,
+        );
+        // No se deja en un lugar seguro: se cobra en mano.
+        expect(
+          (
+            await subir(
+              `/datos/repartidor/pedidos/${c.id}/entregado?modo=seguro&nota=porteria`,
+              paseRep,
+              enCasa,
+            )
+          ).status(),
+        ).toBe(409);
+        expect(
+          (
+            await request.post(`/datos/repartidor/pedidos/${c.id}/no-pago`, {
+              headers: hdr(paseRep),
+              data: { motivo: 'no aparece' },
+            })
+          ).ok(),
+        ).toBe(true);
+        expect(filaPed(c.id)).toMatchObject({ estado: 'cancelado', cobro_estado: 'no_pagado' });
         expect(
           sql(
-            `SELECT COUNT(*) AS n FROM libro WHERE pedido_id = '${directo.pedidoId}' AND concepto = 'comida_comprada_sin_entregar'`,
+            `SELECT COUNT(*) AS n FROM libro WHERE pedido_id = '${c.id}' AND concepto = 'comida_comprada_sin_entregar'`,
           )[0]?.n,
         ).toBe(1);
+
+        // D. Soporte: la bandeja muestra la comida perdida (espera la decisión de Richard), la toma y
+        //    deja la nota. Nada se compensa solo.
+        const casos = (await (
+          await request.get('/datos/admin/bandeja-dinero', { headers: auth })
+        ).json()) as {
+          casos: {
+            clave: string;
+            tipo: string;
+            moneda: string;
+            esperaDecision: string | null;
+            acciones: string[];
+          }[];
+        };
+        const comida = casos.casos.find((x) => x.clave === `comida:${c.id}`);
+        expect(comida).toMatchObject({
+          tipo: 'comida',
+          moneda: 'USD',
+          esperaDecision: 'decision-20',
+          acciones: ['tomar', 'nota', 'resolver'],
+        });
+        for (const accion of ['tomar', 'nota'])
+          expect(
+            (
+              await request.post(
+                `/datos/admin/bandeja-dinero/${encodeURIComponent(`comida:${c.id}`)}/acciones`,
+                {
+                  headers: auth,
+                  data: {
+                    accion,
+                    nota: 'Recorrido: el cliente no apareció; ticket en la app',
+                    idempotencia: `recorrido-${accion}-${c.id}`,
+                  },
+                },
+              )
+            ).ok(),
+          ).toBe(true);
+        // La bandeja en la pantalla del superadmin (en el idioma de la corrida).
+        const ruta = (
+          (await (await request.get('/datos/admin/ruta', { headers: auth })).json()) as {
+            ruta: string | null;
+          }
+        ).ruta;
+        const supCtx = await nuevoContexto('computadora');
+        const sup = await supCtx.newPage();
+        await sup.goto('/panel');
+        await sup.getByLabel(L.correo).fill(DATOS.correoEquipo);
+        await sup.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await sup.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
+        await sup.waitForLoadState('networkidle');
+        await sup.goto(`/panel/${ruta}/cash/${encodeURIComponent(`comida:${c.id}`)}`);
+        await expect(sup.getByTestId('caso-dinero')).toBeVisible({ timeout: 20_000 });
+        await foto(sup, 'super-bandeja-caso');
+        await sup.goto(`/panel/${ruta}/cash`);
+        await expect(sup.getByTestId('bandeja-dinero')).toBeVisible({ timeout: 20_000 });
+        await foto(sup, 'super-bandeja');
+        await supCtx.close();
+        await repCtx.setGeolocation(MIAMI);
         // Ya libre, el repartidor se desconecta (así no se lleva ofertas de la corrida siguiente).
         await rep.goto('/driver/');
         await rep
