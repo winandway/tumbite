@@ -71,9 +71,15 @@ export async function descontarSiAlcanza(
   db: D1Database,
   f: FilaLibro & { monto: number },
 ): Promise<boolean> {
+  const r = await sentenciaDescontar(db, f).run();
+  return Number(r.meta.changes) === 1;
+}
+
+/** La sentencia de `descontarSiAlcanza`, para meterla en un lote con otras. */
+export function sentenciaDescontar(db: D1Database, f: FilaLibro & { monto: number }) {
   entero(f.monto);
   if (f.monto <= 0) throw new Error('libro: el descuento tiene que ser positivo');
-  const r = await db
+  return db
     .prepare(
       `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, pedido_id, referencia, autor_id)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10
@@ -91,9 +97,7 @@ export async function descontarSiAlcanza(
       f.referencia ?? null,
       f.autorId ?? null,
       f.monto,
-    )
-    .run();
-  return Number(r.meta.changes) === 1;
+    );
 }
 
 /** Comisión apartada al aceptar un pedido en cobro directo: sale de `prepago` y entra en `reservado`. */
@@ -108,28 +112,40 @@ export async function reservarComision(
     .bind(`${ref}:reservado`)
     .first();
   if (ya) return true;
-  const ok = await descontarSiAlcanza(db, {
-    cuentaId: p.repartidorId,
-    bolsillo: 'prepago',
-    pais: p.pais,
-    moneda: p.moneda,
-    monto: p.monto,
-    concepto: 'reserva_comision',
-    pedidoId: p.pedidoId,
-    referencia: `${ref}:prepago`,
-  });
-  if (!ok) return false;
-  await anotarLibro(db, {
-    cuentaId: p.repartidorId,
-    bolsillo: 'reservado',
-    pais: p.pais,
-    moneda: p.moneda,
-    monto: p.monto,
-    concepto: 'reserva_comision',
-    pedidoId: p.pedidoId,
-    referencia: `${ref}:reservado`,
-  });
-  return true;
+  // Las dos patas van en UN lote (C-RESERVA-ATOMICA): sale de prepago y entra en reservado, o nada.
+  // La segunda solo entra si la primera existe; un reintento después de una caída vieja (prepago sin
+  // reservado) termina la reserva en vez de tomarlo como «no alcanza».
+  await db.batch([
+    sentenciaDescontar(db, {
+      cuentaId: p.repartidorId,
+      bolsillo: 'prepago',
+      pais: p.pais,
+      moneda: p.moneda,
+      monto: p.monto,
+      concepto: 'reserva_comision',
+      pedidoId: p.pedidoId,
+      referencia: `${ref}:prepago`,
+    }),
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, pedido_id, referencia)
+         SELECT ?, ?, 'reservado', ?, ?, ?, 'reserva_comision', ?, ?
+          WHERE EXISTS (SELECT 1 FROM libro WHERE referencia = ?)`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        p.repartidorId,
+        p.pais,
+        p.moneda,
+        p.monto,
+        p.pedidoId,
+        `${ref}:reservado`,
+        `${ref}:prepago`,
+      ),
+  ]);
+  return Boolean(
+    await db.prepare('SELECT 1 FROM libro WHERE referencia = ?').bind(`${ref}:reservado`).first(),
+  );
 }
 
 /** Lo que un repartidor tiene reservado para un pedido (0 si nada o si ya se cobró o liberó). */

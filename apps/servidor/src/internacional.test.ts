@@ -938,6 +938,42 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
     expect(e.llamadasStripe.length).toBe(antes);
   });
 
+  it('reserva atómica: si una caída dejó el descuento sin la reserva, el reintento la termina sin descontar dos veces (C-RESERVA-ATOMICA)', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 1000);
+    const { reservarComision, saldoLibro: saldo } = await import('./internacional/libro');
+    // Como si el proceso se hubiera caído entre las dos patas (código anterior).
+    await e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, pedido_id, referencia) VALUES ('x1', ?, 'prepago', 'US', 'USD', -300, 'reserva_comision', ?, ?)",
+    )
+      .bind(rep.id, id, `reserva:${id}:${rep.id}:prepago`)
+      .run();
+    const ok = await reservarComision(e.m.DB, {
+      pedidoId: id,
+      repartidorId: rep.id,
+      pais: 'US',
+      moneda: 'USD',
+      monto: 300,
+    });
+    expect(ok).toBe(true);
+    expect(await saldo(e.m.DB, rep.id, 'prepago', 'US', 'USD')).toBe(700);
+    expect(await saldo(e.m.DB, rep.id, 'reservado', 'US', 'USD')).toBe(300);
+    // Otra vez: no cambia nada.
+    expect(
+      await reservarComision(e.m.DB, {
+        pedidoId: id,
+        repartidorId: rep.id,
+        pais: 'US',
+        moneda: 'USD',
+        monto: 300,
+      }),
+    ).toBe(true);
+    expect(await saldo(e.m.DB, rep.id, 'prepago', 'US', 'USD')).toBe(700);
+  });
+
   it('dos aceptaciones simultáneas con saldo para una sola comisión: solo una aparta, nada queda en negativo', async () => {
     const e = await escenario();
     const p1 = (await e.pedir()).datos.pedidoId as string;
