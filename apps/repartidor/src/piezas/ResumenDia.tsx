@@ -7,11 +7,14 @@ import { textosDriver } from './textos';
 export function ResumenDia({
   idioma,
   ganancias,
+  enMano,
   entregas,
   segundosConectado,
 }: {
   idioma: Idioma;
   ganancias: number;
+  /** Lo ganado hoy en pedidos cobrados en mano, en la moneda del país (no pasa por Stripe). */
+  enMano?: { total: number; moneda: string };
   entregas: number;
   segundosConectado: number;
 }) {
@@ -41,8 +44,15 @@ export function ResumenDia({
         {t.hoy}
       </Text>
       <View style={{ flexDirection: 'row' }}>
-        {/* Movimientos de la billetera de Stripe: solo tarjeta, en USD. */}
-        {celda(formatearMonto(ganancias, 'USD', idioma), t.ganancias)}
+        {/* Tarjeta (billetera de Stripe, USD) y cobro en mano (su moneda), nunca sumados entre monedas. */}
+        {celda(
+          enMano?.total && enMano.moneda !== 'USD'
+            ? ganancias
+              ? `${formatearMonto(ganancias, 'USD', idioma)} + ${formatearMonto(enMano.total, enMano.moneda, idioma)}`
+              : formatearMonto(enMano.total, enMano.moneda, idioma)
+            : formatearMonto(ganancias + (enMano?.total ?? 0), 'USD', idioma),
+          t.ganancias,
+        )}
         <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />
         {celda(String(entregas), t.entregas)}
         <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />

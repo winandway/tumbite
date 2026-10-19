@@ -125,7 +125,7 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
   const hasta = q.success && q.data.hasta ? `${q.data.hasta} 23:59:59` : null;
   const { results } = await db
     .prepare(
-      `SELECT p.id, p.entregado_en, p.envio, p.complemento, p.propina, p.pago_repartidor, p.moneda, r.nombre AS restaurante,
+      `SELECT p.id, p.entregado_en, p.envio, p.complemento, p.propina, p.pago_repartidor, p.moneda, p.metodo_pago, r.nombre AS restaurante,
               COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0) AS bono,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = p.repartidor_id AND m.concepto = 'ajuste' AND m.referencia = 'propina-extra-' || p.id), 0) AS propina_posterior
          FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
@@ -142,6 +142,7 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       propina: number;
       pago_repartidor: number;
       moneda: string | null;
+      metodo_pago: string | null;
       restaurante: string;
       bono: number;
       propina_posterior: number;
@@ -158,6 +159,8 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       entregadoEn: p.entregado_en,
       // C-MONEDA-RECORRIDO: cada pedido en su moneda.
       moneda: p.moneda ?? 'USD',
+      // Cobrado en mano: no pasa por la billetera de Stripe; «Hoy» lo suma desde aquí.
+      cobradoEnMano: (p.metodo_pago ?? 'tarjeta') !== 'tarjeta',
       base,
       bono,
       propina,

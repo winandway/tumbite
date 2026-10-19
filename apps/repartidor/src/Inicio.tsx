@@ -726,6 +726,42 @@ export function Inicio() {
     transferenciaActiva: boolean;
     recargasPuntoVenta: boolean;
   } | null>(null);
+  // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
+  // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
+  const [enManoHoy, setEnManoHoy] = useState<{ total: number; entregas: number; moneda: string }>({
+    total: 0,
+    entregas: 0,
+    moneda: 'USD',
+  });
+  const cobroEnManoActivo = Boolean(prepago?.efectivoActivo || prepago?.transferenciaActiva);
+  const movimientosVistos = billetera?.movimientos?.length ?? 0;
+  const entregaActiva = estado?.activo?.id ?? null;
+  useEffect(() => {
+    if (!cobroEnManoActivo) return;
+    let vivo = true;
+    api
+      .pedir<{
+        pedidos: { entregadoEn: string; total: number; moneda: string; cobradoEnMano?: boolean }[];
+      }>('GET', '/datos/repartidor/ganancias')
+      .then((g) => {
+        if (!vivo) return;
+        const hoy = new Date().toLocaleDateString('en-CA');
+        const de = g.pedidos.filter(
+          (p) =>
+            p.cobradoEnMano &&
+            new Date(`${p.entregadoEn.replace(' ', 'T')}Z`).toLocaleDateString('en-CA') === hoy,
+        );
+        setEnManoHoy({
+          total: de.reduce((x, p) => x + p.total, 0),
+          entregas: de.length,
+          moneda: de[0]?.moneda ?? prepago?.moneda ?? 'USD',
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, cobroEnManoActivo, movimientosVistos, entregaActiva, prepago?.moneda]);
   const cargarPrepago = useCallback(async () => {
     try {
       setPrepago(await api.pedir('GET', '/datos/repartidor/saldo-prepago'));
@@ -918,8 +954,9 @@ export function Inicio() {
   const gananciasHoy = deHoy
     .filter((m) => m.concepto !== 'retiro' && m.monto > 0)
     .reduce((x, m) => x + m.monto, 0);
-  const entregasHoy = new Set(deHoy.filter((m) => m.concepto === 'entrega').map((m) => m.pedidoId))
-    .size;
+  const entregasHoy =
+    new Set(deHoy.filter((m) => m.concepto === 'entrega').map((m) => m.pedidoId)).size +
+    enManoHoy.entregas;
   const segundosConectado =
     estado?.conectado && conectadoDesde
       ? Math.max(0, Math.floor((tic - conectadoDesde) / 1000))
@@ -1962,6 +1999,7 @@ export function Inicio() {
         <ResumenDia
           idioma={idioma}
           ganancias={gananciasHoy}
+          enMano={enManoHoy}
           entregas={entregasHoy}
           segundosConectado={segundosConectado}
         />

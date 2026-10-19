@@ -336,6 +336,13 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect(c.vendido).toBe(0);
     expect(c.devuelto).toBe(0);
     expect(c.detalle).toMatchObject({ directos_USD: 1, directosConDiferencia_USD: 0 });
+    // «Hoy» del repartidor suma los pedidos cobrados en mano desde Ganancias (no están en Stripe).
+    const g = await e.m.llamar('GET', '/datos/repartidor/ganancias', undefined, rep.token);
+    expect(
+      (g.datos.pedidos as { pedidoId: string; cobradoEnMano: boolean }[]).find(
+        (x) => x.pedidoId === id,
+      )?.cobradoEnMano,
+    ).toBe(true);
   });
 
   it('un pedido cobrado en mano no se deja en un lugar seguro: el camino es «El cliente no pagó»', async () => {
@@ -1264,6 +1271,7 @@ describe('pantallas del cobro directo en las apps y Docs (C-COBRO-DIRECTO)', () 
     expect(rep).toContain('/cobre');
     expect(rep).toContain('/no-pago');
     expect(rep).toContain('testID="sin-lugar-seguro"');
+    expect(rep).toContain('enMano={enManoHoy}');
     expect(leer('apps/repartidor/src/grandes/Oferta.tsx')).toContain(
       'testID="oferta-cobro-en-mano"',
     );
