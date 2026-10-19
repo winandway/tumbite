@@ -1206,6 +1206,13 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
     );
   if (f.propina_extra != null)
     throw new ErrorDatos('Ya agregaste una propina a este pedido.', undefined, 409);
+  // Un pedido pagado en mano no tiene tarjeta guardada: la propina se le da al repartidor en mano.
+  if (String(f.metodo_pago ?? 'tarjeta') !== 'tarjeta' || !f.stripe_pago)
+    throw new ErrorDatos(
+      'La propina extra con tarjeta es solo para pedidos pagados con tarjeta.',
+      undefined,
+      409,
+    );
   const entregado = Date.parse(`${String(f.entregado_en).replace(' ', 'T')}Z`);
   if (Date.now() - entregado > 7 * 86_400_000)
     throw new ErrorDatos(
@@ -1269,9 +1276,10 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
       .bind(id, centavos, cobro.id),
     db
       .prepare(
-        "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, ?, ?, 'ajuste', 'propina-extra')",
+        // La referencia lleva el pedido: así la leen las ganancias y la campana del repartidor.
+        "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, ?, ?, 'ajuste', 'propina-extra-' || ?)",
       )
-      .bind(nuevoId(), String(f.repartidor_id), id, centavos),
+      .bind(nuevoId(), String(f.repartidor_id), id, centavos, id),
   ]);
   await notificar(
     c.env,

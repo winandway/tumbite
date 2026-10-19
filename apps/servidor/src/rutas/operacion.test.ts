@@ -2375,7 +2375,7 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
       true,
     );
     const saldo = await m.DB.prepare(
-      "SELECT SUM(monto) AS s FROM movimientos WHERE usuario_id = ? AND pedido_id = ? AND referencia = 'propina-extra'",
+      "SELECT SUM(monto) AS s FROM movimientos WHERE usuario_id = ? AND pedido_id = ? AND referencia = 'propina-extra-' || pedido_id",
     )
       .bind(rep.id, id)
       .first<{ s: number }>();

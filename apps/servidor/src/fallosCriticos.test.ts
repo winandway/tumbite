@@ -190,7 +190,7 @@ describe('fallo 3 · la propina posterior solo se anota si Stripe la cobró', ()
     );
     expect(r.estado).not.toBe(200);
     const saldo = await m.DB.prepare(
-      "SELECT COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id = ? AND pedido_id = ? AND referencia = 'propina-extra'",
+      "SELECT COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id = ? AND pedido_id = ? AND referencia LIKE 'propina-extra%'",
     )
       .bind(rep.id, id)
       .first<{ s: number }>();
@@ -201,6 +201,58 @@ describe('fallo 3 · la propina posterior solo se anota si Stripe la cobró', ()
       .bind(id)
       .first<{ n: number }>();
     expect(registrada?.n).toBe(0);
+  });
+});
+
+describe('la propina posterior cobrada llega a las ganancias del repartidor', () => {
+  it('con el cobro confirmado, «Ganancias» la muestra en ese pedido; en un pedido pagado en mano da 409, no 500', async () => {
+    const { m, dueno, cliente, pedidoPagado, repartidor } = await escenario();
+    const rep = await repartidor('Pro Pina', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    await m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_1' WHERE id = ?")
+      .bind(cliente.id)
+      .run();
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (String(url).includes('/payment_intents/') && (init?.method ?? 'GET') === 'GET')
+        return new Response(JSON.stringify({ id: 'pi_1', payment_method: 'pm_guardada' }), {
+          status: 200,
+        });
+      return new Response(JSON.stringify({ id: 'pi_propina', status: 'succeeded' }), {
+        status: 200,
+      });
+    });
+    const r = await m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/propina`,
+      { centavos: 300 },
+      cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    const g = await m.llamar('GET', '/datos/repartidor/ganancias', undefined, rep.token);
+    const fila = (g.datos.pedidos as { pedidoId: string; propinaPosterior: number }[]).find(
+      (x) => x.pedidoId === id,
+    );
+    expect(fila?.propinaPosterior).toBe(300);
+    // Un pedido pagado en mano no tiene tarjeta: la ruta lo explica, no revienta.
+    await m.DB.prepare(
+      "UPDATE pedidos SET metodo_pago = 'efectivo', stripe_pago = NULL WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    await m.DB.prepare('DELETE FROM propinas_extra WHERE pedido_id = ?').bind(id).run();
+    const enMano = await m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/propina`,
+      { centavos: 300 },
+      cliente.token,
+    );
+    expect(enMano.estado).toBe(409);
   });
 });
 

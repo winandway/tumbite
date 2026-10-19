@@ -140,6 +140,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
   [
+    'La propina extra con tarjeta es solo para pedidos pagados con tarjeta.',
+    'An extra card tip is only for orders paid by card.',
+  ],
+  [
     'Este pedido se cobra en mano: no se puede dejar sin entregarlo. Si el cliente no aparece, toca «El cliente no pagó».',
     'This order is paid in person: it can’t be left without handing it over. If the customer doesn’t show up, tap “The customer didn’t pay.”',
   ],
