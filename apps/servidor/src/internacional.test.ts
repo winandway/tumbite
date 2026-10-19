@@ -644,6 +644,37 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
       rep.token,
     );
     expect(datos.datos.registrado.conFotoTicket).toBe(true);
+    // Repetir la foto no deja la anterior huérfana en el almacén.
+    const bucket = e.m.extra.BUCKET as R2Bucket;
+    const primera = fila!.ticket_clave!;
+    expect(
+      (await e.m.foto(`/datos/repartidor/pedidos/${id}/foto-ticket`, rep.token, donde)).estado,
+    ).toBe(200);
+    expect(await bucket.get(primera)).toBeNull();
+    // Retención: a los 30 días se borra SOLO si el pedido quedó conciliado; con diferencia se queda.
+    const { depurarFotos } = await import('./conciliacion');
+    await e.m.DB.prepare(
+      "UPDATE pagos_local SET creado_en = datetime('now', '-31 days') WHERE pedido_id = ?",
+    )
+      .bind(id)
+      .run();
+    await e.m.DB.prepare("UPDATE pedidos SET conciliacion_estado = 'con_diferencia' WHERE id = ?")
+      .bind(id)
+      .run();
+    await depurarFotos(e.m.DB, bucket);
+    const sigue = await e.m.DB.prepare('SELECT ticket_clave FROM pagos_local WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ ticket_clave: string | null }>();
+    expect(sigue?.ticket_clave).not.toBeNull();
+    await e.m.DB.prepare("UPDATE pedidos SET conciliacion_estado = 'conciliado' WHERE id = ?")
+      .bind(id)
+      .run();
+    await depurarFotos(e.m.DB, bucket);
+    const borrada = await e.m.DB.prepare('SELECT ticket_clave FROM pagos_local WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ ticket_clave: string | null }>();
+    expect(borrada?.ticket_clave).toBeNull();
+    expect(await bucket.get(sigue!.ticket_clave!)).toBeNull();
   });
 
   it('ticket e importe distintos: no frenan la entrega, quedan anotados y la conciliación sale «con diferencia»', async () => {

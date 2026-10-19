@@ -1531,10 +1531,16 @@ operacion.post('/repartidor/pedidos/:id/foto-ticket', async (c) => {
   await foto.bucket.put(clave, foto.bytes, {
     httpMetadata: { contentType: foto.tipo, cacheControl: 'private, no-store' },
   });
+  const anterior = await db
+    .prepare('SELECT ticket_clave FROM pagos_local WHERE pedido_id = ?')
+    .bind(id)
+    .first<{ ticket_clave: string | null }>();
   await db
     .prepare('UPDATE pagos_local SET ticket_clave = ? WHERE pedido_id = ?')
     .bind(clave, id)
     .run();
+  // Si repitió la foto, la anterior no queda huérfana en el almacén.
+  if (anterior?.ticket_clave) await foto.bucket.delete(anterior.ticket_clave);
   await anotarEvento(db, id, 'foto_ticket');
   return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/ticket` });
 });

@@ -185,5 +185,24 @@ export async function depurarFotos(db: D1Database, almacen: R2Bucket): Promise<n
       .run();
     borradas++;
   }
+  // La foto del ticket del pago en el local (cobro directo): misma retención, pero SOLO si el pedido
+  // quedó conciliado sin diferencias. Con diferencia o reclamo abierto, es evidencia y se queda.
+  const { results: tickets } = await db
+    .prepare(
+      `SELECT l.pedido_id, l.ticket_clave FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
+       WHERE l.ticket_clave IS NOT NULL AND l.creado_en < datetime('now', ?) AND p.conciliacion_estado = 'conciliado'
+       AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.pedido_id = l.pedido_id AND t.estado != 'cerrado')
+       LIMIT 200`,
+    )
+    .bind(`-${DIAS_FOTOS} days`)
+    .all<{ pedido_id: string; ticket_clave: string }>();
+  for (const t of tickets) {
+    await almacen.delete(t.ticket_clave);
+    await db
+      .prepare('UPDATE pagos_local SET ticket_clave = NULL WHERE pedido_id = ?')
+      .bind(t.pedido_id)
+      .run();
+    borradas++;
+  }
   return borradas;
 }
