@@ -86,8 +86,9 @@ describe('copia de seguridad diaria', () => {
 describe('el reloj pide la copia diaria en producción y en pruebas', () => {
   it('reloj.yml tiene los dos pasos (en pruebas nunca se pedía y el canario quedaba «atrasado»)', async () => {
     const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
     const reloj = readFileSync(
-      new URL('../../../.github/workflows/reloj.yml', import.meta.url),
+      fileURLToPath(new URL('../../../.github/workflows/reloj.yml', import.meta.url).href),
       'utf8',
     );
     expect(reloj).toContain('https://tumbite.com/datos/respaldo?siHaceFalta=1');
