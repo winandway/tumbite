@@ -7,6 +7,7 @@ import { ErrorDatos } from '../validar';
 import { minutosPausa } from '../pausa';
 import { aRestaurante, conHorarios } from './catalogo';
 import { ZONA_INICIAL, zonaPara } from './zonas';
+import { enTrozos } from '../trozos';
 
 /**
  * Buscador real del inicio del cliente (18 oct 2026, «como los grandes»): restaurantes por nombre
@@ -89,16 +90,29 @@ buscar.get('/buscar', async (c) => {
     abiertoAhora: boolean;
   }[] = [];
   if (todos.length) {
-    const marcas = todos.map(() => '?').join(',');
-    const filas = await db
-      .prepare(
-        `SELECT id, restaurante_id, nombre_es, nombre_en, categoria, categoria_en, precio_centavos, imagen
-           FROM platos WHERE restaurante_id IN (${marcas}) AND disponible = 1 AND eliminado = 0
-          ORDER BY orden, nombre_es LIMIT 2000`,
+    // C-LIMITE-PARAMETROS: en trozos (D1 acepta 100 parámetros por consulta).
+    const filas = (
+      await enTrozos(
+        todos.map((r) => r.id),
+        async (trozo, marcas) =>
+          (
+            await db
+              .prepare(
+                `SELECT id, restaurante_id, nombre_es, nombre_en, categoria, categoria_en, precio_centavos, imagen, orden
+                   FROM platos WHERE restaurante_id IN (${marcas}) AND disponible = 1 AND eliminado = 0
+                  ORDER BY orden, nombre_es LIMIT 2000`,
+              )
+              .bind(...trozo)
+              .all<FilaPlato & { orden: number | null }>()
+          ).results,
       )
-      .bind(...todos.map((r) => r.id))
-      .all<FilaPlato>();
-    platos = filas.results
+    )
+      .sort(
+        (a, b) =>
+          Number(a.orden ?? 0) - Number(b.orden ?? 0) || a.nombre_es.localeCompare(b.nombre_es),
+      )
+      .slice(0, 2000);
+    platos = filas
       .filter((p) =>
         normalizar(`${p.nombre_es} ${p.nombre_en} ${p.categoria} ${p.categoria_en}`).includes(
           texto,

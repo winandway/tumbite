@@ -58,5 +58,24 @@ describe('listas con más de 100 elementos (C-LIMITE-PARAMETROS)', () => {
     expect(
       (lista.datos.restaurantes as { horarios: unknown[] }[]).every((x) => x.horarios.length === 7),
     ).toBe(true);
+    // El buscador también recorre todos los restaurantes de la zona para buscar platos.
+    await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Pizza margarita', precioCentavos: 1200 },
+      dueno.token,
+    );
+    const b = await m.llamar('GET', '/datos/buscar?q=margar&lat=25.7725&lng=-80.187');
+    expect(b.estado).toBe(200);
+    expect(b.datos.platos.length).toBeGreaterThan(0);
+  });
+
+  it('ninguna tabla llega a 100 columnas (el respaldo restaura una fila con un parámetro por columna)', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const { results } = await m.DB.prepare(
+      "SELECT m.name, (SELECT COUNT(*) FROM pragma_table_info(m.name)) AS n FROM sqlite_master m WHERE m.type = 'table'",
+    ).all<{ name: string; n: number }>();
+    expect(results.filter((t) => t.n >= 100)).toEqual([]);
   });
 });
