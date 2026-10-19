@@ -111,6 +111,8 @@ export type Restaurante = {
   tiempoPrepMin: number;
   regalosPb: number;
   distanciaKm?: number;
+  /** C-MONEDA-RECORRIDO: moneda de su zona (USD, COP…). Los precios van en su unidad menor. */
+  moneda?: string;
   /** Solo para el dueño: la lista de activación (qué falta antes de abrir). */
   activacion?: Activacion;
 };
