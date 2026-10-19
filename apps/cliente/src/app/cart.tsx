@@ -131,12 +131,15 @@ export default function PantallaCarrito() {
     efectivoActivo: boolean;
     transferenciaRepartidorActiva: boolean;
   } | null>(null);
+  // C-PAIS-DEL-RESTAURANTE: las formas de pago son las del país del RESTAURANTE del carrito (antes,
+  // las de la ciudad guardada del cliente: uno nuevo caía en Miami y no veía el efectivo de su país).
+  const ridPais = carrito.restauranteId;
   useEffect(() => {
     let vivo = true;
     api
       .pedir<{ efectivoActivo: boolean; transferenciaRepartidorActiva: boolean }>(
         'GET',
-        '/datos/pais',
+        ridPais ? `/datos/pais?restauranteId=${encodeURIComponent(ridPais)}` : '/datos/pais',
       )
       .then((p) => {
         if (vivo) setPais(p);
@@ -145,7 +148,7 @@ export default function PantallaCarrito() {
     return () => {
       vivo = false;
     };
-  }, [api]);
+  }, [api, ridPais]);
   const [punto, setPunto] = useState<Punto | null>(null);
   const [propinaPb, setPropinaPb] = useState<number | 'otra'>(2000);
   const [error, setError] = useState('');

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { BONO_OFERTA_ABIERTA } from '@tumbite/compartido';
-import { esquemaConfigDinero } from '../rutas/dinero';
+import { esquemaTarifasPais } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
 
 /**
@@ -42,7 +42,7 @@ export const esquemaConfigPais = z.object({
    * (unidad menor). null = sin tarifas escritas: el país NO recibe pedidos. Estados Unidos no usa
    * este campo (sigue con la configuración global de siempre). Las cifras las fija Richard.
    */
-  tarifas: esquemaConfigDinero.nullable(),
+  tarifas: esquemaTarifasPais.nullable(),
   /**
    * C-TOPES-PAIS: topes en la moneda del país (unidad menor). null = sin escribir: el país no se
    * puede encender ni recibe pedidos. Estados Unidos no usa este campo (sigue con sus cifras de

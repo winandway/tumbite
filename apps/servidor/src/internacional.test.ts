@@ -667,6 +667,8 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
       rep.token,
     );
     expect(datos.datos.registrado.conFotoTicket).toBe(true);
+    // La app del repartidor necesita la moneda para mostrar y leer los montos (sin ella caía en dólares).
+    expect(datos.datos.moneda).toBe('USD');
     // Repetir la foto no deja la anterior huérfana en el almacén.
     const bucket = e.m.extra.BUCKET as R2Bucket;
     const primera = fila!.ticket_clave!;

@@ -1,5 +1,5 @@
 import type { ConfigDinero } from '@tumbite/compartido';
-import { esquemaConfigDinero, leerConfigDinero } from '../rutas/dinero';
+import { esquemaTarifasPais, leerConfigDinero } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
 import { TOPES_EEUU, type TopesPais, leerConfigPais, paisDeZona } from './paises';
 import { leerConfigQuejas } from '../devoluciones';
@@ -32,7 +32,7 @@ export async function tarifasDeZona(
 /** La configuración que se aplicó al crear el pedido (los pedidos viejos no la tienen: null). */
 export function tarifasDelPedido(f: { tarifas_json?: unknown }): ConfigDinero | null {
   if (f.tarifas_json == null) return null;
-  const r = esquemaConfigDinero.safeParse(JSON.parse(String(f.tarifas_json)));
+  const r = esquemaTarifasPais.safeParse(JSON.parse(String(f.tarifas_json)));
   return r.success ? r.data : null;
 }
 

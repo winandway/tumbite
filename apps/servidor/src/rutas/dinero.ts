@@ -28,6 +28,23 @@ export const esquemaConfigDinero = z.object({
   impuestoPb: pb.optional().default(0),
 });
 
+/**
+ * C-TOPES-PAIS: las tarifas de otro país, en SU moneda. Mismos campos y validación que la global,
+ * con montos más altos (en pesos o bolívares 100 000 unidades se quedan cortas). La de EE. UU. no
+ * cambia.
+ */
+const montoPais = z.number().int().min(0).max(1_000_000_000);
+export const esquemaTarifasPais = esquemaConfigDinero.extend({
+  envioBase: montoPais,
+  envioPorKm: montoPais,
+  envioMaximo: montoPais,
+  servicioMinimo: montoPais,
+  servicioMaximo: montoPais,
+  pedidoMinimo: montoPais,
+  cargoPedidoPequeno: montoPais,
+  pagoMinimoRepartidor: montoPais,
+});
+
 export async function leerConfigDinero(db: D1Database): Promise<ConfigDinero> {
   const f = await db
     .prepare("SELECT valor FROM config WHERE clave = 'dinero'")

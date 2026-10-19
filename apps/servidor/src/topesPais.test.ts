@@ -165,4 +165,47 @@ describe('C-TOPES-PAIS: topes por país y moneda', () => {
     // Venezuela sin escribir: sin topes.
     expect(await topesDePais(e.m.DB, 'VE')).toBeNull();
   });
+
+  it('el carrito pregunta las formas de pago del país del RESTAURANTE, no de la ciudad guardada del cliente (C-PAIS-DEL-RESTAURANTE)', async () => {
+    const e = await escenario();
+    await e.aColombia();
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/paises/CO',
+      { tarifas: TARIFAS_PRUEBA_COP, topes: TOPES_PRUEBA, efectivoActivo: true },
+      e.admin.token,
+    );
+    const sinRest = await e.m.llamar('GET', '/datos/pais', undefined, e.cliente.token);
+    expect(sinRest.datos.pais).toBe('US');
+    const conRest = await e.m.llamar(
+      'GET',
+      `/datos/pais?restauranteId=${e.rid}`,
+      undefined,
+      e.cliente.token,
+    );
+    expect(conRest.datos).toMatchObject({ pais: 'CO', moneda: 'COP', efectivoActivo: true });
+  });
+
+  it('las tarifas de un país aceptan montos de su moneda (bolívares, pesos) sin el tope de centavos de dólar', async () => {
+    const e = await escenario();
+    const r = await e.m.llamar(
+      'PUT',
+      '/datos/admin/paises/VE',
+      { tarifas: { ...TARIFAS_PRUEBA_COP, envioMaximo: 120_000, servicioMaximo: 50_000 } },
+      e.admin.token,
+    );
+    expect(r.estado).toBe(200);
+    // La configuración global de EE. UU. sigue con su tope de siempre.
+    const cfg = await e.m.llamar('GET', '/datos/config-dinero', undefined, e.admin.token);
+    expect(
+      (
+        await e.m.llamar(
+          'PUT',
+          '/datos/admin/config-dinero',
+          { ...cfg.datos.config, envioMaximo: 120_000 },
+          e.admin.token,
+        )
+      ).estado,
+    ).toBe(400);
+  });
 });

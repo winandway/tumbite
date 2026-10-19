@@ -344,7 +344,13 @@ internacional.get('/repartidor/pedidos/:id/pago-local', async (c) => {
   const l = await leerPagoLocal(base(c), c.req.param('id'));
   if (!l || l.pedido.repartidor_id !== u.id)
     throw new ErrorDatos('Este pedido no se paga en el local.', undefined, 404);
-  return c.json({ montoEsperado: l.montoEsperado, subtotal: l.subtotal, registrado: l.registrado });
+  return c.json({
+    montoEsperado: l.montoEsperado,
+    subtotal: l.subtotal,
+    // C-TARIFAS-PAIS: sin esto la app caía en dólares y multiplicaba los pesos por cien.
+    moneda: l.moneda,
+    registrado: l.registrado,
+  });
 });
 
 internacional.post('/repartidor/pedidos/:id/pago-local', async (c) => {
@@ -379,7 +385,13 @@ internacional.get('/restaurante/pedidos/:id/pago-local', async (c) => {
         .first()
     : null;
   if (!l || !mio) throw new ErrorDatos('Este pedido no se paga en el local.', undefined, 404);
-  return c.json({ montoEsperado: l.montoEsperado, subtotal: l.subtotal, registrado: l.registrado });
+  return c.json({
+    montoEsperado: l.montoEsperado,
+    subtotal: l.subtotal,
+    // C-TARIFAS-PAIS: sin esto la app caía en dólares y multiplicaba los pesos por cien.
+    moneda: l.moneda,
+    registrado: l.registrado,
+  });
 });
 
 /**
@@ -529,12 +541,22 @@ internacional.post('/pedidos/:id/disputa-cobro', async (c) => {
 internacional.get('/pais', async (c) => {
   const db = base(c);
   const u = c.get('usuario');
-  const z = u
+  // C-PAIS-DEL-RESTAURANTE: con el restaurante del carrito, el país de SU zona (donde se pide).
+  const rid = c.req.query('restauranteId');
+  const deRest = rid
     ? await db
-        .prepare('SELECT zona_id FROM usuarios WHERE id = ?')
-        .bind(u.id)
+        .prepare('SELECT zona_id FROM restaurantes WHERE id = ?')
+        .bind(rid)
         .first<{ zona_id: string | null }>()
     : null;
+  const z = deRest?.zona_id
+    ? deRest
+    : u
+      ? await db
+          .prepare('SELECT zona_id FROM usuarios WHERE id = ?')
+          .bind(u.id)
+          .first<{ zona_id: string | null }>()
+      : null;
   const { pais, moneda } = await paisDeZona(db, z?.zona_id ?? 'US-FL-MIAMI');
   const cfg = await leerConfigPais(db, pais);
   return c.json({

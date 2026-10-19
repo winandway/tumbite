@@ -26,7 +26,7 @@ const archivo = existsSync(CARPETA)
 describe.skipIf(!archivo)(
   'restauración aislada de un respaldo real (C-RESTAURACION-AISLADA)',
   () => {
-    it('respaldar la base del recorrido y restaurarla en otra: mismas filas, relaciones sanas y la app funciona', async () => {
+    it('respaldar la base del recorrido y restaurarla en otra: mismas filas, relaciones sanas y la app funciona', async (ctx) => {
       // Copia consistente (incluye lo que está en el WAL) para no tocar la base del recorrido.
       const dir = mkdtempSync(join(tmpdir(), 'tumbite-restauracion-'));
       const copia = join(dir, 'origen.sqlite');
@@ -35,6 +35,14 @@ describe.skipIf(!archivo)(
       fuenteCruda.close();
       copyFileSync(copia, join(dir, 'respaldo-original.sqlite'));
       const origen = crearBasePruebas(copia);
+      // Hace falta una corrida completa del recorrido (con un cliente que haya pedido); si la base
+      // local está recién creada, se salta y lo dice.
+      const hayCorrida = await origen
+        .prepare(
+          "SELECT 1 FROM usuarios u WHERE u.correo LIKE 'cliente.%@recorrido.test' AND EXISTS (SELECT 1 FROM pedidos p WHERE p.cliente_id = u.id)",
+        )
+        .first();
+      if (!hayCorrida) ctx.skip('la base del recorrido no tiene todavía una corrida completa');
       const almacen = crearAlmacenPruebas().bucket;
       const r = await respaldarBase(origen, almacen);
       expect(r.filas).toBeGreaterThan(100);
