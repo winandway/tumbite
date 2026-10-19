@@ -140,6 +140,11 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Ese pedido no se cobra en mano.', 'That order isn’t paid in person.'],
   [
+    'Ese comprobante ya se usó para este punto de venta. Escribe el número del pago nuevo.',
+    'That receipt was already used for this point of sale. Enter the new payment’s number.',
+  ],
+  ['Ese código no existe.', 'That code doesn’t exist.'],
+  [
     'Solo el dueño puede cambiar los datos del restaurante.',
     'Only the owner can change the restaurant’s details.',
   ],

@@ -1041,6 +1041,70 @@ describe('recargas por punto de venta (C-COBRO-DIRECTO)', () => {
     expect(total).toBe(1000);
   });
 
+  it('recargas endurecidas: comprobante repetido = 409, punto desactivado = códigos sin valor, soporte anula y el fondo vuelve, el reintento tras una caída acredita una sola vez', async () => {
+    const e = await escenario();
+    const duenoPunto = await e.m.cuenta('cliente', 'Tienda Dos');
+    const punto = await e.m.llamar(
+      'POST',
+      '/datos/admin/puntos-venta',
+      { nombre: 'Tienda Dos', pais: 'US', usuarioId: duenoPunto.id },
+      e.admin.token,
+    );
+    const pid = punto.datos.punto.id as string;
+    const fondo = (comprobante: string) =>
+      e.m.llamar(
+        'POST',
+        `/datos/admin/puntos-venta/${pid}/fondo`,
+        { monto: 5000, comprobante },
+        e.admin.token,
+      );
+    expect((await fondo('pago-001')).estado).toBe(200);
+    // El mismo comprobante otra vez no suma y se dice (antes respondía 200 sin sumar).
+    expect((await fondo('pago-001')).estado).toBe(409);
+    const emitir = () =>
+      e.m.llamar('POST', '/datos/punto-venta/codigos', { monto: 1000 }, duenoPunto.token);
+    const a = await emitir();
+    const b = await emitir();
+    const rep = await e.repartidor('Rafa Rep');
+    // Reintento tras una caída: el código quedó canjeado por él, pero el saldo no llegó.
+    await e.m.DB.prepare(
+      "UPDATE codigos_recarga SET estado = 'canjeado', canjeado_por = ?, canjeado_en = datetime('now') WHERE id = ?",
+    )
+      .bind(rep.id, a.datos.id)
+      .run();
+    const canje = (codigo: string) =>
+      e.m.llamar('POST', '/datos/repartidor/recargar', { codigo }, rep.token);
+    expect((await canje(a.datos.codigo)).estado).toBe(200);
+    expect((await canje(a.datos.codigo)).estado).toBe(409);
+    const saldo = await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token);
+    expect(saldo.datos.disponible).toBe(1000);
+    // Soporte desactiva el punto: el código que quedaba en la calle ya no sirve.
+    await e.m.DB.prepare('UPDATE puntos_venta SET activo = 0 WHERE id = ?').bind(pid).run();
+    expect((await canje(b.datos.codigo)).estado).toBe(409);
+    // Soporte lo anula (código perdido o robado) y el fondo vuelve al punto, una sola vez.
+    const anular = () =>
+      e.m.llamar('POST', `/datos/admin/codigos-recarga/${b.datos.id}/anular`, {}, e.admin.token);
+    expect((await anular()).estado).toBe(200);
+    expect((await anular()).estado).toBe(409);
+    const { saldoLibro, cuentaPunto } = await import('./internacional/libro');
+    expect(await saldoLibro(e.m.DB, cuentaPunto(pid), 'punto', 'US', 'USD')).toBe(4000);
+    // Solo soporte puede anular por esta ruta.
+    expect(
+      (await e.m.llamar('POST', `/datos/admin/codigos-recarga/${b.datos.id}/anular`, {}, rep.token))
+        .estado,
+    ).toBe(403);
+  });
+
+  it('el tope semanal de recargas también vale para la tarjeta (cuenta las pendientes)', async () => {
+    const e = await escenario({ recargasStripeActivas: true, recargasSemanaMax: 2 });
+    const rep = await e.repartidor('Rafa Rep');
+    const pedir = () =>
+      e.m.llamar('POST', '/datos/repartidor/recargas/stripe', { monto: 1000 }, rep.token);
+    expect((await pedir()).estado).toBe(201);
+    expect((await pedir()).estado).toBe(201);
+    expect((await pedir()).estado).toBe(409);
+  });
+
   it('la recarga con tarjeta queda pendiente hasta el aviso de Stripe y se acredita una sola vez', async () => {
     const e = await escenario({ recargasStripeActivas: true });
     const rep = await e.repartidor('Rafa Rep');

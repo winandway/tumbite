@@ -27,8 +27,9 @@ export async function fondearPunto(
     .prepare('SELECT id, pais, moneda, activo FROM puntos_venta WHERE id = ?')
     .bind(p.puntoId)
     .first<{ id: string; pais: string; moneda: string; activo: number }>();
-  if (!punto) throw new ErrorDatos('Ese punto de venta no existe.', undefined, 404);
-  await anotarLibro(db, {
+  if (!punto || !punto.activo)
+    throw new ErrorDatos('Ese punto de venta no existe.', undefined, 404);
+  const r = await anotarLibro(db, {
     cuentaId: cuentaPunto(punto.id),
     bolsillo: 'punto',
     pais: punto.pais,
@@ -38,6 +39,13 @@ export async function fondearPunto(
     referencia: `fondo:${punto.id}:${p.comprobante}`,
     autorId: p.autorId,
   });
+  // El comprobante identifica el pago: el mismo dos veces no suma dos veces, y se dice.
+  if (!r.meta.changes)
+    throw new ErrorDatos(
+      'Ese comprobante ya se usó para este punto de venta. Escribe el número del pago nuevo.',
+      'comprobante',
+      409,
+    );
   return saldoLibro(db, cuentaPunto(punto.id), 'punto', punto.pais, punto.moneda);
 }
 
@@ -97,30 +105,53 @@ export async function emitirCodigo(
 /** Un código emitido y no canjeado vuelve al fondo del punto. */
 export async function anularCodigo(
   db: D1Database,
-  p: { codigoId: string; puntoId: string; autorId: string },
+  /** puntoId null = soporte (código perdido, robado o vendido por error, también de un punto desactivado). */
+  p: { codigoId: string; puntoId: string | null; autorId: string },
 ) {
-  const r = await db
-    .prepare(
-      "UPDATE codigos_recarga SET estado = 'anulado', anulado_en = datetime('now') WHERE id = ? AND punto_id = ? AND estado = 'emitido'",
-    )
-    .bind(p.codigoId, p.puntoId)
-    .run();
-  if (!r.meta.changes)
-    throw new ErrorDatos('Ese código ya se canjeó: no se puede anular.', undefined, 409);
-  const c = (await db
-    .prepare('SELECT pais, moneda, monto FROM codigos_recarga WHERE id = ?')
+  const c = await db
+    .prepare('SELECT punto_id, pais, moneda, monto FROM codigos_recarga WHERE id = ?')
     .bind(p.codigoId)
-    .first<{ pais: string; moneda: string; monto: number }>())!;
-  await anotarLibro(db, {
-    cuentaId: cuentaPunto(p.puntoId),
-    bolsillo: 'punto',
-    pais: c.pais,
-    moneda: c.moneda,
-    monto: c.monto,
-    concepto: 'codigo_anulado',
-    referencia: `codigo:${p.codigoId}:anulado`,
-    autorId: p.autorId,
-  });
+    .first<{ punto_id: string; pais: string; moneda: string; monto: number }>();
+  if (!c || (p.puntoId != null && c.punto_id !== p.puntoId))
+    throw new ErrorDatos('Ese código no existe.', undefined, 404);
+  const ref = `codigo:${p.codigoId}:anulado`;
+  // Marcar y devolver el fondo en un solo lote: si algo falla, no queda el código anulado sin fondo.
+  const [r] = await db.batch([
+    db
+      .prepare(
+        "UPDATE codigos_recarga SET estado = 'anulado', anulado_en = datetime('now') WHERE id = ? AND estado = 'emitido'",
+      )
+      .bind(p.codigoId),
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia, autor_id)
+         SELECT ?, ?, 'punto', ?, ?, ?, 'codigo_anulado', ?, ?
+          WHERE EXISTS (SELECT 1 FROM codigos_recarga WHERE id = ? AND estado = 'anulado')`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        cuentaPunto(c.punto_id),
+        c.pais,
+        c.moneda,
+        c.monto,
+        ref,
+        p.autorId,
+        p.codigoId,
+      ),
+  ]);
+  if (!r?.meta.changes)
+    throw new ErrorDatos('Ese código ya se canjeó: no se puede anular.', undefined, 409);
+}
+
+/** Recargas de los últimos 7 días (acreditadas o con tarjeta todavía pendientes), para el tope semanal. */
+async function recargasDeLaSemana(db: D1Database, usuarioId: string) {
+  const f = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM recargas WHERE usuario_id = ? AND estado IN ('acreditada', 'pendiente') AND creado_en > datetime('now', '-7 days')",
+    )
+    .bind(usuarioId)
+    .first<{ n: number }>();
+  return Number(f?.n ?? 0);
 }
 
 /**
@@ -144,22 +175,27 @@ export async function canjearCodigo(
       409,
     );
   const cfg = await leerConfigPais(db, p.pais);
-  const semana = await db
-    .prepare(
-      "SELECT COUNT(*) AS n FROM recargas WHERE usuario_id = ? AND estado = 'acreditada' AND creado_en > datetime('now', '-7 days')",
-    )
-    .bind(p.repartidorId)
-    .first<{ n: number }>();
-  if (Number(semana?.n ?? 0) >= cfg.recargasSemanaMax)
+  if ((await recargasDeLaSemana(db, p.repartidorId)) >= cfg.recargasSemanaMax)
     throw new ErrorDatos('Llegaste al máximo de recargas de esta semana.', undefined, 409);
   const hash = await sha256(normalizarCodigo(p.codigo));
   const r = await db
     .prepare(
-      "UPDATE codigos_recarga SET estado = 'canjeado', canjeado_por = ?, canjeado_en = datetime('now') WHERE codigo_hash = ? AND estado = 'emitido' AND pais = ? AND moneda = ?",
+      // Solo códigos de un punto ACTIVO: si soporte desactiva un punto, sus códigos dejan de servir.
+      "UPDATE codigos_recarga SET estado = 'canjeado', canjeado_por = ?, canjeado_en = datetime('now') WHERE codigo_hash = ? AND estado = 'emitido' AND pais = ? AND moneda = ? AND punto_id IN (SELECT id FROM puntos_venta WHERE activo = 1)",
     )
     .bind(p.repartidorId, hash, p.pais, p.moneda)
     .run();
-  if (!r.meta.changes) {
+  // Reintento después de una caída: el código ya quedó canjeado por ESTA persona pero el saldo no
+  // llegó. Se termina de acreditar (la referencia del libro es única: nunca se acredita dos veces).
+  const atascado = r.meta.changes
+    ? null
+    : await db
+        .prepare(
+          "SELECT c.id FROM codigos_recarga c WHERE c.codigo_hash = ? AND c.estado = 'canjeado' AND c.canjeado_por = ? AND NOT EXISTS (SELECT 1 FROM recargas x WHERE x.canal = 'codigo' AND x.referencia = c.id)",
+        )
+        .bind(hash, p.repartidorId)
+        .first<{ id: string }>();
+  if (!r.meta.changes && !atascado) {
     await db
       .prepare(
         `INSERT INTO intentos_canje (usuario_id, fallidos, ultimo_en) VALUES (?, 1, datetime('now'))
@@ -179,9 +215,11 @@ export async function canjearCodigo(
   await db.batch([
     db
       .prepare(
-        "INSERT INTO recargas (id, usuario_id, pais, moneda, monto, canal, estado, referencia, acreditada_en) VALUES (?, ?, ?, ?, ?, 'codigo', 'acreditada', ?, datetime('now'))",
+        `INSERT INTO recargas (id, usuario_id, pais, moneda, monto, canal, estado, referencia, acreditada_en)
+         SELECT ?, ?, ?, ?, ?, 'codigo', 'acreditada', ?, datetime('now')
+          WHERE NOT EXISTS (SELECT 1 FROM recargas WHERE canal = 'codigo' AND referencia = ?)`,
       )
-      .bind(recargaId, p.repartidorId, p.pais, p.moneda, c.monto, c.id),
+      .bind(recargaId, p.repartidorId, p.pais, p.moneda, c.monto, c.id, c.id),
     sentenciaLibro(db, {
       cuentaId: p.repartidorId,
       bolsillo: 'prepago',
@@ -207,6 +245,9 @@ export async function crearRecargaStripe(
     throw new ErrorDatos('Las recargas con tarjeta no están activas en este país.', undefined, 409);
   if (p.monto < cfg.recargaMin || p.monto > cfg.recargaMax)
     throw new ErrorDatos('La recarga está fuera de los límites permitidos.', 'monto', 409);
+  // El mismo tope semanal que los códigos (también cuenta las pendientes: no se abren cobros sin fin).
+  if ((await recargasDeLaSemana(db, p.repartidorId)) >= cfg.recargasSemanaMax)
+    throw new ErrorDatos('Llegaste al máximo de recargas de esta semana.', undefined, 409);
   const id = crypto.randomUUID();
   await db
     .prepare(

@@ -200,6 +200,13 @@ internacional.post('/punto-venta/codigos/:id/anular', async (c) => {
   return c.json({ ok: true });
 });
 
+/** Soporte anula un código perdido, robado o vendido por error (también de un punto desactivado). */
+internacional.post('/admin/codigos-recarga/:id/anular', async (c) => {
+  const u = exigir(c, 'admin');
+  await anularCodigo(base(c), { codigoId: c.req.param('id'), puntoId: null, autorId: u.id });
+  return c.json({ ok: true });
+});
+
 // ───────── Repartidor: saldo prepago, recargas y cobro directo ─────────
 internacional.get('/repartidor/saldo-prepago', async (c) => {
   const u = exigir(c, 'repartidor');
