@@ -123,4 +123,4 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] S.4 Corregir decisiones preparadas (comida perdida = crédito, no efectivo; transferencia sin confirmar; recarga disputada; Venezuela: tasa USD/VES).
 - [x] S.5 Recuperación completa: inventario de archivos del almacén, pérdida actual, solución de respaldo con retención, acceso y costo.
 - [x] S.6 Solicitud final única.
-- [ ] S.7 Verificar, publicar por el flujo permanente, encabezado vigente de la entrega.
+- [x] S.7 Verificar, publicar por el flujo permanente, encabezado vigente de la entrega.

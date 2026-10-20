@@ -1,6 +1,6 @@
 # Entrega del cierre técnico — versión vigente: 20 oct 2026 (ronda de estabilidad y recuperación)
 
-> **El MVP NO está terminado. Los pagos NO están probados con dinero real. El incidente de la foto de recogida NO está resuelto: su causa sigue sin confirmar.** Versión: PUBLICACION_PENDIENTE. Las rondas anteriores siguen abajo como historial.
+> **El MVP NO está terminado. Los pagos NO están probados con dinero real. El incidente de la foto de recogida NO está resuelto: su causa sigue sin confirmar.** Versión: publicado en c275d744 el 20 oct (staging verde en la corrida 39349948748, recorrido en inglés y español; producción con `publicar` 39353082904 y el verificador «después» en verde, pieza de errores en ok; punto de restauración previo `restauracion-2026-10-20-estabilidad` sobre cfc1cec7). Las rondas anteriores siguen abajo como historial.
 
 ## Estado vigente y evidencias
 
