@@ -1716,3 +1716,15 @@ CREATE TABLE IF NOT EXISTS casos_dinero_historial (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS casos_dinero_historial_clave ON casos_dinero_historial(clave, creado_en);
+
+-- C-ERRORES-VISIBLES (20 oct 2026): cada error no controlado (500) queda escrito con su ruta y su
+-- mensaje. Antes solo iba a la consola del momento y no se podía diagnosticar después.
+CREATE TABLE IF NOT EXISTS errores_servidor (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  metodo TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  mensaje TEXT NOT NULL,
+  pila TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS errores_servidor_creado ON errores_servidor(creado_en);
