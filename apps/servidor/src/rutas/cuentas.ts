@@ -434,11 +434,24 @@ cuentas.delete('/yo', async (c) => {
     // Verificación de identidad y datos del vehículo, licencia y seguro: se borran con la cuenta.
     db.prepare('DELETE FROM kyc WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM repartidor_datos WHERE usuario_id = ?').bind(u.id),
+    // C-BORRADO-VEHICULO (20 oct 2026): los documentos del vehículo (registro, seguro, fotos de la
+    // placa) también son datos personales: se quita el archivo y queda la fila sin él.
+    db
+      .prepare(
+        "UPDATE vehiculo_documentos SET clave = '' WHERE vehiculo_id IN (SELECT id FROM vehiculos WHERE conductor_id = ?)",
+      )
+      .bind(u.id),
   ]);
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (c.env.BUCKET) {
-    const lista = await c.env.BUCKET.list({ prefix: `kyc/${u.id}/` });
-    if (lista.objects.length) await c.env.BUCKET.delete(lista.objects.map((o) => o.key));
+    for (const prefix of [`kyc/${u.id}/`, `vehiculos/${u.id}/`]) {
+      let cursor: string | undefined;
+      do {
+        const lista = await c.env.BUCKET.list({ prefix, cursor });
+        if (lista.objects.length) await c.env.BUCKET.delete(lista.objects.map((o) => o.key));
+        cursor = lista.truncated ? lista.cursor : undefined;
+      } while (cursor);
+    }
   }
   c.header('Set-Cookie', cookie('', true));
   return c.json({ ok: true });
