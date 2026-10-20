@@ -114,3 +114,13 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 - [x] P.5 Alcance exacto de la restauración aislada.
 - [x] P.6 Solicitud única agrupada A–F y decisiones preparadas (20, 22, tarifas, topes, recargas disputadas).
 - [x] P.7 Verificar, staging, producción por el flujo permanente; registro, entrega y pagos con la misma versión.
+
+## Ronda de estabilidad y recuperación — 20 oct
+
+- [ ] S.1 Fallo de la foto de recogida en staging: conservar y analizar respuesta, rastro, estado, GPS; reproducir condiciones; arreglar con candado o documentar el riesgo sin inventar causa.
+- [ ] S.2 Restauración: prueba determinista que siempre corre; la de la base del recorrido informa expresamente si no se ejecutó.
+- [ ] S.3 Recorrido COP/VES determinista, aislado por corrida (sin limpiezas indiscriminadas), listo para staging con permiso.
+- [ ] S.4 Corregir decisiones preparadas (comida perdida = crédito, no efectivo; transferencia sin confirmar; recarga disputada; Venezuela: tasa USD/VES).
+- [ ] S.5 Recuperación completa: inventario de archivos del almacén, pérdida actual, solución de respaldo con retención, acceso y costo.
+- [ ] S.6 Solicitud final única.
+- [ ] S.7 Verificar, publicar por el flujo permanente, encabezado vigente de la entrega.
