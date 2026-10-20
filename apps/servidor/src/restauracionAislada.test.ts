@@ -2,11 +2,102 @@ import { copyFileSync, existsSync, mkdtempSync, readdirSync, readFileSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { describe, expect, it } from 'vitest';
-import { app } from './app';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { crearBasePruebas } from './pruebas/d1';
-import { crearAlmacenPruebas } from './pruebas/r2';
-import { respaldarBase, restaurarDesdeRespaldo } from './respaldo';
+import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
+import { verificarRestauracion } from './pruebas/restauracion';
+
+/**
+ * C-RESTAURACION-SIEMPRE (20 oct 2026): la restauración se comprueba en CADA corrida de pruebas con
+ * datos propios y fijos (restaurante, cliente, repartidor, dos pedidos entregados y su dinero en el
+ * libro). Antes solo corría si existía la base del recorrido local; si no, se saltaba y la
+ * verificación quedaba en verde sin haber restaurado nada.
+ */
+describe('restauración de un respaldo con datos fijos (C-RESTAURACION-SIEMPRE)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('respalda, restaura en otra base y todo cuadra: filas, relaciones, libro y la cuenta entra', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(JSON.stringify({ id: 'pi_prueba', client_secret: 'x' }), { status: 200 }),
+    );
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
+    const dueno = await m.cuenta('restaurante');
+    const admin = await m.cuenta('admin');
+    const cliente = await m.cuenta('cliente', 'Ana Cliente');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    const restId = r.datos.restaurante.id as string;
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/restaurantes/${restId}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    const plato = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Plato fijo', precioCentavos: 1500 },
+      dueno.token,
+    );
+    await m.abrir(dueno.token);
+    const rep = await m.cuenta('repartidor', 'Luis Prueba');
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.771, lng: -80.191 },
+      rep.token,
+    );
+    for (let i = 0; i < 2; i++) {
+      const p = await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: restId,
+          lineas: [{ platoId: plato.datos.plato.id, cantidad: 2 }],
+          propinaCentavos: 400,
+          direccion: '200 Calle Prueba',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        cliente.token,
+      );
+      const id = p.datos.pedidoId as string;
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      )
+        .bind(id)
+        .run();
+      await m.llamar(
+        'POST',
+        `/datos/restaurante/pedidos/${id}/aceptar`,
+        { minutos: 5 },
+        dueno.token,
+      );
+      await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+      await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+      await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+      await m.recoger(id, rep.token, dueno.token);
+      const e = await m.entregar(id, rep.token);
+      if (e.estado !== 200) throw new Error(`entrega ${e.estado}: ${JSON.stringify(e.datos)}`);
+    }
+    const correo = await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(cliente.id)
+      .first<{ correo: string }>();
+    const hecho = await verificarRestauracion(m.DB, {
+      correoComo: correo!.correo,
+      clave: 'clave-segura-1',
+      filasMinimas: 20,
+    });
+    // El respaldo tenía de verdad el dinero y los pedidos (no una base vacía).
+    const dinero = await m.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM movimientos) AS mov, (SELECT COUNT(*) FROM pedidos WHERE estado = 'entregado') AS ent",
+    ).first<{ mov: number; ent: number }>();
+    expect(Number(dinero?.mov)).toBeGreaterThan(0);
+    expect(Number(dinero?.ent)).toBe(2);
+    expect(hecho.filas).toBeGreaterThan(20);
+  });
+});
 
 /**
  * C-RESTAURACION-AISLADA (19 oct 2026): la prueba de que un respaldo REAL se puede restaurar, sin
@@ -42,104 +133,20 @@ describe.skipIf(!archivo)(
           "SELECT 1 FROM usuarios u WHERE u.correo LIKE 'cliente.%@recorrido.test' AND EXISTS (SELECT 1 FROM pedidos p WHERE p.cliente_id = u.id)",
         )
         .first();
-      if (!hayCorrida) ctx.skip('la base del recorrido no tiene todavía una corrida completa');
-      const almacen = crearAlmacenPruebas().bucket;
-      const r = await respaldarBase(origen, almacen);
-      expect(r.filas).toBeGreaterThan(100);
-
-      // Base nueva: el esquema de schema.sql y las columnas que agrega el servidor al arrancar.
-      const destino = crearBasePruebas();
-      expect((await app.request('/datos/salud', {}, { DB: destino })).status).toBe(200);
-      const dia = new Date().toISOString().slice(0, 10);
-      const rest = await restaurarDesdeRespaldo(destino, almacen, dia);
-      expect(rest.tablas).toBe(r.tablas);
-      expect(rest.filas).toBe(r.filas);
-
-      // Mismas filas tabla por tabla.
-      const { results: tablas } = await origen
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'",
-        )
-        .all<{ name: string }>();
-      const distintas: string[] = [];
-      for (const { name } of tablas) {
-        if (!/^[a-z_]+$/.test(name)) continue;
-        const a = await origen
-          .prepare(`SELECT COUNT(*) AS n FROM "${name}"`)
-          .first<{ n: number }>();
-        const b = await destino
-          .prepare(`SELECT COUNT(*) AS n FROM "${name}"`)
-          .first<{ n: number }>()
-          .catch(() => null);
-        if (b && Number(a?.n) !== Number(b.n)) distintas.push(`${name}: ${a?.n} → ${b.n}`);
-      }
-      expect(
-        // Las sesiones no se respaldan a propósito (nadie queda con la sesión de una copia vieja).
-        distintas.filter((t) => !t.startsWith('sesiones:')),
-      ).toEqual([]);
-
-      // Relaciones: ninguna llave foránea rota.
-      const rotas = await destino.prepare('PRAGMA foreign_key_check').all();
-      expect(rotas.results).toEqual([]);
-      // El dinero cuadra igual: el saldo de cada bolsillo del libro es el mismo.
-      const saldos = (db: D1Database) =>
-        db
-          .prepare(
-            'SELECT cuenta_id, bolsillo, moneda, SUM(monto) AS s FROM libro GROUP BY cuenta_id, bolsillo, moneda ORDER BY 1, 2, 3',
-          )
-          .all();
-      expect((await saldos(destino)).results).toEqual((await saldos(origen)).results);
-
-      // Funcionamiento: la salud, la lista de restaurantes y una cuenta real del recorrido entra y
-      // ve sus pedidos, sobre la base restaurada.
-      const salud = (await (await app.request('/datos/salud', {}, { DB: destino })).json()) as {
-        piezas: Record<string, string>;
-      };
-      expect(salud.piezas).toMatchObject({
-        base: 'ok',
-        esquema: 'ok',
-        libro: 'ok',
-        transiciones: 'ok',
-      });
-      const lista = await app.request(
-        '/datos/restaurantes?lat=25.7725&lng=-80.187',
-        {},
-        { DB: destino },
-      );
-      expect(lista.status).toBe(200);
+      // Parcial a propósito: sin una corrida del recorrido NO se restauró nada con datos del
+      // recorrido, y lo dice. La restauración igual quedó probada arriba (C-RESTAURACION-SIEMPRE).
+      if (!hayCorrida)
+        ctx.skip(
+          'NO EJECUTADA: la base del recorrido no tiene una corrida completa (la de datos fijos sí corrió)',
+        );
       const datos = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8')) as {
         clave: string;
       };
-      const cliente = await destino
-        .prepare(
-          "SELECT u.id, u.correo FROM usuarios u WHERE u.rol = 'cliente' AND u.correo LIKE 'cliente.%@recorrido.test' AND EXISTS (SELECT 1 FROM pedidos p WHERE p.cliente_id = u.id) ORDER BY u.creado_en DESC LIMIT 1",
-        )
-        .first<{ id: string; correo: string }>();
-      expect(cliente).toBeTruthy();
-      const entrar = await app.request(
-        '/datos/cuentas/entrar',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'cf-connecting-ip': '10.250.0.1' },
-          body: JSON.stringify({ correo: cliente!.correo, clave: datos.clave }),
-        },
-        { DB: destino },
-      );
-      expect(entrar.status).toBe(200);
-      const { token } = (await entrar.json()) as { token: string };
-      const mios = await app.request(
-        '/datos/mis-pedidos',
-        { headers: { authorization: `Bearer ${token}`, 'cf-connecting-ip': '10.250.0.2' } },
-        { DB: destino },
-      );
-      expect(mios.status).toBe(200);
-      const n = await origen
-        .prepare('SELECT COUNT(*) AS n FROM pedidos WHERE cliente_id = ?')
-        .bind(cliente!.id)
-        .first<{ n: number }>();
-      const lista2 = (await mios.json()) as { pedidos: unknown[] };
-      expect(lista2.pedidos.length).toBe(Math.min(Number(n?.n), lista2.pedidos.length));
-      expect(lista2.pedidos.length).toBeGreaterThan(0);
+      await verificarRestauracion(origen, {
+        correoComo: 'cliente.%@recorrido.test',
+        clave: datos.clave,
+        filasMinimas: 100,
+      });
     });
   },
 );
