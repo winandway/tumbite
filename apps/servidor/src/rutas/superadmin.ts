@@ -1,3 +1,4 @@
+import { rutaSinIds } from '../errores';
 import { devolverParcial, guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -1074,6 +1075,26 @@ superadmin.put('/admin/quejas-config', async (c) => {
   );
   await guardarConfigQuejas(base(c), d);
   return c.json({ config: d });
+});
+
+/** C-ERRORES-VISIBLES: los últimos errores no controlados (sin datos personales). */
+superadmin.get('/admin/errores', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      'SELECT id, metodo, ruta, mensaje, pila, creado_en FROM errores_servidor ORDER BY id DESC LIMIT 100',
+    )
+    .all<Record<string, unknown>>();
+  return c.json({
+    errores: results.map((r) => ({
+      id: Number(r.id),
+      metodo: String(r.metodo),
+      ruta: rutaSinIds(String(r.ruta)),
+      mensaje: String(r.mensaje),
+      pila: String(r.pila),
+      creadoEn: String(r.creado_en),
+    })),
+  });
 });
 
 /** Disputas (contracargos) abiertas o cerradas que avisó Stripe. */

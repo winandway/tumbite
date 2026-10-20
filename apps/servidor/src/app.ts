@@ -1,3 +1,4 @@
+import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
@@ -239,6 +240,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: disputas', e);
       return 'error' as const;
     });
+  // C-ERRORES-VISIBLES: errores no controlados en la última hora («pendiente», para revisar).
+  if (c.env.DB)
+    piezas.errores = await saludErrores(c.env.DB).catch((e: unknown) => {
+      console.error('salud: errores', e);
+      return 'error' as const;
+    });
   // C-BANDEJA-DINERO: casos del cobro en mano esperando a soporte («pendiente», no es un error).
   if (c.env.DB)
     piezas.bandeja = await saludBandeja(c.env.DB).catch((e: unknown) => {
@@ -412,12 +419,17 @@ app.route('/datos', fotos);
 app.route('/', media);
 app.route('/datos', respaldo);
 
-app.onError((err, c) => {
+app.onError(async (err, c) => {
   // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).
   const idioma = idiomaDeLaPeticion((n) => c.req.header(n));
   if (err instanceof ErrorDatos)
     return c.json({ error: enIdiomaDePeticion(err.message, idioma), campo: err.campo }, err.estado);
   console.error('error no controlado', err);
+  // C-ERRORES-VISIBLES: queda escrito para poder diagnosticarlo después (si la base responde).
+  if (c.env.DB)
+    await guardarError(c.env.DB, c.req.method, c.req.path, err).catch((e: unknown) =>
+      console.error('no se pudo guardar el error', e),
+    );
   return c.json(
     {
       error: enIdiomaDePeticion('Algo salió mal de nuestro lado. Ya lo estamos revisando.', idioma),

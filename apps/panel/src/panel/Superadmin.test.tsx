@@ -104,6 +104,30 @@ describe('superadmin', () => {
     expect(screen.getAllByText('$1,200.00').length).toBeGreaterThan(0);
   });
 
+  it('C-ERRORES-VISIBLES: el resumen lista los errores del servidor con su ruta y mensaje', async () => {
+    servidor((url) =>
+      url.includes('/admin/errores')
+        ? {
+            errores: [
+              {
+                id: 1,
+                metodo: 'POST',
+                ruta: '/datos/repartidor/pedidos/:id/foto-recogida',
+                mensaje: 'D1_ERROR: prueba',
+                creadoEn: '2026-10-19 21:43:17',
+              },
+            ],
+          }
+        : RESUMEN,
+    );
+    render(<SuperResumen base="/panel/control-x" idioma="en" />);
+    expect(await screen.findByText('D1_ERROR: prueba')).toBeInTheDocument();
+    expect(
+      screen.getByText('POST /datos/repartidor/pedidos/:id/foto-recogida'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Server errors')).toBeInTheDocument();
+  });
+
   it('la bandeja filtra por estado y el ticket se responde y se cierra', async () => {
     const llamadas = servidor((url, init) => {
       if (url.includes('/datos/admin/tickets?'))

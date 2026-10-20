@@ -82,6 +82,17 @@ for (const k of ['sms', 'retiros', 'tiempoReal'])
     pieza.get(k) === 'pendiente',
     `salud · ${k} = pendiente, apagado a propósito (está «${pieza.get(k)}»)`,
   );
+// C-ERRORES-VISIBLES: después de publicar la pieza existe; «pendiente» = hubo errores no
+// controlados en la última hora (no tumba la publicación, pero se dice para revisarlos).
+if (modo === 'despues')
+  exigir(
+    ['ok', 'pendiente'].includes(pieza.get('errores')),
+    `salud · errores = ok o pendiente (está «${pieza.get('errores')}»)`,
+  );
+if (pieza.get('errores') === 'pendiente')
+  avisos.push(
+    'aviso · hubo errores no controlados en la última hora: revisar /datos/admin/errores',
+  );
 // La pieza «reloj» (reloj seguro): ok, o «atrasado» solo con el programador de GitHub. Error nunca.
 if (conReloj)
   exigir(

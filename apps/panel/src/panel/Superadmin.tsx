@@ -51,6 +51,62 @@ function SaludPiezas() {
   );
 }
 
+type ErrorServidor = {
+  id: number;
+  metodo: string;
+  ruta: string;
+  mensaje: string;
+  creadoEn: string;
+};
+
+/**
+ * C-ERRORES-VISIBLES: los últimos errores no controlados del servidor (ruta y mensaje, sin datos
+ * personales). Antes solo iban a la consola del momento y no se podían revisar después.
+ */
+function ErroresServidor({ idioma }: { idioma: Idioma }) {
+  const t = enIdioma(T, idioma);
+  const [errores, setErrores] = useState<ErrorServidor[] | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    pedir<{ errores: ErrorServidor[] }>('GET', '/datos/admin/errores')
+      .then((r) => {
+        if (vivo) setErrores(r.errores);
+      })
+      .catch(() => {
+        if (vivo) setErrores([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  if (!errores) return null;
+  if (!errores.length) return <p className="ok">{t.sinErrores}</p>;
+  return (
+    <div className="tabla-ancha">
+      <table className="tabla" aria-label={t.errores}>
+        <thead>
+          <tr>
+            <th>{t.cuando}</th>
+            <th>{t.ruta}</th>
+            <th>{t.mensaje}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {errores.slice(0, 20).map((e) => (
+            <tr key={e.id}>
+              <td>{e.creadoEn}</td>
+              <td>
+                {e.metodo} {e.ruta}
+              </td>
+              <td>{e.mensaje}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 const T = {
   es: {
     resumen: 'Resumen',
@@ -58,6 +114,13 @@ const T = {
     saludAyuda:
       'Cada pieza dice ok, pendiente (apagada a propósito), atrasado o error. Si algo está en error, el equipo ya recibió el correo del canario.',
     dinero: 'Dinero de ayer',
+    errores: 'Errores del servidor',
+    erroresAyuda:
+      'Los últimos fallos que el servidor no supo manejar (la persona vio «Algo salió mal»). Hora en UTC.',
+    sinErrores: 'Sin errores registrados.',
+    cuando: 'Cuándo',
+    ruta: 'Dónde',
+    mensaje: 'Mensaje',
     cuadra: 'Cuadra',
     noCuadra: 'NO cuadra: revisar',
     sinConciliar: 'Todavía sin conciliar',
@@ -131,6 +194,13 @@ const T = {
     saludAyuda:
       'Each piece says ok, pending (turned off on purpose), delayed or error. If something is in error, the team already got the canary email.',
     dinero: 'Yesterday’s money',
+    errores: 'Server errors',
+    erroresAyuda:
+      'The latest failures the server could not handle (the person saw “Something went wrong”). Time in UTC.',
+    sinErrores: 'No errors recorded.',
+    cuando: 'When',
+    ruta: 'Where',
+    mensaje: 'Message',
     cuadra: 'Adds up',
     noCuadra: 'Does NOT add up: review',
     sinConciliar: 'Not reconciled yet',
@@ -320,6 +390,9 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
       <h2>{t.salud}</h2>
       <p className="suave">{t.saludAyuda}</p>
       <SaludPiezas />
+      <h2>{t.errores}</h2>
+      <p className="suave">{t.erroresAyuda}</p>
+      <ErroresServidor idioma={idioma} />
       <h2>{t.franquicias}</h2>
       <div className="tabla-ancha">
         <table className="tabla">

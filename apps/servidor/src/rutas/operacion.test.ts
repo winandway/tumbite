@@ -625,6 +625,49 @@ describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-E
     expect(await estado(m, id)).toBe('listo');
   });
 
+  it('C-FOTO-RECOGIDA-REINTENTO: si falla después de guardar la foto, queda el error escrito y reintentar la completa', async () => {
+    // Reproduce la huella del 19 oct en staging (corrida 39327502810): evidencia y llegada
+    // guardadas, sin el evento «foto_recogida» y respuesta 500. La falla se inyecta con un
+    // disparador que solo existe en esta prueba; la causa real en staging NO está confirmada.
+    const { m, rep, id } = await hastaListo();
+    await m.DB.prepare(
+      `CREATE TRIGGER falla_inyectada BEFORE INSERT ON bitacora_pedidos
+       WHEN NEW.evento = 'foto_recogida' BEGIN SELECT RAISE(ABORT, 'falla inyectada'); END`,
+    ).run();
+    const ruta = `/datos/repartidor/pedidos/${id}/foto-recogida`;
+    const gps = { lat: 25.7701, lng: -80.1901 };
+    const r1 = await m.foto(ruta, rep.token, gps);
+    expect(r1.estado).toBe(500);
+    const huella = async () => ({
+      evidencia: await m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM evidencias WHERE pedido_id = ? AND tipo = 'recogida'",
+      )
+        .bind(id)
+        .first<{ n: number }>(),
+      evento: await m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'foto_recogida'",
+      )
+        .bind(id)
+        .first<{ n: number }>(),
+    });
+    expect(await huella()).toEqual({ evidencia: { n: 1 }, evento: { n: 0 } });
+    // C-ERRORES-VISIBLES: el error quedó escrito con su ruta y su mensaje.
+    const err = await m.DB.prepare(
+      'SELECT metodo, ruta, mensaje FROM errores_servidor ORDER BY id DESC LIMIT 1',
+    ).first<{ metodo: string; ruta: string; mensaje: string }>();
+    expect(err).toMatchObject({ metodo: 'POST', ruta: expect.stringContaining('foto-recogida') });
+    expect(err?.mensaje).toContain('falla inyectada');
+    const admin = await m.cuenta('admin');
+    const lista = await m.llamar('GET', '/datos/admin/errores', undefined, admin.token);
+    expect(lista.datos.errores[0].ruta).toBe('/datos/repartidor/pedidos/:id/foto-recogida');
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect(salud.datos.piezas.errores).toBe('pendiente');
+    // Se quita la falla y el repartidor reintenta: la foto se completa sin duplicar nada.
+    await m.DB.prepare('DROP TRIGGER falla_inyectada').run();
+    expect((await m.foto(ruta, rep.token, gps)).estado).toBe(200);
+    expect(await huella()).toEqual({ evidencia: { n: 1 }, evento: { n: 1 } });
+  });
+
   it('la foto lejos del restaurante o sin ubicación no vale', async () => {
     const { m, rep, id } = await hastaListo();
     const ruta = `/datos/repartidor/pedidos/${id}/foto-recogida`;

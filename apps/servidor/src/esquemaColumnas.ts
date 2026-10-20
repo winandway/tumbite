@@ -1033,5 +1033,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "autor_id",
     "idempotencia",
     "creado_en"
+  ],
+  "errores_servidor": [
+    "id",
+    "metodo",
+    "ruta",
+    "mensaje",
+    "pila",
+    "creado_en"
   ]
 };
