@@ -961,3 +961,32 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Defectos que encontró y quedaron arreglados:** (1) la ruta del pago en el local no devolvía la moneda: la app caía en dólares y multiplicaba los pesos por cien; (2) el carrito preguntaba las formas de pago por la ciudad guardada del cliente y no por la del restaurante (un cliente nuevo nunca veía el efectivo de su país); (3) las tarifas de un país no aceptaban montos de más de 100 000 unidades (en bolívares no cabía un envío máximo de 1 200); (4) el carrito ofrecía «Tarjeta» en pesos aunque el servidor la rechaza.
 - **Pruebas:** el recorrido, `topesPais.test.ts` (país del restaurante, montos amplios) y las comprobaciones de piezas de `internacional.test.ts`; rojo comprobado de cada arreglo de servidor.
 - **Lo que NO prueba:** staging con zonas de otro país (falta permiso para crearlas allí), teléfono real, cifras reales (no existen), dinero real, pasarelas locales.
+
+## C-ERRORES-VISIBLES y C-FOTO-RECOGIDA-REINTENTO: cada error no controlado queda escrito (20 oct 2026)
+
+- **Qué se rompió:** el 19 oct en staging (corrida 39327502810) la foto de recogida respondió 500 y no había forma de saber por qué: `app.onError` solo hacía `console.error` y el alojamiento no conserva la consola. Informe completo: `docs/INCIDENTE-FOTO-RECOGIDA-2026-10-19.md`. **Causa sin confirmar.**
+- **Qué se hizo:** `apps/servidor/src/errores.ts` guarda cada 500 en `errores_servidor` (método, ruta, mensaje, seis renglones de pila; máximo 1000 filas; nunca el cuerpo). Pieza `errores` en `/datos/salud` («pendiente» si hubo errores en la última hora; no tumba la salud). Ruta `GET /datos/admin/errores` (los UUID salen como `:id`). Tabla «Errores del servidor» en el resumen del superadmin. El verificador «después» exige la pieza y avisa si está en pendiente.
+- **Si guardar el error falla**, se escribe en la consola y la respuesta sigue siendo el 500 normal: nunca se tapa el error original.
+- **Pruebas:** `operacion.test.ts` «C-FOTO-RECOGIDA-REINTENTO» (inyecta la falla con un disparador después de guardar la evidencia, exige 500 + error escrito + canario pendiente, y que el reintento responda 200 sin duplicar la evidencia); comprobada en rojo quitando `guardarError`. `Superadmin.test.tsx` «C-ERRORES-VISIBLES».
+- **No tocar:** el `async` de `app.onError` ni el `catch` alrededor de `guardarError`.
+
+## C-RESTAURACION-SIEMPRE: la restauración se prueba en cada corrida, con datos fijos (20 oct 2026)
+
+- **Qué estaba mal:** la prueba de restauración (C-RESTAURACION-AISLADA) solo corría si existía la base del recorrido local; en CI y en una computadora nueva se saltaba y `npm run verify` quedaba en verde sin haber restaurado nada.
+- **Qué se hizo:** `restauracionAislada.test.ts` tiene ahora dos partes. **Completa (siempre corre):** arma por la API un restaurante, un cliente, un repartidor y dos pedidos entregados con su dinero, respalda con el código de producción, restaura en otra base y exige mismas filas por tabla, ninguna llave rota, el mismo libro, la misma billetera por persona, la salud en ok y que el cliente entre y vea sus pedidos (`pruebas/restauracion.ts`). **Parcial (con la base del recorrido):** si no hay corrida, se salta con el texto «NO EJECUTADA», nunca en silencio.
+- **Comprobada en rojo:** quitando una tabla del respaldo, falla con «movimientos: 6 → 0».
+- **Lo que sigue sin probar:** la restauración sobre la base real de staging (espera autorización: sobrescribe datos) y los archivos del almacén (no se respaldan hoy; ver `docs/RECUPERACION-COMPLETA-2026-10-20.md`).
+
+## C-RECORRIDO-AISLADO: el recorrido en pesos y bolívares solo toca lo suyo (20 oct 2026)
+
+- **Qué estaba mal:** para no chocar con corridas anteriores, `internacional.spec.ts` desconectaba a TODOS los repartidores y cancelaba TODOS los pedidos pendientes de la ciudad de prueba con SQL directo, y al final apagaba el país en vez de devolverlo como estaba.
+- **Qué se hizo:** cada corrida crea su propia ciudad (`CO-DC-P<corrida>`, `VE-DC-P<corrida>`); antes apaga por la API solo las ciudades de prueba anteriores con su mismo prefijo (el despacho nunca cruza de ciudad, así que lo viejo no interfiere y no se modifica). Guarda la configuración del país al empezar y la devuelve igual al final. En un `finally` desconecta a su repartidor, cierra su restaurante y apaga su ciudad, aunque la prueba falle, y exige que esa limpieza salga bien. Sin SQL en todo el archivo salvo, en staging, volver admin a la cuenta del equipo de la corrida (como el recorrido principal).
+- **Staging:** solo con `RECORRIDO_INTERNACIONAL=autorizado`; sin esa variable se salta con «NO EJECUTADA en staging». La variable NO está puesta en el flujo de CI: espera la autorización de Richard (solicitud del 20 oct, grupo «datos de prueba en staging»).
+- **Comprobado:** dos corridas locales verdes (COP en español, VES en inglés) el 20 oct; al terminar, las cuatro ciudades de prueba quedaron apagadas y los tres países con el cobro en mano apagado.
+
+## C-BORRADO-VEHICULO: borrar la cuenta borra también los documentos del vehículo (20 oct 2026)
+
+- **Qué estaba mal:** al borrar la cuenta se vaciaba la carpeta de identidad (`kyc/<persona>/`) pero no la de los documentos del vehículo (`vehiculos/<persona>/`: registro, seguro, fotos de la placa). Además la lista del almacén se leía una sola vez (máximo 1000 claves).
+- **Qué se hizo:** `cuentas.ts` recorre las dos carpetas con paginación y deja `vehiculo_documentos.clave` vacía. Encontrado al inventariar el almacén (`docs/RECUPERACION-COMPLETA-2026-10-20.md`).
+- **Promesa rota:** la política de privacidad (es y en) y la página de borrar la cuenta ya decían que se borran «tu vehículo, licencia y seguro».
+- **Prueba:** `borradoVehiculo.test.ts`, comprobada en rojo quitando la carpeta del vehículo; un archivo de otra persona no se toca.

@@ -117,10 +117,10 @@ Nota: el prompt nombra AGENTS.md; en este proyecto ese archivo es CLAUDE.md.
 
 ## Ronda de estabilidad y recuperación — 20 oct
 
-- [ ] S.1 Fallo de la foto de recogida en staging: conservar y analizar respuesta, rastro, estado, GPS; reproducir condiciones; arreglar con candado o documentar el riesgo sin inventar causa.
-- [ ] S.2 Restauración: prueba determinista que siempre corre; la de la base del recorrido informa expresamente si no se ejecutó.
-- [ ] S.3 Recorrido COP/VES determinista, aislado por corrida (sin limpiezas indiscriminadas), listo para staging con permiso.
-- [ ] S.4 Corregir decisiones preparadas (comida perdida = crédito, no efectivo; transferencia sin confirmar; recarga disputada; Venezuela: tasa USD/VES).
-- [ ] S.5 Recuperación completa: inventario de archivos del almacén, pérdida actual, solución de respaldo con retención, acceso y costo.
-- [ ] S.6 Solicitud final única.
+- [x] S.1 Fallo de la foto de recogida en staging: conservar y analizar respuesta, rastro, estado, GPS; reproducir condiciones; arreglar con candado o documentar el riesgo sin inventar causa.
+- [x] S.2 Restauración: prueba determinista que siempre corre; la de la base del recorrido informa expresamente si no se ejecutó.
+- [x] S.3 Recorrido COP/VES determinista, aislado por corrida (sin limpiezas indiscriminadas), listo para staging con permiso.
+- [x] S.4 Corregir decisiones preparadas (comida perdida = crédito, no efectivo; transferencia sin confirmar; recarga disputada; Venezuela: tasa USD/VES).
+- [x] S.5 Recuperación completa: inventario de archivos del almacén, pérdida actual, solución de respaldo con retención, acceso y costo.
+- [x] S.6 Solicitud final única.
 - [ ] S.7 Verificar, publicar por el flujo permanente, encabezado vigente de la entrega.

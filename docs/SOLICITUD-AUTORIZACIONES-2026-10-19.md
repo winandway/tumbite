@@ -1,5 +1,7 @@
 # Solicitud única de autorizaciones — 19 oct 2026 (versión agrupada A–F)
 
+> **Reemplazada el 20 oct por `docs/SOLICITUD-AUTORIZACIONES-2026-10-20.md` (siete grupos).** Se conserva como historial y por el detalle de cada fila.
+
 **Estado:** nada de esto está autorizado, creado ni ejecutado. No hay ninguna aprobación escrita de Richard sobre estos recursos. Cada fila necesita su propio «sí»; un «sí» a una fila no autoriza las demás.
 
 **Cómo se lee:** cada fila dice el recurso, su nombre exacto, la cuenta donde vive, para qué sirve, cuánto cuesta y el límite que se propone, qué cambia al hacerlo y quién lo ejecuta. **Claude ejecuta todo lo técnico una vez autorizado.** A Richard solo le toca lo que exige su identidad, su firma, su tarjeta o su sesión personal (grupo E). Los precios son los públicos de cada proveedor, consultados el 19 oct 2026 (las direcciones están en «Fuentes», al final); antes de crear algo, Claude vuelve a mirar el precio en el panel y, si no coincide, para y avisa.
