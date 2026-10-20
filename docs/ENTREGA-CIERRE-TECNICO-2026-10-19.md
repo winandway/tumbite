@@ -1,4 +1,55 @@
-# Entrega del cierre técnico — 19 de octubre de 2026 (tarde)
+# Entrega del cierre técnico — versión vigente: 20 oct 2026 (ronda de estabilidad y recuperación)
+
+> **El MVP NO está terminado. Los pagos NO están probados con dinero real. El incidente de la foto de recogida NO está resuelto: su causa sigue sin confirmar.** Versión: PUBLICACION_PENDIENTE. Las rondas anteriores siguen abajo como historial.
+
+## Estado vigente y evidencias
+
+| Pieza                                           | Estado                                                                                                               | Evidencia                                                               |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| EE. UU., tarjeta                                | Publicado; probado en local y staging con Stripe de prueba                                                           | Recorrido es/en en staging (ver «Versión»)                              |
+| EE. UU., efectivo y transferencia               | Apagados; probados en local y staging solo durante la corrida                                                        | Ídem                                                                    |
+| Colombia (COP) y Venezuela (VES), cobro en mano | Probados **solo en local**, con cifras ficticias, en pantalla y por API; ahora aislados por corrida                  | C-RECORRIDO-AISLADO; staging espera la fila 3.1                         |
+| Errores no controlados                          | Ahora quedan escritos y visibles (canario, superadmin, verificador)                                                  | C-ERRORES-VISIBLES                                                      |
+| Foto de recogida (500 en staging del 19 oct)    | Huella reproducida en local; el reintento la completa sin duplicar; **causa sin confirmar**                          | `docs/INCIDENTE-FOTO-RECOGIDA-2026-10-19.md`, C-FOTO-RECOGIDA-REINTENTO |
+| Restauración de la base                         | Se prueba en **cada** corrida con datos fijos; la variante con la base del recorrido dice «NO EJECUTADA» si no corre | C-RESTAURACION-SIEMPRE                                                  |
+| Archivos (fotos, identidad, vehículo)           | **Sin copia**: el respaldo vive en el mismo almacén                                                                  | `docs/RECUPERACION-COMPLETA-2026-10-20.md`                              |
+| Borrar la cuenta                                | Ahora borra también los documentos del vehículo, como prometía la política                                           | C-BORRADO-VEHICULO                                                      |
+
+|                                     | Pruebas automáticas | Local en pantalla | Staging                 | Teléfono real | Dinero real |
+| ----------------------------------- | ------------------- | ----------------- | ----------------------- | ------------- | ----------- |
+| EE. UU., tarjeta                    | Sí                  | Sí                | Sí                      | No            | No          |
+| EE. UU., cobro en mano              | Sí                  | Sí                | Sí (durante la corrida) | No            | No          |
+| Colombia y Venezuela, cobro en mano | Sí                  | Sí                | **No**                  | No            | No          |
+| Restauración                        | Sí (siempre)        | Sí                | **No** (fila 4.1)       | —             | —           |
+
+## Trabajo técnico pendiente de nuestro lado
+
+- Construir la copia separada de la base y los archivos cuando se autorice la fila 2.1.
+- Construir la tasa USD/VES por pedido si Richard la aprueba (fila 7.4): diseño listo en `docs/DISENO-TASA-VES.md`.
+- Cuando vuelva a fallar algo en staging o producción: leer «Errores del servidor» y corregir con prueba en rojo.
+
+## Riesgos abiertos e impacto
+
+| Riesgo                                                    | Impacto                                                                                      |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Pérdida del almacén o una llave robada                    | Se pierden base, respaldos, fotos de entrega y verificaciones: alto, hasta tener la fila 2.1 |
+| Fallo esporádico de la foto de recogida                   | Bajo: el repartidor reintenta y nada se duplica; ahora se ve el mensaje                      |
+| Cobro en mano fuera de EE. UU. sin staging ni dinero real | Bloquea encender esos países                                                                 |
+| Tarjeta sin prueba con dinero real                        | Bloquea anunciar ventas (fila 5.1)                                                           |
+
+## Decisiones y autorizaciones indispensables
+
+Una sola solicitud: `docs/SOLICITUD-AUTORIZACIONES-2026-10-20.md` (siete grupos). Ninguna fila está autorizada. Las decisiones corregidas están en `docs/DECISIONES-PREPARADAS-2026-10-19.md`.
+
+## Siguiente acción
+
+Richard: fila 5.1 (compra real), fila 2.1 (copia separada) y decisión 7.1. Nosotros: construir lo que se autorice, en ese orden.
+
+---
+
+## Historial: entrega del 19 oct (tarde y noche)
+
+## Entrega del cierre técnico — 19 de octubre de 2026 (tarde)
 
 > **El MVP NO está terminado.** Corrige la entrega anterior (`docs/ENTREGA-RONDA-MVP-2026-10-19.md`), que decía que todo lo restante dependía de Richard aunque listaba trabajo técnico. Estado punto por punto: `docs/RECONCILIACION-FASE-2.md` (sección 10). Versión: publicado en 26649f68 el 19 oct (staging verde en la corrida 39310077342 con el recorrido completo en inglés y español; producción con `publicar` 39314512825 y el verificador «después» en verde; punto de restauración previo `restauracion-2026-10-19-cierre-tecnico` sobre 62a5d345).
 

@@ -354,3 +354,12 @@ Estado de publicación: publicado en cfc1cec7 el 19 oct (staging verde en la cor
 | Alcance de la restauración aislada                                                                                                               | C-RESTAURACION-AISLADA    | Base verificada; almacén, entorno alojado y recuperación operativa sin verificar                 |
 
 **Sigue pendiente de nuestro lado:** ninguno de los puntos técnicos de esta ronda. Para encender un país faltan: cifras de tarifas y topes (Richard), decisiones 20 y 22, el recorrido en staging con una ciudad de otro país (permiso), teléfono real, piloto y lo legal.
+
+## 12. Estabilidad y recuperación (20 oct)
+
+- **Foto de recogida (500 en staging, 19 oct):** huella analizada (evidencia y llegada guardadas, evento ausente) y reproducida en local; el reintento la completa. **Causa sin confirmar.** Desde ahora cada error no controlado queda escrito (C-ERRORES-VISIBLES).
+- **Restauración:** ya no puede quedar en verde sin ejecutarse (C-RESTAURACION-SIEMPRE). La real en staging sigue esperando la fila 4.1.
+- **Pesos y bolívares:** recorrido aislado por corrida (C-RECORRIDO-AISLADO); staging espera la fila 3.1. **Colombia y Venezuela no están listos.**
+- **Decisiones 20, 22, recarga disputada y tasa VES:** corregidas y preparadas, ninguna tomada.
+- **Archivos:** sin copia independiente; propuesta en `docs/RECUPERACION-COMPLETA-2026-10-20.md` (fila 2.1).
+- **Privacidad:** los documentos del vehículo ahora se borran con la cuenta (C-BORRADO-VEHICULO).

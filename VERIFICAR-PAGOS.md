@@ -2,6 +2,8 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+> **20 oct, ronda de estabilidad:** ningún cambio en el circuito de cobro. El recorrido de pesos y bolívares ahora corre aislado por corrida; staging sigue sin probarlo (espera la fila 3.1 de `docs/SOLICITUD-AUTORIZACIONES-2026-10-20.md`). La compra real es la fila 5.1. **Nada nuevo probado con dinero real.**
+
 > **19 oct (noche), publicado en cfc1cec7:** topes por país; un país sin tarifas o topes no se enciende; cobro en mano en COP y VES probado **solo en esta computadora**, con cifras ficticias, en pantalla y por API. Ningún país distinto de EE. UU. tiene tarifas reales ni ciudad activa. Nada probado con dinero real.
 
 > **19 oct (tarde), publicado en 26649f68:** cobro en mano (efectivo y transferencia al repartidor) probado de punta a punta en staging con las cuentas de la corrida y en simulación; bandeja de soporte del cobro en mano; recarga que no cuadra abre incidencia. **Nada de esto se probó con dinero real** y el cobro en mano sigue **apagado** en todos los países. La tarjeta en EE. UU. sigue sin compra real (`docs/SOLICITUD-AUTORIZACIONES-2026-10-19.md`, fila 8).
