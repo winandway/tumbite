@@ -1,0 +1,422 @@
+"""Propuesta de inversión DRIVER'S Miami (PDF de venta para un tercero; NO cambia la marca Tumbite).
+Uso: python3 docs/pdf/modelo-drivers-miami.py && python3 docs/pdf/propuesta-drivers-miami.py
+Luego: node docs/pdf/a-pdf.mjs docs/pdf/propuesta-drivers-miami.html docs/Propuesta-DRIVERS-Miami.pdf
+"""
+import importlib.util, json, os
+
+AQUI = os.path.dirname(os.path.abspath(__file__))
+d = json.load(open(os.path.join(AQUI, 'modelo-drivers-miami.json')))
+spec = importlib.util.spec_from_file_location('modelo', os.path.join(AQUI, 'modelo-drivers-miami.py'))
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+
+CAP = '../capturas/recorrido/'
+lic, capital, total, margen = d['licencia'], d['capital'], d['total'], d['margen']
+planes = d['planes']
+base, cons, opti = d['res']['base'], d['res']['conservador'], d['res']['optimista']
+
+
+def n(v): return f"{v:,.0f}".replace(',', '.')
+def usd(v): return n(v) + ' USD'
+def dol(v): return f"{v:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+def musd(v): return f"{v / 1e6:.2f}".replace('.', ',') + ' millones de USD'
+def pct(v): return f"{v * 100:.1f}".replace('.', ',') + ' %'
+def pago_txt(r): return f"mes {r['payback']}" if r['payback'] else 'después del mes 48'
+
+
+def telefono(nombre, pie):
+    return f'<figure class="tel"><img src="{CAP}{nombre}.png" alt="{pie}"><figcaption>{pie}</figcaption></figure>'
+
+
+def fila(nombre, r, campo, fmt=usd):
+    celdas = ''.join(f'<td class="num">{fmt(a[campo])}</td>' for a in r['anios'])
+    extra = f'<td class="num">{pago_txt(r)}</td>' if campo == 'util' else '<td></td>'
+    return f'<tr><td><b>{nombre}</b></td>{celdas}{extra}</tr>'
+
+
+# Uso del capital hasta el fondo de la caja (escenario base)
+meses = mod.correr('base')
+fondo = min(range(48), key=lambda k: meses[k]['caja']) + 1
+tramo = meses[:fondo]
+usos = {
+    'Equipo de la ciudad': sum(mod.equipo(x['m']) for x in tramo),
+    'Publicidad de lanzamiento': sum(mod.publicidad(x['m']) for x in tramo),
+    'Incentivos a repartidores y descuentos a clientes': sum(mod.incentivos(x['m'], x['pedidos']) for x in tramo),
+    'Tablets, kits, abogado, permisos y seguros iniciales': sum(v for m in range(1, fondo + 1) for _, v in mod.UNA_VEZ.get(m, [])),
+    'Seguro comercial, oficina y herramientas': mod.SEGUROS_Y_OFICINA * fondo,
+}
+ingreso_fondo = sum(x['margen'] - x['windoce'] for x in tramo)
+reserva = capital - (sum(usos.values()) - ingreso_fondo)
+filas_uso = ''.join(f'<tr><td>{k}</td><td class="num">{usd(v)}</td></tr>' for k, v in usos.items())
+ganado48 = base['serie'][-1]
+
+# Gráfico: caja acumulada del proyecto (base), 48 meses
+serie = base['serie']
+lo, hi = min(serie), max(serie)
+W, H, PADL, PADB = 470, 250, 46, 24
+def x(i): return PADL + i * (W - PADL - 10) / (len(serie) - 1)
+def y(v): return 10 + (hi - v) * (H - PADB - 10) / (hi - lo)
+puntos = ' '.join(f'{x(i):.1f},{y(v):.1f}' for i, v in enumerate(serie))
+y0 = y(0)
+marcas = ''
+for val in range(int(lo // 1e6) * 1_000_000, int(hi) + 1, 1_000_000):
+    marcas += f'<line x1="{PADL}" x2="{W-10}" y1="{y(val):.1f}" y2="{y(val):.1f}" stroke="#e6e6e6"/><text x="{PADL-8}" y="{y(val)+4:.1f}" text-anchor="end" font-size="11" fill="#6b6b6b">{val/1e6:+.0f} M</text>'
+for mes in (12, 24, 36, 48):
+    marcas += f'<text x="{x(mes-1):.1f}" y="{H-8}" text-anchor="{'end' if mes == 48 else 'middle'}" font-size="11" fill="#6b6b6b">mes {mes}</text>'
+pb = base['payback']
+grafico = f'''<svg viewBox="0 0 {W} {H}" width="100%">{marcas}
+<line x1="{PADL}" x2="{W-10}" y1="{y0:.1f}" y2="{y0:.1f}" stroke="#0e1b2c" stroke-width="1"/>
+<polyline points="{puntos}" fill="none" stroke="#f2a900" stroke-width="2.5"/>
+<circle cx="{x(pb-1):.1f}" cy="{y0:.1f}" r="5" fill="#0f8a4a"/>
+<text x="{x(pb-1)+8:.1f}" y="{y0-10:.1f}" text-anchor="start" font-size="12" fill="#0f8a4a" font-weight="700">capital recuperado, mes {pb}</text></svg>'''
+
+LOGO = '''<svg viewBox="0 0 260 64" height="{alto}" xmlns="http://www.w3.org/2000/svg" aria-label="DRIVER'S">
+<rect x="0" y="0" width="64" height="64" rx="16" fill="#f2a900"/>
+<path d="M18 46 C 18 30, 30 18, 46 18" fill="none" stroke="#0e1b2c" stroke-width="7" stroke-linecap="round"/>
+<path d="M18 46 C 18 30, 30 18, 46 18" fill="none" stroke="#f2a900" stroke-width="1.6" stroke-dasharray="4 5" stroke-linecap="round"/>
+<circle cx="46" cy="18" r="6" fill="#0e1b2c"/><circle cx="46" cy="18" r="2.4" fill="#f2a900"/>
+<circle cx="18" cy="46" r="5" fill="#0e1b2c"/>
+<text x="78" y="44" font-family="Poppins, sans-serif" font-weight="800" font-size="34" letter-spacing="1" fill="{color}">DRIVER<tspan fill="#f2a900">\'</tspan>S</text>
+</svg>'''
+def logo(alto='16mm', color='#ffffff'):
+    return LOGO.replace('{alto}', alto).replace('{color}', color)
+
+
+html = f'''<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>DRIVER'S Miami · Propuesta de inversión</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@page {{ size: A4 landscape; margin: 0; }}
+* {{ box-sizing: border-box; margin: 0; padding: 0; }}
+:root {{ --rojo:#f2a900; --gris:#0e1b2c; --texto:#2b2b2b; --suave:#6b6b6b; --borde:#2a2a2a; --linea:#dcdcdc; --fondo:#f6f5f3; --verde:#0f8a4a; }}
+body {{ font-family: Montserrat, sans-serif; color: var(--texto); font-size: 9.6pt; line-height: 1.42; }}
+.hoja {{ width: 297mm; height: 210mm; padding: 11mm 14mm 13mm; position: relative; page-break-after: always; overflow: hidden; background: #fff; }}
+.hoja:last-child {{ page-break-after: auto; }}
+h1, h2, h3, .p {{ font-family: Poppins, sans-serif; color: var(--gris); }}
+h2 {{ font-size: 19pt; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 2mm; }}
+h3 {{ font-size: 11.5pt; font-weight: 700; margin-bottom: 1.5mm; }}
+.sub {{ color: var(--suave); font-size: 10.5pt; margin-bottom: 6mm; max-width: 230mm; }}
+.etq {{ font-family: Poppins; font-size: 8pt; font-weight: 700; color: var(--rojo); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 1.5mm; }}
+.pie {{ position: absolute; left: 14mm; right: 14mm; bottom: 6mm; display: flex; justify-content: space-between; font-size: 7.5pt; color: var(--suave); }}
+.pie a {{ color: var(--suave); text-decoration: none; }}
+.col2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }}
+.col3 {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; }}
+.col4 {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }}
+.tarjeta {{ border: 1px solid var(--borde); border-radius: 10px; padding: 4.5mm 5mm; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.06); }}
+.cifra {{ font-family: Poppins; font-size: 21pt; font-weight: 800; color: var(--gris); line-height: 1.1; }}
+.cifra.verde {{ color: var(--verde); }}
+.cifra.roja {{ color: var(--rojo); }}
+.chico {{ font-size: 8.2pt; color: var(--suave); }}
+ul.lista {{ list-style: none; }}
+ul.lista li {{ padding: 1.2mm 0 1.2mm 4.5mm; position: relative; border-bottom: 1px solid #efefef; }}
+ul.lista li::before {{ content: ""; position: absolute; left: 0; top: 2.9mm; width: 1.8mm; height: 1.8mm; border-radius: 50%; background: var(--rojo); }}
+table {{ width: 100%; border-collapse: collapse; font-size: 8.8pt; }}
+th {{ text-align: left; font-family: Poppins; font-weight: 600; font-size: 8pt; color: var(--suave); border-bottom: 1.5px solid var(--gris); padding: 1.6mm 2mm; }}
+td {{ padding: 1.5mm 2mm; border-bottom: 1px solid #ececec; vertical-align: top; }}
+td.num, th.num {{ text-align: right; white-space: nowrap; }}
+tr.total td {{ font-weight: 700; color: var(--gris); border-top: 1.5px solid var(--gris); border-bottom: none; }}
+.tels {{ display: flex; gap: 5mm; justify-content: space-between; }}
+.tel {{ flex: 1; text-align: center; }}
+.tel img {{ width: 100%; max-height: 118mm; object-fit: contain; object-position: top; border: 1px solid var(--borde); border-radius: 14px; }}
+.tel figcaption {{ font-size: 8pt; color: var(--suave); margin-top: 1.5mm; }}
+.panel img {{ width: 100%; border: 1px solid var(--borde); border-radius: 8px; }}
+.nota {{ font-size: 8pt; color: var(--suave); margin-top: 3mm; }}
+.portada {{ background: var(--gris); color: #fff; display: grid; grid-template-columns: 1.15fr 1fr; gap: 10mm; padding: 12mm 16mm; }}
+.portada h1 {{ color: #fff; font-size: 34pt; font-weight: 800; line-height: 1.05; letter-spacing: -0.8px; }}
+.portada .rojo {{ color: var(--rojo); }}
+.portada p {{ color: #d6d6d6; font-size: 11pt; }}
+.portada .datos {{ margin-top: 10mm; display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }}
+.portada .dato {{ border: 1px solid #2c3d55; border-radius: 10px; padding: 4mm; }}
+.portada .dato b {{ display: block; font-family: Poppins; font-size: 17pt; color: #fff; }}
+.portada .dato span {{ font-size: 8.5pt; color: #bdbdbd; }}
+.fase {{ border-left: 1px solid var(--linea); padding-left: 4mm; }}
+.fase b.p {{ font-size: 10pt; }}
+.paso {{ display: inline-block; font-family: Poppins; font-weight: 700; font-size: 8pt; color: #fff; background: var(--gris); border-radius: 20px; padding: .6mm 2.5mm; margin-bottom: 1.5mm; }}
+.verde-t {{ color: var(--verde); font-weight: 700; }}
+.barra {{ height: 7mm; border-radius: 5px; display: flex; overflow: hidden; border: 1px solid var(--borde); margin: 2mm 0 1mm; font-family: Poppins; font-size: 8.5pt; font-weight: 700; color: #fff; }}
+.barra div {{ display: flex; align-items: center; justify-content: center; }}
+</style></head>
+<body>
+
+<section class="hoja portada">
+  <div>
+    {logo('17mm')}
+    <div style="margin-top:6mm;display:inline-block;border:1px solid #f2a900;color:#f2a900;border-radius:6px;padding:1.5mm 3mm;font-family:Poppins;font-weight:700;font-size:8.5pt">BORRADOR · CIFRAS PROPUESTAS, NO DEFINITIVAS</div>
+    <div style="margin-top:6mm" class="etq">Propuesta de inversión · Miami</div>
+    <h1>DRIVER'S<br><span class="rojo">Miami</span></h1>
+    <p style="margin-top:3mm;font-family:Poppins;font-weight:600;font-size:13pt;color:#fff">Comida, motos, carros y envíos en una sola app.</p>
+    <p style="margin-top:4mm;max-width:130mm">Una plataforma de domicilios completa, ya construida y funcionando, con licencia exclusiva para Miami-Dade. Este documento explica qué se compra, cuánto se invierte, cómo se lanza, cuánto deja y cómo recupera su dinero quien invierte.</p>
+    <div class="datos">
+      <div class="dato"><b>{musd(total)}</b><span>inversión total: licencia y lanzamiento</span></div>
+      <div class="dato"><b>mes {base['payback']}</b><span>capital recuperado en el escenario base</span></div>
+      <div class="dato"><b>15 a 25 %</b><span>comisión al restaurante, frente a 25 a 30 % de los grandes</span></div>
+      <div class="dato"><b>10 años</b><span>exclusividad en Miami-Dade, renovables</span></div>
+    </div>
+    <p style="margin-top:6mm;font-size:8pt;color:#9a9a9a">Preparado por Windoce LLC · 21 de octubre de 2026 · Cifras en dólares de EE. UU.</p>
+  </div>
+  <div style="display:flex;gap:4mm;align-items:flex-end">
+    <img src="{CAP}cliente-inicio-es.png" style="width:50%;border-radius:14px;border:1px solid #2c3d55" alt="Inicio con los servicios">
+    <img src="{CAP}cliente-en-camino-es.png" style="width:50%;border-radius:14px;border:1px solid #2c3d55;margin-bottom:14mm" alt="Pedido en camino">
+  </div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Resumen</div>
+  <h2>La propuesta en una página</h2>
+  <p class="sub">Miami-Dade tiene 2,8 millones de habitantes, es bilingüe y pide a domicilio todos los días. Los grandes cobran al restaurante entre 25 y 30 % en sus planes más usados. DRIVER'S entra más barato, con una app que ya funciona de punta a punta y un dueño local.</p>
+  <div class="col4" style="margin-bottom:6mm">
+    <div class="tarjeta"><div class="chico">Licencia de la plataforma (una vez)</div><div class="cifra">{usd(lic)}</div><div class="chico">Miami-Dade, con exclusividad</div></div>
+    <div class="tarjeta"><div class="chico">Capital del lanzamiento</div><div class="cifra">{musd(capital).replace(' millones de USD',' M USD')}</div><div class="chico">incluye 10 % de reserva</div></div>
+    <div class="tarjeta"><div class="chico">Utilidad del dueño, año 3 (base)</div><div class="cifra verde">{usd(base['anios'][2]['util'])}</div><div class="chico">después de equipo y publicidad</div></div>
+    <div class="tarjeta"><div class="chico">Capital recuperado (base)</div><div class="cifra verde">mes {base['payback']}</div><div class="chico">optimista: mes {opti['payback']} · conservador: {pago_txt(cons)}</div></div>
+  </div>
+  <div class="col3">
+    <div class="tarjeta"><h3>Qué se compra</h3><ul class="lista">
+      <li>La licencia de la plataforma con la marca DRIVER'S y la exclusividad de Miami-Dade por 10 años.</li>
+      <li>Tres apps listas (cliente, restaurante, repartidor) y los paneles web, en inglés y español.</li>
+      <li>El plan de lanzamiento por barrios y el acompañamiento de nuestro equipo.</li>
+      <li>Las mejoras de la tecnología, sin costo extra.</li></ul></div>
+    <div class="tarjeta"><h3>Qué pone el dueño local</h3><ul class="lista">
+      <li>La empresa en Florida (LLC) y su cuenta con el procesador de pagos.</li>
+      <li>El capital del lanzamiento y el equipo de la ciudad.</li>
+      <li>La firma de restaurantes y repartidores, y la atención local.</li>
+      <li>Los permisos, seguros y el abogado de Florida.</li></ul></div>
+    <div class="tarjeta"><h3>Cómo se reparte</h3>
+      <div class="barra"><div style="width:75%;background:#0e1b2c">75 % dueño</div><div style="width:25%;background:#f2a900;color:#0e1b2c">25 %</div></div>
+      <p class="chico">De lo que deja cada pedido (comisión y tarifa de servicio, menos el procesador de pagos y el pago mínimo al repartidor), el 75 % es del dueño local y el 25 % de Windoce, que pone y mantiene la tecnología. El envío y la propina son del repartidor, completos.</p></div>
+  </div>
+  <div class="pie"><span>DRIVER'S Miami · Propuesta de inversión</span><span>Las proyecciones no son promesas: dependen de la ejecución y del mercado.</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">El mercado</div>
+  <h2>Miami pide a domicilio, y el restaurante paga caro</h2>
+  <p class="sub">Datos de fuentes públicas (lista al final). Donde no hay cifra pública, se dice que es una estimación nuestra.</p>
+  <div class="col4" style="margin-bottom:6mm">
+    <div class="tarjeta"><div class="cifra">2,8 millones</div><div class="chico">de habitantes en Miami-Dade (Oficina del Censo de EE. UU., estimación de julio de 2025)</div></div>
+    <div class="tarjeta"><div class="cifra">≈ 9.800</div><div class="chico">establecimientos de comida en el condado (registros del estado de Florida, vía un agregador)</div></div>
+    <div class="tarjeta"><div class="cifra">25 % / 30 %</div><div class="chico">comisión de los planes Plus y Premier de DoorDash; Uber Eats cobra 20, 25 y 30 %</div></div>
+    <div class="tarjeta"><div class="cifra">2 idiomas</div><div class="chico">Miami vive en inglés y español: la app ya nace bilingüe</div></div>
+  </div>
+  <div class="col2">
+    <div class="tarjeta"><h3>Por qué hay espacio para un tercero</h3><ul class="lista">
+      <li>El restaurante paga entre 25 y 30 % por pedido en los planes que le dan visibilidad: busca una alternativa más barata.</li>
+      <li>Un actor local, bilingüe y cercano gana restaurantes que las grandes atienden por teléfono o por correo.</li>
+      <li>Una sola app con comida, viajes y envíos aprovecha el mismo equipo de repartidores para varios negocios.</li>
+      <li>El modelo no necesita ganarle a DoorDash: el escenario base supone unos 600 restaurantes activos con cuatro pedidos al día cada uno (ver la proyección).</li></ul></div>
+    <div class="tarjeta"><h3>Comisión al restaurante por entrega</h3>
+      <table><tr><th>Plataforma</th><th class="num">Planes</th></tr>
+      <tr><td>DoorDash (Basic, Plus, Premier)</td><td class="num">15 · 25 · 30 %</td></tr>
+      <tr><td>Uber Eats (Lite, Plus, Premium)</td><td class="num">20 · 25 · 30 %</td></tr>
+      <tr><td><b>DRIVER'S (Básico, Plus, Premium)</b></td><td class="num"><b>15 · 20 · 25 %</b></td></tr></table>
+      <table style="margin-top:4mm"><tr><th>Restaurante que vende 10.000 USD al mes en apps</th><th class="num">Le quedan</th></tr>
+      <tr><td>Con un plan de 30 %</td><td class="num">7.000</td></tr>
+      <tr><td><b>Con DRIVER'S Plus (20 %)</b></td><td class="num"><b>8.000</b></td></tr></table>
+      <p class="nota">Comisiones publicadas por DoorDash y Uber Eats para comercios de EE. UU. (20 oct 2026). Uber Eats ofrece 15 % en su plan Lite en algunas ciudades.</p></div>
+  </div>
+  <div class="pie"><span>Fuentes: Oficina del Censo de EE. UU., Florida DBPR (vía Florida Food Safety), DoorDash y Uber Eats</span><span>2</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Servicios</div>
+  <h2>Comida, motos, carros, envíos y más</h2>
+  <p class="sub">Cada servicio tiene su pantalla y se enciende o se apaga desde el panel, sin publicar una app nueva. La tabla dice con honestidad qué funciona hoy y qué se termina antes de encenderlo.</p>
+  <table>
+    <tr><th>Servicio</th><th>Qué hace</th><th>Estado hoy</th><th>Cuándo se enciende</th></tr>
+    <tr><td><b>Comida</b></td><td>Pedidos con entrega en la puerta o recogida, seguimiento en vivo, foto de entrega, PIN, propina y reseñas</td><td class="verde-t">Funciona hoy</td><td>Desde el día uno</td></tr>
+    <tr><td><b>Motos</b></td><td>Viaje en moto con conductor y vehículo verificados y recogida con PIN</td><td>Motor del viaje construido (conductores, vehículos, documentos, estados del viaje); falta la pantalla del pasajero</td><td>Fase 2, con los permisos y seguros de Florida</td></tr>
+    <tr><td><b>Carros</b></td><td>Viaje en carro con el mismo motor</td><td>Igual que Motos</td><td>Fase 2, con los permisos y seguros de Florida</td></tr>
+    <tr><td><b>Envíos</b></td><td>Paquetes de un punto a otro, con foto y PIN de entrega</td><td>Se apoya en el ciclo de entrega que ya funciona; falta la pantalla de pedir un envío</td><td>Fase 2</td></tr>
+    <tr><td><b>Mercado</b></td><td>Supermercados y tiendas con catálogo</td><td>Muy pronto: usa el catálogo y el carrito de Comida</td><td>Fase 3</td></tr>
+    <tr><td><b>Farmacia</b></td><td>Productos sin receta, con entrega rápida</td><td>Muy pronto</td><td>Fase 3</td></tr>
+    <tr><td><b>Licores</b></td><td>Con verificación de mayoría de edad al entregar</td><td>La verificación de edad ya existe</td><td>Fase 3, con su licencia</td></tr>
+    <tr><td><b>Más</b></td><td>Flores, mascotas, tiendas</td><td>Muy pronto</td><td>Según demanda</td></tr>
+  </table>
+  <p class="nota">La proyección de este documento solo cuenta Comida. Los demás servicios son ingreso adicional que no está en las cuentas.</p>
+  <div class="pie"><span>DRIVER'S Miami · Propuesta de inversión</span><span>3</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">El producto, ya construido</div>
+  <h2>La app del cliente: capturas reales, no maquetas</h2>
+  <p class="sub">Pantallas de la plataforma que ya funciona hoy. Llevan la marca de demostración actual; al entregar, las apps salen con la marca DRIVER'S.</p>
+  <div class="tels">
+    {telefono('cliente-inicio-es', 'Inicio con servicios y restaurantes')}
+    {telefono('cliente-menu-es', 'Menú del restaurante')}
+    {telefono('cliente-carrito-es', 'Carrito y pago en la app')}
+    {telefono('cliente-en-camino-es', 'Pedido en vivo en el mapa')}
+    {telefono('cliente-sellado-es', 'Pedido sellado con foto')}
+  </div>
+  <div class="pie"><span>Capturas originales del recorrido automático de la app</span><span>4</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">El producto, ya construido</div>
+  <h2>Repartidores y restaurantes, con su propia app</h2>
+  <p class="sub">El repartidor ve cuánto gana antes de aceptar; el restaurante recibe el pedido con alarma y ve su dinero del día. Todo en inglés y en español.</p>
+  <div class="tels">
+    {telefono('repartidor-oferta-es', 'Oferta con el pago antes de aceptar')}
+    {telefono('repartidor-ganancias-es', 'Ganancias del día con desglose')}
+    {telefono('repartidor-en-camino-es', 'Camino a la entrega')}
+    {telefono('restapp-nuevo-es', 'Pedido nuevo en la app del restaurante')}
+  </div>
+  <div class="pie"><span>Capturas originales del recorrido automático de la app</span><span>5</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Cuánto deja cada pedido</div>
+  <h2>Un pedido típico de 30 dólares, a 2 km y con 4 de propina</h2>
+  <p class="sub">El cliente paga la comida, el envío, la tarifa de servicio y la propina. El repartidor se lleva el envío, la propina y lo que falte para su pago mínimo. La plataforma vive de la comisión y la tarifa de servicio.</p>
+  <div class="col2">
+    <div class="tarjeta"><table>
+      <tr><th>Concepto</th>{''.join(f'<th class="num">{k} {round(v["pct"]*100)} %</th>' for k, v in planes.items())}</tr>
+      <tr><td>Comisión del restaurante</td>{''.join(f'<td class="num">{dol(30*v["pct"])}</td>' for v in planes.values())}</tr>
+      <tr><td>Tarifa de servicio (5 %, mínimo 1,99)</td>{'<td class="num">1,99</td>'*3}</tr>
+      <tr><td>Completar el pago mínimo del repartidor (5,00)</td>{'<td class="num">−1,01</td>'*3}</tr>
+      <tr><td>Procesador de pagos (2,9 % + 0,30 sobre 39,98)</td>{'<td class="num">−1,46</td>'*3}</tr>
+      <tr class="total"><td>Margen por pedido</td>{''.join(f'<td class="num verde-t">{dol(v["margen"])}</td>' for v in planes.values())}</tr>
+      <tr><td>Dueño local (75 %)</td>{''.join(f'<td class="num">{dol(v["margen"]*0.75)}</td>' for v in planes.values())}</tr>
+      <tr><td>Windoce (25 %)</td>{''.join(f'<td class="num">{dol(v["margen"]*0.25)}</td>' for v in planes.values())}</tr></table>
+      <p class="nota">El cliente paga 39,98: comida 30, envío 3,99, servicio 1,99 y propina 4. El repartidor recibe 9,00. Impuesto de ventas aparte. Tarifa estándar del procesador para tarjetas de EE. UU.</p></div>
+    <div class="tarjeta"><h3>El promedio que usa la proyección</h3>
+      <p>Se supone que la mitad de los restaurantes elige Básico, un 35 % Plus y un 15 % Premium. El margen promedio queda en <b>{dol(margen)} dólares por pedido</b>.</p>
+      <p style="margin-top:3mm">Los tres primeros meses de operación, los primeros restaurantes pagan 0 % de comisión: en esos meses cada pedido deja una pérdida pequeña (−0,48), que ya está en las cuentas.</p>
+      <p style="margin-top:3mm" class="chico">Además se descuentan 0,30 por pedido, siempre, para cupones y bonos.</p>
+      <p style="margin-top:3mm" class="chico">Ingresos que no están en estas cuentas: membresía con envío gratis, restaurantes destacados, viajes en moto y en carro, envíos, mercado y farmacia.</p></div>
+  </div>
+  <div class="pie"><span>Tarifas de la plataforma: envío desde 3,99, servicio 5 % con mínimo 1,99, pago mínimo al repartidor 5,00</span><span>6</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Lanzamiento</div>
+  <h2>Por barrios y por servicios, con el capital por metas</h2>
+  <p class="sub">Una app de domicilios necesita a la vez restaurantes, repartidores y clientes. Por eso abre por zonas, y cada zona abre cuando tiene oferta suficiente.</p>
+  <div class="col4">
+    <div class="fase"><span class="paso">Meses 1 a 3</span><br><b class="p">Antes de abrir</b><ul class="lista" style="margin-top:2mm">
+      <li>LLC, procesador de pagos, seguros y abogado.</li><li>Gerente de ciudad y equipo comercial.</li><li>300 restaurantes firmados, con menú, fotos y tablet.</li><li>500 repartidores verificados.</li></ul></div>
+    <div class="fase"><span class="paso">Mes 4</span><br><b class="p">Apertura en el centro</b><ul class="lista" style="margin-top:2mm">
+      <li>Brickell, Downtown, Edgewater y Wynwood.</li><li>0 % de comisión tres meses para los primeros restaurantes.</li><li>Campaña bilingüe en redes y creadores de Miami.</li></ul></div>
+    <div class="fase"><span class="paso">Meses 5 a 12</span><br><b class="p">Expansión</b><ul class="lista" style="margin-top:2mm">
+      <li>Little Havana, Coral Gables, Coconut Grove y Miami Beach.</li><li>300 restaurantes más y 500 repartidores más.</li><li>Envíos, motos y carros con sus permisos.</li></ul></div>
+    <div class="fase"><span class="paso">Año 2 en adelante</span><br><b class="p">Todo el condado</b><ul class="lista" style="margin-top:2mm">
+      <li>Doral, Hialeah, Kendall y el norte.</li><li>Mercado, farmacia y licores.</li><li>La publicidad pasa a un gasto mensual estable.</li></ul></div>
+  </div>
+  <div class="tarjeta" style="margin-top:6mm"><h3>Compuertas: el capital sale por metas</h3>
+    <p>El capital no se gasta de golpe: <b>40 %</b> para la preparación (meses 1 a 3); <b>35 %</b> al abrir, si hay 300 restaurantes y 500 repartidores listos; <b>25 %</b> en el mes 7, si la primera zona cumple su meta de pedidos. Si una meta no se cumple, se corrige antes de gastar más.</p></div>
+  <div class="pie"><span>DRIVER'S Miami · Propuesta de inversión</span><span>7</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">La inversión</div>
+  <h2>En qué se usa cada dólar</h2>
+  <p class="sub">El capital cubre la licencia y los meses en que el negocio todavía no se paga solo. En el escenario base, la caja toca fondo en el mes {fondo} y desde ahí la utilidad la va reponiendo.</p>
+  <div class="col2" style="grid-template-columns:1.4fr 1fr">
+    <div><table><tr><th>Uso (meses 1 a {fondo}, escenario base)</th><th class="num">Dólares</th></tr>
+      {filas_uso}
+      <tr><td>Menos lo que dejan los pedidos de esos meses</td><td class="num">−{usd(ingreso_fondo)}</td></tr>
+      <tr><td>Reserva para imprevistos (10 %)</td><td class="num">{usd(reserva)}</td></tr>
+      <tr class="total"><td>Capital del lanzamiento</td><td class="num">{usd(capital)}</td></tr>
+      <tr><td>Licencia de la plataforma (Miami-Dade, 10 años)</td><td class="num">{usd(lic)}</td></tr>
+      <tr class="total"><td>Inversión total</td><td class="num">{usd(total)}</td></tr></table></div>
+    <div class="tarjeta"><h3>Los supuestos</h3><ul class="lista">
+      <li>Equipo: 35.000 al mes antes de abrir; 62.000 el primer año; 75.000 el segundo; 85.000 después (con cargas sociales).</li>
+      <li>Publicidad: 120.000 al mes en los seis meses de apertura; 50.000 al mes desde el año 2.</li>
+      <li>Incentivos: garantía de ingresos para repartidores y descuentos de primer pedido al abrir.</li>
+      <li>600 tablets para restaurantes y 1.000 kits para repartidores.</li>
+      <li>Seguro comercial, oficina y herramientas: 6.000 al mes.</li></ul>
+      <p class="nota">Estimaciones nuestras: se confirman al cotizar en Miami antes de firmar.</p></div>
+  </div>
+  <div class="pie"><span>Modelo con supuestos escritos; se actualiza cada mes con los números reales</span><span>8</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Proyección</div>
+  <h2>Utilidad anual del dueño y retorno del capital</h2>
+  <p class="sub">Utilidad del dueño local después de su equipo, su publicidad y la parte de Windoce. Tres escenarios: el base llega a unos {n(base['mes24']['pedidos'])} pedidos al mes en el mes 24 (por ejemplo, 600 restaurantes con unos 4 pedidos al día cada uno).</p>
+  <div class="col2" style="grid-template-columns:1.1fr 1fr">
+    <div>
+      <table><tr><th>Escenario</th><th class="num">Año 1</th><th class="num">Año 2</th><th class="num">Año 3</th><th class="num">Año 4</th><th class="num">Recupera</th></tr>
+        {fila('Conservador', cons, 'util')}{fila('Base', base, 'util')}{fila('Optimista', opti, 'util')}</table>
+      <h3 style="margin-top:6mm">Pedidos al año</h3>
+      <table><tr><th>Escenario</th><th class="num">Año 1</th><th class="num">Año 2</th><th class="num">Año 3</th><th class="num">Año 4</th><th></th></tr>
+        {fila('Conservador', cons, 'pedidos', n)}{fila('Base', base, 'pedidos', n)}{fila('Optimista', opti, 'pedidos', n)}</table>
+      <h3 style="margin-top:6mm">Lo que recibe Windoce (25 %)</h3>
+      <table><tr><th>Escenario</th><th class="num">Año 1</th><th class="num">Año 2</th><th class="num">Año 3</th><th class="num">Año 4</th><th></th></tr>
+        {fila('Base', base, 'windoce')}</table></div>
+    <div class="tarjeta"><h3>Caja acumulada del proyecto, escenario base</h3>
+      {grafico}
+      <p class="chico">Empieza en menos la licencia, baja durante el arranque (lo cubre el capital de los socios) y sube con la utilidad de cada mes. En el mes {base['payback']} vuelve a cero: los socios ya recuperaron todo lo que pusieron. Desde ahí, todo es utilidad.</p>
+      <p class="chico" style="margin-top:2mm">En el conservador, el capital no se recupera en estos cuatro años: por eso el capital sale por metas y se corrige a tiempo.</p></div>
+  </div>
+  <div class="pie"><span>Las proyecciones no son promesas: dependen de la ejecución y del mercado</span><span>9</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Socios y retorno</div>
+  <h2>Cómo entra el dinero y cómo vuelve</h2>
+  <p class="sub">Los inversionistas son dueños de la empresa de Miami. Windoce no pide acciones: gana con la licencia y con su 25 % del margen.</p>
+  <div class="col3">
+    <div class="tarjeta"><span class="paso">1</span><h3>La empresa</h3><p>Se crea <b>DRIVER'S Miami LLC</b>. Los socios aportan el capital y reciben su parte en proporción. Con {musd(total)} en total, un aporte de 100.000 dólares equivale a cerca del {pct(100000/total)} de la empresa.</p></div>
+    <div class="tarjeta"><span class="paso">2</span><h3>El aporte, por partes</h3><p>Al firmar: la licencia y el 40 % del capital. Al abrir la primera zona: el 35 %. En el mes 7, con la meta cumplida: el último 25 %.</p></div>
+    <div class="tarjeta"><span class="paso">3</span><h3>El retorno</h3><p>Mientras los socios no recuperen su aporte, toda la utilidad va primero a devolverles el capital, en proporción. Después, la utilidad se reparte por participación o se reinvierte, según decidan los socios.</p></div>
+  </div>
+  <div class="tarjeta" style="margin-top:6mm"><h3>Ejemplo: un socio con 100.000 dólares (escenario base)</h3>
+    <table><tr><th>Momento</th><th>Qué pasa</th><th class="num">Para el socio</th></tr>
+      <tr><td>Meses 1 a 6</td><td>Se prepara la ciudad y se abre por zonas</td><td class="num">aporta 100.000 USD</td></tr>
+      <tr><td>Hasta el mes {base['payback']}</td><td>La utilidad devuelve el capital a todos los socios</td><td class="num">recupera los 100.000 USD</td></tr>
+      <tr><td>Año 3</td><td>Utilidad de la empresa: {usd(base['anios'][2]['util'])}</td><td class="num verde-t">≈ {usd(base['anios'][2]['util']*100000/total)}</td></tr>
+      <tr><td>Año 4</td><td>Utilidad de la empresa: {usd(base['anios'][3]['util'])}</td><td class="num verde-t">≈ {usd(base['anios'][3]['util']*100000/total)}</td></tr>
+      <tr class="total"><td>Al mes 48</td><td>Recuperado el capital, lo ganado por encima</td><td class="num verde-t">≈ {usd(ganado48*100000/total)}</td></tr></table>
+    <p class="nota">Cálculo proporcional y antes de impuestos. La empresa también vale más con el tiempo: una operación que deja utilidad se puede vender o ampliar a otras ciudades de Florida.</p></div>
+  <div class="pie"><span>DRIVER'S Miami · Propuesta de inversión</span><span>10</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Condiciones y honestidad</div>
+  <h2>Lo que hay hoy, lo que falta y lo que hay que saber</h2>
+  <div class="col3">
+    <div class="tarjeta"><h3>Ya funciona hoy</h3><ul class="lista">
+      <li>Cobro con tarjeta en dólares, dentro de la app.</li>
+      <li>Apps de cliente, restaurante y repartidor, y los paneles web, en inglés y español.</li>
+      <li>Seguimiento en vivo, foto de recogida y entrega, PIN, chat y soporte con bandeja de casos.</li>
+      <li>Zonas dibujadas en el mapa y panel propio para el dueño de la ciudad.</li></ul></div>
+    <div class="tarjeta"><h3>Antes de abrir</h3><ul class="lista">
+      <li>Publicar las apps con la marca DRIVER'S en App Store y Google Play.</li>
+      <li>Una compra real de prueba de punta a punta con el procesador de pagos del dueño.</li>
+      <li>Planes de comisión de 15, 20 y 25 % configurados en el panel.</li>
+      <li>Motos y Carros: pantalla del pasajero, permisos y seguros de Florida.</li></ul></div>
+    <div class="tarjeta"><h3>Lo que hay que saber</h3><ul class="lista">
+      <li>Las cifras de este documento son propuestas y estimaciones; se confirman al cotizar.</li>
+      <li>DoorDash y Uber Eats van a responder: por eso se abre por zonas y el capital sale por metas.</li>
+      <li>Antes de firmar: abogado de Florida para la licencia, los repartidores y los datos personales.</li>
+      <li>Las proyecciones dependen de la ejecución; no son promesas.</li></ul></div>
+  </div>
+  <div class="tarjeta" style="margin-top:6mm"><h3>Condiciones propuestas</h3>
+    <table>
+      <tr><td>Territorio</td><td>Miami-Dade, con exclusividad. Broward y Palm Beach se pueden sumar.</td></tr>
+      <tr><td>Licencia</td><td>{usd(lic)}, en dos pagos: firma y apertura.</td></tr>
+      <tr><td>Reparto del margen</td><td>75 % dueño local, 25 % Windoce, liquidado cada mes.</td></tr>
+      <tr><td>Duración</td><td>10 años, renovables por 5.</td></tr>
+      <tr><td>Metas para conservar la exclusividad</td><td>500 restaurantes activos al mes 12 y 50.000 pedidos al mes al mes 24.</td></tr></table>
+    <p style="margin-top:3mm"><b>Siguientes pasos:</b> 1. Reunión para revisar los supuestos. 2. Carta de intención con la exclusividad reservada por 60 días. 3. Contrato y creación de la LLC. 4. Arranca el mes 1.</p></div>
+  <div class="pie"><span>© 2026 DRIVER'S | All rights reserved. Developed by Windoce LLC</span><span>11</span></div>
+</section>
+
+<section class="hoja">
+  <div class="etq">Fuentes</div>
+  <h2>De dónde salen los datos</h2>
+  <ul class="lista" style="font-size:8.6pt;max-width:220mm">
+    <li>Población de Miami-Dade: Oficina del Censo de EE. UU., QuickFacts, estimación al 1 de julio de 2025 (2.802.029 habitantes).</li>
+    <li>Establecimientos de comida en Miami-Dade: registros del Departamento de Negocios y Regulación Profesional de Florida (DBPR), según el agregador Florida Food Safety (unos 9.800, mayo de 2026). No es un conteo oficial.</li>
+    <li>Comisiones de DoorDash para comercios en EE. UU.: página oficial de precios para comercios, consultada el 20 oct 2026.</li>
+    <li>Comisiones de Uber Eats para comercios en EE. UU.: página oficial de precios para comercios, consultada el 20 oct 2026.</li>
+    <li>Procesador de pagos: tarifa estándar publicada para tarjetas de EE. UU. (2,9 % + 0,30).</li>
+    <li>Tarifas de envío, servicio y pago mínimo al repartidor: las que la plataforma cobra hoy.</li>
+    <li>Equipo, publicidad, incentivos, tablets y seguros: estimaciones propias, marcadas como tales; se confirman al cotizar en Miami.</li>
+  </ul>
+  <div class="pie"><span>© 2026 DRIVER'S | All rights reserved. Developed by Windoce LLC</span><span>12</span></div>
+</section>
+</body></html>
+'''
+
+open(os.path.join(AQUI, 'propuesta-drivers-miami.html'), 'w').write(html)
+print('listo')
