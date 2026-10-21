@@ -14,3 +14,17 @@ Descartados por Richard: Beru, Dono, Drover y Domi. Revisión de Doox (idea de R
 Descartados en la revisión: Zenvo (fabricante danés de superautos), Oxxi (se confunde con OXXO), Vexo, Roxi, Moxo, Ziro, Voxa, Kaivo, Velko, Tuxi (ya hay una app de taxi «Tuxi»), Nuvo (dominio ocupado).
 
 Fuentes: registro oficial de los dominios .com (Verisign) y buscador de la App Store de EE. UU., 21 oct 2026; búsquedas web de marcas (Trademark Directory, Justia, TrademarkElite, Registerkaro); Zoox en Miami: WLRN (25 mar 2026), Electrek (24 mar 2026), Built In (13 oct 2026). La oficina de marcas de EE. UU. no se pudo consultar directamente: falta el abogado.
+
+## Tercera tanda (21 oct, mediodía): el estilo de Doox
+
+Richard revisó Doox en la App Store y en Google: sin coincidencias. Le gusta y queda como favorito.
+
+| Nombre | Dominio con «driver» (.com) | Apps en la App Store de EE. UU. | Internet y marcas                                                                                                                           |
+| ------ | --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Doox   | libre                       | ninguna                         | ninguna empresa llamada Doox; la App Store sugiere «epoxy» al escribirlo (poca competencia). Ojo: Zoox (robotaxis de Amazon) opera en Miami |
+| Roox   | libre                       | ninguna                         | «Deep Roox» es dueño de marcas de publicidad y educación (otra palabra)                                                                     |
+| Vuux   | libre                       | ninguna                         | nada                                                                                                                                        |
+| Jaax   | libre                       | ninguna                         | JAX y JAXJOX existen como marcas (lubricantes, software de ejercicio)                                                                       |
+| Raxo   | libre                       | ninguna                         | nada; «Rowax» es una marca de la India de apps de comida (otra palabra)                                                                     |
+
+Descartados: Foox (en inglés se puede leer como una grosería), Kooz, Mooz, Toox, Zuup, Veex, Kaaz y Nooz (ya hay apps con esos nombres). Los cinco solos, sin «driver», tienen el punto com ocupado.
