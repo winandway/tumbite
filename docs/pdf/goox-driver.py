@@ -2,7 +2,10 @@
 Uso: python3 docs/pdf/goox-driver.py
 Luego: node docs/pdf/a-pdf.mjs docs/pdf/goox-driver.html docs/Goox-Driver-2026-10-21.pdf
 """
-import os
+import os, re, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from goox_logos import FAVORITOS, GRUPOS, LOGOS
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
@@ -79,6 +82,45 @@ def bloque_logo(i, l):
 </div>'''
 
 
+
+def tarjeta(n, l, alto='36mm'):
+    _g, nombre, idea, fondo, svg, marca = l
+    return f'''<div class="ficha">
+  <div class="lienzo" style="background:{fondo};height:{alto}"><div class="logo" style="{'transform:scale(1.15)' if alto != '36mm' else ''}">{icono(svg)}<div class="marca">{marca}</div></div></div>
+  <div class="pie-ficha"><b>{n}. {nombre}</b><span>{idea}</span><div class="mini" style="background:{fondo}">{icono(svg, '9mm')}</div></div>
+</div>'''
+
+
+numero = 10
+def pagina_grupo(claves, cols, alto='36mm'):
+    global numero
+    partes = ''
+    for clave in claves:
+        titulo, texto = next((t, d) for c, t, d in GRUPOS if c == clave)
+        items = [l for l in LOGOS if l[0] == clave]
+        celdas = ''
+        for l in items:
+            numero += 1
+            celdas += tarjeta(numero, l, alto)
+        partes += f'<h3 style="margin-top:3mm">{titulo}</h3><p class="chico-g">{texto}</p><div class="rejilla" style="grid-template-columns:repeat({cols},1fr)">{celdas}</div>'
+    return f'''<section class="hoja"><div class="etq">Treinta logos nuevos</div>{partes}
+<div class="pie"><span>Goox Driver · propuesta de marca</span><span>§</span></div></section>'''
+
+
+def pagina_favoritos():
+    filas = ''
+    for nom in FAVORITOS:
+        l = next(x for x in LOGOS if x[1] == nom)
+        _g, nombre, idea, fondo, svg, marca = l
+        filas += f'''<div class="fav">
+  <div class="lienzo grande" style="background:{fondo}"><div class="logo" style="transform:scale(1.15)">{icono(svg, '20mm')}<div class="marca">{marca}</div></div></div>
+  <div class="lienzo grande oscuro" style="background:#121214"><div class="logo" style="transform:scale(1.15)">{icono(svg, '20mm')}<div class="marca">{marca}</div></div></div>
+  <div class="tel"><div class="pantalla">{''.join(f'<div class="ap"></div>' for _ in range(3))}<div class="ap yo" style="background:{fondo}">{icono(svg, '11mm')}</div>{''.join(f'<div class="ap"></div>' for _ in range(4))}</div><span>{nombre}</span></div>
+</div>'''
+    return f'''<section class="hoja"><div class="etq">Nuestros favoritos</div><h2>Tres caminos, en grande</h2>
+<p class="sub">Sobre fondo claro, sobre fondo oscuro (de noche, en la app y en las maletas) y como ícono en la pantalla del celular.</p>{filas}
+<div class="pie"><span>Goox Driver · propuesta de marca</span><span>§</span></div></section>'''
+
 fuentes = ('family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Fredoka:wght@600;700'
            '&family=Outfit:wght@700;800&family=Archivo+Black&family=Baloo+2:wght@700;800&family=Barlow:ital,wght@1,900;0,600'
            '&family=Sora:wght@600;700&family=Bebas+Neue&family=Space+Grotesk:wght@600;700&display=swap')
@@ -147,6 +189,15 @@ td.dice {{ font-family: Poppins; font-weight: 700; font-size: 11pt; white-space:
 .check {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 5mm; }}
 .check div {{ background: #fff; border: 1px solid #2a2a2a; border-radius: 10px; padding: 3mm 4mm; font-size: 8.6pt; }}
 .check b {{ display: block; font-family: Poppins; color: #0f8a4a; font-size: 9.5pt; }}
+.chico-g {{ font-size: 8.4pt; color: #55555c; margin-bottom: 2.5mm; }}
+.fav {{ display: grid; grid-template-columns: 1.3fr 1.3fr .6fr; gap: 4mm; margin-bottom: 4mm; align-items: center; }}
+.lienzo.grande {{ height: 40mm; border: 1px solid #2a2a2a; border-radius: 12px; }}
+.oscuro .marca span, .oscuro .marca span span {{ color: #fff !important; }} .oscuro .marca svg path {{ stroke: #fff; }} .oscuro .marca svg circle[fill='#111'] {{ fill: #fff; }}
+.tel {{ display: flex; flex-direction: column; align-items: center; gap: 1.5mm; font-size: 7.5pt; color: #55555c; }}
+.pantalla {{ width: 34mm; height: 40mm; border-radius: 6mm; background: #1c1c22; border: 1.5mm solid #000; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; padding: 4mm 3mm; align-content: start; }}
+.ap {{ width: 8mm; height: 8mm; border-radius: 2.2mm; background: #3a3a44; justify-self: center; }}
+.ap.yo {{ display: flex; align-items: center; justify-content: center; overflow: hidden; }}
+.ap.yo svg {{ width: 8mm; height: 8mm; }}
 </style></head><body>
 
 <section class="hoja portada">
@@ -181,12 +232,17 @@ td.dice {{ font-family: Poppins; font-weight: 700; font-size: 11pt; white-space:
 
 <section class="hoja">
   <div class="etq">Diez logos</div>
-  <h2>Diez caminos para el logo</h2>
+  <h2>Los primeros diez caminos</h2>
   <p class="sub">Todos siguen la misma regla: <b>Goox</b> grande y <b>driver</b> pequeño, como apellido. Cada uno trae su ícono de app al lado. Son propuestas para que el equipo de marketing elija un camino y lo termine.</p>
   <div class="rejilla">{''.join(bloque_logo(i + 1, l) for i, l in enumerate(L))}</div>
   <div class="pie"><span>Logos de propuesta, diseñados para este documento · sin degradados, listos para una sola tinta</span><span>3</span></div>
 </section>
 
+{pagina_grupo(['x'], 4)}
+{pagina_grupo(['o'], 4)}
+{pagina_grupo(['g', 'w'], 5)}
+{pagina_grupo(['s'], 2, '50mm')}
+{pagina_favoritos()}
 <section class="hoja">
   <div class="etq">Ventajas</div>
   <h2>Por qué Goox Driver</h2>
@@ -226,5 +282,7 @@ td.dice {{ font-family: Poppins; font-weight: 700; font-size: 11pt; white-space:
 </section>
 </body></html>'''
 
+contador = iter(range(1, 100))
+html = re.sub(r'<span>(\d+|§)</span></div>\s*</section>', lambda m: f'<span>{next(contador)}</span></div></section>', html)
 open(os.path.join(AQUI, 'goox-driver.html'), 'w').write(html)
 print('listo')
