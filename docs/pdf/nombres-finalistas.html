@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nombres finalistas</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&family=Fredoka:wght@600;700&family=Outfit:wght@700;800&family=Archivo+Black&family=Baloo+2:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: Montserrat, sans-serif;
+        color: #26262b;
+        font-size: 9.6pt;
+        line-height: 1.45;
+      }
+      .hoja {
+        width: 297mm;
+        height: 210mm;
+        padding: 12mm 15mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+        background: var(--fondo, #fafaf7);
+      }
+      .hoja:last-child {
+        page-break-after: auto;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Poppins, sans-serif;
+        color: #17171a;
+      }
+      h2 {
+        font-size: 20pt;
+        font-weight: 800;
+        margin-bottom: 2mm;
+      }
+      h3 {
+        font-size: 11pt;
+        font-weight: 700;
+        margin-bottom: 1.5mm;
+      }
+      .sub {
+        color: #5d5d66;
+        font-size: 10.5pt;
+        max-width: 235mm;
+        margin-bottom: 6mm;
+      }
+      .cabeza {
+        display: flex;
+        justify-content: space-between;
+        font-family: Poppins;
+        font-size: 8.5pt;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--c1);
+        margin-bottom: 3mm;
+      }
+      .dos {
+        display: grid;
+        grid-template-columns: 1.08fr 1fr;
+        gap: 10mm;
+      }
+      .nombre-grande {
+        font-size: 54pt;
+        line-height: 1;
+        letter-spacing: -1px;
+      }
+      .nombre-grande span {
+        font-size: 22pt;
+        letter-spacing: 0;
+        font-family: Poppins;
+        font-weight: 600;
+        margin-left: 1.5mm;
+      }
+      .dominio {
+        margin-top: 4mm;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 3mm;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 2.5mm 4mm;
+        background: #fff;
+      }
+      .dominio span {
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b6b6b;
+      }
+      .dominio b {
+        font-family: Poppins;
+        font-size: 15pt;
+        color: #17171a;
+      }
+      .dominio em {
+        font-style: normal;
+        font-size: 8pt;
+        color: #0f8a4a;
+        font-weight: 700;
+      }
+      .idea {
+        margin-top: 4mm;
+        font-size: 10.5pt;
+        max-width: 135mm;
+      }
+      .dice {
+        margin-top: 2mm;
+        font-size: 9pt;
+        color: #45454d;
+      }
+      .lienzos {
+        margin-top: 6mm;
+        display: grid;
+        grid-template-columns: 1fr 1fr 32mm;
+        gap: 4mm;
+        align-items: stretch;
+      }
+      .lienzo {
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 6mm 4mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lienzo.claro {
+        background: #fff;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 2.5mm;
+      }
+      .marca {
+        display: flex;
+        flex-direction: column;
+        line-height: 0.9;
+      }
+      .marca .grande {
+        font-size: 26pt;
+      }
+      .marca .chica {
+        font-family: Poppins;
+        font-weight: 600;
+        font-size: 8.5pt;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-top: 1mm;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2mm;
+        font-size: 8pt;
+        color: #45454d;
+      }
+      .icono-app {
+        width: 24mm;
+        height: 24mm;
+        border-radius: 6mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #2a2a2a;
+      }
+      ul.pro,
+      ul.contra {
+        list-style: none;
+      }
+      ul.pro li,
+      ul.contra li {
+        padding: 1.3mm 0 1.3mm 5mm;
+        position: relative;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+      }
+      ul.pro li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #0f8a4a;
+        font-weight: 700;
+      }
+      ul.contra li::before {
+        content: '!';
+        position: absolute;
+        left: 0.8mm;
+        color: #c62828;
+        font-weight: 800;
+      }
+      .dato {
+        margin-top: 3mm;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 2.5mm 3.5mm;
+        background: #fff;
+        font-size: 8.6pt;
+      }
+      .dato b {
+        display: block;
+        font-family: Poppins;
+        font-size: 8.5pt;
+        margin-bottom: 0.5mm;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.8pt;
+        background: #fff;
+      }
+      th {
+        text-align: left;
+        font-family: Poppins;
+        font-weight: 600;
+        font-size: 8pt;
+        color: #6b6b6b;
+        border-bottom: 1.5px solid #17171a;
+        padding: 2mm;
+      }
+      td {
+        padding: 2.4mm 2mm;
+        border-bottom: 1px solid #ececec;
+        vertical-align: middle;
+      }
+      td.nota {
+        font-size: 13pt;
+        letter-spacing: 1px;
+        color: #17171a;
+        white-space: nowrap;
+      }
+      .pie {
+        position: absolute;
+        left: 15mm;
+        right: 15mm;
+        bottom: 6mm;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.5pt;
+        color: #6b6b6b;
+      }
+      .portada {
+        background: #17171a;
+        color: #fff;
+      }
+      .portada h1 {
+        color: #fff;
+        font-size: 38pt;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.8px;
+      }
+      .portada p {
+        color: #cfcfd4;
+        font-size: 11pt;
+        max-width: 150mm;
+      }
+      .rejilla {
+        margin-top: 12mm;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5mm;
+      }
+      .rejilla div {
+        background: #fff;
+        border-radius: 12px;
+        padding: 6mm 3mm;
+        display: flex;
+        justify-content: center;
+      }
+      .caja {
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 5mm;
+        background: #fff;
+      }
+      .col2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7mm;
+      }
+      ol.pasos {
+        padding-left: 5mm;
+      }
+      ol.pasos li {
+        margin-bottom: 2mm;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hoja portada">
+      <div
+        style="
+          font-family: Poppins;
+          font-size: 8.5pt;
+          font-weight: 700;
+          letter-spacing: 1.4px;
+          color: #ffd400;
+          text-transform: uppercase;
+        "
+      >
+        Para el equipo de marketing · 21 de octubre de 2026
+      </div>
+      <h1 style="margin-top: 5mm">Cuatro nombres para la app,<br />cada uno con su logo</h1>
+      <p style="margin-top: 5mm">
+        El primer nombre va en grande: es la marca que la gente va a decir y la que trabajaremos en
+        buscadores. «driver» va pequeño, como apellido: sirve para encontrarnos en Google y en las
+        tiendas de apps y para tener el dominio punto com.
+      </p>
+      <div class="rejilla">
+        <div>
+          <div class="logo" style="height: 17mm">
+            <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+              <circle cx="32" cy="32" r="30" fill="#0f6b5a" />
+              <path d="M22 16v32h12a9 9 0 0 0 2-17.8A8 8 0 0 0 30 16z" fill="#c8f169" />
+              <circle cx="31" cy="39" r="4" fill="#0f6b5a" />
+              <circle cx="29" cy="25" r="3.4" fill="#0f6b5a" />
+            </svg>
+            <div class="marca">
+              <span class="grande" style="font-family: 'Fredoka'; font-weight: 700; color: #0b2f29"
+                >Beru</span
+              ><span class="chica" style="color: #0f6b5a">driver</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="logo" style="height: 17mm">
+            <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+              <rect x="2" y="2" width="60" height="60" rx="18" fill="#ff7a1a" />
+              <path d="M20 26h24l-2.5 22h-19z" fill="#fff" />
+              <path
+                d="M26 26v-3a6 6 0 0 1 12 0v3"
+                fill="none"
+                stroke="#fff"
+                stroke-width="3.5"
+                stroke-linecap="round"
+              />
+              <circle cx="32" cy="38" r="4" fill="#ff7a1a" />
+            </svg>
+            <div class="marca">
+              <span class="grande" style="font-family: 'Outfit'; font-weight: 800; color: #1d1d1f"
+                >Dono</span
+              ><span class="chica" style="color: #ff7a1a">driver</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="logo" style="height: 17mm">
+            <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+              <rect x="2" y="2" width="60" height="60" rx="14" fill="#111111" />
+              <path
+                d="M14 46 L32 16 L50 46"
+                fill="none"
+                stroke="#ffd400"
+                stroke-width="6"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              />
+              <path d="M32 28v6M32 38v4" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <div class="marca">
+              <span
+                class="grande"
+                style="font-family: 'Archivo Black'; font-weight: 400; color: #111111"
+                >Drover</span
+              ><span class="chica" style="color: #111111">driver</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="logo" style="height: 17mm">
+            <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+              <circle cx="32" cy="32" r="30" fill="#e8452c" />
+              <path d="M32 13 13 29h5v20h28V29h5z" fill="#ffe8c7" />
+              <path d="M27 49V37a5 5 0 0 1 10 0v12" fill="#e8452c" />
+            </svg>
+            <div class="marca">
+              <span class="grande" style="font-family: 'Baloo 2'; font-weight: 800; color: #2a1410"
+                >Domi</span
+              ><span class="chica" style="color: #e8452c">driver</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 10mm; font-size: 8.5pt; color: #9a9aa2">
+        Los cuatro punto com están libres (registro oficial de los dominios .com, 21 oct 2026). Las
+        marcas y apps se revisaron en fuentes públicas; antes de comprar el nombre, un abogado de
+        marcas tiene que confirmarlo en la oficina de marcas de EE. UU.
+      </p>
+      <div class="pie" style="color: #8a8a92">
+        <span>Logos de propuesta, diseñados para este documento</span><span>1</span>
+      </div>
+    </section>
+
+    <section class="hoja">
+      <h2>Los cuatro, uno al lado del otro</h2>
+      <p class="sub">
+        Ordenados de mejor a peor según nuestra revisión. Cuatro puntos es la mejor nota.
+      </p>
+      <table>
+        <tr>
+          <th>Nombre</th>
+          <th>Dominio</th>
+          <th>Cómo se dice</th>
+          <th>Marca registrada que encontramos</th>
+          <th>Apps parecidas</th>
+          <th>Nota</th>
+        </tr>
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 3mm">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <circle cx="32" cy="32" r="30" fill="#e8452c" />
+                <path d="M32 13 13 29h5v20h28V29h5z" fill="#ffe8c7" />
+                <path d="M27 49V37a5 5 0 0 1 10 0v12" fill="#e8452c" /></svg
+              ><b style="font-family: 'Baloo 2'; font-size: 14pt; color: #2a1410"
+                >Domi<span style="color: #e8452c; font-size: 9pt">driver</span></b
+              >
+            </div>
+          </td>
+          <td>domidriver.com</td>
+          <td>«DO-mi»</td>
+          <td>DOMI de Domi Outdoor Living (Países Bajos)</td>
+          <td>«Domii» (Domii SAS, comida, Colombia) en la App Store.</td>
+          <td class="nota">●●●●</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 3mm">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect x="2" y="2" width="60" height="60" rx="14" fill="#111111" />
+                <path
+                  d="M14 46 L32 16 L50 46"
+                  fill="none"
+                  stroke="#ffd400"
+                  stroke-width="6"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M32 28v6M32 38v4"
+                  stroke="#fff"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                /></svg
+              ><b style="font-family: 'Archivo Black'; font-size: 14pt; color: #111111"
+                >Drover<span style="color: #111111; font-size: 9pt">driver</span></b
+              >
+            </div>
+          </td>
+          <td>droverdriver.com</td>
+          <td>«DROU-ver»</td>
+          <td>DROVER</td>
+          <td>DroverDispatch (envíos, Nigeria) en la App Store.</td>
+          <td class="nota">●●●○</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 3mm">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <circle cx="32" cy="32" r="30" fill="#0f6b5a" />
+                <path d="M22 16v32h12a9 9 0 0 0 2-17.8A8 8 0 0 0 30 16z" fill="#c8f169" />
+                <circle cx="31" cy="39" r="4" fill="#0f6b5a" />
+                <circle cx="29" cy="25" r="3.4" fill="#0f6b5a" /></svg
+              ><b style="font-family: 'Fredoka'; font-size: 14pt; color: #0b2f29"
+                >Beru<span style="color: #0f6b5a; font-size: 9pt">driver</span></b
+              >
+            </div>
+          </td>
+          <td>berudriver.com</td>
+          <td>«BE-ru»</td>
+          <td>BERU de Beru AG (Alemania, repuestos de autos)</td>
+          <td>Dos apps de taxi llamadas Beru en la App Store de EE. UU.</td>
+          <td class="nota">●●○○</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 3mm">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect x="2" y="2" width="60" height="60" rx="18" fill="#ff7a1a" />
+                <path d="M20 26h24l-2.5 22h-19z" fill="#fff" />
+                <path
+                  d="M26 26v-3a6 6 0 0 1 12 0v3"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                />
+                <circle cx="32" cy="38" r="4" fill="#ff7a1a" /></svg
+              ><b style="font-family: 'Outfit'; font-size: 14pt; color: #1d1d1f"
+                >Dono<span style="color: #ff7a1a; font-size: 9pt">driver</span></b
+              >
+            </div>
+          </td>
+          <td>donodriver.com</td>
+          <td>«DO-no» en español; en inglés se lee «DOU-nou»</td>
+          <td>DONO de DONO LLC (Irvine, California)</td>
+          <td>«Dono pizza» (Eatery Club) en la App Store.</td>
+          <td class="nota">●○○○</td>
+        </tr>
+      </table>
+      <div class="col2" style="margin-top: 7mm">
+        <div class="caja">
+          <h3>Nuestra recomendación: Domi</h3>
+          <p>
+            Es el único de los cuatro que <b>dice lo que hacemos</b> para el público latino («el
+            domi»), suena igual en inglés y en español, y la marca DOMI que existe en EE. UU. es de
+            muebles, otra categoría. Lo que hay que vigilar: la app colombiana Domii y el parecido
+            con Domino’s.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Los que descartaríamos</h3>
+          <p>
+            <b>Dono:</b> hay una marca DONO registrada para software en California, la misma clase
+            que una app. <b>Beru:</b> ya hay dos apps de taxi llamadas Beru en la App Store de EE.
+            UU. <b>Drover</b> queda en medio: suena muy bien en inglés, pero hay una marca DROVER
+            registrada para software de viajes.
+          </p>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>2</span>
+      </div>
+    </section>
+
+    <section class="hoja" style="--c1: #0f6b5a; --c2: #c8f169; --fondo: #eef7f2">
+      <div class="cabeza">
+        <span class="num">Nombre 1 de 4</span><span class="puesto">Nuestra opinión: ●●○○</span>
+      </div>
+      <div class="dos">
+        <div>
+          <div
+            class="nombre-grande"
+            style="font-family: 'Fredoka'; font-weight: 700; color: #0b2f29"
+          >
+            Beru<span style="color: #0f6b5a">driver</span>
+          </div>
+          <div class="dominio">
+            <span>Dominio</span><b>berudriver.com</b><em>libre el 21 oct 2026</em>
+          </div>
+          <p class="idea">
+            Corto, redondo y simpático. No significa nada en inglés ni en español, y eso permite
+            llenarlo de marca.
+          </p>
+          <p class="dice"><b>Cómo se dice:</b> «BE-ru», en inglés y en español igual.</p>
+          <div class="lienzos">
+            <div class="lienzo claro">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <circle cx="32" cy="32" r="30" fill="#0f6b5a" />
+                  <path d="M22 16v32h12a9 9 0 0 0 2-17.8A8 8 0 0 0 30 16z" fill="#c8f169" />
+                  <circle cx="31" cy="39" r="4" fill="#0f6b5a" />
+                  <circle cx="29" cy="25" r="3.4" fill="#0f6b5a" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Fredoka'; font-weight: 700; color: #0b2f29"
+                    >Beru</span
+                  ><span class="chica" style="color: #0f6b5a">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="lienzo" style="background: #0b2f29">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <circle cx="32" cy="32" r="30" fill="#0f6b5a" />
+                  <path d="M22 16v32h12a9 9 0 0 0 2-17.8A8 8 0 0 0 30 16z" fill="#c8f169" />
+                  <circle cx="31" cy="39" r="4" fill="#0f6b5a" />
+                  <circle cx="29" cy="25" r="3.4" fill="#0f6b5a" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Fredoka'; font-weight: 700; color: #ffffff"
+                    >Beru</span
+                  ><span class="chica" style="color: #c8f169">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="app">
+              <div class="icono-app" style="background: #eef7f2">
+                <svg viewBox="0 0 64 64" width="15mm" height="15mm">
+                  <circle cx="32" cy="32" r="30" fill="#0f6b5a" />
+                  <path d="M22 16v32h12a9 9 0 0 0 2-17.8A8 8 0 0 0 30 16z" fill="#c8f169" />
+                  <circle cx="31" cy="39" r="4" fill="#0f6b5a" />
+                  <circle cx="29" cy="25" r="3.4" fill="#0f6b5a" />
+                </svg>
+              </div>
+              <span>Beru</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>A favor</h3>
+          <ul class="pro">
+            <li>Muy corto: dos sílabas, cuatro letras.</li>
+            <li>Se pronuncia igual en inglés y en español.</li>
+            <li>berudriver.com está libre (revisado el 21 oct 2026).</li>
+            <li>Fácil de dibujar y de recordar.</li>
+          </ul>
+          <h3 style="margin-top: 4mm">En contra</h3>
+          <ul class="contra">
+            <li>
+              En la App Store de EE. UU. ya hay dos apps de taxi llamadas «Beru» («Beru taxi» y
+              «beru - заказ такси»): misma categoría que nosotros. Es la pega más grave de los
+              cuatro.
+            </li>
+            <li>Beru fue la tienda en línea de Yandex en Rusia hasta 2020.</li>
+            <li>
+              Existe la marca BERU de Beru AG (repuestos de autos, Alemania) en la oficina de marcas
+              de EE. UU.; su estado no está claro.
+            </li>
+            <li>En inglés suena a «Beru», la tía de Luke Skywalker en Star Wars.</li>
+          </ul>
+          <div class="dato">
+            <b>Marcas registradas en EE. UU.</b
+            ><span
+              >BERU de Beru AG (Alemania, repuestos de autos): solicitud internacional en EE. UU.,
+              con un rechazo en 2009; estado actual sin confirmar.</span
+            >
+          </div>
+          <div class="dato">
+            <b>Apps con nombre parecido</b
+            ><span>Dos apps de taxi llamadas Beru en la App Store de EE. UU.</span>
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>3</span>
+      </div>
+    </section>
+    <section class="hoja" style="--c1: #ff7a1a; --c2: #1d1d1f; --fondo: #fff4ea">
+      <div class="cabeza">
+        <span class="num">Nombre 2 de 4</span><span class="puesto">Nuestra opinión: ●○○○</span>
+      </div>
+      <div class="dos">
+        <div>
+          <div
+            class="nombre-grande"
+            style="font-family: 'Outfit'; font-weight: 800; color: #1d1d1f"
+          >
+            Dono<span style="color: #ff7a1a">driver</span>
+          </div>
+          <div class="dominio">
+            <span>Dominio</span><b>donodriver.com</b><em>libre el 21 oct 2026</em>
+          </div>
+          <p class="idea">
+            Cálido y directo. En portugués e italiano «dono» es «dueño» y «regalo».
+          </p>
+          <p class="dice"><b>Cómo se dice:</b> «DO-no» en español; en inglés se lee «DOU-nou».</p>
+          <div class="lienzos">
+            <div class="lienzo claro">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <rect x="2" y="2" width="60" height="60" rx="18" fill="#ff7a1a" />
+                  <path d="M20 26h24l-2.5 22h-19z" fill="#fff" />
+                  <path
+                    d="M26 26v-3a6 6 0 0 1 12 0v3"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="32" cy="38" r="4" fill="#ff7a1a" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Outfit'; font-weight: 800; color: #1d1d1f"
+                    >Dono</span
+                  ><span class="chica" style="color: #ff7a1a">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="lienzo" style="background: #1d1d1f">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <rect x="2" y="2" width="60" height="60" rx="18" fill="#ff7a1a" />
+                  <path d="M20 26h24l-2.5 22h-19z" fill="#fff" />
+                  <path
+                    d="M26 26v-3a6 6 0 0 1 12 0v3"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="32" cy="38" r="4" fill="#ff7a1a" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Outfit'; font-weight: 800; color: #ffffff"
+                    >Dono</span
+                  ><span class="chica" style="color: #1d1d1f">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="app">
+              <div class="icono-app" style="background: #fff4ea">
+                <svg viewBox="0 0 64 64" width="15mm" height="15mm">
+                  <rect x="2" y="2" width="60" height="60" rx="18" fill="#ff7a1a" />
+                  <path d="M20 26h24l-2.5 22h-19z" fill="#fff" />
+                  <path
+                    d="M26 26v-3a6 6 0 0 1 12 0v3"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="32" cy="38" r="4" fill="#ff7a1a" />
+                </svg>
+              </div>
+              <span>Dono</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>A favor</h3>
+          <ul class="pro">
+            <li>Corto y fácil de escribir.</li>
+            <li>donodriver.com está libre (revisado el 21 oct 2026).</li>
+            <li>En portugués e italiano tiene un sentido positivo (dueño, regalo).</li>
+          </ul>
+          <h3 style="margin-top: 4mm">En contra</h3>
+          <ul class="contra">
+            <li>
+              DONO LLC, de Irvine, California, tiene registrada la marca DONO en EE. UU. desde 2022
+              para software (clase 9) y finanzas: la misma clase que una app. Es un riesgo legal
+              serio.
+            </li>
+            <li>En inglés suena parecido a «dunno» («no sé»), que se usa mucho en la calle.</li>
+            <li>Ya hay una app de pizzas llamada «Dono» en la App Store (de Ucrania).</li>
+          </ul>
+          <div class="dato">
+            <b>Marcas registradas en EE. UU.</b
+            ><span
+              >DONO de DONO LLC (Irvine, California): registrada en 2022, clases 9 (software) y 36
+              (finanzas).</span
+            >
+          </div>
+          <div class="dato">
+            <b>Apps con nombre parecido</b><span>«Dono pizza» (Eatery Club) en la App Store.</span>
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>4</span>
+      </div>
+    </section>
+    <section class="hoja" style="--c1: #111111; --c2: #ffd400; --fondo: #f5f5f0">
+      <div class="cabeza">
+        <span class="num">Nombre 3 de 4</span><span class="puesto">Nuestra opinión: ●●●○</span>
+      </div>
+      <div class="dos">
+        <div>
+          <div
+            class="nombre-grande"
+            style="font-family: 'Archivo Black'; font-weight: 400; color: #111111"
+          >
+            Drover<span style="color: #111111">driver</span>
+          </div>
+          <div class="dominio">
+            <span>Dominio</span><b>droverdriver.com</b><em>libre el 21 oct 2026</em>
+          </div>
+          <p class="idea">
+            Es una palabra del inglés: el arriero, quien conduce el ganado de un lugar a otro. Suena
+            a camino y a movimiento.
+          </p>
+          <p class="dice"><b>Cómo se dice:</b> «DROU-ver», muy natural en inglés.</p>
+          <div class="lienzos">
+            <div class="lienzo claro">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <rect x="2" y="2" width="60" height="60" rx="14" fill="#111111" />
+                  <path
+                    d="M14 46 L32 16 L50 46"
+                    fill="none"
+                    stroke="#ffd400"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M32 28v6M32 38v4"
+                    stroke="#fff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Archivo Black'; font-weight: 400; color: #111111"
+                    >Drover</span
+                  ><span class="chica" style="color: #111111">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="lienzo" style="background: #111111">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <rect x="2" y="2" width="60" height="60" rx="14" fill="#111111" />
+                  <path
+                    d="M14 46 L32 16 L50 46"
+                    fill="none"
+                    stroke="#ffd400"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M32 28v6M32 38v4"
+                    stroke="#fff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Archivo Black'; font-weight: 400; color: #ffffff"
+                    >Drover</span
+                  ><span class="chica" style="color: #ffd400">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="app">
+              <div class="icono-app" style="background: #f5f5f0">
+                <svg viewBox="0 0 64 64" width="15mm" height="15mm">
+                  <rect x="2" y="2" width="60" height="60" rx="14" fill="#111111" />
+                  <path
+                    d="M14 46 L32 16 L50 46"
+                    fill="none"
+                    stroke="#ffd400"
+                    stroke-width="6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M32 28v6M32 38v4"
+                    stroke="#fff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <span>Drover</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>A favor</h3>
+          <ul class="pro">
+            <li>Suena fuerte y natural en inglés, el idioma principal del mercado.</li>
+            <li>Su significado habla de conducir y de llevar algo de un lugar a otro.</li>
+            <li>droverdriver.com está libre (revisado el 21 oct 2026).</li>
+          </ul>
+          <h3 style="margin-top: 4mm">En contra</h3>
+          <ul class="contra">
+            <li>
+              La marca DROVER está registrada en EE. UU. desde 2020 para software de coordinación de
+              grupos en viajes y eventos (clase 9): cercano a nuestra categoría. Hay que verlo con
+              abogado.
+            </li>
+            <li>«Drover driver» repite la idea: las dos palabras significan conductor.</li>
+            <li>
+              Drover fue una empresa de suscripción de autos en el Reino Unido (cerró en 2022) y hoy
+              hay una app de envíos en Nigeria llamada DroverDispatch.
+            </li>
+            <li>En español no se entiende y cuesta pronunciarlo.</li>
+          </ul>
+          <div class="dato">
+            <b>Marcas registradas en EE. UU.</b
+            ><span
+              >DROVER: registrada en EE. UU. en julio de 2020 (serie 88435056), software para
+              coordinar grupos en viajes y eventos.</span
+            >
+          </div>
+          <div class="dato">
+            <b>Apps con nombre parecido</b
+            ><span>DroverDispatch (envíos, Nigeria) en la App Store.</span>
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>5</span>
+      </div>
+    </section>
+    <section class="hoja" style="--c1: #e8452c; --c2: #ffe8c7; --fondo: #fff3ef">
+      <div class="cabeza">
+        <span class="num">Nombre 4 de 4</span><span class="puesto">Nuestra opinión: ●●●●</span>
+      </div>
+      <div class="dos">
+        <div>
+          <div
+            class="nombre-grande"
+            style="font-family: 'Baloo 2'; font-weight: 800; color: #2a1410"
+          >
+            Domi<span style="color: #e8452c">driver</span>
+          </div>
+          <div class="dominio">
+            <span>Dominio</span><b>domidriver.com</b><em>libre el 21 oct 2026</em>
+          </div>
+          <p class="idea">
+            En Colombia y en buena parte de Latinoamérica «domi» es como se le dice al domicilio.
+            Dice lo que hacemos sin explicarlo.
+          </p>
+          <p class="dice"><b>Cómo se dice:</b> «DO-mi», igual en inglés y en español.</p>
+          <div class="lienzos">
+            <div class="lienzo claro">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <circle cx="32" cy="32" r="30" fill="#e8452c" />
+                  <path d="M32 13 13 29h5v20h28V29h5z" fill="#ffe8c7" />
+                  <path d="M27 49V37a5 5 0 0 1 10 0v12" fill="#e8452c" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Baloo 2'; font-weight: 800; color: #2a1410"
+                    >Domi</span
+                  ><span class="chica" style="color: #e8452c">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="lienzo" style="background: #2a1410">
+              <div class="logo" style="height: 22mm">
+                <svg viewBox="0 0 64 64" width="22mm" height="22mm">
+                  <circle cx="32" cy="32" r="30" fill="#e8452c" />
+                  <path d="M32 13 13 29h5v20h28V29h5z" fill="#ffe8c7" />
+                  <path d="M27 49V37a5 5 0 0 1 10 0v12" fill="#e8452c" />
+                </svg>
+                <div class="marca">
+                  <span
+                    class="grande"
+                    style="font-family: 'Baloo 2'; font-weight: 800; color: #ffffff"
+                    >Domi</span
+                  ><span class="chica" style="color: #ffe8c7">driver</span>
+                </div>
+              </div>
+            </div>
+            <div class="app">
+              <div class="icono-app" style="background: #fff3ef">
+                <svg viewBox="0 0 64 64" width="15mm" height="15mm">
+                  <circle cx="32" cy="32" r="30" fill="#e8452c" />
+                  <path d="M32 13 13 29h5v20h28V29h5z" fill="#ffe8c7" />
+                  <path d="M27 49V37a5 5 0 0 1 10 0v12" fill="#e8452c" />
+                </svg>
+              </div>
+              <span>Domi</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3>A favor</h3>
+          <ul class="pro">
+            <li>Para el público latino dice exactamente lo que hacemos: el domicilio.</li>
+            <li>Muy corto, dos sílabas, y se pronuncia igual en los dos idiomas.</li>
+            <li>domidriver.com está libre (revisado el 21 oct 2026).</li>
+            <li>
+              La única marca DOMI registrada en EE. UU. que encontramos es de muebles (clase 20):
+              otra categoría.
+            </li>
+          </ul>
+          <h3 style="margin-top: 4mm">En contra</h3>
+          <ul class="contra">
+            <li>
+              Ya hay una app de comida en Colombia llamada «Domii» (Domii SAS) en la App Store: si
+              algún día vamos a Colombia, se confunde.
+            </li>
+            <li>Se parece un poco a Domino’s, también de comida a domicilio.</li>
+            <li>Para quien no habla español, «domi» no significa nada (igual que Beru o Dono).</li>
+          </ul>
+          <div class="dato">
+            <b>Marcas registradas en EE. UU.</b
+            ><span
+              >DOMI de Domi Outdoor Living (Países Bajos): registrada en 2017 para muebles (clase
+              20). No encontramos otra DOMI viva.</span
+            >
+          </div>
+          <div class="dato">
+            <b>Apps con nombre parecido</b
+            ><span>«Domii» (Domii SAS, comida, Colombia) en la App Store.</span>
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>6</span>
+      </div>
+    </section>
+
+    <section class="hoja">
+      <h2>Antes de elegir: lo que falta revisar</h2>
+      <p class="sub">
+        Esta revisión usa fuentes públicas. Antes de comprar el dominio, cambiar las apps y publicar
+        en las tiendas, se hacen estos pasos con el nombre ganador.
+      </p>
+      <div class="col2">
+        <div class="caja">
+          <h3>Pasos</h3>
+          <ol class="pasos">
+            <li>
+              Un abogado de marcas busca el nombre en la oficina de marcas de EE. UU. (clases 9, 35,
+              39 y 43: software, publicidad, transporte y restaurantes) y en Colombia.
+            </li>
+            <li>Revisar Google Play (aquí solo se revisó la App Store de EE. UU.).</li>
+            <li>Revisar que estén libres los usuarios en Instagram, TikTok, Facebook y X.</li>
+            <li>
+              Prueba de oído: decirle el nombre a diez personas (cinco que hablen inglés) y pedirles
+              que lo escriban.
+            </li>
+            <li>Comprar el punto com y, si se puede, la versión sin «driver».</li>
+            <li>Registrar la marca a nombre de Windoce LLC.</li>
+          </ol>
+        </div>
+        <div class="caja">
+          <h3>Cómo se usa el nombre</h3>
+          <p>
+            La marca es el primer nombre: <b>Domi</b>, <b>Beru</b>, <b>Dono</b> o <b>Drover</b>. Es
+            lo que va en el ícono, en la publicidad y en la conversación.
+          </p>
+          <p style="margin-top: 3mm">
+            «driver» acompaña en pequeño en el logo completo, en el dominio y en el nombre largo de
+            las tiendas (por ejemplo, «Domi Driver: comida y envíos»), para que nos encuentren y
+            para diferenciarnos de otras empresas con el mismo primer nombre.
+          </p>
+          <p style="margin-top: 3mm">El trabajo en buscadores se hace sobre el primer nombre.</p>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Propuesta de nombre · para el equipo de marketing</span><span>7</span>
+      </div>
+    </section>
+
+    <section class="hoja">
+      <h2>De dónde salen los datos</h2>
+      <ul class="pro" style="max-width: 240mm; font-size: 8.8pt">
+        <li>
+          Dominios: registro oficial de los dominios .com (Verisign), consultado el 21 oct 2026:
+          berudriver.com, donodriver.com, droverdriver.com y domidriver.com, libres. Beru.com,
+          dono.com, drover.com y domi.com están ocupados.
+        </li>
+        <li>
+          Apps: buscador oficial de la App Store de EE. UU., 21 oct 2026 (Beru taxi, beru - заказ
+          такси, Dono pizza, Domii, DroverDispatch).
+        </li>
+        <li>Marca BERU (Beru AG): Justia Trademarks, serie 79064748; Trademark Directory.</li>
+        <li>Marca DONO (DONO LLC, Irvine, California): Trademark Directory.</li>
+        <li>Marca DROVER: Justia Trademarks, serie 88435056, registrada en julio de 2020.</li>
+        <li>
+          Marca DOMI (Domi Outdoor Living B.V.): TrademarkElite, serie 86876014, registro 5179124.
+        </li>
+        <li>
+          Historia de Beru en Rusia: OrderTracker; historia de Drover en el Reino Unido: Wikipedia,
+          Tech.eu y AM Online.
+        </li>
+        <li>
+          Son fuentes públicas y de terceros: la oficina de marcas de EE. UU. no se pudo consultar
+          directamente desde aquí. Lo confirma el abogado.
+        </li>
+      </ul>
+      <div class="pie"><span>© 2026 Windoce LLC</span><span>8</span></div>
+    </section>
+  </body>
+</html>
