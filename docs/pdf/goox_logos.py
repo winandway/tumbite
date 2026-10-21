@@ -116,3 +116,44 @@ GRUPOS = [
 ]
 
 FAVORITOS = ['Equis que avanza', 'De aquí hasta allá', 'El mapa del tesoro']
+
+
+# ── Escudos vikingos (idea de Richard, 21 oct 2026): protección, la X al centro y el borde como rueda ──
+_REMACHES12 = ''.join(
+    f'<circle cx="{100 + 80 * c:.1f}" cy="{100 + 80 * s:.1f}" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1"/>'
+    for c, s in [(0, -1), (.5, -.866), (.866, -.5), (1, 0), (.866, .5), (.5, .866), (0, 1), (-.5, .866), (-.866, .5), (-1, 0), (-.866, -.5), (-.5, -.866)])
+_REMACHES8 = ''.join(
+    f'<circle cx="{100 + 78.5 * c:.1f}" cy="{100 + 78.5 * s:.1f}" r="3.4" fill="#ffffff"/>'
+    for c, s in [(0, -1), (.707, -.707), (1, 0), (.707, .707), (0, 1), (-.707, .707), (-1, 0), (-.707, -.707)])
+
+ESCUDOS = [
+    dict(nombre='Escudo de madera', clave='madera',
+         idea='El escudo de los vikingos, tal cual: tablas de madera, la X roja con bordes blancos, el borde de hierro con remaches y el centro de metal. Habla de protección, de historia y de fuerza.',
+         uso='Campañas, uniformes, la maleta de reparto, la tienda y las redes: donde hay espacio para el detalle.',
+         svg=('<circle cx="100" cy="100" r="85" fill="#1c1c1c"/><circle cx="100" cy="100" r="74" fill="#7a5233"/>'
+              '<g stroke="#5c3c22" stroke-width="2"><path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156"/></g>'
+              '<g stroke="#9a6b45" stroke-width="1" opacity=".6"><path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20"/></g>'
+              '<path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30"/>'
+              '<path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20"/>'
+              '<circle cx="100" cy="100" r="27" fill="#2a2a2a"/><circle cx="100" cy="100" r="19" fill="#111"/><circle cx="94" cy="94" r="6" fill="#4a4a4a"/>'
+              + _REMACHES12 +
+              '<g fill="#555"><circle cx="100" cy="77" r="2.2"/><circle cx="123" cy="100" r="2.2"/><circle cx="100" cy="123" r="2.2"/><circle cx="77" cy="100" r="2.2"/></g>'),
+         colores=[('#e1261c', 'Rojo escudo'), ('#f4efe6', 'Blanco hueso'), ('#7a5233', 'Madera'), ('#1c1c1c', 'Hierro')]),
+    dict(nombre='Escudo moderno', clave='moderno',
+         idea='El mismo escudo, limpio y plano: borde negro con ocho remaches, campo blanco y la X roja de la marca. Se reconoce igual de lejos y en tamaño pequeño.',
+         uso='El ícono de la app, el logo principal, gorras, cascos, la web y todo lo que se ve pequeño.',
+         svg=('<circle cx="100" cy="100" r="85" fill="#191919"/><circle cx="100" cy="100" r="72" fill="#ffffff"/>'
+              '<path d="M59 59 141 141M141 59 59 141" stroke="#ff3008" stroke-width="24" stroke-linecap="round"/>'
+              '<circle cx="100" cy="100" r="20" fill="#191919"/><circle cx="100" cy="100" r="8" fill="#ffffff"/>' + _REMACHES8),
+         colores=[('#ff3008', 'Rojo escarlata'), ('#ffffff', 'Blanco'), ('#191919', 'Gris oscuro')]),
+    dict(nombre='Escudo rueda', clave='rueda',
+         idea='El borde se vuelve llanta y el centro, tuercas: es un escudo y es una rueda a la vez. La X roja hace de rayos.',
+         uso='Repartidores, motos y carros: la parte de transporte de la marca.',
+         svg=('<circle cx="100" cy="100" r="85" fill="#191919"/>'
+              '<g stroke="#3a3a3a" stroke-width="5"><path d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"/></g>'
+              '<circle cx="100" cy="100" r="66" fill="#ffffff"/><path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6"/>'
+              '<path d="M60 60 140 140M140 60 60 140" stroke="#ff3008" stroke-width="18" stroke-linecap="round"/>'
+              '<circle cx="100" cy="100" r="22" fill="#191919"/>'
+              '<g fill="#ffffff"><circle cx="100" cy="88" r="3"/><circle cx="111.4" cy="96.3" r="3"/><circle cx="107" cy="109.7" r="3"/><circle cx="93" cy="109.7" r="3"/><circle cx="88.6" cy="96.3" r="3"/></g>'),
+         colores=[('#ff3008', 'Rojo escarlata'), ('#ffffff', 'Blanco'), ('#191919', 'Gris oscuro'), ('#d8d8d8', 'Gris rayos')]),
+]

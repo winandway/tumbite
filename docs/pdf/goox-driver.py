@@ -5,7 +5,7 @@ Luego: node docs/pdf/a-pdf.mjs docs/pdf/goox-driver.html docs/Goox-Driver-2026-1
 import os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from goox_logos import FAVORITOS, GRUPOS, LOGOS
+from goox_logos import ESCUDOS, FAVORITOS, GRUPOS, LOGOS
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
@@ -121,6 +121,50 @@ def pagina_favoritos():
 <p class="sub">Sobre fondo claro, sobre fondo oscuro (de noche, en la app y en las maletas) y como ícono en la pantalla del celular.</p>{filas}
 <div class="pie"><span>Goox Driver · propuesta de marca</span><span>§</span></div></section>'''
 
+
+def esc(e, tam):
+    return f'<svg viewBox="0 0 200 200" width="{tam}" height="{tam}">{e["svg"]}</svg>'
+
+
+def marca_escudo(e, color, sec, tam_ic='24mm', tam_txt=44):
+    return (f'<div style="display:flex;align-items:center;gap:4mm">{esc(e, tam_ic)}<div style="display:flex;flex-direction:column">'
+            f'<span style="font-family:\'Archivo Black\';font-size:{tam_txt}pt;line-height:1;color:{color}">Goox</span>'
+            f'<span style="font-family:Poppins;font-weight:600;font-size:{tam_txt*0.24:.1f}pt;letter-spacing:4px;color:{sec};margin-top:1.5mm">DRIVER</span></div></div>')
+
+
+def paginas_escudos():
+    out = f'''<section class="hoja portada" style="grid-template-columns:1fr 1fr">
+  <div><div class="etq" style="color:#ff3008">La idea de Richard</div>
+    <div class="gigante" style="font-size:64pt">El escudo<span style="color:#ff3008">GOOX DRIVER</span></div>
+    <p style="margin-top:8mm">El escudo de pelea de los vikingos: madera, una X roja, el borde de hierro con remaches. Tiene la X de Goox en el centro, el borde parece una rueda y su significado es uno solo: <b>protección</b>. Lo que le prometemos a quien pide, a quien entrega y a quien cocina.</p>
+    <p style="margin-top:4mm">Usa los colores que ya tiene la app: rojo, blanco y gris oscuro. Tres versiones, una hoja para cada una.</p></div>
+  <div style="display:flex;gap:6mm;justify-content:center">{''.join(esc(e, '40mm') for e in ESCUDOS)}</div>
+  <div class="pie" style="color:#8a8a92"><span>Goox Driver · propuesta de marca</span><span>§</span></div>
+</section>'''
+    for i, e in enumerate(ESCUDOS, 1):
+        sw = ''.join(f'<div class="sw"><i style="background:{c}"></i><b>{n}</b><span>{c.upper()}</span></div>' for c, n in e['colores'])
+        tamanos = ''.join(f'<div class="tm">{esc(e, t)}<span>{t}</span></div>' for t in ('22mm', '14mm', '9mm', '5mm'))
+        out += f'''<section class="hoja" style="background:#f4f3ef">
+  <div class="etq" style="color:#ff3008">Escudo {i} de 3</div>
+  <div class="hojaesc">
+    <div class="heroe">{esc(e, '128mm')}</div>
+    <div>
+      <h2>{e["nombre"]}</h2>
+      <p class="sub" style="margin-bottom:4mm">{e["idea"]}</p>
+      <div class="lienzo grande" style="background:#fff;height:30mm">{marca_escudo(e, '#191919', '#ff3008')}</div>
+      <div class="lienzo grande" style="background:#191919;height:30mm;margin-top:3mm">{marca_escudo(e, '#ffffff', '#ff3008')}</div>
+      <div class="filaesc">
+        <div class="tel"><div class="pantalla">{''.join('<div class="ap"></div>' for _ in range(4))}<div class="ap yo" style="background:#fff">{esc(e, '8mm')}</div>{''.join('<div class="ap"></div>' for _ in range(3))}</div><span>En el celular</span></div>
+        <div><h3>En tamaño pequeño</h3><div class="tms">{tamanos}</div>
+          <h3 style="margin-top:3mm">Colores</h3><div class="sws">{sw}</div></div>
+      </div>
+      <p class="chico-g" style="margin-top:3mm"><b>Dónde se usa:</b> {e["uso"]}</p>
+    </div>
+  </div>
+  <div class="pie"><span>Goox Driver · propuesta de marca · escudo</span><span>§</span></div>
+</section>'''
+    return out
+
 fuentes = ('family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Fredoka:wght@600;700'
            '&family=Outfit:wght@700;800&family=Archivo+Black&family=Baloo+2:wght@700;800&family=Barlow:ital,wght@1,900;0,600'
            '&family=Sora:wght@600;700&family=Bebas+Neue&family=Space+Grotesk:wght@600;700&display=swap')
@@ -198,6 +242,15 @@ td.dice {{ font-family: Poppins; font-weight: 700; font-size: 11pt; white-space:
 .ap {{ width: 8mm; height: 8mm; border-radius: 2.2mm; background: #3a3a44; justify-self: center; }}
 .ap.yo {{ display: flex; align-items: center; justify-content: center; overflow: hidden; }}
 .ap.yo svg {{ width: 8mm; height: 8mm; }}
+.hojaesc {{ display: grid; grid-template-columns: 130mm 1fr; gap: 8mm; align-items: start; margin-top: 2mm; }}
+.heroe {{ background: #fff; border: 1px solid #2a2a2a; border-radius: 16px; height: 168mm; display: flex; align-items: center; justify-content: center; }}
+.filaesc {{ display: grid; grid-template-columns: 38mm 1fr; gap: 5mm; margin-top: 3mm; align-items: start; }}
+.tms {{ display: flex; gap: 3.5mm; align-items: flex-end; }}
+.tm {{ display: flex; flex-direction: column; align-items: center; gap: 1mm; font-size: 7pt; color: #6b6b6b; }}
+.sws {{ display: flex; gap: 2.5mm; }}
+.sw {{ display: flex; flex-direction: column; font-size: 7pt; color: #55555c; width: 18mm; }}
+.sw i {{ display: block; height: 9mm; border-radius: 6px; border: 1px solid #2a2a2a; margin-bottom: 1mm; }}
+.sw b {{ font-family: Poppins; font-size: 7.6pt; color: #111; }}
 </style></head><body>
 
 <section class="hoja portada">
@@ -243,6 +296,7 @@ td.dice {{ font-family: Poppins; font-weight: 700; font-size: 11pt; white-space:
 {pagina_grupo(['g', 'w'], 5)}
 {pagina_grupo(['s'], 2, '50mm')}
 {pagina_favoritos()}
+{paginas_escudos()}
 <section class="hoja">
   <div class="etq">Ventajas</div>
   <h2>Por qué Goox Driver</h2>
