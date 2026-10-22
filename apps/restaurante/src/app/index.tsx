@@ -14,7 +14,7 @@ function Portada() {
         source={IMG.logo}
         style={{ width: 220, height: 64 }}
         resizeMode="contain"
-        accessibilityLabel="Tumbite"
+        accessibilityLabel="Divoox"
       />
       <Text style={{ fontWeight: '900', fontSize: 20, color: C.secundario, marginTop: -6 }}>
         {t.restaurante}

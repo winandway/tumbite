@@ -51,7 +51,7 @@ describe('los ejemplos de dinero publicados están al día', () => {
     expect(guias).toContain(`el cliente pagó ${punto(d.totalCliente)} dólares`);
     expect(guias).toContain(`envío ${punto(d.envio)}, servicio ${punto(d.servicio)}`);
     expect(guias).toContain(`recibió ${punto(d.pagoRestaurante)}`);
-    expect(guias).toContain(`Tumbite se quedó con ${punto(d.gananciaPlataforma)}`);
+    expect(guias).toContain(`Divoox se quedó con ${punto(d.gananciaPlataforma)}`);
     expect(guias).toContain(`the customer paid ${en(d.totalCliente)}`);
   });
 });

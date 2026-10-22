@@ -78,7 +78,7 @@ export function Cabecera({
           source={IMG.logo}
           style={{ width: 150, height: 41 }}
           resizeMode="contain"
-          accessibilityLabel="Tumbite"
+          accessibilityLabel="Divoox"
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {redondo(

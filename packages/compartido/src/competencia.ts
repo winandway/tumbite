@@ -32,7 +32,7 @@ export type Comparacion = {
 
 /**
  * Lo que le queda al restaurante de unas ventas (ya restados los regalos que él decidió dar) con
- * Tumbite y con el plan equivalente de cada competidor.
+ * Divoox y con el plan equivalente de cada competidor.
  */
 export function compararConOtras(
   ventas: Centavos,

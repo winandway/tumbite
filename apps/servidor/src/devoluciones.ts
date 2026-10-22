@@ -31,7 +31,7 @@ export async function devolverParcial(
     .bind(p.pedidoId)
     .first<Record<string, unknown>>();
   if (!f) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  // Cobro directo: el cliente le pagó al repartidor, no a Tumbite. No hay cobro de Stripe que
+  // Cobro directo: el cliente le pagó al repartidor, no a Divoox. No hay cobro de Stripe que
   // devolver; la devolución la coordina soporte con el repartidor o el restaurante.
   if (String(f.metodo_pago ?? 'tarjeta') !== 'tarjeta')
     throw new ErrorDatos(

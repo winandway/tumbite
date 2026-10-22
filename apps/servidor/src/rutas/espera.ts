@@ -88,8 +88,8 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
     zonaId: zona?.id ?? null,
     asuntoCorreo: en ? `You're on the list, ${d.nombre}` : `Ya estás en la lista, ${d.nombre}`,
     intro: en
-      ? `You're signed up to ${que} with Tumbite in ${d.ciudad}. We'll email you first the moment we open in your area. Thanks for being early.`
-      : `Quedaste anotado para ${que} con Tumbite en ${d.ciudad}. Te avisamos primero, por este correo, en cuanto abramos en tu zona. Gracias por llegar temprano.`,
+      ? `You're signed up to ${que} with Divoox in ${d.ciudad}. We'll email you first the moment we open in your area. Thanks for being early.`
+      : `Quedaste anotado para ${que} con Divoox en ${d.ciudad}. Te avisamos primero, por este correo, en cuanto abramos en tu zona. Gracias por llegar temprano.`,
   });
   return c.json({ ok: true, zona: zona ? { id: zona.id, nombre: zona.nombre } : null }, 201);
 });

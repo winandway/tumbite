@@ -29,7 +29,7 @@ type Datos = {
 /**
  * Cobro directo, pasos 2 y 3 del recorrido aprobado (C-COBRO-DIRECTO-LOCAL): el repartidor paga la
  * comida en el mostrador con SU dinero (efectivo o su tarjeta), anota cuánto pagó y cuánto dice el
- * ticket, y entrega el ticket con el pedido. Tumbite no presta ni financia esta compra.
+ * ticket, y entrega el ticket con el pedido. Divoox no presta ni financia esta compra.
  */
 export function PagoEnLocal({
   api,

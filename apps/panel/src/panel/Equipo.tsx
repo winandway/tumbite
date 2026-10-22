@@ -22,7 +22,7 @@ const T = {
     quitar: 'Quitar del equipo',
     agregar: 'Agregar a alguien',
     correoAyuda:
-      'La persona tiene que registrarse antes en el panel de Tumbite como restaurante (sin crear un restaurante propio).',
+      'La persona tiene que registrarse antes en el panel de Divoox como restaurante (sin crear un restaurante propio).',
     enviar: 'Agregar',
     agregado: 'Listo: ya puede entrar.',
     sin: 'Nadie más todavía: solo tú.',
@@ -41,7 +41,7 @@ const T = {
     quitar: 'Remove from team',
     agregar: 'Add someone',
     correoAyuda:
-      'The person must first sign up in the Tumbite panel as a restaurant (without creating their own restaurant).',
+      'The person must first sign up in the Divoox panel as a restaurant (without creating their own restaurant).',
     enviar: 'Add',
     agregado: 'Done: they can sign in now.',
     sin: 'Nobody else yet: just you.',

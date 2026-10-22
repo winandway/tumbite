@@ -1,6 +1,6 @@
 import type { Idioma } from '@tumbite/compartido';
 
-/** Textos del diseño nuevo de Tumbite Driver (los de la lógica siguen en Inicio.tsx). */
+/** Textos del diseño nuevo de Divoox Driver (los de la lógica siguen en Inicio.tsx). */
 const es = {
   driver: 'Driver',
   hoy: 'Hoy',
@@ -37,7 +37,7 @@ const es = {
   preferencias: 'Preferencias',
   idioma: 'Idioma',
   soporte: 'Soporte',
-  prontoTitulo: '¡Muy pronto en Tumbite!',
+  prontoTitulo: '¡Muy pronto en Divoox!',
   prontoTexto: 'Estamos preparando esta función para ti.',
   entendido: 'Entendido',
   avisos: 'Avisos',
@@ -81,7 +81,7 @@ const en: typeof es = {
   preferencias: 'Preferences',
   idioma: 'Language',
   soporte: 'Support',
-  prontoTitulo: 'Coming soon to Tumbite!',
+  prontoTitulo: 'Coming soon to Divoox!',
   prontoTexto: 'We’re getting this feature ready for you.',
   entendido: 'Got it',
   avisos: 'Notifications',

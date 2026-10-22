@@ -17,7 +17,7 @@ import {
 import { Enlace } from '../Enlace';
 
 /**
- * Calculadora pública (/calculator): cuánto gana o ahorra cada quien con Tumbite. Restaurante,
+ * Calculadora pública (/calculator): cuánto gana o ahorra cada quien con Divoox. Restaurante,
  * repartidor, cliente y franquicia. Son proyecciones con supuestos públicos a la vista, NO
  * promesas (decisión de Richard, 13 oct 2026). La cuenta vive en packages/compartido/src/calculadora.ts.
  */
@@ -28,11 +28,11 @@ const CIUDADES = ['Miami', 'Orlando', 'Tampa', 'Ocala'];
 const T = {
   es: {
     etiqueta: 'Calculadora',
-    titulo: 'Calcula cuánto ganas y cuánto ahorras con Tumbite',
+    titulo: 'Calcula cuánto ganas y cuánto ahorras con Divoox',
     intro:
-      'Elige quién eres y mueve los números. Todo se calcula con los precios que Tumbite usa hoy en la app y con datos públicos del mercado.',
+      'Elige quién eres y mueve los números. Todo se calcula con los precios que Divoox usa hoy en la app y con datos públicos del mercado.',
     aviso:
-      'Son proyecciones, no promesas: dependen de cuánta gente pida en tu ciudad y de cómo crezca Tumbite allí. Los supuestos están abajo y los puedes cambiar.',
+      'Son proyecciones, no promesas: dependen de cuánta gente pida en tu ciudad y de cómo crezca Divoox allí. Los supuestos están abajo y los puedes cambiar.',
     pestanas: {
       restaurants: 'Restaurante',
       drivers: 'Repartidor',
@@ -43,26 +43,26 @@ const T = {
     empezar: 'Empezar de nuevo',
     // Restaurante
     ventasMes: 'Tus ventas por apps de reparto al mes (dólares)',
-    plan: 'Plan de Tumbite',
+    plan: 'Plan de Divoox',
     planes: { inicial: 'Inicial (7,5 %)', crece: 'Crece (12,5 %)', elite: 'Élite (15 %)' },
     teQueda: 'Lo que te queda al mes',
-    conTumbite: 'Con Tumbite',
+    conTumbite: 'Con Divoox',
     masAlMes: (a: string, b: string) =>
-      `Con Tumbite te quedan ${a} más al mes que con DoorDash y ${b} más que con Uber Eats.`,
+      `Con Divoox te quedan ${a} más al mes que con DoorDash y ${b} más que con Uber Eats.`,
     masAlAno: (a: string) => `En un año: ${a} más que con DoorDash.`,
-    pedidosNuevos: 'Pedidos que Tumbite te puede traer',
+    pedidosNuevos: 'Pedidos que Divoox te puede traer',
     pedidosNuevosAyuda:
-      'Con el tamaño de tu ciudad, cuántos restaurantes hay en Tumbite y qué parte del mercado logramos allí.',
+      'Con el tamaño de tu ciudad, cuántos restaurantes hay en Divoox y qué parte del mercado logramos allí.',
     poblacion: 'Habitantes de la ciudad',
-    restaurantes: 'Restaurantes en Tumbite en la ciudad',
-    cuota: 'Parte del mercado de apps que logra Tumbite (%)',
+    restaurantes: 'Restaurantes en Divoox en la ciudad',
+    cuota: 'Parte del mercado de apps que logra Divoox (%)',
     porRestaurante: (n: string) => `Unos ${n} pedidos al mes para tu restaurante`,
     ventasExtra: (v: string) =>
       `Unos ${v} en ventas al mes con esos pedidos (antes de la comisión).`,
     // Repartidor
     ciudad: 'Ciudad',
     ciudadAyuda:
-      'Tumbite paga lo mismo en todas las ciudades; lo que cambia es cuántos pedidos hay por hora.',
+      'Divoox paga lo mismo en todas las ciudades; lo que cambia es cuántos pedidos hay por hora.',
     horas: 'Horas por día',
     dias: 'Días por semana',
     ritmo: 'Entregas por hora',
@@ -73,7 +73,7 @@ const T = {
     propina: 'Propina promedio por entrega (dólares)',
     km: 'Distancia promedio de cada entrega (km)',
     porEntrega: (total: string, base: string) =>
-      `Por entrega: ${total} (${base} de Tumbite más la propina, que es 100 % tuya)`,
+      `Por entrega: ${total} (${base} de Divoox más la propina, que es 100 % tuya)`,
     porDia: 'Por día',
     porSemana: 'Por semana',
     porMes: 'Por mes',
@@ -82,7 +82,7 @@ const T = {
     pedidosMes: 'Pedidos al mes',
     ticket: 'Comida promedio por pedido (dólares)',
     servicio: (t: string, o: string) =>
-      `Tarifa de servicio por pedido: ${t} en Tumbite, frente a ${o} con el ${SERVICIO_DOORDASH_PCT} % que DoorDash publica en varias ciudades.`,
+      `Tarifa de servicio por pedido: ${t} en Divoox, frente a ${o} con el ${SERVICIO_DOORDASH_PCT} % que DoorDash publica en varias ciudades.`,
     ahorrasMes: 'Ahorras al mes',
     ahorrasAno: 'Ahorras al año',
     clienteNota:
@@ -90,7 +90,7 @@ const T = {
     // Franquicia
     usuarios: 'Personas que piden por apps',
     pedidosMercado: 'Pedidos por apps en la ciudad al mes',
-    pedidosTumbite: 'Pedidos de Tumbite al mes',
+    pedidosTumbite: 'Pedidos de Divoox al mes',
     pedidosRest: 'Pedidos por restaurante al mes',
     ventasRest: 'Lo que reciben los restaurantes al mes',
     pagoRep: 'Lo que ganan los repartidores al mes',
@@ -104,7 +104,7 @@ const T = {
     // Fuentes
     fuentesTitulo: 'De dónde salen los números',
     fuentes: [
-      'Precios de Tumbite: los de la app hoy (envío desde 3,99 dólares, servicio del 5 % con mínimo de 1,99, pago mínimo de 5 dólares por entrega al repartidor y comisión del 7,5 al 15 % al restaurante).',
+      'Precios de Divoox: los de la app hoy (envío desde 3,99 dólares, servicio del 5 % con mínimo de 1,99, pago mínimo de 5 dólares por entrega al repartidor y comisión del 7,5 al 15 % al restaurante).',
       'Comisiones de DoorDash y Uber Eats y la tarifa de servicio del 15 % de DoorDash: sus páginas oficiales, consultadas en octubre de 2026.',
       'Personas que piden por apps: encuesta de YouGov de enero de 2025 (28,2 % de los adultos de EE.UU. las usa al menos una vez por semana).',
       'Pedidos al mes y valor del pedido: informe anual 2025 de DoorDash (3.172 millones de pedidos, 56 millones de usuarios activos al mes, unos 32 dólares por pedido con tarifas y propina).',
@@ -113,11 +113,11 @@ const T = {
   },
   en: {
     etiqueta: 'Calculator',
-    titulo: 'See how much you earn and save with Tumbite',
+    titulo: 'See how much you earn and save with Divoox',
     intro:
-      'Pick who you are and move the numbers. Everything is calculated with the prices Tumbite uses in the app today and with public market data.',
+      'Pick who you are and move the numbers. Everything is calculated with the prices Divoox uses in the app today and with public market data.',
     aviso:
-      'These are projections, not promises: they depend on how many people order in your city and how Tumbite grows there. The assumptions are below and you can change them.',
+      'These are projections, not promises: they depend on how many people order in your city and how Divoox grows there. The assumptions are below and you can change them.',
     pestanas: {
       restaurants: 'Restaurant',
       drivers: 'Driver',
@@ -127,25 +127,25 @@ const T = {
     recuperado: 'We restored the numbers you had.',
     empezar: 'Start over',
     ventasMes: 'Your monthly sales on delivery apps (dollars)',
-    plan: 'Tumbite plan',
+    plan: 'Divoox plan',
     planes: { inicial: 'Starter (7.5%)', crece: 'Growth (12.5%)', elite: 'Elite (15%)' },
     teQueda: 'What you keep each month',
-    conTumbite: 'With Tumbite',
+    conTumbite: 'With Divoox',
     masAlMes: (a: string, b: string) =>
-      `With Tumbite you keep ${a} more per month than with DoorDash and ${b} more than with Uber Eats.`,
+      `With Divoox you keep ${a} more per month than with DoorDash and ${b} more than with Uber Eats.`,
     masAlAno: (a: string) => `Over a year: ${a} more than with DoorDash.`,
-    pedidosNuevos: 'Orders Tumbite can bring you',
+    pedidosNuevos: 'Orders Divoox can bring you',
     pedidosNuevosAyuda:
-      'Based on your city’s size, how many restaurants are on Tumbite, and the share of the market we reach there.',
+      'Based on your city’s size, how many restaurants are on Divoox, and the share of the market we reach there.',
     poblacion: 'City population',
-    restaurantes: 'Restaurants on Tumbite in the city',
-    cuota: 'Share of the app market Tumbite reaches (%)',
+    restaurantes: 'Restaurants on Divoox in the city',
+    cuota: 'Share of the app market Divoox reaches (%)',
     porRestaurante: (n: string) => `About ${n} orders a month for your restaurant`,
     ventasExtra: (v: string) =>
       `About ${v} in monthly sales from those orders (before commission).`,
     ciudad: 'City',
     ciudadAyuda:
-      'Tumbite pays the same in every city; what changes is how many orders there are per hour.',
+      'Divoox pays the same in every city; what changes is how many orders there are per hour.',
     horas: 'Hours per day',
     dias: 'Days per week',
     ritmo: 'Deliveries per hour',
@@ -153,7 +153,7 @@ const T = {
     propina: 'Average tip per delivery (dollars)',
     km: 'Average distance per delivery (km)',
     porEntrega: (total: string, base: string) =>
-      `Per delivery: ${total} (${base} from Tumbite plus the tip, which is 100% yours)`,
+      `Per delivery: ${total} (${base} from Divoox plus the tip, which is 100% yours)`,
     porDia: 'Per day',
     porSemana: 'Per week',
     porMes: 'Per month',
@@ -161,14 +161,14 @@ const T = {
     pedidosMes: 'Orders per month',
     ticket: 'Average food per order (dollars)',
     servicio: (t: string, o: string) =>
-      `Service fee per order: ${t} on Tumbite, versus ${o} at the ${SERVICIO_DOORDASH_PCT}% DoorDash publishes in several cities.`,
+      `Service fee per order: ${t} on Divoox, versus ${o} at the ${SERVICIO_DOORDASH_PCT}% DoorDash publishes in several cities.`,
     ahorrasMes: 'You save per month',
     ahorrasAno: 'You save per year',
     clienteNota:
       'We only compare the service fee, which those apps publish as a percentage. Other apps’ delivery fees change by restaurant and area, so we don’t add them.',
     usuarios: 'People who order on apps',
     pedidosMercado: 'App orders in the city per month',
-    pedidosTumbite: 'Tumbite orders per month',
+    pedidosTumbite: 'Divoox orders per month',
     pedidosRest: 'Orders per restaurant per month',
     ventasRest: 'What restaurants receive per month',
     pagoRep: 'What drivers earn per month',
@@ -181,7 +181,7 @@ const T = {
     pedidosUsuario: 'Orders per person per month',
     fuentesTitulo: 'Where the numbers come from',
     fuentes: [
-      'Tumbite prices: the ones in the app today (delivery from $3.99, a 5% service fee with a $1.99 minimum, a $5 minimum per delivery for drivers, and a 7.5% to 15% commission for restaurants).',
+      'Divoox prices: the ones in the app today (delivery from $3.99, a 5% service fee with a $1.99 minimum, a $5 minimum per delivery for drivers, and a 7.5% to 15% commission for restaurants).',
       'DoorDash and Uber Eats commissions and DoorDash’s 15% service fee: their official pages, checked in October 2026.',
       'People who order on apps: YouGov survey, January 2025 (28.2% of US adults use them at least once a week).',
       'Orders per month and order value: DoorDash 2025 annual report (3,172 million orders, 56 million monthly active users, about $32 per order with fees and tip).',

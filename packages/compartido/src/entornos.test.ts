@@ -16,7 +16,7 @@ describe('C-ENTORNOS-SEPARADOS: cada app habla con su propio entorno', () => {
       'http://localhost:8790',
     );
   });
-  it('fuera de un sitio de Tumbite (desarrollo con Expo) o en el celular, manda la variable', () => {
+  it('fuera de un sitio de Divoox (desarrollo con Expo) o en el celular, manda la variable', () => {
     expect(elegirServidor('http://192.168.0.9:8081', 'https://staging.tumbite.com')).toBe(
       'https://staging.tumbite.com',
     );

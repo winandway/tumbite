@@ -44,12 +44,12 @@ try {
   const ORGANIZACION = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Tumbite',
+    name: 'Divoox',
     url: `${DOMINIO}/`,
     logo: `${DOMINIO}/marca/logo.webp`,
     email: 'support@tumbite.com',
     description:
-      'Tumbite is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
+      'Divoox is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
     areaServed: 'Miami, Florida, United States',
     parentOrganization: {
       '@type': 'Organization',
@@ -60,7 +60,7 @@ try {
   const SITIO_WEB = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Tumbite',
+    name: 'Divoox',
     url: `${DOMINIO}/`,
     inLanguage: ['en', 'es'],
   };
@@ -133,16 +133,16 @@ try {
       const titulo =
         ruta === '/'
           ? lengua === 'en'
-            ? 'Tumbite · Food delivery in Miami'
-            : 'Tumbite · Comida a domicilio en Miami'
-          : /tumbite/i.test(h1)
+            ? 'Divoox · Food delivery in Miami'
+            : 'Divoox · Comida a domicilio en Miami'
+          : /divoox/i.test(h1)
             ? h1
-            : `${h1} · Tumbite`;
+            : `${h1} · Divoox`;
       const descripcion = (
         parrafo ||
         (lengua === 'en'
-          ? 'Tumbite: great food, with rhythm, right to your door.'
-          : 'Tumbite: comida rica, con ritmo, hasta tu puerta.')
+          ? 'Divoox: great food, with rhythm, right to your door.'
+          : 'Divoox: comida rica, con ritmo, hasta tu puerta.')
       ).slice(0, 155);
       const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
       const pagina = plantilla
@@ -234,9 +234,9 @@ ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</lo
       ? `## ${titulo}\n\n${xs.map((p) => `- [${p.titulo}](${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}): ${p.descripcion}`).join('\n')}\n`
       : '';
   };
-  const llms = `# Tumbite
+  const llms = `# Divoox
 
-> Tumbite is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@tumbite.com · franchises: sales@tumbite.com.
+> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@tumbite.com · franchises: sales@tumbite.com.
 
 ${grupo('Main pages', (r) => r === '/' || r === '/how-it-works')}
 ${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}

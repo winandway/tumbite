@@ -61,7 +61,7 @@ const T = {
     comisionesCobradas: 'Comisiones cobradas',
     puntos: 'Puntos de venta de recargas',
     puntosAyuda:
-      'Cada punto compra saldo a Tumbite por adelantado (el comprobante del pago queda escrito) y lo vende en códigos. Su dueño entra con su cuenta y emite los códigos.',
+      'Cada punto compra saldo a Divoox por adelantado (el comprobante del pago queda escrito) y lo vende en códigos. Su dueño entra con su cuenta y emite los códigos.',
     nombrePunto: 'Nombre del punto',
     usuarioPunto: 'Correo del dueño del punto (cuenta ya registrada)',
     crearPunto: 'Crear punto',
@@ -72,13 +72,13 @@ const T = {
     comprobante: 'Comprobante del pago',
     quejas: 'Quejas con artículo faltante',
     quejasAyuda:
-      'Si está encendido, cuando un cliente marca que faltó un plato en un pedido entregado y cobrado, se le devuelve solo el valor de esos platos (lo absorbe Tumbite) hasta el tope. Apagado, la queja llega al ticket con el monto propuesto.',
+      'Si está encendido, cuando un cliente marca que faltó un plato en un pedido entregado y cobrado, se le devuelve solo el valor de esos platos (lo absorbe Divoox) hasta el tope. Apagado, la queja llega al ticket con el monto propuesto.',
     quejasAuto: 'Reembolso automático por faltante',
     quejasTope: 'Tope por queja (dólares)',
     guardarQuejas: 'Guardar',
     cupones: 'Cupones y promociones',
     cuponesAyuda:
-      'El descuento lo absorbe Tumbite (baja su ganancia). Los destacados salen en «Ofertas del día» del inicio de la app.',
+      'El descuento lo absorbe Divoox (baja su ganancia). Los destacados salen en «Ofertas del día» del inicio de la app.',
     codigo: 'Código',
     tipo: 'Tipo',
     valor: 'Valor',
@@ -169,7 +169,7 @@ const T = {
     comisionesCobradas: 'Fees collected',
     puntos: 'Top-up sales points',
     puntosAyuda:
-      'Each point buys balance from Tumbite in advance (the payment proof is recorded) and sells it as codes. Its owner signs in with their account and issues the codes.',
+      'Each point buys balance from Divoox in advance (the payment proof is recorded) and sells it as codes. Its owner signs in with their account and issues the codes.',
     nombrePunto: 'Point name',
     usuarioPunto: 'Email of the point’s owner (existing account)',
     crearPunto: 'Create point',
@@ -180,13 +180,13 @@ const T = {
     comprobante: 'Payment proof',
     quejas: 'Complaints with missing items',
     quejasAyuda:
-      'When on, if a customer marks a missing item on a delivered and charged order, the value of those items is refunded automatically (absorbed by Tumbite) up to the cap. When off, the complaint reaches the ticket with the proposed amount.',
+      'When on, if a customer marks a missing item on a delivered and charged order, the value of those items is refunded automatically (absorbed by Divoox) up to the cap. When off, the complaint reaches the ticket with the proposed amount.',
     quejasAuto: 'Automatic refund for missing items',
     quejasTope: 'Cap per complaint (dollars)',
     guardarQuejas: 'Save',
     cupones: 'Coupons and promotions',
     cuponesAyuda:
-      'Tumbite absorbs the discount (lowers its margin). Featured ones show under “Today’s deals” on the app’s home.',
+      'Divoox absorbs the discount (lowers its margin). Featured ones show under “Today’s deals” on the app’s home.',
     codigo: 'Code',
     tipo: 'Type',
     valor: 'Value',

@@ -8,7 +8,7 @@ const T = {
   es: {
     antecedentes: 'Antecedentes',
     antecedentesAyuda:
-      'Como en las grandes plataformas, revisamos antecedentes penales y récord de manejo con un proveedor (Checkr). Tus datos sensibles los escribes en la página del proveedor, nunca en Tumbite.',
+      'Como en las grandes plataformas, revisamos antecedentes penales y récord de manejo con un proveedor (Checkr). Tus datos sensibles los escribes en la página del proveedor, nunca en Divoox.',
     antecedentesEstados: {
       sin_pedir: 'Sin empezar',
       invitado: 'Invitación enviada: completa el formulario de Checkr',
@@ -20,7 +20,7 @@ const T = {
     abrirCheckr: 'Abrir el formulario de Checkr',
     titulo: 'Verifica tu identidad',
     ayuda:
-      'Para repartir con Tumbite verificamos que eres tú. Toma las fotos con tu cámara; solo las ve el equipo de Tumbite.',
+      'Para repartir con Divoox verificamos que eres tú. Toma las fotos con tu cámara; solo las ve el equipo de Divoox.',
     doc: 'Documento',
     docs: {
       licencia: 'Licencia de conducir',
@@ -46,7 +46,7 @@ const T = {
   en: {
     antecedentes: 'Background check',
     antecedentesAyuda:
-      'Like the big platforms, we check criminal records and driving history with a provider (Checkr). You enter your sensitive details on the provider’s page, never in Tumbite.',
+      'Like the big platforms, we check criminal records and driving history with a provider (Checkr). You enter your sensitive details on the provider’s page, never in Divoox.',
     antecedentesEstados: {
       sin_pedir: 'Not started',
       invitado: 'Invitation sent: complete the Checkr form',
@@ -58,7 +58,7 @@ const T = {
     abrirCheckr: 'Open the Checkr form',
     titulo: 'Verify your identity',
     ayuda:
-      'To deliver with Tumbite we verify it’s really you. Take the photos with your camera; only the Tumbite team sees them.',
+      'To deliver with Divoox we verify it’s really you. Take the photos with your camera; only the Divoox team sees them.',
     doc: 'Document',
     docs: { licencia: 'Driver’s license', identificacion: 'Government ID', pasaporte: 'Passport' },
     frente: 'Photo of your document (front)',

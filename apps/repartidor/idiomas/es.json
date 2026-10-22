@@ -1,8 +1,8 @@
 {
   "ios": {
-    "NSLocationWhenInUseUsageDescription": "Tumbite usa tu ubicación para ofrecerte pedidos cercanos y mostrarte la ruta al restaurante y al cliente.",
-    "NSCameraUsageDescription": "Tumbite usa la cámara para la foto del pedido al recogerlo y al entregarlo, y para la foto de tu documento y de tu cara cuando verificas tu identidad.",
-    "NSLocationAlwaysAndWhenInUseUsageDescription": "Tumbite sigue mandando tu ubicación mientras tienes una entrega activa, aunque la pantalla esté apagada, para que el cliente y el restaurante vean dónde vas.",
-    "NSLocationAlwaysUsageDescription": "Tumbite sigue mandando tu ubicación mientras tienes una entrega activa, aunque la pantalla esté apagada."
+    "NSLocationWhenInUseUsageDescription": "Divoox usa tu ubicación para ofrecerte pedidos cercanos y mostrarte la ruta al restaurante y al cliente.",
+    "NSCameraUsageDescription": "Divoox usa la cámara para la foto del pedido al recogerlo y al entregarlo, y para la foto de tu documento y de tu cara cuando verificas tu identidad.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Divoox sigue mandando tu ubicación mientras tienes una entrega activa, aunque la pantalla esté apagada, para que el cliente y el restaurante vean dónde vas.",
+    "NSLocationAlwaysUsageDescription": "Divoox sigue mandando tu ubicación mientras tienes una entrega activa, aunque la pantalla esté apagada."
   }
 }

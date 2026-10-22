@@ -173,7 +173,7 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     expect(screen.getByText('Honda Navi')).toBeInTheDocument();
     expect(screen.getByText('Llegó frío')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Aprobar antecedentes' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Dar seguro de Tumbite' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Dar seguro de Divoox' }));
     await waitFor(() => expect(llamadas.filter((l) => l.metodo === 'PATCH')).toHaveLength(2));
   });
 

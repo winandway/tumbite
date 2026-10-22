@@ -8,7 +8,7 @@ const T = {
     ubicacion: 'Usar mi ubicación',
     buscar: 'Buscar',
     buscando: 'Buscando…',
-    dentro: '¡Tumbite llega a tu zona! Anótate abajo y te avisamos el día del lanzamiento.',
+    dentro: '¡Divoox llega a tu zona! Anótate abajo y te avisamos el día del lanzamiento.',
     fuera:
       'Todavía no llegamos a tu zona. Anótate abajo: cuando haya suficientes vecinos, llegamos.',
     escrito: 'Anótate abajo con tu ciudad y te avisamos cuando lleguemos.',
@@ -20,7 +20,7 @@ const T = {
     ubicacion: 'Use my location',
     buscar: 'Search',
     buscando: 'Searching…',
-    dentro: 'Tumbite is coming to your area! Sign up below and we’ll let you know on launch day.',
+    dentro: 'Divoox is coming to your area! Sign up below and we’ll let you know on launch day.',
     fuera: 'We’re not in your area yet. Sign up below: once enough neighbors join, we’ll be there.',
     escrito: 'Sign up below with your city and we’ll let you know when we arrive.',
     sinPermiso: 'We couldn’t get your location. Just type your city below.',
@@ -28,7 +28,7 @@ const T = {
   },
 };
 
-/** Buscador de dirección estilo Uber Eats: dice si Tumbite llega a tu zona y te lleva a anotarte. */
+/** Buscador de dirección estilo Uber Eats: dice si Divoox llega a tu zona y te lleva a anotarte. */
 export function Buscador({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   // Lo escrito se guarda solo, como en todo formulario de la casa.

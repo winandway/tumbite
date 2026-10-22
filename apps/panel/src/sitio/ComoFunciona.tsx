@@ -4,7 +4,7 @@ import { Icono } from './Icono';
 import { FormFranquicia } from './FormFranquicia';
 
 /**
- * «Cómo funciona Tumbite» (/how-it-works): el modelo completo de la empresa en una sola página,
+ * «Cómo funciona Divoox» (/how-it-works): el modelo completo de la empresa en una sola página,
  * para clientes, restaurantes, repartidores, futuros franquiciados y buscadores (Google y los de IA).
  * Dictado por Richard el 12 oct 2026. Las cifras de dinero son las ya publicadas en la portada;
  * el precio de cada franquicia NO se publica: lo decide Richard por ciudad.
@@ -12,9 +12,9 @@ import { FormFranquicia } from './FormFranquicia';
 const T = {
   es: {
     etiqueta: 'Cómo funciona',
-    titulo: 'Cómo funciona Tumbite',
+    titulo: 'Cómo funciona Divoox',
     intro:
-      'Tumbite es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
+      'Divoox es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
     indice: 'En esta página',
     tres: {
       titulo: 'Tres personas, una sola entrega',
@@ -22,7 +22,7 @@ const T = {
         {
           id: 'customers',
           img: '/docs/recorrido-cliente-inicio-es.webp',
-          alt: 'Pantalla real de la app de Tumbite con los servicios y los restaurantes cercanos',
+          alt: 'Pantalla real de la app de Divoox con los servicios y los restaurantes cercanos',
           titulo: 'Si tienes hambre',
           puntos: [
             'Abres la app, ves los restaurantes abiertos cerca de ti y eliges.',
@@ -53,7 +53,7 @@ const T = {
           puntos: [
             'Ves cuánto ganas antes de aceptar cada pedido. Si no te conviene, lo rechazas y no te baja de nivel.',
             'Te quedas con el 100 % de la propina, siempre.',
-            'Hay un pago mínimo por pedido: si envío y propina no llegan, Tumbite pone la diferencia.',
+            'Hay un pago mínimo por pedido: si envío y propina no llegan, Divoox pone la diferencia.',
             'Los pedidos te llegan por cercanía y tu nivel te da prioridad en los pedidos grandes.',
             'Cobras en tu banco a través de Stripe, sin esperar a fin de mes.',
           ],
@@ -72,7 +72,7 @@ const T = {
           '9,00 USD',
         ],
         [
-          'Tumbite recibe',
+          'Divoox recibe',
           'la comisión y el servicio, menos lo que completa al repartidor (de ahí paga la tarjeta)',
           '3,23 USD',
         ],
@@ -82,7 +82,7 @@ const T = {
     franquicias: {
       titulo: 'Franquicias: así abrimos una ciudad nueva',
       texto:
-        'Tumbite crece ciudad por ciudad, en cualquier país. Cada ciudad nueva se abre con una franquicia local: un socio que conoce su ciudad y que pone el capital para el lanzamiento. Con el dinero de la franquicia no se compra una marca: se compra un arranque completo.',
+        'Divoox crece ciudad por ciudad, en cualquier país. Cada ciudad nueva se abre con una franquicia local: un socio que conoce su ciudad y que pone el capital para el lanzamiento. Con el dinero de la franquicia no se compra una marca: se compra un arranque completo.',
       incluye: 'Lo que paga la franquicia en cada ciudad',
       items: [
         {
@@ -154,7 +154,7 @@ const T = {
         ],
         ['Bilingüe de verdad', 'Español e inglés en todo: apps, menús, recibos y soporte.'],
         [
-          'Tumbite AI',
+          'Divoox AI',
           'Un asistente que vigila cada pedido y responde dudas con los datos reales. Muy pronto.',
         ],
       ],
@@ -168,7 +168,7 @@ const T = {
           'Menos gasto por kilómetro para el repartidor y menos ruido en el barrio.',
         ],
         [
-          'Base Tumbite en cada ciudad',
+          'Base Divoox en cada ciudad',
           'Un punto para cargar el celular, descansar y recibir soporte en persona.',
         ],
         [
@@ -179,41 +179,41 @@ const T = {
           'Embajadores de barrio',
           'Clientes que recomiendan a su restaurante favorito y ganan créditos cuando entra.',
         ],
-        ['Tumbite para empresas', 'Almuerzos para oficinas con una sola factura al mes.'],
+        ['Divoox para empresas', 'Almuerzos para oficinas con una sola factura al mes.'],
       ],
     },
     preguntas: {
       titulo: 'Preguntas frecuentes',
       items: [
         [
-          '¿En qué ciudades está Tumbite?',
+          '¿En qué ciudades está Divoox?',
           'Empezamos en Miami y abrimos ciudad por ciudad. En el pie de esta página están todos los países y ciudades, con su estado.',
         ],
         [
-          '¿Cuánto cobra Tumbite a los restaurantes?',
+          '¿Cuánto cobra Divoox a los restaurantes?',
           'Según el plan: 7,5 %, 12,5 % o 15 % de comisión, sin contratos de permanencia.',
         ],
         [
           '¿El repartidor se queda con la propina?',
-          'Sí, con el 100 %. Además hay un pago mínimo por pedido que pone Tumbite si hace falta.',
+          'Sí, con el 100 %. Además hay un pago mínimo por pedido que pone Divoox si hace falta.',
         ],
         [
-          '¿Cómo se abre Tumbite en mi ciudad?',
+          '¿Cómo se abre Divoox en mi ciudad?',
           'Con una franquicia local que financia el arranque: motos, entrenamiento, el kit de cada restaurante y la búsqueda de los primeros clientes. Llena el formulario de franquicias de esta página.',
         ],
         [
-          '¿Tumbite funciona en otros países?',
+          '¿Divoox funciona en otros países?',
           'Sí. El modelo es el mismo en cualquier país: la app es bilingüe y cada ciudad tiene sus restaurantes y sus repartidores, con soporte en tu idioma.',
         ],
       ],
     },
-    cta: 'Avísame cuando Tumbite llegue a mi ciudad',
+    cta: 'Avísame cuando Divoox llegue a mi ciudad',
   },
   en: {
     etiqueta: 'How it works',
-    titulo: 'How Tumbite works',
+    titulo: 'How Divoox works',
     intro:
-      'Tumbite is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
+      'Divoox is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
     indice: 'On this page',
     tres: {
       titulo: 'Three people, one delivery',
@@ -221,7 +221,7 @@ const T = {
         {
           id: 'customers',
           img: '/docs/recorrido-cliente-inicio-en.webp',
-          alt: 'Real Tumbite app screen with services and restaurants nearby',
+          alt: 'Real Divoox app screen with services and restaurants nearby',
           titulo: 'If you’re hungry',
           puntos: [
             'Open the app, see the restaurants open near you, and pick one.',
@@ -252,7 +252,7 @@ const T = {
           puntos: [
             'See what you’ll earn before accepting each order. If it’s not worth it, decline and your level stays the same.',
             'Keep 100% of the tip, always.',
-            'There’s a minimum pay per order: if delivery and tip fall short, Tumbite makes up the difference.',
+            'There’s a minimum pay per order: if delivery and tip fall short, Divoox makes up the difference.',
             'Orders come to you by proximity, and your level gives you priority on larger orders.',
             'Get paid to your bank through Stripe, no waiting until the end of the month.',
           ],
@@ -267,7 +267,7 @@ const T = {
         ['The restaurant gets', 'the food minus its 7.5% commission', '$27.75'],
         ['The driver gets', 'their $5 minimum pay plus 100% of the tip', '$9.00'],
         [
-          'Tumbite gets',
+          'Divoox gets',
           'the commission and service fee, minus what it adds to the driver’s pay (card processing comes out of this)',
           '$3.23',
         ],
@@ -277,7 +277,7 @@ const T = {
     franquicias: {
       titulo: 'Franchises: how we launch a new city',
       texto:
-        'Tumbite grows city by city, in any country. Every new city launches with a local franchise: a partner who knows the city and invests the launch capital. The franchise money doesn’t buy a brand: it buys a complete launch.',
+        'Divoox grows city by city, in any country. Every new city launches with a local franchise: a partner who knows the city and invests the launch capital. The franchise money doesn’t buy a brand: it buys a complete launch.',
       incluye: 'What the franchise pays for in each city',
       items: [
         {
@@ -349,7 +349,7 @@ const T = {
         ],
         ['Truly bilingual', 'English and Spanish everywhere: apps, menus, receipts, and support.'],
         [
-          'Tumbite AI',
+          'Divoox AI',
           'An assistant that watches every order and answers questions with real data. Coming soon.',
         ],
       ],
@@ -363,7 +363,7 @@ const T = {
           'Lower cost per mile for drivers and less noise in the neighborhood.',
         ],
         [
-          'A Tumbite hub in every city',
+          'A Divoox hub in every city',
           'A place to charge your phone, rest, and get support in person.',
         ],
         ['Insurance for drivers', 'Coverage during deliveries included in each city’s plan.'],
@@ -371,35 +371,35 @@ const T = {
           'Neighborhood ambassadors',
           'Customers who recommend their favorite restaurant and earn credit when it joins.',
         ],
-        ['Tumbite for business', 'Office lunches with a single monthly invoice.'],
+        ['Divoox for business', 'Office lunches with a single monthly invoice.'],
       ],
     },
     preguntas: {
       titulo: 'Frequently asked questions',
       items: [
         [
-          'Which cities is Tumbite in?',
+          'Which cities is Divoox in?',
           'We start in Miami and open city by city. The footer of this page lists every country and city with its status.',
         ],
         [
-          'How much does Tumbite charge restaurants?',
+          'How much does Divoox charge restaurants?',
           'Depending on the plan: 7.5%, 12.5%, or 15% commission, with no long-term contracts.',
         ],
         [
           'Does the driver keep the tip?',
-          'Yes, 100% of it. There’s also a minimum pay per order that Tumbite tops up when needed.',
+          'Yes, 100% of it. There’s also a minimum pay per order that Divoox tops up when needed.',
         ],
         [
-          'How does Tumbite open in my city?',
+          'How does Divoox open in my city?',
           'With a local franchise that funds the launch: motorbikes, training, each restaurant’s kit, and finding the first customers. Fill out the franchise form on this page.',
         ],
         [
-          'Does Tumbite work in other countries?',
+          'Does Divoox work in other countries?',
           'Yes. The model is the same in any country: the app is bilingual and every city has its own restaurants and drivers, with support in your language.',
         ],
       ],
     },
-    cta: 'Let me know when Tumbite comes to my city',
+    cta: 'Let me know when Divoox comes to my city',
   },
 };
 
@@ -485,7 +485,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
           <img
             src="/marca/local-tumbite.webp"
             alt={
-              idioma === 'en' ? 'A Tumbite partner restaurant' : 'Un restaurante aliado de Tumbite'
+              idioma === 'en' ? 'A Divoox partner restaurant' : 'Un restaurante aliado de Divoox'
             }
             loading="lazy"
             width={1400}
@@ -604,7 +604,7 @@ function Rueda({ pasos, titulo }: { pasos: string[]; titulo: string }) {
         );
       })}
       <text x={c} y={c + 5} textAnchor="middle" fontSize="16" fontWeight="800" fill="#191919">
-        Tumbite
+        Divoox
       </text>
     </svg>
   );

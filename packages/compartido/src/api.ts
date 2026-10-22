@@ -27,7 +27,7 @@ export type OpcionesApi = {
   fetch?: typeof fetch;
 };
 
-/** Cliente del servidor de Tumbite. Lo usan las tres apps y el panel. */
+/** Cliente del servidor de Divoox. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
   const hacer = op.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   // Las apps entran con su propio token y NO mandan la cookie del navegador: en la web, la app

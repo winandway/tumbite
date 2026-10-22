@@ -206,7 +206,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     expect(saldo.datos).toMatchObject({ disponible: 700, reservado: 300 });
   });
 
-  it('entrega + «cobré» el total → conciliado: la comisión pasa a Tumbite; la entrega no crea abonos en la billetera', async () => {
+  it('entrega + «cobré» el total → conciliado: la comisión pasa a Divoox; la entrega no crea abonos en la billetera', async () => {
     const e = await escenario();
     const p = await e.pedir();
     const id = p.datos.pedidoId as string;
@@ -252,7 +252,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
       cobro_estado: 'pendiente',
       conciliacion_estado: 'pendiente',
     });
-    // Nada de dinero por Tumbite: ni venta al restaurante ni entrega al repartidor en movimientos.
+    // Nada de dinero por Divoox: ni venta al restaurante ni entrega al repartidor en movimientos.
     const mov = await e.m.DB.prepare('SELECT COUNT(*) AS n FROM movimientos WHERE pedido_id = ?')
       .bind(id)
       .first<{ n: number }>();
@@ -284,7 +284,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
         )
       ).estado,
     ).toBe(409);
-    // Reconstrucción: cuánto pagó el cliente, qué recibió cada uno, qué ganó Tumbite.
+    // Reconstrucción: cuánto pagó el cliente, qué recibió cada uno, qué ganó Divoox.
     const libro = await e.m.llamar(
       'GET',
       `/datos/admin/libro/pedido/${id}`,
@@ -327,7 +327,7 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
       { montoRecibido: total - 200, nota: '' },
       rep.token,
     );
-    // Otro pedido en mano, cancelado: en mano no hubo devolución de dinero por Tumbite.
+    // Otro pedido en mano, cancelado: en mano no hubo devolución de dinero por Divoox.
     const otro = await e.pedir();
     await e.m.llamar('POST', `/datos/pedidos/${otro.datos.pedidoId}/cancelar`, {}, e.cliente.token);
     const { conciliar } = await import('./conciliacion');
@@ -585,7 +585,7 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
       undefined,
       rep.token,
     );
-    // Lo que paga en el mostrador es la comida menos la comisión de Tumbite (no la financia Tumbite).
+    // Lo que paga en el mostrador es la comida menos la comisión de Divoox (no la financia Divoox).
     expect(ver.datos).toMatchObject({
       montoEsperado: desglose.pagoRestaurante,
       subtotal: 3000,

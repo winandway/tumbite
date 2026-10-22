@@ -6,7 +6,7 @@ import { type BrowserContext, type Page, devices, expect, test } from '@playwrig
 import { TEXTOS } from './textos';
 
 /**
- * El recorrido completo de Tumbite en el navegador, como lo haría la gente: el restaurante se
+ * El recorrido completo de Divoox en el navegador, como lo haría la gente: el restaurante se
  * registra y arma su menú, nuestro equipo lo aprueba, el cliente se registra, pide y paga (con
  * Stripe simulado), el restaurante acepta, el repartidor se conecta, acepta, recoge y entrega, y
  * el cliente califica. Al final el dinero tiene que cuadrar al centavo.
@@ -69,33 +69,33 @@ const AGENTE = {
 } as const;
 /** Qué foto del recorrido va a qué app de la tienda, en qué orden y con qué nombre. */
 const PARA_TIENDA = new Map<string, [string, string]>([
-  ['cliente-inicio', ['Tumbite (cliente)', '01-inicio-restaurantes-cercanos']],
-  ['cliente-restaurantes', ['Tumbite (cliente)', '01b-restaurantes-de-comida']],
-  ['cliente-menu', ['Tumbite (cliente)', '02-menu-del-restaurante']],
-  ['cliente-opciones', ['Tumbite (cliente)', '02b-elige-tamano-y-extras']],
-  ['cliente-carrito', ['Tumbite (cliente)', '03-carrito-con-el-precio-completo']],
-  ['cliente-pagado', ['Tumbite (cliente)', '04-pago-recibido']],
-  ['cliente-en-camino', ['Tumbite (cliente)', '05-pedido-en-vivo-en-el-mapa']],
-  ['cliente-sellado', ['Tumbite (cliente)', '06-pedido-sellado-con-foto']],
-  ['cliente-chat', ['Tumbite (cliente)', '07-chat-con-el-repartidor']],
-  ['cliente-calificar', ['Tumbite (cliente)', '08-entregado-con-foto-y-calificar']],
-  ['repartidor-conectado', ['Tumbite Driver (repartidor)', '01-conectado-buscando-pedidos']],
-  ['repartidor-oferta', ['Tumbite Driver (repartidor)', '02-oferta-con-el-pago-antes-de-aceptar']],
+  ['cliente-inicio', ['Divoox (cliente)', '01-inicio-restaurantes-cercanos']],
+  ['cliente-restaurantes', ['Divoox (cliente)', '01b-restaurantes-de-comida']],
+  ['cliente-menu', ['Divoox (cliente)', '02-menu-del-restaurante']],
+  ['cliente-opciones', ['Divoox (cliente)', '02b-elige-tamano-y-extras']],
+  ['cliente-carrito', ['Divoox (cliente)', '03-carrito-con-el-precio-completo']],
+  ['cliente-pagado', ['Divoox (cliente)', '04-pago-recibido']],
+  ['cliente-en-camino', ['Divoox (cliente)', '05-pedido-en-vivo-en-el-mapa']],
+  ['cliente-sellado', ['Divoox (cliente)', '06-pedido-sellado-con-foto']],
+  ['cliente-chat', ['Divoox (cliente)', '07-chat-con-el-repartidor']],
+  ['cliente-calificar', ['Divoox (cliente)', '08-entregado-con-foto-y-calificar']],
+  ['repartidor-conectado', ['Divoox Driver (repartidor)', '01-conectado-buscando-pedidos']],
+  ['repartidor-oferta', ['Divoox Driver (repartidor)', '02-oferta-con-el-pago-antes-de-aceptar']],
   [
     'repartidor-foto-recogida',
-    ['Tumbite Driver (repartidor)', '03-foto-del-pedido-en-el-restaurante'],
+    ['Divoox Driver (repartidor)', '03-foto-del-pedido-en-el-restaurante'],
   ],
-  ['repartidor-en-camino', ['Tumbite Driver (repartidor)', '04-en-camino-como-llegar']],
-  ['repartidor-llegada', ['Tumbite Driver (repartidor)', '05-en-la-puerta-foto-de-la-entrega']],
-  ['repartidor-billetera', ['Tumbite Driver (repartidor)', '06-billetera']],
-  ['repartidor-retiro', ['Tumbite Driver (repartidor)', '07-retiro-al-banco']],
-  ['restapp-nuevo', ['Tumbite Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
-  ['restapp-preparando', ['Tumbite Restaurants (restaurante)', '02-pedido-en-preparacion']],
+  ['repartidor-en-camino', ['Divoox Driver (repartidor)', '04-en-camino-como-llegar']],
+  ['repartidor-llegada', ['Divoox Driver (repartidor)', '05-en-la-puerta-foto-de-la-entrega']],
+  ['repartidor-billetera', ['Divoox Driver (repartidor)', '06-billetera']],
+  ['repartidor-retiro', ['Divoox Driver (repartidor)', '07-retiro-al-banco']],
+  ['restapp-nuevo', ['Divoox Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
+  ['restapp-preparando', ['Divoox Restaurants (restaurante)', '02-pedido-en-preparacion']],
   [
     'restapp-listo',
-    ['Tumbite Restaurants (restaurante)', '03-confirmar-con-la-foto-del-repartidor'],
+    ['Divoox Restaurants (restaurante)', '03-confirmar-con-la-foto-del-repartidor'],
   ],
-  ['restapp-entrar', ['Tumbite Restaurants (restaurante)', '04-entrar']],
+  ['restapp-entrar', ['Divoox Restaurants (restaurante)', '04-entrar']],
 ]);
 const MIAMI = { latitude: 25.7743, longitude: -80.1937 };
 // Las «fotos» que toma el repartidor: la bolsa cerrada al recoger y al entregar (sin caras).
@@ -1354,10 +1354,10 @@ for (const idioma of ['en', 'es'] as const) {
       name: /Compared with other apps|Comparado con otras apps/,
     });
     // La comparación usa el plan sobre TODAS sus ventas (la recogida al 5 % la mejora aún más):
-    // lo que importa es que con Tumbite le queda más que con los otros.
+    // lo que importa es que con Divoox le queda más que con los otros.
     await expect(compara).toContainText(/DoorDash Basic/);
     const textoCompara = await compara.innerText();
-    const montoTumbite = Number(/Tumbite[^$]*\$(\d+\.\d\d)/.exec(textoCompara)?.[1] ?? '0');
+    const montoTumbite = Number(/Divoox[^$]*\$(\d+\.\d\d)/.exec(textoCompara)?.[1] ?? '0');
     const montoDoorDash = Number(/DoorDash Basic[^$]*\$(\d+\.\d\d)/.exec(textoCompara)?.[1] ?? '0');
     expect(montoTumbite).toBeGreaterThan(montoDoorDash);
     await expect(compara).toContainText(/Uber Eats Lite/);
@@ -1804,7 +1804,7 @@ for (const idioma of ['en', 'es'] as const) {
           cobro_estado: 'confirmado',
           conciliacion_estado: 'conciliado',
         });
-        expect(comisiones(), 'la comisión pasó del saldo prepago a Tumbite').toBeGreaterThan(antes);
+        expect(comisiones(), 'la comisión pasó del saldo prepago a Divoox').toBeGreaterThan(antes);
 
         // B. Transferencia: «aún no me llega» (pendiente, sin cerrar nada) y después confirmada.
         const t = await pedirEnMano('transferencia_repartidor');

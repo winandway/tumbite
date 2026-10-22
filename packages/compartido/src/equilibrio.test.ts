@@ -3,7 +3,7 @@ import { CONFIG_DINERO_INICIAL, calcularPedido } from './bolsillos';
 import { PLANES } from './catalogo';
 
 /**
- * Candado C-EQUILIBRIO (13 oct 2026, decisión de Richard): desde el primer pedido, Tumbite no
+ * Candado C-EQUILIBRIO (13 oct 2026, decisión de Richard): desde el primer pedido, Divoox no
  * pierde dinero en ningún pedido normal. Lo que le queda (comisión + servicio + cargo por pedido
  * pequeño − lo que completa del pago del repartidor) tiene que cubrir el cobro de la tarjeta de
  * Stripe: 2,9 % + 30 centavos (stripe.com/pricing, consultado el 13 oct 2026).

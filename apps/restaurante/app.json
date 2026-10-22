@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Tumbite Restaurants",
+    "name": "Divoox Restaurants",
     "slug": "tumbite-restaurante",
     "version": "0.1.0",
     "orientation": "default",
@@ -14,7 +14,7 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Tumbite uses your photos so you can add a photo of each dish to your menu."
+        "NSPhotoLibraryUsageDescription": "Divoox uses your photos so you can add a photo of each dish to your menu."
       }
     },
     "android": {
@@ -65,14 +65,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Tumbite uses your photos so you can add a photo of each dish to your menu.",
+          "photosPermission": "Divoox uses your photos so you can add a photo of each dish to your menu.",
           "cameraPermission": false,
           "microphonePermission": false
         }
       ],
       "../../plugins/escenas-ios"
     ],
-    "description": "Receive and manage your Tumbite orders.",
+    "description": "Receive and manage your Divoox orders.",
     "owner": "windoce-llc",
     "experiments": {
       "baseUrl": "/restaurant"

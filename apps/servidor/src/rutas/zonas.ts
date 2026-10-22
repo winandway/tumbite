@@ -160,7 +160,7 @@ zonas.patch('/admin/zonas/:id', async (c) => {
 // ───────────────────────── Cobertura pública (C-TERRITORIO) ─────────────────────────
 
 /**
- * ¿Llega Tumbite a este punto? Si no, en qué ciudades sí estamos y qué áreas abren pronto.
+ * ¿Llega Divoox a este punto? Si no, en qué ciudades sí estamos y qué áreas abren pronto.
  * La app y la web la piden con la dirección del cliente; la decisión siempre es del servidor.
  */
 zonas.get('/cobertura', async (c) => {

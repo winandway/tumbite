@@ -151,10 +151,10 @@ export async function crearCuentaCobro(
   await enviarCorreo(env, {
     de: 'avisos',
     para: p.correo,
-    asunto: en ? 'Your Tumbite payout account was changed' : 'Cambió tu cuenta de cobro en Tumbite',
+    asunto: en ? 'Your Divoox payout account was changed' : 'Cambió tu cuenta de cobro en Divoox',
     texto: en
-      ? `Hi ${p.nombre},\n\nA new account for receiving customer transfers was added to your Tumbite driver profile: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). It becomes active in ${HORAS_ESPERA_CUENTA} hours.\n\nIf it wasn’t you, reply to this email right now.`
-      : `Hola, ${p.nombre}.\n\nSe agregó una cuenta nueva para recibir las transferencias de los clientes en tu perfil de repartidor de Tumbite: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). Entra en vigor en ${HORAS_ESPERA_CUENTA} horas.\n\nSi no fuiste tú, responde este correo ahora mismo.`,
+      ? `Hi ${p.nombre},\n\nA new account for receiving customer transfers was added to your Divoox driver profile: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). It becomes active in ${HORAS_ESPERA_CUENTA} hours.\n\nIf it wasn’t you, reply to this email right now.`
+      : `Hola, ${p.nombre}.\n\nSe agregó una cuenta nueva para recibir las transferencias de los clientes en tu perfil de repartidor de Divoox: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). Entra en vigor en ${HORAS_ESPERA_CUENTA} horas.\n\nSi no fuiste tú, responde este correo ahora mismo.`,
     responderA: 'support@tumbite.com',
   }).catch((e: unknown) => console.error('cuenta de cobro: correo', e));
   const r = await db

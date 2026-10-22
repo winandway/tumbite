@@ -19,7 +19,7 @@ function codigoNuevo(): string {
 
 export const normalizarCodigo = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-/** Tumbite le vende saldo a un punto de venta (contra pago fuera del sistema: el comprobante queda escrito). */
+/** Divoox le vende saldo a un punto de venta (contra pago fuera del sistema: el comprobante queda escrito). */
 export async function fondearPunto(
   db: D1Database,
   p: { puntoId: string; monto: number; comprobante: string; autorId: string },

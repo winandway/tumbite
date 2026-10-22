@@ -4,12 +4,12 @@ import { TITULO_PORTADA, tituloPagina } from './tituloPagina';
 
 describe('título de la pestaña en el idioma de la página', () => {
   it('la portada lleva su título en cada idioma', () => {
-    expect(tituloPagina('', true, 'es')).toBe('Tumbite · Comida a domicilio en Miami');
-    expect(tituloPagina('Hola', true, 'en')).toBe('Tumbite · Food delivery in Miami');
+    expect(tituloPagina('', true, 'es')).toBe('Divoox · Comida a domicilio en Miami');
+    expect(tituloPagina('Hola', true, 'en')).toBe('Divoox · Food delivery in Miami');
   });
   it('las demás páginas usan su encabezado', () => {
-    expect(tituloPagina('Configuración', false, 'es')).toBe('Configuración · Tumbite');
-    expect(tituloPagina('Tumbite Docs', false, 'en')).toBe('Tumbite Docs');
+    expect(tituloPagina('Configuración', false, 'es')).toBe('Configuración · Divoox');
+    expect(tituloPagina('Divoox Docs', false, 'en')).toBe('Divoox Docs');
     expect(tituloPagina('', false, 'es')).toBe(TITULO_PORTADA.es);
   });
   it('usa los mismos títulos de portada que el prerender', () => {

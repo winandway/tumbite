@@ -304,7 +304,7 @@ internacional.post('/repartidor/recargas/stripe', async (c) => {
       amount: monto,
       currency: moneda.toLowerCase(),
       automatic_payment_methods: { enabled: true },
-      description: 'Tumbite · recarga de saldo para comisiones',
+      description: 'Divoox · recarga de saldo para comisiones',
       metadata: { recarga_id: recargaId, usuario_id: u.id },
     },
     `recarga-${recargaId}`,

@@ -47,7 +47,7 @@ const T = {
     cliente: 'Paga el cliente',
     rest: 'Recibe el restaurante',
     rep: 'Recibe el repartidor',
-    plat: 'Gana Tumbite',
+    plat: 'Gana Divoox',
     malo: 'Revisa este valor.',
   },
   en: {
@@ -79,7 +79,7 @@ const T = {
     cliente: 'Customer pays',
     rest: 'Restaurant receives',
     rep: 'Driver receives',
-    plat: 'Tumbite earns',
+    plat: 'Divoox earns',
     malo: 'Check this value.',
   },
 };

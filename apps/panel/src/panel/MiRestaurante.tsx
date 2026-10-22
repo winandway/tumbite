@@ -44,7 +44,7 @@ const T = {
     estados: {
       pendiente: 'En revisión: te avisamos al aprobarlo.',
       aprobado: 'Aprobado',
-      pausado: 'Pausado por Tumbite. Escríbenos.',
+      pausado: 'Pausado por Divoox. Escríbenos.',
       rechazado: 'No aprobado. Escríbenos para revisarlo.',
     },
     sinUbicacion: 'Sin ubicación: los clientes no verán la distancia.',
@@ -77,7 +77,7 @@ const T = {
     estados: {
       pendiente: 'Under review: we’ll let you know when it’s approved.',
       aprobado: 'Approved',
-      pausado: 'Paused by Tumbite. Contact us.',
+      pausado: 'Paused by Divoox. Contact us.',
       rechazado: 'Not approved. Contact us to review it.',
     },
     sinUbicacion: 'No location: customers won’t see the distance.',

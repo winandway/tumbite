@@ -19,7 +19,7 @@ export async function tarifasDeZona(
     return { pais, moneda, config: await leerConfigDinero(db) };
   const cfg = await leerConfigPais(db, pais);
   if (!cfg.tarifas || !cfg.topes)
-    throw new ErrorDatos('Tumbite todavía no recibe pedidos en este país.', undefined, 409);
+    throw new ErrorDatos('Divoox todavía no recibe pedidos en este país.', undefined, 409);
   if (cfg.moneda !== moneda)
     throw new ErrorDatos(
       'La moneda de esta zona no coincide con la del país. Escríbenos a soporte.',

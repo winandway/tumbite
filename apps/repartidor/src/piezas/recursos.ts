@@ -1,4 +1,4 @@
-/** Recursos gráficos del diseño aprobado de Tumbite Driver (14 oct 2026). */
+/** Recursos gráficos del diseño aprobado de Divoox Driver (14 oct 2026). */
 import logo from '../../assets/driver/logo.png';
 import mascota from '../../assets/driver/mascota.webp';
 import campana from '../../assets/driver/icono-campana.png';

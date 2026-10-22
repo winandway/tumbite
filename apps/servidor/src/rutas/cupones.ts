@@ -10,7 +10,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 /**
  * Cupones y promociones reales (auditoría final, punto 15). Los crea el superadmin; el cliente los
  * aplica en el carrito; el servidor los valida de nuevo al crear el pedido (nunca se confía en la
- * app). El descuento lo absorbe Tumbite (baja su ganancia): quién paga cada campaña es decisión de
+ * app). El descuento lo absorbe Divoox (baja su ganancia): quién paga cada campaña es decisión de
  * Richard por cupón (docs/DECISIONES-RICHARD-FASE-2.md).
  */
 export const cupones = new Hono<{ Bindings: Env; Variables: Variables }>();

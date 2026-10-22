@@ -617,7 +617,7 @@ pedidos.post('/pedidos', async (c) => {
       // Obligatorio cuando la sesión del cliente permite guardar la tarjeta: sin esto, Stripe
       // se niega a pintar el formulario (y lo hace en silencio). Candado C-PAGO-FORMULARIO.
       setup_future_usage: 'off_session',
-      description: `Tumbite · ${String(rest.nombre)}`,
+      description: `Divoox · ${String(rest.nombre)}`,
       metadata: { pedido_id: id },
     },
     `pedido-${id}`,
@@ -877,8 +877,8 @@ pedidos.post('/stripe/aviso', async (c) => {
               : `Tu abono de ${monto} no llegó al banco`,
           texto:
             duenio.idioma === 'en'
-              ? `The bank rejected your ${monto} payout${motivo ? ` (${motivo})` : ''}. Open “Wallet” in your app and check your bank details; the money is still in your Tumbite balance.`
-              : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Tumbite.`,
+              ? `The bank rejected your ${monto} payout${motivo ? ` (${motivo})` : ''}. Open “Wallet” in your app and check your bank details; the money is still in your Divoox balance.`
+              : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Divoox.`,
         }).catch((e: unknown) => console.error('abono fallido: correo', e));
       }
       for (const para of (c.env.ADMIN_CORREOS ?? '')
@@ -1025,7 +1025,7 @@ type MetodoStripe = {
   card?: { brand: string; last4: string; exp_month: number; exp_year: number };
 };
 
-/** Las tarjetas que la persona guardó en Stripe (Tumbite nunca ve el número completo). */
+/** Las tarjetas que la persona guardó en Stripe (Divoox nunca ve el número completo). */
 pedidos.get('/mis-tarjetas', async (c) => {
   const u = exigir(c, 'cliente');
   const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
@@ -1270,7 +1270,7 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
         payment_method: original.payment_method,
         off_session: true,
         confirm: true,
-        description: `Tumbite · propina extra`,
+        description: `Divoox · propina extra`,
         metadata: { pedido_id: id, propina_extra: '1' },
       },
       `propina-${id}`,

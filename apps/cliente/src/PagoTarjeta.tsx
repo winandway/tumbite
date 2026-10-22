@@ -22,7 +22,7 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
       try {
         await initStripe({ publishableKey: clavePublica, urlScheme: 'tumbite-cliente' });
         const r = await initPaymentSheet({
-          merchantDisplayName: 'Tumbite',
+          merchantDisplayName: 'Divoox',
           paymentIntentClientSecret: cobro.clientSecret,
           customerId: cobro.clienteStripe,
           customerSessionClientSecret: cobro.sesionCliente,

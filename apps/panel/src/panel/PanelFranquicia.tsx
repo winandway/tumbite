@@ -5,7 +5,7 @@ import { pedir } from './api';
 const T = {
   es: {
     titulo: '{nombre}',
-    subtitulo: 'Franquicia de Tumbite en {ciudad}',
+    subtitulo: 'Franquicia de Divoox en {ciudad}',
     estados: {
       prospecto: 'Prospecto',
       vendida: 'Vendida',
@@ -55,7 +55,7 @@ const T = {
   },
   en: {
     titulo: '{nombre}',
-    subtitulo: 'Tumbite franchise in {ciudad}',
+    subtitulo: 'Divoox franchise in {ciudad}',
     estados: {
       prospecto: 'Prospect',
       vendida: 'Sold',

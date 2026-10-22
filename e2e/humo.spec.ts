@@ -6,7 +6,7 @@ for (const ruta of RUTAS) {
   test(`la ruta ${ruta} responde 200 y muestra la marca`, async ({ page }) => {
     const res = await page.goto(ruta);
     expect(res?.status()).toBe(200);
-    await expect(page.getByText('Tumbite').first()).toBeVisible();
+    await expect(page.getByText('Divoox').first()).toBeVisible();
   });
 }
 

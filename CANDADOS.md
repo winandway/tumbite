@@ -990,3 +990,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `cuentas.ts` recorre las dos carpetas con paginación y deja `vehiculo_documentos.clave` vacía. Encontrado al inventariar el almacén (`docs/RECUPERACION-COMPLETA-2026-10-20.md`).
 - **Promesa rota:** la política de privacidad (es y en) y la página de borrar la cuenta ya decían que se borran «tu vehículo, licencia y seguro».
 - **Prueba:** `borradoVehiculo.test.ts`, comprobada en rojo quitando la carpeta del vehículo; un archivo de otra persona no se toca.
+
+## C-MARCA-DIVOOX: el nombre visible es Divoox; lo interno sigue siendo Tumbite (22 oct 2026)
+
+- **Decisión de Richard:** Divoox es la marca pública; Tumbite queda como nombre interno del proyecto. Solo se cambió el texto visible (web, Docs, legales, apps, correos, avisos, nombres de las apps). Imágenes, logos y capturas se cambian después, con el logo nuevo.
+- **Qué se hizo:** se reemplazó la palabra «Tumbite» escrita sola por «Divoox» en apps, paneles, servidor, paquetes y pruebas (798 cambios en 116 archivos, rama `marca-divoox`). **No se tocó:** nombres internos pegados a otras palabras (`seguroTumbite`, `CUENTA_TUMBITE`, `conTumbite`…), claves guardadas en el navegador (`tumbite.idioma`, `tumbite.sesion`), la cuenta interna del libro (`'tumbite'`), las tablas, los identificadores de las apps (`com.windoce.tumbite…`), el sitio de pruebas y los dominios y correos `@tumbite.com` (siguen funcionando hasta que divoox.com esté registrado y con correo).
+- **Trampa encontrada:** el título de la pestaña y el prerender buscaban «tumbite» en minúscula para no repetir la marca (`/tumbite/i`); se cambió a `/divoox/i`. La prueba `tituloPagina.test.tsx` lo cubre.
+- **Cuando divoox.com esté listo:** cambiar las direcciones y correos visibles de tumbite.com a divoox.com y redirigir tumbite.com.

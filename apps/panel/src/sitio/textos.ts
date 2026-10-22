@@ -17,7 +17,7 @@ const es = {
     etiqueta: 'Muy pronto en Miami',
     titulo: 'Comida rica, con ritmo, hasta tu puerta.',
     texto:
-      'Tumbite conecta a los vecinos de Miami con sus restaurantes favoritos y con repartidores que ganan de verdad. Más justo para todos, con gente de carne y hueso del otro lado.',
+      'Divoox conecta a los vecinos de Miami con sus restaurantes favoritos y con repartidores que ganan de verdad. Más justo para todos, con gente de carne y hueso del otro lado.',
     pedir: 'Quiero pedir',
     restaurante: 'Tengo un restaurante',
     repartir: 'Quiero repartir',
@@ -58,7 +58,7 @@ const es = {
     ],
     fidelidad:
       'Premiamos que vuelvas: regalo en tu cumpleaños, tarjeta de sellos y sorpresas de tus restaurantes favoritos.',
-    form: 'Avísame cuando Tumbite llegue a mi zona',
+    form: 'Avísame cuando Divoox llegue a mi zona',
   },
   restaurantes: {
     etiqueta: 'Para restaurantes',
@@ -99,7 +99,7 @@ const es = {
         'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
       ],
     ],
-    form: 'Quiero mi restaurante en Tumbite',
+    form: 'Quiero mi restaurante en Divoox',
   },
   repartidores: {
     etiqueta: 'Para repartidores',
@@ -120,13 +120,13 @@ const es = {
       ['billetera', 'Tu billetera', 'saldo, historial y retiro a tu banco.'],
       ['ruta', 'Ruta en un toque', 'con Google Maps o Apple Maps.'],
     ],
-    form: 'Quiero repartir con Tumbite',
+    form: 'Quiero repartir con Divoox',
   },
   mapa: {
     etiqueta: 'Dónde estamos',
     titulo: 'Empezamos en Miami. Tu ciudad puede ser la siguiente.',
     texto:
-      'Tumbite crece pueblo a pueblo. Cada ciudad tiene sus restaurantes y sus repartidores, con soporte en tu idioma. Anótate y cuando haya suficientes vecinos en tu zona, llegamos.',
+      'Divoox crece pueblo a pueblo. Cada ciudad tiene sus restaurantes y sus repartidores, con soporte en tu idioma. Anótate y cuando haya suficientes vecinos en tu zona, llegamos.',
     activa: 'Activa',
     proxima: 'Próximamente',
   },
@@ -134,14 +134,14 @@ const es = {
     etiqueta: 'Música en vivo, de verdad',
     titulo: 'Premiamos a los mejores restaurantes con bandas en vivo',
     texto:
-      'Es lo que viene: una parte de lo que gane Tumbite irá a llevar músicos de verdad a los restaurantes mejor calificados. Creemos en la música hecha por personas y en el arte de nuestra ciudad.',
+      'Es lo que viene: una parte de lo que gane Divoox irá a llevar músicos de verdad a los restaurantes mejor calificados. Creemos en la música hecha por personas y en el arte de nuestra ciudad.',
   },
   preguntas: {
     titulo: 'Preguntas frecuentes',
     lista: [
-      ['¿Cuándo empieza Tumbite?', 'Muy pronto en Miami. Anótate y te avisamos primero.'],
+      ['¿Cuándo empieza Divoox?', 'Muy pronto en Miami. Anótate y te avisamos primero.'],
       [
-        '¿Cuánto cobra Tumbite a los restaurantes?',
+        '¿Cuánto cobra Divoox a los restaurantes?',
         'Desde 7,5 % por pedido, la mitad de lo que cobran las grandes plataformas. Sin contratos de permanencia.',
       ],
       [
@@ -150,7 +150,7 @@ const es = {
       ],
       [
         '¿Cómo se le paga al restaurante y al repartidor?',
-        'Cada uno tiene su billetera en la app y retira a su banco. Los datos bancarios se guardan en Stripe, nunca en Tumbite.',
+        'Cada uno tiene su billetera en la app y retira a su banco. Los datos bancarios se guardan en Stripe, nunca en Divoox.',
       ],
       [
         '¿Qué pasa si hay un problema con mi pedido?',
@@ -179,7 +179,7 @@ const es = {
     listo: '¡Listo! Te avisamos primero.',
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezar: 'Empezar de nuevo',
-    privacidad: 'Usamos tus datos solo para avisarte de Tumbite.',
+    privacidad: 'Usamos tus datos solo para avisarte de Divoox.',
   },
   pantallas: {
     cerca: 'Cerca de ti',
@@ -215,14 +215,14 @@ const es = {
     docs: 'Docs',
     derechos: 'Todos los derechos reservados.',
     desarrollo: 'Desarrollado por',
-    cobertura: 'Dónde está Tumbite',
+    cobertura: 'Dónde está Divoox',
     ciudades: 'Ciudades',
     paises: 'Países',
     cocinas: 'Tipos de comida',
     activo: 'Activo',
     pronto: 'Muy pronto',
     conocenos: 'Conócenos',
-    sobre: 'Cómo funciona Tumbite',
+    sobre: 'Cómo funciona Divoox',
     ciudadesTodas: 'Todas las ciudades',
     contacto: 'Escríbenos',
     ayuda: 'Te ayudamos',
@@ -232,8 +232,8 @@ const es = {
     soporteHumano: 'Soporte humano',
     panel: 'Panel de restaurantes',
     negocios: 'Negocios',
-    restaurante: 'Pon tu restaurante en Tumbite',
-    repartir: 'Reparte con Tumbite',
+    restaurante: 'Pon tu restaurante en Divoox',
+    repartir: 'Reparte con Divoox',
     guiaRestaurante: 'Guía para restaurantes',
     guiaRepartidor: 'Guía para repartidores',
     franquicias: 'Franquicias por ciudad',
@@ -249,24 +249,24 @@ const es = {
     activo: 'Activo',
     pronto: 'Muy pronto',
     comida: 'Tipo de comida',
-    tituloActivo: 'Comida a domicilio en {lugar} con Tumbite',
-    tituloPronto: 'Tumbite llega muy pronto a {lugar}',
+    tituloActivo: 'Comida a domicilio en {lugar} con Divoox',
+    tituloPronto: 'Divoox llega muy pronto a {lugar}',
     textoActivo:
       'Pide de los restaurantes de {lugar}, síguelo en el mapa y recíbelo en tu puerta. Comisiones justas para los restaurantes y el 100 % de la propina para el repartidor.',
     textoPronto:
       'Estamos preparando el lanzamiento en {lugar}: restaurantes, repartidores y vecinos con hambre. Anótate y te avisamos primero cuando abramos.',
     enPais: 'Forma parte de nuestra red en {pais}.',
     ciudadesDe: 'Ciudades en {lugar}',
-    tresPublicos: 'Tumbite en tu ciudad es para tres',
+    tresPublicos: 'Divoox en tu ciudad es para tres',
     paraComensales: 'Para los que tienen hambre: pides en segundos y lo sigues en vivo.',
     paraRestaurantes:
       'Para restaurantes: hasta la mitad de comisión, sin contratos de permanencia.',
     paraRepartidores:
       'Para repartidores: ves cuánto ganas antes de aceptar y rechazar no te castiga.',
-    avisame: 'Avísame cuando Tumbite llegue aquí',
-    quieroRestaurante: 'Quiero mi restaurante en Tumbite',
-    quieroRepartir: 'Quiero repartir con Tumbite',
-    cocinaTitulo: '{comida} a domicilio con Tumbite',
+    avisame: 'Avísame cuando Divoox llegue aquí',
+    quieroRestaurante: 'Quiero mi restaurante en Divoox',
+    quieroRepartir: 'Quiero repartir con Divoox',
+    cocinaTitulo: '{comida} a domicilio con Divoox',
     cocinaTexto:
       'Los mejores lugares de {comida} de tu zona, con el menú en español e inglés y el pedido seguido en vivo hasta tu puerta.',
     restauranteCocina: '¿Tienes un restaurante de {comida}?',
@@ -274,14 +274,14 @@ const es = {
     primerasCiudades: 'Las primeras ciudades de {lugar}',
     primerasCiudadesTexto:
       'Abrimos ciudad por ciudad, con restaurantes, repartidores y soporte locales. En {lugar} empezaríamos por {ciudades}.',
-    datos: 'Tumbite en {lugar}',
+    datos: 'Divoox en {lugar}',
     idioma: 'Idioma de la app',
     moneda: 'Precios en',
     region: 'Región',
-    franquiciaTitulo: '¿Quieres llevar Tumbite a tu ciudad en {lugar}?',
+    franquiciaTitulo: '¿Quieres llevar Divoox a tu ciudad en {lugar}?',
     franquiciaTexto:
       'Cada ciudad nueva arranca con una franquicia local: con ella se compran las motos, se entrena a los repartidores, cada restaurante recibe su tablet y salimos a buscar a los primeros clientes. Así lo hacemos en cualquier país.',
-    franquiciaEnlace: 'Cómo funciona Tumbite y las franquicias →',
+    franquiciaEnlace: 'Cómo funciona Divoox y las franquicias →',
     otrosPaises: 'Otros países de {region}',
   },
   volver: '← Volver al inicio',
@@ -303,7 +303,7 @@ const en: Textos = {
     etiqueta: 'Coming soon to Miami',
     titulo: 'Great food, with rhythm, right to your door.',
     texto:
-      'Tumbite connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other side.',
+      'Divoox connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other side.',
     pedir: 'I want to order',
     restaurante: 'I own a restaurant',
     entradas: [
@@ -347,7 +347,7 @@ const en: Textos = {
     ],
     fidelidad:
       'We reward you for coming back: a birthday gift, punch cards, and surprises from your favorite restaurants.',
-    form: 'Let me know when Tumbite reaches my area',
+    form: 'Let me know when Divoox reaches my area',
   },
   restaurantes: {
     etiqueta: 'For restaurants',
@@ -388,7 +388,7 @@ const en: Textos = {
         'Orders, sales, commission, and your payout. Cash out to your bank.',
       ],
     ],
-    form: 'I want my restaurant on Tumbite',
+    form: 'I want my restaurant on Divoox',
   },
   repartidores: {
     etiqueta: 'For drivers',
@@ -409,13 +409,13 @@ const en: Textos = {
       ['billetera', 'Your wallet', 'balance, history, and cash-out to your bank.'],
       ['ruta', 'Directions in one tap', 'with Google Maps or Apple Maps.'],
     ],
-    form: 'I want to drive with Tumbite',
+    form: 'I want to drive with Divoox',
   },
   mapa: {
     etiqueta: 'Where we are',
     titulo: 'We start in Miami. Your city could be next.',
     texto:
-      'Tumbite grows town by town. Each city has its own restaurants and its own drivers, with support in your language. Sign up, and once enough neighbors in your area join, we’ll be there.',
+      'Divoox grows town by town. Each city has its own restaurants and its own drivers, with support in your language. Sign up, and once enough neighbors in your area join, we’ll be there.',
     activa: 'Live',
     proxima: 'Coming soon',
   },
@@ -423,14 +423,14 @@ const en: Textos = {
     etiqueta: 'Live music, for real',
     titulo: 'We reward the best restaurants with live bands',
     texto:
-      'It’s what’s coming: part of what Tumbite earns will bring real musicians to the best-rated restaurants. We believe in music made by people and in our city’s art.',
+      'It’s what’s coming: part of what Divoox earns will bring real musicians to the best-rated restaurants. We believe in music made by people and in our city’s art.',
   },
   preguntas: {
     titulo: 'Frequently asked questions',
     lista: [
-      ['When does Tumbite launch?', 'Very soon in Miami. Sign up and you’ll be the first to know.'],
+      ['When does Divoox launch?', 'Very soon in Miami. Sign up and you’ll be the first to know.'],
       [
-        'How much does Tumbite charge restaurants?',
+        'How much does Divoox charge restaurants?',
         'From 7.5% per order, half of what the big platforms charge. No long-term contracts.',
       ],
       [
@@ -439,7 +439,7 @@ const en: Textos = {
       ],
       [
         'How do restaurants and drivers get paid?',
-        'Each one has a wallet in the app and cashes out to their bank. Bank details are stored with Stripe, never with Tumbite.',
+        'Each one has a wallet in the app and cashes out to their bank. Bank details are stored with Stripe, never with Divoox.',
       ],
       [
         'What if there’s a problem with my order?',
@@ -468,7 +468,7 @@ const en: Textos = {
     listo: 'You’re in! We’ll let you know first.',
     recuperado: 'We restored what you were typing.',
     empezar: 'Start over',
-    privacidad: 'We only use your info to tell you about Tumbite.',
+    privacidad: 'We only use your info to tell you about Divoox.',
   },
   pantallas: {
     cerca: 'Near you',
@@ -504,14 +504,14 @@ const en: Textos = {
     docs: 'Docs',
     derechos: 'All rights reserved.',
     desarrollo: 'Developed by',
-    cobertura: 'Where Tumbite is',
+    cobertura: 'Where Divoox is',
     ciudades: 'Cities',
     paises: 'Countries',
     cocinas: 'Cuisines',
     activo: 'Live',
     pronto: 'Coming soon',
     conocenos: 'Get to know us',
-    sobre: 'How Tumbite works',
+    sobre: 'How Divoox works',
     ciudadesTodas: 'All cities',
     contacto: 'Write to us',
     ayuda: 'Let us help you',
@@ -521,8 +521,8 @@ const en: Textos = {
     soporteHumano: 'Human support',
     panel: 'Restaurant dashboard',
     negocios: 'Doing business',
-    restaurante: 'Put your restaurant on Tumbite',
-    repartir: 'Deliver with Tumbite',
+    restaurante: 'Put your restaurant on Divoox',
+    repartir: 'Deliver with Divoox',
     guiaRestaurante: 'Restaurant guide',
     guiaRepartidor: 'Driver guide',
     franquicias: 'City franchises',
@@ -538,23 +538,23 @@ const en: Textos = {
     activo: 'Live',
     pronto: 'Coming soon',
     comida: 'Cuisine',
-    tituloActivo: 'Food delivery in {lugar} with Tumbite',
-    tituloPronto: 'Tumbite is coming soon to {lugar}',
+    tituloActivo: 'Food delivery in {lugar} with Divoox',
+    tituloPronto: 'Divoox is coming soon to {lugar}',
     textoActivo:
       'Order from {lugar} restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver.',
     textoPronto:
       'We’re getting ready to launch in {lugar}: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open.',
     enPais: 'Part of our network in {pais}.',
     ciudadesDe: 'Cities in {lugar}',
-    tresPublicos: 'Tumbite in your city is for three',
+    tresPublicos: 'Divoox in your city is for three',
     paraComensales: 'For the hungry: order in seconds and track it live.',
     paraRestaurantes: 'For restaurants: up to half the commission, no lock-in contracts.',
     paraRepartidores:
       'For drivers: see what you earn before you accept, and declining never counts against you.',
-    avisame: 'Let me know when Tumbite gets here',
-    quieroRestaurante: 'I want my restaurant on Tumbite',
-    quieroRepartir: 'I want to deliver with Tumbite',
-    cocinaTitulo: '{comida} delivery with Tumbite',
+    avisame: 'Let me know when Divoox gets here',
+    quieroRestaurante: 'I want my restaurant on Divoox',
+    quieroRepartir: 'I want to deliver with Divoox',
+    cocinaTitulo: '{comida} delivery with Divoox',
     cocinaTexto:
       'The best {comida} spots in your area, with menus in English and Spanish and your order tracked live to your door.',
     restauranteCocina: 'Do you run a {comida} restaurant?',
@@ -562,14 +562,14 @@ const en: Textos = {
     primerasCiudades: 'First cities in {lugar}',
     primerasCiudadesTexto:
       'We open city by city, with local restaurants, drivers, and support. In {lugar} we would start with {ciudades}.',
-    datos: 'Tumbite in {lugar}',
+    datos: 'Divoox in {lugar}',
     idioma: 'App language',
     moneda: 'Prices in',
     region: 'Region',
-    franquiciaTitulo: 'Want to bring Tumbite to your city in {lugar}?',
+    franquiciaTitulo: 'Want to bring Divoox to your city in {lugar}?',
     franquiciaTexto:
       'Every new city launches with a local franchise: it pays for the motorbikes, driver training, a tablet for every restaurant, and the hunt for the first customers. We do it the same way in any country.',
-    franquiciaEnlace: 'How Tumbite and franchises work →',
+    franquiciaEnlace: 'How Divoox and franchises work →',
     otrosPaises: 'Other countries in {region}',
   },
   volver: '← Back to home',

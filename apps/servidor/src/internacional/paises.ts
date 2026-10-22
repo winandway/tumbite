@@ -24,7 +24,7 @@ export const esquemaConfigPais = z.object({
   transferenciaRepartidorActiva: z.boolean(),
   recargasPuntoVentaActivas: z.boolean(),
   recargasStripeActivas: z.boolean(),
-  /** Comisión de Tumbite por pedido en cobro directo, en puntos base sobre la comida. null = la ganancia del desglose. */
+  /** Comisión de Divoox por pedido en cobro directo, en puntos base sobre la comida. null = la ganancia del desglose. */
   comisionPb: z.number().int().min(0).max(5000).nullable(),
   /** Cargo fijo por pedido en cobro directo (unidad menor). */
   cargoFijo: z.number().int().min(0),

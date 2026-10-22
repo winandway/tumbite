@@ -2,7 +2,7 @@
   "name": "@tumbite/servidor",
   "version": "0.1.0",
   "private": true,
-  "description": "Servidor de Tumbite. Corre en YaDominios Cloud como _worker.js. Rutas de datos bajo /datos (nunca /api).",
+  "description": "Servidor de Divoox. Corre en YaDominios Cloud como _worker.js. Rutas de datos bajo /datos (nunca /api).",
   "main": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",

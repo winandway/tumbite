@@ -505,7 +505,7 @@ const esquemaRevision = z.object({
   seguroTumbite: z.boolean().optional(),
 });
 
-/** El superadmin marca la verificación de antecedentes y si el repartidor va con el seguro de Tumbite. */
+/** El superadmin marca la verificación de antecedentes y si el repartidor va con el seguro de Divoox. */
 superadmin.patch('/admin/repartidores/:id', async (c) => {
   exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaRevision);
@@ -1039,7 +1039,7 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
 /**
  * Devolución DESPUÉS de entregar (queja atendida): reembolso parcial o total en Stripe con clave de
  * idempotencia, registro en `devoluciones` y, si se le carga al restaurante o al repartidor, un
- * movimiento compensatorio con autor (nunca se borra historial). Por defecto la asume Tumbite:
+ * movimiento compensatorio con autor (nunca se borra historial). Por defecto la asume Divoox:
  * quién paga cada tipo de queja es decisión de Richard (docs/DECISIONES-RICHARD-FASE-2.md).
  */
 superadmin.post('/admin/pedidos/:id/devolver', async (c) => {

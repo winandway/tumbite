@@ -19,7 +19,7 @@ const T = {
     correo: 'Correo',
     mandar: 'Mandarme el enlace',
     mandado:
-      'Si ese correo tiene cuenta en Tumbite, ya te llegó el enlace. Revisa también la carpeta de spam. Vence en 30 minutos.',
+      'Si ese correo tiene cuenta en Divoox, ya te llegó el enlace. Revisa también la carpeta de spam. Vence en 30 minutos.',
     nueva: 'Crea tu contraseña nueva',
     clave: 'Contraseña nueva',
     confirmar: 'Repite la contraseña',
@@ -39,7 +39,7 @@ const T = {
     correo: 'Email',
     mandar: 'Send me the link',
     mandado:
-      'If that email has a Tumbite account, the link is on its way. Check your spam folder too. It expires in 30 minutes.',
+      'If that email has a Divoox account, the link is on its way. Check your spam folder too. It expires in 30 minutes.',
     nueva: 'Create your new password',
     clave: 'New password',
     confirmar: 'Repeat the password',

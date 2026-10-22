@@ -1,5 +1,5 @@
 /**
- * Direcciones públicas de Tumbite. El idioma principal es el inglés (regla de Richard, 13 oct
+ * Direcciones públicas de Divoox. El idioma principal es el inglés (regla de Richard, 13 oct
  * 2026): «/privacy» es la página en inglés y «/es/privacy» la misma en español. Ninguna dirección
  * lleva palabras en español. Las viejas en español (que ya circularon en correos, tiendas y
  * buscadores) se redirigen a las nuevas con 301: aquí está el mapa. Candado C-INGLES-PRINCIPAL.

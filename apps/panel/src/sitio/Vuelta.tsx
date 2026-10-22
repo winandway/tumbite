@@ -6,7 +6,7 @@ const T = {
   es: {
     '/payment/done': [
       '¡Pago recibido!',
-      'Tu pedido ya va para el restaurante. Vuelve a la app de Tumbite para seguirlo en vivo.',
+      'Tu pedido ya va para el restaurante. Vuelve a la app de Divoox para seguirlo en vivo.',
     ],
     '/payment/cancelled': [
       'Pago no completado',
@@ -27,7 +27,7 @@ const T = {
   en: {
     '/payment/done': [
       'Payment received!',
-      'Your order is on its way to the restaurant. Go back to the Tumbite app to track it live.',
+      'Your order is on its way to the restaurant. Go back to the Divoox app to track it live.',
     ],
     '/payment/cancelled': [
       'Payment not completed',

@@ -36,7 +36,7 @@ export function debeOfrecer(minutosQueFaltan: number, km: number): boolean {
 
 /** Rechazos (o vencimientos) seguidos a partir de los cuales el pedido se ofrece a todos con bono. */
 export const RECHAZOS_PARA_ABRIR = 3;
-/** Bono (centavos) que paga Tumbite al repartidor que toma un pedido que nadie quiso. */
+/** Bono (centavos) que paga Divoox al repartidor que toma un pedido que nadie quiso. */
 export const BONO_OFERTA_ABIERTA = 100;
 /** Minutos extra que el restaurante puede sumar con «cocina ocupada». */
 export const OPCIONES_COCINA_OCUPADA = [0, 10, 20] as const;

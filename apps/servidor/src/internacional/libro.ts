@@ -203,7 +203,7 @@ export async function liberarReservasDe(db: D1Database, pedidoId: string, motivo
   for (const r of results) await liberarReserva(db, pedidoId, r.cuenta_id, motivo);
 }
 
-/** La reserva se convierte en comisión cobrada por Tumbite. Idempotente. */
+/** La reserva se convierte en comisión cobrada por Divoox. Idempotente. */
 export async function cobrarReserva(db: D1Database, pedidoId: string, repartidorId: string) {
   const { monto, sentencias } = await sentenciasCobrarReserva(db, pedidoId, repartidorId);
   if (sentencias.length) await db.batch(sentencias);

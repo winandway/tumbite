@@ -42,7 +42,7 @@ export const esquemaEnv = z.object({
   /** Twilio (SMS de respaldo y llamadas con número oculto). Sin esto, se apagan solos. */
   TWILIO_ACCOUNT_SID: z.string().startsWith('AC').optional(),
   TWILIO_AUTH_TOKEN: z.string().min(16).optional(),
-  /** El número de Tumbite en Twilio, en formato internacional (+1…). */
+  /** El número de Divoox en Twilio, en formato internacional (+1…). */
   TWILIO_FROM: z
     .string()
     .regex(/^\+\d{8,15}$/)

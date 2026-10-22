@@ -1,6 +1,6 @@
 /**
  * Topes FICTICIOS de un país de prueba (C-TOPES-PAIS). Solo existen dentro de las pruebas: no son
- * cifras de Tumbite ni propuestas para Colombia o Venezuela (esas las fija Richard).
+ * cifras de Divoox ni propuestas para Colombia o Venezuela (esas las fija Richard).
  */
 export const TOPES_PRUEBA = {
   bonoOfertaAbierta: 3000,

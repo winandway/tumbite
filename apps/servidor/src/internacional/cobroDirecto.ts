@@ -53,7 +53,7 @@ export async function deudaCliente(
 }
 
 /**
- * Comisión que Tumbite cobra en un pedido de cobro directo: la del país (porcentaje sobre la comida
+ * Comisión que Divoox cobra en un pedido de cobro directo: la del país (porcentaje sobre la comida
  * más cargo fijo) o, sin cifra fijada, la ganancia que ya calculó el desglose.
  */
 export function comisionDirecta(p: { subtotal: number; ganancia: number }, cfg: ConfigPais) {
@@ -88,7 +88,7 @@ export async function abrirPedidoDirecto(
   const deuda = await deudaCliente(db, p.clienteId, pais, moneda);
   if (deuda > cfg.umbralDeudaCliente)
     throw new ErrorDatos(
-      'Tienes un saldo pendiente con Tumbite. Escríbenos a soporte para resolverlo antes de pedir.',
+      'Tienes un saldo pendiente con Divoox. Escríbenos a soporte para resolverlo antes de pedir.',
       undefined,
       409,
     );
@@ -240,7 +240,7 @@ export async function confirmarCobro(
     `${estado} · ${p.montoRecibido} · ${f.metodo_pago} · confirmación manual del repartidor ${p.repartidorId}`,
   );
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
-  // Informativo: ese dinero fue del cliente al repartidor, nunca pasó por Tumbite.
+  // Informativo: ese dinero fue del cliente al repartidor, nunca pasó por Divoox.
   await anotarLibro(db, {
     cuentaId: p.repartidorId,
     bolsillo: 'directo',
@@ -350,7 +350,7 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
         ]
       : []),
     // El cliente pagó de MÁS (por ejemplo, una transferencia repetida): el repartidor le debe la
-    // diferencia. Queda escrito; Tumbite no la devuelve porque ese dinero nunca pasó por Tumbite.
+    // diferencia. Queda escrito; Divoox no la devuelve porque ese dinero nunca pasó por Divoox.
     ...(excedente > 0
       ? [
           sentenciaLibro(db, {

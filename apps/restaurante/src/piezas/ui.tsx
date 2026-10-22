@@ -179,7 +179,7 @@ export function Cabecera({
           source={IMG.logo}
           style={{ width: 132, height: 40 }}
           resizeMode="contain"
-          accessibilityLabel="Tumbite"
+          accessibilityLabel="Divoox"
         />
         <Text
           style={{

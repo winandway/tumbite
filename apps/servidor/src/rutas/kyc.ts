@@ -16,7 +16,7 @@ import {
 } from '../antecedentes';
 
 /**
- * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Tumbite.
+ * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Divoox.
  * - La persona toma con la app la foto del documento (frente y reverso) y una foto de su cara.
  * - El restaurante además una foto del local con la ubicación del celular: si está lejos de la
  *   dirección registrada, el superadmin lo ve marcado (restaurantes falsos o mudados).
@@ -458,8 +458,8 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     texto:
       d.estado === 'aprobado'
         ? en
-          ? `Hi ${u.nombre},\n\nYour verification was approved. Welcome to Tumbite!`
-          : `Hola, ${u.nombre}.\n\nTu verificación quedó aprobada. ¡Bienvenido a Tumbite!`
+          ? `Hi ${u.nombre},\n\nYour verification was approved. Welcome to Divoox!`
+          : `Hola, ${u.nombre}.\n\nTu verificación quedó aprobada. ¡Bienvenido a Divoox!`
         : en
           ? `Hi ${u.nombre},\n\nWe couldn’t approve your verification: ${d.motivo}\n\nPlease take the photos again in the app.`
           : `Hola, ${u.nombre}.\n\nNo pudimos aprobar tu verificación: ${d.motivo}\n\nVuelve a tomar las fotos en la app.`,

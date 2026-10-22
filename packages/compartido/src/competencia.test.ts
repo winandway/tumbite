@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COMPETENCIA, compararConOtras, planesEquivalentes } from './competencia';
 
 describe('comparación con otras apps (lo que le queda al restaurante)', () => {
-  it('con 1.000 dólares de ventas en el plan Inicial: 925 con Tumbite, 850 con DoorDash, 800 con Uber Eats', () => {
+  it('con 1.000 dólares de ventas en el plan Inicial: 925 con Divoox, 850 con DoorDash, 800 con Uber Eats', () => {
     expect(compararConOtras(100000, 0, 'inicial')).toEqual({
       ventas: 100000,
       tumbite: 92500,

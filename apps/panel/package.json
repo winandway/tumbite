@@ -2,7 +2,7 @@
   "name": "@tumbite/panel",
   "version": "0.1.0",
   "private": true,
-  "description": "Paneles web de Tumbite: restaurante y administración.",
+  "description": "Paneles web de Divoox: restaurante y administración.",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -240,7 +240,7 @@ describe('C-TERRITORIO: cobertura por áreas', () => {
     const malo = await pedir(EN_SUR);
     expect(malo.estado).toBe(409);
     expect(malo.datos.error ?? malo.datos.mensaje ?? JSON.stringify(malo.datos)).toMatch(
-      /fuera de la zona de cobertura|outside Tumbite/,
+      /fuera de la zona de cobertura|outside Divoox/,
     );
     const bueno = await pedir({ lat: 25.81, lng: -80.21 });
     expect([200, 201]).toContain(bueno.estado);
@@ -456,7 +456,7 @@ describe('C-TERRITORIO: franquicias y managers aislados', () => {
     const m = mundo(ENV);
     const admin = await m.cuenta('admin');
     await m.DB.prepare(
-      "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto, ciudad) VALUES ('tf', 'codf', 'franquicia', 'Ana Socia', 'ana@ejemplo.com', 'Quiero Tumbite', 'Orlando')",
+      "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto, ciudad) VALUES ('tf', 'codf', 'franquicia', 'Ana Socia', 'ana@ejemplo.com', 'Quiero Divoox', 'Orlando')",
     ).run();
     const lista = (
       await m.llamar('GET', '/datos/admin/solicitudes-franquicia', undefined, admin.token)

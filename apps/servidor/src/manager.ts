@@ -10,7 +10,7 @@ import { soltarPedido } from './rutas/operacion';
 import { aplicarAjuste } from './rutas/pedidos';
 
 /**
- * El Manager de Tumbite, fase de reglas (sin IA y sin costo): vigila que ningún pedido pagado
+ * El Manager de Divoox, fase de reglas (sin IA y sin costo): vigila que ningún pedido pagado
  * se quede olvidado. Corre en el reloj externo y también cada vez que el cliente mira su
  * seguimiento (la app pregunta cada pocos segundos), así no depende de que el reloj sea puntual.
  * Candado C-MANAGER-1.

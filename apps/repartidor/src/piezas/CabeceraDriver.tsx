@@ -57,7 +57,7 @@ export function CabeceraDriver({
           source={IMG.logo}
           style={{ width: 132, height: 36 }}
           resizeMode="contain"
-          accessibilityLabel="Tumbite"
+          accessibilityLabel="Divoox"
         />
         <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 13, marginTop: -4 }}>
           {t.driver}

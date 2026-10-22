@@ -86,7 +86,7 @@ const es = {
     noListoOk: 'Avisamos al restaurante y quedó registrado: la espera no cuenta en tu contra.',
     ayuda: 'Ayuda con este pedido',
     emergencia: 'Emergencia',
-    emergenciaAyuda: 'Llama al 911. Tumbite queda avisado.',
+    emergenciaAyuda: 'Llama al 911. Divoox queda avisado.',
     cobrar: 'Cobra al cliente',
     cobrarEfectivo: 'El cliente paga en efectivo. Sin la propina, debe darte:',
     cobrarTransfer:
@@ -108,7 +108,7 @@ const es = {
     titulo: 'Paga la comida en el restaurante',
     paga: 'Paga en el mostrador:',
     explica:
-      'Es la comida ({comida}) menos la comisión de Tumbite. La pagas con tu dinero; el cliente te la devuelve al recibir.',
+      'Es la comida ({comida}) menos la comisión de Divoox. La pagas con tu dinero; el cliente te la devuelve al recibir.',
     efectivo: 'Efectivo',
     tarjeta: 'Mi tarjeta',
     cuantoPagaste: 'Lo que pagaste',
@@ -118,13 +118,13 @@ const es = {
     resumen: 'Pagaste {pagado} con {metodo}. El ticket dice {ticket}.',
     conDiferencia: 'Hay una diferencia con lo que esperaba la app: soporte la revisará.',
     entregaTicket: 'Entrega el ticket al cliente junto con el pedido.',
-    tuDinero: 'Tumbite no presta ni pone este dinero: es tu capital de trabajo.',
+    tuDinero: 'Divoox no presta ni pone este dinero: es tu capital de trabajo.',
     montoInvalido: 'Escribe los dos montos.',
     fotoTicket: 'Tomar foto del ticket (opcional)',
     fotoTicketOk: 'Foto del ticket guardada.',
   },
   fondo: {
-    titulo: 'Tumbite está activo',
+    titulo: 'Divoox está activo',
     cuerpo: 'Seguimos mandando tu ubicación mientras estás conectado.',
   },
   edad: {
@@ -269,7 +269,7 @@ const en: T = {
     noListoOk: 'We told the restaurant and it’s on record: the wait doesn’t count against you.',
     ayuda: 'Help with this order',
     emergencia: 'Emergency',
-    emergenciaAyuda: 'Calls 911. Tumbite is notified.',
+    emergenciaAyuda: 'Calls 911. Divoox is notified.',
     cobrar: 'Collect from the customer',
     cobrarEfectivo: 'The customer pays in cash. Without the tip, they owe you:',
     cobrarTransfer:
@@ -291,7 +291,7 @@ const en: T = {
     titulo: 'Pay for the food at the restaurant',
     paga: 'Pay at the counter:',
     explica:
-      'It’s the food ({comida}) minus Tumbite’s fee. You pay with your own money; the customer pays you back on delivery.',
+      'It’s the food ({comida}) minus Divoox’s fee. You pay with your own money; the customer pays you back on delivery.',
     efectivo: 'Cash',
     tarjeta: 'My card',
     cuantoPagaste: 'What you paid',
@@ -301,13 +301,13 @@ const en: T = {
     resumen: 'You paid {pagado} by {metodo}. The receipt says {ticket}.',
     conDiferencia: 'There’s a difference from what the app expected: support will review it.',
     entregaTicket: 'Hand the receipt to the customer with the order.',
-    tuDinero: 'Tumbite doesn’t lend or put up this money: it’s your working capital.',
+    tuDinero: 'Divoox doesn’t lend or put up this money: it’s your working capital.',
     montoInvalido: 'Enter both amounts.',
     fotoTicket: 'Take a photo of the receipt (optional)',
     fotoTicketOk: 'Receipt photo saved.',
   },
   fondo: {
-    titulo: 'Tumbite is active',
+    titulo: 'Divoox is active',
     cuerpo: 'We keep sending your location while you’re online.',
   },
   edad: {

@@ -670,7 +670,7 @@ operacion.get('/restaurante/resumen', async (c) => {
     )
     .bind(rid, desde, hasta, moneda)
     .first<Record<string, number>>();
-  // Los últimos 30 días y el plan: con eso el panel compara lo que le queda con Tumbite y con
+  // Los últimos 30 días y el plan: con eso el panel compara lo que le queda con Divoox y con
   // otras apps (calculadora de «Beneficios», C-COMPARA-REST).
   const mes = await db
     .prepare(
@@ -1107,7 +1107,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
     if (!candidatos.length) continue;
     // Oferta abierta: a los 3 rechazos (o vencimientos) se ofrece a todos a la vez con un bono
-    // que paga Tumbite. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
+    // que paga Divoox. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
     let bono = 0;
     if (vistos.size >= RECHAZOS_PARA_ABRIR) {
       // C-TOPES-PAIS: el bono del país de la zona (EE. UU.: el de siempre).
@@ -1182,7 +1182,7 @@ async function avisarAlCliente(
       pedidoId,
       tipo: smsTipo,
       telefono: f.telefono,
-      texto: `Tumbite: ${texto.titulo}. ${texto.cuerpo}`,
+      texto: `Divoox: ${texto.titulo}. ${texto.cuerpo}`,
     }).catch((e: unknown) => console.error('sms respaldo', e));
 }
 
@@ -1216,7 +1216,7 @@ function conDatosRestaurante(f: FilaPedido) {
       lat: f.rest_lat == null ? null : Number(f.rest_lat),
       lng: f.rest_lng == null ? null : Number(f.rest_lng),
     },
-    // El bono de la oferta abierta se suma a lo que gana (lo paga Tumbite al entregar).
+    // El bono de la oferta abierta se suma a lo que gana (lo paga Divoox al entregar).
     pagoRepartidor: Number(f.pago_repartidor) + Number(f.bono ?? 0),
     bono: Number(f.bono ?? 0),
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
@@ -1806,7 +1806,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         )
         .bind(id),
       anotarEstado(db, id, 'entregado', u.id),
-      // Fase 2 · cobro directo: el dinero nunca pasó por Tumbite (el cliente le pagó al repartidor y
+      // Fase 2 · cobro directo: el dinero nunca pasó por Divoox (el cliente le pagó al repartidor y
       // él al restaurante en el local): no se acreditan bolsillos; la conciliación lo deja en el libro.
       ...(esDirecto(String(p.metodo_pago ?? 'tarjeta'))
         ? []
@@ -2220,7 +2220,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
 
 /**
  * Llamada con número oculto: el repartidor o el cliente de un pedido en marcha toca «Llamar»;
- * Twilio lo llama a él primero y, al contestar, marca al otro. Los dos ven el número de Tumbite.
+ * Twilio lo llama a él primero y, al contestar, marca al otro. Los dos ven el número de Divoox.
  */
 operacion.post('/pedidos/:id/llamar', async (c) => {
   const u = exigir(c, 'cliente', 'repartidor');
@@ -2374,7 +2374,7 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
   return c.json({ ok: true });
 });
 
-/** El puente de Twilio: con el pase válido, marca al otro número con el de Tumbite como remitente. */
+/** El puente de Twilio: con el pase válido, marca al otro número con el de Divoox como remitente. */
 // F9: la llamada pide GET, pero se acepta también POST (el método por defecto de Twilio).
 operacion.on(['GET', 'POST'], '/twilio/puente', async (c) => {
   const a = await abrirPase(c.env, c.req.query('t') ?? '');

@@ -215,7 +215,7 @@ restauranteMas.post('/mi-restaurante/equipo', async (c) => {
     .first<{ id: string }>();
   if (!u)
     throw new ErrorDatos(
-      'Esa persona todavía no tiene cuenta de restaurante en Tumbite: pídele que se registre en el panel primero.',
+      'Esa persona todavía no tiene cuenta de restaurante en Divoox: pídele que se registre en el panel primero.',
       'correo',
       404,
     );

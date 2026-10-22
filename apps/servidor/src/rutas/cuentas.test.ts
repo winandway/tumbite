@@ -120,7 +120,7 @@ describe('cuentas', () => {
     const r = await llamar('/datos/cuentas/registro', {
       ...nueva,
       correo: 'jefe@tumbite.com',
-      nombre: 'Soporte Tumbite',
+      nombre: 'Soporte Divoox',
     });
     expect(r.datos.usuario.rol).toBe('cliente');
   });
@@ -129,7 +129,7 @@ describe('cuentas', () => {
     const jefe = await llamar('/datos/cuentas/registro', {
       ...nueva,
       correo: 'jefe@tumbite.com',
-      nombre: 'Soporte Tumbite',
+      nombre: 'Soporte Divoox',
     });
     const mala = await llamar('/datos/cuentas/hacer-admin', { semilla: 'otra' }, jefe.datos.token);
     expect(mala.res.status).toBe(403);

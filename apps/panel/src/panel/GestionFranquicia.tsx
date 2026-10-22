@@ -397,7 +397,7 @@ const TS = {
   es: {
     solicitudes: 'Solicitudes del formulario «Quiero una franquicia»',
     vacio: 'No hay solicitudes todavía.',
-    ciudad: 'Ciudad de Tumbite',
+    ciudad: 'Ciudad de Divoox',
     elegir: 'Elige una ciudad',
     convertir: 'Crear franquicia en prospecto',
     convertida: 'Ya es franquicia',
@@ -405,7 +405,7 @@ const TS = {
   en: {
     solicitudes: 'Requests from the “I want a franchise” form',
     vacio: 'No requests yet.',
-    ciudad: 'Tumbite city',
+    ciudad: 'Divoox city',
     elegir: 'Choose a city',
     convertir: 'Create prospect franchise',
     convertida: 'Already a franchise',

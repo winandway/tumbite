@@ -1,6 +1,6 @@
 /**
  * Los mensajes que el servidor le muestra a la persona, en inglés (el idioma principal de
- * Tumbite). El código los escribe en español; al responder se pasan a inglés si la app o el
+ * Divoox). El código los escribe en español; al responder se pasan a inglés si la app o el
  * panel pidieron inglés (cabecera «x-idioma»). La prueba `mensajesEn.test.ts` falla si aparece un
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
@@ -83,8 +83,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['La fecha tiene que ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
   [
-    'Esa persona todavía no tiene cuenta de restaurante en Tumbite: pídele que se registre en el panel primero.',
-    'That person doesn’t have a restaurant account on Tumbite yet: ask them to sign up in the panel first.',
+    'Esa persona todavía no tiene cuenta de restaurante en Divoox: pídele que se registre en el panel primero.',
+    'That person doesn’t have a restaurant account on Divoox yet: ask them to sign up in the panel first.',
   ],
   ['Ya eres el dueño.', 'You are already the owner.'],
   [
@@ -107,8 +107,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'You already have the maximum number of saved addresses. Delete one to add another.',
   ],
   [
-    'Tumbite todavía no recibe pedidos en este país.',
-    'Tumbite isn’t taking orders in this country yet.',
+    'Divoox todavía no recibe pedidos en este país.',
+    'Divoox isn’t taking orders in this country yet.',
   ],
   [
     'La moneda de esta zona no coincide con la del país. Escríbenos a soporte.',
@@ -127,8 +127,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'This country doesn’t accept transfers to the driver yet.',
   ],
   [
-    'Tienes un saldo pendiente con Tumbite. Escríbenos a soporte para resolverlo antes de pedir.',
-    'You have an outstanding balance with Tumbite. Contact support to resolve it before ordering.',
+    'Tienes un saldo pendiente con Divoox. Escríbenos a soporte para resolverlo antes de pedir.',
+    'You have an outstanding balance with Divoox. Contact support to resolve it before ordering.',
   ],
   [
     'Te falta saldo para la comisión de este pedido. Recarga y vuelve a intentar.',
@@ -711,8 +711,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'That area already belongs to another franchise. Remove it from that one first.',
   ],
   [
-    'Esa dirección está fuera de la zona de cobertura de Tumbite.',
-    'That address is outside Tumbite’s coverage area.',
+    'Esa dirección está fuera de la zona de cobertura de Divoox.',
+    'That address is outside Divoox’s coverage area.',
   ],
   [
     'El área no es válida: revisa que tenga al menos 3 puntos y que su borde no se cruce.',

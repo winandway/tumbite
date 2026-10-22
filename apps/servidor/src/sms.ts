@@ -4,7 +4,7 @@ import { nuevoId } from './cripto';
 /**
  * SMS de respaldo y llamadas con número oculto, por Twilio. Como dicen los estudios: el push no
  * garantiza sonido, así que «en tu puerta» y «no te encuentran» también van por SMS; y el
- * repartidor y el cliente se llaman a través del número de Tumbite, sin ver el del otro.
+ * repartidor y el cliente se llaman a través del número de Divoox, sin ver el del otro.
  * Sin las variables de Twilio, todo esto se apaga solo (el canario lo marca «pendiente»).
  */
 const TWILIO_REAL = 'https://api.twilio.com';
@@ -136,13 +136,13 @@ export async function abrirPase(
   return telefono;
 }
 
-/** TwiML del puente: Twilio marca al otro con el número de Tumbite como remitente. */
+/** TwiML del puente: Twilio marca al otro con el número de Divoox como remitente. */
 export const twimlPuente = (a: string, desde: string) =>
   `<?xml version="1.0" encoding="UTF-8"?><Response><Dial callerId="${desde}" timeout="25">${a}</Dial></Response>`;
 
 /**
  * Llama primero a quien pidió la llamada; cuando contesta, Twilio marca al otro. Los dos ven el
- * número de Tumbite. Devuelve el id de la llamada en Twilio.
+ * número de Divoox. Devuelve el id de la llamada en Twilio.
  */
 export async function llamarConNumeroOculto(
   env: Env,

@@ -4,7 +4,7 @@ import { CONFIG_DINERO_INICIAL, type ConfigDinero, calcularPedido } from './bols
 import { compararConOtras } from './competencia';
 
 /**
- * La calculadora pública de Tumbite (/calculator): franquicia, restaurante, repartidor y cliente.
+ * La calculadora pública de Divoox (/calculator): franquicia, restaurante, repartidor y cliente.
  * Son PROYECCIONES con supuestos a la vista, no promesas. Los supuestos del mercado salen de
  * fuentes públicas (detalle y enlaces en docs/MODELO-DE-DINERO.md); cada persona los puede mover.
  */
@@ -47,7 +47,7 @@ function pedidoPromedio(
 export type EntradaFranquicia = {
   poblacion: number;
   restaurantes: number;
-  /** Parte del mercado de apps de comida de la ciudad que logra Tumbite (%). */
+  /** Parte del mercado de apps de comida de la ciudad que logra Divoox (%). */
   cuotaPct: number;
   usuariosAppsPct?: number;
   pedidosPorUsuarioMes?: number;
@@ -57,7 +57,7 @@ export type EntradaFranquicia = {
   km?: number;
 };
 
-/** El mercado de una ciudad y lo que movería Tumbite en ella, al mes. */
+/** El mercado de una ciudad y lo que movería Divoox en ella, al mes. */
 export function proyectarCiudad(e: EntradaFranquicia, c: ConfigDinero = CONFIG_DINERO_INICIAL) {
   const s = SUPUESTOS_MERCADO;
   const usuarios = Math.round(
@@ -89,7 +89,7 @@ export function proyectarCiudad(e: EntradaFranquicia, c: ConfigDinero = CONFIG_D
   };
 }
 
-/** Restaurante: cuánto le queda de sus ventas con Tumbite y con las otras apps, al mes. */
+/** Restaurante: cuánto le queda de sus ventas con Divoox y con las otras apps, al mes. */
 export function compararRestaurante(
   ventasMes: Centavos,
   plan: Plan,
@@ -106,7 +106,7 @@ export type EntradaRepartidor = {
   km: number;
 };
 
-/** Repartidor: cuánto gana por entrega, por día, por semana y por mes (lo que paga Tumbite + propina). */
+/** Repartidor: cuánto gana por entrega, por día, por semana y por mes (lo que paga Divoox + propina). */
 export function proyectarRepartidor(e: EntradaRepartidor, c: ConfigDinero = CONFIG_DINERO_INICIAL) {
   const d = calcularPedido({
     lineas: [{ precioCentavos: SUPUESTOS_MERCADO.ticketComida, cantidad: 1 }],

@@ -87,8 +87,8 @@ const DETALLE_EN: Record<string, string> = {
     'The payment, the store payment or the receipt don’t match.',
   ['El repartidor pagó la comida y el pedido no se entregó. Quién la absorbe está pendiente de decisión (decisión 20).']:
     'The driver paid for the food and the order wasn’t delivered. Who covers it is pending a decision (decision 20).',
-  ['El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Tumbite.']:
-    'The customer overpaid the driver. The driver owes it back; that money never went through Tumbite.',
+  ['El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Divoox.']:
+    'The customer overpaid the driver. The driver owes it back; that money never went through Divoox.',
   ['El restaurante no confirmó en la app que recibió el pago en el mostrador.']:
     'The restaurant didn’t confirm in the app that it received the payment at the counter.',
   ['Stripe no confirmó esta recarga en un día. No se acreditó nada.']:
@@ -207,7 +207,7 @@ const FUENTES: readonly Fuente[] = [
         String(f.clave),
         f,
         { porDevolver: -n(f.neto) },
-        'El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Tumbite.',
+        'El cliente pagó de más al repartidor. El repartidor se lo debe devolver; ese dinero nunca pasó por Divoox.',
       ),
   },
   {

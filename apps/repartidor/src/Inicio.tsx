@@ -71,7 +71,7 @@ import {
 function confirmar(texto: string): Promise<boolean> {
   if (Platform.OS === 'web') return Promise.resolve(window.confirm(texto));
   return new Promise((resolver) =>
-    Alert.alert('Tumbite', texto, [
+    Alert.alert('Divoox', texto, [
       { text: 'No', style: 'cancel', onPress: () => resolver(false) },
       { text: 'OK', onPress: () => resolver(true) },
     ]),
@@ -163,7 +163,7 @@ const T = {
     sinUbicacion: 'Para recibir pedidos necesitamos tu ubicación mientras usas la app.',
     buscandoUbicacion: 'Buscando tu ubicación…',
     ubicacionTarda:
-      'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que Tumbite tenga permiso de ubicación, y vuelve a intentar.',
+      'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que Divoox tenga permiso de ubicación, y vuelve a intentar.',
     buscando: 'Buscando pedidos cerca de ti…',
     oferta: 'Nueva oferta',
     ganas: 'Ganas',
@@ -263,7 +263,7 @@ const T = {
     sinUbicacion: 'To receive orders we need your location while you use the app.',
     buscandoUbicacion: 'Finding your location…',
     ubicacionTarda:
-      'We couldn’t read your location. Make sure GPS is on and Tumbite has location permission, then try again.',
+      'We couldn’t read your location. Make sure GPS is on and Divoox has location permission, then try again.',
     buscando: 'Looking for orders near you…',
     oferta: 'New offer',
     ganas: 'You earn',

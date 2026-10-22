@@ -2,7 +2,7 @@ import type { Idioma } from '@tumbite/compartido';
 import type { NombreIcono } from '../Icono';
 
 /**
- * Docs de Tumbite: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
+ * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
  * el enlace a una persona como soporte y para que Google la indexe sola.
  */
 export type Captura = { src: string; alt: string; pie: string };
@@ -40,14 +40,14 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Mientras tu pedido viene en camino, la app te avisa: «Llega en 5 minutos» cuando el repartidor está a unos 5 minutos; «Sal a recibir tu pedido» a 2 minutos si elegiste entrega en mano; «Casi llega» a una cuadra; y «Tu repartidor está en tu puerta» al llegar.',
           'Los avisos de «en tu puerta» y «no te encuentran» también te llegan por mensaje de texto (SMS) al celular de tu cuenta, por si el celular está en silencio o sin datos.',
-          'Si necesitas hablar con el repartidor, toca «Llamar al repartidor (número oculto)»: te llamamos a ti primero y, al contestar, te conectamos con él. Ninguno de los dos ve el número del otro: los dos ven el número de Tumbite. El repartidor puede llamarte igual.',
+          'Si necesitas hablar con el repartidor, toca «Llamar al repartidor (número oculto)»: te llamamos a ti primero y, al contestar, te conectamos con él. Ninguno de los dos ve el número del otro: los dos ven el número de Divoox. El repartidor puede llamarte igual.',
           'El chat del pedido sigue disponible para escribir sin llamar.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-llamar-es.webp',
             alt: 'Pedido en camino en la app del cliente con el botón «Llamar al repartidor (número oculto)» y el aviso «Te estamos llamando. Contesta y te conectamos con tu repartidor».',
-            pie: 'Llamas sin dar tu número: Tumbite los conecta.',
+            pie: 'Llamas sin dar tu número: Divoox los conecta.',
           },
         ],
         preguntas: [
@@ -139,7 +139,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En el carrito, en «Cupón o código promocional», escribe el código y toca «Aplicar». Si vale, verás «Cupón aplicado» y el descuento en el desglose; si no, te decimos por qué (venció, es de otro restaurante, no llegas al mínimo, ya lo usaste).',
           'Hay cupones de monto fijo, de porcentaje sobre la comida y de envío gratis. Algunos son solo para tu primer pedido o para un restaurante.',
-          'El descuento nunca sale del restaurante ni del repartidor: lo pone Tumbite.',
+          'El descuento nunca sale del restaurante ni del repartidor: lo pone Divoox.',
         ],
         capturas: [
           {
@@ -161,7 +161,7 @@ const es: SeccionDocs[] = [
           'Faltó algo, llegó frío, llegó tarde: dinos qué pasó con dos toques. Si faltó un plato, marcas cuál y, cuando está activado, se te devuelve solo ese valor.',
         explicacion: [
           'En el pedido, toca «Tengo un problema». Elige qué pasó: faltó algo, me llegó otro pedido, llegó frío o dañado, llegó muy tarde, problema con el repartidor u otra cosa.',
-          'Si faltó algo, marca los platos que no llegaron. Tumbite calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
+          'Si faltó algo, marca los platos que no llegaron. Divoox calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
           'Tu reporte queda en una conversación privada con un enlace que te llega por correo.',
         ],
         capturas: [],
@@ -183,7 +183,7 @@ const es: SeccionDocs[] = [
           'Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco.',
           'Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte.',
           'Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos.',
-          'Los precios, el envío, el servicio, la propina y el total se muestran en la moneda de la ciudad del restaurante, en las ciudades donde Tumbite opere. Nada se convierte: el monto que ves en el carrito y en el seguimiento es el que pagas.',
+          'Los precios, el envío, el servicio, la propina y el total se muestran en la moneda de la ciudad del restaurante, en las ciudades donde Divoox opere. Nada se convierte: el monto que ves en el carrito y en el seguimiento es el que pagas.',
         ],
         capturas: [
           {
@@ -210,9 +210,9 @@ const es: SeccionDocs[] = [
         resumen:
           'Hoy pagas con tu tarjeta dentro de la app. Muy pronto, en la misma pantalla de pago, aparecerá Apple Pay (iPhone) o Google Pay (Android y Chrome) si tu celular los tiene configurados. Un toque y listo.',
         explicacion: [
-          'Al confirmar tu pedido se abre el formulario de pago dentro de la app y pagas con tu tarjeta. Cuando Apple Pay y Google Pay estén activados en Tumbite, aparecerán como primera opción en esa misma pantalla; te avisaremos en la app.',
+          'Al confirmar tu pedido se abre el formulario de pago dentro de la app y pagas con tu tarjeta. Cuando Apple Pay y Google Pay estén activados en Divoox, aparecerán como primera opción en esa misma pantalla; te avisaremos en la app.',
           'Es el mismo cobro: se autoriza al pedir y se cobra al entregar (si cancelas antes de que el restaurante acepte, no se te cobra nada).',
-          'Tus datos de pago los guarda Apple, Google o Stripe; Tumbite nunca ve el número de tu tarjeta.',
+          'Tus datos de pago los guarda Apple, Google o Stripe; Divoox nunca ve el número de tu tarjeta.',
           'Si no te aparece Apple Pay o Google Pay, revisa que tengas una tarjeta agregada en la billetera de tu celular.',
         ],
         capturas: [],
@@ -229,9 +229,9 @@ const es: SeccionDocs[] = [
         resumen:
           'Como en las grandes apps de reparto: arriba el logotipo, tu saludo, la campana de avisos y el cupón de regalos. Luego el buscador, los ocho servicios en orden (hoy funciona Comida), tus regalos o las ofertas, los restaurantes cerca de ti y la barra de abajo.',
         explicacion: [
-          'Cabecera: el logotipo de Tumbite, tu nombre, la campana de avisos (con un punto rojo si tienes pedidos en curso) y el cupón, que abre tus regalos. El selector de idioma (español o inglés) está ahí mismo.',
-          'Buscador: tócalo y escribe lo que se te antoja; Tumbite busca restaurantes y platos en tu ciudad mientras escribes (guía «Buscar en Tumbite»). El botón de la derecha deja solo los abiertos ahora.',
-          'Servicios, en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona «Comida»: al tocarla ves todos los restaurantes, con buscador, categorías y filtros rápidos. Los demás abren su pantalla con una franja que dice que están en construcción (guía «Los servicios de Tumbite»).',
+          'Cabecera: el logotipo de Divoox, tu nombre, la campana de avisos (con un punto rojo si tienes pedidos en curso) y el cupón, que abre tus regalos. El selector de idioma (español o inglés) está ahí mismo.',
+          'Buscador: tócalo y escribe lo que se te antoja; Divoox busca restaurantes y platos en tu ciudad mientras escribes (guía «Buscar en Divoox»). El botón de la derecha deja solo los abiertos ahora.',
+          'Servicios, en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona «Comida»: al tocarla ves todos los restaurantes, con buscador, categorías y filtros rápidos. Los demás abren su pantalla con una franja que dice que están en construcción (guía «Los servicios de Divoox»).',
           'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
           'Tus regalos u ofertas del día: si ya tienes regalos en marcha (tarjeta de sellos, descuento por volver), los ves aquí; si no, ves ofertas de ejemplo marcadas «Ejemplo» (no se pueden comprar).',
           'Restaurantes cerca de ti: tarjetas con la foto, el tiempo estimado, el costo de envío y si está abierto. Toca una para ver el menú.',
@@ -256,9 +256,9 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'search',
-        titulo: 'Buscar en Tumbite: restaurantes, platos y tipos de comida',
+        titulo: 'Buscar en Divoox: restaurantes, platos y tipos de comida',
         resumen:
-          'Toca el buscador del inicio y escribe lo que se te antoja. Mientras escribes, Tumbite busca en tu ciudad y te muestra los restaurantes y los platos que coinciden, con los abiertos primero.',
+          'Toca el buscador del inicio y escribe lo que se te antoja. Mientras escribes, Divoox busca en tu ciudad y te muestra los restaurantes y los platos que coinciden, con los abiertos primero.',
         explicacion: [
           'El buscador del inicio abre una pantalla propia, como en las grandes apps de reparto. Escribe al menos dos letras: el nombre de un restaurante, un plato («pizza», «sushi») o un tipo de comida («cubana»).',
           'Los resultados llegan solos mientras escribes, sin tocar nada más, y vienen en dos pestañas: «Restaurantes» y «Platos». Cada pestaña muestra cuántos encontró.',
@@ -274,7 +274,7 @@ const es: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          '¿Cómo busco un plato en Tumbite?',
+          '¿Cómo busco un plato en Divoox?',
           '¿Por qué el buscador no encuentra nada?',
           '¿Puedo buscar por tipo de comida?',
         ],
@@ -293,7 +293,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Cuando tienes un pedido en curso, la campana lleva un punto rojo con el número de pedidos. Al tocarla ves cada uno con su estado («En preparación», «En camino hacia ti»…) y al tocarlo abres el seguimiento.',
           'En la pestaña «Regalos» (la misma que abre el cupón) ves tus regalos en marcha: la tarjeta de sellos de cada restaurante donde ya pediste, con cuántos pedidos llevas y cuántos faltan para el plato de regalo, y los descuentos por volver cuando te tocan. La barra verde muestra tu avance.',
-          'También te avisamos cuando Tumbite va a abrir en una zona nueva de tu ciudad, con la fecha prevista si ya la hay.',
+          'También te avisamos cuando Divoox va a abrir en una zona nueva de tu ciudad, con la fecha prevista si ya la hay.',
           'Los avisos se calculan al momento: no hay nada que borrar ni marcar como leído. Cuando un pedido se entrega, desaparece de la campana y queda en «Pedidos».',
           'Si no hay nada que avisar, la campana lo dice claro: nunca inventa avisos.',
         ],
@@ -317,11 +317,11 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'services',
-        titulo: 'Los servicios de Tumbite: qué hay hoy y qué viene',
+        titulo: 'Los servicios de Divoox: qué hay hoy y qué viene',
         resumen:
           'En el inicio ves ocho servicios en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona Comida; los demás tienen su pantalla y te dicen, con una franja discreta, que están en construcción.',
         explicacion: [
-          'Tumbite nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Por eso los servicios ya están en el inicio, en el orden en que van a llegar.',
+          'Divoox nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Por eso los servicios ya están en el inicio, en el orden en que van a llegar.',
           'Cada servicio tiene su propia pantalla. Si todavía no está listo, arriba ves una franja discreta: «Estamos construyendo este servicio. Pronto estará listo.» Nada de ventanas que tapen la pantalla. Debajo, una lista marcada «Ejemplo» de lo que vas a poder hacer.',
           'En la loseta del inicio, una etiqueta pequeña dice «Pronto» cuando el servicio viene, «En pausa» si se detuvo un tiempo, o «Actualiza» si tu versión de la app es muy vieja para usarlo. Sin etiqueta, el servicio funciona.',
           'Qué estado tiene cada servicio depende de tu ciudad: un servicio puede estar abierto en una y en construcción en otra. La app lo pregunta cada vez que entras.',
@@ -335,7 +335,7 @@ const es: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          '¿Qué servicios tiene Tumbite?',
+          '¿Qué servicios tiene Divoox?',
           '¿Por qué un servicio dice «Pronto»?',
           '¿Cuándo llega Moto o Mercado a mi ciudad?',
         ],
@@ -352,7 +352,7 @@ const es: SeccionDocs[] = [
           'La app siempre te dice qué pasa: si en tu zona todavía no hay restaurantes, si no llegamos aún a tu ciudad o si falló la conexión. Y si no puede comprobar tu sesión, te deja intentar de nuevo sin perder tu cuenta.',
         explicacion: [
           'Los restaurantes que ves dependen de tu ubicación. La app usa, en este orden: el punto que elegiste en el mapa del carrito, la última ubicación que guardaste y, si no hay ninguna, la de tu teléfono. Tu lista no cambia sola por moverte un poco ni por cambiar el idioma.',
-          '«Todavía no hay restaurantes en tu zona»: Tumbite ya funciona en tu zona, pero aún no hay restaurantes abiertos ahí. Estamos sumando más cada semana.',
+          '«Todavía no hay restaurantes en tu zona»: Divoox ya funciona en tu zona, pero aún no hay restaurantes abiertos ahí. Estamos sumando más cada semana.',
           '«Todavía no llegamos a tu zona»: tu ubicación está fuera de las ciudades donde trabajamos hoy. Pronto estaremos en más.',
           '«No pudimos cargar los restaurantes»: falló la conexión. Toca «Intentar de nuevo». Si ya tenías una lista, la seguimos mostrando y te avisamos que no se pudo actualizar.',
           'Al abrir la app comprobamos tu sesión. Si el internet está lento, no te dejamos esperando para siempre: después de unos segundos ves «No pudimos confirmar tu sesión», con «Reintentar» y «Entrar con otra cuenta». Tu sesión no se borra por un problema de conexión.',
@@ -548,12 +548,12 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-cliente-restaurantes-es.webp',
-            alt: 'Lista de restaurantes de Comida en la app de Tumbite: buscador, botones por tipo de comida y tarjetas con foto, distancia, tiempo y si está abierto.',
+            alt: 'Lista de restaurantes de Comida en la app de Divoox: buscador, botones por tipo de comida y tarjetas con foto, distancia, tiempo y si está abierto.',
             pie: 'Toca «Comida» y elige entre todos los restaurantes de tu zona.',
           },
           {
             src: '/docs/recorrido-cliente-menu-es.webp',
-            alt: 'Menú de un restaurante en la app de Tumbite: foto grande, pestañas Menú e Información, botones por categoría y cada plato con su precio y el botón +.',
+            alt: 'Menú de un restaurante en la app de Divoox: foto grande, pestañas Menú e Información, botones por categoría y cada plato con su precio y el botón +.',
             pie: 'Eliges tus platos con el botón +; al tocar un plato ves su detalle.',
           },
           {
@@ -563,17 +563,17 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-es.webp',
-            alt: 'Confirmación «¡Pedido realizado!» en la app de Tumbite, con el número del pedido, el total y los botones «Ver seguimiento» y «Volver al inicio».',
+            alt: 'Confirmación «¡Pedido realizado!» en la app de Divoox, con el número del pedido, el total y los botones «Ver seguimiento» y «Volver al inicio».',
             pie: 'Pagas y el pedido le llega al restaurante al instante.',
           },
         ],
         preguntas: [
-          '¿Cómo pido comida en Tumbite?',
+          '¿Cómo pido comida en Divoox?',
           '¿Cómo pago mi pedido?',
           '¿Puedo pagar con Apple Pay o Google Pay?',
         ],
         pasos: [
-          'Abre la app de Tumbite y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
+          'Abre la app de Divoox y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
           'Toca «Comida» y luego un restaurante. Toca un plato para ver su detalle: elige el tamaño, los extras y la cantidad, y toca «Agregar al carrito».',
           'Ve al carrito. Marca tu dirección en el mapa o escríbela, y agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
@@ -610,18 +610,18 @@ const es: SeccionDocs[] = [
           'Mientras el restaurante no lo acepte, cancelas en un toque y te devolvemos todo. Y si el restaurante no responde, lo cancelamos nosotros.',
         explicacion: [
           'Pedir comida tiene que ser tranquilo. Por eso, mientras el restaurante todavía no empezó a cocinar tu pedido, puedes arrepentirte sin dar explicaciones: te devolvemos el total, con el envío y la propina incluidos.',
-          'Si el restaurante tarda en confirmar, no tienes que esperar ni reclamar. A los diez minutos sin respuesta, Tumbite cancela el pedido por su cuenta, te devuelve el dinero y te avisa al celular.',
+          'Si el restaurante tarda en confirmar, no tienes que esperar ni reclamar. A los diez minutos sin respuesta, Divoox cancela el pedido por su cuenta, te devuelve el dinero y te avisa al celular.',
           'Cuando el restaurante ya aceptó, la comida está en la cocina y no se puede cancelar desde la app. Si hay un problema, toca «¿Problemas con tu pedido?» y te atiende una persona.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-cancelar-es.webp',
-            alt: 'Pedido pagado en la app de Tumbite con la pregunta «Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?» y el botón «Sí, cancelar».',
+            alt: 'Pedido pagado en la app de Divoox con la pregunta «Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?» y el botón «Sí, cancelar».',
             pie: 'Antes de cancelar, la app te pregunta: nada se cancela por un toque sin querer.',
           },
           {
             src: '/docs/recorrido-cliente-cancelado-es.webp',
-            alt: 'Pedido cancelado en la app de Tumbite con el aviso de que se devolvió todo el dinero a la tarjeta.',
+            alt: 'Pedido cancelado en la app de Divoox con el aviso de que se devolvió todo el dinero a la tarjeta.',
             pie: 'Cancelado: te dice por qué y que el dinero vuelve a tu tarjeta.',
           },
         ],
@@ -646,7 +646,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/mi-cuenta-es.webp',
-            alt: 'Pantalla «Mi cuenta» de la app de Tumbite con el nombre y el correo del cliente y la lista de sus pedidos con restaurante, fecha, estado y total.',
+            alt: 'Pantalla «Mi cuenta» de la app de Divoox con el nombre y el correo del cliente y la lista de sus pedidos con restaurante, fecha, estado y total.',
             pie: 'Mi cuenta: tus datos arriba y todos tus pedidos debajo.',
           },
         ],
@@ -665,7 +665,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-cliente-regalo-es.webp',
-            alt: 'Carrito de la app de Tumbite con el regalo de cumpleaños aplicado en verde y el descuento en el desglose del total.',
+            alt: 'Carrito de la app de Divoox con el regalo de cumpleaños aplicado en verde y el descuento en el desglose del total.',
             pie: 'El día de tu cumpleaños, el regalo aparece solo en el carrito y se descuenta del total.',
           },
         ],
@@ -679,7 +679,7 @@ const es: SeccionDocs[] = [
           'Si llevas un tiempo sin pedir, algunos restaurantes te ofrecen un descuento de bienvenida.',
           'Cuando te toque un regalo, lo verás en el carrito antes de pagar. Tócalo para aplicarlo; se descuenta del total.',
         ],
-        nota: 'Los regalos los paga el restaurante con una parte de sus ventas, no Tumbite. Por eso cada restaurante decide los suyos.',
+        nota: 'Los regalos los paga el restaurante con una parte de sus ventas, no Divoox. Por eso cada restaurante decide los suyos.',
       },
       {
         id: 'rate',
@@ -760,7 +760,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Agrega a las personas de tu restaurante con su propia cuenta y su rol. Cada una entra al panel y a la app sin compartir tu contraseña.',
         explicacion: [
-          'En Equipo (menú del panel) el dueño agrega a alguien por su correo. La persona tiene que registrarse antes en el panel de Tumbite como restaurante, sin crear un restaurante propio.',
+          'En Equipo (menú del panel) el dueño agrega a alguien por su correo. La persona tiene que registrarse antes en el panel de Divoox como restaurante, sin crear un restaurante propio.',
           'Roles: el manager responde reseñas, ordena el menú y pone festivos; el staff atiende pedidos y el menú del día a día. Solo el dueño agrega o quita gente, cambia el plan y maneja el dinero.',
           'Cada quien entra con su cuenta y ve el mismo restaurante. Para quitar a alguien, «Quitar del equipo».',
         ],
@@ -806,9 +806,9 @@ const es: SeccionDocs[] = [
         id: 'store-not-receiving-orders',
         titulo: '¿Por qué mi tienda aparece sin recibir pedidos?',
         resumen:
-          'Si tu app o tu panel de Tumbite no responden durante 5 minutos, tu tienda deja de recibir pedidos para que ningún cliente espere en vano. Vuelve sola en cuanto los abres otra vez.',
+          'Si tu app o tu panel de Divoox no responden durante 5 minutos, tu tienda deja de recibir pedidos para que ningún cliente espere en vano. Vuelve sola en cuanto los abres otra vez.',
         explicacion: [
-          'Mientras tu app o tu panel de Tumbite están abiertos, le avisan a Tumbite cada pocos segundos que estás listo para recibir pedidos.',
+          'Mientras tu app o tu panel de Divoox están abiertos, le avisan a Divoox cada pocos segundos que estás listo para recibir pedidos.',
           'Si durante 5 minutos no llega ese aviso (se apagó la tableta, se cayó el internet o se cerró la app), los clientes ven tu tienda como cerrada y no pueden pedirte. Así evitamos que un pedido llegue a una pantalla que nadie mira y se cancele.',
           'Te avisamos al celular y por correo. No tienes que hacer nada más: en cuanto abres la app o el panel otra vez, tu tienda vuelve a aparecer abierta, sola, y te avisamos que ya recibes pedidos.',
           'Si cierras tu tienda a propósito con el botón de abrir o cerrar, eso no es una pausa: sigue cerrada hasta que la abras.',
@@ -821,7 +821,7 @@ const es: SeccionDocs[] = [
           '¿Cómo vuelvo a recibir pedidos?',
         ],
         pasos: [
-          'Deja la app o el panel de Tumbite abiertos mientras tu tienda está abierta.',
+          'Deja la app o el panel de Divoox abiertos mientras tu tienda está abierta.',
           'Si recibes el aviso «Tu tienda no está recibiendo pedidos», revisa la conexión y abre la app o el panel.',
           'En cuanto lo abres, tu tienda vuelve sola y te llega el aviso «Ya recibes pedidos otra vez».',
         ],
@@ -940,10 +940,10 @@ const es: SeccionDocs[] = [
         id: 'payout-failed',
         titulo: 'Si un abono a tu banco falla',
         resumen:
-          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Tumbite. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
+          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Divoox. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
         explicacion: [
           'Cuando retiras tu saldo, el dinero sale hacia tu cuenta bancaria. A veces el banco lo rechaza: cuenta cerrada, número mal escrito, nombre que no coincide.',
-          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Tumbite.',
+          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Divoox.',
           'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
           'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
         ],
@@ -981,7 +981,7 @@ const es: SeccionDocs[] = [
         id: 'hours',
         titulo: 'Tu horario: abres y cierras solo',
         resumen:
-          'Cargas tus turnos por día y Tumbite abre y cierra tu restaurante a esa hora. Fuera de horario el cliente ve a qué hora abres.',
+          'Cargas tus turnos por día y Divoox abre y cierra tu restaurante a esa hora. Fuera de horario el cliente ve a qué hora abres.',
         explicacion: [
           'En «Mi restaurante», abajo, está «Horario». Cada día puede tener uno o más turnos (por ejemplo, de 11:00 a 15:00 y de 18:00 a 23:00). Un turno puede terminar después de medianoche.',
           'Con el horario cargado, tu restaurante aparece abierto solo dentro de esos turnos y con el botón de recibir pedidos encendido. Si pausas con el botón, se cierra aunque sea tu horario.',
@@ -1093,13 +1093,13 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'get-started',
-        titulo: 'Poner tu restaurante en Tumbite',
+        titulo: 'Poner tu restaurante en Divoox',
         resumen:
           'Crea tu cuenta, completa tu ficha y espera la aprobación. Sin contratos de permanencia.',
         capturas: [
           {
             src: '/docs/recorrido-restaurante-registro-es.webp',
-            alt: 'Formulario para crear la cuenta de restaurante en el panel de Tumbite, con tu nombre, correo, celular y contraseña.',
+            alt: 'Formulario para crear la cuenta de restaurante en el panel de Divoox, con tu nombre, correo, celular y contraseña.',
             pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
           },
           {
@@ -1109,12 +1109,12 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restaurante-abierto-es.webp',
-            alt: 'Restaurante aprobado en el panel de Tumbite, recibiendo pedidos, con el botón para cerrar por ahora.',
+            alt: 'Restaurante aprobado en el panel de Divoox, recibiendo pedidos, con el botón para cerrar por ahora.',
             pie: 'Aprobado: abres con un toque y empiezas a recibir pedidos.',
           },
         ],
         preguntas: [
-          '¿Cómo pongo mi restaurante en Tumbite?',
+          '¿Cómo pongo mi restaurante en Divoox?',
           '¿Cuánto tarda la aprobación?',
           '¿Cómo abro y cierro mi restaurante?',
         ],
@@ -1141,7 +1141,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'En «Menú», toca «Agregar plato».',
           'Escribe el nombre y la descripción en español y en inglés. Tus clientes ven el idioma que eligieron.',
-          'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en la moneda de la ciudad de tu restaurante (en las ciudades donde Tumbite opere; con pesos se escribe sin decimales: 12000 son doce mil pesos).',
+          'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en la moneda de la ciudad de tu restaurante (en las ciudades donde Divoox opere; con pesos se escribe sin decimales: 12000 son doce mil pesos).',
           'Sube la foto del plato. Si no tienes, puedes agregarla después: el plato se publica igual.',
           'Guarda. Lo que escribas se guarda solo mientras lo escribes: si se te cierra la ventana, al volver sigue ahí.',
         ],
@@ -1187,7 +1187,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-rechazado-es.webp',
-            alt: 'Pedido en la app de Tumbite que el restaurante no pudo atender, con el aviso de que se devolvió todo el dinero.',
+            alt: 'Pedido en la app de Divoox que el restaurante no pudo atender, con el aviso de que se devolvió todo el dinero.',
             pie: 'Si el restaurante no puede atender un pedido, el cliente lo ve al instante y recibe su dinero.',
           },
         ],
@@ -1203,7 +1203,7 @@ const es: SeccionDocs[] = [
           'Cada pedido lleva su semáforo: verde va a tiempo, amarillo se está atrasando y rojo necesita atención ya. Al lado ves hace cuánto entró y por qué se atrasa.',
           'Si nadie acepta un pedido, te avisamos al celular al minuto y a los 3 minutos. A los 6 lo cancelamos y le devolvemos el dinero al cliente: es mejor un pedido cancelado a tiempo que un cliente esperando.',
           'Si no puedes atender un pedido, abre los tres puntos y elige «Rechazar pedido». El cliente recibe todo su dinero de vuelta.',
-          'También puedes usar la app de Tumbite para restaurantes en una tablet o un celular: misma alarma, mismos pedidos.',
+          'También puedes usar la app de Divoox para restaurantes en una tablet o un celular: misma alarma, mismos pedidos.',
         ],
       },
       {
@@ -1219,7 +1219,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/tablero-restaurante-es.webp',
-            alt: 'Tablero del restaurante en Tumbite con pedidos esperando, ventas de 7 y 30 días, lo que recibe, ticket promedio, platos más vendidos, tiempo real de cocina y calificación.',
+            alt: 'Tablero del restaurante en Divoox con pedidos esperando, ventas de 7 y 30 días, lo que recibe, ticket promedio, platos más vendidos, tiempo real de cocina y calificación.',
             pie: 'Tu tablero al entrar al panel: lo importante del negocio en una sola pantalla.',
           },
         ],
@@ -1237,9 +1237,9 @@ const es: SeccionDocs[] = [
         resumen:
           'Cuatro fotos desde el celular: tu documento, tu cara y el frente del local. Así tus clientes saben que eres real.',
         explicacion: [
-          'En Tumbite cada restaurante es un negocio real, con un dueño identificado y un local que existe. Esa verificación protege a tus clientes, protege tu marca de imitadores y es lo que hace que la gente confíe en pedirte por primera vez.',
+          'En Divoox cada restaurante es un negocio real, con un dueño identificado y un local que existe. Esa verificación protege a tus clientes, protege tu marca de imitadores y es lo que hace que la gente confíe en pedirte por primera vez.',
           'La foto del local se toma estando allí: el celular guarda la ubicación y la comparamos con la dirección de tu ficha. Una vez al año te pedimos repetir solo esa foto, para confirmar que sigues en el mismo lugar.',
-          'Las fotos las ve únicamente el equipo de Tumbite que revisa las verificaciones. No se publican, no se comparten y se borran si cierras tu cuenta.',
+          'Las fotos las ve únicamente el equipo de Divoox que revisa las verificaciones. No se publican, no se comparten y se borran si cierras tu cuenta.',
         ],
         capturas: [
           {
@@ -1284,21 +1284,21 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-restaurante-beneficios-es.webp',
-            alt: 'Pantalla «Beneficios» del panel de Tumbite con el día de hoy: pedidos entregados, ventas, regalos, la comisión, lo que te toca en verde, el saldo disponible y cada venta con su número de pedido.',
+            alt: 'Pantalla «Beneficios» del panel de Divoox con el día de hoy: pedidos entregados, ventas, regalos, la comisión, lo que te toca en verde, el saldo disponible y cada venta con su número de pedido.',
             pie: '«Beneficios»: tu día, tu saldo y cada venta con su número de pedido.',
           },
         ],
         preguntas: [
           '¿Cuándo y cómo cobro?',
           '¿Cómo conecto mi cuenta bancaria?',
-          '¿Cuánto me cobra Tumbite?',
+          '¿Cuánto me cobra Divoox?',
         ],
         pasos: [
           'En «Beneficios» ves el día de hoy: pedidos entregados, ventas, regalos, comisión y, en verde, lo que te toca.',
           'La primera vez, toca «Conectar mi cuenta bancaria»: Stripe te pide tus datos una sola vez, en su página segura.',
           'Tu saldo disponible se acumula con cada pedido entregado y abajo ves cada venta con su número de pedido. Retira cuando quieras, desde un dólar.',
           'Tu plan (Inicial, Crece o Élite) define la comisión. Puedes pedir cambio de plan escribiéndonos.',
-          'En «Comparado con otras apps» ves, con tus ventas reales de los últimos 30 días, cuánto te queda con Tumbite y cuánto te quedaría con DoorDash o Uber Eats en el plan equivalente.',
+          'En «Comparado con otras apps» ves, con tus ventas reales de los últimos 30 días, cuánto te queda con Divoox y cuánto te quedaría con DoorDash o Uber Eats en el plan equivalente.',
         ],
       },
     ],
@@ -1312,10 +1312,10 @@ const es: SeccionDocs[] = [
         id: 'background-location',
         titulo: 'Tu ubicación con la pantalla apagada',
         resumen:
-          'Mientras estás conectado, Tumbite sigue mandando tu posición aunque bloquees el celular o abras el mapa: el cliente y el restaurante ven dónde vas sin que tengas que volver a la app.',
+          'Mientras estás conectado, Divoox sigue mandando tu posición aunque bloquees el celular o abras el mapa: el cliente y el restaurante ven dónde vas sin que tengas que volver a la app.',
         explicacion: [
           'La primera vez que te conectes, el celular te pedirá permitir la ubicación «Siempre» (iPhone) o «Todo el tiempo» (Android). Es solo mientras estás conectado: al desconectarte se apaga.',
-          'En Android verás una notificación fija «Tumbite está activo» mientras estés conectado: es la señal de que tu posición se sigue mandando.',
+          'En Android verás una notificación fija «Divoox está activo» mientras estés conectado: es la señal de que tu posición se sigue mandando.',
           'Si no das el permiso, la app sigue funcionando, pero solo manda tu posición con la pantalla abierta.',
         ],
         capturas: [],
@@ -1353,18 +1353,18 @@ const es: SeccionDocs[] = [
         id: 'cash-orders-and-top-ups',
         titulo: 'Pedidos cobrados en mano y tu saldo para comisiones',
         resumen:
-          'En las ciudades donde está activo, algunos pedidos se pagan al recibir: el cliente te paga a ti en efectivo o por transferencia, tú pagas la comida en el mostrador y la comisión de Tumbite sale de un saldo que recargas por adelantado.',
+          'En las ciudades donde está activo, algunos pedidos se pagan al recibir: el cliente te paga a ti en efectivo o por transferencia, tú pagas la comida en el mostrador y la comisión de Divoox sale de un saldo que recargas por adelantado.',
         explicacion: [
           'La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista.',
           'Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí).',
           'Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera.',
-          'En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Tumbite. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Tumbite no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena.',
+          'En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Divoox. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Divoox no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena.',
           'Entrega el ticket al cliente con el pedido. En la puerta ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Es una confirmación tuya, no una verificación del banco: queda quién confirmó, cuánto y cuándo. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya; si pagó de más (por ejemplo, una transferencia repetida), queda anotado que le debes devolver la diferencia.',
           'Si es por transferencia y todavía no la ves en tu banco, toca «La transferencia aún no me llega»: puedes entregar, el cobro queda pendiente y tu comisión apartada. Cuando la veas, confirma lo que llegó; si nunca llega, confirma 0 y el cliente queda con deuda (puede abrir un reclamo).',
           'Si el pedido se cancela después de que pagaste la comida, ese pago queda registrado a tu nombre como pérdida pendiente de revisión; nunca desaparece. Una vez pagada la comida ya no puedes soltar el pedido tú solo: entrégalo o escribe a soporte.',
           'Si el cliente no paga, toca «El cliente no pagó»: el pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
           'Un pedido cobrado en mano no se deja en un lugar seguro: si el cliente no aparece, el camino es «El cliente no pagó». Y si ya confirmaste el cobro, ese botón ya no aplica.',
-          'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Tumbite no entra a tu cuenta.',
+          'Para recibir transferencias, publica tu cuenta en tu perfil: nombre del titular y número. Un cambio de cuenta pide tu contraseña, te avisa por correo y entra en vigor a las 24 horas (o antes si el equipo lo confirma). Tú confirmas cada transferencia mirando tu propio banco: Divoox no entra a tu cuenta.',
           'La propina en efectivo es tuya y no se cuenta en el cobro.',
         ],
         capturas: [
@@ -1469,22 +1469,22 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/registro-repartidor-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Tumbite con nombre y apellido, correo, celular y contraseña.',
+            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
             pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
           },
           {
             src: '/docs/recorrido-repartidor-conectado-es.webp',
-            alt: 'App de repartidores de Tumbite conectada: «Conectado: recibiendo pedidos», con el nivel y el saldo.',
+            alt: 'App de repartidores de Divoox conectada: «Conectado: recibiendo pedidos», con el nivel y el saldo.',
             pie: 'Te conectas cuando quieres trabajar y te desconectas cuando quieres.',
           },
         ],
         preguntas: [
-          '¿Cómo empiezo a repartir con Tumbite?',
+          '¿Cómo empiezo a repartir con Divoox?',
           '¿Tengo horario fijo?',
           '¿Cómo me conecto para recibir pedidos?',
         ],
         pasos: [
-          'Descarga la app de Tumbite para repartidores y crea tu cuenta.',
+          'Descarga la app de Divoox para repartidores y crea tu cuenta.',
           'En Perfil → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.',
           'Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.',
           'Toca «Conectarme» cuando quieras trabajar. La app usa tu ubicación solo mientras estás conectado.',
@@ -1497,8 +1497,8 @@ const es: SeccionDocs[] = [
         resumen:
           'Tu documento y una foto de tu cara, desde la app. Es lo que les da confianza a los clientes que te abren la puerta.',
         explicacion: [
-          'Cuando un cliente recibe su comida, quiere saber que quien toca su puerta es la persona que dice ser. Por eso todo repartidor de Tumbite pasa por una verificación de identidad antes de repartir.',
-          'Solo necesitas tu documento y una foto de tu cara. Las fotos las ve únicamente el equipo de Tumbite que revisa las verificaciones; no se publican y se borran si cierras tu cuenta.',
+          'Cuando un cliente recibe su comida, quiere saber que quien toca su puerta es la persona que dice ser. Por eso todo repartidor de Divoox pasa por una verificación de identidad antes de repartir.',
+          'Solo necesitas tu documento y una foto de tu cara. Las fotos las ve únicamente el equipo de Divoox que revisa las verificaciones; no se publican y se borran si cierras tu cuenta.',
         ],
         capturas: [
           {
@@ -1561,7 +1561,7 @@ const es: SeccionDocs[] = [
           'Tasa de finalización: de los pedidos que aceptaste, cuántos entregaste. Soltar un pedido cuenta en contra. Las grandes apps piden 90 % o más.',
           'Puntualidad: cuántas entregas llegaron dentro de la hora prometida al cliente. Si el restaurante se demora y tú llegaste a tiempo, no es culpa tuya.',
           'Entregas en 30 días y totales: tu historial de un vistazo.',
-          'En Tumbite estos números son tu guía y cuentan para tu nivel; no se desactiva a nadie por ellos.',
+          'En Divoox estos números son tu guía y cuentan para tu nivel; no se desactiva a nadie por ellos.',
         ],
         capturas: [
           {
@@ -1591,7 +1591,7 @@ const es: SeccionDocs[] = [
           'Debajo, cada pedido con el restaurante, la hora y su total. Toca «Ver desglose» para ver base, bono y propina de ese pedido.',
           'Si el cliente da propina después de entregar, te llega un aviso y aparece como «propina después de entregar» en ese pedido y en el total de propinas.',
           'Más abajo sigue tu billetera: saldo disponible, retiros y movimientos.',
-          'Cada pedido se muestra en la moneda de su ciudad, en las ciudades donde Tumbite opere. Si haces pedidos en ciudades con monedas distintas, ves un total por cada moneda: nunca se suman entre sí.',
+          'Cada pedido se muestra en la moneda de su ciudad, en las ciudades donde Divoox opere. Si haces pedidos en ciudades con monedas distintas, ves un total por cada moneda: nunca se suman entre sí.',
         ],
         capturas: [
           {
@@ -1649,7 +1649,7 @@ const es: SeccionDocs[] = [
           '«Llegué al restaurante»: confirma tu llegada con tu posición. Funciona a menos de 200 metros del local; si estás más lejos, la app te dice a cuántos metros. El GPS también marca la llegada solo, pero con el botón queda registrada en el momento y el restaurante sabe que estás ahí.',
           '«El pedido no está listo»: si llegaste y el restaurante todavía no termina, tócalo. Le llega un aviso al restaurante y queda en la bitácora del pedido: esa espera no cuenta en tu contra.',
           '«Ayuda con este pedido»: elige el motivo (el restaurante está cerrado, el pedido está incorrecto o incompleto, no encuentro la dirección, tuve un accidente o un problema con el vehículo, otro), cuenta más si quieres y se abre tu conversación con soporte con el pedido ya adjunto.',
-          'Emergencia: llama al 911 desde la app y Tumbite queda avisado.',
+          'Emergencia: llama al 911 desde la app y Divoox queda avisado.',
         ],
         capturas: [
           {
@@ -1696,12 +1696,12 @@ const es: SeccionDocs[] = [
           'Como la app de un banco: tu saldo, lo ganado, las propinas y cada movimiento con su pedido. Retiras a tu banco cuando quieras.',
         explicacion: [
           'Cada entrega suma dos movimientos: el pago de la entrega y la propina, que es 100 % tuya y nunca se usa para completar tu pago. Todo queda anotado con la fecha y el número del pedido, para que puedas revisarlo cuando quieras.',
-          'Arriba ves lo disponible para retirar y, debajo, lo ganado, las propinas y lo retirado en el mes. Tus datos bancarios los escribes en Stripe, el procesador de pagos: Tumbite nunca los ve.',
+          'Arriba ves lo disponible para retirar y, debajo, lo ganado, las propinas y lo retirado en el mes. Tus datos bancarios los escribes en Stripe, el procesador de pagos: Divoox nunca los ve.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-repartidor-billetera-es.webp',
-            alt: 'Billetera de la app de repartidores de Tumbite con el saldo disponible, lo ganado, las propinas y lo retirado del mes, y cada entrega y propina con su pedido.',
+            alt: 'Billetera de la app de repartidores de Divoox con el saldo disponible, lo ganado, las propinas y lo retirado del mes, y cada entrega y propina con su pedido.',
             pie: 'Tu billetera: cuánto tienes, cuánto ganaste en el mes y cada movimiento.',
           },
           {
@@ -1760,7 +1760,7 @@ const es: SeccionDocs[] = [
           'Si tres repartidores rechazan o dejan vencer un pedido, se ofrece a todos a la vez con 1 dólar extra. Quien lo entrega, lo cobra.',
         explicacion: [
           'Normalmente cada pedido se ofrece a un solo repartidor a la vez, el más cercano, con 45 segundos para aceptar. Rechazar no castiga.',
-          'Si tres lo dejan pasar, el pedido pasa a «oferta abierta»: lo ven todos los repartidores libres de la zona al mismo tiempo, con un bono de 1 dólar que paga Tumbite. En la tarjeta de la oferta dice «Incluye un bono de $1».',
+          'Si tres lo dejan pasar, el pedido pasa a «oferta abierta»: lo ven todos los repartidores libres de la zona al mismo tiempo, con un bono de 1 dólar que paga Divoox. En la tarjeta de la oferta dice «Incluye un bono de $1».',
           'El primero que acepta se lo lleva; a los demás se les quita de la pantalla. El bono se suma a tu ganancia cuando entregas.',
           'Además, si un pedido lleva 5 minutos sin repartidor, nuestro equipo recibe una alerta para ayudar a resolverlo.',
         ],
@@ -1782,9 +1782,9 @@ const es: SeccionDocs[] = [
         id: 'call-customer-masked',
         titulo: 'Llamar al cliente sin ver su número (ni que vea el tuyo)',
         resumen:
-          'En camino, toca «Llamar al cliente (número oculto)»: te llamamos y te conectamos con el cliente. Los dos ven el número de Tumbite.',
+          'En camino, toca «Llamar al cliente (número oculto)»: te llamamos y te conectamos con el cliente. Los dos ven el número de Divoox.',
         explicacion: [
-          'Si no encuentras la dirección o el cliente no contesta el chat, toca «Llamar al cliente (número oculto)». Tumbite te llama a tu celular y, cuando contestas, marca al cliente. Él ve el número de Tumbite, no el tuyo, y tú no ves el suyo.',
+          'Si no encuentras la dirección o el cliente no contesta el chat, toca «Llamar al cliente (número oculto)». Divoox te llama a tu celular y, cuando contestas, marca al cliente. Él ve el número de Divoox, no el tuyo, y tú no ves el suyo.',
           'Para eso tu cuenta necesita tu número de celular (está en «Mis datos»). Si el cliente no tiene celular registrado, la app te lo dice y te deja el chat.',
           'El cliente también puede llamarte de la misma forma. Cada llamada queda anotada en el pedido, por si hay un reclamo.',
           'Además, el cliente recibe sus avisos solos: «llega en 5 minutos», «sal a recibir» (en mano) y «en tu puerta», también por SMS.',
@@ -1793,7 +1793,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-repartidor-llamar-es.webp',
             alt: 'App del repartidor en camino con el botón «Llamar al cliente (número oculto)» y el aviso «Te estamos llamando. Contesta y te conectamos con el cliente».',
-            pie: 'Tumbite te llama y te conecta: nadie ve el número del otro.',
+            pie: 'Divoox te llama y te conecta: nadie ve el número del otro.',
           },
         ],
         preguntas: [
@@ -1802,7 +1802,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'En camino, toca «Llamar al cliente (número oculto)».',
-          'Contesta la llamada de Tumbite: te conecta con el cliente.',
+          'Contesta la llamada de Divoox: te conecta con el cliente.',
           'Si no tiene celular, escríbele por el chat del pedido.',
         ],
       },
@@ -1810,10 +1810,10 @@ const es: SeccionDocs[] = [
         id: 'payout-failed',
         titulo: 'Si un abono a tu banco falla',
         resumen:
-          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Tumbite. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
+          'Si el banco rechaza un depósito, te avisamos por la app y por correo, y el dinero sigue en tu saldo de Divoox. Revisa tus datos bancarios en «Billetera» y vuelve a retirar.',
         explicacion: [
           'Cuando retiras tu saldo, el dinero sale hacia tu cuenta bancaria. A veces el banco lo rechaza: cuenta cerrada, número mal escrito, nombre que no coincide.',
-          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Tumbite.',
+          'Si pasa, te llega un aviso al celular y un correo con el motivo. El dinero no se pierde: vuelve a tu saldo de Divoox.',
           'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
           'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
         ],
@@ -1831,7 +1831,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Como en las grandes plataformas: revisamos antecedentes penales y récord de manejo con un proveedor, y de vez en cuando te pedimos una foto de tu cara antes de conectarte.',
         explicacion: [
-          'Antecedentes: en «Mis datos y vehículo» toca «Iniciar la verificación de antecedentes». Se abre el formulario de Checkr, un proveedor especializado, donde escribes tus datos sensibles (nunca en Tumbite). Suele tardar de 1 a 3 días. Cuando el resultado es limpio, tu cuenta queda aprobada sola; si hay algo que revisar, lo mira nuestro equipo.',
+          'Antecedentes: en «Mis datos y vehículo» toca «Iniciar la verificación de antecedentes». Se abre el formulario de Checkr, un proveedor especializado, donde escribes tus datos sensibles (nunca en Divoox). Suele tardar de 1 a 3 días. Cuando el resultado es limpio, tu cuenta queda aprobada sola; si hay algo que revisar, lo mira nuestro equipo.',
           'Foto de control: de vez en cuando (no más de una vez por semana, al azar), al tocar «Conectarme» la app te pide una foto de tu cara. Es rápida: de frente y con buena luz. Nuestro equipo la compara con la foto de tu registro para confirmar que quien reparte eres tú.',
           'Mientras la foto de control esté pendiente, no puedes conectarte. Apenas la envías, puedes seguir.',
           'Estas dos medidas protegen a los clientes, a los restaurantes y a ti: nadie puede repartir con la cuenta de otro.',
@@ -1957,7 +1957,7 @@ const es: SeccionDocs[] = [
           'Todo empieza en la app del cliente: elige un restaurante, arma su carrito y ve el desglose completo antes de pagar. Al pagar, la tarjeta solo queda autorizada: el cobro de verdad se hace cuando te entregan (si el pedido se cancela antes, no hay nada que devolver). El pedido llega al restaurante con una alarma y un semáforo en verde.',
           'El restaurante lo acepta eligiendo el tiempo de preparación. En ese momento buscamos al repartidor más cercano: le llega una oferta con lo que gana y la distancia, antes de aceptar. Rechazar nunca le baja de nivel.',
           'Cuando la comida está lista, el restaurante toca «¡Listo!». El repartidor toma la foto del pedido cerrado y el restaurante la confirma en su pantalla: recién ahí sale. Al llegar a la puerta, el repartidor toma la foto de la entrega. El cliente sigue cada paso en vivo, con el repartidor en el mapa, y al final califica la comida y la entrega por separado.',
-          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Tumbite se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
+          'El dinero se reparte en el momento de la entrega y queda a la vista de cada uno. Un ejemplo real de nuestra prueba: el cliente pagó 28.18 dólares (comida 18.50, envío 3.99, servicio 1.99 y propina 3.70). El restaurante, con el plan Inicial, recibió 17.11, que es su comida menos la comisión del 7,5 %. El repartidor recibió 8.70: el pago de la entrega más el 100 % de la propina. Divoox se quedó con 2.37, de lo que paga el cobro de la tarjeta.',
           'Y si algo se atrasa, el Manager avisa; si el restaurante no confirma en 6 minutos, cancela y devuelve el dinero solo.',
         ],
         capturas: [
@@ -1968,7 +1968,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-es.webp',
-            alt: 'Pedido pagado en la app de Tumbite, esperando que el restaurante lo acepte, con la barra de progreso.',
+            alt: 'Pedido pagado en la app de Divoox, esperando que el restaurante lo acepte, con la barra de progreso.',
             pie: 'Pagas y el pedido le llega al restaurante al instante.',
           },
           {
@@ -2019,7 +2019,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Un vigilante automático acompaña cada pedido desde que se paga hasta que llega a la puerta, y actúa solo cuando algo se atrasa.',
         explicacion: [
-          'En un servicio de comida, lo que más enoja no es un error: es la espera sin respuesta. Por eso en Tumbite cada pedido tiene un Manager que lo acompaña de principio a fin, minuto a minuto, sin descanso.',
+          'En un servicio de comida, lo que más enoja no es un error: es la espera sin respuesta. Por eso en Divoox cada pedido tiene un Manager que lo acompaña de principio a fin, minuto a minuto, sin descanso.',
           'El Manager conoce los tiempos que esperamos en cada etapa. Si el restaurante no confirma, le avisa al minuto y otra vez a los 3. Si a los 6 minutos sigue sin respuesta, cancela el pedido y le devuelve el dinero al cliente, para que nadie se quede con la comida pagada y sin noticias.',
           'Cuando el pedido está listo y ningún repartidor lo ha tomado, el Manager avisa a nuestro equipo de operaciones para que busque a alguien de la zona. Y todo lo que pasa queda anotado con su hora: quién aceptó, cuándo salió, cuándo llegó.',
           'Para el cliente significa tranquilidad. Para el restaurante, un asistente que le recuerda lo urgente en la hora pico. Para el repartidor, pedidos que no se quedan colgados. Y para nuestro equipo, un tablero con todos los pedidos vivos donde los que necesitan ayuda aparecen primero.',
@@ -2032,7 +2032,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-manager-cancela-es.webp',
-            alt: 'Pedido en la app de Tumbite que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de la devolución.',
+            alt: 'Pedido en la app de Divoox que el Manager canceló solo porque el restaurante no confirmó a tiempo, con el aviso de la devolución.',
             pie: 'Si el restaurante no confirma en 6 minutos, el Manager cancela el pedido y devuelve el dinero.',
           },
         ],
@@ -2053,7 +2053,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/semaforo-restaurante-es.webp',
-            alt: 'Lista de pedidos del panel del restaurante en Tumbite: un pedido «A tiempo» en verde, uno «Atrasándose» en amarillo sin aceptar y uno «En problemas» en rojo, listo y sin repartidor.',
+            alt: 'Lista de pedidos del panel del restaurante en Divoox: un pedido «A tiempo» en verde, uno «Atrasándose» en amarillo sin aceptar y uno «En problemas» en rojo, listo y sin repartidor.',
             pie: 'Así lo ve el restaurante en su lista de pedidos: el color, los minutos y el motivo.',
           },
           {
@@ -2075,19 +2075,19 @@ const es: SeccionDocs[] = [
         resumen:
           'Cada restaurante es un negocio real y cada repartidor es quien dice ser. Lo revisa una persona de nuestro equipo.',
         explicacion: [
-          'Antes de vender en Tumbite, el dueño de cada restaurante muestra su documento, una foto de su cara y una foto del frente del local tomada en el lugar, que comparamos con la dirección registrada. Así evitamos negocios falsos y locales que ya se mudaron.',
+          'Antes de vender en Divoox, el dueño de cada restaurante muestra su documento, una foto de su cara y una foto del frente del local tomada en el lugar, que comparamos con la dirección registrada. Así evitamos negocios falsos y locales que ya se mudaron.',
           'Antes de repartir, cada repartidor muestra su documento y una foto de su cara. Además registra su vehículo, su licencia y su seguro, y el sistema avisa cuando alguno está por vencer.',
           'Las fotos las revisa una persona de nuestro equipo, no una máquina. No se publican, no se usan para nada más y se borran cuando la persona cierra su cuenta.',
         ],
         capturas: [
           {
             src: '/docs/verificacion-restaurante-es.webp',
-            alt: 'Sección «Verificación del dueño y del local» en el panel del restaurante de Tumbite, con el documento, la cara y el frente del local.',
+            alt: 'Sección «Verificación del dueño y del local» en el panel del restaurante de Divoox, con el documento, la cara y el frente del local.',
             pie: 'El restaurante verifica al dueño y el local con fotos tomadas desde el celular.',
           },
           {
             src: '/docs/verificacion-repartidor-es.webp',
-            alt: 'Pantalla «Verifica tu identidad» de la app de repartidores de Tumbite, con el documento y la foto de la cara.',
+            alt: 'Pantalla «Verifica tu identidad» de la app de repartidores de Divoox, con el documento y la foto de la cara.',
             pie: 'El repartidor verifica su identidad con su documento y una foto de su cara.',
           },
         ],
@@ -2097,27 +2097,27 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'compare',
-        titulo: 'Tumbite comparado con otras apps de reparto',
+        titulo: 'Divoox comparado con otras apps de reparto',
         resumen:
           'Cuánto se queda cada app del restaurante, qué paga el cliente y qué recibe el repartidor. Con números públicos, para que cada uno decida.',
         explicacion: [
-          'Creemos que cada persona tiene que poder comparar antes de elegir. Por eso publicamos lo que cobra Tumbite al lado de lo que DoorDash y Uber Eats publican en sus propias páginas.',
-          'Al restaurante, por cada pedido a domicilio: Tumbite cobra 7,5 % en el plan Inicial, 12,5 % en Crece y 15 % en Élite. DoorDash publica 15 % (Basic), 25 % (Plus) y 30 % (Premier). Uber Eats publica 20 % (Lite, desde 15 % en algunas ciudades), 25 % (Plus) y 30 % (Premium).',
-          'Un ejemplo con un pedido de 30 dólares de comida: con Tumbite Inicial el restaurante recibe 27,75; con DoorDash Basic, 25,50; con Uber Eats Lite, 24,00. Con los planes más altos la diferencia crece: 26,25 con Tumbite Crece frente a 22,50 con DoorDash Plus o Uber Eats Plus.',
-          'Al cliente: Tumbite cobra un envío desde 3,99 dólares (sube 50 centavos por kilómetro después de los primeros 3, con un tope de 7,99) y una tarifa de servicio del 5 % del pedido, con un mínimo de 1,99 y un máximo de 4,99. Si el pedido es de menos de 10 dólares, se suma un cargo por pedido pequeño de 2 dólares. DoorDash publica una tarifa de servicio del 15 % del pedido en varias ciudades y una variable en las demás, más un envío que depende del restaurante. Uber Eats publica una tarifa de servicio que es un porcentaje del pedido con un mínimo y un máximo según la región, más un envío que cambia según la zona y los repartidores disponibles.',
-          'Al repartidor: en Tumbite cada entrega paga al menos 5 dólares, y la propina es 100 % suya y nunca se usa para completar ese mínimo. DoorDash publica un pago base por oferta de 2 a más de 10 dólares, y que la propina es 100 % del repartidor.',
+          'Creemos que cada persona tiene que poder comparar antes de elegir. Por eso publicamos lo que cobra Divoox al lado de lo que DoorDash y Uber Eats publican en sus propias páginas.',
+          'Al restaurante, por cada pedido a domicilio: Divoox cobra 7,5 % en el plan Inicial, 12,5 % en Crece y 15 % en Élite. DoorDash publica 15 % (Basic), 25 % (Plus) y 30 % (Premier). Uber Eats publica 20 % (Lite, desde 15 % en algunas ciudades), 25 % (Plus) y 30 % (Premium).',
+          'Un ejemplo con un pedido de 30 dólares de comida: con Divoox Inicial el restaurante recibe 27,75; con DoorDash Basic, 25,50; con Uber Eats Lite, 24,00. Con los planes más altos la diferencia crece: 26,25 con Divoox Crece frente a 22,50 con DoorDash Plus o Uber Eats Plus.',
+          'Al cliente: Divoox cobra un envío desde 3,99 dólares (sube 50 centavos por kilómetro después de los primeros 3, con un tope de 7,99) y una tarifa de servicio del 5 % del pedido, con un mínimo de 1,99 y un máximo de 4,99. Si el pedido es de menos de 10 dólares, se suma un cargo por pedido pequeño de 2 dólares. DoorDash publica una tarifa de servicio del 15 % del pedido en varias ciudades y una variable en las demás, más un envío que depende del restaurante. Uber Eats publica una tarifa de servicio que es un porcentaje del pedido con un mínimo y un máximo según la región, más un envío que cambia según la zona y los repartidores disponibles.',
+          'Al repartidor: en Divoox cada entrega paga al menos 5 dólares, y la propina es 100 % suya y nunca se usa para completar ese mínimo. DoorDash publica un pago base por oferta de 2 a más de 10 dólares, y que la propina es 100 % del repartidor.',
         ],
         preguntas: [
-          '¿Cuánto cobra Tumbite a los restaurantes comparado con DoorDash y Uber Eats?',
-          '¿Cuánto paga el cliente en Tumbite?',
-          '¿Cuánto gana un repartidor por entrega en Tumbite?',
+          '¿Cuánto cobra Divoox a los restaurantes comparado con DoorDash y Uber Eats?',
+          '¿Cuánto paga el cliente en Divoox?',
+          '¿Cuánto gana un repartidor por entrega en Divoox?',
         ],
         pasos: [
           'Restaurante: en tu panel, en «Beneficios», ves esta comparación hecha con tus propias ventas de los últimos 30 días.',
-          'Cliente: en Tumbite ves el desglose completo antes de pagar (comida, envío, servicio, propina), sin sorpresas al final.',
+          'Cliente: en Divoox ves el desglose completo antes de pagar (comida, envío, servicio, propina), sin sorpresas al final.',
           'Repartidor: antes de aceptar cada oferta ves cuánto ganas, con la propina incluida.',
         ],
-        nota: 'Los datos de DoorDash y Uber Eats son los que publican en sus páginas oficiales de precios y de ayuda, consultadas en octubre de 2026; pueden cambiar y variar por ciudad. Los de Tumbite son los vigentes en la app.',
+        nota: 'Los datos de DoorDash y Uber Eats son los que publican en sus páginas oficiales de precios y de ayuda, consultadas en octubre de 2026; pueden cambiar y variar por ciudad. Los de Divoox son los vigentes en la app.',
       },
     ],
   },
@@ -2128,34 +2128,34 @@ const es: SeccionDocs[] = [
     guias: [
       {
         id: 'calculator',
-        titulo: 'Calculadora: cuánto ganas y cuánto ahorras con Tumbite',
+        titulo: 'Calculadora: cuánto ganas y cuánto ahorras con Divoox',
         resumen:
-          'Una calculadora para cada quien: el restaurante, el repartidor, el cliente y quien quiere abrir Tumbite en su ciudad.',
+          'Una calculadora para cada quien: el restaurante, el repartidor, el cliente y quien quiere abrir Divoox en su ciudad.',
         explicacion: [
-          'En la página «Calculadora» eliges quién eres y mueves los números. Todo se calcula con los precios que Tumbite usa hoy en la app y con datos públicos del mercado, y abajo se dice de dónde sale cada uno.',
-          'Restaurante: escribes lo que vendes al mes por apps de reparto y ves cuánto te queda con Tumbite, con DoorDash y con Uber Eats en el plan equivalente. Con el tamaño de tu ciudad, cuántos restaurantes hay en Tumbite y qué parte del mercado logramos, ves también cuántos pedidos al mes te podemos traer.',
-          'Repartidor: eliges horas por día, días por semana, cuántas entregas haces por hora, tu propina promedio y la distancia, y ves lo que ganas por entrega, por día, por semana y por mes. Tumbite paga lo mismo en todas las ciudades; lo que cambia es cuántos pedidos hay por hora.',
+          'En la página «Calculadora» eliges quién eres y mueves los números. Todo se calcula con los precios que Divoox usa hoy en la app y con datos públicos del mercado, y abajo se dice de dónde sale cada uno.',
+          'Restaurante: escribes lo que vendes al mes por apps de reparto y ves cuánto te queda con Divoox, con DoorDash y con Uber Eats en el plan equivalente. Con el tamaño de tu ciudad, cuántos restaurantes hay en Divoox y qué parte del mercado logramos, ves también cuántos pedidos al mes te podemos traer.',
+          'Repartidor: eliges horas por día, días por semana, cuántas entregas haces por hora, tu propina promedio y la distancia, y ves lo que ganas por entrega, por día, por semana y por mes. Divoox paga lo mismo en todas las ciudades; lo que cambia es cuántos pedidos hay por hora.',
           'Cliente: con cuántos pedidos haces al mes y cuánto gastas en comida, ves cuánto ahorras en la tarifa de servicio frente al 15 % que DoorDash publica en varias ciudades.',
-          'Franquicia: con los habitantes de la ciudad, los restaurantes y la parte del mercado, ves cuánta gente pide por apps, cuántos pedidos tendría Tumbite, cuánto reciben los restaurantes y los repartidores, cuántos repartidores hacen falta y lo que le queda a la plataforma.',
+          'Franquicia: con los habitantes de la ciudad, los restaurantes y la parte del mercado, ves cuánta gente pide por apps, cuántos pedidos tendría Divoox, cuánto reciben los restaurantes y los repartidores, cuántos repartidores hacen falta y lo que le queda a la plataforma.',
         ],
         capturas: [
           {
             src: '/docs/calculadora-restaurante-es.webp',
-            alt: 'Calculadora de Tumbite para restaurantes: con 10.000 dólares de ventas al mes, le quedan 9.250 con Tumbite, 8.500 con DoorDash Basic y 8.000 con Uber Eats Lite, y los pedidos que Tumbite le puede traer según su ciudad.',
+            alt: 'Calculadora de Divoox para restaurantes: con 10.000 dólares de ventas al mes, le quedan 9.250 con Divoox, 8.500 con DoorDash Basic y 8.000 con Uber Eats Lite, y los pedidos que Divoox le puede traer según su ciudad.',
             pie: 'Restaurante: cuánto te queda en cada app y cuántos pedidos te podemos traer.',
           },
           {
             src: '/docs/calculadora-franquicia-es.webp',
-            alt: 'Calculadora de Tumbite para franquicias: en una ciudad de 100.000 habitantes con 100 restaurantes y el 5 % del mercado, los pedidos al mes, lo que reciben restaurantes y repartidores, los repartidores necesarios y lo que le queda a la plataforma.',
+            alt: 'Calculadora de Divoox para franquicias: en una ciudad de 100.000 habitantes con 100 restaurantes y el 5 % del mercado, los pedidos al mes, lo que reciben restaurantes y repartidores, los repartidores necesarios y lo que le queda a la plataforma.',
             pie: 'Franquicia: el tamaño del negocio en tu ciudad, con los supuestos a la vista.',
           },
         ],
         preguntas: [
-          '¿Cuánto gana un restaurante con Tumbite?',
-          '¿Cuántos clientes le puede traer Tumbite a mi restaurante?',
-          '¿Cuánto gana un repartidor al día con Tumbite?',
-          '¿Cuánto me ahorro pidiendo con Tumbite?',
-          '¿Cuánto mueve Tumbite en una ciudad?',
+          '¿Cuánto gana un restaurante con Divoox?',
+          '¿Cuántos clientes le puede traer Divoox a mi restaurante?',
+          '¿Cuánto gana un repartidor al día con Divoox?',
+          '¿Cuánto me ahorro pidiendo con Divoox?',
+          '¿Cuánto mueve Divoox en una ciudad?',
         ],
         pasos: [
           'Entra a tumbite.com y toca «Calculadora» en el menú de arriba.',
@@ -2163,31 +2163,31 @@ const es: SeccionDocs[] = [
           'Cambia los números por los tuyos. Lo que escribes se guarda solo en tu navegador.',
           'Si quieres compartir una pestaña, copia la dirección: lleva la pestaña al final.',
         ],
-        nota: 'Son proyecciones, no promesas: dependen de cuánta gente pida en cada ciudad y de cómo crezca Tumbite allí. La parte del franquiciado se acuerda en su contrato.',
+        nota: 'Son proyecciones, no promesas: dependen de cuánta gente pida en cada ciudad y de cómo crezca Divoox allí. La parte del franquiciado se acuerda en su contrato.',
       },
       {
         id: 'franchises',
-        titulo: 'Franquicias: lleva Tumbite a tu ciudad',
+        titulo: 'Franquicias: lleva Divoox a tu ciudad',
         resumen:
           'Cada ciudad nueva abre con un socio local. Lo que pagas no es una marca: es un lanzamiento completo, con flota, entrenamiento, tablets y los primeros clientes.',
         explicacion: [
-          'Tumbite crece ciudad por ciudad, en cualquier país. Cada ciudad se abre con una franquicia: un socio que conoce su ciudad y pone el capital del lanzamiento.',
+          'Divoox crece ciudad por ciudad, en cualquier país. Cada ciudad se abre con una franquicia: un socio que conoce su ciudad y pone el capital del lanzamiento.',
           'Con ese dinero se compra un arranque completo: una flota propia de 25 a 50 motos para que ningún pedido se quede sin repartidor, repartidores entrenados en seguridad vial, higiene y trato al cliente, una tablet lista para cada restaurante con el menú cargado en dos idiomas, y la búsqueda de los primeros clientes con lista de espera y promociones de lanzamiento.',
           'Una ciudad grande se puede dividir en varias zonas, cada una con su propia franquicia. El franquiciado tiene su panel con los números de su territorio: pedidos, ventas, restaurantes, repartidores e incidencias, y ve solo lo suyo. El valor de cada franquicia depende del tamaño de su territorio.',
           'El dueño de la franquicia puede trabajar con managers de su equipo: cada uno entra al mismo panel con su propio correo, supervisa los pedidos y atiende las incidencias de su territorio.',
-          'Si escribes tu dirección en Tumbite y todavía no llegamos ahí, la app te dice en qué ciudades ya estamos y qué zonas abren pronto.',
+          'Si escribes tu dirección en Divoox y todavía no llegamos ahí, la app te dice en qué ciudades ya estamos y qué zonas abren pronto.',
         ],
         capturas: [
           {
             src: '/docs/franquicias-es.webp',
-            alt: 'Sección de franquicias de Tumbite: un local con la marca Tumbite y las cuatro cosas que paga la franquicia: flota propia, repartidores entrenados, kit para cada restaurante y los primeros clientes.',
-            pie: 'Lo que incluye una franquicia de Tumbite en cada ciudad.',
+            alt: 'Sección de franquicias de Divoox: un local con la marca Divoox y las cuatro cosas que paga la franquicia: flota propia, repartidores entrenados, kit para cada restaurante y los primeros clientes.',
+            pie: 'Lo que incluye una franquicia de Divoox en cada ciudad.',
           },
         ],
-        preguntas: ['¿Cómo llevo Tumbite a mi ciudad?', '¿Cuánto cuesta una franquicia?'],
+        preguntas: ['¿Cómo llevo Divoox a mi ciudad?', '¿Cuánto cuesta una franquicia?'],
         pasos: [
           'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
-          'Llena el formulario «Quiero una franquicia de Tumbite»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
+          'Llena el formulario «Quiero una franquicia de Divoox»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
           'Te llega un correo con el enlace privado a tu caso. Nuestro equipo te prepara los números de tu ciudad y te responde por ahí.',
           'Cuando se firma, nuestro equipo te da acceso a tu panel con tu correo, y también a los managers de tu equipo que nos indiques.',
         ],
@@ -2211,7 +2211,7 @@ const es: SeccionDocs[] = [
         preguntas: ['¿Qué tiene que leer cada persona del equipo antes de un lanzamiento?'],
         pasos: [
           'Todo el equipo: «Un pedido de punta a punta», «El Manager», «El semáforo de cada pedido» y «Restaurantes y repartidores verificados».',
-          'Quien visita restaurantes: «Poner tu restaurante en Tumbite», «Verificar tu restaurante», «Tu menú», «Recibir pedidos y la alarma», «Tu tablero», «Regalos y marketing» y «Resumen del día y tu billetera».',
+          'Quien visita restaurantes: «Poner tu restaurante en Divoox», «Verificar tu restaurante», «Tu menú», «Recibir pedidos y la alarma», «Tu tablero», «Regalos y marketing» y «Resumen del día y tu billetera».',
           'Quien entrena repartidores: «Empezar a repartir», «Verificar tu identidad», «Las ofertas», «Los niveles» y «Tu billetera».',
           'Quien atiende clientes: «Cómo hacer tu primer pedido», «Seguir tu pedido en vivo», «Cancelar un pedido», «Mi cuenta» y «Ayuda de una persona real».',
           'Al terminar: explicarle a otra persona del equipo, con el celular en la mano, un pedido completo y qué pasa si el restaurante no responde.',
@@ -2230,36 +2230,36 @@ const es: SeccionDocs[] = [
         resumen:
           'Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.',
         explicacion: [
-          'En Tumbite hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Tumbite. El restaurante crea su cuenta en el panel, desde la computadora. Quien reparte se registra en la app Tumbite Driver.',
+          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en el panel, desde la computadora. Quien reparte se registra en la app Divoox Driver.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-registro-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de Tumbite con nombre y apellido, correo, celular, fecha de cumpleaños y contraseña.',
+            alt: 'Pantalla «Crear cuenta» de la app de Divoox con nombre y apellido, correo, celular, fecha de cumpleaños y contraseña.',
             pie: 'Te registras con tu nombre, tu correo, tu celular y una contraseña.',
           },
           {
             src: '/docs/recorrido-restaurante-registro-es.webp',
-            alt: 'Formulario para crear la cuenta de restaurante en el panel de Tumbite, con tu nombre, correo, celular y contraseña.',
+            alt: 'Formulario para crear la cuenta de restaurante en el panel de Divoox, con tu nombre, correo, celular y contraseña.',
             pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
           },
           {
             src: '/docs/registro-repartidor-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Tumbite con nombre y apellido, correo, celular y contraseña.',
-            pie: 'Quien reparte se registra en la app Tumbite Driver.',
+            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
+            pie: 'Quien reparte se registra en la app Divoox Driver.',
           },
         ],
         preguntas: [
-          '¿Cómo me registro en Tumbite?',
+          '¿Cómo me registro en Divoox?',
           '¿Cómo creo una cuenta de restaurante?',
           '¿Cómo creo una cuenta de repartidor?',
         ],
         pasos: [
-          'Para pedir: abre la app de Tumbite, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos y toca «Crear cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
-          'Para tu restaurante: entra a tumbite.com, toca «Panel», luego «¿Tu restaurante aún no está en Tumbite? Crea tu cuenta», y completa tus datos.',
-          'Para repartir: abre la app Tumbite Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
-          'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Tumbite.',
+          'Para pedir: abre la app de Divoox, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos y toca «Crear cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
+          'Para tu restaurante: entra a tumbite.com, toca «Panel», luego «¿Tu restaurante aún no está en Divoox? Crea tu cuenta», y completa tus datos.',
+          'Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
+          'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox.',
         ],
       },
       {
@@ -2269,19 +2269,19 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/olvide-clave-es.webp',
-            alt: 'Página «Olvidé mi contraseña» de Tumbite con la casilla del correo y el botón «Mandarme el enlace».',
+            alt: 'Página «Olvidé mi contraseña» de Divoox con la casilla del correo y el botón «Mandarme el enlace».',
             pie: 'Escribe tu correo y te mandamos el enlace.',
           },
           {
             src: '/docs/cambiar-clave-es.webp',
-            alt: 'Tarjeta «Contraseña» en la configuración de Tumbite con la contraseña actual, la nueva y su repetición, cada una con el ojito para verla.',
+            alt: 'Tarjeta «Contraseña» en la configuración de Divoox con la contraseña actual, la nueva y su repetición, cada una con el ojito para verla.',
             pie: 'Si la recuerdas, la cambias en «Configuración» con el ojito para ver lo que escribes.',
           },
         ],
         preguntas: ['¿Qué hago si olvidé mi contraseña?', '¿Cómo cambio mi contraseña?'],
         pasos: [
           'En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».',
-          'Escribe tu correo. Si tiene cuenta en Tumbite, te llega un enlace (revisa también la carpeta de spam).',
+          'Escribe tu correo. Si tiene cuenta en Divoox, te llega un enlace (revisa también la carpeta de spam).',
           'Toca el enlace y escribe tu contraseña nueva dos veces.',
           'Listo. Por seguridad, se cierran todas las sesiones abiertas y entras de nuevo con la contraseña nueva.',
         ],
@@ -2293,7 +2293,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/correo-estado-es.webp',
-            alt: 'Tarjeta «Correo» en la configuración de Tumbite con el aviso «Tu correo todavía no está confirmado» y el enlace «Volver a mandar el enlace».',
+            alt: 'Tarjeta «Correo» en la configuración de Divoox con el aviso «Tu correo todavía no está confirmado» y el enlace «Volver a mandar el enlace».',
             pie: 'En «Configuración» ves si tu correo está confirmado y pides el enlace otra vez.',
           },
         ],
@@ -2302,7 +2302,7 @@ const es: SeccionDocs[] = [
           'No me llegó el correo de confirmación, ¿qué hago?',
         ],
         pasos: [
-          'Después de crear tu cuenta, busca el correo «Confirma tu correo de Tumbite».',
+          'Después de crear tu cuenta, busca el correo «Confirma tu correo de Divoox».',
           'Toca el enlace. Vence en dos días; si venció, entra a «Configuración» y toca «Volver a mandar el enlace».',
           'Confirmar el correo no bloquea nada: puedes usar la app mientras tanto. Sirve para que te lleguen los recibos y para recuperar tu contraseña.',
         ],
@@ -2314,7 +2314,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/borrar-cuenta-es.webp',
-            alt: 'Página «Borrar tu cuenta de Tumbite» con el botón «Borrar mi cuenta ahora» y la primera opción explicada.',
+            alt: 'Página «Borrar tu cuenta de Divoox» con el botón «Borrar mi cuenta ahora» y la primera opción explicada.',
             pie: 'La página para borrar tu cuenta, con o sin la app.',
           },
         ],
@@ -2339,12 +2339,12 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/ticket-es.webp',
-            alt: 'Conversación privada de un reporte en Tumbite: el mensaje del cliente y la respuesta del equipo de Tumbite, con la casilla para responder.',
+            alt: 'Conversación privada de un reporte en Divoox: el mensaje del cliente y la respuesta del equipo de Divoox, con la casilla para responder.',
             pie: 'Tu caso tiene su propia página privada: ves la respuesta y contestas desde ahí.',
           },
         ],
         preguntas: [
-          '¿Cómo hablo con una persona de Tumbite?',
+          '¿Cómo hablo con una persona de Divoox?',
           '¿Cómo reporto un problema con un pedido?',
         ],
         pasos: [
@@ -2372,14 +2372,14 @@ const en: SeccionDocs[] = [
         explicacion: [
           'While your order is on the way, the app alerts you: “Arriving in 5 minutes” when the driver is about 5 minutes away; “Come out to meet your driver” at 2 minutes if you chose hand delivery; “Almost here” a block away; and “Your driver is at your door” on arrival.',
           'The “at your door” and “can’t find you” alerts also reach you by text message (SMS) on your account’s mobile number, in case your phone is on silent or has no data.',
-          'If you need to talk to the driver, tap “Call the driver (masked number)”: we call you first and, when you answer, connect you with them. Neither of you sees the other’s number: you both see Tumbite’s number. The driver can call you the same way.',
+          'If you need to talk to the driver, tap “Call the driver (masked number)”: we call you first and, when you answer, connect you with them. Neither of you sees the other’s number: you both see Divoox’s number. The driver can call you the same way.',
           'The order chat is still there to write without calling.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-llamar-en.webp',
             alt: 'Order on the way in the customer app with the “Call the driver (masked number)” button and the notice “We’re calling you now. Answer and we’ll connect you with your driver.”',
-            pie: 'You call without sharing your number: Tumbite connects you.',
+            pie: 'You call without sharing your number: Divoox connects you.',
           },
         ],
         preguntas: [
@@ -2468,7 +2468,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'In the cart, under “Coupon or promo code”, enter the code and tap “Apply”. If it’s valid you’ll see “Coupon applied” and the discount in the breakdown; if not, we tell you why (expired, another restaurant, below the minimum, already used).',
           'There are fixed-amount coupons, percentage-off-food coupons and free-delivery coupons. Some are only for your first order or for one restaurant.',
-          'The discount never comes out of the restaurant or the driver: Tumbite covers it.',
+          'The discount never comes out of the restaurant or the driver: Divoox covers it.',
         ],
         capturas: [
           {
@@ -2490,7 +2490,7 @@ const en: SeccionDocs[] = [
           'Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded.',
         explicacion: [
           'In the order, tap “I have a problem”. Choose what happened: something missing, wrong order, cold or damaged, very late, problem with the driver, or something else.',
-          'If something was missing, check the items that didn’t arrive. Tumbite calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
+          'If something was missing, check the items that didn’t arrive. Divoox calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
           'Your report stays in a private conversation with a link that reaches you by email.',
         ],
         capturas: [],
@@ -2515,7 +2515,7 @@ const en: SeccionDocs[] = [
           'With a transfer: in the tracking screen you see the account holder’s name and the driver’s published account (for example their mobile-payment number or bank account) and the exact amount. You transfer when they’re in front of you; they confirm it in their bank.',
           'If you don’t pay on delivery, the order is canceled and an outstanding balance stays on your account: you won’t be able to order with pay-on-delivery again until you settle it with support.',
           'If you transferred and the driver says it didn’t arrive, or the amount doesn’t match, tap “I have a problem with the payment” in your order: support reviews the case with both of you.',
-          'Prices, delivery, service, tip, and total are shown in the local currency of the restaurant’s city, in the cities where Tumbite operates. Nothing is converted: the amount you see in the cart and in the tracking screen is what you pay.',
+          'Prices, delivery, service, tip, and total are shown in the local currency of the restaurant’s city, in the cities where Divoox operates. Nothing is converted: the amount you see in the cart and in the tracking screen is what you pay.',
         ],
         capturas: [
           {
@@ -2542,9 +2542,9 @@ const en: SeccionDocs[] = [
         resumen:
           'Today you pay with your card inside the app. Soon, on the same payment screen, Apple Pay (iPhone) or Google Pay (Android and Chrome) will show up if your phone has it set up. One tap and done.',
         explicacion: [
-          'When you confirm your order, the payment form opens inside the app and you pay with your card. Once Apple Pay and Google Pay are turned on in Tumbite, they will show as the first option on that same screen; we will let you know in the app.',
+          'When you confirm your order, the payment form opens inside the app and you pay with your card. Once Apple Pay and Google Pay are turned on in Divoox, they will show as the first option on that same screen; we will let you know in the app.',
           'It’s the same charge: authorized when you order and charged when it’s delivered (if you cancel before the restaurant accepts, you’re not charged at all).',
-          'Your payment details are held by Apple, Google or Stripe; Tumbite never sees your card number.',
+          'Your payment details are held by Apple, Google or Stripe; Divoox never sees your card number.',
           'If Apple Pay or Google Pay doesn’t show up, check that you have a card added to your phone’s wallet.',
         ],
         capturas: [],
@@ -2561,9 +2561,9 @@ const en: SeccionDocs[] = [
         resumen:
           'Like the big delivery apps: at the top the logo, your greeting, the notifications bell and the gifts coupon. Then the search bar, the eight services in order (Food works today), your gifts or the deals, restaurants near you and the bottom bar.',
         explicacion: [
-          'Header: the Tumbite logo, your name, the notifications bell (with a red dot when you have active orders) and the coupon, which opens your gifts. The language selector (Spanish or English) is right there.',
-          'Search: tap it and type what you’re craving; Tumbite searches restaurants and dishes in your city as you type (guide “Searching Tumbite”). The button on the right keeps only the ones open right now.',
-          'Services, in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. “Food” works today: tapping it shows every restaurant, with search, categories, and quick filters. The others open their own screen with a strip saying they’re under construction (guide “Tumbite services”).',
+          'Header: the Divoox logo, your name, the notifications bell (with a red dot when you have active orders) and the coupon, which opens your gifts. The language selector (Spanish or English) is right there.',
+          'Search: tap it and type what you’re craving; Divoox searches restaurants and dishes in your city as you type (guide “Searching Divoox”). The button on the right keeps only the ones open right now.',
+          'Services, in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. “Food” works today: tapping it shows every restaurant, with search, categories, and quick filters. The others open their own screen with a strip saying they’re under construction (guide “Divoox services”).',
           'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
           'Your gifts or today’s deals: if you already have gifts in progress (stamp card, come-back discount), you see them here; otherwise you see sample deals marked “Sample” (they can’t be bought).',
           'Restaurants near you: cards with the photo, the estimated time, the delivery fee and whether it’s open. Tap one to see the menu.',
@@ -2588,9 +2588,9 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'search',
-        titulo: 'Searching Tumbite: restaurants, dishes, and cuisines',
+        titulo: 'Searching Divoox: restaurants, dishes, and cuisines',
         resumen:
-          'Tap the search bar on the home screen and type what you’re craving. As you type, Tumbite searches your city and shows matching restaurants and dishes, open ones first.',
+          'Tap the search bar on the home screen and type what you’re craving. As you type, Divoox searches your city and shows matching restaurants and dishes, open ones first.',
         explicacion: [
           'The home search bar opens its own screen, like the big delivery apps. Type at least two letters: a restaurant name, a dish (“pizza”, “sushi”), or a cuisine (“Cuban”).',
           'Results arrive on their own as you type, in two tabs: “Restaurants” and “Dishes”. Each tab shows how many it found.',
@@ -2606,7 +2606,7 @@ const en: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          'How do I search for a dish on Tumbite?',
+          'How do I search for a dish on Divoox?',
           'Why doesn’t the search find anything?',
           'Can I search by type of food?',
         ],
@@ -2625,7 +2625,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'When you have an active order, the bell shows a red dot with the number of orders. Tap it to see each one with its status (“Being prepared”, “On its way to you”…) and tap an order to open tracking.',
           'Under the “Gifts” tab (the same one the coupon opens) you see your gifts in progress: the stamp card for each restaurant you’ve ordered from, with how many orders you have and how many are left for the free dish, plus come-back discounts when they’re due. The green bar shows your progress.',
-          'We also let you know when Tumbite is about to open in a new area of your city, with the expected date when there is one.',
+          'We also let you know when Divoox is about to open in a new area of your city, with the expected date when there is one.',
           'Notifications are computed on the spot: nothing to delete or mark as read. When an order is delivered, it leaves the bell and stays under “Orders”.',
           'If there’s nothing to report, the bell says so clearly: it never makes up notifications.',
         ],
@@ -2649,11 +2649,11 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'services',
-        titulo: 'Tumbite services: what’s here today and what’s coming',
+        titulo: 'Divoox services: what’s here today and what’s coming',
         resumen:
           'The home screen shows eight services in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. Food works today; the others have their own screen and tell you, with a discreet strip, that they’re under construction.',
         explicacion: [
-          'Tumbite starts as a food delivery app and grows into an everything app, like the big players. That’s why the services are already on the home screen, in the order they’ll arrive.',
+          'Divoox starts as a food delivery app and grows into an everything app, like the big players. That’s why the services are already on the home screen, in the order they’ll arrive.',
           'Each service has its own screen. If it isn’t ready yet, a discreet strip at the top says: “We’re building this service. It will be ready soon.” No pop-ups covering the screen. Below, a list marked “Sample” of what you’ll be able to do.',
           'On the home tile, a small label says “Soon” when the service is coming, “Paused” if it stopped for a while, or “Update” if your app version is too old to use it. No label means the service works.',
           'Each service’s status depends on your city: a service can be open in one and under construction in another. The app checks every time you open it.',
@@ -2667,7 +2667,7 @@ const en: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          'What services does Tumbite have?',
+          'What services does Divoox have?',
           'Why does a service say “Soon”?',
           'When does Moto or Grocery arrive in my city?',
         ],
@@ -2684,7 +2684,7 @@ const en: SeccionDocs[] = [
           'The app always tells you what’s going on: no restaurants in your area yet, we’re not in your city yet, or the connection failed. And if it can’t verify your session, it lets you try again without losing your account.',
         explicacion: [
           'The restaurants you see depend on your location. The app uses, in this order: the spot you picked on the map in your cart, the last location you saved and, if there’s none, your phone’s location. Your list doesn’t change on its own when you move a little or switch languages.',
-          '“No restaurants in your area yet”: Tumbite already works in your area, but no restaurants are open there yet. We’re adding more every week.',
+          '“No restaurants in your area yet”: Divoox already works in your area, but no restaurants are open there yet. We’re adding more every week.',
           '“We’re not in your area yet”: your location is outside the cities we serve today. We’re coming to more soon.',
           '“We couldn’t load the restaurants”: the connection failed. Tap “Try again.” If you already had a list, we keep showing it and let you know it couldn’t be refreshed.',
           'When the app opens, we verify your session. If your internet is slow, we don’t leave you waiting forever: after a few seconds you’ll see “We couldn’t confirm your session,” with “Try again” and “Sign in with another account.” A connection problem never signs you out.',
@@ -2880,12 +2880,12 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-cliente-restaurantes-en.webp',
-            alt: 'The Food restaurant list in the Tumbite app: search bar, buttons by type of food, and cards with photo, distance, time, and whether it’s open.',
+            alt: 'The Food restaurant list in the Divoox app: search bar, buttons by type of food, and cards with photo, distance, time, and whether it’s open.',
             pie: 'Tap “Food” and choose from every restaurant in your area.',
           },
           {
             src: '/docs/recorrido-cliente-menu-en.webp',
-            alt: 'A restaurant’s menu in the Tumbite app: big photo, Menu and Info tabs, category buttons, and each item with its price and the + button.',
+            alt: 'A restaurant’s menu in the Divoox app: big photo, Menu and Info tabs, category buttons, and each item with its price and the + button.',
             pie: 'Pick your items with the + button; tap an item to see its details.',
           },
           {
@@ -2895,17 +2895,17 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-en.webp',
-            alt: '“Order placed!” confirmation in the Tumbite app, with the order number, the total, and the “Track order” and “Back to home” buttons.',
+            alt: '“Order placed!” confirmation in the Divoox app, with the order number, the total, and the “Track order” and “Back to home” buttons.',
             pie: 'You pay and the order reaches the restaurant instantly.',
           },
         ],
         preguntas: [
-          'How do I order food on Tumbite?',
+          'How do I order food on Divoox?',
           'How do I pay for my order?',
           'Can I pay with Apple Pay or Google Pay?',
         ],
         pasos: [
-          'Open the Tumbite app and allow location: you’ll see the restaurants in your area, closest first.',
+          'Open the Divoox app and allow location: you’ll see the restaurants in your area, closest first.',
           'Tap “Food” and then a restaurant. Tap a dish to see its details: choose the size, the extras, and the quantity, and tap “Add to cart.”',
           'Go to the cart. Mark your address on the map or type it, and add notes if needed (for example, “ring twice”).',
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',
@@ -2940,18 +2940,18 @@ const en: SeccionDocs[] = [
           'Until the restaurant accepts it, you cancel in one tap and get a full refund. And if the restaurant doesn’t answer, we cancel it for you.',
         explicacion: [
           'Ordering food should feel easy. So while the restaurant hasn’t started cooking your order, you can change your mind, no questions asked: we refund the full amount, delivery and tip included.',
-          'If the restaurant is slow to confirm, you don’t have to wait or complain. After ten minutes with no answer, Tumbite cancels the order on its own, refunds you, and lets you know on your phone.',
+          'If the restaurant is slow to confirm, you don’t have to wait or complain. After ten minutes with no answer, Divoox cancels the order on its own, refunds you, and lets you know on your phone.',
           'Once the restaurant accepts, the food is in the kitchen and the order can’t be canceled from the app. If something is wrong, tap “Problems with your order?” and a real person will help you.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-cancelar-en.webp',
-            alt: 'Paid order in the Tumbite app with the question “We’ll refund all your money to your card. Cancel it?” and the “Yes, cancel” button.',
+            alt: 'Paid order in the Divoox app with the question “We’ll refund all your money to your card. Cancel it?” and the “Yes, cancel” button.',
             pie: 'Before canceling, the app asks first: nothing gets canceled by an accidental tap.',
           },
           {
             src: '/docs/recorrido-cliente-cancelado-en.webp',
-            alt: 'Canceled order in the Tumbite app with the notice that all the money was refunded to the card.',
+            alt: 'Canceled order in the Divoox app with the notice that all the money was refunded to the card.',
             pie: 'Canceled: it tells you why and that the money goes back to your card.',
           },
         ],
@@ -2976,7 +2976,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/mi-cuenta-en.webp',
-            alt: '“My account” screen in the Tumbite app with the customer’s name and email and the list of orders with restaurant, date, status, and total.',
+            alt: '“My account” screen in the Divoox app with the customer’s name and email and the list of orders with restaurant, date, status, and total.',
             pie: 'My account: your details at the top and all your orders below.',
           },
         ],
@@ -2995,7 +2995,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-cliente-regalo-en.webp',
-            alt: 'Cart in the Tumbite app with the birthday gift applied in green and the discount in the total breakdown.',
+            alt: 'Cart in the Divoox app with the birthday gift applied in green and the discount in the total breakdown.',
             pie: 'On your birthday, the gift shows up in your cart on its own and comes off the total.',
           },
         ],
@@ -3006,7 +3006,7 @@ const en: SeccionDocs[] = [
           'If you haven’t ordered in a while, some restaurants offer a win-back discount.',
           'When a gift is yours, you’ll see it in the cart before paying. Tap it to apply; it comes off the total.',
         ],
-        nota: 'Gifts are funded by the restaurant from a share of its sales, not by Tumbite. That’s why each restaurant chooses its own.',
+        nota: 'Gifts are funded by the restaurant from a share of its sales, not by Divoox. That’s why each restaurant chooses its own.',
       },
       {
         id: 'rate',
@@ -3087,7 +3087,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.',
         explicacion: [
-          'Under Team (panel menu) the owner adds someone by email. The person must first sign up in the Tumbite panel as a restaurant, without creating their own restaurant.',
+          'Under Team (panel menu) the owner adds someone by email. The person must first sign up in the Divoox panel as a restaurant, without creating their own restaurant.',
           'Roles: a manager replies to reviews, reorders the menu and sets holidays; staff handles orders and the day-to-day menu. Only the owner adds or removes people, changes the plan and manages money.',
           'Everyone signs in with their own account and sees the same restaurant. To remove someone, “Remove from team”.',
         ],
@@ -3127,9 +3127,9 @@ const en: SeccionDocs[] = [
         id: 'store-not-receiving-orders',
         titulo: 'Why does my store show as not receiving orders?',
         resumen:
-          'If your Tumbite app or panel doesn’t check in for 5 minutes, your store stops receiving orders so no customer waits for nothing. It comes back on its own as soon as you open it again.',
+          'If your Divoox app or panel doesn’t check in for 5 minutes, your store stops receiving orders so no customer waits for nothing. It comes back on its own as soon as you open it again.',
         explicacion: [
-          'While your Tumbite app or panel is open, it tells Tumbite every few seconds that you’re ready for orders.',
+          'While your Divoox app or panel is open, it tells Divoox every few seconds that you’re ready for orders.',
           'If that check-in doesn’t arrive for 5 minutes (the tablet turned off, the internet dropped, or the app closed), customers see your store as closed and can’t order. That way an order never lands on a screen nobody is watching and gets canceled.',
           'We let you know by phone notification and email. You don’t need to do anything else: as soon as you open the app or panel again, your store shows as open on its own, and we let you know you’re receiving orders again.',
           'If you close your store on purpose with the open/close switch, that isn’t a pause: it stays closed until you open it.',
@@ -3142,7 +3142,7 @@ const en: SeccionDocs[] = [
           'How do I start receiving orders again?',
         ],
         pasos: [
-          'Keep the Tumbite app or panel open while your store is open.',
+          'Keep the Divoox app or panel open while your store is open.',
           'If you get the “Your store isn’t receiving orders” notification, check your connection and open the app or panel.',
           'As soon as you open it, your store comes back on its own and you get the “You’re receiving orders again” notification.',
         ],
@@ -3258,10 +3258,10 @@ const en: SeccionDocs[] = [
         id: 'payout-failed',
         titulo: 'If a payout to your bank fails',
         resumen:
-          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Tumbite balance. Check your bank details under “Wallet” and withdraw again.',
+          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Divoox balance. Check your bank details under “Wallet” and withdraw again.',
         explicacion: [
           'When you withdraw your balance, the money goes out to your bank account. Sometimes the bank rejects it: closed account, mistyped number, name mismatch.',
-          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Tumbite balance.',
+          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Divoox balance.',
           'Open “Wallet,” check or fix your bank account details and withdraw again.',
           'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
         ],
@@ -3302,7 +3302,7 @@ const en: SeccionDocs[] = [
         id: 'hours',
         titulo: 'Your hours: open and close on their own',
         resumen:
-          'Set your shifts per day and Tumbite opens and closes your restaurant at those times. Outside of them customers see when you open.',
+          'Set your shifts per day and Divoox opens and closes your restaurant at those times. Outside of them customers see when you open.',
         explicacion: [
           'Under “My restaurant,” at the bottom, is “Hours.” Each day can have one or more shifts (for example, 11:00 to 15:00 and 18:00 to 23:00). A shift can end after midnight.',
           'With hours set, your restaurant shows as open only within those shifts and with the take-orders button on. If you pause with the button, you’re closed even during your hours.',
@@ -3414,13 +3414,13 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'get-started',
-        titulo: 'Put your restaurant on Tumbite',
+        titulo: 'Put your restaurant on Divoox',
         resumen:
           'Create your account, complete your profile, and wait for approval. No lock-in contracts.',
         capturas: [
           {
             src: '/docs/recorrido-restaurante-registro-en.webp',
-            alt: 'Form to create a restaurant account in the Tumbite dashboard, with your name, email, phone, and password.',
+            alt: 'Form to create a restaurant account in the Divoox dashboard, with your name, email, phone, and password.',
             pie: 'Restaurants create their account in the dashboard, from a computer.',
           },
           {
@@ -3430,12 +3430,12 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restaurante-abierto-en.webp',
-            alt: 'Approved restaurant in the Tumbite dashboard, taking orders, with the button to close for now.',
+            alt: 'Approved restaurant in the Divoox dashboard, taking orders, with the button to close for now.',
             pie: 'Approved: open with one tap and start taking orders.',
           },
         ],
         preguntas: [
-          'How do I put my restaurant on Tumbite?',
+          'How do I put my restaurant on Divoox?',
           'How long does approval take?',
           'How do I open and close my restaurant?',
         ],
@@ -3463,7 +3463,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'In “Menu,” tap “Add item.”',
           'Write the name and description in English and Spanish. Customers see the language they chose.',
-          'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in the local currency of your restaurant’s city (in the cities where Tumbite operates; currencies without cents, like pesos, are written as whole numbers: 12000 is twelve thousand pesos).',
+          'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in the local currency of your restaurant’s city (in the cities where Divoox operates; currencies without cents, like pesos, are written as whole numbers: 12000 is twelve thousand pesos).',
           'Upload the item photo. No photo yet? Add it later: the item is published either way.',
           'Save. What you type is saved as you go: if the window closes, it’s still there when you’re back.',
         ],
@@ -3508,7 +3508,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-rechazado-en.webp',
-            alt: 'Order in the Tumbite app that the restaurant couldn’t take, with the notice that all the money was refunded.',
+            alt: 'Order in the Divoox app that the restaurant couldn’t take, with the notice that all the money was refunded.',
             pie: 'If the restaurant can’t take an order, the customer sees it right away and gets their money back.',
           },
         ],
@@ -3524,7 +3524,7 @@ const en: SeccionDocs[] = [
           'Every order has its traffic light: green is on time, yellow is running late, and red needs attention now. Next to it you see how long ago it came in and why it’s late.',
           'If nobody accepts an order, we alert you on your phone at 1 and 3 minutes. At 6 we cancel it and refund the customer: an order canceled in time beats a customer left waiting.',
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
-          'You can also use the Tumbite restaurant app on a tablet or phone: same alarm, same orders.',
+          'You can also use the Divoox restaurant app on a tablet or phone: same alarm, same orders.',
         ],
       },
       {
@@ -3540,7 +3540,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/tablero-restaurante-en.webp',
-            alt: 'Tumbite restaurant dashboard showing orders waiting, 7- and 30-day sales, payout, average order, best sellers, real kitchen time, and rating.',
+            alt: 'Divoox restaurant dashboard showing orders waiting, 7- and 30-day sales, payout, average order, best sellers, real kitchen time, and rating.',
             pie: 'Your dashboard when you sign in: the essentials of your business on one screen.',
           },
         ],
@@ -3558,9 +3558,9 @@ const en: SeccionDocs[] = [
         resumen:
           'Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.',
         explicacion: [
-          'On Tumbite every restaurant is a real business, with an identified owner and a place that exists. That verification protects your customers, protects your brand from copycats, and is what makes people comfortable ordering from you for the first time.',
+          'On Divoox every restaurant is a real business, with an identified owner and a place that exists. That verification protects your customers, protects your brand from copycats, and is what makes people comfortable ordering from you for the first time.',
           'The storefront photo is taken on site: your phone records the location and we match it with the address on your profile. Once a year we ask you to retake just that photo, to confirm you’re still at the same place.',
-          'Only the Tumbite team that reviews verifications sees the photos. They are never published or shared, and they’re deleted if you close your account.',
+          'Only the Divoox team that reviews verifications sees the photos. They are never published or shared, and they’re deleted if you close your account.',
         ],
         capturas: [
           {
@@ -3604,21 +3604,21 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-restaurante-beneficios-en.webp',
-            alt: '“Earnings” screen in the Tumbite dashboard with today: orders delivered, sales, gifts, commission, your payout in green, the available balance, and each sale with its order number.',
+            alt: '“Earnings” screen in the Divoox dashboard with today: orders delivered, sales, gifts, commission, your payout in green, the available balance, and each sale with its order number.',
             pie: '“Earnings”: your day, your balance, and every sale with its order number.',
           },
         ],
         preguntas: [
           'When and how do I get paid?',
           'How do I connect my bank account?',
-          'How much does Tumbite charge?',
+          'How much does Divoox charge?',
         ],
         pasos: [
           'In “Earnings” you see today: delivered orders, sales, gifts, commission, and, in green, your payout.',
           'The first time, tap “Connect my bank account”: Stripe asks for your details once, on its secure page.',
           'Your available balance grows with every delivered order, and below you see each sale with its order number. Cash out anytime, from one dollar.',
           'Your plan (Starter, Growth, or Elite) sets the commission. Ask us to change plans anytime.',
-          'In “Compared with other apps” you see, with your real sales from the last 30 days, what you keep with Tumbite and what you’d keep with DoorDash or Uber Eats on the equivalent plan.',
+          'In “Compared with other apps” you see, with your real sales from the last 30 days, what you keep with Divoox and what you’d keep with DoorDash or Uber Eats on the equivalent plan.',
         ],
       },
     ],
@@ -3632,10 +3632,10 @@ const en: SeccionDocs[] = [
         id: 'background-location',
         titulo: 'Your location with the screen off',
         resumen:
-          'While you’re online, Tumbite keeps sending your position even if you lock the phone or open the map: the customer and the restaurant see where you are without you coming back to the app.',
+          'While you’re online, Divoox keeps sending your position even if you lock the phone or open the map: the customer and the restaurant see where you are without you coming back to the app.',
         explicacion: [
           'The first time you go online, the phone asks you to allow location “Always” (iPhone) or “All the time” (Android). It’s only while you’re online: when you go offline it turns off.',
-          'On Android you’ll see a fixed notification “Tumbite is active” while you’re online: it’s the sign your position keeps being sent.',
+          'On Android you’ll see a fixed notification “Divoox is active” while you’re online: it’s the sign your position keeps being sent.',
           'If you don’t grant it, the app still works, but only sends your position with the screen open.',
         ],
         capturas: [],
@@ -3667,18 +3667,18 @@ const en: SeccionDocs[] = [
         id: 'cash-orders-and-top-ups',
         titulo: 'Orders collected in person and your balance for fees',
         resumen:
-          'In cities where it’s active, some orders are paid on delivery: the customer pays you in cash or by transfer, you pay for the food at the counter, and Tumbite’s fee comes out of a balance you top up in advance.',
+          'In cities where it’s active, some orders are paid on delivery: the customer pays you in cash or by transfer, you pay for the food at the counter, and Divoox’s fee comes out of a balance you top up in advance.',
         explicacion: [
           'The offer tells you before you accept: whether the customer pays in cash or by transfer, and how much you’ll pay at the store with your own money. You decide with everything in view.',
           'Before accepting an order paid in person you need balance for the fee. You top it up by buying a code at an authorized sales point and redeeming it under Earnings → “Balance for fees”. Without balance you don’t get cash-order offers (card orders still come).',
           'When you accept, the fee is reserved from your balance; when you deliver and confirm the payment, it’s charged. If the order is canceled or you drop it, it goes back to your balance in full.',
-          'At the restaurant the app tells you how much to pay at the counter: the food minus Tumbite’s fee. You pay with your own money, in cash or with your card (it’s your working capital: Tumbite doesn’t lend it), and under “Pay for the food at the restaurant” you enter what you paid and the receipt total. Without that record the order can’t leave. You can also take a photo of the receipt: the restaurant, the customer and support can see it if there’s a claim. If something doesn’t match, it’s noted and support reviews it; it doesn’t stop you.',
+          'At the restaurant the app tells you how much to pay at the counter: the food minus Divoox’s fee. You pay with your own money, in cash or with your card (it’s your working capital: Divoox doesn’t lend it), and under “Pay for the food at the restaurant” you enter what you paid and the receipt total. Without that record the order can’t leave. You can also take a photo of the receipt: the restaurant, the customer and support can see it if there’s a claim. If something doesn’t match, it’s noted and support reviews it; it doesn’t stop you.',
           'Hand the receipt to the customer with the order. At the door you see how much they owe you (without the tip). Tap “Collected” and enter what you received. It’s your own confirmation, not a bank check: who confirmed, how much and when are recorded. If they paid less, the difference becomes the customer’s debt, not yours; if they paid more (for example, a repeated transfer), it’s recorded that you owe them the difference back.',
           'If it’s a transfer and you don’t see it in your bank yet, tap “The transfer hasn’t reached me yet”: you can deliver, the payment stays pending and your fee stays reserved. When you see it, confirm what arrived; if it never arrives, confirm 0 and the customer gets a debt (they can file a claim).',
           'If the order is canceled after you paid for the food, that payment stays recorded under your name as a loss pending review; it never disappears. Once you paid for the food you can’t drop the order on your own: deliver it or contact support.',
           'If the customer doesn’t pay, tap “The customer didn’t pay”: the order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
           'An order paid in person can’t be left in a safe place: if the customer doesn’t show up, use “The customer didn’t pay.” Once you’ve confirmed the payment, that button no longer applies.',
-          'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Tumbite never accesses your account.',
+          'To receive transfers, publish your account in your profile: account holder’s name and number. Changing it asks for your password, emails you, and takes effect in 24 hours (or sooner if the team confirms it). You confirm each transfer by checking your own bank: Divoox never accesses your account.',
           'A cash tip is yours and isn’t counted in the payment.',
         ],
         capturas: [
@@ -3784,22 +3784,22 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/registro-repartidor-en.webp',
-            alt: '“Create account” screen in the Tumbite driver app with full name, email, mobile phone, and password.',
+            alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
             pie: 'You create your account in the app with your name, email, phone, and a password.',
           },
           {
             src: '/docs/recorrido-repartidor-conectado-en.webp',
-            alt: 'Tumbite driver app online: “Online: receiving orders,” with the level and the balance.',
+            alt: 'Divoox driver app online: “Online: receiving orders,” with the level and the balance.',
             pie: 'Go online when you want to work, and offline whenever you like.',
           },
         ],
         preguntas: [
-          'How do I start delivering with Tumbite?',
+          'How do I start delivering with Divoox?',
           'Do I have a fixed schedule?',
           'How do I go online to get orders?',
         ],
         pasos: [
-          'Download the Tumbite driver app and create your account.',
+          'Download the Divoox driver app and create your account.',
           'Connect your bank from your wallet with “Connect my bank account” (Stripe, once) so you can cash out your earnings.',
           'Tap “Go online” when you want to work. The app uses your location only while you’re online.',
           'No schedules, no minimums: go online and offline whenever you like.',
@@ -3811,8 +3811,8 @@ const en: SeccionDocs[] = [
         resumen:
           'Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.',
         explicacion: [
-          'When customers get their food, they want to know the person at their door is who they say they are. That’s why every Tumbite driver goes through an identity check before delivering.',
-          'All you need is your ID and a photo of your face. Only the Tumbite team that reviews verifications sees the photos; they’re never published and they’re deleted if you close your account.',
+          'When customers get their food, they want to know the person at their door is who they say they are. That’s why every Divoox driver goes through an identity check before delivering.',
+          'All you need is your ID and a photo of your face. Only the Divoox team that reviews verifications sees the photos; they’re never published and they’re deleted if you close your account.',
         ],
         capturas: [
           {
@@ -3876,7 +3876,7 @@ const en: SeccionDocs[] = [
           'Completion rate: of the orders you accepted, how many you delivered. Dropping an order counts against you. The big apps ask for 90% or higher.',
           'On-time rate: how many deliveries arrived within the time promised to the customer. If the restaurant runs late and you arrived on time, it’s not on you.',
           'Deliveries in 30 days and lifetime: your history at a glance.',
-          'At Tumbite these numbers are your guide and count toward your level; nobody is deactivated because of them.',
+          'At Divoox these numbers are your guide and count toward your level; nobody is deactivated because of them.',
         ],
         capturas: [
           {
@@ -3906,7 +3906,7 @@ const en: SeccionDocs[] = [
           'Below, every order with the restaurant, the time, and its total. Tap “See breakdown” for that order’s base, bonus, and tip.',
           'If the customer tips after delivery, you get a notification and it shows as “tip after delivery” on that order and in the tips total.',
           'Further down is your wallet: available balance, payouts, and activity.',
-          'Each order is shown in the local currency of its city, in the cities where Tumbite operates. If you deliver in cities with different currencies, you see one total per currency: they are never added together.',
+          'Each order is shown in the local currency of its city, in the cities where Divoox operates. If you deliver in cities with different currencies, you see one total per currency: they are never added together.',
         ],
         capturas: [
           {
@@ -3964,7 +3964,7 @@ const en: SeccionDocs[] = [
           '“I’m at the restaurant”: confirms your arrival with your position. It works within 200 meters of the store; if you’re farther, the app tells you how many meters. GPS also marks the arrival on its own, but with the button it’s recorded right away and the restaurant knows you’re there.',
           '“Order isn’t ready”: if you arrived and the restaurant hasn’t finished, tap it. The restaurant gets a notification and it goes on the order’s record: that wait doesn’t count against you.',
           '“Help with this order”: pick the reason (the restaurant is closed, the order is wrong or incomplete, I can’t find the address, I had an accident or a vehicle problem, something else), add details if you want, and your conversation with support opens with the order attached.',
-          'Emergency: calls 911 from the app and Tumbite is notified.',
+          'Emergency: calls 911 from the app and Divoox is notified.',
         ],
         capturas: [
           {
@@ -4011,12 +4011,12 @@ const en: SeccionDocs[] = [
           'Like a banking app: your balance, earnings, tips, and every movement with its order. Cash out to your bank whenever you want.',
         explicacion: [
           'Every delivery adds two movements: the delivery pay and the tip, which is 100% yours and never used to top up your pay. Everything is logged with the date and order number, so you can check it anytime.',
-          'At the top you see what’s available to withdraw and, below, what you earned, your tips, and what you withdrew this month. You enter your bank details in Stripe, our payment processor: Tumbite never sees them.',
+          'At the top you see what’s available to withdraw and, below, what you earned, your tips, and what you withdrew this month. You enter your bank details in Stripe, our payment processor: Divoox never sees them.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-repartidor-billetera-en.webp',
-            alt: 'Wallet in the Tumbite driver app with the available balance, earnings, tips, and withdrawals for the month, and each delivery and tip with its order.',
+            alt: 'Wallet in the Divoox driver app with the available balance, earnings, tips, and withdrawals for the month, and each delivery and tip with its order.',
             pie: 'Your wallet: what you have, what you earned this month, and every transaction.',
           },
           {
@@ -4075,7 +4075,7 @@ const en: SeccionDocs[] = [
           'If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.',
         explicacion: [
           'Normally each order is offered to one driver at a time, the closest one, with 45 seconds to accept. Declining doesn’t count against you.',
-          'If three drivers pass on it, the order becomes an “open offer”: every available driver in the area sees it at the same time, with a 1-dollar bonus paid by Tumbite. The offer card says “Includes a bonus of $1.”',
+          'If three drivers pass on it, the order becomes an “open offer”: every available driver in the area sees it at the same time, with a 1-dollar bonus paid by Divoox. The offer card says “Includes a bonus of $1.”',
           'The first to accept takes it; it disappears from everyone else’s screen. The bonus is added to your earnings when you deliver.',
           'Also, if an order goes 5 minutes without a driver, our team gets an alert to help sort it out.',
         ],
@@ -4100,9 +4100,9 @@ const en: SeccionDocs[] = [
         id: 'call-customer-masked',
         titulo: 'Call the customer without seeing their number (or showing yours)',
         resumen:
-          'On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Tumbite’s number.',
+          'On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Divoox’s number.',
         explicacion: [
-          'If you can’t find the address or the customer isn’t answering the chat, tap “Call the customer (masked number).” Tumbite calls your phone and, when you answer, dials the customer. They see Tumbite’s number, not yours, and you don’t see theirs.',
+          'If you can’t find the address or the customer isn’t answering the chat, tap “Call the customer (masked number).” Divoox calls your phone and, when you answer, dials the customer. They see Divoox’s number, not yours, and you don’t see theirs.',
           'For that, your account needs your mobile number (it’s under “My details”). If the customer has no mobile number on file, the app tells you and leaves you the chat.',
           'The customer can call you the same way. Every call is noted on the order in case of a claim.',
           'The customer also gets their alerts automatically: “arriving in 5 minutes,” “come out to meet your driver” (hand delivery) and “at your door,” by SMS as well.',
@@ -4111,7 +4111,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-repartidor-llamar-en.webp',
             alt: 'Driver app on the way with the “Call the customer (masked number)” button and the notice “We’re calling you now. Answer and we’ll connect you with the customer.”',
-            pie: 'Tumbite calls you and connects you: nobody sees the other’s number.',
+            pie: 'Divoox calls you and connects you: nobody sees the other’s number.',
           },
         ],
         preguntas: [
@@ -4120,7 +4120,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'On the way, tap “Call the customer (masked number).”',
-          'Answer Tumbite’s call: it connects you with the customer.',
+          'Answer Divoox’s call: it connects you with the customer.',
           'If they have no mobile number, message them through the order chat.',
         ],
       },
@@ -4128,10 +4128,10 @@ const en: SeccionDocs[] = [
         id: 'payout-failed',
         titulo: 'If a payout to your bank fails',
         resumen:
-          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Tumbite balance. Check your bank details under “Wallet” and withdraw again.',
+          'If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Divoox balance. Check your bank details under “Wallet” and withdraw again.',
         explicacion: [
           'When you withdraw your balance, the money goes out to your bank account. Sometimes the bank rejects it: closed account, mistyped number, name mismatch.',
-          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Tumbite balance.',
+          'If that happens, you get a phone notification and an email with the reason. The money isn’t lost: it goes back to your Divoox balance.',
           'Open “Wallet,” check or fix your bank account details and withdraw again.',
           'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
         ],
@@ -4152,7 +4152,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Like the big platforms: we check criminal records and driving history with a provider, and every so often we ask for a photo of your face before you go online.',
         explicacion: [
-          'Background check: under “My details and vehicle,” tap “Start the background check.” The Checkr form opens, a specialized provider, where you enter your sensitive details (never in Tumbite). It usually takes 1 to 3 days. When the result is clear, your account is approved automatically; if something needs review, our team looks at it.',
+          'Background check: under “My details and vehicle,” tap “Start the background check.” The Checkr form opens, a specialized provider, where you enter your sensitive details (never in Divoox). It usually takes 1 to 3 days. When the result is clear, your account is approved automatically; if something needs review, our team looks at it.',
           'Identity check photo: every so often (no more than once a week, at random), when you tap “Go online” the app asks for a photo of your face. It’s quick: face the camera in good light. Our team compares it with the photo on file to confirm the person delivering is you.',
           'While the check photo is pending, you can’t go online. As soon as you send it, you can continue.',
           'These two measures protect customers, restaurants and you: nobody can deliver using someone else’s account.',
@@ -4278,7 +4278,7 @@ const en: SeccionDocs[] = [
           'It all starts in the customer app: they pick a restaurant, build their cart, and see the full breakdown before paying. When they pay, the card is only authorized: the actual charge happens when the order is delivered (if it’s canceled before that, there’s nothing to refund). The order reaches the restaurant with an alarm and a green traffic light.',
           'The restaurant accepts it by choosing the prep time. That’s when we look for the closest driver: they get an offer with what they’ll earn and the distance, before accepting. Declining never lowers their level.',
           'When the food is ready, the restaurant taps “Ready!” The driver takes a photo of the closed order and the restaurant confirms it on their screen: only then does it go out. At the door, the driver takes the delivery photo. The customer follows every step live, with the driver on the map, and rates the food and the delivery separately at the end.',
-          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Tumbite kept $2.37, out of which it pays the card processing fee.',
+          'The money is split at delivery and everyone can see their share. A real example from our test: the customer paid $28.18 (food $18.50, delivery $3.99, service $1.99, and a $3.70 tip). The restaurant, on the Starter plan, received $17.11: its food minus the 7.5% commission. The driver received $8.70: the delivery pay plus 100% of the tip. Divoox kept $2.37, out of which it pays the card processing fee.',
           'And if something runs late, the Manager steps in; if the restaurant doesn’t confirm within 6 minutes, it cancels and refunds automatically.',
         ],
         capturas: [
@@ -4289,7 +4289,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-pagado-en.webp',
-            alt: 'Paid order in the Tumbite app, waiting for the restaurant to accept, with the progress bar.',
+            alt: 'Paid order in the Divoox app, waiting for the restaurant to accept, with the progress bar.',
             pie: 'You pay and the order reaches the restaurant instantly.',
           },
           {
@@ -4340,7 +4340,7 @@ const en: SeccionDocs[] = [
         resumen:
           'An automatic watcher follows every order from payment to the door, and steps in only when something runs late.',
         explicacion: [
-          'In food delivery, what upsets people most isn’t a mistake: it’s waiting with no answer. That’s why every Tumbite order has a Manager that follows it from start to finish, minute by minute, around the clock.',
+          'In food delivery, what upsets people most isn’t a mistake: it’s waiting with no answer. That’s why every Divoox order has a Manager that follows it from start to finish, minute by minute, around the clock.',
           'The Manager knows how long each stage should take. If the restaurant doesn’t confirm, it sends a reminder at 1 minute and again at 3. If there’s still no answer at 6 minutes, it cancels the order and refunds the customer, so nobody is left with a paid order and no news.',
           'When an order is ready and no driver has picked it up, the Manager alerts our operations team so they can find someone nearby. And everything that happens is logged with its time: who accepted, when it left, when it arrived.',
           'For customers, that means peace of mind. For restaurants, an assistant that flags what’s urgent at rush hour. For drivers, orders that don’t get stuck. And for our team, a live board of every order where the ones that need help show up first.',
@@ -4353,7 +4353,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-cliente-manager-cancela-en.webp',
-            alt: 'Order in the Tumbite app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the refund notice.',
+            alt: 'Order in the Divoox app that the Manager canceled on its own because the restaurant didn’t confirm in time, with the refund notice.',
             pie: 'If the restaurant doesn’t confirm within 6 minutes, the Manager cancels the order and refunds the money.',
           },
         ],
@@ -4374,7 +4374,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/semaforo-restaurante-en.webp',
-            alt: 'Order list in the Tumbite restaurant dashboard: one order “On time” in green, one “Running late” in yellow not yet accepted, and one “In trouble” in red, ready with no driver.',
+            alt: 'Order list in the Divoox restaurant dashboard: one order “On time” in green, one “Running late” in yellow not yet accepted, and one “In trouble” in red, ready with no driver.',
             pie: 'This is how restaurants see it in their order list: the color, the minutes, and the reason.',
           },
           {
@@ -4396,19 +4396,19 @@ const en: SeccionDocs[] = [
         resumen:
           'Every restaurant is a real business and every driver is who they say they are. A person on our team checks it.',
         explicacion: [
-          'Before selling on Tumbite, each restaurant owner shows an ID, a photo of their face, and a photo of the storefront taken on site, which we match with the registered address. That keeps out fake businesses and places that have moved.',
+          'Before selling on Divoox, each restaurant owner shows an ID, a photo of their face, and a photo of the storefront taken on site, which we match with the registered address. That keeps out fake businesses and places that have moved.',
           'Before delivering, each driver shows an ID and a photo of their face. They also register their vehicle, license, and insurance, and the system flags anything about to expire.',
           'The photos are reviewed by a person on our team, not a machine. They’re never published, never used for anything else, and they’re deleted when the person closes their account.',
         ],
         capturas: [
           {
             src: '/docs/verificacion-restaurante-en.webp',
-            alt: '“Owner and storefront verification” section in the Tumbite restaurant dashboard, with the ID, the face photo, and the storefront.',
+            alt: '“Owner and storefront verification” section in the Divoox restaurant dashboard, with the ID, the face photo, and the storefront.',
             pie: 'Restaurants verify the owner and the location with photos taken from a phone.',
           },
           {
             src: '/docs/verificacion-repartidor-en.webp',
-            alt: '“Verify your identity” screen in the Tumbite driver app, with the ID and the face photo.',
+            alt: '“Verify your identity” screen in the Divoox driver app, with the ID and the face photo.',
             pie: 'Drivers verify their identity with their ID and a photo of their face.',
           },
         ],
@@ -4418,27 +4418,27 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'compare',
-        titulo: 'Tumbite compared with other delivery apps',
+        titulo: 'Divoox compared with other delivery apps',
         resumen:
           'How much each app keeps from the restaurant, what the customer pays, and what the driver gets. With public numbers, so everyone can decide.',
         explicacion: [
-          'We believe everyone should be able to compare before choosing. That’s why we publish what Tumbite charges next to what DoorDash and Uber Eats publish on their own pages.',
-          'To the restaurant, per delivery order: Tumbite charges 7.5% on the Starter plan, 12.5% on Growth, and 15% on Elite. DoorDash publishes 15% (Basic), 25% (Plus), and 30% (Premier). Uber Eats publishes 20% (Lite, from 15% in some cities), 25% (Plus), and 30% (Premium).',
-          'An example with a $30 food order: with Tumbite Starter the restaurant receives $27.75; with DoorDash Basic, $25.50; with Uber Eats Lite, $24.00. On higher plans the gap grows: $26.25 with Tumbite Growth versus $22.50 with DoorDash Plus or Uber Eats Plus.',
-          'To the customer: Tumbite charges delivery from $3.99 (up 50 cents per kilometer after the first 3, capped at $7.99) and a service fee of 5% of the order, with a $1.99 minimum and a $4.99 maximum. Orders under $10 add a $2 small order fee. DoorDash publishes a service fee of 15% of the order in several cities and a variable one elsewhere, plus a delivery fee that depends on the restaurant. Uber Eats publishes a service fee that is a percentage of the order with a minimum and maximum by region, plus a delivery fee that changes with the area and available drivers.',
-          'To the driver: on Tumbite every delivery pays at least $5, and the tip is 100% theirs and is never used to reach that minimum. DoorDash publishes base pay per offer of $2 to $10+, and that drivers keep 100% of tips.',
+          'We believe everyone should be able to compare before choosing. That’s why we publish what Divoox charges next to what DoorDash and Uber Eats publish on their own pages.',
+          'To the restaurant, per delivery order: Divoox charges 7.5% on the Starter plan, 12.5% on Growth, and 15% on Elite. DoorDash publishes 15% (Basic), 25% (Plus), and 30% (Premier). Uber Eats publishes 20% (Lite, from 15% in some cities), 25% (Plus), and 30% (Premium).',
+          'An example with a $30 food order: with Divoox Starter the restaurant receives $27.75; with DoorDash Basic, $25.50; with Uber Eats Lite, $24.00. On higher plans the gap grows: $26.25 with Divoox Growth versus $22.50 with DoorDash Plus or Uber Eats Plus.',
+          'To the customer: Divoox charges delivery from $3.99 (up 50 cents per kilometer after the first 3, capped at $7.99) and a service fee of 5% of the order, with a $1.99 minimum and a $4.99 maximum. Orders under $10 add a $2 small order fee. DoorDash publishes a service fee of 15% of the order in several cities and a variable one elsewhere, plus a delivery fee that depends on the restaurant. Uber Eats publishes a service fee that is a percentage of the order with a minimum and maximum by region, plus a delivery fee that changes with the area and available drivers.',
+          'To the driver: on Divoox every delivery pays at least $5, and the tip is 100% theirs and is never used to reach that minimum. DoorDash publishes base pay per offer of $2 to $10+, and that drivers keep 100% of tips.',
         ],
         preguntas: [
-          'How much does Tumbite charge restaurants compared with DoorDash and Uber Eats?',
-          'How much does the customer pay on Tumbite?',
-          'How much does a driver earn per delivery on Tumbite?',
+          'How much does Divoox charge restaurants compared with DoorDash and Uber Eats?',
+          'How much does the customer pay on Divoox?',
+          'How much does a driver earn per delivery on Divoox?',
         ],
         pasos: [
           'Restaurants: in your dashboard, under “Earnings,” you see this comparison worked out with your own sales from the last 30 days.',
-          'Customers: on Tumbite you see the full breakdown before paying (food, delivery, service, tip), with no surprises at the end.',
+          'Customers: on Divoox you see the full breakdown before paying (food, delivery, service, tip), with no surprises at the end.',
           'Drivers: before accepting each offer you see what you earn, tip included.',
         ],
-        nota: 'DoorDash and Uber Eats figures are the ones they publish on their official pricing and help pages, checked in October 2026; they may change and vary by city. Tumbite figures are the ones currently in the app.',
+        nota: 'DoorDash and Uber Eats figures are the ones they publish on their official pricing and help pages, checked in October 2026; they may change and vary by city. Divoox figures are the ones currently in the app.',
       },
     ],
   },
@@ -4449,34 +4449,34 @@ const en: SeccionDocs[] = [
     guias: [
       {
         id: 'calculator',
-        titulo: 'Calculator: how much you earn and save with Tumbite',
+        titulo: 'Calculator: how much you earn and save with Divoox',
         resumen:
-          'A calculator for everyone: the restaurant, the driver, the customer, and whoever wants to open Tumbite in their city.',
+          'A calculator for everyone: the restaurant, the driver, the customer, and whoever wants to open Divoox in their city.',
         explicacion: [
-          'On the “Calculator” page you pick who you are and move the numbers. Everything is calculated with the prices Tumbite uses in the app today and with public market data, and the page shows where each number comes from.',
-          'Restaurant: enter what you sell per month on delivery apps and see what you keep with Tumbite, DoorDash, and Uber Eats on the equivalent plan. With your city’s size, how many restaurants are on Tumbite, and the share of the market we reach, you also see how many monthly orders we can bring you.',
-          'Driver: choose hours per day, days per week, deliveries per hour, your average tip, and distance, and see what you earn per delivery, per day, per week, and per month. Tumbite pays the same in every city; what changes is how many orders there are per hour.',
+          'On the “Calculator” page you pick who you are and move the numbers. Everything is calculated with the prices Divoox uses in the app today and with public market data, and the page shows where each number comes from.',
+          'Restaurant: enter what you sell per month on delivery apps and see what you keep with Divoox, DoorDash, and Uber Eats on the equivalent plan. With your city’s size, how many restaurants are on Divoox, and the share of the market we reach, you also see how many monthly orders we can bring you.',
+          'Driver: choose hours per day, days per week, deliveries per hour, your average tip, and distance, and see what you earn per delivery, per day, per week, and per month. Divoox pays the same in every city; what changes is how many orders there are per hour.',
           'Customer: with how many orders you place per month and how much you spend on food, see how much you save on the service fee versus the 15% DoorDash publishes in several cities.',
-          'Franchise: with the city’s population, restaurants, and market share, see how many people order on apps, how many orders Tumbite would have, what restaurants and drivers receive, how many drivers are needed, and what the platform keeps.',
+          'Franchise: with the city’s population, restaurants, and market share, see how many people order on apps, how many orders Divoox would have, what restaurants and drivers receive, how many drivers are needed, and what the platform keeps.',
         ],
         capturas: [
           {
             src: '/docs/calculadora-restaurante-en.webp',
-            alt: 'Tumbite calculator for restaurants: with $10,000 in monthly sales, the restaurant keeps $9,250 with Tumbite, $8,500 with DoorDash Basic, and $8,000 with Uber Eats Lite, plus the orders Tumbite can bring based on its city.',
+            alt: 'Divoox calculator for restaurants: with $10,000 in monthly sales, the restaurant keeps $9,250 with Divoox, $8,500 with DoorDash Basic, and $8,000 with Uber Eats Lite, plus the orders Divoox can bring based on its city.',
             pie: 'Restaurant: what you keep on each app and how many orders we can bring you.',
           },
           {
             src: '/docs/calculadora-franquicia-en.webp',
-            alt: 'Tumbite calculator for franchises: in a city of 100,000 people with 100 restaurants and a 5% market share, the monthly orders, what restaurants and drivers receive, the drivers needed, and what the platform keeps.',
+            alt: 'Divoox calculator for franchises: in a city of 100,000 people with 100 restaurants and a 5% market share, the monthly orders, what restaurants and drivers receive, the drivers needed, and what the platform keeps.',
             pie: 'Franchise: the size of the business in your city, with the assumptions in plain view.',
           },
         ],
         preguntas: [
-          'How much does a restaurant earn with Tumbite?',
-          'How many customers can Tumbite bring to my restaurant?',
-          'How much does a driver earn per day with Tumbite?',
-          'How much do I save ordering with Tumbite?',
-          'How much does Tumbite move in a city?',
+          'How much does a restaurant earn with Divoox?',
+          'How many customers can Divoox bring to my restaurant?',
+          'How much does a driver earn per day with Divoox?',
+          'How much do I save ordering with Divoox?',
+          'How much does Divoox move in a city?',
         ],
         pasos: [
           'Go to tumbite.com and tap “Calculator” in the top menu.',
@@ -4484,31 +4484,31 @@ const en: SeccionDocs[] = [
           'Replace the numbers with yours. What you type is saved in your browser.',
           'To share a tab, copy the address: it carries the tab at the end.',
         ],
-        nota: 'These are projections, not promises: they depend on how many people order in each city and how Tumbite grows there. The franchisee’s share is set in their contract.',
+        nota: 'These are projections, not promises: they depend on how many people order in each city and how Divoox grows there. The franchisee’s share is set in their contract.',
       },
       {
         id: 'franchises',
-        titulo: 'Franchises: bring Tumbite to your city',
+        titulo: 'Franchises: bring Divoox to your city',
         resumen:
           'Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers.',
         explicacion: [
-          'Tumbite grows city by city, in any country. Each city opens with a franchise: a partner who knows the city and invests the launch capital.',
+          'Divoox grows city by city, in any country. Each city opens with a franchise: a partner who knows the city and invests the launch capital.',
           'That money buys a complete launch: our own fleet of 25 to 50 motorbikes so no order goes without a driver, drivers trained in road safety, food hygiene, and customer service, a ready-to-use tablet for every restaurant with the menu in two languages, and finding the first customers with a waitlist and launch promotions.',
           'A large city can be split into several zones, each with its own franchise. The franchisee gets a dashboard with their territory’s numbers: orders, sales, restaurants, drivers, and incidents, and sees only their own. Each franchise is priced by the size of its territory.',
           'The franchise owner can work with managers from their team: each one signs in to the same dashboard with their own email, oversees orders, and handles incidents in their territory.',
-          'If you enter your address in Tumbite and we’re not there yet, the app tells you which cities we’re already in and which zones are opening soon.',
+          'If you enter your address in Divoox and we’re not there yet, the app tells you which cities we’re already in and which zones are opening soon.',
         ],
         capturas: [
           {
             src: '/docs/franquicias-en.webp',
-            alt: 'Tumbite franchise section: a Tumbite-branded restaurant and the four things the franchise pays for: own fleet, trained drivers, a kit for every restaurant, and the first customers.',
-            pie: 'What a Tumbite franchise includes in each city.',
+            alt: 'Divoox franchise section: a Divoox-branded restaurant and the four things the franchise pays for: own fleet, trained drivers, a kit for every restaurant, and the first customers.',
+            pie: 'What a Divoox franchise includes in each city.',
           },
         ],
-        preguntas: ['How do I bring Tumbite to my city?', 'How much does a franchise cost?'],
+        preguntas: ['How do I bring Divoox to my city?', 'How much does a franchise cost?'],
         pasos: [
           'Open the “How it works” page and scroll to “Franchises,” or open your country’s page.',
-          'Fill in the “I want a Tumbite franchise” form: your city, available capital, your experience, and when you’d like to start.',
+          'Fill in the “I want a Divoox franchise” form: your city, available capital, your experience, and when you’d like to start.',
           'You get an email with the private link to your case. Our team prepares your city’s numbers and replies there.',
           'Once it’s signed, our team gives you access to your dashboard with your email, and to the managers on your team you tell us about.',
         ],
@@ -4532,7 +4532,7 @@ const en: SeccionDocs[] = [
         preguntas: ['What should each team member read before a launch?'],
         pasos: [
           'Whole team: “An order from start to finish,” “The Manager,” “The traffic light on every order,” and “Verified restaurants and drivers.”',
-          'Restaurant visits: “Put your restaurant on Tumbite,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
+          'Restaurant visits: “Put your restaurant on Divoox,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
           'Driver training: “Start delivering,” “Verify your identity,” “Offers,” “Levels,” and “Your wallet.”',
           'Customer support: “How to place your first order,” “Track your order live,” “Cancel an order,” “My account,” and “Help from a real person.”',
           'To finish: walk another team member through a full order, phone in hand, and what happens if the restaurant doesn’t answer.',
@@ -4551,36 +4551,36 @@ const en: SeccionDocs[] = [
         resumen:
           'One account to order, one for your restaurant, and one to deliver. Each takes a minute.',
         explicacion: [
-          'Tumbite has three front doors, one for each way to use it. People who order food sign up in the Tumbite app. Restaurants create their account in the dashboard, from a computer. Drivers sign up in the Tumbite Driver app.',
+          'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the dashboard, from a computer. Drivers sign up in the Divoox Driver app.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-registro-en.webp',
-            alt: '“Create account” screen in the Tumbite app with full name, email, mobile phone, birthday, and password.',
+            alt: '“Create account” screen in the Divoox app with full name, email, mobile phone, birthday, and password.',
             pie: 'You sign up with your name, email, phone, and a password.',
           },
           {
             src: '/docs/recorrido-restaurante-registro-en.webp',
-            alt: 'Form to create a restaurant account in the Tumbite dashboard, with your name, email, phone, and password.',
+            alt: 'Form to create a restaurant account in the Divoox dashboard, with your name, email, phone, and password.',
             pie: 'Restaurants create their account in the dashboard, from a computer.',
           },
           {
             src: '/docs/registro-repartidor-en.webp',
-            alt: '“Create account” screen in the Tumbite driver app with full name, email, mobile phone, and password.',
-            pie: 'Drivers sign up in the Tumbite Driver app.',
+            alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
+            pie: 'Drivers sign up in the Divoox Driver app.',
           },
         ],
         preguntas: [
-          'How do I sign up for Tumbite?',
+          'How do I sign up for Divoox?',
           'How do I create a restaurant account?',
           'How do I create a driver account?',
         ],
         pasos: [
-          'To order: open the Tumbite app, tap “New here? Create your account,” fill in your details, and tap “Create account.” If you add your birthday, your favorite restaurants can send you a gift.',
-          'For your restaurant: go to tumbite.com, tap “Dashboard,” then “Restaurant not on Tumbite yet? Create your account,” and fill in your details.',
-          'To deliver: open the Tumbite Driver app, tap “New here? Create your account,” and fill in your details.',
-          'We email you a link to confirm it’s yours. Meanwhile, you can already use Tumbite.',
+          'To order: open the Divoox app, tap “New here? Create your account,” fill in your details, and tap “Create account.” If you add your birthday, your favorite restaurants can send you a gift.',
+          'For your restaurant: go to tumbite.com, tap “Dashboard,” then “Restaurant not on Divoox yet? Create your account,” and fill in your details.',
+          'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
+          'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',
         ],
       },
       {
@@ -4590,19 +4590,19 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/olvide-clave-en.webp',
-            alt: 'Tumbite “Forgot my password” page with the email field and the “Send me the link” button.',
+            alt: 'Divoox “Forgot my password” page with the email field and the “Send me the link” button.',
             pie: 'Enter your email and we send you the link.',
           },
           {
             src: '/docs/cambiar-clave-en.webp',
-            alt: '“Password” card in Tumbite settings with the current password, the new one, and its repeat, each with the eye icon to show it.',
+            alt: '“Password” card in Divoox settings with the current password, the new one, and its repeat, each with the eye icon to show it.',
             pie: 'If you remember it, change it in “Settings,” with the eye icon to see what you type.',
           },
         ],
         preguntas: ['What if I forgot my password?', 'How do I change my password?'],
         pasos: [
           'On the sign-in screen, tap “Forgot your password?”',
-          'Enter your email. If it has a Tumbite account, you get a link (check spam too).',
+          'Enter your email. If it has a Divoox account, you get a link (check spam too).',
           'Tap the link and type your new password twice.',
           'Done. For safety, all open sessions are closed and you sign in again with the new password.',
         ],
@@ -4614,7 +4614,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/correo-estado-en.webp',
-            alt: '“Email” card in Tumbite settings with the notice “Your email isn’t confirmed yet” and the “Send the link again” link.',
+            alt: '“Email” card in Divoox settings with the notice “Your email isn’t confirmed yet” and the “Send the link again” link.',
             pie: 'In “Settings” you see whether your email is confirmed and can ask for the link again.',
           },
         ],
@@ -4623,7 +4623,7 @@ const en: SeccionDocs[] = [
           'I didn’t get the confirmation email. What do I do?',
         ],
         pasos: [
-          'After creating your account, look for the email “Confirm your Tumbite email.”',
+          'After creating your account, look for the email “Confirm your Divoox email.”',
           'Tap the link. It expires in two days; if it did, go to “Settings” and tap “Send the link again.”',
           'Confirming doesn’t block anything: you can use the app meanwhile. It makes sure receipts reach you and lets you recover your password.',
         ],
@@ -4635,7 +4635,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/borrar-cuenta-en.webp',
-            alt: '“Delete your Tumbite account” page with the “Delete my account now” button and the first option explained.',
+            alt: '“Delete your Divoox account” page with the “Delete my account now” button and the first option explained.',
             pie: 'The page to delete your account, with or without the app.',
           },
         ],
@@ -4660,12 +4660,12 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/ticket-en.webp',
-            alt: 'Private conversation of a Tumbite report: the customer’s message and the Tumbite team’s reply, with the box to answer.',
+            alt: 'Private conversation of a Divoox report: the customer’s message and the Divoox team’s reply, with the box to answer.',
             pie: 'Your case has its own private page: read our reply and answer right there.',
           },
         ],
         preguntas: [
-          'How do I talk to a person at Tumbite?',
+          'How do I talk to a person at Divoox?',
           'How do I report a problem with an order?',
         ],
         pasos: [

@@ -56,9 +56,9 @@ export type Desglose = {
   servicio: Centavos;
   cargoPedidoPequeno: Centavos;
   propina: Centavos;
-  /** Impuesto de ventas recaudado para el estado (Tumbite lo retiene y remite; no es ganancia). */
+  /** Impuesto de ventas recaudado para el estado (Divoox lo retiene y remite; no es ganancia). */
   impuesto: Centavos;
-  /** Lo que quitó el cupón (lo absorbe Tumbite). */
+  /** Lo que quitó el cupón (lo absorbe Divoox). */
   descuento: Centavos;
   totalCliente: Centavos;
   comisionRestaurante: Centavos;
@@ -99,7 +99,7 @@ export function calcularPedido(p: {
   regalo?: Centavos;
   /** Recogida en el local: sin envío ni repartidor; comisión del 5 % (como los grandes). */
   recogida?: boolean;
-  /** Cupón: baja el total del cliente y la ganancia de Tumbite (nunca lo que recibe el restaurante o el repartidor). */
+  /** Cupón: baja el total del cliente y la ganancia de Divoox (nunca lo que recibe el restaurante o el repartidor). */
   descuento?: Centavos;
 }): Desglose {
   const c = p.config ?? CONFIG_DINERO_INICIAL;

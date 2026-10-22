@@ -216,19 +216,19 @@ export const AVISOS = {
       ? {
           titulo: 'Your store isn’t receiving orders',
           cuerpo:
-            'Your Tumbite app or panel hasn’t checked in for 5 minutes, so customers can’t order. Open it to start receiving orders again.',
+            'Your Divoox app or panel hasn’t checked in for 5 minutes, so customers can’t order. Open it to start receiving orders again.',
         }
       : {
           titulo: 'Tu tienda no está recibiendo pedidos',
           cuerpo:
-            'Tu app o tu panel de Tumbite no responden hace 5 minutos y los clientes no pueden pedirte. Ábrelo para volver a recibir pedidos.',
+            'Tu app o tu panel de Divoox no responden hace 5 minutos y los clientes no pueden pedirte. Ábrelo para volver a recibir pedidos.',
         },
   tiendaConSenal: (i: string): Aviso =>
     i === 'en'
-      ? { titulo: 'You’re receiving orders again', cuerpo: 'Your store is back on Tumbite.' }
+      ? { titulo: 'You’re receiving orders again', cuerpo: 'Your store is back on Divoox.' }
       : {
           titulo: 'Ya recibes pedidos otra vez',
-          cuerpo: 'Tu tienda volvió a aparecer en Tumbite.',
+          cuerpo: 'Tu tienda volvió a aparecer en Divoox.',
         },
   abonoFallido: (i: string, monto: string): Aviso =>
     i === 'en'

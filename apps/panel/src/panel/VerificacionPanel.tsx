@@ -7,7 +7,7 @@ const T = {
   es: {
     titulo: 'Verificación del dueño y del local',
     ayuda:
-      'Para publicar tu restaurante verificamos que el dueño es quien dice ser y que el local existe en la dirección registrada. Toma las fotos con la cámara del celular; solo las ve el equipo de Tumbite.',
+      'Para publicar tu restaurante verificamos que el dueño es quien dice ser y que el local existe en la dirección registrada. Toma las fotos con la cámara del celular; solo las ve el equipo de Divoox.',
     doc: 'Documento del dueño',
     docs: {
       licencia: 'Licencia de conducir',
@@ -35,7 +35,7 @@ const T = {
   en: {
     titulo: 'Owner and storefront verification',
     ayuda:
-      'To publish your restaurant we verify the owner is who they say and that the place exists at the registered address. Take the photos with your phone camera; only the Tumbite team sees them.',
+      'To publish your restaurant we verify the owner is who they say and that the place exists at the registered address. Take the photos with your phone camera; only the Divoox team sees them.',
     doc: 'Owner’s document',
     docs: { licencia: 'Driver’s license', identificacion: 'Government ID', pasaporte: 'Passport' },
     frente: 'Document (front)',

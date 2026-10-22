@@ -15,7 +15,7 @@ describe('calculadora pública', () => {
     expect(r.pedidosTumbiteMes).toBe(1120);
     expect(r.pedidosPorRestauranteMes).toBe(22);
     expect(r.repartidoresNecesarios).toBe(3);
-    // El dinero cuadra: lo que pagan los clientes = restaurantes + repartidores + Tumbite (antes de la tarjeta).
+    // El dinero cuadra: lo que pagan los clientes = restaurantes + repartidores + Divoox (antes de la tarjeta).
     const d = r.pedido;
     expect(d.pagoRestaurante + d.pagoRepartidor + d.gananciaPlataforma).toBe(d.totalCliente);
     expect(r.netoPlataformaMes).toBeGreaterThan(0);

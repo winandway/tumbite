@@ -51,8 +51,8 @@ export async function reciboDePedido(
   const fm = (x: number) => formatearMonto(x, m, d);
   const asunto =
     d === 'en'
-      ? `Your Tumbite order #${corto} is confirmed`
-      : `Tu pedido #${corto} en Tumbite quedó confirmado`;
+      ? `Your Divoox order #${corto} is confirmed`
+      : `Tu pedido #${corto} en Divoox quedó confirmado`;
   const texto =
     d === 'en'
       ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d, m)}\n\nSubtotal: ${fm(p.subtotal)}\nDelivery: ${fm(p.envio)}\nService: ${fm(p.servicio)}${p.impuesto ? `\nTax: ${fm(p.impuesto)}` : ''}\nTip: ${fm(p.propina)}${p.regalo ? `\nGift: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
@@ -100,7 +100,7 @@ export async function avisoRestauranteNuevoAlAdmin(
     .split(',')
     .map((x) => x.trim())
     .filter(Boolean);
-  const texto = `Un restaurante nuevo pidió entrar a Tumbite y espera aprobación.\n\nRestaurante: ${p.restaurante}\nTipo: ${p.categoria || '—'}\nDirección: ${p.direccion}\nDueño: ${p.dueno} (${p.correoDueno})\n\nRevísalo y apruébalo en el panel de administración:\n\n${sitio(env)}/panel/restaurants`;
+  const texto = `Un restaurante nuevo pidió entrar a Divoox y espera aprobación.\n\nRestaurante: ${p.restaurante}\nTipo: ${p.categoria || '—'}\nDirección: ${p.direccion}\nDueño: ${p.dueno} (${p.correoDueno})\n\nRevísalo y apruébalo en el panel de administración:\n\n${sitio(env)}/panel/restaurants`;
   for (const para of admins)
     await enviarCorreo(env, {
       de: 'avisos',
@@ -130,29 +130,29 @@ export async function correoEstadoRestaurante(
   const textos = {
     aprobado: en
       ? [
-          `${p.restaurante} is approved on Tumbite`,
+          `${p.restaurante} is approved on Divoox`,
           `Hi ${p.nombre},\n\n${p.restaurante} is approved. Open your panel, finish the activation list and tap “Open” to start taking orders:\n\n${panel}`,
         ]
       : [
-          `${p.restaurante} quedó aprobado en Tumbite`,
+          `${p.restaurante} quedó aprobado en Divoox`,
           `Hola, ${p.nombre}.\n\n${p.restaurante} quedó aprobado. Entra a tu panel, completa la lista de activación y toca «Abrir» para empezar a recibir pedidos:\n\n${panel}`,
         ],
     pausado: en
       ? [
-          `${p.restaurante} was paused on Tumbite`,
+          `${p.restaurante} was paused on Divoox`,
           `Hi ${p.nombre},\n\n${p.restaurante} was paused by our team and isn't taking orders for now.${porque}\n\nReply to this email if you have questions.`,
         ]
       : [
-          `${p.restaurante} quedó en pausa en Tumbite`,
+          `${p.restaurante} quedó en pausa en Divoox`,
           `Hola, ${p.nombre}.\n\nNuestro equipo puso ${p.restaurante} en pausa y por ahora no recibe pedidos.${porque}\n\nResponde este correo si tienes dudas.`,
         ],
     rechazado: en
       ? [
-          `About ${p.restaurante} on Tumbite`,
+          `About ${p.restaurante} on Divoox`,
           `Hi ${p.nombre},\n\nWe couldn't approve ${p.restaurante} for now.${porque}\n\nReply to this email if you'd like to review it with us.`,
         ]
       : [
-          `Sobre ${p.restaurante} en Tumbite`,
+          `Sobre ${p.restaurante} en Divoox`,
           `Hola, ${p.nombre}.\n\nPor ahora no pudimos aprobar ${p.restaurante}.${porque}\n\nResponde este correo si quieres revisarlo con nosotros.`,
         ],
     pendiente: en
@@ -201,8 +201,8 @@ export async function bienvenidaListaEspera(
     d === 'en' ? `You're on the list, ${p.nombre}` : `Ya estás en la lista, ${p.nombre}`;
   const texto =
     d === 'en'
-      ? `Hi ${p.nombre},\n\nYou're signed up to ${que} with Tumbite in ${p.ciudad}. We'll email you first the moment we open in your area.\n\nThanks for being early.`
-      : `Hola, ${p.nombre}.\n\nQuedaste anotado para ${que} con Tumbite en ${p.ciudad}. Te avisamos primero, por este correo, en cuanto abramos en tu zona.\n\nGracias por llegar temprano.`;
+      ? `Hi ${p.nombre},\n\nYou're signed up to ${que} with Divoox in ${p.ciudad}. We'll email you first the moment we open in your area.\n\nThanks for being early.`
+      : `Hola, ${p.nombre}.\n\nQuedaste anotado para ${que} con Divoox en ${p.ciudad}. Te avisamos primero, por este correo, en cuanto abramos en tu zona.\n\nGracias por llegar temprano.`;
   return enviarCorreo(env, {
     de: 'hola',
     para: p.correo,
@@ -218,10 +218,10 @@ export async function correoDeConfirmacion(
 ) {
   const d = p.idioma;
   const enlace = `${sitio(env)}${enIdiomaDireccion(PAGINAS.confirmEmail, d)}?token=${p.token}`;
-  const asunto = d === 'en' ? 'Confirm your Tumbite email' : 'Confirma tu correo de Tumbite';
+  const asunto = d === 'en' ? 'Confirm your Divoox email' : 'Confirma tu correo de Divoox';
   const texto =
     d === 'en'
-      ? `Hi ${p.nombre},\n\nWelcome to Tumbite. Tap the link to confirm this email is yours (it expires in 2 days):\n\n${enlace}\n\nIf you didn't create an account, you can ignore this.`
-      : `Hola, ${p.nombre}.\n\nBienvenido a Tumbite. Toca el enlace para confirmar que este correo es tuyo (vence en 2 días):\n\n${enlace}\n\nSi no creaste una cuenta, ignora este correo.`;
+      ? `Hi ${p.nombre},\n\nWelcome to Divoox. Tap the link to confirm this email is yours (it expires in 2 days):\n\n${enlace}\n\nIf you didn't create an account, you can ignore this.`
+      : `Hola, ${p.nombre}.\n\nBienvenido a Divoox. Toca el enlace para confirmar que este correo es tuyo (vence en 2 días):\n\n${enlace}\n\nSi no creaste una cuenta, ignora este correo.`;
   return enviarCorreo(env, { de: 'avisos', para: p.correo, asunto, texto });
 }

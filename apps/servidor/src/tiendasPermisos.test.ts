@@ -31,8 +31,8 @@ describe('permisos de las apps para las tiendas', () => {
         if (app === 'repartidor') {
           const op = loc[1] as Record<string, unknown>;
           expect(op).toMatchObject({ motionUsagePermission: false });
-          expect(String(op.locationAlwaysAndWhenInUsePermission)).toMatch(/Tumbite/);
-          expect(String(op.locationAlwaysPermission)).toMatch(/Tumbite/);
+          expect(String(op.locationAlwaysAndWhenInUsePermission)).toMatch(/Divoox/);
+          expect(String(op.locationAlwaysPermission)).toMatch(/Divoox/);
         } else {
           expect(loc[1]).toMatchObject({
             locationAlwaysPermission: false,

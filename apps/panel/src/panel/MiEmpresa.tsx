@@ -17,7 +17,7 @@ const T = {
   es: {
     titulo: 'Mi empresa',
     ayuda:
-      'Los datos legales de tu negocio y las personas a cargo. Los ve solo el equipo de Tumbite. El número fiscal y el banco los pide Stripe al conectar tu billetera.',
+      'Los datos legales de tu negocio y las personas a cargo. Los ve solo el equipo de Divoox. El número fiscal y el banco los pide Stripe al conectar tu billetera.',
     negocio: 'Tu negocio',
     nombreLegal: 'Nombre legal de la empresa',
     tipoEmpresa: 'Tipo de empresa (LLC, corporación, persona…)',
@@ -35,7 +35,7 @@ const T = {
   en: {
     titulo: 'My company',
     ayuda:
-      'Your business’s legal details and the people in charge. Only the Tumbite team sees them. Stripe asks for your tax ID and bank when you connect your wallet.',
+      'Your business’s legal details and the people in charge. Only the Divoox team sees them. Stripe asks for your tax ID and bank when you connect your wallet.',
     negocio: 'Your business',
     nombreLegal: 'Legal company name',
     tipoEmpresa: 'Company type (LLC, corporation, sole proprietor…)',

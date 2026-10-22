@@ -34,7 +34,7 @@ const es = {
   otraCuenta: 'Entrar con otra cuenta',
   hola: 'Hola',
   rolEquivocado:
-    'Esta cuenta no es de esta app. Descarga la app de Tumbite que corresponde a tu cuenta.',
+    'Esta cuenta no es de esta app. Descarga la app de Divoox que corresponde a tu cuenta.',
   soloPanel: 'Las cuentas de restaurante se crean en tumbite.com/panel. Aquí solo entras.',
 };
 
@@ -75,7 +75,7 @@ const en: T = {
   otraCuenta: 'Sign in with another account',
   hola: 'Hi',
   rolEquivocado:
-    'This account doesn’t belong to this app. Please download the Tumbite app for your account type.',
+    'This account doesn’t belong to this app. Please download the Divoox app for your account type.',
   soloPanel: 'Restaurant accounts are created at tumbite.com/panel. Sign in here.',
 };
 

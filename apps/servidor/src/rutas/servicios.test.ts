@@ -8,7 +8,7 @@ import { FOTO_PRUEBA, mundo } from '../pruebas/ayuda';
  */
 async function escenario() {
   const m = mundo();
-  const admin = await m.cuenta('admin', 'Soporte Tumbite');
+  const admin = await m.cuenta('admin', 'Soporte Divoox');
   const rep = await m.cuenta('repartidor', 'Rep Uno');
   return { m, admin, rep };
 }

@@ -9,7 +9,7 @@ import { ErrorDatos } from './validar';
 
 /**
  * Cobertura territorial (C-TERRITORIO, 17 oct 2026). Una sola respuesta, en el servidor, para
- * «¿llega Tumbite a este punto?»:
+ * «¿llega Divoox a este punto?»:
  *
  * 1. Si el punto cae en un área ACTIVA de una ciudad activa → dentro (gana la regla de prioridad).
  * 2. Si cae en un área publicada pero no activa (o en una ciudad apagada) → ese estado
@@ -208,7 +208,7 @@ export async function exigirCobertura(
   const c = await cobertura(db, lat, lng);
   if (c.estado !== 'dentro' || c.zona?.id !== zonaId)
     throw new ErrorDatos(
-      'Esa dirección está fuera de la zona de cobertura de Tumbite.',
+      'Esa dirección está fuera de la zona de cobertura de Divoox.',
       'direccion',
       409,
     );

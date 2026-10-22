@@ -43,7 +43,7 @@ async function escenario() {
 }
 
 describe('cupones reales (C-CUPONES-DIRECCIONES)', () => {
-  it('el superadmin crea un cupón, el cliente lo valida y el pedido lo descuenta de la ganancia de Tumbite, nunca del restaurante ni del repartidor', async () => {
+  it('el superadmin crea un cupón, el cliente lo valida y el pedido lo descuenta de la ganancia de Divoox, nunca del restaurante ni del repartidor', async () => {
     const e = await escenario();
     const creado = await e.m.llamar(
       'POST',

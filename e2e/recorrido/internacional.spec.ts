@@ -6,7 +6,7 @@ import { TEXTOS } from './textos';
 
 /**
  * C-RECORRIDO-INTERNACIONAL (19 oct 2026): el cobro en mano en PESOS y en BOLÍVARES, de punta a
- * punta. Tarifas y topes FICTICIOS, solo para esta prueba: no son cifras de Tumbite. Las capturas
+ * punta. Tarifas y topes FICTICIOS, solo para esta prueba: no son cifras de Divoox. Las capturas
  * van a .recorrido/capturas-internacional (fuera de git, fuera de la web y de Docs).
  *
  * C-RECORRIDO-AISLADO (20 oct 2026): cada corrida usa SU propia ciudad de prueba (código con la

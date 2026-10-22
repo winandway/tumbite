@@ -1,6 +1,6 @@
 /** Identidad de la marca. Un solo lugar para el nombre y los colores. */
 export const MARCA = {
-  nombre: 'Tumbite',
+  nombre: 'Divoox',
   empresa: 'Windoce LLC',
   sitioEmpresa: 'https://windoce.com',
   colores: {

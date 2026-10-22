@@ -14,7 +14,7 @@ import { PAISES } from './cobertura';
 
 const T = {
   es: {
-    titulo: 'Quiero una franquicia de Tumbite',
+    titulo: 'Quiero una franquicia de Divoox',
     texto:
       'Cuéntanos de ti y de tu ciudad. Te respondemos con los números de tu ciudad y los siguientes pasos.',
     nombre: 'Nombre y apellido',
@@ -50,7 +50,7 @@ const T = {
     privacidad: 'Usamos tus datos solo para responder tu solicitud.',
   },
   en: {
-    titulo: 'I want a Tumbite franchise',
+    titulo: 'I want a Divoox franchise',
     texto:
       'Tell us about you and your city. We’ll reply with the numbers for your city and the next steps.',
     nombre: 'Full name',

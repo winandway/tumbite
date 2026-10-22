@@ -370,7 +370,7 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
         business_profile: { mcc: '4215', url: 'https://tumbite.com' },
         individual: {
           first_name: 'Prueba',
-          last_name: 'Tumbite',
+          last_name: 'Divoox',
           dob: { day: 1, month: 1, year: 1901 },
           id_number: '000000000',
           ssn_last_4: '0000',

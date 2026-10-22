@@ -1,7 +1,7 @@
 /** Lo que la persona ve en pantalla, en cada idioma. La prueba toca los botones por su nombre. */
 export const TEXTOS = {
   en: {
-    panelCrear: 'Restaurant not on Tumbite yet? Create your account',
+    panelCrear: 'Restaurant not on Divoox yet? Create your account',
     panelRegistrar: 'Create a restaurant account',
     tuNombre: 'Your name',
     correo: 'Email',
@@ -133,7 +133,7 @@ export const TEXTOS = {
     buscando: 'Looking for orders near you…',
   },
   es: {
-    panelCrear: '¿Tu restaurante aún no está en Tumbite? Crea tu cuenta',
+    panelCrear: '¿Tu restaurante aún no está en Divoox? Crea tu cuenta',
     panelRegistrar: 'Crear cuenta de restaurante',
     tuNombre: 'Tu nombre',
     correo: 'Correo',

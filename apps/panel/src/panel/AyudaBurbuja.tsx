@@ -76,8 +76,8 @@ const PREGUNTAS: Pregunta[] = [
     responder: (idioma) => ({
       texto:
         idioma === 'en'
-          ? 'Tumbite pays you through Stripe Connect, the same payment company used by Amazon and Shopify. Stripe verifies your identity and issues your tax forms.'
-          : 'Te paga Tumbite a través de Stripe Connect, la misma empresa de pagos que usan Amazon y Shopify. Stripe verifica tu identidad y te emite los formularios de impuestos.',
+          ? 'Divoox pays you through Stripe Connect, the same payment company used by Amazon and Shopify. Stripe verifies your identity and issues your tax forms.'
+          : 'Te paga Divoox a través de Stripe Connect, la misma empresa de pagos que usan Amazon y Shopify. Stripe verifica tu identidad y te emite los formularios de impuestos.',
     }),
   },
   {

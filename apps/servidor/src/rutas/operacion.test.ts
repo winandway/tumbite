@@ -1865,7 +1865,7 @@ describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de
 
   it('«No puedo confirmar mi ubicación»: soporte autoriza con su nombre y recién ahí se entrega', async () => {
     const { m, rep, id, estado } = await enCamino();
-    const admin = await m.cuenta('admin', 'Soporte Tumbite');
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
     const pedida = await m.llamar(
       'POST',
       `/datos/repartidor/pedidos/${id}/no-puedo-confirmar`,
@@ -1892,7 +1892,7 @@ describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de
       (await m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, casa)).estado,
     ).toBe(200);
     const ficha2 = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
-    expect(ficha2.datos.pedido.excepcionUbicacion.autorizadaPor).toBe('Soporte Tumbite');
+    expect(ficha2.datos.pedido.excepcionUbicacion.autorizadaPor).toBe('Soporte Divoox');
     expect(ficha2.datos.pedido.bitacora.map((b: { evento: string }) => b.evento)).toEqual(
       expect.arrayContaining(['ubicacion_sin_confirmar', 'ubicacion_autorizada']),
     );
@@ -2088,7 +2088,7 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
     expect(sms()).toHaveLength(1);
     expect(sms()[0]!.cuerpo.get('To')).toBe('+13055551234');
     expect(sms()[0]!.cuerpo.get('From')).toBe('+13055550000');
-    expect(sms()[0]!.cuerpo.get('Body')).toMatch(/Tumbite/);
+    expect(sms()[0]!.cuerpo.get('Body')).toMatch(/Divoox/);
     await m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token);
     expect(sms()).toHaveLength(2);
     const filas = (
@@ -2104,7 +2104,7 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
     ]);
   });
 
-  it('llamada con número oculto: Twilio llama a quien pidió y el puente marca al otro con el número de Tumbite', async () => {
+  it('llamada con número oculto: Twilio llama a quien pidió y el puente marca al otro con el número de Divoox', async () => {
     const { m, rep, id, cliente, telefonos } = await enCamino(TWILIO);
     const twilio = espiarTwilio();
     // Sin celular registrado no hay a quién conectar.
@@ -2124,7 +2124,7 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
       method: 'POST',
     });
     expect(porPost.status).toBe(200);
-    // Twilio pide el puente con el pase: marca al cliente con el número de Tumbite.
+    // Twilio pide el puente con el pase: marca al cliente con el número de Divoox.
     const puente = await m.crudo(`/datos/twilio/puente?t=${url.searchParams.get('t')}`, {
       method: 'GET',
     });

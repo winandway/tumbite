@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Tumbite",
+    "name": "Divoox",
     "slug": "tumbite-cliente",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.windoce.tumbite",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Tumbite uses your location to show nearby restaurants and to deliver your order.",
+        "NSLocationWhenInUseUsageDescription": "Divoox uses your location to show nearby restaurants and to deliver your order.",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true
       },
@@ -53,7 +53,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Tumbite uses your location to show nearby restaurants and to deliver your order.",
+          "locationWhenInUsePermission": "Divoox uses your location to show nearby restaurants and to deliver your order.",
           "locationAlwaysPermission": false,
           "locationAlwaysAndWhenInUsePermission": false,
           "motionUsagePermission": false

@@ -44,7 +44,7 @@ describe('página pública para borrar la cuenta (Google Play)', () => {
     it(`(${idioma}) tiene el botón directo, el pedido por correo y qué se borra y qué se guarda`, () => {
       expect(b.accion?.href).toBe('/panel/settings');
       const t = texto(b);
-      expect(t).toContain('Tumbite');
+      expect(t).toContain('Divoox');
       expect(t).toContain('support@tumbite.com');
       expect(b.secciones.length).toBeGreaterThanOrEqual(4);
     });

@@ -104,7 +104,7 @@ describe('superadmin a escala (C-SUPERADMIN-ESCALA)', () => {
       admin.token,
     );
     expect(ficha.datos.repartidor).toMatchObject({ codigo: 'US-MIA-000001', entregas: 0 });
-    // Revisión de antecedentes y seguro de Tumbite.
+    // Revisión de antecedentes y seguro de Divoox.
     await m.llamar(
       'PATCH',
       `/datos/admin/repartidores/${r.id}`,

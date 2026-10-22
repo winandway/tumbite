@@ -85,7 +85,7 @@ const RESUMEN = {
 };
 const usuario = {
   id: 'a1',
-  nombre: 'Soporte Tumbite',
+  nombre: 'Soporte Divoox',
   correo: 'soporte@ejemplo.com',
   rol: 'admin' as const,
   idioma: 'es' as const,

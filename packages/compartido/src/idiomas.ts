@@ -9,7 +9,7 @@ export const IDIOMAS = [
 
 export type Idioma = (typeof IDIOMAS)[number]['codigo'];
 
-/** El inglés es el idioma principal de Tumbite (regla de Richard, 13 oct 2026). */
+/** El inglés es el idioma principal de Divoox (regla de Richard, 13 oct 2026). */
 export const IDIOMA_POR_DEFECTO: Idioma = 'en';
 
 const TEXTOS = {
@@ -19,7 +19,7 @@ const TEXTOS = {
     'app.cliente': 'Pide comida',
     'app.repartidor': 'Reparte y gana',
     'app.restaurante': 'Recibe tus pedidos',
-    'panel.titulo': 'Panel de Tumbite',
+    'panel.titulo': 'Panel de Divoox',
     'panel.restaurante': 'Mi restaurante',
     'panel.admin': 'Administración',
     'pie.derechos': 'Todos los derechos reservados.',
@@ -31,7 +31,7 @@ const TEXTOS = {
     'app.cliente': 'Order food',
     'app.repartidor': 'Deliver and earn',
     'app.restaurante': 'Receive your orders',
-    'panel.titulo': 'Tumbite Dashboard',
+    'panel.titulo': 'Divoox Dashboard',
     'panel.restaurante': 'My restaurant',
     'panel.admin': 'Admin',
     'pie.derechos': 'All rights reserved.',

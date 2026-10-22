@@ -139,7 +139,7 @@ export async function crearTicket(
   await enviarCorreo(env, {
     de: REMITENTE_DE[t.tipo],
     para: t.correo,
-    asunto: t.asuntoCorreo ?? `${t.asunto} · Tumbite`,
+    asunto: t.asuntoCorreo ?? `${t.asunto} · Divoox`,
     texto: confirmacion,
   });
 
@@ -321,8 +321,8 @@ tickets.post('/franquicias', limiteIntentos(5, 60_000), async (c) => {
     datos: { empresa: d.empresa, capital: d.capital, cuando: d.cuando },
     intro:
       d.idioma === 'en'
-        ? `Thanks for your interest in bringing Tumbite to ${d.ciudad}. Our team will review your city and get back to you with the numbers.`
-        : `Gracias por querer llevar Tumbite a ${d.ciudad}. Nuestro equipo va a estudiar tu ciudad y te responde con los números.`,
+        ? `Thanks for your interest in bringing Divoox to ${d.ciudad}. Our team will review your city and get back to you with the numbers.`
+        : `Gracias por querer llevar Divoox a ${d.ciudad}. Nuestro equipo va a estudiar tu ciudad y te responde con los números.`,
   });
   return c.json({ ok: true, enlace: `/t/${t.codigo}` }, 201);
 });

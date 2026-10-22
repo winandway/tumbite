@@ -159,7 +159,7 @@ describe('impuesto de ventas (auditoría final, A.12)', () => {
 });
 
 describe('cupones (auditoría final, punto 15)', () => {
-  it('el descuento baja el total del cliente y la ganancia de Tumbite; restaurante y repartidor cobran igual; nunca más que lo cobrable', () => {
+  it('el descuento baja el total del cliente y la ganancia de Divoox; restaurante y repartidor cobran igual; nunca más que lo cobrable', () => {
     const base = calcularPedido({
       lineas: [{ precioCentavos: 1500, cantidad: 2 }],
       plan: 'inicial',

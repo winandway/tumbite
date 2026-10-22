@@ -67,7 +67,7 @@ const esConectadas = (a: Aviso, env: Env) =>
 stripeAvisos.get('/interno-stripe/avisos', async (c) => {
   const { avisos: todos } = await listar(c.env);
   // La cuenta de Stripe de Windoce es compartida con otros negocios: solo se muestran los avisos que
-  // apuntan a este sitio (perímetro de Tumbite).
+  // apuntan a este sitio (perímetro de Divoox).
   const host = new URL(c.env.SITIO_URL ?? 'https://invalido.local').host;
   const avisos = todos.filter((a) => {
     try {
@@ -100,7 +100,7 @@ stripeAvisos.post('/interno-stripe/avisos/conectadas', async (c) => {
       url: urlAviso(c.env),
       connect: true,
       enabled_events: EVENTOS_CONECTADAS,
-      description: 'Tumbite · cuentas conectadas (restaurantes y repartidores)',
+      description: 'Divoox · cuentas conectadas (restaurantes y repartidores)',
       metadata: { tumbite: 'conectadas' },
     },
     `avisos-conectadas-${urlAviso(c.env)}`,

@@ -6,7 +6,7 @@ import { paisDeZona } from './paises';
 /**
  * Fase 2 · cobro directo, paso 2 y 3 del recorrido aprobado (C-COBRO-DIRECTO-LOCAL): el repartidor
  * paga la comida en el mostrador con su propio dinero (efectivo o su tarjeta), recibe el ticket del
- * restaurante y lo entrega con el pedido. Tumbite NO pone ese dinero ni lo financia: solo registra
+ * restaurante y lo entrega con el pedido. Divoox NO pone ese dinero ni lo financia: solo registra
  * cuánto se pagó, cuánto decía el ticket y cuánto esperaba la app, para que la conciliación cuadre.
  */
 export type MetodoLocal = 'efectivo' | 'tarjeta_propia';
@@ -73,7 +73,7 @@ export async function leerPagoLocal(db: D1Database, pedidoId: string) {
     .first<Record<string, unknown>>();
   return {
     pedido: f,
-    // Lo que la app le dice al repartidor que pague: la comida menos la comisión de Tumbite.
+    // Lo que la app le dice al repartidor que pague: la comida menos la comisión de Divoox.
     montoEsperado: Number(f.pago_restaurante),
     subtotal: Number(f.subtotal),
     // C-TARIFAS-PAIS: los montos van en la moneda del pedido.

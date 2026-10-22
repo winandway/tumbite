@@ -41,7 +41,7 @@ export async function registrarDisputa(
           .first<{ id: string; usuario_id: string }>()
       : null;
   // C-STRIPE-AVISOS: la cuenta de Stripe es COMPARTIDA con otros negocios de Windoce. Una disputa
-  // que no es de un pedido ni de una recarga de Tumbite no se guarda, no avisa y no toca la salud.
+  // que no es de un pedido ni de una recarga de Divoox no se guarda, no avisa y no toca la salud.
   if (!pedido && !recarga) return null;
   const r = await db
     .prepare(

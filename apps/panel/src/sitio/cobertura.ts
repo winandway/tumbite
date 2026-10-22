@@ -1,7 +1,7 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 
 /**
- * Dónde está Tumbite y a dónde va. Un solo lugar: el pie de página, las páginas por país y
+ * Dónde está Divoox y a dónde va. Un solo lugar: el pie de página, las páginas por país y
  * por ciudad (SEO) y el mapa del sitio salen de aquí. «activo» se pinta en verde; lo demás, «muy pronto».
  */
 export type Estado = 'activo' | 'pronto';

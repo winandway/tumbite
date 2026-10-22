@@ -37,9 +37,8 @@ const T = {
     aseguradora: 'Aseguradora',
     poliza: 'Número de póliza',
     guardar: 'Guardar mis datos',
-    guardado: 'Guardado. Lo revisa el equipo de Tumbite.',
-    privado:
-      'Solo lo ves tú y el equipo de Tumbite. Tus datos bancarios van en Stripe, nunca aquí.',
+    guardado: 'Guardado. Lo revisa el equipo de Divoox.',
+    privado: 'Solo lo ves tú y el equipo de Divoox. Tus datos bancarios van en Stripe, nunca aquí.',
   },
   en: {
     tuId: 'Your driver ID',
@@ -65,9 +64,9 @@ const T = {
     aseguradora: 'Insurer',
     poliza: 'Policy number',
     guardar: 'Save my details',
-    guardado: 'Saved. The Tumbite team will review it.',
+    guardado: 'Saved. The Divoox team will review it.',
     privado:
-      'Only you and the Tumbite team can see this. Your bank details go in Stripe, never here.',
+      'Only you and the Divoox team can see this. Your bank details go in Stripe, never here.',
   },
 };
 

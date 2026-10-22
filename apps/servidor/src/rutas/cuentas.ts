@@ -72,22 +72,22 @@ const esquemaDispositivo = z.object({
 
 const TEXTOS_RECUPERAR = {
   es: {
-    asunto: 'Restablece tu contraseña de Tumbite',
+    asunto: 'Restablece tu contraseña de Divoox',
     cuerpo: (nombre: string, enlace: string) =>
       `Hola, ${nombre}.
 
-Alguien pidió restablecer la contraseña de tu cuenta de Tumbite. Si fuiste tú, toca este enlace (sirve una sola vez y vence en ${MINUTOS_RECUPERACION} minutos):
+Alguien pidió restablecer la contraseña de tu cuenta de Divoox. Si fuiste tú, toca este enlace (sirve una sola vez y vence en ${MINUTOS_RECUPERACION} minutos):
 
 ${enlace}
 
 Si no fuiste tú, no hagas nada: tu contraseña sigue igual.`,
   },
   en: {
-    asunto: 'Reset your Tumbite password',
+    asunto: 'Reset your Divoox password',
     cuerpo: (nombre: string, enlace: string) =>
       `Hi ${nombre},
 
-Someone asked to reset the password for your Tumbite account. If that was you, tap this link (it works once and expires in ${MINUTOS_RECUPERACION} minutes):
+Someone asked to reset the password for your Divoox account. If that was you, tap this link (it works once and expires in ${MINUTOS_RECUPERACION} minutes):
 
 ${enlace}
 

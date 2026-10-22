@@ -42,7 +42,7 @@ const T = {
     conectar: 'Conectar mi cuenta bancaria',
     continuar: 'Terminar de conectar mi cuenta',
     conectarAyuda:
-      'Tus datos bancarios se escriben en la página segura de Stripe. Tumbite nunca los ve.',
+      'Tus datos bancarios se escriben en la página segura de Stripe. Divoox nunca los ve.',
     retirar: 'Retirar',
     monto: 'Monto a retirar',
     retirado: 'Listo: el retiro va en camino a tu banco.',
@@ -66,7 +66,7 @@ const T = {
     entregados: 'Pedidos entregados',
     ventas: 'Ventas',
     regalos: 'Regalos a clientes',
-    comision: 'Comisión de Tumbite',
+    comision: 'Comisión de Divoox',
     neto: 'Te toca',
     enCurso: 'en curso',
     cancelados: 'cancelados',
@@ -74,10 +74,10 @@ const T = {
     comparaMes: (n: number) =>
       `Con tus ventas de los últimos 30 días (${n} ${n === 1 ? 'pedido' : 'pedidos'}), esto es lo que te queda en cada app:`,
     comparaEjemplo: 'Por cada 1.000 dólares de ventas, esto es lo que te queda en cada app:',
-    conTumbite: (plan: string) => `Tumbite, plan ${plan}`,
+    conTumbite: (plan: string) => `Divoox, plan ${plan}`,
     planes: { inicial: 'Inicial', crece: 'Crece', elite: 'Élite' } as Record<string, string>,
     masQue: (a: string, b: string) =>
-      `Con Tumbite te quedan ${a} más que con DoorDash y ${b} más que con Uber Eats.`,
+      `Con Divoox te quedan ${a} más que con DoorDash y ${b} más que con Uber Eats.`,
     fuente:
       'Comisiones que DoorDash y Uber Eats publican en sus páginas oficiales (octubre de 2026), con el plan equivalente al tuyo.',
   },
@@ -86,7 +86,7 @@ const T = {
     saldo: 'Available balance',
     conectar: 'Connect my bank account',
     continuar: 'Finish connecting my account',
-    conectarAyuda: 'You enter your bank details on Stripe’s secure page. Tumbite never sees them.',
+    conectarAyuda: 'You enter your bank details on Stripe’s secure page. Divoox never sees them.',
     retirar: 'Cash out',
     monto: 'Amount to cash out',
     retirado: 'Done: your cash-out is on its way to your bank.',
@@ -111,7 +111,7 @@ const T = {
     entregados: 'Orders delivered',
     ventas: 'Sales',
     regalos: 'Customer gifts',
-    comision: 'Tumbite commission',
+    comision: 'Divoox commission',
     neto: 'Your payout',
     enCurso: 'in progress',
     cancelados: 'canceled',
@@ -119,10 +119,10 @@ const T = {
     comparaMes: (n: number) =>
       `With your sales from the last 30 days (${n} ${n === 1 ? 'order' : 'orders'}), here’s what you keep on each app:`,
     comparaEjemplo: 'For every $1,000 in sales, here’s what you keep on each app:',
-    conTumbite: (plan: string) => `Tumbite, ${plan} plan`,
+    conTumbite: (plan: string) => `Divoox, ${plan} plan`,
     planes: { inicial: 'Starter', crece: 'Growth', elite: 'Elite' } as Record<string, string>,
     masQue: (a: string, b: string) =>
-      `With Tumbite you keep ${a} more than with DoorDash and ${b} more than with Uber Eats.`,
+      `With Divoox you keep ${a} more than with DoorDash and ${b} more than with Uber Eats.`,
     fuente:
       'Commissions DoorDash and Uber Eats publish on their official pages (October 2026), on the plan equivalent to yours.',
   },
@@ -326,7 +326,7 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
 }
 
 /**
- * «Cuánto te queda con Tumbite y con otras apps», con las ventas reales del restaurante de los
+ * «Cuánto te queda con Divoox y con otras apps», con las ventas reales del restaurante de los
  * últimos 30 días (o con 1.000 dólares de ejemplo si todavía no vendió). Candado C-COMPARA-REST.
  */
 function Comparar({

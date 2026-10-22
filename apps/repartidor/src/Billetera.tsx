@@ -29,7 +29,7 @@ const T = {
     retirar: 'Retirar a mi banco',
     minimo: 'Puedes retirar desde 1 dólar.',
     conectar: 'Conectar mi cuenta bancaria',
-    conectarAyuda: 'Tus datos bancarios los escribes en Stripe. Tumbite nunca los ve.',
+    conectarAyuda: 'Tus datos bancarios los escribes en Stripe. Divoox nunca los ve.',
     movimientos: 'Movimientos',
     sinMovimientos: 'Aquí verás cada entrega, propina y retiro.',
     conceptos: {
@@ -55,7 +55,7 @@ const T = {
     retirar: 'Withdraw to my bank',
     minimo: 'You can withdraw from $1.',
     conectar: 'Connect my bank account',
-    conectarAyuda: 'You enter your bank details on Stripe. Tumbite never sees them.',
+    conectarAyuda: 'You enter your bank details on Stripe. Divoox never sees them.',
     movimientos: 'Activity',
     sinMovimientos: 'Every delivery, tip, and withdrawal will show up here.',
     conceptos: {

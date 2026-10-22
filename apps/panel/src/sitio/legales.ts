@@ -30,12 +30,12 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Política de privacidad',
     actualizado: FECHA.es,
-    intro: `Esta política explica qué datos personales recoge Tumbite, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Tumbite (clientes), Tumbite Driver (repartidores), Tumbite para restaurantes, el panel web y ${SITIO}.`,
+    intro: `Esta política explica qué datos personales recoge Divoox, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Divoox (clientes), Divoox Driver (repartidores), Divoox para restaurantes, el panel web y ${SITIO}.`,
     secciones: [
       {
         titulo: '1. Quiénes somos y cómo contactarnos',
         parrafos: [
-          `Tumbite es un servicio de ${EMPRESA}, una empresa de Florida, Estados Unidos, que es la responsable de tus datos.`,
+          `Divoox es un servicio de ${EMPRESA}, una empresa de Florida, Estados Unidos, que es la responsable de tus datos.`,
           `Para cualquier pregunta sobre privacidad o para ejercer tus derechos, escríbenos a ${CONTACTO}. Respondemos en español y en inglés.`,
         ],
       },
@@ -44,7 +44,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         parrafos: [
           'Datos que nos das tú: nombre, correo, número de celular, contraseña (la guardamos cifrada, nunca en texto), idioma y, si lo eliges, tu fecha de nacimiento para el regalo de cumpleaños. Si eres restaurante: nombre del negocio, dirección, teléfono, menú, precios y fotos. Si eres repartidor: tu vehículo (tipo, marca, modelo, año, color y placa), tu licencia de conducir (número, estado y vencimiento) y tu seguro (aseguradora, póliza y vencimiento).',
           'Datos de tus pedidos: lo que pides, el restaurante, la dirección de entrega, las indicaciones para el repartidor, los importes, la propina, las calificaciones y los comentarios que dejas.',
-          'Verificación de identidad (repartidores y dueños de restaurante): una foto de tu documento (frente y reverso) y una foto de tu cara, que toma tu cámara. Si tienes un restaurante, también una foto del local con la ubicación del celular en ese momento, para comprobar que existe en la dirección registrada. Una persona del equipo compara las fotos; no creamos plantillas biométricas de tu cara. Las fotos se guardan en un almacén privado que solo ve el equipo de Tumbite y se borran cuando borras tu cuenta.',
+          'Verificación de identidad (repartidores y dueños de restaurante): una foto de tu documento (frente y reverso) y una foto de tu cara, que toma tu cámara. Si tienes un restaurante, también una foto del local con la ubicación del celular en ese momento, para comprobar que existe en la dirección registrada. Una persona del equipo compara las fotos; no creamos plantillas biométricas de tu cara. Las fotos se guardan en un almacén privado que solo ve el equipo de Divoox y se borran cuando borras tu cuenta.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
           'Datos técnicos: el identificador del teléfono para enviarte avisos (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
@@ -112,7 +112,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '10. Menores de edad',
         parrafos: [
-          `Para crear una cuenta hay que tener al menos 18 años. Tumbite no está dirigido a menores de 13 años y no recogemos sus datos a sabiendas. Si crees que un menor nos dio sus datos, escríbenos a ${CONTACTO} y los borramos.`,
+          `Para crear una cuenta hay que tener al menos 18 años. Divoox no está dirigido a menores de 13 años y no recogemos sus datos a sabiendas. Si crees que un menor nos dio sus datos, escríbenos a ${CONTACTO} y los borramos.`,
         ],
       },
       {
@@ -132,12 +132,12 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   en: {
     titulo: 'Privacy Policy',
     actualizado: FECHA.en,
-    intro: `This policy explains what personal data Tumbite collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Tumbite app (customers), Tumbite Driver, Tumbite for Restaurants, the web dashboard, and ${SITIO}.`,
+    intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
         titulo: '1. Who we are and how to reach us',
         parrafos: [
-          `Tumbite is a service of ${EMPRESA}, a Florida company in the United States, which is responsible for your data.`,
+          `Divoox is a service of ${EMPRESA}, a Florida company in the United States, which is responsible for your data.`,
           `For any privacy question or to exercise your rights, email us at ${CONTACTO}. We answer in English and Spanish.`,
         ],
       },
@@ -146,7 +146,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         parrafos: [
           'Information you give us: name, email, mobile number, password (stored encrypted, never in plain text), language, and, if you choose, your birthday for your birthday gift. Restaurants: business name, address, phone, menu, prices, and photos. Drivers: your vehicle (type, make, model, year, color, and plate), your driver’s license (number, issuing state, and expiration), and your insurance (insurer, policy, and expiration).',
           'Order information: what you order, the restaurant, the delivery address, notes for your driver, amounts, tip, and the ratings and comments you leave.',
-          'Identity verification (drivers and restaurant owners): a photo of your ID document (front and back) and a photo of your face, taken with your camera. If you own a restaurant, also a photo of the storefront with your phone’s location at that moment, to confirm it exists at the registered address. A person on our team compares the photos; we don’t create biometric templates of your face. The photos are stored privately, only the Tumbite team can see them, and they’re deleted when you delete your account.',
+          'Identity verification (drivers and restaurant owners): a photo of your ID document (front and back) and a photo of your face, taken with your camera. If you own a restaurant, also a photo of the storefront with your phone’s location at that moment, to confirm it exists at the registered address. A person on our team compares the photos; we don’t create biometric templates of your face. The photos are stored privately, only the Divoox team can see them, and they’re deleted when you delete your account.',
           'Location: only with your permission. See section 4.',
           'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
           'Technical information: your device token to send you notifications (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
@@ -214,7 +214,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '10. Children',
         parrafos: [
-          `You must be at least 18 to create an account. Tumbite is not directed to children under 13 and we don’t knowingly collect their data. If you believe a child gave us their data, email ${CONTACTO} and we’ll delete it.`,
+          `You must be at least 18 to create an account. Divoox is not directed to children under 13 and we don’t knowingly collect their data. If you believe a child gave us their data, email ${CONTACTO} and we’ll delete it.`,
         ],
       },
       {
@@ -239,18 +239,18 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos de uso',
     actualizado: FECHA.es,
-    intro: `Estos términos son un acuerdo entre tú y ${EMPRESA} para usar Tumbite. Al crear una cuenta o hacer un pedido los aceptas. Los restaurantes y los repartidores tienen además sus propios términos.`,
+    intro: `Estos términos son un acuerdo entre tú y ${EMPRESA} para usar Divoox. Al crear una cuenta o hacer un pedido los aceptas. Los restaurantes y los repartidores tienen además sus propios términos.`,
     secciones: [
       {
-        titulo: '1. Qué es Tumbite',
+        titulo: '1. Qué es Divoox',
         parrafos: [
-          'Tumbite es una plataforma que conecta a clientes con restaurantes locales y con repartidores independientes. Los restaurantes preparan la comida y son responsables de ella, de sus ingredientes y de la información de alérgenos. Los repartidores la llevan a tu puerta. Tumbite no cocina ni vende comida por su cuenta.',
+          'Divoox es una plataforma que conecta a clientes con restaurantes locales y con repartidores independientes. Los restaurantes preparan la comida y son responsables de ella, de sus ingredientes y de la información de alérgenos. Los repartidores la llevan a tu puerta. Divoox no cocina ni vende comida por su cuenta.',
         ],
       },
       {
         titulo: '2. Tu cuenta',
         parrafos: [
-          'Para usar Tumbite debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en tumbite.com/delete-account.',
+          'Para usar Divoox debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en tumbite.com/delete-account.',
         ],
       },
       {
@@ -272,32 +272,32 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '5. Regalos, sellos y niveles',
         parrafos: [
-          'Los regalos de cumpleaños, la tarjeta de sellos, los regalos de bienvenida de vuelta y los niveles son beneficios gratuitos que ofrecen los restaurantes y Tumbite. No tienen valor en efectivo, no se pueden vender ni transferir, y pueden cambiar o terminar. Si detectamos abuso (por ejemplo, varias cuentas de la misma persona), podemos anularlos.',
+          'Los regalos de cumpleaños, la tarjeta de sellos, los regalos de bienvenida de vuelta y los niveles son beneficios gratuitos que ofrecen los restaurantes y Divoox. No tienen valor en efectivo, no se pueden vender ni transferir, y pueden cambiar o terminar. Si detectamos abuso (por ejemplo, varias cuentas de la misma persona), podemos anularlos.',
         ],
       },
       {
         titulo: '6. Calificaciones y comentarios',
         parrafos: [
-          'Puedes calificar al restaurante y al repartidor. Tus comentarios deben ser honestos y respetuosos. Nos das permiso para mostrarlos dentro de Tumbite. Podemos quitar los que tengan insultos, datos personales de otros, contenido ilegal o falso. Para reportar un comentario ofensivo, escríbenos y lo revisamos.',
+          'Puedes calificar al restaurante y al repartidor. Tus comentarios deben ser honestos y respetuosos. Nos das permiso para mostrarlos dentro de Divoox. Podemos quitar los que tengan insultos, datos personales de otros, contenido ilegal o falso. Para reportar un comentario ofensivo, escríbenos y lo revisamos.',
         ],
       },
       {
         titulo: '7. Uso correcto',
         parrafos: [
-          'No puedes usar Tumbite para fraude, para pedir con tarjetas ajenas, para acosar o amenazar a repartidores o restaurantes, para pedir cosas ilegales, ni para intentar entrar a sistemas o cuentas ajenas. Podemos suspender o cerrar las cuentas que lo hagan.',
+          'No puedes usar Divoox para fraude, para pedir con tarjetas ajenas, para acosar o amenazar a repartidores o restaurantes, para pedir cosas ilegales, ni para intentar entrar a sistemas o cuentas ajenas. Podemos suspender o cerrar las cuentas que lo hagan.',
         ],
       },
       {
         titulo: '8. Disponibilidad y limitación de responsabilidad',
         parrafos: [
-          'Trabajamos para que Tumbite funcione siempre, pero puede haber fallas, demoras o zonas sin servicio. Los tiempos de entrega son estimados.',
-          'En la medida que lo permita la ley, Tumbite no responde por daños indirectos, y nuestra responsabilidad total por un reclamo se limita a lo que pagaste por el pedido relacionado. Nada de esto limita los derechos que la ley te da como consumidor.',
+          'Trabajamos para que Divoox funcione siempre, pero puede haber fallas, demoras o zonas sin servicio. Los tiempos de entrega son estimados.',
+          'En la medida que lo permita la ley, Divoox no responde por daños indirectos, y nuestra responsabilidad total por un reclamo se limita a lo que pagaste por el pedido relacionado. Nada de esto limita los derechos que la ley te da como consumidor.',
         ],
       },
       {
         titulo: '9. Cambios y fin del servicio',
         parrafos: [
-          'Podemos cambiar estos términos. Publicaremos la nueva versión aquí con su fecha y, si el cambio es importante, te avisaremos antes. Si sigues usando Tumbite después, aceptas los nuevos términos.',
+          'Podemos cambiar estos términos. Publicaremos la nueva versión aquí con su fecha y, si el cambio es importante, te avisaremos antes. Si sigues usando Divoox después, aceptas los nuevos términos.',
         ],
       },
       {
@@ -311,18 +311,18 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
   en: {
     titulo: 'Terms of Service',
     actualizado: FECHA.en,
-    intro: `These terms are an agreement between you and ${EMPRESA} for using Tumbite. By creating an account or placing an order you accept them. Restaurants and drivers also have their own terms.`,
+    intro: `These terms are an agreement between you and ${EMPRESA} for using Divoox. By creating an account or placing an order you accept them. Restaurants and drivers also have their own terms.`,
     secciones: [
       {
-        titulo: '1. What Tumbite is',
+        titulo: '1. What Divoox is',
         parrafos: [
-          'Tumbite is a platform that connects customers with local restaurants and independent drivers. Restaurants prepare the food and are responsible for it, its ingredients, and allergen information. Drivers bring it to your door. Tumbite doesn’t cook or sell food itself.',
+          'Divoox is a platform that connects customers with local restaurants and independent drivers. Restaurants prepare the food and are responsible for it, its ingredients, and allergen information. Drivers bring it to your door. Divoox doesn’t cook or sell food itself.',
         ],
       },
       {
         titulo: '2. Your account',
         parrafos: [
-          'To use Tumbite you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at tumbite.com/delete-account.',
+          'To use Divoox you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at tumbite.com/delete-account.',
         ],
       },
       {
@@ -344,32 +344,32 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '5. Gifts, punch cards, and levels',
         parrafos: [
-          'Birthday gifts, punch cards, welcome-back gifts, and levels are free benefits offered by restaurants and Tumbite. They have no cash value, can’t be sold or transferred, and may change or end. If we detect abuse (for example, multiple accounts by the same person), we may cancel them.',
+          'Birthday gifts, punch cards, welcome-back gifts, and levels are free benefits offered by restaurants and Divoox. They have no cash value, can’t be sold or transferred, and may change or end. If we detect abuse (for example, multiple accounts by the same person), we may cancel them.',
         ],
       },
       {
         titulo: '6. Ratings and comments',
         parrafos: [
-          'You can rate the restaurant and the driver. Your comments must be honest and respectful. You give us permission to display them within Tumbite. We may remove those with insults, other people’s personal information, or illegal or false content. To report an offensive comment, email us and we’ll review it.',
+          'You can rate the restaurant and the driver. Your comments must be honest and respectful. You give us permission to display them within Divoox. We may remove those with insults, other people’s personal information, or illegal or false content. To report an offensive comment, email us and we’ll review it.',
         ],
       },
       {
         titulo: '7. Acceptable use',
         parrafos: [
-          'You may not use Tumbite for fraud, to order with someone else’s card, to harass or threaten drivers or restaurants, to order anything illegal, or to try to access other people’s systems or accounts. We may suspend or close accounts that do.',
+          'You may not use Divoox for fraud, to order with someone else’s card, to harass or threaten drivers or restaurants, to order anything illegal, or to try to access other people’s systems or accounts. We may suspend or close accounts that do.',
         ],
       },
       {
         titulo: '8. Availability and limitation of liability',
         parrafos: [
-          'We work to keep Tumbite running, but there may be outages, delays, or areas without service. Delivery times are estimates.',
-          'To the extent permitted by law, Tumbite isn’t liable for indirect damages, and our total liability for any claim is limited to what you paid for the related order. Nothing here limits your rights as a consumer under the law.',
+          'We work to keep Divoox running, but there may be outages, delays, or areas without service. Delivery times are estimates.',
+          'To the extent permitted by law, Divoox isn’t liable for indirect damages, and our total liability for any claim is limited to what you paid for the related order. Nothing here limits your rights as a consumer under the law.',
         ],
       },
       {
         titulo: '9. Changes and termination',
         parrafos: [
-          'We may change these terms. We’ll post the new version here with its date and, if the change is significant, notify you in advance. If you keep using Tumbite afterward, you accept the new terms.',
+          'We may change these terms. We’ll post the new version here with its date and, if the change is significant, notify you in advance. If you keep using Divoox afterward, you accept the new terms.',
         ],
       },
       {
@@ -388,7 +388,7 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos para restaurantes',
     actualizado: FECHA.es,
-    intro: `Estos términos se suman a los Términos de uso y aplican a los negocios que venden en Tumbite. Al registrar tu restaurante los aceptas en nombre del negocio.`,
+    intro: `Estos términos se suman a los Términos de uso y aplican a los negocios que venden en Divoox. Al registrar tu restaurante los aceptas en nombre del negocio.`,
     secciones: [
       {
         titulo: '1. Tu plan y la comisión',
@@ -400,14 +400,14 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Cómo y cuándo cobras',
         parrafos: [
-          'Tus ventas, menos la comisión, se acreditan en tu billetera de Tumbite cuando el pedido se entrega. Retiras a tu banco a través de Stripe Connect. Tus datos bancarios los escribes en la pantalla de Stripe; Tumbite nunca los ve. Stripe verifica tu identidad y emite los formularios de impuestos que correspondan.',
+          'Tus ventas, menos la comisión, se acreditan en tu billetera de Divoox cuando el pedido se entrega. Retiras a tu banco a través de Stripe Connect. Tus datos bancarios los escribes en la pantalla de Stripe; Divoox nunca los ve. Stripe verifica tu identidad y emite los formularios de impuestos que correspondan.',
         ],
       },
       {
         titulo: '3. Tu menú y tu comida',
         parrafos: [
           'Eres responsable de que el menú, los precios, las fotos y la información de alérgenos sean verdaderos, y de que la comida se prepare cumpliendo las leyes de salud y seguridad alimentaria. Debes tener las licencias y permisos que tu ciudad y tu estado exigen, y pagar tus impuestos.',
-          'No puedes vender alcohol, tabaco ni productos regulados a través de Tumbite mientras no lo habilitemos por escrito.',
+          'No puedes vender alcohol, tabaco ni productos regulados a través de Divoox mientras no lo habilitemos por escrito.',
         ],
       },
       {
@@ -425,7 +425,7 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '6. Datos de los clientes',
         parrafos: [
-          'Recibes el nombre, el pedido y la dirección del cliente solo para preparar y entregar ese pedido. No puedes usarlos para otra cosa, guardarlos fuera de Tumbite, ni contactar al cliente por fuera para publicidad.',
+          'Recibes el nombre, el pedido y la dirección del cliente solo para preparar y entregar ese pedido. No puedes usarlos para otra cosa, guardarlos fuera de Divoox, ni contactar al cliente por fuera para publicidad.',
         ],
       },
       {
@@ -440,7 +440,7 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
     titulo: 'Restaurant Terms',
     actualizado: FECHA.en,
     intro:
-      'These terms add to the Terms of Service and apply to businesses selling on Tumbite. By registering your restaurant you accept them on behalf of the business.',
+      'These terms add to the Terms of Service and apply to businesses selling on Divoox. By registering your restaurant you accept them on behalf of the business.',
     secciones: [
       {
         titulo: '1. Your plan and commission',
@@ -452,14 +452,14 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. How and when you get paid',
         parrafos: [
-          'Your sales, minus commission, are credited to your Tumbite wallet when the order is delivered. You withdraw to your bank through Stripe Connect. You enter your bank details on Stripe’s screen; Tumbite never sees them. Stripe verifies your identity and issues any required tax forms.',
+          'Your sales, minus commission, are credited to your Divoox wallet when the order is delivered. You withdraw to your bank through Stripe Connect. You enter your bank details on Stripe’s screen; Divoox never sees them. Stripe verifies your identity and issues any required tax forms.',
         ],
       },
       {
         titulo: '3. Your menu and your food',
         parrafos: [
           'You’re responsible for keeping your menu, prices, photos, and allergen information accurate, and for preparing food in compliance with health and food safety laws. You must hold the licenses and permits your city and state require, and pay your taxes.',
-          'You may not sell alcohol, tobacco, or regulated products through Tumbite unless we enable it in writing.',
+          'You may not sell alcohol, tobacco, or regulated products through Divoox unless we enable it in writing.',
         ],
       },
       {
@@ -477,7 +477,7 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '6. Customer data',
         parrafos: [
-          'You receive the customer’s name, order, and address only to prepare and deliver that order. You may not use them for anything else, store them outside Tumbite, or contact the customer outside the platform for marketing.',
+          'You receive the customer’s name, order, and address only to prepare and deliver that order. You may not use them for anything else, store them outside Divoox, or contact the customer outside the platform for marketing.',
         ],
       },
       {
@@ -497,12 +497,12 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
     titulo: 'Términos para repartidores',
     actualizado: FECHA.es,
     intro:
-      'Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas con Tumbite Driver. Al crear tu cuenta de repartidor los aceptas.',
+      'Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas con Divoox Driver. Al crear tu cuenta de repartidor los aceptas.',
     secciones: [
       {
         titulo: '1. Eres independiente',
         parrafos: [
-          `Como repartidor de Tumbite eres un contratista independiente, no un empleado de ${EMPRESA}. Tú decides cuándo te conectas, qué pedidos aceptas y por qué camino vas. No hay horario mínimo ni exclusividad: puedes trabajar con otras plataformas.`,
+          `Como repartidor de Divoox eres un contratista independiente, no un empleado de ${EMPRESA}. Tú decides cuándo te conectas, qué pedidos aceptas y por qué camino vas. No hay horario mínimo ni exclusividad: puedes trabajar con otras plataformas.`,
         ],
       },
       {
@@ -514,8 +514,8 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '3. Lo que ganas',
         parrafos: [
-          'Antes de aceptar cada pedido ves lo que vas a ganar. Ganas el envío más el 100 % de la propina. Si eso no llega al mínimo por pedido que muestra la app, Tumbite completa la diferencia.',
-          'Lo que ganas se acredita en tu billetera al entregar el pedido. Retiras a tu banco a través de Stripe Connect; tus datos bancarios los escribes en la pantalla de Stripe y Tumbite nunca los ve. Eres responsable de declarar y pagar tus impuestos; Stripe emite los formularios que correspondan.',
+          'Antes de aceptar cada pedido ves lo que vas a ganar. Ganas el envío más el 100 % de la propina. Si eso no llega al mínimo por pedido que muestra la app, Divoox completa la diferencia.',
+          'Lo que ganas se acredita en tu billetera al entregar el pedido. Retiras a tu banco a través de Stripe Connect; tus datos bancarios los escribes en la pantalla de Stripe y Divoox nunca los ve. Eres responsable de declarar y pagar tus impuestos; Stripe emite los formularios que correspondan.',
         ],
       },
       {
@@ -542,12 +542,12 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
     titulo: 'Driver Terms',
     actualizado: FECHA.en,
     intro:
-      'These terms add to the Terms of Service and apply to anyone delivering with Tumbite Driver. By creating a driver account you accept them.',
+      'These terms add to the Terms of Service and apply to anyone delivering with Divoox Driver. By creating a driver account you accept them.',
     secciones: [
       {
         titulo: '1. You’re independent',
         parrafos: [
-          `As a Tumbite driver you’re an independent contractor, not an employee of ${EMPRESA}. You decide when to go online, which orders to accept, and which route to take. There’s no minimum schedule and no exclusivity: you may work with other platforms.`,
+          `As a Divoox driver you’re an independent contractor, not an employee of ${EMPRESA}. You decide when to go online, which orders to accept, and which route to take. There’s no minimum schedule and no exclusivity: you may work with other platforms.`,
         ],
       },
       {
@@ -559,8 +559,8 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '3. What you earn',
         parrafos: [
-          'Before accepting each order you see what you’ll earn. You earn the delivery fee plus 100% of the tip. If that falls short of the per-order minimum shown in the app, Tumbite makes up the difference.',
-          'Earnings are credited to your wallet when you deliver the order. You withdraw to your bank through Stripe Connect; you enter your bank details on Stripe’s screen and Tumbite never sees them. You’re responsible for reporting and paying your taxes; Stripe issues any required tax forms.',
+          'Before accepting each order you see what you’ll earn. You earn the delivery fee plus 100% of the tip. If that falls short of the per-order minimum shown in the app, Divoox makes up the difference.',
+          'Earnings are credited to your wallet when you deliver the order. You withdraw to your bank through Stripe Connect; you enter your bank details on Stripe’s screen and Divoox never sees them. You’re responsible for reporting and paying your taxes; Stripe issues any required tax forms.',
         ],
       },
       {
@@ -590,10 +590,10 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
 /** Página pública que exige Google Play (y que Apple acepta como camino directo desde la app). */
 export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   es: {
-    titulo: 'Borrar tu cuenta de Tumbite',
+    titulo: 'Borrar tu cuenta de Divoox',
     actualizado: FECHA.es,
     accion: { texto: 'Borrar mi cuenta ahora', href: '/panel/settings' },
-    intro: `Así borras tu cuenta de Tumbite (app de clientes, Tumbite Driver o Tumbite para restaurantes), de ${EMPRESA}. No hace falta tener la app instalada.`,
+    intro: `Así borras tu cuenta de Divoox (app de clientes, Divoox Driver o Divoox para restaurantes), de ${EMPRESA}. No hace falta tener la app instalada.`,
     secciones: [
       {
         id: 'como',
@@ -627,10 +627,10 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
     ],
   },
   en: {
-    titulo: 'Delete your Tumbite account',
+    titulo: 'Delete your Divoox account',
     actualizado: FECHA.en,
     accion: { texto: 'Delete my account now', href: '/panel/settings' },
-    intro: `Here’s how to delete your Tumbite account (customer app, Tumbite Driver, or Tumbite for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
+    intro: `Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
     secciones: [
       {
         id: 'how',
@@ -720,7 +720,7 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
 };
 
 // ─────────────────────── El inglés es el que rige ───────────────────────
-// Tumbite es una empresa de EE.UU. y el inglés es su idioma principal (regla de Richard, 13 oct
+// Divoox es una empresa de EE.UU. y el inglés es su idioma principal (regla de Richard, 13 oct
 // 2026). En los acuerdos, la versión en inglés es la que vale; la española es una traducción.
 const RIGE = {
   es: 'Esta es una traducción de cortesía. Si hay alguna diferencia, rige la versión en inglés.',
