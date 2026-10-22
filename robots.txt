@@ -1,4 +1,4 @@
-# Tumbite: bienvenidos los buscadores y los asistentes de IA. Resumen para IA en /llms.txt
+# Divoox: bienvenidos los buscadores y los asistentes de IA. Resumen para IA en /llms.txt
 User-agent: *
 Allow: /
 Disallow: /panel
