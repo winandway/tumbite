@@ -1,0 +1,4340 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Divoox</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Fredoka:wght@600;700&family=Outfit:wght@700;800&family=Archivo+Black&family=Baloo+2:wght@700;800&family=Barlow:ital,wght@1,900;0,600&family=Sora:wght@600;700&family=Bebas+Neue&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: Montserrat, sans-serif;
+        color: #1f1f23;
+        font-size: 9.6pt;
+        line-height: 1.45;
+      }
+      .hoja {
+        width: 297mm;
+        height: 210mm;
+        padding: 12mm 15mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+        background: #f7f7f3;
+      }
+      .hoja:last-child {
+        page-break-after: auto;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Poppins, sans-serif;
+        color: #111;
+      }
+      h2 {
+        font-size: 21pt;
+        font-weight: 800;
+        margin-bottom: 2mm;
+        letter-spacing: -0.3px;
+      }
+      h3 {
+        font-size: 11pt;
+        font-weight: 700;
+        margin-bottom: 1.5mm;
+      }
+      .sub {
+        color: #55555c;
+        font-size: 10.5pt;
+        max-width: 235mm;
+        margin-bottom: 6mm;
+      }
+      .etq {
+        font-family: Poppins;
+        font-size: 8pt;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #5a8a00;
+        margin-bottom: 2mm;
+      }
+      .pie {
+        position: absolute;
+        left: 15mm;
+        right: 15mm;
+        bottom: 6mm;
+        display: flex;
+        justify-content: space-between;
+        font-size: 7.5pt;
+        color: #6b6b6b;
+      }
+      .portada {
+        background: #111;
+        color: #fff;
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 12mm;
+        align-items: center;
+      }
+      .portada .gigante {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 96pt;
+        line-height: 0.9;
+        letter-spacing: -3px;
+        color: #fff;
+      }
+      .portada .gigante span {
+        display: block;
+        font-size: 18pt;
+        letter-spacing: 8px;
+        color: #c6f432;
+        font-weight: 600;
+        margin-top: 3mm;
+      }
+      .portada p {
+        color: #cfcfd4;
+        font-size: 11pt;
+        max-width: 135mm;
+      }
+      .dom {
+        margin-top: 7mm;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 3mm;
+        background: #fff;
+        color: #111;
+        border-radius: 12px;
+        padding: 3mm 5mm;
+      }
+      .dom b {
+        font-family: Poppins;
+        font-size: 18pt;
+      }
+      .dom em {
+        font-style: normal;
+        color: #0f8a4a;
+        font-weight: 800;
+        font-size: 9pt;
+      }
+      .captura {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid #333;
+      }
+      .rejilla {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4mm;
+      }
+      .ficha {
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+      .lienzo {
+        height: 34mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid #e2e2e2;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 2.5mm;
+      }
+      .lienzo .logo {
+        transform: scale(0.74);
+      }
+      .marca {
+        display: flex;
+        flex-direction: column;
+      }
+      .pie-ficha {
+        padding: 2.5mm 3mm;
+        font-size: 7.8pt;
+        position: relative;
+        min-height: 26mm;
+      }
+      .pie-ficha b {
+        display: block;
+        font-family: Poppins;
+        font-size: 8.8pt;
+        margin-bottom: 0.6mm;
+        padding-right: 11mm;
+      }
+      .pie-ficha span {
+        display: block;
+        color: #55555c;
+        padding-right: 11mm;
+      }
+      .mini {
+        position: absolute;
+        right: 2.5mm;
+        top: 2.5mm;
+        width: 10mm;
+        height: 10mm;
+        border-radius: 2.6mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ddd;
+      }
+      .col2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7mm;
+      }
+      .col4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4mm;
+      }
+      .caja {
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 4.5mm 5mm;
+        background: #fff;
+      }
+      .caja h3 {
+        color: #111;
+      }
+      .caja p {
+        font-size: 8.8pt;
+        color: #3d3d44;
+      }
+      ul.lista {
+        list-style: none;
+      }
+      ul.lista li {
+        padding: 1.6mm 0 1.6mm 5mm;
+        position: relative;
+        border-bottom: 1px solid #ececec;
+      }
+      ul.lista li::before {
+        content: '!';
+        position: absolute;
+        left: 0.8mm;
+        color: #c47a00;
+        font-weight: 800;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        background: #fff;
+      }
+      th {
+        text-align: left;
+        font-family: Poppins;
+        font-weight: 600;
+        font-size: 8pt;
+        color: #6b6b6b;
+        border-bottom: 1.5px solid #111;
+        padding: 2mm;
+      }
+      td {
+        padding: 2.1mm 2mm;
+        border-bottom: 1px solid #ececec;
+      }
+      td.dice {
+        font-family: Poppins;
+        font-weight: 700;
+        font-size: 11pt;
+        white-space: nowrap;
+      }
+      .check {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4mm;
+        margin-top: 5mm;
+      }
+      .check div {
+        background: #fff;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 3mm 4mm;
+        font-size: 8.6pt;
+      }
+      .check b {
+        display: block;
+        font-family: Poppins;
+        color: #0f8a4a;
+        font-size: 9.5pt;
+      }
+      .chico-g {
+        font-size: 8.4pt;
+        color: #55555c;
+        margin-bottom: 2.5mm;
+      }
+      .fav {
+        display: grid;
+        grid-template-columns: 1.3fr 1.3fr 0.6fr;
+        gap: 4mm;
+        margin-bottom: 4mm;
+        align-items: center;
+      }
+      .lienzo.grande {
+        height: 40mm;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+      }
+      .oscuro .marca span,
+      .oscuro .marca span span {
+        color: #fff !important;
+      }
+      .oscuro .marca svg path {
+        stroke: #fff;
+      }
+      .oscuro .marca svg circle[fill='#111'] {
+        fill: #fff;
+      }
+      .tel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5mm;
+        font-size: 7.5pt;
+        color: #55555c;
+      }
+      .pantalla {
+        width: 34mm;
+        height: 40mm;
+        border-radius: 6mm;
+        background: #1c1c22;
+        border: 1.5mm solid #000;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2mm;
+        padding: 4mm 3mm;
+        align-content: start;
+      }
+      .ap {
+        width: 8mm;
+        height: 8mm;
+        border-radius: 2.2mm;
+        background: #3a3a44;
+        justify-self: center;
+      }
+      .ap.yo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .ap.yo svg {
+        width: 8mm;
+        height: 8mm;
+      }
+      .hojaesc {
+        display: grid;
+        grid-template-columns: 130mm 1fr;
+        gap: 8mm;
+        align-items: start;
+        margin-top: 2mm;
+      }
+      .heroe {
+        background: #fff;
+        border: 1px solid #2a2a2a;
+        border-radius: 16px;
+        height: 168mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .filaesc {
+        display: grid;
+        grid-template-columns: 38mm 1fr;
+        gap: 5mm;
+        margin-top: 3mm;
+        align-items: start;
+      }
+      .tms {
+        display: flex;
+        gap: 3.5mm;
+        align-items: flex-end;
+      }
+      .tm {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1mm;
+        font-size: 7pt;
+        color: #6b6b6b;
+      }
+      .sws {
+        display: flex;
+        gap: 2.5mm;
+      }
+      .sw {
+        display: flex;
+        flex-direction: column;
+        font-size: 7pt;
+        color: #55555c;
+        width: 18mm;
+      }
+      .sw i {
+        display: block;
+        height: 9mm;
+        border-radius: 6px;
+        border: 1px solid #2a2a2a;
+        margin-bottom: 1mm;
+      }
+      .sw b {
+        font-family: Poppins;
+        font-size: 7.6pt;
+        color: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hoja portada">
+      <div>
+        <div class="etq" style="color: #ff3008">Propuesta de marca · 22 de octubre de 2026</div>
+        <div class="gigante">
+          Divoox<span style="color: #ff3008">COMIDA · VIAJES · ENVÍOS</span>
+        </div>
+        <p style="margin-top: 8mm">
+          Una sola app para comida, motos, carros y envíos. <b>Divoox</b>: la D y la V de delivery,
+          las dos o y la fuerza de la X. Por primera vez, la marca y el dominio son exactamente lo
+          mismo.
+        </p>
+        <div class="dom"><b>divoox.com</b><em>DISPONIBLE</em></div>
+        <div class="dom" style="margin-left: 3mm">
+          <b>App Store y Google Play</b><em>NINGUNA APP DIVOOX</em>
+        </div>
+      </div>
+      <div>
+        <img
+          class="captura"
+          style="height: 150mm; object-fit: cover; object-position: top"
+          src="img-divoox/dominio-libre.webp"
+          alt="Búsqueda del dominio divoox.com: disponible"
+        />
+        <p style="margin-top: 2mm; font-size: 8pt; color: #9a9aa2">
+          Búsqueda del dominio en YaDominios: divoox.com, .net, .org, .co, .io y .me disponibles.
+          Confirmado en el registro oficial de los .com el 22 oct 2026.
+        </p>
+      </div>
+      <div class="pie" style="color: #8a8a92">
+        <span>Divoox · propuesta de marca</span><span>1</span>
+      </div>
+    </section>
+
+    <section class="hoja">
+      <div class="etq">Revisión</div>
+      <h2>Divoox está libre: lo que revisamos</h2>
+      <p class="sub">
+        Antes de enamorarse de un nombre hay que saber si alguien ya lo usa. Esto es lo que
+        encontramos el 22 de octubre de 2026.
+      </p>
+      <div class="check">
+        <div style="border-color: #0f8a4a; border-width: 2px">
+          <b>divoox.com, libre</b>El nombre solo, sin apellido. También divoox.net,
+          divooxdriver.com, divooxapp.com y getdivoox.com.
+        </div>
+        <div>
+          <b>Sin apps con ese nombre</b>Ninguna app Divoox en la App Store de EE. UU. ni en Google
+          Play.
+        </div>
+        <div>
+          <b>Sin marcas registradas</b>No encontramos DIVOOX en registros públicos de marcas.
+          Existen DIVX (video) y DEIVVOX (audífonos), otras palabras.
+        </div>
+        <div style="border-color: #c47a00; border-width: 2px">
+          <b style="color: #c47a00">Ojo: Divox, con una sola o</b>Software para restaurantes de
+          Redspark Technologies (India), con la app de repartidores «Divox Rider» en la App Store de
+          EE. UU. y Colombia. Mismo rubro: lo revisa el abogado.
+        </div>
+        <div>
+          <b>Historia del dominio</b>De 2007 a 2009 fue un buscador en español de películas y
+          series; después se vendió y se dejó vencer. Riesgo bajo.
+        </div>
+        <div>
+          <b>Redes</b>TikTok: @divoox existe, @divooxdriver libre. Instagram, Facebook y X: se
+          revisan desde un teléfono.
+        </div>
+      </div>
+      <div class="caja" style="margin-top: 6mm">
+        <h3>Lo que falta antes de comprarlo</h3>
+        <p>
+          Comprar divoox.com y divoox.net el mismo día que se decida. Un abogado de marcas lo
+          confirma en la oficina de marcas de EE. UU. (software, transporte, publicidad y
+          restaurantes) y en Colombia, mirando en especial a Divox. Asegurar los usuarios en redes.
+        </p>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>2</span></div>
+    </section>
+
+    <section class="hoja">
+      <div class="etq">Logos para Divoox</div>
+      <h3 style="margin-top: 3mm">Jugando con la X</h3>
+      <p class="chico-g">
+        La X es la letra más fuerte del nombre: cruce, flecha, encuentro, destino.
+      </p>
+      <div class="rejilla" style="grid-template-columns: repeat(4, 1fr)">
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#0b1f3a" />
+                <path
+                  d="M15 15 49 49M49 15 15 49"
+                  stroke="#fff"
+                  stroke-width="11"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M15 15 49 49M49 15 15 49"
+                  stroke="#0b1f3a"
+                  stroke-width="1.8"
+                  stroke-dasharray="3.5 4"
+                />
+                <circle cx="49" cy="15" r="5.5" fill="#b8f400" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Poppins';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #0b1f3a;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #6b8f00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>11. Cruce de avenidas</b
+            ><span
+              >Dos avenidas que se cruzan, con su línea central: cada pedido es un punto de
+              encuentro.</span
+            >
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#0b1f3a" />
+                <path
+                  d="M15 15 49 49M49 15 15 49"
+                  stroke="#fff"
+                  stroke-width="11"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M15 15 49 49M49 15 15 49"
+                  stroke="#0b1f3a"
+                  stroke-width="1.8"
+                  stroke-dasharray="3.5 4"
+                />
+                <circle cx="49" cy="15" r="5.5" fill="#b8f400" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #fff6f0; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="18" fill="#ff5a1f" />
+                <path
+                  d="M18 46 46 18M18 18l10 10M36 36l10 10"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M33 17h13v13"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Space Grotesk';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #2a0f05;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ff5a1f;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>12. Equis que avanza</b
+            ><span>Un brazo de la X termina en flecha: siempre hacia adelante.</span>
+            <div class="mini" style="background: #fff6f0">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="18" fill="#ff5a1f" />
+                <path
+                  d="M18 46 46 18M18 18l10 10M36 36l10 10"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M33 17h13v13"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #effaf6; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <circle cx="32" cy="32" r="30" fill="#00a67e" />
+                <g fill="#fff">
+                  <path d="M17 13l11 11-4 4-11-11z" transform="translate(0 0)" />
+                  <path d="M47 13 36 24l4 4 11-11z" />
+                  <path d="M17 51l11-11-4-4-11 11z" />
+                  <path d="M47 51 36 40l4-4 11 11z" />
+                </g>
+                <circle cx="32" cy="32" r="4.5" fill="#ffd84d" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Outfit';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #03382a;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #00a67e;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>13. Cuatro direcciones</b
+            ><span>Cuatro piezas que se encuentran en el centro: norte, sur, este y oeste.</span>
+            <div class="mini" style="background: #effaf6">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <circle cx="32" cy="32" r="30" fill="#00a67e" />
+                <g fill="#fff">
+                  <path d="M17 13l11 11-4 4-11-11z" transform="translate(0 0)" />
+                  <path d="M47 13 36 24l4 4 11-11z" />
+                  <path d="M17 51l11-11-4-4-11 11z" />
+                  <path d="M47 51 36 40l4-4 11 11z" />
+                </g>
+                <circle cx="32" cy="32" r="4.5" fill="#ffd84d" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <g fill="#111">
+                  <path d="M6 10a4 4 0 0 1 4-4h14l8 8-18 18-8-8z" />
+                  <path d="M58 10a4 4 0 0 0-4-4H40l-8 8 18 18 8-8z" />
+                  <path d="M6 54a4 4 0 0 0 4 4h14l8-8-18-18-8 8z" />
+                  <path d="M58 54a4 4 0 0 1-4 4H40l-8-8 18-18 8 8z" />
+                </g>
+                <circle cx="32" cy="32" r="4" fill="#ff2d55" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-weight: 400;
+                    font-style: normal;
+                    color: #111;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ff2d55;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>14. Equis calada</b
+            ><span
+              >La X nace del espacio vacío entre cuatro bloques: limpia y muy reconocible.</span
+            >
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <g fill="#111">
+                  <path d="M6 10a4 4 0 0 1 4-4h14l8 8-18 18-8-8z" />
+                  <path d="M58 10a4 4 0 0 0-4-4H40l-8 8 18 18 8-8z" />
+                  <path d="M6 54a4 4 0 0 0 4 4h14l8-8-18-18-8 8z" />
+                  <path d="M58 54a4 4 0 0 1-4 4H40l-8-8 18-18 8 8z" />
+                </g>
+                <circle cx="32" cy="32" r="4" fill="#ff2d55" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #fff3ee; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="32" fill="#e63b2e" />
+                <path d="M19 17l28 30" stroke="#fff" stroke-width="5" stroke-linecap="round" />
+                <path
+                  d="M17 15v7l5 5M21 13v7M25 15v7l-3 3"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M46 15c-6 3-9 9-8 15l-19 18"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Fredoka';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #5a120b;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #e63b2e;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>15. Cubiertos cruzados</b
+            ><span>Tenedor y cuchillo forman la X: la comida está en el centro.</span>
+            <div class="mini" style="background: #fff3ee">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="32" fill="#e63b2e" />
+                <path d="M19 17l28 30" stroke="#fff" stroke-width="5" stroke-linecap="round" />
+                <path
+                  d="M17 15v7l5 5M21 13v7M25 15v7l-3 3"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M46 15c-6 3-9 9-8 15l-19 18"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #eef3ff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <path
+                  d="M32 4c-12 0-21 9-21 21 0 15 21 35 21 35s21-20 21-35C53 13 44 4 32 4z"
+                  fill="#1d4ed8"
+                />
+                <path
+                  d="M25 18l14 14M39 18 25 32"
+                  stroke="#fff"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Sora';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #0b1f5c;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #1d4ed8;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>16. X marca el destino</b
+            ><span>El pin del mapa lleva una X por dentro: «aquí te lo llevamos».</span>
+            <div class="mini" style="background: #eef3ff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <path
+                  d="M32 4c-12 0-21 9-21 21 0 15 21 35 21 35s21-20 21-35C53 13 44 4 32 4z"
+                  fill="#1d4ed8"
+                />
+                <path
+                  d="M25 18l14 14M39 18 25 32"
+                  stroke="#fff"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #fffbe6; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="14" fill="#111" />
+                <path
+                  d="M12 18l16 14-16 14"
+                  fill="none"
+                  stroke="#ffd000"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M52 18 36 32l16 14"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Poppins';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #111;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #b38f00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>17. Encuentro</b
+            ><span>Dos flechas que se miran y se tocan: el repartidor y tú se encuentran.</span>
+            <div class="mini" style="background: #fffbe6">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="14" fill="#111" />
+                <path
+                  d="M12 18l16 14-16 14"
+                  fill="none"
+                  stroke="#ffd000"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M52 18 36 32l16 14"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #f3fbe8; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#ffffff" stroke="#e4e4e4" />
+                <path d="M14 14 50 50" stroke="#111" stroke-width="10" stroke-linecap="round" />
+                <path d="M50 14 14 50" stroke="#7bd11f" stroke-width="10" stroke-linecap="round" />
+                <path d="M38.5 38.5 50 50" stroke="#111" stroke-width="10" stroke-linecap="round" />
+                <path d="M33 31l7 7" stroke="#fff" stroke-width="3" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Montserrat';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #111;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #5a9e10;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>18. Cinta entrelazada</b
+            ><span>Dos cintas que pasan una por encima de la otra: comida y viajes unidos.</span>
+            <div class="mini" style="background: #f3fbe8">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#ffffff" stroke="#e4e4e4" />
+                <path d="M14 14 50 50" stroke="#111" stroke-width="10" stroke-linecap="round" />
+                <path d="M50 14 14 50" stroke="#7bd11f" stroke-width="10" stroke-linecap="round" />
+                <path d="M38.5 38.5 50 50" stroke="#111" stroke-width="10" stroke-linecap="round" />
+                <path d="M33 31l7 7" stroke="#fff" stroke-width="3" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>3</span></div>
+    </section>
+    <section class="hoja">
+      <div class="etq">Logos para Divoox</div>
+      <h3 style="margin-top: 3mm">Jugando con las dos «o»</h3>
+      <p class="chico-g">
+        Faros, ojos, origen y destino, ruedas. Ninguno usa el ocho acostado, que ya es de Meta.
+      </p>
+      <div class="rejilla" style="grid-template-columns: repeat(4, 1fr)">
+        <div class="ficha">
+          <div class="lienzo" style="background: #0f1115; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#0f1115" />
+                <circle cx="21" cy="32" r="9" fill="#ffe14d" />
+                <circle cx="43" cy="32" r="9" fill="#ffe14d" />
+                <path d="M30 25h4M30 39h4" stroke="#0f1115" />
+                <path
+                  d="M8 26l5 2M8 38l5-2M56 26l-5 2M56 38l-5-2"
+                  stroke="#ffe14d"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Poppins';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #ffffff;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ffe14d;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>19. Faros encendidos</b
+            ><span>Las dos «o» son los faros de un carro que viene hacia ti.</span>
+            <div class="mini" style="background: #0f1115">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#0f1115" />
+                <circle cx="21" cy="32" r="9" fill="#ffe14d" />
+                <circle cx="43" cy="32" r="9" fill="#ffe14d" />
+                <path d="M30 25h4M30 39h4" stroke="#0f1115" />
+                <path
+                  d="M8 26l5 2M8 38l5-2M56 26l-5 2M56 38l-5-2"
+                  stroke="#ffe14d"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #fff4e5; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="20" fill="#ff8a00" />
+                <circle cx="22" cy="32" r="10" fill="#fff" />
+                <circle cx="43" cy="32" r="10" fill="#fff" />
+                <circle cx="26" cy="32" r="4.5" fill="#1a0e00" />
+                <circle cx="47" cy="32" r="4.5" fill="#1a0e00" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Baloo 2';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #3a1d00;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ff8a00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>20. Miran hacia adelante</b
+            ><span>Dos ojos con la mirada a la derecha: la app siempre va un paso adelante.</span>
+            <div class="mini" style="background: #fff4e5">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="20" fill="#ff8a00" />
+                <circle cx="22" cy="32" r="10" fill="#fff" />
+                <circle cx="43" cy="32" r="10" fill="#fff" />
+                <circle cx="26" cy="32" r="4.5" fill="#1a0e00" />
+                <circle cx="47" cy="32" r="4.5" fill="#1a0e00" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #effcf4; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#0a7b44" />
+                <circle cx="16" cy="40" r="6" fill="none" stroke="#fff" stroke-width="3.5" />
+                <path
+                  d="M48 14c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z"
+                  fill="#fff"
+                />
+                <circle cx="48" cy="24" r="3.5" fill="#0a7b44" />
+                <path
+                  d="M22 40c8 0 10-6 16-10"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3"
+                  stroke-dasharray="2.5 4"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Outfit';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #053a20;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #0a7b44;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>21. De aquí hasta allá</b
+            ><span>Las dos «o» son el origen y el destino, unidos por el camino.</span>
+            <div class="mini" style="background: #effcf4">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#0a7b44" />
+                <circle cx="16" cy="40" r="6" fill="none" stroke="#fff" stroke-width="3.5" />
+                <path
+                  d="M48 14c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z"
+                  fill="#fff"
+                />
+                <circle cx="48" cy="24" r="3.5" fill="#0a7b44" />
+                <path
+                  d="M22 40c8 0 10-6 16-10"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3"
+                  stroke-dasharray="2.5 4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <circle cx="32" cy="32" r="30" fill="#111" />
+                <path
+                  d="M14 40a18 18 0 1 1 36 0"
+                  fill="none"
+                  stroke="#2a2a2a"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M14 40a18 18 0 0 1 30-13"
+                  fill="none"
+                  stroke="#00e0a4"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path d="M32 40l12-15" stroke="#fff" stroke-width="4" stroke-linecap="round" />
+                <circle cx="32" cy="40" r="4" fill="#fff" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Space Grotesk';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #111;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #00a37a;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>22. Velocímetro</b
+            ><span>Una «o» se vuelve tablero: rapidez medida, no promesa.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <circle cx="32" cy="32" r="30" fill="#111" />
+                <path
+                  d="M14 40a18 18 0 1 1 36 0"
+                  fill="none"
+                  stroke="#2a2a2a"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M14 40a18 18 0 0 1 30-13"
+                  fill="none"
+                  stroke="#00e0a4"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                />
+                <path d="M32 40l12-15" stroke="#fff" stroke-width="4" stroke-linecap="round" />
+                <circle cx="32" cy="40" r="4" fill="#fff" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#ff3b6b" />
+                <circle cx="25" cy="32" r="13" fill="none" stroke="#fff" stroke-width="4" />
+                <circle cx="39" cy="32" r="13" fill="#fff" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Sora';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #3a0613;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ff3b6b;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>23. Eclipse en marcha</b
+            ><span>Una «o» llena alcanza a la otra: movimiento sin perder la forma.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#ff3b6b" />
+                <circle cx="25" cy="32" r="13" fill="none" stroke="#fff" stroke-width="4" />
+                <circle cx="39" cy="32" r="13" fill="#fff" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #eef7ff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <path
+                  d="M10 14h44a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H28l-10 9v-9h-8a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"
+                  fill="#0a84ff"
+                />
+                <circle cx="25" cy="30" r="5" fill="#fff" />
+                <circle cx="39" cy="30" r="5" fill="#fff" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Poppins';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #06305c;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #0a84ff;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>24. Ya va en camino</b
+            ><span>Una burbuja de chat con dos puntos: «tu pedido viene en camino».</span>
+            <div class="mini" style="background: #eef7ff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <path
+                  d="M10 14h44a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H28l-10 9v-9h-8a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"
+                  fill="#0a84ff"
+                />
+                <circle cx="25" cy="30" r="5" fill="#fff" />
+                <circle cx="39" cy="30" r="5" fill="#fff" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #fbf3e9; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="14" fill="#1c1c1c" />
+                <path d="M14 26h36l-3 26H17z" fill="#f2b33d" />
+                <circle cx="25" cy="20" r="6" fill="none" stroke="#f2b33d" stroke-width="3.5" />
+                <circle cx="39" cy="20" r="6" fill="none" stroke="#f2b33d" stroke-width="3.5" />
+                <path d="M26 40h12" stroke="#1c1c1c" stroke-width="3" stroke-linecap="round" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Montserrat';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #1c1c1c;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #c48a17;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>25. Asas de la bolsa</b><span>Las dos «o» son las asas de la bolsa de reparto.</span>
+            <div class="mini" style="background: #fbf3e9">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="14" fill="#1c1c1c" />
+                <path d="M14 26h36l-3 26H17z" fill="#f2b33d" />
+                <circle cx="25" cy="20" r="6" fill="none" stroke="#f2b33d" stroke-width="3.5" />
+                <circle cx="39" cy="20" r="6" fill="none" stroke="#f2b33d" stroke-width="3.5" />
+                <path d="M26 40h12" stroke="#1c1c1c" stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>4</span></div>
+    </section>
+    <section class="hoja">
+      <div class="etq">Logos para Divoox</div>
+      <h3 style="margin-top: 3mm">Jugando con la palabra</h3>
+      <p class="chico-g">La palabra misma como logo: la X que es flecha, las «o» que son puntos.</p>
+      <div class="rejilla" style="grid-template-columns: repeat(5, 1fr)">
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#111" />
+                <text
+                  x="9"
+                  y="44"
+                  font-family="Poppins"
+                  font-weight="800"
+                  font-size="30"
+                  fill="#fff"
+                >
+                  D
+                </text>
+                <path
+                  d="M34 44l16-16M34 28l6 6M44 38l6 6M41 27h9v9"
+                  fill="none"
+                  stroke="#c6f432"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="marca">
+                <span style="display: flex; align-items: center"
+                  ><span
+                    style="
+                      font-family: Poppins;
+                      font-weight: 800;
+                      font-size: 23pt;
+                      color: #111;
+                      line-height: 1;
+                    "
+                    >Divoo</span
+                  ><svg viewBox="0 0 30 30" width="11mm" height="11mm">
+                    <path
+                      d="M5 27 26 6M5 6l8 8M18 19l8 8M15 5h11v11"
+                      fill="none"
+                      stroke="#5a8a00"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    /></svg></span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #5a8a00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    margin-top: 1.2mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>26. La X es flecha</b
+            ><span>En la palabra, la X apunta hacia arriba y a la derecha.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#111" />
+                <text
+                  x="9"
+                  y="44"
+                  font-family="Poppins"
+                  font-weight="800"
+                  font-size="30"
+                  fill="#fff"
+                >
+                  D
+                </text>
+                <path
+                  d="M34 44l16-16M34 28l6 6M44 38l6 6M41 27h9v9"
+                  fill="none"
+                  stroke="#c6f432"
+                  stroke-width="4.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="32" fill="#ffffff" stroke="#e3e3e3" />
+                <circle cx="23" cy="32" r="9" fill="#ff3b30" />
+                <circle cx="41" cy="32" r="9" fill="#111" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 1mm;
+                    font-family: Poppins;
+                    font-weight: 800;
+                    font-size: 23pt;
+                    color: #111;
+                    line-height: 1;
+                  "
+                  >Div<svg viewBox="0 0 52 26" width="18mm" height="9mm">
+                    <circle cx="12" cy="15" r="10" fill="#ff3b30" />
+                    <circle cx="38" cy="15" r="10" fill="#111" /></svg
+                  >x</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #ff3b30;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    margin-top: 1.2mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>27. Puntos de color</b
+            ><span>Las dos «o» se vuelven puntos llenos: el pedido y su destino.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="32" fill="#ffffff" stroke="#e3e3e3" />
+                <circle cx="23" cy="32" r="9" fill="#ff3b30" />
+                <circle cx="41" cy="32" r="9" fill="#111" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#1257ff" />
+                <text
+                  x="32"
+                  y="45"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="34"
+                  fill="#fff"
+                >
+                  D
+                </text>
+                <path d="M0 30h64M0 38h64" stroke="#1257ff" stroke-width="2.5" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    position: relative;
+                    display: inline-block;
+                    font-family: 'Archivo Black';
+                    font-size: 23pt;
+                    color: #1257ff;
+                    font-style: italic;
+                    line-height: 1;
+                  "
+                  >Divoox<span
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      top: 45%;
+                      height: 0.6mm;
+                      background: #fff;
+                    "
+                  ></span
+                  ><span
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      top: 63%;
+                      height: 0.6mm;
+                      background: #fff;
+                    "
+                  ></span></span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #111;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    margin-top: 1.2mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>28. Cortada por el viento</b
+            ><span>Letras gruesas atravesadas por líneas de velocidad.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#1257ff" />
+                <text
+                  x="32"
+                  y="45"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="34"
+                  fill="#fff"
+                >
+                  D
+                </text>
+                <path d="M0 30h64M0 38h64" stroke="#1257ff" stroke-width="2.5" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #f3f3ef; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="12" fill="#111" />
+                <text
+                  x="32"
+                  y="30"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="15"
+                  fill="#fff"
+                  letter-spacing="1"
+                >
+                  DIV
+                </text>
+                <text
+                  x="32"
+                  y="51"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="15"
+                  fill="#ff6b00"
+                  letter-spacing="1"
+                >
+                  OOX
+                </text>
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 22pt;
+                    line-height: 0.95;
+                    color: #111;
+                  "
+                  >DIV<br /><span style="color: #ff6b00">OOX</span></span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #111;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    margin-top: 1.2mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>29. En bloque</b
+            ><span>DIV arriba, OOX abajo: un bloque que se lee de un vistazo.</span>
+            <div class="mini" style="background: #f3f3ef">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="12" fill="#111" />
+                <text
+                  x="32"
+                  y="30"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="15"
+                  fill="#fff"
+                  letter-spacing="1"
+                >
+                  DIV
+                </text>
+                <text
+                  x="32"
+                  y="51"
+                  text-anchor="middle"
+                  font-family="Archivo Black"
+                  font-size="15"
+                  fill="#ff6b00"
+                  letter-spacing="1"
+                >
+                  OOX
+                </text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 36mm">
+            <div class="logo" style="">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#e8f7ee" />
+                <circle cx="22" cy="28" r="9" fill="none" stroke="#0a7b44" stroke-width="5" />
+                <circle cx="42" cy="28" r="9" fill="none" stroke="#0a7b44" stroke-width="5" />
+                <path
+                  d="M16 46h32"
+                  stroke="#0a7b44"
+                  stroke-width="3"
+                  stroke-dasharray="3 3"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: Outfit;
+                    font-weight: 800;
+                    font-size: 23pt;
+                    color: #053a20;
+                    line-height: 1;
+                    border-bottom: 1mm dashed #0a7b44;
+                    padding-bottom: 0.5mm;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #0a7b44;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    margin-top: 1.6mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>30. Doble o en ruta</b
+            ><span>Las dos «o» se unen por debajo con un camino punteado.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#e8f7ee" />
+                <circle cx="22" cy="28" r="9" fill="none" stroke="#0a7b44" stroke-width="5" />
+                <circle cx="42" cy="28" r="9" fill="none" stroke="#0a7b44" stroke-width="5" />
+                <path
+                  d="M16 46h32"
+                  stroke="#0a7b44"
+                  stroke-width="3"
+                  stroke-dasharray="3 3"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>5</span></div>
+    </section>
+    <section class="hoja">
+      <div class="etq">Logos para Divoox</div>
+      <h3 style="margin-top: 3mm">Sellos y personajes</h3>
+      <p class="chico-g">Para gorras, cascos, maletas de reparto y redes.</p>
+      <div class="rejilla" style="grid-template-columns: repeat(2, 1fr)">
+        <div class="ficha">
+          <div class="lienzo" style="background: #fff6e8; height: 50mm">
+            <div class="logo" style="transform: scale(1.15)">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="18" fill="#ffb020" />
+                <path d="M15 24h34l-2 30H17z" fill="#fff" />
+                <path
+                  d="M24 24v-4a8 8 0 0 1 16 0v4"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <circle cx="26" cy="36" r="3.2" fill="#1a1a1a" />
+                <circle cx="38" cy="36" r="3.2" fill="#1a1a1a" />
+                <path
+                  d="M27 44q5 4 10 0"
+                  fill="none"
+                  stroke="#1a1a1a"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Fredoka';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #3d2300;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #e08a00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>31. La bolsa simpática</b
+            ><span>La bolsa de reparto con ojos: el personaje de la marca.</span>
+            <div class="mini" style="background: #fff6e8">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="18" fill="#ffb020" />
+                <path d="M15 24h34l-2 30H17z" fill="#fff" />
+                <path
+                  d="M24 24v-4a8 8 0 0 1 16 0v4"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="4"
+                  stroke-linecap="round"
+                />
+                <circle cx="26" cy="36" r="3.2" fill="#1a1a1a" />
+                <circle cx="38" cy="36" r="3.2" fill="#1a1a1a" />
+                <path
+                  d="M27 44q5 4 10 0"
+                  fill="none"
+                  stroke="#1a1a1a"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #eef2f7; height: 50mm">
+            <div class="logo" style="transform: scale(1.15)">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#0f172a" />
+                <path d="M12 40c0-14 9-24 21-24s19 9 19 22v6H12z" fill="#e2e8f0" />
+                <path d="M20 34h26a4 4 0 0 1 4 4v2H20z" fill="#0f172a" />
+                <circle cx="29" cy="37" r="2.2" fill="#38bdf8" />
+                <circle cx="38" cy="37" r="2.2" fill="#38bdf8" />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Space Grotesk';
+                    font-weight: 700;
+                    font-style: normal;
+                    color: #0f172a;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #0ea5e9;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>32. El casco</b
+            ><span>El visor del casco dibuja las dos «o»: motos y repartidores.</span>
+            <div class="mini" style="background: #eef2f7">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#0f172a" />
+                <path d="M12 40c0-14 9-24 21-24s19 9 19 22v6H12z" fill="#e2e8f0" />
+                <path d="M20 34h26a4 4 0 0 1 4 4v2H20z" fill="#0f172a" />
+                <circle cx="29" cy="37" r="2.2" fill="#38bdf8" />
+                <circle cx="38" cy="37" r="2.2" fill="#38bdf8" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #ffffff; height: 50mm">
+            <div class="logo" style="transform: scale(1.15)">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <circle cx="32" cy="32" r="30" fill="#111" />
+                <circle cx="32" cy="32" r="24" fill="none" stroke="#c6f432" stroke-width="1.5" />
+                <path
+                  d="M24 24l16 16M40 24 24 40"
+                  stroke="#c6f432"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <g fill="#fff">
+                  <circle cx="32" cy="11" r="1.6" />
+                  <circle cx="32" cy="53" r="1.6" />
+                  <circle cx="11" cy="32" r="1.6" />
+                  <circle cx="53" cy="32" r="1.6" />
+                </g>
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-weight: 400;
+                    font-style: normal;
+                    color: #111;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #5a8a00;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>33. Sello de calidad</b
+            ><span>Un sello redondo con la X en el centro, para cascos, gorras y maletas.</span>
+            <div class="mini" style="background: #ffffff">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <circle cx="32" cy="32" r="30" fill="#111" />
+                <circle cx="32" cy="32" r="24" fill="none" stroke="#c6f432" stroke-width="1.5" />
+                <path
+                  d="M24 24l16 16M40 24 24 40"
+                  stroke="#c6f432"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+                <g fill="#fff">
+                  <circle cx="32" cy="11" r="1.6" />
+                  <circle cx="32" cy="53" r="1.6" />
+                  <circle cx="11" cy="32" r="1.6" />
+                  <circle cx="53" cy="32" r="1.6" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="ficha">
+          <div class="lienzo" style="background: #f8f1e4; height: 50mm">
+            <div class="logo" style="transform: scale(1.15)">
+              <svg viewBox="0 0 64 64" width="17mm" height="17mm">
+                <rect width="64" height="64" rx="16" fill="#0e7490" />
+                <path d="M10 18l14-5 16 6 14-5v33l-14 5-16-6-14 5z" fill="#fef3c7" />
+                <path d="M24 13v33M40 19v33" stroke="#0e7490" stroke-width="1.5" opacity=".5" />
+                <path
+                  d="M14 38c6-2 9-10 18-10"
+                  fill="none"
+                  stroke="#0e7490"
+                  stroke-width="2.4"
+                  stroke-dasharray="2.5 3"
+                />
+                <path
+                  d="M37 26l8 8M45 26l-8 8"
+                  stroke="#e11d48"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="marca">
+                <span
+                  style="
+                    font-family: 'Baloo 2';
+                    font-weight: 800;
+                    font-style: normal;
+                    color: #083344;
+                    font-size: 23pt;
+                    letter-spacing: 0px;
+                    line-height: 1;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    color: #0e7490;
+                    font-size: 8pt;
+                    letter-spacing: 3px;
+                    text-transform: uppercase;
+                    margin-top: 1.2mm;
+                  "
+                  >driver</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="pie-ficha">
+            <b>34. El mapa del tesoro</b
+            ><span>Un mapa doblado donde la X marca el lugar: tu puerta.</span>
+            <div class="mini" style="background: #f8f1e4">
+              <svg viewBox="0 0 64 64" width="9mm" height="9mm">
+                <rect width="64" height="64" rx="16" fill="#0e7490" />
+                <path d="M10 18l14-5 16 6 14-5v33l-14 5-16-6-14 5z" fill="#fef3c7" />
+                <path d="M24 13v33M40 19v33" stroke="#0e7490" stroke-width="1.5" opacity=".5" />
+                <path
+                  d="M14 38c6-2 9-10 18-10"
+                  fill="none"
+                  stroke="#0e7490"
+                  stroke-width="2.4"
+                  stroke-dasharray="2.5 3"
+                />
+                <path
+                  d="M37 26l8 8M45 26l-8 8"
+                  stroke="#e11d48"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>6</span></div>
+    </section>
+    <section class="hoja">
+      <div class="etq">Nuestros favoritos</div>
+      <h2>Tres caminos, en grande</h2>
+      <p class="sub">
+        Sobre fondo claro, sobre fondo oscuro (de noche, en la app y en las maletas) y como ícono en
+        la pantalla del celular.
+      </p>
+      <div class="fav">
+        <div class="lienzo grande" style="background: #fff6f0">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="18" fill="#ff5a1f" />
+              <path
+                d="M18 46 46 18M18 18l10 10M36 36l10 10"
+                stroke="#fff"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
+              <path
+                d="M33 17h13v13"
+                fill="none"
+                stroke="#fff"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Space Grotesk';
+                  font-weight: 700;
+                  font-style: normal;
+                  color: #2a0f05;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #ff5a1f;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="lienzo grande oscuro" style="background: #121214">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="18" fill="#ff5a1f" />
+              <path
+                d="M18 46 46 18M18 18l10 10M36 36l10 10"
+                stroke="#fff"
+                stroke-width="7"
+                stroke-linecap="round"
+              />
+              <path
+                d="M33 17h13v13"
+                fill="none"
+                stroke="#fff"
+                stroke-width="7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Space Grotesk';
+                  font-weight: 700;
+                  font-style: normal;
+                  color: #2a0f05;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #ff5a1f;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="tel">
+          <div class="pantalla">
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap yo" style="background: #fff6f0">
+              <svg viewBox="0 0 64 64" width="11mm" height="11mm">
+                <rect width="64" height="64" rx="18" fill="#ff5a1f" />
+                <path
+                  d="M18 46 46 18M18 18l10 10M36 36l10 10"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M33 17h13v13"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+          </div>
+          <span>Equis que avanza</span>
+        </div>
+      </div>
+      <div class="fav">
+        <div class="lienzo grande" style="background: #effcf4">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="16" fill="#0a7b44" />
+              <circle cx="16" cy="40" r="6" fill="none" stroke="#fff" stroke-width="3.5" />
+              <path
+                d="M48 14c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z"
+                fill="#fff"
+              />
+              <circle cx="48" cy="24" r="3.5" fill="#0a7b44" />
+              <path
+                d="M22 40c8 0 10-6 16-10"
+                fill="none"
+                stroke="#fff"
+                stroke-width="3"
+                stroke-dasharray="2.5 4"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Outfit';
+                  font-weight: 800;
+                  font-style: normal;
+                  color: #053a20;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #0a7b44;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="lienzo grande oscuro" style="background: #121214">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="16" fill="#0a7b44" />
+              <circle cx="16" cy="40" r="6" fill="none" stroke="#fff" stroke-width="3.5" />
+              <path
+                d="M48 14c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z"
+                fill="#fff"
+              />
+              <circle cx="48" cy="24" r="3.5" fill="#0a7b44" />
+              <path
+                d="M22 40c8 0 10-6 16-10"
+                fill="none"
+                stroke="#fff"
+                stroke-width="3"
+                stroke-dasharray="2.5 4"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Outfit';
+                  font-weight: 800;
+                  font-style: normal;
+                  color: #053a20;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #0a7b44;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="tel">
+          <div class="pantalla">
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap yo" style="background: #effcf4">
+              <svg viewBox="0 0 64 64" width="11mm" height="11mm">
+                <rect width="64" height="64" rx="16" fill="#0a7b44" />
+                <circle cx="16" cy="40" r="6" fill="none" stroke="#fff" stroke-width="3.5" />
+                <path
+                  d="M48 14c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z"
+                  fill="#fff"
+                />
+                <circle cx="48" cy="24" r="3.5" fill="#0a7b44" />
+                <path
+                  d="M22 40c8 0 10-6 16-10"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3"
+                  stroke-dasharray="2.5 4"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+          </div>
+          <span>De aquí hasta allá</span>
+        </div>
+      </div>
+      <div class="fav">
+        <div class="lienzo grande" style="background: #f8f1e4">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="16" fill="#0e7490" />
+              <path d="M10 18l14-5 16 6 14-5v33l-14 5-16-6-14 5z" fill="#fef3c7" />
+              <path d="M24 13v33M40 19v33" stroke="#0e7490" stroke-width="1.5" opacity=".5" />
+              <path
+                d="M14 38c6-2 9-10 18-10"
+                fill="none"
+                stroke="#0e7490"
+                stroke-width="2.4"
+                stroke-dasharray="2.5 3"
+              />
+              <path
+                d="M37 26l8 8M45 26l-8 8"
+                stroke="#e11d48"
+                stroke-width="3.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Baloo 2';
+                  font-weight: 800;
+                  font-style: normal;
+                  color: #083344;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #0e7490;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="lienzo grande oscuro" style="background: #121214">
+          <div class="logo" style="transform: scale(1.15)">
+            <svg viewBox="0 0 64 64" width="20mm" height="20mm">
+              <rect width="64" height="64" rx="16" fill="#0e7490" />
+              <path d="M10 18l14-5 16 6 14-5v33l-14 5-16-6-14 5z" fill="#fef3c7" />
+              <path d="M24 13v33M40 19v33" stroke="#0e7490" stroke-width="1.5" opacity=".5" />
+              <path
+                d="M14 38c6-2 9-10 18-10"
+                fill="none"
+                stroke="#0e7490"
+                stroke-width="2.4"
+                stroke-dasharray="2.5 3"
+              />
+              <path
+                d="M37 26l8 8M45 26l-8 8"
+                stroke="#e11d48"
+                stroke-width="3.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="marca">
+              <span
+                style="
+                  font-family: 'Baloo 2';
+                  font-weight: 800;
+                  font-style: normal;
+                  color: #083344;
+                  font-size: 23pt;
+                  letter-spacing: 0px;
+                  line-height: 1;
+                "
+                >Divoox</span
+              ><span
+                style="
+                  font-family: Poppins;
+                  font-weight: 600;
+                  color: #0e7490;
+                  font-size: 8pt;
+                  letter-spacing: 3px;
+                  text-transform: uppercase;
+                  margin-top: 1.2mm;
+                "
+                >driver</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="tel">
+          <div class="pantalla">
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap yo" style="background: #f8f1e4">
+              <svg viewBox="0 0 64 64" width="11mm" height="11mm">
+                <rect width="64" height="64" rx="16" fill="#0e7490" />
+                <path d="M10 18l14-5 16 6 14-5v33l-14 5-16-6-14 5z" fill="#fef3c7" />
+                <path d="M24 13v33M40 19v33" stroke="#0e7490" stroke-width="1.5" opacity=".5" />
+                <path
+                  d="M14 38c6-2 9-10 18-10"
+                  fill="none"
+                  stroke="#0e7490"
+                  stroke-width="2.4"
+                  stroke-dasharray="2.5 3"
+                />
+                <path
+                  d="M37 26l8 8M45 26l-8 8"
+                  stroke="#e11d48"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+            <div class="ap"></div>
+          </div>
+          <span>El mapa del tesoro</span>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>7</span></div>
+    </section>
+    <section class="hoja portada" style="grid-template-columns: 1fr 1fr">
+      <div>
+        <div class="etq" style="color: #ff3008">La idea de Richard</div>
+        <div class="gigante" style="font-size: 64pt">
+          El escudo<span style="color: #ff3008">DIVOOX</span>
+        </div>
+        <p style="margin-top: 8mm">
+          El escudo de pelea de los vikingos: madera, una X roja, el borde de hierro con remaches.
+          Tiene la X de Divoox en el centro, el borde parece una rueda y su significado es uno solo:
+          <b>protección</b>. Lo que le prometemos a quien pide, a quien entrega y a quien cocina.
+        </p>
+        <p style="margin-top: 4mm">
+          Usa los colores que ya tiene la app: rojo, blanco y gris oscuro. Tres versiones, una hoja
+          para cada una.
+        </p>
+      </div>
+      <div style="display: flex; gap: 6mm; justify-content: center">
+        <svg viewBox="0 0 200 200" width="40mm" height="40mm">
+          <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+          <circle cx="100" cy="100" r="74" fill="#7a5233" />
+          <g stroke="#5c3c22" stroke-width="2">
+            <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+          </g>
+          <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+            <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+          </g>
+          <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+          <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+          <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+          <circle cx="100" cy="100" r="19" fill="#111" />
+          <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+          <circle cx="100.0" cy="20.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="140.0" cy="30.7" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="169.3" cy="60.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="180.0" cy="100.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="169.3" cy="140.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="140.0" cy="169.3" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="100.0" cy="180.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="60.0" cy="169.3" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="30.7" cy="140.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="20.0" cy="100.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="30.7" cy="60.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <circle cx="60.0" cy="30.7" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+          <g fill="#555">
+            <circle cx="100" cy="77" r="2.2" />
+            <circle cx="123" cy="100" r="2.2" />
+            <circle cx="100" cy="123" r="2.2" />
+            <circle cx="77" cy="100" r="2.2" />
+          </g></svg
+        ><svg viewBox="0 0 200 200" width="40mm" height="40mm">
+          <circle cx="100" cy="100" r="85" fill="#191919" />
+          <circle cx="100" cy="100" r="72" fill="#ffffff" />
+          <path
+            d="M59 59 141 141M141 59 59 141"
+            stroke="#ff3008"
+            stroke-width="24"
+            stroke-linecap="round"
+          />
+          <circle cx="100" cy="100" r="20" fill="#191919" />
+          <circle cx="100" cy="100" r="8" fill="#ffffff" />
+          <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+          <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+          <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+          <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+          <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+          <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+          <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+          <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" /></svg
+        ><svg viewBox="0 0 200 200" width="40mm" height="40mm">
+          <circle cx="100" cy="100" r="85" fill="#191919" />
+          <g stroke="#3a3a3a" stroke-width="5">
+            <path
+              d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+            />
+          </g>
+          <circle cx="100" cy="100" r="66" fill="#ffffff" />
+          <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+          <path
+            d="M60 60 140 140M140 60 60 140"
+            stroke="#ff3008"
+            stroke-width="18"
+            stroke-linecap="round"
+          />
+          <circle cx="100" cy="100" r="22" fill="#191919" />
+          <g fill="#ffffff">
+            <circle cx="100" cy="88" r="3" />
+            <circle cx="111.4" cy="96.3" r="3" />
+            <circle cx="107" cy="109.7" r="3" />
+            <circle cx="93" cy="109.7" r="3" />
+            <circle cx="88.6" cy="96.3" r="3" />
+          </g>
+        </svg>
+      </div>
+      <div class="pie" style="color: #8a8a92">
+        <span>Divoox · propuesta de marca</span><span>8</span>
+      </div>
+    </section>
+    <section class="hoja" style="background: #f4f3ef">
+      <div class="etq" style="color: #ff3008">Escudo 1 de 3</div>
+      <div class="hojaesc">
+        <div class="heroe">
+          <svg viewBox="0 0 200 200" width="128mm" height="128mm">
+            <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+            <circle cx="100" cy="100" r="74" fill="#7a5233" />
+            <g stroke="#5c3c22" stroke-width="2">
+              <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+            </g>
+            <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+              <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+            </g>
+            <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+            <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+            <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+            <circle cx="100" cy="100" r="19" fill="#111" />
+            <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+            <circle cx="100.0" cy="20.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="140.0" cy="30.7" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="169.3" cy="60.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle
+              cx="180.0"
+              cy="100.0"
+              r="4.2"
+              fill="#3d3d3d"
+              stroke="#0d0d0d"
+              stroke-width="1"
+            />
+            <circle
+              cx="169.3"
+              cy="140.0"
+              r="4.2"
+              fill="#3d3d3d"
+              stroke="#0d0d0d"
+              stroke-width="1"
+            />
+            <circle
+              cx="140.0"
+              cy="169.3"
+              r="4.2"
+              fill="#3d3d3d"
+              stroke="#0d0d0d"
+              stroke-width="1"
+            />
+            <circle
+              cx="100.0"
+              cy="180.0"
+              r="4.2"
+              fill="#3d3d3d"
+              stroke="#0d0d0d"
+              stroke-width="1"
+            />
+            <circle cx="60.0" cy="169.3" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="30.7" cy="140.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="20.0" cy="100.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="30.7" cy="60.0" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <circle cx="60.0" cy="30.7" r="4.2" fill="#3d3d3d" stroke="#0d0d0d" stroke-width="1" />
+            <g fill="#555">
+              <circle cx="100" cy="77" r="2.2" />
+              <circle cx="123" cy="100" r="2.2" />
+              <circle cx="100" cy="123" r="2.2" />
+              <circle cx="77" cy="100" r="2.2" />
+            </g>
+          </svg>
+        </div>
+        <div>
+          <h2>Escudo de madera</h2>
+          <p class="sub" style="margin-bottom: 4mm">
+            El escudo de los vikingos, tal cual: tablas de madera, la X roja con bordes blancos, el
+            borde de hierro con remaches y el centro de metal. Habla de protección, de historia y de
+            fuerza.
+          </p>
+          <div class="lienzo grande" style="background: #fff; height: 30mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                <g stroke="#5c3c22" stroke-width="2">
+                  <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                </g>
+                <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                  <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                </g>
+                <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                <circle cx="100" cy="100" r="19" fill="#111" />
+                <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                <circle
+                  cx="100.0"
+                  cy="20.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="140.0"
+                  cy="30.7"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="169.3"
+                  cy="60.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="180.0"
+                  cy="100.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="169.3"
+                  cy="140.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="140.0"
+                  cy="169.3"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="100.0"
+                  cy="180.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="60.0"
+                  cy="169.3"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="30.7"
+                  cy="140.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="20.0"
+                  cy="100.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="30.7"
+                  cy="60.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="60.0"
+                  cy="30.7"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <g fill="#555">
+                  <circle cx="100" cy="77" r="2.2" />
+                  <circle cx="123" cy="100" r="2.2" />
+                  <circle cx="100" cy="123" r="2.2" />
+                  <circle cx="77" cy="100" r="2.2" />
+                </g>
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #191919;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="lienzo grande" style="background: #191919; height: 30mm; margin-top: 3mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                <g stroke="#5c3c22" stroke-width="2">
+                  <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                </g>
+                <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                  <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                </g>
+                <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                <circle cx="100" cy="100" r="19" fill="#111" />
+                <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                <circle
+                  cx="100.0"
+                  cy="20.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="140.0"
+                  cy="30.7"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="169.3"
+                  cy="60.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="180.0"
+                  cy="100.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="169.3"
+                  cy="140.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="140.0"
+                  cy="169.3"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="100.0"
+                  cy="180.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="60.0"
+                  cy="169.3"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="30.7"
+                  cy="140.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="20.0"
+                  cy="100.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="30.7"
+                  cy="60.0"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <circle
+                  cx="60.0"
+                  cy="30.7"
+                  r="4.2"
+                  fill="#3d3d3d"
+                  stroke="#0d0d0d"
+                  stroke-width="1"
+                />
+                <g fill="#555">
+                  <circle cx="100" cy="77" r="2.2" />
+                  <circle cx="123" cy="100" r="2.2" />
+                  <circle cx="100" cy="123" r="2.2" />
+                  <circle cx="77" cy="100" r="2.2" />
+                </g>
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #ffffff;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="filaesc">
+            <div class="tel">
+              <div class="pantalla">
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap yo" style="background: #fff">
+                  <svg viewBox="0 0 200 200" width="8mm" height="8mm">
+                    <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                    <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                    <g stroke="#5c3c22" stroke-width="2">
+                      <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                    </g>
+                    <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                      <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                    </g>
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                    <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                    <circle cx="100" cy="100" r="19" fill="#111" />
+                    <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                    <circle
+                      cx="100.0"
+                      cy="20.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="180.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="100.0"
+                      cy="180.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="20.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <g fill="#555">
+                      <circle cx="100" cy="77" r="2.2" />
+                      <circle cx="123" cy="100" r="2.2" />
+                      <circle cx="100" cy="123" r="2.2" />
+                      <circle cx="77" cy="100" r="2.2" />
+                    </g>
+                  </svg>
+                </div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+              </div>
+              <span>En el celular</span>
+            </div>
+            <div>
+              <h3>En tamaño pequeño</h3>
+              <div class="tms">
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="22mm" height="22mm">
+                    <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                    <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                    <g stroke="#5c3c22" stroke-width="2">
+                      <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                    </g>
+                    <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                      <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                    </g>
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                    <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                    <circle cx="100" cy="100" r="19" fill="#111" />
+                    <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                    <circle
+                      cx="100.0"
+                      cy="20.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="180.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="100.0"
+                      cy="180.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="20.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <g fill="#555">
+                      <circle cx="100" cy="77" r="2.2" />
+                      <circle cx="123" cy="100" r="2.2" />
+                      <circle cx="100" cy="123" r="2.2" />
+                      <circle cx="77" cy="100" r="2.2" />
+                    </g></svg
+                  ><span>22mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="14mm" height="14mm">
+                    <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                    <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                    <g stroke="#5c3c22" stroke-width="2">
+                      <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                    </g>
+                    <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                      <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                    </g>
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                    <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                    <circle cx="100" cy="100" r="19" fill="#111" />
+                    <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                    <circle
+                      cx="100.0"
+                      cy="20.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="180.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="100.0"
+                      cy="180.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="20.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <g fill="#555">
+                      <circle cx="100" cy="77" r="2.2" />
+                      <circle cx="123" cy="100" r="2.2" />
+                      <circle cx="100" cy="123" r="2.2" />
+                      <circle cx="77" cy="100" r="2.2" />
+                    </g></svg
+                  ><span>14mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="9mm" height="9mm">
+                    <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                    <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                    <g stroke="#5c3c22" stroke-width="2">
+                      <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                    </g>
+                    <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                      <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                    </g>
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                    <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                    <circle cx="100" cy="100" r="19" fill="#111" />
+                    <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                    <circle
+                      cx="100.0"
+                      cy="20.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="180.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="100.0"
+                      cy="180.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="20.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <g fill="#555">
+                      <circle cx="100" cy="77" r="2.2" />
+                      <circle cx="123" cy="100" r="2.2" />
+                      <circle cx="100" cy="123" r="2.2" />
+                      <circle cx="77" cy="100" r="2.2" />
+                    </g></svg
+                  ><span>9mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="5mm" height="5mm">
+                    <circle cx="100" cy="100" r="85" fill="#1c1c1c" />
+                    <circle cx="100" cy="100" r="74" fill="#7a5233" />
+                    <g stroke="#5c3c22" stroke-width="2">
+                      <path d="M44 52H156M30 76H170M26 100H174M30 124H170M44 148H156" />
+                    </g>
+                    <g stroke="#9a6b45" stroke-width="1" opacity=".6">
+                      <path d="M60 64h30M110 88h40M40 112h25M120 136h30M70 160h20" />
+                    </g>
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#f4efe6" stroke-width="30" />
+                    <path d="M50 50 150 150M150 50 50 150" stroke="#e1261c" stroke-width="20" />
+                    <circle cx="100" cy="100" r="27" fill="#2a2a2a" />
+                    <circle cx="100" cy="100" r="19" fill="#111" />
+                    <circle cx="94" cy="94" r="6" fill="#4a4a4a" />
+                    <circle
+                      cx="100.0"
+                      cy="20.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="180.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="169.3"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="140.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="100.0"
+                      cy="180.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="169.3"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="140.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="20.0"
+                      cy="100.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="30.7"
+                      cy="60.0"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <circle
+                      cx="60.0"
+                      cy="30.7"
+                      r="4.2"
+                      fill="#3d3d3d"
+                      stroke="#0d0d0d"
+                      stroke-width="1"
+                    />
+                    <g fill="#555">
+                      <circle cx="100" cy="77" r="2.2" />
+                      <circle cx="123" cy="100" r="2.2" />
+                      <circle cx="100" cy="123" r="2.2" />
+                      <circle cx="77" cy="100" r="2.2" />
+                    </g></svg
+                  ><span>5mm</span>
+                </div>
+              </div>
+              <h3 style="margin-top: 3mm">Colores</h3>
+              <div class="sws">
+                <div class="sw">
+                  <i style="background: #e1261c"></i><b>Rojo escudo</b><span>#E1261C</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #f4efe6"></i><b>Blanco hueso</b><span>#F4EFE6</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #7a5233"></i><b>Madera</b><span>#7A5233</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #1c1c1c"></i><b>Hierro</b><span>#1C1C1C</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="chico-g" style="margin-top: 3mm">
+            <b>Dónde se usa:</b> Campañas, uniformes, la maleta de reparto, la tienda y las redes:
+            donde hay espacio para el detalle.
+          </p>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca · escudo</span><span>9</span></div>
+    </section>
+    <section class="hoja" style="background: #f4f3ef">
+      <div class="etq" style="color: #ff3008">Escudo 2 de 3</div>
+      <div class="hojaesc">
+        <div class="heroe">
+          <svg viewBox="0 0 200 200" width="128mm" height="128mm">
+            <circle cx="100" cy="100" r="85" fill="#191919" />
+            <circle cx="100" cy="100" r="72" fill="#ffffff" />
+            <path
+              d="M59 59 141 141M141 59 59 141"
+              stroke="#ff3008"
+              stroke-width="24"
+              stroke-linecap="round"
+            />
+            <circle cx="100" cy="100" r="20" fill="#191919" />
+            <circle cx="100" cy="100" r="8" fill="#ffffff" />
+            <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+            <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+            <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+            <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+            <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+            <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+            <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+            <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" />
+          </svg>
+        </div>
+        <div>
+          <h2>Escudo moderno</h2>
+          <p class="sub" style="margin-bottom: 4mm">
+            El mismo escudo, limpio y plano: borde negro con ocho remaches, campo blanco y la X roja
+            de la marca. Se reconoce igual de lejos y en tamaño pequeño.
+          </p>
+          <div class="lienzo grande" style="background: #fff; height: 30mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#191919" />
+                <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                <path
+                  d="M59 59 141 141M141 59 59 141"
+                  stroke="#ff3008"
+                  stroke-width="24"
+                  stroke-linecap="round"
+                />
+                <circle cx="100" cy="100" r="20" fill="#191919" />
+                <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" />
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #191919;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="lienzo grande" style="background: #191919; height: 30mm; margin-top: 3mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#191919" />
+                <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                <path
+                  d="M59 59 141 141M141 59 59 141"
+                  stroke="#ff3008"
+                  stroke-width="24"
+                  stroke-linecap="round"
+                />
+                <circle cx="100" cy="100" r="20" fill="#191919" />
+                <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" />
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #ffffff;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="filaesc">
+            <div class="tel">
+              <div class="pantalla">
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap yo" style="background: #fff">
+                  <svg viewBox="0 0 200 200" width="8mm" height="8mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                    <path
+                      d="M59 59 141 141M141 59 59 141"
+                      stroke="#ff3008"
+                      stroke-width="24"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="20" fill="#191919" />
+                    <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                    <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                    <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" />
+                  </svg>
+                </div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+              </div>
+              <span>En el celular</span>
+            </div>
+            <div>
+              <h3>En tamaño pequeño</h3>
+              <div class="tms">
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="22mm" height="22mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                    <path
+                      d="M59 59 141 141M141 59 59 141"
+                      stroke="#ff3008"
+                      stroke-width="24"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="20" fill="#191919" />
+                    <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                    <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                    <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" /></svg
+                  ><span>22mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="14mm" height="14mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                    <path
+                      d="M59 59 141 141M141 59 59 141"
+                      stroke="#ff3008"
+                      stroke-width="24"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="20" fill="#191919" />
+                    <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                    <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                    <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" /></svg
+                  ><span>14mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="9mm" height="9mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                    <path
+                      d="M59 59 141 141M141 59 59 141"
+                      stroke="#ff3008"
+                      stroke-width="24"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="20" fill="#191919" />
+                    <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                    <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                    <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" /></svg
+                  ><span>9mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="5mm" height="5mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <circle cx="100" cy="100" r="72" fill="#ffffff" />
+                    <path
+                      d="M59 59 141 141M141 59 59 141"
+                      stroke="#ff3008"
+                      stroke-width="24"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="20" fill="#191919" />
+                    <circle cx="100" cy="100" r="8" fill="#ffffff" />
+                    <circle cx="100.0" cy="21.5" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="44.5" r="3.4" fill="#ffffff" />
+                    <circle cx="178.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="155.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="100.0" cy="178.5" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="155.5" r="3.4" fill="#ffffff" />
+                    <circle cx="21.5" cy="100.0" r="3.4" fill="#ffffff" />
+                    <circle cx="44.5" cy="44.5" r="3.4" fill="#ffffff" /></svg
+                  ><span>5mm</span>
+                </div>
+              </div>
+              <h3 style="margin-top: 3mm">Colores</h3>
+              <div class="sws">
+                <div class="sw">
+                  <i style="background: #ff3008"></i><b>Rojo escarlata</b><span>#FF3008</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #ffffff"></i><b>Blanco</b><span>#FFFFFF</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #191919"></i><b>Gris oscuro</b><span>#191919</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="chico-g" style="margin-top: 3mm">
+            <b>Dónde se usa:</b> El ícono de la app, el logo principal, gorras, cascos, la web y
+            todo lo que se ve pequeño.
+          </p>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca · escudo</span><span>10</span></div>
+    </section>
+    <section class="hoja" style="background: #f4f3ef">
+      <div class="etq" style="color: #ff3008">Escudo 3 de 3</div>
+      <div class="hojaesc">
+        <div class="heroe">
+          <svg viewBox="0 0 200 200" width="128mm" height="128mm">
+            <circle cx="100" cy="100" r="85" fill="#191919" />
+            <g stroke="#3a3a3a" stroke-width="5">
+              <path
+                d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+              />
+            </g>
+            <circle cx="100" cy="100" r="66" fill="#ffffff" />
+            <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+            <path
+              d="M60 60 140 140M140 60 60 140"
+              stroke="#ff3008"
+              stroke-width="18"
+              stroke-linecap="round"
+            />
+            <circle cx="100" cy="100" r="22" fill="#191919" />
+            <g fill="#ffffff">
+              <circle cx="100" cy="88" r="3" />
+              <circle cx="111.4" cy="96.3" r="3" />
+              <circle cx="107" cy="109.7" r="3" />
+              <circle cx="93" cy="109.7" r="3" />
+              <circle cx="88.6" cy="96.3" r="3" />
+            </g>
+          </svg>
+        </div>
+        <div>
+          <h2>Escudo rueda</h2>
+          <p class="sub" style="margin-bottom: 4mm">
+            El borde se vuelve llanta y el centro, tuercas: es un escudo y es una rueda a la vez. La
+            X roja hace de rayos.
+          </p>
+          <div class="lienzo grande" style="background: #fff; height: 30mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#191919" />
+                <g stroke="#3a3a3a" stroke-width="5">
+                  <path
+                    d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                  />
+                </g>
+                <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                <path
+                  d="M60 60 140 140M140 60 60 140"
+                  stroke="#ff3008"
+                  stroke-width="18"
+                  stroke-linecap="round"
+                />
+                <circle cx="100" cy="100" r="22" fill="#191919" />
+                <g fill="#ffffff">
+                  <circle cx="100" cy="88" r="3" />
+                  <circle cx="111.4" cy="96.3" r="3" />
+                  <circle cx="107" cy="109.7" r="3" />
+                  <circle cx="93" cy="109.7" r="3" />
+                  <circle cx="88.6" cy="96.3" r="3" />
+                </g>
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #191919;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="lienzo grande" style="background: #191919; height: 30mm; margin-top: 3mm">
+            <div style="display: flex; align-items: center; gap: 4mm">
+              <svg viewBox="0 0 200 200" width="24mm" height="24mm">
+                <circle cx="100" cy="100" r="85" fill="#191919" />
+                <g stroke="#3a3a3a" stroke-width="5">
+                  <path
+                    d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                  />
+                </g>
+                <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                <path
+                  d="M60 60 140 140M140 60 60 140"
+                  stroke="#ff3008"
+                  stroke-width="18"
+                  stroke-linecap="round"
+                />
+                <circle cx="100" cy="100" r="22" fill="#191919" />
+                <g fill="#ffffff">
+                  <circle cx="100" cy="88" r="3" />
+                  <circle cx="111.4" cy="96.3" r="3" />
+                  <circle cx="107" cy="109.7" r="3" />
+                  <circle cx="93" cy="109.7" r="3" />
+                  <circle cx="88.6" cy="96.3" r="3" />
+                </g>
+              </svg>
+              <div style="display: flex; flex-direction: column">
+                <span
+                  style="
+                    font-family: 'Archivo Black';
+                    font-size: 34pt;
+                    line-height: 1;
+                    color: #ffffff;
+                  "
+                  >Divoox</span
+                ><span
+                  style="
+                    font-family: Poppins;
+                    font-weight: 600;
+                    font-size: 8.2pt;
+                    letter-spacing: 4px;
+                    color: #ff3008;
+                    margin-top: 1.5mm;
+                  "
+                  >DRIVER</span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="filaesc">
+            <div class="tel">
+              <div class="pantalla">
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap yo" style="background: #fff">
+                  <svg viewBox="0 0 200 200" width="8mm" height="8mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <g stroke="#3a3a3a" stroke-width="5">
+                      <path
+                        d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                      />
+                    </g>
+                    <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                    <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                    <path
+                      d="M60 60 140 140M140 60 60 140"
+                      stroke="#ff3008"
+                      stroke-width="18"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="22" fill="#191919" />
+                    <g fill="#ffffff">
+                      <circle cx="100" cy="88" r="3" />
+                      <circle cx="111.4" cy="96.3" r="3" />
+                      <circle cx="107" cy="109.7" r="3" />
+                      <circle cx="93" cy="109.7" r="3" />
+                      <circle cx="88.6" cy="96.3" r="3" />
+                    </g>
+                  </svg>
+                </div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+                <div class="ap"></div>
+              </div>
+              <span>En el celular</span>
+            </div>
+            <div>
+              <h3>En tamaño pequeño</h3>
+              <div class="tms">
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="22mm" height="22mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <g stroke="#3a3a3a" stroke-width="5">
+                      <path
+                        d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                      />
+                    </g>
+                    <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                    <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                    <path
+                      d="M60 60 140 140M140 60 60 140"
+                      stroke="#ff3008"
+                      stroke-width="18"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="22" fill="#191919" />
+                    <g fill="#ffffff">
+                      <circle cx="100" cy="88" r="3" />
+                      <circle cx="111.4" cy="96.3" r="3" />
+                      <circle cx="107" cy="109.7" r="3" />
+                      <circle cx="93" cy="109.7" r="3" />
+                      <circle cx="88.6" cy="96.3" r="3" />
+                    </g></svg
+                  ><span>22mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="14mm" height="14mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <g stroke="#3a3a3a" stroke-width="5">
+                      <path
+                        d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                      />
+                    </g>
+                    <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                    <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                    <path
+                      d="M60 60 140 140M140 60 60 140"
+                      stroke="#ff3008"
+                      stroke-width="18"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="22" fill="#191919" />
+                    <g fill="#ffffff">
+                      <circle cx="100" cy="88" r="3" />
+                      <circle cx="111.4" cy="96.3" r="3" />
+                      <circle cx="107" cy="109.7" r="3" />
+                      <circle cx="93" cy="109.7" r="3" />
+                      <circle cx="88.6" cy="96.3" r="3" />
+                    </g></svg
+                  ><span>14mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="9mm" height="9mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <g stroke="#3a3a3a" stroke-width="5">
+                      <path
+                        d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                      />
+                    </g>
+                    <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                    <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                    <path
+                      d="M60 60 140 140M140 60 60 140"
+                      stroke="#ff3008"
+                      stroke-width="18"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="22" fill="#191919" />
+                    <g fill="#ffffff">
+                      <circle cx="100" cy="88" r="3" />
+                      <circle cx="111.4" cy="96.3" r="3" />
+                      <circle cx="107" cy="109.7" r="3" />
+                      <circle cx="93" cy="109.7" r="3" />
+                      <circle cx="88.6" cy="96.3" r="3" />
+                    </g></svg
+                  ><span>9mm</span>
+                </div>
+                <div class="tm">
+                  <svg viewBox="0 0 200 200" width="5mm" height="5mm">
+                    <circle cx="100" cy="100" r="85" fill="#191919" />
+                    <g stroke="#3a3a3a" stroke-width="5">
+                      <path
+                        d="M100 15v10M100 185v-10M15 100h10M185 100h-10M160 40l-7 7M40 160l7-7M160 160l-7-7M40 40l7 7"
+                      />
+                    </g>
+                    <circle cx="100" cy="100" r="66" fill="#ffffff" />
+                    <path d="M100 34V166M34 100H166" stroke="#d8d8d8" stroke-width="6" />
+                    <path
+                      d="M60 60 140 140M140 60 60 140"
+                      stroke="#ff3008"
+                      stroke-width="18"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="100" cy="100" r="22" fill="#191919" />
+                    <g fill="#ffffff">
+                      <circle cx="100" cy="88" r="3" />
+                      <circle cx="111.4" cy="96.3" r="3" />
+                      <circle cx="107" cy="109.7" r="3" />
+                      <circle cx="93" cy="109.7" r="3" />
+                      <circle cx="88.6" cy="96.3" r="3" />
+                    </g></svg
+                  ><span>5mm</span>
+                </div>
+              </div>
+              <h3 style="margin-top: 3mm">Colores</h3>
+              <div class="sws">
+                <div class="sw">
+                  <i style="background: #ff3008"></i><b>Rojo escarlata</b><span>#FF3008</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #ffffff"></i><b>Blanco</b><span>#FFFFFF</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #191919"></i><b>Gris oscuro</b><span>#191919</span>
+                </div>
+                <div class="sw">
+                  <i style="background: #d8d8d8"></i><b>Gris rayos</b><span>#D8D8D8</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="chico-g" style="margin-top: 3mm">
+            <b>Dónde se usa:</b> Repartidores, motos y carros: la parte de transporte de la marca.
+          </p>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca · escudo</span><span>11</span></div>
+    </section>
+    <section class="hoja">
+      <div class="etq">Ventajas</div>
+      <h2>Por qué Divoox</h2>
+      <p class="sub">Lo que el nombre le da a la empresa desde el primer día.</p>
+      <div class="col4">
+        <div class="caja">
+          <h3>El punto com, libre</h3>
+          <p>
+            divoox.com, el nombre solo y sin apellido, está libre (registro oficial, 22 oct 2026).
+            La marca y el dominio son lo mismo.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Único en las tiendas</h3>
+          <p>
+            Ninguna app llamada Divoox en la App Store ni en Google Play, y ninguna marca registrada
+            con ese nombre en los registros públicos.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>D y V de delivery</h3>
+          <p>
+            Empieza como «delivery» y termina con la fuerza de la X: dice movimiento y entrega sin
+            explicarlo.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Las dos o y la X</h3>
+          <p>
+            Se presta para ruedas, ojos, origen y destino, y para la X del escudo: todos los logos
+            funcionan.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Dos sílabas</h3>
+          <p>Seis letras, fácil de decir y de recordar: «pídelo por Divoox».</p>
+        </div>
+        <div class="caja">
+          <h3>Un solo nombre para todo</h3>
+          <p>
+            Comida, motos, carros y envíos bajo la misma marca. «Driver» queda solo para la app de
+            repartidores.
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Marca registrable</h3>
+          <p>Es una palabra inventada: más fácil de registrar y proteger que una palabra común.</p>
+        </div>
+        <div class="caja">
+          <h3>Funciona en el mundo</h3>
+          <p>
+            Se pronuncia casi igual en los idiomas más hablados y no tiene un significado malo en
+            inglés ni en español.
+          </p>
+        </div>
+      </div>
+      <div class="caja" style="margin-top: 6mm">
+        <h3>A tener en cuenta</h3>
+        <ul class="lista">
+          <li>
+            Existe Divox, con una sola o: software para restaurantes de una empresa de la India, con
+            una app de repartidores («Divox Rider») en la App Store de EE. UU. y de Colombia. Mismo
+            rubro y una letra de diferencia: el abogado lo revisa antes de comprar.
+          </li>
+          <li>
+            Entre 2007 y 2009 divoox.com fue una página en español para ver películas y series en
+            línea; después se vendió y se dejó vencer. Es contenido de hace más de quince años:
+            riesgo bajo.
+          </li>
+          <li>
+            En TikTok @divoox ya existe; @divooxdriver está libre. Instagram, Facebook y X se
+            revisan desde un teléfono con sesión.
+          </li>
+          <li>
+            Hay que fijar una sola pronunciación desde la primera publicidad, «di-VÚKS», y alejar el
+            diseño de marcas parecidas: Divoom (parlantes), DivX (video) y Deliveroo (reparto en
+            Europa).
+          </li>
+        </ul>
+      </div>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>12</span></div>
+    </section>
+
+    <section class="hoja">
+      <div class="etq">Pronunciación</div>
+      <h2>Cómo se dice Divoox en los idiomas más hablados</h2>
+      <p class="sub">
+        La marca se dice <b>«di-VÚKS»</b>: dos sílabas, la fuerza en la segunda y la doble o como
+        «u», igual que en Google. Así se adapta en cada idioma (aproximado).
+      </p>
+      <table>
+        <tr>
+          <th>Idioma</th>
+          <th>Se dice</th>
+          <th>Nota</th>
+        </tr>
+        <tr>
+          <td><b>Inglés</b></td>
+          <td class="dice">di-VÚKS</td>
+          <td>algunos dirán «dai-VÚKS»: se fija una sola forma en la publicidad</td>
+        </tr>
+        <tr>
+          <td><b>Español</b></td>
+          <td class="dice">di-VÚKS</td>
+          <td>la doble o se dice «u», como en Google</td>
+        </tr>
+        <tr>
+          <td><b>Portugués</b></td>
+          <td class="dice">dji-VÚKS</td>
+          <td>en Brasil la «di» suena «dji»; natural</td>
+        </tr>
+        <tr>
+          <td><b>Francés</b></td>
+          <td class="dice">di-VÚKS</td>
+          <td>se escribe «divouks» al decirlo</td>
+        </tr>
+        <tr>
+          <td><b>Italiano</b></td>
+          <td class="dice">di-VÚKS</td>
+          <td>sin cambios</td>
+        </tr>
+        <tr>
+          <td><b>Alemán</b></td>
+          <td class="dice">di-FÚKS / di-VÚKS</td>
+          <td>en alemán la v suele sonar f; en marca se enseña «di-VÚKS»</td>
+        </tr>
+        <tr>
+          <td><b>Chino mandarín</b></td>
+          <td class="dice">dí wǔ kè sī · 迪武克斯</td>
+          <td>adaptación por sílabas, como se hace con las marcas extranjeras</td>
+        </tr>
+        <tr>
+          <td><b>Japonés</b></td>
+          <td class="dice">divūkusu · ディヴークス</td>
+          <td>adaptación al silabario katakana</td>
+        </tr>
+        <tr>
+          <td><b>Árabe</b></td>
+          <td class="dice">dīfūks · ديفوكس</td>
+          <td>el árabe no tiene v; se adapta con f</td>
+        </tr>
+        <tr>
+          <td><b>Hindi</b></td>
+          <td class="dice">divūks · डिवूक्स</td>
+          <td>fácil, dos sílabas</td>
+        </tr>
+        <tr>
+          <td><b>Ruso</b></td>
+          <td class="dice">divuks · Дивукс</td>
+          <td>corto y directo</td>
+        </tr>
+      </table>
+      <p style="margin-top: 4mm; font-size: 8.6pt; color: #55555c">
+        Para la app de repartidores, «Divoox Driver»: «driver» se dice <b>«dráiver»</b> en todos los
+        idiomas.
+      </p>
+      <div class="pie"><span>Divoox · propuesta de marca</span><span>13</span></div>
+    </section>
+
+    <section class="hoja">
+      <div class="etq">Cómo se usa</div>
+      <h2>El nombre en la vida real</h2>
+      <div class="col2">
+        <div class="caja">
+          <h3>Cómo se escribe</h3>
+          <table>
+            <tr>
+              <td>La marca (ícono, publicidad, conversación)</td>
+              <td><b>Divoox</b></td>
+            </tr>
+            <tr>
+              <td>Dominio</td>
+              <td><b>divoox.com</b></td>
+            </tr>
+            <tr>
+              <td>Nombre largo en las tiendas</td>
+              <td><b>Divoox: Food, Rides & Delivery</b></td>
+            </tr>
+            <tr>
+              <td>Apps</td>
+              <td>
+                <b>Divoox</b> (cliente), <b>Divoox Driver</b> (repartidor),
+                <b>Divoox for Restaurants</b>
+              </td>
+            </tr>
+            <tr>
+              <td>Redes</td>
+              <td>
+                <b>@divoox</b> donde esté libre; si no, <b>@divooxapp</b> o <b>@divooxdriver</b>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="caja">
+          <h3>Cómo lo dice la gente</h3>
+          <p>
+            «Pídelo por Divoox». «Llegó el Divoox». «¿Vas en Divoox?». Un nombre que se vuelve
+            verbo, como pasó con las grandes.
+          </p>
+          <h3 style="margin-top: 5mm">Siguientes pasos</h3>
+          <p>
+            1. Comprar divoox.com y divoox.net. 2. Abogado de marcas, mirando a Divox. 3. El equipo
+            elige el logo (escudo u otro). 4. Usuarios en redes. 5. Abrir las cuentas de Apple y
+            Google Play con el nombre definitivo. 6. Cambiar la marca en las apps, la web y Docs,
+            pasando por el sitio de pruebas.
+          </p>
+        </div>
+      </div>
+      <div class="pie"><span>© 2026 Windoce LLC</span><span>14</span></div>
+    </section>
+  </body>
+</html>
