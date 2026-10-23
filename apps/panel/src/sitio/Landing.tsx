@@ -66,7 +66,8 @@ const ALT = {
     ],
     banner: 'Tus antojos en minutos con Divoox',
     servicios: 'Comida · Viajes · Envíos — muy pronto en Miami',
-    restaurante: 'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante',
+    restaurante:
+      'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante de comida rápida',
     repartidor: 'Repartidor de Divoox en su moto por Miami',
     miami: 'Cartel de Divoox en una autopista de Miami',
     local: 'Local de Divoox',
@@ -80,7 +81,7 @@ const ALT = {
     ],
     banner: 'Your cravings in minutes with Divoox',
     servicios: 'Food · Rides · Delivery — coming soon to Miami',
-    restaurante: 'A Divoox driver picks up an order at a restaurant counter',
+    restaurante: 'A Divoox driver picks up an order at a fast-food restaurant counter',
     repartidor: 'Divoox driver on a bike in Miami',
     miami: 'Divoox billboard on a Miami highway',
     local: 'Divoox storefront',
@@ -245,7 +246,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             src={IMG.restaurante}
             alt={a.restaurante}
             width={1536}
-            height={1024}
+            height={817}
             loading="lazy"
           />
           <ul className="ld-funciones">

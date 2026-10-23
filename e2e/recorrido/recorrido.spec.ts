@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type BrowserContext, type Page, devices, expect, test } from './fixtures';
+import { type BrowserContext, type Locator, type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
 
 /**
@@ -193,6 +193,17 @@ for (const idioma of ['en', 'es'] as const) {
      * Consulta a la base de prueba (solo la local de .recorrido; nunca otra). Si wrangler falla un
      * instante (la base ocupada por el servidor, pasa en GitHub), se reintenta hasta tres veces.
      */
+    /**
+     * Captura para Docs sin mover la pantalla (23 oct 2026): la sección ya quedó a la vista. Solo
+     * con CAPTURAS y nunca para las tiendas; con `elemento`, solo ese recuadro.
+     */
+    const fotoAqui = async (pagina: Page, nombre: string, elemento?: Locator) => {
+      if (!CAPTURAS || TIENDA) return;
+      const dir = join(RAIZ, 'docs', 'capturas', 'recorrido');
+      mkdirSync(dir, { recursive: true });
+      await (elemento ?? pagina).screenshot({ path: join(dir, `${nombre}-${idioma}.png`) });
+    };
+
     const sql = (comando: string, intento = 1): Record<string, unknown>[] => {
       try {
         return sqlUnaVez(comando);
@@ -536,6 +547,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByLabel(L.correo).fill(correo('repartidor'));
     await rep.getByLabel(L.celular).fill('3055550102');
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+    await fotoAqui(rep, 'repartidor-registro');
     await rep.getByRole('button', { name: L.crearCuenta }).click();
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.
@@ -561,6 +573,14 @@ for (const idioma of ['en', 'es'] as const) {
       rep.getByText(/Online: receiving orders|Conectado: recibiendo pedidos/),
     ).toBeVisible();
     await foto(rep, 'repartidor-conectado');
+    if (CAPTURAS) {
+      const nivel = rep
+        .getByText(/^(Your level|Tu nivel):/)
+        .filter({ visible: true })
+        .first();
+      await nivel.scrollIntoViewIfNeeded();
+      await fotoAqui(rep, 'repartidor-nivel', nivel.locator('..'));
+    }
 
     // 5. El cliente se registra, elige, arma el carrito y paga.
     const cliCtx = await nuevoContexto('celular', CASA);
@@ -1081,6 +1101,13 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.goto('/app/favorites');
     await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-favoritos');
+    if (CAPTURAS) {
+      await cli.goto('/app/account');
+      await expect(cli.getByText(/^(My account|Mi cuenta)$/).first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await foto(cli, 'cliente-mi-cuenta');
+    }
 
     // Direcciones guardadas, cupón y pago al recibir, todo en el carrito. La dirección queda
     // guardada por la API (como si la hubiera marcado «guardar» en el primer pedido); el cupón lo
@@ -1362,6 +1389,30 @@ for (const idioma of ['en', 'es'] as const) {
     expect(montoTumbite).toBeGreaterThan(montoDoorDash);
     await expect(compara).toContainText(/Uber Eats Lite/);
     await foto(panel, 'restaurante-beneficios');
+    if (CAPTURAS) {
+      await panel.goto('/panel');
+      await expect(panel.getByText(/Last 7 days|Últimos 7 días/).first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await foto(panel, 'restaurante-tablero');
+      await panel.goto('/panel/settings');
+      await expect(
+        panel.getByRole('button', { name: /^(Change password|Cambiar contraseña)$/ }),
+      ).toBeVisible({ timeout: 20_000 });
+      for (const [titulo, nombre] of [
+        [/^(Password|Contraseña)$/, 'restaurante-clave'],
+        [/^(Email|Correo)$/, 'restaurante-correo'],
+      ] as const) {
+        // Solo la tarjeta de esa sección (Playwright la trae a la vista sola).
+        await fotoAqui(panel, nombre, panel.getByRole('heading', { name: titulo }).locator('..'));
+      }
+      await panel.goto('/panel/company');
+      const verif = panel.getByText(
+        /^(Owner and storefront verification|Verificación del dueño y del local)$/,
+      );
+      await verif.scrollIntoViewIfNeeded();
+      await fotoAqui(panel, 'restaurante-verificacion');
+    }
 
     // El repartidor ve su billetera, conecta su banco (en Stripe) y retira todo.
     await rep.goto('/driver/');
@@ -1411,6 +1462,13 @@ for (const idioma of ['en', 'es'] as const) {
       await foto(rep, 'repartidor-retiro');
       // Calificaciones visibles y la campana real (como los grandes, 18 oct).
       await rep.getByRole('tab', { name: L.perfil }).click();
+      if (CAPTURAS) {
+        await rep.getByText(/^(Documents|Documentos)$/).click();
+        const titulo = rep.getByText(/^(Verify your identity|Verifica tu identidad)$/);
+        await titulo.scrollIntoViewIfNeeded();
+        await fotoAqui(rep, 'repartidor-verificacion');
+        await rep.getByText(/^(Documents|Documentos)$/).click();
+      }
       await rep.getByRole('button', { name: L.misCalificaciones }).click();
       await expect(rep.getByTestId('calificaciones')).toBeVisible({ timeout: 20_000 });
       await foto(rep, 'repartidor-calificaciones');

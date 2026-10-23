@@ -359,7 +359,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/sesion-sin-confirmar-es.webp',
+            src: '/docs/recorrido-cliente-sesion-sin-confirmar-es.webp',
             alt: 'Pantalla de la app del cliente que dice «No pudimos confirmar tu sesión», con los botones «Reintentar» y «Entrar con otra cuenta».',
             pie: 'Si la conexión falla al abrir, la app te deja reintentar sin cerrar tu sesión.',
           },
@@ -645,7 +645,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/mi-cuenta-es.webp',
+            src: '/docs/recorrido-cliente-mi-cuenta-es.webp',
             alt: 'Pantalla «Mi cuenta» de la app de Divoox con el nombre y el correo del cliente y la lista de sus pedidos con restaurante, fecha, estado y total.',
             pie: 'Mi cuenta: tus datos arriba y todos tus pedidos debajo.',
           },
@@ -1152,8 +1152,8 @@ const es: SeccionDocs[] = [
         resumen: 'Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.',
         capturas: [
           {
-            src: '/docs/menu-restaurante-es.webp',
-            alt: 'Menú del restaurante con un plato marcado como «Agotado».',
+            src: '/docs/recorrido-restaurante-menu-es.webp',
+            alt: 'Menú del restaurante con la casilla «Disponible» en cada plato; al quitarla, el plato queda «Agotado».',
             pie: 'Un toque y el plato queda «Agotado»: deja de aparecer para los clientes.',
           },
         ],
@@ -1171,7 +1171,7 @@ const es: SeccionDocs[] = [
           'Suena fuerte hasta que alguien acepta. Ningún pedido se queda olvidado en hora pico.',
         capturas: [
           {
-            src: '/docs/semaforo-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
             alt: 'Lista de pedidos del restaurante con la alarma, el semáforo de cada pedido y los botones para aceptar con 10, 20 o 30 minutos.',
             pie: 'Los pedidos con su semáforo y los botones para aceptar.',
           },
@@ -1218,7 +1218,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/tablero-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-tablero-es.webp',
             alt: 'Tablero del restaurante en Divoox con pedidos esperando, ventas de 7 y 30 días, lo que recibe, ticket promedio, platos más vendidos, tiempo real de cocina y calificación.',
             pie: 'Tu tablero al entrar al panel: lo importante del negocio en una sola pantalla.',
           },
@@ -1243,7 +1243,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-verificacion-es.webp',
             alt: 'Sección «Verificación del dueño y del local» del panel del restaurante, con el tipo de documento y los botones «Tomar foto» para el documento, la cara del dueño y el frente del local.',
             pie: 'Todo se hace desde «Mi empresa», con la cámara del celular.',
           },
@@ -1468,7 +1468,7 @@ const es: SeccionDocs[] = [
         resumen: 'Crea tu cuenta, conéctate cuando quieras y acepta solo lo que te convenga.',
         capturas: [
           {
-            src: '/docs/registro-repartidor-es.webp',
+            src: '/docs/recorrido-repartidor-registro-es.webp',
             alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
             pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
           },
@@ -1502,7 +1502,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-repartidor-es.webp',
+            src: '/docs/recorrido-repartidor-verificacion-es.webp',
             alt: 'Pantalla «Verifica tu identidad» de la app de repartidores, con el tipo de documento y los botones «Tomar foto» para el frente, el reverso y la cara.',
             pie: 'Está en el menú, en «Mis datos y vehículo».',
           },
@@ -1676,7 +1676,7 @@ const es: SeccionDocs[] = [
           'Los niveles altos ven primero los pedidos grandes. Se suben con entregas y buenas notas.',
         capturas: [
           {
-            src: '/docs/nivel-repartidor-es.webp',
+            src: '/docs/recorrido-repartidor-nivel-es.webp',
             alt: 'Tarjeta «Tu nivel» en la app de repartidores con el nivel, los puntos, lo que falta para el siguiente nivel y la barra de avance en verde.',
             pie: 'Tu nivel en la pantalla de inicio, con la barra verde de avance.',
           },
@@ -2052,7 +2052,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/semaforo-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
             alt: 'Lista de pedidos del panel del restaurante en Divoox: un pedido «A tiempo» en verde, uno «Atrasándose» en amarillo sin aceptar y uno «En problemas» en rojo, listo y sin repartidor.',
             pie: 'Así lo ve el restaurante en su lista de pedidos: el color, los minutos y el motivo.',
           },
@@ -2081,12 +2081,12 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-verificacion-es.webp',
             alt: 'Sección «Verificación del dueño y del local» en el panel del restaurante de Divoox, con el documento, la cara y el frente del local.',
             pie: 'El restaurante verifica al dueño y el local con fotos tomadas desde el celular.',
           },
           {
-            src: '/docs/verificacion-repartidor-es.webp',
+            src: '/docs/recorrido-repartidor-verificacion-es.webp',
             alt: 'Pantalla «Verifica tu identidad» de la app de repartidores de Divoox, con el documento y la foto de la cara.',
             pie: 'El repartidor verifica su identidad con su documento y una foto de su cara.',
           },
@@ -2140,12 +2140,12 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/calculadora-restaurante-es.webp',
+            src: '/docs/recorrido-web-calculadora-restaurante-es.webp',
             alt: 'Calculadora de Divoox para restaurantes: con 10.000 dólares de ventas al mes, le quedan 9.250 con Divoox, 8.500 con DoorDash Basic y 8.000 con Uber Eats Lite, y los pedidos que Divoox le puede traer según su ciudad.',
             pie: 'Restaurante: cuánto te queda en cada app y cuántos pedidos te podemos traer.',
           },
           {
-            src: '/docs/calculadora-franquicia-es.webp',
+            src: '/docs/recorrido-web-calculadora-franquicia-es.webp',
             alt: 'Calculadora de Divoox para franquicias: en una ciudad de 100.000 habitantes con 100 restaurantes y el 5 % del mercado, los pedidos al mes, lo que reciben restaurantes y repartidores, los repartidores necesarios y lo que le queda a la plataforma.',
             pie: 'Franquicia: el tamaño del negocio en tu ciudad, con los supuestos a la vista.',
           },
@@ -2179,7 +2179,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/franquicias-es.webp',
+            src: '/docs/recorrido-web-franquicias-es.webp',
             alt: 'Sección de franquicias de Divoox: un local con la marca Divoox y las cuatro cosas que paga la franquicia: flota propia, repartidores entrenados, kit para cada restaurante y los primeros clientes.',
             pie: 'Lo que incluye una franquicia de Divoox en cada ciudad.',
           },
@@ -2203,7 +2203,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-es.webp',
+            src: '/docs/recorrido-restaurante-verificacion-es.webp',
             alt: 'Verificación del dueño y del local en el panel del restaurante.',
             pie: 'Ejemplo de lo que el equipo enseña en la visita al restaurante.',
           },
@@ -2245,7 +2245,7 @@ const es: SeccionDocs[] = [
             pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
           },
           {
-            src: '/docs/registro-repartidor-es.webp',
+            src: '/docs/recorrido-repartidor-registro-es.webp',
             alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
             pie: 'Quien reparte se registra en la app Divoox Driver.',
           },
@@ -2268,12 +2268,12 @@ const es: SeccionDocs[] = [
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
         capturas: [
           {
-            src: '/docs/olvide-clave-es.webp',
+            src: '/docs/recorrido-web-olvide-clave-es.webp',
             alt: 'Página «Olvidé mi contraseña» de Divoox con la casilla del correo y el botón «Mandarme el enlace».',
             pie: 'Escribe tu correo y te mandamos el enlace.',
           },
           {
-            src: '/docs/cambiar-clave-es.webp',
+            src: '/docs/recorrido-restaurante-clave-es.webp',
             alt: 'Tarjeta «Contraseña» en la configuración de Divoox con la contraseña actual, la nueva y su repetición, cada una con el ojito para verla.',
             pie: 'Si la recuerdas, la cambias en «Configuración» con el ojito para ver lo que escribes.',
           },
@@ -2292,7 +2292,7 @@ const es: SeccionDocs[] = [
         resumen: 'Al registrarte te llega un enlace para confirmar que el correo es tuyo.',
         capturas: [
           {
-            src: '/docs/correo-estado-es.webp',
+            src: '/docs/recorrido-restaurante-correo-es.webp',
             alt: 'Tarjeta «Correo» en la configuración de Divoox con el aviso «Tu correo todavía no está confirmado» y el enlace «Volver a mandar el enlace».',
             pie: 'En «Configuración» ves si tu correo está confirmado y pides el enlace otra vez.',
           },
@@ -2313,7 +2313,7 @@ const es: SeccionDocs[] = [
         resumen: 'Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.',
         capturas: [
           {
-            src: '/docs/borrar-cuenta-es.webp',
+            src: '/docs/recorrido-web-borrar-cuenta-es.webp',
             alt: 'Página «Borrar tu cuenta de Divoox» con el botón «Borrar mi cuenta ahora» y la primera opción explicada.',
             pie: 'La página para borrar tu cuenta, con o sin la app.',
           },
@@ -2338,7 +2338,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/ticket-es.webp',
+            src: '/docs/recorrido-cliente-ticket-es.webp',
             alt: 'Conversación privada de un reporte en Divoox: el mensaje del cliente y la respuesta del equipo de Divoox, con la casilla para responder.',
             pie: 'Tu caso tiene su propia página privada: ves la respuesta y contestas desde ahí.',
           },
@@ -2691,7 +2691,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/sesion-sin-confirmar-en.webp',
+            src: '/docs/recorrido-cliente-sesion-sin-confirmar-en.webp',
             alt: 'Customer app screen reading “We couldn’t confirm your session,” with the buttons “Try again” and “Sign in with another account.”',
             pie: 'If the connection fails when the app opens, you can try again without being signed out.',
           },
@@ -2975,7 +2975,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/mi-cuenta-en.webp',
+            src: '/docs/recorrido-cliente-mi-cuenta-en.webp',
             alt: '“My account” screen in the Divoox app with the customer’s name and email and the list of orders with restaurant, date, status, and total.',
             pie: 'My account: your details at the top and all your orders below.',
           },
@@ -3474,8 +3474,8 @@ const en: SeccionDocs[] = [
         resumen: 'Out of chicken? Turn it off for today in one tap and nobody can order it.',
         capturas: [
           {
-            src: '/docs/menu-restaurante-en.webp',
-            alt: 'Restaurant menu with one item marked “Sold out.”',
+            src: '/docs/recorrido-restaurante-menu-en.webp',
+            alt: 'Restaurant menu with an “Available” checkbox on each item; uncheck it and the item is “Sold out.”',
             pie: 'One tap and the item is “Sold out”: customers no longer see it.',
           },
         ],
@@ -3492,7 +3492,7 @@ const en: SeccionDocs[] = [
         resumen: 'It rings loud until someone accepts. No order gets forgotten at rush hour.',
         capturas: [
           {
-            src: '/docs/semaforo-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
             alt: 'Restaurant order list with the alarm, the traffic light on each order, and buttons to accept with 10, 20, or 30 minutes.',
             pie: 'Orders with their traffic light and the accept buttons.',
           },
@@ -3539,7 +3539,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/tablero-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-tablero-en.webp',
             alt: 'Divoox restaurant dashboard showing orders waiting, 7- and 30-day sales, payout, average order, best sellers, real kitchen time, and rating.',
             pie: 'Your dashboard when you sign in: the essentials of your business on one screen.',
           },
@@ -3564,7 +3564,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-verificacion-en.webp',
             alt: '“Owner and storefront verification” section of the restaurant dashboard, with the document type and “Take photo” buttons for the ID, the owner’s face, and the storefront.',
             pie: 'Everything happens in “My company,” with your phone camera.',
           },
@@ -3783,7 +3783,7 @@ const en: SeccionDocs[] = [
           'Create your account, go online when you want, and accept only what works for you.',
         capturas: [
           {
-            src: '/docs/registro-repartidor-en.webp',
+            src: '/docs/recorrido-repartidor-registro-en.webp',
             alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
             pie: 'You create your account in the app with your name, email, phone, and a password.',
           },
@@ -3816,7 +3816,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-repartidor-en.webp',
+            src: '/docs/recorrido-repartidor-verificacion-en.webp',
             alt: '“Verify your identity” screen in the driver app, with the document type and “Take photo” buttons for the front, the back, and your face.',
             pie: 'You’ll find it in the menu, under “My details and vehicle.”',
           },
@@ -3991,7 +3991,7 @@ const en: SeccionDocs[] = [
           'Higher levels see bigger orders first. You level up with deliveries and good ratings.',
         capturas: [
           {
-            src: '/docs/nivel-repartidor-en.webp',
+            src: '/docs/recorrido-repartidor-nivel-en.webp',
             alt: '“Your level” card in the driver app with the level, points, how many points to the next level, and the progress bar in green.',
             pie: 'Your level on the home screen, with the green progress bar.',
           },
@@ -4373,7 +4373,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/semaforo-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
             alt: 'Order list in the Divoox restaurant dashboard: one order “On time” in green, one “Running late” in yellow not yet accepted, and one “In trouble” in red, ready with no driver.',
             pie: 'This is how restaurants see it in their order list: the color, the minutes, and the reason.',
           },
@@ -4402,12 +4402,12 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-verificacion-en.webp',
             alt: '“Owner and storefront verification” section in the Divoox restaurant dashboard, with the ID, the face photo, and the storefront.',
             pie: 'Restaurants verify the owner and the location with photos taken from a phone.',
           },
           {
-            src: '/docs/verificacion-repartidor-en.webp',
+            src: '/docs/recorrido-repartidor-verificacion-en.webp',
             alt: '“Verify your identity” screen in the Divoox driver app, with the ID and the face photo.',
             pie: 'Drivers verify their identity with their ID and a photo of their face.',
           },
@@ -4461,12 +4461,12 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/calculadora-restaurante-en.webp',
+            src: '/docs/recorrido-web-calculadora-restaurante-en.webp',
             alt: 'Divoox calculator for restaurants: with $10,000 in monthly sales, the restaurant keeps $9,250 with Divoox, $8,500 with DoorDash Basic, and $8,000 with Uber Eats Lite, plus the orders Divoox can bring based on its city.',
             pie: 'Restaurant: what you keep on each app and how many orders we can bring you.',
           },
           {
-            src: '/docs/calculadora-franquicia-en.webp',
+            src: '/docs/recorrido-web-calculadora-franquicia-en.webp',
             alt: 'Divoox calculator for franchises: in a city of 100,000 people with 100 restaurants and a 5% market share, the monthly orders, what restaurants and drivers receive, the drivers needed, and what the platform keeps.',
             pie: 'Franchise: the size of the business in your city, with the assumptions in plain view.',
           },
@@ -4500,7 +4500,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/franquicias-en.webp',
+            src: '/docs/recorrido-web-franquicias-en.webp',
             alt: 'Divoox franchise section: a Divoox-branded restaurant and the four things the franchise pays for: own fleet, trained drivers, a kit for every restaurant, and the first customers.',
             pie: 'What a Divoox franchise includes in each city.',
           },
@@ -4524,7 +4524,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/verificacion-restaurante-en.webp',
+            src: '/docs/recorrido-restaurante-verificacion-en.webp',
             alt: 'Owner and storefront verification in the restaurant dashboard.',
             pie: 'An example of what the team teaches during the restaurant visit.',
           },
@@ -4566,7 +4566,7 @@ const en: SeccionDocs[] = [
             pie: 'Restaurants create their account in the dashboard, from a computer.',
           },
           {
-            src: '/docs/registro-repartidor-en.webp',
+            src: '/docs/recorrido-repartidor-registro-en.webp',
             alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
             pie: 'Drivers sign up in the Divoox Driver app.',
           },
@@ -4589,12 +4589,12 @@ const en: SeccionDocs[] = [
         resumen: 'We email you a link. It works once and expires in 30 minutes.',
         capturas: [
           {
-            src: '/docs/olvide-clave-en.webp',
+            src: '/docs/recorrido-web-olvide-clave-en.webp',
             alt: 'Divoox “Forgot my password” page with the email field and the “Send me the link” button.',
             pie: 'Enter your email and we send you the link.',
           },
           {
-            src: '/docs/cambiar-clave-en.webp',
+            src: '/docs/recorrido-restaurante-clave-en.webp',
             alt: '“Password” card in Divoox settings with the current password, the new one, and its repeat, each with the eye icon to show it.',
             pie: 'If you remember it, change it in “Settings,” with the eye icon to see what you type.',
           },
@@ -4613,7 +4613,7 @@ const en: SeccionDocs[] = [
         resumen: 'When you sign up, you get a link to confirm the email is yours.',
         capturas: [
           {
-            src: '/docs/correo-estado-en.webp',
+            src: '/docs/recorrido-restaurante-correo-en.webp',
             alt: '“Email” card in Divoox settings with the notice “Your email isn’t confirmed yet” and the “Send the link again” link.',
             pie: 'In “Settings” you see whether your email is confirmed and can ask for the link again.',
           },
@@ -4634,7 +4634,7 @@ const en: SeccionDocs[] = [
         resumen: 'From the account menu, in the three dots. Your personal data is removed.',
         capturas: [
           {
-            src: '/docs/borrar-cuenta-en.webp',
+            src: '/docs/recorrido-web-borrar-cuenta-en.webp',
             alt: '“Delete your Divoox account” page with the “Delete my account now” button and the first option explained.',
             pie: 'The page to delete your account, with or without the app.',
           },
@@ -4659,7 +4659,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/ticket-en.webp',
+            src: '/docs/recorrido-cliente-ticket-en.webp',
             alt: 'Private conversation of a Divoox report: the customer’s message and the Divoox team’s reply, with the box to answer.',
             pie: 'Your case has its own private page: read our reply and answer right there.',
           },

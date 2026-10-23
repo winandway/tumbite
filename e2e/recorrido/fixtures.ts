@@ -34,4 +34,4 @@ export const test = base.extend({
   },
 });
 
-export { expect, devices, type BrowserContext, type Page } from '@playwright/test';
+export { expect, devices, type BrowserContext, type Locator, type Page } from '@playwright/test';

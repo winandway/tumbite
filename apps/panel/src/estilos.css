@@ -1864,9 +1864,6 @@ button {
   }
 }
 /* Fotos de marketing de Divoox (23 oct 2026): grandes, a la izquierda de la lista */
-.ld-con-foto-grande .ld-foto {
-  aspect-ratio: 3 / 2;
-}
 @media (min-width: 900px) {
   .ld-con-foto.ld-con-foto-grande {
     grid-template-columns: 1.55fr 1fr;

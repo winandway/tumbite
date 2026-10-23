@@ -10,7 +10,8 @@ const origen = join(raiz, 'docs', 'capturas', 'recorrido');
 const destino = join(raiz, 'apps', 'panel', 'public', 'docs');
 let n = 0;
 for (const archivo of readdirSync(origen).filter((f) => f.endsWith('.png'))) {
-  const celular = !archivo.startsWith('restaurante-');
+  // Las del panel del restaurante y las páginas web (web-…) quedan a su ancho.
+  const celular = !archivo.startsWith('restaurante-') && !archivo.startsWith('web-');
   execFileSync('cwebp', [
     '-quiet',
     '-q',
