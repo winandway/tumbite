@@ -1,0 +1,14 @@
+DIVOOX — ARCHIVOS VECTORIALES APROBADOS
+
+Fondo claro: colocar sobre blanco o superficies claras.
+Fondo oscuro: colocar sobre negro o superficies oscuras.
+
+01 Logo completo para fondo claro
+02 Logo completo para fondo oscuro
+03 Solo palabra Divoox para fondo claro
+04 Solo palabra Divoox para fondo oscuro
+05 Solo isotipo GPS para fondo claro
+06 Solo isotipo GPS para fondo oscuro
+
+Estos SVG corresponden a las seis versiones aprobadas durante el trabajo.
+No se han redibujado ni alterado los trazados al empaquetarlos.
