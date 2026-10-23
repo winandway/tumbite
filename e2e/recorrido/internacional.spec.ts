@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type Page, devices, expect, test } from '@playwright/test';
+import { type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
 
 /**

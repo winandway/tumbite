@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type BrowserContext, type Page, devices, expect, test } from '@playwright/test';
+import { type BrowserContext, type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
 
 /**

@@ -997,3 +997,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** se reemplazó la palabra «Tumbite» escrita sola por «Divoox» en apps, paneles, servidor, paquetes y pruebas (798 cambios en 116 archivos, rama `marca-divoox`). **No se tocó:** nombres internos pegados a otras palabras (`seguroTumbite`, `CUENTA_TUMBITE`, `conTumbite`…), claves guardadas en el navegador (`tumbite.idioma`, `tumbite.sesion`), la cuenta interna del libro (`'tumbite'`), las tablas, los identificadores de las apps (`com.windoce.tumbite…`), el sitio de pruebas y los dominios y correos `@tumbite.com` (siguen funcionando hasta que divoox.com esté registrado y con correo).
 - **Trampa encontrada:** el título de la pestaña y el prerender buscaban «tumbite» en minúscula para no repetir la marca (`/tumbite/i`); se cambió a `/divoox/i`. La prueba `tituloPagina.test.tsx` lo cubre.
 - **Cuando divoox.com esté listo:** cambiar las direcciones y correos visibles de tumbite.com a divoox.com y redirigir tumbite.com.
+
+## C-RECORRIDO-REINTENTA-RED: un corte de conexión del alojamiento no tumba el recorrido (22 oct 2026)
+
+- **Qué pasaba:** en el sitio de pruebas, llamadas a la API del recorrido fallaban de vez en cuando con «read ECONNRESET» (corte de conexión del alojamiento, no de la app). El 22 oct falló dos veces seguidas el recorrido en inglés, en lugares distintos.
+- **Qué se hizo:** `e2e/recorrido/fixtures.ts` envuelve el `request` de Playwright y agrega `maxRetries: 3` a cada llamada. Playwright reintenta SOLO errores de red, nunca una respuesta 4xx o 5xx: un fallo real de la app sigue fallando. `recorrido.spec.ts` e `internacional.spec.ts` importan `test` de ahí.
+- **Ojo en local:** si se corre el recorrido varias veces sin preparar la base, se acumulan restaurantes con el mismo nombre y la prueba falla por «strict mode». Se arregla con `SIN_COMPILAR=1 node scripts/recorrido/preparar.mjs`.
