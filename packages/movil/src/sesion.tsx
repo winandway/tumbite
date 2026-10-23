@@ -50,7 +50,8 @@ type Sesion = {
    * protegido funciona; la sesión guardada se conserva para «Reintentar».
    */
   sinConfirmar: 'tiempo' | 'red' | 'servidor' | null;
-  reintentarSesion: () => Promise<void>;
+  /** `silencioso`: reintento automático, sin pasar por la pantalla de carga (no parpadea). */
+  reintentarSesion: (silencioso?: boolean) => Promise<void>;
   usarOtraCuenta: () => void;
   usuario: Usuario | null;
   api: Api;
@@ -143,16 +144,19 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
     })();
   }, [confirmar]);
 
-  const reintentarSesion = useCallback(async () => {
-    setCargando(true);
-    try {
-      const guardado = await llavero.leer(LLAVE_TOKEN);
-      if (guardado) await confirmar(guardado);
-      else setSinConfirmar(null);
-    } finally {
-      setCargando(false);
-    }
-  }, [confirmar]);
+  const reintentarSesion = useCallback(
+    async (silencioso = false) => {
+      if (!silencioso) setCargando(true);
+      try {
+        const guardado = await llavero.leer(LLAVE_TOKEN);
+        if (guardado) await confirmar(guardado);
+        else setSinConfirmar(null);
+      } finally {
+        if (!silencioso) setCargando(false);
+      }
+    },
+    [confirmar],
+  );
 
   // Entrar con otra cuenta: se muestra la pantalla de entrar; la sesión guardada se reemplaza al entrar.
   const usarOtraCuenta = useCallback(() => setSinConfirmar(null), []);

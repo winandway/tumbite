@@ -30,6 +30,7 @@ const es = {
   salir: 'Cerrar sesión',
   sesionSinConfirmar: 'No pudimos confirmar tu sesión.',
   sesionSinConfirmarDetalle: 'Puede ser la conexión. Tu sesión sigue guardada en este teléfono.',
+  reintentandoSolo: 'Reintentando solo en unos segundos…',
   reintentarSesion: 'Reintentar',
   otraCuenta: 'Entrar con otra cuenta',
   hola: 'Hola',
@@ -71,6 +72,7 @@ const en: T = {
   sesionSinConfirmar: 'We couldn’t confirm your session.',
   sesionSinConfirmarDetalle:
     'It may be your connection. Your session is still saved on this phone.',
+  reintentandoSolo: 'Trying again automatically in a few seconds…',
   reintentarSesion: 'Try again',
   otraCuenta: 'Sign in with another account',
   hola: 'Hi',

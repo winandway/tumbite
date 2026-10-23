@@ -1021,3 +1021,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Canónica, Open Graph, mapa del sitio, robots, pie, legales, Docs y enlaces de los correos en divoox.com; variable `SITIO_URL=https://divoox.com` en producción. Los correos siguen siendo @tumbite.com hasta activar el correo del dominio nuevo.
 - El semáforo de `publicar.yml` y el verificador de producción consultan divoox.com (curl sin -L se quedaba en el 301).
 - Prueba: `dominio.test.ts` (comprobada en rojo quitando el filtro).
+
+## C-SESION-REINTENTA-SOLA: la app reintenta sola cuando no puede confirmar la sesión (23 oct 2026)
+
+- Qué pasaba: con un corte de conexión al abrir la app, la persona quedaba en «No pudimos confirmar tu sesión» hasta tocar «Reintentar» (se vio en el sitio de pruebas, corrida 40005515113).
+- Arreglo: `packages/movil/src/ConSesion.tsx` (`SesionSinConfirmar`) reintenta en silencio con esperas de 3, 6, 12, 24 y luego cada 30 segundos (`ESPERAS_REINTENTO_MS`); `reintentarSesion(true)` en `sesion.tsx` no pasa por la pantalla de carga para que no parpadee. El botón «Reintentar» sigue. Línea nueva `reintentandoSolo` en los textos.
+- Prueba: `e2e/recorrido/sesion.spec.ts` corta la ruta de la sesión, ve la pantalla, devuelve la conexión y exige que la app entre sola sin tocar nada. Comprobada en rojo quitando el reintento.
+- No tocar: la sesión guardada no se borra al fallar la confirmación.
