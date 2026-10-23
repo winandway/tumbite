@@ -1,0 +1,37 @@
+import { describe, expect, it } from 'vitest';
+import { app } from './app';
+import { redireccionDominio } from './dominio';
+import { crearBasePruebas } from './pruebas/d1';
+
+const r = (u: string, m = 'GET') => redireccionDominio(new URL(u), m);
+
+describe('dirección principal divoox.com (C-DOMINIO-DIVOOX)', () => {
+  it('las páginas de tumbite.com y www pasan a divoox.com con la misma ruta', () => {
+    expect(r('https://tumbite.com/es/how-it-works?a=1')).toBe(
+      'https://divoox.com/es/how-it-works?a=1',
+    );
+    expect(r('https://www.tumbite.com/')).toBe('https://divoox.com/');
+    expect(r('https://www.divoox.com/docs')).toBe('https://divoox.com/docs');
+  });
+  it('el mapa del sitio viejo lleva al nuestro', () => {
+    expect(r('https://divoox.com/sitemap_index.xml')).toBe('https://divoox.com/sitemap.xml');
+    expect(r('http://www.divoox.com/sitemap.xml')).toBe('https://divoox.com/sitemap.xml');
+  });
+  it('no toca la API, las fotos, los POST, divoox.com ni el sitio de pruebas', () => {
+    expect(r('https://tumbite.com/datos/stripe/aviso', 'POST')).toBeNull();
+    expect(r('https://tumbite.com/datos/salud')).toBeNull();
+    expect(r('https://tumbite.com/media/fotos/x.webp')).toBeNull();
+    expect(r('https://tumbite.com/panel', 'POST')).toBeNull();
+    expect(r('https://divoox.com/es/')).toBeNull();
+    expect(r('https://staging.tumbite.com/')).toBeNull();
+    expect(r('http://localhost:8790/')).toBeNull();
+  });
+  it('el servidor responde 301 en tumbite.com y deja pasar la API', async () => {
+    const DB = crearBasePruebas();
+    const pagina = await app.request('https://tumbite.com/es/', {}, { DB });
+    expect(pagina.status).toBe(301);
+    expect(pagina.headers.get('location')).toBe('https://divoox.com/es/');
+    const api = await app.request('https://tumbite.com/datos/salud', {}, { DB });
+    expect(api.status).not.toBe(301);
+  });
+});

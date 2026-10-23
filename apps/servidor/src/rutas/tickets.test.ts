@@ -49,7 +49,7 @@ describe('tickets (C-TICKETS)', () => {
     expect(r.datos.enlace).toMatch(/^\/t\/[A-Za-z0-9_-]{40,}$/);
     const aPersona = para(enviados, 'marta@ejemplo.com')[0];
     expect(aPersona?.from.address).toBe('sales@tumbite.com');
-    expect(aPersona?.text).toContain(`https://tumbite.com${r.datos.enlace}`);
+    expect(aPersona?.text).toContain(`https://divoox.com${r.datos.enlace}`);
     const aJefe = para(enviados, 'jefe@ejemplo.com')[0];
     expect(aJefe?.from.address).toBe('no-reply@tumbite.com');
     expect(aJefe?.text).toContain('150 000 a 500 000 USD');

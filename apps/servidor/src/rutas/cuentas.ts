@@ -311,7 +311,7 @@ cuentas.post('/recuperar', async (c) => {
       )
       .bind(await sha256(token), fila.id, `+${MINUTOS_RECUPERACION} minutes`)
       .run();
-    const base_ = (c.env.SITIO_URL ?? 'https://tumbite.com').replace(/\/$/, '');
+    const base_ = (c.env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
     const lengua = d.idioma ?? fila.idioma;
     const t = lengua === 'en' ? TEXTOS_RECUPERAR.en : TEXTOS_RECUPERAR.es;
     await enviarCorreo(c.env, {

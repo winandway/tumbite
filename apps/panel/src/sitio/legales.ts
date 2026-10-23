@@ -2,7 +2,7 @@ import type { Idioma } from '@tumbite/compartido';
 import { CONTACTO } from './textos';
 
 /**
- * Textos legales de tumbite.com. Escritos para cumplir las guías de Apple (5.1.1, 5.1.2, 5.1.5)
+ * Textos legales de divoox.com. Escritos para cumplir las guías de Apple (5.1.1, 5.1.2, 5.1.5)
  * y de Google Play (datos de usuario y borrado de cuenta): ver docs/LEGALES-TIENDAS.md.
  * Un abogado debe revisarlos antes del lanzamiento abierto (anotado en PENDIENTES.md).
  * Lo que aquí se promete tiene que ser verdad en el código: borrar cuenta (cuentas.ts),
@@ -22,7 +22,7 @@ export type DocumentoLegal = {
 
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
 const EMPRESA = 'Windoce LLC';
-const SITIO = 'https://tumbite.com';
+const SITIO = 'https://divoox.com';
 
 // ─────────────────────────────── Privacidad ───────────────────────────────
 
@@ -48,7 +48,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
           'Datos técnicos: el identificador del teléfono para enviarte avisos (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
-          'Lista de espera: si te anotas en tumbite.com, tu nombre, correo, ciudad y, si lo das, tu teléfono.',
+          'Lista de espera: si te anotas en divoox.com, tu nombre, correo, ciudad y, si lo das, tu teléfono.',
         ],
       },
       {
@@ -90,7 +90,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'borrar',
         titulo: '7. Cómo borrar tu cuenta o retirar tu consentimiento',
         parrafos: [
-          'En la app: menú de los tres puntos → «Borrar mi cuenta». En la web: tumbite.com/panel/settings → tres puntos junto al título → «Borrar mi cuenta».',
+          'En la app: menú de los tres puntos → «Borrar mi cuenta». En la web: divoox.com/panel/settings → tres puntos junto al título → «Borrar mi cuenta».',
           `Sin la app: escríbenos a ${CONTACTO} desde el correo de tu cuenta y la borramos en un máximo de 30 días. No hace falta reinstalar nada. Todos los detalles están en ${SITIO}/delete-account.`,
           'Para retirar tu consentimiento sin borrar la cuenta: quita el permiso de ubicación o de avisos en los ajustes del teléfono, borra tu fecha de nacimiento en Configuración, o pídenos por correo que dejemos de usar algún dato.',
         ],
@@ -150,7 +150,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Location: only with your permission. See section 4.',
           'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
           'Technical information: your device token to send you notifications (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
-          'Waitlist: if you sign up on tumbite.com, your name, email, city, and, if you share it, your phone number.',
+          'Waitlist: if you sign up on divoox.com, your name, email, city, and, if you share it, your phone number.',
         ],
       },
       {
@@ -192,7 +192,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'delete',
         titulo: '7. How to delete your account or withdraw consent',
         parrafos: [
-          'In the app: three-dot menu → “Delete my account”. On the web: tumbite.com/panel/settings → three dots next to the title → “Delete my account”.',
+          'In the app: three-dot menu → “Delete my account”. On the web: divoox.com/panel/settings → three dots next to the title → “Delete my account”.',
           `Without the app: email ${CONTACTO} from your account’s email address and we’ll delete it within 30 days. No need to reinstall anything. Full details at ${SITIO}/delete-account.`,
           'To withdraw consent without deleting your account: turn off location or notification access in your phone’s settings, remove your birthday in Settings, or email us to stop using any piece of data.',
         ],
@@ -250,7 +250,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Tu cuenta',
         parrafos: [
-          'Para usar Divoox debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en tumbite.com/delete-account.',
+          'Para usar Divoox debes tener al menos 18 años, dar datos verdaderos y cuidar tu contraseña. Eres responsable de lo que se haga con tu cuenta. Puedes borrarla cuando quieras desde la app o en divoox.com/delete-account.',
         ],
       },
       {
@@ -322,7 +322,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Your account',
         parrafos: [
-          'To use Divoox you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at tumbite.com/delete-account.',
+          'To use Divoox you must be at least 18, provide accurate information, and keep your password safe. You’re responsible for activity on your account. You can delete it at any time in the app or at divoox.com/delete-account.',
         ],
       },
       {

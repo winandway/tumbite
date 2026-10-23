@@ -28,7 +28,7 @@ export type TipoTicket =
   | 'queja'
   | 'soporte';
 
-const SITIO = 'https://tumbite.com';
+const SITIO = 'https://divoox.com';
 const enlacePublico = (codigo: string) => `${SITIO}/t/${codigo}`;
 
 const NOMBRE_TIPO: Record<TipoTicket, Record<Idioma, string>> = {

@@ -62,5 +62,5 @@ jobs:
       # Después de publicar: producción tiene que servir ESTA versión y su salud (con la pieza
       # «entorno») responder 200. Si no, queda en rojo para actuar de inmediato.
       - name: Semáforo de producción (solo lectura)
-        run: bash scripts/semaforo.sh "https://tumbite.com" "${VERSION:0:7}" yapanel-build
+        run: bash scripts/semaforo.sh "https://divoox.com" "${VERSION:0:7}" yapanel-build
         timeout-minutes: 30

@@ -11,7 +11,7 @@ if (!['antes', 'despues'].includes(modo)) {
   console.error(`Modo desconocido: ${modoPedido}`);
   process.exit(2);
 }
-const SITIO = process.env.VERIFICAR_SITIO ?? 'https://tumbite.com';
+const SITIO = process.env.VERIFICAR_SITIO ?? 'https://divoox.com';
 const LLAVE = process.env.YADOMINIOS_LLAVE;
 if (!LLAVE) {
   console.error('Falta YADOMINIOS_LLAVE (solo lectura de la base de producción).');

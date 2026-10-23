@@ -1,3 +1,4 @@
+import { redireccionDominio } from './dominio';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
@@ -55,6 +56,12 @@ import { saludCobros } from './liquidaciones';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// C-DOMINIO-DIVOOX: las páginas viven en divoox.com; la API sigue respondiendo en los dos.
+app.use('*', async (c, next) => {
+  const destino = redireccionDominio(new URL(c.req.url), c.req.method);
+  if (destino) return c.redirect(destino, 301);
+  await next();
+});
 app.use('*', cabecerasSeguridad);
 // C-ENTORNOS-SEPARADOS: el sitio de pruebas nunca usa una llave real de Stripe.
 app.use('*', async (c, next) => {

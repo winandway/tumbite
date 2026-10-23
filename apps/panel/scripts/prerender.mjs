@@ -14,7 +14,7 @@ const dist = join(raiz, 'dist');
 const plantilla = readFileSync(join(dist, 'index.html'), 'utf8');
 if (!/<div id="raiz">[\s\S]*?<\/div>\s*<\/body>/.test(plantilla))
   throw new Error('prerender: no encuentro el #raiz seguido de </body> en dist/index.html');
-const DOMINIO = 'https://tumbite.com';
+const DOMINIO = 'https://divoox.com';
 
 // Un navegador de mentira para que los módulos encuentren window, document y localStorage.
 const dom = new JSDOM('<!doctype html><html><body><div id="raiz"></div></body></html>', {

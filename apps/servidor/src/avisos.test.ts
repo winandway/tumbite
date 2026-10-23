@@ -105,7 +105,7 @@ describe('correos que el sitio manda solo', () => {
     expect(c?.subject).toBe("You're on the list, Sam");
     expect(c?.text).toContain('start delivering');
     // Abre un ticket: la persona recibe su enlace privado y el equipo recibe el aviso.
-    expect(c?.text).toMatch(/https:\/\/tumbite\.com\/t\/[A-Za-z0-9_-]{40,}/);
+    expect(c?.text).toMatch(/https:\/\/divoox\.com\/t\/[A-Za-z0-9_-]{40,}/);
     expect(de(enviados, 'soporte@ejemplo.com')[0]?.subject).toContain('Nuevo ticket');
   });
 

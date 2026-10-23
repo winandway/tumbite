@@ -1119,7 +1119,7 @@ const es: SeccionDocs[] = [
           '¿Cómo abro y cierro mi restaurante?',
         ],
         pasos: [
-          'Entra a tumbite.com, toca «Panel» y crea tu cuenta de restaurante con tu correo.',
+          'Entra a divoox.com, toca «Panel» y crea tu cuenta de restaurante con tu correo.',
           'En «Mi restaurante» completa el nombre, el tipo de comida, el teléfono y la dirección. Usa «Usar la ubicación de esta computadora» si estás en el local.',
           'Sube una foto de portada: una foto clara y con buena luz vende más. La reducimos solos para que cargue rápido.',
           'Guarda. Tu restaurante queda «en revisión»: nuestro equipo lo aprueba y te avisamos por correo.',
@@ -2158,7 +2158,7 @@ const es: SeccionDocs[] = [
           '¿Cuánto mueve Divoox en una ciudad?',
         ],
         pasos: [
-          'Entra a tumbite.com y toca «Calculadora» en el menú de arriba.',
+          'Entra a divoox.com y toca «Calculadora» en el menú de arriba.',
           'Elige tu pestaña: Restaurante, Repartidor, Cliente o Franquicia.',
           'Cambia los números por los tuyos. Lo que escribes se guarda solo en tu navegador.',
           'Si quieres compartir una pestaña, copia la dirección: lleva la pestaña al final.',
@@ -2257,7 +2257,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Para pedir: abre la app de Divoox, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos y toca «Crear cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
-          'Para tu restaurante: entra a tumbite.com, toca «Panel», luego «¿Tu restaurante aún no está en Divoox? Crea tu cuenta», y completa tus datos.',
+          'Para tu restaurante: entra a divoox.com, toca «Panel», luego «¿Tu restaurante aún no está en Divoox? Crea tu cuenta», y completa tus datos.',
           'Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
           'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox.',
         ],
@@ -2320,7 +2320,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Cómo borro mi cuenta?'],
         pasos: [
-          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página tumbite.com/delete-account.',
+          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página divoox.com/delete-account.',
           'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
           'Se borran tu nombre, correo, teléfono, fecha de nacimiento, las direcciones de tus pedidos y el texto de tus calificaciones. Los importes de los pedidos quedan sin tu nombre, por obligaciones de impuestos. No se puede deshacer.',
           'Sin la app: escribe a support@tumbite.com desde el correo de tu cuenta y la borramos en un máximo de 30 días.',
@@ -3440,7 +3440,7 @@ const en: SeccionDocs[] = [
           'How do I open and close my restaurant?',
         ],
         pasos: [
-          'Go to tumbite.com, tap “Dashboard,” and create a restaurant account with your email.',
+          'Go to divoox.com, tap “Dashboard,” and create a restaurant account with your email.',
           'Under Profile → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
@@ -4479,7 +4479,7 @@ const en: SeccionDocs[] = [
           'How much does Divoox move in a city?',
         ],
         pasos: [
-          'Go to tumbite.com and tap “Calculator” in the top menu.',
+          'Go to divoox.com and tap “Calculator” in the top menu.',
           'Pick your tab: Restaurant, Driver, Customer, or Franchise.',
           'Replace the numbers with yours. What you type is saved in your browser.',
           'To share a tab, copy the address: it carries the tab at the end.',
@@ -4578,7 +4578,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'To order: open the Divoox app, tap “New here? Create your account,” fill in your details, and tap “Create account.” If you add your birthday, your favorite restaurants can send you a gift.',
-          'For your restaurant: go to tumbite.com, tap “Dashboard,” then “Restaurant not on Divoox yet? Create your account,” and fill in your details.',
+          'For your restaurant: go to divoox.com, tap “Dashboard,” then “Restaurant not on Divoox yet? Create your account,” and fill in your details.',
           'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
           'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',
         ],
@@ -4641,7 +4641,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I delete my account?'],
         pasos: [
-          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to tumbite.com/delete-account.',
+          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to divoox.com/delete-account.',
           'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',
           'Your name, email, phone, birthday, order addresses, and rating comments are deleted. Order amounts remain without your name, for tax obligations. This can’t be undone.',
           'Without the app: email support@tumbite.com from your account’s email and we’ll delete it within 30 days.',

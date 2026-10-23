@@ -11,7 +11,7 @@ type Idioma = 'es' | 'en';
 type Linea = { nombreEs: string; nombreEn: string; precioCentavos: number; cantidad: number };
 
 function sitio(env: Env): string {
-  return (env.SITIO_URL ?? 'https://tumbite.com').replace(/\/$/, '');
+  return (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
 }
 
 function lineasTexto(lineas: Linea[], idioma: Idioma, moneda: string): string {

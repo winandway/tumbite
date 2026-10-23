@@ -165,7 +165,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/support">{t.soporte}</Enlace>
         </nav>
         <p>
-          © {new Date().getFullYear()} tumbite.com | {t.derechos} {t.desarrollo}{' '}
+          © {new Date().getFullYear()} divoox.com | {t.derechos} {t.desarrollo}{' '}
           <a href={MARCA.sitioEmpresa} target="_blank" rel="noopener noreferrer">
             {MARCA.empresa}
           </a>

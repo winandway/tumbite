@@ -1013,3 +1013,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Colores:** rojo `#F20D20`, acento `#C20A1A`, negro `#101010`, gris `#666B73` (`packages/compartido/src/marca.ts` y CSS).
 - **Fotos de marketing con la marca vieja** (banners, cartel, local, entrega, repartidor): ya no se muestran; en su lugar van placas con el logo (`PlacaMarca` en `Landing.tsx`) hasta que marketing entregue fotos nuevas.
 - **Capturas:** rehechas con `npm run recorrido:capturas` (158 capturas para Docs y la portada).
+
+## C-DOMINIO-DIVOOX: divoox.com es la dirección principal (23 oct 2026)
+
+- divoox.com registrado y conectado al sitio el 23 oct. `apps/servidor/src/dominio.ts`: las páginas pedidas en tumbite.com, www.tumbite.com o www.divoox.com pasan con 301 a https://divoox.com con la misma ruta; `/sitemap_index.xml` (mapa viejo del dueño anterior) lleva a `/sitemap.xml`.
+- **No se redirige** `/datos/*` (apps compiladas y aviso de Stripe siguen llamando a tumbite.com; un 301 rompería un POST) ni `/media/*`. El sitio de pruebas sigue en staging.tumbite.com.
+- Canónica, Open Graph, mapa del sitio, robots, pie, legales, Docs y enlaces de los correos en divoox.com; variable `SITIO_URL=https://divoox.com` en producción. Los correos siguen siendo @tumbite.com hasta activar el correo del dominio nuevo.
+- El semáforo de `publicar.yml` y el verificador de producción consultan divoox.com (curl sin -L se quedaba en el 301).
+- Prueba: `dominio.test.ts` (comprobada en rojo quitando el filtro).

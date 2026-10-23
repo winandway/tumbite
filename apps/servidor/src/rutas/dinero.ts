@@ -158,7 +158,7 @@ dinero.post('/billetera/conectar', async (c) => {
       .run();
     fila = { stripe_cuenta: cuenta.id };
   }
-  const sitio = c.env.SITIO_URL ?? 'https://tumbite.com';
+  const sitio = c.env.SITIO_URL ?? 'https://divoox.com';
   const enlace = await stripe.post<{ url: string }>('/account_links', {
     account: fila.stripe_cuenta,
     type: 'account_onboarding',

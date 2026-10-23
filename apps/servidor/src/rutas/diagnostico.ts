@@ -30,7 +30,7 @@ import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
  * Diagnóstico del SITIO DE PRUEBAS (Fase 0, 15 oct 2026): las pruebas S2–S5, S7 y S11 de
  * ARQUITECTURA-MULTISERVICIO-V1.2 corren DENTRO del worker, contra la base D1 real de pruebas.
  * Doble cerrojo: (1) solo responde en el dominio de pruebas (o localhost en las pruebas
- * automáticas); en tumbite.com siempre es «No encontrado»; (2) exige el secreto del reloj, que
+ * automáticas); en divoox.com siempre es «No encontrado»; (2) exige el secreto del reloj, que
  * GitHub ya guarda como secreto (nadie lo ve ni lo comparte). S11 además exige llaves de Stripe
  * de MODO PRUEBA (sk_test_…): con llaves reales se niega.
  */
@@ -367,7 +367,7 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
           losses: { payments: 'application' },
         },
         capabilities: { transfers: { requested: true } },
-        business_profile: { mcc: '4215', url: 'https://tumbite.com' },
+        business_profile: { mcc: '4215', url: 'https://divoox.com' },
         individual: {
           first_name: 'Prueba',
           last_name: 'Divoox',

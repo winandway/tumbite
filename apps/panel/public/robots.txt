@@ -56,4 +56,4 @@ Allow: /
 Disallow: /panel
 Disallow: /t/
 
-Sitemap: https://tumbite.com/sitemap.xml
+Sitemap: https://divoox.com/sitemap.xml
