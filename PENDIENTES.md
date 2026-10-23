@@ -2,8 +2,11 @@
 
 ## En cola (pedido por Richard el 23 oct 2026)
 
-- [ ] **divoox.com en Google Search Console (Richard ya verificó el dominio):** quitar o redirigir los mapas del sitio viejos del dueño anterior (`/sitemap_index.xml` de 2024 y `http://www.divoox.com/sitemap.xml` de 2018), servir el nuestro en `https://divoox.com/sitemap.xml`, y que las direcciones canónicas apunten a divoox.com. Al terminar, avisarle a Richard para que vuelva a enviar el mapa del sitio.
-- [ ] **Portada más profesional:** menos rojo y más blanco y negro, con balance. Un banner delgado animado hecho con código, como un juego: pasa de derecha a izquierda una moto con su caja o un carro, con el anuncio y el logo de Divoox que se mueve. Va después de terminar la identidad visual.
+- [x] (23 oct, publicado con C-DOMINIO-DIVOOX; falta que Richard reenvíe el mapa 👤) **divoox.com en Google Search Console (Richard ya verificó el dominio):** quitar o redirigir los mapas del sitio viejos del dueño anterior (`/sitemap_index.xml` de 2024 y `http://www.divoox.com/sitemap.xml` de 2018), servir el nuestro en `https://divoox.com/sitemap.xml`, y que las direcciones canónicas apunten a divoox.com. Al terminar, avisarle a Richard para que vuelva a enviar el mapa del sitio.
+- [x] (23 oct, rama fase-divoox-fotos) **Portada más profesional:** menos rojo y más blanco y negro, con balance. Un banner delgado animado hecho con código, como un juego: pasa de derecha a izquierda una moto con su caja o un carro, con el anuncio y el logo de Divoox que se mueve. Va después de terminar la identidad visual.
+- [x] (23 oct) Fotos nuevas de marketing grandes en la portada: restaurante moderno y repartidora en bicicleta.
+- [ ] 👤 Banner «Todo lo que necesitas, a un clic»: marketing debe corregir la mascota y el «bite» viejos, el «DivoooX» con tres o, «Detroit» y hacer la versión en inglés. La foto de McDonald's no se usa (marca ajena).
+- [ ] Correos visibles @tumbite.com → @divoox.com cuando el correo del dominio nuevo esté activo.
 
 👤 = depende de Richard. Ordenado por importancia.
 
