@@ -82,20 +82,20 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - `docs/PLAN-MAESTRO-FASE-2.md`, `docs/INFORME-FINAL-FASE-2.md` y `docs/DECISIONES-RICHARD-FASE-2.md` — la Fase 2 (modelo internacional): el plan, el cierre del 18 oct y lo que solo Richard decide.
 - `docs/COMPARACION-CICLO-PEDIDO.md` — cómo funciona de verdad un pedido en DoorDash y Uber Eats frente al nuestro, con las brechas por orden. Se lee antes de tocar el ciclo del pedido.
 
-## Colores corporativos (dictado por Richard, 10 oct 2026) — SOLO estos
+## Identidad de Divoox (aprobada por Richard el 23 oct 2026) — SOLO estos colores
 
-- Rojo escarlata, dominante: `#FF3008` (el oficial del kit aprobado; `#EB1700` solo como tono más oscuro de apoyo).
-- Blanco `#FFFFFF`.
-- Gris oscuro Cod Gray `#191919` (textos, cabeceras oscuras, botón secundario fuerte).
+- **La marca pública es Divoox; Tumbite es el nombre interno del proyecto** (tablas, código, repositorio, sitio de pruebas). Solo cambia lo visible.
+- **Archivos maestros:** carpeta `identidad-divoox/` en la raíz (manual de marca en PDF, vectores SVG aprobados, PNG, favicon). Las piezas de la web y las apps se generan SOLO desde esos vectores con `node scripts/marca/generar-identidad.mjs` (nunca a mano, nunca estiradas).
+- Rojo principal `#F20D20` (acento oscuro de apoyo `#C20A1A`), negro principal `#101010`, blanco `#FFFFFF`, gris de apoyo `#666B73`.
 - PROHIBIDO el morado y cualquier otro color de marca. Grises neutros solo para bordes y textos suaves.
+- Reglas del manual: no deformar, inclinar ni poner sombras o efectos 3D; espacio libre alrededor; en tamaño pequeño, el isotipo. El logo completo para fondo oscuro lleva la X roja: nunca sobre fondo rojo.
+- Íconos de las apps (variantes oficiales): cliente fondo rojo, repartidor fondo negro, restaurante fondo blanco.
 - Estilo de referencia: Uber Eats (titular grande, buscador de dirección con pin, comida grande a la derecha), con PIZZAS, no hamburguesas.
-- Tipografías del manual: Poppins (titulares y botones) y Montserrat (textos).
+- Tipografías: Poppins (titulares y botones) y Montserrat (textos).
 
-## Kit de marca oficial
+## Kit de marca anterior (Tumbite, retirado)
 
-- Carpeta `logo-imagenes-banner-marketing/` (solo en esta computadora, fuera de git por peso). Lo aprobado está en `Tumbite_Kit_Final_Aprobado_v1/` (logo, mascota, variantes, manuales). Leer su `LEEME_PRIMERO.txt` antes de usar nada.
-- Reglas del manual: no deformar, rotar, recolorear ni quitar partes de la mascota; margen libre del tamaño de un ojo; usar PNG (el SVG experimental fue RECHAZADO, no usarlo).
-- Las versiones para la web (WebP livianos) están en `apps/panel/public/marca/`. Los íconos de las apps se arman con la mascota completa sobre escarlata (cliente), gris oscuro (repartidor) y blanco (restaurante).
+- La carpeta `logo-imagenes-banner-marketing/` (fuera de git) es el kit de Tumbite: ya no se usa para nada visible. La mascota se reemplazó por el isotipo de Divoox.
 
 ## Estructura
 

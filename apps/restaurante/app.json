@@ -57,7 +57,7 @@
         "expo-notifications",
         {
           "icon": "./assets/android-icon-monochrome.png",
-          "color": "#FF3008",
+          "color": "#F20D20",
           "defaultChannel": "pedidos",
           "sounds": ["./assets/sonidos/alarma.wav"]
         }

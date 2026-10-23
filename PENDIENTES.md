@@ -1,5 +1,10 @@
 # Tumbite — Pendientes
 
+## En cola (pedido por Richard el 23 oct 2026)
+
+- [ ] **divoox.com en Google Search Console (Richard ya verificó el dominio):** quitar o redirigir los mapas del sitio viejos del dueño anterior (`/sitemap_index.xml` de 2024 y `http://www.divoox.com/sitemap.xml` de 2018), servir el nuestro en `https://divoox.com/sitemap.xml`, y que las direcciones canónicas apunten a divoox.com. Al terminar, avisarle a Richard para que vuelva a enviar el mapa del sitio.
+- [ ] **Portada más profesional:** menos rojo y más blanco y negro, con balance. Un banner delgado animado hecho con código, como un juego: pasa de derecha a izquierda una moto con su caja o un carro, con el anuncio y el logo de Divoox que se mueve. Va después de terminar la identidad visual.
+
 👤 = depende de Richard. Ordenado por importancia.
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.

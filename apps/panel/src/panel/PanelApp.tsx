@@ -187,10 +187,10 @@ export function PanelApp({ ruta }: { ruta: string }) {
         <Enlace a="/" className="logo">
           <img
             className="logo-marca"
-            src="/marca/logo.webp"
+            src="/marca/divoox-logo.svg"
             alt={MARCA.nombre}
-            width={74}
-            height={38}
+            width={138}
+            height={34}
           />
         </Enlace>
         <div className="cabecera-derecha">

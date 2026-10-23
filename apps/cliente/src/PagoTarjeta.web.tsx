@@ -35,8 +35,8 @@ export function PagoTarjeta(props: PropsPago) {
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#FF3008',
-            colorText: '#191919',
+            colorPrimary: '#F20D20',
+            colorText: '#101010',
             colorBackground: '#FFFFFF',
             borderRadius: '10px',
             fontFamily: 'Montserrat, system-ui, sans-serif',

@@ -6,7 +6,7 @@ import { ICONO_PESTANA, IMG, type Pestana } from './recursos';
 import { textosRest } from './textos';
 
 export const sombra: ViewStyle = {
-  shadowColor: '#191919',
+  shadowColor: '#101010',
   shadowOpacity: 0.07,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 3 },

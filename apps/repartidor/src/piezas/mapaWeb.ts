@@ -8,7 +8,7 @@ export type Punto = { lat: number; lng: number };
  * Ojo: los mosaicos de openstreetmap.org son para poco tráfico; si la web crece, se cambia la
  * dirección de los mosaicos aquí por un proveedor propio.
  */
-export const COLORES = { restaurante: '#191919', casa: '#FF3008', repartidor: '#FF3008' };
+export const COLORES = { restaurante: '#101010', casa: '#F20D20', repartidor: '#F20D20' };
 
 export function crearMapa(div: HTMLDivElement, centro: Punto, zoom = 15): L.Map {
   const mapa = L.map(div, { zoomControl: false, attributionControl: true }).setView(

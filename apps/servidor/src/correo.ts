@@ -118,9 +118,9 @@ export function aHtml(texto: string): string {
       const t = escapar(p.trim());
       const m = t.match(/^(https?:\/\/\S+)$/);
       if (m)
-        return `<p style="margin:24px 0"><a href="${m[1]}" style="background:#FF3008;color:#fff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:12px;display:inline-block">${m[1]}</a></p>`;
+        return `<p style="margin:24px 0"><a href="${m[1]}" style="background:#F20D20;color:#fff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:12px;display:inline-block">${m[1]}</a></p>`;
       return `<p style="margin:0 0 14px;line-height:1.5">${t.replace(/\n/g, '<br>')}</p>`;
     })
     .join('');
-  return `<!doctype html><html><body style="margin:0;background:#f6f6f6;font-family:Arial,Helvetica,sans-serif;color:#191919"><div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:16px;padding:28px"><p style="margin:0 0 20px;font-size:22px;font-weight:800;color:#FF3008">${MARCA.nombre}</p>${parrafos}</div><p style="font-size:12px;color:#777;text-align:center;margin:16px 0 0">${MARCA.nombre} · ${DOMINIO_CORREO}</p></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f6f6f6;font-family:Arial,Helvetica,sans-serif;color:#101010"><div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:16px;padding:28px"><p style="margin:0 0 20px;font-size:22px;font-weight:800;color:#F20D20">${MARCA.nombre}</p>${parrafos}</div><p style="font-size:12px;color:#777;text-align:center;margin:16px 0 0">${MARCA.nombre} · ${DOMINIO_CORREO}</p></div></body></html>`;
 }

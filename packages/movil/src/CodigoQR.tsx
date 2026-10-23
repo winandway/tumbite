@@ -36,7 +36,7 @@ export function CodigoQR({
             {fila.map((negro, x) => (
               <View
                 key={x}
-                style={{ width: lado, height: lado, backgroundColor: negro ? '#191919' : '#fff' }}
+                style={{ width: lado, height: lado, backgroundColor: negro ? '#101010' : '#fff' }}
               />
             ))}
           </View>

@@ -55,7 +55,7 @@ export async function iniciarUbicacionFondo(textos: {
       foregroundService: {
         notificationTitle: textos.titulo,
         notificationBody: textos.cuerpo,
-        notificationColor: '#FF3008',
+        notificationColor: '#F20D20',
       },
     });
     return true;

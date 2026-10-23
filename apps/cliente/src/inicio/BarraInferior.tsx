@@ -32,7 +32,7 @@ export function BarraInferior({
         borderTopRightRadius: 24,
         paddingTop: 10,
         paddingBottom: 8,
-        shadowColor: '#191919',
+        shadowColor: '#101010',
         shadowOpacity: 0.1,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: -3 },

@@ -1,11 +1,11 @@
 :root {
-  --primario: #eb1700;
-  --vivo: #ff3008;
+  --primario: #c20a1a;
+  --vivo: #f20d20;
   --suave: #f6f6f6;
-  --secundario: #191919;
-  --acento: #ff3008;
+  --secundario: #101010;
+  --acento: #f20d20;
   --fondo: #ffffff;
-  --texto: #191919;
+  --texto: #101010;
   /* Tipografías del manual de marca: Montserrat para textos, Poppins para titulares y botones. */
   font-family:
     'Montserrat',
@@ -283,8 +283,8 @@ h1 {
 }
 .legal .legal-intro {
   font-size: 1.05rem;
-  color: #191919;
-  border-left: 3px solid #191919;
+  color: #101010;
+  border-left: 3px solid #101010;
   padding-left: 12px;
   margin: 16px 0 24px;
 }
@@ -649,7 +649,7 @@ h1 {
   font-weight: 700;
   /* Neutra: el rojo queda para los problemas y el verde para lo que salió bien. */
   background: #f1f1f1;
-  color: #191919 !important;
+  color: #101010 !important;
 }
 .insignia-aprobado {
   background: #e3f6ea;
@@ -846,7 +846,7 @@ fieldset.regalo small,
 .selector-idioma-caja input[type='radio'] {
   width: 18px;
   height: 18px;
-  accent-color: #eb1700;
+  accent-color: #c20a1a;
   margin: 0;
 }
 
@@ -875,7 +875,7 @@ html {
   margin-bottom: 12px;
 }
 .ld-hero {
-  background: radial-gradient(circle at 85% 20%, #ff3008 0%, var(--secundario) 55%);
+  background: radial-gradient(circle at 85% 20%, #f20d20 0%, var(--secundario) 55%);
   color: #fff;
   padding: 48px 16px 32px;
   display: grid;
@@ -1595,7 +1595,7 @@ html {
   opacity: 0.95;
 }
 .ld-hero .ld-etiqueta {
-  background: #191919;
+  background: #101010;
   color: #fff;
 }
 .ld-buscador {
@@ -1627,11 +1627,11 @@ html {
   padding: 16px 0;
   width: 100%;
   min-width: 0;
-  color: #191919;
+  color: #101010;
   background: transparent;
 }
 .ld-buscar {
-  background: #191919;
+  background: #101010;
   color: #fff;
   border: 0;
   border-radius: 10px;
@@ -1647,7 +1647,7 @@ html {
 .ld-ubicacion {
   align-self: flex-start;
   background: #fff;
-  color: #191919;
+  color: #101010;
   border: 0;
   border-radius: 999px;
   padding: 9px 16px;
@@ -1656,7 +1656,7 @@ html {
   cursor: pointer;
 }
 .ld-mensaje {
-  background: #191919;
+  background: #101010;
   color: #fff !important;
   border-radius: 10px;
   padding: 10px 14px;
@@ -1721,7 +1721,7 @@ html {
   color: var(--primario);
 }
 .ld-oscura {
-  background: #191919;
+  background: #101010;
 }
 .ld-oscura .ld-etiqueta {
   background: var(--primario);
@@ -1735,7 +1735,7 @@ html {
   background: var(--primario);
 }
 .p-oscura {
-  background: #191919;
+  background: #101010;
 }
 .p-oro {
   color: var(--vivo);
@@ -1744,14 +1744,14 @@ html {
   background: var(--primario);
 }
 .saldo {
-  background: #191919;
+  background: #101010;
 }
 .saldo strong {
   color: #fff;
 }
 .mapa-florida path {
   fill: #f6f6f6;
-  stroke: #191919;
+  stroke: #101010;
 }
 .metrica-fuerte {
   /* Lo que te toca es una buena noticia: verde (C-VERDE-EXITO). */
@@ -1783,7 +1783,7 @@ button {
     sans-serif;
 }
 .logo img.logo-marca {
-  height: 38px;
+  height: 30px;
   width: auto;
   display: block;
 }
@@ -1803,8 +1803,8 @@ button {
 /* Capturas reales de la app (recorrido): marco de celular dibujado con CSS, sin retocar la foto. */
 .ld-app-real {
   border-radius: 28px;
-  border: 7px solid #191919;
-  background: #191919;
+  border: 7px solid #101010;
+  background: #101010;
   object-fit: cover;
   aspect-ratio: 440 / 956;
 }
@@ -1878,14 +1878,14 @@ button {
 /* Cabecera blanca: el logo oficial se diseñó para fondo claro */
 .cabecera {
   background: #fff !important;
-  color: #191919;
+  color: #101010;
   border-bottom: 1px solid #ececec;
 }
 .logo img.logo-marca {
-  height: 46px;
+  height: 34px;
 }
 .ld-nav a {
-  color: #191919;
+  color: #101010;
 }
 .ld-nav a:hover {
   color: var(--primario);
@@ -1896,18 +1896,18 @@ button {
   border-color: var(--primario) !important;
 }
 .boton-panel:hover {
-  background: #191919 !important;
-  border-color: #191919 !important;
+  background: #101010 !important;
+  border-color: #101010 !important;
 }
 .cabecera .selector-idioma-boton {
-  color: #191919;
+  color: #101010;
 }
 .cabecera .selector-idioma-boton:hover,
 .cabecera .selector-idioma-boton[aria-expanded='true'] {
-  border-color: #191919;
+  border-color: #101010;
 }
 .cabecera .cuenta {
-  color: #191919;
+  color: #101010;
 }
 .cabecera .cuenta summary {
   border-color: #d6d6d6;
@@ -2533,7 +2533,7 @@ button {
   margin: 4px 0 12px;
 }
 .nota-legal a {
-  color: #191919;
+  color: #101010;
   text-decoration: underline;
 }
 
@@ -2638,7 +2638,7 @@ button {
   columns: 2 220px;
 }
 .como-indice a {
-  color: #191919;
+  color: #101010;
 }
 .como-seccion {
   margin-top: 56px;
@@ -2749,7 +2749,7 @@ button {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #191919;
+  background: #101010;
   color: #fff;
   font-weight: 800;
 }
@@ -2835,7 +2835,7 @@ button {
 }
 .ticket-hilo li.del-equipo {
   justify-self: end;
-  background: #191919;
+  background: #101010;
   color: #fff;
 }
 .ticket-hilo time {
@@ -2913,7 +2913,7 @@ button {
   border: 1px solid #2a2a2a;
   border-radius: 12px;
   margin-bottom: 8px;
-  color: #191919;
+  color: #101010;
 }
 .super-bandeja small {
   display: block;
@@ -2934,9 +2934,9 @@ button {
   cursor: pointer;
 }
 .super-filtros button.activa {
-  background: #191919;
+  background: #101010;
   color: #fff;
-  border-color: #191919;
+  border-color: #101010;
 }
 .super-franquicias {
   display: grid;
@@ -2954,7 +2954,7 @@ button {
   color: #5e5e5e;
 }
 .super-tarjeta a {
-  color: #191919;
+  color: #101010;
 }
 
 /* Tablero del restaurante */
@@ -2973,7 +2973,7 @@ button {
   font-family: Poppins, system-ui, sans-serif;
 }
 .tablero-ahora.hay {
-  background: #191919;
+  background: #101010;
   color: #fff;
 }
 .tablero-ahora.hay a {
@@ -3010,7 +3010,7 @@ button {
   gap: 10px;
 }
 .burbuja-boton {
-  background: #ff3008;
+  background: #f20d20;
   color: #fff;
   border: 0;
   border-radius: 999px;
@@ -3189,8 +3189,8 @@ button {
 }
 .verificacion-tomar {
   background: #ffffff;
-  color: #191919;
-  border: 1px solid #191919;
+  color: #101010;
+  border: 1px solid #101010;
   cursor: pointer;
 }
 .verificacion-tomar.deshabilitado {
@@ -3227,10 +3227,10 @@ button {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #ff3008;
+  background: #f20d20;
 }
 .super-bitacora li.super-bitacora-manager::before {
-  background: #191919;
+  background: #101010;
 }
 .super-bitacora time {
   font-size: 0.8rem;
@@ -3247,7 +3247,7 @@ button {
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-  color: #191919;
+  color: #101010;
 }
 .semaforo-punto {
   width: 10px;
@@ -3262,7 +3262,7 @@ button {
   background: #e0a100;
 }
 .semaforo-rojo .semaforo-punto {
-  background: #ff3008;
+  background: #f20d20;
 }
 .semaforo-rojo {
   font-weight: 700;
@@ -3271,7 +3271,7 @@ button {
   display: grid;
   gap: 4px;
   text-decoration: none;
-  color: #191919;
+  color: #101010;
 }
 .super-encurso li a > span:first-of-type {
   color: #5e5e5e;
@@ -3330,25 +3330,25 @@ button {
   border-bottom: 1px solid #e6e6e6;
 }
 .docs-preguntas li a {
-  color: #191919;
+  color: #101010;
   font-weight: 600;
   text-decoration: none;
 }
 .docs-preguntas li a:hover {
-  color: #eb1700;
+  color: #c20a1a;
   text-decoration: underline;
 }
 .docs-comohago {
   display: inline-block;
   font-weight: 700;
-  color: #eb1700;
+  color: #c20a1a;
   margin: 4px 0 8px;
 }
 .burbuja-guias {
   display: block;
   margin-top: 10px;
   font-weight: 700;
-  color: #eb1700;
+  color: #c20a1a;
   text-align: center;
 }
 /* «Guardado» junto al botón de guardar: con aire, nunca pegado (todos los formularios del panel). */
@@ -3376,7 +3376,7 @@ button {
 
 /* Calculadora pública (/calculator): pestañas sobrias, resultados en verde (es lo que ganas). */
 .calc-aviso {
-  border-left: 3px solid #191919;
+  border-left: 3px solid #101010;
   padding: 8px 12px;
   background: #f6f6f6;
   border-radius: 8px;
@@ -3390,14 +3390,14 @@ button {
 .calc-pestanas button {
   border: 1px solid #2a2a2a;
   background: #fff;
-  color: #191919;
+  color: #101010;
   border-radius: 999px;
   padding: 8px 16px;
   font-weight: 700;
   cursor: pointer;
 }
 .calc-pestanas button.activa {
-  background: #191919;
+  background: #101010;
   color: #fff;
 }
 .calc-panel {
@@ -3522,7 +3522,7 @@ button {
 }
 .boton.secundario {
   background: #fff;
-  color: #191919;
+  color: #101010;
   border: 1px solid #d6d6d6;
 }
 
@@ -3629,7 +3629,7 @@ button {
   color: #0d7a3a;
 }
 .activacion-falta {
-  color: #191919;
+  color: #101010;
 }
 
 /* Cocina ocupada (pedidos del restaurante) */
@@ -3647,7 +3647,7 @@ button {
 }
 
 .super-tarjeta-alerta {
-  border-color: #ff3008;
+  border-color: #f20d20;
 }
 
 /* Versión del artefacto publicado (C-VERSION-DEL-ARTEFACTO): discreta, al pie y en el menú de la cuenta. */
@@ -3683,4 +3683,30 @@ button {
 .gestion-franquicia .casilla input {
   width: auto;
   margin: 0;
+}
+
+/* Placas de marca Divoox en lugar de las fotos con la marca vieja (23 oct 2026) */
+.ld-placa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ld-placa-negro {
+  background: #101010;
+}
+.ld-placa-rojo {
+  background: #f20d20;
+}
+.ld-placa img {
+  height: auto;
+  max-height: 60%;
+}
+.ld-placa img.ld-placa-completo {
+  width: min(70%, 620px);
+}
+.ld-placa img.ld-placa-isotipo {
+  width: min(42%, 260px);
 }

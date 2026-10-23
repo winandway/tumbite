@@ -308,7 +308,7 @@ function Estrellas({
             }
             hitSlop={6}
           >
-            <Text style={{ fontSize: 30, color: n <= valor ? '#FF3008' : '#D6D6D6' }}>★</Text>
+            <Text style={{ fontSize: 30, color: n <= valor ? '#F20D20' : '#D6D6D6' }}>★</Text>
           </Pressable>
         ))}
       </View>

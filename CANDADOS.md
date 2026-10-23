@@ -1003,3 +1003,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pasaba:** en el sitio de pruebas, llamadas a la API del recorrido fallaban de vez en cuando con «read ECONNRESET» (corte de conexión del alojamiento, no de la app). El 22 oct falló dos veces seguidas el recorrido en inglés, en lugares distintos.
 - **Qué se hizo:** `e2e/recorrido/fixtures.ts` envuelve el `request` de Playwright y agrega `maxRetries: 3` a cada llamada. Playwright reintenta SOLO errores de red, nunca una respuesta 4xx o 5xx: un fallo real de la app sigue fallando. `recorrido.spec.ts` e `internacional.spec.ts` importan `test` de ahí.
 - **Ojo en local:** si se corre el recorrido varias veces sin preparar la base, se acumulan restaurantes con el mismo nombre y la prueba falla por «strict mode». Se arregla con `SIN_COMPILAR=1 node scripts/recorrido/preparar.mjs`.
+
+## C-IDENTIDAD-DIVOOX: la identidad visual sale solo de los vectores aprobados (23 oct 2026)
+
+- **Archivos maestros:** `identidad-divoox/` (manual de marca v1, seis SVG aprobados, PNG, favicon). No se editan.
+- **Generador:** `node scripts/marca/generar-identidad.mjs` produce TODAS las piezas: logo y variantes SVG de la web (`apps/panel/public/marca/divoox-*.svg`), favicon, íconos de la web, tarjeta para redes (`og.png`), íconos de las tres apps (cliente fondo rojo, repartidor negro, restaurante blanco; adaptativos y monocromo de Android), logo de la cabecera de cada app y la mascota vieja reemplazada por el isotipo. Todo con `object-fit: contain`: nada se estira.
+- **Dos ajustes, sin tocar trazos:** (1) la «palabra sola» se guarda sin los trazos del isotipo que el SVG tenía fuera del recuadro (aparecían si se estiraba); (2) sobre fondo rojo, el isotipo para fondo oscuro perdía el punto rojo (su anillo es transparente): se pone un disco blanco solo dentro del hueco, como el ícono rojo del manual.
+- **Regla del manual:** el logo completo para fondo oscuro lleva la X roja: nunca sobre rojo (en la portada, las placas rojas llevan solo el isotipo blanco).
+- **Colores:** rojo `#F20D20`, acento `#C20A1A`, negro `#101010`, gris `#666B73` (`packages/compartido/src/marca.ts` y CSS).
+- **Fotos de marketing con la marca vieja** (banners, cartel, local, entrega, repartidor): ya no se muestran; en su lugar van placas con el logo (`PlacaMarca` en `Landing.tsx`) hasta que marketing entregue fotos nuevas.
+- **Capturas:** rehechas con `npm run recorrido:capturas` (158 capturas para Docs y la portada).

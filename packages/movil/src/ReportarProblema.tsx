@@ -173,11 +173,11 @@ export function ReportarProblema({
                   paddingVertical: 8,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: motivo === clave ? '#FF3008' : '#DADADA',
-                  backgroundColor: motivo === clave ? '#FF3008' : '#fff',
+                  borderColor: motivo === clave ? '#F20D20' : '#DADADA',
+                  backgroundColor: motivo === clave ? '#F20D20' : '#fff',
                 }}
               >
-                <Text style={{ color: motivo === clave ? '#fff' : '#191919', fontWeight: '700' }}>
+                <Text style={{ color: motivo === clave ? '#fff' : '#101010', fontWeight: '700' }}>
                   {etiqueta}
                 </Text>
               </Pressable>
@@ -209,8 +209,8 @@ export function ReportarProblema({
                         height: 20,
                         borderRadius: 5,
                         borderWidth: 2,
-                        borderColor: marcado ? '#FF3008' : '#8A8A8A',
-                        backgroundColor: marcado ? '#FF3008' : '#fff',
+                        borderColor: marcado ? '#F20D20' : '#8A8A8A',
+                        backgroundColor: marcado ? '#F20D20' : '#fff',
                       }}
                     />
                     <Text style={{ flex: 1 }}>

@@ -482,15 +482,14 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
             <p>{t.franquicias.texto}</p>
             <h3>{t.franquicias.incluye}</h3>
           </div>
-          <img
-            src="/marca/local-tumbite.webp"
-            alt={
-              idioma === 'en' ? 'A Divoox partner restaurant' : 'Un restaurante aliado de Divoox'
-            }
-            loading="lazy"
-            width={1400}
-            height={933}
-          />
+          <div
+            className="ld-foto ld-placa ld-placa-negro"
+            role="img"
+            aria-label={idioma === 'en' ? 'Divoox logo' : 'Logo de Divoox'}
+            style={{ aspectRatio: '1400 / 933' }}
+          >
+            <img src="/marca/divoox-logo-oscuro.svg" alt="" className="ld-placa-completo" />
+          </div>
         </div>
         <ul className="como-tarjetas">
           {t.franquicias.items.map((x) => (
@@ -581,7 +580,7 @@ function Rueda({ pasos, titulo }: { pasos: string[]; titulo: string }) {
         cy={c}
         r={r}
         fill="none"
-        stroke="#191919"
+        stroke="#101010"
         strokeWidth="2"
         strokeDasharray="6 6"
       />
@@ -591,7 +590,7 @@ function Rueda({ pasos, titulo }: { pasos: string[]; titulo: string }) {
         const y = c + r * Math.sin(a);
         return (
           <g key={p}>
-            <circle cx={x} cy={y} r="35" fill={i === 0 ? '#FF3008' : '#191919'} />
+            <circle cx={x} cy={y} r="35" fill={i === 0 ? '#F20D20' : '#101010'} />
             <text x={x} y={y} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#FFFFFF">
               {/* Una palabra por renglón para que quepa dentro del círculo. */}
               {p.split(' ').map((palabra, j, todas) => (
@@ -603,7 +602,7 @@ function Rueda({ pasos, titulo }: { pasos: string[]; titulo: string }) {
           </g>
         );
       })}
-      <text x={c} y={c + 5} textAnchor="middle" fontSize="16" fontWeight="800" fill="#191919">
+      <text x={c} y={c + 5} textAnchor="middle" fontSize="16" fontWeight="800" fill="#101010">
         Divoox
       </text>
     </svg>

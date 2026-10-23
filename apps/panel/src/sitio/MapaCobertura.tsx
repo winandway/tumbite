@@ -72,20 +72,20 @@ export function MapaCobertura({ idioma }: { idioma: Idioma }) {
 
   return (
     <svg className="mapa-florida" viewBox="0 0 320 300" role="img" aria-label="Florida">
-      <path d={contorno} fill="#FFFFFF" stroke="#191919" strokeWidth="2" strokeLinejoin="round" />
+      <path d={contorno} fill="#FFFFFF" stroke="#101010" strokeWidth="2" strokeLinejoin="round" />
       {PROXIMAS.filter((p) => !activos.has(p.nombre)).map((p) => (
         <g key={p.nombre} transform={`translate(${x(p.lng)} ${y(p.lat)})`}>
-          <circle r="7" fill="none" stroke="#191919" strokeDasharray="3 3" />
-          <text x="-11" y="4" fontSize="11" fill="#191919" textAnchor="end">
+          <circle r="7" fill="none" stroke="#101010" strokeDasharray="3 3" />
+          <text x="-11" y="4" fontSize="11" fill="#101010" textAnchor="end">
             {p.nombre} · {t.proxima}
           </text>
         </g>
       ))}
       {zonas.map((z) => (
         <g key={z.id} transform={`translate(${x(z.lng)} ${y(z.lat)})`}>
-          <circle r="22" fill="#FF3008" opacity="0.18" className="pulso" />
-          <circle r="8" fill="#FF3008" />
-          <text x="-14" y="-14" fontSize="12" fontWeight="800" fill="#191919" textAnchor="end">
+          <circle r="22" fill="#F20D20" opacity="0.18" className="pulso" />
+          <circle r="8" fill="#F20D20" />
+          <text x="-14" y="-14" fontSize="12" fontWeight="800" fill="#101010" textAnchor="end">
             {z.nombre} · {t.activa}
           </text>
         </g>

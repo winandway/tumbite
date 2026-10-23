@@ -94,12 +94,12 @@ export function EditorArea({
         .addTo(g);
     const puntos = actual.current.map(([lng, lat]) => [lat, lng] as [number, number]);
     if (puntos.length >= 2)
-      leaflet.polygon(puntos, { color: '#FF3008', weight: 2, fillOpacity: 0.2 }).addTo(g);
+      leaflet.polygon(puntos, { color: '#F20D20', weight: 2, fillOpacity: 0.2 }).addTo(g);
     actual.current.forEach(([lng, lat], i) => {
       const marca = leaflet
         .circleMarker([lat, lng], {
           radius: 6,
-          color: '#191919',
+          color: '#101010',
           fillColor: '#FFFFFF',
           fillOpacity: 1,
         })

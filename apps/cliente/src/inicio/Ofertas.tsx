@@ -116,7 +116,7 @@ export function Ofertas({
   const tarjeta = {
     backgroundColor: '#fff',
     borderRadius: 18,
-    shadowColor: '#191919',
+    shadowColor: '#101010',
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },

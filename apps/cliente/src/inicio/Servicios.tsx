@@ -52,7 +52,7 @@ export function Servicios({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
-        shadowColor: '#191919',
+        shadowColor: '#101010',
         shadowOpacity: 0.06,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 3 },

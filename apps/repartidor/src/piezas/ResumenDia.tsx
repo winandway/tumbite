@@ -33,7 +33,7 @@ export function ResumenDia({
         backgroundColor: '#fff',
         borderRadius: 18,
         padding: 12,
-        shadowColor: '#191919',
+        shadowColor: '#101010',
         shadowOpacity: 0.1,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 3 },

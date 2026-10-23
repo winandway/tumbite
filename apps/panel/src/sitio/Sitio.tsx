@@ -21,10 +21,10 @@ export function Sitio({
         <Enlace a="/" className="logo">
           <img
             className="logo-marca"
-            src="/marca/logo.webp"
+            src="/marca/divoox-logo.svg"
             alt={MARCA.nombre}
-            width={74}
-            height={38}
+            width={138}
+            height={34}
           />
         </Enlace>
         <nav className="ld-nav" aria-label={t.menu.como}>

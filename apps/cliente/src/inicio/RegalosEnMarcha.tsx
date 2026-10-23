@@ -39,7 +39,7 @@ export function RegalosEnMarcha({
               borderRadius: 18,
               padding: 14,
               marginTop: 10,
-              shadowColor: '#191919',
+              shadowColor: '#101010',
               shadowOpacity: 0.08,
               shadowRadius: 8,
               shadowOffset: { width: 0, height: 2 },

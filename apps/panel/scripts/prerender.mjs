@@ -46,7 +46,7 @@ try {
     '@type': 'Organization',
     name: 'Divoox',
     url: `${DOMINIO}/`,
-    logo: `${DOMINIO}/marca/logo.webp`,
+    logo: `${DOMINIO}/icono-512.png`,
     email: 'support@tumbite.com',
     description:
       'Divoox is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',

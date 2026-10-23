@@ -13,7 +13,7 @@ html = html
   .replace('<html lang="en">', '<html lang="es">')
   .replace(
     /<title>([^<]*)<\/title>/,
-    '<meta name="color-scheme" content="only light" />\n    <meta name="theme-color" content="#FF3008" />\n    <title>$1</title>\n    <style>html, body { background: #ffffff !important; color: #191919; color-scheme: only light; }</style>',
+    '<meta name="color-scheme" content="only light" />\n    <meta name="theme-color" content="#F20D20" />\n    <title>$1</title>\n    <style>html, body { background: #ffffff !important; color: #101010; color-scheme: only light; }</style>',
   );
 if (!html.includes('name="color-scheme"'))
   throw new Error('claro: no se pudo inyectar el modo claro');

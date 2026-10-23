@@ -13,13 +13,46 @@ import { CONTACTO, TEXTOS_SITIO } from './textos';
  * de pantallas inventadas donde se presente «así es la app»).
  */
 const IMG = {
-  restaurante: '/marca/entrega-restaurante.webp',
-  repartidor: '/marca/repartidor.webp',
-  miami: '/marca/cartel-miami.webp',
-  local: '/marca/local-tumbite.webp',
   mascota: '/marca/mascota.webp',
-  banner: { es: '/marca/banner-es.webp', en: '/marca/banner-en.webp' },
 };
+
+/**
+ * Placa de marca (23 oct 2026): las fotos de marketing llevaban la marca vieja (Tumbite) en
+ * letreros, maletas y carteles. Hasta que marketing entregue las nuevas, en su lugar va el logo
+ * de Divoox sobre negro o rojo, con la misma proporción, para no mover el diseño.
+ */
+function PlacaMarca({
+  fondo,
+  logo,
+  ancho,
+  alto,
+  etiqueta,
+  clase = 'ld-foto',
+}: {
+  fondo: 'negro' | 'rojo';
+  logo: 'completo' | 'isotipo';
+  ancho: number;
+  alto: number;
+  etiqueta: string;
+  clase?: string;
+}) {
+  const src =
+    logo === 'completo'
+      ? '/marca/divoox-logo-oscuro.svg'
+      : fondo === 'rojo'
+        ? '/marca/divoox-isotipo-blanco.svg'
+        : '/marca/divoox-isotipo-oscuro.svg';
+  return (
+    <div
+      className={`${clase} ld-placa ld-placa-${fondo}`}
+      role="img"
+      aria-label={etiqueta}
+      style={{ aspectRatio: `${ancho} / ${alto}` }}
+    >
+      <img src={src} alt="" className={`ld-placa-${logo}`} />
+    </div>
+  );
+}
 
 const ALT = {
   es: {
@@ -149,12 +182,13 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       </ul>
 
       <div className="ld-banner">
-        <img
-          src={enIdioma(IMG.banner, idioma)}
-          alt={a.banner}
-          width={1800}
-          height={663}
-          loading="lazy"
+        <PlacaMarca
+          fondo="negro"
+          logo="completo"
+          ancho={1800}
+          alto={500}
+          etiqueta={a.banner}
+          clase=""
         />
       </div>
 
@@ -208,13 +242,12 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           ))}
         </div>
         <div className="ld-con-foto">
-          <img
-            className="ld-foto"
-            src={IMG.restaurante}
-            alt={a.restaurante}
-            width={1200}
-            height={800}
-            loading="lazy"
+          <PlacaMarca
+            fondo="rojo"
+            logo="isotipo"
+            ancho={1200}
+            alto={800}
+            etiqueta={a.restaurante}
           />
           <ul className="ld-funciones">
             {t.restaurantes.funciones.map(([icono, titulo, texto]) => (
@@ -238,13 +271,13 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         <span className="ld-etiqueta">{t.repartidores.etiqueta}</span>
         <h2>{t.repartidores.titulo}</h2>
         <div className="ld-con-foto">
-          <img
-            className="ld-foto ld-foto-alta"
-            src={IMG.repartidor}
-            alt={a.repartidor}
-            width={900}
-            height={1350}
-            loading="lazy"
+          <PlacaMarca
+            fondo="negro"
+            logo="isotipo"
+            ancho={900}
+            alto={1350}
+            etiqueta={a.repartidor}
+            clase="ld-foto ld-foto-alta"
           />
           <ul className="ld-funciones">
             {t.repartidores.puntos.map(([icono, titulo, texto]) => (
@@ -269,14 +302,6 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <span className="ld-etiqueta">{t.mapa.etiqueta}</span>
           <h2>{t.mapa.titulo}</h2>
           <p className="ld-entrada">{t.mapa.texto}</p>
-          <img
-            className="ld-foto"
-            src={IMG.miami}
-            alt={a.miami}
-            width={1400}
-            height={933}
-            loading="lazy"
-          />
         </div>
         <MapaCobertura idioma={idioma} />
       </section>
@@ -288,14 +313,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         </span>
         <h2>{t.musica.titulo}</h2>
         <p className="ld-entrada">{t.musica.texto}</p>
-        <img
-          className="ld-foto"
-          src={IMG.local}
-          alt={a.local}
-          width={1400}
-          height={933}
-          loading="lazy"
-        />
+        <PlacaMarca fondo="negro" logo="completo" ancho={1400} alto={700} etiqueta={a.local} />
       </section>
 
       {/* 7 · Preguntas */}

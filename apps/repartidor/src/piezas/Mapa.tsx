@@ -86,7 +86,7 @@ export function Mapa({
                 width: 54,
                 height: 54,
                 borderRadius: 27,
-                backgroundColor: 'rgba(255, 48, 8, 0.18)',
+                backgroundColor: 'rgba(242, 13, 32, 0.18)',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
