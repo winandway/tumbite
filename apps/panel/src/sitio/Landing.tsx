@@ -14,6 +14,8 @@ import { CONTACTO, TEXTOS_SITIO } from './textos';
  */
 const IMG = {
   mascota: '/marca/mascota.webp',
+  restaurante: '/marca/divoox-entrega-restaurante.webp',
+  repartidora: '/marca/divoox-repartidora-bici.webp',
 };
 
 /**
@@ -241,13 +243,14 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             </article>
           ))}
         </div>
-        <div className="ld-con-foto">
-          <PlacaMarca
-            fondo="rojo"
-            logo="isotipo"
-            ancho={1200}
-            alto={800}
-            etiqueta={a.restaurante}
+        <div className="ld-con-foto ld-con-foto-grande">
+          <img
+            className="ld-foto"
+            src={IMG.restaurante}
+            alt={a.restaurante}
+            width={1536}
+            height={1024}
+            loading="lazy"
           />
           <ul className="ld-funciones">
             {t.restaurantes.funciones.map(([icono, titulo, texto]) => (
@@ -270,14 +273,14 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       <section id="drivers" className="ld-seccion">
         <span className="ld-etiqueta">{t.repartidores.etiqueta}</span>
         <h2>{t.repartidores.titulo}</h2>
-        <div className="ld-con-foto">
-          <PlacaMarca
-            fondo="negro"
-            logo="isotipo"
-            ancho={900}
-            alto={1350}
-            etiqueta={a.repartidor}
-            clase="ld-foto ld-foto-alta"
+        <div className="ld-con-foto ld-con-foto-grande">
+          <img
+            className="ld-foto"
+            src={IMG.repartidora}
+            alt={a.repartidor}
+            width={1536}
+            height={1024}
+            loading="lazy"
           />
           <ul className="ld-funciones">
             {t.repartidores.puntos.map(([icono, titulo, texto]) => (

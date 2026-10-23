@@ -46,3 +46,7 @@ registros/
 # APK de pruebas compilados en esta computadora (pesan ~100 MB; no van a GitHub)
 /apks-pruebas/
 .claude/worktrees/
+
+# Fotos de marketing que no se publican (marca ajena / banner por corregir)
+identidad-divoox/fotos-marketing/Entrega Divoox en McDonald’s.png
+identidad-divoox/fotos-marketing/Todo lo que necesitas, a un clic.png
