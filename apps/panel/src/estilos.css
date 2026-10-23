@@ -3720,3 +3720,202 @@ button {
 .ld-placa img.ld-placa-isotipo {
   width: min(42%, 260px);
 }
+
+/* ===== Portada equilibrada (pedido de Richard, 23 oct 2026) =====
+   Menos rojo: la portada va en blanco y negro y el rojo queda para lo que se toca (buscar,
+   etiquetas). Sin degradados. */
+.ld-hero {
+  background: #ffffff;
+  color: #101010;
+  border-bottom: 1px solid #ececec;
+}
+.ld-hero h1,
+.ld-hero h1::first-line {
+  color: #101010;
+}
+.ld-hero p {
+  color: #3d3d3d;
+  opacity: 1;
+}
+.ld-hero .ld-etiqueta {
+  background: var(--acento);
+  color: #fff;
+}
+.ld-direccion {
+  border: 1px solid #d6d6d6;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
+}
+.ld-buscar {
+  background: var(--acento);
+}
+.ld-buscar:hover {
+  background: var(--primario);
+}
+.ld-ubicacion {
+  background: #f1f1f1;
+}
+.ld-cta {
+  background: #fff !important;
+  color: #101010 !important;
+  border: 1px solid #101010;
+}
+.ld-cta:hover {
+  background: #101010 !important;
+  color: #fff !important;
+}
+.ld-hero .ld-tiendas span {
+  border-color: #101010;
+  color: #101010;
+}
+.ld-hero .ld-tiendas small {
+  color: #666b73;
+  opacity: 1;
+}
+.ld-hero .ld-app {
+  filter: drop-shadow(0 18px 30px rgb(0 0 0 / 22%));
+}
+
+/* Banner animado: franja fina negra donde cruzan una moto y un carro de Divoox. */
+.ld-carretera {
+  position: relative;
+  height: 170px;
+  background: #101010;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.ld-carretera-ciudad {
+  position: absolute;
+  inset: 12px 0 34px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3%;
+  padding: 0 2%;
+  opacity: 0.6;
+}
+.ld-carretera-ciudad span {
+  flex: 1;
+  background: #1f1f1f;
+  border-radius: 3px 3px 0 0;
+}
+.ld-carretera-centro {
+  position: absolute;
+  inset: 0 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #fff;
+  text-align: center;
+  z-index: 1;
+}
+.ld-banner .ld-carretera-logo {
+  width: 170px;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+  animation: ld-logo-flota 3.2s ease-in-out infinite;
+}
+.ld-carretera-lema {
+  font-family: Poppins, sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+.ld-carretera-servicios {
+  font-size: 0.8rem;
+  color: #b9bcc2;
+}
+.ld-carretera-via {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  background: #262626;
+  border-top: 2px solid #3a3a3a;
+}
+.ld-carretera-via::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15px;
+  border-top: 3px dashed #8a8d93;
+}
+.ld-vehiculo {
+  position: absolute;
+  left: 100%;
+  z-index: 2;
+  animation: ld-cruza 9s linear infinite;
+}
+.ld-moto {
+  bottom: 14px;
+}
+.ld-carro {
+  bottom: 6px;
+  animation-duration: 12s;
+  animation-delay: -5s;
+}
+.ld-rueda {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ld-gira 0.6s linear infinite;
+}
+@keyframes ld-cruza {
+  from {
+    left: 100%;
+  }
+  to {
+    left: -160px;
+  }
+}
+@keyframes ld-gira {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes ld-logo-flota {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.04);
+  }
+}
+@media (max-width: 600px) {
+  .ld-carretera {
+    height: 128px;
+  }
+  .ld-banner .ld-carretera-logo {
+    width: 130px;
+  }
+  .ld-carretera-lema {
+    font-size: 0.9rem;
+  }
+  .ld-carretera-servicios {
+    display: none;
+  }
+  .ld-moto {
+    width: 74px;
+    height: 50px;
+  }
+  .ld-carro {
+    width: 104px;
+    height: 43px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-carretera-logo,
+  .ld-rueda,
+  .ld-vehiculo {
+    animation: none;
+  }
+  .ld-moto {
+    left: auto;
+    right: 6%;
+  }
+  .ld-carro {
+    left: 4%;
+  }
+}

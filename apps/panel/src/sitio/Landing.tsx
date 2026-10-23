@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
+import { BannerCarretera } from './BannerCarretera';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
@@ -64,6 +65,7 @@ const ALT = {
       'Pantalla real de la app de Divoox: el pedido en camino, con el repartidor en el mapa',
     ],
     banner: 'Tus antojos en minutos con Divoox',
+    servicios: 'Comida · Viajes · Envíos — muy pronto en Miami',
     restaurante: 'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante',
     repartidor: 'Repartidor de Divoox en su moto por Miami',
     miami: 'Cartel de Divoox en una autopista de Miami',
@@ -77,6 +79,7 @@ const ALT = {
       'Real Divoox app screen: the order on its way, with the driver on the map',
     ],
     banner: 'Your cravings in minutes with Divoox',
+    servicios: 'Food · Rides · Delivery — coming soon to Miami',
     restaurante: 'A Divoox driver picks up an order at a restaurant counter',
     repartidor: 'Divoox driver on a bike in Miami',
     miami: 'Divoox billboard on a Miami highway',
@@ -184,14 +187,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       </ul>
 
       <div className="ld-banner">
-        <PlacaMarca
-          fondo="negro"
-          logo="completo"
-          ancho={1800}
-          alto={500}
-          etiqueta={a.banner}
-          clase=""
-        />
+        <BannerCarretera lema={a.banner} servicios={a.servicios} />
       </div>
 
       {/* 2 · Comensales: los tres pasos con las pantallas reales */}
