@@ -8,7 +8,7 @@
  * El mapa del sitio viejo del dueño anterior de divoox.com (`/sitemap_index.xml`) lleva al nuestro.
  */
 export const DOMINIO_PRINCIPAL = 'divoox.com';
-const SECUNDARIOS = new Set(['tumbite.com', 'www.tumbite.com', 'www.divoox.com']);
+export const SECUNDARIOS = new Set(['tumbite.com', 'www.tumbite.com', 'www.divoox.com']);
 
 export function redireccionDominio(url: URL, metodo: string): string | null {
   if (metodo !== 'GET' && metodo !== 'HEAD') return null;

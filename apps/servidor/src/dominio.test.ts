@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { app } from './app';
-import { redireccionDominio } from './dominio';
+import { SECUNDARIOS, redireccionDominio } from './dominio';
 import { crearBasePruebas } from './pruebas/d1';
 
 const r = (u: string, m = 'GET') => redireccionDominio(new URL(u), m);
@@ -33,5 +36,31 @@ describe('dirección principal divoox.com (C-DOMINIO-DIVOOX)', () => {
     expect(pagina.headers.get('location')).toBe('https://divoox.com/es/');
     const api = await app.request('https://tumbite.com/datos/salud', {}, { DB });
     expect(api.status).not.toBe(301);
+  });
+  // La plataforma sirve «/» y las páginas prerenderizadas sin pasar por el servidor: el salto del
+  // navegador (public/dominio.js) cubre esos casos con la misma lista.
+  it('el salto del navegador manda los mismos dominios a divoox.com y deja el de pruebas', () => {
+    const PUBLICO = join(__dirname, '..', '..', 'panel');
+    const codigo = readFileSync(join(PUBLICO, 'public', 'dominio.js'), 'utf8');
+    expect(readFileSync(join(PUBLICO, 'index.html'), 'utf8')).toContain(
+      '<script src="/dominio.js"></script>',
+    );
+    const saltar = (hostname: string) => {
+      let destino: string | null = null;
+      const location = {
+        hostname,
+        pathname: '/es/how-it-works',
+        search: '?a=1',
+        hash: '',
+        replace: (u: string) => (destino = u),
+      };
+      runInNewContext(codigo, { location });
+      return destino;
+    };
+    for (const host of SECUNDARIOS)
+      expect(saltar(host), host).toBe('https://divoox.com/es/how-it-works?a=1');
+    expect(saltar('divoox.com')).toBeNull();
+    expect(saltar('staging.tumbite.com')).toBeNull();
+    expect(saltar('localhost')).toBeNull();
   });
 });

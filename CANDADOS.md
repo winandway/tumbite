@@ -1020,7 +1020,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **No se redirige** `/datos/*` (apps compiladas y aviso de Stripe siguen llamando a tumbite.com; un 301 rompería un POST) ni `/media/*`. El sitio de pruebas sigue en staging.tumbite.com.
 - Canónica, Open Graph, mapa del sitio, robots, pie, legales, Docs y enlaces de los correos en divoox.com; variable `SITIO_URL=https://divoox.com` en producción. Los correos siguen siendo @tumbite.com hasta activar el correo del dominio nuevo.
 - El semáforo de `publicar.yml` y el verificador de producción consultan divoox.com (curl sin -L se quedaba en el 301).
-- Prueba: `dominio.test.ts` (comprobada en rojo quitando el filtro).
+- **Ojo (visto en vivo el 23 oct):** la plataforma sirve «/» y las páginas prerenderizadas directo, sin pasar por el servidor, así que el 301 solo alcanza a las rutas que no son archivos. Por eso `apps/panel/public/dominio.js`, cargado al principio del `<head>` de `index.html` (y de todas las páginas prerenderizadas), hace el mismo salto en el navegador con la misma lista. La etiqueta canónica ya dice divoox.com para los buscadores.
+- Prueba: `dominio.test.ts` (comprobada en rojo quitando el filtro). La prueba del salto del navegador ejecuta `dominio.js` con cada dominio de `SECUNDARIOS` y exige divoox.com (comprobada en rojo quitando www.divoox.com).
 
 ## C-SESION-REINTENTA-SOLA: la app reintenta sola cuando no puede confirmar la sesión (23 oct 2026)
 
