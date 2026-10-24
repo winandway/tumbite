@@ -1,10 +1,10 @@
 # Divoox
 
-> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@tumbite.com · franchises: sales@tumbite.com.
+> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@divoox.com · franchises: sales@divoox.com.
 
 ## Main pages
 
-- [Divoox · Food delivery in Miami](https://divoox.com/): Divoox connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other side
+- [Divoox · Food delivery in Miami](https://divoox.com/): Your favorite Miami restaurants, with drivers who truly earn.
 - [How Divoox works](https://divoox.com/how-it-works): Divoox is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine
 
 ## Guides (Docs)
@@ -169,5 +169,5 @@
 ## En español
 
 Every page above also exists in Spanish under https://divoox.com/es (for example https://divoox.com/es/how-it-works).
-- [Divoox · Comida a domicilio en Miami](https://divoox.com/es): Divoox conecta a los vecinos de Miami con sus restaurantes favoritos y con repartidores que ganan de verdad. Más justo para todos, con gente de carne y hue
+- [Divoox · Comida a domicilio en Miami](https://divoox.com/es): Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.
 - [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo
