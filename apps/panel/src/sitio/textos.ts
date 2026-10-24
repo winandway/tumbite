@@ -1,7 +1,7 @@
 import type { Idioma } from '@tumbite/compartido';
 
 /** Textos de la landing y las páginas legales, en los dos idiomas. */
-export const CONTACTO = 'support@tumbite.com';
+export const CONTACTO = 'support@divoox.com';
 
 const es = {
   menu: {
@@ -15,9 +15,8 @@ const es = {
   },
   hero: {
     etiqueta: 'Muy pronto en Miami',
-    titulo: 'Comida rica, con ritmo, hasta tu puerta.',
-    texto:
-      'Divoox conecta a los vecinos de Miami con sus restaurantes favoritos y con repartidores que ganan de verdad. Más justo para todos, con gente de carne y hueso del otro lado.',
+    titulo: 'Comida rica, hasta tu puerta.',
+    texto: 'Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.',
     pedir: 'Quiero pedir',
     restaurante: 'Tengo un restaurante',
     repartir: 'Quiero repartir',
@@ -301,9 +300,8 @@ const en: Textos = {
   },
   hero: {
     etiqueta: 'Coming soon to Miami',
-    titulo: 'Great food, with rhythm, right to your door.',
-    texto:
-      'Divoox connects Miami neighbors with their favorite restaurants and with drivers who actually earn. Fairer for everyone, with real people on the other side.',
+    titulo: 'Great food, right to your door.',
+    texto: 'Your favorite Miami restaurants, with drivers who truly earn.',
     pedir: 'I want to order',
     restaurante: 'I own a restaurant',
     entradas: [

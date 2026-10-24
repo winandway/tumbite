@@ -300,7 +300,7 @@ app.get('/datos/publico', (c) =>
   c.json(
     {
       whatsapp: c.env.WHATSAPP_SOPORTE ?? '',
-      correoSoporte: 'support@tumbite.com',
+      correoSoporte: 'support@divoox.com',
       stripePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
       // Clave pública del escudo anti-robots: vacía = apagado (F5).
       turnstileSitio: c.env.TURNSTILE_SITE_KEY ?? '',

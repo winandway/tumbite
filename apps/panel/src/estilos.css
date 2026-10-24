@@ -3916,3 +3916,81 @@ button {
     left: 4%;
   }
 }
+
+/* Banner arriba de todo y héroe compacto (Richard, 23 oct 2026): el buscador de dirección se ve
+   completo en la primera pantalla, también en el celular. */
+.ld-banner.ld-banner-arriba {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.ld-banner-arriba .ld-carretera {
+  height: 120px;
+  border-radius: 0;
+}
+.ld-banner-arriba .ld-carretera-centro {
+  inset: 0 0 40px;
+  gap: 2px;
+}
+.ld-banner-arriba .ld-carretera-logo {
+  width: 130px;
+}
+.ld-banner-arriba .ld-carretera-lema {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ld-hero {
+  padding-top: 28px;
+}
+.ld-hero h1 {
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.05;
+  margin: 0 0 10px;
+}
+.ld-hero p {
+  font-size: 1.05rem;
+  margin: 0 0 16px;
+}
+.ld-direccion {
+  border: 2px solid #101010;
+  border-radius: 12px;
+}
+.ld-direccion input {
+  font-size: 1.1rem;
+  padding: 18px 0;
+}
+.ld-buscar {
+  font-size: 1.1rem;
+  padding: 0 26px;
+  border-radius: 12px;
+}
+@media (min-width: 900px) {
+  .ld-hero {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    min-height: 0;
+  }
+}
+@media (max-width: 600px) {
+  .ld-banner-arriba .ld-carretera {
+    height: 100px;
+  }
+  .ld-banner-arriba .ld-carretera-logo {
+    width: 110px;
+  }
+  .ld-banner-arriba .ld-carretera-lema {
+    font-size: 0.8rem;
+  }
+  .ld-buscar {
+    padding: 0 16px;
+    font-size: 1rem;
+  }
+  .ld-direccion {
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .ld-direccion input {
+    font-size: 1rem;
+  }
+}

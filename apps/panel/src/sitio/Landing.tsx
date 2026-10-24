@@ -64,8 +64,7 @@ const ALT = {
       'Pantalla real de la app de Divoox: el menú de un restaurante',
       'Pantalla real de la app de Divoox: el pedido en camino, con el repartidor en el mapa',
     ],
-    banner: 'Tus antojos en minutos con Divoox',
-    servicios: 'Comida · Viajes · Envíos — muy pronto en Miami',
+    servicios: 'Comida · Viajes · Envíos',
     restaurante:
       'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante de comida rápida',
     repartidor: 'Repartidor de Divoox en su moto por Miami',
@@ -79,8 +78,7 @@ const ALT = {
       'Real Divoox app screen: a restaurant menu',
       'Real Divoox app screen: the order on its way, with the driver on the map',
     ],
-    banner: 'Your cravings in minutes with Divoox',
-    servicios: 'Food · Rides · Delivery — coming soon to Miami',
+    servicios: 'Food · Rides · Delivery',
     restaurante: 'A Divoox driver picks up an order at a fast-food restaurant counter',
     repartidor: 'Divoox driver on a bike in Miami',
     miami: 'Divoox billboard on a Miami highway',
@@ -111,9 +109,12 @@ export function Landing({ idioma }: { idioma: Idioma }) {
   return (
     <main className="ld">
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
+      {/* Banner animado arriba de todo (Richard, 23 oct): «muy pronto en Miami» va dentro. */}
+      <div className="ld-banner ld-banner-arriba">
+        <BannerCarretera lema={t.hero.etiqueta} servicios={a.servicios} />
+      </div>
       <section className="ld-hero">
         <div className="ld-hero-texto">
-          <span className="ld-etiqueta">{t.hero.etiqueta}</span>
           <h1>{t.hero.titulo}</h1>
           <p>{t.hero.texto}</p>
           <Buscador idioma={idioma} />
@@ -186,10 +187,6 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           </li>
         ))}
       </ul>
-
-      <div className="ld-banner">
-        <BannerCarretera lema={a.banner} servicios={a.servicios} />
-      </div>
 
       {/* 2 · Comensales: los tres pasos con las pantallas reales */}
       <section id="customers" className="ld-seccion">

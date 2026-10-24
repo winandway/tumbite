@@ -47,7 +47,7 @@ try {
     name: 'Divoox',
     url: `${DOMINIO}/`,
     logo: `${DOMINIO}/icono-512.png`,
-    email: 'support@tumbite.com',
+    email: 'support@divoox.com',
     description:
       'Divoox is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
     areaServed: 'Miami, Florida, United States',
@@ -141,8 +141,8 @@ try {
       const descripcion = (
         parrafo ||
         (lengua === 'en'
-          ? 'Divoox: great food, with rhythm, right to your door.'
-          : 'Divoox: comida rica, con ritmo, hasta tu puerta.')
+          ? 'Divoox: great food, right to your door.'
+          : 'Divoox: comida rica, hasta tu puerta.')
       ).slice(0, 155);
       const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
       const pagina = plantilla
@@ -236,7 +236,7 @@ ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</lo
   };
   const llms = `# Divoox
 
-> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@tumbite.com · franchises: sales@tumbite.com.
+> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: support@divoox.com · franchises: sales@divoox.com.
 
 ${grupo('Main pages', (r) => r === '/' || r === '/how-it-works')}
 ${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}

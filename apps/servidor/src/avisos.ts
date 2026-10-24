@@ -170,7 +170,7 @@ export async function correoEstadoRestaurante(
     para: p.correo,
     asunto: textos[0]!,
     texto: textos[1]!,
-    responderA: 'support@tumbite.com',
+    responderA: 'support@divoox.com',
   });
 }
 
@@ -208,7 +208,7 @@ export async function bienvenidaListaEspera(
     para: p.correo,
     asunto,
     texto,
-    responderA: 'support@tumbite.com',
+    responderA: 'support@divoox.com',
   });
 }
 

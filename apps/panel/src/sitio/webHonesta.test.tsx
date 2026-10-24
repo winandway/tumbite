@@ -11,8 +11,8 @@ describe('la web solo promete lo que existe (C-WEB-HONESTA)', () => {
   const es = JSON.stringify(TEXTOS_SITIO.es);
   const en = JSON.stringify(TEXTOS_SITIO.en);
 
-  it('un solo buzón público: support@tumbite.com', () => {
-    expect(CONTACTO).toBe('support@tumbite.com');
+  it('un solo buzón público: support@divoox.com', () => {
+    expect(CONTACTO).toBe('support@divoox.com');
     for (const t of [es, en]) {
       expect(t).not.toMatch(/hello@tumbite|sales@tumbite|ventas@tumbite/);
     }
