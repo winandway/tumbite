@@ -6,8 +6,9 @@
 - [x] (23 oct, rama fase-divoox-fotos) **Portada más profesional:** menos rojo y más blanco y negro, con balance. Un banner delgado animado hecho con código, como un juego: pasa de derecha a izquierda una moto con su caja o un carro, con el anuncio y el logo de Divoox que se mueve. Va después de terminar la identidad visual.
 - [x] (23 oct) Fotos nuevas de marketing grandes en la portada: restaurante moderno y repartidora en bicicleta.
 - [ ] 👤 Banner «Todo lo que necesitas, a un clic»: marketing debe corregir la mascota y el «bite» viejos, el «DivoooX» con tres o, «Detroit» y hacer la versión en inglés. La foto de McDonald's no se usa (marca ajena).
-- [x] (23 oct) Correos visibles cambiados a support@divoox.com y sales@divoox.com.
-- [ ] 👤 El buzón de soporte NO recibe correo: ni divoox.com ni tumbite.com tienen registros MX. Hace falta activar el reenvío de correo de divoox.com (decidir a qué buzón llega) y verificar divoox.com como remitente.
+- [x] (23 oct) Correos visibles cambiados a go@windoce.com (decisión de Richard).
+- [ ] Remitente de los correos automáticos: sigue saliendo de tumbite.com; pasarlo a divoox.com exige verificar el dominio en el proveedor de correo.
+- [ ] Auditoría y limpieza definitiva Tumbite → Divoox (pedida por Richard el 23 oct): inventario completo (archivo, línea, referencia, corrección), presentar hallazgos ANTES de tocar textos legales o configuraciones críticas, luego corregir, staging, producción e informe final.
 
 👤 = depende de Richard. Ordenado por importancia.
 

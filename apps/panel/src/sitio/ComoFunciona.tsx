@@ -108,7 +108,7 @@ const T = {
       ],
       precio:
         'El valor de cada franquicia depende del tamaño de la ciudad: no es lo mismo un pueblo que una capital. Déjanos tus datos y te preparamos los números de tu ciudad.',
-      contacto: 'Quiero una franquicia: support@divoox.com',
+      contacto: 'Quiero una franquicia: go@windoce.com',
     },
     frio: {
       titulo: 'El arranque en frío, paso a paso',
@@ -303,7 +303,7 @@ const T = {
       ],
       precio:
         'Each franchise is priced by city size: a small town isn’t a capital. Leave us your details and we’ll prepare the numbers for your city.',
-      contacto: 'I want a franchise: support@divoox.com',
+      contacto: 'I want a franchise: go@windoce.com',
     },
     frio: {
       titulo: 'The cold start, step by step',

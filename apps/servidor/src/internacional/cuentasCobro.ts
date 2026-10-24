@@ -155,7 +155,7 @@ export async function crearCuentaCobro(
     texto: en
       ? `Hi ${p.nombre},\n\nA new account for receiving customer transfers was added to your Divoox driver profile: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). It becomes active in ${HORAS_ESPERA_CUENTA} hours.\n\nIf it wasn’t you, reply to this email right now.`
       : `Hola, ${p.nombre}.\n\nSe agregó una cuenta nueva para recibir las transferencias de los clientes en tu perfil de repartidor de Divoox: ${p.tipo} ${p.banco} ${enmascarar(p.identificador)} (${p.titular}). Entra en vigor en ${HORAS_ESPERA_CUENTA} horas.\n\nSi no fuiste tú, responde este correo ahora mismo.`,
-    responderA: 'support@divoox.com',
+    responderA: 'go@windoce.com',
   }).catch((e: unknown) => console.error('cuenta de cobro: correo', e));
   const r = await db
     .prepare('SELECT * FROM cuentas_cobro WHERE id = ?')

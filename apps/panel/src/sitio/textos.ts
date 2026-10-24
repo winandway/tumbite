@@ -1,7 +1,7 @@
 import type { Idioma } from '@tumbite/compartido';
 
 /** Textos de la landing y las páginas legales, en los dos idiomas. */
-export const CONTACTO = 'support@divoox.com';
+export const CONTACTO = 'go@windoce.com';
 
 const es = {
   menu: {
