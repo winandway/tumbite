@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plan del lanzamiento de Divoox</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&family=Montserrat:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Montserrat, sans-serif;
+        color: #101010;
+        background: #fff;
+      }
+      .hoja {
+        width: 297mm;
+        height: 210mm;
+        padding: 13mm 15mm 11mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        border-bottom: 2.5px solid #101010;
+        padding-bottom: 6px;
+      }
+      header .n {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 13px;
+        color: #fff;
+        background: #101010;
+        padding: 3px 10px;
+        border-radius: 4px;
+      }
+      header h2 {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 30px;
+        margin: 0;
+        flex: 1;
+      }
+      header .pag {
+        font-size: 11px;
+        color: #666b73;
+      }
+      .frase {
+        font-size: 15px;
+        margin: 10px 0 12px;
+        color: #333;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 12mm;
+      }
+      h3 {
+        font-family: Poppins;
+        font-size: 16px;
+        margin: 0 0 6px;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      .tu h3 {
+        background: #101010;
+        color: #fff;
+      }
+      .yo h3 {
+        border: 1.5px solid #101010;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .t {
+        display: flex;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px dashed #c9cbd0;
+      }
+      .caja {
+        flex: 0 0 auto;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #101010;
+        border-radius: 3px;
+        margin-top: 2px;
+      }
+      .t.ia .caja {
+        border-width: 1.5px;
+        border-color: #666b73;
+      }
+      .t strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .t small {
+        display: block;
+        font-size: 12.5px;
+        color: #444;
+        margin-top: 1px;
+      }
+      .t em {
+        display: block;
+        font-size: 12px;
+        font-style: normal;
+        color: #c20a1a;
+        margin-top: 2px;
+        font-weight: 600;
+      }
+      .t.ia strong {
+        font-weight: 500;
+      }
+      footer {
+        position: absolute;
+        left: 15mm;
+        right: 15mm;
+        bottom: 7mm;
+        font-size: 9px;
+        color: #666b73;
+        border-top: 1px solid #ddd;
+        padding-top: 4px;
+      }
+      .portada h1 {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 36px;
+        margin: 3mm 0 1mm;
+      }
+      .portada .sub {
+        font-size: 14px;
+        margin: 0 0 5mm;
+      }
+      .portada .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12mm;
+      }
+      .portada ol,
+      .portada ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .portada li {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 13.5px;
+        padding: 4px 0;
+        border-bottom: 1px dashed #c9cbd0;
+      }
+      .portada li b {
+        font-family: Poppins;
+        width: 22px;
+      }
+      .leyenda {
+        font-size: 12px;
+        position: absolute;
+        left: 15mm;
+        bottom: 16mm;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+      }
+      .leyenda span.caja {
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      .marca {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 22px;
+      }
+      .marca i {
+        color: #f20d20;
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hoja portada">
+      <div class="marca">Divoo<i>x</i></div>
+      <h1>Plan del lanzamiento en Miami</h1>
+      <p class="sub">
+        Todo lo que falta para tener las apps en los teléfonos y cobrando de verdad. Una casilla por
+        tarea: márcala cuando esté hecha.
+      </p>
+      <div class="grid">
+        <div>
+          <h3 style="background: #101010; color: #fff">Los pasos, en orden</h3>
+          <ol>
+            <li><span class="caja"></span><b>1</b> La compra real</li>
+            <li><span class="caja"></span><b>2</b> Las cuentas</li>
+            <li><span class="caja"></span><b>3</b> El mapa</li>
+            <li><span class="caja"></span><b>4</b> Compilar y probar en teléfonos reales</li>
+            <li><span class="caja"></span><b>5</b> La prueba en la calle</li>
+            <li><span class="caja"></span><b>6</b> Fichas de las tiendas y lanzamiento cerrado</li>
+            <li><span class="caja"></span><b>7</b> Configuraciones que solo necesitan tu «sí»</li>
+            <li><span class="caja"></span><b>8</b> Seguridad (urgente si no está hecho)</li>
+            <li>
+              <span class="caja"></span><b>9</b> Servicios con costo (cada uno con tope antes de
+              encender)
+            </li>
+            <li><span class="caja"></span><b>10</b> Decisiones de negocio</li>
+            <li><span class="caja"></span><b>11</b> Decisiones de franquicias y otros países</li>
+            <li><span class="caja"></span><b>12</b> Marca y legal</li>
+          </ol>
+        </div>
+        <div>
+          <h3 style="border: 1.5px solid #101010">Dónde estamos hoy</h3>
+          <ul>
+            <li>
+              <span class="caja" style="background: #101010"></span>Web, panel y tres apps
+              construidos
+            </li>
+            <li>
+              <span class="caja" style="background: #101010"></span>Marca Divoox y dominio
+              divoox.com publicados
+            </li>
+            <li>
+              <span class="caja" style="background: #101010"></span>Cobro probado con dinero de
+              prueba
+            </li>
+            <li><span class="caja"></span>Cobro con dinero real (paso 1)</li>
+            <li><span class="caja"></span>Apps en las tiendas (pasos 2 a 6)</li>
+            <li><span class="caja"></span>Prueba en la calle (paso 5)</li>
+          </ul>
+          <h3 style="border: 1.5px solid #101010; margin-top: 4mm">Lo que hago yo en paralelo</h3>
+          <ul>
+            <li>
+              <span class="caja"></span>Terminar la marca Divoox en las apps (avisos y dirección del
+              servidor).
+            </li>
+            <li>
+              <span class="caja"></span>Página «Cómo funciona» y las de restaurantes y repartidores
+              con el estilo de la portada.
+            </li>
+            <li>
+              <span class="caja"></span>Fichas de las tiendas con capturas reales, listas para el
+              día de las cuentas.
+            </li>
+            <li>
+              <span class="caja"></span>Mantener Docs y la web al día con capturas originales en
+              cada cambio.
+            </li>
+            <li>
+              <span class="caja"></span>Pruebas automáticas, sitio de pruebas y verificación de
+              producción en cada publicación.
+            </li>
+            <li>
+              <span class="caja"></span>Seguridad: actualizar las librerías cuando salga un aviso
+              nuevo.
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="leyenda">
+        <span><span class="caja"></span>Casilla gruesa: la haces tú</span
+        ><span
+          ><span class="caja" style="border-width: 1.5px; border-color: #666b73"></span>Casilla
+          fina: la hago yo</span
+        ><span style="color: #c20a1a; font-weight: 600"
+          >En rojo: lo que se destranca cuando la haces</span
+        >
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Detalle en el documento
+        ROADMAP-LANZAMIENTO-MIAMI
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 1</span>
+        <h2>La compra real</h2>
+        <span class="pag">1 / 13</span>
+      </header>
+      <p class="frase">
+        Lo primero y lo más importante: demostrar que el cobro con dinero real funciona.
+      </p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Comprar un plato de 1 dólar en divoox.com con tu tarjeta</strong
+                ><small
+                  >La tarjeta autoriza 4,99 con el envío. Sigue el guion PRUEBA-REAL-1-DOLAR.</small
+                >
+                <em>Destranca: Poder anunciar y vender</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Hacer una segunda compra igual y cancelarla antes de que la acepten</strong
+                ><small>La autorización se anula sola: no se cobra.</small>
+                <em>Destranca: Probar la anulación real</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Mirar en tu banco que solo quedó el cobro correcto</strong
+                ><small>Neto: 3,99 dólares, de los que unos 0,44 son comisión de Stripe.</small>
+                <em>Destranca: Cerrar la prueba de dinero</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Preparar el restaurante y el plato de 1 dólar</strong
+                ><small>En producción, listo para tu compra.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Seguir tu pedido en vivo y aceptarlo, prepararlo y entregarlo</strong
+                ><small>Con el panel.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Devolverte 1,00 dólar (devolución parcial)</strong
+                ><small>Desde el panel de soporte.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Comprobar en Stripe el cobro, la anulación y la devolución</strong
+                ><small>Modo real.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Anotarlo como PROBADO en VERIFICAR-PAGOS</strong
+                ><small>Con fecha y número de pedido.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 2</span>
+        <h2>Las cuentas</h2>
+        <span class="pag">2 / 13</span>
+      </header>
+      <p class="frase">
+        Sin estas cuentas las apps no llegan a los teléfonos. Tú pones identidad y tarjeta; lo
+        técnico es mío.
+      </p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Apple Developer a nombre de Windoce LLC</strong
+                ><small>99 dólares al año. Pide el número D-U-N-S de la empresa.</small>
+                <em>Destranca: App Store, TestFlight y Apple Pay</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Google Play Console a nombre de Windoce LLC</strong
+                ><small>25 dólares, una sola vez.</small> <em>Destranca: Google Play</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Cuenta de Expo de la empresa</strong
+                ><small>Gratis. Y cambiar la clave de Expo que estuvo expuesta.</small>
+                <em>Destranca: Compilar las apps</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Google Cloud con facturación (un proyecto «Divoox»)</strong
+                ><small>Con la sesión de Google de Windoce.</small>
+                <em>Destranca: Firebase y la llave del mapa</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Darme acceso a cada cuenta</strong
+                ><small>Como administrador o desarrollador; yo te digo dónde.</small>
+                <em>Destranca: Que yo haga todo lo demás</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Crear los tres proyectos de Expo</strong
+                ><small>Cliente, repartidor y restaurante.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Crear Firebase solo para avisos y conectarlo a Expo</strong
+                ><small>Avisos al celular en Android.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Registrar las tres apps en Apple y Google</strong
+                ><small>Nombres, íconos e identificadores.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Pasarte el plano casilla por casilla si un paso pide algo tuyo</strong
+                ><small>Sin listas de comandos.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 3</span>
+        <h2>El mapa</h2>
+        <span class="pag">3 / 13</span>
+      </header>
+      <p class="frase">
+        Se queda el mapa que ya tenemos. Falta solo una llave, la de Google para Android, y es
+        gratis.
+      </p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Nada más que el paso 2 (Google Cloud y Expo)</strong
+                ><small>La llave sale de ahí.</small> <em>Destranca: El mapa en Android</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Activar «Maps SDK for Android» en Google Cloud</strong
+                ><small>Uso ilimitado sin cobro, según la página de precios de Google.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Crear UNA llave restringida a las tres apps de Android</strong
+                ><small>Con la huella de firma que da Expo.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Ponerla en la configuración de compilación, nunca en el código</strong
+                ><small>Hoy dice «PON_AQUI_LA_LLAVE».</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>NO encender buscar direcciones, rutas ni autocompletado</strong
+                ><small>Esos sí cobran; si algún día, con tope escrito.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Comprobar en un Android real que el mapa sale con calles</strong
+                ><small>Sin llave se ve gris.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 4</span>
+        <h2>Compilar y probar en teléfonos reales</h2>
+        <span class="pag">4 / 13</span>
+      </header>
+      <p class="frase">Lo que en el navegador no se puede probar, se prueba aquí.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Instalar las apps de prueba en tu iPhone y en un Android</strong
+                ><small>Te mando el enlace de TestFlight y el de prueba interna.</small>
+                <em>Destranca: Probar como usuario</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Compilar las tres apps para iPhone y Android</strong
+                ><small>Con Expo.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Cambiar la dirección del servidor de las apps a divoox.com</strong
+                ><small>Auditoría de marca.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Cambiar los avisos «tumbite.com/panel» a divoox.com/panel</strong
+                ><small>App del restaurante y pantalla de entrar.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Probar GPS del repartidor con la app en segundo plano</strong
+                ><small>Teléfono real.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Probar avisos al celular, cámara, fotos y PIN</strong
+                ><small>Teléfono real.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Recorrido completo de un pedido en dos teléfonos</strong
+                ><small>iPhone y Android.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 5</span>
+        <h2>La prueba en la calle</h2>
+        <span class="pag">5 / 13</span>
+      </header>
+      <p class="frase">Tres personas reales, pocos pedidos chicos, dinero de verdad.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Elegir un cliente, un restaurante de Miami y un repartidor</strong
+                ><small>Gente de confianza.</small> <em>Destranca: Arrancar la prueba</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Hacer tres pedidos completos con ellos</strong
+                ><small>Guion: PLAN-DE-PRUEBA-EN-CALLE.</small>
+                <em>Destranca: Saber que funciona sin ayuda</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Contarme todo lo que no les gustó</strong
+                ><small>Por WhatsApp, con capturas.</small>
+                <em>Destranca: Arreglar antes de lanzar</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Dar de alta y aprobar al restaurante y al repartidor</strong
+                ><small>Con verificación.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Vigilar cada pedido en el panel en vivo</strong
+                ><small>Y responder en soporte.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Arreglar lo que aparezca, con su prueba</strong
+                ><small>Pasa por el sitio de pruebas.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 6</span>
+        <h2>Fichas de las tiendas y lanzamiento cerrado</h2>
+        <span class="pag">6 / 13</span>
+      </header>
+      <p class="frase">Se prepara mientras tanto; se sube cuando las pantallas estén cerradas.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Aprobar los textos y las capturas de las fichas</strong
+                ><small>Inglés y español.</small> <em>Destranca: Subir a las tiendas</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Elegir los primeros restaurantes del lanzamiento</strong
+                ><small>Pocos al principio.</small> <em>Destranca: Lanzamiento cerrado</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Decidir si hay promoción de lanzamiento</strong
+                ><small>Envío gratis o comisión 0 % por un tiempo.</small>
+                <em>Destranca: Marketing del lanzamiento</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Textos de las fichas en inglés y español</strong
+                ><small>App Store y Google Play.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Capturas reales al tamaño de cada tienda</strong
+                ><small>Salen solas del recorrido.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Enlaces de privacidad, términos, soporte y borrar cuenta</strong
+                ><small>Ya existen en divoox.com.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Subir las apps a revisión de Apple y Google</strong
+                ><small>Y responder lo que pidan.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Borrar los datos de prueba antes del lanzamiento abierto</strong
+                ><small>Ciudades y cuentas de prueba.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 7</span>
+        <h2>Configuraciones que solo necesitan tu «sí»</h2>
+        <span class="pag">7 / 13</span>
+      </header>
+      <p class="frase">Sin costo. Yo las hago; tú solo autorizas.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Sí al aviso de cuentas conectadas de Stripe (prueba y real)</strong
+                ><small>Alta de restaurantes.</small>
+                <em>Destranca: Que los restaurantes cobren</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Sí al escudo anti-robots (Turnstile)</strong
+                ><small>Entrar y registrarse.</small> <em>Destranca: Seguridad contra robots</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Sí a Apple Pay y Google Pay en Stripe</strong
+                ><small>Dos interruptores; Apple depende del paso 2.</small>
+                <em>Destranca: Pagar con el teléfono</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Terminar la activación de Connect en Stripe modo prueba</strong
+                ><small>Es un formulario tuyo en Stripe.</small>
+                <em>Destranca: Alta de restaurantes en pruebas</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Sí a verificar divoox.com como remitente de correos</strong
+                ><small>Hoy salen desde la dirección vieja.</small>
+                <em>Destranca: Correos con la marca nueva</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Hacer cada configuración en cuanto digas «sí»</strong
+                ><small>Con el canario vigilando cada pieza.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Comprobar que el aviso de Stripe llega y queda en verde</strong
+                ><small>En la salud del sistema.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Cambiar el remitente solo después de verificar el dominio</strong
+                ><small>Si no, los correos dejan de llegar.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 8</span>
+        <h2>Seguridad (urgente si no está hecho)</h2>
+        <span class="pag">8 / 13</span>
+      </header>
+      <p class="frase">Claves que pasaron por donde no debían.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Cambiar la clave de Expo que estuvo expuesta</strong
+                ><small>Va junto con el paso 2.</small> <em>Destranca: Cuentas seguras</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Cambiar las contraseñas de las cuentas de prueba expuestas</strong
+                ><small>Cliente, repartidor y restaurante.</small>
+                <em>Destranca: Cuentas seguras</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Revocar y crear otra llave del sitio de pruebas</strong
+                ><small>Pasó por el chat.</small> <em>Destranca: Sitio de pruebas seguro</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Guardar las claves nuevas solo en esta computadora</strong
+                ><small>Nunca en el repositorio ni en el chat.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Comprobar que nada usa las claves viejas</strong
+                ><small>Y avisarte si algo falla.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 9</span>
+        <h2>Servicios con costo (cada uno con tope antes de encender)</h2>
+        <span class="pag">9 / 13</span>
+      </header>
+      <p class="frase">
+        Ninguno frena el lanzamiento cerrado; se encienden cuando digas, con su límite de gasto.
+      </p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Copia de seguridad separada de la base y las fotos</strong
+                ><small>Hoy 0 dólares; alerta a los 5 al mes.</small>
+                <em>Destranca: No perder datos nunca</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Twilio: llamada con número oculto y SMS de respaldo</strong
+                ><small>Prepago.</small> <em>Destranca: Llamar sin mostrar el número</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Checkr: antecedentes de repartidores</strong
+                ><small>De 30 a 50 dólares por repartidor.</small>
+                <em>Destranca: Repartidores verificados</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Autocompletar la dirección (Google Places)</strong
+                ><small>Unas 10 000 gratis al mes; con cuota diaria.</small>
+                <em>Destranca: Escribir menos</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Tope mensual de la IA del Manager</strong
+                ><small>Propuesto: 20 dólares prepago.</small> <em>Destranca: El Manager con IA</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Reloj exacto y tiempo real en producción (Cloudflare)</strong
+                ><small>Fichas B1 y B2.</small> <em>Destranca: Avisos al segundo</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Montar cada servicio con su tope y su alerta escritos</strong
+                ><small>Antes de encender nada.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Agregarlo al canario de salud</strong
+                ><small>Para que no falle en silencio.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Anotar cuenta, tarjeta y dónde se recarga</strong
+                ><small>Registro privado de proveedores.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 10</span>
+        <h2>Decisiones de negocio</h2>
+        <span class="pag">10 / 13</span>
+      </header>
+      <p class="frase">Solo tú las puedes tomar. Yo recomiendo; tú decides.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Número de WhatsApp de soporte</strong
+                ><small>El botón ya está listo en la web y las apps.</small>
+                <em>Destranca: Soporte por WhatsApp</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Nombre del negocio que sale en el cobro de la tarjeta</strong
+                ><small>Hoy sale «Windoce, LLC».</small>
+                <em>Destranca: Que el cliente reconozca el cobro</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Retiro mínimo de restaurantes y repartidores</strong
+                ><small>Hoy 1 dólar; recomendado 10.</small> <em>Destranca: Encender retiros</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Cuándo la verificación de identidad es obligatoria</strong
+                ><small>Interruptor listo.</small> <em>Destranca: Repartidores verificados</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong
+                  >Regalo que cubre todo el plato: ¿se perdona el cargo por pedido pequeño?</strong
+                ><small>Hoy se cobra igual.</small> <em>Destranca: Regalos sin sorpresas</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Nombres de los planes y de los niveles</strong
+                ><small>Hoy: Inicial, Crece, Élite; Bronce a Diamante.</small>
+                <em>Destranca: Textos finales</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Aplicar cada decisión en cuanto la tomes</strong
+                ><small>Con su prueba y su guía en Docs.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Mostrarte el efecto en la calculadora antes de encender</strong
+                ><small>Números en dólares.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 11</span>
+        <h2>Decisiones de franquicias y otros países</h2>
+        <span class="pag">11 / 13</span>
+      </header>
+      <p class="frase">Para crecer después de Miami. No frenan el lanzamiento cerrado.</p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Condiciones de las franquicias</strong
+                ><small>Cuota, porcentaje, plazo y territorio.</small>
+                <em>Destranca: Vender franquicias</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong
+                  >Comida comprada y no entregada; transferencia sin confirmar; recarga
+                  disputada</strong
+                ><small>Decisiones 7.1 a 7.3.</small> <em>Destranca: Cobro en mano</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Venezuela y Colombia: tasa, tarifas y socios</strong
+                ><small>Decisiones 7.4 a 7.6.</small> <em>Destranca: Otros países</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Aplicar cada decisión en cuanto la tomes</strong
+                ><small>Con su prueba y su guía en Docs.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Mostrarte el efecto en la calculadora antes de encender</strong
+                ><small>Números en dólares.</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+    <section class="hoja">
+      <header>
+        <span class="n">Paso 12</span>
+        <h2>Marca y legal</h2>
+        <span class="pag">12 / 13</span>
+      </header>
+      <p class="frase">
+        La marca nueva necesita protección y los textos legales, una revisión profesional.
+      </p>
+      <div class="cols">
+        <div class="col tu">
+          <h3>Tu parte · Richard</h3>
+          <ul>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Abogado: registrar la marca Divoox en EE. UU.</strong
+                ><small>Oficina de marcas (USPTO).</small> <em>Destranca: Que nadie la use</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Abogado: revisar términos, privacidad y textos legales</strong
+                ><small>Ya publicados en inglés y español.</small>
+                <em>Destranca: Textos sin riesgo</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Contador: impuesto de ventas en Florida y tipo de repartidor</strong
+                ><small>Empleado o independiente.</small>
+                <em>Destranca: Cobrar bien los impuestos</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Marketing: corregir el banner «a un clic» y hacerlo en inglés</strong
+                ><small>Tiene restos de la marca vieja.</small> <em>Destranca: Usarlo en la web</em>
+              </div>
+            </li>
+            <li class="t">
+              <span class="caja"></span>
+              <div>
+                <strong>Search Console: borrar la fila del mapa con «www» (opcional)</strong
+                ><small>No quita nada.</small> <em>Destranca: Informe limpio</em>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col yo">
+          <h3>Mi parte · IA</h3>
+          <ul>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div>
+                <strong>Pasar los cambios del abogado a la web y las apps</strong
+                ><small>En los dos idiomas.</small>
+              </div>
+            </li>
+            <li class="t ia">
+              <span class="caja"></span>
+              <div><strong>Publicar el banner corregido</strong><small>Cuando llegue.</small></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <footer>
+        Divoox · Plan del lanzamiento en Miami · 23 oct 2026 · Marca cada casilla cuando esté hecha
+      </footer>
+    </section>
+  </body>
+</html>
