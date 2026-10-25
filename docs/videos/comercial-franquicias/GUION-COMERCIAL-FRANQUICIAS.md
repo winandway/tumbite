@@ -3,7 +3,7 @@
 - Formato: video vertical, Richard a cámara, de saco y corbata. Duración: 1 minuto 45 segundos aprox. (unas 280 palabras, a ritmo tranquilo).
 - Público: inversionistas de América Latina y del mundo con capital para comprar una franquicia de ciudad.
 - Marca: **no se dice el nombre** hasta registrarla. Se habla de «nuestra aplicación de reparto». (Tampoco se usa el nombre interno viejo: confundiría a quien llame.)
-- Datos revisados para que nadie los pueda desmentir: la inteligencia artificial que lo cambió todo (ChatGPT) salió a finales de 2022, en San Francisco; los inventos están dichos con precisión (por ejemplo, Ford no inventó el carro: lo hizo para todos con la producción en serie).
+- Datos revisados para que nadie los pueda desmentir (fuentes y fechas al final): ChatGPT, de OpenAI (San Francisco), salió el 30 de noviembre de 2022; Edison no inventó la bombilla, hizo la primera práctica y duradera (1879); Ford no inventó el carro, lo puso al alcance de todos con la producción en serie (1913); el teléfono se patentó en EE. UU. (Bell, 1876); se dice «internet» y no «la web» (la web nació en Suiza).
 
 ## Guion con tiempos
 
@@ -14,7 +14,7 @@
 **0:07 — Los inventos (ritmo rápido; en edición, una imagen por cada uno)**
 
 Aquí nació el avión, con los hermanos Wright.
-La bombilla eléctrica de Edison, que iluminó las casas.
+La bombilla de Edison, que llevó la luz a las casas.
 El teléfono se patentó aquí.
 Ford puso el carro al alcance de todos con la producción en serie.
 La televisión electrónica.
@@ -26,7 +26,7 @@ Y la red que hoy nos conecta a todos: internet.
 
 **0:30 — La inteligencia artificial**
 
-Y como si eso fuera poco, a finales de 2022 explotó el invento más importante después de internet: la inteligencia artificial. ¿Dónde nació? En San Francisco. En Estados Unidos.
+Y como si eso fuera poco, en noviembre de 2022 explotó el invento más importante después de internet: la inteligencia artificial que hoy usa el mundo. ¿De dónde salió? De San Francisco. De Estados Unidos.
 
 **0:40 — El llamado**
 
@@ -35,7 +35,7 @@ Hoy quiero hacer un llamado a América Latina y a cada país del mundo: desperte
 **0:55 — La oportunidad**
 
 Usted conoce Uber, DoorDash, Rappi. Todas fueron el sueño de una persona, y todas empezaron igual: ciudad por ciudad, barrio por barrio.
-Hoy le ofrezco ser el dueño de la aplicación de reparto de comida de su ciudad. Que cada pedido que llega a un hogar pase por una aplicación de su ciudad, en la que usted invirtió y de la que usted gana.
+Hoy le ofrezco la franquicia exclusiva de su ciudad: ser el dueño de la aplicación de reparto de comida de su ciudad. Que cada pedido que llega a un hogar pase por una aplicación de su ciudad, en la que usted invirtió y de la que usted gana.
 
 **1:12 — Qué recibe**
 
@@ -58,7 +58,7 @@ porque su gente cree en sus ideas
 y el mundo entero invierte en ellas?
 
 Aquí nació el avión.
-La bombilla eléctrica.
+La bombilla de Edison.
 El teléfono.
 El carro para todos, con Ford.
 La televisión.
@@ -69,11 +69,11 @@ El teléfono inteligente.
 E internet.
 
 Y como si eso fuera poco,
-a finales de 2022 explotó
+en noviembre de 2022 explotó
 el invento más importante después de internet:
-la inteligencia artificial.
-¿Dónde nació? En San Francisco.
-En Estados Unidos.
+la inteligencia artificial que hoy usa el mundo.
+¿De dónde salió? De San Francisco.
+De Estados Unidos.
 
 Hoy quiero hacer un llamado
 a América Latina y a cada país del mundo:
@@ -88,7 +88,8 @@ Todas fueron el sueño de una persona.
 Y todas empezaron igual:
 ciudad por ciudad.
 
-Hoy le ofrezco ser el dueño
+Hoy le ofrezco la franquicia exclusiva de su ciudad:
+ser el dueño
 de la aplicación de reparto de comida de su ciudad.
 Que cada pedido que llega a un hogar
 pase por una aplicación de su ciudad,
@@ -120,6 +121,10 @@ Su ciudad tiene una oportunidad
 que nadie más está viendo.
 Sea usted quien la vea primero.
 ```
+
+## La palabra «franquicia»
+
+Se puede decir, y con fuerza («la franquicia exclusiva de su ciudad»). Lo que trae problemas no es la palabra sino la venta: en EE. UU. la regla de franquicias de la FTC obliga a entregar el documento de divulgación (FDD) al menos 14 días antes de firmar o cobrar; México exige entregar la información 30 días antes; otros países tienen reglas parecidas. Y en ningún país conviene prometer ganancias en un anuncio. Por eso el guion vende la oportunidad, el kit y la exclusividad, nunca cifras de ganancia. Lo confirma el abogado antes de comprar tráfico.
 
 ## Antes de comprar tráfico (lo que solo decide Richard)
 
@@ -164,3 +169,17 @@ Etiquetas: franquicia, inversión, delivery, aplicación de reparto, negocios, e
 ```
 ¿Quiere ser el dueño de la app de reparto de comida de su ciudad? Se la entregamos lista para lanzar. Solo inversionistas. Escríbame 👔
 ```
+
+## Fuentes de los datos (para responder a cualquiera)
+
+- Avión: hermanos Wright, Kitty Hawk, Carolina del Norte, 17 de diciembre de 1903.
+- Bombilla: Thomas Edison, primera bombilla incandescente práctica y duradera, Menlo Park, 1879 (hubo inventores antes; por eso se dice «la bombilla de Edison»).
+- Teléfono: patente de Alexander Graham Bell en EE. UU., 1876 (Bell nació en Escocia; por eso se dice «se patentó aquí»).
+- Ford: línea de montaje móvil del Modelo T, 1913 (el automóvil lo inventó Karl Benz en Alemania, 1886).
+- Televisión electrónica: Philo Farnsworth, San Francisco, 1927.
+- Microchip (circuito integrado): Jack Kilby (Texas Instruments, 1958) y Robert Noyce (1959).
+- Computadora personal: Altair 8800 (1975) y Apple II (1977), en EE. UU.
+- GPS: Departamento de Defensa de EE. UU.; primer satélite en 1978.
+- Teléfono inteligente: IBM Simon (1994) y el iPhone de Apple (2007), en EE. UU.
+- Internet: ARPANET (1969) y los protocolos TCP/IP de Vint Cerf y Bob Kahn, EE. UU. La web (WWW) nació en el CERN, Suiza: no se menciona.
+- Inteligencia artificial: ChatGPT, de OpenAI, empresa de San Francisco, lanzado el 30 de noviembre de 2022.
