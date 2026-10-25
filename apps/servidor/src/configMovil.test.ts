@@ -27,7 +27,7 @@ describe('configuración de las apps móviles', () => {
       expect(eas.build.pruebas.env.EXPO_PUBLIC_API_URL).toBe('https://staging.tumbite.com');
       expect(eas.build.pruebas.android.buildType).toBe('apk');
       for (const perfil of ['preview', 'production'])
-        expect(eas.build[perfil].env.EXPO_PUBLIC_API_URL).toBe('https://tumbite.com');
+        expect(eas.build[perfil].env.EXPO_PUBLIC_API_URL).toBe('https://divoox.com');
       expect(plugin(c, 'expo-notifications')?.[1].defaultChannel).toBe('pedidos');
       // Las frases de permisos de iPhone van bajo «ios»: sueltas, Expo las copia también a
       // Android y su compilación se cae (ExtraTranslation), aquí y en EAS.

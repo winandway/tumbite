@@ -1,4 +1,4 @@
-import { redireccionDominio } from './dominio';
+import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
@@ -331,7 +331,8 @@ const esRutaPublica = (rutaConIdioma: string) => {
       : rutaConIdioma;
   return RUTAS_PUBLICAS.has(ruta) || /^\/(docs|country|city|food)\//.test(ruta);
 };
-const DOMINIO = 'tumbite.com';
+// C-DOMINIO-DIVOOX: la etiqueta canónica que pone el servidor apunta a la dirección principal.
+export const urlCanonica = (ruta: string) => `https://${DOMINIO_PRINCIPAL}${ruta}`;
 
 export function conCanonica(res: Response, href: string): Response {
   if (!res.headers.get('content-type')?.includes('text/html')) return res;
@@ -389,10 +390,7 @@ app.notFound(async (c) => {
     respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
     // La etiqueta canónica dice la dirección de ESTA página (el index.html trae la de la portada
     // para todas; sin esto Google cree que privacidad y términos son copias de la portada).
-    respuesta = conCanonica(
-      respuesta,
-      `https://${DOMINIO}${c.req.path === '/' ? '/' : c.req.path}`,
-    );
+    respuesta = conCanonica(respuesta, urlCanonica(c.req.path));
   }
   return respuesta;
 });

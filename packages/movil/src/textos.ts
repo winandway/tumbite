@@ -36,7 +36,7 @@ const es = {
   hola: 'Hola',
   rolEquivocado:
     'Esta cuenta no es de esta app. Descarga la app de Divoox que corresponde a tu cuenta.',
-  soloPanel: 'Las cuentas de restaurante se crean en tumbite.com/panel. Aquí solo entras.',
+  soloPanel: 'Las cuentas de restaurante se crean en divoox.com/panel. Aquí solo entras.',
 };
 
 type T = typeof es;
@@ -78,7 +78,7 @@ const en: T = {
   hola: 'Hi',
   rolEquivocado:
     'This account doesn’t belong to this app. Please download the Divoox app for your account type.',
-  soloPanel: 'Restaurant accounts are created at tumbite.com/panel. Sign in here.',
+  soloPanel: 'Restaurant accounts are created at divoox.com/panel. Sign in here.',
 };
 
 export const TEXTOS_MOVIL: Record<Idioma, T> = { es, en };

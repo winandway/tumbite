@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
-import { app } from './app';
+import { app, urlCanonica } from './app';
 import { SECUNDARIOS, redireccionDominio } from './dominio';
 import { crearBasePruebas } from './pruebas/d1';
 
@@ -62,5 +62,9 @@ describe('dirección principal divoox.com (C-DOMINIO-DIVOOX)', () => {
     expect(saltar('divoox.com')).toBeNull();
     expect(saltar('staging.tumbite.com')).toBeNull();
     expect(saltar('localhost')).toBeNull();
+  });
+  it('la etiqueta canónica que pone el servidor dice divoox.com', () => {
+    expect(urlCanonica('/')).toBe('https://divoox.com/');
+    expect(urlCanonica('/es/privacy')).toBe('https://divoox.com/es/privacy');
   });
 });

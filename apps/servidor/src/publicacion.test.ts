@@ -99,7 +99,7 @@ describe('perfiles de construcción del celular', () => {
         expect(c.env?.EXPO_PUBLIC_API_URL, `${app}/${perfil}`).toBe(
           perfil === 'pruebas' || perfil === 'simulador'
             ? 'https://staging.tumbite.com'
-            : 'https://tumbite.com',
+            : 'https://divoox.com',
         );
     }
   });
