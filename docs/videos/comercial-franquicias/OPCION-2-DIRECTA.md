@@ -35,7 +35,10 @@ _(En pantalla: «¿Y si fuera tuya?»)_
 **0:04 — La pregunta que duele**
 ¿Alguna vez soñaste con tener una aplicación como esas en tu ciudad?
 
-**0:08 — Giro (pausa corta, sonrisa leve)**
+**0:07 — La aclaración (lento, mirando al lente)**
+No te hablo de manejar para ella. Te hablo de que tú seas el dueño de la aplicación.
+
+**0:11 — Giro (pausa corta, sonrisa leve)**
 Te cuento algo: esa oportunidad llegó.
 
 **0:12 — Quiénes somos (sin decir el nombre)**
@@ -61,7 +64,7 @@ Si quieres la de tu ciudad antes que otro, escríbeme desde el botón de este an
 ### Texto corrido para el teleprónter
 
 ```
-¿Conoces Uber? ¿Conoces Rappi, DoorDash? ¿Alguna vez soñaste con tener una aplicación como esas en tu ciudad?
+¿Conoces Uber? ¿Conoces Rappi, DoorDash? ¿Alguna vez soñaste con tener una aplicación como esas en tu ciudad? No te hablo de manejar para ella. Te hablo de que tú seas el dueño de la aplicación.
 
 Te cuento algo: esa oportunidad llegó.
 
@@ -81,6 +84,7 @@ Si quieres la de tu ciudad antes que otro, escríbeme desde el botón de este an
 ### Por qué cada frase está así
 
 - **«¿Conoces Uber?»**: la marca más conocida del mundo en este rubro. El cerebro responde «sí» antes de pensar, y eso retiene los primeros 3 segundos.
+- **«No te hablo de manejar para ella. Te hablo de que tú seas el dueño»**: corta de raíz la idea de que es una oferta de trabajo como repartidor; desde el segundo 7 queda claro que es para dueños.
 - **«tener una como esas»** (y no «ser dueño de Uber»): no da a entender que vendemos Uber ni que tenemos relación con ellas. Se nombran solo para comparar, sin logos.
 - **«una startup de Estados Unidos»**: da confianza sin decir el nombre. Es verdad: Windoce LLC es de Florida.
 - **«por ciudad, por estado o por país. Exclusiva»**: escasez. Deja abierto el tamaño de la inversión según el territorio.
