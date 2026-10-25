@@ -137,7 +137,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/docs/restaurants/get-started">{t.guiaRestaurante}</Enlace>
           <Enlace a="/docs/drivers/get-started">{t.guiaRepartidor}</Enlace>
           <Enlace a="/calculator">{t.calculadora}</Enlace>
-          <Enlace a="/how-it-works#franchises">{t.franquicias}</Enlace>
+          <Enlace a="/franchise">{t.franquicias}</Enlace>
           <Enlace a="/how-it-works#launch">{t.arranque}</Enlace>
         </nav>
         <div className="pie-apps">

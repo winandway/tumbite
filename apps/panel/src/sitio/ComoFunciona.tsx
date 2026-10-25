@@ -2,7 +2,6 @@ import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
 import { BannerCarretera } from './BannerCarretera';
-import { FormFranquicia } from './FormFranquicia';
 
 /**
  * «Cómo funciona Divoox» (/how-it-works): el modelo completo de la empresa en una sola página,
@@ -80,37 +79,6 @@ const T = {
       ],
       nota: 'Ejemplo con los valores de lanzamiento. Cada pedido muestra su propio desglose antes de pagar.',
     },
-    franquicias: {
-      titulo: 'Franquicias: así abrimos una ciudad nueva',
-      texto:
-        'Divoox crece ciudad por ciudad, en cualquier país. Cada ciudad nueva se abre con una franquicia local: un socio que conoce su ciudad y que pone el capital para el lanzamiento. Con el dinero de la franquicia no se compra una marca: se compra un arranque completo.',
-      incluye: 'Lo que paga la franquicia en cada ciudad',
-      items: [
-        {
-          titulo: 'Una flota propia desde el primer día',
-          texto:
-            'Entre 25 y 50 motos, según el tamaño de la ciudad. Así ningún pedido se queda sin repartidor mientras crece la red de independientes.',
-        },
-        {
-          titulo: 'Repartidores entrenados',
-          texto:
-            'Selección, entrenamiento en seguridad vial, higiene de los alimentos, trato al cliente y uso de la app.',
-        },
-        {
-          titulo: 'El kit de cada restaurante',
-          texto:
-            'Una tablet ya configurada, con la alarma de pedidos, el menú cargado en dos idiomas y las fotos de los platos. Se entrega en mano y se explica en el local.',
-        },
-        {
-          titulo: 'Los primeros clientes',
-          texto:
-            'Nosotros salimos a buscarlos: lista de espera, campaña local y promociones de lanzamiento, para que el primer día ya haya pedidos.',
-        },
-      ],
-      precio:
-        'El valor de cada franquicia depende del tamaño de la ciudad: no es lo mismo un pueblo que una capital. Déjanos tus datos y te preparamos los números de tu ciudad.',
-      contacto: 'Quiero una franquicia: go@windoce.com',
-    },
     frio: {
       titulo: 'El arranque en frío, paso a paso',
       texto:
@@ -122,7 +90,7 @@ const T = {
         ],
         [
           'La flota lista',
-          'Las motos de la franquicia y los primeros repartidores, entrenados y con la app probada en la calle.',
+          'Las motos y los primeros repartidores, entrenados y con la app probada en la calle.',
         ],
         [
           'Clientes esperando',
@@ -200,7 +168,7 @@ const T = {
         ],
         [
           '¿Cómo se abre Divoox en mi ciudad?',
-          'Con una franquicia local que financia el arranque: motos, entrenamiento, el kit de cada restaurante y la búsqueda de los primeros clientes. Llena el formulario de franquicias de esta página.',
+          'Ciudad por ciudad, con un socio local que financia el arranque. Si te interesa llevar Divoox a tu ciudad, la información está en «Franquicias», al pie de la página.',
         ],
         [
           '¿Divoox funciona en otros países?',
@@ -275,37 +243,6 @@ const T = {
       ],
       nota: 'Example with launch values. Every order shows its own breakdown before you pay.',
     },
-    franquicias: {
-      titulo: 'Franchises: how we launch a new city',
-      texto:
-        'Divoox grows city by city, in any country. Every new city launches with a local franchise: a partner who knows the city and invests the launch capital. The franchise money doesn’t buy a brand: it buys a complete launch.',
-      incluye: 'What the franchise pays for in each city',
-      items: [
-        {
-          titulo: 'Our own fleet from day one',
-          texto:
-            'Between 25 and 50 motorbikes, depending on the size of the city. No order goes without a driver while the independent network grows.',
-        },
-        {
-          titulo: 'Trained drivers',
-          texto:
-            'Recruiting and training in road safety, food hygiene, customer service, and the app.',
-        },
-        {
-          titulo: 'A kit for every restaurant',
-          texto:
-            'A ready-to-use tablet with the order alarm, the menu loaded in two languages, and photos of the dishes. Delivered and explained in person.',
-        },
-        {
-          titulo: 'The first customers',
-          texto:
-            'We go out and find them: waitlist, local campaign, and launch promotions, so there are orders on day one.',
-        },
-      ],
-      precio:
-        'Each franchise is priced by city size: a small town isn’t a capital. Leave us your details and we’ll prepare the numbers for your city.',
-      contacto: 'I want a franchise: go@windoce.com',
-    },
     frio: {
       titulo: 'The cold start, step by step',
       texto:
@@ -317,7 +254,7 @@ const T = {
         ],
         [
           'The fleet, ready',
-          'The franchise’s motorbikes and the first drivers, trained and with the app tested on the street.',
+          'The motorbikes and the first drivers, trained and with the app tested on the street.',
         ],
         [
           'Customers waiting',
@@ -392,7 +329,7 @@ const T = {
         ],
         [
           'How does Divoox open in my city?',
-          'With a local franchise that funds the launch: motorbikes, training, each restaurant’s kit, and finding the first customers. Fill out the franchise form on this page.',
+          'City by city, with a local partner who funds the launch. If you’d like to bring Divoox to your city, see «City franchises» at the bottom of the page.',
         ],
         [
           'Does Divoox work in other countries?',
@@ -414,7 +351,6 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
   const secciones: [string, string][] = [
     ['tres', t.tres.titulo],
     ['dinero', t.dinero.titulo],
-    ['franchises', t.franquicias.titulo],
     ['launch', t.frio.titulo],
     ['synergy', t.sinergia.titulo],
     ['distintos', t.distintos.titulo],
@@ -482,41 +418,6 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
             </tbody>
           </table>
           <p className="como-nota">{t.dinero.nota}</p>
-        </section>
-
-        <section id="franchises" className="como-seccion">
-          <h2>{t.franquicias.titulo}</h2>
-          <div className="como-franquicia">
-            <div>
-              <p>{t.franquicias.texto}</p>
-              <h3>{t.franquicias.incluye}</h3>
-              <Enlace a="/franchise" className="boton">
-                {idioma === 'en' ? 'See the investor offer' : 'Ver la oferta para inversionistas'}
-              </Enlace>
-            </div>
-            <img
-              className="como-tres-apps"
-              src="/marca/tres-apps.webp"
-              alt={
-                idioma === 'en'
-                  ? 'The three real apps: customer, restaurant, and driver'
-                  : 'Las tres apps reales: cliente, restaurante y repartidor'
-              }
-              width={1380}
-              height={950}
-              loading="lazy"
-            />
-          </div>
-          <ul className="como-tarjetas">
-            {t.franquicias.items.map((x) => (
-              <li key={x.titulo}>
-                <h4>{x.titulo}</h4>
-                <p>{x.texto}</p>
-              </li>
-            ))}
-          </ul>
-          <p>{t.franquicias.precio}</p>
-          <FormFranquicia idioma={idioma} />
         </section>
 
         <section id="launch" className="como-seccion">

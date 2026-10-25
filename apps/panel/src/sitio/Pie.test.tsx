@@ -38,12 +38,16 @@ describe('pie de página y páginas por lugar', () => {
     expect(eeuu).toHaveClass('activo');
   });
 
-  it('cada país tiene su propia página con los tres formularios de lista de espera y el de franquicia', async () => {
+  // La franquicia vive en UNA sola página (/franchise, Richard 25 oct): el país solo la enlaza.
+  it('cada país tiene su propia página con los tres formularios de lista de espera y el enlace a inversionistas', async () => {
     window.history.pushState(null, '', '/country/colombia');
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Colombia/);
-    expect(screen.getAllByRole('form')).toHaveLength(4);
-    expect(screen.getByRole('form', { name: /franquicia|franchise/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('form')).toHaveLength(3);
+    expect(screen.queryByRole('form', { name: /franquicia|franchise/i })).toBeNull();
+    expect(
+      screen.getByRole('link', { name: /inversionistas|investors/i }).getAttribute('href'),
+    ).toMatch(/\/franchise$/);
     window.history.pushState(null, '', '/city/miami');
   });
 
@@ -74,6 +78,7 @@ describe('pie de página y páginas por lugar', () => {
       '/delete-account',
       '/support',
       '/calculator',
+      '/franchise',
       '/docs',
       '/panel',
       '/app/',

@@ -280,7 +280,7 @@ const es = {
     franquiciaTitulo: '¿Quieres llevar Divoox a tu ciudad en {lugar}?',
     franquiciaTexto:
       'Cada ciudad nueva arranca con una franquicia local: con ella se compran las motos, se entrena a los repartidores, cada restaurante recibe su tablet y salimos a buscar a los primeros clientes. Así lo hacemos en cualquier país.',
-    franquiciaEnlace: 'Cómo funciona Divoox y las franquicias →',
+    franquiciaEnlace: 'Información para inversionistas →',
     otrosPaises: 'Otros países de {region}',
   },
   volver: '← Volver al inicio',
@@ -567,7 +567,7 @@ const en: Textos = {
     franquiciaTitulo: 'Want to bring Divoox to your city in {lugar}?',
     franquiciaTexto:
       'Every new city launches with a local franchise: it pays for the motorbikes, driver training, a tablet for every restaurant, and the hunt for the first customers. We do it the same way in any country.',
-    franquiciaEnlace: 'How Divoox and franchises work →',
+    franquiciaEnlace: 'Information for investors →',
     otrosPaises: 'Other countries in {region}',
   },
   volver: '← Back to home',
