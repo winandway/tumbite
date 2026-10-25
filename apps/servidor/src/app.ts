@@ -300,6 +300,7 @@ app.get('/datos/publico', (c) =>
   c.json(
     {
       whatsapp: c.env.WHATSAPP_SOPORTE ?? '',
+      whatsappVentas: c.env.WHATSAPP_VENTAS ?? '',
       correoSoporte: 'go@windoce.com',
       stripePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
       // Clave pública del escudo anti-robots: vacía = apagado (F5).

@@ -30,6 +30,11 @@ export const esquemaEnv = z.object({
     .string()
     .regex(/^\d{8,15}$/)
     .optional(),
+  /** WhatsApp de ventas de franquicias (solo dígitos): sale SOLO después del formulario. */
+  WHATSAPP_VENTAS: z
+    .string()
+    .regex(/^\d{8,15}$/)
+    .optional(),
   /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
   EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */

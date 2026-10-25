@@ -1030,3 +1030,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Arreglo: `packages/movil/src/ConSesion.tsx` (`SesionSinConfirmar`) reintenta en silencio con esperas de 3, 6, 12, 24 y luego cada 30 segundos (`ESPERAS_REINTENTO_MS`); `reintentarSesion(true)` en `sesion.tsx` no pasa por la pantalla de carga para que no parpadee. El botón «Reintentar» sigue. Línea nueva `reintentandoSolo` en los textos.
 - Prueba: `e2e/recorrido/sesion.spec.ts` corta la ruta de la sesión, ve la pantalla, devuelve la conexión y exige que la app entre sola sin tocar nada. Comprobada en rojo quitando el reintento.
 - No tocar: la sesión guardada no se borra al fallar la confirmación.
+
+## C-FORMULARIO-ANTES: a los inversionistas, primero el formulario y después el WhatsApp (25 oct 2026)
+
+- Pedido de Richard: en campañas anteriores, un botón directo de WhatsApp trajo mensajes de gente que tocó por tocar. La página de los anuncios de franquicias (`/franchise`, `/es/franchise`, `apps/panel/src/sitio/Inversionistas.tsx`) muestra la oferta, las tres apps reales y el formulario de franquicia.
+- El WhatsApp de ventas (variable `WHATSAPP_VENTAS` en el sitio, leída por `/datos/publico`) aparece SOLO después de enviar el formulario y SOLO si la persona marcó capital de 50 000 USD o más (`FormFranquicia.tsx`). Cada solicitud llega igual como caso de franquicia al panel.
+- Prueba: `Inversionistas.test.tsx` (comprobada en rojo dejando el botón para cualquier capital).
+- Pendiente de Richard: el número de WhatsApp de ventas. Sin él, la página funciona y solo falta el botón final.

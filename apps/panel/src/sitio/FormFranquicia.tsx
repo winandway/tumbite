@@ -48,6 +48,9 @@ const T = {
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezar: 'Empezar de nuevo',
     privacidad: 'Usamos tus datos solo para responder tu solicitud.',
+    whatsapp: 'Escríbenos por WhatsApp',
+    whatsappTexto: (nombre: string, ciudad: string) =>
+      `Hola, soy ${nombre}. Acabo de enviar el formulario de franquicia para ${ciudad}.`,
   },
   en: {
     titulo: 'I want a Divoox franchise',
@@ -83,6 +86,9 @@ const T = {
     recuperado: 'We restored what you were typing.',
     empezar: 'Start over',
     privacidad: 'We only use your information to reply to your request.',
+    whatsapp: 'Talk to us on WhatsApp',
+    whatsappTexto: (nombre: string, ciudad: string) =>
+      `Hi, I'm ${nombre}. I just sent the franchise form for ${ciudad}.`,
   },
 };
 
@@ -103,7 +109,16 @@ const INICIAL = {
  * «Quiero una franquicia»: abre un ticket (correo a la persona con su enlace privado y aviso a
  * Richard). Nunca pierde lo escrito.
  */
-export function FormFranquicia({ idioma, pais }: { idioma: Idioma; pais?: string }) {
+export function FormFranquicia({
+  idioma,
+  pais,
+  whatsapp,
+}: {
+  idioma: Idioma;
+  pais?: string;
+  /** WhatsApp de ventas: se ofrece SOLO después de enviar y si hay capital mínimo (C-FORMULARIO-ANTES). */
+  whatsapp?: string;
+}) {
   const t = enIdioma(T, idioma);
   const b = useBorrador({
     formulario: 'franquicia',
@@ -112,6 +127,11 @@ export function FormFranquicia({ idioma, pais }: { idioma: Idioma; pais?: string
   });
   const [estado, setEstado] = useState<'libre' | 'enviando' | 'listo'>('libre');
   const [enlace, setEnlace] = useState('');
+  const [enviado, setEnviado] = useState<{
+    nombre: string;
+    ciudad: string;
+    capital: string;
+  } | null>(null);
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const id = useId();
   const v = b.valores;
@@ -126,6 +146,7 @@ export function FormFranquicia({ idioma, pais }: { idioma: Idioma; pais?: string
         ...v,
         idioma,
       });
+      setEnviado({ nombre: v.nombre, ciudad: v.ciudad, capital: v.capital });
       await b.limpiar();
       setEnlace(r.enlace);
       setEstado('listo');
@@ -143,6 +164,16 @@ export function FormFranquicia({ idioma, pais }: { idioma: Idioma; pais?: string
         <Icono nombre="listo" tamano={40} />
         <p>{t.listo}</p>
         {enlace && <Enlace a={enlace}>{t.verConversacion}</Enlace>}
+        {whatsapp && enviado && enviado.capital !== 'menos-50k' && (
+          <a
+            className="boton ld-whatsapp"
+            href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(t.whatsappTexto(enviado.nombre, enviado.ciudad))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t.whatsapp}
+          </a>
+        )}
       </div>
     );
 

@@ -211,9 +211,9 @@ const ESCENAS = [
     n: '20',
     t: '1:42',
     ico: ['mensaje'],
-    titulo: 'Escríbanos',
-    sub: 'Toque el botón de este anuncio',
-    dice: 'Escríbanos desde el botón de este anuncio.',
+    titulo: 'Llene el formulario',
+    sub: 'En el enlace de este anuncio',
+    dice: 'Llene el formulario en el enlace de este anuncio.',
   },
 ];
 

@@ -13,6 +13,7 @@ export const PAGINAS = {
   support: '/support',
   howItWorks: '/how-it-works',
   calculator: '/calculator',
+  franchise: '/franchise',
   forgotPassword: '/forgot-password',
   confirmEmail: '/confirm-email',
   resetPassword: '/reset-password',

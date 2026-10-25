@@ -87,6 +87,7 @@ try {
     '/',
     '/how-it-works',
     '/calculator',
+    '/franchise',
     '/privacy',
     '/terms',
     '/restaurant-terms',

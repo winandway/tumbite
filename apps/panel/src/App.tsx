@@ -5,6 +5,7 @@ import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
 import { ComoFunciona } from './sitio/ComoFunciona';
 import { Calculadora } from './sitio/Calculadora';
+import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
@@ -102,6 +103,12 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <TicketPublico codigo={ticket[1]} idioma={idioma} />
+      </Sitio>
+    );
+  if (ruta === '/franchise')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Inversionistas idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/calculator')

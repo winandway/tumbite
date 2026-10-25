@@ -48,7 +48,7 @@ Este proyecto está pensado para inversionistas con el capital disponible para l
 
 **1:38 — El cierre**
 
-El nombre de nuestra marca lo conocerá en una conversación privada. Escríbanos desde el botón de este anuncio. Su ciudad tiene una oportunidad que nadie más está viendo. Sea usted quien la vea primero.
+El nombre de nuestra marca lo conocerá en una conversación privada. Llene el formulario en el enlace de este anuncio. Su ciudad tiene una oportunidad que nadie más está viendo. Sea usted quien la vea primero.
 
 ## Versión para teleprónter (frases cortas, sin tiempos)
 
@@ -120,7 +120,7 @@ le agradecemos su tiempo.
 
 El nombre de nuestra marca
 lo conocerá en una conversación privada.
-Escríbanos desde el botón de este anuncio.
+Llene el formulario en el enlace de este anuncio.
 Su ciudad tiene una oportunidad
 que nadie más está viendo.
 Sea usted quien la vea primero.
@@ -134,7 +134,7 @@ Se puede decir, y con fuerza («la franquicia exclusiva de su ciudad»). Lo que 
 
 1. **Precio y contenido exacto del kit.** El guion no dice cifras a propósito. Las cuentas que dijiste no cuadran todavía: 50 motos cuestan más que 25 000 dólares (una moto de reparto ronda entre 1 000 y 2 000 dólares), y 12 000 dólares de publicidad son 1 000 al mes. Primero se fija el precio por tamaño de ciudad y se cierra el kit; las cifras se dan en la llamada, no en el anuncio.
 2. **Abogado antes de publicar el anuncio.** Vender franquicias es una actividad regulada: en EE. UU. se exige entregar un documento de divulgación (FDD) antes de vender, y en varios países hay reglas parecidas. Prometer ganancias en un anuncio está prohibido sin ese respaldo; por eso el guion dice «participa de los beneficios» y no promete cifras.
-3. **El botón del anuncio.** Recomiendo un WhatsApp de ventas o un formulario corto que pregunte país, ciudad y capital disponible, para filtrar a quien no puede invertir.
+3. **El anuncio lleva a un formulario, no a un botón** (decisión de Richard, 25 oct): la página para inversionistas pide nombre, correo, teléfono, país, ciudad, capital y cuándo arrancar; el WhatsApp aparece solo después de enviarlo y solo a quien tiene el capital mínimo. Antes decía: recomiendo un formulario corto que pregunte país, ciudad y capital disponible, para filtrar a quien no puede invertir.
 
 ## Textos para las redes
 
@@ -145,13 +145,13 @@ Título: La aplicación que lo hace todo en su ciudad puede ser suya
 ```
 
 ```
-Uber, DoorDash y Rappi empezaron ciudad por ciudad. Hoy le ofrecemos ser el dueño de la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro): la entregamos lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
+Uber, DoorDash y Rappi empezaron ciudad por ciudad. Hoy le ofrecemos ser el dueño de la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro): la entregamos lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Llene el formulario para una conversación privada.
 ```
 
 ### TikTok
 
 ```
-¿Y si la app que lo hace todo en su ciudad fuera suya? Comida, mercado, envíos y viajes 🛵🚗 Su ciudad, lista para lanzar: app, motos, tabletas y un año de publicidad. Solo para inversionistas. Escríbanos. #franquicia #inversion #emprendimiento #delivery #negocios #latinoamerica
+¿Y si la app que lo hace todo en su ciudad fuera suya? Comida, mercado, envíos y viajes 🛵🚗 Su ciudad, lista para lanzar: app, motos, tabletas y un año de publicidad. Solo para inversionistas. Llene el formulario. #franquicia #inversion #emprendimiento #delivery #negocios #latinoamerica
 ```
 
 ### YouTube Shorts
@@ -161,7 +161,7 @@ Título: Sea dueño de la app que lo hace todo en su ciudad
 ```
 
 ```
-Descripción: Estados Unidos lidera porque cree en sus ideas. Hoy le proponemos dar el primer paso en su país: la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro), entregada lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
+Descripción: Estados Unidos lidera porque cree en sus ideas. Hoy le proponemos dar el primer paso en su país: la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro), entregada lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Llene el formulario para una conversación privada.
 ```
 
 ```
@@ -171,7 +171,7 @@ Etiquetas: franquicia, inversión, delivery, superapp, envíos, viajes, aplicaci
 ### Estado de WhatsApp
 
 ```
-¿Quiere ser el dueño de la app que lo hace todo en su ciudad? Comida, mercado, envíos y viajes. Se la entregamos lista para lanzar. Solo inversionistas. Escríbame 👔
+¿Quiere ser el dueño de la app que lo hace todo en su ciudad? Comida, mercado, envíos y viajes. Se la entregamos lista para lanzar. Solo inversionistas. Llene el formulario 👔
 ```
 
 ## Fuentes de los datos (para responder a cualquiera)

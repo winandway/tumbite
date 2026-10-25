@@ -59,7 +59,7 @@ Uber, Rappi y DoorDash empezaron igual: ciudad por ciudad. La diferencia es que 
 Es una inversión para quien tiene el capital disponible.
 
 **0:48 — Cierre**
-Si quieres la de tu ciudad antes que otro, escríbeme desde el botón de este anuncio.
+Si quieres la de tu ciudad antes que otro, llena el formulario en el enlace de este anuncio.
 
 ### Texto corrido para el teleprónter
 
@@ -78,7 +78,7 @@ Uber, Rappi y DoorDash empezaron igual: ciudad por ciudad. La diferencia es que 
 
 Es una inversión para quien tiene el capital disponible.
 
-Si quieres la de tu ciudad antes que otro, escríbeme desde el botón de este anuncio.
+Si quieres la de tu ciudad antes que otro, llena el formulario en el enlace de este anuncio.
 ```
 
 ### Por qué cada frase está así
@@ -111,7 +111,7 @@ Título: ¿Y si una app como Uber fuera tuya en tu ciudad?
 ```
 
 ```
-Una startup de Estados Unidos lanzó la aplicación que lo hace todo: comida, mercado, farmacia, envíos y viajes en moto o en carro. La entregamos por franquicia exclusiva, por ciudad, estado o país, lista para lanzar: app, flota de motos, tabletas para restaurantes y un año de publicidad. Para inversionistas con capital disponible. Escríbenos.
+Una startup de Estados Unidos lanzó la aplicación que lo hace todo: comida, mercado, farmacia, envíos y viajes en moto o en carro. La entregamos por franquicia exclusiva, por ciudad, estado o país, lista para lanzar: app, flota de motos, tabletas para restaurantes y un año de publicidad. Para inversionistas con capital disponible. Llena el formulario.
 ```
 
 ### TikTok
@@ -127,7 +127,7 @@ Título: ¿Y si una app como Uber fuera tuya en tu ciudad?
 ```
 
 ```
-Descripción: Una startup de Estados Unidos lanzó la aplicación que lo hace todo: comida, mercado, farmacia, envíos y viajes en moto o en carro. La entregamos por franquicia exclusiva por ciudad, estado o país, lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbenos para una conversación privada.
+Descripción: Una startup de Estados Unidos lanzó la aplicación que lo hace todo: comida, mercado, farmacia, envíos y viajes en moto o en carro. La entregamos por franquicia exclusiva por ciudad, estado o país, lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Llena el formulario para una conversación privada.
 ```
 
 ```
@@ -137,5 +137,5 @@ Etiquetas: franquicia, inversión, startup, superapp, delivery, envíos, viajes,
 ### Estado de WhatsApp
 
 ```
-¿Conoces Uber? ¿Y si tuvieras una app así en tu ciudad? Franquicia exclusiva, lista para lanzar. Solo inversionistas. Escríbeme 👔
+¿Conoces Uber? ¿Y si tuvieras una app así en tu ciudad? Franquicia exclusiva, lista para lanzar. Solo inversionistas. Llena el formulario 👔
 ```
