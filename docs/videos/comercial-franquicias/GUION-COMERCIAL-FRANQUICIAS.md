@@ -2,7 +2,7 @@
 
 - Formato: video vertical, Richard a cámara, de saco y corbata. Duración: 1 minuto 45 segundos aprox. (unas 280 palabras, a ritmo tranquilo).
 - Público: inversionistas de América Latina y del mundo con capital para comprar una franquicia de ciudad.
-- Marca: **no se dice el nombre** hasta registrarla. Se habla de «nuestra aplicación de reparto». (Tampoco se usa el nombre interno viejo: confundiría a quien llame.)
+- Marca: **no se dice el nombre** hasta registrarla. Se habla de «nuestra aplicación»: una sola app para comida, mercado, farmacia, envíos y viajes en moto o en carro. (Tampoco se usa el nombre interno viejo: confundiría a quien llame.)
 - Datos revisados para que nadie los pueda desmentir (fuentes y fechas al final): ChatGPT, de OpenAI (San Francisco), salió el 30 de noviembre de 2022; Edison no inventó la bombilla, hizo la primera práctica y duradera (1879); Ford no inventó el carro, lo puso al alcance de todos con la producción en serie (1913); el teléfono se patentó en EE. UU. (Bell, 1876); se dice «internet» y no «la web» (la web nació en Suiza).
 
 ## Guion con tiempos
@@ -35,7 +35,7 @@ Hoy quiero hacer un llamado a América Latina y a cada país del mundo: desperte
 **0:55 — La oportunidad**
 
 Usted conoce Uber, DoorDash, Rappi. Todas fueron el sueño de una persona, y todas empezaron igual: ciudad por ciudad, barrio por barrio.
-Hoy le ofrezco la franquicia exclusiva de su ciudad: ser el dueño de la aplicación de reparto de comida de su ciudad. Que cada pedido que llega a un hogar pase por una aplicación de su ciudad, en la que usted invirtió y de la que usted gana.
+Hoy le ofrezco la franquicia exclusiva de su ciudad: ser el dueño de la aplicación que lo hace todo en su ciudad. Comida, mercado, farmacia, envíos de paquetes y viajes en moto o en carro, en una sola aplicación. Que cada pedido y cada viaje de su ciudad pase por una aplicación en la que usted invirtió y de la que usted gana.
 
 **1:12 — Qué recibe**
 
@@ -89,10 +89,14 @@ Y todas empezaron igual:
 ciudad por ciudad.
 
 Hoy le ofrezco la franquicia exclusiva de su ciudad:
-ser el dueño
-de la aplicación de reparto de comida de su ciudad.
-Que cada pedido que llega a un hogar
-pase por una aplicación de su ciudad,
+ser el dueño de la aplicación
+que lo hace todo en su ciudad.
+Comida, mercado, farmacia,
+envíos de paquetes
+y viajes en moto o en carro,
+en una sola aplicación.
+Que cada pedido y cada viaje de su ciudad
+pase por una aplicación
 en la que usted invirtió
 y de la que usted gana.
 
@@ -137,37 +141,37 @@ Se puede decir, y con fuerza («la franquicia exclusiva de su ciudad»). Lo que 
 ### Facebook e Instagram
 
 ```
-Título: La aplicación de reparto de su ciudad puede ser suya
+Título: La aplicación que lo hace todo en su ciudad puede ser suya
 ```
 
 ```
-Uber, DoorDash y Rappi empezaron ciudad por ciudad. Hoy le ofrecemos ser el dueño de la aplicación de reparto de comida de su ciudad: la entregamos lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
+Uber, DoorDash y Rappi empezaron ciudad por ciudad. Hoy le ofrecemos ser el dueño de la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro): la entregamos lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
 ```
 
 ### TikTok
 
 ```
-¿Y si la app de reparto de su ciudad fuera suya? 🛵 Su ciudad, lista para lanzar: app, motos, tabletas y un año de publicidad. Solo para inversionistas. Escríbanos. #franquicia #inversion #emprendimiento #delivery #negocios #latinoamerica
+¿Y si la app que lo hace todo en su ciudad fuera suya? Comida, mercado, envíos y viajes 🛵🚗 Su ciudad, lista para lanzar: app, motos, tabletas y un año de publicidad. Solo para inversionistas. Escríbanos. #franquicia #inversion #emprendimiento #delivery #negocios #latinoamerica
 ```
 
 ### YouTube Shorts
 
 ```
-Título: Sea dueño de la app de reparto de su ciudad
+Título: Sea dueño de la app que lo hace todo en su ciudad
 ```
 
 ```
-Descripción: Estados Unidos lidera porque cree en sus ideas. Hoy le proponemos dar el primer paso en su país: la aplicación de reparto de comida de su ciudad, entregada lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
+Descripción: Estados Unidos lidera porque cree en sus ideas. Hoy le proponemos dar el primer paso en su país: la aplicación que lo hace todo en su ciudad (comida, mercado, farmacia, envíos y viajes en moto o en carro), entregada lista para lanzar, con flota de motos, tabletas para restaurantes, material de lanzamiento y un año de publicidad. Para inversionistas con capital disponible. Escríbanos para una conversación privada.
 ```
 
 ```
-Etiquetas: franquicia, inversión, delivery, aplicación de reparto, negocios, emprendimiento, Latinoamérica, startup
+Etiquetas: franquicia, inversión, delivery, superapp, envíos, viajes, aplicación, negocios, emprendimiento, Latinoamérica, startup
 ```
 
 ### Estado de WhatsApp
 
 ```
-¿Quiere ser el dueño de la app de reparto de comida de su ciudad? Se la entregamos lista para lanzar. Solo inversionistas. Escríbame 👔
+¿Quiere ser el dueño de la app que lo hace todo en su ciudad? Comida, mercado, envíos y viajes. Se la entregamos lista para lanzar. Solo inversionistas. Escríbame 👔
 ```
 
 ## Fuentes de los datos (para responder a cualquiera)
