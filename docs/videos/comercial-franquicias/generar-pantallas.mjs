@@ -175,14 +175,6 @@ const ESCENAS = [
     dice: 'Usted conoce Uber, DoorDash, Rappi… todas empezaron ciudad por ciudad.',
   },
   {
-    n: '15',
-    t: '1:02',
-    ico: ['smartphone', 'ciudad'],
-    titulo: 'La app de su ciudad',
-    sub: 'Franquicia exclusiva · usted es el dueño',
-    dice: 'Hoy le ofrezco la franquicia exclusiva de su ciudad.',
-  },
-  {
     n: '16',
     t: '1:12',
     ico: ['moto', 'tablet', 'caja', 'megafono'],
@@ -283,10 +275,41 @@ for (const e of ESCENAS) {
 }
 
 // PDF horizontal: una escena por fila, con lo que se dice y la imagen que va encima.
-const filas = ESCENAS.map(
-  (e) =>
-    `<div class="esc"><img src="pantallas/${e.archivo}"><div><b>${e.t} · Imagen ${e.n}</b><q>${e.dice}</q><small>Archivo: ${e.archivo}</small></div></div>`,
-).join('');
+// Pantallas REALES de la app (las arma pantallas-app.py con el logo tapado por «SU MARCA»).
+const APPS = [
+  [
+    '15-0',
+    '1:00',
+    'las-tres-apps',
+    'Hoy le ofrezco la franquicia exclusiva de su ciudad (las tres apps: cliente, restaurante y repartidor).',
+  ],
+  [
+    '15-1',
+    '1:03',
+    'app-cliente-inicio',
+    'Ser el dueño de la aplicación de reparto de comida de su ciudad.',
+  ],
+  ['15-2', '1:05', 'app-cliente-menu', 'Que cada pedido que llega a un hogar…'],
+  ['15-3', '1:07', 'app-cliente-carrito', '…pase por una aplicación de su ciudad…'],
+  ['15-4', '1:09', 'app-cliente-seguimiento', '…en la que usted invirtió y de la que usted gana.'],
+  [
+    '16-1',
+    '1:12',
+    'app-restaurante-pedido-nuevo',
+    'La aplicación funcionando… tabletas para los restaurantes.',
+  ],
+  ['16-2', '1:14', 'app-repartidor-oferta', 'Una flota de motos con la marca.'],
+  ['16-3', '1:16', 'app-repartidor-en-camino', 'El material de lanzamiento…'],
+  ['16-4', '1:18', 'app-repartidor-ganancias', 'Usted participa de los beneficios de su ciudad.'],
+].map(([n, t, nombre, dice]) => ({ n, t, dice, archivo: `${n}-${nombre}.png` }));
+for (const e of ESCENAS) if (e.n === '16') e.t = '1:20';
+const todas = [...ESCENAS, ...APPS].sort((a, b) => a.t.localeCompare(b.t, 'es', { numeric: true }));
+const filas = todas
+  .map(
+    (e) =>
+      `<div class="esc"><img src="pantallas/${e.archivo}"><div><b>${e.t} · Imagen ${e.n}</b><q>${e.dice}</q><small>Archivo: ${e.archivo}</small></div></div>`,
+  )
+  .join('');
 const html = `<!doctype html><html lang="es"><meta charset="utf-8"><title>Comercial de franquicias · escenas</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Montserrat:wght@500;600&display=swap');
@@ -296,13 +319,13 @@ h1{font-family:Poppins;font-size:28px;margin:0 0 4px}
 .intro{font-size:13px;margin:0 0 14px;color:#333}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
 .esc{display:flex;gap:14px;align-items:center;border:1px solid #d6d6d6;border-radius:10px;padding:8px;break-inside:avoid}
-.esc img{width:120px;height:120px;background:#3a3a3a;border-radius:8px}
+.esc img{width:120px;height:120px;object-fit:contain;background:#3a3a3a;border-radius:8px}
 .esc b{font-family:Poppins;font-size:14px;display:block}
 .esc q{display:block;font-size:13px;margin:4px 0}
 .esc small{color:#666B73;font-size:10.5px}
 </style>
 <h1>Comercial «La aplicación de su ciudad» · escenas e imágenes</h1>
-<p class="intro">Veinte imágenes sin ninguna marca, en la carpeta «pantallas» (PNG de 1080 × 1080 con fondo transparente, para poner encima del video grabado en chroma). Cada una indica en qué segundo del guion va y qué frase la acompaña. El guion completo está en el documento GUION-COMERCIAL-FRANQUICIAS.</p>
+<p class="intro">Imágenes sin ninguna marca: tarjetas de los inventos y pantallas REALES de la app con el logo cambiado por «SU MARCA», en la carpeta «pantallas» (PNG de 1080 × 1080 con fondo transparente, para poner encima del video grabado en chroma). Cada una indica en qué segundo del guion va y qué frase la acompaña. El guion completo está en el documento GUION-COMERCIAL-FRANQUICIAS.</p>
 <div class="grid">${filas}</div></html>`;
 writeFileSync(join(AQUI, 'escenas.html'), html);
 const pdf = await navegador.newPage();
