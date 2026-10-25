@@ -4025,3 +4025,8 @@ button {
   margin: 18px auto;
   font-weight: 600;
 }
+.como-tres-apps {
+  width: 100%;
+  height: auto;
+  display: block;
+}

@@ -1,6 +1,7 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
+import { BannerCarretera } from './BannerCarretera';
 import { FormFranquicia } from './FormFranquicia';
 
 /**
@@ -14,7 +15,7 @@ const T = {
     etiqueta: 'Cómo funciona',
     titulo: 'Cómo funciona Divoox',
     intro:
-      'Divoox es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
+      'Divoox es una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
     indice: 'En esta página',
     tres: {
       titulo: 'Tres personas, una sola entrega',
@@ -213,7 +214,7 @@ const T = {
     etiqueta: 'How it works',
     titulo: 'How Divoox works',
     intro:
-      'Divoox is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
+      'Divoox is an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
     indice: 'On this page',
     tres: {
       titulo: 'Three people, one delivery',
@@ -420,152 +421,168 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
     ['faq', t.preguntas.titulo],
   ];
   return (
-    <main className="como">
-      <Enlace a="/" className="docs-volver">
-        {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
-      </Enlace>
-      <span className="ld-etiqueta">{t.etiqueta}</span>
-      <h1>{t.titulo}</h1>
-      <p className="ld-entrada">{t.intro}</p>
+    <>
+      {/* El mismo banner animado de la portada (25 oct 2026): la web se siente una sola. */}
+      <div className="ld-banner ld-banner-arriba">
+        <BannerCarretera
+          lema={idioma === 'en' ? 'Coming soon to Miami' : 'Muy pronto en Miami'}
+          servicios={idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos'}
+        />
+      </div>
+      <main className="como">
+        <Enlace a="/" className="docs-volver">
+          {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
+        </Enlace>
+        <span className="ld-etiqueta">{t.etiqueta}</span>
+        <h1>{t.titulo}</h1>
+        <p className="ld-entrada">{t.intro}</p>
 
-      <nav className="como-indice" aria-label={t.indice}>
-        <strong>{t.indice}</strong>
-        <ol>
-          {secciones.map(([id, titulo]) => (
-            <li key={id}>
-              <a href={`#${id}`}>{titulo}</a>
-            </li>
-          ))}
-        </ol>
-      </nav>
-
-      <section id="tres" className="como-seccion">
-        <h2>{t.tres.titulo}</h2>
-        <div className="como-tres">
-          {t.tres.partes.map((p) => (
-            <article key={p.id} id={p.id} className="como-parte">
-              <img src={p.img} alt={p.alt} loading="lazy" width={520} height={600} />
-              <h3>{p.titulo}</h3>
-              <ul>
-                {p.puntos.map((x) => (
-                  <li key={x}>
-                    <Icono nombre="listo" tamano={16} /> {x}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="dinero" className="como-seccion">
-        <h2>{t.dinero.titulo}</h2>
-        <p>{t.dinero.texto}</p>
-        <table className="como-dinero">
-          <tbody>
-            {t.dinero.filas.map(([quien, que, cuanto]) => (
-              <tr key={quien}>
-                <th scope="row">{quien}</th>
-                <td>{que}</td>
-                <td className="como-monto">{cuanto}</td>
-              </tr>
+        <nav className="como-indice" aria-label={t.indice}>
+          <strong>{t.indice}</strong>
+          <ol>
+            {secciones.map(([id, titulo]) => (
+              <li key={id}>
+                <a href={`#${id}`}>{titulo}</a>
+              </li>
             ))}
-          </tbody>
-        </table>
-        <p className="como-nota">{t.dinero.nota}</p>
-      </section>
+          </ol>
+        </nav>
 
-      <section id="franchises" className="como-seccion">
-        <h2>{t.franquicias.titulo}</h2>
-        <div className="como-franquicia">
-          <div>
-            <p>{t.franquicias.texto}</p>
-            <h3>{t.franquicias.incluye}</h3>
+        <section id="tres" className="como-seccion">
+          <h2>{t.tres.titulo}</h2>
+          <div className="como-tres">
+            {t.tres.partes.map((p) => (
+              <article key={p.id} id={p.id} className="como-parte">
+                <img src={p.img} alt={p.alt} loading="lazy" width={520} height={600} />
+                <h3>{p.titulo}</h3>
+                <ul>
+                  {p.puntos.map((x) => (
+                    <li key={x}>
+                      <Icono nombre="listo" tamano={16} /> {x}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
           </div>
-          <div
-            className="ld-foto ld-placa ld-placa-negro"
-            role="img"
-            aria-label={idioma === 'en' ? 'Divoox logo' : 'Logo de Divoox'}
-            style={{ aspectRatio: '1400 / 933' }}
-          >
-            <img src="/marca/divoox-logo-oscuro.svg" alt="" className="ld-placa-completo" />
-          </div>
-        </div>
-        <ul className="como-tarjetas">
-          {t.franquicias.items.map((x) => (
-            <li key={x.titulo}>
-              <h4>{x.titulo}</h4>
-              <p>{x.texto}</p>
-            </li>
-          ))}
-        </ul>
-        <p>{t.franquicias.precio}</p>
-        <FormFranquicia idioma={idioma} />
-      </section>
+        </section>
 
-      <section id="launch" className="como-seccion">
-        <h2>{t.frio.titulo}</h2>
-        <p>{t.frio.texto}</p>
-        <ol className="como-pasos">
-          {t.frio.pasos.map(([titulo, texto], i) => (
-            <li key={titulo}>
-              <span className="como-numero" aria-hidden="true">
-                {i + 1}
-              </span>
-              <div>
+        <section id="dinero" className="como-seccion">
+          <h2>{t.dinero.titulo}</h2>
+          <p>{t.dinero.texto}</p>
+          <table className="como-dinero">
+            <tbody>
+              {t.dinero.filas.map(([quien, que, cuanto]) => (
+                <tr key={quien}>
+                  <th scope="row">{quien}</th>
+                  <td>{que}</td>
+                  <td className="como-monto">{cuanto}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="como-nota">{t.dinero.nota}</p>
+        </section>
+
+        <section id="franchises" className="como-seccion">
+          <h2>{t.franquicias.titulo}</h2>
+          <div className="como-franquicia">
+            <div>
+              <p>{t.franquicias.texto}</p>
+              <h3>{t.franquicias.incluye}</h3>
+              <Enlace a="/franchise" className="boton">
+                {idioma === 'en' ? 'See the investor offer' : 'Ver la oferta para inversionistas'}
+              </Enlace>
+            </div>
+            <img
+              className="como-tres-apps"
+              src="/marca/tres-apps.webp"
+              alt={
+                idioma === 'en'
+                  ? 'The three real apps: customer, restaurant, and driver'
+                  : 'Las tres apps reales: cliente, restaurante y repartidor'
+              }
+              width={1380}
+              height={950}
+              loading="lazy"
+            />
+          </div>
+          <ul className="como-tarjetas">
+            {t.franquicias.items.map((x) => (
+              <li key={x.titulo}>
+                <h4>{x.titulo}</h4>
+                <p>{x.texto}</p>
+              </li>
+            ))}
+          </ul>
+          <p>{t.franquicias.precio}</p>
+          <FormFranquicia idioma={idioma} />
+        </section>
+
+        <section id="launch" className="como-seccion">
+          <h2>{t.frio.titulo}</h2>
+          <p>{t.frio.texto}</p>
+          <ol className="como-pasos">
+            {t.frio.pasos.map(([titulo, texto], i) => (
+              <li key={titulo}>
+                <span className="como-numero" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3>{titulo}</h3>
+                  <p>{texto}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section id="synergy" className="como-seccion">
+          <h2>{t.sinergia.titulo}</h2>
+          <div className="como-sinergia">
+            <p>{t.sinergia.texto}</p>
+            <Rueda pasos={t.sinergia.rueda} titulo={t.sinergia.titulo} />
+          </div>
+        </section>
+
+        <section id="distintos" className="como-seccion">
+          <h2>{t.distintos.titulo}</h2>
+          <ul className="como-tarjetas">
+            {t.distintos.items.map(([titulo, texto]) => (
+              <li key={titulo}>
                 <h3>{titulo}</h3>
                 <p>{texto}</p>
-              </div>
-            </li>
+              </li>
+            ))}
+          </ul>
+          <h3>{t.ideas.titulo}</h3>
+          <p>{t.ideas.texto}</p>
+          <ul className="como-ideas">
+            {t.ideas.items.map(([titulo, texto]) => (
+              <li key={titulo}>
+                <strong>{titulo}.</strong> {texto}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="faq" className="como-seccion">
+          <h2>{t.preguntas.titulo}</h2>
+          {t.preguntas.items.map(([p, r]) => (
+            <details key={p} className="como-pregunta">
+              <summary>{p}</summary>
+              <p>{r}</p>
+            </details>
           ))}
-        </ol>
-      </section>
+        </section>
 
-      <section id="synergy" className="como-seccion">
-        <h2>{t.sinergia.titulo}</h2>
-        <div className="como-sinergia">
-          <p>{t.sinergia.texto}</p>
-          <Rueda pasos={t.sinergia.rueda} titulo={t.sinergia.titulo} />
-        </div>
-      </section>
-
-      <section id="distintos" className="como-seccion">
-        <h2>{t.distintos.titulo}</h2>
-        <ul className="como-tarjetas">
-          {t.distintos.items.map(([titulo, texto]) => (
-            <li key={titulo}>
-              <h3>{titulo}</h3>
-              <p>{texto}</p>
-            </li>
-          ))}
-        </ul>
-        <h3>{t.ideas.titulo}</h3>
-        <p>{t.ideas.texto}</p>
-        <ul className="como-ideas">
-          {t.ideas.items.map(([titulo, texto]) => (
-            <li key={titulo}>
-              <strong>{titulo}.</strong> {texto}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section id="faq" className="como-seccion">
-        <h2>{t.preguntas.titulo}</h2>
-        {t.preguntas.items.map(([p, r]) => (
-          <details key={p} className="como-pregunta">
-            <summary>{p}</summary>
-            <p>{r}</p>
-          </details>
-        ))}
-      </section>
-
-      <p className="como-cta">
-        <Enlace a="/#customers" className="boton">
-          {t.cta}
-        </Enlace>
-      </p>
-    </main>
+        <p className="como-cta">
+          <Enlace a="/#customers" className="boton">
+            {t.cta}
+          </Enlace>
+        </p>
+      </main>
+    </>
   );
 }
 
