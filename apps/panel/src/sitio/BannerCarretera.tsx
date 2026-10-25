@@ -4,6 +4,36 @@
  * mientras el logo de Divoox se mueve en el centro. Todo en código (SVG + CSS), sin fotos.
  * Con «reducir movimiento» activado en el teléfono o la computadora, todo queda quieto.
  */
+/**
+ * El banner arriba de todo de las páginas públicas (portada, «Cómo funciona», ciudades, países y
+ * comidas): una sola pieza para que la web se sienta una sola (25 oct 2026).
+ */
+export function BannerArriba({
+  idioma,
+  lugar = 'Miami',
+  activo = false,
+}: {
+  idioma: 'es' | 'en';
+  lugar?: string;
+  activo?: boolean;
+}) {
+  const lema = activo
+    ? idioma === 'en'
+      ? `Now in ${lugar}`
+      : `Ya estamos en ${lugar}`
+    : idioma === 'en'
+      ? `Coming soon to ${lugar}`
+      : `Muy pronto en ${lugar}`;
+  return (
+    <div className="ld-banner ld-banner-arriba">
+      <BannerCarretera
+        lema={lema}
+        servicios={idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos'}
+      />
+    </div>
+  );
+}
+
 export function BannerCarretera({ lema, servicios }: { lema: string; servicios: string }) {
   return (
     <div className="ld-carretera" role="img" aria-label={`${lema}. ${servicios}`}>

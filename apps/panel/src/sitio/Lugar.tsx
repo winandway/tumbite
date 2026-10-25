@@ -1,5 +1,6 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
+import { BannerArriba } from './BannerCarretera';
 import { FormEspera } from './FormEspera';
 import { Icono } from './Icono';
 import {
@@ -29,17 +30,20 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   if (cocina) {
     const nombre = enIdioma(cocina.nombre, idioma);
     return (
-      <main className="lugar">
-        <Enlace a="/" className="docs-volver">
-          {t.volver}
-        </Enlace>
-        <span className="ld-etiqueta">{t.comida}</span>
-        <h1>{t.cocinaTitulo.replace('{comida}', nombre)}</h1>
-        <p className="ld-entrada">{t.cocinaTexto.replace('{comida}', nombre.toLowerCase())}</p>
-        <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
-        <h2>{t.restauranteCocina.replace('{comida}', nombre.toLowerCase())}</h2>
-        <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
-      </main>
+      <>
+        <BannerArriba idioma={idioma} />
+        <main className="lugar">
+          <Enlace a="/" className="docs-volver">
+            {t.volver}
+          </Enlace>
+          <span className="ld-etiqueta">{t.comida}</span>
+          <h1>{t.cocinaTitulo.replace('{comida}', nombre)}</h1>
+          <p className="ld-entrada">{t.cocinaTexto.replace('{comida}', nombre.toLowerCase())}</p>
+          <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
+          <h2>{t.restauranteCocina.replace('{comida}', nombre.toLowerCase())}</h2>
+          <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
+        </main>
+      </>
     );
   }
 
@@ -67,96 +71,99 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
     : [];
 
   return (
-    <main className="lugar">
-      <Enlace a="/" className="docs-volver">
-        {t.volver}
-      </Enlace>
-      <span className={`ld-etiqueta ${activo ? 'lugar-activo' : 'lugar-pronto'}`}>
-        <Icono nombre={activo ? 'listo' : 'reloj'} tamano={14} /> {activo ? t.activo : t.pronto}
-      </span>
-      <h1>{(activo ? t.tituloActivo : t.tituloPronto).replace('{lugar}', frase)}</h1>
-      <p className="ld-entrada">
-        {(activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, frase)}
-        {paisDeCiudad ? ` ${t.enPais.replace('{pais}', paisEnFrase(paisDeCiudad, idioma))}` : ''}
-      </p>
-      {pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
-        <section className="lugar-datos">
-          <h2>{t.primerasCiudades.replace('{lugar}', frase)}</h2>
-          <p>
-            {t.primerasCiudadesTexto.replace('{lugar}', frase).replace(
-              '{ciudades}',
-              listaHumana(
-                pais.primerasCiudades.map((c) => ciudadEnIdioma(c, idioma)),
-                idioma,
-              ),
-            )}
-          </p>
-          <dl>
-            {pais.idioma && (
-              <>
-                <dt>{t.idioma}</dt>
-                <dd>{enIdioma(pais.idioma, idioma)}</dd>
-              </>
-            )}
-            {pais.moneda && (
-              <>
-                <dt>{t.moneda}</dt>
-                <dd>{enIdioma(pais.moneda, idioma)}</dd>
-              </>
-            )}
-            {region && (
-              <>
-                <dt>{t.region}</dt>
-                <dd>{enIdioma(region.nombre, idioma)}</dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )}
-      {ciudadesDelPais.length > 0 && (
-        <section className="lugar-ciudades">
-          <h2>{t.ciudadesDe.replace('{lugar}', frase)}</h2>
+    <>
+      <BannerArriba idioma={idioma} lugar={nombre} activo={activo} />
+      <main className="lugar">
+        <Enlace a="/" className="docs-volver">
+          {t.volver}
+        </Enlace>
+        <span className={`ld-etiqueta ${activo ? 'lugar-activo' : 'lugar-pronto'}`}>
+          <Icono nombre={activo ? 'listo' : 'reloj'} tamano={14} /> {activo ? t.activo : t.pronto}
+        </span>
+        <h1>{(activo ? t.tituloActivo : t.tituloPronto).replace('{lugar}', frase)}</h1>
+        <p className="ld-entrada">
+          {(activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, frase)}
+          {paisDeCiudad ? ` ${t.enPais.replace('{pais}', paisEnFrase(paisDeCiudad, idioma))}` : ''}
+        </p>
+        {pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
+          <section className="lugar-datos">
+            <h2>{t.primerasCiudades.replace('{lugar}', frase)}</h2>
+            <p>
+              {t.primerasCiudadesTexto.replace('{lugar}', frase).replace(
+                '{ciudades}',
+                listaHumana(
+                  pais.primerasCiudades.map((c) => ciudadEnIdioma(c, idioma)),
+                  idioma,
+                ),
+              )}
+            </p>
+            <dl>
+              {pais.idioma && (
+                <>
+                  <dt>{t.idioma}</dt>
+                  <dd>{enIdioma(pais.idioma, idioma)}</dd>
+                </>
+              )}
+              {pais.moneda && (
+                <>
+                  <dt>{t.moneda}</dt>
+                  <dd>{enIdioma(pais.moneda, idioma)}</dd>
+                </>
+              )}
+              {region && (
+                <>
+                  <dt>{t.region}</dt>
+                  <dd>{enIdioma(region.nombre, idioma)}</dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )}
+        {ciudadesDelPais.length > 0 && (
+          <section className="lugar-ciudades">
+            <h2>{t.ciudadesDe.replace('{lugar}', frase)}</h2>
+            <ul>
+              {ciudadesDelPais.map((c) => (
+                <li key={c.slug} className={c.estado}>
+                  <Enlace a={`/city/${c.slug}`}>{enIdioma(c.nombre, idioma)}</Enlace>
+                  <span>{c.estado === 'activo' ? t.activo : t.pronto}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <section className="lugar-publicos">
+          <h2>{t.tresPublicos}</h2>
           <ul>
-            {ciudadesDelPais.map((c) => (
-              <li key={c.slug} className={c.estado}>
-                <Enlace a={`/city/${c.slug}`}>{enIdioma(c.nombre, idioma)}</Enlace>
-                <span>{c.estado === 'activo' ? t.activo : t.pronto}</span>
-              </li>
-            ))}
+            <li>{t.paraComensales}</li>
+            <li>{t.paraRestaurantes}</li>
+            <li>{t.paraRepartidores}</li>
           </ul>
         </section>
-      )}
-      <section className="lugar-publicos">
-        <h2>{t.tresPublicos}</h2>
-        <ul>
-          <li>{t.paraComensales}</li>
-          <li>{t.paraRestaurantes}</li>
-          <li>{t.paraRepartidores}</li>
-        </ul>
-      </section>
-      {pais && !activo && (
-        <section className="lugar-franquicia">
-          <h2>{t.franquiciaTitulo.replace('{lugar}', nombre)}</h2>
-          <p>{t.franquiciaTexto}</p>
-          <Enlace a="/franchise">{t.franquiciaEnlace}</Enlace>
-        </section>
-      )}
-      <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
-      <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
-      <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />
-      {vecinos.length > 0 && region && (
-        <nav className="lugar-vecinos" aria-label={t.otrosPaises.replace('{region}', '')}>
-          <h2>{t.otrosPaises.replace('{region}', enIdioma(region.nombre, idioma))}</h2>
-          <ul>
-            {vecinos.map((v) => (
-              <li key={v.slug}>
-                <Enlace a={`/country/${v.slug}`}>{enIdioma(v.nombre, idioma)}</Enlace>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
-    </main>
+        {pais && !activo && (
+          <section className="lugar-franquicia">
+            <h2>{t.franquiciaTitulo.replace('{lugar}', nombre)}</h2>
+            <p>{t.franquiciaTexto}</p>
+            <Enlace a="/franchise">{t.franquiciaEnlace}</Enlace>
+          </section>
+        )}
+        <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
+        <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
+        <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />
+        {vecinos.length > 0 && region && (
+          <nav className="lugar-vecinos" aria-label={t.otrosPaises.replace('{region}', '')}>
+            <h2>{t.otrosPaises.replace('{region}', enIdioma(region.nombre, idioma))}</h2>
+            <ul>
+              {vecinos.map((v) => (
+                <li key={v.slug}>
+                  <Enlace a={`/country/${v.slug}`}>{enIdioma(v.nombre, idioma)}</Enlace>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+      </main>
+    </>
   );
 }
 

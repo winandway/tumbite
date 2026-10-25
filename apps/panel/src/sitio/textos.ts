@@ -257,7 +257,8 @@ const es = {
     enPais: 'Forma parte de nuestra red en {pais}.',
     ciudadesDe: 'Ciudades en {lugar}',
     tresPublicos: 'Divoox en tu ciudad es para tres',
-    paraComensales: 'Para los que tienen hambre: pides en segundos y lo sigues en vivo.',
+    paraComensales:
+      'Para los vecinos: pides comida en segundos y la sigues en vivo. Muy pronto también mercado, farmacia, envíos y viajes en moto o en carro.',
     paraRestaurantes:
       'Para restaurantes: hasta la mitad de comisión, sin contratos de permanencia.',
     paraRepartidores:
@@ -545,7 +546,8 @@ const en: Textos = {
     enPais: 'Part of our network in {pais}.',
     ciudadesDe: 'Cities in {lugar}',
     tresPublicos: 'Divoox in your city is for three',
-    paraComensales: 'For the hungry: order in seconds and track it live.',
+    paraComensales:
+      'For neighbors: order food in seconds and track it live. Groceries, pharmacy, package delivery, and motorbike or car rides are coming soon.',
     paraRestaurantes: 'For restaurants: up to half the commission, no lock-in contracts.',
     paraRepartidores:
       'For drivers: see what you earn before you accept, and declining never counts against you.',

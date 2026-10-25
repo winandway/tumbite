@@ -1,7 +1,7 @@
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
-import { BannerCarretera } from './BannerCarretera';
+import { BannerArriba } from './BannerCarretera';
 
 /**
  * «Cómo funciona Divoox» (/how-it-works): el modelo completo de la empresa en una sola página,
@@ -358,13 +358,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
   ];
   return (
     <>
-      {/* El mismo banner animado de la portada (25 oct 2026): la web se siente una sola. */}
-      <div className="ld-banner ld-banner-arriba">
-        <BannerCarretera
-          lema={idioma === 'en' ? 'Coming soon to Miami' : 'Muy pronto en Miami'}
-          servicios={idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos'}
-        />
-      </div>
+      <BannerArriba idioma={idioma} />
       <main className="como">
         <Enlace a="/" className="docs-volver">
           {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
