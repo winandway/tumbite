@@ -5,7 +5,7 @@
 ## Main pages
 
 - [Divoox · Food delivery in Miami](https://divoox.com/): Your favorite Miami restaurants, with drivers who truly earn.
-- [How Divoox works](https://divoox.com/how-it-works): Divoox is a food delivery app built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine
+- [How Divoox works](https://divoox.com/how-it-works): Divoox is an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so all three win: the hu
 
 ## Guides (Docs)
 
@@ -170,4 +170,4 @@
 
 Every page above also exists in Spanish under https://divoox.com/es (for example https://divoox.com/es/how-it-works).
 - [Divoox · Comida a domicilio en Miami](https://divoox.com/es): Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.
-- [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una app de comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo
+- [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) hecha para que ganen los t
