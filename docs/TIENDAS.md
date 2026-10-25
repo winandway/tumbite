@@ -1,4 +1,4 @@
-# Tumbite — Publicación en App Store y Google Play
+# Divoox — Publicación en App Store y Google Play
 
 > Estado (12 oct 2026, noche): 🟡 **todo listo de nuestro lado**. Bloqueado solo por las cuentas de desarrollador de Apple y Google a nombre de Windoce LLC y la cuenta de Expo (EAS) de la empresa. El día que existan, se compila y se sube el mismo día.
 
@@ -6,24 +6,24 @@
 
 | App         | Nombre en la tienda | Identificador (no se cambia nunca) | Para quién                                      | Tablet |
 | ----------- | ------------------- | ---------------------------------- | ----------------------------------------------- | ------ |
-| Cliente     | Tumbite             | `com.windoce.tumbite`              | quien pide comida                               | No     |
-| Repartidor  | Tumbite Driver      | `com.windoce.tumbite.driver`       | repartidores                                    | No     |
-| Restaurante | Tumbite Restaurants | `com.windoce.tumbite.restaurants`  | el mostrador del restaurante (tablet o celular) | Sí     |
+| Cliente     | Divoox              | `com.windoce.tumbite`              | quien pide comida                               | No     |
+| Repartidor  | Divoox Driver       | `com.windoce.tumbite.driver`       | repartidores                                    | No     |
+| Restaurante | Divoox Restaurants  | `com.windoce.tumbite.restaurants`  | el mostrador del restaurante (tablet o celular) | Sí     |
 
 Versión de tienda: **1.0.0** el primer envío (en `app.json` dice 0.1.0; se sube a 1.0.0 al compilar para la tienda).
 
 ## Direcciones que piden las tiendas (ya están en vivo)
 
-Todas en inglés, que es el idioma principal y el que rige en los textos legales. La misma página en español está bajo `/es` (por ejemplo `https://tumbite.com/es/privacy`). A las tiendas se les dan las de abajo.
+Todas en inglés, que es el idioma principal y el que rige en los textos legales. La misma página en español está bajo `/es` (por ejemplo `https://divoox.com/es/privacy`). A las tiendas se les dan las de abajo.
 
-- Política de privacidad: `https://tumbite.com/privacy`
-- Términos: `https://tumbite.com/terms`
-- Términos para restaurantes: `https://tumbite.com/restaurant-terms`
-- Términos para repartidores: `https://tumbite.com/driver-terms`
-- Borrar la cuenta (Google Play → Seguridad de los datos → «enlace para borrar la cuenta»): `https://tumbite.com/delete-account`
-- Soporte: `https://tumbite.com/support`
-- Guías públicas (sirven de «marketing URL»): `https://tumbite.com/docs`
-- Sitio: `https://tumbite.com`
+- Política de privacidad: `https://divoox.com/privacy`
+- Términos: `https://divoox.com/terms`
+- Términos para restaurantes: `https://divoox.com/restaurant-terms`
+- Términos para repartidores: `https://divoox.com/driver-terms`
+- Borrar la cuenta (Google Play → Seguridad de los datos → «enlace para borrar la cuenta»): `https://divoox.com/delete-account`
+- Soporte: `https://divoox.com/support`
+- Guías públicas (sirven de «marketing URL»): `https://divoox.com/docs`
+- Sitio: `https://divoox.com`
 
 ## Permisos: cada app pide solo lo que usa (candado C-TIENDAS-PERMISOS)
 
@@ -45,14 +45,14 @@ Comprobado el 12 oct 2026 con la configuración final de Expo (lo que de verdad 
 
 Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palabras clave 100; Google, descripción corta 80. Todo lo de abajo cabe.
 
-### Tumbite (cliente)
+### Divoox (cliente)
 
 - **Subtítulo** EN: Local food, delivered fast · ES: Comida local, rápido a tu puerta
 - **Texto promocional** EN: Order from local restaurants, see the full price before you pay, and follow your driver live. Changed your mind? Cancel before it’s cooking and get it all back.
 - **Texto promocional** ES: Pide a restaurantes locales, ve el precio completo antes de pagar y sigue a tu repartidor en vivo. ¿Cambiaste de idea? Cancela antes de que cocinen y te devolvemos todo.
 - **Descripción corta (Google)** EN: Local restaurants, honest prices, and live tracking to your door. · ES: Restaurantes locales, precios claros y seguimiento en vivo hasta tu puerta.
 - **Descripción** EN:
-  Tumbite brings you the best local restaurants with prices you can trust.
+  Divoox brings you the best local restaurants with prices you can trust.
   • See every cost before you pay: food, delivery, service, and tip. No surprises.
   • Pay with your card right inside the app.
   • Save your favorite restaurants and your addresses, and use coupons at checkout.
@@ -63,7 +63,7 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
   • Rewards for coming back: birthday gifts, punch cards, and welcome-back offers.
   • In English and Spanish.
 - **Descripción** ES:
-  Tumbite te trae los mejores restaurantes locales con precios en los que puedes confiar.
+  Divoox te trae los mejores restaurantes locales con precios en los que puedes confiar.
   • Ves cada costo antes de pagar: comida, envío, servicio y propina. Sin sorpresas.
   • Pagas con tarjeta dentro de la app.
   • Guardas tus restaurantes favoritos y tus direcciones, y usas cupones al pagar.
@@ -77,14 +77,14 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
 - **Palabras clave** ES: comida a domicilio,restaurantes,pedir comida,delivery,pizza,cena,almuerzo,local,Miami
 - **Categoría:** Food & Drink · **Clasificación:** 4+ / Everyone (ver respuestas abajo)
 
-### Tumbite Driver
+### Divoox Driver
 
 - **Subtítulo** EN: Deliver on your schedule · ES: Reparte a tu ritmo
 - **Texto promocional** EN: See what you earn before you accept, keep 100% of your tips, and cash out to your bank. Declining an order never lowers your level.
 - **Texto promocional** ES: Ves cuánto ganas antes de aceptar, el 100 % de la propina es tuyo y retiras a tu banco. Rechazar un pedido nunca te baja de nivel.
-- **Descripción corta (Google)** EN: Deliver with Tumbite: clear pay, full tips, and cash out anytime. · ES: Reparte con Tumbite: pago claro, propina completa y retiros cuando quieras.
+- **Descripción corta (Google)** EN: Deliver with Divoox: clear pay, full tips, and cash out anytime. · ES: Reparte con Divoox: pago claro, propina completa y retiros cuando quieras.
 - **Descripción** EN:
-  Deliver with Tumbite whenever you want.
+  Deliver with Divoox whenever you want.
   • See the pay and distance of every order before you accept.
   • Keep 100% of your tips. They never top up your base pay.
   • A bank-style wallet: balance, earnings, tips, and every movement. Cash out to your bank anytime.
@@ -93,7 +93,7 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
   • Report a problem in one tap and a real person answers.
   • In English and Spanish.
 - **Descripción** ES:
-  Reparte con Tumbite cuando quieras.
+  Reparte con Divoox cuando quieras.
   • Ves el pago y la distancia de cada pedido antes de aceptar.
   • El 100 % de la propina es tuyo. Nunca se usa para completar tu pago.
   • Una billetera como la de un banco: saldo, ganancias, propinas y cada movimiento. Retiras a tu banco cuando quieras.
@@ -105,14 +105,14 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
 - **Palabras clave** ES: repartidor,trabajo flexible,ganar dinero,delivery,propinas,reparto,ingreso extra
 - **Categoría:** Business · **Clasificación:** 4+ / Everyone
 
-### Tumbite Restaurants
+### Divoox Restaurants
 
 - **Subtítulo** EN: Orders for your restaurant · ES: Pedidos para tu restaurante
 - **Texto promocional** EN: A loud alarm for every new order, a traffic light that shows what’s late, and a clear breakdown of what you earn. Lower commissions, no lock-in.
 - **Texto promocional** ES: Una alarma fuerte para cada pedido nuevo, un semáforo que muestra lo atrasado y el desglose claro de lo que ganas. Comisiones más bajas, sin permanencia.
-- **Descripción corta (Google)** EN: Receive Tumbite orders with an alarm, a traffic light, and clear payouts. · ES: Recibe pedidos de Tumbite con alarma, semáforo y pagos claros.
+- **Descripción corta (Google)** EN: Receive Divoox orders with an alarm, a traffic light, and clear payouts. · ES: Recibe pedidos de Divoox con alarma, semáforo y pagos claros.
 - **Descripción** EN:
-  Run your Tumbite orders from a tablet or phone at the counter.
+  Run your Divoox orders from a tablet or phone at the counter.
   • A loud alarm until someone accepts the order. Choose the prep time in one tap.
   • A traffic light on every order: green on time, yellow running late, red needs attention.
   • Mark orders ready and we send the closest driver.
@@ -121,7 +121,7 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
   • Lower commissions and a full breakdown of every order. No lock-in contracts.
   • In English and Spanish.
 - **Descripción** ES:
-  Maneja los pedidos de Tumbite desde una tablet o un celular en el mostrador.
+  Maneja los pedidos de Divoox desde una tablet o un celular en el mostrador.
   • Una alarma fuerte hasta que alguien acepta el pedido. Eliges el tiempo de preparación con un toque.
   • Un semáforo en cada pedido: verde a tiempo, amarillo atrasándose, rojo necesita atención.
   • Marcas el pedido listo y enviamos al repartidor más cercano.
@@ -143,23 +143,23 @@ Sin violencia, sin contenido sexual, sin apuestas, sin compras de alcohol o taba
 
 Datos que se recogen, todos **ligados a la cuenta**, **ninguno para rastrear** ni para publicidad de terceros:
 
-| Dato                                             | Cliente                                                | Repartidor                                           | Restaurante        | Para qué                                                                                          |
-| ------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| Nombre, correo, teléfono                         | Sí                                                     | Sí                                                   | Sí                 | La cuenta y el soporte                                                                            |
-| Dirección de entrega                             | Sí                                                     | —                                                    | Sí (local)         | Entregar el pedido                                                                                |
-| Ubicación precisa                                | Sí, solo con la app abierta                            | Sí, también en segundo plano mientras está conectado | —                  | Restaurantes cercanos; seguimiento del pedido en curso y ofertas cercanas                         |
-| Historial de compras                             | Sí                                                     | —                                                    | Sí (ventas)        | El servicio y los recibos                                                                         |
-| Pagos                                            | Lo maneja Stripe; Tumbite no guarda números de tarjeta | Banco por Stripe                                     | Banco por Stripe   | Cobrar y pagar                                                                                    |
-| Fotos (documento y cara)                         | —                                                      | Sí                                                   | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo                                                |
-| Fotos del pedido (al recogerlo y al entregarlo)  | —                                                      | Sí                                                   | —                  | Probar la recogida y la entrega; las ven el cliente, el restaurante y el repartidor de ese pedido |
-| Identificadores del dispositivo (notificaciones) | Sí                                                     | Sí                                                   | Sí                 | Avisos del pedido                                                                                 |
-| Mensajes de soporte                              | Sí                                                     | Sí                                                   | Sí                 | Atender quejas                                                                                    |
+| Dato                                             | Cliente                                               | Repartidor                                           | Restaurante        | Para qué                                                                                          |
+| ------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| Nombre, correo, teléfono                         | Sí                                                    | Sí                                                   | Sí                 | La cuenta y el soporte                                                                            |
+| Dirección de entrega                             | Sí                                                    | —                                                    | Sí (local)         | Entregar el pedido                                                                                |
+| Ubicación precisa                                | Sí, solo con la app abierta                           | Sí, también en segundo plano mientras está conectado | —                  | Restaurantes cercanos; seguimiento del pedido en curso y ofertas cercanas                         |
+| Historial de compras                             | Sí                                                    | —                                                    | Sí (ventas)        | El servicio y los recibos                                                                         |
+| Pagos                                            | Lo maneja Stripe; Divoox no guarda números de tarjeta | Banco por Stripe                                     | Banco por Stripe   | Cobrar y pagar                                                                                    |
+| Fotos (documento y cara)                         | —                                                     | Sí                                                   | Sí (dueño y local) | Verificar la identidad; las ve solo nuestro equipo                                                |
+| Fotos del pedido (al recogerlo y al entregarlo)  | —                                                     | Sí                                                   | —                  | Probar la recogida y la entrega; las ven el cliente, el restaurante y el repartidor de ese pedido |
+| Identificadores del dispositivo (notificaciones) | Sí                                                    | Sí                                                   | Sí                 | Avisos del pedido                                                                                 |
+| Mensajes de soporte                              | Sí                                                    | Sí                                                   | Sí                 | Atender quejas                                                                                    |
 
-Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://tumbite.com/delete-account`).
+Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://divoox.com/delete-account`).
 
 ### Notas para el revisor (se pegan en «App Review Information»)
 
-EN: Tumbite is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Customers’ location is only used while the app is open. Drivers’ location is also used in the background, only while they are online to receive or deliver orders (shown by a persistent notification on Android); it stops when they go offline. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.” Drivers photograph the closed order at pickup (the restaurant confirms it on its screen) and the delivery at the door; delivery is only allowed near the address, so the reviewer driver account is exempt from the distance check (it still needs the photos).
+EN: Divoox is a food delivery marketplace. Payments are for physical goods (food and delivery) and use Stripe, not in-app purchases. Customers’ location is only used while the app is open. Drivers’ location is also used in the background, only while they are online to receive or deliver orders (shown by a persistent notification on Android); it stops when they go offline. To test: sign in with the demo account below; a demo restaurant is open and approved in the test area. Account deletion: three-dot menu → “Delete my account.” Drivers photograph the closed order at pickup (the restaurant confirms it on its screen) and the delivery at the door; delivery is only allowed near the address, so the reviewer driver account is exempt from the distance check (it still needs the photos).
 
 Cuentas de prueba para el revisor: una de cliente, una de repartidor y una de restaurante, con un restaurante de prueba aprobado. El correo de la de repartidor va en la variable `CORREOS_REVISOR` del sitio (YaDominios Cloud → Variables de entorno), para que pueda recoger y entregar desde otra ciudad. **Se crean el día del envío** con contraseñas nuevas que van solo en el formulario de Apple y Google, nunca en el repositorio.
 
@@ -169,7 +169,9 @@ Se sacan solas con `npm run recorrido:tiendas`: corre el recorrido completo (App
 
 `capturas-tiendas/<app>/<Apple App Store | Google Play>/<English | Español>/<Celular | Tableta>/NN-que-pantalla-es.png`
 
-Tamaños: Apple, iPhone 6,9" 1320 × 2868 y iPad 13" acostado 2752 × 2064 (solo Tumbite Restaurants, que funciona en tableta); Google, celular 1080 × 1920 y tableta 1920 × 1080 (9:16 y 16:9; Google no acepta un lado más del doble del otro).
+Tamaños: Apple, iPhone 6,9" 1320 × 2868 y iPad 13" acostado 2752 × 2064 (solo Divoox Restaurants, que funciona en tableta); Google, celular 1080 × 1920 y tableta 1920 × 1080 (9:16 y 16:9; Google no acepta un lado más del doble del otro).
+
+**Con su frase arriba (25 oct 2026), como las fichas de las apps grandes:** `node scripts/marca/fichas-tiendas.mjs` toma esas capturas reales y arma cada una al mismo tamaño exacto, con fondo negro, una frase corta en blanco con una palabra en rojo, y la pantalla real debajo sin estirarla. Quedan en `capturas-tiendas-con-titulo/` (misma estructura). Son las que se suben: cliente 5 (restaurantes, menú, precio completo, en vivo, entregado con foto), repartidor 5 (pago antes de aceptar, conectarse, cómo llegar, propina completa, retiro al banco) y restaurante 3 (pedido nuevo, a tiempo, entrega con foto). Ojo: en el inicio del cliente salen los servicios que todavía no están encendidos con la etiqueta «Pronto» y las ofertas de muestra con «Ejemplo»; es honesto y Apple lo acepta, pero la descripción no los promete.
 
 | App         | Capturas (en este orden)                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -177,7 +179,7 @@ Tamaños: Apple, iPhone 6,9" 1320 × 2868 y iPad 13" acostado 2752 × 2064 (solo
 | Repartidor  | Conectado buscando pedidos · Oferta con el pago antes de aceptar · Entrega en camino · Billetera · Retiro al banco                                                                                       |
 | Restaurante | Pedido nuevo con los tiempos para aceptar · En preparación · Listo para el repartidor · Entrar                                                                                                           |
 
-La app del restaurante es el tablero de pedidos; el menú, los regalos, el semáforo y los beneficios están en el panel web, por eso no salen en sus capturas. En el modo de tiendas el inicio muestra además tres restaurantes de prueba (Sakura Sushi Bar, Taquería El Sol, Green Bowl Kitchen) que solo existen en la base local. Son las mismas apps en su versión web (la que también está en tumbite.com/app y /driver); cuando el simulador de iPhone funcione en esta Mac se pueden repetir desde ahí con la barra de estado del teléfono.
+La app del restaurante es el tablero de pedidos; el menú, los regalos, el semáforo y los beneficios están en el panel web, por eso no salen en sus capturas. En el modo de tiendas el inicio muestra además tres restaurantes de prueba (Sakura Sushi Bar, Taquería El Sol, Green Bowl Kitchen) que solo existen en la base local. Son las mismas apps en su versión web (la que también está en divoox.com/app y /driver); cuando el simulador de iPhone funcione en esta Mac se pueden repetir desde ahí con la barra de estado del teléfono.
 
 ## Lo que Apple y Google revisan con lupa (ya resuelto)
 
@@ -193,7 +195,7 @@ La app del restaurante es el tablero de pedidos; el menú, los regalos, el semá
 Guía para Richard, paso a paso y con croquis de cada formulario: `docs/Guia-publicar-apps-Apple-Google.pdf` (fuente en `docs/pdf/guia-tiendas.html`; se rehace con Playwright en horizontal). Comprobado en las páginas oficiales el 13 oct 2026.
 
 1. 👤 Richard: cuenta de Apple nueva con un correo `@windoce.com` (Apple exige correo del dominio de la empresa y sitio funcionando; windoce.com cumple) e inscripción de Windoce LLC como organización con su D-U-N-S. 99 dólares al año. Apple puede llamar al teléfono de D&B.
-2. 👤 Richard: en App Store Connect, «Request Access» a la API y una llave de equipo con acceso **Admin** (`Tumbite EAS`). Me pasa Team ID, Issuer ID, Key ID y deja el archivo `.p8` en Descargas.
+2. 👤 Richard: en App Store Connect, «Request Access» a la API y una llave de equipo con acceso **Admin** (`Divoox EAS`). Me pasa Team ID, Issuer ID, Key ID y deja el archivo `.p8` en Descargas.
 3. 👤 Richard: comprobar que la cuenta de Google Play es de **organización** a nombre de Windoce LLC (si es personal creada después del 13 nov 2023, Google exige 12 probadores por 14 días: mejor cuenta nueva de organización). Crear las tres apps y la llave de servicio JSON (`tumbite-eas`) con los permisos de la guía.
 4. 👤 Richard: cuenta de Expo y organización `windoce-llc` (plan gratis: 15 fabricaciones de iPhone y 15 de Android al mes) y una llave de acceso para mí.
 5. 👤 Richard: llave de Google Maps para Android (sin ella el mapa del cliente solo se ve en iPhone).

@@ -45,7 +45,7 @@ export default tseslint.config(
   {
     // El generador de la identidad lee los vectores de identidad-divoox/ y escribe las piezas en
     // las carpetas de cada app: sus rutas se arman desde la raíz del repositorio, no del usuario.
-    files: ['scripts/marca/generar-identidad.mjs'],
+    files: ['scripts/marca/generar-identidad.mjs', 'scripts/marca/fichas-tiendas.mjs'],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },
   {

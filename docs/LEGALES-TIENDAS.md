@@ -1,6 +1,6 @@
 # Legales listos para las tiendas (12 oct 2026)
 
-Lo que Apple y Google revisan sobre privacidad, términos y borrado de cuenta, y dónde está cada cosa en Tumbite.
+Lo que Apple y Google revisan sobre privacidad, términos y borrado de cuenta, y dónde está cada cosa en Divoox.
 Fuentes leídas el 12 oct 2026:
 
 - Apple, App Review Guidelines: https://developer.apple.com/app-store/review/guidelines/ (5.1.1, 5.1.2, 5.1.5, 3.1.3(e), 1.2)
@@ -9,22 +9,22 @@ Fuentes leídas el 12 oct 2026:
 
 ## Lo que piden y dónde lo cumplimos
 
-| Requisito                                           | Quién                   | Dónde está                                                                        |
-| --------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| Política pública, con título «privacidad», no PDF   | Apple y Google          | `https://tumbite.com/privacy` (ES/EN, prerenderizada)                             |
-| Qué datos, cómo se recogen y para qué               | Apple 5.1.1(i), Google  | Privacidad §2, §3, §4                                                             |
-| Terceros con la misma protección                    | Apple 5.1.1(i)          | Privacidad §5                                                                     |
-| Cuánto se guarda y cómo se borra                    | Apple 5.1.1(i), Google  | Privacidad §6 (`#cuanto-tiempo`) y §7 (`#borrar`)                                 |
-| Retirar el consentimiento                           | Apple 5.1.1(ii)         | Privacidad §7                                                                     |
-| Contacto de privacidad y nombre del desarrollador   | Google                  | Privacidad §1: Windoce LLC, support@tumbite.com                                   |
-| Política enlazada dentro de la app                  | Apple y Google          | Menú de 3 puntos → «Términos y privacidad»; aviso al crear cuenta                 |
-| Borrar la cuenta desde la app                       | Apple 5.1.1(v), Google  | Menú de 3 puntos → «Borrar mi cuenta» → `/delete-account` → botón directo         |
-| Página web para borrar sin reinstalar               | Google                  | `https://tumbite.com/delete-account` (qué se borra, qué se guarda, plazo, correo) |
-| Ubicación solo para lo necesario y con alternativa  | Apple 5.1.5 y 5.1.1(iv) | Privacidad §4; el cliente puede escribir la dirección a mano                      |
-| Pagos de bienes físicos fuera de la compra de Apple | Apple 3.1.3(e)          | Stripe con tarjeta y Apple Pay, no compras dentro de la app                       |
-| Reportar contenido ofensivo y contacto publicado    | Apple 1.2               | Términos §6 y Soporte «Reportar un comentario»                                    |
-| Derechos de California y otros estados              | Ley                     | Privacidad §8                                                                     |
-| Menores                                             | Apple, COPPA            | Privacidad §10 (18+ para cuenta, nada dirigido a menores de 13)                   |
+| Requisito                                           | Quién                   | Dónde está                                                                       |
+| --------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| Política pública, con título «privacidad», no PDF   | Apple y Google          | `https://divoox.com/privacy` (ES/EN, prerenderizada)                             |
+| Qué datos, cómo se recogen y para qué               | Apple 5.1.1(i), Google  | Privacidad §2, §3, §4                                                            |
+| Terceros con la misma protección                    | Apple 5.1.1(i)          | Privacidad §5                                                                    |
+| Cuánto se guarda y cómo se borra                    | Apple 5.1.1(i), Google  | Privacidad §6 (`#cuanto-tiempo`) y §7 (`#borrar`)                                |
+| Retirar el consentimiento                           | Apple 5.1.1(ii)         | Privacidad §7                                                                    |
+| Contacto de privacidad y nombre del desarrollador   | Google                  | Privacidad §1: Windoce LLC, go@windoce.com                                       |
+| Política enlazada dentro de la app                  | Apple y Google          | Menú de 3 puntos → «Términos y privacidad»; aviso al crear cuenta                |
+| Borrar la cuenta desde la app                       | Apple 5.1.1(v), Google  | Menú de 3 puntos → «Borrar mi cuenta» → `/delete-account` → botón directo        |
+| Página web para borrar sin reinstalar               | Google                  | `https://divoox.com/delete-account` (qué se borra, qué se guarda, plazo, correo) |
+| Ubicación solo para lo necesario y con alternativa  | Apple 5.1.5 y 5.1.1(iv) | Privacidad §4; el cliente puede escribir la dirección a mano                     |
+| Pagos de bienes físicos fuera de la compra de Apple | Apple 3.1.3(e)          | Stripe con tarjeta y Apple Pay, no compras dentro de la app                      |
+| Reportar contenido ofensivo y contacto publicado    | Apple 1.2               | Términos §6 y Soporte «Reportar un comentario»                                   |
+| Derechos de California y otros estados              | Ley                     | Privacidad §8                                                                    |
+| Menores                                             | Apple, COPPA            | Privacidad §10 (18+ para cuenta, nada dirigido a menores de 13)                  |
 
 ## Lo que el código cumple (si cambia uno, cambia el otro)
 
