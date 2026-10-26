@@ -38,6 +38,10 @@ describe('configuración de las apps móviles', () => {
   it('los paquetes de las tres apps son distintos', () => {
     const ids = APPS.map((a) => (leer(a, 'app.json') as Conf).expo.android.package);
     expect(new Set(ids).size).toBe(3);
+    // Sin el proyecto de Expo de la empresa no hay avisos al celular ni compilación (26 oct 2026).
+    const proyectos = APPS.map((a) => (leer(a, 'app.json') as Conf).expo.extra?.eas?.projectId);
+    for (const p of proyectos) expect(p).toMatch(/^[0-9a-f-]{36}$/);
+    expect(new Set(proyectos).size).toBe(3);
   });
 
   it('el restaurante incluye su alarma y la usa en el canal de avisos', () => {

@@ -83,6 +83,11 @@
     },
     "locales": {
       "es": "./idiomas/es.json"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0f62355b-be8a-44a8-b4b4-098976dc8f90"
+      }
     }
   }
 }

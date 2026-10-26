@@ -81,7 +81,10 @@
       "es": "./idiomas/es.json"
     },
     "extra": {
-      "sonidoAvisos": "alarma.wav"
+      "sonidoAvisos": "alarma.wav",
+      "eas": {
+        "projectId": "2fff4b85-0329-4ae1-bc8b-7dbd36d056ad"
+      }
     }
   }
 }
