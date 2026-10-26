@@ -14,7 +14,9 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 - ✅ D-U-N-S de Windoce LLC: listo (guardado en el archivo privado de la empresa).
 - ⏳ Apple Developer: inscripción enviada como organización el 26 oct (número de inscripción en el archivo privado). Apple verifica la autoridad para firmar y manda un correo; luego Richard acepta el contrato y paga 99 USD.
 - ✅ Google Play: cuenta de organización CREADA, pagada y VERIFICADA COMPLETA el 26 oct (go@windoce.com, nombre «Divoox», id en el archivo privado). Organización verificada con la carta CP 575 del IRS, Richard verificado como representante, sitio windoce.com verificado (Search Console de go@windoce.com) y los dos teléfonos verificados. Ya se pueden crear las apps. Siguiente: crear las tres fichas (Richard marca las declaraciones) y la cuenta de servicio para subir desde Expo.
-- ⏳ Expo y Google Cloud: siguientes.
+- ✅ Google Play: las tres apps creadas el 26 oct (Divoox, Divoox Driver, Divoox Restaurants; idioma principal inglés de EE. UU.; gratis).
+- ⏳ Google Cloud: proyecto «Divoox Apps» (id divoox-apps, organización windoce.com) creado, API de Google Play activada y cuenta de servicio divoox-eas@divoox-apps.iam.gserviceaccount.com creada. La llave JSON está bloqueada por la política de la organización «Inhabilitar la creación de claves de cuentas de servicio» (viene encendida por defecto en organizaciones nuevas). 👤 Richard: darse el rol «Administrador de políticas de la organización» en la organización y anular esa política SOLO en el proyecto Divoox Apps (regla desactivada). Después: crear la llave, guardarla en ~/.config/tumbite/google-play-eas.json e invitar la cuenta de servicio en Play Console (Usuarios y permisos) con permiso de publicar las tres apps.
+- ⏳ Expo: siguiente.
 
 ## Paso 0 — El número D-U-N-S de Windoce LLC (lo primero; lo piden Apple y Google)
 
