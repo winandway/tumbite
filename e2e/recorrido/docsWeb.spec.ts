@@ -55,8 +55,9 @@ for (const idioma of ['en', 'es'] as const) {
     await p.getByRole('tab', { name: es ? 'Franquicia' : 'Franchise' }).click();
     await guardar(p, 'calculadora-franquicia');
 
-    await p.goto(`${pre}/how-it-works#franchises`);
-    await p.locator('#franchises').scrollIntoViewIfNeeded();
+    // Desde el 25 oct la franquicia vive solo en su página para inversionistas.
+    await p.goto(`${pre}/franchise`);
+    await expect(p.getByRole('heading', { level: 1 })).toBeVisible();
     await p.waitForTimeout(500);
     await guardar(p, 'franquicias');
 

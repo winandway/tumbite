@@ -2180,14 +2180,14 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-web-franquicias-es.webp',
-            alt: 'Sección de franquicias de Divoox: un local con la marca Divoox y las cuatro cosas que paga la franquicia: flota propia, repartidores entrenados, kit para cada restaurante y los primeros clientes.',
+            alt: 'Página para inversionistas de Divoox: «Sea dueño de la app que lo hace todo en su ciudad», con las tres apps reales y lo que recibe la franquicia.',
             pie: 'Lo que incluye una franquicia de Divoox en cada ciudad.',
           },
         ],
         preguntas: ['¿Cómo llevo Divoox a mi ciudad?', '¿Cuánto cuesta una franquicia?'],
         pasos: [
-          'Abre la página «Cómo funciona» y baja hasta «Franquicias», o la página de tu país.',
-          'Llena el formulario «Quiero una franquicia de Divoox»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar.',
+          'Abre la página para inversionistas: «Franquicias por ciudad», al pie de cualquier página de Divoox.',
+          'Llena el formulario «Quiero una franquicia de Divoox»: tu ciudad, el capital disponible, tu experiencia y cuándo quieres arrancar. Al enviarlo, si tienes el capital mínimo, puedes escribirnos también por WhatsApp.',
           'Te llega un correo con el enlace privado a tu caso. Nuestro equipo te prepara los números de tu ciudad y te responde por ahí.',
           'Cuando se firma, nuestro equipo te da acceso a tu panel con tu correo, y también a los managers de tu equipo que nos indiques.',
         ],
@@ -4501,14 +4501,14 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-web-franquicias-en.webp',
-            alt: 'Divoox franchise section: a Divoox-branded restaurant and the four things the franchise pays for: own fleet, trained drivers, a kit for every restaurant, and the first customers.',
+            alt: 'Divoox investor page: “Own the app that does it all in your city,” with the three real apps and what the franchise includes.',
             pie: 'What a Divoox franchise includes in each city.',
           },
         ],
         preguntas: ['How do I bring Divoox to my city?', 'How much does a franchise cost?'],
         pasos: [
-          'Open the “How it works” page and scroll to “Franchises,” or open your country’s page.',
-          'Fill in the “I want a Divoox franchise” form: your city, available capital, your experience, and when you’d like to start.',
+          'Open the investor page: “City franchises,” at the bottom of any Divoox page.',
+          'Fill in the “I want a Divoox franchise” form: your city, available capital, your experience, and when you’d like to start. Once you send it, if you have the minimum capital, you can also message us on WhatsApp.',
           'You get an email with the private link to your case. Our team prepares your city’s numbers and replies there.',
           'Once it’s signed, our team gives you access to your dashboard with your email, and to the managers on your team you tell us about.',
         ],
