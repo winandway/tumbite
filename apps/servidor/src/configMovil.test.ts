@@ -28,6 +28,10 @@ describe('configuración de las apps móviles', () => {
       expect(eas.build.pruebas.android.buildType).toBe('apk');
       for (const perfil of ['preview', 'production'])
         expect(eas.build[perfil].env.EXPO_PUBLIC_API_URL).toBe('https://divoox.com');
+      // El npm viejo de los servidores de Expo no acepta nuestro archivo de candados (26 oct 2026):
+      // cada perfil compila con el mismo Node de la computadora.
+      for (const perfil of Object.values(eas.build) as { node?: string }[])
+        expect(perfil.node).toMatch(/^24\./);
       expect(plugin(c, 'expo-notifications')?.[1].defaultChannel).toBe('pedidos');
       // Las frases de permisos de iPhone van bajo «ios»: sueltas, Expo las copia también a
       // Android y su compilación se cae (ExtraTranslation), aquí y en EAS.

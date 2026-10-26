@@ -9,7 +9,8 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://divoox.com"
-      }
+      },
+      "node": "24.15.0"
     },
     "preview": {
       "distribution": "internal",
@@ -18,13 +19,15 @@
       },
       "android": {
         "buildType": "apk"
-      }
+      },
+      "node": "24.15.0"
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://divoox.com"
-      }
+      },
+      "node": "24.15.0"
     },
     "pruebas": {
       "distribution": "internal",
@@ -33,7 +36,8 @@
       },
       "android": {
         "buildType": "apk"
-      }
+      },
+      "node": "24.15.0"
     },
     "simulador": {
       "distribution": "internal",
@@ -42,7 +46,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
-      }
+      },
+      "node": "24.15.0"
     }
   },
   "submit": {
