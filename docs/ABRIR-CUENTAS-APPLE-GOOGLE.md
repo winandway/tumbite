@@ -13,7 +13,7 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 
 - ✅ D-U-N-S de Windoce LLC: listo (guardado en el archivo privado de la empresa).
 - ⏳ Apple Developer: inscripción enviada como organización el 26 oct (número de inscripción en el archivo privado). Apple verifica la autoridad para firmar y manda un correo; luego Richard acepta el contrato y paga 99 USD.
-- ⏳ Google Play (cuenta go@windoce.com, nombre de programador «Divoox»): perfil de pagos actualizado con los datos de Dun & Bradstreet (Windoce, LLC, Novi, Michigan), organización de 1 a 10 empleados, teléfono y sitio web divoox.com, correo público verificado. Falta que Richard marque la declaración del perfil público, acepte los términos y pague 25 USD.
+- ⏳ Google Play (cuenta go@windoce.com, nombre de programador «Divoox»): perfil de pagos actualizado con los datos de Dun & Bradstreet (Windoce, LLC, Novi, Michigan), organización de 1 a 10 empleados, teléfono y sitio web windoce.com (el correo de contacto debe ser del mismo dominio), correo público go@windoce.com y de contacto help.divoox@windoce.com (alias), los dos verificados. Todas las secciones llenas; falta que Richard acepte los términos y pague 25 USD («Crear cuenta y pagar»). Después Google puede pedir su identificación.
 - ⏳ Expo y Google Cloud: siguientes.
 
 ## Paso 0 — El número D-U-N-S de Windoce LLC (lo primero; lo piden Apple y Google)
