@@ -45,7 +45,12 @@ export default tseslint.config(
   {
     // El generador de la identidad lee los vectores de identidad-divoox/ y escribe las piezas en
     // las carpetas de cada app: sus rutas se arman desde la raíz del repositorio, no del usuario.
-    files: ['scripts/marca/generar-identidad.mjs', 'scripts/marca/fichas-tiendas.mjs'],
+    // Lo mismo para el que sube a Google Play: lee la llave privada y el .aab que se le indica.
+    files: [
+      'scripts/marca/generar-identidad.mjs',
+      'scripts/marca/fichas-tiendas.mjs',
+      'scripts/tiendas/subir-google-play.mjs',
+    ],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },
   {
