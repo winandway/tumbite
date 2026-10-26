@@ -9,6 +9,12 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 - **Lo que no hago yo, por seguridad (lo haces tú):** escribir contraseñas y códigos de verificación, pagar con tarjeta, escribir números de identificación personal, subir la foto de tu documento y aceptar contratos o términos. En esos pasos te aviso y tú lo tocas.
 - **No existe una herramienta (MCP) ni un token para crear las cuentas de desarrollador**: eso se hace a mano, una sola vez. Lo que sí existe es para **después**: una llave de App Store Connect (Apple) y una cuenta de servicio de Google Play. Con esas dos, Expo y yo compilamos y subimos las apps solos, sin que tengas que entrar. Las guardo en esta computadora, fuera del repositorio, y no te las vuelvo a pedir.
 
+## Estado (26 oct 2026)
+
+- ✅ D-U-N-S de Windoce LLC: listo (guardado en el archivo privado de la empresa).
+- ⏳ Apple Developer: inscripción enviada como organización el 26 oct (número de inscripción en el archivo privado). Apple verifica la autoridad para firmar y manda un correo; luego Richard acepta el contrato y paga 99 USD.
+- ⏳ Google Play, Expo y Google Cloud: siguientes.
+
 ## Paso 0 — El número D-U-N-S de Windoce LLC (lo primero; lo piden Apple y Google)
 
 - Qué es: el número de Dun & Bradstreet que identifica a la empresa. Es gratis.
