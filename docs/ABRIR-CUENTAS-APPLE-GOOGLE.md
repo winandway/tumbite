@@ -13,7 +13,7 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 
 - ✅ D-U-N-S de Windoce LLC: listo (guardado en el archivo privado de la empresa).
 - ⏳ Apple Developer: inscripción enviada como organización el 26 oct (número de inscripción en el archivo privado). Apple verifica la autoridad para firmar y manda un correo; luego Richard acepta el contrato y paga 99 USD.
-- ✅ Google Play: cuenta de organización CREADA y pagada el 26 oct (go@windoce.com, nombre «Divoox», id de la cuenta en el archivo privado). Sitio web windoce.com verificado (Search Console de go@windoce.com, por el registro DNS que ya existía). ⏳ Falta: Richard sube su identificación («Verifica tu identidad», puede tardar días) y después se verifican los teléfonos.
+- ✅ Google Play: cuenta de organización CREADA, pagada y VERIFICADA COMPLETA el 26 oct (go@windoce.com, nombre «Divoox», id en el archivo privado). Organización verificada con la carta CP 575 del IRS, Richard verificado como representante, sitio windoce.com verificado (Search Console de go@windoce.com) y los dos teléfonos verificados. Ya se pueden crear las apps. Siguiente: crear las tres fichas (Richard marca las declaraciones) y la cuenta de servicio para subir desde Expo.
 - ⏳ Expo y Google Cloud: siguientes.
 
 ## Paso 0 — El número D-U-N-S de Windoce LLC (lo primero; lo piden Apple y Google)
