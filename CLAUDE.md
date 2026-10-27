@@ -81,6 +81,7 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
 - `docs/PLAN-MAESTRO-FASE-2.md`, `docs/INFORME-FINAL-FASE-2.md` y `docs/DECISIONES-RICHARD-FASE-2.md` — la Fase 2 (modelo internacional): el plan, el cierre del 18 oct y lo que solo Richard decide.
 - `docs/COMPARACION-CICLO-PEDIDO.md` — cómo funciona de verdad un pedido en DoorDash y Uber Eats frente al nuestro, con las brechas por orden. Se lee antes de tocar el ciclo del pedido.
+- `docs/AUDITORIA-DIVOOX-FLEX-2026.md`, `docs/DIVOOX-FLEX-FASE-1-RESULTADOS.md` y `docs/API-DIVOOX-FLEX-V1.md` — Divoox Flex (logística empresarial de paquetes): la auditoría, lo hecho en la Fase 1 y la API. Las rutas viven en `apps/servidor/src/flex/` bajo `/datos/v1/flex`; el panel en `apps/panel/src/panel/flex/` (`/panel/business`).
 
 ## Identidad de Divoox (aprobada por Richard el 23 oct 2026) — SOLO estos colores
 

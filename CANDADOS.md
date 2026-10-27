@@ -1114,3 +1114,43 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Google Play, 27 oct:** Divoox (cliente) y Divoox Restaurants enviadas a revisión. El Driver
   espera la declaración de `FOREGROUND_SERVICE_LOCATION` (exige video en YouTube): se graba en el
   emulador con el APK de pruebas y se sube no listado a la cuenta go@windoce.com.
+
+## C-FLEX-ESQUEMA · Divoox Flex, Fase 1: diecinueve tablas nuevas, ninguna existente tocada (27 oct 2026)
+
+- Qué: bloque «DIVOOX FLEX · FASE 1» en `schema.sql` (antes del bloque de la Fase 3): `empresas`, `empresa_miembros`, `empresa_invitaciones`, `empresa_centros`, `empresa_conductores`, `empresa_claves`, `empresa_auditoria`, `envios`, `paquetes`, `transiciones_paquete`, `paquete_eventos`, `idempotencia_flex`, `importaciones`, `importacion_filas`, `lotes`, `lote_paquetes`, `rutas_flex`, `ruta_paradas`, `ruta_asignaciones`. Disparadores de una sola sentencia (como los de `retiros`): `paquetes_transicion_valida`, `paquete_eventos_inmutable_*`, `empresa_auditoria_inmutable_*`.
+- Por qué va antes de la Fase 3: `fase3.test.ts` exige que desde «FASE 3 · EXCLUSIVIDAD» hasta el final no haya `TRIGGER` ni `BEGIN`.
+- Candados: `esquemaCompleto.test.ts` (la lista de columnas regenerada con `node scripts/generar-columnas.mjs`), `flex.test.ts` (los disparadores rechazan saltos de estado y borrados de eventos).
+- No tocar: `conductor_ocupacion`, `operaciones`, `pedidos`, el dinero. La Fase 2 agregará `tipo = 'ruta_flex'` a la ocupación por migración aparte. Diseño: `docs/AUDITORIA-DIVOOX-FLEX-2026.md`; resultados: `docs/DIVOOX-FLEX-FASE-1-RESULTADOS.md`.
+
+## C-FLEX-INVITACIONES · Nadie entra a una empresa por registrar un correo
+
+- Qué: el acceso a una empresa es SOLO por una fila activa en `empresa_miembros` (`apps/servidor/src/flex/autorizacion.ts`, `actorDeEmpresa`). Esa fila nace al crear la empresa (dueño) o al ACEPTAR una invitación: token aleatorio de 32 bytes, en la base solo su SHA-256, vence a los 7 días, uso único (`UPDATE … WHERE estado = 'pendiente'` en el mismo lote que la membresía), MISMO correo y `correo_confirmado_en` no nulo, revocable, auditado.
+- Candado: `apps/servidor/src/flex/flex.test.ts` («solo el hash queda en la base…», «vencida o revocada…»), comprobado en rojo el 27 oct 2026.
+- No tocar: `tieneCorreoConfirmado` en la aceptación ni el `WHERE estado = 'pendiente'`.
+
+## C-FLEX-API · Claves de integración acotadas e idempotencia obligatoria
+
+- Qué: `empresa_claves` guarda solo el hash y el prefijo; el secreto `dvxk_…` se devuelve una vez. Permisos de una clave ⊆ `PERMISOS_CLAVE_API` (nunca miembros, claves ni dinero: `soloPersona()` en las rutas de equipo, conductores y claves). Una clave de otra empresa responde 401 sin pistas. 60 peticiones por minuto por clave (429). Toda creación exige `Idempotency-Key` (`conIdempotencia`: reserva la clave con `INSERT OR IGNORE` ANTES de hacer nada; misma clave + mismo cuerpo = misma respuesta; otro cuerpo = 409).
+- Candado: `flex.test.ts` («la clave se muestra una vez…», «límite…», «la misma Idempotency-Key…»).
+
+## C-FLEX-PAQUETES · Custodia con máquina de estados en la base y eventos inmutables
+
+- Qué: `transiciones_paquete` + disparador `paquetes_transicion_valida` (la base rechaza cualquier salto); el código lo repite con `puedeTransitar` (`packages/compartido/src/flex.ts`, la misma tabla). Cada evento lleva `idempotencia UNIQUE` y no se puede editar ni borrar. Crear un envío con N paquetes y sus eventos «creado» es un solo `batch`. Códigos opacos (`DVX` + 10 letras; etiqueta de 12 letras; alfabeto sin 0/O/1/I/L). El seguimiento público solo da estado y fechas.
+- Candado: `flex.test.ts` («la custodia sigue la máquina de estados…», «crea un envío con varios paquetes…»), `packages/compartido/src/flex.test.ts`.
+
+## C-FLEX-IMPORTACION · CSV en dos pasos, reanudable, sin cruzar empresas
+
+- Qué: previsualizar valida columnas y filas, marca duplicados (en la hoja y contra `envios_referencia_unica`), guarda las filas con su error y no vuelve a previsualizar la misma hoja (`huella`). Confirmar crea solo las válidas pendientes, 100 por llamada en lotes de 10 sentencias por fila (D1), y se puede volver a llamar hasta `terminada`. Tope de filas: 500 (`FLEX_IMPORTACION_MAX`).
+- Candado: `flex.test.ts` («previsualiza con errores por fila…», «rechaza una hoja…»).
+
+## C-FLEX-PANEL · Panel de empresa en /panel/business
+
+- Qué: `apps/panel/src/panel/flex/*` (es/en; móvil y escritorio); toda creación manda `Idempotency-Key` (`crear()` en `apps/panel/src/panel/api.ts`); el menú se arma con los permisos que declara el servidor; los formularios usan `useBorrador`; etiquetas con QR (`qrcode`) y Code 128 propio (`barrasCode128`) imprimibles; la billetera es «próximamente» sin saldos ni botones.
+- Candado: `apps/panel/src/panel/flex/PanelEmpresa.test.tsx`. Visto en pantalla el 27 oct 2026 (capturas en `docs/capturas/flex/`).
+
+## C-FRANQUICIA-CORREO-CONFIRMADO · El acceso por correo exige el correo confirmado (27 oct 2026)
+
+- Qué se rompía: la auditoría de Divoox Flex encontró que registrar (o cambiar la cuenta a) el correo del dueño o de un manager de una franquicia sin cuenta abría su panel; lo mismo con `revisores` y `CORREOS_REVISOR` (se saltaba la regla de distancia).
+- Arreglo mínimo: `rolEn`, `/mi-franquicia` y `enlazarDueno` en `rutas/franquicias.ts` solo aceptan el correo si `usuarios.correo_confirmado_en` no es nulo (el acceso por `dueno_id` sigue igual); `esRevisor` en `rutas/operacion.ts` exige lo mismo; las cuentas que crea el superadmin para los revisores nacen confirmadas (`rutas/superadmin.ts`).
+- Candado: `rutas/franquicias.test.ts` («registrar una cuenta con el correo del dueño… NO abre la franquicia»), comprobado en rojo sin la corrección el 27 oct 2026; `revisores.test.ts` (cuentas confirmadas). Las pruebas que asignan por correo ahora confirman con `m.confirmarCorreo(id)`.
+- No tocar: la condición `correo_confirmado_en IS NOT NULL`.

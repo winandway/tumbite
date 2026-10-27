@@ -12,6 +12,8 @@
 
 👤 = depende de Richard. Ordenado por importancia.
 
+- [x] **Divoox Flex · Fase 1** (27 oct 2026, rama `fase-flex-1`, solo staging): empresas, invitaciones seguras, claves de API, envíos y paquetes con custodia, importación CSV, etiquetas, base de lotes y rutas, panel en /panel/business, Docs. Informe: `docs/DIVOOX-FLEX-FASE-1-RESULTADOS.md`. 👤 Autorizar la Fase 2 (rutas operativas, conductores, escaneo, entregas y devoluciones) y decidir si Flex pasa a producción antes o después del lanzamiento de Comida.
+
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
 ## La fila de la IA — Fase 2 (18 oct 2026)
