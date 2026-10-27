@@ -10,7 +10,7 @@ describe('GPS en segundo plano del repartidor (C-GPS-FONDO)', () => {
     const app = JSON.parse(leer('apps/repartidor/app.json')) as {
       expo: {
         ios: { infoPlist: Record<string, unknown> };
-        android: { permissions: string[] };
+        android: { permissions: string[]; blockedPermissions: string[] };
         plugins: unknown[];
       };
     };
