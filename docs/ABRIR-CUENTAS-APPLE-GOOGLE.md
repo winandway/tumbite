@@ -66,5 +66,13 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 ## Firebase y mapa (26 oct 2026)
 
 - ✅ Firebase activado sobre el proyecto de Google Cloud «Divoox Apps» (sin Google Analytics, para no recoger el ID de publicidad). Las tres apps de Android registradas. El archivo google-services.json está en ~/.config/tumbite/google-services.json y en EAS como variable secreta GOOGLE_SERVICES_JSON de la organización windoce-llc; cada app lo lee desde su app.config.js. Nunca va al repositorio (candado en configMovil.test.ts).
-- ⏳ 👤 Avisos al celular: falta la llave de servicio de Firebase para Expo. Richard: Firebase → Configuración del proyecto → Cuentas de servicio → «Generar nueva clave privada» (se descarga un archivo). Después yo la subo a Expo (Credenciales → Android → FCM V1) y la guardo en ~/.config/tumbite.
-- ⏳ 👤 Mapa de Android: el proyecto «Divoox Apps» no tiene cuenta de facturación y Google Maps la exige aunque el mapa de celular sea gratis. Richard: vincular una cuenta de facturación de la empresa al proyecto. Después yo activo «Maps SDK for Android», creo la llave restringida a los tres paquetes y la pongo en las apps.
+- ✅ Avisos al celular: Richard generó la llave del SDK de Firebase (26 oct); guardada en ~/.config/tumbite/firebase-fcm.json y cargada en Expo como «FCM V1 service account key» en las tres apps.
+- ✅ Mapa de Android: Richard creó la cuenta de facturación «Mi cuenta de facturación Divoox» (Chase Business Debit) y yo la vinculé al proyecto. «Maps SDK for Android» activado. Llave «Divoox Maps Android» restringida a Maps SDK for Android y a com.windoce.tumbite y com.windoce.tumbite.driver con la huella SHA-1 de firma de Google Play; guardada en ~/.config/tumbite/google-maps-android-key y en EAS como secreto GOOGLE_MAPS_ANDROID_KEY (app.config.js la lee). El mapa de celular no tiene costo por carga.
+
+## Lo que falta para enviar a revisión (26 oct 2026)
+
+1. 👤 Tres cuentas para el revisor en divoox.com (cliente, repartidor, restaurante) y el correo de la de repartidor en CORREOS_REVISOR.
+2. Público objetivo 18+ y enviar Seguridad de los datos (yo, después del punto 1).
+3. 👤 Driver: video de la ubicación con la pantalla apagada, o quitarla en la versión 1.
+4. Versión de producción con países y notas (yo) → «Enviar a revisión».
+5. 🔴 Antes de que Google apruebe: la compra real de 1 dólar (circuito de pagos sin probar con dinero real).
