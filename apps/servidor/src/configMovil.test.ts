@@ -46,6 +46,13 @@ describe('configuración de las apps móviles', () => {
     const proyectos = APPS.map((a) => (leer(a, 'app.json') as Conf).expo.extra?.eas?.projectId);
     for (const p of proyectos) expect(p).toMatch(/^[0-9a-f-]{36}$/);
     expect(new Set(proyectos).size).toBe(3);
+    // Avisos de Android: el archivo de Firebase llega por la variable secreta de EAS; ni el
+    // archivo ni su ruta fija viven en el repositorio.
+    for (const a of APPS) {
+      const conf = readFileSync(join(RAIZ, 'apps', a, 'app.config.js'), 'utf8');
+      expect(conf).toContain('process.env.GOOGLE_SERVICES_JSON');
+      expect(existsSync(join(RAIZ, 'apps', a, 'google-services.json'))).toBe(false);
+    }
   });
 
   it('el restaurante incluye su alarma y la usa en el canal de avisos', () => {
