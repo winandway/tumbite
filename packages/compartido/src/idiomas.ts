@@ -60,3 +60,9 @@ export function enIdioma<T>(valores: Record<Idioma, T>, idioma: Idioma): T {
 /** Correo de muestra para las casillas: en inglés no puede salir «correo@ejemplo.com». */
 export const correoEjemplo = (idioma: Idioma) =>
   idioma === 'en' ? 'email@example.com' : 'correo@ejemplo.com';
+
+/**
+ * ¿Lo escrito parece un correo? Revisión rápida en pantalla, antes de enviar (27 oct 2026: la
+ * casilla de correo aceptaba un número de teléfono sin avisar). El servidor valida de todos modos.
+ */
+export const pareceCorreo = (texto: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(texto.trim());

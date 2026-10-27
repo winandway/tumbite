@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   correoEjemplo,
+  pareceCorreo,
   ErrorApi,
   type Idioma,
   type Usuario,
@@ -47,6 +48,10 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!pareceCorreo(v.correo)) {
+      setError({ mensaje: t.correoInvalido, campo: 'correo' });
+      return;
+    }
     setEnviando(true);
     try {
       const r =
@@ -77,7 +82,7 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
 
   return (
     <main className="acceso">
-      <h1>{modo === 'entrar' ? t.entrar : t.registrarse}</h1>
+      <h1>{modo === 'entrar' ? t.tituloEntrar : t.registrarse}</h1>
       {b.recuperado && (
         <p className="aviso-borrador">
           {t.recuperado}{' '}

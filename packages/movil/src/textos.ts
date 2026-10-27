@@ -3,6 +3,11 @@ import type { Idioma } from '@tumbite/compartido';
 const es = {
   entrar: 'Entrar',
   crearCuenta: 'Crear cuenta',
+  correoInvalido: 'Escribe un correo, por ejemplo nombre@dominio.com.',
+  cuentaDe: {
+    cliente: 'Cuenta de cliente: para pedir comida',
+    repartidor: 'Cuenta de repartidor: para repartir con Divoox',
+  },
   aceptas: 'Al crear tu cuenta aceptas los',
   terminos: 'Términos de uso',
   terminosRepartidores: 'Términos para repartidores',
@@ -44,6 +49,11 @@ type T = typeof es;
 const en: T = {
   entrar: 'Sign in',
   crearCuenta: 'Create account',
+  correoInvalido: 'Enter an email, for example name@domain.com.',
+  cuentaDe: {
+    cliente: 'Customer account: to order food',
+    repartidor: 'Driver account: to deliver with Divoox',
+  },
   aceptas: 'By creating your account you agree to the',
   terminos: 'Terms of Service',
   terminosRepartidores: 'Driver Terms',

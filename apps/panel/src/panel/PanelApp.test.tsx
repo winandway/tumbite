@@ -54,6 +54,26 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     expect(screen.getByLabelText('Correo')).toHaveValue('rosa@correo.com');
   });
 
+  it('un teléfono en la casilla de correo se avisa en pantalla y no se envía (27 oct 2026)', async () => {
+    let envios = 0;
+    servidor({
+      '/datos/cuentas/yo': () => new Response('{}', { status: 401 }),
+      '/datos/cuentas/entrar': () => {
+        envios++;
+        return new Response('{}', { status: 401 });
+      },
+    });
+    render(<PanelApp ruta="/panel" />);
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(
+      'Entrar al panel de tu restaurante',
+    );
+    await userEvent.type(screen.getByLabelText('Correo'), '14034151645');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'una-clave');
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    expect(await screen.findByText(/Escribe un correo/)).toBeInTheDocument();
+    expect(envios).toBe(0);
+  });
+
   it('recupera lo escrito al volver, sin la contraseña', async () => {
     servidor({ '/datos/cuentas/yo': () => new Response('{}', { status: 401 }) });
     localStorage.setItem(

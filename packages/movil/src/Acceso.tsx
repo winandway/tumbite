@@ -3,6 +3,7 @@ import { Linking, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
+  pareceCorreo,
   ErrorApi,
   enIdioma,
   enIdiomaDireccion,
@@ -53,6 +54,10 @@ export function Acceso({
 
   async function enviar() {
     setError(null);
+    if (!pareceCorreo(v.correo)) {
+      setError({ mensaje: t.correoInvalido, campo: 'correo' });
+      return;
+    }
     setEnviando(true);
     try {
       const r =
@@ -114,6 +119,15 @@ export function Acceso({
     );
   return marco(
     <>
+      {rolRegistro ? (
+        // Que se sepa siempre qué cuenta se crea o se usa: de cliente o de repartidor.
+        <Text
+          style={{ color: '#5E5E5E', fontSize: 15, marginBottom: 12 }}
+          accessibilityRole="header"
+        >
+          {rolRegistro === 'repartidor' ? t.cuentaDe.repartidor : t.cuentaDe.cliente}
+        </Text>
+      ) : null}
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {registro && (
         <Campo

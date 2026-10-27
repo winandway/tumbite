@@ -2,6 +2,8 @@ import type { Idioma } from '@tumbite/compartido';
 
 const es = {
   entrar: 'Entrar',
+  tituloEntrar: 'Entrar al panel de tu restaurante',
+  correoInvalido: 'Escribe un correo, por ejemplo nombre@dominio.com.',
   registrarse: 'Crear cuenta de restaurante',
   aceptas: 'Al crear tu cuenta aceptas los',
   terminos: 'Términos de uso',
@@ -66,6 +68,8 @@ type T = typeof es;
 
 const en: T = {
   entrar: 'Sign in',
+  tituloEntrar: 'Sign in to your restaurant panel',
+  correoInvalido: 'Enter an email, for example name@domain.com.',
   registrarse: 'Create a restaurant account',
   aceptas: 'By creating your account you agree to the',
   terminos: 'Terms of Service',
