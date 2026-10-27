@@ -1952,18 +1952,24 @@ for (const idioma of ['en', 'es'] as const) {
 
         // D. Soporte: la bandeja muestra la comida perdida (espera la decisión de Richard), la toma y
         //    deja la nota. Nada se compensa solo.
-        const casos = (await (
-          await request.get('/datos/admin/bandeja-dinero', { headers: auth })
-        ).json()) as {
-          casos: {
-            clave: string;
-            tipo: string;
-            moneda: string;
-            esperaDecision: string | null;
-            acciones: string[];
-          }[];
-        };
-        const comida = casos.casos.find((x) => x.clave === `comida:${c.id}`);
+        // Por su clave, no en la lista: la bandeja pagina los 50 casos más viejos primero y el sitio
+        // de pruebas acumula casos de corridas anteriores (27 oct 2026).
+        const comida = (
+          (await (
+            await request.get(
+              `/datos/admin/bandeja-dinero/${encodeURIComponent(`comida:${c.id}`)}`,
+              { headers: auth },
+            )
+          ).json()) as {
+            caso: {
+              clave: string;
+              tipo: string;
+              moneda: string;
+              esperaDecision: string | null;
+              acciones: string[];
+            };
+          }
+        ).caso;
         expect(comida).toMatchObject({
           tipo: 'comida',
           moneda: 'USD',
@@ -2006,6 +2012,22 @@ for (const idioma of ['en', 'es'] as const) {
         await expect(sup.getByTestId('bandeja-dinero')).toBeVisible({ timeout: 20_000 });
         await foto(sup, 'super-bandeja');
         await supCtx.close();
+        // Resuelto al final: el caso de esta corrida no se queda acumulado en la bandeja de pruebas.
+        expect(
+          (
+            await request.post(
+              `/datos/admin/bandeja-dinero/${encodeURIComponent(`comida:${c.id}`)}/acciones`,
+              {
+                headers: auth,
+                data: {
+                  accion: 'resolver',
+                  nota: 'Recorrido: caso de prueba cerrado',
+                  idempotencia: `recorrido-resolver-${c.id}`,
+                },
+              },
+            )
+          ).ok(),
+        ).toBe(true);
         await repCtx.setGeolocation(MIAMI);
         // Ya libre, el repartidor se desconecta (así no se lleva ofertas de la corrida siguiente).
         await rep.goto('/driver/');
