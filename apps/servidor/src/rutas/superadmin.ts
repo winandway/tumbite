@@ -9,6 +9,7 @@ import { soltarPedido } from './operacion';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
 import { type Variables, base, exigir } from '../sesion';
+import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 /**
@@ -1119,4 +1120,101 @@ superadmin.get('/admin/disputas', async (c) => {
       creadoEn: String(r.creado_en),
     })),
   });
+});
+
+/** Cuentas fijas del revisor de las tiendas (Apple y Google), una por app. */
+export const CUENTAS_REVISOR = [
+  { rol: 'cliente', correo: 'revisor.cliente@windoce.com', nombre: 'Soporte Revisor Cliente' },
+  { rol: 'repartidor', correo: 'revisor.driver@windoce.com', nombre: 'Soporte Revisor Driver' },
+  {
+    rol: 'restaurante',
+    correo: 'revisor.restaurante@windoce.com',
+    nombre: 'Soporte Revisor Restaurante',
+  },
+] as const;
+
+/**
+ * Un botón del superadmin crea (o renueva) las tres cuentas del revisor de las tiendas, con
+ * contraseña nueva al azar, y las deja listas para usar: el repartidor con la verificación y los
+ * antecedentes aprobados y sin regla de distancia; el restaurante aprobado y cerrado (no recibe
+ * pedidos reales). Las contraseñas se muestran UNA sola vez: van al formulario de Apple y Google.
+ */
+superadmin.post('/admin/revisores', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const cuentas: { rol: string; correo: string; clave: string }[] = [];
+  for (const r of CUENTAS_REVISOR) {
+    // 20 caracteres al azar, fáciles de copiar (sin signos que se pierdan al pegar).
+    const clave = nuevoToken()
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 20);
+    const existe = await db
+      .prepare('SELECT id FROM usuarios WHERE correo = ?')
+      .bind(r.correo)
+      .first<{ id: string }>();
+    const id = existe?.id ?? nuevoId();
+    if (existe)
+      await db
+        .prepare('UPDATE usuarios SET clave_hash = ?, rol = ?, activo = 1, nombre = ? WHERE id = ?')
+        .bind(await hashClave(clave), r.rol, r.nombre, id)
+        .run();
+    else
+      await db
+        .prepare(
+          'INSERT INTO usuarios (id, correo, nombre, rol, idioma, clave_hash) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .bind(id, r.correo, r.nombre, r.rol, 'en', await hashClave(clave))
+        .run();
+    await db
+      .prepare('INSERT OR IGNORE INTO revisores (correo, rol) VALUES (?, ?)')
+      .bind(r.correo, r.rol)
+      .run();
+    if (r.rol === 'repartidor') {
+      await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(id).run();
+      await asegurarCodigoRepartidor(db, id);
+      await db
+        .prepare(
+          "INSERT INTO kyc (usuario_id, estado, doc_tipo, enviado_en, revisado_en, revisado_por) VALUES (?, 'aprobado', 'licencia', datetime('now'), datetime('now'), 'revisores') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', motivo = '', revisado_en = datetime('now'), proxima_revision = NULL",
+        )
+        .bind(id)
+        .run();
+      await db
+        .prepare(
+          "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, color, placa, antecedentes, antecedentes_fecha) VALUES (?, 'carro', 'Review', 'Vehicle', 'White', 'REVIEW1', 'aprobado', date('now')) ON CONFLICT(usuario_id) DO UPDATE SET antecedentes = 'aprobado', antecedentes_fecha = date('now')",
+        )
+        .bind(id)
+        .run();
+    }
+    if (r.rol === 'restaurante') {
+      const rest = await db
+        .prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+        .bind(id)
+        .first<{ id: string }>();
+      if (rest)
+        await db
+          .prepare("UPDATE restaurantes SET estado = 'aprobado', abierto = 0 WHERE id = ?")
+          .bind(rest.id)
+          .run();
+      else
+        await db
+          .prepare(
+            "INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, estado, abierto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aprobado', 0)",
+          )
+          .bind(
+            nuevoId(),
+            id,
+            'Divoox Review Kitchen (Soporte)',
+            'Restaurante de prueba para los revisores de las tiendas.',
+            'Test restaurant for the app store reviewers.',
+            'Pizza',
+            '+1 305 000 0000',
+            '1 SE 3rd Ave, Miami, FL 33131',
+            25.7736,
+            -80.1897,
+          )
+          .run();
+    }
+    cuentas.push({ rol: r.rol, correo: r.correo, clave });
+  }
+  return c.json({ cuentas });
 });

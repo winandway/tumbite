@@ -770,6 +770,14 @@ CREATE TABLE IF NOT EXISTS antecedentes_checkr (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Cuentas de los revisores de las tiendas (Apple y Google): las crea el superadmin con un botón
+-- (27 oct 2026). Al repartidor revisor no se le exige la distancia al recoger ni al entregar.
+CREATE TABLE IF NOT EXISTS revisores (
+  correo TEXT PRIMARY KEY COLLATE NOCASE,
+  rol TEXT NOT NULL CHECK (rol IN ('cliente', 'repartidor', 'restaurante')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Selfie de control (identidad continua): al conectarse, a algunos repartidores se les pide una
 -- foto de la cara al azar y el equipo la compara con la del registro.
 CREATE TABLE IF NOT EXISTS selfies_control (

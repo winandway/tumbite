@@ -128,6 +128,27 @@ describe('superadmin', () => {
     expect(screen.getByText('Server errors')).toBeInTheDocument();
   });
 
+  it('C-REVISORES: el botón crea las cuentas del revisor y muestra las contraseñas una vez', async () => {
+    const llamadas = servidor((url, init) =>
+      url.includes('/admin/revisores') && init?.method === 'POST'
+        ? {
+            cuentas: [
+              { rol: 'cliente', correo: 'revisor.cliente@windoce.com', clave: 'AbC123' },
+              { rol: 'repartidor', correo: 'revisor.driver@windoce.com', clave: 'DeF456' },
+            ],
+          }
+        : RESUMEN,
+    );
+    render(<SuperResumen base="/panel/control-x" idioma="es" />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Crear las cuentas del revisor' }),
+    );
+    expect(await screen.findByText('DeF456')).toBeInTheDocument();
+    expect(screen.getByText('revisor.cliente@windoce.com')).toBeInTheDocument();
+    expect(screen.getByText(/no se vuelven a mostrar/)).toBeInTheDocument();
+    expect(llamadas.some((l) => l.url.includes('/datos/admin/revisores'))).toBe(true);
+  });
+
   it('la bandeja filtra por estado y el ticket se responde y se cierra', async () => {
     const llamadas = servidor((url, init) => {
       if (url.includes('/datos/admin/tickets?'))

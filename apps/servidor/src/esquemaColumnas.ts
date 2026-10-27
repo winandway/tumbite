@@ -572,6 +572,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "actualizado_en"
   ],
+  "revisores": [
+    "correo",
+    "rol",
+    "creado_en"
+  ],
   "selfies_control": [
     "id",
     "usuario_id",

@@ -126,6 +126,16 @@ const T = {
     sinConciliar: 'Todavía sin conciliar',
     activarWallets: 'Activar Apple Pay y Google Pay en la web',
     walletsOk: 'Dominio registrado en Stripe. Apple Pay:',
+    revisores: 'Cuentas para los revisores de las tiendas',
+    revisoresAyuda:
+      'Crea (o renueva) las tres cuentas que Apple y Google usan para revisar las apps: cliente, repartidor y restaurante. Las contraseñas se muestran una sola vez: cópialas al formulario de la tienda.',
+    crearRevisores: 'Crear las cuentas del revisor',
+    revisoresListas: 'Listas. Copia cada contraseña ahora: no se vuelven a mostrar.',
+    roles: {
+      cliente: 'Cliente (app Divoox)',
+      repartidor: 'Repartidor (Divoox Driver)',
+      restaurante: 'Restaurante (Divoox Restaurants)',
+    },
     franquicias: 'Franquicias',
     vendidas: 'Vendidas',
     activas: 'Activas',
@@ -206,6 +216,16 @@ const T = {
     sinConciliar: 'Not reconciled yet',
     activarWallets: 'Enable Apple Pay and Google Pay on the web',
     walletsOk: 'Domain registered with Stripe. Apple Pay:',
+    revisores: 'App store reviewer accounts',
+    revisoresAyuda:
+      'Creates (or renews) the three accounts Apple and Google use to review the apps: customer, driver and restaurant. Passwords are shown once: copy them into the store form.',
+    crearRevisores: 'Create reviewer accounts',
+    revisoresListas: 'Done. Copy each password now: they are not shown again.',
+    roles: {
+      cliente: 'Customer (Divoox app)',
+      repartidor: 'Driver (Divoox Driver)',
+      restaurante: 'Restaurant (Divoox Restaurants)',
+    },
     franquicias: 'Franchises',
     vendidas: 'Sold',
     activas: 'Active',
@@ -333,6 +353,8 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
   const [error, setError] = useState('');
   const [conciliacion, setConciliacion] = useState<{ dia: string; cuadra: boolean } | null>(null);
   const [wallets, setWallets] = useState('');
+  const [revisores, setRevisores] = useState<{ rol: string; correo: string; clave: string }[]>([]);
+  const [errorRevisores, setErrorRevisores] = useState('');
   useEffect(() => {
     pedir<Resumen>('GET', '/datos/admin/resumen')
       .then(setR)
@@ -354,6 +376,19 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
       setWallets(`${t.walletsOk} ${w.applePay} · Google Pay: ${w.googlePay}`);
     } catch (x) {
       setWallets(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+  async function crearRevisores() {
+    setErrorRevisores('');
+    try {
+      const x = await pedir<{ cuentas: { rol: string; correo: string; clave: string }[] }>(
+        'POST',
+        '/datos/admin/revisores',
+        {},
+      );
+      setRevisores(x.cuentas);
+    } catch (e) {
+      setErrorRevisores(e instanceof ErrorApi ? e.message : String(e));
     }
   }
   if (!r) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
@@ -387,6 +422,40 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
           {wallets ? <span className="suave">{wallets}</span> : null}
         </li>
       </ul>
+      <h2>{t.revisores}</h2>
+      <p className="suave">{t.revisoresAyuda}</p>
+      <button type="button" className="boton" onClick={() => void crearRevisores()}>
+        {t.crearRevisores}
+      </button>
+      {errorRevisores ? <p role="alert">{errorRevisores}</p> : null}
+      {revisores.length ? (
+        <div>
+          <p role="status">{t.revisoresListas}</p>
+          <div className="tabla-ancha">
+            <table className="tabla">
+              <tbody>
+                {revisores.map((c) => (
+                  <tr key={c.correo}>
+                    <td>
+                      {c.rol === 'cliente'
+                        ? t.roles.cliente
+                        : c.rol === 'repartidor'
+                          ? t.roles.repartidor
+                          : t.roles.restaurante}
+                    </td>
+                    <td>
+                      <code>{c.correo}</code>
+                    </td>
+                    <td>
+                      <code>{c.clave}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
       <h2>{t.salud}</h2>
       <p className="suave">{t.saludAyuda}</p>
       <SaludPiezas />

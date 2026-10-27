@@ -1476,13 +1476,23 @@ async function guardarEvidencia(
 }
 
 const lejos = (metros: number | null) => metros != null && metros > RADIO_LLEGADA_M;
-/** Las cuentas de los revisores de las tiendas prueban desde otra ciudad: sin regla de distancia. */
-const esRevisor = (c: Ctx, correo: string) =>
-  (c.env.CORREOS_REVISOR ?? '')
+/**
+ * Las cuentas de los revisores de las tiendas prueban desde otra ciudad: sin regla de distancia.
+ * Vienen de la variable CORREOS_REVISOR o de la tabla «revisores» (el botón del superadmin).
+ */
+async function esRevisor(c: Ctx, correo: string): Promise<boolean> {
+  const porVariable = (c.env.CORREOS_REVISOR ?? '')
     .split(',')
     .map((x) => x.trim().toLowerCase())
     .filter(Boolean)
     .includes(correo.toLowerCase());
+  if (porVariable) return true;
+  const fila = await base(c)
+    .prepare('SELECT 1 FROM revisores WHERE correo = ?')
+    .bind(correo)
+    .first();
+  return Boolean(fila);
+}
 const comoPunto = (lat: unknown, lng: unknown) =>
   lat == null || lng == null ? null : { lat: Number(lat), lng: Number(lng) };
 
@@ -1507,7 +1517,7 @@ operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
   const foto = await leerFoto(c);
   const rest = comoPunto(p.lat, p.lng);
   const metros = rest ? metrosEntre(foto.donde, rest) : null;
-  if (lejos(metros) && !esRevisor(c, u.correo))
+  if (lejos(metros) && !(await esRevisor(c, u.correo)))
     throw new ErrorDatos(
       'Todavía no estás en el restaurante. Acércate y vuelve a tomar la foto.',
       undefined,
@@ -1747,7 +1757,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   }
   const casa = comoPunto(p.lat, p.lng);
   const metros = casa ? metrosEntre(donde, casa) : null;
-  if (lejos(metros) && !esRevisor(c, u.correo))
+  if (lejos(metros) && !(await esRevisor(c, u.correo)))
     throw new ErrorDatos(
       'Todavía no llegas a la dirección de entrega. El botón se activa cuando estés en la puerta.',
       undefined,
@@ -1755,7 +1765,11 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     );
   // GPS serio: la llegada la confirman dos lecturas precisas (hito «llegó»), o soporte autorizó la
   // excepción «No puedo confirmar mi ubicación». Un punto suelto no alcanza.
-  if (p.h_llego_cli == null && p.excepcion_ubicacion !== 'autorizada' && !esRevisor(c, u.correo))
+  if (
+    p.h_llego_cli == null &&
+    p.excepcion_ubicacion !== 'autorizada' &&
+    !(await esRevisor(c, u.correo))
+  )
     throw new ErrorDatos(
       'Todavía no confirmamos tu ubicación en la puerta. Espera unos segundos con el GPS encendido o pide la excepción a soporte.',
       'gps',
