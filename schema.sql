@@ -1748,7 +1748,9 @@ CREATE TABLE IF NOT EXISTS flex_pruebas (
   clave TEXT NOT NULL,
   lat REAL,
   lng REAL,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Fase 3: cuándo se borró el archivo por una política de retención APROBADA (la fila queda).
+  purgada_en TEXT
 );
 CREATE INDEX IF NOT EXISTS flex_pruebas_ruta ON flex_pruebas(ruta_id, parada_id);
 
@@ -1786,6 +1788,125 @@ CREATE TABLE IF NOT EXISTS flex_incidencias (
 );
 CREATE INDEX IF NOT EXISTS flex_incidencias_ruta ON flex_incidencias(ruta_id, estado);
 CREATE INDEX IF NOT EXISTS flex_incidencias_empresa ON flex_incidencias(empresa_id, creado_en);
+
+-- ───────────── DIVOOX FLEX · FASE 3 (27 oct 2026, rama fase-flex-3): automatización e integraciones ─────────────
+-- Bandeja de eventos de salida. La llenan DISPARADORES (esquemaFlex.ts) en la misma transacción que
+-- el cambio de custodia, de ruta o la incidencia: si el cambio se deshace, el evento tampoco existe.
+-- `evento_id` es el id único que recibe la empresa (protección contra repeticiones).
+CREATE TABLE IF NOT EXISTS flex_eventos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  evento_id TEXT NOT NULL UNIQUE,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  tipo TEXT NOT NULL,
+  objeto_id TEXT NOT NULL,
+  ruta_id TEXT,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  repartido_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS flex_eventos_sin_repartir ON flex_eventos(repartido_en, id);
+CREATE INDEX IF NOT EXISTS flex_eventos_empresa ON flex_eventos(empresa_id, id);
+
+-- Destinos de integración (avisos firmados al sistema de la empresa). El secreto se guarda CIFRADO
+-- (se muestra una sola vez); al rotarlo, el anterior sigue firmando durante el periodo de gracia.
+CREATE TABLE IF NOT EXISTS flex_webhooks (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  url TEXT NOT NULL,
+  eventos_json TEXT NOT NULL DEFAULT '[]',
+  descripcion TEXT NOT NULL DEFAULT '',
+  secreto_cifrado TEXT NOT NULL,
+  secreto_prefijo TEXT NOT NULL,
+  secreto_anterior_cifrado TEXT,
+  secreto_anterior_vence_en TEXT,
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'pausado', 'desactivado')),
+  fallos_seguidos INTEGER NOT NULL DEFAULT 0,
+  ultimo_exito_en TEXT,
+  desactivado_en TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS flex_webhooks_empresa ON flex_webhooks(empresa_id, estado);
+
+-- Cola de entrega: un evento por destino, una sola vez (UNIQUE). Reintentos con espera creciente.
+CREATE TABLE IF NOT EXISTS flex_webhook_entregas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  webhook_id TEXT NOT NULL REFERENCES flex_webhooks(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  evento_id TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente', 'enviando', 'entregado', 'fallido', 'descartado')),
+  intentos INTEGER NOT NULL DEFAULT 0,
+  proximo_en TEXT NOT NULL DEFAULT (datetime('now')),
+  tomado_en TEXT,
+  ultimo_http INTEGER,
+  ultimo_error TEXT NOT NULL DEFAULT '',
+  entregado_en TEXT,
+  es_prueba INTEGER NOT NULL DEFAULT 0 CHECK (es_prueba IN (0, 1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (webhook_id, evento_id)
+);
+CREATE INDEX IF NOT EXISTS flex_webhook_entregas_cola ON flex_webhook_entregas(estado, proximo_en);
+CREATE INDEX IF NOT EXISTS flex_webhook_entregas_destino ON flex_webhook_entregas(webhook_id, id);
+
+-- Registro de cada intento (para la empresa y para soporte). Nunca guarda el cuerpo ni el secreto.
+CREATE TABLE IF NOT EXISTS flex_webhook_intentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entrega_id INTEGER NOT NULL REFERENCES flex_webhook_entregas(id),
+  webhook_id TEXT NOT NULL REFERENCES flex_webhooks(id),
+  numero INTEGER NOT NULL,
+  http_estado INTEGER,
+  error TEXT NOT NULL DEFAULT '',
+  duracion_ms INTEGER,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS flex_webhook_intentos_destino ON flex_webhook_intentos(webhook_id, id);
+
+-- Avisos al celular de Flex: la clave única evita mandar el mismo aviso dos veces.
+CREATE TABLE IF NOT EXISTS flex_avisos (
+  clave TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL,
+  ruta_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Retención por país y servicio. Lo sensible (fotos, firmas, pruebas) NUNCA se borra sin una
+-- política aprobada por una persona; sin fila aquí, rige la de fábrica (que no borra pruebas).
+CREATE TABLE IF NOT EXISTS flex_retencion (
+  pais TEXT NOT NULL,
+  servicio TEXT NOT NULL,
+  categoria TEXT NOT NULL,
+  dias INTEGER NOT NULL CHECK (dias >= 1),
+  aprobada INTEGER NOT NULL DEFAULT 0 CHECK (aprobada IN (0, 1)),
+  aprobada_por TEXT REFERENCES usuarios(id),
+  aprobada_en TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pais, servicio, categoria)
+);
+CREATE TABLE IF NOT EXISTS flex_limpiezas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  modo TEXT NOT NULL CHECK (modo IN ('simulacion', 'ejecucion')),
+  origen TEXT NOT NULL DEFAULT 'reloj',
+  resultado_json TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Capacidad de un vehículo para Flex (la pone la empresa). No toca `vehiculos` de Comida.
+CREATE TABLE IF NOT EXISTS flex_capacidad_vehiculo (
+  vehiculo_id TEXT NOT NULL REFERENCES vehiculos(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  max_paquetes INTEGER CHECK (max_paquetes IS NULL OR max_paquetes BETWEEN 1 AND 1000),
+  max_peso_g INTEGER CHECK (max_peso_g IS NULL OR max_peso_g BETWEEN 1 AND 5000000),
+  max_volumen_cm3 INTEGER CHECK (max_volumen_cm3 IS NULL OR max_volumen_cm3 BETWEEN 1 AND 50000000),
+  -- Restricción por paquete: el lado más largo que cabe (cm). NULL = sin dato.
+  max_lado_cm INTEGER CHECK (max_lado_cm IS NULL OR max_lado_cm BETWEEN 1 AND 1000),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (vehiculo_id, empresa_id)
+);
 
 -- =====================================================================================
 -- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN (16 oct 2026, rama fase-3-exclusividad). Diseño:
