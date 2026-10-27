@@ -191,13 +191,14 @@ export function Acceso({
       ) : null}
       {registro ? (
         // Aceptación con casilla antes de crear la cuenta (Apple y Google la revisan).
-        <Pressable
-          onPress={() => setAcepto(!acepto)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: acepto }}
-          style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}
-        >
-          <View
+        // Solo el cuadrito es la casilla: el texto lleva enlaces y un toque ahí abre la página.
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+          <Pressable
+            onPress={() => setAcepto(!acepto)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: acepto }}
+            accessibilityLabel={`${t.aceptas} ${t.terminos} ${t.yLa} ${t.privacidad}`}
+            hitSlop={10}
             style={{
               width: 22,
               height: 22,
@@ -213,7 +214,7 @@ export function Acceso({
             {acepto ? (
               <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>✓</Text>
             ) : null}
-          </View>
+          </Pressable>
           <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>
             {t.aceptas}{' '}
             <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
@@ -237,7 +238,7 @@ export function Acceso({
             </Text>
             .
           </Text>
-        </Pressable>
+        </View>
       ) : null}
       <Boton
         texto={enviando ? t.enviando : registro ? t.crearCuenta : t.entrar}
