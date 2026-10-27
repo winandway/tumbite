@@ -1350,6 +1350,331 @@ CREATE TABLE IF NOT EXISTS lotes_ubicacion (
 CREATE INDEX IF NOT EXISTS lotes_ubicacion_viejos ON lotes_ubicacion(recibido_en);
 
 -- =====================================================================================
+-- DIVOOX FLEX · FASE 1 (27 oct 2026, rama fase-flex-1). Logística empresarial de paquetes.
+-- Auditoría: docs/AUDITORIA-DIVOOX-FLEX-2026.md. Solo tablas NUEVAS: Comida, pedidos, dinero,
+-- conductor_ocupacion y operaciones no se tocan. Sin cobros, sin despacho, sin rutas en vivo.
+-- Las mismas entidades (envios, paquetes) servirán a Divoox Express (un paquete, una parada).
+-- =====================================================================================
+
+-- Empresa cliente de Flex: su dueño es una cuenta normal (usuarios). Una persona puede
+-- pertenecer a varias empresas con roles distintos (empresa_miembros).
+CREATE TABLE IF NOT EXISTS empresas (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  razon_social TEXT NOT NULL DEFAULT '',
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'pausada', 'cerrada')),
+  dueno_id TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS empresas_dueno ON empresas(dueno_id);
+
+-- Miembros con permisos comprobados en el servidor. Nunca se entra por correo: solo por fila aquí.
+CREATE TABLE IF NOT EXISTS empresa_miembros (
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  rol TEXT NOT NULL CHECK (rol IN ('dueno', 'operaciones', 'operador', 'finanzas', 'api')),
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'retirado')),
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (empresa_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS empresa_miembros_usuario ON empresa_miembros(usuario_id, estado);
+
+-- Invitación segura: token aleatorio del que solo se guarda el hash; vence; se usa una vez;
+-- la acepta una cuenta con el MISMO correo, confirmado. Se puede revocar. Todo queda auditado.
+CREATE TABLE IF NOT EXISTS empresa_invitaciones (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  correo TEXT NOT NULL COLLATE NOCASE,
+  rol TEXT NOT NULL CHECK (rol IN ('operaciones', 'operador', 'finanzas', 'api')),
+  token_hash TEXT NOT NULL UNIQUE,
+  expira_en TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aceptada', 'revocada')),
+  emisor_id TEXT NOT NULL REFERENCES usuarios(id),
+  aceptada_por TEXT REFERENCES usuarios(id),
+  aceptada_en TEXT,
+  revocada_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS empresa_invitaciones_empresa ON empresa_invitaciones(empresa_id, estado);
+
+-- Centros de distribución de la empresa (donde se reciben y cargan los paquetes).
+CREATE TABLE IF NOT EXISTS empresa_centros (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  nombre TEXT NOT NULL,
+  direccion TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  ciudad TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  zona_horaria TEXT NOT NULL DEFAULT 'America/New_York',
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'inactivo')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS empresa_centros_empresa ON empresa_centros(empresa_id, estado);
+
+-- Conductores vinculados a la empresa: propios, de la red Divoox o híbridos. Solo cuentas con
+-- rol repartidor. La asignación de rutas y la ocupación quedan para la Fase 2.
+CREATE TABLE IF NOT EXISTS empresa_conductores (
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  vinculo TEXT NOT NULL CHECK (vinculo IN ('propio', 'red', 'hibrido')),
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'retirado')),
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (empresa_id, usuario_id)
+);
+
+-- Claves de integración (API empresarial): se guarda SOLO el hash; el prefijo sirve para
+-- reconocerla en pantalla. Permisos acotados (nunca miembros ni dinero). Revocables. Uso contado.
+CREATE TABLE IF NOT EXISTS empresa_claves (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  nombre TEXT NOT NULL,
+  prefijo TEXT NOT NULL,
+  clave_hash TEXT NOT NULL UNIQUE,
+  permisos TEXT NOT NULL DEFAULT '[]',
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'revocada')),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  revocada_en TEXT,
+  ultimo_uso_en TEXT,
+  usos INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS empresa_claves_empresa ON empresa_claves(empresa_id, estado);
+
+-- Auditoría de la empresa: quién hizo qué (miembros, invitaciones, claves, centros, importaciones).
+-- Inmutable: ni UPDATE ni DELETE.
+CREATE TABLE IF NOT EXISTS empresa_auditoria (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  actor_id TEXT,
+  actor_tipo TEXT NOT NULL DEFAULT 'usuario' CHECK (actor_tipo IN ('usuario', 'api', 'sistema')),
+  accion TEXT NOT NULL,
+  objeto TEXT NOT NULL DEFAULT '',
+  detalle_json TEXT NOT NULL DEFAULT 'null',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS empresa_auditoria_empresa ON empresa_auditoria(empresa_id, creado_en);
+CREATE TRIGGER IF NOT EXISTS empresa_auditoria_inmutable_update
+BEFORE UPDATE ON empresa_auditoria
+BEGIN
+  SELECT RAISE(ABORT, 'auditoria_inmutable');
+END;
+CREATE TRIGGER IF NOT EXISTS empresa_auditoria_inmutable_delete
+BEFORE DELETE ON empresa_auditoria
+BEGIN
+  SELECT RAISE(ABORT, 'auditoria_inmutable');
+END;
+
+-- Envío: un destino con uno o varios paquetes. Sirve a Flex (ruta con muchas paradas) y, más
+-- adelante, a Express (un envío suelto). Datos personales mínimos: nombre y teléfono del que recibe.
+CREATE TABLE IF NOT EXISTS envios (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  centro_id TEXT REFERENCES empresa_centros(id),
+  referencia_externa TEXT,
+  remitente_nombre TEXT NOT NULL DEFAULT '',
+  destinatario_nombre TEXT NOT NULL,
+  destinatario_telefono TEXT NOT NULL DEFAULT '',
+  direccion TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  instrucciones TEXT NOT NULL DEFAULT '',
+  ventana_desde TEXT,
+  ventana_hasta TEXT,
+  estado TEXT NOT NULL DEFAULT 'creado'
+    CHECK (estado IN ('creado', 'en_proceso', 'entregado', 'parcial', 'fallido', 'devuelto', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS envios_empresa ON envios(empresa_id, creado_en);
+-- La referencia propia de la empresa (su número de orden) no se repite dentro de la misma empresa.
+CREATE UNIQUE INDEX IF NOT EXISTS envios_referencia_unica
+  ON envios(empresa_id, referencia_externa) WHERE referencia_externa IS NOT NULL;
+
+-- Paquete: unidad física con su código de seguimiento (público, opaco) y su código de etiqueta
+-- (el que va en el QR y el código de barras; opaco: el servidor lo resuelve tras validar permisos).
+CREATE TABLE IF NOT EXISTS paquetes (
+  id TEXT PRIMARY KEY,
+  envio_id TEXT NOT NULL REFERENCES envios(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  codigo_seguimiento TEXT NOT NULL UNIQUE,
+  codigo_etiqueta TEXT NOT NULL UNIQUE,
+  peso_g INTEGER CHECK (peso_g IS NULL OR peso_g >= 0),
+  largo_cm INTEGER CHECK (largo_cm IS NULL OR largo_cm >= 0),
+  ancho_cm INTEGER CHECK (ancho_cm IS NULL OR ancho_cm >= 0),
+  alto_cm INTEGER CHECK (alto_cm IS NULL OR alto_cm >= 0),
+  descripcion TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'creado' CHECK (estado IN (
+    'creado', 'registrado_centro', 'preparado', 'asignado', 'cargado', 'en_transito',
+    'entregado', 'entrega_fallida', 'en_devolucion', 'devuelto', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS paquetes_envio ON paquetes(envio_id);
+CREATE INDEX IF NOT EXISTS paquetes_empresa_estado ON paquetes(empresa_id, estado, creado_en);
+
+-- Máquina de estados del paquete: la base rechaza cualquier salto que no esté aquí.
+CREATE TABLE IF NOT EXISTS transiciones_paquete (
+  desde TEXT NOT NULL,
+  hacia TEXT NOT NULL,
+  PRIMARY KEY (desde, hacia)
+);
+INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
+  ('creado', 'registrado_centro'), ('creado', 'preparado'), ('creado', 'cancelado'),
+  ('registrado_centro', 'preparado'), ('registrado_centro', 'cancelado'),
+  ('preparado', 'asignado'), ('preparado', 'cancelado'),
+  ('asignado', 'cargado'), ('asignado', 'preparado'), ('asignado', 'cancelado'),
+  ('cargado', 'en_transito'), ('cargado', 'preparado'),
+  ('en_transito', 'entregado'), ('en_transito', 'entrega_fallida'),
+  ('entrega_fallida', 'en_transito'), ('entrega_fallida', 'en_devolucion'),
+  ('en_devolucion', 'devuelto'), ('en_devolucion', 'en_transito');
+CREATE TRIGGER IF NOT EXISTS paquetes_transicion_valida
+BEFORE UPDATE OF estado ON paquetes
+WHEN NEW.estado <> OLD.estado
+ AND NOT EXISTS (SELECT 1 FROM transiciones_paquete WHERE desde = OLD.estado AND hacia = NEW.estado)
+BEGIN
+  SELECT RAISE(ABORT, 'transicion_de_paquete_no_permitida');
+END;
+
+-- Custodia: cada cambio queda como evento inmutable, con su clave de idempotencia única.
+CREATE TABLE IF NOT EXISTS paquete_eventos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paquete_id TEXT NOT NULL REFERENCES paquetes(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  tipo TEXT NOT NULL,
+  actor_id TEXT,
+  actor_tipo TEXT NOT NULL DEFAULT 'usuario' CHECK (actor_tipo IN ('usuario', 'api', 'sistema')),
+  lat REAL,
+  lng REAL,
+  operacion_ref TEXT,
+  idempotencia TEXT NOT NULL UNIQUE,
+  metadatos_json TEXT NOT NULL DEFAULT 'null',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS paquete_eventos_paquete ON paquete_eventos(paquete_id, id);
+CREATE TRIGGER IF NOT EXISTS paquete_eventos_inmutable_update
+BEFORE UPDATE ON paquete_eventos
+BEGIN
+  SELECT RAISE(ABORT, 'evento_inmutable');
+END;
+CREATE TRIGGER IF NOT EXISTS paquete_eventos_inmutable_delete
+BEFORE DELETE ON paquete_eventos
+BEGIN
+  SELECT RAISE(ABORT, 'evento_inmutable');
+END;
+
+-- Idempotencia de la API: la misma clave en la misma empresa devuelve la MISMA respuesta.
+-- Con otro cuerpo, 409. Se guarda la huella del cuerpo, nunca secretos.
+CREATE TABLE IF NOT EXISTS idempotencia_flex (
+  empresa_id TEXT NOT NULL,
+  clave TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  cuerpo_hash TEXT NOT NULL,
+  estado INTEGER NOT NULL,
+  respuesta_json TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (empresa_id, clave)
+);
+
+-- Importación por CSV: se previsualiza (filas válidas y errores), se confirma y se procesa en
+-- lotes pequeños; se puede reanudar (cada fila guarda el envío que creó).
+CREATE TABLE IF NOT EXISTS importaciones (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  centro_id TEXT REFERENCES empresa_centros(id),
+  nombre_archivo TEXT NOT NULL DEFAULT '',
+  huella TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'previsualizada'
+    CHECK (estado IN ('previsualizada', 'confirmada', 'terminada', 'cancelada')),
+  total INTEGER NOT NULL DEFAULT 0,
+  validas INTEGER NOT NULL DEFAULT 0,
+  procesadas INTEGER NOT NULL DEFAULT 0,
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS importaciones_empresa ON importaciones(empresa_id, creado_en);
+CREATE TABLE IF NOT EXISTS importacion_filas (
+  importacion_id TEXT NOT NULL REFERENCES importaciones(id),
+  numero INTEGER NOT NULL,
+  datos_json TEXT NOT NULL,
+  error TEXT,
+  envio_id TEXT REFERENCES envios(id),
+  PRIMARY KEY (importacion_id, numero)
+);
+
+-- Lotes y rutas (solo estructura en la Fase 1; el despacho, la aceptación y la ocupación del
+-- conductor son de la Fase 2). REGLA: una ruta Flex = UNA operación activa del conductor.
+CREATE TABLE IF NOT EXISTS lotes (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  centro_id TEXT REFERENCES empresa_centros(id),
+  nombre TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'cerrado', 'terminado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS lotes_empresa ON lotes(empresa_id, estado);
+-- Un paquete pertenece como mucho a un lote.
+CREATE TABLE IF NOT EXISTS lote_paquetes (
+  paquete_id TEXT PRIMARY KEY REFERENCES paquetes(id),
+  lote_id TEXT NOT NULL REFERENCES lotes(id),
+  agregado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS lote_paquetes_lote ON lote_paquetes(lote_id);
+CREATE TABLE IF NOT EXISTS rutas_flex (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  centro_id TEXT REFERENCES empresa_centros(id),
+  lote_id TEXT REFERENCES lotes(id),
+  nombre TEXT NOT NULL DEFAULT '',
+  conductor_id TEXT REFERENCES usuarios(id),
+  vehiculo_id TEXT REFERENCES vehiculos(id),
+  estado TEXT NOT NULL DEFAULT 'borrador'
+    CHECK (estado IN ('borrador', 'lista', 'asignada', 'en_curso', 'terminada', 'cancelada')),
+  bloque_desde TEXT,
+  bloque_hasta TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS rutas_flex_empresa ON rutas_flex(empresa_id, estado);
+-- Fase 2 activará la ocupación; desde ya la base impide dos rutas activas del mismo conductor.
+CREATE UNIQUE INDEX IF NOT EXISTS rutas_flex_una_activa
+  ON rutas_flex(conductor_id) WHERE estado IN ('asignada', 'en_curso') AND conductor_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS ruta_paradas (
+  id TEXT PRIMARY KEY,
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  orden INTEGER NOT NULL CHECK (orden >= 1),
+  envio_id TEXT NOT NULL REFERENCES envios(id),
+  estado TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente', 'llegada', 'entregada', 'fallida', 'omitida')),
+  ventana_desde TEXT,
+  ventana_hasta TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (ruta_id, orden),
+  UNIQUE (ruta_id, envio_id)
+);
+CREATE TABLE IF NOT EXISTS ruta_asignaciones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  clave TEXT NOT NULL UNIQUE,
+  inicio TEXT NOT NULL DEFAULT (datetime('now')),
+  fin TEXT,
+  resultado TEXT CHECK (resultado IS NULL OR resultado IN
+    ('completada', 'liberada_conductor', 'liberada_sistema', 'reasignada', 'cancelada')),
+  CHECK ((fin IS NULL) = (resultado IS NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ruta_asignaciones_una_abierta ON ruta_asignaciones(ruta_id) WHERE fin IS NULL;
+
+-- =====================================================================================
 -- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN (16 oct 2026, rama fase-3-exclusividad). Diseño:
 -- docs/ARQUITECTURA-MULTISERVICIO-V1.2.md §3.1–§3.4 y §5. Aquí solo van TABLAS e ÍNDICES.
 -- Los disparadores, las vistas y el cuadre de la ocupación los crea el servidor al arrancar
