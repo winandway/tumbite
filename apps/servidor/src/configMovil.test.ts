@@ -52,7 +52,14 @@ describe('configuración de las apps móviles', () => {
       const conf = readFileSync(join(RAIZ, 'apps', a, 'app.config.js'), 'utf8');
       expect(conf).toContain('process.env.GOOGLE_SERVICES_JSON');
       expect(existsSync(join(RAIZ, 'apps', a, 'google-services.json'))).toBe(false);
+      // Ninguna llave de Google escrita a mano en la configuración.
+      expect(readFileSync(join(RAIZ, 'apps', a, 'app.json'), 'utf8')).not.toMatch(/AIza/);
     }
+    // El mapa de Android (cliente y repartidor) toma su llave del secreto de EAS.
+    for (const a of ['cliente', 'repartidor'])
+      expect(readFileSync(join(RAIZ, 'apps', a, 'app.config.js'), 'utf8')).toContain(
+        'process.env.GOOGLE_MAPS_ANDROID_KEY',
+      );
   });
 
   it('el restaurante incluye su alarma y la usa en el canal de avisos', () => {
