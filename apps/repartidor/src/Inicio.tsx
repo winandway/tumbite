@@ -56,6 +56,7 @@ import { AyudaPedido } from './grandes/Ayuda';
 import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
+import { MiRuta } from './flex/MiRuta';
 import {
   Boton,
   C,
@@ -156,6 +157,9 @@ async function ubicacionConLimite(): Promise<Location.LocationObject | null> {
 
 const T = {
   es: {
+    vistaMiRuta: 'Mi ruta (paquetes)',
+    miRutaAyuda:
+      'Rutas de paquetes de las empresas con las que trabajas: carga, entregas y devoluciones.',
     conectado: 'Conectado: recibiendo pedidos',
     desconectado: 'Desconectado',
     conectar: 'Conectarme',
@@ -256,6 +260,9 @@ const T = {
     pedido: 'Pedido',
   },
   en: {
+    vistaMiRuta: 'My route (packages)',
+    miRutaAyuda:
+      'Package routes from the companies you work with: loading, deliveries and returns.',
     conectado: 'Online: receiving orders',
     desconectado: 'Offline',
     conectar: 'Go online',
@@ -389,7 +396,7 @@ export function Inicio() {
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
   const [vista, setVista] = useState<
-    'inicio' | 'billetera' | 'datos' | 'pedidos' | 'calificaciones' | 'avisos' | 'alta'
+    'inicio' | 'billetera' | 'datos' | 'pedidos' | 'calificaciones' | 'avisos' | 'alta' | 'miRuta'
   >('inicio');
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const tg = textosGrandes(idioma);
@@ -1004,6 +1011,7 @@ export function Inicio() {
           {(
             [
               ['inicio', t.vistaInicio],
+              ['miRuta', t.vistaMiRuta],
               ['billetera', t.vistaBilletera],
               ['datos', t.vistaDatos],
             ] as const
@@ -1191,6 +1199,8 @@ export function Inicio() {
   if (vista === 'calificaciones')
     return lienzo('perfil', <Calificaciones api={api} idioma={idioma} />);
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
+  // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
+  if (vista === 'miRuta') return lienzo('pedidos', <MiRuta api={api} idioma={idioma} />);
   if (vista === 'alta')
     return lienzo(
       'perfil',
@@ -1218,6 +1228,14 @@ export function Inicio() {
         <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
           {td.nav.pedidos}
         </Text>
+        <Pressable
+          onPress={() => setVista('miRuta')}
+          accessibilityRole="button"
+          style={[e.tarjeta, { borderWidth: 1, borderColor: '#2a2a2a' }]}
+        >
+          <Text style={{ fontWeight: '900', color: C.secundario }}>{t.vistaMiRuta}</Text>
+          <Text style={{ color: '#5E5E5E' }}>{t.miRutaAyuda}</Text>
+        </Pressable>
         {entregas.length === 0 ? (
           <Text style={{ color: '#5E5E5E' }}>{td.sinPedidos}</Text>
         ) : (

@@ -86,6 +86,54 @@ export function crearApi(op: OpcionesApi) {
     return datos as T;
   }
 
+  /**
+   * Sube un archivo tal cual (foto o firma de Divoox Flex) con cabeceras propias (Idempotency-Key)
+   * y devuelve el JSON del servidor. Sin red: ErrorApi con estado 0, para la cola sin conexión.
+   */
+  async function subirArchivo<T>(
+    archivo: Blob,
+    ruta: string,
+    cabeceras: Record<string, string> = {},
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      'content-type': archivo.type || 'application/octet-stream',
+      ...cabeceras,
+    };
+    const idioma = op.idioma?.();
+    if (idioma) headers['x-idioma'] = idioma;
+    const token = op.token?.();
+    if (token) headers.authorization = `Bearer ${token}`;
+    let res: Response;
+    try {
+      res = await hacer(`${op.base}${ruta}`, {
+        method: 'POST',
+        headers,
+        body: archivo,
+        credentials: credenciales,
+      } as Parameters<typeof fetch>[1]);
+    } catch {
+      throw new ErrorApi(
+        op.idioma?.() === 'en'
+          ? 'No connection. It stays saved and will be sent when you have signal.'
+          : 'Sin conexión. Queda guardado y se manda cuando haya señal.',
+        0,
+      );
+    }
+    const datos = (await res.json().catch(() => null)) as
+      (T & { error?: string; campo?: string }) | null;
+    if (!res.ok)
+      throw new ErrorApi(
+        datos?.error ??
+          (op.idioma?.() === 'es'
+            ? 'No se pudo subir el archivo.'
+            : 'The file couldn’t be uploaded.'),
+        res.status,
+        datos?.campo,
+      );
+    return datos as T;
+  }
+
   /** Sube una foto tal cual (sin JSON). El servidor revisa que de verdad sea una imagen. */
   async function subirFoto(
     foto: Blob,
@@ -165,6 +213,7 @@ export function crearApi(op: OpcionesApi) {
   return {
     pedir,
     subirFoto,
+    subirArchivo,
     verFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
     entrar: (d: DatosEntrar) => pedir<RespuestaSesion>('POST', '/datos/cuentas/entrar', d),
