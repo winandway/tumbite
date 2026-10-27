@@ -1309,6 +1309,33 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'my-route-packages',
+        titulo: 'Mi ruta: repartir paquetes de empresas con Divoox Driver',
+        resumen:
+          'Las empresas te asignan u ofrecen rutas de paquetes. Las aceptas, cargas escaneando cada paquete, sigues las paradas en orden, entregas con foto, PIN o firma y devuelves al centro lo que no se pudo entregar.',
+        explicacion: [
+          'En el menú de Divoox Driver entra a «Mi ruta (paquetes)». Ahí ves las rutas que te asignó una empresa con la que trabajas y las que te ofrecen (con la hora en que vence la oferta). Mientras haces una ruta no recibes otras rutas ni pedidos de comida.',
+          'Al aceptar, ve al centro de la empresa y toca «Llegué al centro». Escanea cada paquete con la cámara (sirven el código QR y el código de barras de la etiqueta) o escribe su código. Si un paquete no está, márcalo como «No está en el centro». Cuando todo está cargado, toca «Salir a la ruta».',
+          'Recorre las paradas en el orden que fijó la empresa. Cada una muestra la dirección, las instrucciones, la cantidad de paquetes y la ventana horaria. «Navegar» abre tu app de mapas. Los datos de quien recibe aparecen cuando ya estás en ruta.',
+          'Para entregar, la app te dice qué pide la empresa: foto, el PIN que te da quien recibe o su firma con el dedo. Si se permite, puedes entregar sin contacto dejando el paquete en la puerta con una foto.',
+          'Si no se puede entregar, toca «No se pudo entregar», elige el motivo y qué sigue. Si la empresa lo permite, podrás reintentar más tarde en la misma ruta.',
+          'Al terminar, toca «Terminar entregas y volver al centro»: verás la lista de lo que devuelves. En el centro escanea cada paquete al dejarlo y luego «Cerrar la ruta». Verás el resumen de tu ruta.',
+          'Sin señal no pasa nada: lo que haces se guarda en el celular y se manda solo cuando vuelve la conexión, sin duplicar. Mientras tanto la app te avisa que está pendiente de confirmar.',
+        ],
+        preguntas: [
+          '¿Dónde veo las rutas de paquetes?',
+          '¿Cómo cargo los paquetes?',
+          '¿Qué hago si no puedo entregar un paquete?',
+          '¿Qué pasa si me quedo sin señal?',
+        ],
+        pasos: [
+          'Abre el menú y entra a «Mi ruta (paquetes)»; acepta la ruta.',
+          'En el centro, escanea cada paquete y toca «Salir a la ruta».',
+          'En cada parada, entrega con las pruebas que pide la empresa o registra la incidencia.',
+          'Vuelve al centro, escanea lo que devuelves y cierra la ruta.',
+        ],
+      },
+      {
         id: 'background-location',
         titulo: 'Tu ubicación con la pantalla apagada',
         resumen:
@@ -2127,6 +2154,35 @@ const es: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'flex-routes',
+        titulo: 'Divoox Flex: asignar rutas y seguir cada entrega',
+        resumen:
+          'Arma una ruta con sus paradas en orden, asígnala a un conductor propio u ofrécela a uno de la red, y sigue en vivo la carga, las entregas, las incidencias y las devoluciones.',
+        explicacion: [
+          'Una ruta es un recorrido con varias paradas: puede llevar 30, 40 o más paquetes. Para el conductor es un solo trabajo: mientras la hace no recibe otras rutas ni pedidos de comida.',
+          'A un conductor propio de tu empresa le asignas la ruta directamente. A uno de la red Divoox se la ofreces por un tiempo (por ejemplo, 60 minutos) y él decide si la acepta. Si dos empresas intentan contar con el mismo conductor a la vez, solo una lo consigue.',
+          'Antes de salir puedes cambiar el orden de las paradas. Toda parada necesita coordenadas verificadas: si alguna no las tiene, Divoox no deja salir la ruta hasta que la corrijas en el detalle del envío.',
+          'En el centro, el conductor escanea cada paquete (el código QR o el código de barras de la etiqueta). Un paquete que no es de esa ruta no se carga, y escanearlo dos veces no cuenta doble. Si falta uno, lo marca y queda registrado.',
+          'En «Rutas en curso» ves el progreso en verde, cada parada con su estado, la última ubicación del conductor mientras trabaja, las fotos y firmas de entrega y las incidencias. La pantalla se actualiza sola cada 20 segundos.',
+          'Tú decides qué pruebas pides en cada entrega: foto, PIN del destinatario, firma, o permitir la entrega sin contacto con foto. Un envío puede pedir algo distinto. Sin las pruebas exigidas, el conductor no puede marcarlo entregado.',
+          'Cuando una entrega no se puede hacer, el conductor elige el motivo (no había nadie, dirección incorrecta, no se pudo entrar, lo rechazaron, paquete dañado, problema de seguridad u otro) y qué sigue: reintentar en la misma ruta, reprogramar o devolver al remitente. Puedes autorizar un reintento desde la incidencia.',
+          'Lo no entregado vuelve al centro. El conductor lo escanea al dejarlo y tu equipo confirma la recepción en «Devoluciones»: hasta esa confirmación, la devolución no está completa. Al cerrar la ruta queda un resumen con entregados, incidencias y devoluciones.',
+        ],
+        preguntas: [
+          '¿Cómo asigno una ruta a un conductor?',
+          '¿Qué pasa si un paquete no se pudo entregar?',
+          '¿Cómo confirmo que me devolvieron un paquete?',
+          '¿Puedo pedir el PIN o la firma del destinatario?',
+        ],
+        pasos: [
+          'En «Lotes y rutas» arma la ruta con los envíos en el orden de las paradas.',
+          'En «Rutas en curso» abre la ruta, elige al conductor y toca «Asignar» (propio) u «Ofrecer» (red).',
+          'Sigue el progreso y las incidencias; si hace falta, autoriza un reintento.',
+          'Cuando vuelva el conductor, confirma en «Devoluciones» cada paquete que te entrega.',
+        ],
+        nota: 'En esta fase no hay cobros ni pagos a conductores dentro de Divoox Flex.',
+      },
+      {
         id: 'flex-company-and-team',
         titulo: 'Divoox Flex: tu empresa de paquetería, tu equipo y tus centros',
         resumen:
@@ -2135,7 +2191,7 @@ const es: SeccionDocs[] = [
           'Divoox Flex sirve para empresas que mueven muchos paquetes: una tienda en línea, una distribuidora, una empresa de mensajería. Desde el panel registras tu empresa (nombre, país y moneda) y te conviertes en su dueño.',
           'Invitas a tu equipo por correo con el rol que le toca a cada quien: administrador de operaciones, operador, finanzas o integración. La persona recibe un enlace que vence en siete días y que solo funciona con su propia cuenta de Divoox, con el correo confirmado. Nadie entra a tu empresa por el simple hecho de registrar un correo.',
           'Los centros de distribución son los lugares desde donde salen los paquetes: una bodega, una tienda, un punto de reparto. Cada envío puede indicar su centro de origen.',
-          'También puedes vincular conductores que ya tienen cuenta en Divoox Driver: propios de tu empresa, de la red Divoox o híbridos. La asignación de rutas a esos conductores se activa en la siguiente fase.',
+          'También puedes vincular conductores que ya tienen cuenta en Divoox Driver: propios de tu empresa, de la red Divoox o híbridos. A los propios les asignas las rutas directamente; a los de la red se las ofreces y ellos las aceptan.',
         ],
         preguntas: [
           '¿Cómo registro mi empresa en Divoox Flex?',
@@ -3702,6 +3758,33 @@ const en: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'my-route-packages',
+        titulo: 'My route: delivering company packages with Divoox Driver',
+        resumen:
+          'Companies assign or offer you package routes. You accept, load by scanning every package, follow the stops in order, deliver with a photo, PIN or signature, and bring back to the hub whatever couldn’t be delivered.',
+        explicacion: [
+          'In the Divoox Driver menu, open “My route (packages)”. There you see the routes a company you work with assigned to you and the ones offered to you (with the time the offer expires). While doing a route you get no other routes or food orders.',
+          'After accepting, go to the company’s hub and tap “I’m at the hub”. Scan every package with the camera (the label’s QR code and barcode both work) or type its code. If a package isn’t there, mark it “Not at the hub”. When everything is loaded, tap “Start the route”.',
+          'Go through the stops in the order the company set. Each one shows the address, instructions, number of packages and time window. “Navigate” opens your maps app. The recipient’s details appear once you’re on route.',
+          'To deliver, the app tells you what the company requires: a photo, the PIN the recipient gives you, or their signature with a finger. If allowed, you can deliver contactless by leaving the package at the door with a photo.',
+          'If a delivery can’t be made, tap “Couldn’t deliver”, pick the reason and the next step. If the company allows it, you can retry later on the same route.',
+          'When you finish, tap “Finish deliveries and go back to the hub”: you’ll see the list of what you’re returning. At the hub, scan each package as you drop it off, then “Close the route”. You’ll see your route summary.',
+          'No signal is fine: what you do is saved on the phone and sent automatically when you’re back online, without duplicates. Meanwhile the app tells you it’s pending confirmation.',
+        ],
+        preguntas: [
+          'Where do I see package routes?',
+          'How do I load the packages?',
+          'What do I do if I can’t deliver a package?',
+          'What happens if I lose signal?',
+        ],
+        pasos: [
+          'Open the menu, go to “My route (packages)” and accept the route.',
+          'At the hub, scan every package and tap “Start the route”.',
+          'At each stop, deliver with the proof the company requires or report the exception.',
+          'Go back to the hub, scan what you return and close the route.',
+        ],
+      },
+      {
         id: 'background-location',
         titulo: 'Your location with the screen off',
         resumen:
@@ -4521,6 +4604,35 @@ const en: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'flex-routes',
+        titulo: 'Divoox Flex: assign routes and follow every delivery',
+        resumen:
+          'Build a route with its stops in order, assign it to your own driver or offer it to a network driver, and follow loading, deliveries, exceptions and returns live.',
+        explicacion: [
+          'A route is a run with several stops: it can carry 30, 40 or more packages. For the driver it is a single job: while doing it, they get no other routes or food orders.',
+          'You assign a route directly to your company’s own driver. A Divoox network driver gets an offer for a limited time (for example, 60 minutes) and decides whether to accept it. If two companies try to book the same driver at the same time, only one gets them.',
+          'Before the route goes out you can change the stop order. Every stop needs verified coordinates: if one is missing, Divoox won’t let the route leave until you fix it in the shipment details.',
+          'At the hub, the driver scans every package (the label’s QR code or barcode). A package from another route isn’t loaded, and scanning it twice doesn’t count twice. If one is missing, they mark it and it’s recorded.',
+          'In “Live routes” you see progress in green, every stop with its status, the driver’s last location while working, delivery photos and signatures, and exceptions. The screen refreshes itself every 20 seconds.',
+          'You decide which proof you require on every delivery: photo, recipient PIN, signature, or allowing contactless delivery with a photo. A shipment can ask for something different. Without the required proof, the driver can’t mark it delivered.',
+          'When a delivery can’t be made, the driver picks the reason (nobody there, wrong address, couldn’t get in, refused, damaged package, safety issue or other) and the next step: retry on the same route, reschedule or return to sender. You can authorize a retry from the exception.',
+          'Whatever isn’t delivered goes back to the hub. The driver scans it when dropping it off and your team confirms reception in “Returns”: until then the return isn’t complete. When the route closes there’s a summary with deliveries, exceptions and returns.',
+        ],
+        preguntas: [
+          'How do I assign a route to a driver?',
+          'What happens if a package couldn’t be delivered?',
+          'How do I confirm a package was returned to me?',
+          'Can I require the recipient’s PIN or signature?',
+        ],
+        pasos: [
+          'In “Batches & routes”, build the route with the shipments in stop order.',
+          'In “Live routes”, open the route, pick the driver and tap “Assign” (own) or “Offer” (network).',
+          'Follow progress and exceptions; authorize a retry if needed.',
+          'When the driver returns, confirm each package they hand you in “Returns”.',
+        ],
+        nota: 'There are no charges or driver payments inside Divoox Flex in this phase.',
+      },
+      {
         id: 'flex-company-and-team',
         titulo: 'Divoox Flex: your delivery business, your team and your hubs',
         resumen:
@@ -4529,7 +4641,7 @@ const en: SeccionDocs[] = [
           'Divoox Flex is for businesses that move many packages: an online store, a distributor, a courier company. From the panel you register your company (name, country and currency) and become its owner.',
           'You invite your team by email with the role each person needs: operations admin, operator, finance or integration. The person receives a link that expires in seven days and works only with their own Divoox account, with a confirmed email. Nobody gets into your company just by registering an email address.',
           'Distribution hubs are the places packages leave from: a warehouse, a store, a pickup point. Each shipment can state its origin hub.',
-          'You can also link drivers who already have a Divoox Driver account: your company’s own, from the Divoox network, or hybrid. Assigning routes to those drivers is enabled in the next phase.',
+          'You can also link drivers who already have a Divoox Driver account: your company’s own, from the Divoox network, or hybrid. You assign routes directly to your own drivers; network drivers get an offer and accept it.',
         ],
         preguntas: [
           'How do I register my company on Divoox Flex?',
