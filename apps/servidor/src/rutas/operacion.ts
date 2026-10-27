@@ -871,8 +871,9 @@ operacion.post('/repartidor/conectar', async (c) => {
       403,
     );
   // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no
-  // más de una por semana). Mientras esté pendiente, no se conecta.
-  if (d.conectado) {
+  // más de una por semana). Mientras esté pendiente, no se conecta. Al revisor de las tiendas no
+  // se le pide (27 oct 2026): probaría la app y se quedaría trancado en una selfie.
+  if (d.conectado && !(await esRevisor(c, u.correo))) {
     const pendiente = await db
       .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
       .bind(u.id)
