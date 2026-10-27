@@ -2127,6 +2127,79 @@ const es: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'flex-company-and-team',
+        titulo: 'Divoox Flex: tu empresa de paquetería, tu equipo y tus centros',
+        resumen:
+          'Divoox Flex es la logística de última milla para empresas: registras tu empresa, invitas a tu equipo con permisos y creas los centros desde donde salen los paquetes.',
+        explicacion: [
+          'Divoox Flex sirve para empresas que mueven muchos paquetes: una tienda en línea, una distribuidora, una empresa de mensajería. Desde el panel registras tu empresa (nombre, país y moneda) y te conviertes en su dueño.',
+          'Invitas a tu equipo por correo con el rol que le toca a cada quien: administrador de operaciones, operador, finanzas o integración. La persona recibe un enlace que vence en siete días y que solo funciona con su propia cuenta de Divoox, con el correo confirmado. Nadie entra a tu empresa por el simple hecho de registrar un correo.',
+          'Los centros de distribución son los lugares desde donde salen los paquetes: una bodega, una tienda, un punto de reparto. Cada envío puede indicar su centro de origen.',
+          'También puedes vincular conductores que ya tienen cuenta en Divoox Driver: propios de tu empresa, de la red Divoox o híbridos. La asignación de rutas a esos conductores se activa en la siguiente fase.',
+        ],
+        preguntas: [
+          '¿Cómo registro mi empresa en Divoox Flex?',
+          '¿Cómo invito a alguien de mi equipo?',
+          '¿Qué puede hacer cada rol?',
+        ],
+        pasos: [
+          'Entra al panel y toca «Divoox Flex (empresas)»; crea tu empresa con su nombre, país y moneda.',
+          'En «Centros» registra tu primer centro de distribución con su dirección.',
+          'En «Equipo» escribe el correo de la persona, elige su rol y envía la invitación; ella entra con su cuenta y acepta.',
+          'En «Conductores» vincula a los repartidores por el correo de su cuenta de Divoox Driver.',
+        ],
+        nota: 'En esta fase no hay cobros ni saldos: la billetera empresarial llega después.',
+      },
+      {
+        id: 'flex-import-and-labels',
+        titulo: 'Divoox Flex: crear envíos, importar paquetes desde una hoja y etiquetarlos',
+        resumen:
+          'Creas envíos uno por uno o importas cientos desde un archivo CSV; cada paquete recibe su código, su etiqueta con QR y código de barras, y su trazabilidad.',
+        explicacion: [
+          'Un envío es un destino con uno o varios paquetes: quién recibe, la dirección, las instrucciones y, si quieres, tu propio número de orden como referencia.',
+          'Para muchos paquetes, importa una hoja CSV. Las columnas pueden ir en español o en inglés: referencia, destinatario, teléfono, dirección, latitud, longitud, instrucciones, paquetes, peso y descripción. Solo son obligatorias el destinatario y la dirección.',
+          'Primero ves una previsualización: cuántas filas son válidas y cuáles tienen error (una dirección vacía, una referencia repetida en la hoja o que ya existe). Confirmas y se crean solo las válidas; la misma hoja no se importa dos veces.',
+          'Cada paquete tiene un código de seguimiento y una etiqueta con un código QR y un código de barras. Ninguno lleva datos privados: son identificadores que solo tu empresa puede resolver en el panel.',
+          'En el detalle de cada paquete ves su trazabilidad: creado, registrado en el centro, preparado, cargado, en tránsito, entregado o devuelto, con la hora y quién lo registró.',
+        ],
+        preguntas: [
+          '¿Cómo importo muchos paquetes a la vez?',
+          '¿Qué columnas acepta el archivo?',
+          '¿Cómo imprimo las etiquetas?',
+        ],
+        pasos: [
+          'En «Envíos» toca «Nuevo envío» para uno solo, o entra a «Importar» y elige tu archivo CSV.',
+          'Revisa la previsualización, corrige las filas con error si quieres, y confirma.',
+          'En «Etiquetas» marca los paquetes y toca «Imprimir»: salen dos por hoja, listas para pegar.',
+          'Sigue cada paquete en «Paquetes» y registra sus pasos desde el detalle.',
+        ],
+      },
+      {
+        id: 'flex-api',
+        titulo: 'Divoox Flex: la API para conectar tu sistema',
+        resumen:
+          'Si tu empresa ya tiene un sistema propio, puede crear y consultar envíos y paquetes directamente con una clave de integración, sin pasar por el panel.',
+        explicacion: [
+          'En «API» creas una clave de integración. Se muestra una sola vez: cópiala y guárdala en tu sistema. Cada clave tiene permisos acotados (crear envíos, consultarlos, registrar pasos, importar, gestionar centros y lotes) y nunca puede manejar tu equipo ni dinero. Puedes revocarla cuando quieras.',
+          'La clave viaja en una cabecera de cada llamada. Las llamadas que crean algo exigen además una clave de idempotencia con un valor único por operación: si repites la misma llamada, recibes la misma respuesta sin duplicar nada. La referencia técnica completa, con las direcciones y los ejemplos, se la entregamos a tu integrador desde el panel.',
+          'Operaciones disponibles: crear un envío o varios en una sola llamada (hasta veinticinco), listar y consultar envíos y paquetes, registrar un paso de custodia, obtener los datos de la etiqueta, resolver un código escaneado, importar una hoja en dos pasos (previsualizar y confirmar) y gestionar lotes y rutas en borrador.',
+          'Hay un límite de sesenta llamadas por minuto por clave. Los errores vienen en palabras claras, en el idioma que pidas con la cabecera «x-idioma» (en o es).',
+          'El destinatario puede consultar el estado de su paquete con su código de seguimiento; esa consulta solo muestra el estado y las fechas, nunca datos personales.',
+        ],
+        preguntas: [
+          '¿Cómo conecto mi sistema con Divoox Flex?',
+          '¿Qué puede hacer una clave de API?',
+          '¿Cómo evito crear envíos duplicados?',
+        ],
+        pasos: [
+          'En el panel de tu empresa entra a «API», crea una clave con los permisos que necesites y cópiala.',
+          'Envía tus llamadas con tu clave y, en las que crean cosas, con una clave de idempotencia única por operación.',
+          'Crea envíos con el nombre de quien recibe, la dirección y la cantidad de paquetes; guarda los códigos que vuelven.',
+          'Consulta el estado de cada paquete cuando lo necesites y registra sus pasos desde tu sistema.',
+        ],
+        nota: 'Los avisos automáticos a tu sistema llegan en una fase posterior.',
+      },
+      {
         id: 'calculator',
         titulo: 'Calculadora: cuánto ganas y cuánto ahorras con Divoox',
         resumen:
@@ -4447,6 +4520,79 @@ const en: SeccionDocs[] = [
     titulo: 'For entrepreneurs',
     icono: 'resumen',
     guias: [
+      {
+        id: 'flex-company-and-team',
+        titulo: 'Divoox Flex: your delivery business, your team and your hubs',
+        resumen:
+          'Divoox Flex is last-mile logistics for businesses: register your company, invite your team with permissions and create the hubs your packages leave from.',
+        explicacion: [
+          'Divoox Flex is for businesses that move many packages: an online store, a distributor, a courier company. From the panel you register your company (name, country and currency) and become its owner.',
+          'You invite your team by email with the role each person needs: operations admin, operator, finance or integration. The person receives a link that expires in seven days and works only with their own Divoox account, with a confirmed email. Nobody gets into your company just by registering an email address.',
+          'Distribution hubs are the places packages leave from: a warehouse, a store, a pickup point. Each shipment can state its origin hub.',
+          'You can also link drivers who already have a Divoox Driver account: your company’s own, from the Divoox network, or hybrid. Assigning routes to those drivers is enabled in the next phase.',
+        ],
+        preguntas: [
+          'How do I register my company on Divoox Flex?',
+          'How do I invite someone from my team?',
+          'What can each role do?',
+        ],
+        pasos: [
+          'Open the panel and tap “Divoox Flex (businesses)”; create your company with its name, country and currency.',
+          'In “Hubs”, register your first distribution hub with its address.',
+          'In “Team”, type the person’s email, pick their role and send the invitation; they sign in with their account and accept.',
+          'In “Drivers”, link drivers by the email of their Divoox Driver account.',
+        ],
+        nota: 'There are no charges or balances in this phase: the business wallet comes later.',
+      },
+      {
+        id: 'flex-import-and-labels',
+        titulo: 'Divoox Flex: create shipments, import packages from a sheet and label them',
+        resumen:
+          'Create shipments one at a time or import hundreds from a CSV file; every package gets its code, its label with QR and barcode, and its chain of custody.',
+        explicacion: [
+          'A shipment is one destination with one or more packages: who receives it, the address, the instructions and, if you want, your own order number as a reference.',
+          'For many packages, import a CSV sheet. Columns can be in English or Spanish: reference, recipient, phone, address, latitude, longitude, instructions, packages, weight and description. Only recipient and address are required.',
+          'First you see a preview: how many rows are valid and which have errors (an empty address, a reference repeated in the sheet or that already exists). You confirm and only the valid rows are created; the same sheet is never imported twice.',
+          'Every package has a tracking code and a label with a QR code and a barcode. None of them carries private data: they are identifiers only your company can resolve in the panel.',
+          'In each package’s details you see its chain of custody: created, received at hub, ready, loaded, in transit, delivered or returned, with the time and who recorded it.',
+        ],
+        preguntas: [
+          'How do I import many packages at once?',
+          'Which columns does the file accept?',
+          'How do I print the labels?',
+        ],
+        pasos: [
+          'In “Shipments” tap “New shipment” for a single one, or open “Import” and choose your CSV file.',
+          'Review the preview, fix the rows with errors if you want, and confirm.',
+          'In “Labels”, check the packages and tap “Print”: two per sheet, ready to stick.',
+          'Track every package in “Packages” and record its steps from the details.',
+        ],
+      },
+      {
+        id: 'flex-api',
+        titulo: 'Divoox Flex: the API to connect your own system',
+        resumen:
+          'If your business already runs its own system, it can create and query shipments and packages directly with an integration key, without the panel.',
+        explicacion: [
+          'In “API” you create an integration key. It is shown only once: copy it and store it in your system. Each key has scoped permissions (create shipments, read them, record steps, import, manage hubs and batches) and can never manage your team or money. You can revoke it at any time.',
+          'The key travels in a header on every call. Calls that create something also require an idempotency key with a unique value per operation: if you repeat the same call, you get the same response with nothing duplicated. We hand the full technical reference, with paths and examples, to your integrator from the panel.',
+          'Available operations: create one shipment or several in a single call (up to twenty-five), list and read shipments and packages, record a custody step, get label data, resolve a scanned code, import a sheet in two steps (preview and confirm) and manage draft batches and routes.',
+          'There is a limit of sixty calls per minute per key. Errors come in plain words, in the language you ask for with the “x-idioma” header (en or es).',
+          'The recipient can check the status of their package with its tracking code; that query shows only the status and dates, never personal data.',
+        ],
+        preguntas: [
+          'How do I connect my system to Divoox Flex?',
+          'What can an API key do?',
+          'How do I avoid creating duplicate shipments?',
+        ],
+        pasos: [
+          'In your company panel open “API”, create a key with the permissions you need and copy it.',
+          'Send your calls with your key and, on the ones that create things, with an idempotency key unique per operation.',
+          'Create shipments with the recipient name, the address and the number of packages; store the codes that come back.',
+          'Query each package’s status whenever you need it and record its steps from your system.',
+        ],
+        nota: 'Automatic notifications to your system arrive in a later phase.',
+      },
       {
         id: 'calculator',
         titulo: 'Calculator: how much you earn and save with Divoox',
