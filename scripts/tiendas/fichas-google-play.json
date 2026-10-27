@@ -1,0 +1,38 @@
+{
+  "com.windoce.tumbite": {
+    "en-US": {
+      "title": "Divoox",
+      "shortDescription": "Local restaurants, honest prices, and live tracking to your door.",
+      "fullDescription": "Divoox brings you the best local restaurants with prices you can trust.\n• See every cost before you pay: food, delivery, service, and tip. No surprises.\n• Pay with your card right inside the app.\n• Save your favorite restaurants and your addresses, and use coupons at checkout.\n• Follow your order live: in the kitchen, on the way, and on the map until it reaches your door.\n• 100% of your tip goes to your driver.\n• Changed your mind? Cancel before the restaurant accepts and get a full refund. If a restaurant doesn’t confirm within 10 minutes, we cancel and refund you automatically.\n• Every restaurant and driver is identity-verified by our team.\n• Rewards for coming back: birthday gifts, punch cards, and welcome-back offers.\n• In English and Spanish."
+    },
+    "es-419": {
+      "title": "Divoox",
+      "shortDescription": "Restaurantes locales, precios claros y seguimiento en vivo hasta tu puerta.",
+      "fullDescription": "Divoox te trae los mejores restaurantes locales con precios en los que puedes confiar.\n• Ves cada costo antes de pagar: comida, envío, servicio y propina. Sin sorpresas.\n• Pagas con tarjeta dentro de la app.\n• Guardas tus restaurantes favoritos y tus direcciones, y usas cupones al pagar.\n• Sigues tu pedido en vivo: en la cocina, en camino y en el mapa hasta tu puerta.\n• El 100 % de la propina es para tu repartidor.\n• ¿Cambiaste de idea? Cancela antes de que el restaurante acepte y te devolvemos todo. Si un restaurante no confirma en 10 minutos, lo cancelamos y te devolvemos el dinero solos.\n• Cada restaurante y cada repartidor está verificado por nuestro equipo.\n• Premios por volver: regalo de cumpleaños, tarjeta de sellos y ofertas de bienvenida.\n• En inglés y en español."
+    }
+  },
+  "com.windoce.tumbite.driver": {
+    "en-US": {
+      "title": "Divoox Driver",
+      "shortDescription": "Deliver with Divoox: clear pay, full tips, and cash out anytime.",
+      "fullDescription": "Deliver with Divoox whenever you want.\n• See the pay and distance of every order before you accept.\n• Keep 100% of your tips. They never top up your base pay.\n• A bank-style wallet: balance, earnings, tips, and every movement. Cash out to your bank anytime.\n• Declining an order never hurts your level. Levels unlock perks as you grow.\n• Your ID is verified once, right from the app, so customers know who’s at their door.\n• Report a problem in one tap and a real person answers.\n• In English and Spanish."
+    },
+    "es-419": {
+      "title": "Divoox Driver",
+      "shortDescription": "Reparte con Divoox: pago claro, propina completa y retiros cuando quieras.",
+      "fullDescription": "Reparte con Divoox cuando quieras.\n• Ves el pago y la distancia de cada pedido antes de aceptar.\n• El 100 % de la propina es tuyo. Nunca se usa para completar tu pago.\n• Una billetera como la de un banco: saldo, ganancias, propinas y cada movimiento. Retiras a tu banco cuando quieras.\n• Rechazar un pedido nunca te baja de nivel. Los niveles te dan beneficios a medida que creces.\n• Verificas tu identidad una sola vez desde la app, para que el cliente sepa quién toca su puerta.\n• Reportas un problema con un toque y te contesta una persona.\n• En inglés y en español."
+    }
+  },
+  "com.windoce.tumbite.restaurants": {
+    "en-US": {
+      "title": "Divoox Restaurants",
+      "shortDescription": "Receive Divoox orders with an alarm, a traffic light, and clear payouts.",
+      "fullDescription": "Run your Divoox orders from a tablet or phone at the counter.\n• A loud alarm until someone accepts the order. Choose the prep time in one tap.\n• A traffic light on every order: green on time, yellow running late, red needs attention.\n• Mark orders ready and we send the closest driver.\n• Your dashboard: orders, sales, top dishes, real kitchen time vs. promised, and ratings.\n• Rewards your regulars love: birthday gifts, punch cards, and welcome-back offers.\n• Lower commissions and a full breakdown of every order. No lock-in contracts.\n• In English and Spanish."
+    },
+    "es-419": {
+      "title": "Divoox Restaurants",
+      "shortDescription": "Recibe pedidos de Divoox con alarma, semáforo y pagos claros.",
+      "fullDescription": "Maneja los pedidos de Divoox desde una tablet o un celular en el mostrador.\n• Una alarma fuerte hasta que alguien acepta el pedido. Eliges el tiempo de preparación con un toque.\n• Un semáforo en cada pedido: verde a tiempo, amarillo atrasándose, rojo necesita atención.\n• Marcas el pedido listo y enviamos al repartidor más cercano.\n• Tu tablero: pedidos, ventas, platos más vendidos, tiempo real de cocina contra el prometido y calificación.\n• Premios que tus clientes fieles valoran: cumpleaños, tarjeta de sellos y bienvenida.\n• Comisiones más bajas y el desglose de cada pedido. Sin contratos de permanencia.\n• En inglés y en español."
+    }
+  }
+}
