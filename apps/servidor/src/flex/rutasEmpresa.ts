@@ -1,3 +1,5 @@
+import { avisarConductor, despues } from './avisosFlex';
+import { evaluarCapacidadRuta } from './operaciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CONFIG_ENTREGA_DEFECTO, configEntrega, leerCodigoEscaneado } from '@tumbite/compartido';
@@ -42,6 +44,8 @@ const esquemaAsignar = z.object({
   vehiculoId: z.string().uuid().nullable().optional(),
   bloqueDesde: fecha.nullable().optional(),
   bloqueHasta: fecha.nullable().optional(),
+  /** Fase 3: la empresa vio el aviso de capacidad y asigna igual. */
+  confirmarCapacidad: z.boolean().optional(),
 });
 const esquemaOfrecer = esquemaAsignar.extend({
   minutos: z.number().int().min(5).max(1440).default(60),
@@ -150,6 +154,27 @@ async function comprobarVehiculo(
   if (!v) throw new ErrorDatos('Ese vehículo no es del conductor.', 'vehiculoId', 404);
 }
 
+/**
+ * Fase 3 (C-FLEX-CAPACIDAD): si la empresa declaró la capacidad del vehículo y la ruta no cabe, se
+ * avisa ANTES de asignar; solo sigue si la empresa lo confirma. Sin datos, no se frena (es «sin dato»).
+ */
+async function comprobarCapacidad(
+  db: D1Database,
+  empresaId: string,
+  rutaId: string,
+  vehiculoId: string | null | undefined,
+  confirmada: boolean | undefined,
+) {
+  if (!vehiculoId || confirmada) return;
+  const cap = await evaluarCapacidadRuta(db, empresaId, rutaId, vehiculoId);
+  if (cap.estado === 'excede')
+    throw new ErrorDatos(
+      'La ruta no cabe en ese vehículo según la capacidad declarada. Revisa la capacidad o confirma que igual quieres asignarla.',
+      'capacidad',
+      409,
+    );
+}
+
 /** Lo que tiene que estar bien ANTES de que la ruta salga del borrador. */
 async function rutaLista(db: D1Database, r: FilaRuta) {
   const f = await db
@@ -218,6 +243,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'asignacion');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     const clave = `asignar:${r.id}:${crypto.randomUUID()}`;
     const res = await db
       .batch([
@@ -261,6 +287,9 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
       .catch(traducirError);
     if (!res[0]?.meta.changes)
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    await despues(c, () =>
+      avisarConductor(c.env, db, { tipo: 'asignacion', rutaId: r.id, ocasion: clave }),
+    );
     return {
       estado: 200,
       datos: await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }),
@@ -282,6 +311,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'oferta');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     const clave = `ofrecer:${r.id}:${crypto.randomUUID()}`;
     const res = await db
       .batch([
@@ -311,6 +341,9 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
       .catch(traducirError);
     if (!res[0]?.meta.changes)
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    await despues(c, () =>
+      avisarConductor(c.env, db, { tipo: 'oferta', rutaId: r.id, ocasion: clave }),
+    );
     return {
       estado: 200,
       datos: await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }),
@@ -326,9 +359,9 @@ export async function volverABorrador(
   db: D1Database,
   r: FilaRuta,
   quien: { actorId: string; actorTipo: 'usuario' | 'api' | 'sistema' },
-  resultado: 'liberada_conductor' | 'reasignada',
+  resultado: 'liberada_conductor' | 'reasignada' | 'liberada_sistema',
   motivo: string,
-) {
+): Promise<string> {
   if (!['ofrecida', 'asignada', 'aceptada'].includes(r.estado))
     throw new ErrorDatos(
       'Esa ruta ya salió a la calle: no se puede retirar, se cierra con devoluciones.',
@@ -374,6 +407,7 @@ export async function volverABorrador(
     .catch(traducirError);
   if (!res[0]?.meta.changes)
     throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+  return clave;
 }
 
 flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/retirar', async (c) => {
@@ -382,8 +416,17 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/retirar', async (c) => {
   const d = await leerCuerpo(c, esquemaMotivo);
   const db = base(c);
   const r = await rutaPorId(db, c.req.param('rutaId'), actor.empresaId);
-  await volverABorrador(db, r, actor, 'reasignada', d.motivo);
+  const clave = await volverABorrador(db, r, actor, 'reasignada', d.motivo);
   await sentenciaAuditoria(db, actor, 'ruta.retirar', r.id, d).run();
+  if (r.conductor_id)
+    await despues(c, () =>
+      avisarConductor(c.env, db, {
+        tipo: 'oferta_retirada',
+        rutaId: r.id,
+        ocasion: clave,
+        conductorId: r.conductor_id,
+      }),
+    );
   return c.json(await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }));
 });
 
@@ -440,6 +483,10 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/cancelar', async (c) => {
     .catch(traducirError);
   if (!res[0]?.meta.changes)
     throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+  if (r.conductor_id)
+    await despues(c, () =>
+      avisarConductor(c.env, db, { tipo: 'ruta_cancelada', rutaId: r.id, ocasion: clave }),
+    );
   return c.json(await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }));
 });
 
@@ -707,6 +754,18 @@ flexRutasEmpresa.post('/empresas/:id/incidencias/:incId/autorizar-reintento', as
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Esa incidencia no está abierta.', undefined, 404);
   await sentenciaAuditoria(db, actor, 'incidencia.autorizar_reintento', c.req.param('incId')).run();
+  const inc = await db
+    .prepare('SELECT ruta_id FROM flex_incidencias WHERE id = ?')
+    .bind(c.req.param('incId'))
+    .first<{ ruta_id: string }>();
+  if (inc)
+    await despues(c, () =>
+      avisarConductor(c.env, db, {
+        tipo: 'reintento_autorizado',
+        rutaId: inc.ruta_id,
+        ocasion: c.req.param('incId'),
+      }),
+    );
   return c.json({ ok: true });
 });
 

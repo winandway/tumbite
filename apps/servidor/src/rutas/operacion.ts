@@ -1,4 +1,5 @@
 import { topesDeZona } from '../internacional/tarifas';
+import { TAREAS_FLEX } from '../flex/automatizacion';
 import {
   conciliarPedidoDirecto,
   esDirecto,
@@ -2038,6 +2039,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     critica: false,
     correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
   },
+  // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
+  ...TAREAS_FLEX,
 ];
 
 export async function correrReloj(

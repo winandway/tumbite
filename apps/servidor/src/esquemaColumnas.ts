@@ -1041,7 +1041,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "clave",
     "lat",
     "lng",
-    "creado_en"
+    "creado_en",
+    "purgada_en"
   ],
   "flex_pines": [
     "envio_id",
@@ -1068,6 +1069,95 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "idempotencia",
     "creado_en",
     "resuelta_en"
+  ],
+  "flex_eventos": [
+    "id",
+    "evento_id",
+    "empresa_id",
+    "tipo",
+    "objeto_id",
+    "ruta_id",
+    "datos_json",
+    "repartido_en",
+    "creado_en"
+  ],
+  "flex_webhooks": [
+    "id",
+    "empresa_id",
+    "url",
+    "eventos_json",
+    "descripcion",
+    "secreto_cifrado",
+    "secreto_prefijo",
+    "secreto_anterior_cifrado",
+    "secreto_anterior_vence_en",
+    "estado",
+    "fallos_seguidos",
+    "ultimo_exito_en",
+    "desactivado_en",
+    "motivo",
+    "creado_por",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "flex_webhook_entregas": [
+    "id",
+    "webhook_id",
+    "empresa_id",
+    "evento_id",
+    "estado",
+    "intentos",
+    "proximo_en",
+    "tomado_en",
+    "ultimo_http",
+    "ultimo_error",
+    "entregado_en",
+    "es_prueba",
+    "creado_en"
+  ],
+  "flex_webhook_intentos": [
+    "id",
+    "entrega_id",
+    "webhook_id",
+    "numero",
+    "http_estado",
+    "error",
+    "duracion_ms",
+    "creado_en"
+  ],
+  "flex_avisos": [
+    "clave",
+    "usuario_id",
+    "tipo",
+    "ruta_id",
+    "creado_en"
+  ],
+  "flex_retencion": [
+    "pais",
+    "servicio",
+    "categoria",
+    "dias",
+    "aprobada",
+    "aprobada_por",
+    "aprobada_en",
+    "actualizado_en"
+  ],
+  "flex_limpiezas": [
+    "id",
+    "modo",
+    "origen",
+    "resultado_json",
+    "creado_en"
+  ],
+  "flex_capacidad_vehiculo": [
+    "vehiculo_id",
+    "empresa_id",
+    "max_paquetes",
+    "max_peso_g",
+    "max_volumen_cm3",
+    "max_lado_cm",
+    "actualizado_por",
+    "actualizado_en"
   ],
   "operaciones": [
     "id",

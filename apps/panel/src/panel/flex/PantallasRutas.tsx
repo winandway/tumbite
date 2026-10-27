@@ -5,6 +5,7 @@ import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
+import { CapacidadAlAsignar, SugerenciaOrden } from './PantallasFase3';
 
 /**
  * Divoox Flex · Fase 2 en el panel de la empresa: rutas operativas (lista con filtros y detalle
@@ -237,7 +238,9 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
     bloqueDesde: '',
     bloqueHasta: '',
     minutos: '60',
+    vehiculoId: '',
   });
+  const [confirmarCapacidad, setConfirmarCapacidad] = useState(false);
   const [menu, setMenu] = useState(false);
   const puede = ctx.permisos.includes('lotes.gestionar');
   const cargar = useCallback(() => {
@@ -347,7 +350,10 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
               <select
                 id="flex-conductor"
                 value={asig.conductorId}
-                onChange={(e) => setAsig({ ...asig, conductorId: e.target.value })}
+                onChange={(e) => {
+                  setConfirmarCapacidad(false);
+                  setAsig({ ...asig, conductorId: e.target.value, vehiculoId: '' });
+                }}
               >
                 <option value="">—</option>
                 {conductores.map((c) => (
@@ -369,6 +375,15 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
               valor={asig.bloqueHasta}
               cambiar={(v) => setAsig({ ...asig, bloqueHasta: v })}
             />
+            <CapacidadAlAsignar
+              ctx={ctx}
+              rutaId={r.id}
+              conductorId={asig.conductorId}
+              vehiculoId={asig.vehiculoId}
+              cambiarVehiculo={(v) => setAsig({ ...asig, vehiculoId: v })}
+              confirmada={confirmarCapacidad}
+              confirmar={setConfirmarCapacidad}
+            />
             {puedeOfrecer ? (
               <Campo
                 etiqueta={t.minutosOferta}
@@ -389,6 +404,8 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                         conductorId: asig.conductorId,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),
+                        vehiculoId: asig.vehiculoId || null,
+                        confirmarCapacidad,
                       },
                       true,
                     )
@@ -409,6 +426,8 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                         minutos: Number(asig.minutos) || 60,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),
+                        vehiculoId: asig.vehiculoId || null,
+                        confirmarCapacidad,
                       },
                       true,
                     )
@@ -442,6 +461,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
               <button
                 type="button"
                 role="menuitem"
+                className="peligro"
                 onClick={() => {
                   if (window.confirm(t.confirmarCancelar)) void hacer('cancelar', {});
                 }}
@@ -454,6 +474,9 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
       ) : null}
       <h2>{t.listaParadas}</h2>
       {reordenable ? <p className="pista">{t.ordenAyuda}</p> : null}
+      {reordenable && r.paradas.length > 1 ? (
+        <SugerenciaOrden ctx={ctx} rutaId={r.id} paradas={r.paradas} aplicado={cargar} />
+      ) : null}
       <ul className="flex-paradas">
         {r.paradas.map((p, i) => (
           <li key={p.id}>

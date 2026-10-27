@@ -24,6 +24,7 @@ import {
   Paquetes,
 } from './PantallasEnvios';
 import { DetalleRutaOperativa, Devoluciones, Incidencias, RutasOperativas } from './PantallasRutas';
+import { Integraciones, Operaciones, Vehiculos } from './PantallasFase3';
 
 export const BASE_FLEX = '/datos/v1/flex';
 export type Empresa = {
@@ -301,6 +302,13 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
     ['operativas', t.menu.operativas],
     ['incidents', t.menu.incidents],
     ['returns', t.menu.returns],
+    ['operations', t.menu.operations],
+    ...(puede('conductores.gestionar')
+      ? ([['vehicles', t.menu.vehicles]] as [string, string][])
+      : []),
+    ...(puede('integraciones.gestionar')
+      ? ([['integrations', t.menu.integrations]] as [string, string][])
+      : []),
     ...(puede('finanzas.ver') ? ([['wallet', t.menu.wallet]] as [string, string][]) : []),
     ...(puede('claves.gestionar') ? ([['keys', t.menu.keys]] as [string, string][]) : []),
   ];
@@ -326,6 +334,9 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
   else if (rutaOperativaId) contenido = <DetalleRutaOperativa ctx={ctx} rutaId={rutaOperativaId} />;
   else if (sub === 'returns') contenido = <Devoluciones ctx={ctx} />;
   else if (sub === 'incidents') contenido = <Incidencias ctx={ctx} />;
+  else if (sub === 'operations') contenido = <Operaciones ctx={ctx} />;
+  else if (sub === 'vehicles') contenido = <Vehiculos ctx={ctx} />;
+  else if (sub === 'integrations') contenido = <Integraciones ctx={ctx} />;
   else if (sub === 'wallet') contenido = <Billetera ctx={ctx} />;
   else if (sub === 'keys') contenido = <Claves ctx={ctx} />;
   else contenido = <p role="alert">{t.noExiste}</p>;

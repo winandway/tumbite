@@ -194,4 +194,31 @@ describe('cuentas del revisor de las tiendas (C-REVISORES)', () => {
       ).estado,
     ).toBe(200);
   });
+
+  it('volver a tocar el botón confirma las cuentas de revisión viejas (sin confirmar), y solo esas', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin');
+    expect((await m.llamar('POST', '/datos/admin/revisores', {}, admin.token)).estado).toBe(200);
+    // Como las que se crearon antes del candado del 27 oct 2026: sin el correo confirmado.
+    await m.DB.prepare(
+      "UPDATE usuarios SET correo_confirmado_en = NULL WHERE correo LIKE 'revisor.%@windoce.com'",
+    ).run();
+    const otra = await m.cuenta('cliente');
+    await m.DB.prepare('UPDATE usuarios SET correo_confirmado_en = NULL WHERE id = ?')
+      .bind(otra.id)
+      .run();
+    const r = await m.llamar('POST', '/datos/admin/revisores', {}, admin.token);
+    expect(r.estado).toBe(200);
+    // No se cambian las claves de las cuentas que ya existían.
+    expect(r.datos.cuentas.every((x: { clave: string | null }) => x.clave === null)).toBe(true);
+    const { results } = await m.DB.prepare(
+      "SELECT correo_confirmado_en FROM usuarios WHERE correo LIKE 'revisor.%@windoce.com'",
+    ).all<{ correo_confirmado_en: string | null }>();
+    expect(results).toHaveLength(3);
+    expect(results.every((x) => x.correo_confirmado_en)).toBe(true);
+    const ajena = await m.DB.prepare('SELECT correo_confirmado_en FROM usuarios WHERE id = ?')
+      .bind(otra.id)
+      .first<{ correo_confirmado_en: string | null }>();
+    expect(ajena!.correo_confirmado_en).toBeNull();
+  });
 });

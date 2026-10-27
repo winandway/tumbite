@@ -52,6 +52,67 @@ WHEN OLD.estado IN (${ACTIVOS}) AND NEW.estado IN (${ACTIVOS}) AND NEW.conductor
 BEGIN
   SELECT RAISE(ABORT, 'cambio_de_conductor_en_ruta_activa');
 END`,
+  // ── Fase 3 · bandeja de eventos de salida (C-FLEX-EVENTOS). Los llena la BASE en la misma
+  // transacción que el cambio: si el cambio se deshace, el evento no existe; si se repite la
+  // petición, la custodia no se repite (idempotencia) y el evento tampoco. Sin datos personales.
+  `CREATE TRIGGER IF NOT EXISTS flex_eventos_custodia
+AFTER INSERT ON paquete_eventos
+WHEN NEW.tipo IN ('creado', 'asignado', 'cargado', 'en_transito', 'entregado', 'entrega_fallida', 'devuelto', 'registrado_centro')
+BEGIN
+  INSERT INTO flex_eventos (evento_id, empresa_id, tipo, objeto_id, ruta_id, datos_json)
+  SELECT 'evt_' || lower(hex(randomblob(12))), NEW.empresa_id,
+    CASE NEW.tipo
+      WHEN 'creado' THEN 'package.created'
+      WHEN 'asignado' THEN 'package.assigned'
+      WHEN 'cargado' THEN 'package.loaded'
+      WHEN 'en_transito' THEN 'package.in_transit'
+      WHEN 'entregado' THEN 'package.delivered'
+      WHEN 'entrega_fallida' THEN 'package.failed'
+      ELSE 'package.returned' END,
+    NEW.paquete_id, NEW.operacion_ref,
+    json_object('package_id', NEW.paquete_id, 'tracking_code', p.codigo_seguimiento,
+      'shipment_id', p.envio_id, 'reference', e.referencia_externa, 'status', NEW.tipo,
+      'route_id', NEW.operacion_ref, 'occurred_at', NEW.creado_en,
+      'returned_to', CASE NEW.tipo WHEN 'devuelto' THEN 'sender' WHEN 'registrado_centro' THEN 'hub' END)
+  FROM paquetes p JOIN envios e ON e.id = p.envio_id
+  WHERE p.id = NEW.paquete_id
+    -- «registrado_centro» solo es una devolución si venía de vuelta (no el alta en el centro).
+    AND (NEW.tipo <> 'registrado_centro' OR (
+      SELECT tipo FROM paquete_eventos WHERE paquete_id = NEW.paquete_id AND id < NEW.id
+        AND tipo NOT IN ('traspaso_centro') ORDER BY id DESC LIMIT 1) = 'en_devolucion');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS flex_eventos_ruta_asignada
+AFTER UPDATE OF estado ON rutas_flex
+WHEN NEW.estado <> OLD.estado
+ AND (NEW.estado = 'asignada' OR (NEW.estado = 'aceptada' AND OLD.estado = 'ofrecida'))
+BEGIN
+  INSERT INTO flex_eventos (evento_id, empresa_id, tipo, objeto_id, ruta_id, datos_json)
+  VALUES ('evt_' || lower(hex(randomblob(12))), NEW.empresa_id, 'route.assigned', NEW.id, NEW.id,
+    json_object('route_id', NEW.id, 'name', NEW.nombre, 'status', NEW.estado, 'hub_id', NEW.centro_id,
+      'driver_id', NEW.conductor_id, 'assignment', NEW.modalidad, 'occurred_at', datetime('now')));
+END`,
+  `CREATE TRIGGER IF NOT EXISTS flex_eventos_ruta_estado
+AFTER UPDATE OF estado ON rutas_flex
+WHEN NEW.estado <> OLD.estado AND NEW.estado IN ('aceptada', 'en_curso', 'completada', 'con_incidencias')
+BEGIN
+  INSERT INTO flex_eventos (evento_id, empresa_id, tipo, objeto_id, ruta_id, datos_json)
+  VALUES ('evt_' || lower(hex(randomblob(12))), NEW.empresa_id,
+    CASE NEW.estado WHEN 'aceptada' THEN 'route.accepted' WHEN 'en_curso' THEN 'route.started'
+      ELSE 'route.completed' END,
+    NEW.id, NEW.id,
+    json_object('route_id', NEW.id, 'name', NEW.nombre, 'status', NEW.estado, 'hub_id', NEW.centro_id,
+      'driver_id', NEW.conductor_id, 'occurred_at', datetime('now'),
+      'with_exceptions', json(CASE WHEN NEW.estado = 'con_incidencias' THEN 'true' ELSE 'false' END)));
+END`,
+  `CREATE TRIGGER IF NOT EXISTS flex_eventos_incidencia
+AFTER INSERT ON flex_incidencias
+BEGIN
+  INSERT INTO flex_eventos (evento_id, empresa_id, tipo, objeto_id, ruta_id, datos_json)
+  VALUES ('evt_' || lower(hex(randomblob(12))), NEW.empresa_id, 'delivery.exception', NEW.id, NEW.ruta_id,
+    json_object('exception_id', NEW.id, 'package_id', NEW.paquete_id, 'route_id', NEW.ruta_id,
+      'stop_id', NEW.parada_id, 'reason', NEW.motivo, 'next_action', NEW.proxima_accion,
+      'occurred_at', NEW.creado_en));
+END`,
 ];
 
 // ─────────────────────────── Migraciones (rehacer sin perder filas) ───────────────────────────

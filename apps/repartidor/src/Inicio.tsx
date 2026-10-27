@@ -66,6 +66,7 @@ import {
   TEXTOS_MOVIL,
   e,
   useSesion,
+  useToqueAviso,
 } from '@tumbite/movil';
 
 /** Pregunta sí/no al repartidor (en el celular con la ventana del sistema; en la web con la del navegador). */
@@ -398,6 +399,15 @@ export function Inicio() {
   const [vista, setVista] = useState<
     'inicio' | 'billetera' | 'datos' | 'pedidos' | 'calificaciones' | 'avisos' | 'alta' | 'miRuta'
   >('inicio');
+  // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
+  const [rutaDelAviso, setRutaDelAviso] = useState<string | null>(null);
+  const alTocarAviso = useCallback((d: Record<string, unknown>) => {
+    if (d.tipo === 'flex' && typeof d.rutaId === 'string') {
+      setRutaDelAviso(d.rutaId);
+      setVista('miRuta');
+    }
+  }, []);
+  useToqueAviso(alTocarAviso);
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const tg = textosGrandes(idioma);
   const [pronto, setPronto] = useState(false);
@@ -1200,7 +1210,11 @@ export function Inicio() {
     return lienzo('perfil', <Calificaciones api={api} idioma={idioma} />);
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
-  if (vista === 'miRuta') return lienzo('pedidos', <MiRuta api={api} idioma={idioma} />);
+  if (vista === 'miRuta')
+    return lienzo(
+      'pedidos',
+      <MiRuta key={rutaDelAviso ?? 'lista'} api={api} idioma={idioma} abrirRutaId={rutaDelAviso} />,
+    );
   if (vista === 'alta')
     return lienzo(
       'perfil',

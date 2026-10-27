@@ -1161,6 +1161,16 @@ superadmin.post('/admin/revisores', async (c) => {
           undefined,
           409,
         );
+      // Cuentas de revisión creadas antes del candado C-FRANQUICIA-CORREO-CONFIRMADO (27 oct 2026)
+      // quedaron sin el correo confirmado y `esRevisor` ya no las reconoce: se confirman aquí, SOLO
+      // si están marcadas como revisor con ese mismo rol (nunca una cuenta ajena). Idempotente.
+      lote.push(
+        db
+          .prepare(
+            "UPDATE usuarios SET correo_confirmado_en = COALESCE(correo_confirmado_en, datetime('now')) WHERE id = ? AND rol = ?",
+          )
+          .bind(id, r.rol),
+      );
       cuentas.push({ rol: r.rol, correo: r.correo, clave: null });
       continue;
     }

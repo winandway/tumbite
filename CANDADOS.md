@@ -1191,3 +1191,60 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## Mensajes con datos variables (27 oct 2026)
 
 - `MENSAJES_EN_PATRONES` en `apps/servidor/src/mensajesEn.ts` traduce mensajes con cantidades o códigos conservando los datos. Candado: `mensajesEn.test.ts`.
+
+## C-FLEX-EVENTOS · La bandeja de eventos la escribe la base (Fase 3, 27 oct 2026)
+
+- Qué: `flex_eventos` se llena con disparadores de `esquemaFlex.ts` (`flex_eventos_custodia` sobre `paquete_eventos`, `flex_eventos_ruta_asignada` y `flex_eventos_ruta_estado` sobre `rutas_flex`, `flex_eventos_incidencia` sobre `flex_incidencias`), en la MISMA transacción que el cambio. Repetir una petición no repite la custodia (idempotencia) y por eso tampoco el evento. Sin datos del destinatario.
+- Ojo: `registrado_centro` solo es `package.returned` si el evento anterior del paquete era `en_devolucion` (el alta en el centro no cuenta). Las tablas nuevas vienen de `schema.sql`, que corre ANTES del servidor en cada publicación; en local hay que aplicarlo a mano (`npx wrangler d1 execute tumbite-local --local --file ../../schema.sql` desde `apps/servidor`) o los disparadores fallan con «no such table».
+- Candado: `flex/flexFase3.test.ts` («la base deja un evento…», «volver al centro…»), comprobado en rojo quitando el disparador.
+
+## C-FLEX-VENCIMIENTO · Las ofertas vencen solas, en el reloj existente
+
+- Qué: `vencerOfertasFlex` (`flex/automatizacion.ts`) dentro de `TAREAS_RELOJ` (`flex_ofertas`, crítica). Reutiliza `volverABorrador` (clave + `guardaClave`): si el conductor acepta en el mismo instante, gana uno solo. Auditoría `ruta.oferta_vencida` con actor sistema; avisos a la empresa y al conductor. `flex_ofertas_por_vencer` avisa a 10 minutos, una vez.
+- No tocar: no hay un segundo reloj. Candado: `flexFase3.test.ts` (vencimiento, carrera y «las tareas de Flex van en el reloj existente»).
+
+## C-FLEX-AVISOS · Cada aviso al celular sale una sola vez y sin datos personales
+
+- Qué: `flex/avisosFlex.ts`. Se reserva la clave en `flex_avisos` ANTES de mandar; si ya existía, no se manda. Textos es/en según la cuenta; solo el nombre de la ruta y cuántas paradas. `despues()` usa `waitUntil` (en pruebas espera en línea); un fallo nunca deshace la operación. La app abre «Mi ruta» con `useToqueAviso` (`packages/movil/src/avisos.ts`).
+- Candado: `flexFase3.test.ts` («conductor y empresa reciben cada aviso una vez…»), comprobado en rojo quitando la comprobación de la clave.
+
+## C-FLEX-INTEGRACIONES · Avisos firmados al sistema de la empresa
+
+- Qué: `flex/integraciones.ts`. Secreto `whsec_dvx_…` mostrado una vez y guardado con AES-GCM (`FLEX_LLAVE_WEBHOOKS`; si falta, derivada del secreto del reloj, marcada `r`; sin ninguna, 503). Firma `t=…,v1=…` (HMAC-SHA256 sobre `"{t}.{cuerpo}"`), dos firmas durante la gracia de rotación. Cola `flex_webhook_entregas` (UNIQUE por destino y evento) tomada con `UPDATE … RETURNING` (dos vueltas no mandan lo mismo); esperas 1, 5, 15, 60, 180, 360, 720 min; 15 fallos seguidos desactivan (auditoría). Despacho tras cada escritura (middleware de `flex/index.ts`) y en el reloj (`flex_integraciones`, hasta 20 vueltas de reparto).
+- No tocar: `redirect: 'manual'`, el registro sin cuerpos ni secretos, el 404 a lo ajeno.
+- Candado: `flexFase3.test.ts` (firma, reintentos, desactivación, carrera, rotación, aislamiento), la redirección comprobada en rojo con `redirect: 'follow'`.
+
+## C-FLEX-SSRF · Ninguna integración apunta a una red interna
+
+- Qué: `revisarFormaDestino` + `revisarDestino` + `ipPrivada` (`flex/integraciones.ts`): solo HTTPS 443, sin usuario ni IP escritas, sin sufijos internos ni dominios propios; DNS sobre HTTPS y rechazo si alguna IP es privada o reservada (v4, v6, v4 en v6). Al registrar Y antes de cada envío.
+- Candado: `flexFase3.test.ts` (bloque «anti-SSRF»), comprobado en rojo quitando la comprobación de las IP.
+
+## C-FLEX-OPTIMIZAR · El orden sugerido nunca se aplica solo
+
+- Qué: `optimizarRuta` (`packages/compartido/src/flexOptimizar.ts`, puro): vecino más cercano + 2-opt sin romper reglas (ventanas, urgentes), sin coordenadas al final, distancia en línea recta marcada como estimada, sin tiempos. `POST …/optimizar` no escribe; aplicar es `PUT …/orden`, que solo vale antes de salir.
+- Candados: `flexOptimizar.test.ts` (12 pruebas, 150 paradas en menos de 1 s) y `flexFase3.test.ts`.
+
+## C-FLEX-CAPACIDAD · Aviso ANTES de asignar si no cabe; lo desconocido no se inventa
+
+- Qué: `flex_capacidad_vehiculo` (aparte de `vehiculos` de Comida), `evaluarCapacidad` (compartido) y `comprobarCapacidad` en `asignar`/`ofrecer`: `409 capacidad` salvo `confirmarCapacidad`. Sin capacidad o sin medidas: «desconocida».
+- Candado: `flexFase3.test.ts` («avisa antes de asignar…»), comprobado en rojo quitando la comprobación. Visto en pantalla el 27 oct 2026: «La ruta no cabe en este vehículo: paquetes 8 de 6».
+
+## C-FLEX-RETENCION · Nada sensible se borra sin una política aprobada
+
+- Qué: `limpiarFlex` (`flex/automatizacion.ts`): simulación y ejecución; categorías técnicas aprobadas de fábrica; `ubicacion` y `pruebas` solo con política aprobada por una persona (`flex_retencion.aprobada = 1`); de las pruebas se borra el archivo y la fila queda con `purgada_en`; nunca una prueba de una incidencia abierta; ejecutar a mano exige simulación de la última hora; solo superadmin.
+- Candado: `flexFase3.test.ts` (bloque «retención»), comprobado en rojo quitando `pol.aprobada`.
+
+## C-FLEX-KPI · Indicadores sin dinero y sin inventar
+
+- Qué: `GET …/operaciones` (`flex/operaciones.ts`): «a tiempo» solo sobre entregas con ventana (si no hay, `null`, nunca 100 %); duración medida, no estimada; ningún campo de dinero. Pantalla «Operación» en el panel.
+- Candado: `flexFase3.test.ts` y `PantallasFase3.test.tsx`.
+
+## C-FLEX-PANEL-FASE3 · Pantallas de la Fase 3
+
+- Qué: `PantallasFase3.tsx` (Operación, Integraciones, Vehículos, sugerencia de orden, capacidad al asignar). Formularios con borrador; el secreto se ve una vez; lo destructivo en los tres puntos; los menús de tres puntos de Flex tienen estilo de menú (blanco, lo destructivo en rojo: `.menu-tres-puntos .cuenta-menu`). Números con coma decimal en español.
+- Candado: `PantallasFase3.test.tsx` (5 pruebas). Capturas: `docs/capturas/flex/panel-fase3-*.jpg`.
+
+## C-REVISORES-CONFIRMADOS · Las cuentas de revisión viejas se confirman con el botón del superadmin
+
+- Qué: `POST /datos/admin/revisores` confirma el correo de las cuentas YA marcadas como revisor con su mismo rol (las creadas antes de C-FRANQUICIA-CORREO-CONFIRMADO), sin cambiar sus claves y sin tocar ninguna otra cuenta.
+- Candado: `rutas/revisores.test.ts` («volver a tocar el botón confirma…»), comprobado en rojo.

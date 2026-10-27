@@ -1315,6 +1315,7 @@ const es: SeccionDocs[] = [
           'Las empresas te asignan u ofrecen rutas de paquetes. Las aceptas, cargas escaneando cada paquete, sigues las paradas en orden, entregas con foto, PIN o firma y devuelves al centro lo que no se pudo entregar.',
         explicacion: [
           'En el menú de Divoox Driver entra a «Mi ruta (paquetes)». Ahí ves las rutas que te asignó una empresa con la que trabajas y las que te ofrecen (con la hora en que vence la oferta). Mientras haces una ruta no recibes otras rutas ni pedidos de comida.',
+          'Te avisamos al celular cuando una empresa te ofrece o te asigna una ruta, cuando a tu oferta le quedan pocos minutos, si te la retiran o la cancelan, y cuando te autorizan reintentar una entrega. Toca el aviso y se abre esa ruta directamente.',
           'Al aceptar, ve al centro de la empresa y toca «Llegué al centro». Escanea cada paquete con la cámara (sirven el código QR y el código de barras de la etiqueta) o escribe su código. Si un paquete no está, márcalo como «No está en el centro». Cuando todo está cargado, toca «Salir a la ruta».',
           'Recorre las paradas en el orden que fijó la empresa. Cada una muestra la dirección, las instrucciones, la cantidad de paquetes y la ventana horaria. «Navegar» abre tu app de mapas. Los datos de quien recibe aparecen cuando ya estás en ruta.',
           'Para entregar, la app te dice qué pide la empresa: foto, el PIN que te da quien recibe o su firma con el dedo. Si se permite, puedes entregar sin contacto dejando el paquete en la puerta con una foto.',
@@ -2183,6 +2184,36 @@ const es: SeccionDocs[] = [
         nota: 'En esta fase no hay cobros ni pagos a conductores dentro de Divoox Flex.',
       },
       {
+        id: 'flex-operations',
+        titulo: 'Divoox Flex: avisos, orden sugerido, capacidad e indicadores de tu operación',
+        resumen:
+          'Divoox te avisa al celular de lo importante, sugiere el mejor orden de las paradas, revisa si la ruta cabe en el vehículo, avisa a tu propio sistema de cada cambio y te muestra cómo va tu operación.',
+        explicacion: [
+          'Avisos al celular: el conductor recibe un aviso cuando le ofrecen o le asignan una ruta, cuando a su oferta le quedan pocos minutos, si se la retiran o la cancelan, y cuando autorizas un reintento. Tocar el aviso abre la ruta directamente. Tu equipo recibe un aviso cuando el conductor acepta o rechaza, sale del centro, registra una incidencia, termina sus paradas, vuelve con devoluciones y cierra la ruta. Cada aviso llega una sola vez y nunca lleva el nombre, el teléfono ni la dirección de quien recibe.',
+          'Ofertas que vencen solas: si nadie acepta una oferta a tiempo, la ruta vuelve sola a borrador, los paquetes quedan libres para otra ruta y te avisamos. Si el conductor la acepta justo en ese instante, gana una sola de las dos cosas: nunca queda a medias.',
+          'Orden sugerido: en el detalle de una ruta que todavía no salió, toca «Sugerir orden». Divoox calcula un recorrido más corto empezando en tu centro, respeta las ventanas horarias de cada entrega y pone primero las paradas que marques como urgentes. Te muestra la distancia aproximada antes y después; es en línea recta, no la distancia de manejo, y no inventa tiempos. Nada cambia hasta que tocas «Aplicar». Una ruta que ya está en la calle no se reordena.',
+          'Capacidad del vehículo: en «Vehículos» declaras cuánto carga cada vehículo de tus conductores (paquetes, peso, volumen y el lado más largo de un paquete). Al asignar u ofrecer una ruta con ese vehículo, Divoox te avisa antes si no cabe y solo sigue si lo confirmas. Lo que no declaras queda como «sin dato»: Divoox no adivina.',
+          'Integraciones: en «Integraciones» registras la dirección segura (https) de tu sistema y eliges qué cambios quieres recibir: paquete creado, asignado, cargado, en camino, entregado, no entregado o devuelto; ruta asignada, aceptada, en camino o terminada; e incidencias. Divoox le avisa a tu sistema cada vez, firmado con un secreto que se muestra una sola vez. Si tu sistema no responde, reintenta durante casi un día y, si sigue fallando, la integración se pausa sola. Puedes enviar una prueba, ver cada intento y cambiar el secreto sin cortar el servicio.',
+          'Operación: en «Operación» ves, para las fechas que elijas, las rutas en la calle, las ofertas abiertas, los paquetes entregados y no entregados, el porcentaje entregado al primer intento, el porcentaje dentro de la ventana horaria (solo si tus envíos tienen ventana), las incidencias por motivo y la duración media de las rutas. Son datos de tu operación: aquí no hay cobros ni pagos.',
+        ],
+        preguntas: [
+          '¿Cómo sé cuándo un conductor acepta o termina una ruta?',
+          '¿Qué pasa si nadie acepta una oferta de ruta?',
+          '¿Cómo ordeno las paradas por el camino más corto?',
+          '¿Cómo evito asignar más paquetes de los que caben en un vehículo?',
+          '¿Cómo recibe mi sistema los cambios de mis paquetes?',
+          '¿Dónde veo cómo va mi operación?',
+        ],
+        pasos: [
+          'En «Vehículos», declara la capacidad de los vehículos de tus conductores.',
+          'En el detalle de la ruta, toca «Sugerir orden», revisa la distancia y toca «Aplicar» si te sirve.',
+          'Al asignar, elige el vehículo: si la ruta no cabe, decide si la asignas igual.',
+          'En «Integraciones», registra la dirección de tu sistema, guarda el secreto y envía una prueba.',
+          'En «Operación», elige las fechas y revisa tus indicadores.',
+        ],
+        nota: 'En esta fase no hay cobros ni pagos a conductores dentro de Divoox Flex.',
+      },
+      {
         id: 'flex-company-and-team',
         titulo: 'Divoox Flex: tu empresa de paquetería, tu equipo y tus centros',
         resumen:
@@ -2253,7 +2284,7 @@ const es: SeccionDocs[] = [
           'Crea envíos con el nombre de quien recibe, la dirección y la cantidad de paquetes; guarda los códigos que vuelven.',
           'Consulta el estado de cada paquete cuando lo necesites y registra sus pasos desde tu sistema.',
         ],
-        nota: 'Los avisos automáticos a tu sistema llegan en una fase posterior.',
+        nota: 'Divoox también puede avisar a tu sistema de cada cambio: lo configuras en «Integraciones» (guía «avisos, orden sugerido, capacidad e indicadores»).',
       },
       {
         id: 'calculator',
@@ -3764,6 +3795,7 @@ const en: SeccionDocs[] = [
           'Companies assign or offer you package routes. You accept, load by scanning every package, follow the stops in order, deliver with a photo, PIN or signature, and bring back to the hub whatever couldn’t be delivered.',
         explicacion: [
           'In the Divoox Driver menu, open “My route (packages)”. There you see the routes a company you work with assigned to you and the ones offered to you (with the time the offer expires). While doing a route you get no other routes or food orders.',
+          'We notify your phone when a company offers or assigns you a route, when your offer is about to expire, if it is withdrawn or canceled, and when you are authorized to retry a delivery. Tap the notification and that route opens directly.',
           'After accepting, go to the company’s hub and tap “I’m at the hub”. Scan every package with the camera (the label’s QR code and barcode both work) or type its code. If a package isn’t there, mark it “Not at the hub”. When everything is loaded, tap “Start the route”.',
           'Go through the stops in the order the company set. Each one shows the address, instructions, number of packages and time window. “Navigate” opens your maps app. The recipient’s details appear once you’re on route.',
           'To deliver, the app tells you what the company requires: a photo, the PIN the recipient gives you, or their signature with a finger. If allowed, you can deliver contactless by leaving the package at the door with a photo.',
@@ -4633,6 +4665,36 @@ const en: SeccionDocs[] = [
         nota: 'There are no charges or driver payments inside Divoox Flex in this phase.',
       },
       {
+        id: 'flex-operations',
+        titulo: 'Divoox Flex: notifications, suggested order, capacity and operations metrics',
+        resumen:
+          'Divoox notifies the right people on their phones, suggests the best stop order, checks whether a route fits the vehicle, notifies your own system of every change and shows how your operation is doing.',
+        explicacion: [
+          'Phone notifications: the driver is notified when a route is offered or assigned, when an offer is about to expire, if it is withdrawn or canceled, and when you authorize a retry. Tapping the notification opens the route directly. Your team is notified when the driver accepts or declines, leaves the hub, reports an exception, finishes all stops, heads back with returns and closes the route. Each notification arrives only once and never includes the recipient’s name, phone or address.',
+          'Offers that expire on their own: if nobody accepts an offer in time, the route goes back to draft by itself, its packages are free for another route and we let you know. If the driver accepts at that exact moment, only one of the two wins: nothing is left halfway.',
+          'Suggested order: in the details of a route that hasn’t left yet, tap “Suggest order”. Divoox computes a shorter path starting at your hub, respects each delivery’s time window and puts the stops you mark as urgent first. It shows the approximate distance before and after; it is straight-line, not driving distance, and it never makes up times. Nothing changes until you tap “Apply”. A route already on the street is never reordered.',
+          'Vehicle capacity: in “Vehicles” you declare how much each of your drivers’ vehicles carries (packages, weight, volume and the longest side of a package). When you assign or offer a route with that vehicle, Divoox warns you first if it doesn’t fit and only continues if you confirm. Whatever you don’t declare stays “no data”: Divoox doesn’t guess.',
+          'Integrations: in “Integrations” you register your system’s secure (https) address and choose which changes you want: package created, assigned, loaded, on the way, delivered, not delivered or returned; route assigned, accepted, on the way or finished; and exceptions. Divoox notifies your system every time, signed with a secret shown only once. If your system doesn’t respond, it retries for almost a day and, if it keeps failing, the integration pauses itself. You can send a test, see every attempt and change the secret without interrupting the service.',
+          'Operations: in “Operations” you see, for the dates you choose, routes on the street, open offers, delivered and undelivered packages, the share delivered on the first attempt, the share delivered within the time window (only if your shipments have one), exceptions by reason and the average route duration. These are operations metrics: there are no charges or payments here.',
+        ],
+        preguntas: [
+          'How do I know when a driver accepts or finishes a route?',
+          'What happens if nobody accepts a route offer?',
+          'How do I order stops by the shortest path?',
+          'How do I avoid assigning more packages than a vehicle can carry?',
+          'How does my system receive changes to my packages?',
+          'Where do I see how my operation is doing?',
+        ],
+        pasos: [
+          'In “Vehicles”, declare the capacity of your drivers’ vehicles.',
+          'In the route details, tap “Suggest order”, review the distance and tap “Apply” if it helps.',
+          'When assigning, pick the vehicle: if the route doesn’t fit, decide whether to assign it anyway.',
+          'In “Integrations”, register your system’s address, save the secret and send a test.',
+          'In “Operations”, pick the dates and review your metrics.',
+        ],
+        nota: 'There are no charges or driver payments inside Divoox Flex in this phase.',
+      },
+      {
         id: 'flex-company-and-team',
         titulo: 'Divoox Flex: your delivery business, your team and your hubs',
         resumen:
@@ -4703,7 +4765,7 @@ const en: SeccionDocs[] = [
           'Create shipments with the recipient name, the address and the number of packages; store the codes that come back.',
           'Query each package’s status whenever you need it and record its steps from your system.',
         ],
-        nota: 'Automatic notifications to your system arrive in a later phase.',
+        nota: 'Divoox can also notify your system of every change: set it up in “Integrations” (see “notifications, suggested order, capacity and operations metrics”).',
       },
       {
         id: 'calculator',

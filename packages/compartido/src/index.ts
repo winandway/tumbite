@@ -33,3 +33,4 @@ export * from './territorio';
 export * from './servicios';
 export * from './filtrosComida';
 export * from './flex';
+export * from './flexOptimizar';

@@ -56,3 +56,34 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null) {
     };
   }, [api, usuario]);
 }
+
+/**
+ * Al tocar un aviso (con la app abierta, en segundo plano o cerrada): entrega sus datos para abrir
+ * la pantalla que corresponde (por ejemplo, Flex abre «Mi ruta» en esa ruta). Fase 3 de Flex.
+ */
+export function useToqueAviso(alTocar: (datos: Record<string, unknown>) => void) {
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let vivo = true;
+    let quitar: (() => void) | null = null;
+    (async () => {
+      try {
+        const Notifications = await import('expo-notifications');
+        // Si la app se abrió desde el aviso (estaba cerrada), ese toque se atiende una vez.
+        const ultimo = await Notifications.getLastNotificationResponseAsync();
+        if (vivo && ultimo) alTocar(ultimo.notification.request.content.data ?? {});
+        const sub = Notifications.addNotificationResponseReceivedListener((r) =>
+          alTocar(r.notification.request.content.data ?? {}),
+        );
+        if (!vivo) sub.remove();
+        else quitar = () => sub.remove();
+      } catch (e) {
+        console.warn('avisos: no se pudo escuchar el toque de los avisos', e);
+      }
+    })();
+    return () => {
+      vivo = false;
+      quitar?.();
+    };
+  }, [alTocar]);
+}

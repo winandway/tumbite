@@ -1,3 +1,4 @@
+import { avisarEmpresa, despues } from './avisosFlex';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -217,6 +218,9 @@ flexConductor.post('/conductor/rutas/:rutaId/aceptar', async (c) => {
         return { estado: 200, datos: await responderRuta(db, rutaId) };
       throw new ErrorDatos('Esa oferta ya venció o cambió.', undefined, 409);
     }
+    await despues(c, () =>
+      avisarEmpresa(c.env, db, { tipo: 'ruta_aceptada', rutaId: r.id, ocasion: clave }),
+    );
     return { estado: 200, datos: await responderRuta(db, rutaId) };
   });
 });
@@ -225,12 +229,15 @@ flexConductor.post('/conductor/rutas/:rutaId/rechazar', async (c) => {
   const u = conductor(c);
   const db = base(c);
   const r = await miRuta(db, u, c.req.param('rutaId'), ['ofrecida', 'asignada', 'aceptada']);
-  await volverABorrador(
+  const clave = await volverABorrador(
     db,
     r,
     { actorId: u.id, actorTipo: 'usuario' },
     'liberada_conductor',
     'rechazada por el conductor',
+  );
+  await despues(c, () =>
+    avisarEmpresa(c.env, db, { tipo: 'ruta_rechazada', rutaId: r.id, ocasion: clave }),
   );
   return c.json({ ok: true });
 });
@@ -452,6 +459,9 @@ flexConductor.post('/conductor/rutas/:rutaId/iniciar', async (c) => {
     const res = await db.batch(sentencias).catch(traducirError);
     if (!res[0]?.meta.changes)
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    await despues(c, () =>
+      avisarEmpresa(c.env, db, { tipo: 'ruta_iniciada', rutaId: r.id, ocasion: clave }),
+    );
     return { estado: 200, datos: await responderRuta(db, r.id) };
   });
 });
@@ -734,6 +744,7 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
       const ub = await guardarUbicacion(db, r.id, d);
       if (ub) sentencias.push(ub);
       await db.batch(sentencias).catch(traducirError);
+      await despues(c, () => avisarSiTermino(c.env, db, r.id));
       return {
         estado: 200,
         datos: { ...(await responderRuta(db, r.id)), entregados: aEntregar.map((x) => x.id) },
@@ -822,6 +833,14 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/incidencia', asyn
       const ub = await guardarUbicacion(db, r.id, d);
       if (ub) sentencias.push(ub);
       await db.batch(sentencias).catch(traducirError);
+      await despues(c, async () => {
+        await avisarEmpresa(c.env, db, {
+          tipo: 'incidencia',
+          rutaId: r.id,
+          ocasion: clavePeticion,
+        });
+        await avisarSiTermino(c.env, db, r.id);
+      });
       return { estado: 200, datos: await responderRuta(db, r.id) };
     },
   );
@@ -925,6 +944,14 @@ flexConductor.post('/conductor/rutas/:rutaId/devolucion', async (c) => {
         ...recalcularParadas(db, r.id),
         db.prepare(ACTUALIZAR_ENVIOS_DE_RUTA).bind(r.id),
       ]);
+    if (results.length)
+      await despues(c, () =>
+        avisarEmpresa(c.env, db, {
+          tipo: 'devolucion_pedida',
+          rutaId: r.id,
+          ocasion: 'devolucion',
+        }),
+      );
     const lista = await db
       .prepare(
         `SELECT p.id, p.codigo_seguimiento, p.codigo_etiqueta, rq.devuelto_centro_en FROM ruta_paquetes rq JOIN paquetes p ON p.id = rq.paquete_id
@@ -1079,6 +1106,21 @@ flexConductor.post('/conductor/rutas/:rutaId/cerrar', async (c) => {
         datos: { resumen: JSON.parse(ya.resumen_json ?? 'null') as unknown, estado: ya.estado },
       };
     }
+    await despues(c, () =>
+      avisarEmpresa(c.env, db, { tipo: 'ruta_cerrada', rutaId: r.id, ocasion: clave }),
+    );
     return { estado: 200, datos: { resumen, estado: final } };
   });
 });
+
+/** «Entregas terminadas»: cuando ya no queda ninguna parada pendiente (una sola vez por ruta). */
+async function avisarSiTermino(env: Env, db: D1Database, rutaId: string) {
+  const f = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM ruta_paradas WHERE ruta_id = ? AND estado NOT IN ('entregada', 'fallida', 'omitida')",
+    )
+    .bind(rutaId)
+    .first<{ n: number }>();
+  if (Number(f?.n) === 0)
+    await avisarEmpresa(env, db, { tipo: 'entregas_terminadas', rutaId, ocasion: 'paradas' });
+}

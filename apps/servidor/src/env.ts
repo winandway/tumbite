@@ -37,6 +37,11 @@ export const esquemaEnv = z.object({
     .optional(),
   /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
   EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
+  /**
+   * Flex · Fase 3: llave con la que se CIFRAN los secretos de los destinos de integración (avisos
+   * firmados a los sistemas de las empresas). Sin ella se deriva una del secreto del reloj (provisional).
+   */
+  FLEX_LLAVE_WEBHOOKS: z.string().min(32).optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
   RELOJ_SECRETO: z.string().min(24).optional(),
   // Cuentas de prueba para los revisores de Apple y Google (correos separados por coma): prueban

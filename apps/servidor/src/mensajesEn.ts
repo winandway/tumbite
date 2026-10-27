@@ -949,6 +949,48 @@ export const MENSAJES_EN = new Map<string, string>([
     'That package isn’t pending return in your company.',
   ],
   ['Ese paquete no viene de vuelta.', 'That package isn’t coming back.'],
+  // Divoox Flex · Fase 3 (integraciones, capacidad, indicadores, retención).
+  [
+    'Primero corre la simulación y revisa qué se borraría.',
+    'Run the simulation first and review what would be deleted.',
+  ],
+  ['Esa dirección no es válida.', 'That address isn’t valid.'],
+  ['La dirección tiene que empezar con https://.', 'The address must start with https://.'],
+  [
+    'La dirección no puede llevar usuario ni contraseña.',
+    'The address can’t include a username or password.',
+  ],
+  ['Solo se admite el puerto 443 de HTTPS.', 'Only HTTPS port 443 is allowed.'],
+  ['Usa un nombre de dominio, no una dirección IP.', 'Use a domain name, not an IP address.'],
+  [
+    'Esa dirección apunta a una red interna o no permitida.',
+    'That address points to an internal or disallowed network.',
+  ],
+  ['La dirección es demasiado larga.', 'The address is too long.'],
+  [
+    'No pudimos comprobar esa dirección (DNS). Intenta de nuevo en un momento.',
+    'We couldn’t verify that address (DNS). Try again in a moment.',
+  ],
+  ['Ese dominio no existe o no tiene dirección.', 'That domain doesn’t exist or has no address.'],
+  [
+    'Las integraciones no están activadas en este servidor todavía.',
+    'Integrations aren’t enabled on this server yet.',
+  ],
+  ['Esa integración no existe.', 'That integration doesn’t exist.'],
+  ['No se pudo preparar la prueba.', 'The test couldn’t be prepared.'],
+  ['Ese vehículo no existe.', 'That vehicle doesn’t exist.'],
+  ['La fecha inicial va antes que la final.', 'The start date must be before the end date.'],
+  ['Consulta como máximo tres meses.', 'Query three months at most.'],
+  [
+    'La ruta no cabe en ese vehículo según la capacidad declarada. Revisa la capacidad o confirma que igual quieres asignarla.',
+    'The route doesn’t fit that vehicle’s declared capacity. Review the capacity or confirm you still want to assign it.',
+  ],
+  [
+    'Tu empresa llegó al máximo de integraciones activas (10).',
+    'Your company reached the maximum of active integrations (10).',
+  ],
+  ['Elige al menos un evento.', 'Choose at least one event.'],
+  ['País en dos letras (o * para todos).', 'Two-letter country code (or * for all).'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

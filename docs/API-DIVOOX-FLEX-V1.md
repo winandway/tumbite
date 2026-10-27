@@ -197,9 +197,100 @@ Todas con `Idempotency-Key` (la cola sin conexión del celular repite la misma c
 
 Resumen del cierre: `total`, `entregados`, `fallidos` (incidencias), `devueltos` (recibidos), `pendientesJustificados` (entregados al centro esperando recepción), `excluidosEnCentro`, `inicio`, `fin`, `incidencias`, `paradas`, `conductor`.
 
+## Fase 3 · Automatización, integraciones, optimización y capacidad (27 oct 2026)
+
+### Integraciones salientes (avisos firmados al sistema de la empresa)
+
+Permiso `integraciones.gestionar` (dueño y operaciones; **solo personas**: una `x-api-key` responde 403). Máximo 10 activas por empresa.
+
+| Método | Ruta                                   | Qué hace                                                                                                             |
+| ------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| GET    | `…/integraciones`                      | Lista (sin secretos: solo su prefijo), eventos disponibles, si el servidor las tiene activadas y la cola de cada una |
+| POST   | `…/integraciones`                      | `{url, eventos[], descripcion?}`. Devuelve el **secreto una sola vez** (`whsec_dvx_…`)                               |
+| PATCH  | `…/integraciones/{w}`                  | `{url?, eventos?, descripcion?, estado?: activo\|pausado\|desactivado}`. Reactivar pone en cero los fallos           |
+| POST   | `…/integraciones/{w}/rotar`            | `{graciaHoras: 0–168, por defecto 24}`. Nuevo secreto (una vez); el anterior sigue firmando durante la gracia        |
+| POST   | `…/integraciones/{w}/probar`           | Manda un evento `ping` firmado ahora y devuelve `{ok, http, error, duracionMs}`                                      |
+| GET    | `…/integraciones/{w}/intentos?limite=` | Registro de intentos: evento, intento, HTTP, error, duración. Nunca guarda cuerpos ni secretos                       |
+
+**Eventos**: `package.created`, `package.assigned`, `package.loaded`, `package.in_transit`, `package.delivered`, `package.failed`, `package.returned` (`data.returned_to`: `hub` o `sender`), `route.assigned`, `route.accepted`, `route.started`, `route.completed` (`data.with_exceptions`), `delivery.exception` (`reason`, `next_action`). `*` = todos. Los escribe la base de datos en la misma transacción que el cambio (si el cambio se deshace, el evento no existe). Sin nombre, teléfono ni dirección del destinatario.
+
+**Cuerpo** (POST, `application/json`):
+
+```json
+{
+  "id": "evt_…",
+  "type": "package.delivered",
+  "created_at": "2026-10-27T18:04:11Z",
+  "company_id": "…",
+  "api_version": "v1",
+  "data": {
+    "package_id": "…",
+    "tracking_code": "DVX…",
+    "shipment_id": "…",
+    "reference": "PED-1001",
+    "status": "entregado",
+    "route_id": "…",
+    "occurred_at": "2026-10-27 18:04:11"
+  }
+}
+```
+
+**Cabeceras**: `Divoox-Signature: t=<segundos>,v1=<hex>[,v1=<hex del secreto anterior>]`, `Divoox-Event-Id`, `Divoox-Event-Type`, `Divoox-Delivery-Attempt`.
+
+**Verificación (receptor)**: HMAC-SHA256 con tu secreto sobre `"{t}.{cuerpo exacto}"`; acepta si alguna `v1` coincide y `|ahora − t| ≤ 300 s`; guarda `Divoox-Event-Id` y descarta repetidos (los reintentos llevan el mismo id).
+
+```js
+import crypto from 'node:crypto';
+function valida(cuerpo, cabecera, secreto) {
+  const partes = Object.groupBy(
+    cabecera.split(',').map((x) => x.split('=')),
+    ([k]) => k,
+  );
+  const t = Number(partes.t?.[0]?.[1]);
+  if (!t || Math.abs(Date.now() / 1000 - t) > 300) return false;
+  const esperada = crypto.createHmac('sha256', secreto).update(`${t}.${cuerpo}`).digest('hex');
+  return (partes.v1 ?? []).some(([, v]) =>
+    crypto.timingSafeEqual(Buffer.from(v), Buffer.from(esperada)),
+  );
+}
+```
+
+**Entrega**: tras cada escritura de la empresa se intenta enviar enseguida (segundo plano) y el reloj repasa cada 5 minutos. Respuesta 2xx = entregado. Cualquier otra, sin respuesta en 8 s o una redirección (no se siguen) = fallo: reintentos a 1, 5, 15, 60, 180, 360 y 720 minutos (8 intentos, ~22 h). 15 fallos seguidos desactivan la integración (queda en la auditoría). El orden entre eventos no está garantizado: usa `occurred_at`.
+
+**Seguridad de la dirección**: solo `https://` en el puerto 443, sin usuario ni contraseña, sin IP escritas ni nombres internos (`localhost`, `.local`, `.internal`…); el nombre se resuelve por DNS sobre HTTPS y se rechaza si apunta a una red privada, local o reservada (v4 y v6). Se comprueba al registrar y antes de cada envío.
+
+**Secretos**: cifrados con AES-GCM con la llave del servidor `FLEX_LLAVE_WEBHOOKS` (si falta, una derivada del secreto del reloj, provisional; sin ninguna de las dos, las integraciones responden 503).
+
+### Optimización y capacidad
+
+| Método | Ruta                                | Qué hace                                                                                                                                                                                                                                                                                                                                                                          |
+| ------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `…/rutas/{r}/optimizar`             | `{obligatorias?: paradaId[]}`. Devuelve `sugerencia` (`orden`, `distanciaActualM`, `distanciaSugeridaM`, `mejoraPct`, `cambia`, `avisos`, `distanciaEstimada: true`) y `aplicable`. **No escribe nada.** Se aplica con `PUT …/orden` (solo antes de salir). Vecino más cercano + 2-opt; ventanas horarias y obligatorias primero; distancia en línea recta; sin tiempos de manejo |
+| GET    | `…/vehiculos`                       | Vehículos de los conductores vinculados, con la capacidad declarada (o `null`)                                                                                                                                                                                                                                                                                                    |
+| PUT    | `…/vehiculos/{v}/capacidad`         | `{maxPaquetes?, maxPesoKg?, maxVolumenLitros?, maxLadoCm?}` (lo vacío = sin dato). No toca los vehículos de Comida                                                                                                                                                                                                                                                                |
+| GET    | `…/rutas/{r}/capacidad?vehiculoId=` | `estado: ok\|excede\|desconocida`, `excesos[]`, `desconocidos[]`                                                                                                                                                                                                                                                                                                                  |
+
+`asignar` y `ofrecer` aceptan `vehiculoId` y `confirmarCapacidad`. Si la ruta excede la capacidad declarada y no se confirma: `409` con `campo: "capacidad"`.
+
+### Indicadores de operación
+
+`GET …/operaciones?desde=AAAA-MM-DD&hasta=AAAA-MM-DD&centroId=` (permiso `envios.ver`, máximo 3 meses): rutas por estado, ahora mismo (en curso, ofertas abiertas, por salir), paquetes del periodo (entregados, no entregados, recibidos de vuelta), tasas (`entregaPct`, `primerIntentoPct`, `aTiempoPct` — `null` si no hubo ventanas), incidencias por motivo, rutas cerradas (duración media medida, paradas por ruta, conductores) y cola de integraciones. **Ningún dato de dinero.**
+
+### Automático (reloj existente, cada 5 minutos)
+
+`flex_ofertas` (ofertas vencidas vuelven a borrador, sueltan paquetes y reserva, avisan y quedan en la auditoría; idempotente), `flex_ofertas_por_vencer` (aviso al conductor a 10 minutos, una vez), `flex_integraciones` (reparto y envío), `flex_limpieza` (una vez al día).
+
+### Avisos al celular (Expo)
+
+Conductor: oferta, asignación, oferta por vencer, oferta retirada o vencida, ruta cancelada, reintento autorizado. Empresa (dueño, operaciones y operadores): aceptada, rechazada, oferta vencida, en camino, incidencia, entregas terminadas, devolución en camino, cerrada. Cada aviso sale una sola vez (`flex_avisos`), en el idioma de la persona y sin datos del destinatario. Datos del aviso: `{tipo: "flex", evento, rutaId}` (la app abre «Mi ruta» en esa ruta).
+
+### Retención (superadmin)
+
+`GET/PUT /admin/retencion` (políticas por país y servicio: `{pais, servicio, categoria, dias, aprobada}`), `POST /admin/retencion/simular` (no borra nada), `POST /admin/retencion/ejecutar` (exige una simulación de la última hora). Categorías: `idempotencia` (7 días), `avisos` (30), `integraciones` (30) — de fábrica aprobadas; `ubicacion` (90) y `pruebas` (365) — **nunca** se borran sin una política aprobada por una persona. De las pruebas se borra el archivo y la fila queda marcada (`purgada_en`); nunca una prueba de una incidencia abierta. La custodia (eventos) es inmutable y no se borra.
+
 ## Lo que NO existe todavía
 
-Cobros, recargas, comisiones, pagos a conductores, webhooks salientes, optimización automática de rutas, navegación multiparada integrada (hoy se abre la app de mapas parada por parada), seguimiento en tiempo real por WebSocket, Express (envío individual del cliente).
+Cobros, recargas, comisiones, pagos a conductores (Fase 4), navegación multiparada integrada (hoy se abre la app de mapas parada por parada), tiempos de manejo reales (la optimización usa línea recta), seguimiento en tiempo real por WebSocket, GPS en segundo plano, Express (envío individual del cliente).
 
 ---
 
@@ -219,4 +310,6 @@ Base: `https://divoox.com/datos/v1/flex`. JSON, UTC dates. Messages in English b
 
 **Phase 2 (operational routes)**: assign (`POST …/rutas/{r}/asignar`, own/hybrid drivers, occupies the driver as ONE operation), offer (`…/ofrecer`, network/hybrid, expires), withdraw, cancel (before going out), reorder (`PUT …/orden`), detail with progress (`GET …/rutas/{r}/detalle`), filtered list (`GET …/rutas-operativas`), private proof images (`GET …/pruebas/{id}`), fix shipment coordinates (`PATCH …/envios/{id}`), required proof (`GET/PUT …/config-entrega`), recipient PIN (`POST …/envios/{id}/pin`, shown once, hashed), exceptions and authorized retries, returns and hub reception (`POST …/devoluciones/recibir`, people only). Driver endpoints under `/conductor/rutas/{r}` (driver session only; an API key gets 403): accept/decline, hub arrival, scan (QR, Code 128 or tracking; repeated scans don’t duplicate), missing, start, location, stop arrival, proof upload, deliver (required proof enforced, PIN checked server-side), exception, retry, return list, hand back to hub, close (releases the driver once, returns the summary).
 
-**Not yet**: charges, top-ups, fees, driver payouts, outgoing webhooks, automatic route optimization, built-in multi-stop navigation, WebSocket live tracking, Express.
+**Phase 3 (automation and integrations)**: outgoing signed webhooks (`…/integraciones`, people only, max 10 per company; secret shown once and stored AES-GCM encrypted; `Divoox-Signature: t=…,v1=…` HMAC-SHA256 over `"{t}.{body}"`, 5-minute tolerance, unique `Divoox-Event-Id`; events `package.created|assigned|loaded|in_transit|delivered|failed|returned`, `route.assigned|accepted|started|completed`, `delivery.exception`; retries at 1, 5, 15, 60, 180, 360, 720 min, auto-disable after 15 consecutive failures; HTTPS port 443 only, no IP literals, no internal names, DNS-over-HTTPS check against private ranges, redirects never followed; test ping, secret rotation with grace period, attempt log). Route suggestion (`POST …/rutas/{r}/optimizar`: nearest neighbor + 2-opt, time windows, mandatory stops first, straight-line distance marked as estimated, never writes; apply with `PUT …/orden` before the route goes out). Vehicle capacity (`GET …/vehiculos`, `PUT …/vehiculos/{v}/capacidad`, `GET …/rutas/{r}/capacidad`; `asignar`/`ofrecer` return `409` `campo: capacidad` unless `confirmarCapacidad: true`). Operations KPIs (`GET …/operaciones`, no money). Automatic offer expiry, offer-expiring push, webhook dispatch and daily cleanup run on the existing 5-minute clock. Retention policies per country and service (superadmin, simulation first; proofs never deleted without an approved policy).
+
+**Not yet**: charges, top-ups, fees, driver payouts (Phase 4), built-in multi-stop navigation, real driving times, WebSocket live tracking, background GPS, Express.

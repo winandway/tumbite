@@ -63,6 +63,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['empresas', 'config_entrega_json', "TEXT NOT NULL DEFAULT '{}'"],
   ['envios', 'config_entrega_json', 'TEXT'],
   ['ruta_paradas', 'llegada_en', 'TEXT'],
+  // Flex · Fase 3: archivo de prueba borrado por una política de retención aprobada.
+  ['flex_pruebas', 'purgada_en', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],
   // Pausa automática sin señal (16 oct 2026, C-PAUSA-SIN-SENAL): la última vez que la app o el
   // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.

@@ -127,10 +127,20 @@ const hora = (f: string | null, idioma: Idioma) =>
  * entrega con las pruebas que pide la empresa, las incidencias, las devoluciones y el cierre.
  * Lo que se hace sin señal queda en la cola del celular y se manda solo, sin duplicar.
  */
-export function MiRuta({ api, idioma }: { api: Api; idioma: Idioma }) {
+export function MiRuta({
+  api,
+  idioma,
+  abrirRutaId = null,
+}: {
+  api: Api;
+  idioma: Idioma;
+  /** Fase 3: la ruta del aviso que tocó el conductor (se abre directo). */
+  abrirRutaId?: string | null;
+}) {
   const t = enIdioma(TEXTOS_RUTA, idioma);
   const [lista, setLista] = useState<Fila[] | null>(null);
-  const [rutaId, setRutaId] = useState<string | null>(null);
+  // La ruta del aviso abre directo; si llega otro aviso, Inicio vuelve a montar esta pantalla (key).
+  const [rutaId, setRutaId] = useState<string | null>(abrirRutaId);
   const [ruta, setRuta] = useState<Ruta | null>(null);
   const [paradaId, setParadaId] = useState<string | null>(null);
   const [vistaRuta, setVistaRuta] = useState<'paradas' | 'mapa'>('paradas');

@@ -24,6 +24,8 @@ export const PERMISOS_FLEX = [
   'finanzas.ver',
   // Fase 2: recibir en el centro los paquetes que devuelve el conductor (solo personas).
   'devoluciones.recibir',
+  // Fase 3: destinos de integración (avisos firmados al sistema de la empresa). Solo personas.
+  'integraciones.gestionar',
 ] as const;
 export type PermisoFlex = (typeof PERMISOS_FLEX)[number];
 
@@ -42,6 +44,7 @@ export const PERMISOS_POR_ROL: Record<RolEmpresa, readonly PermisoFlex[]> = {
     'importar',
     'lotes.gestionar',
     'devoluciones.recibir',
+    'integraciones.gestionar',
   ],
   operador: [
     'empresa.ver',
