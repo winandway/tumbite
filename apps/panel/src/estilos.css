@@ -4054,3 +4054,29 @@ button {
   display: inline-block;
   text-decoration: none;
 }
+
+/* C-REVISORES: cada acceso se puede leer completo en un celular. */
+@media (max-width: 720px) {
+  .super .tabla-revisores,
+  .super .tabla-revisores tbody,
+  .super .tabla-revisores tr,
+  .super .tabla-revisores td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .super .tabla-revisores tr {
+    margin-bottom: 16px;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .super .tabla-revisores td {
+    border: 0;
+  }
+  .super .tabla-revisores td:first-child {
+    font-weight: 700;
+  }
+}

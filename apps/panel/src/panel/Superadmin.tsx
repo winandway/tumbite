@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   correoEjemplo,
   ErrorApi,
@@ -128,9 +128,17 @@ const T = {
     walletsOk: 'Dominio registrado en Stripe. Apple Pay:',
     revisores: 'Cuentas para los revisores de las tiendas',
     revisoresAyuda:
-      'Crea (o renueva) las tres cuentas que Apple y Google usan para revisar las apps: cliente, repartidor y restaurante. Las contraseñas se muestran una sola vez: cópialas al formulario de la tienda.',
+      'Crea las cuentas que falten. Las existentes conservan su contraseña. Copia las claves nuevas directamente en Acceso a la aplicación de Google Play o en Apple; no las envíes por chat. Crear las cuentas no verifica el recorrido completo.',
     crearRevisores: 'Crear las cuentas del revisor',
-    revisoresListas: 'Listas. Copia cada contraseña ahora: no se vuelven a mostrar.',
+    revisoresListas:
+      'Copia las contraseñas nuevas ahora: no se vuelven a mostrar. Las existentes se conservan.',
+    revisoresExistente: 'Cuenta existente: conserva su contraseña.',
+    revisoresRenovar: 'Cambiar esta contraseña',
+    revisoresConfirmar:
+      'La clave anterior dejará de funcionar. Actualiza también el acceso en la tienda.',
+    revisoresAceptar: 'Confirmar cambio de contraseña',
+    revisoresCancelar: 'Cancelar',
+    revisoresOpciones: 'Más opciones de la cuenta',
     roles: {
       cliente: 'Cliente (app Divoox)',
       repartidor: 'Repartidor (Divoox Driver)',
@@ -218,9 +226,17 @@ const T = {
     walletsOk: 'Domain registered with Stripe. Apple Pay:',
     revisores: 'App store reviewer accounts',
     revisoresAyuda:
-      'Creates (or renews) the three accounts Apple and Google use to review the apps: customer, driver and restaurant. Passwords are shown once: copy them into the store form.',
+      'Creates missing accounts and preserves existing passwords. Copy new passwords directly into Google Play App access or Apple; do not send them through chat. Creating accounts does not verify the full review journey.',
     crearRevisores: 'Create reviewer accounts',
-    revisoresListas: 'Done. Copy each password now: they are not shown again.',
+    revisoresListas:
+      'Copy new passwords now: they are not shown again. Existing passwords are preserved.',
+    revisoresExistente: 'Existing account: password unchanged.',
+    revisoresRenovar: 'Change this password',
+    revisoresConfirmar:
+      'The previous password will stop working. Update the store access details too.',
+    revisoresAceptar: 'Confirm password change',
+    revisoresCancelar: 'Cancel',
+    revisoresOpciones: 'More account options',
     roles: {
       cliente: 'Customer (Divoox app)',
       repartidor: 'Driver (Divoox Driver)',
@@ -353,8 +369,13 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
   const [error, setError] = useState('');
   const [conciliacion, setConciliacion] = useState<{ dia: string; cuadra: boolean } | null>(null);
   const [wallets, setWallets] = useState('');
-  const [revisores, setRevisores] = useState<{ rol: string; correo: string; clave: string }[]>([]);
+  const [revisores, setRevisores] = useState<
+    { rol: string; correo: string; clave: string | null }[]
+  >([]);
   const [errorRevisores, setErrorRevisores] = useState('');
+  const [ocupadoRevisores, setOcupadoRevisores] = useState(false);
+  const candadoRevisores = useRef(false);
+  const [renovarRol, setRenovarRol] = useState<string | null>(null);
   useEffect(() => {
     pedir<Resumen>('GET', '/datos/admin/resumen')
       .then(setR)
@@ -379,16 +400,47 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
     }
   }
   async function crearRevisores() {
+    if (candadoRevisores.current) return;
+    candadoRevisores.current = true;
+    setOcupadoRevisores(true);
     setErrorRevisores('');
     try {
-      const x = await pedir<{ cuentas: { rol: string; correo: string; clave: string }[] }>(
+      const x = await pedir<{ cuentas: { rol: string; correo: string; clave: string | null }[] }>(
         'POST',
         '/datos/admin/revisores',
         {},
       );
-      setRevisores(x.cuentas);
+      setRevisores((anteriores) =>
+        x.cuentas.map((cuenta) => ({
+          ...cuenta,
+          clave: cuenta.clave ?? anteriores.find((a) => a.correo === cuenta.correo)?.clave ?? null,
+        })),
+      );
     } catch (e) {
       setErrorRevisores(e instanceof ErrorApi ? e.message : String(e));
+    } finally {
+      candadoRevisores.current = false;
+      setOcupadoRevisores(false);
+    }
+  }
+  async function renovarClave(rol: string) {
+    if (candadoRevisores.current) return;
+    candadoRevisores.current = true;
+    setOcupadoRevisores(true);
+    setErrorRevisores('');
+    try {
+      const x = await pedir<{ rol: string; correo: string; clave: string }>(
+        'POST',
+        `/datos/admin/revisores/${rol}/clave`,
+        { confirmar: true },
+      );
+      setRevisores((anteriores) => anteriores.map((a) => (a.rol === rol ? x : a)));
+      setRenovarRol(null);
+    } catch (e) {
+      setErrorRevisores(e instanceof ErrorApi ? e.message : String(e));
+    } finally {
+      candadoRevisores.current = false;
+      setOcupadoRevisores(false);
     }
   }
   if (!r) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
@@ -424,7 +476,12 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
       </ul>
       <h2>{t.revisores}</h2>
       <p className="suave">{t.revisoresAyuda}</p>
-      <button type="button" className="boton" onClick={() => void crearRevisores()}>
+      <button
+        type="button"
+        className="boton"
+        disabled={ocupadoRevisores}
+        onClick={() => void crearRevisores()}
+      >
         {t.crearRevisores}
       </button>
       {errorRevisores ? <p role="alert">{errorRevisores}</p> : null}
@@ -432,7 +489,7 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
         <div>
           <p role="status">{t.revisoresListas}</p>
           <div className="tabla-ancha">
-            <table className="tabla">
+            <table className="tabla tabla-revisores">
               <tbody>
                 {revisores.map((c) => (
                   <tr key={c.correo}>
@@ -447,7 +504,38 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
                       <code>{c.correo}</code>
                     </td>
                     <td>
-                      <code>{c.clave}</code>
+                      {c.clave ? <code>{c.clave}</code> : <span>{t.revisoresExistente}</span>}
+                    </td>
+                    <td>
+                      <details>
+                        <summary aria-label={t.revisoresOpciones}>⋮</summary>
+                        <button
+                          type="button"
+                          disabled={ocupadoRevisores}
+                          onClick={() => setRenovarRol(c.rol)}
+                        >
+                          {t.revisoresRenovar}
+                        </button>
+                      </details>
+                      {renovarRol === c.rol ? (
+                        <div>
+                          <p>{t.revisoresConfirmar}</p>
+                          <button
+                            type="button"
+                            disabled={ocupadoRevisores}
+                            onClick={() => void renovarClave(c.rol)}
+                          >
+                            {t.revisoresAceptar}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={ocupadoRevisores}
+                            onClick={() => setRenovarRol(null)}
+                          >
+                            {t.revisoresCancelar}
+                          </button>
+                        </div>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

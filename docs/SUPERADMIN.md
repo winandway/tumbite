@@ -33,3 +33,7 @@ El código de ciudad usa tres letras (MIA, NOV, ORL, TPA) en vez de dos para que
 - Los restaurantes se vuelven a verificar cada año (`proxima_revision`).
 - La foto del local se compara con la dirección: a más de 300 metros queda marcada.
 - La revisión automática con IA (comparar cara y documento, leer el documento) va después, con el tope de gasto aprobado; alternativa sin IA propia: Stripe Identity (cobra por verificación; confirmar precio antes).
+
+## Cuentas para revisión de tiendas
+
+En Resumen: crear cuentas faltantes y, en ⋮ de cada cuenta, cambiar una contraseña con confirmación. Consulta [Acceso de revisores](ACCESO-REVISORES.md) para los límites, pruebas y estado de publicación.

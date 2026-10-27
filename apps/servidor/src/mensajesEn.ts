@@ -5,6 +5,20 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  [
+    'Este correo ya pertenece a una cuenta que no es de revisión. No se modificó ninguna cuenta.',
+    'This email belongs to an account that was not created for review. No accounts were changed.',
+  ],
+  [
+    'Otra solicitud creó estas cuentas. Vuelve a consultar; no se cambiaron sus contraseñas.',
+    'Another request created these accounts. Check again; their passwords were not changed.',
+  ],
+  ['Cuenta de revisión desconocida.', 'Unknown reviewer account.'],
+  [
+    'Primero crea o revisa esta cuenta de revisión.',
+    'Create or check this reviewer account first.',
+  ],
+
   ['Este pedido ya se entregó.', 'This order was already delivered.'],
   [
     'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',

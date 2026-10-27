@@ -1133,16 +1133,13 @@ export const CUENTAS_REVISOR = [
   },
 ] as const;
 
-/**
- * Un botón del superadmin crea (o renueva) las tres cuentas del revisor de las tiendas, con
- * contraseña nueva al azar, y las deja listas para usar: el repartidor con la verificación y los
- * antecedentes aprobados y sin regla de distancia; el restaurante aprobado y cerrado (no recibe
- * pedidos reales). Las contraseñas se muestran UNA sola vez: van al formulario de Apple y Google.
- */
+/** Crea solo cuentas nuevas, en un único lote atómico. Repetir nunca cambia claves. */
 superadmin.post('/admin/revisores', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  const cuentas: { rol: string; correo: string; clave: string }[] = [];
+  c.header('Cache-Control', 'no-store');
+  const cuentas: { rol: string; correo: string; clave: string | null }[] = [];
+  const lote: D1PreparedStatement[] = [];
   for (const r of CUENTAS_REVISOR) {
     // 20 caracteres al azar, fáciles de copiar (sin signos que se pierdan al pegar).
     const clave = nuevoToken()
@@ -1153,37 +1150,60 @@ superadmin.post('/admin/revisores', async (c) => {
       .bind(r.correo)
       .first<{ id: string }>();
     const id = existe?.id ?? nuevoId();
-    if (existe)
-      await db
-        .prepare('UPDATE usuarios SET clave_hash = ?, rol = ?, activo = 1, nombre = ? WHERE id = ?')
-        .bind(await hashClave(clave), r.rol, r.nombre, id)
-        .run();
-    else
-      await db
+    if (existe) {
+      const marcada = await db
+        .prepare('SELECT rol FROM revisores WHERE correo = ?')
+        .bind(r.correo)
+        .first<{ rol: string }>();
+      if (marcada?.rol !== r.rol)
+        throw new ErrorDatos(
+          'Este correo ya pertenece a una cuenta que no es de revisión. No se modificó ninguna cuenta.',
+          undefined,
+          409,
+        );
+      cuentas.push({ rol: r.rol, correo: r.correo, clave: null });
+      continue;
+    }
+    lote.push(
+      db
         .prepare(
           'INSERT INTO usuarios (id, correo, nombre, rol, idioma, clave_hash) VALUES (?, ?, ?, ?, ?, ?)',
         )
-        .bind(id, r.correo, r.nombre, r.rol, 'en', await hashClave(clave))
-        .run();
-    await db
-      .prepare('INSERT OR IGNORE INTO revisores (correo, rol) VALUES (?, ?)')
-      .bind(r.correo, r.rol)
-      .run();
+        .bind(id, r.correo, r.nombre, r.rol, 'en', await hashClave(clave)),
+    );
+    lote.push(
+      db
+        .prepare('INSERT OR IGNORE INTO revisores (correo, rol) VALUES (?, ?)')
+        .bind(r.correo, r.rol),
+    );
     if (r.rol === 'repartidor') {
-      await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(id).run();
-      await asegurarCodigoRepartidor(db, id);
-      await db
-        .prepare(
-          "INSERT INTO kyc (usuario_id, estado, doc_tipo, enviado_en, revisado_en, revisado_por) VALUES (?, 'aprobado', 'licencia', datetime('now'), datetime('now'), 'revisores') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', motivo = '', revisado_en = datetime('now'), proxima_revision = NULL",
-        )
-        .bind(id)
-        .run();
-      await db
-        .prepare(
-          "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, color, placa, antecedentes, antecedentes_fecha) VALUES (?, 'carro', 'Review', 'Vehicle', 'White', 'REVIEW1', 'aprobado', date('now')) ON CONFLICT(usuario_id) DO UPDATE SET antecedentes = 'aprobado', antecedentes_fecha = date('now')",
-        )
-        .bind(id)
-        .run();
+      lote.push(db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(id));
+      lote.push(
+        db.prepare(
+          "INSERT INTO contadores (clave, n) VALUES ('repartidor:US-REV', 1) ON CONFLICT(clave) DO UPDATE SET n = n + 1",
+        ),
+      );
+      lote.push(
+        db
+          .prepare(
+            "UPDATE repartidores SET codigo = 'US-REV-' || printf('%06d', (SELECT n FROM contadores WHERE clave = 'repartidor:US-REV')) WHERE usuario_id = ? AND codigo IS NULL",
+          )
+          .bind(id),
+      );
+      lote.push(
+        db
+          .prepare(
+            "INSERT INTO kyc (usuario_id, estado, doc_tipo, enviado_en, revisado_en, revisado_por) VALUES (?, 'aprobado', 'licencia', datetime('now'), datetime('now'), 'revisores') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', motivo = '', revisado_en = datetime('now'), proxima_revision = NULL",
+          )
+          .bind(id),
+      );
+      lote.push(
+        db
+          .prepare(
+            "INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, color, placa, antecedentes, antecedentes_fecha) VALUES (?, 'carro', 'Review', 'Vehicle', 'White', 'REVIEW1', 'aprobado', date('now')) ON CONFLICT(usuario_id) DO UPDATE SET antecedentes = 'aprobado', antecedentes_fecha = date('now')",
+          )
+          .bind(id),
+      );
     }
     if (r.rol === 'restaurante') {
       const rest = await db
@@ -1191,30 +1211,73 @@ superadmin.post('/admin/revisores', async (c) => {
         .bind(id)
         .first<{ id: string }>();
       if (rest)
-        await db
-          .prepare("UPDATE restaurantes SET estado = 'aprobado', abierto = 0 WHERE id = ?")
-          .bind(rest.id)
-          .run();
+        lote.push(
+          db
+            .prepare("UPDATE restaurantes SET estado = 'aprobado', abierto = 0 WHERE id = ?")
+            .bind(rest.id),
+        );
       else
-        await db
-          .prepare(
-            "INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, estado, abierto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aprobado', 0)",
-          )
-          .bind(
-            nuevoId(),
-            id,
-            'Divoox Review Kitchen (Soporte)',
-            'Restaurante de prueba para los revisores de las tiendas.',
-            'Test restaurant for the app store reviewers.',
-            'Pizza',
-            '+1 305 000 0000',
-            '1 SE 3rd Ave, Miami, FL 33131',
-            25.7736,
-            -80.1897,
-          )
-          .run();
+        lote.push(
+          db
+            .prepare(
+              "INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, estado, abierto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aprobado', 0)",
+            )
+            .bind(
+              nuevoId(),
+              id,
+              'Divoox Review Kitchen (Soporte)',
+              'Restaurante de prueba para los revisores de las tiendas.',
+              'Test restaurant for the app store reviewers.',
+              'Pizza',
+              '+1 305 000 0000',
+              '1 SE 3rd Ave, Miami, FL 33131',
+              25.7736,
+              -80.1897,
+            ),
+        );
     }
     cuentas.push({ rol: r.rol, correo: r.correo, clave });
   }
+  if (lote.length) {
+    try {
+      await db.batch(lote);
+    } catch (e) {
+      if (e instanceof Error && /UNIQUE constraint failed/i.test(e.message))
+        throw new ErrorDatos(
+          'Otra solicitud creó estas cuentas. Vuelve a consultar; no se cambiaron sus contraseñas.',
+          undefined,
+          409,
+        );
+      throw e;
+    }
+  }
   return c.json({ cuentas });
+});
+
+/** Rotación explícita de una sola cuenta; nunca forma parte de «crear». */
+superadmin.post('/admin/revisores/:rol/clave', async (c) => {
+  exigir(c, 'admin');
+  await leerCuerpo(c, z.object({ confirmar: z.literal(true) }));
+  const r = CUENTAS_REVISOR.find((x) => x.rol === c.req.param('rol'));
+  if (!r) throw new ErrorDatos('Cuenta de revisión desconocida.', undefined, 404);
+  const db = base(c);
+  const cuenta = await db
+    .prepare(
+      'SELECT u.id FROM usuarios u JOIN revisores r ON r.correo = u.correo AND r.rol = u.rol WHERE u.correo = ? AND u.rol = ? AND u.activo = 1',
+    )
+    .bind(r.correo, r.rol)
+    .first<{ id: string }>();
+  if (!cuenta)
+    throw new ErrorDatos('Primero crea o revisa esta cuenta de revisión.', undefined, 409);
+  const clave = nuevoToken()
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 20);
+  await db.batch([
+    db
+      .prepare('UPDATE usuarios SET clave_hash = ? WHERE id = ?')
+      .bind(await hashClave(clave), cuenta.id),
+    db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(cuenta.id),
+  ]);
+  c.header('Cache-Control', 'no-store');
+  return c.json({ rol: r.rol, correo: r.correo, clave });
 });

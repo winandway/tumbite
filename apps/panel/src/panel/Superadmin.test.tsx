@@ -149,6 +149,71 @@ describe('superadmin', () => {
     expect(llamadas.some((l) => l.url.includes('/datos/admin/revisores'))).toBe(true);
   });
 
+  it('C-REVISORES: conserva la clave visible al repetir y exige confirmar para renovarla', async () => {
+    let creada = false;
+    const llamadas = servidor((url, init) => {
+      if (url.includes('/admin/revisores/repartidor/clave'))
+        return {
+          rol: 'repartidor',
+          correo: 'revisor.driver@windoce.com',
+          clave: 'Nueva-clave-local',
+        };
+      if (url.includes('/admin/revisores') && init?.method === 'POST') {
+        const clave = creada ? null : 'Clave-local-inicial';
+        creada = true;
+        return { cuentas: [{ rol: 'repartidor', correo: 'revisor.driver@windoce.com', clave }] };
+      }
+      return RESUMEN;
+    });
+    render(<SuperResumen base="/panel/control-x" idioma="es" />);
+    const crear = await screen.findByRole('button', { name: 'Crear las cuentas del revisor' });
+    await userEvent.click(crear);
+    expect(await screen.findByText('Clave-local-inicial')).toBeInTheDocument();
+    await userEvent.click(crear);
+    expect(screen.getByText('Clave-local-inicial')).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('Más opciones de la cuenta'));
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar esta contraseña' }));
+    expect(llamadas.some((l) => l.url.includes('/repartidor/clave'))).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(llamadas.some((l) => l.url.includes('/repartidor/clave'))).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar esta contraseña' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar cambio de contraseña' }));
+    expect(await screen.findByText('Nueva-clave-local')).toBeInTheDocument();
+    expect(screen.queryByText('Clave-local-inicial')).not.toBeInTheDocument();
+    expect(llamadas.filter((l) => l.url.includes('/repartidor/clave'))).toHaveLength(1);
+  });
+
+  it('C-REVISORES: bloquea el botón mientras se está creando y explica las cuentas existentes', async () => {
+    let completar: ((r: Response) => void) | undefined;
+    let creaciones = 0;
+    vi.stubGlobal('fetch', async (url: string) => {
+      if (url.includes('/admin/revisores')) {
+        creaciones++;
+        return new Promise<Response>((resolver) => {
+          completar = resolver;
+        });
+      }
+      return new Response(JSON.stringify(RESUMEN));
+    });
+    render(<SuperResumen base="/panel/control-x" idioma="es" />);
+    const crear = await screen.findByRole('button', { name: 'Crear las cuentas del revisor' });
+    await userEvent.click(crear);
+    expect(crear).toBeDisabled();
+    await userEvent.click(crear);
+    expect(creaciones).toBe(1);
+    completar!(
+      new Response(
+        JSON.stringify({
+          cuentas: [{ rol: 'cliente', correo: 'revisor.cliente@windoce.com', clave: null }],
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText('Cuenta existente: conserva su contraseña.'),
+    ).toBeInTheDocument();
+    expect(crear).toBeEnabled();
+  });
+
   it('la bandeja filtra por estado y el ticket se responde y se cierra', async () => {
     const llamadas = servidor((url, init) => {
       if (url.includes('/datos/admin/tickets?'))

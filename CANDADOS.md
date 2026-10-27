@@ -1047,23 +1047,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Junto con esto:** casilla «Acepto los términos» obligatoria al crear cuenta (apps y panel; solo el cuadrito marca), aviso si el correo no es un correo, y cada pantalla dice qué cuenta es (cliente, repartidor, restaurante). Pruebas en PanelApp.test.tsx e idiomas.test.ts, y el recorrido de staging marca la casilla.
 - **Cómo se comprueba:** abrir https://divoox.com/app/, «Crea tu cuenta»: debe decir «Cuenta de cliente», tener la casilla y crear la cuenta sin «Sin conexión».
 
-## C-REVISORES: las cuentas del revisor de las tiendas se crean con un botón (27 oct 2026)
+## C-REVISORES: creación atómica y contraseñas estables (27 oct 2026)
 
-- **Qué pasaba:** Google Play no deja enviar a revisión sin cuentas de prueba (detalles de acceso →
-  público objetivo → seguridad de los datos, en cadena). Crearlas a mano son tres formularios, dos
-  aprobaciones en el panel y una variable en el sitio.
-- **Arreglo:** `POST /datos/admin/revisores` (superadmin.ts, solo admin) crea o renueva las tres
-  cuentas fijas de `CUENTAS_REVISOR` (revisor.cliente, revisor.driver y revisor.restaurante, de
-  windoce.com, con «Soporte» en el nombre) con contraseña nueva de 20 caracteres al azar, que se
-  devuelve una sola vez. Repartidor: fila en `repartidores`, código, `kyc` aprobado, `repartidor_datos`
-  con antecedentes aprobados. Restaurante: «Divoox Review Kitchen (Soporte)» aprobado y cerrado
-  (`abierto = 0`, no recibe pedidos reales). Tabla nueva `revisores`: `esRevisor` (operacion.ts) la
-  consulta además de `CORREOS_REVISOR`, así el revisor recoge y entrega desde otra ciudad.
-- **Dónde:** superadmin → Resumen → «Crear las cuentas del revisor» (`SuperResumen`).
-- **Prueba:** `revisores.test.ts` (403 sin admin; se entra con la contraseña devuelta; el repartidor se
-  conecta con KYC obligatorio; renovar no duplica) y `Superadmin.test.tsx`. Comprobada en rojo
-  quitando la ruta.
-- **No tocar:** las contraseñas no se guardan en claro en ningún lado; cada clic las renueva.
+- **Fallo:** cada clic cambiaba las tres claves; un fallo al crear el restaurante dejaba usuarios a medias. Una cuenta registrada con un correo reservado podía ser sobrescrita.
+- **Causa:** escrituras secuenciales y cambio de contraseña incluido en crear.
+- **Arreglo:** `POST /datos/admin/revisores` prepara las inserciones y las ejecuta en un único `DB.batch`. Las cuentas existentes marcadas conservan su clave (`clave: null` en la respuesta); las no marcadas producen 409 sin cambios. Una colisión concurrente revierte el lote. Las claves nunca se guardan en claro.
+- **Rotación:** `POST /datos/admin/revisores/:rol/clave` exige admin y `{ confirmar: true }`, cambia solo esa clave y revoca sus sesiones en el mismo lote. Respuestas con claves: `Cache-Control: no-store`.
+- **Panel:** bloqueo mientras hay una solicitud pendiente, claves existentes conservadas en la pantalla, cambio individual dentro de ⋮ con confirmación, accesos apilados en celular. No mandar contraseñas por chat.
+- **Pruebas:** `revisores.test.ts`: acceso solo admin, tres logins, repetir sin cambiar claves, reversión por fallo, colisión concurrente, no sobrescribir cuenta ajena, rotación individual y sesiones revocadas. Los fallos de repetición/reversión/sobrescritura se reprodujeron en rojo antes del arreglo; la nueva ruta dio 404 antes de implementarla. `Superadmin.test.tsx`: doble clic, repetir, confirmación/cancelación y cuentas existentes.
+- **Verificación visual local:** navegador integrado, panel real contra servidor y SQLite locales; crear y repetir, ancho 375px, consola sin errores. Captura y límites: [Acceso de revisores](docs/ACCESO-REVISORES.md).
+- **Commit:** localizar por `git log --all --grep='fix(revisores): conserva claves y crea cuentas de forma atómica'`.
+- **No tocar:** no volver a unir crear con cambiar claves; no quitar el lote atómico ni la revocación de sesiones.
+- **Límite importante:** esto prepara identidades, NO un entorno aislado de demostración. El restaurante cerrado no garantiza aislamiento; faltan recorrido completo de revisión y comprobación en los Android entregados a Google. No considerar estas pruebas locales una validación de producción.
 
 ## C-GPS-FONDO, nota del 27 oct 2026: Android sin ACCESS_BACKGROUND_LOCATION
 

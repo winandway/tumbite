@@ -37,7 +37,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 ## 👤 Lo que solo puede hacer Richard
 
-- [ ] 👤 **Google Play, un clic:** superadmin → Resumen → «Crear las cuentas del revisor» y pasarme las tres contraseñas (se muestran una sola vez). Destranca: detalles de acceso, público 18+, seguridad de datos y «Enviar a revisión» de las tres apps (27 oct 2026).
+- [ ] **Google Play, accesos:** confirmar administrador real, preparar escenario aislado de revisión, comprobar los tres accesos en los Android de la tienda y guardar las credenciales directamente en Google Play. Crear cuentas por sí solo no cierra este punto. Véase [Acceso de revisores](docs/ACCESO-REVISORES.md).
 
 - [ ] 👤 **Leer la auditoría final** (`docs/AUDITORIA-FINAL-2026-10-18.md`) y decidir: cuándo publicar en tiendas (recomendación: al cerrar la lista MVP), qué hacer con el banner del kit de la web (pantalla dibujada, no real), y ordenar la fila si quiere otro orden.
 - [ ] 👤 **Probar en el simulador las dos apps nuevas** (cliente e inicio «como los grandes»; repartidor con oferta completa, calificaciones, ganancias, campana, pausa, llegué y ayuda) y decir qué falta. Cuentas en `docs/CUENTAS-DE-PRUEBA.md`.

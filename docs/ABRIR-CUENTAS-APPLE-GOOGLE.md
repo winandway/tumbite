@@ -75,14 +75,8 @@ Google Play encadena las tres declaraciones: «Detalles de acceso» pide las cue
 «Público objetivo» no se abre sin la anterior; «Seguridad de los datos» no se envía sin el público
 objetivo (quedó guardada como borrador en las tres apps). Por eso TODO espera las cuentas.
 
-1. 👤 Richard, un clic: entrar al superadmin → Resumen → «Crear las cuentas del revisor». Salen las
-   tres cuentas (revisor.cliente, revisor.driver y revisor.restaurante, de windoce.com) con sus
-   contraseñas, que se muestran UNA sola vez. Pasármelas en el chat (son contraseñas de prueba, solo
-   para el formulario de las tiendas). El repartidor ya queda verificado y sin regla de distancia; el
-   restaurante queda aprobado y cerrado. (Botón publicado el 27 oct; candado C-REVISORES.)
-2. Yo, con las contraseñas: «Detalles de acceso» en las tres apps, público objetivo 18+, enviar
-   Seguridad de los datos y «Enviar a revisión» (la versión de producción ya está en borrador con
-   Estados Unidos; el Driver con el AAB sin ubicación en segundo plano).
+1. **Accesos pendientes de verificación:** identificar la sesión del administrador real y seguir [Acceso de revisores](ACCESO-REVISORES.md). La corrección local separa crear de cambiar contraseñas; todavía no prueba las aplicaciones Android ni prepara un escenario aislado. No pasar claves por chat.
+2. Después de comprobar el recorrido de cada app, guardar sus credenciales e instrucciones en inglés directamente en «Detalles de acceso» de Google Play. Solo entonces cerrar los formularios restantes y evaluar el envío a revisión. Un acceso correcto al panel web no acredita los tres Android.
 3. ✅ Driver: la ubicación con la pantalla apagada ya NO pide el permiso «todo el tiempo» en Android
    (versión 1, 27 oct): el servicio en primer plano con notificación sigue mandando la posición. No
    hace falta el video. iPhone sigue igual.
