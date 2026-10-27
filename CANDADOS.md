@@ -1074,3 +1074,23 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   sigue mandando la posición con la pantalla apagada: expo-location no exige el permiso de fondo
   cuando hay servicio en primer plano (LocationModule.kt, `startLocationUpdatesAsync`).
 - Prueba: `repartidorFondo.test.ts` (comprobada en rojo volviendo a encender el permiso).
+
+## C-CORREOS-DIVOOX: remitente y plantilla de los correos (27 oct 2026)
+
+- **Qué pasaba:** los correos salían de no-reply@tumbite.com con pie «tumbite.com» y una plantilla
+  pobre (Richard: «confunde a la gente»; «las plantillas son feitas»).
+- **Arreglo:** Richard activó «Correos desde tu dominio» para divoox.com en YaDominios Cloud. En
+  `correo.ts`, `DOMINIO_CORREO = 'divoox.com'` y `remitente(env, de)` decide por `SITIO_URL`: en
+  divoox.com (producción) sale de divoox.com; en staging.tumbite.com sigue tumbite.com (divoox.com no
+  está conectado al sitio de pruebas y el envío sería rechazado). Plantilla única `aHtml`: logo real
+  (`/marca/divoox-logo-correo.png`, generado del SVG con sharp), botón con etiqueta según la página
+  (`etiquetaBoton`) y la dirección completa debajo, detalle «Etiqueta: valor» en tabla, pie con
+  soporte y Windoce LLC. Commit 4208dc6 (producción, verificador «despues» en verde; correo real de
+  recuperación enviado con el canario `correo: ok`).
+- **Pruebas:** `recuperar.test.ts` (pie sin tumbite.com, remitente por sitio, botones y tabla,
+  sin HTML colado) y `tickets.test.ts`. Comprobadas en rojo.
+- **No tocar:** `DOMINIO_CORREO_PRUEBAS` mientras divoox.com no esté conectado al sitio de pruebas.
+- **De paso, el recorrido de staging:** la bandeja de dinero pagina 50 casos (los más viejos primero)
+  y el inicio del cliente no muestra todos los restaurantes; staging acumulaba casos y restaurantes
+  de corridas anteriores. El recorrido consulta el caso por su clave, lo resuelve al final y pausa
+  los restaurantes de corridas de hace más de 30 minutos (nunca los de la corrida en curso).
