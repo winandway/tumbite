@@ -3,13 +3,26 @@ import type { Env } from './env';
 
 /**
  * Correos que manda el sitio, por la API de YaDominios Cloud (incluida en el plan,
- * firmada con DKIM desde tumbite.com). Un solo lugar para enviar: nada manda correos por fuera.
+ * firmada con DKIM desde divoox.com). Un solo lugar para enviar: nada manda correos por fuera.
  * Nunca falla en silencio: el último error queda en el canario de /datos/salud.
  */
 export const SITIO = 'tumbite';
-export const DOMINIO_CORREO = 'tumbite.com';
-/** Lo que ve la gente al pie de cada correo: la marca y su dominio público (no el del remitente). */
+/**
+ * Dominio del remitente (27 oct 2026): divoox.com, activado en YaDominios Cloud y conectado al sitio
+ * de producción. El sitio de pruebas sigue en tumbite.com (divoox.com no está conectado ahí y el
+ * envío sería rechazado): `dominioCorreo` lo decide por la dirección pública del sitio.
+ */
+export const DOMINIO_CORREO = 'divoox.com';
+const DOMINIO_CORREO_PRUEBAS = 'tumbite.com';
+/** Lo que ve la gente al pie de cada correo: la marca y su dominio público. */
 export const DOMINIO_PUBLICO = 'divoox.com';
+
+export function dominioCorreo(env: Pick<Env, 'SITIO_URL'>): string {
+  const host = env.SITIO_URL ? new URL(env.SITIO_URL).hostname : DOMINIO_PUBLICO;
+  return host === DOMINIO_PUBLICO || host.endsWith(`.${DOMINIO_PUBLICO}`)
+    ? DOMINIO_CORREO
+    : DOMINIO_CORREO_PRUEBAS;
+}
 
 /** Remitentes oficiales (en inglés, como pidió Richard). Nombre visible bilingüe no hace falta. */
 export const REMITENTES = {
@@ -21,6 +34,14 @@ export const REMITENTES = {
   hola: { address: `hello@${DOMINIO_CORREO}`, name: MARCA.nombre },
 } as const;
 export type Remitente = keyof typeof REMITENTES;
+
+/** El remitente con el dominio que corresponde al sitio (producción: divoox.com; pruebas: tumbite.com). */
+export function remitente(env: Pick<Env, 'SITIO_URL'>, de: Remitente) {
+  // «de» es una de las llaves fijas de REMITENTES (tipo Remitente), no texto de fuera.
+  // eslint-disable-next-line security/detect-object-injection
+  const r = REMITENTES[de];
+  return { ...r, address: r.address.replace(`@${DOMINIO_CORREO}`, `@${dominioCorreo(env)}`) };
+}
 
 export type Correo = {
   de: Remitente;
@@ -61,7 +82,7 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
   const cuerpo = {
     sitio: SITIO,
     token: env.YAD_TOKEN,
-    from: REMITENTES[correo.de],
+    from: remitente(env, correo.de),
     to: [{ address: correo.para }],
     subject: correo.asunto,
     text: correo.texto,

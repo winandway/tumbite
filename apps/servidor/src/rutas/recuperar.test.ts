@@ -128,6 +128,17 @@ describe('pie de los correos (27 oct 2026)', () => {
     expect(html).not.toContain('tumbite.com');
   });
 
+  it('el remitente es de divoox.com en producción y de tumbite.com en el sitio de pruebas', async () => {
+    const { remitente } = await import('../correo');
+    expect(remitente({ SITIO_URL: 'https://divoox.com' }, 'avisos').address).toBe(
+      'no-reply@divoox.com',
+    );
+    expect(remitente({}, 'pedidos').address).toBe('orders@divoox.com');
+    expect(remitente({ SITIO_URL: 'https://staging.tumbite.com' }, 'avisos').address).toBe(
+      'no-reply@tumbite.com',
+    );
+  });
+
   it('los enlaces salen como botón con etiqueta en el idioma del correo y los detalles como tabla', async () => {
     const { aHtml } = await import('../correo');
     const es = aHtml(
