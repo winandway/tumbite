@@ -799,7 +799,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "dueno_id",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "config_entrega_json"
   ],
   "empresa_miembros": [
     "empresa_id",
@@ -885,7 +886,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ventana_hasta",
     "estado",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "config_entrega_json"
   ],
   "paquetes": [
     "id",
@@ -976,7 +978,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "bloque_desde",
     "bloque_hasta",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "modalidad",
+    "oferta_vence_en",
+    "asignada_en",
+    "aceptada_en",
+    "carga_en",
+    "iniciada_en",
+    "cerrada_en",
+    "ultima_clave",
+    "motivo",
+    "conductor_lat",
+    "conductor_lng",
+    "conductor_ubicacion_en",
+    "resumen_json"
   ],
   "ruta_paradas": [
     "id",
@@ -986,7 +1001,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "ventana_desde",
     "ventana_hasta",
-    "creado_en"
+    "creado_en",
+    "llegada_en",
+    "resuelta_en"
   ],
   "ruta_asignaciones": [
     "id",
@@ -996,6 +1013,61 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "inicio",
     "fin",
     "resultado"
+  ],
+  "transiciones_ruta_flex": [
+    "desde",
+    "hacia"
+  ],
+  "ruta_paquetes": [
+    "ruta_id",
+    "paquete_id",
+    "parada_id",
+    "empresa_id",
+    "activo",
+    "cargado_en",
+    "excluido_en",
+    "excluido_motivo",
+    "devuelto_centro_en",
+    "recibido_en",
+    "recibido_por"
+  ],
+  "flex_pruebas": [
+    "id",
+    "empresa_id",
+    "ruta_id",
+    "parada_id",
+    "conductor_id",
+    "tipo",
+    "clave",
+    "lat",
+    "lng",
+    "creado_en"
+  ],
+  "flex_pines": [
+    "envio_id",
+    "empresa_id",
+    "pin_hash",
+    "sal",
+    "intentos",
+    "creado_en",
+    "usado_en"
+  ],
+  "flex_incidencias": [
+    "id",
+    "empresa_id",
+    "ruta_id",
+    "parada_id",
+    "paquete_id",
+    "conductor_id",
+    "motivo",
+    "observaciones",
+    "prueba_id",
+    "proxima_accion",
+    "estado",
+    "reintento_autorizado",
+    "idempotencia",
+    "creado_en",
+    "resuelta_en"
   ],
   "operaciones": [
     "id",
@@ -1070,7 +1142,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "tipo",
     "operacion_id",
     "pedidos",
-    "desde"
+    "desde",
+    "ruta_id"
   ],
   "libro": [
     "id",

@@ -473,7 +473,8 @@ flexEnvios.get('/empresas/:id/etiquetas/:codigo', async (c) => {
 // ───────────────────────────── Eventos de custodia ─────────────────────────────
 
 /** Estado del envío según sus paquetes (una sola sentencia, después de cada evento). */
-const ACTUALIZAR_ENVIO = `UPDATE envios SET estado = (
+/** El estado del envío según sus paquetes (una sola sentencia). */
+const ESTADO_ENVIO = `estado = (
   SELECT CASE
     WHEN SUM(estado = 'entregado') = COUNT(*) THEN 'entregado'
     WHEN SUM(estado = 'cancelado') = COUNT(*) THEN 'cancelado'
@@ -482,7 +483,10 @@ const ACTUALIZAR_ENVIO = `UPDATE envios SET estado = (
     WHEN SUM(estado = 'entrega_fallida') > 0 AND SUM(estado IN ('en_transito','cargado','asignado','en_devolucion')) = 0 THEN 'fallido'
     WHEN SUM(estado <> 'creado') > 0 THEN 'en_proceso'
     ELSE 'creado' END FROM paquetes WHERE envio_id = envios.id
-  ), actualizado_en = datetime('now') WHERE id = ?`;
+  ), actualizado_en = datetime('now')`;
+const ACTUALIZAR_ENVIO = `UPDATE envios SET ${ESTADO_ENVIO} WHERE id = ?`;
+/** Lo mismo para todos los envíos (paradas) de una ruta, de una vez. */
+export const ACTUALIZAR_ENVIOS_DE_RUTA = `UPDATE envios SET ${ESTADO_ENVIO} WHERE id IN (SELECT envio_id FROM ruta_paradas WHERE ruta_id = ?)`;
 
 flexEnvios.post('/empresas/:id/paquetes/:paqueteId/eventos', async (c) => {
   const actor = await actorDeEmpresa(c, c.req.param('id'));

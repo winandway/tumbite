@@ -826,6 +826,129 @@ export const MENSAJES_EN = new Map<string, string>([
     'Hay referencias externas repetidas dentro del mismo lote.',
     'There are repeated external references within the same batch.',
   ],
+  // Divoox Flex · Fase 2 (27 oct 2026).
+  ['Una clave de API no puede actuar como conductor.', 'An API key can’t act as a driver.'],
+  ['La ruta no está en el paso que permite esto.', 'The route isn’t at the step that allows this.'],
+  ['Esa oferta ya venció.', 'That offer has expired.'],
+  ['Esa ruta ya no se puede aceptar.', 'That route can no longer be accepted.'],
+  ['Esa oferta ya venció o cambió.', 'That offer expired or changed.'],
+  ['Ese código no es de una etiqueta de Divoox.', 'That code isn’t from a Divoox label.'],
+  ['Ese paquete no es de tu ruta.', 'That package isn’t on your route.'],
+  ['Ese paquete no está listo para cargarse.', 'That package isn’t ready to be loaded.'],
+  ['Ese paquete ya se cargó.', 'That package was already loaded.'],
+  ['No hay paquetes cargados en esta ruta.', 'There are no loaded packages on this route.'],
+  [
+    'Hay paradas sin coordenadas verificadas: la empresa tiene que corregirlas antes de salir.',
+    'Some stops have no verified coordinates: the company must fix them before you leave.',
+  ],
+  [
+    'La ruta cambió mientras tanto. Vuelve a cargarla.',
+    'The route changed in the meantime. Reload it.',
+  ],
+  ['Falta la ubicación.', 'Location is missing.'],
+  ['Esa parada no es de tu ruta.', 'That stop isn’t on your route.'],
+  ['Algún paquete no es de esta parada.', 'A package isn’t from this stop.'],
+  ['Tipo de prueba desconocido.', 'Unknown proof type.'],
+  [
+    'El almacén de fotos no está disponible en este momento.',
+    'Photo storage isn’t available right now.',
+  ],
+  [
+    'Este envío no tiene PIN: pídele a la empresa que lo genere.',
+    'This shipment has no PIN: ask the company to generate one.',
+  ],
+  [
+    'El PIN se bloqueó por demasiados intentos. Registra una incidencia.',
+    'The PIN is locked after too many attempts. Report an exception.',
+  ],
+  [
+    'El PIN no coincide. Pídeselo otra vez a quien recibe.',
+    'The PIN doesn’t match. Ask the recipient again.',
+  ],
+  [
+    'No hay paquetes en camino para entregar en esta parada.',
+    'There are no packages on the way to deliver at this stop.',
+  ],
+  [
+    'Esta empresa no permite entregar sin contacto.',
+    'This company doesn’t allow contactless delivery.',
+  ],
+  ['la foto', 'the photo'],
+  ['el PIN', 'the PIN'],
+  ['la firma', 'the signature'],
+  ['Esa foto no es de esta parada.', 'That photo isn’t from this stop.'],
+  ['Esa firma no es de esta parada.', 'That signature isn’t from this stop.'],
+  [
+    'Con «otro motivo», cuenta qué pasó en las observaciones.',
+    'With “other reason”, explain what happened in the notes.',
+  ],
+  ['No hay paquetes en camino en esta parada.', 'There are no packages on the way at this stop.'],
+  ['Ese paquete no tiene una entrega fallida.', 'That package has no failed delivery.'],
+  [
+    'Ese reintento no está autorizado: devuélvelo al centro.',
+    'That retry isn’t authorized: return it to the hub.',
+  ],
+  ['Ese paquete no está en devolución.', 'That package isn’t being returned.'],
+  [
+    'Ese conductor ya está ocupado con otra ruta o pedido.',
+    'That driver is busy with another route or order.',
+  ],
+  [
+    'Algún paquete de esta ruta ya está en otra ruta activa.',
+    'A package on this route is already on another active route.',
+  ],
+  [
+    'La ruta ya no está en un estado que permita esto.',
+    'The route is no longer in a state that allows this.',
+  ],
+  ['Un paquete no puede pasar a ese estado.', 'A package can’t move to that status.'],
+  ['Ese conductor no está vinculado a tu empresa.', 'That driver isn’t linked to your company.'],
+  [
+    'A un conductor de la red Divoox no se le asigna: se le ofrece la ruta y él la acepta.',
+    'A Divoox network driver isn’t assigned: offer them the route and they accept it.',
+  ],
+  [
+    'A un conductor propio se le asigna la ruta directamente.',
+    'Your own drivers get the route assigned directly.',
+  ],
+  ['Ese vehículo no es del conductor.', 'That vehicle doesn’t belong to the driver.'],
+  ['La ruta no tiene paradas.', 'The route has no stops.'],
+  ['La ruta no tiene paquetes listos para salir.', 'The route has no packages ready to go.'],
+  ['Solo se asigna una ruta en borrador.', 'Only a draft route can be assigned.'],
+  ['Solo se ofrece una ruta en borrador.', 'Only a draft route can be offered.'],
+  [
+    'Esa ruta ya salió a la calle: no se puede retirar, se cierra con devoluciones.',
+    'That route is already out: it can’t be withdrawn, it’s closed with returns.',
+  ],
+  [
+    'Una ruta en la calle no se cancela: se cierra con sus devoluciones.',
+    'A route that’s out isn’t canceled: it’s closed with its returns.',
+  ],
+  [
+    'El orden se cambia antes de salir a la calle.',
+    'The order is changed before the route goes out.',
+  ],
+  [
+    'La lista tiene que traer todas las paradas de la ruta, una vez cada una.',
+    'The list must include every stop on the route, once each.',
+  ],
+  ['Esa prueba no existe.', 'That proof doesn’t exist.'],
+  ['La latitud y la longitud van juntas.', 'Latitude and longitude go together.'],
+  [
+    'Ese envío ya va en camino: no se cambia ahora.',
+    'That shipment is already on the way: it can’t be changed now.',
+  ],
+  ['Ese envío ya se entregó con su PIN.', 'That shipment was already delivered with its PIN.'],
+  ['Esa incidencia no está abierta.', 'That exception isn’t open.'],
+  [
+    'La recepción la confirma una persona del centro, no una clave de API.',
+    'Reception is confirmed by a person at the hub, not an API key.',
+  ],
+  [
+    'Ese paquete no está pendiente de devolución en tu empresa.',
+    'That package isn’t pending return in your company.',
+  ],
+  ['Ese paquete no viene de vuelta.', 'That package isn’t coming back.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
@@ -835,5 +958,62 @@ export function idiomaDeLaPeticion(cabecera: (n: string) => string | undefined):
   return (cabecera('accept-language') ?? '').toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
-export const enIdiomaDePeticion = (mensaje: string, idioma: 'es' | 'en') =>
-  idioma === 'en' ? (MENSAJES_EN.get(mensaje) ?? mensaje) : mensaje;
+/**
+ * Mensajes con datos variables (cantidades, códigos, nombres de columnas). Lo variable se copia
+ * tal cual; las palabras fijas alrededor se traducen. Candado C-INGLES-PRINCIPAL.
+ */
+const PARTES = new Map([
+  ['la foto', 'the photo'],
+  ['el PIN', 'the PIN'],
+  ['la firma', 'the signature'],
+]);
+export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Faltan (\d+) paquetes por escanear \(o márcalos como faltantes\)\.$/,
+    (m) => `${m[1]} packages still need to be scanned (or marked as missing).`,
+  ],
+  [
+    /^Para entregar falta: (.+)\.$/,
+    (m) =>
+      `To deliver you still need: ${(m[1] ?? '')
+        .split(', ')
+        .map((x) => PARTES.get(x) ?? x)
+        .join(', ')}.`,
+  ],
+  [
+    /^Hay (\d+) paquetes sin cerrar: entrégalos, registra la incidencia y devuélvelos al centro \((.*)\)\.$/,
+    (m) =>
+      `${m[1]} packages are not closed yet: deliver them, report the exception and return them to the hub (${m[2]}).`,
+  ],
+  [
+    /^Hay paradas sin coordenadas verificadas: corrígelas antes de asignar \((.*)\)\.$/,
+    (m) => `Some stops have no verified coordinates: fix them before assigning (${m[1]}).`,
+  ],
+  [
+    /^Una ruta lleva como máximo (\d+) paquetes\. Divídela\.$/,
+    (m) => `A route carries at most ${m[1]} packages. Split it.`,
+  ],
+  [
+    /^Un paquete «(.+)» no puede pasar a «(.+)»\.$/,
+    (m) => `A package in “${m[1]}” can’t move to “${m[2]}”.`,
+  ],
+  [
+    /^La hoja tiene (\d+) filas y el máximo por importación es (\d+)\. Divídela\.$/,
+    (m) => `The sheet has ${m[1]} rows and the import limit is ${m[2]}. Split it.`,
+  ],
+  [
+    /^Falta la columna «(.+)» \(acepta también sus nombres en inglés: recipient, address\)\.$/,
+    (m) => `Missing the “${m[1]}” column (English names are accepted too: recipient, address).`,
+  ],
+];
+
+export const enIdiomaDePeticion = (mensaje: string, idioma: 'es' | 'en') => {
+  if (idioma !== 'en') return mensaje;
+  const fijo = MENSAJES_EN.get(mensaje);
+  if (fijo) return fijo;
+  for (const [patron, traducir] of MENSAJES_EN_PATRONES) {
+    const m = patron.exec(mensaje);
+    if (m) return traducir(m);
+  }
+  return mensaje;
+};

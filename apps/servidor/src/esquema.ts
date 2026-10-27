@@ -3,6 +3,7 @@ import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
 import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
+import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -58,6 +59,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Idempotencia persistente de los avisos de Stripe (16 oct 2026, C-FALLOS-CRITICOS 1): los
   // avisos ya guardados estaban aplicados, por eso nacen como 'hecho'.
   ['avisos_stripe', 'estado', "TEXT NOT NULL DEFAULT 'hecho'"],
+  // Divoox Flex · Fase 2 (27 oct 2026): pruebas de entrega exigidas por empresa y por envío.
+  ['empresas', 'config_entrega_json', "TEXT NOT NULL DEFAULT '{}'"],
+  ['envios', 'config_entrega_json', 'TEXT'],
+  ['ruta_paradas', 'llegada_en', 'TEXT'],
+  ['ruta_paradas', 'resuelta_en', 'TEXT'],
   // Pausa automática sin señal (16 oct 2026, C-PAUSA-SIN-SENAL): la última vez que la app o el
   // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.
   ['restaurantes', 'senal_en', 'TEXT'],
@@ -240,7 +246,7 @@ async function revisarColumnas(db: D1Database): Promise<void> {
 async function asegurarFase3(db: D1Database): Promise<void> {
   // Una sola consulta para los disparadores de la Fase 3 y los de los pedidos
   // (C-TRANSICIONES-PEDIDO): el arranque sigue barato.
-  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS];
+  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS, ...ESQUEMA_FLEX];
   const nombres = todo
     .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
     .filter((n): n is string => Boolean(n));
@@ -290,6 +296,9 @@ async function migrar(db: D1Database): Promise<void> {
   }
   // Un solo viaje a la base para todos los índices (antes, uno por índice en cada arranque).
   await db.batch(INDICES.map((sql) => db.prepare(sql)));
+  // Flex · Fase 2: rehacer rutas_flex y conductor_ocupacion si vienen de antes (sin perder filas);
+  // suelta sus disparadores y vistas, que asegurarFase3 vuelve a crear justo después.
+  await rehacerFlex(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db);

@@ -1367,7 +1367,9 @@ CREATE TABLE IF NOT EXISTS empresas (
   estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'pausada', 'cerrada')),
   dueno_id TEXT NOT NULL REFERENCES usuarios(id),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Fase 2: pruebas de entrega que exige la empresa ({foto, pin, firma, sinContacto, reintentoEnRuta}).
+  config_entrega_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS empresas_dueno ON empresas(dueno_id);
 
@@ -1491,7 +1493,9 @@ CREATE TABLE IF NOT EXISTS envios (
   estado TEXT NOT NULL DEFAULT 'creado'
     CHECK (estado IN ('creado', 'en_proceso', 'entregado', 'parcial', 'fallido', 'devuelto', 'cancelado')),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Fase 2: pruebas exigidas para ESTE envío (manda sobre las de la empresa); null = las de la empresa.
+  config_entrega_json TEXT
 );
 CREATE INDEX IF NOT EXISTS envios_empresa ON envios(empresa_id, creado_en);
 -- La referencia propia de la empresa (su número de orden) no se repite dentro de la misma empresa.
@@ -1535,6 +1539,10 @@ INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
   ('en_transito', 'entregado'), ('en_transito', 'entrega_fallida'),
   ('entrega_fallida', 'en_transito'), ('entrega_fallida', 'en_devolucion'),
   ('en_devolucion', 'devuelto'), ('en_devolucion', 'en_transito');
+-- Fase 2: la ruta toma paquetes del centro; lo no entregado vuelve al centro (y puede salir otra vez).
+INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
+  ('creado', 'asignado'), ('registrado_centro', 'asignado'),
+  ('en_transito', 'en_devolucion'), ('en_devolucion', 'registrado_centro');
 CREATE TRIGGER IF NOT EXISTS paquetes_transicion_valida
 BEFORE UPDATE OF estado ON paquetes
 WHEN NEW.estado <> OLD.estado
@@ -1637,17 +1645,35 @@ CREATE TABLE IF NOT EXISTS rutas_flex (
   nombre TEXT NOT NULL DEFAULT '',
   conductor_id TEXT REFERENCES usuarios(id),
   vehiculo_id TEXT REFERENCES vehiculos(id),
-  estado TEXT NOT NULL DEFAULT 'borrador'
-    CHECK (estado IN ('borrador', 'lista', 'asignada', 'en_curso', 'terminada', 'cancelada')),
+  estado TEXT NOT NULL DEFAULT 'borrador' CHECK (estado IN (
+    'borrador', 'ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso',
+    'completada', 'con_incidencias', 'cancelada')),
   bloque_desde TEXT,
   bloque_hasta TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Fase 2: cómo llegó al conductor (asignación directa a uno propio u oferta a uno de la red).
+  modalidad TEXT CHECK (modalidad IS NULL OR modalidad IN ('asignacion', 'oferta')),
+  oferta_vence_en TEXT,
+  asignada_en TEXT,
+  aceptada_en TEXT,
+  carga_en TEXT,
+  iniciada_en TEXT,
+  cerrada_en TEXT,
+  ultima_clave TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  conductor_lat REAL,
+  conductor_lng REAL,
+  conductor_ubicacion_en TEXT,
+  resumen_json TEXT,
+  CHECK ((estado = 'borrador' AND conductor_id IS NULL) OR estado = 'cancelada'
+      OR (estado NOT IN ('borrador', 'cancelada') AND conductor_id IS NOT NULL))
 );
 CREATE INDEX IF NOT EXISTS rutas_flex_empresa ON rutas_flex(empresa_id, estado);
 -- Fase 2 activará la ocupación; desde ya la base impide dos rutas activas del mismo conductor.
 CREATE UNIQUE INDEX IF NOT EXISTS rutas_flex_una_activa
-  ON rutas_flex(conductor_id) WHERE estado IN ('asignada', 'en_curso') AND conductor_id IS NOT NULL;
+  ON rutas_flex(conductor_id) WHERE estado IN ('asignada', 'aceptada', 'en_carga', 'en_curso') AND conductor_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS rutas_flex_conductor ON rutas_flex(conductor_id, estado);
 CREATE TABLE IF NOT EXISTS ruta_paradas (
   id TEXT PRIMARY KEY,
   ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
@@ -1658,6 +1684,9 @@ CREATE TABLE IF NOT EXISTS ruta_paradas (
   ventana_desde TEXT,
   ventana_hasta TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Fase 2: cuándo llegó el conductor y cuándo quedó resuelta la parada.
+  llegada_en TEXT,
+  resuelta_en TEXT,
   UNIQUE (ruta_id, orden),
   UNIQUE (ruta_id, envio_id)
 );
@@ -1673,6 +1702,90 @@ CREATE TABLE IF NOT EXISTS ruta_asignaciones (
   CHECK ((fin IS NULL) = (resultado IS NULL))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ruta_asignaciones_una_abierta ON ruta_asignaciones(ruta_id) WHERE fin IS NULL;
+
+-- ───────────── DIVOOX FLEX · FASE 2 (27 oct 2026, rama fase-flex-2): rutas operativas ─────────────
+-- Estados de la ruta. La base rechaza cualquier salto que no esté aquí (disparador en esquemaFlex.ts).
+CREATE TABLE IF NOT EXISTS transiciones_ruta_flex (
+  desde TEXT NOT NULL,
+  hacia TEXT NOT NULL,
+  PRIMARY KEY (desde, hacia)
+);
+INSERT OR IGNORE INTO transiciones_ruta_flex (desde, hacia) VALUES
+  ('borrador', 'ofrecida'), ('borrador', 'asignada'), ('borrador', 'cancelada'),
+  ('ofrecida', 'aceptada'), ('ofrecida', 'borrador'), ('ofrecida', 'cancelada'),
+  ('asignada', 'aceptada'), ('asignada', 'borrador'), ('asignada', 'cancelada'),
+  ('aceptada', 'en_carga'), ('aceptada', 'borrador'), ('aceptada', 'cancelada'),
+  ('en_carga', 'en_curso'), ('en_carga', 'cancelada'),
+  ('en_curso', 'completada'), ('en_curso', 'con_incidencias');
+
+-- Qué paquetes lleva la ruta. Un paquete está como mucho en UNA ruta activa a la vez.
+CREATE TABLE IF NOT EXISTS ruta_paquetes (
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  paquete_id TEXT NOT NULL REFERENCES paquetes(id),
+  parada_id TEXT NOT NULL REFERENCES ruta_paradas(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  activo INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+  cargado_en TEXT,
+  excluido_en TEXT,
+  excluido_motivo TEXT,
+  devuelto_centro_en TEXT,
+  recibido_en TEXT,
+  recibido_por TEXT REFERENCES usuarios(id),
+  PRIMARY KEY (ruta_id, paquete_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ruta_paquetes_activo ON ruta_paquetes(paquete_id) WHERE activo = 1;
+CREATE INDEX IF NOT EXISTS ruta_paquetes_parada ON ruta_paquetes(parada_id);
+
+-- Pruebas de entrega (foto, firma, foto de incidencia): el archivo vive en el almacén privado (R2);
+-- aquí solo la referencia. Nunca hay enlaces públicos: se sirven a la empresa dueña con permiso.
+CREATE TABLE IF NOT EXISTS flex_pruebas (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  parada_id TEXT REFERENCES ruta_paradas(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('foto', 'firma', 'incidencia')),
+  clave TEXT NOT NULL,
+  lat REAL,
+  lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS flex_pruebas_ruta ON flex_pruebas(ruta_id, parada_id);
+
+-- PIN del destinatario: se muestra una vez a la empresa (para que lo comunique) y aquí solo queda
+-- el hash con su sal. Se verifica en el servidor; cinco intentos fallidos lo bloquean.
+CREATE TABLE IF NOT EXISTS flex_pines (
+  envio_id TEXT PRIMARY KEY REFERENCES envios(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  pin_hash TEXT NOT NULL,
+  sal TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usado_en TEXT
+);
+
+-- Entregas fallidas con su motivo y la próxima acción. Nunca se marcan entregadas solas.
+CREATE TABLE IF NOT EXISTS flex_incidencias (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  parada_id TEXT REFERENCES ruta_paradas(id),
+  paquete_id TEXT NOT NULL REFERENCES paquetes(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('ausente', 'direccion_incorrecta', 'acceso_imposible',
+    'rechazada', 'danado', 'seguridad', 'no_encontrado_centro', 'otro')),
+  observaciones TEXT NOT NULL DEFAULT '',
+  prueba_id TEXT REFERENCES flex_pruebas(id),
+  proxima_accion TEXT NOT NULL CHECK (proxima_accion IN ('reintentar', 'reprogramar', 'devolver')),
+  estado TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'reintentada', 'resuelta')),
+  -- La empresa autoriza un reintento aunque su configuración no los permita en ruta.
+  reintento_autorizado INTEGER NOT NULL DEFAULT 0 CHECK (reintento_autorizado IN (0, 1)),
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+CREATE INDEX IF NOT EXISTS flex_incidencias_ruta ON flex_incidencias(ruta_id, estado);
+CREATE INDEX IF NOT EXISTS flex_incidencias_empresa ON flex_incidencias(empresa_id, creado_en);
 
 -- =====================================================================================
 -- FASE 3 · EXCLUSIVIDAD Y ASIGNACIÓN (16 oct 2026, rama fase-3-exclusividad). Diseño:
@@ -1809,14 +1922,18 @@ CREATE INDEX IF NOT EXISTS asignaciones_conductor ON asignaciones_operacion(cond
 -- ----- Exclusividad (V1.2 §3.4): UNA fila por conductor ocupado -----
 CREATE TABLE IF NOT EXISTS conductor_ocupacion (
   conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
-  tipo TEXT NOT NULL CHECK (tipo IN ('comida', 'operacion')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('comida', 'operacion', 'ruta_flex')),
   operacion_id TEXT REFERENCES operaciones(id),
   pedidos INTEGER NOT NULL DEFAULT 0,
   desde TEXT NOT NULL DEFAULT (datetime('now')),
-  CHECK ((tipo = 'comida' AND operacion_id IS NULL AND pedidos >= 1)
-      OR (tipo = 'operacion' AND operacion_id IS NOT NULL AND pedidos = 0))
+  ruta_id TEXT REFERENCES rutas_flex(id),
+  CHECK ((tipo = 'comida' AND operacion_id IS NULL AND ruta_id IS NULL AND pedidos >= 1)
+      OR (tipo = 'operacion' AND operacion_id IS NOT NULL AND ruta_id IS NULL AND pedidos = 0)
+      OR (tipo = 'ruta_flex' AND ruta_id IS NOT NULL AND operacion_id IS NULL AND pedidos = 0))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_operacion ON conductor_ocupacion(operacion_id) WHERE operacion_id IS NOT NULL;
+-- Divoox Flex · Fase 2: una ruta (con todos sus paquetes) ocupa al conductor como UNA sola operación.
+CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_ruta ON conductor_ocupacion(ruta_id) WHERE ruta_id IS NOT NULL;
 
 -- ───────────── Fase 2 · Modelo internacional (18 oct 2026) ─────────────
 -- Libro mayor por país y moneda. Cada fila es un movimiento de UN bolsillo; nunca se borra ni se

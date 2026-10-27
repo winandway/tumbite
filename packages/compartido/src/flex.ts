@@ -22,6 +22,8 @@ export const PERMISOS_FLEX = [
   'importar',
   'lotes.gestionar',
   'finanzas.ver',
+  // Fase 2: recibir en el centro los paquetes que devuelve el conductor (solo personas).
+  'devoluciones.recibir',
 ] as const;
 export type PermisoFlex = (typeof PERMISOS_FLEX)[number];
 
@@ -39,8 +41,16 @@ export const PERMISOS_POR_ROL: Record<RolEmpresa, readonly PermisoFlex[]> = {
     'paquetes.eventos',
     'importar',
     'lotes.gestionar',
+    'devoluciones.recibir',
   ],
-  operador: ['empresa.ver', 'envios.crear', 'envios.ver', 'paquetes.eventos', 'importar'],
+  operador: [
+    'empresa.ver',
+    'envios.crear',
+    'envios.ver',
+    'paquetes.eventos',
+    'importar',
+    'devoluciones.recibir',
+  ],
   finanzas: ['empresa.ver', 'envios.ver', 'finanzas.ver'],
   // Cuenta técnica de la integración: lo mismo que puede hacer una clave de API.
   api: ['empresa.ver', 'envios.crear', 'envios.ver', 'paquetes.eventos', 'importar'],
@@ -355,4 +365,225 @@ export function mapearEncabezados(encabezados: string[]): Record<string, number>
       if (alias.includes(n) && mapa[campo] === undefined) mapa[campo] = i;
   });
   return mapa;
+}
+
+// ═══════════════════════════ Fase 2: rutas operativas ═══════════════════════════
+
+export const ESTADOS_RUTA = [
+  'borrador',
+  'ofrecida',
+  'asignada',
+  'aceptada',
+  'en_carga',
+  'en_curso',
+  'completada',
+  'con_incidencias',
+  'cancelada',
+] as const;
+export type EstadoRuta = (typeof ESTADOS_RUTA)[number];
+/** En estos estados la ruta tiene al conductor ocupado (una sola operación activa). */
+export const ESTADOS_RUTA_ACTIVA: readonly EstadoRuta[] = [
+  'asignada',
+  'aceptada',
+  'en_carga',
+  'en_curso',
+];
+/** Igual que `transiciones_ruta_flex` en schema.sql (la base también las exige). */
+export const TRANSICIONES_RUTA: Record<EstadoRuta, readonly EstadoRuta[]> = {
+  borrador: ['ofrecida', 'asignada', 'cancelada'],
+  ofrecida: ['aceptada', 'borrador', 'cancelada'],
+  asignada: ['aceptada', 'borrador', 'cancelada'],
+  aceptada: ['en_carga', 'borrador', 'cancelada'],
+  en_carga: ['en_curso', 'cancelada'],
+  en_curso: ['completada', 'con_incidencias'],
+  completada: [],
+  con_incidencias: [],
+  cancelada: [],
+};
+
+export const MOTIVOS_INCIDENCIA = [
+  'ausente',
+  'direccion_incorrecta',
+  'acceso_imposible',
+  'rechazada',
+  'danado',
+  'seguridad',
+  'otro',
+] as const;
+export type MotivoIncidencia = (typeof MOTIVOS_INCIDENCIA)[number] | 'no_encontrado_centro';
+export const PROXIMAS_ACCIONES = ['reintentar', 'reprogramar', 'devolver'] as const;
+export type ProximaAccion = (typeof PROXIMAS_ACCIONES)[number];
+
+/** Pruebas de entrega que exige la empresa (o un envío en particular). */
+export type ConfigEntrega = {
+  foto: boolean;
+  pin: boolean;
+  firma: boolean;
+  /** Si se permite «sin contacto» (dejar en la puerta con foto) cuando el destinatario no firma ni da PIN. */
+  sinContacto: boolean;
+  /** Si el conductor puede reintentar en la misma ruta una entrega fallida. */
+  reintentoEnRuta: boolean;
+};
+export const CONFIG_ENTREGA_DEFECTO: ConfigEntrega = {
+  foto: true,
+  pin: false,
+  firma: false,
+  sinContacto: false,
+  reintentoEnRuta: true,
+};
+
+function leerConfig(json: string | null | undefined): Partial<ConfigEntrega> {
+  if (!json) return {};
+  try {
+    const v = JSON.parse(json) as Record<string, unknown>;
+    const out: Partial<ConfigEntrega> = {};
+    for (const k of Object.keys(CONFIG_ENTREGA_DEFECTO) as (keyof ConfigEntrega)[])
+      if (typeof v[k] === 'boolean') out[k] = v[k] as boolean;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** La del envío manda sobre la de la empresa; lo que no dicen, lo de fábrica. */
+export const configEntrega = (
+  empresaJson?: string | null,
+  envioJson?: string | null,
+): ConfigEntrega => ({
+  ...CONFIG_ENTREGA_DEFECTO,
+  ...leerConfig(empresaJson),
+  ...leerConfig(envioJson),
+});
+
+/** Qué falta para poder entregar con estas pruebas (vacío = se puede). */
+export function pruebasFaltantes(
+  config: ConfigEntrega,
+  dadas: { foto: boolean; pin: boolean; firma: boolean; sinContacto: boolean },
+): ('foto' | 'pin' | 'firma')[] {
+  const faltan: ('foto' | 'pin' | 'firma')[] = [];
+  if (config.foto && !dadas.foto) faltan.push('foto');
+  // «Sin contacto» reemplaza PIN y firma (no hay nadie que los dé), pero exige la foto.
+  const sinContacto = config.sinContacto && dadas.sinContacto;
+  if (config.pin && !dadas.pin && !sinContacto) faltan.push('pin');
+  if (config.firma && !dadas.firma && !sinContacto) faltan.push('firma');
+  if (sinContacto && !dadas.foto && !faltan.includes('foto')) faltan.push('foto');
+  return faltan;
+}
+
+/**
+ * Lo que leyó el escáner del conductor: el QR de la etiqueta («dvx:XXXXXXXXXXXX»), el código de
+ * barras Code 128 (las mismas 12 letras) o el código de seguimiento («DVX» + 10).
+ */
+export function leerCodigoEscaneado(
+  texto: string,
+): { tipo: 'etiqueta' | 'seguimiento'; codigo: string } | null {
+  const t = texto.trim().toUpperCase();
+  const qr = codigoDesdeQr(texto.trim());
+  if (qr) return { tipo: 'etiqueta', codigo: qr };
+  if (/^DVX[A-HJ-NP-Z2-9]{10}$/.test(t)) return { tipo: 'seguimiento', codigo: t };
+  if (/^[A-HJ-NP-Z2-9]{12}$/.test(t)) return { tipo: 'etiqueta', codigo: t };
+  return null;
+}
+
+// ─────────────────────────── Cola sin conexión de Flex ───────────────────────────
+
+/** Una acción del conductor guardada en el celular hasta que el servidor la confirme. */
+export type AccionFlex = {
+  /** Identificador único: viaja como Idempotency-Key (repetirla no duplica nada). */
+  id: string;
+  tipo: 'escaneo' | 'llegada' | 'entrega' | 'incidencia' | 'devolucion' | 'reintento';
+  rutaId: string;
+  paqueteId?: string;
+  paradaId?: string;
+  /** Ruta del servidor y cuerpo JSON. */
+  ruta: string;
+  cuerpo: Record<string, unknown>;
+  /** Fotos o firma como «data:…»: se suben antes de mandar la acción. */
+  adjuntos?: { foto?: string; firma?: string };
+  capturadoEn: number;
+  estado: 'pendiente' | 'error';
+  intentos: number;
+  error?: string;
+};
+
+export type AlmacenAcciones = {
+  leer(): Promise<string | null>;
+  escribir(v: string): Promise<void>;
+};
+
+/** ¿El fallo fue por no tener red (reintentar luego) o el servidor la rechazó (conflicto)? */
+export type ResultadoEnvio = { ok: true } | { ok: false; sinRed: boolean; error: string };
+
+/**
+ * Cola de Flex: guarda en orden de captura, sincroniza en ese orden (orden causal: el escaneo antes
+ * de iniciar, la llegada antes de la entrega) y se detiene al primer fallo de red. Lo que el
+ * servidor rechaza queda marcado como «error» y visible hasta que la persona lo descarte: nunca se
+ * da por confirmado algo que solo está en el celular.
+ */
+export function crearColaFlex(almacen: AlmacenAcciones, nuevoId: () => string) {
+  async function listar(): Promise<AccionFlex[]> {
+    try {
+      const v = JSON.parse((await almacen.leer()) ?? '[]') as unknown;
+      return Array.isArray(v) ? (v as AccionFlex[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  const guardar = (l: AccionFlex[]) => almacen.escribir(JSON.stringify(l));
+  // Un solo sincronizador a la vez: dos ciclos seguidos no mandan la misma acción dos veces.
+  let enCurso: Promise<{ confirmadas: AccionFlex[]; rechazadas: AccionFlex[] }> | null = null;
+  return {
+    listar,
+    async agregar(
+      a: Omit<AccionFlex, 'id' | 'capturadoEn' | 'estado' | 'intentos'> & { id?: string },
+    ) {
+      const nueva: AccionFlex = {
+        ...a,
+        id: a.id ?? nuevoId(),
+        capturadoEn: Date.now(),
+        estado: 'pendiente',
+        intentos: 0,
+      };
+      await guardar([...(await listar()), nueva]);
+      return nueva;
+    },
+    async descartar(id: string) {
+      await guardar((await listar()).filter((a) => a.id !== id));
+    },
+    sincronizar(enviar: (a: AccionFlex) => Promise<ResultadoEnvio>) {
+      enCurso ??= (async () => {
+        const confirmadas: AccionFlex[] = [];
+        const rechazadas: AccionFlex[] = [];
+        try {
+          for (const a of await listar()) {
+            if (a.estado === 'error') continue;
+            const r = await enviar(a);
+            const actual = await listar();
+            if (r.ok) {
+              confirmadas.push(a);
+              await guardar(actual.filter((x) => x.id !== a.id));
+            } else if (r.sinRed) {
+              await guardar(
+                actual.map((x) => (x.id === a.id ? { ...x, intentos: x.intentos + 1 } : x)),
+              );
+              break;
+            } else {
+              const marcada = {
+                ...a,
+                estado: 'error' as const,
+                intentos: a.intentos + 1,
+                error: r.error,
+              };
+              rechazadas.push(marcada);
+              await guardar(actual.map((x) => (x.id === a.id ? marcada : x)));
+            }
+          }
+          return { confirmadas, rechazadas };
+        } finally {
+          enCurso = null;
+        }
+      })();
+      return enCurso;
+    },
+  };
 }

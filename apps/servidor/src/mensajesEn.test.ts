@@ -83,3 +83,18 @@ describe('mensajes del servidor en inglés', () => {
     );
   });
 });
+
+describe('mensajes con datos variables (Flex)', () => {
+  it('se traducen las palabras fijas y se conservan los datos', async () => {
+    const { enIdiomaDePeticion } = await import('./mensajesEn');
+    expect(
+      enIdiomaDePeticion('Faltan 3 paquetes por escanear (o márcalos como faltantes).', 'en'),
+    ).toBe('3 packages still need to be scanned (or marked as missing).');
+    expect(enIdiomaDePeticion('Para entregar falta: la foto, el PIN.', 'en')).toBe(
+      'To deliver you still need: the photo, the PIN.',
+    );
+    expect(enIdiomaDePeticion('Para entregar falta: la foto, el PIN.', 'es')).toBe(
+      'Para entregar falta: la foto, el PIN.',
+    );
+  });
+});
