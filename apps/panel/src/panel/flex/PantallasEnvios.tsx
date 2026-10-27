@@ -13,6 +13,7 @@ import { ir } from '../../ruta';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
+import { HerramientasEnvio } from './PantallasRutas';
 
 /** Pantallas de envíos, paquetes, importación, etiquetas, lotes y rutas, y billetera (próximamente). */
 
@@ -39,6 +40,8 @@ type Envio = {
   paquetes: number | Paquete[];
   entregados?: number;
   centroId: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 type Evento = {
   id: number;
@@ -359,6 +362,12 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         {e.instrucciones ? <br /> : null}
         {e.instrucciones}
       </p>
+      <HerramientasEnvio
+        ctx={ctx}
+        envioId={e.id}
+        sinCoordenadas={e.lat == null || e.lng == null}
+        alCambiar={cargar}
+      />
       <h2>{t.paquetes}</h2>
       <ul className="super-lista">
         {e.paquetes.map((p, i) => (

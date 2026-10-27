@@ -5,6 +5,7 @@ import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
+import { ConfigEntrega } from './PantallasRutas';
 
 /** Pantallas de la empresa: inicio, perfil, centros, equipo, conductores y claves de API. */
 
@@ -93,6 +94,7 @@ export function Perfil({ ctx }: { ctx: Contexto }) {
         )}
         {ok && <span className="insignia insignia-aprobado">✓</span>}
       </form>
+      <ConfigEntrega ctx={ctx} />
       <Auditoria ctx={ctx} />
     </section>
   );

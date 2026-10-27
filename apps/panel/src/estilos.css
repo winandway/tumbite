@@ -4207,3 +4207,71 @@ button {
     flex-direction: column;
   }
 }
+/* Flex · Fase 2 */
+.flex-barra {
+  position: relative;
+  height: 26px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  background: #fff;
+  margin: 6px 0;
+  overflow: hidden;
+  max-width: 560px;
+}
+.flex-barra-llena {
+  height: 100%;
+  background: #0d7a3a;
+}
+.flex-barra span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #101010;
+}
+.flex-paradas > li {
+  margin: 8px 0;
+}
+.flex-paradas ul {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+.flex-pruebas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.flex-pruebas a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  color: inherit;
+}
+.flex-pruebas img {
+  object-fit: cover;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+}
+.menu-tres-puntos {
+  position: relative;
+  margin: 8px 0;
+}
+.menu-tres-puntos .cuenta-menu {
+  position: absolute;
+  z-index: 5;
+  background: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 240px;
+}
+.flex-herramientas {
+  margin: 10px 0;
+}

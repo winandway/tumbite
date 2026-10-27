@@ -23,6 +23,7 @@ import {
   NuevoEnvio,
   Paquetes,
 } from './PantallasEnvios';
+import { DetalleRutaOperativa, Devoluciones, Incidencias, RutasOperativas } from './PantallasRutas';
 
 export const BASE_FLEX = '/datos/v1/flex';
 export type Empresa = {
@@ -297,6 +298,9 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
     ...(puede('importar') ? ([['import', t.menu.import]] as [string, string][]) : []),
     ['labels', t.menu.labels],
     ['routes', t.menu.routes],
+    ['operativas', t.menu.operativas],
+    ['incidents', t.menu.incidents],
+    ['returns', t.menu.returns],
     ...(puede('finanzas.ver') ? ([['wallet', t.menu.wallet]] as [string, string][]) : []),
     ...(puede('claves.gestionar') ? ([['keys', t.menu.keys]] as [string, string][]) : []),
   ];
@@ -304,6 +308,7 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
   let contenido: React.ReactNode;
   const envioId = /^shipments\/([0-9a-f-]{36})$/.exec(sub)?.[1];
   const paqueteId = /^packages\/([0-9a-f-]{36})$/.exec(sub)?.[1];
+  const rutaOperativaId = /^operativas\/([0-9a-f-]{36})$/.exec(sub)?.[1];
   if (sub === '') contenido = <Inicio ctx={ctx} resumen={ficha.resumen} />;
   else if (sub === 'profile') contenido = <Perfil ctx={ctx} />;
   else if (sub === 'hubs') contenido = <Centros ctx={ctx} />;
@@ -317,6 +322,10 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
   else if (sub === 'import') contenido = <Importar ctx={ctx} />;
   else if (sub === 'labels') contenido = <Etiquetas ctx={ctx} />;
   else if (sub === 'routes') contenido = <LotesRutas ctx={ctx} />;
+  else if (sub === 'operativas') contenido = <RutasOperativas ctx={ctx} />;
+  else if (rutaOperativaId) contenido = <DetalleRutaOperativa ctx={ctx} rutaId={rutaOperativaId} />;
+  else if (sub === 'returns') contenido = <Devoluciones ctx={ctx} />;
+  else if (sub === 'incidents') contenido = <Incidencias ctx={ctx} />;
   else if (sub === 'wallet') contenido = <Billetera ctx={ctx} />;
   else if (sub === 'keys') contenido = <Claves ctx={ctx} />;
   else contenido = <p role="alert">{t.noExiste}</p>;
