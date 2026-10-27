@@ -21,7 +21,12 @@ describe('C-ENTORNOS-SEPARADOS: cada app habla con su propio entorno', () => {
       'https://staging.tumbite.com',
     );
     expect(elegirServidor(null, 'https://staging.tumbite.com')).toBe('https://staging.tumbite.com');
-    expect(elegirServidor(null, undefined)).toBe('https://tumbite.com');
+    expect(elegirServidor(null, undefined)).toBe('https://divoox.com');
+    // 27 oct 2026: la web servida desde divoox.com le habla a divoox.com, nunca a tumbite.com.
+    expect(elegirServidor('https://divoox.com', 'https://tumbite.com')).toBe('https://divoox.com');
+    expect(elegirServidor('https://www.divoox.com', 'https://tumbite.com')).toBe(
+      'https://www.divoox.com',
+    );
   });
   it('reconoce los entornos por dominio', () => {
     expect(entornoDeHost('tumbite.com')).toBe('produccion');

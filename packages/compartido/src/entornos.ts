@@ -13,12 +13,20 @@ export type Entorno = 'produccion' | 'pruebas' | 'local';
 
 /** El servidor de producción (lo que usa el celular si no se fijó otro al construir). La dirección
  * del sitio de pruebas NO se escribe aquí: así nunca viaja dentro de un paquete de producción. */
-export const SERVIDOR_PRODUCCION = 'https://tumbite.com';
+export const SERVIDOR_PRODUCCION = 'https://divoox.com';
 
 /** Dominios que sirven Divoox y a qué entorno pertenecen. */
 export function entornoDeHost(host: string): Entorno | null {
   const h = host.toLowerCase().split(':')[0] ?? '';
-  if (h === 'tumbite.com' || h === 'www.tumbite.com' || h === 'tumbite.sitios.dev')
+  // 27 oct 2026: divoox.com es el dominio principal; sin él, la web de divoox.com le hablaba a
+  // tumbite.com (que redirige) y el navegador bloqueaba todo: «Sin conexión» al crear cuenta.
+  if (
+    h === 'divoox.com' ||
+    h === 'www.divoox.com' ||
+    h === 'tumbite.com' ||
+    h === 'www.tumbite.com' ||
+    h === 'tumbite.sitios.dev'
+  )
     return 'produccion';
   if (h === 'staging.tumbite.com' || h === 'tumbite-pruebas.sitios.dev') return 'pruebas';
   if (h === 'localhost' || h === '127.0.0.1') return 'local';
