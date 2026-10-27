@@ -118,3 +118,12 @@ describe('recuperar la contraseña por correo', () => {
     expect(html).toContain('href="https://tumbite.com/reset-password?token=abc"');
   });
 });
+
+describe('pie de los correos (27 oct 2026)', () => {
+  it('el pie dice divoox.com, nunca el dominio del remitente', async () => {
+    const { aHtml } = await import('../correo');
+    const html = aHtml('Hola.');
+    expect(html).toContain('Divoox · divoox.com');
+    expect(html).not.toContain('tumbite.com');
+  });
+});

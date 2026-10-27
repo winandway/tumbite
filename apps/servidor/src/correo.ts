@@ -8,6 +8,8 @@ import type { Env } from './env';
  */
 export const SITIO = 'tumbite';
 export const DOMINIO_CORREO = 'tumbite.com';
+/** Lo que ve la gente al pie de cada correo: la marca y su dominio público (no el del remitente). */
+export const DOMINIO_PUBLICO = 'divoox.com';
 
 /** Remitentes oficiales (en inglés, como pidió Richard). Nombre visible bilingüe no hace falta. */
 export const REMITENTES = {
@@ -122,5 +124,5 @@ export function aHtml(texto: string): string {
       return `<p style="margin:0 0 14px;line-height:1.5">${t.replace(/\n/g, '<br>')}</p>`;
     })
     .join('');
-  return `<!doctype html><html><body style="margin:0;background:#f6f6f6;font-family:Arial,Helvetica,sans-serif;color:#101010"><div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:16px;padding:28px"><p style="margin:0 0 20px;font-size:22px;font-weight:800;color:#F20D20">${MARCA.nombre}</p>${parrafos}</div><p style="font-size:12px;color:#777;text-align:center;margin:16px 0 0">${MARCA.nombre} · ${DOMINIO_CORREO}</p></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#f6f6f6;font-family:Arial,Helvetica,sans-serif;color:#101010"><div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:16px;padding:28px"><p style="margin:0 0 20px;font-size:22px;font-weight:800;color:#F20D20">${MARCA.nombre}</p>${parrafos}</div><p style="font-size:12px;color:#777;text-align:center;margin:16px 0 0">${MARCA.nombre} · ${DOMINIO_PUBLICO}</p></div></body></html>`;
 }
