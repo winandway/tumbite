@@ -74,8 +74,11 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 - ✅ Divoox (cliente): enviada a revisión (acceso del revisor, público 18+, seguridad de datos,
   categoría Comida y bebida, contacto go@windoce.com, ficha sin recursos de IA, versión 1.0.0 confirmada).
 - ✅ Divoox Restaurants: enviada a revisión, mismos pasos.
-- 🟡 Divoox Driver: todo hecho salvo la declaración del permiso FOREGROUND_SERVICE_LOCATION, que exige
-  un video; se produce con el APK de pruebas en el emulador y se sube a YouTube (no listado).
+- Divoox Driver: la declaración del permiso FOREGROUND_SERVICE_LOCATION lleva el video grabado en el
+  emulador de Android (APK de pruebas, cuenta de revisor de staging) y subido como no listado a la
+  cuenta de YouTube de go@windoce.com: https://www.youtube.com/watch?v=Cd5WkcxaeFg (archivo original en
+  docs/videos/driver-servicio-primer-plano/). Cómo se grabó: `adb shell screenrecord` tras revocar el
+  permiso de ubicación, para que se vea el diálogo, «Online» y la notificación fija.
 - Cuentas del revisor: creadas por Richard con el botón del superadmin; guardadas en
   ~/.config/tumbite/revisores-tiendas.
 
