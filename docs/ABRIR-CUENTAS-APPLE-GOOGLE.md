@@ -69,7 +69,17 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 - ✅ Avisos al celular: Richard generó la llave del SDK de Firebase (26 oct); guardada en ~/.config/tumbite/firebase-fcm.json y cargada en Expo como «FCM V1 service account key» en las tres apps.
 - ✅ Mapa de Android: Richard creó la cuenta de facturación «Mi cuenta de facturación Divoox» (Chase Business Debit) y yo la vinculé al proyecto. «Maps SDK for Android» activado. Llave «Divoox Maps Android» restringida a Maps SDK for Android y a com.windoce.tumbite y com.windoce.tumbite.driver con la huella SHA-1 de firma de Google Play; guardada en ~/.config/tumbite/google-maps-android-key y en EAS como secreto GOOGLE_MAPS_ANDROID_KEY (app.config.js la lee). El mapa de celular no tiene costo por carga.
 
-## Lo que falta para enviar a revisión (27 oct 2026, madrugada)
+## Estado al 27 oct 2026 (tarde)
+
+- ✅ Divoox (cliente): enviada a revisión (acceso del revisor, público 18+, seguridad de datos,
+  categoría Comida y bebida, contacto go@windoce.com, ficha sin recursos de IA, versión 1.0.0 confirmada).
+- ✅ Divoox Restaurants: enviada a revisión, mismos pasos.
+- 🟡 Divoox Driver: todo hecho salvo la declaración del permiso FOREGROUND_SERVICE_LOCATION, que exige
+  un video; se produce con el APK de pruebas en el emulador y se sube a YouTube (no listado).
+- Cuentas del revisor: creadas por Richard con el botón del superadmin; guardadas en
+  ~/.config/tumbite/revisores-tiendas.
+
+## Lo que faltaba para enviar a revisión (27 oct 2026, madrugada)
 
 Google Play encadena las tres declaraciones: «Detalles de acceso» pide las cuentas del revisor;
 «Público objetivo» no se abre sin la anterior; «Seguridad de los datos» no se envía sin el público

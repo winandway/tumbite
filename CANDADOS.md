@@ -1096,3 +1096,21 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   y el inicio del cliente no muestra todos los restaurantes; staging acumulaba casos y restaurantes
   de corridas anteriores. El recorrido consulta el caso por su clave, lo resuelve al final y pausa
   los restaurantes de corridas de hace más de 30 minutos (nunca los de la corrida en curso).
+
+## C-REVISORES, notas del 27 oct 2026 (tarde)
+
+- **Sin selfie de control para el revisor:** `operacion.ts` (`/repartidor/conectar`) salta la selfie de
+  control cuando `esRevisor`. Visto en staging con `SELFIE_CONTROL_SIEMPRE=1`: el revisor quedaba en
+  409 al conectarse. Prueba en `revisores.test.ts` (comprobada en rojo).
+- **Botón del superadmin, versión del otro asistente (checkpoint 13:03):** crea solo las cuentas que
+  faltan en un lote atómico; repetir no cambia contraseñas; cada cuenta tiene «cambiar contraseña» en
+  sus tres puntos con confirmación y cierre de sesiones; un correo existente que no es revisor da 409.
+  Documentado en `docs/ACCESO-REVISORES.md`.
+- **Accidente evitado para siempre:** un árbol de trabajo aparte (`git worktree`) con enlaces
+  simbólicos `node_modules` → carpeta principal coló esos enlaces en un commit (`node_modules/` del
+  .gitignore no cubre un enlace). Al fusionar, git reemplazó los `node_modules` reales por enlaces a sí
+  mismos. Arreglo: `.gitignore` también ignora `node_modules` sin barra; se reinstaló con `npm ci`.
+  Regla: en un worktree nunca enlazar `node_modules`; correr `npm ci` dentro.
+- **Google Play, 27 oct:** Divoox (cliente) y Divoox Restaurants enviadas a revisión. El Driver
+  espera la declaración de `FOREGROUND_SERVICE_LOCATION` (exige video en YouTube): se graba en el
+  emulador con el APK de pruebas y se sube no listado a la cuenta go@windoce.com.
