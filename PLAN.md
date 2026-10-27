@@ -1,7 +1,7 @@
 # Plan: enviar las tres apps a revisión de Google Play (27 oct 2026, madrugada)
 
 - [x] 1. Driver en Android sin el permiso de ubicación en segundo plano (sigue el servicio en primer plano con notificación; iOS igual que antes); candado y pruebas al día.
-- [ ] 2. Compilar el nuevo AAB del Driver con EAS y subirlo al borrador de producción de Google Play.
+- [x] 2. Compilar el nuevo AAB del Driver con EAS y subirlo al borrador de producción de Google Play.
 - [ ] 3. Publicar el cambio por el flujo (staging → verificador → producción).
 - [ ] 4. Cliente en Google Play: acceso a la app (registro libre), público 18+, seguridad de datos enviada, enviar a revisión.
 - [ ] 5. Driver y Restaurante en Google Play: público 18+, seguridad de datos enviada, declaración de ubicación retirada; acceso del revisor queda a un clic (espera las cuentas).
