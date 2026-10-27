@@ -1046,3 +1046,31 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** entornos.test.ts exige que la web servida desde divoox.com le hable a divoox.com (comprobado en rojo).
 - **Junto con esto:** casilla «Acepto los términos» obligatoria al crear cuenta (apps y panel; solo el cuadrito marca), aviso si el correo no es un correo, y cada pantalla dice qué cuenta es (cliente, repartidor, restaurante). Pruebas en PanelApp.test.tsx e idiomas.test.ts, y el recorrido de staging marca la casilla.
 - **Cómo se comprueba:** abrir https://divoox.com/app/, «Crea tu cuenta»: debe decir «Cuenta de cliente», tener la casilla y crear la cuenta sin «Sin conexión».
+
+## C-REVISORES: las cuentas del revisor de las tiendas se crean con un botón (27 oct 2026)
+
+- **Qué pasaba:** Google Play no deja enviar a revisión sin cuentas de prueba (detalles de acceso →
+  público objetivo → seguridad de los datos, en cadena). Crearlas a mano son tres formularios, dos
+  aprobaciones en el panel y una variable en el sitio.
+- **Arreglo:** `POST /datos/admin/revisores` (superadmin.ts, solo admin) crea o renueva las tres
+  cuentas fijas de `CUENTAS_REVISOR` (revisor.cliente, revisor.driver y revisor.restaurante, de
+  windoce.com, con «Soporte» en el nombre) con contraseña nueva de 20 caracteres al azar, que se
+  devuelve una sola vez. Repartidor: fila en `repartidores`, código, `kyc` aprobado, `repartidor_datos`
+  con antecedentes aprobados. Restaurante: «Divoox Review Kitchen (Soporte)» aprobado y cerrado
+  (`abierto = 0`, no recibe pedidos reales). Tabla nueva `revisores`: `esRevisor` (operacion.ts) la
+  consulta además de `CORREOS_REVISOR`, así el revisor recoge y entrega desde otra ciudad.
+- **Dónde:** superadmin → Resumen → «Crear las cuentas del revisor» (`SuperResumen`).
+- **Prueba:** `revisores.test.ts` (403 sin admin; se entra con la contraseña devuelta; el repartidor se
+  conecta con KYC obligatorio; renovar no duplica) y `Superadmin.test.tsx`. Comprobada en rojo
+  quitando la ruta.
+- **No tocar:** las contraseñas no se guardan en claro en ningún lado; cada clic las renueva.
+
+## C-GPS-FONDO, nota del 27 oct 2026: Android sin ACCESS_BACKGROUND_LOCATION
+
+- Google Play solo aprueba el permiso «ubicación todo el tiempo» con un video de demostración. En
+  la versión 1 el Driver de Android no lo pide: `isAndroidBackgroundLocationEnabled: false`, el
+  permiso va en `blockedPermissions`, y `ubicacionFondo.ts` solo pide el permiso de fondo en iPhone.
+  El servicio en primer plano con notificación (`foregroundService`) iniciado con la app abierta
+  sigue mandando la posición con la pantalla apagada: expo-location no exige el permiso de fondo
+  cuando hay servicio en primer plano (LocationModule.kt, `startLocationUpdatesAsync`).
+- Prueba: `repartidorFondo.test.ts` (comprobada en rojo volviendo a encender el permiso).

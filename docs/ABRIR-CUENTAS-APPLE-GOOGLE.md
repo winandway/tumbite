@@ -69,10 +69,21 @@ Plan paso a paso. 👤 = lo haces tú (identidad, contraseñas, pagos, aceptar c
 - ✅ Avisos al celular: Richard generó la llave del SDK de Firebase (26 oct); guardada en ~/.config/tumbite/firebase-fcm.json y cargada en Expo como «FCM V1 service account key» en las tres apps.
 - ✅ Mapa de Android: Richard creó la cuenta de facturación «Mi cuenta de facturación Divoox» (Chase Business Debit) y yo la vinculé al proyecto. «Maps SDK for Android» activado. Llave «Divoox Maps Android» restringida a Maps SDK for Android y a com.windoce.tumbite y com.windoce.tumbite.driver con la huella SHA-1 de firma de Google Play; guardada en ~/.config/tumbite/google-maps-android-key y en EAS como secreto GOOGLE_MAPS_ANDROID_KEY (app.config.js la lee). El mapa de celular no tiene costo por carga.
 
-## Lo que falta para enviar a revisión (26 oct 2026)
+## Lo que falta para enviar a revisión (27 oct 2026, madrugada)
 
-1. 👤 Tres cuentas para el revisor en divoox.com (cliente, repartidor, restaurante) y el correo de la de repartidor en CORREOS_REVISOR.
-2. Público objetivo 18+ y enviar Seguridad de los datos (yo, después del punto 1).
-3. 👤 Driver: video de la ubicación con la pantalla apagada, o quitarla en la versión 1.
-4. Versión de producción con países y notas (yo) → «Enviar a revisión».
-5. 🔴 Antes de que Google apruebe: la compra real de 1 dólar (circuito de pagos sin probar con dinero real).
+Google Play encadena las tres declaraciones: «Detalles de acceso» pide las cuentas del revisor;
+«Público objetivo» no se abre sin la anterior; «Seguridad de los datos» no se envía sin el público
+objetivo (quedó guardada como borrador en las tres apps). Por eso TODO espera las cuentas.
+
+1. 👤 Richard, un clic: entrar al superadmin → Resumen → «Crear las cuentas del revisor». Salen las
+   tres cuentas (revisor.cliente, revisor.driver y revisor.restaurante, de windoce.com) con sus
+   contraseñas, que se muestran UNA sola vez. Pasármelas en el chat (son contraseñas de prueba, solo
+   para el formulario de las tiendas). El repartidor ya queda verificado y sin regla de distancia; el
+   restaurante queda aprobado y cerrado. (Botón publicado el 27 oct; candado C-REVISORES.)
+2. Yo, con las contraseñas: «Detalles de acceso» en las tres apps, público objetivo 18+, enviar
+   Seguridad de los datos y «Enviar a revisión» (la versión de producción ya está en borrador con
+   Estados Unidos; el Driver con el AAB sin ubicación en segundo plano).
+3. ✅ Driver: la ubicación con la pantalla apagada ya NO pide el permiso «todo el tiempo» en Android
+   (versión 1, 27 oct): el servicio en primer plano con notificación sigue mandando la posición. No
+   hace falta el video. iPhone sigue igual.
+4. 🔴 Antes de que Google apruebe: la compra real de 1 dólar (circuito de pagos sin probar con dinero real).

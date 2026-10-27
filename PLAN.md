@@ -5,7 +5,7 @@
 - [ ] 3. Publicar el cambio por el flujo (staging → verificador → producción).
 - [ ] 4. Cliente en Google Play: acceso a la app (registro libre), público 18+, seguridad de datos enviada, enviar a revisión.
 - [ ] 5. Driver y Restaurante en Google Play: público 18+, seguridad de datos enviada, declaración de ubicación retirada; acceso del revisor queda a un clic (espera las cuentas).
-- [ ] 6. Documentar en ABRIR-CUENTAS-APPLE-GOOGLE.md y CANDADOS.md; commit.
+- [x] 6. Documentar en ABRIR-CUENTAS-APPLE-GOOGLE.md y CANDADOS.md; commit.
 
 ---
 
