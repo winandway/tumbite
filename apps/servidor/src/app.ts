@@ -38,6 +38,7 @@ import { versionMinimaApp } from './versionApp';
 import { saludDisputas } from './disputas';
 import { internacional } from './rutas/internacional';
 import { favoritos } from './rutas/favoritos';
+import { flex } from './flex';
 import { cupones } from './rutas/cupones';
 import { direcciones } from './rutas/direcciones';
 import { restauranteMas } from './rutas/restauranteMas';
@@ -424,6 +425,7 @@ app.route('/datos', kyc);
 app.route('/datos', fotos);
 app.route('/', media);
 app.route('/datos', respaldo);
+app.route('/datos/v1/flex', flex);
 
 app.onError(async (err, c) => {
   // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).

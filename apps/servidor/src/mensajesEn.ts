@@ -736,6 +736,96 @@ export const MENSAJES_EN = new Map<string, string>([
     'Esta área se pisa con otra área publicada de la ciudad. Ajusta el borde (pueden compartirlo) o deja una de las dos en borrador.',
     'This area overlaps another published area in the city. Adjust the border (they can share it) or keep one of them as a draft.',
   ],
+  // Divoox Flex · Fase 1 (27 oct 2026).
+  ['Esa empresa no existe.', 'That company doesn’t exist.'],
+  [
+    'Falta la cabecera Idempotency-Key (una clave única por operación, hasta 200 caracteres).',
+    'Missing the Idempotency-Key header (one unique key per operation, up to 200 characters).',
+  ],
+  [
+    'Esa Idempotency-Key ya se usó con otros datos. Usa una clave nueva.',
+    'That Idempotency-Key was already used with different data. Use a new key.',
+  ],
+  ['Esa operación todavía se está procesando.', 'That operation is still being processed.'],
+  ['Una clave de API no puede hacer esto.', 'An API key can’t do this.'],
+  [
+    'Confirma tu correo antes de crear una empresa (te mandamos un enlace al registrarte).',
+    'Confirm your email before creating a company (we sent you a link when you signed up).',
+  ],
+  ['Esa persona no está en el equipo.', 'That person isn’t on the team.'],
+  ['El dueño de la empresa no se cambia por aquí.', 'The company owner can’t be changed here.'],
+  ['Esa persona ya está en el equipo.', 'That person is already on the team.'],
+  ['Esa invitación no está pendiente.', 'That invitation isn’t pending.'],
+  [
+    'Esta invitación no existe o ya no sirve.',
+    'This invitation doesn’t exist or is no longer valid.',
+  ],
+  ['Esta invitación ya se usó o fue revocada.', 'This invitation was already used or revoked.'],
+  ['Esta invitación venció. Pide otra.', 'This invitation expired. Ask for a new one.'],
+  [
+    'Esta invitación es para otro correo. Entra con la cuenta invitada.',
+    'This invitation is for a different email. Sign in with the invited account.',
+  ],
+  [
+    'Confirma tu correo antes de aceptar la invitación.',
+    'Confirm your email before accepting the invitation.',
+  ],
+  ['Esta invitación ya se usó.', 'This invitation was already used.'],
+  ['Ese centro no existe.', 'That hub doesn’t exist.'],
+  [
+    'No hay una cuenta de repartidor con ese correo. La persona debe crearla primero en Divoox Driver.',
+    'There’s no driver account with that email. The person must create one first in Divoox Driver.',
+  ],
+  ['Ese conductor no está vinculado.', 'That driver isn’t linked.'],
+  [
+    'Elige al menos un permiso válido para la clave.',
+    'Choose at least one valid permission for the key.',
+  ],
+  ['Esa clave no existe o ya estaba revocada.', 'That key doesn’t exist or was already revoked.'],
+  ['Ese centro no existe en tu empresa.', 'That hub doesn’t exist in your company.'],
+  [
+    'Ya existe un envío con esa referencia externa en tu empresa.',
+    'A shipment with that external reference already exists in your company.',
+  ],
+  [
+    'El código generado chocó con otro. Vuelve a intentar.',
+    'The generated code collided with another one. Try again.',
+  ],
+  ['Ese envío no existe.', 'That shipment doesn’t exist.'],
+  ['Ese paquete no existe.', 'That package doesn’t exist.'],
+  [
+    'Ese código no corresponde a un paquete de tu empresa.',
+    'That code doesn’t match a package of your company.',
+  ],
+  ['Ese evento ya se registró.', 'That event was already recorded.'],
+  [
+    'El paquete cambió de estado mientras tanto. Vuelve a consultarlo.',
+    'The package changed status in the meantime. Check it again.',
+  ],
+  [
+    'La hoja necesita una fila de encabezados y al menos una fila de datos.',
+    'The sheet needs a header row and at least one data row.',
+  ],
+  ['Esa importación no existe.', 'That import doesn’t exist.'],
+  ['Esa importación se canceló.', 'That import was canceled.'],
+  [
+    'Solo se cancela una importación que no se ha confirmado.',
+    'Only an import that hasn’t been confirmed can be canceled.',
+  ],
+  ['Ese lote no existe.', 'That batch doesn’t exist.'],
+  ['Ese lote ya está cerrado.', 'That batch is already closed.'],
+  ['Ese paquete no está en el lote.', 'That package isn’t in the batch.'],
+  ['Hay envíos repetidos en la ruta.', 'There are repeated shipments in the route.'],
+  [
+    'Alguno de esos envíos no existe en tu empresa.',
+    'One of those shipments doesn’t exist in your company.',
+  ],
+  ['Esa ruta no existe.', 'That route doesn’t exist.'],
+  ['Solo se edita una ruta en borrador.', 'Only a draft route can be edited.'],
+  [
+    'Hay referencias externas repetidas dentro del mismo lote.',
+    'There are repeated external references within the same batch.',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
