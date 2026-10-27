@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -48,6 +48,8 @@ export function Acceso({
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
+  const [acepto, setAcepto] = useState(false);
   const v = b.valores;
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
   const turnstileSitio = useTurnstileSitio(api);
@@ -56,6 +58,10 @@ export function Acceso({
     setError(null);
     if (!pareceCorreo(v.correo)) {
       setError({ mensaje: t.correoInvalido, campo: 'correo' });
+      return;
+    }
+    if (modo === 'registro' && rolRegistro && !acepto) {
+      setError({ mensaje: t.faltaAceptar });
       return;
     }
     setEnviando(true);
@@ -184,30 +190,54 @@ export function Acceso({
         </Text>
       ) : null}
       {registro ? (
-        // Aceptación visible antes de crear la cuenta (Apple y Google la revisan).
-        <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 10 }}>
-          {t.aceptas}{' '}
-          <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
-            {t.terminos}
+        // Aceptación con casilla antes de crear la cuenta (Apple y Google la revisan).
+        <Pressable
+          onPress={() => setAcepto(!acepto)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: acepto }}
+          style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}
+        >
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 4,
+              borderWidth: 2,
+              borderColor: acepto ? C.primario : '#8A8A8A',
+              backgroundColor: acepto ? C.primario : '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 1,
+            }}
+          >
+            {acepto ? (
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>✓</Text>
+            ) : null}
+          </View>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>
+            {t.aceptas}{' '}
+            <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
+              {t.terminos}
+            </Text>
+            {rolRegistro === 'repartidor' ? (
+              <>
+                ,{' '}
+                <Text
+                  style={e.enlaceLinea}
+                  onPress={() => abrir('/driver-terms')}
+                  accessibilityRole="link"
+                >
+                  {t.terminosRepartidores}
+                </Text>
+              </>
+            ) : null}{' '}
+            {t.yLa}{' '}
+            <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">
+              {t.privacidad}
+            </Text>
+            .
           </Text>
-          {rolRegistro === 'repartidor' ? (
-            <>
-              ,{' '}
-              <Text
-                style={e.enlaceLinea}
-                onPress={() => abrir('/driver-terms')}
-                accessibilityRole="link"
-              >
-                {t.terminosRepartidores}
-              </Text>
-            </>
-          ) : null}{' '}
-          {t.yLa}{' '}
-          <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">
-            {t.privacidad}
-          </Text>
-          .
-        </Text>
+        </Pressable>
       ) : null}
       <Boton
         texto={enviando ? t.enviando : registro ? t.crearCuenta : t.entrar}

@@ -74,6 +74,27 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     expect(envios).toBe(0);
   });
 
+  it('crear cuenta pide marcar la casilla de los términos antes de enviar (27 oct 2026)', async () => {
+    let envios = 0;
+    servidor({
+      '/datos/cuentas/yo': () => new Response('{}', { status: 401 }),
+      '/datos/cuentas/registro': () => {
+        envios++;
+        return new Response('{}', { status: 400 });
+      },
+    });
+    render(<PanelApp ruta="/panel" />);
+    await userEvent.click(await screen.findByText(/Crea tu cuenta/));
+    await userEvent.type(screen.getByLabelText('Correo'), 'rosa@correo.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'una-clave-larga');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Marca la casilla');
+    expect(envios).toBe(0);
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
+    await waitFor(() => expect(envios).toBe(1));
+  });
+
   it('recupera lo escrito al volver, sin la contraseña', async () => {
     servidor({ '/datos/cuentas/yo': () => new Response('{}', { status: 401 }) });
     localStorage.setItem(

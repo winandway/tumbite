@@ -54,6 +54,7 @@ async function registrar(p: Page, idioma: 'en' | 'es') {
   await p.getByLabel(L.correo).fill(`cliente.${idioma}${Date.now().toString(36)}@hito1.test`);
   await p.getByLabel(L.celular).fill('3055550199');
   await p.getByLabel(L.clave, { exact: true }).fill(CLAVE);
+  await p.getByRole('checkbox').click(); // acepta los términos
   await p.getByRole('button', { name: L.boton }).click();
 }
 

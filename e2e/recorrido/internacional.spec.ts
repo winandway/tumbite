@@ -314,6 +314,7 @@ for (const P of PAISES) {
       await rep.getByLabel(L.correo).fill(correo('repartidor'));
       await rep.getByLabel(L.celular).fill('3000000002');
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
+      await rep.getByRole('checkbox').click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
       const conectar = () =>
         rep
@@ -379,6 +380,7 @@ for (const P of PAISES) {
       await cli.getByLabel(L.correo).fill(correo('cliente'));
       await cli.getByLabel(L.celular).fill('3000000003');
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
+      await cli.getByRole('checkbox').click(); // acepta los términos
       await cli.getByRole('button', { name: L.crearCuenta }).click();
       await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
       await cli.getByText(nombreRest).first().click();

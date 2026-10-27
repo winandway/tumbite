@@ -29,6 +29,8 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
+  const [acepto, setAcepto] = useState(false);
   const [turnstileSitio, setTurnstileSitio] = useState('');
   const v = b.valores;
   // Escudo anti-robots (F5): la clave pública la publica el servidor; vacía = apagado.
@@ -50,6 +52,10 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
     setError(null);
     if (!pareceCorreo(v.correo)) {
       setError({ mensaje: t.correoInvalido, campo: 'correo' });
+      return;
+    }
+    if (modo === 'registro' && !acepto) {
+      setError({ mensaje: t.faltaAceptar });
       return;
     }
     setEnviando(true);
@@ -137,7 +143,8 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
           </p>
         )}
         {modo === 'registro' && (
-          <p className="nota-legal">
+          <label className="nota-legal casilla-acepto">
+            <input type="checkbox" checked={acepto} onChange={(x) => setAcepto(x.target.checked)} />{' '}
             {t.aceptas}{' '}
             <a href="/terms" target="_blank" rel="noopener noreferrer">
               {t.terminos}
@@ -151,7 +158,7 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
               {t.privacidad}
             </a>
             .
-          </p>
+          </label>
         )}
         <Turnstile sitio={turnstileSitio} idioma={idioma} />
         <button type="submit" className="boton ancho" disabled={enviando}>

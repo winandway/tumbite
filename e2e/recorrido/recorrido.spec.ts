@@ -305,6 +305,7 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByLabel(L.celular).fill('3055550100');
     await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
+    await panel.getByRole('checkbox').check(); // acepta los términos
     await panel.getByRole('button', { name: L.panelRegistrar }).click();
 
     await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
@@ -548,6 +549,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByLabel(L.celular).fill('3055550102');
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await fotoAqui(rep, 'repartidor-registro');
+    await rep.getByRole('checkbox').click(); // acepta los términos
     await rep.getByRole('button', { name: L.crearCuenta }).click();
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.
@@ -600,6 +602,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
+    await cli.getByRole('checkbox').click(); // acepta los términos
     await cli.getByRole('button', { name: L.crearCuenta }).click();
     await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
