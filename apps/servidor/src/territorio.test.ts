@@ -319,6 +319,8 @@ describe('C-TERRITORIO: franquicias y managers aislados', () => {
     // Managers por correo.
     const ma = await m.cuenta('cliente', 'Manager Norte');
     const mb = await m.cuenta('cliente', 'Manager Sur');
+    await m.confirmarCorreo(ma.id);
+    await m.confirmarCorreo(mb.id);
     await m.llamar(
       'POST',
       `/datos/admin/franquicias/${A.id}/miembros`,
@@ -433,6 +435,7 @@ describe('C-TERRITORIO: franquicias y managers aislados', () => {
     const admin = await m.cuenta('admin');
     await restauranteEn(m, admin.token, EN_NORTE, 'Norte Grill');
     const dueno = await m.cuenta('cliente', 'Socio');
+    await m.confirmarCorreo(dueno.id);
     const f = await m.llamar(
       'POST',
       '/datos/admin/franquicias',

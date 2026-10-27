@@ -1482,6 +1482,14 @@ const lejos = (metros: number | null) => metros != null && metros > RADIO_LLEGAD
  * Vienen de la variable CORREOS_REVISOR o de la tabla «revisores» (el botón del superadmin).
  */
 async function esRevisor(c: Ctx, correo: string): Promise<boolean> {
+  // Solo con el correo confirmado (C-FRANQUICIA-CORREO-CONFIRMADO): las cuentas que crea el
+  // superadmin para los revisores nacen confirmadas; una cuenta registrada con un correo de la
+  // lista, sin confirmarlo, no se salta la regla de distancia.
+  const confirmada = await base(c)
+    .prepare('SELECT 1 FROM usuarios WHERE correo = ? AND correo_confirmado_en IS NOT NULL')
+    .bind(correo)
+    .first();
+  if (!confirmada) return false;
   const porVariable = (c.env.CORREOS_REVISOR ?? '')
     .split(',')
     .map((x) => x.trim().toLowerCase())

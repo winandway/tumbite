@@ -49,6 +49,12 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
         .run();
     return { token: r.datos.token as string, id: r.datos.usuario.id as string };
   }
+  /** Marca el correo de la cuenta como confirmado (como si hubiera tocado el enlace del correo). */
+  async function confirmarCorreo(id: string) {
+    await DB.prepare("UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE id = ?")
+      .bind(id)
+      .run();
+  }
   /** Petición cruda (con cabeceras propias, p. ej. la firma de un aviso de Stripe). */
   const crudo = (ruta: string, init: RequestInit) => app.request(ruta, init, { DB, ...extra });
   /** Sube una foto (bytes crudos) con la ubicación en la dirección, como lo hace la app. */
@@ -128,6 +134,7 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
     DB,
     llamar,
     cuenta,
+    confirmarCorreo,
     crudo,
     foto,
     recoger,

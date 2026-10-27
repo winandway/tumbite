@@ -209,16 +209,26 @@ async function rolEn(
   f: FilaFranquicia,
 ): Promise<Rol | null> {
   if (u.rol === 'admin') return 'admin';
-  if (
-    f.dueno_id === u.id ||
-    (f.dueno_correo !== '' && f.dueno_correo.toLowerCase() === u.correo.toLowerCase())
-  )
+  if (f.dueno_id === u.id) return 'dueno';
+  // C-FRANQUICIA-CORREO-CONFIRMADO (27 oct 2026): el acceso por correo solo vale con el correo
+  // CONFIRMADO. Antes, registrar (o cambiar la cuenta a) el correo de una franquicia sin cuenta
+  // abría su panel a cualquiera. Lo encontró la auditoría de Divoox Flex.
+  if (!(await correoConfirmado(db, u.id))) return null;
+  if (f.dueno_correo !== '' && f.dueno_correo.toLowerCase() === u.correo.toLowerCase())
     return 'dueno';
   const m = await db
     .prepare('SELECT rol FROM franquicia_miembros WHERE franquicia_id = ? AND correo = ?')
     .bind(f.id, u.correo)
     .first<{ rol: 'dueno' | 'manager' }>();
   return m?.rol ?? null;
+}
+
+async function correoConfirmado(db: D1Database, usuarioId: string): Promise<boolean> {
+  const f = await db
+    .prepare('SELECT correo_confirmado_en FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ correo_confirmado_en: string | null }>();
+  return Boolean(f?.correo_confirmado_en);
 }
 
 // ───────────────────────── Superadmin ─────────────────────────
@@ -300,8 +310,12 @@ const esquemaFranquicia = z.object({
 
 async function enlazarDueno(db: D1Database, correo: string): Promise<string | null> {
   if (!correo) return null;
+  // Solo se enlaza una cuenta con el correo CONFIRMADO (C-FRANQUICIA-CORREO-CONFIRMADO); si no,
+  // queda por correo y entra cuando lo confirme.
   const u = await db
-    .prepare('SELECT id FROM usuarios WHERE correo = ? AND activo = 1')
+    .prepare(
+      'SELECT id FROM usuarios WHERE correo = ? AND activo = 1 AND correo_confirmado_en IS NOT NULL',
+    )
     .bind(correo)
     .first<{ id: string }>();
   return u?.id ?? null;
@@ -537,12 +551,14 @@ franquicias.delete('/admin/franquicias/:id/miembros/:correo', async (c) => {
 /** Las franquicias a las que entra esta cuenta (dueño o manager), con su dirección. */
 franquicias.get('/mi-franquicia', async (c) => {
   const u = exigir(c);
+  // Por correo solo entra una cuenta con el correo confirmado (C-FRANQUICIA-CORREO-CONFIRMADO).
+  const confirmado = await correoConfirmado(base(c), u.id);
   const { results } = await base(c)
     .prepare(
-      `${SELECT_FRANQUICIA} WHERE f.dueno_id = ? OR (f.dueno_correo = ? AND f.dueno_correo <> '')
-       OR f.id IN (SELECT franquicia_id FROM franquicia_miembros WHERE correo = ?) ORDER BY z.nombre, f.nombre`,
+      `${SELECT_FRANQUICIA} WHERE f.dueno_id = ?1 OR (?4 = 1 AND ((f.dueno_correo = ?2 AND f.dueno_correo <> '')
+       OR f.id IN (SELECT franquicia_id FROM franquicia_miembros WHERE correo = ?3))) ORDER BY z.nombre, f.nombre`,
     )
-    .bind(u.id, u.correo, u.correo)
+    .bind(u.id, u.correo, u.correo, confirmado ? 1 : 0)
     .all<FilaFranquicia>();
   const lista = results.map((f) => ({
     nombre: f.nombre || f.zona_nombre,

@@ -1167,7 +1167,8 @@ superadmin.post('/admin/revisores', async (c) => {
     lote.push(
       db
         .prepare(
-          'INSERT INTO usuarios (id, correo, nombre, rol, idioma, clave_hash) VALUES (?, ?, ?, ?, ?, ?)',
+          // Las crea el superadmin: nacen con el correo confirmado (esRevisor lo exige).
+          "INSERT INTO usuarios (id, correo, nombre, rol, idioma, clave_hash, correo_confirmado_en) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))",
         )
         .bind(id, r.correo, r.nombre, r.rol, 'en', await hashClave(clave)),
     );

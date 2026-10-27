@@ -53,6 +53,14 @@ describe('cuentas del revisor de las tiendas (C-REVISORES)', () => {
     expect(
       await m.DB.prepare('SELECT 1 FROM revisores WHERE correo = ?').bind(driver.correo).first(),
     ).toBeTruthy();
+    // Las cuentas que crea el superadmin nacen con el correo confirmado (esRevisor lo exige).
+    expect(
+      await m.DB.prepare(
+        'SELECT 1 FROM usuarios WHERE correo = ? AND correo_confirmado_en IS NOT NULL',
+      )
+        .bind(driver.correo)
+        .first(),
+    ).toBeTruthy();
     const rest = await m.DB.prepare(
       "SELECT r.estado, r.abierto FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo = 'revisor.restaurante@windoce.com'",
     ).first<{ estado: string; abierto: number }>();

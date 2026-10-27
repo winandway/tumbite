@@ -728,6 +728,7 @@ describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-E
     const fila = await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
       .bind(rep.id)
       .first<{ correo: string }>();
+    await m.confirmarCorreo(rep.id);
     (m.extra as Record<string, unknown>).CORREOS_REVISOR = `otro@ejemplo.com, ${fila!.correo}`;
     const lejos = { lat: 37.33, lng: -122.03 };
     expect(
