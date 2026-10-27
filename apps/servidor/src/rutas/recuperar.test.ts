@@ -152,6 +152,17 @@ describe('pie de los correos (27 oct 2026)', () => {
     expect(en).toContain('>Follow my order</a>');
     expect(en).toContain('<td align="right"');
     expect(en).toContain('$12.00');
+    // Enlace al final de una frase o en la línea de abajo: también botón, con su nombre e idioma.
+    const ticket = aHtml(
+      'Hola, Sam.\n\nTu conversación está aquí (guarda este enlace):\nhttps://divoox.com/t/abc\n\nResponder en el superadmin: https://divoox.com/panel/control-x/tickets/1',
+    );
+    expect(ticket).toContain('>Ver la conversación</a>');
+    expect(ticket).toContain('>Responder en el panel</a>');
+    expect(ticket).toContain('¿Necesitas ayuda?');
+    expect(aHtml('Revísalo en el panel:\n\nhttps://divoox.com/panel/restaurants')).toContain(
+      '>Abrir mi panel</a>',
+    );
+    expect(aHtml('x', 'en')).toContain('Need help?');
     // Nada de HTML colado desde los datos.
     expect(aHtml('Hola <b>x</b>')).not.toContain('<b>');
   });

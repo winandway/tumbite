@@ -1090,6 +1090,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas:** `recuperar.test.ts` (pie sin tumbite.com, remitente por sitio, botones y tabla,
   sin HTML colado) y `tickets.test.ts`. Comprobadas en rojo.
 - **No tocar:** `DOMINIO_CORREO_PRUEBAS` mientras divoox.com no esté conectado al sitio de pruebas.
+- **Revisión a fondo (27 oct 2026, pedido de Richard):** se sacaron los 28 tipos de correo que manda
+  el sistema (todos pasan por `aHtml`; ninguno trae HTML propio) y se dibujaron en
+  `docs/capturas/correos/`. Arreglos: el enlace al final de una frase o en la línea de abajo también
+  es botón; botones «Ver la conversación» y «Responder en el panel»; idioma de botones y pie por
+  `correo.idioma` o, si no viene, por `pareceEspanol` (acentos y palabras típicas), no por tres
+  palabras sueltas. Para volver a revisarlos: correr las pruebas del servidor con una variable que
+  vuelque cada envío a archivos y dibujarlos (procedimiento en este mismo candado).
 - **De paso, el recorrido de staging:** la bandeja de dinero pagina 50 casos (los más viejos primero)
   y el inicio del cliente no muestra todos los restaurantes; staging acumulaba casos y restaurantes
   de corridas anteriores. El recorrido consulta el caso por su clave, lo resuelve al final y pausa

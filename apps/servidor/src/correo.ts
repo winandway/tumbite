@@ -50,6 +50,8 @@ export type Correo = {
   texto: string;
   html?: string;
   responderA?: string;
+  /** Idioma de los botones y del pie. Sin él se deduce del texto. */
+  idioma?: 'es' | 'en';
 };
 
 export type ResultadoCorreo =
@@ -86,7 +88,7 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     to: [{ address: correo.para }],
     subject: correo.asunto,
     text: correo.texto,
-    html: correo.html ?? aHtml(correo.texto),
+    html: correo.html ?? aHtml(correo.texto, correo.idioma),
     ...(correo.responderA ? { reply_to: { address: correo.responderA } } : {}),
   };
   let res: Response;
@@ -139,9 +141,16 @@ function etiquetaBoton(url: string, en: boolean): string {
   if (ruta.includes('/reset-password'))
     return en ? 'Reset my password' : 'Restablecer mi contraseña';
   if (ruta.includes('/app/order/')) return en ? 'Follow my order' : 'Seguir mi pedido';
+  if (/^\/t\//.test(ruta)) return en ? 'Open the conversation' : 'Ver la conversación';
+  if (/\/tickets\//.test(ruta)) return en ? 'Reply in the panel' : 'Responder en el panel';
   if (ruta.includes('/panel')) return en ? 'Open my panel' : 'Abrir mi panel';
   if (ruta.includes('/driver')) return en ? 'Open Divoox Driver' : 'Abrir Divoox Driver';
   return en ? 'Open Divoox' : 'Abrir Divoox';
+}
+
+/** Sin idioma explícito: español si el texto tiene acentos, eñes o palabras típicas del español. */
+function pareceEspanol(texto: string): boolean {
+  return /[áéíóúñ¿¡]|\b(el|los|las|del|tu|tus|que|para|con|una|está|por)\b/i.test(texto);
 }
 
 /** Un párrafo de líneas «Etiqueta: valor» (detalle del pedido) se pinta como tabla limpia. */
@@ -155,17 +164,19 @@ function esDetalle(lineas: string[]): boolean {
  * botón no se ve), los detalles en tabla y un pie con la empresa y el soporte. Sin franjas gruesas de
  * color ni adornos: borde fino y sombra suave, como en la web.
  */
-export function aHtml(texto: string): string {
+export function aHtml(texto: string, idioma?: 'es' | 'en'): string {
   const limpio = texto.trim();
-  const en = !/\b(Hola|Toca|Tu pedido|Recibimos|Bienvenid[oa])\b/.test(limpio);
+  const en = idioma ? idioma === 'en' : !pareceEspanol(limpio);
+  const boton = (crudo: string) => {
+    const url = escapar(crudo);
+    return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:20px 0 8px"><tr><td style="background:#F20D20;border-radius:10px"><a href="${url}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;font-family:Arial,Helvetica,sans-serif">${etiquetaBoton(crudo, en)}</a></td></tr></table><p style="margin:0 0 18px;font-size:12px;line-height:1.5;color:#666B73;word-break:break-all">${url}</p>`;
+  };
+  const parrafo = (lineas: string[]) =>
+    lineas.length
+      ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#101010">${lineas.map(escapar).join('<br>')}</p>`
+      : '';
   const parrafos = limpio.split(/\n{2,}/).map((p) => {
-    const bruto = p.trim();
-    const m = bruto.match(/^(https?:\/\/\S+)$/);
-    if (m?.[1]) {
-      const url = escapar(m[1]);
-      return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:26px 0 8px"><tr><td style="background:#F20D20;border-radius:10px"><a href="${url}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;font-family:Arial,Helvetica,sans-serif">${etiquetaBoton(m[1], en)}</a></td></tr></table><p style="margin:0 0 18px;font-size:12px;line-height:1.5;color:#666B73;word-break:break-all">${url}</p>`;
-    }
-    const lineas = bruto.split('\n');
+    const lineas = p.trim().split('\n');
     if (esDetalle(lineas))
       return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:6px 0 18px;border-collapse:collapse;width:100%">${lineas
         .map((l) => {
@@ -176,7 +187,23 @@ export function aHtml(texto: string): string {
           return `<tr><td style="padding:8px 0;border-bottom:1px solid #ECECEC;color:#666B73;font-size:15px${total ? ';font-weight:700;color:#101010' : ''}">${k}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #ECECEC;font-size:15px${total ? ';font-weight:700' : ''}">${v}</td></tr>`;
         })
         .join('')}</table>`;
-    return `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#101010">${escapar(bruto).replace(/\n/g, '<br>')}</p>`;
+    // Cada enlace, esté solo en su línea o al final de una frase, se vuelve botón con su nombre;
+    // el texto que lo acompaña queda como párrafo encima.
+    let html = '';
+    let texto: string[] = [];
+    for (const linea of lineas) {
+      const urls = linea.match(/https?:\/\/\S+/g);
+      if (!urls) {
+        texto.push(linea);
+        continue;
+      }
+      const resto = linea.replace(/https?:\/\/\S+/g, '').trim();
+      if (resto) texto.push(resto);
+      html += parrafo(texto);
+      texto = [];
+      for (const u of urls) html += boton(u.replace(/[).,;]+$/, ''));
+    }
+    return html + parrafo(texto);
   });
   const pie = en
     ? `Need help? <a href="https://${DOMINIO_PUBLICO}/support" style="color:#101010">${DOMINIO_PUBLICO}/support</a>`
