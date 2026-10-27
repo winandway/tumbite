@@ -454,7 +454,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
       ) : null}
       <h2>{t.listaParadas}</h2>
       {reordenable ? <p className="pista">{t.ordenAyuda}</p> : null}
-      <ol className="flex-paradas">
+      <ul className="flex-paradas">
         {r.paradas.map((p, i) => (
           <li key={p.id}>
             <strong>
@@ -501,7 +501,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
             </ul>
           </li>
         ))}
-      </ol>
+      </ul>
       <h2>{t.incidencias}</h2>
       {d.incidencias.length === 0 ? (
         <p className="pista">{t.sinIncidencias}</p>

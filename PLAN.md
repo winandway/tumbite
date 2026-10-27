@@ -11,5 +11,5 @@ Rama `fase-flex-2` sobre `fase-flex-1` (c773e8c52). Sin producción, sin pagos, 
 - [x] Paso 7: App Divoox Driver — sección «Mi ruta» (rutas y ofertas, detalle, aceptar/rechazar, llegada al centro, escaneo QR + Code 128, cargados, paradas, mapa, detalle de parada con navegación, entregar con foto/PIN/firma/sin contacto, incidencia, devoluciones, resumen final), cola sin conexión con indicador de pendientes y errores, es/en.
 - [x] Paso 8: Panel empresarial — asignar/ofrecer, progreso y paradas, incidencias, recepción de devoluciones, resumen, historial de custodia, filtros por centro, conductor, fecha y estado, configuración de pruebas, PIN del destinatario, corrección de coordenadas; seguimiento por consultas controladas. Pruebas de interfaz.
 - [x] Paso 9: API v1 y Docs — referencia técnica ampliada; guías públicas es/en (rutas para empresas y «Mi ruta» para conductores).
-- [ ] Paso 10: `npm run verify` completo, typecheck de las apps, recorrido en pantalla del panel y de la app web del conductor.
-- [ ] Paso 11: `docs/DIVOOX-FLEX-FASE-2-RESULTADOS.md`, `CANDADOS.md`, `PENDIENTES.md`; commit; push de la rama (solo staging); informe y detenerse.
+- [x] Paso 10: `npm run verify` completo, typecheck de las apps, recorrido en pantalla del panel y de la app web del conductor.
+- [x] Paso 11: `docs/DIVOOX-FLEX-FASE-2-RESULTADOS.md`, `CANDADOS.md`, `PENDIENTES.md`; commit; push de la rama (solo staging); informe y detenerse.

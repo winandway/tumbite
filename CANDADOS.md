@@ -1154,3 +1154,40 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Arreglo mínimo: `rolEn`, `/mi-franquicia` y `enlazarDueno` en `rutas/franquicias.ts` solo aceptan el correo si `usuarios.correo_confirmado_en` no es nulo (el acceso por `dueno_id` sigue igual); `esRevisor` en `rutas/operacion.ts` exige lo mismo; las cuentas que crea el superadmin para los revisores nacen confirmadas (`rutas/superadmin.ts`).
 - Candado: `rutas/franquicias.test.ts` («registrar una cuenta con el correo del dueño… NO abre la franquicia»), comprobado en rojo sin la corrección el 27 oct 2026; `revisores.test.ts` (cuentas confirmadas). Las pruebas que asignan por correo ahora confirman con `m.confirmarCorreo(id)`.
 - No tocar: la condición `correo_confirmado_en IS NOT NULL`.
+
+## C-FLEX-OCUPACION · Una ruta Flex = UNA sola ocupación del conductor (Fase 2, 27 oct 2026)
+
+- Qué: `conductor_ocupacion` admite `tipo = 'ruta_flex'` con `ruta_id`. La ocupación la toman y la sueltan disparadores de `rutas_flex` (`apps/servidor/src/esquemaFlex.ts`: `rutas_flex_conductor_libre`, `rutas_flex_ocupa_conductor`, `rutas_flex_libera_conductor`, `rutas_flex_conductor_fijo`, `rutas_flex_transicion_valida`) en la MISMA sentencia que cambia el estado: dos empresas que asignan al mismo conductor a la vez no ganan las dos. Los disparadores de Comida ya rechazan un pedido si hay una ocupación que no es de comida: no se tocaron.
+- Migración: `rehacerFlex` rehace `conductor_ocupacion` y `rutas_flex` si vienen de antes, SIN perder filas (patrón de `rehacerFranquicias`): suelta primero los disparadores y vistas que las usan (y las vistas que dependen de esas vistas) y `asegurarFase3` los vuelve a crear justo después.
+- Ojo, lo que casi rompe la publicación: el índice único `conductor_ocupacion_ruta` NO va en `schema.sql` (schema.sql corre en cada publicación ANTES del servidor y la tabla vieja no tiene `ruta_id`). Lo crea `rehacerFlex` en cada arranque.
+- Cada lote de una acción de ruta pone `ultima_clave` en el cambio de estado y todo lo demás del lote lleva `guardaClave`: si otra petición ganó la carrera, el lote perdedor no mueve ni reserva nada.
+- Candados: `esquemaFlex.test.ts` (definiciones iguales a schema.sql, migración con filas, schema.sql reaplicado sobre una base vieja: comprobado en rojo devolviendo el índice a schema.sql) y `flex/flexRutas.test.ts` («dos empresas asignan al mismo conductor a la vez»: comprobado en rojo quitando el disparador de ocupación).
+
+## C-FLEX-ESCANEO · La carga se hace escaneando, sin duplicar
+
+- Qué: `POST /datos/v1/flex/conductor/rutas/{r}/escanear` acepta el QR `dvx:…`, el Code 128 (12 letras) o el código de seguimiento (`leerCodigoEscaneado`). Solo paquetes ACTIVOS de esa ruta (`ruta_paquetes`, un paquete en una sola ruta activa por `ruta_paquetes_activo`). Lo ajeno responde 404 sin pistas. Repetir responde `yaCargado` y el evento lleva idempotencia `escaneo:<ruta>:<paquete>`. Sin todo cargado (o marcado faltante) no se sale.
+- Candado: `flexRutas.test.ts` («escaneo repetido no duplica…»). La app lee `qr` y `code128` (`apps/repartidor/src/flex/MiRuta.tsx`).
+
+## C-FLEX-ENTREGA · Sin las pruebas exigidas no hay entrega
+
+- Qué: `configEntrega(empresa, envío)` + `pruebasFaltantes` (`packages/compartido/src/flex.ts`): foto, PIN, firma; «sin contacto» reemplaza PIN y firma pero exige foto. Fotos y firmas van al almacén privado (`flex/<empresa>/<ruta>/<parada>/…`), en la base solo la referencia (`flex_pruebas`); se sirven solo a la empresa dueña con `cache-control: private, no-store`. El PIN se genera una vez, se guarda hash con sal (`flex_pines`) y se verifica en el servidor (5 intentos). La prueba tiene que ser de ESA parada, ruta y conductor.
+- Candado: `flexRutas.test.ts` («sin la foto exigida no se entrega», «PIN…», «firma… sin contacto»). Visto en pantalla el 27 oct 2026: «El servidor no aceptó esta acción: Para entregar falta: la foto.»
+
+## C-FLEX-DEVOLUCIONES · La devolución se completa solo con la recepción del centro
+
+- Qué: incidencia con motivo y próxima acción (nunca marca entregado); reintento solo si la empresa lo permite o lo autorizó; lo no entregado pasa a `en_devolucion`; el conductor lo escanea al dejarlo (`traspaso_centro`); una PERSONA con `devoluciones.recibir` confirma (`registrado_centro` o `devuelto`). El cierre exige todo final o traspasado, libera la ocupación una sola vez y guarda el resumen; las recepciones posteriores lo ponen al día.
+- Candado: `flexRutas.test.ts` («fallida → reintento… devolución… cierre y liberación»), ruta de 40 paquetes de punta a punta (5 eventos por paquete exactos, una sola ocupación).
+
+## C-FLEX-COLA · La cola sin conexión de Flex no duplica ni da por hecho lo no confirmado
+
+- Qué: `crearColaFlex` (`packages/compartido/src/flex.ts`): orden de captura, se detiene sin red, lo rechazado queda en «error» visible hasta descartarlo, un solo sincronizador a la vez; cada acción viaja con su id como `Idempotency-Key` y sus fotos con `<id>:foto`. En la app, «N acciones guardadas esperan señal».
+- Candado: `packages/compartido/src/flex.test.ts` («la cola sin conexión sincroniza en orden…»).
+
+## C-FLEX-PANEL-RUTAS · Panel de rutas operativas
+
+- Qué: `apps/panel/src/panel/flex/PantallasRutas.tsx`: lista con filtros, detalle con asignar/ofrecer (según el vínculo del conductor), progreso en verde, paradas reordenables, incidencias con autorizar reintento, pruebas, resumen, seguimiento cada 20 s solo con la ruta activa; cancelar y retirar dentro de los tres puntos; devoluciones e incidencias; pruebas exigidas en el perfil; PIN y corrección de coordenadas en el envío. Formularios con `useBorrador`.
+- Candado: `PantallasRutas.test.tsx`.
+
+## Mensajes con datos variables (27 oct 2026)
+
+- `MENSAJES_EN_PATRONES` en `apps/servidor/src/mensajesEn.ts` traduce mensajes con cantidades o códigos conservando los datos. Candado: `mensajesEn.test.ts`.

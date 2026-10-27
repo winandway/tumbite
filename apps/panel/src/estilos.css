@@ -4275,3 +4275,7 @@ button {
 .flex-herramientas {
   margin: 10px 0;
 }
+.flex-paradas {
+  list-style: none;
+  padding-left: 0;
+}
