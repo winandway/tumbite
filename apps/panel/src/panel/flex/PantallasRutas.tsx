@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorApi } from '@tumbite/compartido';
+import { ErrorApi, almacenNavegador, useBorrador } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
@@ -611,8 +611,16 @@ type Devolucion = {
 export function Devoluciones({ ctx }: { ctx: Contexto }) {
   const { t, empresa } = ctx;
   const [lista, setLista] = useState<Devolucion[] | null>(null);
-  const [codigo, setCodigo] = useState('');
-  const [destino, setDestino] = useState<'centro' | 'remitente'>('centro');
+  // Lo escrito se guarda solo (regla: ningún formulario pierde lo escrito).
+  const b = useBorrador({
+    formulario: `flex-devolucion-${empresa.id}`,
+    inicial: { codigo: '', destino: 'centro' },
+    almacen: almacenNavegador,
+  });
+  const codigo = b.valores.codigo;
+  const destino = b.valores.destino as 'centro' | 'remitente';
+  const setCodigo = (v: string) => b.cambiar('codigo', v);
+  const setDestino = (v: 'centro' | 'remitente') => b.cambiar('destino', v);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const puede = ctx.permisos.includes('devoluciones.recibir');
@@ -631,7 +639,7 @@ export function Devoluciones({ ctx }: { ctx: Contexto }) {
         destino: dest,
       });
       setOk(`${c} · ${t.recibido}`);
-      setCodigo('');
+      await b.limpiar();
       cargar();
     } catch (x) {
       setError(mensajeDe(x));
@@ -822,8 +830,14 @@ export function HerramientasEnvio({
 }) {
   const { t, empresa } = ctx;
   const [pin, setPin] = useState<string | null>(null);
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
+  const b = useBorrador({
+    formulario: `flex-ubicacion-${envioId}`,
+    inicial: { lat: '', lng: '' },
+    almacen: almacenNavegador,
+  });
+  const { lat, lng } = b.valores;
+  const setLat = (v: string) => b.cambiar('lat', v);
+  const setLng = (v: string) => b.cambiar('lng', v);
   const [error, setError] = useState('');
   if (!ctx.permisos.includes('envios.crear')) return null;
   async function generar() {

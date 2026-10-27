@@ -949,7 +949,7 @@ function DetalleParada({
               accessibilityState={{ checked: sinContacto }}
               style={{ flexDirection: 'row', gap: 8 }}
             >
-              <Text style={{ fontWeight: '900' }}>{sinContacto ? '☑' : '☐'}</Text>
+              <Marca marcada={sinContacto} cuadrada />
               <Text style={{ flex: 1 }}>{t.sinContacto}</Text>
             </Pressable>
           ) : null}
@@ -977,7 +977,7 @@ function DetalleParada({
               accessibilityState={{ checked: motivo === m }}
               style={{ flexDirection: 'row', gap: 8 }}
             >
-              <Text>{motivo === m ? '◉' : '○'}</Text>
+              <Marca marcada={motivo === m} />
               <Text>{t.motivos[m]}</Text>
             </Pressable>
           ))}
@@ -1005,7 +1005,7 @@ function DetalleParada({
               accessibilityState={{ checked: proxima === a }}
               style={{ flexDirection: 'row', gap: 8 }}
             >
-              <Text>{proxima === a ? '◉' : '○'}</Text>
+              <Marca marcada={proxima === a} />
               <Text>{t.acciones[a]}</Text>
             </Pressable>
           ))}
@@ -1014,6 +1014,34 @@ function DetalleParada({
             ←
           </Text>
         </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Casilla o círculo de selección dibujados (sin emojis ni símbolos: candado C-SIN-EMOJIS). */
+function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) {
+  return (
+    <View
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: cuadrada ? 4 : 10,
+        borderWidth: 2,
+        borderColor: marcada ? C.primario : '#8A8A8A',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {marcada ? (
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: cuadrada ? 2 : 5,
+            backgroundColor: C.primario,
+          }}
+        />
       ) : null}
     </View>
   );
