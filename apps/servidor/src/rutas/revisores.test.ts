@@ -26,8 +26,9 @@ describe('cuentas del revisor de las tiendas (C-REVISORES)', () => {
     }
   });
 
-  it('el repartidor revisor se conecta con KYC obligatorio y el restaurante queda aprobado y cerrado', async () => {
-    const m = mundo({ KYC_OBLIGATORIO: '1' });
+  it('el repartidor revisor se conecta con KYC obligatorio y sin selfie de control; el restaurante queda aprobado y cerrado', async () => {
+    // SELFIE_CONTROL_SIEMPRE = 1: a cualquier otro repartidor se le pediría la selfie al conectarse.
+    const m = mundo({ KYC_OBLIGATORIO: '1', SELFIE_CONTROL_SIEMPRE: '1' });
     const admin = await m.cuenta('admin');
     const r = await m.llamar('POST', '/datos/admin/revisores', {}, admin.token);
     const driver = r.datos.cuentas.find((x: { rol: string }) => x.rol === 'repartidor');
@@ -42,6 +43,13 @@ describe('cuentas del revisor de las tiendas (C-REVISORES)', () => {
       e.datos.token,
     );
     expect(con.estado).toBe(200);
+    expect(
+      await m.DB.prepare(
+        'SELECT 1 FROM selfies_control WHERE usuario_id = (SELECT id FROM usuarios WHERE correo = ?)',
+      )
+        .bind(driver.correo)
+        .first(),
+    ).toBeNull();
     expect(
       await m.DB.prepare('SELECT 1 FROM revisores WHERE correo = ?').bind(driver.correo).first(),
     ).toBeTruthy();

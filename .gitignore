@@ -52,3 +52,6 @@ identidad-divoox/fotos-marketing/Entrega Divoox en restaurante moderno.png
 identidad-divoox/fotos-marketing/Todo lo que necesitas, a un clic.png
 capturas-tiendas-con-titulo
 google-services.json
+
+# También como enlace simbólico (27 oct 2026: un árbol de trabajo coló enlaces node_modules en un commit)
+node_modules
