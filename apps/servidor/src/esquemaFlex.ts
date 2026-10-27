@@ -202,5 +202,7 @@ export async function rehacerFlex(db: D1Database): Promise<{ rutas: boolean; ocu
     console.warn('esquema: conductor_ocupacion rehecha con el tipo ruta_flex (Flex, Fase 2)');
     hecho.ocupacion = true;
   }
+  // Siempre (barato, idempotente): el índice único de la ocupación por ruta. No va en schema.sql.
+  await db.batch(INDICES_OCUPACION.map((sql) => db.prepare(sql)));
   return hecho;
 }

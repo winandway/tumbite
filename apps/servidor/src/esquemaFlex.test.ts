@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { reiniciarEsquema } from './esquema';
@@ -90,5 +91,27 @@ describe('esquema de Flex, Fase 2 (C-FLEX-OCUPACION)', () => {
         .bind(rep.id)
         .run(),
     ).rejects.toThrow();
+  });
+
+  it('schema.sql se puede volver a aplicar sobre una base de la Fase 1 sin fallar (la publicación no se frena)', () => {
+    const viejo = new DatabaseSync(':memory:');
+    // La base como estaba: schema.sql con la ocupación y la ruta de antes.
+    const antes = esquema
+      .replace(
+        bloque('conductor_ocupacion'),
+        `CREATE TABLE IF NOT EXISTS conductor_ocupacion (
+  conductor_id TEXT PRIMARY KEY, tipo TEXT NOT NULL CHECK (tipo IN ('comida', 'operacion')),
+  operacion_id TEXT, pedidos INTEGER NOT NULL DEFAULT 0, desde TEXT NOT NULL DEFAULT (datetime('now')))`,
+      )
+      .replace(
+        bloque('rutas_flex'),
+        `CREATE TABLE IF NOT EXISTS rutas_flex (
+  id TEXT PRIMARY KEY, empresa_id TEXT NOT NULL, centro_id TEXT, lote_id TEXT, nombre TEXT NOT NULL DEFAULT '',
+  conductor_id TEXT, vehiculo_id TEXT, estado TEXT NOT NULL DEFAULT 'borrador', bloque_desde TEXT, bloque_hasta TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')), actualizado_en TEXT NOT NULL DEFAULT (datetime('now')))`,
+      );
+    viejo.exec(antes);
+    // Lo que hace la plataforma en cada publicación: schema.sql otra vez, entero.
+    expect(() => viejo.exec(esquema)).not.toThrow();
   });
 });

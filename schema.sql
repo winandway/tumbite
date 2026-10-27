@@ -1933,7 +1933,8 @@ CREATE TABLE IF NOT EXISTS conductor_ocupacion (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_operacion ON conductor_ocupacion(operacion_id) WHERE operacion_id IS NOT NULL;
 -- Divoox Flex · Fase 2: una ruta (con todos sus paquetes) ocupa al conductor como UNA sola operación.
-CREATE UNIQUE INDEX IF NOT EXISTS conductor_ocupacion_ruta ON conductor_ocupacion(ruta_id) WHERE ruta_id IS NOT NULL;
+-- El índice único por ruta_id lo crea el servidor al arrancar (esquemaFlex.ts): aquí rompería la
+-- publicación en una base donde la tabla todavía no tiene la columna (schema.sql corre antes).
 
 -- ───────────── Fase 2 · Modelo internacional (18 oct 2026) ─────────────
 -- Libro mayor por país y moneda. Cada fila es un movimiento de UN bolsillo; nunca se borra ni se
