@@ -1037,3 +1037,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - El WhatsApp de ventas (variable `WHATSAPP_VENTAS` en el sitio, leída por `/datos/publico`) aparece SOLO después de enviar el formulario y SOLO si la persona marcó capital de 50 000 USD o más (`FormFranquicia.tsx`). Cada solicitud llega igual como caso de franquicia al panel.
 - Prueba: `Inversionistas.test.tsx` (comprobada en rojo dejando el botón para cualquier capital).
 - Pendiente de Richard: el número de WhatsApp de ventas. Sin él, la página funciona y solo falta el botón final.
+
+## C-DOMINIO-WEB-APPS (27 oct 2026)
+
+- **Qué se rompió:** en divoox.com/app, /driver y /restaurante, crear cuenta y entrar daban «Sin conexión». La web le hablaba a tumbite.com (que redirige a divoox.com) y el navegador bloqueaba la petición.
+- **Causa:** `entornoDeHost` (packages/compartido/src/entornos.ts) no conocía divoox.com, así que la web caía en la dirección fija de construcción (tumbite.com).
+- **Arreglo:** divoox.com y www.divoox.com son producción; `SERVIDOR_PRODUCCION` y el `URL_API` por defecto de `build:*-web` pasan a https://divoox.com. Commit b03c867 (producción, verificador «despues» en verde).
+- **Candado:** entornos.test.ts exige que la web servida desde divoox.com le hable a divoox.com (comprobado en rojo).
+- **Junto con esto:** casilla «Acepto los términos» obligatoria al crear cuenta (apps y panel; solo el cuadrito marca), aviso si el correo no es un correo, y cada pantalla dice qué cuenta es (cliente, repartidor, restaurante). Pruebas en PanelApp.test.tsx e idiomas.test.ts, y el recorrido de staging marca la casilla.
+- **Cómo se comprueba:** abrir https://divoox.com/app/, «Crea tu cuenta»: debe decir «Cuenta de cliente», tener la casilla y crear la cuenta sin «Sin conexión».
