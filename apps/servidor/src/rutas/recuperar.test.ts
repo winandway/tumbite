@@ -123,7 +123,25 @@ describe('pie de los correos (27 oct 2026)', () => {
   it('el pie dice divoox.com, nunca el dominio del remitente', async () => {
     const { aHtml } = await import('../correo');
     const html = aHtml('Hola.');
-    expect(html).toContain('Divoox · divoox.com');
+    expect(html).toContain('Windoce LLC');
+    expect(html).toContain('divoox.com/marca/divoox-logo-correo.png');
     expect(html).not.toContain('tumbite.com');
+  });
+
+  it('los enlaces salen como botón con etiqueta en el idioma del correo y los detalles como tabla', async () => {
+    const { aHtml } = await import('../correo');
+    const es = aHtml(
+      'Hola, Ana.\n\nToca el enlace:\n\nhttps://divoox.com/es/confirm-email?token=abc',
+    );
+    expect(es).toContain('>Confirmar mi correo</a>');
+    expect(es).toContain('https://divoox.com/es/confirm-email?token=abc');
+    const en = aHtml(
+      'Hi Ana,\n\nSubtotal: $10.00\nDelivery: $2.00\nTotal: $12.00\n\nFollow it live:\n\nhttps://divoox.com/app/order/1',
+    );
+    expect(en).toContain('>Follow my order</a>');
+    expect(en).toContain('<td align="right"');
+    expect(en).toContain('$12.00');
+    // Nada de HTML colado desde los datos.
+    expect(aHtml('Hola <b>x</b>')).not.toContain('<b>');
   });
 });
