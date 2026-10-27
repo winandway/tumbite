@@ -49,6 +49,7 @@ export default tseslint.config(
     files: [
       'scripts/marca/generar-identidad.mjs',
       'scripts/marca/fichas-tiendas.mjs',
+      'scripts/marca/graficos-google-play.mjs',
       'scripts/tiendas/*.mjs',
     ],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },
