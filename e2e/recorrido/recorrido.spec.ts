@@ -627,6 +627,12 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-buscar');
     await cli.goto('/app/notifications');
     await expect(cli.getByTestId('avisos-vacio')).toBeVisible({ timeout: 20_000 });
+    // Staging acumula un restaurante por corrida y el inicio no los muestra todos: los de corridas
+    // viejas se pausan (nunca los de la corrida en curso, que corre en los dos idiomas a la vez).
+    if (STAGING)
+      sql(
+        "UPDATE restaurantes SET estado = 'pausado', abierto = 0 WHERE estado = 'aprobado' AND (nombre LIKE 'Pizza Bella %' OR nombre LIKE 'Bella Pizza %') AND creado_en < datetime('now', '-30 minutes')",
+      );
     await cli.goto('/app/');
     await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
     // «Comida» abre la lista de restaurantes (diseño aprobado del 14 oct) y de ahí, el menú.
