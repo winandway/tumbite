@@ -31,6 +31,7 @@ const es = {
   cargando: 'Cargando…',
   soloEquipo: 'Este panel es para restaurantes. Tus pedidos están en la app de Divoox.',
   irApp: 'Ir a mis pedidos',
+  flex: 'Divoox Flex (empresas)',
   menuRest: {
     inicio: 'Inicio',
     restaurant: 'Mi restaurante',
@@ -98,6 +99,7 @@ const en: T = {
   cargando: 'Loading…',
   soloEquipo: 'This dashboard is for restaurants. Your orders are in the Divoox app.',
   irApp: 'Go to my orders',
+  flex: 'Divoox Flex (businesses)',
   menuRest: {
     inicio: 'Home',
     restaurant: 'My restaurant',

@@ -27,6 +27,7 @@ import { Pedidos } from './Pedidos';
 import { AdminEspera, AdminZonas } from './AdminZonas';
 import { SuperFranquicias, SuperResumen, SuperTickets } from './Superadmin';
 import { PanelFranquicia } from './PanelFranquicia';
+import { PanelEmpresa } from './flex/PanelEmpresa';
 import { TableroRestaurante } from './TableroRestaurante';
 import { MiEmpresa } from './MiEmpresa';
 import { SuperKyc } from './SuperKyc';
@@ -159,6 +160,8 @@ export function PanelApp({ ruta }: { ruta: string }) {
 
   const esControl = ruta.startsWith('/panel/control-');
   const esFranquicia = ruta.startsWith('/panel/franchise-');
+  // Divoox Flex (empresas de paquetería): cualquier cuenta con sesión; el servidor decide qué ve.
+  const esFlex = ruta === '/panel/business' || ruta.startsWith('/panel/business/');
   // La dirección del superadmin no existe para nadie más (ni siquiera muestra el login).
   if (
     esControl &&
@@ -203,6 +206,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 <Enlace a="/panel/settings" className="boton secundario">
                   <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
                 </Enlace>
+                <Enlace a="/panel/business" className="boton secundario">
+                  <Icono nombre="ruta" tamano={16} /> {t.flex}
+                </Enlace>
                 <button type="button" onClick={() => void salir(usuario)}>
                   {t.salir}
                 </button>
@@ -223,6 +229,10 @@ export function PanelApp({ ruta }: { ruta: string }) {
       ) : esFranquicia ? (
         <main className="contenido">
           <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
+        </main>
+      ) : esFlex ? (
+        <main className="contenido contenido-flex">
+          <PanelEmpresa ruta={ruta} idioma={idioma} />
         </main>
       ) : menu.length === 0 && ruta === '/panel/settings' ? (
         <main className="contenido">
@@ -247,6 +257,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
             <a className="boton" href="/app/">
               {t.irApp}
             </a>
+            <Enlace a="/panel/business" className="boton secundario">
+              {t.flex}
+            </Enlace>
             <Enlace a="/panel/settings" className="boton secundario">
               <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
             </Enlace>

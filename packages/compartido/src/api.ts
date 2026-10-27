@@ -39,8 +39,10 @@ export function crearApi(op: OpcionesApi) {
     metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     ruta: string,
     cuerpo?: unknown,
+    /** Cabeceras extra (p. ej. `Idempotency-Key` en las rutas de Divoox Flex que crean cosas). */
+    extra?: { cabeceras?: Record<string, string> },
   ): Promise<T> {
-    const headers: Record<string, string> = { accept: 'application/json' };
+    const headers: Record<string, string> = { accept: 'application/json', ...extra?.cabeceras };
     if (cuerpo !== undefined) headers['content-type'] = 'application/json';
     // El servidor contesta los avisos y errores en este idioma (el inglés es el principal).
     const idioma = op.idioma?.();

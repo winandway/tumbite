@@ -12,6 +12,14 @@ export async function pedir<T>(
   metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   ruta: string,
   cuerpo?: unknown,
+  extra?: { cabeceras?: Record<string, string> },
 ): Promise<T> {
-  return api.pedir<T>(metodo, ruta, cuerpo);
+  return api.pedir<T>(metodo, ruta, cuerpo, extra);
+}
+
+/** Crear algo en Divoox Flex: cada intento lleva su propia clave de idempotencia. */
+export function crear<T>(ruta: string, cuerpo: unknown): Promise<T> {
+  return api.pedir<T>('POST', ruta, cuerpo, {
+    cabeceras: { 'idempotency-key': crypto.randomUUID() },
+  });
 }
