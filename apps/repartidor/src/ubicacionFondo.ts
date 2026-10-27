@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
@@ -8,6 +9,11 @@ import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
  * esté apagada o la app detrás de Google Maps. Android lo muestra como servicio en primer plano
  * (notificación fija); iOS pide el permiso «Siempre». Sin permiso, sigue funcionando solo con la
  * app abierta, como antes.
+ *
+ * Android, versión 1 de las tiendas (27 oct 2026): la app NO pide el permiso de ubicación «todo el
+ * tiempo» (ACCESS_BACKGROUND_LOCATION), que Google Play solo aprueba con un video de demostración.
+ * No hace falta: el servicio en primer plano con notificación, iniciado con la app abierta, sigue
+ * mandando la posición con la pantalla apagada (así lo permite expo-location y Android 10+).
  */
 export const TAREA_UBICACION = 'tumbite-ubicacion-fondo';
 
@@ -43,8 +49,10 @@ export async function iniciarUbicacionFondo(textos: {
   try {
     const primer = await Location.requestForegroundPermissionsAsync();
     if (primer.status !== 'granted') return false;
-    const fondo = await Location.requestBackgroundPermissionsAsync();
-    if (fondo.status !== 'granted') return false;
+    if (Platform.OS === 'ios') {
+      const fondo = await Location.requestBackgroundPermissionsAsync();
+      if (fondo.status !== 'granted') return false;
+    }
     if (await Location.hasStartedLocationUpdatesAsync(TAREA_UBICACION)) return true;
     await Location.startLocationUpdatesAsync(TAREA_UBICACION, {
       accuracy: Location.Accuracy.High,

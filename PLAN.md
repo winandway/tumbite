@@ -1,3 +1,14 @@
+# Plan: enviar las tres apps a revisión de Google Play (27 oct 2026, madrugada)
+
+- [ ] 1. Driver en Android sin el permiso de ubicación en segundo plano (sigue el servicio en primer plano con notificación; iOS igual que antes); candado y pruebas al día.
+- [ ] 2. Compilar el nuevo AAB del Driver con EAS y subirlo al borrador de producción de Google Play.
+- [ ] 3. Publicar el cambio por el flujo (staging → verificador → producción).
+- [ ] 4. Cliente en Google Play: acceso a la app (registro libre), público 18+, seguridad de datos enviada, enviar a revisión.
+- [ ] 5. Driver y Restaurante en Google Play: público 18+, seguridad de datos enviada, declaración de ubicación retirada; acceso del revisor queda a un clic (espera las cuentas).
+- [ ] 6. Documentar en ABRIR-CUENTAS-APPLE-GOOGLE.md y CANDADOS.md; commit.
+
+---
+
 # Plan: Fase 2 de Tumbite — cerrar la auditoría y el modelo internacional (18 oct 2026)
 
 Fuente: prompt de Richard del 18 oct (modelo internacional aprobado) + docs/AUDITORIA-FINAL-2026-10-18.md.
