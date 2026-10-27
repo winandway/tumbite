@@ -24,6 +24,37 @@ describe('sitio público', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Great food');
   });
 
+  it('cada camino de la portada explica primero y lleva a crear la cuenta (27 oct 2026)', async () => {
+    window.history.pushState(null, '', '/');
+    localStorage.setItem('tumbite.idioma', 'es');
+    render(<App />);
+    expect(await screen.findByRole('link', { name: /Quiero pedir$/ })).toHaveAttribute(
+      'href',
+      '#customers',
+    );
+    expect(screen.getByRole('link', { name: /Tengo un restaurante$/ })).toHaveAttribute(
+      'href',
+      '#restaurants',
+    );
+    expect(screen.getByRole('link', { name: /Quiero repartir$/ })).toHaveAttribute(
+      'href',
+      '#drivers',
+    );
+    expect(screen.getByRole('link', { name: 'Pedir ahora' })).toHaveAttribute('href', '/app/');
+    expect(screen.getByRole('link', { name: 'Crear mi cuenta de restaurante' })).toHaveAttribute(
+      'href',
+      '/panel',
+    );
+    expect(screen.getByRole('link', { name: 'Crear mi cuenta de repartidor' })).toHaveAttribute(
+      'href',
+      '/driver/',
+    );
+    // Ya no hay lista de espera para restaurantes ni repartidores: la cuenta se crea de una.
+    expect(screen.queryByText('Quiero repartir con Divoox')).toBeNull();
+    expect(screen.queryByText('Quiero mi restaurante en Divoox')).toBeNull();
+    localStorage.clear();
+  });
+
   it('navega a la política de privacidad sin recargar', async () => {
     window.history.pushState(null, '', '/');
     render(<App />);

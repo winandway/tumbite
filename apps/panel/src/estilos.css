@@ -1551,7 +1551,7 @@ html {
   text-align: left;
 }
 .ld-seccion {
-  scroll-margin-top: 64px;
+  scroll-margin-top: 88px;
 }
 .p-tarjeta .p-fila {
   flex-direction: row;
@@ -4029,4 +4029,28 @@ button {
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* Llamada a la acción al final de cada sección de la portada (27 oct 2026) */
+.ld-accion {
+  margin: 36px auto 0;
+  max-width: 560px;
+  text-align: center;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 28px 24px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+.ld-accion h3 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+}
+.ld-accion p {
+  margin: 0 0 18px;
+  color: #666b73;
+}
+.ld-accion .boton {
+  display: inline-block;
+  text-decoration: none;
 }

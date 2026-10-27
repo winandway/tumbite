@@ -119,10 +119,12 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <p>{t.hero.texto}</p>
           <Buscador idioma={idioma} />
           <div className="ld-ctas">
-            <a className="ld-cta" href="/app/">
+            {/* Los tres botones del hero bajan a su sección (qué es y cómo empezar); el botón de
+                la sección lleva a crear la cuenta. Antes mandaban directo a entrar, sin explicar. */}
+            <a className="ld-cta" href="#customers">
               <Icono nombre="pizza" tamano={18} /> {t.hero.pedir}
             </a>
-            <a className="ld-cta" href="/panel">
+            <a className="ld-cta" href="#restaurants">
               <Icono nombre="chef" tamano={18} /> {t.hero.restaurante}
             </a>
             <a className="ld-cta" href="#drivers">
@@ -161,7 +163,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       {/* Los tres caminos, claros y arriba: nadie tiene que adivinar ni bajar. */}
       <section className="ld-entradas" aria-label={t.hero.pedir}>
         {t.hero.entradas.map(([titulo, texto, boton], i) => {
-          const destino = ['/app/', '/panel', '#drivers'].at(i) ?? '/';
+          const destino = ['/app/', '/panel', '/driver/'].at(i) ?? '/';
           const icono = (['pizza', 'chef', 'moto'] as const).at(i) ?? 'pizza';
           return (
             <a key={titulo} className="ld-entrada-tarjeta" href={destino}>
@@ -214,6 +216,13 @@ export function Landing({ idioma }: { idioma: Idioma }) {
         <p className="ld-nota">
           <Icono nombre="cumple" /> {t.comensales.fidelidad}
         </p>
+        <div className="ld-accion" data-testid="accion-comensal">
+          <h3>{t.acciones.comensal.titulo}</h3>
+          <p>{t.acciones.comensal.texto}</p>
+          <a className="boton" href="/app/">
+            {t.acciones.comensal.boton}
+          </a>
+        </div>
         <FormEspera tipo="comensal" idioma={idioma} titulo={t.comensales.form} />
       </section>
 
@@ -260,7 +269,13 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             ))}
           </ul>
         </div>
-        <FormEspera tipo="restaurante" idioma={idioma} titulo={t.restaurantes.form} />
+        <div className="ld-accion" data-testid="accion-restaurante">
+          <h3>{t.acciones.restaurante.titulo}</h3>
+          <p>{t.acciones.restaurante.texto}</p>
+          <a className="boton" href="/panel">
+            {t.acciones.restaurante.boton}
+          </a>
+        </div>
       </section>
 
       {/* 4 · Repartidores */}
@@ -290,7 +305,13 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             ))}
           </ul>
         </div>
-        <FormEspera tipo="repartidor" idioma={idioma} titulo={t.repartidores.form} />
+        <div className="ld-accion" data-testid="accion-repartidor">
+          <h3>{t.acciones.repartidor.titulo}</h3>
+          <p>{t.acciones.repartidor.texto}</p>
+          <a className="boton" href="/driver/">
+            {t.acciones.repartidor.boton}
+          </a>
+        </div>
       </section>
 
       {/* 5 · Dónde estamos */}

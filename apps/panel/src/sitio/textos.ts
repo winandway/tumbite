@@ -13,6 +13,25 @@ const es = {
     docs: 'Docs',
     panel: 'Panel',
   },
+  acciones: {
+    comensal: {
+      titulo: 'Pide hoy desde la web',
+      texto:
+        'Crea tu cuenta gratis en un minuto y pide desde el navegador. Las apps para iPhone y Android llegan muy pronto.',
+      boton: 'Pedir ahora',
+    },
+    restaurante: {
+      titulo: 'Abre tu restaurante en Divoox',
+      texto:
+        'Crea tu cuenta de restaurante, sube tu menú y empieza a recibir pedidos. Sin permanencia.',
+      boton: 'Crear mi cuenta de restaurante',
+    },
+    repartidor: {
+      titulo: 'Empieza a repartir',
+      texto: 'Crea tu cuenta de repartidor, verifica tu identidad y conéctate cuando quieras.',
+      boton: 'Crear mi cuenta de repartidor',
+    },
+  },
   hero: {
     etiqueta: 'Muy pronto en Miami',
     titulo: 'Comida rica, hasta tu puerta.',
@@ -31,7 +50,11 @@ const es = {
         'Vende más pagando la mitad de comisión. Sin permanencia.',
         'Entrar al panel',
       ],
-      ['Quiero repartir', 'Ves cuánto ganas antes de aceptar. Rechazar no te castiga.', 'Anotarme'],
+      [
+        'Quiero repartir',
+        'Ves cuánto ganas antes de aceptar. Rechazar no te castiga.',
+        'Crear mi cuenta',
+      ],
     ],
     tiendas: 'Muy pronto en App Store y Google Play',
   },
@@ -298,6 +321,25 @@ const en: Textos = {
     calculadora: 'Calculator',
     docs: 'Docs',
     panel: 'Dashboard',
+  },
+  acciones: {
+    comensal: {
+      titulo: 'Order today from the web',
+      texto:
+        'Create your free account in a minute and order from your browser. The iPhone and Android apps are coming very soon.',
+      boton: 'Order now',
+    },
+    restaurante: {
+      titulo: 'Open your restaurant on Divoox',
+      texto:
+        'Create your restaurant account, upload your menu and start receiving orders. No lock-in.',
+      boton: 'Create my restaurant account',
+    },
+    repartidor: {
+      titulo: 'Start delivering',
+      texto: 'Create your driver account, verify your identity and go online whenever you want.',
+      boton: 'Create my driver account',
+    },
   },
   hero: {
     etiqueta: 'Coming soon to Miami',
