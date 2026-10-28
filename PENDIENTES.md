@@ -215,3 +215,9 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
   - conservar el original solo donde hace falta como evidencia;
   - aplica a las fotos de platos, de restaurantes, de documentos y de entregas.
   - Hay que decidir dónde se convierte: en el teléfono antes de subir, en el servidor o con un servicio de imágenes. Va con su prueba de peso y de calidad.
+
+## Flex en producción (28 oct 2026)
+
+- [x] Flex Fases 1 a 4 publicadas en producción (21702c4), verificador verde. Restaurar: etiqueta `restauracion-antes-flex-fase4-2026-10-28`.
+- [ ] Subir la versión nueva del Driver (build 32d18083, «Mi ruta» rediseñada) a Google Play en cuanto aprueben la revisión en curso.
+- [ ] 👤 Encender las recargas de empresa en producción (dinero real): orden de Richard y una compra real de 1 dólar.
