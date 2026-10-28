@@ -254,5 +254,5 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] Cobro contra entrega en Venezuela (Fase 6, 28 oct 2026, C-FLEX-COBRO): cobro en el envío, registro al entregar con cédula, caja de la ruta y «Recibí el efectivo». Informe en `docs/DIVOOX-FLEX-FASE-6-RESULTADOS.md`.
 - [x] Doble moneda en Venezuela (28 oct 2026, C-FLEX-TASA): tasa oficial del día del Banco Central y la propia de la empresa; la caja muestra todo en dólares.
 - [x] Retiro en un punto con plazo (28 oct 2026, C-FLEX-RETIRO): centro como agencia, 5 días hábiles, cédula o tercero autorizado, cobro al retirar, devolución al vencer.
-- [ ] Siguiente para Venezuela (de la investigación): pagos locales en la billetera (pago móvil, transferencia, Zelle, efectivo) con comprobante; avisos al destinatario por WhatsApp; seguro.
+- [ ] Siguiente para Venezuela (de la investigación): pagos locales en la billetera (pago móvil, transferencia, Zelle, efectivo) con comprobante; seguro. (Los avisos al destinatario van por push con sonido propio desde el 28 oct, C-AVISO-PAQUETE; el SMS se descartó por costo.)
 - [ ] 👤 Llave de Google Places (API nueva) para buscar direcciones mientras se escribe (sin ella funciona el pin).

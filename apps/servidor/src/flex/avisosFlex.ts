@@ -195,6 +195,8 @@ async function mandar(
     const aviso = texto(u.idioma);
     await notificar(env, db, u.id, {
       ...aviso,
+      // C-AVISO-PAQUETE: las ofertas y asignaciones del conductor suenan con su alarma propia.
+      ...(clave.startsWith('c:') ? { sonido: SONIDO_CONDUCTOR } : {}),
       datos: { tipo: 'flex', evento: tipo, rutaId },
     });
     enviados++;
@@ -247,6 +249,117 @@ export async function avisarEmpresa(
  * Trabajo para después de responder: en Cloudflare va con waitUntil (no demora la respuesta);
  * donde no hay contexto de ejecución (pruebas), se espera aquí mismo. Nunca rompe la operación.
  */
+// ───────────────── C-AVISO-PAQUETE: al destinatario que usa la app de Divoox ─────────────────
+
+/**
+ * C-AVISO-PAQUETE (28 oct 2026, idea de Richard): el destinatario que tiene la app de Divoox recibe
+ * un aviso al celular con sonido propio en cada paso de su paquete. Es gratis: un SMS a Venezuela
+ * cuesta 0,2257 dólares en Twilio, más que lo que cobra Divoox por caja entregada (0,20). Sin datos
+ * del conductor ni de otras paradas. Una vez por envío y por paso (clave en `flex_avisos`).
+ */
+export type TipoAvisoPaquete = 'en_camino' | 'eres_el_siguiente' | 'entregado' | 'listo_retiro';
+
+export const SONIDO_CLIENTE = 'aviso.wav';
+export const SONIDO_CONDUCTOR = 'oferta.wav';
+
+export const TEXTOS_AVISO_PAQUETE: Record<
+  TipoAvisoPaquete,
+  (i: string, d: { empresa: string }) => Aviso
+> = {
+  en_camino: (i, d) =>
+    i === 'en'
+      ? {
+          titulo: 'Your package is on its way',
+          cuerpo: `${d.empresa} sent it out today. Track it in the app.`,
+        }
+      : {
+          titulo: 'Tu paquete va en camino',
+          cuerpo: `${d.empresa} lo despachó hoy. Síguelo en la app.`,
+        },
+  eres_el_siguiente: (i, d) =>
+    i === 'en'
+      ? {
+          titulo: 'You’re the next stop',
+          cuerpo: `The ${d.empresa} driver is heading to you. Be ready to receive it.`,
+        }
+      : {
+          titulo: 'Eres la próxima parada',
+          cuerpo: `El conductor de ${d.empresa} va hacia ti. Prepárate para recibirlo.`,
+        },
+  entregado: (i, d) =>
+    i === 'en'
+      ? { titulo: 'Package delivered', cuerpo: `Your ${d.empresa} package was delivered.` }
+      : { titulo: 'Paquete entregado', cuerpo: `Tu paquete de ${d.empresa} fue entregado.` },
+  listo_retiro: (i, d) =>
+    i === 'en'
+      ? {
+          titulo: 'Ready for pickup',
+          cuerpo: `Your ${d.empresa} package is waiting for you. Bring your ID.`,
+        }
+      : {
+          titulo: 'Listo para retirar',
+          cuerpo: `Tu paquete de ${d.empresa} te espera. Lleva tu cédula.`,
+        },
+};
+
+/** Avisa a los destinatarios (con la app) de estos envíos. Devuelve cuántos avisos salieron. */
+export async function avisarDestinatarios(
+  env: Env,
+  db: D1Database,
+  envioIds: string[],
+  tipo: TipoAvisoPaquete,
+): Promise<number> {
+  if (!envioIds.length) return 0;
+  const { results } = await db
+    .prepare(
+      `SELECT e.id, e.destinatario_usuario_id AS usuario, u.idioma, em.nombre AS empresa
+         FROM envios e JOIN usuarios u ON u.id = e.destinatario_usuario_id
+         JOIN empresas em ON em.id = e.empresa_id
+        WHERE e.id IN (SELECT value FROM json_each(?)) AND e.destinatario_usuario_id IS NOT NULL`,
+    )
+    .bind(JSON.stringify(envioIds))
+    .all<{ id: string; usuario: string; idioma: string; empresa: string }>();
+  let enviados = 0;
+  for (const f of results) {
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, NULL)',
+      )
+      .bind(`d:${tipo}:${f.id}:${f.usuario}`, f.usuario, `paquete_${tipo}`)
+      .run();
+    if (!r.meta.changes) continue;
+    await notificar(env, db, f.usuario, {
+      // eslint-disable-next-line security/detect-object-injection -- tipo de la lista cerrada
+      ...TEXTOS_AVISO_PAQUETE[tipo](f.idioma, { empresa: f.empresa }),
+      sonido: SONIDO_CLIENTE,
+      datos: { tipo: 'flex_paquete', evento: tipo, envioId: f.id },
+    });
+    enviados++;
+  }
+  return enviados;
+}
+
+/** La próxima parada sin resolver de la ruta: a su destinatario, «eres la próxima parada». */
+export async function avisarSiguienteParada(env: Env, db: D1Database, rutaId: string) {
+  const f = await db
+    .prepare(
+      "SELECT envio_id FROM ruta_paradas WHERE ruta_id = ? AND estado = 'pendiente' ORDER BY orden LIMIT 1",
+    )
+    .bind(rutaId)
+    .first<{ envio_id: string }>();
+  return f ? avisarDestinatarios(env, db, [f.envio_id], 'eres_el_siguiente') : 0;
+}
+
+/** Todos los envíos de una ruta (para el aviso «va en camino» al salir). */
+export async function enviosDeRuta(db: D1Database, rutaId: string) {
+  return (
+    await db
+      .prepare('SELECT envio_id FROM ruta_paradas WHERE ruta_id = ? ORDER BY orden')
+      .bind(rutaId)
+      .all<{ envio_id: string }>()
+  ).results.map((x) => x.envio_id);
+}
+
 export async function despues(c: Ctx, trabajo: () => Promise<unknown>): Promise<void> {
   const seguro = () =>
     trabajo().catch((e: unknown) => console.error('flex: tarea posterior falló', e));

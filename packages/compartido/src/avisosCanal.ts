@@ -1,7 +1,9 @@
 /**
  * El canal «pedidos» de Android: los avisos del servidor llegan por él (channelId 'pedidos').
- * La app del restaurante declara `extra.sonidoAvisos` y su alarma suena aunque la app esté
- * cerrada; las demás usan el sonido normal del teléfono (C-AVISOS-CANAL).
+ * Cada app declara `extra.sonidoAvisos` y su sonido suena aunque la app esté cerrada: la alarma
+ * del restaurante, la del conductor (oferta.wav) y la campanita del cliente (aviso.wav)
+ * (C-AVISOS-CANAL, C-AVISO-PAQUETE). Android fija el sonido al crear el canal: en un teléfono que
+ * ya tenía la app, el sonido nuevo sale al reinstalarla.
  */
 export const CANAL_AVISOS = 'pedidos';
 

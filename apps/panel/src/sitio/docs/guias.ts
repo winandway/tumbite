@@ -2360,6 +2360,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Cada paquete tiene su número de seguimiento, que empieza por DVX y viene en la etiqueta. Con él, cualquiera puede ver el estado del paquete y cada paso con su fecha y hora.',
           'Por privacidad, el rastreo nunca muestra nombres, teléfonos ni direcciones: solo los estados.',
+          'Si usas la app de Divoox con el mismo teléfono o correo que dio la empresa, te llega un aviso al celular, con su sonido, cuando tu paquete sale, cuando eres la próxima parada, cuando se entrega y cuando está listo para retirar.',
         ],
         capturas: [
           {
@@ -5158,6 +5159,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Every package has a tracking number that starts with DVX and is printed on the label. With it, anyone can see the package status and every step with its date and time.',
           'For privacy, tracking never shows names, phones or addresses: only the statuses.',
+          'If you use the Divoox app with the same phone or email the company has, you get a phone alert, with its sound, when your package leaves, when you’re the next stop, when it’s delivered and when it’s ready for pickup.',
         ],
         capturas: [
           {

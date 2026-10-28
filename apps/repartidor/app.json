@@ -77,7 +77,8 @@
         {
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#F20D20",
-          "defaultChannel": "pedidos"
+          "defaultChannel": "pedidos",
+          "sounds": ["./assets/sonidos/oferta.wav"]
         }
       ],
       [
@@ -107,6 +108,7 @@
       "es": "./idiomas/es.json"
     },
     "extra": {
+      "sonidoAvisos": "oferta.wav",
       "eas": {
         "projectId": "f73487b3-0624-48fd-a2f1-6939df58d736"
       }

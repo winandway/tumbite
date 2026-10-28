@@ -276,8 +276,16 @@ export const AVISOS = {
       : { titulo: '¡Entregado! Buen provecho', cuerpo: 'Toca para calificar tu pedido.' },
   ofertaNueva: (i: string, pago: string, km: string): Aviso =>
     i === 'en'
-      ? { titulo: `New delivery: ${pago}`, cuerpo: `${km} km from you. Accept it in the app.` }
-      : { titulo: `Entrega nueva: ${pago}`, cuerpo: `A ${km} km de ti. Acéptala en la app.` },
+      ? {
+          titulo: `New delivery: ${pago}`,
+          cuerpo: `${km} km from you. Accept it in the app.`,
+          sonido: 'oferta.wav',
+        }
+      : {
+          titulo: `Entrega nueva: ${pago}`,
+          cuerpo: `A ${km} km de ti. Acéptala en la app.`,
+          sonido: 'oferta.wav',
+        },
   pedidoNuevo: (i: string, corto: string): Aviso =>
     i === 'en'
       ? {

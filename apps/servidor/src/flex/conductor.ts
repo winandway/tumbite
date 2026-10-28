@@ -1,4 +1,10 @@
-import { avisarEmpresa, despues } from './avisosFlex';
+import {
+  avisarDestinatarios,
+  avisarEmpresa,
+  avisarSiguienteParada,
+  despues,
+  enviosDeRuta,
+} from './avisosFlex';
 import {
   ajustarCobroAlSalir,
   cerrarCobroRuta,
@@ -475,9 +481,12 @@ flexConductor.post('/conductor/rutas/:rutaId/iniciar', async (c) => {
     await ajustarCobroAlSalir(db, r.id).catch((e: unknown) =>
       console.error('finanzas: ajuste de la reserva al salir', e),
     );
-    await despues(c, () =>
-      avisarEmpresa(c.env, db, { tipo: 'ruta_iniciada', rutaId: r.id, ocasion: clave }),
-    );
+    await despues(c, async () => {
+      await avisarEmpresa(c.env, db, { tipo: 'ruta_iniciada', rutaId: r.id, ocasion: clave });
+      // C-AVISO-PAQUETE: a cada destinatario con la app, «va en camino»; al primero, que es el siguiente.
+      await avisarDestinatarios(c.env, db, await enviosDeRuta(db, r.id), 'en_camino');
+      await avisarSiguienteParada(c.env, db, r.id);
+    });
     return { estado: 200, datos: await responderRuta(db, r.id) };
   });
 });
@@ -849,7 +858,11 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
       const ub = await guardarUbicacion(db, r.id, d);
       if (ub) sentencias.push(ub);
       await db.batch(sentencias).catch(traducirError);
-      await despues(c, () => avisarSiTermino(c.env, db, r.id));
+      await despues(c, async () => {
+        await avisarSiTermino(c.env, db, r.id);
+        await avisarDestinatarios(c.env, db, [p.envio_id], 'entregado');
+        await avisarSiguienteParada(c.env, db, r.id);
+      });
       return {
         estado: 200,
         datos: { ...(await responderRuta(db, r.id)), entregados: aEntregar.map((x) => x.id) },
@@ -945,6 +958,7 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/incidencia', asyn
           ocasion: clavePeticion,
         });
         await avisarSiTermino(c.env, db, r.id);
+        await avisarSiguienteParada(c.env, db, r.id);
       });
       return { estado: 200, datos: await responderRuta(db, r.id) };
     },

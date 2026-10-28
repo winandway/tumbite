@@ -12,6 +12,7 @@ import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { actorDeEmpresa, conIdempotencia, exigirPermiso, sentenciaAuditoria } from './autorizacion';
+import { avisarDestinatarios, despues } from './avisosFlex';
 import { paisDeEmpresa } from './ubicacion';
 
 /**
@@ -145,6 +146,8 @@ flexRetiro.post('/empresas/:id/envios/:envioId/retiro/disponible', async (c) => 
         .bind(vence, e.id),
       sentenciaAuditoria(db, actor, 'retiro.disponible', e.id, { vence }),
     ]);
+    // C-AVISO-PAQUETE: si el destinatario tiene la app, también le llega al celular (gratis).
+    await despues(c, () => avisarDestinatarios(c.env, db, [e.id], 'listo_retiro'));
     const codigo = paquetes[0]?.codigo_seguimiento ?? '';
     const mensaje = mensajeAviso(e, codigo, vence, actor.idioma);
     const tel = telefonoInternacional(
@@ -269,6 +272,7 @@ flexRetiro.post('/empresas/:id/envios/:envioId/retiro/entregar', async (c) => {
       sentenciaAuditoria(db, actor, 'retiro.entregar', e.id, { tercero: Boolean(d.tercero) }),
     );
     await db.batch(sentencias);
+    await despues(c, () => avisarDestinatarios(c.env, db, [e.id], 'entregado'));
     return { estado: 200, datos: { entregado: true } };
   });
 });

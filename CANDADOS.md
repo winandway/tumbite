@@ -1404,6 +1404,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `apps/servidor/src/flex/cobros.test.ts` (la página del Banco Central siempre simulada), `flexCobro.test.ts`, y la caja en `PantallasRutas.test.tsx`; comprobada en rojo.
 - **No tocar:** las pruebas nunca llaman a la página real; Divoox no cambia dinero, solo muestra la equivalencia.
 
+## C-AVISO-PAQUETE · Avisos push al destinatario con sonido propio, no SMS (28 oct 2026)
+
+- **Por qué:** un SMS a Venezuela cuesta 0,2257 dólares en Twilio, más que los 0,20 que cobra Divoox por caja (`docs/investigaciones-rea/2026-10-28-avisos-push-vs-sms.md`). El push es gratis.
+- **Cómo funciona:** `avisarDestinatarios` en `apps/servidor/src/flex/avisosFlex.ts` avisa al destinatario vinculado (`destinatario_usuario_id`): «va en camino» al salir la ruta, «eres la próxima parada» al resolverse la anterior, «entregado» y «listo para retirar». Una vez por envío y por paso (`flex_avisos`). Sonidos propios: `apps/cliente/assets/sonidos/aviso.wav` y `apps/repartidor/assets/sonidos/oferta.wav` (hechos por Divoox), declarados en `app.json` y en `extra.sonidoAvisos`. Al tocar el aviso, la app del cliente abre «Mis paquetes» (`apps/cliente/src/AbrirAvisos.tsx`).
+- **Ojo:** Android fija el sonido al crear el canal; en un teléfono que ya tenía la app, el sonido nuevo sale al reinstalar. Llega a los teléfonos con la próxima versión de las apps en las tiendas.
+- **Prueba:** `apps/servidor/src/flex/avisoPaquete.test.ts`, comprobada en rojo.
+
 ## C-FLEX-RETIRO · Retiro en un punto con plazo (28 oct 2026)
 
 - **País:** todos; la cédula se exige donde el perfil la pide (Venezuela). Como la agencia de MRW: 5 días hábiles, cédula y número de seguimiento, tercero autorizado anotado, cobro al retirar, devolución al vencer.
