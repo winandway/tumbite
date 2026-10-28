@@ -11,6 +11,6 @@ Pedido por Richard el 28 oct 2026. País: **Venezuela primero**; EE. UU. separad
 - [x] 7. Panel de la empresa: estado de la ubicación de cada envío, enviar el enlace por WhatsApp, pin al crear el envío
 - [x] 8. Seguimiento público por número de guía (/track y /track/<código>), como MRW y Zoom
 - [x] 9. Búsqueda de direcciones de Google por el servidor (apagada hasta tener la llave)
-- [ ] 10. Web: «Flex» en el menú de arriba y página /flex con capturas reales, «empresas sin tecnología» y Venezuela
-- [ ] 11. Docs: guías de Flex al día, en español e inglés
+- [x] 10. Web: «Flex» en el menú de arriba y página /flex con capturas reales, «empresas sin tecnología» y Venezuela
+- [x] 11. Docs: guías de Flex al día, en español e inglés
 - [ ] 12. Pruebas en rojo, verify, sitio de pruebas y producción

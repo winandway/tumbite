@@ -1364,3 +1364,20 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `calificaciones_viaje`: una por lado y viaje, solo con el viaje terminado; repetir no la cambia. La del pasajero entra en el promedio del conductor junto con las de Comida (`/datos/repartidor/calificaciones`).
 - **Prueba:** `rutas/viajesPasajero.test.ts` (M8).
 - **Propina:** queda para el pago con tarjeta de los viajes (en efectivo se da en mano).
+
+## C-FLEX-UBICACION · La ubicación exacta del destinatario, por país (28 oct 2026)
+
+- **País:** Venezuela (ubicación confirmada obligatoria) y EE. UU. (dirección escrita basta), según el perfil de `packages/compartido/src/flexPaises.ts` (una sola pieza: «cada país es su propio sistema»).
+- **Cómo funciona:** cada envío guarda `ubicacion_estado` (sin_coordenadas, pendiente, confirmada) y su fuente (empresa, importación, app del cliente, enlace del destinatario). Con teléfono o correo se vincula a la cuenta Divoox del destinatario y, si tiene UNA casa con pin, la usa. El enlace «confirma dónde recibes» (`/deliver/<código>`) se manda por WhatsApp; el código sale de un HMAC con el secreto del reloj y el vencimiento, así es el MISMO mientras dure (solo se guarda su huella). En Venezuela `rutaLista` no deja asignar ni ofrecer una ruta con paradas sin confirmar. La etiqueta lleva el punto de referencia y el código plus.
+- **Fallos encontrados al tomar las capturas reales y corregidos:** (1) pedir la ubicación otra vez invalidaba el enlace que ya se había mandado; (2) si varias cuentas compartían el teléfono, el envío se le podía vincular a la persona equivocada: ahora solo se vincula por teléfono si UNA cuenta lo tiene (o por correo).
+- **Prueba:** `apps/servidor/src/flex/ubicacion.test.ts` (regla de Venezuela, enlace estable y destinatario único comprobados en rojo), `packages/compartido/src/flexPaises.test.ts` (código plus contra los valores oficiales del estándar), `apps/servidor/src/rutas/lugares.test.ts`.
+- **No tocar:** nunca vincular por teléfono cuando hay más de una cuenta; nunca mostrar el teléfono en el enlace público; nunca guardar el código del enlace en claro.
+
+## C-FLEX-SEGUIMIENTO · El rastreo público no muestra datos personales (28 oct 2026)
+
+- `/track/<código>` (web) y `GET /datos/v1/flex/seguimiento/:codigo`: solo estados y fechas. La investigación con REA del 28 oct 2026 encontró que el rastreo público de MRW devuelve el nombre y la cédula de otra persona con una guía inventada; el nuestro no muestra nombres, teléfonos ni direcciones.
+- **No tocar:** no agregar al seguimiento público ningún dato del destinatario ni del remitente.
+
+## C-GOOGLE-POR-SERVIDOR · La llave de Google Places nunca sale del servidor (28 oct 2026)
+
+- `apps/servidor/src/rutas/lugares.ts`: sugerencias y punto exacto por el servidor, con tope por red y tiempo límite. Sin `GOOGLE_PLACES_KEY` la búsqueda se apaga (503) y se usa el pin. Prueba: `rutas/lugares.test.ts`.

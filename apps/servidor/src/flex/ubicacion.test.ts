@@ -310,6 +310,53 @@ describe('Venezuela: la casa marcada una vez ubica los envíos que esperaban', (
   });
 });
 
+describe('el enlace no cambia mientras siga vigente', () => {
+  it('pedir la ubicación otra vez da el MISMO enlace (el que ya se mandó sigue sirviendo)', async () => {
+    const m = mundo({ RELOJ_SECRETO: 'secreto-de-prueba-del-reloj-largo-123' });
+    const e = await empresaEn(m, 'VE');
+    const x = await envio(m, e);
+    const ruta = `${B}/empresas/${e.id}/envios/${x.id}/enlace-ubicacion`;
+    const a = await llamar(m, 'POST', ruta, {}, e.dueno.token);
+    const b = await llamar(m, 'POST', ruta, {}, e.dueno.token);
+    expect(b.datos.url).toBe(a.datos.url);
+    const codigo = String(a.datos.url).split('/deliver/')[1] ?? '';
+    expect((await llamar(m, 'GET', `${B}/publico/ubicacion/${codigo}`)).estado).toBe(200);
+  });
+});
+
+describe('un paquete nunca le aparece a otra persona', () => {
+  it('si dos cuentas comparten el teléfono, no se vincula por teléfono (sí por correo)', async () => {
+    const m = mundo();
+    const a = await m.cuenta('cliente', 'María Uno');
+    const b = await m.cuenta('cliente', 'María Dos');
+    for (const u of [a, b])
+      await m.DB.prepare("UPDATE usuarios SET telefono = '04141234567' WHERE id = ?")
+        .bind(u.id)
+        .run();
+    const e = await empresaEn(m, 'VE');
+    const x = await envio(m, e);
+    expect(
+      await m.DB.prepare('SELECT destinatario_usuario_id AS u FROM envios WHERE id = ?')
+        .bind(x.id)
+        .first(),
+    ).toEqual({ u: null });
+    for (const u of [a, b])
+      expect(
+        (await llamar(m, 'GET', `${B}/mis-paquetes`, undefined, u.token)).datos.paquetes,
+      ).toHaveLength(0);
+    // Con el correo de una de ellas, el envío es de esa persona.
+    const correoB = (await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(b.id)
+      .first<{ correo: string }>())!.correo;
+    const y = await envio(m, e, { destinatarioCorreo: correoB });
+    expect(
+      await m.DB.prepare('SELECT destinatario_usuario_id AS u FROM envios WHERE id = ?')
+        .bind(y.id)
+        .first(),
+    ).toEqual({ u: b.id });
+  });
+});
+
 describe('Venezuela: cédula o RIF del destinatario', () => {
   it('se acepta con su forma y se rechaza mal escrita', async () => {
     const m = mundo();

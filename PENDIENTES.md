@@ -241,3 +241,12 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 Tarifas y comisión reales por ciudad (el sistema arranca con valores de prueba).
 - [ ] 👤 Orden de encender Moto en producción.
 - [ ] Subir la versión 7 del Driver (Mi ruta de Flex) en cuanto Google apruebe la revisión en curso.
+
+## Divoox Flex · Fase 5: ubicación exacta, Venezuela y la web (28 oct 2026) — rama fase-flex-5
+
+- [x] Investigación REA de MRW, Zoom, Tealca y del estándar de ubicación (docs/investigaciones-rea/2026-10-28-flex-venezuela.md).
+- [x] Perfil por país de Flex; ubicación confirmada obligatoria en Venezuela; cédula/RIF y punto de referencia; código plus en la etiqueta.
+- [x] Enlace «confirma dónde recibes» por WhatsApp; «Mis paquetes» en la app del cliente; marcar la casa una vez.
+- [x] Rastreo público /track; página /flex con capturas reales; «Flex» en el menú de arriba y en el pie; guías de Docs.
+- [ ] Siguiente para Venezuela (de la investigación): cobro contra entrega con liquidación al comercio; pagos locales en la billetera (pago móvil, transferencia, Zelle, efectivo) con comprobante; doble moneda dólar y bolívar; cédula de quien recibe en la entrega; avisos al destinatario por WhatsApp; retiro en punto con plazo; seguro.
+- [ ] 👤 Llave de Google Places (API nueva) para buscar direcciones mientras se escribe (sin ella funciona el pin).

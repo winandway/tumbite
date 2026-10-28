@@ -2155,6 +2155,67 @@ const es: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'flex-recipient-location',
+        titulo: 'Divoox Flex: la ubicación exacta de cada destinatario',
+        resumen:
+          'Antes de que salga la ruta, cada paquete tiene su punto exacto de entrega: lo confirma el destinatario con un enlace por WhatsApp o con su app de Divoox, o lo marcas tú con el pin.',
+        explicacion: [
+          'Una dirección escrita muchas veces no basta para llegar a la puerta. Por eso cada envío de Divoox Flex muestra en su detalle cómo está su ubicación: confirmada, falta que el destinatario la confirme o solo con la dirección escrita.',
+          'Con «Pedir la ubicación al destinatario» se prepara un mensaje con un enlace que puedes mandar por WhatsApp o copiar. Quien lo recibe abre el enlace, marca en el mapa el punto exacto de entrega y escribe un punto de referencia («casa azul frente a la panadería»). No necesita crear una cuenta. El enlace dura 7 días y, mientras dure, es el mismo cada vez que lo pidas.',
+          'Si el destinatario ya usa la app de Divoox con el mismo teléfono o el mismo correo, el envío le aparece en «Mis paquetes». Si marcó su casa en la app, el paquete llega ya ubicado sin que tengas que pedir nada.',
+          'También puedes marcar tú el punto con el pin en el mapa desde el detalle del envío.',
+          'Cada país funciona a su manera. En Venezuela la ruta no sale hasta que cada parada tenga su ubicación confirmada, se pide el punto de referencia y puedes guardar la cédula o el RIF del destinatario. En Estados Unidos la dirección escrita basta y el pin es opcional.',
+          'La etiqueta del paquete lleva el punto de referencia y el código plus del punto exacto: un código corto que Google Maps entiende aunque no haya internet.',
+          'Por privacidad, el enlace solo muestra quién envía el paquete y la dirección; nunca el teléfono ni otros datos. Una vez que el paquete sale en la ruta, la ubicación ya no se puede cambiar.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-pedir-ubicacion-es.webp',
+            alt: 'Detalle de un envío en Divoox Flex con el estado de la ubicación y el mensaje listo para WhatsApp.',
+            pie: 'Pides la ubicación con un toque y la mandas por WhatsApp.',
+          },
+          {
+            src: '/docs/flex-destinatario-confirmar-es.webp',
+            alt: 'Página para que el destinatario marque en el mapa dónde recibe su paquete.',
+            pie: 'El destinatario marca su puerta en el mapa, sin crear cuenta.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo pido la ubicación exacta al destinatario?',
+          '¿Por qué no sale mi ruta en Venezuela?',
+          '¿El destinatario necesita la app?',
+          '¿Qué es el código plus de la etiqueta?',
+        ],
+        pasos: [
+          'Abre el envío en «Envíos».',
+          'En «Ubicación de entrega», toca «Pedir la ubicación al destinatario» y envía el mensaje por WhatsApp.',
+          'Cuando el destinatario confirme, el estado cambia a «Confirmada».',
+          'O toca «Marcar el punto yo mismo» y guarda el punto en el mapa.',
+        ],
+      },
+      {
+        id: 'flex-tracking',
+        titulo: 'Divoox Flex: rastrear un paquete con su número de seguimiento',
+        resumen:
+          'Quien recibe un paquete escribe su número de seguimiento y ve en qué va: recibido en el centro, preparado, en camino, entregado.',
+        explicacion: [
+          'Cada paquete tiene su número de seguimiento, que empieza por DVX y viene en la etiqueta. Con él, cualquiera puede ver el estado del paquete y cada paso con su fecha y hora.',
+          'Por privacidad, el rastreo nunca muestra nombres, teléfonos ni direcciones: solo los estados.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-rastreo-es.webp',
+            alt: 'Página de rastreo de Divoox con el estado actual y el historial de un paquete.',
+            pie: 'El historial del paquete, sin datos personales.',
+          },
+        ],
+        preguntas: ['¿Cómo rastreo mi paquete?', '¿Dónde está mi número de seguimiento?'],
+        pasos: [
+          'Entra a «Rastrear un paquete» en divoox.com.',
+          'Escribe el número de seguimiento (empieza por DVX) y toca «Rastrear».',
+        ],
+      },
+      {
         id: 'flex-routes',
         titulo: 'Divoox Flex: asignar rutas y seguir cada entrega',
         resumen:
@@ -2162,7 +2223,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Una ruta es un recorrido con varias paradas: puede llevar 30, 40 o más paquetes. Para el conductor es un solo trabajo: mientras la hace no recibe otras rutas ni pedidos de comida.',
           'A un conductor propio de tu empresa le asignas la ruta directamente. A uno de la red Divoox se la ofreces por un tiempo (por ejemplo, 60 minutos) y él decide si la acepta. Si dos empresas intentan contar con el mismo conductor a la vez, solo una lo consigue.',
-          'Antes de salir puedes cambiar el orden de las paradas. Toda parada necesita coordenadas verificadas: si alguna no las tiene, Divoox no deja salir la ruta hasta que la corrijas en el detalle del envío.',
+          'Antes de salir puedes cambiar el orden de las paradas. Toda parada necesita coordenadas verificadas: si alguna no las tiene, Divoox no deja salir la ruta hasta que la corrijas en el detalle del envío. En Venezuela, además, cada ubicación tiene que estar confirmada (guía «la ubicación exacta de cada destinatario»).',
           'En el centro, el conductor escanea cada paquete (el código QR o el código de barras de la etiqueta). Un paquete que no es de esa ruta no se carga, y escanearlo dos veces no cuenta doble. Si falta uno, lo marca y queda registrado.',
           'En «Rutas en curso» ves el progreso en verde, cada parada con su estado, la última ubicación del conductor mientras trabaja, las fotos y firmas de entrega y las incidencias. La pantalla se actualiza sola cada 20 segundos.',
           'Tú decides qué pruebas pides en cada entrega: foto, PIN del destinatario, firma, o permitir la entrega sin contacto con foto. Un envío puede pedir algo distinto. Sin las pruebas exigidas, el conductor no puede marcarlo entregado.',
@@ -2266,7 +2327,7 @@ const es: SeccionDocs[] = [
           'En «Equipo» escribe el correo de la persona, elige su rol y envía la invitación; ella entra con su cuenta y acepta.',
           'En «Conductores» vincula a los repartidores por el correo de su cuenta de Divoox Driver.',
         ],
-        nota: 'En esta fase no hay cobros ni saldos: la billetera empresarial llega después.',
+        nota: 'Las comisiones se cobran del saldo de tu billetera (guía «tu billetera, recargas, comisiones y comprobantes»).',
       },
       {
         id: 'flex-import-and-labels',
@@ -4667,6 +4728,67 @@ const en: SeccionDocs[] = [
     icono: 'resumen',
     guias: [
       {
+        id: 'flex-recipient-location',
+        titulo: 'Divoox Flex: each recipient’s exact location',
+        resumen:
+          'Before the route leaves, every package has its exact delivery spot: the recipient confirms it with a WhatsApp link or their Divoox app, or you mark it with the pin.',
+        explicacion: [
+          'A written address often isn’t enough to reach the door. That’s why every Divoox Flex shipment shows its location status: confirmed, waiting for the recipient, or written address only.',
+          'With “Ask the recipient for their location” we prepare a message with a link you can send on WhatsApp or copy. The recipient opens it, marks the exact delivery spot on the map and adds a landmark (“blue house across from the bakery”). No account needed. The link lasts 7 days and, while it lasts, it’s the same every time you ask.',
+          'If the recipient already uses the Divoox app with the same phone or email, the shipment shows up in “My packages”. If they marked their home in the app, the package arrives already located without you asking.',
+          'You can also mark the spot yourself with the pin on the map from the shipment detail.',
+          'Each country works its own way. In Venezuela the route can’t leave until every stop has a confirmed location, a landmark is required and you can save the recipient’s national ID. In the United States the written address is enough and the pin is optional.',
+          'The package label carries the landmark and the plus code of the exact spot: a short code Google Maps understands even offline.',
+          'For privacy, the link only shows who is sending the package and the address; never the phone or other details. Once the package leaves on the route, the location can no longer change.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-pedir-ubicacion-en.webp',
+            alt: 'Shipment detail in Divoox Flex with the location status and the message ready for WhatsApp.',
+            pie: 'Ask for the location with one tap and send it on WhatsApp.',
+          },
+          {
+            src: '/docs/flex-destinatario-confirmar-en.webp',
+            alt: 'Page where the recipient marks on the map where they receive their package.',
+            pie: 'The recipient marks their door on the map, no account needed.',
+          },
+        ],
+        preguntas: [
+          'How do I ask the recipient for their exact location?',
+          'Why won’t my route leave in Venezuela?',
+          'Does the recipient need the app?',
+          'What is the plus code on the label?',
+        ],
+        pasos: [
+          'Open the shipment in “Shipments”.',
+          'In “Delivery location”, tap “Ask the recipient for their location” and send the message on WhatsApp.',
+          'When the recipient confirms, the status changes to “Confirmed”.',
+          'Or tap “Mark the spot myself” and save the spot on the map.',
+        ],
+      },
+      {
+        id: 'flex-tracking',
+        titulo: 'Divoox Flex: track a package with its tracking number',
+        resumen:
+          'Whoever receives a package enters its tracking number and sees where it is: received at the hub, ready, on its way, delivered.',
+        explicacion: [
+          'Every package has a tracking number that starts with DVX and is printed on the label. With it, anyone can see the package status and every step with its date and time.',
+          'For privacy, tracking never shows names, phones or addresses: only the statuses.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-rastreo-en.webp',
+            alt: 'Divoox tracking page with the current status and history of a package.',
+            pie: 'The package history, without personal details.',
+          },
+        ],
+        preguntas: ['How do I track my package?', 'Where is my tracking number?'],
+        pasos: [
+          'Go to “Track a package” on divoox.com.',
+          'Enter the tracking number (it starts with DVX) and tap “Track”.',
+        ],
+      },
+      {
         id: 'flex-routes',
         titulo: 'Divoox Flex: assign routes and follow every delivery',
         resumen:
@@ -4674,7 +4796,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'A route is a run with several stops: it can carry 30, 40 or more packages. For the driver it is a single job: while doing it, they get no other routes or food orders.',
           'You assign a route directly to your company’s own driver. A Divoox network driver gets an offer for a limited time (for example, 60 minutes) and decides whether to accept it. If two companies try to book the same driver at the same time, only one gets them.',
-          'Before the route goes out you can change the stop order. Every stop needs verified coordinates: if one is missing, Divoox won’t let the route leave until you fix it in the shipment details.',
+          'Before the route goes out you can change the stop order. Every stop needs verified coordinates: if one is missing, Divoox won’t let the route leave until you fix it in the shipment details. In Venezuela, each location must also be confirmed (see the guide on each recipient’s exact location).',
           'At the hub, the driver scans every package (the label’s QR code or barcode). A package from another route isn’t loaded, and scanning it twice doesn’t count twice. If one is missing, they mark it and it’s recorded.',
           'In “Live routes” you see progress in green, every stop with its status, the driver’s last location while working, delivery photos and signatures, and exceptions. The screen refreshes itself every 20 seconds.',
           'You decide which proof you require on every delivery: photo, recipient PIN, signature, or allowing contactless delivery with a photo. A shipment can ask for something different. Without the required proof, the driver can’t mark it delivered.',
@@ -4778,7 +4900,7 @@ const en: SeccionDocs[] = [
           'In “Team”, type the person’s email, pick their role and send the invitation; they sign in with their account and accept.',
           'In “Drivers”, link drivers by the email of their Divoox Driver account.',
         ],
-        nota: 'There are no charges or balances in this phase: the business wallet comes later.',
+        nota: 'Commissions are charged from your wallet balance (see the guide on your wallet, top-ups, commissions and receipts).',
       },
       {
         id: 'flex-import-and-labels',

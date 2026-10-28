@@ -6,6 +6,7 @@ import {
   TRANSICIONES_PAQUETE,
   almacenNavegador,
   barrasCode128,
+  correoEjemplo,
   enIdioma,
   perfilFlex,
   useBorrador,
@@ -306,7 +307,7 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           tipo="email"
           valor={v.destinatarioCorreo}
           cambiar={(x) => b.cambiar('destinatarioCorreo', x)}
-          placeholder="correo@ejemplo.com"
+          placeholder={correoEjemplo(ctx.idioma)}
         />
         {perfilFlex(empresa.pais).documento.pide ? (
           <Campo
@@ -430,7 +431,8 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
       <HerramientasEnvio
         ctx={ctx}
         envioId={e.id}
-        sinCoordenadas={e.lat == null || e.lng == null}
+        // El punto ahora se marca con el pin de «Ubicación de entrega» (Fase 5).
+        sinCoordenadas={false}
         alCambiar={cargar}
       />
       <h2>{t.paquetes}</h2>

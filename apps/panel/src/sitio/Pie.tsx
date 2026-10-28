@@ -138,6 +138,8 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/docs/drivers/get-started">{t.guiaRepartidor}</Enlace>
           <Enlace a="/calculator">{t.calculadora}</Enlace>
           <Enlace a="/franchise">{t.franquicias}</Enlace>
+          <Enlace a="/flex">Divoox Flex</Enlace>
+          <Enlace a="/track">{idioma === 'en' ? 'Track a package' : 'Rastrear un paquete'}</Enlace>
           <Enlace a="/how-it-works#launch">{t.arranque}</Enlace>
         </nav>
         <div className="pie-apps">

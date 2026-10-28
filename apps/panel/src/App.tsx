@@ -10,6 +10,7 @@ import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
+import { Flex } from './sitio/Flex';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -134,6 +135,12 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <ViajeCompartido codigo={compartido[1]} idioma={idioma} />
+      </Sitio>
+    );
+  if (ruta === '/flex')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Flex idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/franchise')

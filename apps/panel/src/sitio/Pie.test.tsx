@@ -78,6 +78,9 @@ describe('pie de página y páginas por lugar', () => {
       '/delete-account',
       '/support',
       '/calculator',
+      // Divoox Flex (28 oct 2026): la página del servicio y el rastreo por número de guía.
+      '/flex',
+      '/track',
       '/franchise',
       '/docs',
       '/panel',

@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  almacenNavegador,
+  enIdioma,
+  useBorrador,
+} from '@tumbite/compartido';
 import { api } from '../panel/api';
 import { ir } from '../ruta';
 
@@ -70,7 +76,14 @@ type Seguimiento = {
 export function Seguimiento({ codigo, idioma }: { codigo: string | null; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const estados = new Map(Object.entries(t.estados));
-  const [texto, setTexto] = useState(codigo ?? '');
+  // Regla de la casa: ningún formulario pierde lo escrito (aunque sea un número de guía).
+  const b = useBorrador({
+    formulario: 'rastreo',
+    inicial: { codigo: codigo ?? '' },
+    almacen: almacenNavegador,
+  });
+  const texto = b.valores.codigo || codigo || '';
+  const setTexto = (v: string) => b.cambiar('codigo', v);
   const [datos, setDatos] = useState<Seguimiento | null>(null);
   const [falla, setFalla] = useState('');
   const [buscando, setBuscando] = useState(false);

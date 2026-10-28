@@ -4713,10 +4713,9 @@ button {
 .flex-eventos {
   border: 1px solid #d0d2d6;
   border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
+  padding: 8px 12px 8px 30px;
+  display: grid;
+  gap: 6px;
 }
 .texto-exito {
   color: #0d7a3a;
@@ -4924,4 +4923,79 @@ button {
   width: 100%;
   text-align: left;
   padding: 8px 10px;
+}
+
+/* Divoox Flex · página pública /flex (capturas originales de la app). */
+.fw-pagina .fw-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+.fw-pasos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 32px;
+}
+.fw-paso {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 24px;
+  align-items: center;
+}
+.fw-paso img,
+.fw-dos img,
+.fw-ancha {
+  width: 100%;
+  height: auto;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(16, 16, 16, 0.08);
+  background: #fff;
+}
+.fw-paso:nth-child(even) > div {
+  order: 2;
+}
+.fw-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.fw-dos figure {
+  margin: 0;
+}
+.fw-dos figcaption {
+  margin-top: 8px;
+  color: #666b73;
+}
+.fw-ancha {
+  margin-top: 16px;
+}
+.fw-final {
+  text-align: center;
+}
+@media (max-width: 760px) {
+  .fw-paso,
+  .fw-dos {
+    grid-template-columns: 1fr;
+  }
+  .fw-paso:nth-child(even) > div {
+    order: 0;
+  }
+}
+.fw-pagina img.fw-celular {
+  max-width: 320px;
+  justify-self: center;
+  display: block;
+  margin: 0 auto;
+}
+
+.fw-tarjeta {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
 }

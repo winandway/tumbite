@@ -84,11 +84,13 @@ export async function vincularDestinatarios(db: D1Database, envioIds: string[], 
       )
       .bind(correo, correo, tel, `%${tel.slice(-7)}`)
       .all<{ id: string; telefono: string | null; correo: string }>();
-    const u = results.find(
-      (x) =>
-        (correo && x.correo.toLowerCase() === correo) ||
-        (tel && telefonoInternacional(x.telefono ?? '', pais) === tel),
-    );
+    // El correo identifica a una sola persona. El teléfono solo si UNA cuenta lo tiene: si varias lo
+    // comparten, no se adivina (un paquete nunca puede aparecerle a otra persona).
+    const porCorreo = correo ? results.find((x) => x.correo.toLowerCase() === correo) : undefined;
+    const porTelefono = tel
+      ? results.filter((x) => telefonoInternacional(x.telefono ?? '', pais) === tel)
+      : [];
+    const u = porCorreo ?? (porTelefono.length === 1 ? porTelefono[0] : undefined);
     if (!u) continue;
     await db
       .prepare('UPDATE envios SET destinatario_usuario_id = ? WHERE id = ?')
@@ -163,6 +165,32 @@ async function confirmarPunto(
     .run();
 }
 
+/**
+ * El código del enlace: con secreto, el mismo para el mismo envío y vencimiento (HMAC); sin secreto
+ * (pruebas locales), uno al azar cada vez.
+ */
+async function codigoDeEnlace(secreto: string | undefined, envioId: string, vence: string) {
+  if (!secreto) return nuevoToken();
+  const llave = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secreto),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const firma = new Uint8Array(
+    await crypto.subtle.sign(
+      'HMAC',
+      llave,
+      new TextEncoder().encode(`ubicacion:${envioId}:${vence}`),
+    ),
+  );
+  return btoa(String.fromCharCode(...firma))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replaceAll('=', '');
+}
+
 // ───────────────────────────── Empresa: pedir la ubicación ─────────────────────────────
 
 /**
@@ -192,15 +220,30 @@ flexUbicacion.post('/empresas/:id/envios/:envioId/enlace-ubicacion', async (c) =
       undefined,
       409,
     );
-  const codigo = nuevoToken();
+  // El MISMO enlace mientras siga vigente: si la empresa vuelve a tocar «pedir», el que ya mandó por
+  // WhatsApp sigue sirviendo (visto al tomar las capturas del 28 oct 2026). El código se calcula con
+  // el secreto del servidor y la fecha de vencimiento; en la base solo queda su huella.
+  const vigente = await db
+    .prepare(
+      "SELECT enlace_ubicacion_vence AS vence FROM envios WHERE id = ? AND enlace_ubicacion_vence > datetime('now', '+1 day')",
+    )
+    .bind(envioId)
+    .first<{ vence: string }>();
+  const vence =
+    vigente?.vence ??
+    new Date(Date.now() + DIAS_ENLACE_UBICACION * 86_400_000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+  const codigo = await codigoDeEnlace(c.env.RELOJ_SECRETO, envioId, vence);
   await db.batch([
     db
       .prepare(
-        `UPDATE envios SET enlace_ubicacion_huella = ?, enlace_ubicacion_vence = datetime('now', ?),
+        `UPDATE envios SET enlace_ubicacion_huella = ?, enlace_ubicacion_vence = ?,
            ubicacion_estado = CASE WHEN ubicacion_estado = 'confirmada' THEN 'confirmada' ELSE 'pendiente' END
          WHERE id = ?`,
       )
-      .bind(await sha256(codigo), `+${DIAS_ENLACE_UBICACION} days`, envioId),
+      .bind(await sha256(codigo), vence, envioId),
     sentenciaAuditoria(db, actor, 'envio.enlace_ubicacion', envioId, {}),
   ]);
   const sitio = (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
