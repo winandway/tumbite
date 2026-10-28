@@ -45,6 +45,11 @@ export const TEXTOS_MOTO = {
     compartirMensaje: 'Sigue mi viaje en Divoox en vivo:',
     emergencia: 'Emergencia',
     emergenciaAyuda: 'Llama a emergencias y avisa a nuestro equipo con tu ubicación.',
+    calificar: '¿Cómo estuvo tu viaje?',
+    comentario: 'Cuéntanos algo (opcional)',
+    enviarCalificacion: 'Enviar calificación',
+    gracias: '¡Gracias por calificar tu viaje!',
+    estrella: 'estrellas',
   },
   en: {
     titulo: 'Moto',
@@ -90,5 +95,10 @@ export const TEXTOS_MOTO = {
     compartirMensaje: 'Follow my Divoox ride live:',
     emergencia: 'Emergency',
     emergenciaAyuda: 'Call emergency services and alert our team with your location.',
+    calificar: 'How was your ride?',
+    comentario: 'Tell us something (optional)',
+    enviarCalificacion: 'Submit rating',
+    gracias: 'Thanks for rating your ride!',
+    estrella: 'stars',
   },
 };

@@ -684,3 +684,45 @@ export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
     .first<{ colgadas: number; huerfanas: number }>();
   return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 ? 'ok' : 'error';
 }
+
+// ---------------------------------------------------------------- M8: calificación
+
+export const esquemaCalificacionViaje = z.object({
+  estrellas: z.number().int().min(1).max(5),
+  comentario: z.string().trim().max(500).default(''),
+});
+
+/** Guarda la calificación de un lado (una sola: repetir responde igual sin cambiarla). */
+export async function calificarViaje(
+  db: D1Database,
+  p: {
+    operacionId: string;
+    de: 'pasajero' | 'conductor';
+    autorId: string;
+    estrellas: number;
+    comentario: string;
+  },
+) {
+  const v = await db
+    .prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
+    .bind(p.operacionId)
+    .first<{ estado: string }>();
+  if (v?.estado !== 'terminado')
+    throw new ErrorDatos('Solo se califica un viaje terminado.', undefined, 409);
+  await db
+    .prepare(
+      'INSERT OR IGNORE INTO calificaciones_viaje (operacion_id, de, autor_id, estrellas, comentario) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(p.operacionId, p.de, p.autorId, p.estrellas, p.comentario)
+    .run();
+}
+
+viajesPasajero.post('/viajes/:id/calificar', async (c) => {
+  const u = exigir(c, 'cliente');
+  const id = c.req.param('id');
+  if (!(await viajeDelCliente(base(c), u.id, id)))
+    throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  const d = await leerCuerpo(c, esquemaCalificacionViaje);
+  await calificarViaje(base(c), { operacionId: id, de: 'pasajero', autorId: u.id, ...d });
+  return c.json({ ok: true });
+});

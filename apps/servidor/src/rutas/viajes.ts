@@ -4,7 +4,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { nuevoId } from '../cripto';
-import { registrarEmergencia } from './viajesPasajero';
+import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
 import {
   cobrarReservaViaje,
   devolverReservaViaje,
@@ -435,3 +435,17 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
     .first<{ total_final_centavos: number | null }>();
   return fin?.total_final_centavos ?? null;
 }
+
+/** M8: el conductor califica al pasajero al terminar. */
+viajes.post('/conductor/operaciones/:id/calificar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const id = c.req.param('id');
+  const f = await base(c)
+    .prepare('SELECT 1 FROM operaciones WHERE id = ? AND conductor_id = ?')
+    .bind(id, u.id)
+    .first();
+  if (!f) throw new ErrorDatos('Este viaje ya no está asignado a ti.', undefined, 404);
+  const d = await leerCuerpo(c, esquemaCalificacionViaje);
+  await calificarViaje(base(c), { operacionId: id, de: 'conductor', autorId: u.id, ...d });
+  return c.json({ ok: true });
+});

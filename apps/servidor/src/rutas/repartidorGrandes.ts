@@ -30,8 +30,16 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
   const db = base(c);
   const estrellas = await db
     .prepare(
-      `SELECT c.estrellas_repartidor AS e, c.culpa_restaurante AS culpa FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
-        WHERE p.repartidor_id = ? AND c.estrellas_repartidor IS NOT NULL ORDER BY c.creado_en DESC LIMIT ${ULTIMAS}`,
+      `SELECT e, culpa FROM (
+         SELECT c.estrellas_repartidor AS e, c.culpa_restaurante AS culpa, c.creado_en FROM calificaciones c
+           JOIN pedidos p ON p.id = c.pedido_id
+          WHERE p.repartidor_id = ?1 AND c.estrellas_repartidor IS NOT NULL
+         -- Divoox Moto · M8: las de los pasajeros cuentan igual que las de Comida.
+         UNION ALL
+         SELECT k.estrellas, 0, k.creado_en FROM calificaciones_viaje k
+           JOIN operaciones o ON o.id = k.operacion_id
+          WHERE o.conductor_id = ?1 AND k.de = 'pasajero')
+        ORDER BY creado_en DESC LIMIT ${ULTIMAS}`,
     )
     .bind(u.id)
     .all<{ e: number; culpa: number | null }>();

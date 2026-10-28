@@ -232,7 +232,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] (28 oct) M5 App del cliente: pedir Moto con precio fijo (recotiza solo), buscando, conductor y moto, mapa, código, cancelar con su precio, pagar en efectivo.
 - [x] (28 oct) M6 Seguridad: emergencia en las dos apps con aviso al equipo y número del país, viaje compartido en vivo que se apaga al terminar, casco confirmado por el conductor. (Pendiente para más adelante: contactos de emergencia, aviso de desvío, límite de horas y pausa del chat.)
 - [x] (28 oct) M7 Dinero: comisión del prepago apartada al aceptar, cobrada al terminar y devuelta si no se hace; espera por minuto; deudas en la cuenta final; conciliación en la salud. (El pago con tarjeta de los viajes queda para una fase propia con Stripe de prueba.)
-- [ ] M8 Calificación de ambos lados y propina.
+- [x] (28 oct) M8 Calificación de ambos lados (cuenta en el promedio del conductor). La propina va con el pago con tarjeta.
 - [ ] M9 Panel: tarifas, interruptores, viajes en curso, emergencias.
 - [ ] M10 Recorrido en staging, comparación con REA sobre nuestras apps, guías en Docs, informe.
 - [ ] 👤 Primer mercado de Moto y aprobación legal de ese país.

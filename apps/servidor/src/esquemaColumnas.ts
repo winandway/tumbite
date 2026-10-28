@@ -1590,5 +1590,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "operacion_id",
     "creado_por",
     "creado_en"
+  ],
+  "calificaciones_viaje": [
+    "operacion_id",
+    "de",
+    "autor_id",
+    "estrellas",
+    "comentario",
+    "creado_en"
   ]
 };

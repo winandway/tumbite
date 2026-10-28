@@ -74,6 +74,15 @@ export function ViajeActivo({
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
   // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
   const [totalFinal, setTotalFinal] = useState<number | null>(null);
+  const [estrellas, setEstrellas] = useState(0);
+  /** M8: el conductor califica al pasajero (una vez); después vuelve al inicio. */
+  async function calificarYSalir() {
+    if (estrellas)
+      await api
+        .pedir('POST', `/datos/conductor/operaciones/${viaje.id}/calificar`, { estrellas })
+        .catch(() => undefined);
+    alCambiar();
+  }
   // La espera corre en la pantalla desde la hora de llegada que guardó el servidor.
   const [tic, setTic] = useState(() => Date.now());
   useEffect(() => {
@@ -130,7 +139,27 @@ export function ViajeActivo({
             </Text>
           </View>
         ) : null}
-        <Boton texto={t.listo} alTocar={alCambiar} exito />
+        {cierre === 'terminado' ? (
+          <View testID="viaje-calificar-pasajero" style={{ gap: 6 }}>
+            <Text style={{ fontWeight: '800', color: C.secundario }}>{t.califica}</Text>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Pressable
+                  key={n}
+                  onPress={() => setEstrellas(n)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${n} ${t.estrellas}`}
+                  accessibilityState={{ selected: estrellas === n }}
+                >
+                  <Text style={{ fontSize: 32, color: n <= estrellas ? C.exito : '#C9CED6' }}>
+                    ★
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+        <Boton texto={t.listo} alTocar={() => void calificarYSalir()} exito />
       </View>
     );
 

@@ -39,6 +39,8 @@ export const TEXTOS_VIAJE = {
       listo: 'Listo',
       soporte: '¿Problemas? Llama a soporte desde Ayuda.',
       emergencia: 'Emergencia',
+      califica: 'Califica a tu pasajero',
+      estrellas: 'estrellas',
     },
   },
   en: {
@@ -80,6 +82,8 @@ export const TEXTOS_VIAJE = {
       listo: 'Done',
       soporte: 'Having trouble? Call support from Help.',
       emergencia: 'Emergency',
+      califica: 'Rate your rider',
+      estrellas: 'stars',
     },
   },
 };

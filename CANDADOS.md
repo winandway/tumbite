@@ -1358,3 +1358,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Conciliación:** pieza `viajes` de `/datos/salud`: rojo si un viaje cerrado hace más de 10 minutos conserva comisión apartada, o si hay deudas cobradas sin su viaje.
 - **Prueba:** `rutas/viajesPasajero.test.ts` (M7 y su salud), el cobro comprobado en rojo.
 - **Pendiente de decisión de negocio:** en efectivo, el cargo de cancelación o de «no se presentó» lo cobra el conductor del SIGUIENTE viaje y queda en su mano; el estándar (Uber) es que vaya al conductor afectado. Se resuelve con el pago con tarjeta.
+
+## C-VIAJE-CALIFICACION · Los dos lados califican una vez (28 oct 2026)
+
+- `calificaciones_viaje`: una por lado y viaje, solo con el viaje terminado; repetir no la cambia. La del pasajero entra en el promedio del conductor junto con las de Comida (`/datos/repartidor/calificaciones`).
+- **Prueba:** `rutas/viajesPasajero.test.ts` (M8).
+- **Propina:** queda para el pago con tarjeta de los viajes (en efectivo se da en mano).

@@ -835,3 +835,74 @@ describe('M7: la salud de los viajes (conciliación)', () => {
     expect((await e.m.llamar('GET', '/datos/salud')).datos.piezas.viajes).toBe('error');
   });
 });
+
+describe('M8: calificación de los dos lados', () => {
+  it('cada lado califica una vez al terminar, y la del pasajero cuenta en el promedio del conductor', async () => {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const c = (await cotizar(e)).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: c.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    // Antes de terminar no se califica.
+    expect(
+      (await e.m.llamar('POST', `/datos/viajes/${id}/calificar`, { estrellas: 5 }, e.cliente.token))
+        .estado,
+    ).toBe(409);
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    expect(await cond.paso(id, 'terminar')).toBe(200);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/viajes/${id}/calificar`,
+          { estrellas: 4, comentario: 'Muy amable' },
+          e.cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
+    // Repetir no cambia la calificación.
+    expect(
+      (await e.m.llamar('POST', `/datos/viajes/${id}/calificar`, { estrellas: 1 }, e.cliente.token))
+        .estado,
+    ).toBe(200);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/conductor/operaciones/${id}/calificar`,
+          { estrellas: 5 },
+          cond.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const { results } = await e.m.DB.prepare(
+      'SELECT de, estrellas FROM calificaciones_viaje WHERE operacion_id = ? ORDER BY de',
+    )
+      .bind(id)
+      .all();
+    expect(results).toEqual([
+      { de: 'conductor', estrellas: 5 },
+      { de: 'pasajero', estrellas: 4 },
+    ]);
+    const prom = await e.m.llamar('GET', '/datos/repartidor/calificaciones', undefined, cond.token);
+    expect(prom.datos.clientes).toMatchObject({ promedio: 4, cuantas: 1 });
+    // Nadie más califica ese viaje.
+    const otro = await e.m.cuenta('cliente', 'Otro');
+    expect(
+      (await e.m.llamar('POST', `/datos/viajes/${id}/calificar`, { estrellas: 1 }, otro.token))
+        .estado,
+    ).toBe(404);
+  });
+});

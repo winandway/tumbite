@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Linking, Share, Text, View } from 'react-native';
+import { Linking, Pressable, Share, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, useSesion } from '@tumbite/movil';
+import { Boton, C, Campo, useSesion } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
@@ -51,6 +51,19 @@ export function ViajeEnCurso({
   const [error, setError] = useState('');
   const [cancelando, setCancelando] = useState(false);
   const [cargoCobrado, setCargoCobrado] = useState<number | null>(null);
+  const [estrellas, setEstrellas] = useState(0);
+  const [comentario, setComentario] = useState('');
+  const [calificado, setCalificado] = useState(false);
+
+  async function calificar() {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/viajes/${viaje.id}/calificar`, { estrellas, comentario });
+      setCalificado(true);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   const titulo = new Map([
     ['buscando', t.buscando],
     ['pago_pendiente', t.buscando],
@@ -205,6 +218,36 @@ export function ViajeEnCurso({
           />
         </>
       ) : null}
+      {viaje.estado === 'terminado' && !calificado ? (
+        <Tarjeta>
+          <View testID="viaje-calificar" style={{ gap: 8 }}>
+            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+              {t.calificar}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Pressable
+                  key={n}
+                  onPress={() => setEstrellas(n)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${n} ${t.estrella}`}
+                  accessibilityState={{ selected: estrellas === n }}
+                  testID={`estrella-${n}`}
+                >
+                  <Text style={{ fontSize: 34, color: n <= estrellas ? C.exito : '#C9CED6' }}>
+                    ★
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Campo etiqueta={t.comentario} value={comentario} onChangeText={setComentario} />
+            {estrellas ? (
+              <Boton texto={t.enviarCalificacion} alTocar={() => void calificar()} exito />
+            ) : null}
+          </View>
+        </Tarjeta>
+      ) : null}
+      {calificado ? <Text style={{ color: C.exito, fontWeight: '700' }}>{t.gracias}</Text> : null}
       {FINALES.has(viaje.estado) ? (
         <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />
       ) : null}

@@ -2527,3 +2527,16 @@ CREATE TABLE IF NOT EXISTS viajes_compartidos (
   creado_por TEXT NOT NULL REFERENCES usuarios(id),
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Divoox Moto · M8 (28 oct 2026): cada lado califica al otro al terminar el viaje (como Uber e
+-- inDrive). Una sola calificación por lado y viaje. La del pasajero cuenta en el promedio del
+-- conductor junto con las de Comida.
+CREATE TABLE IF NOT EXISTS calificaciones_viaje (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  de TEXT NOT NULL CHECK (de IN ('pasajero', 'conductor')),
+  autor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estrellas INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, de)
+);
