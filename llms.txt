@@ -102,7 +102,7 @@
 - [Divoox Flex: the API to connect your own system](https://divoox.com/docs/business/flex-api): If your business already runs its own system, it can create and query shipments and packages directly with an integration key, without the panel.
 - [Calculator: how much you earn and save with Divoox](https://divoox.com/docs/business/calculator): A calculator for everyone: the restaurant, the driver, the customer, and whoever wants to open Divoox in their city.
 - [Franchises: bring Divoox to your city](https://divoox.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
-- [Launch team training · Divoox](https://divoox.com/docs/business/team-training): The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.
+- [Launch team training · Divoox](https://divoox.com/docs/business/team-training): The reading list for everyone on the team: what to read, in what order, and what they should be able to explain at the end. It covers restaurants, drivers,
 - [Your account · Divoox](https://divoox.com/docs/account): ⌘K← Docs Your accountCreate your accountOne account to order, one for your restaurant, and one to deliver. Each takes a minute.Forgot my passwordWe email y
 - [Create your account · Divoox](https://divoox.com/docs/account/create-account): One account to order, one for your restaurant, and one to deliver. Each takes a minute.
 - [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
