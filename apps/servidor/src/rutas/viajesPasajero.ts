@@ -672,13 +672,18 @@ export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
   const f = await db
     .prepare(
       `SELECT
+         -- Una sola pasada por las reservas de viajes (sin cruzar todo el libro con todas las
+         -- operaciones): el id del viaje sale de la referencia «reserva_viaje:<viaje>:<conductor>:…».
          (SELECT COUNT(*) FROM (
-            SELECT l.referencia FROM libro l
-              JOIN operaciones o ON l.referencia LIKE 'reserva_viaje:' || o.id || ':%'
-             WHERE l.bolsillo = 'reservado'
-               AND o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
-               AND o.actualizado_en < datetime('now', '-10 minutes')
-             GROUP BY o.id, l.cuenta_id HAVING SUM(l.monto) != 0)) AS colgadas,
+            SELECT r.op, r.cuenta_id FROM (
+              SELECT substr(l.referencia, 15, instr(substr(l.referencia, 15), ':') - 1) AS op,
+                     l.cuenta_id, l.monto
+                FROM libro l
+               WHERE l.bolsillo = 'reservado' AND l.referencia LIKE 'reserva_viaje:%') r
+            JOIN operaciones o ON o.id = r.op
+           WHERE o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
+             AND o.actualizado_en < datetime('now', '-10 minutes')
+           GROUP BY r.op, r.cuenta_id HAVING SUM(r.monto) != 0)) AS colgadas,
          (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas`,
     )
     .first<{ colgadas: number; huerfanas: number }>();
