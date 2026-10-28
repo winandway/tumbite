@@ -4,6 +4,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { nuevoId } from '../cripto';
+import { registrarEmergencia } from './viajesPasajero';
 import {
   aceptarOperacion,
   cambiarEstadoViaje,
@@ -308,3 +309,20 @@ viajes.post(
     return c.json({ ok: true, estado: paso.hacia });
   },
 );
+
+/** M6: el conductor también tiene botón de emergencia durante su viaje. */
+viajes.post('/conductor/operaciones/:id/emergencia', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const id = c.req.param('id');
+  await miOperacion(c, id, u.id);
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      lat: z.number().min(-90).max(90).optional(),
+      lng: z.number().min(-180).max(180).optional(),
+    }),
+  );
+  return c.json(
+    await registrarEmergencia(c, { operacionId: id, actorId: u.id, rol: 'conductor', ...d }),
+  );
+});

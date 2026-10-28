@@ -11,9 +11,11 @@ import {
   esquemaCotizarViaje,
   esquemaTarifaViaje,
   estimarRuta,
+  numeroEmergencia,
 } from '@tumbite/compartido';
+import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
-import { nuevoId } from '../cripto';
+import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -543,4 +545,118 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
       .bind(nuevoId(), u.id, id, cargo, f.moneda)
       .run();
   return c.json({ ok: true, cargo });
+});
+
+// ---------------------------------------------------------------- M6: seguridad del viaje
+
+/**
+ * Botón de emergencia (pasajero o conductor): queda guardado con la ubicación, le llega al equipo
+ * por correo y la app llama al número de emergencias del país que devuelve esta respuesta.
+ * Nunca falla por el correo: lo importante es que quede registrado y que la app llame.
+ */
+export async function registrarEmergencia(
+  c: Ctx,
+  p: {
+    operacionId: string;
+    actorId: string;
+    rol: 'pasajero' | 'conductor';
+    lat?: number;
+    lng?: number;
+  },
+) {
+  const db = base(c);
+  const f = await db
+    .prepare(
+      `SELECT z.pais, u.nombre FROM operaciones o JOIN zonas z ON z.id = o.zona_id
+         JOIN usuarios u ON u.id = ? WHERE o.id = ?`,
+    )
+    .bind(p.actorId, p.operacionId)
+    .first<{ pais: string; nombre: string }>();
+  await db
+    .prepare(
+      'INSERT INTO emergencias_viaje (id, operacion_id, actor_id, rol, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(nuevoId(), p.operacionId, p.actorId, p.rol, p.lat ?? null, p.lng ?? null)
+    .run();
+  await avisoEmergenciaViaje(c.env, {
+    operacionId: p.operacionId,
+    rol: p.rol,
+    nombre: f?.nombre ?? '',
+    donde: p.lat != null && p.lng != null ? `${p.lat},${p.lng}` : 'sin ubicación',
+  }).catch((e: unknown) => console.error('viajes: correo de emergencia', e));
+  return { numero: numeroEmergencia(f?.pais) };
+}
+
+const cuerpoEmergencia = z.object({
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+});
+
+viajesPasajero.post('/viajes/:id/emergencia', async (c) => {
+  const u = exigir(c, 'cliente');
+  const id = c.req.param('id');
+  if (!(await viajeDelCliente(base(c), u.id, id)))
+    throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  const d = await leerCuerpo(c, cuerpoEmergencia);
+  return c.json(
+    await registrarEmergencia(c, { operacionId: id, actorId: u.id, rol: 'pasajero', ...d }),
+  );
+});
+
+/**
+ * Compartir el viaje (Grab «Share My Ride», DiDi): un enlace largo y secreto que muestra el viaje
+ * en vivo a quien lo reciba, sin cuenta. Se guarda solo su huella y deja de servir al terminar.
+ */
+viajesPasajero.post('/viajes/:id/compartir', async (c) => {
+  const u = exigir(c, 'cliente');
+  const id = c.req.param('id');
+  const f = await viajeDelCliente(base(c), u.id, id);
+  if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  if (['terminado', 'cancelado', 'sin_conductor', 'no_show'].includes(f.estado))
+    throw new ErrorDatos('Este viaje ya terminó.', undefined, 409);
+  const codigo = nuevoToken();
+  await base(c)
+    .prepare('INSERT INTO viajes_compartidos (huella, operacion_id, creado_por) VALUES (?, ?, ?)')
+    .bind(await sha256(codigo), id, u.id)
+    .run();
+  const sitio = (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
+  return c.json({ url: `${sitio}/ride/${codigo}` }, 201);
+});
+
+/** Lo que ve quien recibió el enlace: solo mientras el viaje no termine. */
+viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
+  const codigo = c.req.param('codigo');
+  if (!/^[A-Za-z0-9_-]{40,60}$/.test(codigo))
+    throw new ErrorDatos('Este enlace no existe.', undefined, 404);
+  const f = await base(c)
+    .prepare(
+      `SELECT v.estado, v.origen_direccion, v.destino_direccion, v.destino_lat, v.destino_lng,
+              u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
+         FROM viajes_compartidos s JOIN operaciones o ON o.id = s.operacion_id
+         JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN usuarios u ON u.id = o.conductor_id
+         LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
+         LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
+        WHERE s.huella = ?`,
+    )
+    .bind(await sha256(codigo))
+    .first<Record<string, unknown>>();
+  if (!f) throw new ErrorDatos('Este enlace no existe.', undefined, 404);
+  const estado = String(f.estado);
+  if (['terminado', 'cancelado', 'sin_conductor', 'no_show'].includes(estado))
+    return c.json({ viaje: { estado, terminado: true } });
+  return c.json({
+    viaje: {
+      estado,
+      terminado: false,
+      origen: String(f.origen_direccion),
+      destino: String(f.destino_direccion),
+      conductor: f.conductor ? String(f.conductor).split(' ')[0] : null,
+      vehiculo: f.conductor
+        ? { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa }
+        : null,
+      ubicacion: f.lat != null && f.lng != null ? { lat: Number(f.lat), lng: Number(f.lng) } : null,
+      ubicacionEn: f.ubicacion_en ?? null,
+    },
+  });
 });

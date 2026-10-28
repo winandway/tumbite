@@ -1050,6 +1050,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Divoox Moto · M1 (cotización de viajes).
+  ['Este viaje ya terminó.', 'This ride has already ended.'],
+  ['Este enlace no existe.', 'This link doesn’t exist.'],
   ['Esa cotización no existe.', 'That quote doesn’t exist.'],
   [
     'El precio venció. Vuelve a cotizar el viaje.',

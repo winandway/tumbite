@@ -230,7 +230,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] (28 oct) M3 Oferta completa (ganancia, recogida, destino, duración, pago) y despacho al pedir, al rechazar, al soltar y al consultar.
 - [x] (28 oct) M4 App del Driver: oferta, viaje activo, espera, casco, PIN, terminar, no se presentó.
 - [x] (28 oct) M5 App del cliente: pedir Moto con precio fijo (recotiza solo), buscando, conductor y moto, mapa, código, cancelar con su precio, pagar en efectivo.
-- [ ] M6 Seguridad: emergencia, compartir viaje, lista de seguridad, casco, interruptores.
+- [x] (28 oct) M6 Seguridad: emergencia en las dos apps con aviso al equipo y número del país, viaje compartido en vivo que se apaga al terminar, casco confirmado por el conductor. (Pendiente para más adelante: contactos de emergencia, aviso de desvío, límite de horas y pausa del chat.)
 - [ ] M7 Dinero: reserva y cobro de comisión del prepago, política de cancelaciones por servicio, espera por minuto, conciliación.
 - [ ] M8 Calificación de ambos lados y propina.
 - [ ] M9 Panel: tarifas, interruptores, viajes en curso, emergencias.

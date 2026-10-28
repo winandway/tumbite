@@ -244,6 +244,19 @@ export function ViajeActivo({
           {error}
         </Text>
       ) : null}
+      {/* M6: emergencia. Primero la llamada (aunque falle el aviso al equipo). */}
+      <Boton
+        texto={t.emergencia}
+        alTocar={() =>
+          void api
+            .pedir<{ numero: string }>(
+              'POST',
+              `/datos/conductor/operaciones/${viaje.id}/emergencia`,
+            )
+            .catch(() => ({ numero: '911' }))
+            .then((r) => Linking.openURL(`tel:${r.numero}`))
+        }
+      />
       <Text style={{ color: '#8A8A8A', fontSize: 12 }}>{t.soporte}</Text>
     </View>
   );

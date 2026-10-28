@@ -41,6 +41,10 @@ export const TEXTOS_MOTO = {
     etiquetaRecogida: 'Recogida',
     etiquetaDestino: 'Destino',
     etiquetaConductor: 'Tu conductor',
+    compartir: 'Compartir mi viaje',
+    compartirMensaje: 'Sigue mi viaje en Divoox en vivo:',
+    emergencia: 'Emergencia',
+    emergenciaAyuda: 'Llama a emergencias y avisa a nuestro equipo con tu ubicación.',
   },
   en: {
     titulo: 'Moto',
@@ -82,5 +86,9 @@ export const TEXTOS_MOTO = {
     etiquetaRecogida: 'Pickup',
     etiquetaDestino: 'Destination',
     etiquetaConductor: 'Your driver',
+    compartir: 'Share my ride',
+    compartirMensaje: 'Follow my Divoox ride live:',
+    emergencia: 'Emergency',
+    emergenciaAyuda: 'Call emergency services and alert our team with your location.',
   },
 };

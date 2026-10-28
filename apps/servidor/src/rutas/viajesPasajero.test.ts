@@ -534,3 +534,92 @@ describe('M3 (C-OFERTA-COMPLETA): la oferta del conductor y el despacho sin espe
     expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(1);
   });
 });
+
+describe('M6 (C-VIAJE-SEGURIDAD): emergencia y viaje compartido', () => {
+  async function conViaje() {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const c = (await cotizar(e)).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: c.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    return { e, cond, id };
+  }
+
+  it('el botón de emergencia del pasajero y del conductor queda registrado y da el número del país', async () => {
+    const { e, cond, id } = await conViaje();
+    const r = await e.m.llamar(
+      'POST',
+      `/datos/viajes/${id}/emergencia`,
+      { lat: 25.76, lng: -80.19 },
+      e.cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.numero).toBe('911');
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    const d = await e.m.llamar(
+      'POST',
+      `/datos/conductor/operaciones/${id}/emergencia`,
+      {},
+      cond.token,
+    );
+    expect(d.datos.numero).toBe('911');
+    const { results } = await e.m.DB.prepare(
+      'SELECT rol, lat FROM emergencias_viaje WHERE operacion_id = ? ORDER BY creado_en, rol',
+    )
+      .bind(id)
+      .all();
+    expect(results.map((x) => x.rol).sort()).toEqual(['conductor', 'pasajero']);
+    const otro = await e.m.cuenta('cliente', 'Otro');
+    expect(
+      (await e.m.llamar('POST', `/datos/viajes/${id}/emergencia`, {}, otro.token)).estado,
+    ).toBe(404);
+  });
+
+  it('el enlace compartido muestra el viaje en vivo sin cuenta y deja de mostrarlo al terminar', async () => {
+    const { e, cond, id } = await conViaje();
+    const r = await e.m.llamar('POST', `/datos/viajes/${id}/compartir`, {}, e.cliente.token);
+    expect(r.estado).toBe(201);
+    const codigo = String(r.datos.url).split('/ride/')[1] ?? '';
+    expect(codigo).toMatch(/^[A-Za-z0-9_-]{40,60}$/);
+    // Solo se guarda la huella, nunca el código.
+    expect(
+      await e.m.DB.prepare('SELECT 1 AS x FROM viajes_compartidos WHERE huella = ?')
+        .bind(codigo)
+        .first(),
+    ).toBeNull();
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    const vivo = await e.m.llamar('GET', `/datos/publico/viaje/${codigo}`);
+    expect(vivo.datos.viaje).toMatchObject({
+      estado: 'asignado',
+      terminado: false,
+      conductor: 'Conductor',
+      destino: DESTINO.direccion,
+    });
+    expect(vivo.datos.viaje.vehiculo.marca).toBe('Yamaha');
+    // Al terminar no se ve nada más del viaje.
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    expect(await cond.paso(id, 'terminar')).toBe(200);
+    const fin = await e.m.llamar('GET', `/datos/publico/viaje/${codigo}`);
+    expect(fin.datos.viaje).toEqual({ estado: 'terminado', terminado: true });
+    expect(
+      (await e.m.llamar('POST', `/datos/viajes/${id}/compartir`, {}, e.cliente.token)).estado,
+    ).toBe(409);
+  });
+
+  it('un código inventado o mal formado no muestra nada', async () => {
+    const e = await enPruebas();
+    expect((await e.m.llamar('GET', `/datos/publico/viaje/${'a'.repeat(43)}`)).estado).toBe(404);
+    expect((await e.m.llamar('GET', '/datos/publico/viaje/corto')).estado).toBe(404);
+  });
+});

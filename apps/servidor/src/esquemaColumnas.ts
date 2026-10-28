@@ -1572,5 +1572,22 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en",
     "resuelta_en"
+  ],
+  "emergencias_viaje": [
+    "id",
+    "operacion_id",
+    "actor_id",
+    "rol",
+    "lat",
+    "creado_en",
+    "atendida_en",
+    "atendida_por",
+    "nota"
+  ],
+  "viajes_compartidos": [
+    "huella",
+    "operacion_id",
+    "creado_por",
+    "creado_en"
   ]
 };

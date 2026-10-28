@@ -1342,3 +1342,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Oferta:** `GET /datos/conductor/operaciones/ofertas` trae la ganancia (precio fijo menos la comisión de la política de conductor que rija para «ride»; sin política, todo), la distancia a la recogida, el destino, la distancia y duración del viaje, la moneda y la forma de pago. Así lo hace Uber Moto [DOC].
 - **Despacho sin reloj:** el sitio no tiene reloj propio (el de afuera pasa cada 5 minutos). Por eso se despacha al pedir, al rechazar, al soltar el viaje y cuando el pasajero consulta su viaje sin oferta abierta. Uno a uno, el más cercano primero (equivale a un radio que crece).
 - **Prueba:** `rutas/viajesPasajero.test.ts` (M3), comprobada en rojo quitando la ganancia y el redespacho.
+
+## C-VIAJE-SEGURIDAD · Emergencia y viaje compartido (28 oct 2026)
+
+- **Emergencia:** el pasajero (`POST /datos/viajes/:id/emergencia`) y el conductor (`POST /datos/conductor/operaciones/:id/emergencia`) tienen botón de emergencia. Queda en `emergencias_viaje` con la ubicación, le llega por correo al equipo (ADMIN_CORREOS), y la app llama al número del país (`numeroEmergencia`: 911 en EE. UU., Venezuela y México; 123 en Colombia). La app llama PRIMERO aunque falle el aviso.
+- **Compartir el viaje:** `POST /datos/viajes/:id/compartir` da un enlace largo y secreto (`/ride/<código>`) que muestra el viaje en vivo sin cuenta (`GET /datos/publico/viaje/:código`). Solo se guarda la huella del código; la página no se indexa ni se guarda en caché, y deja de mostrar el viaje cuando termina.
+- **Prueba:** `rutas/viajesPasajero.test.ts` (M6); el apagado al terminar comprobado en rojo.
+- **No tocar:** nunca guardar el código del enlace en claro; nunca mostrar el viaje compartido después de terminado.

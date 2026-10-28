@@ -7,6 +7,7 @@ import { ComoFunciona } from './sitio/ComoFunciona';
 import { Calculadora } from './sitio/Calculadora';
 import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
+import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -46,7 +47,8 @@ export function App() {
   const ruta = sinIdioma(rutaReal);
   const [idiomaGuardado, guardarIdioma] = useIdioma();
   // El panel y las conversaciones privadas (/t/…) no tienen versión /es: usan lo que la persona eligió.
-  const publica = !ruta.startsWith('/panel') && !ruta.startsWith('/t/');
+  const publica =
+    !ruta.startsWith('/panel') && !ruta.startsWith('/t/') && !ruta.startsWith('/ride/');
   const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
     document.documentElement.lang = idioma;
@@ -103,6 +105,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <TicketPublico codigo={ticket[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // Divoox Moto · M6: el viaje compartido en vivo (enlace secreto, sin indexar).
+  const compartido = /^\/ride\/([A-Za-z0-9_-]{40,60})$/.exec(ruta);
+  if (compartido?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <ViajeCompartido codigo={compartido[1]} idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/franchise')

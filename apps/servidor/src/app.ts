@@ -149,6 +149,7 @@ app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
+app.use('/datos/publico/viaje/*', limiteIntentos(60, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -397,7 +398,9 @@ app.notFound(async (c) => {
   }
   let respuesta = new Response(res.body, res);
   // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.
-  if (c.req.path.startsWith('/t/')) respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  // Igual el viaje compartido (/ride/<codigo>, M6): privado y en vivo.
+  if (c.req.path.startsWith('/t/') || c.req.path.startsWith('/ride/'))
+    respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
   if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
     respuesta.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');

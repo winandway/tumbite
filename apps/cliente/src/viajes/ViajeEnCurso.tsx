@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Share, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Boton, C, useSesion } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
+import { miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
@@ -87,6 +88,26 @@ export function ViajeEnCurso({
     }
   }
 
+  async function compartir() {
+    setError('');
+    try {
+      const r = await api.pedir<{ url: string }>('POST', `/datos/viajes/${viaje.id}/compartir`);
+      await Share.share({ message: `${t.compartirMensaje} ${r.url}` });
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  /** Emergencia: primero la llamada (aunque falle el aviso), después el aviso al equipo. */
+  async function emergencia() {
+    const p = await miUbicacion().catch(() => null);
+    const r = await api
+      .pedir<{ numero: string }>('POST', `/datos/viajes/${viaje.id}/emergencia`, p ?? {})
+      .catch(() => ({ numero: '911' }));
+    void Linking.openURL(`tel:${r.numero}`);
+  }
+  const conConductor = ['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado);
+
   return (
     <View testID="viaje-pasajero" style={{ gap: 12 }}>
       <Text
@@ -155,6 +176,15 @@ export function ViajeEnCurso({
         ) : null}
       </Tarjeta>
 
+      {conConductor ? (
+        <View style={{ gap: 8 }}>
+          <Boton texto={t.compartir} alTocar={() => void compartir()} secundario />
+          <Boton texto={t.emergencia} alTocar={() => void emergencia()} />
+          <Text style={{ color: '#5E5E5E', fontSize: 12, textAlign: 'center' }}>
+            {t.emergenciaAyuda}
+          </Text>
+        </View>
+      ) : null}
       {cargoCobrado ? (
         <Text style={{ color: '#5E5E5E' }}>
           {t.cargoCobrado} {monto(cargoCobrado)}

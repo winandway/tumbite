@@ -177,3 +177,17 @@ export function cargoCancelacionViaje(
   if (estado !== 'asignado' && estado !== 'conductor_llego') return null;
   return (segundosDesdeAsignacion ?? 0) <= t.cancelacionGratisS ? 0 : t.cargoCancelacion;
 }
+
+/**
+ * El número de emergencias de cada país (M6). El botón de emergencia de las dos apps llama aquí
+ * y además avisa al equipo de Divoox con la ubicación. Uber Moto Colombia lleva al 123 [OBS].
+ */
+const NUMEROS_EMERGENCIA = new Map<string, string>([
+  ['US', '911'],
+  ['CO', '123'],
+  ['VE', '911'],
+  ['MX', '911'],
+]);
+export function numeroEmergencia(pais: string | null | undefined): string {
+  return NUMEROS_EMERGENCIA.get((pais ?? '').toUpperCase()) ?? '911';
+}

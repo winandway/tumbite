@@ -38,6 +38,7 @@ export const TEXTOS_VIAJE = {
       noShow: 'Viaje cerrado: el pasajero no se presentó',
       listo: 'Listo',
       soporte: '¿Problemas? Llama a soporte desde Ayuda.',
+      emergencia: 'Emergencia',
     },
   },
   en: {
@@ -78,6 +79,7 @@ export const TEXTOS_VIAJE = {
       noShow: 'Ride closed: the rider didn’t show up',
       listo: 'Done',
       soporte: 'Having trouble? Call support from Help.',
+      emergencia: 'Emergency',
     },
   },
 };

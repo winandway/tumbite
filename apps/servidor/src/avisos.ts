@@ -225,3 +225,23 @@ export async function correoDeConfirmacion(
       : `Hola, ${p.nombre}.\n\nBienvenido a Divoox. Toca el enlace para confirmar que este correo es tuyo (vence en 2 días):\n\n${enlace}\n\nSi no creaste una cuenta, ignora este correo.`;
   return enviarCorreo(env, { de: 'avisos', para: p.correo, asunto, texto });
 }
+
+/** Divoox Moto · M6: alguien tocó el botón de emergencia en un viaje. Va a todo el equipo. */
+export async function avisoEmergenciaViaje(
+  env: Env,
+  p: { operacionId: string; rol: 'pasajero' | 'conductor'; nombre: string; donde: string },
+) {
+  const admins = (env.ADMIN_CORREOS ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  const quien = p.rol === 'pasajero' ? 'el pasajero' : 'el conductor';
+  const texto = `EMERGENCIA en un viaje: ${quien} (${p.nombre}) tocó el botón de emergencia.\n\nViaje: ${p.operacionId}\nUbicación: ${p.donde}\n\nComunícate de inmediato y revisa el viaje en el panel:\n\n${sitio(env)}/panel`;
+  for (const para of admins)
+    await enviarCorreo(env, {
+      de: 'avisos',
+      para,
+      asunto: `EMERGENCIA en un viaje de Moto (${quien})`,
+      texto,
+    });
+}
