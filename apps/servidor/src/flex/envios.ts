@@ -4,13 +4,16 @@ import {
   ESTADOS_FINALES_PAQUETE,
   ESTADOS_PAQUETE,
   type EstadoPaquete,
+  codigoPlus,
   contenidoQrEtiqueta,
+  documentoValido,
   nuevoCodigoEtiqueta,
   nuevoCodigoSeguimiento,
   puedeTransitar,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
+import { paisDeEmpresa, ubicacionInicial, vincularDestinatarios } from './ubicacion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   type ActorFlex,
@@ -45,6 +48,12 @@ export const esquemaEnvio = z.object({
   remitenteNombre: z.string().trim().max(120).default(''),
   destinatarioNombre: z.string().trim().min(1).max(120),
   destinatarioTelefono: z.string().trim().max(32).default(''),
+  // Fase 5 (C-FLEX-UBICACION): con correo o teléfono se encuentra al destinatario en Divoox.
+  destinatarioCorreo: z.string().trim().max(120).default(''),
+  /** Cédula o RIF en Venezuela. */
+  destinatarioDocumento: z.string().trim().max(20).default(''),
+  /** Puntos de referencia («casa azul frente a la panadería»). */
+  referencias: z.string().trim().max(300).default(''),
   direccion: z.string().trim().min(3).max(300),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
@@ -77,6 +86,14 @@ const filaEnvio = (f: Record<string, unknown>) => ({
   lat: f.lat,
   lng: f.lng,
   instrucciones: f.instrucciones,
+  // Fase 5 (C-FLEX-UBICACION).
+  destinatarioCorreo: f.destinatario_correo ?? '',
+  destinatarioDocumento: f.destinatario_documento ?? '',
+  referencias: f.referencias ?? '',
+  ubicacionEstado: f.ubicacion_estado ?? 'sin_coordenadas',
+  ubicacionFuente: f.ubicacion_fuente ?? '',
+  ubicacionConfirmadaEn: f.ubicacion_confirmada_en ?? null,
+  destinatarioEnDivoox: Boolean(f.destinatario_usuario_id),
   ventanaDesde: f.ventana_desde,
   ventanaHasta: f.ventana_hasta,
   estado: f.estado,
@@ -120,18 +137,22 @@ export function sentenciasDeEnvio(
   actor: Pick<ActorFlex, 'empresaId' | 'actorId' | 'actorTipo'>,
   d: EnvioEntrada,
   origen: string,
+  pais = 'US',
 ): {
   id: string;
   paquetes: { id: string; codigoSeguimiento: string; codigoEtiqueta: string }[];
   sentencias: D1PreparedStatement[];
 } {
   const id = nuevoIdFlex();
+  const ubic = ubicacionInicial(pais, d, origen);
   const sentencias: D1PreparedStatement[] = [
     db
       .prepare(
         `INSERT INTO envios (id, empresa_id, centro_id, referencia_externa, remitente_nombre, destinatario_nombre,
-         destinatario_telefono, direccion, lat, lng, instrucciones, ventana_desde, ventana_hasta)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         destinatario_telefono, direccion, lat, lng, instrucciones, ventana_desde, ventana_hasta,
+         destinatario_correo, destinatario_documento, referencias, ubicacion_estado, ubicacion_fuente,
+         ubicacion_confirmada_en)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END)`,
       )
       .bind(
         id,
@@ -147,6 +168,12 @@ export function sentenciasDeEnvio(
         d.instrucciones,
         d.ventanaDesde ?? null,
         d.ventanaHasta ?? null,
+        d.destinatarioCorreo,
+        d.destinatarioDocumento,
+        d.referencias,
+        ubic.estado,
+        ubic.fuente,
+        ubic.confirmada ? 1 : 0,
       ),
   ];
   const paquetes = d.paquetes.map((p) => {
@@ -197,6 +224,16 @@ export function sentenciasDeEnvio(
   return { id, paquetes, sentencias };
 }
 
+/** Fase 5: la cédula o el RIF, si viene, con la forma de su país (V-12345678, J-12345678-9). */
+function exigirDocumento(pais: string, documento: string) {
+  if (documento && !documentoValido(pais, documento))
+    throw new ErrorDatos(
+      'El documento del destinatario no tiene una forma válida (por ejemplo V-12345678).',
+      'destinatarioDocumento',
+      422,
+    );
+}
+
 async function comprobarCentro(
   db: D1Database,
   empresaId: string,
@@ -245,13 +282,17 @@ flexEnvios.post('/empresas/:id/envios', async (c) => {
   const db = base(c);
   await comprobarCentro(db, actor.empresaId, d.centroId);
   return conIdempotencia(c, actor, d, async () => {
+    const pais = await paisDeEmpresa(db, actor.empresaId);
+    exigirDocumento(pais, d.destinatarioDocumento);
     const { id, sentencias } = sentenciasDeEnvio(
       db,
       actor,
       d,
       actor.actorTipo === 'api' ? 'api' : 'panel',
+      pais,
     );
     await db.batch(sentencias).catch(errorUnico);
+    await vincularDestinatarios(db, [id], pais);
     return { estado: 201, datos: { envio: await envioCompleto(db, actor.empresaId, id) } };
   });
 });
@@ -271,10 +312,17 @@ flexEnvios.post('/empresas/:id/envios/lote', async (c) => {
     );
   for (const e of d.envios) await comprobarCentro(db, actor.empresaId, e.centroId);
   return conIdempotencia(c, actor, d, async () => {
+    const pais = await paisDeEmpresa(db, actor.empresaId);
+    for (const e of d.envios) exigirDocumento(pais, e.destinatarioDocumento);
     const creados = d.envios.map((e) =>
-      sentenciasDeEnvio(db, actor, e, actor.actorTipo === 'api' ? 'api' : 'panel'),
+      sentenciasDeEnvio(db, actor, e, actor.actorTipo === 'api' ? 'api' : 'panel', pais),
     );
     await db.batch(creados.flatMap((x) => x.sentencias)).catch(errorUnico);
+    await vincularDestinatarios(
+      db,
+      creados.map((x) => x.id),
+      pais,
+    );
     return {
       estado: 201,
       datos: { envios: creados.map((x) => ({ id: x.id, paquetes: x.paquetes })) },
@@ -426,6 +474,7 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
   const e = await db
     .prepare(
       `SELECT e.referencia_externa, e.destinatario_nombre, e.direccion, e.instrucciones, e.centro_id,
+         e.referencias, e.lat, e.lng, e.ubicacion_estado,
          (SELECT nombre FROM empresa_centros WHERE id = e.centro_id) AS centro,
          (SELECT nombre FROM empresas WHERE id = e.empresa_id) AS empresa,
          (SELECT COUNT(*) FROM paquetes WHERE envio_id = e.id) AS total
@@ -464,6 +513,10 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
       destinatarioNombre: e?.destinatario_nombre,
       direccion: e?.direccion,
       instrucciones: e?.instrucciones,
+      // Fase 5: punto de referencia y código plus del punto exacto (Google Maps lo entiende sin internet).
+      referencias: e?.referencias ?? '',
+      codigoPlus: e?.lat != null && e.lng != null ? codigoPlus(Number(e.lat), Number(e.lng)) : null,
+      ubicacionConfirmada: e?.ubicacion_estado === 'confirmada',
       centro: e?.centro ?? null,
       empresa: e?.empresa,
       pieza: orden?.n ?? 1,

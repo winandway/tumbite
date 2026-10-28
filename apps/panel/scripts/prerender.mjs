@@ -88,6 +88,8 @@ try {
     '/how-it-works',
     '/calculator',
     '/franchise',
+    '/flex',
+    '/track',
     '/privacy',
     '/terms',
     '/restaurant-terms',

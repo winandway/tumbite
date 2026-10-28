@@ -1049,6 +1049,30 @@ export const MENSAJES_EN = new Map<string, string>([
     'Check the threshold and amount of the automatic top-up.',
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
+  // Divoox Flex · Fase 5 (ubicación exacta).
+  [
+    'El documento del destinatario no tiene una forma válida (por ejemplo V-12345678).',
+    'The recipient’s ID doesn’t look valid (for example V-12345678).',
+  ],
+  [
+    'Escribe un punto de referencia (por ejemplo: «casa azul frente a la panadería»).',
+    'Add a landmark (for example: “blue house across from the bakery”).',
+  ],
+  [
+    'Este paquete ya va en camino: ya no se cambia la ubicación.',
+    'This package is already on its way: the location can no longer be changed.',
+  ],
+  ['Este enlace no existe o venció.', 'This link doesn’t exist or has expired.'],
+  ['Ese paquete no existe.', 'That package doesn’t exist.'],
+  [
+    'La búsqueda de direcciones se activa muy pronto. Marca el punto en el mapa.',
+    'Address search is coming soon. Mark the spot on the map.',
+  ],
+  [
+    'No pudimos buscar la dirección. Marca el punto en el mapa.',
+    'We couldn’t search for the address. Mark the spot on the map.',
+  ],
+  ['Esa dirección no existe.', 'That address doesn’t exist.'],
   // Divoox Moto · M1 (cotización de viajes).
   ['Esa emergencia ya fue atendida.', 'That emergency was already handled.'],
   ['Solo se califica un viaje terminado.', 'Only completed rides can be rated.'],
@@ -1138,6 +1162,11 @@ export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = 
     /^Hay (\d+) paquetes sin cerrar: entrégalos, registra la incidencia y devuélvelos al centro \((.*)\)\.$/,
     (m) =>
       `${m[1]} packages are not closed yet: deliver them, report the exception and return them to the hub (${m[2]}).`,
+  ],
+  [
+    /^Hay destinatarios sin ubicación confirmada: pídeles su ubicación antes de asignar \((.+)\)\.$/,
+    (m) =>
+      `Some recipients are without a confirmed location: request their location before assigning (${m[1]}).`,
   ],
   [
     /^Hay paradas sin coordenadas verificadas: corrígelas antes de asignar \((.*)\)\.$/,

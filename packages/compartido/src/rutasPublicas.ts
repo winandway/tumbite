@@ -14,6 +14,8 @@ export const PAGINAS = {
   howItWorks: '/how-it-works',
   calculator: '/calculator',
   franchise: '/franchise',
+  flex: '/flex',
+  track: '/track',
   forgotPassword: '/forgot-password',
   confirmEmail: '/confirm-email',
   resetPassword: '/reset-password',

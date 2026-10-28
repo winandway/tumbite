@@ -307,6 +307,10 @@ export const COLUMNAS_CSV: Record<string, readonly string[]> = {
   referencia: ['referencia', 'referencia_externa', 'reference', 'order', 'orden'],
   destinatario: ['destinatario', 'nombre', 'recipient', 'name', 'customer'],
   telefono: ['telefono', 'teléfono', 'phone', 'tel'],
+  // Fase 5 (C-FLEX-UBICACION): con correo o teléfono se encuentra al destinatario en Divoox.
+  correo: ['correo', 'email', 'e-mail'],
+  documento: ['cedula', 'cédula', 'rif', 'documento', 'id_number'],
+  referencias: ['referencias', 'punto_referencia', 'punto de referencia', 'landmark'],
   direccion: ['direccion', 'dirección', 'address'],
   lat: ['lat', 'latitud', 'latitude'],
   lng: ['lng', 'lon', 'longitud', 'longitude'],

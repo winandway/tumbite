@@ -3,6 +3,7 @@ import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { flexEmpresas } from './empresas';
 import { flexEnvios } from './envios';
+import { flexUbicacion } from './ubicacion';
 import { flexImportacion } from './importacion';
 import { flexLotes } from './lotes';
 import { flexRutasEmpresa } from './rutasEmpresa';
@@ -35,6 +36,7 @@ flex.use('*', async (c, next) => {
 });
 flex.route('/', flexEmpresas);
 flex.route('/', flexEnvios);
+flex.route('/', flexUbicacion);
 flex.route('/', flexImportacion);
 flex.route('/', flexLotes);
 flex.route('/', flexRutasEmpresa);

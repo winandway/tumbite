@@ -78,6 +78,16 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['viajes', 'cotizacion_id', 'TEXT'],
   // Divoox Moto · M7: el viaje en el que se cobró la deuda del pasajero.
   ['deudas_pasajero', 'cobrada_en', 'TEXT'],
+  // Flex · Fase 5 (C-FLEX-UBICACION): destinatario y ubicación exacta de cada envío.
+  ['envios', 'destinatario_correo', "TEXT NOT NULL DEFAULT ''"],
+  ['envios', 'destinatario_documento', "TEXT NOT NULL DEFAULT ''"],
+  ['envios', 'referencias', "TEXT NOT NULL DEFAULT ''"],
+  ['envios', 'ubicacion_estado', "TEXT NOT NULL DEFAULT 'sin_coordenadas'"],
+  ['envios', 'ubicacion_fuente', "TEXT NOT NULL DEFAULT ''"],
+  ['envios', 'ubicacion_confirmada_en', 'TEXT'],
+  ['envios', 'destinatario_usuario_id', 'TEXT'],
+  ['envios', 'enlace_ubicacion_huella', 'TEXT'],
+  ['envios', 'enlace_ubicacion_vence', 'TEXT'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],
@@ -105,6 +115,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
 const INDICES = [
+  // Flex · Fase 5: sobre columnas que llegan con COLUMNAS (en schema.sql romperían la publicación).
+  'CREATE INDEX IF NOT EXISTS envios_destinatario ON envios(destinatario_usuario_id, creado_en)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS envios_enlace_ubicacion ON envios(enlace_ubicacion_huella) WHERE enlace_ubicacion_huella IS NOT NULL',
   'CREATE INDEX IF NOT EXISTS restaurantes_zona_estado ON restaurantes(zona_id, estado, abierto)',
   'CREATE INDEX IF NOT EXISTS restaurantes_zona_celda ON restaurantes(zona_id, geohash)',
   'CREATE INDEX IF NOT EXISTS repartidores_zona_celda ON repartidores(zona_id, conectado, geohash)',

@@ -5,6 +5,7 @@ import { leerCsv, mapearEncabezados } from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
+import { paisDeEmpresa, vincularDestinatarios } from './ubicacion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { actorDeEmpresa, exigirPermiso, nuevoIdFlex, sentenciaAuditoria } from './autorizacion';
 import { esquemaEnvio, sentenciasDeEnvio } from './envios';
@@ -67,6 +68,9 @@ export function validarFila(
     referenciaExterna: v('referencia') || null,
     destinatarioNombre: v('destinatario'),
     destinatarioTelefono: v('telefono'),
+    destinatarioCorreo: v('correo'),
+    destinatarioDocumento: v('documento'),
+    referencias: v('referencias'),
     direccion: v('direccion'),
     lat,
     lng,
@@ -316,6 +320,8 @@ flexImportacion.post('/empresas/:id/importaciones/:impId/confirmar', async (c) =
     .bind(id, FILAS_POR_LLAMADA)
     .all<{ numero: number; datos_json: string }>();
   let creadas = 0;
+  const pais = await paisDeEmpresa(db, actor.empresaId);
+  const creadosIds: string[] = [];
   for (let i = 0; i < pendientes.results.length; i += FILAS_POR_LOTE) {
     const trozo = pendientes.results.slice(i, i + FILAS_POR_LOTE);
     const sentencias: D1PreparedStatement[] = [];
@@ -326,7 +332,9 @@ flexImportacion.post('/empresas/:id/importaciones/:impId/confirmar', async (c) =
         actor,
         { ...entrada, centroId: f.centro_id },
         `importacion:${id}`,
+        pais,
       );
+      creadosIds.push(e.id);
       sentencias.push(
         ...e.sentencias,
         db
@@ -357,7 +365,9 @@ flexImportacion.post('/empresas/:id/importaciones/:impId/confirmar', async (c) =
           actor,
           { ...entrada, centroId: f.centro_id },
           `importacion:${id}`,
+          pais,
         );
+        creadosIds.push(ee.id);
         try {
           await db.batch([
             ...ee.sentencias,
@@ -388,6 +398,8 @@ flexImportacion.post('/empresas/:id/importaciones/:impId/confirmar', async (c) =
       }
     }
   }
+  // Fase 5: cada destinatario que ya tenga cuenta en Divoox queda vinculado (y con su pin, si tiene uno).
+  await vincularDestinatarios(db, creadosIds, pais);
   const quedan = await db
     .prepare(
       'SELECT COUNT(*) AS n FROM importacion_filas WHERE importacion_id = ? AND error IS NULL AND envio_id IS NULL',

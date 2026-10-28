@@ -48,6 +48,7 @@ import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
+import { lugares } from './rutas/lugares';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
@@ -150,6 +151,8 @@ app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
 app.use('/datos/publico/viaje/*', limiteIntentos(60, 60_000));
+// Cada búsqueda de Google cuesta: tope por persona (red).
+app.use('/datos/lugares/*', limiteIntentos(40, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -342,6 +345,8 @@ const RUTAS_PUBLICAS = new Set([
   '/delete-account',
   '/support',
   '/docs',
+  '/flex',
+  '/track',
 ]);
 const esRutaPublica = (rutaConIdioma: string) => {
   // /es/... es la misma página pública en español (el inglés va sin prefijo).
@@ -427,6 +432,7 @@ app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
 app.route('/datos', viajesPasajero);
+app.route('/datos', lugares);
 app.route('/datos', interno);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);

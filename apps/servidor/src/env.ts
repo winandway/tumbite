@@ -42,6 +42,11 @@ export const esquemaEnv = z.object({
    * firmados a los sistemas de las empresas). Sin ella se deriva una del secreto del reloj (provisional).
    */
   FLEX_LLAVE_WEBHOOKS: z.string().min(32).optional(),
+  /**
+   * Llave de Google Places (API nueva) para buscar direcciones. Vive SOLO en el servidor; sin ella la
+   * búsqueda se apaga y se usa el pin en el mapa (C-FLEX-UBICACION).
+   */
+  GOOGLE_PLACES_KEY: z.string().min(20).optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
   RELOJ_SECRETO: z.string().min(24).optional(),
   // Cuentas de prueba para los revisores de Apple y Google (correos separados por coma): prueban

@@ -1497,7 +1497,18 @@ CREATE TABLE IF NOT EXISTS envios (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   -- Fase 2: pruebas exigidas para ESTE envío (manda sobre las de la empresa); null = las de la empresa.
-  config_entrega_json TEXT
+  config_entrega_json TEXT,
+  -- Fase 5 (28 oct 2026, C-FLEX-UBICACION): el destinatario y su ubicación EXACTA. En Venezuela
+  -- un envío no entra a una ruta sin ubicación confirmada (por la app o por el enlace).
+  destinatario_correo TEXT NOT NULL DEFAULT '',
+  destinatario_documento TEXT NOT NULL DEFAULT '',
+  referencias TEXT NOT NULL DEFAULT '',
+  ubicacion_estado TEXT NOT NULL DEFAULT 'sin_coordenadas',
+  ubicacion_fuente TEXT NOT NULL DEFAULT '',
+  ubicacion_confirmada_en TEXT,
+  destinatario_usuario_id TEXT,
+  enlace_ubicacion_huella TEXT,
+  enlace_ubicacion_vence TEXT
 );
 CREATE INDEX IF NOT EXISTS envios_empresa ON envios(empresa_id, creado_en);
 -- La referencia propia de la empresa (su número de orden) no se repite dentro de la misma empresa.

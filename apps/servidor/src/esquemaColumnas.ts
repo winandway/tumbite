@@ -888,7 +888,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en",
     "actualizado_en",
-    "config_entrega_json"
+    "config_entrega_json",
+    "destinatario_correo",
+    "destinatario_documento",
+    "referencias",
+    "ubicacion_estado",
+    "ubicacion_fuente",
+    "ubicacion_confirmada_en",
+    "destinatario_usuario_id",
+    "enlace_ubicacion_huella",
+    "enlace_ubicacion_vence"
   ],
   "paquetes": [
     "id",

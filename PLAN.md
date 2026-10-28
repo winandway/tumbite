@@ -1,19 +1,16 @@
-# Plan: Divoox Flex — Fase 4 (billetera prepago, recargas, comisiones, Stripe Connect) + rediseño de pantallas
+# Plan: Divoox Flex — ubicación exacta del destinatario, Venezuela y página web
 
-Rama `fase-flex-4` sobre `fase-flex-3` (7a31e7509). Solo staging y Stripe en modo prueba. Sin cobros, transferencias ni retiros reales. Food no cambia. Se reutiliza el libro contable (`libro`, bolsillos `prepago`/`reservado`/`comisiones`/`deuda_cliente`, referencia única) y el aviso firmado de Stripe que ya existen. (La Fase 3 terminó con sus 15 pasos marcados; informe `docs/DIVOOX-FLEX-FASE-3-RESULTADOS.md`.)
+Pedido por Richard el 28 oct 2026. País: **Venezuela primero**; EE. UU. separado por su perfil.
 
-- [x] Paso 1: Verificación inicial — git, rama nueva, lectura del libro, recargas, aviso de Stripe, disputas y configuración por país.
-- [x] Paso 2: Rediseño en paralelo (ayudantes en ramas propias): panel de Paquetes con selección y acciones en bloque, etiqueta nueva y hoja de impresión; «Mi ruta» del conductor como las maquetas.
-- [x] Paso 3: Capa común de políticas financieras con cálculo puro de comisiones (por paquete, por ruta, porcentaje, volumen, exenta) y desglose del servicio logístico (tecnología, transporte, conductor, procesador, impuestos). Pruebas.
-- [x] Paso 4: Esquema — políticas, tarifa congelada por ruta, recargas de empresa, comprobantes, configuración financiera de la empresa y su cliente de Stripe, disputas de recargas de empresa.
-- [x] Paso 5: Billetera de empresa sobre el libro (cuenta `empresa:<id>`): disponible, reservado, total, deuda, movimientos, alertas.
-- [x] Paso 6: Recargas con Stripe de prueba: crear, acreditar solo por aviso firmado y una sola vez, fallidas, canceladas, reembolsos sin saldos negativos (deuda y suspensión), disputas, recarga automática opcional, comprobante.
-- [x] Paso 7: Comisiones y reservas en las rutas: reserva al asignar u ofrecer, liberación al retirar, vencer o cancelar, ajuste al salir, cobro por paquete entregado en la misma transacción (una sola vez), cobro por ruta al cerrar, liberación del resto.
-- [x] Paso 8: Conductor prepago: política por mercado con revisión legal obligatoria, separación de prepago y ganancias, cálculo reutilizable (sin tocar Food).
-- [x] Paso 9: Conciliación y recuperación en el reloj existente (recargas pendientes contra Stripe, invariantes, reservas huérfanas) y pieza de salud.
-- [x] Paso 10: Superadmin financiero: políticas auditadas y nunca retroactivas, límites de recarga por país, ajustes manuales con contraseña y motivo, movimientos, conciliación, simulador logístico.
-- [x] Paso 11: Panel financiero de la empresa: Mi billetera, Recargar (pago dentro de la pantalla), Comisiones, Comprobantes con descarga, Configuración. Español e inglés, celular y escritorio.
-- [x] Paso 12: Pruebas obligatorias con candados en rojo (recarga una vez, fallida, aviso duplicado, comisión duplicada, reservas simultáneas, saldo insuficiente, liberación, reembolso, disputa, separación, permisos, conciliación, regresión de Food, integridad del libro).
-- [x] Paso 13: Integrar el rediseño, revisar credenciales (Stripe, Firebase, Expo, Apple) sin exponer nada, Docs públicos es/en, referencia de la API.
-- [x] Paso 14: `npm run verify`, recorrido en pantalla, staging con una recarga de prueba de punta a punta.
-- [x] Paso 15: `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`, `CANDADOS.md`, `PENDIENTES.md`, `VERIFICAR-PAGOS.md`; commit; push (solo staging); informe.
+- [x] 1. Investigación REA de MRW, Zoom, Tealca y del estándar de ubicación (Amazon, Onfleet…) → ficha en docs/investigaciones-rea (en curso)
+- [x] 2. Perfil por país de Flex (una sola pieza): pagos, moneda, ubicación exacta obligatoria o no, app del destinatario, datos que se piden (VE / US)
+- [x] 3. Envío: correo, referencias y cédula del destinatario, estado y fuente de la ubicación, vínculo con la cuenta Divoox por teléfono o correo
+- [ ] 4. Enlace público «confirma tu ubicación» (/deliver/<código>) con pin en el mapa, búsqueda de dirección y referencias, e invitación a la app
+- [ ] 5. App del cliente: «Mis paquetes» (lo que me envían) con seguimiento y confirmar ubicación con pin o dirección guardada
+- [x] 6. Rutas: en Venezuela no entra a una ruta un envío sin ubicación confirmada
+- [ ] 7. Panel de la empresa: estado de la ubicación de cada envío, enviar el enlace por WhatsApp, pin al crear el envío
+- [ ] 8. Seguimiento público por número de guía (/track y /track/<código>), como MRW y Zoom
+- [x] 9. Búsqueda de direcciones de Google por el servidor (apagada hasta tener la llave)
+- [ ] 10. Web: «Flex» en el menú de arriba y página /flex con capturas reales, «empresas sin tecnología» y Venezuela
+- [ ] 11. Docs: guías de Flex al día, en español e inglés
+- [ ] 12. Pruebas en rojo, verify, sitio de pruebas y producción

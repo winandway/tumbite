@@ -8,6 +8,7 @@ import { Calculadora } from './sitio/Calculadora';
 import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
+import { Seguimiento } from './sitio/Seguimiento';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -105,6 +106,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <TicketPublico codigo={ticket[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // Divoox Flex: rastreo público por número de guía (/track y /track/<código>).
+  const guia = ruta === '/track' ? '' : /^\/track\/([A-Za-z0-9]{8,20})$/.exec(ruta)?.[1];
+  if (guia !== undefined)
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Seguimiento codigo={guia || null} idioma={idioma} />
       </Sitio>
     );
   // Divoox Moto · M6: el viaje compartido en vivo (enlace secreto, sin indexar).

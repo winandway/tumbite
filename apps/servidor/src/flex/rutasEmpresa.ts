@@ -3,7 +3,12 @@ import { evaluarCapacidadRuta } from './operaciones';
 import { liberarCobroRuta, reservarCobroRuta } from '../finanzas/cobrosRuta';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { CONFIG_ENTREGA_DEFECTO, configEntrega, leerCodigoEscaneado } from '@tumbite/compartido';
+import {
+  CONFIG_ENTREGA_DEFECTO,
+  configEntrega,
+  leerCodigoEscaneado,
+  perfilFlex,
+} from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
@@ -59,6 +64,9 @@ const esquemaEnvioCambio = z.object({
   lng: z.number().min(-180).max(180).optional(),
   instrucciones: z.string().trim().max(500).optional(),
   destinatarioTelefono: z.string().trim().max(32).optional(),
+  destinatarioCorreo: z.string().trim().max(120).optional(),
+  destinatarioDocumento: z.string().trim().max(20).optional(),
+  referencias: z.string().trim().max(300).optional(),
   configEntrega: z
     .object({
       foto: z.boolean().optional(),
@@ -197,10 +205,20 @@ async function rutaLista(db: D1Database, r: FilaRuta) {
         (SELECT COUNT(*) FROM ruta_paradas rp JOIN paquetes p ON p.envio_id = rp.envio_id
           WHERE rp.ruta_id = ?1 AND p.estado IN ('creado', 'registrado_centro', 'preparado')) AS paquetes,
         (SELECT json_group_array(e.referencia_externa) FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id
-          WHERE rp.ruta_id = ?1 AND (e.lat IS NULL OR e.lng IS NULL)) AS sin_coordenadas`,
+          WHERE rp.ruta_id = ?1 AND (e.lat IS NULL OR e.lng IS NULL)) AS sin_coordenadas,
+        (SELECT json_group_array(COALESCE(e.referencia_externa, e.destinatario_nombre)) FROM ruta_paradas rp
+           JOIN envios e ON e.id = rp.envio_id
+          WHERE rp.ruta_id = ?1 AND e.ubicacion_estado != 'confirmada') AS sin_confirmar,
+        (SELECT pais FROM empresas WHERE id = ?2) AS pais`,
     )
-    .bind(r.id)
-    .first<{ paradas: number; paquetes: number; sin_coordenadas: string }>();
+    .bind(r.id, r.empresa_id)
+    .first<{
+      paradas: number;
+      paquetes: number;
+      sin_coordenadas: string;
+      sin_confirmar: string;
+      pais: string;
+    }>();
   if (!f?.paradas) throw new ErrorDatos('La ruta no tiene paradas.', undefined, 409);
   if (!f.paquetes)
     throw new ErrorDatos('La ruta no tiene paquetes listos para salir.', undefined, 409);
@@ -214,6 +232,15 @@ async function rutaLista(db: D1Database, r: FilaRuta) {
   if (faltan.length)
     throw new ErrorDatos(
       `Hay paradas sin coordenadas verificadas: corrígelas antes de asignar (${faltan.map((x) => x ?? '—').join(', ')}).`,
+      'paradas',
+      409,
+    );
+  // C-FLEX-UBICACION: en los países donde la ubicación tiene que estar confirmada (Venezuela), la
+  // ruta no sale hasta que cada destinatario confirme su punto o la empresa lo marque con el pin.
+  const sinConfirmar = JSON.parse(f.sin_confirmar || '[]') as (string | null)[];
+  if (perfilFlex(f.pais).ubicacion === 'confirmada' && sinConfirmar.length)
+    throw new ErrorDatos(
+      `Hay destinatarios sin ubicación confirmada: pídeles su ubicación antes de asignar (${sinConfirmar.map((x) => x ?? '—').join(', ')}).`,
       'paradas',
       409,
     );
@@ -659,6 +686,12 @@ flexRutasEmpresa.patch('/empresas/:id/envios/:envioId', async (c) => {
       .prepare(
         `UPDATE envios SET direccion = COALESCE(?, direccion), lat = COALESCE(?, lat), lng = COALESCE(?, lng),
            instrucciones = COALESCE(?, instrucciones), destinatario_telefono = COALESCE(?, destinatario_telefono),
+           destinatario_correo = COALESCE(?, destinatario_correo), destinatario_documento = COALESCE(?, destinatario_documento),
+           referencias = COALESCE(?, referencias),
+           -- La empresa marcó el punto (pin o coordenadas): queda confirmado por ella (C-FLEX-UBICACION).
+           ubicacion_estado = CASE WHEN ? = 1 THEN 'confirmada' ELSE ubicacion_estado END,
+           ubicacion_fuente = CASE WHEN ? = 1 THEN 'empresa' ELSE ubicacion_fuente END,
+           ubicacion_confirmada_en = CASE WHEN ? = 1 THEN ${ahora} ELSE ubicacion_confirmada_en END,
            config_entrega_json = CASE WHEN ? = 1 THEN ? ELSE config_entrega_json END, actualizado_en = ${ahora}
          WHERE id = ? AND empresa_id = ?`,
       )
@@ -668,6 +701,12 @@ flexRutasEmpresa.patch('/empresas/:id/envios/:envioId', async (c) => {
         d.lng ?? null,
         d.instrucciones ?? null,
         d.destinatarioTelefono ?? null,
+        d.destinatarioCorreo ?? null,
+        d.destinatarioDocumento ?? null,
+        d.referencias ?? null,
+        d.lat !== undefined ? 1 : 0,
+        d.lat !== undefined ? 1 : 0,
+        d.lat !== undefined ? 1 : 0,
         d.configEntrega === undefined ? 0 : 1,
         d.configEntrega ? JSON.stringify(d.configEntrega) : null,
         envioId,
