@@ -34,3 +34,4 @@ export * from './servicios';
 export * from './filtrosComida';
 export * from './flex';
 export * from './flexOptimizar';
+export * from './finanzas';

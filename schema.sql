@@ -612,7 +612,9 @@ CREATE TABLE IF NOT EXISTS disputas (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   -- Recarga del saldo prepago disputada (si la disputa no es de un pedido).
-  recarga_id TEXT
+  recarga_id TEXT,
+  -- Flex · Fase 4: recarga de la billetera de una empresa disputada.
+  recarga_empresa_id TEXT
 );
 
 -- Estado anterior de cada pieza del canario, para avisar UNA vez al pasar a rojo (F11).
@@ -1906,6 +1908,133 @@ CREATE TABLE IF NOT EXISTS flex_capacidad_vehiculo (
   actualizado_por TEXT REFERENCES usuarios(id),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (vehiculo_id, empresa_id)
+);
+
+-- ───────────── DIVOOX · FASE 4 DE FLEX (27 oct 2026, rama fase-flex-4): dinero ─────────────
+-- El dinero vive en el LIBRO (tabla `libro`, cuenta `empresa:<id>`, bolsillos prepago/reservado/
+-- deuda_cliente; Divoox en `tumbite`/comisiones). Estas tablas solo explican y ordenan esos
+-- movimientos: nunca son la fuente del saldo. Todo en la unidad menor de la moneda (centavos).
+
+-- Políticas financieras (capa común de todos los servicios). Ninguna cifra vive en el código. Una
+-- política no se edita: se cierra (vigente_hasta) y se crea otra; lo ya cobrado nunca cambia.
+CREATE TABLE IF NOT EXISTS politicas_financieras (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL DEFAULT '',
+  servicio TEXT NOT NULL CHECK (servicio IN ('flex', 'express', 'food', 'ride', 'car', 'grocery')),
+  tipo_cuenta TEXT NOT NULL CHECK (tipo_cuenta IN ('empresa', 'conductor')),
+  pais TEXT NOT NULL,
+  ciudad TEXT,
+  empresa_id TEXT REFERENCES empresas(id),
+  modalidad TEXT NOT NULL CHECK (modalidad IN ('prepago', 'connect', 'sin_cobro')),
+  moneda TEXT NOT NULL,
+  regla_json TEXT NOT NULL,
+  descuento_pb INTEGER NOT NULL DEFAULT 0 CHECK (descuento_pb BETWEEN 0 AND 10000),
+  vigente_desde TEXT NOT NULL,
+  vigente_hasta TEXT,
+  prioridad INTEGER NOT NULL DEFAULT 0,
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  -- Prepago de conductores: no rige sin la revisión legal y comercial del mercado aprobada.
+  revision_legal_aprobada INTEGER NOT NULL DEFAULT 0 CHECK (revision_legal_aprobada IN (0, 1)),
+  revision_legal_nota TEXT NOT NULL DEFAULT '',
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrada_por TEXT REFERENCES usuarios(id),
+  cerrada_en TEXT,
+  CHECK (vigente_hasta IS NULL OR vigente_hasta > vigente_desde)
+);
+CREATE INDEX IF NOT EXISTS politicas_financieras_busqueda
+  ON politicas_financieras(servicio, tipo_cuenta, pais, activa);
+
+-- Auditoría financiera (políticas, límites, ajustes manuales, reembolsos). Inmutable (disparadores).
+CREATE TABLE IF NOT EXISTS finanzas_auditoria (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor_id TEXT,
+  actor_tipo TEXT NOT NULL DEFAULT 'usuario' CHECK (actor_tipo IN ('usuario', 'sistema')),
+  accion TEXT NOT NULL,
+  objeto TEXT NOT NULL DEFAULT '',
+  empresa_id TEXT,
+  detalle_json TEXT NOT NULL DEFAULT 'null',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS finanzas_auditoria_empresa ON finanzas_auditoria(empresa_id, id);
+
+-- Cobro de una ruta: la tarifa CONGELADA al salir del borrador y su reserva. Un ciclo por cada vez
+-- que la ruta se asigna u ofrece; solo uno abierto a la vez por ruta.
+CREATE TABLE IF NOT EXISTS flex_cobros_ruta (
+  id TEXT PRIMARY KEY,
+  ruta_id TEXT NOT NULL REFERENCES rutas_flex(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  politica_id TEXT REFERENCES politicas_financieras(id),
+  regla_json TEXT NOT NULL,
+  tarifa_unitaria INTEGER NOT NULL DEFAULT 0,
+  descuento_pb INTEGER NOT NULL DEFAULT 0,
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  paquetes_estimados INTEGER NOT NULL DEFAULT 0,
+  reservado INTEGER NOT NULL DEFAULT 0,
+  cobrado INTEGER NOT NULL DEFAULT 0,
+  liberado INTEGER NOT NULL DEFAULT 0,
+  estado TEXT NOT NULL DEFAULT 'reservada' CHECK (estado IN ('reservada', 'liberada', 'cerrada')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS flex_cobros_ruta_abierto ON flex_cobros_ruta(ruta_id) WHERE estado = 'reservada';
+CREATE INDEX IF NOT EXISTS flex_cobros_ruta_empresa ON flex_cobros_ruta(empresa_id, creado_en);
+
+-- Recargas de la billetera de una empresa (Stripe en modo prueba). El saldo solo se acredita con el
+-- aviso FIRMADO de Stripe, una vez (referencia única en el libro).
+CREATE TABLE IF NOT EXISTS recargas_empresa (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  estado TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente', 'acreditada', 'fallida', 'cancelada')),
+  automatica INTEGER NOT NULL DEFAULT 0 CHECK (automatica IN (0, 1)),
+  stripe_pi TEXT UNIQUE,
+  idempotencia TEXT UNIQUE,
+  creado_por TEXT REFERENCES usuarios(id),
+  reembolsado INTEGER NOT NULL DEFAULT 0,
+  disputado INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  acreditada_en TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS recargas_empresa_empresa ON recargas_empresa(empresa_id, creado_en);
+CREATE INDEX IF NOT EXISTS recargas_empresa_pendientes ON recargas_empresa(estado, creado_en);
+
+-- Comprobantes (no son facturas fiscales): recarga, reembolso, comisiones de una ruta, ajuste.
+CREATE TABLE IF NOT EXISTS comprobantes (
+  id TEXT PRIMARY KEY,
+  numero TEXT NOT NULL UNIQUE,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('recarga', 'reembolso', 'comisiones_ruta', 'ajuste')),
+  monto INTEGER NOT NULL,
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS comprobantes_empresa ON comprobantes(empresa_id, creado_en);
+
+-- Configuración financiera de cada empresa: alertas, recarga automática y su método guardado en
+-- Stripe (solo el id y la marca con los 4 últimos dígitos; nunca el número de la tarjeta).
+CREATE TABLE IF NOT EXISTS empresa_finanzas (
+  empresa_id TEXT PRIMARY KEY REFERENCES empresas(id),
+  alerta_saldo INTEGER CHECK (alerta_saldo IS NULL OR alerta_saldo >= 0),
+  avisos_correo INTEGER NOT NULL DEFAULT 1 CHECK (avisos_correo IN (0, 1)),
+  recarga_auto_activa INTEGER NOT NULL DEFAULT 0 CHECK (recarga_auto_activa IN (0, 1)),
+  recarga_auto_umbral INTEGER CHECK (recarga_auto_umbral IS NULL OR recarga_auto_umbral >= 0),
+  recarga_auto_monto INTEGER CHECK (recarga_auto_monto IS NULL OR recarga_auto_monto > 0),
+  stripe_cliente TEXT,
+  stripe_metodo TEXT,
+  metodo_resumen TEXT NOT NULL DEFAULT '',
+  alerta_enviada_en TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- =====================================================================================

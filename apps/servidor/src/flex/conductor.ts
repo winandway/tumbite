@@ -1,4 +1,9 @@
 import { avisarEmpresa, despues } from './avisosFlex';
+import {
+  ajustarCobroAlSalir,
+  cerrarCobroRuta,
+  sentenciasCobroEntrega,
+} from '../finanzas/cobrosRuta';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -459,6 +464,10 @@ flexConductor.post('/conductor/rutas/:rutaId/iniciar', async (c) => {
     const res = await db.batch(sentencias).catch(traducirError);
     if (!res[0]?.meta.changes)
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    // Fase 4: lo apartado por paquetes que no se cargaron vuelve al disponible.
+    await ajustarCobroAlSalir(db, r.id).catch((e: unknown) =>
+      console.error('finanzas: ajuste de la reserva al salir', e),
+    );
     await despues(c, () =>
       avisarEmpresa(c.env, db, { tipo: 'ruta_iniciada', rutaId: r.id, ocasion: clave }),
     );
@@ -734,6 +743,12 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
           .bind(p.id),
         ...recalcularParadas(db, r.id),
         db.prepare(ACTUALIZAR_ENVIOS_DE_RUTA).bind(r.id),
+        // Fase 4 (C-FIN-COMISION): la comisión de cada paquete entregado, en ESTA transacción.
+        ...sentenciasCobroEntrega(
+          db,
+          r.id,
+          aEntregar.map((x) => x.id),
+        ),
       ];
       if (pinOk)
         sentencias.push(
@@ -1106,6 +1121,10 @@ flexConductor.post('/conductor/rutas/:rutaId/cerrar', async (c) => {
         datos: { resumen: JSON.parse(ya.resumen_json ?? 'null') as unknown, estado: ya.estado },
       };
     }
+    // Fase 4: se cobra lo de la ruta (si la regla es por ruta) y se libera lo que sobró.
+    await cerrarCobroRuta(db, r.id).catch((e: unknown) =>
+      console.error('finanzas: cierre del cobro de la ruta', e),
+    );
     await despues(c, () =>
       avisarEmpresa(c.env, db, { tipo: 'ruta_cerrada', rutaId: r.id, ocasion: clave }),
     );

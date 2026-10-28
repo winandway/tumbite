@@ -26,6 +26,8 @@ export const PERMISOS_FLEX = [
   'devoluciones.recibir',
   // Fase 3: destinos de integración (avisos firmados al sistema de la empresa). Solo personas.
   'integraciones.gestionar',
+  // Fase 4: recargar la billetera y configurar alertas y recarga automática (solo personas).
+  'finanzas.gestionar',
 ] as const;
 export type PermisoFlex = (typeof PERMISOS_FLEX)[number];
 
@@ -54,7 +56,7 @@ export const PERMISOS_POR_ROL: Record<RolEmpresa, readonly PermisoFlex[]> = {
     'importar',
     'devoluciones.recibir',
   ],
-  finanzas: ['empresa.ver', 'envios.ver', 'finanzas.ver'],
+  finanzas: ['empresa.ver', 'envios.ver', 'finanzas.ver', 'finanzas.gestionar'],
   // Cuenta técnica de la integración: lo mismo que puede hacer una clave de API.
   api: ['empresa.ver', 'envios.crear', 'envios.ver', 'paquetes.eventos', 'importar'],
 };

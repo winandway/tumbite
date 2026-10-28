@@ -2,6 +2,15 @@ import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
 import { acreditarRecargaStripe } from '../internacional/recargas';
+import {
+  TEXTOS_FINANZAS,
+  acreditarRecargaEmpresa,
+  avisarFinanzas,
+  disputaDeRecarga,
+  recargaCancelada,
+  recargaRechazada,
+  reembolsoDeRecarga,
+} from '../finanzas/billetera';
 import { registrarDisputa } from '../disputas';
 import { avisoDeTransferencia } from '../retiros';
 import { Hono } from 'hono';
@@ -773,6 +782,31 @@ pedidos.post('/stripe/aviso', async (c) => {
         await correosDePedidoPagado(c.env, db, pedidoId as string);
       }
     }
+    // Flex · Fase 4 (C-FIN-RECARGAS): recargas de la billetera de una empresa. Solo por este aviso
+    // firmado se acredita saldo; nunca por lo que diga el navegador.
+    if ((obj.metadata as Record<string, string> | undefined)?.tipo === 'recarga_empresa') {
+      const meta = obj.metadata as Record<string, string>;
+      if (evento.type === 'payment_intent.succeeded') {
+        if (await acreditarRecargaEmpresa(c.env, db, obj))
+          await avisarFinanzas(
+            c.env,
+            db,
+            meta.empresa_id ?? '',
+            `recarga:${meta.recarga_empresa_id}`,
+            TEXTOS_FINANZAS.recargaAcreditada,
+          );
+      } else if (evento.type === 'payment_intent.payment_failed') {
+        if (await recargaRechazada(db, obj))
+          await avisarFinanzas(
+            c.env,
+            db,
+            meta.empresa_id ?? '',
+            `auto_fallida:${meta.recarga_empresa_id}`,
+            TEXTOS_FINANZAS.recargaAutomaticaFallida,
+          );
+      } else if (evento.type === 'payment_intent.canceled') await recargaCancelada(db, obj);
+    }
+    if (evento.type === 'charge.refunded') await reembolsoDeRecarga(db, obj);
     if (evento.type === 'payment_intent.succeeded') {
       // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).
       if ((obj.metadata as Record<string, string> | undefined)?.recarga_id)
@@ -895,6 +929,19 @@ pedidos.post('/stripe/aviso', async (c) => {
     // Disputas (contracargos): se anotan con su plazo y se avisa al equipo; la evidencia se manda
     // desde el panel de Stripe (auditoría final, A.12). Nunca se tocan saldos desde aquí.
     if (evento.type.startsWith('charge.dispute.')) {
+      // Flex · Fase 4: una recarga de empresa disputada retiene lo disputado (C-FIN-DISPUTAS).
+      if (await disputaDeRecarga(db, evento.type, obj))
+        for (const para of (c.env.ADMIN_CORREOS ?? '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean))
+          if (evento.type === 'charge.dispute.created')
+            await enviarCorreo(c.env, {
+              de: 'avisos',
+              para,
+              asunto: `Disputa de una recarga de empresa (Flex): ${formatearDolares(Number(obj.amount ?? 0), 'es')}`,
+              texto: `Se disputó una recarga de la billetera de una empresa. Lo disputado quedó retenido en su billetera hasta que Stripe cierre la disputa. Responder en Stripe.`,
+            }).catch((e: unknown) => console.error('disputa recarga empresa: correo', e));
       const r = await registrarDisputa(db, evento.type, obj);
       if (r?.nueva)
         for (const para of (c.env.ADMIN_CORREOS ?? '')

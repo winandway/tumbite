@@ -113,6 +113,63 @@ BEGIN
       'stop_id', NEW.parada_id, 'reason', NEW.motivo, 'next_action', NEW.proxima_accion,
       'occurred_at', NEW.creado_en));
 END`,
+  // ── Fase 4 · dinero (C-FIN-POLITICAS, C-FIN-AUDITORIA). Una política no se edita: solo se cierra
+  // HACIA ADELANTE (nunca con una fecha pasada) o se aprueba su revisión legal. Lo ya cobrado se
+  // calculó con la tarifa congelada de su ruta, así que nada de esto cambia la historia.
+  `CREATE TRIGGER IF NOT EXISTS politicas_financieras_inmutables
+BEFORE UPDATE ON politicas_financieras
+WHEN NEW.regla_json IS NOT OLD.regla_json OR NEW.servicio IS NOT OLD.servicio
+  OR NEW.tipo_cuenta IS NOT OLD.tipo_cuenta OR NEW.pais IS NOT OLD.pais OR NEW.ciudad IS NOT OLD.ciudad
+  OR NEW.empresa_id IS NOT OLD.empresa_id OR NEW.modalidad IS NOT OLD.modalidad
+  OR NEW.moneda IS NOT OLD.moneda OR NEW.descuento_pb IS NOT OLD.descuento_pb
+  OR NEW.vigente_desde IS NOT OLD.vigente_desde OR NEW.prioridad IS NOT OLD.prioridad
+BEGIN
+  SELECT RAISE(ABORT, 'politica_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS politicas_financieras_cierre_adelante
+BEFORE UPDATE OF vigente_hasta ON politicas_financieras
+WHEN NEW.vigente_hasta IS NOT OLD.vigente_hasta
+ AND (NEW.vigente_hasta IS NULL OR NEW.vigente_hasta < datetime('now', '-1 minutes')
+      OR (OLD.vigente_hasta IS NOT NULL AND OLD.vigente_hasta <= datetime('now')))
+BEGIN
+  SELECT RAISE(ABORT, 'politica_cierre_retroactivo');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS politicas_financieras_sin_borrar
+BEFORE DELETE ON politicas_financieras
+BEGIN
+  SELECT RAISE(ABORT, 'politica_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS finanzas_auditoria_inmutable_update
+BEFORE UPDATE ON finanzas_auditoria
+BEGIN
+  SELECT RAISE(ABORT, 'auditoria_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS finanzas_auditoria_inmutable_delete
+BEFORE DELETE ON finanzas_auditoria
+BEGIN
+  SELECT RAISE(ABORT, 'auditoria_inmutable');
+END`,
+  // El libro contable nunca se edita ni se borra: los ajustes son filas compensatorias con autor.
+  `CREATE TRIGGER IF NOT EXISTS libro_inmutable_update
+BEFORE UPDATE ON libro
+BEGIN
+  SELECT RAISE(ABORT, 'libro_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS libro_inmutable_delete
+BEFORE DELETE ON libro
+BEGIN
+  SELECT RAISE(ABORT, 'libro_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS comprobantes_inmutables_update
+BEFORE UPDATE ON comprobantes
+BEGIN
+  SELECT RAISE(ABORT, 'comprobante_inmutable');
+END`,
+  `CREATE TRIGGER IF NOT EXISTS comprobantes_inmutables_delete
+BEFORE DELETE ON comprobantes
+BEGIN
+  SELECT RAISE(ABORT, 'comprobante_inmutable');
+END`,
 ];
 
 // ─────────────────────────── Migraciones (rehacer sin perder filas) ───────────────────────────

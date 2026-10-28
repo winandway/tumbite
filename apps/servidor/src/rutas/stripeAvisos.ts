@@ -89,6 +89,41 @@ stripeAvisos.get('/interno-stripe/avisos', async (c) => {
   });
 });
 
+/** Eventos que necesita el aviso PRINCIPAL (pedidos, recargas, Flex · Fase 4). */
+export const EVENTOS_PRINCIPAL = [
+  'checkout.session.completed',
+  'payment_intent.amount_capturable_updated',
+  'payment_intent.succeeded',
+  'payment_intent.payment_failed',
+  'payment_intent.canceled',
+  'charge.refunded',
+  'charge.dispute.created',
+  'charge.dispute.updated',
+  'charge.dispute.closed',
+  'transfer.created',
+  'transfer.reversed',
+];
+
+/**
+ * Agrega al aviso principal de ESTE sitio los eventos que le falten (nunca quita ninguno ni toca
+ * avisos de otros sitios de la cuenta compartida). Idempotente.
+ */
+stripeAvisos.post('/interno-stripe/avisos/principal/eventos', async (c) => {
+  const { stripe, avisos } = await listar(c.env);
+  const principal = avisos.find((a) => a.url === urlAviso(c.env) && !esConectadas(a, c.env));
+  if (!principal) throw new ErrorDatos('No hay aviso principal para este sitio.', undefined, 404);
+  const faltan = EVENTOS_PRINCIPAL.filter(
+    (e) => !principal.enabled_events.includes(e) && !principal.enabled_events.includes('*'),
+  );
+  if (!faltan.length) return c.json({ id: principal.id, agregados: [] });
+  await stripe.post(
+    `/webhook_endpoints/${principal.id}`,
+    { enabled_events: [...principal.enabled_events, ...faltan] },
+    `avisos-principal-${principal.id}-${faltan.join(',')}`,
+  );
+  return c.json({ id: principal.id, agregados: faltan });
+});
+
 stripeAvisos.post('/interno-stripe/avisos/conectadas', async (c) => {
   if (!c.env.SITIO_URL) throw new ErrorDatos('Falta SITIO_URL.', undefined, 409);
   const { stripe, avisos } = await listar(c.env);

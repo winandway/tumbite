@@ -1,5 +1,6 @@
 import { avisarConductor, despues } from './avisosFlex';
 import { evaluarCapacidadRuta } from './operaciones';
+import { liberarCobroRuta, reservarCobroRuta } from '../finanzas/cobrosRuta';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CONFIG_ENTREGA_DEFECTO, configEntrega, leerCodigoEscaneado } from '@tumbite/compartido';
@@ -175,6 +176,18 @@ async function comprobarCapacidad(
     );
 }
 
+/** Paquetes que la ruta llevaría al salir del borrador (los del centro en sus paradas). */
+async function paquetesDelBorrador(db: D1Database, rutaId: string) {
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM ruta_paradas rp JOIN paquetes p ON p.envio_id = rp.envio_id
+        WHERE rp.ruta_id = ? AND p.estado IN ('creado', 'registrado_centro', 'preparado')`,
+    )
+    .bind(rutaId)
+    .first<{ n: number }>();
+  return Number(f?.n ?? 0);
+}
+
 /** Lo que tiene que estar bien ANTES de que la ruta salga del borrador. */
 async function rutaLista(db: D1Database, r: FilaRuta) {
   const f = await db
@@ -244,6 +257,11 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
+    // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
+    const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));
+    const soltar = async () => {
+      if (cobro?.nuevo) await liberarCobroRuta(db, r.id, 'no_salio');
+    };
     const clave = `asignar:${r.id}:${crypto.randomUUID()}`;
     const res = await db
       .batch([
@@ -284,9 +302,14 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
         db.prepare(ACTUALIZAR_ENVIOS_DE_RUTA).bind(r.id),
         sentenciaAuditoria(db, actor, 'ruta.asignar', r.id, { conductorId: d.conductorId }),
       ])
-      .catch(traducirError);
-    if (!res[0]?.meta.changes)
+      .catch(async (e: unknown) => {
+        await soltar();
+        return traducirError(e);
+      });
+    if (!res[0]?.meta.changes) {
+      await soltar();
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    }
     await despues(c, () =>
       avisarConductor(c.env, db, { tipo: 'asignacion', rutaId: r.id, ocasion: clave }),
     );
@@ -312,6 +335,11 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
+    // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
+    const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));
+    const soltar = async () => {
+      if (cobro?.nuevo) await liberarCobroRuta(db, r.id, 'no_salio');
+    };
     const clave = `ofrecer:${r.id}:${crypto.randomUUID()}`;
     const res = await db
       .batch([
@@ -338,9 +366,14 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
           minutos: d.minutos,
         }),
       ])
-      .catch(traducirError);
-    if (!res[0]?.meta.changes)
+      .catch(async (e: unknown) => {
+        await soltar();
+        return traducirError(e);
+      });
+    if (!res[0]?.meta.changes) {
+      await soltar();
       throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+    }
     await despues(c, () =>
       avisarConductor(c.env, db, { tipo: 'oferta', rutaId: r.id, ocasion: clave }),
     );
@@ -407,6 +440,10 @@ export async function volverABorrador(
     .catch(traducirError);
   if (!res[0]?.meta.changes)
     throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+  // Fase 4: la comisión apartada vuelve al disponible (si falla, el reloj la recupera).
+  await liberarCobroRuta(db, r.id, resultado).catch((e: unknown) =>
+    console.error('finanzas: liberar reserva al volver a borrador', e),
+  );
   return clave;
 }
 
@@ -483,6 +520,9 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/cancelar', async (c) => {
     .catch(traducirError);
   if (!res[0]?.meta.changes)
     throw new ErrorDatos('La ruta cambió mientras tanto. Vuelve a cargarla.', undefined, 409);
+  await liberarCobroRuta(db, r.id, 'cancelada').catch((e: unknown) =>
+    console.error('finanzas: liberar reserva al cancelar', e),
+  );
   if (r.conductor_id)
     await despues(c, () =>
       avisarConductor(c.env, db, { tipo: 'ruta_cancelada', rutaId: r.id, ocasion: clave }),
