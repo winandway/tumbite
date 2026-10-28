@@ -2640,7 +2640,7 @@ const es: SeccionDocs[] = [
         id: 'team-training',
         titulo: 'Capacitación del equipo de lanzamiento',
         resumen:
-          'La lista de lectura para cada persona del equipo que abre una ciudad: qué leer, en qué orden y qué tiene que saber explicar al terminar.',
+          'La lista de lectura para cada persona del equipo: qué leer, en qué orden y qué tiene que saber explicar al terminar. Sirve para restaurantes, repartidores, clientes y empresas de paquetería.',
         explicacion: [
           'En cada lanzamiento en frío, el equipo local entrega tablets en los restaurantes, entrena repartidores y atiende a los primeros clientes. Para hacerlo bien, todos tienen que conocer el producto como lo conoce un cliente. Estas guías son el material: cada una explica una función con capturas reales, en español y en inglés.',
           'La tarea es leer las guías de su área, en orden, y al final poder explicarlas con sus propias palabras a un restaurante, a un repartidor o a un cliente. Cada guía tiene su propia dirección: se puede mandar por mensaje y abrir en el celular.',
@@ -2658,6 +2658,7 @@ const es: SeccionDocs[] = [
           'Quien visita restaurantes: «Poner tu restaurante en Divoox», «Verificar tu restaurante», «Tu menú», «Recibir pedidos y la alarma», «Tu tablero», «Regalos y marketing» y «Resumen del día y tu billetera».',
           'Quien entrena repartidores: «Empezar a repartir», «Verificar tu identidad», «Las ofertas», «Los niveles» y «Tu billetera».',
           'Quien atiende clientes: «Cómo hacer tu primer pedido», «Seguir tu pedido en vivo», «Cancelar un pedido», «Mi cuenta» y «Ayuda de una persona real».',
+          'Quien atiende empresas de paquetería (Divoox Flex), en este orden: «tu empresa de paquetería, tu equipo y tus centros», «crear envíos, importar paquetes desde una hoja y etiquetarlos», «la ubicación exacta de cada destinatario», «asignar rutas y seguir cada entrega», «Mi ruta: repartir paquetes de empresas con Divoox Driver», «cobro contra entrega en Venezuela», «tu billetera, recargas, comisiones y comprobantes», «avisos, orden sugerido, capacidad e indicadores de tu operación» y «rastrear un paquete con su número de seguimiento».',
           'Al terminar: explicarle a otra persona del equipo, con el celular en la mano, un pedido completo y qué pasa si el restaurante no responde.',
         ],
       },
@@ -5376,7 +5377,7 @@ const en: SeccionDocs[] = [
         id: 'team-training',
         titulo: 'Launch team training',
         resumen:
-          'The reading list for everyone on the team that opens a city: what to read, in what order, and what they should be able to explain at the end.',
+          'The reading list for everyone on the team: what to read, in what order, and what they should be able to explain at the end. It covers restaurants, drivers, customers and package companies.',
         explicacion: [
           'At every cold launch, the local team delivers tablets to restaurants, trains drivers, and helps the first customers. To do it well, everyone needs to know the product the way a customer does. These guides are the material: each one explains a feature with real screenshots, in English and Spanish.',
           'The assignment is to read the guides for their area, in order, and at the end be able to explain them in their own words to a restaurant, a driver, or a customer. Every guide has its own link: it can be sent in a message and opened on a phone.',
@@ -5394,6 +5395,7 @@ const en: SeccionDocs[] = [
           'Restaurant visits: “Put your restaurant on Divoox,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
           'Driver training: “Start delivering,” “Verify your identity,” “Offers,” “Levels,” and “Your wallet.”',
           'Customer support: “How to place your first order,” “Track your order live,” “Cancel an order,” “My account,” and “Help from a real person.”',
+          'Package companies (Divoox Flex), in this order: “your package company, your team and your hubs,” “create shipments, import packages from a spreadsheet and label them,” “each recipient’s exact location,” “assign routes and follow every delivery,” “My route: delivering company packages with Divoox Driver,” “cash on delivery in Venezuela,” “your wallet, top-ups, fees and receipts,” “notifications, suggested order, capacity and operations metrics,” and “track a package with its tracking number.”',
           'To finish: walk another team member through a full order, phone in hand, and what happens if the restaurant doesn’t answer.',
         ],
       },
