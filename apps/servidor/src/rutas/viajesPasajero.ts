@@ -17,6 +17,7 @@ import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
+import { devolverReservasViaje } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { estadoServicioEnZona } from './servicios';
@@ -537,6 +538,7 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
     motivo: 'cancelado_por_pasajero',
   });
   if (!ok) throw new ErrorDatos('El viaje cambió. Actualiza la pantalla.', undefined, 409);
+  await devolverReservasViaje(db, id, 'cancelado_por_pasajero');
   if (cargo > 0 && f.moneda)
     await db
       .prepare(
@@ -660,3 +662,25 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
     },
   });
 });
+
+/**
+ * Pieza «viajes» de /datos/salud (M7, conciliación): ningún viaje cerrado hace más de 10 minutos
+ * puede seguir con comisión apartada (se cobró o se devolvió), y ninguna deuda puede quedar
+ * «cobrada» sin el viaje que la cobró. Si algo queda colgado, se ve en rojo.
+ */
+export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
+  const f = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM (
+            SELECT l.referencia FROM libro l
+              JOIN operaciones o ON l.referencia LIKE 'reserva_viaje:' || o.id || ':%'
+             WHERE l.bolsillo = 'reservado'
+               AND o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
+               AND o.actualizado_en < datetime('now', '-10 minutes')
+             GROUP BY o.id, l.cuenta_id HAVING SUM(l.monto) != 0)) AS colgadas,
+         (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas`,
+    )
+    .first<{ colgadas: number; huerfanas: number }>();
+  return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 ? 'ok' : 'error';
+}

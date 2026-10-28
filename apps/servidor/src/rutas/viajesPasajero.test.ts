@@ -623,3 +623,215 @@ describe('M6 (C-VIAJE-SEGURIDAD): emergencia y viaje compartido', () => {
     expect((await e.m.llamar('GET', '/datos/publico/viaje/corto')).estado).toBe(404);
   });
 });
+
+describe('M7 (C-VIAJE-COMISION): comisión del prepago, espera y deudas', () => {
+  const T7 = { ...TARIFA, porMinutoEspera: 20, cancelacionGratisS: 120, cargoCancelacion: 150 };
+  async function listo(conPolitica = true) {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e, T7);
+    if (conPolitica)
+      await e.m.DB.prepare(
+        `INSERT INTO politicas_financieras (id, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
+         VALUES ('pol-ride', 'ride', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', datetime('now', '-1 day'), 1)`,
+      ).run();
+    return e;
+  }
+  const recargar = (e: Awaited<ReturnType<typeof escenario>>, cuenta: string, monto: number) =>
+    e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES (?, ?, 'prepago', 'US', 'USD', ?, 'recarga_prueba', ?)",
+    )
+      .bind(crypto.randomUUID(), cuenta, monto, `recarga-prueba:${cuenta}:${monto}`)
+      .run();
+  const bolsillo = async (e: Awaited<ReturnType<typeof escenario>>, cuenta: string, b: string) =>
+    Number(
+      (
+        await e.m.DB.prepare(
+          'SELECT COALESCE(SUM(monto), 0) AS s FROM libro WHERE cuenta_id = ? AND bolsillo = ?',
+        )
+          .bind(cuenta, b)
+          .first<{ s: number }>()
+      )?.s,
+    );
+  async function pedir(e: Awaited<ReturnType<typeof escenario>>) {
+    const c = (await cotizar(e)).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: c.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    return { cot: c, id };
+  }
+  async function hacerViaje(
+    e: Awaited<ReturnType<typeof escenario>>,
+    cond: Awaited<ReturnType<typeof conductorDeMoto>>,
+    id: string,
+    esperaS = 0,
+  ) {
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    if (esperaS)
+      await e.m.DB.prepare("UPDATE viajes SET llego_en = datetime('now', ?) WHERE operacion_id = ?")
+        .bind(`-${esperaS} seconds`, id)
+        .run();
+    const pin = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    const r = await e.m.crudo(`/datos/conductor/operaciones/${id}/terminar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${cond.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': `terminar-${id.slice(0, 8)}-x`,
+      },
+      body: '{}',
+    });
+    expect(r.status).toBe(200);
+    return (await r.json()) as { totalFinal: number };
+  }
+
+  it('aparta la comisión al aceptar y la cobra al terminar, una sola vez', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    await recargar(e, cond.id, 10_000);
+    const { cot, id } = await pedir(e);
+    const comision = Math.round(cot.total / 10);
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await bolsillo(e, cond.id, 'reservado')).toBe(comision);
+    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000 - comision);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    expect(await cond.paso(id, 'terminar')).toBe(200);
+    expect(await cond.paso(id, 'terminar')).toBe(200); // reintento
+    expect(await bolsillo(e, cond.id, 'reservado')).toBe(0);
+    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000 - comision);
+    expect(await bolsillo(e, 'tumbite', 'comisiones')).toBe(comision);
+  });
+
+  it('sin saldo suficiente no acepta, y el viaje sigue buscando', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    await recargar(e, cond.id, 1);
+    const { id } = await pedir(e);
+    expect(await cond.paso(id, 'aceptar')).toBe(409);
+    expect(await bolsillo(e, cond.id, 'prepago')).toBe(1);
+    expect(
+      (await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?').bind(id).first())
+        ?.estado,
+    ).toBe('buscando');
+  });
+
+  it('si el pasajero cancela o el conductor suelta, lo apartado vuelve al prepago', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    await recargar(e, cond.id, 10_000);
+    const a = await pedir(e);
+    expect(await cond.paso(a.id, 'aceptar')).toBe(200);
+    expect(await cond.paso(a.id, 'liberar', { motivo: 'prueba' })).toBe(200);
+    expect(await bolsillo(e, cond.id, 'reservado')).toBe(0);
+    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000);
+    // El viaje vuelve a buscar y pasa a OTRO conductor (al que lo soltó no se le ofrece de nuevo);
+    // ese lo acepta y el pasajero cancela.
+    const otro = await conductorDeMoto(e.m, { lat: ORIGEN.lat + 0.002, lng: ORIGEN.lng });
+    await recargar(e, otro.id, 10_000);
+    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect(await otro.paso(a.id, 'aceptar')).toBe(200);
+    expect(await bolsillo(e, otro.id, 'reservado')).toBeGreaterThan(0);
+    const r = await e.m.crudo(`/datos/viajes/${a.id}/cancelar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${e.cliente.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': 'cancelar-m7-cliente',
+      },
+      body: '{}',
+    });
+    expect(r.status).toBe(200);
+    expect(await bolsillo(e, otro.id, 'reservado')).toBe(0);
+    expect(await bolsillo(e, otro.id, 'prepago')).toBe(10_000);
+    expect(await bolsillo(e, 'tumbite', 'comisiones')).toBe(0);
+  });
+
+  it('sin política que rija no se aparta nada (EE. UU. sigue con su modelo)', async () => {
+    const e = await listo(false);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const { cot, id } = await pedir(e);
+    const r = await hacerViaje(e, cond, id);
+    expect(r.totalFinal).toBe(cot.total);
+    expect(await bolsillo(e, cond.id, 'reservado')).toBe(0);
+  });
+
+  it('la espera pasada la gratis y la deuda anterior se suman a lo que se cobra en efectivo', async () => {
+    const e = await listo(false);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    // Una deuda pendiente de un viaje anterior.
+    const viejo = await pedir(e);
+    expect(await cond.paso(viejo.id, 'aceptar')).toBe(200);
+    await e.m.DB.prepare(
+      "UPDATE viajes SET asignado_en = datetime('now', '-200 seconds') WHERE operacion_id = ?",
+    )
+      .bind(viejo.id)
+      .run();
+    await e.m.crudo(`/datos/viajes/${viejo.id}/cancelar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${e.cliente.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': 'cancelar-deuda-m7',
+      },
+      body: '{}',
+    });
+    const { cot, id } = await pedir(e);
+    // 400 s esperando: 100 s pasados de los 300 gratis = 2 minutos empezados × 20.
+    const r = await hacerViaje(e, cond, id, 400);
+    expect(r.totalFinal).toBe(cot.total + 40 + 150);
+    expect(
+      await e.m.DB.prepare('SELECT estado, cobrada_en FROM deudas_pasajero WHERE operacion_id = ?')
+        .bind(viejo.id)
+        .first(),
+    ).toEqual({ estado: 'cobrada', cobrada_en: id });
+    const luego = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token))
+      .datos;
+    expect(luego.deudaPendiente).toBeNull();
+  });
+});
+
+describe('M7: la salud de los viajes (conciliación)', () => {
+  it('en verde sin nada colgado; en rojo si un viaje cerrado conserva comisión apartada', async () => {
+    const e = await enPruebas();
+    expect((await e.m.llamar('GET', '/datos/salud')).datos.piezas.viajes).toBe('ok');
+    await encenderMoto(e);
+    await ponerTarifa(e);
+    const c = (await cotizar(e)).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: c.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    // Una reserva olvidada en un viaje cancelado hace rato.
+    await e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('x1', 'alguien', 'reservado', 'US', 'USD', 50, 'reserva_viaje:ride', ?)",
+    )
+      .bind(`reserva_viaje:${id}:alguien:reservado`)
+      .run();
+    await e.m.DB.prepare(
+      "UPDATE viajes SET estado = 'cancelado', ultimo_actor = 'cliente', ultima_clave = 'x-cancel' WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    await e.m.DB.prepare(
+      "UPDATE operaciones SET actualizado_en = datetime('now', '-11 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    expect((await e.m.llamar('GET', '/datos/salud')).datos.piezas.viajes).toBe('error');
+  });
+});

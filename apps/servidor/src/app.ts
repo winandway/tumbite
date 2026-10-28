@@ -47,7 +47,7 @@ import { restauranteMas } from './rutas/restauranteMas';
 import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
-import { viajesPasajero } from './rutas/viajesPasajero';
+import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
@@ -216,6 +216,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.servicios = await saludServicios(c.env.DB, entornoDe(c.req.url)).catch((e: unknown) => {
       console.error('salud: servicios', e);
+      return 'error' as const;
+    });
+  // Divoox Moto · M7: ningún viaje cerrado con comisión apartada ni deudas sin su viaje.
+  if (c.env.DB)
+    piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
+      console.error('salud: viajes', e);
       return 'error' as const;
     });
   // Fase 2: tiempo real (apagado = «pendiente»; las apps siguen con la consulta normal).

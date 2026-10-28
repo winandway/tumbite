@@ -6,6 +6,12 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { nuevoId } from '../cripto';
 import { registrarEmergencia } from './viajesPasajero';
 import {
+  cobrarReservaViaje,
+  devolverReservaViaje,
+  reservarComisionViaje,
+} from '../finanzas/conductor';
+import { cargoEspera, esquemaTarifaViaje } from '@tumbite/compartido';
+import {
   aceptarOperacion,
   cambiarEstadoViaje,
   liberarViaje,
@@ -35,11 +41,15 @@ const MINUTOS_UBICACION_LLEGADA = 2;
  */
 export const viajes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+/**
+ * La clave lleva también al conductor (28 oct 2026): dos conductores que mandaran la misma clave
+ * para el mismo viaje chocaban en la base (500). El reintento del MISMO conductor sigue igual.
+ */
 function claveDe(c: Ctx, accion: string, operacionId: string): string {
   const k = c.req.header('idempotency-key') ?? '';
   if (!/^[A-Za-z0-9_-]{8,80}$/.test(k))
     throw new ErrorDatos('Falta la clave de la solicitud. Actualiza la app.', undefined, 400);
-  return `${accion}:${operacionId}:${k}`;
+  return `${accion}:${operacionId}:${c.get('usuario')?.id ?? ''}:${k}`;
 }
 
 /** La operación tiene que ser de este conductor (sin revelar si existe para otros). */
@@ -161,6 +171,40 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
     .bind(id, u.id)
     .first<{ vehiculo_id: string }>();
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
+  // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
+  // de aceptar; si el saldo no alcanza, no se acepta.
+  const info = await base(c)
+    .prepare(
+      `SELECT o.servicio_id, o.zona_id, z.pais, q.total, q.moneda FROM operaciones o
+         JOIN zonas z ON z.id = o.zona_id
+         JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE o.id = ?`,
+    )
+    .bind(id)
+    .first<{
+      servicio_id: string;
+      zona_id: string;
+      pais: string;
+      total: number | null;
+      moneda: string | null;
+    }>();
+  if (info?.total != null && info.moneda) {
+    const reserva = await reservarComisionViaje(base(c), {
+      servicio: info.servicio_id === 'carro' ? 'car' : 'ride',
+      pais: info.pais,
+      ciudad: info.zona_id,
+      moneda: info.moneda,
+      operacionId: id,
+      conductorId: u.id,
+      valor: info.total,
+    });
+    if (!reserva.ok)
+      throw new ErrorDatos(
+        'Tu saldo prepago no alcanza para la comisión de este viaje. Recarga para aceptarlo.',
+        undefined,
+        409,
+      );
+  }
   const r = await aceptarOperacion(base(c), {
     operacionId: id,
     conductorId: u.id,
@@ -169,6 +213,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   });
   if (r.resultado === 'tomada' || r.resultado === 'ya_es_tuya')
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
+  // No se lo quedó: lo apartado vuelve al prepago.
+  await devolverReservaViaje(base(c), id, u.id, 'no_aceptado');
   if (r.resultado === 'ocupado')
     throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
   if (r.resultado === 'otro_conductor')
@@ -197,6 +243,7 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
   const clave = claveDe(c, 'liberar', id);
   const { motivo } = await leerCuerpo(c, z.object({ motivo: z.string().max(200).default('') }));
   const ok = await liberarViaje(base(c), { operacionId: id, conductorId: u.id, motivo, clave });
+  if (ok) await devolverReservaViaje(base(c), id, u.id, 'soltado');
   if (!ok) {
     // Reintento de una liberación que ya se hizo: la misma respuesta.
     const hecho = await base(c)
@@ -294,6 +341,11 @@ viajes.post(
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 409);
     }
+    if (nombre === 'terminar') {
+      const totalFinal = await cerrarCuentaViaje(c, id, u.id);
+      return c.json({ ok: true, estado: paso.hacia, totalFinal });
+    }
+    if (nombre === 'no-se-presento') await devolverReservaViaje(db, id, u.id, 'no_se_presento');
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
     // deuda para su próximo viaje (una sola por viaje).
     if (nombre === 'no-se-presento')
@@ -326,3 +378,60 @@ viajes.post('/conductor/operaciones/:id/emergencia', async (c) => {
     await registrarEmergencia(c, { operacionId: id, actorId: u.id, rol: 'conductor', ...d }),
   );
 });
+
+/**
+ * M7: la cuenta final de un viaje terminado. Precio fijo + espera pasada la gratis (de la tarifa
+ * copiada) + lo que el pasajero debía de viajes anteriores (se cobra ahora y queda saldado), y la
+ * comisión apartada pasa a Divoox. Todo idempotente: repetir «terminar» no cobra dos veces.
+ */
+async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: string) {
+  const db = base(c);
+  const f = await db
+    .prepare(
+      `SELECT o.cliente_id, v.total_final_centavos, q.total, q.moneda, q.tarifa_json,
+              CAST((julianday(v.iniciado_en) - julianday(v.llego_en)) * 86400 AS INTEGER) AS espera_s
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE o.id = ?`,
+    )
+    .bind(operacionId)
+    .first<{
+      cliente_id: string;
+      total_final_centavos: number | null;
+      total: number | null;
+      moneda: string | null;
+      tarifa_json: string | null;
+      espera_s: number | null;
+    }>();
+  await cobrarReservaViaje(db, operacionId, conductorId);
+  if (!f || f.total == null) return null;
+  if (f.total_final_centavos != null) return f.total_final_centavos;
+  let espera = 0;
+  try {
+    espera = cargoEspera(
+      esquemaTarifaViaje.parse(JSON.parse(f.tarifa_json ?? '{}')),
+      f.espera_s ?? 0,
+    );
+  } catch {
+    console.error('viajes: copia de tarifa dañada al cerrar', operacionId);
+  }
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE deudas_pasajero SET estado = 'cobrada', resuelta_en = datetime('now'), cobrada_en = ?
+          WHERE cliente_id = ? AND estado = 'pendiente' AND moneda = ? AND operacion_id != ?`,
+      )
+      .bind(operacionId, f.cliente_id, f.moneda, operacionId),
+    db
+      .prepare(
+        `UPDATE viajes SET total_final_centavos = ? + ? +
+           (SELECT COALESCE(SUM(monto), 0) FROM deudas_pasajero WHERE cobrada_en = ?)
+          WHERE operacion_id = ? AND total_final_centavos IS NULL`,
+      )
+      .bind(f.total, espera, operacionId, operacionId),
+  ]);
+  const fin = await db
+    .prepare('SELECT total_final_centavos FROM viajes WHERE operacion_id = ?')
+    .bind(operacionId)
+    .first<{ total_final_centavos: number | null }>();
+  return fin?.total_final_centavos ?? null;
+}

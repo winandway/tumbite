@@ -1349,3 +1349,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Compartir el viaje:** `POST /datos/viajes/:id/compartir` da un enlace largo y secreto (`/ride/<código>`) que muestra el viaje en vivo sin cuenta (`GET /datos/publico/viaje/:código`). Solo se guarda la huella del código; la página no se indexa ni se guarda en caché, y deja de mostrar el viaje cuando termina.
 - **Prueba:** `rutas/viajesPasajero.test.ts` (M6); el apagado al terminar comprobado en rojo.
 - **No tocar:** nunca guardar el código del enlace en claro; nunca mostrar el viaje compartido después de terminado.
+
+## C-VIAJE-COMISION · Comisión del prepago, espera y deudas en la cuenta del viaje (28 oct 2026)
+
+- **Comisión:** donde rige una política de prepago de conductores (con revisión legal aprobada), al aceptar se aparta la comisión prevista del prepago (`reservarComisionViaje`); sin saldo, no se acepta. Al terminar se cobra para Divoox; si el viaje no se hace (cancelado, soltado, sin señal, no se presentó o no se lo quedó) vuelve al prepago. Cada pata con su referencia única `reserva_viaje:<viaje>:<conductor>:…`: repetir no duplica. Sin política (EE. UU. hoy), no se aparta nada.
+- **Cuenta final (`cerrarCuentaViaje`):** precio fijo + espera pasada la gratis de la tarifa copiada + deudas pendientes del pasajero (quedan «cobradas» con el viaje que las cobró). Se calcula una sola vez.
+- **Clave de idempotencia:** lleva al conductor (dos conductores con la misma clave chocaban con un 500).
+- **Conciliación:** pieza `viajes` de `/datos/salud`: rojo si un viaje cerrado hace más de 10 minutos conserva comisión apartada, o si hay deudas cobradas sin su viaje.
+- **Prueba:** `rutas/viajesPasajero.test.ts` (M7 y su salud), el cobro comprobado en rojo.
+- **Pendiente de decisión de negocio:** en efectivo, el cargo de cancelación o de «no se presentó» lo cobra el conductor del SIGUIENTE viaje y queda en su mano; el estándar (Uber) es que vaya al conductor afectado. Se resuelve con el pago con tarjeta.

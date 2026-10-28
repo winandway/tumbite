@@ -72,6 +72,8 @@ export function ViajeActivo({
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
+  // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
+  const [totalFinal, setTotalFinal] = useState<number | null>(null);
   // La espera corre en la pantalla desde la hora de llegada que guardó el servidor.
   const [tic, setTic] = useState(() => Date.now());
   useEffect(() => {
@@ -91,9 +93,13 @@ export function ViajeActivo({
       setEnviando(true);
       setError('');
       try {
-        await api.pedir('POST', `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`, cuerpo, {
-          cabeceras: { 'idempotency-key': clave() },
-        });
+        const r = await api.pedir<{ totalFinal?: number | null }>(
+          'POST',
+          `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`,
+          cuerpo,
+          { cabeceras: { 'idempotency-key': clave() } },
+        );
+        if (r?.totalFinal != null) setTotalFinal(r.totalFinal);
         if (final) setCierre(final);
         else alCambiar();
       } catch (x) {
@@ -111,14 +117,16 @@ export function ViajeActivo({
         <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>
           {cierre === 'terminado' ? t.terminado : t.noShow}
         </Text>
-        {cierre === 'terminado' && viaje.metodo_pago === 'efectivo' && viaje.total != null ? (
+        {cierre === 'terminado' &&
+        viaje.metodo_pago === 'efectivo' &&
+        (totalFinal ?? viaje.total) != null ? (
           <View
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
             <Text style={{ color: '#5E5E5E' }}>{t.cobra}</Text>
             <Text style={{ fontSize: 34, fontWeight: '900', color: C.exito }}>
-              {formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)}
+              {formatearMonto(totalFinal ?? viaje.total ?? 0, viaje.moneda ?? 'USD', idioma)}
             </Text>
           </View>
         ) : null}

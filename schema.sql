@@ -2500,6 +2500,8 @@ CREATE TABLE IF NOT EXISTS deudas_pasajero (
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'cobrada', 'perdonada')),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   resuelta_en TEXT,
+  -- El viaje en el que se cobró (M7): se suma a la cuenta final de ese viaje.
+  cobrada_en TEXT,
   UNIQUE (operacion_id, motivo)
 );
 CREATE INDEX IF NOT EXISTS deudas_pasajero_cliente ON deudas_pasajero(cliente_id, estado);

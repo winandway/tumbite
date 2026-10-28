@@ -1571,7 +1571,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "moneda",
     "estado",
     "creado_en",
-    "resuelta_en"
+    "resuelta_en",
+    "cobrada_en"
   ],
   "emergencias_viaje": [
     "id",

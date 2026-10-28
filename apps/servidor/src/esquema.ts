@@ -76,6 +76,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Divoox Moto · M2: con qué paga el pasajero y de qué cotización salió el viaje.
   ['viajes', 'metodo_pago', "TEXT NOT NULL DEFAULT 'efectivo'"],
   ['viajes', 'cotizacion_id', 'TEXT'],
+  // Divoox Moto · M7: el viaje en el que se cobró la deuda del pasajero.
+  ['deudas_pasajero', 'cobrada_en', 'TEXT'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],

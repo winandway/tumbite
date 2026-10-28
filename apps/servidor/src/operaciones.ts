@@ -1,7 +1,7 @@
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import { distanciaKm } from '@tumbite/compartido';
-import { comisionConductor } from './finanzas/conductor';
+import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md; V1.2 §3 y §5).
@@ -246,7 +246,11 @@ export async function repartirOperaciones(
       clave: `sin-senal:${s.operacion_id}:${s.conductor_id}:${Date.now()}`,
       motivo: 'sin_senal',
     });
-    if (ok) liberados++;
+    if (ok) {
+      liberados++;
+      // M7: lo que había apartado vuelve a su prepago (el viaje no lo hizo).
+      await devolverReservaViaje(db, s.operacion_id, s.conductor_id, 'sin_senal');
+    }
   }
   // M2: un viaje que lleva demasiado buscando (desde que empezó a buscar, también tras una
   // liberación) se cierra como «sin conductor» y el pasajero lo ve en vez de esperar para siempre.
