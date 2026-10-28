@@ -56,6 +56,8 @@ export async function notificar(env: Env, db: D1Database, usuarioId: string, avi
       method: 'POST',
       headers,
       body: JSON.stringify(mensajes),
+      // C-LLAMADAS-CON-LIMITE: un Expo que no contesta no deja colgada la petición.
+      signal: AbortSignal.timeout(10_000),
     });
     const r = (await res.json().catch(() => null)) as {
       data?: { status: string; message?: string; details?: { error?: string } }[];

@@ -1288,3 +1288,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - Qué: `apps/panel/src/panel/flex/PantallasBilletera.tsx` (Resumen, Recargar con el formulario de Stripe dentro de la pantalla, Comisiones, Comprobantes con impresión, Configuración) y `apps/panel/src/panel/SuperFinanzas.tsx`.
 - Candados: `PantallasBilletera.test.tsx` (5) y `SuperFinanzas.test.tsx`.
+
+## C-LLAMADAS-CON-LIMITE · Ninguna llamada a un servicio externo espera para siempre (27 oct 2026)
+
+- Qué se rompía: en staging, dos recorridos de Comida quedaron colgados (uno 47 minutos en «no puedo confirmar», que manda un correo al equipo). El correo, los avisos de Expo y Stripe se llamaban sin límite de tiempo: si el servicio no contestaba, la petición de la persona tampoco.
+- Arreglo: `AbortSignal.timeout` en `correo.ts` (10 s, `TIEMPO_CORREO_MS`), `notificaciones.ts` (10 s) y `stripe.ts` (25 s; toda escritura a Stripe lleva clave de idempotencia, repetir es seguro). Los fallos ya se manejaban: ahora llegan a tiempo.
+- Candado: `correoLimite.test.ts`, comprobado en rojo quitando el límite (la prueba se queda colgada).
+
+## C-STRIPE-AVISO-PRINCIPAL · El aviso principal es el que recibe los pagos
+
+- Qué: `POST /datos/interno-stripe/avisos/principal/eventos` busca el aviso de este sitio que escucha `payment_intent.succeeded` (aunque también escuche `account.updated`, como el de staging creado a mano) y le agrega los eventos que falten; nunca quita ninguno ni toca avisos de otros negocios de la cuenta.
+- Candado: `rutas/stripeAvisos.test.ts`, comprobado en rojo con la regla vieja (que lo confundía con el de cuentas conectadas).

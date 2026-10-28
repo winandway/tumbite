@@ -447,7 +447,7 @@ function Resumen({ ctx }: { ctx: Contexto }) {
                   {x.creadoEn} · {t.bolsillos[x.bolsillo] ?? x.bolsillo}
                 </small>
               </span>
-              <span className={x.monto >= 0 ? 'texto-exito' : ''}>
+              <span className={x.monto >= 0 && x.bolsillo === 'prepago' ? 'texto-exito' : ''}>
                 {x.monto >= 0 ? '+' : '−'}
                 {m(Math.abs(x.monto))}
               </span>

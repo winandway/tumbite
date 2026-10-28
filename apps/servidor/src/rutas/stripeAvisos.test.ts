@@ -178,4 +178,44 @@ describe('avisos de Stripe desde el servidor (C-STRIPE-AVISOS)', () => {
     expect(d.avisos.map((a) => a.id)).toEqual(['we_c']);
     expect(llamadas).toHaveLength(2);
   });
+
+  it('agrega al aviso PRINCIPAL los eventos que le faltan, aunque también escuche account.updated; nunca toca avisos ajenos', async () => {
+    const { pedir, llamadas } = conStripe([
+      {
+        id: 'we_1',
+        url: `${URL_SITIO}/datos/stripe/aviso`,
+        status: 'enabled',
+        livemode: false,
+        enabled_events: ['payment_intent.succeeded', 'account.updated', 'payout.failed'],
+        metadata: {},
+      },
+      {
+        id: 'we_otro',
+        url: 'https://otro-negocio.example/webhook',
+        status: 'enabled',
+        livemode: false,
+        enabled_events: ['charge.succeeded'],
+        metadata: {},
+      },
+    ]);
+    const r = await pedir('POST', '/datos/interno-stripe/avisos/principal/eventos');
+    expect(r.status).toBe(200);
+    const d = (await r.json()) as { id: string; agregados: string[] };
+    expect(d.id).toBe('we_1');
+    expect(d.agregados).toEqual(
+      expect.arrayContaining([
+        'charge.refunded',
+        'payment_intent.payment_failed',
+        'charge.dispute.created',
+      ]),
+    );
+    const escrita = llamadas.filter(
+      (l) => l.metodo === 'POST' && l.url.includes('/v1/webhook_endpoints/'),
+    );
+    expect(escrita).toHaveLength(1);
+    expect(escrita[0]!.url).toContain('/v1/webhook_endpoints/we_1');
+    // Conserva los eventos que ya tenía.
+    expect(decodeURIComponent(escrita[0]!.cuerpo)).toContain('account.updated');
+    expect(llamadas.some((l) => l.url.includes('we_otro'))).toBe(false);
+  });
 });

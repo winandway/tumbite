@@ -110,7 +110,14 @@ export const EVENTOS_PRINCIPAL = [
  */
 stripeAvisos.post('/interno-stripe/avisos/principal/eventos', async (c) => {
   const { stripe, avisos } = await listar(c.env);
-  const principal = avisos.find((a) => a.url === urlAviso(c.env) && !esConectadas(a, c.env));
+  // El principal es el de este sitio que recibe los PAGOS (puede escuchar también account.updated
+  // si se creó a mano); el de cuentas conectadas solo lleva sus dos eventos o la marca «conectadas».
+  const principal = avisos.find(
+    (a) =>
+      a.url === urlAviso(c.env) &&
+      a.metadata?.tumbite !== 'conectadas' &&
+      (a.enabled_events.includes('payment_intent.succeeded') || a.enabled_events.includes('*')),
+  );
   if (!principal) throw new ErrorDatos('No hay aviso principal para este sitio.', undefined, 404);
   const faltan = EVENTOS_PRINCIPAL.filter(
     (e) => !principal.enabled_events.includes(e) && !principal.enabled_events.includes('*'),

@@ -70,6 +70,13 @@ export function usarTransporteCorreo(t: Transporte | null) {
   ultimoErrorCorreo = null;
 }
 
+/** Tiempo máximo para hablar con el servicio de correo (C-LLAMADAS-CON-LIMITE). */
+export let TIEMPO_CORREO_MS = 10_000;
+/** Solo para pruebas. */
+export function usarTiempoCorreo(ms: number | null) {
+  TIEMPO_CORREO_MS = ms ?? 10_000;
+}
+
 export function correoConfigurado(env: Env): boolean {
   return Boolean(env.YAD_TOKEN);
 }
@@ -97,6 +104,9 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(cuerpo),
+      // C-LLAMADAS-CON-LIMITE: si el servicio de correo no contesta, la petición de la persona no
+      // se queda colgada (antes podía esperar para siempre y trabar la entrega).
+      signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
     });
   } catch (e) {
     const motivo = `No se pudo hablar con el servicio de correo: ${String(e)}`;

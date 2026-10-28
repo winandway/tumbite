@@ -80,6 +80,9 @@ export function crearStripe(secreta: string | undefined) {
         method: metodo,
         headers,
         body: metodo === 'POST' ? cuerpo : undefined,
+        // C-LLAMADAS-CON-LIMITE: nunca esperar a Stripe para siempre. Toda escritura lleva clave de
+        // idempotencia, así que repetirla después de un corte no cobra dos veces.
+        signal: AbortSignal.timeout(25_000),
       },
     );
     const json = (await res.json().catch(() => ({}))) as { error?: { message?: string } } & T;
