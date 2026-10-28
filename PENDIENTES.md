@@ -219,7 +219,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 ## Flex en producción (28 oct 2026)
 
 - [x] Flex Fases 1 a 4 publicadas en producción (21702c4), verificador verde. Restaurar: etiqueta `restauracion-antes-flex-fase4-2026-10-28`.
-- [ ] Subir la versión nueva del Driver (build 32d18083, «Mi ruta» rediseñada) a Google Play en cuanto aprueben la revisión en curso.
+- [x] Versión nueva del Driver (build 32d18083) subida el 28 oct 2026.
 - [ ] 👤 Encender las recargas de empresa en producción (dinero real): orden de Richard y una compra real de 1 dólar.
 
 ## Divoox Moto, pasajeros (28 oct 2026) — en producción 7ce5503 con Moto APAGADA; encendida solo en el sitio de pruebas — plan en docs/PLAN-MOTO-PASAJEROS.md
@@ -240,7 +240,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 Aseguradora para el seguro de accidentes del pasajero.
 - [ ] 👤 Tarifas y comisión reales por ciudad (el sistema arranca con valores de prueba).
 - [ ] 👤 Orden de encender Moto en producción.
-- [ ] Subir la versión 7 del Driver (Mi ruta de Flex) en cuanto Google apruebe la revisión en curso.
+- [x] Versión 7 del Driver subida y enviada a revisión el 28 oct 2026 (Google ya había publicado la 6).
+- [ ] Cuando Google apruebe la 7: compilar y subir la versión 8 del Driver (cobro al entregar, reintento ante errores pasajeros, sugerencias de direcciones) y una versión nueva del Cliente.
 
 ## Divoox Flex · Fase 5: ubicación exacta, Venezuela y la web (28 oct 2026) — rama fase-flex-5
 
