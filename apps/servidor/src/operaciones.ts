@@ -1,6 +1,7 @@
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import { distanciaKm } from '@tumbite/compartido';
+import { comisionConductor } from './finanzas/conductor';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md; V1.2 §3 y §5).
@@ -21,6 +22,11 @@ export type ResultadoAceptar =
 
 /** Segundos que dura una oferta de operación antes de pasar al siguiente conductor. */
 export const SEGUNDOS_OFERTA_OPERACION = 30;
+/** El servicio del catálogo en la capa financiera (C-FIN-POLITICAS). */
+const SERVICIO_FINANCIERO = new Map<string, 'ride' | 'car'>([
+  ['moto', 'ride'],
+  ['carro', 'car'],
+]);
 /** Sin ubicación por este tiempo, un viaje asignado (sin iniciar) vuelve a buscar conductor. */
 export const MINUTOS_SIN_SENAL = 5;
 /** Cuánto busca conductor un viaje antes de cerrarse como «sin conductor» (M2). */
@@ -267,8 +273,11 @@ export async function repartirOperaciones(
     });
   const { results: buscando } = await db
     .prepare(
-      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng FROM operaciones o
+      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, q.total, q.moneda, z.pais
+         FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN zonas z ON z.id = o.zona_id
         WHERE o.estado_general = 'buscando'
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion f WHERE f.operacion_id = o.id AND f.estado = 'ofrecida')
         ORDER BY o.creado_en LIMIT 20`,
@@ -279,6 +288,9 @@ export async function repartirOperaciones(
       zona_id: string;
       origen_lat: number;
       origen_lng: number;
+      total: number | null;
+      moneda: string | null;
+      pais: string | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
@@ -299,16 +311,40 @@ export async function repartirOperaciones(
     if (!elegido) continue;
     // La condición repite la regla de «libre» en la MISMA sentencia: si entre la consulta y aquí
     // el conductor tomó otra cosa, la oferta no se crea.
+    // M3 (C-OFERTA-COMPLETA): el conductor ve cuánto gana antes de aceptar, como en Uber: el
+    // precio fijo del viaje menos la comisión de la política de Divoox que rija (si rige).
+    const ganancia =
+      op.total != null && op.moneda && op.pais
+        ? op.total -
+          ((
+            await comisionConductor(db, {
+              servicio: SERVICIO_FINANCIERO.get(op.servicio_id) ?? 'ride',
+              pais: op.pais,
+              ciudad: op.zona_id,
+              moneda: op.moneda,
+              valor: op.total,
+            }).catch((e: unknown) => {
+              console.error('operaciones: comisión de la oferta', e);
+              return null;
+            })
+          )?.monto ?? 0)
+        : 0;
     const r = await db
       .prepare(
-        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en)
-         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4)
+        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos)
+         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5
           WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
             AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
          ON CONFLICT(operacion_id, conductor_id) DO NOTHING`,
       )
-      .bind(op.id, elegido.conductorId, elegido.vehiculoId, `+${SEGUNDOS_OFERTA_OPERACION} seconds`)
+      .bind(
+        op.id,
+        elegido.conductorId,
+        elegido.vehiculoId,
+        `+${SEGUNDOS_OFERTA_OPERACION} seconds`,
+        Math.max(0, ganancia),
+      )
       .run();
     if (!r.meta.changes) continue;
     yaOfrecidos.add(elegido.conductorId);

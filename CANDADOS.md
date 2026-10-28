@@ -1336,3 +1336,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Sin conductor:** a los 10 minutos buscando (desde la última vez que volvió a buscar) el reloj lo cierra como «sin conductor».
 - **Prueba:** `rutas/viajesPasajero.test.ts` (M2), con el pedido único y la deuda comprobados en rojo.
 - **No tocar:** el cargo sale de la copia de la tarifa en la cotización, nunca de la tarifa vigente ni de la app.
+
+## C-OFERTA-COMPLETA · El conductor ve lo que gana antes de aceptar, y el viaje no espera al reloj (28 oct 2026)
+
+- **Oferta:** `GET /datos/conductor/operaciones/ofertas` trae la ganancia (precio fijo menos la comisión de la política de conductor que rija para «ride»; sin política, todo), la distancia a la recogida, el destino, la distancia y duración del viaje, la moneda y la forma de pago. Así lo hace Uber Moto [DOC].
+- **Despacho sin reloj:** el sitio no tiene reloj propio (el de afuera pasa cada 5 minutos). Por eso se despacha al pedir, al rechazar, al soltar el viaje y cuando el pasajero consulta su viaje sin oferta abierta. Uno a uno, el más cercano primero (equivale a un radio que crece).
+- **Prueba:** `rutas/viajesPasajero.test.ts` (M3), comprobada en rojo quitando la ganancia y el redespacho.

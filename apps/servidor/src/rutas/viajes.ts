@@ -4,8 +4,13 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { nuevoId } from '../cripto';
-import { aceptarOperacion, cambiarEstadoViaje, liberarViaje } from '../operaciones';
-import { RADIO_LLEGADA_M, llego } from '@tumbite/compartido';
+import {
+  aceptarOperacion,
+  cambiarEstadoViaje,
+  liberarViaje,
+  repartirOperaciones,
+} from '../operaciones';
+import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 
 /**
  * C-VIAJE-PASOS-REALES (28 oct 2026, encontrado con REA): sin estas reglas un conductor podía
@@ -62,30 +67,52 @@ async function miOperacion(c: Ctx, id: string, conductorId: string) {
   return f;
 }
 
+/**
+ * M3 (C-OFERTA-COMPLETA): lo que el conductor ve ANTES de aceptar, como en Uber Moto: cuánto gana,
+ * qué tan lejos está la recogida, a dónde va el viaje, cuánto dura y cómo paga el pasajero.
+ */
 viajes.get('/conductor/operaciones/ofertas', async (c) => {
   const u = exigir(c, 'repartidor');
   const { results } = await base(c)
     .prepare(
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
-              v.origen_direccion, v.destino_direccion, v.pasajeros
+              v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
+              v.destino_lng, v.pasajeros, v.metodo_pago, q.distancia_m, q.duracion_s, q.moneda,
+              d.lat AS yo_lat, d.lng AS yo_lng
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN repartidores d ON d.usuario_id = f.conductor_id
         WHERE f.conductor_id = ? AND f.estado = 'ofrecida' AND f.expira_en > datetime('now')
           AND o.estado_general = 'buscando'`,
     )
     .bind(u.id)
     .all<Record<string, unknown>>();
   return c.json({
-    ofertas: results.map((f) => ({
-      operacionId: String(f.operacion_id),
-      vehiculoId: String(f.vehiculo_id),
-      servicioId: String(f.servicio_id),
-      gananciaCentavos: Number(f.ganancia_centavos),
-      expiraEn: String(f.expira_en),
-      origen: String(f.origen_direccion),
-      destino: String(f.destino_direccion),
-      pasajeros: Number(f.pasajeros),
-    })),
+    ofertas: results.map((f) => {
+      const origen = { lat: Number(f.origen_lat), lng: Number(f.origen_lng) };
+      const yo =
+        f.yo_lat != null && f.yo_lng != null
+          ? { lat: Number(f.yo_lat), lng: Number(f.yo_lng) }
+          : null;
+      return {
+        operacionId: String(f.operacion_id),
+        vehiculoId: String(f.vehiculo_id),
+        servicioId: String(f.servicio_id),
+        gananciaCentavos: Number(f.ganancia_centavos),
+        moneda: f.moneda == null ? null : String(f.moneda),
+        expiraEn: String(f.expira_en),
+        origen: String(f.origen_direccion),
+        destino: String(f.destino_direccion),
+        origenPunto: origen,
+        destinoPunto: { lat: Number(f.destino_lat), lng: Number(f.destino_lng) },
+        recogidaM: yo ? metrosEntre(yo, origen) : null,
+        viajeM: f.distancia_m == null ? null : Number(f.distancia_m),
+        viajeS: f.duracion_s == null ? null : Number(f.duracion_s),
+        metodoPago: String(f.metodo_pago ?? 'efectivo'),
+        pasajeros: Number(f.pasajeros),
+      };
+    }),
   });
 });
 
@@ -137,6 +164,10 @@ viajes.post('/conductor/operaciones/:id/rechazar', async (c) => {
     )
     .bind(c.req.param('id'), u.id)
     .run();
+  // M3: si lo rechaza, el viaje pasa al siguiente conductor de una vez (no espera al reloj).
+  await repartirOperaciones(c.env, base(c)).catch((e: unknown) =>
+    console.error('viajes: despacho al rechazar', e),
+  );
   return c.json({ ok: true });
 });
 
@@ -155,6 +186,9 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
     if (hecho) return c.json({ ok: true });
     throw new ErrorDatos('Este viaje ya no se puede soltar.', undefined, 409);
   }
+  await repartirOperaciones(c.env, base(c)).catch((e: unknown) =>
+    console.error('viajes: despacho al soltar', e),
+  );
   return c.json({ ok: true });
 });
 

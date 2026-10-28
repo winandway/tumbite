@@ -456,3 +456,81 @@ describe('M2: pedir, ver y cancelar un viaje (efectivo)', () => {
     expect((await cancelar(e, id, otro.token)).status).toBe(404);
   });
 });
+
+describe('M3 (C-OFERTA-COMPLETA): la oferta del conductor y el despacho sin esperar al reloj', () => {
+  async function listo() {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e);
+    return e;
+  }
+  async function pedir(e: Awaited<ReturnType<typeof escenario>>) {
+    const c = (await cotizar(e)).datos.cotizacion;
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: c.id, metodoPago: 'efectivo' },
+      e.cliente.token,
+    );
+    return { cot: c, id: r.datos.viaje.id as string };
+  }
+  const ofertas = (e: Awaited<ReturnType<typeof escenario>>, token: string) =>
+    e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, token);
+
+  it('el conductor ve ganancia, recogida, destino, duración y forma de pago antes de aceptar', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, { lat: ORIGEN.lat + 0.005, lng: ORIGEN.lng });
+    const { cot, id } = await pedir(e);
+    const o = (await ofertas(e, cond.token)).datos.ofertas;
+    expect(o).toHaveLength(1);
+    expect(o[0]).toMatchObject({
+      operacionId: id,
+      gananciaCentavos: cot.total, // sin política de comisión, gana todo
+      moneda: 'USD',
+      destino: DESTINO.direccion,
+      viajeM: cot.distanciaM,
+      viajeS: cot.duracionS,
+      metodoPago: 'efectivo',
+    });
+    expect(o[0].recogidaM).toBeGreaterThan(500);
+    expect(o[0].recogidaM).toBeLessThan(600);
+  });
+
+  it('con una política de comisión vigente, la ganancia ya la descuenta', async () => {
+    const e = await listo();
+    await e.m.DB.prepare(
+      `INSERT INTO politicas_financieras (id, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
+       VALUES ('pol-ride', 'ride', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', datetime('now', '-1 day'), 1)`,
+    ).run();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const { cot } = await pedir(e);
+    const o = (await ofertas(e, cond.token)).datos.ofertas;
+    expect(o[0].gananciaCentavos).toBe(cot.total - Math.round(cot.total / 10));
+  });
+
+  it('si el conductor la rechaza, pasa al siguiente de una vez', async () => {
+    const e = await listo();
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    const b = await conductorDeMoto(e.m, { lat: ORIGEN.lat + 0.01, lng: ORIGEN.lng });
+    const { id } = await pedir(e);
+    expect((await ofertas(e, a.token)).datos.ofertas).toHaveLength(1);
+    expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(0);
+    expect(await a.paso(id, 'rechazar')).toBe(200);
+    expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(1);
+  });
+
+  it('si la oferta vence, la consulta del pasajero la pasa al siguiente', async () => {
+    const e = await listo();
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    const b = await conductorDeMoto(e.m, { lat: ORIGEN.lat + 0.01, lng: ORIGEN.lng });
+    const { id } = await pedir(e);
+    await e.m.DB.prepare(
+      "UPDATE ofertas_operacion SET expira_en = datetime('now', '-1 second') WHERE operacion_id = ? AND conductor_id = ?",
+    )
+      .bind(id, a.id)
+      .run();
+    expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(0);
+    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(1);
+  });
+});

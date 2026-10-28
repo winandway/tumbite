@@ -464,7 +464,23 @@ function viajePublico(f: FilaViajeCliente) {
 viajesPasajero.get('/viajes/actual', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
-  const f = await viajeDelCliente(db, u.id, null);
+  let f = await viajeDelCliente(db, u.id, null);
+  // M3: el sitio no tiene reloj propio (el de afuera pasa cada 5 minutos). Mientras el pasajero
+  // espera, su consulta mueve el despacho si la oferta anterior venció o fue rechazada.
+  if (f?.estado === 'buscando') {
+    const abierta = await db
+      .prepare(
+        "SELECT 1 FROM ofertas_operacion WHERE operacion_id = ? AND estado = 'ofrecida' AND expira_en > datetime('now')",
+      )
+      .bind(f.id)
+      .first();
+    if (!abierta) {
+      await repartirOperaciones(c.env, db).catch((e: unknown) =>
+        console.error('viajes: despacho al consultar', e),
+      );
+      f = await viajeDelCliente(db, u.id, null);
+    }
+  }
   const deuda = await db
     .prepare(
       "SELECT COALESCE(SUM(monto), 0) AS monto, MAX(moneda) AS moneda FROM deudas_pasajero WHERE cliente_id = ? AND estado = 'pendiente'",
