@@ -234,7 +234,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] (28 oct) M7 Dinero: comisión del prepago apartada al aceptar, cobrada al terminar y devuelta si no se hace; espera por minuto; deudas en la cuenta final; conciliación en la salud. (El pago con tarjeta de los viajes queda para una fase propia con Stripe de prueba.)
 - [x] (28 oct) M8 Calificación de ambos lados (cuenta en el promedio del conductor). La propina va con el pago con tarjeta.
 - [x] (28 oct) M9 Panel del superadmin «Moto · Viajes»: emergencias abiertas para atender, viajes recientes y tarifa por ciudad (versión nueva con motivo). (Los interruptores por ciudad —PIN de noche, selfie con casco, pausa del chat— quedan para después.)
-- [ ] M10 Recorrido en staging, comparación con REA sobre nuestras apps, guías en Docs, informe.
+- [x] (28 oct) M10 Viaje de punta a punta en el sitio de pruebas en cada publicación (scripts/staging/probar-moto.mjs + herramienta interna moto/armar y limpiar), informe. Las guías públicas en Docs se escriben al encender Moto (antes prometerían algo que el público no puede usar).
+- [ ] Moto después de M10: pago con tarjeta (Stripe de prueba) y propina; cargo de cancelación al conductor afectado; contactos de emergencia, aviso de desvío, límite de horas, pausa del chat; interruptores por ciudad (PIN de noche, selfie con casco); oferta del pasajero tipo inDrive; Carro con lo mismo.
 - [ ] 👤 Primer mercado de Moto y aprobación legal de ese país.
 - [ ] 👤 Aseguradora para el seguro de accidentes del pasajero.
 - [ ] 👤 Tarifas y comisión reales por ciudad (el sistema arranca con valores de prueba).

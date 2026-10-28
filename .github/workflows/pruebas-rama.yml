@@ -52,6 +52,12 @@ jobs:
         if: ${{ vars.URL_PRUEBAS != '' }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
         timeout-minutes: 30
+      - name: Viaje de Moto de punta a punta (C-MOTO-SOLO-PRUEBAS)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        run: node scripts/staging/probar-moto.mjs
       - name: Avisos de Stripe de prueba con los eventos de Flex (recargas, reembolsos, disputas)
         if: ${{ vars.URL_PRUEBAS != '' }}
         continue-on-error: true

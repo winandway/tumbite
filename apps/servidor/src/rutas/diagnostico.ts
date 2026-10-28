@@ -2118,3 +2118,148 @@ diagnostico.post('/interno/diagnostico/l1', async (c) => {
     await db.batch(lote).catch((e: unknown) => console.error('L1: limpieza', e));
   }
 });
+
+// ---------------------------------------------------------------- Divoox Moto · M10
+// Viaje de Moto de punta a punta en el sitio de pruebas. «armar» crea un pasajero y un conductor
+// TEMPORALES («zz-mt-…») con todo en regla —en el sitio de pruebas no hay proveedor de antecedentes,
+// por eso sus requisitos se dan por cumplidos aquí— y devuelve sus pases de 30 minutos. El viaje en
+// sí se prueba por la API, como la app (scripts/staging/probar-moto.mjs). «limpiar» lo borra todo.
+
+const SUFIJO_MOTO = /^[a-z0-9]{6,24}$/;
+
+diagnostico.post('/interno/diagnostico/moto/armar', async (c) => {
+  const db = base(c);
+  const s = sufijo();
+  const ids = { cliente: `zz-mt-c-${s}`, conductor: `zz-mt-k-${s}`, admin: `zz-mt-a-${s}` };
+  const veh = `zz-mt-v-${s}`;
+  const punto = { lat: 25.7617, lng: -80.1918 };
+  const tokens = { cliente: nuevoToken(), conductor: nuevoToken() };
+  // Moto encendida en Miami con una tarifa DE PRUEBA si todavía no tiene (solo en este sitio).
+  await db.batch([
+    db.prepare("UPDATE servicios SET estado = 'disponible' WHERE id = 'moto'"),
+    db.prepare(
+      "INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('moto', 'US-FL-MIAMI', 'disponible') ON CONFLICT DO UPDATE SET estado = 'disponible'",
+    ),
+    db
+      .prepare(
+        `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
+           espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion, cargo_no_se_presento,
+           tope_dinamico_pb, redondeo, de_prueba, motivo)
+         SELECT ?, 'moto', 'US-FL-MIAMI', 'USD', 150, 60, 12, 400, 300, 20, 120, 150, 200, 10000, 1, 1,
+                'Tarifa de prueba del diagnóstico (M10)'
+          WHERE NOT EXISTS (SELECT 1 FROM tarifas_viaje WHERE servicio_id = 'moto' AND zona_id = 'US-FL-MIAMI' AND activa = 1)`,
+      )
+      .bind(`zz-mt-t-${s}`),
+  ]);
+  const usuario = (id: string, rol: string, nombre: string) =>
+    db
+      .prepare('INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES (?, ?, ?, ?, ?)')
+      .bind(id, `${id}@prueba.invalid`, nombre, rol, 'x');
+  const sesion = async (id: string, token: string) =>
+    db
+      .prepare(
+        "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+30 minutes'))",
+      )
+      .bind(await sha256(token), id);
+  await db.batch([
+    usuario(ids.cliente, 'cliente', 'Pasajero Prueba'),
+    usuario(ids.conductor, 'repartidor', 'Conductor Prueba'),
+    usuario(ids.admin, 'admin', 'Soporte Prueba'),
+    await sesion(ids.cliente, tokens.cliente),
+    await sesion(ids.conductor, tokens.conductor),
+    db
+      .prepare(
+        "INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, estado) VALUES (?, ?, 'moto', 'Prueba', 'Moto', 'Negro', ?, 'ZZ', 2023, 'aprobado')",
+      )
+      .bind(veh, ids.conductor, `ZZM${s}`.slice(0, 20)),
+    ...['registro', 'seguro', 'seguro_pasajeros'].map((t) =>
+      db
+        .prepare(
+          "INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES (?, ?, ?, 'zz', 'aprobado', datetime('now', '+1 day'))",
+        )
+        .bind(`zz-mt-o-${s}-${t}`, veh, t),
+    ),
+    db
+      .prepare(
+        "INSERT INTO kyc (usuario_id, estado, doc_tipo, doc_frente, selfie, enviado_en, revisado_en, revisado_por) VALUES (?, 'aprobado', 'licencia', 'zz', 'zz', datetime('now'), datetime('now'), ?)",
+      )
+      .bind(ids.conductor, ids.admin),
+    ...[
+      ['identidad', '', 'kyc'],
+      ['antecedentes_pasajeros', '', 'checkr'],
+      ['historial_manejo', '', 'checkr'],
+      ['licencia_moto', '', 'sistema'],
+      ['edad_minima_21', '', 'sistema'],
+      ['seguro_pasajeros', veh, 'sistema'],
+      ['casco_pasajero', veh, 'sistema'],
+    ].map(([req, v, fuente]) =>
+      db
+        .prepare(
+          "INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, vence_en) VALUES (?, ?, ?, 'aprobado', ?, datetime('now', '+1 day'))",
+        )
+        .bind(ids.conductor, v, req, fuente),
+    ),
+    db
+      .prepare(
+        "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id, vehiculo_activo_id) VALUES (?, 1, ?, ?, datetime('now'), 'US-FL-MIAMI', ?)",
+      )
+      .bind(ids.conductor, punto.lat, punto.lng, veh),
+    db
+      .prepare(
+        "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES (?, 'moto', 'aprobada', ?, datetime('now'))",
+      )
+      .bind(ids.conductor, ids.admin),
+    db
+      .prepare(
+        "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'moto', 1)",
+      )
+      .bind(ids.conductor),
+  ]);
+  return c.json({ sufijo: s, ids, tokens, punto });
+});
+
+diagnostico.post('/interno/diagnostico/moto/limpiar', async (c) => {
+  const db = base(c);
+  const { sufijo: s } = await leerCuerpo(c, z.object({ sufijo: z.string().regex(SUFIJO_MOTO) }));
+  const cliente = `zz-mt-c-${s}`;
+  const conductor = `zz-mt-k-${s}`;
+  const admin = `zz-mt-a-${s}`;
+  const ops = `SELECT id FROM operaciones WHERE cliente_id = '${cliente}'`;
+  await db.batch([
+    db.prepare(`DELETE FROM calificaciones_viaje WHERE operacion_id IN (${ops})`),
+    db.prepare(`DELETE FROM viajes_compartidos WHERE operacion_id IN (${ops})`),
+    db.prepare(`DELETE FROM emergencias_viaje WHERE operacion_id IN (${ops})`),
+    db.prepare(`DELETE FROM deudas_pasajero WHERE cliente_id = ?`).bind(cliente),
+    db.prepare(`DELETE FROM ofertas_operacion WHERE operacion_id IN (${ops})`),
+    db.prepare(`DELETE FROM eventos_operacion WHERE operacion_id IN (${ops})`),
+    db.prepare(`DELETE FROM asignaciones_operacion WHERE operacion_id IN (${ops})`),
+    db.prepare('DELETE FROM conductor_ocupacion WHERE conductor_id = ?').bind(conductor),
+    db.prepare(`DELETE FROM viajes WHERE operacion_id IN (${ops})`),
+    db.prepare('DELETE FROM cotizaciones_viaje WHERE cliente_id = ?').bind(cliente),
+    db.prepare(`DELETE FROM operaciones WHERE cliente_id = ?`).bind(cliente),
+    db
+      .prepare('UPDATE repartidores SET vehiculo_activo_id = NULL WHERE usuario_id = ?')
+      .bind(conductor),
+    db.prepare('DELETE FROM vehiculo_documentos WHERE vehiculo_id LIKE ?').bind(`zz-mt-v-${s}%`),
+    db.prepare('DELETE FROM vehiculo_revisiones WHERE vehiculo_id LIKE ?').bind(`zz-mt-v-${s}%`),
+    db.prepare('DELETE FROM vehiculos WHERE id LIKE ?').bind(`zz-mt-v-${s}%`),
+    db.prepare('DELETE FROM cumplimientos WHERE conductor_id = ?').bind(conductor),
+    db.prepare('DELETE FROM habilitaciones_historial WHERE conductor_id = ?').bind(conductor),
+    db.prepare('DELETE FROM habilitaciones WHERE conductor_id = ?').bind(conductor),
+    db.prepare('DELETE FROM preferencias_servicio WHERE conductor_id = ?').bind(conductor),
+    db.prepare('DELETE FROM kyc WHERE usuario_id = ?').bind(conductor),
+    db.prepare('DELETE FROM repartidores WHERE usuario_id = ?').bind(conductor),
+    db.prepare('DELETE FROM ubicaciones_recientes WHERE usuario_id = ?').bind(conductor),
+    db
+      .prepare('DELETE FROM sesiones WHERE usuario_id IN (?, ?, ?)')
+      .bind(cliente, conductor, admin),
+    db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(cliente, conductor, admin),
+  ]);
+  const resto = await db
+    .prepare(
+      'SELECT (SELECT COUNT(*) FROM usuarios WHERE id LIKE ?1) + (SELECT COUNT(*) FROM operaciones WHERE cliente_id LIKE ?1) AS n',
+    )
+    .bind(`zz-mt-_-${s}`)
+    .first<{ n: number }>();
+  return c.json({ ok: Number(resto?.n) === 0 });
+});
