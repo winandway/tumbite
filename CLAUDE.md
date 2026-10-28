@@ -10,6 +10,18 @@ Las reglas globales de Richard aplican; estas se suman.
 - **No se le pregunta a Richard si quiere una herramienta que los grandes ya tienen (dictado el 14 oct 2026).** Se copia como la hacen ellos, con interruptor para que el usuario final decida (PIN sí/no, en la puerta o en mano), se decide cómo encaja y se le presenta el plan. Se le pregunta solo lo que únicamente él puede dar: una cuenta, una clave, dinero, un dato legal. Todas las herramientas de los estudios son importantes; ninguna se descarta por «menos prioritaria».
 - La comparación viva está en `docs/COMPARACION-CICLO-PEDIDO.md` (sección «Los estudios de Richard»). Cada hallazgo nuevo se anota ahí con la página del estudio de donde salió.
 
+## REA ES LA HERRAMIENTA PRINCIPAL. SE USA DE VERDAD (REGLA PRINCIPAL, Richard, 28 oct 2026)
+
+> Sus palabras: _«he hecho cosas que son un estándar del mercado, y sin REA me ha salido mal, llena de errores… use REA, pero que la use de verdad, porque es la única manera que podemos ver exactamente cómo funciona y cómo está estructurada cualquier función… si sale algún problema o algún error, utilizar la herramienta principal que tenemos, que es REA»_.
+
+1. **Toda función importante arranca con REA ejecutado de verdad**, con evidencia y hash guardados en `docs/investigaciones-rea/` (paquete `evidencia-rea-*.json`). Leer documentos públicos sin correr REA no cuenta como «investigación con REA».
+2. **Qué se analiza con REA:**
+   - la web pública de los grandes, como visitante (capturas, red, estructura de la página);
+   - proyectos de código abierto del mismo rubro cuya licencia lo permita (por ejemplo, apps de transporte abiertas), para ver máquinas de estado, tarifas y despacho reales;
+   - **nuestras propias apps y el sitio de pruebas**, siempre.
+3. **Todo error o problema en lo que se está construyendo se investiga primero con REA** sobre nuestra app (qué llama, qué guarda, qué responde), antes de tocar el código. Después va la prueba en rojo y el arreglo.
+4. **El límite legal sigue igual:** no se descompilan las apps de Uber, DiDi u otros terceros, no se usan cuentas, no se saltan anti-robots y no se captura tráfico ajeno. Lo prohíben sus términos y expondría a Windoce.
+
 ## «No inventemos la rueda» (eslogan y regla, Richard, 18 oct 2026)
 
 Se copia el **estándar del mercado** de reparto (DoorDash, Uber Eats, Rappi): la interfaz, los menús, el orden de las cosas y los flujos. Buscador arriba, «Hola, fulano», logo, campana, cupón, servicios, y abajo lo que publicó el vendedor. Cambiamos colores, marca y lo nuestro; no la estructura. Antes de diseñar una pantalla se pregunta «¿cuál es el estándar?» y se copia, salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública (no se descompilan sus apps de tienda: lo prohíben sus términos y expondría a Windoce; no hace falta).

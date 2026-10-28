@@ -45,3 +45,12 @@ export function blindarStripeEnPruebas(host: string, env: Env): void {
   if (env.STRIPE_PUBLISHABLE_KEY && !env.STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_'))
     env.STRIPE_PUBLISHABLE_KEY = undefined;
 }
+
+/** El entorno de la petición según el dominio que la sirve (null si es un dominio desconocido). */
+export function entornoDe(url: string): Entorno | null {
+  try {
+    return entornoDeHost(new URL(url).host);
+  } catch {
+    return null;
+  }
+}

@@ -3,7 +3,7 @@ import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { finanzasAdmin } from './finanzas/rutasAdmin';
 import { saludBilleteras } from './finanzas/reloj';
-import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
+import { blindarStripeEnPruebas, entornoDe, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -47,6 +47,7 @@ import { restauranteMas } from './rutas/restauranteMas';
 import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
+import { viajesPasajero } from './rutas/viajesPasajero';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
@@ -147,6 +148,7 @@ app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
+app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -154,7 +156,7 @@ app.use('/datos/*', (c, next) =>
     : versionMinimaApp(c, next),
 );
 app.use('/datos/*', async (c, next) => {
-  if (c.env.DB) await asegurarEsquema(c.env.DB);
+  if (c.env.DB) await asegurarEsquema(c.env.DB, entornoDe(c.req.url));
   await next();
 });
 app.use('/datos/*', cargarSesion);
@@ -208,9 +210,10 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: retiros', e);
       return 'error' as const;
     });
-  // Fase 1: catálogo de servicios (Moto y Carro apagados, disparadores puestos).
+  // Fase 1: catálogo de servicios (Moto y Carro apagados, disparadores puestos). Moto se admite
+  // encendida solo en el sitio de pruebas (C-MOTO-SOLO-PRUEBAS).
   if (c.env.DB)
-    piezas.servicios = await saludServicios(c.env.DB).catch((e: unknown) => {
+    piezas.servicios = await saludServicios(c.env.DB, entornoDe(c.req.url)).catch((e: unknown) => {
       console.error('salud: servicios', e);
       return 'error' as const;
     });
@@ -414,6 +417,7 @@ app.route('/datos', buscar);
 app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
+app.route('/datos', viajesPasajero);
 app.route('/datos', interno);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);

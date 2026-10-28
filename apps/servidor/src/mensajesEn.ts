@@ -1049,6 +1049,28 @@ export const MENSAJES_EN = new Map<string, string>([
     'Check the threshold and amount of the automatic top-up.',
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
+  // Divoox Moto · M1 (cotización de viajes).
+  ['Todavía no llegamos a esa dirección.', 'We don’t serve that address yet.'],
+  [
+    'El destino queda fuera de la ciudad del viaje.',
+    'The destination is outside the city of this ride.',
+  ],
+  [
+    'Este servicio todavía no está disponible en tu ciudad.',
+    'This service isn’t available in your city yet.',
+  ],
+  [
+    'Este servicio todavía no tiene precio en tu ciudad.',
+    'This service doesn’t have pricing in your city yet.',
+  ],
+  [
+    'El destino está demasiado cerca del punto de recogida.',
+    'The destination is too close to the pickup point.',
+  ],
+  [
+    'El destino está demasiado lejos para este servicio.',
+    'The destination is too far for this service.',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

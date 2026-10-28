@@ -1306,3 +1306,17 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** el cliente común (`packages/compartido/src/api.ts`, `pedir`) corta a los 30 segundos (`TIEMPO_PEDIDO_MS`) y lo cuenta como «sin conexión» (estado 0), con lo escrito intacto. El recorrido ya no usa `networkidle`: espera a que desaparezca el formulario de entrar.
 - **Prueba:** `api.test.ts` («una respuesta que nunca llega se corta a tiempo»), comprobada en rojo.
 - **No tocar:** no volver a `waitForLoadState('networkidle')` en el panel (consulta cada pocos segundos).
+
+## C-MOTO-SOLO-PRUEBAS · Moto existe solo en el sitio de pruebas (28 oct 2026)
+
+- **Qué protege:** Moto de pasajeros se está construyendo (docs/PLAN-MOTO-PASAJEROS.md). Encenderla en producción sería ofrecer un servicio sin aprobación legal ni seguro.
+- **Cómo funciona:** `SERVICIOS_EN_PRUEBA` en `apps/servidor/src/esquema.ts` (solo `moto`) se suma a lo implementado ÚNICAMENTE cuando la petición llega por el dominio del sitio de pruebas (`entornoDe`, en `entorno.ts`). En divoox.com la sincronización la sigue suspendiendo, `bloquearPasajeros` la rechaza y la salud de servicios dice «error» si apareciera encendida. Carro sigue bloqueado en todas partes.
+- **Prueba:** `rutas/viajesPasajero.test.ts` («en producción Moto no se enciende ni se cotiza»), comprobada en rojo cambiando la condición del entorno.
+- **No tocar:** no mover `moto` a `SERVICIOS_IMPLEMENTADOS` sin la orden de Richard de encender Moto en producción (con aprobación legal y aseguradora).
+
+## C-VIAJE-PRECIO-FIJO · Tarifa versionada y cotización con precio fijo (28 oct 2026)
+
+- **Cómo funciona:** la tarifa de cada servicio de pasajeros por ciudad vive en `tarifas_viaje` (una sola activa; cambiar = cerrar y abrir otra, con auditoría). `POST /datos/viajes/cotizar` calcula base + km + minuto, nunca menos que el mínimo, recargo dinámico acotado por el tope y redondeo de la ciudad (`packages/compartido/src/viajes.ts`), y GUARDA la cotización en `cotizaciones_viaje` con vencimiento de 5 minutos: al pedir solo viaja su id.
+- **Supuesto anotado [INF]:** sin mapa de rutas todavía, distancia = línea recta × 1,3 y tiempo a 24 km/h en moto. Se reemplaza por la ruta real cuando haya llave de mapas.
+- **Prueba:** `packages/compartido/src/viajes.test.ts` y `rutas/viajesPasajero.test.ts`.
+- **No tocar:** no aceptar un precio que venga de la app; no editar una tarifa en el lugar (las cotizaciones viejas apuntan a la suya).

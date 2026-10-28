@@ -1,4 +1,4 @@
-import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
+import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL, type Entorno } from '@tumbite/compartido';
 import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
 import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
@@ -155,17 +155,32 @@ async function preciosDeFabrica(db: D1Database): Promise<void> {
  */
 export const SERVICIOS_IMPLEMENTADOS = new Map<string, number>([['comida', 1]]);
 
-async function sincronizarServicios(db: D1Database): Promise<void> {
+/**
+ * Divoox Moto · Fase M1 (C-MOTO-SOLO-PRUEBAS): servicios que este código atiende SOLO en el sitio
+ * de pruebas, mientras se construyen (docs/PLAN-MOTO-PASAJEROS.md). En producción no existen: la
+ * sincronización los suspende como a cualquier servicio no implementado.
+ */
+export const SERVICIOS_EN_PRUEBA = new Map<string, number>([['moto', 1]]);
+
+/** Lo que este código atiende en ese entorno (el entorno sale del dominio que sirve la petición). */
+export function serviciosImplementados(entorno: Entorno | null): Map<string, number> {
+  return entorno === 'pruebas'
+    ? new Map([...SERVICIOS_IMPLEMENTADOS, ...SERVICIOS_EN_PRUEBA])
+    : SERVICIOS_IMPLEMENTADOS;
+}
+
+async function sincronizarServicios(db: D1Database, entorno: Entorno | null): Promise<void> {
   const hay = await db
     .prepare(
       "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'servicios_implementados'",
     )
     .first();
   if (!hay) return;
-  const ids = [...SERVICIOS_IMPLEMENTADOS.keys()];
+  const implementados = serviciosImplementados(entorno);
+  const ids = [...implementados.keys()];
   const marcas = ids.map(() => '?').join(',');
   await db.batch([
-    ...[...SERVICIOS_IMPLEMENTADOS].map(([id, contrato]) =>
+    ...[...implementados].map(([id, contrato]) =>
       db
         .prepare(
           'INSERT INTO servicios_implementados (servicio_id, contrato) SELECT id, ? FROM servicios WHERE id = ? ' +
@@ -268,7 +283,7 @@ async function asegurarFase3(db: D1Database): Promise<void> {
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
-async function migrar(db: D1Database): Promise<void> {
+async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
   await rehacerFranquicias(db);
   // C-ARRANQUE-RAPIDO: las columnas de TODAS las tablas de la lista en un solo lote (un viaje a la
   // base). Antes era una consulta por columna: 40 viajes seguidos en cada arranque, y la primera
@@ -305,12 +320,12 @@ async function migrar(db: D1Database): Promise<void> {
   await rehacerFlex(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
-  await sincronizarServicios(db);
+  await sincronizarServicios(db, entorno);
   await revisarColumnas(db);
 }
 
-export function asegurarEsquema(db: D1Database): Promise<void> {
-  listo ??= migrar(db).then(
+export function asegurarEsquema(db: D1Database, entorno: Entorno | null = null): Promise<void> {
+  listo ??= migrar(db, entorno).then(
     () => {
       ultimoErrorEsquema = null;
     },

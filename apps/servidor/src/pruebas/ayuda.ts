@@ -8,7 +8,12 @@ export const FOTO_PRUEBA = new Uint8Array([
 ]);
 
 /** Ayudas para las pruebas del servidor: una base nueva y llamadas con IP distinta cada vez. */
-export function mundo(extraDado: Record<string, unknown> = {}) {
+/**
+ * `host` hace que las peticiones lleguen como si vinieran de ese dominio (por ejemplo, el sitio de
+ * pruebas «staging.tumbite.com», donde Moto existe: C-MOTO-SOLO-PRUEBAS). Sin él, «localhost».
+ */
+export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?: string } = {}) {
+  const origen = opciones.host ? `https://${opciones.host}` : '';
   const DB = crearBasePruebas();
   // Almacén de fotos de mentira por defecto (las entregas llevan foto).
   // La selfie de control al azar se apaga en las pruebas (cada prueba la enciende si la necesita).
@@ -25,7 +30,7 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
     };
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await app.request(
-      ruta,
+      `${origen}${ruta}`,
       { method: metodo, headers, body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo) },
       { DB, ...extra },
     );
@@ -56,7 +61,8 @@ export function mundo(extraDado: Record<string, unknown> = {}) {
       .run();
   }
   /** Petición cruda (con cabeceras propias, p. ej. la firma de un aviso de Stripe). */
-  const crudo = (ruta: string, init: RequestInit) => app.request(ruta, init, { DB, ...extra });
+  const crudo = (ruta: string, init: RequestInit) =>
+    app.request(`${origen}${ruta}`, init, { DB, ...extra });
   /** Sube una foto (bytes crudos) con la ubicación en la dirección, como lo hace la app. */
   async function foto(ruta: string, token: string, donde?: { lat: number; lng: number }) {
     ip++;

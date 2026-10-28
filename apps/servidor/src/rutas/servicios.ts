@@ -3,8 +3,10 @@ import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { SERVICIOS_IMPLEMENTADOS } from '../esquema';
-import { type Variables, base, exigir } from '../sesion';
+import { SERVICIOS_EN_PRUEBA, serviciosImplementados } from '../esquema';
+import { entornoDe } from '../entorno';
+import { type Ctx, type Variables, base, exigir } from '../sesion';
+import type { Entorno } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 
@@ -128,6 +130,12 @@ function estadoEfectivo(
   return 'disponible';
 }
 const ahoraSql = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+/** El estado efectivo de UN servicio en una zona (lo usan las cotizaciones de viaje). */
+export async function estadoServicioEnZona(db: Db, servicioId: string, zonaId: string) {
+  const s = (await catalogo(db, zonaId)).find((x) => x.id === servicioId);
+  return s ? estadoEfectivo(s, ahoraSql()) : 'no_disponible_zona';
+}
 const ACCION = new Map([
   ['disponible', 'abrir'],
   ['proximamente', 'muy_pronto'],
@@ -681,8 +689,13 @@ const VERSION = z
   .regex(/^\d+\.\d+\.\d+$/)
   .optional();
 
-/** Fase 1: un servicio de pasajeros no se enciende (la fase 8 trae la doble aprobación y lo legal). */
-function bloquearPasajeros(transporta: number, estado: string | undefined) {
+/**
+ * Fase 1: un servicio de pasajeros no se enciende (la fase 8 trae la doble aprobación y lo legal).
+ * Única excepción (C-MOTO-SOLO-PRUEBAS): en el sitio de pruebas se enciende el que se está
+ * construyendo (Moto), para probarlo de punta a punta. En producción, nunca.
+ */
+function bloquearPasajeros(c: Ctx, id: string, transporta: number, estado: string | undefined) {
+  if (entornoDe(c.req.url) === 'pruebas' && SERVICIOS_EN_PRUEBA.has(id)) return;
   if (transporta === 1 && estado === 'disponible')
     throw new ErrorDatos(
       'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
@@ -708,7 +721,7 @@ servicios.get('/admin/servicios', async (c) => {
       .all<{ servicio_id: string }>(),
   ]);
   return c.json({
-    implementadosEnEsteCodigo: [...SERVICIOS_IMPLEMENTADOS.keys()],
+    implementadosEnEsteCodigo: [...serviciosImplementados(entornoDe(c.req.url)).keys()],
     servicios: lista.map((s) => ({
       ...s,
       zonas: zonas.filter((z) => z.servicio_id === s.id),
@@ -739,7 +752,7 @@ servicios.put('/admin/servicios/:id', async (c) => {
       versionMinDriver: VERSION,
     }),
   );
-  bloquearPasajeros(antes.transporta_personas, d.estado);
+  bloquearPasajeros(c, id, antes.transporta_personas, d.estado);
   await conRestricciones(
     db
       .prepare(
@@ -789,7 +802,7 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
       motivo: z.string().trim().max(200).default(''),
     }),
   );
-  bloquearPasajeros(s.transporta_personas, d.estado);
+  bloquearPasajeros(c, id, s.transporta_personas, d.estado);
   const antes = await db
     .prepare('SELECT * FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?')
     .bind(id, zona)
@@ -1140,17 +1153,23 @@ export const DISPARADORES_SERVICIOS = [
  * Pieza «servicios» de /datos/salud: «error» si falta un disparador del catálogo, si un servicio
  * de pasajeros quedó encendido en esta fase, o si algo encendido no está implementado.
  */
-export async function saludServicios(db: D1Database): Promise<'ok' | 'error'> {
+export async function saludServicios(
+  db: D1Database,
+  entorno: Entorno | null = null,
+): Promise<'ok' | 'error'> {
+  // En pruebas, el servicio de pasajeros en construcción puede estar encendido; en producción no.
+  const permitidos = entorno === 'pruebas' ? [...SERVICIOS_EN_PRUEBA.keys()] : [];
+  const fuera = permitidos.length ? `AND s.id NOT IN (${permitidos.map(() => '?').join(',')})` : '';
   const f = await db
     .prepare(
       `SELECT
          (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_SERVICIOS.map(() => '?').join(',')})) AS disparadores,
-         (SELECT COUNT(*) FROM servicios s WHERE s.transporta_personas = 1 AND (s.estado = 'disponible'
+         (SELECT COUNT(*) FROM servicios s WHERE s.transporta_personas = 1 ${fuera} AND (s.estado = 'disponible'
             OR EXISTS (SELECT 1 FROM servicios_zona z WHERE z.servicio_id = s.id AND z.estado = 'disponible'))) AS pasajeros,
          (SELECT COUNT(*) FROM servicios s WHERE s.estado = 'disponible'
             AND NOT EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = s.id)) AS sin_codigo`,
     )
-    .bind(...DISPARADORES_SERVICIOS)
+    .bind(...DISPARADORES_SERVICIOS, ...permitidos)
     .first<{ disparadores: number; pasajeros: number; sin_codigo: number }>();
   if (Number(f?.disparadores) !== DISPARADORES_SERVICIOS.length) return 'error';
   if (Number(f?.pasajeros) > 0 || Number(f?.sin_codigo) > 0) return 'error';
