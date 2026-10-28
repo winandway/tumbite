@@ -72,7 +72,18 @@ const es: SeccionDocs[] = [
           '«Repetir pedido» arma otra vez tu carrito con los mismos platos y cantidades. Si alguno ya no está en el menú, te lo decimos y ponemos los que sí.',
           'Si tenías otro carrito a medias, repetir lo reemplaza.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-ticket-es.webp',
+            alt: 'El recibo de un pedido en la app de Divoox.',
+            pie: 'El recibo de tu pedido, siempre a mano.',
+          },
+          {
+            src: '/docs/recorrido-cliente-mi-cuenta-es.webp',
+            alt: 'La pantalla Mi cuenta en la app de Divoox, con tus pedidos.',
+            pie: 'Tus pedidos están en Mi cuenta.',
+          },
+        ],
         preguntas: [
           '¿Dónde veo mis pedidos anteriores?',
           '¿Cómo vuelvo a pedir lo mismo?',
@@ -164,7 +175,18 @@ const es: SeccionDocs[] = [
           'Si faltó algo, marca los platos que no llegaron. Divoox calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
           'Tu reporte queda en una conversación privada con un enlace que te llega por correo.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-falta-plato-es.webp',
+            alt: 'Reportar que faltó un plato en la app de Divoox.',
+            pie: 'Dices qué faltó y lo revisamos.',
+          },
+          {
+            src: '/docs/recorrido-cliente-chat-es.webp',
+            alt: 'El chat de ayuda de un pedido en la app de Divoox.',
+            pie: 'El chat de ayuda del pedido.',
+          },
+        ],
         preguntas: ['Faltó un plato, ¿qué hago?', '¿Me devuelven el dinero si falta algo?'],
         pasos: [
           'Abre el pedido y toca «Tengo un problema».',
@@ -386,7 +408,23 @@ const es: SeccionDocs[] = [
           'Cambiar la dirección: mientras el repartidor no haya salido del restaurante, en tu pedido toca «Cambiar la dirección de entrega», escribe la nueva o usa tu ubicación actual. Si el envío cambia, te mostramos el nuevo total y lo aplicamos solo si lo aceptas. Cuando el repartidor ya salió, escríbele por el chat.',
           'Propina después: si el servicio te gustó, al terminar tu pedido puedes dejar 1, 2 o 5 dólares extra. Se cobra con tu tarjeta guardada, sin volver a escribirla, y va entera al repartidor. Una vez por pedido, hasta 7 días después.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-recoger-es.webp',
+            alt: 'Un pedido para recoger en el local, en la app de Divoox.',
+            pie: 'Recoger en el local.',
+          },
+          {
+            src: '/docs/recorrido-cliente-cambiar-direccion-es.webp',
+            alt: 'Cambiar la dirección de entrega de un pedido.',
+            pie: 'Cambiar la dirección antes de que salga.',
+          },
+          {
+            src: '/docs/recorrido-cliente-propina-despues-es.webp',
+            alt: 'Dejar propina después de la entrega.',
+            pie: 'La propina después de recibir.',
+          },
+        ],
         preguntas: [
           '¿Puedo recoger mi pedido en el restaurante?',
           '¿Puedo cambiar la dirección después de pedir?',
@@ -814,7 +852,18 @@ const es: SeccionDocs[] = [
           'Si cierras tu tienda a propósito con el botón de abrir o cerrar, eso no es una pausa: sigue cerrada hasta que la abras.',
           'La etiqueta verde «Recibiendo pedidos» sale solo cuando de verdad recibes: abierta, dentro de tu horario y con la app o el panel escuchando. Si está abierta pero fuera de tu horario, verás «Abierto, fuera de horario» en gris: los clientes no pueden pedir hasta que empiece tu turno.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-semaforo-rojo-es.webp',
+            alt: 'Panel del restaurante con el semáforo en rojo.',
+            pie: 'El semáforo dice por qué no entran pedidos.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-cocina-ocupada-es.webp',
+            alt: 'Pausa de cocina ocupada en el panel del restaurante.',
+            pie: 'Cocina ocupada: pausa por un rato.',
+          },
+        ],
         preguntas: [
           '¿Por qué los clientes ven mi tienda cerrada si yo la abrí?',
           '¿Qué pasa si se me va el internet?',
@@ -965,7 +1014,13 @@ const es: SeccionDocs[] = [
           'Mayores de 21: en el menú, al editar un plato, marca «Solo para mayores de 21». Esos pedidos se entregan únicamente en mano y quien entrega (el repartidor, o tú si es recogida) revisa el documento y lo confirma en la app antes de marcar la entrega.',
           'Así cumples la ley sin complicarte: la app no deja marcar entregado sin esa confirmación.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-recoger-es.webp',
+            alt: 'Pedido para recoger en el panel del restaurante.',
+            pie: 'Así ve el local un pedido para recoger.',
+          },
+        ],
         preguntas: [
           '¿Cómo entrego un pedido que el cliente recoge en el local?',
           '¿Cuánto es la comisión de los pedidos para recoger?',
@@ -1323,6 +1378,23 @@ const es: SeccionDocs[] = [
           'Al terminar, toca «Terminar entregas y volver al centro»: verás la lista de lo que devuelves. En el centro escanea cada paquete al dejarlo y luego «Cerrar la ruta». Verás el resumen de tu ruta.',
           'Sin señal no pasa nada: lo que haces se guarda en el celular y se manda solo cuando vuelve la conexión, sin duplicar. Mientras tanto la app te avisa que está pendiente de confirmar.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-driver-mis-rutas-es.webp',
+            alt: 'La pantalla Mis rutas en la app Divoox Driver.',
+            pie: 'Tus rutas de paquetes asignadas.',
+          },
+          {
+            src: '/docs/flex-driver-ruta-es.webp',
+            alt: 'Detalle de una ruta de paquetes en Divoox Driver.',
+            pie: 'Cada parada en orden.',
+          },
+          {
+            src: '/docs/flex-driver-cobrar-es.webp',
+            alt: 'Cobrar al entregar en Divoox Driver.',
+            pie: 'En Venezuela, el cobro al entregar.',
+          },
+        ],
         preguntas: [
           '¿Dónde veo las rutas de paquetes?',
           '¿Cómo cargo los paquetes?',
@@ -1346,7 +1418,13 @@ const es: SeccionDocs[] = [
           'En Android verás una notificación fija «Divoox está activo» mientras estés conectado: es la señal de que tu posición se sigue mandando.',
           'Si no das el permiso, la app sigue funcionando, pero solo manda tu posición con la pantalla abierta.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-gps-es.webp',
+            alt: 'Aviso de ubicación apagada en Divoox Driver.',
+            pie: 'La app avisa si la ubicación está apagada.',
+          },
+        ],
         preguntas: [
           '¿Por qué me pide ubicación «Siempre»?',
           '¿Por qué sale una notificación fija?',
@@ -1366,7 +1444,13 @@ const es: SeccionDocs[] = [
           'Pide el documento, enciende «Revisé el documento», elige el tipo (licencia, pasaporte, otro), escribe sus últimos cuatro dígitos y el nombre de la persona como aparece en el documento. Eso queda en la evidencia de la entrega.',
           'Si la persona es menor, no muestra documento o parece alterado, no entregues: usa «Ayuda con este pedido».',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-es.webp',
+            alt: 'Verificación de identidad en la entrega en Divoox Driver.',
+            pie: 'Se revisa la identificación al entregar.',
+          },
+        ],
         preguntas: [
           '¿Qué hago si el cliente no tiene documento?',
           '¿Por qué me pide los últimos dígitos?',
@@ -1890,7 +1974,13 @@ const es: SeccionDocs[] = [
           'Pedidos agrupados: cuando todavía no recogiste tu pedido y el mismo restaurante tiene otro listo para una dirección a menos de 5 minutos de desvío, te llega la oferta. Si la aceptas, los dos salen juntos al confirmar la recogida del principal y en tu pantalla ves cada uno con su dirección, su «Cómo llegar» y su foto de entrega. Cobras los dos.',
           'Mayoría de edad: si un pedido tiene productos para mayores de 21, lo ves marcado. Solo se entrega en mano: pide el documento, confirma en la app «Revisé el documento: mayor de 21» y recién ahí toca «Entregado en mano». Sin esa confirmación la app no deja entregar.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-es.webp',
+            alt: 'Verificación de identidad en la entrega en Divoox Driver.',
+            pie: 'La revisión de mayoría de edad.',
+          },
+        ],
         preguntas: ['¿Puedo llevar dos pedidos a la vez?', '¿Qué hago si el pedido es de alcohol?'],
         pasos: [
           'Acepta la segunda oferta del mismo restaurante si te conviene.',
@@ -2267,6 +2357,18 @@ const es: SeccionDocs[] = [
           'Cuando una entrega no se puede hacer, el conductor elige el motivo (no había nadie, dirección incorrecta, no se pudo entrar, lo rechazaron, paquete dañado, problema de seguridad u otro) y qué sigue: reintentar en la misma ruta, reprogramar o devolver al remitente. Puedes autorizar un reintento desde la incidencia.',
           'Lo no entregado vuelve al centro. El conductor lo escanea al dejarlo y tu equipo confirma la recepción en «Devoluciones»: hasta esa confirmación, la devolución no está completa. Al cerrar la ruta queda un resumen con entregados, incidencias y devoluciones.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-rutas-es.webp',
+            alt: 'Rutas de Divoox Flex en el panel de la empresa.',
+            pie: 'Tus rutas y su estado.',
+          },
+          {
+            src: '/docs/flex-driver-ruta-es.webp',
+            alt: 'La misma ruta vista en la app del conductor, Divoox Driver.',
+            pie: 'Lo que ve el conductor.',
+          },
+        ],
         preguntas: [
           '¿Cómo asigno una ruta a un conductor?',
           '¿Qué pasa si un paquete no se pudo entregar?',
@@ -2293,6 +2395,28 @@ const es: SeccionDocs[] = [
           'Capacidad del vehículo: en «Vehículos» declaras cuánto carga cada vehículo de tus conductores (paquetes, peso, volumen y el lado más largo de un paquete). Al asignar u ofrecer una ruta con ese vehículo, Divoox te avisa antes si no cabe y solo sigue si lo confirmas. Lo que no declaras queda como «sin dato»: Divoox no adivina.',
           'Integraciones: en «Integraciones» registras la dirección segura (https) de tu sistema y eliges qué cambios quieres recibir: paquete creado, asignado, cargado, en camino, entregado, no entregado o devuelto; ruta asignada, aceptada, en camino o terminada; e incidencias. Divoox le avisa a tu sistema cada vez, firmado con un secreto que se muestra una sola vez. Si tu sistema no responde, reintenta durante casi un día y, si sigue fallando, la integración se pausa sola. Puedes enviar una prueba, ver cada intento y cambiar el secreto sin cortar el servicio.',
           'Operación: en «Operación» ves, para las fechas que elijas, las rutas en la calle, las ofertas abiertas, los paquetes entregados y no entregados, el porcentaje entregado al primer intento, el porcentaje dentro de la ventana horaria (solo si tus envíos tienen ventana), las incidencias por motivo y la duración media de las rutas. Son datos de tu operación: aquí no hay cobros ni pagos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-fase3-operacion-es.webp',
+            alt: 'Indicadores de la operación en Divoox Flex.',
+            pie: 'Los indicadores de tu operación.',
+          },
+          {
+            src: '/docs/flex-fase3-orden-sugerido-es.webp',
+            alt: 'Orden sugerido de las paradas en Divoox Flex.',
+            pie: 'El orden sugerido de las paradas.',
+          },
+          {
+            src: '/docs/flex-fase3-vehiculos-es.webp',
+            alt: 'Capacidad de los vehículos en Divoox Flex.',
+            pie: 'La capacidad de cada vehículo.',
+          },
+          {
+            src: '/docs/flex-fase3-integraciones-es.webp',
+            alt: 'La pantalla de integraciones en el panel de Divoox Flex.',
+            pie: 'Los avisos a tu sistema.',
+          },
         ],
         preguntas: [
           '¿Cómo sé cuándo un conductor acepta o termina una ruta?',
@@ -2326,6 +2450,13 @@ const es: SeccionDocs[] = [
           'Configuración: eliges a partir de qué saldo te avisamos, si también quieres el aviso por correo y, si tu país lo permite, la recarga automática: cuando el disponible baje del umbral, recargamos el importe que elijas con la tarjeta que guardaste (como mucho una vez por hora).',
           'Si un reembolso o un contracargo deja tu billetera con un saldo pendiente, las rutas nuevas no salen hasta que recargues (la próxima recarga paga primero lo pendiente). Las rutas que ya estaban en la calle terminan normal.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-billetera-es.webp',
+            alt: 'Billetera de una empresa en Divoox Flex.',
+            pie: 'Tu saldo, recargas y comprobantes.',
+          },
+        ],
         preguntas: [
           '¿Cómo recargo saldo en Divoox Flex?',
           '¿Cuándo se descuenta la comisión de un paquete?',
@@ -2353,6 +2484,13 @@ const es: SeccionDocs[] = [
           'Los centros de distribución son los lugares desde donde salen los paquetes: una bodega, una tienda, un punto de reparto. Cada envío puede indicar su centro de origen.',
           'También puedes vincular conductores que ya tienen cuenta en Divoox Driver: propios de tu empresa, de la red Divoox o híbridos. A los propios les asignas las rutas directamente; a los de la red se las ofreces y ellos las aceptan.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-inicio-es.webp',
+            alt: 'El inicio de una empresa en el panel de Divoox Flex.',
+            pie: 'El inicio de tu empresa.',
+          },
+        ],
         preguntas: [
           '¿Cómo registro mi empresa en Divoox Flex?',
           '¿Cómo invito a alguien de mi equipo?',
@@ -2377,6 +2515,23 @@ const es: SeccionDocs[] = [
           'Primero ves una previsualización: cuántas filas son válidas y cuáles tienen error (una dirección vacía, una referencia repetida en la hoja o que ya existe). Confirmas y se crean solo las válidas; la misma hoja no se importa dos veces.',
           'Cada paquete tiene un código de seguimiento y una etiqueta con un código QR y un código de barras. Ninguno lleva datos privados: son identificadores que solo tu empresa puede resolver en el panel.',
           'En el detalle de cada paquete ves su trazabilidad: creado, registrado en el centro, preparado, cargado, en tránsito, entregado o devuelto, con la hora y quién lo registró.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-nuevo-envio-es.webp',
+            alt: 'El formulario para crear un envío en el panel de Divoox Flex.',
+            pie: 'Crear un envío.',
+          },
+          {
+            src: '/docs/flex-panel-etiquetas-es.webp',
+            alt: 'Etiquetas de paquetes con QR y código de barras en Divoox Flex.',
+            pie: 'La etiqueta con QR y código de barras.',
+          },
+          {
+            src: '/docs/flex-panel-etiqueta-cobro-es.webp',
+            alt: 'Etiqueta con cobro contra entrega en Divoox Flex.',
+            pie: 'En Venezuela, la etiqueta dice cuánto cobrar.',
+          },
         ],
         preguntas: [
           '¿Cómo importo muchos paquetes a la vez?',
@@ -2693,7 +2848,18 @@ const en: SeccionDocs[] = [
           '“Reorder” builds your cart again with the same items and quantities. If any is no longer on the menu, we tell you and add the ones that are.',
           'If you had another cart half done, reordering replaces it.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-ticket-en.webp',
+            alt: 'A Divoox order receipt in the app.',
+            pie: 'Your order receipt, always at hand.',
+          },
+          {
+            src: '/docs/recorrido-cliente-mi-cuenta-en.webp',
+            alt: 'The My account screen in the Divoox app, with your orders.',
+            pie: 'Your orders live in My account.',
+          },
+        ],
         preguntas: [
           'Where do I see my past orders?',
           'How do I order the same again?',
@@ -2782,7 +2948,18 @@ const en: SeccionDocs[] = [
           'If something was missing, check the items that didn’t arrive. Divoox calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
           'Your report stays in a private conversation with a link that reaches you by email.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-falta-plato-en.webp',
+            alt: 'Reporting a missing item in the Divoox app.',
+            pie: 'Tell us what was missing and we review it.',
+          },
+          {
+            src: '/docs/recorrido-cliente-chat-en.webp',
+            alt: 'The help chat of an order in the Divoox app.',
+            pie: 'The order help chat.',
+          },
+        ],
         preguntas: [
           'An item was missing, what do I do?',
           'Do I get a refund if something is missing?',
@@ -3007,7 +3184,23 @@ const en: SeccionDocs[] = [
           'Change the address: as long as the driver hasn’t left the restaurant, open your order, tap “Change the delivery address,” type the new one or use your current location. If the delivery fee changes, we show you the new total and apply it only if you accept. Once the driver has left, message them through the chat.',
           'Tip after delivery: if you liked the service, once your order is done you can leave 1, 2 or 5 dollars extra. It’s charged to your saved card, without typing it again, and goes in full to the driver. Once per order, up to 7 days later.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-recoger-en.webp',
+            alt: 'A pickup order in the Divoox app, ready at the store.',
+            pie: 'Pick up at the store.',
+          },
+          {
+            src: '/docs/recorrido-cliente-cambiar-direccion-en.webp',
+            alt: 'Changing the delivery address of an order in Divoox.',
+            pie: 'Change the address before it leaves.',
+          },
+          {
+            src: '/docs/recorrido-cliente-propina-despues-en.webp',
+            alt: 'Adding a tip after the delivery in the Divoox app.',
+            pie: 'Tip after you receive it.',
+          },
+        ],
         preguntas: [
           'Can I pick up my order at the restaurant?',
           'Can I change the address after ordering?',
@@ -3424,7 +3617,18 @@ const en: SeccionDocs[] = [
           'If you close your store on purpose with the open/close switch, that isn’t a pause: it stays closed until you open it.',
           'The green “Taking orders” label shows only when you really are: open, within your hours, and with the app or panel checking in. If you’re open but outside your hours, you’ll see “Open, outside hours” in gray: customers can’t order until your shift starts.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-semaforo-rojo-en.webp',
+            alt: 'Restaurant dashboard with a red traffic light.',
+            pie: 'The traffic light tells you why orders aren’t coming in.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-cocina-ocupada-en.webp',
+            alt: 'Busy kitchen pause in the restaurant dashboard.',
+            pie: 'Busy kitchen: pause for a while.',
+          },
+        ],
         preguntas: [
           'Why do customers see my store as closed when I opened it?',
           'What happens if my internet goes down?',
@@ -3575,7 +3779,13 @@ const en: SeccionDocs[] = [
           '21+ items: in the menu, when editing a dish, check “21+ only.” Those orders are delivered in hand only, and whoever hands them over (the driver, or you for pickup) checks the ID and confirms it in the app before marking it delivered.',
           'That way you stay within the law without hassle: the app won’t let you mark it delivered without that confirmation.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-restaurante-recoger-en.webp',
+            alt: 'A pickup order in the restaurant dashboard.',
+            pie: 'How the store sees a pickup order.',
+          },
+        ],
         preguntas: [
           'How do I hand over a pickup order?',
           'What is the commission on pickup orders?',
@@ -3932,6 +4142,23 @@ const en: SeccionDocs[] = [
           'When you finish, tap “Finish deliveries and go back to the hub”: you’ll see the list of what you’re returning. At the hub, scan each package as you drop it off, then “Close the route”. You’ll see your route summary.',
           'No signal is fine: what you do is saved on the phone and sent automatically when you’re back online, without duplicates. Meanwhile the app tells you it’s pending confirmation.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-driver-mis-rutas-en.webp',
+            alt: 'The My routes screen in the Divoox Driver app.',
+            pie: 'Your assigned package routes.',
+          },
+          {
+            src: '/docs/flex-driver-ruta-en.webp',
+            alt: 'Package route detail in Divoox Driver.',
+            pie: 'Every stop in order.',
+          },
+          {
+            src: '/docs/flex-driver-cobrar-en.webp',
+            alt: 'Collect on delivery in Divoox Driver.',
+            pie: 'In Venezuela, collect on delivery.',
+          },
+        ],
         preguntas: [
           'Where do I see package routes?',
           'How do I load the packages?',
@@ -3955,7 +4182,13 @@ const en: SeccionDocs[] = [
           'On Android you’ll see a fixed notification “Divoox is active” while you’re online: it’s the sign your position keeps being sent.',
           'If you don’t grant it, the app still works, but only sends your position with the screen open.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-sin-gps-en.webp',
+            alt: 'Location-off warning in Divoox Driver.',
+            pie: 'The app warns you if location is off.',
+          },
+        ],
         preguntas: ['Why does it ask for location “Always”?', 'Why is there a fixed notification?'],
         pasos: [
           'Go online and accept the always-on location permission.',
@@ -3972,7 +4205,13 @@ const en: SeccionDocs[] = [
           'Ask for the ID, turn on “I checked the ID”, choose the type (driver’s license, passport, other), enter its last four digits and the person’s name as on the ID. That stays in the delivery evidence.',
           'If the person is underage, shows no ID or it looks altered, don’t deliver: use “Help with this order”.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-en.webp',
+            alt: 'ID check at delivery in Divoox Driver.',
+            pie: 'ID is checked at delivery.',
+          },
+        ],
         preguntas: ['What if the customer has no ID?', 'Why does it ask for the last digits?'],
         pasos: [
           'Hand it over in person and ask for the ID.',
@@ -4500,7 +4739,13 @@ const en: SeccionDocs[] = [
           'Grouped orders: when you haven’t picked up your order yet and the same restaurant has another one ready for an address less than 5 minutes out of the way, you get the offer. If you accept, both leave together when the main pickup is confirmed, and your screen shows each one with its address, its “Directions” and its delivery photo. You get paid for both.',
           'Age check: if an order has 21+ items, you’ll see it flagged. Hand delivery only: ask for the ID, confirm in the app “I checked the ID: the recipient is 21 or older,” and only then tap “Handed to the customer.” Without that confirmation the app won’t let you deliver.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-foto-identidad-en.webp',
+            alt: 'ID check at delivery in Divoox Driver.',
+            pie: 'The age check.',
+          },
+        ],
         preguntas: ['Can I carry two orders at once?', 'What do I do if the order has alcohol?'],
         pasos: [
           'Accept the second offer from the same restaurant if it works for you.',
@@ -4877,6 +5122,18 @@ const en: SeccionDocs[] = [
           'When a delivery can’t be made, the driver picks the reason (nobody there, wrong address, couldn’t get in, refused, damaged package, safety issue or other) and the next step: retry on the same route, reschedule or return to sender. You can authorize a retry from the exception.',
           'Whatever isn’t delivered goes back to the hub. The driver scans it when dropping it off and your team confirms reception in “Returns”: until then the return isn’t complete. When the route closes there’s a summary with deliveries, exceptions and returns.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-rutas-en.webp',
+            alt: 'Divoox Flex routes in the company dashboard.',
+            pie: 'Your routes and their status.',
+          },
+          {
+            src: '/docs/flex-driver-ruta-en.webp',
+            alt: 'The same route seen in the driver app, Divoox Driver.',
+            pie: 'What the driver sees.',
+          },
+        ],
         preguntas: [
           'How do I assign a route to a driver?',
           'What happens if a package couldn’t be delivered?',
@@ -4963,6 +5220,13 @@ const en: SeccionDocs[] = [
           'Distribution hubs are the places packages leave from: a warehouse, a store, a pickup point. Each shipment can state its origin hub.',
           'You can also link drivers who already have a Divoox Driver account: your company’s own, from the Divoox network, or hybrid. You assign routes directly to your own drivers; network drivers get an offer and accept it.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-inicio-en.webp',
+            alt: 'A company’s home in the Divoox Flex dashboard.',
+            pie: 'Your company home.',
+          },
+        ],
         preguntas: [
           'How do I register my company on Divoox Flex?',
           'How do I invite someone from my team?',
@@ -4987,6 +5251,23 @@ const en: SeccionDocs[] = [
           'First you see a preview: how many rows are valid and which have errors (an empty address, a reference repeated in the sheet or that already exists). You confirm and only the valid rows are created; the same sheet is never imported twice.',
           'Every package has a tracking code and a label with a QR code and a barcode. None of them carries private data: they are identifiers only your company can resolve in the panel.',
           'In each package’s details you see its chain of custody: created, received at hub, ready, loaded, in transit, delivered or returned, with the time and who recorded it.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-nuevo-envio-en.webp',
+            alt: 'The form to create a shipment in the Divoox Flex dashboard.',
+            pie: 'Create a shipment.',
+          },
+          {
+            src: '/docs/flex-panel-etiquetas-en.webp',
+            alt: 'Package labels with QR and barcode in Divoox Flex.',
+            pie: 'The label with QR and barcode.',
+          },
+          {
+            src: '/docs/flex-panel-etiqueta-cobro-en.webp',
+            alt: 'Label with cash on delivery in Divoox Flex.',
+            pie: 'In Venezuela, the label says how much to collect.',
+          },
         ],
         preguntas: [
           'How do I import many packages at once?',
