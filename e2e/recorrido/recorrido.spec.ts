@@ -2010,7 +2010,9 @@ for (const idioma of ['en', 'es'] as const) {
         await sup.getByLabel(L.correo).fill(DATOS.correoEquipo);
         await sup.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
         await sup.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
-        await sup.waitForLoadState('networkidle');
+        // Ya dentro: se espera a que se vaya el formulario, no a que la red quede quieta (el panel
+        // consulta cada pocos segundos y una sola respuesta perdida colgaba la corrida 15 minutos).
+        await expect(sup.getByLabel(L.clave, { exact: true })).toBeHidden({ timeout: 30_000 });
         await sup.goto(`/panel/${ruta}/cash/${encodeURIComponent(`comida:${c.id}`)}`);
         await expect(sup.getByTestId('caso-dinero')).toBeVisible({ timeout: 20_000 });
         await foto(sup, 'super-bandeja-caso');

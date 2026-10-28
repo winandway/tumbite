@@ -669,7 +669,8 @@ for (const P of PAISES) {
       await sup.getByLabel(L.correo).fill(DATOS.correoEquipo);
       await sup.getByLabel(L.clave, { exact: true }).fill(clave);
       await sup.getByRole('button', { name: P.idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
-      await sup.waitForLoadState('networkidle');
+      // Se espera a que se vaya el formulario, no a la red quieta (el panel consulta sin parar).
+      await expect(sup.getByLabel(L.clave, { exact: true })).toBeHidden({ timeout: 30_000 });
       await sup.goto(`/panel/${ruta}/cash/${encodeURIComponent(`excedente:${x.id}`)}`);
       await expect(sup.getByTestId('caso-dinero')).toBeVisible({ timeout: 20_000 });
       await expect(sup.getByText(P.decimales === 0 ? /\d\.\d{3}/ : /Bs|VES/).first()).toBeVisible();

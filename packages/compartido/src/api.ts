@@ -25,7 +25,12 @@ export type OpcionesApi = {
   /** Nombre y versión de la app («cliente/0.1.0»): el servidor puede pedir actualizar (426). */
   app?: () => string | null | undefined;
   fetch?: typeof fetch;
+  /** Cuánto se espera una respuesta antes de darla por perdida (C-PEDIDO-CON-LIMITE). */
+  tiempoMs?: number;
 };
+
+/** Una respuesta que tarda más que esto se corta y se cuenta como «sin conexión». */
+export const TIEMPO_PEDIDO_MS = 30_000;
 
 /** Cliente del servidor de Divoox. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
@@ -54,15 +59,20 @@ export function crearApi(op: OpcionesApi) {
     const app = op.app?.();
     if (app) headers['x-tumbite-app'] = app;
     let res: Response;
+    // Sin límite, una petición sin respuesta dejaba la pantalla cargando para siempre.
+    const corte = typeof AbortController === 'undefined' ? null : new AbortController();
+    const reloj = corte ? setTimeout(() => corte.abort(), op.tiempoMs ?? TIEMPO_PEDIDO_MS) : null;
     try {
       const init = {
         method: metodo,
         headers,
         body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
         credentials: credenciales,
+        signal: corte?.signal,
       } as Parameters<typeof fetch>[1];
       res = await hacer(`${op.base}${ruta}`, init);
     } catch {
+      if (reloj) clearTimeout(reloj);
       throw new ErrorApi(
         op.idioma?.() === 'en'
           ? 'No connection. Your info is safe here; try again in a moment.'
@@ -71,6 +81,7 @@ export function crearApi(op: OpcionesApi) {
       );
     }
     const datos: unknown = await res.json().catch(() => null);
+    if (reloj) clearTimeout(reloj);
     if (!res.ok) {
       const d = (datos ?? {}) as { error?: string; campo?: string };
       throw new ErrorApi(

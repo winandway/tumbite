@@ -1299,3 +1299,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - Qué: `POST /datos/interno-stripe/avisos/principal/eventos` busca el aviso de este sitio que escucha `payment_intent.succeeded` (aunque también escuche `account.updated`, como el de staging creado a mano) y le agrega los eventos que falten; nunca quita ninguno ni toca avisos de otros negocios de la cuenta.
 - Candado: `rutas/stripeAvisos.test.ts`, comprobado en rojo con la regla vieja (que lo confundía con el de cuentas conectadas).
+
+## C-PEDIDO-CON-LIMITE (27 oct 2026)
+
+- **Qué se rompió:** en el sitio de pruebas una petición del panel quedó sin respuesta; la pantalla del superadmin se quedó cargando y el recorrido de Comida esperó «la red quieta» hasta agotar sus 15 minutos (dos corridas seguidas).
+- **Arreglo:** el cliente común (`packages/compartido/src/api.ts`, `pedir`) corta a los 30 segundos (`TIEMPO_PEDIDO_MS`) y lo cuenta como «sin conexión» (estado 0), con lo escrito intacto. El recorrido ya no usa `networkidle`: espera a que desaparezca el formulario de entrar.
+- **Prueba:** `api.test.ts` («una respuesta que nunca llega se corta a tiempo»), comprobada en rojo.
+- **No tocar:** no volver a `waitForLoadState('networkidle')` en el panel (consulta cada pocos segundos).

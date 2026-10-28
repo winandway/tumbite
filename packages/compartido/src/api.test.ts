@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { ErrorApi, crearApi } from './api';
 
 describe('cliente del servidor', () => {
+  it('una respuesta que nunca llega se corta a tiempo y se cuenta como sin conexión', async () => {
+    // Candado C-PEDIDO-CON-LIMITE: en el sitio de pruebas una petición quedó sin respuesta y la
+    // pantalla del panel se quedó cargando para siempre.
+    const api = crearApi({
+      base: '',
+      idioma: () => 'es',
+      tiempoMs: 30,
+      fetch: (_u, init) =>
+        new Promise((_ok, falla) => {
+          init?.signal?.addEventListener('abort', () => falla(new Error('abortado')));
+        }),
+    });
+    await expect(api.pedir('GET', '/datos/lento')).rejects.toMatchObject({ estado: 0 });
+  });
+
   it('manda el token y devuelve los datos', async () => {
     let cabecera = '';
     const api = crearApi({
