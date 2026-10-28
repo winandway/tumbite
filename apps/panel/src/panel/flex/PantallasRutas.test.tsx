@@ -241,4 +241,53 @@ describe('Divoox Flex · Fase 2 · panel', () => {
       pin: true,
     });
   });
+  it('C-FLEX-COBRO · Venezuela: la caja muestra lo cobrado y «Recibí el efectivo» va con Idempotency-Key', async () => {
+    let recibido = false;
+    const llamadas = servidor({
+      '/datos/cuentas/yo': json({ usuario }),
+      '/datos/mi-franquicia': json({ ruta: null }),
+      [`/datos/v1/flex/empresas/${E}`]: json({
+        ...ficha,
+        empresa: { ...ficha.empresa, pais: 'VE' },
+      }),
+      [`/datos/v1/flex/empresas/${E}/conductores`]: json({ conductores: [] }),
+      [`/datos/v1/flex/empresas/${E}/rutas/${R}/detalle`]: json(detalle('en_curso')),
+      [`/datos/v1/flex/empresas/${E}/cobros`]: () =>
+        new Response(
+          JSON.stringify({
+            cobros: [],
+            totales: {
+              cobrado: { USD: 2500 },
+              efectivoEnMano: recibido ? {} : { USD: 2500 },
+              pendientes: 1,
+            },
+          }),
+        ),
+      [`POST /datos/v1/flex/empresas/${E}/rutas/${R}/cobros/recibir`]: () => {
+        recibido = true;
+        return new Response(JSON.stringify({ recibidos: 1 }));
+      },
+    });
+    render(<PanelApp ruta={`/panel/business/${E}/operativas/${R}`} />);
+    expect(await screen.findByText('Caja de la ruta')).toBeInTheDocument();
+    expect(screen.getAllByText(/25\.00/).length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Recibí el efectivo' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/Efectivo recibido/));
+    const r = llamadas.find((l) => l.url.endsWith('/cobros/recibir'))!;
+    expect(r.headers['idempotency-key']).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Recibí el efectivo' })).toBeNull();
+  });
+
+  it('en EE. UU. no hay caja de cobro contra entrega', async () => {
+    servidor({
+      '/datos/cuentas/yo': json({ usuario }),
+      '/datos/mi-franquicia': json({ ruta: null }),
+      [`/datos/v1/flex/empresas/${E}`]: json(ficha),
+      [`/datos/v1/flex/empresas/${E}/conductores`]: json({ conductores: [] }),
+      [`/datos/v1/flex/empresas/${E}/rutas/${R}/detalle`]: json(detalle('en_curso')),
+    });
+    render(<PanelApp ruta={`/panel/business/${E}/operativas/${R}`} />);
+    expect(await screen.findByText(/Ruta Norte/)).toBeInTheDocument();
+    expect(screen.queryByText('Caja de la ruta')).toBeNull();
+  });
 });

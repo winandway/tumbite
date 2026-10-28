@@ -8,6 +8,7 @@ import {
   barrasCode128,
   correoEjemplo,
   enIdioma,
+  formatearMonto,
   perfilFlex,
   useBorrador,
 } from '@tumbite/compartido';
@@ -51,7 +52,20 @@ type Envio = {
   // Fase 5 (C-FLEX-UBICACION).
   destinatarioCorreo?: string;
   destinatarioDocumento?: string;
+  // Fase 6 (C-FLEX-COBRO).
+  cobro?: CobroEnvio | null;
 } & UbicacionDeEnvio;
+type CobroEnvio = {
+  monto: number;
+  moneda: string;
+  estado: string;
+  metodo: string | null;
+  montoRecibido: number | null;
+  monedaRecibida: string | null;
+  referencia: string | null;
+  cobradoEn: string | null;
+  liquidadoEn: string | null;
+};
 type Evento = {
   id: number;
   tipo: string;
@@ -195,6 +209,9 @@ const INICIAL_ENVIO = {
   destinatarioCorreo: '',
   destinatarioDocumento: '',
   referencias: '',
+  // Fase 6 (C-FLEX-COBRO): cobro contra entrega, escrito como en la factura («25.00»).
+  cobroMonto: '',
+  cobroMoneda: 'USD',
 };
 
 /** Campos nuevos del destinatario (Fase 5), en los dos idiomas. */
@@ -206,6 +223,26 @@ const CAMPOS_DESTINATARIO = {
     referenciasEj: 'Casa azul frente a la panadería',
     ayudaApp:
       'Con su teléfono o su correo lo encontramos en Divoox: si tiene la app, el paquete le llega ya ubicado.',
+    cobro: 'Cobrar al entregar (opcional)',
+    cobroAyuda:
+      'El conductor lo cobra y lo registra antes de entregar. Déjalo vacío si ya está pagado.',
+    moneda: 'Moneda del cobro',
+    cobroTitulo: 'Cobro contra entrega',
+    cobroEstados: {
+      pendiente: 'Por cobrar',
+      cobrado: 'Cobrado por el conductor',
+      liquidado: 'Recibido en el centro',
+    } as Record<string, string>,
+    metodos: {
+      efectivo_usd: 'efectivo en dólares',
+      efectivo_ves: 'efectivo en bolívares',
+      pago_movil: 'pago móvil',
+      transferencia: 'transferencia',
+      zelle: 'Zelle',
+      punto_venta: 'punto de venta',
+    } as Record<string, string>,
+    referenciaPago: 'Referencia',
+    cobrar: 'COBRAR',
   },
   en: {
     correo: 'Recipient email (optional)',
@@ -214,8 +251,57 @@ const CAMPOS_DESTINATARIO = {
     referenciasEj: 'Blue house across from the bakery',
     ayudaApp:
       'With their phone or email we find them on Divoox: if they have the app, the package arrives already located.',
+    cobro: 'Collect on delivery (optional)',
+    cobroAyuda:
+      'The driver collects and records it before delivering. Leave it empty if it’s already paid.',
+    moneda: 'Collection currency',
+    cobroTitulo: 'Cash on delivery',
+    cobroEstados: {
+      pendiente: 'To collect',
+      cobrado: 'Collected by the driver',
+      liquidado: 'Received at the center',
+    } as Record<string, string>,
+    metodos: {
+      efectivo_usd: 'cash in dollars',
+      efectivo_ves: 'cash in bolívares',
+      pago_movil: 'pago móvil',
+      transferencia: 'bank transfer',
+      zelle: 'Zelle',
+      punto_venta: 'card terminal',
+    } as Record<string, string>,
+    referenciaPago: 'Reference',
+    cobrar: 'COLLECT',
   },
 };
+
+/** «25.00» o «25,00» → 2500 (0 si está vacío o no es un monto). */
+function montoCentavos(texto: string): number {
+  const n = Math.round(Number(texto.replace(',', '.')) * 100);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/** Fase 6: el cobro contra entrega en el detalle del envío. */
+function CobroDelEnvio({ cobro, idioma }: { cobro: CobroEnvio; idioma: Contexto['idioma'] }) {
+  const cd = enIdioma(CAMPOS_DESTINATARIO, idioma);
+  return (
+    <div className="flex-cobro" data-testid="cobro-envio">
+      <h2>{cd.cobroTitulo}</h2>
+      <p>
+        <strong>{formatearMonto(cobro.monto, cobro.moneda, idioma)}</strong> ·{' '}
+        <span className={cobro.estado === 'pendiente' ? 'insignia' : 'insignia insignia-aprobado'}>
+          {cd.cobroEstados[cobro.estado] ?? cobro.estado}
+        </span>
+      </p>
+      {cobro.metodo && cobro.montoRecibido != null ? (
+        <p>
+          {formatearMonto(cobro.montoRecibido, cobro.monedaRecibida ?? cobro.moneda, idioma)} ·{' '}
+          {cd.metodos[cobro.metodo] ?? cobro.metodo}
+          {cobro.referencia ? ` · ${cd.referenciaPago} ${cobro.referencia}` : ''}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
   const { t, empresa, raiz } = ctx;
@@ -246,6 +332,9 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           destinatarioCorreo: v.destinatarioCorreo,
           destinatarioDocumento: v.destinatarioDocumento,
           referencias: v.referencias,
+          cobro: montoCentavos(v.cobroMonto)
+            ? { monto: montoCentavos(v.cobroMonto), moneda: v.cobroMoneda }
+            : null,
           centroId: v.centroId || null,
           paquetes: Array.from({ length: n }, () => ({ descripcion: v.descripcion })),
         },
@@ -318,6 +407,32 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           />
         ) : null}
         <p className="pista">{cd.ayudaApp}</p>
+        {perfilFlex(empresa.pais).cobroContraEntrega ? (
+          <>
+            <Campo
+              etiqueta={cd.cobro}
+              tipo="number"
+              valor={v.cobroMonto}
+              cambiar={(x) => b.cambiar('cobroMonto', x)}
+              placeholder="0.00"
+            />
+            <div className="campo">
+              <label htmlFor="flex-moneda-cobro">{cd.moneda}</label>
+              <select
+                id="flex-moneda-cobro"
+                value={v.cobroMoneda}
+                onChange={(e) => b.cambiar('cobroMoneda', e.target.value)}
+              >
+                {perfilFlex(empresa.pais).monedas.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="pista">{cd.cobroAyuda}</p>
+          </>
+        ) : null}
         <Campo
           etiqueta={t.instrucciones}
           valor={v.instrucciones}
@@ -421,6 +536,7 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         {e.instrucciones ? <br /> : null}
         {e.instrucciones}
       </p>
+      {e.cobro ? <CobroDelEnvio cobro={e.cobro} idioma={ctx.idioma} /> : null}
       <UbicacionEnvio
         envio={e}
         empresaId={empresa.id}
@@ -1103,6 +1219,8 @@ type DatosEtiqueta = {
   // Fase 5: punto de referencia y código plus del punto exacto (Google Maps lo entiende sin internet).
   referencias?: string;
   codigoPlus?: string | null;
+  // Fase 6: el monto a cobrar, en grande (como el «cobro en destino» de las guías de allá).
+  cobro?: { monto: number; moneda: string } | null;
   centro: string | null;
   empresa: string;
   pieza: number;
@@ -1209,6 +1327,12 @@ export function Etiqueta({
           {d.codigoPlus && (
             <p className="flex-etiqueta-plus">
               <strong>{d.codigoPlus}</strong>
+            </p>
+          )}
+          {d.cobro && (
+            <p className="flex-etiqueta-cobro" data-testid="etiqueta-cobro">
+              {t.cobrarEtiqueta}{' '}
+              <strong>{formatearMonto(d.cobro.monto, d.cobro.moneda, t.idiomaMonto)}</strong>
             </p>
           )}
           {!compacta && d.instrucciones && <p className="flex-etiqueta-nota">{d.instrucciones}</p>}

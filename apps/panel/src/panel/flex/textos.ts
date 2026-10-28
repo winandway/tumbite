@@ -1,4 +1,5 @@
 /** Textos del panel de Divoox Flex (empresas de paquetería), en español e inglés. */
+import type { Idioma } from '@tumbite/compartido';
 export const TEXTOS_FLEX = {
   es: {
     flex: 'Divoox Flex',
@@ -386,6 +387,8 @@ export const TEXTOS_FLEX = {
     paqueteN: 'Paquete',
     codigoSeguimiento: 'Código de seguimiento',
     escanearSeguimiento: 'Escanear para seguimiento',
+    cobrarEtiqueta: 'COBRAR',
+    idiomaMonto: 'es' as Idioma,
     destinatarioEtiqueta: 'Destinatario',
     ruta: 'Ruta',
     parada: 'Parada',
@@ -767,6 +770,8 @@ export const TEXTOS_FLEX = {
     paqueteN: 'Package',
     codigoSeguimiento: 'Tracking code',
     escanearSeguimiento: 'Scan to track',
+    cobrarEtiqueta: 'COLLECT',
+    idiomaMonto: 'en' as Idioma,
     destinatarioEtiqueta: 'Recipient',
     ruta: 'Route',
     parada: 'Stop',

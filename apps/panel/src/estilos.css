@@ -4897,6 +4897,23 @@ button {
   }
 }
 
+/* Divoox Flex · Fase 6: el cobro contra entrega en la etiqueta y en el detalle. */
+.flex-etiqueta-cobro {
+  border: 2px solid #101010;
+  padding: 4px 8px;
+  font-size: 18px;
+  font-weight: 800;
+  display: inline-block;
+}
+.flex-caja {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
 /* Divoox Flex · Fase 5: código plus en la etiqueta y el mapa para marcar el punto exacto. */
 .flex-etiqueta-plus {
   font-family: ui-monospace, Menlo, monospace;

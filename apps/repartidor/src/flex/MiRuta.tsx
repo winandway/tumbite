@@ -20,13 +20,19 @@ import {
   type AccionFlex,
   ErrorApi,
   type Idioma,
+  METODOS_COBRO,
+  METODOS_CON_REFERENCIA,
   MOTIVOS_INCIDENCIA,
+  type MetodoCobro,
   PROXIMAS_ACCIONES,
   crearColaFlex,
   distanciaKm,
+  efectivoEnMano,
   enIdioma,
+  formatearMonto,
   leerCodigoEscaneado,
   pruebasFaltantes,
+  validarCobro,
 } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 import type { Punto } from '../piezas/mapaWeb';
@@ -97,6 +103,15 @@ type Parada = {
     sinContacto: boolean;
     reintentoEnRuta: boolean;
   };
+  /** Fase 6 (C-FLEX-COBRO): cobro contra entrega de esta parada (Venezuela). */
+  cobro?: {
+    monto: number;
+    moneda: string;
+    estado: string;
+    metodo: string | null;
+    montoRecibido?: number | null;
+    monedaRecibida?: string | null;
+  } | null;
   paquetes: Paquete[];
 };
 type Ruta = {
@@ -850,6 +865,7 @@ export function MiRuta({
             activa={vistaRuta}
             alCambiar={setVistaRuta}
           />
+          <EfectivoEnMano {...{ t, idioma, ruta }} />
           {vistaRuta === 'mapa' ? (
             <VistaMapa {...{ t, idioma, ruta, siguiente, yo }} abrir={setParadaId} />
           ) : vistaRuta === 'linea' ? (
@@ -955,7 +971,10 @@ export function MiRuta({
         </>
       ) : null}
       {['completada', 'con_incidencias'].includes(ruta.estado) ? (
-        <ResumenRuta {...{ t, idioma, ruta }} />
+        <>
+          <ResumenRuta {...{ t, idioma, ruta }} />
+          <EfectivoEnMano {...{ t, idioma, ruta }} />
+        </>
       ) : null}
     </View>
   );
@@ -1465,6 +1484,35 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
 }
 
 /** Resumen de la ruta cerrada: totales reales del cierre, horas y las últimas paradas. */
+/** Fase 6 (C-FLEX-COBRO): el efectivo cobrado en esta ruta, que se entrega en el centro. */
+function EfectivoEnMano({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Ruta }) {
+  const mano = efectivoEnMano(
+    ruta.paradas
+      .filter((p) => p.cobro && p.cobro.estado !== 'pendiente')
+      .map((p) => ({
+        metodo: p.cobro?.metodo ?? '',
+        monto: p.cobro?.montoRecibido ?? 0,
+        moneda: p.cobro?.monedaRecibida ?? p.cobro?.moneda ?? 'USD',
+        liquidado: p.cobro?.estado === 'liquidado',
+      })),
+  );
+  const monedas = Object.entries(mano);
+  if (!monedas.length) return null;
+  return (
+    <View style={[tarjeta, { gap: 4 }]} testID="efectivo-en-mano">
+      <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+        {t.efectivoEnMano}
+      </Text>
+      {monedas.map(([moneda, monto]) => (
+        <Text key={moneda} style={{ fontSize: 22, fontWeight: '900' }}>
+          {formatearMonto(monto, moneda, idioma)}
+        </Text>
+      ))}
+      <Text style={{ color: GRIS, fontSize: 13 }}>{t.efectivoAyuda}</Text>
+    </View>
+  );
+}
+
 function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Ruta }) {
   const bien = ruta.estado === 'completada';
   const inicio = ruta.iniciadaEn ? fecha(ruta.iniciadaEn).getTime() : NaN;
@@ -1583,6 +1631,19 @@ function DetalleParada({
   const [pin, setPin] = useState('');
   const [sinContacto, setSinContacto] = useState(false);
   const [recibio, setRecibio] = useState('');
+  // Fase 6: el cobro contra entrega.
+  const cobroPendiente = parada.cobro?.estado === 'pendiente' ? parada.cobro : null;
+  const [metodo, setMetodo] = useState<MetodoCobro>(
+    cobroPendiente?.moneda === 'VES' ? 'pago_movil' : 'efectivo_usd',
+  );
+  const [montoTexto, setMontoTexto] = useState(
+    cobroPendiente ? (cobroPendiente.monto / 100).toFixed(2) : '',
+  );
+  const [referenciaPago, setReferenciaPago] = useState('');
+  const [cedula, setCedula] = useState('');
+  const [relacion, setRelacion] = useState<'titular' | 'familiar' | 'vecino' | 'portero'>(
+    'titular',
+  );
   const [motivo, setMotivo] = useState<(typeof MOTIVOS_INCIDENCIA)[number]>('ausente');
   const [obs, setObs] = useState('');
   const [proxima, setProxima] = useState<(typeof PROXIMAS_ACCIONES)[number]>('reintentar');
@@ -1603,7 +1664,8 @@ function DetalleParada({
       'foto',
       ...(parada.pruebas.pin ? (['pin'] as const) : []),
       ...(parada.pruebas.firma ? (['firma'] as const) : []),
-      ...(parada.pruebas.sinContacto ? (['sinContacto'] as const) : []),
+      // Con dinero de por medio nunca se deja sin contacto (el servidor también lo impide).
+      ...(parada.pruebas.sinContacto && !cobroPendiente ? (['sinContacto'] as const) : []),
     ] as const
   ).map((id) => ({ id, texto: t.pestanasPrueba[id] }));
 
@@ -1628,6 +1690,12 @@ function DetalleParada({
     });
     if (faltan.length)
       return setAviso(`${t.falta}: ${faltan.map((k) => t.pruebas[k]).join(', ')}.`);
+    const cobro = cobroPendiente ? cobroDelFormulario() : null;
+    if (cobroPendiente) {
+      if (!cobro) return;
+      if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienRecibio}.`);
+      if (cedula.replace(/[\s.-]/g, '').length < 7) return setAviso(t.faltaCedula);
+    }
     setAviso('');
     const p = await ubicacion();
     await encolar({
@@ -1635,11 +1703,39 @@ function DetalleParada({
       rutaId: ruta.id,
       paradaId: parada.id,
       ruta: `${base}/entregar`,
-      cuerpo: { sinContacto, recibio, ...(pin ? { pin } : {}), ...(p ?? {}) },
+      cuerpo: {
+        sinContacto,
+        recibio,
+        ...(pin ? { pin } : {}),
+        ...(cobro ? { cobro, recibioDocumento: cedula.trim(), recibioRelacion: relacion } : {}),
+        ...(p ?? {}),
+      },
       adjuntos: { ...(foto ? { foto } : {}), ...(firma ? { firma } : {}) },
     });
     setHecha({ en: new Date(), foto: Boolean(foto), firma: Boolean(firma) });
     setModo('ver');
+  }
+  /** El cobro escrito, con las mismas reglas que el servidor (o null y el aviso de qué falta). */
+  function cobroDelFormulario() {
+    if (!cobroPendiente) return null;
+    const monto = Math.round(Number(montoTexto.replace(',', '.')) * 100);
+    const moneda =
+      metodo === 'punto_venta'
+        ? cobroPendiente.moneda
+        : metodo === 'efectivo_usd' || metodo === 'zelle'
+          ? 'USD'
+          : 'VES';
+    if (!Number.isFinite(monto) || monto <= 0) {
+      setAviso(t.errorCobro.monto_incompleto);
+      return null;
+    }
+    const c = { metodo, monto, moneda: moneda as 'USD' | 'VES', referencia: referenciaPago.trim() };
+    const v = validarCobro(cobroPendiente, c);
+    if (!v.ok) {
+      setAviso(t.errorCobro[v.error]);
+      return null;
+    }
+    return c;
   }
   async function incidencia() {
     const p = await ubicacion();
@@ -1991,6 +2087,68 @@ function DetalleParada({
               style={e.input}
               accessibilityLabel={t.quienRecibio}
             />
+            {cobroPendiente ? (
+              <View style={{ gap: 8 }} testID="cobro-entrega">
+                <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+                  {t.cobrar}: {formatearMonto(cobroPendiente.monto, cobroPendiente.moneda, idioma)}
+                </Text>
+                <Text style={{ color: GRIS, fontSize: 13 }}>{t.cobrarAyuda}</Text>
+                <Text style={{ fontWeight: '800' }}>{t.metodoCobro}</Text>
+                {METODOS_COBRO.map((m) => (
+                  <Pressable
+                    key={m}
+                    onPress={() => setMetodo(m)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: metodo === m }}
+                    style={{ flexDirection: 'row', gap: 8 }}
+                  >
+                    <Marca marcada={metodo === m} />
+                    <Text>{t.metodosCobro[m]}</Text>
+                  </Pressable>
+                ))}
+                <TextInput
+                  value={montoTexto}
+                  onChangeText={setMontoTexto}
+                  placeholder={t.montoCobrado}
+                  keyboardType="decimal-pad"
+                  style={e.input}
+                  accessibilityLabel={t.montoCobrado}
+                />
+                {(METODOS_CON_REFERENCIA as readonly string[]).includes(metodo) ? (
+                  <TextInput
+                    value={referenciaPago}
+                    onChangeText={setReferenciaPago}
+                    placeholder={t.referenciaPago}
+                    keyboardType="number-pad"
+                    style={e.input}
+                    accessibilityLabel={t.referenciaPago}
+                  />
+                ) : null}
+                <TextInput
+                  value={cedula}
+                  onChangeText={setCedula}
+                  placeholder="V-12345678"
+                  autoCapitalize="characters"
+                  style={e.input}
+                  accessibilityLabel={t.cedulaRecibe}
+                />
+                <Text style={{ fontWeight: '800' }}>{t.relacionRecibe}</Text>
+                {(['titular', 'familiar', 'vecino', 'portero'] as const).map((r) => (
+                  <Pressable
+                    key={r}
+                    onPress={() => setRelacion(r)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: relacion === r }}
+                    style={{ flexDirection: 'row', gap: 8 }}
+                  >
+                    <Marca marcada={relacion === r} />
+                    <Text>{t.relaciones[r]}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : parada.cobro?.estado === 'cobrado' ? (
+              <Text style={{ color: C.exito, fontWeight: '700' }}>{t.cobrado}</Text>
+            ) : null}
             {aviso ? (
               <Text style={e.error} accessibilityRole="alert">
                 {aviso}

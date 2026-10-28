@@ -1,6 +1,13 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorApi, almacenNavegador, useBorrador } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  almacenNavegador,
+  enIdioma,
+  formatearMonto,
+  perfilFlex,
+  useBorrador,
+} from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
@@ -599,6 +606,9 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
           </div>
         </>
       ) : null}
+      {perfilFlex(empresa.pais).cobroContraEntrega ? (
+        <CajaRuta ctx={ctx} rutaId={r.id} cambio={r.progreso.entregados} />
+      ) : null}
       {r.resumen ? (
         <>
           <h2>{t.resumenRuta}</h2>
@@ -616,6 +626,110 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         </>
       ) : null}
     </section>
+  );
+}
+
+const TEXTOS_CAJA = {
+  es: {
+    titulo: 'Caja de la ruta',
+    ayuda:
+      'Lo que el conductor cobró al entregar. Cuando te entregue el efectivo en el centro, márcalo recibido.',
+    cobrado: 'Cobrado',
+    efectivo: 'Efectivo en manos del conductor',
+    porCobrar: 'Envíos por cobrar',
+    recibir: 'Recibí el efectivo',
+    recibido: 'Efectivo recibido. Queda en el historial de la empresa.',
+    nada: 'Nada',
+  },
+  en: {
+    titulo: 'Route cash',
+    ayuda:
+      'What the driver collected on delivery. When they hand you the cash at the center, mark it received.',
+    cobrado: 'Collected',
+    efectivo: 'Cash held by the driver',
+    porCobrar: 'Shipments to collect',
+    recibir: 'I received the cash',
+    recibido: 'Cash received. It stays in the company history.',
+    nada: 'None',
+  },
+};
+
+type TotalesCaja = {
+  cobrado: Record<string, number>;
+  efectivoEnMano: Record<string, number>;
+  pendientes: number;
+};
+
+/** Fase 6 (C-FLEX-COBRO, Venezuela): lo cobrado en la ruta y el «recibí el efectivo». */
+function CajaRuta({ ctx, rutaId, cambio }: { ctx: Contexto; rutaId: string; cambio: number }) {
+  const { empresa } = ctx;
+  const tc = enIdioma(TEXTOS_CAJA, ctx.idioma);
+  const [tot, setTot] = useState<TotalesCaja | null>(null);
+  const [aviso, setAviso] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const cargar = useCallback(() => {
+    pedir<{ totales: TotalesCaja }>(
+      'GET',
+      `${BASE_FLEX}/empresas/${empresa.id}/cobros?rutaId=${encodeURIComponent(rutaId)}`,
+    )
+      .then((r) => setTot(r.totales))
+      .catch((x: unknown) => setError(mensajeDe(x)));
+  }, [empresa.id, rutaId]);
+  // Se vuelve a pedir cuando cambia lo entregado (el detalle se consulta cada 20 s).
+  useEffect(cargar, [cargar, cambio]);
+  if (!tot) return error ? <p role="alert">{error}</p> : null;
+  const montos = (m: Record<string, number>) =>
+    Object.entries(m)
+      .map(([moneda, monto]) => formatearMonto(monto, moneda, ctx.idioma))
+      .join(' · ') || tc.nada;
+  const hayEfectivo = Object.keys(tot.cobrado).length > 0;
+  const puede =
+    ctx.permisos.includes('devoluciones.recibir') || ctx.permisos.includes('finanzas.gestionar');
+  async function recibir() {
+    setError('');
+    setEnviando(true);
+    try {
+      await crear(`${BASE_FLEX}/empresas/${empresa.id}/rutas/${rutaId}/cobros/recibir`, {});
+      setAviso(tc.recibido);
+      cargar();
+    } catch (x) {
+      setError(mensajeDe(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+  if (!hayEfectivo && !tot.pendientes) return null;
+  return (
+    <div className="flex-caja" data-testid="caja-ruta">
+      <h2>{tc.titulo}</h2>
+      <p className="pista">{tc.ayuda}</p>
+      <ul className="super-tarjetas">
+        <li className="super-tarjeta">
+          <span>{tc.cobrado}</span>
+          <strong>{montos(tot.cobrado)}</strong>
+        </li>
+        <li className="super-tarjeta">
+          <span>{tc.efectivo}</span>
+          <strong>{montos(tot.efectivoEnMano)}</strong>
+        </li>
+        <li className="super-tarjeta">
+          <span>{tc.porCobrar}</span>
+          <strong>{tot.pendientes}</strong>
+        </li>
+      </ul>
+      {error ? (
+        <p className="error-general" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {aviso ? <p role="status">{aviso}</p> : null}
+      {puede && Object.keys(tot.efectivoEnMano).length > 0 ? (
+        <button type="button" className="boton" disabled={enviando} onClick={() => void recibir()}>
+          {tc.recibir}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
