@@ -311,7 +311,10 @@ describe('cobro al entregar: protecciones', () => {
       e.m.entregar(e.id, e.rep.token),
       e.m.entregar(e.id, e.rep.token),
     ]);
-    expect([a.estado, b.estado].sort()).toEqual([200, 409]);
+    // Una sola entrega de verdad; la otra choca (409) o, si llega después, responde «ya
+    // entregado» (C-ENTREGA-REINTENTO). Lo que importa está abajo: un solo cobro.
+    for (const x of [a, b]) expect([200, 409]).toContain(x.estado);
+    expect([a, b].filter((x) => x.estado === 200 && !x.datos?.yaEntregado)).toHaveLength(1);
     expect(e.st.capturasReales).toEqual([e.total]);
     const movs = await e.movimientos();
     const conceptos = movs.map((x) => `${x.usuario_id}:${x.concepto}`);

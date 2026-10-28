@@ -1698,7 +1698,18 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     )
     .bind(id, u.id)
     .first<Record<string, unknown>>();
-  if (!p) throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  if (!p) {
+    // C-ENTREGA-REINTENTO (28 oct 2026, visto en el recorrido del sitio de pruebas): si la
+    // respuesta se perdió y la app reintenta, el pedido ya está entregado por ESTE repartidor:
+    // se responde igual que la primera vez, no con un error que lo hace dudar en la puerta.
+    const ya = await db
+      .prepare("SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'entregado'")
+      .bind(id, u.id)
+      .first();
+    if (ya)
+      return c.json({ ok: true, yaEntregado: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
+    throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  }
   // Mayoría de edad: si algún plato lo exige, solo en mano y con el documento revisado.
   const requiereEdad = lineasConEdad(p);
   // En la puerta: con foto. En mano: sin foto (el cliente lo recibió). En lugar seguro: foto y nota,

@@ -1381,3 +1381,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-GOOGLE-POR-SERVIDOR · La llave de Google Places nunca sale del servidor (28 oct 2026)
 
 - `apps/servidor/src/rutas/lugares.ts`: sugerencias y punto exacto por el servidor, con tope por red y tiempo límite. Sin `GOOGLE_PLACES_KEY` la búsqueda se apaga (503) y se usa el pin. Prueba: `rutas/lugares.test.ts`.
+
+## C-ENTREGA-REINTENTO · Reintentar «entregado» no da error ni paga dos veces (28 oct 2026)
+
+- **Qué se rompió y cómo se vio:** en el recorrido del sitio de pruebas, la respuesta de «entregado» se perdió en el camino; la app reintentó y el servidor contestó «Este pedido no está en camino contigo» (409) aunque el pedido YA estaba entregado. Con mala señal (Venezuela) el repartidor vería un error en la puerta. Se encontró leyendo el rastro de red del recorrido.
+- **Arreglo:** `POST /datos/repartidor/pedidos/:id/entregado`: si el pedido ya está entregado por ESE repartidor, responde 200 con `yaEntregado: true`; otro repartidor sigue recibiendo 409. No se acredita nada de nuevo.
+- **Prueba:** `rutas/operacion.test.ts` («de pagado a entregado, con dinero acreditado una sola vez»), comprobada en rojo.

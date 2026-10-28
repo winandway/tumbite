@@ -173,7 +173,14 @@ describe('ciclo del pedido', () => {
     expect(seg.datos.pedido.minutosEstimados).toBeLessThan(20);
 
     expect((await m.entregar(id, rep.token)).estado).toBe(200);
-    expect((await m.entregar(id, rep.token)).estado).toBe(409);
+    // C-ENTREGA-REINTENTO: si la respuesta se perdió y la app reintenta, responde igual (ya
+    // entregado) y NO se acredita dos veces (el resumen de abajo sigue con una sola entrega).
+    const reintento = await m.entregar(id, rep.token);
+    expect(reintento.estado).toBe(200);
+    expect(reintento.datos.yaEntregado).toBe(true);
+    // Otro repartidor no puede «entregar» un pedido ajeno.
+    const otroRep = await m.cuenta('repartidor', 'Otro');
+    expect((await m.entregar(id, otroRep.token)).estado).toBe(409);
     const resumen = await m.llamar('GET', '/datos/restaurante/resumen', undefined, dueno.token);
     expect(resumen.datos.resumen).toMatchObject({
       entregados: 1,

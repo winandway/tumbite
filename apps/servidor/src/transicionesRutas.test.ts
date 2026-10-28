@@ -255,7 +255,10 @@ describe('transiciones del pedido por las rutas reales (C-TRANSICIONES-PEDIDO)',
     await m.recoger(id, rep.token, dueno.token);
     const capturasAntes = veces(/\/payment_intents\/[^/]+\/capture$/);
     const [a, b] = await Promise.all([m.entregar(id, rep.token), m.entregar(id, rep.token)]);
-    expect([a.estado, b.estado].sort()).toEqual([200, 409]);
+    // Una sola entrega de verdad; la otra choca (409) o, si llega después, responde «ya
+    // entregado» (C-ENTREGA-REINTENTO). Lo que importa está abajo: un solo cobro.
+    for (const x of [a, b]) expect([200, 409]).toContain(x.estado);
+    expect([a, b].filter((x) => x.estado === 200 && !x.datos?.yaEntregado)).toHaveLength(1);
     expect(await estado(id)).toBe('entregado');
     expect(veces(/\/payment_intents\/[^/]+\/capture$/) - capturasAntes).toBe(1);
     const movs = await m.DB.prepare(
