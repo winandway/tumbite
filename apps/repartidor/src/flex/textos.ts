@@ -169,6 +169,7 @@ export const TEXTOS_RUTA = {
     marcarEntregado: 'Marcar como entregado',
     // Fase 6 (C-FLEX-COBRO): cobro contra entrega (Venezuela).
     cobrar: 'Cobrar al entregar',
+    quienPaga: 'Nombre de quien recibe y paga',
     cobrarAyuda: 'Cobra antes de entregar. Sin el cobro no se puede marcar entregado.',
     cobrado: 'Cobro registrado',
     metodoCobro: 'Cómo pagó',
@@ -396,6 +397,7 @@ export const TEXTOS_RUTA = {
     falta: 'To deliver, you still need',
     marcarEntregado: 'Mark as delivered',
     cobrar: 'Collect on delivery',
+    quienPaga: 'Name of the person receiving and paying',
     cobrarAyuda: 'Collect before delivering. You can’t mark it delivered without the payment.',
     cobrado: 'Payment recorded',
     metodoCobro: 'How they paid',

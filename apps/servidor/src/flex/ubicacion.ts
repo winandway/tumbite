@@ -25,7 +25,12 @@ export const flexUbicacion = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 /** Días que dura el enlace para confirmar la ubicación. */
 export const DIAS_ENLACE_UBICACION = 7;
-const ESTADOS_CERRADOS = ['cargado', 'en_transito', ...ESTADOS_FINALES_PAQUETE];
+/** Con un paquete en estos estados el punto de entrega ya no cambia (salió o terminó). */
+export const ESTADOS_CERRADOS: readonly string[] = [
+  'cargado',
+  'en_transito',
+  ...ESTADOS_FINALES_PAQUETE,
+];
 
 export async function paisDeEmpresa(db: D1Database, empresaId: string): Promise<string> {
   const f = await db

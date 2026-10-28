@@ -15,7 +15,12 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
-import { paisDeEmpresa, ubicacionInicial, vincularDestinatarios } from './ubicacion';
+import {
+  ESTADOS_CERRADOS,
+  paisDeEmpresa,
+  ubicacionInicial,
+  vincularDestinatarios,
+} from './ubicacion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   type ActorFlex,
@@ -322,7 +327,11 @@ async function envioCompleto(db: D1Database, empresaId: string, id: string) {
     .prepare('SELECT * FROM paquetes WHERE envio_id = ? ORDER BY creado_en, id')
     .bind(id)
     .all<Record<string, unknown>>();
-  return filaEnvio({ ...f, paquetes: p.results.map(filaPaquete) });
+  return {
+    ...filaEnvio({ ...f, paquetes: p.results.map(filaPaquete) }),
+    // El panel solo ofrece pedir o marcar la ubicación mientras se puede cambiar (C-FLEX-UBICACION).
+    ubicacionEditable: !p.results.some((x) => ESTADOS_CERRADOS.includes(String(x.estado))),
+  };
 }
 
 // ───────────────────────────── Crear ─────────────────────────────

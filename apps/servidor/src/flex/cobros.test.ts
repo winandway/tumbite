@@ -191,4 +191,29 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
     );
     expect(ajena.estado).toBe(404);
   });
+  it('C-FLEX-UBICACION: un envío que ya salió dice que su ubicación no cambia (el panel no ofrece cambiarla)', async () => {
+    const m = mundo();
+    const r = await rutaConCobro(m);
+    const ver = async () =>
+      (
+        await llamar(
+          m,
+          'GET',
+          `${B}/empresas/${r.e.id}/envios/${r.p.envioId}`,
+          undefined,
+          r.e.dueno.token,
+        )
+      ).datos.envio;
+    // En camino: ya no se puede cambiar.
+    expect((await ver()).ubicacionEditable).toBe(false);
+    // Uno que todavía no sale, sí.
+    const nuevo = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${r.e.id}/envios`,
+      { centroId: r.e.centroId, destinatarioNombre: 'Otra', direccion: 'Calle 5, Caracas' },
+      r.e.dueno.token,
+    );
+    expect(nuevo.datos.envio.ubicacionEditable).toBe(true);
+  });
 });

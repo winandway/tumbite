@@ -27,6 +27,7 @@ const T = {
     copiado: 'Mensaje copiado.',
     vence: 'El enlace vence en {n} días.',
     marcar: 'Marcar el punto yo mismo',
+    cerrada: 'El paquete ya salió: la ubicación de entrega ya no se puede cambiar.',
     guardar: 'Guardar este punto',
     referencias: 'Punto de referencia',
     plus: 'Código plus',
@@ -53,6 +54,7 @@ const T = {
     copiado: 'Message copied.',
     vence: 'The link expires in {n} days.',
     marcar: 'Mark the spot myself',
+    cerrada: 'The package already left: the delivery location can no longer change.',
     guardar: 'Save this spot',
     referencias: 'Landmark',
     plus: 'Plus code',
@@ -67,6 +69,8 @@ export type UbicacionDeEnvio = {
   ubicacionEstado?: string;
   ubicacionFuente?: string;
   destinatarioEnDivoox?: boolean;
+  /** false cuando un paquete ya salió o terminó: el punto ya no cambia. */
+  ubicacionEditable?: boolean;
 };
 
 /**
@@ -143,14 +147,18 @@ export function UbicacionEnvio({
       {perfil.ubicacion === 'confirmada' && estado !== 'confirmada' ? (
         <p className="pista">{t.obligatoria}</p>
       ) : null}
-      <div className="flex-acciones">
-        <button type="button" className="boton" onClick={() => void pedirEnlace()}>
-          {t.pedir}
-        </button>
-        <button type="button" className="boton secundario" onClick={() => setMarcando((x) => !x)}>
-          {t.marcar}
-        </button>
-      </div>
+      {envio.ubicacionEditable === false ? (
+        <p className="pista">{t.cerrada}</p>
+      ) : (
+        <div className="flex-acciones">
+          <button type="button" className="boton" onClick={() => void pedirEnlace()}>
+            {t.pedir}
+          </button>
+          <button type="button" className="boton secundario" onClick={() => setMarcando((x) => !x)}>
+            {t.marcar}
+          </button>
+        </div>
+      )}
       {enlace ? (
         <div className="flex-tarjeta">
           <p>{enlace.mensaje}</p>

@@ -1693,7 +1693,7 @@ function DetalleParada({
     const cobro = cobroPendiente ? cobroDelFormulario() : null;
     if (cobroPendiente) {
       if (!cobro) return;
-      if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienRecibio}.`);
+      if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienPaga}.`);
       if (cedula.replace(/[\s.-]/g, '').length < 7) return setAviso(t.faltaCedula);
     }
     setAviso('');
@@ -2083,9 +2083,9 @@ function DetalleParada({
             <TextInput
               value={recibio}
               onChangeText={setRecibio}
-              placeholder={t.quienRecibio}
+              placeholder={cobroPendiente ? t.quienPaga : t.quienRecibio}
               style={e.input}
-              accessibilityLabel={t.quienRecibio}
+              accessibilityLabel={cobroPendiente ? t.quienPaga : t.quienRecibio}
             />
             {cobroPendiente ? (
               <View style={{ gap: 8 }} testID="cobro-entrega">
@@ -2106,6 +2106,7 @@ function DetalleParada({
                     <Text>{t.metodosCobro[m]}</Text>
                   </Pressable>
                 ))}
+                <Text style={{ fontWeight: '800' }}>{t.montoCobrado}</Text>
                 <TextInput
                   value={montoTexto}
                   onChangeText={setMontoTexto}
@@ -2124,6 +2125,7 @@ function DetalleParada({
                     accessibilityLabel={t.referenciaPago}
                   />
                 ) : null}
+                <Text style={{ fontWeight: '800' }}>{t.cedulaRecibe}</Text>
                 <TextInput
                   value={cedula}
                   onChangeText={setCedula}
