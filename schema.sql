@@ -2503,3 +2503,25 @@ CREATE TABLE IF NOT EXISTS deudas_pasajero (
   UNIQUE (operacion_id, motivo)
 );
 CREATE INDEX IF NOT EXISTS deudas_pasajero_cliente ON deudas_pasajero(cliente_id, estado);
+
+-- Divoox Moto · M6 (28 oct 2026): seguridad del viaje. Cada toque del botón de emergencia queda
+-- aquí (con la ubicación) y le llega al equipo; el enlace para compartir el viaje se guarda solo
+-- como huella (nunca el código) y deja de servir cuando el viaje termina.
+CREATE TABLE IF NOT EXISTS emergencias_viaje (
+  id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  actor_id TEXT NOT NULL REFERENCES usuarios(id),
+  rol TEXT NOT NULL CHECK (rol IN ('pasajero', 'conductor')),
+  lat REAL, lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  atendida_en TEXT,
+  atendida_por TEXT REFERENCES usuarios(id),
+  nota TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS emergencias_viaje_abiertas ON emergencias_viaje(atendida_en, creado_en);
+CREATE TABLE IF NOT EXISTS viajes_compartidos (
+  huella TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
