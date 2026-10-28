@@ -34,6 +34,7 @@ Documentos relacionados: `docs/API-DIVOOX-FLEX-V1.md` (sección «Fase 4»), `do
 - `packages/compartido/src/flex.ts` (permiso `finanzas.gestionar`), `index.ts`.
 - Panel: `PanelEmpresa.tsx`, `PantallasEnvios.tsx`, `PantallasRutas.tsx`, `textos.ts`, `PanelApp.tsx`, `panel/textos.ts`, `estilos.css`, `sitio/docs/guias.ts`, `package.json` (Stripe en el panel).
 - App del conductor: `apps/repartidor/src/flex/MiRuta.tsx`, `textos.ts`.
+- Límites de tiempo: `apps/servidor/src/correo.ts` (10 s), `notificaciones.ts` (10 s), `stripe.ts` (25 s) y `packages/compartido/src/api.ts` (30 s en el cliente común), con `correoLimite.test.ts` y `api.test.ts` (C-LLAMADAS-CON-LIMITE, C-PEDIDO-CON-LIMITE). `e2e/recorrido/recorrido.spec.ts` e `internacional.spec.ts` ya no esperan «la red quieta» del panel.
 - `.github/workflows/pruebas-rama.yml` (eventos de Stripe de prueba en staging), `docs/API-DIVOOX-FLEX-V1.md`, `VERIFICAR-PAGOS.md`, `CANDADOS.md`, `PENDIENTES.md`, `PLAN.md`, `CLAUDE.md`.
 
 ## 4. Tablas y migraciones
@@ -127,3 +128,16 @@ Ver «Sitio de pruebas» al final.
 5. Piloto en la calle con celulares reales (`docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`).
 
 **Esperando la autorización para la siguiente fase.**
+
+## Resultado de la verificación
+
+- `npm run verify` en verde: 164 archivos de pruebas (163 pasan, 1 omitido), **1019 pruebas pasan**, 2 omitidas; tipos, lint, compilación y auditoría sin vulnerabilidades.
+- Candados comprobados en rojo: los de la sección 12, más C-STRIPE-AVISO-PRINCIPAL (el aviso de pruebas también escucha `account.updated`), C-LLAMADAS-CON-LIMITE y C-PEDIDO-CON-LIMITE.
+
+## Sitio de pruebas
+
+- Recarga de punta a punta con Stripe en **modo prueba** (tarjeta de prueba `pm_card_visa`, `scripts/staging/probar-billetera-flex.mjs`): 10 dólares, la misma clave de idempotencia no abre dos recargas, el aviso firmado acreditó el saldo una sola vez, comprobante `DVX-2026-000001`.
+- Reembolsos parciales de prueba (3 y 2 dólares): el saldo bajó a 5; el aviso `charge.refunded` se recibió y no descontó dos veces.
+- Salud del sitio: esquema, Stripe, aviso de Stripe, libro y reloj en `ok`; billeteras en `pendiente` hasta la primera conciliación del reloj.
+- Hallazgos de staging corregidos en esta fase: el aviso principal no se reconocía (escucha más eventos), llamadas a correo/Expo/Stripe sin límite y el recorrido de Comida colgado 15 minutos por esperar la red quieta del panel.
+- Nada de esto tocó producción ni movió dinero real.
