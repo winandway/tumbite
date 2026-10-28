@@ -1281,6 +1281,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pasajeros",
     "pin_recogida",
     "liberaciones",
+    "intentos_pin",
     "distancia_m_real",
     "asignado_en"
   ],

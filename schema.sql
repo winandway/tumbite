@@ -2081,6 +2081,7 @@ CREATE TABLE IF NOT EXISTS viajes (
   pasajeros INTEGER NOT NULL DEFAULT 1 CHECK (pasajeros BETWEEN 1 AND 6),
   pin_recogida TEXT NOT NULL CHECK (length(pin_recogida) = 4),
   liberaciones INTEGER NOT NULL DEFAULT 0 CHECK (liberaciones >= 0),
+  intentos_pin INTEGER NOT NULL DEFAULT 0,
   distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
   asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
 );

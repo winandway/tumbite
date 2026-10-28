@@ -1320,3 +1320,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Supuesto anotado [INF]:** sin mapa de rutas todavía, distancia = línea recta × 1,3 y tiempo a 24 km/h en moto. Se reemplaza por la ruta real cuando haya llave de mapas.
 - **Prueba:** `packages/compartido/src/viajes.test.ts` y `rutas/viajesPasajero.test.ts`.
 - **No tocar:** no aceptar un precio que venga de la app; no editar una tarifa en el lugar (las cotizaciones viejas apuntan a la suya).
+
+## C-VIAJE-PASOS-REALES · El conductor no cobra sin haber ido (28 oct 2026, encontrado con REA)
+
+- **Qué estaba mal:** en las rutas del conductor de la Fase 3, «Llegué» se marcaba desde cualquier lugar, «No se presentó» al segundo de llegar y el código de inicio aceptaba intentos sin límite. No afectó a nadie (ninguna ruta creaba viajes y Moto está apagada en producción), pero con viajes reales un conductor podía cobrar un «no se presentó» sin haber ido.
+- **Cómo se encontró:** comparando con REA nuestro flujo contra Namma Yatri, que valida la llegada por radio, la espera cumplida y el código (docs/investigaciones-rea/2026-10-28-moto-rea.md).
+- **Arreglo (`apps/servidor/src/rutas/viajes.ts`):** «Llegué» exige ubicación del conductor de menos de 2 minutos y a 200 m o menos del punto de recogida; «No se presentó» exige que haya pasado la espera gratis de la tarifa copiada en la cotización (300 s si no hay); el código admite 5 intentos (`viajes.intentos_pin`) y después responde 429.
+- **Prueba:** `fase3.test.ts` («C-VIAJE-PASOS-REALES»), tres casos comprobados en rojo quitando el arreglo.
+- **No tocar:** no quitar ninguna de las tres condiciones para «que la app no se trabe»; si el GPS falla, la salida es soporte, no saltarse la regla.

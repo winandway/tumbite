@@ -1050,6 +1050,18 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Divoox Moto · M1 (cotización de viajes).
+  [
+    'Todavía no estás en el punto de recogida. Acércate y vuelve a intentarlo.',
+    'You’re not at the pickup point yet. Get closer and try again.',
+  ],
+  [
+    'Espera a tu pasajero hasta que termine el tiempo de espera gratis.',
+    'Wait for your rider until the free waiting time is over.',
+  ],
+  [
+    'Demasiados intentos con el código. Llama a soporte desde la app.',
+    'Too many attempts with the code. Call support from the app.',
+  ],
   ['Todavía no llegamos a esa dirección.', 'We don’t serve that address yet.'],
   [
     'El destino queda fuera de la ciudad del viaje.',

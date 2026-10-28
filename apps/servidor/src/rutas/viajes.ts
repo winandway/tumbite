@@ -4,6 +4,18 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { aceptarOperacion, cambiarEstadoViaje, liberarViaje } from '../operaciones';
+import { RADIO_LLEGADA_M, llego } from '@tumbite/compartido';
+
+/**
+ * C-VIAJE-PASOS-REALES (28 oct 2026, encontrado con REA): sin estas reglas un conductor podía
+ * marcar «Llegué» desde cualquier lugar, «No se presentó» al segundo de llegar y probar códigos
+ * sin límite, y cobrar sin haber ido. Igual que Namma Yatri: radio de llegada con ubicación
+ * reciente, espera gratis cumplida y tope de intentos del código.
+ */
+export const INTENTOS_PIN_MAXIMOS = 5;
+/** Espera gratis si el viaje no trae tarifa (los viajes de antes de las cotizaciones). */
+export const ESPERA_GRATIS_S_POR_DEFECTO = 300;
+const MINUTOS_UBICACION_LLEGADA = 2;
 
 /**
  * Fase 3 · Lo que el conductor hace con una operación de otro servicio (Moto, Carro…). Todas las
@@ -27,11 +39,24 @@ function claveDe(c: Ctx, accion: string, operacionId: string): string {
 async function miOperacion(c: Ctx, id: string, conductorId: string) {
   const f = await base(c)
     .prepare(
-      `SELECT o.id, o.estado_general, v.estado, v.pin_recogida FROM operaciones o
+      `SELECT o.id, o.estado_general, v.estado, v.pin_recogida, v.intentos_pin, v.origen_lat, v.origen_lng,
+              CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS espera_s,
+              (SELECT q.tarifa_json FROM cotizaciones_viaje q WHERE q.operacion_id = o.id) AS tarifa_json
+         FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id WHERE o.id = ? AND o.conductor_id = ?`,
     )
     .bind(id, conductorId)
-    .first<{ id: string; estado_general: string; estado: string; pin_recogida: string }>();
+    .first<{
+      id: string;
+      estado_general: string;
+      estado: string;
+      pin_recogida: string;
+      intentos_pin: number;
+      origen_lat: number;
+      origen_lng: number;
+      espera_s: number | null;
+      tarifa_json: string | null;
+    }>();
   if (!f) throw new ErrorDatos('Este viaje ya no está asignado a ti.', undefined, 404);
   return f;
 }
@@ -150,12 +175,59 @@ viajes.post(
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 404);
     const clave = claveDe(c, nombre, id);
     const op = await miOperacion(c, id, u.id);
+    const db = base(c);
+    if (nombre === 'llegue' && op.estado === paso.desde) {
+      const yo = await db
+        .prepare(
+          "SELECT lat, lng FROM repartidores WHERE usuario_id = ? AND lat IS NOT NULL AND ubicacion_en > datetime('now', ?)",
+        )
+        .bind(u.id, `-${MINUTOS_UBICACION_LLEGADA} minutes`)
+        .first<{ lat: number; lng: number }>();
+      if (!llego(yo ?? null, { lat: op.origen_lat, lng: op.origen_lng }, RADIO_LLEGADA_M))
+        throw new ErrorDatos(
+          'Todavía no estás en el punto de recogida. Acércate y vuelve a intentarlo.',
+          undefined,
+          409,
+        );
+    }
+    if (nombre === 'no-se-presento' && op.estado === paso.desde) {
+      let espera = ESPERA_GRATIS_S_POR_DEFECTO;
+      try {
+        const t = JSON.parse(op.tarifa_json ?? '{}') as { esperaGratisS?: unknown };
+        if (typeof t.esperaGratisS === 'number') espera = t.esperaGratisS;
+      } catch {
+        console.error('viajes: copia de tarifa dañada en la cotización', id);
+      }
+      if ((op.espera_s ?? 0) < espera)
+        throw new ErrorDatos(
+          'Espera a tu pasajero hasta que termine el tiempo de espera gratis.',
+          undefined,
+          409,
+        );
+    }
     if (nombre === 'iniciar') {
       const { pin } = await leerCuerpo(c, z.object({ pin: z.string().regex(/^\d{4}$/) }));
-      if (op.estado === paso.desde && pin !== op.pin_recogida)
-        throw new ErrorDatos('El código no coincide. Pídeselo otra vez a tu pasajero.', 'pin', 409);
+      if (op.estado === paso.desde) {
+        if (op.intentos_pin >= INTENTOS_PIN_MAXIMOS)
+          throw new ErrorDatos(
+            'Demasiados intentos con el código. Llama a soporte desde la app.',
+            'pin',
+            429,
+          );
+        if (pin !== op.pin_recogida) {
+          await db
+            .prepare('UPDATE viajes SET intentos_pin = intentos_pin + 1 WHERE operacion_id = ?')
+            .bind(id)
+            .run();
+          throw new ErrorDatos(
+            'El código no coincide. Pídeselo otra vez a tu pasajero.',
+            'pin',
+            409,
+          );
+        }
+      }
     }
-    const ok = await cambiarEstadoViaje(base(c), {
+    const ok = await cambiarEstadoViaje(db, {
       operacionId: id,
       desde: paso.desde,
       hacia: paso.hacia,

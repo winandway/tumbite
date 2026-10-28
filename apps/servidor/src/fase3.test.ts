@@ -735,6 +735,69 @@ describe('Fase 3 · rutas del conductor', () => {
   });
 });
 
+describe('C-VIAJE-PASOS-REALES: el conductor no cobra sin haber ido', () => {
+  async function asignado() {
+    const { m, cliente } = await escenario();
+    const c = await conductor(m);
+    const op = await operacion(m, cliente.id);
+    await ofrecer(m, op, c);
+    let n = 0;
+    const paso = async (nombre: string, cuerpo: unknown = {}) => {
+      n++;
+      const r = await m.crudo(`/datos/conductor/operaciones/${op}/${nombre}`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${c.token}`,
+          'content-type': 'application/json',
+          'idempotency-key': `clave-${nombre}-${n}-xyz`,
+        },
+        body: JSON.stringify(cuerpo),
+      });
+      return r.status;
+    };
+    expect(await paso('aceptar')).toBe(200);
+    return { m, c, op, paso };
+  }
+
+  it('«Llegué» exige estar cerca del punto de recogida con la ubicación reciente', async () => {
+    const { m, c, paso } = await asignado();
+    await q(m, 'UPDATE repartidores SET lat = 25.9, lng = -80.3 WHERE usuario_id = ?', c.id);
+    expect(await paso('llegue')).toBe(409);
+    await q(
+      m,
+      "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now', '-10 minutes') WHERE usuario_id = ?",
+      PUNTO.lat,
+      PUNTO.lng,
+      c.id,
+    );
+    expect(await paso('llegue')).toBe(409);
+    await q(m, "UPDATE repartidores SET ubicacion_en = datetime('now') WHERE usuario_id = ?", c.id);
+    expect(await paso('llegue')).toBe(200);
+  });
+
+  it('«No se presentó» solo después de la espera gratis', async () => {
+    const { m, op, paso } = await asignado();
+    expect(await paso('llegue')).toBe(200);
+    expect(await paso('no-se-presento')).toBe(409);
+    await q(
+      m,
+      "UPDATE viajes SET llego_en = datetime('now', '-301 seconds') WHERE operacion_id = ?",
+      op,
+    );
+    expect(await paso('no-se-presento')).toBe(200);
+  });
+
+  it('el código de inicio tiene tope de intentos, aunque después acierte', async () => {
+    const { op, m, paso } = await asignado();
+    expect(await paso('llegue')).toBe(200);
+    for (let i = 0; i < 5; i++) expect(await paso('iniciar', { pin: '0000' })).toBe(409);
+    expect(await paso('iniciar', { pin: '4321' })).toBe(429);
+    expect(await uno(m, 'SELECT estado FROM viajes WHERE operacion_id = ?', op)).toMatchObject({
+      estado: 'conductor_llego',
+    });
+  });
+});
+
 describe('Fase 3 · migración y vuelta atrás', () => {
   const raiz = join(__dirname, '..', '..', '..');
   const publicar = async (m: Mundo) => {

@@ -225,7 +225,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 ## Divoox Moto, pasajeros (28 oct 2026) — plan en docs/PLAN-MOTO-PASAJEROS.md
 
 - [x] (28 oct, rama fase-moto-1) M1 Tarifa por ciudad y cotización con precio fijo guardada en el servidor; Moto encendida solo en el sitio de pruebas.
-- [ ] M2 Pedir viaje (efectivo y tarjeta de prueba), PIN, cancelación del pasajero y «sin conductor».
+- [x] (28 oct) M2a Candado C-VIAJE-PASOS-REALES: llegada por radio, espera cumplida y tope del código (fallo encontrado con REA).
+- [ ] M2 Pedir viaje (efectivo y tarjeta de prueba), PIN, cancelación del pasajero (ventana desde la asignación) y «sin conductor»; deuda del pasajero en efectivo.
 - [ ] M3 Despacho al instante, uno a uno, con ganancia, recogida y destino en la oferta.
 - [ ] M4 App del Driver: oferta, viaje activo, espera, casco, PIN, terminar, no se presentó.
 - [ ] M5 App del cliente: pedir Moto, buscando, conductor asignado, seguimiento, PIN, recibo.

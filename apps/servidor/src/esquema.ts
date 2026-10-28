@@ -71,6 +71,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tarifas_viaje', 'factor_calle_pb', 'INTEGER NOT NULL DEFAULT 13000'],
   ['tarifas_viaje', 'velocidad_kmh', 'INTEGER NOT NULL DEFAULT 24'],
   ['cotizaciones_viaje', 'tarifa_json', "TEXT NOT NULL DEFAULT '{}'"],
+  // C-VIAJE-PASOS-REALES: tope de intentos del código de inicio del viaje.
+  ['viajes', 'intentos_pin', 'INTEGER NOT NULL DEFAULT 0'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],
