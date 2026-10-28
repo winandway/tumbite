@@ -4144,67 +4144,445 @@ button {
 .flex-errores li {
   color: #c20a1a;
 }
+/* Flex · paquetes: encabezado, tabla con selección y acciones en bloque (27 oct 2026) */
+.flex-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.flex-encabezado h1 {
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  margin: 0 0 4px;
+}
+.flex-encabezado .pista {
+  margin: 0;
+}
+.flex-encabezado-botones,
+.flex-acciones-botones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.flex-paquetes .boton,
+.flex-etiquetas .boton {
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  font-weight: 600;
+}
+.flex-paquetes .flex-filtros .flex-buscador {
+  flex: 3 1 260px;
+}
+.flex-tabla-caja {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
+}
+.flex-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.flex-tabla th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666b73;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4e4e6;
+}
+.flex-tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #eeeef0;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+.flex-tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+.flex-tabla .flex-fila-elegida td {
+  background: #f6f6f7;
+}
+.flex-tabla .flex-col-check,
+.flex-tabla .flex-col-num {
+  width: 36px;
+}
+.flex-tabla .flex-col-num {
+  color: #666b73;
+}
+.flex-tabla .flex-col-acciones {
+  width: 64px;
+  text-align: right;
+}
+.flex-tabla .flex-col-codigo a {
+  color: #101010;
+  text-decoration: none;
+}
+.flex-tabla .flex-col-codigo small {
+  display: block;
+  color: #666b73;
+  font-size: 12px;
+}
+.flex-tabla .flex-col-direccion span {
+  display: block;
+}
+.flex-tabla .flex-col-direccion span + span {
+  color: #666b73;
+  font-size: 13px;
+}
+.flex-tabla .tres-puntos > button {
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px 10px;
+}
+.flex-tabla input[type='checkbox'],
+.flex-acciones-cuenta input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #101010;
+}
+.flex-pildora {
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* En camino: verde suave con borde, distinto del «entregado» pero nunca rojo. */
+.flex-pildora-camino {
+  background: #fff;
+  color: #0d7a3a !important;
+  box-shadow: inset 0 0 0 1px #0d7a3a;
+}
+.flex-acciones-lote {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.flex-acciones-cuenta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+.flex-elegir-lote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.flex-elegir-lote select {
+  padding: 8px 10px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  font: inherit;
+}
+@media (max-width: 720px) {
+  /* En el celular la tabla se vuelve tarjetas apiladas: nada de desplazamiento lateral. */
+  .flex-tabla-caja {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .flex-tabla thead {
+    display: none;
+  }
+  .flex-tabla,
+  .flex-tabla tbody,
+  .flex-tabla tr,
+  .flex-tabla td {
+    display: block;
+    width: 100%;
+  }
+  .flex-tabla tr {
+    position: relative;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
+    margin-bottom: 10px;
+    padding: 10px 56px 10px 40px;
+  }
+  .flex-tabla td {
+    border: 0;
+    padding: 3px 0;
+  }
+  .flex-tabla .flex-fila-elegida td {
+    background: transparent;
+  }
+  .flex-tabla .flex-col-check {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: auto;
+  }
+  .flex-tabla .flex-col-num {
+    display: none;
+  }
+  .flex-tabla .flex-col-acciones {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    width: auto;
+  }
+  .flex-acciones-botones .boton {
+    flex: 1 1 140px;
+  }
+}
+
+/* Flex · etiqueta del paquete y hoja de impresión (diseño aprobado el 27 oct 2026) */
 .flex-hoja-etiquetas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
-.flex-etiqueta {
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  padding: 10px;
-  background: #fff;
-  color: #101010;
-  break-inside: avoid;
-  page-break-inside: avoid;
+.flex-hoja-etiquetas.flex-hoja-una {
+  grid-template-columns: minmax(0, 460px);
 }
-.flex-etiqueta header,
-.flex-etiqueta footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  gap: 8px;
-}
-.flex-etiqueta-cuerpo {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+.flex-elegir-paquetes {
   margin: 8px 0;
 }
-.flex-etiqueta-cuerpo p {
-  margin: 2px 0;
-  font-size: 13px;
+.flex-etiqueta {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #fff;
+  color: #101010;
+  overflow: hidden;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.flex-etiqueta-cabeza {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 16px 6px;
+}
+.flex-etiqueta-logo,
+.flex-etiqueta-pie img {
+  height: auto;
+  max-width: 45%;
+  object-fit: contain;
+}
+.flex-etiqueta-pieza {
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+.flex-etiqueta-codigos {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 6px 16px 12px;
+  border-bottom: 1px solid #d6d6d6;
+}
+.flex-etiqueta-seguimiento {
+  flex: 1;
+  min-width: 0;
+}
+.flex-etiqueta-titulo {
+  display: block;
+  font-size: 12px;
+  color: #666b73;
+}
+.flex-etiqueta-codigo {
+  display: block;
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 2px 0 6px;
+  overflow-wrap: anywhere;
+}
+.flex-etiqueta-qr {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.flex-etiqueta-qr figcaption {
+  font-size: 11px;
+  color: #101010;
+  max-width: 112px;
+}
+.flex-etiqueta-destino {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.flex-etiqueta-destino p {
+  margin: 1px 0;
+  font-size: 14px;
 }
 .flex-etiqueta-nombre {
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px !important;
 }
 .flex-etiqueta-nota {
   font-style: italic;
+  font-size: 12px !important;
+  color: #666b73;
+}
+.flex-etiqueta-ref {
+  font-size: 11px !important;
+  color: #666b73;
+}
+.flex-etiqueta-ruta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 96px;
+}
+.flex-etiqueta-ruta strong {
+  font-family: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.flex-etiqueta-ruta .flex-etiqueta-parada {
+  font-size: 28px;
+  line-height: 1;
+}
+.flex-etiqueta-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+  padding: 10px 16px 14px;
+  border-top: 1px solid #d6d6d6;
+}
+.flex-etiqueta-datos dt {
+  font-size: 11px;
+  color: #666b73;
+}
+.flex-etiqueta-datos dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.flex-etiqueta-pie {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #101010;
+  color: #fff;
+}
+.flex-etiqueta-pie span {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 .flex-barras {
   display: block;
-  margin: 6px 0;
+  margin: 4px 0;
+}
+/* Compacta: la versión de la hoja de impresión (varias por página). */
+.flex-etiqueta-compacta .flex-etiqueta-cabeza {
+  padding: 10px 10px 2px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-pieza {
+  font-size: 10px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-codigos {
+  padding: 4px 10px 8px;
+  gap: 8px;
+  border-bottom: 0;
+}
+.flex-etiqueta-compacta .flex-etiqueta-titulo {
+  font-size: 10px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-codigos .flex-etiqueta-titulo {
+  display: none;
+}
+.flex-etiqueta-compacta .flex-etiqueta-codigo {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-destino {
+  padding: 2px 10px 10px;
+  gap: 8px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-destino > div:first-child .flex-etiqueta-titulo {
+  display: none;
+}
+.flex-etiqueta-compacta .flex-etiqueta-destino p {
+  font-size: 11px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-nombre {
+  font-size: 13px !important;
+}
+.flex-etiqueta-compacta .flex-etiqueta-ruta {
+  min-width: 64px;
+}
+.flex-etiqueta-compacta .flex-etiqueta-ruta .flex-etiqueta-titulo {
+  display: none;
+}
+.flex-etiqueta-compacta .flex-etiqueta-ruta strong {
+  font-size: 13px;
+  margin: 0;
+}
+.flex-etiqueta-compacta .flex-etiqueta-ruta .flex-etiqueta-parada {
+  font-size: 18px;
 }
 @media print {
+  @page {
+    margin: 10mm;
+  }
   .cabecera,
   .panel-menu,
   .flex-no-imprimir,
-  .flex-etiquetas h1,
-  .flex-etiquetas .pista {
+  .flex-etiquetas > .pista,
+  .flex-etiquetas .error-general {
     display: none !important;
   }
+  .panel-contenido {
+    padding: 0 !important;
+    max-width: none !important;
+  }
   .flex-hoja-etiquetas {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6mm;
+    margin: 0;
+  }
+  .flex-hoja-etiquetas.flex-hoja-una {
+    grid-template-columns: minmax(0, 120mm);
   }
   .flex-etiqueta {
     border: 1px solid #000;
+    box-shadow: none;
+  }
+  .flex-etiqueta,
+  .flex-etiqueta-pie {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 @media (max-width: 720px) {
-  .flex-etiqueta-cuerpo {
-    flex-direction: column;
+  .flex-hoja-etiquetas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flex-etiqueta-codigo {
+    font-size: 19px;
+  }
+  .flex-etiqueta-ruta .flex-etiqueta-parada {
+    font-size: 24px;
   }
 }
 /* Flex · Fase 2 */

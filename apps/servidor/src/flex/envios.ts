@@ -288,6 +288,7 @@ const PAGINA = 50;
 const esquemaLista = z.object({
   estado: z.string().max(32).optional(),
   q: z.string().trim().max(80).optional(),
+  centro: z.string().max(64).optional(),
   pagina: z.coerce.number().int().min(1).max(1000).default(1),
 });
 
@@ -361,9 +362,13 @@ flexEnvios.get('/empresas/:id/paquetes', async (c) => {
     const like = `%${q.q}%`;
     valores.push(like, like, like, like);
   }
+  if (q.centro) {
+    condiciones.push('e.centro_id = ?');
+    valores.push(q.centro);
+  }
   const { results } = await db
     .prepare(
-      `SELECT p.*, e.referencia_externa, e.destinatario_nombre, e.direccion, e.estado AS envio_estado
+      `SELECT p.*, e.referencia_externa, e.destinatario_nombre, e.direccion, e.centro_id, e.estado AS envio_estado
        FROM paquetes p JOIN envios e ON e.id = p.envio_id WHERE ${condiciones.join(' AND ')}
        ORDER BY p.creado_en DESC, p.id LIMIT ? OFFSET ?`,
     )
@@ -375,6 +380,7 @@ flexEnvios.get('/empresas/:id/paquetes', async (c) => {
       referenciaExterna: f.referencia_externa,
       destinatarioNombre: f.destinatario_nombre,
       direccion: f.direccion,
+      centroId: f.centro_id ?? null,
     })),
     hayMas: results.length > PAGINA,
     pagina: q.pagina,
@@ -433,6 +439,21 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
     )
     .bind(f.envio_id, f.creado_en, f.creado_en, f.id)
     .first<{ n: number }>();
+  // Ruta abierta del paquete (si ya está en una, aunque sea borrador): nombre, parada y total.
+  // Solo lectura; un paquete excluido de esa ruta no la muestra.
+  const enRuta = await db
+    .prepare(
+      `SELECT r.id, r.nombre, rp.orden,
+         (SELECT COUNT(*) FROM ruta_paradas WHERE ruta_id = r.id) AS paradas
+       FROM ruta_paradas rp JOIN rutas_flex r ON r.id = rp.ruta_id
+       WHERE rp.envio_id = ?1 AND r.empresa_id = ?2
+         AND r.estado NOT IN ('cancelada', 'completada', 'con_incidencias')
+         AND NOT EXISTS (SELECT 1 FROM ruta_paquetes rq
+           WHERE rq.ruta_id = r.id AND rq.paquete_id = ?3 AND rq.activo = 0)
+       ORDER BY r.creado_en DESC, r.id DESC LIMIT 1`,
+    )
+    .bind(f.envio_id, actor.empresaId, f.id)
+    .first<{ id: string; nombre: string; orden: number; paradas: number }>();
   return c.json({
     etiqueta: {
       paqueteId: f.id,
@@ -449,6 +470,17 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
       total: e?.total ?? 1,
       descripcion: f.descripcion,
       pesoG: f.peso_g,
+      largoCm: f.largo_cm ?? null,
+      anchoCm: f.ancho_cm ?? null,
+      altoCm: f.alto_cm ?? null,
+      ruta: enRuta
+        ? {
+            id: enRuta.id,
+            nombre: enRuta.nombre,
+            parada: enRuta.orden,
+            paradas: enRuta.paradas,
+          }
+        : null,
     },
   });
 });
