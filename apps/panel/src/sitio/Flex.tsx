@@ -78,6 +78,16 @@ const T = {
       alt2: 'Mis paquetes en la app de Divoox, con la ubicación confirmada',
       app: 'Con la app de Divoox, el destinatario marca su casa una sola vez y cada paquete que le envíen llega a ese punto. Lo ve en «Mis paquetes».',
     },
+    cobro: {
+      titulo: 'Cobro contra entrega, con la caja de cada ruta',
+      texto:
+        'En Venezuela el cliente paga al recibir. Pones el monto en el envío y el conductor no puede entregar sin registrar el cobro: cómo pagó (efectivo en dólares o bolívares, pago móvil, transferencia, Zelle o punto de venta), la referencia y la cédula de quien paga. Al volver al centro, marcas «Recibí el efectivo» y queda todo anotado. Divoox no toca ese dinero: lo registra.',
+      img1: 'panel-caja',
+      alt1: 'La caja de una ruta con lo cobrado y el efectivo por recibir',
+      img2: 'driver-cobrar',
+      alt2: 'El conductor registra el cobro en la app antes de entregar',
+      app: 'El conductor registra el cobro en la app antes de marcar entregado.',
+    },
     sinTecnologia: {
       titulo: 'Si tu empresa todavía no tiene tecnología',
       intro:
@@ -102,7 +112,8 @@ const T = {
           'La ruta no sale sin la ubicación confirmada de cada parada.',
           'Código plus en la etiqueta: el punto exacto aunque no haya dirección formal.',
           'Mensajes listos para WhatsApp.',
-          'Cobro contra entrega y pagos locales: muy pronto.',
+          'Cobro contra entrega en dólares o bolívares, con la caja de cada ruta.',
+          'Pagos locales en la billetera: muy pronto.',
         ],
       },
       us: {
@@ -186,6 +197,16 @@ const T = {
       alt2: 'My packages in the Divoox app, with the location confirmed',
       app: 'With the Divoox app, the recipient marks their home once and every package sent to them goes to that spot. They see it in “My packages”.',
     },
+    cobro: {
+      titulo: 'Cash on delivery, with each route’s cash panel',
+      texto:
+        'In Venezuela the customer pays on receipt. You set the amount on the shipment and the driver can’t deliver without recording the payment: how they paid (cash in dollars or bolívares, pago móvil, bank transfer, Zelle or card terminal), the reference and the payer’s ID. Back at the center, you mark “I received the cash” and everything is logged. Divoox doesn’t touch that money: it records it.',
+      img1: 'panel-caja',
+      alt1: 'A route’s cash panel with what was collected and the cash to receive',
+      img2: 'driver-cobrar',
+      alt2: 'The driver records the payment in the app before delivering',
+      app: 'The driver records the payment in the app before marking it delivered.',
+    },
     sinTecnologia: {
       titulo: 'If your company doesn’t have technology yet',
       intro:
@@ -210,7 +231,8 @@ const T = {
           'The route can’t leave without each stop’s confirmed location.',
           'Plus code on the label: the exact spot even without a formal address.',
           'Messages ready for WhatsApp.',
-          'Cash on delivery and local payments: coming soon.',
+          'Cash on delivery in dollars or bolívares, with each route’s cash panel.',
+          'Local payments in the wallet: coming soon.',
         ],
       },
       us: {
@@ -296,6 +318,23 @@ export function Flex({ idioma }: { idioma: Idioma }) {
               className="fw-celular"
             />
             <figcaption>{t.ubicacion.app}</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="cobro" className="como-seccion">
+        <h2>{t.cobro.titulo}</h2>
+        <p>{t.cobro.texto}</p>
+        <div className="fw-dos">
+          <img src={img(t.cobro.img1, idioma)} alt={t.cobro.alt1} loading="lazy" />
+          <figure>
+            <img
+              src={img(t.cobro.img2, idioma)}
+              alt={t.cobro.alt2}
+              loading="lazy"
+              className="fw-celular"
+            />
+            <figcaption>{t.cobro.app}</figcaption>
           </figure>
         </div>
       </section>

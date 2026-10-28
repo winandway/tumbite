@@ -544,13 +544,16 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         idioma={ctx.idioma}
         alCambiar={cargar}
       />
-      <HerramientasEnvio
-        ctx={ctx}
-        envioId={e.id}
-        // El punto ahora se marca con el pin de «Ubicación de entrega» (Fase 5).
-        sinCoordenadas={false}
-        alCambiar={cargar}
-      />
+      {/* Un envío que ya terminó no ofrece herramientas para entregarlo (PIN). */}
+      {['entregado', 'devuelto', 'cancelado'].includes(e.estado) ? null : (
+        <HerramientasEnvio
+          ctx={ctx}
+          envioId={e.id}
+          // El punto ahora se marca con el pin de «Ubicación de entrega» (Fase 5).
+          sinCoordenadas={false}
+          alCambiar={cargar}
+        />
+      )}
       <h2>{t.paquetes}</h2>
       <ul className="super-lista">
         {e.paquetes.map((p, i) => (

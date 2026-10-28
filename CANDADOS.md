@@ -1382,6 +1382,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - `apps/servidor/src/rutas/lugares.ts`: sugerencias y punto exacto por el servidor, con tope por red y tiempo límite. Sin `GOOGLE_PLACES_KEY` la búsqueda se apaga (503) y se usa el pin. Prueba: `rutas/lugares.test.ts`.
 
+## C-FLEX-COBRO · Cobro contra entrega en Venezuela (28 oct 2026)
+
+- **País:** Venezuela (perfil `cobroContraEntrega`). En EE. UU. el envío con cobro se rechaza (422), también fila por fila en la importación.
+- **Cómo funciona:** el envío guarda `cobro_monto` y `cobro_moneda` (USD o VES, en centavos) con `cobro_estado` pendiente → cobrado → liquidado. `POST …/paradas/:id/entregar` exige el cobro si está pendiente: método (efectivo en dólares o bolívares, pago móvil, transferencia, Zelle, punto de venta), monto completo en la misma moneda (otra moneda se acepta y queda marcada), referencia en los métodos digitales, nombre y cédula de quien paga; nunca «sin contacto». El cobro se escribe en el MISMO lote que la entrega. Reglas puras en `packages/compartido/src/flexCobro.ts`. La caja: `GET /conductor/cobros` (efectivo en la mano), `GET /empresas/:id/cobros` y `POST /empresas/:id/rutas/:rutaId/cobros/recibir` (solo personas con permiso de recibir en el centro o de finanzas; una sola vez, con auditoría). Divoox no mueve ese dinero: lo registra.
+- **Fallos encontrados al tomar las capturas reales y corregidos:** un envío que ya salió seguía ofreciendo «Pedir la ubicación», «Marcar el punto» y «Generar PIN» (el servidor lo rechazaba); ahora el envío dice `ubicacionEditable` y el panel lo explica. En la app del conductor, el nombre de quien paga decía «opcional».
+- **Prueba:** `apps/servidor/src/flex/cobros.test.ts`, `packages/compartido/src/flexCobro.test.ts` y la caja en `apps/panel/src/panel/flex/PantallasRutas.test.tsx`, comprobadas en rojo.
+- **No tocar:** nunca permitir entregar un envío con cobro pendiente sin registrarlo; nunca «sin contacto» con cobro; el «recibí el efectivo» nunca desde una clave de API.
+
 ## C-ENTREGA-REINTENTO · Reintentar «entregado» no da error ni paga dos veces (28 oct 2026)
 
 - **Qué se rompió y cómo se vio:** en el recorrido del sitio de pruebas, la respuesta de «entregado» se perdió en el camino; la app reintentó y el servidor contestó «Este pedido no está en camino contigo» (409) aunque el pedido YA estaba entregado. Con mala señal (Venezuela) el repartidor vería un error en la puerta. Se encontró leyendo el rastro de red del recorrido.

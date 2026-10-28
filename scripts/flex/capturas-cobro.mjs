@@ -183,7 +183,6 @@ for (const idioma of ['es', 'en']) {
     .first()
     .click()
     .catch(() => undefined);
-  await drv.screenshot({ path: join(process.env.TMPDIR ?? '/tmp', 'cobro-debug.png') });
   await drv.getByText('Calle 3, Los Palos Grandes, Caracas').first().click();
   await foto(drv, `driver-cobrar-${idioma}`, 'cobro-entrega');
   await m.close();

@@ -2194,6 +2194,43 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'flex-cash-on-delivery',
+        titulo: 'Divoox Flex: cobro contra entrega en Venezuela',
+        resumen:
+          'El conductor cobra al entregar, registra cómo le pagaron y tu empresa recibe el efectivo al cerrar la ruta. Todo queda anotado, paquete por paquete.',
+        explicacion: [
+          'En Venezuela muchos clientes pagan cuando reciben. Con Divoox Flex le pones a cada envío el monto a cobrar, en dólares o en bolívares, al crearlo o desde tu hoja de Excel (columna «cobro»). La etiqueta lo dice en grande: «COBRAR».',
+          'Al llegar, el conductor no puede marcar el paquete como entregado sin registrar el cobro. Anota cómo le pagaron (efectivo en dólares o en bolívares, pago móvil, transferencia, Zelle o punto de venta), el monto, la referencia del pago cuando es digital, y el nombre y la cédula de quien recibe y paga. Con dinero de por medio, nunca se deja un paquete sin contacto.',
+          'El conductor ve en su app el efectivo que lleva en la mano. Al volver al centro te lo entrega y tú tocas «Recibí el efectivo» en la caja de la ruta. Se hace una sola vez y queda en el historial de tu empresa con tu nombre.',
+          'Divoox no toca ese dinero: el cobro es entre tu cliente y tu empresa. Divoox lo registra para que sepas en todo momento cuánto se cobró, cómo, y cuánto falta por llegar al centro.',
+          'Cada país funciona a su manera. El cobro contra entrega está en Venezuela; en Estados Unidos no se usa.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-driver-cobrar-es.webp',
+            alt: 'App del conductor de Divoox con el formulario para registrar el cobro antes de entregar.',
+            pie: 'El conductor registra el cobro antes de marcar entregado.',
+          },
+          {
+            src: '/docs/flex-panel-caja-es.webp',
+            alt: 'Caja de la ruta en el panel de Divoox Flex con lo cobrado y el botón «Recibí el efectivo».',
+            pie: 'La caja de la ruta: lo cobrado y el efectivo por recibir.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo cobro al entregar en Venezuela?',
+          '¿Qué métodos de pago puede registrar el conductor?',
+          '¿Cómo sé cuánto efectivo trae el conductor?',
+          '¿Divoox se queda con el dinero del cobro?',
+        ],
+        pasos: [
+          'Al crear el envío, escribe el monto en «Cobrar al entregar» y elige la moneda.',
+          'El conductor registra el cobro al entregar: método, monto, referencia y la cédula de quien paga.',
+          'En «Rutas en curso», abre la ruta y revisa la «Caja de la ruta».',
+          'Cuando el conductor te entregue el efectivo, toca «Recibí el efectivo».',
+        ],
+      },
+      {
         id: 'flex-tracking',
         titulo: 'Divoox Flex: rastrear un paquete con su número de seguimiento',
         resumen:
@@ -4764,6 +4801,43 @@ const en: SeccionDocs[] = [
           'In “Delivery location”, tap “Ask the recipient for their location” and send the message on WhatsApp.',
           'When the recipient confirms, the status changes to “Confirmed”.',
           'Or tap “Mark the spot myself” and save the spot on the map.',
+        ],
+      },
+      {
+        id: 'flex-cash-on-delivery',
+        titulo: 'Divoox Flex: cash on delivery in Venezuela',
+        resumen:
+          'The driver collects on delivery, records how the customer paid, and your company receives the cash when the route closes. Everything is logged, package by package.',
+        explicacion: [
+          'In Venezuela many customers pay when they receive. With Divoox Flex you set the amount to collect on each shipment, in dollars or bolívares, when you create it or from your spreadsheet (the “cobro” column). The label shows it in large letters.',
+          'At the door, the driver can’t mark the package delivered without recording the payment: how the customer paid (cash in dollars or bolívares, pago móvil, bank transfer, Zelle or card terminal), the amount, the payment reference for digital methods, and the name and ID of the person receiving and paying. When money is involved, a package is never left without contact.',
+          'The driver sees in their app the cash they’re carrying. Back at the center they hand it to you and you tap “I received the cash” in the route cash panel. It happens only once and stays in your company history with your name.',
+          'Divoox doesn’t touch that money: the payment is between your customer and your company. Divoox records it so you always know how much was collected, how, and how much is still on its way to the center.',
+          'Each country works its own way. Cash on delivery is available in Venezuela; it isn’t used in the United States.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-driver-cobrar-en.webp',
+            alt: 'Divoox driver app with the form to record the payment before delivering.',
+            pie: 'The driver records the payment before marking it delivered.',
+          },
+          {
+            src: '/docs/flex-panel-caja-en.webp',
+            alt: 'Route cash panel in Divoox Flex with what was collected and the “I received the cash” button.',
+            pie: 'Route cash: what was collected and the cash still to receive.',
+          },
+        ],
+        preguntas: [
+          'How do I collect on delivery in Venezuela?',
+          'Which payment methods can the driver record?',
+          'How do I know how much cash the driver is carrying?',
+          'Does Divoox keep the money collected?',
+        ],
+        pasos: [
+          'When you create the shipment, enter the amount in “Collect on delivery” and choose the currency.',
+          'The driver records the payment on delivery: method, amount, reference and the payer’s ID.',
+          'In “Live routes”, open the route and check “Route cash”.',
+          'When the driver hands you the cash, tap “I received the cash”.',
         ],
       },
       {
