@@ -22,6 +22,14 @@ Las reglas globales de Richard aplican; estas se suman.
 3. **Todo error o problema en lo que se está construyendo se investiga primero con REA** sobre nuestra app (qué llama, qué guarda, qué responde), antes de tocar el código. Después va la prueba en rojo y el arreglo.
 4. **El límite legal sigue igual:** no se descompilan las apps de Uber, DiDi u otros terceros, no se usan cuentas, no se saltan anti-robots y no se captura tráfico ajeno. Lo prohíben sus términos y expondría a Windoce.
 
+## CADA PAÍS ES SU PROPIO SISTEMA (REGLA PRINCIPAL, Richard, 28 oct 2026)
+
+> Sus palabras: _«el sistema de Estados Unidos es uno y el sistema de Venezuela es otro. Entonces, separémoslos… cada vez que hagamos un cambio, tenemos que indicar para dónde va ese cambio»_.
+
+1. **Al crear una cuenta (empresa de Flex, restaurante, conductor) se elige el país**, y el país decide: formas de pago, moneda, cómo se ubica al destinatario, qué datos se piden y qué exige la app. Vive en un perfil por país en código (una sola pieza), nunca repartido en condiciones sueltas.
+2. **Todo cambio dice a qué país aplica** (Venezuela, EE. UU., Colombia o todos): en el commit, en el documento de la fase y en el reporte a Richard.
+3. **Antes de construir para un país se estudia con REA el software más popular de ese país** (en Venezuela: MRW, Zoom, Tealca y las apps locales), se copia su estándar y, si se puede, se mejora. La evidencia queda en `docs/investigaciones-rea/`.
+
 ## «No inventemos la rueda» (eslogan y regla, Richard, 18 oct 2026)
 
 Se copia el **estándar del mercado** de reparto (DoorDash, Uber Eats, Rappi): la interfaz, los menús, el orden de las cosas y los flujos. Buscador arriba, «Hola, fulano», logo, campana, cupón, servicios, y abajo lo que publicó el vendedor. Cambiamos colores, marca y lo nuestro; no la estructura. Antes de diseñar una pantalla se pregunta «¿cuál es el estándar?» y se copia, salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública (no se descompilan sus apps de tienda: lo prohíben sus términos y expondría a Windoce; no hace falta).
