@@ -222,7 +222,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] Subir la versión nueva del Driver (build 32d18083, «Mi ruta» rediseñada) a Google Play en cuanto aprueben la revisión en curso.
 - [ ] 👤 Encender las recargas de empresa en producción (dinero real): orden de Richard y una compra real de 1 dólar.
 
-## Divoox Moto, pasajeros (28 oct 2026) — plan en docs/PLAN-MOTO-PASAJEROS.md
+## Divoox Moto, pasajeros (28 oct 2026) — en producción 7ce5503 con Moto APAGADA; encendida solo en el sitio de pruebas — plan en docs/PLAN-MOTO-PASAJEROS.md
 
 - [x] (28 oct, rama fase-moto-1) M1 Tarifa por ciudad y cotización con precio fijo guardada en el servidor; Moto encendida solo en el sitio de pruebas.
 - [x] (28 oct) M2a Candado C-VIAJE-PASOS-REALES: llegada por radio, espera cumplida y tope del código (fallo encontrado con REA).
