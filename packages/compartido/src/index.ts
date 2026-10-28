@@ -37,3 +37,4 @@ export * from './flexOptimizar';
 export * from './finanzas';
 export * from './viajes';
 export * from './flexPaises';
+export * from './flexCobro';
