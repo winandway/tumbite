@@ -48,7 +48,7 @@ describe('búsqueda de direcciones (C-FLEX-UBICACION)', () => {
     expect(JSON.stringify(s.datos) + JSON.stringify(p.datos)).not.toContain(llave);
   });
 
-  it('C-DIRECCION-SUGERENCIAS: sin país en la pantalla usa el de la conexión, y sin él no limita', async () => {
+  it('C-DIRECCION-SUGERENCIAS: sin país en la pantalla busca en todo el mundo (la conexión solo va primero)', async () => {
     const m = mundo({ GOOGLE_PLACES_KEY: 'llave-de-prueba-de-google-places-123' });
     const original = globalThis.fetch;
     const cuerpos: Record<string, unknown>[] = [];
@@ -62,7 +62,10 @@ describe('búsqueda de direcciones (C-FLEX-UBICACION)', () => {
     });
     await m.llamar('GET', '/datos/lugares/sugerencias?q=Chacao&pais=ve');
     await m.llamar('GET', '/datos/lugares/sugerencias?q=Chacao');
-    expect(cuerpos[0]).toMatchObject({ includedRegionCodes: ['us'] });
+    // Desde EE. UU. buscando una calle de Venezuela: no se limita a EE. UU., solo lo pone primero.
+    expect(cuerpos[0]?.includedRegionCodes).toBeUndefined();
+    expect(cuerpos[0]).toMatchObject({ regionCode: 'us' });
+    // Con el país de la empresa (Flex), sí se limita a ese país.
     expect(cuerpos[1]).toMatchObject({ includedRegionCodes: ['ve'] });
     expect(cuerpos[2]?.includedRegionCodes).toBeUndefined();
   });

@@ -45,15 +45,21 @@ lugares.get('/lugares/sugerencias', async (c) => {
     })
     .parse(c.req.query());
   const k = llave(c.env);
-  // C-DIRECCION-SUGERENCIAS: sin país en la pantalla (la portada), el de donde se conecta la persona.
+  // C-DIRECCION-SUGERENCIAS: con país en la pantalla (Flex de una empresa), solo ese país. Sin
+  // país (la portada, la app del cliente) se busca en TODO el mundo y el país de la conexión solo
+  // va primero: limitarlo escondía Venezuela a quien la buscaba desde EE. UU. (28 oct 2026).
   const ip = c.req.header('cf-ipcountry');
-  const pais = q.pais ?? (ip && /^[A-Za-z]{2}$/.test(ip) && ip !== 'XX' ? ip.toUpperCase() : null);
+  const deLaConexion = ip && /^[A-Za-z]{2}$/.test(ip) && ip !== 'XX' ? ip.toUpperCase() : null;
   const r = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': k },
     body: JSON.stringify({
       input: q.q,
-      ...(pais ? { includedRegionCodes: [pais.toLowerCase()] } : {}),
+      ...(q.pais
+        ? { includedRegionCodes: [q.pais.toLowerCase()] }
+        : deLaConexion
+          ? { regionCode: deLaConexion.toLowerCase() }
+          : {}),
       languageCode: (c.req.header('x-idioma') ?? 'es').startsWith('en') ? 'en' : 'es',
       ...(q.sesion ? { sessionToken: q.sesion } : {}),
       ...(q.lat != null && q.lng != null
