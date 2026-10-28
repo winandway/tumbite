@@ -2500,6 +2500,8 @@ CREATE TABLE IF NOT EXISTS deudas_pasajero (
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'cobrada', 'perdonada')),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   resuelta_en TEXT,
+  -- El viaje en el que se cobró (M7): se suma a la cuenta final de ese viaje.
+  cobrada_en TEXT,
   UNIQUE (operacion_id, motivo)
 );
 CREATE INDEX IF NOT EXISTS deudas_pasajero_cliente ON deudas_pasajero(cliente_id, estado);
@@ -2524,4 +2526,17 @@ CREATE TABLE IF NOT EXISTS viajes_compartidos (
   operacion_id TEXT NOT NULL REFERENCES operaciones(id),
   creado_por TEXT NOT NULL REFERENCES usuarios(id),
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Divoox Moto · M8 (28 oct 2026): cada lado califica al otro al terminar el viaje (como Uber e
+-- inDrive). Una sola calificación por lado y viaje. La del pasajero cuenta en el promedio del
+-- conductor junto con las de Comida.
+CREATE TABLE IF NOT EXISTS calificaciones_viaje (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  de TEXT NOT NULL CHECK (de IN ('pasajero', 'conductor')),
+  autor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estrellas INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, de)
 );
