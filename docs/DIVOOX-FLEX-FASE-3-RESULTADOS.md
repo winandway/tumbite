@@ -172,7 +172,7 @@ Obligatorias del pedido, todas automáticas (SQLite en memoria; avisos, DNS y si
 
 ## 17. Riesgos pendientes y limitaciones
 
-1. **Llave de cifrado en staging y producción**: sin `FLEX_LLAVE_WEBHOOKS` en el panel de YaDominios, los secretos se cifran con una llave derivada del secreto del reloj (provisional). Si ese secreto cambia, los secretos guardados no se pueden leer y hay que rotarlos. Recomendación: poner la llave dedicada antes de que una empresa real use integraciones.
+1. **Llave de cifrado en producción**: en staging ya está la llave dedicada. En producción, sin `FLEX_LLAVE_WEBHOOKS`, los secretos se cifrarían con una llave derivada del secreto del reloj (provisional). Se pone el día que Flex pase a producción.
 2. **Latencia de las integraciones**: casi inmediata tras cada escritura; en el peor caso, hasta 5 minutos (el reloj). El orden de los eventos no está garantizado (se documenta usar `occurred_at`).
 3. **DNS rebinding**: se comprueba el DNS antes de cada envío, pero entre la comprobación y la conexión el nombre podría cambiar. En Cloudflare Workers las conexiones a redes privadas ya están bloqueadas por la plataforma, lo que cierra ese hueco en la práctica.
 4. **Avisos al celular**: dependen de Firebase (Android) y Apple (iPhone), todavía pendientes de Richard. El código está listo y probado con el transporte simulado.
@@ -183,7 +183,7 @@ Obligatorias del pedido, todas automáticas (SQLite en memoria; avisos, DNS y si
 ## 18. Recomendaciones y decisiones para la Fase 4 (dinero)
 
 1. Ejecutar el piloto de la sección 16 en staging antes de cualquier cobro.
-2. Poner `FLEX_LLAVE_WEBHOOKS` en staging y producción (valor al azar de 32+ caracteres).
+2. Poner `FLEX_LLAVE_WEBHOOKS` en producción el día que Flex pase allá (en staging ya está).
 3. Decidir el modelo de cobro de Flex (por paquete, por ruta o por bloque de horas) y la custodia de fondos (recomendación de la auditoría: Stripe cobra, el libro registra), con la compra real de 1 dólar como prueba previa obligatoria.
 4. Aprobar o no las políticas de retención sensibles (ubicación y pruebas) por país: es una decisión legal y de negocio.
 5. Al publicar en producción: marcar confirmadas las cuentas de revisión con el botón del superadmin (con autorización).
@@ -202,3 +202,12 @@ Obligatorias del pedido, todas automáticas (SQLite en memoria; avisos, DNS y si
 | Recorrido en pantalla del panel (local)                                            | Operación, Vehículos, Integraciones (secreto una vez, menú de tres puntos), sugerencia y aplicación del orden (19,5 km a 7,7 km), aviso de capacidad (8 de 6), freno del servidor sin confirmar y exclusividad del conductor ocupado |
 
 Encontrado y corregido durante el recorrido: los menús de tres puntos de Flex salían como botones rojos (ahora son un menú blanco con lo destructivo en rojo), los decimales salían con punto en español (ahora con coma) y la lista sugerida tenía doble numeración.
+
+## Sitio de pruebas (staging)
+
+| Comprobación                                             | Resultado                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Publicación de la rama `fase-flex-3` (versión `de2eaf6`) | Verde: compuertas, paquete, semáforo 200, pruebas S de la Fase 0, tiempo real en vivo, conciliación contra Stripe en modo prueba                                                                                                                                          |
+| Recorrido completo de Comida                             | Primer intento: el recorrido en inglés se cortó por tiempo (el navegador del cliente perdió la conexión: 51 peticiones sin respuesta mientras el navegador del conductor recibía cientos de respuestas 200 del mismo servidor). Segundo intento: verde en los dos idiomas |
+| Salud después de publicar                                | `ok`, esquema `ok` (tablas y columna nuevas aplicadas), reloj `ok`                                                                                                                                                                                                        |
+| Llave `FLEX_LLAVE_WEBHOOKS`                              | Cargada en el sitio de pruebas con la llave del sitio de pruebas (`scripts/staging/cargar-llave-flex.sh`; copia en `~/.config/tumbite/flex-llave-webhooks-pruebas`, fuera del repo). **Producción no se tocó.**                                                           |
