@@ -4,6 +4,8 @@
   <url><loc>https://divoox.com/how-it-works</loc><lastmod>2026-10-28</lastmod><priority>0.9</priority></url>
   <url><loc>https://divoox.com/calculator</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/franchise</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/flex</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/track</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/privacy</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/terms</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/restaurant-terms</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
@@ -92,6 +94,8 @@
   <url><loc>https://divoox.com/docs/trust/verification</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust/compare</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/business</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/business/flex-recipient-location</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/business/flex-tracking</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/business/flex-routes</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/business/flex-operations</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/business/flex-wallet</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
@@ -159,6 +163,8 @@
   <url><loc>https://divoox.com/es/how-it-works</loc><lastmod>2026-10-28</lastmod><priority>0.9</priority></url>
   <url><loc>https://divoox.com/es/calculator</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/franchise</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/es/flex</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/es/track</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/privacy</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/terms</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/restaurant-terms</loc><lastmod>2026-10-28</lastmod><priority>0.3</priority></url>
@@ -247,6 +253,8 @@
   <url><loc>https://divoox.com/es/docs/trust/verification</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust/compare</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/business</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/business/flex-recipient-location</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/business/flex-tracking</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/business/flex-routes</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/business/flex-operations</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/business/flex-wallet</loc><lastmod>2026-10-28</lastmod><priority>0.7</priority></url>
