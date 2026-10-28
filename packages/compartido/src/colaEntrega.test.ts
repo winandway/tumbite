@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ErrorApi } from './api';
-import { crearCola, esFalloDeRed } from './colaEntrega';
+import { crearCola, esFalloDeRed, sePuedeReintentar } from './colaEntrega';
 
 const memoria = () => {
   let v: string | null = null;
@@ -39,5 +39,24 @@ describe('cola sin señal del repartidor (C-COLA-SIN-RED)', () => {
   it('un almacén roto no tumba la app', async () => {
     const cola = crearCola({ leer: async () => '{no es json', escribir: async () => undefined });
     expect(await cola.listar()).toEqual([]);
+  });
+  it('C-COLA-ERROR-PASAJERO: un error pasajero del servidor NO bota la entrega: se reintenta', async () => {
+    const cola = crearCola(memoria());
+    await cola.agregar({ ruta: '/datos/x/entregado', tipo: 'foto', cuerpo: 'data:x' });
+    let respuesta = 500;
+    const enviar = async () => {
+      if (respuesta !== 200) throw new ErrorApi('Algo salió mal de nuestro lado.', respuesta);
+    };
+    for (const e of [500, 502, 503, 429, 408]) {
+      respuesta = e;
+      const r = await cola.reintentar(enviar);
+      expect(r.rechazados).toEqual([]);
+      expect(await cola.listar()).toHaveLength(1); // la foto sigue guardada
+    }
+    respuesta = 200;
+    expect((await cola.reintentar(enviar)).enviados).toHaveLength(1);
+    expect(await cola.listar()).toHaveLength(0);
+    expect(sePuedeReintentar(new ErrorApi('x', 503))).toBe(true);
+    expect(sePuedeReintentar(new ErrorApi('x', 409))).toBe(false);
   });
 });

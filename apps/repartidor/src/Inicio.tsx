@@ -34,7 +34,7 @@ import {
   type OpcionElegida,
   type Pendiente,
   crearCola,
-  esFalloDeRed,
+  sePuedeReintentar,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { MisDatos } from './MisDatos';
@@ -541,9 +541,12 @@ export function Inicio() {
       lector.readAsDataURL(blob);
     });
 
-  /** Si no hay señal, la entrega se guarda en la cola y se avisa; si es otro error, se muestra. */
+  /**
+   * Sin señal o con un error pasajero del servidor, la entrega se guarda en la cola y se reintenta
+   * sola (C-COLA-ERROR-PASAJERO); si el servidor la rechaza de verdad, se muestra el motivo.
+   */
   async function guardarSiSinSenal(x: unknown, p: Omit<Pendiente, 'id' | 'creadoEn'>) {
-    if (!esFalloDeRed(x)) return false;
+    if (!sePuedeReintentar(x)) return false;
     await cola.agregar(p);
     setPendientes(await cola.listar()); // la tarjeta «Pendiente de confirmar» lo explica
     return true;

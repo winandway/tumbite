@@ -1404,6 +1404,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `apps/servidor/src/flex/cobros.test.ts` (la página del Banco Central siempre simulada), `flexCobro.test.ts`, y la caja en `PantallasRutas.test.tsx`; comprobada en rojo.
 - **No tocar:** las pruebas nunca llaman a la página real; Divoox no cambia dinero, solo muestra la equivalencia.
 
+## C-COLA-ERROR-PASAJERO · Un error pasajero del servidor no bota una entrega (28 oct 2026)
+
+- **Qué se vio:** en la verificación de producción del recorrido, el repartidor entregó sin señal; al volver la red el servidor respondió 500 una vez y la app SACÓ la entrega de la cola (la trataba como rechazo): la foto se perdió y el pedido se quedó «en camino». Se encontró leyendo el rastro de red de la corrida.
+- **Arreglo:** `sePuedeReintentar` en `packages/compartido/src/colaEntrega.ts` (sin red, 5xx, 429 y 408 se quedan y se reintentan). Lo usan la cola de comida (`apps/repartidor/src/Inicio.tsx`, también en el primer intento) y la de las rutas de paquetes (`apps/repartidor/src/flex/MiRuta.tsx`). Solo un rechazo de verdad (409, 422…) sale de la cola con su motivo.
+- **Causa del 500:** no quedó registro; desde ahora la verificación en la nube muestra los errores del servidor (`playwright.recorrido.config.ts`).
+- **Prueba:** `colaEntrega.test.ts`, comprobada en rojo antes del arreglo.
+
 ## C-ENTREGA-REINTENTO · Reintentar «entregado» no da error ni paga dos veces (28 oct 2026)
 
 - **Qué se rompió y cómo se vio:** en el recorrido del sitio de pruebas, la respuesta de «entregado» se perdió en el camino; la app reintentó y el servidor contestó «Este pedido no está en camino contigo» (409) aunque el pedido YA estaba entregado. Con mala señal (Venezuela) el repartidor vería un error en la puerta. Se encontró leyendo el rastro de red del recorrido.

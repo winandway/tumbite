@@ -32,6 +32,7 @@ import {
   formatearMonto,
   leerCodigoEscaneado,
   pruebasFaltantes,
+  sePuedeReintentar,
   validarCobro,
 } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
@@ -323,7 +324,8 @@ export function MiRuta({
         await api.pedir('POST', a.ruta, cuerpo, { cabeceras: { 'idempotency-key': a.id } });
         return { ok: true } as const;
       } catch (x) {
-        const sinRed = x instanceof ErrorApi && x.estado === 0;
+        // C-COLA-ERROR-PASAJERO: sin red o con un error pasajero del servidor, la acción se queda.
+        const sinRed = sePuedeReintentar(x);
         return { ok: false, sinRed, error: x instanceof Error ? x.message : String(x) } as const;
       }
     },

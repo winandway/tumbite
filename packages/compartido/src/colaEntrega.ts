@@ -22,6 +22,15 @@ export type AlmacenCola = {
 /** Sin respuesta del servidor (la app marca estado 0 cuando no hay red). */
 export const esFalloDeRed = (x: unknown) => x instanceof ErrorApi && x.estado === 0;
 
+/**
+ * C-COLA-ERROR-PASAJERO (28 oct 2026, visto en el recorrido de producción): sin red, un error del
+ * servidor (5xx), «demasiados intentos» (429) o «se agotó el tiempo» (408) son pasajeros: la entrega
+ * se queda guardada y se reintenta. Antes un 500 la botaba de la cola y la foto se perdía.
+ */
+export const sePuedeReintentar = (x: unknown) =>
+  x instanceof ErrorApi &&
+  (x.estado === 0 || x.estado >= 500 || x.estado === 429 || x.estado === 408);
+
 export function crearCola(almacen: AlmacenCola) {
   async function listar(): Promise<Pendiente[]> {
     try {
@@ -47,8 +56,8 @@ export function crearCola(almacen: AlmacenCola) {
       await guardar((await listar()).filter((p) => p.id !== id));
     },
     /**
-     * Manda lo pendiente en orden. Si sigue sin red se detiene y lo deja para el próximo intento;
-     * si el servidor lo rechaza, lo saca de la cola y devuelve el motivo.
+     * Manda lo pendiente en orden. Sin red o con un error pasajero se detiene y lo deja para el
+     * próximo intento; si el servidor lo rechaza de verdad (409, 422…), lo saca y devuelve el motivo.
      */
     async reintentar(enviar: (p: Pendiente) => Promise<void>) {
       const enviados: Pendiente[] = [];
@@ -59,7 +68,7 @@ export function crearCola(almacen: AlmacenCola) {
           enviados.push(p);
           await this.quitar(p.id);
         } catch (x) {
-          if (esFalloDeRed(x)) break;
+          if (sePuedeReintentar(x)) break;
           rechazados.push({ pendiente: p, error: x instanceof Error ? x.message : String(x) });
           await this.quitar(p.id);
         }

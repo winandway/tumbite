@@ -29,7 +29,9 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 120_000,
       stdout: 'ignore',
-      stderr: 'ignore',
+      // En la nube los errores del servidor salen en el registro de la corrida (para investigar un
+      // fallo como el 500 del 28 oct 2026, que no dejó rastro); en la computadora, en silencio.
+      stderr: process.env.CI ? 'pipe' : 'ignore',
     },
   ],
 });
