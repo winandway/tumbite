@@ -9,6 +9,8 @@ import { conciliarRetiros, pedirRetiro, procesarRetiro, retirosActivos } from '.
 import { conciliar } from '../conciliacion';
 import { cancelarConReembolso } from '../manager';
 import { entornoDeHost } from '@tumbite/compartido';
+import { entornoDe } from '../entorno';
+import { serviciosImplementados } from '../esquema';
 import {
   esEntregaRepetida,
   estadoInicial,
@@ -584,12 +586,18 @@ diagnostico.post('/interno/diagnostico/f1', async (c) => {
   const impl = await db
     .prepare('SELECT servicio_id FROM servicios_implementados ORDER BY servicio_id')
     .all<{ servicio_id: string }>();
+  // C-MOTO-SOLO-PRUEBAS: en el sitio de pruebas también está lo que se construye (Moto).
+  const entorno = entornoDe(c.req.url);
+  const esperados = [...serviciosImplementados(entorno).keys()].sort();
   casos.push({
-    nombre: 'solo Comida está implementada',
-    ok: impl.results.map((r) => r.servicio_id).join(',') === 'comida',
+    nombre: `solo está implementado: ${esperados.join(', ')}`,
+    ok: impl.results.map((r) => r.servicio_id).join(',') === esperados.join(','),
   });
-  casos.push({ nombre: 'la salud del catálogo dice ok', ok: (await saludServicios(db)) === 'ok' });
-  for (const id of ['moto', 'carro'])
+  casos.push({
+    nombre: 'la salud del catálogo dice ok',
+    ok: (await saludServicios(db, entorno)) === 'ok',
+  });
+  for (const id of ['moto', 'carro'].filter((x) => !esperados.includes(x)))
     casos.push({
       nombre: `la base no deja encender ${id} (ni en una ciudad)`,
       ok:
@@ -608,7 +616,8 @@ diagnostico.post('/interno/diagnostico/f1', async (c) => {
   const estadoMoto = await db
     .prepare("SELECT estado FROM servicios WHERE id = 'moto'")
     .first<{ estado: string }>();
-  casos.push({ nombre: 'Moto sigue «próximamente»', ok: estadoMoto?.estado === 'proximamente' });
+  if (!esperados.includes('moto'))
+    casos.push({ nombre: 'Moto sigue «próximamente»', ok: estadoMoto?.estado === 'proximamente' });
   await db.batch([
     db
       .prepare(

@@ -609,7 +609,8 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-inicio');
     // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
     // «en construcción» (nunca una ventana encima), el buscador es real y la campana también.
-    await cli.getByTestId('servicio-moto').click();
+    // Carro: sigue bloqueado en todas partes (Moto ya se enciende en pruebas, C-MOTO-SOLO-PRUEBAS).
+    await cli.getByTestId('servicio-carro').click();
     await expect(cli.getByTestId('franja-estado')).toBeVisible({ timeout: 20_000 });
     await expect(
       cli.getByText(/Estamos construyendo este servicio|We’re building this service/),
