@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   type TarifaViaje,
+  cargoCancelacionViaje,
   cargoEspera,
   cotizarViaje,
   esquemaCotizarViaje,
@@ -141,5 +142,22 @@ describe('ruta estimada y espera', () => {
     expect(
       esquemaCotizarViaje.safeParse({ servicio: 'comida', origen: p, destino: p }).success,
     ).toBe(false);
+  });
+});
+
+describe('cancelación del pasajero', () => {
+  const x = t({ cancelacionGratisS: 120, cargoCancelacion: 150 });
+  it('gratis mientras se busca conductor', () => {
+    expect(cargoCancelacionViaje(x, 'buscando', null)).toBe(0);
+    expect(cargoCancelacionViaje(x, 'pago_pendiente', null)).toBe(0);
+  });
+  it('la ventana gratis cuenta desde la asignación del conductor', () => {
+    expect(cargoCancelacionViaje(x, 'asignado', 120)).toBe(0);
+    expect(cargoCancelacionViaje(x, 'asignado', 121)).toBe(150);
+    expect(cargoCancelacionViaje(x, 'conductor_llego', 600)).toBe(150);
+  });
+  it('un viaje en curso o terminado no se cancela desde la app', () => {
+    expect(cargoCancelacionViaje(x, 'en_curso', 10)).toBeNull();
+    expect(cargoCancelacionViaje(x, 'terminado', 10)).toBeNull();
   });
 });

@@ -73,6 +73,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['cotizaciones_viaje', 'tarifa_json', "TEXT NOT NULL DEFAULT '{}'"],
   // C-VIAJE-PASOS-REALES: tope de intentos del código de inicio del viaje.
   ['viajes', 'intentos_pin', 'INTEGER NOT NULL DEFAULT 0'],
+  // Divoox Moto · M2: con qué paga el pasajero y de qué cotización salió el viaje.
+  ['viajes', 'metodo_pago', "TEXT NOT NULL DEFAULT 'efectivo'"],
+  ['viajes', 'cotizacion_id', 'TEXT'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],

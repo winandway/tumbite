@@ -1328,3 +1328,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo (`apps/servidor/src/rutas/viajes.ts`):** «Llegué» exige ubicación del conductor de menos de 2 minutos y a 200 m o menos del punto de recogida; «No se presentó» exige que haya pasado la espera gratis de la tarifa copiada en la cotización (300 s si no hay); el código admite 5 intentos (`viajes.intentos_pin`) y después responde 429.
 - **Prueba:** `fase3.test.ts` («C-VIAJE-PASOS-REALES»), tres casos comprobados en rojo quitando el arreglo.
 - **No tocar:** no quitar ninguna de las tres condiciones para «que la app no se trabe»; si el GPS falla, la salida es soporte, no saltarse la regla.
+
+## C-VIAJE-PEDIR-CANCELAR · Pedir con cotización de un solo uso y cancelar con la regla del mercado (28 oct 2026)
+
+- **Pedir (`POST /datos/viajes`):** solo con una cotización vigente del mismo pasajero. En un solo lote se marca usada y nacen la operación y el viaje con su código de 4 dígitos; repetir el pedido devuelve el mismo viaje; un pasajero tiene un solo viaje activo a la vez. Al pedir se busca conductor de una vez. M2 es solo efectivo (la tarjeta llega en M7).
+- **Cancelar (`POST /datos/viajes/:id/cancelar`):** gratis mientras se busca; con conductor, gratis durante la ventana de la tarifa contada desde la asignación; después, el cargo. Un viaje en curso no se cancela desde la app. En efectivo, el cargo y el de «no se presentó» quedan en `deudas_pasajero` (uno por viaje y motivo) para el próximo viaje.
+- **Sin conductor:** a los 10 minutos buscando (desde la última vez que volvió a buscar) el reloj lo cierra como «sin conductor».
+- **Prueba:** `rutas/viajesPasajero.test.ts` (M2), con el pedido único y la deuda comprobados en rojo.
+- **No tocar:** el cargo sale de la copia de la tarifa en la cotización, nunca de la tarifa vigente ni de la app.

@@ -1282,6 +1282,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pin_recogida",
     "liberaciones",
     "intentos_pin",
+    "metodo_pago",
+    "cotizacion_id",
     "distancia_m_real",
     "asignado_en"
   ],
@@ -1559,5 +1561,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usada_en",
     "operacion_id",
     "creado_en"
+  ],
+  "deudas_pasajero": [
+    "id",
+    "cliente_id",
+    "operacion_id",
+    "motivo",
+    "monto",
+    "moneda",
+    "estado",
+    "creado_en",
+    "resuelta_en"
   ]
 };

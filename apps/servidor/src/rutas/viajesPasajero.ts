@@ -6,6 +6,7 @@ import {
   SERVICIOS_VIAJE,
   type TarifaViaje,
   VIGENCIA_COTIZACION_S,
+  cargoCancelacionViaje,
   cotizarViaje,
   esquemaCotizarViaje,
   esquemaTarifaViaje,
@@ -13,7 +14,8 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { type Variables, base, exigir } from '../sesion';
+import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
+import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
@@ -270,4 +272,259 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     dePrueba: fila.de_prueba === 1,
   };
   return c.json({ cotizacion }, 201);
+});
+
+// ---------------------------------------------------------------- M2: pedir, ver y cancelar
+
+/** El código de 4 dígitos que el pasajero le dice al conductor para empezar. */
+function pinNuevo(): string {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+  return String(n % 10_000).padStart(4, '0');
+}
+
+function claveDe(c: Ctx, accion: string, id: string): string {
+  const k = c.req.header('idempotency-key') ?? '';
+  if (!/^[A-Za-z0-9_-]{8,80}$/.test(k))
+    throw new ErrorDatos('Falta la clave de la solicitud. Actualiza la app.', undefined, 400);
+  return `${accion}:${id}:${k}`;
+}
+
+const ESTADOS_ACTIVOS = "('pago_pendiente', 'buscando', 'asignada', 'en_curso')";
+
+/**
+ * Pedir el viaje con una cotización vigente. La cotización es de un solo uso: el mismo pedido
+ * repetido (doble toque, respuesta perdida) devuelve el mismo viaje. Todo en un solo lote: la
+ * cotización se marca usada, nacen la operación y el viaje, o no pasa nada.
+ * M2: efectivo (el conductor cobra en mano). La tarjeta llega con el dinero (M7).
+ */
+viajesPasajero.post('/viajes', async (c) => {
+  const u = exigir(c, 'cliente');
+  const db = base(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({ cotizacionId: z.string().min(8).max(64), metodoPago: z.literal('efectivo') }),
+  );
+  const cot = await db
+    .prepare(
+      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, vence_en > datetime('now') AS vigente
+         FROM cotizaciones_viaje WHERE id = ? AND cliente_id = ?`,
+    )
+    .bind(d.cotizacionId, u.id)
+    .first<{
+      id: string;
+      servicio_id: string;
+      zona_id: string;
+      usada_en: string | null;
+      operacion_id: string | null;
+      vigente: number;
+    }>();
+  if (!cot) throw new ErrorDatos('Esa cotización no existe.', 'cotizacionId', 404);
+  if (cot.usada_en && cot.operacion_id) return c.json({ viaje: { id: cot.operacion_id } });
+  if (!cot.vigente)
+    throw new ErrorDatos('El precio venció. Vuelve a cotizar el viaje.', 'cotizacionId', 409);
+  if ((await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id)) !== 'disponible')
+    throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
+  const op = nuevoId();
+  const r = await db.batch([
+    db
+      .prepare(
+        `UPDATE cotizaciones_viaje SET usada_en = datetime('now'), operacion_id = ?1
+          WHERE id = ?2 AND cliente_id = ?3 AND usada_en IS NULL AND vence_en > datetime('now')
+            AND NOT EXISTS (SELECT 1 FROM operaciones o WHERE o.cliente_id = ?3
+                             AND o.tipo_operacion = 'viaje_pasajero' AND o.estado_general IN ${ESTADOS_ACTIVOS})`,
+      )
+      .bind(op, cot.id, u.id),
+    db
+      .prepare(
+        `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, ultima_clave)
+         SELECT ?1, servicio_id, 'viaje_pasajero', cliente_id, zona_id, 'buscando', ?3
+           FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
+      )
+      .bind(op, cot.id, `pedir:${cot.id}`),
+    db
+      .prepare(
+        `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
+           origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
+           pasajeros, pin_recogida, metodo_pago, cotizacion_id)
+         SELECT ?1, 'buscando', 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
+                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id
+           FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
+      )
+      .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago),
+  ]);
+  if (!r[0]?.meta.changes) {
+    const otra = await db
+      .prepare('SELECT operacion_id FROM cotizaciones_viaje WHERE id = ? AND usada_en IS NOT NULL')
+      .bind(cot.id)
+      .first<{ operacion_id: string }>();
+    if (otra) return c.json({ viaje: { id: otra.operacion_id } });
+    throw new ErrorDatos('Ya tienes un viaje en curso.', undefined, 409);
+  }
+  // Se busca conductor de una vez, sin esperar la vuelta del reloj (M3 afina el despacho).
+  await repartirOperaciones(c.env, db).catch((e: unknown) =>
+    console.error('viajes: despacho al pedir', e),
+  );
+  return c.json({ viaje: { id: op } }, 201);
+});
+
+type FilaViajeCliente = {
+  id: string;
+  servicio_id: string;
+  estado: string;
+  pin_recogida: string;
+  metodo_pago: string;
+  origen_direccion: string;
+  destino_direccion: string;
+  origen_lat: number;
+  origen_lng: number;
+  destino_lat: number;
+  destino_lng: number;
+  segundos_asignado: number | null;
+  total: number | null;
+  moneda: string | null;
+  tarifa_json: string | null;
+  conductor_nombre: string | null;
+  conductor_lat: number | null;
+  conductor_lng: number | null;
+  marca: string | null;
+  modelo: string | null;
+  color: string | null;
+  placa: string | null;
+};
+
+async function viajeDelCliente(db: D1Database, clienteId: string, id: string | null) {
+  return db
+    .prepare(
+      `SELECT o.id, o.servicio_id, v.estado, v.pin_recogida, v.metodo_pago, v.origen_direccion,
+              v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
+              CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
+              q.total, q.moneda, q.tarifa_json,
+              u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
+              h.marca, h.modelo, h.color, h.placa
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN usuarios u ON u.id = o.conductor_id
+         LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
+         LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
+        WHERE o.cliente_id = ?1 AND o.tipo_operacion = 'viaje_pasajero'
+          AND (?2 IS NULL AND o.estado_general IN ${ESTADOS_ACTIVOS} OR o.id = ?2)
+        ORDER BY o.creado_en DESC LIMIT 1`,
+    )
+    .bind(clienteId, id)
+    .first<FilaViajeCliente>();
+}
+
+function tarifaDeCopia(json: string | null) {
+  try {
+    return esquemaTarifaViaje.parse(JSON.parse(json ?? '{}'));
+  } catch {
+    return null;
+  }
+}
+
+function viajePublico(f: FilaViajeCliente) {
+  const t = tarifaDeCopia(f.tarifa_json);
+  const cargo = t ? cargoCancelacionViaje(t, f.estado, f.segundos_asignado) : null;
+  const conConductor = ['asignado', 'conductor_llego', 'en_curso'].includes(f.estado);
+  return {
+    id: f.id,
+    servicio: f.servicio_id,
+    estado: f.estado,
+    // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
+    pin: ['buscando', 'asignado', 'conductor_llego'].includes(f.estado) ? f.pin_recogida : null,
+    metodoPago: f.metodo_pago,
+    origen: { direccion: f.origen_direccion, lat: f.origen_lat, lng: f.origen_lng },
+    destino: { direccion: f.destino_direccion, lat: f.destino_lat, lng: f.destino_lng },
+    total: f.total,
+    moneda: f.moneda,
+    conductor:
+      conConductor && f.conductor_nombre
+        ? {
+            nombre: f.conductor_nombre.split(' ')[0] ?? '',
+            ubicacion:
+              f.conductor_lat != null && f.conductor_lng != null
+                ? { lat: f.conductor_lat, lng: f.conductor_lng }
+                : null,
+            vehiculo: { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa },
+          }
+        : null,
+    cancelacion:
+      cargo === null
+        ? null
+        : {
+            cargo,
+            gratisPorS:
+              t && cargo === 0 && f.segundos_asignado != null
+                ? Math.max(0, t.cancelacionGratisS - f.segundos_asignado)
+                : null,
+          },
+  };
+}
+
+viajesPasajero.get('/viajes/actual', async (c) => {
+  const u = exigir(c, 'cliente');
+  const db = base(c);
+  const f = await viajeDelCliente(db, u.id, null);
+  const deuda = await db
+    .prepare(
+      "SELECT COALESCE(SUM(monto), 0) AS monto, MAX(moneda) AS moneda FROM deudas_pasajero WHERE cliente_id = ? AND estado = 'pendiente'",
+    )
+    .bind(u.id)
+    .first<{ monto: number; moneda: string | null }>();
+  return c.json({
+    viaje: f ? viajePublico(f) : null,
+    deudaPendiente: deuda?.monto ? { monto: deuda.monto, moneda: deuda.moneda } : null,
+  });
+});
+
+viajesPasajero.get('/viajes/:id', async (c) => {
+  const u = exigir(c, 'cliente');
+  const f = await viajeDelCliente(base(c), u.id, c.req.param('id'));
+  if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  return c.json({ viaje: viajePublico(f) });
+});
+
+/**
+ * El pasajero cancela. Gratis mientras se busca conductor y en la ventana desde la asignación;
+ * después, el cargo de la tarifa copiada en la cotización. En efectivo, el cargo queda como deuda
+ * para su próximo viaje (no se cobra en el momento).
+ */
+viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
+  const u = exigir(c, 'cliente');
+  const db = base(c);
+  const id = c.req.param('id');
+  const clave = claveDe(c, 'cancelar-cliente', id);
+  const f = await viajeDelCliente(db, u.id, id);
+  if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  if (f.estado === 'cancelado') return c.json({ ok: true, cargo: 0 }); // reintento
+  const t = tarifaDeCopia(f.tarifa_json);
+  const cargo = cargoCancelacionViaje(
+    t ?? { cancelacionGratisS: 0, cargoCancelacion: 0 },
+    f.estado,
+    f.segundos_asignado,
+  );
+  if (cargo === null)
+    throw new ErrorDatos(
+      'El viaje ya empezó: ya no se puede cancelar desde la app.',
+      undefined,
+      409,
+    );
+  const ok = await cambiarEstadoViaje(db, {
+    operacionId: id,
+    desde: f.estado,
+    hacia: 'cancelado',
+    actor: 'cliente',
+    actorId: u.id,
+    clave,
+    motivo: 'cancelado_por_pasajero',
+  });
+  if (!ok) throw new ErrorDatos('El viaje cambió. Actualiza la pantalla.', undefined, 409);
+  if (cargo > 0 && f.moneda)
+    await db
+      .prepare(
+        "INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda) VALUES (?, ?, ?, 'cancelacion', ?, ?)",
+      )
+      .bind(nuevoId(), u.id, id, cargo, f.moneda)
+      .run();
+  return c.json({ ok: true, cargo });
 });

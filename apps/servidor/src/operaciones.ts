@@ -23,6 +23,8 @@ export type ResultadoAceptar =
 export const SEGUNDOS_OFERTA_OPERACION = 30;
 /** Sin ubicación por este tiempo, un viaje asignado (sin iniciar) vuelve a buscar conductor. */
 export const MINUTOS_SIN_SENAL = 5;
+/** Cuánto busca conductor un viaje antes de cerrarse como «sin conductor» (M2). */
+export const MINUTOS_SIN_CONDUCTOR = 10;
 /** Ubicación más vieja que esto no cuenta para ofrecer. */
 const MINUTOS_UBICACION_VIGENTE = 2;
 const KM_MAXIMO_OFERTA = 15;
@@ -240,6 +242,29 @@ export async function repartirOperaciones(
     });
     if (ok) liberados++;
   }
+  // M2: un viaje que lleva demasiado buscando (desde que empezó a buscar, también tras una
+  // liberación) se cierra como «sin conductor» y el pasajero lo ve en vez de esperar para siempre.
+  const { results: vencidos } = await db
+    .prepare(
+      `SELECT o.id FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+        WHERE o.estado_general = 'buscando' AND v.estado = 'buscando'
+          AND COALESCE((SELECT MAX(e.creado_en) FROM eventos_operacion e
+                         WHERE e.operacion_id = o.id AND e.estado_nuevo = 'buscando'), o.creado_en)
+              < datetime('now', ?)
+        LIMIT 50`,
+    )
+    .bind(`-${MINUTOS_SIN_CONDUCTOR} minutes`)
+    .all<{ id: string }>();
+  for (const v of vencidos)
+    await cambiarEstadoViaje(db, {
+      operacionId: v.id,
+      desde: 'buscando',
+      hacia: 'sin_conductor',
+      actor: 'sistema',
+      actorId: null,
+      clave: `sin-conductor:${v.id}`,
+      motivo: 'sin_conductor',
+    });
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng FROM operaciones o

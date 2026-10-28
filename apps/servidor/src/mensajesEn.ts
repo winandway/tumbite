@@ -1050,6 +1050,18 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Divoox Moto · M1 (cotización de viajes).
+  ['Esa cotización no existe.', 'That quote doesn’t exist.'],
+  [
+    'El precio venció. Vuelve a cotizar el viaje.',
+    'The price expired. Get a new quote for the ride.',
+  ],
+  ['Ya tienes un viaje en curso.', 'You already have a ride in progress.'],
+  ['Ese viaje no existe.', 'That ride doesn’t exist.'],
+  [
+    'El viaje ya empezó: ya no se puede cancelar desde la app.',
+    'The ride has started and can’t be canceled from the app.',
+  ],
+  ['El viaje cambió. Actualiza la pantalla.', 'The ride changed. Refresh the screen.'],
   [
     'Todavía no estás en el punto de recogida. Acércate y vuelve a intentarlo.',
     'You’re not at the pickup point yet. Get closer and try again.',

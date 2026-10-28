@@ -161,3 +161,19 @@ export type CotizacionViaje = {
   /** La tarifa es de prueba (sitio de pruebas): no es un precio comercial aprobado. */
   dePrueba: boolean;
 };
+
+/**
+ * Lo que paga el pasajero si cancela ahora (estándar del mercado, verificado con REA en Namma
+ * Yatri): gratis mientras se busca conductor; con conductor asignado, gratis durante la ventana de
+ * la tarifa contada DESDE LA ASIGNACIÓN; después, el cargo de cancelación. Un viaje en curso no se
+ * cancela desde la app (null).
+ */
+export function cargoCancelacionViaje(
+  t: Pick<TarifaViaje, 'cancelacionGratisS' | 'cargoCancelacion'>,
+  estado: string,
+  segundosDesdeAsignacion: number | null,
+): number | null {
+  if (estado === 'pago_pendiente' || estado === 'buscando') return 0;
+  if (estado !== 'asignado' && estado !== 'conductor_llego') return null;
+  return (segundosDesdeAsignacion ?? 0) <= t.cancelacionGratisS ? 0 : t.cargoCancelacion;
+}

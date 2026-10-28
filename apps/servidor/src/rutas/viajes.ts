@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { nuevoId } from '../cripto';
 import { aceptarOperacion, cambiarEstadoViaje, liberarViaje } from '../operaciones';
 import { RADIO_LLEGADA_M, llego } from '@tumbite/compartido';
 
@@ -239,6 +240,18 @@ viajes.post(
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 409);
     }
+    // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
+    // deuda para su próximo viaje (una sola por viaje).
+    if (nombre === 'no-se-presento')
+      await db
+        .prepare(
+          `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda)
+           SELECT ?, o.cliente_id, o.id, 'no_se_presento', json_extract(q.tarifa_json, '$.cargoNoSePresento'), q.moneda
+             FROM operaciones o JOIN cotizaciones_viaje q ON q.operacion_id = o.id
+            WHERE o.id = ? AND json_extract(q.tarifa_json, '$.cargoNoSePresento') > 0`,
+        )
+        .bind(nuevoId(), id)
+        .run();
     return c.json({ ok: true, estado: paso.hacia });
   },
 );

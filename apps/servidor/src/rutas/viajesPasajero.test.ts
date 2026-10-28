@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
+import { conductorDeMoto } from '../pruebas/conductorMoto';
+import { repartirOperaciones } from '../operaciones';
 
 /**
  * Divoox Moto · Fase M1. Candados C-MOTO-SOLO-PRUEBAS (Moto se enciende solo en el sitio de
@@ -230,5 +232,227 @@ describe('C-VIAJE-PRECIO-FIJO: cotización del pasajero', () => {
         })
       ).estado,
     ).toBe(401);
+  });
+});
+
+describe('M2: pedir, ver y cancelar un viaje (efectivo)', () => {
+  const T2 = { ...TARIFA, cancelacionGratisS: 120, cargoCancelacion: 150, cargoNoSePresento: 200 };
+  async function listo() {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e, T2);
+    return e;
+  }
+  const q = (e: Awaited<ReturnType<typeof escenario>>, sql: string, ...v: unknown[]) =>
+    e.m.DB.prepare(sql)
+      .bind(...v)
+      .run();
+  const uno = <T>(e: Awaited<ReturnType<typeof escenario>>, sql: string, ...v: unknown[]) =>
+    e.m.DB.prepare(sql)
+      .bind(...v)
+      .first<T>();
+  async function pedir(e: Awaited<ReturnType<typeof escenario>>, token = e.cliente.token) {
+    const c = (await cotizar(e, {}, token)).datos.cotizacion;
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: c.id, metodoPago: 'efectivo' },
+      token,
+    );
+    return { cot: c, r, id: r.datos.viaje?.id as string };
+  }
+  let k = 0;
+  const cancelar = (
+    e: Awaited<ReturnType<typeof escenario>>,
+    id: string,
+    token = e.cliente.token,
+  ) =>
+    e.m.crudo(`/datos/viajes/${id}/cancelar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+        'idempotency-key': `cancelar-${++k}-cliente`,
+      },
+      body: '{}',
+    });
+
+  it('pedir crea el viaje buscando con su código; repetir no crea otro; uno a la vez', async () => {
+    const e = await listo();
+    const { cot, r, id } = await pedir(e);
+    expect(r.estado).toBe(201);
+    const otra = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: cot.id, metodoPago: 'efectivo' },
+      e.cliente.token,
+    );
+    expect(otra.estado).toBe(200);
+    expect(otra.datos.viaje.id).toBe(id);
+    const act = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje;
+    expect(act).toMatchObject({
+      id,
+      estado: 'buscando',
+      total: cot.total,
+      metodoPago: 'efectivo',
+      conductor: null,
+    });
+    expect(act.pin).toMatch(/^\d{4}$/);
+    expect(act.cancelacion).toEqual({ cargo: 0, gratisPorS: null });
+    // Con un viaje activo no se pide otro.
+    expect((await pedir(e)).r.estado).toBe(409);
+    expect(
+      await uno(
+        e,
+        "SELECT COUNT(*) AS n FROM operaciones WHERE cliente_id = ? AND tipo_operacion = 'viaje_pasajero'",
+        e.cliente.id,
+      ),
+    ).toEqual({ n: 1 });
+  });
+
+  it('una cotización vencida o de otro pasajero no sirve', async () => {
+    const e = await listo();
+    const c = (await cotizar(e)).datos.cotizacion;
+    const otro = await e.m.cuenta('cliente', 'Otro');
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          '/datos/viajes',
+          { cotizacionId: c.id, metodoPago: 'efectivo' },
+          otro.token,
+        )
+      ).estado,
+    ).toBe(404);
+    await q(
+      e,
+      "UPDATE cotizaciones_viaje SET vence_en = datetime('now', '-1 second') WHERE id = ?",
+      c.id,
+    );
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          '/datos/viajes',
+          { cotizacionId: c.id, metodoPago: 'efectivo' },
+          e.cliente.token,
+        )
+      ).estado,
+    ).toBe(409);
+  });
+
+  it('cancelar mientras se busca es gratis y no deja deuda', async () => {
+    const e = await listo();
+    const { id } = await pedir(e);
+    const r = await cancelar(e, id);
+    expect(r.status).toBe(200);
+    expect(await r.json()).toMatchObject({ ok: true, cargo: 0 });
+    expect(await uno(e, 'SELECT estado_general FROM operaciones WHERE id = ?', id)).toEqual({
+      estado_general: 'cancelada',
+    });
+    expect(await uno(e, 'SELECT COUNT(*) AS n FROM deudas_pasajero')).toEqual({ n: 0 });
+  });
+
+  it('con conductor: gratis en la ventana desde la asignación; después, el cargo queda como deuda', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const { id } = await pedir(e);
+    // Pedir busca conductor al instante: la oferta ya está.
+    expect(
+      await uno(
+        e,
+        'SELECT estado FROM ofertas_operacion WHERE operacion_id = ? AND conductor_id = ?',
+        id,
+        cond.id,
+      ),
+    ).toEqual({ estado: 'ofrecida' });
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    const act = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje;
+    expect(act.estado).toBe('asignado');
+    expect(act.conductor).toMatchObject({
+      nombre: 'Conductor',
+      vehiculo: { marca: 'Yamaha', modelo: 'NMAX', color: 'Negro' },
+    });
+    expect(act.cancelacion.cargo).toBe(0);
+    expect(act.cancelacion.gratisPorS).toBeGreaterThan(100);
+    await q(
+      e,
+      "UPDATE viajes SET asignado_en = datetime('now', '-200 seconds') WHERE operacion_id = ?",
+      id,
+    );
+    const r = await cancelar(e, id);
+    expect(await r.json()).toMatchObject({ ok: true, cargo: 150 });
+    expect(
+      await uno(e, 'SELECT motivo, monto, estado FROM deudas_pasajero WHERE operacion_id = ?', id),
+    ).toEqual({ motivo: 'cancelacion', monto: 150, estado: 'pendiente' });
+    const luego = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token))
+      .datos;
+    expect(luego).toMatchObject({ viaje: null, deudaPendiente: { monto: 150, moneda: 'USD' } });
+    // El conductor quedó libre.
+    expect(
+      await uno(e, 'SELECT 1 AS x FROM conductor_ocupacion WHERE conductor_id = ?', cond.id),
+    ).toBeNull();
+  });
+
+  it('un viaje en curso no se cancela desde la app', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const { id } = await pedir(e);
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    expect((await cancelar(e, id)).status).toBe(409);
+    expect(
+      (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos.viaje.pin,
+    ).toBeNull();
+  });
+
+  it('«no se presentó» deja la deuda de la tarifa del viaje', async () => {
+    const e = await listo();
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    const { id } = await pedir(e);
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    await q(
+      e,
+      "UPDATE viajes SET llego_en = datetime('now', '-301 seconds') WHERE operacion_id = ?",
+      id,
+    );
+    expect(await cond.paso(id, 'no-se-presento')).toBe(200);
+    expect(
+      await uno(e, 'SELECT motivo, monto FROM deudas_pasajero WHERE operacion_id = ?', id),
+    ).toEqual({ motivo: 'no_se_presento', monto: 200 });
+  });
+
+  it('sin conductor en 10 minutos, el viaje se cierra como «sin conductor»', async () => {
+    const e = await listo();
+    const { id } = await pedir(e);
+    await q(
+      e,
+      "UPDATE operaciones SET creado_en = datetime('now', '-11 minutes') WHERE id = ?",
+      id,
+    );
+    await repartirOperaciones(undefined, e.m.DB);
+    expect(await uno(e, 'SELECT estado FROM viajes WHERE operacion_id = ?', id)).toEqual({
+      estado: 'sin_conductor',
+    });
+    expect(
+      (await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, e.cliente.token)).datos.viaje
+        .estado,
+    ).toBe('sin_conductor');
+  });
+
+  it('nadie más ve ni cancela mi viaje', async () => {
+    const e = await listo();
+    const { id } = await pedir(e);
+    const otro = await e.m.cuenta('cliente', 'Otro');
+    expect((await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, otro.token)).estado).toBe(
+      404,
+    );
+    expect((await cancelar(e, id, otro.token)).status).toBe(404);
   });
 });

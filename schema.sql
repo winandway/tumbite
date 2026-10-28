@@ -2082,6 +2082,8 @@ CREATE TABLE IF NOT EXISTS viajes (
   pin_recogida TEXT NOT NULL CHECK (length(pin_recogida) = 4),
   liberaciones INTEGER NOT NULL DEFAULT 0 CHECK (liberaciones >= 0),
   intentos_pin INTEGER NOT NULL DEFAULT 0,
+  metodo_pago TEXT NOT NULL DEFAULT 'efectivo',
+  cotizacion_id TEXT,
   distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
   asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
 );
@@ -2484,3 +2486,20 @@ CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(cliente_id, creado_en);
+
+-- Divoox Moto · M2 (28 oct 2026): lo que el pasajero debe por cancelar tarde o no presentarse en un
+-- viaje en efectivo. No se puede cobrar en el momento: se suma a su siguiente viaje (como Namma
+-- Yatri). Una sola deuda por viaje y motivo.
+CREATE TABLE IF NOT EXISTS deudas_pasajero (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('cancelacion', 'no_se_presento')),
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'cobrada', 'perdonada')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT,
+  UNIQUE (operacion_id, motivo)
+);
+CREATE INDEX IF NOT EXISTS deudas_pasajero_cliente ON deudas_pasajero(cliente_id, estado);
