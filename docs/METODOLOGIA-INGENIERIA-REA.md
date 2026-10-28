@@ -157,16 +157,17 @@ la prueba en staging y la guía pública si el público lo ve.
 
 Están en la rama `investigacion-rea`, sin fusionar todavía:
 
-| Ficha                                                             | Qué cubre                                                      |
-| ----------------------------------------------------------------- | -------------------------------------------------------------- |
-| `docs/investigaciones-rea/INVESTIGACION-REA.md`                   | Instalación de REA y primera prueba sobre nuestras apps        |
-| `docs/investigaciones-rea/EVIDENCIA-DOORDASH-FUENTES-PUBLICAS.md` | 52 fuentes públicas de DoorDash, cada dato etiquetado          |
-| `docs/investigaciones-rea/INVESTIGACION-DIRECTA-DOORDASH.md`      | Observación de la web del cliente de DoorDash, con 11 capturas |
-| `docs/ARQUITECTURA-REFERENCIA-DOORDASH.md`                        | Arquitectura, estados y flujos de referencia                   |
-| `docs/COMPARACION-TUMBITE-DOORDASH-REA.md`                        | Comparación de arquitectura con nuestro código                 |
-| `docs/DIAGRAMAS-REA-TUMBITE.md`                                   | Nuestros componentes, estados y secuencias, con evidencia      |
-| `docs/RESULTADOS-FALLOS-CRITICOS.md`                              | Los cinco fallos reproducidos en rojo y su cierre de seguridad |
-| `docs/PLAN-IMPLEMENTACION-REA-V2.md`                              | El plan de entregas vigente                                    |
+| Ficha                                                                                          | Qué cubre                                                      |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `docs/investigaciones-rea/INVESTIGACION-REA.md`                                                | Instalación de REA y primera prueba sobre nuestras apps        |
+| `docs/investigaciones-rea/EVIDENCIA-DOORDASH-FUENTES-PUBLICAS.md`                              | 52 fuentes públicas de DoorDash, cada dato etiquetado          |
+| `docs/investigaciones-rea/INVESTIGACION-DIRECTA-DOORDASH.md`                                   | Observación de la web del cliente de DoorDash, con 11 capturas |
+| `docs/ARQUITECTURA-REFERENCIA-DOORDASH.md`                                                     | Arquitectura, estados y flujos de referencia                   |
+| `docs/COMPARACION-TUMBITE-DOORDASH-REA.md`                                                     | Comparación de arquitectura con nuestro código                 |
+| `docs/DIAGRAMAS-REA-TUMBITE.md`                                                                | Nuestros componentes, estados y secuencias, con evidencia      |
+| `docs/RESULTADOS-FALLOS-CRITICOS.md`                                                           | Los cinco fallos reproducidos en rojo y su cierre de seguridad |
+| `docs/PLAN-IMPLEMENTACION-REA-V2.md`                                                           | El plan de entregas vigente                                    |
+| `docs/PLAN-MOTO-PASAJEROS.md` + `docs/investigaciones-rea/2026-10-28-moto-fuentes-publicas.md` | Moto de pasajeros: estándar del mercado, ley y plan M1-M10     |
 
 ## Metodología permanente (texto de Richard, 18 oct 2026)
 

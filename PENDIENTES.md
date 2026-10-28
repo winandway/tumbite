@@ -221,3 +221,21 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] Flex Fases 1 a 4 publicadas en producción (21702c4), verificador verde. Restaurar: etiqueta `restauracion-antes-flex-fase4-2026-10-28`.
 - [ ] Subir la versión nueva del Driver (build 32d18083, «Mi ruta» rediseñada) a Google Play en cuanto aprueben la revisión en curso.
 - [ ] 👤 Encender las recargas de empresa en producción (dinero real): orden de Richard y una compra real de 1 dólar.
+
+## Divoox Moto, pasajeros (28 oct 2026) — plan en docs/PLAN-MOTO-PASAJEROS.md
+
+- [ ] M1 Tarifa por ciudad y cotización con precio fijo firmado; bandera que enciende Moto solo en staging.
+- [ ] M2 Pedir viaje (efectivo y tarjeta de prueba), PIN, cancelación del pasajero y «sin conductor».
+- [ ] M3 Despacho al instante, uno a uno, con ganancia, recogida y destino en la oferta.
+- [ ] M4 App del Driver: oferta, viaje activo, espera, casco, PIN, terminar, no se presentó.
+- [ ] M5 App del cliente: pedir Moto, buscando, conductor asignado, seguimiento, PIN, recibo.
+- [ ] M6 Seguridad: emergencia, compartir viaje, lista de seguridad, casco, interruptores.
+- [ ] M7 Dinero: reserva y cobro de comisión del prepago, política de cancelaciones por servicio, espera por minuto, conciliación.
+- [ ] M8 Calificación de ambos lados y propina.
+- [ ] M9 Panel: tarifas, interruptores, viajes en curso, emergencias.
+- [ ] M10 Recorrido en staging, comparación con REA sobre nuestras apps, guías en Docs, informe.
+- [ ] 👤 Primer mercado de Moto y aprobación legal de ese país.
+- [ ] 👤 Aseguradora para el seguro de accidentes del pasajero.
+- [ ] 👤 Tarifas y comisión reales por ciudad (el sistema arranca con valores de prueba).
+- [ ] 👤 Orden de encender Moto en producción.
+- [ ] Subir la versión 7 del Driver (Mi ruta de Flex) en cuanto Google apruebe la revisión en curso.
