@@ -311,6 +311,9 @@ export const COLUMNAS_CSV: Record<string, readonly string[]> = {
   correo: ['correo', 'email', 'e-mail'],
   documento: ['cedula', 'cédula', 'rif', 'documento', 'id_number'],
   referencias: ['referencias', 'punto_referencia', 'punto de referencia', 'landmark'],
+  // Fase 6 (C-FLEX-COBRO): cobro contra entrega («25.00» y su moneda, USD o VES).
+  cobro: ['cobro', 'cobrar', 'cobro_contra_entrega', 'cod', 'cash_on_delivery'],
+  moneda_cobro: ['moneda', 'moneda_cobro', 'currency'],
   direccion: ['direccion', 'dirección', 'address'],
   lat: ['lat', 'latitud', 'latitude'],
   lng: ['lng', 'lon', 'longitud', 'longitude'],

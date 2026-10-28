@@ -8,7 +8,7 @@ import { type Variables, base } from '../sesion';
 import { paisDeEmpresa, vincularDestinatarios } from './ubicacion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { actorDeEmpresa, exigirPermiso, nuevoIdFlex, sentenciaAuditoria } from './autorizacion';
-import { esquemaEnvio, sentenciasDeEnvio } from './envios';
+import { errorDelPais, esquemaEnvio, sentenciasDeEnvio } from './envios';
 
 /**
  * Divoox Flex · importación por CSV en dos pasos: previsualizar (se validan columnas y filas,
@@ -63,6 +63,11 @@ export function validarFila(
     return { datos: null, error: 'Latitud o longitud no numéricas.' };
   const pesoG = numero('peso_g');
   if (Number.isNaN(pesoG)) return { datos: null, error: 'El peso debe ser un número en gramos.' };
+  // Fase 6: el cobro se escribe como en la factura («25.00» o «25,00») y se guarda en centavos.
+  const cobro = numero('cobro');
+  if (Number.isNaN(cobro) || (cobro !== null && cobro < 0))
+    return { datos: null, error: 'El cobro debe ser un monto, por ejemplo 25.00.' };
+  const monedaCobro = (v('moneda_cobro') || 'USD').toUpperCase();
   const entrada = {
     centroId,
     referenciaExterna: v('referencia') || null,
@@ -71,6 +76,7 @@ export function validarFila(
     destinatarioCorreo: v('correo'),
     destinatarioDocumento: v('documento'),
     referencias: v('referencias'),
+    cobro: cobro ? { monto: Math.round(cobro * 100), moneda: monedaCobro } : null,
     direccion: v('direccion'),
     lat,
     lng,
@@ -138,8 +144,12 @@ flexImportacion.post('/empresas/:id/importaciones/previsualizar', async (c) => {
     );
 
   // Duplicados dentro de la hoja y contra la base (referencias que ya existen en la empresa).
+  const paisHoja = await paisDeEmpresa(db, actor.empresaId);
   const validadas: FilaValidada[] = datos.map((celdas, i) => {
     const r = validarFila(celdas, mapa, d.centroId ?? null);
+    // Las reglas del país (cédula, cobro contra entrega) también fila por fila.
+    const delPais = r.datos ? errorDelPais(paisHoja, r.datos) : null;
+    if (delPais) return { numero: i + 1, datos: { crudo: celdas }, error: delPais.mensaje };
     return {
       numero: i + 1,
       datos: (r.datos ?? { crudo: celdas }) as Record<string, unknown>,

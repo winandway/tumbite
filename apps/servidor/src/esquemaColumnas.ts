@@ -897,7 +897,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ubicacion_confirmada_en",
     "destinatario_usuario_id",
     "enlace_ubicacion_huella",
-    "enlace_ubicacion_vence"
+    "enlace_ubicacion_vence",
+    "cobro_monto",
+    "cobro_moneda",
+    "cobro_estado",
+    "cobro_metodo",
+    "cobro_monto_recibido",
+    "cobro_moneda_recibida",
+    "cobro_referencia",
+    "cobro_conductor_id",
+    "cobro_ruta_id",
+    "cobrado_en",
+    "liquidado_en",
+    "liquidado_por",
+    "recibio_documento",
+    "recibio_relacion"
   ],
   "paquetes": [
     "id",

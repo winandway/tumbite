@@ -1049,6 +1049,45 @@ export const MENSAJES_EN = new Map<string, string>([
     'Check the threshold and amount of the automatic top-up.',
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
+  // Divoox Flex · Fase 6 (cobro contra entrega).
+  ['Filtro inválido.', 'Invalid filter.'],
+  [
+    'Recibir dinero lo hace una persona, no una clave.',
+    'Receiving money is done by a person, not an API key.',
+  ],
+  ['Esta ruta no tiene cobros por recibir.', 'This route has no collections to receive.'],
+  [
+    'Este envío se cobra al entregar: no se puede dejar sin contacto.',
+    'This shipment is cash on delivery: it can’t be left without contact.',
+  ],
+  [
+    'Este envío se cobra al entregar: registra el cobro.',
+    'This shipment is cash on delivery: record the payment.',
+  ],
+  [
+    'Escribe el nombre de quien recibe y paga.',
+    'Enter the name of the person receiving and paying.',
+  ],
+  [
+    'Escribe la cédula de quien recibe y paga (por ejemplo V-12345678).',
+    'Enter the ID of the person receiving and paying (for example V-12345678).',
+  ],
+  [
+    'Ese método no va en esa moneda (por ejemplo, Zelle es en dólares y pago móvil en bolívares).',
+    'That method doesn’t use that currency (for example, Zelle is in dollars and pago móvil in bolívares).',
+  ],
+  [
+    'Escribe la referencia del pago (los últimos números del comprobante).',
+    'Enter the payment reference (the last digits of the receipt).',
+  ],
+  [
+    'El monto cobrado es menor que lo que hay que cobrar.',
+    'The amount collected is less than the amount due.',
+  ],
+  [
+    'En este país Flex no lleva cobro contra entrega.',
+    'Flex doesn’t offer cash on delivery in this country.',
+  ],
   // Divoox Flex · Fase 5 (ubicación exacta).
   [
     'El documento del destinatario no tiene una forma válida (por ejemplo V-12345678).',

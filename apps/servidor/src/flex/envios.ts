@@ -6,7 +6,9 @@ import {
   type EstadoPaquete,
   codigoPlus,
   contenidoQrEtiqueta,
+  MONEDAS_COBRO,
   documentoValido,
+  perfilFlex,
   nuevoCodigoEtiqueta,
   nuevoCodigoSeguimiento,
   puedeTransitar,
@@ -54,6 +56,14 @@ export const esquemaEnvio = z.object({
   destinatarioDocumento: z.string().trim().max(20).default(''),
   /** Puntos de referencia («casa azul frente a la panadería»). */
   referencias: z.string().trim().max(300).default(''),
+  /** Fase 6 (C-FLEX-COBRO): lo que el conductor cobra al entregar, en la unidad menor de la moneda. */
+  cobro: z
+    .object({
+      monto: z.number().int().positive().max(1_000_000_000),
+      moneda: z.enum(MONEDAS_COBRO),
+    })
+    .nullable()
+    .optional(),
   direccion: z.string().trim().min(3).max(300),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
@@ -94,6 +104,8 @@ const filaEnvio = (f: Record<string, unknown>) => ({
   ubicacionFuente: f.ubicacion_fuente ?? '',
   ubicacionConfirmadaEn: f.ubicacion_confirmada_en ?? null,
   destinatarioEnDivoox: Boolean(f.destinatario_usuario_id),
+  // Fase 6 (C-FLEX-COBRO).
+  cobro: filaCobro(f),
   ventanaDesde: f.ventana_desde,
   ventanaHasta: f.ventana_hasta,
   estado: f.estado,
@@ -101,6 +113,21 @@ const filaEnvio = (f: Record<string, unknown>) => ({
   actualizadoEn: f.actualizado_en,
   paquetes: f.paquetes,
 });
+/** El cobro contra entrega de un envío (null si no lleva). */
+export function filaCobro(f: Record<string, unknown>) {
+  if (!f.cobro_monto) return null;
+  return {
+    monto: f.cobro_monto as number,
+    moneda: f.cobro_moneda as string,
+    estado: (f.cobro_estado as string) ?? 'pendiente',
+    metodo: (f.cobro_metodo as string | null) ?? null,
+    montoRecibido: (f.cobro_monto_recibido as number | null) ?? null,
+    monedaRecibida: (f.cobro_moneda_recibida as string | null) ?? null,
+    referencia: (f.cobro_referencia as string | null) ?? null,
+    cobradoEn: (f.cobrado_en as string | null) ?? null,
+    liquidadoEn: (f.liquidado_en as string | null) ?? null,
+  };
+}
 const filaPaquete = (f: Record<string, unknown>) => ({
   id: f.id,
   envioId: f.envio_id,
@@ -151,8 +178,8 @@ export function sentenciasDeEnvio(
         `INSERT INTO envios (id, empresa_id, centro_id, referencia_externa, remitente_nombre, destinatario_nombre,
          destinatario_telefono, direccion, lat, lng, instrucciones, ventana_desde, ventana_hasta,
          destinatario_correo, destinatario_documento, referencias, ubicacion_estado, ubicacion_fuente,
-         ubicacion_confirmada_en)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END)`,
+         ubicacion_confirmada_en, cobro_monto, cobro_moneda, cobro_estado)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -174,6 +201,9 @@ export function sentenciasDeEnvio(
         ubic.estado,
         ubic.fuente,
         ubic.confirmada ? 1 : 0,
+        d.cobro?.monto ?? null,
+        d.cobro?.moneda ?? null,
+        d.cobro ? 'pendiente' : 'sin_cobro',
       ),
   ];
   const paquetes = d.paquetes.map((p) => {
@@ -224,14 +254,36 @@ export function sentenciasDeEnvio(
   return { id, paquetes, sentencias };
 }
 
-/** Fase 5: la cédula o el RIF, si viene, con la forma de su país (V-12345678, J-12345678-9). */
-function exigirDocumento(pais: string, documento: string) {
-  if (documento && !documentoValido(pais, documento))
-    throw new ErrorDatos(
-      'El documento del destinatario no tiene una forma válida (por ejemplo V-12345678).',
-      'destinatarioDocumento',
-      422,
-    );
+/**
+ * Lo que el perfil del país exige de un envío (CADA PAÍS ES SU PROPIO SISTEMA): la cédula o el RIF
+ * con su forma (Fase 5) y el cobro contra entrega solo donde se usa, en una moneda del país (Fase 6).
+ */
+export function errorDelPais(
+  pais: string,
+  d: Pick<EnvioEntrada, 'destinatarioDocumento' | 'cobro'>,
+): { campo: string; mensaje: string } | null {
+  if (d.destinatarioDocumento && !documentoValido(pais, d.destinatarioDocumento))
+    return {
+      campo: 'destinatarioDocumento',
+      mensaje: 'El documento del destinatario no tiene una forma válida (por ejemplo V-12345678).',
+    };
+  const perfil = perfilFlex(pais);
+  if (d.cobro && !perfil.cobroContraEntrega)
+    return { campo: 'cobro', mensaje: 'En este país Flex no lleva cobro contra entrega.' };
+  if (d.cobro && !perfil.monedas.includes(d.cobro.moneda))
+    return {
+      campo: 'cobro',
+      mensaje: `El cobro va en ${perfil.monedas.join(' o ')}.`,
+    };
+  return null;
+}
+
+function exigirReglasDelPais(
+  pais: string,
+  d: Pick<EnvioEntrada, 'destinatarioDocumento' | 'cobro'>,
+) {
+  const e = errorDelPais(pais, d);
+  if (e) throw new ErrorDatos(e.mensaje, e.campo, 422);
 }
 
 async function comprobarCentro(
@@ -283,7 +335,7 @@ flexEnvios.post('/empresas/:id/envios', async (c) => {
   await comprobarCentro(db, actor.empresaId, d.centroId);
   return conIdempotencia(c, actor, d, async () => {
     const pais = await paisDeEmpresa(db, actor.empresaId);
-    exigirDocumento(pais, d.destinatarioDocumento);
+    exigirReglasDelPais(pais, d);
     const { id, sentencias } = sentenciasDeEnvio(
       db,
       actor,
@@ -313,7 +365,7 @@ flexEnvios.post('/empresas/:id/envios/lote', async (c) => {
   for (const e of d.envios) await comprobarCentro(db, actor.empresaId, e.centroId);
   return conIdempotencia(c, actor, d, async () => {
     const pais = await paisDeEmpresa(db, actor.empresaId);
-    for (const e of d.envios) exigirDocumento(pais, e.destinatarioDocumento);
+    for (const e of d.envios) exigirReglasDelPais(pais, e);
     const creados = d.envios.map((e) =>
       sentenciasDeEnvio(db, actor, e, actor.actorTipo === 'api' ? 'api' : 'panel', pais),
     );
@@ -474,7 +526,7 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
   const e = await db
     .prepare(
       `SELECT e.referencia_externa, e.destinatario_nombre, e.direccion, e.instrucciones, e.centro_id,
-         e.referencias, e.lat, e.lng, e.ubicacion_estado,
+         e.referencias, e.lat, e.lng, e.ubicacion_estado, e.cobro_monto, e.cobro_moneda, e.cobro_estado,
          (SELECT nombre FROM empresa_centros WHERE id = e.centro_id) AS centro,
          (SELECT nombre FROM empresas WHERE id = e.empresa_id) AS empresa,
          (SELECT COUNT(*) FROM paquetes WHERE envio_id = e.id) AS total
@@ -517,6 +569,10 @@ flexEnvios.get('/empresas/:id/paquetes/:paqueteId/etiqueta', async (c) => {
       referencias: e?.referencias ?? '',
       codigoPlus: e?.lat != null && e.lng != null ? codigoPlus(Number(e.lat), Number(e.lng)) : null,
       ubicacionConfirmada: e?.ubicacion_estado === 'confirmada',
+      // Fase 6: «COBRAR» en grande en la etiqueta (como MRW o Zoom con su cobro en destino).
+      cobro: e?.cobro_monto
+        ? { monto: e.cobro_monto as number, moneda: e.cobro_moneda as string }
+        : null,
       centro: e?.centro ?? null,
       empresa: e?.empresa,
       pieza: orden?.n ?? 1,

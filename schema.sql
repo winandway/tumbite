@@ -1508,7 +1508,23 @@ CREATE TABLE IF NOT EXISTS envios (
   ubicacion_confirmada_en TEXT,
   destinatario_usuario_id TEXT,
   enlace_ubicacion_huella TEXT,
-  enlace_ubicacion_vence TEXT
+  enlace_ubicacion_vence TEXT,
+  -- Fase 6 (28 oct 2026, C-FLEX-COBRO): cobro contra entrega (Venezuela). Divoox no mueve ese
+  -- dinero: registra lo que el conductor cobró, lo que tiene en la mano y cuándo la empresa lo recibió.
+  cobro_monto INTEGER,
+  cobro_moneda TEXT,
+  cobro_estado TEXT NOT NULL DEFAULT 'sin_cobro',
+  cobro_metodo TEXT,
+  cobro_monto_recibido INTEGER,
+  cobro_moneda_recibida TEXT,
+  cobro_referencia TEXT,
+  cobro_conductor_id TEXT,
+  cobro_ruta_id TEXT,
+  cobrado_en TEXT,
+  liquidado_en TEXT,
+  liquidado_por TEXT,
+  recibio_documento TEXT NOT NULL DEFAULT '',
+  recibio_relacion TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS envios_empresa ON envios(empresa_id, creado_en);
 -- La referencia propia de la empresa (su número de orden) no se repite dentro de la misma empresa.

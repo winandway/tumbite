@@ -88,6 +88,21 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['envios', 'destinatario_usuario_id', 'TEXT'],
   ['envios', 'enlace_ubicacion_huella', 'TEXT'],
   ['envios', 'enlace_ubicacion_vence', 'TEXT'],
+  // Flex · Fase 6 (C-FLEX-COBRO): cobro contra entrega y quién recibió.
+  ['envios', 'cobro_monto', 'INTEGER'],
+  ['envios', 'cobro_moneda', 'TEXT'],
+  ['envios', 'cobro_estado', "TEXT NOT NULL DEFAULT 'sin_cobro'"],
+  ['envios', 'cobro_metodo', 'TEXT'],
+  ['envios', 'cobro_monto_recibido', 'INTEGER'],
+  ['envios', 'cobro_moneda_recibida', 'TEXT'],
+  ['envios', 'cobro_referencia', 'TEXT'],
+  ['envios', 'cobro_conductor_id', 'TEXT'],
+  ['envios', 'cobro_ruta_id', 'TEXT'],
+  ['envios', 'cobrado_en', 'TEXT'],
+  ['envios', 'liquidado_en', 'TEXT'],
+  ['envios', 'liquidado_por', 'TEXT'],
+  ['envios', 'recibio_documento', "TEXT NOT NULL DEFAULT ''"],
+  ['envios', 'recibio_relacion', "TEXT NOT NULL DEFAULT ''"],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],
@@ -117,6 +132,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
 const INDICES = [
   // Flex · Fase 5: sobre columnas que llegan con COLUMNAS (en schema.sql romperían la publicación).
   'CREATE INDEX IF NOT EXISTS envios_destinatario ON envios(destinatario_usuario_id, creado_en)',
+  // Fase 6: el efectivo en la mano de cada conductor y los cobros de cada ruta.
+  'CREATE INDEX IF NOT EXISTS envios_cobro_conductor ON envios(cobro_conductor_id, cobro_estado)',
+  'CREATE INDEX IF NOT EXISTS envios_cobro_ruta ON envios(cobro_ruta_id, cobro_estado)',
   'CREATE UNIQUE INDEX IF NOT EXISTS envios_enlace_ubicacion ON envios(enlace_ubicacion_huella) WHERE enlace_ubicacion_huella IS NOT NULL',
   'CREATE INDEX IF NOT EXISTS restaurantes_zona_estado ON restaurantes(zona_id, estado, abierto)',
   'CREATE INDEX IF NOT EXISTS restaurantes_zona_celda ON restaurantes(zona_id, geohash)',

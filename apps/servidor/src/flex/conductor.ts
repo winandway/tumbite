@@ -10,8 +10,11 @@ import {
   MOTIVOS_INCIDENCIA,
   PROXIMAS_ACCIONES,
   configEntrega,
+  documentoValido,
+  esquemaCobroEntrega,
   leerCodigoEscaneado,
   pruebasFaltantes,
+  validarCobro,
 } from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
@@ -65,6 +68,10 @@ const esquemaEntrega = z.object({
     .optional(),
   sinContacto: z.boolean().default(false),
   recibio: z.string().trim().max(120).default(''),
+  // Fase 6 (C-FLEX-COBRO): lo cobrado y quién recibió (cédula y relación: «titular», «familiar»…).
+  cobro: esquemaCobroEntrega.nullable().optional(),
+  recibioDocumento: z.string().trim().max(20).default(''),
+  recibioRelacion: z.string().trim().max(40).default(''),
   ...punto,
 });
 const esquemaIncidencia = z.object({
@@ -491,7 +498,8 @@ flexConductor.post('/conductor/rutas/:rutaId/ubicacion', async (c) => {
 async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
   const f = await db
     .prepare(
-      `SELECT rp.id, rp.envio_id, rp.estado, e.config_entrega_json AS envio_cfg, em.config_entrega_json AS empresa_cfg
+      `SELECT rp.id, rp.envio_id, rp.estado, e.config_entrega_json AS envio_cfg, em.config_entrega_json AS empresa_cfg,
+         em.pais, e.cobro_monto, e.cobro_moneda, e.cobro_estado
          FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id JOIN empresas em ON em.id = e.empresa_id
         WHERE rp.id = ? AND rp.ruta_id = ?`,
     )
@@ -502,9 +510,54 @@ async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
       estado: string;
       envio_cfg: string | null;
       empresa_cfg: string | null;
+      pais: string | null;
+      cobro_monto: number | null;
+      cobro_moneda: string | null;
+      cobro_estado: string;
     }>();
   if (!f) throw new ErrorDatos('Esa parada no es de tu ruta.', undefined, 404);
   return f;
+}
+
+const MENSAJE_COBRO = {
+  moneda_del_metodo:
+    'Ese método no va en esa moneda (por ejemplo, Zelle es en dólares y pago móvil en bolívares).',
+  falta_referencia: 'Escribe la referencia del pago (los últimos números del comprobante).',
+  monto_incompleto: 'El monto cobrado es menor que lo que hay que cobrar.',
+} as const;
+
+/**
+ * C-FLEX-COBRO: si el envío lleva cobro pendiente, no hay entrega sin registrarlo, y en el país que
+ * pide documento (Venezuela) va la cédula de quien recibe. Nunca «sin contacto» con dinero de por medio.
+ */
+function exigirCobro(
+  p: Awaited<ReturnType<typeof paradaDe>>,
+  d: z.infer<typeof esquemaEntrega>,
+  sinContacto: boolean,
+) {
+  if (p.cobro_estado !== 'pendiente' || !p.cobro_monto) return null;
+  if (sinContacto)
+    throw new ErrorDatos(
+      'Este envío se cobra al entregar: no se puede dejar sin contacto.',
+      'sinContacto',
+      409,
+    );
+  if (!d.cobro)
+    throw new ErrorDatos('Este envío se cobra al entregar: registra el cobro.', 'cobro', 422);
+  const v = validarCobro({ monto: p.cobro_monto, moneda: p.cobro_moneda ?? 'USD' }, d.cobro);
+  if (!v.ok) throw new ErrorDatos(MENSAJE_COBRO[v.error], 'cobro', 422);
+  const pais = p.pais ?? 'US';
+  if (pais === 'VE') {
+    if (!d.recibio)
+      throw new ErrorDatos('Escribe el nombre de quien recibe y paga.', 'recibio', 422);
+    if (!documentoValido(pais, d.recibioDocumento))
+      throw new ErrorDatos(
+        'Escribe la cédula de quien recibe y paga (por ejemplo V-12345678).',
+        'recibioDocumento',
+        422,
+      );
+  }
+  return { ...d.cobro, otraMoneda: v.otraMoneda };
 }
 
 /** Paquetes de la parada que siguen en la ruta (o los pedidos, si son de esta parada). */
@@ -707,6 +760,7 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
           faltan[0],
           422,
         );
+      const cobro = exigirCobro(p, d, sinContacto);
       const pinOk = config.pin && !sinContacto ? await verificarPin(db, p.envio_id, d.pin) : false;
       const meta = {
         fotoId: d.fotoId ?? null,
@@ -714,6 +768,16 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
         pin: pinOk,
         sinContacto,
         recibio: d.recibio || null,
+        recibioDocumento: d.recibioDocumento || null,
+        recibioRelacion: d.recibioRelacion || null,
+        cobro: cobro
+          ? {
+              metodo: cobro.metodo,
+              monto: cobro.monto,
+              moneda: cobro.moneda,
+              otraMoneda: cobro.otraMoneda,
+            }
+          : null,
         capturadoEn: d.capturadoEn ?? null,
       };
       const sentencias = [
@@ -755,6 +819,32 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
           db
             .prepare(`UPDATE flex_pines SET usado_en = ${ahora} WHERE envio_id = ?`)
             .bind(p.envio_id),
+        );
+      if (d.recibioDocumento || d.recibioRelacion)
+        sentencias.push(
+          db
+            .prepare('UPDATE envios SET recibio_documento = ?, recibio_relacion = ? WHERE id = ?')
+            .bind(d.recibioDocumento, d.recibioRelacion, p.envio_id),
+        );
+      // El cobro queda en la MISMA transacción que la entrega: o las dos cosas, o ninguna.
+      if (cobro)
+        sentencias.push(
+          db
+            .prepare(
+              `UPDATE envios SET cobro_estado = 'cobrado', cobro_metodo = ?, cobro_monto_recibido = ?,
+                 cobro_moneda_recibida = ?, cobro_referencia = ?, cobro_conductor_id = ?, cobro_ruta_id = ?,
+                 cobrado_en = ${ahora}
+               WHERE id = ? AND cobro_estado = 'pendiente'`,
+            )
+            .bind(
+              cobro.metodo,
+              cobro.monto,
+              cobro.moneda,
+              cobro.referencia || null,
+              u.id,
+              r.id,
+              p.envio_id,
+            ),
         );
       const ub = await guardarUbicacion(db, r.id, d);
       if (ub) sentencias.push(ub);

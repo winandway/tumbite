@@ -1,5 +1,6 @@
 import { type EstadoPaquete, configEntrega } from '@tumbite/compartido';
 import { ErrorDatos } from '../validar';
+import { filaCobro } from './envios';
 
 /**
  * Divoox Flex · Fase 2: piezas comunes de las rutas operativas (empresa y conductor).
@@ -246,6 +247,8 @@ export async function detalleRuta(
       `SELECT rp.id, rp.orden, rp.estado, rp.envio_id, rp.llegada_en, rp.resuelta_en,
               e.referencia_externa, e.destinatario_nombre, e.destinatario_telefono, e.direccion, e.lat, e.lng,
               e.instrucciones, e.ventana_desde, e.ventana_hasta, e.config_entrega_json,
+              e.referencias, e.cobro_monto, e.cobro_moneda, e.cobro_estado, e.cobro_metodo,
+              e.cobro_monto_recibido, e.cobro_moneda_recibida, e.cobro_referencia, e.cobrado_en, e.liquidado_en,
               (SELECT COUNT(*) FROM flex_pines fp WHERE fp.envio_id = e.id) AS tiene_pin
          FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id WHERE rp.ruta_id = ? ORDER BY rp.orden`,
     )
@@ -317,6 +320,9 @@ export async function detalleRuta(
           p.config_entrega_json as string | null,
         ),
         tienePin: Number(p.tiene_pin) > 0,
+        referencias: p.referencias ?? '',
+        // Fase 6 (C-FLEX-COBRO): lo que se cobra en esta parada y si ya se cobró.
+        cobro: filaCobro(p),
         paquetes: (porParada.get(String(p.id)) ?? []).map((q) => ({
           id: q.id,
           codigoSeguimiento: q.codigo_seguimiento,
