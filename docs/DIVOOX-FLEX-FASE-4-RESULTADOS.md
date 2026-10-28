@@ -140,4 +140,5 @@ Ver «Sitio de pruebas» al final.
 - Reembolsos parciales de prueba (3 y 2 dólares): el saldo bajó a 5; el aviso `charge.refunded` se recibió y no descontó dos veces.
 - Salud del sitio: esquema, Stripe, aviso de Stripe, libro y reloj en `ok`; billeteras en `pendiente` hasta la primera conciliación del reloj.
 - Hallazgos de staging corregidos en esta fase: el aviso principal no se reconocía (escucha más eventos), llamadas a correo/Expo/Stripe sin límite y el recorrido de Comida colgado 15 minutos por esperar la red quieta del panel.
+- Corrida completa del sitio de pruebas en verde (recorrido de Comida incluido) con el arreglo del límite de tiempo.
 - Nada de esto tocó producción ni movió dinero real.

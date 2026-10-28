@@ -15,5 +15,5 @@ Rama `fase-flex-4` sobre `fase-flex-3` (7a31e7509). Solo staging y Stripe en mod
 - [x] Paso 11: Panel financiero de la empresa: Mi billetera, Recargar (pago dentro de la pantalla), Comisiones, Comprobantes con descarga, Configuración. Español e inglés, celular y escritorio.
 - [x] Paso 12: Pruebas obligatorias con candados en rojo (recarga una vez, fallida, aviso duplicado, comisión duplicada, reservas simultáneas, saldo insuficiente, liberación, reembolso, disputa, separación, permisos, conciliación, regresión de Food, integridad del libro).
 - [x] Paso 13: Integrar el rediseño, revisar credenciales (Stripe, Firebase, Expo, Apple) sin exponer nada, Docs públicos es/en, referencia de la API.
-- [ ] Paso 14: `npm run verify`, recorrido en pantalla, staging con una recarga de prueba de punta a punta.
-- [ ] Paso 15: `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`, `CANDADOS.md`, `PENDIENTES.md`, `VERIFICAR-PAGOS.md`; commit; push (solo staging); informe.
+- [x] Paso 14: `npm run verify`, recorrido en pantalla, staging con una recarga de prueba de punta a punta.
+- [x] Paso 15: `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`, `CANDADOS.md`, `PENDIENTES.md`, `VERIFICAR-PAGOS.md`; commit; push (solo staging); informe.
