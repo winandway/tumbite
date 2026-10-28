@@ -1524,7 +1524,12 @@ CREATE TABLE IF NOT EXISTS envios (
   liquidado_en TEXT,
   liquidado_por TEXT,
   recibio_documento TEXT NOT NULL DEFAULT '',
-  recibio_relacion TEXT NOT NULL DEFAULT ''
+  recibio_relacion TEXT NOT NULL DEFAULT '',
+  -- C-FLEX-RETIRO: «domicilio» (la ruta lo lleva) o «punto» (se retira en un centro, con plazo).
+  entrega_tipo TEXT NOT NULL DEFAULT 'domicilio',
+  punto_centro_id TEXT,
+  retiro_disponible_en TEXT,
+  retiro_vence TEXT
 );
 CREATE INDEX IF NOT EXISTS envios_empresa ON envios(empresa_id, creado_en);
 -- La referencia propia de la empresa (su número de orden) no se repite dentro de la misma empresa.
@@ -1572,6 +1577,10 @@ INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
 INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
   ('creado', 'asignado'), ('registrado_centro', 'asignado'),
   ('en_transito', 'en_devolucion'), ('en_devolucion', 'registrado_centro');
+-- C-FLEX-RETIRO (28 oct 2026): el centro como punto de retiro (la «agencia» de MRW o Zoom): el
+-- destinatario lo retira en el mostrador, o vence el plazo y se devuelve al remitente.
+INSERT OR IGNORE INTO transiciones_paquete (desde, hacia) VALUES
+  ('registrado_centro', 'entregado'), ('registrado_centro', 'devuelto');
 CREATE TRIGGER IF NOT EXISTS paquetes_transicion_valida
 BEFORE UPDATE OF estado ON paquetes
 WHEN NEW.estado <> OLD.estado
@@ -2566,4 +2575,16 @@ CREATE TABLE IF NOT EXISTS calificaciones_viaje (
   comentario TEXT NOT NULL DEFAULT '',
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (operacion_id, de)
+);
+
+-- Flex · C-FLEX-TASA (28 oct 2026, Venezuela): la tasa del día (bolívares por dólar). Una fila por
+-- día y fuente: «bcv» (la oficial, leída de su página pública) o la de una empresa («empresa:<id>»).
+CREATE TABLE IF NOT EXISTS tasas_cambio (
+  pais TEXT NOT NULL,
+  fecha TEXT NOT NULL,
+  fuente TEXT NOT NULL,
+  tasa REAL NOT NULL CHECK (tasa > 0),
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pais, fecha, fuente)
 );
