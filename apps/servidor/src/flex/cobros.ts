@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { efectivoEnMano } from '@tumbite/compartido';
+import { efectivoEnMano, enDolares } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -11,6 +11,8 @@ import {
   exigirPermiso,
   sentenciaAuditoria,
 } from './autorizacion';
+import { type TasaDelDia, tasaDelDia } from './tasas';
+import { paisDeEmpresa } from './ubicacion';
 
 /**
  * Divoox Flex · Fase 6: la CAJA del cobro contra entrega (C-FLEX-COBRO). País: Venezuela.
@@ -64,7 +66,7 @@ const filaSalida = (f: FilaCobro) => ({
 });
 
 /** Totales por moneda: lo cobrado (todo), y lo que sigue en manos del conductor en efectivo. */
-function totales(filas: FilaCobro[]) {
+function totales(filas: FilaCobro[], tasa: TasaDelDia | null = null) {
   const cobrado: Record<string, number> = {};
   for (const f of filas)
     if (f.cobro_estado === 'cobrado' || f.cobro_estado === 'liquidado') {
@@ -85,7 +87,20 @@ function totales(filas: FilaCobro[]) {
         })),
     ),
     pendientes: filas.filter((f) => f.cobro_estado === 'pendiente').length,
+    // C-FLEX-TASA: todo lo cobrado en dólares, con la tasa del día (null si falta la tasa).
+    enDolares: totalEnDolares(cobrado, tasa),
+    tasa,
   };
+}
+
+function totalEnDolares(cobrado: Record<string, number>, tasa: TasaDelDia | null): number | null {
+  let total = 0;
+  for (const [moneda, monto] of Object.entries(cobrado)) {
+    const d = enDolares(monto, moneda, tasa?.tasa ?? null);
+    if (d == null) return null;
+    total += d;
+  }
+  return total;
 }
 
 const esquemaFiltro = z.object({
@@ -116,7 +131,8 @@ flexCobros.get('/empresas/:id/cobros', async (c) => {
     .prepare(`${SELECT_COBROS} WHERE ${donde.join(' AND ')} ORDER BY e.creado_en DESC LIMIT 500`)
     .bind(...valores)
     .all<FilaCobro>();
-  return c.json({ cobros: results.map(filaSalida), totales: totales(results) });
+  const tasa = await tasaDelDia(db, await paisDeEmpresa(db, actor.empresaId), actor.empresaId);
+  return c.json({ cobros: results.map(filaSalida), totales: totales(results, tasa) });
 });
 
 /**

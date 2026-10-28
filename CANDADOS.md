@@ -1398,6 +1398,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `apps/servidor/src/flex/cobros.test.ts`, `packages/compartido/src/flexCobro.test.ts` y la caja en `apps/panel/src/panel/flex/PantallasRutas.test.tsx`, comprobadas en rojo.
 - **No tocar:** nunca permitir entregar un envío con cobro pendiente sin registrarlo; nunca «sin contacto» con cobro; el «recibí el efectivo» nunca desde una clave de API.
 
+## C-FLEX-TASA · Doble moneda con la tasa del día (Venezuela, 28 oct 2026)
+
+- La tasa oficial (bolívares por dólar) se lee una vez al día de la página pública del Banco Central (`leerTasaBcv` en `packages/compartido/src/flexCobro.ts`; `apps/servidor/src/flex/tasas.ts`) y se guarda en `tasas_cambio`. Si no responde, se usa la última con su fecha (`deHoy: false`). La tasa que pone la empresa manda ese día. La caja suma todo en dólares (`enDolares`). Evidencia: `docs/investigaciones-rea/2026-10-28-tasa-bcv.md`.
+- **Prueba:** `apps/servidor/src/flex/cobros.test.ts` (la página del Banco Central siempre simulada), `flexCobro.test.ts`, y la caja en `PantallasRutas.test.tsx`; comprobada en rojo.
+- **No tocar:** las pruebas nunca llaman a la página real; Divoox no cambia dinero, solo muestra la equivalencia.
+
 ## C-ENTREGA-REINTENTO · Reintentar «entregado» no da error ni paga dos veces (28 oct 2026)
 
 - **Qué se rompió y cómo se vio:** en el recorrido del sitio de pruebas, la respuesta de «entregado» se perdió en el camino; la app reintentó y el servidor contestó «Este pedido no está en camino contigo» (409) aunque el pedido YA estaba entregado. Con mala señal (Venezuela) el repartidor vería un error en la puerta. Se encontró leyendo el rastro de red del recorrido.

@@ -640,6 +640,12 @@ const TEXTOS_CAJA = {
     recibir: 'Recibí el efectivo',
     recibido: 'Efectivo recibido. Queda en el historial de la empresa.',
     nada: 'Nada',
+    enDolares: 'Todo en dólares',
+    tasa: (t: string, f: string, oficial: boolean, hoy: boolean) =>
+      `Tasa ${oficial ? 'oficial del BCV' : 'de tu empresa'}: ${t} Bs por dólar, del ${f}${hoy ? '' : ' (la última disponible)'}.`,
+    sinTasa: 'Sin la tasa del día todavía: escribe la tuya abajo.',
+    tuTasa: 'Tu tasa de hoy (Bs por dólar)',
+    guardarTasa: 'Guardar tasa',
   },
   en: {
     titulo: 'Route cash',
@@ -651,6 +657,12 @@ const TEXTOS_CAJA = {
     recibir: 'I received the cash',
     recibido: 'Cash received. It stays in the company history.',
     nada: 'None',
+    enDolares: 'All in dollars',
+    tasa: (t: string, f: string, oficial: boolean, hoy: boolean) =>
+      `${oficial ? 'Official BCV' : 'Your company’s'} rate: ${t} Bs per dollar, from ${f}${hoy ? '' : ' (latest available)'}.`,
+    sinTasa: 'No daily rate yet: enter yours below.',
+    tuTasa: 'Your rate today (Bs per dollar)',
+    guardarTasa: 'Save rate',
   },
 };
 
@@ -658,6 +670,8 @@ type TotalesCaja = {
   cobrado: Record<string, number>;
   efectivoEnMano: Record<string, number>;
   pendientes: number;
+  enDolares?: number | null;
+  tasa?: { tasa: number; fecha: string; fuente: string; deHoy: boolean } | null;
 };
 
 /** Fase 6 (C-FLEX-COBRO, Venezuela): lo cobrado en la ruta y el «recibí el efectivo». */
@@ -668,6 +682,7 @@ function CajaRuta({ ctx, rutaId, cambio }: { ctx: Contexto; rutaId: string; camb
   const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [tasaTexto, setTasaTexto] = useState('');
   const cargar = useCallback(() => {
     pedir<{ totales: TotalesCaja }>(
       'GET',
@@ -686,6 +701,18 @@ function CajaRuta({ ctx, rutaId, cambio }: { ctx: Contexto; rutaId: string; camb
   const hayEfectivo = Object.keys(tot.cobrado).length > 0;
   const puede =
     ctx.permisos.includes('devoluciones.recibir') || ctx.permisos.includes('finanzas.gestionar');
+  async function guardarTasa() {
+    setError('');
+    const n = Number(tasaTexto.replace(/\./g, '').replace(',', '.'));
+    if (!Number.isFinite(n) || n <= 0) return setError(tc.tuTasa);
+    try {
+      await pedir('POST', `${BASE_FLEX}/empresas/${empresa.id}/tasa`, { tasa: n });
+      setTasaTexto('');
+      cargar();
+    } catch (x) {
+      setError(mensajeDe(x));
+    }
+  }
   async function recibir() {
     setError('');
     setEnviando(true);
@@ -717,7 +744,34 @@ function CajaRuta({ ctx, rutaId, cambio }: { ctx: Contexto; rutaId: string; camb
           <span>{tc.porCobrar}</span>
           <strong>{tot.pendientes}</strong>
         </li>
+        {tot.enDolares != null ? (
+          <li className="super-tarjeta">
+            <span>{tc.enDolares}</span>
+            <strong>{formatearMonto(tot.enDolares, 'USD', ctx.idioma)}</strong>
+          </li>
+        ) : null}
       </ul>
+      {/* C-FLEX-TASA: la tasa con la que se ve todo en dólares, y la propia de la empresa. */}
+      <p className="pista" data-testid="tasa-del-dia">
+        {tot.tasa
+          ? tc.tasa(
+              tot.tasa.tasa.toLocaleString(ctx.idioma === 'es' ? 'es-VE' : 'en-US', {
+                maximumFractionDigits: 4,
+              }),
+              tot.tasa.fecha,
+              tot.tasa.fuente === 'bcv',
+              tot.tasa.deHoy,
+            )
+          : tc.sinTasa}
+      </p>
+      {ctx.permisos.includes('finanzas.gestionar') ? (
+        <div className="fila-botones">
+          <Campo etiqueta={tc.tuTasa} valor={tasaTexto} cambiar={setTasaTexto} placeholder="0,00" />
+          <button type="button" className="boton secundario" onClick={() => void guardarTasa()}>
+            {tc.guardarTasa}
+          </button>
+        </div>
+      ) : null}
       {error ? (
         <p className="error-general" role="alert">
           {error}

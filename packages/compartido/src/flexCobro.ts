@@ -77,3 +77,26 @@ export function efectivoEnMano(
       total[c.moneda] = (total[c.moneda] ?? 0) + c.monto;
   return total;
 }
+
+/**
+ * C-FLEX-TASA (Venezuela): la tasa oficial del día del Banco Central, leída de su página pública
+ * (bloque «dolar», número con coma decimal). Devuelve bolívares por dólar, o null si no se encuentra.
+ */
+export function leerTasaBcv(html: string): { tasa: number; fecha: string | null } | null {
+  const i = html.indexOf('id="dolar"');
+  if (i < 0) return null;
+  const trozo = html.slice(i, i + 1500);
+  const m = /<strong[^>]*>\s*([\d.]+,\d+)\s*<\/strong>/.exec(trozo);
+  if (!m?.[1]) return null;
+  const tasa = Number(m[1].replace(/\./g, '').replace(',', '.'));
+  if (!Number.isFinite(tasa) || tasa <= 0) return null;
+  const f = /content="(\d{4}-\d{2}-\d{2})T/.exec(html.slice(i, i + 3000));
+  return { tasa, fecha: f?.[1] ?? null };
+}
+
+/** Un monto (unidad menor) en dólares: los bolívares se dividen por la tasa del día. */
+export function enDolares(monto: number, moneda: string, tasaVes: number | null): number | null {
+  if (moneda === 'USD') return monto;
+  if (moneda === 'VES') return tasaVes && tasaVes > 0 ? Math.round(monto / tasaVes) : null;
+  return null;
+}

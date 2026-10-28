@@ -260,6 +260,8 @@ describe('Divoox Flex · Fase 2 · panel', () => {
               cobrado: { USD: 2500 },
               efectivoEnMano: recibido ? {} : { USD: 2500 },
               pendientes: 1,
+              enDolares: 2604,
+              tasa: { tasa: 888.1183, fecha: '2026-10-28', fuente: 'bcv', deHoy: true },
             },
           }),
         ),
@@ -271,6 +273,9 @@ describe('Divoox Flex · Fase 2 · panel', () => {
     render(<PanelApp ruta={`/panel/business/${E}/operativas/${R}`} />);
     expect(await screen.findByText('Caja de la ruta')).toBeInTheDocument();
     expect(screen.getAllByText(/25\.00/).length).toBeGreaterThan(0);
+    // C-FLEX-TASA: el total en dólares con la tasa oficial del día.
+    expect(screen.getByText('Todo en dólares')).toBeInTheDocument();
+    expect(screen.getByTestId('tasa-del-dia')).toHaveTextContent(/oficial del BCV: 888,1183 Bs/);
     await userEvent.click(screen.getByRole('button', { name: 'Recibí el efectivo' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/Efectivo recibido/));
     const r = llamadas.find((l) => l.url.endsWith('/cobros/recibir'))!;

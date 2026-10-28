@@ -2567,3 +2567,15 @@ CREATE TABLE IF NOT EXISTS calificaciones_viaje (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (operacion_id, de)
 );
+
+-- Flex · C-FLEX-TASA (28 oct 2026, Venezuela): la tasa del día (bolívares por dólar). Una fila por
+-- día y fuente: «bcv» (la oficial, leída de su página pública) o la de una empresa («empresa:<id>»).
+CREATE TABLE IF NOT EXISTS tasas_cambio (
+  pais TEXT NOT NULL,
+  fecha TEXT NOT NULL,
+  fuente TEXT NOT NULL,
+  tasa REAL NOT NULL CHECK (tasa > 0),
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pais, fecha, fuente)
+);

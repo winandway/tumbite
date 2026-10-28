@@ -1621,5 +1621,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estrellas",
     "comentario",
     "creado_en"
+  ],
+  "tasas_cambio": [
+    "pais",
+    "fecha",
+    "fuente",
+    "tasa",
+    "creado_por",
+    "creado_en"
   ]
 };

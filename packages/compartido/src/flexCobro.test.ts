@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { efectivoEnMano, esquemaCobroEntrega, validarCobro } from './flexCobro';
+import {
+  efectivoEnMano,
+  enDolares,
+  esquemaCobroEntrega,
+  leerTasaBcv,
+  validarCobro,
+} from './flexCobro';
 
 const c = (x: Record<string, unknown>) =>
   esquemaCobroEntrega.parse({ metodo: 'efectivo_usd', monto: 2500, moneda: 'USD', ...x });
@@ -58,5 +64,24 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
         { metodo: 'zelle', monto: 2500, moneda: 'USD', liquidado: false },
       ]),
     ).toEqual({ USD: 2500, VES: 50_000 });
+  });
+});
+
+describe('C-FLEX-TASA · Venezuela: tasa del día y equivalencia en dólares', () => {
+  it('lee la tasa del Banco Central con su coma decimal y su fecha', () => {
+    const html = `<div id="dolar" class="x"><span> USD</span></div><div><strong class="strong-tb">888,11830000</strong></div>
+      Fecha Valor: <span content="2026-10-28T00:00:00-04:00">Miércoles</span>`;
+    expect(leerTasaBcv(html)).toEqual({ tasa: 888.1183, fecha: '2026-10-28' });
+    expect(leerTasaBcv('<html>sin tasa</html>')).toBeNull();
+    expect(leerTasaBcv('<div id="dolar"><strong>1.234,50</strong></div>')).toEqual({
+      tasa: 1234.5,
+      fecha: null,
+    });
+  });
+
+  it('convierte bolívares a dólares con la tasa, y sin tasa no inventa', () => {
+    expect(enDolares(2500, 'USD', null)).toBe(2500);
+    expect(enDolares(92_000, 'VES', 888.1183)).toBe(104);
+    expect(enDolares(92_000, 'VES', null)).toBeNull();
   });
 });

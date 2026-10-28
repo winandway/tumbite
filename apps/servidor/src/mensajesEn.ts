@@ -1050,6 +1050,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Divoox Flex · Fase 6 (cobro contra entrega).
+  ['La tasa la pone una persona, no una clave.', 'The rate is set by a person, not an API key.'],
+  ['En este país no hace falta una tasa del día.', 'This country doesn’t need a daily rate.'],
   ['Filtro inválido.', 'Invalid filter.'],
   [
     'Recibir dinero lo hace una persona, no una clave.',

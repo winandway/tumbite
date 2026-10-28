@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { B, empresa, k, llamar, rutaEnCurso, subir, type M } from '../pruebas/flex';
 
@@ -33,6 +33,21 @@ async function rutaConCobro(m: M) {
 }
 
 const cobroOk = { metodo: 'efectivo_usd', monto: 2500, moneda: 'USD' };
+
+// Nunca se toca la página real del Banco Central: se simula (o se apaga) en cada prueba.
+let bcv: 'responde' | 'caido' = 'responde';
+const PAGINA_BCV = `<div id="dolar"><span> USD</span><strong class="strong-tb">888,11830000</strong></div>
+  Fecha Valor: <span content="2026-10-28T00:00:00-04:00"></span>`;
+beforeEach(() => {
+  bcv = 'responde';
+  const original = globalThis.fetch;
+  vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+    if (!String(url).includes('bcv.org.ve')) return original(url, init);
+    if (bcv === 'caido') throw new Error('sin red');
+    return new Response(PAGINA_BCV);
+  });
+});
+afterEach(() => vi.unstubAllGlobals());
 
 describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
   it('solo un país con cobro contra entrega lo acepta al crear el envío', async () => {
@@ -215,5 +230,55 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
       r.e.dueno.token,
     );
     expect(nuevo.datos.envio.ubicacionEditable).toBe(true);
+  });
+
+  it('C-FLEX-TASA: la caja muestra todo en dólares con la tasa oficial del día', async () => {
+    const m = mundo();
+    const r = await rutaConCobro(m);
+    expect(
+      (
+        await r.entregar({
+          cobro: { metodo: 'pago_movil', monto: 222_030, moneda: 'VES', referencia: '000123' },
+          recibioDocumento: 'V-12345678',
+        })
+      ).estado,
+    ).toBe(200);
+    const lista = await llamar(
+      m,
+      'GET',
+      `${B}/empresas/${r.e.id}/cobros?rutaId=${r.rutaId}`,
+      undefined,
+      r.e.dueno.token,
+    );
+    expect(lista.datos.totales.tasa).toMatchObject({ tasa: 888.1183, fuente: 'bcv', deHoy: true });
+    expect(lista.datos.totales.enDolares).toBe(250);
+  });
+
+  it('C-FLEX-TASA: sin el Banco Central se usa la última tasa, y la de la empresa manda ese día', async () => {
+    const m = mundo();
+    const r = await rutaConCobro(m);
+    await m.DB.prepare(
+      "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-10-20', 'bcv', 850)",
+    ).run();
+    bcv = 'caido';
+    const ver = async () =>
+      (await llamar(m, 'GET', `${B}/empresas/${r.e.id}/tasa`, undefined, r.e.dueno.token)).datos
+        .tasa;
+    expect(await ver()).toEqual({ tasa: 850, fecha: '2026-10-20', fuente: 'bcv', deHoy: false });
+    const propia = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${r.e.id}/tasa`,
+      { tasa: 900 },
+      r.e.dueno.token,
+    );
+    expect(propia.estado).toBe(200);
+    expect(await ver()).toMatchObject({ tasa: 900, fuente: 'empresa', deHoy: true });
+    // En EE. UU. no hay tasa del día.
+    const us = await empresa(m, 'Miami');
+    expect(
+      (await llamar(m, 'POST', `${B}/empresas/${us.id}/tasa`, { tasa: 900 }, us.dueno.token))
+        .estado,
+    ).toBe(422);
   });
 });

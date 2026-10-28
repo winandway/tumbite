@@ -2293,6 +2293,7 @@ const es: SeccionDocs[] = [
           'Al llegar, el conductor no puede marcar el paquete como entregado sin registrar el cobro. Anota cómo le pagaron (efectivo en dólares o en bolívares, pago móvil, transferencia, Zelle o punto de venta), el monto, la referencia del pago cuando es digital, y el nombre y la cédula de quien recibe y paga. Con dinero de por medio, nunca se deja un paquete sin contacto.',
           'El conductor ve en su app el efectivo que lleva en la mano. Al volver al centro te lo entrega y tú tocas «Recibí el efectivo» en la caja de la ruta. Se hace una sola vez y queda en el historial de tu empresa con tu nombre.',
           'Divoox no toca ese dinero: el cobro es entre tu cliente y tu empresa. Divoox lo registra para que sepas en todo momento cuánto se cobró, cómo, y cuánto falta por llegar al centro.',
+          'Si cobras en dólares y en bolívares, la caja muestra también todo en dólares con la tasa oficial del Banco Central de ese día. Si tu empresa usa otra tasa, la escribes en la caja y manda ese día.',
           'Cada país funciona a su manera. El cobro contra entrega está en Venezuela; en Estados Unidos no se usa.',
         ],
         capturas: [
@@ -5059,6 +5060,7 @@ const en: SeccionDocs[] = [
           'At the door, the driver can’t mark the package delivered without recording the payment: how the customer paid (cash in dollars or bolívares, pago móvil, bank transfer, Zelle or card terminal), the amount, the payment reference for digital methods, and the name and ID of the person receiving and paying. When money is involved, a package is never left without contact.',
           'The driver sees in their app the cash they’re carrying. Back at the center they hand it to you and you tap “I received the cash” in the route cash panel. It happens only once and stays in your company history with your name.',
           'Divoox doesn’t touch that money: the payment is between your customer and your company. Divoox records it so you always know how much was collected, how, and how much is still on its way to the center.',
+          'If you collect in dollars and bolívares, the cash panel also shows everything in dollars using the Central Bank’s official rate for that day. If your company uses another rate, enter it in the cash panel and it applies that day.',
           'Each country works its own way. Cash on delivery is available in Venezuela; it isn’t used in the United States.',
         ],
         capturas: [
