@@ -43,6 +43,9 @@ type FilaTarifa = {
   cargo_no_se_presento: number;
   tope_dinamico_pb: number;
   redondeo: number;
+  cargo_fijo: number;
+  factor_calle_pb: number;
+  velocidad_kmh: number;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -64,6 +67,9 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     cargoNoSePresento: f.cargo_no_se_presento,
     topeDinamicoPb: f.tope_dinamico_pb,
     redondeo: f.redondeo,
+    cargoFijo: f.cargo_fijo,
+    factorCallePb: f.factor_calle_pb,
+    velocidadKmh: f.velocidad_kmh,
   };
 }
 
@@ -149,8 +155,9 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
       .prepare(
         `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
-           cargo_no_se_presento, tope_dinamico_pb, redondeo, de_prueba, motivo, creada_por)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
+           de_prueba, motivo, creada_por)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -168,6 +175,9 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         t.cargoNoSePresento,
         t.topeDinamicoPb,
         t.redondeo,
+        t.cargoFijo,
+        t.factorCallePb,
+        t.velocidadKmh,
         d.dePrueba ? 1 : 0,
         d.motivo,
         admin.id,
@@ -207,22 +217,23 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   const fila = await tarifaActiva(db, d.servicio, zona.id);
   if (!fila)
     throw new ErrorDatos('Este servicio todavía no tiene precio en tu ciudad.', 'servicio', 409);
-  const ruta = estimarRuta(d.servicio, d.origen, d.destino);
+  const tarifa = filaATarifa(fila);
+  const ruta = estimarRuta(tarifa, d.origen, d.destino);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[d.servicio] * 1000)
     throw new ErrorDatos('El destino está demasiado lejos para este servicio.', 'destino', 422);
   // M1: sin precio dinámico todavía (multiplicador 1). El tope ya vive en la tarifa.
   const multiplicadorPb = 10_000;
-  const desglose = cotizarViaje(filaATarifa(fila), ruta, multiplicadorPb);
+  const desglose = cotizarViaje(tarifa, ruta, multiplicadorPb);
   const id = nuevoId();
   const venceEn = sqlFecha(new Date(Date.now() + VIGENCIA_COTIZACION_S * 1000));
   await db
     .prepare(
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-         distancia_m, duracion_s, multiplicador_pb, desglose_json, total, moneda, vence_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -240,6 +251,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
       ruta.duracionS,
       multiplicadorPb,
       JSON.stringify(desglose),
+      JSON.stringify(tarifa),
       desglose.total,
       fila.moneda,
       venceEn,

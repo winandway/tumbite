@@ -2449,6 +2449,9 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   cargo_no_se_presento INTEGER NOT NULL CHECK (cargo_no_se_presento >= 0),
   tope_dinamico_pb INTEGER NOT NULL CHECK (tope_dinamico_pb BETWEEN 10000 AND 30000),
   redondeo INTEGER NOT NULL CHECK (redondeo >= 1),
+  cargo_fijo INTEGER NOT NULL DEFAULT 0 CHECK (cargo_fijo >= 0),
+  factor_calle_pb INTEGER NOT NULL DEFAULT 13000,
+  velocidad_kmh INTEGER NOT NULL DEFAULT 24,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
@@ -2470,6 +2473,8 @@ CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   duracion_s INTEGER NOT NULL CHECK (duracion_s >= 0),
   multiplicador_pb INTEGER NOT NULL DEFAULT 10000,
   desglose_json TEXT NOT NULL,
+  -- Copia de la tarifa con que se cotizó: la espera y la cancelación usan ESA, aunque cambie después.
+  tarifa_json TEXT NOT NULL DEFAULT '{}',
   total INTEGER NOT NULL CHECK (total >= 0),
   moneda TEXT NOT NULL,
   vence_en TEXT NOT NULL,

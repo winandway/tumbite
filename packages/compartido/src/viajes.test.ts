@@ -20,6 +20,8 @@ describe('C-VIAJE-PRECIO-FIJO: precio fijo de un viaje', () => {
       tiempo: 200,
       ajusteMinimo: 0,
       dinamico: 0,
+      cargoFijo: 0,
+      redondeo: 0,
       total: 800,
     });
   });
@@ -52,6 +54,35 @@ describe('C-VIAJE-PRECIO-FIJO: precio fijo de un viaje', () => {
     expect(d.total).toBe(Math.round((2000 + 3975 + 1580) / 100) * 100);
   });
 
+  it('el cargo fijo va aparte: no cuenta para el mínimo ni lleva recargo', () => {
+    const d = cotizarViaje(
+      t({ cargoFijo: 90, topeDinamicoPb: 20_000 }),
+      { distanciaM: 1000, duracionS: 120 },
+      20_000,
+    );
+    expect(d.ajusteMinimo).toBe(130);
+    expect(d.dinamico).toBe(300);
+    expect(d.total).toBe(300 + 300 + 90);
+  });
+
+  it('el desglose siempre suma el total, también con redondeo', () => {
+    const cop = t({
+      base: 2000,
+      porKm: 750,
+      porMinuto: 120,
+      minimo: 4500,
+      redondeo: 100,
+      cargoFijo: 250,
+    });
+    for (const distanciaM of [900, 5300, 12_345, 30_001]) {
+      const d = cotizarViaje(cop, { distanciaM, duracionS: Math.round(distanciaM / 6) });
+      expect(
+        d.base + d.distancia + d.tiempo + d.ajusteMinimo + d.dinamico + d.cargoFijo + d.redondeo,
+      ).toBe(d.total);
+      expect(d.total % 100).toBe(0);
+    }
+  });
+
   it('rechaza distancias o tiempos que no son enteros', () => {
     expect(() => cotizarViaje(t(), { distanciaM: -1, duracionS: 10 })).toThrow();
     expect(() => cotizarViaje(t(), { distanciaM: 10, duracionS: 1.5 })).toThrow();
@@ -82,10 +113,17 @@ describe('C-VIAJE-PRECIO-FIJO: precio fijo de un viaje', () => {
 describe('ruta estimada y espera', () => {
   it('estima la distancia por calle y un tiempo mínimo de un minuto', () => {
     const a = { lat: 4.65, lng: -74.05 };
-    const r = estimarRuta('moto', a, { lat: 4.66, lng: -74.05 });
+    const r = estimarRuta(t(), a, { lat: 4.66, lng: -74.05 });
     expect(r.distanciaM).toBeGreaterThan(1400);
     expect(r.distanciaM).toBeLessThan(1500);
-    expect(estimarRuta('moto', a, a)).toEqual({ distanciaM: 0, duracionS: 60 });
+    expect(estimarRuta(t(), a, a)).toEqual({ distanciaM: 0, duracionS: 60 });
+    // El factor y la velocidad son de la ciudad.
+    const lenta = estimarRuta(t({ factorCallePb: 15_000, velocidadKmh: 12 }), a, {
+      lat: 4.66,
+      lng: -74.05,
+    });
+    expect(lenta.distanciaM).toBeGreaterThan(r.distanciaM);
+    expect(lenta.duracionS).toBeGreaterThan(r.duracionS * 2);
   });
 
   it('la espera es gratis hasta el límite y luego se cobra por minuto empezado', () => {

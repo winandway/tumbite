@@ -37,17 +37,26 @@ export const esquemaTarifaViaje = z
     topeDinamicoPb: z.number().int().min(10_000).max(30_000).default(10_000),
     /** El total se redondea a este paso (100 = de cien en cien pesos). */
     redondeo: z.number().int().min(1).max(100_000).default(1),
+    /**
+     * Cargo fijo por viaje, aparte del precio del recorrido (Uber lo llama tarifa de operación; aquí
+     * también cubre el seguro del pasajero). No cuenta para el mínimo ni lleva recargo dinámico.
+     */
+    cargoFijo: monto.default(0),
+    /** Sin mapa de rutas: distancia por calle = línea recta × este factor (13 000 = × 1,3). [INF] */
+    factorCallePb: z.number().int().min(10_000).max(20_000).default(13_000),
+    /** Sin mapa de rutas: velocidad media para estimar el tiempo, por ciudad. [INF] */
+    velocidadKmh: z.number().int().min(5).max(80).default(24),
   })
   .refine((t) => t.minimo <= 100_000_000, { path: ['minimo'] });
 export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
 
-/**
+/*
  * Sin mapa de rutas todavía (la llave de Google Maps está pendiente), la distancia por calle se
- * estima con la línea recta por un factor y el tiempo con una velocidad urbana media. [INF]: son
- * supuestos nuestros, no datos de los grandes; se reemplazan por la ruta real cuando haya mapa.
+ * estima con la línea recta por un factor y el tiempo con una velocidad urbana media, los dos
+ * guardados en la tarifa de cada ciudad. [INF]: son supuestos nuestros (Namma Yatri usa rutas
+ * reales; Picap publica 33 km/h para la moto en trancón), y se reemplazan por la ruta real cuando
+ * haya mapa (docs/investigaciones-rea/2026-10-28-moto-rea.md).
  */
-export const FACTOR_CALLE = 1.3;
-export const VELOCIDAD_URBANA_KMH: Record<ServicioViaje, number> = { moto: 24, carro: 20 };
 /** Un viaje de Moto más largo que esto no se cotiza (los grandes limitan la moto a la ciudad). */
 export const DISTANCIA_MAXIMA_KM: Record<ServicioViaje, number> = { moto: 40, carro: 80 };
 /** Cuánto dura la cotización: después hay que volver a cotizar (precio fijo, no eterno). */
@@ -56,16 +65,14 @@ export const VIGENCIA_COTIZACION_S = 300;
 type Punto = { lat: number; lng: number };
 
 export function estimarRuta(
-  servicio: ServicioViaje,
+  t: Pick<TarifaViaje, 'factorCallePb' | 'velocidadKmh'>,
   origen: Punto,
   destino: Punto,
 ): { distanciaM: number; duracionS: number } {
-  const km = distanciaKm(origen, destino) * FACTOR_CALLE;
-  // eslint-disable-next-line security/detect-object-injection -- servicio validado por el tipo
-  const kmh = VELOCIDAD_URBANA_KMH[servicio];
+  const km = (distanciaKm(origen, destino) * t.factorCallePb) / 10_000;
   return {
     distanciaM: Math.round(km * 1000),
-    duracionS: Math.max(60, Math.round((km / kmh) * 3600)),
+    duracionS: Math.max(60, Math.round((km / t.velocidadKmh) * 3600)),
   };
 }
 
@@ -77,6 +84,9 @@ export type DesgloseViaje = {
   ajusteMinimo: number;
   /** Recargo dinámico (0 sin recargo). */
   dinamico: number;
+  cargoFijo: number;
+  /** Lo que mueve el redondeo de la ciudad (puede ser negativo); así el desglose suma el total. */
+  redondeo: number;
   total: number;
 };
 
@@ -105,8 +115,18 @@ export function cotizarViaje(
   const ajusteMinimo = Math.max(0, t.minimo - subtotal);
   const conMinimo = subtotal + ajusteMinimo;
   const dinamico = Math.round((conMinimo * (mult - 10_000)) / 10_000);
-  const total = Math.max(alPaso(conMinimo + dinamico, t.redondeo), t.minimo);
-  return { base: t.base, distancia, tiempo, ajusteMinimo, dinamico, total };
+  const sinRedondeo = conMinimo + dinamico + t.cargoFijo;
+  const total = Math.max(alPaso(sinRedondeo, t.redondeo), t.minimo + t.cargoFijo);
+  return {
+    base: t.base,
+    distancia,
+    tiempo,
+    ajusteMinimo,
+    dinamico,
+    cargoFijo: t.cargoFijo,
+    redondeo: total - sinRedondeo,
+    total,
+  };
 }
 
 /** Lo que cuesta la espera: gratis hasta el límite y después por minuto empezado. */

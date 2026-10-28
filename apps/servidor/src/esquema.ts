@@ -65,6 +65,12 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['ruta_paradas', 'llegada_en', 'TEXT'],
   // Flex · Fase 3: archivo de prueba borrado por una política de retención aprobada.
   ['flex_pruebas', 'purgada_en', 'TEXT'],
+  // Divoox Moto · M1 (28 oct 2026, después de REA): cargo fijo, ruta estimada por ciudad y la copia
+  // de la tarifa dentro de cada cotización. Las tablas ya existían en el sitio de pruebas.
+  ['tarifas_viaje', 'cargo_fijo', 'INTEGER NOT NULL DEFAULT 0'],
+  ['tarifas_viaje', 'factor_calle_pb', 'INTEGER NOT NULL DEFAULT 13000'],
+  ['tarifas_viaje', 'velocidad_kmh', 'INTEGER NOT NULL DEFAULT 24'],
+  ['cotizaciones_viaje', 'tarifa_json', "TEXT NOT NULL DEFAULT '{}'"],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],

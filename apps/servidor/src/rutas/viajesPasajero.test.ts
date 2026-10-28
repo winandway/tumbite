@@ -164,13 +164,21 @@ describe('C-VIAJE-PRECIO-FIJO: cotización del pasajero', () => {
       zona: { id: ZONA },
     });
     const d = c.desglose;
-    expect(d.base + d.distancia + d.tiempo + d.ajusteMinimo + d.dinamico).toBe(c.total);
+    expect(
+      d.base + d.distancia + d.tiempo + d.ajusteMinimo + d.dinamico + d.cargoFijo + d.redondeo,
+    ).toBe(c.total);
     expect(d.distancia).toBe(Math.round((TARIFA.porKm * c.distanciaM) / 1000));
     expect(c.total).toBeGreaterThanOrEqual(TARIFA.minimo);
     const f = await e.m.DB.prepare('SELECT * FROM cotizaciones_viaje WHERE id = ?')
       .bind(c.id)
       .first<Record<string, unknown>>();
     expect(f).toMatchObject({ cliente_id: e.cliente.id, total: c.total, usada_en: null });
+    // La cotización guarda la tarifa con que se calculó (la espera y la cancelación usan esa).
+    expect(JSON.parse(String(f?.tarifa_json))).toMatchObject({
+      ...TARIFA,
+      cargoFijo: 0,
+      velocidadKmh: 24,
+    });
     const vence = new Date(`${String(f?.vence_en).replace(' ', 'T')}Z`).getTime();
     expect(vence - Date.now()).toBeGreaterThan(280_000);
     expect(vence - Date.now()).toBeLessThanOrEqual(300_000);

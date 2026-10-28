@@ -165,3 +165,27 @@ Carro se hace después con lo mismo: otra tarifa, otro tipo de vehículo, hasta 
 - El enlace de compartir deja de funcionar al terminar.
 - Comida sigue igual con Moto encendida en staging (recorrido de Comida verde).
 - En producción, Moto sigue apagada y el canario de salud lo confirma.
+
+## 9. Lo que cambió después de correr REA de verdad (28 oct 2026)
+
+Evidencia con hash: `docs/investigaciones-rea/2026-10-28-moto-rea.md` y su paquete `evidencia-rea-moto-2026-10-28.json.gz`. Siete capturas de páginas públicas como visitante (Uber Moto Colombia, el estimador de Uber —que no cotiza sin sesión, y ahí se paró—, DiDi Moto, Picap) y dos proyectos de código abierto analizados: Namma Yatri (AGPL; app real de autos y motos en India) y Locomotion de Autofleet (MIT). Se copiaron ideas, no código.
+
+**Ya aplicado en M1:**
+
+- La fórmula base + km + minuto, con mínimo, tope dinámico y redondeo coincide con Uber y con Namma Yatri. [REA/DOC]
+- Nuevo **cargo fijo por viaje**, aparte del recorrido (la «tarifa de operación» de Uber; aquí también cubre el seguro del pasajero). No cuenta para el mínimo ni lleva recargo.
+- **Cada cotización guarda la copia de su tarifa**: la espera y la cancelación usarán esa, aunque el superadmin cambie la tarifa después.
+- El factor de calle y la velocidad dejaron de ser constantes globales: van **en la tarifa de cada ciudad**.
+- El desglose siempre suma el total, también con el redondeo de la ciudad.
+
+**Se agrega a las fases siguientes:**
+
+- **M2 (primero, es un fallo del código de la Fase 3):** hoy «Llegué» se marca sin revisar la ubicación del conductor, «No se presentó» se marca sin comprobar que pasó la espera gratis, y el PIN no tiene tope de intentos. Un conductor podría cobrar sin haber ido. No afecta a nadie hoy (ninguna ruta crea viajes y Moto está apagada en producción), pero se corrige antes de que exista el primer viaje: radio de llegada, tiempo de espera cumplido y tope de intentos del PIN, cada uno con su prueba en rojo.
+- **M2:** la ventana de cancelación gratis cuenta desde que **se asigna el conductor**, no desde que se pide; no se cobra si la culpa es del conductor; si cancela el conductor, el viaje vuelve a «buscando».
+- **M2/M7:** en efectivo, un cargo de cancelación o de «no se presentó» no se puede cobrar en el momento: queda como **deuda del pasajero** que se suma a su siguiente viaje (como Namma Yatri).
+- **M3:** despacho por **lotes con radio creciente** (lote de uno = uno a uno) y, antes de cada lote, comprobar que el viaje siga buscando.
+- **M5:** la app del pasajero **vuelve a cotizar sola** antes de que venza la cotización.
+- **M7:** regla de **recálculo al terminar**: el precio sigue fijo salvo que cambie el destino o la distancia real pase un umbral (Namma lo hace por bandas).
+- **M6:** contactos de emergencia, aviso si el viaje se detiene o se desvía, y chequeo después del viaje.
+- **Textos por mercado:** DiDi y Picap se presentan como «alquiler de moto con conductor» por la zona gris legal de Colombia; los textos del servicio tienen que poder cambiarse por ciudad.
+- **Casco:** Uber Colombia no garantiza casco para el pasajero (recomienda llevar el propio). Interruptor por ciudad: «el conductor lleva casco para el pasajero» sí o no.
