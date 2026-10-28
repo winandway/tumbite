@@ -6,6 +6,8 @@ import {
   TRANSICIONES_PAQUETE,
   almacenNavegador,
   barrasCode128,
+  enIdioma,
+  perfilFlex,
   useBorrador,
 } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
@@ -15,6 +17,7 @@ import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { HerramientasEnvio } from './PantallasRutas';
+import { type UbicacionDeEnvio, UbicacionEnvio } from './UbicacionEnvio';
 
 /** Pantallas de envíos, paquetes, importación, etiquetas, lotes y rutas, y billetera (próximamente). */
 
@@ -44,7 +47,10 @@ type Envio = {
   centroId: string | null;
   lat?: number | null;
   lng?: number | null;
-};
+  // Fase 5 (C-FLEX-UBICACION).
+  destinatarioCorreo?: string;
+  destinatarioDocumento?: string;
+} & UbicacionDeEnvio;
 type Evento = {
   id: number;
   tipo: string;
@@ -184,10 +190,35 @@ const INICIAL_ENVIO = {
   paquetes: '1',
   descripcion: '',
   centroId: '',
+  // Fase 5 (C-FLEX-UBICACION).
+  destinatarioCorreo: '',
+  destinatarioDocumento: '',
+  referencias: '',
+};
+
+/** Campos nuevos del destinatario (Fase 5), en los dos idiomas. */
+const CAMPOS_DESTINATARIO = {
+  es: {
+    correo: 'Correo del destinatario (opcional)',
+    documento: 'Cédula o RIF del destinatario',
+    referencias: 'Punto de referencia',
+    referenciasEj: 'Casa azul frente a la panadería',
+    ayudaApp:
+      'Con su teléfono o su correo lo encontramos en Divoox: si tiene la app, el paquete le llega ya ubicado.',
+  },
+  en: {
+    correo: 'Recipient email (optional)',
+    documento: 'Recipient ID',
+    referencias: 'Landmark',
+    referenciasEj: 'Blue house across from the bakery',
+    ayudaApp:
+      'With their phone or email we find them on Divoox: if they have the app, the package arrives already located.',
+  },
 };
 
 export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
   const { t, empresa, raiz } = ctx;
+  const cd = enIdioma(CAMPOS_DESTINATARIO, ctx.idioma);
   const centros = useCentros(empresa.id);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -211,6 +242,9 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           destinatarioTelefono: v.destinatarioTelefono,
           direccion: v.direccion,
           instrucciones: v.instrucciones,
+          destinatarioCorreo: v.destinatarioCorreo,
+          destinatarioDocumento: v.destinatarioDocumento,
+          referencias: v.referencias,
           centroId: v.centroId || null,
           paquetes: Array.from({ length: n }, () => ({ descripcion: v.descripcion })),
         },
@@ -261,6 +295,28 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           cambiar={(x) => b.cambiar('direccion', x)}
           placeholder={t.direccion}
         />
+        <Campo
+          etiqueta={cd.referencias}
+          valor={v.referencias}
+          cambiar={(x) => b.cambiar('referencias', x)}
+          placeholder={cd.referenciasEj}
+        />
+        <Campo
+          etiqueta={cd.correo}
+          tipo="email"
+          valor={v.destinatarioCorreo}
+          cambiar={(x) => b.cambiar('destinatarioCorreo', x)}
+          placeholder="correo@ejemplo.com"
+        />
+        {perfilFlex(empresa.pais).documento.pide ? (
+          <Campo
+            etiqueta={cd.documento}
+            valor={v.destinatarioDocumento}
+            cambiar={(x) => b.cambiar('destinatarioDocumento', x)}
+            placeholder={perfilFlex(empresa.pais).documento.ejemplo}
+          />
+        ) : null}
+        <p className="pista">{cd.ayudaApp}</p>
         <Campo
           etiqueta={t.instrucciones}
           valor={v.instrucciones}
@@ -364,6 +420,13 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         {e.instrucciones ? <br /> : null}
         {e.instrucciones}
       </p>
+      <UbicacionEnvio
+        envio={e}
+        empresaId={empresa.id}
+        pais={empresa.pais}
+        idioma={ctx.idioma}
+        alCambiar={cargar}
+      />
       <HerramientasEnvio
         ctx={ctx}
         envioId={e.id}
@@ -1035,6 +1098,9 @@ type DatosEtiqueta = {
   destinatarioNombre: string;
   direccion: string;
   instrucciones: string;
+  // Fase 5: punto de referencia y código plus del punto exacto (Google Maps lo entiende sin internet).
+  referencias?: string;
+  codigoPlus?: string | null;
   centro: string | null;
   empresa: string;
   pieza: number;
@@ -1137,6 +1203,12 @@ export function Etiqueta({
           <p className="flex-etiqueta-nombre">{d.destinatarioNombre}</p>
           <p>{calle}</p>
           {ciudad && <p>{ciudad}</p>}
+          {d.referencias && <p className="flex-etiqueta-nota">Ref.: {d.referencias}</p>}
+          {d.codigoPlus && (
+            <p className="flex-etiqueta-plus">
+              <strong>{d.codigoPlus}</strong>
+            </p>
+          )}
           {!compacta && d.instrucciones && <p className="flex-etiqueta-nota">{d.instrucciones}</p>}
           {compacta && d.referenciaExterna && (
             <p className="flex-etiqueta-ref">Ref: {d.referenciaExterna}</p>

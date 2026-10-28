@@ -302,6 +302,26 @@ flexUbicacion.get('/mis-paquetes', async (c) => {
       .all<{ id: string; pais: string }>();
     for (const s of sueltos) await vincularDestinatarios(db, [s.id], s.pais);
   }
+  // Si ya guardó UNA casa con pin, los envíos suyos que esperan ubicación (y no han salido) la toman.
+  const { results: casas } = await db
+    .prepare(
+      'SELECT direccion, lat, lng, instrucciones FROM direcciones_cliente WHERE usuario_id = ? AND lat IS NOT NULL AND lng IS NOT NULL',
+    )
+    .bind(u.id)
+    .all<{ direccion: string; lat: number; lng: number; instrucciones: string }>();
+  const casa = casas.length === 1 ? casas[0] : undefined;
+  if (casa)
+    await db
+      .prepare(
+        `UPDATE envios SET lat = ?, lng = ?, direccion = ?, referencias = CASE WHEN referencias = '' THEN ? ELSE referencias END,
+           ubicacion_estado = 'confirmada', ubicacion_fuente = 'app_cliente', ubicacion_confirmada_en = datetime('now'),
+           actualizado_en = datetime('now')
+         WHERE destinatario_usuario_id = ? AND lat IS NULL AND ubicacion_estado != 'confirmada'
+           AND NOT EXISTS (SELECT 1 FROM paquetes p WHERE p.envio_id = envios.id
+                            AND p.estado IN (${ESTADOS_CERRADOS.map(() => '?').join(',')}))`,
+      )
+      .bind(casa.lat, casa.lng, casa.direccion, casa.instrucciones, u.id, ...ESTADOS_CERRADOS)
+      .run();
   const { results } = await db
     .prepare(
       `SELECT e.id, e.direccion, e.referencias, e.lat, e.lng, e.ubicacion_estado, e.creado_en, e.estado,

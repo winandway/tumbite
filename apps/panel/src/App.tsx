@@ -9,6 +9,7 @@ import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { Seguimiento } from './sitio/Seguimiento';
+import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -49,7 +50,10 @@ export function App() {
   const [idiomaGuardado, guardarIdioma] = useIdioma();
   // El panel y las conversaciones privadas (/t/…) no tienen versión /es: usan lo que la persona eligió.
   const publica =
-    !ruta.startsWith('/panel') && !ruta.startsWith('/t/') && !ruta.startsWith('/ride/');
+    !ruta.startsWith('/panel') &&
+    !ruta.startsWith('/t/') &&
+    !ruta.startsWith('/ride/') &&
+    !ruta.startsWith('/deliver/');
   const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
     document.documentElement.lang = idioma;
@@ -106,6 +110,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <TicketPublico codigo={ticket[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // Divoox Flex: «confirma dónde recibes» (enlace secreto que la empresa manda por WhatsApp).
+  const entrega = /^\/deliver\/([A-Za-z0-9_-]{40,60})$/.exec(ruta);
+  if (entrega?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <ConfirmarUbicacion codigo={entrega[1]} idioma={idioma} />
       </Sitio>
     );
   // Divoox Flex: rastreo público por número de guía (/track y /track/<código>).

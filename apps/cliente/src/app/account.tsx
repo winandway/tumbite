@@ -121,6 +121,19 @@ export default function MiCuenta() {
         </Text>
       ) : null}
 
+      {/* Divoox Flex: lo que las empresas me envían (C-FLEX-UBICACION). */}
+      <Pressable
+        onPress={() => router.push('/packages')}
+        accessibilityRole="link"
+        testID="ir-mis-paquetes"
+        style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+      >
+        <Text style={{ fontWeight: '800' }}>
+          {idioma === 'en' ? 'My packages' : 'Mis paquetes'}
+        </Text>
+        <Text style={{ fontWeight: '800' }}>›</Text>
+      </Pressable>
+
       <Text style={estilos.subtitulo}>{t.pedidos}</Text>
       {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}
       {pedidos?.map((p) => (

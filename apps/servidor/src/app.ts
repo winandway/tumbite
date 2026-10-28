@@ -410,7 +410,7 @@ app.notFound(async (c) => {
   let respuesta = new Response(res.body, res);
   // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.
   // Igual el viaje compartido (/ride/<codigo>, M6): privado y en vivo.
-  if (c.req.path.startsWith('/t/') || c.req.path.startsWith('/ride/'))
+  if (['/t/', '/ride/', '/deliver/'].some((p) => c.req.path.startsWith(p)))
     respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
   if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.

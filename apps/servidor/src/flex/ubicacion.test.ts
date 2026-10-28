@@ -272,6 +272,44 @@ describe('C-FLEX-UBICACION · Venezuela: ubicación exacta antes de salir', () =
   });
 });
 
+describe('Venezuela: la casa marcada una vez ubica los envíos que esperaban', () => {
+  it('al guardar su casa con pin, el envío pendiente queda confirmado con ese punto', async () => {
+    const m = mundo();
+    const cli = await m.cuenta('cliente', 'María Pérez');
+    await m.DB.prepare("UPDATE usuarios SET telefono = '04141234567' WHERE id = ?")
+      .bind(cli.id)
+      .run();
+    const e = await empresaEn(m, 'VE');
+    const x = await envio(m, e);
+    expect(
+      (await llamar(m, 'GET', `${B}/mis-paquetes`, undefined, cli.token)).datos.paquetes[0]
+        .ubicacion,
+    ).toBe('pendiente');
+    expect(
+      (
+        await llamar(
+          m,
+          'POST',
+          '/datos/mis-direcciones',
+          {
+            etiqueta: 'Casa',
+            direccion: 'Los Palos Grandes, Caracas',
+            ...CARACAS,
+            instrucciones: 'Edificio rojo',
+          },
+          cli.token,
+        )
+      ).estado,
+    ).toBe(201);
+    const p = (await llamar(m, 'GET', `${B}/mis-paquetes`, undefined, cli.token)).datos.paquetes[0];
+    expect(p).toMatchObject({
+      envioId: x.id,
+      ubicacion: 'confirmada',
+      referencias: 'Edificio rojo',
+    });
+  });
+});
+
 describe('Venezuela: cédula o RIF del destinatario', () => {
   it('se acepta con su forma y se rechaza mal escrita', async () => {
     const m = mundo();
