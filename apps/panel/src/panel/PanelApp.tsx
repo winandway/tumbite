@@ -43,6 +43,7 @@ import {
 } from './SuperFichas';
 import { AyudaBurbuja } from './AyudaBurbuja';
 import { ir } from '../ruta';
+import { SuperFinanzas } from './SuperFinanzas';
 import { pedir } from './api';
 
 /**
@@ -63,6 +64,10 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   const caso = /^\/cash\/([^/]+)$/.exec(sub);
   if (caso?.[1])
     return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
+  if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
+  const finEmpresa = /^\/flexfinance\/([0-9a-f-]{36})$/.exec(sub);
+  if (finEmpresa?.[1])
+    return <SuperFinanzas base={base} idioma={idioma} empresaId={finEmpresa[1]} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;
   if (sub === '/restaurants') return <AdminRestaurantes idioma={idioma} base={base} />;

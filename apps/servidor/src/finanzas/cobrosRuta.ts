@@ -266,7 +266,6 @@ export async function liberarCobroRuta(db: D1Database, rutaId: string, motivo: s
   if (!c) return 0;
   const restante = await restanteDe(db, c);
   const k = conceptos(c.id);
-  const cuenta = cuentaEmpresa(c.empresa_id);
   const lote: D1PreparedStatement[] = [
     db
       .prepare(

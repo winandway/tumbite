@@ -1248,3 +1248,43 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - Qué: `POST /datos/admin/revisores` confirma el correo de las cuentas YA marcadas como revisor con su mismo rol (las creadas antes de C-FRANQUICIA-CORREO-CONFIRMADO), sin cambiar sus claves y sin tocar ninguna otra cuenta.
 - Candado: `rutas/revisores.test.ts` («volver a tocar el botón confirma…»), comprobado en rojo.
+
+## C-FIN-POLITICAS · Ninguna tarifa en el código; nunca retroactiva (Fase 4 de Flex, 27 oct 2026)
+
+- Qué: la capa común `packages/compartido/src/finanzas.ts` (`elegirPolitica`, `calcularComision`, `tarifaUnitaria`, `desgloseServicioLogistico`) y la tabla `politicas_financieras`. Gana la más específica (empresa > ciudad > país > todos), después la prioridad. Sin política, no se cobra nada. El prepago de conductores no rige sin `revision_legal_aprobada`. Disparadores (`esquemaFlex.ts`): `politicas_financieras_inmutables`, `politicas_financieras_cierre_adelante`, `politicas_financieras_sin_borrar`.
+- Candados: `finanzas.test.ts` (compartido, 11 pruebas) y `apps/servidor/src/finanzas/finanzas.test.ts` («las políticas no se editan ni se cierran hacia atrás», «la tarifa queda congelada»), comprobado en rojo quitando el control de fecha.
+
+## C-FIN-BILLETERA · El saldo vive solo en el libro, y el libro es inmutable
+
+- Qué: cuenta `empresa:<id>`; bolsillos `prepago`, `reservado`, `deuda_cliente`. `libro_inmutable_update/delete` (disparadores nuevos: nunca se edita ni se borra una fila del libro), `finanzas_auditoria` y `comprobantes` inmutables. Ajustes manuales solo con rol admin, su contraseña y motivo.
+- Candado: `finanzas.test.ts` («ajuste manual…», «una empresa no ve la billetera de otra…»).
+
+## C-FIN-RECARGAS · Se acredita solo con el aviso firmado de Stripe, una vez
+
+- Qué: `crearRecargaEmpresa` (Idempotency-Key → misma recarga y mismo intento de Stripe), `acreditarRecargaEmpresa` (monto, moneda, empresa e intento tienen que cuadrar; referencia `recarga_empresa:<id>`), comprobante en el mismo lote. El navegador nunca acredita: la pantalla pregunta al servidor.
+- Candado: `finanzas.test.ts` («queda pendiente hasta el aviso FIRMADO…», «no acredita si…»), comprobado en rojo con una referencia al azar y sin el control de empresa.
+
+## C-FIN-RESERVAS / C-FIN-COMISION · Se aparta antes de salir; cada paquete se cobra una vez
+
+- Qué: `finanzas/cobrosRuta.ts`. `reservarCobroRuta` (lote atómico que solo entra si alcanza; índice único de una reserva abierta por ruta), `sentenciasCobroEntrega` dentro del lote de la entrega (referencia `comision_flex_paquete:<paquete>`), `ajustarCobroAlSalir`, `cerrarCobroRuta`, `liberarCobroRuta` (lo liberado paga primero la deuda), `recuperarCobrosHuerfanos` en el reloj.
+- Candados: `finanzas.test.ts` (ejemplo de 50 / 40 × 0,25, entrega repetida, saldo insuficiente, dos rutas a la vez, liberaciones), comprobados en rojo quitando el control de saldo y con la referencia por paquete al azar.
+
+## C-FIN-REEMBOLSOS / C-FIN-DISPUTAS · Sin saldos negativos
+
+- Qué: `reembolsoDeRecarga` descuenta solo la diferencia contra lo ya descontado; lo que el disponible no cubre queda como deuda y frena rutas nuevas. `disputaDeRecarga` retiene, libera o quita una sola vez cada paso.
+- Candado: `finanzas.test.ts` (reembolso doble, deuda, disputa ganada y perdida), comprobado en rojo.
+
+## C-FIN-CONCILIACION · Lo perdido se recupera y lo descuadrado se ve
+
+- Qué: `finanzas/reloj.ts` (`fin_conciliacion` en el reloj existente): recargas pendientes contra Stripe, reservas huérfanas, invariantes del libro, pieza `billeteras` de la salud.
+- Candado: `finanzas.test.ts` («recupera una recarga cuyo aviso se perdió…»).
+
+## C-FIN-CONDUCTOR · Prepago de conductores solo con revisión legal; nunca toca lo retirable
+
+- Qué: `finanzas/conductor.ts` (`cobrarComisionConductor`, `saldosConductor`). No está enchufado a Food. Ver `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`.
+- Candado: `finanzas.test.ts` (bloque C-FIN-CONDUCTOR).
+
+## C-FIN-PANEL · Billetera y superadmin financiero
+
+- Qué: `apps/panel/src/panel/flex/PantallasBilletera.tsx` (Resumen, Recargar con el formulario de Stripe dentro de la pantalla, Comisiones, Comprobantes con impresión, Configuración) y `apps/panel/src/panel/SuperFinanzas.tsx`.
+- Candados: `PantallasBilletera.test.tsx` (5) y `SuperFinanzas.test.tsx`.

@@ -12,6 +12,8 @@
 
 👤 = depende de Richard. Ordenado por importancia.
 
+- [ ] **Monetización prepago multiservicio** (requisito de Richard, 27 oct 2026, `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`): unificar Food en cobro directo con la capa de políticas sin cambiar su resultado; política de cancelaciones por servicio; enchufar Express, Grocery y Flex conductor cuando existan.
+- [ ] 👤 **Autorización comercial y legal por mercado** para encender el prepago de conductores (sin ella la política no rige).
 - [x] **Divoox Flex · Fase 3** (27 oct 2026, rama `fase-flex-3` sobre la 2, solo staging): ofertas que vencen solas en el reloj existente, avisos al celular a conductor y empresa, integraciones firmadas con anti-SSRF, orden sugerido, capacidad de vehículos, indicadores de operación, retención con simulación, escala medida (10/100/1000 empresas), protocolo de piloto y cuentas de revisores resueltas en el código. Informe: `docs/DIVOOX-FLEX-FASE-3-RESULTADOS.md`; piloto: `docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`. 👤 Autorizar la Fase 4 (dinero).
 - [ ] **Llave `FLEX_LLAVE_WEBHOOKS` en producción** (el día que Flex pase a producción, con autorización). En staging ya está cargada (27 oct 2026, `scripts/staging/cargar-llave-flex.sh`).
 - [ ] **Piloto de Flex en la calle** (20 a 40 paquetes, Android y iPhone) según `docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`. Necesita personas y celulares; los avisos esperan Firebase (Android) y Apple.
@@ -53,7 +55,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] 👤 Autorizar en producción la arquitectura multiciudad: publicada el 17 oct (bac14e2a).
 - [ ] 👤 **Revisar como superadmin en tumbite.com** Zonas → Áreas y Franquicias → Territorio y equipo (solo Richard puede entrar).
 
-- [ ] 👤 **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
+- [x] (27 oct 2026, comprobado en la API de Expo: las tres apps tienen la llave FCM V1) **Proyecto de Firebase** (gratis) para los avisos al celular en Android: registrar las tres apps (com.windoce.tumbite, .driver, .restaurants) y subir la llave de FCM a Expo. Sin él, los APK no reciben avisos. Detalle en `docs/APPS-MOVILES-FASE-4.md`.
 
 - [ ] 👤 **URGENTE — cambiar las contraseñas de prueba** que estaban en el archivo de contraseñas de las apps (la de Expo y las de las cuentas de prueba de cliente, repartidor y restaurante). El archivo entró por error al repositorio público el 16 oct y **sí está en el historial de main** (no en lo publicado). La clave del cliente de pruebas ya se cambió el 19 oct; falta la de Expo. Detalle en `docs/PUBLICACION-RELOJ-SEGURO-2026-10-17.md`. Borrarlo del historial de GitHub es destructivo y espera su decisión.
 

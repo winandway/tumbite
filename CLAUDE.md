@@ -81,6 +81,7 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - `docs/CONTRATO-YADOMINIOS.md` — cómo se publica.
 - `docs/PLAN-MAESTRO-FASE-2.md`, `docs/INFORME-FINAL-FASE-2.md` y `docs/DECISIONES-RICHARD-FASE-2.md` — la Fase 2 (modelo internacional): el plan, el cierre del 18 oct y lo que solo Richard decide.
 - `docs/COMPARACION-CICLO-PEDIDO.md` — cómo funciona de verdad un pedido en DoorDash y Uber Eats frente al nuestro, con las brechas por orden. Se lee antes de tocar el ciclo del pedido.
+- `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md` — requisito permanente de Richard (27 oct 2026): las comisiones se descuentan del saldo prepago del conductor en todos los servicios donde el mercado lo habilite; EE. UU. conserva Stripe Connect. Una sola billetera y una sola capa de políticas.
 - `docs/AUDITORIA-DIVOOX-FLEX-2026.md`, `docs/DIVOOX-FLEX-FASE-1-RESULTADOS.md`, `docs/DIVOOX-FLEX-FASE-2-RESULTADOS.md` y `docs/API-DIVOOX-FLEX-V1.md` — Divoox Flex (logística empresarial de paquetes): la auditoría, lo hecho en la Fase 1 y la API. Las rutas viven en `apps/servidor/src/flex/` bajo `/datos/v1/flex`; el panel en `apps/panel/src/panel/flex/` (`/panel/business`); «Mi ruta» del conductor en `apps/repartidor/src/flex/`. Regla: una ruta Flex ocupa al conductor como UNA sola operación (C-FLEX-OCUPACION).
 
 ## Identidad de Divoox (aprobada por Richard el 23 oct 2026) — SOLO estos colores

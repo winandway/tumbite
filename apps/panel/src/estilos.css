@@ -4766,3 +4766,134 @@ button {
 .menu-tres-puntos .cuenta-menu button.peligro {
   color: #c20a1a;
 }
+/* Flex · Fase 4: billetera de la empresa */
+.flex-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid #e3e4e6;
+  margin: 8px 0 16px;
+}
+.flex-pestanas a {
+  padding: 8px 14px;
+  border-radius: 8px 8px 0 0;
+  color: #101010;
+  text-decoration: none;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+}
+.flex-pestanas a.activa {
+  background: #f20d20;
+  color: #fff;
+}
+.flex-kpi-grande strong {
+  font-size: 30px;
+  color: #0d7a3a;
+}
+.flex-movimientos {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  border: 1px solid #e3e4e6;
+  border-radius: 10px;
+  background: #fff;
+}
+.flex-movimientos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f1f2;
+}
+.flex-movimientos li:last-child {
+  border-bottom: 0;
+}
+.flex-movimientos li > span:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.flex-movimientos small {
+  color: #666b73;
+  font-size: 12px;
+}
+.flex-importes {
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.flex-importes legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.flex-importe {
+  border: 1px solid #d0d2d6;
+  border-radius: 10px;
+  padding: 12px 18px;
+  cursor: pointer;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+.flex-importe input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.flex-importe.activo {
+  border-color: #f20d20;
+  box-shadow: 0 0 0 2px rgba(242, 13, 32, 0.15);
+}
+.flex-pago {
+  margin: 12px 0;
+  max-width: 520px;
+}
+.flex-comprobante {
+  max-width: 640px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 20px 24px;
+  background: #fff;
+}
+.flex-comprobante header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e3e4e6;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.flex-comprobante header div {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+.flex-comprobante dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 18px;
+  margin: 0;
+}
+.flex-comprobante dt {
+  color: #666b73;
+}
+.flex-comprobante dd {
+  margin: 0;
+  font-weight: 600;
+}
+.flex-comprobante-monto {
+  font-size: 22px;
+}
+@media print {
+  .flex-pestanas,
+  .flex-billetera h1 {
+    display: none !important;
+  }
+  .flex-comprobante {
+    border: 0;
+  }
+}

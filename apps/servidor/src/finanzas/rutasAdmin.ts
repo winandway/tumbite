@@ -39,7 +39,13 @@ export const finanzasAdmin = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 const fechaHora = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/, 'Fecha en formato AAAA-MM-DD HH:MM.')
+  .refine(
+    (s) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(s) ||
+      /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(s) ||
+      /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(s),
+    'Fecha en formato AAAA-MM-DD HH:MM.',
+  )
   .transform((s) => {
     const x = s.replace('T', ' ');
     return x.length === 10 ? `${x} 00:00:00` : x.length === 16 ? `${x}:00` : x;

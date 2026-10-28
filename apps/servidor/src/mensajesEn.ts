@@ -991,6 +991,64 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Elige al menos un evento.', 'Choose at least one event.'],
   ['País en dos letras (o * para todos).', 'Two-letter country code (or * for all).'],
+  // Divoox Flex · Fase 4 (billetera, recargas, políticas).
+  [
+    'Los importes sugeridos tienen que estar entre el mínimo y el máximo.',
+    'Suggested amounts must be between the minimum and the maximum.',
+  ],
+  [
+    'Las recargas todavía no están activas en tu país.',
+    'Top-ups aren’t available in your country yet.',
+  ],
+  ['El importe está fuera de los límites permitidos.', 'The amount is outside the allowed limits.'],
+  ['Los pagos no están configurados todavía.', 'Payments aren’t set up yet.'],
+  ['Esa clave ya se usó para otra recarga.', 'That key was already used for another top-up.'],
+  [
+    'No pudimos iniciar el pago. Intenta de nuevo en un momento.',
+    'We couldn’t start the payment. Try again in a moment.',
+  ],
+  ['Esa recarga no se puede reembolsar.', 'That top-up can’t be refunded.'],
+  ['El reembolso supera lo que se recargó.', 'The refund exceeds what was topped up.'],
+  [
+    'La empresa no tiene ese saldo disponible para devolver.',
+    'The company doesn’t have that much available balance to refund.',
+  ],
+  [
+    'El ajuste dejaría el saldo disponible en negativo.',
+    'The adjustment would leave the available balance negative.',
+  ],
+  [
+    'Tu billetera tiene un saldo pendiente de pago. Recarga para enviar rutas nuevas.',
+    'Your wallet has an outstanding balance. Top up to send new routes.',
+  ],
+  [
+    'Saldo insuficiente en la billetera para esta ruta. Recarga para continuar.',
+    'Not enough wallet balance for this route. Top up to continue.',
+  ],
+  ['Una política nueva no puede empezar en el pasado.', 'A new policy can’t start in the past.'],
+  ['La fecha final va después de la inicial.', 'The end date must be after the start date.'],
+  ['Esa política no existe.', 'That policy doesn’t exist.'],
+  [
+    'Una política solo se cierra desde ahora en adelante.',
+    'A policy can only be closed from now on.',
+  ],
+  ['País en dos letras.', 'Two-letter country code.'],
+  [
+    'Escribe la referencia de la revisión legal y comercial aprobada.',
+    'Enter the reference of the approved legal and business review.',
+  ],
+  ['Esa recarga no existe.', 'That top-up doesn’t exist.'],
+  ['Ese comprobante no existe.', 'That receipt doesn’t exist.'],
+  [
+    'La recarga automática no está disponible en tu país.',
+    'Automatic top-up isn’t available in your country.',
+  ],
+  ['Primero haz una recarga guardando tu tarjeta.', 'First make a top-up saving your card.'],
+  [
+    'Revisa el umbral y el importe de la recarga automática.',
+    'Check the threshold and amount of the automatic top-up.',
+  ],
+  ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

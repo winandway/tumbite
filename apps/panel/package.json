@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^7.0.1",
+    "@stripe/stripe-js": "^10.2.0",
     "@tumbite/compartido": "0.1.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.55.0",

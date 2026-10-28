@@ -1524,13 +1524,3 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
     </section>
   );
 }
-
-export function Billetera({ ctx }: { ctx: Contexto }) {
-  const { t } = ctx;
-  return (
-    <section className="super">
-      <h1>{t.billetera}</h1>
-      <p className="pista">{t.billeteraPronto}</p>
-    </section>
-  );
-}

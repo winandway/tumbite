@@ -13,7 +13,6 @@ import { crear, pedir } from '../api';
 import { TEXTOS_FLEX } from './textos';
 import { Centros, Claves, Conductores, Equipo, Inicio, Perfil } from './Pantallas';
 import {
-  Billetera,
   DetalleEnvio,
   DetallePaquete,
   Envios,
@@ -25,6 +24,7 @@ import {
 } from './PantallasEnvios';
 import { DetalleRutaOperativa, Devoluciones, Incidencias, RutasOperativas } from './PantallasRutas';
 import { Integraciones, Operaciones, Vehiculos } from './PantallasFase3';
+import { BilleteraEmpresa } from './PantallasBilletera';
 
 export const BASE_FLEX = '/datos/v1/flex';
 export type Empresa = {
@@ -337,7 +337,8 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
   else if (sub === 'operations') contenido = <Operaciones ctx={ctx} />;
   else if (sub === 'vehicles') contenido = <Vehiculos ctx={ctx} />;
   else if (sub === 'integrations') contenido = <Integraciones ctx={ctx} />;
-  else if (sub === 'wallet') contenido = <Billetera ctx={ctx} />;
+  else if (sub === 'wallet' || sub.startsWith('wallet/'))
+    contenido = <BilleteraEmpresa ctx={ctx} sub={sub} />;
   else if (sub === 'keys') contenido = <Claves ctx={ctx} />;
   else contenido = <p role="alert">{t.noExiste}</p>;
   return (

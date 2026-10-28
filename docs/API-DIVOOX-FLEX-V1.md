@@ -288,9 +288,32 @@ Conductor: oferta, asignación, oferta por vencer, oferta retirada o vencida, ru
 
 `GET/PUT /admin/retencion` (políticas por país y servicio: `{pais, servicio, categoria, dias, aprobada}`), `POST /admin/retencion/simular` (no borra nada), `POST /admin/retencion/ejecutar` (exige una simulación de la última hora). Categorías: `idempotencia` (7 días), `avisos` (30), `integraciones` (30) — de fábrica aprobadas; `ubicacion` (90) y `pruebas` (365) — **nunca** se borran sin una política aprobada por una persona. De las pruebas se borra el archivo y la fila queda marcada (`purgada_en`); nunca una prueba de una incidencia abierta. La custodia (eventos) es inmutable y no se borra.
 
+## Fase 4 · Billetera, recargas y comisiones (27 oct 2026)
+
+El dinero vive en el libro contable (`libro`, cuenta `empresa:<id>`): `prepago` = disponible, `reservado` = apartado para rutas y retenciones, `deuda_cliente` = pendiente (frena rutas nuevas). Montos en la unidad menor (centavos). Solo personas: `finanzas.ver` para leer, `finanzas.gestionar` para recargar y configurar (dueño y finanzas). Una `x-api-key` responde 403.
+
+| Método | Ruta                                                     | Qué hace                                                                                                                                                                                               |
+| ------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `…/billetera`                                            | Saldo (disponible, reservado, deuda, total), alerta, suspendida, límites de recarga del país, tarifa vigente, configuración, clave pública de Stripe                                                   |
+| GET    | `…/billetera/movimientos?desde&hasta&antes&limite`       | Movimientos del libro con su tipo (recarga, reserva, comisión, liberación, reembolso, disputa, ajuste)                                                                                                 |
+| GET    | `…/billetera/recargas` · `…/billetera/recargas/{r}`      | Recargas y su estado (`pendiente`, `acreditada`, `fallida`, `cancelada`)                                                                                                                               |
+| POST   | `…/billetera/recargas`                                   | `{monto, guardarMetodo?}` con **Idempotency-Key** obligatoria. Devuelve `clientSecret` para el formulario de Stripe. **No acredita nada**: solo el aviso firmado `payment_intent.succeeded` suma saldo |
+| GET    | `…/billetera/comisiones?desde&hasta`                     | Comisiones por ruta (tarifa congelada, paquetes facturados, cobrado)                                                                                                                                   |
+| GET    | `…/comprobantes?desde&hasta&tipo` · `…/comprobantes/{c}` | Comprobantes numerados `DVX-AAAA-000001` (no son facturas fiscales)                                                                                                                                    |
+| PUT    | `…/billetera/config`                                     | `{alertaSaldo, avisosCorreo, recargaAutomatica: {activa, umbral, monto}}`                                                                                                                              |
+| POST   | `…/billetera/metodo/quitar`                              | Quita la tarjeta guardada y apaga la recarga automática                                                                                                                                                |
+
+**Rutas**: `asignar` y `ofrecer` apartan la comisión estimada con la tarifa CONGELADA de la política vigente (`flex_cobros_ruta`); sin saldo, `409` con `campo: "billetera"` y la ruta queda en borrador. Con deuda, `409`. Cada paquete entregado se cobra en la misma transacción de la entrega (referencia única por paquete). Al salir se libera lo de los faltantes; al cerrar, se cobra la regla por ruta (si aplica) y se libera el resto; al retirar, vencer o cancelar, se libera todo. Lo liberado paga primero la deuda.
+
+**Stripe (modo prueba)**: eventos atendidos `payment_intent.succeeded` (acredita, valida monto, moneda y empresa), `payment_intent.payment_failed` (motivo; la recarga sigue abierta salvo la automática), `payment_intent.canceled`, `charge.refunded` (descuenta solo la diferencia; lo que el disponible no cubre queda como deuda), `charge.dispute.created/closed` (retiene lo disputado; ganada libera; perdida quita y deja deuda por lo que faltaba). `POST /datos/interno-stripe/avisos/principal/eventos` (secreto del reloj) agrega al aviso de este sitio los eventos que falten.
+
+**Superadmin** (`/datos/admin/finanzas/…`, rol admin): `politicas` (GET, POST — nunca en el pasado), `politicas/{p}/cerrar` (solo hacia adelante; antes de empezar, la apaga), `politicas/{p}/revision-legal`, `recargas-config/{pais}` (GET, PUT), `empresas`, `empresas/{e}/movimientos`, `empresas/{e}/ajuste` y `recargas/{r}/reembolsar` (con la contraseña del administrador y un motivo), `conciliacion` (GET, POST), `simular-logistico`.
+
+**Reloj existente**: `fin_conciliacion` (recupera recargas pendientes preguntando a Stripe, libera o cierra reservas huérfanas, comprueba invariantes; la salud muestra `billeteras`), `fin_recarga_automatica`, `fin_alertas_saldo`.
+
 ## Lo que NO existe todavía
 
-Cobros, recargas, comisiones, pagos a conductores (Fase 4), navegación multiparada integrada (hoy se abre la app de mapas parada por parada), tiempos de manejo reales (la optimización usa línea recta), seguimiento en tiempo real por WebSocket, GPS en segundo plano, Express (envío individual del cliente).
+Pagos a conductores de Flex por la empresa (servicio logístico completo: solo el desglose y el simulador), navegación multiparada integrada (hoy se abre la app de mapas parada por parada), tiempos de manejo reales (la optimización usa línea recta), seguimiento en tiempo real por WebSocket, GPS en segundo plano, Express (envío individual del cliente).
 
 ---
 

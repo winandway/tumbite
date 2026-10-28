@@ -14,6 +14,8 @@
 
 Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito se vio funcionando en local (candado C-PAGO-FORMULARIO); falta la compra real de $1.
 
+> **27 oct, Divoox Flex · Fase 4 (rama `fase-flex-4`, solo staging):** billetera prepago de empresas sobre el libro, recargas con Stripe en **modo prueba**, comisiones por paquete con reserva, reembolsos, disputas, conciliación y recarga automática. 🔴 **Nada probado con dinero real.** La recarga de empresa se probó de punta a punta en staging con Stripe de prueba (ver `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`). Ninguna tarifa activa en producción.
+
 ## Cómo funciona (construido)
 
 1. La app manda qué platos y cuántos. **El servidor pone los precios** desde la base y calcula los cuatro bolsillos (`packages/compartido/src/bolsillos.ts`).
