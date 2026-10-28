@@ -2081,6 +2081,9 @@ CREATE TABLE IF NOT EXISTS viajes (
   pasajeros INTEGER NOT NULL DEFAULT 1 CHECK (pasajeros BETWEEN 1 AND 6),
   pin_recogida TEXT NOT NULL CHECK (length(pin_recogida) = 4),
   liberaciones INTEGER NOT NULL DEFAULT 0 CHECK (liberaciones >= 0),
+  intentos_pin INTEGER NOT NULL DEFAULT 0,
+  metodo_pago TEXT NOT NULL DEFAULT 'efectivo',
+  cotizacion_id TEXT,
   distancia_m_real INTEGER, duracion_s_real INTEGER, total_final_centavos INTEGER,
   asignado_en TEXT, llego_en TEXT, iniciado_en TEXT, terminado_en TEXT
 );
@@ -2429,3 +2432,111 @@ CREATE TABLE IF NOT EXISTS errores_servidor (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS errores_servidor_creado ON errores_servidor(creado_en);
+
+-- Divoox Moto · Fase M1 (28 oct 2026, C-VIAJE-PRECIO-FIJO): tarifa de un servicio de pasajeros por
+-- ciudad, versionada (una sola activa; cambiar = cerrar la vieja y abrir otra, nunca editar), y la
+-- cotización con PRECIO FIJO que el pasajero acepta al pedir. Montos en la unidad menor, enteros.
+CREATE TABLE IF NOT EXISTS tarifas_viaje (
+  id TEXT PRIMARY KEY,
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  moneda TEXT NOT NULL,
+  base INTEGER NOT NULL CHECK (base >= 0),
+  por_km INTEGER NOT NULL CHECK (por_km >= 0),
+  por_minuto INTEGER NOT NULL CHECK (por_minuto >= 0),
+  minimo INTEGER NOT NULL CHECK (minimo >= 0),
+  espera_gratis_s INTEGER NOT NULL CHECK (espera_gratis_s >= 0),
+  por_minuto_espera INTEGER NOT NULL CHECK (por_minuto_espera >= 0),
+  cancelacion_gratis_s INTEGER NOT NULL CHECK (cancelacion_gratis_s >= 0),
+  cargo_cancelacion INTEGER NOT NULL CHECK (cargo_cancelacion >= 0),
+  cargo_no_se_presento INTEGER NOT NULL CHECK (cargo_no_se_presento >= 0),
+  tope_dinamico_pb INTEGER NOT NULL CHECK (tope_dinamico_pb BETWEEN 10000 AND 30000),
+  redondeo INTEGER NOT NULL CHECK (redondeo >= 1),
+  cargo_fijo INTEGER NOT NULL DEFAULT 0 CHECK (cargo_fijo >= 0),
+  factor_calle_pb INTEGER NOT NULL DEFAULT 13000,
+  velocidad_kmh INTEGER NOT NULL DEFAULT 24,
+  de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  motivo TEXT NOT NULL DEFAULT '',
+  creada_por TEXT REFERENCES usuarios(id),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrada_en TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS tarifas_viaje_una_activa ON tarifas_viaje(servicio_id, zona_id) WHERE activa = 1;
+
+CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  tarifa_id TEXT NOT NULL REFERENCES tarifas_viaje(id),
+  origen_lat REAL NOT NULL, origen_lng REAL NOT NULL, origen_direccion TEXT NOT NULL,
+  destino_lat REAL NOT NULL, destino_lng REAL NOT NULL, destino_direccion TEXT NOT NULL,
+  distancia_m INTEGER NOT NULL CHECK (distancia_m >= 0),
+  duracion_s INTEGER NOT NULL CHECK (duracion_s >= 0),
+  multiplicador_pb INTEGER NOT NULL DEFAULT 10000,
+  desglose_json TEXT NOT NULL,
+  -- Copia de la tarifa con que se cotizó: la espera y la cancelación usan ESA, aunque cambie después.
+  tarifa_json TEXT NOT NULL DEFAULT '{}',
+  total INTEGER NOT NULL CHECK (total >= 0),
+  moneda TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  usada_en TEXT,
+  operacion_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(cliente_id, creado_en);
+
+-- Divoox Moto · M2 (28 oct 2026): lo que el pasajero debe por cancelar tarde o no presentarse en un
+-- viaje en efectivo. No se puede cobrar en el momento: se suma a su siguiente viaje (como Namma
+-- Yatri). Una sola deuda por viaje y motivo.
+CREATE TABLE IF NOT EXISTS deudas_pasajero (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('cancelacion', 'no_se_presento')),
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'cobrada', 'perdonada')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT,
+  -- El viaje en el que se cobró (M7): se suma a la cuenta final de ese viaje.
+  cobrada_en TEXT,
+  UNIQUE (operacion_id, motivo)
+);
+CREATE INDEX IF NOT EXISTS deudas_pasajero_cliente ON deudas_pasajero(cliente_id, estado);
+
+-- Divoox Moto · M6 (28 oct 2026): seguridad del viaje. Cada toque del botón de emergencia queda
+-- aquí (con la ubicación) y le llega al equipo; el enlace para compartir el viaje se guarda solo
+-- como huella (nunca el código) y deja de servir cuando el viaje termina.
+CREATE TABLE IF NOT EXISTS emergencias_viaje (
+  id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  actor_id TEXT NOT NULL REFERENCES usuarios(id),
+  rol TEXT NOT NULL CHECK (rol IN ('pasajero', 'conductor')),
+  lat REAL, lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  atendida_en TEXT,
+  atendida_por TEXT REFERENCES usuarios(id),
+  nota TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS emergencias_viaje_abiertas ON emergencias_viaje(atendida_en, creado_en);
+CREATE TABLE IF NOT EXISTS viajes_compartidos (
+  huella TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Divoox Moto · M8 (28 oct 2026): cada lado califica al otro al terminar el viaje (como Uber e
+-- inDrive). Una sola calificación por lado y viaje. La del pasajero cuenta en el promedio del
+-- conductor junto con las de Comida.
+CREATE TABLE IF NOT EXISTS calificaciones_viaje (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  de TEXT NOT NULL CHECK (de IN ('pasajero', 'conductor')),
+  autor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estrellas INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, de)
+);
