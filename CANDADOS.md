@@ -1404,6 +1404,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `apps/servidor/src/flex/cobros.test.ts` (la página del Banco Central siempre simulada), `flexCobro.test.ts`, y la caja en `PantallasRutas.test.tsx`; comprobada en rojo.
 - **No tocar:** las pruebas nunca llaman a la página real; Divoox no cambia dinero, solo muestra la equivalencia.
 
+## C-FLEX-RETIRO · Retiro en un punto con plazo (28 oct 2026)
+
+- **País:** todos; la cédula se exige donde el perfil la pide (Venezuela). Como la agencia de MRW: 5 días hábiles, cédula y número de seguimiento, tercero autorizado anotado, cobro al retirar, devolución al vencer.
+- **Cómo funciona:** el envío guarda `entrega_tipo = 'punto'`, `punto_centro_id`, `retiro_disponible_en` y `retiro_vence`. Sin estados nuevos (la base no deja tocar el CHECK de `paquetes.estado`): el paquete está «registrado_centro» y se agregaron las transiciones registrado_centro → entregado y → devuelto. Rutas en `apps/servidor/src/flex/retiro.ts`; pantalla `RetiroEnPunto.tsx`. Lo que va a un punto no entra a una ruta a domicilio (409).
+- **Prueba:** `apps/servidor/src/flex/retiro.test.ts` (rojo comprobado quitando la comparación de la cédula), `RetiroEnPunto.test.tsx`, `flexPaises.test.ts` (5 días hábiles).
+- **No tocar:** nunca entregar en el mostrador sin el número de seguimiento del envío; en Venezuela, nunca con otra cédula sin marcar el tercero.
+
 ## C-COLA-ERROR-PASAJERO · Un error pasajero del servidor no bota una entrega (28 oct 2026)
 
 - **Qué se vio:** en la verificación de producción del recorrido, el repartidor entregó sin señal; al volver la red el servidor respondió 500 una vez y la app SACÓ la entrega de la cola (la trataba como rechazo): la foto se perdió y el pedido se quedó «en camino». Se encontró leyendo el rastro de red de la corrida.

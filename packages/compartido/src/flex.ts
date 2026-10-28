@@ -97,7 +97,8 @@ export type EstadoPaquete = (typeof ESTADOS_PAQUETE)[number];
 /** Mismas transiciones que `transiciones_paquete` en schema.sql (la base también las exige). */
 export const TRANSICIONES_PAQUETE: Record<EstadoPaquete, readonly EstadoPaquete[]> = {
   creado: ['registrado_centro', 'preparado', 'cancelado'],
-  registrado_centro: ['preparado', 'cancelado'],
+  // C-FLEX-RETIRO: en el centro como punto de retiro, se retira en el mostrador o vence y se devuelve.
+  registrado_centro: ['preparado', 'cancelado', 'entregado', 'devuelto'],
   preparado: ['asignado', 'cancelado'],
   asignado: ['cargado', 'preparado', 'cancelado'],
   cargado: ['en_transito', 'preparado'],

@@ -70,6 +70,9 @@ export const esquemaEnvio = z.object({
     .nullable()
     .optional(),
   direccion: z.string().trim().min(3).max(300),
+  /** C-FLEX-RETIRO: «domicilio» (por defecto) o «punto»: se retira en un centro de la empresa. */
+  entrega: z.enum(['domicilio', 'punto']).default('domicilio'),
+  puntoCentroId: z.string().uuid().nullable().optional(),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
   instrucciones: z.string().trim().max(500).default(''),
@@ -111,6 +114,11 @@ const filaEnvio = (f: Record<string, unknown>) => ({
   destinatarioEnDivoox: Boolean(f.destinatario_usuario_id),
   // Fase 6 (C-FLEX-COBRO).
   cobro: filaCobro(f),
+  // C-FLEX-RETIRO.
+  entrega: (f.entrega_tipo as string) ?? 'domicilio',
+  puntoCentroId: (f.punto_centro_id as string | null) ?? null,
+  retiroDisponibleEn: (f.retiro_disponible_en as string | null) ?? null,
+  retiroVence: (f.retiro_vence as string | null) ?? null,
   ventanaDesde: f.ventana_desde,
   ventanaHasta: f.ventana_hasta,
   estado: f.estado,
@@ -183,8 +191,8 @@ export function sentenciasDeEnvio(
         `INSERT INTO envios (id, empresa_id, centro_id, referencia_externa, remitente_nombre, destinatario_nombre,
          destinatario_telefono, direccion, lat, lng, instrucciones, ventana_desde, ventana_hasta,
          destinatario_correo, destinatario_documento, referencias, ubicacion_estado, ubicacion_fuente,
-         ubicacion_confirmada_en, cobro_monto, cobro_moneda, cobro_estado)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END, ?, ?, ?)`,
+         ubicacion_confirmada_en, cobro_monto, cobro_moneda, cobro_estado, entrega_tipo, punto_centro_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -209,6 +217,8 @@ export function sentenciasDeEnvio(
         d.cobro?.monto ?? null,
         d.cobro?.moneda ?? null,
         d.cobro ? 'pendiente' : 'sin_cobro',
+        d.entrega,
+        d.entrega === 'punto' ? (d.puntoCentroId ?? d.centroId ?? null) : null,
       ),
   ];
   const paquetes = d.paquetes.map((p) => {
@@ -291,6 +301,19 @@ function exigirReglasDelPais(
   if (e) throw new ErrorDatos(e.mensaje, e.campo, 422);
 }
 
+/** C-FLEX-RETIRO: el punto de retiro es un centro activo de la empresa. */
+async function comprobarPunto(
+  db: D1Database,
+  empresaId: string,
+  d: Pick<EnvioEntrada, 'entrega' | 'puntoCentroId' | 'centroId'>,
+) {
+  if (d.entrega !== 'punto') return;
+  const punto = d.puntoCentroId ?? d.centroId;
+  if (!punto)
+    throw new ErrorDatos('Elige el centro donde se retira el paquete.', 'puntoCentroId', 422);
+  await comprobarCentro(db, empresaId, punto);
+}
+
 async function comprobarCentro(
   db: D1Database,
   empresaId: string,
@@ -342,6 +365,7 @@ flexEnvios.post('/empresas/:id/envios', async (c) => {
   const d = await leerCuerpo(c, esquemaEnvio);
   const db = base(c);
   await comprobarCentro(db, actor.empresaId, d.centroId);
+  await comprobarPunto(db, actor.empresaId, d);
   return conIdempotencia(c, actor, d, async () => {
     const pais = await paisDeEmpresa(db, actor.empresaId);
     exigirReglasDelPais(pais, d);
@@ -371,7 +395,10 @@ flexEnvios.post('/empresas/:id/envios/lote', async (c) => {
       'envios',
       409,
     );
-  for (const e of d.envios) await comprobarCentro(db, actor.empresaId, e.centroId);
+  for (const e of d.envios) {
+    await comprobarCentro(db, actor.empresaId, e.centroId);
+    await comprobarPunto(db, actor.empresaId, e);
+  }
   return conIdempotencia(c, actor, d, async () => {
     const pais = await paisDeEmpresa(db, actor.empresaId);
     for (const e of d.envios) exigirReglasDelPais(pais, e);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   codigoPlus,
+  documentoNormal,
+  venceRetiro,
   documentoValido,
   perfilFlex,
   puedeEntrarARuta,
@@ -59,5 +61,19 @@ describe('código plus en la etiqueta', () => {
     expect(codigoPlus(10.4806, -66.9036)).toMatch(
       /^[23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2}$/,
     );
+  });
+});
+
+describe('C-FLEX-RETIRO · retiro en el punto con plazo', () => {
+  it('cuenta 5 días hábiles, sin fines de semana', () => {
+    // Miércoles 28 oct 2026 → miércoles 4 nov.
+    expect(venceRetiro(new Date('2026-10-28T15:00:00Z'))).toBe('2026-11-04');
+    // Viernes 30 oct → viernes 6 nov.
+    expect(venceRetiro(new Date('2026-10-30T15:00:00Z'))).toBe('2026-11-06');
+    // Sábado 31 oct → viernes 6 nov.
+    expect(venceRetiro(new Date('2026-10-31T15:00:00Z'))).toBe('2026-11-06');
+  });
+  it('compara la cédula sin puntos ni guiones', () => {
+    expect(documentoNormal('v-12.345.678')).toBe(documentoNormal('V12345678'));
   });
 });

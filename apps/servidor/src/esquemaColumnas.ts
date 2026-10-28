@@ -911,7 +911,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "liquidado_en",
     "liquidado_por",
     "recibio_documento",
-    "recibio_relacion"
+    "recibio_relacion",
+    "entrega_tipo",
+    "punto_centro_id",
+    "retiro_disponible_en",
+    "retiro_vence"
   ],
   "paquetes": [
     "id",

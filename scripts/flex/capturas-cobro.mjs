@@ -113,6 +113,27 @@ for (const e of [
     ).envio,
   );
 
+// C-FLEX-RETIRO: un envío que se retira en el centro, con cobro, ya disponible para retirar.
+const retiro = (
+  await api(
+    'POST',
+    `${E}/envios`,
+    {
+      centroId: centro.id,
+      entrega: 'punto',
+      referenciaExterna: 'PED-2003',
+      destinatarioNombre: 'Carmen Díaz',
+      destinatarioTelefono: '0424-000.00.03',
+      destinatarioDocumento: 'V-10000003',
+      direccion: 'Retiro en el centro',
+      cobro: { monto: 1800, moneda: 'USD' },
+      paquetes: [{ descripcion: 'Zapatos', pesoG: 1200 }],
+    },
+    dueno.token,
+  )
+).envio;
+await api('POST', `${E}/envios/${retiro.id}/retiro/disponible`, {}, dueno.token);
+
 const conductor = await cuenta('Carlos Conductor', 'repartidor');
 await api('POST', `${E}/conductores`, { correo: conductor.correo, vinculo: 'propio' }, dueno.token);
 const ruta = (
@@ -226,6 +247,8 @@ for (const idioma of ['es', 'en']) {
   await foto(p, `panel-caja-${idioma}`, 'caja-ruta');
   await p.goto(`${URL}${pre}/panel/business/${empresa.id}/shipments/${envios[1].id}`);
   await foto(p, `panel-cobro-envio-${idioma}`, 'cobro-envio');
+  await p.goto(`${URL}${pre}/panel/business/${empresa.id}/shipments/${retiro.id}`);
+  await foto(p, `panel-retiro-${idioma}`, 'retiro-en-punto');
   await p.goto(`${URL}${pre}/panel/business/${empresa.id}/labels`);
   await p.getByText('PED-2001').click();
   await p.setViewportSize({ width: 1280, height: 1180 });
@@ -244,7 +267,7 @@ for (const n of execSync(`ls ${salida}`)
   execSync(
     `cwebp -quiet -q 82 "${join(salida, n)}" -o "${join(web, n.replace('fase6-', '').replace('.png', '.webp'))}"`,
   );
-for (const n of ['driver-cobrar', 'panel-caja'])
+for (const n of ['driver-cobrar', 'panel-caja', 'panel-retiro'])
   for (const l of ['es', 'en'])
     execSync(
       `cp "${join(web, `${n}-${l}.webp`)}" "${join(raiz, 'apps', 'panel', 'public', 'docs', `flex-${n}-${l}.webp`)}"`,

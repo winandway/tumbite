@@ -35,15 +35,20 @@ async function rutaConCobro(m: M) {
 const cobroOk = { metodo: 'efectivo_usd', monto: 2500, moneda: 'USD' };
 
 // Nunca se toca la página real del Banco Central: se simula (o se apaga) en cada prueba.
-let bcv: 'responde' | 'caido' = 'responde';
+let bcv: 'responde' | 'solo-respaldo' | 'caido' = 'responde';
 const PAGINA_BCV = `<div id="dolar"><span> USD</span><strong class="strong-tb">888,11830000</strong></div>
   Fecha Valor: <span content="2026-10-28T00:00:00-04:00"></span>`;
 beforeEach(() => {
   bcv = 'responde';
   const original = globalThis.fetch;
   vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
-    if (!String(url).includes('bcv.org.ve')) return original(url, init);
-    if (bcv === 'caido') throw new Error('sin red');
+    const u = String(url);
+    if (u.includes('dolarapi.com')) {
+      if (bcv === 'caido') throw new Error('sin red');
+      return Response.json({ promedio: 888.1183, fechaActualizacion: '2026-10-28T00:00:00-04:00' });
+    }
+    if (!u.includes('bcv.org.ve')) return original(url, init);
+    if (bcv !== 'responde') throw new Error('certificado');
     return new Response(PAGINA_BCV);
   });
 });
@@ -280,5 +285,13 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
       (await llamar(m, 'POST', `${B}/empresas/${us.id}/tasa`, { tasa: 900 }, us.dueno.token))
         .estado,
     ).toBe(422);
+  });
+
+  it('C-FLEX-TASA: si el Banco Central falla, la misma tasa oficial sale del respaldo', async () => {
+    const m = mundo();
+    const r = await rutaConCobro(m);
+    bcv = 'solo-respaldo';
+    const t = await llamar(m, 'GET', `${B}/empresas/${r.e.id}/tasa`, undefined, r.e.dueno.token);
+    expect(t.datos.tasa).toMatchObject({ tasa: 888.1183, fuente: 'bcv', deHoy: true });
   });
 });

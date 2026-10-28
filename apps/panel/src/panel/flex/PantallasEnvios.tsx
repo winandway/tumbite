@@ -15,6 +15,7 @@ import {
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { CampoDireccion } from '../../sitio/CampoDireccion';
+import { RetiroEnPunto } from './RetiroEnPunto';
 import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
@@ -55,6 +56,9 @@ type Envio = {
   destinatarioDocumento?: string;
   // Fase 6 (C-FLEX-COBRO).
   cobro?: CobroEnvio | null;
+  // C-FLEX-RETIRO.
+  entrega?: 'domicilio' | 'punto';
+  retiroVence?: string | null;
 } & UbicacionDeEnvio;
 type CobroEnvio = {
   monto: number;
@@ -210,6 +214,8 @@ const INICIAL_ENVIO = {
   destinatarioCorreo: '',
   destinatarioDocumento: '',
   referencias: '',
+  // C-FLEX-RETIRO: a domicilio o retiro en el centro elegido abajo.
+  entrega: 'domicilio',
   // C-DIRECCION-SUGERENCIAS: el punto de la dirección sugerida que se eligió.
   lat: '',
   lng: '',
@@ -227,6 +233,10 @@ const CAMPOS_DESTINATARIO = {
     referenciasEj: 'Casa azul frente a la panadería',
     ayudaApp:
       'Con su teléfono o su correo lo encontramos en Divoox: si tiene la app, el paquete le llega ya ubicado.',
+    entrega: 'Cómo se entrega',
+    domicilio: 'A domicilio (sale en una ruta)',
+    punto: 'Retiro en el centro elegido abajo (5 días hábiles)',
+    direccionPunto: 'Retiro en el centro',
     cobro: 'Cobrar al entregar (opcional)',
     cobroAyuda:
       'El conductor lo cobra y lo registra antes de entregar. Déjalo vacío si ya está pagado.',
@@ -255,6 +265,10 @@ const CAMPOS_DESTINATARIO = {
     referenciasEj: 'Blue house across from the bakery',
     ayudaApp:
       'With their phone or email we find them on Divoox: if they have the app, the package arrives already located.',
+    entrega: 'How it’s delivered',
+    domicilio: 'To a home (goes on a route)',
+    punto: 'Pickup at the hub chosen below (5 business days)',
+    direccionPunto: 'Pickup at the hub',
     cobro: 'Collect on delivery (optional)',
     cobroAyuda:
       'The driver collects and records it before delivering. Leave it empty if it’s already paid.',
@@ -331,7 +345,8 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           referenciaExterna: v.referenciaExterna || null,
           destinatarioNombre: v.destinatarioNombre,
           destinatarioTelefono: v.destinatarioTelefono,
-          direccion: v.direccion,
+          direccion: v.direccion || (v.entrega === 'punto' ? cd.direccionPunto : ''),
+          entrega: v.entrega,
           ...(v.lat ? { lat: Number(v.lat), lng: Number(v.lng) } : {}),
           instrucciones: v.instrucciones,
           destinatarioCorreo: v.destinatarioCorreo,
@@ -384,6 +399,17 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           cambiar={(x) => b.cambiar('destinatarioTelefono', x)}
           placeholder={t.telefono}
         />
+        <div className="campo">
+          <label htmlFor="flex-entrega">{cd.entrega}</label>
+          <select
+            id="flex-entrega"
+            value={v.entrega}
+            onChange={(e) => b.cambiar('entrega', e.target.value)}
+          >
+            <option value="domicilio">{cd.domicilio}</option>
+            <option value="punto">{cd.punto}</option>
+          </select>
+        </div>
         <div className="campo">
           {/* C-DIRECCION-SUGERENCIAS: direcciones reales del país de la empresa, con su punto. */}
           <CampoDireccion
@@ -557,13 +583,23 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         {e.instrucciones}
       </p>
       {e.cobro ? <CobroDelEnvio cobro={e.cobro} idioma={ctx.idioma} /> : null}
-      <UbicacionEnvio
-        envio={e}
-        empresaId={empresa.id}
-        pais={empresa.pais}
-        idioma={ctx.idioma}
-        alCambiar={cargar}
-      />
+      {e.entrega === 'punto' ? (
+        <RetiroEnPunto
+          envio={e}
+          empresaId={empresa.id}
+          pais={empresa.pais}
+          idioma={ctx.idioma}
+          alCambiar={cargar}
+        />
+      ) : (
+        <UbicacionEnvio
+          envio={e}
+          empresaId={empresa.id}
+          pais={empresa.pais}
+          idioma={ctx.idioma}
+          alCambiar={cargar}
+        />
+      )}
       {/* Un envío que ya terminó no ofrece herramientas para entregarlo (PIN). */}
       {['entregado', 'devuelto', 'cancelado'].includes(e.estado) ? null : (
         <HerramientasEnvio

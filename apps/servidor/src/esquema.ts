@@ -103,6 +103,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['envios', 'liquidado_por', 'TEXT'],
   ['envios', 'recibio_documento', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'recibio_relacion', "TEXT NOT NULL DEFAULT ''"],
+  // Flex · C-FLEX-RETIRO: retiro en un punto (centro) con plazo.
+  ['envios', 'entrega_tipo', "TEXT NOT NULL DEFAULT 'domicilio'"],
+  ['envios', 'punto_centro_id', 'TEXT'],
+  ['envios', 'retiro_disponible_en', 'TEXT'],
+  ['envios', 'retiro_vence', 'TEXT'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.
   ['disputas', 'recarga_empresa_id', 'TEXT'],
   ['ruta_paradas', 'resuelta_en', 'TEXT'],

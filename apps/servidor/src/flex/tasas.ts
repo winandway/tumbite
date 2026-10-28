@@ -16,9 +16,30 @@ import { paisDeEmpresa } from './ubicacion';
 export const flexTasas = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const URL_BCV = 'https://www.bcv.org.ve/';
+/**
+ * Respaldo: el mismo dólar oficial del Banco Central, republicado por DolarApi (código abierto). Hace
+ * falta porque el certificado del Banco Central falla en el entorno del servidor (visto el 28 oct).
+ */
+const URL_RESPALDO = 'https://ve.dolarapi.com/v1/dolares/oficial';
 const hoyVenezuela = () => new Date(Date.now() - 4 * 3600_000).toISOString().slice(0, 10);
 
 export type TasaDelDia = { tasa: number; fecha: string; fuente: 'bcv' | 'empresa'; deHoy: boolean };
+
+async function leerDelRespaldo(): Promise<{ tasa: number; fecha: string | null } | null> {
+  try {
+    const r = await fetch(URL_RESPALDO, { signal: AbortSignal.timeout(8_000) });
+    if (!r.ok) {
+      console.error('tasa: el respaldo respondió', r.status);
+      return null;
+    }
+    const d = (await r.json()) as { promedio?: number; fechaActualizacion?: string };
+    if (typeof d.promedio !== 'number' || !(d.promedio > 0)) return null;
+    return { tasa: d.promedio, fecha: d.fechaActualizacion?.slice(0, 10) ?? null };
+  } catch (e) {
+    console.error('tasa: el respaldo no respondió', e);
+    return null;
+  }
+}
 
 async function leerDelBcv(): Promise<{ tasa: number; fecha: string | null } | null> {
   try {
@@ -59,7 +80,7 @@ export async function tasaDelDia(
     .bind(pais, hoy)
     .first<{ tasa: number; fecha: string }>();
   if (oficial) return { tasa: oficial.tasa, fecha: oficial.fecha, fuente: 'bcv', deHoy: true };
-  const leida = await leerDelBcv();
+  const leida = (await leerDelBcv()) ?? (await leerDelRespaldo());
   if (leida) {
     await db
       .prepare(

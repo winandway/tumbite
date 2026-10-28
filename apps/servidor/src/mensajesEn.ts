@@ -1049,6 +1049,35 @@ export const MENSAJES_EN = new Map<string, string>([
     'Check the threshold and amount of the automatic top-up.',
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
+  // Divoox Flex · retiro en un punto (C-FLEX-RETIRO).
+  ['Elige el centro donde se retira el paquete.', 'Choose the hub where the package is picked up.'],
+  [
+    'Hay envíos que se retiran en un punto: no van en una ruta a domicilio.',
+    'Some shipments are picked up at a point: they don’t go on a delivery route.',
+  ],
+  [
+    'Este envío se entrega a domicilio, no en un punto.',
+    'This shipment is delivered to a home, not a pickup point.',
+  ],
+  ['Este envío ya no está en el punto.', 'This shipment is no longer at the pickup point.'],
+  ['Una entrega en el mostrador la hace una persona.', 'A counter pickup is done by a person.'],
+  [
+    'Ese número de seguimiento no es de este envío.',
+    'That tracking number isn’t from this shipment.',
+  ],
+  ['Este paquete no está disponible para retirar.', 'This package isn’t ready for pickup.'],
+  [
+    'Escribe la cédula de quien retira (por ejemplo V-12345678).',
+    'Enter the ID of the person picking up (for example V-12345678).',
+  ],
+  [
+    'La cédula no es la del destinatario. Si retira otra persona, márcalo como tercero autorizado.',
+    'That ID isn’t the recipient’s. If someone else is picking up, mark them as an authorized third party.',
+  ],
+  [
+    'Este envío se cobra al retirar: registra el cobro.',
+    'This shipment is paid at pickup: record the payment.',
+  ],
   // Divoox Flex · Fase 6 (cobro contra entrega).
   ['La tasa la pone una persona, no una clave.', 'The rate is set by a person, not an API key.'],
   ['En este país no hace falta una tasa del día.', 'This country doesn’t need a daily rate.'],

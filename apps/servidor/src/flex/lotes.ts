@@ -226,12 +226,19 @@ async function enviosDeLaEmpresa(db: D1Database, empresaId: string, ids: string[
     throw new ErrorDatos('Hay envíos repetidos en la ruta.', 'envioIds', 409);
   const { results } = await db
     .prepare(
-      `SELECT id FROM envios WHERE empresa_id = ? AND id IN (${unicos.map(() => '?').join(',')})`,
+      `SELECT id, entrega_tipo FROM envios WHERE empresa_id = ? AND id IN (${unicos.map(() => '?').join(',')})`,
     )
     .bind(empresaId, ...unicos)
-    .all<{ id: string }>();
+    .all<{ id: string; entrega_tipo: string | null }>();
   if (results.length !== unicos.length)
     throw new ErrorDatos('Alguno de esos envíos no existe en tu empresa.', 'envioIds', 404);
+  // C-FLEX-RETIRO: lo que se retira en un punto no sale en una ruta a domicilio.
+  if (results.some((r) => r.entrega_tipo === 'punto'))
+    throw new ErrorDatos(
+      'Hay envíos que se retiran en un punto: no van en una ruta a domicilio.',
+      'envioIds',
+      409,
+    );
 }
 
 flexLotes.post('/empresas/:id/rutas', async (c) => {

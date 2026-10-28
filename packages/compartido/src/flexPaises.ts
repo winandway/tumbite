@@ -131,3 +131,21 @@ export function documentoValido(pais: string, texto: string): boolean {
   const p = perfilFlex(pais).documento.patron;
   return !p || p.test(texto.replace(/[\s.-]/g, ''));
 }
+
+/**
+ * C-FLEX-RETIRO: el último día para retirar en el punto, contando días hábiles (lunes a viernes)
+ * desde que el paquete queda disponible. MRW da 5 días hábiles en agencia; después vuelve al origen.
+ */
+export function venceRetiro(desde: Date, diasHabiles = 5): string {
+  const d = new Date(Date.UTC(desde.getUTCFullYear(), desde.getUTCMonth(), desde.getUTCDate()));
+  let quedan = diasHabiles;
+  while (quedan > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const dia = d.getUTCDay();
+    if (dia !== 0 && dia !== 6) quedan--;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+/** La cédula o el RIF para comparar (sin puntos, guiones ni espacios, en mayúscula). */
+export const documentoNormal = (t: string) => t.replace(/[\s.-]/g, '').toUpperCase();

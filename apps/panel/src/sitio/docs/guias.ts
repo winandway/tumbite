@@ -2322,6 +2322,37 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'flex-pickup-point',
+        titulo: 'Divoox Flex: retiro en tu centro, con plazo',
+        resumen:
+          'El paquete se queda en tu centro y el destinatario lo retira con su cédula y el número de seguimiento, en 5 días hábiles. Si se cobra, paga ahí.',
+        explicacion: [
+          'Además de la entrega a domicilio, cada envío puede retirarse en uno de tus centros, como en una agencia. Al crearlo eliges «Retiro en el centro» y el centro.',
+          'Cuando el paquete está en el centro, tocas «avisar al destinatario» y Divoox prepara el mensaje para WhatsApp: dónde retirarlo, hasta qué día, qué traer y, si se cobra, cuánto.',
+          'En el mostrador escribes el número de seguimiento que trae la persona. En Venezuela también su cédula, que tiene que ser la del destinatario; si retira otra persona, se marca como tercero autorizado y queda anotado. Si el envío se cobra, registras cómo pagó y el dinero ya queda en tu caja.',
+          'Hay 5 días hábiles para retirar. Si vence el plazo y nadie lo retiró, el paquete vuelve al remitente con un toque.',
+          'Lo que se retira en un centro nunca sale en una ruta a domicilio.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-retiro-es.webp',
+            alt: 'Retiro en el centro en el panel de Divoox Flex: aviso al destinatario y entrega en el mostrador con cédula y cobro.',
+            pie: 'Avisas al destinatario y lo entregas en el mostrador.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo hago para que el cliente retire el paquete en mi local?',
+          '¿Cuánto tiempo tiene para retirarlo?',
+          '¿Puede retirarlo otra persona?',
+        ],
+        pasos: [
+          'Al crear el envío, en «Cómo se entrega», elige «Retiro en el centro» y el centro.',
+          'Cuando el paquete esté en el centro, abre el envío y toca «Ya está en el centro: avisar al destinatario».',
+          'En el mostrador, escribe el número de seguimiento y la cédula, registra el cobro si lo hay y toca «Confirmar la entrega».',
+          'Si pasan los 5 días hábiles, toca «Venció el plazo: devolver al remitente».',
+        ],
+      },
+      {
         id: 'flex-tracking',
         titulo: 'Divoox Flex: rastrear un paquete con su número de seguimiento',
         resumen:
@@ -5086,6 +5117,37 @@ const en: SeccionDocs[] = [
           'The driver records the payment on delivery: method, amount, reference and the payer’s ID.',
           'In “Live routes”, open the route and check “Route cash”.',
           'When the driver hands you the cash, tap “I received the cash”.',
+        ],
+      },
+      {
+        id: 'flex-pickup-point',
+        titulo: 'Divoox Flex: pickup at your hub, with a deadline',
+        resumen:
+          'The package stays at your hub and the recipient picks it up with their ID and the tracking number within 5 business days. If it’s paid on delivery, they pay there.',
+        explicacion: [
+          'Besides home delivery, each shipment can be picked up at one of your hubs, like at an agency. When you create it, choose “Pickup at the hub” and the hub.',
+          'When the package is at the hub, tap “notify the recipient” and Divoox prepares the WhatsApp message: where to pick it up, until which day, what to bring and, if it’s paid on delivery, how much.',
+          'At the counter you enter the tracking number the person brings. In Venezuela also their ID, which must be the recipient’s; if someone else picks it up, they’re marked as an authorized third party and it’s recorded. If the shipment is paid on delivery, you record how they paid and the money is already in your cash.',
+          'There are 5 business days to pick it up. If the deadline passes and nobody picked it up, the package goes back to the sender with one tap.',
+          'What’s picked up at a hub never goes on a delivery route.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-retiro-en.webp',
+            alt: 'Hub pickup in the Divoox Flex dashboard: notify the recipient and hand over at the counter with ID and payment.',
+            pie: 'Notify the recipient and hand it over at the counter.',
+          },
+        ],
+        preguntas: [
+          'How do I let the customer pick up the package at my store?',
+          'How long do they have to pick it up?',
+          'Can someone else pick it up?',
+        ],
+        pasos: [
+          'When you create the shipment, under “How it’s delivered”, choose “Pickup at the hub” and the hub.',
+          'When the package is at the hub, open the shipment and tap “It’s at the hub: notify the recipient”.',
+          'At the counter, enter the tracking number and the ID, record the payment if there is one, and tap “Confirm the handover”.',
+          'If 5 business days pass, tap “Deadline passed: return to sender”.',
         ],
       },
       {
