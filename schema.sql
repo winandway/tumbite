@@ -2429,3 +2429,52 @@ CREATE TABLE IF NOT EXISTS errores_servidor (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS errores_servidor_creado ON errores_servidor(creado_en);
+
+-- Divoox Moto · Fase M1 (28 oct 2026, C-VIAJE-PRECIO-FIJO): tarifa de un servicio de pasajeros por
+-- ciudad, versionada (una sola activa; cambiar = cerrar la vieja y abrir otra, nunca editar), y la
+-- cotización con PRECIO FIJO que el pasajero acepta al pedir. Montos en la unidad menor, enteros.
+CREATE TABLE IF NOT EXISTS tarifas_viaje (
+  id TEXT PRIMARY KEY,
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  moneda TEXT NOT NULL,
+  base INTEGER NOT NULL CHECK (base >= 0),
+  por_km INTEGER NOT NULL CHECK (por_km >= 0),
+  por_minuto INTEGER NOT NULL CHECK (por_minuto >= 0),
+  minimo INTEGER NOT NULL CHECK (minimo >= 0),
+  espera_gratis_s INTEGER NOT NULL CHECK (espera_gratis_s >= 0),
+  por_minuto_espera INTEGER NOT NULL CHECK (por_minuto_espera >= 0),
+  cancelacion_gratis_s INTEGER NOT NULL CHECK (cancelacion_gratis_s >= 0),
+  cargo_cancelacion INTEGER NOT NULL CHECK (cargo_cancelacion >= 0),
+  cargo_no_se_presento INTEGER NOT NULL CHECK (cargo_no_se_presento >= 0),
+  tope_dinamico_pb INTEGER NOT NULL CHECK (tope_dinamico_pb BETWEEN 10000 AND 30000),
+  redondeo INTEGER NOT NULL CHECK (redondeo >= 1),
+  de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  motivo TEXT NOT NULL DEFAULT '',
+  creada_por TEXT REFERENCES usuarios(id),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrada_en TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS tarifas_viaje_una_activa ON tarifas_viaje(servicio_id, zona_id) WHERE activa = 1;
+
+CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  tarifa_id TEXT NOT NULL REFERENCES tarifas_viaje(id),
+  origen_lat REAL NOT NULL, origen_lng REAL NOT NULL, origen_direccion TEXT NOT NULL,
+  destino_lat REAL NOT NULL, destino_lng REAL NOT NULL, destino_direccion TEXT NOT NULL,
+  distancia_m INTEGER NOT NULL CHECK (distancia_m >= 0),
+  duracion_s INTEGER NOT NULL CHECK (duracion_s >= 0),
+  multiplicador_pb INTEGER NOT NULL DEFAULT 10000,
+  desglose_json TEXT NOT NULL,
+  total INTEGER NOT NULL CHECK (total >= 0),
+  moneda TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  usada_en TEXT,
+  operacion_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(cliente_id, creado_en);
