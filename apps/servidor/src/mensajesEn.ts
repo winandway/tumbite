@@ -1050,6 +1050,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Divoox Moto · M1 (cotización de viajes).
+  ['Esa emergencia ya fue atendida.', 'That emergency was already handled.'],
   ['Solo se califica un viaje terminado.', 'Only completed rides can be rated.'],
   [
     'Tu saldo prepago no alcanza para la comisión de este viaje. Recarga para aceptarlo.',

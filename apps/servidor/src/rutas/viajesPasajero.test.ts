@@ -906,3 +906,61 @@ describe('M8: calificación de los dos lados', () => {
     ).toBe(404);
   });
 });
+
+describe('M9: lo que vigila el superadmin', () => {
+  it('ve emergencias abiertas, viajes y tarifas; atiende una emergencia una sola vez', async () => {
+    const e = await enPruebas();
+    await encenderMoto(e);
+    await ponerTarifa(e);
+    const c = (await cotizar(e)).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: c.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    await e.m.llamar('POST', `/datos/viajes/${id}/emergencia`, {}, e.cliente.token);
+    expect(
+      (await e.m.llamar('GET', '/datos/admin/viajes', undefined, e.cliente.token)).estado,
+    ).toBe(403);
+    const r = await e.m.llamar('GET', '/datos/admin/viajes', undefined, e.admin.token);
+    expect(r.datos.emergencias).toHaveLength(1);
+    expect(r.datos.emergencias[0]).toMatchObject({
+      operacion_id: id,
+      rol: 'pasajero',
+      nombre: 'Pasajero Uno',
+    });
+    expect(r.datos.viajes[0]).toMatchObject({ id, estado: 'buscando', pasajero: 'Pasajero Uno' });
+    expect(r.datos.tarifas[0]).toMatchObject({
+      zona: ZONA,
+      zonaNombre: 'Miami',
+      base: TARIFA.base,
+    });
+    const eid = r.datos.emergencias[0].id as string;
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/admin/viajes/emergencias/${eid}/atender`,
+          { nota: 'Llamamos al pasajero' },
+          e.admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/admin/viajes/emergencias/${eid}/atender`,
+          { nota: 'Otra vez' },
+          e.admin.token,
+        )
+      ).estado,
+    ).toBe(409);
+    expect(
+      (await e.m.llamar('GET', '/datos/admin/viajes', undefined, e.admin.token)).datos.emergencias,
+    ).toHaveLength(0);
+  });
+});

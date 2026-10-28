@@ -726,3 +726,58 @@ viajesPasajero.post('/viajes/:id/calificar', async (c) => {
   await calificarViaje(base(c), { operacionId: id, de: 'pasajero', autorId: u.id, ...d });
   return c.json({ ok: true });
 });
+
+// ---------------------------------------------------------------- M9: panel del superadmin
+
+/** Lo que el superadmin vigila de Moto: emergencias abiertas, viajes recientes y tarifas activas. */
+viajesPasajero.get('/admin/viajes', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const [emergencias, viajes, tarifas] = await Promise.all([
+    db
+      .prepare(
+        `SELECT e.id, e.operacion_id, e.rol, e.lat, e.lng, e.creado_en, u.nombre, u.correo, u.telefono
+           FROM emergencias_viaje e JOIN usuarios u ON u.id = e.actor_id
+          WHERE e.atendida_en IS NULL ORDER BY e.creado_en DESC LIMIT 50`,
+      )
+      .all<Record<string, unknown>>(),
+    db
+      .prepare(
+        `SELECT o.id, o.servicio_id, o.zona_id, o.creado_en, v.estado, v.origen_direccion,
+                v.destino_direccion, v.metodo_pago, v.total_final_centavos, q.total, q.moneda,
+                p.nombre AS pasajero, d.nombre AS conductor
+           FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+           LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+           LEFT JOIN usuarios p ON p.id = o.cliente_id
+           LEFT JOIN usuarios d ON d.id = o.conductor_id
+          WHERE o.tipo_operacion = 'viaje_pasajero'
+          ORDER BY o.estado_general IN ('buscando', 'asignada', 'en_curso') DESC, o.creado_en DESC
+          LIMIT 50`,
+      )
+      .all<Record<string, unknown>>(),
+    db
+      .prepare(
+        `SELECT t.*, z.nombre AS zona_nombre FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id
+          WHERE t.activa = 1 ORDER BY t.servicio_id, z.nombre`,
+      )
+      .all<FilaTarifa & { zona_nombre: string }>(),
+  ]);
+  return c.json({
+    emergencias: emergencias.results,
+    viajes: viajes.results,
+    tarifas: tarifas.results.map((f) => ({ ...tarifaPublica(f), zonaNombre: f.zona_nombre })),
+  });
+});
+
+viajesPasajero.post('/admin/viajes/emergencias/:id/atender', async (c) => {
+  const admin = exigir(c, 'admin');
+  const { nota } = await leerCuerpo(c, z.object({ nota: z.string().trim().min(3).max(500) }));
+  const r = await base(c)
+    .prepare(
+      "UPDATE emergencias_viaje SET atendida_en = datetime('now'), atendida_por = ?, nota = ? WHERE id = ? AND atendida_en IS NULL",
+    )
+    .bind(admin.id, nota, c.req.param('id'))
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Esa emergencia ya fue atendida.', undefined, 409);
+  return c.json({ ok: true });
+});
