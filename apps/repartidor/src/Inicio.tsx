@@ -57,6 +57,8 @@ import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
 import { MiRuta } from './flex/MiRuta';
+import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
+import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   Boton,
   C,
@@ -393,6 +395,9 @@ export function Inicio() {
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
   const [ofertas, setOfertas] = useState<Pedido[]>([]);
+  // Divoox Moto (M4): la oferta de un viaje y el viaje en curso (otra operación, no un pedido).
+  const [ofertasViaje, setOfertasViaje] = useState<OfertaViaje[]>([]);
+  const [viajeActivo, setViajeActivo] = useState<ViajeConductor | null>(null);
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
@@ -465,6 +470,20 @@ export function Inicio() {
           (await api.pedir<{ ofertas: Pedido[] }>('GET', '/datos/repartidor/ofertas')).ofertas,
         );
       else setOfertas([]);
+      // Viajes de Moto: el viaje en curso manda; si no hay, las ofertas (el servidor nunca da las dos).
+      const v = await api
+        .pedir<{ operacion: ViajeConductor | null }>('GET', '/datos/conductor/operaciones/actual')
+        .catch(() => ({ operacion: null }));
+      setViajeActivo(v.operacion);
+      setOfertasViaje(
+        s.conectado && !s.activo && !v.operacion
+          ? (
+              await api
+                .pedir<{ ofertas: OfertaViaje[] }>('GET', '/datos/conductor/operaciones/ofertas')
+                .catch(() => ({ ofertas: [] }))
+            ).ofertas
+          : [],
+      );
       setBilletera(await api.pedir<Billetera>('GET', '/datos/billetera'));
       api
         .pedir<{ kyc: { estado: string } }>('GET', '/datos/kyc')
@@ -832,6 +851,26 @@ export function Inicio() {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
+  /** Acciones de viajes: llevan su clave de idempotencia (el servidor la exige). */
+  async function accionViaje(ruta: string) {
+    setError('');
+    try {
+      await api.pedir(
+        'POST',
+        ruta,
+        {},
+        {
+          cabeceras: {
+            'idempotency-key': `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`,
+          },
+        },
+      );
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+    await cargar();
+  }
+
   async function accion(ruta: string, cuerpo: unknown = {}) {
     setError('');
     try {
@@ -1387,6 +1426,34 @@ export function Inicio() {
       </View>,
     );
   }
+
+  // ───────── Divoox Moto (M4): el viaje en curso ocupa el inicio, como Uber Driver ─────────
+  if (viajeActivo && vista === 'inicio')
+    return lienzo(
+      'inicio',
+      <ViajeActivo
+        api={{
+          pedir: async (metodo, ruta, cuerpo, extra) => {
+            // Antes de «Llegué», la posición de AHORA (el servidor exige estar en la recogida).
+            if (ruta.endsWith('/llegue')) {
+              const p = await ubicacionConLimite();
+              if (p)
+                await api
+                  .pedir('POST', '/datos/repartidor/ubicacion', {
+                    lat: p.coords.latitude,
+                    lng: p.coords.longitude,
+                    precision: p.coords.accuracy ?? null,
+                  })
+                  .catch(() => undefined);
+            }
+            return api.pedir(metodo, ruta, cuerpo, extra);
+          },
+        }}
+        idioma={idioma}
+        viaje={viajeActivo}
+        alCambiar={() => void cargar()}
+      />,
+    );
 
   // ───────── Inicio: pedido activo (cabecera roja con distancia, mapa, progreso) o mapa con ofertas ─────────
   if (activo) {
@@ -2085,6 +2152,22 @@ export function Inicio() {
         {mensajes}
         {estado?.conectado ? (
           <Text style={e.tarjeta}>{estado.pausado ? tg.pausa.enPausa : t.buscando}</Text>
+        ) : null}
+        {ofertasViaje[0] && !ofertas[0] ? (
+          <OfertaViajeModal
+            oferta={ofertasViaje[0]}
+            idioma={idioma}
+            alAceptar={() =>
+              void accionViaje(
+                `/datos/conductor/operaciones/${ofertasViaje[0]!.operacionId}/aceptar`,
+              )
+            }
+            alRechazar={() =>
+              void accionViaje(
+                `/datos/conductor/operaciones/${ofertasViaje[0]!.operacionId}/rechazar`,
+              )
+            }
+          />
         ) : null}
         {ofertas[0] ? (
           <Oferta

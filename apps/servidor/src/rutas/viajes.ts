@@ -116,18 +116,37 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
   });
 });
 
+/**
+ * El viaje en curso del conductor, con lo que necesita la pantalla (M4): a quién recoge, cuánto
+ * cobra en mano, desde cuándo espera y cuánto dura la espera gratis de SU tarifa.
+ */
 viajes.get('/conductor/operaciones/actual', async (c) => {
   const u = exigir(c, 'repartidor');
   const f = await base(c)
     .prepare(
       `SELECT o.id, o.servicio_id, o.version, v.estado, v.origen_direccion, v.destino_direccion,
-              v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, v.pasajeros
+              v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, v.pasajeros, v.metodo_pago,
+              v.intentos_pin, v.llego_en,
+              CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
+              q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
+              p.nombre AS pasajero
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN usuarios p ON p.id = o.cliente_id
         WHERE o.conductor_id = ? AND o.estado_general IN ('asignada', 'en_curso')`,
     )
     .bind(u.id)
     .first<Record<string, unknown>>();
-  return c.json({ operacion: f ?? null });
+  if (!f) return c.json({ operacion: null });
+  return c.json({
+    operacion: {
+      ...f,
+      pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
+      espera_gratis_s:
+        f.espera_gratis_s == null ? ESPERA_GRATIS_S_POR_DEFECTO : Number(f.espera_gratis_s),
+      intentos_pin_quedan: Math.max(0, INTENTOS_PIN_MAXIMOS - Number(f.intentos_pin ?? 0)),
+    },
+  });
 });
 
 viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
