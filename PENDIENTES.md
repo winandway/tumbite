@@ -228,8 +228,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] (28 oct) M2a Candado C-VIAJE-PASOS-REALES: llegada por radio, espera cumplida y tope del código (fallo encontrado con REA).
 - [x] (28 oct) M2 Pedir viaje en efectivo con cotización de un solo uso, código de inicio, cancelación con ventana desde la asignación, «sin conductor» a los 10 min y deuda del pasajero (la tarjeta pasa a M7).
 - [x] (28 oct) M3 Oferta completa (ganancia, recogida, destino, duración, pago) y despacho al pedir, al rechazar, al soltar y al consultar.
-- [ ] M4 App del Driver: oferta, viaje activo, espera, casco, PIN, terminar, no se presentó.
-- [ ] M5 App del cliente: pedir Moto, buscando, conductor asignado, seguimiento, PIN, recibo.
+- [x] (28 oct) M4 App del Driver: oferta, viaje activo, espera, casco, PIN, terminar, no se presentó.
+- [x] (28 oct) M5 App del cliente: pedir Moto con precio fijo (recotiza solo), buscando, conductor y moto, mapa, código, cancelar con su precio, pagar en efectivo.
 - [ ] M6 Seguridad: emergencia, compartir viaje, lista de seguridad, casco, interruptores.
 - [ ] M7 Dinero: reserva y cobro de comisión del prepago, política de cancelaciones por servicio, espera por minuto, conciliación.
 - [ ] M8 Calificación de ambos lados y propina.

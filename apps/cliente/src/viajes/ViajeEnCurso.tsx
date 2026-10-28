@@ -1,0 +1,188 @@
+import { useState } from 'react';
+import { Text, View } from 'react-native';
+import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
+import { Boton, C, useSesion } from '@tumbite/movil';
+import { MapaEntrega } from '../MapaEntrega';
+import { Tarjeta } from '../comida/piezas';
+import { TEXTOS_MOTO } from './textos';
+
+/** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
+export type ViajePasajero = {
+  id: string;
+  estado: string;
+  pin: string | null;
+  metodoPago: string;
+  origen: { direccion: string; lat: number; lng: number };
+  destino: { direccion: string; lat: number; lng: number };
+  total: number | null;
+  moneda: string | null;
+  conductor: {
+    nombre: string;
+    ubicacion: { lat: number; lng: number } | null;
+    vehiculo: {
+      marca: string | null;
+      modelo: string | null;
+      color: string | null;
+      placa: string | null;
+    };
+  } | null;
+  cancelacion: { cargo: number; gratisPorS: number | null } | null;
+};
+
+const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
+
+/**
+ * El viaje del pasajero mientras pasa (M5), como Uber Moto: buscando conductor; conductor
+ * asignado con su nombre, su moto y su placa; el código para empezar; el mapa con el conductor;
+ * en camino; y al llegar, cuánto pagar en efectivo. Cancelar dice antes cuánto cuesta.
+ */
+export function ViajeEnCurso({
+  viaje,
+  alCambiar,
+  alTerminar,
+}: {
+  viaje: ViajePasajero;
+  alCambiar: () => void;
+  alTerminar: () => void;
+}) {
+  const { api, idioma } = useSesion();
+  const t = enIdioma(TEXTOS_MOTO, idioma);
+  const [error, setError] = useState('');
+  const [cancelando, setCancelando] = useState(false);
+  const [cargoCobrado, setCargoCobrado] = useState<number | null>(null);
+  const titulo = new Map([
+    ['buscando', t.buscando],
+    ['pago_pendiente', t.buscando],
+    ['asignado', t.asignado],
+    ['conductor_llego', t.llego],
+    ['en_curso', t.enCurso],
+    ['terminado', t.terminado],
+    ['cancelado', t.cancelado],
+    ['sin_conductor', t.sinConductor],
+    ['no_show', t.noShow],
+  ]).get(viaje.estado);
+  const monto = (m: number) => formatearMonto(m, viaje.moneda ?? 'USD', idioma);
+  const moto = viaje.conductor?.vehiculo;
+
+  async function cancelar() {
+    setCancelando(true);
+    setError('');
+    try {
+      const r = await api.pedir<{ cargo: number }>(
+        'POST',
+        `/datos/viajes/${viaje.id}/cancelar`,
+        {},
+        {
+          cabeceras: {
+            'idempotency-key': `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`,
+          },
+        },
+      );
+      if (r.cargo > 0) setCargoCobrado(r.cargo);
+      alCambiar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setCancelando(false);
+    }
+  }
+
+  return (
+    <View testID="viaje-pasajero" style={{ gap: 12 }}>
+      <Text
+        accessibilityRole="header"
+        testID={`viaje-estado-${viaje.estado}`}
+        style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}
+      >
+        {titulo}
+      </Text>
+
+      {!FINALES.has(viaje.estado) ? (
+        <MapaEntrega
+          restaurante={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
+          casa={{ lat: viaje.destino.lat, lng: viaje.destino.lng }}
+          repartidor={viaje.conductor?.ubicacion ?? null}
+          nombreRepartidor={viaje.conductor?.nombre}
+          etiquetas={{
+            restaurante: t.etiquetaRecogida,
+            casa: t.etiquetaDestino,
+            repartidor: t.etiquetaConductor,
+          }}
+        />
+      ) : null}
+
+      {viaje.conductor ? (
+        <Tarjeta>
+          <View testID="viaje-conductor" style={{ gap: 2 }}>
+            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+              {viaje.conductor.nombre}
+            </Text>
+            <Text style={{ color: '#5E5E5E' }}>
+              {t.moto}: {[moto?.marca, moto?.modelo, moto?.color].filter(Boolean).join(' · ')}
+            </Text>
+            {moto?.placa ? (
+              <Text style={{ fontWeight: '800', color: C.secundario, letterSpacing: 1 }}>
+                {t.placa}: {moto.placa}
+              </Text>
+            ) : null}
+          </View>
+        </Tarjeta>
+      ) : null}
+
+      {viaje.pin && viaje.estado !== 'buscando' ? (
+        <Tarjeta>
+          <View testID="viaje-codigo" style={{ alignItems: 'center', gap: 4 }}>
+            <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.codigo}</Text>
+            <Text
+              style={{ fontSize: 40, fontWeight: '900', letterSpacing: 10, color: C.secundario }}
+            >
+              {viaje.pin}
+            </Text>
+            <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.codigoAyuda}</Text>
+          </View>
+        </Tarjeta>
+      ) : null}
+
+      <Tarjeta>
+        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }}>{viaje.origen.direccion}</Text>
+        <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }}>{viaje.destino.direccion}</Text>
+        {viaje.total != null ? (
+          <Text style={{ marginTop: 8, fontWeight: '800', color: C.secundario }}>
+            {viaje.estado === 'terminado' ? t.pagaEfectivo : t.precioFijo}: {monto(viaje.total)}
+          </Text>
+        ) : null}
+      </Tarjeta>
+
+      {cargoCobrado ? (
+        <Text style={{ color: '#5E5E5E' }}>
+          {t.cargoCobrado} {monto(cargoCobrado)}
+        </Text>
+      ) : null}
+      {viaje.cancelacion ? (
+        <>
+          <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>
+            {viaje.cancelacion.cargo === 0
+              ? t.cancelarGratis
+              : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
+          </Text>
+          <Boton
+            texto={t.cancelar}
+            alTocar={() => void cancelar()}
+            cargando={cancelando}
+            secundario
+          />
+        </>
+      ) : null}
+      {FINALES.has(viaje.estado) ? (
+        <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />
+      ) : null}
+      {error ? (
+        <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
+          {error}
+        </Text>
+      ) : null}
+    </View>
+  );
+}

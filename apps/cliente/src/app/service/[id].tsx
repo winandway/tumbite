@@ -86,6 +86,12 @@ export default function PantallaServicio() {
             <Boton texto={t.abrirServicio} alTocar={abrir} />
           </View>
         ) : null}
+        {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}
+        {accion === 'abrir' && id === 'moto' ? (
+          <View style={{ marginTop: 18 }}>
+            <Boton texto={t.abrirServicio} alTocar={() => router.push('/ride')} exito />
+          </View>
+        ) : null}
         <Tarjeta style={{ marginTop: 22 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
