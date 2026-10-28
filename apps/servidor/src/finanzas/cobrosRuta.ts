@@ -207,6 +207,59 @@ function traducirCobro(e: unknown): never {
   throw e;
 }
 
+/**
+ * Devuelve `monto` del reservado: si la empresa tiene deuda, primero la paga; el resto vuelve al
+ * disponible. Referencias únicas por prefijo (idempotente).
+ */
+async function sentenciasDevolver(
+  db: D1Database,
+  c: FilaCobro,
+  monto: number,
+  prefijo: string,
+  concepto: string,
+): Promise<D1PreparedStatement[]> {
+  if (monto <= 0) return [];
+  const cuenta = cuentaEmpresa(c.empresa_id);
+  const s = await saldoEmpresa(db, { id: c.empresa_id, pais: c.pais, moneda: c.moneda });
+  const aDeuda = Math.min(Math.max(s.deuda, 0), monto);
+  const lista = [
+    sentenciaLibro(db, {
+      cuentaId: cuenta,
+      bolsillo: 'reservado',
+      pais: c.pais,
+      moneda: c.moneda,
+      monto: -monto,
+      concepto: concepto.split(':').slice(0, 2).join(':'),
+      referencia: `${prefijo}:reservado`,
+    }),
+  ];
+  if (aDeuda > 0)
+    lista.push(
+      sentenciaLibro(db, {
+        cuentaId: cuenta,
+        bolsillo: 'deuda_cliente',
+        pais: c.pais,
+        moneda: c.moneda,
+        monto: -aDeuda,
+        concepto: `${concepto}:pago_deuda`,
+        referencia: `${prefijo}:deuda`,
+      }),
+    );
+  if (monto - aDeuda > 0)
+    lista.push(
+      sentenciaLibro(db, {
+        cuentaId: cuenta,
+        bolsillo: 'prepago',
+        pais: c.pais,
+        moneda: c.moneda,
+        monto: monto - aDeuda,
+        concepto,
+        referencia: `${prefijo}:prepago`,
+      }),
+    );
+  return lista;
+}
+
 /** Devuelve al disponible TODO lo que siga apartado (retirar, vencer, cancelar). Idempotente. */
 export async function liberarCobroRuta(db: D1Database, rutaId: string, motivo: string) {
   const c = await cobroAbierto(db, rutaId);
@@ -221,27 +274,15 @@ export async function liberarCobroRuta(db: D1Database, rutaId: string, motivo: s
       )
       .bind(restante, c.id),
   ];
-  if (restante > 0)
-    lote.push(
-      sentenciaLibro(db, {
-        cuentaId: cuenta,
-        bolsillo: 'reservado',
-        pais: c.pais,
-        moneda: c.moneda,
-        monto: -restante,
-        concepto: k.liberacion,
-        referencia: `cobro:${c.id}:liberacion:reservado`,
-      }),
-      sentenciaLibro(db, {
-        cuentaId: cuenta,
-        bolsillo: 'prepago',
-        pais: c.pais,
-        moneda: c.moneda,
-        monto: restante,
-        concepto: `${k.liberacion}:${motivo}`,
-        referencia: `cobro:${c.id}:liberacion:prepago`,
-      }),
-    );
+  lote.push(
+    ...(await sentenciasDevolver(
+      db,
+      c,
+      restante,
+      `cobro:${c.id}:liberacion`,
+      `${k.liberacion}:${motivo}`,
+    )),
+  );
   await db.batch(lote);
   return restante;
 }
@@ -260,27 +301,7 @@ export async function ajustarCobroAlSalir(db: D1Database, rutaId: string) {
   const sobra = (await restanteDe(db, c)) - necesario;
   if (sobra <= 0) return 0;
   const k = conceptos(c.id);
-  const cuenta = cuentaEmpresa(c.empresa_id);
-  await db.batch([
-    sentenciaLibro(db, {
-      cuentaId: cuenta,
-      bolsillo: 'reservado',
-      pais: c.pais,
-      moneda: c.moneda,
-      monto: -sobra,
-      concepto: k.ajuste,
-      referencia: `cobro:${c.id}:salida:reservado`,
-    }),
-    sentenciaLibro(db, {
-      cuentaId: cuenta,
-      bolsillo: 'prepago',
-      pais: c.pais,
-      moneda: c.moneda,
-      monto: sobra,
-      concepto: k.ajuste,
-      referencia: `cobro:${c.id}:salida:prepago`,
-    }),
-  ]);
+  await db.batch(await sentenciasDevolver(db, c, sobra, `cobro:${c.id}:salida`, k.ajuste));
   return sobra;
 }
 
@@ -368,27 +389,15 @@ export async function cerrarCobroRuta(db: D1Database, rutaId: string) {
       restante -= monto;
     }
   }
-  if (restante > 0)
-    lote.push(
-      sentenciaLibro(db, {
-        cuentaId: cuenta,
-        bolsillo: 'reservado',
-        pais: c.pais,
-        moneda: c.moneda,
-        monto: -restante,
-        concepto: k.liberacion,
-        referencia: `cobro:${c.id}:cierre:reservado`,
-      }),
-      sentenciaLibro(db, {
-        cuentaId: cuenta,
-        bolsillo: 'prepago',
-        pais: c.pais,
-        moneda: c.moneda,
-        monto: restante,
-        concepto: `${k.liberacion}:cierre`,
-        referencia: `cobro:${c.id}:cierre:prepago`,
-      }),
-    );
+  lote.push(
+    ...(await sentenciasDevolver(
+      db,
+      c,
+      restante,
+      `cobro:${c.id}:cierre`,
+      `${k.liberacion}:cierre`,
+    )),
+  );
   if (lote.length) await db.batch(lote);
   const cobrado = await cobradoDe(db, c);
   const ruta = await db

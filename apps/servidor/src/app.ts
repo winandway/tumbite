@@ -1,6 +1,8 @@
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
+import { finanzasAdmin } from './finanzas/rutasAdmin';
+import { saludBilleteras } from './finanzas/reloj';
 import { blindarStripeEnPruebas, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
@@ -266,6 +268,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: cobros', e);
       return 'error' as const;
     });
+  // Flex · Fase 4: la última conciliación de las billeteras de empresa no encontró diferencias.
+  if (c.env.DB)
+    piezas.billeteras = await saludBilleteras(c.env.DB).catch((e: unknown) => {
+      console.error('salud: billeteras', e);
+      return 'error' as const;
+    });
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -426,6 +434,7 @@ app.route('/datos', fotos);
 app.route('/', media);
 app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
+app.route('/datos', finanzasAdmin);
 
 app.onError(async (err, c) => {
   // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).

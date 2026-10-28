@@ -1,5 +1,6 @@
 import { topesDeZona } from '../internacional/tarifas';
 import { TAREAS_FLEX } from '../flex/automatizacion';
+import { TAREAS_FINANZAS } from '../finanzas/reloj';
 import {
   conciliarPedidoDirecto,
   esDirecto,
@@ -2041,6 +2042,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   },
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
+  // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.
+  ...TAREAS_FINANZAS,
 ];
 
 export async function correrReloj(

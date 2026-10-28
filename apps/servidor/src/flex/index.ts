@@ -11,6 +11,7 @@ import { flexIntegraciones, despacharIntegraciones } from './integraciones';
 import { flexOperaciones } from './operaciones';
 import { flexRetencion } from './automatizacion';
 import { despues } from './avisosFlex';
+import { finanzasEmpresa } from '../finanzas/rutasEmpresa';
 
 /**
  * Divoox Flex · API empresarial v1 (Fase 1). Se monta en /datos/v1/flex (nunca /api: regla de
@@ -41,3 +42,4 @@ flex.route('/', flexConductor);
 flex.route('/', flexIntegraciones);
 flex.route('/', flexOperaciones);
 flex.route('/', flexRetencion);
+flex.route('/', finanzasEmpresa);
