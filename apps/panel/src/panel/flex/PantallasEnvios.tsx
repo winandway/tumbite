@@ -14,6 +14,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
+import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
@@ -209,6 +210,9 @@ const INICIAL_ENVIO = {
   destinatarioCorreo: '',
   destinatarioDocumento: '',
   referencias: '',
+  // C-DIRECCION-SUGERENCIAS: el punto de la dirección sugerida que se eligió.
+  lat: '',
+  lng: '',
   // Fase 6 (C-FLEX-COBRO): cobro contra entrega, escrito como en la factura («25.00»).
   cobroMonto: '',
   cobroMoneda: 'USD',
@@ -328,6 +332,7 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           destinatarioNombre: v.destinatarioNombre,
           destinatarioTelefono: v.destinatarioTelefono,
           direccion: v.direccion,
+          ...(v.lat ? { lat: Number(v.lat), lng: Number(v.lng) } : {}),
           instrucciones: v.instrucciones,
           destinatarioCorreo: v.destinatarioCorreo,
           destinatarioDocumento: v.destinatarioDocumento,
@@ -379,12 +384,27 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           cambiar={(x) => b.cambiar('destinatarioTelefono', x)}
           placeholder={t.telefono}
         />
-        <Campo
-          etiqueta={t.direccion}
-          valor={v.direccion}
-          cambiar={(x) => b.cambiar('direccion', x)}
-          placeholder={t.direccion}
-        />
+        <div className="campo">
+          {/* C-DIRECCION-SUGERENCIAS: direcciones reales del país de la empresa, con su punto. */}
+          <CampoDireccion
+            etiqueta={t.direccion}
+            valor={v.direccion}
+            cambiar={(x) => {
+              b.cambiar('direccion', x);
+              // Si se vuelve a escribir a mano, el punto elegido antes ya no corresponde.
+              if (v.lat) {
+                b.cambiar('lat', '');
+                b.cambiar('lng', '');
+              }
+            }}
+            alElegir={(d) => {
+              b.cambiar('lat', String(d.punto.lat));
+              b.cambiar('lng', String(d.punto.lng));
+            }}
+            pais={empresa.pais}
+            placeholder={t.direccion}
+          />
+        </div>
         <Campo
           etiqueta={cd.referencias}
           valor={v.referencias}

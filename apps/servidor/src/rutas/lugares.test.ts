@@ -47,4 +47,23 @@ describe('búsqueda de direcciones (C-FLEX-UBICACION)', () => {
     });
     expect(JSON.stringify(s.datos) + JSON.stringify(p.datos)).not.toContain(llave);
   });
+
+  it('C-DIRECCION-SUGERENCIAS: sin país en la pantalla usa el de la conexión, y sin él no limita', async () => {
+    const m = mundo({ GOOGLE_PLACES_KEY: 'llave-de-prueba-de-google-places-123' });
+    const original = globalThis.fetch;
+    const cuerpos: Record<string, unknown>[] = [];
+    vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(url).includes('googleapis.com')) return original(url, init);
+      cuerpos.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+      return Response.json({ suggestions: [] });
+    });
+    await m.llamar('GET', '/datos/lugares/sugerencias?q=30080%20Montmor', undefined, undefined, {
+      'cf-ipcountry': 'US',
+    });
+    await m.llamar('GET', '/datos/lugares/sugerencias?q=Chacao&pais=ve');
+    await m.llamar('GET', '/datos/lugares/sugerencias?q=Chacao');
+    expect(cuerpos[0]).toMatchObject({ includedRegionCodes: ['us'] });
+    expect(cuerpos[1]).toMatchObject({ includedRegionCodes: ['ve'] });
+    expect(cuerpos[2]?.includedRegionCodes).toBeUndefined();
+  });
 });

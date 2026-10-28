@@ -11,7 +11,16 @@ import {
   textoLinea,
   type OpcionElegida,
 } from '@tumbite/compartido';
-import { Boton, C, ChatPedido, FotoPedido, ReportarProblema, e, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  CampoDireccion,
+  ChatPedido,
+  FotoPedido,
+  ReportarProblema,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { MapaEntrega } from '../../MapaEntrega';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
@@ -1077,12 +1086,13 @@ export default function SeguirPedido() {
           <Tarjeta>
             <Text style={{ fontWeight: '800' }}>{t.cambiarDireccion}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cambiarDireccionAyuda}</Text>
-            <TextInput
-              value={nuevaDireccion}
-              onChangeText={setNuevaDireccion}
+            {/* C-DIRECCION-SUGERENCIAS: la dirección nueva con su punto exacto. */}
+            <CampoDireccion
+              etiqueta={t.nuevaDireccion}
+              valor={nuevaDireccion}
+              cambiar={setNuevaDireccion}
+              alElegir={(d) => setNuevoPunto(d.punto)}
               placeholder={t.nuevaDireccion}
-              accessibilityLabel={t.nuevaDireccion}
-              style={[e.input, { marginTop: 6 }]}
             />
             <Boton texto={t.usarUbicacion} alTocar={() => void usarUbicacion()} secundario />
             {propuesta ? (

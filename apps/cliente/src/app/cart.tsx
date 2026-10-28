@@ -26,6 +26,7 @@ import {
   e,
   urlFoto,
   useSesion,
+  CampoDireccion,
 } from '@tumbite/movil';
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -661,12 +662,18 @@ export default function PantallaCarrito() {
             cambiarDireccion={(x) => b.cambiar('direccion', x)}
             textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
           />
-          <Campo
+          {/* C-DIRECCION-SUGERENCIAS: direcciones reales mientras se escribe; al elegir, el pin va ahí. */}
+          <CampoDireccion
             etiqueta={t.direccion}
-            value={b.valores.direccion}
-            onChangeText={(x) => b.cambiar('direccion', x)}
+            valor={b.valores.direccion}
+            cambiar={(x) => b.cambiar('direccion', x)}
+            alElegir={(d) => {
+              setPunto(d.punto);
+              void guardarUbicacion(d.punto);
+            }}
+            cerca={punto}
             placeholder={t.direccionAyuda}
-            autoComplete="street-address"
+            testID="carrito-direccion"
           />
           <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text style={{ flex: 1, fontWeight: '800' }}>{te.guardar}</Text>

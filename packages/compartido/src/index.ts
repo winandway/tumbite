@@ -38,3 +38,4 @@ export * from './finanzas';
 export * from './viajes';
 export * from './flexPaises';
 export * from './flexCobro';
+export * from './lugares';

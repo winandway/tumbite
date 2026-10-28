@@ -12,7 +12,7 @@ import {
   AvisoBorrador,
   Boton,
   C,
-  Campo,
+  CampoDireccion,
   alSalirTelefono,
   almacenTelefono,
   useSesion,
@@ -136,24 +136,37 @@ export function PedirMoto({
   return (
     <View style={{ gap: 12 }}>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
-      <Campo
+      {/* C-DIRECCION-SUGERENCIAS: recogida y destino con direcciones reales y su punto exacto. */}
+      <CampoDireccion
         etiqueta={t.recogida}
         placeholder={t.recogidaAyuda}
-        value={v.recogida}
-        onChangeText={(x) => {
+        valor={v.recogida}
+        cambiar={(x) => {
           cambiar('recogida', x);
           setCotizacion(null);
         }}
+        alElegir={(d) => {
+          cambiar('recogidaLat', String(d.punto.lat));
+          cambiar('recogidaLng', String(d.punto.lng));
+          setCotizacion(null);
+        }}
+        cerca={recogida}
         testID="moto-recogida"
       />
-      <Campo
+      <CampoDireccion
         etiqueta={t.destino}
         placeholder={t.destino}
-        value={v.destino}
-        onChangeText={(x) => {
+        valor={v.destino}
+        cambiar={(x) => {
           cambiar('destino', x);
           setCotizacion(null);
         }}
+        alElegir={(d) => {
+          cambiar('destinoLat', String(d.punto.lat));
+          cambiar('destinoLng', String(d.punto.lng));
+          setCotizacion(null);
+        }}
+        cerca={recogida}
         testID="moto-destino"
       />
       <ElegirEnMapa

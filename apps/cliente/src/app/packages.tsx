@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, Campo, useSesion } from '@tumbite/movil';
+import { Boton, C, Campo, CampoDireccion, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { ElegirEnMapa } from '../ElegirEnMapa';
@@ -221,7 +221,14 @@ export default function MisPaquetes() {
                 }}
                 textos={{ ayuda: t.ayuda, buscando: t.buscando, pin: t.pin }}
               />
-              <Campo etiqueta={t.casaDireccion} value={casaDir} onChangeText={setCasaDir} />
+              {/* C-DIRECCION-SUGERENCIAS: al elegir una dirección real, el pin va a ese punto. */}
+              <CampoDireccion
+                etiqueta={t.casaDireccion}
+                valor={casaDir}
+                cambiar={setCasaDir}
+                alElegir={(d) => setCasa(d.punto)}
+                cerca={casa}
+              />
               <Campo
                 etiqueta={t.referencias}
                 placeholder={t.referenciasEj}

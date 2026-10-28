@@ -1378,6 +1378,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `/track/<código>` (web) y `GET /datos/v1/flex/seguimiento/:codigo`: solo estados y fechas. La investigación con REA del 28 oct 2026 encontró que el rastreo público de MRW devuelve el nombre y la cédula de otra persona con una guía inventada; el nuestro no muestra nombres, teléfonos ni direcciones.
 - **No tocar:** no agregar al seguimiento público ningún dato del destinatario ni del remitente.
 
+## C-DIRECCION-SUGERENCIAS · Toda casilla de dirección sugiere direcciones reales (28 oct 2026)
+
+- **Qué se rompió:** la portada de divoox.com (y casi toda casilla de dirección) no sugería direcciones: la llave de Google solo estaba conectada a la página del destinatario de Flex. Richard probó escribiendo «30080 Montmor» y no salió nada.
+- **Arreglo:** una sola pieza para web y apps (`useSugerenciasDireccion` en `packages/compartido/src/lugares.ts`; `CampoDireccion` en la web y en `packages/movil`). Conectada en: la portada, el carrito de comida, cambiar la dirección de un pedido, Moto (recogida y destino), «Mis paquetes», el envío de Flex, los centros de Flex y el local del restaurante. Sin país en la pantalla, el servidor usa el de la conexión (`cf-ipcountry`).
+- **Llave:** «Divoox servidor Places» en Google Cloud (proyecto divoox-apps), solo Places API (New); topes de 2000 búsquedas y 1000 puntos al día; variable `GOOGLE_PLACES_KEY` en los dos sitios.
+- **Prueba:** `packages/compartido/src/lugares.test.tsx`, `apps/panel/src/sitio/CampoDireccion.test.tsx`, `apps/servidor/src/rutas/lugares.test.ts`.
+- **No tocar:** nunca una casilla de dirección suelta; nunca la llave en una app o en la web.
+
 ## C-GOOGLE-POR-SERVIDOR · La llave de Google Places nunca sale del servidor (28 oct 2026)
 
 - `apps/servidor/src/rutas/lugares.ts`: sugerencias y punto exacto por el servidor, con tope por red y tiempo límite. Sin `GOOGLE_PLACES_KEY` la búsqueda se apaga (503) y se usa el pin. Prueba: `rutas/lugares.test.ts`.

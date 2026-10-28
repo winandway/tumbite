@@ -22,11 +22,18 @@ export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?
   // Cada mundo con su propia red de mentira: el límite de intentos vive en memoria y, si no,
   // las pruebas de un mismo archivo chocaban entre sí.
   const red = Math.floor(Math.random() * 200) + 20;
-  async function llamar(metodo: string, ruta: string, cuerpo?: unknown, token?: string) {
+  async function llamar(
+    metodo: string,
+    ruta: string,
+    cuerpo?: unknown,
+    token?: string,
+    cabeceras: Record<string, string> = {},
+  ) {
     ip++;
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       'cf-connecting-ip': `10.${red}.${Math.floor(ip / 250)}.${ip % 250}`,
+      ...cabeceras,
     };
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await app.request(

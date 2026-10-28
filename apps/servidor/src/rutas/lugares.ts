@@ -13,7 +13,11 @@ import { ErrorDatos } from '../validar';
 export const lugares = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const TIEMPO_MS = 8_000;
-const PAISES = z.enum(['US', 'VE', 'CO', 'MX']);
+/** Código de país de dos letras (ISO 3166-1). */
+const PAIS = z
+  .string()
+  .regex(/^[A-Za-z]{2}$/)
+  .transform((x) => x.toUpperCase());
 
 function llave(env: Env): string {
   const k = env.GOOGLE_PLACES_KEY;
@@ -31,7 +35,7 @@ lugares.get('/lugares/sugerencias', async (c) => {
   const q = z
     .object({
       q: z.string().trim().min(3).max(120),
-      pais: PAISES.default('VE'),
+      pais: PAIS.optional(),
       sesion: z
         .string()
         .regex(/^[A-Za-z0-9_-]{8,64}$/)
@@ -41,12 +45,15 @@ lugares.get('/lugares/sugerencias', async (c) => {
     })
     .parse(c.req.query());
   const k = llave(c.env);
+  // C-DIRECCION-SUGERENCIAS: sin país en la pantalla (la portada), el de donde se conecta la persona.
+  const ip = c.req.header('cf-ipcountry');
+  const pais = q.pais ?? (ip && /^[A-Za-z]{2}$/.test(ip) && ip !== 'XX' ? ip.toUpperCase() : null);
   const r = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': k },
     body: JSON.stringify({
       input: q.q,
-      includedRegionCodes: [q.pais.toLowerCase()],
+      ...(pais ? { includedRegionCodes: [pais.toLowerCase()] } : {}),
       languageCode: (c.req.header('x-idioma') ?? 'es').startsWith('en') ? 'en' : 'es',
       ...(q.sesion ? { sessionToken: q.sesion } : {}),
       ...(q.lat != null && q.lng != null

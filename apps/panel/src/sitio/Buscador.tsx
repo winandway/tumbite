@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CampoDireccion } from './CampoDireccion';
 import { Icono } from './Icono';
 import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
 
@@ -45,30 +46,33 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
   const irAlFormulario = () =>
     document.getElementById('customers')?.scrollIntoView({ behavior: 'smooth' });
 
+  /** Con un punto real (el GPS o una dirección sugerida): a la app si llegamos, o a anotarse. */
+  async function irConPunto(lat: number, lng: number, direccion?: string) {
+    setBuscando(true);
+    try {
+      const r = await fetch(`/datos/restaurantes?lat=${lat}&lng=${lng}`);
+      const d = (await r.json()) as { fueraDeZona?: boolean };
+      if (!d.fueraDeZona) {
+        // Dentro de la zona: directo a la app con la ubicación puesta.
+        const extra = direccion ? `&direccion=${encodeURIComponent(direccion)}` : '';
+        window.location.href = `/app/?lat=${lat}&lng=${lng}${extra}`;
+        return;
+      }
+      setMensaje(t.fuera);
+      irAlFormulario();
+    } catch {
+      setMensaje(t.escrito);
+      irAlFormulario();
+    } finally {
+      setBuscando(false);
+    }
+  }
+
   function usarUbicacion() {
     if (!navigator.geolocation) return setMensaje(t.sinPermiso);
     setBuscando(true);
     navigator.geolocation.getCurrentPosition(
-      async (p) => {
-        try {
-          const r = await fetch(
-            `/datos/restaurantes?lat=${p.coords.latitude}&lng=${p.coords.longitude}`,
-          );
-          const d = (await r.json()) as { fueraDeZona?: boolean };
-          if (!d.fueraDeZona) {
-            // Dentro de la zona: directo a la app con la ubicación puesta.
-            window.location.href = `/app/?lat=${p.coords.latitude}&lng=${p.coords.longitude}`;
-            return;
-          }
-          setMensaje(t.fuera);
-          irAlFormulario();
-        } catch {
-          setMensaje(t.escrito);
-          irAlFormulario();
-        } finally {
-          setBuscando(false);
-        }
-      },
+      (p) => void irConPunto(p.coords.latitude, p.coords.longitude),
       () => {
         setBuscando(false);
         setMensaje(t.sinPermiso);
@@ -89,12 +93,12 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
       <form onSubmit={buscar} role="search">
         <label className="ld-direccion">
           <Icono nombre="pin" tamano={20} />
-          <input
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
+          {/* C-DIRECCION-SUGERENCIAS: mientras se escribe salen direcciones reales. */}
+          <CampoDireccion
+            valor={texto}
+            cambiar={setTexto}
+            alElegir={(d) => void irConPunto(d.punto.lat, d.punto.lng, d.direccion)}
             placeholder={t.placeholder}
-            aria-label={t.placeholder}
-            autoComplete="street-address"
           />
         </label>
         <button type="submit" className="ld-buscar">

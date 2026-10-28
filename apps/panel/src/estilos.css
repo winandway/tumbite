@@ -5016,3 +5016,40 @@ button {
   background: #fff;
   box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
 }
+
+/* C-DIRECCION-SUGERENCIAS: la lista de direcciones sugeridas de toda casilla de dirección. */
+.campo-direccion {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+.campo-direccion > input {
+  width: 100%;
+}
+.sugerencias-direccion {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sugerencias-direccion li {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: #101010;
+  font-size: 0.95rem;
+}
+.sugerencias-direccion li:hover,
+.sugerencias-direccion li.activa {
+  background: #f1f1f1;
+}

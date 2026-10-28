@@ -10,6 +10,7 @@ import {
   useBorrador,
   textoActivacion,
 } from '@tumbite/compartido';
+import { CampoDireccion } from '../sitio/CampoDireccion';
 import { Campo } from './CampoClave';
 import { Horarios } from './Horarios';
 import { Cierres } from './Cierres';
@@ -277,13 +278,20 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           cambiar={(x) => b.cambiar('telefono', x)}
           placeholder={t.telefono}
         />
-        <Campo
-          etiqueta={t.direccion}
-          valor={v.direccion}
-          cambiar={(x) => b.cambiar('direccion', x)}
-          placeholder={t.direccion}
-          error={errorDe('direccion')}
-        />
+        <div className="campo">
+          {/* C-DIRECCION-SUGERENCIAS: la dirección real del local, con su punto en el mapa. */}
+          <CampoDireccion
+            etiqueta={t.direccion}
+            valor={v.direccion}
+            cambiar={(x) => b.cambiar('direccion', x)}
+            alElegir={(d) => {
+              b.cambiar('lat', d.punto.lat.toFixed(6));
+              b.cambiar('lng', d.punto.lng.toFixed(6));
+            }}
+            placeholder={t.direccion}
+          />
+          {errorDe('direccion') ? <p className="error-campo">{errorDe('direccion')}</p> : null}
+        </div>
         <div className="fila-ubicacion">
           <button type="button" className="boton secundario" onClick={ubicar}>
             <Icono nombre="pin" tamano={18} /> {t.ubicacion}

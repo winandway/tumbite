@@ -30,6 +30,14 @@ Las reglas globales de Richard aplican; estas se suman.
 2. **Todo cambio dice a qué país aplica** (Venezuela, EE. UU., Colombia o todos): en el commit, en el documento de la fase y en el reporte a Richard.
 3. **Antes de construir para un país se estudia con REA el software más popular de ese país** (en Venezuela: MRW, Zoom, Tealca y las apps locales), se copia su estándar y, si se puede, se mejora. La evidencia queda en `docs/investigaciones-rea/`.
 
+## TODA CASILLA DE DIRECCIÓN SUGIERE DIRECCIONES REALES (REGLA PRINCIPAL, Richard, 28 oct 2026)
+
+> Sus palabras: _«todo lo que sea búsqueda de direcciones en todas las aplicaciones… la sugerencia de direcciones va a estar aplicada a todas las búsquedas de ahora y a las futuras»_.
+
+- Toda casilla donde alguien escribe una dirección (portada, comida, Moto recogida y destino, Flex, envíos de A a B, restaurantes, centros, direcciones guardadas, cambiar la dirección de un pedido, y cualquier pantalla futura) usa la pieza única de sugerencias: `CampoDireccion` (web: `apps/panel/src/sitio/CampoDireccion.tsx`; apps: `packages/movil/src/CampoDireccion.tsx`), sobre el hook `useSugerenciasDireccion` de `packages/compartido/src/lugares.ts`.
+- Al elegir una sugerencia se guardan sus coordenadas reales. PROHIBIDO un `<input>` o `TextInput` suelto para una dirección. Candado C-DIRECCION-SUGERENCIAS.
+- La llave de Google va SIEMPRE por el servidor (`/datos/lugares/*`), con los topes diarios de Google Cloud.
+
 ## «No inventemos la rueda» (eslogan y regla, Richard, 18 oct 2026)
 
 Se copia el **estándar del mercado** de reparto (DoorDash, Uber Eats, Rappi): la interfaz, los menús, el orden de las cosas y los flujos. Buscador arriba, «Hola, fulano», logo, campana, cupón, servicios, y abajo lo que publicó el vendedor. Cambiamos colores, marca y lo nuestro; no la estructura. Antes de diseñar una pantalla se pregunta «¿cuál es el estándar?» y se copia, salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública (no se descompilan sus apps de tienda: lo prohíben sus términos y expondría a Windoce; no hace falta).

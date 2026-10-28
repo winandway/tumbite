@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PERMISOS_CLAVE_API, almacenNavegador, useBorrador } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
+import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
@@ -231,12 +232,20 @@ export function Centros({ ctx }: { ctx: Contexto }) {
             cambiar={(x) => b.cambiar('nombre', x)}
             placeholder={t.nombre}
           />
-          <Campo
-            etiqueta={t.direccion}
-            valor={v.direccion}
-            cambiar={(x) => b.cambiar('direccion', x)}
-            placeholder={t.direccion}
-          />
+          <div className="campo">
+            {/* C-DIRECCION-SUGERENCIAS: al elegir una dirección real se llenan su latitud y longitud. */}
+            <CampoDireccion
+              etiqueta={t.direccion}
+              valor={v.direccion}
+              cambiar={(x) => b.cambiar('direccion', x)}
+              alElegir={(d) => {
+                b.cambiar('lat', d.punto.lat.toFixed(6));
+                b.cambiar('lng', d.punto.lng.toFixed(6));
+              }}
+              pais={empresa.pais}
+              placeholder={t.direccion}
+            />
+          </div>
           <Campo
             etiqueta={t.ciudad}
             valor={v.ciudad}
