@@ -1155,3 +1155,53 @@ describe('Flex · ruta de 40 paquetes de punta a punta', () => {
     ).toBe(200);
   });
 });
+
+describe('Flex · etiqueta con ruta y parada', () => {
+  it('sin ruta devuelve ruta null; en una ruta devuelve nombre, parada y total, sin teléfono', async () => {
+    const m = mundo();
+    const e = await empresa(m, 'Etiquetas Norte');
+    const ids = await envios(m, e, 3, 1, 'ET');
+    const lista = await llamar(
+      m,
+      'GET',
+      `${B}/empresas/${e.id}/paquetes?centro=${e.centroId}`,
+      undefined,
+      e.dueno.token,
+    );
+    expect(lista.estado).toBe(200);
+    expect(lista.datos.paquetes).toHaveLength(3);
+    expect(lista.datos.paquetes[0].centroId).toBe(e.centroId);
+    const otroCentro = await llamar(
+      m,
+      'GET',
+      `${B}/empresas/${e.id}/paquetes?centro=no-existe`,
+      undefined,
+      e.dueno.token,
+    );
+    expect(otroCentro.datos.paquetes).toHaveLength(0);
+    const paqueteDe = async (envioId: string) =>
+      (await m.DB.prepare('SELECT id FROM paquetes WHERE envio_id = ?')
+        .bind(envioId)
+        .first<{ id: string }>())!.id;
+    const etiqueta = async (paqueteId: string) =>
+      (
+        await llamar(
+          m,
+          'GET',
+          `${B}/empresas/${e.id}/paquetes/${paqueteId}/etiqueta`,
+          undefined,
+          e.dueno.token,
+        )
+      ).datos.etiqueta;
+    const p2 = await paqueteDe(ids[1]!);
+    expect((await etiqueta(p2)).ruta).toBeNull();
+    await ruta(m, e, ids);
+    const et = await etiqueta(p2);
+    expect(et.ruta).toMatchObject({ nombre: 'Ruta', paradas: 3 });
+    expect(et.ruta.parada).toBeGreaterThanOrEqual(1);
+    expect(et.ruta.parada).toBeLessThanOrEqual(3);
+    expect(et).toHaveProperty('largoCm');
+    expect(JSON.stringify(et)).not.toContain('3050000000');
+    expect(JSON.stringify(et)).not.toContain('telefono');
+  });
+});

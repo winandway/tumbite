@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
   type EstadoPaquete,
@@ -11,6 +11,7 @@ import {
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { Campo } from '../CampoClave';
+import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { HerramientasEnvio } from './PantallasRutas';
@@ -27,6 +28,7 @@ type Paquete = {
   referenciaExterna?: string | null;
   destinatarioNombre?: string;
   direccion?: string;
+  centroId?: string | null;
 };
 type Envio = {
   id: string;
@@ -388,22 +390,60 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
   );
 }
 
+/** Estados que ya van en camino (verde suave, sin llegar al «entregado»). */
+const EN_CAMINO = ['asignado', 'cargado', 'en_transito'];
+
+/** Píldora de estado de la lista: verde para lo que salió bien, rojo solo para los problemas. */
+function PildoraPaquete({ estado, t }: { estado: string; t: Contexto['t'] }) {
+  const ok = estado === 'entregado';
+  const camino = EN_CAMINO.includes(estado);
+  const mal = ['entrega_fallida', 'cancelado', 'devuelto', 'en_devolucion'].includes(estado);
+  const clase = ok
+    ? 'insignia-aprobado'
+    : camino
+      ? 'flex-pildora-camino'
+      : mal
+        ? 'insignia-rechazado'
+        : '';
+  return (
+    <span className={`insignia flex-pildora ${clase}`}>{t.estadosPaquete[estado] ?? estado}</span>
+  );
+}
+
+/** Dirección en dos líneas: la calle y, debajo, la ciudad (parte en la primera coma). */
+export function lineasDireccion(direccion: string | undefined): [string, string] {
+  const d = (direccion ?? '').trim();
+  const i = d.indexOf(',');
+  return i < 0 ? [d, ''] : [d.slice(0, i).trim(), d.slice(i + 1).trim()];
+}
+
+type LoteAbierto = { id: string; nombre: string; estado: string };
+
 export function Paquetes({ ctx }: { ctx: Contexto }) {
   const { t, empresa, raiz } = ctx;
   const inicial =
     typeof window !== 'undefined'
       ? (new URLSearchParams(window.location.search).get('estado') ?? '')
       : '';
+  const centros = useCentros(empresa.id);
   const [lista, setLista] = useState<Paquete[] | null>(null);
   const [q, setQ] = useState('');
   const [estado, setEstado] = useState(inicial);
+  const [centro, setCentro] = useState('');
   const [pagina, setPagina] = useState(1);
   const [hayMas, setHayMas] = useState(false);
   const [error, setError] = useState('');
+  const [elegidos, setElegidos] = useState<string[]>([]);
+  const [lotes, setLotes] = useState<LoteAbierto[] | null>(null);
+  const [loteId, setLoteId] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [trabajando, setTrabajando] = useState(false);
+  const puedeLotes = ctx.permisos.includes('lotes.gestionar');
   useEffect(() => {
     const p = new URLSearchParams({ pagina: String(pagina) });
     if (q) p.set('q', q);
     if (estado) p.set('estado', estado);
+    if (centro) p.set('centro', centro);
     pedir<{ paquetes: Paquete[]; hayMas: boolean }>(
       'GET',
       `${BASE_FLEX}/empresas/${empresa.id}/paquetes?${p.toString()}`,
@@ -413,24 +453,109 @@ export function Paquetes({ ctx }: { ctx: Contexto }) {
         setHayMas(r.hayMas);
       })
       .catch((x: unknown) => setError(mensajeDe(x)));
-  }, [empresa.id, q, estado, pagina]);
+  }, [empresa.id, q, estado, centro, pagina]);
+  const visibles = lista ?? [];
+  const todosElegidos = visibles.length > 0 && visibles.every((p) => elegidos.includes(p.id));
+  const alternar = (id: string) =>
+    setElegidos((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
+  const alternarTodos = () =>
+    setElegidos((l) =>
+      todosElegidos
+        ? l.filter((id) => !visibles.some((p) => p.id === id))
+        : [...new Set([...l, ...visibles.map((p) => p.id)])],
+    );
+  const aEtiquetas = (ids: string[], pdf = false) =>
+    ir(`${raiz}/labels?paquetes=${ids.map(encodeURIComponent).join(',')}${pdf ? '&pdf=1' : ''}`);
+  function abrirLotes() {
+    setAviso('');
+    setLotes([]);
+    pedir<{ lotes: LoteAbierto[] }>('GET', `${BASE_FLEX}/empresas/${empresa.id}/lotes`)
+      .then((r) => {
+        const abiertos = r.lotes.filter((l) => l.estado === 'abierto');
+        setLotes(abiertos);
+        setLoteId(abiertos[0]?.id ?? '');
+      })
+      .catch((x: unknown) => {
+        setLotes(null);
+        setError(mensajeDe(x));
+      });
+  }
+  async function asignarLote() {
+    if (!loteId || !elegidos.length) return;
+    setError('');
+    setTrabajando(true);
+    try {
+      const r = await pedir<{ agregados: number; rechazados: string[] }>(
+        'POST',
+        `${BASE_FLEX}/empresas/${empresa.id}/lotes/${loteId}/paquetes`,
+        { paqueteIds: elegidos },
+      );
+      setAviso(
+        `${r.agregados} ${t.agregadosAlLote}${r.rechazados.length ? ` ${r.rechazados.length} ${t.noAgregados}` : ''}`,
+      );
+      setLotes(null);
+      setElegidos([]);
+    } catch (x) {
+      setError(mensajeDe(x));
+    } finally {
+      setTrabajando(false);
+    }
+  }
+  const cambiarFiltro = (poner: () => void) => {
+    poner();
+    setPagina(1);
+  };
   return (
-    <section className="super">
-      <h1>{t.paquetes}</h1>
+    <section className="super flex-paquetes">
+      <header className="flex-encabezado">
+        <div>
+          <h1>{t.paquetes}</h1>
+          <p className="pista">{t.paquetesSubtitulo}</p>
+        </div>
+        <div className="flex-encabezado-botones">
+          {ctx.permisos.includes('importar') && (
+            <Enlace a={`${raiz}/import`} className="boton secundario">
+              {t.importarCsv}
+            </Enlace>
+          )}
+          {ctx.permisos.includes('envios.crear') && (
+            <Enlace a={`${raiz}/shipments/new`} className="boton">
+              + {t.crearPaquete}
+            </Enlace>
+          )}
+        </div>
+      </header>
       <Error_ error={error} />
       <div className="flex-filtros">
         <input
           type="search"
-          aria-label={t.buscar}
-          placeholder={t.buscar}
+          className="flex-buscador"
+          aria-label={t.buscarPaquetes}
+          placeholder={t.buscarPaquetes}
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => cambiarFiltro(() => setQ(e.target.value))}
         />
-        <select aria-label={t.estado} value={estado} onChange={(e) => setEstado(e.target.value)}>
-          <option value="">{t.todos}</option>
+        <select
+          aria-label={t.estado}
+          value={estado}
+          onChange={(e) => cambiarFiltro(() => setEstado(e.target.value))}
+        >
+          <option value="">{t.todosEstados}</option>
           {Object.entries(t.estadosPaquete).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label={t.centro}
+          value={centro}
+          onChange={(e) => cambiarFiltro(() => setCentro(e.target.value))}
+        >
+          <option value="">{t.todosCentros}</option>
+          {centros.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
             </option>
           ))}
         </select>
@@ -440,17 +565,148 @@ export function Paquetes({ ctx }: { ctx: Contexto }) {
       ) : lista.length === 0 ? (
         <p className="pista">{t.sinPaquetes}</p>
       ) : (
-        <ul className="super-lista">
-          {lista.map((p) => (
-            <li key={p.id}>
-              <Enlace a={`${raiz}/packages/${p.id}`}>
-                <code>{p.codigoSeguimiento}</code>
-              </Enlace>{' '}
-              · {p.referenciaExterna ?? '—'} · {p.destinatarioNombre} ·{' '}
-              <InsigniaPaquete estado={p.estado} t={t} />
-            </li>
-          ))}
-        </ul>
+        <div className="flex-tabla-caja">
+          <table className="flex-tabla">
+            <thead>
+              <tr>
+                <th className="flex-col-check">
+                  <input
+                    type="checkbox"
+                    aria-label={t.seleccionarTodos}
+                    checked={todosElegidos}
+                    onChange={alternarTodos}
+                  />
+                </th>
+                <th className="flex-col-num">#</th>
+                <th>{t.colCodigo}</th>
+                <th>{t.colDestinatario}</th>
+                <th>{t.direccion}</th>
+                <th>{t.estado}</th>
+                <th className="flex-col-acciones">{t.colAcciones}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((p, i) => {
+                const [calle, ciudad] = lineasDireccion(p.direccion);
+                const marcado = elegidos.includes(p.id);
+                return (
+                  <tr key={p.id} className={marcado ? 'flex-fila-elegida' : undefined}>
+                    <td className="flex-col-check">
+                      <input
+                        type="checkbox"
+                        aria-label={`${t.seleccionarPaquete} ${p.codigoSeguimiento}`}
+                        checked={marcado}
+                        onChange={() => alternar(p.id)}
+                      />
+                    </td>
+                    <td className="flex-col-num">{(pagina - 1) * 50 + i + 1}</td>
+                    <td className="flex-col-codigo">
+                      <Enlace a={`${raiz}/packages/${p.id}`}>
+                        <strong>{p.codigoSeguimiento}</strong>
+                      </Enlace>
+                      {p.referenciaExterna && <small>{p.referenciaExterna}</small>}
+                    </td>
+                    <td data-titulo={t.colDestinatario}>{p.destinatarioNombre}</td>
+                    <td className="flex-col-direccion" data-titulo={t.direccion}>
+                      <span>{calle}</span>
+                      {ciudad && <span>{ciudad}</span>}
+                    </td>
+                    <td data-titulo={t.estado}>
+                      <PildoraPaquete estado={p.estado} t={t} />
+                    </td>
+                    <td className="flex-col-acciones">
+                      <MenuTresPuntos
+                        etiqueta={`${t.accionesPaquete} ${p.codigoSeguimiento}`}
+                        opciones={[
+                          { texto: t.verDetalle, alTocar: () => ir(`${raiz}/packages/${p.id}`) },
+                          { texto: t.verEtiqueta, alTocar: () => aEtiquetas([p.id]) },
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {lista !== null && lista.length > 0 && (
+        <div className="flex-acciones-lote" aria-live="polite">
+          <label className="flex-acciones-cuenta">
+            <input
+              type="checkbox"
+              aria-label={t.seleccionarTodos}
+              checked={todosElegidos}
+              onChange={alternarTodos}
+            />{' '}
+            {elegidos.length}{' '}
+            {elegidos.length === 1 ? t.paqueteSeleccionado : t.paquetesSeleccionados}
+          </label>
+          <div className="flex-acciones-botones">
+            {puedeLotes && (
+              <button
+                type="button"
+                className="boton secundario"
+                disabled={!elegidos.length}
+                onClick={abrirLotes}
+              >
+                {t.asignarALote}
+              </button>
+            )}
+            <button
+              type="button"
+              className="boton secundario"
+              disabled={!elegidos.length}
+              onClick={() => aEtiquetas(elegidos)}
+            >
+              {t.imprimirEtiquetas}
+            </button>
+            <button
+              type="button"
+              className="boton secundario"
+              disabled={!elegidos.length}
+              onClick={() => aEtiquetas(elegidos, true)}
+            >
+              {t.descargarPdf}
+            </button>
+          </div>
+        </div>
+      )}
+      {lotes !== null && (
+        <div className="flex-tarjeta flex-elegir-lote">
+          {lotes.length === 0 ? (
+            <p className="pista">{t.sinLotesAbiertos}</p>
+          ) : (
+            <>
+              <label>
+                {t.elegirLote}{' '}
+                <select value={loteId} onChange={(e) => setLoteId(e.target.value)}>
+                  {lotes.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="boton"
+                disabled={!loteId || trabajando}
+                onClick={() => void asignarLote()}
+              >
+                {t.asignarAlLote}
+              </button>
+            </>
+          )}
+          <button type="button" className="boton secundario" onClick={() => setLotes(null)}>
+            {t.cancelar}
+          </button>
+        </div>
+      )}
+      {aviso && (
+        <p className="insignia insignia-aprobado" role="status">
+          {aviso}
+        </p>
       )}
       <div className="fila-botones">
         {pagina > 1 && (
@@ -784,6 +1040,13 @@ type DatosEtiqueta = {
   pieza: number;
   total: number;
   descripcion: string;
+  pesoG?: number | null;
+  largoCm?: number | null;
+  anchoCm?: number | null;
+  altoCm?: number | null;
+  ruta?: { id: string; nombre: string; parada: number; paradas: number } | null;
+  /** QR ya dibujado (lo prepara la hoja de impresión para imprimir sin esperar). */
+  qrImagen?: string;
 };
 
 /** Código de barras Code 128 B como SVG (sin dependencias). */
@@ -797,6 +1060,7 @@ export function CodigoBarras({ texto, alto = 48 }: { texto: string; alto?: numbe
       viewBox={`0 0 ${ancho + 20} ${alto}`}
       width="100%"
       height={alto}
+      preserveAspectRatio="none"
       role="img"
       aria-label={texto}
       className="flex-barras"
@@ -809,58 +1073,129 @@ export function CodigoBarras({ texto, alto = 48 }: { texto: string; alto?: numbe
   );
 }
 
-export function Etiqueta({ d, t }: { d: DatosEtiqueta; t: Contexto['t'] }) {
-  const [qr, setQr] = useState('');
+const kilos = (g: number | null | undefined) =>
+  typeof g === 'number' && g > 0 ? `${(g / 1000).toFixed(g % 1000 === 0 ? 0 : 1)} kg` : '—';
+const medidas = (d: DatosEtiqueta) =>
+  d.largoCm && d.anchoCm && d.altoCm ? `${d.largoCm} x ${d.anchoCm} x ${d.altoCm} cm` : '—';
+
+/**
+ * Etiqueta del paquete (diseño aprobado el 27 oct 2026): logo, pieza, código de seguimiento,
+ * barras con el identificador opaco, QR, destinatario, ruta y parada, y la franja negra de la marca.
+ * Nunca lleva el teléfono del destinatario (C-FLEX-ETIQUETA).
+ */
+export function Etiqueta({
+  d,
+  t,
+  compacta = false,
+}: {
+  d: DatosEtiqueta;
+  t: Contexto['t'];
+  compacta?: boolean;
+}) {
+  const [qrPropio, setQrPropio] = useState('');
   useEffect(() => {
-    void QRCode.toDataURL(d.qr, { margin: 1, width: 180 })
-      .then(setQr)
-      .catch(() => setQr(''));
-  }, [d.qr]);
+    if (d.qrImagen) return;
+    void QRCode.toDataURL(d.qr, { margin: 1, width: 220 })
+      .then(setQrPropio)
+      .catch(() => setQrPropio(''));
+  }, [d.qr, d.qrImagen]);
+  const qr = d.qrImagen || qrPropio;
+  const [calle, ciudad] = lineasDireccion(d.direccion);
+  const lado = compacta ? 76 : 112;
   return (
-    <article className="flex-etiqueta">
-      <header>
-        <strong>{d.empresa}</strong>
-        <span>
-          {t.pieza} {d.pieza} {t.de} {d.total}
+    <article className={`flex-etiqueta${compacta ? ' flex-etiqueta-compacta' : ''}`}>
+      <header className="flex-etiqueta-cabeza">
+        <img
+          src="/marca/divoox-logo.svg"
+          alt="Divoox"
+          className="flex-etiqueta-logo"
+          width={compacta ? 98 : 150}
+          height={compacta ? 24 : 37}
+        />
+        <span className="flex-etiqueta-pieza">
+          {t.paqueteN} {d.pieza} {t.de} {d.total}
         </span>
       </header>
-      <div className="flex-etiqueta-cuerpo">
-        {qr ? (
-          <img src={qr} alt={d.qr} width={120} height={120} />
-        ) : (
-          <div style={{ width: 120, height: 120 }} />
-        )}
-        <div>
-          <p className="flex-etiqueta-nombre">{d.destinatarioNombre}</p>
-          <p>{d.direccion}</p>
-          {d.instrucciones && <p className="flex-etiqueta-nota">{d.instrucciones}</p>}
-          {d.referenciaExterna && (
-            <p>
-              Ref: <strong>{d.referenciaExterna}</strong>
-            </p>
+      <div className="flex-etiqueta-codigos">
+        <div className="flex-etiqueta-seguimiento">
+          <span className="flex-etiqueta-titulo">{t.codigoSeguimiento}</span>
+          <strong className="flex-etiqueta-codigo">{d.codigoSeguimiento}</strong>
+          <CodigoBarras texto={d.codigoEtiqueta} alto={compacta ? 34 : 56} />
+        </div>
+        <figure className="flex-etiqueta-qr">
+          {qr ? (
+            <img src={qr} alt={d.qr} width={lado} height={lado} />
+          ) : (
+            <span style={{ width: lado, height: lado }} />
           )}
-          {d.centro && <p>{d.centro}</p>}
-          {d.descripcion && <p>{d.descripcion}</p>}
+          {!compacta && <figcaption>{t.escanearSeguimiento}</figcaption>}
+        </figure>
+      </div>
+      <div className="flex-etiqueta-destino">
+        <div>
+          <span className="flex-etiqueta-titulo">{t.destinatarioEtiqueta}</span>
+          <p className="flex-etiqueta-nombre">{d.destinatarioNombre}</p>
+          <p>{calle}</p>
+          {ciudad && <p>{ciudad}</p>}
+          {!compacta && d.instrucciones && <p className="flex-etiqueta-nota">{d.instrucciones}</p>}
+          {compacta && d.referenciaExterna && (
+            <p className="flex-etiqueta-ref">Ref: {d.referenciaExterna}</p>
+          )}
+        </div>
+        <div className="flex-etiqueta-ruta">
+          <span className="flex-etiqueta-titulo">{t.ruta}</span>
+          <strong>{d.ruta ? d.ruta.nombre || d.ruta.id.slice(0, 8) : '—'}</strong>
+          <span className="flex-etiqueta-titulo">{t.parada}</span>
+          <strong className="flex-etiqueta-parada">
+            {d.ruta ? `${d.ruta.parada} / ${d.ruta.paradas}` : '—'}
+          </strong>
         </div>
       </div>
-      <CodigoBarras texto={d.codigoEtiqueta} />
-      <footer>
-        <code>{d.codigoEtiqueta}</code> · {t.seguimiento}: <code>{d.codigoSeguimiento}</code>
-      </footer>
+      {!compacta && (
+        <dl className="flex-etiqueta-datos">
+          <div>
+            <dt>{t.referenciaExterna}</dt>
+            <dd>{d.referenciaExterna ?? '—'}</dd>
+          </div>
+          <div>
+            <dt>{t.peso}</dt>
+            <dd>{kilos(d.pesoG)}</dd>
+          </div>
+          <div>
+            <dt>{t.dimensiones}</dt>
+            <dd>{medidas(d)}</dd>
+          </div>
+          <div>
+            <dt>{t.remitente}</dt>
+            <dd>{[d.empresa, d.centro].filter(Boolean).join(' · ') || '—'}</dd>
+          </div>
+        </dl>
+      )}
+      {!compacta && (
+        <footer className="flex-etiqueta-pie">
+          <img src="/marca/divoox-logo-oscuro.svg" alt="Divoox" width={130} height={32} />
+          <span>{t.lema}</span>
+        </footer>
+      )}
     </article>
   );
 }
 
 export function Etiquetas({ ctx }: { ctx: Contexto }) {
   const { t, empresa } = ctx;
-  const unoInicial =
-    typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('paquete')
-      : null;
+  const parametros =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const idsIniciales = [
+    ...(parametros?.get('paquete') ? [parametros.get('paquete') as string] : []),
+    ...(parametros?.get('paquetes')?.split(',').filter(Boolean) ?? []),
+  ];
+  const [pdf] = useState(parametros?.get('pdf') === '1');
   const [lista, setLista] = useState<Paquete[]>([]);
-  const [elegidos, setElegidos] = useState<string[]>(unoInicial ? [unoInicial] : []);
+  const [elegidos, setElegidos] = useState<string[]>([...new Set(idsIniciales)]);
+  const [verLista, setVerLista] = useState(idsIniciales.length === 0);
   const [etiquetas, setEtiquetas] = useState<DatosEtiqueta[]>([]);
   const [error, setError] = useState('');
+  const impreso = useRef(false);
   useEffect(() => {
     pedir<{ paquetes: Paquete[] }>('GET', `${BASE_FLEX}/empresas/${empresa.id}/paquetes`)
       .then((r) => setLista(r.paquetes))
@@ -873,7 +1208,12 @@ export function Etiquetas({ ctx }: { ctx: Contexto }) {
         pedir<{ etiqueta: DatosEtiqueta }>(
           'GET',
           `${BASE_FLEX}/empresas/${empresa.id}/paquetes/${id}/etiqueta`,
-        ).then((r) => r.etiqueta),
+        ).then(async (r) => ({
+          ...r.etiqueta,
+          qrImagen: await QRCode.toDataURL(r.etiqueta.qr, { margin: 1, width: 220 }).catch(
+            () => '',
+          ),
+        })),
       ),
     )
       .then((e) => {
@@ -884,41 +1224,78 @@ export function Etiquetas({ ctx }: { ctx: Contexto }) {
       vivo = false;
     };
   }, [elegidos, empresa.id]);
+  // «Descargar PDF» llega con ?pdf=1: abre la ventana de impresión una vez, con todo dibujado.
+  const listas =
+    etiquetas.length > 0 &&
+    etiquetas.length === elegidos.length &&
+    etiquetas.every((e) => elegidos.includes(e.paqueteId));
+  useEffect(() => {
+    if (!pdf || impreso.current || !listas) return;
+    impreso.current = true;
+    window.print();
+  }, [pdf, listas]);
   const alternar = (id: string) =>
     setElegidos(elegidos.includes(id) ? elegidos.filter((x) => x !== id) : [...elegidos, id]);
+  const una = etiquetas.length === 1;
   return (
     <section className="super flex-etiquetas">
-      <h1>{t.etiquetas}</h1>
-      <p className="pista">{t.etiquetasAyuda}</p>
+      <header className="flex-encabezado flex-no-imprimir">
+        <div>
+          <h1>{una ? t.etiqueta : t.etiquetasImpresion}</h1>
+          <p className="pista">{t.etiquetasAyuda}</p>
+        </div>
+        <div className="flex-encabezado-botones">
+          <button
+            type="button"
+            className="boton secundario"
+            disabled={!etiquetas.length}
+            onClick={() => window.print()}
+          >
+            {t.descargarPdf}
+          </button>
+          <button
+            type="button"
+            className="boton"
+            disabled={!etiquetas.length}
+            onClick={() => window.print()}
+          >
+            {t.imprimir}
+          </button>
+        </div>
+      </header>
+      <p className="pista flex-no-imprimir">{t.pdfAyuda}</p>
       <Error_ error={error} />
       <div className="flex-no-imprimir">
-        <ul className="super-lista">
-          {lista.map((p) => (
-            <li key={p.id}>
-              <label className="flex-check">
-                <input
-                  type="checkbox"
-                  checked={elegidos.includes(p.id)}
-                  onChange={() => alternar(p.id)}
-                />{' '}
-                <code>{p.codigoSeguimiento}</code> · {p.referenciaExterna ?? '—'} ·{' '}
-                {p.destinatarioNombre}
-              </label>
-            </li>
-          ))}
-        </ul>
         <button
           type="button"
-          className="boton"
-          disabled={!etiquetas.length}
-          onClick={() => window.print()}
+          className="boton secundario"
+          aria-expanded={verLista}
+          onClick={() => setVerLista((v) => !v)}
         >
-          {t.imprimir}
+          {t.elegirPaquetes} ({elegidos.length})
         </button>
+        {verLista && (
+          <ul className="super-lista flex-elegir-paquetes">
+            {lista.map((p) => (
+              <li key={p.id}>
+                <label className="flex-check">
+                  <input
+                    type="checkbox"
+                    checked={elegidos.includes(p.id)}
+                    onChange={() => alternar(p.id)}
+                  />{' '}
+                  <code>{p.codigoSeguimiento}</code> · {p.referenciaExterna ?? '—'} ·{' '}
+                  {p.destinatarioNombre}
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <div className="flex-hoja-etiquetas">
+      {!elegidos.length && <p className="pista">{t.sinSeleccion}</p>}
+      <div className={`flex-hoja-etiquetas${una ? ' flex-hoja-una' : ''}`}>
         {etiquetas.map((e) => (
-          <Etiqueta key={e.paqueteId} d={e} t={t} />
+          <Etiqueta key={e.paqueteId} d={e} t={t} compacta={!una} />
         ))}
       </div>
     </section>
