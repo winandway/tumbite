@@ -53,8 +53,10 @@ export type ResultadoBusqueda = ProductoTienda & {
 export const fotoProducto = (ruta: string | null | undefined) =>
   ruta?.startsWith('https://') ? ruta : urlFoto(ruta);
 
-/** «Brand · 500 mL» para debajo del nombre. */
-export const detalleProducto = (p: ProductoTienda) =>
-  [p.marca, p.tamano && `${p.tamano}${p.unidadTamano ? ` ${p.unidadTamano}` : ''}`]
+/** «Brand · 500 mL» para debajo del nombre («each» se dice «unid.» o «ct», como en las tiendas). */
+export const detalleProducto = (p: ProductoTienda, idioma: 'es' | 'en' = 'es') => {
+  const unidad = p.unidadTamano === 'each' ? (idioma === 'en' ? 'ct' : 'unid.') : p.unidadTamano;
+  return [p.marca, p.tamano && `${p.tamano}${unidad ? ` ${unidad}` : ''}`]
     .filter(Boolean)
     .join(' · ');
+};

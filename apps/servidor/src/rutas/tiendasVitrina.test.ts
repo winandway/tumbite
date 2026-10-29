@@ -77,6 +77,21 @@ describe('C-TIENDAS-VITRINA · lo que ve el cliente', () => {
     ).toHaveLength(0);
   });
 
+  it('en la computadora solo con TIENDAS_LOCAL, y en producción nunca, aunque la tenga', async () => {
+    const local = await escenario('localhost', { TIENDAS_LOCAL: '1' });
+    expect(
+      (await local.m.llamar('GET', `/datos/tiendas?servicio=mercado&${EN_MIAMI}`)).estado,
+    ).toBe(200);
+    const sin = await escenario('localhost');
+    expect((await sin.m.llamar('GET', `/datos/tiendas?servicio=mercado&${EN_MIAMI}`)).estado).toBe(
+      404,
+    );
+    const prod = await escenario('divoox.com', { TIENDAS_LOCAL: '1' });
+    expect((await prod.m.llamar('GET', `/datos/tiendas?servicio=mercado&${EN_MIAMI}`)).estado).toBe(
+      404,
+    );
+  });
+
   it('en producción las tiendas están apagadas: «muy pronto»', async () => {
     const { m, tid } = await escenario('divoox.com');
     expect((await m.llamar('GET', `/datos/tiendas?servicio=mercado&${EN_MIAMI}`)).estado).toBe(404);

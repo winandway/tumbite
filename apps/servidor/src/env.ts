@@ -89,6 +89,8 @@ export const esquemaEnv = z.object({
   TIEMPO_REAL_URL: z.url().optional(),
   /** «1» = la selfie de control se pide en cada conexión (pruebas y recorrido). */
   SELFIE_CONTROL_SIEMPRE: z.enum(['0', '1']).optional(),
+  /** C-TIENDAS-VITRINA: «1» enciende las tiendas en el servidor LOCAL del recorrido (nunca en un sitio publicado). */
+  TIENDAS_LOCAL: z.enum(['0', '1']).optional(),
 });
 
 export type Variables = z.infer<typeof esquemaEnv>;

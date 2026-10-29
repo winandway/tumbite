@@ -1412,6 +1412,25 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **No tocar:** las tiendas no salen entre los restaurantes (`tipo_comercio = 'restaurante'` en la lista y el buscador de comida); los medicamentos con receta siguen bloqueados hasta una orden legal de Richard; un producto nunca se borra.
 - **Prueba:** `packages/compartido/src/tiendas.test.ts`, `apps/servidor/src/rutas/tiendas.test.ts` (rojo comprobado quitando el filtro), `apps/panel/src/panel/Productos.test.tsx`.
 
+## C-TIENDAS-VITRINA · El cliente ve y compra en las tiendas cercanas (28 oct 2026)
+
+- **País:** todos. Encendido SOLO en el sitio de pruebas (`SERVICIOS_EN_PRUEBA` en `apps/servidor/src/esquema.ts`: mercado, farmacia, licores, mas); en producción las rutas responden 404 «muy pronto» hasta que Richard diga en qué país abre.
+- **Cómo funciona:** `GET /datos/tiendas?servicio&lat&lng` (aprobadas, de la zona y del área activa, con productos a la venta; abiertas y más cercanas primero, con el mismo «abierto ahora» de los restaurantes: horario, cierres y señal), `GET /datos/tiendas/:id` (ficha y pasillos), `GET /datos/tiendas/:id/productos` (de 50 en 50, buscador y pasillo) y `GET /datos/tiendas-buscar` (un producto en todas las tiendas cercanas). Solo se ve lo disponible hoy (`DISPONIBLE_HOY`: activo, o agotado «por hoy» que ya venció) y nunca lo que pide receta. App: `apps/cliente/src/app/stores.tsx` y `store/[id].tsx`, abiertas desde el botón «Ver tiendas cerca» del servicio.
+- **Lista de activación:** en una tienda, «platos vendibles» cuenta sus productos con precio (si no, una tienda no podía abrir nunca).
+- **Prueba:** `apps/servidor/src/rutas/tiendasVitrina.test.ts`, rojo comprobado poniendo `DISPONIBLE_HOY` en verdadero (un agotado salía a la venta).
+
+## C-TIENDAS-COMPRA · Comprar en una tienda con el circuito de siempre (28 oct 2026)
+
+- **País:** todos. `POST /datos/pedidos` mira `tipo_comercio`: en una tienda las líneas salen de `lineasDeTienda` (`apps/servidor/src/rutas/tiendas.ts`), nunca de la app. Precio de la oferta o el rebajado; agotados fuera (409); lo pesable al peso estimado (`precioEstimado`) y marcado `pesable`; alcohol y tabaco con `requiereEdad`; cada línea con `sustitucion` (reembolsar por defecto, similar o contactar). Todo lo demás (pago, repartidor, «falta un producto» con reembolso) es el de comida.
+- **Regla de dinero:** «uno parecido» se entrega SIN cobrar de más; el cobro nunca sube después de pagar. Lo que falta o pesa menos se devuelve con «falta un producto».
+- **La tienda lo ve:** `notaSustitucion` en el panel (`Pedidos.tsx`) y en la app del restaurante (`Inicio.tsx`).
+- **Prueba:** `tiendasVitrina.test.ts` (rojo comprobado quitando la sustitución de las líneas) y `packages/compartido/src/tiendas.test.ts`.
+
+## C-TIENDAS-CODIGO · Rellenar la ficha con el código de barras (28 oct 2026)
+
+- **Cómo funciona:** `GET /datos/mi-restaurante/productos/codigo/:codigo` consulta Open Food Facts por el servidor (base abierta ODbL, fotos CC BY-SA, se nombra la fuente en el panel), con agente propio y tope de 30 por minuto. Solo rellena lo vacío; la tienda revisa y guarda. Si Open Food Facts no responde, se dice y se escribe a mano.
+- **Prueba:** `tiendasVitrina.test.ts` («rellenar con el código de barras»), con Open Food Facts simulado: las pruebas nunca le pegan al servicio real.
+
 ## C-AVISO-PAQUETE · Avisos push al destinatario con sonido propio, no SMS (28 oct 2026)
 
 - **Por qué:** un SMS a Venezuela cuesta 0,2257 dólares en Twilio, más que los 0,20 que cobra Divoox por caja (`docs/investigaciones-rea/2026-10-28-avisos-push-vs-sms.md`). El push es gratis.

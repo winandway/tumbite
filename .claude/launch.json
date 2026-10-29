@@ -45,6 +45,17 @@
         "EXPO_NO_TELEMETRY": "1"
       },
       "port": 8083
+    },
+    {
+      "name": "app-cliente-web-pruebas",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
+      "cwd": "apps/cliente",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com",
+        "EXPO_NO_TELEMETRY": "1"
+      },
+      "port": 8081
     }
   ]
 }

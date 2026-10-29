@@ -239,7 +239,17 @@ export default function Tienda() {
           const n = enCarrito(p.id);
           return (
             <View
-              style={[{ flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 10 }, sombra]}
+              // Siempre media fila: un producto solo no se estira a todo el ancho.
+              style={[
+                {
+                  flex: 1,
+                  maxWidth: '49%',
+                  backgroundColor: '#fff',
+                  borderRadius: 16,
+                  padding: 10,
+                },
+                sombra,
+              ]}
             >
               <View
                 style={{
@@ -288,9 +298,9 @@ export default function Tienda() {
               >
                 {p.nombre}
               </Text>
-              {detalleProducto(p) ? (
+              {detalleProducto(p, idioma) ? (
                 <Text style={{ color: '#5E5E5E', fontSize: 12 }} numberOfLines={1}>
-                  {detalleProducto(p)}
+                  {detalleProducto(p, idioma)}
                 </Text>
               ) : null}
               {p.restriccion === 'alcohol' || p.restriccion === 'tobacco' ? (

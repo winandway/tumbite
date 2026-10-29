@@ -393,9 +393,12 @@ const coordenada = z.coerce.number().min(-180).max(180).optional();
 
 /** Solo donde el servicio está encendido (pruebas hoy; en producción cuando Richard abra el país). */
 function exigirServicio(c: Parameters<typeof base>[0], servicio: string) {
+  const entorno = entornoDe(c.req.url);
+  // En la computadora (recorrido local) se pueden encender con TIENDAS_LOCAL; en los sitios, no.
+  const local = entorno === 'local' && c.env.TIENDAS_LOCAL === '1';
   if (
     !tiposDeServicio(servicio).length ||
-    !serviciosImplementados(entornoDe(c.req.url)).has(servicio)
+    !(local || serviciosImplementados(entorno).has(servicio))
   )
     throw new ErrorDatos('Este servicio llega muy pronto.', undefined, 404);
 }

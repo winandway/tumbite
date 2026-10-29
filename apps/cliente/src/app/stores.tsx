@@ -208,8 +208,10 @@ export default function Tiendas() {
                   ) : null}
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '800', color: C.secundario }}>{r.nombre}</Text>
-                    {detalleProducto(r) ? (
-                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{detalleProducto(r)}</Text>
+                    {detalleProducto(r, idioma) ? (
+                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                        {detalleProducto(r, idioma)}
+                      </Text>
                     ) : null}
                     <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 2 }}>
                       {t.enTienda.replace('{tienda}', r.tienda)}
