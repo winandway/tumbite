@@ -53,6 +53,7 @@
 - [If you’re out of an item or need more time · Divoox](https://divoox.com/docs/restaurants/out-of-stock-and-more-time): Flag the item you’re out of and the customer decides in their app; and if you’re running late, add minutes before the driver leaves.
 - [Your counter: see the driver coming, the QR code and the wait · Divoox](https://divoox.com/docs/restaurants/your-counter): On your screen you see who’s coming for each order, how many minutes away they are, when they arrived and how long they wait. Next to each ready order ther
 - [Put your restaurant on Divoox](https://divoox.com/docs/restaurants/get-started): Create your account, complete your profile, and wait for approval. No lock-in contracts.
+- [Upload your store catalog: grocery, pharmacy, liquor and more · Divoox](https://divoox.com/docs/restaurants/store-catalog): If you run a grocery store, pharmacy, liquor store, hardware store or another shop, upload your products with a spreadsheet or one by one. They’re ready fo
 - [Your menu: items, prices, and photos · Divoox](https://divoox.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Divoox](https://divoox.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
