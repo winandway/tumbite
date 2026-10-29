@@ -16,8 +16,9 @@
 - [x] Auditoría Tumbite → Divoox, parte 1: inventario completo (archivo, línea, texto, corrección) en `docs/AUDITORIA-MARCA-DIVOOX.md`, separando lo visible al público, lo legal, lo de configuración y lo interno que se queda. Todos los países.
 - [x] (29 oct: nada visible quedaba; ver la auditoría) Auditoría Tumbite → Divoox, parte 2: corregir todo lo visible que NO sea legal ni configuración crítica (web, apps, Docs, correos, avisos), con su prueba, staging y producción. Lo legal queda anotado para Richard. Todos los países.
 - [x] (ya en producción desde el 27 oct) Remitente de los correos en divoox.com: averiguar el proveedor de correo, qué hace falta para verificar el dominio y dejarlo listo de nuestro lado; si solo falta un paso de Richard, anotarlo con su croquis. Todos los países.
-- [ ] Monetización prepago, paso 1: Food pasa por la capa de políticas de cobro sin cambiar ningún resultado (pruebas que comparan antes y después). Todos los países; EE. UU. sigue con Stripe Connect.
-- [ ] Monetización prepago, paso 2: política de cancelaciones por servicio dentro de la misma capa, con sus pruebas. Todos los países.
+- [x] Monetización prepago, paso 1: Food pasa por la capa de políticas de cobro sin cambiar ningún resultado (pruebas que comparan antes y después). Todos los países; EE. UU. sigue con Stripe Connect.
+- [x] Monetización prepago, paso 2: política de cancelaciones por servicio dentro de la misma capa, con sus pruebas. Todos los países.
+- [ ] Superadmin, pantalla de «Cancelaciones» en Finanzas (ver, crear y aprobar la regla por servicio y país) sobre las rutas nuevas, con su prueba. Todos los países.
 - [ ] F17: ciudades de la web desde el servidor, con interruptor de lanzamiento por ciudad en el superadmin; Miami sigue «muy pronto» hasta que Richard lo encienda. Todos los países.
 - [ ] Google Play, accesos de revisión: preparar el escenario aislado en staging y comprobar que las tres cuentas de revisión entran en las tres apps. EE. UU.
 - [ ] Fichas de las tiendas (Google Play y App Store): textos en inglés y español y capturas del recorrido listas en `docs/FICHAS-TIENDAS.md`, para subirlas al cerrar las pantallas. Todos los países.

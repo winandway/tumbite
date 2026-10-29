@@ -1498,3 +1498,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa:** la pantalla mostraba siempre lo que se pidió, nunca cómo se entregó.
 - **Arreglo:** `entregaMostrada()` en `packages/compartido/src/entregaMostrada.ts`: si ya se entregó manda `entregadoComo` («seguro» cuenta como puerta); si no, lo pedido. La usa `apps/cliente/src/app/order/[id].tsx`.
 - **Prueba:** `packages/compartido/src/entregaMostrada.test.ts` (en rojo sin la función).
+
+## C-FOOD-POLITICAS y C-CANCELACION-POLITICA (29 oct 2026) — todos los países; EE. UU. sigue con Stripe Connect
+
+- **Qué faltaba:** la comida en cobro directo calculaba su comisión aparte (la del país), fuera de la capa común de políticas; y al cancelar, la comisión apartada siempre volvía completa, sin regla configurable por servicio.
+- **Arreglo 1:** `comisionFood()` en `apps/servidor/src/internacional/cobroDirecto.ts`. Si hay política de conductor en prepago para `food` con revisión legal aprobada, manda ella; si no, `comisionDirecta()`, igual que antes. La usan aceptar (reserva) y el ajuste por plato quitado.
+- **Arreglo 2:** tabla nueva `politicas_cancelacion` (schema.sql), regla `esquemaCancelacion` y `comisionPorCancelacion()` en `packages/compartido/src/finanzas.ts` (liberar, porcentaje o fijo, antes y después de recoger; nunca más de lo apartado). `cerrarReservasPorCancelacion()` reemplaza a `liberarReservasDe` en la cancelación del gerente (`manager.ts`). `cerrarReservaCancelada()` en `libro.ts`, con referencias únicas (no cobra dos veces). Rutas del superadmin: GET y POST `/datos/admin/finanzas/cancelaciones`, auditadas; crear una nueva cierra la anterior.
+- **Sin política aprobada no cambia nada:** todo vuelve al prepago del repartidor.
+- **Pruebas:** `internacional/comisionFood.test.ts`; en `internacional.test.ts` las tres «C-CANCELACION-POLITICA» (en rojo con `liberarReservasDe`); `compartido/finanzas.test.ts`.

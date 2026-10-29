@@ -1984,6 +1984,26 @@ CREATE TABLE IF NOT EXISTS politicas_financieras (
 CREATE INDEX IF NOT EXISTS politicas_financieras_busqueda
   ON politicas_financieras(servicio, tipo_cuenta, pais, activa);
 
+-- Política de cancelaciones por servicio y país (C-CANCELACION-POLITICA): qué parte de la comisión
+-- apartada se queda Divoox si la operación se cancela. Sin fila vigente, todo vuelve al conductor.
+-- No se edita: se cierra (vigente_hasta) y se crea otra.
+CREATE TABLE IF NOT EXISTS politicas_cancelacion (
+  id TEXT PRIMARY KEY,
+  servicio TEXT NOT NULL CHECK (servicio IN ('flex', 'express', 'food', 'ride', 'car', 'grocery')),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  regla_json TEXT NOT NULL,
+  vigente_desde TEXT NOT NULL DEFAULT (datetime('now')),
+  vigente_hasta TEXT,
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  revision_legal_aprobada INTEGER NOT NULL DEFAULT 0 CHECK (revision_legal_aprobada IN (0, 1)),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS politicas_cancelacion_busqueda
+  ON politicas_cancelacion(servicio, pais, activa);
+
 -- Auditoría financiera (políticas, límites, ajustes manuales, reembolsos). Inmutable (disparadores).
 CREATE TABLE IF NOT EXISTS finanzas_auditoria (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

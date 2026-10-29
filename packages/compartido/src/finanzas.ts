@@ -234,3 +234,31 @@ export function desgloseServicioLogistico(p: ParametrosLogisticos): DesgloseLogi
     totalEmpresa: subtotal,
   };
 }
+
+/**
+ * C-CANCELACION-POLITICA (29 oct 2026): qué parte de la comisión apartada se queda Divoox cuando una
+ * operación se cancela, según la etapa. Sin política (o «liberar») vuelve TODO al prepago del
+ * conductor, que es lo de siempre. Nunca se queda más de lo apartado.
+ */
+const tramoCancelacion = z.discriminatedUnion('tipo', [
+  z.object({ tipo: z.literal('liberar') }),
+  z.object({ tipo: z.literal('porcentaje'), pb: z.number().int().min(0).max(10_000) }),
+  z.object({ tipo: z.literal('fijo'), monto: z.number().int().min(0) }),
+]);
+export const esquemaCancelacion = z.object({
+  antesDeRecoger: tramoCancelacion,
+  despuesDeRecoger: tramoCancelacion,
+});
+export type ReglaCancelacion = z.infer<typeof esquemaCancelacion>;
+
+export function comisionPorCancelacion(
+  regla: ReglaCancelacion | null,
+  p: { apartado: number; recogido: boolean },
+): number {
+  const apartado = Math.max(0, Math.floor(p.apartado));
+  if (!regla || apartado === 0) return 0;
+  const t = p.recogido ? regla.despuesDeRecoger : regla.antesDeRecoger;
+  if (t.tipo === 'liberar') return 0;
+  const m = t.tipo === 'fijo' ? t.monto : Math.floor((apartado * t.pb) / 10_000 + 0.5);
+  return Math.min(apartado, Math.max(0, m));
+}

@@ -541,6 +541,112 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
     };
     expect(salud.piezas.libro).toBe('ok');
   });
+
+  /** C-CANCELACION-POLITICA: pedido directo aceptado por un repartidor con 300 apartados. */
+  async function aceptadoConReserva(e: Awaited<ReturnType<typeof escenario>>) {
+    const id = (await e.pedir()).datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Rep');
+    await e.recargar(rep, 300);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    expect(await saldoDe(e, rep)).toMatchObject({ disponible: 0, reservado: 300 });
+    return { id, rep };
+  }
+  const saldoDe = async (e: Awaited<ReturnType<typeof escenario>>, rep: { token: string }) =>
+    (await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token)).datos;
+  async function politicaCancelacion(e: Awaited<ReturnType<typeof escenario>>, aprobada: 0 | 1) {
+    await e.m.DB.prepare(
+      `INSERT INTO politicas_cancelacion (id, servicio, pais, moneda, regla_json, vigente_desde, revision_legal_aprobada)
+       VALUES ('pc-food', 'food', 'US', 'USD', ?, datetime('now', '-1 day'), ?)`,
+    )
+      .bind(
+        JSON.stringify({
+          antesDeRecoger: { tipo: 'porcentaje', pb: 5000 },
+          despuesDeRecoger: { tipo: 'liberar' },
+        }),
+        aprobada,
+      )
+      .run();
+  }
+
+  it('cancelación con política aprobada: Divoox se queda la parte y el resto vuelve, una sola vez (C-CANCELACION-POLITICA)', async () => {
+    const e = await escenario();
+    await politicaCancelacion(e, 1);
+    const { id, rep } = await aceptadoConReserva(e);
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${id}/cancelar`,
+      { motivo: 'prueba' },
+      e.admin.token,
+    );
+    expect(await saldoDe(e, rep)).toMatchObject({ disponible: 150, reservado: 0 });
+    const { cerrarReservasPorCancelacion } = await import('./internacional/cobroDirecto');
+    expect(await cerrarReservasPorCancelacion(e.m.DB, id)).toBe(0);
+    expect(await saldoDe(e, rep)).toMatchObject({ disponible: 150, reservado: 0 });
+  });
+
+  it('el superadmin crea la política de cancelación y queda auditada (C-CANCELACION-POLITICA)', async () => {
+    const e = await escenario();
+    const regla = {
+      antesDeRecoger: { tipo: 'fijo', monto: 100 },
+      despuesDeRecoger: { tipo: 'liberar' },
+    };
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/admin/finanzas/cancelaciones',
+      {
+        servicio: 'food',
+        pais: 'US',
+        moneda: 'USD',
+        regla,
+        revisionLegalAprobada: true,
+        motivo: 'prueba',
+      },
+      e.admin.token,
+    );
+    expect(r.estado).toBe(201);
+    const { id, rep } = await aceptadoConReserva(e);
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${id}/cancelar`,
+      { motivo: 'prueba' },
+      e.admin.token,
+    );
+    expect(await saldoDe(e, rep)).toMatchObject({ disponible: 200, reservado: 0 });
+    const lista = await e.m.llamar(
+      'GET',
+      '/datos/admin/finanzas/cancelaciones',
+      undefined,
+      e.admin.token,
+    );
+    expect(lista.datos.politicas[0]).toMatchObject({ servicio: 'food', activa: true });
+    const cli = await e.m.llamar(
+      'POST',
+      '/datos/admin/finanzas/cancelaciones',
+      { servicio: 'food', pais: 'US', moneda: 'USD', regla, motivo: 'x1x' },
+      e.cliente.token,
+    );
+    expect(cli.estado).toBe(403);
+  });
+
+  it('cancelación con política SIN revisión legal: todo vuelve al repartidor (C-CANCELACION-POLITICA)', async () => {
+    const e = await escenario();
+    await politicaCancelacion(e, 0);
+    const { id, rep } = await aceptadoConReserva(e);
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${id}/cancelar`,
+      { motivo: 'prueba' },
+      e.admin.token,
+    );
+    expect(await saldoDe(e, rep)).toMatchObject({ disponible: 300, reservado: 0 });
+  });
 });
 
 describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)', () => {

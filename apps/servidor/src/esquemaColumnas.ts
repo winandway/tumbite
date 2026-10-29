@@ -1212,6 +1212,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "cerrada_por",
     "cerrada_en"
   ],
+  "politicas_cancelacion": [
+    "id",
+    "servicio",
+    "pais",
+    "moneda",
+    "regla_json",
+    "vigente_desde",
+    "vigente_hasta",
+    "activa",
+    "revision_legal_aprobada",
+    "motivo",
+    "creado_por",
+    "creado_en"
+  ],
   "finanzas_auditoria": [
     "id",
     "actor_id",

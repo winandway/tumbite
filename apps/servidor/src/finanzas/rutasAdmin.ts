@@ -5,6 +5,7 @@ import {
   SERVICIOS_FINANCIEROS,
   TIPOS_CUENTA,
   desgloseServicioLogistico,
+  esquemaCancelacion,
   esquemaRegla,
 } from '@tumbite/compartido';
 import { verificarClave } from '../cripto';
@@ -145,6 +146,86 @@ finanzasAdmin.post('/admin/finanzas/politicas', async (c) => {
     }),
   ]);
   return c.json({ politica: politicaPublica((await filaPolitica(db, id))!) }, 201);
+});
+
+/**
+ * C-CANCELACION-POLITICA: políticas de cancelación por servicio y país. No se editan: crear una
+ * nueva cierra la anterior del mismo servicio y país desde ahora (nunca hacia atrás).
+ */
+finanzasAdmin.get('/admin/finanzas/cancelaciones', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      'SELECT * FROM politicas_cancelacion ORDER BY activa DESC, servicio, pais, creado_en DESC LIMIT 200',
+    )
+    .all<Record<string, unknown>>();
+  return c.json({
+    politicas: results.map((f) => ({
+      id: f.id,
+      servicio: f.servicio,
+      pais: f.pais,
+      moneda: f.moneda,
+      regla: JSON.parse(String(f.regla_json)) as unknown,
+      vigenteDesde: f.vigente_desde,
+      vigenteHasta: f.vigente_hasta,
+      activa: Boolean(f.activa),
+      revisionLegalAprobada: Boolean(f.revision_legal_aprobada),
+      motivo: f.motivo,
+    })),
+  });
+});
+
+finanzasAdmin.post('/admin/finanzas/cancelaciones', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      servicio: z.enum(SERVICIOS_FINANCIEROS),
+      pais: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^([A-Z]{2}|\*)$/),
+      moneda: z.string().trim().toUpperCase().length(3),
+      regla: esquemaCancelacion,
+      revisionLegalAprobada: z.boolean().default(false),
+      motivo: z.string().trim().min(3, { error: 'Escribe el motivo.' }).max(300),
+    }),
+  );
+  const db = base(c);
+  const ahora = ahoraSql();
+  const id = crypto.randomUUID();
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE politicas_cancelacion SET activa = 0, vigente_hasta = ?
+          WHERE servicio = ? AND pais = ? AND UPPER(moneda) = ? AND activa = 1`,
+      )
+      .bind(ahora, d.servicio, d.pais, d.moneda),
+    db
+      .prepare(
+        `INSERT INTO politicas_cancelacion (id, servicio, pais, moneda, regla_json, vigente_desde, revision_legal_aprobada, motivo, creado_por)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        d.servicio,
+        d.pais,
+        d.moneda,
+        JSON.stringify(d.regla),
+        ahora,
+        d.revisionLegalAprobada ? 1 : 0,
+        d.motivo,
+        u.id,
+      ),
+    sentenciaAuditoriaFin(db, {
+      actorId: u.id,
+      accion: 'cancelacion.crear',
+      objeto: id,
+      detalle: d,
+    }),
+  ]);
+  return c.json({ id }, 201);
 });
 
 finanzasAdmin.post('/admin/finanzas/politicas/:pid/cerrar', async (c) => {

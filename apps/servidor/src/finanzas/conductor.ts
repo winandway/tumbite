@@ -10,8 +10,8 @@ import { politicaVigente } from './politicas';
 
 /**
  * Divoox · Fase 4: modalidad PREPAGO de conductores, reutilizable por cualquier servicio
- * (C-FIN-CONDUCTOR). No se enchufa a Food (Food sigue con su cobro de siempre): queda lista para
- * que un servicio la use cuando su mercado la active.
+ * (C-FIN-CONDUCTOR). Food en cobro directo ya la consulta (C-FOOD-POLITICAS, `comisionFood`); sin
+ * política aprobada, Food sigue con la comisión del país.
  *
  * - Solo rige si hay una política del servicio y del mercado con la revisión legal y comercial
  *   APROBADA (sin eso, `politicaVigente` no la elige y no se cobra nada).

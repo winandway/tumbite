@@ -4,6 +4,9 @@ import {
   type ReglaComision,
   elegirPolitica,
   esquemaRegla,
+  esquemaCancelacion,
+  type ReglaCancelacion,
+  type ServicioFinanciero,
 } from '@tumbite/compartido';
 
 /**
@@ -141,4 +144,31 @@ export function sentenciaAuditoriaFin(
       p.empresaId ?? null,
       JSON.stringify(p.detalle ?? null),
     );
+}
+
+/**
+ * C-CANCELACION-POLITICA: la regla de cancelación que rige ahora para un servicio y mercado. Solo
+ * cuenta si está activa, vigente y con la revisión legal aprobada; si no, null (todo se libera).
+ */
+export async function politicaCancelacionVigente(
+  db: D1Database,
+  c: { servicio: ServicioFinanciero; pais: string; moneda: string },
+): Promise<ReglaCancelacion | null> {
+  const f = await db
+    .prepare(
+      `SELECT regla_json FROM politicas_cancelacion
+        WHERE servicio = ? AND (pais = ? OR pais = '*') AND UPPER(moneda) = UPPER(?) AND activa = 1
+          AND revision_legal_aprobada = 1 AND vigente_desde <= datetime('now')
+          AND (vigente_hasta IS NULL OR vigente_hasta > datetime('now'))
+        ORDER BY (pais = '*') ASC, vigente_desde DESC LIMIT 1`,
+    )
+    .bind(c.servicio, c.pais, c.moneda)
+    .first<{ regla_json: string }>();
+  if (!f) return null;
+  try {
+    return esquemaCancelacion.parse(JSON.parse(f.regla_json));
+  } catch {
+    console.error('finanzas: regla de cancelación dañada; se libera todo', c);
+    return null;
+  }
 }

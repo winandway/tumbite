@@ -3,6 +3,7 @@ import { anotarEvento } from '../manager';
 import { ErrorDatos } from '../validar';
 import {
   anotarLibro,
+  cerrarReservaCancelada,
   liberarReserva,
   reservaVigente,
   reservarComision,
@@ -12,6 +13,9 @@ import {
 } from './libro';
 import { leerConfigPais, paisDeZona, type ConfigPais } from './paises';
 import { registrarPerdidaComida } from './pagoLocal';
+import { comisionConductor } from '../finanzas/conductor';
+import { politicaCancelacionVigente } from '../finanzas/politicas';
+import { comisionPorCancelacion } from '@tumbite/compartido';
 
 export type MetodoPago = 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
 
@@ -59,6 +63,22 @@ export async function deudaCliente(
 export function comisionDirecta(p: { subtotal: number; ganancia: number }, cfg: ConfigPais) {
   if (cfg.comisionPb == null) return Math.max(0, p.ganancia) + cfg.cargoFijo;
   return porcentajeDe(p.subtotal, cfg.comisionPb) + cfg.cargoFijo;
+}
+
+/**
+ * C-FOOD-POLITICAS (29 oct 2026): la comisión de Food en cobro directo pasa por la capa común de
+ * políticas (la misma de Moto y Flex). Si el mercado tiene una política de conductor en prepago con
+ * la revisión legal aprobada, manda ella; si no, se cobra exactamente lo de antes (la del país).
+ */
+export async function comisionFood(
+  db: D1Database,
+  p: { subtotal: number; ganancia: number },
+  pais: string,
+  moneda: string,
+  cfg: ConfigPais,
+) {
+  const pol = await comisionConductor(db, { servicio: 'food', pais, moneda, valor: p.subtotal });
+  return pol ? pol.monto : comisionDirecta(p, cfg);
 }
 
 /**
@@ -124,7 +144,7 @@ export async function puedeTomarDirecto(
   if (!f || !esDirecto(f.metodo_pago)) return { ok: true, comision: 0, pais: 'US', moneda: 'USD' };
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
   const cfg = await leerConfigPais(db, pais);
-  const comision = comisionDirecta(f, cfg);
+  const comision = await comisionFood(db, f, pais, moneda, cfg);
   const saldo = await saldoLibro(db, repartidorId, 'prepago', pais, moneda);
   if (saldo < comision) return { ok: false, motivo: 'saldo' };
   if (cfg.topeEfectivoDiario != null) {
@@ -176,7 +196,7 @@ export async function ajustarReservaDirecta(db: D1Database, pedidoId: string) {
   const f = await filaDirecta(db, pedidoId);
   if (!f || !esDirecto(f.metodo_pago) || !f.repartidor_id) return 0;
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
-  const nueva = comisionDirecta(f, await leerConfigPais(db, pais));
+  const nueva = await comisionFood(db, f, pais, moneda, await leerConfigPais(db, pais));
   const vigente = await reservaVigente(db, pedidoId, f.repartidor_id);
   const sobra = vigente.monto - nueva;
   if (sobra <= 0) return 0;
@@ -385,4 +405,33 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
   if (!resultados.at(-1)?.meta.changes) return null;
   await anotarEvento(db, pedidoId, 'conciliado', `${estado} · recibido ${recibido} de ${esperado}`);
   return estado;
+}
+
+/**
+ * C-CANCELACION-POLITICA: al cancelar un pedido de comida, cada reserva de comisión se cierra según
+ * la política de cancelaciones del mercado (antes o después de recoger). Sin política, todo vuelve
+ * al prepago del repartidor, como siempre.
+ */
+export async function cerrarReservasPorCancelacion(db: D1Database, pedidoId: string) {
+  const f = await db
+    .prepare('SELECT zona_id, recogido_en FROM pedidos WHERE id = ?')
+    .bind(pedidoId)
+    .first<{ zona_id: string; recogido_en: string | null }>();
+  const { results } = await db
+    .prepare("SELECT DISTINCT cuenta_id FROM libro WHERE pedido_id = ? AND bolsillo = 'reservado'")
+    .bind(pedidoId)
+    .all<{ cuenta_id: string }>();
+  if (!f || !results.length) return 0;
+  const { pais, moneda } = await paisDeZona(db, f.zona_id);
+  const regla = await politicaCancelacionVigente(db, { servicio: 'food', pais, moneda });
+  let cobrado = 0;
+  for (const r of results) {
+    const vigente = await reservaVigente(db, pedidoId, r.cuenta_id);
+    const quedarse = comisionPorCancelacion(regla, {
+      apartado: vigente.monto,
+      recogido: Boolean(f.recogido_en),
+    });
+    cobrado += (await cerrarReservaCancelada(db, pedidoId, r.cuenta_id, quedarse)).cobrado;
+  }
+  return cobrado;
 }

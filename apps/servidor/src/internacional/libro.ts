@@ -194,6 +194,54 @@ export async function liberarReserva(
   return r.monto;
 }
 
+/**
+ * C-CANCELACION-POLITICA: cierra la reserva de una operación cancelada. Divoox se queda `quedarse`
+ * (nunca más de lo apartado) y el resto vuelve al prepago. Con 0 es una liberación normal.
+ * Referencias únicas: dos llamadas no cobran dos veces.
+ */
+export async function cerrarReservaCancelada(
+  db: D1Database,
+  pedidoId: string,
+  repartidorId: string,
+  quedarse: number,
+) {
+  const r = await reservaVigente(db, pedidoId, repartidorId);
+  const parte = Math.min(Math.max(0, Math.floor(quedarse)), r.monto);
+  if (r.monto <= 0) return { cobrado: 0, liberado: 0 };
+  if (parte === 0)
+    return { cobrado: 0, liberado: await liberarReserva(db, pedidoId, repartidorId, 'cancelado') };
+  const ref = `cancelacion:${pedidoId}:${repartidorId}`;
+  const base = { pais: r.pais, moneda: r.moneda, pedidoId, concepto: 'comision_por_cancelacion' };
+  const sentencias = [
+    sentenciaLibro(db, {
+      ...base,
+      cuentaId: repartidorId,
+      bolsillo: 'reservado',
+      monto: -r.monto,
+      referencia: `${ref}:reservado`,
+    }),
+    sentenciaLibro(db, {
+      ...base,
+      cuentaId: CUENTA_TUMBITE,
+      bolsillo: 'comisiones',
+      monto: parte,
+      referencia: `${ref}:tumbite`,
+    }),
+  ];
+  if (r.monto > parte)
+    sentencias.push(
+      sentenciaLibro(db, {
+        ...base,
+        cuentaId: repartidorId,
+        bolsillo: 'prepago',
+        monto: r.monto - parte,
+        referencia: `${ref}:prepago`,
+      }),
+    );
+  await db.batch(sentencias);
+  return { cobrado: parte, liberado: r.monto - parte };
+}
+
 /** Libera las reservas de cualquier repartidor sobre un pedido (cancelación). */
 export async function liberarReservasDe(db: D1Database, pedidoId: string, motivo: string) {
   const { results } = await db

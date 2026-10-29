@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  comisionPorCancelacion,
   type PoliticaFinanciera,
   calcularComision,
   comisionEstimada,
@@ -156,5 +157,26 @@ describe('C-FIN-LOGISTICO · el servicio completo se separa en sus partes', () =
     expect(d.procesadorPagos).toBe(407);
     // La comisión de 0,25 sola no cubre el transporte.
     expect(d.tecnologiaDivoox).toBeLessThan(d.transporte);
+  });
+});
+
+describe('C-CANCELACION-POLITICA', () => {
+  const regla = {
+    antesDeRecoger: { tipo: 'liberar' as const },
+    despuesDeRecoger: { tipo: 'porcentaje' as const, pb: 5000 },
+  };
+  it('sin política vuelve todo al conductor', () => {
+    expect(comisionPorCancelacion(null, { apartado: 300, recogido: true })).toBe(0);
+  });
+  it('antes de recoger libera, después cobra la parte', () => {
+    expect(comisionPorCancelacion(regla, { apartado: 300, recogido: false })).toBe(0);
+    expect(comisionPorCancelacion(regla, { apartado: 300, recogido: true })).toBe(150);
+  });
+  it('un cargo fijo nunca pasa de lo apartado', () => {
+    const fijo = {
+      antesDeRecoger: { tipo: 'fijo' as const, monto: 900 },
+      despuesDeRecoger: { tipo: 'liberar' as const },
+    };
+    expect(comisionPorCancelacion(fijo, { apartado: 300, recogido: false })).toBe(300);
   });
 });
