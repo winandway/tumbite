@@ -1539,3 +1539,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el tablero del restaurante no tenía horas ni días fuertes, clientes nuevos frente a los que repiten, ni cancelados (estándar de DoorDash Merchant y Uber Eats Manager).
 - **Arreglo:** `rendimientoRestaurante()` (`packages/compartido/src/rendimiento.ts`, en la hora del restaurante); `GET /datos/restaurante/tablero` suma `porHora`, `porDia`, `clientes`, `canceladosMes` y `zonaHoraria`. Se ve en el panel (`TableroRestaurante.tsx`) y en la app (`apps/restaurante/src/Estadisticas.tsx`). Docs: guía «dashboard».
 - **Pruebas:** `compartido/rendimiento.test.ts`, «C-TABLERO-REST» en `rutas/operacion.test.ts`, `panel/TableroRestaurante.test.tsx`.
+
+## C-ROLES-INTERNOS (29 oct 2026) — todos los países
+
+- **Qué faltaba:** toda cuenta del equipo (rol admin) podía cambiar todo, y no quedaba registro de quién hizo qué.
+- **Arreglo:** perfiles Total, Soporte, Finanzas y Solo lectura (`packages/compartido/src/perfilesInternos.ts`, `permiteAccionInterna`). Tablas `perfiles_internos` y `acciones_equipo`. El intermedio `permisosInternos` (`apps/servidor/src/rutas/equipo.ts`, montado en `/datos/admin/*` en `app.ts`) frena con 403 lo que el perfil no permite y anota cada cambio (método, ruta, resultado). Rutas `GET /datos/admin/equipo`, `GET /datos/admin/equipo/acciones`, `PUT /datos/admin/equipo/:id` (solo Total, nunca a sí mismo). Pantalla: superadmin → «Equipo interno» (`SuperEquipo.tsx`).
+- **Sin perfil guardado = Total:** ninguna cuenta existente pierde acceso.
+- **Pruebas:** `compartido/perfilesInternos.test.ts`, `rutas/equipo.test.ts` (en rojo sin el intermedio), `panel/SuperEquipo.test.tsx`.

@@ -495,6 +495,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese pedido no existe.', 'That order doesn’t exist.'],
   ['Este comercio ya no está disponible.', 'This store is no longer available.'],
   [
+    'Solo una cuenta con perfil Total cambia los perfiles.',
+    'Only a Full profile account can change profiles.',
+  ],
+  [
+    'No puedes cambiar tu propio perfil. Pídeselo a otra cuenta Total.',
+    'You can’t change your own profile. Ask another Full account.',
+  ],
+  ['Esa cuenta no es del equipo.', 'That account isn’t on the team.'],
+  [
     'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.',
     'That time is too soon. Pick a window at least one hour from now.',
   ],
@@ -1250,6 +1259,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Tu perfil del equipo \((.+)\) no permite este cambio\. Pídeselo a una cuenta con perfil Total\.$/,
+    (m) =>
+      `Your team profile (${({ Total: 'Full', Soporte: 'Support', Finanzas: 'Finance', 'Solo lectura': 'Read only' } as Record<string, string>)[m[1] ?? ''] ?? m[1]}) doesn’t allow this change. Ask a Full profile account.`,
+  ],
   [
     /^Faltan (\d+) paquetes por escanear \(o márcalos como faltantes\)\.$/,
     (m) => `${m[1]} packages still need to be scanned (or marked as missing).`,

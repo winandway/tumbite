@@ -24,6 +24,7 @@ import { regalos } from './rutas/regalos';
 import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
 import { ciudadesWeb } from './rutas/ciudadesWeb';
+import { equipo, permisosInternos } from './rutas/equipo';
 import { tickets } from './rutas/tickets';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
@@ -168,6 +169,8 @@ app.use('/datos/*', async (c, next) => {
   await next();
 });
 app.use('/datos/*', cargarSesion);
+// C-ROLES-INTERNOS: el perfil del equipo frena lo que no le toca y queda anotado quién cambió qué.
+app.use('/datos/admin/*', permisosInternos);
 
 /**
  * Canario de salud. Cada pieza dice ok / error / pendiente. Nada falla en silencio:
@@ -445,6 +448,7 @@ app.route('/datos', regalos);
 app.route('/datos', zonas);
 app.route('/datos', espera);
 app.route('/datos', ciudadesWeb);
+app.route('/datos', equipo);
 app.route('/datos', tickets);
 app.route('/datos', franquicias);
 app.route('/datos', superadmin);

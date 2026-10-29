@@ -1293,6 +1293,26 @@ CREATE TABLE IF NOT EXISTS conductor_bloqueos (
 CREATE INDEX IF NOT EXISTS conductor_bloqueos_vivos ON conductor_bloqueos(conductor_id) WHERE levantado_en IS NULL;
 
 -- ----- Auditoría de los cambios del panel sobre el catálogo, vehículos y habilitaciones -----
+-- C-ROLES-INTERNOS (29 oct 2026): perfil de cada cuenta del equipo (rol admin). Sin fila = total,
+-- así ninguna cuenta existente pierde acceso. Solo una cuenta «total» cambia estos perfiles.
+CREATE TABLE IF NOT EXISTS perfiles_internos (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  perfil TEXT NOT NULL CHECK (perfil IN ('total', 'soporte', 'finanzas', 'lectura')),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Registro de toda acción del equipo que cambia algo (quién, qué, cuándo y cómo terminó).
+CREATE TABLE IF NOT EXISTS acciones_equipo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id TEXT NOT NULL,
+  perfil TEXT NOT NULL,
+  metodo TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  estado INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS acciones_equipo_usuario ON acciones_equipo(usuario_id, id);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

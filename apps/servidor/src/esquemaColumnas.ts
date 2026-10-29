@@ -755,6 +755,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "levantado_en",
     "levantado_por"
   ],
+  "perfiles_internos": [
+    "usuario_id",
+    "perfil",
+    "actualizado_por",
+    "actualizado_en"
+  ],
+  "acciones_equipo": [
+    "id",
+    "usuario_id",
+    "perfil",
+    "metodo",
+    "ruta",
+    "estado",
+    "creado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",
