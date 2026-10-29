@@ -1323,6 +1323,15 @@ CREATE TABLE IF NOT EXISTS acciones_equipo (
 );
 CREATE INDEX IF NOT EXISTS acciones_equipo_usuario ON acciones_equipo(usuario_id, id);
 
+-- C-AVISOS-EQUIPO (29 oct 2026): qué avisos por correo quiere cada cuenta del equipo, por tipo.
+CREATE TABLE IF NOT EXISTS avisos_equipo (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('pedidos', 'dinero', 'verificaciones', 'sistema')),
+  activo INTEGER NOT NULL CHECK (activo IN (0, 1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, tipo)
+);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

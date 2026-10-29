@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 
@@ -18,10 +19,7 @@ export async function alertarCanario(
     .all<{ pieza: string; estado: string }>()
     .then((r) => new Map(r.results.map((f) => [f.pieza, f.estado])))
     .catch(() => new Map<string, string>());
-  const destinos = (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const destinos = await correosEquipo(env, 'sistema');
   for (const [pieza, estado] of Object.entries(piezas)) {
     const rojo = estado === 'error';
     const estabaRojo = previas.get(pieza) === 'error';

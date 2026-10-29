@@ -24,6 +24,7 @@ const SOPORTE = [
   'solicitudes-franquicia',
   'errores',
   'auditoria',
+  'mis-avisos',
 ];
 /** Familias de dinero y configuración de países. */
 const FINANZAS = [
@@ -43,6 +44,7 @@ const FINANZAS = [
   'bandeja-dinero',
   'disputas',
   'auditoria',
+  'mis-avisos',
 ];
 
 /** `ruta` = la ruta completa de la petición (/datos/admin/…). */

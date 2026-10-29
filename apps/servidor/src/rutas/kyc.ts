@@ -1,3 +1,4 @@
+import { correosEquipo } from '../avisosEquipo';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { distanciaKm } from '@tumbite/compartido';
@@ -279,10 +280,7 @@ kyc.post('/kyc/enviar', async (c) => {
     .bind(docTipo, distancia, u.id)
     .run();
   // Punto 27: el equipo se entera en el momento (antes nadie avisaba y la bandeja se miraba a mano).
-  for (const para of (c.env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean))
+  for (const para of await correosEquipo(c.env, 'verificaciones'))
     await enviarCorreo(c.env, {
       de: 'avisos',
       para,

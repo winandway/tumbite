@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
 
@@ -147,10 +148,7 @@ export async function procesarAvisoCheckr(
       .bind(limpio ? 'aprobado' : 'pendiente', fila.usuario_id),
   ]);
   if (!limpio)
-    for (const para of (env.ADMIN_CORREOS ?? '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean))
+    for (const para of await correosEquipo(env, 'verificaciones'))
       await enviarCorreo(env, {
         de: 'avisos',
         para,

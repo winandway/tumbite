@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import { PAUSA_SIN_SENAL_MINUTOS } from '@tumbite/compartido';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
@@ -104,10 +105,7 @@ async function avisar(env: Env, db: D1Database, r: Fila, que: 'pausa' | 'vuelta'
     asunto: aviso.titulo,
     texto: aviso.cuerpo,
   }).catch((e: unknown) => console.error('pausa sin señal: correo al dueño', r.id, e));
-  for (const para of (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean))
+  for (const para of await correosEquipo(env, 'pedidos'))
     await enviarCorreo(env, {
       de: 'avisos',
       para,

@@ -778,6 +778,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en"
   ],
+  "avisos_equipo": [
+    "usuario_id",
+    "tipo",
+    "activo",
+    "actualizado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",

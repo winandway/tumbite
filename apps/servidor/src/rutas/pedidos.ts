@@ -1,3 +1,4 @@
+import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
@@ -928,10 +929,7 @@ pedidos.post('/stripe/aviso', async (c) => {
     if (evento.type === 'transfer.created' || evento.type === 'transfer.reversed') {
       const r = await avisoDeTransferencia(db, evento.type, obj);
       if (r === 'alerta')
-        for (const para of (c.env.ADMIN_CORREOS ?? '')
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean))
+        for (const para of await correosEquipo(c.env, 'dinero'))
           await enviarCorreo(c.env, {
             de: 'avisos',
             para,
@@ -979,10 +977,7 @@ pedidos.post('/stripe/aviso', async (c) => {
               : `El banco rechazó tu abono de ${monto}${motivo ? ` (${motivo})` : ''}. Entra a «Billetera» en tu app y revisa los datos de tu cuenta bancaria; el dinero sigue en tu saldo de Divoox.`,
         }).catch((e: unknown) => console.error('abono fallido: correo', e));
       }
-      for (const para of (c.env.ADMIN_CORREOS ?? '')
-        .split(',')
-        .map((x) => x.trim())
-        .filter(Boolean))
+      for (const para of await correosEquipo(c.env, 'dinero'))
         await enviarCorreo(c.env, {
           de: 'avisos',
           para,
@@ -995,10 +990,7 @@ pedidos.post('/stripe/aviso', async (c) => {
     if (evento.type.startsWith('charge.dispute.')) {
       // Flex · Fase 4: una recarga de empresa disputada retiene lo disputado (C-FIN-DISPUTAS).
       if (await disputaDeRecarga(db, evento.type, obj))
-        for (const para of (c.env.ADMIN_CORREOS ?? '')
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean))
+        for (const para of await correosEquipo(c.env, 'dinero'))
           if (evento.type === 'charge.dispute.created')
             await enviarCorreo(c.env, {
               de: 'avisos',
@@ -1008,10 +1000,7 @@ pedidos.post('/stripe/aviso', async (c) => {
             }).catch((e: unknown) => console.error('disputa recarga empresa: correo', e));
       const r = await registrarDisputa(db, evento.type, obj);
       if (r?.nueva)
-        for (const para of (c.env.ADMIN_CORREOS ?? '')
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean))
+        for (const para of await correosEquipo(c.env, 'dinero'))
           await enviarCorreo(c.env, {
             de: 'avisos',
             para,

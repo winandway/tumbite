@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import { PAGINAS, enIdiomaDireccion, formatearMonto } from '@tumbite/compartido';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
@@ -96,10 +97,7 @@ export async function avisoRestauranteNuevoAlAdmin(
     categoria: string;
   },
 ) {
-  const admins = (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const admins = await correosEquipo(env, 'verificaciones');
   const texto = `Un restaurante nuevo pidió entrar a Divoox y espera aprobación.\n\nRestaurante: ${p.restaurante}\nTipo: ${p.categoria || '—'}\nDirección: ${p.direccion}\nDueño: ${p.dueno} (${p.correoDueno})\n\nRevísalo y apruébalo en el panel de administración:\n\n${sitio(env)}/panel/restaurants`;
   for (const para of admins)
     await enviarCorreo(env, {
@@ -231,10 +229,7 @@ export async function avisoEmergenciaViaje(
   env: Env,
   p: { operacionId: string; rol: 'pasajero' | 'conductor'; nombre: string; donde: string },
 ) {
-  const admins = (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const admins = await correosEquipo(env, 'sistema');
   const quien = p.rol === 'pasajero' ? 'el pasajero' : 'el conductor';
   const texto = `EMERGENCIA en un viaje: ${quien} (${p.nombre}) tocó el botón de emergencia.\n\nViaje: ${p.operacionId}\nUbicación: ${p.donde}\n\nComunícate de inmediato y revisa el viaje en el panel:\n\n${sitio(env)}/panel`;
   for (const para of admins)

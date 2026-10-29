@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
 import { crearStripe } from './stripe';
@@ -114,10 +115,7 @@ async function programar(
 }
 
 async function alertar(env: Env, f: Fila, error: string) {
-  for (const para of (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean))
+  for (const para of await correosEquipo(env, 'dinero'))
     await enviarCorreo(env, {
       de: 'avisos',
       para,

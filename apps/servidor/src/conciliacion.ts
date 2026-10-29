@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
 
@@ -140,10 +141,7 @@ export async function conciliarAyer(env: Env, db: D1Database): Promise<Conciliac
   if (hecha) return null;
   const r = await conciliar(db, dia);
   if (!r.cuadra)
-    for (const para of (env.ADMIN_CORREOS ?? '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean))
+    for (const para of await correosEquipo(env, 'dinero'))
       await enviarCorreo(env, {
         de: 'avisos',
         para,

@@ -1,3 +1,4 @@
+import { correosEquipo } from './avisosEquipo';
 import { cerrarReservasPorCancelacion } from './internacional/cobroDirecto';
 import { registrarPerdidaComida } from './internacional/pagoLocal';
 import { enviarCorreo } from './correo';
@@ -308,10 +309,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     await anotarEvento(db, p.id, 'repartidor_perdido', `${REGLAS.repartidorPerdido} min sin señal`);
     resumen.perdidos++;
     const corto = p.id.slice(0, 6).toUpperCase();
-    for (const para of (env.ADMIN_CORREOS ?? '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean))
+    for (const para of await correosEquipo(env, 'pedidos'))
       await enviarCorreo(env, {
         de: 'avisos',
         para,
@@ -331,10 +329,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     )
     .bind(`-${REGLAS.sinRepartidor} minutes`, ...(pedidoId ? [pedidoId] : []))
     .all<{ id: string; restaurante: string; direccion: string; minutos: number }>();
-  const admins = (env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const admins = await correosEquipo(env, 'pedidos');
   for (const p of solos) {
     if (!(await anotarEvento(db, p.id, 'sin_repartidor', `${p.minutos} min`))) continue;
     resumen.sinRepartidor++;

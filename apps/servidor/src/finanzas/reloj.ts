@@ -1,3 +1,4 @@
+import { correosEquipo } from '../avisosEquipo';
 import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { crearStripe } from '../stripe';
@@ -118,10 +119,7 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
     .bind(JSON.stringify(resultado))
     .run();
   if (!resultado.ok)
-    for (const para of (env.ADMIN_CORREOS ?? '')
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean))
+    for (const para of await correosEquipo(env, 'dinero'))
       await enviarCorreo(env, {
         de: 'avisos',
         para,

@@ -23,6 +23,15 @@ const T = {
     sinAcciones: 'Todavía no hay cambios registrados.',
     rechazado: 'rechazado',
     guardado: 'Perfil guardado.',
+    misAvisos: 'Mis avisos por correo',
+    misAvisosAyuda:
+      'Elige qué avisos te llegan. El aviso de sistema (algo dejó de funcionar) no se apaga para los correos fijos del sitio.',
+    tiposAviso: {
+      pedidos: 'Pedidos (sin repartidor, repartidor perdido, comercio sin señal)',
+      dinero: 'Dinero (conciliación, abonos fallidos, disputas)',
+      verificaciones: 'Verificaciones (comercios nuevos, identidad, antecedentes)',
+      sistema: 'Sistema (algo dejó de funcionar, emergencias)',
+    },
   },
   en: {
     titulo: 'Internal team',
@@ -34,6 +43,15 @@ const T = {
     sinAcciones: 'No changes recorded yet.',
     rechazado: 'rejected',
     guardado: 'Profile saved.',
+    misAvisos: 'My email alerts',
+    misAvisosAyuda:
+      'Choose which alerts you get. The system alert (something stopped working) can’t be turned off for the site’s fixed emails.',
+    tiposAviso: {
+      pedidos: 'Orders (no driver, lost driver, store without signal)',
+      dinero: 'Money (reconciliation, failed payouts, disputes)',
+      verificaciones: 'Verifications (new stores, identity, background checks)',
+      sistema: 'System (something stopped working, emergencies)',
+    },
   },
 };
 
@@ -56,6 +74,26 @@ export function SuperEquipo({ idioma, miId }: { idioma: Idioma; miId: string }) 
   const [acciones, setAcciones] = useState<Accion[]>([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [avisos, setAvisos] = useState<{ tipo: string; activo: boolean; fijo: boolean }[]>([]);
+  const nombreAviso = (tipo: string) => new Map(Object.entries(t.tiposAviso)).get(tipo) ?? tipo;
+  const cargarAvisos = useCallback(() => {
+    pedir<{ avisos: { tipo: string; activo: boolean; fijo: boolean }[] }>(
+      'GET',
+      '/datos/admin/mis-avisos',
+    )
+      .then((r) => setAvisos(r.avisos ?? []))
+      .catch(() => setAvisos([]));
+  }, []);
+  useEffect(cargarAvisos, [cargarAvisos]);
+  async function cambiarAviso(tipo: string, activo: boolean) {
+    setError('');
+    try {
+      await pedir('PUT', '/datos/admin/mis-avisos', { tipo, activo });
+      cargarAvisos();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   const cargar = useCallback(() => {
     pedir<{ miPerfil: PerfilInterno; equipo: Miembro[] }>('GET', '/datos/admin/equipo')
       .then((r) => {
@@ -122,6 +160,19 @@ export function SuperEquipo({ idioma, miId }: { idioma: Idioma; miId: string }) 
           </li>
         ))}
       </ul>
+      <h2>{t.misAvisos}</h2>
+      <p className="pista">{t.misAvisosAyuda}</p>
+      {avisos.map((a) => (
+        <label key={a.tipo} className="campo-check">
+          <input
+            type="checkbox"
+            checked={a.activo || a.fijo}
+            disabled={a.fijo}
+            onChange={(e) => void cambiarAviso(a.tipo, e.target.checked)}
+          />{' '}
+          {nombreAviso(a.tipo)}
+        </label>
+      ))}
       <h2>{t.acciones}</h2>
       {acciones.length === 0 ? <p>{t.sinAcciones}</p> : null}
       <ul className="lista">

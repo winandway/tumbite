@@ -1,3 +1,4 @@
+import { correosEquipo } from '../avisosEquipo';
 import { topesDeZona } from '../internacional/tarifas';
 import { TAREAS_FLEX } from '../flex/automatizacion';
 import { TAREAS_FINANZAS } from '../finanzas/reloj';
@@ -1755,10 +1756,7 @@ operacion.post('/repartidor/pedidos/:id/no-puedo-confirmar', async (c) => {
     .run();
   await anotarEvento(db, id, 'ubicacion_sin_confirmar', d.motivo);
   const corto = id.slice(0, 6).toUpperCase();
-  for (const para of (c.env.ADMIN_CORREOS ?? '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean))
+  for (const para of await correosEquipo(c.env, 'pedidos'))
     await enviarCorreo(c.env, {
       de: 'avisos',
       para,

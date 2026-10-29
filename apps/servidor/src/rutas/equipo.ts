@@ -4,6 +4,7 @@ import { PERFILES_INTERNOS, type PerfilInterno, permiteAccionInterna } from '@tu
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { TIPOS_AVISO_EQUIPO } from '../avisosEquipo';
 
 /**
  * C-ROLES-INTERNOS (29 oct 2026): perfiles del equipo interno (total, soporte, finanzas, solo
@@ -106,4 +107,43 @@ equipo.put('/admin/equipo/:id', async (c) => {
     .bind(id, perfil, u.id)
     .run();
   return c.json({ ok: true, id, perfil });
+});
+
+/** C-AVISOS-EQUIPO: los avisos por correo de quien mira, por tipo (sin fila = lo de ADMIN_CORREOS). */
+equipo.get('/admin/mis-avisos', async (c) => {
+  const u = exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare('SELECT tipo, activo FROM avisos_equipo WHERE usuario_id = ?')
+    .bind(u.id)
+    .all<{ tipo: string; activo: number }>();
+  const enLista = (c.env.ADMIN_CORREOS ?? '')
+    .toLowerCase()
+    .split(',')
+    .map((x) => x.trim())
+    .includes(u.correo.toLowerCase());
+  const guardado = new Map(results.map((r) => [r.tipo, Number(r.activo) === 1]));
+  return c.json({
+    avisos: TIPOS_AVISO_EQUIPO.map((tipo) => ({
+      tipo,
+      activo: guardado.get(tipo) ?? enLista,
+      // El canario nunca se apaga para quien está en la lista fija del sitio.
+      fijo: tipo === 'sistema' && enLista,
+    })),
+  });
+});
+
+equipo.put('/admin/mis-avisos', async (c) => {
+  const u = exigir(c, 'admin');
+  const { tipo, activo } = await leerCuerpo(
+    c,
+    z.object({ tipo: z.enum(TIPOS_AVISO_EQUIPO), activo: z.boolean() }),
+  );
+  await base(c)
+    .prepare(
+      `INSERT INTO avisos_equipo (usuario_id, tipo, activo) VALUES (?, ?, ?)
+       ON CONFLICT(usuario_id, tipo) DO UPDATE SET activo = excluded.activo, actualizado_en = datetime('now')`,
+    )
+    .bind(u.id, tipo, activo ? 1 : 0)
+    .run();
+  return c.json({ ok: true, tipo, activo });
 });

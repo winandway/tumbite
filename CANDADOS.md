@@ -1564,3 +1564,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** cada respuesta a una reseña se escribía desde cero (Uber Eats Manager ofrece respuestas rápidas).
 - **Arreglo:** `respuestasSugeridas(estrellas, cliente, idioma)` (`packages/compartido/src/respuestasResena.ts`): dos textos para buenas (4 y 5) y dos para malas, con el primer nombre y SIN prometer dinero, descuentos ni regalos. En `apps/panel/src/panel/Resenas.tsx` aparecen como botones que llenan la respuesta, editable antes de publicar. Docs: guía de reseñas.
 - **Pruebas:** `compartido/respuestasResena.test.ts`, `panel/Resenas.test.tsx`.
+
+## C-AVISOS-EQUIPO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** todos los avisos por correo del equipo iban a la lista fija `ADMIN_CORREOS`; nadie podía elegir qué recibir ni sumarse.
+- **Arreglo:** `correosEquipo(env, tipo)` (`apps/servidor/src/avisosEquipo.ts`) con cuatro tipos: pedidos, dinero, verificaciones y sistema. Base = `ADMIN_CORREOS`; cada cuenta del equipo se suma o se sale (tabla `avisos_equipo`). El de sistema NUNCA se apaga para la lista fija y si todos se salen de un tipo vuelve a la lista fija (un aviso que no le llega a nadie es un fallo en silencio). Lo usan canario, Manager, pausa sin señal, reloj de finanzas, conciliación, liquidaciones, ubicación sin confirmar, verificación de identidad, avisos de Stripe (transferencias, abonos fallidos, disputas), restaurante nuevo, emergencia de viaje y antecedentes. Los tickets siguen yendo a la lista fija.
+- **Pantalla:** superadmin → Equipo interno → «Mis avisos por correo». Rutas `GET` y `PUT /datos/admin/mis-avisos` (permitidas a todos los perfiles).
+- **Pruebas:** `avisosEquipo.test.ts`, `panel/SuperEquipo.test.tsx`.
