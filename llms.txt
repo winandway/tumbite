@@ -62,6 +62,8 @@
 - [Your menu: items, prices, and photos · Divoox](https://divoox.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Divoox](https://divoox.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
+- [Print kitchen tickets · Divoox](https://divoox.com/docs/restaurants/print-tickets): Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.
+- [Connect your POS system · Divoox](https://divoox.com/docs/restaurants/pos-integration): With a key from your restaurant, your POS system receives Divoox orders and accepts them or marks them ready without touching the tablet.
 - [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
@@ -86,6 +88,8 @@
 - [If you lose signal when delivering · Divoox](https://divoox.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
 - [Shifts: book your hours · Divoox](https://divoox.com/docs/trust/driver-shifts): Book your hours up to 7 days ahead. During your shift, while online, offers reach you before drivers without a shift.
 - [Top driver · Divoox](https://divoox.com/docs/trust/top-driver): Meet all five requirements and you’re a top driver: at the same distance, offers reach you first.
+- [Rate the customer · Divoox](https://divoox.com/docs/trust/rate-customer): After delivering, you can rate the customer with stars and, if something went wrong, say what happened.
+- [Driver safety · Divoox](https://divoox.com/docs/trust/driver-safety): Emergency button, share your trip with someone you trust and report an incident, all from “Safety”.
 - [Bonus for taking an order others passed on · Divoox](https://divoox.com/docs/trust/open-offer-bonus): If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.
 - [Call the customer without seeing their number (or showing yours) · Divoox](https://divoox.com/docs/trust/call-customer-masked): On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Divoox’s number.
 - [If a payout to your bank fails · Divoox](https://divoox.com/docs/trust/payout-failed): If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Divoox balance. Check your bank details under “Wallet” 

@@ -1378,6 +1378,55 @@ CREATE TABLE IF NOT EXISTS pedidos_compartidos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- C-CALIFICA-CLIENTE (29 oct 2026), como Uber: el repartidor califica al cliente al entregar.
+-- Solo lo ve soporte; no bloquea a nadie.
+CREATE TABLE IF NOT EXISTS calificaciones_cliente (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  estrellas INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  motivo TEXT NOT NULL DEFAULT '' CHECK (motivo IN ('', 'no_salio', 'direccion', 'trato', 'espera')),
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS calificaciones_cliente_cliente ON calificaciones_cliente(cliente_id, creado_en);
+
+-- C-SEGURIDAD-REPARTIDOR (29 oct 2026), como el centro de seguridad de Dasher y Uber Driver:
+-- emergencias e incidentes del repartidor, y su recorrido compartido con un contacto.
+CREATE TABLE IF NOT EXISTS incidentes_repartidor (
+  id TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('emergencia', 'incidente')),
+  motivo TEXT NOT NULL DEFAULT '' CHECK (motivo IN ('', 'accidente', 'acoso', 'robo', 'animal', 'otro')),
+  detalle TEXT NOT NULL DEFAULT '',
+  pedido_id TEXT,
+  lat REAL,
+  lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS incidentes_repartidor_fecha ON incidentes_repartidor(creado_en);
+CREATE TABLE IF NOT EXISTS recorridos_compartidos (
+  huella TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL
+);
+
+-- C-API-POS (29 oct 2026): llaves del restaurante para conectar su sistema de punto de venta.
+-- Se guarda solo la huella; la llave se muestra una vez.
+CREATE TABLE IF NOT EXISTS claves_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  nombre TEXT NOT NULL,
+  huella TEXT NOT NULL UNIQUE,
+  prefijo TEXT NOT NULL,
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usada_en TEXT,
+  revocada_en TEXT
+);
+CREATE INDEX IF NOT EXISTS claves_restaurante_rest ON claves_restaurante(restaurante_id);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),
