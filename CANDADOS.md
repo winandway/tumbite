@@ -1546,3 +1546,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** perfiles Total, Soporte, Finanzas y Solo lectura (`packages/compartido/src/perfilesInternos.ts`, `permiteAccionInterna`). Tablas `perfiles_internos` y `acciones_equipo`. El intermedio `permisosInternos` (`apps/servidor/src/rutas/equipo.ts`, montado en `/datos/admin/*` en `app.ts`) frena con 403 lo que el perfil no permite y anota cada cambio (método, ruta, resultado). Rutas `GET /datos/admin/equipo`, `GET /datos/admin/equipo/acciones`, `PUT /datos/admin/equipo/:id` (solo Total, nunca a sí mismo). Pantalla: superadmin → «Equipo interno» (`SuperEquipo.tsx`).
 - **Sin perfil guardado = Total:** ninguna cuenta existente pierde acceso.
 - **Pruebas:** `compartido/perfilesInternos.test.ts`, `rutas/equipo.test.ts` (en rojo sin el intermedio), `panel/SuperEquipo.test.tsx`.
+
+## C-INFORMES (29 oct 2026) — todos los países
+
+- **Qué faltaba:** no había informe por rango de fechas ni forma de bajarlo para la contabilidad.
+- **Arreglo:** `GET /datos/admin/informes?desde&hasta[&formato=csv]` (`apps/servidor/src/rutas/informes.ts`): por ciudad y moneda (nunca mezcla monedas), pedidos, entregados, cancelados, ventas, cobrado, propinas y lo que queda para la plataforma. El CSV escapa comas y comillas y nunca deja una celda que la hoja de cálculo lea como fórmula (`celdaCsv`). Pantalla: superadmin → «Informes» (`SuperInformes.tsx`), con el rango guardado como borrador.
+- **Pruebas:** `rutas/informes.test.ts`, `panel/SuperInformes.test.tsx`.

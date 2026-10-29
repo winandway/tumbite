@@ -503,6 +503,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'You can’t change your own profile. Ask another Full account.',
   ],
   ['Esa cuenta no es del equipo.', 'That account isn’t on the team.'],
+  ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
   [
     'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.',
     'That time is too soon. Pick a window at least one hour from now.',
