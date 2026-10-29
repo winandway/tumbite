@@ -169,6 +169,8 @@ export async function crearTicket(
 type FilaTicket = {
   id: string;
   codigo: string;
+  prioridad?: string | null;
+  asignado_a?: string | null;
   tipo: TipoTicket;
   estado: string;
   nombre: string;
@@ -445,7 +447,7 @@ tickets.get('/admin/ruta', async (c) => {
 });
 
 tickets.get('/admin/tickets', async (c) => {
-  exigir(c, 'admin');
+  const u = exigir(c, 'admin');
   const estado = c.req.query('estado');
   const tipo = c.req.query('tipo');
   const filtros: string[] = [];
@@ -458,13 +460,22 @@ tickets.get('/admin/tickets', async (c) => {
     filtros.push('tipo = ?');
     valores.push(tipo);
   }
+  // C-TICKETS-EQUIPO: «mios» = asignados a quien mira; «sin» = sin nadie a cargo.
+  const asignado = c.req.query('asignado');
+  if (asignado === 'mios') {
+    filtros.push('asignado_a = ?');
+    valores.push(u.id);
+  } else if (asignado === 'sin') filtros.push('asignado_a IS NULL');
   const { results } = await base(c)
     .prepare(
       `SELECT id, tipo, estado, nombre, correo, telefono, pais, ciudad, asunto, zona_id AS zonaId, pedido_id AS pedidoId,
-       creado_en AS creado, actualizado_en AS actualizado,
+       creado_en AS creado, actualizado_en AS actualizado, prioridad, asignado_a AS asignadoA,
+       (SELECT nombre FROM usuarios a WHERE a.id = tickets.asignado_a) AS asignadoNombre,
        (SELECT texto FROM ticket_mensajes m WHERE m.ticket_id = tickets.id ORDER BY creado_en DESC, rowid DESC LIMIT 1) AS ultimo
        FROM tickets ${filtros.length ? `WHERE ${filtros.join(' AND ')}` : ''}
-       ORDER BY (estado = 'abierto') DESC, actualizado_en DESC LIMIT 300`,
+       ORDER BY (estado = 'abierto') DESC,
+         CASE prioridad WHEN 'urgente' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
+         actualizado_en DESC LIMIT 300`,
     )
     .bind(...valores)
     .all();
@@ -475,6 +486,46 @@ tickets.get('/admin/tickets', async (c) => {
     tickets: results,
     totales: Object.fromEntries(totales.map((t) => [t.estado, Number(t.n)])),
   });
+});
+
+// C-TICKETS-EQUIPO: respuestas guardadas (van antes de /admin/tickets/:id para no confundirse).
+tickets.get('/admin/tickets/plantillas', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      'SELECT id, titulo, texto_es AS textoEs, texto_en AS textoEn FROM respuestas_guardadas ORDER BY titulo LIMIT 200',
+    )
+    .all();
+  return c.json({ plantillas: results });
+});
+
+tickets.post('/admin/tickets/plantillas', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      titulo: z.string().trim().min(2, { error: 'Ponle un título.' }).max(80),
+      textoEs: z.string().trim().min(2, { error: 'Escribe la respuesta en español.' }).max(4000),
+      textoEn: z.string().trim().max(4000).default(''),
+    }),
+  );
+  const id = nuevoId();
+  await base(c)
+    .prepare(
+      'INSERT INTO respuestas_guardadas (id, titulo, texto_es, texto_en, creado_por) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(id, d.titulo, d.textoEs, d.textoEn, u.id)
+    .run();
+  return c.json({ id }, 201);
+});
+
+tickets.delete('/admin/tickets/plantillas/:pid', async (c) => {
+  exigir(c, 'admin');
+  await base(c)
+    .prepare('DELETE FROM respuestas_guardadas WHERE id = ?')
+    .bind(c.req.param('pid'))
+    .run();
+  return c.json({ ok: true });
 });
 
 tickets.get('/admin/tickets/:id', async (c) => {
@@ -499,6 +550,8 @@ tickets.get('/admin/tickets/:id', async (c) => {
       datos: JSON.parse(t.datos_json) as Record<string, unknown>,
       pedidoId: t.pedido_id,
       zonaId: t.zona_id,
+      prioridad: String(t.prioridad ?? 'normal'),
+      asignadoA: t.asignado_a ?? null,
       creado: t.creado_en,
       enlace: `/t/${t.codigo}`,
       mensajes: await mensajesDe(base(c), t.id),
@@ -546,14 +599,40 @@ tickets.post('/admin/tickets/:id/mensajes', async (c) => {
   return c.json({ ok: true, mensajes: await mensajesDe(db, t.id) }, 201);
 });
 
-const esquemaEstado = z.object({ estado: z.enum(['abierto', 'respondido', 'cerrado']) });
+const esquemaCambioTicket = z
+  .object({
+    estado: z.enum(['abierto', 'respondido', 'cerrado']).optional(),
+    // C-TICKETS-EQUIPO: prioridad y a quién le toca (null = nadie).
+    prioridad: z.enum(['urgente', 'alta', 'normal', 'baja']).optional(),
+    asignadoA: z.string().min(1).nullable().optional(),
+  })
+  .refine((d) => d.estado || d.prioridad || d.asignadoA !== undefined, {
+    error: 'No hay nada que cambiar.',
+  });
 
 tickets.patch('/admin/tickets/:id', async (c) => {
   exigir(c, 'admin');
-  const { estado } = await leerCuerpo(c, esquemaEstado);
-  const r = await base(c)
-    .prepare("UPDATE tickets SET estado = ?, actualizado_en = datetime('now') WHERE id = ?")
-    .bind(estado, c.req.param('id'))
+  const d = await leerCuerpo(c, esquemaCambioTicket);
+  const db = base(c);
+  if (d.asignadoA) {
+    const del = await db
+      .prepare("SELECT id FROM usuarios WHERE id = ? AND rol = 'admin' AND activo = 1")
+      .bind(d.asignadoA)
+      .first();
+    if (!del) throw new ErrorDatos('Esa persona no es del equipo.', 'asignadoA', 422);
+  }
+  const r = await db
+    .prepare(
+      `UPDATE tickets SET estado = COALESCE(?, estado), prioridad = COALESCE(?, prioridad),
+         asignado_a = CASE WHEN ? = 1 THEN ? ELSE asignado_a END, actualizado_en = datetime('now') WHERE id = ?`,
+    )
+    .bind(
+      d.estado ?? null,
+      d.prioridad ?? null,
+      d.asignadoA !== undefined ? 1 : 0,
+      d.asignadoA ?? null,
+      c.req.param('id'),
+    )
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Ese ticket no existe.', undefined, 404);
   return c.json({ ok: true });

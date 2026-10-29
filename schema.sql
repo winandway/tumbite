@@ -344,6 +344,16 @@ CREATE TABLE IF NOT EXISTS tickets (
 CREATE INDEX IF NOT EXISTS tickets_estado ON tickets(estado, actualizado_en);
 CREATE INDEX IF NOT EXISTS tickets_zona ON tickets(zona_id, estado, actualizado_en);
 
+-- C-TICKETS-EQUIPO: respuestas guardadas del equipo, en los dos idiomas.
+CREATE TABLE IF NOT EXISTS respuestas_guardadas (
+  id TEXT PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  texto_es TEXT NOT NULL,
+  texto_en TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS ticket_mensajes (
   id TEXT PRIMARY KEY,
   ticket_id TEXT NOT NULL REFERENCES tickets(id),

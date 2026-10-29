@@ -133,3 +133,71 @@ describe('tickets (C-TICKETS)', () => {
     expect((await m.llamar('POST', '/datos/quejas', { texto: 'Hola, ayuda.' })).estado).toBe(401);
   });
 });
+
+describe('C-TICKETS-EQUIPO', () => {
+  it('prioridad, asignación a alguien del equipo y respuestas guardadas', async () => {
+    buzon();
+    const m = mundo(ENV);
+    await m.llamar('POST', '/datos/franquicias', FRANQUICIA);
+    await m.llamar('POST', '/datos/franquicias', { ...FRANQUICIA, correo: 'otra@ejemplo.com' });
+    const admin = await m.cuenta('admin', 'Soporte Uno');
+    const cliente = await m.cuenta('cliente');
+    const lista = (await m.llamar('GET', '/datos/admin/tickets', undefined, admin.token)).datos
+      .tickets as { id: string; prioridad: string }[];
+    expect(lista.every((x) => x.prioridad === 'normal')).toBe(true);
+    const segundo = lista[1]!.id;
+    expect(
+      (
+        await m.llamar(
+          'PATCH',
+          `/datos/admin/tickets/${segundo}`,
+          { prioridad: 'urgente', asignadoA: admin.id },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    // Lo urgente va primero y dice a quién le toca.
+    const ahora = (await m.llamar('GET', '/datos/admin/tickets', undefined, admin.token)).datos
+      .tickets;
+    expect(ahora[0]).toMatchObject({
+      id: segundo,
+      prioridad: 'urgente',
+      asignadoA: admin.id,
+      asignadoNombre: 'Soporte Uno',
+    });
+    const mios = (
+      await m.llamar('GET', '/datos/admin/tickets?asignado=mios', undefined, admin.token)
+    ).datos.tickets;
+    expect(mios.map((x: { id: string }) => x.id)).toEqual([segundo]);
+    // A un cliente no se le asigna un ticket.
+    expect(
+      (
+        await m.llamar(
+          'PATCH',
+          `/datos/admin/tickets/${segundo}`,
+          { asignadoA: cliente.id },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(422);
+    // Respuestas guardadas.
+    const p = await m.llamar(
+      'POST',
+      '/datos/admin/tickets/plantillas',
+      {
+        titulo: 'Reembolso hecho',
+        textoEs: 'Ya te devolvimos el dinero.',
+        textoEn: 'We refunded you.',
+      },
+      admin.token,
+    );
+    expect(p.estado).toBe(201);
+    const pl = await m.llamar('GET', '/datos/admin/tickets/plantillas', undefined, admin.token);
+    expect(pl.datos.plantillas).toEqual([
+      expect.objectContaining({ titulo: 'Reembolso hecho', textoEn: 'We refunded you.' }),
+    ]);
+    expect(
+      (await m.llamar('GET', '/datos/admin/tickets/plantillas', undefined, cliente.token)).estado,
+    ).toBe(403);
+  });
+});

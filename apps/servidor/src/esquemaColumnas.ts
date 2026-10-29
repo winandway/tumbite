@@ -268,6 +268,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "actualizado_en"
   ],
+  "respuestas_guardadas": [
+    "id",
+    "titulo",
+    "texto_es",
+    "texto_en",
+    "creado_por",
+    "creado_en"
+  ],
   "ticket_mensajes": [
     "id",
     "ticket_id",

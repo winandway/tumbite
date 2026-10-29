@@ -458,4 +458,65 @@ describe('territorio y equipo de una franquicia (C-TERRITORIO)', () => {
       ).toEqual({ correo: 'manager@ejemplo.com', rol: 'manager' }),
     );
   });
+
+  it('C-TICKETS-EQUIPO: cambia la prioridad, asigna a alguien y usa una respuesta guardada', async () => {
+    const llamadas = servidor((url, init) => {
+      if (url.includes('/datos/admin/equipo'))
+        return { miPerfil: 'total', equipo: [{ id: 'e1', nombre: 'Soporte Uno' }] };
+      if (url.includes('/plantillas'))
+        return {
+          plantillas: [
+            { id: 'p1', titulo: 'Reembolso', textoEs: 'Ya te devolvimos el dinero.', textoEn: '' },
+          ],
+        };
+      if (init?.method === 'PATCH' || init?.method === 'POST') return { ok: true };
+      return {
+        ticket: {
+          id: '22222222-2222-2222-2222-222222222222',
+          tipo: 'soporte',
+          estado: 'abierto',
+          prioridad: 'normal',
+          asignadoA: null,
+          nombre: 'Ana',
+          correo: 'ana@ejemplo.com',
+          telefono: '',
+          asunto: 'Mi pedido',
+          ciudad: '',
+          pais: '',
+          idioma: 'es',
+          actualizado: '',
+          ultimo: '',
+          datos: {},
+          enlace: '/t/abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+          mensajes: [{ autor: 'persona', texto: 'No llegó', fecha: '2026-10-29 10:00:00' }],
+        },
+      };
+    });
+    render(
+      <SuperTickets
+        base="/panel/control-x"
+        idioma="es"
+        ticketId="22222222-2222-2222-2222-222222222222"
+      />,
+    );
+    expect(await screen.findByText('No llegó')).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Prioridad' }), 'urgente');
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PATCH')?.cuerpo).toEqual({ prioridad: 'urgente' }),
+    );
+    await userEvent.selectOptions(
+      await screen.findByRole('combobox', { name: 'A cargo de' }),
+      'e1',
+    );
+    await waitFor(() =>
+      expect(llamadas.filter((l) => l.metodo === 'PATCH').at(-1)?.cuerpo).toEqual({
+        asignadoA: 'e1',
+      }),
+    );
+    await userEvent.selectOptions(
+      await screen.findByRole('combobox', { name: 'Respuesta guardada' }),
+      'p1',
+    );
+    expect(screen.getByRole('textbox')).toHaveValue('Ya te devolvimos el dinero.');
+  });
 });

@@ -504,6 +504,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa cuenta no es del equipo.', 'That account isn’t on the team.'],
   ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
+  ['Esa persona no es del equipo.', 'That person isn’t on the team.'],
+  ['Ponle un título.', 'Give it a title.'],
+  ['Escribe la respuesta en español.', 'Write the reply in Spanish.'],
+  ['No hay nada que cambiar.', 'There’s nothing to change.'],
   [
     'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.',
     'That time is too soon. Pick a window at least one hour from now.',

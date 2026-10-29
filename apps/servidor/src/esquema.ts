@@ -13,6 +13,9 @@ import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-PEDIDO-PROGRAMADO (29 oct 2026): inicio de la franja elegida (UTC); NULL = lo antes posible.
   ['pedidos', 'programado_para', 'TEXT'],
+  // C-TICKETS-EQUIPO (29 oct 2026): prioridad y persona del equipo a cargo.
+  ['tickets', 'prioridad', "TEXT NOT NULL DEFAULT 'normal'"],
+  ['tickets', 'asignado_a', 'TEXT'],
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],

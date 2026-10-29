@@ -34,7 +34,7 @@
 
 - [ ] Comprobar en el sitio de pruebas, con el navegador, todo lo publicado hoy (carrito con «Programar», «Pedir otra vez», Cancelaciones, Ciudades en la web, Equipo interno, rendimiento del restaurante) y sacar las capturas reales para Docs y la web. Todos los países.
 - [x] Informes del superadmin por rango de fechas (pedidos, ventas, comisiones, cancelados, por ciudad) con exportación a CSV. Todos los países.
-- [ ] Tickets de soporte con prioridad, asignación a una persona del equipo y respuestas guardadas (plantillas). Todos los países.
+- [x] Tickets de soporte con prioridad, asignación a una persona del equipo y respuestas guardadas (plantillas). Todos los países.
 - [ ] «Pedir otra vez» en el inicio del cliente: fila con los últimos comercios donde pidió, como DoorDash. Todos los países.
 
 ## Cada sesión

@@ -1552,3 +1552,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** no había informe por rango de fechas ni forma de bajarlo para la contabilidad.
 - **Arreglo:** `GET /datos/admin/informes?desde&hasta[&formato=csv]` (`apps/servidor/src/rutas/informes.ts`): por ciudad y moneda (nunca mezcla monedas), pedidos, entregados, cancelados, ventas, cobrado, propinas y lo que queda para la plataforma. El CSV escapa comas y comillas y nunca deja una celda que la hoja de cálculo lea como fórmula (`celdaCsv`). Pantalla: superadmin → «Informes» (`SuperInformes.tsx`), con el rango guardado como borrador.
 - **Pruebas:** `rutas/informes.test.ts`, `panel/SuperInformes.test.tsx`.
+
+## C-TICKETS-EQUIPO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** los tickets no tenían prioridad, nadie quedaba a cargo y cada respuesta se escribía desde cero.
+- **Arreglo:** columnas `tickets.prioridad` (urgente, alta, normal, baja; por defecto normal) y `tickets.asignado_a` (vía COLUMNAS); tabla `respuestas_guardadas`. `PATCH /datos/admin/tickets/:id` acepta estado, prioridad y asignadoA (solo alguien del equipo); la bandeja ordena por prioridad y filtra `asignado=mios|sin`; `GET`, `POST` y `DELETE /datos/admin/tickets/plantillas` (declaradas antes de `/admin/tickets/:id`). Pantalla del ticket en `Superadmin.tsx`: Prioridad, A cargo de, Respuesta guardada y «Guardar este texto como respuesta».
+- **Pruebas:** «C-TICKETS-EQUIPO» en `rutas/tickets.test.ts` y en `panel/Superadmin.test.tsx`.

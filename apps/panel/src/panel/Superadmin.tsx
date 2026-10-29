@@ -638,7 +638,41 @@ type FilaTicket = {
   pais: string;
   actualizado: string;
   ultimo: string;
+  /** C-TICKETS-EQUIPO */
+  prioridad?: 'urgente' | 'alta' | 'normal' | 'baja';
+  asignadoA?: string | null;
+  asignadoNombre?: string | null;
 };
+
+const TK = {
+  es: {
+    prioridad: 'Prioridad',
+    prioridades: { urgente: 'Urgente', alta: 'Alta', normal: 'Normal', baja: 'Baja' },
+    asignado: 'A cargo de',
+    nadie: 'Nadie',
+    mios: 'Míos',
+    sinAsignar: 'Sin asignar',
+    plantilla: 'Respuesta guardada',
+    elegir: 'Elegir…',
+    guardarPlantilla: 'Guardar este texto como respuesta',
+    tituloPlantilla: 'Título de la respuesta',
+  },
+  en: {
+    prioridad: 'Priority',
+    prioridades: { urgente: 'Urgent', alta: 'High', normal: 'Normal', baja: 'Low' },
+    asignado: 'Assigned to',
+    nadie: 'Nobody',
+    mios: 'Mine',
+    sinAsignar: 'Unassigned',
+    plantilla: 'Saved reply',
+    elegir: 'Choose…',
+    guardarPlantilla: 'Save this text as a reply',
+    tituloPlantilla: 'Reply title',
+  },
+};
+const PRIORIDADES = ['urgente', 'alta', 'normal', 'baja'] as const;
+const nombrePrioridad = (tk: (typeof TK)['es'], p: string) =>
+  new Map(Object.entries(tk.prioridades)).get(p) ?? p;
 
 /** Bandeja de tickets: lista con filtros, o un ticket con su conversación si viene el id. */
 export function SuperTickets({
@@ -652,17 +686,20 @@ export function SuperTickets({
 }) {
   const t = enIdioma(T, idioma);
   const filtroTipo = new URLSearchParams(window.location.search).get('tipo') ?? '';
+  const tk = enIdioma(TK, idioma);
   const [estado, setEstado] = useState('abierto');
+  const [asignado, setAsignado] = useState('');
   const [lista, setLista] = useState<FilaTicket[] | null>(null);
   useEffect(() => {
     if (ticketId) return;
     const q = new URLSearchParams();
     if (estado) q.set('estado', estado);
     if (filtroTipo) q.set('tipo', filtroTipo);
+    if (asignado) q.set('asignado', asignado);
     pedir<{ tickets: FilaTicket[] }>('GET', `/datos/admin/tickets?${q.toString()}`)
       .then((r) => setLista(r.tickets))
       .catch(() => setLista([]));
-  }, [estado, filtroTipo, ticketId]);
+  }, [estado, filtroTipo, asignado, ticketId]);
 
   if (ticketId) return <SuperTicket base={base} idioma={idioma} id={ticketId} />;
   return (
@@ -688,6 +725,22 @@ export function SuperTickets({
             {texto}
           </button>
         ))}
+        {(
+          [
+            ['mios', tk.mios],
+            ['sin', tk.sinAsignar],
+          ] as const
+        ).map(([v, texto]) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={asignado === v}
+            className={asignado === v ? 'activa' : undefined}
+            onClick={() => setAsignado(asignado === v ? '' : v)}
+          >
+            {texto}
+          </button>
+        ))}
       </div>
       {lista === null ? (
         <p role="status">…</p>
@@ -698,8 +751,16 @@ export function SuperTickets({
           {lista.map((x) => (
             <li key={x.id}>
               <Enlace a={`${base}/tickets/${x.id}`}>
-                <span className="insignia">{t.tipos[x.tipo]}</span> <strong>{x.asunto}</strong> ·{' '}
-                {x.nombre}
+                <span className="insignia">{t.tipos[x.tipo]}</span>{' '}
+                {x.prioridad && x.prioridad !== 'normal' ? (
+                  <span
+                    className={`insignia ${x.prioridad === 'urgente' ? 'insignia-rechazado' : ''}`}
+                  >
+                    {nombrePrioridad(tk, x.prioridad)}
+                  </span>
+                ) : null}{' '}
+                <strong>{x.asunto}</strong> · {x.nombre}
+                {x.asignadoNombre ? ` · ${tk.asignado}: ${x.asignadoNombre}` : ''}
                 <small>
                   {t.estadosTicket[x.estado]} · {x.actualizado} · {(x.ultimo ?? '').slice(0, 120)}
                 </small>
@@ -714,6 +775,7 @@ export function SuperTickets({
 
 type Ticket = FilaTicket & {
   telefono: string;
+  idioma?: string;
   datos: Record<string, unknown>;
   enlace: string;
   mensajes: { autor: 'persona' | 'equipo'; texto: string; fecha: string }[];
@@ -721,6 +783,25 @@ type Ticket = FilaTicket & {
 
 function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: string }) {
   const t = enIdioma(T, idioma);
+  const tk = enIdioma(TK, idioma);
+  const [equipo, setEquipo] = useState<{ id: string; nombre: string }[]>([]);
+  const [plantillas, setPlantillas] = useState<
+    { id: string; titulo: string; textoEs: string; textoEn: string }[]
+  >([]);
+  const cargarPlantillas = useCallback(() => {
+    pedir<{ plantillas: { id: string; titulo: string; textoEs: string; textoEn: string }[] }>(
+      'GET',
+      '/datos/admin/tickets/plantillas',
+    )
+      .then((r) => setPlantillas(r.plantillas ?? []))
+      .catch(() => setPlantillas([]));
+  }, []);
+  useEffect(() => {
+    pedir<{ equipo: { id: string; nombre: string }[] }>('GET', '/datos/admin/equipo')
+      .then((r) => setEquipo(r.equipo ?? []))
+      .catch(() => setEquipo([]));
+    cargarPlantillas();
+  }, [cargarPlantillas]);
   const [x, setX] = useState<Ticket | null>(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -756,6 +837,30 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
     await pedir('PATCH', `/datos/admin/tickets/${id}`, { estado });
     cargar();
   }
+  async function cambiarTicket(cambio: { prioridad?: string; asignadoA?: string | null }) {
+    setError('');
+    try {
+      await pedir('PATCH', `/datos/admin/tickets/${id}`, cambio);
+      cargar();
+    } catch (er) {
+      setError(er instanceof ErrorApi ? er.message : String(er));
+    }
+  }
+  async function guardarPlantilla() {
+    const titulo = window.prompt(tk.tituloPlantilla);
+    if (!titulo?.trim()) return;
+    try {
+      const texto = b.valores.texto;
+      await pedir('POST', '/datos/admin/tickets/plantillas', {
+        titulo,
+        textoEs: texto,
+        textoEn: x?.idioma === 'en' ? texto : '',
+      });
+      cargarPlantillas();
+    } catch (er) {
+      setError(er instanceof ErrorApi ? er.message : String(er));
+    }
+  }
 
   if (!x) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   return (
@@ -773,6 +878,35 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
       <p>
         {t.enlacePublico}: <a href={x.enlace}>{x.enlace.slice(0, 18)}…</a>
       </p>
+      <div className="flex-inline">
+        <label className="campo">
+          <span>{tk.prioridad}</span>
+          <select
+            value={x.prioridad ?? 'normal'}
+            onChange={(e) => void cambiarTicket({ prioridad: e.target.value })}
+          >
+            {PRIORIDADES.map((p) => (
+              <option key={p} value={p}>
+                {nombrePrioridad(tk, p)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo">
+          <span>{tk.asignado}</span>
+          <select
+            value={x.asignadoA ?? ''}
+            onChange={(e) => void cambiarTicket({ asignadoA: e.target.value || null })}
+          >
+            <option value="">{tk.nadie}</option>
+            {equipo.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <ol className="ticket-hilo">
         {x.mensajes.map((m, i) => (
           <li
@@ -791,6 +925,25 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
           idioma={idioma}
           empezar={() => void b.empezarDeNuevo()}
         />
+        {plantillas.length ? (
+          <label className="campo">
+            <span>{tk.plantilla}</span>
+            <select
+              value=""
+              onChange={(e) => {
+                const p = plantillas.find((q) => q.id === e.target.value);
+                if (p) b.cambiar('texto', x.idioma === 'en' && p.textoEn ? p.textoEn : p.textoEs);
+              }}
+            >
+              <option value="">{tk.elegir}</option>
+              {plantillas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.titulo}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <label className="campo">
           <span>{t.responder}</span>
           <textarea
@@ -807,6 +960,14 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
         <div className="fila-botones">
           <button type="submit" className="boton" disabled={enviando || !b.valores.texto.trim()}>
             {t.enviar}
+          </button>
+          <button
+            type="button"
+            className="boton secundario"
+            disabled={!b.valores.texto.trim()}
+            onClick={() => void guardarPlantilla()}
+          >
+            {tk.guardarPlantilla}
           </button>
           {x.estado === 'cerrado' ? (
             <button
