@@ -20,13 +20,39 @@ permissions:
   contents: write
 
 jobs:
-  publicar:
+  # C-PUBLICAR-VERSION-EXACTA (29 oct 2026): con dos cambios seguidos, la publicación del primero
+  # bajaba el código del segundo y el control lo frenaba («la web no lleva el commit …»). Ahora solo
+  # se publica si la versión verificada sigue siendo la última de main (la más nueva ya trae todo y
+  # se publica cuando termine su verificación), y se baja EXACTAMENTE esa versión.
+  revisar:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      ultima: ${{ steps.r.outputs.ultima }}
+    steps:
+      - id: r
+        env:
+          VERSION: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PUNTA=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
+          # Los cambios con [skip ci] no se verifican ni se publican solos: no cuentan como «más nuevos».
+          NUEVOS=$(gh api "repos/${{ github.repository }}/compare/${VERSION}...main" \
+            --jq '[.commits[] | select(.commit.message | test("\\[skip ci\\]") | not)] | length')
+          if [ "$PUNTA" = "$VERSION" ] || [ "$NUEVOS" = "0" ]; then echo "ultima=true" >> "$GITHUB_OUTPUT"; else
+            echo "ultima=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${VERSION:0:7} no se publica: main ya va en ${PUNTA:0:7}, que se publica al terminar su verificación."
+          fi
+  publicar:
+    needs: revisar
+    if: ${{ needs.revisar.outputs.ultima == 'true' }}
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci

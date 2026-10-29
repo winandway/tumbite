@@ -1479,3 +1479,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** el carrito dejaba elegir «En la puerta» en un pedido con alcohol (visto en la compra de prueba de Richard con cerveza). Al llegar, el repartidor no podía entregarlo: el sistema exige en mano con documento.
 - **Arreglo:** en `POST /pedidos`, si alguna línea `requiereEdad` y la entrega es «puerta», pasa a «mano» (con su PIN). En la app, las líneas guardan `requiereEdad`; con alcohol o tabaco, «En la puerta» sale apagada y aparece el aviso de los 21 años.
 - **Prueba:** `tiendasVitrina.test.ts` («C-EDAD-EN-MANO», en rojo sin el arreglo).
+
+## C-PUBLICAR-VERSION-EXACTA (29 oct 2026) — todos los países
+
+- **Qué se rompía:** con dos cambios subidos seguidos, la publicación del primero bajaba el código del segundo (el `checkout` de `workflow_run` toma la punta de main) y su control la frenaba: «index.html: la web no lleva el commit …». Visto tres veces (b781d13, bff3eeb, 17103cc): el sitio de pruebas se quedaba en una versión vieja.
+- **Arreglo (`.github/workflows/publicar.yml`):** un paso «revisar» publica solo si la versión verificada es la última de main (sin contar los cambios con [skip ci]); si hay una más nueva, avisa y deja que esa publique al terminar su verificación. El `checkout` baja exactamente `workflow_run.head_sha`.
+- **No tocar:** nunca volver al checkout sin `ref`; nunca publicar una versión vieja encima de una más nueva.
