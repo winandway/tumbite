@@ -211,7 +211,14 @@ export const SERVICIOS_IMPLEMENTADOS = new Map<string, number>([['comida', 1]]);
  * de pruebas, mientras se construyen (docs/PLAN-MOTO-PASAJEROS.md). En producción no existen: la
  * sincronización los suspende como a cualquier servicio no implementado.
  */
-export const SERVICIOS_EN_PRUEBA = new Map<string, number>([['moto', 1]]);
+export const SERVICIOS_EN_PRUEBA = new Map<string, number>([
+  ['moto', 1],
+  // Tiendas (C-TIENDAS-VITRINA, 28 oct 2026): solo en pruebas hasta que Richard abra cada país.
+  ['mercado', 1],
+  ['farmacia', 1],
+  ['licores', 1],
+  ['mas', 1],
+]);
 
 /** Lo que este código atiende en ese entorno (el entorno sale del dominio que sirve la petición). */
 export function serviciosImplementados(entorno: Entorno | null): Map<string, number> {

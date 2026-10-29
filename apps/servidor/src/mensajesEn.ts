@@ -1050,6 +1050,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
   // Tiendas · catálogo (C-TIENDAS-CATALOGO).
+  ['Este servicio llega muy pronto.', 'This service is coming soon.'],
+  ['Esa tienda no existe.', 'That store does not exist.'],
   ['Falta el nombre del producto.', 'The product name is missing.'],
   [
     'Los medicamentos con receta todavía no se pueden vender en Divoox.',

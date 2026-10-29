@@ -6,8 +6,16 @@ import {
   TIPOS_COMERCIO,
   UNIDADES_TAMANO,
   codigoBarrasValido,
+  distanciaKm,
   leerPlanillaProductos,
+  precioEstimado,
+  tiposDeServicio,
 } from '@tumbite/compartido';
+import { entornoDe } from '../entorno';
+import { serviciosImplementados } from '../esquema';
+import { zonaPara } from './zonas';
+import { aRestaurante, conHorarios } from './catalogo';
+import { minutosPausa } from '../pausa';
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { paisDeZona } from '../internacional/paises';
@@ -372,4 +380,234 @@ tiendas.post('/mi-restaurante/productos/importar', async (c) => {
   }
   for (let i = 0; i < sentencias.length; i += 80) await t.db.batch(sentencias.slice(i, i + 80));
   return c.json({ ...resumen, guardado: true });
+});
+
+// ───────────────────────── C-TIENDAS-VITRINA: lo que ve el cliente ─────────────────────────
+
+/** Disponible hoy: activo, o agotado «por hoy» con su fecha ya pasada (vuelve solo). */
+const DISPONIBLE_HOY =
+  "(o.disponible = 1 OR (o.agotado_hasta IS NOT NULL AND o.agotado_hasta <= date('now')))";
+
+const coordenada = z.coerce.number().min(-180).max(180).optional();
+
+/** Solo donde el servicio está encendido (pruebas hoy; en producción cuando Richard abra el país). */
+function exigirServicio(c: Parameters<typeof base>[0], servicio: string) {
+  if (
+    !tiposDeServicio(servicio).length ||
+    !serviciosImplementados(entornoDe(c.req.url)).has(servicio)
+  )
+    throw new ErrorDatos('Este servicio llega muy pronto.', undefined, 404);
+}
+
+const aProductoPublico = (f: FilaProducto, idioma: 'es' | 'en') => {
+  const precio = Number(f.precio_oferta ?? f.precio);
+  return {
+    id: f.id,
+    nombre: idioma === 'en' ? f.nombre_en || f.nombre_es : f.nombre_es || f.nombre_en,
+    marca: f.marca,
+    tamano: f.tamano,
+    unidadTamano: f.unidad_tamano,
+    categoria: f.categoria1,
+    imagen: f.imagen,
+    vendidoPor: f.vendido_por,
+    pesoPromedio: f.peso_promedio,
+    unidadPeso: f.unidad_peso,
+    restriccion: f.restriccion,
+    precio,
+    precioAntes: f.precio_oferta != null ? Number(f.precio) : null,
+    precioEstimado: precioEstimado(precio, String(f.vendido_por), f.peso_promedio as number | null),
+  };
+};
+const idiomaDe = (c: Parameters<typeof base>[0]) =>
+  (c.req.header('x-idioma') ?? '').startsWith('es') ? 'es' : 'en';
+
+/** Las tiendas de un servicio cerca de la persona, las abiertas y más cercanas primero. */
+tiendas.get('/tiendas', async (c) => {
+  const q = z
+    .object({ servicio: z.string().max(20), lat: coordenada, lng: coordenada })
+    .parse(c.req.query());
+  exigirServicio(c, q.servicio);
+  const db = base(c);
+  const zona = await zonaPara(db, q.lat, q.lng);
+  if (!zona) return c.json({ tiendas: [], fueraDeZona: true });
+  const tipos = tiposDeServicio(q.servicio);
+  const { results } = await db
+    .prepare(
+      `SELECT r.*, (SELECT COUNT(*) FROM catalogo_ofertas o WHERE o.comercio_id = r.id AND ${DISPONIBLE_HOY}) AS productos
+         FROM restaurantes r
+        WHERE r.zona_id = ?1 AND r.estado = 'aprobado'
+          AND r.tipo_comercio IN (SELECT value FROM json_each(?2))
+          AND (NOT EXISTS (SELECT 1 FROM areas WHERE zona_id = ?1 AND estado <> 'borrador')
+               OR r.area_id IN (SELECT id FROM areas WHERE zona_id = ?1 AND estado = 'activa'))`,
+    )
+    .bind(zona.id, JSON.stringify(tipos))
+    .all<Record<string, unknown>>();
+  const minutos = await minutosPausa(db);
+  const lista = (
+    await conHorarios(
+      db,
+      results.filter((r) => Number(r.productos) > 0),
+    )
+  )
+    .map((f) => {
+      const r = aRestaurante(f, minutos);
+      return {
+        id: r.id,
+        nombre: r.nombre,
+        direccion: r.direccion,
+        imagen: r.imagen,
+        tipo: String(f.tipo_comercio),
+        abierto: r.abiertoAhora,
+        productos: Number(f.productos),
+        minutos: r.tiempoPrepMin + 15,
+        distanciaKm:
+          q.lat != null && q.lng != null && r.lat != null && r.lng != null
+            ? Math.round(distanciaKm({ lat: q.lat, lng: q.lng }, { lat: r.lat, lng: r.lng }) * 10) /
+              10
+            : null,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.abierto) - Number(a.abierto) || (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999),
+    );
+  return c.json({ tiendas: lista, fueraDeZona: false });
+});
+
+async function tiendaPublica(c: Parameters<typeof base>[0], id: string) {
+  const db = base(c);
+  const t = await db
+    .prepare(
+      `SELECT id, nombre, direccion, lat, lng, imagen, abierto, tipo_comercio, plan, zona_id
+         FROM restaurantes WHERE id = ? AND estado = 'aprobado' AND tipo_comercio <> 'restaurante'`,
+    )
+    .bind(id)
+    .first<Record<string, unknown>>();
+  if (!t) throw new ErrorDatos('Esa tienda no existe.', undefined, 404);
+  exigirServicio(c, servicioDe(String(t.tipo_comercio)));
+  return { db, t };
+}
+const servicioDe = (tipo: string) =>
+  (['mercado', 'farmacia', 'licores', 'mas'] as const).find((s) =>
+    tiposDeServicio(s).includes(tipo as never),
+  ) ?? 'mas';
+
+/** La tienda con sus pasillos (categorías con productos disponibles). */
+tiendas.get('/tiendas/:id', async (c) => {
+  const { db, t } = await tiendaPublica(c, c.req.param('id'));
+  const { moneda } = await paisDeZona(db, String(t.zona_id ?? ''));
+  const pasillos = await db
+    .prepare(
+      `SELECT p.categoria1 AS nombre, COUNT(*) AS n FROM catalogo_productos p
+         JOIN catalogo_ofertas o ON o.producto_id = p.id AND o.comercio_id = p.comercio_id
+        WHERE p.comercio_id = ? AND ${DISPONIBLE_HOY} AND p.restriccion <> 'prescription'
+        GROUP BY p.categoria1 ORDER BY p.categoria1`,
+    )
+    .bind(t.id)
+    .all<{ nombre: string; n: number }>();
+  return c.json({
+    tienda: {
+      id: t.id,
+      nombre: t.nombre,
+      direccion: t.direccion,
+      lat: t.lat,
+      lng: t.lng,
+      imagen: t.imagen,
+      tipo: t.tipo_comercio,
+      abierto: Number(t.abierto) === 1,
+      plan: t.plan,
+      moneda,
+    },
+    pasillos: pasillos.results,
+  });
+});
+
+/** Los productos disponibles de la tienda, por pasillo o buscando, de 50 en 50. */
+tiendas.get('/tiendas/:id/productos', async (c) => {
+  const { db, t } = await tiendaPublica(c, c.req.param('id'));
+  const q = esquemaBusqueda.parse(c.req.query());
+  const donde = ['p.comercio_id = ?', DISPONIBLE_HOY, "p.restriccion <> 'prescription'"];
+  const valores: unknown[] = [t.id];
+  if (q.q) {
+    const patron = `%${q.q.replace(/[\\%_]/g, (x) => `\\${x}`)}%`;
+    donde.push(
+      "(p.nombre_es LIKE ? ESCAPE '\\' OR p.nombre_en LIKE ? ESCAPE '\\' OR p.marca LIKE ? ESCAPE '\\' OR p.codigo_barras = ?)",
+    );
+    valores.push(patron, patron, patron, q.q);
+  }
+  if (q.categoria) {
+    donde.push('p.categoria1 = ?');
+    valores.push(q.categoria);
+  }
+  const { results } = await db
+    .prepare(
+      `SELECT p.*, o.precio, o.precio_oferta FROM catalogo_productos p
+         JOIN catalogo_ofertas o ON o.producto_id = p.id AND o.comercio_id = p.comercio_id
+        WHERE ${donde.join(' AND ')}
+        ORDER BY p.categoria1, COALESCE(NULLIF(p.nombre_es, ''), p.nombre_en) LIMIT ? OFFSET ?`,
+    )
+    .bind(...valores, PAGINA + 1, (q.pagina - 1) * PAGINA)
+    .all<FilaProducto>();
+  const idioma = idiomaDe(c);
+  return c.json({
+    productos: results.slice(0, PAGINA).map((f) => aProductoPublico(f, idioma)),
+    hayMas: results.length > PAGINA,
+    pagina: q.pagina,
+  });
+});
+
+/** Búsqueda entre tiendas cercanas del servicio: dónde está el producto, la tienda más cerca primero. */
+tiendas.get('/tiendas-buscar', async (c) => {
+  const q = z
+    .object({
+      servicio: z.string().max(20),
+      q: z.string().trim().min(2).max(80),
+      lat: coordenada,
+      lng: coordenada,
+    })
+    .parse(c.req.query());
+  exigirServicio(c, q.servicio);
+  const db = base(c);
+  const zona = await zonaPara(db, q.lat, q.lng);
+  if (!zona) return c.json({ resultados: [] });
+  const patron = `%${q.q.replace(/[\\%_]/g, (x) => `\\${x}`)}%`;
+  const { results } = await db
+    .prepare(
+      `SELECT p.*, o.precio, o.precio_oferta, r.nombre AS tienda, r.lat AS tlat, r.lng AS tlng, r.abierto
+         FROM catalogo_productos p
+         JOIN catalogo_ofertas o ON o.producto_id = p.id AND o.comercio_id = p.comercio_id
+         JOIN restaurantes r ON r.id = p.comercio_id
+        WHERE r.zona_id = ? AND r.estado = 'aprobado'
+          AND r.tipo_comercio IN (SELECT value FROM json_each(?))
+          AND ${DISPONIBLE_HOY} AND p.restriccion <> 'prescription'
+          AND (p.nombre_es LIKE ? ESCAPE '\\' OR p.nombre_en LIKE ? ESCAPE '\\' OR p.marca LIKE ? ESCAPE '\\' OR p.codigo_barras = ?)
+        LIMIT 200`,
+    )
+    .bind(zona.id, JSON.stringify(tiposDeServicio(q.servicio)), patron, patron, patron, q.q)
+    .all<FilaProducto>();
+  const idioma = idiomaDe(c);
+  const resultados = results
+    .map((f) => ({
+      ...aProductoPublico(f, idioma),
+      tiendaId: f.comercio_id,
+      tienda: f.tienda,
+      abierto: Number(f.abierto) === 1,
+      distanciaKm:
+        q.lat != null && q.lng != null && f.tlat != null && f.tlng != null
+          ? Math.round(
+              distanciaKm(
+                { lat: q.lat, lng: q.lng },
+                { lat: Number(f.tlat), lng: Number(f.tlng) },
+              ) * 10,
+            ) / 10
+          : null,
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.abierto) - Number(a.abierto) ||
+        (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999) ||
+        a.precio - b.precio,
+    )
+    .slice(0, 40);
+  return c.json({ resultados });
 });

@@ -74,7 +74,15 @@ describe('C-MOTO-SOLO-PRUEBAS: Moto existe solo en el sitio de pruebas', () => {
     const e = await enPruebas();
     expect(await encenderMoto(e)).toEqual({ servicio: 200, zona: 200 });
     const lista = await e.m.llamar('GET', '/datos/admin/servicios', undefined, e.admin.token);
-    expect(lista.datos.implementadosEnEsteCodigo).toEqual(['comida', 'moto']);
+    expect(lista.datos.implementadosEnEsteCodigo).toEqual([
+      'comida',
+      'moto',
+      // C-TIENDAS-VITRINA: las tiendas también se encienden solo en pruebas.
+      'mercado',
+      'farmacia',
+      'licores',
+      'mas',
+    ]);
     expect((await e.m.llamar('GET', '/datos/salud')).datos.piezas.servicios).toBe('ok');
     // Carro sigue bloqueado aun en pruebas: solo se abre lo que se está construyendo.
     const carro = await e.m.llamar(

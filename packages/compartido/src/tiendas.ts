@@ -387,3 +387,16 @@ export function leerPlanillaProductos(
   );
   return { validas, errores, faltanColumnas: faltan };
 }
+
+/** Los servicios de tienda (todos menos comida) y qué tipos de comercio entran en cada uno. */
+export const SERVICIOS_TIENDA = ['mercado', 'farmacia', 'licores', 'mas'] as const;
+export const tiposDeServicio = (servicio: string): TipoComercio[] =>
+  TIPOS_COMERCIO.filter((t) => t !== 'restaurante' && servicioDeComercio(t) === servicio);
+
+/** Precio de un artículo por peso, estimado con el peso promedio (se ajusta al pesar). */
+export const precioEstimado = (precio: number, vendidoPor: string, pesoPromedio: number | null) =>
+  vendidoPor === 'weight' && pesoPromedio ? Math.round(precio * pesoPromedio) : precio;
+
+/** Qué hacer si falta un artículo (lo elige el cliente por artículo, como DoorDash y Uber Eats). */
+export const SUSTITUCIONES = ['reembolsar', 'similar', 'contactar'] as const;
+export type Sustitucion = (typeof SUSTITUCIONES)[number];

@@ -59,3 +59,13 @@ describe('C-TIENDAS-CATALOGO · reglas del catálogo de tiendas (todos los país
     ]);
   });
 });
+
+describe('C-TIENDAS-VITRINA · servicios y precios', () => {
+  it('cada servicio de tienda junta sus tipos de comercio', async () => {
+    const { tiposDeServicio, precioEstimado } = await import('./tiendas');
+    expect(tiposDeServicio('mercado')).toEqual(['mercado', 'conveniencia']);
+    expect(tiposDeServicio('mas')).toEqual(['ferreteria', 'mascotas', 'belleza', 'tienda']);
+    expect(precioEstimado(300, 'weight', 1.5)).toBe(450);
+    expect(precioEstimado(300, 'each', null)).toBe(300);
+  });
+});
