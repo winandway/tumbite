@@ -96,7 +96,7 @@ export function Restaurantes({
       : null;
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
   return (
-    <View style={{ marginTop: 20 }}>
+    <View style={{ marginTop: 20 }} testID="lista-restaurantes">
       <View
         style={{
           flexDirection: 'row',
