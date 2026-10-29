@@ -6,7 +6,7 @@ import { formatearMonto } from '@tumbite/compartido';
 import { C, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Tarjeta, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
-import { puntoDeBusqueda } from '../comida/useRestaurantes';
+import { puntoGps, puntoGuardado } from '../comida/useRestaurantes';
 import { distanciaTexto } from '../textos';
 import { textosInicio } from '../inicio/textos';
 import { IMG } from '../inicio/recursos';
@@ -41,7 +41,16 @@ export default function Tiendas() {
   const [intento, setIntento] = useState(0);
 
   useEffect(() => {
-    void puntoDeBusqueda().then((p) => setPunto(p));
+    let vivo = true;
+    void (async () => {
+      const guardado = await puntoGuardado();
+      if (vivo) setPunto(guardado);
+      const gps = await puntoGps();
+      if (vivo && gps && !guardado) setPunto(gps);
+    })();
+    return () => {
+      vivo = false;
+    };
   }, []);
   const donde = punto ? `&lat=${punto.lat}&lng=${punto.lng}` : '';
 
