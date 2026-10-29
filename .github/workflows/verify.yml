@@ -4,6 +4,13 @@ on:
     branches: [main]
   pull_request:
 
+# C-VERIFY-SOLO-LA-ULTIMA (29 oct 2026): un push nuevo cancela la verificación anterior de la misma
+# rama. Solo la última se publica (C-PUBLICAR-VERSION-EXACTA), así que las viejas solo estorbaban:
+# tres a la vez tardaban más de 40 minutos y producción no avanzaba.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest

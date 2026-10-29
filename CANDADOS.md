@@ -1519,3 +1519,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** «Repetir pedido» (pestaña Pedidos) armaba el carrito en el celular con el menú del restaurante: con una TIENDA no funcionaba (el menú de tiendas es otro), vaciaba el carrito sin preguntar, no revisaba las opciones y el aviso de «lo que falta» se perdía al abrir el carrito. No había «Pedir otra vez» al terminar un pedido.
 - **Arreglo:** `GET /datos/pedidos/:id/repetir` (`apps/servidor/src/rutas/pedidos.ts`), solo el dueño del pedido: pasa cada línea vieja por las mismas validaciones del pedido nuevo (`lineasDeRestaurante` / `lineasDeTienda`), con el precio de HOY, y devuelve aparte lo que ya no está. En la app: `usePedirOtraVez()` (`apps/cliente/src/pedirOtraVez.ts`) pregunta antes de reemplazar otro carrito, usa `llenar()` del carrito y avisa lo que falta; lo usan la pestaña Pedidos y la pantalla del pedido entregado o cancelado. Docs: guía «my-orders-and-reorder».
 - **Pruebas:** `rutas/pedirOtraVez.test.ts` (restaurante) y en `rutas/tiendasVitrina.test.ts` «C-PEDIR-OTRA-VEZ» (tienda, precio nuevo, agotado aparte y solo el dueño).
+
+## C-VERIFY-SOLO-LA-ULTIMA (29 oct 2026) — infraestructura
+
+- **Qué se rompía:** con varios push seguidos corrían tres verificaciones a la vez (más de 40 minutos cada una) y, como solo se publica la última (C-PUBLICAR-VERSION-EXACTA), producción se quedó horas en una versión vieja.
+- **Arreglo:** `concurrency: verify-${{ github.ref }}` con `cancel-in-progress: true` en `.github/workflows/verify.yml`.
+- **Qué NO tocar:** `publicar` sigue con `cancel-in-progress: false` (nunca se corta una publicación a medias).
