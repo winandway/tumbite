@@ -25,6 +25,7 @@ const SOPORTE = [
   'errores',
   'auditoria',
   'mis-avisos',
+  'seguridad',
 ];
 /** Familias de dinero y configuración de países. */
 const FINANZAS = [

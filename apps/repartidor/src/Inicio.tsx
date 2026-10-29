@@ -38,6 +38,7 @@ import {
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
+import { Seguridad } from './grandes/Seguridad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
@@ -413,6 +414,7 @@ export function Inicio() {
     | 'alta'
     | 'miRuta'
     | 'turnos'
+    | 'seguridad'
   >('inicio');
   // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
   const [rutaDelAviso, setRutaDelAviso] = useState<string | null>(null);
@@ -1075,6 +1077,7 @@ export function Inicio() {
               ['inicio', t.vistaInicio],
               ['miRuta', t.vistaMiRuta],
               ['turnos', idioma === 'en' ? 'My shifts' : 'Mis turnos'],
+              ['seguridad', idioma === 'en' ? 'Safety' : 'Seguridad'],
               ['billetera', t.vistaBilletera],
               ['datos', t.vistaDatos],
             ] as const
@@ -1264,6 +1267,8 @@ export function Inicio() {
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
   // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
   if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
+  // C-SEGURIDAD-REPARTIDOR: emergencia, recorrido compartido e incidentes.
+  if (vista === 'seguridad') return lienzo('inicio', <Seguridad api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
   if (vista === 'miRuta')
     return lienzo(

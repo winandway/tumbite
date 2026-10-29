@@ -9,6 +9,7 @@ import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { PedidoCompartido } from './sitio/PedidoCompartido';
+import { RecorridoCompartido } from './sitio/RecorridoCompartido';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
@@ -56,6 +57,7 @@ export function App() {
     !ruta.startsWith('/t/') &&
     !ruta.startsWith('/ride/') &&
     !ruta.startsWith('/order-status/') &&
+    !ruta.startsWith('/driver-trip/') &&
     !ruta.startsWith('/deliver/');
   const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
@@ -129,6 +131,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Seguimiento codigo={guia || null} idioma={idioma} />
+      </Sitio>
+    );
+  // C-SEGURIDAD-REPARTIDOR: el recorrido de un repartidor compartido con su contacto de confianza.
+  const recorrido = /^\/driver-trip\/([A-Za-z0-9_-]{40,60})$/.exec(ruta);
+  if (recorrido?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <RecorridoCompartido codigo={recorrido[1]} idioma={idioma} />
       </Sitio>
     );
   // C-SEGUIMIENTO-COMPARTIDO: el seguimiento de un pedido compartido (enlace secreto, sin indexar).

@@ -1391,6 +1391,27 @@ CREATE TABLE IF NOT EXISTS calificaciones_cliente (
 );
 CREATE INDEX IF NOT EXISTS calificaciones_cliente_cliente ON calificaciones_cliente(cliente_id, creado_en);
 
+-- C-SEGURIDAD-REPARTIDOR (29 oct 2026), como el centro de seguridad de Dasher y Uber Driver:
+-- emergencias e incidentes del repartidor, y su recorrido compartido con un contacto.
+CREATE TABLE IF NOT EXISTS incidentes_repartidor (
+  id TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('emergencia', 'incidente')),
+  motivo TEXT NOT NULL DEFAULT '' CHECK (motivo IN ('', 'accidente', 'acoso', 'robo', 'animal', 'otro')),
+  detalle TEXT NOT NULL DEFAULT '',
+  pedido_id TEXT,
+  lat REAL,
+  lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS incidentes_repartidor_fecha ON incidentes_repartidor(creado_en);
+CREATE TABLE IF NOT EXISTS recorridos_compartidos (
+  huella TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  expira_en TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

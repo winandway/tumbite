@@ -509,6 +509,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe la respuesta en español.', 'Write the reply in Spanish.'],
   ['No hay nada que cambiar.', 'There’s nothing to change.'],
   ['Revisa el turno.', 'Check the shift.'],
+  ['Cuéntanos qué pasó.', 'Tell us what happened.'],
   [
     'Solo calificas a clientes de tus entregas de hoy.',
     'You can only rate customers from today’s deliveries.',

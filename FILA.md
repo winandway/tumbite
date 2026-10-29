@@ -53,7 +53,7 @@
 - [x] Pedido en grupo también en las tiendas (mercado, farmacia): mismo enlace y mismas reglas, con «qué hacer si falta» por producto. Todos los países.
 - [x] El repartidor califica al cliente (como Uber): estrellas y motivo al entregar; solo lo ve soporte, no bloquea a nadie. Servidor, app Driver, superadmin, Docs. Todos los países.
 
-- [ ] Centro de seguridad del repartidor (como Dasher y Uber Driver): botón de emergencia en la entrega, compartir su recorrido con un contacto y reportar un incidente; el equipo recibe el aviso de sistema. Servidor, app Driver, Docs. Todos los países.
+- [x] Centro de seguridad del repartidor (como Dasher y Uber Driver): botón de emergencia en la entrega, compartir su recorrido con un contacto y reportar un incidente; el equipo recibe el aviso de sistema. Servidor, app Driver, Docs. Todos los países.
 - [ ] Impresora de tickets en el panel del restaurante: imprimir la comanda al aceptar (impresión del navegador, formato de 80 mm), con interruptor «imprimir al aceptar». Panel, Docs. Todos los países.
 - [ ] API pública de pedidos y menú para sistemas de punto de venta (lectura de pedidos y cambio de estado, con llave por restaurante), como las integraciones de DoorDash. Ficha REA primero. Todos los países.
 

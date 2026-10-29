@@ -2131,6 +2131,20 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'driver-safety',
+        titulo: 'Seguridad del repartidor',
+        resumen:
+          'Botón de emergencia, compartir tu recorrido con alguien de confianza y reportar un incidente, todo desde «Seguridad».',
+        explicacion: [
+          'En el menú de la app, toca «Seguridad».',
+          'Emergencia: avisa al instante a nuestro equipo con tu ubicación y te muestra el botón para llamar al número de emergencias de tu país.',
+          'Compartir mi recorrido: manda un enlace a alguien de confianza. Ve tu primer nombre y dónde vas, sin cuenta, durante 12 horas.',
+          'Reportar un incidente: un accidente, acoso, un robo o un animal suelto. Cuéntanos qué pasó y nuestro equipo te contacta.',
+        ],
+        preguntas: ['¿Qué hago si tengo una emergencia repartiendo?', '¿Cómo comparto dónde voy?'],
+        pasos: ['Abre el menú y toca «Seguridad».', 'Elige: emergencia, compartir o reportar.'],
+      },
+      {
         id: 'open-offer-bonus',
         titulo: 'Bono por tomar un pedido que otros dejaron pasar',
         resumen:
@@ -5211,6 +5225,20 @@ const en: SeccionDocs[] = [
           'Tap the stars for the delivery.',
           'If needed, pick what happened and send.',
         ],
+      },
+      {
+        id: 'driver-safety',
+        titulo: 'Driver safety',
+        resumen:
+          'Emergency button, share your trip with someone you trust and report an incident, all from “Safety”.',
+        explicacion: [
+          'In the app menu, tap “Safety”.',
+          'Emergency: instantly alerts our team with your location and shows the button to call your country’s emergency number.',
+          'Share my trip: send a link to someone you trust. They see your first name and where you are, without an account, for 12 hours.',
+          'Report an incident: an accident, harassment, a robbery or a loose animal. Tell us what happened and our team will contact you.',
+        ],
+        preguntas: ['What do I do in an emergency while delivering?', 'How do I share where I am?'],
+        pasos: ['Open the menu and tap “Safety”.', 'Choose: emergency, share or report.'],
       },
       {
         id: 'open-offer-bonus',

@@ -827,6 +827,23 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "comentario",
     "creado_en"
   ],
+  "incidentes_repartidor": [
+    "id",
+    "repartidor_id",
+    "tipo",
+    "motivo",
+    "detalle",
+    "pedido_id",
+    "lat",
+    "lng",
+    "creado_en"
+  ],
+  "recorridos_compartidos": [
+    "huella",
+    "repartidor_id",
+    "creado_en",
+    "expira_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",

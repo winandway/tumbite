@@ -1614,3 +1614,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el repartidor no podía decir cómo le fue con un cliente (Uber lo tiene).
 - **Arreglo:** tabla `calificaciones_cliente` (una por pedido). `GET /datos/repartidor/por-calificar` (entregas de las últimas 24 h sin calificar) y `POST /datos/repartidor/pedidos/:id/calificar-cliente` (solo su repartidor, una vez; motivo solo con 3 estrellas o menos) en `rutas/repartidorGrandes.ts`. Superadmin: «Nota de los repartidores» en la ficha del cliente. App Driver: «Califica a tus clientes de hoy» en Pedidos (`grandes/CalificarCliente.tsx`). Solo lo ve soporte; no bloquea a nadie. Docs: guía «rate-customer».
 - **Prueba:** «C-CALIFICA-CLIENTE» en `rutas/operacion.test.ts`.
+
+## C-SEGURIDAD-REPARTIDOR (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el repartidor de comida no tenía centro de seguridad (Dasher y Uber Driver sí; Moto tenía el botón del viaje).
+- **Arreglo:** tablas `incidentes_repartidor` y `recorridos_compartidos`. Rutas en `apps/servidor/src/rutas/seguridadRepartidor.ts`: `POST /datos/repartidor/emergencia` (anota y avisa al equipo con el tipo «sistema», que nunca se apaga; devuelve el número de emergencias del país), `POST /datos/repartidor/incidentes` (aviso tipo «pedidos»), `POST /datos/repartidor/compartir-recorrido` (enlace secreto de 12 horas, solo la huella), `GET /datos/publico/recorrido/:codigo` (primer nombre y ubicación, sin indexar) y `GET /datos/admin/seguridad`. App Driver: menú → «Seguridad» (`grandes/Seguridad.tsx`). Página `/driver-trip/<código>`. Docs: guía «driver-safety».
+- **Prueba:** `rutas/seguridadRepartidor.test.ts`.
