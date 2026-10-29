@@ -88,6 +88,7 @@
 - [How we look after every order · Divoox](https://divoox.com/docs/trust): ⌘K← Docs How we look after every orderIf you lose signal when deliveringThe delivery photo (or “Handed to the customer”) is saved on your phone and sent on
 - [If you lose signal when delivering · Divoox](https://divoox.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
 - [Shifts: book your hours · Divoox](https://divoox.com/docs/trust/driver-shifts): Book your hours up to 7 days ahead. During your shift, while online, offers reach you before drivers without a shift.
+- [Busy areas: where to head for more orders · Divoox](https://divoox.com/docs/trust/busy-areas): The Driver app map highlights in red the areas of your city with the most orders in the last hour, so you know where the work is, just like the big deliver
 - [Top driver · Divoox](https://divoox.com/docs/trust/top-driver): Meet all five requirements and you’re a top driver: at the same distance, offers reach you first.
 - [Rate the customer · Divoox](https://divoox.com/docs/trust/rate-customer): After delivering, you can rate the customer with stars and, if something went wrong, say what happened.
 - [Driver safety · Divoox](https://divoox.com/docs/trust/driver-safety): Emergency button, share your trip with someone you trust and report an incident, all from “Safety”.
