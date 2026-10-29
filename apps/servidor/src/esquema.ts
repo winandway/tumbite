@@ -242,7 +242,9 @@ async function sincronizarServicios(db: D1Database, entorno: Entorno | null): Pr
       db
         .prepare(
           'INSERT INTO servicios_implementados (servicio_id, contrato) SELECT id, ? FROM servicios WHERE id = ? ' +
-            "ON CONFLICT(servicio_id) DO UPDATE SET contrato = excluded.contrato, desplegado_en = datetime('now')",
+            "ON CONFLICT(servicio_id) DO UPDATE SET contrato = excluded.contrato, desplegado_en = datetime('now') " +
+            // Sin cambio de contrato no se escribe: cada arranque en frío dejaba la base ocupada.
+            'WHERE servicios_implementados.contrato <> excluded.contrato',
         )
         .bind(contrato, id),
     ),
@@ -382,21 +384,55 @@ async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
   await revisarColumnas(db);
 }
 
+/**
+ * C-ESQUEMA-SIN-ATASCO (29 oct 2026): la migración corre una vez por servidor y todas las
+ * peticiones la esperan. Si una consulta suya se quedaba trabada, ese servidor dejaba colgadas
+ * TODAS sus peticiones durante minutos (visto en el sitio de pruebas: la sesión y el resumen del
+ * superadmin sin respuesta mientras otro servidor contestaba al instante). Ahora ninguna petición
+ * espera más de ESPERA_ESQUEMA_MS; la que pasa la espera sigue (la base ya tiene sus tablas), la
+ * salud lo dice en rojo, y una migración que pasa de ESQUEMA_TRABADO_MS se descarta y se reintenta.
+ */
+export const ESPERA_ESQUEMA_MS = 8_000;
+export const ESQUEMA_TRABADO_MS = 30_000;
+let inicioMigracion = 0;
+
 export function asegurarEsquema(db: D1Database, entorno: Entorno | null = null): Promise<void> {
-  listo ??= migrar(db, entorno).then(
-    () => {
-      ultimoErrorEsquema = null;
-    },
-    (e: unknown) => {
-      ultimoErrorEsquema = String(e);
-      console.error('esquema: la migración falló', e);
-      listo = null; // se reintenta en la siguiente petición
-    },
-  );
-  return listo;
+  if (listo && inicioMigracion && Date.now() - inicioMigracion > ESQUEMA_TRABADO_MS) {
+    ultimoErrorEsquema = `la migración lleva más de ${ESQUEMA_TRABADO_MS / 1000} s sin terminar; se reintenta`;
+    console.error('esquema:', ultimoErrorEsquema);
+    listo = null;
+  }
+  if (!listo) {
+    inicioMigracion = Date.now();
+    const esta: Promise<void> = migrar(db, entorno).then(
+      () => {
+        if (listo === esta) inicioMigracion = 0;
+        ultimoErrorEsquema = null;
+      },
+      (e: unknown) => {
+        ultimoErrorEsquema = String(e);
+        console.error('esquema: la migración falló', e);
+        if (listo === esta) listo = null; // se reintenta en la siguiente petición
+      },
+    );
+    listo = esta;
+  }
+  const actual = listo;
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const espera = new Promise<void>((resolver) => {
+    reloj = setTimeout(() => {
+      if (listo === actual && inicioMigracion) {
+        ultimoErrorEsquema = `la migración tardó más de ${ESPERA_ESQUEMA_MS / 1000} s`;
+        console.error('esquema:', ultimoErrorEsquema);
+      }
+      resolver();
+    }, ESPERA_ESQUEMA_MS);
+  });
+  return Promise.race([actual, espera]).finally(() => clearTimeout(reloj));
 }
 
 /** Solo para pruebas: cada base nueva vuelve a migrar. */
 export function reiniciarEsquema(): void {
   listo = null;
+  inicioMigracion = 0;
 }

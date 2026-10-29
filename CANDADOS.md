@@ -1457,3 +1457,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió y cómo se vio:** en el recorrido del sitio de pruebas, la respuesta de «entregado» se perdió en el camino; la app reintentó y el servidor contestó «Este pedido no está en camino contigo» (409) aunque el pedido YA estaba entregado. Con mala señal (Venezuela) el repartidor vería un error en la puerta. Se encontró leyendo el rastro de red del recorrido.
 - **Arreglo:** `POST /datos/repartidor/pedidos/:id/entregado`: si el pedido ya está entregado por ESE repartidor, responde 200 con `yaEntregado: true`; otro repartidor sigue recibiendo 409. No se acredita nada de nuevo.
 - **Prueba:** `rutas/operacion.test.ts` («de pagado a entregado, con dinero acreditado una sola vez»), comprobada en rojo.
+
+## C-ESQUEMA-SIN-ATASCO (29 oct 2026) — todos los países
+
+- **Qué se rompía:** en el sitio de pruebas, algunas peticiones (la sesión y el resumen del superadmin) se quedaban colgadas minutos, mientras otras contestaban al instante. Una respuesta vacía tardaba uno o dos segundos.
+- **Causa:** cada servidor que arranca en frío corre la revisión del esquema (unas diez consultas a la base, varias de escritura) y TODAS sus peticiones esperan esa promesa compartida. Si una consulta se trababa, la promesa no terminaba nunca y ese servidor colgaba todo lo que le llegaba. Además, la sincronización de servicios reescribía la fecha de despliegue en cada arranque, así que la base se ocupaba con escrituras sin cambios.
+- **Arreglo (`apps/servidor/src/esquema.ts`):** ninguna petición espera más de `ESPERA_ESQUEMA_MS` (8 s); una migración que pasa de `ESQUEMA_TRABADO_MS` (30 s) se descarta y se reintenta, y `ultimoErrorEsquema` lo deja visible en la salud. La sincronización de servicios solo escribe si cambió el contrato.
+- **Prueba:** `apps/servidor/src/esquemaSinAtasco.test.ts` (tres casos, comprobados en rojo quitando cada parte del arreglo).
+- **No tocar:** no quitar el tope de espera ni volver a escribir `desplegado_en` en cada arranque.
