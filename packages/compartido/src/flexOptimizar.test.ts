@@ -114,7 +114,11 @@ describe('C-FLEX-OPTIMIZAR · optimizador básico', () => {
     const r = optimizarRuta(ps, centro);
     // C-FLEX-OPTIMIZAR-TIEMPO (29 oct 2026): en la máquina de GitHub, con todas las pruebas a la vez,
     // tardó 1,3 s una vez (en esta computadora, unos 0,3 s). Allí se le da margen; aquí sigue en 1 s.
-    expect(Date.now() - t).toBeLessThan(process.env.CI ? 2500 : 1000);
+    expect(Date.now() - t).toBeLessThan(
+      (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CI
+        ? 2500
+        : 1000,
+    );
     expect(new Set(r.orden).size).toBe(150);
     expect(ordenRespetaReglas(r.orden.map((id) => ps.find((p) => p.id === id)!))).toBe(true);
   });
