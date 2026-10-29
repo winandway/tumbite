@@ -1558,3 +1558,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** los tickets no tenían prioridad, nadie quedaba a cargo y cada respuesta se escribía desde cero.
 - **Arreglo:** columnas `tickets.prioridad` (urgente, alta, normal, baja; por defecto normal) y `tickets.asignado_a` (vía COLUMNAS); tabla `respuestas_guardadas`. `PATCH /datos/admin/tickets/:id` acepta estado, prioridad y asignadoA (solo alguien del equipo); la bandeja ordena por prioridad y filtra `asignado=mios|sin`; `GET`, `POST` y `DELETE /datos/admin/tickets/plantillas` (declaradas antes de `/admin/tickets/:id`). Pantalla del ticket en `Superadmin.tsx`: Prioridad, A cargo de, Respuesta guardada y «Guardar este texto como respuesta».
 - **Pruebas:** «C-TICKETS-EQUIPO» en `rutas/tickets.test.ts` y en `panel/Superadmin.test.tsx`.
+
+## C-RESENAS-SUGERIDAS (29 oct 2026) — todos los países
+
+- **Qué faltaba:** cada respuesta a una reseña se escribía desde cero (Uber Eats Manager ofrece respuestas rápidas).
+- **Arreglo:** `respuestasSugeridas(estrellas, cliente, idioma)` (`packages/compartido/src/respuestasResena.ts`): dos textos para buenas (4 y 5) y dos para malas, con el primer nombre y SIN prometer dinero, descuentos ni regalos. En `apps/panel/src/panel/Resenas.tsx` aparecen como botones que llenan la respuesta, editable antes de publicar. Docs: guía de reseñas.
+- **Pruebas:** `compartido/respuestasResena.test.ts`, `panel/Resenas.test.tsx`.

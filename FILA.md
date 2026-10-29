@@ -37,6 +37,9 @@
 - [x] Tickets de soporte con prioridad, asignación a una persona del equipo y respuestas guardadas (plantillas). Todos los países.
 - [x] «Pedir otra vez» en el inicio del cliente: fila con los últimos comercios donde pidió, como DoorDash. Todos los países.
 
+- [x] (como respuestas sugeridas según las estrellas) Reseñas del restaurante: respuestas guardadas para contestar con un toque (panel y app). Todos los países.
+- [ ] Avisos al equipo configurables por persona y por tipo (pedidos sin repartidor, dinero, tickets urgentes). Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.

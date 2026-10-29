@@ -5101,3 +5101,25 @@ button {
   color: #666b73;
   margin-top: 4px;
 }
+
+/* C-RESENAS-SUGERIDAS: respuestas rápidas que llenan el texto. */
+.sugeridas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sugeridas small {
+  width: 100%;
+  color: #666b73;
+}
+.sugeridas .chip {
+  border: 1px solid #2a2a2a;
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}

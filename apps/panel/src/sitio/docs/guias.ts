@@ -827,6 +827,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Entra a Reseñas en el menú del panel. Arriba ves tu promedio, cuántas reseñas tienes y cuántas respondiste. Cada reseña trae las estrellas, el comentario, el nombre de pila del cliente y el número del pedido.',
           'Toca «Responder», escribe con calma y toca «Publicar respuesta». Se publica una sola vez y el cliente la ve en el detalle de ese pedido.',
+          'Para ir más rápido, arriba del cuadro hay respuestas sugeridas según las estrellas, con el nombre del cliente: tocas una, la cambias si quieres y la publicas.',
           'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
           'Pueden responder el dueño y los managers; el staff solo las lee.',
         ],
@@ -3815,6 +3816,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Open Reviews in the panel menu. At the top you see your average, how many reviews you have and how many you replied to. Each review shows the stars, the comment, the customer’s first name and the order number.',
           'Tap “Reply”, write calmly and tap “Publish reply”. It’s published once and the customer sees it in that order’s details.',
+          'To go faster, above the box there are suggested replies based on the stars, with the customer’s name: tap one, change it if you want and publish it.',
           'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
           'The owner and managers can reply; staff can only read them.',
         ],

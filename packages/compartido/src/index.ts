@@ -44,3 +44,4 @@ export * from './entregaMostrada';
 export * from './programado';
 export * from './rendimiento';
 export * from './perfilesInternos';
+export * from './respuestasResena';

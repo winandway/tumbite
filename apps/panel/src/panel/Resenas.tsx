@@ -4,6 +4,7 @@ import {
   type Idioma,
   almacenNavegador,
   enIdioma,
+  respuestasSugeridas,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -25,6 +26,7 @@ const T = {
     culpa: 'El cliente marcó que el repartidor no tuvo la culpa',
     sinComentario: '(sin comentario)',
     pedido: 'Pedido',
+    sugeridas: 'Respuestas sugeridas (tócala y edítala si quieres)',
   },
   en: {
     titulo: 'Reviews',
@@ -41,6 +43,7 @@ const T = {
     culpa: 'The customer marked that the driver wasn’t at fault',
     sinComentario: '(no comment)',
     pedido: 'Order',
+    sugeridas: 'Suggested replies (tap one and edit it if you like)',
   },
 };
 
@@ -61,10 +64,14 @@ function Respuesta({
   pedidoId,
   idioma,
   alPublicar,
+  estrellas,
+  cliente,
 }: {
   pedidoId: string;
   idioma: Idioma;
   alPublicar: () => void;
+  estrellas: number;
+  cliente: string;
 }) {
   const t = enIdioma(T, idioma);
   const b = useBorrador({
@@ -94,6 +101,14 @@ function Respuesta({
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
+      <div className="sugeridas" role="group" aria-label={t.sugeridas}>
+        <small>{t.sugeridas}</small>
+        {respuestasSugeridas(estrellas, cliente, idioma === 'en' ? 'en' : 'es').map((r) => (
+          <button key={r} type="button" className="chip" onClick={() => b.cambiar('texto', r)}>
+            {r}
+          </button>
+        ))}
+      </div>
       <label className="campo">
         <span>{t.respuesta}</span>
         <textarea
@@ -176,6 +191,8 @@ export function Resenas({ idioma }: { idioma: Idioma }) {
                 <Respuesta
                   pedidoId={r.pedidoId}
                   idioma={idioma}
+                  estrellas={r.estrellas}
+                  cliente={r.cliente}
                   alPublicar={() => {
                     setAbierta(null);
                     cargar();
