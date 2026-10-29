@@ -519,7 +519,6 @@ export const MENSAJES_EN = new Map<string, string>([
     'Elige una hora entre 15 minutos y 24 horas desde ahora.',
     'Pick a time between 15 minutes and 24 hours from now.',
   ],
-  ['El pedido en grupo es para restaurantes.', 'Group orders are for restaurants.'],
   ['Este pedido en grupo ya se cerró.', 'This group order is already closed.'],
   [
     'Este pedido en grupo ya tiene demasiados platos.',

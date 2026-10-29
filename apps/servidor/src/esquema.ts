@@ -21,6 +21,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-PEDIDO-GRUPO-HORA (29 oct 2026): hora de cierre opcional y cuándo se avisó al anfitrión.
   ['pedidos_grupo', 'cierra_en', 'TEXT'],
   ['pedidos_grupo', 'avisado_en', 'TEXT'],
+  // C-PEDIDO-GRUPO-TIENDA: en una tienda, qué hacer si falta cada producto.
+  ['pedidos_grupo_items', 'sustitucion', 'TEXT'],
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],

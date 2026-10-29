@@ -5,6 +5,8 @@ import { nuevoId, nuevoToken } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { lineasDeRestaurante } from './pedidos';
+import { lineasDeTienda } from './tiendas';
+import { SUSTITUCIONES, type Sustitucion } from '@tumbite/compartido';
 import { notificar } from '../notificaciones';
 
 /**
@@ -59,6 +61,7 @@ type Item = {
   plato_id: string;
   cantidad: number;
   opciones_json: string;
+  sustitucion?: string | null;
 };
 
 async function itemsDe(db: D1Database, grupoId: string) {
@@ -71,7 +74,13 @@ async function itemsDe(db: D1Database, grupoId: string) {
 }
 
 /** Cada ítem con su precio de HOY; lo que ya no está disponible va aparte. */
-async function conPrecios(db: D1Database, rest: Record<string, unknown>, items: Item[]) {
+async function conPrecios(
+  c: Parameters<typeof base>[0],
+  rest: Record<string, unknown>,
+  items: Item[],
+) {
+  const db = base(c);
+  const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
   const listos: (Awaited<ReturnType<typeof lineasDeRestaurante>>[number] & {
     itemId: string;
     participanteId: string;
@@ -80,13 +89,16 @@ async function conPrecios(db: D1Database, rest: Record<string, unknown>, items: 
   const faltan: { itemId: string; persona: string; platoId: string }[] = [];
   for (const it of items) {
     try {
-      const [l] = await lineasDeRestaurante(db, rest, [
-        {
-          platoId: it.plato_id,
-          cantidad: it.cantidad,
-          opciones: JSON.parse(it.opciones_json) as string[],
-        },
-      ]);
+      const pedida = {
+        platoId: it.plato_id,
+        cantidad: it.cantidad,
+        opciones: JSON.parse(it.opciones_json) as string[],
+        sustitucion: (it.sustitucion ?? undefined) as Sustitucion | undefined,
+      };
+      // C-PEDIDO-GRUPO-TIENDA: en una tienda, el precio sale de su catálogo.
+      const [l] = esTienda
+        ? await lineasDeTienda(c, rest, [pedida])
+        : await lineasDeRestaurante(db, rest, [pedida]);
       if (l)
         listos.push({
           ...l,
@@ -106,9 +118,8 @@ grupos.post('/grupos', async (c) => {
   const u = exigir(c, 'cliente');
   const { restauranteId } = await leerCuerpo(c, z.object({ restauranteId: z.string().min(1) }));
   const db = base(c);
-  const rest = await restauranteDe(db, restauranteId);
-  if (String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante')
-    throw new ErrorDatos('El pedido en grupo es para restaurantes.', undefined, 409);
+  // Que exista y esté aprobado (restaurante o tienda; lanza si no).
+  await restauranteDe(db, restauranteId);
   const id = nuevoId();
   const codigo = nuevoToken().slice(0, 22);
   await db
@@ -125,7 +136,7 @@ grupos.get('/grupos/:codigo', async (c) => {
   const db = base(c);
   const g = await grupoDe(db, c.req.param('codigo'));
   const rest = await restauranteDe(db, g.restaurante_id);
-  const { listos, faltan } = await conPrecios(db, rest, await itemsDe(db, g.id));
+  const { listos, faltan } = await conPrecios(c, rest, await itemsDe(db, g.id));
   return c.json({
     grupo: {
       codigo: g.codigo,
@@ -137,6 +148,7 @@ grupos.get('/grupos/:codigo', async (c) => {
         id: String(rest.id),
         nombre: String(rest.nombre),
         moneda: String(rest.zona_moneda ?? 'USD'),
+        esTienda: String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante',
       },
       items: listos.map((l) => ({
         id: l.itemId,
@@ -161,6 +173,7 @@ grupos.post('/grupos/:codigo/items', async (c) => {
       platoId: z.string().min(1),
       cantidad: z.number().int().min(1).max(20),
       opciones: z.array(z.string().min(1)).max(40).default([]),
+      sustitucion: z.enum(SUSTITUCIONES).optional(),
     }),
   );
   const db = base(c);
@@ -169,9 +182,9 @@ grupos.post('/grupos/:codigo/items', async (c) => {
     throw new ErrorDatos('Este pedido en grupo ya se cerró.', undefined, 409);
   const rest = await restauranteDe(db, g.restaurante_id);
   // Valida el plato y sus opciones igual que un pedido normal (lanza si algo no cuadra).
-  await lineasDeRestaurante(db, rest, [
-    { platoId: d.platoId, cantidad: d.cantidad, opciones: d.opciones },
-  ]);
+  const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
+  if (esTienda) await lineasDeTienda(c, rest, [d]);
+  else await lineasDeRestaurante(db, rest, [d]);
   const cuenta = await db
     .prepare(
       'SELECT COUNT(*) AS items, COUNT(DISTINCT participante_id) AS personas, SUM(participante_id = ?) AS mios FROM pedidos_grupo_items WHERE grupo_id = ?',
@@ -189,7 +202,7 @@ grupos.post('/grupos/:codigo/items', async (c) => {
   const id = nuevoId();
   await db
     .prepare(
-      'INSERT INTO pedidos_grupo_items (id, grupo_id, participante_id, nombre, plato_id, cantidad, opciones_json) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO pedidos_grupo_items (id, grupo_id, participante_id, nombre, plato_id, cantidad, opciones_json, sustitucion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       id,
@@ -199,6 +212,7 @@ grupos.post('/grupos/:codigo/items', async (c) => {
       d.platoId,
       d.cantidad,
       JSON.stringify(d.opciones),
+      esTienda ? (d.sustitucion ?? 'reembolsar') : null,
     )
     .run();
   return c.json({ id }, 201);
@@ -287,7 +301,7 @@ grupos.post('/grupos/:codigo/cerrar', async (c) => {
   if (g.estado === 'cancelado')
     throw new ErrorDatos('Este pedido en grupo se canceló.', undefined, 409);
   const rest = await restauranteDe(db, g.restaurante_id);
-  const { listos, faltan } = await conPrecios(db, rest, await itemsDe(db, g.id));
+  const { listos, faltan } = await conPrecios(c, rest, await itemsDe(db, g.id));
   if (!listos.length) throw new ErrorDatos('Todavía nadie agregó platos.', undefined, 409);
   await db
     .prepare(
@@ -303,7 +317,7 @@ grupos.post('/grupos/:codigo/cerrar', async (c) => {
       lat: rest.lat == null ? null : Number(rest.lat),
       lng: rest.lng == null ? null : Number(rest.lng),
       moneda: String(rest.zona_moneda ?? 'USD'),
-      esTienda: false,
+      esTienda: String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante',
     },
     lineas: listos.map((l) => ({
       platoId: l.platoId,
@@ -313,6 +327,9 @@ grupos.post('/grupos/:codigo/cerrar', async (c) => {
       cantidad: l.cantidad,
       opciones: l.opciones,
       requiereEdad: l.requiereEdad,
+      ...('sustitucion' in l ? { sustitucion: l.sustitucion } : {}),
+      ...('pesable' in l ? { pesable: l.pesable } : {}),
+      ...('imagen' in l ? { imagen: l.imagen } : {}),
     })),
     faltan: faltan.length,
   });

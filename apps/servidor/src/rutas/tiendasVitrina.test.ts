@@ -221,6 +221,57 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     ).toBe(404);
   });
 
+  it('C-PEDIDO-GRUPO-TIENDA: pedido en grupo en una tienda, con qué hacer si falta por producto', async () => {
+    stripeFalso();
+    const { m, tid } = await escenario('staging.tumbite.com', STRIPE);
+    const ana = await m.cuenta('cliente', 'Ana López');
+    const beto = await m.cuenta('cliente', 'Beto Ruiz');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const codigo = (await m.llamar('POST', '/datos/grupos', { restauranteId: tid }, ana.token))
+      .datos.codigo as string;
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/grupos/${codigo}/items`,
+          { platoId: id('Orange juice'), cantidad: 2, sustitucion: 'similar' },
+          beto.token,
+        )
+      ).estado,
+    ).toBe(201);
+    // Lo agotado no entra.
+    const agotado = (await m.DB.prepare(
+      'SELECT p.id FROM catalogo_productos p JOIN catalogo_ofertas o ON o.producto_id = p.id WHERE p.comercio_id = ? AND o.disponible = 0 LIMIT 1',
+    )
+      .bind(tid)
+      .first<{ id: string }>())!.id;
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/grupos/${codigo}/items`,
+          { platoId: agotado, cantidad: 1 },
+          beto.token,
+        )
+      ).estado,
+    ).toBe(409);
+    const cierre = await m.llamar('POST', `/datos/grupos/${codigo}/cerrar`, {}, ana.token);
+    expect(cierre.estado).toBe(200);
+    expect(cierre.datos.restaurante.esTienda).toBe(true);
+    expect(cierre.datos.lineas).toEqual([
+      expect.objectContaining({
+        platoId: id('Orange juice'),
+        cantidad: 2,
+        precioCentavos: 350,
+        sustitucion: 'similar',
+      }),
+    ]);
+  });
+
   it('C-TIENDAS-FALTANTES: lo que falta se resuelve con lo que eligió el cliente, y pueden faltar varios', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

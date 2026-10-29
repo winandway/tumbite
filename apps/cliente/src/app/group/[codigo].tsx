@@ -26,7 +26,7 @@ type Grupo = {
   /** C-PEDIDO-GRUPO-HORA */
   cierraEn?: string | null;
   pasoLaHora?: boolean;
-  restaurante: { id: string; nombre: string; moneda: string };
+  restaurante: { id: string; nombre: string; moneda: string; esTienda?: boolean };
   items: {
     id: string;
     persona: string;
@@ -252,7 +252,9 @@ export default function PedidoEnGrupo() {
                   <BotonAncho
                     texto={t.agregar}
                     alTocar={() =>
-                      router.push(`/restaurant/${g.restaurante.id}?grupo=${String(codigo)}`)
+                      router.push(
+                        `/${g.restaurante.esTienda ? 'store' : 'restaurant'}/${g.restaurante.id}?grupo=${String(codigo)}`,
+                      )
                     }
                   />
                 </View>

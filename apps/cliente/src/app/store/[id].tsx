@@ -40,7 +40,12 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
  * rebajado) y el botón «+». Se cargan de 50 en 50: una tienda puede tener miles.
  */
 export default function Tienda() {
-  const { id, q: qInicial } = useLocalSearchParams<{ id: string; q?: string }>();
+  // C-PEDIDO-GRUPO-TIENDA: con ?grupo=<código>, lo que se agrega va al pedido en grupo.
+  const {
+    id,
+    q: qInicial,
+    grupo,
+  } = useLocalSearchParams<{ id: string; q?: string; grupo?: string }>();
   const { api, idioma } = useSesion();
   const t = textosTiendas(idioma);
   const tc = textosComida(idioma);
@@ -106,8 +111,31 @@ export default function Tienda() {
       ? carrito.lineas.filter((l) => l.platoId === pid).reduce((s, l) => s + l.cantidad, 0)
       : 0;
 
+  const [avisoGrupo, setAvisoGrupo] = useState('');
+  async function crearGrupo() {
+    try {
+      const r = await api.pedir<{ codigo: string }>('POST', '/datos/grupos', { restauranteId: id });
+      router.push(`/group/${r.codigo}`);
+    } catch (x) {
+      setError(x instanceof Error ? x.message : String(x));
+    }
+  }
   async function alMas(p: ProductoTienda) {
     if (!ficha) return;
+    if (grupo) {
+      try {
+        await api.pedir('POST', `/datos/grupos/${String(grupo)}/items`, {
+          platoId: p.id,
+          cantidad: 1,
+        });
+        setAvisoGrupo(
+          idioma === 'en' ? 'Added to the group order.' : 'Agregado al pedido en grupo.',
+        );
+      } catch (x) {
+        setError(x instanceof Error ? x.message : String(x));
+      }
+      return;
+    }
     const rest = {
       id: ficha.id,
       nombre: ficha.nombre,
@@ -183,6 +211,34 @@ export default function Tienda() {
             <Estado abierto={ficha.abierto} texto={ficha.abierto ? t.abierta : t.cerrada} />
           </View>
           <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>{ficha.direccion}</Text>
+          {/* C-PEDIDO-GRUPO-TIENDA: como en los restaurantes, el pedido en grupo sale de aquí. */}
+          {grupo ? (
+            <View style={{ marginTop: 8, gap: 4 }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {idioma === 'en'
+                  ? 'You’re adding to a group order.'
+                  : 'Estás agregando a un pedido en grupo.'}
+              </Text>
+              {avisoGrupo ? (
+                <Text style={{ color: C.exito, fontWeight: '700' }}>{avisoGrupo}</Text>
+              ) : null}
+              <Text
+                style={{ color: C.primario, fontWeight: '700' }}
+                onPress={() => router.push(`/group/${String(grupo)}`)}
+                accessibilityRole="button"
+              >
+                {idioma === 'en' ? 'Back to the group order →' : 'Volver al pedido en grupo →'}
+              </Text>
+            </View>
+          ) : (
+            <Text
+              style={{ color: C.primario, fontWeight: '700', marginTop: 8 }}
+              onPress={() => void crearGrupo()}
+              accessibilityRole="button"
+            >
+              {idioma === 'en' ? 'Start a group order' : 'Hacer un pedido en grupo'}
+            </Text>
+          )}
         </View>
       ) : error ? (
         <Text style={{ color: C.secundario, marginTop: 20 }}>{error}</Text>

@@ -172,7 +172,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Arma un pedido para la oficina, la familia o los amigos: compartes un enlace, cada persona agrega lo suyo y tú pagas todo junto.',
         explicacion: [
-          'En el menú del restaurante, toca «Hacer un pedido en grupo». Se abre tu pedido en grupo con el botón «Compartir el enlace».',
+          'En el menú del restaurante, o en la página de una tienda (mercado, farmacia y más), toca «Hacer un pedido en grupo». Se abre tu pedido en grupo con el botón «Compartir el enlace». En las tiendas, cada producto lleva lo que elegiste hacer si falta.',
           'Cada persona abre el enlace con su cuenta de Divoox, toca «Agregar mis platos» y elige del menú como siempre, con sus opciones. Lo suyo aparece con su nombre.',
           'Cada quien puede quitar lo suyo. Tú, que armaste el pedido, puedes quitar cualquier plato.',
           'Si quieres, pon una hora de cierre (en 30 minutos, 1 hora o 2 horas). Al llegar la hora nadie puede agregar más y te avisamos para que revises y pagues.',
@@ -3253,7 +3253,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Build one order for the office, family or friends: share a link, each person adds their items and you pay for everything together.',
         explicacion: [
-          'On the restaurant menu, tap “Start a group order”. Your group order opens with a “Share the link” button.',
+          'On the restaurant menu, or on a store page (grocery, pharmacy and more), tap “Start a group order”. Your group order opens with a “Share the link” button. In stores, each item keeps what you chose to do if it’s out.',
           'Each person opens the link with their Divoox account, taps “Add my items” and picks from the menu as usual, with their options. Their items show with their name.',
           'Everyone can remove their own items. You, who started the order, can remove any item.',
           'If you want, set a closing time (in 30 minutes, 1 hour or 2 hours). At that time nobody can add more and we let you know so you can review and pay.',
