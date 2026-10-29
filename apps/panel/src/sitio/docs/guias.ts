@@ -170,6 +170,11 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
+            src: '/docs/cliente-sugerencias-es.webp',
+            alt: 'Carrito de la app de Divoox escribiendo «100 Biscayne»: aparecen sugerencias de direcciones reales, primero las de Miami.',
+            pie: 'Mientras escribes salen direcciones reales, primero las cercanas; toca la tuya.',
+          },
+          {
             src: '/docs/recorrido-cliente-direcciones-es.webp',
             alt: 'Carrito con la dirección guardada «Casa» como botón encima del mapa, ya seleccionada.',
             pie: 'Un toque en «Casa» rellena la dirección y el pin del mapa.',
@@ -2734,6 +2739,13 @@ const es: SeccionDocs[] = [
           'Hay un límite de sesenta llamadas por minuto por clave. Los errores vienen en palabras claras, en el idioma que pidas con la cabecera «x-idioma» (en o es).',
           'El destinatario puede consultar el estado de su paquete con su código de seguimiento; esa consulta solo muestra el estado y las fechas, nunca datos personales.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-claves-es.webp',
+            alt: 'Pantalla «Claves de integración (API)» en el panel de Divoox Flex: nombre de la clave y los permisos que tendrá.',
+            pie: 'Creas una clave por sistema y eliges solo los permisos que necesita; se muestra una sola vez.',
+          },
+        ],
         preguntas: [
           '¿Cómo conecto mi sistema con Divoox Flex?',
           '¿Qué puede hacer una clave de API?',
@@ -3120,6 +3132,11 @@ const en: SeccionDocs[] = [
           'As you type a new address, real address suggestions appear. Tap yours: the map pin lands right at your door and the driver gets there without getting lost. It works in the cart, in your saved addresses and when you change an order’s address.',
         ],
         capturas: [
+          {
+            src: '/docs/cliente-sugerencias-en.webp',
+            alt: 'Divoox app cart typing “100 Biscayne”: real address suggestions appear, Miami ones first.',
+            pie: 'As you type, real addresses appear, nearby ones first; tap yours.',
+          },
           {
             src: '/docs/recorrido-cliente-direcciones-en.webp',
             alt: 'Cart with the saved address “Home” as a button above the map, already selected.',
@@ -5642,6 +5659,13 @@ const en: SeccionDocs[] = [
           'Available operations: create one shipment or several in a single call (up to twenty-five), list and read shipments and packages, record a custody step, get label data, resolve a scanned code, import a sheet in two steps (preview and confirm) and manage draft batches and routes.',
           'There is a limit of sixty calls per minute per key. Errors come in plain words, in the language you ask for with the “x-idioma” header (en or es).',
           'The recipient can check the status of their package with its tracking code; that query shows only the status and dates, never personal data.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-claves-en.webp',
+            alt: 'The “Integration keys (API)” screen in the Divoox Flex dashboard: the key’s name and the permissions it will have.',
+            pie: 'You create one key per system and pick only the permissions it needs; it’s shown only once.',
+          },
         ],
         preguntas: [
           'How do I connect my system to Divoox Flex?',

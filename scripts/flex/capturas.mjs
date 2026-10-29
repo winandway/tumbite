@@ -196,6 +196,9 @@ for (const idioma of ['es', 'en']) {
   await foto(p, `panel-pedir-ubicacion-${idioma}`);
   await p.goto(`${URL}${pre}/panel/business/${empresa.id}/shipments/${envios[0].id}`);
   await foto(p, `panel-ubicacion-app-${idioma}`);
+  // La pantalla de las llaves de la API (guía «flex-api»).
+  await p.goto(`${URL}${pre}/panel/business/${empresa.id}/keys`);
+  await foto(p, `panel-claves-${idioma}`);
   await p.goto(`${URL}${pre}/panel/business/${empresa.id}/labels`);
   await p.getByText('ORD-1003').click();
   await p.setViewportSize({ width: 1280, height: 1180 });
