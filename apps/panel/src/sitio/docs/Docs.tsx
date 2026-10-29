@@ -247,6 +247,17 @@ function PaginaGuia({
           ))}
         </div>
       )}
+      {guia.descargas && guia.descargas.length > 0 && (
+        <ul className="docs-descargas">
+          {guia.descargas.map((d) => (
+            <li key={d.href}>
+              <a className="boton" href={d.href} target="_blank" rel="noopener noreferrer">
+                {d.texto}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
       {guia.pasos.length > 0 && (
         <>
           <h2>{t.pasos}</h2>

@@ -64,7 +64,7 @@
 - [x] (ya existía: «Quitar repartidor» en el detalle del pedido, con motivo; el pedido se ofrece a otro y el registro del equipo anota quién lo hizo) Superadmin: reasignar el repartidor desde el detalle del pedido, con motivo y registro de quién lo hizo. Todos los países.
 
 - [x] «Te puede gustar» en el inicio del cliente (como DoorDash): restaurantes abiertos y cercanos del mismo tipo de comida que ya pidió, que todavía no probó, ordenados por calificación; si nunca pidió, los mejor calificados. Servidor, app, Docs. Todos los países.
-- [ ] Presentaciones en PDF horizontal con capturas reales, en Docs: (1) para clientes: programar, pedir otra vez, pedido en grupo, compartir el seguimiento, «Te puede gustar»; (2) láminas para charlas con restaurantes: qué gana el restaurante con cada herramienta (programados, grupo, comanda, punto de venta, rendimiento, reseñas). Pasarle el enlace a Richard. Todos los países.
+- [x] Presentaciones en PDF horizontal con capturas reales, en Docs: (1) para clientes: programar, pedir otra vez, pedido en grupo, compartir el seguimiento, «Te puede gustar»; (2) láminas para charlas con restaurantes: qué gana el restaurante con cada herramienta (programados, grupo, comanda, punto de venta, rendimiento, reseñas). Pasarle el enlace a Richard. Todos los países.
 
 ## Cada sesión
 

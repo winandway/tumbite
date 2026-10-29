@@ -5123,3 +5123,13 @@ button {
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* Descargas de una guía (presentaciones en PDF). */
+.docs-descargas {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}

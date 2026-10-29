@@ -18,6 +18,8 @@ export type Guia = {
   preguntas?: string[];
   pasos: string[];
   nota?: string;
+  /** Archivos para descargar (las presentaciones en PDF). */
+  descargas?: { texto: string; href: string }[];
 };
 export type SeccionDocs = {
   id: 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'business' | 'account';
@@ -1528,6 +1530,29 @@ const es: SeccionDocs[] = [
           'En «Conectar tu punto de venta», crea una llave.',
           'Pásasela a quien instala tu sistema.',
         ],
+      },
+      {
+        id: 'presentations',
+        titulo: 'Presentaciones de Divoox (PDF)',
+        resumen:
+          'Láminas en PDF, con pantallas reales de la app, para explicar Divoox a clientes y para dar charlas a restaurantes.',
+        explicacion: [
+          'Para clientes: cómo programar un pedido, pedir otra vez, «Te puede gustar», el pedido en grupo y cómo compartir el seguimiento.',
+          'Para restaurantes: qué gana el restaurante con los pedidos programados y en grupo, los clientes que vuelven, su tablero, la comanda impresa, la conexión con su caja y las reseñas.',
+          'Están en horizontal, listas para proyectar en una pantalla o mandar por WhatsApp o correo.',
+        ],
+        descargas: [
+          {
+            texto: 'Presentación para clientes (PDF)',
+            href: '/docs/presentaciones/divoox-clientes-es.pdf',
+          },
+          {
+            texto: 'Presentación para restaurantes (PDF)',
+            href: '/docs/presentaciones/divoox-restaurantes-es.pdf',
+          },
+        ],
+        preguntas: ['¿Tienen una presentación de Divoox para restaurantes?'],
+        pasos: ['Toca la presentación que quieres.', 'Descárgala o proyéctala.'],
       },
       {
         id: 'dashboard',
@@ -4722,6 +4747,29 @@ const en: SeccionDocs[] = [
           'Under “Connect your point of sale”, create a key.',
           'Give it to whoever sets up your system.',
         ],
+      },
+      {
+        id: 'presentations',
+        titulo: 'Divoox presentations (PDF)',
+        resumen:
+          'PDF slides, with real app screens, to explain Divoox to customers and to give talks to restaurants.',
+        explicacion: [
+          'For customers: how to schedule an order, order again, “You might like”, group orders and how to share tracking.',
+          'For restaurants: what a restaurant gets from scheduled and group orders, returning customers, its dashboard, printed kitchen tickets, connecting its POS and reviews.',
+          'They’re in landscape, ready to project on a screen or send by WhatsApp or email.',
+        ],
+        descargas: [
+          {
+            texto: 'Presentation for customers (PDF)',
+            href: '/docs/presentaciones/divoox-customers-en.pdf',
+          },
+          {
+            texto: 'Presentation for restaurants (PDF)',
+            href: '/docs/presentaciones/divoox-restaurants-en.pdf',
+          },
+        ],
+        preguntas: ['Do you have a Divoox presentation for restaurants?'],
+        pasos: ['Tap the presentation you want.', 'Download it or project it.'],
       },
       {
         id: 'dashboard',

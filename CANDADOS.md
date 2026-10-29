@@ -1650,3 +1650,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el inicio no recomendaba restaurantes nuevos según lo que la persona ya pidió (DoorDash «You might like»).
 - **Arreglo:** `recomendarRestaurantes` (`packages/compartido/src/recomendados.ts`): mismo tipo de comida que sus pedidos entregados, abiertos, sin los ya probados, el más cercano primero; sin historial no muestra nada. En `apps/cliente/src/Inicio.tsx` la fila «Te puede gustar» usa la misma tarjeta de `Restaurantes` con `titulo` y `testID="te-puede-gustar"` (la lista normal sigue siendo `lista-restaurantes`, la que usa el recorrido). Docs: guía «you-might-like».
 - **Prueba:** `compartido/recomendados.test.ts`.
+
+## C-PRESENTACIONES (29 oct 2026) — todos los países
+
+- **Qué es:** presentaciones en PDF horizontal (1280×720) con capturas ORIGINALES de la app, para clientes y para charlas con restaurantes, en español e inglés.
+- **Cómo se rehacen:** `CLAVE_DEMO=… node scripts/presentaciones/capturas.mjs` (capturas del sitio de pruebas: pedido en grupo, punto de venta, pedidos, comanda) y `node scripts/presentaciones/generar.mjs` (arma los cuatro PDF con las capturas de `docs/capturas/` y los logos oficiales). Salen en `apps/panel/public/docs/presentaciones/` y se publican con la web.
+- **En Docs:** guía «presentations» con el campo nuevo `descargas` (lo dibuja `Docs.tsx`).
+- **Regla:** cada vez que cambie una de esas pantallas, se rehacen las capturas y los PDF en el mismo trabajo.
