@@ -1602,3 +1602,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el cliente no podía mostrarle a otra persona cómo iba su pedido (Uber Eats lo tiene; Moto ya lo tenía con su viaje).
 - **Arreglo:** tabla `pedidos_compartidos` (solo la huella del código). `POST /datos/pedidos/:id/compartir` (solo el dueño, pedido vivo) y `GET /datos/publico/pedido/:codigo` (`apps/servidor/src/rutas/pedidoCompartido.ts`): estado, restaurante, primer nombre del repartidor y su ubicación SOLO en camino; nunca dirección, nombre del cliente ni dinero; sin indexar; terminado = sin datos. Página `/order-status/<código>` (`apps/panel/src/sitio/PedidoCompartido.tsx`), botón «Compartir el seguimiento» en el pedido del cliente. Docs: guía «share-tracking».
 - **Prueba:** «C-SEGUIMIENTO-COMPARTIDO» en `rutas/operacion.test.ts`.
+
+## C-FLEX-OPTIMIZAR-TIEMPO (29 oct 2026) — pruebas
+
+- **Qué pasó:** la prueba «150 paradas en menos de un segundo» falló en GitHub (1,28 s) con todas las pruebas corriendo a la vez; en esta computadora tarda unos 0,3 s. No fue un cambio del optimizador.
+- **Arreglo:** en GitHub (`CI`) el tope es 2,5 s; en la computadora sigue en 1 s, así una lentitud real del optimizador se sigue viendo aquí.
