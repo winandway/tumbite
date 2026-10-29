@@ -955,6 +955,11 @@ const es: SeccionDocs[] = [
             alt: 'Estadísticas de la app del restaurante con ventas, pedidos, ticket promedio y lo que te queda, por día, semana y mes.',
             pie: 'Cómo te va, de un vistazo.',
           },
+          {
+            src: '/docs/recorrido-restapp-pedidos-es.webp',
+            alt: 'Pestaña Pedidos de la app del restaurante, con filtros En preparación, Listos y Completados y un pedido en curso.',
+            pie: 'En «Pedidos» ves los de las últimas 24 horas, filtrados por estado.',
+          },
         ],
         preguntas: [
           '¿Cómo acepto un pedido desde el celular?',
@@ -1602,6 +1607,16 @@ const es: SeccionDocs[] = [
             src: '/docs/recorrido-restapp-cobro-repartidor-es.webp',
             alt: 'App del restaurante con un pedido pagado en mano: «Cobra al repartidor» con el monto y si el repartidor ya registró el pago.',
             pie: 'El restaurante ve cuánto cobrarte y si ya registraste el pago.',
+          },
+          {
+            src: '/docs/recorrido-oferta-cobro-en-mano-es.webp',
+            alt: 'Oferta en Divoox Driver que avisa que el cliente paga en efectivo y cuánto pagas tú en el local.',
+            pie: 'Antes de aceptar ves que el cliente paga en efectivo y cuánto adelantas en el local.',
+          },
+          {
+            src: '/docs/recorrido-pago-local-registrado-es.webp',
+            alt: 'Pedido en Divoox Driver con «Paga la comida en el restaurante» y el pago ya registrado, con el monto del ticket.',
+            pie: 'Registras lo que pagaste en el local y el ticket; el cliente te lo devuelve al recibir.',
           },
         ],
         preguntas: [
@@ -2378,6 +2393,16 @@ const es: SeccionDocs[] = [
             alt: 'Página para que el destinatario marque en el mapa dónde recibe su paquete.',
             pie: 'El destinatario marca su puerta en el mapa, sin crear cuenta.',
           },
+          {
+            src: '/docs/flex-app-mis-paquetes-es.webp',
+            alt: '«Mis paquetes» en la app de Divoox: el paquete en camino con su seguimiento, la dirección, el punto de referencia y «Ubicación confirmada».',
+            pie: 'Quien recibe confirma dónde lo recibe desde «Mis paquetes» en su app.',
+          },
+          {
+            src: '/docs/flex-panel-ubicacion-app-es.webp',
+            alt: 'Detalle del envío en el panel de Divoox Flex con la ubicación de entrega confirmada por el destinatario en su app.',
+            pie: 'En el panel ves que el destinatario confirmó la ubicación en su app.',
+          },
         ],
         preguntas: [
           '¿Cómo pido la ubicación exacta al destinatario?',
@@ -2415,6 +2440,11 @@ const es: SeccionDocs[] = [
             src: '/docs/flex-panel-caja-es.webp',
             alt: 'Caja de la ruta en el panel de Divoox Flex con lo cobrado y el botón «Recibí el efectivo».',
             pie: 'La caja de la ruta: lo cobrado y el efectivo por recibir.',
+          },
+          {
+            src: '/docs/flex-panel-cobro-envio-es.webp',
+            alt: 'Detalle de un envío entregado en el panel de Divoox Flex: cobro contra entrega cobrado por el conductor, con el medio de pago y su referencia.',
+            pie: 'Cada envío muestra cuánto se cobró, cómo se pagó y su referencia.',
           },
         ],
         preguntas: [
@@ -2558,6 +2588,11 @@ const es: SeccionDocs[] = [
             src: '/docs/flex-fase3-integraciones-es.webp',
             alt: 'La pantalla de integraciones en el panel de Divoox Flex.',
             pie: 'Los avisos a tu sistema.',
+          },
+          {
+            src: '/docs/flex-fase3-capacidad-es.webp',
+            alt: 'Ruta de Divoox Flex en el panel: al elegir el vehículo avisa que la ruta no cabe (8 paquetes para un vehículo de 6).',
+            pie: 'Si la ruta no cabe en el vehículo, te avisa antes de asignarla.',
           },
         ],
         preguntas: [
@@ -3863,6 +3898,11 @@ const en: SeccionDocs[] = [
             alt: 'Restaurant app stats with sales, orders, average ticket, and what you keep, by day, week, and month.',
             pie: 'How you’re doing, at a glance.',
           },
+          {
+            src: '/docs/recorrido-restapp-pedidos-en.webp',
+            alt: 'The Orders tab of the restaurant app, with In progress, Ready and Completed filters and an order in progress.',
+            pie: 'In “Orders” you see the last 24 hours, filtered by status.',
+          },
         ],
         preguntas: [
           'How do I accept an order from my phone?',
@@ -4503,6 +4543,16 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-restapp-cobro-repartidor-en.webp',
             alt: 'Restaurant app with an order paid in hand: “Charge the driver” with the amount and whether the driver already recorded the payment.',
             pie: 'The restaurant sees how much to charge you and whether you recorded the payment.',
+          },
+          {
+            src: '/docs/recorrido-oferta-cobro-en-mano-en.webp',
+            alt: 'An offer in Divoox Driver warning that the customer pays in cash and how much you pay at the restaurant.',
+            pie: 'Before accepting you see the customer pays in cash and how much you pay up front.',
+          },
+          {
+            src: '/docs/recorrido-pago-local-registrado-en.webp',
+            alt: 'An order in Divoox Driver with “Pay for the food at the restaurant” and the payment already recorded, with the receipt amount.',
+            pie: 'You record what you paid and the receipt; the customer pays you back on delivery.',
           },
         ],
         preguntas: [
@@ -5286,6 +5336,16 @@ const en: SeccionDocs[] = [
             alt: 'Page where the recipient marks on the map where they receive their package.',
             pie: 'The recipient marks their door on the map, no account needed.',
           },
+          {
+            src: '/docs/flex-app-mis-paquetes-en.webp',
+            alt: '“My packages” in the Divoox app: the package on its way with its tracking number, the address, the landmark and “Location confirmed”.',
+            pie: 'The recipient confirms where they’ll receive it from “My packages” in their app.',
+          },
+          {
+            src: '/docs/flex-panel-ubicacion-app-en.webp',
+            alt: 'Shipment detail in the Divoox Flex dashboard with the delivery location confirmed by the recipient in their app.',
+            pie: 'In the dashboard you see the recipient confirmed the location in their app.',
+          },
         ],
         preguntas: [
           'How do I ask the recipient for their exact location?',
@@ -5323,6 +5383,11 @@ const en: SeccionDocs[] = [
             src: '/docs/flex-panel-caja-en.webp',
             alt: 'Route cash panel in Divoox Flex with what was collected and the “I received the cash” button.',
             pie: 'Route cash: what was collected and the cash still to receive.',
+          },
+          {
+            src: '/docs/flex-panel-cobro-envio-en.webp',
+            alt: 'Detail of a delivered shipment in the Divoox Flex dashboard: cash on delivery collected by the driver, with the payment method and its reference.',
+            pie: 'Each shipment shows how much was collected, how it was paid and its reference.',
           },
         ],
         preguntas: [
