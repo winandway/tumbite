@@ -46,7 +46,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 ## 👤 Lo que solo puede hacer Richard
 
-- [ ] **Google Play, accesos:** confirmar administrador real, preparar escenario aislado de revisión, comprobar los tres accesos en los Android de la tienda y guardar las credenciales directamente en Google Play. Crear cuentas por sí solo no cierra este punto. Véase [Acceso de revisores](docs/ACCESO-REVISORES.md).
+- [ ] 👤 **Google Play, accesos:** (de mi lado todo listo; falta que abras tu sesión de administrador en divoox.com/panel) confirmar administrador real, preparar escenario aislado de revisión, comprobar los tres accesos en los Android de la tienda y guardar las credenciales directamente en Google Play. Crear cuentas por sí solo no cierra este punto. Véase [Acceso de revisores](docs/ACCESO-REVISORES.md).
 
 - [ ] 👤 **Leer la auditoría final** (`docs/AUDITORIA-FINAL-2026-10-18.md`) y decidir: cuándo publicar en tiendas (recomendación: al cerrar la lista MVP), qué hacer con el banner del kit de la web (pantalla dibujada, no real), y ordenar la fila si quiere otro orden.
 - [ ] 👤 **Probar en el simulador las dos apps nuevas** (cliente e inicio «como los grandes»; repartidor con oferta completa, calificaciones, ganancias, campana, pausa, llegué y ayuda) y decir qué falta. Cuentas en `docs/CUENTAS-DE-PRUEBA.md`.
@@ -68,8 +68,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 **Cuenta de Checkr** (antecedentes de repartidores, como DoorDash): abrir la cuenta a nombre de Windoce LLC en Checkr, elegir el paquete con antecedentes penales y récord de manejo (cuesta por repartidor verificado, del orden de 30 a 50 dólares cada uno; lo paga Tumbite), y pegar UN valor en YaDominios Cloud → sitio tumbite → Variables de entorno: `CHECKR_API_KEY` (la llave secreta de producción). En Checkr → Developer → Webhooks, poner la dirección de avisos `https://tumbite.com/datos/checkr/aviso`. Destranca: el botón «Iniciar la verificación de antecedentes» de la app del repartidor (hoy dice que se activa pronto).
 - [x] 👤 Decidir el primer pedido de 7.18 dólares: marcado entregado por decisión de Richard (15 oct), sin reembolso.
 - [ ] 👤 **Cuentas de desarrollador de Apple y Google** a nombre de Windoce LLC: sin ellas las apps no llegan a las tiendas. (La Etapa 2½ quedó cerrada el 14 oct; solo falta la prueba en la calle.) Guía paso a paso con croquis en `docs/Guia-publicar-apps-Apple-Google.pdf` (Apple como organización con correo @windoce.com, llave Admin; Google: comprobar que la cuenta sea de organización; Expo: organización windoce-llc y su llave).
-- [ ] 👤 Número de WhatsApp de soporte.
-- [ ] 👤 Llave de Google Places para que la dirección se complete sola.
+- [ ] 👤 Número de WhatsApp de soporte (ver el punto con el detalle más abajo).
+- [x] Llave de Google Places (28 oct; en los dos sitios, con topes diarios).
 - [ ] 👤 Abogado: revisar los textos legales y la marca.
 - [x] Modelo de dinero en punto de equilibrio aplicado el 13 oct 2026 (envío desde 3,99, servicio con mínimo 1,99; `docs/MODELO-DE-DINERO.md`).
 - [ ] 👤 Retiro mínimo para restaurantes y repartidores (hoy 1 dólar; recomendado 10, porque Stripe cobra 25 centavos por retiro).
@@ -90,22 +90,22 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 **Llave de Google Maps para Android** (Google Cloud → Maps SDK for Android; gratis hasta un volumen alto). Va en `apps/cliente/app.json`. Sin ella, el mapa solo se ve en iPhone.
 - [ ] 👤 ¿Promociones de lanzamiento? Cupón de envío gratis para la lista de espera y comisión 0 % por 3 meses para restaurantes (sugerencias en docs/EXPANSION-Y-LANDING.md). Son decisiones de dinero.
 - [ ] 👤 ¿Lanzar también en Venezuela? Si sí: Pago Móvil y Zelle (Zelle no tiene API para comercios).
-- [ ] ~~Plataforma no republica~~ resuelto. Texto viejo: **La plataforma no está republicando.** Desde las 21:12 (hora UTC) del 10 oct 2026 la rama `yapanel-build` recibió 4 publicaciones nuevas y tumbite.com sigue con la primera. Esa primera versión da error en todas las páginas menos la portada. Entrar a YaDominios Cloud → sitio tumbite → «Registro de errores», y volver a publicar. Con eso se ven la landing nueva, las páginas legales, el panel y el color nuevo.
+- [x] ~~Plataforma no republica~~ resuelto. Texto viejo: **La plataforma no está republicando.** Desde las 21:12 (hora UTC) del 10 oct 2026 la rama `yapanel-build` recibió 4 publicaciones nuevas y tumbite.com sigue con la primera. Esa primera versión da error en todas las páginas menos la portada. Entrar a YaDominios Cloud → sitio tumbite → «Registro de errores», y volver a publicar. Con eso se ven la landing nueva, las páginas legales, el panel y el color nuevo.
 
 - [x] ~~Base de datos en vivo~~ resuelto (salud: base ok). `https://tumbite.com/datos/salud` dice `base: pendiente`: el sitio no tiene base de datos. Revisar en YaDominios Cloud → sitio tumbite que el plan incluya base de datos y mirar «Registro de errores». Sin esto, nada de cuentas ni pedidos funciona en vivo.
-- [ ] 👤 **Stripe de Windoce LLC** con Connect activado, y sus llaves de PRUEBA puestas en YaDominios Cloud → Variables de entorno: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITIO_URL`. Pasos exactos en `VERIFICAR-PAGOS.md`. Destranca la prueba del circuito de pagos.
+- [x] (en pruebas desde el 28 oct: compras con 4242 de punta a punta) **Stripe de Windoce LLC** con Connect activado, y sus llaves de PRUEBA puestas en YaDominios Cloud → Variables de entorno: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITIO_URL`. Pasos exactos en `VERIFICAR-PAGOS.md`. Destranca la prueba del circuito de pagos.
 - [x] `ADMIN_CORREOS` (tumbite.com@gmail.com) y `ADMIN_SEMILLA` puestos (11 oct 2026; la semilla está en el llavero de esta Mac).
 - [ ] 👤 **Cuenta de administrador:** registrarse en tumbite.com/panel con tumbite.com@gmail.com y nombre «Soporte Tumbite»; la IA la vuelve administrador. Destranca aprobar restaurantes.
 - [x] Llave de IA de tumbite-pruebas recibida (11 oct 2026): variables puestas, correo en verde. Las llaves de prueba de Stripe se ponen ahí en cuanto lleguen.
 - [x] `staging.tumbite.com` conectado al sitio de pruebas (YaDominios lo arregló el 11 oct 2026, 19:26 UTC). El semáforo (`URL_PRUEBAS`) y `SITIO_URL` de pruebas apuntan ahí.
 - [ ] 👤 **Cuentas de desarrollador** de Apple y Google a nombre de Windoce LLC, y cuenta de Expo (EAS) de la empresa. Destranca la publicación en tiendas (`docs/TIENDAS.md`).
-- [ ] 👤 **Abrir Xcode una vez** en esta Mac para que termine de instalarse. Destranca probar las apps en el simulador de iPhone.
+- [x] (simulador de iPhone funcionando) **Abrir Xcode una vez** en esta Mac para que termine de instalarse. Destranca probar las apps en el simulador de iPhone.
 - [ ] 👤 Turnstile (escudo anti-robots): las DOS claves de Cloudflare (pública `TURNSTILE_SITE_KEY` y secreta `TURNSTILE_SECRET_KEY`) en YaDominios Cloud → sitio tumbite → Variables, con `tumbite.com` y `staging.tumbite.com` en los dominios del widget. Desde el 18 oct la web y las tres apps ya mandan el pase (F5). Opcional; sin ellas el login funciona con el límite de intentos.
 - [ ] 👤 Aprobar el modelo de dinero de los cuatro bolsillos (construido; se edita en el panel → Dinero).
 - [ ] 👤 Nombre del programa de música y porcentaje para el fondo (sugerido 5 %).
 - [ ] 👤 Nombres de los planes (hoy: Inicial / Crece / Élite) y de los cuatro niveles (hoy: Bronce / Plata / Oro / Diamante).
 - [x] Legales listos para las tiendas (12 oct 2026): privacidad, términos para clientes, restaurantes y repartidores, página de borrar cuenta y aviso al crear cuenta. Ver `docs/LEGALES-TIENDAS.md`.
-- [ ] 👤 Revisión de marca «Tumbite» con abogado (USPTO, clases 9, 39, 42 y 43) y revisión legal de los textos ya publicados.
+- [ ] 👤 Revisión de marca «Divoox» con abogado (USPTO, clases 9, 39, 42 y 43) y revisión legal de los textos ya publicados.
 - [ ] 👤 Contador: impuesto de ventas en Florida; repartidores empleados e independientes.
 - [x] Empresa: Windoce LLC. Nombre: Tumbite. Dominio tumbite.com conectado y en vivo (10 oct 2026).
 
@@ -140,7 +140,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] S2, S3, S5 y S7 en la base real del sitio de pruebas, sin compartir ningún token (corren desde GitHub con el secreto del reloj).
 - [x] «En proceso» en la app y en el panel; retiros apagados por defecto.
 - [x] Anulación del Manager verificada en Stripe antes de revivir un pedido (C-ANULACION-VERIFICADA).
-- [ ] 👤 Cargar en el panel de YaDominios, **en el sitio de pruebas**, las llaves de **modo prueba** de Stripe y su aviso de prueba (con `transfer.created`). Destraba S11 y el recorrido completo de Comida en pruebas. Nunca en el chat.
+- [x] (hecho; compras de prueba en staging el 28 oct) Cargar en el panel de YaDominios, **en el sitio de pruebas**, las llaves de **modo prueba** de Stripe y su aviso de prueba (con `transfer.created`). Destraba S11 y el recorrido completo de Comida en pruebas. Nunca en el chat.
 
 ## Fase 1 · Multiservicio (15 oct 2026, rama `multiservicio-fase-1`, solo local)
 

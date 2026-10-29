@@ -20,9 +20,16 @@
 - [x] Monetización prepago, paso 2: política de cancelaciones por servicio dentro de la misma capa, con sus pruebas. Todos los países.
 - [x] Superadmin, pantalla de «Cancelaciones» en Finanzas (ver, crear y aprobar la regla por servicio y país) sobre las rutas nuevas, con su prueba. Todos los países.
 - [x] F17: ciudades de la web desde el servidor, con interruptor de lanzamiento por ciudad en el superadmin; Miami sigue «muy pronto» hasta que Richard lo encienda. Todos los países.
-- [ ] Google Play, accesos de revisión: preparar el escenario aislado en staging y comprobar que las tres cuentas de revisión entran en las tres apps. EE. UU.
-- [ ] Fichas de las tiendas (Google Play y App Store): textos en inglés y español y capturas del recorrido listas en `docs/FICHAS-TIENDAS.md`, para subirlas al cerrar las pantallas. Todos los países.
-- [ ] Limpiar `PENDIENTES.md`: marcar lo que ya quedó resuelto (Google Places, Stripe de prueba, cuenta de administrador, Xcode, etc.) y dejar los 👤 vigentes arriba. Todos los países.
+- [!] (necesita que Richard abra su sesión de administrador en divoox.com/panel; yo no escribo contraseñas) Google Play, accesos de revisión: preparar el escenario aislado en staging y comprobar que las tres cuentas de revisión entran en las tres apps. EE. UU.
+- [x] (ya estaban en docs/TIENDAS.md, «Fichas de la tienda», y scripts/marca/fichas-tiendas.mjs; las tiendas de productos no se anuncian mientras estén apagadas) Fichas de las tiendas (Google Play y App Store): textos en inglés y español y capturas del recorrido listas en `docs/FICHAS-TIENDAS.md`, para subirlas al cerrar las pantallas. Todos los países.
+- [x] Limpiar `PENDIENTES.md`: marcar lo que ya quedó resuelto (Google Places, Stripe de prueba, cuenta de administrador, Xcode, etc.) y dejar los 👤 vigentes arriba. Todos los países.
+
+## Siguiente (de la lista final de la auditoría del 18 oct, lo que hacen DoorDash y Uber Eats)
+
+- [ ] «Pedir otra vez» en Comida y Tiendas: botón en el pedido entregado y en «Pedidos» que vuelve a llenar el carrito con lo mismo (solo lo que sigue disponible, con su precio de hoy y aviso de lo que falta). App del cliente, web de la app, Docs con captura. Todos los países.
+- [ ] Pedido programado (elegir día y hora de entrega) en Comida: cliente elige franja, el restaurante lo ve como programado y se le avisa antes, el repartidor lo recibe a su hora; cobro igual que hoy. Ficha REA antes. Servidor, tres apps, panel, Docs. Todos los países.
+- [ ] Rendimiento del restaurante (ventas por hora y día, ticket promedio, tiempo de preparación real contra prometido, clientes nuevos y recurrentes) en el panel y la app del restaurante, con Docs. Todos los países.
+- [ ] Roles internos del superadmin (soporte, finanzas, solo lectura) con registro de quién hizo qué. Todos los países.
 
 ## Cada sesión
 
