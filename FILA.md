@@ -46,7 +46,7 @@
 
 - [x] Repartidor destacado (como el «Top Dasher» de DoorDash): requisitos visibles en Calificaciones y prioridad en las ofertas. Todos los países.
 
-- [ ] Varios locales en una sola cuenta (DoorDash Merchant para cadenas): primero la ficha en docs/investigaciones-rea con todo lo que hoy supone un local por dueño (fotos, verificación del local, cobros, activación, miembros); después construir con selector de local en panel y app. Todos los países.
+- [ ] (ficha lista: docs/investigaciones-rea/2026-10-29-varios-locales.md) Varios locales en una sola cuenta (DoorDash Merchant para cadenas): primero la ficha en docs/investigaciones-rea con todo lo que hoy supone un local por dueño (fotos, verificación del local, cobros, activación, miembros); después construir con selector de local en panel y app. Todos los países.
 - [x] Compartir el seguimiento del pedido con otra persona (como Uber Eats): enlace de solo lectura con estado, hora estimada y el repartidor en el mapa mientras va en camino; se apaga al entregar. Servidor, app del cliente, página pública, Docs. Todos los países.
 
 ## Cada sesión
