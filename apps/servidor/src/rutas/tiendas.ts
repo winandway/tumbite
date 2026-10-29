@@ -666,3 +666,53 @@ export async function lineasDeTienda(
     };
   });
 }
+
+// ───────────────────── C-TIENDAS-CODIGO: rellenar la ficha con el código de barras ─────────────────────
+
+/**
+ * Busca el producto en Open Food Facts (base abierta, licencia ODbL; las fotos, CC BY-SA) por el
+ * servidor, para que la tienda no escriba lo que ya existe. Solo rellena: la tienda revisa y guarda.
+ * Si Open Food Facts no responde o no lo conoce, se dice y se sigue escribiendo a mano.
+ */
+tiendas.get('/mi-restaurante/productos/codigo/:codigo', async (c) => {
+  await miComercio(c, 'staff');
+  const codigo = c.req.param('codigo').replace(/\D/g, '');
+  if (!codigoBarrasValido(codigo))
+    throw new ErrorDatos('Ese código de barras no es válido.', 'codigoBarras', 422);
+  let r: Response;
+  try {
+    r = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${codigo}.json?fields=product_name,product_name_es,product_name_en,brands,quantity,image_front_url`,
+      { headers: { 'user-agent': 'Divoox/1.0 (soporte@divoox.com)' } },
+    );
+  } catch (e) {
+    console.error('codigo de barras: Open Food Facts no responde', e);
+    throw new ErrorDatos('No pudimos buscar ese código ahora. Escríbelo a mano.', undefined, 503);
+  }
+  const d = (await r.json().catch(() => ({}))) as {
+    status?: number;
+    product?: Record<string, string | undefined>;
+  };
+  if (!r.ok || d.status !== 1 || !d.product)
+    return c.json({ encontrado: false, fuente: 'Open Food Facts' });
+  const p = d.product;
+  // «500 ml», «1 L», «12 oz»: número y unidad, si se entienden.
+  const cantidad = /^([\d.,]+)\s*([a-zA-Z ]+)$/.exec(String(p.quantity ?? '').trim());
+  const imagen = String(p.image_front_url ?? '');
+  return c.json({
+    encontrado: true,
+    fuente: 'Open Food Facts',
+    nombreEs: p.product_name_es || '',
+    nombreEn: p.product_name_en || p.product_name || '',
+    marca:
+      String(p.brands ?? '')
+        .split(',')[0]
+        ?.trim() ?? '',
+    tamano: cantidad ? cantidad[1]!.replace(',', '.') : '',
+    unidad:
+      (cantidad &&
+        UNIDADES_TAMANO.find((u) => u.toLowerCase() === cantidad[2]!.trim().toLowerCase())) ||
+      '',
+    imagen: imagen.startsWith('https://') ? imagen : '',
+  });
+});

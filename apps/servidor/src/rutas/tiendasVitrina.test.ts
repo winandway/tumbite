@@ -170,3 +170,58 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(r.estado).toBe(409);
   });
 });
+
+describe('C-TIENDAS-CODIGO · rellenar con el código de barras', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('trae nombre, marca, tamaño y foto de Open Food Facts; si no lo conoce, lo dice', async () => {
+    const { m, dueno } = await escenario();
+    const pedidas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      pedidas.push(url);
+      return url.includes('/012000161155.json')
+        ? new Response(
+            JSON.stringify({
+              status: 1,
+              product: {
+                product_name: 'Spring water',
+                brands: 'Brand Sample, Otra',
+                quantity: '500 ml',
+                image_front_url: 'https://images.openfoodfacts.org/x.jpg',
+              },
+            }),
+          )
+        : new Response(JSON.stringify({ status: 0 }), { status: 404 });
+    });
+    const r = await m.llamar(
+      'GET',
+      '/datos/mi-restaurante/productos/codigo/012000161155',
+      undefined,
+      dueno.token,
+    );
+    expect(r.datos).toMatchObject({
+      encontrado: true,
+      fuente: 'Open Food Facts',
+      nombreEn: 'Spring water',
+      marca: 'Brand Sample',
+      tamano: '500',
+      unidad: 'mL',
+      imagen: 'https://images.openfoodfacts.org/x.jpg',
+    });
+    expect(pedidas[0]).toContain('world.openfoodfacts.org');
+    const nada = await m.llamar(
+      'GET',
+      '/datos/mi-restaurante/productos/codigo/012000161162',
+      undefined,
+      dueno.token,
+    );
+    expect(nada.datos.encontrado).toBe(false);
+    const malo = await m.llamar(
+      'GET',
+      '/datos/mi-restaurante/productos/codigo/012000161156',
+      undefined,
+      dueno.token,
+    );
+    expect(malo.estado).toBe(422);
+  });
+});

@@ -52,6 +52,9 @@ const T = {
     nuevo: 'Agregar un producto',
     sku: 'SKU (tu código interno)',
     codigo: 'Código de barras (opcional)',
+    rellenar: 'Rellenar con el código',
+    rellenado: 'Listo: revisa los datos y guarda. Datos de Open Food Facts.',
+    noEncontrado: 'No encontramos ese código. Escribe los datos a mano.',
     nombre: 'Nombre del producto',
     marca: 'Marca',
     categoria: 'Categoría',
@@ -93,6 +96,9 @@ const T = {
     nuevo: 'Add a product',
     sku: 'SKU (your internal code)',
     codigo: 'Barcode (optional)',
+    rellenar: 'Fill in from the barcode',
+    rellenado: 'Done: check the details and save. Data from Open Food Facts.',
+    noEncontrado: 'We couldn’t find that barcode. Type the details in by hand.',
     nombre: 'Product name',
     marca: 'Brand',
     categoria: 'Category',
@@ -191,6 +197,7 @@ export function Productos({ idioma }: { idioma: Idioma }) {
       precio: '',
       tamano: '',
       unidadTamano: 'each',
+      imagen: '',
     },
     almacen: almacenNavegador,
   });
@@ -260,12 +267,36 @@ export function Productos({ idioma }: { idioma: Idioma }) {
         precio: precioACentavos(v.precio) ?? -1,
         tamano: v.tamano ? Number(v.tamano.replace(',', '.')) : null,
         unidadTamano: v.unidadTamano,
+        imagen: v.imagen,
       });
       await b.limpiar();
       setAviso(t.agregado);
       cargar();
     });
   };
+
+  // C-TIENDAS-CODIGO: con el código de barras se rellena la ficha (la tienda revisa y guarda).
+  const rellenar = () =>
+    hacer(async () => {
+      const r = await pedir<{
+        encontrado: boolean;
+        nombreEs?: string;
+        nombreEn?: string;
+        marca?: string;
+        tamano?: string;
+        unidad?: string;
+        imagen?: string;
+      }>('GET', `/datos/mi-restaurante/productos/codigo/${encodeURIComponent(v.codigoBarras)}`);
+      if (!r.encontrado) return setAviso(t.noEncontrado);
+      const ingles = datos?.pais === 'US';
+      const nombre = (ingles ? r.nombreEn || r.nombreEs : r.nombreEs || r.nombreEn) ?? '';
+      if (nombre && !v.nombre) b.cambiar('nombre', nombre);
+      if (r.marca && !v.marca) b.cambiar('marca', r.marca);
+      if (r.tamano && !v.tamano) b.cambiar('tamano', r.tamano);
+      if (r.unidad) b.cambiar('unidadTamano', r.unidad);
+      if (r.imagen) b.cambiar('imagen', r.imagen);
+      setAviso(t.rellenado);
+    });
 
   async function leerArchivo(f: File | undefined) {
     if (!f) return;
@@ -430,6 +461,17 @@ export function Productos({ idioma }: { idioma: Idioma }) {
           cambiar={(x) => b.cambiar('codigoBarras', x)}
           placeholder="0000000000000"
         />
+        <button
+          type="button"
+          className="boton secundario"
+          disabled={v.codigoBarras.replace(/\D/g, '').length < 8}
+          onClick={() => void rellenar()}
+        >
+          {t.rellenar}
+        </button>
+        {v.imagen ? (
+          <img src={v.imagen} alt={v.nombre || t.nombre} className="foto-producto-previa" />
+        ) : null}
         <Campo
           etiqueta={t.nombre}
           valor={v.nombre}
