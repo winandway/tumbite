@@ -2155,6 +2155,29 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'busy-areas',
+        titulo: 'Zonas con más pedidos: hacia dónde moverte',
+        resumen:
+          'El mapa de la app Driver marca en rojo las zonas de tu ciudad con más pedidos en la última hora, para que sepas dónde hay más trabajo, como en las grandes apps de reparto.',
+        explicacion: [
+          'En el inicio de la app Driver, el mapa muestra círculos rojos translúcidos sobre las zonas con más pedidos de la última hora. Cuanto más intenso el rojo, más pedidos hay.',
+          'Toca un círculo (en la versión web) para ver cuántos pedidos tuvo esa zona en la última hora. Arriba del mapa aparece la leyenda «Zonas con más pedidos ahora» cuando hay alguna.',
+          'El mapa se actualiza solo cada minuto. Una zona con un solo pedido no aparece: solo se marcan las que tienen movimiento de verdad.',
+          'Las zonas se calculan con la ubicación de los restaurantes, nunca con la de los clientes. No se muestran nombres, direcciones ni pedidos concretos.',
+          'Estar en una zona marcada no garantiza ofertas: es una guía de dónde está la demanda ahora mismo. Las ofertas siguen llegando por cercanía, turnos y nivel.',
+        ],
+        preguntas: [
+          '¿Dónde hay más pedidos ahora en Divoox?',
+          '¿Qué son los círculos rojos del mapa?',
+          '¿El mapa muestra dónde viven los clientes?',
+        ],
+        pasos: [
+          'Abre la app Driver y permite la ubicación.',
+          'Mira el mapa del inicio: los círculos rojos son las zonas con más pedidos.',
+          'Si quieres más ofertas, acércate a una zona marcada y conéctate.',
+        ],
+      },
+      {
         id: 'top-driver',
         titulo: 'Repartidor destacado',
         resumen:
@@ -5304,6 +5327,29 @@ const en: SeccionDocs[] = [
           'Open the menu and tap “My shifts”.',
           'Pick the day, start time and length, and tap “Book”.',
           'Go online when your shift starts.',
+        ],
+      },
+      {
+        id: 'busy-areas',
+        titulo: 'Busy areas: where to head for more orders',
+        resumen:
+          'The Driver app map highlights in red the areas of your city with the most orders in the last hour, so you know where the work is, just like the big delivery apps.',
+        explicacion: [
+          'On the Driver app home screen, the map shows translucent red circles over the areas with the most orders in the last hour. The deeper the red, the more orders.',
+          'Tap a circle (on the web version) to see how many orders that area had in the last hour. When there are busy areas, the “Busy areas right now” legend shows above the map.',
+          'The map refreshes on its own every minute. An area with a single order isn’t shown: only areas with real activity are highlighted.',
+          'Areas are based on restaurant locations, never customer locations. No names, addresses, or specific orders are shown.',
+          'Being in a highlighted area doesn’t guarantee offers: it’s a guide to where demand is right now. Offers still come by distance, shifts, and level.',
+        ],
+        preguntas: [
+          'Where are the most orders right now on Divoox?',
+          'What are the red circles on the map?',
+          'Does the map show where customers live?',
+        ],
+        pasos: [
+          'Open the Driver app and allow location access.',
+          'Check the home map: red circles are the busiest areas.',
+          'For more offers, head toward a highlighted area and go online.',
         ],
       },
       {

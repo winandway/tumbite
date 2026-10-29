@@ -1,20 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { Image, View } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
-import type { Punto } from './mapaWeb';
+import type { Punto, ZonaDemanda } from './mapaWeb';
 
 /**
  * Mapa del repartidor (celular): su ubicación con la mascota, los restaurantes cercanos, el
  * restaurante del pedido y la casa del cliente con la línea de la ruta. iOS usa Apple Maps;
- * Android necesita la llave de Google Maps en app.json.
+ * Android necesita la llave de Google Maps en app.json. Con `zonasDemanda`, las zonas con más
+ * pedidos ahora (C-MAPA-DEMANDA) como círculos rojos translúcidos.
  */
 export function Mapa({
   yo,
   restaurante,
   casa,
   marcadores = [],
+  zonasDemanda = [],
   alto = 300,
   etiquetas,
 }: {
@@ -22,6 +24,9 @@ export function Mapa({
   restaurante?: Punto | null;
   casa?: Punto | null;
   marcadores?: { id: string; punto: Punto; nombre: string }[];
+  zonasDemanda?: ZonaDemanda[];
+  /** Solo lo usa la web (el círculo nativo no lleva texto). */
+  etiquetaZona?: (pedidos: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
 }) {
@@ -53,6 +58,16 @@ export function Mapa({
         toolbarEnabled={false}
         accessibilityLabel={etiquetas.yo}
       >
+        {zonasDemanda.map((z) => (
+          <Circle
+            key={`${z.lat},${z.lng}`}
+            center={{ latitude: z.lat, longitude: z.lng }}
+            radius={600}
+            strokeWidth={1}
+            strokeColor="rgba(242,13,32,0.6)"
+            fillColor={z.nivel === 'alta' ? 'rgba(242,13,32,0.35)' : 'rgba(242,13,32,0.18)'}
+          />
+        ))}
         {marcadores.map((m) => (
           <Marker
             key={m.id}

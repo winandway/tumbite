@@ -34,3 +34,19 @@ export function punto(p: Punto, color: string, radio = 9, etiqueta?: string): L.
   if (etiqueta) m.bindTooltip(etiqueta);
   return m;
 }
+
+/** C-MAPA-DEMANDA: una zona con pedidos en la última hora (centro de la celda, unos 1,2 km). */
+export type ZonaDemanda = { lat: number; lng: number; pedidos: number; nivel: 'alta' | 'media' };
+
+/** La zona como un círculo rojo translúcido: más intenso si la demanda es alta. */
+export function zona(z: ZonaDemanda, etiqueta: string): L.Circle {
+  const c = L.circle([z.lat, z.lng], {
+    radius: 600,
+    color: '#F20D20',
+    weight: 1,
+    fillColor: '#F20D20',
+    fillOpacity: z.nivel === 'alta' ? 0.35 : 0.18,
+  });
+  c.bindTooltip(etiqueta);
+  return c;
+}

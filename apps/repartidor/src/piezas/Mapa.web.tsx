@@ -1,16 +1,19 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
-import { COLORES, type Punto, crearMapa, punto } from './mapaWeb';
+import { COLORES, type Punto, type ZonaDemanda, crearMapa, punto, zona } from './mapaWeb';
 
 /**
  * Mapa del repartidor en la versión web (Leaflet con OpenStreetMap, sin llave): su ubicación en
- * escarlata, los restaurantes cercanos, el restaurante del pedido y la casa con la ruta.
+ * escarlata, los restaurantes cercanos, el restaurante del pedido y la casa con la ruta. Con
+ * `zonasDemanda`, las zonas con más pedidos ahora (C-MAPA-DEMANDA), debajo de todo lo demás.
  */
 export function Mapa({
   yo,
   restaurante,
   casa,
   marcadores = [],
+  zonasDemanda = [],
+  etiquetaZona = (n: number) => String(n),
   alto = 300,
   etiquetas,
 }: {
@@ -18,6 +21,8 @@ export function Mapa({
   restaurante?: Punto | null;
   casa?: Punto | null;
   marcadores?: { id: string; punto: Punto; nombre: string }[];
+  zonasDemanda?: ZonaDemanda[];
+  etiquetaZona?: (pedidos: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
 }) {
@@ -25,6 +30,7 @@ export function Mapa({
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
   const centro = yo ?? restaurante ?? casa ?? { lat: 25.7743, lng: -80.1937 };
+  const firmaZonas = zonasDemanda.map((z) => `${z.lat},${z.lng},${z.pedidos}`).join('|');
 
   useEffect(() => {
     if (!caja.current || mapa.current) return;
@@ -42,6 +48,7 @@ export function Mapa({
     if (!m) return;
     for (const c of capas.current) c.remove();
     const nuevas: L.Layer[] = [];
+    for (const z of zonasDemanda) nuevas.push(zona(z, etiquetaZona(z.pedidos)));
     for (const x of marcadores) nuevas.push(punto(x.punto, COLORES.restaurante, 8, x.nombre));
     if (restaurante) nuevas.push(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante));
     if (casa) nuevas.push(punto(casa, COLORES.casa, 9, etiquetas.casa));
@@ -68,6 +75,7 @@ export function Mapa({
     casa?.lat,
     casa?.lng,
     marcadores.length,
+    firmaZonas,
   ]);
 
   return (

@@ -46,6 +46,7 @@ import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
 import { Mapa } from './piezas/Mapa';
+import type { ZonaDemanda } from './piezas/mapaWeb';
 import { ModalMuyPronto } from './piezas/ModalMuyPronto';
 import { Progreso } from './piezas/Progreso';
 import { ResumenDia } from './piezas/ResumenDia';
@@ -515,6 +516,28 @@ export function Inicio() {
       clearInterval(reloj);
     };
   }, [cargar]);
+
+  // C-MAPA-DEMANDA: las zonas con más pedidos de la última hora, cada minuto (como el «Dash Now»).
+  const [zonasDemanda, setZonasDemanda] = useState<ZonaDemanda[]>([]);
+  const latAqui = aqui ? Math.round(aqui.lat * 100) / 100 : null;
+  const lngAqui = aqui ? Math.round(aqui.lng * 100) / 100 : null;
+  useEffect(() => {
+    if (latAqui == null || lngAqui == null) return;
+    const leerDemanda = () =>
+      void api
+        .pedir<{ zonas: ZonaDemanda[] }>(
+          'GET',
+          `/datos/repartidor/demanda?lat=${latAqui}&lng=${lngAqui}`,
+        )
+        .then((r) => setZonasDemanda(r.zonas))
+        .catch((x: unknown) => console.warn('demanda: falló', x));
+    const primero = setTimeout(leerDemanda, 0);
+    const reloj = setInterval(leerDemanda, 60_000);
+    return () => {
+      clearTimeout(primero);
+      clearInterval(reloj);
+    };
+  }, [api, latAqui, lngAqui]);
 
   // Lo pendiente se reintenta cada 10 segundos; lo que el servidor rechaza se muestra y se descarta.
   const textoEnviado = t.pendienteEnviado;
@@ -2147,6 +2170,8 @@ export function Inicio() {
         <Mapa
           yo={aqui}
           marcadores={marcadoresOfertas}
+          zonasDemanda={zonasDemanda}
+          etiquetaZona={(n) => td.zonaOcupada.replace('{n}', String(n))}
           alto={alturaMapa}
           etiquetas={etiquetasMapa}
         />
@@ -2167,6 +2192,35 @@ export function Inicio() {
           >
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.primario }} />
             <Text style={{ fontWeight: '700', fontSize: 12 }}>{td.tuUbicacion}</Text>
+          </View>
+        ) : null}
+        {zonasDemanda.length ? (
+          <View
+            accessibilityRole="text"
+            style={{
+              position: 'absolute',
+              top: 56,
+              left: 16,
+              backgroundColor: '#fff',
+              borderRadius: 999,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <View
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 6,
+                backgroundColor: 'rgba(242,13,32,0.35)',
+                borderWidth: 1,
+                borderColor: C.primario,
+              }}
+            />
+            <Text style={{ fontWeight: '700', fontSize: 12 }}>{td.zonasOcupadas}</Text>
           </View>
         ) : null}
       </View>

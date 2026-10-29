@@ -1638,3 +1638,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** no se podía marcar un plato como vegetariano, vegano, sin gluten, halal o picante, ni filtrar por eso (DoorDash y Uber Eats lo tienen).
 - **Arreglo:** lista cerrada `ETIQUETAS_DIETA` con sus nombres y `leerEtiquetasDieta` en `packages/compartido/src/catalogo.ts`; `esquemaPlato.etiquetas` (sin repetir, orden fijo). Columna `platos.etiquetas` (texto «vegano,halal») por COLUMNAS de `esquema.ts`, nunca en schema.sql. El buscador (`rutas/buscar.ts`) acepta `dieta=` con o sin `q`; con marca, el restaurante sale solo si tiene un plato con ella. Panel (Menu.tsx) y app del restaurante (MiMenu.tsx) envían SIEMPRE las marcas al guardar: un PUT sin ellas las borraría. Cliente: filtros en el buscador y marcas en verde en el menú. Docs: guía «dietary-filters».
 - **Prueba:** `apps/servidor/src/filtrosDieta.test.ts`.
+
+## C-MAPA-DEMANDA (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el repartidor no sabía hacia dónde moverse para tener más ofertas (DoorDash tiene «Dash Now» y Uber Driver sus zonas).
+- **Arreglo:** `GET /datos/repartidor/demanda?lat&lng` (`apps/servidor/src/rutas/demanda.ts`): pedidos de la última hora de la ciudad del repartidor, agrupados por geohash de 6 letras desde el LOCAL (nunca la casa del cliente); celdas con un solo pedido no salen; cinco o más es «alta». Solo devuelve centro, cantidad y nivel: nada de nombres, direcciones, pedidos ni dinero. App Driver: círculos rojos translúcidos en el mapa del inicio (`zonasDemanda` en `piezas/Mapa.tsx` y `Mapa.web.tsx`), se lee cada minuto. Docs: guía «busy-areas».
+- **Prueba:** `apps/servidor/src/mapaDemanda.test.ts`.
