@@ -344,6 +344,16 @@ CREATE TABLE IF NOT EXISTS tickets (
 CREATE INDEX IF NOT EXISTS tickets_estado ON tickets(estado, actualizado_en);
 CREATE INDEX IF NOT EXISTS tickets_zona ON tickets(zona_id, estado, actualizado_en);
 
+-- C-TICKETS-EQUIPO: respuestas guardadas del equipo, en los dos idiomas.
+CREATE TABLE IF NOT EXISTS respuestas_guardadas (
+  id TEXT PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  texto_es TEXT NOT NULL,
+  texto_en TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS ticket_mensajes (
   id TEXT PRIMARY KEY,
   ticket_id TEXT NOT NULL REFERENCES tickets(id),
@@ -1293,6 +1303,81 @@ CREATE TABLE IF NOT EXISTS conductor_bloqueos (
 CREATE INDEX IF NOT EXISTS conductor_bloqueos_vivos ON conductor_bloqueos(conductor_id) WHERE levantado_en IS NULL;
 
 -- ----- Auditoría de los cambios del panel sobre el catálogo, vehículos y habilitaciones -----
+-- C-ROLES-INTERNOS (29 oct 2026): perfil de cada cuenta del equipo (rol admin). Sin fila = total,
+-- así ninguna cuenta existente pierde acceso. Solo una cuenta «total» cambia estos perfiles.
+CREATE TABLE IF NOT EXISTS perfiles_internos (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  perfil TEXT NOT NULL CHECK (perfil IN ('total', 'soporte', 'finanzas', 'lectura')),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Registro de toda acción del equipo que cambia algo (quién, qué, cuándo y cómo terminó).
+CREATE TABLE IF NOT EXISTS acciones_equipo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id TEXT NOT NULL,
+  perfil TEXT NOT NULL,
+  metodo TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  estado INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS acciones_equipo_usuario ON acciones_equipo(usuario_id, id);
+
+-- C-AVISOS-EQUIPO (29 oct 2026): qué avisos por correo quiere cada cuenta del equipo, por tipo.
+CREATE TABLE IF NOT EXISTS avisos_equipo (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('pedidos', 'dinero', 'verificaciones', 'sistema')),
+  activo INTEGER NOT NULL CHECK (activo IN (0, 1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, tipo)
+);
+
+-- C-TURNOS-REPARTIDOR (29 oct 2026): turnos reservados por el repartidor (UTC).
+CREATE TABLE IF NOT EXISTS turnos_repartidor (
+  id TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  zona_id TEXT NOT NULL,
+  inicio TEXT NOT NULL,
+  fin TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'activo', 'cumplido', 'perdido', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (fin > inicio)
+);
+CREATE INDEX IF NOT EXISTS turnos_repartidor_quien ON turnos_repartidor(repartidor_id, inicio);
+CREATE INDEX IF NOT EXISTS turnos_repartidor_estado ON turnos_repartidor(estado, inicio);
+
+-- C-PEDIDO-GRUPO (29 oct 2026), como el «Group Order» de DoorDash: quien lo arma comparte un
+-- enlace, cada persona agrega lo suyo y quien lo armó paga todo.
+CREATE TABLE IF NOT EXISTS pedidos_grupo (
+  id TEXT PRIMARY KEY,
+  codigo TEXT NOT NULL UNIQUE,
+  anfitrion_id TEXT NOT NULL REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'cerrado', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT
+);
+CREATE TABLE IF NOT EXISTS pedidos_grupo_items (
+  id TEXT PRIMARY KEY,
+  grupo_id TEXT NOT NULL REFERENCES pedidos_grupo(id),
+  participante_id TEXT NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  plato_id TEXT NOT NULL,
+  cantidad INTEGER NOT NULL CHECK (cantidad BETWEEN 1 AND 20),
+  opciones_json TEXT NOT NULL DEFAULT '[]',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS pedidos_grupo_items_grupo ON pedidos_grupo_items(grupo_id, creado_en);
+
+-- C-SEGUIMIENTO-COMPARTIDO (29 oct 2026), como Uber Eats: el cliente comparte el estado de su
+-- pedido con un enlace secreto. Se guarda solo la huella del código; se apaga al entregar.
+CREATE TABLE IF NOT EXISTS pedidos_compartidos (
+  huella TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),
