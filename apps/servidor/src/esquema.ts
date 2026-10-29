@@ -11,6 +11,8 @@ import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-PEDIDO-PROGRAMADO (29 oct 2026): inicio de la franja elegida (UTC); NULL = lo antes posible.
+  ['pedidos', 'programado_para', 'TEXT'],
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],

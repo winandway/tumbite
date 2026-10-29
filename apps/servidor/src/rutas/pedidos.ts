@@ -32,6 +32,8 @@ import { nuevoId } from '../cripto';
 import {
   SUSTITUCIONES,
   type Sustitucion,
+  aSqlUtc,
+  validarProgramado,
   formatearDolares,
   formatearMonto,
 } from '@tumbite/compartido';
@@ -84,6 +86,8 @@ const esquemaNuevoPedido = z.object({
   cupon: z.string().trim().max(30).optional(),
   /** Fase 2: cobro directo (el cliente paga al repartidor al recibir). Solo con el interruptor del país. */
   metodoPago: z.enum(['tarjeta', 'efectivo', 'transferencia_repartidor']).default('tarjeta'),
+  /** C-PEDIDO-PROGRAMADO: inicio de la franja elegida (ISO, UTC). Sin él, lo antes posible. */
+  programadoPara: z.iso.datetime().optional(),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -289,6 +293,8 @@ export function aPedido(f: FilaPedido) {
     cupon: f.cupon ? String(f.cupon) : null,
     metodoPago: String(f.metodo_pago ?? 'tarjeta'),
     moneda: String(f.moneda ?? 'USD'),
+    /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC «AAAA-MM-DD HH:MM:SS»), o null. */
+    programadoPara: f.programado_para ? String(f.programado_para) : null,
     cobroEstado: String(f.cobro_estado ?? 'no_aplica'),
     montoRecibido: f.monto_recibido == null ? null : Number(f.monto_recibido),
     conciliacionEstado: String(f.conciliacion_estado ?? 'no_aplica'),
@@ -415,17 +421,44 @@ pedidos.post('/pedidos', async (c) => {
     .bind(d.restauranteId)
     .first<Record<string, unknown>>();
   if (!rest) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
-  if (Number(rest.abierto) !== 1)
-    throw new ErrorDatos('El restaurante acaba de cerrar. Intenta más tarde.', undefined, 409);
   const [restConHorario] = await conHorarios(db, [rest]);
-  if (!abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria)))
+  // C-PEDIDO-PROGRAMADO: un pedido para más tarde no necesita al local abierto AHORA, sino en su
+  // franja; el restaurante lo recibe 45 minutos antes (el Manager y los repartidores esperan).
+  const programado = d.programadoPara ? new Date(d.programadoPara) : null;
+  if (programado) {
+    const v = validarProgramado(
+      programado,
+      restConHorario!.horarios as Turno[],
+      String(restConHorario!.zona_horaria),
+      new Date(),
+      (restConHorario!.cierres as string[] | undefined) ?? [],
+    );
+    if (v !== 'ok')
+      throw new ErrorDatos(
+        v === 'pronto'
+          ? 'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.'
+          : v === 'lejos'
+            ? 'Se puede programar hasta 6 días adelante.'
+            : v === 'cerrado'
+              ? 'El restaurante está cerrado a esa hora. Elige otra franja.'
+              : 'Elige una de las franjas que te mostramos.',
+        'programadoPara',
+        409,
+      );
+  }
+  if (!programado && Number(rest.abierto) !== 1)
+    throw new ErrorDatos('El restaurante acaba de cerrar. Intenta más tarde.', undefined, 409);
+  if (
+    !programado &&
+    !abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria))
+  )
     throw new ErrorDatos(
       'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
       undefined,
       409,
     );
   // C-PAUSA-SIN-SENAL: si su app o su panel no están escuchando, el pedido no le llegaría a nadie.
-  if (!conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
+  if (!programado && !conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
     throw new ErrorDatos(
       'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
       undefined,
@@ -580,6 +613,11 @@ pedidos.post('/pedidos', async (c) => {
     .prepare('INSERT OR REPLACE INTO preferencias_entrega (pedido_id, modo) VALUES (?, ?)')
     .bind(id, recogida ? 'mano' : d.entrega)
     .run();
+  if (programado)
+    await db
+      .prepare('UPDATE pedidos SET programado_para = ? WHERE id = ?')
+      .bind(aSqlUtc(programado), id)
+      .run();
   if (recogida)
     await db.prepare('INSERT OR IGNORE INTO recogidas (pedido_id) VALUES (?)').bind(id).run();
   // PIN también en la recogida en el local: el cliente lo muestra en el mostrador.

@@ -2572,3 +2572,83 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
     expect(ev?.nota).toContain('recibió Ana Cliente');
   });
 });
+
+describe('C-PEDIDO-PROGRAMADO', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const franja = (min: number) => {
+    const paso = 30 * 60_000;
+    return new Date(Math.ceil((Date.now() + min * 60_000) / paso) * paso).toISOString();
+  };
+
+  it('guarda la franja, rechaza una muy cercana y el Manager espera a 45 min antes para apurar', async () => {
+    const { m, cliente, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    const rid = (await m.DB.prepare('SELECT restaurante_id, lineas_json FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{
+        restaurante_id: string;
+        lineas_json: string;
+      }>())!;
+    const platoId = (JSON.parse(rid.lineas_json) as { platoId: string }[])[0]!.platoId;
+    const cuerpo = (programadoPara: string) => ({
+      restauranteId: rid.restaurante_id,
+      lineas: [{ platoId, cantidad: 1 }],
+      propinaCentavos: 0,
+      direccion: '200 Calle Prueba',
+      lat: 25.78,
+      lng: -80.2,
+      programadoPara,
+    });
+    const pronto = await m.llamar('POST', '/datos/pedidos', cuerpo(franja(5)), cliente.token);
+    expect(pronto.estado).toBe(409);
+    const ok = await m.llamar('POST', '/datos/pedidos', cuerpo(franja(180)), cliente.token);
+    expect(ok.estado).toBe(201);
+    const pid = ok.datos.pedidoId as string;
+    const ped = await m.llamar('GET', `/datos/pedidos/${pid}`, undefined, cliente.token);
+    expect(ped.datos.pedido.programadoPara).toBe(franja(180).slice(0, 19).replace('T', ' '));
+
+    // Pagado hace 10 minutos, pero es para dentro de 3 horas: nadie lo cancela.
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now', '-10 minutes'), stripe_pago = 'pi_2' WHERE id = ?",
+    )
+      .bind(pid)
+      .run();
+    const { vigilarPedidos } = await import('../manager');
+    const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    const r1 = await vigilarPedidos(env, m.DB, pid);
+    expect(r1.cancelados + r1.recordatorios).toBe(0);
+    // Ya entró en su ventana hace 10 minutos (franja en 35 min): ahora sí se cancela sin respuesta.
+    await m.DB.prepare(
+      "UPDATE pedidos SET programado_para = datetime('now', '+35 minutes') WHERE id = ?",
+    )
+      .bind(pid)
+      .run();
+    expect((await vigilarPedidos(env, m.DB, pid)).cancelados).toBe(1);
+  });
+
+  it('a los repartidores se les ofrece desde 45 minutos antes de la franja, no antes', async () => {
+    const { m, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await repartidor('Rafa Rep', 25.781, -80.201);
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'aceptado', aceptado_en = datetime('now', '-60 minutes'), programado_para = datetime('now', '+3 hours') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const { repartirOfertas } = await import('./operacion');
+    const env = { DB: m.DB } as never;
+    await repartirOfertas(m.DB, env);
+    const ofertas = () =>
+      m.DB.prepare('SELECT COUNT(*) AS n FROM ofertas WHERE pedido_id = ?')
+        .bind(id)
+        .first<{ n: number }>();
+    expect((await ofertas())?.n).toBe(0);
+    await m.DB.prepare(
+      "UPDATE pedidos SET aceptado_en = datetime('now', '-60 minutes'), programado_para = datetime('now', '+15 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    await repartirOfertas(m.DB, env);
+    expect((await ofertas())?.n).toBeGreaterThan(0);
+  });
+});

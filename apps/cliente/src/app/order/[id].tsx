@@ -7,7 +7,9 @@ import * as Location from 'expo-location';
 import {
   ErrorApi,
   enIdioma,
+  deSqlUtc,
   entregaMostrada,
+  textoFranja,
   formatearMonto,
   textoLinea,
   type OpcionElegida,
@@ -55,6 +57,8 @@ type Pedido = {
   propinaExtra?: number | null;
   requiereEdad?: boolean;
   entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
+  /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC «AAAA-MM-DD HH:MM:SS») o null. */
+  programadoPara?: string | null;
   notaEntrega?: string;
   llegaAMasTardar?: string | null;
   pin?: string | null;
@@ -185,6 +189,9 @@ const T = {
       seguro: 'No te encontraron y lo dejaron en un lugar seguro:',
     } as Record<string, string>,
     tuCasa: 'Tu dirección',
+    programado: 'Programado para',
+    programadoAyuda:
+      'El restaurante empieza a prepararlo antes de esa hora para que llegue a tiempo.',
     elRestaurante: 'El restaurante',
     calificar: '¿Qué tal todo?',
     restaurante: 'La comida',
@@ -289,6 +296,8 @@ const T = {
       seguro: 'They couldn’t find you and left it in a safe spot:',
     } as Record<string, string>,
     tuCasa: 'Your address',
+    programado: 'Scheduled for',
+    programadoAyuda: 'The restaurant starts preparing it before that time so it arrives on time.',
     elRestaurante: 'The restaurant',
     calificar: 'How was everything?',
     restaurante: 'The food',
@@ -1193,6 +1202,22 @@ export default function SeguirPedido() {
             </>
           ) : null}
         </Tarjeta>
+
+        {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
+          <Tarjeta style={{ borderWidth: 1, borderColor: '#2A2A2A' }}>
+            <Text style={{ fontWeight: '800', color: C.secundario }}>{t.programado}</Text>
+            <Text style={{ fontWeight: '900', fontSize: 17, marginTop: 2 }}>
+              {textoFranja(
+                deSqlUtc(p.programadoPara),
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
+                idioma,
+              )}
+            </Text>
+            <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>
+              {t.programadoAyuda}
+            </Text>
+          </Tarjeta>
+        ) : null}
 
         {(p.estado === 'pagado' || p.estado === 'pago_pendiente') &&
           (confirmar ? (

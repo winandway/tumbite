@@ -137,6 +137,29 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'schedule-an-order',
+        titulo: 'Programar un pedido para más tarde',
+        resumen:
+          'Elige el día y la media hora en que quieres recibir tu pedido, desde una hora adelante hasta seis días después.',
+        explicacion: [
+          'En el carrito, en «¿Cuándo lo quieres?», toca «Programar». Aparecen los días y, debajo, las franjas de media hora en que el restaurante o la tienda está abierto.',
+          'El precio y el envío son los mismos que si lo pidieras ahora. La tarjeta se autoriza al pedir y se cobra al entregar, como siempre.',
+          'El restaurante ve tu pedido marcado como «Programado» con su hora, y empieza a prepararlo antes para que llegue dentro de tu franja. El repartidor lo recibe a tiempo para eso.',
+          'En la pantalla de tu pedido ves «Programado para» con el día y la hora. Mientras el restaurante no lo acepte, puedes cancelarlo y el dinero vuelve.',
+          'No se puede programar en días festivos del comercio ni fuera de su horario.',
+        ],
+        preguntas: [
+          '¿Puedo pedir comida para mañana?',
+          '¿Cuesta más programar un pedido?',
+          '¿Con cuánta anticipación puedo programar?',
+        ],
+        pasos: [
+          'Arma tu carrito como siempre.',
+          'En «¿Cuándo lo quieres?», toca «Programar».',
+          'Elige el día y la franja, y paga.',
+        ],
+      },
+      {
         id: 'favorites',
         titulo: 'Favoritos: guarda tus restaurantes',
         resumen:
@@ -3102,6 +3125,29 @@ const en: SeccionDocs[] = [
           'Tap Orders in the bottom bar.',
           'Tap “See order and receipt” or “Reorder”.',
           'If you reorder, review the cart and pay as usual.',
+        ],
+      },
+      {
+        id: 'schedule-an-order',
+        titulo: 'Schedule an order for later',
+        resumen:
+          'Pick the day and the half hour when you want your order, from one hour ahead up to six days out.',
+        explicacion: [
+          'In the cart, under “When do you want it?”, tap “Schedule”. You see the days and, below, the half-hour windows when the restaurant or store is open.',
+          'The price and delivery fee are the same as ordering now. Your card is authorized when you order and charged on delivery, as always.',
+          'The restaurant sees your order marked “Scheduled” with its time and starts preparing it ahead so it arrives within your window. The driver gets it in time for that.',
+          'Your order screen shows “Scheduled for” with the day and time. Until the restaurant accepts it, you can cancel and get your money back.',
+          'You can’t schedule on the store’s holidays or outside its hours.',
+        ],
+        preguntas: [
+          'Can I order food for tomorrow?',
+          'Does scheduling cost more?',
+          'How far ahead can I schedule?',
+        ],
+        pasos: [
+          'Build your cart as usual.',
+          'Under “When do you want it?”, tap “Schedule”.',
+          'Pick the day and window, and pay.',
         ],
       },
       {

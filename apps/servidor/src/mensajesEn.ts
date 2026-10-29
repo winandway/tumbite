@@ -494,6 +494,16 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
   ['Ese pedido no existe.', 'That order doesn’t exist.'],
   ['Este comercio ya no está disponible.', 'This store is no longer available.'],
+  [
+    'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.',
+    'That time is too soon. Pick a window at least one hour from now.',
+  ],
+  ['Se puede programar hasta 6 días adelante.', 'You can schedule up to 6 days ahead.'],
+  [
+    'El restaurante está cerrado a esa hora. Elige otra franja.',
+    'The restaurant is closed at that time. Pick another window.',
+  ],
+  ['Elige una de las franjas que te mostramos.', 'Pick one of the windows we show you.'],
   ['Ese plato no existe en tu menú.', 'That item isn’t on your menu.'],
   ['Ese regalo ya no está disponible.', 'That gift is no longer available.'],
   ['Ese repartidor no existe.', 'That driver doesn’t exist.'],

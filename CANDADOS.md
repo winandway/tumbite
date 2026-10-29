@@ -1525,3 +1525,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** con varios push seguidos corrían tres verificaciones a la vez (más de 40 minutos cada una) y, como solo se publica la última (C-PUBLICAR-VERSION-EXACTA), producción se quedó horas en una versión vieja.
 - **Arreglo:** `concurrency: verify-${{ github.ref }}` con `cancel-in-progress: true` en `.github/workflows/verify.yml`.
 - **Qué NO tocar:** `publicar` sigue con `cancel-in-progress: false` (nunca se corta una publicación a medias).
+
+## C-PEDIDO-PROGRAMADO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** solo se podía pedir «ahora». DoorDash y Uber Eats dejan programar día y franja (fuentes: preguntas frecuentes de DoorDash en sus páginas de restaurante; Uber Eats Manager y su sala de prensa).
+- **Cómo quedó:** franjas de 30 minutos, desde 1 hora adelante hasta 6 días, solo con el comercio abierto y fuera de sus festivos (`packages/compartido/src/programado.ts`: `franjasProgramables`, `validarProgramado`, `textoFranja`). Columna `pedidos.programado_para` (vía COLUMNAS en `esquema.ts`). `GET /datos/restaurantes/:id/franjas` da las franjas al carrito; `POST /datos/pedidos` acepta `programadoPara` y, si viene, no exige el local abierto ni con señal AHORA.
+- **Tiempos:** el Manager cuenta la espera del restaurante y el «sin repartidor» desde 45 minutos antes de la franja (`manager.ts`); `repartirOfertas` no lo ofrece antes de eso y quiere la comida lista 15 minutos antes de la franja (`operacion.ts`).
+- **Pantallas:** carrito «¿Cuándo lo quieres?» (`apps/cliente/src/app/cart.tsx`), tarjeta «Programado para» en el pedido, etiqueta «Programado» en el panel (`Pedidos.tsx`) y en la app del restaurante (`Inicio.tsx`). Docs: guía «schedule-an-order».
+- **Pruebas:** `compartido/programado.test.ts`; en `rutas/operacion.test.ts` «C-PEDIDO-PROGRAMADO» (las dos en rojo sin el arreglo del Manager y de las ofertas).

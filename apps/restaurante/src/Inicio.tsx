@@ -27,7 +27,9 @@ import {
   fotoSinConfirmar,
   lineaRepartidor,
   notaSustitucion,
+  deSqlUtc,
   puedeMarcarFalta,
+  textoFranja,
   textoLinea,
   type OpcionElegida,
   type Plato,
@@ -62,6 +64,8 @@ import {
 } from './piezas/ui';
 
 type Pedido = {
+  /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
+  programadoPara?: string | null;
   id: string;
   estado: string;
   entrega?: 'puerta' | 'mano' | 'recoger';
@@ -99,6 +103,7 @@ type Pedido = {
 
 const T = {
   es: {
+    programado: 'Programado',
     titulo: 'Pedidos',
     nuevos: 'Nuevos',
     preparando: 'Preparando',
@@ -151,6 +156,7 @@ const T = {
     normal: 'Normal',
   },
   en: {
+    programado: 'Scheduled',
     titulo: 'Orders',
     nuevos: 'New',
     preparando: 'Preparing',
@@ -459,6 +465,28 @@ export function Inicio() {
               {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
             </Text>
           </View>
+          {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
+            <Text
+              style={{
+                alignSelf: 'flex-start',
+                marginTop: 4,
+                paddingVertical: 2,
+                paddingHorizontal: 8,
+                borderRadius: 999,
+                backgroundColor: '#101010',
+                color: '#fff',
+                fontWeight: '800',
+                fontSize: 13,
+              }}
+            >
+              {t.programado} ·{' '}
+              {textoFranja(
+                deSqlUtc(p.programadoPara),
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
+                idioma,
+              )}
+            </Text>
+          ) : null}
           {p.lineas.map((l) => (
             <Text
               key={`${l.platoId}-${textoLinea(l, idioma)}`}

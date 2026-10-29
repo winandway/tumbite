@@ -10,7 +10,9 @@ import {
   fotoSinConfirmar,
   lineaRepartidor,
   notaSustitucion,
+  deSqlUtc,
   puedeMarcarFalta,
+  textoFranja,
   textoLinea,
   type OpcionElegida,
 } from '@tumbite/compartido';
@@ -23,6 +25,8 @@ import { pedir } from './api';
 type Pedido = {
   id: string;
   estado: string;
+  /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
+  programadoPara?: string | null;
   entrega?: 'puerta' | 'mano' | 'recoger';
   requiereEdad?: boolean;
   subtotal: number;
@@ -81,6 +85,7 @@ const T = {
     sinConfirmar: 'La foto lleva más de 2 minutos sin confirmar. El repartidor te está esperando.',
     faltaPlato: 'Me falta un plato',
     faltaProducto: 'Falta un producto',
+    programado: 'Programado',
     cualFalta:
       '¿Cuál plato no tienes? Al cliente le avisamos y decide: quitarlo (se le devuelve esa parte) o cancelar todo.',
     avisarFalta: 'Avisar al cliente',
@@ -131,6 +136,7 @@ const T = {
     sinConfirmar: 'The photo has been waiting over 2 minutes. The driver is waiting on you.',
     faltaPlato: 'I’m out of an item',
     faltaProducto: 'An item is missing',
+    programado: 'Scheduled',
     cualFalta:
       'Which item are you out of? We notify the customer and they decide: remove it (that part is refunded) or cancel everything.',
     avisarFalta: 'Notify the customer',
@@ -298,6 +304,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                 #{p.id.slice(0, 4).toUpperCase()} · {t.estados[p.estado] ?? p.estado} ·{' '}
                 {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
               </strong>
+              {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
+                <span className="insignia insignia-programado">
+                  {t.programado} ·{' '}
+                  {textoFranja(
+                    deSqlUtc(p.programadoPara),
+                    Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    idioma === 'en' ? 'en' : 'es',
+                  )}
+                </span>
+              ) : null}
               <LuzSemaforo pedido={p} idioma={idioma} />
               {lineaRepartidor(p.repartidor, idioma) && (
                 <span className="repartidor-linea">{lineaRepartidor(p.repartidor, idioma)}</span>

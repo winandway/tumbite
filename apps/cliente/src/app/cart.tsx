@@ -42,6 +42,13 @@ import type { Cobro } from '../pagoTipos';
 
 const TE = {
   es: {
+    cuando: '¿Cuándo lo quieres?',
+    ahora: 'Lo antes posible',
+    ahoraAyuda: 'Sale en cuanto el restaurante lo prepare.',
+    programar: 'Programar',
+    programarAyuda: 'Elige día y hora, hasta 6 días adelante.',
+    sinFranjas: 'Este comercio no tiene horas disponibles para programar en los próximos días.',
+    elegirFranja: 'Elige una hora para programar tu pedido.',
     como: '¿Cómo quieres recibirlo?',
     puerta: 'En la puerta',
     puertaAyuda: 'Sin contacto. El repartidor lo deja y te manda la foto.',
@@ -72,6 +79,13 @@ const TE = {
     descuento: 'Cupón',
   },
   en: {
+    cuando: 'When do you want it?',
+    ahora: 'As soon as possible',
+    ahoraAyuda: 'Goes out as soon as the restaurant prepares it.',
+    programar: 'Schedule',
+    programarAyuda: 'Pick a day and time, up to 6 days ahead.',
+    sinFranjas: 'This store has no times available to schedule in the next few days.',
+    elegirFranja: 'Pick a time to schedule your order.',
     como: 'How do you want to receive it?',
     puerta: 'Leave at my door',
     puertaAyuda: 'Contactless. The driver leaves it and sends you a photo.',
@@ -180,10 +194,31 @@ export default function PantallaCarrito() {
       guardarDireccion: 'no',
       etiquetaDireccion: '',
       cupon: '',
+      // C-PEDIDO-PROGRAMADO: «» = lo antes posible; «elegir» = programar sin hora aún; o la hora ISO.
+      programado: '',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
+
+  // C-PEDIDO-PROGRAMADO: las franjas las da el servidor (horario y festivos del comercio).
+  const [franjas, setFranjas] = useState<{ inicio: string; es: string; en: string }[]>([]);
+  useEffect(() => {
+    if (!carrito.restauranteId) return;
+    api
+      .pedir<{ franjas: { inicio: string; es: string; en: string }[] }>(
+        'GET',
+        `/datos/restaurantes/${carrito.restauranteId}/franjas`,
+      )
+      .then((r) => setFranjas(r.franjas))
+      .catch(() => setFranjas([]));
+  }, [api, carrito.restauranteId]);
+  const programado = b.valores.programado;
+  const franjaElegida = franjas.find((f) => f.inicio === programado) ?? null;
+  const diaDe = (f: { es: string; en: string }) => (idioma === 'en' ? f.en : f.es).split(',')[0]!;
+  const dias = [...new Set(franjas.map(diaDe))];
+  const [diaVisto, setDiaVisto] = useState<string | null>(null);
+  const diaActivo = diaVisto ?? (franjaElegida ? diaDe(franjaElegida) : (dias[0] ?? null));
 
   // Si la persona escribió su dirección en la portada de tumbite.com, llega por la URL.
   const { direccion: direccionUrl } = useLocalSearchParams<{ direccion?: string }>();
@@ -346,6 +381,7 @@ export default function PantallaCarrito() {
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
     if (sinTarifas) return setError(sinTarifas);
+    if (programado && !franjaElegida) return setError(te.elegirFranja);
     setError('');
     setPagando(true);
     try {
@@ -374,6 +410,7 @@ export default function PantallaCarrito() {
         lat: punto?.lat ?? null,
         lng: punto?.lng ?? null,
         regalo: regalo > 0 ? regaloElegido : null,
+        ...(franjaElegida ? { programadoPara: franjaElegida.inicio } : {}),
       });
       // Guardar la dirección para la próxima (si lo pidió), sin frenar el pago si falla.
       if (b.valores.guardarDireccion === 'si' && b.valores.entrega !== 'recoger')
@@ -577,6 +614,111 @@ export default function PantallaCarrito() {
           </Tarjeta>
         );
       })}
+
+      {/* C-PEDIDO-PROGRAMADO: lo antes posible o programar día y franja, como DoorDash y Uber Eats. */}
+      {titulo(te.cuando)}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+        {(['ahora', 'programar'] as const).map((modo) => {
+          const activo = modo === 'ahora' ? !programado : Boolean(programado);
+          return (
+            <Pressable
+              key={modo}
+              onPress={() => b.cambiar('programado', modo === 'ahora' ? '' : 'elegir')}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: activo }}
+              accessibilityLabel={modo === 'ahora' ? te.ahora : te.programar}
+              style={{
+                flex: 1,
+                padding: 12,
+                borderRadius: 14,
+                borderWidth: activo ? 2 : 1,
+                borderColor: activo ? C.primario : '#DADADA',
+                backgroundColor: '#fff',
+              }}
+            >
+              <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
+                {modo === 'ahora'
+                  ? te.ahora
+                  : franjaElegida
+                    ? idioma === 'en'
+                      ? franjaElegida.en
+                      : franjaElegida.es
+                    : te.programar}
+              </Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+                {modo === 'ahora' ? te.ahoraAyuda : te.programarAyuda}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {programado ? (
+        franjas.length ? (
+          <View style={{ marginBottom: 12, gap: 8 }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8 }}
+            >
+              {dias.map((dia) => (
+                <Pressable
+                  key={dia}
+                  onPress={() => setDiaVisto(dia)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: dia === diaActivo }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    borderRadius: 999,
+                    backgroundColor: dia === diaActivo ? C.secundario : '#fff',
+                    borderWidth: 1,
+                    borderColor: dia === diaActivo ? C.secundario : '#DADADA',
+                  }}
+                >
+                  <Text
+                    style={{ fontWeight: '700', color: dia === diaActivo ? '#fff' : C.secundario }}
+                  >
+                    {dia}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {franjas
+                .filter((f) => diaDe(f) === diaActivo)
+                .map((f) => {
+                  const hora = (idioma === 'en' ? f.en : f.es).split(', ').slice(1).join(', ');
+                  const activa = f.inicio === programado;
+                  return (
+                    <Pressable
+                      key={f.inicio}
+                      onPress={() => b.cambiar('programado', f.inicio)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: activa }}
+                      accessibilityLabel={idioma === 'en' ? f.en : f.es}
+                      style={{
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 12,
+                        borderWidth: activa ? 2 : 1,
+                        borderColor: activa ? C.primario : '#DADADA',
+                        backgroundColor: '#fff',
+                      }}
+                    >
+                      <Text
+                        style={{ fontWeight: '700', color: activa ? C.primario : C.secundario }}
+                      >
+                        {hora}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+            </View>
+          </View>
+        ) : (
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>{te.sinFranjas}</Text>
+        )
+      ) : null}
 
       {/* Cómo recibir: en la puerta (el repartidor deja foto), en mano o recoger en el local. */}
       {titulo(te.como)}

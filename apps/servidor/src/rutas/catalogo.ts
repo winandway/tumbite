@@ -19,6 +19,8 @@ import {
   conSenal,
   PAUSA_SIN_SENAL_MINUTOS,
   fechaLocal,
+  franjasProgramables,
+  textoFranja,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -303,6 +305,35 @@ catalogo.get('/restaurantes/:id', async (c) => {
   return c.json({
     restaurante: aRestaurante(conH!, await minutosPausa(db)),
     platos: await platosConGrupos(db, ordenarPlatos(f, results)),
+  });
+});
+
+/**
+ * C-PEDIDO-PROGRAMADO: las franjas de 30 minutos que se pueden elegir en el carrito (restaurante o
+ * tienda), con el texto ya escrito en la hora del comercio. Respeta horarios y festivos.
+ */
+catalogo.get('/restaurantes/:id/franjas', async (c) => {
+  const db = base(c);
+  const f = await db
+    .prepare("SELECT * FROM restaurantes WHERE id = ? AND estado = 'aprobado'")
+    .bind(c.req.param('id'))
+    .first<FilaRest>();
+  if (!f) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
+  const [conH] = await conHorarios(db, [f]);
+  const zona = String(conH!.zona_horaria ?? 'America/New_York');
+  const franjas = franjasProgramables(
+    (conH!.horarios as Turno[] | undefined) ?? [],
+    zona,
+    new Date(),
+    (conH!.cierres as string[] | undefined) ?? [],
+  );
+  return c.json({
+    zonaHoraria: zona,
+    franjas: franjas.map((d) => ({
+      inicio: d.toISOString(),
+      es: textoFranja(d, zona, 'es'),
+      en: textoFranja(d, zona, 'en'),
+    })),
   });
 });
 

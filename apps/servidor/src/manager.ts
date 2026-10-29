@@ -225,14 +225,15 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
   };
   const solo = pedidoId ? ' AND p.id = ?' : '';
   // La espera del restaurante cuenta desde el pago o, si hubo un plato agotado, desde que el
-  // cliente decidió (el restaurante recién ahí puede aceptar).
+  // cliente decidió (el restaurante recién ahí puede aceptar). C-PEDIDO-PROGRAMADO: si es para más
+  // tarde, desde 45 minutos antes de su franja (PROGRAMADO.liberarAntesMin).
   const { results: esperando } = await db
     .prepare(
       `SELECT p.id, p.cliente_id, r.dueno_id, r.nombre AS restaurante, uc.idioma AS idioma_cliente, ud.idioma AS idioma_dueno,
-        CAST((julianday('now') - julianday(COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), p.pagado_en, p.creado_en))) * 1440 AS INTEGER) AS minutos
+        CAST((julianday('now') - julianday(COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), CASE WHEN p.programado_para IS NOT NULL THEN MAX(COALESCE(p.pagado_en, p.creado_en), datetime(p.programado_para, '-45 minutes')) END, p.pagado_en, p.creado_en))) * 1440 AS INTEGER) AS minutos
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
        JOIN usuarios uc ON uc.id = p.cliente_id JOIN usuarios ud ON ud.id = r.dueno_id
-       WHERE p.estado = 'pagado' AND COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), p.pagado_en, p.creado_en) <= datetime('now', ?)
+       WHERE p.estado = 'pagado' AND COALESCE((SELECT a.resuelto_en FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'quitado'), CASE WHEN p.programado_para IS NOT NULL THEN MAX(COALESCE(p.pagado_en, p.creado_en), datetime(p.programado_para, '-45 minutes')) END, p.pagado_en, p.creado_en) <= datetime('now', ?)
        AND NOT EXISTS (SELECT 1 FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'pendiente')${solo}
        ORDER BY p.pagado_en LIMIT 50`,
     )
@@ -322,9 +323,9 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
   const { results: solos } = await db
     .prepare(
       `SELECT p.id, r.nombre AS restaurante, p.direccion,
-        CAST((julianday('now') - julianday(p.aceptado_en)) * 1440 AS INTEGER) AS minutos
+        CAST((julianday('now') - julianday(MAX(p.aceptado_en, COALESCE(datetime(p.programado_para, '-45 minutes'), p.aceptado_en)))) * 1440 AS INTEGER) AS minutos
        FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL AND p.aceptado_en <= datetime('now', ?)
+       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL AND MAX(p.aceptado_en, COALESCE(datetime(p.programado_para, '-45 minutes'), p.aceptado_en)) <= datetime('now', ?)
        AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)${solo}
        LIMIT 50`,
     )

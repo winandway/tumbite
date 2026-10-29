@@ -1080,9 +1080,13 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     .run();
   const { results: pendientes } = await db
     .prepare(
-      `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash,
+        CAST((julianday(p.programado_para) - julianday('now')) * 1440 AS INTEGER) AS min_franja
+      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
       AND NOT EXISTS (SELECT 1 FROM recogidas rc WHERE rc.pedido_id = p.id)
+      -- C-PEDIDO-PROGRAMADO: uno para más tarde se ofrece desde 45 minutos antes de su franja.
+      AND (p.programado_para IS NULL OR p.programado_para <= datetime('now', '+45 minutes'))
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.pedido_id = p.id AND o.estado = 'ofrecida') ORDER BY p.pagado_en LIMIT 20`,
     )
     .all<{
@@ -1096,6 +1100,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       lat: number | null;
       lng: number | null;
       geohash: string | null;
+      min_franja: number | null;
     }>();
   if (!pendientes.length) return;
   const ocupados = new Set<string>();
@@ -1106,7 +1111,11 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       .all<{ repartidor_id: string }>();
     const vistos = new Set(yaVistos.map((v) => v.repartidor_id));
     // Despacho con reloj: solo a quien llegaría cuando la comida esté lista (ni antes a esperar).
-    const faltan = minutosParaListo(p.estado, p.aceptado_en, p.tiempo_prep_min);
+    // C-PEDIDO-PROGRAMADO: la comida debe estar lista 15 minutos antes de la franja, no antes.
+    const faltan = Math.max(
+      minutosParaListo(p.estado, p.aceptado_en, p.tiempo_prep_min),
+      p.min_franja == null ? 0 : p.min_franja - 15,
+    );
     const ordenar = (libres: Libre[]) =>
       libres
         .filter((d) => !vistos.has(d.id) && !ocupados.has(d.id))

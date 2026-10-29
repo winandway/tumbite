@@ -41,3 +41,4 @@ export * from './flexCobro';
 export * from './lugares';
 export * from './tiendas';
 export * from './entregaMostrada';
+export * from './programado';

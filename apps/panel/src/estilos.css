@@ -651,6 +651,10 @@ h1 {
   background: #f1f1f1;
   color: #101010 !important;
 }
+.insignia-programado {
+  background: #101010;
+  color: #fff !important;
+}
 .insignia-aprobado {
   background: #e3f6ea;
   color: #0d5a2c !important;
