@@ -21,6 +21,7 @@
   <url><loc>https://divoox.com/docs/ordering/schedule-an-order</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/group-order</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/share-tracking</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/you-might-like</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/favorites</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/saved-addresses</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/coupons</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
@@ -68,6 +69,7 @@
   <url><loc>https://divoox.com/docs/restaurants/orders</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/print-tickets</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/pos-integration</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/restaurants/presentations</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/dashboard</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/verify</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/gifts</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
@@ -196,6 +198,7 @@
   <url><loc>https://divoox.com/es/docs/ordering/schedule-an-order</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/group-order</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/share-tracking</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/you-might-like</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/favorites</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/saved-addresses</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/coupons</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
@@ -243,6 +246,7 @@
   <url><loc>https://divoox.com/es/docs/restaurants/orders</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/print-tickets</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/pos-integration</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/restaurants/presentations</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/dashboard</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/verify</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/gifts</loc><lastmod>2026-10-29</lastmod><priority>0.7</priority></url>
