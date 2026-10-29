@@ -1,6 +1,16 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
@@ -190,6 +200,9 @@ const T = {
     } as Record<string, string>,
     tuCasa: 'Tu dirección',
     programado: 'Programado para',
+    compartir: 'Compartir el seguimiento',
+    compartirMensaje: (url: string) => `Sigue mi pedido de Divoox aquí: ${url}`,
+    copiado: 'Enlace copiado. Pégalo donde quieras compartirlo.',
     programadoAyuda:
       'El restaurante empieza a prepararlo antes de esa hora para que llegue a tiempo.',
     elRestaurante: 'El restaurante',
@@ -297,6 +310,9 @@ const T = {
     } as Record<string, string>,
     tuCasa: 'Your address',
     programado: 'Scheduled for',
+    compartir: 'Share tracking',
+    compartirMensaje: (url: string) => `Follow my Divoox order here: ${url}`,
+    copiado: 'Link copied. Paste it wherever you want to share it.',
     programadoAyuda: 'The restaurant starts preparing it before that time so it arrives on time.',
     elRestaurante: 'The restaurant',
     calificar: 'How was everything?',
@@ -378,6 +394,7 @@ export default function SeguirPedido() {
   const t = enIdioma(T, idioma);
   const tc = textosComida(idioma);
   const otraVez = usePedirOtraVez(idioma);
+  const [copiado, setCopiado] = useState(false);
   const [verSeguimiento, setVerSeguimiento] = useState(false);
   const desplazar = useRef<ScrollView>(null);
   const posChat = useRef(0);
@@ -1202,6 +1219,28 @@ export default function SeguirPedido() {
             </>
           ) : null}
         </Tarjeta>
+
+        {/* C-SEGUIMIENTO-COMPARTIDO: como Uber Eats, compartir el estado con otra persona. */}
+        {!['entregado', 'cancelado', 'pago_pendiente'].includes(p.estado) ? (
+          <Text
+            style={[e.enlace, { marginBottom: 8 }]}
+            accessibilityRole="button"
+            onPress={() =>
+              void api
+                .pedir<{ url: string }>('POST', `/datos/pedidos/${p.id}/compartir`, {})
+                .then(async (r) => {
+                  const mensaje = t.compartirMensaje(r.url);
+                  if (Platform.OS === 'web' && navigator.clipboard) {
+                    await navigator.clipboard.writeText(mensaje);
+                    setCopiado(true);
+                  } else await Share.share({ message: mensaje });
+                })
+                .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+            }
+          >
+            {copiado ? t.copiado : t.compartir}
+          </Text>
+        ) : null}
 
         {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
           <Tarjeta style={{ borderWidth: 1, borderColor: '#2A2A2A' }}>

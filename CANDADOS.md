@@ -1596,3 +1596,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** las métricas del repartidor no daban ningún beneficio (DoorDash tiene «Top Dasher»).
 - **Arreglo:** `requisitosDestacado` (`packages/compartido/src/destacado.ts`: 4,7 estrellas, 70 % de aceptación, 95 % completados, 100 entregas en 30 días, 200 en total). `metricasRepartidor` y `evaluarDestacado` (`apps/servidor/src/rutas/repartidorGrandes.ts`) guardan `repartidores.destacado` (vía COLUMNAS) al abrir Calificaciones y al conectarse. En `repartirOfertas`, a igual distancia: primero quien está en turno, después el destacado. App Driver: tarjeta «Repartidor destacado» con cada requisito en Calificaciones. Nadie se desactiva por no cumplir. Docs: guía «top-driver».
 - **Pruebas:** `compartido/destacado.test.ts`; «C-REPARTIDOR-DESTACADO» en `rutas/operacion.test.ts`.
+
+## C-SEGUIMIENTO-COMPARTIDO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el cliente no podía mostrarle a otra persona cómo iba su pedido (Uber Eats lo tiene; Moto ya lo tenía con su viaje).
+- **Arreglo:** tabla `pedidos_compartidos` (solo la huella del código). `POST /datos/pedidos/:id/compartir` (solo el dueño, pedido vivo) y `GET /datos/publico/pedido/:codigo` (`apps/servidor/src/rutas/pedidoCompartido.ts`): estado, restaurante, primer nombre del repartidor y su ubicación SOLO en camino; nunca dirección, nombre del cliente ni dinero; sin indexar; terminado = sin datos. Página `/order-status/<código>` (`apps/panel/src/sitio/PedidoCompartido.tsx`), botón «Compartir el seguimiento» en el pedido del cliente. Docs: guía «share-tracking».
+- **Prueba:** «C-SEGUIMIENTO-COMPARTIDO» en `rutas/operacion.test.ts`.

@@ -1369,6 +1369,15 @@ CREATE TABLE IF NOT EXISTS pedidos_grupo_items (
 );
 CREATE INDEX IF NOT EXISTS pedidos_grupo_items_grupo ON pedidos_grupo_items(grupo_id, creado_en);
 
+-- C-SEGUIMIENTO-COMPARTIDO (29 oct 2026), como Uber Eats: el cliente comparte el estado de su
+-- pedido con un enlace secreto. Se guarda solo la huella del código; se apaga al entregar.
+CREATE TABLE IF NOT EXISTS pedidos_compartidos (
+  huella TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

@@ -189,6 +189,23 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'share-tracking',
+        titulo: 'Compartir el seguimiento de tu pedido',
+        resumen:
+          'Manda un enlace para que otra persona vea cómo va tu pedido, sin cuenta y sin ver tus datos.',
+        explicacion: [
+          'En la pantalla de tu pedido, toca «Compartir el seguimiento» y elige a quién mandarlo.',
+          'Quien abre el enlace ve el estado del pedido, de qué restaurante es y, cuando va en camino, el nombre del repartidor y dónde va en el mapa.',
+          'No ve tu dirección, tu nombre ni lo que pagaste. El enlace se apaga solo cuando el pedido se entrega o se cancela.',
+        ],
+        preguntas: ['¿Cómo le muestro a alguien dónde va mi pedido?', '¿Qué ve la otra persona?'],
+        pasos: [
+          'Abre tu pedido.',
+          'Toca «Compartir el seguimiento».',
+          'Mándalo por WhatsApp, mensaje o correo.',
+        ],
+      },
+      {
         id: 'favorites',
         titulo: 'Favoritos: guarda tus restaurantes',
         resumen:
@@ -3250,6 +3267,19 @@ const en: SeccionDocs[] = [
           'Share the link; everyone adds their items.',
           'Tap “Close and pay” and pay from your cart.',
         ],
+      },
+      {
+        id: 'share-tracking',
+        titulo: 'Share your order tracking',
+        resumen:
+          'Send a link so someone else can see how your order is going, without an account and without seeing your details.',
+        explicacion: [
+          'On your order screen, tap “Share tracking” and choose who to send it to.',
+          'Whoever opens the link sees the order status, which restaurant it’s from and, once it’s on the way, the driver’s name and where they are on the map.',
+          'They don’t see your address, your name or what you paid. The link turns off on its own when the order is delivered or canceled.',
+        ],
+        preguntas: ['How do I show someone where my order is?', 'What does the other person see?'],
+        pasos: ['Open your order.', 'Tap “Share tracking”.', 'Send it by WhatsApp, text or email.'],
       },
       {
         id: 'favorites',

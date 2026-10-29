@@ -2820,3 +2820,42 @@ describe('C-REPARTIDOR-DESTACADO', () => {
     expect(o?.repartidor_id).toBe(top.id);
   });
 });
+
+describe('C-SEGUIMIENTO-COMPARTIDO', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el enlace muestra el estado sin datos privados, al repartidor solo en camino, y se apaga al entregar', async () => {
+    const { m, cliente, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const otro = await m.cuenta('cliente', 'Otra Persona');
+    expect((await m.llamar('POST', `/datos/pedidos/${id}/compartir`, {}, otro.token)).estado).toBe(
+      404,
+    );
+    const r = await m.llamar('POST', `/datos/pedidos/${id}/compartir`, {}, cliente.token);
+    expect(r.estado).toBe(201);
+    const codigo = String(r.datos.url).split('/order-status/')[1]!;
+    const ver = () => m.llamar('GET', `/datos/publico/pedido/${codigo}`);
+    const a = await ver();
+    expect(a.res.headers.get('x-robots-tag')).toContain('noindex');
+    expect(a.datos.pedido).toMatchObject({ estado: 'pagado', terminado: false, ubicacion: null });
+    const texto = JSON.stringify(a.datos);
+    expect(texto).not.toMatch(/Calle Prueba|Ana|total|propina/i);
+    const rep = await repartidor('Rafa Sigue', 25.781, -80.201);
+    for (const estado of ['aceptado', 'listo', 'en_camino'])
+      await m.DB.prepare('UPDATE pedidos SET estado = ?, repartidor_id = ? WHERE id = ?')
+        .bind(estado, rep.id, id)
+        .run();
+    expect((await ver()).datos.pedido).toMatchObject({
+      estado: 'en_camino',
+      repartidor: 'Rafa',
+      ubicacion: { lat: 25.781, lng: -80.201 },
+    });
+    await m.DB.prepare("UPDATE pedidos SET estado = 'entregado' WHERE id = ?").bind(id).run();
+    expect((await ver()).datos.pedido).toEqual({
+      estado: 'entregado',
+      terminado: true,
+      restaurante: expect.any(String),
+    });
+    expect((await m.llamar('GET', `/datos/publico/pedido/${'x'.repeat(43)}`)).estado).toBe(404);
+  });
+});

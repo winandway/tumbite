@@ -509,6 +509,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe la respuesta en español.', 'Write the reply in Spanish.'],
   ['No hay nada que cambiar.', 'There’s nothing to change.'],
   ['Revisa el turno.', 'Check the shift.'],
+  ['Este pedido ya terminó.', 'This order is already finished.'],
   ['Ese pedido en grupo no existe.', 'That group order doesn’t exist.'],
   ['El pedido en grupo es para restaurantes.', 'Group orders are for restaurants.'],
   ['Este pedido en grupo ya se cerró.', 'This group order is already closed.'],

@@ -8,6 +8,7 @@ import { Calculadora } from './sitio/Calculadora';
 import { Inversionistas } from './sitio/Inversionistas';
 import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
+import { PedidoCompartido } from './sitio/PedidoCompartido';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
@@ -54,6 +55,7 @@ export function App() {
     !ruta.startsWith('/panel') &&
     !ruta.startsWith('/t/') &&
     !ruta.startsWith('/ride/') &&
+    !ruta.startsWith('/order-status/') &&
     !ruta.startsWith('/deliver/');
   const idioma = espanol ? 'es' : publica ? 'en' : idiomaGuardado;
   useEffect(() => {
@@ -127,6 +129,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Seguimiento codigo={guia || null} idioma={idioma} />
+      </Sitio>
+    );
+  // C-SEGUIMIENTO-COMPARTIDO: el seguimiento de un pedido compartido (enlace secreto, sin indexar).
+  const pedidoCompartido = /^\/order-status\/([A-Za-z0-9_-]{40,60})$/.exec(ruta);
+  if (pedidoCompartido?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <PedidoCompartido codigo={pedidoCompartido[1]} idioma={idioma} />
       </Sitio>
     );
   // Divoox Moto · M6: el viaje compartido en vivo (enlace secreto, sin indexar).

@@ -812,6 +812,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "opciones_json",
     "creado_en"
   ],
+  "pedidos_compartidos": [
+    "huella",
+    "pedido_id",
+    "creado_por",
+    "creado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",
