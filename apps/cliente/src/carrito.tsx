@@ -26,6 +26,8 @@ export type LineaCarrito = {
   sustitucion?: Sustitucion;
   /** Producto que se vende al peso: el precio es estimado y se ajusta al pesarlo. */
   pesable?: boolean;
+  /** C-EDAD-EN-MANO: alcohol o tabaco: se entrega en mano y se pide identificación. */
+  requiereEdad?: boolean;
 };
 export const claveDeLinea = (platoId: string, opciones: { id: string }[]) =>
   `${platoId}:${opciones
@@ -144,6 +146,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               cantidad: 1,
               opciones,
               imagen: p.imagen,
+              ...(p.requiereEdad ? { requiereEdad: true } : {}),
               ...(rest.esTienda
                 ? { sustitucion: 'reembolsar' as const, pesable: p.pesable ?? false }
                 : {}),

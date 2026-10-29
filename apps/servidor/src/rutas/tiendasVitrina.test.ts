@@ -225,6 +225,44 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(ac.estado).toBe(409);
   });
 
+  it('C-EDAD-EN-MANO: con alcohol, «en la puerta» pasa a «en mano»', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/productos/importar',
+      {
+        csv: 'sku,name,brand,category_1,price,available,restriction\nB9,Light beer,Brand Sample,Beer,1.80,yes,alcohol',
+        confirmar: true,
+      },
+      dueno.token,
+    );
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [{ platoId: prods.find((p) => p.nombre === 'Light beer')!.id, cantidad: 1 }],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+        entrega: 'puerta',
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const f = await m.DB.prepare('SELECT modo FROM preferencias_entrega WHERE pedido_id = ?')
+      .bind(r.datos.pedidoId)
+      .first<{ modo: string }>();
+    expect(f?.modo).toBe('mano');
+  });
+
   it('lo agotado no se puede comprar aunque la app lo mande', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

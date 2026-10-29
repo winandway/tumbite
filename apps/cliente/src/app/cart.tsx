@@ -49,6 +49,8 @@ const TE = {
     manoAyuda: 'Te lo entrega a ti. Sal a recibirlo cuando te avise.',
     recoger: 'Recojo en el local',
     recogerAyuda: 'Sin costo de envío. Pasas a buscarlo cuando esté listo.',
+    edadAviso:
+      'Tu pedido lleva alcohol o tabaco: se entrega en mano a un mayor de 21 años, con su identificación.',
     pinTitulo: 'Pedir un PIN de 4 dígitos al entregar',
     pinAyuda:
       'El PIN aparece en tu pedido y quien reciba se lo dice al repartidor. Apágalo si va a recibir otra persona y no quieres pasarle el PIN.',
@@ -77,6 +79,8 @@ const TE = {
     manoAyuda: 'The driver hands it to you. Come out when they let you know.',
     recoger: 'I’ll pick it up',
     recogerAyuda: 'No delivery fee. You pick it up when it’s ready.',
+    edadAviso:
+      'Your order has alcohol or tobacco: it’s handed to someone 21 or older, who shows their ID.',
     pinTitulo: 'Ask for a 4-digit PIN at delivery',
     pinAyuda:
       'The PIN shows in your order and whoever receives it tells the driver. Turn it off if someone else will receive it and you don’t want to pass the PIN along.',
@@ -463,7 +467,10 @@ export default function PantallaCarrito() {
       {texto}
     </Text>
   );
-  const modoActual = b.valores.entrega || 'puerta';
+  // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (el servidor también lo cambia).
+  const conEdad = carrito.lineas.some((l) => l.requiereEdad);
+  const modoElegido = b.valores.entrega || 'puerta';
+  const modoActual = conEdad && modoElegido === 'puerta' ? 'mano' : modoElegido;
   const directoPermitido =
     modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
   // C-TARIFAS-PAIS: la tarjeta solo cobra en dólares; en otra moneda no se ofrece.
@@ -576,12 +583,14 @@ export default function PantallaCarrito() {
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
         {(['puerta', 'mano', 'recoger'] as const).map((modo) => {
           const activo = modoActual === modo;
+          const apagado = conEdad && modo === 'puerta';
           return (
             <Pressable
               key={modo}
               onPress={() => b.cambiar('entrega', modo)}
+              disabled={apagado}
               accessibilityRole="radio"
-              accessibilityState={{ checked: activo }}
+              accessibilityState={{ checked: activo, disabled: apagado }}
               accessibilityLabel={
                 modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta
               }
@@ -592,6 +601,7 @@ export default function PantallaCarrito() {
                 borderWidth: activo ? 2 : 1,
                 borderColor: activo ? C.primario : '#DADADA',
                 backgroundColor: '#fff',
+                opacity: apagado ? 0.45 : 1,
               }}
             >
               <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
@@ -608,6 +618,11 @@ export default function PantallaCarrito() {
           );
         })}
       </View>
+      {conEdad ? (
+        <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: -4, marginBottom: 12 }}>
+          {te.edadAviso}
+        </Text>
+      ) : null}
       {modoActual === 'mano' ? (
         <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>

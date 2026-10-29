@@ -1473,3 +1473,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Textos:** en una tienda el carrito dice «Productos» en vez de «Comida», el seguimiento habla de «la tienda» y el panel dice «Falta un producto».
 - **Prueba:** `tiendasVitrina.test.ts` («C-TIENDAS-FALTANTES»: en rojo sin el arreglo) y `tiendas.test.ts` (puedeMarcarFalta).
 - **No tocar:** un restaurante sigue con un faltante por pedido y la decisión del cliente.
+
+## C-EDAD-EN-MANO (29 oct 2026) — todos los países
+
+- **Qué se rompía:** el carrito dejaba elegir «En la puerta» en un pedido con alcohol (visto en la compra de prueba de Richard con cerveza). Al llegar, el repartidor no podía entregarlo: el sistema exige en mano con documento.
+- **Arreglo:** en `POST /pedidos`, si alguna línea `requiereEdad` y la entrega es «puerta», pasa a «mano» (con su PIN). En la app, las líneas guardan `requiereEdad`; con alcohol o tabaco, «En la puerta» sale apagada y aparece el aviso de los 21 años.
+- **Prueba:** `tiendasVitrina.test.ts` («C-EDAD-EN-MANO», en rojo sin el arreglo).

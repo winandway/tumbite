@@ -124,6 +124,7 @@ export default function Tienda() {
       precioCentavos: p.precioEstimado,
       imagen: p.imagen,
       pesable: p.vendidoPor === 'weight',
+      requiereEdad: p.restriccion === 'alcohol' || p.restriccion === 'tobacco',
     } as Plato & { pesable: boolean };
     if (agregar(rest, plato) === 'otro-restaurante') {
       if (!(await confirmar(t.otraTienda, t.vaciarYAgregar, tc.volver))) return;

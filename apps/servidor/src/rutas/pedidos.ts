@@ -433,6 +433,9 @@ pedidos.post('/pedidos', async (c) => {
     ? await lineasDeTienda(c, rest, d.lineas)
     : await lineasDeRestaurante(db, rest, d.lineas);
 
+  // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (DoorDash y Uber Eats lo entregan
+  // en mano y piden identificación). Si la app mandó «en la puerta», pasa a «en mano».
+  if (d.entrega === 'puerta' && lineas.some((l) => l.requiereEdad)) d.entrega = 'mano';
   const recogida = d.entrega === 'recoger';
   if (recogida) {
     // Recogida en el local: la «dirección de entrega» es el propio restaurante.
