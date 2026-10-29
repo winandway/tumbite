@@ -3,6 +3,12 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## LA FÁBRICA: FILA.md ES EL RUMBO Y LA SESIÓN NO SE PARA (Richard, 29 oct 2026)
+
+- `FILA.md` es la única lista de trabajo de la IA, en orden. Se ejecuta punto por punto sin cerrar el turno.
+- El gancho Stop (`scripts/fabrica/seguir.sh`) no deja terminar mientras quede un `[ ]`; la tarea programada «fabrica-divoox» la retoma cada dos horas si la sesión quedó quieta.
+- Lo trabado por Richard se marca `[!]` y se sigue. Freno manual: archivo `.fabrica-pausa`.
+
 ## Los estudios de Richard se consultan SIEMPRE (dictado el 14 oct 2026)
 
 - Carpeta `Proyectos Para estudiar y copiar clonar ideas /` (con espacio al final del nombre; se queda en el repo). Tiene estudios profundos, con fuentes, de cómo funcionan DoorDash, Uber Eats, Rappi y el reparto de comida en general. Richard los suma cuando encuentra más.

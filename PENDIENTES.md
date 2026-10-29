@@ -7,8 +7,8 @@
 - [x] (23 oct) Fotos nuevas de marketing grandes en la portada: restaurante moderno y repartidora en bicicleta.
 - [ ] 👤 Banner «Todo lo que necesitas, a un clic»: marketing debe corregir la mascota y el «bite» viejos, el «DivoooX» con tres o, «Detroit» y hacer la versión en inglés. La foto de McDonald's no se usa (marca ajena).
 - [x] (23 oct) Correos visibles cambiados a go@windoce.com (decisión de Richard).
-- [ ] Remitente de los correos automáticos: sigue saliendo de tumbite.com; pasarlo a divoox.com exige verificar el dominio en el proveedor de correo.
-- [ ] Auditoría y limpieza definitiva Tumbite → Divoox (pedida por Richard el 23 oct): inventario completo (archivo, línea, referencia, corrección), presentar hallazgos ANTES de tocar textos legales o configuraciones críticas, luego corregir, staging, producción e informe final.
+- [x] Remitente de los correos automáticos (en divoox.com desde el 27 oct): sigue saliendo de tumbite.com; pasarlo a divoox.com exige verificar el dominio en el proveedor de correo.
+- [x] Auditoría y limpieza definitiva Tumbite → Divoox (29 oct, docs/AUDITORIA-MARCA-DIVOOX.md: lo visible ya estaba limpio) (pedida por Richard el 23 oct): inventario completo (archivo, línea, referencia, corrección), presentar hallazgos ANTES de tocar textos legales o configuraciones críticas, luego corregir, staging, producción e informe final.
 
 👤 = depende de Richard. Ordenado por importancia.
 
