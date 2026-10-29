@@ -32,6 +32,11 @@
 - [x] Rendimiento del restaurante (ventas por hora y día, ticket promedio, tiempo de preparación real contra prometido, clientes nuevos y recurrentes) en el panel y la app del restaurante, con Docs. Todos los países.
 - [x] Roles internos del superadmin (soporte, finanzas, solo lectura) con registro de quién hizo qué. Todos los países.
 
+- [ ] Comprobar en el sitio de pruebas, con el navegador, todo lo publicado hoy (carrito con «Programar», «Pedir otra vez», Cancelaciones, Ciudades en la web, Equipo interno, rendimiento del restaurante) y sacar las capturas reales para Docs y la web. Todos los países.
+- [ ] Informes del superadmin por rango de fechas (pedidos, ventas, comisiones, cancelados, por ciudad) con exportación a CSV. Todos los países.
+- [ ] Tickets de soporte con prioridad, asignación a una persona del equipo y respuestas guardadas (plantillas). Todos los países.
+- [ ] «Pedir otra vez» en el inicio del cliente: fila con los últimos comercios donde pidió, como DoorDash. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
