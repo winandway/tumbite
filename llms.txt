@@ -15,6 +15,7 @@
 - [Shop at the grocery store, pharmacy or liquor store · Divoox](https://divoox.com/docs/ordering/shop-stores): In Grocery, Pharmacy, Liquor and More you see the stores near you, search a product in all of them at once and choose what happens if something is out.
 - [Your order alerts and how to call the driver without sharing your number · Divoox](https://divoox.com/docs/ordering/order-alerts-and-calls): We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can ca
 - [Your orders: history, receipt and reorder · Divoox](https://divoox.com/docs/ordering/my-orders-and-reorder): In the Orders tab you see each order with its status and total, open the full receipt and order the same again with one tap.
+- [Schedule an order for later · Divoox](https://divoox.com/docs/ordering/schedule-an-order): Pick the day and the half hour when you want your order, from one hour ahead up to six days out.
 - [Favorites: save your restaurants · Divoox](https://divoox.com/docs/ordering/favorites): Tap a restaurant’s heart to save it to Favorites and find it instantly next time.
 - [Saved addresses and delivery instructions · Divoox](https://divoox.com/docs/ordering/saved-addresses): Save home, work or wherever you order often, with instructions for the driver, and pick them with one tap in the cart.
 - [Coupons and promotions · Divoox](https://divoox.com/docs/ordering/coupons): Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.
@@ -59,7 +60,7 @@
 - [Your menu: items, prices, and photos · Divoox](https://divoox.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Divoox](https://divoox.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
-- [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your real kitchen time, and what customers think, at a glance.
+- [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Divoox](https://divoox.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
