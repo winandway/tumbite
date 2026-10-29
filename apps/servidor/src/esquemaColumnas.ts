@@ -1212,6 +1212,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "cerrada_por",
     "cerrada_en"
   ],
+  "ciudades_web": [
+    "slug",
+    "estado",
+    "actualizado_por",
+    "actualizado_en"
+  ],
   "politicas_cancelacion": [
     "id",
     "servicio",

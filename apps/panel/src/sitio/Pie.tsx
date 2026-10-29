@@ -6,6 +6,7 @@ import { Icono } from './Icono';
 import { LogoApple, LogoGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
+import { useCiudadesEnVivo } from './ciudadesEnVivo';
 
 /**
  * Pie de página: fondo oscuro con muchos enlaces reales (estilo DoorDash, bueno para el SEO)
@@ -20,6 +21,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
       <Icono nombre="reloj" tamano={12} /> {t.pronto}
     </span>
   );
+  const estadoCiudad = useCiudadesEnVivo();
   const activo = (
     <span className="pie-activo">
       <Icono nombre="listo" tamano={12} /> {t.activo}
@@ -30,7 +32,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
       ? CIUDADES.map((c) => ({
           a: `/city/${c.slug}`,
           nombre: enIdioma(c.nombre, idioma),
-          estado: c.estado,
+          estado: estadoCiudad(c),
         }))
       : pestana === 'paises'
         ? PAISES.map((p) => ({

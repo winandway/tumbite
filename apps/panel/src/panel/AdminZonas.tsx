@@ -9,6 +9,7 @@ import {
 } from '@tumbite/compartido';
 import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
+import { CiudadesWeb } from './CiudadesWeb';
 import { pedir } from './api';
 
 type Zona = {
@@ -156,6 +157,7 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   return (
     <section>
       <h1>{t.zonas}</h1>
+      <CiudadesWeb idioma={idioma} />
       <ul className="lista">
         {zonas.map((z) => (
           <li key={z.id}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { BannerCarretera } from './BannerCarretera';
+import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
@@ -96,6 +97,7 @@ const pantallasReales = (idioma: Idioma) => ({
 
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
+  const estadoCiudad = useCiudadesEnVivo();
   const a = enIdioma(ALT, idioma);
   const app = pantallasReales(idioma);
   // El WhatsApp de soporte lo da el servidor (variable del sitio): aparece solo cuando exista.
@@ -111,7 +113,16 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
       {/* Banner animado arriba de todo (Richard, 23 oct): «muy pronto en Miami» va dentro. */}
       <div className="ld-banner ld-banner-arriba">
-        <BannerCarretera lema={t.hero.etiqueta} servicios={a.servicios} />
+        <BannerCarretera
+          lema={
+            estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo'
+              ? idioma === 'en'
+                ? 'Now in Miami'
+                : 'Ya estamos en Miami'
+              : t.hero.etiqueta
+          }
+          servicios={a.servicios}
+        />
       </div>
       <section className="ld-hero">
         <div className="ld-hero-texto">

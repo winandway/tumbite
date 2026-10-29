@@ -1,3 +1,5 @@
+import { useCiudadesEnVivo } from './ciudadesEnVivo';
+
 /**
  * Banner animado de la portada (pedido de Richard, 23 oct 2026): una franja fina, como un juego,
  * donde cruzan de derecha a izquierda una moto con la caja de Divoox y un carro con el logo,
@@ -11,12 +13,15 @@
 export function BannerArriba({
   idioma,
   lugar = 'Miami',
-  activo = false,
+  activo: activoDado,
 }: {
   idioma: 'es' | 'en';
   lugar?: string;
   activo?: boolean;
 }) {
+  const estadoCiudad = useCiudadesEnVivo();
+  // Sin dato de la página, el banner dice el estado real de Miami (interruptor del superadmin).
+  const activo = activoDado ?? estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo';
   const lema = activo
     ? idioma === 'en'
       ? `Now in ${lugar}`

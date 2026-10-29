@@ -4,10 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { App } from '../App';
 import { CIUDADES, COCINAS, PAISES } from './cobertura';
 import { DOCS } from './docs/guias';
+import { olvidarCiudadesEnVivo } from './ciudadesEnVivo';
 
 describe('pie de página y páginas por lugar', () => {
   beforeEach(() => {
     localStorage.clear();
+    olvidarCiudadesEnVivo();
     vi.stubGlobal('fetch', async () => new Response('{}', { status: 404 }));
   });
   afterEach(() => vi.unstubAllGlobals());
@@ -24,6 +26,17 @@ describe('pie de página y páginas por lugar', () => {
       'united-states',
     ]);
     expect(pie.querySelector('a[href="https://windoce.com"]')).not.toBeNull();
+  });
+
+  it('C-CIUDADES-WEB: si el superadmin anuncia Miami, la página de Miami dice «Ya estamos»', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('/datos/web/ciudades')
+        ? new Response(JSON.stringify({ ciudades: { miami: 'activo' } }), { status: 200 })
+        : new Response('{}', { status: 404 }),
+    );
+    window.history.pushState(null, '', '/es/city/miami');
+    render(<App />);
+    expect(await screen.findByRole('img', { name: /Ya estamos en Miami/ })).toBeInTheDocument();
   });
 
   it('la pestaña de países muestra «muy pronto» en los que no están activos', async () => {

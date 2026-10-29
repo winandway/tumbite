@@ -1506,3 +1506,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo 2:** tabla nueva `politicas_cancelacion` (schema.sql), regla `esquemaCancelacion` y `comisionPorCancelacion()` en `packages/compartido/src/finanzas.ts` (liberar, porcentaje o fijo, antes y después de recoger; nunca más de lo apartado). `cerrarReservasPorCancelacion()` reemplaza a `liberarReservasDe` en la cancelación del gerente (`manager.ts`). `cerrarReservaCancelada()` en `libro.ts`, con referencias únicas (no cobra dos veces). Rutas del superadmin: GET y POST `/datos/admin/finanzas/cancelaciones`, auditadas; crear una nueva cierra la anterior.
 - **Sin política aprobada no cambia nada:** todo vuelve al prepago del repartidor.
 - **Pruebas:** `internacional/comisionFood.test.ts`; en `internacional.test.ts` las tres «C-CANCELACION-POLITICA» (en rojo con `liberarReservasDe`); `compartido/finanzas.test.ts`.
+
+## C-CIUDADES-WEB (F17, 29 oct 2026) — todos los países
+
+- **Qué faltaba:** el estado público de cada ciudad («Ya estamos» o «Muy pronto») estaba fijo en el código de la web; anunciar Miami exigía publicar.
+- **Arreglo:** tabla `ciudades_web` (schema.sql); rutas `GET /datos/web/ciudades` (pública, caché 60 s), `GET` y `PUT /datos/admin/web/ciudades/:slug` (solo admin) en `apps/servidor/src/rutas/ciudadesWeb.ts`. La web usa `useCiudadesEnVivo()` (`apps/panel/src/sitio/ciudadesEnVivo.ts`) en el pie, las páginas de ciudad, el banner y la portada; sin respuesta del servidor manda la lista fija (todas «muy pronto»), así nunca se anuncia una ciudad por error. Superadmin → Zonas → «Ciudades en la web» (`CiudadesWeb.tsx`), con confirmación.
+- **Encender la web NO abre pedidos:** eso sigue siendo la zona.
+- **Pruebas:** `rutas/ciudadesWeb.test.ts`, `panel/CiudadesWeb.test.tsx`, y en `sitio/Pie.test.tsx` «C-CIUDADES-WEB» (en rojo si el gancho ignora al servidor).

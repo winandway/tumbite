@@ -15,6 +15,7 @@ import {
   paisEnFrase,
 } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
+import { useCiudadesEnVivo } from './ciudadesEnVivo';
 
 /**
  * Páginas por país, por ciudad y por tipo de comida (/country/x, /city/x, /food/x).
@@ -26,6 +27,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const pais = tipo === 'country' ? paisDe(slug ?? '') : null;
   const ciudad = tipo === 'city' ? ciudadDe(slug ?? '') : null;
   const cocina = tipo === 'food' ? cocinaDe(slug ?? '') : null;
+  const estadoCiudad = useCiudadesEnVivo();
 
   if (cocina) {
     const nombre = enIdioma(cocina.nombre, idioma);
@@ -61,7 +63,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const nombre = enIdioma(lugar.nombre, idioma);
   // Dentro de una frase en inglés: «in the Netherlands», no «in Netherlands».
   const frase = pais ? paisEnFrase(pais, idioma) : nombre;
-  const activo = lugar.estado === 'activo';
+  const activo = (ciudad ? estadoCiudad(ciudad) : lugar.estado) === 'activo';
   const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug) : [];
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
   const region = pais?.region ? (REGIONES.find((r) => r.id === pais.region) ?? null) : null;
@@ -124,9 +126,9 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
             <h2>{t.ciudadesDe.replace('{lugar}', frase)}</h2>
             <ul>
               {ciudadesDelPais.map((c) => (
-                <li key={c.slug} className={c.estado}>
+                <li key={c.slug} className={estadoCiudad(c)}>
                   <Enlace a={`/city/${c.slug}`}>{enIdioma(c.nombre, idioma)}</Enlace>
-                  <span>{c.estado === 'activo' ? t.activo : t.pronto}</span>
+                  <span>{estadoCiudad(c) === 'activo' ? t.activo : t.pronto}</span>
                 </li>
               ))}
             </ul>

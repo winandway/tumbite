@@ -34,7 +34,7 @@ Lista única en `docs/PLAN-MAESTRO-FASE-2.md`. Hecho el 18 oct (en producción o
 - [x] Ruta interna para consultar y crear los avisos de Stripe (19 oct, C-STRIPE-AVISOS). Comprobado: falta el de cuentas conectadas en prueba y en real; crearlo espera la autorización (B).
 - [x] Clave expuesta del cliente de pruebas rotada y comprobada (19 oct). Falta la de Expo (C, Richard).
 - [ ] Montos en moneda local: el formato está listo (C-MONEDA-LOCAL); falta construir las tarifas por país, que dependen de la decisión 12 (D).
-- [ ] F17: ciudades de la web desde el servidor, con un interruptor público de lanzamiento por ciudad (hoy la lista fija es intencional; Miami «muy pronto»).
+- [x] F17 (29 oct, C-CIUDADES-WEB): ciudades de la web desde el servidor, con un interruptor público de lanzamiento por ciudad (hoy la lista fija es intencional; Miami «muy pronto»).
 - [x] Panel del superadmin para países, puntos de venta y libro (18 oct, en la rama fase-2-bloque-c; probado a mano en local).
 - [x] E.2 Recorrido visual de lo nuevo con capturas en Docs (18 oct, 1ff9eb6f): reseñas con respuesta, equipo, festivos, orden del menú, favoritos, direcciones, cupón, pago al recibir y saldo prepago. Lo que falta es verlo en un celular real (Expo, 👤).
 - [ ] 35 / E.4 Fichas de App Store y Google Play con capturas del recorrido (al final).

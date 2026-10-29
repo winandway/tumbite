@@ -1984,6 +1984,15 @@ CREATE TABLE IF NOT EXISTS politicas_financieras (
 CREATE INDEX IF NOT EXISTS politicas_financieras_busqueda
   ON politicas_financieras(servicio, tipo_cuenta, pais, activa);
 
+-- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
+-- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
+CREATE TABLE IF NOT EXISTS ciudades_web (
+  slug TEXT PRIMARY KEY,
+  estado TEXT NOT NULL CHECK (estado IN ('activo', 'pronto')),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Política de cancelaciones por servicio y país (C-CANCELACION-POLITICA): qué parte de la comisión
 -- apartada se queda Divoox si la operación se cancela. Sin fila vigente, todo vuelve al conductor.
 -- No se edita: se cierra (vigente_hasta) y se crea otra.
