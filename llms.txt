@@ -18,6 +18,7 @@
 - [Schedule an order for later · Divoox](https://divoox.com/docs/ordering/schedule-an-order): Pick the day and the half hour when you want your order, from one hour ahead up to six days out.
 - [Group order: everyone picks their own · Divoox](https://divoox.com/docs/ordering/group-order): Build one order for the office, family or friends: share a link, each person adds their items and you pay for everything together.
 - [Share your order tracking · Divoox](https://divoox.com/docs/ordering/share-tracking): Send a link so someone else can see how your order is going, without an account and without seeing your details.
+- [“You might like”: new restaurants for you · Divoox](https://divoox.com/docs/ordering/you-might-like): On the home screen we show open, nearby restaurants of the kind of food you already ordered that you haven’t tried yet.
 - [Favorites: save your restaurants · Divoox](https://divoox.com/docs/ordering/favorites): Tap a restaurant’s heart to save it to Favorites and find it instantly next time.
 - [Saved addresses and delivery instructions · Divoox](https://divoox.com/docs/ordering/saved-addresses): Save home, work or wherever you order often, with instructions for the driver, and pick them with one tap in the cart.
 - [Coupons and promotions · Divoox](https://divoox.com/docs/ordering/coupons): Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.
@@ -65,6 +66,7 @@
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
 - [Print kitchen tickets · Divoox](https://divoox.com/docs/restaurants/print-tickets): Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.
 - [Connect your POS system · Divoox](https://divoox.com/docs/restaurants/pos-integration): With a key from your restaurant, your POS system receives Divoox orders and accepts them or marks them ready without touching the tablet.
+- [Divoox presentations (PDF)](https://divoox.com/docs/restaurants/presentations): PDF slides, with real app screens, to explain Divoox to customers and to give talks to restaurants.
 - [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
