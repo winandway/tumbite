@@ -103,6 +103,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['envios', 'liquidado_por', 'TEXT'],
   ['envios', 'recibio_documento', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'recibio_relacion', "TEXT NOT NULL DEFAULT ''"],
+  // Tiendas · C-TIENDAS-CATALOGO: el tipo de comercio (restaurante, mercado, farmacia…).
+  ['restaurantes', 'tipo_comercio', "TEXT NOT NULL DEFAULT 'restaurante'"],
   // Flex · C-FLEX-RETIRO: retiro en un punto (centro) con plazo.
   ['envios', 'entrega_tipo', "TEXT NOT NULL DEFAULT 'domicilio'"],
   ['envios', 'punto_centro_id', 'TEXT'],

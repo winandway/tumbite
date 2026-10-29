@@ -256,6 +256,8 @@ catalogo.get('/restaurantes', async (c) => {
   const { results } = await db
     .prepare(
       `SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado'
+       -- C-TIENDAS-CATALOGO: las tiendas (mercado, farmacia…) no salen entre los restaurantes.
+       AND tipo_comercio = 'restaurante'
        AND (NOT EXISTS (SELECT 1 FROM areas WHERE zona_id = ?1 AND estado <> 'borrador')
             OR area_id IN (SELECT id FROM areas WHERE zona_id = ?1 AND estado = 'activa'))
        ORDER BY abierto DESC, nombre`,
@@ -524,7 +526,7 @@ catalogo.patch('/mi-restaurante/abierto', async (c) => {
   return c.json({ abierto, abiertoAhora: aRestaurante(conH!).abiertoAhora });
 });
 
-async function exigirMiRestaurante(c: Ctx, minimo: 'staff' | 'manager' | 'dueno' = 'staff') {
+export async function exigirMiRestaurante(c: Ctx, minimo: 'staff' | 'manager' | 'dueno' = 'staff') {
   const u = exigir(c, 'restaurante');
   const f = await miRestaurante(base(c), u.id);
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);

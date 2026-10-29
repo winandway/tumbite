@@ -80,7 +80,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "geohash",
     "categorias_orden",
-    "creado_en"
+    "creado_en",
+    "tipo_comercio"
   ],
   "platos": [
     "id",
@@ -1633,5 +1634,39 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "tasa",
     "creado_por",
     "creado_en"
+  ],
+  "catalogo_productos": [
+    "id",
+    "comercio_id",
+    "sku",
+    "codigo_barras",
+    "nombre_es",
+    "nombre_en",
+    "marca",
+    "tamano",
+    "unidad_tamano",
+    "unidades",
+    "categoria1",
+    "categoria2",
+    "imagen",
+    "descripcion",
+    "vendido_por",
+    "peso_promedio",
+    "unidad_peso",
+    "restriccion",
+    "abv",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "catalogo_ofertas": [
+    "comercio_id",
+    "producto_id",
+    "precio",
+    "precio_oferta",
+    "disponible",
+    "existencias",
+    "pasillo",
+    "agotado_hasta",
+    "actualizado_en"
   ]
 };
