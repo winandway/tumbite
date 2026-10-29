@@ -80,4 +80,38 @@ describe('superadmin financiero de Flex', () => {
       regla: { tipo: 'por_paquete', monto: 30 },
     });
   });
+
+  it('crea una regla de cancelación por servicio y país (C-CANCELACION-POLITICA)', async () => {
+    const llamadas = servidor({
+      '/datos/admin/finanzas/politicas': json({ politicas: [] }),
+      '/datos/admin/finanzas/cancelaciones': json({ politicas: [] }),
+      'POST /datos/admin/finanzas/cancelaciones': json({ id: 'c1' }, 201),
+      '/datos/admin/finanzas/empresas': json({ empresas: [] }),
+      '/datos/admin/finanzas/conciliacion': json({ ultima: null }),
+    });
+    render(<SuperFinanzas base="/panel/control-x" idioma="es" empresaId={null} />);
+    expect(
+      await screen.findByText('Todavía no hay reglas: en todos los mercados se devuelve todo.'),
+    ).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Antes de recoger'), 'porcentaje');
+    await userEvent.type(screen.getByLabelText('Antes de recoger · Porcentaje (%)'), '50');
+    await userEvent.click(screen.getByLabelText('Revisión legal y comercial aprobada'));
+    await userEvent.type(screen.getByLabelText('Motivo del cambio'), 'Regla de prueba');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear regla de cancelación' }));
+    await waitFor(() =>
+      expect(llamadas.some((l) => l.metodo === 'POST' && l.url.endsWith('/cancelaciones'))).toBe(
+        true,
+      ),
+    );
+    expect(llamadas.find((l) => l.metodo === 'POST')!.cuerpo).toMatchObject({
+      servicio: 'food',
+      pais: 'US',
+      moneda: 'USD',
+      regla: {
+        antesDeRecoger: { tipo: 'porcentaje', pb: 5000 },
+        despuesDeRecoger: { tipo: 'liberar' },
+      },
+      revisionLegalAprobada: true,
+    });
+  });
 });

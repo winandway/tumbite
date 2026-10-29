@@ -284,6 +284,7 @@ export function SuperFinanzas({
     <section className="super">
       <h1>{t.titulo}</h1>
       <Politicas t={t} idioma={idioma} />
+      <Cancelaciones idioma={idioma} />
       <LimitesRecarga t={t} idioma={idioma} />
       <Empresas t={t} idioma={idioma} base={base} />
       <Conciliacion t={t} />
@@ -598,6 +599,233 @@ function Politicas({ t, idioma }: { t: TT; idioma: 'es' | 'en' }) {
             ) : null}
           </>
         ) : null}
+        {ok ? (
+          <p className="texto-exito" role="status">
+            {ok}
+          </p>
+        ) : null}
+        <div className="fila-botones">
+          <button type="submit" className="boton">
+            {t.crear}
+          </button>
+        </div>
+      </form>
+    </>
+  );
+}
+
+/** C-CANCELACION-POLITICA: qué parte de la comisión apartada se queda Divoox si se cancela. */
+const TC = {
+  es: {
+    titulo: 'Cancelaciones',
+    ayuda:
+      'Sin una regla aprobada, toda la comisión apartada vuelve al saldo del conductor. Crear una regla nueva cierra la anterior del mismo servicio y país desde ahora.',
+    antes: 'Antes de recoger',
+    despues: 'Después de recoger',
+    tipos: {
+      liberar: 'Devolver todo',
+      porcentaje: 'Quedarse un porcentaje',
+      fijo: 'Cargo fijo',
+    } as Record<string, string>,
+    valorPct: 'Porcentaje (%)',
+    valorFijo: 'Cargo fijo',
+    aprobada: 'Revisión legal y comercial aprobada',
+    motivo: 'Motivo del cambio',
+    crear: 'Crear regla de cancelación',
+    creada: 'Regla creada.',
+    vacia: 'Todavía no hay reglas: en todos los mercados se devuelve todo.',
+    vigente: 'Vigente',
+    sinAprobar: 'Sin revisión legal: no rige',
+    cerrada: 'Cerrada',
+  },
+  en: {
+    titulo: 'Cancellations',
+    ayuda:
+      'Without an approved rule, the whole held commission goes back to the driver’s balance. A new rule closes the previous one for the same service and country from now on.',
+    antes: 'Before pickup',
+    despues: 'After pickup',
+    tipos: {
+      liberar: 'Return everything',
+      porcentaje: 'Keep a percentage',
+      fijo: 'Flat fee',
+    } as Record<string, string>,
+    valorPct: 'Percentage (%)',
+    valorFijo: 'Flat fee',
+    aprobada: 'Legal and commercial review approved',
+    motivo: 'Reason for the change',
+    crear: 'Create cancellation rule',
+    creada: 'Rule created.',
+    vacia: 'No rules yet: every market returns everything.',
+    vigente: 'Active',
+    sinAprobar: 'No legal review: not in force',
+    cerrada: 'Closed',
+  },
+};
+type Tramo = { tipo: string; pb?: number; monto?: number };
+type FilaCancelacion = {
+  id: string;
+  servicio: string;
+  pais: string;
+  moneda: string;
+  regla: { antesDeRecoger: Tramo; despuesDeRecoger: Tramo };
+  activa: boolean;
+  revisionLegalAprobada: boolean;
+  motivo: string;
+};
+
+function tramoTexto(t: (typeof TC)['es'], tr: Tramo, moneda: string, idioma: 'es' | 'en') {
+  if (tr.tipo === 'porcentaje') return `${t.tipos.porcentaje}: ${(tr.pb ?? 0) / 100} %`;
+  if (tr.tipo === 'fijo')
+    return `${t.tipos.fijo}: ${formatearMonto(tr.monto ?? 0, moneda, idioma)}`;
+  return t.tipos.liberar;
+}
+
+function Cancelaciones({ idioma }: { idioma: 'es' | 'en' }) {
+  const t = TC[idioma];
+  const [lista, setLista] = useState<FilaCancelacion[] | null>(null);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+  const b = useBorrador({
+    formulario: 'super-fin-cancelaciones',
+    inicial: {
+      servicio: 'food',
+      pais: 'US',
+      moneda: 'USD',
+      antesTipo: 'liberar',
+      antesValor: '',
+      despuesTipo: 'liberar',
+      despuesValor: '',
+      aprobada: '',
+      motivo: '',
+    },
+    almacen: almacenNavegador,
+  });
+  const v = b.valores;
+  const cargar = useCallback(() => {
+    pedir<{ politicas: FilaCancelacion[] }>('GET', '/datos/admin/finanzas/cancelaciones')
+      .then((r) => setLista(r.politicas))
+      .catch((x: unknown) => setError(mensaje(x)));
+  }, []);
+  useEffect(cargar, [cargar]);
+  const tramo = (tipo: string, valor: string, moneda: string) =>
+    tipo === 'porcentaje'
+      ? { tipo, pb: Math.round(Number(valor.replace(',', '.')) * 100) || 0 }
+      : tipo === 'fijo'
+        ? { tipo, monto: textoAMonto(valor, moneda) }
+        : { tipo: 'liberar' };
+  async function crear(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setOk('');
+    const moneda = v.moneda.trim().toUpperCase();
+    try {
+      await pedir('POST', '/datos/admin/finanzas/cancelaciones', {
+        servicio: v.servicio,
+        pais: v.pais.trim().toUpperCase(),
+        moneda,
+        regla: {
+          antesDeRecoger: tramo(v.antesTipo, v.antesValor, moneda),
+          despuesDeRecoger: tramo(v.despuesTipo, v.despuesValor, moneda),
+        },
+        revisionLegalAprobada: v.aprobada === '1',
+        motivo: v.motivo,
+      });
+      await b.limpiar();
+      setOk(t.creada);
+      cargar();
+    } catch (x) {
+      setError(mensaje(x));
+    }
+  }
+  const selectorTramo = (cual: 'antes' | 'despues') => (
+    <div className="flex-inline">
+      <div className="campo">
+        <label htmlFor={`can-${cual}`}>{cual === 'antes' ? t.antes : t.despues}</label>
+        <select
+          id={`can-${cual}`}
+          value={v[`${cual}Tipo`]}
+          onChange={(e) => b.cambiar(`${cual}Tipo`, e.target.value)}
+        >
+          {Object.entries(t.tipos).map(([k, txt]) => (
+            <option key={k} value={k}>
+              {txt}
+            </option>
+          ))}
+        </select>
+      </div>
+      {v[`${cual}Tipo`] !== 'liberar' ? (
+        <Campo
+          etiqueta={`${cual === 'antes' ? t.antes : t.despues} · ${v[`${cual}Tipo`] === 'fijo' ? t.valorFijo : t.valorPct}`}
+          valor={v[`${cual}Valor`]}
+          cambiar={(x) => b.cambiar(`${cual}Valor`, x)}
+          placeholder={v[`${cual}Tipo`] === 'fijo' ? '1.00' : '50'}
+        />
+      ) : null}
+    </div>
+  );
+  return (
+    <>
+      <h2>{t.titulo}</h2>
+      <p className="pista">{t.ayuda}</p>
+      {lista && lista.length === 0 ? <p>{t.vacia}</p> : null}
+      {lista && lista.length > 0 ? (
+        <ul className="lista-simple">
+          {lista.map((p) => (
+            <li key={p.id}>
+              <strong>
+                {p.servicio} · {p.pais} · {p.moneda}
+              </strong>{' '}
+              — {t.antes}: {tramoTexto(t, p.regla.antesDeRecoger, p.moneda, idioma)} · {t.despues}:{' '}
+              {tramoTexto(t, p.regla.despuesDeRecoger, p.moneda, idioma)} ·{' '}
+              {!p.activa ? t.cerrada : p.revisionLegalAprobada ? t.vigente : t.sinAprobar}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <Recuperado b={b} idioma={idioma} />
+      <form className="flex-form" noValidate onSubmit={(e) => void crear(e)}>
+        <div className="flex-inline">
+          <div className="campo">
+            <label htmlFor="can-servicio">{idioma === 'en' ? 'Service' : 'Servicio'}</label>
+            <select
+              id="can-servicio"
+              value={v.servicio}
+              onChange={(e) => b.cambiar('servicio', e.target.value)}
+            >
+              {SERVICIOS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Campo
+            etiqueta={
+              idioma === 'en'
+                ? 'Rule country (two letters or *)'
+                : 'País de la regla (dos letras o *)'
+            }
+            valor={v.pais}
+            cambiar={(x) => b.cambiar('pais', x)}
+          />
+          <Campo
+            etiqueta={idioma === 'en' ? 'Currency' : 'Moneda'}
+            valor={v.moneda}
+            cambiar={(x) => b.cambiar('moneda', x)}
+          />
+        </div>
+        {selectorTramo('antes')}
+        {selectorTramo('despues')}
+        <label>
+          <input
+            type="checkbox"
+            checked={v.aprobada === '1'}
+            onChange={(e) => b.cambiar('aprobada', e.target.checked ? '1' : '')}
+          />{' '}
+          {t.aprobada}
+        </label>
+        <Campo etiqueta={t.motivo} valor={v.motivo} cambiar={(x) => b.cambiar('motivo', x)} />
+        <Aviso error={error} />
         {ok ? (
           <p className="texto-exito" role="status">
             {ok}
