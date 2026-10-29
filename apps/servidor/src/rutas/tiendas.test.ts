@@ -143,4 +143,30 @@ describe('C-TIENDAS-CATALOGO · catálogo de tiendas', () => {
     await m.llamar('PUT', '/datos/mi-restaurante/tipo', { tipo: 'restaurante' }, d.token);
     expect((await m.llamar('GET', '/datos/restaurantes')).datos.restaurantes).toHaveLength(1);
   });
+
+  it('los avisos de la planilla salen en el idioma de quien la sube', async () => {
+    const m = mundo();
+    const d = await tienda(m);
+    // La tienda es de Miami (los nombres en inglés), pero el panel está en español.
+    const r = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/productos/importar',
+      { csv: HOJA },
+      d.token,
+      {
+        'x-idioma': 'es',
+      },
+    );
+    expect(r.datos.errores[0].error).toMatch(/no es válido/);
+    const en = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/productos/importar',
+      { csv: HOJA },
+      d.token,
+      {
+        'x-idioma': 'en',
+      },
+    );
+    expect(en.datos.errores[0].error).toMatch(/isn’t valid/);
+  });
 });

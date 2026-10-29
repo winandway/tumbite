@@ -17,6 +17,7 @@ import { api } from './api';
 import { TEXTOS_PANEL } from './textos';
 import { MiRestaurante } from './MiRestaurante';
 import { Menu } from './Menu';
+import { Productos } from './Productos';
 import { AdminRestaurantes } from './AdminRestaurantes';
 import { AdminDinero } from './AdminDinero';
 import { Resenas } from './Resenas';
@@ -90,6 +91,7 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
   if (usuario.rol === 'restaurante') {
     if (ruta === '/panel/restaurant') return <MiRestaurante usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/menu') return <Menu usuario={usuario} idioma={idioma} />;
+    if (ruta === '/panel/products') return <Productos idioma={idioma} />;
     if (ruta === '/panel/company') return <MiEmpresa usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/earnings') return <Billetera usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/gifts') return <Regalos usuario={usuario} idioma={idioma} />;

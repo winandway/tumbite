@@ -105,7 +105,7 @@ tiendas.get('/mi-restaurante/productos', async (c) => {
          FROM catalogo_productos p
          LEFT JOIN catalogo_ofertas o ON o.producto_id = p.id AND o.comercio_id = p.comercio_id
         WHERE ${donde.join(' AND ')}
-        ORDER BY p.categoria1, p.nombre_es, p.nombre_en LIMIT ? OFFSET ?`,
+        ORDER BY p.categoria1, COALESCE(NULLIF(p.nombre_es, ''), p.nombre_en) LIMIT ? OFFSET ?`,
     )
     .bind(...valores, PAGINA + 1, (q.pagina - 1) * PAGINA)
     .all<FilaProducto>();
@@ -312,7 +312,9 @@ tiendas.post('/mi-restaurante/productos/importar', async (c) => {
     z.object({ csv: z.string().min(1).max(5_000_000), confirmar: z.boolean().default(false) }),
   );
   const idioma = t.pais === 'US' ? 'en' : 'es';
-  const r = leerPlanillaProductos(d.csv, idioma);
+  // Los nombres van en el idioma del país de la tienda; los avisos, en el de quien sube la planilla.
+  const mensajes = (c.req.header('x-idioma') ?? idioma).startsWith('en') ? 'en' : 'es';
+  const r = leerPlanillaProductos(d.csv, idioma, mensajes);
   if (r.faltanColumnas.length)
     throw new ErrorDatos(
       `Faltan las columnas: ${r.faltanColumnas.join(', ')}. Descarga la plantilla para ver el formato.`,
@@ -338,7 +340,7 @@ tiendas.post('/mi-restaurante/productos/importar', async (c) => {
     ...sinPrecio.map((x) => ({
       fila: x.fila,
       error:
-        idioma === 'en'
+        mensajes === 'en'
           ? 'The price is missing (it’s a new product).'
           : 'Falta el precio (el producto es nuevo).',
     })),

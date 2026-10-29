@@ -188,8 +188,10 @@ export function filaDeProducto(
   celdas: string[],
   mapa: Record<string, number>,
   idioma: 'es' | 'en',
+  /** El idioma de quien sube la planilla (los avisos de error); por defecto el de la tienda. */
+  idiomaMensajes: 'es' | 'en' = idioma,
 ): { ficha: FichaProducto; oferta: OfertaProducto | null; error: null } | { error: string } {
-  const tx = (es: string, en: string) => (idioma === 'en' ? en : es);
+  const tx = (es: string, en: string) => (idiomaMensajes === 'en' ? en : es);
   const v = (campo: string) => {
     // eslint-disable-next-line security/detect-object-injection -- campo de la lista cerrada
     const i = mapa[campo];
@@ -350,7 +352,11 @@ export function filaDeProducto(
 }
 
 /** La planilla completa: filas válidas y errores por fila (la fila 1 es la de los encabezados). */
-export function leerPlanillaProductos(texto: string, idioma: 'es' | 'en') {
+export function leerPlanillaProductos(
+  texto: string,
+  idioma: 'es' | 'en',
+  idiomaMensajes: 'es' | 'en' = idioma,
+) {
   const filas = leerCsv(texto);
   const mapa = mapearColumnasProductos(filas[0] ?? []);
   const validas: { fila: number; ficha: FichaProducto; oferta: OfertaProducto | null }[] = [];
@@ -359,14 +365,14 @@ export function leerPlanillaProductos(texto: string, idioma: 'es' | 'en') {
   filas.slice(1).forEach((celdas, i) => {
     const numero = i + 2;
     if (celdas.every((x) => !x.trim())) return;
-    const r = filaDeProducto(celdas, mapa, idioma);
+    const r = filaDeProducto(celdas, mapa, idioma, idiomaMensajes);
     if (r.error !== null) return errores.push({ fila: numero, error: r.error });
     const antes = vistos.get(r.ficha.sku);
     if (antes)
       return errores.push({
         fila: numero,
         error:
-          idioma === 'en'
+          idiomaMensajes === 'en'
             ? `Repeated SKU (already in row ${antes}).`
             : `SKU repetido (ya está en la fila ${antes}).`,
       });
