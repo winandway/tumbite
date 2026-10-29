@@ -21,6 +21,17 @@ import { ReportarPanel } from './ReportarPanel';
 import { LuzSemaforo } from './LuzSemaforo';
 import QRCode from 'qrcode';
 import { pedir } from './api';
+import { imprimirComanda } from './comanda';
+
+/** C-COMANDA: la preferencia vive en este navegador (cada tableta o computadora decide). */
+const LLAVE_IMPRIMIR = 'divoox.imprimirAlAceptar';
+const leerImprimir = () => {
+  try {
+    return localStorage.getItem(LLAVE_IMPRIMIR) === '1';
+  } catch {
+    return false;
+  }
+};
 
 type Pedido = {
   id: string;
@@ -66,6 +77,8 @@ const T = {
     sonidoOk: 'Alarma activada',
     vacio: 'Sin pedidos por ahora.',
     aceptar: 'Aceptar',
+    imprimir: 'Imprimir comanda',
+    imprimirAlAceptar: 'Imprimir la comanda al aceptar',
     recoge: 'El cliente lo recoge en el local (sin repartidor)',
     pinCliente: 'PIN del cliente (4 dígitos, está en su app)',
     mayorEdad: 'Revisé el documento: quien recibe es mayor de 21',
@@ -117,6 +130,8 @@ const T = {
     sonidoOk: 'Alarm on',
     vacio: 'No orders right now.',
     aceptar: 'Accept',
+    imprimir: 'Print ticket',
+    imprimirAlAceptar: 'Print the ticket when accepting',
     recoge: 'Customer picks up in store (no driver)',
     pinCliente: 'Customer PIN (4 digits, in their app)',
     mayorEdad: 'I checked the ID: the recipient is 21 or older',
@@ -243,6 +258,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
     setSonido(true);
   }
 
+  const [imprimirAlAceptar, setImprimirAlAceptar] = useState(leerImprimir);
   async function accion(ruta: string, cuerpo: unknown = {}) {
     try {
       await pedir('POST', ruta, cuerpo);
@@ -256,6 +272,21 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
     <section>
       <div className="titulo-fila">
         <h1>{t.titulo}</h1>
+        <label className="campo-check">
+          <input
+            type="checkbox"
+            checked={imprimirAlAceptar}
+            onChange={(ev) => {
+              setImprimirAlAceptar(ev.target.checked);
+              try {
+                localStorage.setItem(LLAVE_IMPRIMIR, ev.target.checked ? '1' : '0');
+              } catch {
+                /* sin almacén en este navegador: vale solo mientras la página esté abierta */
+              }
+            }}
+          />{' '}
+          {t.imprimirAlAceptar}
+        </label>
         {sonido ? (
           <span className="ok">
             <Icono nombre="alarma" tamano={18} /> {t.sonidoOk}
@@ -462,15 +493,26 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                       key={m}
                       type="button"
                       className={m === cocina.prepSugerida ? 'boton exito' : 'boton'}
-                      onClick={() =>
-                        void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m })
-                      }
+                      onClick={() => {
+                        if (imprimirAlAceptar)
+                          imprimirComanda(p, '', idioma === 'en' ? 'en' : 'es');
+                        void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m });
+                      }}
                     >
                       {t.aceptar} · {m} {t.min}
                       {m === cocina.prepSugerida ? ` · ${t.sugerido}` : ''}
                     </button>
                   ),
                 )}
+              {['aceptado', 'listo'].includes(p.estado) ? (
+                <button
+                  type="button"
+                  className="boton secundario"
+                  onClick={() => imprimirComanda(p, '', idioma === 'en' ? 'en' : 'es')}
+                >
+                  {t.imprimir}
+                </button>
+              ) : null}
               {p.estado === 'aceptado' && (
                 <button
                   type="button"

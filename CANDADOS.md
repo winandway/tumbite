@@ -1620,3 +1620,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el repartidor de comida no tenía centro de seguridad (Dasher y Uber Driver sí; Moto tenía el botón del viaje).
 - **Arreglo:** tablas `incidentes_repartidor` y `recorridos_compartidos`. Rutas en `apps/servidor/src/rutas/seguridadRepartidor.ts`: `POST /datos/repartidor/emergencia` (anota y avisa al equipo con el tipo «sistema», que nunca se apaga; devuelve el número de emergencias del país), `POST /datos/repartidor/incidentes` (aviso tipo «pedidos»), `POST /datos/repartidor/compartir-recorrido` (enlace secreto de 12 horas, solo la huella), `GET /datos/publico/recorrido/:codigo` (primer nombre y ubicación, sin indexar) y `GET /datos/admin/seguridad`. App Driver: menú → «Seguridad» (`grandes/Seguridad.tsx`). Página `/driver-trip/<código>`. Docs: guía «driver-safety».
 - **Prueba:** `rutas/seguridadRepartidor.test.ts`.
+
+## C-COMANDA (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el restaurante no podía imprimir la comanda (DoorDash y Uber Eats tienen impresora).
+- **Arreglo:** `htmlComanda` e `imprimirComanda` (`apps/panel/src/panel/comanda.ts`): impresión del navegador en 80 mm, número, modo, programado, platos con opciones y notas (escapadas); nada de dirección ni dinero. En Pedidos: «Imprimir comanda» en aceptados y listos, e «Imprimir la comanda al aceptar» guardado en ese navegador. Docs: guía «print-tickets».
+- **Prueba:** `panel/comanda.test.tsx`.

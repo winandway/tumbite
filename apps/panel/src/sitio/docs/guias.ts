@@ -1458,6 +1458,23 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'print-tickets',
+        titulo: 'Imprimir la comanda',
+        resumen:
+          'Imprime cada pedido para la cocina, a mano o solo al aceptarlo, con cualquier impresora de tickets conectada a tu computadora o tableta.',
+        explicacion: [
+          'En Pedidos, cada pedido aceptado o listo tiene el botón «Imprimir comanda».',
+          'Si marcas «Imprimir la comanda al aceptar», cada vez que aceptes un pedido se abre la impresión sola. La preferencia queda guardada en ese equipo.',
+          'La comanda trae el número del pedido, si es a domicilio o para recoger, si es programado, los platos con sus opciones y las notas. No trae la dirección ni el dinero del cliente.',
+          'Sale en el ancho de 80 mm de las impresoras térmicas; también se puede imprimir en una hoja normal.',
+        ],
+        preguntas: ['¿Cómo imprimo los pedidos para la cocina?', '¿Puedo imprimir al aceptar?'],
+        pasos: [
+          'Abre Pedidos.',
+          'Marca «Imprimir la comanda al aceptar» o toca «Imprimir comanda».',
+        ],
+      },
+      {
         id: 'dashboard',
         titulo: 'Tu tablero: cómo va tu restaurante',
         resumen:
@@ -4558,6 +4575,20 @@ const en: SeccionDocs[] = [
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
           'You can also use the Divoox restaurant app on a tablet or phone: same alarm, same orders.',
         ],
+      },
+      {
+        id: 'print-tickets',
+        titulo: 'Print kitchen tickets',
+        resumen:
+          'Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.',
+        explicacion: [
+          'In Orders, every accepted or ready order has a “Print ticket” button.',
+          'If you check “Print the ticket when accepting”, printing opens every time you accept an order. The setting is saved on that device.',
+          'The ticket shows the order number, whether it’s delivery or pickup, whether it’s scheduled, the items with their options and the notes. It doesn’t show the customer’s address or money.',
+          'It prints at the 80 mm width of thermal printers; it can also be printed on a regular page.',
+        ],
+        preguntas: ['How do I print orders for the kitchen?', 'Can I print when accepting?'],
+        pasos: ['Open Orders.', 'Check “Print the ticket when accepting” or tap “Print ticket”.'],
       },
       {
         id: 'dashboard',
