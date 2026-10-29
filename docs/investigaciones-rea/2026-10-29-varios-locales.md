@@ -38,3 +38,9 @@
 ## Riesgo
 
 Toca más de 20 lugares del servidor que hoy toman «el primer restaurante del dueño». Por eso va con la función única `localActivo` y la regla «sin cabecera = lo de hoy», y se construye en una rama con el recorrido completo en verde antes de fusionar.
+
+## Bloqueo encontrado al empezar (29 oct 2026)
+
+`restaurantes.dueno_id` es `UNIQUE` en `schema.sql`: la base no deja que un dueño tenga dos restaurantes. En SQLite quitar un `UNIQUE` exige reconstruir la tabla (crear otra sin la regla, copiar, cambiar de nombre), y de `restaurantes` cuelgan pedidos, platos, horarios, miembros, cobros y más. Es una migración de producción delicada: **espera el visto bueno de Richard** antes de hacerse, con respaldo previo, ensayo en el sitio de pruebas y punto de restauración.
+
+Alternativa sin tocar la tabla (descartada): crear cada local nuevo con otro «dueño» técnico y dar al dueño real el rol de dueño por `miembros_restaurante`. Complica cobros, avisos y permisos y va contra la regla de no inventar.

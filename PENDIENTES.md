@@ -46,6 +46,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Varios locales en una cuenta (cadenas):** sí o no a reconstruir la tabla de restaurantes en producción (hoy un dueño solo puede tener uno). Con respaldo, ensayo en pruebas y punto de restauración. Ficha: docs/investigaciones-rea/2026-10-29-varios-locales.md.
+
 - [ ] 👤 **Google Play, accesos:** (de mi lado todo listo; falta que abras tu sesión de administrador en divoox.com/panel) confirmar administrador real, preparar escenario aislado de revisión, comprobar los tres accesos en los Android de la tienda y guardar las credenciales directamente en Google Play. Crear cuentas por sí solo no cierra este punto. Véase [Acceso de revisores](docs/ACCESO-REVISORES.md).
 
 - [ ] 👤 **Leer la auditoría final** (`docs/AUDITORIA-FINAL-2026-10-18.md`) y decidir: cuándo publicar en tiendas (recomendación: al cerrar la lista MVP), qué hacer con el banner del kit de la web (pantalla dibujada, no real), y ordenar la fila si quiere otro orden.
