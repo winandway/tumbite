@@ -263,3 +263,6 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] Retiro en un punto con plazo (28 oct 2026, C-FLEX-RETIRO): centro como agencia, 5 días hábiles, cédula o tercero autorizado, cobro al retirar, devolución al vencer.
 - [ ] Siguiente para Venezuela (de la investigación): pagos locales en la billetera (pago móvil, transferencia, Zelle, efectivo) con comprobante; seguro. (Los avisos al destinatario van por push con sonido propio desde el 28 oct, C-AVISO-PAQUETE; el SMS se descartó por costo.)
 - [ ] 👤 Llave de Google Places (API nueva) para buscar direcciones mientras se escribe (sin ella funciona el pin).
+
+- [x] (29 oct 2026) Versiones nuevas de las tres apps subidas a Google Play, a la revisión en curso: cliente versión 6 (tiendas, Moto, sugerencias de direcciones, entrega en mano con alcohol), restaurante versión 5 (faltantes de tienda), Driver versión 8 (cobro al entregar en Mi ruta y reintentos). Ninguna app está aprobada todavía: las tres siguen en su primera revisión desde el 27 oct.
+- [ ] 👤 Esperar la aprobación de Google de las tres apps (no depende de nosotros). Al aprobarse, revisar que en el celular aparezcan Mercado, Farmacia, Licores y Más como «muy pronto» y Moto apagado.
