@@ -20,6 +20,7 @@ import { useServicios } from './inicio/useServicios';
 import { useAvisos } from './inicio/useAvisos';
 import { RegalosEnMarcha } from './inicio/RegalosEnMarcha';
 import { textosInicio } from './inicio/textos';
+import { PedirOtraVezInicio } from './inicio/PedirOtraVezInicio';
 
 /**
  * Inicio del cliente con el diseño aprobado (14 oct 2026): cabecera con logotipo y hamburguesa,
@@ -140,6 +141,7 @@ export function Inicio() {
             {ti.sinUbicacion}
           </Text>
         )}
+        <PedirOtraVezInicio idioma={idioma} />
         <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
         <Restaurantes
           idioma={idioma}

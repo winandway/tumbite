@@ -110,7 +110,7 @@ const es: SeccionDocs[] = [
           '«Ver pedido y recibo» abre el pedido con el desglose: comida, envío, servicio, impuesto (si aplica en tu ciudad), propina y total, además del seguimiento y la calificación.',
           '«Repetir pedido» arma otra vez tu carrito con los mismos platos o productos, cantidades y opciones, con el precio de hoy. Si alguno ya no está disponible, te decimos cuál y ponemos los que sí.',
           'También sirve con las tiendas (mercado, farmacia y más): se repite incluso lo que elegiste hacer si falta un producto.',
-          'Al terminar un pedido, en su pantalla aparece «Pedir otra vez» con el mismo efecto.',
+          'Al terminar un pedido, en su pantalla aparece «Pedir otra vez» con el mismo efecto. Y en el inicio, la fila «Pedir otra vez» muestra los últimos comercios donde recibiste un pedido: un toque y está en tu carrito.',
           'Si tenías otro carrito a medias, primero te preguntamos si lo cambiamos.',
         ],
         capturas: [
@@ -3103,7 +3103,7 @@ const en: SeccionDocs[] = [
           '“See order and receipt” opens the order with the breakdown: food, delivery, service, tax (where it applies in your city), tip and total, plus tracking and rating.',
           '“Reorder” builds your cart again with the same items, quantities and options, at today’s prices. If any is no longer available, we tell you which one and add the rest.',
           'It works with stores too (grocery, pharmacy and more), including what you chose to do if an item is missing.',
-          'When an order is finished, its screen shows “Order again”, which does the same.',
+          'When an order is finished, its screen shows “Order again”, which does the same. On the home screen, the “Order again” row shows the last places you got an order from: one tap and it’s in your cart.',
           'If you had another cart half done, we ask before replacing it.',
         ],
         capturas: [
