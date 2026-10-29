@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   notaSustitucion,
+  puedeMarcarFalta,
   codigoBarrasValido,
   leerPlanillaProductos,
   precioACentavos,
@@ -76,5 +77,15 @@ describe('C-TIENDAS-COMPRA · nota de sustitución para la tienda', () => {
     expect(notaSustitucion({ sustitucion: 'similar' }, 'es')).toContain('parecido');
     expect(notaSustitucion({ sustitucion: 'reembolsar' }, 'en')).toBe('If out: refund it');
     expect(notaSustitucion({}, 'es')).toBe('');
+  });
+});
+
+describe('C-TIENDAS-FALTANTES · otro faltante', () => {
+  it('en una tienda, otro en cuanto se resolvió el anterior; en un restaurante, uno solo', () => {
+    const tienda = [{ sustitucion: 'reembolsar' }];
+    expect(puedeMarcarFalta(null, tienda)).toBe(true);
+    expect(puedeMarcarFalta({ estado: 'quitado' }, tienda)).toBe(true);
+    expect(puedeMarcarFalta({ estado: 'pendiente' }, tienda)).toBe(false);
+    expect(puedeMarcarFalta({ estado: 'quitado' }, [{}])).toBe(false);
   });
 });

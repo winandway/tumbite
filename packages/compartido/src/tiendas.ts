@@ -418,3 +418,15 @@ export function notaSustitucion(l: { sustitucion?: string | null }, idioma: 'es'
   const t = l.sustitucion ? textos.get(l.sustitucion) : undefined;
   return t ? (idioma === 'en' ? t[1] : t[0]) : '';
 }
+
+/**
+ * C-TIENDAS-FALTANTES: ¿se puede marcar otro producto como faltante? En un restaurante, uno por
+ * pedido; en una tienda (sus líneas traen qué hacer si falta), otro en cuanto se resolvió el anterior.
+ */
+export function puedeMarcarFalta(
+  ajuste: { estado: string } | null | undefined,
+  lineas: { sustitucion?: string | null }[],
+): boolean {
+  if (!ajuste) return true;
+  return ajuste.estado === 'quitado' && lineas.some((l) => Boolean(l.sustitucion));
+}

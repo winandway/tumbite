@@ -82,6 +82,7 @@ type Pedido = {
     cantidad: number;
     precioCentavos: number;
     opciones?: OpcionElegida[];
+    sustitucion?: string;
   }[];
   repartidor?: {
     nombre: string;
@@ -139,6 +140,14 @@ const T = {
     tuPinAyuda:
       'Díselo solo a quien reciba el pedido. El repartidor lo necesita para entregarlo en mano.',
     faltaTitulo: 'El restaurante no tiene «{plato}»',
+    // C-TIENDAS-COMPRA: en una tienda se habla de la tienda y de tus productos, no de comida.
+    estadosTienda: {
+      pagado: 'Pago recibido. Esperando que la tienda lo acepte.',
+      aceptado: 'La tienda está preparando tus productos.',
+      listo: 'Tus productos están listos. Buscando repartidor…',
+      entregado: '¡Entregado!',
+    } as Record<string, string>,
+    faltaTituloTienda: 'La tienda no tiene «{plato}»',
     faltaTexto:
       'Elige qué hacer. Si no respondes en 5 minutos, lo quitamos y te devolvemos su parte.',
     quitar: 'Quitarlo y seguir (te devolvemos {monto})',
@@ -236,6 +245,13 @@ const T = {
     tuPinAyuda:
       'Share it only with whoever receives the order. The driver needs it to hand it over.',
     faltaTitulo: 'The restaurant is out of “{plato}”',
+    estadosTienda: {
+      pagado: 'Payment received. Waiting for the store to accept.',
+      aceptado: 'The store is getting your items ready.',
+      listo: 'Your items are ready. Finding a driver…',
+      entregado: 'Delivered!',
+    } as Record<string, string>,
+    faltaTituloTienda: 'The store is out of “{plato}”',
     faltaTexto:
       'Choose what to do. If you don’t answer in 5 minutes, we remove it and refund that part.',
     quitar: 'Remove it and continue (we refund {monto})',
@@ -498,8 +514,10 @@ export default function SeguirPedido() {
   const paso = p ? (PASOS_DISENO.get(p.estado) ?? -1) : -1;
   const activo = p ? !['entregado', 'cancelado'].includes(p.estado) : false;
   const numero = `#${String(id).slice(0, 4).toUpperCase()}`;
+  const esTienda = Boolean(p?.lineas.some((l) => l.sustitucion));
   const estadoTexto = p
     ? ((p.estado === 'cancelado' && p.motivoCancelacion ? t.motivos[p.motivoCancelacion] : null) ??
+      (esTienda ? t.estadosTienda[p.estado] : undefined) ??
       t.estados[p.estado] ??
       p.estado)
     : '';
@@ -825,7 +843,7 @@ export default function SeguirPedido() {
             {p.ajuste.estado === 'pendiente' ? (
               <>
                 <Text style={{ fontWeight: '800', fontSize: 17 }}>
-                  {t.faltaTitulo.replace(
+                  {(esTienda ? t.faltaTituloTienda : t.faltaTitulo).replace(
                     '{plato}',
                     idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
                   )}

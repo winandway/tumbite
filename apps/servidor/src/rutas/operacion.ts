@@ -47,7 +47,14 @@ import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { CON_AJUSTE, CON_EVIDENCIAS, type FilaPedido, aPedido, calcularSinPlato } from './pedidos';
+import {
+  CON_AJUSTE,
+  CON_EVIDENCIAS,
+  type FilaPedido,
+  aPedido,
+  aplicarAjuste,
+  calcularSinPlato,
+} from './pedidos';
 import { anotar, anotarEstado } from '../historial';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
@@ -549,7 +556,7 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
   const { platoId } = await leerCuerpo(c, z.object({ platoId: z.string().min(1) }));
   const f = await db
     .prepare(
-      `SELECT p.*, ${CON_AJUSTE}, r.nombre AS restaurante_nombre FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.restaurante_id = ? AND p.estado IN ('pagado','aceptado') AND p.repartidor_id IS NULL`,
+      `SELECT p.*, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.tipo_comercio AS tipo_comercio FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.restaurante_id = ? AND p.estado IN ('pagado','aceptado') AND p.repartidor_id IS NULL`,
     )
     .bind(id, rid)
     .first<FilaPedido>();
@@ -559,19 +566,39 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
       undefined,
       409,
     );
-  if (f.aj_plato) throw new ErrorDatos('Ya avisaste de un plato en este pedido.', undefined, 409);
+  // C-TIENDAS-FALTANTES: en una tienda pueden faltar varios productos (uno detrás de otro, como en
+  // Instacart); en un restaurante, uno por pedido. Nunca dos a la vez sin resolver.
+  const esTienda = String(f.tipo_comercio ?? 'restaurante') !== 'restaurante';
+  if (f.aj_plato && (!esTienda || f.aj_estado === 'pendiente'))
+    throw new ErrorDatos('Ya avisaste de un plato en este pedido.', undefined, 409);
   const linea = (
-    JSON.parse(String(f.lineas_json)) as { platoId: string; nombreEs: string; nombreEn: string }[]
+    JSON.parse(String(f.lineas_json)) as {
+      platoId: string;
+      nombreEs: string;
+      nombreEn: string;
+      sustitucion?: string;
+    }[]
   ).find((l) => l.platoId === platoId);
   if (!linea) throw new ErrorDatos('Ese plato no está en este pedido.', 'platoId', 404);
   const { devolucion } = await calcularSinPlato(db, f, platoId);
   await db
     .prepare(
-      'INSERT INTO ajustes_pedido (pedido_id, plato_id, nombre_es, nombre_en, devolucion) VALUES (?, ?, ?, ?, ?)',
+      `INSERT INTO ajustes_pedido (pedido_id, plato_id, nombre_es, nombre_en, devolucion) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(pedido_id) DO UPDATE SET plato_id = excluded.plato_id, nombre_es = excluded.nombre_es,
+         nombre_en = excluded.nombre_en, devolucion = excluded.devolucion, estado = 'pendiente',
+         creado_en = datetime('now'), resuelto_en = NULL
+       WHERE ajustes_pedido.estado = 'quitado'`,
     )
     .bind(id, platoId, linea.nombreEs, linea.nombreEn, devolucion)
     .run();
   await anotarEvento(db, id, 'plato_agotado', linea.nombreEs);
+  // C-TIENDAS-FALTANTES: el cliente ya dijo en el carrito qué hacer si falta. «Reembolsar» y «uno
+  // parecido» (si la tienda lo marca, tampoco tenía uno parecido) se devuelven en el acto; solo
+  // «avísame» espera su decisión, como un restaurante.
+  if (esTienda && (linea.sustitucion ?? 'reembolsar') !== 'contactar') {
+    const r = await aplicarAjuste(c.env, db, id, 'quitar', exigir(c, 'restaurante').id);
+    return c.json({ ok: true, devolucion: r.devolucion, resuelto: true, cancelado: r.cancelado });
+  }
   await avisarAlCliente(c.env, db, id, (i, ff) =>
     AVISOS.faltaPlato(
       i,

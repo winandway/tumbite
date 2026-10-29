@@ -194,7 +194,8 @@ export async function aplicarAjuste(
         amount: devolucion,
         metadata: { pedido_id: pedidoId, motivo: 'plato_agotado' },
       },
-      `ajuste-${pedidoId}`,
+      // Una devolución por producto: en una tienda puede faltar más de uno.
+      `ajuste-${pedidoId}-${String(f.aj_plato)}`,
     );
   }
   await db.batch([

@@ -163,6 +163,68 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     ]);
   });
 
+  it('C-TIENDAS-FALTANTES: lo que falta se resuelve con lo que eligió el cliente, y pueden faltar varios', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [
+          { platoId: id('Spring water'), cantidad: 1, sustitucion: 'reembolsar' },
+          { platoId: id('Orange juice'), cantidad: 1, sustitucion: 'similar' },
+          { platoId: id('Bananas'), cantidad: 1, sustitucion: 'contactar' },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const pid = r.datos.pedidoId as string;
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+    )
+      .bind(pid)
+      .run();
+    const falta = (n: string) =>
+      m.llamar('POST', `/datos/restaurante/pedidos/${pid}/falta`, { platoId: id(n) }, dueno.token);
+    const total = async () =>
+      (await m.llamar('GET', `/datos/pedidos/${pid}`, undefined, cliente.token)).datos.pedido
+        .total as number;
+    const antes = await total();
+
+    // «Reembolsar»: se devuelve en el acto, sin esperar al cliente.
+    const a = await falta('Spring water');
+    expect(a.estado).toBe(200);
+    expect(a.datos).toMatchObject({ resuelto: true, cancelado: false });
+    expect(await total()).toBe(antes - a.datos.devolucion);
+    // «Uno parecido»: si la tienda lo marca es que tampoco había; también en el acto. Segundo faltante.
+    const b = await falta('Orange juice');
+    expect(b.estado).toBe(200);
+    expect(b.datos.resuelto).toBe(true);
+    // «Avísame»: espera la decisión del cliente, y mientras tanto la tienda no acepta.
+    const c = await falta('Bananas');
+    expect(c.estado).toBe(200);
+    expect(c.datos.resuelto).toBeUndefined();
+    const ac = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${pid}/aceptar`,
+      { minutos: 20 },
+      dueno.token,
+    );
+    expect(ac.estado).toBe(409);
+  });
+
   it('lo agotado no se puede comprar aunque la app lo mande', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

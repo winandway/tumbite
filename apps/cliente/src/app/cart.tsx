@@ -865,7 +865,7 @@ export default function PantallaCarrito() {
       ) : null}
       {desgloseFiable ? (
         <Tarjeta>
-          {fila(t.subtotal, d.subtotal)}
+          {fila(carrito.esTienda ? t.subtotalTienda : t.subtotal, d.subtotal)}
           {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
           {d.descuento > 0 && fila(te.descuento, -d.descuento)}
           {fila(t.envio, d.envio)}

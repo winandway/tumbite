@@ -1260,7 +1260,8 @@ const es: SeccionDocs[] = [
           'En cada producto del pedido ves qué quiere el cliente si no lo tienes: reembolsar, uno parecido sin cobrar de más o preguntarle por el chat.',
         explicacion: [
           'Un pedido de tienda llega igual que uno de comida: suena la alarma, lo aceptas, lo preparas y lo entregas al repartidor. La diferencia está en cada producto: debajo dice qué quiere el cliente si no lo tienes.',
-          '«Si no hay: reembolsar» quiere decir que lo quitas del pedido con «Falta un producto» y Divoox le devuelve al cliente lo que pagó por él. «Uno parecido, sin cobrar de más» quiere decir que pongas uno similar del mismo precio o más barato: el cobro no cambia. «Preguntarle por el chat» quiere decir que le escribas por el chat del pedido antes de decidir.',
+          '«Si no hay: reembolsar» quiere decir que lo quitas del pedido con «Falta un producto» y Divoox le devuelve al cliente lo que pagó por él en ese mismo momento, sin esperar su respuesta. «Uno parecido, sin cobrar de más» quiere decir que pongas uno similar del mismo precio o más barato: el cobro no cambia; si tampoco tienes uno parecido, márcalo como faltante y se devuelve igual, en el acto. «Preguntarle por el chat» quiere decir que le escribas por el chat del pedido: al marcarlo como faltante, el cliente decide en su app si lo quita o cancela.',
+          'Pueden faltar varios productos en un mismo pedido: márcalos uno detrás de otro. Cada uno se resuelve antes de pasar al siguiente.',
           'Los productos que se venden al peso se cobran con un peso estimado. Si pesan menos, quita la diferencia; nunca se le cobra al cliente más de lo que aceptó.',
           'Los productos con alcohol o tabaco salen marcados: el repartidor pide identificación al entregar.',
         ],
@@ -1279,7 +1280,8 @@ const es: SeccionDocs[] = [
         pasos: [
           'Acepta el pedido cuando suene la alarma.',
           'Lee debajo de cada producto qué quiere el cliente si falta.',
-          'Si falta uno y pidió reembolso, toca «Falta un producto» y elígelo.',
+          'Si falta uno, toca «Falta un producto» y elígelo. Si pidió reembolso o uno parecido, se le devuelve en el acto.',
+          'Si falta otro, repite: puedes marcar varios en el mismo pedido.',
           'Si pidió uno parecido, pon uno del mismo precio o más barato.',
           'Si pidió que le pregunten, escríbele por el chat del pedido.',
           'Marca el pedido como listo y entrégalo al repartidor.',
@@ -4165,7 +4167,8 @@ const en: SeccionDocs[] = [
           'Under each item in the order you see what the customer wants if you don’t have it: a refund, something similar at no extra charge, or a question in the chat.',
         explicacion: [
           'A store order comes in just like a food order: the alarm rings, you accept it, prepare it and hand it to the driver. The difference is on each item: underneath it says what the customer wants if you don’t have it.',
-          '“If out: refund it” means you remove it with “An item is missing” and Divoox refunds the customer what they paid for it. “Something similar, no extra charge” means you pack a similar item at the same price or less: the charge doesn’t change. “Ask the customer in the chat” means you message them in the order chat before deciding.',
+          '“If out: refund it” means you remove it with “An item is missing” and Divoox refunds the customer what they paid for it right away, without waiting for a reply. “Something similar, no extra charge” means you pack a similar item at the same price or less: the charge doesn’t change; if you don’t have anything similar either, mark it missing and it’s refunded right away too. “Ask the customer in the chat” means you message them in the order chat: when you mark it missing, the customer decides in their app whether to remove it or cancel.',
+          'Several items can be out in the same order: mark them one after another. Each one is settled before the next.',
           'Items sold by weight are charged at an estimated weight. If they weigh less, remove the difference; the customer is never charged more than they agreed to.',
           'Items with alcohol or tobacco are marked: the driver asks for ID at delivery.',
         ],
@@ -4184,7 +4187,8 @@ const en: SeccionDocs[] = [
         pasos: [
           'Accept the order when the alarm rings.',
           'Read under each item what the customer wants if it’s out.',
-          'If one is out and they asked for a refund, tap “An item is missing” and pick it.',
+          'If one is out, tap “An item is missing” and pick it. If they asked for a refund or something similar, it’s refunded right away.',
+          'If another one is out, do it again: you can mark several in the same order.',
           'If they asked for something similar, pack one at the same price or less.',
           'If they asked to be contacted, message them in the order chat.',
           'Mark the order ready and hand it to the driver.',

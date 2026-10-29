@@ -27,6 +27,7 @@ import {
   fotoSinConfirmar,
   lineaRepartidor,
   notaSustitucion,
+  puedeMarcarFalta,
   textoLinea,
   type OpcionElegida,
   type Plato,
@@ -502,7 +503,9 @@ export function Inicio() {
           {t.quitado.replace('{plato}', nombreAjuste(p))}
         </Text>
       ) : null}
-      {(p.estado === 'pagado' || p.estado === 'aceptado') && !p.repartidor && !p.ajuste ? (
+      {(p.estado === 'pagado' || p.estado === 'aceptado') &&
+      !p.repartidor &&
+      puedeMarcarFalta(p.ajuste, p.lineas) ? (
         <View style={{ marginTop: 10 }}>
           <Pressable
             onPress={() => setFaltaDe(faltaDe === p.id ? null : p.id)}

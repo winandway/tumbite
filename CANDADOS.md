@@ -1465,3 +1465,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo (`apps/servidor/src/esquema.ts`):** ninguna petición espera más de `ESPERA_ESQUEMA_MS` (8 s); una migración que pasa de `ESQUEMA_TRABADO_MS` (30 s) se descarta y se reintenta, y `ultimoErrorEsquema` lo deja visible en la salud. La sincronización de servicios solo escribe si cambió el contrato.
 - **Prueba:** `apps/servidor/src/esquemaSinAtasco.test.ts` (tres casos, comprobados en rojo quitando cada parte del arreglo).
 - **No tocar:** no quitar el tope de espera ni volver a escribir `desplegado_en` en cada arranque.
+
+## C-TIENDAS-FALTANTES (29 oct 2026) — todos los países
+
+- **Qué se rompía:** en la compra de prueba de Richard en Mercado Demo, la tienda marcó un producto como faltante y después no podía aceptar el pedido: el sistema esperaba hasta cinco minutos la decisión del cliente, aunque el cliente ya había elegido «Reembolsar» en el carrito. Además, solo se podía marcar un faltante por pedido.
+- **Arreglo:** en una tienda, `/restaurante/pedidos/:id/falta` aplica en el acto la preferencia de la línea: «reembolsar» y «uno parecido» quitan el producto y devuelven su parte (`aplicarAjuste`); solo «avísame» espera al cliente. Cuando el faltante anterior quedó resuelto («quitado»), se puede marcar otro (la fila de `ajustes_pedido` se reutiliza; la historia queda en los eventos). La devolución en Stripe lleva una llave por producto (`ajuste-<pedido>-<producto>`), para que dos faltantes no choquen. En el panel y en la app de la tienda, `puedeMarcarFalta` (compartido) deja marcar el siguiente.
+- **Textos:** en una tienda el carrito dice «Productos» en vez de «Comida», el seguimiento habla de «la tienda» y el panel dice «Falta un producto».
+- **Prueba:** `tiendasVitrina.test.ts` («C-TIENDAS-FALTANTES»: en rojo sin el arreglo) y `tiendas.test.ts` (puedeMarcarFalta).
+- **No tocar:** un restaurante sigue con un faltante por pedido y la decisión del cliente.

@@ -10,6 +10,7 @@ import {
   fotoSinConfirmar,
   lineaRepartidor,
   notaSustitucion,
+  puedeMarcarFalta,
   textoLinea,
   type OpcionElegida,
 } from '@tumbite/compartido';
@@ -79,6 +80,7 @@ const T = {
     esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
     sinConfirmar: 'La foto lleva más de 2 minutos sin confirmar. El repartidor te está esperando.',
     faltaPlato: 'Me falta un plato',
+    faltaProducto: 'Falta un producto',
     cualFalta:
       '¿Cuál plato no tienes? Al cliente le avisamos y decide: quitarlo (se le devuelve esa parte) o cancelar todo.',
     avisarFalta: 'Avisar al cliente',
@@ -128,6 +130,7 @@ const T = {
     esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
     sinConfirmar: 'The photo has been waiting over 2 minutes. The driver is waiting on you.',
     faltaPlato: 'I’m out of an item',
+    faltaProducto: 'An item is missing',
     cualFalta:
       'Which item are you out of? We notify the customer and they decide: remove it (that part is refunded) or cancel everything.',
     avisarFalta: 'Notify the customer',
@@ -493,8 +496,15 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               etiqueta={t.mas}
               opciones={[
                 { texto: t.reportar, alTocar: () => setReportando(p.id) },
-                ...((p.estado === 'pagado' || p.estado === 'aceptado') && !p.repartidor && !p.ajuste
-                  ? [{ texto: t.faltaPlato, alTocar: () => setFaltando(p.id) }]
+                ...((p.estado === 'pagado' || p.estado === 'aceptado') &&
+                !p.repartidor &&
+                puedeMarcarFalta(p.ajuste, p.lineas)
+                  ? [
+                      {
+                        texto: p.lineas.some((l) => l.sustitucion) ? t.faltaProducto : t.faltaPlato,
+                        alTocar: () => setFaltando(p.id),
+                      },
+                    ]
                   : []),
                 ...(p.estado === 'pagado' || p.estado === 'aceptado'
                   ? [
