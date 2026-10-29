@@ -44,6 +44,8 @@
 
 - [x] Pedido en grupo (como el «Group Order» de DoorDash): quien arma el pedido comparte un enlace, cada persona agrega lo suyo con su nombre, y quien lo armó revisa y paga todo (dividir el pago queda para después). Servidor, app del cliente, Docs. Todos los países.
 
+- [x] Repartidor destacado (como el «Top Dasher» de DoorDash): requisitos visibles en Calificaciones y prioridad en las ofertas. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.

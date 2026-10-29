@@ -2780,3 +2780,43 @@ describe('C-TURNOS-REPARTIDOR', () => {
     void sinTurno;
   });
 });
+
+describe('C-REPARTIDOR-DESTACADO', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('calificaciones dice los requisitos; sin cumplirlos no es destacado', async () => {
+    const { m, repartidor } = await escenario();
+    const d = await repartidor('Rafa Nuevo', 25.78, -80.2);
+    const r = await m.llamar('GET', '/datos/repartidor/calificaciones', undefined, d.token);
+    expect(r.estado).toBe(200);
+    expect(r.datos.destacado).toBe(false);
+    expect(r.datos.requisitos.map((x: { clave: string }) => x.clave)).toEqual([
+      'estrellas',
+      'aceptacion',
+      'finalizacion',
+      'entregas30Dias',
+      'entregasTotales',
+    ]);
+  });
+
+  it('a igual distancia y sin turnos, la oferta va primero al destacado', async () => {
+    const { m, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await repartidor('Comun', 25.781, -80.201);
+    const top = await repartidor('Destacado', 25.781, -80.201);
+    await m.DB.prepare('UPDATE repartidores SET destacado = 1 WHERE usuario_id = ?')
+      .bind(top.id)
+      .run();
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'aceptado', aceptado_en = datetime('now', '-60 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const { repartirOfertas } = await import('./operacion');
+    await repartirOfertas(m.DB, { DB: m.DB } as never);
+    const o = await m.DB.prepare('SELECT repartidor_id FROM ofertas WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ repartidor_id: string }>();
+    expect(o?.repartidor_id).toBe(top.id);
+  });
+});

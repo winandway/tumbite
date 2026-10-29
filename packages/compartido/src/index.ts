@@ -46,3 +46,4 @@ export * from './rendimiento';
 export * from './perfilesInternos';
 export * from './respuestasResena';
 export * from './turnos';
+export * from './destacado';

@@ -1,3 +1,4 @@
+import { evaluarDestacado } from './repartidorGrandes';
 import { correosEquipo } from '../avisosEquipo';
 import { topesDeZona } from '../internacional/tarifas';
 import { TAREAS_FLEX } from '../flex/automatizacion';
@@ -999,6 +1000,11 @@ operacion.post('/repartidor/conectar', async (c) => {
   // conectarte en esta zona» de Dasher): queda conectado en su ciudad de siempre, sin ofertas aquí.
   if (d.conectado)
     await db.prepare('UPDATE repartidores SET pausado = 0 WHERE usuario_id = ?').bind(u.id).run();
+  // C-REPARTIDOR-DESTACADO: al conectarse se revisa si sigue cumpliendo (no frena la conexión).
+  if (d.conectado)
+    await evaluarDestacado(db, u.id).catch((e: unknown) =>
+      console.error('destacado: no se pudo revisar', e),
+    );
   return c.json({ conectado: d.conectado, cobertura: aqui.estado });
 });
 
@@ -1044,7 +1050,15 @@ operacion.post('/repartidor/ubicacion', async (c) => {
  * Rechazar o dejar vencer la oferta (60 s) solo la pasa al siguiente: no castiga.
  */
 /** `en_turno`: C-TURNOS-REPARTIDOR, está dentro de un turno reservado (tiene prioridad). */
-type Libre = { id: string; lat: number; lng: number; puntos: number; en_turno?: number };
+type Libre = {
+  id: string;
+  lat: number;
+  lng: number;
+  puntos: number;
+  en_turno?: number;
+  /** C-REPARTIDOR-DESTACADO */
+  destacado?: number;
+};
 
 /** Repartidores libres de una zona (y, si se piden, solo de esas celdas del mapa). */
 async function conSaldoParaDirecto<T extends { id: string }>(
@@ -1061,7 +1075,7 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
   const filtroCeldas = celdas ? `AND d.geohash IN (${celdas.map(() => '?').join(',')})` : '';
   const { results } = await db
     .prepare(
-      `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos,
+      `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos, d.destacado,
         EXISTS (SELECT 1 FROM turnos_repartidor t WHERE t.repartidor_id = d.usuario_id AND t.estado IN ('programado','activo')
           AND t.inicio <= datetime('now') AND t.fin > datetime('now')) AS en_turno
       FROM repartidores d
@@ -1180,6 +1194,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
             Math.floor(a.km * 2) - Math.floor(b.km * 2) ||
             // C-TURNOS-REPARTIDOR: a igual distancia, primero quien está en su turno reservado.
             Number(b.en_turno ?? 0) - Number(a.en_turno ?? 0) ||
+            // C-REPARTIDOR-DESTACADO: después, quien cumple los requisitos de destacado.
+            Number(b.destacado ?? 0) - Number(a.destacado ?? 0) ||
             nivelDe(b.puntos).indice - nivelDe(a.puntos).indice ||
             a.km - b.km,
         );

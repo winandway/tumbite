@@ -11,11 +11,48 @@ type Datos = {
   puntualidad: { porcentaje: number | null; de: number };
   entregas30Dias: number;
   entregasTotales: number;
+  /** C-REPARTIDOR-DESTACADO */
+  destacado?: boolean;
+  requisitos?: { clave: string; meta: number; valor: number | null; ok: boolean }[];
 };
+
+const TD = {
+  es: {
+    titulo: 'Repartidor destacado',
+    si: 'Eres repartidor destacado: a igual distancia, las ofertas te llegan antes.',
+    no: 'Cumple los cinco para ser repartidor destacado y recibir las ofertas antes.',
+    nombres: {
+      estrellas: 'Calificación de clientes',
+      aceptacion: 'Aceptación',
+      finalizacion: 'Pedidos completados',
+      entregas30Dias: 'Entregas en 30 días',
+      entregasTotales: 'Entregas en total',
+    } as Record<string, string>,
+  },
+  en: {
+    titulo: 'Top driver',
+    si: 'You’re a top driver: at the same distance, offers reach you first.',
+    no: 'Meet all five to become a top driver and get offers first.',
+    nombres: {
+      estrellas: 'Customer rating',
+      aceptacion: 'Acceptance',
+      finalizacion: 'Completed orders',
+      entregas30Dias: 'Deliveries in 30 days',
+      entregasTotales: 'Total deliveries',
+    } as Record<string, string>,
+  },
+};
+const metaTexto = (clave: string, meta: number) =>
+  clave === 'estrellas'
+    ? `${meta} ★`
+    : clave === 'aceptacion' || clave === 'finalizacion'
+      ? `${meta} %`
+      : String(meta);
 
 /** Pestaña Ratings de Dasher: lo que el cliente califica, ahora visible para el repartidor. */
 export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
   const t = textosGrandes(idioma).calif;
+  const td = idioma === 'en' ? TD.en : TD.es;
   const [d, setD] = useState<Datos | null>(null);
   useEffect(() => {
     let vivo = true;
@@ -92,6 +129,33 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
             t.sinMinimo,
             null,
           )}
+          {d.requisitos ? (
+            <View style={[e.tarjeta, { gap: 6 }]} testID="destacado">
+              <Text
+                style={{
+                  fontWeight: '900',
+                  fontSize: 17,
+                  color: d.destacado ? C.exito : C.secundario,
+                }}
+              >
+                {td.titulo}
+              </Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{d.destacado ? td.si : td.no}</Text>
+              {d.requisitos.map((r) => (
+                <View
+                  key={r.clave}
+                  style={{ flexDirection: 'row', justifyContent: 'space-between' }}
+                >
+                  <Text style={{ color: C.secundario }}>
+                    {r.ok ? '✓' : '·'} {td.nombres[r.clave] ?? r.clave}
+                  </Text>
+                  <Text style={{ fontWeight: '700', color: r.ok ? C.exito : '#5E5E5E' }}>
+                    {r.valor == null ? '—' : String(r.valor)} / {metaTexto(r.clave, r.meta)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           <View style={[e.tarjeta, { flexDirection: 'row' }]}>
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={{ fontWeight: '900', fontSize: 22, color: C.secundario }}>

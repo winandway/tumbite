@@ -1,6 +1,12 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { RADIO_LLEGADA_M, distanciaKm, metrosEntre, minutosDeViaje } from '@tumbite/compartido';
+import {
+  RADIO_LLEGADA_M,
+  distanciaKm,
+  metrosEntre,
+  minutosDeViaje,
+  requisitosDestacado,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -25,9 +31,9 @@ const MARGEN_MIN = 10;
 
 const pct = (parte: number, de: number) => (de ? Math.round((parte / de) * 100) : null);
 
-repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
-  const u = exigir(c, 'repartidor');
-  const db = base(c);
+/** Las métricas del repartidor (las mismas que ve en Calificaciones). */
+export async function metricasRepartidor(db: D1Database, repartidorId: string) {
+  const u = { id: repartidorId };
   const estrellas = await db
     .prepare(
       `SELECT e, culpa FROM (
@@ -110,7 +116,7 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
       .bind(u.id)
       .first<{ n: number }>(),
   ]);
-  return c.json({
+  return {
     clientes: { promedio, cuantas, excluidas, minimo: MINIMO_ESTRELLAS },
     aceptacion: { porcentaje: pct(aceptadas, ofertas.results.length), de: ofertas.results.length },
     finalizacion: {
@@ -121,7 +127,30 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
     puntualidad: { porcentaje: pct(puntuales, nEntregados), de: nEntregados },
     entregas30Dias: Number(treinta?.n ?? 0),
     entregasTotales: Number(totales?.n ?? 0),
+  };
+}
+
+/** C-REPARTIDOR-DESTACADO: revisa los requisitos y guarda si es destacado (lo lee el despacho). */
+export async function evaluarDestacado(db: D1Database, repartidorId: string) {
+  const m = await metricasRepartidor(db, repartidorId);
+  const r = requisitosDestacado({
+    estrellas: m.clientes.promedio,
+    aceptacion: m.aceptacion.porcentaje,
+    finalizacion: m.finalizacion.porcentaje,
+    entregas30Dias: m.entregas30Dias,
+    entregasTotales: m.entregasTotales,
   });
+  await db
+    .prepare('UPDATE repartidores SET destacado = ? WHERE usuario_id = ?')
+    .bind(r.destacado ? 1 : 0, repartidorId)
+    .run();
+  return { metricas: m, ...r };
+}
+
+repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const { metricas, destacado, requisitos } = await evaluarDestacado(base(c), u.id);
+  return c.json({ ...metricas, destacado, requisitos });
 });
 
 const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);

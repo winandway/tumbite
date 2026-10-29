@@ -16,6 +16,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-TICKETS-EQUIPO (29 oct 2026): prioridad y persona del equipo a cargo.
   ['tickets', 'prioridad', "TEXT NOT NULL DEFAULT 'normal'"],
   ['tickets', 'asignado_a', 'TEXT'],
+  // C-REPARTIDOR-DESTACADO (29 oct 2026): cumple los requisitos del «Top Dasher».
+  ['repartidores', 'destacado', 'INTEGER NOT NULL DEFAULT 0'],
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],

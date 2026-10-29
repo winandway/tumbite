@@ -2073,6 +2073,24 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'top-driver',
+        titulo: 'Repartidor destacado',
+        resumen:
+          'Si cumples los cinco requisitos, eres repartidor destacado y, a igual distancia, las ofertas te llegan antes.',
+        explicacion: [
+          'Los requisitos son: calificación de clientes de 4,7 o más, aceptación del 70 % o más, 95 % o más de pedidos completados, 100 entregas en los últimos 30 días y 200 entregas en total.',
+          'En «Calificaciones» ves cada requisito con tu número y la meta; los que ya cumples salen en verde.',
+          'Lo revisamos cada vez que te conectas o abres tus calificaciones. Si dejas de cumplir uno, dejas de ser destacado hasta que lo recuperes; nadie se desactiva por esto.',
+          'Si además tienes un turno reservado, el turno va primero.',
+        ],
+        preguntas: ['¿Cómo llego a repartidor destacado?', '¿Qué gano siendo destacado?'],
+        pasos: [
+          'Abre «Calificaciones» en la app.',
+          'Mira qué requisitos te faltan.',
+          'Al cumplir los cinco, eres destacado.',
+        ],
+      },
+      {
         id: 'open-offer-bonus',
         titulo: 'Bono por tomar un pedido que otros dejaron pasar',
         resumen:
@@ -5098,6 +5116,24 @@ const en: SeccionDocs[] = [
           'Open the menu and tap “My shifts”.',
           'Pick the day, start time and length, and tap “Book”.',
           'Go online when your shift starts.',
+        ],
+      },
+      {
+        id: 'top-driver',
+        titulo: 'Top driver',
+        resumen:
+          'Meet all five requirements and you’re a top driver: at the same distance, offers reach you first.',
+        explicacion: [
+          'The requirements are: a customer rating of 4.7 or higher, 70% or higher acceptance, 95% or more completed orders, 100 deliveries in the last 30 days and 200 deliveries in total.',
+          'Under “Ratings” you see each requirement with your number and the goal; the ones you meet show in green.',
+          'We check it every time you go online or open your ratings. If you stop meeting one, you stop being a top driver until you get it back; nobody is deactivated for this.',
+          'If you also have a booked shift, the shift comes first.',
+        ],
+        preguntas: ['How do I become a top driver?', 'What do I get as a top driver?'],
+        pasos: [
+          'Open “Ratings” in the app.',
+          'See which requirements you’re missing.',
+          'Meet all five and you’re a top driver.',
         ],
       },
       {

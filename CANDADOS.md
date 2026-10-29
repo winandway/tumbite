@@ -1590,3 +1590,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué se rompió:** al llegar la fila «Pedir otra vez» al inicio, el nombre del restaurante aparece dos veces y el recorrido (`getByText(restaurante, { exact: true })`) fallaba por ambigüedad: la verificación de GitHub se puso en rojo y no se publicó.
 - **Arreglo:** el recorrido toca la ÚLTIMA tarjeta con el nombre del restaurante (`getByRole('button', { name: restaurante, exact: true }).last()`): en el inicio, «Tus regalos» y «Pedir otra vez» van arriba y la lista de restaurantes abajo y las comprobaciones de que se ve usan `.first()`. La fila no cambia.
+
+## C-REPARTIDOR-DESTACADO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** las métricas del repartidor no daban ningún beneficio (DoorDash tiene «Top Dasher»).
+- **Arreglo:** `requisitosDestacado` (`packages/compartido/src/destacado.ts`: 4,7 estrellas, 70 % de aceptación, 95 % completados, 100 entregas en 30 días, 200 en total). `metricasRepartidor` y `evaluarDestacado` (`apps/servidor/src/rutas/repartidorGrandes.ts`) guardan `repartidores.destacado` (vía COLUMNAS) al abrir Calificaciones y al conectarse. En `repartirOfertas`, a igual distancia: primero quien está en turno, después el destacado. App Driver: tarjeta «Repartidor destacado» con cada requisito en Calificaciones. Nadie se desactiva por no cumplir. Docs: guía «top-driver».
+- **Pruebas:** `compartido/destacado.test.ts`; «C-REPARTIDOR-DESTACADO» en `rutas/operacion.test.ts`.
