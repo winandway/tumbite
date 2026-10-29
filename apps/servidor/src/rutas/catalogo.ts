@@ -21,6 +21,7 @@ import {
   fechaLocal,
   franjasProgramables,
   textoFranja,
+  leerEtiquetasDieta,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -87,6 +88,7 @@ export function aPlato(f: FilaRest): Plato {
     imagen: (f.imagen as string | null) ?? null,
     disponible: Number(f.disponible) === 1,
     requiereEdad: Number(f.requiere_edad ?? 0) === 1,
+    etiquetas: leerEtiquetasDieta(f.etiquetas),
   };
 }
 
@@ -601,7 +603,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
   const id = nuevoId();
   await base(c)
     .prepare(
-      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible, imagen, requiere_edad) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible, imagen, requiere_edad, etiquetas) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
     )
     .bind(
       id,
@@ -616,6 +618,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
       d.disponible ? 1 : 0,
       d.imagen,
       d.requiereEdad ? 1 : 0,
+      d.etiquetas.join(','),
     )
     .run();
   const f = await base(c).prepare('SELECT * FROM platos WHERE id = ?').bind(id).first<FilaRest>();
@@ -627,7 +630,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
   const d = await leerCuerpo(c, esquemaPlato);
   const r = await base(c)
     .prepare(
-      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=?, requiere_edad=? WHERE id=? AND restaurante_id=? AND eliminado=0',
+      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=?, requiere_edad=?, etiquetas=? WHERE id=? AND restaurante_id=? AND eliminado=0',
     )
     .bind(
       d.nombreEs,
@@ -640,6 +643,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
       d.disponible ? 1 : 0,
       d.imagen,
       d.requiereEdad ? 1 : 0,
+      d.etiquetas.join(','),
       c.req.param('id'),
       rid,
     )

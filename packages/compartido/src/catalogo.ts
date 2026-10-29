@@ -75,6 +75,30 @@ export const esquemaHorarios = z.object({
     .max(21),
 });
 
+/**
+ * C-FILTROS-DIETA (29 oct 2026, como DoorDash y Uber Eats): marcas cerradas de cada plato. El
+ * restaurante las elige; el cliente las ve en el menú y filtra el buscador por ellas.
+ */
+export const ETIQUETAS_DIETA = ['vegetariano', 'vegano', 'sin_gluten', 'halal', 'picante'] as const;
+export type EtiquetaDieta = (typeof ETIQUETAS_DIETA)[number];
+const NOMBRES_DIETA = new Map<EtiquetaDieta, { es: string; en: string }>([
+  ['vegetariano', { es: 'Vegetariano', en: 'Vegetarian' }],
+  ['vegano', { es: 'Vegano', en: 'Vegan' }],
+  ['sin_gluten', { es: 'Sin gluten', en: 'Gluten-free' }],
+  ['halal', { es: 'Halal', en: 'Halal' }],
+  ['picante', { es: 'Picante', en: 'Spicy' }],
+]);
+/** El nombre visible de una marca en el idioma pedido. */
+export function nombreEtiquetaDieta(e: EtiquetaDieta, idioma: 'es' | 'en'): string {
+  const n = NOMBRES_DIETA.get(e);
+  return n ? (idioma === 'en' ? n.en : n.es) : e;
+}
+/** Las marcas válidas de un texto guardado («vegano,halal»), sin repetir y en el orden fijo. */
+export function leerEtiquetasDieta(valor: unknown): EtiquetaDieta[] {
+  const dadas = new Set(String(valor ?? '').split(','));
+  return ETIQUETAS_DIETA.filter((e) => dadas.has(e));
+}
+
 export const esquemaPlato = z.object({
   nombreEs: z.string().trim().min(2, { error: 'Escribe el nombre del plato.' }).max(80),
   nombreEn: texto(80).default(''),
@@ -87,6 +111,12 @@ export const esquemaPlato = z.object({
   imagen: foto,
   /** Solo para mayores de 21 (alcohol): se entrega en mano con documento revisado. */
   requiereEdad: z.boolean().default(false),
+  /** C-FILTROS-DIETA: sin repetir y en el orden fijo de la lista. */
+  etiquetas: z
+    .array(z.enum(ETIQUETAS_DIETA))
+    .max(ETIQUETAS_DIETA.length * 2)
+    .default([])
+    .transform((l) => leerEtiquetasDieta(l.join(','))),
 });
 export type DatosPlato = z.input<typeof esquemaPlato>;
 
@@ -166,6 +196,7 @@ export type Plato = {
   imagen: string | null;
   disponible: boolean;
   requiereEdad?: boolean;
+  etiquetas?: EtiquetaDieta[];
   grupos?: GrupoOpciones[];
 };
 

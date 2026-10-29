@@ -1632,3 +1632,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** no había forma de conectar el sistema de caja del restaurante (DoorDash y Uber Eats tienen integraciones).
 - **Arreglo:** tabla `claves_restaurante` (solo la huella; la llave `dvx_pos_…` se muestra una vez; máximo 5 activas). Rutas en `apps/servidor/src/rutas/apiPos.ts`: el dueño crea, lista y revoca (`/datos/mi-restaurante/claves-api`); la API `/datos/v1/pos/pedidos` (leer), `/aceptar` y `/listo` con `x-api-key`, 120 por minuto. Aceptar y listo usan las mismas funciones que el panel (`aceptarPedido`, `marcarListo` en `operacion.ts`). Nunca devuelve dirección, teléfono ni dinero. Panel: «Conectar tu punto de venta» en Mi restaurante (`ClavesPos.tsx`, revocar en los tres puntos). Documento técnico: `docs/API-POS-V1.md`. Docs: guía «pos-integration».
 - **Pruebas:** «C-API-POS» en `rutas/operacion.test.ts`, `panel/ClavesPos.test.tsx`.
+
+## C-FILTROS-DIETA (29 oct 2026) — todos los países
+
+- **Qué faltaba:** no se podía marcar un plato como vegetariano, vegano, sin gluten, halal o picante, ni filtrar por eso (DoorDash y Uber Eats lo tienen).
+- **Arreglo:** lista cerrada `ETIQUETAS_DIETA` con sus nombres y `leerEtiquetasDieta` en `packages/compartido/src/catalogo.ts`; `esquemaPlato.etiquetas` (sin repetir, orden fijo). Columna `platos.etiquetas` (texto «vegano,halal») por COLUMNAS de `esquema.ts`, nunca en schema.sql. El buscador (`rutas/buscar.ts`) acepta `dieta=` con o sin `q`; con marca, el restaurante sale solo si tiene un plato con ella. Panel (Menu.tsx) y app del restaurante (MiMenu.tsx) envían SIEMPRE las marcas al guardar: un PUT sin ellas las borraría. Cliente: filtros en el buscador y marcas en verde en el menú. Docs: guía «dietary-filters».
+- **Prueba:** `apps/servidor/src/filtrosDieta.test.ts`.

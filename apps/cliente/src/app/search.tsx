@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { type Restaurante, formatearMonto } from '@tumbite/compartido';
+import {
+  ETIQUETAS_DIETA,
+  type EtiquetaDieta,
+  nombreEtiquetaDieta,
+  type Restaurante,
+  formatearMonto,
+} from '@tumbite/compartido';
 import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -19,6 +25,7 @@ type Plato = {
   restauranteNombre: string;
   moneda?: string;
   abiertoAhora: boolean;
+  etiquetas?: EtiquetaDieta[];
 };
 type Resultado = {
   zona: { id: string; nombre: string } | null;
@@ -31,7 +38,8 @@ export const ESPERA_BUSQUEDA_MS = 300;
 /**
  * Buscador real (como en los grandes): pantalla propia, se escribe arriba y los resultados llegan
  * mientras se escribe, en dos pestañas: Restaurantes y Platos. Todo sale del servidor
- * (GET /datos/buscar) y solo de la ciudad de la persona.
+ * (GET /datos/buscar) y solo de la ciudad de la persona. C-FILTROS-DIETA: debajo, las marcas de
+ * dieta (vegetariano, vegano…) filtran con o sin texto, como en DoorDash y Uber Eats.
  */
 export default function Buscar() {
   const { api, idioma } = useSesion();
@@ -41,25 +49,31 @@ export default function Buscar() {
   const [pestana, setPestana] = useState<'restaurantes' | 'platos'>('restaurantes');
   const [res, setRes] = useState<Resultado | null>(null);
   const [buscando, setBuscando] = useState(false);
+  const [dieta, setDieta] = useState<EtiquetaDieta | null>(null);
   const catalogo = useRestaurantes(api, null);
   const punto = catalogo.punto;
   const ultimo = useRef(0);
 
   const texto = q.trim();
-  const activa = texto.length >= 2;
+  const conTexto = texto.length >= 2;
+  const activa = conTexto || dieta !== null;
   useEffect(() => {
     if (!activa) return;
     const n = ++ultimo.current;
     const id = setTimeout(() => {
       setBuscando(true);
       const ubi = punto ? `&lat=${punto.lat}&lng=${punto.lng}` : '';
+      const marca = dieta ? `&dieta=${dieta}` : '';
       void api
-        .pedir<Resultado>('GET', `/datos/buscar?q=${encodeURIComponent(texto)}${ubi}`)
+        .pedir<Resultado>(
+          'GET',
+          `/datos/buscar?q=${encodeURIComponent(conTexto ? texto : '')}${marca}${ubi}`,
+        )
         .then((r) => {
           // Solo la última búsqueda manda: una respuesta vieja nunca pisa a la nueva.
           if (n !== ultimo.current) return;
           setRes(r);
-          if (!r.restaurantes.length && r.platos.length) setPestana('platos');
+          if (dieta || (!r.restaurantes.length && r.platos.length)) setPestana('platos');
         })
         .catch((e: unknown) => console.warn('buscar: falló', e))
         .finally(() => {
@@ -67,7 +81,7 @@ export default function Buscar() {
         });
     }, ESPERA_BUSQUEDA_MS);
     return () => clearTimeout(id);
-  }, [texto, activa, api, punto]);
+  }, [texto, conTexto, activa, dieta, api, punto]);
   // Con menos de dos letras no hay búsqueda: lo que había se deja de mostrar.
   const resultado = activa ? res : null;
 
@@ -116,6 +130,22 @@ export default function Buscar() {
           ) : null}
         </View>
       </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        accessibilityLabel={t.filtrosDieta}
+        contentContainerStyle={{ gap: 8, paddingTop: 12 }}
+      >
+        {ETIQUETAS_DIETA.map((m) => (
+          <Pildora
+            key={m}
+            texto={nombreEtiquetaDieta(m, idioma)}
+            activa={dieta === m}
+            alTocar={() => setDieta(dieta === m ? null : m)}
+          />
+        ))}
+      </ScrollView>
       <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 14 }}>
         <Pildora
           texto={`${t.pestanaRestaurantes}${resultado ? ` (${resultado.restaurantes.length})` : ''}`}
@@ -133,7 +163,7 @@ export default function Buscar() {
       {buscando && activa ? (
         <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.buscando}</Text>
       ) : null}
-      {texto.length > 0 && !activa ? (
+      {texto.length > 0 && !conTexto && !dieta ? (
         <Text style={{ color: '#5E5E5E' }}>{t.escribeMas}</Text>
       ) : null}
       {resultado && !resultado.zona ? (
@@ -147,7 +177,12 @@ export default function Buscar() {
     !buscando &&
     !(pestana === 'restaurantes' ? resultado.restaurantes : resultado.platos).length ? (
       <Text style={{ color: '#5E5E5E', marginTop: 12 }}>
-        {t.sinResultadosBusqueda.replace('{q}', texto)}
+        {t.sinResultadosBusqueda.replace(
+          '{q}',
+          [conTexto ? texto : '', dieta ? nombreEtiquetaDieta(dieta, idioma) : '']
+            .filter(Boolean)
+            .join(' · '),
+        )}
       </Text>
     ) : null;
 
@@ -249,7 +284,10 @@ export default function Buscar() {
                   {p.nombre}
                 </Text>
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={1}>
-                  {p.restauranteNombre}
+                  {[
+                    p.restauranteNombre,
+                    ...(p.etiquetas ?? []).map((m) => nombreEtiquetaDieta(m, idioma)),
+                  ].join(' · ')}
                 </Text>
                 <View
                   style={{

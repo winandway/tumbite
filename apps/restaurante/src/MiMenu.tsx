@@ -10,6 +10,9 @@ import {
   montoEscrito,
   nombrePlato,
   useBorrador,
+  ETIQUETAS_DIETA,
+  nombreEtiquetaDieta,
+  leerEtiquetasDieta,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -258,6 +261,8 @@ const VACIO = {
   precio: '',
   imagen: '',
   disponible: 'si',
+  /** C-FILTROS-DIETA: marcas separadas por coma («vegano,halal»). */
+  etiquetas: '',
 };
 
 /** Añadir / Editar producto. Lo escrito se guarda solo y vuelve si la app se cierra. */
@@ -304,6 +309,7 @@ function FormPlato({
       precio: montoATexto(plato.precioCentavos, moneda),
       imagen: plato.imagen ?? '',
       disponible: plato.disponible ? 'si' : 'no',
+      etiquetas: (plato.etiquetas ?? []).join(','),
     });
   }, [plato, cargarBase, moneda]);
 
@@ -343,6 +349,7 @@ function FormPlato({
       precioCentavos,
       imagen: v.imagen || null,
       requiereEdad: plato?.requiereEdad ?? false,
+      etiquetas: leerEtiquetasDieta(v.etiquetas),
     };
     setGuardando(true);
     try {
@@ -499,6 +506,26 @@ function FormPlato({
           accessibilityLabel={t.disponible}
           trackColor={{ true: C.exito, false: '#D6D6D6' }}
         />
+      </View>
+      <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>{t.marcasDieta}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 }}>
+        {ETIQUETAS_DIETA.map((m) => {
+          const marcadas = leerEtiquetasDieta(v.etiquetas);
+          const activa = marcadas.includes(m);
+          return (
+            <Pildora
+              key={m}
+              texto={nombreEtiquetaDieta(m, idioma)}
+              activa={activa}
+              alTocar={() =>
+                b.cambiar(
+                  'etiquetas',
+                  (activa ? marcadas.filter((x) => x !== m) : [...marcadas, m]).join(','),
+                )
+              }
+            />
+          );
+        })}
       </View>
       <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>{t.opcionesPanel}</Text>
       {error ? (

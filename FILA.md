@@ -57,6 +57,16 @@
 - [x] Impresora de tickets en el panel del restaurante: imprimir la comanda al aceptar (impresión del navegador, formato de 80 mm), con interruptor «imprimir al aceptar». Panel, Docs. Todos los países.
 - [x] API pública de pedidos y menú para sistemas de punto de venta (lectura de pedidos y cambio de estado, con llave por restaurante), como las integraciones de DoorDash. Ficha REA primero. Todos los países.
 
+## Rellenada el 29 oct (lista final de la auditoría, lo que todavía no existía)
+
+- [x] Filtros de dieta (como DoorDash y Uber Eats): el restaurante marca cada plato como vegetariano, vegano, sin gluten, halal o picante (panel y app), el cliente ve las marcas en el menú y filtra el buscador por ellas, con o sin texto. Docs «dietary-filters». Todos los países.
+- [ ] Mapa de demanda para el repartidor (como el «Dash Now» de DoorDash): zonas con más pedidos sin repartidor en la última hora, en la app Driver, sin datos de clientes. Servidor, app Driver, Docs. Todos los países.
+- [ ] Superadmin: reasignar el repartidor desde el detalle del pedido, con motivo y registro de quién lo hizo. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
+
+## Bitácora
+
+- 29 oct 2026, noche (tarea programada): la fila estaba vacía; se rellenó con tres puntos de la auditoría y se hizo «Filtros de dieta» de punta a punta (prueba en rojo, arreglo, verify, staging y producción).

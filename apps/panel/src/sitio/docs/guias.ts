@@ -430,6 +430,30 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'dietary-filters',
+        titulo: 'Filtros de dieta: vegetariano, vegano, sin gluten, halal y picante',
+        resumen:
+          'Cada restaurante puede marcar sus platos como vegetarianos, veganos, sin gluten, halal o picantes. Tú ves esas marcas en el menú y puedes filtrar el buscador por ellas, con o sin escribir nada.',
+        explicacion: [
+          'En el buscador, debajo de la barra, hay una fila de filtros: Vegetariano, Vegano, Sin gluten, Halal y Picante. Toca uno y Divoox te muestra los platos de tu ciudad que llevan esa marca, aunque no hayas escrito nada.',
+          'Puedes combinar el filtro con lo que escribes: «pizza» con «Vegetariano» muestra solo las pizzas vegetarianas. En «Restaurantes» aparecen los que tienen al menos un plato con esa marca. Para quitar el filtro, tócalo otra vez.',
+          'En el menú de cada restaurante, las marcas aparecen en verde debajo del nombre del plato, y también al abrir el plato.',
+          'Para restaurantes: al crear o editar un plato, en el panel o en la app del restaurante, marca las casillas que le correspondan. Puedes marcar varias. Si un plato deja de cumplir una marca, quítala en ese momento.',
+          'Las marcas las pone cada restaurante. Si tienes una alergia, confírmalo siempre con el restaurante antes de pedir: una marca no reemplaza esa consulta.',
+        ],
+        preguntas: [
+          '¿Cómo encuentro platos veganos en Divoox?',
+          '¿Cómo marco un plato como sin gluten?',
+          '¿Puedo combinar un filtro con lo que escribo?',
+        ],
+        pasos: [
+          'Abre el buscador desde el inicio.',
+          'Toca el filtro que quieras (por ejemplo, «Vegano»).',
+          'Si quieres, escribe también un plato o un tipo de comida.',
+          'Toca un resultado para abrir el restaurante y pedir.',
+        ],
+      },
+      {
         id: 'alerts-and-rewards',
         titulo: 'La campana y el cupón: tus avisos y tus regalos',
         resumen:
@@ -3574,6 +3598,30 @@ const en: SeccionDocs[] = [
           'On the home screen, tap the “What are you craving today?” bar.',
           'Type at least two letters of what you’re looking for.',
           'Switch between “Restaurants” and “Dishes” with the tabs.',
+          'Tap a result to open the restaurant and order.',
+        ],
+      },
+      {
+        id: 'dietary-filters',
+        titulo: 'Dietary filters: vegetarian, vegan, gluten-free, halal, and spicy',
+        resumen:
+          'Restaurants can label their dishes as vegetarian, vegan, gluten-free, halal, or spicy. You see those labels on the menu and can filter search by them, with or without typing anything.',
+        explicacion: [
+          'In search, right below the search bar, there’s a row of filters: Vegetarian, Vegan, Gluten-free, Halal, and Spicy. Tap one and Divoox shows the dishes in your city with that label, even if you haven’t typed anything.',
+          'You can combine a filter with what you type: “pizza” plus “Vegetarian” shows only vegetarian pizzas. Under “Restaurants” you’ll see the ones with at least one dish carrying that label. To clear the filter, tap it again.',
+          'On each restaurant’s menu, labels appear in green under the dish name, and again when you open the dish.',
+          'For restaurants: when you create or edit a dish, in the dashboard or the restaurant app, check the labels that apply. You can check several. If a dish no longer meets a label, remove it right away.',
+          'Each restaurant sets its own labels. If you have an allergy, always confirm with the restaurant before ordering: a label doesn’t replace that conversation.',
+        ],
+        preguntas: [
+          'How do I find vegan dishes on Divoox?',
+          'How do I label a dish as gluten-free?',
+          'Can I combine a filter with what I type?',
+        ],
+        pasos: [
+          'Open search from the home screen.',
+          'Tap the filter you want (for example, “Vegan”).',
+          'If you like, also type a dish or a cuisine.',
           'Tap a result to open the restaurant and order.',
         ],
       },

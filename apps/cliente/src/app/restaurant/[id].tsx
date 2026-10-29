@@ -25,6 +25,7 @@ import {
   formatearMonto,
   nombrePlato,
   categoriaPlato,
+  nombreEtiquetaDieta,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -442,6 +443,11 @@ export default function MenuRestaurante() {
                                 {descripcion(p, idioma)}
                               </Text>
                             ) : null}
+                            {p.etiquetas?.length ? (
+                              <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
+                                {p.etiquetas.map((m) => nombreEtiquetaDieta(m, idioma)).join(' · ')}
+                              </Text>
+                            ) : null}
                             <Text style={{ marginTop: 4, fontWeight: '800', color: C.secundario }}>
                               {formatearMonto(p.precioCentavos, moneda, idioma)}
                             </Text>
@@ -546,6 +552,11 @@ export default function MenuRestaurante() {
                   {descripcion(detalle, idioma) ? (
                     <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
                       {descripcion(detalle, idioma)}
+                    </Text>
+                  ) : null}
+                  {detalle.etiquetas?.length ? (
+                    <Text style={{ color: C.exito, marginTop: 4, fontWeight: '700' }}>
+                      {detalle.etiquetas.map((m) => nombreEtiquetaDieta(m, idioma)).join(' · ')}
                     </Text>
                   ) : null}
                   <Text

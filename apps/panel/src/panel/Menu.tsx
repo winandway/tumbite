@@ -13,6 +13,9 @@ import {
   useBorrador,
   categoriaPlato,
   type GrupoOpciones,
+  ETIQUETAS_DIETA,
+  nombreEtiquetaDieta,
+  leerEtiquetasDieta,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -37,6 +40,7 @@ const T = {
     cancelar: 'Cancelar',
     disponible: 'Disponible',
     mayores21: 'Solo para mayores de 21 (se entrega en mano con documento)',
+    dieta: 'Marcas del plato (el cliente las ve y puede filtrar por ellas)',
     agotado: 'Agotado',
     vacio: 'Tu menú está vacío. Agrega tu primer plato.',
     precioMal: 'Escribe un precio como 12.50',
@@ -85,6 +89,7 @@ const T = {
     cancelar: 'Cancel',
     disponible: 'Available',
     mayores21: '21+ only (handed over in person with an ID check)',
+    dieta: 'Dish labels (customers see them and can filter by them)',
     agotado: 'Sold out',
     vacio: 'Your menu is empty. Add your first item.',
     precioMal: 'Enter a price like 12.50',
@@ -130,6 +135,8 @@ const VACIO = {
   grupos: '',
   /** «si» cuando el plato es solo para mayores de 21 (se guarda como texto en el borrador). */
   requiereEdad: '',
+  /** C-FILTROS-DIETA: marcas separadas por coma («vegano,halal»), como texto en el borrador. */
+  etiquetas: '',
 };
 
 type GrupoForm = {
@@ -236,6 +243,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       id: p.id,
       nombreEs: p.nombreEs,
       requiereEdad: p.requiereEdad ? 'si' : '',
+      etiquetas: (p.etiquetas ?? []).join(','),
       nombreEn: p.nombreEn,
       descripcionEs: p.descripcionEs,
       descripcionEn: p.descripcionEn,
@@ -265,6 +273,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       precioCentavos,
       imagen: v.imagen || null,
       requiereEdad: v.requiereEdad === 'si',
+      etiquetas: leerEtiquetasDieta(v.etiquetas),
     };
     try {
       let r = v.id
@@ -418,6 +427,30 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             />
             {t.mayores21}
           </label>
+          <fieldset className="etiquetas-dieta">
+            <legend>{t.dieta}</legend>
+            {ETIQUETAS_DIETA.map((e) => {
+              const marcadas = leerEtiquetasDieta(v.etiquetas);
+              return (
+                <label key={e} className="interruptor">
+                  <input
+                    type="checkbox"
+                    checked={marcadas.includes(e)}
+                    onChange={(ev) =>
+                      b.cambiar(
+                        'etiquetas',
+                        (ev.target.checked
+                          ? [...marcadas, e]
+                          : marcadas.filter((x) => x !== e)
+                        ).join(','),
+                      )
+                    }
+                  />
+                  {nombreEtiquetaDieta(e, idioma)}
+                </label>
+              );
+            })}
+          </fieldset>
           <SubirFoto
             etiqueta={t.foto}
             valor={v.imagen}
@@ -676,6 +709,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                     categoriaPlato(p, idioma),
                     formatearMonto(p.precioCentavos, moneda, idioma),
                     (p.grupos?.length ?? 0) > 0 ? t.conOpciones : '',
+                    ...(p.etiquetas ?? []).map((e) => nombreEtiquetaDieta(e, idioma)),
                   ]
                     .filter(Boolean)
                     .join(' · ')}

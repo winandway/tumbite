@@ -81,6 +81,7 @@ const es = {
   categoria: 'Categoría',
   categoriaEn: 'Categoría en inglés',
   disponible: 'Disponible',
+  marcasDieta: 'Marcas del plato (el cliente puede filtrar por ellas)',
   opcionesPanel: 'Los tamaños y extras del plato se editan en el panel web, en divoox.com/panel.',
   precioMal: 'Escribe el precio en dólares, por ejemplo 14.00.',
   // C-MONEDA-RECORRIDO: fuera del dólar, la moneda del restaurante.
@@ -160,6 +161,7 @@ const en: T = {
   categoria: 'Category in Spanish',
   categoriaEn: 'Category',
   disponible: 'Available',
+  marcasDieta: 'Dish labels (customers can filter by them)',
   opcionesPanel: 'Sizes and extras are edited in the web dashboard at divoox.com/panel.',
   precioMal: 'Enter the price in dollars, for example 14.00.',
   precioMoneda: 'Price ({m})',

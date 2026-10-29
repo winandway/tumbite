@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { normalizar } from '@tumbite/compartido';
+import { ETIQUETAS_DIETA, leerEtiquetasDieta, normalizar } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos } from '../validar';
@@ -17,8 +17,10 @@ import { enTrozos } from '../trozos';
  */
 export const buscar = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// C-FILTROS-DIETA: el texto es opcional si viene una marca de dieta; sin ninguno de los dos, 400.
 const consulta = z.object({
-  q: z.string().trim().min(2).max(60),
+  q: z.string().trim().max(60).optional(),
+  dieta: z.enum(ETIQUETAS_DIETA).optional(),
   lat: z.coerce.number().finite().optional(),
   lng: z.coerce.number().finite().optional(),
 });
@@ -33,11 +35,15 @@ type FilaPlato = {
   categoria_en: string;
   precio_centavos: number;
   imagen: string | null;
+  etiquetas: string | null;
 };
 
 buscar.get('/buscar', async (c) => {
   const q = consulta.safeParse(c.req.query());
-  if (!q.success) throw new ErrorDatos('Escribe al menos dos letras.', 'q', 400);
+  const qTexto = q.success && (q.data.q ?? '').length >= 2 ? (q.data.q ?? '') : '';
+  if (!q.success || (!qTexto && !q.data.dieta))
+    throw new ErrorDatos('Escribe al menos dos letras.', 'q', 400);
+  const dieta = q.data.dieta;
   const db = base(c);
   const ingles = (c.req.header('x-idioma') ?? '').startsWith('en');
   const u = c.get('usuario');
@@ -60,7 +66,7 @@ buscar.get('/buscar', async (c) => {
     if (f) zona = f;
   }
   if (!zona) return c.json({ zona: null, restaurantes: [], platos: [] });
-  const texto = normalizar(q.data.q);
+  const texto = normalizar(qTexto);
   const { results } = await db
     .prepare(
       `SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado' AND tipo_comercio = 'restaurante'
@@ -75,10 +81,9 @@ buscar.get('/buscar', async (c) => {
   const porId = new Map(todos.map((r) => [r.id, r]));
   const abiertoPrimero = (a: { abiertoAhora?: boolean }, b: { abiertoAhora?: boolean }) =>
     Number(Boolean(b.abiertoAhora)) - Number(Boolean(a.abiertoAhora));
-  const restaurantes = todos
-    .filter((r) => normalizar(`${r.nombre} ${r.categoria}`).includes(texto))
-    .sort(abiertoPrimero)
-    .slice(0, TOPE);
+  let restaurantes = todos
+    .filter((r) => dieta || normalizar(`${r.nombre} ${r.categoria}`).includes(texto))
+    .sort(abiertoPrimero);
 
   let platos: {
     id: string;
@@ -88,6 +93,7 @@ buscar.get('/buscar', async (c) => {
     restauranteId: string;
     restauranteNombre: string;
     abiertoAhora: boolean;
+    etiquetas: string[];
     /** C-MONEDA-RECORRIDO: la moneda del restaurante (el precio va en su unidad menor). */
     moneda: string;
   }[] = [];
@@ -100,7 +106,7 @@ buscar.get('/buscar', async (c) => {
           (
             await db
               .prepare(
-                `SELECT id, restaurante_id, nombre_es, nombre_en, categoria, categoria_en, precio_centavos, imagen, orden
+                `SELECT id, restaurante_id, nombre_es, nombre_en, categoria, categoria_en, precio_centavos, imagen, etiquetas, orden
                    FROM platos WHERE restaurante_id IN (${marcas}) AND disponible = 1 AND eliminado = 0
                   ORDER BY orden, nombre_es LIMIT 2000`,
               )
@@ -114,7 +120,27 @@ buscar.get('/buscar', async (c) => {
           Number(a.orden ?? 0) - Number(b.orden ?? 0) || a.nombre_es.localeCompare(b.nombre_es),
       )
       .slice(0, 2000);
-    platos = filas
+    const conMarca = dieta
+      ? filas.filter((p) => leerEtiquetasDieta(p.etiquetas).includes(dieta))
+      : filas;
+    // Con marca, el restaurante sale solo si tiene al menos un plato con ella (y su texto, si lo hay).
+    if (dieta) {
+      const conPlato = new Set(conMarca.map((p) => p.restaurante_id));
+      restaurantes = restaurantes.filter(
+        (r) =>
+          conPlato.has(r.id) &&
+          (!texto ||
+            normalizar(`${r.nombre} ${r.categoria}`).includes(texto) ||
+            conMarca.some(
+              (p) =>
+                p.restaurante_id === r.id &&
+                normalizar(
+                  `${p.nombre_es} ${p.nombre_en} ${p.categoria} ${p.categoria_en}`,
+                ).includes(texto),
+            )),
+      );
+    }
+    platos = conMarca
       .filter((p) =>
         normalizar(`${p.nombre_es} ${p.nombre_en} ${p.categoria} ${p.categoria_en}`).includes(
           texto,
@@ -131,11 +157,16 @@ buscar.get('/buscar', async (c) => {
           restauranteNombre: r?.nombre ?? '',
           abiertoAhora: Boolean(r?.abiertoAhora),
           moneda: r?.moneda ?? 'USD',
+          etiquetas: leerEtiquetasDieta(p.etiquetas),
         };
       })
       .sort(abiertoPrimero)
       .slice(0, TOPE);
   }
   c.header('cache-control', 'private, max-age=30');
-  return c.json({ zona: { id: zona.id, nombre: zona.nombre }, restaurantes, platos });
+  return c.json({
+    zona: { id: zona.id, nombre: zona.nombre },
+    restaurantes: restaurantes.slice(0, TOPE),
+    platos,
+  });
 });
