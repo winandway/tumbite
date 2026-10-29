@@ -1,6 +1,8 @@
 // Presentaciones en PDF horizontal con capturas ORIGINALES de la app (29 oct 2026):
 //   - clientes: programar, pedir otra vez, te puede gustar, pedido en grupo, compartir el seguimiento;
-//   - restaurantes: láminas para las charlas (qué gana el restaurante con cada herramienta).
+//   - restaurantes: láminas para las charlas (qué gana el restaurante con cada herramienta);
+//   - vendedores: cómo vender Divoox y acompañar el alta de un restaurante (sin inventar precios);
+//   - repartidores: conectarse, ofertas, turnos, destacado, seguridad y ganancias.
 // Salen en español e inglés a apps/panel/public/docs/presentaciones/ (se publican con la web).
 // Uso: node scripts/presentaciones/generar.mjs
 import { chromium } from '@playwright/test';
@@ -141,6 +143,142 @@ const T = {
       ],
       cierre: ['Súmate a Divoox', 'Regístrate en divoox.com/restaurants'],
     },
+    vendedores: {
+      archivo: 'divoox-vendedores-es.pdf',
+      portada: ['Cómo vender Divoox', 'Guía para vendedores'],
+      laminas: [
+        {
+          titulo: 'Qué vendes',
+          texto: [
+            'Divoox es la app de reparto: el cliente pide, el restaurante cocina y un repartidor lo lleva.',
+            'Comida, mercado y más, en la app y en divoox.com.',
+            'Al restaurante le traes clientes nuevos sin que contrate repartidores.',
+          ],
+          foto: 'recorrido/cliente-inicio-es.png',
+        },
+        {
+          titulo: 'Lo que gana el restaurante',
+          texto: [
+            'Clientes nuevos con «Te puede gustar» y clientes que vuelven con «Pedir otra vez».',
+            'Pedidos programados y en grupo: más ventas fuera de la hora pico.',
+            'Su tablero con ventas, horas fuertes y clientes, de un vistazo.',
+          ],
+          foto: 'recorrido/restaurante-tablero-es.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Cuánto le cuesta',
+          texto: [
+            'No inventes números: abre con él la calculadora de divoox.com.',
+            'Pone sus ventas y ve lo que recibe después de la comisión.',
+            'Si tiene dudas de su caso, lo pones en contacto con nuestro equipo.',
+          ],
+          foto: 'recorrido/web-calculadora-restaurante-es.png',
+          ancha: true,
+        },
+        {
+          titulo: 'El registro, contigo al lado',
+          texto: [
+            'Se registra en divoox.com/restaurants con su correo y los datos del local.',
+            'Le llega un correo para confirmar la cuenta.',
+            'Hazlo con él en la visita: toma cinco minutos.',
+          ],
+          foto: 'recorrido/restaurante-registro-es.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Su lista para abrir',
+          texto: [
+            'El panel le dice qué falta: teléfono, dirección, horario y al menos un plato con precio.',
+            'Lo recomendado: cinco platos con foto y su cuenta de cobro conectada.',
+            'Con todo en verde, nuestro equipo revisa y lo activa.',
+          ],
+          foto: 'recorrido/restaurante-activacion-es.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Un menú que vende',
+          texto: [
+            'Fotos claras con buena luz: venden más.',
+            'Opciones por plato (tamaño, extras) y marcas de dieta (vegano, sin gluten, picante).',
+            'Lo que se acaba se marca agotado con un toque.',
+          ],
+          foto: 'recorrido/restaurante-menu-es.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Su primer pedido',
+          texto: [
+            'Suena en la tableta o en la computadora, y lo acepta con su tiempo de cocina.',
+            'Puede imprimir la comanda y avisar cuando está listo.',
+            'El repartidor llega, confirma y se lo lleva al cliente.',
+          ],
+          foto: 'recorrido/restapp-nuevo-es.png',
+        },
+      ],
+      cierre: ['Vende Divoox', 'Registra restaurantes en divoox.com/restaurants'],
+    },
+    repartidores: {
+      archivo: 'divoox-repartidores-es.pdf',
+      portada: ['Gana a tu ritmo', 'Divoox para repartidores'],
+      laminas: [
+        {
+          titulo: 'Te conectas cuando quieres',
+          texto: [
+            'Un toque y estás disponible; otro y descansas.',
+            'Ves lo que ganaste hoy, tu nivel y tu saldo.',
+            'En el mapa se marcan las zonas con más pedidos de la última hora.',
+          ],
+          foto: 'presentaciones/repartidor-inicio-es.png',
+        },
+        {
+          titulo: 'Ofertas claras',
+          texto: [
+            'Antes de aceptar ves cuánto ganas, la distancia y el restaurante.',
+            'La aceptas o la dejas pasar.',
+            'Las propinas son tuyas completas.',
+          ],
+          foto: 'recorrido/repartidor-oferta-es.png',
+        },
+        {
+          titulo: 'Reserva tus turnos',
+          texto: [
+            'Eliges tus horas hasta 7 días adelante, en franjas de media hora.',
+            'Durante tu turno, conectado, recibes las ofertas antes.',
+            'Si no te conectas en la primera media hora, el turno se libera.',
+          ],
+          foto: 'presentaciones/repartidor-turnos-es.png',
+        },
+        {
+          titulo: 'Repartidor destacado',
+          texto: [
+            'Tus calificaciones, aceptación, finalización y puntualidad, siempre a la vista.',
+            'Cumple los cinco requisitos y recibes las ofertas antes que los demás.',
+            'Sabes exactamente qué te falta.',
+          ],
+          foto: 'presentaciones/repartidor-destacado-es.png',
+        },
+        {
+          titulo: 'Tu seguridad primero',
+          texto: [
+            'Botón de emergencia: avisa a nuestro equipo con tu ubicación.',
+            'Comparte tu recorrido con alguien de confianza.',
+            'Reporta un accidente, un robo o un acoso en segundos.',
+          ],
+          foto: 'presentaciones/repartidor-seguridad-es.png',
+        },
+        {
+          titulo: 'Tus ganancias',
+          texto: [
+            'Cada entrega con su desglose: pago base, propina y bonos.',
+            'Por día y por semana.',
+            'Tu billetera con cada movimiento.',
+          ],
+          foto: 'recorrido/repartidor-ganancias-es.png',
+        },
+      ],
+      cierre: ['Reparte con Divoox', 'Regístrate en divoox.com/drivers'],
+    },
   },
   en: {
     clientes: {
@@ -260,6 +398,142 @@ const T = {
       ],
       cierre: ['Join Divoox', 'Sign up at divoox.com/restaurants'],
     },
+    vendedores: {
+      archivo: 'divoox-salespeople-en.pdf',
+      portada: ['How to sell Divoox', 'A guide for salespeople'],
+      laminas: [
+        {
+          titulo: 'What you sell',
+          texto: [
+            'Divoox is the delivery app: the customer orders, the restaurant cooks and a driver delivers.',
+            'Food, groceries and more, in the app and at divoox.com.',
+            'You bring the restaurant new customers without hiring drivers.',
+          ],
+          foto: 'recorrido/cliente-inicio-en.png',
+        },
+        {
+          titulo: 'What the restaurant gets',
+          texto: [
+            'New customers through “You might like” and returning ones through “Order again”.',
+            'Scheduled and group orders: more sales outside rush hour.',
+            'A dashboard with sales, busy hours and customers at a glance.',
+          ],
+          foto: 'recorrido/restaurante-tablero-en.png',
+          ancha: true,
+        },
+        {
+          titulo: 'What it costs',
+          texto: [
+            'Don’t make up numbers: open the calculator at divoox.com with them.',
+            'They enter their sales and see what they receive after commission.',
+            'If they have questions about their case, connect them with our team.',
+          ],
+          foto: 'recorrido/web-calculadora-restaurante-en.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Sign-up, with you there',
+          texto: [
+            'They sign up at divoox.com/restaurants with their email and store details.',
+            'They get an email to confirm the account.',
+            'Do it with them during the visit: it takes five minutes.',
+          ],
+          foto: 'recorrido/restaurante-registro-en.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Their checklist to open',
+          texto: [
+            'The dashboard shows what’s missing: phone, address, hours and at least one priced item.',
+            'Recommended: five items with photos and their payout account connected.',
+            'Once everything is green, our team reviews and activates them.',
+          ],
+          foto: 'recorrido/restaurante-activacion-en.png',
+          ancha: true,
+        },
+        {
+          titulo: 'A menu that sells',
+          texto: [
+            'Clear, well-lit photos sell more.',
+            'Options per item (size, extras) and dietary tags (vegan, gluten-free, spicy).',
+            'Anything that runs out is marked sold out with one tap.',
+          ],
+          foto: 'recorrido/restaurante-menu-en.png',
+          ancha: true,
+        },
+        {
+          titulo: 'Their first order',
+          texto: [
+            'It rings on the tablet or computer, and they accept it with their prep time.',
+            'They can print the kitchen ticket and mark it ready.',
+            'The driver arrives, confirms the pickup and takes it to the customer.',
+          ],
+          foto: 'recorrido/restapp-nuevo-en.png',
+        },
+      ],
+      cierre: ['Sell Divoox', 'Sign up restaurants at divoox.com/restaurants'],
+    },
+    repartidores: {
+      archivo: 'divoox-drivers-en.pdf',
+      portada: ['Earn on your schedule', 'Divoox for drivers'],
+      laminas: [
+        {
+          titulo: 'Go online whenever you want',
+          texto: [
+            'One tap and you’re available; another and you take a break.',
+            'See what you earned today, your level and your balance.',
+            'The map highlights the areas with the most orders in the last hour.',
+          ],
+          foto: 'presentaciones/repartidor-inicio-en.png',
+        },
+        {
+          titulo: 'Clear offers',
+          texto: [
+            'Before accepting you see your pay, the distance and the restaurant.',
+            'Accept it or let it pass.',
+            'You keep 100% of your tips.',
+          ],
+          foto: 'recorrido/repartidor-oferta-en.png',
+        },
+        {
+          titulo: 'Book your shifts',
+          texto: [
+            'Pick your hours up to 7 days ahead, in half-hour slots.',
+            'During your shift, while online, you get offers first.',
+            'If you don’t go online in the first half hour, the shift is released.',
+          ],
+          foto: 'presentaciones/repartidor-turnos-en.png',
+        },
+        {
+          titulo: 'Top driver',
+          texto: [
+            'Your rating, acceptance, completion and on-time rates, always visible.',
+            'Meet all five requirements and you get offers before others.',
+            'You know exactly what you’re missing.',
+          ],
+          foto: 'presentaciones/repartidor-destacado-en.png',
+        },
+        {
+          titulo: 'Your safety first',
+          texto: [
+            'Emergency button: alerts our team with your location.',
+            'Share your trip with someone you trust.',
+            'Report an accident, a robbery or harassment in seconds.',
+          ],
+          foto: 'presentaciones/repartidor-seguridad-en.png',
+        },
+        {
+          titulo: 'Your earnings',
+          texto: [
+            'Every delivery with its breakdown: base pay, tip and bonuses.',
+            'By day and by week.',
+            'Your wallet with every transaction.',
+          ],
+          foto: 'recorrido/repartidor-ganancias-en.png',
+        },
+      ],
+      cierre: ['Deliver with Divoox', 'Sign up at divoox.com/drivers'],
+    },
   },
 };
 
@@ -310,7 +584,7 @@ function html(deck) {
 const nav = await chromium.launch();
 const p = await nav.newPage({ viewport: { width: 1280, height: 720 } });
 for (const idioma of ['es', 'en'])
-  for (const tipo of ['clientes', 'restaurantes']) {
+  for (const tipo of ['clientes', 'restaurantes', 'vendedores', 'repartidores']) {
     // eslint-disable-next-line security/detect-object-injection -- idioma y tipo salen de las listas fijas de arriba
     const deck = T[idioma][tipo];
     await p.setContent(html(deck), { waitUntil: 'networkidle' });

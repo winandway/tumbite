@@ -1,4 +1,5 @@
 import {
+  Presentation,
   BadgePercent,
   BookOpen,
   Clock,
@@ -68,6 +69,7 @@ const ICONOS = {
   buscar: Search,
   ajustes: Settings,
   subir: Upload,
+  presentacion: Presentation,
 } satisfies Record<string, LucideIcon>;
 
 export type NombreIcono = keyof typeof ICONOS;

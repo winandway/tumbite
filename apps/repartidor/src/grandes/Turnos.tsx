@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, Text, View } from 'react-native';
-import { type Api, ErrorApi, type Idioma, TURNO, deSqlUtc, enIdioma } from '@tumbite/compartido';
+import {
+  type Api,
+  ErrorApi,
+  type Idioma,
+  TURNO,
+  deSqlUtc,
+  enIdioma,
+  inicioDelDia,
+} from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 
 /**
@@ -119,12 +127,12 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
 
   // Horas de inicio del día elegido, cada 30 minutos (hoy, desde la media hora en curso).
   const paso = TURNO.pasoMin * 60_000;
-  const base = new Date(ahora);
-  base.setHours(0, 0, 0, 0);
-  const diaInicio = base.getTime() + dia * 86_400_000;
+  // Por calendario, no sumando 24 horas (C-TURNOS-HORARIO: el cambio de hora repetía un día).
+  const diaInicio = inicioDelDia(ahora, dia);
+  const diaFin = inicioDelDia(ahora, dia + 1);
   const desde = Math.max(diaInicio, Math.floor(ahora / paso) * paso);
   const opciones: number[] = [];
-  for (let x = desde; x < diaInicio + 86_400_000; x += paso) opciones.push(x);
+  for (let x = desde; x < diaFin; x += paso) opciones.push(x);
   const hora = (ms: number) =>
     new Date(ms).toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit' });
   const nombreDia = (n: number) =>
@@ -132,7 +140,7 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
       ? t.hoy
       : n === 1
         ? t.manana
-        : new Date(base.getTime() + n * 86_400_000).toLocaleDateString(loc, {
+        : new Date(inicioDelDia(ahora, n)).toLocaleDateString(loc, {
             weekday: 'short',
             day: 'numeric',
           });

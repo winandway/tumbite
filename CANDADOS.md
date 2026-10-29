@@ -1654,6 +1654,19 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-PRESENTACIONES (29 oct 2026) — todos los países
 
 - **Qué es:** presentaciones en PDF horizontal (1280×720) con capturas ORIGINALES de la app, para clientes y para charlas con restaurantes, en español e inglés.
-- **Cómo se rehacen:** `CLAVE_DEMO=… node scripts/presentaciones/capturas.mjs` (capturas del sitio de pruebas: pedido en grupo, punto de venta, pedidos, comanda) y `node scripts/presentaciones/generar.mjs` (arma los cuatro PDF con las capturas de `docs/capturas/` y los logos oficiales). Salen en `apps/panel/public/docs/presentaciones/` y se publican con la web.
-- **En Docs:** guía «presentations» con el campo nuevo `descargas` (lo dibuja `Docs.tsx`).
+- **Cómo se rehacen:** `CLAVE_DEMO=… node scripts/presentaciones/capturas.mjs` (capturas del sitio de pruebas: pedido en grupo, punto de venta, pedidos, comanda), `CLAVE_DEMO=… node scripts/presentaciones/capturas-repartidor.mjs` (inicio, turnos, seguridad y calificaciones de la app Driver) y `node scripts/presentaciones/generar.mjs` (arma los ocho PDF: clientes, restaurantes, vendedores y repartidores con las capturas de `docs/capturas/` y los logos oficiales). Salen en `apps/panel/public/docs/presentaciones/` y se publican con la web.
+- **En Docs:** sección «courses» (Cursos y presentaciones), la PRIMERA de la lista, con una guía por presentación y «presentations» con las cuatro; el campo `descargas` lo dibuja `Docs.tsx`. En el inicio de Docs va arriba, en el bloque oscuro de cursos.
 - **Regla:** cada vez que cambie una de esas pantallas, se rehacen las capturas y los PDF en el mismo trabajo.
+
+## C-DOCS-ENCONTRAR (29 oct 2026) — todos los países
+
+- **Qué se rompió:** Richard no encontraba las presentaciones. Tocaba un resultado del buscador y «no abría nada» (la guía se abría, pero el texto buscado quedaba guardado y la pantalla seguía mostrando los resultados). La dirección `/docs/restaurants/presentations` o `/docs/<guia>` caía en el inicio sin decir nada. Secciones y guías del menú tenían la misma letra.
+- **Arreglo (`apps/panel/src/sitio/docs/Docs.tsx`):** al cambiar de ruta se limpia la búsqueda; Enter abre el primer resultado; la guía se busca en TODAS las secciones si la dirección trae otra o ninguna (las guías pueden cambiar de sección sin romper enlaces); una guía inexistente muestra un aviso (`noExiste`). Íconos por guía en `iconosGuia.ts`. Estilo en `estilos.css`: sección en mayúsculas pequeñas, negrita y con raya arriba; guía en gris, más chica, con su ícono.
+- **Prueba:** `apps/panel/src/sitio/docs/Docs.test.tsx` (cuatro casos comprobados en rojo quitando cada arreglo, y que los cuatro PDF existen en los dos idiomas).
+- **No tocar:** la sección «courses» va primera; no se quita el campo de búsqueda del mismo lugar (perdería el foco al escribir).
+
+## C-TURNOS-HORARIO (29 oct 2026) — todos los países
+
+- **Qué se rompió:** en «Mis turnos» del Driver el domingo 1 de noviembre salía dos veces y, desde ahí, cada día empezaba a las 11 p. m. del anterior: se sumaban 24 horas y el día del cambio de hora dura 25.
+- **Arreglo:** `inicioDelDia(ahora, n)` en `packages/compartido/src/turnos.ts` (por calendario, con `setDate`); `apps/repartidor/src/grandes/Turnos.tsx` lo usa para los días y para las horas de cada día.
+- **Prueba:** `packages/compartido/src/turnos.test.ts`, en la hora de Miami aunque la nube corra en UTC; comprobada en rojo con la suma de 24 horas.

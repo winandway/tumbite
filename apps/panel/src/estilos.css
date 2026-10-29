@@ -2057,16 +2057,35 @@ button {
 .docs-barra details {
   margin-top: 4px;
 }
+/* Secciones bien distintas de las guías (29 oct 2026, Richard: «todo es confuso»): la sección es un
+   título grande, en mayúsculas pequeñas y con raya arriba; la guía, una línea gris con su ícono. */
+.docs-barra details + details {
+  border-top: 1px solid #ececec;
+  padding-top: 6px;
+}
 .docs-barra summary {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   list-style: none;
-  padding: 8px 10px;
+  padding: 10px 10px 6px;
   border-radius: 10px;
-  font-weight: 700;
-  color: var(--secundario);
+  font-family: Poppins, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #101010;
+}
+.docs-barra summary::after {
+  content: '▾';
+  margin-left: auto;
+  color: #666b73;
+  transition: transform 0.15s ease;
+}
+.docs-barra details:not([open]) summary::after {
+  transform: rotate(-90deg);
 }
 .docs-barra summary::-webkit-details-marker {
   display: none;
@@ -2081,16 +2100,28 @@ button {
 }
 .docs-barra ul {
   list-style: none;
-  margin: 2px 0 6px;
-  padding: 0 0 0 22px;
+  margin: 0 0 8px;
+  padding: 0;
 }
 .docs-barra li a {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
   padding: 6px 10px;
   border-radius: 8px;
-  color: #3a3a3a;
+  color: #4a4f57;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.docs-barra li a .icono-guia {
+  flex: none;
+  margin-top: 1px;
+  color: #666b73;
+}
+.docs-barra li a.activo .icono-guia {
+  color: #fff;
 }
 .docs-barra li a:hover {
   background: #f6f6f6;
@@ -2202,6 +2233,63 @@ button {
 }
 .docs-tarjeta strong {
   color: var(--secundario);
+}
+.docs-tarjeta .icono-guia {
+  color: var(--primario);
+  margin-bottom: 4px;
+}
+.docs-guia h1 .icono-guia {
+  color: var(--primario);
+  flex: none;
+}
+/* Cursos y presentaciones: lo primero del inicio de Docs, en tarjetas grandes. */
+.docs-cursos {
+  background: #101010;
+  color: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  margin: 18px 0 28px;
+}
+.docs-cursos h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #fff;
+}
+.docs-cursos h2 .icono {
+  color: var(--primario);
+}
+.docs-cursos-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.docs-curso {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fff;
+  color: #101010;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.docs-curso:hover {
+  transform: translateY(-2px);
+}
+.docs-curso .icono-guia {
+  color: var(--primario);
+}
+.docs-curso strong {
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 1.05rem;
+}
+.docs-curso span {
+  color: #5e5e5e;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 .docs-tarjeta span {
   color: #5e5e5e;

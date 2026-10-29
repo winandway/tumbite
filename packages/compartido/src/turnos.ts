@@ -29,3 +29,15 @@ export function validarTurno(
   if (a > ahora.getTime() + TURNO.dias * 86_400_000) return 'lejos';
   return 'ok';
 }
+
+/**
+ * La medianoche de la hora local `n` días después de `ahora` (C-TURNOS-HORARIO, 29 oct 2026).
+ * Sumar 24 horas fallaba en el cambio de hora: el 1 de noviembre dura 25 horas en Miami y desde
+ * ahí cada día salía una hora antes (el domingo 1 aparecía dos veces en «Mis turnos»).
+ */
+export function inicioDelDia(ahora: number, n: number): number {
+  const d = new Date(ahora);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + n);
+  return d.getTime();
+}
