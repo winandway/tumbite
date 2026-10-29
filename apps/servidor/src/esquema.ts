@@ -18,6 +18,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tickets', 'asignado_a', 'TEXT'],
   // C-REPARTIDOR-DESTACADO (29 oct 2026): cumple los requisitos del «Top Dasher».
   ['repartidores', 'destacado', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-PEDIDO-GRUPO-HORA (29 oct 2026): hora de cierre opcional y cuándo se avisó al anfitrión.
+  ['pedidos_grupo', 'cierra_en', 'TEXT'],
+  ['pedidos_grupo', 'avisado_en', 'TEXT'],
   ['usuarios', 'zona_id', 'TEXT'],
   ['usuarios', 'correo_confirmado_en', 'TEXT'],
   ['usuarios', 'stripe_cliente', 'TEXT'],

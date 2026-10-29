@@ -5,6 +5,7 @@ import { nuevoId, nuevoToken } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { lineasDeRestaurante } from './pedidos';
+import { notificar } from '../notificaciones';
 
 /**
  * C-PEDIDO-GRUPO (29 oct 2026), como el «Group Order» de DoorDash: quien arma el pedido (anfitrión)
@@ -23,7 +24,12 @@ type FilaGrupo = {
   anfitrion_id: string;
   restaurante_id: string;
   estado: 'abierto' | 'cerrado' | 'cancelado';
+  cierra_en?: string | null;
 };
+
+/** C-PEDIDO-GRUPO-HORA: pasada la hora de cierre, nadie agrega más (el anfitrión sigue pudiendo pagar). */
+const pasoLaHora = (g: FilaGrupo) =>
+  Boolean(g.cierra_en && new Date(`${g.cierra_en.replace(' ', 'T')}Z`).getTime() <= Date.now());
 
 async function grupoDe(db: D1Database, codigo: string) {
   const g = await db
@@ -125,6 +131,8 @@ grupos.get('/grupos/:codigo', async (c) => {
       codigo: g.codigo,
       estado: g.estado,
       soyAnfitrion: g.anfitrion_id === u.id,
+      cierraEn: g.cierra_en ?? null,
+      pasoLaHora: pasoLaHora(g),
       restaurante: {
         id: String(rest.id),
         nombre: String(rest.nombre),
@@ -157,7 +165,7 @@ grupos.post('/grupos/:codigo/items', async (c) => {
   );
   const db = base(c);
   const g = await grupoDe(db, c.req.param('codigo'));
-  if (g.estado !== 'abierto')
+  if (g.estado !== 'abierto' || pasoLaHora(g))
     throw new ErrorDatos('Este pedido en grupo ya se cerró.', undefined, 409);
   const rest = await restauranteDe(db, g.restaurante_id);
   // Valida el plato y sus opciones igual que un pedido normal (lanza si algo no cuadra).
@@ -212,6 +220,62 @@ grupos.delete('/grupos/:codigo/items/:itemId', async (c) => {
   if (!r.meta.changes) throw new ErrorDatos('Ese plato no es tuyo.', undefined, 403);
   return c.json({ ok: true });
 });
+
+/** C-PEDIDO-GRUPO-HORA: el anfitrión pone (o quita) la hora de cierre: de 15 minutos a 24 horas. */
+grupos.patch('/grupos/:codigo', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { cierraEn } = await leerCuerpo(c, z.object({ cierraEn: z.iso.datetime().nullable() }));
+  const db = base(c);
+  const g = await grupoDe(db, c.req.param('codigo'));
+  if (g.anfitrion_id !== u.id)
+    throw new ErrorDatos('Solo quien armó el pedido en grupo pone la hora.', undefined, 403);
+  if (g.estado !== 'abierto')
+    throw new ErrorDatos('Este pedido en grupo ya se cerró.', undefined, 409);
+  let valor: string | null = null;
+  if (cierraEn) {
+    const t = new Date(cierraEn).getTime() - Date.now();
+    if (t < 15 * 60_000 || t > 24 * 3_600_000)
+      throw new ErrorDatos(
+        'Elige una hora entre 15 minutos y 24 horas desde ahora.',
+        'cierraEn',
+        409,
+      );
+    valor = new Date(cierraEn).toISOString().slice(0, 19).replace('T', ' ');
+  }
+  await db
+    .prepare('UPDATE pedidos_grupo SET cierra_en = ?, avisado_en = NULL WHERE id = ?')
+    .bind(valor, g.id)
+    .run();
+  return c.json({ ok: true, cierraEn: valor });
+});
+
+/** Lo llama el Manager: a la hora de cierre, avisa al anfitrión una sola vez que ya puede pagar. */
+export async function avisarGruposVencidos(env: Env, db: D1Database) {
+  const { results } = await db
+    .prepare(
+      `SELECT g.id, g.codigo, g.anfitrion_id, u.idioma FROM pedidos_grupo g JOIN usuarios u ON u.id = g.anfitrion_id
+        WHERE g.estado = 'abierto' AND g.cierra_en IS NOT NULL AND g.cierra_en <= datetime('now') AND g.avisado_en IS NULL
+        LIMIT 50`,
+    )
+    .all<{ id: string; codigo: string; anfitrion_id: string; idioma: string }>();
+  for (const g of results) {
+    const r = await db
+      .prepare(
+        "UPDATE pedidos_grupo SET avisado_en = datetime('now') WHERE id = ? AND avisado_en IS NULL",
+      )
+      .bind(g.id)
+      .run();
+    if (!r.meta.changes) continue;
+    const en = g.idioma === 'en';
+    await notificar(env, db, g.anfitrion_id, {
+      titulo: en ? 'Your group order is ready to check out' : 'Tu pedido en grupo ya se cerró',
+      cuerpo: en
+        ? 'It’s closing time: nobody can add more. Review it and pay.'
+        : 'Llegó la hora: ya nadie puede agregar más. Revísalo y paga.',
+      datos: { grupo: g.codigo },
+    }).catch((e: unknown) => console.error('pedido en grupo: aviso', g.id, e));
+  }
+}
 
 /** El anfitrión lo cierra: los platos pasan a su carrito (la app los pone) y nadie agrega más. */
 grupos.post('/grupos/:codigo/cerrar', async (c) => {

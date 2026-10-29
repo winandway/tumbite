@@ -175,6 +175,7 @@ const es: SeccionDocs[] = [
           'En el menú del restaurante, toca «Hacer un pedido en grupo». Se abre tu pedido en grupo con el botón «Compartir el enlace».',
           'Cada persona abre el enlace con su cuenta de Divoox, toca «Agregar mis platos» y elige del menú como siempre, con sus opciones. Lo suyo aparece con su nombre.',
           'Cada quien puede quitar lo suyo. Tú, que armaste el pedido, puedes quitar cualquier plato.',
+          'Si quieres, pon una hora de cierre (en 30 minutos, 1 hora o 2 horas). Al llegar la hora nadie puede agregar más y te avisamos para que revises y pagues.',
           'Cuando estén todos, toca «Cerrar y pagar»: nadie puede agregar más, los platos pasan a tu carrito con el precio de hoy y pagas como siempre. Si algo ya no está disponible, te avisamos y no se cobra.',
         ],
         preguntas: [
@@ -3255,6 +3256,7 @@ const en: SeccionDocs[] = [
           'On the restaurant menu, tap “Start a group order”. Your group order opens with a “Share the link” button.',
           'Each person opens the link with their Divoox account, taps “Add my items” and picks from the menu as usual, with their options. Their items show with their name.',
           'Everyone can remove their own items. You, who started the order, can remove any item.',
+          'If you want, set a closing time (in 30 minutes, 1 hour or 2 hours). At that time nobody can add more and we let you know so you can review and pay.',
           'When everyone is in, tap “Close and pay”: nobody can add more, the items move to your cart at today’s prices and you pay as usual. If something is no longer available, we tell you and it isn’t charged.',
         ],
         preguntas: [

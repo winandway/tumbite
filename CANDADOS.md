@@ -1584,7 +1584,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** no se podía armar un pedido entre varias personas (DoorDash «Group Order»).
 - **Cómo quedó:** tablas `pedidos_grupo` (código secreto de 22 caracteres) y `pedidos_grupo_items`. Rutas en `apps/servidor/src/rutas/grupos.ts`: crear, ver (con el precio de hoy y quién agregó qué), agregar (validado como un pedido normal con `lineasDeRestaurante`), quitar (lo suyo; el anfitrión, cualquiera), cerrar (solo el anfitrión; devuelve las líneas para su carrito) y cancelar. Topes: 100 platos y 20 personas. Este módulo NO cobra: paga el anfitrión desde su carrito, como siempre.
 - **App del cliente:** «Hacer un pedido en grupo» en el menú (`app/restaurant/[id].tsx`, con `?grupo=` agrega al grupo) y la pantalla `app/group/[codigo].tsx` (compartir, agregar, quitar, cerrar y pagar; se refresca cada 8 segundos). Docs: guía «group-order». Por ahora solo restaurantes; dividir el pago queda para después.
-- **Prueba:** `rutas/grupos.test.ts`.
+- **Hora de cierre (C-PEDIDO-GRUPO-HORA):** `PATCH /datos/grupos/:codigo {cierraEn}` (solo el anfitrión, de 15 min a 24 h; null la quita; columnas `cierra_en` y `avisado_en` vía COLUMNAS). Pasada la hora nadie agrega; el Manager avisa al anfitrión UNA vez (`avisarGruposVencidos`) y él sigue pudiendo cerrar y pagar. En la app: «Hora de cierre» (sin hora, 30 min, 1 h, 2 h) y «Se cierra a las…».
+- **Prueba:** `rutas/grupos.test.ts` (las dos).
 
 ## C-RECORRIDO-BOTON-RESTAURANTE (29 oct 2026) — pruebas
 

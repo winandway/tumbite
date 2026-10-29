@@ -511,6 +511,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Revisa el turno.', 'Check the shift.'],
   ['Este pedido ya terminó.', 'This order is already finished.'],
   ['Ese pedido en grupo no existe.', 'That group order doesn’t exist.'],
+  [
+    'Solo quien armó el pedido en grupo pone la hora.',
+    'Only the person who started the group order can set the time.',
+  ],
+  [
+    'Elige una hora entre 15 minutos y 24 horas desde ahora.',
+    'Pick a time between 15 minutes and 24 hours from now.',
+  ],
   ['El pedido en grupo es para restaurantes.', 'Group orders are for restaurants.'],
   ['Este pedido en grupo ya se cerró.', 'This group order is already closed.'],
   [

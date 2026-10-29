@@ -23,6 +23,9 @@ type Grupo = {
   codigo: string;
   estado: 'abierto' | 'cerrado' | 'cancelado';
   soyAnfitrion: boolean;
+  /** C-PEDIDO-GRUPO-HORA */
+  cierraEn?: string | null;
+  pasoLaHora?: boolean;
   restaurante: { id: string; nombre: string; moneda: string };
   items: {
     id: string;
@@ -54,6 +57,11 @@ const T = {
     no: 'No',
     cerrado: 'Este pedido en grupo ya se cerró: quien lo armó lo está pagando.',
     cancelado: 'Este pedido en grupo se canceló.',
+    hora: 'Hora de cierre',
+    sinHora: 'Sin hora',
+    en: (m: string) => `En ${m}`,
+    seCierra: (h: string) => `Se cierra a las ${h}.`,
+    yaCerro: 'Llegó la hora de cierre: ya nadie puede agregar más.',
     noDisponibles: (n: number) => `${n} plato(s) ya no están disponibles y no se cobrarán.`,
     mensaje: (r: string, url: string) =>
       `Armemos un pedido en grupo de ${r} en Divoox. Agrega lo tuyo aquí: ${url}`,
@@ -73,11 +81,19 @@ const T = {
     no: 'No',
     cerrado: 'This group order is closed: whoever started it is paying.',
     cancelado: 'This group order was canceled.',
+    hora: 'Closing time',
+    sinHora: 'No time',
+    en: (m: string) => `In ${m}`,
+    seCierra: (h: string) => `Closes at ${h}.`,
+    yaCerro: 'It’s closing time: nobody can add more.',
     noDisponibles: (n: number) => `${n} item(s) are no longer available and won’t be charged.`,
     mensaje: (r: string, url: string) =>
       `Let’s do a group order from ${r} on Divoox. Add yours here: ${url}`,
   },
 };
+
+/** La hora de cierre, desde ahora (fuera del componente: se calcula al tocar, no al dibujar). */
+const dentroDe = (minutos: number) => new Date(Date.now() + minutos * 60_000).toISOString();
 
 function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
   if (Platform.OS === 'web') return Promise.resolve(window.confirm(mensaje));
@@ -118,6 +134,16 @@ export default function PedidoEnGrupo() {
       return;
     }
     await Share.share({ message: mensaje }).catch(() => undefined);
+  }
+  async function ponerHora(minutos: number | null) {
+    try {
+      await api.pedir('PATCH', `/datos/grupos/${String(codigo)}`, {
+        cierraEn: minutos == null ? null : dentroDe(minutos),
+      });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
   }
   async function quitar(itemId: string) {
     try {
@@ -173,7 +199,54 @@ export default function PedidoEnGrupo() {
               <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
               {g.estado === 'cerrado' ? <Text style={e.aviso}>{t.cerrado}</Text> : null}
               {g.estado === 'cancelado' ? <Text style={e.aviso}>{t.cancelado}</Text> : null}
-              {g.estado === 'abierto' ? (
+              {g.estado === 'abierto' && g.cierraEn ? (
+                <Text
+                  style={{ fontWeight: '700', color: g.pasoLaHora ? C.primario : C.secundario }}
+                >
+                  {g.pasoLaHora
+                    ? t.yaCerro
+                    : t.seCierra(
+                        new Date(`${g.cierraEn.replace(' ', 'T')}Z`).toLocaleTimeString(
+                          idioma === 'en' ? 'en-US' : 'es-US',
+                          { hour: 'numeric', minute: '2-digit' },
+                        ),
+                      )}
+                </Text>
+              ) : null}
+              {g.estado === 'abierto' && g.soyAnfitrion && !g.pasoLaHora ? (
+                <View style={{ gap: 6 }}>
+                  <Text style={{ color: '#5E5E5E' }}>{t.hora}</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {(
+                      [
+                        [null, t.sinHora],
+                        [30, t.en('30 min')],
+                        [60, t.en('1 h')],
+                        [120, t.en('2 h')],
+                      ] as const
+                    ).map(([min, texto]) => (
+                      <Text
+                        key={texto}
+                        onPress={() => void ponerHora(min)}
+                        accessibilityRole="button"
+                        style={{
+                          paddingVertical: 6,
+                          paddingHorizontal: 12,
+                          borderRadius: 12,
+                          borderWidth: 1,
+                          borderColor: '#DADADA',
+                          backgroundColor: '#fff',
+                          fontWeight: '700',
+                          color: C.secundario,
+                        }}
+                      >
+                        {texto}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+              {g.estado === 'abierto' && !g.pasoLaHora ? (
                 <View style={{ gap: 8 }}>
                   <BotonAncho texto={t.compartir} alTocar={() => void compartir()} secundario />
                   <BotonAncho

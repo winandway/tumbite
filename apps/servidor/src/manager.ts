@@ -1,3 +1,4 @@
+import { avisarGruposVencidos } from './rutas/grupos';
 import { actualizarTurnos } from './rutas/turnos';
 import { correosEquipo } from './avisosEquipo';
 import { cerrarReservasPorCancelacion } from './internacional/cobroDirecto';
@@ -240,6 +241,9 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
   // C-TURNOS-REPARTIDOR: turnos que empiezan, se pierden o terminan (solo en la vuelta general).
   if (!pedidoId)
     await actualizarTurnos(db).catch((e: unknown) => console.error('manager: turnos', e));
+  // C-PEDIDO-GRUPO-HORA: pedidos en grupo que llegaron a su hora de cierre.
+  if (!pedidoId)
+    await avisarGruposVencidos(env, db).catch((e: unknown) => console.error('manager: grupos', e));
   // C-PEDIDO-PROGRAMADO: 45 minutos antes de la franja, el restaurante recibe «empieza a prepararlo»
   // (una sola vez por pedido: la bitácora no deja repetir el evento).
   if (!pedidoId) {
