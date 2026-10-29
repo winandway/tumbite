@@ -49,6 +49,10 @@
 - [!] (espera tu visto bueno: hay que reconstruir la tabla de restaurantes en producción porque hoy un dueño solo puede tener uno; ficha lista en docs/investigaciones-rea/2026-10-29-varios-locales.md) Varios locales en una sola cuenta (DoorDash Merchant para cadenas): primero la ficha en docs/investigaciones-rea con todo lo que hoy supone un local por dueño (fotos, verificación del local, cobros, activación, miembros); después construir con selector de local en panel y app. Todos los países.
 - [x] Compartir el seguimiento del pedido con otra persona (como Uber Eats): enlace de solo lectura con estado, hora estimada y el repartidor en el mapa mientras va en camino; se apaga al entregar. Servidor, app del cliente, página pública, Docs. Todos los países.
 
+- [ ] Pedido en grupo con hora de cierre opcional (como DoorDash: «se cierra a las 12:00») y aviso a quien lo armó cuando llega la hora. Todos los países.
+- [ ] Pedido en grupo también en las tiendas (mercado, farmacia): mismo enlace y mismas reglas, con «qué hacer si falta» por producto. Todos los países.
+- [ ] El repartidor califica al cliente (como Uber): estrellas y motivo al entregar; solo lo ve soporte, no bloquea a nadie. Servidor, app Driver, superadmin, Docs. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
