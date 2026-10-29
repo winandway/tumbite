@@ -276,6 +276,16 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             {t.acciones.restaurante.boton}
           </a>
         </div>
+        <div className="ld-accion" data-testid="accion-tienda">
+          <h3>{t.acciones.tienda.titulo}</h3>
+          <p>{t.acciones.tienda.texto}</p>
+          <a className="boton" href="/panel/products">
+            {t.acciones.tienda.boton}
+          </a>{' '}
+          <a href={`${idioma === 'es' ? '/es' : ''}/docs/restaurants/store-catalog`}>
+            {t.acciones.tienda.guia}
+          </a>
+        </div>
       </section>
 
       {/* 4 · Repartidores */}

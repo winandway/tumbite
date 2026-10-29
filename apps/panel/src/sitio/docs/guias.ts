@@ -1182,6 +1182,39 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'store-catalog',
+        titulo: 'Sube el catálogo de tu tienda: supermercado, farmacia, licorería y más',
+        resumen:
+          'Si tienes un supermercado, una farmacia, una licorería, una ferretería u otra tienda, sube tus productos con una planilla o uno por uno. Quedan listos para el día del lanzamiento.',
+        explicacion: [
+          'Divoox no es solo comida. En «Productos (tienda)» eliges qué tipo de negocio tienes: supermercado, tienda de conveniencia, farmacia, licorería, ferretería, mascotas, belleza u otra tienda. Cada tipo sale en su servicio de la app: Mercado, Farmacia, Licores o Más.',
+          'Puedes subir miles de productos de una vez con la planilla. Descarga la plantilla, llena una fila por producto (SKU, código de barras, nombre, marca, tamaño, categoría, precio y si hay existencias) y súbela. Antes de guardar, Divoox te muestra cuántos productos se crean, cuántos se actualizan y en qué fila hay un error, para que lo corrijas. Si vuelves a subir la planilla, los productos se actualizan por su SKU: nunca se duplican.',
+          'El código de barras se revisa con su dígito verificador, para que no se cuele un número mal escrito. Puedes vender por unidad o por peso, y marcar los productos con alcohol, tabaco o medicamentos de venta libre: Divoox revisa la edad al entregar. Los medicamentos con receta todavía no se pueden vender.',
+          'Un producto nunca se borra: si se te acaba, lo marcas agotado por hoy y vuelve solo mañana, o lo reactivas cuando quieras.',
+          'Tu catálogo todavía no se muestra al público. Lo cargas ahora y, el día que abramos las tiendas en tu ciudad, tus productos ya están ahí.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-productos-es.webp',
+            alt: 'Pantalla Productos de una tienda en el panel de Divoox, con la vista previa de la planilla y la lista de productos.',
+            pie: 'Revisas la planilla antes de guardar y ves cada error por fila.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo subo los productos de mi supermercado o farmacia?',
+          '¿Qué columnas lleva la planilla de productos?',
+          '¿Qué pasa si vuelvo a subir la planilla?',
+          '¿Puedo vender alcohol o medicamentos?',
+        ],
+        pasos: [
+          'En el panel, entra a «Productos (tienda)» y elige tu tipo de negocio.',
+          'Toca «Descargar la plantilla» y llena una fila por producto.',
+          'Sube el archivo y toca «Revisar la planilla».',
+          'Corrige las filas con error si las hay y toca «Guardar».',
+          'Para agotar un producto, toca «Agotar hoy»; vuelve solo mañana.',
+        ],
+      },
+      {
         id: 'menu',
         titulo: 'Tu menú: platos, precios y fotos',
         resumen: 'Cada plato en español e inglés, con su precio, su categoría y su foto.',
@@ -3980,6 +4013,39 @@ const en: SeccionDocs[] = [
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
           'Save. Your restaurant is “under review”: our team approves it and emails you.',
           'Once approved, tap “Open and take orders.” You can close anytime.',
+        ],
+      },
+      {
+        id: 'store-catalog',
+        titulo: 'Upload your store catalog: grocery, pharmacy, liquor and more',
+        resumen:
+          'If you run a grocery store, pharmacy, liquor store, hardware store or another shop, upload your products with a spreadsheet or one by one. They’re ready for launch day.',
+        explicacion: [
+          'Divoox isn’t just food. In “Products (store)” you choose your business type: grocery, convenience, pharmacy, liquor, hardware, pets, beauty or another store. Each type appears in its own service in the app: Grocery, Pharmacy, Liquor or More.',
+          'You can upload thousands of products at once with the spreadsheet. Download the template, fill one row per product (SKU, barcode, name, brand, size, category, price and stock) and upload it. Before saving, Divoox shows how many products will be created, how many updated, and which row has an error so you can fix it. If you upload the spreadsheet again, products update by SKU: they’re never duplicated.',
+          'Barcodes are checked with their check digit, so a mistyped number doesn’t slip through. You can sell by unit or by weight, and flag products with alcohol, tobacco or over-the-counter medicine: Divoox checks age at delivery. Prescription medicines can’t be sold yet.',
+          'A product is never deleted: if you run out, mark it out of stock for today and it comes back on its own tomorrow, or reactivate it whenever you want.',
+          'Your catalog isn’t shown to the public yet. Upload it now, and on the day we open stores in your city, your products are already there.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-productos-en.webp',
+            alt: 'A store’s Products screen in the Divoox dashboard, with the spreadsheet preview and the product list.',
+            pie: 'Check the spreadsheet before saving and see each error by row.',
+          },
+        ],
+        preguntas: [
+          'How do I upload my grocery store or pharmacy products?',
+          'Which columns does the product spreadsheet have?',
+          'What happens if I upload the spreadsheet again?',
+          'Can I sell alcohol or medicine?',
+        ],
+        pasos: [
+          'In the dashboard, open “Products (store)” and choose your business type.',
+          'Tap “Download the template” and fill one row per product.',
+          'Upload the file and tap “Check the spreadsheet”.',
+          'Fix any rows with errors and tap “Save”.',
+          'To mark a product out of stock, tap “Out of stock today”; it comes back tomorrow.',
         ],
       },
       {

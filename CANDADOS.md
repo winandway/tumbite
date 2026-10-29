@@ -1404,6 +1404,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `apps/servidor/src/flex/cobros.test.ts` (la página del Banco Central siempre simulada), `flexCobro.test.ts`, y la caja en `PantallasRutas.test.tsx`; comprobada en rojo.
 - **No tocar:** las pruebas nunca llaman a la página real; Divoox no cambia dinero, solo muestra la equivalencia.
 
+## C-TIENDAS-CATALOGO · Catálogo de tiendas: ficha, oferta y planilla estándar (28 oct 2026)
+
+- **País:** todos (abre en EE. UU., Venezuela y Colombia). Estándar de DoorDash, Uber Eats, Rappi e Instacart (`docs/investigaciones-rea/2026-10-28-tiendas-fuentes-publicas.md` y `evidencia-rea-tiendas-2026-10-28.json.gz`).
+- **Cómo funciona:** `restaurantes.tipo_comercio` (restaurante, mercado, conveniencia, farmacia, licores, ferreteria, mascotas, belleza, tienda) decide el servicio (`servicioDeComercio`). Ficha en `catalogo_productos` (SKU único por comercio, código de barras con dígito verificador, venta por unidad o peso, restricción) y oferta en `catalogo_ofertas` (precio en centavos, disponible, existencias, pasillo, agotado hasta). Planilla con vista previa y errores por fila (`leerPlanillaProductos`), actualiza por SKU. Rutas en `apps/servidor/src/rutas/tiendas.ts`; pantalla `apps/panel/src/panel/Productos.tsx` (`/panel/products`).
+- **Fallos encontrados construyendo y corregidos:** un encabezado «codigo de barras» sin acento no se reconocía y el código se saltaba sin validar (ahora se comparan sin acentos ni espacios); los avisos de error salían en el idioma del país de la tienda y no en el de quien usa el panel.
+- **No tocar:** las tiendas no salen entre los restaurantes (`tipo_comercio = 'restaurante'` en la lista y el buscador de comida); los medicamentos con receta siguen bloqueados hasta una orden legal de Richard; un producto nunca se borra.
+- **Prueba:** `packages/compartido/src/tiendas.test.ts`, `apps/servidor/src/rutas/tiendas.test.ts` (rojo comprobado quitando el filtro), `apps/panel/src/panel/Productos.test.tsx`.
+
 ## C-AVISO-PAQUETE · Avisos push al destinatario con sonido propio, no SMS (28 oct 2026)
 
 - **Por qué:** un SMS a Venezuela cuesta 0,2257 dólares en Twilio, más que los 0,20 que cobra Divoox por caja (`docs/investigaciones-rea/2026-10-28-avisos-push-vs-sms.md`). El push es gratis.

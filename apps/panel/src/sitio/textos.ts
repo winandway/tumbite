@@ -27,6 +27,14 @@ const es = {
         'Crea tu cuenta de restaurante, sube tu menú y empieza a recibir pedidos. Sin permanencia.',
       boton: 'Crear mi cuenta de restaurante',
     },
+    // C-TIENDAS-CATALOGO: las tiendas suben su catálogo antes del lanzamiento.
+    tienda: {
+      titulo: '¿Tienes un supermercado, una farmacia o una tienda?',
+      texto:
+        'Sube ya tu catálogo con una planilla: supermercados, farmacias, licorerías, ferreterías y más. Tus productos quedan listos para cuando abramos las tiendas en tu ciudad (muy pronto).',
+      boton: 'Subir mis productos',
+      guia: 'Cómo subir el catálogo',
+    },
     repartidor: {
       titulo: 'Empieza a repartir',
       texto: 'Crea tu cuenta de repartidor, verifica tu identidad y conéctate cuando quieras.',
@@ -336,6 +344,13 @@ const en: Textos = {
       texto:
         'Create your restaurant account, upload your menu and start receiving orders. No lock-in.',
       boton: 'Create my restaurant account',
+    },
+    tienda: {
+      titulo: 'Do you run a grocery store, pharmacy or shop?',
+      texto:
+        'Upload your catalog now with a spreadsheet: grocery, pharmacy, liquor, hardware and more. Your products are ready for when we open stores in your city (coming soon).',
+      boton: 'Upload my products',
+      guia: 'How to upload your catalog',
     },
     repartidor: {
       titulo: 'Start delivering',
