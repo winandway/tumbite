@@ -428,3 +428,59 @@ repartidorGrandes.post('/repartidor/pedidos/:id/no-esta-listo', async (c) => {
 
 /** Para las pruebas y el panel: distancia entre dos puntos en km (reexportada por comodidad). */
 export const kmEntre = distanciaKm;
+
+/**
+ * C-CALIFICA-CLIENTE (29 oct 2026), como Uber: el repartidor califica al cliente de sus entregas de
+ * las últimas 24 horas (una vez por pedido). Solo lo ve soporte; nadie se bloquea por esto.
+ */
+repartidorGrandes.get('/repartidor/por-calificar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT p.id AS pedidoId, uc.nombre AS cliente, p.entregado_en AS entregadoEn FROM pedidos p
+         JOIN usuarios uc ON uc.id = p.cliente_id
+        WHERE p.repartidor_id = ? AND p.estado = 'entregado' AND p.entregado_en > datetime('now', '-1 day')
+          AND NOT EXISTS (SELECT 1 FROM calificaciones_cliente k WHERE k.pedido_id = p.id)
+        ORDER BY p.entregado_en DESC LIMIT 10`,
+    )
+    .bind(u.id)
+    .all<{ pedidoId: string; cliente: string; entregadoEn: string }>();
+  return c.json({
+    pedidos: results.map((r) => ({ ...r, cliente: String(r.cliente ?? '').split(' ')[0] })),
+  });
+});
+
+repartidorGrandes.post('/repartidor/pedidos/:id/calificar-cliente', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      estrellas: z.number().int().min(1).max(5),
+      motivo: z.enum(['', 'no_salio', 'direccion', 'trato', 'espera']).default(''),
+      comentario: z.string().trim().max(300).default(''),
+    }),
+  );
+  const db = base(c);
+  const f = await db
+    .prepare(
+      "SELECT cliente_id FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'entregado' AND entregado_en > datetime('now', '-1 day')",
+    )
+    .bind(c.req.param('id'), u.id)
+    .first<{ cliente_id: string }>();
+  if (!f) throw new ErrorDatos('Solo calificas a clientes de tus entregas de hoy.', undefined, 404);
+  const r = await db
+    .prepare(
+      'INSERT OR IGNORE INTO calificaciones_cliente (pedido_id, repartidor_id, cliente_id, estrellas, motivo, comentario) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(
+      c.req.param('id'),
+      u.id,
+      f.cliente_id,
+      d.estrellas,
+      d.estrellas >= 4 ? '' : d.motivo,
+      d.comentario,
+    )
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Ya calificaste este pedido.', undefined, 409);
+  return c.json({ ok: true }, 201);
+});

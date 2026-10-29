@@ -2109,6 +2109,23 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'rate-customer',
+        titulo: 'Calificar al cliente',
+        resumen:
+          'Después de entregar, puedes calificar al cliente con estrellas y, si algo salió mal, decir qué pasó.',
+        explicacion: [
+          'En «Pedidos» aparecen tus entregas de hoy que todavía no calificaste. Tocas las estrellas y, si son 3 o menos, eliges qué pasó: no salió a recibir, dirección equivocada, mal trato o te hizo esperar.',
+          'Es opcional. Solo lo ve nuestro equipo de soporte, para cuidar a los repartidores; el cliente no ve tu nota y nadie se bloquea por una calificación.',
+          'Cada entrega se califica una sola vez, el mismo día.',
+        ],
+        preguntas: ['¿Puedo calificar a un cliente?', '¿El cliente ve mi calificación?'],
+        pasos: [
+          'Abre «Pedidos».',
+          'Toca las estrellas de la entrega.',
+          'Si hace falta, elige qué pasó y envía.',
+        ],
+      },
+      {
         id: 'open-offer-bonus',
         titulo: 'Bono por tomar un pedido que otros dejaron pasar',
         resumen:
@@ -5166,6 +5183,23 @@ const en: SeccionDocs[] = [
           'Open “Ratings” in the app.',
           'See which requirements you’re missing.',
           'Meet all five and you’re a top driver.',
+        ],
+      },
+      {
+        id: 'rate-customer',
+        titulo: 'Rate the customer',
+        resumen:
+          'After delivering, you can rate the customer with stars and, if something went wrong, say what happened.',
+        explicacion: [
+          'Under “Orders” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait.',
+          'It’s optional. Only our support team sees it, to look after drivers; the customer doesn’t see your rating and nobody is blocked over one rating.',
+          'Each delivery can be rated once, on the same day.',
+        ],
+        preguntas: ['Can I rate a customer?', 'Does the customer see my rating?'],
+        pasos: [
+          'Open “Orders”.',
+          'Tap the stars for the delivery.',
+          'If needed, pick what happened and send.',
         ],
       },
       {

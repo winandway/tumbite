@@ -1608,3 +1608,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué pasó:** la prueba «150 paradas en menos de un segundo» falló en GitHub (1,28 s) con todas las pruebas corriendo a la vez; en esta computadora tarda unos 0,3 s. No fue un cambio del optimizador.
 - **Arreglo:** en GitHub (`CI`) el tope es 2,5 s; en la computadora sigue en 1 s, así una lentitud real del optimizador se sigue viendo aquí.
+
+## C-CALIFICA-CLIENTE (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el repartidor no podía decir cómo le fue con un cliente (Uber lo tiene).
+- **Arreglo:** tabla `calificaciones_cliente` (una por pedido). `GET /datos/repartidor/por-calificar` (entregas de las últimas 24 h sin calificar) y `POST /datos/repartidor/pedidos/:id/calificar-cliente` (solo su repartidor, una vez; motivo solo con 3 estrellas o menos) en `rutas/repartidorGrandes.ts`. Superadmin: «Nota de los repartidores» en la ficha del cliente. App Driver: «Califica a tus clientes de hoy» en Pedidos (`grandes/CalificarCliente.tsx`). Solo lo ve soporte; no bloquea a nadie. Docs: guía «rate-customer».
+- **Prueba:** «C-CALIFICA-CLIENTE» en `rutas/operacion.test.ts`.

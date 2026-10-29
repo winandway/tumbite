@@ -38,6 +38,7 @@ import {
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
+import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
@@ -1296,6 +1297,7 @@ export function Inicio() {
         <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
           {td.nav.pedidos}
         </Text>
+        <CalificarCliente api={api} idioma={idioma} />
         <Pressable
           onPress={() => setVista('miRuta')}
           accessibilityRole="button"

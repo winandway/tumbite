@@ -2859,3 +2859,65 @@ describe('C-SEGUIMIENTO-COMPARTIDO', () => {
     expect((await m.llamar('GET', `/datos/publico/pedido/${'x'.repeat(43)}`)).estado).toBe(404);
   });
 });
+
+describe('C-CALIFICA-CLIENTE', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el repartidor califica una vez al cliente de su entrega de hoy y soporte lo ve', async () => {
+    const { m, cliente, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const rep = await repartidor('Rafa Califica', 25.781, -80.201);
+    const otro = await repartidor('Otro Rep', 25.781, -80.201);
+    for (const estado of ['aceptado', 'listo', 'en_camino', 'entregado'])
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = ?, repartidor_id = ?, entregado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(estado, rep.id, id)
+        .run();
+    const pend = await m.llamar('GET', '/datos/repartidor/por-calificar', undefined, rep.token);
+    expect(pend.datos.pedidos).toEqual([expect.objectContaining({ pedidoId: id, cliente: 'Ana' })]);
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/calificar-cliente`,
+          { estrellas: 2, motivo: 'no_salio' },
+          otro.token,
+        )
+      ).estado,
+    ).toBe(404);
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/calificar-cliente`,
+          { estrellas: 2, motivo: 'no_salio' },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(201);
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/calificar-cliente`,
+          { estrellas: 5 },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(409);
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/por-calificar', undefined, rep.token)).datos
+        .pedidos,
+    ).toEqual([]);
+    const admin = await m.cuenta('admin');
+    const ficha = await m.llamar(
+      'GET',
+      `/datos/admin/clientes/${cliente.id}`,
+      undefined,
+      admin.token,
+    );
+    expect(ficha.datos.cliente.notaRepartidores).toMatchObject({ promedio: 2, cuantas: 1 });
+    expect(ficha.datos.cliente.notaRepartidores.ultimas[0]).toMatchObject({ motivo: 'no_salio' });
+  });
+});

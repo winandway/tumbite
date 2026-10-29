@@ -818,6 +818,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_por",
     "creado_en"
   ],
+  "calificaciones_cliente": [
+    "pedido_id",
+    "repartidor_id",
+    "cliente_id",
+    "estrellas",
+    "motivo",
+    "comentario",
+    "creado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",

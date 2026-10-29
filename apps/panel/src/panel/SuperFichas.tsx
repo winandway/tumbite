@@ -900,6 +900,8 @@ type Cliente = {
     repartidorCodigo: string | null;
   }[];
   quejas: { id: string; asunto: string; estado: string; fecha: string }[];
+  /** C-CALIFICA-CLIENTE: lo que dicen los repartidores (solo soporte). */
+  notaRepartidores?: { promedio: number | null; cuantas: number };
 };
 
 export function SuperCliente({ base, id, idioma }: { base: string; id: string; idioma: Idioma }) {
@@ -927,6 +929,14 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
               : formatearMonto(c.gastado, 'USD', idioma)}
           </strong>
         </li>
+        {c.notaRepartidores?.cuantas ? (
+          <li className="super-tarjeta">
+            <span>{idioma === 'en' ? 'Driver rating' : 'Nota de los repartidores'}</span>
+            <strong>
+              {c.notaRepartidores.promedio} ★ ({c.notaRepartidores.cuantas})
+            </strong>
+          </li>
+        ) : null}
       </ul>
       <div className="super-dos">
         <div className="tarjeta-form">

@@ -1378,6 +1378,19 @@ CREATE TABLE IF NOT EXISTS pedidos_compartidos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- C-CALIFICA-CLIENTE (29 oct 2026), como Uber: el repartidor califica al cliente al entregar.
+-- Solo lo ve soporte; no bloquea a nadie.
+CREATE TABLE IF NOT EXISTS calificaciones_cliente (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  estrellas INTEGER NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+  motivo TEXT NOT NULL DEFAULT '' CHECK (motivo IN ('', 'no_salio', 'direccion', 'trato', 'espera')),
+  comentario TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS calificaciones_cliente_cliente ON calificaciones_cliente(cliente_id, creado_en);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

@@ -51,7 +51,7 @@
 
 - [x] Pedido en grupo con hora de cierre opcional (como DoorDash: «se cierra a las 12:00») y aviso a quien lo armó cuando llega la hora. Todos los países.
 - [x] Pedido en grupo también en las tiendas (mercado, farmacia): mismo enlace y mismas reglas, con «qué hacer si falta» por producto. Todos los países.
-- [ ] El repartidor califica al cliente (como Uber): estrellas y motivo al entregar; solo lo ve soporte, no bloquea a nadie. Servidor, app Driver, superadmin, Docs. Todos los países.
+- [x] El repartidor califica al cliente (como Uber): estrellas y motivo al entregar; solo lo ve soporte, no bloquea a nadie. Servidor, app Driver, superadmin, Docs. Todos los países.
 
 ## Cada sesión
 

@@ -621,6 +621,19 @@ superadmin.get('/admin/clientes/:id', async (c) => {
     )
     .bind(id)
     .all();
+  // C-CALIFICA-CLIENTE: lo que dicen los repartidores de este cliente (solo lo ve soporte).
+  const notas = await db
+    .prepare(
+      'SELECT AVG(estrellas) AS promedio, COUNT(*) AS n FROM calificaciones_cliente WHERE cliente_id = ?',
+    )
+    .bind(id)
+    .first<{ promedio: number | null; n: number }>();
+  const { results: ultimasNotas } = await db
+    .prepare(
+      'SELECT pedido_id AS pedidoId, estrellas, motivo, comentario, creado_en AS fecha FROM calificaciones_cliente WHERE cliente_id = ? ORDER BY creado_en DESC LIMIT 10',
+    )
+    .bind(id)
+    .all();
   return c.json({
     cliente: {
       id: String(u.id),
@@ -633,6 +646,11 @@ superadmin.get('/admin/clientes/:id', async (c) => {
       correoConfirmado: Boolean(u.correo_confirmado_en),
       activo: Number(u.activo ?? 1) === 1,
       ciudad: u.ciudad ? String(u.ciudad) : null,
+      notaRepartidores: {
+        promedio: notas?.promedio == null ? null : Math.round(Number(notas.promedio) * 10) / 10,
+        cuantas: Number(notas?.n ?? 0),
+        ultimas: ultimasNotas,
+      },
       pedidos: gastos.reduce((s, x) => s + Number(x.n), 0),
       gastado: Number(gastos.find((x) => (x.moneda ?? 'USD') === 'USD')?.gastado ?? 0),
       gastadoPorMoneda: gastos.map((x) => ({
