@@ -50,6 +50,11 @@ async function gpsReciente(): Promise<Punto | null> {
   return p;
 }
 
+/** C-TIENDAS-VITRINA: el punto de búsqueda para las tiendas (el guardado; si no hay, el GPS). */
+export async function puntoDeBusqueda(): Promise<Punto | null> {
+  return (await ubicacionGuardada()) ?? (await gpsReciente());
+}
+
 export function useRestaurantes(api: Api, deUrl: Punto | null) {
   useEffect(() => {
     apiActual = api;

@@ -26,6 +26,7 @@ import {
   avisoLlegada,
   fotoSinConfirmar,
   lineaRepartidor,
+  notaSustitucion,
   textoLinea,
   type OpcionElegida,
   type Plato,
@@ -91,6 +92,7 @@ type Pedido = {
     cantidad: number;
     precioCentavos?: number;
     opciones?: OpcionElegida[];
+    sustitucion?: string;
   }[];
 };
 
@@ -462,6 +464,12 @@ export function Inicio() {
               style={{ fontSize: 16, marginTop: 3, color: C.secundario }}
             >
               {l.cantidad} × {textoLinea(l, idioma)}
+              {/* C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto. */}
+              {notaSustitucion(l, idioma) ? (
+                <Text style={{ fontSize: 13, color: '#5E5E5E' }}>
+                  {`\n${notaSustitucion(l, idioma)}`}
+                </Text>
+              ) : null}
             </Text>
           ))}
           {p.metodoPago && p.metodoPago !== 'tarjeta' ? (

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { OpcionElegida, Plan, Plato } from '@tumbite/compartido';
+import type { OpcionElegida, Plan, Plato, Sustitucion } from '@tumbite/compartido';
 import { almacenTelefono, useSesion } from '@tumbite/movil';
 
 export type LineaCarrito = {
@@ -22,6 +22,10 @@ export type LineaCarrito = {
   opciones?: OpcionElegida[];
   /** Foto del plato para el carrito (solo para mostrar; el precio lo recalcula el servidor). */
   imagen?: string | null;
+  /** C-TIENDAS-COMPRA: en una tienda, qué hacer si falta (lo decide el cliente; por defecto, reembolsar). */
+  sustitucion?: Sustitucion;
+  /** Producto que se vende al peso: el precio es estimado y se ajusta al pesarlo. */
+  pesable?: boolean;
 };
 export const claveDeLinea = (platoId: string, opciones: { id: string }[]) =>
   `${platoId}:${opciones
@@ -36,6 +40,8 @@ export type Carrito = {
   restLng: number | null;
   /** C-MONEDA-RECORRIDO: moneda del restaurante (los precios van en su unidad menor). */
   moneda?: string;
+  /** C-TIENDAS-COMPRA: el carrito es de una tienda (mercado, farmacia…), no de un restaurante. */
+  esTienda?: boolean;
   lineas: LineaCarrito[];
 };
 
@@ -59,11 +65,13 @@ type Ctx = {
       lat: number | null;
       lng: number | null;
       moneda?: string;
+      esTienda?: boolean;
     },
-    p: Plato,
+    p: Plato & { pesable?: boolean },
     opciones?: OpcionElegida[],
   ) => 'ok' | 'otro-restaurante';
   cambiarCantidad: (clave: string, cantidad: number) => void;
+  cambiarSustitucion: (clave: string, s: Sustitucion) => void;
   vaciar: () => void;
 };
 
@@ -112,6 +120,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               restLat: rest.lat,
               restLng: rest.lng,
               moneda: rest.moneda ?? 'USD',
+              esTienda: rest.esTienda ?? false,
             };
       // Carritos guardados antes de las opciones: se les pone la clave para que no se pierdan.
       const conClave = base.lineas.map((l) => ({
@@ -135,6 +144,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               cantidad: 1,
               opciones,
               imagen: p.imagen,
+              ...(rest.esTienda
+                ? { sustitucion: 'reembolsar' as const, pesable: p.pesable ?? false }
+                : {}),
             },
           ];
       return { ...base, lineas };
@@ -153,6 +165,17 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const cambiarSustitucion = useCallback((clave: string, sustitucion: Sustitucion) => {
+    setCarrito((c) => ({
+      ...c,
+      lineas: c.lineas.map((l) =>
+        (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [])) === clave
+          ? { ...l, sustitucion }
+          : l,
+      ),
+    }));
+  }, []);
+
   const vaciar = useCallback(() => setCarrito(VACIO), []);
 
   const valor = useMemo(
@@ -161,9 +184,10 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       cantidadTotal: carrito.lineas.reduce((s, l) => s + l.cantidad, 0),
       agregar,
       cambiarCantidad,
+      cambiarSustitucion,
       vaciar,
     }),
-    [carrito, agregar, cambiarCantidad, vaciar],
+    [carrito, agregar, cambiarCantidad, cambiarSustitucion, vaciar],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  notaSustitucion,
   codigoBarrasValido,
   leerPlanillaProductos,
   precioACentavos,
@@ -67,5 +68,13 @@ describe('C-TIENDAS-VITRINA · servicios y precios', () => {
     expect(tiposDeServicio('mas')).toEqual(['ferreteria', 'mascotas', 'belleza', 'tienda']);
     expect(precioEstimado(300, 'weight', 1.5)).toBe(450);
     expect(precioEstimado(300, 'each', null)).toBe(300);
+  });
+});
+
+describe('C-TIENDAS-COMPRA · nota de sustitución para la tienda', () => {
+  it('dice qué quiere el cliente en los dos idiomas y nada si no es de tienda', () => {
+    expect(notaSustitucion({ sustitucion: 'similar' }, 'es')).toContain('parecido');
+    expect(notaSustitucion({ sustitucion: 'reembolsar' }, 'en')).toBe('If out: refund it');
+    expect(notaSustitucion({}, 'es')).toBe('');
   });
 });

@@ -400,3 +400,21 @@ export const precioEstimado = (precio: number, vendidoPor: string, pesoPromedio:
 /** Qué hacer si falta un artículo (lo elige el cliente por artículo, como DoorDash y Uber Eats). */
 export const SUSTITUCIONES = ['reembolsar', 'similar', 'contactar'] as const;
 export type Sustitucion = (typeof SUSTITUCIONES)[number];
+
+/**
+ * C-TIENDAS-COMPRA · lo que la tienda ve en cada producto: qué quiere el cliente si no lo tiene.
+ * «Uno parecido» se entrega sin cobrar de más (el precio cobrado no cambia); «reembolsar» se hace
+ * con «falta un producto» y «avísame» por el chat del pedido. Vacío si la línea no es de tienda.
+ */
+export function notaSustitucion(l: { sustitucion?: string | null }, idioma: 'es' | 'en'): string {
+  const textos = new Map<string, [string, string]>([
+    ['reembolsar', ['Si no hay: reembolsar', 'If out: refund it']],
+    [
+      'similar',
+      ['Si no hay: uno parecido, sin cobrar de más', 'If out: something similar, no extra charge'],
+    ],
+    ['contactar', ['Si no hay: preguntarle por el chat', 'If out: ask the customer in the chat']],
+  ]);
+  const t = l.sustitucion ? textos.get(l.sustitucion) : undefined;
+  return t ? (idioma === 'en' ? t[1] : t[0]) : '';
+}

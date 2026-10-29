@@ -9,7 +9,7 @@ diga el país (como Moto). Evidencia: `docs/investigaciones-rea/2026-10-28-tiend
 - [x] 3. Servidor de la vitrina: tiendas cerca por servicio, ficha de la tienda con pasillos, productos disponibles con búsqueda y páginas, búsqueda entre tiendas cercanas. Tiendas encendidas solo en pruebas. Pruebas en rojo.
 - [x] 4. Compra: el pedido acepta productos de tienda (precio de la oferta, agotados fuera, pesables con peso estimado, edad por alcohol y tabaco, preferencia de sustitución por artículo). Lo demás (pago, repartidor, reembolso de lo que falta) es el de comida. Pruebas en rojo.
 - [ ] 5. App del cliente: el servicio abre la lista de tiendas cercanas; la tienda con pasillos, buscador y botón de agregar; el carrito y el pago de siempre con la preferencia de sustitución; búsqueda entre tiendas.
-- [ ] 6. Panel del negocio: en sus pedidos se ve qué hacer si falta un producto (la preferencia del cliente).
+- [x] 6. Panel del negocio: en sus pedidos se ve qué hacer si falta un producto (la preferencia del cliente).
 - [ ] 7. Alta por código de barras: Open Food Facts por el servidor, con atribución, para rellenar la ficha al escribir el código en el panel.
 - [ ] 8. Docs (guías de comprar en una tienda y de preparar el pedido) con capturas reales; web; candado, informe y fila.
 - [ ] 9. Pruebas completas, sitio de pruebas (comprado de punta a punta) y producción (apagado), comprobado en vivo.

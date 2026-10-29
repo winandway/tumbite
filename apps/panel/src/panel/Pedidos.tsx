@@ -9,6 +9,7 @@ import {
   avisoLlegada,
   fotoSinConfirmar,
   lineaRepartidor,
+  notaSustitucion,
   textoLinea,
   type OpcionElegida,
 } from '@tumbite/compartido';
@@ -49,6 +50,7 @@ type Pedido = {
     nombreEn: string;
     cantidad: number;
     opciones?: OpcionElegida[];
+    sustitucion?: string;
   }[];
 };
 
@@ -305,6 +307,10 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               {p.lineas.map((l) => (
                 <span key={l.platoId}>
                   {l.cantidad} × {textoLinea(l, idioma)}
+                  {/* C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto. */}
+                  {notaSustitucion(l, idioma) ? (
+                    <em className="nota-sustitucion"> · {notaSustitucion(l, idioma)}</em>
+                  ) : null}
                 </span>
               ))}
               {p.notas && (

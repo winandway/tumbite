@@ -405,6 +405,8 @@ const aProductoPublico = (f: FilaProducto, idioma: 'es' | 'en') => {
   return {
     id: f.id,
     nombre: idioma === 'en' ? f.nombre_en || f.nombre_es : f.nombre_es || f.nombre_en,
+    nombreEs: f.nombre_es || f.nombre_en,
+    nombreEn: f.nombre_en || f.nombre_es,
     marca: f.marca,
     tamano: f.tamano,
     unidadTamano: f.unidad_tamano,
@@ -610,7 +612,8 @@ tiendas.get('/tiendas-buscar', async (c) => {
         a.precio - b.precio,
     )
     .slice(0, 40);
-  return c.json({ resultados });
+  const { moneda } = await paisDeZona(db, zona.id);
+  return c.json({ resultados, moneda });
 });
 
 /**

@@ -6,6 +6,7 @@ import {
   type RespuestaServicios,
   type ServicioCatalogo,
   ORDEN_SERVICIOS,
+  SERVICIOS_TIENDA,
 } from '@tumbite/compartido';
 import { Boton, C, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../../comida/piezas';
@@ -13,6 +14,7 @@ import { textosComida } from '../../comida/textos';
 import { ICONO_SERVICIO, IMG, type Servicio } from '../../inicio/recursosServicio';
 import { textosInicio } from '../../inicio/textos';
 import { FranjaEstado } from '../../inicio/FranjaEstado';
+import { textosTiendas } from '../../tiendas/textos';
 
 /**
  * Pantalla de un servicio (Moto, Carro, Envíos, Mercado, Farmacia, Licores, Más… y Comida si no
@@ -84,6 +86,15 @@ export default function PantallaServicio() {
         {accion === 'abrir' && id === 'comida' ? (
           <View style={{ marginTop: 18 }}>
             <Boton texto={t.abrirServicio} alTocar={abrir} />
+          </View>
+        ) : null}
+        {/* C-TIENDAS-VITRINA: Mercado, Farmacia, Licores y Más abren las tiendas cerca de ti. */}
+        {accion === 'abrir' && (SERVICIOS_TIENDA as readonly string[]).includes(id ?? '') ? (
+          <View style={{ marginTop: 18 }}>
+            <Boton
+              texto={textosTiendas(idioma).verTiendas}
+              alTocar={() => router.push({ pathname: '/stores', params: { servicio: id } })}
+            />
           </View>
         ) : null}
         {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}

@@ -30,6 +30,8 @@ import {
 } from '@tumbite/movil';
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
+import { textosTiendas } from '../tiendas/textos';
+import { SUSTITUCIONES } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -118,7 +120,9 @@ export default function PantallaCarrito() {
   const t = enIdioma(TEXTOS, idioma);
   const te = idioma === 'en' ? TE.en : TE.es;
   const tc = textosComida(idioma);
-  const { carrito, cambiarCantidad, vaciar } = useCarrito();
+  const { carrito, cambiarCantidad, cambiarSustitucion, vaciar } = useCarrito();
+  const tt = textosTiendas(idioma);
+  const nombreSustitucion = (op: string) => new Map(Object.entries(tt.sustituciones)).get(op) ?? op;
   // C-MONEDA-RECORRIDO: las tarifas y la moneda del país del restaurante (las mismas del servidor).
   // Se guardan con el restaurante para el que se pidieron: si cambia el carrito, no se mezclan.
   const [tarifas, setTarifas] = useState<{
@@ -347,6 +351,7 @@ export default function PantallaCarrito() {
           platoId: l.platoId,
           cantidad: l.cantidad,
           opciones: (l.opciones ?? []).map((o) => o.id),
+          ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
         })),
         propinaCentavos: propina,
         // El servidor compara este total con el suyo y no cobra si no coinciden.
@@ -482,40 +487,86 @@ export default function PantallaCarrito() {
       {carrito.lineas.map((l) => {
         const foto = urlFoto(l.imagen);
         return (
-          <Tarjeta
-            key={l.clave ?? l.platoId}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10 }}
-          >
-            {foto ? (
-              <Image
-                source={{ uri: foto }}
-                style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#f1f1f1' }}
-                accessibilityIgnoresInvertColors
+          <Tarjeta key={l.clave ?? l.platoId} style={{ padding: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {foto ? (
+                <Image
+                  source={{ uri: foto }}
+                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                  accessibilityIgnoresInvertColors
+                />
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  {textoLinea(l, idioma)}
+                </Text>
+                <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+                  {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
+                </Text>
+              </View>
+              <BotonRedondo
+                texto="−"
+                lleno={false}
+                alTocar={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
+                etiqueta={t.menos}
               />
-            ) : null}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {textoLinea(l, idioma)}
+              <Text style={{ fontWeight: '800', minWidth: 20, textAlign: 'center' }}>
+                {l.cantidad}
               </Text>
-              <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
-                {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
-              </Text>
+              <BotonRedondo
+                texto="+"
+                lleno={false}
+                alTocar={() => cambiarCantidad(l.clave ?? l.platoId, Math.min(99, l.cantidad + 1))}
+                etiqueta={t.mas}
+              />
             </View>
-            <BotonRedondo
-              texto="−"
-              lleno={false}
-              alTocar={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
-              etiqueta={t.menos}
-            />
-            <Text style={{ fontWeight: '800', minWidth: 20, textAlign: 'center' }}>
-              {l.cantidad}
-            </Text>
-            <BotonRedondo
-              texto="+"
-              lleno={false}
-              alTocar={() => cambiarCantidad(l.clave ?? l.platoId, Math.min(99, l.cantidad + 1))}
-              etiqueta={t.mas}
-            />
+            {/* C-TIENDAS-COMPRA: qué hacer si la tienda no tiene este producto (como los grandes). */}
+            {carrito.esTienda ? (
+              <View style={{ marginTop: 8 }}>
+                {l.pesable ? (
+                  <Text style={{ color: '#5E5E5E', fontSize: 12, marginBottom: 6 }}>
+                    {tt.porPeso}
+                  </Text>
+                ) : null}
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}
+                >
+                  <Text style={{ color: '#5E5E5E', fontSize: 13, fontWeight: '700' }}>
+                    {tt.siNoHay}
+                  </Text>
+                  {SUSTITUCIONES.map((op) => {
+                    const activo = (l.sustitucion ?? 'reembolsar') === op;
+                    return (
+                      <Pressable
+                        key={op}
+                        onPress={() => cambiarSustitucion(l.clave ?? l.platoId, op)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: activo }}
+                        accessibilityLabel={`${tt.siNoHay} ${nombreSustitucion(op)}`}
+                        style={{
+                          paddingVertical: 6,
+                          paddingHorizontal: 10,
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: activo ? C.secundario : '#D6D6D6',
+                          backgroundColor: activo ? C.secundario : '#fff',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: '700',
+                            color: activo ? '#fff' : C.secundario,
+                          }}
+                        >
+                          {nombreSustitucion(op)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
           </Tarjeta>
         );
       })}
