@@ -2029,6 +2029,28 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'driver-shifts',
+        titulo: 'Turnos: reserva tus horas',
+        resumen:
+          'Reserva tus horas hasta 7 días adelante. Durante tu turno, conectado, las ofertas te llegan antes que a quien no tiene turno.',
+        explicacion: [
+          'En el menú de la app, toca «Mis turnos». Eliges el día, la hora de inicio (en punto o y media) y cuánto dura: de 1 a 8 horas desde la app.',
+          'Durante tu turno, si estás conectado, cuando hay dos repartidores a la misma distancia del restaurante, la oferta va primero al que tiene turno.',
+          'Conéctate en la primera media hora de tu turno. Si no, el turno queda como perdido y se libera para otros.',
+          'Puedes cancelar un turno reservado mientras no haya empezado. Los turnos no son obligatorios: también puedes conectarte cuando quieras.',
+        ],
+        preguntas: [
+          '¿Cómo reservo un turno?',
+          '¿Qué gano con tener turno?',
+          '¿Qué pasa si no me conecto a tiempo?',
+        ],
+        pasos: [
+          'Abre el menú y toca «Mis turnos».',
+          'Elige día, hora de inicio y duración, y toca «Reservar».',
+          'Conéctate al empezar tu turno.',
+        ],
+      },
+      {
         id: 'open-offer-bonus',
         titulo: 'Bono por tomar un pedido que otros dejaron pasar',
         resumen:
@@ -5010,6 +5032,28 @@ const en: SeccionDocs[] = [
           'Take the delivery photo as usual.',
           'If there’s no signal, you’ll see “Pending confirmation.” Carry on with your day.',
           'When the signal is back, the app sends it on its own and lets you know.',
+        ],
+      },
+      {
+        id: 'driver-shifts',
+        titulo: 'Shifts: book your hours',
+        resumen:
+          'Book your hours up to 7 days ahead. During your shift, while online, offers reach you before drivers without a shift.',
+        explicacion: [
+          'In the app menu, tap “My shifts”. Pick the day, the start time (on the hour or half hour) and the length: 1 to 8 hours from the app.',
+          'During your shift, while online, when two drivers are the same distance from the restaurant, the offer goes first to the one with a shift.',
+          'Go online within the first half hour of your shift. Otherwise the shift is marked as missed and opens up for others.',
+          'You can cancel a booked shift until it starts. Shifts are optional: you can also go online whenever you want.',
+        ],
+        preguntas: [
+          'How do I book a shift?',
+          'What do I get from having a shift?',
+          'What happens if I don’t go online on time?',
+        ],
+        pasos: [
+          'Open the menu and tap “My shifts”.',
+          'Pick the day, start time and length, and tap “Book”.',
+          'Go online when your shift starts.',
         ],
       },
       {

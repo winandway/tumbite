@@ -37,6 +37,7 @@ import {
   sePuedeReintentar,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
+import { Turnos } from './grandes/Turnos';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
@@ -402,7 +403,15 @@ export function Inicio() {
   const [error, setError] = useState('');
   const [cambiando, setCambiando] = useState(false);
   const [vista, setVista] = useState<
-    'inicio' | 'billetera' | 'datos' | 'pedidos' | 'calificaciones' | 'avisos' | 'alta' | 'miRuta'
+    | 'inicio'
+    | 'billetera'
+    | 'datos'
+    | 'pedidos'
+    | 'calificaciones'
+    | 'avisos'
+    | 'alta'
+    | 'miRuta'
+    | 'turnos'
   >('inicio');
   // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
   const [rutaDelAviso, setRutaDelAviso] = useState<string | null>(null);
@@ -1064,6 +1073,7 @@ export function Inicio() {
             [
               ['inicio', t.vistaInicio],
               ['miRuta', t.vistaMiRuta],
+              ['turnos', idioma === 'en' ? 'My shifts' : 'Mis turnos'],
               ['billetera', t.vistaBilletera],
               ['datos', t.vistaDatos],
             ] as const
@@ -1251,6 +1261,8 @@ export function Inicio() {
   if (vista === 'calificaciones')
     return lienzo('perfil', <Calificaciones api={api} idioma={idioma} />);
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
+  // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
+  if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
   if (vista === 'miRuta')
     return lienzo(

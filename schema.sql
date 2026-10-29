@@ -1332,6 +1332,20 @@ CREATE TABLE IF NOT EXISTS avisos_equipo (
   PRIMARY KEY (usuario_id, tipo)
 );
 
+-- C-TURNOS-REPARTIDOR (29 oct 2026): turnos reservados por el repartidor (UTC).
+CREATE TABLE IF NOT EXISTS turnos_repartidor (
+  id TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  zona_id TEXT NOT NULL,
+  inicio TEXT NOT NULL,
+  fin TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'activo', 'cumplido', 'perdido', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (fin > inicio)
+);
+CREATE INDEX IF NOT EXISTS turnos_repartidor_quien ON turnos_repartidor(repartidor_id, inicio);
+CREATE INDEX IF NOT EXISTS turnos_repartidor_estado ON turnos_repartidor(estado, inicio);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

@@ -1,3 +1,4 @@
+import { actualizarTurnos } from './rutas/turnos';
 import { correosEquipo } from './avisosEquipo';
 import { cerrarReservasPorCancelacion } from './internacional/cobroDirecto';
 import { registrarPerdidaComida } from './internacional/pagoLocal';
@@ -225,6 +226,9 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     ajustes: 0,
   };
   const solo = pedidoId ? ' AND p.id = ?' : '';
+  // C-TURNOS-REPARTIDOR: turnos que empiezan, se pierden o terminan (solo en la vuelta general).
+  if (!pedidoId)
+    await actualizarTurnos(db).catch((e: unknown) => console.error('manager: turnos', e));
   // La espera del restaurante cuenta desde el pago o, si hubo un plato agotado, desde que el
   // cliente decidió (el restaurante recién ahí puede aceptar). C-PEDIDO-PROGRAMADO: si es para más
   // tarde, desde 45 minutos antes de su franja (PROGRAMADO.liberarAntesMin).

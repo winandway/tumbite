@@ -508,6 +508,18 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ponle un título.', 'Give it a title.'],
   ['Escribe la respuesta en español.', 'Write the reply in Spanish.'],
   ['No hay nada que cambiar.', 'There’s nothing to change.'],
+  ['Revisa el turno.', 'Check the shift.'],
+  ['Primero completa tu registro de repartidor.', 'First complete your driver sign-up.'],
+  ['Ya tienes un turno en esas horas.', 'You already have a shift in those hours.'],
+  ['Ese turno ya empezó o no existe.', 'That shift already started or doesn’t exist.'],
+  ['Elige horas en punto o y media.', 'Pick times on the hour or half hour.'],
+  ['Un turno dura al menos una hora.', 'A shift lasts at least one hour.'],
+  ['Un turno dura como mucho 12 horas.', 'A shift lasts at most 12 hours.'],
+  [
+    'Ese turno ya empezó hace rato. Elige otro.',
+    'That shift started a while ago. Pick another one.',
+  ],
+  ['Se reserva hasta 7 días adelante.', 'You can book up to 7 days ahead.'],
   [
     'Esa hora está muy cerca. Elige una franja de al menos una hora desde ahora.',
     'That time is too soon. Pick a window at least one hour from now.',

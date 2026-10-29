@@ -40,6 +40,8 @@
 - [x] (como respuestas sugeridas según las estrellas) Reseñas del restaurante: respuestas guardadas para contestar con un toque (panel y app). Todos los países.
 - [x] Avisos al equipo configurables por persona y por tipo (pedidos sin repartidor, dinero, tickets urgentes). Todos los países.
 
+- [x] Turnos programados del repartidor (como el «Schedule» de DoorDash): reservar franjas de 30 minutos hasta 7 días, prioridad en las ofertas durante su turno, turno perdido si no se conecta en 30 minutos. Servidor, app Driver, Docs. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.

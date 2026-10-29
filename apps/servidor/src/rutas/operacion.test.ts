@@ -2660,3 +2660,95 @@ describe('C-PEDIDO-PROGRAMADO', () => {
     expect((await ofertas())?.n).toBeGreaterThan(0);
   });
 });
+
+describe('C-TURNOS-REPARTIDOR', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const enPunto = (min: number) => {
+    const paso = 30 * 60_000;
+    return new Date(Math.ceil((Date.now() + min * 60_000) / paso) * paso);
+  };
+
+  it('reserva un turno, no deja chocar otro, cancela y lo da por perdido si no se conecta', async () => {
+    const { m } = await escenario();
+    const d = await m.cuenta('repartidor', 'Rafa Turnos');
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.78, lng: -80.2 },
+      d.token,
+    );
+    const inicio = enPunto(120);
+    const fin = new Date(inicio.getTime() + 3 * 3_600_000);
+    const r = await m.llamar(
+      'POST',
+      '/datos/repartidor/turnos',
+      { inicio: inicio.toISOString(), fin: fin.toISOString() },
+      d.token,
+    );
+    expect(r.estado).toBe(201);
+    const choca = await m.llamar(
+      'POST',
+      '/datos/repartidor/turnos',
+      {
+        inicio: new Date(inicio.getTime() + 3_600_000).toISOString(),
+        fin: new Date(fin.getTime() + 3_600_000).toISOString(),
+      },
+      d.token,
+    );
+    expect(choca.estado).toBe(409);
+    const corto = await m.llamar(
+      'POST',
+      '/datos/repartidor/turnos',
+      {
+        inicio: enPunto(24 * 60).toISOString(),
+        fin: new Date(enPunto(24 * 60).getTime() + 30 * 60_000).toISOString(),
+      },
+      d.token,
+    );
+    expect(corto.estado).toBe(409);
+    expect(
+      (await m.llamar('DELETE', `/datos/repartidor/turnos/${r.datos.id}`, undefined, d.token))
+        .estado,
+    ).toBe(200);
+    // Otro turno que empezó hace 40 minutos y nunca se conectó: perdido.
+    await m.DB.prepare(
+      "INSERT INTO turnos_repartidor (id, repartidor_id, zona_id, inicio, fin) VALUES ('t-viejo', ?, 'US-FL-MIAMI', datetime('now','-40 minutes'), datetime('now','+80 minutes'))",
+    )
+      .bind(d.id)
+      .run();
+    await m.DB.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?')
+      .bind(d.id)
+      .run();
+    const lista = await m.llamar('GET', '/datos/repartidor/turnos', undefined, d.token);
+    expect(lista.datos.turnos.find((t: { id: string }) => t.id === 't-viejo').estado).toBe(
+      'perdido',
+    );
+    expect(lista.datos.turnos.find((t: { id: string }) => t.id === r.datos.id).estado).toBe(
+      'cancelado',
+    );
+  });
+
+  it('a igual distancia, la oferta va primero a quien está en su turno', async () => {
+    const { m, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const sinTurno = await repartidor('Sin Turno', 25.781, -80.201);
+    const conTurno = await repartidor('Con Turno', 25.781, -80.201);
+    await m.DB.prepare(
+      "INSERT INTO turnos_repartidor (id, repartidor_id, zona_id, inicio, fin, estado) VALUES ('t1', ?, (SELECT zona_id FROM repartidores WHERE usuario_id = ?), datetime('now','-10 minutes'), datetime('now','+2 hours'), 'activo')",
+    )
+      .bind(conTurno.id, conTurno.id)
+      .run();
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'aceptado', aceptado_en = datetime('now', '-60 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const { repartirOfertas } = await import('./operacion');
+    await repartirOfertas(m.DB, { DB: m.DB } as never);
+    const o = await m.DB.prepare('SELECT repartidor_id FROM ofertas WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ repartidor_id: string }>();
+    expect(o?.repartidor_id).toBe(conTurno.id);
+    void sinTurno;
+  });
+});

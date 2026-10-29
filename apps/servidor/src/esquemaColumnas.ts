@@ -784,6 +784,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "activo",
     "actualizado_en"
   ],
+  "turnos_repartidor": [
+    "id",
+    "repartidor_id",
+    "zona_id",
+    "inicio",
+    "fin",
+    "estado",
+    "creado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",
