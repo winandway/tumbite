@@ -2634,6 +2634,34 @@ describe('C-PEDIDO-PROGRAMADO', () => {
     expect((await vigilarPedidos(env, m.DB, pid)).cancelados).toBe(1);
   });
 
+  it('45 minutos antes de la franja el restaurante recibe «empieza a prepararlo», una sola vez', async () => {
+    const { m, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'aceptado', aceptado_en = datetime('now'), programado_para = datetime('now', '+3 hours') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const { vigilarPedidos } = await import('../manager');
+    const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    const avisos = () =>
+      m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'programado_preparar'",
+      )
+        .bind(id)
+        .first<{ n: number }>();
+    await vigilarPedidos(env, m.DB);
+    expect((await avisos())?.n).toBe(0);
+    await m.DB.prepare(
+      "UPDATE pedidos SET programado_para = datetime('now', '+40 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    await vigilarPedidos(env, m.DB);
+    await vigilarPedidos(env, m.DB);
+    expect((await avisos())?.n).toBe(1);
+  });
+
   it('a los repartidores se les ofrece desde 45 minutos antes de la franja, no antes', async () => {
     const { m, pedidoPagado, repartidor } = await escenario();
     const id = await pedidoPagado();

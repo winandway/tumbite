@@ -173,6 +173,17 @@ export async function cancelarConReembolso(
 }
 
 const TEXTOS = {
+  // C-PEDIDO-PROGRAMADO: como el segundo aviso de Uber Eats, «empieza a preparar».
+  programadoPreparar: (i: string, corto: string) =>
+    i === 'en'
+      ? {
+          titulo: `Scheduled order #${corto}: start preparing`,
+          cuerpo: 'Its delivery window starts in about 45 minutes. Start preparing it now.',
+        }
+      : {
+          titulo: `Pedido programado #${corto}: empieza a prepararlo`,
+          cuerpo: 'Su franja de entrega empieza en unos 45 minutos. Empieza a prepararlo ya.',
+        },
   recordatorio: (i: string, corto: string, min: number) =>
     i === 'en'
       ? {
@@ -229,6 +240,26 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
   // C-TURNOS-REPARTIDOR: turnos que empiezan, se pierden o terminan (solo en la vuelta general).
   if (!pedidoId)
     await actualizarTurnos(db).catch((e: unknown) => console.error('manager: turnos', e));
+  // C-PEDIDO-PROGRAMADO: 45 minutos antes de la franja, el restaurante recibe «empieza a prepararlo»
+  // (una sola vez por pedido: la bitácora no deja repetir el evento).
+  if (!pedidoId) {
+    const { results: aPreparar } = await db
+      .prepare(
+        `SELECT p.id, r.dueno_id, ud.idioma AS idioma_dueno FROM pedidos p
+           JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios ud ON ud.id = r.dueno_id
+          WHERE p.programado_para IS NOT NULL AND p.estado IN ('pagado','aceptado')
+            AND p.programado_para <= datetime('now', '+45 minutes') AND p.programado_para > datetime('now', '-30 minutes')
+            AND NOT EXISTS (SELECT 1 FROM bitacora_pedidos b WHERE b.pedido_id = p.id AND b.evento = 'programado_preparar')
+          LIMIT 50`,
+      )
+      .all<{ id: string; dueno_id: string; idioma_dueno: string }>();
+    for (const p of aPreparar)
+      if (await anotarEvento(db, p.id, 'programado_preparar'))
+        await notificar(env, db, p.dueno_id, {
+          ...TEXTOS.programadoPreparar(p.idioma_dueno, p.id.slice(0, 6).toUpperCase()),
+          datos: { pedidoId: p.id },
+        }).catch((e: unknown) => console.error('manager: aviso de programado', p.id, e));
+  }
   // La espera del restaurante cuenta desde el pago o, si hubo un plato agotado, desde que el
   // cliente decidió (el restaurante recién ahí puede aceptar). C-PEDIDO-PROGRAMADO: si es para más
   // tarde, desde 45 minutos antes de su franja (PROGRAMADO.liberarAntesMin).

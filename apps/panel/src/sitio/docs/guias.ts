@@ -144,7 +144,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En el carrito, en «¿Cuándo lo quieres?», toca «Programar». Aparecen los días y, debajo, las franjas de media hora en que el restaurante o la tienda está abierto.',
           'El precio y el envío son los mismos que si lo pidieras ahora. La tarjeta se autoriza al pedir y se cobra al entregar, como siempre.',
-          'El restaurante ve tu pedido marcado como «Programado» con su hora, y empieza a prepararlo antes para que llegue dentro de tu franja. El repartidor lo recibe a tiempo para eso.',
+          'El restaurante ve tu pedido marcado como «Programado» con su hora, y 45 minutos antes recibe el aviso de empezar a prepararlo para que llegue dentro de tu franja. El repartidor lo recibe a tiempo para eso.',
           'En la pantalla de tu pedido ves «Programado para» con el día y la hora. Mientras el restaurante no lo acepte, puedes cancelarlo y el dinero vuelve.',
           'No se puede programar en días festivos del comercio ni fuera de su horario.',
         ],
@@ -3167,7 +3167,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'In the cart, under “When do you want it?”, tap “Schedule”. You see the days and, below, the half-hour windows when the restaurant or store is open.',
           'The price and delivery fee are the same as ordering now. Your card is authorized when you order and charged on delivery, as always.',
-          'The restaurant sees your order marked “Scheduled” with its time and starts preparing it ahead so it arrives within your window. The driver gets it in time for that.',
+          'The restaurant sees your order marked “Scheduled” with its time, and 45 minutes before it gets an alert to start preparing it so it arrives within your window. The driver gets it in time for that.',
           'Your order screen shows “Scheduled for” with the day and time. Until the restaurant accepts it, you can cancel and get your money back.',
           'You can’t schedule on the store’s holidays or outside its hours.',
         ],
