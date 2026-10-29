@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 
 /**
@@ -15,8 +15,8 @@ const HOJA = [
   'B5,Orange juice,Brand Sample,Drinks,4,3.50,yes,,,',
 ].join('\n');
 
-async function escenario(host = 'staging.tumbite.com') {
-  const m = mundo({}, { host });
+async function escenario(host = 'staging.tumbite.com', extra: Record<string, unknown> = {}) {
+  const m = mundo(extra, { host });
   const admin = await m.cuenta('admin');
   const dueno = await m.cuenta('restaurante');
   const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
@@ -81,5 +81,92 @@ describe('C-TIENDAS-VITRINA · lo que ve el cliente', () => {
     const { m, tid } = await escenario('divoox.com');
     expect((await m.llamar('GET', `/datos/tiendas?servicio=mercado&${EN_MIAMI}`)).estado).toBe(404);
     expect((await m.llamar('GET', `/datos/tiendas/${tid}`)).estado).toBe(404);
+  });
+});
+
+/** Stripe de mentira (modo prueba): nunca se le pega al real. */
+function stripeFalso() {
+  vi.stubGlobal('fetch', async (url: string) =>
+    /\/(payment_intents|customers|customer_sessions)/.test(url)
+      ? new Response(JSON.stringify({ id: 'pi_test_1', client_secret: 'pi_test_1_secret_x' }), {
+          status: 200,
+        })
+      : new Response('{}', { status: 404 }),
+  );
+}
+const STRIPE = { STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_PUBLISHABLE_KEY: 'pk_test_x' };
+
+describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el precio sale del catálogo, lo pesable al peso estimado y cada línea con qué hacer si falta', async () => {
+    stripeFalso();
+    const { m, tid } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [
+          { platoId: id('Orange juice'), cantidad: 2, sustitucion: 'similar' },
+          { platoId: id('Bananas'), cantidad: 1 },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    // 2 × 3,50 (rebajado) + 0,70 × 2 lb estimadas = 8,40.
+    expect(r.datos.desglose.subtotal).toBe(840);
+    const ped = await m.llamar(
+      'GET',
+      `/datos/pedidos/${r.datos.pedidoId}`,
+      undefined,
+      cliente.token,
+    );
+    expect(ped.datos.pedido.lineas).toEqual([
+      expect.objectContaining({
+        nombreEn: 'Orange juice',
+        precioCentavos: 350,
+        sustitucion: 'similar',
+      }),
+      expect.objectContaining({
+        nombreEn: 'Bananas',
+        precioCentavos: 140,
+        sustitucion: 'reembolsar',
+        pesable: true,
+      }),
+    ]);
+  });
+
+  it('lo agotado no se puede comprar aunque la app lo mande', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const todos = (await m.llamar('GET', '/datos/mi-restaurante/productos', undefined, dueno.token))
+      .datos.productos as { id: string; sku: string }[];
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [{ platoId: todos.find((p) => p.sku === 'B3')!.id, cantidad: 1 }],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(409);
   });
 });

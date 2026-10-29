@@ -29,7 +29,7 @@ import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { formatearDolares, formatearMonto } from '@tumbite/compartido';
+import { SUSTITUCIONES, formatearDolares, formatearMonto } from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -43,6 +43,7 @@ import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
 import { enviarCorreo } from '../correo';
+import { lineasDeTienda } from './tiendas';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -55,6 +56,8 @@ const esquemaNuevoPedido = z.object({
         cantidad: z.number().int().min(1).max(99),
         // Opciones elegidas (ids): el servidor valida mínimos, máximos y precios.
         opciones: z.array(z.string().min(1)).max(40).default([]),
+        // C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto (como Instacart y DoorDash).
+        sustitucion: z.enum(SUSTITUCIONES).optional(),
       }),
     )
     .min(1, { error: 'Tu carrito está vacío.' })
@@ -335,32 +338,13 @@ export function aPedido(f: FilaPedido) {
  * Crear un pedido. El precio SIEMPRE lo calcula el servidor con los precios de la base:
  * lo que mande el teléfono solo dice qué platos y cuántos.
  */
-pedidos.post('/pedidos', async (c) => {
-  const u = exigir(c, 'cliente');
-  const d = await leerCuerpo(c, esquemaNuevoPedido);
-  const db = base(c);
-  const rest = await db
-    .prepare("SELECT * FROM restaurantes WHERE id = ? AND estado = 'aprobado'")
-    .bind(d.restauranteId)
-    .first<Record<string, unknown>>();
-  if (!rest) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
-  if (Number(rest.abierto) !== 1)
-    throw new ErrorDatos('El restaurante acaba de cerrar. Intenta más tarde.', undefined, 409);
-  const [restConHorario] = await conHorarios(db, [rest]);
-  if (!abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria)))
-    throw new ErrorDatos(
-      'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
-      undefined,
-      409,
-    );
-  // C-PAUSA-SIN-SENAL: si su app o su panel no están escuchando, el pedido no le llegaría a nadie.
-  if (!conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
-    throw new ErrorDatos(
-      'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
-      undefined,
-      409,
-    );
-
+/** Las líneas de un pedido de restaurante: platos con sus opciones, validados y con su precio. */
+async function lineasDeRestaurante(
+  db: D1Database,
+  rest: Record<string, unknown>,
+  lineasPedidas: z.infer<typeof esquemaNuevoPedido>['lineas'],
+) {
+  const d = { lineas: lineasPedidas };
   const ids = [...new Set(d.lineas.map((l) => l.platoId))];
   const { results: platos } = await db
     .prepare(
@@ -370,7 +354,7 @@ pedidos.post('/pedidos', async (c) => {
     .all<Record<string, unknown>>();
   const porId = new Map(platos.map((p) => [String(p.id), p]));
   const grupos = await gruposDe(db, ids);
-  const lineas = d.lineas.map((l) => {
+  return d.lineas.map((l) => {
     const p = porId.get(l.platoId);
     if (!p || Number(p.disponible) !== 1)
       throw new ErrorDatos(
@@ -414,6 +398,39 @@ pedidos.post('/pedidos', async (c) => {
       requiereEdad: Number(p.requiere_edad ?? 0) === 1,
     };
   });
+}
+
+pedidos.post('/pedidos', async (c) => {
+  const u = exigir(c, 'cliente');
+  const d = await leerCuerpo(c, esquemaNuevoPedido);
+  const db = base(c);
+  const rest = await db
+    .prepare("SELECT * FROM restaurantes WHERE id = ? AND estado = 'aprobado'")
+    .bind(d.restauranteId)
+    .first<Record<string, unknown>>();
+  if (!rest) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
+  if (Number(rest.abierto) !== 1)
+    throw new ErrorDatos('El restaurante acaba de cerrar. Intenta más tarde.', undefined, 409);
+  const [restConHorario] = await conHorarios(db, [rest]);
+  if (!abiertoPorHorario(restConHorario!.horarios as Turno[], String(restConHorario!.zona_horaria)))
+    throw new ErrorDatos(
+      'El restaurante está cerrado a esta hora. Mira a qué hora abre.',
+      undefined,
+      409,
+    );
+  // C-PAUSA-SIN-SENAL: si su app o su panel no están escuchando, el pedido no le llegaría a nadie.
+  if (!conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
+    throw new ErrorDatos(
+      'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
+      undefined,
+      409,
+    );
+
+  // C-TIENDAS-COMPRA: en una tienda las líneas salen de su catálogo; el resto del pedido es el de siempre.
+  const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
+  const lineas = esTienda
+    ? await lineasDeTienda(c, rest, d.lineas)
+    : await lineasDeRestaurante(db, rest, d.lineas);
 
   const recogida = d.entrega === 'recoger';
   if (recogida) {

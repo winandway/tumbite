@@ -10,6 +10,7 @@ import {
   leerPlanillaProductos,
   precioEstimado,
   tiposDeServicio,
+  type Sustitucion,
 } from '@tumbite/compartido';
 import { entornoDe } from '../entorno';
 import { serviciosImplementados } from '../esquema';
@@ -611,3 +612,54 @@ tiendas.get('/tiendas-buscar', async (c) => {
     .slice(0, 40);
   return c.json({ resultados });
 });
+
+/**
+ * C-TIENDAS-COMPRA: las líneas de un pedido a una tienda, sacadas de SU catálogo y nunca de la app.
+ * Precio de la oferta (o el rebajado), agotados fuera, pesables al peso estimado (el ajuste final es
+ * el de «quitar o cambiar un producto» de siempre), alcohol y tabaco exigen edad al entregar, y cada
+ * línea lleva lo que el cliente quiere si falta (por defecto, reembolsar).
+ */
+export async function lineasDeTienda(
+  c: Parameters<typeof base>[0],
+  rest: Record<string, unknown>,
+  pedidas: { platoId: string; cantidad: number; sustitucion?: Sustitucion }[],
+) {
+  exigirServicio(c, servicioDe(String(rest.tipo_comercio)));
+  const ids = [...new Set(pedidas.map((l) => l.platoId))];
+  const { results } = await base(c)
+    .prepare(
+      `SELECT p.*, o.precio, o.precio_oferta FROM catalogo_productos p
+         JOIN catalogo_ofertas o ON o.producto_id = p.id AND o.comercio_id = p.comercio_id
+        WHERE p.comercio_id = ? AND ${DISPONIBLE_HOY} AND p.restriccion <> 'prescription'
+          AND p.id IN (SELECT value FROM json_each(?))`,
+    )
+    .bind(rest.id, JSON.stringify(ids))
+    .all<FilaProducto>();
+  const porId = new Map(results.map((f) => [String(f.id), f]));
+  return pedidas.map((l) => {
+    const f = porId.get(l.platoId);
+    if (!f)
+      throw new ErrorDatos(
+        'Uno de los productos ya no está disponible. Revisa tu carrito.',
+        'lineas',
+        409,
+      );
+    const precio = Number(f.precio_oferta ?? f.precio);
+    return {
+      platoId: l.platoId,
+      nombreEs: String(f.nombre_es || f.nombre_en),
+      nombreEn: String(f.nombre_en || f.nombre_es),
+      precioCentavos: precioEstimado(
+        precio,
+        String(f.vendido_por),
+        f.peso_promedio as number | null,
+      ),
+      cantidad: l.cantidad,
+      opciones: [],
+      requiereEdad: f.restriccion === 'alcohol' || f.restriccion === 'tobacco',
+      sustitucion: l.sustitucion ?? 'reembolsar',
+      ...(f.vendido_por === 'weight' ? { pesable: true, unidadPeso: f.unidad_peso } : {}),
+      imagen: f.imagen ?? null,
+    };
+  });
+}

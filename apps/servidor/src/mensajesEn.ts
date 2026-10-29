@@ -1052,6 +1052,10 @@ export const MENSAJES_EN = new Map<string, string>([
   // Tiendas · catálogo (C-TIENDAS-CATALOGO).
   ['Este servicio llega muy pronto.', 'This service is coming soon.'],
   ['Esa tienda no existe.', 'That store does not exist.'],
+  [
+    'Uno de los productos ya no está disponible. Revisa tu carrito.',
+    'One of the products is no longer available. Check your cart.',
+  ],
   ['Falta el nombre del producto.', 'The product name is missing.'],
   [
     'Los medicamentos con receta todavía no se pueden vender en Divoox.',
