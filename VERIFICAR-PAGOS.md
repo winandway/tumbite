@@ -76,13 +76,14 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 `GET /datos/salud` → `stripe` y `webhookStripe` dicen `ok` o `pendiente`; `base` dice `ok`/`error`.
 
-## 🔴 Tiendas (28 oct 2026): compra en tienda — probada con Stripe SIMULADO, SIN probar con Stripe de prueba ni real
+## 🟢 Tiendas en el sitio de pruebas (29 oct 2026): PROBADO con Stripe de prueba de punta a punta · 🔴 sin probar con dinero real
 
-- **Qué es:** un pedido a una tienda (Mercado, Farmacia, Licores, Más) usa el MISMO circuito de cobro que comida: autoriza al pedir, cobra al entregar, «falta un producto» devuelve. Solo cambia de dónde salen las líneas (`lineasDeTienda`, C-TIENDAS-COMPRA).
-- **Probado:** pruebas del servidor con Stripe simulado (`tiendasVitrina.test.ts`) y el recorrido local en el navegador (`e2e/recorrido/tiendas.spec.ts`): el cliente compra con producto rebajado, al peso y con alcohol, paga (aviso firmado), la tienda ve qué hacer si falta, y la devolución de un producto que falta responde 200. Subtotal 7,17 dólares cuadrado al centavo.
-- **Sin probar:** una compra en el sitio de pruebas con la tarjeta de prueba de Stripe (4242) hasta la entrega, y nada con dinero real. En producción las tiendas están APAGADAS (404 «muy pronto»).
-- **Cómo se prueba en pruebas:** `node scripts/staging/armar-tienda.mjs` deja «Mercado Demo» abierto en Miami; se entra a la app del sitio de pruebas como demo.cliente, Mercado → Ver tiendas cerca → Mercado Demo, se agregan productos y se paga con 4242 4242 4242 4242.
-- **No anunciar ni abrir tiendas a clientes** hasta esa compra de prueba completa y la orden de Richard por país.
+- **Qué es:** un pedido a una tienda (Mercado, Farmacia, Licores, Más) usa el MISMO circuito de cobro que comida: autoriza al pedir, cobra al entregar por el total vigente, «falta un producto» lo quita del total (C-TIENDAS-COMPRA, C-TIENDAS-FALTANTES).
+- **Probado el 29 oct 2026 en staging, Stripe en modo prueba, pedido #5A2F (5a2f1bcc…):** Richard compró en Mercado Demo desde la web de la app con la tarjeta 4242 (cerveza, leche ×2, jugo, yogur; propina 20 %): **autorizado 29,60 dólares** y el pedido pasó a «pagado» por el aviso firmado de Stripe. La tienda vio el pedido con «Si no hay: reembolsar» en cada línea y marcó el yogur como faltante: el total bajó a **24,11** (devolución calculada 5,49). La tienda aceptó y marcó listo; el repartidor demo verificó el QR, tomó la foto de recogida y lo entregó en mano con documento (lleva cerveza): **capturado 24,11** al entregar (`cobros.capturado`). Salud del sitio: verde.
+- **Antes:** pruebas del servidor con Stripe simulado (`tiendasVitrina.test.ts`) y el recorrido local (`e2e/recorrido/tiendas.spec.ts`).
+- **Sin probar:** nada con dinero real. En producción las tiendas están APAGADAS (404 «muy pronto»).
+- **Cómo se repite:** `node scripts/staging/armar-tienda.mjs` (Miami) o `CIUDAD=novi …` (Michigan). La tienda tiene que tener su panel abierto (señal) para recibir pedidos.
+- **No abrir tiendas a clientes** sin la orden de Richard por país.
 
 ## 🔴 Sin probar en real (14 oct 2026): devolución parcial por plato agotado
 
