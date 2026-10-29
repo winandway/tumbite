@@ -1475,6 +1475,24 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'pos-integration',
+        titulo: 'Conectar tu sistema de caja (punto de venta)',
+        resumen:
+          'Con una llave de tu restaurante, tu sistema de caja recibe los pedidos de Divoox y los acepta o marca listos sin tocar la tableta.',
+        explicacion: [
+          'En tu panel, entra a «Mi restaurante» y baja hasta «Conectar tu punto de venta». Solo el dueño ve esta parte.',
+          'Ponle un nombre a la llave y toca «Crear llave». La llave completa se muestra una sola vez: cópiala y pásasela a quien instala tu sistema.',
+          'Con ella, tu sistema lee los pedidos en curso (platos, opciones, notas y si es programado) y puede aceptarlos o marcarlos listos. Nunca ve la dirección, el teléfono ni el dinero del cliente.',
+          'Si cambias de sistema o se pierde la llave, revócala desde los tres puntos: deja de servir al instante.',
+        ],
+        preguntas: ['¿Puedo recibir los pedidos en mi sistema de caja?', '¿Cómo creo una llave?'],
+        pasos: [
+          'Abre «Mi restaurante».',
+          'En «Conectar tu punto de venta», crea una llave.',
+          'Pásasela a quien instala tu sistema.',
+        ],
+      },
+      {
         id: 'dashboard',
         titulo: 'Tu tablero: cómo va tu restaurante',
         resumen:
@@ -4589,6 +4607,24 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I print orders for the kitchen?', 'Can I print when accepting?'],
         pasos: ['Open Orders.', 'Check “Print the ticket when accepting” or tap “Print ticket”.'],
+      },
+      {
+        id: 'pos-integration',
+        titulo: 'Connect your POS system',
+        resumen:
+          'With a key from your restaurant, your POS system receives Divoox orders and accepts them or marks them ready without touching the tablet.',
+        explicacion: [
+          'In your panel, open “My restaurant” and scroll to “Connect your point of sale”. Only the owner sees this part.',
+          'Name the key and tap “Create key”. The full key is shown only once: copy it and give it to whoever sets up your system.',
+          'With it, your system reads the orders in progress (items, options, notes and whether it’s scheduled) and can accept them or mark them ready. It never sees the customer’s address, phone or money.',
+          'If you change systems or lose the key, revoke it from the three dots: it stops working right away.',
+        ],
+        preguntas: ['Can I receive orders in my POS system?', 'How do I create a key?'],
+        pasos: [
+          'Open “My restaurant”.',
+          'Under “Connect your point of sale”, create a key.',
+          'Give it to whoever sets up your system.',
+        ],
       },
       {
         id: 'dashboard',

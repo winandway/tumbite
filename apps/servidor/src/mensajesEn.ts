@@ -509,6 +509,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe la respuesta en español.', 'Write the reply in Spanish.'],
   ['No hay nada que cambiar.', 'There’s nothing to change.'],
   ['Revisa el turno.', 'Check the shift.'],
+  ['Ponle un nombre a la llave.', 'Give the key a name.'],
+  [
+    'Ya tienes 5 llaves activas. Revoca una antes de crear otra.',
+    'You already have 5 active keys. Revoke one before creating another.',
+  ],
+  ['Esa llave no existe o ya estaba revocada.', 'That key doesn’t exist or was already revoked.'],
   ['Cuéntanos qué pasó.', 'Tell us what happened.'],
   [
     'Solo calificas a clientes de tus entregas de hoy.',

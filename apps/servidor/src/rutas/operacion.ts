@@ -499,12 +499,17 @@ async function cambiarEstado(
   await anotar(db, id, a, rid);
 }
 
-operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
-  const rid = await miRestauranteId(c);
-  const { minutos } = await leerCuerpo(c, z.object({ minutos: z.number().int().min(5).max(120) }));
-  const pendiente = await base(c)
+/** Aceptar un pedido (panel, app y API de punto de venta usan esta misma pieza). */
+export async function aceptarPedido(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  rid: string,
+  minutos: number,
+) {
+  const pendiente = await db
     .prepare("SELECT 1 FROM ajustes_pedido WHERE pedido_id = ? AND estado = 'pendiente'")
-    .bind(c.req.param('id'))
+    .bind(pedidoId)
     .first();
   if (pendiente)
     throw new ErrorDatos(
@@ -513,36 +518,34 @@ operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
       409,
     );
   await cambiarEstado(
-    base(c),
-    c.req.param('id'),
+    db,
+    pedidoId,
     rid,
     ['pagado'],
     'aceptado',
     ", aceptado_en = datetime('now'), tiempo_prep_min = ?",
     [minutos],
   );
-  await avisarAlCliente(c.env, base(c), c.req.param('id'), (i, f) =>
-    AVISOS.pedidoAceptado(i, f.restaurante),
-  );
+  await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.pedidoAceptado(i, f.restaurante));
+}
+
+/** Marcar listo (panel, app y API de punto de venta). */
+export async function marcarListo(env: Env, db: D1Database, pedidoId: string, rid: string) {
+  await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')");
+  await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.listo(i, f.restaurante));
+  await avisarAlRepartidor(env, db, pedidoId, (i, f) => AVISOS.repListo(i, f.restaurante));
+}
+
+operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
+  const rid = await miRestauranteId(c);
+  const { minutos } = await leerCuerpo(c, z.object({ minutos: z.number().int().min(5).max(120) }));
+  await aceptarPedido(c.env, base(c), c.req.param('id'), rid, minutos);
   return c.json({ ok: true });
 });
 
 operacion.post('/restaurante/pedidos/:id/listo', async (c) => {
   const rid = await miRestauranteId(c);
-  await cambiarEstado(
-    base(c),
-    c.req.param('id'),
-    rid,
-    ['aceptado'],
-    'listo',
-    ", listo_en = datetime('now')",
-  );
-  await avisarAlCliente(c.env, base(c), c.req.param('id'), (i, f) =>
-    AVISOS.listo(i, f.restaurante),
-  );
-  await avisarAlRepartidor(c.env, base(c), c.req.param('id'), (i, f) =>
-    AVISOS.repListo(i, f.restaurante),
-  );
+  await marcarListo(c.env, base(c), c.req.param('id'), rid);
   return c.json({ ok: true });
 });
 

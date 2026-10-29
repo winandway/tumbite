@@ -1626,3 +1626,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el restaurante no podía imprimir la comanda (DoorDash y Uber Eats tienen impresora).
 - **Arreglo:** `htmlComanda` e `imprimirComanda` (`apps/panel/src/panel/comanda.ts`): impresión del navegador en 80 mm, número, modo, programado, platos con opciones y notas (escapadas); nada de dirección ni dinero. En Pedidos: «Imprimir comanda» en aceptados y listos, e «Imprimir la comanda al aceptar» guardado en ese navegador. Docs: guía «print-tickets».
 - **Prueba:** `panel/comanda.test.tsx`.
+
+## C-API-POS (29 oct 2026) — todos los países
+
+- **Qué faltaba:** no había forma de conectar el sistema de caja del restaurante (DoorDash y Uber Eats tienen integraciones).
+- **Arreglo:** tabla `claves_restaurante` (solo la huella; la llave `dvx_pos_…` se muestra una vez; máximo 5 activas). Rutas en `apps/servidor/src/rutas/apiPos.ts`: el dueño crea, lista y revoca (`/datos/mi-restaurante/claves-api`); la API `/datos/v1/pos/pedidos` (leer), `/aceptar` y `/listo` con `x-api-key`, 120 por minuto. Aceptar y listo usan las mismas funciones que el panel (`aceptarPedido`, `marcarListo` en `operacion.ts`). Nunca devuelve dirección, teléfono ni dinero. Panel: «Conectar tu punto de venta» en Mi restaurante (`ClavesPos.tsx`, revocar en los tres puntos). Documento técnico: `docs/API-POS-V1.md`. Docs: guía «pos-integration».
+- **Pruebas:** «C-API-POS» en `rutas/operacion.test.ts`, `panel/ClavesPos.test.tsx`.

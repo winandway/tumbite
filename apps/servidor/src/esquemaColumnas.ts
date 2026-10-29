@@ -844,6 +844,17 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "expira_en"
   ],
+  "claves_restaurante": [
+    "id",
+    "restaurante_id",
+    "nombre",
+    "huella",
+    "prefijo",
+    "creado_por",
+    "creado_en",
+    "usada_en",
+    "revocada_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",

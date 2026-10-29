@@ -16,6 +16,7 @@ import { Horarios } from './Horarios';
 import { Cierres } from './Cierres';
 import { pedir } from './api';
 import { SubirFoto } from './SubirFoto';
+import { ClavesPos } from './ClavesPos';
 
 const T = {
   es: {
@@ -334,6 +335,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         <>
           <Horarios restaurante={rest} cuenta={usuario.id} idioma={idioma} alGuardar={setRest} />
           <Cierres idioma={idioma} />
+          <ClavesPos idioma={idioma} />
         </>
       ) : null}
     </section>

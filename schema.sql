@@ -1412,6 +1412,21 @@ CREATE TABLE IF NOT EXISTS recorridos_compartidos (
   expira_en TEXT NOT NULL
 );
 
+-- C-API-POS (29 oct 2026): llaves del restaurante para conectar su sistema de punto de venta.
+-- Se guarda solo la huella; la llave se muestra una vez.
+CREATE TABLE IF NOT EXISTS claves_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  nombre TEXT NOT NULL,
+  huella TEXT NOT NULL UNIQUE,
+  prefijo TEXT NOT NULL,
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usada_en TEXT,
+  revocada_en TEXT
+);
+CREATE INDEX IF NOT EXISTS claves_restaurante_rest ON claves_restaurante(restaurante_id);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

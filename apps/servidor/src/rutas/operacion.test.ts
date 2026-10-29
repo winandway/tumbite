@@ -2921,3 +2921,71 @@ describe('C-CALIFICA-CLIENTE', () => {
     expect(ficha.datos.cliente.notaRepartidores.ultimas[0]).toMatchObject({ motivo: 'no_salio' });
   });
 });
+
+describe('C-API-POS', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el dueño crea una llave, el punto de venta lee, acepta y marca listo; revocada deja de servir', async () => {
+    const { m, dueno, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    const cliente = await m.cuenta('cliente');
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/mi-restaurante/claves-api',
+          { nombre: 'Caja' },
+          cliente.token,
+        )
+      ).estado,
+    ).toBe(403);
+    const k = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/claves-api',
+      { nombre: 'Caja principal' },
+      dueno.token,
+    );
+    expect(k.estado).toBe(201);
+    const llave = k.datos.llave as string;
+    expect(llave.startsWith('dvx_pos_')).toBe(true);
+    const pos = (metodo: string, ruta: string, cuerpo?: unknown, clave = llave) =>
+      m.llamar(metodo, ruta, cuerpo, undefined, { 'x-api-key': clave });
+    expect((await pos('GET', '/datos/v1/pos/pedidos', undefined, 'dvx_pos_falsa')).estado).toBe(
+      401,
+    );
+    const lista = await pos('GET', '/datos/v1/pos/pedidos');
+    expect(lista.estado).toBe(200);
+    expect(lista.datos.orders[0]).toMatchObject({
+      id,
+      status: 'pagado',
+      items: [expect.objectContaining({ quantity: 2 })],
+    });
+    expect(JSON.stringify(lista.datos)).not.toMatch(/Calle Prueba|total|propina|telefono/i);
+    expect(
+      (await pos('POST', `/datos/v1/pos/pedidos/${id}/aceptar`, { prepMinutes: 15 })).estado,
+    ).toBe(200);
+    expect((await pos('POST', `/datos/v1/pos/pedidos/${id}/listo`, {})).estado).toBe(200);
+    const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ estado: string }>();
+    expect(f?.estado).toBe('listo');
+    const claves = await m.llamar(
+      'GET',
+      '/datos/mi-restaurante/claves-api',
+      undefined,
+      dueno.token,
+    );
+    expect(claves.datos.claves[0]).toMatchObject({
+      nombre: 'Caja principal',
+      prefijo: llave.slice(0, 12),
+    });
+    expect(JSON.stringify(claves.datos)).not.toContain(llave);
+    await m.llamar(
+      'POST',
+      `/datos/mi-restaurante/claves-api/${k.datos.id}/revocar`,
+      {},
+      dueno.token,
+    );
+    expect((await pos('GET', '/datos/v1/pos/pedidos')).estado).toBe(401);
+  });
+});
