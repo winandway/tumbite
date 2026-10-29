@@ -82,6 +82,8 @@ writeFileSync(
     'CHECKR_API_KEY=checkr-recorrido-de-prueba-larga',
     `CHECKR_API_URL=http://localhost:${process.env.PUERTO_TWILIO ?? 12112}`,
     'SELFIE_CONTROL_SIEMPRE=1',
+    // Tiendas: encendidas en el servidor local para probar la compra con el Stripe simulado.
+    'TIENDAS_LOCAL=1',
     // Flex · Fase 5: con el secreto del reloj, el enlace «confirma dónde recibes» es estable.
     `RELOJ_SECRETO=${randomBytes(24).toString('hex')}`,
   ].join('\n') + '\n',

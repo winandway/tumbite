@@ -1049,6 +1049,29 @@ export const MENSAJES_EN = new Map<string, string>([
     'Check the threshold and amount of the automatic top-up.',
   ],
   ['No hay aviso principal para este sitio.', 'There is no main webhook for this site.'],
+  // Tiendas · catálogo (C-TIENDAS-CATALOGO).
+  ['Este servicio llega muy pronto.', 'This service is coming soon.'],
+  ['Esa tienda no existe.', 'That store does not exist.'],
+  ['Ese código de barras no es válido.', 'That barcode is not valid.'],
+  [
+    'No pudimos buscar ese código ahora. Escríbelo a mano.',
+    'We couldn’t look up that barcode right now. Type it in by hand.',
+  ],
+  [
+    'Uno de los productos ya no está disponible. Revisa tu carrito.',
+    'One of the products is no longer available. Check your cart.',
+  ],
+  ['Falta el nombre del producto.', 'The product name is missing.'],
+  [
+    'Los medicamentos con receta todavía no se pueden vender en Divoox.',
+    'Prescription medicines can’t be sold on Divoox yet.',
+  ],
+  [
+    'Si se vende por peso, escribe el peso promedio.',
+    'If it’s sold by weight, enter the average weight.',
+  ],
+  ['Ese producto no existe en tu tienda.', 'That product isn’t in your store.'],
+  ['Falta el precio (el producto es nuevo).', 'The price is missing (it’s a new product).'],
   // Divoox Flex · retiro en un punto (C-FLEX-RETIRO).
   ['Elige el centro donde se retira el paquete.', 'Choose the hub where the package is picked up.'],
   [

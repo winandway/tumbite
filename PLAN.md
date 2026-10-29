@@ -1,16 +1,15 @@
-# Plan: Divoox Flex — ubicación exacta del destinatario, Venezuela y página web
+# Plan: Tiendas completas (Mercado, Farmacia, Licores, Ferretería y más)
 
-Pedido por Richard el 28 oct 2026. País: **Venezuela primero**; EE. UU. separado por su perfil.
+País: todos (abre en EE. UU., Venezuela y Colombia). Rama `fase-tiendas-1`. Regla de Richard: la función
+se termina de punta a punta. Encendida en el sitio de pruebas; en producción, apagada hasta que Richard
+diga el país (como Moto). Evidencia: `docs/investigaciones-rea/2026-10-28-tiendas-fuentes-publicas.md`.
 
-- [x] 1. Investigación REA de MRW, Zoom, Tealca y del estándar de ubicación (Amazon, Onfleet…) → ficha en docs/investigaciones-rea (en curso)
-- [x] 2. Perfil por país de Flex (una sola pieza): pagos, moneda, ubicación exacta obligatoria o no, app del destinatario, datos que se piden (VE / US)
-- [x] 3. Envío: correo, referencias y cédula del destinatario, estado y fuente de la ubicación, vínculo con la cuenta Divoox por teléfono o correo
-- [x] 4. Enlace público «confirma tu ubicación» (/deliver/<código>) con pin en el mapa, búsqueda de dirección y referencias, e invitación a la app
-- [x] 5. App del cliente: «Mis paquetes» (lo que me envían) con seguimiento y confirmar ubicación con pin o dirección guardada
-- [x] 6. Rutas: en Venezuela no entra a una ruta un envío sin ubicación confirmada
-- [x] 7. Panel de la empresa: estado de la ubicación de cada envío, enviar el enlace por WhatsApp, pin al crear el envío
-- [x] 8. Seguimiento público por número de guía (/track y /track/<código>), como MRW y Zoom
-- [x] 9. Búsqueda de direcciones de Google por el servidor (apagada hasta tener la llave)
-- [x] 10. Web: «Flex» en el menú de arriba y página /flex con capturas reales, «empresas sin tecnología» y Venezuela
-- [x] 11. Docs: guías de Flex al día, en español e inglés
-- [ ] 12. Pruebas en rojo, verify, sitio de pruebas y producción
+- [x] 1. Investigación (REA y fuentes públicas) y evidencia.
+- [x] 2. Catálogo: tipo de comercio, ficha y oferta, planilla estándar, panel «Productos», guía, portada.
+- [x] 3. Servidor de la vitrina: tiendas cerca por servicio, ficha de la tienda con pasillos, productos disponibles con búsqueda y páginas, búsqueda entre tiendas cercanas. Tiendas encendidas solo en pruebas. Pruebas en rojo.
+- [x] 4. Compra: el pedido acepta productos de tienda (precio de la oferta, agotados fuera, pesables con peso estimado, edad por alcohol y tabaco, preferencia de sustitución por artículo). Lo demás (pago, repartidor, reembolso de lo que falta) es el de comida. Pruebas en rojo.
+- [ ] 5. App del cliente: el servicio abre la lista de tiendas cercanas; la tienda con pasillos, buscador y botón de agregar; el carrito y el pago de siempre con la preferencia de sustitución; búsqueda entre tiendas.
+- [x] 6. Panel del negocio: en sus pedidos se ve qué hacer si falta un producto (la preferencia del cliente).
+- [x] 7. Alta por código de barras: Open Food Facts por el servidor, con atribución, para rellenar la ficha al escribir el código en el panel.
+- [x] 8. Docs (guías de comprar en una tienda y de preparar el pedido) con capturas reales; web; candado, informe y fila.
+- [ ] 9. Pruebas completas, sitio de pruebas (comprado de punta a punta) y producción (apagado), comprobado en vivo.

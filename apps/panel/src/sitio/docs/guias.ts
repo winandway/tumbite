@@ -33,6 +33,45 @@ const es: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'shop-stores',
+        titulo: 'Compra en el supermercado, la farmacia o la licorería',
+        resumen:
+          'En Mercado, Farmacia, Licores y Más ves las tiendas cerca de ti, buscas un producto en todas a la vez y eliges qué hacer si falta algo.',
+        explicacion: [
+          'Divoox no es solo comida. Toca Mercado, Farmacia, Licores o Más en el inicio y verás las tiendas cerca de tu dirección: primero las abiertas y las más cercanas, con cuántos productos tienen y cuánto tardan.',
+          'Arriba hay un buscador que busca en todas las tiendas a la vez: escribes «leche» y ves en qué tienda está, a qué precio y a qué distancia. Tocas el resultado y entras a esa tienda.',
+          'Dentro de la tienda, los productos están por pasillos (bebidas, lácteos, despensa…), como en el súper. Cada producto muestra su foto, su precio y, si está rebajado, el precio de antes tachado. Lo que está agotado no aparece.',
+          'Las frutas, verduras y carnes que se venden al peso muestran un precio estimado: la tienda lo pesa al preparar tu pedido. Si un producto tiene alcohol o tabaco, el repartidor te pide identificación al entregarlo.',
+          'En el carrito eliges, producto por producto, qué hacer si la tienda no lo tiene: reembolsarlo, que te traigan uno parecido sin cobrarte de más, o que te pregunten por el chat del pedido. Si no eliges nada, se reembolsa.',
+          'Las tiendas abren ciudad por ciudad. Si en la tuya todavía no hay, el servicio dice «muy pronto».',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-cliente-tienda-es.webp',
+            alt: 'Una tienda por dentro en la app de Divoox, con los pasillos, el buscador y los productos con su precio.',
+            pie: 'La tienda por pasillos, con el buscador arriba y el botón + en cada producto.',
+          },
+          {
+            src: '/docs/tiendas-cliente-carrito-es.webp',
+            alt: 'El carrito de una tienda en la app de Divoox, con la opción de qué hacer si falta cada producto.',
+            pie: 'En el carrito eliges qué hacer si falta cada producto.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo compro en un supermercado o farmacia con Divoox?',
+          '¿Cómo busco un producto en todas las tiendas?',
+          '¿Qué pasa si la tienda no tiene un producto que pedí?',
+          '¿Por qué el precio de las frutas dice «estimado»?',
+        ],
+        pasos: [
+          'En el inicio, toca Mercado, Farmacia, Licores o Más, y después «Ver tiendas cerca».',
+          'Elige una tienda, o escribe el producto en el buscador para verlo en todas.',
+          'Toca el + de cada producto que quieras.',
+          'Abre el carrito y elige qué hacer si falta cada producto.',
+          'Paga como siempre y sigue tu pedido en «Pedidos».',
+        ],
+      },
+      {
         id: 'order-alerts-and-calls',
         titulo: 'Los avisos de tu pedido y cómo llamar al repartidor sin dar tu número',
         resumen:
@@ -1179,6 +1218,71 @@ const es: SeccionDocs[] = [
           'Sube una foto de portada: una foto clara y con buena luz vende más. La reducimos solos para que cargue rápido.',
           'Guarda. Tu restaurante queda «en revisión»: nuestro equipo lo aprueba y te avisamos por correo.',
           'Cuando esté aprobado, toca «Abrir y recibir pedidos». Puedes cerrar cuando quieras.',
+        ],
+      },
+      {
+        id: 'store-catalog',
+        titulo: 'Sube el catálogo de tu tienda: supermercado, farmacia, licorería y más',
+        resumen:
+          'Si tienes un supermercado, una farmacia, una licorería, una ferretería u otra tienda, sube tus productos con una planilla o uno por uno. Quedan listos para el día del lanzamiento.',
+        explicacion: [
+          'Divoox no es solo comida. En «Productos (tienda)» eliges qué tipo de negocio tienes: supermercado, tienda de conveniencia, farmacia, licorería, ferretería, mascotas, belleza u otra tienda. Cada tipo sale en su servicio de la app: Mercado, Farmacia, Licores o Más.',
+          'Puedes subir miles de productos de una vez con la planilla. Descarga la plantilla, llena una fila por producto (SKU, código de barras, nombre, marca, tamaño, categoría, precio y si hay existencias) y súbela. Antes de guardar, Divoox te muestra cuántos productos se crean, cuántos se actualizan y en qué fila hay un error, para que lo corrijas. Si vuelves a subir la planilla, los productos se actualizan por su SKU: nunca se duplican.',
+          'El código de barras se revisa con su dígito verificador, para que no se cuele un número mal escrito. Si cargas un producto uno por uno, escribe el código y toca «Rellenar con el código»: traemos el nombre, la marca, el tamaño y la foto desde Open Food Facts, una base de datos abierta de productos, y tú solo revisas el precio y guardas. Puedes vender por unidad o por peso, y marcar los productos con alcohol, tabaco o medicamentos de venta libre: Divoox revisa la edad al entregar. Los medicamentos con receta todavía no se pueden vender.',
+          'Un producto nunca se borra: si se te acaba, lo marcas agotado por hoy y vuelve solo mañana, o lo reactivas cuando quieras.',
+          'Tu catálogo todavía no se muestra al público. Lo cargas ahora y, el día que abramos las tiendas en tu ciudad, tus productos ya están ahí.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-productos-es.webp',
+            alt: 'Pantalla Productos de una tienda en el panel de Divoox, con la vista previa de la planilla y la lista de productos.',
+            pie: 'Revisas la planilla antes de guardar y ves cada error por fila.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo subo los productos de mi supermercado o farmacia?',
+          '¿Qué columnas lleva la planilla de productos?',
+          '¿Qué pasa si vuelvo a subir la planilla?',
+          '¿Puedo vender alcohol o medicamentos?',
+        ],
+        pasos: [
+          'En el panel, entra a «Productos (tienda)» y elige tu tipo de negocio.',
+          'Toca «Descargar la plantilla» y llena una fila por producto.',
+          'Sube el archivo y toca «Revisar la planilla».',
+          'Corrige las filas con error si las hay y toca «Guardar».',
+          'Para agotar un producto, toca «Agotar hoy»; vuelve solo mañana.',
+        ],
+      },
+      {
+        id: 'store-orders',
+        titulo: 'Prepara un pedido de tienda: qué hacer si falta un producto',
+        resumen:
+          'En cada producto del pedido ves qué quiere el cliente si no lo tienes: reembolsar, uno parecido sin cobrar de más o preguntarle por el chat.',
+        explicacion: [
+          'Un pedido de tienda llega igual que uno de comida: suena la alarma, lo aceptas, lo preparas y lo entregas al repartidor. La diferencia está en cada producto: debajo dice qué quiere el cliente si no lo tienes.',
+          '«Si no hay: reembolsar» quiere decir que lo quitas del pedido con «Falta un producto» y Divoox le devuelve al cliente lo que pagó por él. «Uno parecido, sin cobrar de más» quiere decir que pongas uno similar del mismo precio o más barato: el cobro no cambia. «Preguntarle por el chat» quiere decir que le escribas por el chat del pedido antes de decidir.',
+          'Los productos que se venden al peso se cobran con un peso estimado. Si pesan menos, quita la diferencia; nunca se le cobra al cliente más de lo que aceptó.',
+          'Los productos con alcohol o tabaco salen marcados: el repartidor pide identificación al entregar.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-panel-pedido-es.webp',
+            alt: 'Un pedido de tienda en el panel de Divoox, con lo que quiere el cliente si falta cada producto.',
+            pie: 'Debajo de cada producto, lo que quiere el cliente si no lo tienes.',
+          },
+        ],
+        preguntas: [
+          '¿Qué hago si no tengo un producto del pedido?',
+          '¿Puedo cambiar un producto por otro parecido?',
+          '¿Cómo cobro los productos que se venden al peso?',
+        ],
+        pasos: [
+          'Acepta el pedido cuando suene la alarma.',
+          'Lee debajo de cada producto qué quiere el cliente si falta.',
+          'Si falta uno y pidió reembolso, toca «Falta un producto» y elígelo.',
+          'Si pidió uno parecido, pon uno del mismo precio o más barato.',
+          'Si pidió que le pregunten, escríbele por el chat del pedido.',
+          'Marca el pedido como listo y entrégalo al repartidor.',
         ],
       },
       {
@@ -2844,6 +2948,45 @@ const en: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'shop-stores',
+        titulo: 'Shop at the grocery store, pharmacy or liquor store',
+        resumen:
+          'In Grocery, Pharmacy, Liquor and More you see the stores near you, search a product in all of them at once and choose what happens if something is out.',
+        explicacion: [
+          'Divoox isn’t just food. Tap Grocery, Pharmacy, Liquor or More on the home screen to see the stores near your address: open and closest first, with how many products they carry and how long they take.',
+          'At the top there’s a search that looks in every store at once: type “milk” and see which store has it, at what price and how far away. Tap the result to go into that store.',
+          'Inside the store, products are grouped by aisle (drinks, dairy, pantry…), just like at the supermarket. Each product shows its photo, its price and, when it’s on sale, the old price crossed out. Sold-out items don’t show up.',
+          'Fruit, vegetables and meat sold by weight show an estimated price: the store weighs them while preparing your order. If a product contains alcohol or tobacco, the driver asks for ID at delivery.',
+          'In the cart you choose, item by item, what happens if the store doesn’t have it: refund it, get something similar at no extra charge, or have them ask you in the order chat. If you don’t choose, it’s refunded.',
+          'Stores open city by city. If yours isn’t open yet, the service says “coming soon.”',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-cliente-tienda-en.webp',
+            alt: 'A store inside the Divoox app, with its aisles, the search bar and products with their prices.',
+            pie: 'The store by aisle, with the search bar on top and the + button on every product.',
+          },
+          {
+            src: '/docs/tiendas-cliente-carrito-en.webp',
+            alt: 'A store cart in the Divoox app, with the choice of what happens if each item is out.',
+            pie: 'In the cart you choose what happens if each item is out.',
+          },
+        ],
+        preguntas: [
+          'How do I shop at a grocery store or pharmacy with Divoox?',
+          'How do I search a product in every store?',
+          'What happens if the store doesn’t have an item I ordered?',
+          'Why does the produce price say “estimated”?',
+        ],
+        pasos: [
+          'On the home screen, tap Grocery, Pharmacy, Liquor or More, then “See stores nearby.”',
+          'Pick a store, or type the product in the search bar to see it in all of them.',
+          'Tap + on each product you want.',
+          'Open the cart and choose what happens if each item is out.',
+          'Pay as usual and follow your order in “Orders.”',
+        ],
+      },
+      {
         id: 'order-alerts-and-calls',
         titulo: 'Your order alerts and how to call the driver without sharing your number',
         resumen:
@@ -3980,6 +4123,71 @@ const en: SeccionDocs[] = [
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
           'Save. Your restaurant is “under review”: our team approves it and emails you.',
           'Once approved, tap “Open and take orders.” You can close anytime.',
+        ],
+      },
+      {
+        id: 'store-catalog',
+        titulo: 'Upload your store catalog: grocery, pharmacy, liquor and more',
+        resumen:
+          'If you run a grocery store, pharmacy, liquor store, hardware store or another shop, upload your products with a spreadsheet or one by one. They’re ready for launch day.',
+        explicacion: [
+          'Divoox isn’t just food. In “Products (store)” you choose your business type: grocery, convenience, pharmacy, liquor, hardware, pets, beauty or another store. Each type appears in its own service in the app: Grocery, Pharmacy, Liquor or More.',
+          'You can upload thousands of products at once with the spreadsheet. Download the template, fill one row per product (SKU, barcode, name, brand, size, category, price and stock) and upload it. Before saving, Divoox shows how many products will be created, how many updated, and which row has an error so you can fix it. If you upload the spreadsheet again, products update by SKU: they’re never duplicated.',
+          'Barcodes are checked with their check digit, so a mistyped number doesn’t slip through. When you add a product one at a time, type the barcode and tap “Fill in from the barcode”: we bring the name, brand, size and photo from Open Food Facts, an open product database, and you just check the price and save. You can sell by unit or by weight, and flag products with alcohol, tobacco or over-the-counter medicine: Divoox checks age at delivery. Prescription medicines can’t be sold yet.',
+          'A product is never deleted: if you run out, mark it out of stock for today and it comes back on its own tomorrow, or reactivate it whenever you want.',
+          'Your catalog isn’t shown to the public yet. Upload it now, and on the day we open stores in your city, your products are already there.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-productos-en.webp',
+            alt: 'A store’s Products screen in the Divoox dashboard, with the spreadsheet preview and the product list.',
+            pie: 'Check the spreadsheet before saving and see each error by row.',
+          },
+        ],
+        preguntas: [
+          'How do I upload my grocery store or pharmacy products?',
+          'Which columns does the product spreadsheet have?',
+          'What happens if I upload the spreadsheet again?',
+          'Can I sell alcohol or medicine?',
+        ],
+        pasos: [
+          'In the dashboard, open “Products (store)” and choose your business type.',
+          'Tap “Download the template” and fill one row per product.',
+          'Upload the file and tap “Check the spreadsheet”.',
+          'Fix any rows with errors and tap “Save”.',
+          'To mark a product out of stock, tap “Out of stock today”; it comes back tomorrow.',
+        ],
+      },
+      {
+        id: 'store-orders',
+        titulo: 'Prepare a store order: what to do if an item is out',
+        resumen:
+          'Under each item in the order you see what the customer wants if you don’t have it: a refund, something similar at no extra charge, or a question in the chat.',
+        explicacion: [
+          'A store order comes in just like a food order: the alarm rings, you accept it, prepare it and hand it to the driver. The difference is on each item: underneath it says what the customer wants if you don’t have it.',
+          '“If out: refund it” means you remove it with “An item is missing” and Divoox refunds the customer what they paid for it. “Something similar, no extra charge” means you pack a similar item at the same price or less: the charge doesn’t change. “Ask the customer in the chat” means you message them in the order chat before deciding.',
+          'Items sold by weight are charged at an estimated weight. If they weigh less, remove the difference; the customer is never charged more than they agreed to.',
+          'Items with alcohol or tobacco are marked: the driver asks for ID at delivery.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-panel-pedido-en.webp',
+            alt: 'A store order in the Divoox dashboard, showing what the customer wants if each item is out.',
+            pie: 'Under each item, what the customer wants if you don’t have it.',
+          },
+        ],
+        preguntas: [
+          'What do I do if I don’t have an item in the order?',
+          'Can I swap an item for something similar?',
+          'How do I charge for items sold by weight?',
+        ],
+        pasos: [
+          'Accept the order when the alarm rings.',
+          'Read under each item what the customer wants if it’s out.',
+          'If one is out and they asked for a refund, tap “An item is missing” and pick it.',
+          'If they asked for something similar, pack one at the same price or less.',
+          'If they asked to be contacted, message them in the order chat.',
+          'Mark the order ready and hand it to the driver.',
         ],
       },
       {

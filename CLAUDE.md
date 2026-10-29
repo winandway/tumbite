@@ -30,6 +30,12 @@ Las reglas globales de Richard aplican; estas se suman.
 2. **Todo cambio dice a qué país aplica** (Venezuela, EE. UU., Colombia o todos): en el commit, en el documento de la fase y en el reporte a Richard.
 3. **Antes de construir para un país se estudia con REA el software más popular de ese país** (en Venezuela: MRW, Zoom, Tealca y las apps locales), se copia su estándar y, si se puede, se mejora. La evidencia queda en `docs/investigaciones-rea/`.
 
+## TODA FUNCIÓN NUEVA SE TERMINA DE PUNTA A PUNTA (REGLA PRINCIPAL, Richard, 28 oct 2026)
+
+> Sus palabras: _«si agregamos una función, terminarla y no dejarla por la mitad»_.
+
+- Una función nueva no está hecha hasta que la persona final la puede usar: servidor, panel, apps (cliente, conductor, restaurante según toque), Docs y web, pruebas y publicación (encendida en pruebas; en producción por país cuando Richard lo decida). Las fases son pasos internos del mismo trabajo, no entregas a medias.
+
 ## TODA CASILLA DE DIRECCIÓN SUGIERE DIRECCIONES REALES (REGLA PRINCIPAL, Richard, 28 oct 2026)
 
 > Sus palabras: _«todo lo que sea búsqueda de direcciones en todas las aplicaciones… la sugerencia de direcciones va a estar aplicada a todas las búsquedas de ahora y a las futuras»_.

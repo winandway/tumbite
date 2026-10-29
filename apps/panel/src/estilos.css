@@ -5053,3 +5053,18 @@ button {
 .sugerencias-direccion li.activa {
   background: #f1f1f1;
 }
+
+/* C-TIENDAS-COMPRA: qué quiere el cliente si falta un producto. */
+.nota-sustitucion {
+  color: #666b73;
+  font-size: 0.85em;
+}
+
+.foto-producto-previa {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border: 1px solid #e4e6ea;
+  border-radius: 8px;
+  background: #fff;
+}

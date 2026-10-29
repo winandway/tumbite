@@ -256,6 +256,8 @@ catalogo.get('/restaurantes', async (c) => {
   const { results } = await db
     .prepare(
       `SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado'
+       -- C-TIENDAS-CATALOGO: las tiendas (mercado, farmacia…) no salen entre los restaurantes.
+       AND tipo_comercio = 'restaurante'
        AND (NOT EXISTS (SELECT 1 FROM areas WHERE zona_id = ?1 AND estado <> 'borrador')
             OR area_id IN (SELECT id FROM areas WHERE zona_id = ?1 AND estado = 'activa'))
        ORDER BY abierto DESC, nombre`,
@@ -320,8 +322,12 @@ async function activacionDe(db: D1Database, f: FilaRest) {
   const n = await db
     .prepare(
       `SELECT (SELECT COUNT(*) FROM horarios_restaurante h WHERE h.restaurante_id = ?1) AS turnos,
-        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0) AS vendibles,
-        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0 AND p.imagen IS NOT NULL AND p.imagen != '') AS con_foto,
+        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0)
+          -- C-TIENDAS-VITRINA: en una tienda, lo vendible son los productos de su catálogo.
+          + (SELECT COUNT(*) FROM catalogo_ofertas o WHERE o.comercio_id = ?1 AND o.disponible = 1 AND o.precio > 0) AS vendibles,
+        (SELECT COUNT(*) FROM platos p WHERE p.restaurante_id = ?1 AND p.eliminado = 0 AND p.disponible = 1 AND p.precio_centavos > 0 AND p.imagen IS NOT NULL AND p.imagen != '')
+          + (SELECT COUNT(*) FROM catalogo_ofertas o JOIN catalogo_productos cp ON cp.id = o.producto_id
+              WHERE o.comercio_id = ?1 AND o.disponible = 1 AND o.precio > 0 AND cp.imagen IS NOT NULL AND cp.imagen != '') AS con_foto,
         (SELECT COUNT(*) FROM cuentas_stripe s WHERE s.usuario_id = ?2 AND s.pagos_activos = 1) AS cobro`,
     )
     .bind(String(f.id), String(f.dueno_id))
@@ -524,7 +530,7 @@ catalogo.patch('/mi-restaurante/abierto', async (c) => {
   return c.json({ abierto, abiertoAhora: aRestaurante(conH!).abiertoAhora });
 });
 
-async function exigirMiRestaurante(c: Ctx, minimo: 'staff' | 'manager' | 'dueno' = 'staff') {
+export async function exigirMiRestaurante(c: Ctx, minimo: 'staff' | 'manager' | 'dueno' = 'staff') {
   const u = exigir(c, 'restaurante');
   const f = await miRestaurante(base(c), u.id);
   if (!f) throw new ErrorDatos('Primero completa los datos de tu restaurante.', undefined, 404);

@@ -76,6 +76,14 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 `GET /datos/salud` → `stripe` y `webhookStripe` dicen `ok` o `pendiente`; `base` dice `ok`/`error`.
 
+## 🔴 Tiendas (28 oct 2026): compra en tienda — probada con Stripe SIMULADO, SIN probar con Stripe de prueba ni real
+
+- **Qué es:** un pedido a una tienda (Mercado, Farmacia, Licores, Más) usa el MISMO circuito de cobro que comida: autoriza al pedir, cobra al entregar, «falta un producto» devuelve. Solo cambia de dónde salen las líneas (`lineasDeTienda`, C-TIENDAS-COMPRA).
+- **Probado:** pruebas del servidor con Stripe simulado (`tiendasVitrina.test.ts`) y el recorrido local en el navegador (`e2e/recorrido/tiendas.spec.ts`): el cliente compra con producto rebajado, al peso y con alcohol, paga (aviso firmado), la tienda ve qué hacer si falta, y la devolución de un producto que falta responde 200. Subtotal 7,17 dólares cuadrado al centavo.
+- **Sin probar:** una compra en el sitio de pruebas con la tarjeta de prueba de Stripe (4242) hasta la entrega, y nada con dinero real. En producción las tiendas están APAGADAS (404 «muy pronto»).
+- **Cómo se prueba en pruebas:** `node scripts/staging/armar-tienda.mjs` deja «Mercado Demo» abierto en Miami; se entra a la app del sitio de pruebas como demo.cliente, Mercado → Ver tiendas cerca → Mercado Demo, se agregan productos y se paga con 4242 4242 4242 4242.
+- **No anunciar ni abrir tiendas a clientes** hasta esa compra de prueba completa y la orden de Richard por país.
+
 ## 🔴 Sin probar en real (14 oct 2026): devolución parcial por plato agotado
 
 - Qué es: cuando el restaurante marca un plato que no tiene y el cliente lo quita, Tumbite recalcula el pedido y le devuelve la diferencia con un reembolso parcial en Stripe (`POST /refunds` con `amount`), con clave de idempotencia `ajuste-<pedido>`.

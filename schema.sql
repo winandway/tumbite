@@ -100,7 +100,9 @@ CREATE TABLE IF NOT EXISTS restaurantes (
   geohash TEXT,
   -- Orden de las categorías del menú (JSON de nombres), lo fija el restaurante.
   categorias_orden TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-TIENDAS-CATALOGO: restaurante, mercado, farmacia, licores, ferreteria… (cada uno en su servicio).
+  tipo_comercio TEXT NOT NULL DEFAULT 'restaurante'
 );
 CREATE INDEX IF NOT EXISTS restaurantes_estado ON restaurantes(estado);
 
@@ -2587,4 +2589,47 @@ CREATE TABLE IF NOT EXISTS tasas_cambio (
   creado_por TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (pais, fecha, fuente)
+);
+
+-- Tiendas · C-TIENDAS-CATALOGO (28 oct 2026, todos los países): la FICHA del producto (una vez) y la
+-- OFERTA de cada tienda (precio, si hay, existencias, pasillo), como DoorDash, Uber Eats, Rappi e
+-- Instacart. Hoy cada comercio es su propia tienda; la ficha queda lista para cadenas. Nunca se borra
+-- un producto: se agota (`disponible = 0` o `agotado_hasta`).
+CREATE TABLE IF NOT EXISTS catalogo_productos (
+  id TEXT PRIMARY KEY,
+  comercio_id TEXT NOT NULL REFERENCES restaurantes(id),
+  sku TEXT NOT NULL,
+  codigo_barras TEXT NOT NULL DEFAULT '',
+  nombre_es TEXT NOT NULL DEFAULT '',
+  nombre_en TEXT NOT NULL DEFAULT '',
+  marca TEXT NOT NULL DEFAULT '',
+  tamano REAL,
+  unidad_tamano TEXT NOT NULL DEFAULT 'each',
+  unidades INTEGER NOT NULL DEFAULT 1 CHECK (unidades >= 1),
+  categoria1 TEXT NOT NULL,
+  categoria2 TEXT NOT NULL DEFAULT '',
+  imagen TEXT NOT NULL DEFAULT '',
+  descripcion TEXT NOT NULL DEFAULT '',
+  vendido_por TEXT NOT NULL DEFAULT 'each' CHECK (vendido_por IN ('each', 'weight')),
+  peso_promedio REAL,
+  unidad_peso TEXT NOT NULL DEFAULT '',
+  restriccion TEXT NOT NULL DEFAULT '' CHECK (restriccion IN ('', 'alcohol', 'tobacco', 'otc_medicine', 'prescription')),
+  abv REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (comercio_id, sku)
+);
+CREATE INDEX IF NOT EXISTS catalogo_productos_barras ON catalogo_productos(comercio_id, codigo_barras);
+CREATE INDEX IF NOT EXISTS catalogo_productos_categoria ON catalogo_productos(comercio_id, categoria1);
+CREATE TABLE IF NOT EXISTS catalogo_ofertas (
+  comercio_id TEXT NOT NULL REFERENCES restaurantes(id),
+  producto_id TEXT NOT NULL REFERENCES catalogo_productos(id),
+  precio INTEGER NOT NULL CHECK (precio >= 0),
+  precio_oferta INTEGER CHECK (precio_oferta IS NULL OR precio_oferta >= 0),
+  disponible INTEGER NOT NULL DEFAULT 1 CHECK (disponible IN (0, 1)),
+  existencias INTEGER CHECK (existencias IS NULL OR existencias >= 0),
+  pasillo TEXT NOT NULL DEFAULT '',
+  agotado_hasta TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (comercio_id, producto_id)
 );

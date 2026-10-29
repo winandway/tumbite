@@ -49,6 +49,7 @@ import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { lugares } from './rutas/lugares';
+import { tiendas } from './rutas/tiendas';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
@@ -153,6 +154,8 @@ app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
 app.use('/datos/publico/viaje/*', limiteIntentos(60, 60_000));
 // Cada búsqueda de Google cuesta: tope por persona (red).
 app.use('/datos/lugares/*', limiteIntentos(40, 60_000));
+// C-TIENDAS-CODIGO: Open Food Facts pide no abusar de su servicio gratuito.
+app.use('/datos/mi-restaurante/productos/codigo/*', limiteIntentos(30, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -433,6 +436,7 @@ app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
 app.route('/datos', viajesPasajero);
 app.route('/datos', lugares);
+app.route('/datos', tiendas);
 app.route('/datos', interno);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
