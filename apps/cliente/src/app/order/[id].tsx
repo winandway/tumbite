@@ -23,6 +23,7 @@ import {
   useSesion,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
+import { usePedirOtraVez } from '../../pedirOtraVez';
 import { MapaEntrega } from '../../MapaEntrega';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
 import { IMG_COMIDA } from '../../comida/recursos';
@@ -367,6 +368,7 @@ export default function SeguirPedido() {
   }
   const t = enIdioma(T, idioma);
   const tc = textosComida(idioma);
+  const otraVez = usePedirOtraVez(idioma);
   const [verSeguimiento, setVerSeguimiento] = useState(false);
   const desplazar = useRef<ScrollView>(null);
   const posChat = useRef(0);
@@ -1208,6 +1210,16 @@ export default function SeguirPedido() {
               {t.cancelar}
             </Text>
           ))}
+        {p.estado === 'entregado' || p.estado === 'cancelado' ? (
+          <BotonAncho
+            texto={otraVez.texto}
+            alTocar={() =>
+              void otraVez
+                .pedirOtraVez(p.id)
+                .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+            }
+          />
+        ) : null}
         {p.estado === 'entregado' ? (
           <BotonAncho texto={tc.volverInicio} alTocar={irInicio} secundario />
         ) : null}

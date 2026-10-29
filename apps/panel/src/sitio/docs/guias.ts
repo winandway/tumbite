@@ -108,8 +108,10 @@ const es: SeccionDocs[] = [
         explicacion: [
           'La pestaña Pedidos (abajo, la segunda) lista todos tus pedidos, del más reciente al más viejo, con la fecha, el estado y el total. Los que van en curso dicen «En curso».',
           '«Ver pedido y recibo» abre el pedido con el desglose: comida, envío, servicio, impuesto (si aplica en tu ciudad), propina y total, además del seguimiento y la calificación.',
-          '«Repetir pedido» arma otra vez tu carrito con los mismos platos y cantidades. Si alguno ya no está en el menú, te lo decimos y ponemos los que sí.',
-          'Si tenías otro carrito a medias, repetir lo reemplaza.',
+          '«Repetir pedido» arma otra vez tu carrito con los mismos platos o productos, cantidades y opciones, con el precio de hoy. Si alguno ya no está disponible, te decimos cuál y ponemos los que sí.',
+          'También sirve con las tiendas (mercado, farmacia y más): se repite incluso lo que elegiste hacer si falta un producto.',
+          'Al terminar un pedido, en su pantalla aparece «Pedir otra vez» con el mismo efecto.',
+          'Si tenías otro carrito a medias, primero te preguntamos si lo cambiamos.',
         ],
         capturas: [
           {
@@ -3074,8 +3076,10 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The Orders tab (bottom bar, second one) lists all your orders, newest first, with date, status and total. The ones in progress say “In progress”.',
           '“See order and receipt” opens the order with the breakdown: food, delivery, service, tax (where it applies in your city), tip and total, plus tracking and rating.',
-          '“Reorder” builds your cart again with the same items and quantities. If any is no longer on the menu, we tell you and add the ones that are.',
-          'If you had another cart half done, reordering replaces it.',
+          '“Reorder” builds your cart again with the same items, quantities and options, at today’s prices. If any is no longer available, we tell you which one and add the rest.',
+          'It works with stores too (grocery, pharmacy and more), including what you chose to do if an item is missing.',
+          'When an order is finished, its screen shows “Order again”, which does the same.',
+          'If you had another cart half done, we ask before replacing it.',
         ],
         capturas: [
           {

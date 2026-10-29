@@ -1513,3 +1513,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** tabla `ciudades_web` (schema.sql); rutas `GET /datos/web/ciudades` (pública, caché 60 s), `GET` y `PUT /datos/admin/web/ciudades/:slug` (solo admin) en `apps/servidor/src/rutas/ciudadesWeb.ts`. La web usa `useCiudadesEnVivo()` (`apps/panel/src/sitio/ciudadesEnVivo.ts`) en el pie, las páginas de ciudad, el banner y la portada; sin respuesta del servidor manda la lista fija (todas «muy pronto»), así nunca se anuncia una ciudad por error. Superadmin → Zonas → «Ciudades en la web» (`CiudadesWeb.tsx`), con confirmación.
 - **Encender la web NO abre pedidos:** eso sigue siendo la zona.
 - **Pruebas:** `rutas/ciudadesWeb.test.ts`, `panel/CiudadesWeb.test.tsx`, y en `sitio/Pie.test.tsx` «C-CIUDADES-WEB» (en rojo si el gancho ignora al servidor).
+
+## C-PEDIR-OTRA-VEZ (29 oct 2026) — todos los países
+
+- **Qué se rompía:** «Repetir pedido» (pestaña Pedidos) armaba el carrito en el celular con el menú del restaurante: con una TIENDA no funcionaba (el menú de tiendas es otro), vaciaba el carrito sin preguntar, no revisaba las opciones y el aviso de «lo que falta» se perdía al abrir el carrito. No había «Pedir otra vez» al terminar un pedido.
+- **Arreglo:** `GET /datos/pedidos/:id/repetir` (`apps/servidor/src/rutas/pedidos.ts`), solo el dueño del pedido: pasa cada línea vieja por las mismas validaciones del pedido nuevo (`lineasDeRestaurante` / `lineasDeTienda`), con el precio de HOY, y devuelve aparte lo que ya no está. En la app: `usePedirOtraVez()` (`apps/cliente/src/pedirOtraVez.ts`) pregunta antes de reemplazar otro carrito, usa `llenar()` del carrito y avisa lo que falta; lo usan la pestaña Pedidos y la pantalla del pedido entregado o cancelado. Docs: guía «my-orders-and-reorder».
+- **Pruebas:** `rutas/pedirOtraVez.test.ts` (restaurante) y en `rutas/tiendasVitrina.test.ts` «C-PEDIR-OTRA-VEZ» (tienda, precio nuevo, agotado aparte y solo el dueño).

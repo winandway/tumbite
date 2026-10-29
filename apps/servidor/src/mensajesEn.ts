@@ -493,6 +493,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe un correo válido.', 'Enter a valid email.'],
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
   ['Ese pedido no existe.', 'That order doesn’t exist.'],
+  ['Este comercio ya no está disponible.', 'This store is no longer available.'],
   ['Ese plato no existe en tu menú.', 'That item isn’t on your menu.'],
   ['Ese regalo ya no está disponible.', 'That gift is no longer available.'],
   ['Ese repartidor no existe.', 'That driver doesn’t exist.'],

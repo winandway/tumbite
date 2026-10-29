@@ -29,7 +29,12 @@ import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { SUSTITUCIONES, formatearDolares, formatearMonto } from '@tumbite/compartido';
+import {
+  SUSTITUCIONES,
+  type Sustitucion,
+  formatearDolares,
+  formatearMonto,
+} from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -1070,6 +1075,76 @@ pedidos.get('/pedidos/:id', async (c) => {
     (u.rol === 'admin' || f.cliente_id === u.id || f.dueno_id === u.id || f.repartidor_id === u.id);
   if (!f || !puede) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   return c.json({ pedido: aPedido(f) });
+});
+
+/**
+ * C-PEDIR-OTRA-VEZ (29 oct 2026), como «Reorder» de DoorDash y Uber Eats: lo mismo de un pedido
+ * anterior, con el precio de HOY y solo lo que sigue disponible; lo que ya no está se devuelve
+ * aparte para avisarlo. No crea nada: la app lo pone en el carrito y el cliente paga como siempre.
+ */
+pedidos.get('/pedidos/:id/repetir', async (c) => {
+  const u = exigir(c, 'cliente');
+  const db = base(c);
+  const f = await db
+    .prepare('SELECT cliente_id, restaurante_id, lineas_json FROM pedidos WHERE id = ?')
+    .bind(c.req.param('id'))
+    .first<FilaPedido>();
+  if (!f || f.cliente_id !== u.id) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
+  const rest = await db
+    .prepare(
+      `SELECT r.*, z.moneda AS zona_moneda FROM restaurantes r LEFT JOIN zonas z ON z.id = r.zona_id
+        WHERE r.id = ? AND r.estado = 'aprobado'`,
+    )
+    .bind(f.restaurante_id)
+    .first<Record<string, unknown>>();
+  if (!rest) throw new ErrorDatos('Este comercio ya no está disponible.', undefined, 404);
+  const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
+  const viejas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] & {
+    sustitucion?: Sustitucion;
+  })[];
+  const lineas: Awaited<ReturnType<typeof lineasDeRestaurante>> = [];
+  const faltan: { nombreEs: string; nombreEn: string }[] = [];
+  for (const v of viejas) {
+    try {
+      const pedida = {
+        platoId: v.platoId,
+        cantidad: v.cantidad,
+        opciones: (v.opciones ?? []).map((o) => o.id),
+        sustitucion: v.sustitucion,
+      };
+      const [l] = esTienda
+        ? await lineasDeTienda(c, rest, [pedida])
+        : await lineasDeRestaurante(db, rest, [pedida]);
+      if (l) lineas.push(l);
+    } catch (e) {
+      if (!(e instanceof ErrorDatos)) throw e;
+      faltan.push({ nombreEs: v.nombreEs, nombreEn: v.nombreEn });
+    }
+  }
+  // Fotos de los platos (las de las tiendas ya vienen en la línea).
+  const sinFoto = lineas.filter((l) => !('imagen' in l)).map((l) => l.platoId);
+  const fotos = new Map<string, string | null>();
+  if (sinFoto.length) {
+    const { results } = await db
+      .prepare('SELECT id, imagen FROM platos WHERE id IN (SELECT value FROM json_each(?))')
+      .bind(JSON.stringify(sinFoto))
+      .all<{ id: string; imagen: string | null }>();
+    for (const r of results) fotos.set(r.id, r.imagen);
+  }
+  return c.json({
+    restaurante: {
+      id: String(rest.id),
+      nombre: String(rest.nombre),
+      plan: String(rest.plan ?? 'inicial'),
+      lat: rest.lat == null ? null : Number(rest.lat),
+      lng: rest.lng == null ? null : Number(rest.lng),
+      moneda: String(rest.zona_moneda ?? 'USD'),
+      esTienda,
+      abierto: Number(rest.abierto) === 1,
+    },
+    lineas: lineas.map((l) => ({ imagen: fotos.get(l.platoId) ?? null, ...l })),
+    faltan,
+  });
 });
 
 /** El cliente decide qué hacer con el plato agotado. */

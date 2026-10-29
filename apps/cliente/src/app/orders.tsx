@@ -2,16 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import {
-  ErrorApi,
-  type OpcionElegida,
-  type Plato,
-  type Restaurante,
-  enIdioma,
-  formatearMonto,
-} from '@tumbite/compartido';
+import { ErrorApi, type OpcionElegida, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Boton, C, e, useSesion } from '@tumbite/movil';
-import { useCarrito } from '../carrito';
+import { usePedirOtraVez } from '../pedirOtraVez';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 
@@ -24,8 +17,6 @@ const T = {
     ver: 'Ver pedido y recibo',
     repetir: 'Repetir pedido',
     repitiendo: 'Armando tu carrito…',
-    faltan: 'Algunos platos ya no están en el menú: te pusimos los que sí.',
-    nada: 'Ninguno de esos platos sigue en el menú.',
     enCurso: 'En curso',
     estados: {
       pagado: 'Pagado',
@@ -44,8 +35,6 @@ const T = {
     ver: 'See order and receipt',
     repetir: 'Reorder',
     repitiendo: 'Building your cart…',
-    faltan: 'Some items are no longer on the menu: we added the ones that are.',
-    nada: 'None of those items are on the menu anymore.',
     enCurso: 'In progress',
     estados: {
       pagado: 'Paid',
@@ -79,7 +68,7 @@ type Pedido = {
 export default function Pedidos() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
-  const { agregar, vaciar } = useCarrito();
+  const { pedirOtraVez } = usePedirOtraVez(idioma);
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
@@ -93,42 +82,13 @@ export default function Pedidos() {
   }, [api]);
   useEffect(cargar, [cargar]);
 
-  /** Vuelve a armar el carrito con los platos de ese pedido que sigan en el menú y lleva al carrito. */
+  /** C-PEDIR-OTRA-VEZ: el servidor arma lo repetible (restaurante o tienda, precio de hoy). */
   async function repetir(p: Pedido) {
     setError('');
     setAviso('');
     setRepitiendo(p.id);
     try {
-      const r = await api.pedir<{ restaurante: Restaurante; platos: Plato[] }>(
-        'GET',
-        `/datos/restaurantes/${p.restauranteId}`,
-      );
-      const rest = {
-        id: r.restaurante.id,
-        nombre: r.restaurante.nombre,
-        plan: r.restaurante.plan,
-        lat: r.restaurante.lat,
-        lng: r.restaurante.lng,
-        moneda: r.restaurante.moneda,
-      };
-      const disponibles = new Map(
-        r.platos.filter((x) => x.disponible !== false).map((x) => [x.id, x]),
-      );
-      let puestos = 0;
-      let faltan = 0;
-      vaciar();
-      for (const l of p.lineas) {
-        const plato = disponibles.get(l.platoId);
-        if (!plato) {
-          faltan++;
-          continue;
-        }
-        for (let i = 0; i < l.cantidad; i++) agregar(rest, plato, l.opciones ?? []);
-        puestos++;
-      }
-      if (!puestos) return setError(t.nada);
-      if (faltan) setAviso(t.faltan);
-      router.push('/cart');
+      await pedirOtraVez(p.id);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {

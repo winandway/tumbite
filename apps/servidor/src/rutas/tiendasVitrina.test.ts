@@ -163,6 +163,64 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     ]);
   });
 
+  it('C-PEDIR-OTRA-VEZ: repite el pedido con el precio de hoy y avisa lo que ya no está', async () => {
+    stripeFalso();
+    const { m, tid } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const otro = await m.cuenta('cliente', 'Otra Persona');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [
+          { platoId: id('Orange juice'), cantidad: 2, sustitucion: 'similar' },
+          { platoId: id('Spring water'), cantidad: 1 },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    // Hoy: el jugo bajó a 3,00 y el agua se agotó.
+    await m.DB.prepare('UPDATE catalogo_ofertas SET precio_oferta = 300 WHERE producto_id = ?')
+      .bind(id('Orange juice'))
+      .run();
+    await m.DB.prepare('UPDATE catalogo_ofertas SET disponible = 0 WHERE producto_id = ?')
+      .bind(id('Spring water'))
+      .run();
+    const rep = await m.llamar(
+      'GET',
+      `/datos/pedidos/${r.datos.pedidoId}/repetir`,
+      undefined,
+      cliente.token,
+    );
+    expect(rep.estado).toBe(200);
+    expect(rep.datos.restaurante).toMatchObject({ id: tid, esTienda: true, moneda: 'USD' });
+    expect(rep.datos.lineas).toEqual([
+      expect.objectContaining({
+        platoId: id('Orange juice'),
+        cantidad: 2,
+        precioCentavos: 300,
+        sustitucion: 'similar',
+      }),
+    ]);
+    expect(rep.datos.faltan).toEqual([expect.objectContaining({ nombreEn: 'Spring water' })]);
+    // Solo el dueño del pedido.
+    expect(
+      (await m.llamar('GET', `/datos/pedidos/${r.datos.pedidoId}/repetir`, undefined, otro.token))
+        .estado,
+    ).toBe(404);
+  });
+
   it('C-TIENDAS-FALTANTES: lo que falta se resuelve con lo que eligió el cliente, y pueden faltar varios', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

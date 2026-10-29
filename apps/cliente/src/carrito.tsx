@@ -75,6 +75,8 @@ type Ctx = {
   cambiarCantidad: (clave: string, cantidad: number) => void;
   cambiarSustitucion: (clave: string, s: Sustitucion) => void;
   vaciar: () => void;
+  /** C-PEDIR-OTRA-VEZ: reemplaza el carrito entero por el de un pedido anterior. */
+  llenar: (rest: Parameters<Ctx['agregar']>[0], lineas: LineaCarrito[]) => void;
 };
 
 const Contexto = createContext<Ctx | null>(null);
@@ -181,6 +183,24 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
 
   const vaciar = useCallback(() => setCarrito(VACIO), []);
 
+  const llenar = useCallback<Ctx['llenar']>((rest, lineas) => {
+    setCarrito({
+      ...VACIO,
+      restauranteId: rest.id,
+      restauranteNombre: rest.nombre,
+      plan: rest.plan,
+      restLat: rest.lat,
+      restLng: rest.lng,
+      moneda: rest.moneda ?? 'USD',
+      esTienda: rest.esTienda ?? false,
+      lineas: lineas.map((l) => ({
+        ...l,
+        opciones: l.opciones ?? [],
+        clave: claveDeLinea(l.platoId, l.opciones ?? []),
+      })),
+    });
+  }, []);
+
   const valor = useMemo(
     () => ({
       carrito,
@@ -189,8 +209,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       cambiarCantidad,
       cambiarSustitucion,
       vaciar,
+      llenar,
     }),
-    [carrito, agregar, cambiarCantidad, cambiarSustitucion, vaciar],
+    [carrito, agregar, cambiarCantidad, cambiarSustitucion, vaciar, llenar],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }
