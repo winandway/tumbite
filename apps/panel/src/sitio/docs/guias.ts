@@ -167,6 +167,28 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'group-order',
+        titulo: 'Pedido en grupo: cada uno elige lo suyo',
+        resumen:
+          'Arma un pedido para la oficina, la familia o los amigos: compartes un enlace, cada persona agrega lo suyo y tú pagas todo junto.',
+        explicacion: [
+          'En el menú del restaurante, toca «Hacer un pedido en grupo». Se abre tu pedido en grupo con el botón «Compartir el enlace».',
+          'Cada persona abre el enlace con su cuenta de Divoox, toca «Agregar mis platos» y elige del menú como siempre, con sus opciones. Lo suyo aparece con su nombre.',
+          'Cada quien puede quitar lo suyo. Tú, que armaste el pedido, puedes quitar cualquier plato.',
+          'Cuando estén todos, toca «Cerrar y pagar»: nadie puede agregar más, los platos pasan a tu carrito con el precio de hoy y pagas como siempre. Si algo ya no está disponible, te avisamos y no se cobra.',
+        ],
+        preguntas: [
+          '¿Cómo hago un pedido para varias personas?',
+          '¿Quién paga el pedido en grupo?',
+          '¿Los demás necesitan cuenta?',
+        ],
+        pasos: [
+          'En el menú, toca «Hacer un pedido en grupo».',
+          'Comparte el enlace; cada uno agrega lo suyo.',
+          'Toca «Cerrar y pagar» y paga desde tu carrito.',
+        ],
+      },
+      {
         id: 'favorites',
         titulo: 'Favoritos: guarda tus restaurantes',
         resumen:
@@ -3187,6 +3209,28 @@ const en: SeccionDocs[] = [
           'Build your cart as usual.',
           'Under “When do you want it?”, tap “Schedule”.',
           'Pick the day and window, and pay.',
+        ],
+      },
+      {
+        id: 'group-order',
+        titulo: 'Group order: everyone picks their own',
+        resumen:
+          'Build one order for the office, family or friends: share a link, each person adds their items and you pay for everything together.',
+        explicacion: [
+          'On the restaurant menu, tap “Start a group order”. Your group order opens with a “Share the link” button.',
+          'Each person opens the link with their Divoox account, taps “Add my items” and picks from the menu as usual, with their options. Their items show with their name.',
+          'Everyone can remove their own items. You, who started the order, can remove any item.',
+          'When everyone is in, tap “Close and pay”: nobody can add more, the items move to your cart at today’s prices and you pay as usual. If something is no longer available, we tell you and it isn’t charged.',
+        ],
+        preguntas: [
+          'How do I order for several people?',
+          'Who pays for a group order?',
+          'Do the others need an account?',
+        ],
+        pasos: [
+          'On the menu, tap “Start a group order”.',
+          'Share the link; everyone adds their items.',
+          'Tap “Close and pay” and pay from your cart.',
         ],
       },
       {

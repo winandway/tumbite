@@ -793,6 +793,25 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en"
   ],
+  "pedidos_grupo": [
+    "id",
+    "codigo",
+    "anfitrion_id",
+    "restaurante_id",
+    "estado",
+    "creado_en",
+    "cerrado_en"
+  ],
+  "pedidos_grupo_items": [
+    "id",
+    "grupo_id",
+    "participante_id",
+    "nombre",
+    "plato_id",
+    "cantidad",
+    "opciones_json",
+    "creado_en"
+  ],
   "auditoria_admin": [
     "id",
     "actor_id",

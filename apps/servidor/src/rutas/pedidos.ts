@@ -352,7 +352,7 @@ export function aPedido(f: FilaPedido) {
  * lo que mande el teléfono solo dice qué platos y cuántos.
  */
 /** Las líneas de un pedido de restaurante: platos con sus opciones, validados y con su precio. */
-async function lineasDeRestaurante(
+export async function lineasDeRestaurante(
   db: D1Database,
   rest: Record<string, unknown>,
   lineasPedidas: z.infer<typeof esquemaNuevoPedido>['lineas'],

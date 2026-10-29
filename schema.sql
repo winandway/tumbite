@@ -1346,6 +1346,29 @@ CREATE TABLE IF NOT EXISTS turnos_repartidor (
 CREATE INDEX IF NOT EXISTS turnos_repartidor_quien ON turnos_repartidor(repartidor_id, inicio);
 CREATE INDEX IF NOT EXISTS turnos_repartidor_estado ON turnos_repartidor(estado, inicio);
 
+-- C-PEDIDO-GRUPO (29 oct 2026), como el «Group Order» de DoorDash: quien lo arma comparte un
+-- enlace, cada persona agrega lo suyo y quien lo armó paga todo.
+CREATE TABLE IF NOT EXISTS pedidos_grupo (
+  id TEXT PRIMARY KEY,
+  codigo TEXT NOT NULL UNIQUE,
+  anfitrion_id TEXT NOT NULL REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'cerrado', 'cancelado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT
+);
+CREATE TABLE IF NOT EXISTS pedidos_grupo_items (
+  id TEXT PRIMARY KEY,
+  grupo_id TEXT NOT NULL REFERENCES pedidos_grupo(id),
+  participante_id TEXT NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  plato_id TEXT NOT NULL,
+  cantidad INTEGER NOT NULL CHECK (cantidad BETWEEN 1 AND 20),
+  opciones_json TEXT NOT NULL DEFAULT '[]',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS pedidos_grupo_items_grupo ON pedidos_grupo_items(grupo_id, creado_en);
+
 CREATE TABLE IF NOT EXISTS auditoria_admin (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   actor_id TEXT NOT NULL REFERENCES usuarios(id),

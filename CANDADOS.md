@@ -1578,3 +1578,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el repartidor no podía reservar horas (DoorDash tiene «Schedule»: turnos de 30 minutos hasta una semana, con prioridad y turno perdido si no se conecta a tiempo).
 - **Arreglo:** regla `validarTurno` (`packages/compartido/src/turnos.ts`: 1 a 12 horas, franjas de 30 min, hasta 7 días). Tabla `turnos_repartidor`. Rutas `GET`, `POST` y `DELETE /datos/repartidor/turnos` (`apps/servidor/src/rutas/turnos.ts`, no se cruzan turnos). `actualizarTurnos` (activo al conectarse, perdido a los 30 min sin conectarse, cumplido al terminar) corre en cada vuelta del Manager. En `repartirOfertas`, a igual distancia va primero quien está en su turno (`en_turno` en `libresEn`). App Driver: menú → «Mis turnos» (`apps/repartidor/src/grandes/Turnos.tsx`). Docs: guía «driver-shifts».
 - **Pruebas:** `compartido/turnos.test.ts`; «C-TURNOS-REPARTIDOR» en `rutas/operacion.test.ts` (la prioridad en rojo sin el arreglo).
+
+## C-PEDIDO-GRUPO (29 oct 2026) — todos los países
+
+- **Qué faltaba:** no se podía armar un pedido entre varias personas (DoorDash «Group Order»).
+- **Cómo quedó:** tablas `pedidos_grupo` (código secreto de 22 caracteres) y `pedidos_grupo_items`. Rutas en `apps/servidor/src/rutas/grupos.ts`: crear, ver (con el precio de hoy y quién agregó qué), agregar (validado como un pedido normal con `lineasDeRestaurante`), quitar (lo suyo; el anfitrión, cualquiera), cerrar (solo el anfitrión; devuelve las líneas para su carrito) y cancelar. Topes: 100 platos y 20 personas. Este módulo NO cobra: paga el anfitrión desde su carrito, como siempre.
+- **App del cliente:** «Hacer un pedido en grupo» en el menú (`app/restaurant/[id].tsx`, con `?grupo=` agrega al grupo) y la pantalla `app/group/[codigo].tsx` (compartir, agregar, quitar, cerrar y pagar; se refresca cada 8 segundos). Docs: guía «group-order». Por ahora solo restaurantes; dividir el pago queda para después.
+- **Prueba:** `rutas/grupos.test.ts`.

@@ -42,7 +42,7 @@
 
 - [x] Turnos programados del repartidor (como el «Schedule» de DoorDash): reservar franjas de 30 minutos hasta 7 días, prioridad en las ofertas durante su turno, turno perdido si no se conecta en 30 minutos. Servidor, app Driver, Docs. Todos los países.
 
-- [ ] Pedido en grupo (como el «Group Order» de DoorDash): quien arma el pedido comparte un enlace, cada persona agrega lo suyo con su nombre, y quien lo armó revisa y paga todo (dividir el pago queda para después). Servidor, app del cliente, Docs. Todos los países.
+- [x] Pedido en grupo (como el «Group Order» de DoorDash): quien arma el pedido comparte un enlace, cada persona agrega lo suyo con su nombre, y quien lo armó revisa y paga todo (dividir el pago queda para después). Servidor, app del cliente, Docs. Todos los países.
 
 ## Cada sesión
 

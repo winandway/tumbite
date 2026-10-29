@@ -57,7 +57,8 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
  * el botón + redondo; y el detalle del producto a pantalla completa con tamaños, extras y cantidad.
  */
 export default function MenuRestaurante() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // C-PEDIDO-GRUPO: con ?grupo=<código>, lo que se agrega va al pedido en grupo, no al carrito.
+  const { id, grupo } = useLocalSearchParams<{ id: string; grupo?: string }>();
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const tc = textosComida(idioma);
@@ -82,8 +83,30 @@ export default function MenuRestaurante() {
   }, [api, id]);
 
   /** Mete el plato n veces; si el carrito es de otro restaurante, pregunta antes de vaciarlo. */
+  const [avisoGrupo, setAvisoGrupo] = useState('');
+  async function alGrupo(p: Plato, opciones: OpcionElegida[], n: number) {
+    try {
+      await api.pedir('POST', `/datos/grupos/${String(grupo)}/items`, {
+        platoId: p.id,
+        cantidad: n,
+        opciones: opciones.map((o) => o.id),
+      });
+      setAvisoGrupo(idioma === 'en' ? 'Added to the group order.' : 'Agregado al pedido en grupo.');
+    } catch (x) {
+      setError(x instanceof Error ? x.message : String(x));
+    }
+  }
+  async function crearGrupo() {
+    try {
+      const r = await api.pedir<{ codigo: string }>('POST', '/datos/grupos', { restauranteId: id });
+      router.push(`/group/${r.codigo}`);
+    } catch (x) {
+      setError(x instanceof Error ? x.message : String(x));
+    }
+  }
   async function meter(p: Plato, opciones: OpcionElegida[], n: number) {
     if (!datos) return;
+    if (grupo) return alGrupo(p, opciones, n);
     const r = datos.restaurante;
     const rest = {
       id: r.id,
@@ -230,6 +253,35 @@ export default function MenuRestaurante() {
                 : ''}
             </Text>
           ) : null}
+
+          {/* C-PEDIDO-GRUPO: como DoorDash, el pedido en grupo se arma desde el menú. */}
+          {grupo ? (
+            <View style={{ marginTop: 12, gap: 6 }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {idioma === 'en'
+                  ? 'You’re adding to a group order.'
+                  : 'Estás agregando a un pedido en grupo.'}
+              </Text>
+              {avisoGrupo ? (
+                <Text style={{ color: C.exito, fontWeight: '700' }}>{avisoGrupo}</Text>
+              ) : null}
+              <Text
+                style={e.enlace}
+                onPress={() => router.push(`/group/${String(grupo)}`)}
+                accessibilityRole="button"
+              >
+                {idioma === 'en' ? 'Back to the group order →' : 'Volver al pedido en grupo →'}
+              </Text>
+            </View>
+          ) : (
+            <Text
+              style={[e.enlace, { marginTop: 12 }]}
+              onPress={() => void crearGrupo()}
+              accessibilityRole="button"
+            >
+              {idioma === 'en' ? 'Start a group order' : 'Hacer un pedido en grupo'}
+            </Text>
+          )}
 
           {/* Pestañas: Menú e Información. Opiniones llegará cuando el servidor las publique. */}
           <View
