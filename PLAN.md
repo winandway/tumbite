@@ -1,16 +1,14 @@
-# Plan: Divoox Flex — ubicación exacta del destinatario, Venezuela y página web
+# Plan: Tiendas (Mercado, Farmacia, Licores, Ferretería y más) — Fase 1: catálogo
 
-Pedido por Richard el 28 oct 2026. País: **Venezuela primero**; EE. UU. separado por su perfil.
+País: Estados Unidos, Venezuela y Colombia (moneda y datos por país). Rama `fase-tiendas-1`.
+Meta de esta fase: que las empresas invitadas entren YA y suban su catálogo, aunque el público todavía
+no vea las tiendas («muy pronto»). Evidencia: `docs/investigaciones-rea/2026-10-28-tiendas-*`.
 
-- [x] 1. Investigación REA de MRW, Zoom, Tealca y del estándar de ubicación (Amazon, Onfleet…) → ficha en docs/investigaciones-rea (en curso)
-- [x] 2. Perfil por país de Flex (una sola pieza): pagos, moneda, ubicación exacta obligatoria o no, app del destinatario, datos que se piden (VE / US)
-- [x] 3. Envío: correo, referencias y cédula del destinatario, estado y fuente de la ubicación, vínculo con la cuenta Divoox por teléfono o correo
-- [x] 4. Enlace público «confirma tu ubicación» (/deliver/<código>) con pin en el mapa, búsqueda de dirección y referencias, e invitación a la app
-- [x] 5. App del cliente: «Mis paquetes» (lo que me envían) con seguimiento y confirmar ubicación con pin o dirección guardada
-- [x] 6. Rutas: en Venezuela no entra a una ruta un envío sin ubicación confirmada
-- [x] 7. Panel de la empresa: estado de la ubicación de cada envío, enviar el enlace por WhatsApp, pin al crear el envío
-- [x] 8. Seguimiento público por número de guía (/track y /track/<código>), como MRW y Zoom
-- [x] 9. Búsqueda de direcciones de Google por el servidor (apagada hasta tener la llave)
-- [x] 10. Web: «Flex» en el menú de arriba y página /flex con capturas reales, «empresas sin tecnología» y Venezuela
-- [x] 11. Docs: guías de Flex al día, en español e inglés
-- [ ] 12. Pruebas en rojo, verify, sitio de pruebas y producción
+- [x] Paso 1: REA sobre las páginas públicas de DoorDash para comercios (supermercado y tiendas) y evidencia guardada.
+- [ ] Paso 2: Reglas comunes: tipos de comercio, su servicio, categorías bilingües por tipo, columnas estándar de la hoja de productos y validación de cada fila (`packages/compartido/src/tiendas.ts`) con pruebas.
+- [ ] Paso 3: Base: tipo de comercio en el negocio; código de barras, SKU, marca, tamaño, venta por unidad o peso, existencias, edad mínima y receta en el producto; índices.
+- [ ] Paso 4: Servidor: elegir el tipo de comercio; lista de productos con búsqueda y páginas; importar la hoja (vista previa y confirmar, actualiza por SKU o código de barras); las tiendas no salen entre los restaurantes. Pruebas en rojo.
+- [ ] Paso 5: Panel: tipo de negocio en «Mi negocio»; pantalla «Productos» con buscador, páginas, plantilla para descargar e importar la hoja con vista previa. Pruebas.
+- [ ] Paso 6: Integrar el informe de fuentes públicas (DoorDash, Uber Eats, Rappi, Instacart) y ajustar lo que falte.
+- [ ] Paso 7: Docs: guía bilingüe «Sube el catálogo de tu tienda», con captura real; página de comercios en la web; candado y fila.
+- [ ] Paso 8: Pruebas completas, sitio de pruebas y producción, comprobado en vivo.
