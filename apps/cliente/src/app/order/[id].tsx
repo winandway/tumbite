@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import {
   ErrorApi,
   enIdioma,
+  entregaMostrada,
   formatearMonto,
   textoLinea,
   type OpcionElegida,
@@ -1179,12 +1180,14 @@ export default function SeguirPedido() {
               <Text style={{ color: '#5E5E5E' }}>{p.direccion}</Text>
             </>
           ) : null}
-          {p.entrega ? (
+          {entregaMostrada(p.entrega, p.entregadoComo) ? (
             <>
               <Text style={{ fontWeight: '800', marginTop: 10, color: C.secundario }}>
                 {tc.tipoEntrega}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>{tc.tipoEntregaPedido[p.entrega]}</Text>
+              <Text style={{ color: '#5E5E5E' }}>
+                {tc.tipoEntregaPedido[entregaMostrada(p.entrega, p.entregadoComo) ?? '']}
+              </Text>
             </>
           ) : null}
         </Tarjeta>

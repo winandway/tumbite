@@ -1491,3 +1491,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** al escribir «100 Biscayne» en el carrito, desde Miami, las primeras sugerencias eran de Canadá y Ohio. La mayoría de las casillas de dirección no mandan la ubicación de la persona, y sin ella Google no sabe qué va primero.
 - **Arreglo:** `/datos/lugares/sugerencias` usa la ubicación que manda la pantalla y, si no hay, la ciudad aproximada de la conexión (`request.cf` de Cloudflare, o las cabeceras `cf-iplatitude`/`cf-iplongitude`), con un radio de 30 km como preferencia (no como límite). En el carrito, sin GPS, se usa la ubicación de la tienda.
 - **Prueba:** `lugares.test.ts` («C-DIRECCION-CERCA», en rojo sin el arreglo).
+
+## C-ENTREGA-REAL (29 oct 2026) — todos los países
+
+- **Qué se rompió:** el detalle del pedido del cliente decía «Tipo de entrega: Dejar en la puerta» mientras arriba decía «Te lo entregaron en mano» (pedido 5A2F, con cerveza, hecho antes de C-EDAD-EN-MANO).
+- **Causa:** la pantalla mostraba siempre lo que se pidió, nunca cómo se entregó.
+- **Arreglo:** `entregaMostrada()` en `packages/compartido/src/entregaMostrada.ts`: si ya se entregó manda `entregadoComo` («seguro» cuenta como puerta); si no, lo pedido. La usa `apps/cliente/src/app/order/[id].tsx`.
+- **Prueba:** `packages/compartido/src/entregaMostrada.test.ts` (en rojo sin la función).

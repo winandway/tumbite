@@ -55,3 +55,6 @@ google-services.json
 
 # También como enlace simbólico (27 oct 2026: un árbol de trabajo coló enlaces node_modules en un commit)
 node_modules
+
+# Fábrica: freno manual
+.fabrica-pausa
