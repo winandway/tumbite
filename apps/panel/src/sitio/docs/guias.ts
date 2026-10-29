@@ -115,6 +115,11 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
+            src: '/docs/cliente-pedir-otra-vez-es.webp',
+            alt: 'El inicio de la app de Divoox con la fila «Pedir otra vez» y el último pedido de una tienda.',
+            pie: 'En el inicio, «Pedir otra vez» te deja repetir un pedido con un toque.',
+          },
+          {
             src: '/docs/recorrido-cliente-ticket-es.webp',
             alt: 'El recibo de un pedido en la app de Divoox.',
             pie: 'El recibo de tu pedido, siempre a mano.',
@@ -3212,6 +3217,11 @@ const en: SeccionDocs[] = [
           'If you had another cart half done, we ask before replacing it.',
         ],
         capturas: [
+          {
+            src: '/docs/cliente-pedir-otra-vez-en.webp',
+            alt: 'The Divoox app home with the “Order again” row and the last order from a store.',
+            pie: 'On the home screen, “Order again” repeats an order with one tap.',
+          },
           {
             src: '/docs/recorrido-cliente-ticket-en.webp',
             alt: 'A Divoox order receipt in the app.',
