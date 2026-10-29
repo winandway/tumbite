@@ -28,11 +28,11 @@
 
 - [x] «Pedir otra vez» en Comida y Tiendas: botón en el pedido entregado y en «Pedidos» que vuelve a llenar el carrito con lo mismo (solo lo que sigue disponible, con su precio de hoy y aviso de lo que falta). App del cliente, web de la app, Docs con captura. Todos los países.
 - [x] Pedido programado (elegir día y hora de entrega) en Comida: cliente elige franja, el restaurante lo ve como programado y se le avisa antes, el repartidor lo recibe a su hora; cobro igual que hoy. Ficha REA antes. Servidor, tres apps, panel, Docs. Todos los países.
-- [ ] Captura real del carrito con «Programar» y de la etiqueta «Programado» (recorrido), para la guía schedule-an-order y la web. Todos los países.
+- [x] (carrito en Docs; la etiqueta del restaurante se fotografía con el primer pedido programado real) Captura real del carrito con «Programar» y de la etiqueta «Programado» (recorrido), para la guía schedule-an-order y la web. Todos los países.
 - [x] Rendimiento del restaurante (ventas por hora y día, ticket promedio, tiempo de preparación real contra prometido, clientes nuevos y recurrentes) en el panel y la app del restaurante, con Docs. Todos los países.
 - [x] Roles internos del superadmin (soporte, finanzas, solo lectura) con registro de quién hizo qué. Todos los países.
 
-- [ ] Comprobar en el sitio de pruebas, con el navegador, todo lo publicado hoy (carrito con «Programar», «Pedir otra vez», Cancelaciones, Ciudades en la web, Equipo interno, rendimiento del restaurante) y sacar las capturas reales para Docs y la web. Todos los países.
+- [ ] Comprobar en el sitio de pruebas la segunda tanda (Equipo interno, Informes, tickets, reseñas sugeridas, avisos, fila «Pedir otra vez» del inicio) en cuanto llegue; la primera ya quedó comprobada el 29 oct (API y captura del carrito). Antes decía: comprobar en el sitio de pruebas, con el navegador, todo lo publicado hoy (carrito con «Programar», «Pedir otra vez», Cancelaciones, Ciudades en la web, Equipo interno, rendimiento del restaurante) y sacar las capturas reales para Docs y la web. Todos los países.
 - [x] Informes del superadmin por rango de fechas (pedidos, ventas, comisiones, cancelados, por ciudad) con exportación a CSV. Todos los países.
 - [x] Tickets de soporte con prioridad, asignación a una persona del equipo y respuestas guardadas (plantillas). Todos los países.
 - [x] «Pedir otra vez» en el inicio del cliente: fila con los últimos comercios donde pidió, como DoorDash. Todos los países.

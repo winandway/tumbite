@@ -39,6 +39,7 @@ describe('C-PEDIDO-PROGRAMADO', () => {
       'Today, 1:00 PM–1:30 PM',
     );
     expect(textoFranja(new Date('2026-10-30T17:00:00Z'), MIAMI, 'es', AHORA)).toMatch(/^Mañana, /);
+    expect(textoFranja(new Date('2026-10-31T17:00:00Z'), MIAMI, 'es', AHORA)).toMatch(/^Sáb/);
   });
 
   it('un festivo del comercio no se puede programar', () => {

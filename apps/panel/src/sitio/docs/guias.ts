@@ -148,6 +148,13 @@ const es: SeccionDocs[] = [
           'En la pantalla de tu pedido ves «Programado para» con el día y la hora. Mientras el restaurante no lo acepte, puedes cancelarlo y el dinero vuelve.',
           'No se puede programar en días festivos del comercio ni fuera de su horario.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-programar-es.webp',
+            alt: 'El carrito de Divoox con «¿Cuándo lo quieres?»: lo antes posible o programar, los días y las franjas de media hora.',
+            pie: 'Eliges el día y la media hora; la franja elegida queda marcada.',
+          },
+        ],
         preguntas: [
           '¿Puedo pedir comida para mañana?',
           '¿Cuesta más programar un pedido?',
@@ -3141,6 +3148,13 @@ const en: SeccionDocs[] = [
           'The restaurant sees your order marked “Scheduled” with its time and starts preparing it ahead so it arrives within your window. The driver gets it in time for that.',
           'Your order screen shows “Scheduled for” with the day and time. Until the restaurant accepts it, you can cancel and get your money back.',
           'You can’t schedule on the store’s holidays or outside its hours.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-programar-en.webp',
+            alt: 'The Divoox cart with “When do you want it?”: as soon as possible or schedule, the days and the half-hour windows.',
+            pie: 'Pick the day and the half hour; your window stays highlighted.',
+          },
         ],
         preguntas: [
           'Can I order food for tomorrow?',

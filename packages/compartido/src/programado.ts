@@ -97,5 +97,7 @@ export function textoFranja(
         ? 'Tomorrow'
         : 'Mañana'
       : dia(inicio);
-  return `${cuando}, ${hora(inicio)}–${hora(fin)}`;
+  // «sáb 31 oct» → «Sáb 31 oct», igual que «Hoy» y «Mañana».
+  const conMayuscula = cuando.charAt(0).toLocaleUpperCase(loc) + cuando.slice(1);
+  return `${conMayuscula}, ${hora(inicio)}–${hora(fin)}`;
 }
