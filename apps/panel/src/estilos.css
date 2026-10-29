@@ -5072,3 +5072,32 @@ button {
   border-radius: 8px;
   background: #fff;
 }
+
+/* C-RENDIMIENTO-REST: barras del tablero del restaurante. */
+.barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 140px;
+}
+.barra {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+.barra span {
+  width: 100%;
+  border-radius: 3px;
+  background: #e6e7ea;
+}
+.barra span.con {
+  background: #101010;
+}
+.barra small {
+  font-size: 0.7rem;
+  color: #666b73;
+  margin-top: 4px;
+}

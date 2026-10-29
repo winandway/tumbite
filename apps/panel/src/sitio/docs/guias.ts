@@ -1408,11 +1408,13 @@ const es: SeccionDocs[] = [
         id: 'dashboard',
         titulo: 'Tu tablero: cómo va tu restaurante',
         resumen:
-          'Pedidos, ventas, lo que recibes, lo que más se vende, el tiempo real de tu cocina y lo que opinan tus clientes, de un vistazo.',
+          'Pedidos, ventas, lo que recibes, lo que más se vende, tus horas fuertes, tus clientes nuevos y los que repiten, el tiempo real de tu cocina y lo que opinan, de un vistazo.',
         explicacion: [
           'Al entrar a tu panel lo primero que ves es tu tablero. Está pensado para que en diez segundos sepas cómo va el negocio, sin sacar cuentas.',
           'Arriba, cuántos pedidos están esperando ahora mismo, con un enlace directo a ellos. Debajo, los últimos 7 y 30 días: pedidos, ventas, lo que recibes después de la comisión y el ticket promedio.',
           'Más abajo, los platos que más se venden y el tiempo real de tu cocina comparado con el que prometes al aceptar. Si cocinas más rápido de lo que prometes, tus clientes reciben antes y te califican mejor.',
+          'Al final, tus horas y días fuertes de los últimos 30 días, en la hora de tu ciudad: así sabes cuándo reforzar la cocina. Y tus clientes: cuántos son nuevos, cuántos repiten y cuántos pedidos se cancelaron.',
+          'Lo mismo lo ves en la app del restaurante, en Estadísticas.',
         ],
         capturas: [
           {
@@ -4388,11 +4390,13 @@ const en: SeccionDocs[] = [
         id: 'dashboard',
         titulo: 'Your dashboard: how your restaurant is doing',
         resumen:
-          'Orders, sales, your payout, best sellers, your real kitchen time, and what customers think, at a glance.',
+          'Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.',
         explicacion: [
           'When you open your dashboard, the first thing you see is your overview. It’s designed so you know how business is going in ten seconds, without doing the math.',
           'At the top, how many orders are waiting right now, with a direct link to them. Below, the last 7 and 30 days: orders, sales, what you receive after commission, and your average order.',
           'Further down, your best-selling items and your real kitchen time compared with the time you promise when accepting. Cook faster than you promise and customers get their food sooner and rate you higher.',
+          'At the bottom, your busiest hours and days over the last 30 days, in your city’s time, so you know when to staff up. And your customers: how many are new, how many come back, and how many orders were canceled.',
+          'You see the same in the restaurant app, under Stats.',
         ],
         capturas: [
           {

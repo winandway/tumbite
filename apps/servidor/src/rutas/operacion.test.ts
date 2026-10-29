@@ -401,6 +401,14 @@ describe('tablero del restaurante (C-TABLERO-REST)', () => {
     });
     expect(r.datos.tablero.topPlatos[0]).toMatchObject({ nombreEs: 'Cubano', cantidad: 2 });
     expect(r.datos.tablero.calificacion).toBe(4);
+    // C-RENDIMIENTO-REST: por hora (24), por día (7), clientes y cancelados.
+    expect(r.datos.tablero.porHora).toHaveLength(24);
+    expect(r.datos.tablero.porDia).toHaveLength(7);
+    expect(
+      r.datos.tablero.porDia.reduce((s: number, d: { pedidos: number }) => s + d.pedidos, 0),
+    ).toBe(r.datos.tablero.mes.pedidos);
+    expect(r.datos.tablero.clientes).toMatchObject({ nuevos: 1, recurrentes: 0 });
+    expect(r.datos.tablero.canceladosMes).toBe(0);
     // Un cliente no ve el tablero de nadie.
     expect(
       (await m.llamar('GET', '/datos/restaurante/tablero', undefined, cliente.token)).estado,

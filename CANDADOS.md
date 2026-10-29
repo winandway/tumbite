@@ -1533,3 +1533,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Tiempos:** el Manager cuenta la espera del restaurante y el «sin repartidor» desde 45 minutos antes de la franja (`manager.ts`); `repartirOfertas` no lo ofrece antes de eso y quiere la comida lista 15 minutos antes de la franja (`operacion.ts`).
 - **Pantallas:** carrito «¿Cuándo lo quieres?» (`apps/cliente/src/app/cart.tsx`), tarjeta «Programado para» en el pedido, etiqueta «Programado» en el panel (`Pedidos.tsx`) y en la app del restaurante (`Inicio.tsx`). Docs: guía «schedule-an-order».
 - **Pruebas:** `compartido/programado.test.ts`; en `rutas/operacion.test.ts` «C-PEDIDO-PROGRAMADO» (las dos en rojo sin el arreglo del Manager y de las ofertas).
+
+## C-RENDIMIENTO-REST (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el tablero del restaurante no tenía horas ni días fuertes, clientes nuevos frente a los que repiten, ni cancelados (estándar de DoorDash Merchant y Uber Eats Manager).
+- **Arreglo:** `rendimientoRestaurante()` (`packages/compartido/src/rendimiento.ts`, en la hora del restaurante); `GET /datos/restaurante/tablero` suma `porHora`, `porDia`, `clientes`, `canceladosMes` y `zonaHoraria`. Se ve en el panel (`TableroRestaurante.tsx`) y en la app (`apps/restaurante/src/Estadisticas.tsx`). Docs: guía «dashboard».
+- **Pruebas:** `compartido/rendimiento.test.ts`, «C-TABLERO-REST» en `rutas/operacion.test.ts`, `panel/TableroRestaurante.test.tsx`.

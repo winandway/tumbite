@@ -58,11 +58,60 @@ type Tablero = {
   calificacion: number | null;
   calificaciones: number;
   pedidosAhora: number;
+  /** C-RENDIMIENTO-REST (últimos 30 días, hora del restaurante). */
+  porHora?: { pedidos: number; ventas: number }[];
+  porDia?: { pedidos: number; ventas: number }[];
+  clientes?: { nuevos: number; recurrentes: number; nuevosQueVolvieron: number };
+  canceladosMes?: number;
 };
+
+const TR = {
+  es: {
+    porHora: 'Pedidos por hora (últimos 30 días)',
+    porDia: 'Pedidos por día (últimos 30 días)',
+    dias: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+    clientes: 'Clientes (últimos 30 días)',
+    nuevos: 'Nuevos',
+    repiten: 'Repiten',
+    cancelados: 'Cancelados',
+  },
+  en: {
+    porHora: 'Orders by hour (last 30 days)',
+    porDia: 'Orders by day (last 30 days)',
+    dias: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    clientes: 'Customers (last 30 days)',
+    nuevos: 'New',
+    repiten: 'Returning',
+    cancelados: 'Canceled',
+  },
+};
+
+/** Barras simples con CSS (sin librerías). */
+function Barras({ valores, etiquetas }: { valores: number[]; etiquetas: string[] }) {
+  const max = Math.max(1, ...valores);
+  return (
+    <div
+      className="barras"
+      role="img"
+      aria-label={valores.map((v, i) => `${etiquetas.at(i) ?? i}: ${v}`).join(', ')}
+    >
+      {valores.map((v, i) => (
+        <div key={etiquetas.at(i) ?? i} className="barra">
+          <span
+            style={{ height: `${Math.max(2, Math.round((v / max) * 100))}%` }}
+            className={v ? 'con' : ''}
+          />
+          <small>{etiquetas.at(i)}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Inicio del panel del restaurante: cómo le va, de un vistazo. */
 export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
+  const tr = enIdioma(TR, idioma);
   const [x, setX] = useState<Tablero | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -157,6 +206,47 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
               </p>
             </div>
           </div>
+          {x.porHora && x.porHora.some((h) => h.pedidos) ? (
+            <div className="super-dos">
+              <div className="tarjeta-form">
+                <h2>{tr.porHora}</h2>
+                {(() => {
+                  const con = x.porHora.map((h, i) => (h.pedidos ? i : -1)).filter((i) => i >= 0);
+                  const desde = Math.min(...con);
+                  const horas = x.porHora.slice(desde, Math.max(...con) + 1);
+                  return (
+                    <Barras
+                      valores={horas.map((h) => h.pedidos)}
+                      etiquetas={horas.map((_, i) => String(desde + i))}
+                    />
+                  );
+                })()}
+              </div>
+              <div className="tarjeta-form">
+                <h2>{tr.porDia}</h2>
+                <Barras valores={(x.porDia ?? []).map((d) => d.pedidos)} etiquetas={tr.dias} />
+              </div>
+            </div>
+          ) : null}
+          {x.clientes ? (
+            <div className="tarjeta-form">
+              <h2>{tr.clientes}</h2>
+              <ul className="super-tarjetas">
+                <li className="super-tarjeta">
+                  <span>{tr.nuevos}</span>
+                  <strong>{x.clientes.nuevos}</strong>
+                </li>
+                <li className="super-tarjeta">
+                  <span>{tr.repiten}</span>
+                  <strong>{x.clientes.recurrentes + x.clientes.nuevosQueVolvieron}</strong>
+                </li>
+                <li className="super-tarjeta">
+                  <span>{tr.cancelados}</span>
+                  <strong>{x.canceladosMes ?? 0}</strong>
+                </li>
+              </ul>
+            </div>
+          ) : null}
         </>
       )}
     </section>

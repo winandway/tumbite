@@ -77,7 +77,7 @@ import {
   telefonoE164,
   twimlPuente,
 } from '../sms';
-import { formatearMonto } from '@tumbite/compartido';
+import { formatearMonto, rendimientoRestaurante } from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -808,9 +808,52 @@ operacion.get('/restaurante/tablero', async (c) => {
     )
     .bind(rid)
     .first<{ n: number }>();
+  // C-RENDIMIENTO-REST: por hora y día (hora del restaurante), clientes nuevos y que repiten, cancelados.
+  const zona =
+    (
+      await db
+        .prepare(
+          'SELECT z.zona_horaria FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+        )
+        .bind(rid)
+        .first<{ zona_horaria: string | null }>()
+    )?.zona_horaria || 'America/New_York';
+  const { results: entregados } = await db
+    .prepare(
+      `SELECT pagado_en, subtotal, cliente_id FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado'
+        AND pagado_en >= datetime('now','-30 days') AND moneda = ? LIMIT 5000`,
+    )
+    .bind(rid, moneda)
+    .all<{ pagado_en: string; subtotal: number; cliente_id: string }>();
+  const { results: previos } = await db
+    .prepare(
+      `SELECT DISTINCT cliente_id FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado'
+        AND pagado_en < datetime('now','-30 days')`,
+    )
+    .bind(rid)
+    .all<{ cliente_id: string }>();
+  const rendimiento = rendimientoRestaurante(
+    entregados.map((f) => ({
+      pagadoEn: f.pagado_en,
+      subtotal: Number(f.subtotal),
+      clienteId: f.cliente_id,
+    })),
+    zona,
+    new Set(previos.map((f) => f.cliente_id)),
+  );
+  const cancelados = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM pedidos WHERE restaurante_id = ? AND estado = 'cancelado'
+        AND cancelado_en >= datetime('now','-30 days')`,
+    )
+    .bind(rid)
+    .first<{ n: number }>();
   return c.json({
     tablero: {
       moneda,
+      zonaHoraria: zona,
+      ...rendimiento,
+      canceladosMes: Number(cancelados?.n ?? 0),
       semana: await periodo(7),
       mes: await periodo(30),
       topPlatos: [...cuenta.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5),

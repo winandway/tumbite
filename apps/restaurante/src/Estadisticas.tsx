@@ -16,17 +16,70 @@ type Tablero = {
   minutosPrometidos: number | null;
   calificacion: number | null;
   calificaciones: number;
+  /** C-RENDIMIENTO-REST (últimos 30 días, en la hora del restaurante). */
+  porHora?: { pedidos: number; ventas: number }[];
+  porDia?: { pedidos: number; ventas: number }[];
+  clientes?: { nuevos: number; recurrentes: number; nuevosQueVolvieron: number };
+  canceladosMes?: number;
 };
 type Resumen = { entregados: number; ventas: number; neto: number };
+
+const TR = {
+  es: {
+    porHora: 'Pedidos por hora (últimos 30 días)',
+    porDia: 'Pedidos por día (últimos 30 días)',
+    dias: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+    clientes: 'Clientes (últimos 30 días)',
+    nuevos: 'Nuevos',
+    repiten: 'Repiten',
+    cancelados: 'Cancelados',
+  },
+  en: {
+    porHora: 'Orders by hour (last 30 days)',
+    porDia: 'Orders by day (last 30 days)',
+    dias: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    clientes: 'Customers (last 30 days)',
+    nuevos: 'New',
+    repiten: 'Returning',
+    cancelados: 'Canceled',
+  },
+};
+
+/** Barras simples en vista nativa (sin librerías): la más alta llena el alto. */
+function Barras({ valores, etiquetas }: { valores: number[]; etiquetas: string[] }) {
+  const max = Math.max(1, ...valores);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 110 }}>
+      {valores.map((v, i) => (
+        <View key={etiquetas.at(i) ?? String(i)} style={{ flex: 1, alignItems: 'center' }}>
+          <View
+            accessibilityLabel={`${etiquetas.at(i) ?? String(i)}: ${v}`}
+            style={{
+              width: '100%',
+              height: Math.max(2, Math.round((v / max) * 86)),
+              borderRadius: 3,
+              backgroundColor: v ? C.secundario : '#E6E7EA',
+            }}
+          />
+          <Text style={{ fontSize: 10, color: '#5E5E5E', marginTop: 3 }}>
+            {etiquetas.at(i) ?? String(i)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /**
  * Estadísticas (diseño aprobado, pantalla 8): Hoy, Semana y Mes con ventas, pedidos, ticket
  * promedio y lo que le queda al restaurante. Son los mismos datos del tablero del panel web.
- * La gráfica por hora no se dibuja: el servidor todavía no la entrega.
+ * C-RENDIMIENTO-REST (29 oct 2026): horas y días fuertes, clientes nuevos y que repiten, y
+ * cancelados, como el «Performance» de DoorDash Merchant.
  */
 export function Estadisticas() {
   const { api, idioma } = useSesion();
   const t = textosRest(idioma);
+  const tr = idioma === 'en' ? TR.en : TR.es;
   const ancho = useWindowDimensions().width;
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [tablero, setTablero] = useState<Tablero | null>(null);
@@ -134,6 +187,67 @@ export function Estadisticas() {
                   </View>
                 );
               })}
+            </Tarjeta>
+          ) : null}
+          {tablero.porHora && tablero.porHora.some((h) => h.pedidos) ? (
+            <Tarjeta>
+              <Text
+                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+              >
+                {tr.porHora}
+              </Text>
+              {(() => {
+                const conPedidos = tablero.porHora
+                  .map((h, i) => (h.pedidos ? i : -1))
+                  .filter((i) => i >= 0);
+                const desde = Math.min(...conPedidos);
+                const hasta = Math.max(...conPedidos);
+                const horas = tablero.porHora.slice(desde, hasta + 1);
+                return (
+                  <Barras
+                    valores={horas.map((h) => h.pedidos)}
+                    etiquetas={horas.map((_, i) => String(desde + i))}
+                  />
+                );
+              })()}
+            </Tarjeta>
+          ) : null}
+          {tablero.porDia && tablero.porDia.some((h) => h.pedidos) ? (
+            <Tarjeta>
+              <Text
+                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+              >
+                {tr.porDia}
+              </Text>
+              <Barras valores={tablero.porDia.map((d) => d.pedidos)} etiquetas={tr.dias} />
+            </Tarjeta>
+          ) : null}
+          {tablero.clientes ? (
+            <Tarjeta>
+              <Text
+                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+              >
+                {tr.clientes}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {(
+                  [
+                    [tr.nuevos, tablero.clientes.nuevos],
+                    [
+                      tr.repiten,
+                      tablero.clientes.recurrentes + tablero.clientes.nuevosQueVolvieron,
+                    ],
+                    [tr.cancelados, tablero.canceladosMes ?? 0],
+                  ] as const
+                ).map(([nombre, n]) => (
+                  <View key={nombre} style={{ flex: 1 }}>
+                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{nombre}</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+                      {n}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </Tarjeta>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10 }}>
