@@ -3,7 +3,9 @@
 // compra de punta a punta y sacar las capturas originales de Docs. Datos neutros («Mercado Demo»,
 // «Brand Sample»), abierto en Miami cerca de Pizzería Demo. Se puede correr varias veces: actualiza.
 // Nunca toca producción: se niega si la dirección no es la del sitio de pruebas.
-// Uso: URL_PRUEBAS=https://staging.tumbite.com CLAVE_DEMO=… node scripts/staging/armar-tienda.mjs
+// Uso: URL_PRUEBAS=https://staging.tumbite.com CLAVE_DEMO=… [CIUDAD=novi] node scripts/staging/armar-tienda.mjs
+// CIUDAD=novi (29 oct 2026, pedido de Richard): abre la zona de pruebas de Detroit, con Novi adentro,
+// y arma ahí «Mercado Demo Novi» para probar desde Michigan. Solo en el sitio de pruebas.
 import { execSync } from 'node:child_process';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com').replace(/\/$/, '');
@@ -48,11 +50,65 @@ const exigir = (c, t) => {
   if (!c) throw new Error(t);
 };
 
-const CORREO = 'demo.mercado@ejemplo.com';
+const CIUDADES = {
+  miami: {
+    correo: 'demo.mercado@ejemplo.com',
+    nombre: 'Mercado Demo',
+    direccion: '300 Biscayne Blvd, Miami, FL',
+    lat: 25.7743,
+    lng: -80.1868,
+    telefono: '3055550199',
+    zona: null,
+  },
+  novi: {
+    correo: 'demo.mercado.novi@ejemplo.com',
+    nombre: 'Mercado Demo Novi',
+    direccion: 'Novi Rd & Grand River Ave, Novi, MI',
+    lat: 42.4806,
+    lng: -83.4755,
+    telefono: '2485550199',
+    // Detroit y sus alrededores (Novi, Southfield, Dearborn, Ann Arbor) en un solo radio.
+    zona: {
+      id: 'US-MI-DETROIT',
+      nombre: 'Detroit',
+      pais: 'US',
+      moneda: 'USD',
+      zonaHoraria: 'America/Detroit',
+      lat: 42.42,
+      lng: -83.27,
+      radioKm: 50,
+      activa: true,
+      region: 'MI',
+      idioma: 'en',
+    },
+  },
+};
+const CIUDAD = CIUDADES[process.env.CIUDAD ?? 'miami'];
+exigir(CIUDAD, `CIUDAD desconocida: ${process.env.CIUDAD}`);
+const CORREO = CIUDAD.correo;
+
+// La zona va antes que la tienda: la tienda toma su zona de las coordenadas al guardarse.
+if (CIUDAD.zona) {
+  const s0 = await api('POST', '/datos/cuentas/entrar', {
+    correo: 'demo.soporte@ejemplo.com',
+    clave: CLAVE,
+  });
+  exigir(s0.estado === 200, `soporte: ${s0.estado} ${s0.d.error ?? ''}`);
+  const z0 = await api('PUT', '/datos/admin/zonas', CIUDAD.zona, s0.d.token);
+  exigir(z0.estado === 200, `zona: ${z0.estado} ${z0.d.error ?? ''}`);
+  const c0 = await api(
+    'PUT',
+    `/datos/admin/servicios/comida/zonas/${CIUDAD.zona.id}`,
+    { estado: 'disponible' },
+    s0.d.token,
+  );
+  exigir(c0.estado === 200, `comida en la zona: ${c0.estado} ${c0.d.error ?? ''}`);
+  console.log(`zona ${CIUDAD.zona.id} abierta en pruebas (radio ${CIUDAD.zona.radioKm} km)`);
+}
 let ent = await api('POST', '/datos/cuentas/entrar', { correo: CORREO, clave: CLAVE });
 if (ent.estado !== 200) {
   const reg = await api('POST', '/datos/cuentas/registro', {
-    nombre: 'Mercado Demo',
+    nombre: CIUDAD.nombre,
     correo: CORREO,
     clave: CLAVE,
     rol: 'restaurante',
@@ -71,12 +127,12 @@ const datos = await api(
   'PUT',
   '/datos/mi-restaurante',
   {
-    nombre: 'Mercado Demo',
-    direccion: '300 Biscayne Blvd, Miami, FL',
-    lat: 25.7743,
-    lng: -80.1868,
+    nombre: CIUDAD.nombre,
+    direccion: CIUDAD.direccion,
+    lat: CIUDAD.lat,
+    lng: CIUDAD.lng,
     categoria: 'Supermercado',
-    telefono: '3055550199',
+    telefono: CIUDAD.telefono,
   },
   token,
 );
@@ -158,11 +214,14 @@ for (const s of ['mercado', 'farmacia', 'licores', 'mas']) {
 }
 console.log(`servicios de tiendas encendidos en la zona ${zonaId}`);
 
-const cerca = await api('GET', '/datos/tiendas?servicio=mercado&lat=25.78&lng=-80.2');
+const cerca = await api(
+  'GET',
+  `/datos/tiendas?servicio=mercado&lat=${CIUDAD.lat + 0.005}&lng=${CIUDAD.lng - 0.01}`,
+);
 exigir(cerca.estado === 200, `vitrina: ${cerca.estado} ${cerca.d.error ?? ''}`);
 exigir(
   cerca.d.tiendas.some((t) => t.id === tid),
-  'Mercado Demo no sale en la vitrina',
+  `${CIUDAD.nombre} no sale en la vitrina`,
 );
 const prods = await api('GET', `/datos/tiendas/${tid}/productos`);
 exigir(
@@ -170,7 +229,7 @@ exigir(
   'un agotado salió a la venta',
 );
 console.log(
-  `vitrina: ${cerca.d.tiendas.length} tienda(s) cerca; Mercado Demo con ${prods.d.productos.length} productos a la venta`,
+  `vitrina: ${cerca.d.tiendas.length} tienda(s) cerca; ${CIUDAD.nombre} con ${prods.d.productos.length} productos a la venta`,
 );
 const prod = await fetch('https://divoox.com/datos/tiendas?servicio=mercado&lat=25.78&lng=-80.2');
 console.log(`producción: /datos/tiendas responde ${prod.status} (tiene que ser 404: apagado)`);
