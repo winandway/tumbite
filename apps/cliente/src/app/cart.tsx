@@ -737,7 +737,12 @@ export default function PantallaCarrito() {
               setPunto(d.punto);
               void guardarUbicacion(d.punto);
             }}
-            cerca={punto}
+            cerca={
+              punto ??
+              (carrito.restLat != null && carrito.restLng != null
+                ? { lat: carrito.restLat, lng: carrito.restLng }
+                : null)
+            }
             placeholder={t.direccionAyuda}
             testID="carrito-direccion"
           />

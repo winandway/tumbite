@@ -50,6 +50,11 @@ lugares.get('/lugares/sugerencias', async (c) => {
   // va primero: limitarlo escondía Venezuela a quien la buscaba desde EE. UU. (28 oct 2026).
   const ip = c.req.header('cf-ipcountry');
   const deLaConexion = ip && /^[A-Za-z]{2}$/.test(ip) && ip !== 'XX' ? ip.toUpperCase() : null;
+  // C-DIRECCION-CERCA (29 oct 2026): las direcciones cercanas van primero, como en DoorDash y Uber
+  // Eats. Si la pantalla no manda dónde está la persona, se usa la ciudad aproximada de su conexión
+  // (la da Cloudflare en cada petición). Visto en el carrito: desde Miami salían Canadá y Ohio arriba.
+  const cerca =
+    q.lat != null && q.lng != null ? { lat: q.lat, lng: q.lng } : puntoDeLaConexion(c.req.raw);
   const r = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': k },
@@ -62,10 +67,10 @@ lugares.get('/lugares/sugerencias', async (c) => {
           : {}),
       languageCode: (c.req.header('x-idioma') ?? 'es').startsWith('en') ? 'en' : 'es',
       ...(q.sesion ? { sessionToken: q.sesion } : {}),
-      ...(q.lat != null && q.lng != null
+      ...(cerca
         ? {
             locationBias: {
-              circle: { center: { latitude: q.lat, longitude: q.lng }, radius: 30_000 },
+              circle: { center: { latitude: cerca.lat, longitude: cerca.lng }, radius: 30_000 },
             },
           }
         : {}),
@@ -130,3 +135,13 @@ lugares.get('/lugares/punto/:id', async (c) => {
 
 /** ¿Está encendida la búsqueda? (las pantallas muestran el buscador solo si sí). */
 lugares.get('/lugares/estado', (c) => c.json({ busqueda: Boolean(c.env.GOOGLE_PLACES_KEY) }));
+
+/** Ciudad aproximada de la conexión (Cloudflare: `request.cf` o las cabeceras de ubicación). */
+export function puntoDeLaConexion(req: Request): { lat: number; lng: number } | null {
+  const cf = (req as Request & { cf?: { latitude?: string; longitude?: string } }).cf;
+  const lat = Number(cf?.latitude ?? req.headers.get('cf-iplatitude') ?? NaN);
+  const lng = Number(cf?.longitude ?? req.headers.get('cf-iplongitude') ?? NaN);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+    return null;
+  return { lat, lng };
+}

@@ -166,6 +166,7 @@ const es: SeccionDocs[] = [
           'En el carrito, debajo de «Dirección», aparecen tus direcciones guardadas como botones (Casa, Trabajo…). Tocar una rellena la dirección, el pin del mapa, las instrucciones y cómo prefieres recibir.',
           'Para guardar una nueva, enciende «Guardar esta dirección para la próxima» antes de pagar y ponle un nombre. Las instrucciones que escribas en «Notas» (portón, piso, timbre) se guardan con ella.',
           'Puedes tener hasta diez. La misma dirección no se duplica: se actualiza.',
+          'Mientras escribes una dirección nueva aparecen sugerencias de direcciones reales. Toca la tuya: así el pin del mapa cae justo en tu puerta y el repartidor llega sin perderse. Vale en el carrito, en tus direcciones guardadas y al cambiar la dirección de un pedido.',
         ],
         capturas: [
           {
@@ -176,7 +177,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Cómo guardo mi dirección?', '¿Puedo poner instrucciones para el repartidor?'],
         pasos: [
-          'Escribe la dirección y las notas en el carrito.',
+          'Escribe la dirección en el carrito y toca la sugerencia que coincide con la tuya; agrega las notas.',
           'Enciende «Guardar esta dirección para la próxima» y ponle nombre.',
           'La próxima vez, tócala en «Tus direcciones».',
         ],
@@ -380,7 +381,7 @@ const es: SeccionDocs[] = [
         id: 'services',
         titulo: 'Los servicios de Divoox: qué hay hoy y qué viene',
         resumen:
-          'En el inicio ves ocho servicios en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona Comida; los demás tienen su pantalla y te dicen, con una franja discreta, que están en construcción.',
+          'En el inicio ves ocho servicios en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona Comida; los demás tienen su pantalla y te dicen, con una franja discreta, que están en construcción. Mercado, Farmacia, Licores y Más ya están listos por dentro y se abren ciudad por ciudad: cuando lleguen a la tuya, verás las tiendas cercanas en esa misma pantalla.',
         explicacion: [
           'Divoox nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Por eso los servicios ya están en el inicio, en el orden en que van a llegar.',
           'Cada servicio tiene su propia pantalla. Si todavía no está listo, arriba ves una franja discreta: «Estamos construyendo este servicio. Pronto estará listo.» Nada de ventanas que tapen la pantalla. Debajo, una lista marcada «Ejemplo» de lo que vas a poder hacer.',
@@ -541,6 +542,7 @@ const es: SeccionDocs[] = [
           'En la puerta: sin contacto. El repartidor lo deja y toma la foto de dónde quedó; tú la ves en tu pedido.',
           'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto: la prueba es un PIN de 4 dígitos que aparece en tu pedido y que quien recibe le dice al repartidor. Sin el PIN correcto no se entrega.',
           'El PIN es opcional: si va a recibir otra persona (un familiar, el portero) y no quieres pasarle el PIN, apágalo con el interruptor al pedir. Entonces se entrega en mano sin PIN.',
+          'Si tu pedido lleva alcohol o tabaco, «En la puerta» sale apagado: se entrega en mano a un mayor de 21 años, que muestra su identificación.',
           'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido.',
         ],
         capturas: [
@@ -652,7 +654,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Abre la app de Divoox y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
           'Toca «Comida» y luego un restaurante. Toca un plato para ver su detalle: elige el tamaño, los extras y la cantidad, y toca «Agregar al carrito».',
-          'Ve al carrito. Marca tu dirección en el mapa o escríbela, y agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
+          'Ve al carrito. Escribe tu dirección y toca la sugerencia correcta (o marca el punto en el mapa), y agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
           'Revisa el desglose: comida, envío, servicio y propina. Lo que ves es lo que pagas.',
           'Toca «Continuar al pago». El formulario de la tarjeta aparece ahí mismo, dentro de la app, protegido por Stripe. Al pagar ves «¡Pedido realizado!» con el número y el total; toca «Ver seguimiento» para seguirlo en vivo.',
@@ -3080,6 +3082,7 @@ const en: SeccionDocs[] = [
           'In the cart, under “Address”, your saved addresses show as buttons (Home, Work…). Tapping one fills in the address, the map pin, the instructions and how you prefer to receive.',
           'To save a new one, turn on “Save this address for next time” before paying and give it a name. The instructions you write under “Notes” (gate, floor, doorbell) are saved with it.',
           'You can keep up to ten. The same address isn’t duplicated: it’s updated.',
+          'As you type a new address, real address suggestions appear. Tap yours: the map pin lands right at your door and the driver gets there without getting lost. It works in the cart, in your saved addresses and when you change an order’s address.',
         ],
         capturas: [
           {
@@ -3090,7 +3093,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I save my address?', 'Can I add instructions for the driver?'],
         pasos: [
-          'Write the address and the notes in the cart.',
+          'Type the address in the cart and tap the suggestion that matches yours; add the notes.',
           'Turn on “Save this address for next time” and name it.',
           'Next time, tap it under “Your addresses”.',
         ],
@@ -3297,7 +3300,7 @@ const en: SeccionDocs[] = [
         id: 'services',
         titulo: 'Divoox services: what’s here today and what’s coming',
         resumen:
-          'The home screen shows eight services in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. Food works today; the others have their own screen and tell you, with a discreet strip, that they’re under construction.',
+          'The home screen shows eight services in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. Food works today; the others have their own screen and tell you, with a discreet strip, that they’re under construction. Grocery, Pharmacy, Liquor and More are already built and open city by city: when they reach yours, you’ll see nearby stores on that same screen.',
         explicacion: [
           'Divoox starts as a food delivery app and grows into an everything app, like the big players. That’s why the services are already on the home screen, in the order they’ll arrive.',
           'Each service has its own screen. If it isn’t ready yet, a discreet strip at the top says: “We’re building this service. It will be ready soon.” No pop-ups covering the screen. Below, a list marked “Sample” of what you’ll be able to do.',
@@ -3456,6 +3459,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'In the cart, before paying, choose “Leave at my door” or “Hand it to me.”',
           'At the door: contactless. The driver leaves it and photographs where it was left; you see the photo in your order.',
+          'If your order has alcohol or tobacco, “Leave at my door” is turned off: it’s handed to someone 21 or older, who shows their ID.',
           'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case: the proof is a 4-digit PIN that shows in your order and that whoever receives tells the driver. Without the right PIN it isn’t handed over.',
           'The PIN is optional: if someone else will receive it (a relative, the doorman) and you don’t want to pass the PIN along, turn it off with the switch when ordering. Then it’s handed over without a PIN.',
           'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order.',
@@ -3569,7 +3573,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Open the Divoox app and allow location: you’ll see the restaurants in your area, closest first.',
           'Tap “Food” and then a restaurant. Tap a dish to see its details: choose the size, the extras, and the quantity, and tap “Add to cart.”',
-          'Go to the cart. Mark your address on the map or type it, and add notes if needed (for example, “ring twice”).',
+          'Go to the cart. Type your address and tap the right suggestion (or mark the spot on the map), and add notes if needed (for example, “ring twice”).',
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',
           'Review the breakdown: food, delivery, service, and tip. What you see is what you pay.',
           'Tap “Continue to payment.” The card form appears right there, inside the app, secured by Stripe. Once you pay, you see “Order placed!” with the number and the total; tap “Track order” to follow it live.',

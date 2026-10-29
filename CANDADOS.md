@@ -1485,3 +1485,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** con dos cambios subidos seguidos, la publicación del primero bajaba el código del segundo (el `checkout` de `workflow_run` toma la punta de main) y su control la frenaba: «index.html: la web no lleva el commit …». Visto tres veces (b781d13, bff3eeb, 17103cc): el sitio de pruebas se quedaba en una versión vieja.
 - **Arreglo (`.github/workflows/publicar.yml`):** un paso «revisar» publica solo si la versión verificada es la última de main (sin contar los cambios con [skip ci]); si hay una más nueva, avisa y deja que esa publique al terminar su verificación. El `checkout` baja exactamente `workflow_run.head_sha`.
 - **No tocar:** nunca volver al checkout sin `ref`; nunca publicar una versión vieja encima de una más nueva.
+
+## C-DIRECCION-CERCA (29 oct 2026) — todos los países
+
+- **Qué se rompía:** al escribir «100 Biscayne» en el carrito, desde Miami, las primeras sugerencias eran de Canadá y Ohio. La mayoría de las casillas de dirección no mandan la ubicación de la persona, y sin ella Google no sabe qué va primero.
+- **Arreglo:** `/datos/lugares/sugerencias` usa la ubicación que manda la pantalla y, si no hay, la ciudad aproximada de la conexión (`request.cf` de Cloudflare, o las cabeceras `cf-iplatitude`/`cf-iplongitude`), con un radio de 30 km como preferencia (no como límite). En el carrito, sin GPS, se usa la ubicación de la tienda.
+- **Prueba:** `lugares.test.ts` («C-DIRECCION-CERCA», en rojo sin el arreglo).
