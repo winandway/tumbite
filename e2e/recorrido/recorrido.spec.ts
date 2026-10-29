@@ -604,7 +604,7 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-registro');
     await cli.getByRole('checkbox').click(); // acepta los términos
     await cli.getByRole('button', { name: L.crearCuenta }).click();
-    await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
+    await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
     await foto(cli, 'cliente-inicio');
     // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
@@ -635,7 +635,7 @@ for (const idioma of ['en', 'es'] as const) {
         "UPDATE restaurantes SET estado = 'pausado', abierto = 0 WHERE estado = 'aprobado' AND (nombre LIKE 'Pizza Bella %' OR nombre LIKE 'Bella Pizza %') AND creado_en < datetime('now', '-30 minutes')",
       );
     await cli.goto('/app/');
-    await expect(cli.getByText(restaurante)).toBeVisible({ timeout: 20_000 });
+    await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     // «Comida» abre la lista de restaurantes (diseño aprobado del 14 oct) y de ahí, el menú.
     await cli.getByRole('button', { name: /^(Comida|Food)$/ }).click();
     await expect(cli.getByLabel(/Buscar restaurantes|Search restaurants/)).toBeVisible();
@@ -690,7 +690,9 @@ for (const idioma of ['en', 'es'] as const) {
       if (!cli.url().includes('/restaurant/')) {
         await cli.goto('/app/');
         try {
-          await cli.getByText(restaurante, { exact: true }).click({ timeout: 15_000 });
+          await cli
+            .getByRole('button', { name: restaurante, exact: true })
+            .click({ timeout: 15_000 });
         } catch (e) {
           console.error(
             'DEPURAR inicio:',
@@ -1169,7 +1171,7 @@ for (const idioma of ['en', 'es'] as const) {
     await ponerEfectivo(true);
     try {
       await cli.goto('/app/');
-      await cli.getByText(restaurante, { exact: true }).click();
+      await cli.getByRole('button', { name: restaurante, exact: true }).click();
       await cli
         .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
         .filter({ visible: true })
@@ -1232,7 +1234,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // El cliente cumple años: al poner los nudos en el carrito, le aparece el regalo.
     await cli.goto('/app/');
-    await cli.getByText(restaurante, { exact: true }).click();
+    await cli.getByRole('button', { name: restaurante, exact: true }).click();
     await cli
       .getByRole('button', { name: `${L.agregar} ${plato.nudos}` })
       .filter({ visible: true })
@@ -1585,7 +1587,7 @@ for (const idioma of ['en', 'es'] as const) {
         ).toBe(true);
         // El cliente pide y elige «Efectivo al recibir».
         await cli.goto('/app/');
-        await cli.getByText(restaurante, { exact: true }).click();
+        await cli.getByRole('button', { name: restaurante, exact: true }).click();
         await cli
           .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
           .filter({ visible: true })

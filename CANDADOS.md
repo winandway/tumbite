@@ -1585,3 +1585,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo quedó:** tablas `pedidos_grupo` (código secreto de 22 caracteres) y `pedidos_grupo_items`. Rutas en `apps/servidor/src/rutas/grupos.ts`: crear, ver (con el precio de hoy y quién agregó qué), agregar (validado como un pedido normal con `lineasDeRestaurante`), quitar (lo suyo; el anfitrión, cualquiera), cerrar (solo el anfitrión; devuelve las líneas para su carrito) y cancelar. Topes: 100 platos y 20 personas. Este módulo NO cobra: paga el anfitrión desde su carrito, como siempre.
 - **App del cliente:** «Hacer un pedido en grupo» en el menú (`app/restaurant/[id].tsx`, con `?grupo=` agrega al grupo) y la pantalla `app/group/[codigo].tsx` (compartir, agregar, quitar, cerrar y pagar; se refresca cada 8 segundos). Docs: guía «group-order». Por ahora solo restaurantes; dividir el pago queda para después.
 - **Prueba:** `rutas/grupos.test.ts`.
+
+## C-RECORRIDO-BOTON-RESTAURANTE (29 oct 2026) — pruebas
+
+- **Qué se rompió:** al llegar la fila «Pedir otra vez» al inicio, el nombre del restaurante aparece dos veces y el recorrido (`getByText(restaurante, { exact: true })`) fallaba por ambigüedad: la verificación de GitHub se puso en rojo y no se publicó.
+- **Arreglo:** el recorrido toca el BOTÓN del restaurante (`getByRole('button', { name: restaurante, exact: true })`) y las comprobaciones de que se ve usan `.first()`. La fila no cambia.
