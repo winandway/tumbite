@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { type ServicioCatalogo, enIdioma } from '@tumbite/compartido';
+import { type ServicioCatalogo, enIdioma, recomendarRestaurantes } from '@tumbite/compartido';
 import { Boton, MenuCuenta, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
@@ -71,6 +71,24 @@ export function Inicio() {
   const filtrados = useMemo(
     () => (lista ?? []).filter((r) => !soloAbiertos || (r.abiertoAhora ?? r.abierto)),
     [lista, soloAbiertos],
+  );
+
+  // C-TE-PUEDE-GUSTAR: lo que ya pidió decide qué tipo de comida recomendar.
+  const [yaPedidos, setYaPedidos] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!usuario) return;
+    api
+      .pedir<{ pedidos: { estado: string; restauranteId: string }[] }>('GET', '/datos/mis-pedidos')
+      .then((r) =>
+        setYaPedidos(
+          new Set(r.pedidos.filter((p) => p.estado === 'entregado').map((p) => p.restauranteId)),
+        ),
+      )
+      .catch(() => setYaPedidos(new Set()));
+  }, [api, usuario]);
+  const recomendados = useMemo(
+    () => recomendarRestaurantes(lista ?? [], yaPedidos),
+    [lista, yaPedidos],
   );
 
   // Lo único que es un monto real pendiente: el carrito armado y sin pagar.
@@ -142,6 +160,17 @@ export function Inicio() {
           </Text>
         )}
         <PedirOtraVezInicio idioma={idioma} />
+        {recomendados.length ? (
+          <Restaurantes
+            idioma={idioma}
+            lista={recomendados}
+            cargando={false}
+            titulo={idioma === 'en' ? 'You might like' : 'Te puede gustar'}
+            testID="te-puede-gustar"
+            alTocar={(r) => router.push(`/restaurant/${r.id}`)}
+            alTocarEjemplo={() => setPronto(true)}
+          />
+        ) : null}
         <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
         <Restaurantes
           idioma={idioma}

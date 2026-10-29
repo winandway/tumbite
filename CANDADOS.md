@@ -1644,3 +1644,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** el repartidor no sabía hacia dónde moverse para tener más ofertas (DoorDash tiene «Dash Now» y Uber Driver sus zonas).
 - **Arreglo:** `GET /datos/repartidor/demanda?lat&lng` (`apps/servidor/src/rutas/demanda.ts`): pedidos de la última hora de la ciudad del repartidor, agrupados por geohash de 6 letras desde el LOCAL (nunca la casa del cliente); celdas con un solo pedido no salen; cinco o más es «alta». Solo devuelve centro, cantidad y nivel: nada de nombres, direcciones, pedidos ni dinero. App Driver: círculos rojos translúcidos en el mapa del inicio (`zonasDemanda` en `piezas/Mapa.tsx` y `Mapa.web.tsx`), se lee cada minuto. Docs: guía «busy-areas».
 - **Prueba:** `apps/servidor/src/mapaDemanda.test.ts`.
+
+## C-TE-PUEDE-GUSTAR (29 oct 2026) — todos los países
+
+- **Qué faltaba:** el inicio no recomendaba restaurantes nuevos según lo que la persona ya pidió (DoorDash «You might like»).
+- **Arreglo:** `recomendarRestaurantes` (`packages/compartido/src/recomendados.ts`): mismo tipo de comida que sus pedidos entregados, abiertos, sin los ya probados, el más cercano primero; sin historial no muestra nada. En `apps/cliente/src/Inicio.tsx` la fila «Te puede gustar» usa la misma tarjeta de `Restaurantes` con `titulo` y `testID="te-puede-gustar"` (la lista normal sigue siendo `lista-restaurantes`, la que usa el recorrido). Docs: guía «you-might-like».
+- **Prueba:** `compartido/recomendados.test.ts`.

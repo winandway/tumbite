@@ -212,6 +212,19 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'you-might-like',
+        titulo: '«Te puede gustar»: restaurantes nuevos para ti',
+        resumen:
+          'En el inicio te mostramos restaurantes abiertos y cercanos del tipo de comida que ya pediste y que todavía no probaste.',
+        explicacion: [
+          'Cuando ya recibiste algún pedido, el inicio suma la fila «Te puede gustar», debajo de «Pedir otra vez».',
+          'Salen restaurantes del mismo tipo de comida que ya pediste (pizza, sushi, comida cubana…), abiertos ahora y del más cercano al más lejano. Los que ya probaste no se repiten aquí: están en «Pedir otra vez».',
+          'Si todavía no pediste nada, la fila no aparece y ves la lista de siempre.',
+        ],
+        preguntas: ['¿Por qué me recomiendan estos restaurantes?'],
+        pasos: ['Abre el inicio.', 'Desliza la fila «Te puede gustar» y toca uno.'],
+      },
+      {
         id: 'favorites',
         titulo: 'Favoritos: guarda tus restaurantes',
         resumen:
@@ -3405,6 +3418,19 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I show someone where my order is?', 'What does the other person see?'],
         pasos: ['Open your order.', 'Tap “Share tracking”.', 'Send it by WhatsApp, text or email.'],
+      },
+      {
+        id: 'you-might-like',
+        titulo: '“You might like”: new restaurants for you',
+        resumen:
+          'On the home screen we show open, nearby restaurants of the kind of food you already ordered that you haven’t tried yet.',
+        explicacion: [
+          'Once you’ve received an order, the home screen adds the “You might like” row, below “Order again”.',
+          'It shows restaurants of the same kind of food you ordered (pizza, sushi, Cuban food…), open now, nearest first. The ones you already tried don’t repeat here: they’re in “Order again”.',
+          'If you haven’t ordered yet, the row doesn’t appear and you see the usual list.',
+        ],
+        preguntas: ['Why am I seeing these restaurants?'],
+        pasos: ['Open the home screen.', 'Swipe the “You might like” row and tap one.'],
       },
       {
         id: 'favorites',

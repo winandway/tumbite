@@ -78,12 +78,17 @@ export function Restaurantes({
   alTocar,
   alTocarEjemplo,
   cargando,
+  titulo,
+  testID = 'lista-restaurantes',
 }: {
   idioma: Idioma;
   lista: Restaurante[];
   alTocar: (r: Restaurante) => void;
   alTocarEjemplo: () => void;
   cargando: boolean;
+  /** C-TE-PUEDE-GUSTAR: la misma fila con otro título (sin «Ver todos»). */
+  titulo?: string;
+  testID?: string;
 }) {
   const t = textosInicio(idioma);
   // Tres tarjetas a la vista, como en la pantalla aprobada.
@@ -96,7 +101,7 @@ export function Restaurantes({
       : null;
   const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
   return (
-    <View style={{ marginTop: 20 }} testID="lista-restaurantes">
+    <View style={{ marginTop: 20 }} testID={testID}>
       <View
         style={{
           flexDirection: 'row',
@@ -105,8 +110,10 @@ export function Restaurantes({
           marginHorizontal: 16,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.cerca}</Text>
-        {lista.length > 3 ? (
+        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+          {titulo ?? t.cerca}
+        </Text>
+        {!titulo && lista.length > 3 ? (
           <Text
             style={{ color: '#5E5E5E', fontWeight: '600' }}
             onPress={() => router.push('/restaurants')}
