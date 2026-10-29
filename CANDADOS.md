@@ -1589,4 +1589,4 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-RECORRIDO-BOTON-RESTAURANTE (29 oct 2026) — pruebas
 
 - **Qué se rompió:** al llegar la fila «Pedir otra vez» al inicio, el nombre del restaurante aparece dos veces y el recorrido (`getByText(restaurante, { exact: true })`) fallaba por ambigüedad: la verificación de GitHub se puso en rojo y no se publicó.
-- **Arreglo:** el recorrido toca el BOTÓN del restaurante (`getByRole('button', { name: restaurante, exact: true })`) y las comprobaciones de que se ve usan `.first()`. La fila no cambia.
+- **Arreglo:** el recorrido toca la ÚLTIMA tarjeta con el nombre del restaurante (`getByRole('button', { name: restaurante, exact: true }).last()`): en el inicio, «Tus regalos» y «Pedir otra vez» van arriba y la lista de restaurantes abajo y las comprobaciones de que se ve usan `.first()`. La fila no cambia.

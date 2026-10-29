@@ -692,6 +692,7 @@ for (const idioma of ['en', 'es'] as const) {
         try {
           await cli
             .getByRole('button', { name: restaurante, exact: true })
+            .last()
             .click({ timeout: 15_000 });
         } catch (e) {
           console.error(
@@ -1171,7 +1172,7 @@ for (const idioma of ['en', 'es'] as const) {
     await ponerEfectivo(true);
     try {
       await cli.goto('/app/');
-      await cli.getByRole('button', { name: restaurante, exact: true }).click();
+      await cli.getByRole('button', { name: restaurante, exact: true }).last().click();
       await cli
         .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
         .filter({ visible: true })
@@ -1234,7 +1235,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // El cliente cumple años: al poner los nudos en el carrito, le aparece el regalo.
     await cli.goto('/app/');
-    await cli.getByRole('button', { name: restaurante, exact: true }).click();
+    await cli.getByRole('button', { name: restaurante, exact: true }).last().click();
     await cli
       .getByRole('button', { name: `${L.agregar} ${plato.nudos}` })
       .filter({ visible: true })
@@ -1587,7 +1588,7 @@ for (const idioma of ['en', 'es'] as const) {
         ).toBe(true);
         // El cliente pide y elige «Efectivo al recibir».
         await cli.goto('/app/');
-        await cli.getByRole('button', { name: restaurante, exact: true }).click();
+        await cli.getByRole('button', { name: restaurante, exact: true }).last().click();
         await cli
           .getByRole('button', { name: `${L.agregar} ${plato.limonada}` })
           .filter({ visible: true })
