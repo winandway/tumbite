@@ -37,23 +37,34 @@ export async function metricasRepartidor(db: D1Database, repartidorId: string) {
   const u = { id: repartidorId };
   const estrellas = await db
     .prepare(
-      `SELECT e, culpa FROM (
-         SELECT c.estrellas_repartidor AS e, c.culpa_restaurante AS culpa, c.creado_en FROM calificaciones c
+      `SELECT e, creado_en FROM (
+         SELECT c.estrellas_repartidor AS e, c.creado_en FROM calificaciones c
            JOIN pedidos p ON p.id = c.pedido_id
           WHERE p.repartidor_id = ?1 AND c.estrellas_repartidor IS NOT NULL
+            AND COALESCE(c.culpa_restaurante, 0) = 0
          -- Divoox Moto · M8: las de los pasajeros cuentan igual que las de Comida.
          UNION ALL
-         SELECT k.estrellas, 0, k.creado_en FROM calificaciones_viaje k
+         SELECT k.estrellas, k.creado_en FROM calificaciones_viaje k
            JOIN operaciones o ON o.id = k.operacion_id
           WHERE o.conductor_id = ?1 AND k.de = 'pasajero')
         ORDER BY creado_en DESC LIMIT ${ULTIMAS}`,
     )
     .bind(u.id)
-    .all<{ e: number; culpa: number | null }>();
-  // F18: si el cliente marcó que la mala nota fue culpa del restaurante, no le cuenta al repartidor
-  // (lo que prometen Docs y la web).
-  const cuentan = estrellas.results.filter((x) => !x.culpa);
-  const excluidas = estrellas.results.length - cuentan.length;
+    .all<{ e: number; creado_en: string }>();
+  // F18 + C-METRICAS-VENTANA: las notas que fueron culpa del restaurante se quitan ANTES de tomar
+  // las últimas 100 (si no, la ventana quedaba corta). «Excluidas» son las quitadas en ese mismo
+  // período, para mostrárselo al repartidor.
+  const cuentan = estrellas.results;
+  const desde = cuentan.at(-1)?.creado_en ?? null;
+  const fuera = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
+        WHERE p.repartidor_id = ? AND c.estrellas_repartidor IS NOT NULL AND c.culpa_restaurante = 1
+          AND (? IS NULL OR c.creado_en >= ?)`,
+    )
+    .bind(u.id, desde, desde)
+    .first<{ n: number }>();
+  const excluidas = Number(fuera?.n ?? 0);
   const cuantas = cuentan.length;
   const promedio = cuantas
     ? Math.round((cuentan.reduce((s, x) => s + x.e, 0) / cuantas) * 10) / 10
@@ -95,10 +106,14 @@ export async function metricasRepartidor(db: D1Database, repartidorId: string) {
 
   // Puntualidad: entregado antes de la hora «a más tardar» fijada al aceptar.
   const ms = (t: string | null) => (t ? new Date(`${t.replace(' ', 'T')}Z`).getTime() : null);
-  const puntuales = entregados.results.filter((p) => {
-    const a = ms(p.aceptado_en);
-    const e = ms(p.entregado_en);
-    if (a == null || e == null) return true;
+  // C-METRICAS-VENTANA: sin hora de aceptación o de entrega no se puede saber; ese pedido queda
+  // fuera de la cuenta (antes contaba como puntual).
+  const medibles = entregados.results.filter(
+    (p) => ms(p.aceptado_en) != null && ms(p.entregado_en) != null,
+  );
+  const puntuales = medibles.filter((p) => {
+    const a = ms(p.aceptado_en)!;
+    const e = ms(p.entregado_en)!;
     const limite =
       (Number(p.tiempo_prep_min ?? 20) + minutosDeViaje(Number(p.distancia_km ?? 3)) + MARGEN_MIN) *
       60_000;
@@ -125,7 +140,7 @@ export async function metricasRepartidor(db: D1Database, repartidorId: string) {
       de: nEntregados + nAbandonos,
       minimo: MINIMO_FINALIZACION,
     },
-    puntualidad: { porcentaje: pct(puntuales, nEntregados), de: nEntregados },
+    puntualidad: { porcentaje: pct(puntuales, medibles.length), de: medibles.length },
     entregas30Dias: Number(treinta?.n ?? 0),
     entregasTotales: Number(totales?.n ?? 0),
   };
