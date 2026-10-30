@@ -3,6 +3,7 @@ import {
   HITOS_FASE2,
   ORDEN_NIVELES,
   UMBRALES,
+  type Umbrales,
   type Hito,
   type ItemHito,
   type NivelRep,
@@ -40,6 +41,35 @@ export function modoRewards(env: EnvRewards): 'sombra' | 'piloto' | 'apagado' {
   return 'apagado';
 }
 
+/**
+ * C-REWARDS-AJUSTES (30 oct 2026, R3): lo que el equipo cambia desde el superadmin sin publicar.
+ * El porcentaje del margen arranca en 0: sin él, ningún premio tiene monto.
+ */
+export type AjustesRewards = {
+  umbrales: Umbrales;
+  porcentajeMargen: number;
+  topePremioCentavos: number;
+  hitoUnidades: number;
+};
+export const AJUSTES_INICIALES: AjustesRewards = {
+  umbrales: { ...UMBRALES },
+  porcentajeMargen: 0,
+  topePremioCentavos: 0,
+  hitoUnidades: 100,
+};
+export async function leerAjustes(db: D1Database): Promise<AjustesRewards> {
+  const f = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'rewards_ajustes'")
+    .first<{ valor: string }>();
+  if (!f) return AJUSTES_INICIALES;
+  try {
+    return { ...AJUSTES_INICIALES, ...(JSON.parse(f.valor) as Partial<AjustesRewards>) };
+  } catch (e) {
+    console.error('rewards: ajustes ilegibles, se usan los iniciales', e);
+    return AJUSTES_INICIALES;
+  }
+}
+
 /** Lo que ve el repartidor en Driver: el último día calculado, si Rewards está activo para él. */
 export async function reputacionVisible(
   env: EnvRewards,
@@ -72,7 +102,8 @@ export async function reputacionVisible(
   if (!f) return null;
   const i = ORDEN_NIVELES.indexOf(f.nivel);
   const prox = ORDEN_NIVELES.at(i + 1);
-  const umbral = prox && prox !== 'inicial' ? new Map(Object.entries(UMBRALES)).get(prox) : null;
+  const { umbrales } = await leerAjustes(db);
+  const umbral = prox && prox !== 'inicial' ? new Map(Object.entries(umbrales)).get(prox) : null;
   return {
     puntaje: Number(f.puntaje),
     nivel: f.nivel,
@@ -323,6 +354,7 @@ export async function calcularYGuardar(db: D1Database, rid: string, hoy: string)
     previo ? { nivel: previo.nivel_con_gracia, debajoDesde: previo.debajo_desde } : null,
     r.puntaje,
     hoy,
+    (await leerAjustes(db)).umbrales,
   );
   const eleg = elegibilidad(r);
   await db

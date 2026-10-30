@@ -700,6 +700,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
   ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
   [
+    'Los umbrales van en orden: Plata menor que Oro, y Oro menor que Diamante.',
+    'Thresholds go in order: Silver below Gold, and Gold below Diamond.',
+  ],
+  [
     'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
     'That service can’t be turned on for the pilot. Moto and Car carry passengers and are waiting for legal approval and insurance.',
   ],

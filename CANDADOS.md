@@ -1984,3 +1984,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** `GET /datos/repartidor/mi-nivel` (solo si Rewards está activo para esa persona; si no, 404) con los cinco componentes del puntaje y su máximo (30/25/20/15/10), la experiencia por servicio, la elegibilidad y el avance al primer hito. En Driver, la tarjeta `MiNivel` debajo del nivel explica cada parte en palabras simples, como «Ratings» de Dasher.
 - **Candado:** `sombra.test.ts` (los cinco componentes en orden, máximo 30 en finalización, experiencia de comida, hito de 100; 404 sin Rewards activo).
+
+## C-REWARDS-AJUSTES (30 oct 2026) — todos los países
+
+- **Qué es:** Superadmin → «Rewards» cambia sin publicar: umbrales de Plata, Oro y Diamante (en orden, si no 400), porcentaje del margen (0 a 50), tope por premio, entregas por hito y presupuesto por ciudad y mes (`rewards_presupuesto`). Se guardan en `config.rewards_ajustes`; el cálculo diario y «Mi nivel» los leen (`leerAjustes`). Arranca con porcentaje 0 y sin presupuesto: nada se paga hasta que el equipo los fije.
+- **Candado:** `sombra.test.ts` (los umbrales nuevos cambian el nivel; el presupuesto se guarda; fuera de orden se rechaza), `reputacion.test.ts` (umbrales ajustables) y `SuperRewards.test.tsx` (el formulario manda los valores en centavos).

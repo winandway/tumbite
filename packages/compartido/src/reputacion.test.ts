@@ -5,6 +5,7 @@ import {
   UMBRALES,
   calcularReputacion,
   elegibilidad,
+  nivelPorPuntaje,
   pesoUnidad,
   puntosFinalizacion,
   siguienteNivel,
@@ -168,5 +169,16 @@ describe('nivel con gracia (sube al momento, baja tras 7 días y 3 puntos de mar
   it('si se recupera antes de 7 días, el contador se borra', () => {
     const d1 = siguienteNivel({ nivel: 'oro', debajoDesde: null }, 70, '2026-10-01');
     expect(siguienteNivel(d1, 76, '2026-10-03')).toEqual({ nivel: 'oro', debajoDesde: null });
+  });
+});
+
+// C-REWARDS-AJUSTES (30 oct 2026): umbrales cambiados desde el superadmin.
+describe('umbrales ajustables', () => {
+  it('con umbrales más bajos, el mismo puntaje da un nivel más alto', () => {
+    expect(nivelPorPuntaje(70)).toBe('plata');
+    expect(nivelPorPuntaje(70, { plata: 50, oro: 65, diamante: 80 })).toBe('oro');
+    expect(siguienteNivel(null, 70, '2026-10-30', { plata: 50, oro: 65, diamante: 80 }).nivel).toBe(
+      'oro',
+    );
   });
 });

@@ -42,6 +42,8 @@ export const MUESTRA_MINIMA = 20;
 /** Por debajo de este peso total la reputación es «provisional» (como las primeras 50 de DoorDash). */
 export const PESO_PROVISIONAL = 50;
 export const UMBRALES = { plata: 63, oro: 77, diamante: 85 } as const;
+/** C-REWARDS-AJUSTES: los umbrales se pueden cambiar desde el superadmin sin publicar de nuevo. */
+export type Umbrales = { plata: number; oro: number; diamante: number };
 export const MARGEN_BAJADA = 3;
 export const DIAS_GRACIA = 7;
 
@@ -140,21 +142,15 @@ export type Reputacion = {
 export type NivelRep = 'inicial' | 'plata' | 'oro' | 'diamante';
 export const ORDEN_NIVELES: readonly NivelRep[] = ['inicial', 'plata', 'oro', 'diamante'];
 
-export function nivelPorPuntaje(p: number): NivelRep {
-  if (p >= UMBRALES.diamante) return 'diamante';
-  if (p >= UMBRALES.oro) return 'oro';
-  if (p >= UMBRALES.plata) return 'plata';
+export function nivelPorPuntaje(p: number, u: Umbrales = UMBRALES): NivelRep {
+  if (p >= u.diamante) return 'diamante';
+  if (p >= u.oro) return 'oro';
+  if (p >= u.plata) return 'plata';
   return 'inicial';
 }
 
-const umbralDe = (n: NivelRep) =>
-  n === 'diamante'
-    ? UMBRALES.diamante
-    : n === 'oro'
-      ? UMBRALES.oro
-      : n === 'plata'
-        ? UMBRALES.plata
-        : 0;
+const umbralDe = (n: NivelRep, u: Umbrales = UMBRALES) =>
+  n === 'diamante' ? u.diamante : n === 'oro' ? u.oro : n === 'plata' ? u.plata : 0;
 
 export function calcularReputacion(unidades: Unidad[], ofertas: OfertaRep[]): Reputacion {
   const v = ventanaPonderada(unidades);
@@ -241,13 +237,14 @@ export function siguienteNivel(
   previo: { nivel: NivelRep; debajoDesde: string | null } | null,
   puntaje: number,
   hoy: string,
+  u: Umbrales = UMBRALES,
 ): { nivel: NivelRep; debajoDesde: string | null } {
-  const calculado = nivelPorPuntaje(puntaje);
+  const calculado = nivelPorPuntaje(puntaje, u);
   if (!previo) return { nivel: calculado, debajoDesde: null };
   const ip = ORDEN_NIVELES.indexOf(previo.nivel);
   const ic = ORDEN_NIVELES.indexOf(calculado);
   if (ic >= ip) return { nivel: ic > ip ? calculado : previo.nivel, debajoDesde: null };
-  if (puntaje >= umbralDe(previo.nivel) - MARGEN_BAJADA)
+  if (puntaje >= umbralDe(previo.nivel, u) - MARGEN_BAJADA)
     return { nivel: previo.nivel, debajoDesde: null };
   const desde = previo.debajoDesde ?? hoy;
   const dias = Math.floor((Date.parse(hoy) - Date.parse(desde)) / 86_400_000);

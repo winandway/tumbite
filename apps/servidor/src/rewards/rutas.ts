@@ -2,12 +2,14 @@ import { Hono } from 'hono';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { type Variables, base, exigir } from '../sesion';
-import { ErrorDatos } from '../validar';
+import { ErrorDatos, leerCuerpo } from '../validar';
+import { z } from 'zod';
 import { HITOS_FASE2, unidadesQueCuentan } from '@tumbite/compartido';
 import {
   type EnvRewards,
   calcularYGuardar,
   itemsParaHito,
+  leerAjustes,
   modoRewards,
   reputacionVisible,
 } from './sombra';
@@ -118,4 +120,69 @@ rewardsSombra.get('/repartidor/mi-nivel', async (c) => {
     experiencia: JSON.parse(f?.experiencia_json ?? '{}') as Record<string, number>,
     hito: hito ? { meta: hito.unidades, contadas: Math.min(cuentan, hito.unidades) } : null,
   });
+});
+
+// ---------------------------------------------------------------- C-REWARDS-AJUSTES (R3)
+
+rewardsSombra.get('/admin/rewards/ajustes', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const { results: presupuestos } = await db
+    .prepare(
+      'SELECT zona_id AS zona, mes, programa, tope_centavos AS centavos FROM rewards_presupuesto ORDER BY mes DESC, zona_id LIMIT 50',
+    )
+    .all();
+  return c.json({ ajustes: await leerAjustes(db), presupuestos });
+});
+
+rewardsSombra.put('/admin/rewards/ajustes', async (c) => {
+  const yo = exigir(c, 'admin');
+  const nivel = z.number().min(1).max(100);
+  const d = await leerCuerpo(
+    c,
+    z
+      .object({
+        umbrales: z.object({ plata: nivel, oro: nivel, diamante: nivel }),
+        porcentajeMargen: z.number().min(0).max(50),
+        topePremioCentavos: z.number().int().min(0).max(1_000_000),
+        hitoUnidades: z.number().int().min(10).max(10_000),
+        presupuesto: z
+          .object({
+            zona: z.string().min(2).max(64),
+            mes: z.string().regex(/^\d{4}-\d{2}$/),
+            centavos: z.number().int().min(0).max(100_000_000),
+          })
+          .optional(),
+      })
+      .refine((x) => x.umbrales.plata < x.umbrales.oro && x.umbrales.oro < x.umbrales.diamante, {
+        message: 'Los umbrales van en orden: Plata menor que Oro, y Oro menor que Diamante.',
+        path: ['umbrales'],
+      }),
+  );
+  const db = base(c);
+  const { presupuesto, ...ajustes } = d;
+  const lote = [
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('rewards_ajustes', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(JSON.stringify(ajustes)),
+  ];
+  if (presupuesto)
+    lote.push(
+      db
+        .prepare(
+          `INSERT INTO rewards_presupuesto (zona_id, mes, programa, tope_centavos) VALUES (?, ?, ?, ?)
+           ON CONFLICT(zona_id, mes, programa) DO UPDATE SET tope_centavos = excluded.tope_centavos`,
+        )
+        .bind(
+          presupuesto.zona,
+          presupuesto.mes,
+          HITOS_FASE2[0]?.programa ?? 'primer-hito-2026',
+          presupuesto.centavos,
+        ),
+    );
+  await db.batch(lote);
+  console.warn('rewards: ajustes cambiados por', yo.id, JSON.stringify(d));
+  return c.json({ ok: true });
 });

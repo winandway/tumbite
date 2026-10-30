@@ -616,3 +616,54 @@ describe('C-REWARDS-MI-NIVEL: el detalle del nivel para el repartidor', () => {
     expect(r.estado).toBe(404);
   });
 });
+
+// C-REWARDS-AJUSTES (30 oct 2026, R3): el equipo ajusta Rewards sin publicar de nuevo.
+describe('C-REWARDS-AJUSTES: ajustes de Rewards desde el superadmin', () => {
+  it('guarda umbrales, porcentaje, tope y presupuesto; el cálculo usa los umbrales nuevos', async () => {
+    const m = mundoSombra();
+    const admin = await m.cuenta('admin');
+    const rep = await m.cuenta('repartidor');
+    const antes = await m.llamar('GET', '/datos/admin/rewards/ajustes', undefined, admin.token);
+    expect(antes.datos.ajustes).toMatchObject({
+      umbrales: { plata: 63, oro: 77, diamante: 85 },
+      porcentajeMargen: 0,
+    });
+    const guardar = await m.llamar(
+      'PUT',
+      '/datos/admin/rewards/ajustes',
+      {
+        umbrales: { plata: 10, oro: 20, diamante: 30 },
+        porcentajeMargen: 15,
+        topePremioCentavos: 5000,
+        hitoUnidades: 50,
+        presupuesto: { zona: 'US-FL-MIAMI', mes: '2026-11', centavos: 20000 },
+      },
+      admin.token,
+    );
+    expect(guardar.estado).toBe(200);
+    await pedidoEntregado(m, rep.id, { estrellas: 5 });
+    const r = await calcularYGuardar(m.DB, rep.id, '2026-10-30');
+    expect(r.nivel.nivel).toBe('diamante');
+    const pres = await m.DB.prepare(
+      "SELECT tope_centavos FROM rewards_presupuesto WHERE zona_id = 'US-FL-MIAMI' AND mes = '2026-11'",
+    ).first<{ tope_centavos: number }>();
+    expect(pres?.tope_centavos).toBe(20000);
+  });
+
+  it('umbrales fuera de orden se rechazan', async () => {
+    const m = mundoSombra();
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar(
+      'PUT',
+      '/datos/admin/rewards/ajustes',
+      {
+        umbrales: { plata: 80, oro: 70, diamante: 90 },
+        porcentajeMargen: 10,
+        topePremioCentavos: 1000,
+        hitoUnidades: 100,
+      },
+      admin.token,
+    );
+    expect(r.estado).toBe(400);
+  });
+});
