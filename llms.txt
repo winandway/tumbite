@@ -11,6 +11,12 @@
 
 - [Docs · Divoox](https://divoox.com/docs): Short guides for ordering, for restaurants, for drivers, and for the teams that open each city.
 - [How do I…? · Divoox](https://divoox.com/docs/how-to): The questions we get asked most, each with a step-by-step guide and real screenshots.
+- [Courses and presentations · Divoox](https://divoox.com/docs/courses): ⌘K← Docs Courses and presentationsCustomer presentationWhat’s new for ordering on Divoox: scheduling, ordering again, “You might like”, group orders and sh
+- [Customer presentation · Divoox](https://divoox.com/docs/courses/customers-presentation): What’s new for ordering on Divoox: scheduling, ordering again, “You might like”, group orders and sharing tracking.
+- [Restaurant presentation · Divoox](https://divoox.com/docs/courses/restaurants-presentation): The slides for talks with restaurants: what a restaurant gets from each Divoox tool.
+- [Course for salespeople · Divoox](https://divoox.com/docs/courses/salespeople-presentation): How to sell Divoox to a restaurant and support them from sign-up to their first order.
+- [Driver presentation · Divoox](https://divoox.com/docs/courses/drivers-presentation): How you earn with Divoox: going online, offers, shifts, top driver, safety and earnings.
+- [All presentations · Divoox](https://divoox.com/docs/courses/presentations): All four Divoox presentations as PDFs, for customers, restaurants, salespeople and drivers.
 - [Ordering · Divoox](https://divoox.com/docs/ordering): ⌘K← Docs OrderingShop at the grocery store, pharmacy or liquor storeIn Grocery, Pharmacy, Liquor and More you see the stores near you, search a product in 
 - [Shop at the grocery store, pharmacy or liquor store · Divoox](https://divoox.com/docs/ordering/shop-stores): In Grocery, Pharmacy, Liquor and More you see the stores near you, search a product in all of them at once and choose what happens if something is out.
 - [Your order alerts and how to call the driver without sharing your number · Divoox](https://divoox.com/docs/ordering/order-alerts-and-calls): We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can ca
@@ -66,7 +72,6 @@
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
 - [Print kitchen tickets · Divoox](https://divoox.com/docs/restaurants/print-tickets): Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.
 - [Connect your POS system · Divoox](https://divoox.com/docs/restaurants/pos-integration): With a key from your restaurant, your POS system receives Divoox orders and accepts them or marks them ready without touching the tablet.
-- [Divoox presentations (PDF)](https://divoox.com/docs/restaurants/presentations): PDF slides, with real app screens, to explain Divoox to customers and to give talks to restaurants.
 - [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
