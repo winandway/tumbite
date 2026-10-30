@@ -68,7 +68,7 @@
 - [x] Docs fácil de encontrar (Richard, 29 oct): íconos por guía, secciones distintas de las guías, el buscador abre lo que se toca y con Enter, direcciones viejas que siguen sirviendo, sección «Cursos y presentaciones» primera. Todos los países.
 - [x] Presentaciones nuevas para vendedores y para repartidores (ES/EN), con capturas reales del sitio de pruebas. Todos los países.
 - [x] Arreglo de paso: «Mis turnos» repetía el domingo 1 de noviembre por el cambio de hora. Todos los países.
-- [ ] Rehacer la captura de «Mis turnos» con el arreglo ya en pruebas y volver a generar la presentación de repartidores. Todos los países.
+- [x] Rehacer la captura de «Mis turnos» con el arreglo ya en pruebas y volver a generar la presentación de repartidores. Todos los países.
 
 ## Cada sesión
 
