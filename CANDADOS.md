@@ -2005,3 +2005,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** `pagarPremios` (corre al final del cálculo diario): un premio «ganado», con 14 días sin reclamos (`DIAS_RETENCION`) y su presupuesto reservado, pasa a «pagado» con UNA sentencia condicionada y acredita la billetera con un movimiento `ajuste`, referencia `premio:<programa>:<hito>` e id fijo `premio-<repartidor>-<programa>-<hito>` (nunca dos veces). Paga el menor entre el monto del hito y lo reservado. Sin reserva no paga. Queda en `rewards_eventos`.
 - **Ojo:** la tabla `movimientos` no admite el concepto «premio» (su CHECK); por eso es `ajuste` con su referencia. Para reportes, filtrar `referencia LIKE 'premio:%'`.
 - **Candado:** `sombra.test.ts` (diez a la vez = un pago y un evento; dentro de los 14 días no paga; sin reserva no paga).
+
+## C-REWARDS-APELACIONES (30 oct 2026) — todos los países
+
+- **Qué es:** en Driver («Mi nivel»), el repartidor elige una de sus últimas 10 entregas y cuenta qué pasó (10 a 500 letras, el borrador no se pierde). Solo sus propias entregas (si no, 404) y una vez por entrega (409). Soporte la ve en Superadmin → Rewards y la acepta o no (una sola vez: sentencia condicionada a «abierta»). Una entrega con apelación aceptada deja de contar en `unidadesPedidos`.
+- **Candado:** `sombra.test.ts` (apelar, no repetir, aceptar sube el puntaje, la ve como aceptada; entrega ajena 404).

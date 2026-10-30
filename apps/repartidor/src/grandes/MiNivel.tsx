@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
-import { type Api, type Idioma, enIdioma } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { type Api, ErrorApi, type Idioma, enIdioma, useBorrador } from '@tumbite/compartido';
+import { AvisoBorrador, Boton, C, Campo, almacenTelefono, e } from '@tumbite/movil';
 
 /**
  * C-REWARDS-MI-NIVEL (30 oct 2026, R2): el puntaje explicado, como «Ratings» de Dasher: cada parte
@@ -26,6 +26,13 @@ const T = {
     },
     hito: (a: number, b: number) => `Próximo premio: ${a} de ${b} entregas que cuentan`,
     riesgo: 'Cuidado: tu finalización o tus estrellas están por debajo del mínimo.',
+    apelar: '¿Algo no fue tu culpa? Pide revisar una entrega',
+    elegir: 'Elige la entrega',
+    motivo: 'Qué pasó (mínimo 10 letras)',
+    enviar: 'Pedir revisión',
+    enviada: 'Listo. Soporte la revisa; si tienes razón, esa entrega deja de contar.',
+    mias: 'Tus revisiones',
+    estados: { abierta: 'En revisión', aceptada: 'Aceptada', rechazada: 'No aceptada' },
   },
   en: {
     titulo: 'How your score is built',
@@ -45,6 +52,13 @@ const T = {
     },
     hito: (a: number, b: number) => `Next reward: ${a} of ${b} deliveries that count`,
     riesgo: 'Careful: your completion or your stars are below the minimum.',
+    apelar: 'Something wasn’t your fault? Ask us to review a delivery',
+    elegir: 'Choose the delivery',
+    motivo: 'What happened (at least 10 letters)',
+    enviar: 'Ask for a review',
+    enviada: 'Done. Support reviews it; if you’re right, that delivery stops counting.',
+    mias: 'Your reviews',
+    estados: { abierta: 'Under review', aceptada: 'Accepted', rechazada: 'Not accepted' },
   },
 };
 
@@ -70,6 +84,42 @@ export function MiNivel({ api, idioma }: { api: Api; idioma: Idioma }) {
       vivo = false;
     };
   }, [api]);
+  const [ap, setAp] = useState<{
+    apelaciones: { id: string; unidadId: string; estado: string; motivo: string }[];
+    entregas: { id: string; restaurante: string | null; entregadoEn: string }[];
+  } | null>(null);
+  const [elegida, setElegida] = useState('');
+  const [aviso, setAviso] = useState('');
+  const b = useBorrador({
+    formulario: 'apelacion',
+    cuenta: 'repartidor',
+    inicial: { motivo: '' },
+    almacen: almacenTelefono,
+  });
+  const cargarAp = useCallback(() => {
+    void api
+      .pedir<NonNullable<typeof ap>>('GET', '/datos/repartidor/apelaciones')
+      .then(setAp)
+      .catch((x: unknown) => console.warn('apelaciones', x));
+  }, [api]);
+  useEffect(cargarAp, [cargarAp]);
+  async function enviar() {
+    setAviso('');
+    try {
+      await api.pedir('POST', '/datos/repartidor/apelaciones', {
+        unidadTipo: 'pedido',
+        unidadId: elegida,
+        motivo: b.valores.motivo,
+      });
+      await b.limpiar();
+      setElegida('');
+      setAviso(t.enviada);
+      cargarAp();
+    } catch (x) {
+      // Lo escrito se queda para reintentar.
+      setAviso(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   if (!d) return null;
   const nombres = new Map(Object.entries(t.componentes));
   const servicios = new Map(Object.entries(t.servicios));
@@ -98,6 +148,47 @@ export function MiNivel({ api, idioma }: { api: Api; idioma: Idioma }) {
             {servicios.get(k)}: {n}
           </Text>
         ))}
+      {ap ? (
+        <View style={{ marginTop: 12 }} testID="apelaciones">
+          <Text style={{ fontWeight: '800' }}>{t.apelar}</Text>
+          <AvisoBorrador
+            visible={b.recuperado}
+            idioma={idioma}
+            empezar={() => void b.empezarDeNuevo()}
+          />
+          <Text style={{ marginTop: 6 }}>{t.elegir}</Text>
+          {ap.entregas.map((x) => (
+            <Pressable
+              key={x.id}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: elegida === x.id }}
+              onPress={() => setElegida(x.id)}
+              style={{ paddingVertical: 6 }}
+            >
+              <Text style={{ fontWeight: elegida === x.id ? '800' : '400' }}>
+                {elegida === x.id ? '● ' : '○ '}
+                {x.restaurante ?? ''} · {x.entregadoEn.slice(0, 16)}
+              </Text>
+            </Pressable>
+          ))}
+          <Campo
+            etiqueta={t.motivo}
+            value={b.valores.motivo}
+            onChangeText={(v) => b.cambiar('motivo', v)}
+            multiline
+          />
+          <Boton texto={t.enviar} alTocar={() => void enviar()} secundario />
+          {aviso ? <Text style={{ marginTop: 6 }}>{aviso}</Text> : null}
+          {ap.apelaciones.length ? (
+            <Text style={{ fontWeight: '800', marginTop: 8 }}>{t.mias}</Text>
+          ) : null}
+          {ap.apelaciones.map((x) => (
+            <Text key={x.id}>
+              {new Map(Object.entries(t.estados)).get(x.estado) ?? x.estado} · {x.motivo}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       {d.hito ? (
         <Text style={{ marginTop: 8, color: C.exito, fontWeight: '600' }}>
           {t.hito(d.hito.contadas, d.hito.meta)}

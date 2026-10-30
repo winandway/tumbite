@@ -35,6 +35,10 @@ const T = {
     guardar: 'Guardar ajustes',
     guardado: 'Ajustes guardados. Se aplican desde el próximo cálculo.',
     vigentes: 'Presupuestos guardados',
+    apelaciones: 'Apelaciones de repartidores',
+    sinApelaciones: 'No hay apelaciones abiertas.',
+    aceptar: 'Aceptar (deja de contar)',
+    rechazar: 'No aceptar',
   },
   en: {
     titulo: 'Rewards',
@@ -56,6 +60,10 @@ const T = {
     guardar: 'Save settings',
     guardado: 'Settings saved. They apply from the next calculation.',
     vigentes: 'Saved budgets',
+    apelaciones: 'Driver appeals',
+    sinApelaciones: 'No open appeals.',
+    aceptar: 'Accept (stops counting)',
+    rechazar: 'Don’t accept',
   },
 };
 
@@ -66,6 +74,13 @@ type Ajustes = {
   hitoUnidades: number;
   prioridadDespacho?: boolean;
 };
+type Apelacion = {
+  id: string;
+  nombre: string | null;
+  unidadId: string;
+  motivo: string;
+  creadoEn: string;
+};
 type Presupuesto = { zona: string; mes: string; programa: string; centavos: number };
 
 const mesActual = () => new Date().toISOString().slice(0, 7);
@@ -75,6 +90,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
+  const [apelaciones, setApelaciones] = useState<Apelacion[]>([]);
   const b = useBorrador({
     formulario: 'rewards-ajustes',
     cuenta: 'superadmin',
@@ -111,7 +127,20 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
         setPresupuestos(r.presupuestos);
       })
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+    pedir<{ apelaciones: Apelacion[] }>('GET', '/datos/admin/rewards/apelaciones')
+      .then((r) => setApelaciones(r.apelaciones))
+      .catch(() => setApelaciones([]));
   }, [cargarBase]);
+
+  async function resolver(id: string, estado: 'aceptada' | 'rechazada') {
+    setError('');
+    try {
+      await pedir('PUT', `/datos/admin/rewards/apelaciones/${id}`, { estado });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
   useEffect(cargar, [cargar]);
 
   async function guardar(e: React.FormEvent) {
@@ -201,6 +230,30 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
           {ok}
         </p>
       ) : null}
+      <h2>{t.apelaciones}</h2>
+      {apelaciones.length === 0 ? <p className="pista">{t.sinApelaciones}</p> : null}
+      <ul className="lista">
+        {apelaciones.map((a) => (
+          <li key={a.id}>
+            <div className="lista-texto">
+              <strong>{a.nombre ?? a.unidadId}</strong>
+              <span>
+                {a.creadoEn} · {a.motivo}
+              </span>
+            </div>
+            <button type="button" className="boton" onClick={() => void resolver(a.id, 'aceptada')}>
+              {t.aceptar}
+            </button>
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => void resolver(a.id, 'rechazada')}
+            >
+              {t.rechazar}
+            </button>
+          </li>
+        ))}
+      </ul>
       {presupuestos.length ? (
         <>
           <h2>{t.vigentes}</h2>

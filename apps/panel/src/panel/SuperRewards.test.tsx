@@ -14,6 +14,8 @@ describe('C-REWARDS-AJUSTES en el panel', () => {
       const metodo = init?.method ?? 'GET';
       llamadas.push({ metodo, cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined });
       if (metodo === 'PUT') return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      if (String(_url).endsWith('/apelaciones'))
+        return new Response(JSON.stringify({ apelaciones: [] }), { status: 200 });
       return new Response(
         JSON.stringify({
           ajustes: {
