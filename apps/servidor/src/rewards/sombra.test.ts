@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { HITOS_FASE2 } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 import {
   type EnvRewards,
+  borrarRewardsDe,
   calcularYGuardar,
   correrSombra,
   modoRewards,
@@ -311,6 +314,58 @@ describe('C-REWARDS-SOMBRA: no toca las operaciones', () => {
       .bind(rep.id)
       .first<{ n: number }>();
     expect(f?.n).toBe(1);
+  });
+});
+
+// C-REWARDS-LIMPIEZA (30 oct 2026): el reloj guardó la foto de un repartidor de prueba sin entregas y
+// esa fila impidió borrarlo (la limpieza de tiempo real del sitio de pruebas daba 500).
+describe('C-REWARDS-LIMPIEZA: Rewards no traba el borrado de usuarios de prueba', () => {
+  it('un repartidor sin ninguna entrega, viaje ni ruta no recibe foto diaria', async () => {
+    const m = mundoSombra();
+    const vacio = await m.cuenta('repartidor');
+    const r = await correrSombra(PRUEBAS, m.DB, new Date('2026-10-30T12:00:00Z'));
+    expect(r.calculados).toBe(0);
+    const f = await m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM reputacion_diaria WHERE repartidor_id = ?',
+    )
+      .bind(vacio.id)
+      .first<{ n: number }>();
+    expect(f?.n).toBe(0);
+  });
+
+  it('borrarRewardsDe vacía las cinco tablas de Rewards de esos usuarios y no toca a los demás', async () => {
+    const m = mundoSombra();
+    const [a, b] = [await m.cuenta('repartidor'), await m.cuenta('repartidor')];
+    for (const r of [a, b]) {
+      await pedidoEntregado(m, r.id, { estrellas: 5 });
+      await calcularYGuardar(m.DB, r.id, '2026-10-30');
+      await registrarHito(m.DB, r.id, HITOS_FASE2[0]!, {
+        unidades: 120,
+        nivel: 'oro',
+        zona: 'US-FL-MIAMI',
+        mes: '2026-10',
+      });
+    }
+    await m.DB.batch(borrarRewardsDe(m.DB, [a.id]));
+    for (const t of ['reputacion_diaria', 'rewards_reservas', 'rewards_hitos', 'rewards_eventos']) {
+      const cuenta = async (id: string) =>
+        (
+          await m.DB.prepare(`SELECT COUNT(*) AS n FROM ${t} WHERE repartidor_id = ?`)
+            .bind(id)
+            .first<{ n: number }>()
+        )?.n;
+      expect(await cuenta(a.id), t).toBe(0);
+      if (t === 'reputacion_diaria' || t === 'rewards_hitos')
+        expect(await cuenta(b.id), t).toBeGreaterThan(0);
+    }
+  });
+
+  it('toda limpieza de prueba borra lo de Rewards antes de borrar usuarios', () => {
+    const fuente = readFileSync(join(__dirname, '..', 'rutas', 'diagnostico.ts'), 'utf8');
+    const borrados = fuente.match(/DELETE FROM usuarios/g)?.length ?? 0;
+    const limpiezas = fuente.match(/borrarRewardsDe\(db/g)?.length ?? 0;
+    expect(borrados).toBeGreaterThan(0);
+    expect(limpiezas).toBe(borrados);
   });
 });
 

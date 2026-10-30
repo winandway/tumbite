@@ -1,3 +1,4 @@
+import { borrarRewardsDe } from '../rewards/sombra';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -170,6 +171,7 @@ diagnostico.post('/interno/diagnostico/s2', async (c) => {
     await db.batch([
       db.prepare('DELETE FROM retiros WHERE usuario_id = ?').bind(u),
       db.prepare('DELETE FROM movimientos WHERE usuario_id = ?').bind(u),
+      ...borrarRewardsDe(db, [u]),
       db.prepare('DELETE FROM usuarios WHERE id = ?').bind(u),
     ]);
   }
@@ -537,6 +539,7 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
       db.prepare('DELETE FROM retiros WHERE usuario_id = ?').bind(u),
       db.prepare('DELETE FROM movimientos WHERE usuario_id = ?').bind(u),
       db.prepare('DELETE FROM cuentas_stripe WHERE usuario_id = ?').bind(u),
+      ...borrarRewardsDe(db, [u]),
       db.prepare('DELETE FROM usuarios WHERE id = ?').bind(u),
     ]);
   }
@@ -749,6 +752,7 @@ diagnostico.post('/interno/diagnostico/f1', async (c) => {
       db.prepare('DELETE FROM habilitaciones_historial WHERE conductor_id IN (?, ?)').bind(z1, z2),
       db.prepare('DELETE FROM habilitaciones WHERE conductor_id IN (?, ?)').bind(z1, z2),
       db.prepare('DELETE FROM cumplimientos WHERE conductor_id IN (?, ?)').bind(z1, z2),
+      ...borrarRewardsDe(db, [z1, z2]),
       db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(z1, z2),
     ]);
   }
@@ -893,6 +897,7 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
       db.prepare('DELETE FROM lotes_ubicacion WHERE lote_id IN (?, ?)').bind(loteId, `${loteId}-v`),
       db.prepare('DELETE FROM ofertas WHERE repartidor_id IN (?, ?)').bind(libre, ocupado),
       db.prepare('DELETE FROM repartidores WHERE usuario_id IN (?, ?)').bind(libre, ocupado),
+      ...borrarRewardsDe(db, [libre, ocupado, dueno]),
       db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(libre, ocupado, dueno),
     ]);
   }
@@ -1028,6 +1033,7 @@ diagnostico.post('/interno/diagnostico/migraciones-prueba', async (c) => {
       db.prepare(`DELETE FROM kyc WHERE usuario_id IN (${marcas})`).bind(...ids),
       db.prepare(`DELETE FROM repartidor_datos WHERE usuario_id IN (${marcas})`).bind(...ids),
       db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...ids),
+      ...borrarRewardsDe(db, [...ids, revisor]),
       db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas}, ?)`).bind(...ids, revisor),
     ]);
   }
@@ -1130,6 +1136,7 @@ diagnostico.post('/interno/diagnostico/vivo', async (c) => {
     db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
     db.prepare(`DELETE FROM sesiones WHERE usuario_id IN (${marcas})`).bind(...todos),
     db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...todos),
+    ...borrarRewardsDe(db, todos),
     db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...todos),
   ]);
   return c.json({ borrado: true });
@@ -1480,6 +1487,7 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
       .bind(...usuarios),
     db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...usuarios),
     db.prepare('DELETE FROM restaurantes WHERE id LIKE ?').bind(like),
+    ...borrarRewardsDe(db, usuarios),
     db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...usuarios),
   ]);
   const resto = await db
@@ -1681,6 +1689,8 @@ diagnostico.post('/interno/diagnostico/reloj', async (c) => {
         db.prepare('DELETE FROM cobros WHERE pedido_id = ?').bind(pedido),
         db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
         db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
+        ...borrarRewardsDe(db, [cliente, dueno]),
+        ...borrarRewardsDe(db, [cliente, dueno]),
         db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(cliente, dueno),
         db.prepare(
           "DELETE FROM reloj_tareas WHERE clave LIKE 'reloj-diag:%' AND clave IN (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj-diag' AND empezada_en > datetime('now', '-1 hour'))",
@@ -1833,6 +1843,7 @@ diagnostico.post('/interno/diagnostico/s12', async (c) => {
       db.prepare('DELETE FROM cobros WHERE pedido_id = ?').bind(pedido),
       db.prepare('DELETE FROM pedidos WHERE id = ?').bind(pedido),
       db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest),
+      ...borrarRewardsDe(db, [cliente, dueno]),
       db.prepare('DELETE FROM usuarios WHERE id IN (?, ?)').bind(cliente, dueno),
     ]);
   }
@@ -2114,6 +2125,7 @@ diagnostico.post('/interno/diagnostico/l1', async (c) => {
         lote.push(db.prepare(`DELETE FROM ${t} WHERE pedido_id = ?`).bind(id));
     for (const id of pedidos) lote.push(db.prepare('DELETE FROM pedidos WHERE id = ?').bind(id));
     lote.push(db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest));
+    lote.push(...borrarRewardsDe(db, [cliente, dueno, rep]));
     lote.push(db.prepare('DELETE FROM usuarios WHERE id IN (?, ?, ?)').bind(cliente, dueno, rep));
     await db.batch(lote).catch((e: unknown) => console.error('L1: limpieza', e));
   }

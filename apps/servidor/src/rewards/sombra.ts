@@ -437,7 +437,7 @@ export async function registrarHito(
 }
 
 /** Una vuelta del modo sombra: hasta `tope` repartidores que todavía no tienen la foto de hoy. */
-export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new Date(), tope = 40) {
+export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new Date(), tope = 10) {
   if (modoRewards(env) !== 'sombra') return { modo: 'apagado' as const, calculados: 0 };
   const hoy = ahora.toISOString().slice(0, 10);
   const mes = hoy.slice(0, 7);
@@ -446,6 +446,12 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
       `SELECT u.id, COALESCE(u.zona_id, 'US-FL-MIAMI') AS zona FROM usuarios u
         WHERE u.rol = 'repartidor' AND u.activo = 1
           AND NOT EXISTS (SELECT 1 FROM reputacion_diaria d WHERE d.repartidor_id = u.id AND d.fecha = ?)
+          -- Sin ninguna entrega, viaje o ruta no hay nada que evaluar: no se guarda una foto vacía.
+          AND (EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado')
+               OR EXISTS (SELECT 1 FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+                           WHERE o.conductor_id = u.id AND v.estado IN ('terminado', 'cancelado'))
+               OR EXISTS (SELECT 1 FROM rutas_flex r WHERE r.conductor_id = u.id
+                           AND r.estado IN ('completada', 'con_incidencias')))
         LIMIT ?`,
     )
     .bind(hoy, tope)
@@ -464,3 +470,22 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
   }
   return { modo: 'sombra' as const, calculados: results.length };
 }
+
+/** Tablas de Rewards que guardan filas por repartidor (las limpiezas de prueba las borran antes que al usuario). */
+const TABLAS_REWARDS = [
+  'reputacion_diaria',
+  'rewards_reservas',
+  'rewards_hitos',
+  'rewards_eventos',
+  'apelaciones_repartidor',
+] as const;
+
+/** Sentencias para borrar todo lo de Rewards de unos usuarios; van antes del DELETE de usuarios. */
+export const borrarRewardsDe = (db: D1Database, ids: string[]): D1PreparedStatement[] =>
+  ids.length
+    ? TABLAS_REWARDS.map((t) =>
+        db
+          .prepare(`DELETE FROM ${t} WHERE repartidor_id IN (${ids.map(() => '?').join(', ')})`)
+          .bind(...ids),
+      )
+    : [];
