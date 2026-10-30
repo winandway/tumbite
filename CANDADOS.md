@@ -1847,3 +1847,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - La descripción de «Más» decía «Todo lo que viene en Tumbite» al público (lo destapó la captura del recorrido de «Más»). Corregido en el catálogo de `schema.sql` y con un `UPDATE` idempotente para las bases que ya tenían el texto viejo.
 - **Prueba:** `carro.test.ts` («ningún servicio le muestra Tumbite al público»), rojo comprobado.
+
+## C-TEXTOS-POR-SERVICIO (30 oct 2026) — todos los países
+
+- El formulario de pedir (`apps/cliente/src/viajes/PedirMoto.tsx`) es el mismo para Moto, Carro y Envíos, pero cada uno dice lo suyo: el casco y «un pasajero con mochila» solo en Moto; Carro dice hasta 4 pasajeros (6 en XL); Envíos pregunta «Dónde recogemos el paquete» y «¿A dónde lo llevamos?».
+- Lo destapó el repaso en el celular del 30 oct en el sitio de pruebas. Prueba: `e2e/recorrido/mas.spec.ts` («cada servicio dice lo suyo»), rojo comprobado.

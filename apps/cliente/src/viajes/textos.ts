@@ -19,6 +19,11 @@ export const TEXTOS_MOTO = {
     pedirMoto: 'Pedir Moto',
     recogida: 'Punto de recogida',
     recogidaAyuda: 'Dónde te recoge el conductor',
+    recogidaEnvio: 'Dónde recogemos el paquete',
+    destinoEnvio: '¿A dónde lo llevamos?',
+    avisoCarro: 'Hasta 4 pasajeros con equipaje de mano. Para 6, elige Carro XL.',
+    avisoEnvio:
+      'Algo que quepa en el maletero de un carro mediano. Quien recibe tendrá un PIN de entrega.',
     destino: '¿A dónde vas?',
     destinoAyuda: 'Toca el mapa para marcar el destino y escribe la dirección.',
     buscandoCalle: 'Buscando la dirección…',
@@ -95,6 +100,11 @@ export const TEXTOS_MOTO = {
     pedirMoto: 'Request Moto',
     recogida: 'Pickup point',
     recogidaAyuda: 'Where your driver picks you up',
+    recogidaEnvio: 'Where we pick up the package',
+    destinoEnvio: 'Where are we taking it?',
+    avisoCarro: 'Up to 4 riders with carry-on bags. For 6, choose Car XL.',
+    avisoEnvio:
+      'Something that fits in the trunk of a midsize car. The recipient gets a delivery PIN.',
     destino: 'Where to?',
     destinoAyuda: 'Tap the map to mark your destination and type the address.',
     buscandoCalle: 'Finding the address…',

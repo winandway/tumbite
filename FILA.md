@@ -78,6 +78,12 @@
 - [!] (dinero: precio de los anuncios y cómo se cobran lo decide Richard) Promociones y anuncios pagados dentro de la app («patrocinado») con presupuesto y reporte para el restaurante. Todos los países.
 - [!] (cuenta y costo de un proveedor de SMS: espera a Richard; los avisos por push y correo ya existen) Avisos al equipo también por SMS. Todos los países.
 
+## Etapa 1, punto 2 · Repaso en el celular de lo nuevo (30 oct 2026)
+
+- [x] (C-TEXTOS-POR-SERVICIO: Carro y Envíos mostraban los textos de Moto; arreglado) (21) Repaso con REA en el sitio de pruebas, tamaño celular, de las pantallas nuevas del cliente: Moto (contactos de confianza), Carro y Carro XL, Envíos (formulario del paquete y PIN) y «Más». Cada fallo: prueba en rojo y arreglo. Todos los países.
+- [ ] (22) Repaso con REA en el sitio de pruebas del Driver: verificación con el motor apagado, oferta de Carro y de Envíos, foto del paquete y PIN de entrega. Cada fallo: prueba en rojo y arreglo. Todos los países.
+- [ ] (23) Recorrido automático de punta a punta de un viaje en Carro y de un Envío en la app web (como el de Comida), con capturas para Docs cuando se enciendan. Todos los países.
+
 ## Hecho
 
 - Hasta el 29 oct, noche, quedaron hechos 50 puntos de la fila anterior. Cada uno tiene su commit en git y su candado en `CANDADOS.md`.

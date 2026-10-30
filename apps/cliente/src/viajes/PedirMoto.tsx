@@ -178,7 +178,7 @@ export function PedirMoto({
       {/* C-DIRECCION-SUGERENCIAS: recogida y destino con direcciones reales y su punto exacto. */}
       <CampoDireccion
         etiqueta={t.recogida}
-        placeholder={t.recogidaAyuda}
+        placeholder={servicio === 'envios' ? t.recogidaEnvio : t.recogidaAyuda}
         valor={v.recogida}
         cambiar={(x) => {
           cambiar('recogida', x);
@@ -193,8 +193,8 @@ export function PedirMoto({
         testID="moto-recogida"
       />
       <CampoDireccion
-        etiqueta={t.destino}
-        placeholder={t.destino}
+        etiqueta={servicio === 'envios' ? t.destinoEnvio : t.destino}
+        placeholder={servicio === 'envios' ? t.destinoEnvio : t.destino}
         valor={v.destino}
         cambiar={(x) => {
           cambiar('destino', x);
@@ -220,8 +220,11 @@ export function PedirMoto({
         }}
         textos={{ ayuda: t.destinoAyuda, buscando: t.buscandoCalle, pin: t.pinDestino }}
       />
-      <Text style={{ color: '#5E5E5E' }}>{t.casco}</Text>
-      <Text style={{ color: '#5E5E5E' }}>{t.unPasajero}</Text>
+      {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}
+      <Text style={{ color: '#5E5E5E' }}>
+        {servicio === 'carro' ? t.avisoCarro : servicio === 'envios' ? t.avisoEnvio : t.casco}
+      </Text>
+      {servicio === 'moto' ? <Text style={{ color: '#5E5E5E' }}>{t.unPasajero}</Text> : null}
 
       {servicio === 'carro' ? (
         <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
