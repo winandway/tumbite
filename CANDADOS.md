@@ -1957,3 +1957,19 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** en el sitio de pruebas, de vez en cuando una sola petición de lectura se perdía en el camino y la pantalla del caso de dinero del panel de soporte se quedaba en «…» hasta el corte de 30 segundos (el recorrido falló dos veces el 30 oct por eso). El servidor respondía en 1,4 s; el problema era la petición perdida.
 - **Arreglo:** `packages/compartido/src/api.ts`: una lectura (GET) se corta a los 15 s y se repite una vez con el límite normal; los envíos (POST, PUT, PATCH, DELETE) nunca se repiten solos, para no duplicar acciones. Una lectura que responde con error tampoco se repite.
 - **Candado:** `api.test.ts` (tres pruebas: la lectura perdida se repite y entrega, el envío no se repite, el error no se repite); comprobado en rojo.
+
+## C-PILOTO (30 oct 2026) — todos los países
+
+- **Qué es:** la lista de participantes autorizados del piloto en producción controlada (`docs/PLAN-LANZAMIENTO-PILOTO.md`). Superadmin → «Piloto»: agregar por el correo de la cuenta, quitar desde los tres puntos con confirmación, y el registro de quién entró, quién salió y quién lo hizo. Servidor: `apps/servidor/src/rutas/piloto.ts` (`esParticipante`), tablas `piloto_participantes` y `piloto_eventos`, sin claves foráneas a usuarios (lección de C-REWARDS-LIMPIEZA).
+- **Candado:** `piloto.test.ts` (alta por correo sin importar mayúsculas, sin duplicar, baja anotada, correo sin cuenta con mensaje claro, solo el equipo) y `SuperPiloto.test.tsx` (agregar, lo escrito no se pierde al fallar ni al volver, quitar escondido en los tres puntos).
+
+## C-PILOTO-SERVICIOS (30 oct 2026) — todos los países
+
+- **Qué es:** un servicio encendido «solo piloto» en una ciudad (`servicios_piloto`). Los participantes lo ven «disponible» en `/datos/servicios` y pueden usarlo (Tiendas y viajes de Envíos); el público y quien no está en el piloto lo siguen viendo «muy pronto». Solo `SERVICIOS_PILOTO` (Envíos, Mercado, Farmacia, Licores, Más): **Moto y Carro no**, porque llevan pasajeros y esperan lo legal y el seguro (409 si se intenta).
+- **Ojo:** `/datos/servicios` con sesión responde `private, no-store`: la lista es de esa persona y no puede quedar en la caché compartida.
+- **Candado:** `piloto.test.ts` (participante sí, otro cliente y visitante no, Tiendas 200/404, apagar lo cierra, Moto y Carro rechazados) y `SuperPiloto.test.tsx` (la casilla manda el cambio).
+
+## C-PILOTO-LIMITES (30 oct 2026) — todos los países
+
+- **Qué es:** topes de dinero solo para los participantes del piloto: por pedido y por día (por defecto 50 y 150 dólares; se cambian en Superadmin → Piloto, guardados en `config` como `piloto_tope_pedido` y `piloto_tope_dia`). `exigirTopePiloto` corre en `POST /datos/pedidos` antes de guardar; el día suma los pedidos de hoy que no se cancelaron. Quien no está en el piloto no cambia nada.
+- **Candado:** `piloto.test.ts` (fuera del piloto sin tope, dentro 409 con campo `total`, la suma del día).

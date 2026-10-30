@@ -232,7 +232,10 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   const zonaDestino = await zonaPara(db, d.destino.lat, d.destino.lng);
   if (zonaDestino?.id !== zona.id)
     throw new ErrorDatos('El destino queda fuera de la ciudad del viaje.', 'destino', 422);
-  if ((await estadoServicioEnZona(db, d.servicio, zona.id)) !== 'disponible')
+  if (
+    (await estadoServicioEnZona(db, d.servicio, zona.id, c.get('usuario')?.id ?? null)) !==
+    'disponible'
+  )
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
   const fila = await tarifaActiva(db, d.servicio, zona.id);
   if (!fila)
@@ -355,7 +358,10 @@ viajesPasajero.post('/viajes', async (c) => {
   if (cot.usada_en && cot.operacion_id) return c.json({ viaje: { id: cot.operacion_id } });
   if (!cot.vigente)
     throw new ErrorDatos('El precio venció. Vuelve a cotizar el viaje.', 'cotizacionId', 409);
-  if ((await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id)) !== 'disponible')
+  if (
+    (await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id, c.get('usuario')?.id ?? null)) !==
+    'disponible'
+  )
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
   // C-ENVIOS: el paquete es obligatorio en Envíos, con su valor dentro del tope de la ciudad.
   const esEnvio = cot.servicio_id === 'envios';

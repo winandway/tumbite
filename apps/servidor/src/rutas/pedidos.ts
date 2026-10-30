@@ -1,3 +1,4 @@
+import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
@@ -661,6 +662,8 @@ pedidos.post('/pedidos', async (c) => {
       409,
     );
 
+  // C-PILOTO-LIMITES: un participante del piloto no pasa del tope por pedido ni por día.
+  await exigirTopePiloto(db, u.id, desglose.totalCliente);
   const id = nuevoId();
   await db
     .prepare(
