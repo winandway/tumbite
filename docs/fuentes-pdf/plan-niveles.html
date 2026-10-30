@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plan Divoox Rewards</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Montserrat, Arial, sans-serif;
+        color: #101010;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        background: #fff;
+      }
+      .hoja {
+        width: 297mm;
+        height: 210mm;
+        padding: 14mm 16mm 12mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+      }
+      .hoja:last-child {
+        page-break-after: auto;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: Poppins, Arial, sans-serif;
+        margin: 0;
+      }
+      h1 {
+        font-size: 30pt;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+      h2 {
+        font-size: 19pt;
+        font-weight: 800;
+        margin-bottom: 4mm;
+      }
+      h3 {
+        font-size: 11.5pt;
+        font-weight: 700;
+        margin-bottom: 2mm;
+      }
+      .rojo {
+        color: #f20d20;
+      }
+      .gris {
+        color: #666b73;
+      }
+      .marca {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 14pt;
+        letter-spacing: 0.5px;
+      }
+      .pie {
+        position: absolute;
+        bottom: 7mm;
+        left: 16mm;
+        right: 16mm;
+        display: flex;
+        justify-content: space-between;
+        font-size: 8pt;
+        color: #666b73;
+        border-top: 1px solid #e3e3e3;
+        padding-top: 2mm;
+      }
+      .cols {
+        display: grid;
+        gap: 6mm;
+      }
+      .c2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .c3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .caja {
+        border: 1px solid #2a2a2a22;
+        border-radius: 4mm;
+        padding: 5mm;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      }
+      .caja.negra {
+        background: #101010;
+        color: #fff;
+        border-color: #101010;
+      }
+      .caja.negra .gris {
+        color: #c8cbd0;
+      }
+      ul {
+        margin: 0;
+        padding-left: 4.5mm;
+      }
+      li {
+        margin-bottom: 1.2mm;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+      }
+      th {
+        text-align: left;
+        font-family: Poppins;
+        font-weight: 700;
+        font-size: 9pt;
+        color: #666b73;
+        border-bottom: 1.5px solid #101010;
+        padding: 1.8mm 2mm;
+      }
+      td {
+        border-bottom: 1px solid #e6e6e6;
+        padding: 1.8mm 2mm;
+        vertical-align: top;
+      }
+      td.n {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      tr.total td {
+        font-weight: 700;
+        border-top: 1.5px solid #101010;
+      }
+      .etq {
+        display: inline-block;
+        font-size: 7.5pt;
+        font-weight: 700;
+        padding: 0.6mm 2mm;
+        border-radius: 10mm;
+        border: 1px solid #101010;
+        margin-right: 1mm;
+      }
+      .ok {
+        color: #0d7a3a;
+        font-weight: 700;
+      }
+      .no {
+        color: #c20a1a;
+        font-weight: 700;
+      }
+      .grande {
+        font-family: Poppins;
+        font-weight: 800;
+        font-size: 26pt;
+        line-height: 1;
+      }
+      .nivel {
+        border-radius: 4mm;
+        padding: 4mm;
+        border: 1px solid #2a2a2a33;
+      }
+      .nivel h3 {
+        font-size: 13pt;
+      }
+      .paso {
+        display: flex;
+        gap: 4mm;
+        margin-bottom: 3mm;
+      }
+      .num {
+        flex: 0 0 9mm;
+        height: 9mm;
+        border-radius: 50%;
+        background: #101010;
+        color: #fff;
+        font-family: Poppins;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .decide {
+        border: 1.5px solid #f20d20;
+        border-radius: 4mm;
+        padding: 5mm;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 1. Portada y resumen -->
+    <section class="hoja">
+      <img
+        src="file:///Users/windocellc/tumbite/identidad-divoox/Divoox_Vectoriales/01_Logo_Completo_Fondo_Claro.svg"
+        alt="Divoox"
+        style="height: 13mm"
+      />
+      <div style="margin-top: 14mm; max-width: 200mm">
+        <p class="gris" style="font-weight: 600; margin: 0 0 3mm">
+          Plan para aprobar · 30 de octubre de 2026 · Todos los países
+        </p>
+        <h1>Divoox Rewards: niveles, calificación y premios del repartidor</h1>
+        <p style="font-size: 12.5pt; margin-top: 5mm">
+          Cómo lo hacen DoorDash y Uber, qué tenemos ya, y la propuesta para que el repartidor tenga
+          un motivo para cuidar su cuenta:
+          <b>los mismos niveles que DoorDash y, además, un premio en dinero que DoorDash no da</b>.
+        </p>
+      </div>
+      <div class="cols c3" style="margin-top: 12mm">
+        <div class="caja">
+          <h3>Lo que hace DoorDash</h3>
+          <ul>
+            <li>Mide todo sobre las <b>últimas 100</b> entregas u ofertas.</li>
+            <li>
+              Una mala nota no se borra: <b>sale sola</b> cuando entran 100 nuevas. Y se quitan
+              solas las que no fueron culpa del repartidor.
+            </li>
+            <li>Un <b>puntaje de 0 a 100</b> decide el nivel: Plata, Oro o Platino.</li>
+            <li>El nivel da <b>prioridad en los mejores pedidos</b>, no dinero.</li>
+          </ul>
+        </div>
+        <div class="caja">
+          <h3>Lo que Divoox ya tiene</h3>
+          <ul>
+            <li>Las cuatro medidas sobre las últimas 100, igual que DoorDash.</li>
+            <li>Las malas notas por culpa del restaurante no cuentan.</li>
+            <li>Repartidor destacado con prioridad en las ofertas.</li>
+            <li>Niveles por puntos, pero <b>solo miden cuánto trabajó</b>, no qué tan bien.</li>
+          </ul>
+        </div>
+        <div class="caja negra">
+          <h3>Lo que proponemos</h3>
+          <ul>
+            <li>Copiar el puntaje de 0 a 100 y sus tres niveles.</li>
+            <li>
+              Nadie se queda sin trabajar por su nivel: <b>el nivel da prioridad, no permiso</b>.
+            </li>
+            <li>
+              <b>Premio en dinero</b> por hitos de entregas: un porcentaje del margen real que el
+              repartidor le dejó a Divoox.
+            </li>
+            <li>Todo visible en la app y explicado en Docs.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Divoox · Windoce LLC</span
+        ><span>Fuentes: centro de ayuda y noticias de DoorDash (REA), términos de Uber Pro</span
+        ><span>1</span>
+      </div>
+    </section>
+
+    <!-- 2. Cómo califica DoorDash -->
+    <section class="hoja">
+      <h2>1. Cómo califica DoorDash a sus repartidores</h2>
+      <div class="cols c2">
+        <div>
+          <table>
+            <tr>
+              <th>Medida</th>
+              <th>Qué mide</th>
+              <th>Mínimo para seguir activo</th>
+            </tr>
+            <tr>
+              <td><b>Estrellas</b></td>
+              <td>Lo que califica el cliente, de 1 a 5, últimas 100</td>
+              <td>4,2</td>
+            </tr>
+            <tr>
+              <td><b>Finalización</b></td>
+              <td>% de lo aceptado que se entrega, últimos 100</td>
+              <td>90 %</td>
+            </tr>
+            <tr>
+              <td><b>Aceptación</b></td>
+              <td>% de ofertas aceptadas, últimas 100</td>
+              <td class="ok">Sin mínimo</td>
+            </tr>
+            <tr>
+              <td><b>Puntualidad</b></td>
+              <td>% entregado antes de la hora mostrada al aceptar</td>
+              <td>Llegar tarde muchas veces</td>
+            </tr>
+            <tr>
+              <td><b>Calidad</b></td>
+              <td>% sin problemas verificados. Error menor resta 1 %, error mayor resta 3 %</td>
+              <td>Errores mayores repetidos</td>
+            </tr>
+            <tr>
+              <td><b>Pedidos</b></td>
+              <td>Últimos 30 días y de por vida (este nunca se reinicia)</td>
+              <td class="ok">Sin mínimo</td>
+            </tr>
+          </table>
+          <p class="gris" style="font-size: 8.5pt; margin-top: 3mm">
+            Evidencia: «Dasher Ratings Explained», centro de ayuda de DoorDash, capturado con REA el
+            30 de octubre de 2026.
+          </p>
+        </div>
+        <div>
+          <div class="caja" style="margin-bottom: 5mm">
+            <h3>¿Cuándo se borra una mala nota?</h3>
+            <p style="margin: 0">
+              Nunca a mano. Las medidas son <b>móviles</b>: cada calificación nueva saca a la más
+              vieja de las 100. Un rechazo tarda 100 ofertas en salir. Si el cliente no califica, no
+              cuenta. Dejar vencer una oferta cuenta como rechazo.
+            </p>
+          </div>
+          <div class="caja">
+            <h3>Notas que se quitan solas</h3>
+            <ul>
+              <li>Larga espera en el restaurante.</li>
+              <li>El pedido ya iba tarde cuando lo aceptó.</li>
+              <li>Otros repartidores lo soltaron antes.</li>
+              <li>Pedidos agrupados.</li>
+              <li>Clima extremo, protestas o caídas del sistema.</li>
+              <li>Problemas de la comida: nunca cuentan para el repartidor.</li>
+              <li>Las quejas de calidad se revisan antes de contar.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="pie">
+        <span>Divoox Rewards</span><span>DoorDash: calificaciones</span><span>2</span>
+      </div>
+    </section>
+
+    <!-- 3. Puntaje y niveles DoorDash / Uber -->
+    <section class="hoja">
+      <h2>2. El puntaje de 0 a 100 y qué da cada nivel</h2>
+      <div class="cols c3">
+        <div class="caja">
+          <h3>Cómo se arma el puntaje (DoorDash)</h3>
+          <table>
+            <tr>
+              <td>Finalización</td>
+              <td class="n"><b>35</b></td>
+            </tr>
+            <tr>
+              <td>Puntualidad</td>
+              <td class="n"><b>30</b></td>
+            </tr>
+            <tr>
+              <td>Aceptación</td>
+              <td class="n"><b>25</b></td>
+            </tr>
+            <tr>
+              <td>Estrellas</td>
+              <td class="n"><b>10</b></td>
+            </tr>
+            <tr class="total">
+              <td>Total</td>
+              <td class="n">100</td>
+            </tr>
+          </table>
+          <p style="margin-top: 3mm">
+            Plata de 60 a 64 · Oro de 65 a 74 · Platino de 75 a 100. Hoy suman también calidad y
+            pedidos del mes.
+          </p>
+          <p class="gris" style="font-size: 8.5pt">
+            Anuncio oficial de DoorDash, 16 dic 2024 (REA).
+          </p>
+        </div>
+        <div class="caja">
+          <h3>Qué da cada nivel</h3>
+          <ul>
+            <li><b>Prioridad en los pedidos mejor pagados</b>, más alta en cada nivel.</li>
+            <li><b>Menos espera</b> entre ofertas: Platino primero, luego Oro y Plata.</li>
+            <li>
+              Conectarse cuando la zona está llena. En las zonas nuevas,
+              <b>todos pueden trabajar a cualquier hora</b>.
+            </li>
+            <li>Pausar ofertas de tiendas: Oro 1, Platino 3, por dos semanas.</li>
+            <li>
+              <b>Pase Platino:</b> 200 entregas seguidas en Platino dan una semana garantizada.
+            </li>
+            <li>Soporte prioritario y descuentos.</li>
+          </ul>
+          <p class="no" style="margin: 2mm 0 0">No da dinero por subir de nivel.</p>
+        </div>
+        <div class="caja">
+          <h3>Reinicios y reglas</h3>
+          <ul>
+            <li>
+              <b>DoorDash:</b> el nivel sube y baja en vivo con el puntaje. No hay reinicio por
+              fecha.
+            </li>
+            <li>Si baja del mínimo, <b>sigue trabajando</b>; solo pierde los premios.</li>
+            <li>
+              Hace falta haber hecho 50 entregas; las primeras 50 traen beneficios para todos.
+            </li>
+            <li>
+              <b>Uber Pro:</b> puntos por viaje, más en horas pico, y vuelven a cero cada tres
+              meses. Para Oro o más pide 4,85 estrellas y menos de 4 % de cancelaciones.
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="caja negra" style="margin-top: 6mm">
+        <b>Lo que viste en la calle tiene explicación:</b> antes, DoorDash solo dejaba conectarse
+        sin horario reservado a los de mejor nivel cuando la zona estaba llena. Con el puntaje nuevo
+        lo está cambiando: todos se conectan y el nivel solo decide quién recibe primero las mejores
+        ofertas. Eso es lo que copiamos.
+      </div>
+      <div class="pie">
+        <span>Divoox Rewards</span><span>DoorDash y Uber: niveles</span><span>3</span>
+      </div>
+    </section>
+
+    <!-- 4. Propuesta Divoox -->
+    <section class="hoja">
+      <h2>3. La propuesta para Divoox</h2>
+      <div class="cols c3" style="margin-bottom: 6mm">
+        <div class="nivel">
+          <span class="etq">60 a 64 puntos</span>
+          <h3 style="margin-top: 2mm">Plata</h3>
+          <ul>
+            <li>Prioridad en ofertas de mejor pago.</li>
+            <li>Primer premio en dinero desbloqueado.</li>
+          </ul>
+        </div>
+        <div class="nivel">
+          <span class="etq">65 a 74 puntos</span>
+          <h3 style="margin-top: 2mm">Oro</h3>
+          <ul>
+            <li>Más prioridad y menos espera.</li>
+            <li>Pausar 1 tienda por dos semanas.</li>
+            <li>Premios de los hitos medianos.</li>
+          </ul>
+        </div>
+        <div class="nivel" style="border: 1.5px solid #101010">
+          <span class="etq">75 a 100 puntos</span>
+          <h3 style="margin-top: 2mm">Diamante</h3>
+          <ul>
+            <li>Máxima prioridad y soporte prioritario.</li>
+            <li>Pausar 3 tiendas.</li>
+            <li>Pase Diamante: 200 entregas seguidas = una semana garantizada.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cols c2">
+        <div class="caja">
+          <h3>Lo que copiamos igual</h3>
+          <ul>
+            <li>
+              Puntaje de 0 a 100: finalización 35, puntualidad 30, aceptación 25, estrellas 10. Los
+              nombres de nivel son los nuestros.
+            </li>
+            <li>Todo sobre las últimas 100; las malas notas salen solas.</li>
+            <li>Mínimos para seguir activo: 4,2 estrellas y 90 % de finalización.</li>
+            <li>Las primeras 50 entregas con beneficios para todos.</li>
+            <li>Nivel en vivo, sin reinicio por fecha.</li>
+          </ul>
+        </div>
+        <div class="caja negra">
+          <h3>Lo que mejoramos</h3>
+          <ul>
+            <li>
+              <b>Nadie se queda sin trabajar por su nivel.</b> El nivel da prioridad, no permiso.
+            </li>
+            <li>
+              <b>Premio en dinero</b> por hitos de entregas (página siguiente). DoorDash y Uber no
+              lo dan.
+            </li>
+            <li>
+              <b>Más notas que se quitan solas:</b> espera en el restaurante, pedidos agrupados,
+              clima y caídas, además de la culpa del restaurante que ya quitamos.
+            </li>
+            <li>
+              <b>Aviso antes de bajar</b> de nivel y de quedar en riesgo, con consejos y apelación
+              en la app.
+            </li>
+            <li>El repartidor ve cuántos puntos le da cada medida y qué hacer para subir.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox Rewards</span><span>Propuesta</span><span>4</span></div>
+    </section>
+
+    <!-- 5. Premio en dinero -->
+    <section class="hoja p5">
+      <h2>4. El premio en dinero: cuánto se puede dar</h2>
+      <style>
+        .p5 td,
+        .p5 th {
+          padding: 1.2mm 1.6mm;
+        }
+        .p5 li {
+          margin-bottom: 0.6mm;
+        }
+      </style>
+      <div class="cols c2">
+        <div>
+          <h3>Lo que le deja a Divoox cada entrega</h3>
+          <table>
+            <tr>
+              <th>Pedido</th>
+              <th>Plan del restaurante</th>
+              <th class="n">Margen neto</th>
+            </tr>
+            <tr>
+              <td>20 dólares, 3 km</td>
+              <td>Inicial</td>
+              <td class="n">1,34</td>
+            </tr>
+            <tr>
+              <td>30 dólares, 4 km</td>
+              <td>Inicial</td>
+              <td class="n"><b>2,29</b></td>
+            </tr>
+            <tr>
+              <td>25 dólares, 3 km</td>
+              <td>Élite</td>
+              <td class="n">3,44</td>
+            </tr>
+            <tr>
+              <td>30 dólares, 4 km</td>
+              <td>Crece</td>
+              <td class="n">3,79</td>
+            </tr>
+            <tr>
+              <td>45 dólares, 6 km</td>
+              <td>Crece</td>
+              <td class="n">5,96</td>
+            </tr>
+          </table>
+          <p class="gris" style="font-size: 8.5pt; margin-top: 2mm">
+            Margen neto: lo que queda después de pagar al restaurante, al repartidor y a Stripe, con
+            las tarifas de hoy. No descuenta soporte, seguros, reembolsos ni publicidad. Para las
+            cuentas se usa 2,29 dólares por entrega, el pedido típico con el plan más barato.
+          </p>
+          <div class="caja" style="margin-top: 4mm">
+            <h3>Tu ejemplo de 600 puntos</h3>
+            <p style="margin: 0">
+              Hoy cada entrega suma 10 puntos: 600 puntos son <b>60 entregas</b>. Eso le dejó a
+              Divoox unos <b>137 dólares</b>. El 15 % serían unos <b>21 dólares</b>.
+            </p>
+          </div>
+        </div>
+        <div>
+          <h3>Premios por hito de entregas</h3>
+          <table>
+            <tr>
+              <th>Hito (entregas)</th>
+              <th class="n">Entregas del tramo</th>
+              <th class="n">Margen estimado</th>
+              <th class="n">10 %</th>
+              <th class="n">15 %</th>
+              <th class="n">20 %</th>
+              <th class="n">Propuesta</th>
+            </tr>
+            <tr>
+              <td>100</td>
+              <td class="n">100</td>
+              <td class="n">229</td>
+              <td class="n">23</td>
+              <td class="n">34</td>
+              <td class="n">46</td>
+              <td class="n"><b>30</b></td>
+            </tr>
+            <tr>
+              <td>250</td>
+              <td class="n">150</td>
+              <td class="n">344</td>
+              <td class="n">34</td>
+              <td class="n">52</td>
+              <td class="n">69</td>
+              <td class="n"><b>50</b></td>
+            </tr>
+            <tr>
+              <td>500</td>
+              <td class="n">250</td>
+              <td class="n">573</td>
+              <td class="n">57</td>
+              <td class="n">86</td>
+              <td class="n">115</td>
+              <td class="n"><b>75</b></td>
+            </tr>
+            <tr>
+              <td>1.000</td>
+              <td class="n">500</td>
+              <td class="n">1.145</td>
+              <td class="n">115</td>
+              <td class="n">172</td>
+              <td class="n">229</td>
+              <td class="n"><b>150</b></td>
+            </tr>
+            <tr>
+              <td>2.500</td>
+              <td class="n">1.500</td>
+              <td class="n">3.435</td>
+              <td class="n">344</td>
+              <td class="n">515</td>
+              <td class="n">687</td>
+              <td class="n"><b>400</b></td>
+            </tr>
+            <tr>
+              <td>5.000</td>
+              <td class="n">2.500</td>
+              <td class="n">5.725</td>
+              <td class="n">573</td>
+              <td class="n">859</td>
+              <td class="n">1.145</td>
+              <td class="n"><b>700</b></td>
+            </tr>
+            <tr class="total">
+              <td>Total</td>
+              <td class="n">5.000</td>
+              <td class="n">11.450</td>
+              <td class="n">1.145</td>
+              <td class="n">1.718</td>
+              <td class="n">2.290</td>
+              <td class="n">1.405</td>
+            </tr>
+          </table>
+          <p class="gris" style="font-size: 8.5pt; margin-top: 2mm">
+            Dólares. La propuesta reparte cerca del 12 % del margen. El pago real sale del margen
+            que de verdad dejaron esas entregas: nunca más que el porcentaje aprobado.
+          </p>
+          <div class="caja negra" style="margin-top: 3mm">
+            <h3>Reglas para que no se pierda dinero</h3>
+            <ul>
+              <li>Solo cobra quien llega al hito en <b>Plata o más</b> (Oro desde el de 1.000).</li>
+              <li>Solo cuentan entregas completadas y sin reclamo aprobado.</li>
+              <li>Se paga a la billetera del repartidor, una sola vez por hito.</li>
+              <li>Cuentas sospechosas quedan retenidas para revisión, como en DoorDash.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox Rewards</span><span>Premio en dinero</span><span>5</span></div>
+    </section>
+
+    <!-- 6. Plan y decisiones -->
+    <section class="hoja">
+      <h2>5. Cómo se construye y qué decides tú</h2>
+      <div class="cols c2">
+        <div>
+          <div class="paso">
+            <div class="num">1</div>
+            <div>
+              <b>Puntaje de 0 a 100 y niveles en vivo.</b> En el servidor, sobre las medidas que ya
+              tenemos; reemplaza los niveles por puntos y al repartidor destacado.
+            </div>
+          </div>
+          <div class="paso">
+            <div class="num">2</div>
+            <div>
+              <b>Más notas que se quitan solas</b> y quejas de calidad verificadas antes de contar.
+            </div>
+          </div>
+          <div class="paso">
+            <div class="num">3</div>
+            <div>
+              <b>Beneficios:</b> prioridad por nivel en el despacho, pausar tiendas, Pase Diamante y
+              soporte prioritario. Nadie queda bloqueado para conectarse.
+            </div>
+          </div>
+          <div class="paso">
+            <div class="num">4</div>
+            <div>
+              <b>Pantalla «Calificaciones y nivel»</b> en Divoox Driver: puntaje, puntos por medida,
+              últimas 100, cuánto falta, avisos antes de bajar y apelación.
+            </div>
+          </div>
+          <div class="paso">
+            <div class="num">5</div>
+            <div>
+              <b>Premios por hito</b> con el margen real, pagados a la billetera, solo en pruebas
+              hasta tu orden.
+            </div>
+          </div>
+          <div class="paso">
+            <div class="num">6</div>
+            <div>
+              <b>Docs:</b> guías y tutoriales en español e inglés, con capturas, para repartidores,
+              vendedores y cursos. <b>Web:</b> la página de repartidores lo cuenta.
+            </div>
+          </div>
+          <p class="gris" style="font-size: 9pt">
+            Cada paso con su prueba, su candado y su publicación. Todos los países; los premios en
+            dinero se encienden por país.
+          </p>
+        </div>
+        <div>
+          <div class="decide">
+            <h3 class="rojo">Lo que decides tú</h3>
+            <ul>
+              <li>
+                <b>Porcentaje del premio:</b> recomendamos los montos de la tabla, cerca del 12 %
+                del margen.
+              </li>
+              <li>
+                <b>Montos y hitos:</b> 100, 250, 500, 1.000, 2.500 y 5.000 entregas, o los que
+                prefieras.
+              </li>
+              <li><b>Nombres de los niveles:</b> Plata, Oro y Diamante, o los que elijas.</li>
+              <li>
+                <b>Umbrales:</b> los de DoorDash (60, 65 y 75), o bajarlos para que se llegue antes.
+              </li>
+              <li><b>Cuándo se enciende el dinero real</b> y en qué país.</li>
+            </ul>
+          </div>
+          <div class="caja" style="margin-top: 5mm">
+            <h3>Por qué vende</h3>
+            <p style="margin: 0">
+              «En Divoox tu buen trabajo se paga»: niveles como los de DoorDash, nadie se queda sin
+              trabajar por su nivel, y premios en dinero por cada hito. Ningún grande lo ofrece así.
+              Sirve para reclutar repartidores y para que cuiden su cuenta.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="pie"><span>Divoox Rewards</span><span>Plan</span><span>6</span></div>
+    </section>
+  </body>
+</html>

@@ -1030,6 +1030,33 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'restaurant-ratings',
+        titulo: 'Ver la calificación de un restaurante',
+        resumen:
+          'Las estrellas, cuántas opiniones tiene y lo que escribieron otros clientes, antes de pedir.',
+        explicacion: [
+          'En la lista de restaurantes y en el buscador, debajo del nombre, ves las estrellas y el número de opiniones, por ejemplo «★ 4.8 (120)».',
+          'Dentro del restaurante, arriba del menú, está «Calificaciones y reseñas»: las opiniones más nuevas con comentario, con el nombre de pila de quien la escribió y la respuesta del restaurante.',
+          'Un restaurante con menos de 10 opiniones aparece como «Nuevo». Solo cuentan opiniones de pedidos hechos de verdad en Divoox.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-calificacion-es.webp',
+            alt: 'Página de un restaurante en la app de Divoox con «★ 4.8 (12)» y una reseña con la respuesta del restaurante.',
+            pie: 'Las estrellas arriba y las reseñas antes del menú.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo veo las estrellas de un restaurante?',
+          '¿Por qué un restaurante dice «Nuevo»?',
+        ],
+        pasos: [
+          'Abre Divoox y busca el restaurante, o míralo en la lista.',
+          'Debajo del nombre está su calificación y cuántas opiniones tiene.',
+          'Tócalo: arriba del menú lees las reseñas y lo que respondió el restaurante.',
+        ],
+      },
+      {
         id: 'rate',
         titulo: 'Calificar la comida y al repartidor',
         resumen: 'Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.',
@@ -4502,6 +4529,30 @@ const en: SeccionDocs[] = [
           'Tap the item on the restaurant’s menu.',
           'Write your note under “Special instructions”.',
           'Tap “Add to cart”. The note shows in your cart next to the item.',
+        ],
+      },
+      {
+        id: 'restaurant-ratings',
+        titulo: 'See a restaurant’s rating',
+        resumen:
+          'The stars, how many ratings it has and what other customers wrote, before you order.',
+        explicacion: [
+          'In the restaurant list and in search, under the name, you see the stars and the number of ratings, for example “★ 4.8 (120)”.',
+          'Inside the restaurant, above the menu, there’s “Ratings & reviews”: the latest reviews with a comment, with the reviewer’s first name and the restaurant’s reply.',
+          'A restaurant with fewer than 10 ratings shows as “New”. Only ratings from real Divoox orders count.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-calificacion-en.webp',
+            alt: 'Restaurant page in the Divoox app showing “★ 4.8 (12)” and a review with the restaurant’s reply.',
+            pie: 'The stars up top and the reviews before the menu.',
+          },
+        ],
+        preguntas: ['How do I see a restaurant’s stars?', 'Why does a restaurant say “New”?'],
+        pasos: [
+          'Open Divoox and search for the restaurant, or find it in the list.',
+          'Under the name you’ll see its rating and how many ratings it has.',
+          'Tap it: above the menu you can read the reviews and the restaurant’s replies.',
         ],
       },
       {
