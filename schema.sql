@@ -2834,6 +2834,32 @@ CREATE TABLE IF NOT EXISTS huellas_caras (
 );
 CREATE INDEX IF NOT EXISTS huellas_caras_mala ON huellas_caras(mala_conducta);
 
+-- C-VIAJE-SEGURIDAD-2 (30 oct 2026), como el kit de seguridad de Uber: hasta 5 contactos de confianza
+-- por pasajero, que reciben el enlace del viaje en vivo (siempre, solo de noche o nunca).
+CREATE TABLE IF NOT EXISTS contactos_confianza (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (cliente_id, telefono)
+);
+CREATE TABLE IF NOT EXISTS ajustes_seguridad (
+  cliente_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  compartir TEXT NOT NULL DEFAULT 'nunca' CHECK (compartir IN ('nunca', 'siempre', 'noche'))
+);
+-- Avisos durante el viaje (por ahora, el desvío de la ruta): uno por viaje y tipo, con la respuesta.
+CREATE TABLE IF NOT EXISTS alertas_viaje (
+  id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('desvio')),
+  lat REAL, lng REAL,
+  respuesta TEXT NOT NULL DEFAULT '' CHECK (respuesta IN ('', 'bien', 'ayuda')),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  respondida_en TEXT,
+  UNIQUE (operacion_id, tipo)
+);
+
 -- Cada decisión del motor, para que el equipo vea el porqué.
 CREATE TABLE IF NOT EXISTS verificaciones_auto (
   id TEXT PRIMARY KEY,
