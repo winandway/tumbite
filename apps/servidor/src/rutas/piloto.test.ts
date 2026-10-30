@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { mundo } from '../pruebas/ayuda';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 import { esParticipante } from './piloto';
 
 // C-PILOTO (30 oct 2026): la lista de participantes del piloto en producción controlada.
@@ -156,5 +156,97 @@ describe('C-PILOTO-SERVICIOS: servicios encendidos solo para el piloto', () => {
     expect(ids).toEqual(expect.arrayContaining(['envios', 'mercado', 'farmacia', 'licores']));
     expect(ids).not.toContain('moto');
     expect(r.datos.encendidos).toEqual([{ servicio: 'envios', zona: 'US-FL-MIAMI' }]);
+  });
+});
+
+// C-PILOTO-LIMITES (30 oct 2026): un participante del piloto no puede pedir por encima del tope.
+describe('C-PILOTO-LIMITES: topes de dinero para los participantes', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  async function armar() {
+    // Stripe simulado: el pedido crea su intento de pago como siempre.
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'pi_x',
+            client_secret: 'pi_x_secret',
+            status: 'requires_payment_method',
+          }),
+          { status: 200 },
+        ),
+    );
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
+    const admin = await m.cuenta('admin');
+    const dueno = await m.cuenta('restaurante');
+    const cli = await m.cuenta('cliente');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    const rid = r.datos.restaurante.id as string;
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/restaurantes/${rid}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    const plato = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Pizza', precioCentavos: 2000 },
+      dueno.token,
+    );
+    await m.abrir(dueno.token);
+    const correo = (
+      await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+        .bind(cli.id)
+        .first<{ correo: string }>()
+    )?.correo;
+    const pedir = (cantidad: number) =>
+      m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: rid,
+          lineas: [{ platoId: plato.datos.plato.id, cantidad }],
+          propinaCentavos: 0,
+          direccion: '300 Calle Prueba',
+          lat: 25.775,
+          lng: -80.195,
+        },
+        cli.token,
+      );
+    return { m, admin, cli, correo, pedir };
+  }
+
+  it('el participante no pasa del tope por pedido; quien no está en el piloto, sin cambios', async () => {
+    const { m, admin, correo, pedir } = await armar();
+    // Sin estar en el piloto: un pedido de 3 pizzas pasa como siempre.
+    const primero = await pedir(3);
+    expect(primero.estado).toBe(201);
+    await m.llamar('POST', '/datos/admin/piloto', { correo }, admin.token);
+    const limites = await m.llamar(
+      'PUT',
+      '/datos/admin/piloto/limites',
+      { porPedidoCentavos: 5000, porDiaCentavos: 100000 },
+      admin.token,
+    );
+    expect(limites.estado).toBe(200);
+    const caro = await pedir(3);
+    expect(caro.estado).toBe(409);
+    expect(caro.datos.campo).toBe('total');
+    expect((await pedir(1)).estado).toBe(201);
+  });
+
+  it('el tope por día suma los pedidos del día', async () => {
+    const { m, admin, correo, pedir } = await armar();
+    await m.llamar('POST', '/datos/admin/piloto', { correo }, admin.token);
+    await m.llamar(
+      'PUT',
+      '/datos/admin/piloto/limites',
+      { porPedidoCentavos: 10000, porDiaCentavos: 6000 },
+      admin.token,
+    );
+    expect((await pedir(1)).estado).toBe(201);
+    expect((await pedir(1)).estado).toBe(201);
+    expect((await pedir(1)).estado).toBe(409);
   });
 });

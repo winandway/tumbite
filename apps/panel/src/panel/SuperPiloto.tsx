@@ -32,6 +32,13 @@ const T = {
     quitar: 'Quitar del piloto',
     confirmar: (n: string) =>
       `¿Quitar a ${n} del piloto? Dejará de ver lo que es solo para el piloto.`,
+    topes: 'Topes de dinero del piloto',
+    topesAyuda:
+      'Lo máximo que un participante puede pedir. Así un error en una prueba cuesta poco. Quien no está en el piloto no tiene estos topes.',
+    porPedido: 'Por pedido (USD)',
+    porDia: 'Por día (USD)',
+    guardarTopes: 'Guardar topes',
+    topesGuardados: 'Topes guardados.',
     servicios: 'Servicios solo para el piloto',
     serviciosAyuda:
       'Lo marcado se enciende solo para los participantes en esa ciudad; el público lo sigue viendo «muy pronto». Moto y Carro no aparecen: llevan pasajeros y esperan la aprobación legal y el seguro.',
@@ -64,6 +71,13 @@ const T = {
     quitar: 'Remove from pilot',
     confirmar: (n: string) =>
       `Remove ${n} from the pilot? They’ll stop seeing anything that is pilot only.`,
+    topes: 'Pilot money limits',
+    topesAyuda:
+      'The most a participant can order, so a mistake during a test costs little. People outside the pilot don’t have these limits.',
+    porPedido: 'Per order (USD)',
+    porDia: 'Per day (USD)',
+    guardarTopes: 'Save limits',
+    topesGuardados: 'Limits saved.',
     servicios: 'Pilot-only services',
     serviciosAyuda:
       'What you check turns on only for participants in that city; the public still sees “coming soon”. Moto and Car aren’t listed: they carry passengers and are waiting for legal approval and insurance.',
@@ -113,6 +127,14 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [sp, setSp] = useState<ServiciosPiloto | null>(null);
+  const [hayTopes, setHayTopes] = useState(false);
+  const bt = useBorrador({
+    formulario: 'piloto-topes',
+    cuenta: 'superadmin',
+    inicial: { porPedido: '', porDia: '' },
+    almacen: almacenNavegador,
+  });
+  const { cargarBase } = bt;
   const b = useBorrador({
     formulario: 'piloto-agregar',
     cuenta: 'superadmin',
@@ -126,11 +148,40 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
         setEventos(r.eventos);
       })
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+    pedir<{ porPedidoCentavos: number; porDiaCentavos: number }>(
+      'GET',
+      '/datos/admin/piloto/limites',
+    )
+      .then((r) => {
+        cargarBase({
+          porPedido: String(r.porPedidoCentavos / 100),
+          porDia: String(r.porDiaCentavos / 100),
+        });
+        setHayTopes(true);
+      })
+      .catch(() => setHayTopes(false));
     pedir<ServiciosPiloto>('GET', '/datos/admin/piloto/servicios')
       .then(setSp)
       .catch(() => setSp(null));
-  }, []);
+  }, [cargarBase]);
   useEffect(cargar, [cargar]);
+
+  async function guardarTopes(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setOk('');
+    try {
+      await pedir('PUT', '/datos/admin/piloto/limites', {
+        porPedidoCentavos: Math.round(Number(bt.valores.porPedido) * 100),
+        porDiaCentavos: Math.round(Number(bt.valores.porDia) * 100),
+      });
+      await bt.limpiar();
+      setOk(t.topesGuardados);
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
 
   async function cambiarServicio(servicio: string, zona: string, piloto: boolean) {
     setError('');
@@ -235,6 +286,42 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
           </li>
         ))}
       </ul>
+      {hayTopes ? (
+        <form className="formulario tarjeta-form" onSubmit={(e) => void guardarTopes(e)}>
+          <h2>{t.topes}</h2>
+          <AvisoBorrador
+            visible={bt.recuperado}
+            idioma={idioma}
+            empezar={() => void bt.empezarDeNuevo()}
+          />
+          <p className="pista">{t.topesAyuda}</p>
+          <label>
+            {t.porPedido}
+            <input
+              type="number"
+              min="1"
+              step="1"
+              inputMode="decimal"
+              value={bt.valores.porPedido}
+              onChange={(e) => bt.cambiar('porPedido', e.target.value)}
+            />
+          </label>
+          <label>
+            {t.porDia}
+            <input
+              type="number"
+              min="1"
+              step="1"
+              inputMode="decimal"
+              value={bt.valores.porDia}
+              onChange={(e) => bt.cambiar('porDia', e.target.value)}
+            />
+          </label>
+          <button type="submit" className="boton">
+            {t.guardarTopes}
+          </button>
+        </form>
+      ) : null}
       {sp ? (
         <>
           <h2>{t.servicios}</h2>

@@ -155,3 +155,84 @@ piloto.put('/admin/piloto/servicios', async (c) => {
       .run();
   return c.json({ ok: true });
 });
+
+// ---------------------------------------------------------------- C-PILOTO-LIMITES
+
+/** Topes por defecto del piloto: 50 dólares por pedido y 150 por día (se cambian en el superadmin). */
+const TOPE_PEDIDO = 5000;
+const TOPE_DIA = 15000;
+
+async function leerTopes(db: D1Database) {
+  const { results } = await db
+    .prepare(
+      "SELECT clave, valor FROM config WHERE clave IN ('piloto_tope_pedido', 'piloto_tope_dia')",
+    )
+    .all<{ clave: string; valor: string }>();
+  const v = new Map(results.map((f) => [f.clave, Number(f.valor)]));
+  return {
+    porPedidoCentavos: v.get('piloto_tope_pedido') ?? TOPE_PEDIDO,
+    porDiaCentavos: v.get('piloto_tope_dia') ?? TOPE_DIA,
+  };
+}
+
+/**
+ * Para los participantes del piloto: un error no cuesta más que el tope. Quien no está en el piloto
+ * no cambia nada. El día suma los pedidos de hoy que no se cancelaron.
+ */
+export async function exigirTopePiloto(db: D1Database, usuarioId: string, totalCentavos: number) {
+  if (!(await esParticipante(db, usuarioId))) return;
+  const t = await leerTopes(db);
+  if (totalCentavos > t.porPedidoCentavos)
+    throw new ErrorDatos(
+      `En el piloto cada pedido puede ser de hasta $${(t.porPedidoCentavos / 100).toFixed(2)}.`,
+      'total',
+      409,
+    );
+  const hoy = await db
+    .prepare(
+      "SELECT COALESCE(SUM(total), 0) AS suma FROM pedidos WHERE cliente_id = ? AND estado != 'cancelado' AND creado_en >= date('now')",
+    )
+    .bind(usuarioId)
+    .first<{ suma: number }>();
+  if (Number(hoy?.suma ?? 0) + totalCentavos > t.porDiaCentavos)
+    throw new ErrorDatos(
+      `En el piloto puedes pedir hasta $${(t.porDiaCentavos / 100).toFixed(2)} por día.`,
+      'total',
+      409,
+    );
+}
+
+piloto.get('/admin/piloto/limites', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await leerTopes(base(c)));
+});
+
+piloto.put('/admin/piloto/limites', async (c) => {
+  const yo = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      porPedidoCentavos: z.number().int().min(100).max(1_000_000),
+      porDiaCentavos: z.number().int().min(100).max(5_000_000),
+    }),
+  );
+  const db = base(c);
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('piloto_tope_pedido', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(String(d.porPedidoCentavos)),
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('piloto_tope_dia', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(String(d.porDiaCentavos)),
+    db
+      .prepare(
+        "INSERT INTO piloto_eventos (usuario_id, accion, autor_id, nota) VALUES ('topes', 'topes', ?, ?)",
+      )
+      .bind(yo.id, `${d.porPedidoCentavos}/${d.porDiaCentavos}`),
+  ]);
+  return c.json({ ok: true });
+});

@@ -1415,6 +1415,14 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [
+    /^En el piloto cada pedido puede ser de hasta \$([\d.]+)\.$/,
+    (m) => `In the pilot each order can be up to $${m[1]}.`,
+  ],
+  [
+    /^En el piloto puedes pedir hasta \$([\d.]+) por día\.$/,
+    (m) => `In the pilot you can order up to $${m[1]} a day.`,
+  ],
+  [
     /^Llevas (\d+) horas manejando\. Por tu seguridad, descansa: vuelves a recibir viajes en (\d+) horas\.$/,
     (m) =>
       `You’ve been driving for ${m[1]} hours. For your safety, take a break: you’ll get rides again in ${m[2]} hours.`,

@@ -1968,3 +1968,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** un servicio encendido «solo piloto» en una ciudad (`servicios_piloto`). Los participantes lo ven «disponible» en `/datos/servicios` y pueden usarlo (Tiendas y viajes de Envíos); el público y quien no está en el piloto lo siguen viendo «muy pronto». Solo `SERVICIOS_PILOTO` (Envíos, Mercado, Farmacia, Licores, Más): **Moto y Carro no**, porque llevan pasajeros y esperan lo legal y el seguro (409 si se intenta).
 - **Ojo:** `/datos/servicios` con sesión responde `private, no-store`: la lista es de esa persona y no puede quedar en la caché compartida.
 - **Candado:** `piloto.test.ts` (participante sí, otro cliente y visitante no, Tiendas 200/404, apagar lo cierra, Moto y Carro rechazados) y `SuperPiloto.test.tsx` (la casilla manda el cambio).
+
+## C-PILOTO-LIMITES (30 oct 2026) — todos los países
+
+- **Qué es:** topes de dinero solo para los participantes del piloto: por pedido y por día (por defecto 50 y 150 dólares; se cambian en Superadmin → Piloto, guardados en `config` como `piloto_tope_pedido` y `piloto_tope_dia`). `exigirTopePiloto` corre en `POST /datos/pedidos` antes de guardar; el día suma los pedidos de hoy que no se cancelaron. Quien no está en el piloto no cambia nada.
+- **Candado:** `piloto.test.ts` (fuera del piloto sin tope, dentro 409 con campo `total`, la suma del día).
