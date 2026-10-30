@@ -5,7 +5,7 @@ import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { minutosPausa } from '../pausa';
-import { aRestaurante, conHorarios } from './catalogo';
+import { aRestaurante, conCalificaciones, conHorarios } from './catalogo';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { enTrozos } from '../trozos';
 
@@ -166,7 +166,7 @@ buscar.get('/buscar', async (c) => {
   c.header('cache-control', 'private, max-age=30');
   return c.json({
     zona: { id: zona.id, nombre: zona.nombre },
-    restaurantes: restaurantes.slice(0, TOPE),
+    restaurantes: await conCalificaciones(db, restaurantes.slice(0, TOPE)),
     platos,
   });
 });

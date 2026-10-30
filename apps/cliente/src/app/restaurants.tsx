@@ -18,6 +18,7 @@ import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { MapaLocales } from '../comida/MapaLocales';
 import { useCarrito } from '../carrito';
+import { Calificacion } from '../comida/Calificacion';
 
 /**
  * Restaurantes de Comida (diseño aprobado, pantalla 2, mejorada el 18 oct 2026 «como los grandes»):
@@ -296,9 +297,12 @@ export default function Restaurantes() {
                   />
                 </Pressable>
               </View>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={1}>
-                {r.categoria}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Calificacion c={r.calificacion} idioma={idioma} />
+                <Text style={{ color: '#5E5E5E', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
+                  · {r.categoria}
+                </Text>
+              </View>
               <View
                 style={{
                   flexDirection: 'row',

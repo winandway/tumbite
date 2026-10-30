@@ -144,6 +144,11 @@ export type Restaurante = {
   distanciaKm?: number;
   /** C-MONEDA-RECORRIDO: moneda de su zona (USD, COP…). Los precios van en su unidad menor. */
   moneda?: string;
+  /**
+   * C-CALIFICACION-PUBLICA: promedio de 1 a 5 y número de opiniones de pedidos verificados. Llega
+   * solo con 10 opiniones o más (como DoorDash y Uber Eats); antes, null y la app dice «Nuevo».
+   */
+  calificacion?: { promedio: number; total: number } | null;
   /** Solo para el dueño: la lista de activación (qué falta antes de abrir). */
   activacion?: Activacion;
 };

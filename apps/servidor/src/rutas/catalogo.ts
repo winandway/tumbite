@@ -22,6 +22,8 @@ import {
   franjasProgramables,
   textoFranja,
   leerEtiquetasDieta,
+  type CalificacionPublica,
+  calificacionPublica,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -111,6 +113,34 @@ export function ordenarPlatos(rest: FilaRest, platos: FilaRest[]): FilaRest[] {
       Number(a.orden ?? 0) - Number(b.orden ?? 0) ||
       String(a.nombre_es).localeCompare(String(b.nombre_es)),
   );
+}
+
+/**
+ * C-CALIFICACION-PUBLICA: el promedio y la cuenta de opiniones de pedidos verificados de cada
+ * restaurante; con menos de 10, null (la app dice «Nuevo»), como DoorDash y Uber Eats.
+ */
+export async function conCalificaciones<R extends { id: string }>(
+  db: D1Database,
+  lista: R[],
+): Promise<(R & { calificacion: CalificacionPublica | null })[]> {
+  if (!lista.length) return [];
+  const filas = await enTrozos(
+    lista.map((r) => r.id),
+    async (trozo, marcas) =>
+      (
+        await db
+          .prepare(
+            `SELECT p.restaurante_id AS id, AVG(c.estrellas_restaurante) AS promedio, COUNT(*) AS n
+               FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
+              WHERE p.restaurante_id IN (${marcas}) AND c.estrellas_restaurante IS NOT NULL
+              GROUP BY p.restaurante_id`,
+          )
+          .bind(...trozo)
+          .all<{ id: string; promedio: number; n: number }>()
+      ).results,
+  );
+  const por = new Map(filas.map((f) => [f.id, calificacionPublica(f.promedio, f.n)]));
+  return lista.map((r) => ({ ...r, calificacion: por.get(r.id) ?? null }));
 }
 
 export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<FilaRest[]> {
@@ -269,7 +299,10 @@ catalogo.get('/restaurantes', async (c) => {
     .bind(zona.id)
     .all<FilaRest>();
   const minutos = await minutosPausa(db);
-  let lista = (await conHorarios(db, results)).map((f) => aRestaurante(f, minutos));
+  let lista = await conCalificaciones(
+    db,
+    (await conHorarios(db, results)).map((f) => aRestaurante(f, minutos)),
+  );
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     lista = lista
       .map((r) =>
@@ -304,9 +337,51 @@ catalogo.get('/restaurantes/:id', async (c) => {
     .bind(f.id)
     .all<FilaRest>();
   const [conH] = await conHorarios(db, [f]);
+  const [restaurante] = await conCalificaciones(db, [aRestaurante(conH!, await minutosPausa(db))]);
   return c.json({
-    restaurante: aRestaurante(conH!, await minutosPausa(db)),
+    restaurante,
     platos: await platosConGrupos(db, ordenarPlatos(f, results)),
+  });
+});
+
+/**
+ * C-CALIFICACION-PUBLICA: las reseñas que ve el cliente en la ficha (las 20 más nuevas con
+ * comentario, con la respuesta del restaurante). Solo el nombre de pila; nada del pedido.
+ */
+catalogo.get('/restaurantes/:id/resenas', async (c) => {
+  const db = base(c);
+  const f = await db
+    .prepare("SELECT id FROM restaurantes WHERE id = ? AND estado = 'aprobado'")
+    .bind(c.req.param('id'))
+    .first<{ id: string }>();
+  if (!f) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
+  const calificacion = (await conCalificaciones(db, [f]))[0]?.calificacion ?? null;
+  if (!calificacion) return c.json({ calificacion: null, resenas: [] });
+  const { results } = await db
+    .prepare(
+      `SELECT c.estrellas_restaurante AS estrellas, c.comentario, c.respuesta, c.creado_en, u.nombre
+         FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id JOIN usuarios u ON u.id = p.cliente_id
+        WHERE p.restaurante_id = ? AND c.estrellas_restaurante IS NOT NULL AND TRIM(c.comentario) <> ''
+        ORDER BY c.creado_en DESC LIMIT 20`,
+    )
+    .bind(f.id)
+    .all<{
+      estrellas: number;
+      comentario: string;
+      respuesta: string | null;
+      creado_en: string;
+      nombre: string;
+    }>();
+  c.header('cache-control', 'public, max-age=300');
+  return c.json({
+    calificacion,
+    resenas: results.map((x) => ({
+      cliente: String(x.nombre ?? '').split(' ')[0],
+      estrellas: Number(x.estrellas),
+      comentario: x.comentario,
+      respuesta: x.respuesta ?? null,
+      fecha: x.creado_en,
+    })),
   });
 });
 

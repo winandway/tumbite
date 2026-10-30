@@ -93,7 +93,7 @@
 
 ## Etapa 8 · Brechas frente a los grandes (auditoría del 30 oct 2026), en orden de lanzamiento
 
-- [ ] (28) Calificación del restaurante visible para el cliente: estrellas y número de votos en la lista, el buscador y la ficha, y las reseñas en la ficha (como Uber Eats y DoorDash). Quitar las estrellas inventadas de las tarjetas de ejemplo. Todos los países.
+- [x] (C-CALIFICACION-PUBLICA) (28) Calificación del restaurante visible para el cliente: estrellas y número de votos en la lista, el buscador y la ficha, y las reseñas en la ficha (como Uber Eats y DoorDash). Quitar las estrellas inventadas de las tarjetas de ejemplo. Todos los países.
 - [ ] (29) Aceptación automática de pedidos (interruptor del restaurante, como DoorDash: el pedido se confirma solo y se busca repartidor al instante). Todos los países.
 - [ ] (30) Nota por plato («sin cebolla», «bien cocido»): el cliente la escribe en cada plato y el restaurante y el repartidor la ven. Todos los países.
 - [ ] (31) «Agotado hasta mañana» en los platos de comida (hoy, sin fecha o hasta una hora), reutilizando lo de Tiendas, en el panel y en la app del restaurante. Todos los países.

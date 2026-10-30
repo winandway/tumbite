@@ -1028,6 +1028,10 @@ const es: SeccionDocs[] = [
           'Si le das pocas estrellas al repartidor pero el problema fue de la comida o la demora del restaurante, marca el interruptor: así la nota no le cuenta a él.',
           'Toca «Enviar calificación». Gracias: eso mejora el reparto para todos.',
         ],
+        explicacion: [
+          'Tu calificación de la comida suma al promedio del restaurante. Cuando un restaurante tiene 10 opiniones o más, todos ven sus estrellas y cuántas opiniones tiene en la lista y en su página, junto con los comentarios más nuevos y las respuestas del restaurante. Solo se muestra tu nombre de pila.',
+          'Con menos de 10 opiniones, el restaurante aparece como «Nuevo». Solo cuentan las opiniones de pedidos hechos de verdad en Divoox.',
+        ],
       },
     ],
   },
@@ -1044,6 +1048,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Entra a Reseñas en el menú del panel. Arriba ves tu promedio, cuántas reseñas tienes y cuántas respondiste. Cada reseña trae las estrellas, el comentario, el nombre de pila del cliente y el número del pedido.',
           'Toca «Responder», escribe con calma y toca «Publicar respuesta». Se publica una sola vez y el cliente la ve en el detalle de ese pedido.',
+          'Cuando tienes 10 opiniones o más, tu promedio y tus reseñas más nuevas con comentario, junto con tus respuestas, se muestran en tu página para todos los clientes. Antes de eso apareces como «Nuevo».',
           'Para ir más rápido, arriba del cuadro hay respuestas sugeridas según las estrellas, con el nombre del cliente: tocas una, la cambias si quieres y la publicas.',
           'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
           'Pueden responder el dueño y los managers; el staff solo las lee.',
@@ -4410,6 +4415,10 @@ const en: SeccionDocs[] = [
           'If you give the driver a low rating but the problem was the food or the restaurant’s delay, flip the switch: the rating won’t count against them.',
           'Tap “Send rating.” Thanks: it makes delivery better for everyone.',
         ],
+        explicacion: [
+          'Your food rating counts toward the restaurant’s average. Once a restaurant has 10 or more ratings, everyone sees its stars and number of ratings in the list and on its page, along with the latest comments and the restaurant’s replies. Only your first name is shown.',
+          'With fewer than 10 ratings, the restaurant shows as “New”. Only ratings from real Divoox orders count.',
+        ],
       },
     ],
   },
@@ -4426,6 +4435,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Open Reviews in the panel menu. At the top you see your average, how many reviews you have and how many you replied to. Each review shows the stars, the comment, the customer’s first name and the order number.',
           'Tap “Reply”, write calmly and tap “Publish reply”. It’s published once and the customer sees it in that order’s details.',
+          'Once you have 10 or more ratings, your average and your latest reviews with comments, along with your replies, appear on your store page for every customer. Until then you show as “New”.',
           'To go faster, above the box there are suggested replies based on the stars, with the customer’s name: tap one, change it if you want and publish it.',
           'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
           'The owner and managers can reply; staff can only read them.',

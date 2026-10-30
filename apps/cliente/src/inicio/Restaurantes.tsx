@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { C, urlFoto } from '@tumbite/movil';
 import { IMG, fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
+import { Calificacion } from '../comida/Calificacion';
 
 const tarjeta = {
   backgroundColor: '#fff',
@@ -203,9 +204,12 @@ export function Restaurantes({
                   </View>
                 ) : null}
               </View>
-              <Text style={{ fontSize: 12, color: '#5E5E5E', marginTop: 2 }} numberOfLines={1}>
-                {r.categoria}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <Calificacion c={r.calificacion} idioma={idioma} />
+                <Text style={{ fontSize: 12, color: '#5E5E5E', flexShrink: 1 }} numberOfLines={1}>
+                  · {r.categoria}
+                </Text>
+              </View>
             </View>
           </Pressable>
         ))}

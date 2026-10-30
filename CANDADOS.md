@@ -1875,3 +1875,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** en el panel de Divoox Flex la actividad reciente mostraba códigos internos («empresa.crear»), los permisos de las claves de la API salían como códigos sin explicar, y las horas salían en formato de la base y en hora universal («2026-10-30 12:23:05»).
 - **Arreglo:** `packages/compartido/src/flexTextos.ts`: `textoAccionFlex` (frase en los dos idiomas para cada acción que anota el servidor; si aparece una nueva sin frase, «Cambio en la empresa», nunca el código), `textoPermisoClave` (nombre claro, con el código al lado para quien programa) y `fechaHoraLocal` (hora local y en el idioma). Aplicado en actividad, claves, billetera (movimientos, recargas, comisiones, comprobantes), envíos, trazabilidad e importaciones. El comprobante sigue diciendo UTC a propósito.
 - **Candado:** `apps/servidor/src/flex/flexTextos.test.ts` recorre el código del servidor y exige frase para cada `sentenciaAuditoria` (una acción nueva sin frase pone la prueba en rojo).
+
+## C-CALIFICACION-PUBLICA (30 oct 2026) — todos los países
+
+- **Qué faltaba:** el cliente no veía la calificación de ningún restaurante real (solo estrellas inventadas en las tarjetas de ejemplo, que ni se pintaban).
+- **Cómo funciona:** `conCalificaciones` en `apps/servidor/src/rutas/catalogo.ts` suma promedio y cuenta de `calificaciones` (pedidos verificados) a la lista, la ficha y el buscador; `GET /datos/restaurantes/:id/resenas` da las 20 reseñas más nuevas con comentario y la respuesta del restaurante, solo con el nombre de pila. La regla de 10 opiniones vive en `packages/compartido/src/calificacionPublica.ts`. En la app: `apps/cliente/src/comida/Calificacion.tsx`.
+- **Candados:** las tres pruebas de la ficha `docs/investigaciones-rea/2026-10-30-calificacion-publica.md`. Captura: `docs/capturas/calificacion-ficha-es.png`.
+- **No tocar:** nunca mostrar el apellido ni el número de pedido en lo público; nunca bajar el mínimo de 10 sin decisión escrita.

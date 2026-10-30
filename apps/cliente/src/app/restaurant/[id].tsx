@@ -41,6 +41,7 @@ import {
   sombra,
 } from '../../comida/piezas';
 import { textosComida } from '../../comida/textos';
+import { Calificacion, ResenasRestaurante } from '../../comida/Calificacion';
 
 function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
   if (Platform.OS === 'web') return Promise.resolve(window.confirm(mensaje));
@@ -240,6 +241,9 @@ export default function MenuRestaurante() {
                 </Text>
                 <Estado abierto={abierto} texto={abierto ? tc.abierto : tc.cerrado} />
               </View>
+              <View style={{ marginTop: 4 }}>
+                <Calificacion c={r.calificacion} idioma={idioma} claro />
+              </View>
             </View>
           ) : null}
         </View>
@@ -254,6 +258,9 @@ export default function MenuRestaurante() {
                 : ''}
             </Text>
           ) : null}
+
+          {/* C-CALIFICACION-PUBLICA: las reseñas arriba del menú, como DoorDash. */}
+          {r ? <ResenasRestaurante restauranteId={r.id} /> : null}
 
           {/* C-PEDIDO-GRUPO: como DoorDash, el pedido en grupo se arma desde el menú. */}
           {grupo ? (

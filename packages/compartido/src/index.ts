@@ -53,3 +53,4 @@ export * from './identidadUnica';
 export * from './seguridadViaje';
 export * from './masRestaurante';
 export * from './flexTextos';
+export * from './calificacionPublica';
