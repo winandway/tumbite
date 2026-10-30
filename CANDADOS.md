@@ -1863,3 +1863,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `e2e/recorrido/envios.spec.ts`: un envío de punta a punta en las apps web (PIN visible para el cliente, «Cancelar el envío», foto del paquete en el Driver, «Llevando el paquete a…» y entrega con el PIN). `e2e/recorrido/carro.spec.ts`: un viaje en Carro (el Driver pide el código y no el casco).
 - En el sitio local (que no cuenta como sitio de pruebas) los dos encienden su servicio en la base con `servicios_implementados`, igual que las pruebas del servidor.
 - Lo destapó el recorrido: Envíos decía «Llevando a Paula» y «Cancelar el viaje»; arreglado con textos propios y rojo comprobado. Capturas en `docs/capturas/envio-*.png` y `carro-driver-codigo-es.png` (para Docs cuando se enciendan).
+
+## C-MAS-RESTAURANTE (30 oct 2026) — todos los países
+
+- **Qué se rompió:** la pestaña «Más» de la app del restaurante solo tenía «Cerrar sesión» y unos tres puntos sueltos; el dueño no encontraba sus datos, horario, ganancias, reseñas ni equipo desde el celular.
+- **Arreglo:** lista como la de DoorDash Merchant, armada por una sola pieza (`opcionesMasRestaurante` en `packages/compartido/src/masRestaurante.ts`) y pintada por `apps/restaurante/src/Mas.tsx`: «Tu restaurante» (datos y horario, ganancias, reseñas, equipo, configuración) y «Ayuda» (guías, soporte por WhatsApp si está configurado, términos). Cerrar sesión al final y la versión debajo. Borrar la cuenta sigue dentro de Configuración.
+- **Candados:** `masRestaurante.test.ts` (opciones, destinos sin direcciones internas, inglés) y `e2e/recorrido/masRestaurante.spec.ts` (en rojo con la versión vieja, en verde con la nueva; capturas `docs/capturas/restapp-mas-*.png`).

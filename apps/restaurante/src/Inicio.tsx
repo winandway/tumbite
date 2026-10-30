@@ -42,7 +42,6 @@ import {
   C,
   CodigoQR,
   FotoPedido,
-  MenuCuenta,
   Pantalla,
   TEXTOS_MOVIL,
   e,
@@ -51,6 +50,7 @@ import {
 } from '@tumbite/movil';
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
+import { Mas } from './Mas';
 import type { Pestana } from './piezas/recursos';
 import { textosRest } from './piezas/textos';
 import {
@@ -1132,20 +1132,7 @@ export function Inicio() {
   );
 
   // ---------- Más ----------
-  const vistaMas = (
-    <View>
-      <Text
-        accessibilityRole="header"
-        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 12 }}
-      >
-        {tr.mas}
-      </Text>
-      <BotonGrande texto={tm.salir} tipo="claro" alTocar={() => void salir()} />
-      <View style={{ marginTop: 12 }}>
-        <MenuCuenta />
-      </View>
-    </View>
-  );
+  const vistaMas = <Mas titulo={tr.mas} textoSalir={tm.salir} salir={() => void salir()} />;
 
   const cuerpo = detalle ? (
     vistaDetalle(detalle)

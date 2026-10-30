@@ -51,3 +51,4 @@ export * from './recomendados';
 export * from './resumenAnual';
 export * from './identidadUnica';
 export * from './seguridadViaje';
+export * from './masRestaurante';

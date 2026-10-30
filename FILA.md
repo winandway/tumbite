@@ -85,6 +85,12 @@
 - [x] (C-RECORRIDO-CARRO-ENVIOS) (23) Recorrido automático de punta a punta de un viaje en Carro y de un Envío en la app web (como el de Comida), con capturas para Docs cuando se enciendan. Todos los países.
 - [x] (C-COLORES-DRIVER) (24) Colores de marca en el Driver: la campana y el ícono activo de la barra de abajo salen en azul (fuera de la paleta de Divoox); pasarlos a rojo y negro desde la pieza única, con su prueba. Todos los países.
 
+## Etapa 1, punto 3 · Repaso del restaurante y de Flex, y nueva fila del roadmap (30 oct 2026)
+
+- [x] (C-MAS-RESTAURANTE: «Más» estaba casi vacía; ahora trae la lista de DoorDash Merchant) (25) Repaso en el sitio de pruebas, tamaño celular, de la app del restaurante (inicio, pedidos, menú, cuenta): marca, textos, errores en consola y pedidos fallidos. Cada fallo: prueba en rojo y arreglo. Todos los países.
+- [ ] (26) Repaso en el sitio de pruebas, tamaño celular, del panel de Divoox Flex (empresa: inicio, envíos, rutas, saldo): marca, textos y errores. Cada fallo: prueba en rojo y arreglo. Todos los países.
+- [ ] (27) Auditoría de lo que falta del roadmap: comparar los estudios de Richard, la comparación del ciclo del pedido y la auditoría final con lo construido; cada brecha que no dependa de Richard entra a esta fila en orden de lanzamiento. Todos los países.
+
 ## Hecho
 
 - Hasta el 29 oct, noche, quedaron hechos 50 puntos de la fila anterior. Cada uno tiene su commit en git y su candado en `CANDADOS.md`.
