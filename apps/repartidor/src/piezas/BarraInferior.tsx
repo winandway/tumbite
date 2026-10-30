@@ -1,7 +1,7 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Idioma } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
-import { IMG } from './recursos';
 import { textosDriver } from './textos';
 
 export type Pestana = 'inicio' | 'pedidos' | 'ganancias' | 'perfil';
@@ -18,11 +18,13 @@ export function BarraInferior({
 }) {
   const t = textosDriver(idioma);
   const nombres = new Map(Object.entries(t.nav) as [Pestana, string][]);
-  const iconos = new Map<Pestana, number | null>([
-    ['inicio', IMG.navInicio],
-    ['pedidos', IMG.navPedidos],
-    ['ganancias', IMG.navGanancias],
-    ['perfil', IMG.navCuenta],
+  // C-COLORES-DRIVER (30 oct 2026): íconos vectoriales en los colores de la marca, como las barras de
+  // los grandes (lleno el activo, de línea el resto). Las imágenes viejas venían en azul y con un punto
+  // rojo pintado que parecía un aviso. Ganancias son tres barras dibujadas.
+  const iconos = new Map<Pestana, [string, string]>([
+    ['inicio', ['home', 'home-outline']],
+    ['pedidos', ['receipt', 'receipt-outline']],
+    ['perfil', ['person', 'person-outline']],
   ]);
   const pestanas: Pestana[] = ['inicio', 'pedidos', 'ganancias', 'perfil'];
   return (
@@ -51,11 +53,11 @@ export function BarraInferior({
             style={{ flex: 1, alignItems: 'center', paddingVertical: 4 }}
           >
             {icono ? (
-              <Image
-                source={icono}
-                style={{ width: 30, height: 30, opacity: esta ? 1 : 0.65 }}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
+              <Ionicons
+                name={(esta ? icono[0] : icono[1]) as keyof typeof Ionicons.glyphMap}
+                size={28}
+                color={color}
+                testID={`nav-${p}`}
               />
             ) : (
               // Ganancias: tres barras dibujadas, como el ícono del diseño.

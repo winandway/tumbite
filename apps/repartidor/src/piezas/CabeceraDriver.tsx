@@ -1,4 +1,5 @@
 import { Image, Pressable, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Idioma } from '@tumbite/compartido';
 import { C, SelectorIdioma } from '@tumbite/movil';
 import { IMG } from './recursos';
@@ -71,12 +72,21 @@ export function CabeceraDriver({
           hitSlop={6}
           style={{ width: 40, height: 40, borderRadius: 20, overflow: 'hidden' }}
         >
-          <Image
-            source={IMG.campana}
-            style={{ width: 40, height: 40 }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
+          {/* C-COLORES-DRIVER: campana vectorial en negro de la marca; el punto rojo solo si hay avisos. */}
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: '#E3E3E3',
+              backgroundColor: '#FFFFFF',
+            }}
+          >
+            <Ionicons name="notifications-outline" size={24} color={C.secundario} />
+          </View>
           {punto ? (
             <View
               style={{

@@ -1852,3 +1852,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - El formulario de pedir (`apps/cliente/src/viajes/PedirMoto.tsx`) es el mismo para Moto, Carro y Envíos, pero cada uno dice lo suyo: el casco y «un pasajero con mochila» solo en Moto; Carro dice hasta 4 pasajeros (6 en XL); Envíos pregunta «Dónde recogemos el paquete» y «¿A dónde lo llevamos?».
 - Lo destapó el repaso en el celular del 30 oct en el sitio de pruebas. Prueba: `e2e/recorrido/mas.spec.ts` («cada servicio dice lo suyo»), rojo comprobado.
+
+## C-COLORES-DRIVER (30 oct 2026) — todos los países
+
+- La barra de abajo y la campana del Driver eran imágenes azules (fuera de la paleta) con un punto rojo PINTADO en la campana y en Perfil, que parecía un aviso aunque no hubiera ninguno. Ahora son íconos vectoriales (`@expo/vector-icons` 15.0.2, Ionicons, MIT) en los colores de la marca: activo en rojo, el resto gris, campana en negro; el punto rojo solo sale con avisos reales.
+- Piezas: `apps/repartidor/src/piezas/BarraInferior.tsx` y `CabeceraDriver.tsx`. Prueba: `e2e/recorrido/coloresDriver.spec.ts` (rojo comprobado con el código viejo; captura en `docs/capturas/driver-colores-es.png`).

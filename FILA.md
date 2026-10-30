@@ -83,7 +83,7 @@
 - [x] (C-TEXTOS-POR-SERVICIO: Carro y Envíos mostraban los textos de Moto; arreglado) (21) Repaso con REA en el sitio de pruebas, tamaño celular, de las pantallas nuevas del cliente: Moto (contactos de confianza), Carro y Carro XL, Envíos (formulario del paquete y PIN) y «Más». Cada fallo: prueba en rojo y arreglo. Todos los países.
 - [x] (inicio y cuenta sin errores en pruebas; la oferta, la foto y el PIN se cubren con el recorrido automático del punto 23) (22) Repaso con REA en el sitio de pruebas del Driver: verificación con el motor apagado, oferta de Carro y de Envíos, foto del paquete y PIN de entrega. Cada fallo: prueba en rojo y arreglo. Todos los países.
 - [ ] (23) Recorrido automático de punta a punta de un viaje en Carro y de un Envío en la app web (como el de Comida), con capturas para Docs cuando se enciendan. Todos los países.
-- [ ] (24) Colores de marca en el Driver: la campana y el ícono activo de la barra de abajo salen en azul (fuera de la paleta de Divoox); pasarlos a rojo y negro desde la pieza única, con su prueba. Todos los países.
+- [x] (C-COLORES-DRIVER) (24) Colores de marca en el Driver: la campana y el ícono activo de la barra de abajo salen en azul (fuera de la paleta de Divoox); pasarlos a rojo y negro desde la pieza única, con su prueba. Todos los países.
 
 ## Hecho
 
