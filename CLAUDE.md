@@ -21,6 +21,7 @@ Las reglas globales de Richard aplican; estas se suman.
 > Sus palabras: _«cada que hagas una actualización, pasar esa actualización directo a Google… cuando ellos verifiquen, toda esa cola de actualizaciones va a valer para ellos»_.
 
 - Cada vez que se publica un cambio que toca una app (cliente, Driver o restaurante), se compila esa app y se sube a la pista de producción de Google Play, la que revisa Google: `node scripts/tiendas/compilar-y-subir.mjs <app>` (compila con EAS, espera y sube con la cuenta de servicio). Se juntan los cambios del día en una sola compilación por app cuando son varios seguidos.
+- **CORRECCIÓN (30 oct 2026, C-PLAY-NO-CANCELAR):** subir una versión nueva CANCELA la revisión que Google tiene en curso y la fila empieza de cero (Divoox y Driver acumularon nueve envíos cancelados así y nunca llegaban a aprobarse). Mientras una app espera la aprobación de Google NO se sube nada: el script lo impide con el candado `~/.config/tumbite/play-en-revision/<paquete>`. Cuando Google la aprueba, se borra el candado y se sube todo lo acumulado en una sola versión. Antes de decir «en revisión», se comprueba en la consola (Actividad de envío), no en la salida del script.
 
 ## Los estudios de Richard se consultan SIEMPRE (dictado el 14 oct 2026)
 

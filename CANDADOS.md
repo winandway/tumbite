@@ -1938,3 +1938,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** fotos dentro del chat del pedido (brecha 2 de `docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md`, estilo Instacart). `POST /datos/pedidos/:id/mensajes/foto` (bytes, solo imágenes reales, 3 MB, chat abierto) guarda en `chat/<pedido>/…` y anota `mensajes_pedido.foto_clave`; `GET /datos/pedidos/:id/mensajes/:mid/foto` solo para los del pedido y soporte. `ChatPedido` recibe `elegirFoto` (cliente: galería; Driver: cámara) y muestra la foto con `api.verFoto`.
 - **Candado:** `operacion.test.ts` («el chat lleva fotos…»: texto disfrazado da 415, un extraño no la ve).
 - **C-CHAT-FOTOS, lección (30 oct):** el botón se llamaba «Send a photo» y el recorrido buscaba «Send»: dos botones y la verificación en la nube cayó, frenando la publicación de todo el día. Ahora se llama «Adjuntar una foto» / «Attach a photo». Antes de publicar algo que agrega botones a pantallas del recorrido, correr el recorrido completo en local.
+
+## C-PLAY-NO-CANCELAR (30 oct 2026) — todos los países
+
+- **Qué se rompió:** cada subida a Google Play cancelaba el envío en revisión anterior. Divoox y Divoox Driver tenían nueve envíos «Cancelada» en su Actividad de envío y la lista de apps decía «Aún no se envió a revisión». El script decía «a revisión de Google» y eso se le repitió a Richard sin comprobarlo en la consola.
+- **Arreglo:** `scripts/tiendas/publicar-google-play.mjs` no sube si existe `~/.config/tumbite/play-en-revision/<paquete>` (sale con código 3 y explica por qué); al subir, pone el candado. Se quita a mano cuando Google aprueba. `FORZAR=1` solo si Richard lo pide.
+- **Cómo se comprueba:** consola de Google Play, cuenta go@windoce.com (cuenta 2 del Chrome) → app → Descripción general de la publicación → Actividad de envío: el último envío dice «En revisión» y ninguno nuevo lo cancela.
