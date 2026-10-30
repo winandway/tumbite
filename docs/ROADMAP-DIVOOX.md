@@ -79,6 +79,10 @@ clientes, después lo que destranca, después el resto.
 20. 🤖 Ficha REA de la pantalla «Explorar» o «Browse» de los grandes, y construirla: todos los servicios
     y categorías en una sola pantalla.
 
+### Etapa 8 — Brechas frente a los grandes (30 oct 2026, hecha)
+
+Auditoría de los estudios de Richard y de la comparación del ciclo del pedido. Todo lo que no depende de dinero ni de cuentas quedó construido, probado y en Docs: calificación pública del restaurante, aceptación automática, nota por plato, agotado por hoy, correo de entrega con foto, casilla de apartamento, menú desde planilla y alta asistida, opciones anidadas y copiar opciones, menús por horario, horario y reseñas en la app del restaurante, fotos en el chat. Queda: editar las opciones de los platos desde la app (hoy en el panel).
+
 ### Etapa 7 — Crecer (todo decide Richard)
 
 21. 👤 Suscripción tipo DashPass, tarjetas de regalo, anuncios pagados, pago por tiempo al repartidor,
