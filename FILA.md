@@ -78,7 +78,7 @@
 - [x] Modo tableta del restaurante (como la tableta de DoorDash): pantalla siempre encendida, pantalla completa, sonido fuerte y sin cerrar sesión por descuido. Panel y app del restaurante, Docs. Todos los países.
 - [x] Resumen de millas y ganancias del año para el repartidor (como Dasher, para sus impuestos): kilómetros o millas por entrega, total por mes y descarga en CSV. Servidor, app Driver, Docs. EE. UU. primero; los demás países con su moneda.
 - [x] Historial de cambios de la configuración de dinero por ciudad en el superadmin (quién cambió qué y cuándo), y que la calculadora pública lea la configuración en vivo. Todos los países.
-- [ ] Prueba de restauración de un respaldo de la base de pruebas, documentada paso a paso y con su comprobación automática. Todos los países.
+- [x] (la comprobación automática ya existía: restauracionAislada.test.ts en cada corrida; documento nuevo docs/RESTAURAR-RESPALDO.md; restaurar de verdad en pruebas espera tu visto bueno, fila 4.1 del 20 oct) Prueba de restauración de un respaldo de la base de pruebas, documentada paso a paso y con su comprobación automática. Todos los países.
 
 ## Cada sesión
 
