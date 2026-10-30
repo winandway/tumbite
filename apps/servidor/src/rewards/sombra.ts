@@ -140,6 +140,9 @@ async function unidadesPedidos(db: D1Database, rid: string): Promise<Unidad[]> {
                  AND json_extract(t.datos_json, '$.gravedad') = 'mayor') AS mayores
          FROM pedidos p LEFT JOIN restaurantes r ON r.id = p.restaurante_id
         WHERE p.repartidor_id = ? AND p.estado = 'entregado'
+          -- C-REWARDS-APELACIONES: una entrega con apelación aceptada no cuenta en el puntaje.
+          AND NOT EXISTS (SELECT 1 FROM apelaciones_repartidor a WHERE a.repartidor_id = p.repartidor_id
+                            AND a.unidad_tipo = 'pedido' AND a.unidad_id = p.id AND a.estado = 'aceptada')
         ORDER BY p.entregado_en DESC LIMIT ${HISTORIA}`,
     )
     .bind(rid)

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { type Variables, base, exigir } from '../sesion';
+import { nuevoId } from '../cripto';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { z } from 'zod';
 import { HITOS_FASE2, unidadesQueCuentan } from '@tumbite/compartido';
@@ -187,5 +188,86 @@ rewardsSombra.put('/admin/rewards/ajustes', async (c) => {
     );
   await db.batch(lote);
   console.warn('rewards: ajustes cambiados por', yo.id, JSON.stringify(d));
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------- C-REWARDS-APELACIONES (R7)
+
+rewardsSombra.get('/repartidor/apelaciones', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const { results: apelaciones } = await db
+    .prepare(
+      `SELECT a.id, a.unidad_tipo AS unidadTipo, a.unidad_id AS unidadId, a.motivo, a.estado, a.creado_en AS creadoEn
+         FROM apelaciones_repartidor a WHERE a.repartidor_id = ? ORDER BY a.creado_en DESC LIMIT 20`,
+    )
+    .bind(u.id)
+    .all();
+  // Las últimas entregas, para elegir cuál apelar.
+  const { results: entregas } = await db
+    .prepare(
+      `SELECT p.id, p.entregado_en AS entregadoEn, r.nombre AS restaurante
+         FROM pedidos p LEFT JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.repartidor_id = ? AND p.estado = 'entregado' ORDER BY p.entregado_en DESC LIMIT 10`,
+    )
+    .bind(u.id)
+    .all();
+  return c.json({ apelaciones, entregas });
+});
+
+rewardsSombra.post('/repartidor/apelaciones', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      unidadTipo: z.literal('pedido'),
+      unidadId: z.string().min(4).max(64),
+      motivo: z.string().trim().min(10).max(500),
+    }),
+  );
+  const db = base(c);
+  const mio = await db
+    .prepare(
+      "SELECT 1 AS si FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'entregado'",
+    )
+    .bind(d.unidadId, u.id)
+    .first();
+  if (!mio) throw new ErrorDatos('Esa entrega no es tuya o no existe.', 'unidadId', 404);
+  const id = nuevoId();
+  const r = await db
+    .prepare(
+      'INSERT OR IGNORE INTO apelaciones_repartidor (id, repartidor_id, unidad_tipo, unidad_id, motivo) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(id, u.id, d.unidadTipo, d.unidadId, d.motivo)
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Ya pediste revisar esa entrega.', 'unidadId', 409);
+  return c.json({ ok: true, id });
+});
+
+rewardsSombra.get('/admin/rewards/apelaciones', async (c) => {
+  exigir(c, 'admin');
+  const { results: apelaciones } = await base(c)
+    .prepare(
+      `SELECT a.id, a.repartidor_id AS repartidorId, u.nombre, a.unidad_tipo AS unidadTipo, a.unidad_id AS unidadId,
+              a.motivo, a.estado, a.creado_en AS creadoEn
+         FROM apelaciones_repartidor a LEFT JOIN usuarios u ON u.id = a.repartidor_id
+        WHERE a.estado = 'abierta' ORDER BY a.creado_en LIMIT 100`,
+    )
+    .all();
+  return c.json({ apelaciones });
+});
+
+rewardsSombra.put('/admin/rewards/apelaciones/:id', async (c) => {
+  const yo = exigir(c, 'admin');
+  const d = await leerCuerpo(c, z.object({ estado: z.enum(['aceptada', 'rechazada']) }));
+  const r = await base(c)
+    .prepare(
+      `UPDATE apelaciones_repartidor SET estado = ?, resuelta_por = ?, resuelta_en = datetime('now')
+        WHERE id = ? AND estado = 'abierta'`,
+    )
+    .bind(d.estado, yo.id, c.req.param('id'))
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('Esa apelación ya se resolvió o no existe.', undefined, 409);
   return c.json({ ok: true });
 });

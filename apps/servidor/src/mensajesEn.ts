@@ -699,6 +699,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
   ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
+  ['Esa entrega no es tuya o no existe.', 'That delivery isn’t yours or doesn’t exist.'],
+  ['Ya pediste revisar esa entrega.', 'You already asked us to review that delivery.'],
+  [
+    'Esa apelación ya se resolvió o no existe.',
+    'That appeal was already resolved or doesn’t exist.',
+  ],
   [
     'Los umbrales van en orden: Plata menor que Oro, y Oro menor que Diamante.',
     'Thresholds go in order: Silver below Gold, and Gold below Diamond.',

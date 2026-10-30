@@ -777,3 +777,68 @@ describe('C-REWARDS-PAGO: pago del premio a la billetera', () => {
     expect(await saldo(m, rep.id)).toBe(0);
   });
 });
+
+// C-REWARDS-APELACIONES (30 oct 2026, R7): el repartidor pide revisar una entrega; soporte decide.
+describe('C-REWARDS-APELACIONES: apelaciones del repartidor', () => {
+  it('apela una entrega suya, soporte la acepta y esa entrega deja de contar en su puntaje', async () => {
+    const m = mundoSombra();
+    const admin = await m.cuenta('admin');
+    const rep = await m.cuenta('repartidor');
+    for (let i = 0; i < 4; i++) await pedidoEntregado(m, rep.id, { estrellas: 5 });
+    await pedidoEntregado(m, rep.id, { estrellas: 1, tarde: true });
+    const mala = await m.DB.prepare(
+      'SELECT p.id FROM pedidos p JOIN calificaciones c ON c.pedido_id = p.id WHERE p.repartidor_id = ? AND c.estrellas_repartidor = 1',
+    )
+      .bind(rep.id)
+      .first<{ id: string }>();
+    const antes = await calcularYGuardar(m.DB, rep.id, '2026-10-29');
+    const ap = await m.llamar(
+      'POST',
+      '/datos/repartidor/apelaciones',
+      { unidadTipo: 'pedido', unidadId: mala!.id, motivo: 'El restaurante tardó 40 minutos.' },
+      rep.token,
+    );
+    expect(ap.estado).toBe(200);
+    // No se apela dos veces lo mismo.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/repartidor/apelaciones',
+          { unidadTipo: 'pedido', unidadId: mala!.id, motivo: 'Otra vez el mismo pedido.' },
+          rep.token,
+        )
+      ).estado,
+    ).toBe(409);
+    const lista = await m.llamar('GET', '/datos/admin/rewards/apelaciones', undefined, admin.token);
+    expect(lista.datos.apelaciones).toHaveLength(1);
+    const ok = await m.llamar(
+      'PUT',
+      `/datos/admin/rewards/apelaciones/${ap.datos.id}`,
+      { estado: 'aceptada' },
+      admin.token,
+    );
+    expect(ok.estado).toBe(200);
+    const despues = await calcularYGuardar(m.DB, rep.id, '2026-10-30');
+    expect(despues.reputacion.puntaje).toBeGreaterThan(antes.reputacion.puntaje);
+    const mias = await m.llamar('GET', '/datos/repartidor/apelaciones', undefined, rep.token);
+    expect(mias.datos.apelaciones[0]).toMatchObject({ estado: 'aceptada' });
+  });
+
+  it('no se puede apelar una entrega de otro repartidor', async () => {
+    const m = mundoSombra();
+    const rep = await m.cuenta('repartidor');
+    const otro = await m.cuenta('repartidor');
+    await pedidoEntregado(m, otro.id, { estrellas: 1 });
+    const ajeno = await m.DB.prepare('SELECT id FROM pedidos WHERE repartidor_id = ?')
+      .bind(otro.id)
+      .first<{ id: string }>();
+    const r = await m.llamar(
+      'POST',
+      '/datos/repartidor/apelaciones',
+      { unidadTipo: 'pedido', unidadId: ajeno!.id, motivo: 'Quiero apelar esto.' },
+      rep.token,
+    );
+    expect(r.estado).toBe(404);
+  });
+});
