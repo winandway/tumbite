@@ -1999,3 +1999,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** decisión de Richard: el premio es un porcentaje configurable del margen de contribución real de las entregas que cuentan, con tope. `montoPremio(margen, porcentaje, tope)` en compartido; `margenDe` suma `pedidos.ganancia` de las últimas entregas pagadas (tantas como el hito). El hito y el porcentaje salen de Superadmin → Rewards. Con porcentaje, tope o margen en cero no se registra ningún premio (ninguna obligación). Viajes y Flex todavía no aportan margen (Fase 3).
 - **Candado:** `rewardsHitos.test.ts` (porcentaje, tope, ceros) y `sombra.test.ts` (10 % de 10 entregas de 6,50 = 6,50 de premio «ganado»; con 0 % no hay fila).
+
+## C-REWARDS-PAGO (30 oct 2026) — todos los países
+
+- **Qué es:** `pagarPremios` (corre al final del cálculo diario): un premio «ganado», con 14 días sin reclamos (`DIAS_RETENCION`) y su presupuesto reservado, pasa a «pagado» con UNA sentencia condicionada y acredita la billetera con un movimiento `ajuste`, referencia `premio:<programa>:<hito>` e id fijo `premio-<repartidor>-<programa>-<hito>` (nunca dos veces). Paga el menor entre el monto del hito y lo reservado. Sin reserva no paga. Queda en `rewards_eventos`.
+- **Ojo:** la tabla `movimientos` no admite el concepto «premio» (su CHECK); por eso es `ajuste` con su referencia. Para reportes, filtrar `referencia LIKE 'premio:%'`.
+- **Candado:** `sombra.test.ts` (diez a la vez = un pago y un evento; dentro de los 14 días no paga; sin reserva no paga).

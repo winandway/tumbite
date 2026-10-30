@@ -9,6 +9,7 @@ import {
   calcularYGuardar,
   correrSombra,
   modoRewards,
+  pagarPremios,
   registrarHito,
 } from './sombra';
 
@@ -709,5 +710,70 @@ describe('C-REWARDS-PREMIO-VARIABLE: el premio es un porcentaje del margen real'
 
   it('con el porcentaje en cero no se registra ningún premio', async () => {
     expect(await conEntregas(0)).toBeNull();
+  });
+});
+
+// C-REWARDS-PAGO (30 oct 2026, R6): el premio ganado se paga a la billetera una sola vez.
+describe('C-REWARDS-PAGO: pago del premio a la billetera', () => {
+  async function ganado(
+    m: ReturnType<typeof mundoSombra>,
+    rid: string,
+    dias: number,
+    reservar = true,
+  ) {
+    await m.DB.prepare(
+      `INSERT INTO rewards_hitos (repartidor_id, programa, hito_unidades, estado, monto_centavos, unidades_contadas, actualizado_en)
+       VALUES (?, 'primer-hito-2026', 10, 'ganado', 650, 10, datetime('now', ?))`,
+    )
+      .bind(rid, `-${dias} days`)
+      .run();
+    if (reservar)
+      await m.DB.prepare(
+        "INSERT INTO rewards_reservas (repartidor_id, programa, hito_unidades, zona_id, mes, monto_centavos) VALUES (?, 'primer-hito-2026', 10, 'US-FL-MIAMI', '2026-10', 650)",
+      )
+        .bind(rid)
+        .run();
+  }
+  const saldo = async (m: ReturnType<typeof mundoSombra>, rid: string) =>
+    (
+      await m.DB.prepare(
+        "SELECT COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id = ? AND referencia LIKE 'premio:%'",
+      )
+        .bind(rid)
+        .first<{ s: number }>()
+    )?.s;
+
+  it('pasados los días de reclamo, se paga una sola vez aunque corra diez veces a la vez', async () => {
+    const m = mundoSombra();
+    const rep = await m.cuenta('repartidor');
+    await ganado(m, rep.id, 15);
+    await Promise.all(Array.from({ length: 10 }, () => pagarPremios(m.DB)));
+    expect(await saldo(m, rep.id)).toBe(650);
+    const h = await m.DB.prepare('SELECT estado FROM rewards_hitos WHERE repartidor_id = ?')
+      .bind(rep.id)
+      .first<{ estado: string }>();
+    expect(h?.estado).toBe('pagado');
+    const ev = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM rewards_eventos WHERE repartidor_id = ? AND a = 'pagado'",
+    )
+      .bind(rep.id)
+      .first<{ n: number }>();
+    expect(ev?.n).toBe(1);
+  });
+
+  it('dentro de los días de reclamo no se paga', async () => {
+    const m = mundoSombra();
+    const rep = await m.cuenta('repartidor');
+    await ganado(m, rep.id, 3);
+    await pagarPremios(m.DB);
+    expect(await saldo(m, rep.id)).toBe(0);
+  });
+
+  it('sin presupuesto reservado no se paga nunca', async () => {
+    const m = mundoSombra();
+    const rep = await m.cuenta('repartidor');
+    await ganado(m, rep.id, 30, false);
+    await pagarPremios(m.DB);
+    expect(await saldo(m, rep.id)).toBe(0);
   });
 });

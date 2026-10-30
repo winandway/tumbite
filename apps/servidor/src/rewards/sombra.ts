@@ -1,5 +1,6 @@
 import {
   type Entorno,
+  DIAS_RETENCION,
   HITOS_FASE2,
   ORDEN_NIVELES,
   UMBRALES,
@@ -593,7 +594,60 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
       );
     }
   }
+  await pagarPremios(db);
   return { modo, calculados: results.length };
+}
+
+/**
+ * C-REWARDS-PAGO (30 oct 2026, R6): un premio «ganado», pasada la ventana de reclamos y con su
+ * presupuesto reservado, se paga a la billetera del repartidor. Cada pago es UNA sentencia
+ * condicionada (ganado → pagado) y el movimiento lleva una clave fija por hito: aunque corra diez
+ * veces a la vez, se paga una sola vez. Nunca más que lo reservado. Queda en rewards_eventos.
+ */
+export async function pagarPremios(db: D1Database, tope = 50) {
+  const { results } = await db
+    .prepare(
+      `SELECT h.repartidor_id AS rid, h.programa, h.hito_unidades AS unidades,
+              MIN(h.monto_centavos, r.monto_centavos) AS monto
+         FROM rewards_hitos h
+         JOIN rewards_reservas r ON r.repartidor_id = h.repartidor_id AND r.programa = h.programa
+                                AND r.hito_unidades = h.hito_unidades
+        WHERE h.estado = 'ganado' AND h.actualizado_en <= datetime('now', ?)
+        LIMIT ?`,
+    )
+    .bind(`-${DIAS_RETENCION} days`, tope)
+    .all<{ rid: string; programa: string; unidades: number; monto: number }>();
+  let pagados = 0;
+  for (const p of results) {
+    if (p.monto <= 0) continue;
+    const r = await db
+      .prepare(
+        `UPDATE rewards_hitos SET estado = 'pagado', actualizado_en = datetime('now')
+          WHERE repartidor_id = ? AND programa = ? AND hito_unidades = ? AND estado = 'ganado'`,
+      )
+      .bind(p.rid, p.programa, p.unidades)
+      .run();
+    if (!r.meta.changes) continue;
+    await db.batch([
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES (?, ?, NULL, ?, 'ajuste', ?)",
+        )
+        .bind(
+          `premio-${p.rid}-${p.programa}-${p.unidades}`,
+          p.rid,
+          p.monto,
+          `premio:${p.programa}:${p.unidades}`,
+        ),
+      db
+        .prepare(
+          "INSERT INTO rewards_eventos (repartidor_id, programa, hito_unidades, de, a, motivo) VALUES (?, ?, ?, 'ganado', 'pagado', 'pago a la billetera')",
+        )
+        .bind(p.rid, p.programa, p.unidades),
+    ]);
+    pagados++;
+  }
+  return { pagados };
 }
 
 /** Tablas de Rewards que guardan filas por repartidor (las limpiezas de prueba las borran antes que al usuario). */
