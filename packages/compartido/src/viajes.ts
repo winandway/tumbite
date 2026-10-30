@@ -11,7 +11,7 @@ import { distanciaKm } from './catalogo';
  */
 
 /** Servicios de pasajeros que se cotizan con tarifa (Carro viene después con lo mismo). */
-export const SERVICIOS_VIAJE = ['moto', 'carro'] as const;
+export const SERVICIOS_VIAJE = ['moto', 'carro', 'envios'] as const;
 export type ServicioViaje = (typeof SERVICIOS_VIAJE)[number];
 
 const monto = z.number().int().min(0).max(100_000_000);
@@ -47,6 +47,8 @@ export const esquemaTarifaViaje = z
      * este factor (15 000 = × 1,5). Sin él, la ciudad no ofrece XL.
      */
     xlPb: z.number().int().min(10_000).max(30_000).optional(),
+    /** C-ENVIOS: valor declarado máximo de un paquete (unidad menor). */
+    valorMaximo: monto.optional(),
     /** Sin mapa de rutas: distancia por calle = línea recta × este factor (13 000 = × 1,3). [INF] */
     factorCallePb: z.number().int().min(10_000).max(20_000).default(13_000),
     /** Sin mapa de rutas: velocidad media para estimar el tiempo, por ciudad. [INF] */
@@ -63,7 +65,29 @@ export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
  * haya mapa (docs/investigaciones-rea/2026-10-28-moto-rea.md).
  */
 /** Un viaje de Moto más largo que esto no se cotiza (los grandes limitan la moto a la ciudad). */
-export const DISTANCIA_MAXIMA_KM: Record<ServicioViaje, number> = { moto: 40, carro: 80 };
+export const DISTANCIA_MAXIMA_KM: Record<ServicioViaje, number> = {
+  moto: 40,
+  carro: 80,
+  envios: 60,
+};
+
+/**
+ * C-ENVIOS (30 oct 2026), como Uber Courier: lo que el cliente dice del paquete al pedir. El valor
+ * declarado tiene tope por ciudad (`valorMaximo` de la tarifa; sin él, 100 en la moneda local) y quien
+ * envía confirma que no manda nada prohibido.
+ */
+export const esquemaPaqueteEnvio = z.object({
+  descripcion: z.string().trim().min(3).max(120),
+  valorDeclarado: z.number().int().min(0).max(100_000_000),
+  destinatario: z.object({
+    nombre: z.string().trim().min(2).max(60),
+    telefono: z.string().trim().min(7).max(20),
+  }),
+  sinProhibidos: z.literal(true),
+});
+export type PaqueteEnvio = z.infer<typeof esquemaPaqueteEnvio>;
+/** Sin tope en la tarifa de la ciudad: 100 en la unidad mayor de la moneda. */
+export const VALOR_MAXIMO_ENVIO_POR_DEFECTO = 10_000;
 /** Cuánto dura la cotización: después hay que volver a cotizar (precio fijo, no eterno). */
 export const VIGENCIA_COTIZACION_S = 300;
 

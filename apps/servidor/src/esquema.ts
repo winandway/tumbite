@@ -15,6 +15,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['cotizaciones_viaje', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['viajes', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['tarifas_viaje', 'xl_pb', 'INTEGER'],
+  // C-ENVIOS (30 oct 2026): tope del valor declarado de un paquete en la ciudad.
+  ['tarifas_viaje', 'valor_maximo', 'INTEGER'],
   // C-MOTO-CIUDAD (30 oct 2026): si este viaje pide el código para empezar (según la ciudad y la hora).
   ['viajes', 'pin_requerido', 'INTEGER NOT NULL DEFAULT 1'],
   // C-CARGO-AL-AFECTADO (30 oct 2026): el conductor al que le cancelaron (el cargo es suyo).
@@ -247,6 +249,8 @@ export const SERVICIOS_EN_PRUEBA = new Map<string, number>([
   ['moto', 1],
   // Carro (30 oct 2026): sobre el motor de Moto, solo en pruebas hasta que Richard decida país y seguro.
   ['carro', 1],
+  // Envíos (30 oct 2026): paquetes de persona a persona sobre el motor de viajes, solo en pruebas.
+  ['envios', 1],
   // Tiendas (C-TIENDAS-VITRINA, 28 oct 2026): solo en pruebas hasta que Richard abra cada país.
   ['mercado', 1],
   ['farmacia', 1],

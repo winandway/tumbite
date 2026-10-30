@@ -13,7 +13,7 @@ export async function conductorDeMoto(
   m: Mundo,
   donde: { lat: number; lng: number },
   zona = 'US-FL-MIAMI',
-  servicio: 'moto' | 'carro' = 'moto',
+  servicio: 'moto' | 'carro' | 'envios' = 'moto',
 ) {
   const q = (sql: string, ...v: unknown[]) =>
     m.DB.prepare(sql)
@@ -34,7 +34,7 @@ export async function conductorDeMoto(
     "INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado) VALUES (?, ?, ?, ?, ?, 'Negro', ?, 'FL', 2022, ?, 'aprobado')",
     v,
     c.id,
-    servicio,
+    servicio === 'carro' ? 'carro' : 'moto',
     servicio === 'carro' ? 'Toyota' : 'Yamaha',
     servicio === 'carro' ? 'Corolla' : 'NMAX',
     `M${seq}${Math.floor(Math.random() * 1e6)}`,

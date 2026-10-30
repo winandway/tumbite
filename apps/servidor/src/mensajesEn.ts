@@ -630,6 +630,30 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
   ['Carro XL todavía no está disponible en tu ciudad.', 'Car XL isn’t available in your city yet.'],
   [
+    'Cuéntanos qué envías y quién lo recibe.',
+    'Tell us what you’re sending and who’s receiving it.',
+  ],
+  [
+    'El valor de lo que envías pasa el máximo permitido en tu ciudad.',
+    'The value of your item is above the maximum allowed in your city.',
+  ],
+  [
+    'El celular de quien recibe no parece válido.',
+    'The recipient’s mobile number doesn’t look valid.',
+  ],
+  ['Ya tienes un envío en curso.', 'You already have a delivery in progress.'],
+  ['Toma la foto del paquete antes de salir.', 'Take a photo of the package before you leave.'],
+  ['Escribe el PIN de entrega.', 'Enter the delivery PIN.'],
+  [
+    'Demasiados intentos con el PIN. Llama a soporte desde la app.',
+    'Too many PIN attempts. Call support from the app.',
+  ],
+  [
+    'El PIN no coincide. Pídeselo a quien recibe.',
+    'The PIN doesn’t match. Ask the recipient for it.',
+  ],
+  ['Este envío ya no está asignado a ti.', 'This delivery is no longer assigned to you.'],
+  [
     'Antes de aceptar viajes, tómate una selfie con el casco puesto.',
     'Before accepting rides, take a selfie with your helmet on.',
   ],

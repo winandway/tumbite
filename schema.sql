@@ -2834,6 +2834,21 @@ CREATE TABLE IF NOT EXISTS huellas_caras (
 );
 CREATE INDEX IF NOT EXISTS huellas_caras_mala ON huellas_caras(mala_conducta);
 
+-- C-ENVIOS (30 oct 2026), como Uber Courier: el paquete de un envío de persona a persona (va sobre el
+-- motor de viajes). Quien recibe tiene un PIN de entrega; el conductor toma la foto al recogerlo.
+CREATE TABLE IF NOT EXISTS envios_persona (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  descripcion TEXT NOT NULL,
+  valor_declarado INTEGER NOT NULL CHECK (valor_declarado >= 0),
+  destinatario_nombre TEXT NOT NULL,
+  destinatario_telefono TEXT NOT NULL,
+  pin_entrega TEXT NOT NULL CHECK (length(pin_entrega) = 4),
+  intentos_pin INTEGER NOT NULL DEFAULT 0,
+  foto_recogida TEXT,
+  recogido_en TEXT,
+  entregado_en TEXT
+);
+
 -- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
 -- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
 CREATE TABLE IF NOT EXISTS ajustes_viaje_zona (

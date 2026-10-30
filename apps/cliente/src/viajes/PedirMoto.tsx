@@ -6,12 +6,14 @@ import {
   type Idioma,
   enIdioma,
   formatearMonto,
+  textoAMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
   Boton,
   C,
+  Campo,
   CampoDireccion,
   alSalirTelefono,
   almacenTelefono,
@@ -38,8 +40,8 @@ export function PedirMoto({
   alPedir,
   servicio = 'moto',
 }: {
-  /** C-CARRO-PRUEBAS: el mismo formulario pide Moto o Carro. */
-  servicio?: 'moto' | 'carro';
+  /** C-CARRO-PRUEBAS / C-ENVIOS: el mismo formulario pide Moto, Carro o un Envío. */
+  servicio?: 'moto' | 'carro' | 'envios';
   deudaPendiente: { monto: number; moneda: string | null } | null;
   alPedir: (viajeId: string) => void;
 }) {
@@ -59,6 +61,12 @@ export function PedirMoto({
       metodo: 'efectivo',
       // C-CARRO-XL: en Carro, normal o grande (6 plazas o más).
       categoria: 'estandar',
+      // C-ENVIOS: qué se envía y quién lo recibe.
+      paqueteDescripcion: '',
+      paqueteValor: '',
+      destinatarioNombre: '',
+      destinatarioTelefono: '',
+      sinProhibidos: false,
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -134,7 +142,20 @@ export function PedirMoto({
       const r = await api.pedir<{ viaje: { id: string }; pago?: Omit<Cobro, 'pedidoId'> }>(
         'POST',
         '/datos/viajes',
-        { cotizacionId: cotizacion.id, metodoPago: tarjeta ? 'tarjeta' : 'efectivo' },
+        {
+          cotizacionId: cotizacion.id,
+          metodoPago: tarjeta ? 'tarjeta' : 'efectivo',
+          ...(servicio === 'envios'
+            ? {
+                paquete: {
+                  descripcion: v.paqueteDescripcion,
+                  valorDeclarado: textoAMonto(v.paqueteValor || '0', cotizacion.moneda),
+                  destinatario: { nombre: v.destinatarioNombre, telefono: v.destinatarioTelefono },
+                  sinProhibidos: v.sinProhibidos,
+                },
+              }
+            : {}),
+        },
       );
       if (r.pago) {
         setCobro({ ...r.pago, pedidoId: r.viaje.id, viajeId: r.viaje.id });
@@ -289,7 +310,48 @@ export function PedirMoto({
           }}
         />
       ) : cotizacion ? (
-        <Boton texto={t.pedirMoto} alTocar={() => void pedir()} cargando={trabajando} exito />
+        <>
+          {servicio === 'envios' ? (
+            <View style={{ gap: 4 }}>
+              <Campo
+                etiqueta={t.paqueteQue}
+                value={v.paqueteDescripcion}
+                onChangeText={(x) => cambiar('paqueteDescripcion', x)}
+                placeholder={t.paqueteQueEjemplo}
+              />
+              <Campo
+                etiqueta={t.paqueteValor}
+                value={v.paqueteValor}
+                onChangeText={(x) => cambiar('paqueteValor', x)}
+                keyboardType="decimal-pad"
+              />
+              <Campo
+                etiqueta={t.destinatarioNombre}
+                value={v.destinatarioNombre}
+                onChangeText={(x) => cambiar('destinatarioNombre', x)}
+              />
+              <Campo
+                etiqueta={t.destinatarioTelefono}
+                value={v.destinatarioTelefono}
+                onChangeText={(x) => cambiar('destinatarioTelefono', x)}
+                keyboardType="phone-pad"
+                placeholder="(305) 000-0000"
+              />
+              <Pildora
+                texto={t.sinProhibidos}
+                activa={v.sinProhibidos}
+                alTocar={() => cambiar('sinProhibidos', !v.sinProhibidos)}
+                rol="checkbox"
+              />
+            </View>
+          ) : null}
+          <Boton
+            texto={servicio === 'envios' ? t.pedirEnvio : t.pedirMoto}
+            alTocar={() => void pedir()}
+            cargando={trabajando}
+            exito
+          />
+        </>
       ) : (
         <Boton texto={t.verPrecio} alTocar={() => void cotizar()} cargando={trabajando} />
       )}

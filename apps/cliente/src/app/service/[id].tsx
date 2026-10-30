@@ -98,7 +98,7 @@ export default function PantallaServicio() {
           </View>
         ) : null}
         {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}
-        {accion === 'abrir' && (id === 'moto' || id === 'carro') ? (
+        {accion === 'abrir' && (id === 'moto' || id === 'carro' || id === 'envios') ? (
           <View style={{ marginTop: 18 }}>
             <Boton
               texto={t.abrirServicio}

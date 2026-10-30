@@ -114,7 +114,7 @@ export function Pildora({
   activa: boolean;
   alTocar: () => void;
   etiqueta?: string;
-  rol?: 'button' | 'radio' | 'tab';
+  rol?: 'button' | 'radio' | 'tab' | 'checkbox';
 }) {
   return (
     <Pressable

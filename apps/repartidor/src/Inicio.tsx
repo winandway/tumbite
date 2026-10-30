@@ -1510,6 +1510,8 @@ export function Inicio() {
       'inicio',
       <ViajeActivo
         api={{
+          // C-ENVIOS: la foto del paquete al recogerlo.
+          subirFoto: (foto, ruta) => api.subirFoto(foto, ruta),
           pedir: async (metodo, ruta, cuerpo, extra) => {
             // Antes de «Llegué», la posición de AHORA (el servidor exige estar en la recogida).
             if (ruta.endsWith('/llegue')) {

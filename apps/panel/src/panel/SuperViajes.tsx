@@ -50,6 +50,8 @@ const T = {
     redondeo: 'Redondear a (unidad menor; 100 = de cien en cien)',
     servicio: 'Servicio',
     carro: 'Carro',
+    envios: 'Envíos',
+    valorMaximo: 'Envíos: valor máximo declarado de un paquete (vacío = 100)',
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     motivo: 'Motivo del cambio',
     guardar: 'Guardar tarifa',
@@ -92,6 +94,8 @@ const T = {
     redondeo: 'Round to (minor unit; 100 = to the nearest hundred)',
     servicio: 'Service',
     carro: 'Car',
+    envios: 'Delivery',
+    valorMaximo: 'Delivery: maximum declared value of a package (empty = 100)',
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     motivo: 'Reason for the change',
     guardar: 'Save pricing',
@@ -157,6 +161,7 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
       cancelacionGratis: '2',
       redondeo: '1',
       xl: '',
+      valorMaximo: '',
       motivo: '',
     },
     almacen: almacenNavegador,
@@ -202,9 +207,11 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
     // C-CARRO-XL: el factor del carro grande (solo Carro); vacío = la ciudad no ofrece XL.
     const xl = Number(v.xl.replace(',', '.'));
     if (xl >= 1) tarifa.xlPb = Math.round(xl * 10_000);
+    // C-ENVIOS: tope del valor declarado de un paquete en esta ciudad.
+    if (v.valorMaximo.trim()) tarifa.valorMaximo = textoAMonto(v.valorMaximo, m);
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
-        servicio: v.servicio === 'carro' ? 'carro' : 'moto',
+        servicio: v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto',
         zona: v.zona.trim().toUpperCase(),
         tarifa,
         dePrueba: true,
@@ -342,6 +349,7 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
           >
             <option value="moto">Moto</option>
             <option value="carro">{t.carro}</option>
+            <option value="envios">{t.envios}</option>
           </select>
         </label>
         <label className="campo">
@@ -392,6 +400,14 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
             inputMode="decimal"
             value={b.valores.xl}
             onChange={(e) => b.cambiar('xl', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.valorMaximo}</span>
+          <input
+            inputMode="decimal"
+            value={b.valores.valorMaximo}
+            onChange={(e) => b.cambiar('valorMaximo', e.target.value)}
           />
         </label>
         <label className="campo">

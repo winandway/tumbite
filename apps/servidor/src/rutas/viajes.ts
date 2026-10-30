@@ -4,6 +4,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { revisarSelfieCasco } from './ajustesViaje';
+import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
 import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
@@ -144,8 +145,11 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               v.intentos_pin, v.pin_requerido, v.llego_en,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
-              p.nombre AS pasajero
+              p.nombre AS pasajero,
+              e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
+              e.foto_recogida IS NOT NULL AS paquete_foto
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
          LEFT JOIN usuarios p ON p.id = o.cliente_id
         WHERE o.conductor_id = ? AND o.estado_general IN ('asignada', 'en_curso')`,
@@ -338,6 +342,9 @@ viajes.post(
         }
       }
     }
+    // C-ENVIOS: sin la foto del paquete no sale; sin el PIN de quien recibe no se entrega.
+    if (op.estado === paso.desde && (nombre === 'iniciar' || nombre === 'terminar'))
+      await revisarPaquete(c, db, id, nombre);
     const ok = await cambiarEstadoViaje(db, {
       operacionId: id,
       desde: paso.desde,
@@ -494,6 +501,85 @@ async function pasarDeudasAlAfectado(db: D1Database, operacionId: string, cobrad
       mov(cobradorId, -d.monto, 'ajuste', `deuda-viaje:${d.id}:cobrador`),
     ]);
 }
+
+/**
+ * C-ENVIOS (30 oct 2026), como Uber Courier: al salir, la foto del paquete ya tomada; al entregar, el
+ * PIN de quien recibe (cinco intentos). Si la operación no es un envío, no hace nada.
+ */
+async function revisarPaquete(c: Ctx, db: D1Database, id: string, paso: string) {
+  const p = await db
+    .prepare(
+      'SELECT pin_entrega, intentos_pin, foto_recogida FROM envios_persona WHERE operacion_id = ?',
+    )
+    .bind(id)
+    .first<{ pin_entrega: string; intentos_pin: number; foto_recogida: string | null }>();
+  if (!p) return;
+  if (paso === 'iniciar') {
+    if (!p.foto_recogida)
+      throw new ErrorDatos('Toma la foto del paquete antes de salir.', 'foto_paquete', 409);
+    await db
+      .prepare("UPDATE envios_persona SET recogido_en = datetime('now') WHERE operacion_id = ?")
+      .bind(id)
+      .run();
+    return;
+  }
+  const { pinEntrega } = await leerCuerpo(
+    c,
+    z.object({ pinEntrega: z.string().regex(/^\d{4}$/, { error: 'Escribe el PIN de entrega.' }) }),
+  );
+  if (p.intentos_pin >= INTENTOS_PIN_MAXIMOS)
+    throw new ErrorDatos(
+      'Demasiados intentos con el PIN. Llama a soporte desde la app.',
+      'pinEntrega',
+      429,
+    );
+  if (pinEntrega !== p.pin_entrega) {
+    await db
+      .prepare('UPDATE envios_persona SET intentos_pin = intentos_pin + 1 WHERE operacion_id = ?')
+      .bind(id)
+      .run();
+    throw new ErrorDatos('El PIN no coincide. Pídeselo a quien recibe.', 'pinEntrega', 409);
+  }
+  await db
+    .prepare("UPDATE envios_persona SET entregado_en = datetime('now') WHERE operacion_id = ?")
+    .bind(id)
+    .run();
+}
+
+/** C-ENVIOS: la foto del paquete al recogerlo (privada; la ven quien envía y el equipo). */
+viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const id = c.req.param('id');
+  const db = base(c);
+  const es = await db
+    .prepare(
+      'SELECT 1 FROM envios_persona p JOIN operaciones o ON o.id = p.operacion_id WHERE p.operacion_id = ? AND o.conductor_id = ?',
+    )
+    .bind(id, u.id)
+    .first();
+  if (!es) throw new ErrorDatos('Este envío ya no está asignado a ti.', undefined, 404);
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
+  if (bytes.byteLength > MAX_FOTO_BYTES)
+    throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
+  const tipo = tipoReal(bytes);
+  if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  if (!c.env.BUCKET)
+    throw new ErrorDatos(
+      'El almacén no está disponible en este momento. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  const clave = `envios/${id}/recogida-${nuevoId()}`;
+  await c.env.BUCKET.put(clave, bytes, {
+    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  });
+  await db
+    .prepare('UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?')
+    .bind(clave, id)
+    .run();
+  return c.json({ ok: true }, 201);
+});
 
 /** M8: el conductor califica al pasajero al terminar. */
 viajes.post('/conductor/operaciones/:id/calificar', async (c) => {

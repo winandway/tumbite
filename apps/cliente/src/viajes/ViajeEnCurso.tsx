@@ -30,6 +30,16 @@ export type ViajePasajero = {
   cancelacion: { cargo: number; gratisPorS: number | null } | null;
 };
 
+/** C-ENVIOS: lo que manda el servidor del paquete de un envío. */
+export type PaqueteCliente = {
+  descripcion: string;
+  valorDeclarado: number;
+  destinatario: string;
+  pinEntrega: string | null;
+  recogido: boolean;
+  entregado: boolean;
+};
+
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
 
 /**
@@ -39,10 +49,12 @@ const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
  */
 export function ViajeEnCurso({
   viaje,
+  paquete = null,
   alCambiar,
   alTerminar,
 }: {
   viaje: ViajePasajero;
+  paquete?: PaqueteCliente | null;
   alCambiar: () => void;
   alTerminar: () => void;
 }) {
@@ -174,6 +186,25 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
 
+      {paquete ? (
+        <Tarjeta>
+          <Text style={{ fontWeight: '800', color: C.secundario }}>
+            {paquete.descripcion} · {t.paraQuien} {paquete.destinatario}
+          </Text>
+          {paquete.pinEntrega ? (
+            <>
+              <Text style={{ marginTop: 6, color: '#5E5E5E' }}>{t.pinEntrega}</Text>
+              <Text
+                testID="envio-pin"
+                style={{ fontSize: 30, fontWeight: '900', letterSpacing: 8, color: C.secundario }}
+              >
+                {paquete.pinEntrega}
+              </Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
+            </>
+          ) : null}
+        </Tarjeta>
+      ) : null}
       {viaje.pin && viaje.estado !== 'buscando' ? (
         <Tarjeta>
           <View testID="viaje-codigo" style={{ alignItems: 'center', gap: 4 }}>

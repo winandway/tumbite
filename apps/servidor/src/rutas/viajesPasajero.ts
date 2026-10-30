@@ -10,6 +10,10 @@ import {
   cotizarViaje,
   esquemaCotizarViaje,
   esquemaTarifaViaje,
+  esquemaPaqueteEnvio,
+  type PaqueteEnvio,
+  telefonoCanonico,
+  VALOR_MAXIMO_ENVIO_POR_DEFECTO,
   tarifaXl,
   estimarRuta,
   numeroEmergencia,
@@ -24,6 +28,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
 import { revisarDesvio } from './seguridadViaje';
+import { enviarSms } from '../sms';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
 
@@ -56,6 +61,7 @@ type FilaTarifa = {
   factor_calle_pb: number;
   velocidad_kmh: number;
   xl_pb: number | null;
+  valor_maximo: number | null;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -80,6 +86,7 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     cargoFijo: f.cargo_fijo,
     factorCallePb: f.factor_calle_pb,
     ...(f.xl_pb ? { xlPb: f.xl_pb } : {}),
+    ...(f.valor_maximo != null ? { valorMaximo: f.valor_maximo } : {}),
     velocidadKmh: f.velocidad_kmh,
   };
 }
@@ -167,8 +174,8 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
-           de_prueba, motivo, creada_por, xl_pb)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           de_prueba, motivo, creada_por, xl_pb, valor_maximo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -193,6 +200,7 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         d.motivo,
         admin.id,
         t.xlPb ?? null,
+        t.valorMaximo ?? null,
       ),
     db
       .prepare(
@@ -322,11 +330,13 @@ viajesPasajero.post('/viajes', async (c) => {
       cotizacionId: z.string().min(8).max(64),
       // C-VIAJE-TARJETA: con tarjeta se autoriza al pedir y se cobra al terminar.
       metodoPago: z.enum(['efectivo', 'tarjeta']).default('efectivo'),
+      // C-ENVIOS: qué se envía y quién lo recibe (solo en Envíos).
+      paquete: esquemaPaqueteEnvio.optional(),
     }),
   );
   const cot = await db
     .prepare(
-      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, vence_en > datetime('now') AS vigente
+      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, tarifa_json, vence_en > datetime('now') AS vigente
          FROM cotizaciones_viaje WHERE id = ? AND cliente_id = ?`,
     )
     .bind(d.cotizacionId, u.id)
@@ -338,6 +348,7 @@ viajesPasajero.post('/viajes', async (c) => {
       operacion_id: string | null;
       total: number;
       moneda: string;
+      tarifa_json: string | null;
       vigente: number;
     }>();
   if (!cot) throw new ErrorDatos('Esa cotización no existe.', 'cotizacionId', 404);
@@ -346,24 +357,40 @@ viajesPasajero.post('/viajes', async (c) => {
     throw new ErrorDatos('El precio venció. Vuelve a cotizar el viaje.', 'cotizacionId', 409);
   if ((await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id)) !== 'disponible')
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
+  // C-ENVIOS: el paquete es obligatorio en Envíos, con su valor dentro del tope de la ciudad.
+  const esEnvio = cot.servicio_id === 'envios';
+  const tipo = esEnvio ? 'envio_paquete' : 'viaje_pasajero';
+  if (esEnvio) {
+    if (!d.paquete) throw new ErrorDatos('Cuéntanos qué envías y quién lo recibe.', 'paquete', 422);
+    const tope = tarifaDeCopia(cot.tarifa_json)?.valorMaximo ?? VALOR_MAXIMO_ENVIO_POR_DEFECTO;
+    if (d.paquete.valorDeclarado > tope)
+      throw new ErrorDatos(
+        'El valor de lo que envías pasa el máximo permitido en tu ciudad.',
+        'valorDeclarado',
+        422,
+      );
+    if (!telefonoCanonico(d.paquete.destinatario.telefono))
+      throw new ErrorDatos('El celular de quien recibe no parece válido.', 'telefono', 422);
+  }
   const op = nuevoId();
   const inicial = d.metodoPago === 'tarjeta' ? 'pago_pendiente' : 'buscando';
+  const pinEntrega = pinNuevo();
   const r = await db.batch([
     db
       .prepare(
         `UPDATE cotizaciones_viaje SET usada_en = datetime('now'), operacion_id = ?1
           WHERE id = ?2 AND cliente_id = ?3 AND usada_en IS NULL AND vence_en > datetime('now')
             AND NOT EXISTS (SELECT 1 FROM operaciones o WHERE o.cliente_id = ?3
-                             AND o.tipo_operacion = 'viaje_pasajero' AND o.estado_general IN ${ESTADOS_ACTIVOS})`,
+                             AND o.tipo_operacion = ?4 AND o.estado_general IN ${ESTADOS_ACTIVOS})`,
       )
-      .bind(op, cot.id, u.id),
+      .bind(op, cot.id, u.id, tipo),
     db
       .prepare(
         `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, ultima_clave)
-         SELECT ?1, servicio_id, 'viaje_pasajero', cliente_id, zona_id, ?4, ?3
+         SELECT ?1, servicio_id, ?5, cliente_id, zona_id, ?4, ?3
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
       )
-      .bind(op, cot.id, `pedir:${cot.id}`, inicial),
+      .bind(op, cot.id, `pedir:${cot.id}`, inicial, tipo),
     db
       .prepare(
         `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
@@ -374,9 +401,31 @@ viajesPasajero.post('/viajes', async (c) => {
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
       )
       .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago, inicial),
+    ...(esEnvio && d.paquete
+      ? [
+          db
+            .prepare(
+              `INSERT INTO envios_persona (operacion_id, descripcion, valor_declarado, destinatario_nombre, destinatario_telefono, pin_entrega)
+               SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM operaciones WHERE id = ?)`,
+            )
+            .bind(
+              op,
+              d.paquete.descripcion,
+              d.paquete.valorDeclarado,
+              d.paquete.destinatario.nombre,
+              telefonoCanonico(d.paquete.destinatario.telefono),
+              pinEntrega,
+              op,
+            ),
+        ]
+      : []),
   ]);
   // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
-  if (r[0]?.meta.changes && !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id)))
+  // C-ENVIOS: un envío no lleva código al recoger (lleva foto); el PIN es de quien recibe.
+  if (
+    r[0]?.meta.changes &&
+    (esEnvio || !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id)))
+  )
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
   if (!r[0]?.meta.changes) {
     const otra = await db
@@ -384,8 +433,16 @@ viajesPasajero.post('/viajes', async (c) => {
       .bind(cot.id)
       .first<{ operacion_id: string }>();
     if (otra) return c.json({ viaje: { id: otra.operacion_id } });
-    throw new ErrorDatos('Ya tienes un viaje en curso.', undefined, 409);
+    throw new ErrorDatos(
+      esEnvio ? 'Ya tienes un envío en curso.' : 'Ya tienes un viaje en curso.',
+      undefined,
+      409,
+    );
   }
+  if (esEnvio && d.paquete)
+    await avisarDestinatario(c, op, d.paquete, pinEntrega, u.nombre).catch((e: unknown) =>
+      console.error('envios: aviso a quien recibe', e),
+    );
   // C-VIAJE-TARJETA: con tarjeta, primero la autorización; se busca conductor cuando Stripe avisa.
   if (d.metodoPago === 'tarjeta') {
     const pago = await abrirCobroViaje(c.env, db, u, op, Number(cot.total), cot.moneda);
@@ -397,6 +454,66 @@ viajesPasajero.post('/viajes', async (c) => {
   );
   return c.json({ viaje: { id: op } }, 201);
 });
+
+/**
+ * C-ENVIOS: lo que el que envía ve de su paquete. El PIN de entrega también lo ve él, para pasárselo a
+ * quien recibe si el mensaje no le llegó.
+ */
+async function paqueteDe(db: D1Database, operacionId: string) {
+  const p = await db
+    .prepare(
+      'SELECT descripcion, valor_declarado, destinatario_nombre, pin_entrega, recogido_en, entregado_en FROM envios_persona WHERE operacion_id = ?',
+    )
+    .bind(operacionId)
+    .first<{
+      descripcion: string;
+      valor_declarado: number;
+      destinatario_nombre: string;
+      pin_entrega: string;
+      recogido_en: string | null;
+      entregado_en: string | null;
+    }>();
+  return p
+    ? {
+        descripcion: p.descripcion,
+        valorDeclarado: p.valor_declarado,
+        destinatario: p.destinatario_nombre,
+        pinEntrega: p.entregado_en ? null : p.pin_entrega,
+        recogido: Boolean(p.recogido_en),
+        entregado: Boolean(p.entregado_en),
+      }
+    : null;
+}
+
+/** Quien recibe: un mensaje con el enlace para seguir el envío en vivo y su PIN de entrega. */
+async function avisarDestinatario(
+  c: Ctx,
+  operacionId: string,
+  paquete: PaqueteEnvio,
+  pin: string,
+  remitente: string,
+) {
+  const db = base(c);
+  const codigo = nuevoToken();
+  const cliente = await db
+    .prepare('SELECT cliente_id FROM operaciones WHERE id = ?')
+    .bind(operacionId)
+    .first<{ cliente_id: string }>();
+  if (!cliente) return;
+  await db
+    .prepare('INSERT INTO viajes_compartidos (huella, operacion_id, creado_por) VALUES (?, ?, ?)')
+    .bind(await sha256(codigo), operacionId, cliente.cliente_id)
+    .run();
+  const sitio = (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
+  const nombre = remitente.split(' ')[0] ?? '';
+  await enviarSms(c.env, db, {
+    usuarioId: cliente.cliente_id,
+    pedidoId: null,
+    tipo: 'envio_destinatario',
+    telefono: telefonoCanonico(paquete.destinatario.telefono),
+    texto: `Divoox: ${nombre} sent you a package. Follow it live: ${sitio}/ride/${codigo} — Your delivery PIN: ${pin}. Share it only with your driver at delivery.`,
+  });
+}
 
 type FilaViajeCliente = {
   id: string;
@@ -424,7 +541,12 @@ type FilaViajeCliente = {
   placa: string | null;
 };
 
-async function viajeDelCliente(db: D1Database, clienteId: string, id: string | null) {
+async function viajeDelCliente(
+  db: D1Database,
+  clienteId: string,
+  id: string | null,
+  tipo: 'viaje_pasajero' | 'envio_paquete' = 'viaje_pasajero',
+) {
   return db
     .prepare(
       `SELECT o.id, o.servicio_id, v.estado, v.pin_recogida, v.pin_requerido, v.metodo_pago, v.origen_direccion,
@@ -438,11 +560,11 @@ async function viajeDelCliente(db: D1Database, clienteId: string, id: string | n
          LEFT JOIN usuarios u ON u.id = o.conductor_id
          LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
          LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
-        WHERE o.cliente_id = ?1 AND o.tipo_operacion = 'viaje_pasajero'
-          AND (?2 IS NULL AND o.estado_general IN ${ESTADOS_ACTIVOS} OR o.id = ?2)
+        WHERE o.cliente_id = ?1
+          AND (?2 IS NULL AND o.tipo_operacion = ?3 AND o.estado_general IN ${ESTADOS_ACTIVOS} OR o.id = ?2)
         ORDER BY o.creado_en DESC LIMIT 1`,
     )
-    .bind(clienteId, id)
+    .bind(clienteId, id, tipo)
     .first<FilaViajeCliente>();
 }
 
@@ -499,7 +621,9 @@ function viajePublico(f: FilaViajeCliente) {
 viajesPasajero.get('/viajes/actual', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
-  let f = await viajeDelCliente(db, u.id, null);
+  // C-ENVIOS: ?servicio=envios devuelve el envío en curso (uno de cada tipo a la vez).
+  const tipo = c.req.query('servicio') === 'envios' ? 'envio_paquete' : 'viaje_pasajero';
+  let f = await viajeDelCliente(db, u.id, null, tipo);
   // M3: el sitio no tiene reloj propio (el de afuera pasa cada 5 minutos). Mientras el pasajero
   // espera, su consulta mueve el despacho si la oferta anterior venció o fue rechazada.
   if (f?.estado === 'buscando') {
@@ -513,7 +637,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
       await repartirOperaciones(c.env, db).catch((e: unknown) =>
         console.error('viajes: despacho al consultar', e),
       );
-      f = await viajeDelCliente(db, u.id, null);
+      f = await viajeDelCliente(db, u.id, null, tipo);
     }
   }
   const deuda = await db
@@ -525,6 +649,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
   const viaje = f ? viajePublico(f) : null;
   return c.json({
     viaje,
+    paquete: viaje ? await paqueteDe(db, viaje.id) : null,
     // C-VIAJE-SEGURIDAD-2 (RideCheck): si el conductor se salió de la ruta, la app pregunta.
     alerta: viaje
       ? await revisarDesvio(db, {
@@ -547,6 +672,7 @@ viajesPasajero.get('/viajes/:id', async (c) => {
   const viaje = viajePublico(f);
   return c.json({
     viaje,
+    paquete: await paqueteDe(db, viaje.id),
     alerta: await revisarDesvio(db, {
       id: viaje.id,
       estado: viaje.estado,
@@ -828,7 +954,7 @@ viajesPasajero.get('/admin/viajes', async (c) => {
            LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
            LEFT JOIN usuarios p ON p.id = o.cliente_id
            LEFT JOIN usuarios d ON d.id = o.conductor_id
-          WHERE o.tipo_operacion = 'viaje_pasajero'
+          WHERE o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete')
           ORDER BY o.estado_general IN ('buscando', 'asignada', 'en_curso') DESC, o.creado_en DESC
           LIMIT 50`,
       )

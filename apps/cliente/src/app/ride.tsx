@@ -7,7 +7,7 @@ import { useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
-import { type ViajePasajero, ViajeEnCurso } from '../viajes/ViajeEnCurso';
+import { type PaqueteCliente, type ViajePasajero, ViajeEnCurso } from '../viajes/ViajeEnCurso';
 import { ContactosConfianza, PreguntaTodoBien } from '../viajes/Seguridad';
 import { TEXTOS_MOTO } from '../viajes/textos';
 
@@ -22,8 +22,10 @@ export default function PantallaMoto() {
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
-  const servicio =
-    useLocalSearchParams<{ servicio?: string }>().servicio === 'carro' ? 'carro' : 'moto';
+  const pedido = useLocalSearchParams<{ servicio?: string }>().servicio;
+  const servicio = pedido === 'carro' || pedido === 'envios' ? pedido : 'moto';
+  // C-ENVIOS: lo que se envía (quién recibe y su PIN de entrega).
+  const [paquete, setPaquete] = useState<PaqueteCliente | null>(null);
   const [viaje, setViaje] = useState<ViajePasajero | null>(null);
   const [viajeId, setViajeId] = useState<string | null>(null);
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
@@ -33,11 +35,13 @@ export default function PantallaMoto() {
   const cargar = useCallback(async () => {
     try {
       if (viajeId) {
-        const r = await api.pedir<{ viaje: ViajePasajero; alerta?: { id: string } | null }>(
-          'GET',
-          `/datos/viajes/${viajeId}`,
-        );
+        const r = await api.pedir<{
+          viaje: ViajePasajero;
+          alerta?: { id: string } | null;
+          paquete?: PaqueteCliente | null;
+        }>('GET', `/datos/viajes/${viajeId}`);
         setViaje(r.viaje);
+        setPaquete(r.paquete ?? null);
         setAlerta(r.alerta ?? null);
         return;
       }
@@ -45,15 +49,20 @@ export default function PantallaMoto() {
         viaje: ViajePasajero | null;
         deudaPendiente: { monto: number; moneda: string | null } | null;
         alerta?: { id: string } | null;
-      }>('GET', '/datos/viajes/actual');
+        paquete?: PaqueteCliente | null;
+      }>(
+        'GET',
+        servicio === 'envios' ? '/datos/viajes/actual?servicio=envios' : '/datos/viajes/actual',
+      );
       setViaje(r.viaje);
+      setPaquete(r.paquete ?? null);
       setAlerta(r.alerta ?? null);
       setDeuda(r.deudaPendiente);
       if (r.viaje) setViajeId(r.viaje.id);
     } catch (e) {
       console.warn('moto: no se pudo cargar el viaje', e);
     }
-  }, [api, viajeId]);
+  }, [api, viajeId, servicio]);
 
   useEffect(() => {
     const primero = setTimeout(() => void cargar(), 0);
@@ -70,7 +79,9 @@ export default function PantallaMoto() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
       <Encabezado
-        titulo={servicio === 'carro' ? t.tituloCarro : t.titulo}
+        titulo={
+          servicio === 'carro' ? t.tituloCarro : servicio === 'envios' ? t.tituloEnvios : t.titulo
+        }
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         etiquetaVolver={tc.volver}
       />
@@ -89,6 +100,7 @@ export default function PantallaMoto() {
         {viaje ? (
           <ViajeEnCurso
             viaje={viaje}
+            paquete={paquete}
             alCambiar={() => void cargar()}
             alTerminar={() => {
               setViaje(null);
@@ -103,7 +115,7 @@ export default function PantallaMoto() {
               deudaPendiente={deuda}
               alPedir={(id) => setViajeId(id)}
             />
-            <ContactosConfianza />
+            {servicio !== 'envios' ? <ContactosConfianza /> : null}
           </>
         )}
       </ScrollView>

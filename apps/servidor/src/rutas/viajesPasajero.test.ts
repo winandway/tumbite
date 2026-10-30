@@ -79,6 +79,8 @@ describe('C-MOTO-SOLO-PRUEBAS: Moto existe solo en el sitio de pruebas', () => {
       'moto',
       // C-CARRO-PRUEBAS (30 oct 2026): Carro se construye sobre el motor de Moto, solo en pruebas.
       'carro',
+      // C-ENVIOS (30 oct 2026): Envíos de persona a persona sobre el motor de viajes, solo en pruebas.
+      'envios',
       // C-TIENDAS-VITRINA: las tiendas también se encienden solo en pruebas.
       'mercado',
       'farmacia',
@@ -86,14 +88,14 @@ describe('C-MOTO-SOLO-PRUEBAS: Moto existe solo en el sitio de pruebas', () => {
       'mas',
     ]);
     expect((await e.m.llamar('GET', '/datos/salud')).datos.piezas.servicios).toBe('ok');
-    // Lo que no se está construyendo sigue bloqueado aun en pruebas (Envíos).
-    const envios = await e.m.llamar(
+    // Un servicio que el código no conoce no se enciende nunca.
+    const otro = await e.m.llamar(
       'PUT',
-      '/datos/admin/servicios/envios',
+      '/datos/admin/servicios/inventado',
       { estado: 'disponible' },
       e.admin.token,
     );
-    expect(envios.estado).toBe(409);
+    expect(otro.estado).not.toBe(200);
   });
 
   it('si Moto quedara encendida en una base de producción, la salud lo dice en rojo', async () => {

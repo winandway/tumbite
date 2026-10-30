@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
+import * as ImagePicker from 'expo-image-picker';
 import { Boton, C } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 
@@ -11,14 +12,19 @@ type Api = {
     cuerpo?: unknown,
     extra?: { cabeceras?: Record<string, string> },
   ): Promise<T>;
+  subirFoto(foto: Blob, ruta?: string): Promise<{ url: string }>;
 };
 
 /** Lo que manda GET /datos/conductor/operaciones/actual. */
 export type ViajeConductor = {
   id: string;
   estado: 'asignado' | 'conductor_llego' | 'en_curso' | string;
-  /** «moto» o «carro»: el casco solo se confirma en Moto. */
+  /** «moto», «carro» o «envios»: el casco solo se confirma en Moto. */
   servicio_id?: string;
+  /** C-ENVIOS: el paquete de un envío (qué es y para quién) y si ya tiene su foto. */
+  paquete_descripcion?: string | null;
+  paquete_destinatario?: string | null;
+  paquete_foto?: number | null;
   origen_direccion: string;
   destino_direccion: string;
   origen_lat: number;
@@ -73,8 +79,30 @@ export function ViajeActivo({
   const t = enIdioma(TEXTOS_VIAJE, idioma).activo;
   const [pin, setPin] = useState('');
   const [cascoMarcado, setCasco] = useState(false);
-  // C-CARRO-PRUEBAS: en Carro no hay casco que confirmar.
-  const enMoto = viaje.servicio_id !== 'carro';
+  // C-CARRO-PRUEBAS / C-ENVIOS: el casco del pasajero solo se confirma en Moto.
+  const enMoto = viaje.servicio_id === 'moto' || !viaje.servicio_id;
+  const esEnvio = viaje.servicio_id === 'envios';
+  const [pinEntrega, setPinEntrega] = useState('');
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  /** C-ENVIOS: la foto del paquete al recogerlo, antes de salir. */
+  async function fotoPaquete() {
+    setError('');
+    const permiso = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permiso.granted) return setError(t.permisoCamara);
+    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
+    const foto = r.canceled ? null : r.assets[0];
+    if (!foto) return;
+    setSubiendoFoto(true);
+    try {
+      const blob = await (await fetch(foto.uri)).blob();
+      await api.subirFoto(blob, `/datos/conductor/operaciones/${viaje.id}/foto-paquete`);
+      alCambiar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setSubiendoFoto(false);
+    }
+  }
   const casco = cascoMarcado || !enMoto;
   // C-MOTO-CIUDAD: en las ciudades (u horas) sin código, no se pide.
   const conCodigo = viaje.pin_requerido !== 0;
@@ -284,10 +312,46 @@ export function ViajeActivo({
         </>
       ) : null}
 
-      {viaje.estado === 'en_curso' ? (
+      {esEnvio && viaje.paquete_descripcion ? (
+        <Text style={{ color: C.secundario, fontWeight: '700' }}>
+          {viaje.paquete_descripcion} · {t.para} {viaje.paquete_destinatario}
+        </Text>
+      ) : null}
+      {esEnvio && viaje.estado === 'conductor_llego' ? (
         <Boton
-          texto={t.terminar}
-          alTocar={() => void paso('terminar', {}, 'terminado')}
+          texto={viaje.paquete_foto ? t.fotoPaqueteLista : t.fotoPaquete}
+          alTocar={() => void fotoPaquete()}
+          cargando={subiendoFoto}
+          secundario={Boolean(viaje.paquete_foto)}
+        />
+      ) : null}
+      {viaje.estado === 'en_curso' && esEnvio ? (
+        <>
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.pinEntrega}</Text>
+          <TextInput
+            testID="envio-pin-entrega"
+            value={pinEntrega}
+            onChangeText={(v) => setPinEntrega(v.replace(/\D/g, '').slice(0, 4))}
+            keyboardType="number-pad"
+            maxLength={4}
+            accessibilityLabel={t.pinEntrega}
+            style={{
+              borderWidth: 1,
+              borderColor: '#2a2a2a',
+              borderRadius: 10,
+              padding: 12,
+              fontSize: 24,
+              letterSpacing: 8,
+              textAlign: 'center',
+            }}
+          />
+          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
+        </>
+      ) : null}
+      {viaje.estado === 'en_curso' && (!esEnvio || pinEntrega.length === 4) ? (
+        <Boton
+          texto={esEnvio ? t.entregar : t.terminar}
+          alTocar={() => void paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
           cargando={enviando}
           exito
         />

@@ -1826,3 +1826,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - App del pasajero: la pantalla de viajes recibe `servicio=carro` (desde la pantalla del servicio). Driver: la oferta dice «Nuevo viaje en Carro» y en Carro no se confirma casco.
 - **Prueba:** `apps/servidor/src/rutas/carro.test.ts` (producción apagada; viaje completo en pruebas; el conductor de moto no lo recibe). La ayuda `conductorDeMoto(m, donde, zona, 'carro')` arma un conductor de carro.
 - **Carro XL (C-CARRO-XL, 30 oct 2026):** como «Extra room» de Uber, una opción DENTRO de Carro (no otro botón del inicio). La tarifa de la ciudad lleva `xlPb` (columna `tarifas_viaje.xl_pb`; 15 000 = × 1,5) y sin él no hay XL. La cotización y el viaje guardan `categoria`; el despacho solo ofrece un XL a vehículos con 6 plazas o más (`PLAZAS_XL`, filtro en `candidatosParaOperacion`). Panel: el formulario de tarifas elige Moto o Carro y el factor XL. App: «Carro» / «Carro XL (6 plazas)». Prueba en `carro.test.ts` (rojo comprobado quitando el filtro).
+
+## C-ENVIOS (30 oct 2026) — todos los países (solo en pruebas)
+
+- Ficha REA: `docs/investigaciones-rea/2026-10-30-envios.md` (Uber Courier como visitante: «tan fácil como pedir un viaje», seguimiento en vivo y PIN de entrega).
+- Envíos va SOBRE EL MOTOR DE VIAJES (no sobre Flex): la operación es de tipo «envio_paquete» y el viaje lleva su paquete en `envios_persona` (qué es, valor declarado, quién recibe, PIN de entrega, foto, recogido y entregado). OJO: el nombre `paquetes_envio` ya es un índice de Flex; no reutilizarlo.
+- Al pedir: paquete obligatorio, valor ≤ `valorMaximo` de la tarifa de la ciudad (sin él, 100 en la moneda local), celular válido de quien recibe y «no envío nada prohibido». Sin código al recoger (`pin_requerido = 0`). Quien recibe recibe por mensaje el enlace en vivo y su PIN (Twilio; sin Twilio, el que envía ve el PIN en su app para pasárselo).
+- Conductor: sin la foto del paquete no sale (`/conductor/operaciones/:id/foto-paquete`); sin el PIN de quien recibe no entrega (5 intentos). `revisarPaquete` en `rutas/viajes.ts`.
+- Un envío y un viaje del mismo cliente no se mezclan: `/datos/viajes/actual?servicio=envios`.
+- Apps: pasajero (la pantalla de viajes con `servicio=envios`, formulario del paquete y PIN visible) y Driver (foto y PIN). Panel: tarifa de Envíos con su valor máximo.
+- **Prueba:** `apps/servidor/src/rutas/envios.test.ts` (rojo comprobado quitando la revisión del paquete).
+- **Falta:** guías de Docs de Envíos (se escriben como borrador, igual que Moto) y las decisiones de Richard (valor máximo real, seguro del paquete, precio).
