@@ -372,6 +372,7 @@ const es: SeccionDocs[] = [
           'En el carrito, debajo de «Dirección», aparecen tus direcciones guardadas como botones (Casa, Trabajo…). Tocar una rellena la dirección, el pin del mapa, las instrucciones y cómo prefieres recibir.',
           'Para guardar una nueva, enciende «Guardar esta dirección para la próxima» antes de pagar y ponle un nombre. Las instrucciones que escribas en «Notas» (portón, piso, timbre) se guardan con ella.',
           'Puedes tener hasta diez. La misma dirección no se duplica: se actualiza.',
+          'Si vives en un edificio, escribe el apartamento, el piso o el nombre de la torre en su casilla, «Apto, piso o edificio». El repartidor lo ve junto a la dirección y se guarda con ella.',
           'Mientras escribes una dirección nueva aparecen sugerencias de direcciones reales. Toca la tuya: así el pin del mapa cae justo en tu puerta y el repartidor llega sin perderse. Vale en el carrito, en tus direcciones guardadas y al cambiar la dirección de un pedido.',
         ],
         capturas: [
@@ -3811,6 +3812,7 @@ const en: SeccionDocs[] = [
           'In the cart, under “Address”, your saved addresses show as buttons (Home, Work…). Tapping one fills in the address, the map pin, the instructions and how you prefer to receive.',
           'To save a new one, turn on “Save this address for next time” before paying and give it a name. The instructions you write under “Notes” (gate, floor, doorbell) are saved with it.',
           'You can keep up to ten. The same address isn’t duplicated: it’s updated.',
+          'If you live in a building, write the apartment, floor or tower name in its own field, “Apt, suite or floor”. The driver sees it with the address and it’s saved with it.',
           'As you type a new address, real address suggestions appear. Tap yours: the map pin lands right at your door and the driver gets there without getting lost. It works in the cart, in your saved addresses and when you change an order’s address.',
         ],
         capturas: [
