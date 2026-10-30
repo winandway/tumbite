@@ -70,6 +70,7 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
     estado: f.estado as Restaurante['estado'],
     abierto: Number(f.abierto) === 1,
     tiempoPrepMin: Number(f.tiempo_prep_min),
+    aceptarSolo: Number(f.aceptar_solo ?? 0) === 1,
     regalosPb: Number(f.regalos_pb),
     // C-MONEDA-RECORRIDO: la moneda de su zona (precios del menú y del carrito en esa unidad menor).
     moneda: String(f.zona_moneda ?? 'USD'),
@@ -608,6 +609,17 @@ catalogo.put('/mi-restaurante', async (c) => {
     { restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) } },
     actual ? 200 : 201,
   );
+});
+
+/** C-ACEPTAR-SOLO: el dueño o el manager enciende o apaga la aceptación automática. */
+catalogo.patch('/mi-restaurante/aceptar-solo', async (c) => {
+  const rid = await exigirMiRestaurante(c, 'manager');
+  const { activo } = await leerCuerpo(c, z.object({ activo: z.boolean() }));
+  await base(c)
+    .prepare('UPDATE restaurantes SET aceptar_solo = ? WHERE id = ?')
+    .bind(activo ? 1 : 0, rid)
+    .run();
+  return c.json({ ok: true, aceptarSolo: activo });
 });
 
 catalogo.patch('/mi-restaurante/abierto', async (c) => {

@@ -1882,3 +1882,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `conCalificaciones` en `apps/servidor/src/rutas/catalogo.ts` suma promedio y cuenta de `calificaciones` (pedidos verificados) a la lista, la ficha y el buscador; `GET /datos/restaurantes/:id/resenas` da las 20 reseñas más nuevas con comentario y la respuesta del restaurante, solo con el nombre de pila. La regla de 10 opiniones vive en `packages/compartido/src/calificacionPublica.ts`. En la app: `apps/cliente/src/comida/Calificacion.tsx`.
 - **Candados:** las tres pruebas de la ficha `docs/investigaciones-rea/2026-10-30-calificacion-publica.md`. Captura: `docs/capturas/calificacion-ficha-es.png`.
 - **No tocar:** nunca mostrar el apellido ni el número de pedido en lo público; nunca bajar el mínimo de 10 sin decisión escrita.
+
+## C-ACEPTAR-SOLO (30 oct 2026) — todos los países
+
+- **Qué es:** el «auto-confirm» de DoorDash. Columna `restaurantes.aceptar_solo` (vía COLUMNAS), ruta `PATCH /datos/mi-restaurante/aceptar-solo` (dueño o manager), pieza `aceptarSiEsAutomatico` en `apps/servidor/src/rutas/operacion.ts`.
+- **Dónde corre:** al final de `correosDePedidoPagado` (todos los caminos de pago: tarjeta, aviso de Stripe, cobro directo), en un `finally` para que un correo caído no la salte, y en el vigilante (`manager.ts`) para los programados cuya ventana se abrió y los que esperaban la decisión de un plato agotado.
+- **Candados:** `operacion.test.ts` («aceptación automática») y `PedidosAceptarSolo.test.tsx`. Ficha: `docs/investigaciones-rea/2026-10-30-aceptar-solo.md`. Guía pública: Docs → Para restaurantes → «Aceptar pedidos automáticamente».
+- **No tocar:** nunca aceptar un pedido con un plato agotado pendiente ni un programado fuera de su ventana.

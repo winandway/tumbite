@@ -3016,3 +3016,86 @@ describe('C-API-POS', () => {
     expect((await pos('GET', '/datos/v1/pos/pedidos')).estado).toBe(401);
   });
 });
+
+/**
+ * C-ACEPTAR-SOLO (30 oct 2026): como DoorDash («auto-confirm»), el restaurante puede dejar que los
+ * pedidos se acepten solos al pagarse, con el tiempo sugerido; los programados se aceptan cuando se
+ * abre su ventana. Solo el dueño o el manager cambian el interruptor.
+ */
+describe('aceptación automática', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('sin el interruptor el pedido espera; con él, se acepta solo al pagarse', async () => {
+    const { m, dueno, pedidoPagadoPorStripe } = await escenario();
+    const antes = await pedidoPagadoPorStripe();
+    expect(antes.aviso).toBe(200);
+    const estado = async (id: string) =>
+      (await m.DB.prepare('SELECT estado, aceptado_en, tiempo_prep_min FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ estado: string; aceptado_en: string | null; tiempo_prep_min: number }>())!;
+    expect((await estado(antes.id)).estado).toBe('pagado');
+    const sw = await m.llamar(
+      'PATCH',
+      '/datos/mi-restaurante/aceptar-solo',
+      { activo: true },
+      dueno.token,
+    );
+    expect(sw.estado).toBe(200);
+    const mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.restaurante.aceptarSolo).toBe(true);
+    const despues = await pedidoPagadoPorStripe();
+    const e = await estado(despues.id);
+    expect(e.estado).toBe('aceptado');
+    expect(e.aceptado_en).not.toBeNull();
+    expect(e.tiempo_prep_min).toBeGreaterThanOrEqual(5);
+  });
+
+  it('un programado se acepta solo cuando se abre su ventana, no antes', async () => {
+    const { m, dueno, pedidoPagado } = await escenario();
+    await m.llamar('PATCH', '/datos/mi-restaurante/aceptar-solo', { activo: true }, dueno.token);
+    const { vigilarPedidos } = await import('../manager');
+    const lejos = await pedidoPagado();
+    const cerca = await pedidoPagado();
+    await m.DB.prepare(
+      "UPDATE pedidos SET programado_para = datetime('now', '+3 hours') WHERE id = ?",
+    )
+      .bind(lejos)
+      .run();
+    await m.DB.prepare(
+      "UPDATE pedidos SET programado_para = datetime('now', '+30 minutes') WHERE id = ?",
+    )
+      .bind(cerca)
+      .run();
+    await vigilarPedidos({ DB: m.DB } as never, m.DB);
+    const est = async (id: string) =>
+      (await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first<{
+        estado: string;
+      }>())!.estado;
+    expect(await est(cerca)).toBe('aceptado');
+    expect(await est(lejos)).toBe('pagado');
+  });
+
+  it('el staff no puede cambiar el interruptor', async () => {
+    const { m, dueno } = await escenario();
+    const staff = await m.cuenta('restaurante', 'Persona Staff');
+    const alta = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/equipo',
+      {
+        correo: (await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+          .bind(staff.id)
+          .first<{ correo: string }>())!.correo,
+        rol: 'staff',
+      },
+      dueno.token,
+    );
+    expect(alta.estado).toBe(201);
+    const r = await m.llamar(
+      'PATCH',
+      '/datos/mi-restaurante/aceptar-solo',
+      { activo: true },
+      staff.token,
+    );
+    expect(r.estado).toBe(403);
+  });
+});

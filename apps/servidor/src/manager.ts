@@ -9,7 +9,7 @@ import { anotar } from './historial';
 import { notificar } from './notificaciones';
 import { crearStripe, type Stripe } from './stripe';
 import { ErrorDatos } from './validar';
-import { soltarPedido } from './rutas/operacion';
+import { aceptarSiEsAutomatico, soltarPedido } from './rutas/operacion';
 import { aplicarAjuste } from './rutas/pedidos';
 
 /**
@@ -264,6 +264,19 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
           datos: { pedidoId: p.id },
         }).catch((e: unknown) => console.error('manager: aviso de programado', p.id, e));
   }
+  // C-ACEPTAR-SOLO: los pagados de restaurantes con aceptación automática que todavía esperan
+  // (un programado cuya ventana ya se abrió, o uno cuyo cliente ya decidió sobre un plato agotado).
+  const { results: automaticos } = await db
+    .prepare(
+      `SELECT p.id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.estado = 'pagado' AND r.aceptar_solo = 1${solo} ORDER BY p.pagado_en LIMIT 50`,
+    )
+    .bind(...(pedidoId ? [pedidoId] : []))
+    .all<{ id: string }>();
+  for (const p of automaticos)
+    await aceptarSiEsAutomatico(env, db, p.id).catch((e: unknown) =>
+      console.error('manager: aceptación automática', p.id, e),
+    );
   // La espera del restaurante cuenta desde el pago o, si hubo un plato agotado, desde que el
   // cliente decidió (el restaurante recién ahí puede aceptar). C-PEDIDO-PROGRAMADO: si es para más
   // tarde, desde 45 minutos antes de su franja (PROGRAMADO.liberarAntesMin).

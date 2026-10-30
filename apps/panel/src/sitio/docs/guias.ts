@@ -1064,6 +1064,27 @@ const es: SeccionDocs[] = [
         pasos: ['Menú del panel → Reseñas.', 'Toca «Responder» en la reseña y publica.'],
       },
       {
+        id: 'auto-accept',
+        titulo: 'Aceptar pedidos automáticamente',
+        resumen:
+          'Enciende un interruptor y cada pedido nuevo se acepta solo, con el tiempo sugerido, y el repartidor sale enseguida.',
+        explicacion: [
+          'En la pantalla de Pedidos del panel, o en el Inicio de la app del restaurante, está «Aceptar pedidos automáticamente». Al encenderlo, cada pedido nuevo se acepta en cuanto el cliente paga, con el tiempo de preparación sugerido (el promedio real de tu cocina más los minutos de «Cocina ocupada»).',
+          'El aviso sonoro de pedido nuevo suena igual, para que tu equipo empiece a preparar. El cliente ve enseguida que aceptaste y buscamos repartidor sin esperar.',
+          'Un pedido programado para más tarde se acepta solo cuando faltan 45 minutos para su hora. Si falta un producto y el cliente todavía no decidió qué hacer, el pedido espera a su respuesta.',
+          'Puedes apagarlo cuando quieras, por ejemplo en las horas de más trabajo. Solo el dueño y los managers pueden cambiarlo.',
+        ],
+        preguntas: [
+          '¿Cómo acepto los pedidos automáticamente?',
+          '¿Qué pasa con los pedidos programados si acepto automáticamente?',
+        ],
+        pasos: [
+          'Abre Pedidos en el panel o el Inicio en la app del restaurante.',
+          'Enciende «Aceptar pedidos automáticamente».',
+          'Desde ahora, los pedidos nuevos entran directo a preparación.',
+        ],
+      },
+      {
         id: 'holidays-and-closures',
         titulo: 'Festivos y cierres',
         resumen:
@@ -4449,6 +4470,27 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
         pasos: ['Panel menu → Reviews.', 'Tap “Reply” on the review and publish.'],
+      },
+      {
+        id: 'auto-accept',
+        titulo: 'Accept orders automatically',
+        resumen:
+          'Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.',
+        explicacion: [
+          'On the Orders screen in the dashboard, or on Home in the restaurant app, you’ll find “Accept orders automatically”. When it’s on, every new order is accepted as soon as the customer pays, with the suggested prep time (your kitchen’s real average plus any “Busy kitchen” minutes).',
+          'The new-order sound still plays so your team starts cooking. The customer sees right away that you accepted, and we look for a driver without waiting.',
+          'An order scheduled for later is accepted automatically 45 minutes before its time. If an item is missing and the customer hasn’t decided what to do yet, the order waits for their answer.',
+          'You can turn it off anytime, for example during your busiest hours. Only the owner and managers can change it.',
+        ],
+        preguntas: [
+          'How do I accept orders automatically?',
+          'What happens to scheduled orders when auto-accept is on?',
+        ],
+        pasos: [
+          'Open Orders in the dashboard or Home in the restaurant app.',
+          'Turn on “Accept orders automatically”.',
+          'From now on, new orders go straight to preparation.',
+        ],
       },
       {
         id: 'holidays-and-closures',

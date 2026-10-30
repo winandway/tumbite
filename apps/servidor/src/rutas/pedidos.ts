@@ -54,6 +54,7 @@ import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
 import { enviarCorreo } from '../correo';
 import { lineasDeTienda } from './tiendas';
+import { aceptarSiEsAutomatico } from './operacion';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -1103,8 +1104,21 @@ pedidos.post('/stripe/aviso', async (c) => {
   return c.json({ ok: true });
 });
 
-/** Recibo al cliente y aviso al restaurante. Si el correo falla, el pedido sigue igual. */
+/**
+ * Recibo al cliente y aviso al restaurante. Si el correo falla, el pedido sigue igual. Al final,
+ * siempre, la aceptación automática (C-ACEPTAR-SOLO) si el restaurante la tiene encendida.
+ */
 async function correosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) {
+  try {
+    await avisosDePedidoPagado(env, db, pedidoId);
+  } finally {
+    await aceptarSiEsAutomatico(env, db, pedidoId).catch((e: unknown) =>
+      console.error('aceptación automática', pedidoId, e),
+    );
+  }
+}
+
+async function avisosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) {
   const f = await db
     .prepare(
       `SELECT p.id, p.lineas_json, p.subtotal, p.envio, p.servicio, p.impuesto, p.propina, p.regalo, p.total, p.direccion, p.notas, p.pago_restaurante, p.moneda,

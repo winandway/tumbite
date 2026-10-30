@@ -154,6 +154,9 @@ const T = {
     sugerido: 'sugerido',
     cocina: 'Cocina ocupada',
     cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
+    aceptarSolo: 'Aceptar pedidos automáticamente',
+    aceptarSoloAyuda:
+      'Los pedidos nuevos se aceptan solos con el tiempo sugerido y el repartidor sale enseguida. Igual suena la alarma.',
     normal: 'Normal',
   },
   en: {
@@ -207,6 +210,9 @@ const T = {
     sugerido: 'suggested',
     cocina: 'Busy kitchen',
     cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
+    aceptarSolo: 'Accept orders automatically',
+    aceptarSoloAyuda:
+      'New orders are accepted with the suggested time and a driver is sent right away. The alarm still rings.',
     normal: 'Normal',
   },
 };
@@ -793,6 +799,31 @@ export function Inicio() {
                 }
               />
             ))}
+          </View>
+        </Tarjeta>
+      ) : null}
+      {rest ? (
+        <Tarjeta>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '800' }}>{t.aceptarSolo}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.aceptarSoloAyuda}</Text>
+            </View>
+            <Switch
+              testID="aceptar-solo"
+              accessibilityLabel={t.aceptarSolo}
+              value={Boolean(rest.aceptarSolo)}
+              trackColor={{ true: C.exito, false: '#d0d0d0' }}
+              onValueChange={(activo) => {
+                setRest({ ...rest, aceptarSolo: activo });
+                void api
+                  .pedir('PATCH', '/datos/mi-restaurante/aceptar-solo', { activo })
+                  .catch((x: unknown) => {
+                    setRest({ ...rest, aceptarSolo: !activo });
+                    setError(x instanceof ErrorApi ? x.message : String(x));
+                  });
+              }}
+            />
           </View>
         </Tarjeta>
       ) : null}

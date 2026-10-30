@@ -90,6 +90,9 @@ const T = {
     sugerido: 'sugerido',
     cocina: 'Cocina ocupada',
     cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
+    aceptarSolo: 'Aceptar pedidos automáticamente',
+    aceptarSoloAyuda:
+      'Los pedidos nuevos se aceptan solos con el tiempo sugerido y el repartidor sale enseguida. Igual suena la alarma.',
     normal: 'Normal',
     min: 'min',
     listo: '¡Listo!',
@@ -149,6 +152,9 @@ const T = {
     sugerido: 'suggested',
     cocina: 'Busy kitchen',
     cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
+    aceptarSolo: 'Accept orders automatically',
+    aceptarSoloAyuda:
+      'New orders are accepted with the suggested time and a driver is sent right away. The alarm still rings.',
     normal: 'Normal',
     min: 'min',
     listo: 'Ready!',
@@ -218,6 +224,13 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
+  // C-ACEPTAR-SOLO: null mientras carga (no se pinta un interruptor que no se sabe cómo está).
+  const [aceptarSolo, setAceptarSolo] = useState<boolean | null>(null);
+  useEffect(() => {
+    pedir<{ restaurante: { aceptarSolo?: boolean } }>('GET', '/datos/mi-restaurante')
+      .then((r) => setAceptarSolo(Boolean(r.restaurante.aceptarSolo)))
+      .catch(() => setAceptarSolo(null));
+  }, []);
   const [pinLocal, setPinLocal] = useState<Record<string, string>>({});
   const [edadLocal, setEdadLocal] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
@@ -372,6 +385,27 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
           ))}
         </div>
       </div>
+      {aceptarSolo !== null ? (
+        <label className="cocina flex-check">
+          <input
+            type="checkbox"
+            aria-label={t.aceptarSolo}
+            checked={aceptarSolo}
+            onChange={(e) => {
+              const activo = e.target.checked;
+              setAceptarSolo(activo);
+              void pedir('PATCH', '/datos/mi-restaurante/aceptar-solo', { activo }).catch(
+                (x: unknown) => {
+                  setAceptarSolo(!activo);
+                  setError(x instanceof ErrorApi ? x.message : String(x));
+                },
+              );
+            }}
+          />{' '}
+          <strong>{t.aceptarSolo}</strong>
+          <span className="suave"> {t.aceptarSoloAyuda}</span>
+        </label>
+      ) : null}
       {pedidos.length === 0 && <p>{t.vacio}</p>}
       <ul className="lista">
         {pedidos.map((p) => (

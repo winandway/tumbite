@@ -140,6 +140,8 @@ export type Restaurante = {
   estado: EstadoRestaurante;
   abierto: boolean;
   tiempoPrepMin: number;
+  /** C-ACEPTAR-SOLO: los pedidos se aceptan solos al pagarse. */
+  aceptarSolo?: boolean;
   regalosPb: number;
   distanciaKm?: number;
   /** C-MONEDA-RECORRIDO: moneda de su zona (USD, COP…). Los precios van en su unidad menor. */

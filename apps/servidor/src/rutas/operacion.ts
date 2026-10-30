@@ -531,6 +531,28 @@ export async function aceptarPedido(
   await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.pedidoAceptado(i, f.restaurante));
 }
 
+/**
+ * C-ACEPTAR-SOLO: si el restaurante tiene la aceptación automática, el pedido pagado se acepta
+ * solo con el tiempo sugerido (como el «auto-confirm» de DoorDash). Un programado espera a que se
+ * abra su ventana (45 minutos antes); un pedido con un plato agotado sin decidir, también espera.
+ * Devuelve true si lo aceptó.
+ */
+export async function aceptarSiEsAutomatico(env: Env, db: D1Database, pedidoId: string) {
+  const f = await db
+    .prepare(
+      `SELECT p.restaurante_id AS rid FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.id = ? AND p.estado = 'pagado' AND r.aceptar_solo = 1
+          AND (p.programado_para IS NULL OR datetime(p.programado_para, '-45 minutes') <= datetime('now'))
+          AND NOT EXISTS (SELECT 1 FROM ajustes_pedido a WHERE a.pedido_id = p.id AND a.estado = 'pendiente')`,
+    )
+    .bind(pedidoId)
+    .first<{ rid: string }>();
+  if (!f) return false;
+  const { prepSugerida } = await cocinaDe(db, f.rid);
+  await aceptarPedido(env, db, pedidoId, f.rid, Math.min(120, Math.max(5, prepSugerida)));
+  return true;
+}
+
 /** Marcar listo (panel, app y API de punto de venta). */
 export async function marcarListo(env: Env, db: D1Database, pedidoId: string, rid: string) {
   await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')");
