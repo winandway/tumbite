@@ -61,14 +61,34 @@ export type Cara = {
 
 /**
  * La cara más grande de la foto (en la selfie, la persona; en el documento, su foto). Null si no hay
- * ninguna con confianza suficiente.
+ * ninguna con confianza suficiente. En un documento la foto ocupa una parte chica de la tarjeta: si no
+ * aparece en la imagen entera, se busca en cada mitad, donde se ve más grande.
  */
 export async function leerCara(foto: Buffer): Promise<Cara | null> {
-  const { faceapi, tf } = await cargar();
-  const { data, info } = await sharp(foto)
+  const entera = await sharp(foto)
     .rotate()
     .removeAlpha()
     .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+    .png()
+    .toBuffer({ resolveWithObject: true });
+  const directa = await caraEn(entera.data);
+  if (directa) return directa;
+  const { width: ancho, height: alto } = entera.info;
+  const mitad = Math.floor(ancho / 2);
+  for (const left of [0, mitad]) {
+    const parte = await sharp(entera.data)
+      .extract({ left, top: 0, width: mitad, height: alto })
+      .toBuffer();
+    const c = await caraEn(parte);
+    if (c) return { ...c, caja: { ...c.caja, x: c.caja.x + left } };
+  }
+  return null;
+}
+
+async function caraEn(imagenPng: Buffer): Promise<Cara | null> {
+  const { faceapi, tf } = await cargar();
+  const { data, info } = await sharp(imagenPng)
+    .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
   const imagen = tf.tensor3d(new Uint8Array(data), [info.height, info.width, 3], 'int32');

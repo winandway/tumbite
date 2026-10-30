@@ -5,13 +5,14 @@
   "description": "Motor propio de verificación de identidad (documento, persona viva y cara), copiado de la arquitectura de Idswyft (MIT). Corre aparte, en un contenedor; NO se despliega hasta que Richard apruebe dónde.",
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "node --experimental-strip-types src/servidor.ts"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@tensorflow/tfjs": "4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "4.22.0",
     "@tesseract.js-data/eng": "1.0.0",
-    "@vladmandic/face-api": "^1.7.15",
+    "@vladmandic/face-api": "1.7.15",
     "@zxing/library": "0.23.0",
     "sharp": "0.35.5",
     "tesseract.js": "7.0.0"

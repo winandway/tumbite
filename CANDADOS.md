@@ -1774,3 +1774,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `buscarParecidas`: la huella contra la lista de cuentas cerradas por mala conducta; las parecidas van a revisión del equipo, nunca a rechazo automático.
 - **Prueba:** `caras.test.ts` con las fotos de muestra que trae face-api (no se copian al repo). Rojo comprobado subiendo el umbral: otra persona pasaba.
 - **No tocar:** el umbral 0,6 ni el giro mínimo sin medir de nuevo con fotos reales del sitio de pruebas.
+
+## C-KYC-MOTOR (29 oct 2026) — todos los países
+
+- `verificar` (`apps/verificador/src/verificar.ts`) junta todo en un paso y decide al instante: **verificado** (sin motivos), **repetir** (ilegible, vencido, sin cara, cara distinta, sin prueba de vida, otra persona en las tomas) o **revisión** del equipo (menor de edad, cédula sin código estándar, frente que no cuadra, cara parecida a una cuenta cerrada). Devuelve la huella de la selfie para guardarla.
+- `servidor.ts`: la puerta del motor (POST /verificar y GET /salud). Firma HMAC-SHA256 de «hora.cuerpo» con VERIFICADOR_CLAVE (32+ caracteres) y una ventana de cinco minutos; sin firma válida no mira nada. Cuerpo máximo 25 MB.
+- `leerCara` busca la cara en la imagen entera y, si no aparece (en un documento la foto es chica), en cada mitad.
+- **Hallazgo:** la huella de face-api cambia si la cara está muy inclinada (no la endereza). Una selfie torcida puede salir «cara distinta» y pedir repetir; la app pide la cara derecha y de frente.
+- **Prueba:** `verificar.test.ts` (licencia completa armada en la prueba: lee el código, cruza el frente, compara la cara; vencida y otra persona piden repetir; cara de cuenta cerrada a revisión) y `servidor.test.ts` (firma buena, mala, vieja, cuerpo cambiado).
