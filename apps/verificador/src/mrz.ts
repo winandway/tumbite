@@ -130,7 +130,12 @@ const cuadra = (campo: string, digito: string) =>
 export function corregirMrz([l1, l2]: [string, string]): [string, string] {
   if (l1.length !== 44 || l2.length !== 44) return [l1, l2];
   // Línea 1: tipo, país emisor y nombres son solo letras y «<».
-  const a = l1.slice(0, 2) + comoLetra(l1.slice(2));
+  // Los nombres no tienen dígito de control: el relleno del final (que el OCR lee como K o L) se limpia
+  // con la regla del formato: APELLIDOS<<NOMBRES y, después del segundo «<<», todo es relleno.
+  const nombres = comoLetra(l1.slice(5));
+  const corte = nombres.indexOf('<<', nombres.indexOf('<<') + 2);
+  const limpios = (corte > 0 ? nombres.slice(0, corte) : nombres).replace(/<?[KL<]{4,}$/, '');
+  const a = l1.slice(0, 2) + comoLetra(l1.slice(2, 5)) + limpios.padEnd(39, '<');
   // Línea 2: cada campo con su tipo.
   const digito = (i: number) => comoNumero(l2.charAt(i));
   const nac = comoNumero(l2.slice(13, 19));

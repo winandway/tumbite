@@ -51,6 +51,17 @@ describe('corrección por posición de la franja (C-KYC-OCR)', () => {
     expect(r?.datos.numero).toBe('L898902C3');
   });
 
+  it('limpia el relleno del final de los nombres que el OCR lee como L o K', () => {
+    // Lectura real del OCR en el servidor de pruebas (Linux), 29 oct 2026.
+    const leida: [string, string] = ['P<UTOERIKSSON<<ANNA<MARIA<<LLLLLLLLLLLLLLLLL', MRZ[1]];
+    expect(leerMrz(corregirMrz(leida), HOY)?.datos.nombres).toBe('ANNA MARIA');
+    const sinSeparar: [string, string] = ['P<UTOERIKSSON<<ANNA<MARIALLLLLLLLLLLLLLLLLLL', MRZ[1]];
+    expect(leerMrz(corregirMrz(sinSeparar), HOY)?.datos.nombres).toBe('ANNA MARIA');
+    // Un nombre que de verdad termina en L se respeta.
+    const paul: [string, string] = ['P<UTOSMITH<<PAUL<<<<<<<<<<<<<<<<<<<<<<<<<<<<', MRZ[1]];
+    expect(leerMrz(corregirMrz(paul), HOY)?.datos.nombres).toBe('PAUL');
+  });
+
   it('nunca inventa: una fecha cambiada de verdad sigue rechazada', () => {
     const alterada: [string, string] = [MRZ[0], 'L898902C36UTO7508122F1204159ZE184226B<<<<<10'];
     expect(leerMrz(corregirMrz(alterada), HOY)?.controlesOk).toBe(false);
