@@ -43,3 +43,7 @@ cargaron con la sesión correcta.
 - La política de seguridad permite exactamente: el propio sitio, Stripe, Turnstile y las
   estadísticas de Cloudflare (prueba en `apps/servidor/src/app.test.ts`).
 - Un nuevo recorrido con REA no muestra errores de consola por la política de seguridad.
+
+## Publicación
+
+Aprobado en el sitio de pruebas el 30 oct 2026 (corrida completa en verde, incluido el recorrido de Comida) y publicado en producción por el flujo permanente. Las apps (Driver) suben a Google Play en la próxima versión acumulada, cuando Google apruebe la revisión en curso.
