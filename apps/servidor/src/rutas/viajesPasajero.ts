@@ -21,6 +21,7 @@ import { devolverReservasViaje } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
+import { revisarDesvio } from './seguridadViaje';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
 
@@ -503,17 +504,39 @@ viajesPasajero.get('/viajes/actual', async (c) => {
     )
     .bind(u.id)
     .first<{ monto: number; moneda: string | null }>();
+  const viaje = f ? viajePublico(f) : null;
   return c.json({
-    viaje: f ? viajePublico(f) : null,
+    viaje,
+    // C-VIAJE-SEGURIDAD-2 (RideCheck): si el conductor se salió de la ruta, la app pregunta.
+    alerta: viaje
+      ? await revisarDesvio(db, {
+          id: viaje.id,
+          estado: viaje.estado,
+          origen: viaje.origen,
+          destino: viaje.destino,
+          conductor: viaje.conductor?.ubicacion ?? null,
+        })
+      : null,
     deudaPendiente: deuda?.monto ? { monto: deuda.monto, moneda: deuda.moneda } : null,
   });
 });
 
 viajesPasajero.get('/viajes/:id', async (c) => {
   const u = exigir(c, 'cliente');
-  const f = await viajeDelCliente(base(c), u.id, c.req.param('id'));
+  const db = base(c);
+  const f = await viajeDelCliente(db, u.id, c.req.param('id'));
   if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
-  return c.json({ viaje: viajePublico(f) });
+  const viaje = viajePublico(f);
+  return c.json({
+    viaje,
+    alerta: await revisarDesvio(db, {
+      id: viaje.id,
+      estado: viaje.estado,
+      origen: viaje.origen,
+      destino: viaje.destino,
+      conductor: viaje.conductor?.ubicacion ?? null,
+    }),
+  });
 });
 
 /**

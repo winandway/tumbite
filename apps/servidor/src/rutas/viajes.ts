@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
 import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
 import {
@@ -172,6 +173,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
     .bind(id, u.id)
     .first<{ vehiculo_id: string }>();
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
+  // C-VIAJE-SEGURIDAD-2: con 12 horas al volante en 24, primero descansa.
+  await revisarHorasAlVolante(base(c), u.id);
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
@@ -342,6 +345,11 @@ viajes.post(
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 409);
     }
+    // C-VIAJE-SEGURIDAD-2: al empezar, los contactos de confianza reciben el viaje (nunca frena).
+    if (nombre === 'iniciar')
+      await avisarContactos(c, id).catch((e: unknown) =>
+        console.error('viajes: aviso a contactos de confianza', e),
+      );
     if (nombre === 'terminar') {
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).

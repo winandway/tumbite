@@ -1797,3 +1797,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo quedó (como Uber):** `deudas_pasajero.conductor_id` guarda al afectado. Con tarjeta, `soltarCobroViaje` le acredita lo capturado (`movimientos`, referencia `cargo-viaje-<viaje>`). En efectivo, al cobrarse la deuda en otro viaje, `pasarDeudasAlAfectado` (`rutas/viajes.ts`) le descuenta al que la cobró (ajuste negativo) y se la acredita al afectado (referencias `deuda-viaje:<deuda>:…`). Todo una sola vez.
 - **[INF]** El cargo va entero al conductor; si Richard decide cobrar comisión sobre él, se descuenta aquí.
 - **Prueba:** `viajesPasajero.test.ts` (C-CARGO-AL-AFECTADO, rojo comprobado antes del arreglo) y `viajeTarjeta.test.ts`.
+
+## C-VIAJE-SEGURIDAD-2 (30 oct 2026) — todos los países (Moto, solo en pruebas)
+
+- Copiado del kit de seguridad de Uber. Reglas puras en `packages/compartido/src/seguridadViaje.ts`; servidor en `apps/servidor/src/rutas/seguridadViaje.ts`; app en `apps/cliente/src/viajes/Seguridad.tsx`.
+- **Contactos de confianza:** hasta 5 por pasajero (`contactos_confianza`, teléfono canónico, sin repetir). Compartir «nunca», «siempre» o «solo de noche» (9 p. m. a 6 a. m. en la hora de la CIUDAD del viaje). Al iniciar el viaje, `avisarContactos` crea el enlace en vivo y lo manda por mensaje en el idioma del pasajero (Twilio; sin Twilio no se manda nada y el viaje sigue).
+- **«¿Todo bien?» (RideCheck):** en curso, si el conductor está a más de 1,5 km (o un cuarto del largo del viaje) del tramo recto, se crea UN aviso (`alertas_viaje`); la app pregunta. «Estoy bien» lo cierra; «Necesito ayuda» registra la emergencia y llama al número del país.
+- **Horas al volante:** con 12 horas manejando (de aceptar a terminar) en las últimas 24, no acepta viajes hasta 6 horas sin manejar desde el último (`revisarHorasAlVolante` en aceptar).
+- **Prueba:** `seguridadViaje.test.ts` (servidor, rojo comprobado quitando las revisiones) y `packages/compartido/src/seguridadViaje.test.ts`.

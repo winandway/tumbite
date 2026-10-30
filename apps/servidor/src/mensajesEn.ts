@@ -623,6 +623,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'You can add a tip once the ride has ended.',
   ],
   ['Ya dejaste una propina en este viaje.', 'You already tipped on this ride.'],
+  ['Escribe el nombre.', 'Enter the name.'],
+  ['Ese número no parece un celular.', 'That number doesn’t look like a mobile number.'],
+  ['Puedes tener hasta 5 contactos de confianza.', 'You can have up to 5 trusted contacts.'],
+  ['Ese número ya está en tus contactos.', 'That number is already in your contacts.'],
+  ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
   [
     'La propina se puede agregar hasta 7 días después del viaje.',
     'You can add a tip up to 7 days after the ride.',
@@ -1351,6 +1356,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Llevas (\d+) horas manejando\. Por tu seguridad, descansa: vuelves a recibir viajes en (\d+) horas\.$/,
+    (m) =>
+      `You’ve been driving for ${m[1]} hours. For your safety, take a break: you’ll get rides again in ${m[2]} hours.`,
+  ],
   [
     /^Tu perfil del equipo \((.+)\) no permite este cambio\. Pídeselo a una cuenta con perfil Total\.$/,
     (m) =>

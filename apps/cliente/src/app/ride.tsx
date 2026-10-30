@@ -8,6 +8,7 @@ import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
 import { type ViajePasajero, ViajeEnCurso } from '../viajes/ViajeEnCurso';
+import { ContactosConfianza, PreguntaTodoBien } from '../viajes/Seguridad';
 import { TEXTOS_MOTO } from '../viajes/textos';
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
@@ -23,19 +24,27 @@ export default function PantallaMoto() {
   const [viaje, setViaje] = useState<ViajePasajero | null>(null);
   const [viajeId, setViajeId] = useState<string | null>(null);
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
+  // C-VIAJE-SEGURIDAD-2: el «¿Todo bien?» si el viaje se sale de la ruta.
+  const [alerta, setAlerta] = useState<{ id: string } | null>(null);
 
   const cargar = useCallback(async () => {
     try {
       if (viajeId) {
-        const r = await api.pedir<{ viaje: ViajePasajero }>('GET', `/datos/viajes/${viajeId}`);
+        const r = await api.pedir<{ viaje: ViajePasajero; alerta?: { id: string } | null }>(
+          'GET',
+          `/datos/viajes/${viajeId}`,
+        );
         setViaje(r.viaje);
+        setAlerta(r.alerta ?? null);
         return;
       }
       const r = await api.pedir<{
         viaje: ViajePasajero | null;
         deudaPendiente: { monto: number; moneda: string | null } | null;
+        alerta?: { id: string } | null;
       }>('GET', '/datos/viajes/actual');
       setViaje(r.viaje);
+      setAlerta(r.alerta ?? null);
       setDeuda(r.deudaPendiente);
       if (r.viaje) setViajeId(r.viaje.id);
     } catch (e) {
@@ -71,6 +80,9 @@ export default function PantallaMoto() {
           alignSelf: 'center',
         }}
       >
+        {viaje && alerta ? (
+          <PreguntaTodoBien viajeId={viaje.id} alResponder={() => void cargar()} />
+        ) : null}
         {viaje ? (
           <ViajeEnCurso
             viaje={viaje}
@@ -82,7 +94,10 @@ export default function PantallaMoto() {
             }}
           />
         ) : (
-          <PedirMoto deudaPendiente={deuda} alPedir={(id) => setViajeId(id)} />
+          <>
+            <PedirMoto deudaPendiente={deuda} alPedir={(id) => setViajeId(id)} />
+            <ContactosConfianza />
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

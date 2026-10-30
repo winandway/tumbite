@@ -97,12 +97,18 @@ export async function avisarContactos(c: Ctx, operacionId: string): Promise<numb
   const db = base(c);
   const f = await db
     .prepare(
-      `SELECT o.cliente_id, u.nombre, z.zona_horaria, COALESCE(a.compartir, 'nunca') AS compartir
+      `SELECT o.cliente_id, u.nombre, u.idioma, z.zona_horaria, COALESCE(a.compartir, 'nunca') AS compartir
          FROM operaciones o JOIN usuarios u ON u.id = o.cliente_id JOIN zonas z ON z.id = o.zona_id
          LEFT JOIN ajustes_seguridad a ON a.cliente_id = o.cliente_id WHERE o.id = ?`,
     )
     .bind(operacionId)
-    .first<{ cliente_id: string; nombre: string; zona_horaria: string; compartir: string }>();
+    .first<{
+      cliente_id: string;
+      nombre: string;
+      idioma: string;
+      zona_horaria: string;
+      compartir: string;
+    }>();
   if (!f || f.compartir === 'nunca') return 0;
   if (f.compartir === 'noche' && !esDeNoche(new Date(), f.zona_horaria)) return 0;
   const { results: contactos } = await db
@@ -125,7 +131,10 @@ export async function avisarContactos(c: Ctx, operacionId: string): Promise<numb
         pedidoId: null,
         tipo: 'viaje_compartido',
         telefono: k.telefono,
-        texto: `Divoox: ${nombre} started a ride and shared it with you. Follow it live: ${sitio}/ride/${codigo}`,
+        texto:
+          f.idioma === 'es'
+            ? `Divoox: ${nombre} empezó un viaje y lo compartió contigo. Síguelo en vivo: ${sitio}/ride/${codigo}`
+            : `Divoox: ${nombre} started a ride and shared it with you. Follow it live: ${sitio}/ride/${codigo}`,
       })
     )
       enviados++;
@@ -208,10 +217,12 @@ export async function revisarHorasAlVolante(db: D1Database, conductorId: string)
     results.map((r) => ({ inicio: aIso(r.inicio) ?? '', fin: aIso(r.fin) })),
     new Date(),
   );
-  if (b.bloqueadoHasta)
+  if (b.bloqueadoHasta) {
+    const faltan = Math.max(1, Math.ceil((Date.parse(b.bloqueadoHasta) - Date.now()) / 3_600_000));
     throw new ErrorDatos(
-      `Llevas ${Math.floor(b.horas)} horas manejando. Por tu seguridad, descansa: vuelves a recibir viajes a las ${b.bloqueadoHasta.slice(11, 16)} (UTC).`,
+      `Llevas ${Math.floor(b.horas)} horas manejando. Por tu seguridad, descansa: vuelves a recibir viajes en ${faltan} horas.`,
       undefined,
       409,
     );
+  }
 }
