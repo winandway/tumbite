@@ -1878,5 +1878,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "categoria",
     "abre",
     "cierra"
+  ],
+  "piloto_participantes": [
+    "usuario_id",
+    "nota",
+    "agregado_por",
+    "creado_en"
+  ],
+  "piloto_eventos": [
+    "id",
+    "usuario_id",
+    "accion",
+    "autor_id",
+    "nota",
+    "creado_en"
   ]
 };

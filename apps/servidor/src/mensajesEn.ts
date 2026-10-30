@@ -691,6 +691,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'That phone number already has an account. Sign in with it or contact support.',
   ],
   ['Esa cuenta no tiene foto que liberar.', 'That account has no photo to release.'],
+  [
+    'No hay ninguna cuenta con ese correo. La persona tiene que registrarse primero en la app.',
+    'There’s no account with that email. The person has to sign up in the app first.',
+  ],
+  ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
   ['Escribe el motivo de la mala conducta.', 'Write the reason for the misconduct.'],
   ['Los pagos con tarjeta todavía no están activados.', 'Card payments aren’t turned on yet.'],
   ['No pudimos cobrar el viaje en este momento.', 'We couldn’t charge the ride right now.'],
