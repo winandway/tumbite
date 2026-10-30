@@ -71,6 +71,15 @@
 - [x] Rehacer la captura de «Mis turnos» con el arreglo ya en pruebas y volver a generar la presentación de repartidores. Todos los países.
 - [!] (espera tu sí: gasta dinero si pasa de lo gratis; tope propuesto 300 cargas al día; ficha en docs/investigaciones/2026-10-29-mapa-de-la-web.md) Mapa de la web moderno con Google Maps, igual que en las apps, en una sola pieza para las cuatro pantallas. Todos los países.
 
+## Rellenada el 29 oct, noche (lista final de la auditoría, puntos 41, 51, 57, 58, 62 y 65)
+
+- [ ] «Ayuda con mi pedido» como DoorDash: el cliente marca qué plato faltó o llegó mal, con foto, y recibe un reembolso parcial automático dentro de reglas con tope; lo que pasa del tope va a soporte. Ficha REA antes. Solo en pruebas con Stripe de prueba. Servidor, app del cliente, superadmin, Docs. Todos los países.
+- [ ] Contracargos (disputas de Stripe) en el superadmin: lista, plazo para responder, pruebas del pedido (fotos, GPS, hora de entrega) listas para mandar. Comprobar lo que ya existe en los avisos de Stripe y completar. Solo en pruebas. Todos los países.
+- [ ] Modo tableta del restaurante (como la tableta de DoorDash): pantalla siempre encendida, pantalla completa, sonido fuerte y sin cerrar sesión por descuido. Panel y app del restaurante, Docs. Todos los países.
+- [ ] Resumen de millas y ganancias del año para el repartidor (como Dasher, para sus impuestos): kilómetros o millas por entrega, total por mes y descarga en CSV. Servidor, app Driver, Docs. EE. UU. primero; los demás países con su moneda.
+- [ ] Historial de cambios de la configuración de dinero por ciudad en el superadmin (quién cambió qué y cuándo), y que la calculadora pública lea la configuración en vivo. Todos los países.
+- [ ] Prueba de restauración de un respaldo de la base de pruebas, documentada paso a paso y con su comprobación automática. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
