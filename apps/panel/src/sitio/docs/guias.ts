@@ -1692,6 +1692,7 @@ const es: SeccionDocs[] = [
           'Arriba, cuántos pedidos están esperando ahora mismo, con un enlace directo a ellos. Debajo, los últimos 7 y 30 días: pedidos, ventas, lo que recibes después de la comisión y el ticket promedio.',
           'Más abajo, los platos que más se venden y el tiempo real de tu cocina comparado con el que prometes al aceptar. Si cocinas más rápido de lo que prometes, tus clientes reciben antes y te califican mejor.',
           'Al final, tus horas y días fuertes de los últimos 30 días, en la hora de tu ciudad: así sabes cuándo reforzar la cocina. Y tus clientes: cuántos son nuevos, cuántos repiten y cuántos pedidos se cancelaron.',
+          'También ves cuántos pedidos tuvieron un problema (un plato que faltó, vino equivocado o llegó dañado), qué porcentaje de tus pedidos salió sin problemas y cuánto se les devolvió a los clientes en el mes. Es la mejor pista para revisar el armado de las bolsas.',
           'Lo mismo lo ves en la app del restaurante, en Estadísticas.',
         ],
         capturas: [
@@ -5061,6 +5062,7 @@ const en: SeccionDocs[] = [
           'At the top, how many orders are waiting right now, with a direct link to them. Below, the last 7 and 30 days: orders, sales, what you receive after commission, and your average order.',
           'Further down, your best-selling items and your real kitchen time compared with the time you promise when accepting. Cook faster than you promise and customers get their food sooner and rate you higher.',
           'At the bottom, your busiest hours and days over the last 30 days, in your city’s time, so you know when to staff up. And your customers: how many are new, how many come back, and how many orders were canceled.',
+          'You also see how many orders had an issue (an item missing, wrong or damaged), what share of your orders went out without issues, and how much was refunded to customers this month. It’s the best clue for checking how bags are packed.',
           'You see the same in the restaurant app, under Stats.',
         ],
         capturas: [

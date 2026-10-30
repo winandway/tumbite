@@ -89,6 +89,8 @@
 - [!] (lo decide el contador: tasas por condado) Impuesto de ventas de Florida por condado en el total. EE. UU.
 - [!] (dinero) Tarjetas de regalo y regalar un pedido a otra persona. Todos los países.
 
+- [x] Precisión de pedidos en el tablero del restaurante (como DoorDash Merchant): pedidos con problemas, porcentaje sin problemas y reembolsos del mes; panel, app y Docs. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.

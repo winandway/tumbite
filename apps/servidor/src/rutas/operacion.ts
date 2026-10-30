@@ -853,12 +853,38 @@ operacion.get('/restaurante/tablero', async (c) => {
     )
     .bind(rid)
     .first<{ n: number }>();
+  // C-PRECISION-PEDIDOS (29 oct 2026), como la «precisión de pedidos» de DoorDash Merchant: pedidos
+  // del mes con una queja de plato faltante, equivocado o dañado, y lo devuelto a los clientes.
+  const problemas = await db
+    .prepare(
+      `SELECT COUNT(DISTINCT t.pedido_id) AS n FROM tickets t JOIN pedidos p ON p.id = t.pedido_id
+        WHERE p.restaurante_id = ? AND t.tipo = 'queja' AND t.creado_en >= datetime('now','-30 days')
+          AND json_extract(t.datos_json, '$.motivo') IN ('articulo_faltante','pedido_incorrecto','frio_o_danado')`,
+    )
+    .bind(rid)
+    .first<{ n: number }>();
+  const devuelto = await db
+    .prepare(
+      `SELECT COUNT(*) AS n, COALESCE(SUM(d.monto), 0) AS monto FROM devoluciones d JOIN pedidos p ON p.id = d.pedido_id
+        WHERE p.restaurante_id = ? AND p.moneda = ? AND d.creado_en >= datetime('now','-30 days')`,
+    )
+    .bind(rid, moneda)
+    .first<{ n: number; monto: number }>();
+  const conProblemas = Number(problemas?.n ?? 0);
   return c.json({
     tablero: {
       moneda,
       zonaHoraria: zona,
       ...rendimiento,
       canceladosMes: Number(cancelados?.n ?? 0),
+      pedidosConProblemasMes: conProblemas,
+      precisionPct: entregados.length
+        ? Math.round(
+            ((entregados.length - Math.min(conProblemas, entregados.length)) / entregados.length) *
+              1000,
+          ) / 10
+        : null,
+      reembolsosMes: { cantidad: Number(devuelto?.n ?? 0), monto: Number(devuelto?.monto ?? 0) },
       semana: await periodo(7),
       mes: await periodo(30),
       topPlatos: [...cuenta.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5),

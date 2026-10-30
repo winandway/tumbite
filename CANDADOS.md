@@ -1709,3 +1709,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es (como el «Pickup» de Uber Eats):** en Comida, arriba, «Entrega | Recoger». En Recoger: mapa con los locales abiertos (`apps/cliente/src/comida/MapaLocales.tsx` nativo y `.web.tsx` con Leaflet), lo más cerca primero y «Listo en X min» (tiempo de preparación). Al elegir un local, `marcarRecoger(true)` del carrito y el carrito arranca en «Recojo en el local» (una vez; luego se apaga).
 - **No tocar:** el modo de la lista es estado propio de la pantalla; el carrito solo recibe la intención al elegir el local (si se apagara desde el carrito, la lista cambiaría sola al volver).
 - **Prueba:** `e2e/recorrido/recoger.spec.ts` (restaurantes simulados; solo en esta computadora).
+
+## C-PRECISION-PEDIDOS (29 oct 2026) — todos los países
+
+- **Qué es (como la «precisión de pedidos» de DoorDash Merchant):** el tablero del restaurante (`GET /datos/restaurante/tablero` en `rutas/operacion.ts`) suma `pedidosConProblemasMes` (pedidos con queja de plato faltante, equivocado o dañado en 30 días), `precisionPct` (entregados sin problema) y `reembolsosMes` (devoluciones del mes en su moneda). Se ve en el panel (`TableroRestaurante.tsx`) y en la app (`Estadisticas.tsx`, «Con problemas»). Docs: guía «dashboard».
+- **Prueba:** `rutas/operacion.test.ts` (tablero).

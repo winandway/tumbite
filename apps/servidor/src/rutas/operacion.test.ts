@@ -409,6 +409,26 @@ describe('tablero del restaurante (C-TABLERO-REST)', () => {
     ).toBe(r.datos.tablero.mes.pedidos);
     expect(r.datos.tablero.clientes).toMatchObject({ nuevos: 1, recurrentes: 0 });
     expect(r.datos.tablero.canceladosMes).toBe(0);
+    // C-PRECISION-PEDIDOS: sin quejas, 100 % sin problemas; una queja por plato equivocado y una
+    // devolución bajan la precisión y suman lo reembolsado.
+    expect(r.datos.tablero.precisionPct).toBe(100);
+    await m.llamar(
+      'POST',
+      '/datos/quejas',
+      { pedidoId: id, texto: 'Vino otro plato', motivo: 'pedido_incorrecto', platoIds: [] },
+      cliente.token,
+    );
+    await m.DB.prepare(
+      "INSERT INTO devoluciones (id, pedido_id, monto, motivo, cargar_a) VALUES ('dv-t', ?, 500, 'prueba', 'tumbite')",
+    )
+      .bind(id)
+      .run();
+    const r2 = await m.llamar('GET', '/datos/restaurante/tablero', undefined, dueno.token);
+    expect(r2.datos.tablero).toMatchObject({
+      pedidosConProblemasMes: 1,
+      precisionPct: 0,
+      reembolsosMes: { cantidad: 1, monto: 500 },
+    });
     // Un cliente no ve el tablero de nadie.
     expect(
       (await m.llamar('GET', '/datos/restaurante/tablero', undefined, cliente.token)).estado,

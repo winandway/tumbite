@@ -63,6 +63,10 @@ type Tablero = {
   porDia?: { pedidos: number; ventas: number }[];
   clientes?: { nuevos: number; recurrentes: number; nuevosQueVolvieron: number };
   canceladosMes?: number;
+  /** C-PRECISION-PEDIDOS: quejas de plato faltante, equivocado o dañado y lo devuelto (30 días). */
+  pedidosConProblemasMes?: number;
+  precisionPct?: number | null;
+  reembolsosMes?: { cantidad: number; monto: number };
 };
 
 const TR = {
@@ -74,6 +78,9 @@ const TR = {
     nuevos: 'Nuevos',
     repiten: 'Repiten',
     cancelados: 'Cancelados',
+    precision: 'Pedidos sin problemas',
+    conProblemas: 'Con problemas',
+    reembolsos: 'Reembolsado',
   },
   en: {
     porHora: 'Orders by hour (last 30 days)',
@@ -83,6 +90,9 @@ const TR = {
     nuevos: 'New',
     repiten: 'Returning',
     cancelados: 'Canceled',
+    precision: 'Orders without issues',
+    conProblemas: 'With issues',
+    reembolsos: 'Refunded',
   },
 };
 
@@ -243,6 +253,18 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
                 <li className="super-tarjeta">
                   <span>{tr.cancelados}</span>
                   <strong>{x.canceladosMes ?? 0}</strong>
+                </li>
+                <li className="super-tarjeta">
+                  <span>{tr.precision}</span>
+                  <strong>{x.precisionPct == null ? '—' : `${x.precisionPct} %`}</strong>
+                </li>
+                <li className="super-tarjeta">
+                  <span>{tr.conProblemas}</span>
+                  <strong>{x.pedidosConProblemasMes ?? 0}</strong>
+                </li>
+                <li className="super-tarjeta">
+                  <span>{tr.reembolsos}</span>
+                  <strong>{d(x.reembolsosMes?.monto ?? 0)}</strong>
                 </li>
               </ul>
             </div>
