@@ -14,7 +14,7 @@
 
 ### Etapa 1 — Comida lista para lanzar en Miami
 
-- [ ] (1) Comprobar en producción el embudo de pedidos de los informes del superadmin. Todos los países.
+- [x] (29 oct: producción lo incluye y la pantalla lo trae; en pruebas responde con datos reales) (1) Comprobar en producción el embudo de pedidos de los informes del superadmin. Todos los países.
 - [x] (29 oct: 24 pantallas en pruebas sin errores; arreglados el saludo del inicio con la hamburguesa y «Mi cuenta» con la cabecera vieja; la pizza recortada va a marketing) (2) Repaso en celular (375 px) de todas las pantallas de la app del cliente, Divoox Driver, la app del restaurante y el panel, en el sitio de pruebas, con REA sobre nuestras apps: cada fallo con prueba en rojo, arreglo y publicación. Todos los países.
 
 ### Etapa 1½ — Identidad de los repartidores (pedido urgente de Richard, 29 oct, noche)
