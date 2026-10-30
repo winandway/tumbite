@@ -1756,3 +1756,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - `leerCodigoDeFoto` (`apps/verificador/src/codigoBarras.ts`): pasa la foto a grises con sharp (Apache 2.0) y decodifica el PDF417 con ZXing (Apache 2.0); prueba también girada 90, 180 y 270 grados. Una foto sin código devuelve null.
 - **Prueba:** `codigoBarras.test.ts` (un PDF417 real dibujado con bwip-js, MIT, derecho y de lado).
+
+## C-KYC-OCR (29 oct 2026) — todos los países
+
+- `leerFrente` y `leerMrzDeFoto` (`apps/verificador/src/ocr.ts`): Tesseract (Apache 2.0) con los datos de idioma del paquete @tesseract.js-data/eng (MIT), sin bajar nada de internet al verificar.
+- **Hallazgo:** el OCR genérico confunde la franja del pasaporte («<» por K o L, «L» por «1»). Los dígitos de control detectan la lectura mala y nunca la dan por buena. Leerla bien necesita un modelo entrenado en la letra OCR-B (punto K6c de la fila).
+- **Prueba:** `ocr.test.ts` (una franja mal leída no pasa).
