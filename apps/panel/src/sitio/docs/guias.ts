@@ -1008,6 +1008,26 @@ const es: SeccionDocs[] = [
         nota: 'Los regalos los paga el restaurante con una parte de sus ventas, no Divoox. Por eso cada restaurante decide los suyos.',
       },
       {
+        id: 'special-instructions',
+        titulo: 'Instrucciones especiales para un plato',
+        resumen:
+          'Pide «sin cebolla» o «bien cocido» en cada plato, y el restaurante lo ve en tu pedido.',
+        explicacion: [
+          'Toca el plato y, debajo de las opciones, escribe lo que necesitas en «Instrucciones especiales». Cada plato lleva su propia nota.',
+          'Si pides el mismo plato dos veces con notas distintas, salen como dos líneas en tu carrito, para que no se confundan.',
+          'El restaurante ve la nota junto al plato, en su pantalla y en la comanda impresa. Las notas sirven para cambios sencillos; un cambio que cueste más se elige con las opciones del plato.',
+        ],
+        preguntas: [
+          '¿Cómo pido un plato sin cebolla?',
+          '¿Dónde escribo una nota para el restaurante?',
+        ],
+        pasos: [
+          'Toca el plato en el menú del restaurante.',
+          'Escribe tu nota en «Instrucciones especiales».',
+          'Toca «Agregar al carrito». La nota aparece en tu carrito junto al plato.',
+        ],
+      },
+      {
         id: 'rate',
         titulo: 'Calificar la comida y al repartidor',
         resumen: 'Dos calificaciones por separado. Si la comida tardó, no es culpa del repartidor.',
@@ -4414,6 +4434,26 @@ const en: SeccionDocs[] = [
           'When a gift is yours, you’ll see it in the cart before paying. Tap it to apply; it comes off the total.',
         ],
         nota: 'Gifts are funded by the restaurant from a share of its sales, not by Divoox. That’s why each restaurant chooses its own.',
+      },
+      {
+        id: 'special-instructions',
+        titulo: 'Special instructions for an item',
+        resumen:
+          'Ask for “no onions” or “well done” on each item, and the restaurant sees it in your order.',
+        explicacion: [
+          'Tap the item and, below the options, write what you need under “Special instructions”. Each item has its own note.',
+          'If you order the same item twice with different notes, they show up as two lines in your cart so they don’t get mixed up.',
+          'The restaurant sees the note next to the item, on its screen and on the printed ticket. Notes are for simple changes; anything that costs extra is chosen with the item’s options.',
+        ],
+        preguntas: [
+          'How do I order an item without onions?',
+          'Where do I write a note for the restaurant?',
+        ],
+        pasos: [
+          'Tap the item on the restaurant’s menu.',
+          'Write your note under “Special instructions”.',
+          'Tap “Add to cart”. The note shows in your cart next to the item.',
+        ],
       },
       {
         id: 'rate',

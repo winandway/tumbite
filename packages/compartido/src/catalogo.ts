@@ -180,14 +180,35 @@ export type OpcionElegida = {
   precioCentavos: number;
 };
 
-/** «Pizza margarita (Grande, Extra queso)». */
+/** C-NOTA-PLATO: tope de la nota de un plato («sin cebolla», «bien cocido»). */
+export const NOTA_PLATO_MAX = 140;
+
+/** La nota de un plato en una sola línea, sin espacios de más y con su tope. */
+export function limpiarNotaPlato(nota: string | null | undefined): string {
+  return (nota ?? '').replace(/\s+/g, ' ').trim().slice(0, NOTA_PLATO_MAX);
+}
+
+/** La nota limpia para guardarla en la línea, o nada si viene vacía (la línea no lleva el campo). */
+export function conNotaPlato(nota: string | null | undefined): { nota?: string } {
+  const n = limpiarNotaPlato(nota);
+  return n ? { nota: n } : {};
+}
+
+/** «Pizza margarita (Grande, Extra queso) · Nota: sin cebolla». */
 export function textoLinea(
-  l: { nombreEs: string; nombreEn: string; opciones?: OpcionElegida[] | null },
+  l: {
+    nombreEs: string;
+    nombreEn: string;
+    opciones?: OpcionElegida[] | null;
+    nota?: string | null;
+  },
   idioma: 'es' | 'en',
 ): string {
   const base = nombrePlato(l, idioma);
   const extras = (l.opciones ?? []).map((o) => nombrePlato(o, idioma)).filter(Boolean);
-  return extras.length ? `${base} (${extras.join(', ')})` : base;
+  const conExtras = extras.length ? `${base} (${extras.join(', ')})` : base;
+  const nota = limpiarNotaPlato(l.nota);
+  return nota ? `${conExtras} · ${idioma === 'en' ? 'Note' : 'Nota'}: ${nota}` : conExtras;
 }
 
 export type Plato = {

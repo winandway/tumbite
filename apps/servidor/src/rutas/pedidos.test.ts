@@ -448,3 +448,56 @@ describe('tarjetas guardadas (Mi cuenta)', () => {
     expect(llamadas.some((l) => l.includes('pm_mia/detach'))).toBe(true);
   });
 });
+
+// C-NOTA-PLATO (30 oct 2026): «sin cebolla» por plato, como las instrucciones especiales de Uber Eats.
+describe('nota por plato', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('cada plato guarda su nota limpia, el mismo plato con dos notas son dos líneas, y el restaurante las ve', async () => {
+    stripeFalso();
+    const { m, cliente, dueno, pedidoBase, platoId } = await escenario();
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        ...pedidoBase,
+        lineas: [
+          { platoId, cantidad: 1, nota: '  sin   cebolla\n' },
+          { platoId, cantidad: 1, nota: 'bien cocido' },
+          { platoId, cantidad: 1 },
+        ],
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const fila = await m.DB.prepare('SELECT lineas_json FROM pedidos WHERE id = ?')
+      .bind(r.datos.pedidoId)
+      .first<{ lineas_json: string }>();
+    const lineas = JSON.parse(fila!.lineas_json) as { nota?: string }[];
+    expect(lineas.map((l) => l.nota ?? null)).toEqual(['sin cebolla', 'bien cocido', null]);
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now') WHERE id = ?",
+    )
+      .bind(r.datos.pedidoId)
+      .run();
+    const rest = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
+    const p = rest.datos.pedidos.find((x: { id: string }) => x.id === r.datos.pedidoId);
+    expect(p.lineas.map((l: { nota?: string }) => l.nota ?? null)).toEqual([
+      'sin cebolla',
+      'bien cocido',
+      null,
+    ]);
+  });
+
+  it('una nota demasiado larga no se acepta', async () => {
+    stripeFalso();
+    const { m, cliente, pedidoBase, platoId } = await escenario();
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      { ...pedidoBase, lineas: [{ platoId, cantidad: 1, nota: 'x'.repeat(400) }] },
+      cliente.token,
+    );
+    expect(r.estado).toBe(400);
+  });
+});

@@ -1889,3 +1889,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Dónde corre:** al final de `correosDePedidoPagado` (todos los caminos de pago: tarjeta, aviso de Stripe, cobro directo), en un `finally` para que un correo caído no la salte, y en el vigilante (`manager.ts`) para los programados cuya ventana se abrió y los que esperaban la decisión de un plato agotado.
 - **Candados:** `operacion.test.ts` («aceptación automática») y `PedidosAceptarSolo.test.tsx`. Ficha: `docs/investigaciones-rea/2026-10-30-aceptar-solo.md`. Guía pública: Docs → Para restaurantes → «Aceptar pedidos automáticamente».
 - **No tocar:** nunca aceptar un pedido con un plato agotado pendiente ni un programado fuera de su ventana.
+
+## C-NOTA-PLATO (30 oct 2026) — todos los países
+
+- **Qué es:** «Instrucciones especiales» por plato (Uber Eats y DoorDash). La nota viaja en cada línea (`nota`, máximo 140 letras, limpia con `limpiarNotaPlato`), el mismo plato con otra nota es otra línea del carrito (`claveDeLinea` la incluye) y `textoLinea` la escribe («· Nota: …»), así que sale sola en el carrito, el panel, la comanda, la app del restaurante, la del repartidor y los correos.
+- **Candados:** `packages/compartido/src/notaPlato.test.ts`, `pedidos.test.ts` («nota por plato») y `e2e/recorrido/notaPlato.spec.ts` (en rojo con la versión anterior). Captura: `docs/capturas/nota-plato-carrito-es.png`. Guía: Docs → «Instrucciones especiales para un plato».

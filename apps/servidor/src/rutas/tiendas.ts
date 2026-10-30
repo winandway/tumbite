@@ -11,6 +11,7 @@ import {
   precioEstimado,
   tiposDeServicio,
   type Sustitucion,
+  conNotaPlato,
 } from '@tumbite/compartido';
 import { entornoDe } from '../entorno';
 import { serviciosImplementados } from '../esquema';
@@ -628,7 +629,7 @@ tiendas.get('/tiendas-buscar', async (c) => {
 export async function lineasDeTienda(
   c: Parameters<typeof base>[0],
   rest: Record<string, unknown>,
-  pedidas: { platoId: string; cantidad: number; sustitucion?: Sustitucion }[],
+  pedidas: { platoId: string; cantidad: number; sustitucion?: Sustitucion; nota?: string }[],
 ) {
   exigirServicio(c, servicioDe(String(rest.tipo_comercio)));
   const ids = [...new Set(pedidas.map((l) => l.platoId))];
@@ -664,6 +665,7 @@ export async function lineasDeTienda(
       opciones: [],
       requiereEdad: f.restriccion === 'alcohol' || f.restriccion === 'tobacco',
       sustitucion: l.sustitucion ?? 'reembolsar',
+      ...conNotaPlato(l.nota),
       ...(f.vendido_por === 'weight' ? { pesable: true, unidadPeso: f.unidad_peso } : {}),
       imagen: f.imagen ?? null,
     };

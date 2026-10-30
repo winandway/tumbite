@@ -24,6 +24,8 @@ import {
   calcularPedido,
   distanciaKm,
   conSenal,
+  NOTA_PLATO_MAX,
+  conNotaPlato,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
@@ -69,6 +71,8 @@ const esquemaNuevoPedido = z.object({
         opciones: z.array(z.string().min(1)).max(40).default([]),
         // C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto (como Instacart y DoorDash).
         sustitucion: z.enum(SUSTITUCIONES).optional(),
+        // C-NOTA-PLATO: «sin cebolla», «bien cocido» (instrucciones especiales de Uber Eats y DoorDash).
+        nota: z.string().max(NOTA_PLATO_MAX).optional(),
       }),
     )
     .min(1, { error: 'Tu carrito está vacío.' })
@@ -321,6 +325,7 @@ export function lineasDe(f: FilaPedido): {
   cantidad: number;
   opciones?: OpcionElegida[];
   requiereEdad?: boolean;
+  nota?: string;
 }[] {
   try {
     const v = JSON.parse(String(f.lineas_json ?? '[]')) as unknown;
@@ -469,6 +474,7 @@ export async function lineasDeRestaurante(
       opciones: elegidas,
       // Congelado al pedir: si el plato es para mayores de 21, la entrega lo exige en mano.
       requiereEdad: Number(p.requiere_edad ?? 0) === 1,
+      ...conNotaPlato(l.nota),
     };
   });
 }
@@ -1233,6 +1239,7 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
         cantidad: v.cantidad,
         opciones: (v.opciones ?? []).map((o) => o.id),
         sustitucion: v.sustitucion,
+        nota: v.nota,
       };
       const [l] = esTienda
         ? await lineasDeTienda(c, rest, [pedida])

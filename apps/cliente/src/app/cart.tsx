@@ -400,6 +400,7 @@ export default function PantallaCarrito() {
           cantidad: l.cantidad,
           opciones: (l.opciones ?? []).map((o) => o.id),
           ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
+          ...(l.nota ? { nota: l.nota } : {}),
         })),
         propinaCentavos: propina,
         // El servidor compara este total con el suyo y no cobra si no coinciden.

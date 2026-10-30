@@ -7,7 +7,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { OpcionElegida, Plan, Plato, Sustitucion } from '@tumbite/compartido';
+import {
+  type OpcionElegida,
+  type Plan,
+  type Plato,
+  type Sustitucion,
+  limpiarNotaPlato,
+} from '@tumbite/compartido';
 import { almacenTelefono, useSesion } from '@tumbite/movil';
 
 export type LineaCarrito = {
@@ -28,12 +34,14 @@ export type LineaCarrito = {
   pesable?: boolean;
   /** C-EDAD-EN-MANO: alcohol o tabaco: se entrega en mano y se pide identificación. */
   requiereEdad?: boolean;
+  /** C-NOTA-PLATO: «sin cebolla». El mismo plato con otra nota es otra línea. */
+  nota?: string;
 };
-export const claveDeLinea = (platoId: string, opciones: { id: string }[]) =>
+export const claveDeLinea = (platoId: string, opciones: { id: string }[], nota?: string) =>
   `${platoId}:${opciones
     .map((o) => o.id)
     .sort()
-    .join('+')}`;
+    .join('+')}${nota ? `#${nota}` : ''}`;
 export type Carrito = {
   restauranteId: string | null;
   restauranteNombre: string;
@@ -71,6 +79,7 @@ type Ctx = {
     },
     p: Plato & { pesable?: boolean },
     opciones?: OpcionElegida[],
+    nota?: string,
   ) => 'ok' | 'otro-restaurante';
   cambiarCantidad: (clave: string, cantidad: number) => void;
   cambiarSustitucion: (clave: string, s: Sustitucion) => void;
@@ -108,8 +117,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     Promise.resolve(guardar).catch((e) => console.warn('carrito: no se pudo guardar', e));
   }, [carrito, cargado, llave]);
 
-  const agregar = useCallback<Ctx['agregar']>((rest, p, opciones = []) => {
-    const clave = claveDeLinea(p.id, opciones);
+  const agregar = useCallback<Ctx['agregar']>((rest, p, opciones = [], notaCruda) => {
+    const nota = limpiarNotaPlato(notaCruda);
+    const clave = claveDeLinea(p.id, opciones, nota);
     let resultado: 'ok' | 'otro-restaurante' = 'ok';
     setCarrito((c) => {
       if (c.restauranteId && c.restauranteId !== rest.id && c.lineas.length) {
@@ -133,7 +143,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       const conClave = base.lineas.map((l) => ({
         ...l,
         opciones: l.opciones ?? [],
-        clave: l.clave ?? claveDeLinea(l.platoId, l.opciones ?? []),
+        clave: l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [], l.nota),
       }));
       const existe = conClave.find((l) => l.clave === clave);
       const lineas = existe
@@ -152,6 +162,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
               opciones,
               imagen: p.imagen,
               ...(p.requiereEdad ? { requiereEdad: true } : {}),
+              ...(nota ? { nota } : {}),
               ...(rest.esTienda
                 ? { sustitucion: 'reembolsar' as const, pesable: p.pesable ?? false }
                 : {}),
@@ -167,7 +178,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       ...c,
       lineas: c.lineas
         .map((l) =>
-          (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [])) === clave ? { ...l, cantidad } : l,
+          (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [], l.nota)) === clave
+            ? { ...l, cantidad }
+            : l,
         )
         .filter((l) => l.cantidad > 0),
     }));
@@ -177,7 +190,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     setCarrito((c) => ({
       ...c,
       lineas: c.lineas.map((l) =>
-        (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [])) === clave
+        (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [], l.nota)) === clave
           ? { ...l, sustitucion }
           : l,
       ),
@@ -200,7 +213,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       lineas: lineas.map((l) => ({
         ...l,
         opciones: l.opciones ?? [],
-        clave: claveDeLinea(l.platoId, l.opciones ?? []),
+        clave: claveDeLinea(l.platoId, l.opciones ?? [], l.nota),
       })),
     });
   }, []);

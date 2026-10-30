@@ -1,5 +1,5 @@
 import { correosEquipo } from './avisosEquipo';
-import { PAGINAS, enIdiomaDireccion, formatearMonto } from '@tumbite/compartido';
+import { PAGINAS, enIdiomaDireccion, formatearMonto, textoLinea } from '@tumbite/compartido';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 
@@ -9,7 +9,14 @@ import type { Env } from './env';
  * Nunca frenan el flujo principal: si el correo falla, queda en el canario y el pedido sigue.
  */
 type Idioma = 'es' | 'en';
-type Linea = { nombreEs: string; nombreEn: string; precioCentavos: number; cantidad: number };
+type Linea = {
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+  cantidad: number;
+  opciones?: { id: string; nombreEs: string; nombreEn: string; precioCentavos: number }[];
+  nota?: string;
+};
 
 function sitio(env: Env): string {
   return (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
@@ -19,7 +26,8 @@ function lineasTexto(lineas: Linea[], idioma: Idioma, moneda: string): string {
   return lineas
     .map(
       (l) =>
-        `${l.cantidad} × ${idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs} — ${formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}`,
+        // Con sus opciones y la nota del plato (C-NOTA-PLATO), como en la pantalla.
+        `${l.cantidad} × ${textoLinea(l, idioma)} — ${formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}`,
     )
     .join('\n');
 }

@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -26,6 +27,7 @@ import {
   nombrePlato,
   categoriaPlato,
   nombreEtiquetaDieta,
+  NOTA_PLATO_MAX,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -74,6 +76,8 @@ export default function MenuRestaurante() {
   const [eligiendo, setEligiendo] = useState<Plato | null>(null);
   const [elegidas, setElegidas] = useState<Record<string, string[]>>({});
   const [cantidad, setCantidad] = useState(1);
+  // C-NOTA-PLATO: «sin cebolla» para el plato que se está eligiendo.
+  const [notaPlato, setNotaPlato] = useState('');
   // C-MONEDA-RECORRIDO: los precios del menú en la moneda del restaurante.
   const moneda = datos?.restaurante.moneda ?? 'USD';
 
@@ -106,7 +110,7 @@ export default function MenuRestaurante() {
       setError(x instanceof Error ? x.message : String(x));
     }
   }
-  async function meter(p: Plato, opciones: OpcionElegida[], n: number) {
+  async function meter(p: Plato, opciones: OpcionElegida[], n: number, nota = '') {
     if (!datos) return;
     if (grupo) return alGrupo(p, opciones, n);
     const r = datos.restaurante;
@@ -118,19 +122,20 @@ export default function MenuRestaurante() {
       lng: r.lng,
       moneda: r.moneda,
     };
-    if (agregar(rest, p, opciones) === 'otro-restaurante') {
+    if (agregar(rest, p, opciones, nota) === 'otro-restaurante') {
       if (!(await confirmar(t.otroRestaurante, t.siEmpezar, t.no))) return;
       vaciar();
       setTimeout(() => {
-        for (let i = 0; i < n; i++) agregar(rest, p, opciones);
+        for (let i = 0; i < n; i++) agregar(rest, p, opciones, nota);
       }, 0);
       return;
     }
-    for (let i = 1; i < n; i++) agregar(rest, p, opciones);
+    for (let i = 1; i < n; i++) agregar(rest, p, opciones, nota);
   }
   function abrirDetalle(p: Plato) {
     setElegidas({});
     setCantidad(1);
+    setNotaPlato('');
     setEligiendo(p);
   }
   /** El + del plato: con opciones abre el detalle; sin opciones lo agrega de una. */
@@ -168,7 +173,7 @@ export default function MenuRestaurante() {
     const p = eligiendo;
     const opciones = opcionesElegidas(p);
     setEligiendo(null);
-    void meter(p, opciones, cantidad);
+    void meter(p, opciones, cantidad, notaPlato);
   }
 
   const r = datos?.restaurante;
@@ -690,6 +695,33 @@ export default function MenuRestaurante() {
                     </View>
                   ))}
 
+                  {grupo ? null : (
+                    <View style={{ marginTop: 18 }}>
+                      <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+                        {tc.notaPlato}
+                      </Text>
+                      <TextInput
+                        testID="nota-plato"
+                        accessibilityLabel={tc.notaPlato}
+                        value={notaPlato}
+                        onChangeText={setNotaPlato}
+                        placeholder={tc.notaPlatoEjemplo}
+                        placeholderTextColor="#9a9a9a"
+                        maxLength={NOTA_PLATO_MAX}
+                        multiline
+                        style={{
+                          marginTop: 8,
+                          borderWidth: 1,
+                          borderColor: '#D6D6D6',
+                          borderRadius: 10,
+                          padding: 12,
+                          minHeight: 64,
+                          color: C.secundario,
+                          textAlignVertical: 'top',
+                        }}
+                      />
+                    </View>
+                  )}
                   <View
                     style={{
                       flexDirection: 'row',
