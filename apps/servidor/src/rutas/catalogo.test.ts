@@ -371,3 +371,71 @@ describe('menú desde una planilla', () => {
     expect(aud).toEqual({ accion: 'menu_importado' });
   });
 });
+
+// C-MENU-HORARIO (30 oct 2026): categorías con su franja (desayuno, almuerzo), como los menús por
+// horario de DoorDash y Uber Eats. Fuera de su franja no se ven ni se pueden pedir.
+describe('menús por horario', () => {
+  it('una categoría fuera de su franja se esconde y no se puede pedir; dentro, sí', async () => {
+    const m = mundo();
+    const dueno = await m.cuenta('restaurante');
+    const admin = await m.cuenta('admin');
+    const cliente = await m.cuenta('cliente');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    const rid = r.datos.restaurante.id as string;
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/restaurantes/${rid}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    await m.abrir(dueno.token);
+    const desayuno = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { ...PLATO, nombreEs: 'Huevos', categoria: 'Desayuno' },
+      dueno.token,
+    );
+    await m.llamar('POST', '/datos/mi-restaurante/platos', PLATO, dueno.token);
+    // Una franja que ya pasó hoy en Miami (de 00:00 a 00:01): fuera de horario ahora.
+    const fuera = await m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/horarios-categoria',
+      { ventanas: [{ categoria: 'Desayuno', abre: '00:00', cierra: '00:01' }] },
+      dueno.token,
+    );
+    expect(fuera.estado).toBe(200);
+    const mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.horariosCategoria).toEqual([
+      { categoria: 'Desayuno', abre: '00:00', cierra: '00:01' },
+    ]);
+    const pub = await m.llamar('GET', `/datos/restaurantes/${rid}`);
+    expect(pub.datos.platos.map((p: { nombreEs: string }) => p.nombreEs)).toEqual([PLATO.nombreEs]);
+    expect(pub.datos.fueraDeHorario).toEqual([
+      { categoria: 'Desayuno', abre: '00:00', cierra: '00:01' },
+    ]);
+    const pedido = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: rid,
+        lineas: [{ platoId: desayuno.datos.plato.id, cantidad: 1 }],
+        propinaCentavos: 0,
+        direccion: '300 Calle Prueba',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(pedido.estado).toBe(409);
+    // Todo el día: dentro de horario.
+    await m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/horarios-categoria',
+      { ventanas: [{ categoria: 'Desayuno', abre: '00:00', cierra: '23:59' }] },
+      dueno.token,
+    );
+    const otra = await m.llamar('GET', `/datos/restaurantes/${rid}`);
+    expect(otra.datos.platos).toHaveLength(2);
+    expect(otra.datos.fueraDeHorario).toEqual([]);
+  });
+});

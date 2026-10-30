@@ -23,6 +23,8 @@ import {
   textoFranja,
   leerEtiquetasDieta,
   type CalificacionPublica,
+  type VentanaCategoria,
+  categoriaEnHorario,
   MAX_FILAS_MENU,
   leerPlanillaMenu,
   calificacionPublica,
@@ -352,9 +354,18 @@ catalogo.get('/restaurantes/:id', async (c) => {
     .all<FilaRest>();
   const [conH] = await conHorarios(db, [f]);
   const [restaurante] = await conCalificaciones(db, [aRestaurante(conH!, await minutosPausa(db))]);
+  // C-MENU-HORARIO: lo que está fuera de su franja no se muestra; la app dice cuándo vuelve.
+  const ventanas = await ventanasDe(db, String(f.id));
+  const zona = restaurante?.zonaHoraria ?? 'America/New_York';
+  const fueraDeHorario = ventanas.filter((v) => !categoriaEnHorario(v, zona));
+  const fuera = new Set(fueraDeHorario.map((v) => v.categoria));
   return c.json({
     restaurante,
-    platos: await platosConGrupos(db, ordenarPlatos(f, results)),
+    fueraDeHorario,
+    platos: await platosConGrupos(
+      db,
+      ordenarPlatos(f, results).filter((p) => !fuera.has(String(p.categoria ?? ''))),
+    ),
   });
 });
 
@@ -480,7 +491,52 @@ catalogo.get('/mi-restaurante', async (c) => {
   return c.json({
     restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) },
     platos: await platosConGrupos(db, ordenarPlatos(f, results)),
+    horariosCategoria: await ventanasDe(db, String(f.id)),
   });
+});
+
+/** C-MENU-HORARIO: las franjas de las categorías de un restaurante. */
+export async function ventanasDe(db: D1Database, rid: string): Promise<VentanaCategoria[]> {
+  const { results } = await db
+    .prepare(
+      'SELECT categoria, abre, cierra FROM horarios_categoria WHERE restaurante_id = ? ORDER BY abre, categoria',
+    )
+    .bind(rid)
+    .all<VentanaCategoria>();
+  return results;
+}
+
+/** C-MENU-HORARIO: las franjas se reemplazan todas de una vez (dueño o manager). */
+catalogo.put('/mi-restaurante/horarios-categoria', async (c) => {
+  const rid = await exigirMiRestaurante(c, 'manager');
+  const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'Hora como 07:30.' });
+  const { ventanas } = await leerCuerpo(
+    c,
+    z.object({
+      ventanas: z
+        .array(z.object({ categoria: z.string().trim().min(1).max(40), abre: hora, cierra: hora }))
+        .max(30),
+    }),
+  );
+  for (const v of ventanas)
+    if (v.abre === v.cierra)
+      throw new ErrorDatos(
+        'Una franja no puede empezar y terminar a la misma hora.',
+        'ventanas',
+        422,
+      );
+  const db = base(c);
+  await db.batch([
+    db.prepare('DELETE FROM horarios_categoria WHERE restaurante_id = ?').bind(rid),
+    ...ventanas.map((v) =>
+      db
+        .prepare(
+          'INSERT OR REPLACE INTO horarios_categoria (restaurante_id, categoria, abre, cierra) VALUES (?, ?, ?, ?)',
+        )
+        .bind(rid, v.categoria, v.abre, v.cierra),
+    ),
+  ]);
+  return c.json({ horariosCategoria: await ventanasDe(db, rid) });
 });
 
 /** Horarios por día: se reemplazan todos de una vez. */

@@ -10,6 +10,16 @@ export const MENSAJES_EN = new Map<string, string>([
     'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',
     'An option can only open another group of the same item, one level deep.',
   ],
+  // C-MENU-HORARIO
+  [
+    'Uno de los platos solo se sirve en otro horario. Revisa tu carrito.',
+    'One of the items is only served at another time. Check your cart.',
+  ],
+  [
+    'Una franja no puede empezar y terminar a la misma hora.',
+    'A time window can’t start and end at the same time.',
+  ],
+  ['Hora como 07:30.', 'Time like 07:30.'],
   // C-MENU-PLANILLA
   [
     'La planilla necesita al menos una columna de nombre y una de precio. Descarga la plantilla para ver el formato.',

@@ -1872,5 +1872,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "token",
     "pedido_id",
     "creado_en"
+  ],
+  "horarios_categoria": [
+    "restaurante_id",
+    "categoria",
+    "abre",
+    "cierra"
   ]
 };

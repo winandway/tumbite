@@ -1921,3 +1921,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** los «nested modifier groups» de Uber Eats (estudio E2, pág. 3): una opción abre otro grupo del mismo plato (combo → bebida → tamaño), de un solo nivel. Columna `opciones.abre_grupo_id` (vía COLUMNAS); `gruposDe` marca `anidado` y `abreGrupoId`; `gruposActivos` (compartido) decide qué grupos cuentan: la usan el servidor al validar y cobrar (`lineasDeRestaurante`) y la app al mostrar. El panel tiene «Al elegirla, pide también» por opción y «Copiar las opciones de otro plato» (los mismos grupos en varios platos).
 - **Candados:** `opcionesAnidadas.test.ts`, `operacion.test.ts` («el combo pide la bebida…»: sin el anidado no se pide, una opción de un anidado cerrado no vale, el precio suma), `Menu.test.tsx` (copiar y abrir grupo; en rojo sin el cambio) y `e2e/recorrido/notaPlato.spec.ts` (el grupo aparece y desaparece; captura `docs/capturas/opciones-anidadas-es.png`).
+
+## C-MENU-HORARIO (30 oct 2026) — todos los países
+
+- **Qué es:** menús por horario (estudio E1, pág. 3; DoorDash y Uber Eats): franja diaria por categoría en `horarios_categoria`, editada en el panel (`HorariosMenu.tsx`, `PUT /datos/mi-restaurante/horarios-categoria`). Fuera de su franja, la ficha pública no muestra esos platos y devuelve `fueraDeHorario` (la app dice cuándo se sirven); `lineasDeRestaurante` rechaza pedirlos (con la hora de la franja si el pedido es programado). Regla única: `categoriaEnHorario` (compartido).
+- **Candados:** `catalogo.test.ts` («menús por horario») y `HorariosMenu.test.tsx`. Guía: Docs → «Horarios del menú».

@@ -96,3 +96,20 @@ export function fechaLocal(zonaHoraria: string, ahora = new Date()): string {
     return ahora.toISOString().slice(0, 10);
   }
 }
+
+/** C-MENU-HORARIO: franja diaria de una categoría del menú (desayuno de 07:00 a 11:00). */
+export type VentanaCategoria = { categoria: string; abre: string; cierra: string };
+
+/** ¿La categoría se sirve ahora? Sin franja, siempre. Acepta franjas que cruzan la medianoche. */
+export function categoriaEnHorario(
+  ventana: { abre: string; cierra: string } | undefined,
+  zonaHoraria: string,
+  ahora = new Date(),
+): boolean {
+  if (!ventana) return true;
+  return abiertoPorHorario(
+    [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: ventana.abre, cierra: ventana.cierra })),
+    zonaHoraria,
+    ahora,
+  );
+}

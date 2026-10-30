@@ -69,7 +69,12 @@ export default function MenuRestaurante() {
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
   const { width } = useWindowDimensions();
-  const [datos, setDatos] = useState<{ restaurante: Restaurante; platos: Plato[] } | null>(null);
+  const [datos, setDatos] = useState<{
+    restaurante: Restaurante;
+    platos: Plato[];
+    /** C-MENU-HORARIO: categorías que ahora no se sirven, con su franja. */
+    fueraDeHorario?: { categoria: string; abre: string; cierra: string }[];
+  } | null>(null);
   const [error, setError] = useState('');
   const [pestana, setPestana] = useState<'menu' | 'info'>('menu');
   const [categoria, setCategoria] = useState<string | null>(null);
@@ -269,6 +274,19 @@ export default function MenuRestaurante() {
 
           {/* C-CALIFICACION-PUBLICA: las reseñas arriba del menú, como DoorDash. */}
           {r ? <ResenasRestaurante restauranteId={r.id} /> : null}
+          {/* C-MENU-HORARIO: lo que se sirve en otra franja (desayuno de 07:00 a 11:00). */}
+          {(datos?.fueraDeHorario ?? []).map((v) => (
+            <Text
+              key={v.categoria}
+              testID="fuera-de-horario"
+              style={{ color: '#5E5E5E', marginTop: 10, fontSize: 13 }}
+            >
+              {tc.fueraDeHorario
+                .replace('{categoria}', v.categoria)
+                .replace('{abre}', v.abre)
+                .replace('{cierra}', v.cierra)}
+            </Text>
+          ))}
 
           {/* C-PEDIDO-GRUPO: como DoorDash, el pedido en grupo se arma desde el menú. */}
           {grupo ? (

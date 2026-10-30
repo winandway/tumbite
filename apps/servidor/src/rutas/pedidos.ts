@@ -26,11 +26,12 @@ import {
   conSenal,
   NOTA_PLATO_MAX,
   gruposActivos,
+  categoriaEnHorario,
   conNotaPlato,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
-import { conHorarios, gruposDe } from './catalogo';
+import { conHorarios, gruposDe, ventanasDe } from './catalogo';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import {
@@ -424,6 +425,8 @@ export async function lineasDeRestaurante(
   db: D1Database,
   rest: Record<string, unknown>,
   lineasPedidas: z.infer<typeof esquemaNuevoPedido>['lineas'],
+  /** C-MENU-HORARIO: cuándo se sirve (ahora, o la franja de un pedido programado). */
+  cuando = new Date(),
 ) {
   const d = { lineas: lineasPedidas };
   const ids = [...new Set(d.lineas.map((l) => l.platoId))];
@@ -435,11 +438,30 @@ export async function lineasDeRestaurante(
     .all<Record<string, unknown>>();
   const porId = new Map(platos.map((p) => [String(p.id), p]));
   const grupos = await gruposDe(db, ids);
+  const ventanas = new Map(
+    (await ventanasDe(db, String(rest.id))).map((v) => [v.categoria, v] as const),
+  );
+  const zona = await db
+    .prepare('SELECT zona_horaria FROM zonas WHERE id = ?')
+    .bind(String(rest.zona_id ?? ''))
+    .first<{ zona_horaria: string }>();
   return d.lineas.map((l) => {
     const p = porId.get(l.platoId);
     if (!p || Number(p.disponible) !== 1)
       throw new ErrorDatos(
         'Uno de los platos ya no está disponible. Revisa tu carrito.',
+        'lineas',
+        409,
+      );
+    if (
+      !categoriaEnHorario(
+        ventanas.get(String(p.categoria ?? '')),
+        zona?.zona_horaria ?? 'America/New_York',
+        cuando,
+      )
+    )
+      throw new ErrorDatos(
+        'Uno de los platos solo se sirve en otro horario. Revisa tu carrito.',
         'lineas',
         409,
       );
@@ -540,7 +562,12 @@ pedidos.post('/pedidos', async (c) => {
   const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
   const lineas = esTienda
     ? await lineasDeTienda(c, rest, d.lineas)
-    : await lineasDeRestaurante(db, rest, d.lineas);
+    : await lineasDeRestaurante(
+        db,
+        rest,
+        d.lineas,
+        d.programadoPara ? new Date(d.programadoPara) : new Date(),
+      );
 
   // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (DoorDash y Uber Eats lo entregan
   // en mano y piden identificación). Si la app mandó «en la puerta», pasa a «en mano».

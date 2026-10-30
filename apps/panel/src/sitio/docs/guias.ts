@@ -1631,6 +1631,22 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'menu-hours',
+        titulo: 'Horarios del menú: desayuno, almuerzo y cena',
+        resumen: 'Cada categoría puede tener su franja: el desayuno solo aparece en la mañana.',
+        explicacion: [
+          'En «Menú», en «Horarios del menú», pon la hora de inicio y de fin de cada categoría que no se sirve todo el día. Por ejemplo, «Desayuno» de 07:00 a 11:00.',
+          'Fuera de su franja, esos platos no aparecen en tu página y nadie los puede pedir. El cliente ve una línea que le dice a qué hora se sirven.',
+          'Un pedido programado para más tarde se revisa con la hora para la que se pidió. Las categorías sin franja se sirven en todo tu horario.',
+        ],
+        preguntas: ['¿Puedo tener un menú de desayuno?', '¿Cómo pongo horario a una categoría?'],
+        pasos: [
+          'Menú → «Horarios del menú».',
+          'Pon «Desde» y «Hasta» en cada categoría que lo necesite.',
+          'Toca «Guardar horarios del menú».',
+        ],
+      },
+      {
         id: 'sold-out',
         titulo: 'Marcar un plato como agotado',
         resumen: 'Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.',
@@ -5078,6 +5094,22 @@ const en: SeccionDocs[] = [
           'Menu → “Download the template”.',
           'Fill one row per item and save as CSV.',
           'Upload the file, check the preview and tap “Save”.',
+        ],
+      },
+      {
+        id: 'menu-hours',
+        titulo: 'Menu hours: breakfast, lunch and dinner',
+        resumen: 'Each category can have its own window: breakfast only shows in the morning.',
+        explicacion: [
+          'In “Menu”, under “Menu hours”, set a start and end time for each category that isn’t served all day. For example, “Breakfast” from 07:00 to 11:00.',
+          'Outside its window, those items don’t show on your page and nobody can order them. The customer sees a line telling them when they’re served.',
+          'An order scheduled for later is checked against the time it was ordered for. Categories without a window are served during all your hours.',
+        ],
+        preguntas: ['Can I have a breakfast menu?', 'How do I set hours for a category?'],
+        pasos: [
+          'Menu → “Menu hours”.',
+          'Set “From” and “To” on each category that needs it.',
+          'Tap “Save menu hours”.',
         ],
       },
       {

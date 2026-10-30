@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ImportarMenu } from './ImportarMenu';
+import { HorariosMenu } from './HorariosMenu';
 import {
   ErrorApi,
   type Idioma,
@@ -243,15 +244,20 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
 
   const [recarga, setRecarga] = useState(0);
+  const [ventanas, setVentanas] = useState<{ categoria: string; abre: string; cierra: string }[]>(
+    [],
+  );
   useEffect(() => {
-    pedir<{ restaurante: { moneda?: string } | null; platos: Plato[] }>(
-      'GET',
-      '/datos/mi-restaurante',
-    )
+    pedir<{
+      restaurante: { moneda?: string } | null;
+      platos: Plato[];
+      horariosCategoria?: { categoria: string; abre: string; cierra: string }[];
+    }>('GET', '/datos/mi-restaurante')
       .then((r) => {
         setHayRest(Boolean(r.restaurante));
         setMoneda(r.restaurante?.moneda ?? 'USD');
         setPlatos(r.platos);
+        setVentanas(r.horariosCategoria ?? []);
       })
       .catch((e: unknown) => setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) }));
   }, [recarga]);
@@ -837,6 +843,15 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
           ))}
         </ul>
       )}
+      {/* C-MENU-HORARIO: franja de cada categoría (desayuno, almuerzo). */}
+      {hayRest && platos ? (
+        <HorariosMenu
+          key={JSON.stringify(ventanas)}
+          categorias={[...new Set(platos.map((p) => p.categoria).filter(Boolean))]}
+          iniciales={ventanas}
+          idioma={idioma}
+        />
+      ) : null}
       {/* C-MENU-PLANILLA: el menú completo desde una hoja de cálculo. */}
       {hayRest ? (
         <ImportarMenu
