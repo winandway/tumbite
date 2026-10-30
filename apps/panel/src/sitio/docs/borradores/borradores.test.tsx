@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DOCS } from '../guias';
+import { BORRADORES_ENVIOS } from './envios';
 import { BORRADORES_MOTO } from './moto';
 
 /**
@@ -35,6 +36,28 @@ describe('guías de Moto guardadas sin publicar (C-DOCS-MOTO-BORRADOR)', () => {
   it('no dicen nada interno', () => {
     const texto = JSON.stringify(BORRADORES_MOTO).toLowerCase();
     for (const prohibido of ['tumbite', '/datos', 'superadmin', 'stripe', 'twilio', 'sql'])
+      expect(texto).not.toContain(prohibido);
+  });
+});
+
+describe('guías de Envíos guardadas sin publicar (C-DOCS-MOTO-BORRADOR)', () => {
+  it('completas en los dos idiomas, sin publicar y sin nada interno', () => {
+    const publicadas = new Set(
+      Object.values(DOCS).flatMap((secciones) =>
+        secciones.flatMap((s) => s.guias.map((g) => g.id)),
+      ),
+    );
+    for (const rol of ['cliente', 'conductor'] as const) {
+      const es = BORRADORES_ENVIOS.es[rol];
+      const en = BORRADORES_ENVIOS.en[rol];
+      expect(en.map((g) => g.id)).toEqual(es.map((g) => g.id));
+      es.forEach((g, i) => {
+        expect(en.at(i)?.pasos.length).toBe(g.pasos.length);
+        expect(publicadas.has(g.id)).toBe(false);
+      });
+    }
+    const texto = JSON.stringify(BORRADORES_ENVIOS).toLowerCase();
+    for (const prohibido of ['tumbite', '/datos', 'superadmin', 'stripe', 'twilio'])
       expect(texto).not.toContain(prohibido);
   });
 });

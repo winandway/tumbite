@@ -58,7 +58,7 @@
 
 - [x] (docs/investigaciones-rea/2026-10-30-envios.md: sobre el motor de viajes, como Uber Courier) (17) Ficha REA de Envíos: Uber Connect y DoorDash (paquetes), y qué se reutiliza de Flex. Todos los países.
 - [x] (C-ENVIOS; guías de Docs en 18b) (18) Construir Envíos solo en pruebas: cotizar de A a B, pagar con Stripe de prueba, recoger con foto, entregar con PIN y seguimiento. Todos los países.
-- [ ] (18b) Guías de Docs de Envíos (quien envía, quien recibe, conductor) en español e inglés, guardadas sin publicar como las de Moto. Todos los países.
+- [x] (borradores/envios.ts) (18b) Guías de Docs de Envíos (quien envía, quien recibe, conductor) en español e inglés, guardadas sin publicar como las de Moto. Todos los países.
 
 ### Etapa 6 — «Más»
 
