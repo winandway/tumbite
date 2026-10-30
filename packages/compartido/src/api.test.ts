@@ -17,6 +17,55 @@ describe('cliente del servidor', () => {
     await expect(api.pedir('GET', '/datos/lento')).rejects.toMatchObject({ estado: 0 });
   });
 
+  // C-LECTURA-REINTENTO (30 oct 2026, hallado con REA): en el sitio de pruebas una sola petición de
+  // lectura se perdía y la pantalla del caso de dinero se quedaba en «…»; ahora se repite una vez.
+  it('una lectura que no responde se repite sola una vez y entrega los datos', async () => {
+    let llamadas = 0;
+    const api = crearApi({
+      base: '',
+      tiempoMs: 30,
+      fetch: (_u, init) => {
+        llamadas++;
+        if (llamadas === 1)
+          return new Promise((_ok, falla) => {
+            init?.signal?.addEventListener('abort', () => falla(new Error('abortado')));
+          });
+        return Promise.resolve(new Response(JSON.stringify({ ok: 1 }), { status: 200 }));
+      },
+    });
+    await expect(api.pedir('GET', '/datos/caso')).resolves.toEqual({ ok: 1 });
+    expect(llamadas).toBe(2);
+  });
+
+  it('un envío que no responde NO se repite (no se duplica la acción)', async () => {
+    let llamadas = 0;
+    const api = crearApi({
+      base: '',
+      tiempoMs: 30,
+      fetch: (_u, init) => {
+        llamadas++;
+        return new Promise((_ok, falla) => {
+          init?.signal?.addEventListener('abort', () => falla(new Error('abortado')));
+        });
+      },
+    });
+    await expect(api.pedir('POST', '/datos/accion', {})).rejects.toMatchObject({ estado: 0 });
+    expect(llamadas).toBe(1);
+  });
+
+  it('una lectura que responde con error no se repite', async () => {
+    let llamadas = 0;
+    const api = crearApi({
+      base: '',
+      fetch: async () => {
+        llamadas++;
+        return new Response(JSON.stringify({ error: 'No' }), { status: 500 });
+      },
+    });
+    await expect(api.pedir('GET', '/datos/x')).rejects.toMatchObject({ estado: 500 });
+    expect(llamadas).toBe(1);
+  });
+
   it('manda el token y devuelve los datos', async () => {
     let cabecera = '';
     const api = crearApi({

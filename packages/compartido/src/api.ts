@@ -31,6 +31,8 @@ export type OpcionesApi = {
 
 /** Una respuesta que tarda más que esto se corta y se cuenta como «sin conexión». */
 export const TIEMPO_PEDIDO_MS = 30_000;
+/** Una lectura (GET) se corta antes y se repite una vez: una sola respuesta perdida no deja la pantalla en «…». */
+export const TIEMPO_LECTURA_MS = 15_000;
 
 /** Cliente del servidor de Divoox. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
@@ -58,21 +60,36 @@ export function crearApi(op: OpcionesApi) {
     if (pase) headers['cf-turnstile-response'] = pase;
     const app = op.app?.();
     if (app) headers['x-tumbite-app'] = app;
-    let res: Response;
     // Sin límite, una petición sin respuesta dejaba la pantalla cargando para siempre.
-    const corte = typeof AbortController === 'undefined' ? null : new AbortController();
-    const reloj = corte ? setTimeout(() => corte.abort(), op.tiempoMs ?? TIEMPO_PEDIDO_MS) : null;
+    // C-LECTURA-REINTENTO: una lectura que no responde se repite una vez; un envío nunca se repite.
+    const intento = async (ms: number) => {
+      const corte = typeof AbortController === 'undefined' ? null : new AbortController();
+      const reloj = corte ? setTimeout(() => corte.abort(), ms) : null;
+      try {
+        const init = {
+          method: metodo,
+          headers,
+          body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+          credentials: credenciales,
+          signal: corte?.signal,
+        } as Parameters<typeof fetch>[1];
+        const r = await hacer(`${op.base}${ruta}`, init);
+        return { r, reloj };
+      } catch (e) {
+        if (reloj) clearTimeout(reloj);
+        throw e;
+      }
+    };
+    let res: Response;
+    let reloj: ReturnType<typeof setTimeout> | null;
     try {
-      const init = {
-        method: metodo,
-        headers,
-        body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-        credentials: credenciales,
-        signal: corte?.signal,
-      } as Parameters<typeof fetch>[1];
-      res = await hacer(`${op.base}${ruta}`, init);
+      ({ r: res, reloj } =
+        metodo === 'GET'
+          ? await intento(op.tiempoMs ?? TIEMPO_LECTURA_MS).catch(() =>
+              intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS),
+            )
+          : await intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS));
     } catch {
-      if (reloj) clearTimeout(reloj);
       throw new ErrorApi(
         op.idioma?.() === 'en'
           ? 'No connection. Your info is safe here; try again in a moment.'

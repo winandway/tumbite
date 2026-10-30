@@ -1951,3 +1951,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/servidor/src/seguridad.ts` permite ese dominio en `script-src`, y nada más de afuera además de Stripe y Turnstile.
 - **Candado:** `app.test.ts` («la política deja cargar las estadísticas de Cloudflare y nada más…») compara la lista exacta de `script-src`; comprobada en rojo.
 - **Lección del recorrido del 30 oct:** el sitio de pruebas guarda las cuentas de corridas anteriores y tiene todos los servicios encendidos; toda prueba que registre cuentas usa teléfonos propios por corrida y no da por hecho qué servicio está «por venir».
+
+## C-LECTURA-REINTENTO (30 oct 2026) — todos los países
+
+- **Qué se rompió:** en el sitio de pruebas, de vez en cuando una sola petición de lectura se perdía en el camino y la pantalla del caso de dinero del panel de soporte se quedaba en «…» hasta el corte de 30 segundos (el recorrido falló dos veces el 30 oct por eso). El servidor respondía en 1,4 s; el problema era la petición perdida.
+- **Arreglo:** `packages/compartido/src/api.ts`: una lectura (GET) se corta a los 15 s y se repite una vez con el límite normal; los envíos (POST, PUT, PATCH, DELETE) nunca se repiten solos, para no duplicar acciones. Una lectura que responde con error tampoco se repite.
+- **Candado:** `api.test.ts` (tres pruebas: la lectura perdida se repite y entrega, el envío no se repite, el error no se repite); comprobado en rojo.
