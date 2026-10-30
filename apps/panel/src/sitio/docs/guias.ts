@@ -429,6 +429,11 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
+            src: '/docs/cliente-ayuda-pedido-es.webp',
+            alt: 'Reportar un plato equivocado en la app de Divoox: se marcan los platos y se puede agregar una foto.',
+            pie: 'Marcas el plato equivocado y, si quieres, agregas una foto.',
+          },
+          {
             src: '/docs/recorrido-cliente-falta-plato-es.webp',
             alt: 'Reportar que faltó un plato en la app de Divoox.',
             pie: 'Dices qué faltó y lo revisamos.',
@@ -1627,6 +1632,13 @@ const es: SeccionDocs[] = [
           'Para volver al panel normal, toca «Salir del modo tableta».',
           'En la app Divoox para restaurantes la pantalla ya se queda encendida mientras la app está abierta.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-modo-tableta-es.webp',
+            alt: 'Pedidos del panel de Divoox en modo tableta, con la alarma activada.',
+            pie: 'El modo tableta: solo los pedidos, con la alarma.',
+          },
+        ],
         preguntas: ['¿Cómo dejo la tableta del mostrador siempre encendida?'],
         pasos: [
           'Abre Pedidos en tu panel desde la tableta.',
@@ -2295,6 +2307,13 @@ const es: SeccionDocs[] = [
           'Abajo de tus ganancias aparece «Tu año»: cada mes con sus entregas, sus millas y lo que ganaste (pago base, bonos y propinas).',
           'La distancia es una estimación: del restaurante a la dirección del cliente, en línea recta. No incluye el camino hasta el restaurante. Para tus impuestos, lleva también tu propio registro de millas.',
           '«Compartir para mi contador» arma un archivo CSV que se abre en Excel o Google Sheets.',
+        ],
+        capturas: [
+          {
+            src: '/docs/repartidor-tu-ano-es.webp',
+            alt: '«Tu año» en Ganancias de Divoox Driver: entregas, millas y ganancias por mes.',
+            pie: 'Tu año, mes por mes, listo para tu contador.',
+          },
         ],
         preguntas: [
           '¿Dónde veo cuánto gané en el año?',
@@ -3793,6 +3812,11 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
+            src: '/docs/cliente-ayuda-pedido-en.webp',
+            alt: 'Reporting a wrong item in the Divoox app: you check the items and can add a photo.',
+            pie: 'Check the wrong item and add a photo if you want.',
+          },
+          {
             src: '/docs/recorrido-cliente-falta-plato-en.webp',
             alt: 'Reporting a missing item in the Divoox app.',
             pie: 'Tell us what was missing and we review it.',
@@ -4980,6 +5004,13 @@ const en: SeccionDocs[] = [
           'To go back to the regular dashboard, tap “Exit tablet mode”.',
           'In the Divoox app for restaurants, the screen already stays on while the app is open.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-modo-tableta-en.webp',
+            alt: 'Divoox dashboard orders in tablet mode, with the alarm on.',
+            pie: 'Tablet mode: just the orders, with the alarm.',
+          },
+        ],
         preguntas: ['How do I keep the counter tablet always on?'],
         pasos: [
           'Open Orders in your dashboard on the tablet.',
@@ -5639,6 +5670,13 @@ const en: SeccionDocs[] = [
           'Below your earnings you’ll find “Your year”: each month with its deliveries, miles and what you earned (base pay, bonuses and tips).',
           'The distance is an estimate: from the restaurant to the customer’s address, in a straight line. It doesn’t include the drive to the restaurant. For taxes, keep your own mileage log too.',
           '“Share with my accountant” builds a CSV file that opens in Excel or Google Sheets.',
+        ],
+        capturas: [
+          {
+            src: '/docs/repartidor-tu-ano-en.webp',
+            alt: '“Your year” in Divoox Driver Earnings: deliveries, miles and earnings by month.',
+            pie: 'Your year, month by month, ready for your accountant.',
+          },
         ],
         preguntas: ['Where do I see what I earned this year?', 'How do I get my miles for taxes?'],
         pasos: [

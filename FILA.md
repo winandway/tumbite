@@ -82,7 +82,7 @@
 
 ## Rellenada el 29 oct, más tarde (auditoría: puntos 23 y 39, y lo que espera a Richard)
 
-- [ ] Comprobar en el sitio de pruebas lo de esta noche: «Tengo un problema» con plato equivocado y foto, «Tu año» del Driver, «Modo tableta», cursos de Docs; sacar las capturas reales para Docs. Todos los países.
+- [x] (29 oct, noche: los tres comprobados en pruebas con fotos reales en Docs) Comprobar en el sitio de pruebas lo de esta noche: «Tengo un problema» con plato equivocado y foto, «Tu año» del Driver, «Modo tableta», cursos de Docs; sacar las capturas reales para Docs. Todos los países.
 - [!] (después de que Google apruebe la revisión en curso: la ubicación en segundo plano exige en Google Play una declaración y un video, y agregarla ahora puede frenar la aprobación) GPS en segundo plano en Divoox Driver mientras hay un pedido en curso (como Dasher): sigue mandando la ubicación con la pantalla apagada y se apaga al entregar; aviso claro al pedir el permiso. Ficha REA antes. Todos los países.
 - [x] Recoger en el local con mapa (como Uber Eats «Pickup»): en Comida, vista de mapa con los restaurantes cercanos que aceptan recogida y su tiempo. App del cliente, Docs. Todos los países.
 - [!] (dinero: precio y beneficios los decide Richard) Suscripción tipo DashPass (envío gratis y menos servicio con cobro mensual). Todos los países.
