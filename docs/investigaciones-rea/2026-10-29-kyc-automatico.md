@@ -58,6 +58,14 @@ Se guarda solo la **huella de la cara** (números), las fotos privadas y el resu
 consentimiento escrito antes de tomar la selfie, y se borra al cerrar la cuenta (salvo la huella de una
 cuenta cerrada por mala conducta, si el abogado lo aprueba).
 
+## 2b. Lo construido (29 oct, noche)
+
+- Documento: licencia de EE. UU. desde la foto del reverso (código de barras) y pasaporte desde la franja,
+  con corrección por posición y dígitos de control; el frente se cruza buscando en su texto los datos del
+  código. Candados C-KYC-DOCUMENTO, C-KYC-CODIGO-FOTO y C-KYC-OCR.
+- Caras: selfie contra documento, persona viva con el giro de cabeza y caras repetidas contra la lista de
+  mala conducta. Candado C-KYC-CARAS. Todo corre sin internet, con las librerías de código abierto.
+
 ## 3. Lo que decide Richard
 
 - **Dónde corre el motor:** necesita un contenedor (no cabe en YaDominios Cloud ni en un Worker normal).

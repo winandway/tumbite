@@ -1765,3 +1765,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Límite del estándar:** en algunas posiciones «1» y «L» dan el mismo dígito de control; por eso el número también se cruza con el frente y el código de barras.
 - **Frente:** `datosDelFrente` (`documento.ts`) busca en el texto del OCR los datos del código (número sin las letras que el OCR confunde; fecha en MM/DD/AAAA, DD/MM/AAAA o AAAA-MM-DD) y, si el frente trae otro número u otra fecha con su etiqueta, los devuelve para que el cruce marque la diferencia.
 - **Prueba:** `ocr.test.ts` (corrección con la lectura real del OCR, rojo comprobado quitando la corrección; una franja aceptada siempre trae los datos correctos; el frente de la misma persona coincide y el de otra no) y `documento.test.ts`.
+
+## C-KYC-CARAS (29 oct 2026) — todos los países
+
+- `apps/verificador/src/caras.ts`: @vladmandic/face-api 1.7.15 (MIT) sobre TensorFlow 4.22 con WASM (Apache 2.0), como Idswyft. Modelos y WASM salen de los paquetes instalados (el WASM se entrega en línea porque Node no lee archivos con fetch): **nada se baja de internet al verificar**.
+- `compararSelfieConDocumento`: la cara más grande de cada foto, huella de 128 números, distancia euclídea; hasta **0,6** es la misma persona (corte estándar de face-api y de Idswyft). Medido: la misma cara impresa chica y en gris da 0,24; otra persona, 0,66.
+- `decidirVida` / `pruebaDeVida`: tres tomas (de frente, a un lado y al otro). Pasa si las tres son de la misma persona y la nariz se movió al menos **0,08** entre los extremos de la mandíbula hacia los DOS lados. Una foto de una foto da el mismo giro en las tres y no pasa.
+- `buscarParecidas`: la huella contra la lista de cuentas cerradas por mala conducta; las parecidas van a revisión del equipo, nunca a rechazo automático.
+- **Prueba:** `caras.test.ts` con las fotos de muestra que trae face-api (no se copian al repo). Rojo comprobado subiendo el umbral: otra persona pasaba.
+- **No tocar:** el umbral 0,6 ni el giro mínimo sin medir de nuevo con fotos reales del sitio de pruebas.
