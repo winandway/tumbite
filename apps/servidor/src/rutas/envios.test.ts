@@ -42,10 +42,7 @@ async function encender(host = 'staging.tumbite.com') {
   return { m, cliente, estado: s.estado };
 }
 
-async function pedir(
-  e: Awaited<ReturnType<typeof encender>>,
-  paquete: object | undefined = PAQUETE,
-) {
+async function pedir(e: Awaited<ReturnType<typeof encender>>, paquete: object | null = PAQUETE) {
   const cot = (
     await e.m.llamar(
       'POST',
