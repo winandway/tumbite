@@ -48,9 +48,11 @@
 - [Cancel an order and get your money back · Divoox](https://divoox.com/docs/ordering/cancel-order): Until the restaurant accepts it, you cancel in one tap and get a full refund. And if the restaurant doesn’t answer, we cancel it for you.
 - [My account: your orders, cards, and details · Divoox](https://divoox.com/docs/ordering/my-account): All your orders and their status, the cards you saved, and your details, in one place in the app.
 - [Gifts: birthday, punch card, and win-back · Divoox](https://divoox.com/docs/ordering/rewards): Restaurants reward you for coming back. Gifts show up in your cart on their own.
+- [Special instructions for an item · Divoox](https://divoox.com/docs/ordering/special-instructions): Ask for “no onions” or “well done” on each item, and the restaurant sees it in your order.
 - [Rate the food and the driver · Divoox](https://divoox.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
 - [Your customers’ reviews and how to reply · Divoox](https://divoox.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
+- [Accept orders automatically · Divoox](https://divoox.com/docs/restaurants/auto-accept): Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.
 - [Holidays and closures · Divoox](https://divoox.com/docs/restaurants/holidays-and-closures): Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.
 - [Your team: managers and staff · Divoox](https://divoox.com/docs/restaurants/team-and-roles): Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.
 - [Your menu order · Divoox](https://divoox.com/docs/restaurants/menu-order): Decide the order customers see your categories and items: with the up and down arrows under Menu.
@@ -68,6 +70,8 @@
 - [Upload your store catalog: grocery, pharmacy, liquor and more · Divoox](https://divoox.com/docs/restaurants/store-catalog): If you run a grocery store, pharmacy, liquor store, hardware store or another shop, upload your products with a spreadsheet or one by one. They’re ready fo
 - [Prepare a store order: what to do if an item is out · Divoox](https://divoox.com/docs/restaurants/store-orders): Under each item in the order you see what the customer wants if you don’t have it: a refund, something similar at no extra charge, or a question in the cha
 - [Your menu: items, prices, and photos · Divoox](https://divoox.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
+- [Upload your menu from a spreadsheet · Divoox](https://divoox.com/docs/restaurants/menu-spreadsheet): Upload your whole menu at once with a spreadsheet, or ask our team to load it for you.
+- [Menu hours: breakfast, lunch and dinner · Divoox](https://divoox.com/docs/restaurants/menu-hours): Each category can have its own window: breakfast only shows in the morning.
 - [Mark an item as sold out · Divoox](https://divoox.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
 - [Tablet mode: your counter always ready · Divoox](https://divoox.com/docs/restaurants/tablet-mode): Keep a tablet at the counter with your orders full screen, always on and with the alarm, so nobody logs out by accident.
