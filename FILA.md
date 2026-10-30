@@ -10,6 +10,22 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Lanzamiento en producción controlada (directiva del 30 oct 2026, plan en docs/PLAN-LANZAMIENTO-PILOTO.md)
+
+- [ ] (P1) Lista de participantes del piloto en el superadmin (cliente, restaurante, repartidor, empresa), con registro de cambios. Todos los países.
+- [ ] (P2) Cada servicio por ciudad: apagado, solo piloto o público; «solo piloto» lo ven y usan solo los participantes. Todos los países.
+- [ ] (P3) Límites del piloto: monto máximo por pedido y por día para participantes. Todos los países.
+- [ ] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
+- [ ] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
+- [ ] (R3) Panel de Rewards en el superadmin: umbrales, pesos, hitos, porcentaje del margen, presupuesto por ciudad y mes, encendido; sin publicar de nuevo. Todos los países.
+- [ ] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
+- [ ] (R5) Premio variable: porcentaje configurable del margen de contribución real de las entregas que cuentan, con topes. Todos los países.
+- [ ] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
+- [ ] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
+- [ ] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
+- [ ] Encender en piloto en producción Moto, Carro, Envíos, Mercado, Farmacia y Licores (solo participantes). EE. UU.
+- [ ] Monetización prepago: unificar Comida con la capa de políticas y enchufar Express, Tiendas y Flex conductor. Todos los países.
+
 ## Ahora — en el orden de docs/ROADMAP-DIVOOX.md
 
 ### Etapa 1 — Comida lista para lanzar en Miami
