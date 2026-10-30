@@ -1878,5 +1878,69 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "categoria",
     "abre",
     "cierra"
+  ],
+  "reputacion_diaria": [
+    "repartidor_id",
+    "fecha",
+    "version",
+    "puntaje",
+    "provisional",
+    "peso_ventana",
+    "componentes_json",
+    "por_servicio_json",
+    "experiencia_json",
+    "nivel_calculado",
+    "nivel_con_gracia",
+    "debajo_desde",
+    "elegibilidad",
+    "creado_en"
+  ],
+  "rewards_presupuesto": [
+    "zona_id",
+    "mes",
+    "programa",
+    "tope_centavos",
+    "creado_en"
+  ],
+  "rewards_reservas": [
+    "repartidor_id",
+    "programa",
+    "hito_unidades",
+    "zona_id",
+    "mes",
+    "monto_centavos",
+    "creado_en"
+  ],
+  "rewards_hitos": [
+    "repartidor_id",
+    "programa",
+    "hito_unidades",
+    "estado",
+    "monto_centavos",
+    "unidades_contadas",
+    "motivo",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "rewards_eventos": [
+    "id",
+    "repartidor_id",
+    "programa",
+    "hito_unidades",
+    "de",
+    "a",
+    "motivo",
+    "creado_en"
+  ],
+  "apelaciones_repartidor": [
+    "id",
+    "repartidor_id",
+    "unidad_tipo",
+    "unidad_id",
+    "motivo",
+    "estado",
+    "resuelta_por",
+    "resuelta_en",
+    "creado_en"
   ]
 };
