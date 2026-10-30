@@ -1,3 +1,4 @@
+import { correoCanonico, telefonoCanonico } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import {
   PAGINAS,
@@ -147,19 +148,55 @@ cuentas.post('/registro', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaRegistro);
   const db = base(c);
-  const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
+  // C-IDENTIDAD-UNICA: el mismo correo o teléfono escrito de otra forma cuenta como el mismo, y los de
+  // cuentas cerradas por mala conducta no vuelven a entrar.
+  const correoUnico = correoCanonico(d.correo);
+  const telUnico = telefonoCanonico(d.telefono);
+  const bloqueado = await db
+    .prepare(
+      "SELECT 1 FROM bloqueos_identidad WHERE (tipo = 'correo' AND valor = ?) OR (tipo = 'telefono' AND valor = ?)",
+    )
+    .bind(correoUnico, telUnico ?? '-')
+    .first();
+  if (bloqueado)
+    throw new ErrorDatos(
+      'No podemos crear esta cuenta. Si crees que es un error, escríbenos a soporte.',
+      undefined,
+      403,
+    );
+  const existe = await db
+    .prepare('SELECT 1 FROM usuarios WHERE correo = ? OR correo_canonico = ?')
+    .bind(d.correo, correoUnico)
+    .first();
   if (existe)
     throw new ErrorDatos(
       'Ya existe una cuenta con ese correo. Entra con tu contraseña.',
       'correo',
       409,
     );
+  // El mismo teléfono no abre dos cuentas del mismo tipo (un repartidor puede pedir como cliente).
+  if (telUnico) {
+    const conTel = await db
+      .prepare(
+        `SELECT 1 FROM usuarios WHERE rol = ? AND (telefono_canonico = ?
+           OR (telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != ''
+               AND substr(replace(replace(replace(replace(replace(telefono, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), -10) = substr(?, -10)))`,
+      )
+      .bind(d.rol, telUnico, telUnico)
+      .first();
+    if (conTel)
+      throw new ErrorDatos(
+        'Ese teléfono ya tiene una cuenta. Entra con ella o escríbenos a soporte.',
+        'telefono',
+        409,
+      );
+  }
   // Nadie se vuelve administrador al registrarse: eso se hace aparte, con la semilla secreta.
   const rol: Rol = d.rol;
   const id = nuevoId();
   await db
     .prepare(
-      'INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       id,
@@ -170,6 +207,8 @@ cuentas.post('/registro', async (c) => {
       rol,
       d.idioma,
       await hashClave(d.clave),
+      correoUnico,
+      telUnico,
     )
     .run();
   const token = await abrirSesion(db, id);
@@ -407,7 +446,7 @@ cuentas.delete('/yo', async (c) => {
   await db.batch([
     db
       .prepare(
-        "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0 WHERE id = ?",
+        "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0, correo_canonico = NULL, telefono_canonico = NULL WHERE id = ?",
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),

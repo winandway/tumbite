@@ -1798,5 +1798,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en",
     "actualizado_en"
+  ],
+  "bloqueos_identidad": [
+    "tipo",
+    "valor",
+    "usuario_origen",
+    "motivo",
+    "creado_por",
+    "creado_en"
   ]
 };

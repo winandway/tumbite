@@ -1733,3 +1733,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **App:** `PedirMoto.tsx` con «Efectivo | Tarjeta» y la hoja de pago de siempre (`PagoTarjeta`).
 - **Prueba:** `apps/servidor/src/viajeTarjeta.test.ts` (rojo comprobado quitando el cobro al terminar).
 - **Sin probar con dinero real.** Moto sigue apagada en producción.
+
+## C-FOTO-VERIFICADA y C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard) — todos los países
+
+- **Foto verificada (como Uber):** la selfie de la verificación, una vez aprobada contra el documento, es la foto de perfil del repartidor. La ve él (`GET /datos/kyc/mi-foto`), el cliente de un pedido que lleva (`GET /datos/pedidos/:id/repartidor/foto`, también en el seguimiento como `repartidor.foto`) y el equipo; nadie más. No se puede reemplazar desde la app; soporte la libera con motivo (`POST /datos/admin/kyc/:id/liberar-foto`), vuelve a verificación y queda en `auditoria_admin`. App del cliente (`FotoRepartidor.tsx`), Driver (`Verificacion.tsx`), panel (`SuperKyc.tsx`), Docs («verify»).
+- **Identidad única:** `correoCanonico` y `telefonoCanonico` (`packages/compartido/src/identidadUnica.ts`); columnas `usuarios.correo_canonico` y `telefono_canonico`. Al registrarse: el mismo correo escrito de otra forma no entra; el mismo teléfono no abre dos cuentas del mismo tipo (un repartidor sí puede pedir como cliente). Tabla `bloqueos_identidad`: «Cerrar por mala conducta» en la ficha del superadmin guarda su correo y su teléfono; con ellos no se vuelve a registrar. Borrar la cuenta borra también las formas únicas.
+- **Pendiente (K5, decide Richard):** comparar caras con IA (selfie contra documento y contra los bloqueados). Ficha: `docs/investigaciones-rea/2026-10-29-identidad-repartidores.md`.
+- **Prueba:** `apps/servidor/src/identidadRepartidores.test.ts` (rojo comprobado quitando las comprobaciones) y `compartido/identidadUnica.test.ts`.

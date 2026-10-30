@@ -39,6 +39,7 @@ import {
 import { useCarrito } from '../../carrito';
 import { usePedirOtraVez } from '../../pedirOtraVez';
 import { MapaEntrega } from '../../MapaEntrega';
+import { FotoRepartidor } from '../../FotoRepartidor';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
 import { IMG_COMIDA } from '../../comida/recursos';
 import { textosComida } from '../../comida/textos';
@@ -119,6 +120,8 @@ type Pedido = {
     llegaEn5?: boolean;
     casiLlega?: boolean;
     llego?: boolean;
+    /** C-FOTO-VERIFICADA: la ruta privada de su foto aprobada, si la tiene. */
+    foto?: string | null;
   } | null;
 };
 
@@ -1019,20 +1022,7 @@ export default function SeguirPedido() {
         {p.repartidor && activo ? (
           <Tarjeta>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  backgroundColor: C.secundario,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 18 }}>
-                  {p.repartidor.nombre.trim().charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <FotoRepartidor ruta={p.repartidor.foto} nombre={p.repartidor.nombre} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
                   {p.repartidor.nombre}

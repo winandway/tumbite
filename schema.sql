@@ -2810,3 +2810,15 @@ CREATE TABLE IF NOT EXISTS cobros_viaje (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard): correos y teléfonos de cuentas cerradas por mala
+-- conducta. Quien se registre con uno de ellos (escrito de cualquier forma) no entra. Nunca se borra.
+CREATE TABLE IF NOT EXISTS bloqueos_identidad (
+  tipo TEXT NOT NULL CHECK (tipo IN ('correo', 'telefono')),
+  valor TEXT NOT NULL,
+  usuario_origen TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (tipo, valor)
+);

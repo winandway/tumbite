@@ -2,7 +2,7 @@ import { rutaSinIds } from '../errores';
 import { devolverParcial, guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { semaforoPedido } from '@tumbite/compartido';
+import { correoCanonico, semaforoPedido, telefonoCanonico } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
@@ -1029,20 +1029,46 @@ superadmin.post('/admin/pedidos/:id/soltar-repartidor', async (c) => {
 
 /** Suspender o reactivar una cuenta (cliente o repartidor). Suspendida: sus sesiones mueren y no puede entrar. */
 superadmin.patch('/admin/usuarios/:id', async (c) => {
-  exigir(c, 'admin');
+  const admin = exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
-    z.object({ activo: z.boolean(), motivo: z.string().trim().max(300).default('') }),
+    z.object({
+      activo: z.boolean(),
+      motivo: z.string().trim().max(300).default(''),
+      // C-IDENTIDAD-UNICA: cerrada por mala conducta: su correo y su teléfono no vuelven a entrar.
+      malaConducta: z.boolean().default(false),
+    }),
   );
   const db = base(c);
   const id = c.req.param('id');
   const u = await db
     .prepare(
-      "SELECT id, rol FROM usuarios WHERE id = ? AND rol IN ('cliente','repartidor','restaurante')",
+      "SELECT id, rol, correo, telefono FROM usuarios WHERE id = ? AND rol IN ('cliente','repartidor','restaurante')",
     )
     .bind(id)
-    .first<{ id: string; rol: string }>();
+    .first<{ id: string; rol: string; correo: string; telefono: string | null }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  if (!d.activo && d.malaConducta) {
+    if (d.motivo.length < 5)
+      throw new ErrorDatos('Escribe el motivo de la mala conducta.', 'motivo');
+    const tel = telefonoCanonico(u.telefono);
+    await db.batch([
+      db
+        .prepare(
+          "INSERT OR IGNORE INTO bloqueos_identidad (tipo, valor, usuario_origen, motivo, creado_por) VALUES ('correo', ?, ?, ?, ?)",
+        )
+        .bind(correoCanonico(u.correo), id, d.motivo, admin.id),
+      ...(tel
+        ? [
+            db
+              .prepare(
+                "INSERT OR IGNORE INTO bloqueos_identidad (tipo, valor, usuario_origen, motivo, creado_por) VALUES ('telefono', ?, ?, ?, ?)",
+              )
+              .bind(tel, id, d.motivo, admin.id),
+          ]
+        : []),
+    ]);
+  }
   await db.batch([
     db.prepare('UPDATE usuarios SET activo = ? WHERE id = ?').bind(d.activo ? 1 : 0, id),
     ...(d.activo

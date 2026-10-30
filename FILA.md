@@ -19,11 +19,11 @@
 
 ### Etapa 1½ — Identidad de los repartidores (pedido urgente de Richard, 29 oct, noche)
 
-- [ ] (K1) Ficha REA de verificación de identidad de repartidores y conductores (DoorDash, Uber, Rappi; proveedores de verificación con documento y selfie y búsqueda de caras repetidas): qué hacen, qué cuesta, qué exige la ley de datos biométricos por país y estado. Comparación con lo que ya tenemos (foto del documento, selfie de control, revisión del equipo). Todos los países.
-- [ ] (K2) Foto de perfil real al registrarse: el verificador la compara con el documento, la aprueba y queda BLOQUEADA (el repartidor no la puede cambiar; solo soporte, con motivo y registro). Se muestra en su perfil y al cliente. Servidor, app Driver, panel de verificación, Docs. Todos los países.
-- [ ] (K3) Correo y teléfono únicos de verdad: ni el mismo correo con mayúsculas, puntos o «+algo», ni el mismo teléfono en otro formato, ni los de cuentas cerradas por mala conducta. Todos los países.
-- [ ] (K4) Lista de personas bloqueadas por mala conducta: al cerrar una cuenta por fraude queda su documento, su teléfono y su foto; al registrarse alguien nuevo se compara y, si coincide, va a revisión del equipo. Todos los países.
-- [ ] (K5) Comparación de caras con IA (foto contra documento y contra la lista de bloqueados), detrás de un interruptor, con el proveedor que salga de la ficha K1. Se enciende cuando Richard apruebe el costo y el consentimiento legal. Todos los países.
+- [x] (ficha docs/investigaciones-rea/2026-10-29-identidad-repartidores.md con evidencia REA) (K1) Ficha REA de verificación de identidad de repartidores y conductores (DoorDash, Uber, Rappi; proveedores de verificación con documento y selfie y búsqueda de caras repetidas): qué hacen, qué cuesta, qué exige la ley de datos biométricos por país y estado. Comparación con lo que ya tenemos (foto del documento, selfie de control, revisión del equipo). Todos los países.
+- [x] (C-FOTO-VERIFICADA) (K2) Foto de perfil real al registrarse: el verificador la compara con el documento, la aprueba y queda BLOQUEADA (el repartidor no la puede cambiar; solo soporte, con motivo y registro). Se muestra en su perfil y al cliente. Servidor, app Driver, panel de verificación, Docs. Todos los países.
+- [x] (C-IDENTIDAD-UNICA) (K3) Correo y teléfono únicos de verdad: ni el mismo correo con mayúsculas, puntos o «+algo», ni el mismo teléfono en otro formato, ni los de cuentas cerradas por mala conducta. Todos los países.
+- [x] (correo y teléfono, C-IDENTIDAD-UNICA; la foto se compara en K5) (K4) Lista de personas bloqueadas por mala conducta: al cerrar una cuenta por fraude queda su documento, su teléfono y su foto; al registrarse alguien nuevo se compara y, si coincide, va a revisión del equipo. Todos los países.
+- [!] (decide Richard: proveedor, costo y consentimiento biométrico con el abogado; recomendación en la ficha K1) (K5) Comparación de caras con IA (foto contra documento y contra la lista de bloqueados), detrás de un interruptor, con el proveedor que salga de la ficha K1. Se enciende cuando Richard apruebe el costo y el consentimiento legal. Todos los países.
 
 ### Etapa 2 — Tiendas (Mercado, Farmacia, Licores)
 

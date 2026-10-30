@@ -150,6 +150,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-TIENDAS-REEMPLAZOS (29 oct 2026): los reemplazos que propone la tienda y el que se eligió.
   ['ajustes_pedido', 'propuestas_json', 'TEXT'],
   ['ajustes_pedido', 'reemplazo_id', 'TEXT'],
+  // C-IDENTIDAD-UNICA (29 oct 2026): correo y teléfono en su forma única.
+  ['usuarios', 'correo_canonico', 'TEXT'],
+  ['usuarios', 'telefono_canonico', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

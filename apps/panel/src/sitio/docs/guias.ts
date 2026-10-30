@@ -2046,7 +2046,8 @@ const es: SeccionDocs[] = [
           'Tu documento y una foto de tu cara, desde la app. Es lo que les da confianza a los clientes que te abren la puerta.',
         explicacion: [
           'Cuando un cliente recibe su comida, quiere saber que quien toca su puerta es la persona que dice ser. Por eso todo repartidor de Divoox pasa por una verificación de identidad antes de repartir.',
-          'Solo necesitas tu documento y una foto de tu cara. Las fotos las ve únicamente el equipo de Divoox que revisa las verificaciones; no se publican y se borran si cierras tu cuenta.',
+          'Solo necesitas tu documento y una foto de tu cara. El documento lo ve únicamente el equipo de Divoox que revisa las verificaciones; no se publica y se borra si cierras tu cuenta.',
+          'La foto de tu cara, una vez aprobada, es tu foto de perfil: el equipo la compara con tu documento y la ve el cliente del pedido que llevas, para que sepa quién toca su puerta. Nadie más la ve. Como es la foto verificada, no la puedes cambiar desde la app; si necesitas una nueva, escríbenos y la revisamos otra vez.',
         ],
         capturas: [
           {
@@ -5411,7 +5412,8 @@ const en: SeccionDocs[] = [
           'Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.',
         explicacion: [
           'When customers get their food, they want to know the person at their door is who they say they are. That’s why every Divoox driver goes through an identity check before delivering.',
-          'All you need is your ID and a photo of your face. Only the Divoox team that reviews verifications sees the photos; they’re never published and they’re deleted if you close your account.',
+          'All you need is your ID and a photo of your face. Only the Divoox team that reviews verifications sees your ID; it’s never published and it’s deleted if you close your account.',
+          'Once approved, the photo of your face is your profile photo: our team compares it with your ID, and the customer of the order you’re carrying sees it, so they know who’s at their door. No one else sees it. Since it’s your verified photo, you can’t change it from the app; if you need a new one, contact us and we’ll review it again.',
         ],
         capturas: [
           {

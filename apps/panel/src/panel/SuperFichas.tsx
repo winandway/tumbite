@@ -220,6 +220,9 @@ const T_SUSPENDER = {
     suspendida: 'Cuenta suspendida: no puede entrar.',
     pregunta: 'Motivo de la suspensión (queda en el registro):',
     confirmarReactivar: '¿Reactivar esta cuenta?',
+    malaConducta: 'Cerrar por mala conducta',
+    preguntaMala:
+      'Motivo de la mala conducta. Su correo y su teléfono no podrán volver a registrarse, de ninguna forma:',
   },
   en: {
     suspender: 'Suspend account',
@@ -227,6 +230,9 @@ const T_SUSPENDER = {
     suspendida: 'Account suspended: they can’t sign in.',
     pregunta: 'Reason for the suspension (kept in the log):',
     confirmarReactivar: 'Reactivate this account?',
+    malaConducta: 'Close for misconduct',
+    preguntaMala:
+      'Reason for the misconduct. Their email and phone number won’t be able to sign up again, in any form:',
   },
 };
 
@@ -244,15 +250,20 @@ function BotonSuspender({
 }) {
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
-  async function cambiar() {
+  async function cambiar(malaConducta = false) {
     let motivo = '';
     if (activo) {
-      motivo = window.prompt(t.pregunta) ?? '';
-      if (motivo.trim().length < 3) return;
+      motivo = window.prompt(malaConducta ? t.preguntaMala : t.pregunta) ?? '';
+      if (motivo.trim().length < (malaConducta ? 5 : 3)) return;
     } else if (!window.confirm(t.confirmarReactivar)) return;
     setError('');
     try {
-      await pedir('PATCH', `/datos/admin/usuarios/${id}`, { activo: !activo, motivo });
+      // C-IDENTIDAD-UNICA: por mala conducta, su correo y su teléfono quedan bloqueados para siempre.
+      await pedir('PATCH', `/datos/admin/usuarios/${id}`, {
+        activo: !activo,
+        motivo,
+        malaConducta,
+      });
       recargar();
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : String(e));
@@ -264,6 +275,14 @@ function BotonSuspender({
       <button type="button" className="enlace" onClick={() => void cambiar()}>
         {activo ? t.suspender : t.reactivar}
       </button>
+      {activo ? (
+        <>
+          {' · '}
+          <button type="button" className="enlace" onClick={() => void cambiar(true)}>
+            {t.malaConducta}
+          </button>
+        </>
+      ) : null}
       {error ? (
         <span className="error-general" role="alert">
           {' '}

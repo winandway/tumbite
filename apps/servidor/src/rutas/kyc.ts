@@ -412,6 +412,67 @@ kyc.get('/admin/kyc/:id/foto/:pieza', async (c) => {
   return new Response(obj.body, { headers });
 });
 
+/**
+ * C-FOTO-VERIFICADA (29 oct 2026), como Uber: la selfie aprobada contra el documento es la foto de perfil
+ * del repartidor. La ven él mismo, el cliente de un pedido que lleva y el equipo; nadie más.
+ */
+async function servirFoto(c: Parameters<typeof base>[0], usuarioId: string) {
+  const f = await base(c)
+    .prepare("SELECT selfie FROM kyc WHERE usuario_id = ? AND estado = 'aprobado'")
+    .bind(usuarioId)
+    .first<{ selfie: string | null }>();
+  const obj = f?.selfie ? await almacen(c.env).get(f.selfie) : null;
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, no-store');
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(obj.body, { headers });
+}
+
+kyc.get('/kyc/mi-foto', async (c) => servirFoto(c, exigir(c, 'repartidor').id));
+
+kyc.get('/pedidos/:id/repartidor/foto', async (c) => {
+  const u = exigir(c);
+  const p = await base(c)
+    .prepare(
+      "SELECT cliente_id, repartidor_id FROM pedidos WHERE id = ? AND repartidor_id IS NOT NULL AND estado IN ('aceptado', 'listo', 'en_camino', 'entregado')",
+    )
+    .bind(c.req.param('id'))
+    .first<{ cliente_id: string; repartidor_id: string }>();
+  if (!p || (p.cliente_id !== u.id && u.rol !== 'admin')) return c.text('No encontrado', 404);
+  return servirFoto(c, p.repartidor_id);
+});
+
+/**
+ * La foto verificada no se cambia desde la app. Si hace falta una nueva (cambió mucho, la foto quedó
+ * mal), soporte la libera con motivo: la verificación vuelve a empezar y queda en el registro.
+ */
+kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {
+  const admin = exigir(c, 'admin');
+  const { motivo } = await leerCuerpo(
+    c,
+    z.object({ motivo: z.string().trim().min(5, { error: 'Escribe el motivo.' }).max(300) }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      "UPDATE kyc SET selfie = NULL, estado = 'sin_enviar', motivo = ?, revisado_en = datetime('now'), revisado_por = ? WHERE usuario_id = ? AND selfie IS NOT NULL",
+    )
+    .bind(`Soporte pidió una foto nueva: ${motivo}`, admin.id, id)
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('Esa cuenta no tiene foto que liberar.', undefined, 404);
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(admin.id, 'liberar_foto', `kyc:${id}`, null, JSON.stringify({ motivo }))
+    .run();
+  return c.json({ ok: true });
+});
+
 const esquemaRevision = z.object({
   estado: z.enum(['aprobado', 'rechazado']),
   motivo: z.string().trim().max(500).default(''),

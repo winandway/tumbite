@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View, Linking } from 'react-native';
+import { Image, Pressable, Text, View, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { ErrorApi, enIdioma } from '@tumbite/compartido';
+import { type Api, ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion } from '@tumbite/movil';
 
 const T = {
@@ -30,7 +30,10 @@ const T = {
     frente: 'Foto del documento (frente)',
     reverso: 'Foto del documento (reverso)',
     selfie: 'Foto de tu cara',
-    selfieAyuda: 'De frente, con buena luz, sin gorra ni lentes oscuros.',
+    selfieAyuda:
+      'De frente, con buena luz, sin gorra ni lentes oscuros. Es tu foto de perfil: la ve el cliente de cada pedido y no se puede cambiar después de aprobada.',
+    fotoPerfil:
+      'Tu foto de perfil verificada. La ve el cliente de cada pedido. Si necesitas una nueva, escríbenos a soporte.',
     tomar: 'Tomar foto',
     otra: 'Tomar otra',
     lista: 'Lista',
@@ -64,7 +67,10 @@ const T = {
     frente: 'Photo of your document (front)',
     reverso: 'Photo of your document (back)',
     selfie: 'Photo of your face',
-    selfieAyuda: 'Facing the camera, good light, no cap or sunglasses.',
+    selfieAyuda:
+      'Face forward, good light, no cap or sunglasses. It’s your profile photo: customers see it on each order and it can’t be changed once approved.',
+    fotoPerfil:
+      'Your verified profile photo. Customers see it on each order. If you need a new one, contact support.',
     tomar: 'Take photo',
     otra: 'Retake',
     lista: 'Done',
@@ -183,6 +189,7 @@ export function Verificacion() {
         {new Map(Object.entries(t.estados)).get(k.estado)}
       </Text>
       {k.estado === 'rechazado' && k.motivo ? <Text style={e.error}>{k.motivo}</Text> : null}
+      {k.estado === 'aprobado' ? <MiFotoVerificada api={api} texto={t.fotoPerfil} /> : null}
       {!listo ? (
         <>
           <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
@@ -255,6 +262,33 @@ export function Verificacion() {
           />
         ) : null}
       </View>
+    </View>
+  );
+}
+
+/** C-FOTO-VERIFICADA: la selfie aprobada es su foto de perfil; no se cambia desde la app. */
+function MiFotoVerificada({ api, texto }: { api: Api; texto: string }) {
+  const [uri, setUri] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .verFoto('/datos/kyc/mi-foto')
+      .then((u) => vivo && setUri(u))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+      {uri ? (
+        <Image
+          source={{ uri }}
+          style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#f1f1f1' }}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      <Text style={{ flex: 1, color: '#5E5E5E' }}>{texto}</Text>
     </View>
   );
 }

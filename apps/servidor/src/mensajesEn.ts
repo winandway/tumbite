@@ -614,6 +614,16 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your new password must be at least 8 characters.',
   ],
   ['La foto pesa demasiado. El máximo es 3 MB.', 'The photo is too large. The maximum is 3 MB.'],
+  [
+    'No podemos crear esta cuenta. Si crees que es un error, escríbenos a soporte.',
+    'We can’t create this account. If you think this is a mistake, contact support.',
+  ],
+  [
+    'Ese teléfono ya tiene una cuenta. Entra con ella o escríbenos a soporte.',
+    'That phone number already has an account. Sign in with it or contact support.',
+  ],
+  ['Esa cuenta no tiene foto que liberar.', 'That account has no photo to release.'],
+  ['Escribe el motivo de la mala conducta.', 'Write the reason for the misconduct.'],
   ['Los pagos con tarjeta todavía no están activados.', 'Card payments aren’t turned on yet.'],
   ['No pudimos cobrar el viaje en este momento.', 'We couldn’t charge the ride right now.'],
   [

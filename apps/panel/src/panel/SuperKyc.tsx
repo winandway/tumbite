@@ -30,6 +30,10 @@ const T = {
     distancia: 'Distancia entre la foto del local y la dirección registrada',
     metros: 'metros',
     aprobar: 'Aprobar',
+    compararCara:
+      'Compara la cara de la selfie con la del documento. Si apruebas, esa selfie queda como su foto de perfil y él no la puede cambiar.',
+    liberarFoto: 'Pedir una foto nueva',
+    motivoFoto: 'Motivo para pedir una foto nueva (queda en el registro):',
     rechazar: 'Rechazar',
     antecedentes: 'Antecedentes (Checkr)',
     antecedentesEstados: {
@@ -68,6 +72,10 @@ const T = {
     distancia: 'Distance between the storefront photo and the registered address',
     metros: 'meters',
     aprobar: 'Approve',
+    compararCara:
+      'Compare the face in the selfie with the one on the ID. If you approve, that selfie becomes their profile photo and they can’t change it.',
+    liberarFoto: 'Ask for a new photo',
+    motivoFoto: 'Reason for asking for a new photo (kept in the log):',
     rechazar: 'Reject',
     antecedentes: 'Background check (Checkr)',
     antecedentesEstados: {
@@ -251,6 +259,17 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
     }
   }
 
+  async function liberarFoto() {
+    const motivo = window.prompt(t.motivoFoto) ?? '';
+    if (motivo.trim().length < 5) return;
+    try {
+      await pedir('POST', `/datos/admin/kyc/${id}/liberar-foto`, { motivo });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   async function calificar(cid: string, resultado: 'coincide' | 'no_coincide') {
     try {
       await pedir('PATCH', `/datos/admin/kyc/${id}/control/${cid}`, { resultado });
@@ -344,6 +363,7 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
             idioma={idioma}
             empezar={() => void b.empezarDeNuevo()}
           />
+          <p className="suave">{t.compararCara}</p>
           <label className="campo">
             <span>{t.motivo}</span>
             <textarea
@@ -371,6 +391,14 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
           </div>
         </form>
       )}
+      {/* C-FOTO-VERIFICADA: solo soporte libera la foto aprobada, con motivo. */}
+      {d.kyc.estado === 'aprobado' && tiene.get('selfie') ? (
+        <p>
+          <button type="button" className="enlace" onClick={() => void liberarFoto()}>
+            {t.liberarFoto}
+          </button>
+        </p>
+      ) : null}
     </section>
   );
 }
