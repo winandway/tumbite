@@ -89,7 +89,22 @@
 
 - [x] (C-MAS-RESTAURANTE: «Más» estaba casi vacía; ahora trae la lista de DoorDash Merchant) (25) Repaso en el sitio de pruebas, tamaño celular, de la app del restaurante (inicio, pedidos, menú, cuenta): marca, textos, errores en consola y pedidos fallidos. Cada fallo: prueba en rojo y arreglo. Todos los países.
 - [x] (C-FLEX-ACTIVIDAD: códigos internos y horas crudas en el panel; arreglado) (26) Repaso en el sitio de pruebas, tamaño celular, del panel de Divoox Flex (empresa: inicio, envíos, rutas, saldo): marca, textos y errores. Cada fallo: prueba en rojo y arreglo. Todos los países.
-- [ ] (27) Auditoría de lo que falta del roadmap: comparar los estudios de Richard, la comparación del ciclo del pedido y la auditoría final con lo construido; cada brecha que no dependa de Richard entra a esta fila en orden de lanzamiento. Todos los países.
+- [x] (hecha el 30 oct: once brechas, cargadas abajo como puntos 28 a 38) (27) Auditoría de lo que falta del roadmap: comparar los estudios de Richard, la comparación del ciclo del pedido y la auditoría final con lo construido; cada brecha que no dependa de Richard entra a esta fila en orden de lanzamiento. Todos los países.
+
+## Etapa 8 · Brechas frente a los grandes (auditoría del 30 oct 2026), en orden de lanzamiento
+
+- [ ] (28) Calificación del restaurante visible para el cliente: estrellas y número de votos en la lista, el buscador y la ficha, y las reseñas en la ficha (como Uber Eats y DoorDash). Quitar las estrellas inventadas de las tarjetas de ejemplo. Todos los países.
+- [ ] (29) Aceptación automática de pedidos (interruptor del restaurante, como DoorDash: el pedido se confirma solo y se busca repartidor al instante). Todos los países.
+- [ ] (30) Nota por plato («sin cebolla», «bien cocido»): el cliente la escribe en cada plato y el restaurante y el repartidor la ven. Todos los países.
+- [ ] (31) «Agotado hasta mañana» en los platos de comida (hoy, sin fecha o hasta una hora), reutilizando lo de Tiendas, en el panel y en la app del restaurante. Todos los países.
+- [ ] (32) Correo al cliente al entregar, con la foto de la entrega (como DoorDash). Todos los países.
+- [ ] (33) Dirección con casilla aparte para apartamento, piso o edificio. Todos los países.
+- [ ] (34) Alta asistida: el equipo carga el menú por el restaurante, e importación del menú de comida por hoja de cálculo (reutilizando la de Tiendas). Todos los países.
+- [ ] (35) Modificadores anidados y grupos de opciones compartidos entre platos (el combo pide la bebida y la bebida el tamaño). Todos los países.
+- [ ] (36) Menús por horario: categorías con franja (desayuno, almuerzo). Todos los países.
+- [ ] (37) La app del restaurante a la par del panel: horarios y cierres, reseñas con respuesta y extras desde el celular. Todos los países.
+- [ ] (38) Fotos dentro del chat del pedido (para mostrar reemplazos en Tiendas). Todos los países.
+- [ ] (39) Driver: la ventanita «Muy pronto» está montada pero nada la abre; quitarla o conectarla. Todos los países.
 
 ## Hecho
 
