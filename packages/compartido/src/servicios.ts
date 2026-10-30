@@ -44,3 +44,28 @@ export function ordenarServicios<T extends { id: string; orden: number }>(lista:
       a.id.localeCompare(b.id),
   );
 }
+
+/**
+ * C-EXPLORAR (30 oct 2026), como la pestaña «Services» de Uber y «Browse» de DoorDash: «Más» muestra
+ * todos los servicios en grupos (viajes, pedidos, envíos), en el orden de siempre. Lo que el código no
+ * conoce va al final, en «otros».
+ */
+export const GRUPOS_EXPLORAR = [
+  { id: 'viajes', servicios: ['moto', 'carro'] },
+  { id: 'pedidos', servicios: ['comida', 'mercado', 'farmacia', 'licores'] },
+  { id: 'envios', servicios: ['envios'] },
+] as const;
+
+export function agruparServicios<T extends { id: string; orden: number }>(
+  lista: T[],
+): { id: string; servicios: T[] }[] {
+  const usados = new Set<string>(['mas']);
+  const grupos = GRUPOS_EXPLORAR.map((g) => {
+    const ids = g.servicios as readonly string[];
+    const servicios = ordenarServicios(lista.filter((s) => ids.includes(s.id)));
+    servicios.forEach((s) => usados.add(s.id));
+    return { id: g.id as string, servicios };
+  });
+  const otros = ordenarServicios(lista.filter((s) => !usados.has(s.id)));
+  return [...grupos, { id: 'otros', servicios: otros }].filter((g) => g.servicios.length);
+}

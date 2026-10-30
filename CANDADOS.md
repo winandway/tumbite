@@ -1837,3 +1837,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Apps: pasajero (la pantalla de viajes con `servicio=envios`, formulario del paquete y PIN visible) y Driver (foto y PIN). Panel: tarifa de Envíos con su valor máximo.
 - **Prueba:** `apps/servidor/src/rutas/envios.test.ts` (rojo comprobado quitando la revisión del paquete).
 - **Falta:** guías de Docs de Envíos (se escriben como borrador, igual que Moto) y las decisiones de Richard (valor máximo real, seguro del paquete, precio).
+
+## C-EXPLORAR (30 oct 2026) — todos los países
+
+- «Más» (`apps/cliente/src/app/service/[id].tsx` con id «mas») muestra todos los servicios en grupos, como «Services» de Uber: `agruparServicios` y `GRUPOS_EXPLORAR` en `packages/compartido/src/servicios.ts` (viajes, pedidos, envíos y «otros» para lo que el código no conoce; «Más» nunca se lista a sí mismo). Debajo sigue «Ver tiendas».
+- Ficha: `docs/investigaciones-rea/2026-10-30-mas.md`. Pruebas: `servicios.test.ts` y `e2e/recorrido/mas.spec.ts` (captura en `docs/capturas/mas-servicios-*.png`).
+
+## C-MARCA-PUBLICA (30 oct 2026) — todos los países
+
+- La descripción de «Más» decía «Todo lo que viene en Tumbite» al público (lo destapó la captura del recorrido de «Más»). Corregido en el catálogo de `schema.sql` y con un `UPDATE` idempotente para las bases que ya tenían el texto viejo.
+- **Prueba:** `carro.test.ts` («ningún servicio le muestra Tumbite al público»), rojo comprobado.

@@ -62,7 +62,7 @@
 
 ### Etapa 6 — «Más»
 
-- [ ] (20) Ficha REA de «Explorar» de los grandes y construir la pantalla «Más» con todos los servicios y categorías. Todos los países.
+- [x] (C-EXPLORAR) (20) Ficha REA de «Explorar» de los grandes y construir la pantalla «Más» con todos los servicios y categorías. Todos los países.
 
 ## Trabado por Richard (se hace apenas lo decida; el detalle está en PENDIENTES.md)
 

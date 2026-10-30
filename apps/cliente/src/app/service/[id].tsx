@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -7,6 +7,7 @@ import {
   type ServicioCatalogo,
   ORDEN_SERVICIOS,
   SERVICIOS_TIENDA,
+  agruparServicios,
 } from '@tumbite/compartido';
 import { Boton, C, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../../comida/piezas';
@@ -28,12 +29,16 @@ export default function PantallaServicio() {
   const t = textosInicio(idioma);
   const tc = textosComida(idioma);
   const [s, setS] = useState<ServicioCatalogo | null>(null);
+  // C-EXPLORAR: en «Más», todos los servicios en grupos.
+  const [todos, setTodos] = useState<ServicioCatalogo[]>([]);
   useEffect(() => {
     let vivo = true;
     void api
       .pedir<RespuestaServicios>('GET', '/datos/servicios')
       .then((r) => {
-        if (vivo) setS(r.servicios.find((x) => x.id === id) ?? null);
+        if (!vivo) return;
+        setS(r.servicios.find((x) => x.id === id) ?? null);
+        setTodos(r.servicios);
       })
       .catch((e: unknown) => console.warn('servicio: no se pudo cargar', e));
     return () => {
@@ -86,6 +91,60 @@ export default function PantallaServicio() {
         {accion === 'abrir' && id === 'comida' ? (
           <View style={{ marginTop: 18 }}>
             <Boton texto={t.abrirServicio} alTocar={abrir} />
+          </View>
+        ) : null}
+        {id === 'mas' && todos.length ? (
+          <View style={{ marginTop: 18, gap: 14 }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+              {t.todosLosServicios}
+            </Text>
+            {agruparServicios(todos).map((g) => (
+              <View key={g.id} style={{ gap: 8 }}>
+                <Text style={{ fontWeight: '800', color: '#5E5E5E' }}>
+                  {t.grupos[g.id] ?? g.id}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {g.servicios.map((x) => (
+                    <Pressable
+                      key={x.id}
+                      accessibilityRole="button"
+                      testID={`explorar-${x.id}`}
+                      onPress={() =>
+                        x.id === 'comida' && x.accion === 'abrir'
+                          ? router.push('/restaurants')
+                          : router.push({ pathname: '/service/[id]', params: { id: x.id } })
+                      }
+                      style={{
+                        width: 104,
+                        alignItems: 'center',
+                        padding: 10,
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        borderColor: '#E3E3E3',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <Image
+                        source={ICONO_SERVICIO.get(x.id as Servicio) ?? IMG.servicios.mas}
+                        style={{ width: 56, height: 56 }}
+                        resizeMode="contain"
+                        accessibilityIgnoresInvertColors
+                      />
+                      <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+                        {(ORDEN_SERVICIOS as readonly string[]).includes(x.id)
+                          ? t.servicios[x.id as Servicio]
+                          : x.nombre}
+                      </Text>
+                      {t.etiquetaServicio[x.accion] ? (
+                        <Text style={{ fontSize: 11, color: '#8A8A8A', fontWeight: '700' }}>
+                          {t.etiquetaServicio[x.accion]}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ))}
           </View>
         ) : null}
         {/* C-TIENDAS-VITRINA: Mercado, Farmacia, Licores y Más abren las tiendas cerca de ti. */}

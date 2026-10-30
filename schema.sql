@@ -1026,7 +1026,12 @@ INSERT OR IGNORE INTO servicios (id, tipo_operacion, nombre_es, nombre_en, descr
   ('envios',   'envio_paquete',   'Envíos',   'Delivery', 'Envía paquetes por la ciudad.',                'Send packages across town.',                'servicio-envios',   50, 'proximamente', 0),
   ('farmacia', 'compra_encargo',  'Farmacia', 'Pharmacy', 'Productos de farmacia de venta libre.',        'Over-the-counter pharmacy products.',       'servicio-farmacia', 60, 'proximamente', 0),
   ('licores',  'compra_encargo',  'Licores',  'Liquor',   'Bebidas para mayores de 21 años, con verificación de edad.', 'Drinks for ages 21+, with age verification.', 'servicio-licores', 70, 'proximamente', 0),
-  ('mas',      'enlace',          'Más',      'More',     'Todo lo que viene en Tumbite.',                'Everything coming to Tumbite.',             'servicio-mas',      80, 'proximamente', 0);
+  ('mas',      'enlace',          'Más',      'More',     'Todo lo que viene en Divoox.',                 'Everything coming to Divoox.',             'servicio-mas',      80, 'proximamente', 0);
+
+-- C-MARCA-PUBLICA (30 oct 2026): la marca pública es Divoox. Las bases que ya tenían el texto viejo se
+-- corrigen aquí (idempotente: solo toca la fila que todavía diga «Tumbite»).
+UPDATE servicios SET descripcion_es = 'Todo lo que viene en Divoox.', descripcion_en = 'Everything coming to Divoox.'
+  WHERE id = 'mas' AND (descripcion_es LIKE '%Tumbite%' OR descripcion_en LIKE '%Tumbite%');
 
 INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
   SELECT s.id, z.id, 'proximamente' FROM servicios s CROSS JOIN zonas z;

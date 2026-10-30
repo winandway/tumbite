@@ -137,3 +137,15 @@ describe('Carro XL (C-CARRO-XL)', () => {
     expect(await grande.paso(id, 'aceptar')).toBe(200);
   });
 });
+
+describe('marca pública en los servicios (C-MARCA-PUBLICA)', () => {
+  it('ningún servicio le muestra «Tumbite» al público, en ningún idioma', async () => {
+    const m = mundo();
+    for (const idioma of ['es', 'en']) {
+      const r = await m.llamar('GET', '/datos/servicios', undefined, undefined, {
+        'x-idioma': idioma,
+      });
+      expect(JSON.stringify(r.datos)).not.toMatch(/tumbite/i);
+    }
+  });
+});

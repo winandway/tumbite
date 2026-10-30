@@ -1,4 +1,4 @@
-# Roadmap de Divoox, en orden (29 oct 2026, noche)
+# Roadmap de Divoox, en orden (29 oct 2026, noche; estado al 30 oct)
 
 > Este es el plan maestro. Reemplaza el orden de `docs/ROADMAP.md`, del 11 de octubre, que queda como historia.
 > La fábrica (`FILA.md`) sigue este orden de arriba abajo, sin saltarse etapas.
@@ -7,17 +7,17 @@
 
 ## 1. En qué estado está cada servicio hoy
 
-| Servicio        | Qué es                                  | Construido          | Sitio de pruebas | Producción (divoox.com)                              | Lo que falta                                                                    |
-| --------------- | --------------------------------------- | ------------------- | ---------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **Comida**      | Pedidos a restaurantes                  | Sí, completo        | Encendido        | **Encendido** (Miami todavía «muy pronto» en la web) | Lanzar: compra real de 1 dólar, prueba en la calle, tiendas de apps             |
-| **Mercado**     | Supermercado                            | Sí (28 oct)         | Encendido        | Apagado                                              | Compra de prueba hecha por Richard el 29 oct; falta el país para encender       |
-| **Farmacia**    | Productos de venta libre                | Sí (28 oct)         | Encendido        | Apagado                                              | Igual que Mercado                                                               |
-| **Licores**     | Mayores de 21, con verificación de edad | Sí (28 oct)         | Encendido        | Apagado                                              | Igual que Mercado                                                               |
-| **Moto**        | Viajes de pasajeros en moto             | Sí, base (M1 a M10) | Encendido        | Apagado                                              | Pago con tarjeta y propina, seguridad, interruptores por ciudad; legal y seguro |
-| **Carro**       | Viajes de pasajeros en carro            | **No empezado**     | Apagado          | Apagado                                              | Todo: ficha REA y construirlo sobre el motor de Moto                            |
-| **Envíos**      | Paquetes de persona a persona           | **No empezado**     | Apagado          | Apagado                                              | Todo: ficha REA y construirlo sobre lo de Flex                                  |
-| **Más**         | La puerta a todo lo demás               | Solo el botón       | Encendido        | Apagado                                              | Definir qué muestra, como los grandes                                           |
-| **Divoox Flex** | Logística de paquetes para empresas     | Sí (fases 1 a 6)    | Encendido        | **Encendido** (recargas apagadas)                    | Nada con dinero real probado                                                    |
+| Servicio        | Qué es                                  | Construido                                 | Sitio de pruebas | Producción (divoox.com)                              | Lo que falta                                                              |
+| --------------- | --------------------------------------- | ------------------------------------------ | ---------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Comida**      | Pedidos a restaurantes                  | Sí, completo                               | Encendido        | **Encendido** (Miami todavía «muy pronto» en la web) | Lanzar: compra real de 1 dólar, prueba en la calle, tiendas de apps       |
+| **Mercado**     | Supermercado                            | Sí (28 oct)                                | Encendido        | Apagado                                              | Compra de prueba hecha por Richard el 29 oct; falta el país para encender |
+| **Farmacia**    | Productos de venta libre                | Sí (28 oct)                                | Encendido        | Apagado                                              | Igual que Mercado                                                         |
+| **Licores**     | Mayores de 21, con verificación de edad | Sí (28 oct)                                | Encendido        | Apagado                                              | Igual que Mercado                                                         |
+| **Moto**        | Viajes de pasajeros en moto             | Sí, completo (30 oct)                      | Encendido        | Apagado                                              | Solo lo de Richard: país, legal, seguro, tarifas                          |
+| **Carro**       | Viajes de pasajeros en carro            | Sí, con XL (30 oct)                        | Encendido        | Apagado                                              | Solo lo de Richard: país, legal, seguro, tarifas                          |
+| **Envíos**      | Paquetes de persona a persona           | Sí (30 oct), sobre el motor de viajes      | Encendido        | Apagado                                              | Solo lo de Richard: valor máximo, seguro del paquete y precio             |
+| **Más**         | La puerta a todo lo demás               | Sí: todos los servicios en grupos (30 oct) | Encendido        | Apagado                                              | Nada                                                                      |
+| **Divoox Flex** | Logística de paquetes para empresas     | Sí (fases 1 a 6)                           | Encendido        | **Encendido** (recargas apagadas)                    | Nada con dinero real probado                                              |
 
 ## 2. El orden
 

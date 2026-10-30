@@ -18,6 +18,12 @@ const es = {
   prontoTitulo: '¡Muy pronto en Divoox!',
   prontoTexto: 'Estamos preparando nuevos servicios para ti.',
   entendido: 'Entendido',
+  // C-EXPLORAR: los grupos de «Más».
+  grupos: { viajes: 'Viajes', pedidos: 'Pedidos', envios: 'Envíos', otros: 'Otros' } as Record<
+    string,
+    string
+  >,
+  todosLosServicios: 'Todos los servicios',
   // Etiqueta discreta en la loseta del servicio, según lo que dice el servidor.
   etiquetaServicio: {
     abrir: '',
@@ -166,6 +172,8 @@ const en: typeof es = {
   prontoTitulo: 'Coming soon to Divoox!',
   prontoTexto: 'We’re getting new services ready for you.',
   entendido: 'Got it',
+  grupos: { viajes: 'Rides', pedidos: 'Orders', envios: 'Delivery', otros: 'Other' },
+  todosLosServicios: 'All services',
   etiquetaServicio: {
     abrir: '',
     muy_pronto: 'Soon',
