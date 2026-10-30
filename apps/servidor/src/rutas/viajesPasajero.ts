@@ -20,6 +20,7 @@ import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { devolverReservasViaje } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { abrirCobroViaje, soltarCobroViaje } from '../viajesCobro';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
 
@@ -305,11 +306,15 @@ viajesPasajero.post('/viajes', async (c) => {
   const db = base(c);
   const d = await leerCuerpo(
     c,
-    z.object({ cotizacionId: z.string().min(8).max(64), metodoPago: z.literal('efectivo') }),
+    z.object({
+      cotizacionId: z.string().min(8).max(64),
+      // C-VIAJE-TARJETA: con tarjeta se autoriza al pedir y se cobra al terminar.
+      metodoPago: z.enum(['efectivo', 'tarjeta']).default('efectivo'),
+    }),
   );
   const cot = await db
     .prepare(
-      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, vence_en > datetime('now') AS vigente
+      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, vence_en > datetime('now') AS vigente
          FROM cotizaciones_viaje WHERE id = ? AND cliente_id = ?`,
     )
     .bind(d.cotizacionId, u.id)
@@ -319,6 +324,8 @@ viajesPasajero.post('/viajes', async (c) => {
       zona_id: string;
       usada_en: string | null;
       operacion_id: string | null;
+      total: number;
+      moneda: string;
       vigente: number;
     }>();
   if (!cot) throw new ErrorDatos('Esa cotización no existe.', 'cotizacionId', 404);
@@ -328,6 +335,7 @@ viajesPasajero.post('/viajes', async (c) => {
   if ((await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id)) !== 'disponible')
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
   const op = nuevoId();
+  const inicial = d.metodoPago === 'tarjeta' ? 'pago_pendiente' : 'buscando';
   const r = await db.batch([
     db
       .prepare(
@@ -340,20 +348,20 @@ viajesPasajero.post('/viajes', async (c) => {
     db
       .prepare(
         `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, ultima_clave)
-         SELECT ?1, servicio_id, 'viaje_pasajero', cliente_id, zona_id, 'buscando', ?3
+         SELECT ?1, servicio_id, 'viaje_pasajero', cliente_id, zona_id, ?4, ?3
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
       )
-      .bind(op, cot.id, `pedir:${cot.id}`),
+      .bind(op, cot.id, `pedir:${cot.id}`, inicial),
     db
       .prepare(
         `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
            origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
            pasajeros, pin_recogida, metodo_pago, cotizacion_id)
-         SELECT ?1, 'buscando', 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
+         SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
                 destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
       )
-      .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago),
+      .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago, inicial),
   ]);
   if (!r[0]?.meta.changes) {
     const otra = await db
@@ -362,6 +370,11 @@ viajesPasajero.post('/viajes', async (c) => {
       .first<{ operacion_id: string }>();
     if (otra) return c.json({ viaje: { id: otra.operacion_id } });
     throw new ErrorDatos('Ya tienes un viaje en curso.', undefined, 409);
+  }
+  // C-VIAJE-TARJETA: con tarjeta, primero la autorización; se busca conductor cuando Stripe avisa.
+  if (d.metodoPago === 'tarjeta') {
+    const pago = await abrirCobroViaje(c.env, db, u, op, Number(cot.total), cot.moneda);
+    return c.json({ viaje: { id: op }, pago }, 201);
   }
   // Se busca conductor de una vez, sin esperar la vuelta del reloj (M3 afina el despacho).
   await repartirOperaciones(c.env, db).catch((e: unknown) =>
@@ -539,6 +552,11 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
   });
   if (!ok) throw new ErrorDatos('El viaje cambió. Actualiza la pantalla.', undefined, 409);
   await devolverReservasViaje(db, id, 'cancelado_por_pasajero');
+  // C-VIAJE-TARJETA: con tarjeta, el cargo se cobra de la autorización (o se anula si no hay cargo).
+  if (f.metodo_pago === 'tarjeta') {
+    const cobrado = await soltarCobroViaje(c.env, db, id, cargo);
+    return c.json({ ok: true, cargo: cobrado });
+  }
   if (cargo > 0 && f.moneda)
     await db
       .prepare(

@@ -1726,3 +1726,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Dónde:** columnas `ajustes_pedido.propuestas_json` y `reemplazo_id` (por COLUMNAS); `calcularSinPlato(…, reemplazo)` y `aplicarAjuste(…, 'reemplazar', …, platoId)` en `rutas/pedidos.ts`; validación en `rutas/operacion.ts` (catálogo con `lineasDeTienda`); aviso `platoReemplazado`. Panel (`Pedidos.tsx`), app del restaurante (`FaltaTienda.tsx`), app del cliente (pedido) y Docs (`shop-stores`, `store-orders`). Ficha: `docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md`.
 - **No tocar:** el estado `quitado` sirve también para el reemplazo (la tabla tiene un CHECK con tres estados; cambiarlo exigiría rehacer la tabla en producción).
 - **Prueba:** `rutas/tiendasVitrina.test.ts` (C-TIENDAS-REEMPLAZOS, en rojo antes del arreglo) y `PedidosReemplazos.test.tsx`.
+
+## C-VIAJE-TARJETA (29 oct 2026) — todos los países; solo donde Moto esté encendido (hoy, el sitio de pruebas)
+
+- **Qué es (como Uber, con el circuito de Comida):** `POST /datos/viajes` con `metodoPago: 'tarjeta'` deja el viaje en `pago_pendiente` y abre una autorización por el precio fijo (`abrirCobroViaje`, `apps/servidor/src/viajesCobro.ts`, tabla `cobros_viaje`). Solo el aviso firmado `payment_intent.amount_capturable_updated` con el monto exacto lo pasa a `buscando`. Al terminar se captura lo final, nunca más de lo autorizado, y lo cobrado se acredita entero al conductor en `movimientos` (la comisión sigue saliendo de su prepago). Cancelar: sin cargo se anula la autorización; con cargo se captura solo el cargo y no queda deuda. «No se presentó» cobra su cargo igual. Sin conductor, o un pago que nunca se autorizó en 20 minutos: se anula.
+- **App:** `PedirMoto.tsx` con «Efectivo | Tarjeta» y la hoja de pago de siempre (`PagoTarjeta`).
+- **Prueba:** `apps/servidor/src/viajeTarjeta.test.ts` (rojo comprobado quitando el cobro al terminar).
+- **Sin probar con dinero real.** Moto sigue apagada en producción.

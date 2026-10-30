@@ -18,7 +18,9 @@ import {
   useSesion,
 } from '@tumbite/movil';
 import { ElegirEnMapa } from '../ElegirEnMapa';
-import { Tarjeta } from '../comida/piezas';
+import { Pildora, Tarjeta } from '../comida/piezas';
+import { PagoTarjeta } from '../PagoTarjeta';
+import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 
@@ -50,6 +52,8 @@ export function PedirMoto({
       destinoLng: '',
       recogidaLat: '',
       recogidaLng: '',
+      // C-VIAJE-TARJETA: cómo paga el viaje.
+      metodo: 'efectivo',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -58,6 +62,9 @@ export function PedirMoto({
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
+  // C-VIAJE-TARJETA: con tarjeta, el cobro abierto y la hoja de pago de siempre (la de Comida).
+  const [cobro, setCobro] = useState<(Cobro & { viajeId: string }) | null>(null);
+  const tarjeta = v.metodo === 'tarjeta';
 
   // La recogida arranca en la ubicación de ahora (se puede mover en el mapa de recogida).
   useEffect(() => {
@@ -118,10 +125,15 @@ export function PedirMoto({
     setError('');
     setTrabajando(true);
     try {
-      const r = await api.pedir<{ viaje: { id: string } }>('POST', '/datos/viajes', {
-        cotizacionId: cotizacion.id,
-        metodoPago: 'efectivo',
-      });
+      const r = await api.pedir<{ viaje: { id: string }; pago?: Omit<Cobro, 'pedidoId'> }>(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: cotizacion.id, metodoPago: tarjeta ? 'tarjeta' : 'efectivo' },
+      );
+      if (r.pago) {
+        setCobro({ ...r.pago, pedidoId: r.viaje.id, viajeId: r.viaje.id });
+        return;
+      }
       await b.limpiar();
       alPedir(r.viaje.id);
     } catch (x) {
@@ -197,7 +209,26 @@ export function PedirMoto({
               {distancia(cotizacion.distanciaM, idioma)} ·{' '}
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}
             </Text>
-            <Text style={{ color: C.secundario, fontWeight: '700' }}>{t.efectivo}</Text>
+            <View
+              style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}
+              accessibilityRole="radiogroup"
+            >
+              <Pildora
+                texto={t.pagoEfectivo}
+                activa={!tarjeta}
+                alTocar={() => cambiar('metodo', 'efectivo')}
+                rol="radio"
+              />
+              <Pildora
+                texto={t.pagoTarjeta}
+                activa={tarjeta}
+                alTocar={() => cambiar('metodo', 'tarjeta')}
+                rol="radio"
+              />
+            </View>
+            <Text style={{ color: C.secundario, fontWeight: '700' }}>
+              {tarjeta ? t.tarjetaAyuda : t.efectivo}
+            </Text>
             {deudaPendiente ? (
               <Text style={{ color: '#5E5E5E' }}>
                 {t.deuda}{' '}
@@ -213,7 +244,23 @@ export function PedirMoto({
           {error}
         </Text>
       ) : null}
-      {cotizacion ? (
+      {cobro?.clavePublica ? (
+        <PagoTarjeta
+          cobro={cobro}
+          clavePublica={cobro.clavePublica}
+          idioma={idioma}
+          textos={{
+            pagar: `${t.pagarViaje} ${cotizacion ? formatearMonto(cotizacion.total, cotizacion.moneda, idioma) : ''}`,
+            cargando: t.cargandoTarjeta,
+            sinFormulario: t.pagoNoDisponible,
+            reintentar: t.reintentarPago,
+          }}
+          alPagar={() => {
+            void b.limpiar();
+            alPedir(cobro.viajeId);
+          }}
+        />
+      ) : cotizacion ? (
         <Boton texto={t.pedirMoto} alTocar={() => void pedir()} cargando={trabajando} exito />
       ) : (
         <Boton texto={t.verPrecio} alTocar={() => void cotizar()} cargando={trabajando} />

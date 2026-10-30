@@ -2796,3 +2796,17 @@ CREATE TABLE IF NOT EXISTS catalogo_ofertas (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (comercio_id, producto_id)
 );
+
+-- C-VIAJE-TARJETA (29 oct 2026), como Uber: el viaje con tarjeta se AUTORIZA al pedir por el precio
+-- fijo y se CAPTURA al terminar (nunca más de lo autorizado). Cancelar libera la autorización o cobra
+-- solo el cargo. La propina después del viaje es un cobro aparte con la tarjeta guardada.
+CREATE TABLE IF NOT EXISTS cobros_viaje (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  stripe_pago TEXT NOT NULL,
+  autorizado INTEGER NOT NULL DEFAULT 0 CHECK (autorizado >= 0),
+  capturado INTEGER,
+  propina INTEGER NOT NULL DEFAULT 0 CHECK (propina >= 0),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'autorizado', 'capturado', 'anulado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

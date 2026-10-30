@@ -40,6 +40,8 @@ import {
 } from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
 import { crearStripe, firmaValida } from '../stripe';
+import { autorizacionViaje } from '../viajesCobro';
+import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/tarifas';
@@ -869,6 +871,28 @@ pedidos.post('/stripe/aviso', async (c) => {
         await anotar(db, pedidoId as string, 'pagado', null);
         await correosDePedidoPagado(c.env, db, pedidoId as string);
       }
+    }
+    // C-VIAJE-TARJETA: la tarjeta de un viaje quedó autorizada: el viaje empieza a buscar conductor.
+    if (
+      evento.type === 'payment_intent.amount_capturable_updated' &&
+      (obj.metadata as Record<string, string> | undefined)?.viaje_id
+    ) {
+      const op = await autorizacionViaje(db, obj);
+      if (
+        op &&
+        (await cambiarEstadoViaje(db, {
+          operacionId: op,
+          desde: 'pago_pendiente',
+          hacia: 'buscando',
+          actor: 'sistema',
+          actorId: null,
+          clave: `autorizado:${op}`,
+          motivo: 'pago_autorizado',
+        }))
+      )
+        await repartirOperaciones(c.env, db).catch((e: unknown) =>
+          console.error('viajes: despacho al autorizar', e),
+        );
     }
     if (evento.type === 'payment_intent.amount_capturable_updated') {
       // La tarjeta quedó AUTORIZADA por el total: el pedido pasa a pagado y se cobra al entregar.

@@ -614,6 +614,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your new password must be at least 8 characters.',
   ],
   ['La foto pesa demasiado. El máximo es 3 MB.', 'The photo is too large. The maximum is 3 MB.'],
+  ['Los pagos con tarjeta todavía no están activados.', 'Card payments aren’t turned on yet.'],
+  ['No pudimos cobrar el viaje en este momento.', 'We couldn’t charge the ride right now.'],
   [
     'Ese reemplazo no está disponible en tu tienda. Elige otro producto.',
     'That replacement isn’t available in your store. Pick another product.',

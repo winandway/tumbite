@@ -2,6 +2,7 @@ import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import { distanciaKm } from '@tumbite/compartido';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
+import { soltarCobroViaje } from './viajesCobro';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md; V1.2 §3 y §5).
@@ -266,15 +267,44 @@ export async function repartirOperaciones(
     .bind(`-${MINUTOS_SIN_CONDUCTOR} minutes`)
     .all<{ id: string }>();
   for (const v of vencidos)
-    await cambiarEstadoViaje(db, {
-      operacionId: v.id,
-      desde: 'buscando',
-      hacia: 'sin_conductor',
-      actor: 'sistema',
-      actorId: null,
-      clave: `sin-conductor:${v.id}`,
-      motivo: 'sin_conductor',
-    });
+    if (
+      await cambiarEstadoViaje(db, {
+        operacionId: v.id,
+        desde: 'buscando',
+        hacia: 'sin_conductor',
+        actor: 'sistema',
+        actorId: null,
+        clave: `sin-conductor:${v.id}`,
+        motivo: 'sin_conductor',
+      })
+    )
+      // C-VIAJE-TARJETA: sin conductor, la autorización de la tarjeta se anula entera.
+      await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
+        console.error('viajes: anular cobro sin conductor', v.id, e),
+      );
+  // C-VIAJE-TARJETA: un pago que nunca se autorizó (la persona cerró la hoja de pago) no deja el
+  // viaje colgado: a los 20 minutos se cancela y se anula el intento.
+  const { results: sinPagar } = await db
+    .prepare(
+      `SELECT o.id FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+        WHERE v.estado = 'pago_pendiente' AND o.creado_en < datetime('now', '-20 minutes') LIMIT 50`,
+    )
+    .all<{ id: string }>();
+  for (const v of sinPagar)
+    if (
+      await cambiarEstadoViaje(db, {
+        operacionId: v.id,
+        desde: 'pago_pendiente',
+        hacia: 'cancelado',
+        actor: 'sistema',
+        actorId: null,
+        clave: `sin-pago:${v.id}`,
+        motivo: 'sin_pago',
+      })
+    )
+      await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
+        console.error('viajes: anular cobro sin pago', v.id, e),
+      );
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, q.total, q.moneda, z.pais

@@ -1788,5 +1788,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pasillo",
     "agotado_hasta",
     "actualizado_en"
+  ],
+  "cobros_viaje": [
+    "operacion_id",
+    "stripe_pago",
+    "autorizado",
+    "capturado",
+    "propina",
+    "estado",
+    "creado_en",
+    "actualizado_en"
   ]
 };

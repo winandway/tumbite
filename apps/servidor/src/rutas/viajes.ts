@@ -18,6 +18,7 @@ import {
   repartirOperaciones,
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
+import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
 
 /**
  * C-VIAJE-PASOS-REALES (28 oct 2026, encontrado con REA): sin estas reglas un conductor podía
@@ -343,12 +344,28 @@ viajes.post(
     }
     if (nombre === 'terminar') {
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
+      // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
+      if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
       return c.json({ ok: true, estado: paso.hacia, totalFinal });
     }
     if (nombre === 'no-se-presento') await devolverReservaViaje(db, id, u.id, 'no_se_presento');
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
     // deuda para su próximo viaje (una sola por viaje).
-    if (nombre === 'no-se-presento')
+    // C-VIAJE-TARJETA: con tarjeta, el cargo se cobra de la autorización en vez de quedar como deuda.
+    const tarjeta = await db
+      .prepare("SELECT 1 AS t FROM cobros_viaje WHERE operacion_id = ? AND estado = 'autorizado'")
+      .bind(id)
+      .first<{ t: number }>();
+    if (nombre === 'no-se-presento' && tarjeta) {
+      const q = await db
+        .prepare(
+          `SELECT json_extract(q.tarifa_json, '$.cargoNoSePresento') AS cargo FROM viajes v
+             JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE v.operacion_id = ?`,
+        )
+        .bind(id)
+        .first<{ cargo: number | null }>();
+      await soltarCobroViaje(c.env, db, id, Number(q?.cargo ?? 0));
+    } else if (nombre === 'no-se-presento')
       await db
         .prepare(
           `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda)

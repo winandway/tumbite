@@ -17,6 +17,14 @@
 - [ ] (1) Comprobar en producción el embudo de pedidos de los informes del superadmin. Todos los países.
 - [x] (29 oct: 24 pantallas en pruebas sin errores; arreglados el saludo del inicio con la hamburguesa y «Mi cuenta» con la cabecera vieja; la pizza recortada va a marketing) (2) Repaso en celular (375 px) de todas las pantallas de la app del cliente, Divoox Driver, la app del restaurante y el panel, en el sitio de pruebas, con REA sobre nuestras apps: cada fallo con prueba en rojo, arreglo y publicación. Todos los países.
 
+### Etapa 1½ — Identidad de los repartidores (pedido urgente de Richard, 29 oct, noche)
+
+- [ ] (K1) Ficha REA de verificación de identidad de repartidores y conductores (DoorDash, Uber, Rappi; proveedores de verificación con documento y selfie y búsqueda de caras repetidas): qué hacen, qué cuesta, qué exige la ley de datos biométricos por país y estado. Comparación con lo que ya tenemos (foto del documento, selfie de control, revisión del equipo). Todos los países.
+- [ ] (K2) Foto de perfil real al registrarse: el verificador la compara con el documento, la aprueba y queda BLOQUEADA (el repartidor no la puede cambiar; solo soporte, con motivo y registro). Se muestra en su perfil y al cliente. Servidor, app Driver, panel de verificación, Docs. Todos los países.
+- [ ] (K3) Correo y teléfono únicos de verdad: ni el mismo correo con mayúsculas, puntos o «+algo», ni el mismo teléfono en otro formato, ni los de cuentas cerradas por mala conducta. Todos los países.
+- [ ] (K4) Lista de personas bloqueadas por mala conducta: al cerrar una cuenta por fraude queda su documento, su teléfono y su foto; al registrarse alguien nuevo se compara y, si coincide, va a revisión del equipo. Todos los países.
+- [ ] (K5) Comparación de caras con IA (foto contra documento y contra la lista de bloqueados), detrás de un interruptor, con el proveedor que salga de la ficha K1. Se enciende cuando Richard apruebe el costo y el consentimiento legal. Todos los países.
+
 ### Etapa 2 — Tiendas (Mercado, Farmacia, Licores)
 
 - [x] (ficha docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md con evidencia REA) (5) Ficha REA de tiendas frente a DoorDash, Instacart y Uber Eats (documentación pública y web como visitante): comprador que reemplaza en vivo con foto, chat de reemplazos, horarios por tienda, límites de licores por estado; comparación con lo nuestro y brechas en orden. Todos los países.
@@ -26,7 +34,8 @@
 
 ### Etapa 3 — Moto
 
-- [ ] (8) Pago de los viajes con tarjeta (Stripe en modo prueba) y propina, solo en pruebas. Todos los países.
+- [x] (C-VIAJE-TARJETA; la propina después del viaje queda en el punto 8b) (8) Pago de los viajes con tarjeta (Stripe en modo prueba) y propina, solo en pruebas. Todos los países.
+- [ ] (8b) Propina después del viaje con la tarjeta guardada (como la propina posterior de Comida). Todos los países.
 - [ ] (9) El cargo de cancelación va al conductor afectado, no al del siguiente viaje. Todos los países.
 - [ ] (10) Seguridad del viaje: contactos de emergencia, aviso si el viaje se desvía y límite de horas al volante. Todos los países.
 - [ ] (11) Interruptores por ciudad: código solo de noche y selfie con casco. Todos los países.

@@ -33,6 +33,14 @@ clientes, después lo que destranca, después el resto.
    sesión de administrador para Google Play, Twilio, Checkr, abogado y contador.
 4. 👤 Encender Miami en la web cuando todo lo anterior esté en verde.
 
+### Etapa 1½ — Identidad de los repartidores (urgente, pedido de Richard el 29 oct)
+
+- 🤖 Ficha REA de verificación de identidad (documento, selfie, caras repetidas) y de la ley de datos biométricos.
+- 🤖 Foto de perfil real, aprobada contra el documento por un verificador y bloqueada después.
+- 🤖 Correo y teléfono únicos de verdad, también frente a cuentas cerradas.
+- 🤖 Lista de personas bloqueadas por mala conducta, comparada al registrarse.
+- 🤖 Comparación de caras con IA detrás de un interruptor; 👤 Richard aprueba el proveedor, el costo y el consentimiento legal.
+
 ### Etapa 2 — Tiendas: Mercado, Farmacia y Licores
 
 5. 🤖 Ficha REA comparando con DoorDash, Instacart y Uber Eats, con su documentación pública y su web
