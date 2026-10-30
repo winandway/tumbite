@@ -69,12 +69,35 @@ for (const idioma of ['es', 'en'] as const)
     ])
       await expect(p.getByTestId(`mas-${o}`)).toBeVisible();
     await expect(
-      p.getByText(idioma === 'en' ? 'Store info and hours' : 'Datos y horario'),
+      p.getByText(idioma === 'en' ? 'Hours and closures' : 'Horario y cierres'),
     ).toBeVisible();
     await expect(p.getByTestId('version-app')).toBeVisible();
     await expect(
       p.getByRole('button', { name: idioma === 'en' ? 'Sign out' : 'Cerrar sesión' }),
     ).toBeVisible();
     await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', `restapp-mas-${idioma}.png`) });
+    // C-APP-RESTAURANTE-PAR: reseñas y horario se abren dentro de la app.
+    await p.getByTestId('mas-horario').click();
+    await expect(p.getByTestId('app-horario')).toBeVisible({ timeout: 20_000 });
+    await p
+      .getByRole('button', { name: idioma === 'en' ? '+ Shift · Monday' : '+ Turno · Lunes' })
+      .click();
+    await p
+      .getByRole('button', { name: idioma === 'en' ? 'Save hours' : 'Guardar horario' })
+      .click();
+    await expect(p.getByText(idioma === 'en' ? 'Hours saved.' : 'Horario guardado.')).toBeVisible();
+    await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', `restapp-horario-${idioma}.png`) });
+    const hor = await request.get('/datos/mi-restaurante', {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(
+      ((await hor.json()) as { restaurante: { horarios: unknown[] } }).restaurante.horarios,
+    ).toEqual([{ dia: 1, abre: '09:00', cierra: '22:00' }]);
+    await p.getByRole('button', { name: idioma === 'en' ? 'Back' : 'Volver' }).click();
+    await p.getByTestId('mas-resenas').click();
+    await expect(p.getByTestId('app-resenas')).toBeVisible({ timeout: 20_000 });
+    await expect(
+      p.getByText(idioma === 'en' ? 'You don’t have reviews yet.' : 'Todavía no tienes reseñas.'),
+    ).toBeVisible();
     await ctx.close();
   });

@@ -51,6 +51,8 @@ import {
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
 import { Mas } from './Mas';
+import { Resenas } from './Resenas';
+import { Horario } from './Horario';
 import type { Pestana } from './piezas/recursos';
 import { textosRest } from './piezas/textos';
 import {
@@ -302,6 +304,8 @@ export function Inicio() {
   const { width } = useWindowDimensions();
   const ancha = width >= 768;
   const [vista, setVista] = useState<Pestana>('inicio');
+  // C-APP-RESTAURANTE-PAR: pantalla abierta desde «Más» (reseñas u horario).
+  const [pantallaMas, setPantallaMas] = useState<'resenas' | 'horario' | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<'todos' | 'preparando' | 'listos' | 'completados'>('todos');
   const [platos, setPlatos] = useState<Plato[]>([]);
@@ -1163,7 +1167,19 @@ export function Inicio() {
   );
 
   // ---------- Más ----------
-  const vistaMas = <Mas titulo={tr.mas} textoSalir={tm.salir} salir={() => void salir()} />;
+  const vistaMas =
+    pantallaMas === 'resenas' ? (
+      <Resenas alVolver={() => setPantallaMas(null)} />
+    ) : pantallaMas === 'horario' ? (
+      <Horario alVolver={() => setPantallaMas(null)} />
+    ) : (
+      <Mas
+        titulo={tr.mas}
+        textoSalir={tm.salir}
+        salir={() => void salir()}
+        abrirPantalla={setPantallaMas}
+      />
+    );
 
   const cuerpo = detalle ? (
     vistaDetalle(detalle)
@@ -1225,6 +1241,7 @@ export function Inicio() {
         aviso={nuevos.length}
         alTocar={(p) => {
           setDetalleId(null);
+          setPantallaMas(null);
           setVista(p);
         }}
       />

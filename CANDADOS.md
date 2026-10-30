@@ -1926,3 +1926,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** menús por horario (estudio E1, pág. 3; DoorDash y Uber Eats): franja diaria por categoría en `horarios_categoria`, editada en el panel (`HorariosMenu.tsx`, `PUT /datos/mi-restaurante/horarios-categoria`). Fuera de su franja, la ficha pública no muestra esos platos y devuelve `fueraDeHorario` (la app dice cuándo se sirven); `lineasDeRestaurante` rechaza pedirlos (con la hora de la franja si el pedido es programado). Regla única: `categoriaEnHorario` (compartido).
 - **Candados:** `catalogo.test.ts` («menús por horario») y `HorariosMenu.test.tsx`. Guía: Docs → «Horarios del menú».
+
+## C-APP-RESTAURANTE-PAR (30 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash Merchant y Uber Eats Manager, la app del restaurante hace en el celular lo que antes solo hacía el panel: «Horario y cierres» (`apps/restaurante/src/Horario.tsx`: turnos por día y festivos) y «Reseñas» (`Resenas.tsx`: lista y respuesta pública, con borrador). Se abren desde «Más» (`pantalla` en `opcionesMasRestaurante`).
+- **Pendiente honesto:** las opciones y extras de los platos se editan todavía en el panel web.
+- **Candados:** `masRestaurante.test.ts` y `e2e/recorrido/masRestaurante.spec.ts` (guarda un turno y lo comprueba en el servidor; abre reseñas). Capturas: `docs/capturas/restapp-horario-*.png`.

@@ -6,6 +6,7 @@ describe('C-MAS-RESTAURANTE: la pestaña «Más» de la app del restaurante', ()
     const ids = opcionesMasRestaurante('es').flatMap((g) => g.opciones.map((o) => o.id));
     expect(ids).toEqual([
       'restaurante',
+      'horario',
       'ganancias',
       'resenas',
       'equipo',
@@ -14,6 +15,12 @@ describe('C-MAS-RESTAURANTE: la pestaña «Más» de la app del restaurante', ()
       'soporte',
       'legales',
     ]);
+  });
+
+  it('reseñas y horario se abren dentro de la app (C-APP-RESTAURANTE-PAR)', () => {
+    const todas = opcionesMasRestaurante('es').flatMap((g) => g.opciones);
+    expect(todas.find((o) => o.id === 'resenas')).toMatchObject({ pantalla: 'resenas' });
+    expect(todas.find((o) => o.id === 'horario')).toMatchObject({ pantalla: 'horario' });
   });
 
   it('cada opción va a una página que existe y nunca a una dirección interna', () => {

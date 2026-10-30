@@ -10,15 +10,18 @@ export type OpcionMas = {
   id: string;
   titulo: string;
   ayuda: string;
-  /** Página del sitio que abre; sin destino, la app decide (soporte por WhatsApp). */
+  /** Página del sitio que abre; sin destino ni pantalla, soporte por WhatsApp. */
   destino?: string;
+  /** C-APP-RESTAURANTE-PAR: pantalla de la propia app (sin salir al panel web). */
+  pantalla?: 'resenas' | 'horario';
 };
 
 const T = {
   es: {
     local: 'Tu restaurante',
     ayudaGrupo: 'Ayuda',
-    restaurante: ['Datos y horario', 'Nombre, dirección, fotos y horas de atención'],
+    restaurante: ['Datos del restaurante', 'Nombre, dirección, fotos y cobros'],
+    horario: ['Horario y cierres', 'Horas de cada día, festivos y vacaciones'],
     ganancias: ['Ganancias', 'Ventas, depósitos y tu cuenta para cobrar'],
     resenas: ['Reseñas', 'Lo que dicen tus clientes y tus respuestas'],
     equipo: ['Equipo', 'Personas que pueden manejar tu restaurante'],
@@ -30,7 +33,8 @@ const T = {
   en: {
     local: 'Your restaurant',
     ayudaGrupo: 'Help',
-    restaurante: ['Store info and hours', 'Name, address, photos and opening hours'],
+    restaurante: ['Store info', 'Name, address, photos and payouts'],
+    horario: ['Hours and closures', 'Hours for each day, holidays and time off'],
     ganancias: ['Earnings', 'Sales, payouts and your payout account'],
     resenas: ['Reviews', 'What your customers say and your replies'],
     equipo: ['Team', 'People who can manage your restaurant'],
@@ -48,6 +52,7 @@ export function opcionesMasRestaurante(
   const pre = idioma === 'en' ? '' : '/es';
   const textos = new Map<string, readonly [string, string]>([
     ['restaurante', t.restaurante],
+    ['horario', t.horario],
     ['ganancias', t.ganancias],
     ['resenas', t.resenas],
     ['equipo', t.equipo],
@@ -56,17 +61,24 @@ export function opcionesMasRestaurante(
     ['soporte', t.soporte],
     ['legales', t.legales],
   ]);
-  const o = (id: string, destino?: string): OpcionMas => {
+  const o = (id: string, destino?: string, pantalla?: OpcionMas['pantalla']): OpcionMas => {
     const [titulo, ayuda] = textos.get(id) ?? [id, id];
-    return destino ? { id, titulo, ayuda, destino } : { id, titulo, ayuda };
+    return {
+      id,
+      titulo,
+      ayuda,
+      ...(destino ? { destino } : {}),
+      ...(pantalla ? { pantalla } : {}),
+    };
   };
   return [
     {
       titulo: t.local,
       opciones: [
         o('restaurante', '/panel/restaurant'),
+        o('horario', undefined, 'horario'),
         o('ganancias', '/panel/earnings'),
-        o('resenas', '/panel/reviews'),
+        o('resenas', undefined, 'resenas'),
         o('equipo', '/panel/team'),
         o('configuracion', '/panel/settings'),
       ],

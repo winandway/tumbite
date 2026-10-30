@@ -1082,7 +1082,10 @@ const es: SeccionDocs[] = [
           },
         ],
         preguntas: ['¿Dónde veo mis reseñas?', '¿Puedo responder a un cliente?'],
-        pasos: ['Menú del panel → Reseñas.', 'Toca «Responder» en la reseña y publica.'],
+        pasos: [
+          'Menú del panel → Reseñas, o en la app del restaurante: Más → Reseñas.',
+          'Toca «Responder» en la reseña (o escribe tu respuesta en la app) y publica.',
+        ],
       },
       {
         id: 'auto-accept',
@@ -4553,7 +4556,10 @@ const en: SeccionDocs[] = [
           },
         ],
         preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
-        pasos: ['Panel menu → Reviews.', 'Tap “Reply” on the review and publish.'],
+        pasos: [
+          'Panel menu → Reviews, or in the restaurant app: More → Reviews.',
+          'Tap “Reply” on the review (or type your reply in the app) and publish.',
+        ],
       },
       {
         id: 'auto-accept',

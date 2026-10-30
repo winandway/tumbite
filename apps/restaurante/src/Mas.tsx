@@ -11,15 +11,22 @@ export function Mas({
   titulo,
   textoSalir,
   salir,
+  abrirPantalla,
 }: {
   titulo: string;
   textoSalir: string;
   salir: () => void;
+  /** C-APP-RESTAURANTE-PAR: reseñas y horario se abren dentro de la app. */
+  abrirPantalla: (p: 'resenas' | 'horario') => void;
 }) {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
-  const abrir = (destino?: string) =>
-    destino ? void Linking.openURL(`${URL_SERVIDOR}${destino}`) : void abrirWhatsapp();
+  const abrir = (o: { destino?: string; pantalla?: 'resenas' | 'horario' }) =>
+    o.pantalla
+      ? abrirPantalla(o.pantalla)
+      : o.destino
+        ? void Linking.openURL(`${URL_SERVIDOR}${o.destino}`)
+        : void abrirWhatsapp();
 
   return (
     <View>
@@ -36,14 +43,14 @@ export function Mas({
           </Text>
           <Tarjeta style={{ padding: 0 }}>
             {g.opciones
-              .filter((o) => o.destino || whatsapp)
+              .filter((o) => o.destino || o.pantalla || whatsapp)
               .map((o, i) => (
                 <Pressable
                   key={o.id}
                   testID={`mas-${o.id}`}
                   accessibilityRole="link"
                   accessibilityLabel={o.titulo}
-                  onPress={() => abrir(o.destino)}
+                  onPress={() => abrir(o)}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
