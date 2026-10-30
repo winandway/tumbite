@@ -2911,3 +2911,20 @@ CREATE TABLE IF NOT EXISTS verificaciones_auto (
   creada_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS verificaciones_auto_usuario ON verificaciones_auto(usuario_id, creada_en);
+
+-- C-CORREO-ENTREGA: enlace propio de la foto de una entrega para el correo al cliente (vence a los 7 días).
+CREATE TABLE IF NOT EXISTS fotos_entrega_publicas (
+  token TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS fotos_entrega_publicas_pedido ON fotos_entrega_publicas(pedido_id);
+
+-- C-MENU-HORARIO: franja diaria de una categoría del menú (desayuno de 07:00 a 11:00).
+CREATE TABLE IF NOT EXISTS horarios_categoria (
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  categoria TEXT NOT NULL,
+  abre TEXT NOT NULL,
+  cierra TEXT NOT NULL,
+  PRIMARY KEY (restaurante_id, categoria)
+);
