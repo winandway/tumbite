@@ -2,6 +2,7 @@
 export const TEXTOS_MOTO = {
   es: {
     titulo: 'Moto',
+    tituloCarro: 'Carro',
     pedirMoto: 'Pedir Moto',
     recogida: 'Punto de recogida',
     recogidaAyuda: 'Dónde te recoge el conductor',
@@ -64,6 +65,7 @@ export const TEXTOS_MOTO = {
   },
   en: {
     titulo: 'Moto',
+    tituloCarro: 'Car',
     pedirMoto: 'Request Moto',
     recogida: 'Pickup point',
     recogidaAyuda: 'Where your driver picks you up',

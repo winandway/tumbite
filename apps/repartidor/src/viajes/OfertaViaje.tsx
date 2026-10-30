@@ -16,6 +16,8 @@ export type OfertaViaje = {
   viajeM: number | null;
   viajeS: number | null;
   metodoPago: string;
+  /** C-CARRO-PRUEBAS: «moto» o «carro». */
+  servicioId?: string;
 };
 
 const distancia = (m: number, i: Idioma) =>
@@ -66,7 +68,9 @@ export function OfertaViajeModal({
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 16 }}>{t.titulo}</Text>
+            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 16 }}>
+              {oferta.servicioId === 'carro' ? t.tituloCarro : t.titulo}
+            </Text>
             <View
               accessibilityRole="timer"
               accessibilityLabel={`${quedan} ${t.segundos}`}

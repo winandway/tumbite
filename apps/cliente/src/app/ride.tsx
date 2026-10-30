@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { enIdioma } from '@tumbite/compartido';
 import { useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
@@ -21,6 +21,9 @@ export default function PantallaMoto() {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
+  // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
+  const servicio =
+    useLocalSearchParams<{ servicio?: string }>().servicio === 'carro' ? 'carro' : 'moto';
   const [viaje, setViaje] = useState<ViajePasajero | null>(null);
   const [viajeId, setViajeId] = useState<string | null>(null);
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
@@ -67,7 +70,7 @@ export default function PantallaMoto() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
       <Encabezado
-        titulo={t.titulo}
+        titulo={servicio === 'carro' ? t.tituloCarro : t.titulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         etiquetaVolver={tc.volver}
       />
@@ -95,7 +98,11 @@ export default function PantallaMoto() {
           />
         ) : (
           <>
-            <PedirMoto deudaPendiente={deuda} alPedir={(id) => setViajeId(id)} />
+            <PedirMoto
+              servicio={servicio}
+              deudaPendiente={deuda}
+              alPedir={(id) => setViajeId(id)}
+            />
             <ContactosConfianza />
           </>
         )}

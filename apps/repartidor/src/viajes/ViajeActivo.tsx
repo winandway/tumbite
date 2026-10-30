@@ -17,6 +17,8 @@ type Api = {
 export type ViajeConductor = {
   id: string;
   estado: 'asignado' | 'conductor_llego' | 'en_curso' | string;
+  /** «moto» o «carro»: el casco solo se confirma en Moto. */
+  servicio_id?: string;
   origen_direccion: string;
   destino_direccion: string;
   origen_lat: number;
@@ -70,7 +72,10 @@ export function ViajeActivo({
 }) {
   const t = enIdioma(TEXTOS_VIAJE, idioma).activo;
   const [pin, setPin] = useState('');
-  const [casco, setCasco] = useState(false);
+  const [cascoMarcado, setCasco] = useState(false);
+  // C-CARRO-PRUEBAS: en Carro no hay casco que confirmar.
+  const enMoto = viaje.servicio_id !== 'carro';
+  const casco = cascoMarcado || !enMoto;
   // C-MOTO-CIUDAD: en las ciudades (u horas) sin código, no se pide.
   const conCodigo = viaje.pin_requerido !== 0;
   const [error, setError] = useState('');
@@ -221,16 +226,20 @@ export function ViajeActivo({
               {quedaGratis > 0 ? reloj(quedaGratis) : reloj(esperando)}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Switch
-              value={casco}
-              onValueChange={setCasco}
-              accessibilityLabel={t.casco}
-              testID="viaje-casco"
-            />
-            <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>{t.casco}</Text>
-          </View>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.cascoAviso}</Text>
+          {enMoto ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Switch
+                  value={cascoMarcado}
+                  onValueChange={setCasco}
+                  accessibilityLabel={t.casco}
+                  testID="viaje-casco"
+                />
+                <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>{t.casco}</Text>
+              </View>
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.cascoAviso}</Text>
+            </>
+          ) : null}
           {conCodigo ? (
             <>
               <Text style={{ fontWeight: '800', color: C.secundario }}>{t.codigo}</Text>

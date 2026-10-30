@@ -3,6 +3,7 @@ export const TEXTOS_VIAJE = {
   es: {
     oferta: {
       titulo: 'Nuevo viaje en Moto',
+      tituloCarro: 'Nuevo viaje en Carro',
       ganas: 'Ganas',
       recogida: 'hasta la recogida',
       viaje: 'de viaje',
@@ -46,6 +47,7 @@ export const TEXTOS_VIAJE = {
   en: {
     oferta: {
       titulo: 'New Moto ride',
+      tituloCarro: 'New Car ride',
       ganas: 'You earn',
       recogida: 'to pickup',
       viaje: 'trip',

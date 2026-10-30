@@ -13,6 +13,7 @@ export async function conductorDeMoto(
   m: Mundo,
   donde: { lat: number; lng: number },
   zona = 'US-FL-MIAMI',
+  servicio: 'moto' | 'carro' = 'moto',
 ) {
   const q = (sql: string, ...v: unknown[]) =>
     m.DB.prepare(sql)
@@ -21,7 +22,7 @@ export async function conductorDeMoto(
   const c = await m.cuenta('repartidor', 'Conductor Moto');
   const admin = await m.cuenta('admin', 'Soporte Revisión');
   const v = id('veh');
-  await q("DELETE FROM servicio_requisitos WHERE servicio_id = 'moto'");
+  await q('DELETE FROM servicio_requisitos WHERE servicio_id = ?', servicio);
   await q(
     "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES (?, 1, ?, ?, datetime('now'), ?) ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en",
     c.id,
@@ -30,10 +31,14 @@ export async function conductorDeMoto(
     zona,
   );
   await q(
-    "INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, estado) VALUES (?, ?, 'moto', 'Yamaha', 'NMAX', 'Negro', ?, 'FL', 2022, 'aprobado')",
+    "INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado) VALUES (?, ?, ?, ?, ?, 'Negro', ?, 'FL', 2022, ?, 'aprobado')",
     v,
     c.id,
+    servicio,
+    servicio === 'carro' ? 'Toyota' : 'Yamaha',
+    servicio === 'carro' ? 'Corolla' : 'NMAX',
     `M${seq}${Math.floor(Math.random() * 1e6)}`,
+    servicio === 'carro' ? 4 : 1,
   );
   for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
     await q(
@@ -44,13 +49,15 @@ export async function conductorDeMoto(
     );
   await q('UPDATE repartidores SET vehiculo_activo_id = ? WHERE usuario_id = ?', v, c.id);
   await q(
-    "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES (?, 'moto', 'aprobada', ?, datetime('now'))",
+    "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES (?, ?, 'aprobada', ?, datetime('now'))",
     c.id,
+    servicio,
     admin.id,
   );
   await q(
-    "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'moto', 1)",
+    'INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, ?, 1)',
     c.id,
+    servicio,
   );
   /** Un paso del conductor con su clave de idempotencia (la app manda una nueva por acción). */
   let n = 0;

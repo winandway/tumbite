@@ -36,14 +36,17 @@ const distancia = (m: number, i: Idioma) =>
 export function PedirMoto({
   deudaPendiente,
   alPedir,
+  servicio = 'moto',
 }: {
+  /** C-CARRO-PRUEBAS: el mismo formulario pide Moto o Carro. */
+  servicio?: 'moto' | 'carro';
   deudaPendiente: { monto: number; moneda: string | null } | null;
   alPedir: (viajeId: string) => void;
 }) {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const b = useBorrador({
-    formulario: 'moto',
+    formulario: servicio,
     cuenta: usuario?.id,
     inicial: {
       recogida: '',
@@ -94,7 +97,7 @@ export function PedirMoto({
     setTrabajando(true);
     try {
       const r = await api.pedir<{ cotizacion: CotizacionViaje }>('POST', '/datos/viajes/cotizar', {
-        servicio: 'moto',
+        servicio,
         origen: { ...recogida, direccion: v.recogida.trim() || t.recogida },
         destino: { ...destino, direccion: v.destino.trim() },
       });
@@ -105,7 +108,7 @@ export function PedirMoto({
     } finally {
       setTrabajando(false);
     }
-  }, [api, recogida, destino, v.recogida, v.destino, t]);
+  }, [api, recogida, destino, v.recogida, v.destino, t, servicio]);
 
   // Volver a cotizar sola 20 segundos antes de que venza el precio.
   const cotizarRef = useRef(cotizar);

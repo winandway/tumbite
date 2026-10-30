@@ -1818,3 +1818,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Las guías públicas de Moto (pasajero: pedir, pagar/cancelar/propina, seguridad; conductor: conducir, descanso y seguridad) están escritas en español e inglés en `apps/panel/src/sitio/docs/borradores/moto.ts`, FUERA de `DOCS`.
 - **Para publicarlas** el día que Richard encienda Moto: agregar `BORRADORES_MOTO[idioma].pasajero` a la sección «ordering» y `.conductor` a «drivers» en `guias.ts`, tomar las capturas reales y quitar la prueba de «todavía no están publicadas».
 - **Prueba:** `borradores.test.tsx` (completas en los dos idiomas, sin publicar, sin nada interno).
+
+## C-CARRO-PRUEBAS (30 oct 2026) — todos los países (solo en pruebas)
+
+- Ficha REA: `docs/investigaciones-rea/2026-10-30-carro.md` (Uber «Ride options» y «Driver requirements» como visitante).
+- Carro va sobre el motor de Moto: `SERVICIOS_EN_PRUEBA` incluye «carro» (en producción no existe). Requisitos del conductor ya cargados (identidad, antecedentes, historial de manejo, licencia, 21 años, seguro de pasajeros, inspección). El despacho solo ofrece el viaje a quien está habilitado para Carro con un carro aprobado.
+- App del pasajero: la pantalla de viajes recibe `servicio=carro` (desde la pantalla del servicio). Driver: la oferta dice «Nuevo viaje en Carro» y en Carro no se confirma casco.
+- **Prueba:** `apps/servidor/src/rutas/carro.test.ts` (producción apagada; viaje completo en pruebas; el conductor de moto no lo recibe). La ayuda `conductorDeMoto(m, donde, zona, 'carro')` arma un conductor de carro.
+- **Falta (siguiente punto):** Carro grande (XL, 6 plazas) con su tarifa.

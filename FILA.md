@@ -50,8 +50,9 @@
 
 ### Etapa 4 — Carro
 
-- [ ] (14) Ficha REA de Carro: Uber y DiDi por su documentación y web pública, y apps de transporte de código abierto con licencia que lo permita. Todos los países.
-- [ ] (15) Carro sobre el motor de Moto, solo en pruebas: requisitos del conductor, tipos de carro, tarifa, oferta y viaje de punta a punta en cada publicación. Todos los países.
+- [x] (docs/investigaciones-rea/2026-10-30-carro.md) (14) Ficha REA de Carro: Uber y DiDi por su documentación y web pública, y apps de transporte de código abierto con licencia que lo permita. Todos los países.
+- [x] (C-CARRO-PRUEBAS; XL queda en 15b) (15) Carro sobre el motor de Moto, solo en pruebas: requisitos del conductor, tipos de carro, tarifa, oferta y viaje de punta a punta en cada publicación. Todos los países.
+- [ ] (15b) Carro grande (XL, 6 plazas o más): tipo de viaje con su tarifa por ciudad, solo a conductores con carro de 6 plazas. Todos los países, solo en pruebas.
 
 ### Etapa 5 — Envíos de persona a persona
 

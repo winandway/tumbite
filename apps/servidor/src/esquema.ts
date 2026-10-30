@@ -241,6 +241,8 @@ export const SERVICIOS_IMPLEMENTADOS = new Map<string, number>([['comida', 1]]);
  */
 export const SERVICIOS_EN_PRUEBA = new Map<string, number>([
   ['moto', 1],
+  // Carro (30 oct 2026): sobre el motor de Moto, solo en pruebas hasta que Richard decida país y seguro.
+  ['carro', 1],
   // Tiendas (C-TIENDAS-VITRINA, 28 oct 2026): solo en pruebas hasta que Richard abra cada país.
   ['mercado', 1],
   ['farmacia', 1],
