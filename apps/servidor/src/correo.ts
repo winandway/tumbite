@@ -52,6 +52,8 @@ export type Correo = {
   responderA?: string;
   /** Idioma de los botones y del pie. Sin él se deduce del texto. */
   idioma?: 'es' | 'en';
+  /** Una foto debajo del primer párrafo (C-CORREO-ENTREGA: la foto de la entrega). */
+  imagen?: { url: string; alt: string };
 };
 
 export type ResultadoCorreo =
@@ -95,7 +97,7 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     to: [{ address: correo.para }],
     subject: correo.asunto,
     text: correo.texto,
-    html: correo.html ?? aHtml(correo.texto, correo.idioma),
+    html: correo.html ?? aHtml(correo.texto, correo.idioma, correo.imagen),
     ...(correo.responderA ? { reply_to: { address: correo.responderA } } : {}),
   };
   let res: Response;
@@ -174,7 +176,11 @@ function esDetalle(lineas: string[]): boolean {
  * botón no se ve), los detalles en tabla y un pie con la empresa y el soporte. Sin franjas gruesas de
  * color ni adornos: borde fino y sombra suave, como en la web.
  */
-export function aHtml(texto: string, idioma?: 'es' | 'en'): string {
+export function aHtml(
+  texto: string,
+  idioma?: 'es' | 'en',
+  imagen?: { url: string; alt: string },
+): string {
   const limpio = texto.trim();
   const en = idioma ? idioma === 'en' : !pareceEspanol(limpio);
   const boton = (crudo: string) => {
@@ -215,6 +221,12 @@ export function aHtml(texto: string, idioma?: 'es' | 'en'): string {
     }
     return html + parrafo(texto);
   });
+  if (imagen && parrafos.length)
+    parrafos.splice(
+      1,
+      0,
+      `<img src="${escapar(imagen.url)}" alt="${escapar(imagen.alt)}" width="500" style="display:block;width:100%;max-width:500px;height:auto;border:0;border-radius:10px;margin:0 0 18px">`,
+    );
   const pie = en
     ? `Need help? <a href="https://${DOMINIO_PUBLICO}/support" style="color:#101010">${DOMINIO_PUBLICO}/support</a>`
     : `¿Necesitas ayuda? <a href="https://${DOMINIO_PUBLICO}/es/support" style="color:#101010">${DOMINIO_PUBLICO}/support</a>`;

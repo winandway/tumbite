@@ -21,6 +21,7 @@ import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { volverPlatosAgotados } from './catalogo';
+import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
@@ -2095,6 +2096,10 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     console.error('entrega: el cobro queda para el reloj', id, e),
   );
   await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
+  // C-CORREO-ENTREGA: el correo con la foto; si falla, la entrega ya quedó (queda en el canario).
+  await correoDeEntrega(c.env, db, id).catch((e: unknown) =>
+    console.error('correo de entrega', id, e),
+  );
   // Fase 2 · cobro directo: si el cobro ya estaba confirmado, la conciliación cierra aquí.
   await conciliarPedidoDirecto(db, id).catch((e: unknown) =>
     console.error('conciliación directa', e),
@@ -2761,6 +2766,31 @@ operacion.post('/pedidos/:id/mensajes', async (c) => {
 });
 
 /** La foto de la recogida, de la entrega o del ticket: el cliente, el restaurante (dueño y su equipo), el repartidor y soporte. */
+/**
+ * C-CORREO-ENTREGA: la foto de una entrega por su enlace propio (el del correo), sin sesión. Vence
+ * a los 7 días; un enlace inventado o vencido da «no encontrado».
+ */
+operacion.get('/entregas/foto/:token', async (c) => {
+  const token = c.req.param('token');
+  if (!/^[A-Za-z0-9_-]{32,64}$/.test(token) || !c.env.BUCKET) return c.text('No encontrado', 404);
+  const f = await base(c)
+    .prepare(
+      `SELECT e.clave FROM fotos_entrega_publicas t JOIN evidencias e ON e.pedido_id = t.pedido_id AND e.tipo = 'entrega'
+        WHERE t.token = ? AND t.creado_en > datetime('now', ?) AND e.clave <> ''`,
+    )
+    .bind(token, `-${DIAS_FOTO_ENTREGA} days`)
+    .first<{ clave: string }>();
+  if (!f) return c.text('No encontrado', 404);
+  const obj = await c.env.BUCKET.get(f.clave);
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, max-age=3600');
+  headers.set('x-content-type-options', 'nosniff');
+  headers.set('x-robots-tag', 'noindex, nofollow');
+  return new Response(obj.body, { headers });
+});
+
 operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
   const u = exigir(c);
   const tipo = c.req.param('tipo');

@@ -1867,5 +1867,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "similitud",
     "parecidas_json",
     "creada_en"
+  ],
+  "fotos_entrega_publicas": [
+    "token",
+    "pedido_id",
+    "creado_en"
   ]
 };

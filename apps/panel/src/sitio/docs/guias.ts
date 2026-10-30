@@ -2638,6 +2638,7 @@ const es: SeccionDocs[] = [
           'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a menos de 200 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
           'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
           'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
+          'Al entregar, al cliente también le llega un correo con la foto de la entrega y el enlace para calificar. Ese enlace de la foto es solo de su pedido y deja de funcionar a los 7 días.',
         ],
         capturas: [
           {
@@ -6059,6 +6060,7 @@ const en: SeccionDocs[] = [
           'On the way, the green “Directions” button guides the driver. At the door (within 200 meters of the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
           'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
           'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
+          'When the order is delivered, the customer also gets an email with the delivery photo and a link to rate it. That photo link belongs to their order only and stops working after 7 days.',
         ],
         capturas: [
           {

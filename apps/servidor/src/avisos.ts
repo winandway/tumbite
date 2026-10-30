@@ -248,3 +248,64 @@ export async function avisoEmergenciaViaje(
       texto,
     });
 }
+
+/** Días que vale el enlace de la foto de una entrega (C-CORREO-ENTREGA). */
+export const DIAS_FOTO_ENTREGA = 7;
+
+/**
+ * C-CORREO-ENTREGA (como DoorDash): al entregar, correo al cliente con la foto de la entrega. La
+ * foto es privada: va con un enlace propio de esa entrega, imposible de adivinar, que vence a los
+ * 7 días. Si fue en mano (sin foto), el correo sale igual, sin imagen.
+ */
+export async function correoDeEntrega(env: Env, db: D1Database, pedidoId: string) {
+  const f = await db
+    .prepare(
+      `SELECT c.correo, c.nombre, c.idioma, r.nombre AS restaurante, p.direccion,
+        (SELECT e.clave FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '') AS foto
+       FROM pedidos p JOIN usuarios c ON c.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
+       WHERE p.id = ? AND p.estado = 'entregado'`,
+    )
+    .bind(pedidoId)
+    .first<{
+      correo: string;
+      nombre: string;
+      idioma: string;
+      restaurante: string;
+      direccion: string;
+      foto: string | null;
+    }>();
+  if (!f) return null;
+  const d: Idioma = f.idioma === 'en' ? 'en' : 'es';
+  let imagen: { url: string; alt: string } | undefined;
+  if (f.foto) {
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const token = btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    await db
+      .prepare('INSERT INTO fotos_entrega_publicas (token, pedido_id) VALUES (?, ?)')
+      .bind(token, pedidoId)
+      .run();
+    imagen = {
+      url: `${sitio(env)}/datos/entregas/foto/${token}`,
+      alt: d === 'en' ? 'Photo of your delivery' : 'Foto de tu entrega',
+    };
+  }
+  const corto = pedidoId.slice(0, 8).toUpperCase();
+  const asunto =
+    d === 'en' ? `Your Divoox order #${corto} was delivered` : `Tu pedido #${corto} fue entregado`;
+  const nombre = f.nombre.split(' ')[0];
+  const texto =
+    d === 'en'
+      ? `Hi ${nombre}, your order from ${f.restaurante} was delivered to ${f.direccion}.${imagen ? ' Here’s the photo your driver took:' : ''}\n\nRate your food and your driver, or let us know if something went wrong:\n\n${sitio(env)}/app/order/${pedidoId}`
+      : `Hola, ${nombre}. Tu pedido de ${f.restaurante} fue entregado en ${f.direccion}.${imagen ? ' Esta es la foto que tomó tu repartidor:' : ''}\n\nCalifica la comida y a tu repartidor, o avísanos si algo salió mal:\n\n${sitio(env)}/app/order/${pedidoId}`;
+  return enviarCorreo(env, {
+    de: 'pedidos',
+    para: f.correo,
+    asunto,
+    texto,
+    idioma: d,
+    ...(imagen ? { imagen } : {}),
+  });
+}

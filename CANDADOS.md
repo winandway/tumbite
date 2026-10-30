@@ -1899,3 +1899,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** como DoorDash Merchant, un plato se agota «por hoy» (vuelve solo) o «sin fecha». Columna `platos.agotado_hasta` (vía COLUMNAS) con la medianoche del restaurante en UTC (`limitesDelDia`); la tarea del reloj `platos_vuelven` (`volverPlatosAgotados`) los reactiva. Panel: «Agotado por hoy» en los tres puntos; app: «Agotado por hoy» y «Agotado sin fecha».
 - **Candados:** `catalogo.test.ts` («agotado por hoy») y `Menu.test.tsx` (en rojo sin el cambio). Guía: Docs → «Marcar un plato como agotado».
+
+## C-CORREO-ENTREGA (30 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash, al entregar le llega al cliente un correo con la foto de la entrega y el enlace para calificar (`correoDeEntrega` en `apps/servidor/src/avisos.ts`, llamado después de la entrega; si el correo falla, la entrega ya quedó).
+- **Privacidad:** la foto sigue privada; el correo usa un enlace propio (`fotos_entrega_publicas`, ficha de 32 letras al azar) servido por `GET /datos/entregas/foto/:token`, que vence a los 7 días (`DIAS_FOTO_ENTREGA`) y no se indexa. Entrega en mano (sin foto): correo sin imagen.
+- **Candado:** `apps/servidor/src/correoEntrega.test.ts` (imagen en el correo, enlace sin sesión, inventado y vencido dan 404).
