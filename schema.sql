@@ -2928,28 +2928,3 @@ CREATE TABLE IF NOT EXISTS horarios_categoria (
   cierra TEXT NOT NULL,
   PRIMARY KEY (restaurante_id, categoria)
 );
-
--- C-PILOTO (30 oct 2026): participantes autorizados del piloto en producción controlada y su registro.
--- Sin claves foráneas a usuarios: una fila del piloto nunca traba el borrado de un usuario de prueba.
-CREATE TABLE IF NOT EXISTS piloto_participantes (
-  usuario_id TEXT PRIMARY KEY,
-  nota TEXT NOT NULL DEFAULT '',
-  agregado_por TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE TABLE IF NOT EXISTS piloto_eventos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  usuario_id TEXT NOT NULL,
-  accion TEXT NOT NULL,
-  autor_id TEXT,
-  nota TEXT NOT NULL DEFAULT '',
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS piloto_eventos_fecha ON piloto_eventos(creado_en);
--- C-PILOTO-SERVICIOS: un servicio encendido «solo piloto» en una ciudad (el público lo sigue viendo «muy pronto»).
-CREATE TABLE IF NOT EXISTS servicios_piloto (
-  servicio_id TEXT NOT NULL,
-  zona_id TEXT NOT NULL,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (servicio_id, zona_id)
-);
