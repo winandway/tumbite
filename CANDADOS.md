@@ -1989,3 +1989,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** Superadmin → «Rewards» cambia sin publicar: umbrales de Plata, Oro y Diamante (en orden, si no 400), porcentaje del margen (0 a 50), tope por premio, entregas por hito y presupuesto por ciudad y mes (`rewards_presupuesto`). Se guardan en `config.rewards_ajustes`; el cálculo diario y «Mi nivel» los leen (`leerAjustes`). Arranca con porcentaje 0 y sin presupuesto: nada se paga hasta que el equipo los fije.
 - **Candado:** `sombra.test.ts` (los umbrales nuevos cambian el nivel; el presupuesto se guarda; fuera de orden se rechaza), `reputacion.test.ts` (umbrales ajustables) y `SuperRewards.test.tsx` (el formulario manda los valores en centavos).
+
+## C-REWARDS-PRIORIDAD (30 oct 2026) — todos los países
+
+- **Qué es:** al ofrecer un pedido, dentro del mismo tramo de medio kilómetro, el repartidor de mejor nivel de reputación recibe primero (como Platinum de DoorDash). Va después del turno reservado y antes del destacado; nunca salta la distancia. Apagada por defecto: se enciende en Superadmin → Rewards (`prioridadDespacho`). Solo cuenta el nivel de los participantes del piloto (`nivel_rep` en `libresEn`).
+- **Candado:** `prioridadNivel.test.ts` (apagada = orden de siempre; encendida = gana el nivel dentro del tramo; el turno sigue primero).

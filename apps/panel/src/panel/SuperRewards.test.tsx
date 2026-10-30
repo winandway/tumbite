@@ -43,6 +43,7 @@ describe('C-REWARDS-AJUSTES en el panel', () => {
         porcentajeMargen: 15,
         topePremioCentavos: 5000,
         hitoUnidades: 100,
+        prioridadDespacho: false,
         presupuesto: { zona: 'US-FL-MIAMI', centavos: 20000 },
       }),
     );

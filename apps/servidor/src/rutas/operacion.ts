@@ -21,7 +21,7 @@ import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { volverPlatosAgotados } from './catalogo';
-import { correrSombra, reputacionVisible } from '../rewards/sombra';
+import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
@@ -1186,7 +1186,36 @@ type Libre = {
   en_turno?: number;
   /** C-REPARTIDOR-DESTACADO */
   destacado?: number;
+  /** C-REWARDS-PRIORIDAD: nivel de reputación, solo de los participantes del piloto. */
+  nivel_rep?: string | null;
 };
+
+const RANGO_NIVEL = new Map([
+  ['diamante', 3],
+  ['oro', 2],
+  ['plata', 1],
+]);
+
+/**
+ * El orden de las ofertas: a igual tramo de distancia, primero quien está en su turno; después,
+ * con la prioridad de Rewards encendida, el de mejor nivel de reputación (C-REWARDS-PRIORIDAD,
+ * como Platinum de DoorDash); después el destacado y los puntos; al final, el más cerca.
+ */
+export function compararLibres(
+  a: Libre & { km: number },
+  b: Libre & { km: number },
+  prioridadNivel: boolean,
+): number {
+  const rango = (d: Libre) => (prioridadNivel ? (RANGO_NIVEL.get(d.nivel_rep ?? '') ?? 0) : 0);
+  return (
+    Math.floor(a.km * 2) - Math.floor(b.km * 2) ||
+    Number(b.en_turno ?? 0) - Number(a.en_turno ?? 0) ||
+    rango(b) - rango(a) ||
+    Number(b.destacado ?? 0) - Number(a.destacado ?? 0) ||
+    nivelDe(b.puntos).indice - nivelDe(a.puntos).indice ||
+    a.km - b.km
+  );
+}
 
 /** Repartidores libres de una zona (y, si se piden, solo de esas celdas del mapa). */
 async function conSaldoParaDirecto<T extends { id: string }>(
@@ -1204,6 +1233,9 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
   const { results } = await db
     .prepare(
       `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos, d.destacado,
+        CASE WHEN EXISTS (SELECT 1 FROM piloto_participantes pp WHERE pp.usuario_id = d.usuario_id)
+          THEN (SELECT rd.nivel_con_gracia FROM reputacion_diaria rd WHERE rd.repartidor_id = d.usuario_id
+                ORDER BY rd.fecha DESC LIMIT 1) END AS nivel_rep,
         EXISTS (SELECT 1 FROM turnos_repartidor t WHERE t.repartidor_id = d.usuario_id AND t.estado IN ('programado','activo')
           AND t.inicio <= datetime('now') AND t.fin > datetime('now')) AS en_turno
       FROM repartidores d
@@ -1293,6 +1325,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       min_franja: number | null;
     }>();
   if (!pendientes.length) return;
+  const prioridadNivel = (await leerAjustes(db)).prioridadDespacho;
   const ocupados = new Set<string>();
   for (const p of pendientes) {
     const { results: yaVistos } = await db
@@ -1317,16 +1350,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
               : 0,
         }))
         .filter((d) => d.km <= 15 && debeOfrecer(faltan, d.km))
-        .sort(
-          (a, b) =>
-            Math.floor(a.km * 2) - Math.floor(b.km * 2) ||
-            // C-TURNOS-REPARTIDOR: a igual distancia, primero quien está en su turno reservado.
-            Number(b.en_turno ?? 0) - Number(a.en_turno ?? 0) ||
-            // C-REPARTIDOR-DESTACADO: después, quien cumple los requisitos de destacado.
-            Number(b.destacado ?? 0) - Number(a.destacado ?? 0) ||
-            nivelDe(b.puntos).indice - nivelDe(a.puntos).indice ||
-            a.km - b.km,
-        );
+        // C-TURNOS-REPARTIDOR, C-REWARDS-PRIORIDAD y C-REPARTIDOR-DESTACADO, en ese orden.
+        .sort((a, b) => compararLibres(a, b, prioridadNivel));
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
     let candidatos = p.geohash

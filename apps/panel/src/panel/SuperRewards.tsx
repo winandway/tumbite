@@ -31,6 +31,7 @@ const T = {
     zona: 'Ciudad',
     mes: 'Mes (AAAA-MM)',
     monto: 'Monto (USD)',
+    prioridad: 'Prioridad de despacho por nivel (solo participantes del piloto)',
     guardar: 'Guardar ajustes',
     guardado: 'Ajustes guardados. Se aplican desde el próximo cálculo.',
     vigentes: 'Presupuestos guardados',
@@ -51,6 +52,7 @@ const T = {
     zona: 'City',
     mes: 'Month (YYYY-MM)',
     monto: 'Amount (USD)',
+    prioridad: 'Dispatch priority by level (pilot participants only)',
     guardar: 'Save settings',
     guardado: 'Settings saved. They apply from the next calculation.',
     vigentes: 'Saved budgets',
@@ -62,6 +64,7 @@ type Ajustes = {
   porcentajeMargen: number;
   topePremioCentavos: number;
   hitoUnidades: number;
+  prioridadDespacho?: boolean;
 };
 type Presupuesto = { zona: string; mes: string; programa: string; centavos: number };
 
@@ -82,6 +85,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
       porcentaje: '',
       tope: '',
       hito: '',
+      prioridad: '',
       zona: 'US-FL-MIAMI',
       mes: mesActual(),
       monto: '',
@@ -99,6 +103,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
           porcentaje: String(r.ajustes.porcentajeMargen),
           tope: String(r.ajustes.topePremioCentavos / 100),
           hito: String(r.ajustes.hitoUnidades),
+          prioridad: r.ajustes.prioridadDespacho ? 'si' : '',
           zona: 'US-FL-MIAMI',
           mes: mesActual(),
           monto: '',
@@ -120,6 +125,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
         porcentajeMargen: Number(v.porcentaje),
         topePremioCentavos: Math.round(Number(v.tope) * 100),
         hitoUnidades: Number(v.hito),
+        prioridadDespacho: v.prioridad === 'si',
         ...(v.monto.trim()
           ? {
               presupuesto: {
@@ -169,6 +175,14 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
         {campo('porcentaje', t.porcentaje)}
         {campo('tope', t.tope)}
         {campo('hito', t.hito)}
+        <label className="casilla">
+          <input
+            type="checkbox"
+            checked={b.valores.prioridad === 'si'}
+            onChange={(e) => b.cambiar('prioridad', e.target.checked ? 'si' : '')}
+          />
+          {t.prioridad}
+        </label>
         <h2>{t.presupuesto}</h2>
         {campo('zona', t.zona, 'text')}
         {campo('mes', t.mes, 'text')}

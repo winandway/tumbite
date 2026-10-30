@@ -50,12 +50,15 @@ export type AjustesRewards = {
   porcentajeMargen: number;
   topePremioCentavos: number;
   hitoUnidades: number;
+  /** C-REWARDS-PRIORIDAD: a igual distancia, el de mejor nivel recibe primero (solo piloto). */
+  prioridadDespacho: boolean;
 };
 export const AJUSTES_INICIALES: AjustesRewards = {
   umbrales: { ...UMBRALES },
   porcentajeMargen: 0,
   topePremioCentavos: 0,
   hitoUnidades: 100,
+  prioridadDespacho: false,
 };
 export async function leerAjustes(db: D1Database): Promise<AjustesRewards> {
   const f = await db

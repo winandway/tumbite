@@ -146,6 +146,7 @@ rewardsSombra.put('/admin/rewards/ajustes', async (c) => {
         porcentajeMargen: z.number().min(0).max(50),
         topePremioCentavos: z.number().int().min(0).max(1_000_000),
         hitoUnidades: z.number().int().min(10).max(10_000),
+        prioridadDespacho: z.boolean().default(false),
         presupuesto: z
           .object({
             zona: z.string().min(2).max(64),

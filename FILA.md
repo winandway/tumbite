@@ -18,7 +18,7 @@
 - [x] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
 - [x] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
 - [x] (R3) Panel de Rewards en el superadmin: umbrales, pesos, hitos, porcentaje del margen, presupuesto por ciudad y mes, encendido; sin publicar de nuevo. Todos los países.
-- [ ] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
+- [x] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
 - [ ] (R5) Premio variable: porcentaje configurable del margen de contribución real de las entregas que cuentan, con topes. Todos los países.
 - [ ] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
 - [ ] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
