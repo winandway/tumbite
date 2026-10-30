@@ -3,6 +3,8 @@ export const TEXTOS_MOTO = {
   es: {
     titulo: 'Moto',
     tituloCarro: 'Carro',
+    carroNormal: 'Carro',
+    carroXl: 'Carro XL (6 plazas)',
     pedirMoto: 'Pedir Moto',
     recogida: 'Punto de recogida',
     recogidaAyuda: 'Dónde te recoge el conductor',
@@ -66,6 +68,8 @@ export const TEXTOS_MOTO = {
   en: {
     titulo: 'Moto',
     tituloCarro: 'Car',
+    carroNormal: 'Car',
+    carroXl: 'Car XL (6 seats)',
     pedirMoto: 'Request Moto',
     recogida: 'Pickup point',
     recogidaAyuda: 'Where your driver picks you up',

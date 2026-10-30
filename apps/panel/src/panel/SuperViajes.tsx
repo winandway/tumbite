@@ -48,6 +48,9 @@ const T = {
     esperaGratis: 'Espera gratis (minutos)',
     cancelacionGratis: 'Cancelar gratis (minutos desde la asignación)',
     redondeo: 'Redondear a (unidad menor; 100 = de cien en cien)',
+    servicio: 'Servicio',
+    carro: 'Carro',
+    xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     motivo: 'Motivo del cambio',
     guardar: 'Guardar tarifa',
     guardada: 'Tarifa guardada. Las cotizaciones nuevas ya la usan.',
@@ -87,6 +90,9 @@ const T = {
     esperaGratis: 'Free waiting time (minutes)',
     cancelacionGratis: 'Free cancellation (minutes after assignment)',
     redondeo: 'Round to (minor unit; 100 = to the nearest hundred)',
+    servicio: 'Service',
+    carro: 'Car',
+    xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     motivo: 'Reason for the change',
     guardar: 'Save pricing',
     guardada: 'Pricing saved. New quotes use it now.',
@@ -136,6 +142,7 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
   const b = useBorrador({
     formulario: 'tarifa-moto',
     inicial: {
+      servicio: 'moto',
       zona: '',
       moneda: 'USD',
       base: '',
@@ -149,6 +156,7 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
       esperaGratis: '5',
       cancelacionGratis: '2',
       redondeo: '1',
+      xl: '',
       motivo: '',
     },
     almacen: almacenNavegador,
@@ -191,9 +199,12 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
     tarifa.esperaGratisS = Math.round(Number(v.esperaGratis) * 60);
     tarifa.cancelacionGratisS = Math.round(Number(v.cancelacionGratis) * 60);
     tarifa.redondeo = Math.max(1, Math.round(Number(v.redondeo) || 1));
+    // C-CARRO-XL: el factor del carro grande (solo Carro); vacío = la ciudad no ofrece XL.
+    const xl = Number(v.xl.replace(',', '.'));
+    if (xl >= 1) tarifa.xlPb = Math.round(xl * 10_000);
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
-        servicio: 'moto',
+        servicio: v.servicio === 'carro' ? 'carro' : 'moto',
         zona: v.zona.trim().toUpperCase(),
         tarifa,
         dePrueba: true,
@@ -324,6 +335,16 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
           empezar={() => void b.empezarDeNuevo()}
         />
         <label className="campo">
+          <span>{t.servicio}</span>
+          <select
+            value={b.valores.servicio}
+            onChange={(e) => b.cambiar('servicio', e.target.value)}
+          >
+            <option value="moto">Moto</option>
+            <option value="carro">{t.carro}</option>
+          </select>
+        </label>
+        <label className="campo">
           <span>{t.ciudad}</span>
           <input value={b.valores.zona} onChange={(e) => b.cambiar('zona', e.target.value)} />
         </label>
@@ -363,6 +384,14 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
             inputMode="numeric"
             value={b.valores.redondeo}
             onChange={(e) => b.cambiar('redondeo', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.xl}</span>
+          <input
+            inputMode="decimal"
+            value={b.valores.xl}
+            onChange={(e) => b.cambiar('xl', e.target.value)}
           />
         </label>
         <label className="campo">

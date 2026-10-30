@@ -42,6 +42,11 @@ export const esquemaTarifaViaje = z
      * también cubre el seguro del pasajero). No cuenta para el mínimo ni lleva recargo dinámico.
      */
     cargoFijo: monto.default(0),
+    /**
+     * Carro grande (XL, 6 plazas o más), como «Extra room» de Uber: su precio es el del carro normal por
+     * este factor (15 000 = × 1,5). Sin él, la ciudad no ofrece XL.
+     */
+    xlPb: z.number().int().min(10_000).max(30_000).optional(),
     /** Sin mapa de rutas: distancia por calle = línea recta × este factor (13 000 = × 1,3). [INF] */
     factorCallePb: z.number().int().min(10_000).max(20_000).default(13_000),
     /** Sin mapa de rutas: velocidad media para estimar el tiempo, por ciudad. [INF] */
@@ -142,15 +147,36 @@ const punto = z.object({
 });
 export const esquemaCotizarViaje = z.object({
   servicio: z.enum(SERVICIOS_VIAJE),
+  /** C-CARRO-XL: «xl» = carro grande (solo en Carro). */
+  categoria: z.enum(['estandar', 'xl']).default('estandar'),
   origen: punto,
   destino: punto,
 });
+
+/** C-CARRO-XL: plazas mínimas del vehículo para un viaje XL. */
+export const PLAZAS_XL = 6;
+
+/** La tarifa del XL: los montos del recorrido por el factor de la ciudad (la espera y los cargos, iguales). */
+export function tarifaXl<
+  T extends { base: number; porKm: number; porMinuto: number; minimo: number; xlPb?: number },
+>(t: T): T | null {
+  if (!t.xlPb) return null;
+  const f = (n: number) => Math.round((n * (t.xlPb ?? 10_000)) / 10_000);
+  return {
+    ...t,
+    base: f(t.base),
+    porKm: f(t.porKm),
+    porMinuto: f(t.porMinuto),
+    minimo: f(t.minimo),
+  };
+}
 export type PedidoCotizacion = z.infer<typeof esquemaCotizarViaje>;
 
 /** Lo que devuelve POST /datos/viajes/cotizar. */
 export type CotizacionViaje = {
   id: string;
   servicio: ServicioViaje;
+  categoria?: 'estandar' | 'xl';
   zona: { id: string; nombre: string };
   moneda: string;
   distanciaM: number;

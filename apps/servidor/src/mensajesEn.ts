@@ -628,6 +628,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Puedes tener hasta 5 contactos de confianza.', 'You can have up to 5 trusted contacts.'],
   ['Ese número ya está en tus contactos.', 'That number is already in your contacts.'],
   ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
+  ['Carro XL todavía no está disponible en tu ciudad.', 'Car XL isn’t available in your city yet.'],
   [
     'Antes de aceptar viajes, tómate una selfie con el casco puesto.',
     'Before accepting rides, take a selfie with your helmet on.',

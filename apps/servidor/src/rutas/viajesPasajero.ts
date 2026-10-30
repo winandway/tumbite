@@ -10,6 +10,7 @@ import {
   cotizarViaje,
   esquemaCotizarViaje,
   esquemaTarifaViaje,
+  tarifaXl,
   estimarRuta,
   numeroEmergencia,
 } from '@tumbite/compartido';
@@ -54,6 +55,7 @@ type FilaTarifa = {
   cargo_fijo: number;
   factor_calle_pb: number;
   velocidad_kmh: number;
+  xl_pb: number | null;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -77,6 +79,7 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     redondeo: f.redondeo,
     cargoFijo: f.cargo_fijo,
     factorCallePb: f.factor_calle_pb,
+    ...(f.xl_pb ? { xlPb: f.xl_pb } : {}),
     velocidadKmh: f.velocidad_kmh,
   };
 }
@@ -164,8 +167,8 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
-           de_prueba, motivo, creada_por)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           de_prueba, motivo, creada_por, xl_pb)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -189,6 +192,7 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         d.dePrueba ? 1 : 0,
         d.motivo,
         admin.id,
+        t.xlPb ?? null,
       ),
     db
       .prepare(
@@ -225,7 +229,11 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   const fila = await tarifaActiva(db, d.servicio, zona.id);
   if (!fila)
     throw new ErrorDatos('Este servicio todavía no tiene precio en tu ciudad.', 'servicio', 409);
-  const tarifa = filaATarifa(fila);
+  const normal = filaATarifa(fila);
+  // C-CARRO-XL: el carro grande cotiza con su factor; sin factor en la ciudad, no hay XL.
+  const tarifa = d.categoria === 'xl' && d.servicio === 'carro' ? tarifaXl(normal) : normal;
+  if (!tarifa || (d.categoria === 'xl' && d.servicio !== 'carro'))
+    throw new ErrorDatos('Carro XL todavía no está disponible en tu ciudad.', 'categoria', 409);
   const ruta = estimarRuta(tarifa, d.origen, d.destino);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
@@ -240,8 +248,8 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     .prepare(
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-         distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -263,11 +271,13 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
       desglose.total,
       fila.moneda,
       venceEn,
+      d.categoria,
     )
     .run();
   const cotizacion: CotizacionViaje = {
     id,
     servicio: d.servicio,
+    categoria: d.categoria,
     zona: { id: zona.id, nombre: zona.nombre },
     moneda: fila.moneda,
     distanciaM: ruta.distanciaM,
@@ -358,9 +368,9 @@ viajesPasajero.post('/viajes', async (c) => {
       .prepare(
         `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
            origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-           pasajeros, pin_recogida, metodo_pago, cotizacion_id)
+           pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria)
          SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
-                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id
+                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
       )
       .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago, inicial),

@@ -1,6 +1,6 @@
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
-import { distanciaKm } from '@tumbite/compartido';
+import { PLAZAS_XL, distanciaKm } from '@tumbite/compartido';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
 
@@ -181,9 +181,19 @@ export async function candidatosParaOperacion(
           AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = e.conductor_id)
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion o WHERE o.conductor_id = e.conductor_id AND o.estado = 'ofrecida')
           AND NOT EXISTS (SELECT 1 FROM ofertas f WHERE f.repartidor_id = e.conductor_id AND f.estado = 'ofrecida')
-          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ? AND v.conductor_id = e.conductor_id)`,
+          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ? AND v.conductor_id = e.conductor_id)
+          -- C-CARRO-XL: un viaje XL solo va a un carro de 6 plazas o más.
+          AND (COALESCE((SELECT x.categoria FROM viajes x WHERE x.operacion_id = ?), 'estandar') <> 'xl'
+               OR (SELECT h.plazas FROM vehiculos h WHERE h.id = e.vehiculo_id) >= ?)`,
     )
-    .bind(op.servicioId, op.zonaId, `-${MINUTOS_UBICACION_VIGENTE} minutes`, op.id)
+    .bind(
+      op.servicioId,
+      op.zonaId,
+      `-${MINUTOS_UBICACION_VIGENTE} minutes`,
+      op.id,
+      op.id,
+      PLAZAS_XL,
+    )
     .all<{ conductor_id: string; vehiculo_id: string; lat: number; lng: number; puntos: number }>();
   const porId = new Map(results.map((r) => [r.conductor_id, r]));
   if (!porId.size) return { candidatos: [], fuente: 'base' };

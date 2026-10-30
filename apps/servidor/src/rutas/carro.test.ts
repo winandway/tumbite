@@ -90,3 +90,50 @@ describe('Divoox Carro (C-CARRO-PRUEBAS)', () => {
     expect(((await fin.json()) as { totalFinal: number }).totalFinal).toBe(cot.total);
   });
 });
+
+describe('Carro XL (C-CARRO-XL)', () => {
+  it('cuesta el factor de la ciudad, solo se ofrece a carros de 6 plazas y sin factor no existe', async () => {
+    const { m, admin, cliente } = await encender('staging.tumbite.com');
+    const tarifa = (extra: object) =>
+      m.llamar(
+        'POST',
+        '/datos/admin/viajes/tarifas',
+        {
+          servicio: 'carro',
+          zona: 'US-FL-MIAMI',
+          tarifa: { ...TARIFA, ...extra },
+          motivo: 'Tarifa de prueba',
+        },
+        admin.token,
+      );
+    await tarifa({});
+    const cotizar = (categoria: string) =>
+      m.llamar(
+        'POST',
+        '/datos/viajes/cotizar',
+        { servicio: 'carro', categoria, origen: ORIGEN, destino: DESTINO },
+        cliente.token,
+      );
+    expect((await cotizar('xl')).estado).toBe(409); // la ciudad todavía no tiene XL
+    await tarifa({ xlPb: 15_000 });
+    const normal = (await cotizar('estandar')).datos.cotizacion;
+    const xl = (await cotizar('xl')).datos.cotizacion;
+    expect(xl.categoria).toBe('xl');
+    expect(xl.total).toBeGreaterThan(normal.total);
+    // Un carro de 4 plazas al lado no recibe el XL; uno de 7, sí.
+    const chico = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    const grande = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    await m.DB.prepare('UPDATE vehiculos SET plazas = 7 WHERE id = ?').bind(grande.vehiculo).run();
+    const id = (
+      await m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: xl.id, metodoPago: 'efectivo' },
+        cliente.token,
+      )
+    ).datos.viaje.id as string;
+    await m.llamar('GET', '/datos/viajes/actual', undefined, cliente.token);
+    expect(await chico.paso(id, 'aceptar')).toBe(409);
+    expect(await grande.paso(id, 'aceptar')).toBe(200);
+  });
+});

@@ -11,6 +11,10 @@ import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-CARRO-XL (30 oct 2026): carro grande (6 plazas o más).
+  ['cotizaciones_viaje', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
+  ['viajes', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
+  ['tarifas_viaje', 'xl_pb', 'INTEGER'],
   // C-MOTO-CIUDAD (30 oct 2026): si este viaje pide el código para empezar (según la ciudad y la hora).
   ['viajes', 'pin_requerido', 'INTEGER NOT NULL DEFAULT 1'],
   // C-CARGO-AL-AFECTADO (30 oct 2026): el conductor al que le cancelaron (el cargo es suyo).

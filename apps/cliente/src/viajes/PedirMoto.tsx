@@ -57,6 +57,8 @@ export function PedirMoto({
       recogidaLng: '',
       // C-VIAJE-TARJETA: cómo paga el viaje.
       metodo: 'efectivo',
+      // C-CARRO-XL: en Carro, normal o grande (6 plazas o más).
+      categoria: 'estandar',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -98,6 +100,7 @@ export function PedirMoto({
     try {
       const r = await api.pedir<{ cotizacion: CotizacionViaje }>('POST', '/datos/viajes/cotizar', {
         servicio,
+        categoria: servicio === 'carro' && v.categoria === 'xl' ? 'xl' : 'estandar',
         origen: { ...recogida, direccion: v.recogida.trim() || t.recogida },
         destino: { ...destino, direccion: v.destino.trim() },
       });
@@ -108,7 +111,7 @@ export function PedirMoto({
     } finally {
       setTrabajando(false);
     }
-  }, [api, recogida, destino, v.recogida, v.destino, t, servicio]);
+  }, [api, recogida, destino, v.recogida, v.destino, t, servicio, v.categoria]);
 
   // Volver a cotizar sola 20 segundos antes de que venza el precio.
   const cotizarRef = useRef(cotizar);
@@ -199,6 +202,28 @@ export function PedirMoto({
       <Text style={{ color: '#5E5E5E' }}>{t.casco}</Text>
       <Text style={{ color: '#5E5E5E' }}>{t.unPasajero}</Text>
 
+      {servicio === 'carro' ? (
+        <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
+          <Pildora
+            texto={t.carroNormal}
+            activa={v.categoria !== 'xl'}
+            alTocar={() => {
+              cambiar('categoria', 'estandar');
+              setCotizacion(null);
+            }}
+            rol="radio"
+          />
+          <Pildora
+            texto={t.carroXl}
+            activa={v.categoria === 'xl'}
+            alTocar={() => {
+              cambiar('categoria', 'xl');
+              setCotizacion(null);
+            }}
+            rol="radio"
+          />
+        </View>
+      ) : null}
       {cotizacion ? (
         <Tarjeta>
           <View testID="moto-precio" style={{ gap: 4 }}>
