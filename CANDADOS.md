@@ -1812,3 +1812,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - El código se decide AL PEDIR el viaje (`viajes.pin_requerido`): el pasajero y el conductor ven lo mismo aunque cambie la hora en medio.
 - Servidor: `apps/servidor/src/rutas/ajustesViaje.ts` (rutas del equipo con registro en `auditoria_admin`). Panel: Superadmin → Moto · Viajes → «Interruptores por ciudad». Driver: sin código no pide el número; si la ciudad pide la selfie, al aceptar sale la tarjeta para tomarla.
 - **Prueba:** `ajustesViaje.test.ts` (rojo comprobado quitando las dos reglas).
+
+## C-DOCS-MOTO-BORRADOR (30 oct 2026) — todos los países
+
+- Las guías públicas de Moto (pasajero: pedir, pagar/cancelar/propina, seguridad; conductor: conducir, descanso y seguridad) están escritas en español e inglés en `apps/panel/src/sitio/docs/borradores/moto.ts`, FUERA de `DOCS`.
+- **Para publicarlas** el día que Richard encienda Moto: agregar `BORRADORES_MOTO[idioma].pasajero` a la sección «ordering» y `.conductor` a «drivers» en `guias.ts`, tomar las capturas reales y quitar la prueba de «todavía no están publicadas».
+- **Prueba:** `borradores.test.tsx` (completas en los dos idiomas, sin publicar, sin nada interno).
