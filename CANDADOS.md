@@ -1973,3 +1973,40 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** topes de dinero solo para los participantes del piloto: por pedido y por día (por defecto 50 y 150 dólares; se cambian en Superadmin → Piloto, guardados en `config` como `piloto_tope_pedido` y `piloto_tope_dia`). `exigirTopePiloto` corre en `POST /datos/pedidos` antes de guardar; el día suma los pedidos de hoy que no se cancelaron. Quien no está en el piloto no cambia nada.
 - **Candado:** `piloto.test.ts` (fuera del piloto sin tope, dentro 409 con campo `total`, la suma del día).
+
+## C-REWARDS-PILOTO (30 oct 2026) — todos los países
+
+- **Qué es:** Rewards sale del modo sombra para el piloto. `modoRewards`: «sombra» en el sitio de pruebas (todos), «piloto» en producción solo con la variable `REWARDS_MODO=piloto` y solo para los participantes (`piloto_participantes`), «apagado» en cualquier otro caso. `/datos/repartidor/estado` trae `reputacion` (puntaje, nivel, provisional, lo que falta para el siguiente) cuando está activo para esa persona, y Driver la muestra en lugar del nivel viejo por puntos.
+- **Para encender en producción:** variable `REWARDS_MODO=piloto` en YaDominios Cloud → sitio tumbite. Para apagar: quitarla o poner `apagado`. Nada se paga en este paso.
+- **Candado:** `sombra.test.ts` (fuera del piloto no aparece, dentro con el modo sí, el reloj de producción calcula solo a los participantes).
+
+## C-REWARDS-MI-NIVEL (30 oct 2026) — todos los países
+
+- **Qué es:** `GET /datos/repartidor/mi-nivel` (solo si Rewards está activo para esa persona; si no, 404) con los cinco componentes del puntaje y su máximo (30/25/20/15/10), la experiencia por servicio, la elegibilidad y el avance al primer hito. En Driver, la tarjeta `MiNivel` debajo del nivel explica cada parte en palabras simples, como «Ratings» de Dasher.
+- **Candado:** `sombra.test.ts` (los cinco componentes en orden, máximo 30 en finalización, experiencia de comida, hito de 100; 404 sin Rewards activo).
+
+## C-REWARDS-AJUSTES (30 oct 2026) — todos los países
+
+- **Qué es:** Superadmin → «Rewards» cambia sin publicar: umbrales de Plata, Oro y Diamante (en orden, si no 400), porcentaje del margen (0 a 50), tope por premio, entregas por hito y presupuesto por ciudad y mes (`rewards_presupuesto`). Se guardan en `config.rewards_ajustes`; el cálculo diario y «Mi nivel» los leen (`leerAjustes`). Arranca con porcentaje 0 y sin presupuesto: nada se paga hasta que el equipo los fije.
+- **Candado:** `sombra.test.ts` (los umbrales nuevos cambian el nivel; el presupuesto se guarda; fuera de orden se rechaza), `reputacion.test.ts` (umbrales ajustables) y `SuperRewards.test.tsx` (el formulario manda los valores en centavos).
+
+## C-REWARDS-PRIORIDAD (30 oct 2026) — todos los países
+
+- **Qué es:** al ofrecer un pedido, dentro del mismo tramo de medio kilómetro, el repartidor de mejor nivel de reputación recibe primero (como Platinum de DoorDash). Va después del turno reservado y antes del destacado; nunca salta la distancia. Apagada por defecto: se enciende en Superadmin → Rewards (`prioridadDespacho`). Solo cuenta el nivel de los participantes del piloto (`nivel_rep` en `libresEn`).
+- **Candado:** `prioridadNivel.test.ts` (apagada = orden de siempre; encendida = gana el nivel dentro del tramo; el turno sigue primero).
+
+## C-REWARDS-PREMIO-VARIABLE (30 oct 2026) — todos los países
+
+- **Qué es:** decisión de Richard: el premio es un porcentaje configurable del margen de contribución real de las entregas que cuentan, con tope. `montoPremio(margen, porcentaje, tope)` en compartido; `margenDe` suma `pedidos.ganancia` de las últimas entregas pagadas (tantas como el hito). El hito y el porcentaje salen de Superadmin → Rewards. Con porcentaje, tope o margen en cero no se registra ningún premio (ninguna obligación). Viajes y Flex todavía no aportan margen (Fase 3).
+- **Candado:** `rewardsHitos.test.ts` (porcentaje, tope, ceros) y `sombra.test.ts` (10 % de 10 entregas de 6,50 = 6,50 de premio «ganado»; con 0 % no hay fila).
+
+## C-REWARDS-PAGO (30 oct 2026) — todos los países
+
+- **Qué es:** `pagarPremios` (corre al final del cálculo diario): un premio «ganado», con 14 días sin reclamos (`DIAS_RETENCION`) y su presupuesto reservado, pasa a «pagado» con UNA sentencia condicionada y acredita la billetera con un movimiento `ajuste`, referencia `premio:<programa>:<hito>` e id fijo `premio-<repartidor>-<programa>-<hito>` (nunca dos veces). Paga el menor entre el monto del hito y lo reservado. Sin reserva no paga. Queda en `rewards_eventos`.
+- **Ojo:** la tabla `movimientos` no admite el concepto «premio» (su CHECK); por eso es `ajuste` con su referencia. Para reportes, filtrar `referencia LIKE 'premio:%'`.
+- **Candado:** `sombra.test.ts` (diez a la vez = un pago y un evento; dentro de los 14 días no paga; sin reserva no paga).
+
+## C-REWARDS-APELACIONES (30 oct 2026) — todos los países
+
+- **Qué es:** en Driver («Mi nivel»), el repartidor elige una de sus últimas 10 entregas y cuenta qué pasó (10 a 500 letras, el borrador no se pierde). Solo sus propias entregas (si no, 404) y una vez por entrega (409). Soporte la ve en Superadmin → Rewards y la acepta o no (una sola vez: sentencia condicionada a «abierta»). Una entrega con apelación aceptada deja de contar en `unidadesPedidos`.
+- **Candado:** `sombra.test.ts` (apelar, no repetir, aceptar sube el puntaje, la ve como aceptada; entrega ajena 404).

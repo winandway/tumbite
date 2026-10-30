@@ -43,9 +43,9 @@ Divoox cobra sus comisiones descontándolas automáticamente del **saldo prepago
 - Reserva y cobro: se reutilizan `reservarComision` / `sentenciasCobrarReserva` / `liberarReserva` (referencias únicas por servicio) y `cobrarComisionConductor`.
 - EE. UU. sigue con Stripe Connect: allí no se crean políticas de prepago de conductores.
 
-## Pendiente (en la fila)
+## Estado al 30 oct 2026 (revisado en el código)
 
-1. Unificar Food en cobro directo con la capa de políticas (hoy usa `comisionPb` del país): leer la política si existe y, si no, lo de hoy, **sin cambiar el resultado actual** (prueba de regresión).
-2. Enchufar la reserva y el cobro al aceptar y completar en cada servicio nuevo (Express, Grocery, Flex conductor) cuando cada uno exista.
-3. Política de cancelaciones por servicio (liberar todo, cobrar una parte o un cargo fijo), configurable en la política.
-4. Activación por mercado: solo con autorización comercial y legal escrita de Richard.
+1. Food en cobro directo pasa por la capa de políticas sin cambiar el resultado: **hecho** (C-FOOD-POLITICAS, `comisionFood`, 29 oct).
+2. Reserva y cobro por servicio: **hecho** para Moto, Carro y Envíos (`comisionConductor` en `operaciones.ts`, conciliado en la salud «viajes») y para Tiendas (sus compras son pedidos y usan el camino de Food). Flex conductor **no aplica**: en Flex paga la empresa desde su billetera, no el conductor.
+3. Política de cancelaciones por servicio: **hecho** (`politicaCancelacionVigente`).
+4. Activación por mercado: **espera la autorización comercial y legal escrita de Richard** (👤 en `PENDIENTES.md`). En EE. UU. sigue Stripe Connect, sin prepago de conductores.

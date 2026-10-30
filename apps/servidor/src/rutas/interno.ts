@@ -8,6 +8,7 @@ import {
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
+import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { correrRelojUnaVez } from './operacion';
@@ -88,7 +89,12 @@ interno.post('/interno/reloj', async (c) => {
   // No se aceptan ventanas inventadas: a lo sumo 5 minutos de diferencia con la hora real.
   if (Math.abs(Date.parse(`${ventana}:00Z`) - Date.now()) > 5 * 60_000)
     throw new ErrorDatos('Ventana fuera de tiempo.', 'ventana', 409);
-  const r = await correrRelojUnaVez(c.env, base(c), ventana, 'externo');
+  const r = await correrRelojUnaVez(
+    { ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) } as Env,
+    base(c),
+    ventana,
+    'externo',
+  );
   return c.json('yaHecho' in r ? r : { ok: true, ventana, resultado: r });
 });
 

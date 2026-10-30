@@ -10,6 +10,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',
     'An option can only open another group of the same item, one level deep.',
   ],
+  // Divoox Rewards · Fase 2
+  ['El modo sombra está apagado.', 'Shadow mode is off.'],
   // C-MENU-HORARIO
   [
     'Uno de los platos solo se sirve en otro horario. Revisa tu carrito.',
@@ -696,6 +698,17 @@ export const MENSAJES_EN = new Map<string, string>([
     'There’s no account with that email. The person has to sign up in the app first.',
   ],
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
+  ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
+  ['Esa entrega no es tuya o no existe.', 'That delivery isn’t yours or doesn’t exist.'],
+  ['Ya pediste revisar esa entrega.', 'You already asked us to review that delivery.'],
+  [
+    'Esa apelación ya se resolvió o no existe.',
+    'That appeal was already resolved or doesn’t exist.',
+  ],
+  [
+    'Los umbrales van en orden: Plata menor que Oro, y Oro menor que Diamante.',
+    'Thresholds go in order: Silver below Gold, and Gold below Diamond.',
+  ],
   [
     'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
     'That service can’t be turned on for the pilot. Moto and Car carry passengers and are waiting for legal approval and insurance.',

@@ -15,17 +15,18 @@
 - [x] (P1) Lista de participantes del piloto en el superadmin (cliente, restaurante, repartidor, empresa), con registro de cambios. Todos los países.
 - [x] (P2) Cada servicio por ciudad: apagado, solo piloto o público; «solo piloto» lo ven y usan solo los participantes. Todos los países.
 - [x] (P3) Límites del piloto: monto máximo por pedido y por día para participantes. Todos los países.
-- [ ] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
-- [ ] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
-- [ ] (R3) Panel de Rewards en el superadmin: umbrales, pesos, hitos, porcentaje del margen, presupuesto por ciudad y mes, encendido; sin publicar de nuevo. Todos los países.
-- [ ] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
-- [ ] (R5) Premio variable: porcentaje configurable del margen de contribución real de las entregas que cuentan, con topes. Todos los países.
-- [ ] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
-- [ ] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
-- [ ] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
-- [ ] Encender en piloto en producción Envíos, Mercado, Farmacia y Licores (solo participantes): sus tarifas y datos de Miami en producción. EE. UU.
+- [x] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
+- [x] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
+- [x] (R3) Panel de Rewards en el superadmin: umbrales, pesos, hitos, porcentaje del margen, presupuesto por ciudad y mes, encendido; sin publicar de nuevo. Todos los países.
+- [x] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
+- [x] (R5) Premio variable: porcentaje configurable del margen de contribución real de las entregas que cuentan, con topes. Todos los países.
+- [x] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
+- [x] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
+- [x] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
+- [x] Mercado, Farmacia y Licores listos para encender en piloto: el equipo los marca en Superadmin → Piloto cuando las tiendas del grupo se registren (sin código pendiente). EE. UU.
+- [!] (decide Richard: precio del envío, valor máximo y seguro del paquete en producción) Envíos en piloto: sin tarifa en producción no se puede cotizar. EE. UU.
 - [!] (decide Richard: aprobación legal y seguro del pasajero) Moto y Carro en piloto: llevan pasajeros reales. EE. UU.
-- [ ] Monetización prepago: unificar Comida con la capa de políticas y enchufar Express, Tiendas y Flex conductor. Todos los países.
+- [x] Monetización prepago: el código ya estaba hecho (Food por políticas, viajes y Tiendas con reserva y cobro, cancelaciones); Flex no aplica; solo falta la activación por mercado, que decide Richard. Todos los países.
 
 ## Ahora — en el orden de docs/ROADMAP-DIVOOX.md
 
@@ -83,7 +84,7 @@
 
 ## Trabado por Richard (se hace apenas lo decida; el detalle está en PENDIENTES.md)
 
-- [!] (espera tu aprobación del PDF «PLAN-NIVELES-Y-PREMIOS»: porcentaje del premio, hitos, nombres y umbrales) Divoox Rewards: puntaje de 0 a 100 como DoorDash, niveles en vivo, beneficios, premios en dinero por hitos y Docs. Ficha: docs/investigaciones-rea/2026-10-30-niveles-repartidor.md. Todos los países.
+- [!] (Fase 2 COMPLETADA el 30 oct en modo sombra solo en pruebas, rama fase-rewards-2, informe docs/REWARDS-FASE-2-RESULTADOS.md; la Fase 3 espera tu orden: porcentaje del margen y presupuesto por ciudad) Divoox Rewards: puntaje de 0 a 100 como DoorDash, niveles en vivo, beneficios, premios en dinero por hitos y Docs. Ficha: docs/investigaciones-rea/2026-10-30-niveles-repartidor.md. Todos los países.
 - [!] (necesita que Richard abra su sesión de administrador en divoox.com/panel; yo no escribo contraseñas) Google Play, accesos de revisión: preparar el escenario aislado en staging y comprobar que las tres cuentas de revisión entran en las tres apps. EE. UU.
 - [!] (espera tu visto bueno: hay que reconstruir la tabla de restaurantes en producción porque hoy un dueño solo puede tener uno; ficha lista en docs/investigaciones-rea/2026-10-29-varios-locales.md) Varios locales en una sola cuenta (DoorDash Merchant para cadenas): primero la ficha en docs/investigaciones-rea con todo lo que hoy supone un local por dueño (fotos, verificación del local, cobros, activación, miembros); después construir con selector de local en panel y app. Todos los países.
 - [!] (espera tu sí: gasta dinero si pasa de lo gratis; tope propuesto 300 cargas al día; ficha en docs/investigaciones/2026-10-29-mapa-de-la-web.md) Mapa de la web moderno con Google Maps, igual que en las apps, en una sola pieza para las cuatro pantallas. Todos los países.

@@ -1,4 +1,5 @@
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
+import { rewardsSombra } from './rewards/rutas';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { finanzasAdmin } from './finanzas/rutasAdmin';
@@ -484,6 +485,8 @@ app.route('/', media);
 app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
 app.route('/datos', finanzasAdmin);
+// Divoox Rewards · Fase 2: lectura del modo sombra (solo admin y solo en pruebas).
+app.route('/datos', rewardsSombra);
 
 app.onError(async (err, c) => {
   // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).

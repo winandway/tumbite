@@ -39,6 +39,7 @@ import {
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
 import { ResumenAnual } from './grandes/ResumenAnual';
+import { MiNivel } from './grandes/MiNivel';
 import { Seguridad } from './grandes/Seguridad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
@@ -141,6 +142,13 @@ type Estado = {
   pausado?: boolean;
   puntos: number;
   nivel: Nivel;
+  /** C-REWARDS-PILOTO: el nivel de reputación (0 a 100), si Rewards está activo para este repartidor. */
+  reputacion?: {
+    puntaje: number;
+    nivel: 'inicial' | 'plata' | 'oro' | 'diamante';
+    provisional: boolean;
+    siguiente: { nivel: 'inicial' | 'plata' | 'oro' | 'diamante'; faltan: number } | null;
+  };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
@@ -254,6 +262,9 @@ const T = {
     nivel: 'Tu nivel',
     puntos: 'puntos',
     faltan: 'Te faltan',
+    deCien: 'de 100',
+    provisional: 'Provisional: se afina con tus próximas entregas.',
+    niveles: { inicial: 'Inicial', plata: 'Plata', oro: 'Oro', diamante: 'Diamante' },
     para: 'para',
     saldo: 'Tu saldo',
     menu: 'Menú',
@@ -361,6 +372,9 @@ const T = {
     nivel: 'Your level',
     puntos: 'points',
     faltan: 'You need',
+    deCien: 'out of 100',
+    provisional: 'Provisional: it gets sharper with your next deliveries.',
+    niveles: { inicial: 'Starter', plata: 'Silver', oro: 'Gold', diamante: 'Diamond' },
     para: 'to reach',
     saldo: 'Your balance',
     menu: 'Menu',
@@ -2333,7 +2347,45 @@ export function Inicio() {
             secundario
           />
         ) : null}
-        {estado && (
+        {estado?.reputacion ? (
+          <View style={e.tarjeta} testID="nivel-reputacion">
+            <Text style={{ fontWeight: '800' }}>
+              {t.nivel}: {new Map(Object.entries(t.niveles)).get(estado.reputacion.nivel)} ·{' '}
+              {estado.reputacion.puntaje.toFixed(1)} {t.deCien}
+            </Text>
+            {estado.reputacion.siguiente ? (
+              <Text style={{ color: '#5E5E5E' }}>
+                {t.faltan} {estado.reputacion.siguiente.faltan} {t.puntos} {t.para}{' '}
+                {new Map(Object.entries(t.niveles)).get(estado.reputacion.siguiente.nivel)}
+              </Text>
+            ) : null}
+            {estado.reputacion.provisional ? (
+              <Text style={{ color: '#5E5E5E' }}>{t.provisional}</Text>
+            ) : null}
+            <View
+              accessibilityRole="progressbar"
+              accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.reputacion.puntaje) }}
+              style={{
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: '#ECECEC',
+                marginTop: 8,
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  width: `${Math.max(2, Math.round(estado.reputacion.puntaje))}%`,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: C.exito,
+                }}
+              />
+            </View>
+          </View>
+        ) : null}
+        {estado?.reputacion ? <MiNivel api={api} idioma={idioma} /> : null}
+        {estado && !estado.reputacion && (
           <View style={e.tarjeta}>
             <Text style={{ fontWeight: '800' }}>
               {t.nivel}: {enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)} ·{' '}

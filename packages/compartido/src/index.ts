@@ -56,3 +56,5 @@ export * from './flexTextos';
 export * from './calificacionPublica';
 export * from './menuPlanilla';
 export * from './opcionesFormulario';
+export * from './reputacion';
+export * from './rewardsHitos';

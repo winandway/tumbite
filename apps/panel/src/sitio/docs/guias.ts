@@ -2543,6 +2543,37 @@ const es: SeccionDocs[] = [
         pasos: ['Abre el menú y toca «Seguridad».', 'Elige: emergencia, compartir o reportar.'],
       },
       {
+        id: 'driver-level',
+        titulo: 'Tu nivel en Divoox: cómo se calcula y cómo subir',
+        resumen:
+          'Un puntaje de 0 a 100 con cinco partes. Según el puntaje eres Inicial, Plata, Oro o Diamante, y los mejores niveles reciben primero las ofertas cercanas y pueden ganar premios.',
+        explicacion: [
+          'En el inicio de la app ves tu nivel y tu puntaje, por ejemplo «Oro · 81.2 de 100», y cuántos puntos te faltan para el siguiente.',
+          'El puntaje sale de tus últimas entregas, en cinco partes: entregas completadas (hasta 30 puntos), puntualidad (25), pedidos sin problemas (20), calificación de clientes (15) y ofertas aceptadas (10). Debajo del nivel, «Cómo se forma tu puntaje» te muestra cuánto suma cada una.',
+          'Lo que no es tu culpa no te baja: las notas por la demora del restaurante, los clientes que no aparecen con prueba y las ofertas excusadas no cuentan. Si eres nuevo, tu puntaje empieza en un punto medio y se afina con tus entregas.',
+          'Subes de nivel en cuanto llegas al puntaje. Para bajar, tienes que estar por debajo varios días seguidos: un mal día no te quita el nivel.',
+          'Premios: al completar un número de entregas que cuentan, ganas un premio que es una parte de lo que esas entregas le dejaron a Divoox. Se paga a tu billetera después de unos días, cuando ya no hay reclamos.',
+          '¿Algo no fue tu culpa? En «Mi nivel» eliges la entrega, cuentas qué pasó y nuestro equipo la revisa. Si tienes razón, esa entrega deja de contar.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-nivel-es.webp',
+            alt: 'App del repartidor de Divoox con «Tu nivel: Oro · 77.6 de 100», lo que falta para Diamante y las cinco partes del puntaje.',
+            pie: 'Tu nivel, lo que te falta y cómo se forma tu puntaje.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo se calcula mi nivel de repartidor?',
+          '¿Qué pasa si un cliente me califica mal por culpa del restaurante?',
+          '¿Cómo gano un premio?',
+        ],
+        pasos: [
+          'Abre la app de repartidor: tu nivel está en el inicio.',
+          'Lee «Cómo se forma tu puntaje» para ver qué parte puedes mejorar.',
+          'Si una entrega no fue tu culpa, pide revisarla desde ahí mismo.',
+        ],
+      },
+      {
         id: 'open-offer-bonus',
         titulo: 'Bono por tomar un pedido que otros dejaron pasar',
         resumen:
@@ -6022,6 +6053,37 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['What do I do in an emergency while delivering?', 'How do I share where I am?'],
         pasos: ['Open the menu and tap “Safety”.', 'Choose: emergency, share or report.'],
+      },
+      {
+        id: 'driver-level',
+        titulo: 'Your Divoox level: how it’s calculated and how to move up',
+        resumen:
+          'A score from 0 to 100 made of five parts. Depending on your score you’re Starter, Silver, Gold or Diamond, and higher levels get nearby offers first and can earn rewards.',
+        explicacion: [
+          'On the app’s home screen you see your level and your score, for example “Gold · 81.2 out of 100”, and how many points you need for the next one.',
+          'The score comes from your latest deliveries, in five parts: completed deliveries (up to 30 points), on time (25), problem-free orders (20), customer rating (15) and offers accepted (10). Under your level, “How your score is built” shows what each part adds.',
+          'What isn’t your fault doesn’t bring you down: ratings caused by restaurant delays, no-show customers with proof and excused offers don’t count. If you’re new, your score starts in the middle and gets sharper with your deliveries.',
+          'You move up as soon as you reach the score. To move down you have to stay below it for several days in a row: one bad day won’t take your level away.',
+          'Rewards: when you complete a number of deliveries that count, you earn a reward that is a share of what those deliveries left to Divoox. It’s paid to your wallet a few days later, once there are no claims.',
+          'Something wasn’t your fault? In “My level” you pick the delivery, tell us what happened and our team reviews it. If you’re right, that delivery stops counting.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-nivel-en.webp',
+            alt: 'Divoox driver app showing “Your level: Gold · 77.6 out of 100”, what’s left for Diamond and the five parts of the score.',
+            pie: 'Your level, what you need next and how your score is built.',
+          },
+        ],
+        preguntas: [
+          'How is my driver level calculated?',
+          'What if a customer rates me badly because of the restaurant?',
+          'How do I earn a reward?',
+        ],
+        pasos: [
+          'Open the driver app: your level is on the home screen.',
+          'Read “How your score is built” to see which part you can improve.',
+          'If a delivery wasn’t your fault, ask for a review right there.',
+        ],
       },
       {
         id: 'open-offer-bonus',
