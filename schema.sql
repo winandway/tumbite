@@ -1026,7 +1026,12 @@ INSERT OR IGNORE INTO servicios (id, tipo_operacion, nombre_es, nombre_en, descr
   ('envios',   'envio_paquete',   'Envíos',   'Delivery', 'Envía paquetes por la ciudad.',                'Send packages across town.',                'servicio-envios',   50, 'proximamente', 0),
   ('farmacia', 'compra_encargo',  'Farmacia', 'Pharmacy', 'Productos de farmacia de venta libre.',        'Over-the-counter pharmacy products.',       'servicio-farmacia', 60, 'proximamente', 0),
   ('licores',  'compra_encargo',  'Licores',  'Liquor',   'Bebidas para mayores de 21 años, con verificación de edad.', 'Drinks for ages 21+, with age verification.', 'servicio-licores', 70, 'proximamente', 0),
-  ('mas',      'enlace',          'Más',      'More',     'Todo lo que viene en Tumbite.',                'Everything coming to Tumbite.',             'servicio-mas',      80, 'proximamente', 0);
+  ('mas',      'enlace',          'Más',      'More',     'Todo lo que viene en Divoox.',                 'Everything coming to Divoox.',             'servicio-mas',      80, 'proximamente', 0);
+
+-- C-MARCA-PUBLICA (30 oct 2026): la marca pública es Divoox. Las bases que ya tenían el texto viejo se
+-- corrigen aquí (idempotente: solo toca la fila que todavía diga «Tumbite»).
+UPDATE servicios SET descripcion_es = 'Todo lo que viene en Divoox.', descripcion_en = 'Everything coming to Divoox.'
+  WHERE id = 'mas' AND (descripcion_es LIKE '%Tumbite%' OR descripcion_en LIKE '%Tumbite%');
 
 INSERT OR IGNORE INTO servicios_zona (servicio_id, zona_id, estado)
   SELECT s.id, z.id, 'proximamente' FROM servicios s CROSS JOIN zonas z;
@@ -2796,3 +2801,113 @@ CREATE TABLE IF NOT EXISTS catalogo_ofertas (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (comercio_id, producto_id)
 );
+
+-- C-VIAJE-TARJETA (29 oct 2026), como Uber: el viaje con tarjeta se AUTORIZA al pedir por el precio
+-- fijo y se CAPTURA al terminar (nunca más de lo autorizado). Cancelar libera la autorización o cobra
+-- solo el cargo. La propina después del viaje es un cobro aparte con la tarjeta guardada.
+CREATE TABLE IF NOT EXISTS cobros_viaje (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  stripe_pago TEXT NOT NULL,
+  autorizado INTEGER NOT NULL DEFAULT 0 CHECK (autorizado >= 0),
+  capturado INTEGER,
+  propina INTEGER NOT NULL DEFAULT 0 CHECK (propina >= 0),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'autorizado', 'capturado', 'anulado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard): correos y teléfonos de cuentas cerradas por mala
+-- conducta. Quien se registre con uno de ellos (escrito de cualquier forma) no entra. Nunca se borra.
+CREATE TABLE IF NOT EXISTS bloqueos_identidad (
+  tipo TEXT NOT NULL CHECK (tipo IN ('correo', 'telefono')),
+  valor TEXT NOT NULL,
+  usuario_origen TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (tipo, valor)
+);
+
+-- C-KYC-AUTO (29 oct 2026): la huella de la cara (128 números) de cada repartidor verificado por el motor
+-- y la de las cuentas cerradas por mala conducta, para reconocer a quien vuelve con otro correo. Solo la
+-- huella, nunca la foto; se borra al cerrar la cuenta salvo que se haya cerrado por mala conducta.
+CREATE TABLE IF NOT EXISTS huellas_caras (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  huella_json TEXT NOT NULL,
+  mala_conducta INTEGER NOT NULL DEFAULT 0,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS huellas_caras_mala ON huellas_caras(mala_conducta);
+
+-- C-ENVIOS (30 oct 2026), como Uber Courier: el paquete de un envío de persona a persona (va sobre el
+-- motor de viajes). Quien recibe tiene un PIN de entrega; el conductor toma la foto al recogerlo.
+CREATE TABLE IF NOT EXISTS envios_persona (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  descripcion TEXT NOT NULL,
+  valor_declarado INTEGER NOT NULL CHECK (valor_declarado >= 0),
+  destinatario_nombre TEXT NOT NULL,
+  destinatario_telefono TEXT NOT NULL,
+  pin_entrega TEXT NOT NULL CHECK (length(pin_entrega) = 4),
+  intentos_pin INTEGER NOT NULL DEFAULT 0,
+  foto_recogida TEXT,
+  recogido_en TEXT,
+  entregado_en TEXT
+);
+
+-- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
+-- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
+CREATE TABLE IF NOT EXISTS ajustes_viaje_zona (
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  servicio_id TEXT NOT NULL,
+  pin TEXT NOT NULL DEFAULT 'siempre' CHECK (pin IN ('siempre', 'noche', 'nunca')),
+  selfie_casco INTEGER NOT NULL DEFAULT 0,
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (zona_id, servicio_id)
+);
+-- La selfie con el casco puesto: vale 12 horas; la foto es privada (solo el equipo).
+CREATE TABLE IF NOT EXISTS selfies_casco (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  clave TEXT NOT NULL,
+  tomada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS selfies_casco_usuario ON selfies_casco(usuario_id, tomada_en);
+
+-- C-VIAJE-SEGURIDAD-2 (30 oct 2026), como el kit de seguridad de Uber: hasta 5 contactos de confianza
+-- por pasajero, que reciben el enlace del viaje en vivo (siempre, solo de noche o nunca).
+CREATE TABLE IF NOT EXISTS contactos_confianza (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (cliente_id, telefono)
+);
+CREATE TABLE IF NOT EXISTS ajustes_seguridad (
+  cliente_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  compartir TEXT NOT NULL DEFAULT 'nunca' CHECK (compartir IN ('nunca', 'siempre', 'noche'))
+);
+-- Avisos durante el viaje (por ahora, el desvío de la ruta): uno por viaje y tipo, con la respuesta.
+CREATE TABLE IF NOT EXISTS alertas_viaje (
+  id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('desvio')),
+  lat REAL, lng REAL,
+  respuesta TEXT NOT NULL DEFAULT '' CHECK (respuesta IN ('', 'bien', 'ayuda')),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  respondida_en TEXT,
+  UNIQUE (operacion_id, tipo)
+);
+
+-- Cada decisión del motor, para que el equipo vea el porqué.
+CREATE TABLE IF NOT EXISTS verificaciones_auto (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  decision TEXT NOT NULL CHECK (decision IN ('verificado', 'revision', 'repetir', 'sin_respuesta')),
+  motivos_json TEXT NOT NULL DEFAULT '[]',
+  similitud REAL,
+  parecidas_json TEXT NOT NULL DEFAULT '[]',
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS verificaciones_auto_usuario ON verificaciones_auto(usuario_id, creada_en);
