@@ -39,6 +39,14 @@ const sql = (comando: string): Record<string, unknown>[] => {
   return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
 };
 
+// Al terminar, carro queda como estaba (apagado): los demás recorridos esperan verlo «en construcción».
+test.afterAll(() => {
+  if (STAGING) return;
+  sql(`UPDATE servicios_zona SET estado = 'proximamente' WHERE servicio_id = 'carro'`);
+  sql(`UPDATE servicios SET estado = 'proximamente' WHERE id = 'carro'`);
+  sql(`DELETE FROM servicios_implementados WHERE servicio_id = 'carro'`);
+});
+
 const ORIGEN = { lat: 25.7617, lng: -80.1918, direccion: '100 SE 2nd St, Miami' };
 const DESTINO = { lat: 25.79, lng: -80.13, direccion: '1000 Collins Ave, Miami Beach' };
 
