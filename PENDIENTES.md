@@ -179,7 +179,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 - [x] Validación en pruebas de las fases 0, 1 y 2: TODO EN VERDE (corrida 38812353874).
 - [ ] 👤 Aprobar publicar en producción la Fase 0 + el arreglo de `evidencias.modo/nota` (producción hoy no puede completar una entrega).
-- [ ] `publicar.yml`: construir las apps de pruebas con la dirección de pruebas (hoy la copia de pruebas apunta a producción).
+- [x] Apps de pruebas con la dirección de pruebas: los perfiles de pruebas de las tres apps (eas.json) ya apuntan a staging.tumbite.com (comprobado el 29 oct 2026).
 - [ ] 👤 Twilio también en el sitio de pruebas (la llamada con número oculto no se prueba allí).
 - [x] 👤 Autorizar la Fase 3 (exclusividad y asignación). Autorizada el 15 oct; hecha en la rama fase-3-exclusividad, solo en el sitio de pruebas.
 

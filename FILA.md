@@ -91,6 +91,13 @@
 
 - [x] Precisión de pedidos en el tablero del restaurante (como DoorDash Merchant): pedidos con problemas, porcentaje sin problemas y reembolsos del mes; panel, app y Docs. Todos los países.
 
+## Rellenada el 29 oct, 22:10 (lo último de la auditoría: puntos 44, 45, 53 y 64)
+
+- [!] (toca el cobro: un solo pago repartido entre dos restaurantes, y el circuito de pagos todavía no está probado de punta a punta; la auditoría lo deja «cuando haya densidad») Pedir a dos tiendas en un solo pedido (DoubleDash): un carrito con dos locales cercanos, un repartidor y una entrega. Todos los países.
+- [!] (dinero: cuánto se paga por minuto y por milla lo decide Richard) Ganar por tiempo además de por oferta (como «Earn by Time» de Uber y DoorDash). Todos los países.
+- [!] (dinero: precio de los anuncios y cómo se cobran lo decide Richard) Promociones y anuncios pagados dentro de la app («patrocinado») con presupuesto y reporte para el restaurante. Todos los países.
+- [!] (cuenta y costo de un proveedor de SMS: espera a Richard; los avisos por push y correo ya existen) Avisos al equipo también por SMS. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
@@ -99,3 +106,4 @@
 
 - 29 oct 2026, noche (tarea programada): la fila estaba vacía; se rellenó con tres puntos de la auditoría y se hizo «Filtros de dieta» de punta a punta (prueba en rojo, arreglo, verify, staging y producción).
 - 29 oct 2026, noche: «Mapa de demanda» hecho (zonas con más pedidos en el mapa del Driver); «reasignar repartidor» ya existía y se marcó.
+- 29 oct 2026, 22:10 (tarea programada): la fila no tenía puntos abiertos. Se revisó la auditoría del 18 oct: todo lo que la IA puede hacer sola ya está hecho (pedidos agrupados y niveles con requisitos ya existían). Se anotaron los cuatro puntos que quedan, todos trabados por dinero o por el circuito de pagos. En PENDIENTES se cerró «apps de pruebas con la dirección de pruebas» (los perfiles de pruebas ya apuntan a staging).
