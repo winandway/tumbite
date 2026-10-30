@@ -66,6 +66,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['restaurantes', 'aceptar_solo', 'INTEGER NOT NULL DEFAULT 0'],
   // C-AGOTADO-HOY: plato agotado «por hoy»: vuelve solo a esta hora (UTC, medianoche del restaurante).
   ['platos', 'agotado_hasta', 'TEXT'],
+  // C-DIRECCION-APTO: apartamento, piso o edificio en su propia casilla (como DoorDash).
+  ['pedidos', 'apto', "TEXT NOT NULL DEFAULT ''"],
+  ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['repartidores', 'geohash', 'TEXT'],
   ['pedidos', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

@@ -82,6 +82,8 @@ const esquemaNuevoPedido = z.object({
   // El tope real es el del país (C-TOPES-PAIS; EE. UU.: 500 dólares).
   propinaCentavos: z.number().int().min(0).max(100_000_000),
   direccion: z.string().trim().max(200).default(''),
+  // C-DIRECCION-APTO: apartamento, piso o edificio (se suma a la dirección que ve el repartidor).
+  apto: z.string().trim().max(60).default(''),
   notas: z.string().trim().max(300).default(''),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
@@ -549,6 +551,8 @@ pedidos.post('/pedidos', async (c) => {
     d.lng = rest.lng == null ? null : Number(rest.lng);
   } else if (d.direccion.length < 5)
     throw new ErrorDatos('Escribe la dirección de entrega.', 'direccion', 422);
+  else if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
+  if (recogida) d.apto = '';
   const km =
     d.lat != null && d.lng != null && rest.lat != null && rest.lng != null
       ? distanciaKm({ lat: d.lat, lng: d.lng }, { lat: Number(rest.lat), lng: Number(rest.lng) })
@@ -632,8 +636,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -667,6 +671,7 @@ pedidos.post('/pedidos', async (c) => {
       desglose.descuento,
       moneda,
       JSON.stringify(config),
+      d.apto,
     )
     .run();
   if (cupon)
@@ -1359,9 +1364,12 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
       lat: z.number().min(-90).max(90).nullable().default(null),
       lng: z.number().min(-180).max(180).nullable().default(null),
+      apto: z.string().trim().max(60).default(''),
       aceptarTotal: z.boolean().default(false),
     }),
   );
+  // C-DIRECCION-APTO: el apartamento nuevo se suma a la dirección, como al pedir.
+  if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
   const db = base(c);
   const id = c.req.param('id');
   const f = await db
@@ -1436,10 +1444,11 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   }
   await db
     .prepare(
-      'UPDATE pedidos SET direccion = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
     )
     .bind(
       d.direccion,
+      d.apto,
       d.lat,
       d.lng,
       km,

@@ -98,7 +98,7 @@
 - [x] (C-NOTA-PLATO) (30) Nota por plato («sin cebolla», «bien cocido»): el cliente la escribe en cada plato y el restaurante y el repartidor la ven. Todos los países.
 - [x] (C-AGOTADO-HOY) (31) «Agotado hasta mañana» en los platos de comida (hoy, sin fecha o hasta una hora), reutilizando lo de Tiendas, en el panel y en la app del restaurante. Todos los países.
 - [x] (C-CORREO-ENTREGA) (32) Correo al cliente al entregar, con la foto de la entrega (como DoorDash). Todos los países.
-- [ ] (33) Dirección con casilla aparte para apartamento, piso o edificio. Todos los países.
+- [x] (C-DIRECCION-APTO) (33) Dirección con casilla aparte para apartamento, piso o edificio. Todos los países.
 - [ ] (34) Alta asistida: el equipo carga el menú por el restaurante, e importación del menú de comida por hoja de cálculo (reutilizando la de Tiendas). Todos los países.
 - [ ] (35) Modificadores anidados y grupos de opciones compartidos entre platos (el combo pide la bebida y la bebida el tamaño). Todos los países.
 - [ ] (36) Menús por horario: categorías con franja (desayuno, almuerzo). Todos los países.

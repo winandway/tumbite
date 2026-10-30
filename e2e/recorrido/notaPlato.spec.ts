@@ -90,5 +90,10 @@ test('el cliente escribe una nota en el plato y la ve en el carrito', async ({
   await expect(p.getByText('Pizza Margarita · Nota: sin cebolla')).toBeVisible({ timeout: 30_000 });
   await expect(p.getByText('Pizza Margarita · Nota: bien cocida')).toBeVisible();
   await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', 'nota-plato-carrito-es.png') });
+  // C-DIRECCION-APTO: el apartamento va en su propia casilla y no se pierde al recargar.
+  await p.getByTestId('carrito-apto').fill('Apto 4B');
+  await p.waitForTimeout(800);
+  await p.reload();
+  await expect(p.getByTestId('carrito-apto')).toHaveValue('Apto 4B', { timeout: 30_000 });
   await ctx.close();
 });

@@ -501,3 +501,38 @@ describe('nota por plato', () => {
     expect(r.estado).toBe(400);
   });
 });
+
+// C-DIRECCION-APTO (30 oct 2026): como DoorDash y Uber Eats, apartamento, piso o edificio va en su
+// propia casilla; se guarda aparte y se suma a la dirección que leen el repartidor y el restaurante.
+describe('apartamento, piso o edificio', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el pedido guarda el apartamento aparte y la dirección lo muestra', async () => {
+    stripeFalso();
+    const { m, cliente, pedidoBase } = await escenario();
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      { ...pedidoBase, apto: '  Apto 4B  ' },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const f = await m.DB.prepare('SELECT direccion, apto FROM pedidos WHERE id = ?')
+      .bind(r.datos.pedidoId)
+      .first();
+    expect(f).toEqual({ direccion: '200 Calle Prueba, Miami · Apto 4B', apto: 'Apto 4B' });
+  });
+
+  it('la dirección guardada recuerda el apartamento', async () => {
+    const { m, cliente } = await escenario();
+    const g = await m.llamar(
+      'POST',
+      '/datos/mis-direcciones',
+      { direccion: '200 Calle Prueba, Miami', apto: 'Piso 3', etiqueta: 'Casa' },
+      cliente.token,
+    );
+    expect(g.estado).toBe(201);
+    const l = await m.llamar('GET', '/datos/mis-direcciones', undefined, cliente.token);
+    expect(l.datos.direcciones[0].apto).toBe('Piso 3');
+  });
+});

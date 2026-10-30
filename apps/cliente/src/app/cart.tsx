@@ -187,6 +187,7 @@ export default function PantallaCarrito() {
     cuenta: usuario?.id,
     inicial: {
       direccion: '',
+      apto: '',
       notas: '',
       propinaOtra: '',
       entrega: 'puerta',
@@ -312,6 +313,7 @@ export default function PantallaCarrito() {
     lng: number | null;
     instrucciones: string;
     entrega: 'puerta' | 'mano';
+    apto?: string;
   };
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   useEffect(() => {
@@ -328,6 +330,7 @@ export default function PantallaCarrito() {
   }, [api]);
   function usarDireccion(dir: Direccion) {
     b.cambiar('direccion', dir.direccion);
+    b.cambiar('apto', dir.apto ?? '');
     if (dir.instrucciones) b.cambiar('notas', dir.instrucciones);
     b.cambiar('entrega', dir.entrega);
     if (dir.lat != null && dir.lng != null) {
@@ -406,6 +409,7 @@ export default function PantallaCarrito() {
         // El servidor compara este total con el suyo y no cobra si no coinciden.
         totalEsperado: d.totalCliente,
         direccion: b.valores.direccion,
+        apto: b.valores.apto,
         notas: b.valores.notas,
         entrega:
           b.valores.entrega === 'recoger'
@@ -427,6 +431,7 @@ export default function PantallaCarrito() {
           .pedir('POST', '/datos/mis-direcciones', {
             etiqueta: b.valores.etiquetaDireccion,
             direccion: b.valores.direccion,
+            apto: b.valores.apto,
             lat: punto?.lat ?? null,
             lng: punto?.lng ?? null,
             instrucciones: b.valores.notas,
@@ -896,6 +901,15 @@ export default function PantallaCarrito() {
             }
             placeholder={t.direccionAyuda}
             testID="carrito-direccion"
+          />
+          {/* C-DIRECCION-APTO: apartamento, piso o edificio en su propia casilla, como DoorDash. */}
+          <Campo
+            etiqueta={t.apto}
+            value={b.valores.apto}
+            onChangeText={(x) => b.cambiar('apto', x)}
+            placeholder={t.aptoAyuda}
+            maxLength={60}
+            testID="carrito-apto"
           />
           <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text style={{ flex: 1, fontWeight: '800' }}>{te.guardar}</Text>
