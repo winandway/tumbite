@@ -50,3 +50,4 @@ export * from './destacado';
 export * from './recomendados';
 export * from './resumenAnual';
 export * from './identidadUnica';
+export * from './seguridadViaje';
