@@ -70,6 +70,7 @@
 - [Your menu: items, prices, and photos · Divoox](https://divoox.com/docs/restaurants/menu): Every item in English and Spanish, with its price, category, and photo.
 - [Mark an item as sold out · Divoox](https://divoox.com/docs/restaurants/sold-out): Out of chicken? Turn it off for today in one tap and nobody can order it.
 - [Receiving orders and the alarm · Divoox](https://divoox.com/docs/restaurants/orders): It rings loud until someone accepts. No order gets forgotten at rush hour.
+- [Tablet mode: your counter always ready · Divoox](https://divoox.com/docs/restaurants/tablet-mode): Keep a tablet at the counter with your orders full screen, always on and with the alarm, so nobody logs out by accident.
 - [Print kitchen tickets · Divoox](https://divoox.com/docs/restaurants/print-tickets): Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.
 - [Connect your POS system · Divoox](https://divoox.com/docs/restaurants/pos-integration): With a key from your restaurant, your POS system receives Divoox orders and accepts them or marks them ready without touching the tablet.
 - [Your dashboard: how your restaurant is doing · Divoox](https://divoox.com/docs/restaurants/dashboard): Orders, sales, your payout, best sellers, your busiest hours, new and returning customers, your real kitchen time, and what customers think, at a glance.
