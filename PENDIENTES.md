@@ -46,6 +46,12 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Tiendas (Mercado, Farmacia, Licores):** elegir el país donde se encienden. La compra de prueba ya está hecha. Plan: docs/ROADMAP-DIVOOX.md, etapa 2.
+- [ ] 👤 **Carro:** las mismas decisiones que Moto (país, aprobación legal, seguro del pasajero, tarifas). Plan: etapa 4.
+- [ ] 👤 **Envíos de persona a persona:** valor máximo declarado, seguro del paquete y precio. Plan: etapa 5.
+- [ ] 👤 **Mapa moderno de Google en la web:** sí o no (tope de 300 cargas al día, dentro de lo gratis). Ficha: docs/investigaciones/2026-10-29-mapa-de-la-web.md.
+- [ ] 👤 **Restaurar un respaldo de verdad en el sitio de pruebas:** sí o no (borra lo creado en pruebas después de esa copia). Guía: docs/RESTAURAR-RESPALDO.md.
+- [ ] 👤 **Precios para crecer:** suscripción tipo DashPass, tarjetas de regalo, anuncios pagados y pago por tiempo al repartidor. Plan: etapa 7.
 - [ ] 👤 **Varios locales en una cuenta (cadenas):** sí o no a reconstruir la tabla de restaurantes en producción (hoy un dueño solo puede tener uno). Con respaldo, ensayo en pruebas y punto de restauración. Ficha: docs/investigaciones-rea/2026-10-29-varios-locales.md.
 
 - [ ] 👤 **Google Play, accesos:** (de mi lado todo listo; falta que abras tu sesión de administrador en divoox.com/panel) confirmar administrador real, preparar escenario aislado de revisión, comprobar los tres accesos en los Android de la tienda y guardar las credenciales directamente en Google Play. Crear cuentas por sí solo no cierra este punto. Véase [Acceso de revisores](docs/ACCESO-REVISORES.md).

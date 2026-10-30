@@ -122,7 +122,7 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 
 - `docs/REQUISITOS.md` — documento madre (modelo de dinero, planes, regalos, niveles, fases).
 - `docs/PANTALLAS-Y-PLAN.md` — mapa de pantallas y los 10 pasos de la Fase 1.
-- `docs/ROADMAP.md` — el orden de las etapas. No se adelanta nada: una etapa no empieza hasta cerrar la anterior.
+- `docs/ROADMAP-DIVOOX.md` — EL PLAN MAESTRO desde el 29 oct: estado de cada servicio y las siete etapas en orden. La fila (`FILA.md`) lo sigue. (`docs/ROADMAP.md` queda como historia.)
 - `PENDIENTES.md` — la fila; los 👤 dependen de Richard.
 - `CANDADOS.md` — lo que funciona y no se toca.
 - `VERIFICAR-PAGOS.md` — estado del circuito de pagos. Se lee ANTES de decir nada sobre cobros.
