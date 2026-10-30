@@ -19,7 +19,7 @@ export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
   h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self)');
   h.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' https://js.stripe.com https://challenges.cloudflare.com; " +
+    "default-src 'self'; script-src 'self' https://js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com; " +
       "frame-src https://js.stripe.com https://challenges.cloudflare.com; img-src 'self' data: https:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com; frame-ancestors 'none'",
   );

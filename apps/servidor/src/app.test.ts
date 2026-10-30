@@ -35,6 +35,20 @@ describe('servidor', () => {
     expect(res.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
   });
 
+  // C-CSP-ESTADISTICAS (30 oct 2026, hallado con REA): el borde inyecta el script de estadísticas de
+  // Cloudflare y la política lo bloqueaba (error en consola en /restaurants y /business).
+  it('la política deja cargar las estadísticas de Cloudflare y nada más de afuera en scripts', async () => {
+    const csp =
+      (await app.request('/datos/salud', {}, {})).headers.get('Content-Security-Policy') ?? '';
+    const scripts = /script-src ([^;]+)/.exec(csp)?.[1]?.split(' ') ?? [];
+    expect(scripts).toEqual([
+      "'self'",
+      'https://js.stripe.com',
+      'https://challenges.cloudflare.com',
+      'https://static.cloudflareinsights.com',
+    ]);
+  });
+
   it('las páginas de la app web caen en index.html y las públicas llevan caché de borde', async () => {
     const ASSETS = {
       fetch: async (req: Request) => {

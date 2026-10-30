@@ -15,6 +15,7 @@ const T = {
     titulo: 'Tu año',
     ayuda:
       'Entregas, distancia y lo que ganaste por mes. La distancia es una estimación: del restaurante a la dirección del cliente, en línea recta. Para tus impuestos, lleva también tu propio registro de millas.',
+    entrega: 'entrega',
     entregas: 'entregas',
     millas: 'millas',
     compartir: 'Compartir para mi contador (CSV)',
@@ -24,6 +25,7 @@ const T = {
     titulo: 'Your year',
     ayuda:
       'Deliveries, distance and what you earned each month. The distance is an estimate: from the restaurant to the customer’s address, in a straight line. For taxes, keep your own mileage log too.',
+    entrega: 'delivery',
     entregas: 'deliveries',
     millas: 'miles',
     compartir: 'Share with my accountant (CSV)',
@@ -70,7 +72,7 @@ export function ResumenAnual({ api, idioma }: { api: Api; idioma: Idioma }) {
         >
           <Text style={{ fontWeight: '700', textTransform: 'capitalize' }}>{mesNombre(m.mes)}</Text>
           <Text style={{ color: '#5E5E5E' }}>
-            {m.entregas} {t.entregas} · {m.millas} {t.millas}
+            {m.entregas} {m.entregas === 1 ? t.entrega : t.entregas} · {m.millas} {t.millas}
           </Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>
             {m.ganado.map((g) => formatearMonto(g.total, g.moneda, idioma)).join(' · ')}

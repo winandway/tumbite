@@ -1944,3 +1944,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** cada subida a Google Play cancelaba el envío en revisión anterior. Divoox y Divoox Driver tenían nueve envíos «Cancelada» en su Actividad de envío y la lista de apps decía «Aún no se envió a revisión». El script decía «a revisión de Google» y eso se le repitió a Richard sin comprobarlo en la consola.
 - **Arreglo:** `scripts/tiendas/publicar-google-play.mjs` no sube si existe `~/.config/tumbite/play-en-revision/<paquete>` (sale con código 3 y explica por qué); al subir, pone el candado. Se quita a mano cuando Google aprueba. `FORZAR=1` solo si Richard lo pide.
 - **Cómo se comprueba:** consola de Google Play, cuenta go@windoce.com (cuenta 2 del Chrome) → app → Descripción general de la publicación → Actividad de envío: el último envío dice «En revisión» y ninguno nuevo lo cancela.
+
+## C-CSP-ESTADISTICAS (30 oct 2026) — todos los países
+
+- **Qué se rompió:** en cada pantalla que sirve el servidor la consola marcaba un error: el borde de Cloudflare inyecta su script de estadísticas (`static.cloudflareinsights.com`) y la política de seguridad lo bloqueaba. Hallado con REA en el repaso de pantallas (`docs/investigaciones-rea/2026-10-30-repaso-pantallas.md`).
+- **Arreglo:** `apps/servidor/src/seguridad.ts` permite ese dominio en `script-src`, y nada más de afuera además de Stripe y Turnstile.
+- **Candado:** `app.test.ts` («la política deja cargar las estadísticas de Cloudflare y nada más…») compara la lista exacta de `script-src`; comprobada en rojo.
+- **Lección del recorrido del 30 oct:** el sitio de pruebas guarda las cuentas de corridas anteriores y tiene todos los servicios encendidos; toda prueba que registre cuentas usa teléfonos propios por corrida y no da por hecho qué servicio está «por venir».
