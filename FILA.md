@@ -25,6 +25,11 @@
 - [x] (correo y teléfono, C-IDENTIDAD-UNICA; la foto se compara en K5) (K4) Lista de personas bloqueadas por mala conducta: al cerrar una cuenta por fraude queda su documento, su teléfono y su foto; al registrarse alguien nuevo se compara y, si coincide, va a revisión del equipo. Todos los países.
 - [!] (decide Richard: proveedor, costo y consentimiento biométrico con el abogado; recomendación en la ficha K1) (K5) Comparación de caras con IA (foto contra documento y contra la lista de bloqueados), detrás de un interruptor, con el proveedor que salga de la ficha K1. Se enciende cuando Richard apruebe el costo y el consentimiento legal. Todos los países.
 
+- [ ] (K6) Motor de verificación propio (diseño en docs/investigaciones-rea/2026-10-29-kyc-automatico.md, copiado de Idswyft, MIT): servicio en `apps/verificador` con lectura del código de barras de la licencia de EE. UU. y de la franja del pasaporte, cruce con el frente, vencimiento y edad. Con sus pruebas. EE. UU. primero.
+- [ ] (K7) En el motor: comparación de caras (selfie contra documento) y prueba de persona viva (girar la cabeza), con @vladmandic/face-api (MIT). Con sus pruebas. Todos los países.
+- [ ] (K8) Decisión al instante en el servidor y en la app Driver: verificado, en revisión (con motivo para el equipo) o repetir; con el motor apagado, todo sigue como hoy. Consentimiento escrito antes de la selfie. Todos los países.
+- [!] (decide Richard: dónde corre el motor, contenedor con costo; y el abogado aprueba el consentimiento biométrico) (K9) Encender el motor en pruebas y después en producción. Todos los países.
+
 ### Etapa 2 — Tiendas (Mercado, Farmacia, Licores)
 
 - [x] (ficha docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md con evidencia REA) (5) Ficha REA de tiendas frente a DoorDash, Instacart y Uber Eats (documentación pública y web como visitante): comprador que reemplaza en vivo con foto, chat de reemplazos, horarios por tienda, límites de licores por estado; comparación con lo nuestro y brechas en orden. Todos los países.
