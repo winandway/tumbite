@@ -91,6 +91,9 @@ type Pedido = {
     estado: 'pendiente' | 'quitado' | 'cancelado';
     devolucion: number | null;
     creadoEn: string;
+    /** C-TIENDAS-REEMPLAZOS: lo que propone la tienda (precio que pagarías, nunca más) y lo elegido. */
+    propuestas?: { platoId: string; nombreEs: string; nombreEn: string; precioCentavos: number }[];
+    reemplazoId?: string | null;
   } | null;
   lineas: {
     platoId: string;
@@ -175,6 +178,9 @@ const T = {
     faltaTexto:
       'Elige qué hacer. Si no respondes en 5 minutos, lo quitamos y te devolvemos su parte.',
     quitar: 'Quitarlo y seguir (te devolvemos {monto})',
+    reemplazos: 'La tienda te propone a cambio (nunca pagas de más):',
+    elegir: 'Cambiar por {producto}',
+    reemplazadoOk: 'Cambiamos «{plato}» por {producto}. El resto sigue.',
     cancelarTodo: 'Cancelar todo el pedido',
     quitadoOk: 'Quitamos «{plato}» y te devolvimos {monto}. El resto sigue.',
     enPuerta: 'Tu repartidor está en tu puerta.',
@@ -285,6 +291,9 @@ const T = {
     faltaTexto:
       'Choose what to do. If you don’t answer in 5 minutes, we remove it and refund that part.',
     quitar: 'Remove it and continue (we refund {monto})',
+    reemplazos: 'The store suggests instead (you never pay more):',
+    elegir: 'Swap for {producto}',
+    reemplazadoOk: 'We swapped “{plato}” for {producto}. The rest continues.',
     cancelarTodo: 'Cancel the whole order',
     quitadoOk: 'We removed “{plato}” and refunded {monto}. The rest continues.',
     enPuerta: 'Your driver is at your door.',
@@ -425,12 +434,12 @@ export default function SeguirPedido() {
 
   // Mientras el restaurante no acepte, el cliente puede arrepentirse y el dinero vuelve solo.
   const [decidiendo, setDecidiendo] = useState(false);
-  async function decidirAjuste(decision: 'quitar' | 'cancelar') {
+  async function decidirAjuste(decision: 'quitar' | 'cancelar' | 'reemplazar', platoId?: string) {
     if (decidiendo) return;
     setDecidiendo(true);
     setError('');
     try {
-      await api.pedir('POST', `/datos/pedidos/${id}/ajuste`, { decision });
+      await api.pedir('POST', `/datos/pedidos/${id}/ajuste`, { decision, platoId });
       const r = await api.pedir<{ pedido: Pedido }>('GET', `/datos/pedidos/${id}/seguimiento`);
       setP(r.pedido);
     } catch (x) {
@@ -886,6 +895,22 @@ export default function SeguirPedido() {
                   )}
                 </Text>
                 <Text style={{ color: '#5E5E5E', marginVertical: 6 }}>{t.faltaTexto}</Text>
+                {p.ajuste.propuestas?.length ? (
+                  <>
+                    <Text style={{ fontWeight: '700', marginBottom: 4 }}>{t.reemplazos}</Text>
+                    {p.ajuste.propuestas.map((x) => (
+                      <Boton
+                        key={x.platoId}
+                        texto={t.elegir.replace(
+                          '{producto}',
+                          `${idioma === 'en' ? x.nombreEn || x.nombreEs : x.nombreEs} · ${formatearMonto(x.precioCentavos, moneda, idioma)}`,
+                        )}
+                        alTocar={() => void decidirAjuste('reemplazar', x.platoId)}
+                        cargando={decidiendo}
+                      />
+                    ))}
+                  </>
+                ) : null}
                 <Boton
                   texto={t.quitar.replace(
                     '{monto}',
@@ -902,6 +927,23 @@ export default function SeguirPedido() {
                   secundario
                 />
               </>
+            ) : p.ajuste.estado === 'quitado' && p.ajuste.reemplazoId ? (
+              <Text style={{ fontWeight: '700' }}>
+                {t.reemplazadoOk
+                  .replace(
+                    '{plato}',
+                    idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
+                  )
+                  .replace(
+                    '{producto}',
+                    (() => {
+                      const r = p.ajuste.propuestas?.find(
+                        (x) => x.platoId === p.ajuste?.reemplazoId,
+                      );
+                      return r ? (idioma === 'en' ? r.nombreEn || r.nombreEs : r.nombreEs) : '';
+                    })(),
+                  )}
+              </Text>
             ) : p.ajuste.estado === 'quitado' ? (
               <Text style={{ fontWeight: '700' }}>
                 {t.quitadoOk

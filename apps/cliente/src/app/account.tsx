@@ -2,12 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, Pantalla, ReportarProblema, URL_SERVIDOR, e, useSesion } from '@tumbite/movil';
+import { Boton, C, ReportarProblema, URL_SERVIDOR, e, useSesion } from '@tumbite/movil';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ANCHO_MAX, Encabezado } from '../comida/piezas';
+import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 
 const T = {
   es: {
     titulo: 'Mi cuenta',
-    volver: '← Volver',
+    volver: 'Volver',
     pedidos: 'Mis pedidos',
     sinPedidos: 'Todavía no has pedido. ¡Tu primer antojo te espera!',
     tarjetas: 'Mis tarjetas',
@@ -32,7 +36,7 @@ const T = {
   },
   en: {
     titulo: 'My account',
-    volver: '← Back',
+    volver: 'Back',
     pedidos: 'My orders',
     sinPedidos: 'You haven’t ordered yet. Your first craving is waiting!',
     tarjetas: 'My cards',
@@ -70,6 +74,11 @@ type Tarjeta = { id: string; marca: string; ultimos4: string; vence: string };
 /** «Mi cuenta» del cliente: historial, tarjetas guardadas, datos y ayuda. */
 export default function MiCuenta() {
   const { api, idioma, usuario } = useSesion();
+  const pestana = (p: Pestana) => {
+    if (p === 'inicio') return router.replace('/');
+    if (p === 'pedidos') return router.push('/orders');
+    if (p === 'favoritos') return router.push('/favorites');
+  };
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
   const [tarjetas, setTarjetas] = useState<Tarjeta[] | null>(null);
@@ -109,105 +118,122 @@ export default function MiCuenta() {
     });
 
   return (
-    <Pantalla titulo={t.titulo}>
-      <Text style={e.enlace} onPress={() => router.back()} accessibilityRole="button">
-        {t.volver}
-      </Text>
-      <Text style={{ fontWeight: '700' }}>{usuario?.nombre}</Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 16 }}>{usuario?.correo}</Text>
-      {error ? (
-        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
-          {error}
-        </Text>
-      ) : null}
-
-      {/* Divoox Flex: lo que las empresas me envían (C-FLEX-UBICACION). */}
-      <Pressable
-        onPress={() => router.push('/packages')}
-        accessibilityRole="link"
-        testID="ir-mis-paquetes"
-        style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+    // Mismo armazón que Favoritos y Pedidos (antes la cabecera roja vieja con «← Volver»).
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+      <Encabezado
+        titulo={t.titulo}
+        alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        etiquetaVolver={t.volver}
+      />
+      <ScrollView
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 32,
+          width: '100%',
+          maxWidth: ANCHO_MAX,
+          alignSelf: 'center',
+        }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontWeight: '800' }}>
-          {idioma === 'en' ? 'My packages' : 'Mis paquetes'}
-        </Text>
-        <Text style={{ fontWeight: '800' }}>›</Text>
-      </Pressable>
-
-      <Text style={estilos.subtitulo}>{t.pedidos}</Text>
-      {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}
-      {pedidos?.map((p) => (
-        <Pressable
-          key={p.id}
-          onPress={() => router.push(`/order/${p.id}`)}
-          accessibilityRole="link"
-          style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between', gap: 8 }]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '700' }}>{p.restauranteNombre}</Text>
-            <Text style={{ color: '#5E5E5E' }}>
-              {fecha(p.creadoEn)} ·{' '}
-              {/* Entregado en verde: algo que salió bien nunca va en rojo. */}
-              <Text style={p.estado === 'entregado' ? { color: C.exito, fontWeight: '700' } : null}>
-                {t.estados[p.estado] ?? p.estado}
-              </Text>
-            </Text>
-          </View>
-          <Text style={{ fontWeight: '800' }}>
-            {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
+        <Text style={{ fontWeight: '700' }}>{usuario?.nombre}</Text>
+        <Text style={{ color: '#5E5E5E', marginBottom: 16 }}>{usuario?.correo}</Text>
+        {error ? (
+          <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+            {error}
           </Text>
-        </Pressable>
-      ))}
+        ) : null}
 
-      <Text style={estilos.subtitulo}>{t.tarjetas}</Text>
-      {tarjetas?.length === 0 ? <Text style={e.tarjeta}>{t.sinTarjetas}</Text> : null}
-      {tarjetas?.map((x) => (
-        <View key={x.id} style={e.tarjeta}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ flex: 1, fontWeight: '700' }}>
-              {x.marca.toUpperCase()} •••• {x.ultimos4}{' '}
-              <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
-                {t.vence} {x.vence}
-              </Text>
-            </Text>
-            {/* Quitar la tarjeta va escondido en los tres puntos y con confirmación. */}
-            <Pressable
-              onPress={() => setMenu(menu === x.id ? null : x.id)}
-              accessibilityRole="button"
-              accessibilityLabel={t.opciones}
-              hitSlop={8}
-              style={{ padding: 8 }}
-            >
-              <Text style={{ fontSize: 22 }}>⋮</Text>
-            </Pressable>
-          </View>
-          {menu === x.id && confirmar !== x.id ? (
-            <Text style={[e.enlace, { color: C.primario }]} onPress={() => setConfirmar(x.id)}>
-              {t.quitar}
-            </Text>
-          ) : null}
-          {confirmar === x.id ? (
-            <View>
-              <Text style={{ marginVertical: 8 }}>{t.seguro}</Text>
-              <Boton texto={t.si} alTocar={() => void quitar(x.id)} />
-              <Text style={e.enlace} onPress={() => setConfirmar(null)}>
-                {t.no}
+        {/* Divoox Flex: lo que las empresas me envían (C-FLEX-UBICACION). */}
+        <Pressable
+          onPress={() => router.push('/packages')}
+          accessibilityRole="link"
+          testID="ir-mis-paquetes"
+          style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+        >
+          <Text style={{ fontWeight: '800' }}>
+            {idioma === 'en' ? 'My packages' : 'Mis paquetes'}
+          </Text>
+          <Text style={{ fontWeight: '800' }}>›</Text>
+        </Pressable>
+
+        <Text style={estilos.subtitulo}>{t.pedidos}</Text>
+        {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}
+        {pedidos?.map((p) => (
+          <Pressable
+            key={p.id}
+            onPress={() => router.push(`/order/${p.id}`)}
+            accessibilityRole="link"
+            style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between', gap: 8 }]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700' }}>{p.restauranteNombre}</Text>
+              <Text style={{ color: '#5E5E5E' }}>
+                {fecha(p.creadoEn)} ·{' '}
+                {/* Entregado en verde: algo que salió bien nunca va en rojo. */}
+                <Text
+                  style={p.estado === 'entregado' ? { color: C.exito, fontWeight: '700' } : null}
+                >
+                  {t.estados[p.estado] ?? p.estado}
+                </Text>
               </Text>
             </View>
-          ) : null}
-        </View>
-      ))}
+            <Text style={{ fontWeight: '800' }}>
+              {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
+            </Text>
+          </Pressable>
+        ))}
 
-      <Text style={estilos.subtitulo}>{t.datos}</Text>
-      <Boton
-        texto={t.editarDatos}
-        alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/settings`)}
-        secundario
-      />
+        <Text style={estilos.subtitulo}>{t.tarjetas}</Text>
+        {tarjetas?.length === 0 ? <Text style={e.tarjeta}>{t.sinTarjetas}</Text> : null}
+        {tarjetas?.map((x) => (
+          <View key={x.id} style={e.tarjeta}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ flex: 1, fontWeight: '700' }}>
+                {x.marca.toUpperCase()} •••• {x.ultimos4}{' '}
+                <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
+                  {t.vence} {x.vence}
+                </Text>
+              </Text>
+              {/* Quitar la tarjeta va escondido en los tres puntos y con confirmación. */}
+              <Pressable
+                onPress={() => setMenu(menu === x.id ? null : x.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t.opciones}
+                hitSlop={8}
+                style={{ padding: 8 }}
+              >
+                <Text style={{ fontSize: 22 }}>⋮</Text>
+              </Pressable>
+            </View>
+            {menu === x.id && confirmar !== x.id ? (
+              <Text style={[e.enlace, { color: C.primario }]} onPress={() => setConfirmar(x.id)}>
+                {t.quitar}
+              </Text>
+            ) : null}
+            {confirmar === x.id ? (
+              <View>
+                <Text style={{ marginVertical: 8 }}>{t.seguro}</Text>
+                <Boton texto={t.si} alTocar={() => void quitar(x.id)} />
+                <Text style={e.enlace} onPress={() => setConfirmar(null)}>
+                  {t.no}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ))}
 
-      <Text style={estilos.subtitulo}>{t.ayuda}</Text>
-      <ReportarProblema />
-    </Pantalla>
+        <Text style={estilos.subtitulo}>{t.datos}</Text>
+        <Boton
+          texto={t.editarDatos}
+          alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/settings`)}
+          secundario
+        />
+
+        <Text style={estilos.subtitulo}>{t.ayuda}</Text>
+        <ReportarProblema />
+      </ScrollView>
+      <BarraInferior idioma={idioma} activa="cuenta" alTocar={pestana} />
+    </SafeAreaView>
   );
 }
 

@@ -112,7 +112,24 @@ export const CON_AJUSTE = `(SELECT plato_id FROM ajustes_pedido a WHERE a.pedido
   (SELECT nombre_en FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_en,
   (SELECT estado FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_estado,
   (SELECT devolucion FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_devolucion,
-  (SELECT creado_en FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_en_fecha`;
+  (SELECT creado_en FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_en_fecha,
+  (SELECT propuestas_json FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_propuestas,
+  (SELECT reemplazo_id FROM ajustes_pedido a WHERE a.pedido_id = p.id) AS aj_reemplazo`;
+
+/** C-TIENDAS-REEMPLAZOS: un reemplazo propuesto, con el precio que pagaría (nunca más que el original). */
+export type Propuesta = {
+  platoId: string;
+  nombreEs: string;
+  nombreEn: string;
+  precioCentavos: number;
+};
+export function propuestasDe(f: FilaPedido): Propuesta[] {
+  try {
+    return JSON.parse(String(f.aj_propuestas ?? '[]')) as Propuesta[];
+  } catch {
+    return [];
+  }
+}
 
 type Linea = {
   platoId: string;
@@ -123,9 +140,28 @@ type Linea = {
 };
 
 /** Lo que se le devolvería al cliente si se quita ese plato (el resto del pedido se recalcula). */
-export async function calcularSinPlato(db: D1Database, f: FilaPedido, platoId: string) {
+export async function calcularSinPlato(
+  db: D1Database,
+  f: FilaPedido,
+  platoId: string,
+  reemplazo?: Propuesta,
+) {
   const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
-  const nuevas = lineas.filter((l) => l.platoId !== platoId);
+  // C-TIENDAS-REEMPLAZOS: con reemplazo, la línea cambia de producto y se queda con el menor precio.
+  const nuevas = reemplazo
+    ? lineas.map((l) =>
+        l.platoId === platoId
+          ? {
+              ...l,
+              platoId: reemplazo.platoId,
+              nombreEs: reemplazo.nombreEs,
+              nombreEn: reemplazo.nombreEn,
+              precioCentavos: Math.min(l.precioCentavos, reemplazo.precioCentavos),
+              opciones: [],
+            }
+          : l,
+      )
+    : lineas.filter((l) => l.platoId !== platoId);
   // C-TARIFAS-PAIS: se recalcula con las tarifas que se aplicaron al pedido, no con las de hoy.
   const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
   if (!nuevas.length) return { nuevas, desglose: null, devolucion: Number(f.total) };
@@ -161,8 +197,9 @@ export async function aplicarAjuste(
   env: Env,
   db: D1Database,
   pedidoId: string,
-  decision: 'quitar' | 'cancelar',
+  decision: 'quitar' | 'cancelar' | 'reemplazar',
   actorId: string,
+  reemplazoId?: string,
 ) {
   const f = await db
     .prepare(`SELECT p.*, ${CON_AJUSTE} FROM pedidos p WHERE p.id = ?`)
@@ -172,7 +209,16 @@ export async function aplicarAjuste(
     throw new ErrorDatos('Este pedido ya no tiene nada que decidir.', undefined, 409);
   if (!['pagado', 'aceptado'].includes(String(f.estado)))
     throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
-  const { nuevas, desglose, devolucion } = await calcularSinPlato(db, f, String(f.aj_plato));
+  const reemplazo =
+    decision === 'reemplazar' ? propuestasDe(f).find((x) => x.platoId === reemplazoId) : undefined;
+  if (decision === 'reemplazar' && !reemplazo)
+    throw new ErrorDatos('Elige uno de los reemplazos que te propuso la tienda.', 'platoId', 409);
+  const { nuevas, desglose, devolucion } = await calcularSinPlato(
+    db,
+    f,
+    String(f.aj_plato),
+    reemplazo,
+  );
   if (decision === 'cancelar' || !desglose) {
     const ok = await cancelarConReembolso(env, db, pedidoId, {
       desde: ['pagado', 'aceptado'],
@@ -230,11 +276,16 @@ export async function aplicarAjuste(
       ),
     db
       .prepare(
-        "UPDATE ajustes_pedido SET estado = 'quitado', devolucion = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
+        "UPDATE ajustes_pedido SET estado = 'quitado', devolucion = ?, reemplazo_id = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
       )
-      .bind(devolucion, pedidoId),
+      .bind(devolucion, reemplazo?.platoId ?? null, pedidoId),
   ]);
-  await anotarEvento(db, pedidoId, 'plato_quitado', `${devolucion} centavos`);
+  await anotarEvento(
+    db,
+    pedidoId,
+    reemplazo ? 'plato_reemplazado' : 'plato_quitado',
+    reemplazo ? `${reemplazo.nombreEs} · ${devolucion} centavos` : `${devolucion} centavos`,
+  );
   // Pedido en mano: la comisión apartada baja con la comida (C-RESERVA-AJUSTE).
   await ajustarReservaDirecta(db, pedidoId);
   const cli = await db
@@ -242,13 +293,15 @@ export async function aplicarAjuste(
     .bind(String(f.cliente_id))
     .first<{ idioma: string }>();
   const i = cli?.idioma === 'en' ? 'en' : 'es';
+  const nombreFalta = i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es);
   await notificar(env, db, String(f.cliente_id), {
-    ...AVISOS.platoQuitado(
-      i,
-      i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es),
-      devolucion,
-      String(f.moneda ?? 'USD'),
-    ),
+    ...(reemplazo
+      ? AVISOS.platoReemplazado(
+          i,
+          nombreFalta,
+          i === 'en' ? reemplazo.nombreEn || reemplazo.nombreEs : reemplazo.nombreEs,
+        )
+      : AVISOS.platoQuitado(i, nombreFalta, devolucion, String(f.moneda ?? 'USD'))),
     datos: { pedidoId },
   });
   return { devolucion, cancelado: false };
@@ -342,6 +395,8 @@ export function aPedido(f: FilaPedido) {
           estado: String(f.aj_estado) as 'pendiente' | 'quitado' | 'cancelado',
           devolucion: f.aj_devolucion == null ? null : Number(f.aj_devolucion),
           creadoEn: String(f.aj_en_fecha ?? ''),
+          propuestas: propuestasDe(f),
+          reemplazoId: f.aj_reemplazo ? String(f.aj_reemplazo) : null,
         }
       : null,
   };
@@ -1177,13 +1232,19 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
 /** El cliente decide qué hacer con el plato agotado. */
 pedidos.post('/pedidos/:id/ajuste', async (c) => {
   const u = exigir(c, 'cliente');
-  const { decision } = await leerCuerpo(c, z.object({ decision: z.enum(['quitar', 'cancelar']) }));
+  const { decision, platoId } = await leerCuerpo(
+    c,
+    z.object({
+      decision: z.enum(['quitar', 'cancelar', 'reemplazar']),
+      platoId: z.string().min(1).max(64).optional(),
+    }),
+  );
   const f = await base(c)
     .prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
     .bind(c.req.param('id'))
     .first<{ cliente_id: string }>();
   if (!f || f.cliente_id !== u.id) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  const r = await aplicarAjuste(c.env, base(c), c.req.param('id'), decision, u.id);
+  const r = await aplicarAjuste(c.env, base(c), c.req.param('id'), decision, u.id, platoId);
   return c.json({ ok: true, ...r });
 });
 

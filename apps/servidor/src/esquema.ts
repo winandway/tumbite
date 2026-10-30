@@ -147,6 +147,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pedidos', 'tarifas_json', 'TEXT'],
   // Disputa de una recarga del saldo prepago pagada con tarjeta (19 oct 2026).
   ['disputas', 'recarga_id', 'TEXT'],
+  // C-TIENDAS-REEMPLAZOS (29 oct 2026): los reemplazos que propone la tienda y el que se eligió.
+  ['ajustes_pedido', 'propuestas_json', 'TEXT'],
+  ['ajustes_pedido', 'reemplazo_id', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

@@ -9,6 +9,19 @@ Las reglas globales de Richard aplican; estas se suman.
 - El gancho Stop (`scripts/fabrica/seguir.sh`) no deja terminar mientras quede un `[ ]`; la tarea programada «fabrica-divoox» la retoma cada dos horas si la sesión quedó quieta.
 - Lo trabado por Richard se marca `[!]` y se sigue. Freno manual: archivo `.fabrica-pausa`.
 
+## EL ROADMAP SE EJECUTA EN PILOTO AUTOMÁTICO (Richard, 29 oct 2026)
+
+> Sus palabras: _«cuando tengas el plan, arranca en piloto automático. No tienes que pedirme permiso, porque estamos trabajando con ingeniería inversa… los estándares del mercado los buscamos por medio de REA y los instalamos»_.
+
+- `docs/ROADMAP-DIVOOX.md` se ejecuta de corrido, etapa por etapa, sin pedir permiso entre puntos. Cada función: REA, ficha, prueba en rojo, construir, publicar.
+- Lo que solo puede hacer Richard se agrega a su lista (`PENDIENTES.md`, 👤) en el momento y se sigue con lo demás.
+
+## CADA ACTUALIZACIÓN DE LAS APPS SE SUBE A GOOGLE PLAY (Richard, 29 oct 2026)
+
+> Sus palabras: _«cada que hagas una actualización, pasar esa actualización directo a Google… cuando ellos verifiquen, toda esa cola de actualizaciones va a valer para ellos»_.
+
+- Cada vez que se publica un cambio que toca una app (cliente, Driver o restaurante), se compila esa app y se sube a la pista de producción de Google Play, la que revisa Google: `node scripts/tiendas/compilar-y-subir.mjs <app>` (compila con EAS, espera y sube con la cuenta de servicio). Se juntan los cambios del día en una sola compilación por app cuando son varios seguidos.
+
 ## Los estudios de Richard se consultan SIEMPRE (dictado el 14 oct 2026)
 
 - Carpeta `Proyectos Para estudiar y copiar clonar ideas /` (con espacio al final del nombre; se queda en el repo). Tiene estudios profundos, con fuentes, de cómo funcionan DoorDash, Uber Eats, Rappi y el reparto de comida en general. Richard los suma cuando encuentra más.

@@ -15,12 +15,14 @@
 ### Etapa 1 — Comida lista para lanzar en Miami
 
 - [ ] (1) Comprobar en producción el embudo de pedidos de los informes del superadmin. Todos los países.
-- [ ] (2) Repaso en celular (375 px) de todas las pantallas de la app del cliente, Divoox Driver, la app del restaurante y el panel, en el sitio de pruebas, con REA sobre nuestras apps: cada fallo con prueba en rojo, arreglo y publicación. Todos los países.
+- [x] (29 oct: 24 pantallas en pruebas sin errores; arreglados el saludo del inicio con la hamburguesa y «Mi cuenta» con la cabecera vieja; la pizza recortada va a marketing) (2) Repaso en celular (375 px) de todas las pantallas de la app del cliente, Divoox Driver, la app del restaurante y el panel, en el sitio de pruebas, con REA sobre nuestras apps: cada fallo con prueba en rojo, arreglo y publicación. Todos los países.
 
 ### Etapa 2 — Tiendas (Mercado, Farmacia, Licores)
 
-- [ ] (5) Ficha REA de tiendas frente a DoorDash, Instacart y Uber Eats (documentación pública y web como visitante): comprador que reemplaza en vivo con foto, chat de reemplazos, horarios por tienda, límites de licores por estado; comparación con lo nuestro y brechas en orden. Todos los países.
-- [ ] (6) Construir las brechas de la ficha de tiendas, solo en el sitio de pruebas, de punta a punta. Todos los países.
+- [x] (ficha docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md con evidencia REA) (5) Ficha REA de tiendas frente a DoorDash, Instacart y Uber Eats (documentación pública y web como visitante): comprador que reemplaza en vivo con foto, chat de reemplazos, horarios por tienda, límites de licores por estado; comparación con lo nuestro y brechas en orden. Todos los países.
+- [x] (reemplazos propuestos por la tienda, C-TIENDAS-REEMPLAZOS; quedan en la ficha la foto en la propuesta y los horarios de licores por estado) (6) Construir las brechas de la ficha de tiendas, solo en el sitio de pruebas, de punta a punta. Todos los países.
+
+- [ ] (6b) Foto del producto en cada reemplazo propuesto (cliente y tienda). Todos los países.
 
 ### Etapa 3 — Moto
 

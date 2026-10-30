@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
+import { FaltaTienda } from './FaltaTienda';
 import {
   ErrorApi,
   type Idioma,
@@ -550,7 +551,16 @@ export function Inicio() {
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{tr.faltaProducto}</Text>
             <Text style={{ color: '#5E5E5E' }}>{faltaDe === p.id ? '▾' : '›'}</Text>
           </Pressable>
-          {faltaDe === p.id ? (
+          {faltaDe === p.id && p.lineas.some((l) => l.sustitucion) ? (
+            <FaltaTienda
+              api={api}
+              idioma={idioma}
+              lineas={p.lineas}
+              avisar={(platoId, propuestas) =>
+                void accion(`/datos/restaurante/pedidos/${p.id}/falta`, { platoId, propuestas })
+              }
+            />
+          ) : faltaDe === p.id ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {p.lineas.map((l) => (
                 <Pressable

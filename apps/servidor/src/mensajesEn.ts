@@ -614,6 +614,14 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your new password must be at least 8 characters.',
   ],
   ['La foto pesa demasiado. El máximo es 3 MB.', 'The photo is too large. The maximum is 3 MB.'],
+  [
+    'Ese reemplazo no está disponible en tu tienda. Elige otro producto.',
+    'That replacement isn’t available in your store. Pick another product.',
+  ],
+  [
+    'Elige uno de los reemplazos que te propuso la tienda.',
+    'Pick one of the replacements the store suggested.',
+  ],
   ['Esa disputa no tiene un pedido de Divoox.', 'That dispute isn’t linked to a Divoox order.'],
   ['Esa queja no existe.', 'That complaint doesn’t exist.'],
   ['Falta la foto.', 'The photo is missing.'],

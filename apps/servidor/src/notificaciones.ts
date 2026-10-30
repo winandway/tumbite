@@ -186,6 +186,17 @@ export const AVISOS = {
           cuerpo:
             'Elige en la app: quitarlo (te devolvemos su parte) o cancelar todo. En 5 minutos lo quitamos.',
         },
+  /** C-TIENDAS-REEMPLAZOS: el producto que faltó se cambió por otro (nunca cuesta más). */
+  platoReemplazado: (i: string, plato: string, nuevo: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: `${plato} replaced`,
+          cuerpo: `It was out of stock, so we added ${nuevo}. You never pay more.`,
+        }
+      : {
+          titulo: `Cambiamos ${plato}`,
+          cuerpo: `No había, así que va ${nuevo}. Nunca pagas de más.`,
+        },
   platoQuitado: (i: string, plato: string, centavos: number, moneda = 'USD'): Aviso => {
     // C-MONEDA-RECORRIDO: en la moneda del pedido; en dólares, el texto de siempre.
     const monto =

@@ -1719,3 +1719,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** en los informes del superadmin (`GET /datos/admin/informes`), `embudo`: pedidos que empezaron a pagar en el rango, los pagados, los que aceptó el restaurante y los entregados, con el porcentaje que pasa de cada paso al siguiente (`embudo()` en `rutas/informes.ts`). Se ve en `SuperInformes.tsx`.
 - **Prueba:** `rutas/informes.test.ts` y `SuperInformes.test.tsx` (C-EMBUDO).
+
+## C-TIENDAS-REEMPLAZOS (29 oct 2026) — todos los países
+
+- **Qué es (como Instacart):** al marcar un producto que falta, la tienda propone hasta tres reemplazos de su catálogo (disponibles, con su precio rebajado). Con «avísame», el cliente elige uno con un toque; con «uno parecido», va solo el primero. La línea cambia de producto y queda con el MENOR precio entre el original y el reemplazo: nunca se cobra de más.
+- **Dónde:** columnas `ajustes_pedido.propuestas_json` y `reemplazo_id` (por COLUMNAS); `calcularSinPlato(…, reemplazo)` y `aplicarAjuste(…, 'reemplazar', …, platoId)` en `rutas/pedidos.ts`; validación en `rutas/operacion.ts` (catálogo con `lineasDeTienda`); aviso `platoReemplazado`. Panel (`Pedidos.tsx`), app del restaurante (`FaltaTienda.tsx`), app del cliente (pedido) y Docs (`shop-stores`, `store-orders`). Ficha: `docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md`.
+- **No tocar:** el estado `quitado` sirve también para el reemplazo (la tabla tiene un CHECK con tres estados; cambiarlo exigiría rehacer la tabla en producción).
+- **Prueba:** `rutas/tiendasVitrina.test.ts` (C-TIENDAS-REEMPLAZOS, en rojo antes del arreglo) y `PedidosReemplazos.test.tsx`.

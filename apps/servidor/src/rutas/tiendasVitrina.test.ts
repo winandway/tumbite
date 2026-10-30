@@ -334,6 +334,126 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(ac.estado).toBe(409);
   });
 
+  // C-TIENDAS-REEMPLAZOS (29 oct 2026), como Instacart: la tienda propone hasta tres reemplazos de su
+  // catálogo; el cliente elige uno con un toque. Nunca se cobra más que el original.
+  it('C-TIENDAS-REEMPLAZOS: la tienda propone, el cliente elige y nunca paga de más', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const pedir = async (lineas: unknown[]) => {
+      const r = await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: tid,
+          lineas,
+          propinaCentavos: 0,
+          direccion: '200 Calle Prueba, Miami',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        cliente.token,
+      );
+      const pid = r.datos.pedidoId as string;
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      )
+        .bind(pid)
+        .run();
+      return pid;
+    };
+    const pedido = async (pid: string) =>
+      (await m.llamar('GET', `/datos/pedidos/${pid}`, undefined, cliente.token)).datos.pedido;
+
+    // «Avísame»: el jugo (3,50) falta; la tienda propone agua (1,25). El cliente la elige.
+    const p1 = await pedir([
+      { platoId: id('Orange juice'), cantidad: 1, sustitucion: 'contactar' },
+      { platoId: id('Bananas'), cantidad: 1, sustitucion: 'reembolsar' },
+    ]);
+    // Lo agotado o lo que no es de la tienda no se puede proponer.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/restaurante/pedidos/${p1}/falta`,
+          { platoId: id('Orange juice'), propuestas: ['producto-que-no-existe'] },
+          dueno.token,
+        )
+      ).estado,
+    ).toBe(409);
+    const f1 = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${p1}/falta`,
+      { platoId: id('Orange juice'), propuestas: [id('Spring water')] },
+      dueno.token,
+    );
+    expect(f1.estado).toBe(200);
+    const antes = await pedido(p1);
+    expect(antes.ajuste.propuestas).toEqual([
+      expect.objectContaining({
+        platoId: id('Spring water'),
+        nombreEs: 'Spring water',
+        precioCentavos: 125,
+      }),
+    ]);
+    const d = await m.llamar(
+      'POST',
+      `/datos/pedidos/${p1}/ajuste`,
+      { decision: 'reemplazar', platoId: id('Spring water') },
+      cliente.token,
+    );
+    expect(d.estado).toBe(200);
+    const despues = await pedido(p1);
+    expect(despues.lineas.map((l: { nombreEs: string }) => l.nombreEs)).toEqual([
+      'Spring water',
+      'Bananas',
+    ]);
+    expect(despues.subtotal).toBe(antes.subtotal - 350 + 125);
+    expect(despues.ajuste.estado).toBe('quitado');
+    expect(despues.ajuste.reemplazoId).toBe(id('Spring water'));
+
+    // Más caro que el original: se cobra lo mismo que el original, nunca más.
+    const p2 = await pedir([
+      { platoId: id('Spring water'), cantidad: 2, sustitucion: 'contactar' },
+    ]);
+    const antes2 = await pedido(p2);
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${p2}/falta`,
+      { platoId: id('Spring water'), propuestas: [id('Orange juice')] },
+      dueno.token,
+    );
+    await m.llamar(
+      'POST',
+      `/datos/pedidos/${p2}/ajuste`,
+      { decision: 'reemplazar', platoId: id('Orange juice') },
+      cliente.token,
+    );
+    const despues2 = await pedido(p2);
+    expect(despues2.lineas[0]).toMatchObject({
+      nombreEs: 'Orange juice',
+      precioCentavos: 125,
+      cantidad: 2,
+    });
+    expect(despues2.total).toBe(antes2.total);
+
+    // «Uno parecido» con propuesta: se aplica sola la primera, sin esperar al cliente.
+    const p3 = await pedir([{ platoId: id('Spring water'), cantidad: 1, sustitucion: 'similar' }]);
+    const f3 = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${p3}/falta`,
+      { platoId: id('Spring water'), propuestas: [id('Orange juice')] },
+      dueno.token,
+    );
+    expect(f3.datos.resuelto).toBe(true);
+    expect((await pedido(p3)).lineas[0].nombreEs).toBe('Orange juice');
+  });
+
   it('C-EDAD-EN-MANO: con alcohol, «en la puerta» pasa a «en mano»', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

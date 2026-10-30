@@ -56,8 +56,10 @@ import {
   aPedido,
   aplicarAjuste,
   calcularSinPlato,
+  type Propuesta,
 } from './pedidos';
 import { anotar, anotarEstado } from '../historial';
+import { lineasDeTienda } from './tiendas';
 import { AVISOS, notificar } from '../notificaciones';
 import { crearStripe } from '../stripe';
 import { anotarEvento, cancelarConReembolso, vigilarPedidos } from '../manager';
@@ -558,7 +560,14 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
   const rid = await miRestauranteId(c);
   const db = base(c);
   const id = c.req.param('id');
-  const { platoId } = await leerCuerpo(c, z.object({ platoId: z.string().min(1) }));
+  const { platoId, propuestas: idsPropuestos } = await leerCuerpo(
+    c,
+    z.object({
+      platoId: z.string().min(1),
+      // C-TIENDAS-REEMPLAZOS: hasta tres reemplazos del propio catálogo, como el escaneo de Instacart.
+      propuestas: z.array(z.string().min(1).max(64)).max(3).default([]),
+    }),
+  );
   const f = await db
     .prepare(
       `SELECT p.*, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.tipo_comercio AS tipo_comercio FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ? AND p.restaurante_id = ? AND p.estado IN ('pagado','aceptado') AND p.repartidor_id IS NULL`,
@@ -586,20 +595,72 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
   ).find((l) => l.platoId === platoId);
   if (!linea) throw new ErrorDatos('Ese plato no está en este pedido.', 'platoId', 404);
   const { devolucion } = await calcularSinPlato(db, f, platoId);
+  // Los reemplazos tienen que ser de esta tienda, disponibles y distintos del que falta.
+  const propuestas: Propuesta[] = [];
+  const noDisponible = () =>
+    new ErrorDatos(
+      'Ese reemplazo no está disponible en tu tienda. Elige otro producto.',
+      'propuestas',
+      409,
+    );
+  for (const pid of [...new Set(idsPropuestos)].filter((x) => x !== platoId)) {
+    if (esTienda) {
+      // Del catálogo de la tienda, con su precio rebajado y solo si hay hoy.
+      const [l] = await lineasDeTienda(c, { id: rid, tipo_comercio: f.tipo_comercio }, [
+        { platoId: pid, cantidad: 1 },
+      ]).catch(() => {
+        throw noDisponible();
+      });
+      if (!l) throw noDisponible();
+      propuestas.push({
+        platoId: l.platoId,
+        nombreEs: l.nombreEs,
+        nombreEn: l.nombreEn,
+        precioCentavos: l.precioCentavos,
+      });
+      continue;
+    }
+    const pl = await db
+      .prepare(
+        'SELECT id, nombre_es, nombre_en, precio_centavos FROM platos WHERE id = ? AND restaurante_id = ? AND disponible = 1',
+      )
+      .bind(pid, rid)
+      .first<{ id: string; nombre_es: string; nombre_en: string; precio_centavos: number }>();
+    if (!pl) throw noDisponible();
+    propuestas.push({
+      platoId: pl.id,
+      nombreEs: pl.nombre_es,
+      nombreEn: pl.nombre_en,
+      precioCentavos: Number(pl.precio_centavos),
+    });
+  }
   await db
     .prepare(
-      `INSERT INTO ajustes_pedido (pedido_id, plato_id, nombre_es, nombre_en, devolucion) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO ajustes_pedido (pedido_id, plato_id, nombre_es, nombre_en, devolucion, propuestas_json) VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(pedido_id) DO UPDATE SET plato_id = excluded.plato_id, nombre_es = excluded.nombre_es,
          nombre_en = excluded.nombre_en, devolucion = excluded.devolucion, estado = 'pendiente',
+         propuestas_json = excluded.propuestas_json, reemplazo_id = NULL,
          creado_en = datetime('now'), resuelto_en = NULL
        WHERE ajustes_pedido.estado = 'quitado'`,
     )
-    .bind(id, platoId, linea.nombreEs, linea.nombreEn, devolucion)
+    .bind(id, platoId, linea.nombreEs, linea.nombreEn, devolucion, JSON.stringify(propuestas))
     .run();
   await anotarEvento(db, id, 'plato_agotado', linea.nombreEs);
   // C-TIENDAS-FALTANTES: el cliente ya dijo en el carrito qué hacer si falta. «Reembolsar» y «uno
   // parecido» (si la tienda lo marca, tampoco tenía uno parecido) se devuelven en el acto; solo
   // «avísame» espera su decisión, como un restaurante.
+  // «Uno parecido» con un reemplazo propuesto: va el primero, como el «Best match» de Instacart.
+  if (esTienda && linea.sustitucion === 'similar' && propuestas[0]) {
+    const r = await aplicarAjuste(
+      c.env,
+      db,
+      id,
+      'reemplazar',
+      exigir(c, 'restaurante').id,
+      propuestas[0].platoId,
+    );
+    return c.json({ ok: true, devolucion: r.devolucion, resuelto: true, cancelado: r.cancelado });
+  }
   if (esTienda && (linea.sustitucion ?? 'reembolsar') !== 'contactar') {
     const r = await aplicarAjuste(c.env, db, id, 'quitar', exigir(c, 'restaurante').id);
     return c.json({ ok: true, devolucion: r.devolucion, resuelto: true, cancelado: r.cancelado });

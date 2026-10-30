@@ -158,6 +158,7 @@ const es: SeccionDocs[] = [
           'Dentro de la tienda, los productos están por pasillos (bebidas, lácteos, despensa…), como en el súper. Cada producto muestra su foto, su precio y, si está rebajado, el precio de antes tachado. Lo que está agotado no aparece.',
           'Las frutas, verduras y carnes que se venden al peso muestran un precio estimado: la tienda lo pesa al preparar tu pedido. Si un producto tiene alcohol o tabaco, el pedido se entrega en mano, nunca en la puerta, y el repartidor te pide identificación: tienes que ser mayor de 21 años.',
           'En el carrito eliges, producto por producto, qué hacer si la tienda no lo tiene: reembolsarlo, que te traigan uno parecido sin cobrarte de más, o que te pregunten por el chat del pedido. Si no eliges nada, se reembolsa.',
+          'Si elegiste que te pregunten, y la tienda no tiene un producto, te puede proponer hasta tres reemplazos con su precio. Tocas el que quieras y listo, sin escribir en el chat. Si el reemplazo cuesta más, pagas lo mismo que el original; si cuesta menos, te devolvemos la diferencia. También puedes quitarlo o cancelar todo.',
           'Las tiendas abren ciudad por ciudad. Si en la tuya todavía no hay, el servicio dice «muy pronto».',
         ],
         capturas: [
@@ -1516,6 +1517,7 @@ const es: SeccionDocs[] = [
           'Un pedido de tienda llega igual que uno de comida: suena la alarma, lo aceptas, lo preparas y lo entregas al repartidor. La diferencia está en cada producto: debajo dice qué quiere el cliente si no lo tienes.',
           '«Si no hay: reembolsar» quiere decir que lo quitas del pedido con «Falta un producto» y Divoox le devuelve al cliente lo que pagó por él en ese mismo momento, sin esperar su respuesta. «Uno parecido, sin cobrar de más» quiere decir que pongas uno similar del mismo precio o más barato: el cobro no cambia; si tampoco tienes uno parecido, márcalo como faltante y se devuelve igual, en el acto. «Preguntarle por el chat» quiere decir que le escribas por el chat del pedido: al marcarlo como faltante, el cliente decide en su app si lo quita o cancela.',
           'Pueden faltar varios productos en un mismo pedido: márcalos uno detrás de otro. Cada uno se resuelve antes de pasar al siguiente.',
+          'Al marcar un producto que falta, puedes buscar en tu catálogo y proponer hasta tres reemplazos. Si el cliente pidió «uno parecido», va el primero que propongas, sin esperar. Si pidió que le preguntes, lo elige él con un toque en su app. Nunca paga más que el original.',
           'Los productos que se venden al peso se cobran con un peso estimado. Si pesan menos, quita la diferencia; nunca se le cobra al cliente más de lo que aceptó.',
           'Los productos con alcohol o tabaco salen marcados: ese pedido se entrega en mano y el repartidor pide identificación al entregar.',
         ],
@@ -3549,6 +3551,7 @@ const en: SeccionDocs[] = [
           'Inside the store, products are grouped by aisle (drinks, dairy, pantry…), just like at the supermarket. Each product shows its photo, its price and, when it’s on sale, the old price crossed out. Sold-out items don’t show up.',
           'Fruit, vegetables and meat sold by weight show an estimated price: the store weighs them while preparing your order. If a product contains alcohol or tobacco, the order is handed to you, never left at the door, and the driver asks for ID: you must be 21 or older.',
           'In the cart you choose, item by item, what happens if the store doesn’t have it: refund it, get something similar at no extra charge, or have them ask you in the order chat. If you don’t choose, it’s refunded.',
+          'If you chose to be asked and the store is out of an item, it can suggest up to three replacements with their price. Tap the one you want and you’re done, no chat needed. If the replacement costs more, you pay the same as the original; if it costs less, we refund the difference. You can also remove it or cancel everything.',
           'Stores open city by city. If yours isn’t open yet, the service says “coming soon.”',
         ],
         capturas: [
@@ -4890,6 +4893,7 @@ const en: SeccionDocs[] = [
           'A store order comes in just like a food order: the alarm rings, you accept it, prepare it and hand it to the driver. The difference is on each item: underneath it says what the customer wants if you don’t have it.',
           '“If out: refund it” means you remove it with “An item is missing” and Divoox refunds the customer what they paid for it right away, without waiting for a reply. “Something similar, no extra charge” means you pack a similar item at the same price or less: the charge doesn’t change; if you don’t have anything similar either, mark it missing and it’s refunded right away too. “Ask the customer in the chat” means you message them in the order chat: when you mark it missing, the customer decides in their app whether to remove it or cancel.',
           'Several items can be out in the same order: mark them one after another. Each one is settled before the next.',
+          'When you mark an item as missing, you can search your catalog and suggest up to three replacements. If the customer asked for “something similar,” the first one you suggest goes in right away. If they asked to be asked, they pick it with one tap in their app. They never pay more than the original.',
           'Items sold by weight are charged at an estimated weight. If they weigh less, remove the difference; the customer is never charged more than they agreed to.',
           'Items with alcohol or tobacco are marked: that order is handed over in person and the driver asks for ID at delivery.',
         ],

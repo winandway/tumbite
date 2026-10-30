@@ -4,7 +4,6 @@
  * «Ejemplo», para que la pantalla nunca se vea vacía delante de un socio o un inversionista.
  */
 import logo from '../../assets/inicio/logo.png';
-import heroHamburguesa from '../../assets/inicio/hero-hamburguesa.png';
 import iconoCampana from '../../assets/inicio/icono-campana.png';
 import iconoCupon from '../../assets/inicio/icono-cupon.png';
 import iconoLupa from '../../assets/inicio/icono-lupa.png';
@@ -34,7 +33,6 @@ import rellenoRestPizza from '../../assets/inicio/relleno-restaurante-pizza.png'
 
 export const IMG = {
   logo,
-  heroHamburguesa,
   iconoCampana,
   iconoCupon,
   iconoLupa,

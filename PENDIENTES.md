@@ -46,6 +46,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 
 ## 👤 Lo que solo puede hacer Richard
 
+- [ ] 👤 **Marketing: una pizza recortada sin fondo, en buena calidad**, para el saludo del inicio de la app del cliente (la marca va con pizzas; la hamburguesa se quitó el 29 oct). Formato PNG transparente de unos 700 × 440 px.
 - [ ] 👤 **Tiendas (Mercado, Farmacia, Licores):** elegir el país donde se encienden. La compra de prueba ya está hecha. Plan: docs/ROADMAP-DIVOOX.md, etapa 2.
 - [ ] 👤 **Carro:** las mismas decisiones que Moto (país, aprobación legal, seguro del pasajero, tarifas). Plan: etapa 4.
 - [ ] 👤 **Envíos de persona a persona:** valor máximo declarado, seguro del paquete y precio. Plan: etapa 5.

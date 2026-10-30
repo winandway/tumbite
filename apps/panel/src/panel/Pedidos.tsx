@@ -106,6 +106,9 @@ const T = {
     cualFalta:
       '¿Cuál plato no tienes? Al cliente le avisamos y decide: quitarlo (se le devuelve esa parte) o cancelar todo.',
     avisarFalta: 'Avisar al cliente',
+    reemplazos:
+      'Propón hasta 3 reemplazos de tu tienda (el cliente nunca paga más que el original):',
+    buscarReemplazo: 'Buscar un producto',
     esperandoCliente:
       'Avisamos al cliente que no tienes «{plato}». Esperando su respuesta (máximo 5 minutos)…',
     quitado: 'El cliente quitó «{plato}». Prepara el resto.',
@@ -162,6 +165,9 @@ const T = {
     cualFalta:
       'Which item are you out of? We notify the customer and they decide: remove it (that part is refunded) or cancel everything.',
     avisarFalta: 'Notify the customer',
+    reemplazos:
+      'Suggest up to 3 replacements from your store (the customer never pays more than the original):',
+    buscarReemplazo: 'Search a product',
     esperandoCliente:
       'We told the customer you’re out of “{plato}”. Waiting for their answer (up to 5 minutes)…',
     quitado: 'The customer removed “{plato}”. Prepare the rest.',
@@ -191,6 +197,24 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   // «Me falta un plato»: el pedido donde se está eligiendo el plato.
   const [faltando, setFaltando] = useState<string | null>(null);
   const [platoFalta, setPlatoFalta] = useState('');
+  // C-TIENDAS-REEMPLAZOS: búsqueda en el catálogo propio y hasta tres reemplazos elegidos.
+  const [buscaReemplazo, setBuscaReemplazo] = useState('');
+  const [encontrados, setEncontrados] = useState<
+    { id: string; nombreEs: string; nombreEn: string; disponible: boolean }[]
+  >([]);
+  const [propuestas, setPropuestas] = useState<string[]>([]);
+  useEffect(() => {
+    if (!faltando || buscaReemplazo.trim().length < 2) return;
+    const reloj = setTimeout(() => {
+      pedir<{ productos: typeof encontrados }>(
+        'GET',
+        `/datos/mi-restaurante/productos?q=${encodeURIComponent(buscaReemplazo.trim())}`,
+      )
+        .then((r) => setEncontrados(r.productos.filter((x) => x.disponible).slice(0, 8)))
+        .catch(() => setEncontrados([]));
+    }, 300);
+    return () => clearTimeout(reloj);
+  }, [faltando, buscaReemplazo]);
   const t = enIdioma(T, idioma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
@@ -493,6 +517,33 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                       ))}
                     </select>
                   </label>
+                  {p.lineas.some((l) => l.sustitucion) ? (
+                    <fieldset className="reemplazos">
+                      <legend>{t.reemplazos}</legend>
+                      <input
+                        type="search"
+                        value={buscaReemplazo}
+                        onChange={(ev) => setBuscaReemplazo(ev.target.value)}
+                        placeholder={t.buscarReemplazo}
+                        aria-label={t.buscarReemplazo}
+                      />
+                      {encontrados.map((x) => (
+                        <label key={x.id}>
+                          <input
+                            type="checkbox"
+                            checked={propuestas.includes(x.id)}
+                            disabled={!propuestas.includes(x.id) && propuestas.length >= 3}
+                            onChange={(ev) =>
+                              setPropuestas((ps) =>
+                                ev.target.checked ? [...ps, x.id] : ps.filter((y) => y !== x.id),
+                              )
+                            }
+                          />{' '}
+                          {idioma === 'en' ? x.nombreEn || x.nombreEs : x.nombreEs || x.nombreEn}
+                        </label>
+                      ))}
+                    </fieldset>
+                  ) : null}
                   <button
                     type="button"
                     className="boton"
@@ -500,9 +551,13 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                     onClick={() =>
                       void accion(`/datos/restaurante/pedidos/${p.id}/falta`, {
                         platoId: platoFalta,
+                        propuestas,
                       }).then(() => {
                         setFaltando(null);
                         setPlatoFalta('');
+                        setPropuestas([]);
+                        setBuscaReemplazo('');
+                        setEncontrados([]);
                       })
                     }
                   >

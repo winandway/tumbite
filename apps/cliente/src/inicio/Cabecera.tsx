@@ -109,16 +109,12 @@ export function Cabecera({
             flex: 1,
             paddingBottom: 8,
           }}
-          numberOfLines={1}
+          numberOfLines={2}
         >
           {t.hola}, {nombre}!
         </Text>
-        <Image
-          source={IMG.heroHamburguesa}
-          style={{ width: 176, height: 109, marginRight: -16, marginBottom: -14 }}
-          resizeMode="contain"
-          accessibilityIgnoresInvertColors
-        />
+        {/* Sin foto al lado, como DoorDash: el nombre se ve entero. La hamburguesa se quitó porque la
+            marca va con pizzas; la pizza recortada la prepara marketing (PENDIENTES). */}
       </View>
     </View>
   );
