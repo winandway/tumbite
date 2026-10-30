@@ -56,7 +56,7 @@
 
 ### Etapa 5 — Envíos de persona a persona
 
-- [ ] (17) Ficha REA de Envíos: Uber Connect y DoorDash (paquetes), y qué se reutiliza de Flex. Todos los países.
+- [x] (docs/investigaciones-rea/2026-10-30-envios.md: sobre el motor de viajes, como Uber Courier) (17) Ficha REA de Envíos: Uber Connect y DoorDash (paquetes), y qué se reutiliza de Flex. Todos los países.
 - [ ] (18) Construir Envíos solo en pruebas: cotizar de A a B, pagar con Stripe de prueba, recoger con foto, entregar con PIN y seguimiento. Todos los países.
 
 ### Etapa 6 — «Más»
