@@ -523,3 +523,63 @@ describe('C-REWARDS-SOMBRA: la lectura del equipo', () => {
     expect(r3.estado).toBe(403);
   });
 });
+
+// C-REWARDS-PILOTO (30 oct 2026, R1): en producción el nivel de reputación se ve solo en el piloto.
+describe('C-REWARDS-PILOTO: el repartidor del piloto ve su nivel de reputación', () => {
+  it('fuera del piloto no aparece; dentro, con el modo piloto, ve nivel, puntaje y lo que le falta', async () => {
+    const m = mundoSombra();
+    const admin = await m.cuenta('admin');
+    const rep = await m.cuenta('repartidor');
+    await pedidoEntregado(m, rep.id, { estrellas: 5 });
+    await calcularYGuardar(m.DB, rep.id, new Date().toISOString().slice(0, 10));
+    const sin = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(sin.datos.reputacion).toBeUndefined();
+
+    const correo = (
+      await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+        .bind(rep.id)
+        .first<{ correo: string }>()
+    )?.correo;
+    await m.llamar('POST', '/datos/admin/piloto', { correo }, admin.token);
+    const sinModo = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(sinModo.datos.reputacion).toBeUndefined();
+  });
+
+  it('con REWARDS_MODO=piloto y en la lista, el estado trae la reputación', async () => {
+    const m = mundo({ REWARDS_MODO: 'piloto' });
+    m.DB.prepare('PRAGMA foreign_keys = OFF').run();
+    const admin = await m.cuenta('admin');
+    const rep = await m.cuenta('repartidor');
+    await pedidoEntregado(m, rep.id, { estrellas: 5 });
+    await calcularYGuardar(m.DB, rep.id, new Date().toISOString().slice(0, 10));
+    const correo = (
+      await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+        .bind(rep.id)
+        .first<{ correo: string }>()
+    )?.correo;
+    await m.llamar('POST', '/datos/admin/piloto', { correo }, admin.token);
+    const r = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(r.datos.reputacion).toMatchObject({
+      nivel: expect.stringMatching(/inicial|plata|oro|diamante/),
+      puntaje: expect.any(Number),
+      provisional: true,
+    });
+  });
+
+  it('en producción con el modo piloto, el reloj calcula solo a los participantes', async () => {
+    const m = mundoSombra();
+    const dentro = await m.cuenta('repartidor');
+    const fuera = await m.cuenta('repartidor');
+    await pedidoEntregado(m, dentro.id, { estrellas: 5 });
+    await pedidoEntregado(m, fuera.id, { estrellas: 5 });
+    await m.DB.prepare('INSERT INTO piloto_participantes (usuario_id) VALUES (?)')
+      .bind(dentro.id)
+      .run();
+    const r = await correrSombra(
+      { ENTORNO_RELOJ: 'produccion', REWARDS_MODO: 'piloto' } as EnvRewards,
+      m.DB,
+      new Date('2026-10-30T12:00:00Z'),
+    );
+    expect(r).toMatchObject({ modo: 'piloto', calculados: 1 });
+  });
+});

@@ -1,6 +1,8 @@
 import {
   type Entorno,
   HITOS_FASE2,
+  ORDEN_NIVELES,
+  UMBRALES,
   type Hito,
   type ItemHito,
   type NivelRep,
@@ -26,10 +28,60 @@ import type { Env } from '../env';
 
 export type EnvRewards = Env & { REWARDS_MODO?: string; ENTORNO_RELOJ?: Entorno | null };
 
-/** «sombra» solo en el sitio de pruebas y si nadie lo apagó; en cualquier otro caso, «apagado». */
-export function modoRewards(env: EnvRewards): 'sombra' | 'apagado' {
-  if (env.ENTORNO_RELOJ !== 'pruebas') return 'apagado';
-  return env.REWARDS_MODO === 'apagado' ? 'apagado' : 'sombra';
+/**
+ * «sombra» en el sitio de pruebas (todos los repartidores) si nadie lo apagó. C-REWARDS-PILOTO
+ * (30 oct 2026): «piloto» en producción solo con REWARDS_MODO=piloto, y solo para los participantes
+ * del piloto. En cualquier otro caso, «apagado».
+ */
+export function modoRewards(env: EnvRewards): 'sombra' | 'piloto' | 'apagado' {
+  if (env.REWARDS_MODO === 'apagado') return 'apagado';
+  if (env.ENTORNO_RELOJ === 'pruebas') return 'sombra';
+  if (env.ENTORNO_RELOJ === 'produccion' && env.REWARDS_MODO === 'piloto') return 'piloto';
+  return 'apagado';
+}
+
+/** Lo que ve el repartidor en Driver: el último día calculado, si Rewards está activo para él. */
+export async function reputacionVisible(
+  env: EnvRewards,
+  db: D1Database,
+  usuarioId: string,
+): Promise<{
+  puntaje: number;
+  nivel: string;
+  provisional: boolean;
+  siguiente: { nivel: string; faltan: number } | null;
+} | null> {
+  const modo = modoRewards(env);
+  // En la computadora y en las pruebas automáticas (entorno «local») se comporta como producción.
+  const piloto =
+    modo === 'piloto' || (env.ENTORNO_RELOJ === 'local' && env.REWARDS_MODO === 'piloto');
+  if (modo !== 'sombra' && !piloto) return null;
+  if (piloto) {
+    const dentro = await db
+      .prepare('SELECT 1 AS si FROM piloto_participantes WHERE usuario_id = ?')
+      .bind(usuarioId)
+      .first();
+    if (!dentro) return null;
+  }
+  const f = await db
+    .prepare(
+      'SELECT puntaje, provisional, nivel_con_gracia AS nivel FROM reputacion_diaria WHERE repartidor_id = ? ORDER BY fecha DESC LIMIT 1',
+    )
+    .bind(usuarioId)
+    .first<{ puntaje: number; provisional: number; nivel: NivelRep }>();
+  if (!f) return null;
+  const i = ORDEN_NIVELES.indexOf(f.nivel);
+  const prox = ORDEN_NIVELES.at(i + 1);
+  const umbral = prox && prox !== 'inicial' ? new Map(Object.entries(UMBRALES)).get(prox) : null;
+  return {
+    puntaje: Number(f.puntaje),
+    nivel: f.nivel,
+    provisional: Number(f.provisional) === 1,
+    siguiente:
+      prox && umbral != null
+        ? { nivel: prox, faltan: Math.max(0, Math.round((umbral - Number(f.puntaje)) * 10) / 10) }
+        : null,
+  };
 }
 
 const MARGEN_MIN = 10;
@@ -438,13 +490,15 @@ export async function registrarHito(
 
 /** Una vuelta del modo sombra: hasta `tope` repartidores que todavía no tienen la foto de hoy. */
 export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new Date(), tope = 10) {
-  if (modoRewards(env) !== 'sombra') return { modo: 'apagado' as const, calculados: 0 };
+  const modo = modoRewards(env);
+  if (modo === 'apagado') return { modo: 'apagado' as const, calculados: 0 };
   const hoy = ahora.toISOString().slice(0, 10);
   const mes = hoy.slice(0, 7);
   const { results } = await db
     .prepare(
       `SELECT u.id, COALESCE(u.zona_id, 'US-FL-MIAMI') AS zona FROM usuarios u
         WHERE u.rol = 'repartidor' AND u.activo = 1
+          AND (? = 'sombra' OR u.id IN (SELECT usuario_id FROM piloto_participantes))
           AND NOT EXISTS (SELECT 1 FROM reputacion_diaria d WHERE d.repartidor_id = u.id AND d.fecha = ?)
           -- Sin ninguna entrega, viaje o ruta no hay nada que evaluar: no se guarda una foto vacía.
           AND (EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado')
@@ -454,7 +508,7 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
                            AND r.estado IN ('completada', 'con_incidencias')))
         LIMIT ?`,
     )
-    .bind(hoy, tope)
+    .bind(modo, hoy, tope)
     .all<{ id: string; zona: string }>();
   for (const u of results) {
     const r = await calcularYGuardar(db, u.id, hoy);
@@ -468,7 +522,7 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
           mes,
         });
   }
-  return { modo: 'sombra' as const, calculados: results.length };
+  return { modo, calculados: results.length };
 }
 
 /** Tablas de Rewards que guardan filas por repartidor (las limpiezas de prueba las borran antes que al usuario). */

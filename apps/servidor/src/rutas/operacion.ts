@@ -21,7 +21,7 @@ import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { volverPlatosAgotados } from './catalogo';
-import { correrSombra } from '../rewards/sombra';
+import { correrSombra, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
@@ -1046,6 +1046,10 @@ operacion.get('/repartidor/estado', async (c) => {
     tipo: ficha.tipo,
     puntos: Number(ficha.puntos),
     nivel: nivelDe(Number(ficha.puntos)),
+    // C-REWARDS-PILOTO: el nivel de reputación, solo si Rewards está activo para este repartidor.
+    reputacion:
+      (await reputacionVisible({ ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) }, db, u.id)) ??
+      undefined,
     activo: activo ? conDatosRestaurante(activo) : null,
     agrupados: await agrupadosDe(db, u.id, activo),
   });

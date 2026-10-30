@@ -1973,3 +1973,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** topes de dinero solo para los participantes del piloto: por pedido y por día (por defecto 50 y 150 dólares; se cambian en Superadmin → Piloto, guardados en `config` como `piloto_tope_pedido` y `piloto_tope_dia`). `exigirTopePiloto` corre en `POST /datos/pedidos` antes de guardar; el día suma los pedidos de hoy que no se cancelaron. Quien no está en el piloto no cambia nada.
 - **Candado:** `piloto.test.ts` (fuera del piloto sin tope, dentro 409 con campo `total`, la suma del día).
+
+## C-REWARDS-PILOTO (30 oct 2026) — todos los países
+
+- **Qué es:** Rewards sale del modo sombra para el piloto. `modoRewards`: «sombra» en el sitio de pruebas (todos), «piloto» en producción solo con la variable `REWARDS_MODO=piloto` y solo para los participantes (`piloto_participantes`), «apagado» en cualquier otro caso. `/datos/repartidor/estado` trae `reputacion` (puntaje, nivel, provisional, lo que falta para el siguiente) cuando está activo para esa persona, y Driver la muestra en lugar del nivel viejo por puntos.
+- **Para encender en producción:** variable `REWARDS_MODO=piloto` en YaDominios Cloud → sitio tumbite. Para apagar: quitarla o poner `apagado`. Nada se paga en este paso.
+- **Candado:** `sombra.test.ts` (fuera del piloto no aparece, dentro con el modo sí, el reloj de producción calcula solo a los participantes).
