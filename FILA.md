@@ -80,6 +80,15 @@
 - [x] Historial de cambios de la configuración de dinero por ciudad en el superadmin (quién cambió qué y cuándo), y que la calculadora pública lea la configuración en vivo. Todos los países.
 - [x] (la comprobación automática ya existía: restauracionAislada.test.ts en cada corrida; documento nuevo docs/RESTAURAR-RESPALDO.md; restaurar de verdad en pruebas espera tu visto bueno, fila 4.1 del 20 oct) Prueba de restauración de un respaldo de la base de pruebas, documentada paso a paso y con su comprobación automática. Todos los países.
 
+## Rellenada el 29 oct, más tarde (auditoría: puntos 23 y 39, y lo que espera a Richard)
+
+- [ ] Comprobar en el sitio de pruebas lo de esta noche: «Tengo un problema» con plato equivocado y foto, «Tu año» del Driver, «Modo tableta», cursos de Docs; sacar las capturas reales para Docs. Todos los países.
+- [ ] GPS en segundo plano en Divoox Driver mientras hay un pedido en curso (como Dasher): sigue mandando la ubicación con la pantalla apagada y se apaga al entregar; aviso claro al pedir el permiso. Ficha REA antes. Todos los países.
+- [ ] Recoger en el local con mapa (como Uber Eats «Pickup»): en Comida, vista de mapa con los restaurantes cercanos que aceptan recogida y su tiempo. App del cliente, Docs. Todos los países.
+- [!] (dinero: precio y beneficios los decide Richard) Suscripción tipo DashPass (envío gratis y menos servicio con cobro mensual). Todos los países.
+- [!] (lo decide el contador: tasas por condado) Impuesto de ventas de Florida por condado en el total. EE. UU.
+- [!] (dinero) Tarjetas de regalo y regalar un pedido a otra persona. Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.
