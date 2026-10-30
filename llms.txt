@@ -106,6 +106,7 @@
 - [Top driver · Divoox](https://divoox.com/docs/trust/top-driver): Meet all five requirements and you’re a top driver: at the same distance, offers reach you first.
 - [Rate the customer · Divoox](https://divoox.com/docs/trust/rate-customer): After delivering, you can rate the customer with stars and, if something went wrong, say what happened.
 - [Driver safety · Divoox](https://divoox.com/docs/trust/driver-safety): Emergency button, share your trip with someone you trust and report an incident, all from “Safety”.
+- [Your Divoox level: how it’s calculated and how to move up](https://divoox.com/docs/trust/driver-level): A score from 0 to 100 made of five parts. Depending on your score you’re Starter, Silver, Gold or Diamond, and higher levels get nearby offers first and ca
 - [Bonus for taking an order others passed on · Divoox](https://divoox.com/docs/trust/open-offer-bonus): If three drivers decline or let an order expire, it’s offered to everyone at once with 1 dollar extra. Whoever delivers it gets it.
 - [Call the customer without seeing their number (or showing yours) · Divoox](https://divoox.com/docs/trust/call-customer-masked): On the way, tap “Call the customer (masked number)”: we call you and connect you with the customer. You both see Divoox’s number.
 - [If a payout to your bank fails · Divoox](https://divoox.com/docs/trust/payout-failed): If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Divoox balance. Check your bank details under “Wallet” 
