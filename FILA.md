@@ -69,6 +69,7 @@
 - [x] Presentaciones nuevas para vendedores y para repartidores (ES/EN), con capturas reales del sitio de pruebas. Todos los países.
 - [x] Arreglo de paso: «Mis turnos» repetía el domingo 1 de noviembre por el cambio de hora. Todos los países.
 - [x] Rehacer la captura de «Mis turnos» con el arreglo ya en pruebas y volver a generar la presentación de repartidores. Todos los países.
+- [!] (espera tu sí: gasta dinero si pasa de lo gratis; tope propuesto 300 cargas al día; ficha en docs/investigaciones/2026-10-29-mapa-de-la-web.md) Mapa de la web moderno con Google Maps, igual que en las apps, en una sola pieza para las cuatro pantallas. Todos los países.
 
 ## Cada sesión
 

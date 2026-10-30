@@ -54,6 +54,14 @@ Las reglas globales de Richard aplican; estas se suman.
 
 Se copia el **estándar del mercado** de reparto (DoorDash, Uber Eats, Rappi): la interfaz, los menús, el orden de las cosas y los flujos. Buscador arriba, «Hola, fulano», logo, campana, cupón, servicios, y abajo lo que publicó el vendedor. Cambiamos colores, marca y lo nuestro; no la estructura. Antes de diseñar una pantalla se pregunta «¿cuál es el estándar?» y se copia, salvo motivo de negocio escrito. Richard autorizó estudiar los planos de los grandes con REA y observación pública (no se descompilan sus apps de tienda: lo prohíben sus términos y expondría a Windoce; no hace falta).
 
+## NADA SE IMPROVISA: SE BUSCA AFUERA, SE COPIA Y SE MEJORA CON LOS USUARIOS (REGLA PRINCIPAL, Richard, 29 oct 2026)
+
+> Sus palabras: _«no estamos improvisando nada… no vamos a inventar nada. Siempre vamos a buscar la lógica… mejorar lo que ya existe… con práctica, con opinión de los usuarios… adaptándonos a un país, a una ciudad»_.
+
+- Ninguna función ni decisión de producto sale de «la lógica» de la IA: sale de cómo lo hacen los grandes (REA, estudios de Richard, documentación pública), con su fuente anotada.
+- Se mejora solo cuando no afecta nada, y sobre todo con lo que dicen los usuarios, la práctica y la adaptación a cada país y ciudad.
+- Richard no tiene experiencia en startups de reparto: la IA nunca le pide que decida cómo funciona algo que el mercado ya resolvió; le trae cómo lo resolvió el mercado.
+
 ## Metodología permanente de Tumbite (dictada por Richard, 18 oct 2026)
 
 REA es una herramienta **principal** de investigación y comparación funcional durante el desarrollo, no solo cuando aparecen dudas. Antes de desarrollar o modificar una funcionalidad importante:
