@@ -23,7 +23,8 @@
 - [x] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
 - [x] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
 - [ ] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
-- [ ] Encender en piloto en producción Envíos, Mercado, Farmacia y Licores (solo participantes): sus tarifas y datos de Miami en producción. EE. UU.
+- [x] Mercado, Farmacia y Licores listos para encender en piloto: el equipo los marca en Superadmin → Piloto cuando las tiendas del grupo se registren (sin código pendiente). EE. UU.
+- [!] (decide Richard: precio del envío, valor máximo y seguro del paquete en producción) Envíos en piloto: sin tarifa en producción no se puede cotizar. EE. UU.
 - [!] (decide Richard: aprobación legal y seguro del pasajero) Moto y Carro en piloto: llevan pasajeros reales. EE. UU.
 - [ ] Monetización prepago: unificar Comida con la capa de políticas y enchufar Express, Tiendas y Flex conductor. Todos los países.
 
