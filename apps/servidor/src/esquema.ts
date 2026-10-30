@@ -71,6 +71,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
   // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
   ['opciones', 'abre_grupo_id', 'TEXT'],
+  // C-CHAT-FOTOS: foto dentro del chat del pedido (privada, en chat/<pedido>/…).
+  ['mensajes_pedido', 'foto_clave', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['repartidores', 'geohash', 'TEXT'],
   ['pedidos', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

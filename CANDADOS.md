@@ -1932,3 +1932,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** como DoorDash Merchant y Uber Eats Manager, la app del restaurante hace en el celular lo que antes solo hacía el panel: «Horario y cierres» (`apps/restaurante/src/Horario.tsx`: turnos por día y festivos) y «Reseñas» (`Resenas.tsx`: lista y respuesta pública, con borrador). Se abren desde «Más» (`pantalla` en `opcionesMasRestaurante`).
 - **Pendiente honesto:** las opciones y extras de los platos se editan todavía en el panel web.
 - **Candados:** `masRestaurante.test.ts` y `e2e/recorrido/masRestaurante.spec.ts` (guarda un turno y lo comprueba en el servidor; abre reseñas). Capturas: `docs/capturas/restapp-horario-*.png`.
+
+## C-CHAT-FOTOS (30 oct 2026) — todos los países
+
+- **Qué es:** fotos dentro del chat del pedido (brecha 2 de `docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md`, estilo Instacart). `POST /datos/pedidos/:id/mensajes/foto` (bytes, solo imágenes reales, 3 MB, chat abierto) guarda en `chat/<pedido>/…` y anota `mensajes_pedido.foto_clave`; `GET /datos/pedidos/:id/mensajes/:mid/foto` solo para los del pedido y soporte. `ChatPedido` recibe `elegirFoto` (cliente: galería; Driver: cámara) y muestra la foto con `api.verFoto`.
+- **Candado:** `operacion.test.ts` («el chat lleva fotos…»: texto disfrazado da 415, un extraño no la ve).

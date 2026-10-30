@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RESTAURANTE_BASE, llevarA, mundo } from '../pruebas/ayuda';
+import { FOTO_PRUEBA, RESTAURANTE_BASE, llevarA, mundo } from '../pruebas/ayuda';
 
 const SECRETO_AVISO = `whsec_${crypto.randomUUID()}`;
 
@@ -1122,6 +1122,33 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
     expect(
       (await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, rep.token)).datos.abierto,
     ).toBe(false);
+  });
+
+  // C-CHAT-FOTOS (30 oct 2026): fotos en el chat del pedido (mostrar un reemplazo, como Instacart).
+  it('el chat lleva fotos: solo imágenes, solo los del pedido las ven, y se cierra con el pedido', async () => {
+    const { m, cliente, rep, id } = await hastaListo();
+    const subir = (token: string, bytes: Uint8Array) =>
+      m.crudo(`/datos/pedidos/${id}/mensajes/foto`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+        body: bytes,
+      });
+    const texto = await subir(rep.token, new TextEncoder().encode('no soy una foto'));
+    expect(texto.status).toBe(415);
+    const ok = await subir(rep.token, FOTO_PRUEBA);
+    expect(ok.status).toBe(201);
+    const chat = await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, cliente.token);
+    const foto = chat.datos.mensajes.find((x: { foto?: boolean }) => x.foto);
+    expect(foto).toMatchObject({ foto: true, mio: false });
+    const ver = await m.crudo(`/datos/pedidos/${id}/mensajes/${foto.id}/foto`, {
+      headers: { authorization: `Bearer ${cliente.token}` },
+    });
+    expect(ver.status).toBe(200);
+    const extrano = await m.cuenta('cliente', 'Otra Persona');
+    const ajeno = await m.crudo(`/datos/pedidos/${id}/mensajes/${foto.id}/foto`, {
+      headers: { authorization: `Bearer ${extrano.token}` },
+    });
+    expect(ajeno.status).toBe(404);
   });
 
   it('el repartidor se baja antes de recoger: el pedido vuelve a la fila y otro lo toma (C-SOLTAR)', async () => {

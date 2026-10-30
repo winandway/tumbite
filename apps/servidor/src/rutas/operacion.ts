@@ -2728,18 +2728,90 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
   const desde = Number(c.req.query('desde') ?? 0);
   const { results } = await db
     .prepare(
-      'SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ? ORDER BY m.id LIMIT 200',
+      'SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ? ORDER BY m.id LIMIT 200',
     )
     .bind(p.id, desde)
-    .all<{ id: number; de: string; nombre: string; texto: string; en: string }>();
+    .all<{
+      id: number;
+      de: string;
+      nombre: string;
+      texto: string;
+      en: string;
+      foto_clave: string | null;
+    }>();
   return c.json({
     abierto: ['aceptado', 'listo', 'en_camino'].includes(p.estado) && !!p.repartidor_id,
-    mensajes: results.map((m) => ({
+    mensajes: results.map(({ foto_clave, ...m }) => ({
       ...m,
       nombre: m.nombre.split(' ')[0],
       mio: m.de === u.id,
+      ...(foto_clave ? { foto: true } : {}),
     })),
   });
+});
+
+/**
+ * C-CHAT-FOTOS (como Instacart): una foto en el chat del pedido, para mostrar un reemplazo o dónde
+ * dejar el pedido. Privada (chat/<pedido>/…): solo la ven los del pedido y soporte.
+ */
+operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
+  const u = exigir(c, 'cliente', 'repartidor');
+  const db = base(c);
+  const p = await pedidoDelChat(db, c.req.param('id'), u);
+  if (!['aceptado', 'listo', 'en_camino'].includes(p.estado) || !p.repartidor_id)
+    throw new ErrorDatos('Este pedido ya no está activo: el chat se cerró.', undefined, 409);
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
+  if (bytes.byteLength > MAX_FOTO_BYTES)
+    throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
+  const tipo = tipoReal(bytes);
+  if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  if (!c.env.BUCKET)
+    throw new ErrorDatos(
+      'El almacén no está disponible en este momento. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  const clave = `chat/${p.id}/${nuevoId()}`;
+  await c.env.BUCKET.put(clave, bytes, {
+    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  });
+  await db
+    .prepare(
+      "INSERT INTO mensajes_pedido (pedido_id, de_usuario_id, texto, foto_clave) VALUES (?, ?, '', ?)",
+    )
+    .bind(p.id, u.id, clave)
+    .run();
+  const para = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
+  const destino = await db
+    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+    .bind(para)
+    .first<{ idioma: string }>();
+  const en = destino?.idioma === 'en';
+  await notificar(c.env, db, para, {
+    ...AVISOS.mensaje(en ? 'en' : 'es', u.nombre.split(' ')[0] ?? '', en ? 'Photo' : 'Foto'),
+    datos: { pedidoId: p.id },
+  });
+  return c.json({ ok: true }, 201);
+});
+
+operacion.get('/pedidos/:id/mensajes/:mid/foto', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const p = await pedidoDelChat(db, c.req.param('id'), u).catch(() => null);
+  if (!p || !c.env.BUCKET) return c.text('No encontrado', 404);
+  const f = await db
+    .prepare('SELECT foto_clave FROM mensajes_pedido WHERE id = ? AND pedido_id = ?')
+    .bind(Number(c.req.param('mid')), p.id)
+    .first<{ foto_clave: string | null }>();
+  if (!f?.foto_clave) return c.text('No encontrado', 404);
+  const obj = await c.env.BUCKET.get(f.foto_clave);
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, no-store');
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(obj.body, { headers });
 });
 
 operacion.post('/pedidos/:id/mensajes', async (c) => {

@@ -1,16 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e } from './ui';
 import { useSesion } from './sesion';
 
-type Mensaje = { id: number; nombre: string; texto: string; en: string; mio: boolean };
+type Mensaje = {
+  id: number;
+  nombre: string;
+  texto: string;
+  en: string;
+  mio: boolean;
+  /** C-CHAT-FOTOS: el mensaje es una foto (privada; se pide con la sesión). */
+  foto?: boolean;
+};
+
+/** La foto de un mensaje del chat, pedida con la sesión de quien la mira. */
+function FotoMensaje({
+  pedidoId,
+  id,
+  etiqueta,
+}: {
+  pedidoId: string;
+  id: number;
+  etiqueta: string;
+}) {
+  const { api } = useSesion();
+  const [uri, setUri] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .verFoto(`/datos/pedidos/${pedidoId}/mensajes/${id}/foto`)
+      .then((u) => vivo && setUri(u))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, pedidoId, id]);
+  if (!uri) return <Text style={{ color: '#9a9a9a' }}>…</Text>;
+  return (
+    <Image
+      source={{ uri }}
+      accessibilityLabel={etiqueta}
+      style={{ width: 200, height: 200, borderRadius: 10, backgroundColor: '#f2f2f2' }}
+      resizeMode="cover"
+    />
+  );
+}
 
 const T = {
   es: {
     titulo: 'Chat del pedido',
     escribe: 'Escribe un mensaje…',
     enviar: 'Enviar',
+    foto: 'Foto',
+    mandarFoto: 'Mandar una foto',
+    fotoDe: 'Foto de',
     cerrado: 'El chat se cerró: el pedido ya terminó.',
     vacio: 'Sin mensajes todavía. Aquí puedes escribirle sin compartir tu número.',
   },
@@ -18,6 +62,9 @@ const T = {
     titulo: 'Order chat',
     escribe: 'Write a message…',
     enviar: 'Send',
+    foto: 'Photo',
+    mandarFoto: 'Send a photo',
+    fotoDe: 'Photo from',
     cerrado: 'The chat is closed: this order is finished.',
     vacio: 'No messages yet. You can write here without sharing your phone number.',
   },
@@ -27,7 +74,14 @@ const T = {
  * Chat entre el cliente y el repartidor de un pedido, dentro de la app: sin números de teléfono,
  * queda registrado y se cierra solo cuando el pedido termina. Se consulta cada 4 segundos.
  */
-export function ChatPedido({ pedidoId }: { pedidoId: string }) {
+export function ChatPedido({
+  pedidoId,
+  elegirFoto,
+}: {
+  pedidoId: string;
+  /** C-CHAT-FOTOS: la app pasa cómo elegir una foto (cámara o galería). Sin ella, solo texto. */
+  elegirFoto?: () => Promise<Blob | null>;
+}) {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
@@ -78,6 +132,22 @@ export function ChatPedido({ pedidoId }: { pedidoId: string }) {
     }
   }
 
+  async function mandarFoto() {
+    if (!elegirFoto || enviando) return;
+    setError('');
+    try {
+      const f = await elegirFoto();
+      if (!f) return;
+      setEnviando(true);
+      await api.subirFoto(f, `/datos/pedidos/${pedidoId}/mensajes/foto`);
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   return (
     <View style={e.tarjeta} accessibilityLabel={t.titulo}>
       <Text style={{ fontWeight: '800', marginBottom: 6 }}>{t.titulo}</Text>
@@ -105,7 +175,15 @@ export function ChatPedido({ pedidoId }: { pedidoId: string }) {
                   {item.nombre}
                 </Text>
               ) : null}
-              <Text style={{ color: item.mio ? '#fff' : C.secundario }}>{item.texto}</Text>
+              {item.foto ? (
+                <FotoMensaje
+                  pedidoId={pedidoId}
+                  id={item.id}
+                  etiqueta={`${t.fotoDe} ${item.nombre}`}
+                />
+              ) : (
+                <Text style={{ color: item.mio ? '#fff' : C.secundario }}>{item.texto}</Text>
+              )}
             </View>
           )}
         />
@@ -121,6 +199,16 @@ export function ChatPedido({ pedidoId }: { pedidoId: string }) {
             style={[e.input, { flex: 1 }]}
             onSubmitEditing={() => void enviar()}
           />
+          {elegirFoto ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t.mandarFoto}
+              onPress={() => void mandarFoto()}
+              style={{ paddingHorizontal: 10, paddingVertical: 12 }}
+            >
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.foto}</Text>
+            </Pressable>
+          ) : null}
           <View style={{ width: 110 }}>
             <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} exito />
           </View>

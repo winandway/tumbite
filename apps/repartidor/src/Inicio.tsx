@@ -660,6 +660,18 @@ export function Inicio() {
     };
   }, [enCamino, api]);
 
+  /** C-CHAT-FOTOS: foto para el chat del pedido (mostrar un reemplazo o dónde dejar el pedido). */
+  async function fotoParaChat(): Promise<Blob | null> {
+    const permiso = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permiso.granted) {
+      setError(t.permisoCamara);
+      return null;
+    }
+    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
+    const a = r.canceled ? null : r.assets[0];
+    return a ? (await fetch(a.uri)).blob() : null;
+  }
+
   /** Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó. */
   async function tomarFoto(ruta: string, frontal = false) {
     if (subiendo) return;
@@ -2108,7 +2120,7 @@ export function Inicio() {
                   secundario
                 />
               ) : null}
-              {mostrarChat ? <ChatPedido pedidoId={activo.id} /> : null}
+              {mostrarChat ? <ChatPedido pedidoId={activo.id} elegirFoto={fotoParaChat} /> : null}
             </View>
             {(estado?.agrupados ?? []).map((g) => {
               const casaG = g.lat != null && g.lng != null ? { lat: g.lat, lng: g.lng } : null;
@@ -2157,7 +2169,7 @@ export function Inicio() {
                   ) : (
                     <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.esperando}</Text>
                   )}
-                  <ChatPedido pedidoId={g.id} />
+                  <ChatPedido pedidoId={g.id} elegirFoto={fotoParaChat} />
                 </View>
               );
             })}

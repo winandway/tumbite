@@ -823,6 +823,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Desde que tu pedido tiene repartidor hasta que llega, puedes escribirle desde la app, sin compartir tu número.',
         explicacion: [
+          'En el chat también se mandan fotos (botón «Foto»): por ejemplo, la tienda te muestra un reemplazo o tú le muestras la entrada de tu edificio. Solo las ven tú, tu repartidor y nuestro equipo de soporte.',
           'El chat aparece en la pantalla de tu pedido en cuanto un repartidor lo toma. Sirve para avisarle dónde dejarlo, el código del portón o que ya vas saliendo.',
           'Nadie ve tu número de teléfono ni el del repartidor. Lo que se escribe queda guardado y nuestro equipo puede leerlo solo si hay un reclamo.',
           'Cuando el pedido se entrega o se cancela, el chat se cierra solo.',
@@ -4302,6 +4303,7 @@ const en: SeccionDocs[] = [
         resumen:
           'From the moment your order has a driver until it arrives, you can message them from the app, without sharing your number.',
         explicacion: [
+          'You can also send photos in the chat (“Photo” button): for example, the shopper shows you a replacement or you show them your building’s entrance. Only you, your driver and our support team can see them.',
           'The chat appears on your order screen as soon as a driver takes it. Use it to say where to leave it, the gate code, or that you’re coming out.',
           'Nobody sees your phone number or the driver’s. What’s written is saved, and our team can read it only if there’s a claim.',
           'When the order is delivered or canceled, the chat closes on its own.',
