@@ -50,8 +50,8 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 **Comparación de caras con IA (repartidores):** elegir el proveedor y aprobar el costo; y que el abogado apruebe el texto de consentimiento biométrico por país y estado (Illinois, Texas, Washington son estrictos). Recomendación y precios en docs/investigaciones-rea/2026-10-29-identidad-repartidores.md. Lo mecánico (foto bloqueada, correo y teléfono únicos, bloqueados) ya está hecho.
 - [ ] 👤 **Marketing: una pizza recortada sin fondo, en buena calidad**, para el saludo del inicio de la app del cliente (la marca va con pizzas; la hamburguesa se quitó el 29 oct). Formato PNG transparente de unos 700 × 440 px.
 - [ ] 👤 **Tiendas (Mercado, Farmacia, Licores):** elegir el país donde se encienden. La compra de prueba ya está hecha. Plan: docs/ROADMAP-DIVOOX.md, etapa 2.
-- [ ] 👤 **Carro:** las mismas decisiones que Moto (país, aprobación legal, seguro del pasajero, tarifas). Plan: etapa 4.
-- [ ] 👤 **Envíos de persona a persona:** valor máximo declarado, seguro del paquete y precio. Plan: etapa 5.
+- [ ] 👤 **Carro (ya construido en pruebas, con Carro XL, 30 oct):** las mismas decisiones que Moto (país, aprobación legal, seguro del pasajero, tarifas reales). Plan: etapa 4.
+- [ ] 👤 **Envíos de persona a persona (ya construido en pruebas, 30 oct):** valor máximo declarado por país (hoy 100 dólares por defecto), seguro del paquete y precio. Plan: etapa 5.
 - [ ] 👤 **Mapa moderno de Google en la web:** sí o no (tope de 300 cargas al día, dentro de lo gratis). Ficha: docs/investigaciones/2026-10-29-mapa-de-la-web.md.
 - [ ] 👤 **Restaurar un respaldo de verdad en el sitio de pruebas:** sí o no (borra lo creado en pruebas después de esa copia). Guía: docs/RESTAURAR-RESPALDO.md.
 - [ ] 👤 **Precios para crecer:** suscripción tipo DashPass, tarjetas de regalo, anuncios pagados y pago por tiempo al repartidor. Plan: etapa 7.
