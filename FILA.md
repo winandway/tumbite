@@ -98,6 +98,8 @@
 - [!] (dinero: precio de los anuncios y cómo se cobran lo decide Richard) Promociones y anuncios pagados dentro de la app («patrocinado») con presupuesto y reporte para el restaurante. Todos los países.
 - [!] (cuenta y costo de un proveedor de SMS: espera a Richard; los avisos por push y correo ya existen) Avisos al equipo también por SMS. Todos los países.
 
+- [x] Embudo de pedidos en los informes del superadmin (empezaron a pagar, pagaron, aceptados, entregados, con porcentajes). Todos los países.
+
 ## Cada sesión
 
 - Mirar si Google aprobó las tres apps (consola de Google Play); si sí, anotarlo y seguir el plan de las apps.

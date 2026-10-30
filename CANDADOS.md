@@ -1714,3 +1714,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es (como la «precisión de pedidos» de DoorDash Merchant):** el tablero del restaurante (`GET /datos/restaurante/tablero` en `rutas/operacion.ts`) suma `pedidosConProblemasMes` (pedidos con queja de plato faltante, equivocado o dañado en 30 días), `precisionPct` (entregados sin problema) y `reembolsosMes` (devoluciones del mes en su moneda). Se ve en el panel (`TableroRestaurante.tsx`) y en la app (`Estadisticas.tsx`, «Con problemas»). Docs: guía «dashboard».
 - **Prueba:** `rutas/operacion.test.ts` (tablero).
+
+## C-EMBUDO (29 oct 2026) — todos los países
+
+- **Qué es:** en los informes del superadmin (`GET /datos/admin/informes`), `embudo`: pedidos que empezaron a pagar en el rango, los pagados, los que aceptó el restaurante y los entregados, con el porcentaje que pasa de cada paso al siguiente (`embudo()` en `rutas/informes.ts`). Se ve en `SuperInformes.tsx`.
+- **Prueba:** `rutas/informes.test.ts` y `SuperInformes.test.tsx` (C-EMBUDO).

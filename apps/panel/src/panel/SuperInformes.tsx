@@ -23,6 +23,8 @@ const T = {
     ver: 'Ver informe',
     csv: 'Descargar CSV',
     vacio: 'No hay pedidos en ese rango.',
+    embudo: 'Embudo de pedidos',
+    pasos: ['Empezaron a pagar', 'Pagaron', 'El restaurante aceptó', 'Entregados'],
     cols: [
       'Ciudad',
       'Moneda',
@@ -43,6 +45,8 @@ const T = {
     ver: 'See report',
     csv: 'Download CSV',
     vacio: 'No orders in that range.',
+    embudo: 'Order funnel',
+    pasos: ['Started checkout', 'Paid', 'Restaurant accepted', 'Delivered'],
     cols: [
       'City',
       'Currency',
@@ -82,13 +86,28 @@ export function SuperInformes({ idioma }: { idioma: Idioma }) {
   });
   const v = b.valores;
   const [filas, setFilas] = useState<Fila[] | null>(null);
+  // C-EMBUDO: cada paso del pedido con el porcentaje que pasa al siguiente.
+  const [embudo, setEmbudo] = useState<{
+    iniciados: number;
+    pagados: number;
+    aceptados: number;
+    entregados: number;
+    pagoPct: number | null;
+    aceptacionPct: number | null;
+    entregaPct: number | null;
+  } | null>(null);
   const [error, setError] = useState('');
   const consulta = `desde=${encodeURIComponent(v.desde)}&hasta=${encodeURIComponent(v.hasta)}`;
   async function ver(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     try {
-      setFilas((await pedir<{ filas: Fila[] }>('GET', `/datos/admin/informes?${consulta}`)).filas);
+      const r = await pedir<{ filas: Fila[]; embudo?: NonNullable<typeof embudo> }>(
+        'GET',
+        `/datos/admin/informes?${consulta}`,
+      );
+      setFilas(r.filas);
+      setEmbudo(r.embudo ?? null);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -149,6 +168,25 @@ export function SuperInformes({ idioma }: { idioma: Idioma }) {
             </tbody>
           </table>
         </div>
+      ) : null}
+      {embudo && embudo.iniciados > 0 ? (
+        <>
+          <h2>{t.embudo}</h2>
+          <ol className="super-tarjetas" aria-label={t.embudo}>
+            {[
+              [embudo.iniciados, null],
+              [embudo.pagados, embudo.pagoPct],
+              [embudo.aceptados, embudo.aceptacionPct],
+              [embudo.entregados, embudo.entregaPct],
+            ].map(([n, pct], i) => (
+              <li key={t.pasos.at(i)} className="super-tarjeta">
+                <span>{t.pasos.at(i)}</span>
+                <strong>{n}</strong>
+                {pct != null ? <small>{pct} %</small> : null}
+              </li>
+            ))}
+          </ol>
+        </>
       ) : null}
     </section>
   );

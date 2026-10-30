@@ -54,6 +54,41 @@ async function informe(db: D1Database, desde: string, hasta: string) {
   }));
 }
 
+/**
+ * C-EMBUDO (29 oct 2026), como el embudo de conversión de los grandes: de los pedidos que se
+ * empezaron a pagar en el rango, cuántos se pagaron, cuántos aceptó el restaurante y cuántos llegaron.
+ */
+export async function embudo(db: D1Database, desde: string, hasta: string) {
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS iniciados,
+          SUM(CASE WHEN pagado_en IS NOT NULL THEN 1 ELSE 0 END) AS pagados,
+          SUM(CASE WHEN aceptado_en IS NOT NULL THEN 1 ELSE 0 END) AS aceptados,
+          SUM(CASE WHEN estado = 'entregado' THEN 1 ELSE 0 END) AS entregados
+         FROM pedidos WHERE date(creado_en) BETWEEN ? AND ?`,
+    )
+    .bind(desde, hasta)
+    .first<{
+      iniciados: number | null;
+      pagados: number | null;
+      aceptados: number | null;
+      entregados: number | null;
+    }>();
+  const pasos = {
+    iniciados: Number(f?.iniciados ?? 0),
+    pagados: Number(f?.pagados ?? 0),
+    aceptados: Number(f?.aceptados ?? 0),
+    entregados: Number(f?.entregados ?? 0),
+  };
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : null);
+  return {
+    ...pasos,
+    pagoPct: pct(pasos.pagados, pasos.iniciados),
+    aceptacionPct: pct(pasos.aceptados, pasos.pagados),
+    entregaPct: pct(pasos.entregados, pasos.aceptados),
+  };
+}
+
 /** Celda CSV segura: comillas dobladas y sin fórmulas (=, +, -, @) que abra una hoja de cálculo. */
 export function celdaCsv(v: string | number) {
   const t = String(v);
@@ -107,5 +142,10 @@ informes.get('/admin/informes', async (c) => {
       'content-disposition': `attachment; filename="divoox-informe-${d.data}-${h.data}.csv"`,
     });
   }
-  return c.json({ desde: d.data, hasta: h.data, filas });
+  return c.json({
+    desde: d.data,
+    hasta: h.data,
+    filas,
+    embudo: await embudo(base(c), d.data, h.data),
+  });
 });

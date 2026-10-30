@@ -81,6 +81,50 @@ describe('C-INFORMES', () => {
     ).toBe(400);
   });
 
+  // C-EMBUDO: iniciados → pagados → aceptados → entregados, con sus porcentajes.
+  it('el embudo cuenta cada paso del pedido y su porcentaje', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin');
+    const dueno = await m.cuenta('restaurante');
+    const cliente = await m.cuenta('cliente');
+    const rid = (await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token))
+      .datos.restaurante.id as string;
+    const meter = (id: string, estado: string, pagado: boolean, aceptado: boolean) =>
+      m.DB.prepare(
+        `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
+           pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, zona_id, moneda, creado_en, pagado_en, aceptado_en)
+         VALUES (?, ?, ?, ?, '[]', 1000, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 'inicial', '', '', 'US-FL-MIAMI', 'USD', '2026-10-20 15:00:00', ?, ?)`,
+      )
+        .bind(
+          id,
+          cliente.id,
+          rid,
+          estado,
+          pagado ? '2026-10-20 15:01:00' : null,
+          aceptado ? '2026-10-20 15:02:00' : null,
+        )
+        .run();
+    await meter('e1', 'pago_pendiente', false, false);
+    await meter('e2', 'cancelado', true, false);
+    await meter('e3', 'cancelado', true, true);
+    await meter('e4', 'entregado', true, true);
+    const r = await m.llamar(
+      'GET',
+      '/datos/admin/informes?desde=2026-10-01&hasta=2026-10-31',
+      undefined,
+      admin.token,
+    );
+    expect(r.datos.embudo).toEqual({
+      iniciados: 4,
+      pagados: 3,
+      aceptados: 2,
+      entregados: 1,
+      pagoPct: 75,
+      aceptacionPct: 66.7,
+      entregaPct: 50,
+    });
+  });
+
   it('una celda nunca se vuelve fórmula ni rompe la fila', () => {
     expect(celdaCsv('=HYPERLINK("x")')).toBe(`"'=HYPERLINK(""x"")"`);
     expect(celdaCsv('Miami, FL')).toBe('"Miami, FL"');

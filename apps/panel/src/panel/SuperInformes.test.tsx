@@ -28,6 +28,15 @@ describe('C-INFORMES en el panel', () => {
                 plataforma: 300,
               },
             ],
+            embudo: {
+              iniciados: 4,
+              pagados: 3,
+              aceptados: 2,
+              entregados: 1,
+              pagoPct: 75,
+              aceptacionPct: 66.7,
+              entregaPct: 50,
+            },
           }),
           { status: 200 },
         ),
@@ -36,6 +45,10 @@ describe('C-INFORMES en el panel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Ver informe' }));
     expect(await screen.findByText('Miami')).toBeInTheDocument();
     expect(screen.getByText('$3.00')).toBeInTheDocument();
+    // C-EMBUDO: los cuatro pasos con su porcentaje.
+    const embudo = screen.getByRole('list', { name: 'Embudo de pedidos' });
+    expect(embudo).toHaveTextContent('Empezaron a pagar4');
+    expect(embudo).toHaveTextContent('66.7 %');
     const csv = screen.getByRole('link', { name: 'Descargar CSV' });
     expect(csv.getAttribute('href')).toMatch(
       /\/datos\/admin\/informes\?desde=\d{4}-\d{2}-\d{2}&hasta=\d{4}-\d{2}-\d{2}&formato=csv$/,
