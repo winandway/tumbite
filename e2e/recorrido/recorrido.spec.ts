@@ -547,7 +547,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByText(L.appCrear).click();
     await rep.getByLabel(L.nombreCompleto).fill('Luis Pérez');
     await rep.getByLabel(L.correo).fill(correo('repartidor'));
-    await rep.getByLabel(L.celular).fill('3055550102');
+    await rep.getByLabel(L.celular).fill(idioma === 'en' ? '3055550102' : '3055550112');
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await fotoAqui(rep, 'repartidor-registro');
     await rep.getByRole('checkbox').click(); // acepta los términos
@@ -597,7 +597,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByText(L.appCrear).click();
     await cli.getByLabel(L.nombreCompleto).fill('Ana García');
     await cli.getByLabel(L.correo).fill(correo('cliente'));
-    await cli.getByLabel(L.celular).fill('3055550103');
+    await cli.getByLabel(L.celular).fill(idioma === 'en' ? '3055550103' : '3055550113');
     // Cumple hoy: así, después de su primer pedido, le toca el regalo de cumpleaños.
     const hoy = new Date().toISOString().slice(5, 10);
     await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);

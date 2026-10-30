@@ -315,7 +315,8 @@ for (const P of PAISES) {
       await rep.getByText(L.appCrear).click();
       await rep.getByLabel(L.nombreCompleto).fill('Repartidor Prueba');
       await rep.getByLabel(L.correo).fill(correo('repartidor'));
-      await rep.getByLabel(L.celular).fill('3000000002');
+      // Un teléfono por cuenta y por corrida (C-IDENTIDAD-UNICA).
+      await rep.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}7`);
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
       await rep.getByRole('checkbox').click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
@@ -381,7 +382,7 @@ for (const P of PAISES) {
       await cli.getByText(L.appCrear).click();
       await cli.getByLabel(L.nombreCompleto).fill('Cliente Prueba');
       await cli.getByLabel(L.correo).fill(correo('cliente'));
-      await cli.getByLabel(L.celular).fill('3000000003');
+      await cli.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}8`);
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
       await cli.getByRole('checkbox').click(); // acepta los términos
       await cli.getByRole('button', { name: L.crearCuenta }).click();
