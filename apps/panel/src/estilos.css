@@ -5221,3 +5221,13 @@ button {
   gap: 10px;
   margin: 16px 0;
 }
+
+/* C-MODO-TABLETA: en la tableta del mostrador solo quedan los pedidos, grandes y sin el botón de salir. */
+body.modo-tableta .cabecera,
+body.modo-tableta .panel-menu {
+  display: none;
+}
+body.modo-tableta .panel-contenido {
+  max-width: none;
+  font-size: 1.1rem;
+}

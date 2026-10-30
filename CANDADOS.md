@@ -1684,3 +1684,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `pruebasDisputa` en `apps/servidor/src/disputas.ts` arma, con los nombres de campo de Stripe y en inglés, los hechos guardados del pedido: cliente y correo, platos, dirección, fecha de entrega, cómo se entregó, metros por GPS, si hay foto, calificación y lo ya devuelto. `GET /datos/admin/disputas/:id/pruebas` las muestra; `POST` las guarda en la disputa de Stripe con `submit=false` (BORRADOR): las envía una persona desde Stripe. Superadmin: botón «Pruebas» en Control de dinero → Disputas.
 - **No tocar:** nunca `submit=true` automático (una vez enviadas no se pueden cambiar).
 - **Prueba:** `apps/servidor/src/devolucionesDisputas.test.ts` y `apps/panel/src/panel/ControlDinero.test.tsx` (C-DISPUTAS-PRUEBAS).
+
+## C-MODO-TABLETA (29 oct 2026) — todos los países
+
+- **Qué faltaba:** en el panel web (lo que muchos restaurantes abren en una tableta) la pantalla se apagaba y el botón de salir quedaba a la vista. La app del restaurante ya usaba `useKeepAwake`.
+- **Arreglo:** `apps/panel/src/panel/modoTableta.ts` (`useModoTableta`): pantalla completa, candado de pantalla encendida del navegador (Screen Wake Lock, se vuelve a pedir al volver a la pestaña) y clase `modo-tableta` en el body que esconde `.cabecera` y `.panel-menu`. Botón «Modo tableta» en Pedidos, que también enciende la alarma. Docs: guía «tablet-mode».
+- **Prueba:** `apps/panel/src/panel/modoTableta.test.tsx` (comprobada en rojo quitando el volver a pedir el candado).

@@ -21,6 +21,7 @@ import { ReportarPanel } from './ReportarPanel';
 import { LuzSemaforo } from './LuzSemaforo';
 import QRCode from 'qrcode';
 import { pedir } from './api';
+import { useModoTableta } from './modoTableta';
 import { imprimirComanda } from './comanda';
 
 /** C-COMANDA: la preferencia vive en este navegador (cada tableta o computadora decide). */
@@ -75,6 +76,9 @@ const T = {
     titulo: 'Pedidos',
     activar: 'Activar sonido de alarma',
     sonidoOk: 'Alarma activada',
+    tableta: 'Modo tableta',
+    tabletaAyuda: 'Pantalla completa y siempre encendida, con la alarma.',
+    salirTableta: 'Salir del modo tableta',
     vacio: 'Sin pedidos por ahora.',
     aceptar: 'Aceptar',
     imprimir: 'Imprimir comanda',
@@ -128,6 +132,9 @@ const T = {
     titulo: 'Orders',
     activar: 'Turn on alarm sound',
     sonidoOk: 'Alarm on',
+    tableta: 'Tablet mode',
+    tabletaAyuda: 'Full screen and always on, with the alarm.',
+    salirTableta: 'Exit tablet mode',
     vacio: 'No orders right now.',
     aceptar: 'Accept',
     imprimir: 'Print ticket',
@@ -194,6 +201,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
   const [qrs, setQrs] = useState<Record<string, string>>({});
   const audio = useRef<HTMLAudioElement | null>(null);
+  const tableta = useModoTableta();
 
   const cargar = useCallback(async () => {
     try {
@@ -287,6 +295,23 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
           />{' '}
           {t.imprimirAlAceptar}
         </label>
+        {tableta.activo ? (
+          <button type="button" className="boton secundario" onClick={() => void tableta.salir()}>
+            {t.salirTableta}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="boton"
+            title={t.tabletaAyuda}
+            onClick={() => {
+              if (!sonido) activarSonido();
+              void tableta.entrar();
+            }}
+          >
+            {t.tableta}
+          </button>
+        )}
         {sonido ? (
           <span className="ok">
             <Icono nombre="alarma" tamano={18} /> {t.sonidoOk}

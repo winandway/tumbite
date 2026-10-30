@@ -1617,6 +1617,25 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'tablet-mode',
+        titulo: 'Modo tableta: el mostrador siempre listo',
+        resumen:
+          'Deja una tableta en el mostrador con tus pedidos en pantalla completa, siempre encendida y con la alarma, sin que nadie cierre la sesión por descuido.',
+        explicacion: [
+          'En la pantalla de Pedidos del panel, toca «Modo tableta». Los pedidos ocupan toda la pantalla, la pantalla no se apaga sola y la alarma suena con cada pedido nuevo.',
+          'El menú y el botón de salir se esconden, para que nadie del equipo cierre la sesión sin querer.',
+          'Para volver al panel normal, toca «Salir del modo tableta».',
+          'En la app Divoox para restaurantes la pantalla ya se queda encendida mientras la app está abierta.',
+        ],
+        preguntas: ['¿Cómo dejo la tableta del mostrador siempre encendida?'],
+        pasos: [
+          'Abre Pedidos en tu panel desde la tableta.',
+          'Toca «Modo tableta».',
+          'Déjala conectada al cargador en el mostrador.',
+        ],
+        nota: 'Si la tableta tiene ahorro de batería muy fuerte, puede apagar la pantalla igual: déjala conectada al cargador.',
+      },
+      {
         id: 'print-tickets',
         titulo: 'Imprimir la comanda',
         resumen:
@@ -4929,6 +4948,25 @@ const en: SeccionDocs[] = [
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
           'You can also use the Divoox restaurant app on a tablet or phone: same alarm, same orders.',
         ],
+      },
+      {
+        id: 'tablet-mode',
+        titulo: 'Tablet mode: your counter always ready',
+        resumen:
+          'Keep a tablet at the counter with your orders full screen, always on and with the alarm, so nobody logs out by accident.',
+        explicacion: [
+          'On the Orders screen of your dashboard, tap “Tablet mode”. Orders fill the screen, the screen doesn’t turn off on its own, and the alarm rings with every new order.',
+          'The menu and the log-out button are hidden, so nobody on your team logs out by mistake.',
+          'To go back to the regular dashboard, tap “Exit tablet mode”.',
+          'In the Divoox app for restaurants, the screen already stays on while the app is open.',
+        ],
+        preguntas: ['How do I keep the counter tablet always on?'],
+        pasos: [
+          'Open Orders in your dashboard on the tablet.',
+          'Tap “Tablet mode”.',
+          'Leave it plugged into the charger at the counter.',
+        ],
+        nota: 'If the tablet has very aggressive battery saving, it may still turn the screen off: keep it plugged in.',
       },
       {
         id: 'print-tickets',
