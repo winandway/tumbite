@@ -18,6 +18,10 @@ import { ControlDinero } from './ControlDinero';
 
 const T = {
   es: {
+    historial: 'Historial de cambios',
+    historialAyuda:
+      'Quién cambió el dinero, cuándo y qué campos. En Estados Unidos y en cada país.',
+    sinCambios: 'Todavía no hay cambios.',
     titulo: 'Dinero',
     ayuda:
       'Estos valores mandan sobre todos los pedidos nuevos. Los porcentajes van en %, los montos en dólares.',
@@ -51,6 +55,10 @@ const T = {
     malo: 'Revisa este valor.',
   },
   en: {
+    historial: 'Change history',
+    historialAyuda:
+      'Who changed the money settings, when and which fields. In the United States and each country.',
+    sinCambios: 'No changes yet.',
     titulo: 'Money',
     ayuda: 'These values apply to every new order. Percentages in %, amounts in dollars.',
     comision: 'Restaurant commission',
@@ -167,6 +175,16 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
   const { cargarBase } = b;
   const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
+  // C-HISTORIAL-DINERO: quién cambió qué y cuándo.
+  const [cambios, setCambios] = useState<
+    { id: number; donde: string; quien: string; cuando: string; campos: string[] }[] | null
+  >(null);
+  const [vuelta, setVuelta] = useState(0);
+  useEffect(() => {
+    pedir<{ cambios: NonNullable<typeof cambios> }>('GET', '/datos/admin/config-dinero/historial')
+      .then((r) => setCambios(r.cambios))
+      .catch(() => setCambios([]));
+  }, [vuelta]);
 
   useEffect(() => {
     pedir<{ config: ConfigDinero }>('GET', '/datos/config-dinero')
@@ -195,6 +213,7 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
       await pedir('PUT', '/datos/admin/config-dinero', config);
       b.cargar({ campos: valores });
       setAviso(t.guardado);
+      setVuelta((x) => x + 1);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -289,6 +308,25 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
           {t.guardar}
         </button>
       </form>
+      <h2>{t.historial}</h2>
+      <p className="suave">{t.historialAyuda}</p>
+      {cambios && !cambios.length ? <p className="suave">{t.sinCambios}</p> : null}
+      {cambios?.length ? (
+        <div className="tabla-ancha">
+          <table className="tabla" aria-label={t.historial}>
+            <tbody>
+              {cambios.map((x) => (
+                <tr key={x.id}>
+                  <td>{x.cuando.slice(0, 16)}</td>
+                  <td>{x.donde}</td>
+                  <td>{x.quien}</td>
+                  <td>{x.campos.join(', ') || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </section>
   );
 }

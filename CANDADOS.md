@@ -1697,3 +1697,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo:** `resumenAnual` y `csvResumenAnual` en `packages/compartido/src/resumenAnual.ts`; `GET /datos/repartidor/resumen-anual?anio=` en `rutas/repartidorGrandes.ts` (misma cuenta que «Ganancias»); tarjeta `apps/repartidor/src/grandes/ResumenAnual.tsx` (CSV con el Compartir del teléfono). Docs: «year-summary».
 - **Honestidad:** la distancia es `pedidos.distancia_km` (restaurante → cliente en línea recta), NO el camino recorrido: así se dice en la app y en Docs. Medir el camino real necesita GPS en segundo plano (pendiente de la auditoría, punto 23).
 - **Prueba:** `compartido/resumenAnual.test.ts` y `rutas/repartidorGrandes.test.ts` (C-RESUMEN-ANUAL).
+
+## C-HISTORIAL-DINERO y C-CALCULADORA-EN-VIVO (29 oct 2026) — todos los países
+
+- **Historial:** cada `PUT /datos/admin/config-dinero` (EE. UU.) y `PUT /datos/admin/paises/:pais` deja una fila en `auditoria_admin` (objeto `config-dinero` o `config-pais:XX`) con autor, antes y después (`anotarCambioDinero` en `rutas/dinero.ts`). `GET /datos/admin/config-dinero/historial` lo lista con los campos que cambiaron; se ve en Superadmin → Dinero, «Historial de cambios». Nunca se borra.
+- **Calculadora en vivo:** la calculadora pública (`apps/panel/src/sitio/Calculadora.tsx`) lee `/datos/config-dinero` y usa esa comisión, envío y servicio; los nombres de los planes muestran el porcentaje real. Sin respuesta del servidor, usa `CONFIG_DINERO_INICIAL`.
+- **Prueba:** `apps/servidor/src/historialDinero.test.ts` (rojo comprobado quitando el registro), `apps/panel/src/panel/AdminDinero.test.tsx` y `apps/panel/src/sitio/Calculadora.test.tsx`.

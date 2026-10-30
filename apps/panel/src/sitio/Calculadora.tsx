@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  CONFIG_DINERO_INICIAL,
+  type ConfigDinero,
   type Idioma,
   type Plan,
   SERVICIO_DOORDASH_PCT,
@@ -44,7 +46,7 @@ const T = {
     // Restaurante
     ventasMes: 'Tus ventas por apps de reparto al mes (dólares)',
     plan: 'Plan de Divoox',
-    planes: { inicial: 'Inicial (7,5 %)', crece: 'Crece (12,5 %)', elite: 'Élite (15 %)' },
+    planes: { inicial: 'Inicial', crece: 'Crece', elite: 'Élite' },
     teQueda: 'Lo que te queda al mes',
     conTumbite: 'Con Divoox',
     masAlMes: (a: string, b: string) =>
@@ -128,7 +130,7 @@ const T = {
     empezar: 'Start over',
     ventasMes: 'Your monthly sales on delivery apps (dollars)',
     plan: 'Divoox plan',
-    planes: { inicial: 'Starter (7.5%)', crece: 'Growth (12.5%)', elite: 'Elite (15%)' },
+    planes: { inicial: 'Starter', crece: 'Growth', elite: 'Elite' },
     teQueda: 'What you keep each month',
     conTumbite: 'With Divoox',
     masAlMes: (a: string, b: string) =>
@@ -218,6 +220,21 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const b = useBorrador({ formulario: 'calculadora', inicial: INICIAL, almacen: almacenNavegador });
   const v = b.valores;
+  // C-CALCULADORA-EN-VIVO: los precios que usa la app hoy (los del superadmin); si el servidor no
+  // responde, los de siempre.
+  const [config, setConfig] = useState<ConfigDinero>(CONFIG_DINERO_INICIAL);
+  useEffect(() => {
+    let vivo = true;
+    fetch('/datos/config-dinero')
+      .then((r) => (r.ok ? (r.json() as Promise<{ config?: ConfigDinero }>) : null))
+      .then((r) => {
+        if (vivo && r?.config) setConfig(r.config);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, []);
   // La pestaña viaja en la dirección (#drivers…), para pasarle el enlace a alguien.
   const [pestana, setPestana] = useState<Pestana>(() => {
     const h = typeof window === 'undefined' ? '' : window.location.hash.slice(1);
@@ -229,7 +246,12 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
   };
   const $ = (c: number) => formatearDolares(c, idioma);
   const nombrePestana = (p: Pestana) => new Map(Object.entries(t.pestanas)).get(p) ?? p;
-  const nombrePlan = (p: Plan) => new Map(Object.entries(t.planes)).get(p) ?? p;
+  const pct = (pb: number) =>
+    new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-US', { maximumFractionDigits: 1 }).format(
+      pb / 100,
+    );
+  const nombrePlan = (p: Plan) =>
+    `${new Map(Object.entries(t.planes)).get(p) ?? p} (${pct(new Map(Object.entries(config.comisionPb)).get(p) ?? 0)} %)`;
   const n = (x: number) => new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-US').format(x);
   const campo = (
     clave: keyof typeof INICIAL,
@@ -247,15 +269,18 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
     </label>
   );
   const plan = (['inicial', 'crece', 'elite'].includes(v.plan) ? v.plan : 'inicial') as Plan;
-  const ciudad = proyectarCiudad({
-    poblacion: num(v.poblacion),
-    restaurantes: num(v.restaurantes),
-    cuotaPct: num(v.cuota),
-    usuariosAppsPct: num(v.usuariosPct),
-    pedidosPorUsuarioMes: num(v.pedidosUsuario),
-    ticket: aCentavos(v.ticket),
-    plan,
-  });
+  const ciudad = proyectarCiudad(
+    {
+      poblacion: num(v.poblacion),
+      restaurantes: num(v.restaurantes),
+      cuotaPct: num(v.cuota),
+      usuariosAppsPct: num(v.usuariosPct),
+      pedidosPorUsuarioMes: num(v.pedidosUsuario),
+      ticket: aCentavos(v.ticket),
+      plan,
+    },
+    config,
+  );
 
   return (
     <main className="como calculadora">
@@ -294,7 +319,7 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
       <section className="calc-panel" role="tabpanel" aria-label={nombrePestana(pestana)}>
         {pestana === 'restaurants' &&
           (() => {
-            const c = compararRestaurante(aCentavos(v.ventasMes), plan);
+            const c = compararRestaurante(aCentavos(v.ventasMes), plan, config);
             const eq = planesEquivalentes(plan);
             const ventasExtra = ciudad.pedidosPorRestauranteMes * aCentavos(v.ticket);
             return (
@@ -349,13 +374,16 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
 
         {pestana === 'drivers' &&
           (() => {
-            const r = proyectarRepartidor({
-              horasDia: num(v.horas),
-              diasSemana: num(v.dias),
-              entregasPorHora: num(v.ritmo),
-              propina: aCentavos(v.propina),
-              km: num(v.km),
-            });
+            const r = proyectarRepartidor(
+              {
+                horasDia: num(v.horas),
+                diasSemana: num(v.dias),
+                entregasPorHora: num(v.ritmo),
+                propina: aCentavos(v.propina),
+                km: num(v.km),
+              },
+              config,
+            );
             return (
               <>
                 <div className="calc-campos">
@@ -405,7 +433,7 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
 
         {pestana === 'customers' &&
           (() => {
-            const a = ahorroCliente(num(v.pedidosMes), aCentavos(v.ticket));
+            const a = ahorroCliente(num(v.pedidosMes), aCentavos(v.ticket), config);
             return (
               <>
                 <div className="calc-campos">

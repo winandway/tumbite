@@ -62,19 +62,21 @@ export async function leerConfigDinero(db: D1Database): Promise<ConfigDinero> {
 // tarifas del país de ese restaurante. Aquí no, porque tarifas.ts ya importa este archivo.
 
 dinero.put('/admin/config-dinero', async (c) => {
-  exigir(c, 'admin');
+  const admin = exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaConfigDinero);
   if (d.servicioMinimo > d.servicioMaximo || d.envioBase > d.envioMaximo) {
     throw new ErrorDatos(
       'Revisa los mínimos y máximos: el mínimo no puede ser mayor que el máximo.',
     );
   }
+  const antes = await leerConfigDinero(base(c));
   await base(c)
     .prepare(
       "INSERT INTO config (clave, valor) VALUES ('dinero', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
     )
     .bind(JSON.stringify(d))
     .run();
+  await anotarCambioDinero(base(c), admin.id, 'config-dinero', antes, d);
   return c.json({ config: d });
 });
 
@@ -335,4 +337,68 @@ dinero.patch('/admin/abonos-fallidos/:id', async (c) => {
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Ese abono fallido no existe.', undefined, 404);
   return c.json({ ok: true });
+});
+
+/**
+ * C-HISTORIAL-DINERO (29 oct 2026): cada cambio de la configuración de dinero (EE. UU. o un país)
+ * queda con quién lo hizo, cuándo, y el antes y el después. Nunca se borra.
+ */
+export async function anotarCambioDinero(
+  db: D1Database,
+  actorId: string,
+  objeto: string,
+  antes: unknown,
+  despues: unknown,
+) {
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(actorId, 'cambiar', objeto, JSON.stringify(antes), JSON.stringify(despues))
+    .run();
+}
+
+/** Los campos que cambiaron entre dos configuraciones (solo el primer nivel y los planes). */
+export function camposCambiados(antes: unknown, despues: unknown): string[] {
+  const a = (antes ?? {}) as Record<string, unknown>;
+  const d = (despues ?? {}) as Record<string, unknown>;
+  return [...new Set([...Object.keys(a), ...Object.keys(d)])].filter(
+    (k) =>
+      JSON.stringify(new Map(Object.entries(a)).get(k)) !==
+      JSON.stringify(new Map(Object.entries(d)).get(k)),
+  );
+}
+
+dinero.get('/admin/config-dinero/historial', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT a.id, a.objeto, a.antes_json, a.despues_json, a.creado_en, u.nombre
+         FROM auditoria_admin a LEFT JOIN usuarios u ON u.id = a.actor_id
+        WHERE a.objeto = 'config-dinero' OR a.objeto LIKE 'config-pais:%'
+        ORDER BY a.id DESC LIMIT 100`,
+    )
+    .all<{
+      id: number;
+      objeto: string;
+      antes_json: string | null;
+      despues_json: string | null;
+      creado_en: string;
+      nombre: string | null;
+    }>();
+  return c.json({
+    cambios: results.map((r) => {
+      const antes = JSON.parse(r.antes_json ?? 'null') as unknown;
+      const despues = JSON.parse(r.despues_json ?? 'null') as unknown;
+      return {
+        id: r.id,
+        donde: r.objeto === 'config-dinero' ? 'US' : r.objeto.slice('config-pais:'.length),
+        quien: r.nombre ?? '—',
+        cuando: r.creado_en,
+        campos: camposCambiados(antes, despues),
+        antes,
+        despues,
+      };
+    }),
+  });
 });

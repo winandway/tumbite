@@ -1,3 +1,4 @@
+import { anotarCambioDinero } from './dinero';
 import {
   TIPOS_CASO,
   type TipoCaso,
@@ -69,10 +70,14 @@ internacional.get('/admin/paises/:pais', async (c) => {
 });
 
 internacional.put('/admin/paises/:pais', async (c) => {
-  exigir(c, 'admin');
+  const admin = exigir(c, 'admin');
   const pais = PAIS.parse(c.req.param('pais').toUpperCase());
   const d = await leerCuerpo(c, esquemaConfigPais.partial());
-  return c.json({ pais, config: await guardarConfigPais(base(c), pais, d) });
+  const antes = await leerConfigPais(base(c), pais);
+  const config = await guardarConfigPais(base(c), pais, d);
+  // C-HISTORIAL-DINERO: quién cambió las tarifas o los interruptores del país.
+  await anotarCambioDinero(base(c), admin.id, `config-pais:${pais}`, antes, config);
+  return c.json({ pais, config });
 });
 
 internacional.post('/admin/puntos-venta', async (c) => {

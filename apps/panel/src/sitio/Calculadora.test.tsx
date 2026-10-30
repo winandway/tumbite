@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { CONFIG_DINERO_INICIAL } from '@tumbite/compartido';
 import userEvent from '@testing-library/user-event';
 import { App } from '../App';
 
@@ -29,5 +30,28 @@ describe('calculadora pública (C-CALCULADORA)', () => {
     render(<App />);
     expect(within(screen.getByRole('main')).getAllByRole('tab')).toHaveLength(4);
     expect(within(screen.getByRole('main')).getByRole('tabpanel')).toHaveTextContent(/9,250/);
+  });
+
+  // C-CALCULADORA-EN-VIVO: la comisión que cambia el superadmin llega a la calculadora pública.
+  it('usa la comisión que tiene hoy el servidor, no la fija', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).endsWith('/datos/config-dinero')
+        ? new Response(
+            JSON.stringify({
+              config: {
+                ...CONFIG_DINERO_INICIAL,
+                comisionPb: { inicial: 500, crece: 1250, elite: 1500 },
+              },
+            }),
+            { status: 200 },
+          )
+        : new Response('{}', { status: 404 }),
+    );
+    window.history.pushState(null, '', '/calculator');
+    render(<App />);
+    const panel = within(screen.getByRole('main')).getByRole('tabpanel');
+    // Con 5 % en vez de 7,5 %, de 10 000 dólares quedan 9 500.
+    await waitFor(() => expect(panel).toHaveTextContent(/9,500/));
+    expect(panel).toHaveTextContent(/Starter \(5 %\)/);
   });
 });
