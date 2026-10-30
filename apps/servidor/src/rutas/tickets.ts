@@ -10,6 +10,7 @@ import { limiteIntentos } from '../seguridad';
 import { type Variables, base, exigir } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
 
 /**
@@ -367,7 +368,8 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
     zonaId = p.zona_id;
     // Queja guiada: con «artículo faltante» se calcula lo que valen esos platos; si el reembolso
     // automático está encendido (Richard) y cabe en el tope, se devuelve ya; si no, va al ticket.
-    if (d.motivo === 'articulo_faltante' && d.platoIds.length && p.cliente_id === u.id) {
+    // C-AYUDA-PEDIDO: como el «Get help» de DoorDash, también el plato equivocado o dañado.
+    if (MOTIVOS_POR_PLATO.has(d.motivo) && d.platoIds.length && p.cliente_id === u.id) {
       const lineas = JSON.parse(p.lineas_json) as {
         platoId: string;
         precioCentavos: number;
@@ -380,8 +382,14 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
       const cfg = await leerConfigQuejas(db);
       // C-TOPES-PAIS: el tope del país del pedido (EE. UU.: el que fija soporte, como siempre).
       const { topes } = await topesDeZona(db, p.zona_id);
+      // Un solo reembolso automático por pedido: la segunda queja la revisa una persona.
+      const yaDevuelto = await db
+        .prepare('SELECT 1 FROM devoluciones WHERE pedido_id = ? LIMIT 1')
+        .bind(d.pedidoId)
+        .first();
       if (
         propuesta > 0 &&
+        !yaDevuelto &&
         cfg.reembolsoAuto &&
         propuesta <= (topes?.quejaReembolsoMax ?? 0) &&
         p.estado === 'entregado'
@@ -390,7 +398,7 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
           await devolverParcial(c.env, db, {
             pedidoId: d.pedidoId,
             monto: propuesta,
-            motivo: `queja automática: artículo faltante (${d.platoIds.length})`,
+            motivo: `queja automática: ${d.motivo} (${d.platoIds.length})`,
             cargarA: 'tumbite',
             actorId: null,
           });
@@ -433,9 +441,78 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
     zonaId,
   });
   return c.json(
-    { ok: true, enlace: `/t/${t.codigo}`, propuesta, reembolso: reembolso?.monto ?? 0 },
+    {
+      ok: true,
+      ticketId: t.id,
+      enlace: `/t/${t.codigo}`,
+      propuesta,
+      reembolso: reembolso?.monto ?? 0,
+    },
     201,
   );
+});
+
+/** Motivos que se resuelven por plato (lo que vale lo que faltó, vino equivocado o llegó dañado). */
+export const MOTIVOS_POR_PLATO = new Set<string>([
+  'articulo_faltante',
+  'pedido_incorrecto',
+  'frio_o_danado',
+]);
+
+/**
+ * C-AYUDA-PEDIDO: la foto de la queja (plato dañado o equivocado). Privada: la sube quien se quejó,
+ * en las 24 horas siguientes, y la ven esa persona y soporte. Nunca va a /media (que es público).
+ */
+tickets.post('/quejas/:id/foto', limiteIntentos(10, 60_000), async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const t = await db
+    .prepare(
+      "SELECT id, datos_json FROM tickets WHERE id = ? AND usuario_id = ? AND tipo = 'queja' AND creado_en > datetime('now', '-1 day')",
+    )
+    .bind(c.req.param('id'), u.id)
+    .first<{ id: string; datos_json: string }>();
+  if (!t) throw new ErrorDatos('Esa queja no existe.', undefined, 404);
+  if (!c.env.BUCKET)
+    throw new ErrorDatos(
+      'El almacén de fotos no está disponible en este momento. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0) throw new ErrorDatos('Falta la foto.', 'foto', 400);
+  if (bytes.byteLength > MAX_FOTO_BYTES)
+    throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
+  const tipo = tipoReal(bytes);
+  if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  const clave = `quejas/${t.id}/${nuevoId()}`;
+  await c.env.BUCKET.put(clave, bytes, {
+    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  });
+  const datos = { ...(JSON.parse(t.datos_json || '{}') as Record<string, unknown>), foto: clave };
+  await db
+    .prepare('UPDATE tickets SET datos_json = ? WHERE id = ?')
+    .bind(JSON.stringify(datos), t.id)
+    .run();
+  return c.json({ ok: true }, 201);
+});
+
+tickets.get('/quejas/:id/foto', async (c) => {
+  const u = exigir(c);
+  const t = await base(c)
+    .prepare("SELECT usuario_id, datos_json FROM tickets WHERE id = ? AND tipo = 'queja'")
+    .bind(c.req.param('id'))
+    .first<{ usuario_id: string | null; datos_json: string }>();
+  const clave = t ? (JSON.parse(t.datos_json || '{}') as { foto?: string }).foto : undefined;
+  if (!t || !clave || !c.env.BUCKET || (u.rol !== 'admin' && t.usuario_id !== u.id))
+    return c.text('No encontrado', 404);
+  const obj = await c.env.BUCKET.get(clave);
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('cache-control', 'private, no-store');
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(obj.body, { headers });
 });
 
 // ───────────────────────── El equipo (superadmin) ─────────────────────────

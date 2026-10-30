@@ -43,6 +43,14 @@
     },
     "scheme": "tumbite-cliente",
     "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Divoox uses your photos so you can attach a picture when you report a wrong or damaged item.",
+          "cameraPermission": "Divoox uses the camera so you can photograph a wrong or damaged item when you report a problem with your order.",
+          "microphonePermission": false
+        }
+      ],
       "expo-router",
       [
         "expo-secure-store",

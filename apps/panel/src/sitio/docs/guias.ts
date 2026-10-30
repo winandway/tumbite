@@ -422,7 +422,9 @@ const es: SeccionDocs[] = [
           'Faltó algo, llegó frío, llegó tarde: dinos qué pasó con dos toques. Si faltó un plato, marcas cuál y, cuando está activado, se te devuelve solo ese valor.',
         explicacion: [
           'En el pedido, toca «Tengo un problema». Elige qué pasó: faltó algo, me llegó otro pedido, llegó frío o dañado, llegó muy tarde, problema con el repartidor u otra cosa.',
-          'Si faltó algo, marca los platos que no llegaron. Divoox calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
+          'Si faltó algo, si te llegó un plato equivocado o si llegó dañado, marca esos platos. Divoox calcula cuánto valen; si el reembolso automático está encendido en tu ciudad, se te devuelve ese monto a tu tarjeta en unos días; si no, una persona del equipo lo revisa y te responde por correo.',
+          'Si el plato vino equivocado o dañado, puedes agregar una foto. Solo la ven tú y nuestro equipo de soporte.',
+          'El reembolso automático se da una vez por pedido. Si vuelves a reportar algo del mismo pedido, lo revisa una persona.',
           'Tu reporte queda en una conversación privada con un enlace que te llega por correo.',
         ],
         capturas: [
@@ -437,10 +439,15 @@ const es: SeccionDocs[] = [
             pie: 'El chat de ayuda del pedido.',
           },
         ],
-        preguntas: ['Faltó un plato, ¿qué hago?', '¿Me devuelven el dinero si falta algo?'],
+        preguntas: [
+          'Faltó un plato, ¿qué hago?',
+          '¿Me devuelven el dinero si falta algo?',
+          'Me llegó un plato equivocado o dañado, ¿qué hago?',
+        ],
         pasos: [
           'Abre el pedido y toca «Tengo un problema».',
-          'Elige el motivo y, si faltó algo, marca los platos.',
+          'Elige el motivo y marca los platos que faltaron, vinieron equivocados o llegaron dañados.',
+          'Si quieres, agrega una foto del plato.',
           'Escribe lo que quieras agregar y envía.',
         ],
       },
@@ -3740,7 +3747,9 @@ const en: SeccionDocs[] = [
           'Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded.',
         explicacion: [
           'In the order, tap “I have a problem”. Choose what happened: something missing, wrong order, cold or damaged, very late, problem with the driver, or something else.',
-          'If something was missing, check the items that didn’t arrive. Divoox calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
+          'If something was missing, wrong or damaged, check those items. Divoox calculates what they’re worth; if automatic refunds are on in your city, that amount goes back to your card in a few days; if not, a person on the team reviews it and replies by email.',
+          'If an item was wrong or damaged, you can add a photo. Only you and our support team can see it.',
+          'The automatic refund is given once per order. If you report something else on the same order, a person reviews it.',
           'Your report stays in a private conversation with a link that reaches you by email.',
         ],
         capturas: [
@@ -3758,10 +3767,12 @@ const en: SeccionDocs[] = [
         preguntas: [
           'An item was missing, what do I do?',
           'Do I get a refund if something is missing?',
+          'I got a wrong or damaged item, what do I do?',
         ],
         pasos: [
           'Open the order and tap “I have a problem”.',
-          'Choose the reason and, if something was missing, check the items.',
+          'Choose the reason and check the items that were missing, wrong or damaged.',
+          'If you want, add a photo of the item.',
           'Add anything you want and send.',
         ],
       },

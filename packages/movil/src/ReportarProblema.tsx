@@ -26,8 +26,13 @@ const T = {
       otro: 'Otra cosa',
     } as Record<string, string>,
     queFalto: '¿Qué faltó? Marca los platos.',
-    reembolsado: 'Te devolvimos {monto} a tu tarjeta por lo que faltó.',
-    enRevision: 'Soporte revisa lo que faltó ({monto}) y te responde.',
+    queIncorrecto: '¿Qué plato vino equivocado? Márcalo.',
+    queDanado: '¿Qué plato llegó mal? Márcalo.',
+    agregarFoto: 'Agregar una foto (opcional)',
+    fotoLista: 'Foto lista. Toca para cambiarla.',
+    fotoFallo: 'No pudimos subir la foto. Si hace falta, soporte te la pide.',
+    reembolsado: 'Te devolvimos {monto} a tu tarjeta por esos platos.',
+    enRevision: 'Soporte revisa esos platos ({monto}) y te responde.',
   },
   en: {
     abrir: 'I have a problem',
@@ -48,8 +53,13 @@ const T = {
       otro: 'Something else',
     } as Record<string, string>,
     queFalto: 'What was missing? Check the items.',
-    reembolsado: 'We refunded {monto} to your card for what was missing.',
-    enRevision: 'Support is reviewing what was missing ({monto}) and will reply.',
+    queIncorrecto: 'Which item was wrong? Check it.',
+    queDanado: 'Which item arrived in bad shape? Check it.',
+    agregarFoto: 'Add a photo (optional)',
+    fotoLista: 'Photo ready. Tap to change it.',
+    fotoFallo: 'We couldn’t upload the photo. Support will ask for it if needed.',
+    reembolsado: 'We refunded {monto} to your card for those items.',
+    enRevision: 'Support is reviewing those items ({monto}) and will reply.',
   },
 };
 
@@ -58,12 +68,20 @@ const T = {
  * persona recibe su enlace privado. Lo ven el superadmin y el franquiciado de esa ciudad.
  * Nunca pierde lo escrito. Candado C-QUEJAS.
  */
+/** Motivos que se resuelven por plato (C-AYUDA-PEDIDO, como el «Get help» de DoorDash). */
+const POR_PLATO = new Set(['articulo_faltante', 'pedido_incorrecto', 'frio_o_danado']);
+/** Con foto: lo que se ve (plato equivocado o dañado). */
+const CON_FOTO = new Set(['pedido_incorrecto', 'frio_o_danado']);
+
 export function ReportarProblema({
   pedidoId,
   textoBoton,
+  elegirFoto,
 }: {
   pedidoId?: string;
   textoBoton?: string;
+  /** Solo la pasa la app que tiene el selector de fotos instalado (la del cliente). */
+  elegirFoto?: () => Promise<Blob | null>;
 }) {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
@@ -75,6 +93,7 @@ export function ReportarProblema({
   // Queja guiada (auditoría final, punto 16): motivo y, si faltó algo, qué platos.
   const [motivo, setMotivo] = useState('otro');
   const [platos, setPlatos] = useState<Set<string>>(new Set());
+  const [foto, setFoto] = useState<Blob | null>(null);
   const [lineas, setLineas] = useState<
     { platoId: string; nombreEs: string; nombreEn: string; cantidad: number }[]
   >([]);
@@ -112,22 +131,29 @@ export function ReportarProblema({
     setError('');
     setEnviando(true);
     try {
-      const r = await api.pedir<{ enlace: string; propuesta?: number; reembolso?: number }>(
-        'POST',
-        '/datos/quejas',
-        {
-          tipo: 'queja',
-          pedidoId: pedidoId ?? null,
-          texto: b.valores.texto,
-          motivo: pedidoId ? motivo : 'otro',
-          platoIds: pedidoId && motivo === 'articulo_faltante' ? [...platos] : [],
-        },
-      );
+      const r = await api.pedir<{
+        enlace: string;
+        ticketId?: string;
+        propuesta?: number;
+        reembolso?: number;
+      }>('POST', '/datos/quejas', {
+        tipo: 'queja',
+        pedidoId: pedidoId ?? null,
+        texto: b.valores.texto,
+        motivo: pedidoId ? motivo : 'otro',
+        platoIds: pedidoId && POR_PLATO.has(motivo) ? [...platos] : [],
+      });
       await b.limpiar();
+      let avisoFoto = '';
+      if (foto && r.ticketId && CON_FOTO.has(motivo))
+        await api.subirFoto(foto, `/datos/quejas/${r.ticketId}/foto`).catch(() => {
+          avisoFoto = t.fotoFallo;
+        });
       if (r.reembolso)
         setResultado(t.reembolsado.replace('{monto}', formatearMonto(r.reembolso, moneda, idioma)));
       else if (r.propuesta)
         setResultado(t.enRevision.replace('{monto}', formatearMonto(r.propuesta, moneda, idioma)));
+      if (avisoFoto) setError(avisoFoto);
       setEnlace(r.enlace);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -140,6 +166,7 @@ export function ReportarProblema({
     return (
       <View style={e.tarjeta} accessibilityRole="summary">
         <Text style={{ fontWeight: '700', marginBottom: 8 }}>{t.listo}</Text>
+        {error ? <Text style={[e.error, { marginBottom: 8 }]}>{error}</Text> : null}
         {resultado ? (
           <Text style={{ color: '#0D7A3A', fontWeight: '700', marginBottom: 8 }}>{resultado}</Text>
         ) : null}
@@ -183,9 +210,15 @@ export function ReportarProblema({
               </Pressable>
             ))}
           </View>
-          {motivo === 'articulo_faltante' && lineas.length ? (
+          {POR_PLATO.has(motivo) && lineas.length ? (
             <View style={{ marginBottom: 10, gap: 6 }}>
-              <Text style={{ fontWeight: '700' }}>{t.queFalto}</Text>
+              <Text style={{ fontWeight: '700' }}>
+                {motivo === 'pedido_incorrecto'
+                  ? t.queIncorrecto
+                  : motivo === 'frio_o_danado'
+                    ? t.queDanado
+                    : t.queFalto}
+              </Text>
               {lineas.map((l) => {
                 const marcado = platos.has(l.platoId);
                 return (
@@ -219,6 +252,21 @@ export function ReportarProblema({
                   </Pressable>
                 );
               })}
+            </View>
+          ) : null}
+          {elegirFoto && CON_FOTO.has(motivo) ? (
+            <View style={{ marginBottom: 10 }}>
+              <Boton
+                texto={foto ? t.fotoLista : t.agregarFoto}
+                alTocar={() =>
+                  void elegirFoto()
+                    .then((f) => {
+                      if (f) setFoto(f);
+                    })
+                    .catch(() => undefined)
+                }
+                secundario
+              />
             </View>
           ) : null}
         </>

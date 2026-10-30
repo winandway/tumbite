@@ -167,4 +167,73 @@ describe('queja guiada y comentario (C-QUEJA-GUIADA)', () => {
       "'/datos/admin/quejas-config'",
     );
   });
+
+  // C-AYUDA-PEDIDO (29 oct 2026, como «Get help» de DoorDash): plato equivocado o dañado también
+  // se devuelve por plato; un solo reembolso automático por pedido; foto privada de la queja.
+  it('plato equivocado o dañado también se devuelve por plato, y solo una vez por pedido', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/quejas-config',
+      { reembolsoAuto: true, topeCentavos: 1500 },
+      e.admin.token,
+    );
+    const q = await e.m.llamar(
+      'POST',
+      '/datos/quejas',
+      {
+        pedidoId: e.id,
+        texto: 'Los jugos eran otros',
+        motivo: 'pedido_incorrecto',
+        platoIds: [e.jugoId],
+      },
+      e.cliente.token,
+    );
+    expect(q.datos.reembolso).toBe(1000);
+    const q2 = await e.m.llamar(
+      'POST',
+      '/datos/quejas',
+      {
+        pedidoId: e.id,
+        texto: 'Y además llegaron dañados',
+        motivo: 'frio_o_danado',
+        platoIds: [e.jugoId],
+      },
+      e.cliente.token,
+    );
+    expect(q2.estado).toBe(201);
+    expect(q2.datos.reembolso).toBe(0);
+    expect(q2.datos.propuesta).toBe(1000);
+    expect(e.llamadas.filter((l) => /\/refunds$/.test(l))).toHaveLength(1);
+  });
+
+  it('la foto de la queja es privada: la ven quien se quejó y soporte, nadie más', async () => {
+    const e = await escenario();
+    const q = await e.m.llamar(
+      'POST',
+      '/datos/quejas',
+      { pedidoId: e.id, texto: 'Llegó aplastado', motivo: 'frio_o_danado', platoIds: [e.jugoId] },
+      e.cliente.token,
+    );
+    const ticket = q.datos.ticketId as string;
+    expect(ticket).toBeTruthy();
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const subir = (token: string, cuerpo: Uint8Array) =>
+      e.m.crudo(`/datos/quejas/${ticket}/foto`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'image/png' },
+        body: cuerpo as BodyInit,
+      });
+    const otro = await e.m.cuenta('cliente', 'Otra Persona');
+    expect((await subir(otro.token, png)).status).toBe(404);
+    expect((await subir(e.cliente.token, new TextEncoder().encode('no es foto'))).status).toBe(415);
+    expect((await subir(e.cliente.token, png)).status).toBe(201);
+    const ver = (token: string) =>
+      e.m.crudo(`/datos/quejas/${ticket}/foto`, { headers: { authorization: `Bearer ${token}` } });
+    expect((await ver(e.cliente.token)).status).toBe(200);
+    expect((await ver(e.admin.token)).status).toBe(200);
+    const ajena = await ver(otro.token);
+    expect(ajena.status).toBe(404);
+    expect((await ver(e.admin.token)).headers.get('cache-control')).toContain('private');
+  });
 });

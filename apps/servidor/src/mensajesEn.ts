@@ -614,6 +614,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your new password must be at least 8 characters.',
   ],
   ['La foto pesa demasiado. El máximo es 3 MB.', 'The photo is too large. The maximum is 3 MB.'],
+  ['Esa queja no existe.', 'That complaint doesn’t exist.'],
+  ['Falta la foto.', 'The photo is missing.'],
   [
     'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',
     'Our team’s accounts must include “Soporte” in the name.',

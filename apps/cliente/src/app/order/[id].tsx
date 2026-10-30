@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -110,6 +111,13 @@ type Pedido = {
     llego?: boolean;
   } | null;
 };
+
+/** C-AYUDA-PEDIDO: la foto del plato equivocado o dañado, de la galería (reducida para subir rápido). */
+async function elegirFotoQueja(): Promise<Blob | null> {
+  const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+  const a = r.canceled ? null : r.assets[0];
+  return a ? (await fetch(a.uri)).blob() : null;
+}
 
 const T = {
   es: {
@@ -1288,7 +1296,7 @@ export default function SeguirPedido() {
           <BotonAncho texto={tc.volverInicio} alTocar={irInicio} secundario />
         ) : null}
         {/* Abre un ticket atado a este pedido (antes era un correo a una cuenta personal). */}
-        <ReportarProblema pedidoId={p.id} textoBoton={t.ayuda} />
+        <ReportarProblema pedidoId={p.id} textoBoton={t.ayuda} elegirFoto={elegirFotoQueja} />
       </>
     ) : null,
   );

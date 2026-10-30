@@ -1670,3 +1670,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** en «Mis turnos» del Driver el domingo 1 de noviembre salía dos veces y, desde ahí, cada día empezaba a las 11 p. m. del anterior: se sumaban 24 horas y el día del cambio de hora dura 25.
 - **Arreglo:** `inicioDelDia(ahora, n)` en `packages/compartido/src/turnos.ts` (por calendario, con `setDate`); `apps/repartidor/src/grandes/Turnos.tsx` lo usa para los días y para las horas de cada día.
 - **Prueba:** `packages/compartido/src/turnos.test.ts`, en la hora de Miami aunque la nube corra en UTC; comprobada en rojo con la suma de 24 horas.
+
+## C-AYUDA-PEDIDO (29 oct 2026) — todos los países
+
+- **Qué faltaba frente al «Get help» de DoorDash:** la queja guiada solo devolvía por plato cuando FALTABA; no servía para el plato equivocado o dañado, no aceptaba foto y — hueco de dinero — el mismo pedido podía recibir dos reembolsos automáticos con dos quejas.
+- **Arreglo:** `apps/servidor/src/rutas/tickets.ts`: `MOTIVOS_POR_PLATO` (faltante, equivocado, dañado) calculan el valor de los platos marcados; UN solo reembolso automático por pedido (si ya hay una fila en `devoluciones`, la queja va al ticket con su propuesta). `POST /datos/quejas/:id/foto` (quien se quejó, 24 h, foto real JPG/PNG/WebP de hasta 3 MB, guardada en `quejas/<ticket>/…` del almacén, nunca en /media) y `GET` de la misma ruta (quien se quejó y soporte; `private, no-store`). La clave queda en `datos_json.foto` del ticket. App: `packages/movil/src/ReportarProblema.tsx` (platos para los tres motivos y foto opcional solo si la app pasa `elegirFoto`); la del cliente la pasa con `expo-image-picker` (las otras dos apps no lo tienen instalado: no importar el selector dentro de `packages/movil`).
+- **Sigue apagado:** el reembolso automático se enciende en el superadmin (Control de dinero → Quejas) por decisión de Richard; hasta entonces todo va a soporte con el monto propuesto.
+- **Prueba:** `apps/servidor/src/quejasGuiadas.test.ts` (dos casos nuevos, comprobados en rojo antes del arreglo).
