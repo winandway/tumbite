@@ -205,7 +205,9 @@ export function ViajeActivo({
       ? `${t.irARecoger} ${nombre}`
       : viaje.estado === 'conductor_llego'
         ? `${t.esperando} ${nombre}`
-        : `${t.llevando} ${nombre}`;
+        : esEnvio
+          ? `${t.llevandoPaquete} ${viaje.paquete_destinatario ?? ''}`.trim()
+          : `${t.llevando} ${nombre}`;
   const direccion = viaje.estado === 'en_curso' ? viaje.destino_direccion : viaje.origen_direccion;
   const punto =
     viaje.estado === 'en_curso'

@@ -258,7 +258,7 @@ export function ViajeEnCurso({
               : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
           </Text>
           <Boton
-            texto={t.cancelar}
+            texto={paquete ? t.cancelarEnvio : t.cancelar}
             alTocar={() => void cancelar()}
             cargando={cancelando}
             secundario

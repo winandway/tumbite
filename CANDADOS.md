@@ -1857,3 +1857,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - La barra de abajo y la campana del Driver eran imágenes azules (fuera de la paleta) con un punto rojo PINTADO en la campana y en Perfil, que parecía un aviso aunque no hubiera ninguno. Ahora son íconos vectoriales (`@expo/vector-icons` 15.0.2, Ionicons, MIT) en los colores de la marca: activo en rojo, el resto gris, campana en negro; el punto rojo solo sale con avisos reales.
 - Piezas: `apps/repartidor/src/piezas/BarraInferior.tsx` y `CabeceraDriver.tsx`. Prueba: `e2e/recorrido/coloresDriver.spec.ts` (rojo comprobado con el código viejo; captura en `docs/capturas/driver-colores-es.png`).
+
+## C-RECORRIDO-CARRO-ENVIOS (30 oct 2026) — todos los países
+
+- `e2e/recorrido/envios.spec.ts`: un envío de punta a punta en las apps web (PIN visible para el cliente, «Cancelar el envío», foto del paquete en el Driver, «Llevando el paquete a…» y entrega con el PIN). `e2e/recorrido/carro.spec.ts`: un viaje en Carro (el Driver pide el código y no el casco).
+- En el sitio local (que no cuenta como sitio de pruebas) los dos encienden su servicio en la base con `servicios_implementados`, igual que las pruebas del servidor.
+- Lo destapó el recorrido: Envíos decía «Llevando a Paula» y «Cancelar el viaje»; arreglado con textos propios y rojo comprobado. Capturas en `docs/capturas/envio-*.png` y `carro-driver-codigo-es.png` (para Docs cuando se enciendan).
