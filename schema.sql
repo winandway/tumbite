@@ -2928,3 +2928,78 @@ CREATE TABLE IF NOT EXISTS horarios_categoria (
   cierra TEXT NOT NULL,
   PRIMARY KEY (restaurante_id, categoria)
 );
+
+-- ───────── Divoox Rewards · Fase 2 · MODO SOMBRA (30 oct 2026) ─────────
+-- Tablas nuevas e independientes: nada del despacho, la billetera, los puntos ni el destacado las lee.
+-- Reversión: apagar REWARDS_MODO; estas tablas se ignoran (o se vacían) sin tocar nada más.
+CREATE TABLE IF NOT EXISTS reputacion_diaria (
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  fecha TEXT NOT NULL,
+  version TEXT NOT NULL,
+  puntaje REAL NOT NULL,
+  provisional INTEGER NOT NULL DEFAULT 0 CHECK (provisional IN (0, 1)),
+  peso_ventana REAL NOT NULL,
+  componentes_json TEXT NOT NULL,
+  por_servicio_json TEXT NOT NULL DEFAULT '{}',
+  experiencia_json TEXT NOT NULL DEFAULT '{}',
+  nivel_calculado TEXT NOT NULL CHECK (nivel_calculado IN ('inicial', 'plata', 'oro', 'diamante')),
+  nivel_con_gracia TEXT NOT NULL CHECK (nivel_con_gracia IN ('inicial', 'plata', 'oro', 'diamante')),
+  debajo_desde TEXT,
+  elegibilidad TEXT NOT NULL CHECK (elegibilidad IN ('ok', 'en_riesgo', 'sin_datos')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (repartidor_id, fecha)
+);
+CREATE TABLE IF NOT EXISTS rewards_presupuesto (
+  zona_id TEXT NOT NULL,
+  mes TEXT NOT NULL,
+  programa TEXT NOT NULL,
+  tope_centavos INTEGER NOT NULL CHECK (tope_centavos >= 0),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (zona_id, mes, programa)
+);
+-- Una reserva por hito: la clave impide reservar dos veces el mismo hito.
+CREATE TABLE IF NOT EXISTS rewards_reservas (
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  programa TEXT NOT NULL,
+  hito_unidades INTEGER NOT NULL,
+  zona_id TEXT NOT NULL,
+  mes TEXT NOT NULL,
+  monto_centavos INTEGER NOT NULL CHECK (monto_centavos > 0),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (repartidor_id, programa, hito_unidades)
+);
+CREATE INDEX IF NOT EXISTS rewards_reservas_zona ON rewards_reservas(zona_id, mes, programa);
+CREATE TABLE IF NOT EXISTS rewards_hitos (
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  programa TEXT NOT NULL,
+  hito_unidades INTEGER NOT NULL,
+  estado TEXT NOT NULL CHECK (estado IN ('progreso', 'sin_presupuesto', 'condicionado', 'ganado', 'pagado', 'cancelado')),
+  monto_centavos INTEGER NOT NULL,
+  unidades_contadas INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (repartidor_id, programa, hito_unidades)
+);
+CREATE TABLE IF NOT EXISTS rewards_eventos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  repartidor_id TEXT NOT NULL,
+  programa TEXT NOT NULL,
+  hito_unidades INTEGER NOT NULL,
+  de TEXT,
+  a TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS apelaciones_repartidor (
+  id TEXT PRIMARY KEY,
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  unidad_tipo TEXT NOT NULL CHECK (unidad_tipo IN ('pedido', 'viaje', 'ruta', 'oferta')),
+  unidad_id TEXT NOT NULL,
+  motivo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'aceptada', 'rechazada')),
+  resuelta_por TEXT REFERENCES usuarios(id),
+  resuelta_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (repartidor_id, unidad_tipo, unidad_id)
+);
