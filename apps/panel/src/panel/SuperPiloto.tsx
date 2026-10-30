@@ -3,6 +3,7 @@ import {
   ErrorApi,
   type Idioma,
   almacenNavegador,
+  correoEjemplo,
   enIdioma,
   useBorrador,
 } from '@tumbite/compartido';
@@ -31,6 +32,9 @@ const T = {
     quitar: 'Quitar del piloto',
     confirmar: (n: string) =>
       `¿Quitar a ${n} del piloto? Dejará de ver lo que es solo para el piloto.`,
+    servicios: 'Servicios solo para el piloto',
+    serviciosAyuda:
+      'Lo marcado se enciende solo para los participantes en esa ciudad; el público lo sigue viendo «muy pronto». Moto y Carro no aparecen: llevan pasajeros y esperan la aprobación legal y el seguro.',
     registro: 'Últimos cambios',
     sinRegistro: 'Todavía no hay cambios.',
     alta: 'entró',
@@ -60,6 +64,9 @@ const T = {
     quitar: 'Remove from pilot',
     confirmar: (n: string) =>
       `Remove ${n} from the pilot? They’ll stop seeing anything that is pilot only.`,
+    servicios: 'Pilot-only services',
+    serviciosAyuda:
+      'What you check turns on only for participants in that city; the public still sees “coming soon”. Moto and Car aren’t listed: they carry passengers and are waiting for legal approval and insurance.',
     registro: 'Latest changes',
     sinRegistro: 'No changes yet.',
     alta: 'joined',
@@ -92,6 +99,12 @@ type Evento = {
   creadoEn: string;
 };
 
+type ServiciosPiloto = {
+  servicios: { id: string; nombreEs: string; nombreEn: string }[];
+  zonas: { id: string; nombre: string }[];
+  encendidos: { servicio: string; zona: string }[];
+};
+
 export function SuperPiloto({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const nombreRol = (r: string) => new Map(Object.entries(t.roles)).get(r) ?? r;
@@ -99,6 +112,7 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  const [sp, setSp] = useState<ServiciosPiloto | null>(null);
   const b = useBorrador({
     formulario: 'piloto-agregar',
     cuenta: 'superadmin',
@@ -112,8 +126,21 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
         setEventos(r.eventos);
       })
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+    pedir<ServiciosPiloto>('GET', '/datos/admin/piloto/servicios')
+      .then(setSp)
+      .catch(() => setSp(null));
   }, []);
   useEffect(cargar, [cargar]);
+
+  async function cambiarServicio(servicio: string, zona: string, piloto: boolean) {
+    setError('');
+    try {
+      await pedir('PUT', '/datos/admin/piloto/servicios', { servicio, zona, piloto });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
 
   async function agregar(e: React.FormEvent) {
     e.preventDefault();
@@ -161,7 +188,7 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
             type="email"
             value={b.valores.correo}
             onChange={(e) => b.cambiar('correo', e.target.value)}
-            placeholder="correo@ejemplo.com"
+            placeholder={correoEjemplo(idioma)}
             autoComplete="off"
             required
           />
@@ -208,6 +235,30 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
           </li>
         ))}
       </ul>
+      {sp ? (
+        <>
+          <h2>{t.servicios}</h2>
+          <p className="pista">{t.serviciosAyuda}</p>
+          {sp.zonas.map((z) => (
+            <fieldset key={z.id} className="formulario">
+              <legend>{z.nombre}</legend>
+              {sp.servicios.map((s) => {
+                const encendido = sp.encendidos.some((e) => e.servicio === s.id && e.zona === z.id);
+                return (
+                  <label key={s.id} className="casilla">
+                    <input
+                      type="checkbox"
+                      checked={encendido}
+                      onChange={(e) => void cambiarServicio(s.id, z.id, e.target.checked)}
+                    />
+                    {idioma === 'en' ? s.nombreEn : s.nombreEs}
+                  </label>
+                );
+              })}
+            </fieldset>
+          ))}
+        </>
+      ) : null}
       <h2>{t.registro}</h2>
       {eventos.length === 0 ? <p className="pista">{t.sinRegistro}</p> : null}
       <ul className="lista">

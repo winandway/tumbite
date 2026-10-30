@@ -2946,3 +2946,10 @@ CREATE TABLE IF NOT EXISTS piloto_eventos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS piloto_eventos_fecha ON piloto_eventos(creado_en);
+-- C-PILOTO-SERVICIOS: un servicio encendido «solo piloto» en una ciudad (el público lo sigue viendo «muy pronto»).
+CREATE TABLE IF NOT EXISTS servicios_piloto (
+  servicio_id TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (servicio_id, zona_id)
+);

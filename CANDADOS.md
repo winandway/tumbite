@@ -1962,3 +1962,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** la lista de participantes autorizados del piloto en producción controlada (`docs/PLAN-LANZAMIENTO-PILOTO.md`). Superadmin → «Piloto»: agregar por el correo de la cuenta, quitar desde los tres puntos con confirmación, y el registro de quién entró, quién salió y quién lo hizo. Servidor: `apps/servidor/src/rutas/piloto.ts` (`esParticipante`), tablas `piloto_participantes` y `piloto_eventos`, sin claves foráneas a usuarios (lección de C-REWARDS-LIMPIEZA).
 - **Candado:** `piloto.test.ts` (alta por correo sin importar mayúsculas, sin duplicar, baja anotada, correo sin cuenta con mensaje claro, solo el equipo) y `SuperPiloto.test.tsx` (agregar, lo escrito no se pierde al fallar ni al volver, quitar escondido en los tres puntos).
+
+## C-PILOTO-SERVICIOS (30 oct 2026) — todos los países
+
+- **Qué es:** un servicio encendido «solo piloto» en una ciudad (`servicios_piloto`). Los participantes lo ven «disponible» en `/datos/servicios` y pueden usarlo (Tiendas y viajes de Envíos); el público y quien no está en el piloto lo siguen viendo «muy pronto». Solo `SERVICIOS_PILOTO` (Envíos, Mercado, Farmacia, Licores, Más): **Moto y Carro no**, porque llevan pasajeros y esperan lo legal y el seguro (409 si se intenta).
+- **Ojo:** `/datos/servicios` con sesión responde `private, no-store`: la lista es de esa persona y no puede quedar en la caché compartida.
+- **Candado:** `piloto.test.ts` (participante sí, otro cliente y visitante no, Tiendas 200/404, apagar lo cierra, Moto y Carro rechazados) y `SuperPiloto.test.tsx` (la casilla manda el cambio).

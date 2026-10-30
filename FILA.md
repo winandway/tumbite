@@ -13,7 +13,7 @@
 ## Lanzamiento en producción controlada (directiva del 30 oct 2026, plan en docs/PLAN-LANZAMIENTO-PILOTO.md)
 
 - [x] (P1) Lista de participantes del piloto en el superadmin (cliente, restaurante, repartidor, empresa), con registro de cambios. Todos los países.
-- [ ] (P2) Cada servicio por ciudad: apagado, solo piloto o público; «solo piloto» lo ven y usan solo los participantes. Todos los países.
+- [x] (P2) Cada servicio por ciudad: apagado, solo piloto o público; «solo piloto» lo ven y usan solo los participantes. Todos los países.
 - [ ] (P3) Límites del piloto: monto máximo por pedido y por día para participantes. Todos los países.
 - [ ] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
 - [ ] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
@@ -23,7 +23,8 @@
 - [ ] (R6) Pago real del premio a la billetera, con movimiento, evento y conciliación; nunca más que lo reservado (presupuesto inicial cero hasta que Richard lo fije). Todos los países.
 - [ ] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
 - [ ] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
-- [ ] Encender en piloto en producción Moto, Carro, Envíos, Mercado, Farmacia y Licores (solo participantes). EE. UU.
+- [ ] Encender en piloto en producción Envíos, Mercado, Farmacia y Licores (solo participantes): sus tarifas y datos de Miami en producción. EE. UU.
+- [!] (decide Richard: aprobación legal y seguro del pasajero) Moto y Carro en piloto: llevan pasajeros reales. EE. UU.
 - [ ] Monetización prepago: unificar Comida con la capa de políticas y enchufar Express, Tiendas y Flex conductor. Todos los países.
 
 ## Ahora — en el orden de docs/ROADMAP-DIVOOX.md

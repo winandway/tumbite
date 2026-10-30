@@ -14,7 +14,8 @@ import {
   conNotaPlato,
 } from '@tumbite/compartido';
 import { entornoDe } from '../entorno';
-import { serviciosImplementados } from '../esquema';
+import { SERVICIOS_PILOTO, serviciosImplementados } from '../esquema';
+import { esParticipante } from './piloto';
 import { zonaPara } from './zonas';
 import { aRestaurante, conHorarios } from './catalogo';
 import { minutosPausa } from '../pausa';
@@ -393,15 +394,24 @@ const DISPONIBLE_HOY =
 const coordenada = z.coerce.number().min(-180).max(180).optional();
 
 /** Solo donde el servicio está encendido (pruebas hoy; en producción cuando Richard abra el país). */
-function exigirServicio(c: Parameters<typeof base>[0], servicio: string) {
+async function exigirServicio(c: Parameters<typeof base>[0], servicio: string) {
   const entorno = entornoDe(c.req.url);
   // En la computadora (recorrido local) se pueden encender con TIENDAS_LOCAL; en los sitios, no.
   const local = entorno === 'local' && c.env.TIENDAS_LOCAL === '1';
-  if (
-    !tiposDeServicio(servicio).length ||
-    !(local || serviciosImplementados(entorno).has(servicio))
-  )
+  if (!tiposDeServicio(servicio).length)
     throw new ErrorDatos('Este servicio llega muy pronto.', undefined, 404);
+  if (local || serviciosImplementados(entorno).has(servicio)) return;
+  // C-PILOTO-SERVICIOS: encendido «solo piloto» en alguna ciudad y la persona es participante.
+  const u = c.get('usuario');
+  if (SERVICIOS_PILOTO.has(servicio) && u) {
+    const db = base(c);
+    const enPiloto = await db
+      .prepare('SELECT 1 AS si FROM servicios_piloto WHERE servicio_id = ? LIMIT 1')
+      .bind(servicio)
+      .first();
+    if (enPiloto && (await esParticipante(db, u.id))) return;
+  }
+  throw new ErrorDatos('Este servicio llega muy pronto.', undefined, 404);
 }
 
 const aProductoPublico = (f: FilaProducto, idioma: 'es' | 'en') => {
@@ -433,7 +443,7 @@ tiendas.get('/tiendas', async (c) => {
   const q = z
     .object({ servicio: z.string().max(20), lat: coordenada, lng: coordenada })
     .parse(c.req.query());
-  exigirServicio(c, q.servicio);
+  await exigirServicio(c, q.servicio);
   const db = base(c);
   const zona = await zonaPara(db, q.lat, q.lng);
   if (!zona) return c.json({ tiendas: [], fueraDeZona: true });
@@ -491,7 +501,7 @@ async function tiendaPublica(c: Parameters<typeof base>[0], id: string) {
     .bind(id)
     .first<Record<string, unknown>>();
   if (!t) throw new ErrorDatos('Esa tienda no existe.', undefined, 404);
-  exigirServicio(c, servicioDe(String(t.tipo_comercio)));
+  await exigirServicio(c, servicioDe(String(t.tipo_comercio)));
   return { db, t };
 }
 const servicioDe = (tipo: string) =>
@@ -573,7 +583,7 @@ tiendas.get('/tiendas-buscar', async (c) => {
       lng: coordenada,
     })
     .parse(c.req.query());
-  exigirServicio(c, q.servicio);
+  await exigirServicio(c, q.servicio);
   const db = base(c);
   const zona = await zonaPara(db, q.lat, q.lng);
   if (!zona) return c.json({ resultados: [] });
@@ -631,7 +641,7 @@ export async function lineasDeTienda(
   rest: Record<string, unknown>,
   pedidas: { platoId: string; cantidad: number; sustitucion?: Sustitucion; nota?: string }[],
 ) {
-  exigirServicio(c, servicioDe(String(rest.tipo_comercio)));
+  await exigirServicio(c, servicioDe(String(rest.tipo_comercio)));
   const ids = [...new Set(pedidas.map((l) => l.platoId))];
   const { results } = await base(c)
     .prepare(

@@ -269,6 +269,12 @@ export const SERVICIOS_EN_PRUEBA = new Map<string, number>([
   ['mas', 1],
 ]);
 
+/**
+ * C-PILOTO-SERVICIOS (30 oct 2026): lo que se puede encender «solo piloto» en producción para los
+ * participantes autorizados. Moto y Carro NO: llevan pasajeros y esperan lo legal y el seguro.
+ */
+export const SERVICIOS_PILOTO = new Set(['envios', 'mercado', 'farmacia', 'licores', 'mas']);
+
 /** Lo que este código atiende en ese entorno (el entorno sale del dominio que sirve la petición). */
 export function serviciosImplementados(entorno: Entorno | null): Map<string, number> {
   return entorno === 'pruebas'

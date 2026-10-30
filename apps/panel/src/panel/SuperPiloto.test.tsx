@@ -23,6 +23,16 @@ describe('C-PILOTO en el panel', () => {
             })
           : new Response(JSON.stringify({ ok: true, nuevo: true }), { status: 200 });
       if (metodo === 'DELETE') return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      if (String(url).endsWith('/piloto/servicios') && metodo === 'GET')
+        return new Response(
+          JSON.stringify({
+            servicios: [{ id: 'mercado', nombreEs: 'Mercado', nombreEn: 'Grocery' }],
+            zonas: [{ id: 'US-FL-MIAMI', nombre: 'Miami' }],
+            encendidos: [],
+          }),
+          { status: 200 },
+        );
+      if (metodo === 'PUT') return new Response(JSON.stringify({ ok: true }), { status: 200 });
       return new Response(
         JSON.stringify({
           participantes: [
@@ -89,5 +99,19 @@ describe('C-PILOTO en el panel', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Quitar del piloto' }));
     await waitFor(() => expect(llamadas.some((l) => l.metodo === 'DELETE')).toBe(true));
     expect(llamadas.find((l) => l.metodo === 'DELETE')?.url).toMatch(/\/datos\/admin\/piloto\/u1$/);
+  });
+
+  it('marcar un servicio en una ciudad lo enciende solo para el piloto', async () => {
+    const llamadas: { url: string; metodo: string; cuerpo?: unknown }[] = [];
+    servidor(llamadas);
+    render(<SuperPiloto idioma="es" />);
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Mercado' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toEqual({
+        servicio: 'mercado',
+        zona: 'US-FL-MIAMI',
+        piloto: true,
+      }),
+    );
   });
 });

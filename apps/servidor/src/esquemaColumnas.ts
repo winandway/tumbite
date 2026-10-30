@@ -1892,5 +1892,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "autor_id",
     "nota",
     "creado_en"
+  ],
+  "servicios_piloto": [
+    "servicio_id",
+    "zona_id",
+    "creado_en"
   ]
 };

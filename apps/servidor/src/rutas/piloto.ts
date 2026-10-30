@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { SERVICIOS_PILOTO } from '../esquema';
 
 /**
  * C-PILOTO (30 oct 2026): participantes autorizados del piloto en producción controlada
@@ -87,5 +88,70 @@ piloto.delete('/admin/piloto/:usuarioId', async (c) => {
     .prepare("INSERT INTO piloto_eventos (usuario_id, accion, autor_id) VALUES (?, 'baja', ?)")
     .bind(id, yo.id)
     .run();
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------- C-PILOTO-SERVICIOS
+
+piloto.get('/admin/piloto/servicios', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const ids = [...SERVICIOS_PILOTO];
+  const { results: servicios } = await db
+    .prepare(
+      `SELECT id, nombre_es AS nombreEs, nombre_en AS nombreEn FROM servicios
+        WHERE id IN (${ids.map(() => '?').join(', ')}) ORDER BY orden, id`,
+    )
+    .bind(...ids)
+    .all<{ id: string }>();
+  const { results: zonas } = await db
+    .prepare('SELECT id, nombre FROM zonas WHERE activa = 1 ORDER BY nombre')
+    .all();
+  const { results: encendidos } = await db
+    .prepare('SELECT servicio_id AS servicio, zona_id AS zona FROM servicios_piloto ORDER BY 1, 2')
+    .all();
+  return c.json({ servicios, zonas, encendidos });
+});
+
+piloto.put('/admin/piloto/servicios', async (c) => {
+  const yo = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      servicio: z.string().min(2).max(32),
+      zona: z.string().min(2).max(64),
+      piloto: z.boolean(),
+    }),
+  );
+  if (!SERVICIOS_PILOTO.has(d.servicio))
+    throw new ErrorDatos(
+      'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
+      'servicio',
+      409,
+    );
+  const db = base(c);
+  const zona = await db.prepare('SELECT 1 AS si FROM zonas WHERE id = ?').bind(d.zona).first();
+  if (!zona) throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
+  const r = d.piloto
+    ? await db
+        .prepare('INSERT OR IGNORE INTO servicios_piloto (servicio_id, zona_id) VALUES (?, ?)')
+        .bind(d.servicio, d.zona)
+        .run()
+    : await db
+        .prepare('DELETE FROM servicios_piloto WHERE servicio_id = ? AND zona_id = ?')
+        .bind(d.servicio, d.zona)
+        .run();
+  if (r.meta.changes)
+    await db
+      .prepare(
+        'INSERT INTO piloto_eventos (usuario_id, accion, autor_id, nota) VALUES (?, ?, ?, ?)',
+      )
+      .bind(
+        `${d.servicio}:${d.zona}`,
+        d.piloto ? 'servicio_on' : 'servicio_off',
+        yo.id,
+        `${d.servicio} · ${d.zona}`,
+      )
+      .run();
   return c.json({ ok: true });
 });

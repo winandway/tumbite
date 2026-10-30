@@ -3,7 +3,8 @@ import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
-import { SERVICIOS_EN_PRUEBA, serviciosImplementados } from '../esquema';
+import { SERVICIOS_EN_PRUEBA, SERVICIOS_PILOTO, serviciosImplementados } from '../esquema';
+import { esParticipante } from './piloto';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import type { Entorno } from '@tumbite/compartido';
@@ -97,19 +98,21 @@ type Servicio = {
   activo_desde: string | null;
   activo_hasta: string | null;
   implementado: number;
+  piloto: number;
 };
 
 async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[]> {
   const { results } = await db
     .prepare(
       `SELECT s.*, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
-              EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado
+              EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado,
+              EXISTS (SELECT 1 FROM servicios_piloto sp WHERE sp.servicio_id = s.id AND sp.zona_id = ?) AS piloto
          FROM servicios s
          LEFT JOIN servicios_zona sz ON sz.servicio_id = s.id AND sz.zona_id = ?
         WHERE s.estado != 'oculto'
         ORDER BY s.orden, s.id`,
     )
-    .bind(zonaId ?? '')
+    .bind(zonaId ?? '', zonaId ?? '')
     .all<Servicio>();
   return results;
 }
@@ -118,8 +121,12 @@ async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[]> {
 function estadoEfectivo(
   s: Servicio,
   ahora: string,
+  participante = false,
 ): 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible_zona' {
   if (s.estado === 'suspendido') return 'suspendido';
+  // C-PILOTO-SERVICIOS: encendido «solo piloto» en esta ciudad, para los participantes.
+  if (participante && s.piloto && SERVICIOS_PILOTO.has(s.id) && s.zona_estado !== 'suspendido')
+    return 'disponible';
   if (s.estado !== 'disponible' || !s.implementado) return 'proximamente';
   if (!s.zona_estado) return 'no_disponible_zona';
   if (s.zona_estado === 'proximamente') return 'proximamente';
@@ -132,9 +139,15 @@ function estadoEfectivo(
 const ahoraSql = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 
 /** El estado efectivo de UN servicio en una zona (lo usan las cotizaciones de viaje). */
-export async function estadoServicioEnZona(db: Db, servicioId: string, zonaId: string) {
+export async function estadoServicioEnZona(
+  db: Db,
+  servicioId: string,
+  zonaId: string,
+  usuarioId: string | null = null,
+) {
   const s = (await catalogo(db, zonaId)).find((x) => x.id === servicioId);
-  return s ? estadoEfectivo(s, ahoraSql()) : 'no_disponible_zona';
+  const participante = usuarioId ? await esParticipante(db, usuarioId) : false;
+  return s ? estadoEfectivo(s, ahoraSql(), participante) : 'no_disponible_zona';
 }
 const ACCION = new Map([
   ['disponible', 'abrir'],
@@ -174,8 +187,9 @@ servicios.get('/servicios', async (c) => {
   const version = versionDeApp(c.req.header('x-tumbite-app'), 'cliente');
   const ingles = (c.req.header('x-idioma') ?? '').startsWith('en');
   const ahora = ahoraSql();
+  const participante = u ? await esParticipante(db, u.id) : false;
   const lista = (await catalogo(db, zona?.id ?? null)).map((s) => {
-    let estado: string = estadoEfectivo(s, ahora);
+    let estado: string = estadoEfectivo(s, ahora, participante);
     let accion = ACCION.get(estado) ?? 'muy_pronto';
     if (estado === 'disponible' && version < versionNum(s.version_min_cliente))
       accion = 'actualizar_app';
@@ -193,7 +207,8 @@ servicios.get('/servicios', async (c) => {
       accion,
     };
   });
-  c.header('cache-control', 'public, max-age=60');
+  // Con sesión la lista es de esa persona (el piloto cambia lo que ve): nunca en la caché compartida.
+  c.header('cache-control', u ? 'private, no-store' : 'public, max-age=60');
   return c.json({ zona: zona ? { id: zona.id, nombre: zona.nombre } : null, servicios: lista });
 });
 
