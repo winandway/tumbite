@@ -45,6 +45,20 @@ const T = {
       rechazado: 'Hay que repetir las fotos',
     },
     permiso: 'Necesitamos permiso para usar la cámara.',
+    // C-KYC-AUTO: con la verificación automática.
+    consentimiento:
+      'Acepto que Divoox compare mi cara con la foto de mi documento y con la de cuentas cerradas por mala conducta, para verificar que soy yo. Se guarda solo una huella numérica de mi cara, no se vende ni se comparte, y se borra si cierro mi cuenta.',
+    consentir: 'Acepto',
+    consentido: 'Aceptado',
+    giro1: 'Gira la cabeza hacia un lado',
+    giro2: 'Ahora hacia el otro lado',
+    giroAyuda: 'Así sabemos que eres una persona real y no una foto.',
+    verificarYa: 'Verificar ahora',
+    resultado: {
+      verificado: '¡Listo! Quedaste verificado.',
+      repetir: 'Hay que repetir algunas fotos. Mira el motivo arriba.',
+      revision: 'Nuestro equipo lo revisa y te avisamos por correo.',
+    } as Record<string, string>,
   },
   en: {
     antecedentes: 'Background check',
@@ -82,6 +96,19 @@ const T = {
       rechazado: 'Please retake the photos',
     },
     permiso: 'We need permission to use the camera.',
+    consentimiento:
+      'I agree that Divoox may compare my face with the photo on my ID and with those of accounts closed for misconduct, to verify it’s me. Only a numeric template of my face is stored; it isn’t sold or shared, and it’s deleted if I close my account.',
+    consentir: 'I agree',
+    consentido: 'Agreed',
+    giro1: 'Turn your head to one side',
+    giro2: 'Now to the other side',
+    giroAyuda: 'This tells us you’re a real person and not a photo.',
+    verificarYa: 'Verify now',
+    resultado: {
+      verificado: 'Done! You’re verified.',
+      repetir: 'Some photos need to be retaken. See the reason above.',
+      revision: 'Our team will review it and email you.',
+    } as Record<string, string>,
   },
 };
 
@@ -90,8 +117,10 @@ type Kyc = {
   estado: 'sin_enviar' | 'pendiente' | 'aprobado' | 'rechazado';
   motivo: string;
   docTipo: string;
-  tiene: Record<'doc_frente' | 'doc_reverso' | 'selfie' | 'local', boolean>;
+  tiene: Record<Pieza | 'local', boolean>;
+  consentimiento?: boolean;
 };
+type Pieza = 'doc_frente' | 'doc_reverso' | 'selfie' | 'giro_1' | 'giro_2';
 
 /**
  * KYC del repartidor: documento (frente y reverso, o solo el pasaporte) y una foto de su cara,
@@ -105,26 +134,32 @@ export function Verificacion() {
   const [docTipo, setDocTipo] = useState<'licencia' | 'identificacion' | 'pasaporte'>('licencia');
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
+  // C-KYC-AUTO: con el motor, consentimiento y dos tomas girando la cabeza; la decisión sale al instante.
+  const [motor, setMotor] = useState(false);
+  const [resultado, setResultado] = useState('');
 
   const cargar = useCallback(() => {
     api
-      .pedir<{ kyc: Kyc; antecedentes?: Antecedentes }>('GET', '/datos/kyc')
+      .pedir<{ kyc: Kyc; antecedentes?: Antecedentes; motor?: boolean }>('GET', '/datos/kyc')
       .then((r) => {
         setK(r.kyc);
+        setMotor(Boolean(r.motor));
         if (r.antecedentes) setAntecedentes(r.antecedentes);
       })
       .catch(() => {});
   }, [api]);
   useEffect(cargar, [cargar]);
 
-  async function tomar(pieza: 'doc_frente' | 'doc_reverso' | 'selfie') {
+  async function tomar(pieza: Pieza) {
     setError('');
     const permiso = await ImagePicker.requestCameraPermissionsAsync();
     if (!permiso.granted) return setError(t.permiso);
     const r = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       quality: 0.6,
-      cameraType: pieza === 'selfie' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
+      cameraType: pieza.startsWith('doc_')
+        ? ImagePicker.CameraType.back
+        : ImagePicker.CameraType.front,
     });
     const foto = r.canceled ? null : r.assets[0];
     if (!foto) return;
@@ -151,10 +186,28 @@ export function Verificacion() {
     }
   }
 
-  async function enviar() {
+  async function consentir() {
     setError('');
     try {
-      await api.pedir('POST', '/datos/kyc/enviar', { docTipo });
+      await api.pedir('POST', '/datos/kyc/consentimiento', { acepto: true });
+      cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  async function enviar() {
+    setError('');
+    setResultado('');
+    try {
+      const r = await api.pedir<{ decision?: string }>('POST', '/datos/kyc/enviar', { docTipo });
+      setResultado(
+        r.decision
+          ? (new Map(Object.entries(t.resultado)).get(r.decision) ?? '')
+          : motor && k?.consentimiento
+            ? (t.resultado.revision ?? '')
+            : '',
+      );
       cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -163,10 +216,17 @@ export function Verificacion() {
 
   if (!k) return null;
   const listo = k.estado === 'aprobado' || k.estado === 'pendiente';
-  const piezas: ['doc_frente' | 'doc_reverso' | 'selfie', string][] = [
+  const conMotor = motor && Boolean(k.consentimiento);
+  const piezas: [Pieza, string][] = [
     ['doc_frente', t.frente],
-    ...(docTipo === 'pasaporte' ? [] : ([['doc_reverso', t.reverso]] as ['doc_reverso', string][])),
+    ...(docTipo === 'pasaporte' ? [] : ([['doc_reverso', t.reverso]] as [Pieza, string][])),
     ['selfie', t.selfie],
+    ...(conMotor
+      ? ([
+          ['giro_1', t.giro1],
+          ['giro_2', t.giro2],
+        ] as [Pieza, string][])
+      : []),
   ];
   return (
     <View style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
@@ -189,6 +249,18 @@ export function Verificacion() {
         {new Map(Object.entries(t.estados)).get(k.estado)}
       </Text>
       {k.estado === 'rechazado' && k.motivo ? <Text style={e.error}>{k.motivo}</Text> : null}
+      {resultado ? (
+        <Text
+          accessibilityRole="alert"
+          style={{
+            marginBottom: 8,
+            fontWeight: '700',
+            color: k.estado === 'aprobado' ? C.exito : C.secundario,
+          }}
+        >
+          {resultado}
+        </Text>
+      ) : null}
       {k.estado === 'aprobado' ? <MiFotoVerificada api={api} texto={t.fotoPerfil} /> : null}
       {!listo ? (
         <>
@@ -216,6 +288,24 @@ export function Verificacion() {
               </Pressable>
             ))}
           </View>
+          {motor ? (
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: '#D6D6D6',
+                borderRadius: 12,
+                padding: 10,
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: C.texto, marginBottom: 6 }}>{t.consentimiento}</Text>
+              {k.consentimiento ? (
+                <Text style={{ color: C.exito, fontWeight: '700' }}>{t.consentido}</Text>
+              ) : (
+                <Boton texto={t.consentir} alTocar={() => void consentir()} secundario />
+              )}
+            </View>
+          ) : null}
           {piezas.map(([pieza, etiqueta]) => (
             <View key={pieza} style={{ marginBottom: 6 }}>
               <Text style={{ fontWeight: '700' }}>
@@ -224,6 +314,7 @@ export function Verificacion() {
               {pieza === 'selfie' ? (
                 <Text style={{ color: '#5E5E5E' }}>{t.selfieAyuda}</Text>
               ) : null}
+              {pieza === 'giro_1' ? <Text style={{ color: '#5E5E5E' }}>{t.giroAyuda}</Text> : null}
               <Boton
                 texto={new Map(Object.entries(k.tiene)).get(pieza) ? t.otra : t.tomar}
                 alTocar={() => void tomar(pieza)}
@@ -237,7 +328,7 @@ export function Verificacion() {
               {error}
             </Text>
           ) : null}
-          <Boton texto={t.enviar} alTocar={() => void enviar()} />
+          <Boton texto={conMotor ? t.verificarYa : t.enviar} alTocar={() => void enviar()} />
         </>
       ) : null}
       <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E6E6', paddingTop: 8 }}>

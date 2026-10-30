@@ -2822,3 +2822,26 @@ CREATE TABLE IF NOT EXISTS bloqueos_identidad (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (tipo, valor)
 );
+
+-- C-KYC-AUTO (29 oct 2026): la huella de la cara (128 números) de cada repartidor verificado por el motor
+-- y la de las cuentas cerradas por mala conducta, para reconocer a quien vuelve con otro correo. Solo la
+-- huella, nunca la foto; se borra al cerrar la cuenta salvo que se haya cerrado por mala conducta.
+CREATE TABLE IF NOT EXISTS huellas_caras (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  huella_json TEXT NOT NULL,
+  mala_conducta INTEGER NOT NULL DEFAULT 0,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS huellas_caras_mala ON huellas_caras(mala_conducta);
+
+-- Cada decisión del motor, para que el equipo vea el porqué.
+CREATE TABLE IF NOT EXISTS verificaciones_auto (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  decision TEXT NOT NULL CHECK (decision IN ('verificado', 'revision', 'repetir', 'sin_respuesta')),
+  motivos_json TEXT NOT NULL DEFAULT '[]',
+  similitud REAL,
+  parecidas_json TEXT NOT NULL DEFAULT '[]',
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS verificaciones_auto_usuario ON verificaciones_auto(usuario_id, creada_en);

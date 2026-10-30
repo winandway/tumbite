@@ -19,6 +19,8 @@ export function crearAlmacenPruebas() {
       if (!d) return null;
       return {
         body: new Blob([d.bytes]).stream(),
+        // Como el R2 real: la foto entera de una vez (la usa el motor de verificación).
+        arrayBuffer: async () => new Blob([d.bytes]).arrayBuffer(),
         httpEtag: `"${clave.length}"`,
         writeHttpMetadata(h: Headers) {
           if (d.tipo) h.set('content-type', d.tipo);

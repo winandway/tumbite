@@ -15,6 +15,7 @@ import {
   pedirAntecedentes,
   procesarAvisoCheckr,
 } from '../antecedentes';
+import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '../verificacionAuto';
 
 /**
  * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Divoox.
@@ -27,7 +28,7 @@ import {
  */
 export const kyc = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-export const PIEZAS = ['doc_frente', 'doc_reverso', 'selfie', 'local'] as const;
+export const PIEZAS = ['doc_frente', 'doc_reverso', 'selfie', 'local', 'giro_1', 'giro_2'] as const;
 type Pieza = (typeof PIEZAS)[number];
 const esPieza = (x: string): x is Pieza => (PIEZAS as readonly string[]).includes(x);
 /** A más de esto, la foto del local no coincide con la dirección del restaurante. */
@@ -52,6 +53,9 @@ type FilaKyc = {
   doc_reverso: string | null;
   selfie: string | null;
   local: string | null;
+  giro_1?: string | null;
+  giro_2?: string | null;
+  consentimiento_en?: string | null;
   local_lat: number | null;
   local_lng: number | null;
   local_distancia_m: number | null;
@@ -69,7 +73,10 @@ const aKyc = (f: FilaKyc | null) => ({
     doc_reverso: Boolean(f?.doc_reverso),
     selfie: Boolean(f?.selfie),
     local: Boolean(f?.local),
+    giro_1: Boolean(f?.giro_1),
+    giro_2: Boolean(f?.giro_2),
   },
+  consentimiento: Boolean(f?.consentimiento_en),
   localDistanciaM: f?.local_distancia_m ?? null,
   enviado: f?.enviado_en ?? null,
   revisado: f?.revisado_en ?? null,
@@ -122,6 +129,8 @@ kyc.get('/kyc', async (c) => {
   return c.json({
     kyc: aKyc(f),
     pideLocal: u.rol === 'restaurante',
+    // Con el motor, la app pide el consentimiento y las dos tomas girando la cabeza.
+    motor: u.rol === 'repartidor' && motorEncendido(c.env),
     ...(u.rol === 'repartidor' ? await extrasRepartidor(db, u.id) : {}),
   });
 });
@@ -200,7 +209,11 @@ kyc.post('/kyc/selfie-control', async (c) => {
 kyc.post('/kyc/foto/:pieza', async (c) => {
   const u = exigir(c, 'repartidor', 'restaurante');
   const pieza = c.req.param('pieza');
-  if (!esPieza(pieza) || (pieza === 'local' && u.rol !== 'restaurante'))
+  if (
+    !esPieza(pieza) ||
+    (pieza === 'local' && u.rol !== 'restaurante') ||
+    (pieza.startsWith('giro_') && u.rol !== 'repartidor')
+  )
     throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
@@ -246,6 +259,22 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
   return c.json({ ok: true }, 201);
 });
 
+/**
+ * Consentimiento escrito antes de la selfie (datos biométricos): sin él, el motor no mira la cara y la
+ * verificación la hace el equipo. Queda la fecha. El texto lo aprueba el abogado (PENDIENTES 👤).
+ */
+kyc.post('/kyc/consentimiento', async (c) => {
+  const u = exigir(c, 'repartidor');
+  await leerCuerpo(c, z.object({ acepto: z.literal(true) }));
+  const db = base(c);
+  await db.prepare('INSERT OR IGNORE INTO kyc (usuario_id) VALUES (?)').bind(u.id).run();
+  await db
+    .prepare("UPDATE kyc SET consentimiento_en = datetime('now') WHERE usuario_id = ?")
+    .bind(u.id)
+    .run();
+  return c.json({ ok: true });
+});
+
 const esquemaEnvio = z.object({ docTipo: z.enum(['licencia', 'pasaporte', 'identificacion']) });
 
 kyc.post('/kyc/enviar', async (c) => {
@@ -279,6 +308,41 @@ kyc.post('/kyc/enviar', async (c) => {
     )
     .bind(docTipo, distancia, u.id)
     .run();
+  // C-KYC-AUTO: con el motor, el consentimiento y las dos tomas, la decisión sale al instante.
+  if (
+    u.rol === 'repartidor' &&
+    f?.consentimiento_en &&
+    f.giro_1 &&
+    f.giro_2 &&
+    f.doc_frente &&
+    f.selfie &&
+    motorEncendido(c.env)
+  ) {
+    const d = await pedirDecision(c.env, db, u.id, {
+      docTipo,
+      frente: f.doc_frente,
+      reverso: f.doc_reverso,
+      selfie: f.selfie,
+      giros: [f.giro_1, f.giro_2],
+    });
+    if (d) {
+      await guardarDecision(db, u.id, d);
+      const idioma = u.idioma === 'en' ? 'en' : 'es';
+      if (d.decision !== 'revision') {
+        await db
+          .prepare(
+            "UPDATE kyc SET estado = ?, motivo = ?, revisado_en = datetime('now'), revisado_por = 'motor' WHERE usuario_id = ? AND estado = 'pendiente'",
+          )
+          .bind(
+            d.decision === 'verificado' ? 'aprobado' : 'rechazado',
+            d.decision === 'verificado' ? '' : textoMotivos(d.motivos, idioma),
+            u.id,
+          )
+          .run();
+        return c.json({ ok: true, distanciaM: distancia, decision: d.decision });
+      }
+    }
+  }
   // Punto 27: el equipo se entera en el momento (antes nadie avisaba y la bandeja se miraba a mano).
   for (const para of await correosEquipo(c.env, 'verificaciones'))
     await enviarCorreo(c.env, {
@@ -338,12 +402,32 @@ kyc.get('/admin/kyc/:id', async (c) => {
     )
     .bind(id)
     .all<Record<string, unknown>>();
+  const { results: auto } = await db
+    .prepare(
+      'SELECT decision, motivos_json, similitud, parecidas_json, creada_en FROM verificaciones_auto WHERE usuario_id = ? ORDER BY creada_en DESC LIMIT 5',
+    )
+    .bind(id)
+    .all<{
+      decision: string;
+      motivos_json: string;
+      similitud: number | null;
+      parecidas_json: string;
+      creada_en: string;
+    }>();
   return c.json({
     persona: u,
     kyc: {
       ...aKyc(f),
       lejos: f?.local_distancia_m != null && f.local_distancia_m > DISTANCIA_MAXIMA_M,
     },
+    // C-KYC-AUTO: lo que decidió el motor y por qué (las caras parecidas, con la cuenta cerrada).
+    motor: auto.map((a) => ({
+      decision: a.decision,
+      motivos: JSON.parse(a.motivos_json) as string[],
+      similitud: a.similitud,
+      parecidas: JSON.parse(a.parecidas_json) as { id: string; similitud: number }[],
+      en: a.creada_en,
+    })),
     ...(u.rol === 'repartidor' ? await extrasRepartidor(db, id) : {}),
     selfiesControl: controles.map((x) => ({
       id: String(x.id),

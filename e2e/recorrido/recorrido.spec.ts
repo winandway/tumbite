@@ -302,7 +302,8 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByText(L.panelCrear).click();
     await panel.getByLabel(L.tuNombre).fill(idioma === 'en' ? 'Marco Rossi' : 'Marco Rossi');
     await panel.getByLabel(L.correo).fill(correo('restaurante'));
-    await panel.getByLabel(L.celular).fill('3055550100');
+    // Un número por idioma: el mismo teléfono no abre dos cuentas (C-IDENTIDAD-UNICA).
+    await panel.getByLabel(L.celular).fill(idioma === 'en' ? '3055550100' : '3055550110');
     await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
     await panel.getByRole('checkbox').check(); // acepta los términos

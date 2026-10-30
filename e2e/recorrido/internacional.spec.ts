@@ -239,10 +239,13 @@ for (const P of PAISES) {
       });
 
       // ── Restaurante en la ciudad de prueba (por la API, como lo deja listo su panel) ──
+      // Un teléfono por cuenta: el mismo número no abre dos cuentas (C-IDENTIDAD-UNICA).
+      let cuentas = 0;
       const cuenta = async (q: string, rol: string) => {
+        const telefono = `3${String(Date.now()).slice(-8)}${cuentas++ % 10}`;
         const r = await request.post('/datos/cuentas/registro', {
           headers: desde(),
-          data: { nombre: `Prueba ${q}`, correo: correo(q), clave, rol, telefono: '3000000000' },
+          data: { nombre: `Prueba ${q}`, correo: correo(q), clave, rol, telefono },
         });
         expect(r.ok(), await r.text()).toBe(true);
         return (await r.json()) as { token: string; usuario: { id: string } };

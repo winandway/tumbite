@@ -1782,3 +1782,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - `leerCara` busca la cara en la imagen entera y, si no aparece (en un documento la foto es chica), en cada mitad.
 - **Hallazgo:** la huella de face-api cambia si la cara está muy inclinada (no la endereza). Una selfie torcida puede salir «cara distinta» y pedir repetir; la app pide la cara derecha y de frente.
 - **Prueba:** `verificar.test.ts` (licencia completa armada en la prueba: lee el código, cruza el frente, compara la cara; vencida y otra persona piden repetir; cara de cuenta cerrada a revisión) y `servidor.test.ts` (firma buena, mala, vieja, cuerpo cambiado).
+
+## C-KYC-AUTO (29 oct 2026) — todos los países (apagado hasta conectar el motor)
+
+- **Interruptor:** VERIFICADOR_URL y VERIFICADOR_CLAVE en el servidor. Sin las dos, todo sigue como hoy (revisión del equipo). Hoy NO están puestas en ningún sitio: el motor espera que Richard apruebe dónde corre (PENDIENTES 👤).
+- **App Driver** (`apps/repartidor/src/Verificacion.tsx`): con el motor, pide el consentimiento escrito (texto en borrador, lo aprueba el abogado) y dos tomas girando la cabeza (`giro_1`, `giro_2`, solo repartidores); el botón dice «Verificar ahora» y el resultado sale en el momento.
+- **Servidor** (`verificacionAuto.ts` + `/datos/kyc/enviar`): solo llama al motor si hay consentimiento, las dos tomas, el frente y la selfie. Firma HMAC igual que el motor. Verificado → aprobado por «motor»; repetir → rechazado con el motivo en palabras de la persona (es/en); revisión → pendiente para el equipo. Si el motor falla, queda pendiente y se anota «sin_respuesta» (nunca se aprueba sola).
+- **Huellas:** `huellas_caras` guarda solo los 128 números; al cerrar por mala conducta se marca y viaja al motor en cada verificación; al borrar la cuenta se borra (salvo la de mala conducta). `verificaciones_auto` guarda cada decisión y el equipo la ve en el detalle.
+- **Prueba:** `apps/servidor/src/verificacionAuto.test.ts` (motor simulado; rojo comprobado apagando el interruptor).

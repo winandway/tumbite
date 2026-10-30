@@ -11,6 +11,10 @@ import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-KYC-AUTO (29 oct 2026): las dos tomas girando la cabeza y el consentimiento antes de la selfie.
+  ['kyc', 'giro_1', 'TEXT'],
+  ['kyc', 'giro_2', 'TEXT'],
+  ['kyc', 'consentimiento_en', 'TEXT'],
   // C-PEDIDO-PROGRAMADO (29 oct 2026): inicio de la franja elegida (UTC); NULL = lo antes posible.
   ['pedidos', 'programado_para', 'TEXT'],
   // C-TICKETS-EQUIPO (29 oct 2026): prioridad y persona del equipo a cargo.

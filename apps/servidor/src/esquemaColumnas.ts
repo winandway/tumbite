@@ -1806,5 +1806,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "creado_por",
     "creado_en"
+  ],
+  "huellas_caras": [
+    "usuario_id",
+    "huella_json",
+    "mala_conducta",
+    "creada_en"
+  ],
+  "verificaciones_auto": [
+    "id",
+    "usuario_id",
+    "decision",
+    "motivos_json",
+    "similitud",
+    "parecidas_json",
+    "creada_en"
   ]
 };

@@ -1067,6 +1067,8 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
               .bind(tel, id, d.motivo, admin.id),
           ]
         : []),
+      // C-KYC-AUTO: su cara queda en la lista para reconocerla si vuelve con otro correo.
+      db.prepare('UPDATE huellas_caras SET mala_conducta = 1 WHERE usuario_id = ?').bind(id),
     ]);
   }
   await db.batch([

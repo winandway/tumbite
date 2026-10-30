@@ -450,6 +450,8 @@ cuentas.delete('/yo', async (c) => {
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
+    // C-KYC-AUTO: la huella de la cara se borra con la cuenta (la de mala conducta se queda).
+    db.prepare('DELETE FROM huellas_caras WHERE usuario_id = ? AND mala_conducta = 0').bind(u.id),
     db
       .prepare('UPDATE repartidores SET conectado = 0, lat = NULL, lng = NULL WHERE usuario_id = ?')
       .bind(u.id),

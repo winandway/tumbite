@@ -68,6 +68,12 @@ export const esquemaEnv = z.object({
   CHECKR_API_KEY: z.string().min(16).optional(),
   /** Solo para el recorrido: Checkr simulado en localhost (en producción se ignora). */
   CHECKR_API_URL: z.string().optional(),
+  /**
+   * Motor propio de verificación de identidad (apps/verificador). Con las dos, la verificación del
+   * repartidor se decide al instante; sin ellas, la revisa el equipo como siempre. C-KYC-AUTO.
+   */
+  VERIFICADOR_URL: z.url().optional(),
+  VERIFICADOR_CLAVE: z.string().min(32).optional(),
   /** «1» = apagar los retiros de inmediato, sin tocar la base (emergencia). Manda sobre la bandera. */
   RETIROS_APAGADOS: z.enum(['0', '1']).optional(),
   // Fase 2 · Tiempo real (docs/FASE-2-TIEMPO-REAL.md). Sin estas variables todo sigue como hoy:
