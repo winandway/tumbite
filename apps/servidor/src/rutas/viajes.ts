@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { revisarSelfieCasco } from './ajustesViaje';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
 import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
@@ -58,7 +59,7 @@ function claveDe(c: Ctx, accion: string, operacionId: string): string {
 async function miOperacion(c: Ctx, id: string, conductorId: string) {
   const f = await base(c)
     .prepare(
-      `SELECT o.id, o.estado_general, v.estado, v.pin_recogida, v.intentos_pin, v.origen_lat, v.origen_lng,
+      `SELECT o.id, o.estado_general, v.estado, v.pin_recogida, v.pin_requerido, v.intentos_pin, v.origen_lat, v.origen_lng,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS espera_s,
               (SELECT q.tarifa_json FROM cotizaciones_viaje q WHERE q.operacion_id = o.id) AS tarifa_json
          FROM operaciones o
@@ -70,6 +71,7 @@ async function miOperacion(c: Ctx, id: string, conductorId: string) {
       estado_general: string;
       estado: string;
       pin_recogida: string;
+      pin_requerido: number;
       intentos_pin: number;
       origen_lat: number;
       origen_lng: number;
@@ -139,7 +141,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
     .prepare(
       `SELECT o.id, o.servicio_id, o.version, v.estado, v.origen_direccion, v.destino_direccion,
               v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, v.pasajeros, v.metodo_pago,
-              v.intentos_pin, v.llego_en,
+              v.intentos_pin, v.pin_requerido, v.llego_en,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
               p.nombre AS pasajero
@@ -175,6 +177,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
   // C-VIAJE-SEGURIDAD-2: con 12 horas al volante en 24, primero descansa.
   await revisarHorasAlVolante(base(c), u.id);
+  // C-MOTO-CIUDAD: donde la ciudad lo pide, la selfie con el casco puesto de las últimas 12 horas.
+  await revisarSelfieCasco(base(c), u.id, id);
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
@@ -311,7 +315,8 @@ viajes.post(
           409,
         );
     }
-    if (nombre === 'iniciar') {
+    // C-MOTO-CIUDAD: en las ciudades (u horas) sin código, el viaje empieza sin pedirlo.
+    if (nombre === 'iniciar' && op.pin_requerido) {
       const { pin } = await leerCuerpo(c, z.object({ pin: z.string().regex(/^\d{4}$/) }));
       if (op.estado === paso.desde) {
         if (op.intentos_pin >= INTENTOS_PIN_MAXIMOS)

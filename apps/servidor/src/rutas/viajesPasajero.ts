@@ -21,6 +21,7 @@ import { devolverReservasViaje } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
+import { pinParaViajeNuevo } from './ajustesViaje';
 import { revisarDesvio } from './seguridadViaje';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
@@ -364,6 +365,9 @@ viajesPasajero.post('/viajes', async (c) => {
       )
       .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago, inicial),
   ]);
+  // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
+  if (r[0]?.meta.changes && !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id)))
+    await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
   if (!r[0]?.meta.changes) {
     const otra = await db
       .prepare('SELECT operacion_id FROM cotizaciones_viaje WHERE id = ? AND usada_en IS NOT NULL')
@@ -389,6 +393,7 @@ type FilaViajeCliente = {
   servicio_id: string;
   estado: string;
   pin_recogida: string;
+  pin_requerido: number;
   metodo_pago: string;
   origen_direccion: string;
   destino_direccion: string;
@@ -412,7 +417,7 @@ type FilaViajeCliente = {
 async function viajeDelCliente(db: D1Database, clienteId: string, id: string | null) {
   return db
     .prepare(
-      `SELECT o.id, o.servicio_id, v.estado, v.pin_recogida, v.metodo_pago, v.origen_direccion,
+      `SELECT o.id, o.servicio_id, v.estado, v.pin_recogida, v.pin_requerido, v.metodo_pago, v.origen_direccion,
               v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json,
@@ -448,7 +453,10 @@ function viajePublico(f: FilaViajeCliente) {
     servicio: f.servicio_id,
     estado: f.estado,
     // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
-    pin: ['buscando', 'asignado', 'conductor_llego'].includes(f.estado) ? f.pin_recogida : null,
+    pin:
+      f.pin_requerido && ['buscando', 'asignado', 'conductor_llego'].includes(f.estado)
+        ? f.pin_recogida
+        : null,
     metodoPago: f.metodo_pago,
     origen: { direccion: f.origen_direccion, lat: f.origen_lat, lng: f.origen_lng },
     destino: { direccion: f.destino_direccion, lat: f.destino_lat, lng: f.destino_lng },

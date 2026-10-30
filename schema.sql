@@ -2834,6 +2834,26 @@ CREATE TABLE IF NOT EXISTS huellas_caras (
 );
 CREATE INDEX IF NOT EXISTS huellas_caras_mala ON huellas_caras(mala_conducta);
 
+-- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
+-- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
+CREATE TABLE IF NOT EXISTS ajustes_viaje_zona (
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  servicio_id TEXT NOT NULL,
+  pin TEXT NOT NULL DEFAULT 'siempre' CHECK (pin IN ('siempre', 'noche', 'nunca')),
+  selfie_casco INTEGER NOT NULL DEFAULT 0,
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (zona_id, servicio_id)
+);
+-- La selfie con el casco puesto: vale 12 horas; la foto es privada (solo el equipo).
+CREATE TABLE IF NOT EXISTS selfies_casco (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  clave TEXT NOT NULL,
+  tomada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS selfies_casco_usuario ON selfies_casco(usuario_id, tomada_en);
+
 -- C-VIAJE-SEGURIDAD-2 (30 oct 2026), como el kit de seguridad de Uber: hasta 5 contactos de confianza
 -- por pasajero, que reciben el enlace del viaje en vivo (siempre, solo de noche o nunca).
 CREATE TABLE IF NOT EXISTS contactos_confianza (

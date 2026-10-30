@@ -1805,3 +1805,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **«¿Todo bien?» (RideCheck):** en curso, si el conductor está a más de 1,5 km (o un cuarto del largo del viaje) del tramo recto, se crea UN aviso (`alertas_viaje`); la app pregunta. «Estoy bien» lo cierra; «Necesito ayuda» registra la emergencia y llama al número del país.
 - **Horas al volante:** con 12 horas manejando (de aceptar a terminar) en las últimas 24, no acepta viajes hasta 6 horas sin manejar desde el último (`revisarHorasAlVolante` en aceptar).
 - **Prueba:** `seguridadViaje.test.ts` (servidor, rojo comprobado quitando las revisiones) y `packages/compartido/src/seguridadViaje.test.ts`.
+
+## C-MOTO-CIUDAD (30 oct 2026) — todos los países (Moto, solo en pruebas)
+
+- Interruptores por ciudad y servicio (`ajustes_viaje_zona`), como Uber en cada mercado: **código para empezar** («siempre», «noche» = 9 p. m. a 6 a. m. en la hora de la ciudad, o «nunca») y **selfie con casco** antes de aceptar (vale 12 horas, `selfies_casco`, foto privada en `casco/<conductor>/…`). Sin ajuste: código siempre y sin selfie (lo de antes).
+- El código se decide AL PEDIR el viaje (`viajes.pin_requerido`): el pasajero y el conductor ven lo mismo aunque cambie la hora en medio.
+- Servidor: `apps/servidor/src/rutas/ajustesViaje.ts` (rutas del equipo con registro en `auditoria_admin`). Panel: Superadmin → Moto · Viajes → «Interruptores por ciudad». Driver: sin código no pide el número; si la ciudad pide la selfie, al aceptar sale la tarjeta para tomarla.
+- **Prueba:** `ajustesViaje.test.ts` (rojo comprobado quitando las dos reglas).

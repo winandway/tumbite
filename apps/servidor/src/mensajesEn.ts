@@ -629,6 +629,11 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese número ya está en tus contactos.', 'That number is already in your contacts.'],
   ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
   [
+    'Antes de aceptar viajes, tómate una selfie con el casco puesto.',
+    'Before accepting rides, take a selfie with your helmet on.',
+  ],
+  ['Esa ciudad no existe.', 'That city doesn’t exist.'],
+  [
     'La propina se puede agregar hasta 7 días después del viaje.',
     'You can add a tip up to 7 days after the ride.',
   ],
@@ -829,7 +834,6 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
   ['Solo con Stripe en modo prueba.', 'Only with Stripe in test mode.'],
-  ['Esa ciudad no existe.', 'That city doesn’t exist.'],
   ['Esa área no existe.', 'That area doesn’t exist.'],
   ['Esa solicitud no existe.', 'That request doesn’t exist.'],
   ['Esa solicitud ya tiene su franquicia.', 'That request already has its franchise.'],

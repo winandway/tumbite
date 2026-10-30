@@ -11,6 +11,7 @@ import {
 } from '@tumbite/compartido';
 import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
+import { InterruptoresViaje } from './InterruptoresViaje';
 
 const T = {
   es: {
@@ -372,6 +373,7 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
           {t.guardar}
         </button>
       </form>
+      <InterruptoresViaje idioma={idioma} />
     </section>
   );
 }

@@ -29,6 +29,8 @@ export type ViajeConductor = {
   llego_en: string | null;
   espera_gratis_s: number;
   intentos_pin_quedan: number;
+  /** C-MOTO-CIUDAD: 0 si en esta ciudad (u hora) el viaje empieza sin código. */
+  pin_requerido?: number;
   total: number | null;
   moneda: string | null;
   pasajero: string;
@@ -69,6 +71,8 @@ export function ViajeActivo({
   const t = enIdioma(TEXTOS_VIAJE, idioma).activo;
   const [pin, setPin] = useState('');
   const [casco, setCasco] = useState(false);
+  // C-MOTO-CIUDAD: en las ciudades (u horas) sin código, no se pide.
+  const conCodigo = viaje.pin_requerido !== 0;
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
@@ -227,31 +231,35 @@ export function ViajeActivo({
             <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>{t.casco}</Text>
           </View>
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.cascoAviso}</Text>
-          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.codigo}</Text>
-          <TextInput
-            testID="viaje-pin"
-            value={pin}
-            onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-            keyboardType="number-pad"
-            maxLength={4}
-            accessibilityLabel={t.codigo}
-            style={{
-              borderWidth: 1,
-              borderColor: '#2a2a2a',
-              borderRadius: 10,
-              padding: 12,
-              fontSize: 24,
-              letterSpacing: 8,
-              textAlign: 'center',
-            }}
-          />
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
-            {t.codigoAyuda} ({viaje.intentos_pin_quedan} {t.intentos})
-          </Text>
-          {casco && pin.length === 4 ? (
+          {conCodigo ? (
+            <>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.codigo}</Text>
+              <TextInput
+                testID="viaje-pin"
+                value={pin}
+                onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
+                keyboardType="number-pad"
+                maxLength={4}
+                accessibilityLabel={t.codigo}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#2a2a2a',
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 24,
+                  letterSpacing: 8,
+                  textAlign: 'center',
+                }}
+              />
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                {t.codigoAyuda} ({viaje.intentos_pin_quedan} {t.intentos})
+              </Text>
+            </>
+          ) : null}
+          {casco && (!conCodigo || pin.length === 4) ? (
             <Boton
               texto={t.iniciar}
-              alTocar={() => void paso('iniciar', { pin })}
+              alTocar={() => void paso('iniciar', conCodigo ? { pin } : {})}
               cargando={enviando}
               exito
             />

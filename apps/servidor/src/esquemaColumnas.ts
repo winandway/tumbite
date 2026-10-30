@@ -1813,6 +1813,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "mala_conducta",
     "creada_en"
   ],
+  "ajustes_viaje_zona": [
+    "zona_id",
+    "servicio_id",
+    "pin",
+    "selfie_casco",
+    "actualizado_por",
+    "actualizado_en"
+  ],
+  "selfies_casco": [
+    "id",
+    "usuario_id",
+    "clave",
+    "tomada_en"
+  ],
   "contactos_confianza": [
     "id",
     "cliente_id",

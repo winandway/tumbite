@@ -207,6 +207,10 @@ const T = {
     bono: 'Incluye un bono de',
     llamarCliente: 'Llamar al cliente (número oculto)',
     selfieControl: 'Foto de control: confirma que eres tú',
+    selfieCasco: 'Selfie con el casco puesto',
+    selfieCascoAyuda:
+      'En esta ciudad, antes de aceptar viajes en moto, te tomas una foto con el casco puesto. Vale 12 horas.',
+    selfieCascoLista: 'Foto enviada. Ya puedes aceptar el viaje.',
     agrupado: 'Pedido agrupado (mismo restaurante, mismo viaje)',
     agrupadoAyuda: 'Lo recoges junto con el principal y lo entregas en su propia dirección.',
     mayorEdad: 'Revisé el documento: quien recibe es mayor de 21',
@@ -310,6 +314,10 @@ const T = {
     bono: 'Includes a bonus of',
     llamarCliente: 'Call the customer (masked number)',
     selfieControl: 'Identity check photo: confirm it’s you',
+    selfieCasco: 'Selfie with your helmet on',
+    selfieCascoAyuda:
+      'In this city, before accepting motorcycle rides, you take a photo with your helmet on. It’s valid for 12 hours.',
+    selfieCascoLista: 'Photo sent. You can accept the ride now.',
     agrupado: 'Grouped order (same restaurant, same trip)',
     agrupadoAyuda: 'You pick it up with the main one and deliver it to its own address.',
     mayorEdad: 'I checked the ID: the recipient is 21 or older',
@@ -405,6 +413,8 @@ export function Inicio() {
   const [viajeActivo, setViajeActivo] = useState<ViajeConductor | null>(null);
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
+  // C-MOTO-CIUDAD: la ciudad pide la selfie con casco antes de aceptar viajes en moto.
+  const [pideCasco, setPideCasco] = useState(false);
   const [cambiando, setCambiando] = useState(false);
   const [vista, setVista] = useState<
     | 'inicio'
@@ -906,6 +916,7 @@ export function Inicio() {
       );
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
+      if (x instanceof ErrorApi && x.campo === 'selfie_casco') setPideCasco(true);
     }
     await cargar();
   }
@@ -1006,6 +1017,25 @@ export function Inicio() {
         <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
           {error || errorCarga}
         </Text>
+      ) : null}
+      {pideCasco ? (
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>
+          <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieCasco}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+            {t.selfieCascoAyuda}
+          </Text>
+          <Boton
+            texto={subiendo ? t.subiendo : t.tomarSelfie}
+            alTocar={() =>
+              void tomarFoto('/datos/conductor/selfie-casco', true).then(() => {
+                setPideCasco(false);
+                setError('');
+                setAviso(t.selfieCascoLista);
+              })
+            }
+            cargando={subiendo}
+          />
+        </View>
       ) : null}
       {estado?.selfieControlPendiente ? (
         <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>

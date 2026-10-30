@@ -45,7 +45,7 @@
 - [x] (C-VIAJE-PROPINA) (8b) Propina después del viaje con la tarjeta guardada (como la propina posterior de Comida). Todos los países.
 - [x] (C-CARGO-AL-AFECTADO) (9) El cargo de cancelación va al conductor afectado, no al del siguiente viaje. Todos los países.
 - [x] (C-VIAJE-SEGURIDAD-2) (10) Seguridad del viaje: contactos de emergencia, aviso si el viaje se desvía y límite de horas al volante. Todos los países.
-- [ ] (11) Interruptores por ciudad: código solo de noche y selfie con casco. Todos los países.
+- [x] (C-MOTO-CIUDAD) (11) Interruptores por ciudad: código solo de noche y selfie con casco. Todos los países.
 - [ ] (12) Guías de Docs de Moto escritas y guardadas sin publicar (se publican al encender). Todos los países.
 
 ### Etapa 4 — Carro
