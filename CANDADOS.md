@@ -1690,3 +1690,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba:** en el panel web (lo que muchos restaurantes abren en una tableta) la pantalla se apagaba y el botón de salir quedaba a la vista. La app del restaurante ya usaba `useKeepAwake`.
 - **Arreglo:** `apps/panel/src/panel/modoTableta.ts` (`useModoTableta`): pantalla completa, candado de pantalla encendida del navegador (Screen Wake Lock, se vuelve a pedir al volver a la pestaña) y clase `modo-tableta` en el body que esconde `.cabecera` y `.panel-menu`. Botón «Modo tableta» en Pedidos, que también enciende la alarma. Docs: guía «tablet-mode».
 - **Prueba:** `apps/panel/src/panel/modoTableta.test.tsx` (comprobada en rojo quitando el volver a pedir el candado).
+
+## C-RESUMEN-ANUAL (29 oct 2026) — EE. UU. primero; los demás países con su moneda
+
+- **Qué es:** «Tu año» en Ganancias del Driver (como el resumen de Dasher): por mes, entregas, distancia estimada (km y millas) y lo ganado por moneda, con CSV para el contador.
+- **Cómo:** `resumenAnual` y `csvResumenAnual` en `packages/compartido/src/resumenAnual.ts`; `GET /datos/repartidor/resumen-anual?anio=` en `rutas/repartidorGrandes.ts` (misma cuenta que «Ganancias»); tarjeta `apps/repartidor/src/grandes/ResumenAnual.tsx` (CSV con el Compartir del teléfono). Docs: «year-summary».
+- **Honestidad:** la distancia es `pedidos.distancia_km` (restaurante → cliente en línea recta), NO el camino recorrido: así se dice en la app y en Docs. Medir el camino real necesita GPS en segundo plano (pendiente de la auditoría, punto 23).
+- **Prueba:** `compartido/resumenAnual.test.ts` y `rutas/repartidorGrandes.test.ts` (C-RESUMEN-ANUAL).

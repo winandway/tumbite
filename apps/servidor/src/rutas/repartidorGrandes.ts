@@ -6,6 +6,7 @@ import {
   metrosEntre,
   minutosDeViaje,
   requisitosDestacado,
+  resumenAnual,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -228,6 +229,43 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
   const primera = monedas[0];
   const totales = sumar(primera ? pedidos.filter((p) => p.moneda === primera) : []);
   return c.json({ pedidos, totales, totalesPorMoneda });
+});
+
+/**
+ * C-RESUMEN-ANUAL: el año del repartidor por mes (entregas, distancia estimada y lo ganado por moneda),
+ * con la misma cuenta que «Ganancias» (pago base + bono + propina + propina después de entregar).
+ */
+repartidorGrandes.get('/repartidor/resumen-anual', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const q = z
+    .object({ anio: z.coerce.number().int().min(2025).max(2100).optional() })
+    .safeParse(c.req.query());
+  const anio = (q.success && q.data.anio) || new Date().getUTCFullYear();
+  const { results } = await base(c)
+    .prepare(
+      `SELECT p.entregado_en, p.distancia_km, p.moneda,
+              p.envio + p.complemento + p.propina
+                + COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0)
+                + COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = p.repartidor_id AND m.concepto = 'ajuste' AND m.referencia = 'propina-extra-' || p.id), 0) AS total
+         FROM pedidos p
+        WHERE p.repartidor_id = ? AND p.estado = 'entregado' AND substr(p.entregado_en, 1, 4) = ?`,
+    )
+    .bind(u.id, String(anio))
+    .all<{
+      entregado_en: string;
+      distancia_km: number | null;
+      moneda: string | null;
+      total: number;
+    }>();
+  const r = resumenAnual(
+    results.map((x) => ({
+      entregadoEn: String(x.entregado_en),
+      distanciaKm: x.distancia_km == null ? null : Number(x.distancia_km),
+      moneda: x.moneda ?? 'USD',
+      total: Number(x.total),
+    })),
+  );
+  return c.json({ anio, ...r });
 });
 
 /** La campana: calculada al momento, sin tabla nueva (igual que la del cliente). */

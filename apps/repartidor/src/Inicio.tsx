@@ -38,6 +38,7 @@ import {
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
+import { ResumenAnual } from './grandes/ResumenAnual';
 import { Seguridad } from './grandes/Seguridad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
@@ -1274,6 +1275,7 @@ export function Inicio() {
           </Text>
         </View>
         <Ganancias api={api} idioma={idioma} periodo={periodo} />
+        <ResumenAnual api={api} idioma={idioma} />
         <BilleteraRepartidor
           datos={billetera}
           idioma={idioma}

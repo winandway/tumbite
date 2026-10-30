@@ -2287,6 +2287,26 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'year-summary',
+        titulo: 'Tu año: entregas, millas y ganancias por mes',
+        resumen:
+          'En Ganancias ves tu año mes por mes: cuántas entregas hiciste, la distancia estimada y lo que ganaste, y lo compartes con tu contador en un archivo.',
+        explicacion: [
+          'Abajo de tus ganancias aparece «Tu año»: cada mes con sus entregas, sus millas y lo que ganaste (pago base, bonos y propinas).',
+          'La distancia es una estimación: del restaurante a la dirección del cliente, en línea recta. No incluye el camino hasta el restaurante. Para tus impuestos, lleva también tu propio registro de millas.',
+          '«Compartir para mi contador» arma un archivo CSV que se abre en Excel o Google Sheets.',
+        ],
+        preguntas: [
+          '¿Dónde veo cuánto gané en el año?',
+          '¿Cómo saco mis millas para los impuestos?',
+        ],
+        pasos: [
+          'Abre la pestaña Ganancias.',
+          'Baja hasta «Tu año».',
+          'Toca «Compartir para mi contador» y elige cómo mandarlo.',
+        ],
+      },
+      {
         id: 'driver-shifts',
         titulo: 'Turnos: reserva tus horas',
         resumen:
@@ -5608,6 +5628,23 @@ const en: SeccionDocs[] = [
           'Take the delivery photo as usual.',
           'If there’s no signal, you’ll see “Pending confirmation.” Carry on with your day.',
           'When the signal is back, the app sends it on its own and lets you know.',
+        ],
+      },
+      {
+        id: 'year-summary',
+        titulo: 'Your year: deliveries, miles and earnings by month',
+        resumen:
+          'In Earnings you see your year month by month: how many deliveries you made, the estimated distance and what you earned, and you can share it with your accountant as a file.',
+        explicacion: [
+          'Below your earnings you’ll find “Your year”: each month with its deliveries, miles and what you earned (base pay, bonuses and tips).',
+          'The distance is an estimate: from the restaurant to the customer’s address, in a straight line. It doesn’t include the drive to the restaurant. For taxes, keep your own mileage log too.',
+          '“Share with my accountant” builds a CSV file that opens in Excel or Google Sheets.',
+        ],
+        preguntas: ['Where do I see what I earned this year?', 'How do I get my miles for taxes?'],
+        pasos: [
+          'Open the Earnings tab.',
+          'Scroll down to “Your year”.',
+          'Tap “Share with my accountant” and choose how to send it.',
         ],
       },
       {

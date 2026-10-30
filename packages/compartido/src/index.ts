@@ -48,3 +48,4 @@ export * from './respuestasResena';
 export * from './turnos';
 export * from './destacado';
 export * from './recomendados';
+export * from './resumenAnual';

@@ -236,6 +236,37 @@ describe('ganancias con desglose por pedido', () => {
   });
 });
 
+describe('resumen del año (C-RESUMEN-ANUAL)', () => {
+  it('suma por mes lo mismo que «Ganancias» y la distancia estimada; solo para el repartidor', async () => {
+    const e = await escenario();
+    const { m } = e;
+    const rep = await e.repartidor('Rep Anual');
+    const id = await e.pedidoPagado();
+    await e.aceptar(id);
+    await e.ofertasDe(rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await llevarA(m.DB, id, 'entregado', "entregado_en = datetime('now'), distancia_km = 3.2");
+    const gan = await m.llamar('GET', '/datos/repartidor/ganancias', undefined, rep.token);
+    const r = await m.llamar('GET', '/datos/repartidor/resumen-anual', undefined, rep.token);
+    expect(r.estado).toBe(200);
+    expect(r.datos.anio).toBe(new Date().getUTCFullYear());
+    expect(r.datos.meses).toHaveLength(1);
+    expect(r.datos.meses[0]).toMatchObject({
+      entregas: 1,
+      km: 3.2,
+      millas: 2,
+      ganado: [{ moneda: 'USD', total: gan.datos.totales.total }],
+    });
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/resumen-anual?anio=2025', undefined, rep.token))
+        .datos.meses,
+    ).toEqual([]);
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/resumen-anual', undefined, e.cliente.token)).estado,
+    ).toBe(403);
+  });
+});
+
 describe('avisos reales del repartidor', () => {
   it('cancelación del restaurante y cambio de dirección le llegan por push y en la campana', async () => {
     const e = await escenario();
