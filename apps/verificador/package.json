@@ -1,0 +1,10 @@
+{
+  "name": "@tumbite/verificador",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Motor propio de verificación de identidad (documento, persona viva y cara), copiado de la arquitectura de Idswyft (MIT). Corre aparte, en un contenedor; NO se despliega hasta que Richard apruebe dónde.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

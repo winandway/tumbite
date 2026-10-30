@@ -26,6 +26,13 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'verificador',
+          include: ['apps/verificador/src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.tsx'],
           environment: 'jsdom',
@@ -40,6 +47,7 @@ export default defineConfig({
         'apps/servidor/src/**',
         'apps/panel/src/**',
         'apps/tiempo-real/src/**',
+        'apps/verificador/src/**',
       ],
       exclude: [
         '**/*.test.*',

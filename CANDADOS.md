@@ -1745,3 +1745,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** propina después de un viaje pagado con tarjeta (`POST /datos/viajes/:id/propina`, `propinaViaje` en `viajesCobro.ts`), con la tarjeta guardada, una vez y hasta 7 días después; va entera al conductor (`movimientos`, concepto `propina`, referencia `propina-viaje-<id>`) y solo si Stripe confirmó el cobro. App: botones de propina en `ViajeEnCurso.tsx`.
 - **Prueba:** `viajeTarjeta.test.ts`.
+
+## C-KYC-DOCUMENTO (29 oct 2026) — EE. UU. y pasaportes de todos los países
+
+- **Qué es:** el primer bloque del motor propio de verificación (`apps/verificador`, diseño en `docs/investigaciones-rea/2026-10-29-kyc-automatico.md`, copiado de Idswyft, MIT): `leerAamva` lee el código de barras PDF417 de las licencias e identificaciones de EE. UU. (estándar AAMVA); `leerMrz` lee la franja del pasaporte (TD3 de la OACI) y comprueba sus dígitos de control; `revisarDocumento` exige vigencia y edad mínima (18, o 21 para licores); `cruzarConFrente` cruza el código con lo que el OCR lee en el frente (umbral 0,75, como Idswyft).
+- **Todavía no:** decodificar el código de barras y leer el frente desde la FOTO (K6b), la cara (K7) y el servicio que lo corre (K9, decide Richard dónde).
+- **Prueba:** `apps/verificador/src/documento.test.ts` (con el ejemplo oficial de la OACI; rojo comprobado cambiando los pesos del dígito de control).
