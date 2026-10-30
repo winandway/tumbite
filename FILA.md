@@ -26,7 +26,7 @@
 - [x] Mercado, Farmacia y Licores listos para encender en piloto: el equipo los marca en Superadmin → Piloto cuando las tiendas del grupo se registren (sin código pendiente). EE. UU.
 - [!] (decide Richard: precio del envío, valor máximo y seguro del paquete en producción) Envíos en piloto: sin tarifa en producción no se puede cotizar. EE. UU.
 - [!] (decide Richard: aprobación legal y seguro del pasajero) Moto y Carro en piloto: llevan pasajeros reales. EE. UU.
-- [ ] Monetización prepago: unificar Comida con la capa de políticas y enchufar Express, Tiendas y Flex conductor. Todos los países.
+- [x] Monetización prepago: el código ya estaba hecho (Food por políticas, viajes y Tiendas con reserva y cobro, cancelaciones); Flex no aplica; solo falta la activación por mercado, que decide Richard. Todos los países.
 
 ## Ahora — en el orden de docs/ROADMAP-DIVOOX.md
 
