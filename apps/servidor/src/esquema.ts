@@ -11,6 +11,8 @@ import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-CARGO-AL-AFECTADO (30 oct 2026): el conductor al que le cancelaron (el cargo es suyo).
+  ['deudas_pasajero', 'conductor_id', 'TEXT'],
   // C-KYC-AUTO (29 oct 2026): las dos tomas girando la cabeza y el consentimiento antes de la selfie.
   ['kyc', 'giro_1', 'TEXT'],
   ['kyc', 'giro_2', 'TEXT'],

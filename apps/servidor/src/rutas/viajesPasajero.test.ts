@@ -807,6 +807,56 @@ describe('M7 (C-VIAJE-COMISION): comisión del prepago, espera y deudas', () => 
       .datos;
     expect(luego.deudaPendiente).toBeNull();
   });
+
+  it('el cargo de cancelación es del conductor que fue a buscarlo, no del que cobra el viaje siguiente (C-CARGO-AL-AFECTADO)', async () => {
+    const e = await listo(false);
+    const afectado = await conductorDeMoto(e.m, ORIGEN);
+    const viejo = await pedir(e);
+    expect(await afectado.paso(viejo.id, 'aceptar')).toBe(200);
+    await e.m.DB.prepare(
+      "UPDATE viajes SET asignado_en = datetime('now', '-200 seconds') WHERE operacion_id = ?",
+    )
+      .bind(viejo.id)
+      .run();
+    await e.m.crudo(`/datos/viajes/${viejo.id}/cancelar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${e.cliente.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': 'cancelar-afectado-m7',
+      },
+      body: '{}',
+    });
+    // El afectado se desconecta; el viaje siguiente lo hace otro conductor, en efectivo.
+    await e.m.DB.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?')
+      .bind(afectado.id)
+      .run();
+    const otro = await conductorDeMoto(e.m, ORIGEN);
+    const { id } = await pedir(e);
+    await hacerViaje(e, otro, id);
+    const mov = async (u: string) =>
+      (
+        await e.m.DB.prepare(
+          "SELECT concepto, monto FROM movimientos WHERE usuario_id = ? AND referencia LIKE 'deuda-viaje:%' ORDER BY monto",
+        )
+          .bind(u)
+          .all()
+      ).results;
+    // El que cobró la deuda en efectivo la tiene en la mano: se le descuenta y va al afectado.
+    expect(await mov(afectado.id)).toEqual([{ concepto: 'entrega', monto: 150 }]);
+    expect(await mov(otro.id)).toEqual([{ concepto: 'ajuste', monto: -150 }]);
+    // Repetir el cierre no lo duplica.
+    await e.m.crudo(`/datos/conductor/operaciones/${id}/terminar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${otro.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': `terminar-${id.slice(0, 8)}-y`,
+      },
+      body: '{}',
+    });
+    expect(await mov(afectado.id)).toHaveLength(1);
+  });
 });
 
 describe('M7: la salud de los viajes (conciliación)', () => {

@@ -192,5 +192,15 @@ describe('viaje con tarjeta (C-VIAJE-TARJETA)', () => {
         .bind(b.id)
         .first(),
     ).toBeNull();
+    // C-CARGO-AL-AFECTADO: el cargo cobrado es del conductor que fue a buscarlo, una sola vez.
+    const mov = () =>
+      e.m.DB.prepare('SELECT usuario_id, monto, concepto FROM movimientos WHERE referencia = ?')
+        .bind(`cargo-viaje-${b.id}`)
+        .all();
+    expect((await mov()).results).toEqual([
+      { usuario_id: e.cond.id, monto: 150, concepto: 'entrega' },
+    ]);
+    await cancelar(b.id);
+    expect((await mov()).results).toHaveLength(1);
   });
 });

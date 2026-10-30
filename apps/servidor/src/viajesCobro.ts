@@ -175,12 +175,28 @@ export async function soltarCobroViaje(
       { amount_to_capture: monto },
       `cargo-viaje-${operacionId}`,
     );
-    await db
-      .prepare(
-        "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ?",
-      )
-      .bind(monto, operacionId)
-      .run();
+    await db.batch([
+      db
+        .prepare(
+          "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ?",
+        )
+        .bind(monto, operacionId),
+      // C-CARGO-AL-AFECTADO: el cargo es del conductor al que le cancelaron (o esperó en vano).
+      db
+        .prepare(
+          `INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+           SELECT ?, o.conductor_id, ?, 'entrega', ? FROM operaciones o
+            WHERE o.id = ? AND o.conductor_id IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
+        )
+        .bind(
+          nuevoId(),
+          monto,
+          `cargo-viaje-${operacionId}`,
+          operacionId,
+          `cargo-viaje-${operacionId}`,
+        ),
+    ]);
     return monto;
   }
   await stripe.post(`/payment_intents/${f.stripe_pago}/cancel`, {}, `anular-viaje-${operacionId}`);

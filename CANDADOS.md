@@ -1790,3 +1790,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Servidor** (`verificacionAuto.ts` + `/datos/kyc/enviar`): solo llama al motor si hay consentimiento, las dos tomas, el frente y la selfie. Firma HMAC igual que el motor. Verificado → aprobado por «motor»; repetir → rechazado con el motivo en palabras de la persona (es/en); revisión → pendiente para el equipo. Si el motor falla, queda pendiente y se anota «sin_respuesta» (nunca se aprueba sola).
 - **Huellas:** `huellas_caras` guarda solo los 128 números; al cerrar por mala conducta se marca y viaja al motor en cada verificación; al borrar la cuenta se borra (salvo la de mala conducta). `verificaciones_auto` guarda cada decisión y el equipo la ve en el detalle.
 - **Prueba:** `apps/servidor/src/verificacionAuto.test.ts` (motor simulado; rojo comprobado apagando el interruptor).
+
+## C-CARGO-AL-AFECTADO (30 oct 2026) — todos los países (Moto y lo que venga: Carro)
+
+- **Qué estaba mal:** el cargo de cancelación o de «no se presentó» no le llegaba al conductor que fue a buscar al pasajero. Con tarjeta se cobraba y quedaba sin dueño; en efectivo se sumaba al viaje siguiente y se lo quedaba el conductor de ESE viaje.
+- **Cómo quedó (como Uber):** `deudas_pasajero.conductor_id` guarda al afectado. Con tarjeta, `soltarCobroViaje` le acredita lo capturado (`movimientos`, referencia `cargo-viaje-<viaje>`). En efectivo, al cobrarse la deuda en otro viaje, `pasarDeudasAlAfectado` (`rutas/viajes.ts`) le descuenta al que la cobró (ajuste negativo) y se la acredita al afectado (referencias `deuda-viaje:<deuda>:…`). Todo una sola vez.
+- **[INF]** El cargo va entero al conductor; si Richard decide cobrar comisión sobre él, se descuenta aquí.
+- **Prueba:** `viajesPasajero.test.ts` (C-CARGO-AL-AFECTADO, rojo comprobado antes del arreglo) y `viajeTarjeta.test.ts`.

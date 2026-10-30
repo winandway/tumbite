@@ -368,8 +368,8 @@ viajes.post(
     } else if (nombre === 'no-se-presento')
       await db
         .prepare(
-          `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda)
-           SELECT ?, o.cliente_id, o.id, 'no_se_presento', json_extract(q.tarifa_json, '$.cargoNoSePresento'), q.moneda
+          `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda, conductor_id)
+           SELECT ?, o.cliente_id, o.id, 'no_se_presento', json_extract(q.tarifa_json, '$.cargoNoSePresento'), q.moneda, o.conductor_id
              FROM operaciones o JOIN cotizaciones_viaje q ON q.operacion_id = o.id
             WHERE o.id = ? AND json_extract(q.tarifa_json, '$.cargoNoSePresento') > 0`,
         )
@@ -446,11 +446,40 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
       )
       .bind(f.total, espera, operacionId, operacionId),
   ]);
+  await pasarDeudasAlAfectado(db, operacionId, conductorId);
   const fin = await db
     .prepare('SELECT total_final_centavos FROM viajes WHERE operacion_id = ?')
     .bind(operacionId)
     .first<{ total_final_centavos: number | null }>();
   return fin?.total_final_centavos ?? null;
+}
+
+/**
+ * C-CARGO-AL-AFECTADO (30 oct 2026), como Uber: el cargo de cancelación o de «no se presentó» es del
+ * conductor al que le pasó. Si se cobra en un viaje siguiente, quien lo cobra (en efectivo lo tiene en
+ * la mano; con tarjeta se le acredita entero) lo devuelve de sus ganancias y va al afectado. Una vez
+ * por deuda.
+ */
+async function pasarDeudasAlAfectado(db: D1Database, operacionId: string, cobradorId: string) {
+  const { results } = await db
+    .prepare(
+      `SELECT id, conductor_id, monto FROM deudas_pasajero
+        WHERE cobrada_en = ? AND conductor_id IS NOT NULL AND conductor_id <> ?`,
+    )
+    .bind(operacionId, cobradorId)
+    .all<{ id: string; conductor_id: string; monto: number }>();
+  const mov = (usuario: string, monto: number, concepto: string, ref: string) =>
+    db
+      .prepare(
+        `INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+         SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
+      )
+      .bind(nuevoId(), usuario, monto, concepto, ref, ref);
+  for (const d of results)
+    await db.batch([
+      mov(d.conductor_id, d.monto, 'entrega', `deuda-viaje:${d.id}:afectado`),
+      mov(cobradorId, -d.monto, 'ajuste', `deuda-viaje:${d.id}:cobrador`),
+    ]);
 }
 
 /** M8: el conductor califica al pasajero al terminar. */

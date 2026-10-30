@@ -560,9 +560,10 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
   if (cargo > 0 && f.moneda)
     await db
       .prepare(
-        "INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda) VALUES (?, ?, ?, 'cancelacion', ?, ?)",
+        `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda, conductor_id)
+         VALUES (?, ?, ?, 'cancelacion', ?, ?, (SELECT conductor_id FROM operaciones WHERE id = ?))`,
       )
-      .bind(nuevoId(), u.id, id, cargo, f.moneda)
+      .bind(nuevoId(), u.id, id, cargo, f.moneda, id)
       .run();
   return c.json({ ok: true, cargo });
 });
