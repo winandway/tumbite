@@ -2609,11 +2609,18 @@ describe('C-PEDIDO-PROGRAMADO', () => {
     });
     const pronto = await m.llamar('POST', '/datos/pedidos', cuerpo(franja(5)), cliente.token);
     expect(pronto.estado).toBe(409);
-    const ok = await m.llamar('POST', '/datos/pedidos', cuerpo(franja(180)), cliente.token);
+    // El horario de prueba cierra a las 23:59: la franja de las 23:30 (hora del local) no cabe.
+    // Si a las 3 horas cae justo ahí (la nube corrió a medianoche UTC el 29 oct), se usa la siguiente.
+    let elegida = franja(180);
+    let ok = await m.llamar('POST', '/datos/pedidos', cuerpo(elegida), cliente.token);
+    if (ok.estado === 409) {
+      elegida = franja(210);
+      ok = await m.llamar('POST', '/datos/pedidos', cuerpo(elegida), cliente.token);
+    }
     expect(ok.estado).toBe(201);
     const pid = ok.datos.pedidoId as string;
     const ped = await m.llamar('GET', `/datos/pedidos/${pid}`, undefined, cliente.token);
-    expect(ped.datos.pedido.programadoPara).toBe(franja(180).slice(0, 19).replace('T', ' '));
+    expect(ped.datos.pedido.programadoPara).toBe(elegida.slice(0, 19).replace('T', ' '));
 
     // Pagado hace 10 minutos, pero es para dentro de 3 horas: nadie lo cancela.
     await m.DB.prepare(
