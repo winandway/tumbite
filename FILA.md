@@ -88,7 +88,7 @@
 ## Etapa 1, punto 3 · Repaso del restaurante y de Flex, y nueva fila del roadmap (30 oct 2026)
 
 - [x] (C-MAS-RESTAURANTE: «Más» estaba casi vacía; ahora trae la lista de DoorDash Merchant) (25) Repaso en el sitio de pruebas, tamaño celular, de la app del restaurante (inicio, pedidos, menú, cuenta): marca, textos, errores en consola y pedidos fallidos. Cada fallo: prueba en rojo y arreglo. Todos los países.
-- [ ] (26) Repaso en el sitio de pruebas, tamaño celular, del panel de Divoox Flex (empresa: inicio, envíos, rutas, saldo): marca, textos y errores. Cada fallo: prueba en rojo y arreglo. Todos los países.
+- [x] (C-FLEX-ACTIVIDAD: códigos internos y horas crudas en el panel; arreglado) (26) Repaso en el sitio de pruebas, tamaño celular, del panel de Divoox Flex (empresa: inicio, envíos, rutas, saldo): marca, textos y errores. Cada fallo: prueba en rojo y arreglo. Todos los países.
 - [ ] (27) Auditoría de lo que falta del roadmap: comparar los estudios de Richard, la comparación del ciclo del pedido y la auditoría final con lo construido; cada brecha que no dependa de Richard entra a esta fila en orden de lanzamiento. Todos los países.
 
 ## Hecho

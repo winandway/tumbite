@@ -8,6 +8,7 @@ import {
   montoATexto,
   textoAMonto,
   useBorrador,
+  fechaHoraLocal,
 } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
@@ -444,7 +445,7 @@ function Resumen({ ctx }: { ctx: Contexto }) {
               <span>
                 <strong>{t.tipos[x.tipo] ?? x.tipo}</strong>
                 <small>
-                  {x.creadoEn} · {t.bolsillos[x.bolsillo] ?? x.bolsillo}
+                  {fechaHoraLocal(x.creadoEn, ctx.idioma)} · {t.bolsillos[x.bolsillo] ?? x.bolsillo}
                 </small>
               </span>
               <span className={x.monto >= 0 && x.bolsillo === 'prepago' ? 'texto-exito' : ''}>
@@ -809,7 +810,7 @@ function RecargasRecientes({ ctx }: { ctx: Contexto }) {
                 {formatearMonto(r.monto, r.moneda, ctx.idioma === 'en' ? 'en' : 'es')}
               </strong>
               <small>
-                {r.creadoEn}
+                {fechaHoraLocal(r.creadoEn, ctx.idioma)}
                 {r.automatica ? ` · ${t.automatica}` : ''}
                 {r.motivo ? ` · ${r.motivo}` : ''}
               </small>
@@ -967,8 +968,8 @@ function Comisiones({ ctx }: { ctx: Contexto }) {
                       <strong>{r.ruta || r.rutaId.slice(0, 8)}</strong>
                     </Enlace>
                     <small>
-                      {r.creadoEn} · {r.paquetesFacturados} × {m(r.tarifaUnitaria)} ·{' '}
-                      {t.estadoCobro[r.estado] ?? r.estado}
+                      {fechaHoraLocal(r.creadoEn, ctx.idioma)} · {r.paquetesFacturados} ×{' '}
+                      {m(r.tarifaUnitaria)} · {t.estadoCobro[r.estado] ?? r.estado}
                     </small>
                   </span>
                   <span>{m(r.cobrado)}</span>
@@ -1033,7 +1034,7 @@ function Comprobantes({ ctx }: { ctx: Contexto }) {
               <span>
                 <strong>{x.numero}</strong>
                 <small>
-                  {x.creadoEn} · {t.tiposComprobante[x.tipo] ?? x.tipo}
+                  {fechaHoraLocal(x.creadoEn, ctx.idioma)} · {t.tiposComprobante[x.tipo] ?? x.tipo}
                 </small>
               </span>
               <span>

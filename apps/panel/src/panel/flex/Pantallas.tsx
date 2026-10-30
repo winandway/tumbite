@@ -1,6 +1,13 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos y resúmenes fijos, nunca claves del usuario */
 import { useCallback, useEffect, useState } from 'react';
-import { PERMISOS_CLAVE_API, almacenNavegador, useBorrador } from '@tumbite/compartido';
+import {
+  PERMISOS_CLAVE_API,
+  almacenNavegador,
+  fechaHoraLocal,
+  textoAccionFlex,
+  textoPermisoClave,
+  useBorrador,
+} from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Campo } from '../CampoClave';
@@ -118,7 +125,8 @@ function Auditoria({ ctx }: { ctx: Contexto }) {
       <ul className="super-lista">
         {eventos.map((e) => (
           <li key={e.id}>
-            <strong>{e.accion}</strong> · {e.actor} · {e.creadoEn}
+            <strong>{textoAccionFlex(e.accion, ctx.idioma)}</strong> · {e.actor} ·{' '}
+            {fechaHoraLocal(e.creadoEn, ctx.idioma)}
           </li>
         ))}
       </ul>
@@ -567,7 +575,7 @@ export function Claves({ ctx }: { ctx: Contexto }) {
                   setPermisos(e.target.checked ? [...permisos, p] : permisos.filter((x) => x !== p))
                 }
               />{' '}
-              {p}
+              {textoPermisoClave(p, ctx.idioma)} <code className="pista">{p}</code>
             </label>
           ))}
         </fieldset>

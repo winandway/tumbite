@@ -11,6 +11,7 @@ import {
   formatearMonto,
   perfilFlex,
   useBorrador,
+  fechaHoraLocal,
 } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
@@ -180,7 +181,7 @@ export function Envios({ ctx }: { ctx: Contexto }) {
               </Enlace>{' '}
               · {e.destinatarioNombre} · {e.direccion} ·{' '}
               <span className="insignia">{t.estadosEnvio[e.estado] ?? e.estado}</span> ·{' '}
-              {String(e.paquetes)} {t.paquetesN} · {e.creadoEn}
+              {String(e.paquetes)} {t.paquetesN} · {fechaHoraLocal(e.creadoEn, ctx.idioma)}
             </li>
           ))}
         </ul>
@@ -528,10 +529,12 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
 function Trazabilidad({
   eventos,
   t,
+  idioma,
   conPaquete,
 }: {
   eventos: Evento[];
   t: Contexto['t'];
+  idioma: Contexto['idioma'];
   conPaquete?: boolean;
 }) {
   if (!eventos.length) return <p className="pista">{t.sinEventos}</p>;
@@ -539,7 +542,7 @@ function Trazabilidad({
     <ol className="flex-eventos">
       {eventos.map((e) => (
         <li key={e.id}>
-          <InsigniaPaquete estado={e.tipo} t={t} /> {e.creadoEn}
+          <InsigniaPaquete estado={e.tipo} t={t} /> {fechaHoraLocal(e.creadoEn, idioma)}
           {e.actor ? ` · ${t.por} ${e.actor}` : ''}
           {e.metadatos?.nota ? ` · ${e.metadatos.nota}` : ''}
           {conPaquete && e.paqueteId ? ` · ${e.paqueteId.slice(0, 8)}` : ''}
@@ -625,7 +628,7 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
         ))}
       </ul>
       <h2>{t.trazabilidad}</h2>
-      <Trazabilidad eventos={datos.eventos} t={t} conPaquete />
+      <Trazabilidad eventos={datos.eventos} t={t} idioma={ctx.idioma} conPaquete />
     </section>
   );
 }
@@ -1041,7 +1044,7 @@ export function DetallePaquete({ ctx, paqueteId }: { ctx: Contexto; paqueteId: s
         </form>
       )}
       <h2>{t.trazabilidad}</h2>
-      <Trazabilidad eventos={datos.eventos} t={t} />
+      <Trazabilidad eventos={datos.eventos} t={t} idioma={ctx.idioma} />
     </section>
   );
 }
@@ -1254,7 +1257,7 @@ export function Importar({ ctx }: { ctx: Contexto }) {
             {historial.map((h) => (
               <li key={h.id}>
                 {h.nombreArchivo || 'CSV'} · {t.estadosImportacion[h.estado] ?? h.estado} ·{' '}
-                {h.procesadas}/{h.validas} · {h.creadoEn}
+                {h.procesadas}/{h.validas} · {fechaHoraLocal(h.creadoEn ?? '', ctx.idioma)}
               </li>
             ))}
           </ul>
