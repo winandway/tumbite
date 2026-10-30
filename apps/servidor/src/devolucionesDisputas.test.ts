@@ -277,3 +277,45 @@ describe('disputas por webhook y canario (C-DEVOLUCIONES-DISPUTAS)', () => {
     expect(f?.total).toBe(p.datos.desglose.totalCliente);
   });
 });
+
+// C-DISPUTAS-PRUEBAS (29 oct 2026): las pruebas del pedido listas para responder el contracargo.
+describe('pruebas para responder un contracargo (C-DISPUTAS-PRUEBAS)', () => {
+  it('arma las pruebas del pedido en inglés y las guarda en Stripe como borrador, sin enviarlas', async () => {
+    const { m, admin, cliente, id, llamadas } = await escenario();
+    await llevarA(m.DB, id, 'entregado');
+    await m.DB.prepare("UPDATE pedidos SET entregado_en = datetime('now') WHERE id = ?")
+      .bind(id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO evidencias (pedido_id, tipo, clave, distancia_m, modo, confirmada_en) VALUES (?, 'entrega', 'evidencias/x', 12, 'puerta', datetime('now'))",
+    )
+      .bind(id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO disputas (id, pedido_id, stripe_pago, monto, motivo, estado) VALUES ('dp_9', ?, 'pi_1', 3000, 'product_not_received', 'needs_response')",
+    )
+      .bind(id)
+      .run();
+    expect(
+      (await m.llamar('GET', '/datos/admin/disputas/dp_9/pruebas', undefined, cliente.token))
+        .estado,
+    ).toBe(403);
+    const r = await m.llamar('GET', '/datos/admin/disputas/dp_9/pruebas', undefined, admin.token);
+    expect(r.estado).toBe(200);
+    expect(r.datos.campos).toMatchObject({
+      customer_name: 'Ana Cliente',
+      shipping_address: '300 Calle Prueba',
+      product_description: expect.stringContaining('2 × Cubano'),
+    });
+    expect(r.datos.campos.uncategorized_text).toMatch(/Delivered/);
+    expect(r.datos.campos.uncategorized_text).toMatch(/12 m/);
+    expect(r.datos.campos.uncategorized_text).toMatch(/photo/i);
+    const g = await m.llamar('POST', '/datos/admin/disputas/dp_9/pruebas', {}, admin.token);
+    expect(g.estado).toBe(200);
+    const aStripe = llamadas.find((l) => /\/disputes\/dp_9$/.test(l.url));
+    expect(aStripe?.metodo).toBe('POST');
+    expect(decodeURIComponent(aStripe!.cuerpo)).toContain('evidence[customer_name]=Ana Cliente');
+    expect(aStripe!.cuerpo).toContain('submit=false');
+    expect(aStripe!.clave).toBeTruthy();
+  });
+});

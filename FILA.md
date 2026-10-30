@@ -74,7 +74,7 @@
 ## Rellenada el 29 oct, noche (lista final de la auditoría, puntos 41, 51, 57, 58, 62 y 65)
 
 - [x] «Ayuda con mi pedido» como DoorDash: el cliente marca qué plato faltó o llegó mal, con foto, y recibe un reembolso parcial automático dentro de reglas con tope; lo que pasa del tope va a soporte. Ficha REA antes. Solo en pruebas con Stripe de prueba. Servidor, app del cliente, superadmin, Docs. Todos los países.
-- [ ] Contracargos (disputas de Stripe) en el superadmin: lista, plazo para responder, pruebas del pedido (fotos, GPS, hora de entrega) listas para mandar. Comprobar lo que ya existe en los avisos de Stripe y completar. Solo en pruebas. Todos los países.
+- [x] Contracargos (disputas de Stripe) en el superadmin: lista, plazo para responder, pruebas del pedido (fotos, GPS, hora de entrega) listas para mandar. Comprobar lo que ya existe en los avisos de Stripe y completar. Solo en pruebas. Todos los países.
 - [ ] Modo tableta del restaurante (como la tableta de DoorDash): pantalla siempre encendida, pantalla completa, sonido fuerte y sin cerrar sesión por descuido. Panel y app del restaurante, Docs. Todos los países.
 - [ ] Resumen de millas y ganancias del año para el repartidor (como Dasher, para sus impuestos): kilómetros o millas por entrega, total por mes y descarga en CSV. Servidor, app Driver, Docs. EE. UU. primero; los demás países con su moneda.
 - [ ] Historial de cambios de la configuración de dinero por ciudad en el superadmin (quién cambió qué y cuándo), y que la calculadora pública lea la configuración en vivo. Todos los países.

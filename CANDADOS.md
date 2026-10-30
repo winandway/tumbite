@@ -1677,3 +1677,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/servidor/src/rutas/tickets.ts`: `MOTIVOS_POR_PLATO` (faltante, equivocado, dañado) calculan el valor de los platos marcados; UN solo reembolso automático por pedido (si ya hay una fila en `devoluciones`, la queja va al ticket con su propuesta). `POST /datos/quejas/:id/foto` (quien se quejó, 24 h, foto real JPG/PNG/WebP de hasta 3 MB, guardada en `quejas/<ticket>/…` del almacén, nunca en /media) y `GET` de la misma ruta (quien se quejó y soporte; `private, no-store`). La clave queda en `datos_json.foto` del ticket. App: `packages/movil/src/ReportarProblema.tsx` (platos para los tres motivos y foto opcional solo si la app pasa `elegirFoto`); la del cliente la pasa con `expo-image-picker` (las otras dos apps no lo tienen instalado: no importar el selector dentro de `packages/movil`).
 - **Sigue apagado:** el reembolso automático se enciende en el superadmin (Control de dinero → Quejas) por decisión de Richard; hasta entonces todo va a soporte con el monto propuesto.
 - **Prueba:** `apps/servidor/src/quejasGuiadas.test.ts` (dos casos nuevos, comprobados en rojo antes del arreglo).
+
+## C-DISPUTAS-PRUEBAS (29 oct 2026) — todos los países
+
+- **Qué faltaba:** las disputas (contracargos) ya llegaban por el aviso de Stripe y se veían con su plazo, pero las pruebas había que juntarlas a mano.
+- **Arreglo:** `pruebasDisputa` en `apps/servidor/src/disputas.ts` arma, con los nombres de campo de Stripe y en inglés, los hechos guardados del pedido: cliente y correo, platos, dirección, fecha de entrega, cómo se entregó, metros por GPS, si hay foto, calificación y lo ya devuelto. `GET /datos/admin/disputas/:id/pruebas` las muestra; `POST` las guarda en la disputa de Stripe con `submit=false` (BORRADOR): las envía una persona desde Stripe. Superadmin: botón «Pruebas» en Control de dinero → Disputas.
+- **No tocar:** nunca `submit=true` automático (una vez enviadas no se pueden cambiar).
+- **Prueba:** `apps/servidor/src/devolucionesDisputas.test.ts` y `apps/panel/src/panel/ControlDinero.test.tsx` (C-DISPUTAS-PRUEBAS).

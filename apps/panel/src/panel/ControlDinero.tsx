@@ -44,7 +44,10 @@ const T = {
     disputas: 'Disputas (contracargos)',
     sinDisputas: 'Ninguna disputa.',
     disputasAyuda:
-      'La evidencia (foto de entrega, bitácora, chat) se responde en el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
+      'Toca «Pruebas» para ver los hechos del pedido (entrega, GPS, foto, calificación) y guárdalos en Stripe como borrador. Después se revisan y se envían desde el panel de Stripe → Pagos → Disputas, antes de la fecha de vencimiento.',
+    verPruebas: 'Pruebas',
+    guardarPruebas: 'Guardar en Stripe como borrador',
+    pruebasGuardadas: 'Guardadas en Stripe como borrador. Revísalas y envíalas desde Stripe.',
     vence: 'Responder antes de',
     paises: 'Países y cobro directo',
     paisesAyuda:
@@ -152,7 +155,10 @@ const T = {
     disputas: 'Disputes (chargebacks)',
     sinDisputas: 'No disputes.',
     disputasAyuda:
-      'Evidence (delivery photo, log, chat) is submitted in the Stripe dashboard → Payments → Disputes, before the due date.',
+      'Tap “Evidence” to see the order facts (delivery, GPS, photo, rating) and save them to Stripe as a draft. Then review and submit them in the Stripe dashboard → Payments → Disputes, before the due date.',
+    verPruebas: 'Evidence',
+    guardarPruebas: 'Save to Stripe as a draft',
+    pruebasGuardadas: 'Saved to Stripe as a draft. Review and submit them in Stripe.',
     vence: 'Respond by',
     paises: 'Countries and direct payment',
     paisesAyuda:
@@ -328,6 +334,11 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const [abonos, setAbonos] = useState<Abono[] | null>(null);
   const [conc, setConc] = useState<Conciliacion[] | null>(null);
   const [disputas, setDisputas] = useState<Disputa[] | null>(null);
+  // C-DISPUTAS-PRUEBAS: los hechos del pedido de la disputa abierta.
+  const [pruebas, setPruebas] = useState<{ id: string; campos: Record<string, string> } | null>(
+    null,
+  );
+  const [pruebasOk, setPruebasOk] = useState('');
   const [cupones, setCupones] = useState<Cupon[] | null>(null);
   // Regla global: ningún formulario pierde lo escrito (borrador en el navegador).
   const bc = useBorrador({
@@ -1120,6 +1131,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 <th>{t.motivo}</th>
                 <th>{t.resultado}</th>
                 <th>{t.vence}</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -1131,10 +1143,59 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                   <td>{d.motivo || '—'}</td>
                   <td>{d.estado}</td>
                   <td>{fecha(d.venceEn)}</td>
+                  <td>
+                    {d.pedidoId ? (
+                      <button
+                        type="button"
+                        className="boton secundario"
+                        onClick={() =>
+                          void hacer(async () => {
+                            setPruebasOk('');
+                            const r = await pedir<{ campos: Record<string, string> }>(
+                              'GET',
+                              `/datos/admin/disputas/${d.id}/pruebas`,
+                            );
+                            setPruebas({ id: d.id, campos: r.campos });
+                          })
+                        }
+                      >
+                        {t.verPruebas}
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      ) : null}
+      {pruebas ? (
+        <div className="tarjeta" aria-live="polite">
+          <dl>
+            {Object.entries(pruebas.campos).map(([k, v]) => (
+              <div key={k}>
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <button
+            type="button"
+            className="boton"
+            onClick={() =>
+              void hacer(async () => {
+                await pedir('POST', `/datos/admin/disputas/${pruebas.id}/pruebas`, {});
+                setPruebasOk(t.pruebasGuardadas);
+              })
+            }
+          >
+            {t.guardarPruebas}
+          </button>
+          {pruebasOk ? (
+            <p className="ok" role="status">
+              {pruebasOk}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

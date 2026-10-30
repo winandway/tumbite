@@ -8,6 +8,7 @@ import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
+import { pruebasDisputa } from '../disputas';
 import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -1138,6 +1139,33 @@ superadmin.get('/admin/disputas', async (c) => {
       creadoEn: String(r.creado_en),
     })),
   });
+});
+
+/** C-DISPUTAS-PRUEBAS: las pruebas del pedido de una disputa, listas para mandar. */
+superadmin.get('/admin/disputas/:id/pruebas', async (c) => {
+  exigir(c, 'admin');
+  const campos = await pruebasDisputa(base(c), c.req.param('id'));
+  if (!campos) throw new ErrorDatos('Esa disputa no tiene un pedido de Divoox.', undefined, 404);
+  return c.json({ campos });
+});
+
+/**
+ * Las guarda en la disputa de Stripe como BORRADOR (submit=false): una persona del equipo las revisa
+ * y las envía desde Stripe antes del vencimiento. Nunca se envían solas.
+ */
+superadmin.post('/admin/disputas/:id/pruebas', async (c) => {
+  exigir(c, 'admin');
+  const id = c.req.param('id');
+  const campos = await pruebasDisputa(base(c), id);
+  if (!campos) throw new ErrorDatos('Esa disputa no tiene un pedido de Divoox.', undefined, 404);
+  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
+  await stripe.post(
+    `/disputes/${encodeURIComponent(id)}`,
+    { evidence: campos, submit: false },
+    `disputa-pruebas-${id}-${crypto.randomUUID()}`,
+  );
+  return c.json({ ok: true });
 });
 
 /** Cuentas fijas del revisor de las tiendas (Apple y Google), una por app. */

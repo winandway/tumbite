@@ -122,3 +122,54 @@ describe('control de dinero del superadmin (C-SUPER-DINERO)', () => {
     expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
   });
 });
+
+describe('pruebas de un contracargo (C-DISPUTAS-PRUEBAS)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('muestra los hechos del pedido y los guarda en Stripe como borrador', async () => {
+    const llamadas: { url: string; metodo: string }[] = [];
+    // Las demás secciones responden como en la prueba de arriba; aquí solo cambian las disputas.
+    servidor({ activos: false });
+    const resto = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      llamadas.push({ url, metodo: init?.method ?? 'GET' });
+      if (!url.includes('/admin/disputas')) return resto(url, init);
+      const r = url.endsWith('/pruebas')
+        ? init?.method === 'POST'
+          ? { ok: true }
+          : {
+              campos: {
+                customer_name: 'Cliente Prueba',
+                uncategorized_text: 'Delivered 12 m away.',
+              },
+            }
+        : url.includes('/admin/disputas')
+          ? {
+              disputas: [
+                {
+                  id: 'dp_1',
+                  pedidoId: 'p-1',
+                  cliente: 'Cliente Prueba',
+                  monto: 3000,
+                  motivo: 'product_not_received',
+                  estado: 'needs_response',
+                  venceEn: '2026-11-05 00:00:00',
+                  creadoEn: '2026-10-29 10:00:00',
+                },
+              ],
+            }
+          : {};
+      return new Response(JSON.stringify(r), { status: 200 });
+    });
+    render(<ControlDinero idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Pruebas' }));
+    expect(await screen.findByText('Delivered 12 m away.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar en Stripe como borrador' }));
+    await waitFor(() =>
+      expect(
+        llamadas.some((l) => l.metodo === 'POST' && l.url.endsWith('/admin/disputas/dp_1/pruebas')),
+      ).toBe(true),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(/borrador/);
+  });
+});
