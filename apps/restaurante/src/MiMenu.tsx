@@ -169,7 +169,7 @@ export function MiMenu({
               </View>
               <Insignia
                 estado={p.disponible ? 'activo' : 'agotado'}
-                texto={p.disponible ? t.activo : t.agotado}
+                texto={p.disponible ? t.activo : p.agotadoHasta ? t.agotadoHastaManana : t.agotado}
               />
             </Pressable>
             <View>
@@ -199,15 +199,23 @@ export function MiMenu({
               >
                 {[
                   [t.editar, () => setEditando(p)],
-                  [
-                    p.disponible ? t.marcarAgotado : t.marcarDisponible,
+                  // C-AGOTADO-HOY: «por hoy» vuelve solo a medianoche; «sin fecha», hasta reactivarlo.
+                  ...(p.disponible
+                    ? ([
+                        [t.agotadoHoy, 'hoy'],
+                        [t.marcarAgotado, 'reactivar'],
+                      ] as const)
+                    : ([[t.marcarDisponible, 'reactivar']] as const)
+                  ).map(([texto, hasta]) => [
+                    texto,
                     () =>
                       void hacer(() =>
                         api.pedir('PATCH', `/datos/mi-restaurante/platos/${p.id}/disponible`, {
                           disponible: !p.disponible,
+                          hasta,
                         }),
                       ),
-                  ],
+                  ]),
                   [
                     t.eliminar,
                     () =>

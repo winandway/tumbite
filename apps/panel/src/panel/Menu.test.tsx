@@ -56,4 +56,26 @@ describe('menú del restaurante', () => {
     expect(await screen.findByText('Escribe un precio como 12.50')).toBeInTheDocument();
     expect(screen.getByLabelText('Nombre en español')).toHaveValue('Flan');
   });
+
+  // C-AGOTADO-HOY: como DoorDash Merchant, «Agotado por hoy» vuelve solo a medianoche.
+  it('«Agotado por hoy» manda hasta=hoy y el plato dice «Agotado hasta mañana»', async () => {
+    const enviados: unknown[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (init?.method === 'PATCH' && url.includes('/disponible')) {
+        enviados.push(JSON.parse(String(init.body)));
+        return new Response(
+          JSON.stringify({ disponible: false, agotadoHasta: '2026-10-31 04:00:00' }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ restaurante: { id: 'r1' }, platos: [plato] }), {
+        status: 200,
+      });
+    });
+    render(<Menu usuario={usuario} idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Más opciones' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Agotado por hoy' }));
+    expect(await screen.findByText('Agotado hasta mañana')).toBeInTheDocument();
+    expect(enviados).toEqual([{ disponible: false, hasta: 'hoy' }]);
+  });
 });

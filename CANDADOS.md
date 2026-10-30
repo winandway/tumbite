@@ -1894,3 +1894,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** «Instrucciones especiales» por plato (Uber Eats y DoorDash). La nota viaja en cada línea (`nota`, máximo 140 letras, limpia con `limpiarNotaPlato`), el mismo plato con otra nota es otra línea del carrito (`claveDeLinea` la incluye) y `textoLinea` la escribe («· Nota: …»), así que sale sola en el carrito, el panel, la comanda, la app del restaurante, la del repartidor y los correos.
 - **Candados:** `packages/compartido/src/notaPlato.test.ts`, `pedidos.test.ts` («nota por plato») y `e2e/recorrido/notaPlato.spec.ts` (en rojo con la versión anterior). Captura: `docs/capturas/nota-plato-carrito-es.png`. Guía: Docs → «Instrucciones especiales para un plato».
+
+## C-AGOTADO-HOY (30 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash Merchant, un plato se agota «por hoy» (vuelve solo) o «sin fecha». Columna `platos.agotado_hasta` (vía COLUMNAS) con la medianoche del restaurante en UTC (`limitesDelDia`); la tarea del reloj `platos_vuelven` (`volverPlatosAgotados`) los reactiva. Panel: «Agotado por hoy» en los tres puntos; app: «Agotado por hoy» y «Agotado sin fecha».
+- **Candados:** `catalogo.test.ts` («agotado por hoy») y `Menu.test.tsx` (en rojo sin el cambio). Guía: Docs → «Marcar un plato como agotado».

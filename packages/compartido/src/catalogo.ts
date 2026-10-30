@@ -223,6 +223,8 @@ export type Plato = {
   precioCentavos: number;
   imagen: string | null;
   disponible: boolean;
+  /** C-AGOTADO-HOY: agotado «por hoy»: vuelve solo a esta hora (UTC, «AAAA-MM-DD hh:mm:ss»). */
+  agotadoHasta?: string | null;
   requiereEdad?: boolean;
   etiquetas?: EtiquetaDieta[];
   grupos?: GrupoOpciones[];

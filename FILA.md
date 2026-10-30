@@ -96,7 +96,7 @@
 - [x] (C-CALIFICACION-PUBLICA) (28) Calificación del restaurante visible para el cliente: estrellas y número de votos en la lista, el buscador y la ficha, y las reseñas en la ficha (como Uber Eats y DoorDash). Quitar las estrellas inventadas de las tarjetas de ejemplo. Todos los países.
 - [x] (C-ACEPTAR-SOLO) (29) Aceptación automática de pedidos (interruptor del restaurante, como DoorDash: el pedido se confirma solo y se busca repartidor al instante). Todos los países.
 - [x] (C-NOTA-PLATO) (30) Nota por plato («sin cebolla», «bien cocido»): el cliente la escribe en cada plato y el restaurante y el repartidor la ven. Todos los países.
-- [ ] (31) «Agotado hasta mañana» en los platos de comida (hoy, sin fecha o hasta una hora), reutilizando lo de Tiendas, en el panel y en la app del restaurante. Todos los países.
+- [x] (C-AGOTADO-HOY) (31) «Agotado hasta mañana» en los platos de comida (hoy, sin fecha o hasta una hora), reutilizando lo de Tiendas, en el panel y en la app del restaurante. Todos los países.
 - [ ] (32) Correo al cliente al entregar, con la foto de la entrega (como DoorDash). Todos los países.
 - [ ] (33) Dirección con casilla aparte para apartamento, piso o edificio. Todos los países.
 - [ ] (34) Alta asistida: el equipo carga el menú por el restaurante, e importación del menú de comida por hoja de cálculo (reutilizando la de Tiendas). Todos los países.

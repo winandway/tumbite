@@ -42,6 +42,8 @@ const T = {
     mayores21: 'Solo para mayores de 21 (se entrega en mano con documento)',
     dieta: 'Marcas del plato (el cliente las ve y puede filtrar por ellas)',
     agotado: 'Agotado',
+    agotadoHoy: 'Agotado por hoy',
+    agotadoHastaManana: 'Agotado hasta mañana',
     vacio: 'Tu menú está vacío. Agrega tu primer plato.',
     precioMal: 'Escribe un precio como 12.50',
     // C-MONEDA-RECORRIDO: fuera del dólar, la moneda del restaurante.
@@ -91,6 +93,8 @@ const T = {
     mayores21: '21+ only (handed over in person with an ID check)',
     dieta: 'Dish labels (customers see them and can filter by them)',
     agotado: 'Sold out',
+    agotadoHoy: 'Sold out for today',
+    agotadoHastaManana: 'Sold out until tomorrow',
     vacio: 'Your menu is empty. Add your first item.',
     precioMal: 'Enter a price like 12.50',
     precioMoneda: 'Price in {m}',
@@ -322,13 +326,20 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
     setError(null);
   }
 
-  async function alternar(p: Plato) {
+  /** C-AGOTADO-HOY: «hoy» vuelve solo a medianoche; sin «hasta», queda agotado hasta reactivarlo. */
+  async function alternar(p: Plato, hasta: 'hoy' | 'reactivar' = 'reactivar') {
     try {
-      await pedir('PATCH', `/datos/mi-restaurante/platos/${p.id}/disponible`, {
-        disponible: !p.disponible,
-      });
+      const r = await pedir<{ agotadoHasta?: string | null }>(
+        'PATCH',
+        `/datos/mi-restaurante/platos/${p.id}/disponible`,
+        { disponible: !p.disponible, hasta },
+      );
       setPlatos((ps) =>
-        (ps ?? []).map((x) => (x.id === p.id ? { ...x, disponible: !p.disponible } : x)),
+        (ps ?? []).map((x) =>
+          x.id === p.id
+            ? { ...x, disponible: !p.disponible, agotadoHasta: r.agotadoHasta ?? null }
+            : x,
+        ),
       );
     } catch (x) {
       setError({ mensaje: x instanceof ErrorApi ? x.message : String(x) });
@@ -733,12 +744,15 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
               </button>
               <label className="interruptor">
                 <input type="checkbox" checked={p.disponible} onChange={() => void alternar(p)} />
-                {p.disponible ? t.disponible : t.agotado}
+                {p.disponible ? t.disponible : p.agotadoHasta ? t.agotadoHastaManana : t.agotado}
               </label>
               <MenuTresPuntos
                 etiqueta={t.opciones}
                 opciones={[
                   { texto: t.editar, alTocar: () => editar(p) },
+                  ...(p.disponible
+                    ? [{ texto: t.agotadoHoy, alTocar: () => void alternar(p, 'hoy') }]
+                    : []),
                   { texto: t.eliminar, peligro: true, alTocar: () => void eliminar(p) },
                 ]}
               />

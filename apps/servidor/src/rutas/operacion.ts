@@ -20,6 +20,7 @@ import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
+import { volverPlatosAgotados } from './catalogo';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
@@ -2189,6 +2190,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
   { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  // C-AGOTADO-HOY: los platos agotados «por hoy» vuelven a la medianoche del restaurante.
+  { nombre: 'platos_vuelven', critica: false, correr: (_env, db) => volverPlatosAgotados(db) },
   // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
   { nombre: 'liquidaciones', critica: true, correr: (env, db) => liquidarPendientes(env, db) },
   {

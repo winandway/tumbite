@@ -1626,6 +1626,11 @@ const es: SeccionDocs[] = [
           'Tócalo para apagarlo. Desaparece de la app de los clientes al instante.',
           'Cuando vuelvas a tenerlo, tócalo otra vez. No hay que borrar ni volver a crear el plato.',
         ],
+        explicacion: [
+          'Si solo se acabó por hoy, abre los tres puntos del plato y elige «Agotado por hoy». El plato dice «Agotado hasta mañana» y vuelve solo a la medianoche de tu ciudad, sin que tengas que acordarte.',
+          'Con el interruptor (o «Agotado sin fecha» en la app), el plato queda apagado hasta que tú lo vuelvas a encender.',
+          'Lo pueden hacer el dueño, los managers y el staff, desde el panel o desde la app del restaurante.',
+        ],
       },
       {
         id: 'orders',
@@ -5048,6 +5053,11 @@ const en: SeccionDocs[] = [
           'In “Menu,” each item has an “Available / Sold out” switch.',
           'Tap it to turn the item off. It disappears from the customer app instantly.',
           'When it’s back, tap again. No need to delete or recreate the item.',
+        ],
+        explicacion: [
+          'If it ran out just for today, open the item’s three dots and choose “Sold out for today”. The item shows “Sold out until tomorrow” and comes back on its own at midnight in your city, so you don’t have to remember.',
+          'With the switch (or “Sold out until I turn it on” in the app), the item stays off until you turn it back on.',
+          'The owner, managers and staff can all do this, from the dashboard or the restaurant app.',
         ],
       },
       {

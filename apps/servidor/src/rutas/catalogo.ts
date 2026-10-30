@@ -30,6 +30,7 @@ import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { kycAprobado } from './kyc';
+import { limitesDelDia } from './operacion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos';
 import { minutosPausa } from '../pausa';
@@ -90,6 +91,7 @@ export function aPlato(f: FilaRest): Plato {
     precioCentavos: Number(f.precio_centavos),
     imagen: (f.imagen as string | null) ?? null,
     disponible: Number(f.disponible) === 1,
+    agotadoHasta: (f.agotado_hasta as string | null) ?? null,
     requiereEdad: Number(f.requiere_edad ?? 0) === 1,
     etiquetas: leerEtiquetasDieta(f.etiquetas),
   };
@@ -743,16 +745,46 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
   return c.json({ plato: aPlato(f as FilaRest) });
 });
 
+/**
+ * Agotar o reactivar un plato. C-AGOTADO-HOY (como DoorDash Merchant): «hoy» vuelve solo a la
+ * medianoche del restaurante (lo hace el reloj); sin «hasta», queda agotado hasta reactivarlo.
+ */
 catalogo.patch('/mi-restaurante/platos/:id/disponible', async (c) => {
   const rid = await exigirMiRestaurante(c);
-  const { disponible } = await leerCuerpo(c, z.object({ disponible: z.boolean() }));
-  const r = await base(c)
-    .prepare('UPDATE platos SET disponible=? WHERE id=? AND restaurante_id=? AND eliminado=0')
-    .bind(disponible ? 1 : 0, c.req.param('id'), rid)
+  const { disponible, hasta } = await leerCuerpo(
+    c,
+    z.object({ disponible: z.boolean(), hasta: z.enum(['hoy', 'reactivar']).default('reactivar') }),
+  );
+  const db = base(c);
+  let agotadoHasta: string | null = null;
+  if (!disponible && hasta === 'hoy') {
+    const z0 = await db
+      .prepare(
+        'SELECT z.zona_horaria FROM restaurantes r LEFT JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+      )
+      .bind(rid)
+      .first<{ zona_horaria: string | null }>();
+    agotadoHasta = limitesDelDia(z0?.zona_horaria ?? 'America/New_York')[1];
+  }
+  const r = await db
+    .prepare(
+      'UPDATE platos SET disponible=?, agotado_hasta=? WHERE id=? AND restaurante_id=? AND eliminado=0',
+    )
+    .bind(disponible ? 1 : 0, agotadoHasta, c.req.param('id'), rid)
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Ese plato no existe en tu menú.', undefined, 404);
-  return c.json({ disponible });
+  return c.json({ disponible, agotadoHasta });
 });
+
+/** C-AGOTADO-HOY: el reloj devuelve los platos agotados «por hoy» cuya hora ya pasó. */
+export async function volverPlatosAgotados(db: D1Database): Promise<number> {
+  const r = await db
+    .prepare(
+      "UPDATE platos SET disponible = 1, agotado_hasta = NULL WHERE disponible = 0 AND agotado_hasta IS NOT NULL AND agotado_hasta <= datetime('now')",
+    )
+    .run();
+  return r.meta.changes ?? 0;
+}
 
 /** Borrar = esconder. Los pedidos viejos guardan su copia del plato; nada se pierde. */
 catalogo.delete('/mi-restaurante/platos/:id', async (c) => {

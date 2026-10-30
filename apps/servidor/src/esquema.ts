@@ -64,6 +64,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['restaurantes', 'geohash', 'TEXT'],
   // C-ACEPTAR-SOLO: los pedidos se aceptan solos al pagarse (como el «auto-confirm» de DoorDash).
   ['restaurantes', 'aceptar_solo', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-AGOTADO-HOY: plato agotado «por hoy»: vuelve solo a esta hora (UTC, medianoche del restaurante).
+  ['platos', 'agotado_hasta', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['repartidores', 'geohash', 'TEXT'],
   ['pedidos', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

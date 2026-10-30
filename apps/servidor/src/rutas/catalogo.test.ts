@@ -212,3 +212,79 @@ describe('lista de activación del restaurante (C-ACTIVACION)', () => {
     expect(faltan(mio.datos.restaurante.activacion)).toEqual(['fotos', 'cobro']);
   });
 });
+
+// C-AGOTADO-HOY (30 oct 2026): como DoorDash Merchant, un plato se agota «por hoy» y vuelve solo
+// a la medianoche del restaurante, o «sin fecha» hasta que el restaurante lo reactive.
+describe('agotado por hoy', () => {
+  async function conPlato() {
+    const m = mundo();
+    const dueno = await m.cuenta('restaurante');
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/restaurantes/${r.datos.restaurante.id}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    const a = await m.llamar('POST', '/datos/mi-restaurante/platos', PLATO, dueno.token);
+    return { m, dueno, rid: r.datos.restaurante.id as string, platoId: a.datos.plato.id as string };
+  }
+
+  it('«por hoy» guarda la medianoche local, el dueño la ve y el reloj lo devuelve cuando pasa', async () => {
+    const { m, dueno, rid, platoId } = await conPlato();
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/mi-restaurante/platos/${platoId}/disponible`,
+      { disponible: false, hasta: 'hoy' },
+      dueno.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.agotadoHasta).toMatch(/^\d{4}-\d\d-\d\d \d\d:00:00$/);
+    const mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    const p = mio.datos.platos.find((x: { id: string }) => x.id === platoId);
+    expect(p.disponible).toBe(false);
+    expect(p.agotadoHasta).toBe(r.datos.agotadoHasta);
+    const pub = await m.llamar('GET', `/datos/restaurantes/${rid}`);
+    expect(pub.datos.platos).toHaveLength(0);
+    // Pasa la medianoche: el reloj lo reactiva.
+    await m.DB.prepare(
+      "UPDATE platos SET agotado_hasta = datetime('now', '-1 minute') WHERE id = ?",
+    )
+      .bind(platoId)
+      .run();
+    const { volverPlatosAgotados } = await import('./catalogo');
+    expect(await volverPlatosAgotados(m.DB)).toBe(1);
+    const otra = await m.llamar('GET', `/datos/restaurantes/${rid}`);
+    expect(otra.datos.platos).toHaveLength(1);
+    expect(otra.datos.platos[0].agotadoHasta ?? null).toBeNull();
+  });
+
+  it('«sin fecha» no vuelve solo, y reactivarlo borra la fecha', async () => {
+    const { m, dueno, platoId } = await conPlato();
+    await m.llamar(
+      'PATCH',
+      `/datos/mi-restaurante/platos/${platoId}/disponible`,
+      { disponible: false },
+      dueno.token,
+    );
+    const { volverPlatosAgotados } = await import('./catalogo');
+    expect(await volverPlatosAgotados(m.DB)).toBe(0);
+    await m.llamar(
+      'PATCH',
+      `/datos/mi-restaurante/platos/${platoId}/disponible`,
+      { disponible: false, hasta: 'hoy' },
+      dueno.token,
+    );
+    await m.llamar(
+      'PATCH',
+      `/datos/mi-restaurante/platos/${platoId}/disponible`,
+      { disponible: true },
+      dueno.token,
+    );
+    const f = await m.DB.prepare('SELECT disponible, agotado_hasta FROM platos WHERE id = ?')
+      .bind(platoId)
+      .first();
+    expect(f).toEqual({ disponible: 1, agotado_hasta: null });
+  });
+});

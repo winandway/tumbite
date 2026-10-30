@@ -36,7 +36,7 @@ describe('pantallas de Comida con el diseño aprobado', () => {
     // El detalle del producto conserva tamaños (radio), extras (casillas) y cantidad.
     expect(menu).toMatch(/accessibilityRole="radio"/);
     expect(menu).toMatch(/accessibilityRole="checkbox"/);
-    expect(menu).toMatch(/meter\(p, opciones, cantidad\)/);
+    expect(menu).toMatch(/meter\(p, opciones, cantidad, notaPlato\)/);
   });
   it('al pagar se ve «¡Pedido realizado!» y el seguimiento conserva llamar, chat y reportar', () => {
     expect(leer(...CLIENTE, 'app', 'cart.tsx')).toMatch(
