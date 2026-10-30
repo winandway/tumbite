@@ -1,15 +1,19 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PERMISOS_CLAVE_API } from './flex';
-import { fechaHoraLocal, textoAccionFlex, textoPermisoClave } from './flexTextos';
+import {
+  PERMISOS_CLAVE_API,
+  fechaHoraLocal,
+  textoAccionFlex,
+  textoPermisoClave,
+} from '@tumbite/compartido';
 
 /**
  * C-FLEX-ACTIVIDAD (30 oct 2026): la actividad reciente del panel de Flex mostraba códigos internos
  * («empresa.crear») y los permisos de las claves salían como códigos sueltos. Cada acción que el
  * servidor anota tiene su frase en los dos idiomas.
  */
-const CARPETA = join(__dirname, '..', '..', '..', 'apps', 'servidor', 'src');
+const CARPETA = join(__dirname, '..');
 const accionesDelServidor = () => {
   const vistas = new Set<string>();
   const recorrer = (d: string) => {
@@ -36,6 +40,7 @@ describe('C-FLEX-ACTIVIDAD', () => {
         const t = textoAccionFlex(a, idioma);
         expect(t, `${a} (${idioma})`).not.toBe(a);
         expect(t).not.toMatch(/[a-z]\.[a-z]/);
+        expect(t, `${a} sin frase propia`).not.toBe(textoAccionFlex('algo.nuevo', idioma));
       }
     expect(textoAccionFlex('empresa.crear', 'es')).toBe('Creó la empresa');
     expect(textoAccionFlex('empresa.crear', 'en')).toBe('Created the company');
