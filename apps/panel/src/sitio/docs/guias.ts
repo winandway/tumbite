@@ -2555,6 +2555,13 @@ const es: SeccionDocs[] = [
           'Premios: al completar un número de entregas que cuentan, ganas un premio que es una parte de lo que esas entregas le dejaron a Divoox. Se paga a tu billetera después de unos días, cuando ya no hay reclamos.',
           '¿Algo no fue tu culpa? En «Mi nivel» eliges la entrega, cuentas qué pasó y nuestro equipo la revisa. Si tienes razón, esa entrega deja de contar.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-nivel-es.webp',
+            alt: 'App del repartidor de Divoox con «Tu nivel: Oro · 77.6 de 100», lo que falta para Diamante y las cinco partes del puntaje.',
+            pie: 'Tu nivel, lo que te falta y cómo se forma tu puntaje.',
+          },
+        ],
         preguntas: [
           '¿Cómo se calcula mi nivel de repartidor?',
           '¿Qué pasa si un cliente me califica mal por culpa del restaurante?',
@@ -6059,6 +6066,13 @@ const en: SeccionDocs[] = [
           'You move up as soon as you reach the score. To move down you have to stay below it for several days in a row: one bad day won’t take your level away.',
           'Rewards: when you complete a number of deliveries that count, you earn a reward that is a share of what those deliveries left to Divoox. It’s paid to your wallet a few days later, once there are no claims.',
           'Something wasn’t your fault? In “My level” you pick the delivery, tell us what happened and our team reviews it. If you’re right, that delivery stops counting.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-nivel-en.webp',
+            alt: 'Divoox driver app showing “Your level: Gold · 77.6 out of 100”, what’s left for Diamond and the five parts of the score.',
+            pie: 'Your level, what you need next and how your score is built.',
+          },
         ],
         preguntas: [
           'How is my driver level calculated?',
