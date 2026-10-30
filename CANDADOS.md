@@ -1910,3 +1910,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** como DoorDash y Uber Eats, «Apto, piso o edificio» en su propia casilla del carrito (con borrador). Se guarda en `pedidos.apto` y `direcciones_cliente.apto` (vía COLUMNAS) y se suma a `pedidos.direccion` («… · Apto 4B»), así lo ven sin cambios el repartidor, el restaurante, los correos y el seguimiento. También al cambiar la dirección de un pedido en curso.
 - **Candados:** `pedidos.test.ts` («apartamento, piso o edificio») y `e2e/recorrido/notaPlato.spec.ts` (la casilla existe y no se pierde al recargar; en rojo con la versión anterior).
+
+## C-MENU-PLANILLA (30 oct 2026) — todos los países
+
+- **Qué es:** el menú de comida desde una hoja de cálculo (plantilla de menú de DoorDash y Uber Eats) y el alta asistida del estudio E2, página 3 (nuestro equipo carga el menú por el restaurante). Lector: `packages/compartido/src/menuPlanilla.ts` (columnas en los dos idiomas y alias comunes, precio en la moneda del restaurante, errores por fila). Rutas: `POST /datos/mi-restaurante/platos/importar` (dueño o manager) y `POST /datos/admin/restaurantes/:id/platos/importar` (equipo, queda en `auditoria_admin` como `menu_importado`). Sin «confirmar» es vista previa. Mismo nombre = se actualiza, nunca se duplica.
+- **Pantalla:** `apps/panel/src/panel/ImportarMenu.tsx`, en Menú y en la ficha del restaurante del superadmin.
+- **Candados:** `menuPlanilla.test.ts`, `catalogo.test.ts` («menú desde una planilla») e `ImportarMenu.test.tsx`. Guía: Docs → «Cargar el menú desde una planilla».

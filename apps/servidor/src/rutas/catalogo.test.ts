@@ -288,3 +288,86 @@ describe('agotado por hoy', () => {
     expect(f).toEqual({ disponible: 1, agotado_hasta: null });
   });
 });
+
+// C-MENU-PLANILLA (30 oct 2026): el menú desde una hoja de cálculo; lo sube el restaurante o, en el
+// alta asistida (estudio E2, pág. 3), nuestro equipo por él.
+describe('menú desde una planilla', () => {
+  const CSV = [
+    'category_es,category_en,name_es,name_en,description_es,description_en,price,available',
+    'Pizzas,Pizzas,Pizza Margarita,Margherita Pizza,Tomate y mozzarella,Tomato and mozzarella,12.50,si',
+    'Bebidas,Drinks,Limonada,Lemonade,,,4.00,si',
+    'Bebidas,Drinks,Café,Coffee,,,abc,si',
+  ].join('\n');
+
+  it('el restaurante ve la vista previa, confirma, y al subirla otra vez se actualiza sin duplicar', async () => {
+    const m = mundo();
+    const dueno = await m.cuenta('restaurante');
+    await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    const previa = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos/importar',
+      { csv: CSV },
+      dueno.token,
+    );
+    expect(previa.estado).toBe(200);
+    expect(previa.datos).toMatchObject({ nuevos: 2, actualizados: 0, guardado: false });
+    expect(previa.datos.errores).toEqual([{ fila: 4, error: expect.stringMatching(/precio/i) }]);
+    let mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.platos).toHaveLength(0);
+    const ok = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos/importar',
+      { csv: CSV, confirmar: true },
+      dueno.token,
+    );
+    expect(ok.datos).toMatchObject({ nuevos: 2, guardado: true });
+    const otra = await m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos/importar',
+      { csv: CSV.replace('12.50', '13.00'), confirmar: true },
+      dueno.token,
+    );
+    expect(otra.datos).toMatchObject({ nuevos: 0, actualizados: 2 });
+    mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.platos).toHaveLength(2);
+    const pizza = mio.datos.platos.find(
+      (p: { nombreEs: string }) => p.nombreEs === 'Pizza Margarita',
+    );
+    expect(pizza).toMatchObject({
+      precioCentavos: 1300,
+      nombreEn: 'Margherita Pizza',
+      categoria: 'Pizzas',
+    });
+  });
+
+  it('nuestro equipo lo carga por el restaurante; el staff y otro restaurante no pueden', async () => {
+    const m = mundo();
+    const dueno = await m.cuenta('restaurante');
+    const otro = await m.cuenta('restaurante');
+    const admin = await m.cuenta('admin');
+    const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+    const rid = r.datos.restaurante.id as string;
+    const ajeno = await m.llamar(
+      'POST',
+      `/datos/admin/restaurantes/${rid}/platos/importar`,
+      { csv: CSV, confirmar: true },
+      otro.token,
+    );
+    expect(ajeno.estado).toBe(403);
+    const hecho = await m.llamar(
+      'POST',
+      `/datos/admin/restaurantes/${rid}/platos/importar`,
+      { csv: CSV, confirmar: true },
+      admin.token,
+    );
+    expect(hecho.datos).toMatchObject({ nuevos: 2, guardado: true });
+    const mio = await m.llamar('GET', '/datos/mi-restaurante', undefined, dueno.token);
+    expect(mio.datos.platos).toHaveLength(2);
+    const aud = await m.DB.prepare(
+      "SELECT accion FROM auditoria_admin WHERE accion = 'menu_importado' AND objeto = ?",
+    )
+      .bind(rid)
+      .first();
+    expect(aud).toEqual({ accion: 'menu_importado' });
+  });
+});

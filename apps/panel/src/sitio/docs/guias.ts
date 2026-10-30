@@ -1611,6 +1611,24 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'menu-spreadsheet',
+        titulo: 'Cargar el menú desde una planilla',
+        resumen:
+          'Sube todo tu menú de una vez con una hoja de cálculo, o pídele a nuestro equipo que lo cargue por ti.',
+        explicacion: [
+          'En «Menú», al final, está «Cargar el menú desde una planilla». Descarga la plantilla, llénala en Excel, Google Sheets o Numbers con una fila por plato (categoría, nombre, descripción y precio, en español y en inglés) y guárdala como CSV.',
+          'Sube el archivo y toca «Revisar la planilla». Antes de guardar ves cuántos platos se van a crear, cuántos se van a actualizar y qué filas tienen un error, con su número y el motivo, para corregirlas.',
+          'Si un plato ya existe con el mismo nombre, se actualiza (precio, descripción, categoría); no se duplica. Las fotos y las opciones se agregan después, plato por plato.',
+          'Si prefieres no hacerlo tú, nuestro equipo puede cargar tu menú por ti durante el alta: escríbenos desde Soporte.',
+        ],
+        preguntas: ['¿Puedo subir mi menú desde Excel?', '¿Divoox puede cargar mi menú por mí?'],
+        pasos: [
+          'Menú → «Descargar la plantilla».',
+          'Llena una fila por plato y guarda como CSV.',
+          'Sube el archivo, revisa la vista previa y toca «Guardar».',
+        ],
+      },
+      {
         id: 'sold-out',
         titulo: 'Marcar un plato como agotado',
         resumen: 'Se acabó el pollo: lo apagas por hoy en un toque y nadie lo puede pedir.',
@@ -5038,6 +5056,24 @@ const en: SeccionDocs[] = [
           'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in the local currency of your restaurant’s city (in the cities where Divoox operates; currencies without cents, like pesos, are written as whole numbers: 12000 is twelve thousand pesos).',
           'Upload the item photo. No photo yet? Add it later: the item is published either way.',
           'Save. What you type is saved as you go: if the window closes, it’s still there when you’re back.',
+        ],
+      },
+      {
+        id: 'menu-spreadsheet',
+        titulo: 'Upload your menu from a spreadsheet',
+        resumen:
+          'Upload your whole menu at once with a spreadsheet, or ask our team to load it for you.',
+        explicacion: [
+          'At the bottom of “Menu” you’ll find “Upload your menu from a spreadsheet”. Download the template, fill it in Excel, Google Sheets or Numbers with one row per item (category, name, description and price, in Spanish and English) and save it as CSV.',
+          'Upload the file and tap “Review the spreadsheet”. Before saving you see how many items will be created, how many updated, and which rows have an error, with the row number and the reason, so you can fix them.',
+          'If an item already exists with the same name, it’s updated (price, description, category); it isn’t duplicated. Photos and options are added afterwards, item by item.',
+          'If you’d rather not do it yourself, our team can load your menu for you during onboarding: message us from Support.',
+        ],
+        preguntas: ['Can I upload my menu from Excel?', 'Can Divoox load my menu for me?'],
+        pasos: [
+          'Menu → “Download the template”.',
+          'Fill one row per item and save as CSV.',
+          'Upload the file, check the preview and tap “Save”.',
         ],
       },
       {

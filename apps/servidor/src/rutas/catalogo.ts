@@ -23,6 +23,8 @@ import {
   textoFranja,
   leerEtiquetasDieta,
   type CalificacionPublica,
+  MAX_FILAS_MENU,
+  leerPlanillaMenu,
   calificacionPublica,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
@@ -712,6 +714,127 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
     .run();
   const f = await base(c).prepare('SELECT * FROM platos WHERE id = ?').bind(id).first<FilaRest>();
   return c.json({ plato: aPlato(f as FilaRest) }, 201);
+});
+
+/**
+ * C-MENU-PLANILLA: el menú desde una hoja de cálculo (plantilla de menú de DoorDash y Uber Eats).
+ * Sin «confirmar» devuelve la vista previa; con él guarda. Un plato con el mismo nombre (sin borrar)
+ * se actualiza; los nuevos se crean. Las filas malas vuelven con su número y su motivo.
+ */
+async function importarMenu(
+  db: D1Database,
+  rid: string,
+  csv: string,
+  confirmar: boolean,
+  mensajes: 'es' | 'en',
+) {
+  const z0 = await db
+    .prepare(
+      'SELECT z.moneda FROM restaurantes r LEFT JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+    )
+    .bind(rid)
+    .first<{ moneda: string | null }>();
+  const moneda = z0?.moneda ?? 'USD';
+  const r = leerPlanillaMenu(csv, mensajes, moneda);
+  if (r.faltanColumnas.length)
+    throw new ErrorDatos(
+      mensajes === 'en'
+        ? 'The sheet needs at least a name column and a price column. Download the template to see the format.'
+        : 'La planilla necesita al menos una columna de nombre y una de precio. Descarga la plantilla para ver el formato.',
+      'csv',
+    );
+  if (r.validos.length + r.errores.length > MAX_FILAS_MENU)
+    throw new ErrorDatos(`La planilla pasa de ${MAX_FILAS_MENU} filas. Divídela.`, 'csv', 413);
+  const { results } = await db
+    .prepare(
+      'SELECT id, lower(nombre_es) AS clave FROM platos WHERE restaurante_id = ? AND eliminado = 0',
+    )
+    .bind(rid)
+    .all<{ id: string; clave: string }>();
+  const existentes = new Map(results.map((x) => [x.clave, x.id]));
+  const resumen = {
+    nuevos: r.validos.filter((v) => !existentes.has(v.plato.nombreEs.toLowerCase())).length,
+    actualizados: r.validos.filter((v) => existentes.has(v.plato.nombreEs.toLowerCase())).length,
+    errores: r.errores.slice(0, 200),
+    totalErrores: r.errores.length,
+    moneda,
+  };
+  if (!confirmar) return { ...resumen, guardado: false };
+  const sentencias = r.validos.map(({ plato: p }) => {
+    const id = existentes.get(p.nombreEs.toLowerCase());
+    return id
+      ? db
+          .prepare(
+            'UPDATE platos SET nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=? WHERE id=? AND restaurante_id=?',
+          )
+          .bind(
+            p.nombreEn,
+            p.descripcionEs,
+            p.descripcionEn,
+            p.categoria,
+            p.categoriaEn,
+            p.precioCentavos,
+            p.disponible ? 1 : 0,
+            id,
+            rid,
+          )
+      : db
+          .prepare(
+            'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible) VALUES (?,?,?,?,?,?,?,?,?,?)',
+          )
+          .bind(
+            nuevoId(),
+            rid,
+            p.nombreEs,
+            p.nombreEn,
+            p.descripcionEs,
+            p.descripcionEn,
+            p.categoria,
+            p.categoriaEn,
+            p.precioCentavos,
+            p.disponible ? 1 : 0,
+          );
+  });
+  for (let i = 0; i < sentencias.length; i += 80) await db.batch(sentencias.slice(i, i + 80));
+  return { ...resumen, guardado: true };
+}
+
+const esquemaImportarMenu = z.object({
+  csv: z.string().min(1).max(2_000_000),
+  confirmar: z.boolean().default(false),
+});
+const idiomaMensajes = (c: Ctx): 'es' | 'en' =>
+  (c.req.header('x-idioma') ?? 'es').startsWith('en') ? 'en' : 'es';
+
+catalogo.post('/mi-restaurante/platos/importar', async (c) => {
+  const rid = await exigirMiRestaurante(c, 'manager');
+  const d = await leerCuerpo(c, esquemaImportarMenu);
+  return c.json(await importarMenu(base(c), rid, d.csv, d.confirmar, idiomaMensajes(c)));
+});
+
+/** Alta asistida: nuestro equipo carga el menú por el restaurante (queda en la auditoría). */
+catalogo.post('/admin/restaurantes/:id/platos/importar', async (c) => {
+  const admin = exigir(c, 'admin');
+  const d = await leerCuerpo(c, esquemaImportarMenu);
+  const db = base(c);
+  const rid = c.req.param('id');
+  if (!(await db.prepare('SELECT 1 FROM restaurantes WHERE id = ?').bind(rid).first()))
+    throw new ErrorDatos('Ese restaurante no existe.', undefined, 404);
+  const r = await importarMenu(db, rid, d.csv, d.confirmar, idiomaMensajes(c));
+  if (r.guardado)
+    await db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        admin.id,
+        'menu_importado',
+        rid,
+        null,
+        JSON.stringify({ nuevos: r.nuevos, actualizados: r.actualizados }),
+      )
+      .run();
+  return c.json(r);
 });
 
 catalogo.put('/mi-restaurante/platos/:id', async (c) => {

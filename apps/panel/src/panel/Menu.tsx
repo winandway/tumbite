@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ImportarMenu } from './ImportarMenu';
 import {
   ErrorApi,
   type Idioma,
@@ -225,6 +226,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
 
+  const [recarga, setRecarga] = useState(0);
   useEffect(() => {
     pedir<{ restaurante: { moneda?: string } | null; platos: Plato[] }>(
       'GET',
@@ -236,7 +238,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
         setPlatos(r.platos);
       })
       .catch((e: unknown) => setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) }));
-  }, []);
+  }, [recarga]);
 
   // Si había un plato a medio escribir, se vuelve a abrir el formulario.
   const abierto = editando || b.recuperado;
@@ -760,6 +762,14 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
           ))}
         </ul>
       )}
+      {/* C-MENU-PLANILLA: el menú completo desde una hoja de cálculo. */}
+      {hayRest ? (
+        <ImportarMenu
+          ruta="/datos/mi-restaurante/platos/importar"
+          idioma={idioma}
+          alGuardar={() => setRecarga((n) => n + 1)}
+        />
+      ) : null}
     </section>
   );
 }

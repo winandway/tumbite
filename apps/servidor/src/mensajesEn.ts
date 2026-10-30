@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-MENU-PLANILLA
+  [
+    'La planilla necesita al menos una columna de nombre y una de precio. Descarga la plantilla para ver el formato.',
+    'The sheet needs at least a name column and a price column. Download the template to see the format.',
+  ],
   [
     'Este correo ya pertenece a una cuenta que no es de revisión. No se modificó ninguna cuenta.',
     'This email belongs to an account that was not created for review. No accounts were changed.',

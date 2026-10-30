@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ImportarMenu } from './ImportarMenu';
 import {
   ErrorApi,
   type Idioma,
@@ -1159,6 +1160,8 @@ export function SuperRestaurante({
           ))}
         </ul>
       </div>
+      {/* C-MENU-PLANILLA: alta asistida, el equipo carga el menú por el restaurante. */}
+      <ImportarMenu ruta={`/datos/admin/restaurantes/${id}/platos/importar`} idioma={idioma} />
     </section>
   );
 }
