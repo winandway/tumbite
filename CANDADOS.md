@@ -1703,3 +1703,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Historial:** cada `PUT /datos/admin/config-dinero` (EE. UU.) y `PUT /datos/admin/paises/:pais` deja una fila en `auditoria_admin` (objeto `config-dinero` o `config-pais:XX`) con autor, antes y después (`anotarCambioDinero` en `rutas/dinero.ts`). `GET /datos/admin/config-dinero/historial` lo lista con los campos que cambiaron; se ve en Superadmin → Dinero, «Historial de cambios». Nunca se borra.
 - **Calculadora en vivo:** la calculadora pública (`apps/panel/src/sitio/Calculadora.tsx`) lee `/datos/config-dinero` y usa esa comisión, envío y servicio; los nombres de los planes muestran el porcentaje real. Sin respuesta del servidor, usa `CONFIG_DINERO_INICIAL`.
 - **Prueba:** `apps/servidor/src/historialDinero.test.ts` (rojo comprobado quitando el registro), `apps/panel/src/panel/AdminDinero.test.tsx` y `apps/panel/src/sitio/Calculadora.test.tsx`.
+
+## C-RECOGER-MAPA (29 oct 2026) — todos los países
+
+- **Qué es (como el «Pickup» de Uber Eats):** en Comida, arriba, «Entrega | Recoger». En Recoger: mapa con los locales abiertos (`apps/cliente/src/comida/MapaLocales.tsx` nativo y `.web.tsx` con Leaflet), lo más cerca primero y «Listo en X min» (tiempo de preparación). Al elegir un local, `marcarRecoger(true)` del carrito y el carrito arranca en «Recojo en el local» (una vez; luego se apaga).
+- **No tocar:** el modo de la lista es estado propio de la pantalla; el carrito solo recibe la intención al elegir el local (si se apagara desde el carrito, la lista cambiaría sola al volver).
+- **Prueba:** `e2e/recorrido/recoger.spec.ts` (restaurantes simulados; solo en esta computadora).

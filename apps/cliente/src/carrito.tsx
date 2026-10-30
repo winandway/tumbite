@@ -75,6 +75,9 @@ type Ctx = {
   cambiarCantidad: (clave: string, cantidad: number) => void;
   cambiarSustitucion: (clave: string, s: Sustitucion) => void;
   vaciar: () => void;
+  /** C-RECOGER-MAPA: el cliente eligió el local desde «Recoger»: el carrito arranca en recoger. */
+  recoger: boolean;
+  marcarRecoger: (v: boolean) => void;
   /** C-PEDIR-OTRA-VEZ: reemplaza el carrito entero por el de un pedido anterior. */
   llenar: (rest: Parameters<Ctx['agregar']>[0], lineas: LineaCarrito[]) => void;
 };
@@ -182,6 +185,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const vaciar = useCallback(() => setCarrito(VACIO), []);
+  const [recoger, marcarRecoger] = useState(false);
 
   const llenar = useCallback<Ctx['llenar']>((rest, lineas) => {
     setCarrito({
@@ -210,8 +214,10 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       cambiarSustitucion,
       vaciar,
       llenar,
+      recoger,
+      marcarRecoger,
     }),
-    [carrito, agregar, cambiarCantidad, cambiarSustitucion, vaciar, llenar],
+    [carrito, agregar, cambiarCantidad, cambiarSustitucion, vaciar, llenar, recoger],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

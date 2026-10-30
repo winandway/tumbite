@@ -138,7 +138,8 @@ export default function PantallaCarrito() {
   const t = enIdioma(TEXTOS, idioma);
   const te = idioma === 'en' ? TE.en : TE.es;
   const tc = textosComida(idioma);
-  const { carrito, cambiarCantidad, cambiarSustitucion, vaciar } = useCarrito();
+  const { carrito, cambiarCantidad, cambiarSustitucion, vaciar, recoger, marcarRecoger } =
+    useCarrito();
   const tt = textosTiendas(idioma);
   const nombreSustitucion = (op: string) => new Map(Object.entries(tt.sustituciones)).get(op) ?? op;
   // C-MONEDA-RECORRIDO: las tarifas y la moneda del país del restaurante (las mismas del servidor).
@@ -200,6 +201,13 @@ export default function PantallaCarrito() {
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
+  // C-RECOGER-MAPA: si eligió el local desde «Recoger», el carrito arranca en recoger (una vez).
+  const { cambiar: cambiarEntrega } = b;
+  useEffect(() => {
+    if (!recoger) return;
+    cambiarEntrega('entrega', 'recoger');
+    marcarRecoger(false);
+  }, [recoger, cambiarEntrega, marcarRecoger]);
 
   // C-PEDIDO-PROGRAMADO: las franjas las da el servidor (horario y festivos del comercio).
   const [franjas, setFranjas] = useState<{ inicio: string; es: string; en: string }[]>([]);

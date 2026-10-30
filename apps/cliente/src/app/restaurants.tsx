@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -16,6 +16,8 @@ import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { IMG, fotoDeRelleno } from '../inicio/recursos';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
+import { MapaLocales } from '../comida/MapaLocales';
+import { useCarrito } from '../carrito';
 
 /**
  * Restaurantes de Comida (diseño aprobado, pantalla 2, mejorada el 18 oct 2026 «como los grandes»):
@@ -29,6 +31,16 @@ export default function Restaurantes() {
   const [categoria, setCategoria] = useState<string | null>(null);
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [orden, setOrden] = useState<'cerca' | 'rapido' | null>(null);
+  // C-RECOGER-MAPA: «Entrega | Recoger» arriba, como Uber Eats; en Recoger, mapa y lo más cerca primero.
+  const { marcarRecoger } = useCarrito();
+  const [recoger, setRecoger] = useState(false);
+  const abrirLocal = useCallback(
+    (id: string) => {
+      marcarRecoger(recoger);
+      router.push(`/restaurant/${id}`);
+    },
+    [marcarRecoger, recoger],
+  );
   // Favoritos reales (auditoría final, punto 13): los ids vienen del servidor; el corazón los alterna.
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -75,8 +87,27 @@ export default function Restaurantes() {
   );
   // Filtros rápidos como los de los grandes (lógica compartida y probada: filtrarRestaurantes).
   const filtrados = useMemo(
-    () => filtrarRestaurantes(lista ?? [], { busqueda, categoria, soloAbiertos, orden }),
-    [lista, busqueda, categoria, soloAbiertos, orden],
+    () =>
+      filtrarRestaurantes(lista ?? [], {
+        busqueda,
+        categoria,
+        soloAbiertos,
+        orden: recoger ? (orden ?? 'cerca') : orden,
+      }),
+    [lista, busqueda, categoria, soloAbiertos, orden, recoger],
+  );
+  const locales = useMemo(
+    () =>
+      filtrados
+        .filter((r) => r.lat != null && r.lng != null && (r.abiertoAhora ?? r.abierto))
+        .map((r) => ({
+          id: r.id,
+          nombre: r.nombre,
+          lat: r.lat!,
+          lng: r.lng!,
+          detalle: t.listoEn.replace('{n}', String(r.tiempoPrepMin)),
+        })),
+    [filtrados, t.listoEn],
   );
   const abiertos = useMemo(
     () => (lista ?? []).filter((r) => r.abiertoAhora ?? r.abierto).length,
@@ -140,6 +171,23 @@ export default function Restaurantes() {
           {lista ? ` · ${t.abiertosAhora.replace('{n}', String(abiertos))}` : ''}
         </Text>
       </View>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }} accessibilityRole="radiogroup">
+        <Pildora
+          texto={t.entrega}
+          activa={!recoger}
+          alTocar={() => setRecoger(false)}
+          rol="radio"
+        />
+        <Pildora texto={t.recoger} activa={recoger} alTocar={() => setRecoger(true)} rol="radio" />
+      </View>
+      {recoger ? (
+        <>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 8 }}>{t.recogerAyuda}</Text>
+          <View style={{ marginTop: 10 }}>
+            <MapaLocales locales={locales} alElegir={abrirLocal} />
+          </View>
+        </>
+      ) : null}
       <FlatList
         horizontal
         data={[null, ...categorias]}
@@ -199,7 +247,7 @@ export default function Restaurantes() {
         }
         renderItem={({ item: r, index }) => (
           <Pressable
-            onPress={() => router.push(`/restaurant/${r.id}`)}
+            onPress={() => abrirLocal(r.id)}
             accessibilityRole="button"
             accessibilityLabel={r.nombre}
             style={({ pressed }) => [
@@ -260,7 +308,9 @@ export default function Restaurantes() {
               >
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
                   {r.distanciaKm != null ? `${distanciaTexto(r.distanciaKm, idioma)} · ` : ''}
-                  {r.tiempoPrepMin + 10}–{r.tiempoPrepMin + 20} min
+                  {recoger
+                    ? t.listoEn.replace('{n}', String(r.tiempoPrepMin))
+                    : `${r.tiempoPrepMin + 10}–${r.tiempoPrepMin + 20} min`}
                 </Text>
                 <Estado
                   abierto={abierto(r)}

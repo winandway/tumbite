@@ -685,7 +685,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Tres cosas que puedes hacer con tu pedido: recogerlo tú mismo sin costo de envío, cambiar la dirección antes de que salga el repartidor (viendo el nuevo total) y dejar una propina extra después de la entrega.',
         explicacion: [
-          'Recoger en el local: en el carrito elige «Recojo en el local». No pagas envío. Cuando el restaurante lo marque listo, la app te avisa; pasas a buscarlo y muestras tu PIN de 4 dígitos en el mostrador.',
+          'Recoger en el local: en Comida, arriba, toca «Recoger». Ves un mapa con los locales abiertos cerca de ti, ordenados por distancia, y cuánto tardan en tenerlo listo. Al elegir uno, tu carrito ya queda en «Recojo en el local» (también lo puedes elegir en el carrito). No pagas envío. Cuando el restaurante lo marque listo, la app te avisa; pasas a buscarlo y muestras tu PIN de 4 dígitos en el mostrador.',
           'Cambiar la dirección: mientras el repartidor no haya salido del restaurante, en tu pedido toca «Cambiar la dirección de entrega», escribe la nueva o usa tu ubicación actual. Si el envío cambia, te mostramos el nuevo total y lo aplicamos solo si lo aceptas. Cuando el repartidor ya salió, escríbele por el chat.',
           'Propina después: si el servicio te gustó, al terminar tu pedido puedes dejar 1, 2 o 5 dólares extra. Se cobra con tu tarjeta guardada, sin volver a escribirla, y va entera al repartidor. Una vez por pedido, hasta 7 días después.',
         ],
@@ -4049,7 +4049,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Three things you can do with your order: pick it up yourself with no delivery fee, change the address before the driver leaves (seeing the new total), and leave an extra tip after delivery.',
         explicacion: [
-          'Pick up in store: in the cart choose “I’ll pick it up.” No delivery fee. When the restaurant marks it ready, the app lets you know; you go get it and show your 4-digit PIN at the counter.',
+          'Pick up in store: in Food, at the top, tap “Pickup.” You’ll see a map with the open places near you, sorted by distance, and how long they take to have it ready. When you pick one, your cart is already set to “I’ll pick it up” (you can also choose it in the cart). No delivery fee. When the restaurant marks it ready, the app lets you know; you go get it and show your 4-digit PIN at the counter.',
           'Change the address: as long as the driver hasn’t left the restaurant, open your order, tap “Change the delivery address,” type the new one or use your current location. If the delivery fee changes, we show you the new total and apply it only if you accept. Once the driver has left, message them through the chat.',
           'Tip after delivery: if you liked the service, once your order is done you can leave 1, 2 or 5 dollars extra. It’s charged to your saved card, without typing it again, and goes in full to the driver. Once per order, up to 7 days later.',
         ],
