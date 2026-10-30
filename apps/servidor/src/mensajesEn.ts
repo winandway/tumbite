@@ -10,6 +10,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',
     'An option can only open another group of the same item, one level deep.',
   ],
+  // Divoox Rewards · Fase 2
+  ['El modo sombra está apagado.', 'Shadow mode is off.'],
   // C-MENU-HORARIO
   [
     'Uno de los platos solo se sirve en otro horario. Revisa tu carrito.',

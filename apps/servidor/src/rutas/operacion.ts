@@ -21,6 +21,7 @@ import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
 import { volverPlatosAgotados } from './catalogo';
+import { correrSombra } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { Hono } from 'hono';
@@ -48,6 +49,7 @@ import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
 import { kycAprobado } from './kyc';
 import type { Env } from '../env';
+import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -2122,7 +2124,13 @@ operacion.post('/reloj', async (c) => {
   // Comparte el candado por minuto con el reloj nuevo (/datos/interno/reloj): si los dos llegan
   // en el mismo minuto, las tareas corren una sola vez (C-RELOJ-UNA-VEZ).
   return c.json(
-    await correrRelojUnaVez(c.env, base(c), new Date().toISOString().slice(0, 16), 'github'),
+    await correrRelojUnaVez(
+      // Rewards (modo sombra) necesita saber en qué sitio corre el reloj: solo actúa en pruebas.
+      { ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) } as Env,
+      base(c),
+      new Date().toISOString().slice(0, 16),
+      'github',
+    ),
   );
 });
 
@@ -2195,6 +2203,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
   { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  // Divoox Rewards · Fase 2: reputación en MODO SOMBRA (solo en pruebas; en producción no hace nada).
+  { nombre: 'rewards_sombra', critica: false, correr: (env, db) => correrSombra(env, db) },
   // C-AGOTADO-HOY: los platos agotados «por hoy» vuelven a la medianoche del restaurante.
   { nombre: 'platos_vuelven', critica: false, correr: (_env, db) => volverPlatosAgotados(db) },
   // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
