@@ -1,6 +1,6 @@
 # Divoox Rewards · Informe de cierre de la Fase 2 (modo sombra)
 
-Fecha: 30 de octubre de 2026. País: todos los países. Rama: `fase-rewards-2` (commit `83ac137`).
+Fecha: 30 de octubre de 2026. País: todos los países. Rama: `fase-rewards-2` (commit final `a003672`; primera versión `83ac137`).
 Diseño: `docs/REWARDS-FASE-2-DISENO.md`. Plan general: `docs/PLAN-NIVELES-Y-PREMIOS.pdf`.
 
 ## Conclusión
@@ -11,12 +11,12 @@ Fase 3 ni se publica en producción sin orden expresa.
 
 ## Las cuatro comprobaciones finales
 
-| Comprobación                             | Resultado                                                                                                                                                                                                                                             |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pruebas recibió la versión nueva         | `staging.tumbite.com/datos/version` responde `83ac137`. El flujo de pruebas pasó tipos, lint, pruebas, build, auditoría, gitleaks, publicación SOLO en pruebas, semáforo 200, Moto, avisos de Stripe de prueba, pruebas S de la Fase 0 y tiempo real. |
-| Cálculo real con un repartidor de prueba | `POST /datos/admin/rewards/sombra/<repartidor demo>/calcular` (cuenta demo.soporte, rol admin). Resultado abajo.                                                                                                                                      |
-| Producción sin cambios                   | `divoox.com` y `tumbite.com` siguen en `bb587af` (igual que `main`). Salud 200; portada, `/es`, `/panel` y `/docs` en 200. La dirección de sombra responde 404 en producción.                                                                         |
-| Informe con las siete evidencias         | Este documento.                                                                                                                                                                                                                                       |
+| Comprobación                             | Resultado                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pruebas recibió la versión nueva         | `staging.tumbite.com/datos/version` responde `a003672`. La corrida completa del flujo de pruebas terminó en VERDE: tipos, lint, pruebas, build, auditoría, gitleaks, publicación SOLO en pruebas, semáforo 200, Moto, avisos de Stripe de prueba, pruebas S de la Fase 0, tiempo real, recorrido completo de Comida con Stripe de prueba y conciliación. |
+| Cálculo real con un repartidor de prueba | `POST /datos/admin/rewards/sombra/<repartidor demo>/calcular` (cuenta demo.soporte, rol admin). Resultado abajo.                                                                                                                                                                                                                                         |
+| Producción sin cambios                   | `divoox.com` y `tumbite.com` siguen en `bb587af` (igual que `main`). Salud 200; portada, `/es`, `/panel` y `/docs` en 200. La dirección de sombra responde 404 en producción.                                                                                                                                                                            |
+| Informe con las siete evidencias         | Este documento.                                                                                                                                                                                                                                                                                                                                          |
 
 ### El cálculo real en pruebas (repartidor demo, 30 oct 2026)
 
@@ -57,9 +57,28 @@ Nada se borró ni se alteró en tablas existentes. Ninguna migración destructiv
 
 - `npm run verify` completo en verde: tipos, lint, **1384 pruebas** con cobertura, build, auditoría
   (0 vulnerabilidades altas), gitleaks.
-- Pruebas nuevas de Rewards: 35 (13 del motor, 5 de hitos y antifraude, 15 del modo sombra, 2 de métricas).
+- Pruebas nuevas de Rewards: 38 (13 del motor, 5 de hitos y antifraude, 18 del modo sombra y la limpieza, 2 de métricas).
 - Las mismas pasaron en GitHub en el flujo de pruebas antes de publicar en el sitio de pruebas.
 - Las pruebas de las dos correcciones se comprobaron en ROJO antes del arreglo.
+
+### Lo que encontró la corrida completa en pruebas (y se arregló)
+
+La primera corrida completa en el sitio de pruebas falló. Se investigó y se arregló antes de cerrar:
+
+1. **Fallo de Rewards (real):** el cálculo diario guardaba una fila para repartidores de prueba sin
+   ninguna entrega, y esa fila impedía borrarlos (la limpieza de tiempo real y la de cobros del sitio
+   de pruebas daban error 500 y dejaron un cobro de prueba «en revisión», lo que puso en rojo la salud
+   de pruebas). Arreglo: no se guarda foto de un repartidor sin actividad, toda limpieza de prueba
+   borra lo de Rewards antes que al usuario, y el reloj procesa 10 repartidores por vuelta en lugar
+   de 40. Candado C-REWARDS-LIMPIEZA, con pruebas comprobadas en rojo. Los datos de prueba que quedaron
+   a medias en el sitio de pruebas se borraron igual que lo hace su propia limpieza (Stripe en modo prueba;
+   ningún dinero real). En producción no pasa: allí Rewards no existe y las cuentas no se borran, se anonimizan.
+2. **Prueba vieja del recorrido (no de Rewards):** desde la regla de un teléfono por cuenta (29 oct) el
+   recorrido repetía los mismos números, y esperaba ver Carro «en construcción» cuando en pruebas todos
+   los servicios están encendidos. Ahora usa teléfonos propios por corrida y elige un servicio que
+   siga por venir según el estado real.
+
+Después de los arreglos, la corrida completa salió en verde.
 
 ## Evidencia 3 · Casos límite y las dos correcciones
 
