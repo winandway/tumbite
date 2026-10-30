@@ -15,6 +15,7 @@ import {
   puedePasar,
   elegibilidad,
   minutosDeViaje,
+  montoPremio,
   siguienteNivel,
   unidadesQueCuentan,
 } from '@tumbite/compartido';
@@ -386,6 +387,24 @@ export async function calcularYGuardar(db: D1Database, rid: string, hoy: string)
 }
 
 /** Unidades que podrían contar para un hito, con las reglas antifraude de cada servicio. */
+/**
+ * Margen de contribución real de las últimas `n` entregas pagadas (lo que le quedó a Divoox en cada
+ * pedido: `pedidos.ganancia`). Viajes y Flex todavía no aportan margen al premio (Fase 3).
+ */
+export async function margenDe(db: D1Database, rid: string, n: number): Promise<number> {
+  const f = await db
+    .prepare(
+      `SELECT COALESCE(SUM(ganancia), 0) AS margen FROM (
+         SELECT p.ganancia FROM pedidos p
+          WHERE p.repartidor_id = ? AND p.estado = 'entregado'
+            AND (p.pagado_en IS NOT NULL OR p.metodo_pago <> 'tarjeta')
+          ORDER BY p.entregado_en DESC LIMIT ?)`,
+    )
+    .bind(rid, n)
+    .first<{ margen: number }>();
+  return Number(f?.margen ?? 0);
+}
+
 export async function itemsParaHito(db: D1Database, rid: string): Promise<ItemHito[]> {
   const [pedidos, viajes, rutas] = await Promise.all([
     db
@@ -529,6 +548,7 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
   if (modo === 'apagado') return { modo: 'apagado' as const, calculados: 0 };
   const hoy = ahora.toISOString().slice(0, 10);
   const mes = hoy.slice(0, 7);
+  const ajustes = await leerAjustes(db);
   const { results } = await db
     .prepare(
       `SELECT u.id, COALESCE(u.zona_id, 'US-FL-MIAMI') AS zona FROM usuarios u
@@ -548,14 +568,30 @@ export async function correrSombra(env: EnvRewards, db: D1Database, ahora = new 
   for (const u of results) {
     const r = await calcularYGuardar(db, u.id, hoy);
     const { cuentan, bloqueo } = unidadesQueCuentan(await itemsParaHito(db, u.id));
-    if (!bloqueo)
-      for (const h of HITOS_FASE2)
-        await registrarHito(db, u.id, h, {
+    if (bloqueo) continue;
+    // C-REWARDS-PREMIO-VARIABLE: el hito y su monto salen de los ajustes y del margen real.
+    for (const base of HITOS_FASE2) {
+      const h = { ...base, unidades: ajustes.hitoUnidades };
+      if (cuentan < h.unidades) continue;
+      const monto = montoPremio(
+        await margenDe(db, u.id, h.unidades),
+        ajustes.porcentajeMargen,
+        ajustes.topePremioCentavos,
+      );
+      // Sin monto no hay premio ni obligación: no se registra nada.
+      if (monto <= 0) continue;
+      await registrarHito(
+        db,
+        u.id,
+        { ...h, montoCentavos: monto },
+        {
           unidades: cuentan,
           nivel: r.nivel.nivel,
           zona: u.zona,
           mes,
-        });
+        },
+      );
+    }
   }
   return { modo, calculados: results.length };
 }

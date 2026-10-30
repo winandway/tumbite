@@ -1994,3 +1994,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** al ofrecer un pedido, dentro del mismo tramo de medio kilómetro, el repartidor de mejor nivel de reputación recibe primero (como Platinum de DoorDash). Va después del turno reservado y antes del destacado; nunca salta la distancia. Apagada por defecto: se enciende en Superadmin → Rewards (`prioridadDespacho`). Solo cuenta el nivel de los participantes del piloto (`nivel_rep` en `libresEn`).
 - **Candado:** `prioridadNivel.test.ts` (apagada = orden de siempre; encendida = gana el nivel dentro del tramo; el turno sigue primero).
+
+## C-REWARDS-PREMIO-VARIABLE (30 oct 2026) — todos los países
+
+- **Qué es:** decisión de Richard: el premio es un porcentaje configurable del margen de contribución real de las entregas que cuentan, con tope. `montoPremio(margen, porcentaje, tope)` en compartido; `margenDe` suma `pedidos.ganancia` de las últimas entregas pagadas (tantas como el hito). El hito y el porcentaje salen de Superadmin → Rewards. Con porcentaje, tope o margen en cero no se registra ningún premio (ninguna obligación). Viajes y Flex todavía no aportan margen (Fase 3).
+- **Candado:** `rewardsHitos.test.ts` (porcentaje, tope, ceros) y `sombra.test.ts` (10 % de 10 entregas de 6,50 = 6,50 de premio «ganado»; con 0 % no hay fila).

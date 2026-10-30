@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { type ItemComida, type ItemHito, puedePasar, unidadesQueCuentan } from './rewardsHitos';
+import {
+  type ItemComida,
+  type ItemHito,
+  montoPremio,
+  puedePasar,
+  unidadesQueCuentan,
+} from './rewardsHitos';
 
 // C-REWARDS-HITOS (30 oct 2026): estados sin pagos y antifraude distinto por servicio.
 describe('estados de un hito', () => {
@@ -79,5 +85,20 @@ describe('antifraude por servicio', () => {
       empresa_propia: 1,
       ruta_sin_cerrar: 1,
     });
+  });
+});
+
+// C-REWARDS-PREMIO-VARIABLE (30 oct 2026, R5): el premio es un porcentaje del margen real, con tope.
+describe('premio variable', () => {
+  it('es el porcentaje del margen, redondeado al centavo', () => {
+    expect(montoPremio(12_345, 10, 100_000)).toBe(1235);
+  });
+  it('nunca pasa del tope', () => {
+    expect(montoPremio(1_000_000, 20, 5000)).toBe(5000);
+  });
+  it('con porcentaje cero, tope cero o margen negativo no hay premio', () => {
+    expect(montoPremio(10_000, 0, 5000)).toBe(0);
+    expect(montoPremio(10_000, 10, 0)).toBe(0);
+    expect(montoPremio(-500, 10, 5000)).toBe(0);
   });
 });

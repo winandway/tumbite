@@ -110,7 +110,9 @@ rewardsSombra.get('/repartidor/mi-nivel', async (c) => {
       return [k, { valor: x?.valor ?? null, puntos: x?.puntos ?? 0, maximo }];
     }),
   );
-  const hito = HITOS_FASE2[0];
+  const hito = HITOS_FASE2[0]
+    ? { ...HITOS_FASE2[0], unidades: (await leerAjustes(db)).hitoUnidades }
+    : null;
   const { cuentan } = unidadesQueCuentan(await itemsParaHito(db, u.id));
   return c.json({
     ...rep,

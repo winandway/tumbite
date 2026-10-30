@@ -667,3 +667,47 @@ describe('C-REWARDS-AJUSTES: ajustes de Rewards desde el superadmin', () => {
     expect(r.estado).toBe(400);
   });
 });
+
+// C-REWARDS-PREMIO-VARIABLE (30 oct 2026, R5): el monto sale del margen real, no de una cifra fija.
+describe('C-REWARDS-PREMIO-VARIABLE: el premio es un porcentaje del margen real', () => {
+  async function conEntregas(pct: number) {
+    const m = mundoSombra();
+    const rep = await m.cuenta('repartidor');
+    for (let i = 0; i < 12; i++)
+      await pedidoEntregado(m, rep.id, { cliente: `cv${i}`, estrellas: 5 });
+    await m.DB.prepare('UPDATE pedidos SET ganancia = 650 WHERE repartidor_id = ?')
+      .bind(rep.id)
+      .run();
+    const ajustes = {
+      umbrales: { plata: 10, oro: 20, diamante: 30 },
+      porcentajeMargen: pct,
+      topePremioCentavos: 5000,
+      hitoUnidades: 10,
+      prioridadDespacho: false,
+    };
+    await m.DB.prepare(
+      "INSERT INTO config (clave, valor) VALUES ('rewards_ajustes', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+    )
+      .bind(JSON.stringify(ajustes))
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO rewards_presupuesto (zona_id, mes, programa, tope_centavos) VALUES ('US-FL-MIAMI', '2026-10', 'primer-hito-2026', 100000)",
+    ).run();
+    await correrSombra(PRUEBAS, m.DB, new Date('2026-10-30T12:00:00Z'));
+    const h = await m.DB.prepare(
+      'SELECT hito_unidades, monto_centavos, estado FROM rewards_hitos WHERE repartidor_id = ?',
+    )
+      .bind(rep.id)
+      .first<{ hito_unidades: number; monto_centavos: number; estado: string }>();
+    return h;
+  }
+
+  it('10 % del margen de las 10 entregas que cuentan (10 × 6,50 = 65 dólares → 6,50 de premio)', async () => {
+    const h = await conEntregas(10);
+    expect(h).toMatchObject({ hito_unidades: 10, monto_centavos: 650, estado: 'ganado' });
+  });
+
+  it('con el porcentaje en cero no se registra ningún premio', async () => {
+    expect(await conEntregas(0)).toBeNull();
+  });
+});

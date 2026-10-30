@@ -173,3 +173,13 @@ export function unidadesQueCuentan(items: ItemHito[]): {
   }
   return { cuentan, descartes: Object.fromEntries(cuenta), bloqueo };
 }
+
+/**
+ * C-REWARDS-PREMIO-VARIABLE (decisión de Richard, 30 oct 2026): el premio es un porcentaje
+ * configurable del margen de contribución real de las entregas que cuentan, con un tope. Sin
+ * porcentaje, sin tope o sin margen positivo, no hay premio (ninguna obligación de pago).
+ */
+export function montoPremio(margenCentavos: number, porcentaje: number, topeCentavos: number) {
+  if (porcentaje <= 0 || topeCentavos <= 0 || margenCentavos <= 0) return 0;
+  return Math.min(topeCentavos, Math.round((margenCentavos * porcentaje) / 100));
+}
