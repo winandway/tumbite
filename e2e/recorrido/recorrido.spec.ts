@@ -111,6 +111,10 @@ for (const idioma of ['en', 'es'] as const) {
     const correo = (quien: string) => `${quien}.${id}@recorrido.test`;
     // En el sitio de pruebas los datos de corridas anteriores se quedan: el nombre lleva la corrida.
     const restaurante = `${idioma === 'en' ? 'Bella Pizza' : 'Pizza Bella'}${STAGING ? ` ${id.slice(-5)}` : ''}`;
+    // Un teléfono no abre dos cuentas del mismo tipo (29 oct): en el sitio de pruebas, cuyas cuentas
+    // se quedan, cada corrida usa sus propios números; aquí, los de siempre.
+    const corrida = String(Date.now() % 100_000).padStart(5, '0');
+    const tel = (fijo: string) => (STAGING ? `305${fijo.slice(-2)}${corrida}` : fijo);
 
     const nuevoContexto = async (tipo: 'computadora' | 'celular' | 'tableta', donde = MIAMI) => {
       const t = TIENDA && tipo !== 'computadora' ? PANTALLAS[TIENDA][tipo] : null;
@@ -303,7 +307,7 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByLabel(L.tuNombre).fill(idioma === 'en' ? 'Marco Rossi' : 'Marco Rossi');
     await panel.getByLabel(L.correo).fill(correo('restaurante'));
     // Un número por idioma: el mismo teléfono no abre dos cuentas (C-IDENTIDAD-UNICA).
-    await panel.getByLabel(L.celular).fill(idioma === 'en' ? '3055550100' : '3055550110');
+    await panel.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550100' : '3055550110'));
     await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
     await panel.getByRole('checkbox').check(); // acepta los términos
@@ -547,7 +551,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByText(L.appCrear).click();
     await rep.getByLabel(L.nombreCompleto).fill('Luis Pérez');
     await rep.getByLabel(L.correo).fill(correo('repartidor'));
-    await rep.getByLabel(L.celular).fill(idioma === 'en' ? '3055550102' : '3055550112');
+    await rep.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550102' : '3055550112'));
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await fotoAqui(rep, 'repartidor-registro');
     await rep.getByRole('checkbox').click(); // acepta los términos
@@ -597,7 +601,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByText(L.appCrear).click();
     await cli.getByLabel(L.nombreCompleto).fill('Ana García');
     await cli.getByLabel(L.correo).fill(correo('cliente'));
-    await cli.getByLabel(L.celular).fill(idioma === 'en' ? '3055550103' : '3055550113');
+    await cli.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550103' : '3055550113'));
     // Cumple hoy: así, después de su primer pedido, le toca el regalo de cumpleaños.
     const hoy = new Date().toISOString().slice(5, 10);
     await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
@@ -611,12 +615,24 @@ for (const idioma of ['en', 'es'] as const) {
     // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
     // «en construcción» (nunca una ventana encima), el buscador es real y la campana también.
     // Carro: sigue bloqueado en todas partes (Moto ya se enciende en pruebas, C-MOTO-SOLO-PRUEBAS).
-    await cli.getByTestId('servicio-carro').click();
-    await expect(cli.getByTestId('franja-estado')).toBeVisible({ timeout: 20_000 });
-    await expect(
-      cli.getByText(/Estamos construyendo este servicio|We’re building this service/),
-    ).toBeVisible();
-    await foto(cli, 'cliente-servicio');
+    // En el sitio de pruebas pueden estar encendidos todos: se prueba con uno que siga por venir.
+    const servicios = (await (
+      await request.get('/datos/servicios?lat=25.7617&lng=-80.1918')
+    ).json()) as {
+      servicios: { id: string; estado: string }[];
+    };
+    const noListos = servicios.servicios.filter(
+      (s) => s.id !== 'comida' && s.estado !== 'disponible',
+    );
+    const porVenir = noListos.find((s) => s.id === 'carro') ?? noListos[0];
+    if (porVenir || !STAGING) {
+      await cli.getByTestId(`servicio-${porVenir?.id ?? 'carro'}`).click();
+      await expect(cli.getByTestId('franja-estado')).toBeVisible({ timeout: 20_000 });
+      await expect(
+        cli.getByText(/Estamos construyendo este servicio|We’re building this service/),
+      ).toBeVisible();
+      await foto(cli, 'cliente-servicio');
+    }
     await cli.goto('/app/search');
     await cli.getByLabel(/^(Buscar|Search)$/).fill(idioma === 'en' ? 'margh' : 'margar');
     // Al menos un plato (la base del recorrido conserva los de la pasada anterior).
