@@ -22,7 +22,7 @@
 - [x] (ficha docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md con evidencia REA) (5) Ficha REA de tiendas frente a DoorDash, Instacart y Uber Eats (documentación pública y web como visitante): comprador que reemplaza en vivo con foto, chat de reemplazos, horarios por tienda, límites de licores por estado; comparación con lo nuestro y brechas en orden. Todos los países.
 - [x] (reemplazos propuestos por la tienda, C-TIENDAS-REEMPLAZOS; quedan en la ficha la foto en la propuesta y los horarios de licores por estado) (6) Construir las brechas de la ficha de tiendas, solo en el sitio de pruebas, de punta a punta. Todos los países.
 
-- [ ] (6b) Foto del producto en cada reemplazo propuesto (cliente y tienda). Todos los países.
+- [x] (6b) Foto del producto en cada reemplazo propuesto (cliente y tienda). Todos los países.
 
 ### Etapa 3 — Moto
 

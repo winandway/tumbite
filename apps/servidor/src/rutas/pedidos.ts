@@ -122,6 +122,8 @@ export type Propuesta = {
   nombreEs: string;
   nombreEn: string;
   precioCentavos: number;
+  /** La foto del producto propuesto, para que el cliente vea qué le llega (como Instacart). */
+  imagen?: string | null;
 };
 export function propuestasDe(f: FilaPedido): Propuesta[] {
   try {

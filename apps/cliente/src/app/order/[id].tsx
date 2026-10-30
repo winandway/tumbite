@@ -33,6 +33,7 @@ import {
   FotoPedido,
   ReportarProblema,
   e,
+  urlFoto,
   useSesion,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -92,7 +93,13 @@ type Pedido = {
     devolucion: number | null;
     creadoEn: string;
     /** C-TIENDAS-REEMPLAZOS: lo que propone la tienda (precio que pagarías, nunca más) y lo elegido. */
-    propuestas?: { platoId: string; nombreEs: string; nombreEn: string; precioCentavos: number }[];
+    propuestas?: {
+      platoId: string;
+      nombreEs: string;
+      nombreEn: string;
+      precioCentavos: number;
+      imagen?: string | null;
+    }[];
     reemplazoId?: string | null;
   } | null;
   lineas: {
@@ -898,17 +905,39 @@ export default function SeguirPedido() {
                 {p.ajuste.propuestas?.length ? (
                   <>
                     <Text style={{ fontWeight: '700', marginBottom: 4 }}>{t.reemplazos}</Text>
-                    {p.ajuste.propuestas.map((x) => (
-                      <Boton
-                        key={x.platoId}
-                        texto={t.elegir.replace(
-                          '{producto}',
-                          `${idioma === 'en' ? x.nombreEn || x.nombreEs : x.nombreEs} · ${formatearMonto(x.precioCentavos, moneda, idioma)}`,
-                        )}
-                        alTocar={() => void decidirAjuste('reemplazar', x.platoId)}
-                        cargando={decidiendo}
-                      />
-                    ))}
+                    {p.ajuste.propuestas.map((x) => {
+                      // La foto del producto propuesto (de la tienda o de Open Food Facts).
+                      const foto = x.imagen?.startsWith('https://') ? x.imagen : urlFoto(x.imagen);
+                      return (
+                        <View
+                          key={x.platoId}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                        >
+                          {foto ? (
+                            <Image
+                              source={{ uri: foto }}
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 8,
+                                backgroundColor: '#f1f1f1',
+                              }}
+                              accessibilityIgnoresInvertColors
+                            />
+                          ) : null}
+                          <View style={{ flex: 1 }}>
+                            <Boton
+                              texto={t.elegir.replace(
+                                '{producto}',
+                                `${idioma === 'en' ? x.nombreEn || x.nombreEs : x.nombreEs} · ${formatearMonto(x.precioCentavos, moneda, idioma)}`,
+                              )}
+                              alTocar={() => void decidirAjuste('reemplazar', x.platoId)}
+                              cargando={decidiendo}
+                            />
+                          </View>
+                        </View>
+                      );
+                    })}
                   </>
                 ) : null}
                 <Boton

@@ -617,21 +617,29 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
         nombreEs: l.nombreEs,
         nombreEn: l.nombreEn,
         precioCentavos: l.precioCentavos,
+        imagen: l.imagen ? String(l.imagen) : null,
       });
       continue;
     }
     const pl = await db
       .prepare(
-        'SELECT id, nombre_es, nombre_en, precio_centavos FROM platos WHERE id = ? AND restaurante_id = ? AND disponible = 1',
+        'SELECT id, nombre_es, nombre_en, precio_centavos, imagen FROM platos WHERE id = ? AND restaurante_id = ? AND disponible = 1',
       )
       .bind(pid, rid)
-      .first<{ id: string; nombre_es: string; nombre_en: string; precio_centavos: number }>();
+      .first<{
+        id: string;
+        nombre_es: string;
+        nombre_en: string;
+        precio_centavos: number;
+        imagen: string | null;
+      }>();
     if (!pl) throw noDisponible();
     propuestas.push({
       platoId: pl.id,
       nombreEs: pl.nombre_es,
       nombreEn: pl.nombre_en,
       precioCentavos: Number(pl.precio_centavos),
+      imagen: pl.imagen,
     });
   }
   await db
