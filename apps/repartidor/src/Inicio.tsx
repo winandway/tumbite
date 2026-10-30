@@ -39,6 +39,7 @@ import {
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
 import { ResumenAnual } from './grandes/ResumenAnual';
+import { MiNivel } from './grandes/MiNivel';
 import { Seguridad } from './grandes/Seguridad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
@@ -2383,6 +2384,7 @@ export function Inicio() {
             </View>
           </View>
         ) : null}
+        {estado?.reputacion ? <MiNivel api={api} idioma={idioma} /> : null}
         {estado && !estado.reputacion && (
           <View style={e.tarjeta}>
             <Text style={{ fontWeight: '800' }}>

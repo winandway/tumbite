@@ -698,6 +698,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'There’s no account with that email. The person has to sign up in the app first.',
   ],
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
+  ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
   [
     'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
     'That service can’t be turned on for the pilot. Moto and Car carry passengers and are waiting for legal approval and insurance.',

@@ -583,3 +583,36 @@ describe('C-REWARDS-PILOTO: el repartidor del piloto ve su nivel de reputación'
     expect(r).toMatchObject({ modo: 'piloto', calculados: 1 });
   });
 });
+
+// C-REWARDS-MI-NIVEL (30 oct 2026, R2): la pantalla «Mi nivel» explica el puntaje.
+describe('C-REWARDS-MI-NIVEL: el detalle del nivel para el repartidor', () => {
+  it('trae los cinco componentes con su máximo, la experiencia y el avance al hito', async () => {
+    const m = mundo({ REWARDS_MODO: 'piloto' });
+    m.DB.prepare('PRAGMA foreign_keys = OFF').run();
+    const rep = await m.cuenta('repartidor');
+    for (let i = 0; i < 5; i++) await pedidoEntregado(m, rep.id, { estrellas: 5 });
+    await calcularYGuardar(m.DB, rep.id, new Date().toISOString().slice(0, 10));
+    await m.DB.prepare('INSERT INTO piloto_participantes (usuario_id) VALUES (?)')
+      .bind(rep.id)
+      .run();
+    const r = await m.llamar('GET', '/datos/repartidor/mi-nivel', undefined, rep.token);
+    expect(r.estado).toBe(200);
+    expect(Object.keys(r.datos.componentes)).toEqual([
+      'finalizacion',
+      'puntualidad',
+      'calidad',
+      'satisfaccion',
+      'aceptacion',
+    ]);
+    expect(r.datos.componentes.finalizacion.maximo).toBe(30);
+    expect(r.datos.experiencia.comida).toBe(5);
+    expect(r.datos.hito).toMatchObject({ meta: 100, contadas: expect.any(Number) });
+  });
+
+  it('sin Rewards activo para esa persona responde 404', async () => {
+    const m = mundo();
+    const rep = await m.cuenta('repartidor');
+    const r = await m.llamar('GET', '/datos/repartidor/mi-nivel', undefined, rep.token);
+    expect(r.estado).toBe(404);
+  });
+});

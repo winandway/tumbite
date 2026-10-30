@@ -351,7 +351,7 @@ export async function calcularYGuardar(db: D1Database, rid: string, hoy: string)
 }
 
 /** Unidades que podrían contar para un hito, con las reglas antifraude de cada servicio. */
-async function itemsParaHito(db: D1Database, rid: string): Promise<ItemHito[]> {
+export async function itemsParaHito(db: D1Database, rid: string): Promise<ItemHito[]> {
   const [pedidos, viajes, rutas] = await Promise.all([
     db
       .prepare(

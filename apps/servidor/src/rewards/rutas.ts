@@ -3,7 +3,14 @@ import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
-import { type EnvRewards, calcularYGuardar, modoRewards } from './sombra';
+import { HITOS_FASE2, unidadesQueCuentan } from '@tumbite/compartido';
+import {
+  type EnvRewards,
+  calcularYGuardar,
+  itemsParaHito,
+  modoRewards,
+  reputacionVisible,
+} from './sombra';
 
 /**
  * Divoox Rewards · Fase 2: lectura del modo sombra para el equipo (solo admin y solo en pruebas).
@@ -60,4 +67,55 @@ rewardsSombra.post('/admin/rewards/sombra/:repartidorId/calcular', async (c) => 
     new Date().toISOString().slice(0, 10),
   );
   return c.json(r);
+});
+
+// ---------------------------------------------------------------- C-REWARDS-MI-NIVEL (R2)
+
+const MAXIMOS = new Map([
+  ['finalizacion', 30],
+  ['puntualidad', 25],
+  ['calidad', 20],
+  ['satisfaccion', 15],
+  ['aceptacion', 10],
+]);
+
+/** «Mi nivel» en Driver: el puntaje explicado, la experiencia por servicio y el avance al hito. */
+rewardsSombra.get('/repartidor/mi-nivel', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const env: EnvRewards = { ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) };
+  const rep = await reputacionVisible(env, db, u.id);
+  if (!rep) throw new ErrorDatos('Tu nivel todavía no está activo.', undefined, 404);
+  const f = await db
+    .prepare(
+      'SELECT componentes_json, experiencia_json, elegibilidad, fecha FROM reputacion_diaria WHERE repartidor_id = ? ORDER BY fecha DESC LIMIT 1',
+    )
+    .bind(u.id)
+    .first<{
+      componentes_json: string;
+      experiencia_json: string;
+      elegibilidad: string;
+      fecha: string;
+    }>();
+  const crudos = new Map(
+    Object.entries(
+      JSON.parse(f?.componentes_json ?? '{}') as Record<string, { valor: number; puntos: number }>,
+    ),
+  );
+  const componentes = Object.fromEntries(
+    [...MAXIMOS].map(([k, maximo]) => {
+      const x = crudos.get(k);
+      return [k, { valor: x?.valor ?? null, puntos: x?.puntos ?? 0, maximo }];
+    }),
+  );
+  const hito = HITOS_FASE2[0];
+  const { cuentan } = unidadesQueCuentan(await itemsParaHito(db, u.id));
+  return c.json({
+    ...rep,
+    fecha: f?.fecha ?? null,
+    elegibilidad: f?.elegibilidad ?? 'sin_datos',
+    componentes,
+    experiencia: JSON.parse(f?.experiencia_json ?? '{}') as Record<string, number>,
+    hito: hito ? { meta: hito.unidades, contadas: Math.min(cuentan, hito.unidades) } : null,
+  });
 });

@@ -16,7 +16,7 @@
 - [x] (P2) Cada servicio por ciudad: apagado, solo piloto o público; «solo piloto» lo ven y usan solo los participantes. Todos los países.
 - [x] (P3) Límites del piloto: monto máximo por pedido y por día para participantes. Todos los países.
 - [x] (R1) Rewards a producción: el nivel de reputación reemplaza al nivel viejo por puntos en Driver. Todos los países.
-- [ ] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
+- [x] (R2) Pantalla «Mi nivel» en Driver: puntaje, cinco componentes, experiencia por servicio, progreso al siguiente nivel y al hito. Todos los países.
 - [ ] (R3) Panel de Rewards en el superadmin: umbrales, pesos, hitos, porcentaje del margen, presupuesto por ciudad y mes, encendido; sin publicar de nuevo. Todos los países.
 - [ ] (R4) Prioridad de despacho configurable por nivel (peso 0 = apagada), solo participantes. Todos los países.
 - [ ] (R5) Premio variable: porcentaje configurable del margen de contribución real de las entregas que cuentan, con topes. Todos los países.

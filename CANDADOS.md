@@ -1979,3 +1979,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** Rewards sale del modo sombra para el piloto. `modoRewards`: «sombra» en el sitio de pruebas (todos), «piloto» en producción solo con la variable `REWARDS_MODO=piloto` y solo para los participantes (`piloto_participantes`), «apagado» en cualquier otro caso. `/datos/repartidor/estado` trae `reputacion` (puntaje, nivel, provisional, lo que falta para el siguiente) cuando está activo para esa persona, y Driver la muestra en lugar del nivel viejo por puntos.
 - **Para encender en producción:** variable `REWARDS_MODO=piloto` en YaDominios Cloud → sitio tumbite. Para apagar: quitarla o poner `apagado`. Nada se paga en este paso.
 - **Candado:** `sombra.test.ts` (fuera del piloto no aparece, dentro con el modo sí, el reloj de producción calcula solo a los participantes).
+
+## C-REWARDS-MI-NIVEL (30 oct 2026) — todos los países
+
+- **Qué es:** `GET /datos/repartidor/mi-nivel` (solo si Rewards está activo para esa persona; si no, 404) con los cinco componentes del puntaje y su máximo (30/25/20/15/10), la experiencia por servicio, la elegibilidad y el avance al primer hito. En Driver, la tarjeta `MiNivel` debajo del nivel explica cada parte en palabras simples, como «Ratings» de Dasher.
+- **Candado:** `sombra.test.ts` (los cinco componentes en orden, máximo 30 en finalización, experiencia de comida, hito de 100; 404 sin Rewards activo).
