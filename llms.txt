@@ -49,6 +49,7 @@
 - [My account: your orders, cards, and details · Divoox](https://divoox.com/docs/ordering/my-account): All your orders and their status, the cards you saved, and your details, in one place in the app.
 - [Gifts: birthday, punch card, and win-back · Divoox](https://divoox.com/docs/ordering/rewards): Restaurants reward you for coming back. Gifts show up in your cart on their own.
 - [Special instructions for an item · Divoox](https://divoox.com/docs/ordering/special-instructions): Ask for “no onions” or “well done” on each item, and the restaurant sees it in your order.
+- [See a restaurant’s rating · Divoox](https://divoox.com/docs/ordering/restaurant-ratings): The stars, how many ratings it has and what other customers wrote, before you order.
 - [Rate the food and the driver · Divoox](https://divoox.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
 - [Your customers’ reviews and how to reply · Divoox](https://divoox.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
