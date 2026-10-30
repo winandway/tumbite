@@ -20,7 +20,7 @@ import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { devolverReservasViaje } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { abrirCobroViaje, soltarCobroViaje } from '../viajesCobro';
+import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { estadoServicioEnZona } from './servicios';
 import { zonaPara } from './zonas';
 
@@ -565,6 +565,19 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
       .bind(nuevoId(), u.id, id, cargo, f.moneda)
       .run();
   return c.json({ ok: true, cargo });
+});
+
+/** C-VIAJE-PROPINA: propina después del viaje, con la tarjeta guardada (como Uber y Comida). */
+viajesPasajero.post('/viajes/:id/propina', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { centavos } = await leerCuerpo(
+    c,
+    z.object({ centavos: z.number().int().min(100).max(10_000) }),
+  );
+  return c.json({
+    ok: true,
+    propina: await propinaViaje(c.env, base(c), u.id, c.req.param('id'), centavos),
+  });
 });
 
 // ---------------------------------------------------------------- M6: seguridad del viaje

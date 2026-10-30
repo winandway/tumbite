@@ -1740,3 +1740,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Identidad única:** `correoCanonico` y `telefonoCanonico` (`packages/compartido/src/identidadUnica.ts`); columnas `usuarios.correo_canonico` y `telefono_canonico`. Al registrarse: el mismo correo escrito de otra forma no entra; el mismo teléfono no abre dos cuentas del mismo tipo (un repartidor sí puede pedir como cliente). Tabla `bloqueos_identidad`: «Cerrar por mala conducta» en la ficha del superadmin guarda su correo y su teléfono; con ellos no se vuelve a registrar. Borrar la cuenta borra también las formas únicas.
 - **Pendiente (K5, decide Richard):** comparar caras con IA (selfie contra documento y contra los bloqueados). Ficha: `docs/investigaciones-rea/2026-10-29-identidad-repartidores.md`.
 - **Prueba:** `apps/servidor/src/identidadRepartidores.test.ts` (rojo comprobado quitando las comprobaciones) y `compartido/identidadUnica.test.ts`.
+
+## C-VIAJE-PROPINA (29 oct 2026) — todos los países; donde Moto esté encendido
+
+- **Qué es:** propina después de un viaje pagado con tarjeta (`POST /datos/viajes/:id/propina`, `propinaViaje` en `viajesCobro.ts`), con la tarjeta guardada, una vez y hasta 7 días después; va entera al conductor (`movimientos`, concepto `propina`, referencia `propina-viaje-<id>`) y solo si Stripe confirmó el cobro. App: botones de propina en `ViajeEnCurso.tsx`.
+- **Prueba:** `viajeTarjeta.test.ts`.

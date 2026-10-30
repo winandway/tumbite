@@ -615,6 +615,19 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['La foto pesa demasiado. El máximo es 3 MB.', 'The photo is too large. The maximum is 3 MB.'],
   [
+    'La propina con tarjeta es para viajes pagados con tarjeta.',
+    'Card tips are for rides paid by card.',
+  ],
+  [
+    'La propina se agrega cuando el viaje ya terminó.',
+    'You can add a tip once the ride has ended.',
+  ],
+  ['Ya dejaste una propina en este viaje.', 'You already tipped on this ride.'],
+  [
+    'La propina se puede agregar hasta 7 días después del viaje.',
+    'You can add a tip up to 7 days after the ride.',
+  ],
+  [
     'No podemos crear esta cuenta. Si crees que es un error, escríbenos a soporte.',
     'We can’t create this account. If you think this is a mistake, contact support.',
   ],

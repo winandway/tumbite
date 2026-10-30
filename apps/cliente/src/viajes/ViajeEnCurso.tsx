@@ -54,6 +54,17 @@ export function ViajeEnCurso({
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
   const [calificado, setCalificado] = useState(false);
+  // C-VIAJE-PROPINA: propina después del viaje, con la tarjeta con la que pagó.
+  const [propina, setPropina] = useState<number | null>(null);
+  async function darPropina(centavos: number) {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/viajes/${viaje.id}/propina`, { centavos });
+      setPropina(centavos);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
 
   async function calificar() {
     setError('');
@@ -184,7 +195,12 @@ export function ViajeEnCurso({
         <Text style={{ fontWeight: '800', color: C.secundario }}>{viaje.destino.direccion}</Text>
         {viaje.total != null ? (
           <Text style={{ marginTop: 8, fontWeight: '800', color: C.secundario }}>
-            {viaje.estado === 'terminado' ? t.pagaEfectivo : t.precioFijo}: {monto(viaje.total)}
+            {viaje.estado === 'terminado'
+              ? viaje.metodoPago === 'tarjeta'
+                ? t.pagadoTarjeta
+                : t.pagaEfectivo
+              : t.precioFijo}
+            : {monto(viaje.total)}
           </Text>
         ) : null}
       </Tarjeta>
@@ -248,6 +264,26 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
       {calificado ? <Text style={{ color: C.exito, fontWeight: '700' }}>{t.gracias}</Text> : null}
+      {viaje.estado === 'terminado' && viaje.metodoPago === 'tarjeta' ? (
+        <Tarjeta>
+          {propina ? (
+            <Text style={{ color: C.exito, fontWeight: '700' }}>
+              {t.propinaGracias} {monto(propina)}
+            </Text>
+          ) : (
+            <View testID="viaje-propina" style={{ gap: 8 }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.propinaTitulo}</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {[100, 200, 500].map((c) => (
+                  <View key={c} style={{ flex: 1 }}>
+                    <Boton texto={monto(c)} alTocar={() => void darPropina(c)} secundario />
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </Tarjeta>
+      ) : null}
       {FINALES.has(viaje.estado) ? (
         <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />
       ) : null}

@@ -192,3 +192,107 @@ export async function soltarCobroViaje(
     .run();
   return 0;
 }
+
+/**
+ * C-VIAJE-PROPINA (29 oct 2026), copiado de la propina posterior de Comida: después de un viaje pagado
+ * con tarjeta, el pasajero deja propina con la tarjeta guardada, una vez y hasta 7 días después. Va
+ * entera al conductor; el movimiento existe solo si Stripe confirmó el cobro.
+ */
+export async function propinaViaje(
+  env: Env,
+  db: D1Database,
+  clienteId: string,
+  operacionId: string,
+  centavos: number,
+) {
+  const f = await db
+    .prepare(
+      `SELECT o.conductor_id, o.estado_general, v.terminado_en, c.stripe_pago, c.estado, c.propina,
+              u.stripe_cliente, q.moneda
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         JOIN cobros_viaje c ON c.operacion_id = o.id
+         JOIN usuarios u ON u.id = o.cliente_id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE o.id = ? AND o.cliente_id = ?`,
+    )
+    .bind(operacionId, clienteId)
+    .first<{
+      conductor_id: string | null;
+      estado_general: string;
+      terminado_en: string | null;
+      stripe_pago: string;
+      estado: string;
+      propina: number;
+      stripe_cliente: string | null;
+      moneda: string | null;
+    }>();
+  if (!f)
+    throw new ErrorDatos(
+      'La propina con tarjeta es para viajes pagados con tarjeta.',
+      undefined,
+      409,
+    );
+  if (f.estado_general !== 'terminada' || f.estado !== 'capturado' || !f.conductor_id)
+    throw new ErrorDatos('La propina se agrega cuando el viaje ya terminó.', undefined, 409);
+  if (f.propina > 0) throw new ErrorDatos('Ya dejaste una propina en este viaje.', undefined, 409);
+  if (Date.now() - Date.parse(`${String(f.terminado_en).replace(' ', 'T')}Z`) > 7 * 86_400_000)
+    throw new ErrorDatos(
+      'La propina se puede agregar hasta 7 días después del viaje.',
+      undefined,
+      409,
+    );
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos('Los pagos con tarjeta todavía no están activados.', undefined, 422);
+  const original = await stripe.get<{ payment_method?: string | null }>(
+    `/payment_intents/${f.stripe_pago}`,
+  );
+  if (!original.payment_method || !f.stripe_cliente)
+    throw new ErrorDatos(
+      'No encontramos una tarjeta guardada para cobrar la propina.',
+      undefined,
+      409,
+    );
+  const cobro = await stripe
+    .post<{ id: string; status?: string }>(
+      '/payment_intents',
+      {
+        amount: centavos,
+        currency: (f.moneda ?? 'USD').toLowerCase(),
+        customer: f.stripe_cliente,
+        payment_method: original.payment_method,
+        off_session: true,
+        confirm: true,
+        description: 'Divoox · propina del viaje',
+        metadata: { viaje_id: operacionId, propina_viaje: '1' },
+      },
+      `propina-viaje-${operacionId}`,
+    )
+    .catch(() => null);
+  if (cobro?.status !== 'succeeded')
+    throw new ErrorDatos(
+      'No pudimos cobrar la propina con tu tarjeta guardada. Intenta más tarde.',
+      undefined,
+      409,
+    );
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE cobros_viaje SET propina = ?, actualizado_en = datetime('now') WHERE operacion_id = ? AND propina = 0",
+      )
+      .bind(centavos, operacionId),
+    db
+      .prepare(
+        `INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+         SELECT ?, ?, ?, 'propina', ? WHERE NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
+      )
+      .bind(
+        nuevoId(),
+        f.conductor_id,
+        centavos,
+        `propina-viaje-${operacionId}`,
+        `propina-viaje-${operacionId}`,
+      ),
+  ]);
+  return centavos;
+}

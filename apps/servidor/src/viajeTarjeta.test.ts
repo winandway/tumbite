@@ -38,7 +38,16 @@ async function escenario() {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     stripe.push({ url: String(url), cuerpo: decodeURIComponent(String(init?.body ?? '')) });
     if (/\/payment_intents$/.test(String(url)))
-      return new Response(JSON.stringify({ id: 'pi_viaje', client_secret: 'pi_viaje_secret' }), {
+      return new Response(
+        JSON.stringify(
+          String(init?.body ?? '').includes('off_session=true')
+            ? { id: 'pi_propina', status: 'succeeded' }
+            : { id: 'pi_viaje', client_secret: 'pi_viaje_secret' },
+        ),
+        { status: 200 },
+      );
+    if (String(url).endsWith('/payment_intents/pi_viaje') && (init?.method ?? 'GET') === 'GET')
+      return new Response(JSON.stringify({ id: 'pi_viaje', payment_method: 'pm_1' }), {
         status: 200,
       });
     return new Response(JSON.stringify({ id: 'x', client_secret: 'cs' }), { status: 200 });
@@ -133,6 +142,18 @@ describe('viaje con tarjeta (C-VIAJE-TARJETA)', () => {
         .bind(e.cond.id, id)
         .first(),
     ).toEqual({ monto: cot.total });
+    // C-VIAJE-PROPINA: después del viaje, propina con la tarjeta guardada, una sola vez, al conductor.
+    const prop = (centavos: number) =>
+      e.m.llamar('POST', `/datos/viajes/${id}/propina`, { centavos }, e.cliente.token);
+    expect((await prop(300)).estado).toBe(200);
+    expect((await prop(300)).estado).toBe(409);
+    expect(
+      await e.m.DB.prepare(
+        "SELECT monto, concepto FROM movimientos WHERE usuario_id = ? AND referencia = 'propina-viaje-' || ?",
+      )
+        .bind(e.cond.id, id)
+        .first(),
+    ).toEqual({ monto: 300, concepto: 'propina' });
   });
 
   it('cancelar sin cargo anula la autorización; con cargo cobra solo el cargo, sin deuda', async () => {
