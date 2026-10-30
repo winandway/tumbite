@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-OPCIONES-ANIDADAS
+  [
+    'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',
+    'An option can only open another group of the same item, one level deep.',
+  ],
   // C-MENU-PLANILLA
   [
     'La planilla necesita al menos una columna de nombre y una de precio. Descarga la plantilla para ver el formato.',

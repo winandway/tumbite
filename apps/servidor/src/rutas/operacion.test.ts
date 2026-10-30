@@ -1841,6 +1841,90 @@ describe('horarios reales y opciones de los platos (C-HORARIOS, C-OPCIONES)', ()
       seg.datos.pedido.lineas[0].opciones.map((o: { nombreEn: string }) => o.nombreEn),
     ).toEqual(['Large', 'Extra cheese']);
   });
+
+  // C-OPCIONES-ANIDADAS (30 oct 2026): «nested modifier groups» de Uber Eats.
+  it('el combo pide la bebida y, si es refresco, su tamaño; el anidado no se ve suelto ni se puede saltar', async () => {
+    const e = await escenario();
+    const rest = (await e.m.llamar('GET', '/datos/mi-restaurante', undefined, e.dueno.token)).datos
+      .restaurante;
+    const plato = await e.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/platos',
+      { nombreEs: 'Combo', nombreEn: 'Combo', precioCentavos: 1000 },
+      e.dueno.token,
+    );
+    const pid = plato.datos.plato.id as string;
+    const malo = await e.m.llamar(
+      'PUT',
+      `/datos/mi-restaurante/platos/${pid}/opciones`,
+      {
+        grupos: [
+          { nombreEs: 'A', minimo: 0, maximo: 1, opciones: [{ nombreEs: 'x', abreGrupo: 0 }] },
+        ],
+      },
+      e.dueno.token,
+    );
+    expect(malo.estado).toBe(422);
+    const r = await e.m.llamar(
+      'PUT',
+      `/datos/mi-restaurante/platos/${pid}/opciones`,
+      {
+        grupos: [
+          {
+            nombreEs: 'Bebida',
+            nombreEn: 'Drink',
+            minimo: 1,
+            maximo: 1,
+            opciones: [
+              { nombreEs: 'Refresco', nombreEn: 'Soda', abreGrupo: 1 },
+              { nombreEs: 'Agua', nombreEn: 'Water' },
+            ],
+          },
+          {
+            nombreEs: 'Tamaño de la bebida',
+            nombreEn: 'Drink size',
+            minimo: 1,
+            maximo: 1,
+            opciones: [
+              { nombreEs: 'Chico', nombreEn: 'Small' },
+              { nombreEs: 'Grande', nombreEn: 'Large', precioCentavos: 100 },
+            ],
+          },
+        ],
+      },
+      e.dueno.token,
+    );
+    expect(r.estado).toBe(200);
+    const [bebida, tamano] = r.datos.plato.grupos;
+    expect(tamano.anidado).toBe(true);
+    expect(bebida.anidado ?? false).toBe(false);
+    expect(bebida.opciones[0].abreGrupoId).toBe(tamano.id);
+    const refresco = bebida.opciones[0].id;
+    const agua = bebida.opciones[1].id;
+    const grande = tamano.opciones[1].id;
+    const pedir = (opciones: string[]) =>
+      e.m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: rest.id,
+          lineas: [{ platoId: pid, cantidad: 1, opciones }],
+          propinaCentavos: 0,
+          direccion: '300 Calle Prueba',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        e.cliente.token,
+      );
+    // Refresco sin tamaño: falta el anidado.
+    expect((await pedir([refresco])).estado).toBe(409);
+    // Agua con un tamaño: el anidado no está abierto, esa opción no vale.
+    expect((await pedir([agua, grande])).estado).toBe(409);
+    expect((await pedir([agua])).estado).toBe(201);
+    const ok = await pedir([refresco, grande]);
+    expect(ok.estado).toBe(201);
+    expect(ok.datos.desglose.subtotal).toBe(1100);
+  });
 });
 
 describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de soporte (C-GPS-SERIO)', () => {

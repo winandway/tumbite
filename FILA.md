@@ -100,7 +100,7 @@
 - [x] (C-CORREO-ENTREGA) (32) Correo al cliente al entregar, con la foto de la entrega (como DoorDash). Todos los países.
 - [x] (C-DIRECCION-APTO) (33) Dirección con casilla aparte para apartamento, piso o edificio. Todos los países.
 - [x] (C-MENU-PLANILLA) (34) Alta asistida: el equipo carga el menú por el restaurante, e importación del menú de comida por hoja de cálculo (reutilizando la de Tiendas). Todos los países.
-- [ ] (35) Modificadores anidados y grupos de opciones compartidos entre platos (el combo pide la bebida y la bebida el tamaño). Todos los países.
+- [x] (C-OPCIONES-ANIDADAS) (35) Modificadores anidados y grupos de opciones compartidos entre platos (el combo pide la bebida y la bebida el tamaño). Todos los países.
 - [ ] (36) Menús por horario: categorías con franja (desayuno, almuerzo). Todos los países.
 - [ ] (37) La app del restaurante a la par del panel: horarios y cierres, reseñas con respuesta y extras desde el celular. Todos los países.
 - [ ] (38) Fotos dentro del chat del pedido (para mostrar reemplazos en Tiendas). Todos los países.

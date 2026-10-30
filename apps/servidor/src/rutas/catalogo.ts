@@ -228,6 +228,13 @@ export async function gruposDe(
         ).results,
     )
   ).sort(porOrden);
+  // C-OPCIONES-ANIDADAS: un grupo que alguna opción abre es anidado (no se muestra suelto).
+  const abiertos = new Set(
+    opciones
+      .map((o) => o.abre_grupo_id)
+      .filter(Boolean)
+      .map(String),
+  );
   for (const g of grupos) {
     const lista = mapa.get(String(g.plato_id)) ?? [];
     lista.push({
@@ -236,6 +243,7 @@ export async function gruposDe(
       nombreEn: String(g.nombre_en ?? ''),
       minimo: Number(g.minimo),
       maximo: Number(g.maximo),
+      ...(abiertos.has(String(g.id)) ? { anidado: true } : {}),
       opciones: opciones
         .filter((o) => String(o.grupo_id) === String(g.id))
         .map((o) => ({
@@ -244,6 +252,7 @@ export async function gruposDe(
           nombreEn: String(o.nombre_en ?? ''),
           precioCentavos: Number(o.precio_centavos),
           disponible: Number(o.disponible) === 1,
+          ...(o.abre_grupo_id ? { abreGrupoId: String(o.abre_grupo_id) } : {}),
         })),
     });
     mapa.set(String(g.plato_id), lista);
@@ -512,6 +521,22 @@ catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
   for (const g of grupos)
     if (g.minimo > g.maximo)
       throw new ErrorDatos('El mínimo no puede ser mayor que el máximo.', 'grupos', 422);
+  // C-OPCIONES-ANIDADAS: una opción abre OTRO grupo que existe, y un grupo anidado no abre otros
+  // (un nivel, como el combo → bebida → tamaño).
+  const anidados = new Set(
+    grupos.flatMap((g) => g.opciones.map((o) => o.abreGrupo)).filter((x) => x != null),
+  );
+  grupos.forEach((g, gi) => {
+    for (const o of g.opciones) {
+      if (o.abreGrupo == null) continue;
+      if (o.abreGrupo === gi || o.abreGrupo >= grupos.length || anidados.has(gi))
+        throw new ErrorDatos(
+          'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',
+          'grupos',
+          422,
+        );
+    }
+  });
   // C-TOPES-PAIS: precio máximo de una opción, el del país del restaurante.
   const zonaRest = await db
     .prepare('SELECT zona_id FROM restaurantes WHERE id = ?')
@@ -529,8 +554,9 @@ catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
     db.prepare('DELETE FROM opciones WHERE grupo_id = ?').bind(g.id),
   ]);
   const inserts: D1PreparedStatement[] = [];
+  const idsGrupos = grupos.map(() => nuevoId());
   grupos.forEach((g, gi) => {
-    const gid = nuevoId();
+    const gid = idsGrupos.at(gi)!;
     inserts.push(
       db
         .prepare(
@@ -542,9 +568,18 @@ catalogo.put('/mi-restaurante/platos/:id/opciones', async (c) => {
       inserts.push(
         db
           .prepare(
-            'INSERT INTO opciones (id, grupo_id, nombre_es, nombre_en, precio_centavos, disponible, orden) VALUES (?,?,?,?,?,?,?)',
+            'INSERT INTO opciones (id, grupo_id, nombre_es, nombre_en, precio_centavos, disponible, orden, abre_grupo_id) VALUES (?,?,?,?,?,?,?,?)',
           )
-          .bind(nuevoId(), gid, o.nombreEs, o.nombreEn, o.precioCentavos, o.disponible ? 1 : 0, oi),
+          .bind(
+            nuevoId(),
+            gid,
+            o.nombreEs,
+            o.nombreEn,
+            o.precioCentavos,
+            o.disponible ? 1 : 0,
+            oi,
+            o.abreGrupo == null ? null : (idsGrupos.at(o.abreGrupo) ?? null),
+          ),
       ),
     );
   });

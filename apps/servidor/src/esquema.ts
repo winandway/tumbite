@@ -69,6 +69,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-DIRECCION-APTO: apartamento, piso o edificio en su propia casilla (como DoorDash).
   ['pedidos', 'apto', "TEXT NOT NULL DEFAULT ''"],
   ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
+  // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
+  ['opciones', 'abre_grupo_id', 'TEXT'],
   ['repartidores', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],
   ['repartidores', 'geohash', 'TEXT'],
   ['pedidos', 'zona_id', "TEXT NOT NULL DEFAULT 'US-FL-MIAMI'"],

@@ -25,6 +25,7 @@ import {
   distanciaKm,
   conSenal,
   NOTA_PLATO_MAX,
+  gruposActivos,
   conNotaPlato,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
@@ -444,7 +445,8 @@ export async function lineasDeRestaurante(
       );
     // Opciones: cada grupo dentro de su mínimo y máximo, solo opciones disponibles, precio sumado.
     const elegidas: OpcionElegida[] = [];
-    for (const g of grupos.get(l.platoId) ?? []) {
+    // C-OPCIONES-ANIDADAS: solo cuentan los grupos de primer nivel y los que abren las elegidas.
+    for (const g of gruposActivos(grupos.get(l.platoId) ?? [], l.opciones)) {
       const delGrupo = g.opciones.filter((o) => l.opciones.includes(o.id));
       if (delGrupo.length < g.minimo || delGrupo.length > g.maximo)
         throw new ErrorDatos(

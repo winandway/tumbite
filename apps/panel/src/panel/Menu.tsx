@@ -64,6 +64,10 @@ const T = {
     minimo: 'Mínimo',
     maximo: 'Máximo',
     nuevaOpcion: '+ Opción',
+    abreGrupo: 'Al elegirla, pide también',
+    copiarDe: 'Copiar las opciones de otro plato',
+    elegirPlato: 'Elige un plato',
+    ninguno: 'Nada más',
     opcionEs: 'Opción (español)',
     opcionEn: 'Opción (inglés)',
     precioExtra: 'Precio extra',
@@ -114,6 +118,10 @@ const T = {
     minimo: 'Min',
     maximo: 'Max',
     nuevaOpcion: '+ Option',
+    abreGrupo: 'When chosen, also ask for',
+    copiarDe: 'Copy the options from another item',
+    elegirPlato: 'Choose an item',
+    ninguno: 'Nothing else',
     opcionEs: 'Option (Spanish)',
     opcionEn: 'Option (English)',
     precioExtra: 'Extra price',
@@ -149,7 +157,14 @@ type GrupoForm = {
   nombreEn: string;
   minimo: string;
   maximo: string;
-  opciones: { nombreEs: string; nombreEn: string; precio: string; disponible: boolean }[];
+  opciones: {
+    nombreEs: string;
+    nombreEn: string;
+    precio: string;
+    disponible: boolean;
+    /** C-OPCIONES-ANIDADAS: el número del grupo que abre («» = ninguno). */
+    abreGrupo?: string;
+  }[];
 };
 const leerGrupos = (texto: string): GrupoForm[] => {
   try {
@@ -160,7 +175,7 @@ const leerGrupos = (texto: string): GrupoForm[] => {
   }
 };
 const gruposAForm = (grupos: GrupoOpciones[] | undefined, moneda: string): GrupoForm[] =>
-  (grupos ?? []).map((g) => ({
+  (grupos ?? []).map((g, _gi, todos) => ({
     nombreEs: g.nombreEs,
     nombreEn: g.nombreEn,
     minimo: String(g.minimo),
@@ -170,6 +185,7 @@ const gruposAForm = (grupos: GrupoOpciones[] | undefined, moneda: string): Grupo
       nombreEn: o.nombreEn,
       precio: montoATexto(o.precioCentavos, moneda),
       disponible: o.disponible,
+      abreGrupo: o.abreGrupoId ? String(todos.findIndex((x) => x.id === o.abreGrupoId)) : '',
     })),
   }));
 
@@ -286,6 +302,11 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
         ? await pedir<{ plato: Plato }>('PUT', `/datos/mi-restaurante/platos/${v.id}`, cuerpo)
         : await pedir<{ plato: Plato }>('POST', '/datos/mi-restaurante/platos', cuerpo);
       // Las opciones van aparte, todas de una vez (si el plato ya las tenía, se reemplazan).
+      // C-OPCIONES-ANIDADAS: los números de grupo se recalculan sin los grupos vacíos.
+      const nuevoIndice = new Map<number, number>();
+      grupos.forEach((g, i) => {
+        if (g.nombreEs.trim()) nuevoIndice.set(i, nuevoIndice.size);
+      });
       const gruposLimpios = grupos
         .filter((g) => g.nombreEs.trim())
         .map((g) => ({
@@ -300,6 +321,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
               nombreEn: o.nombreEn.trim(),
               precioCentavos: montoEscrito(o.precio || '0', moneda) ?? 0,
               disponible: o.disponible,
+              abreGrupo: o.abreGrupo ? (nuevoIndice.get(Number(o.abreGrupo)) ?? null) : null,
             })),
         }));
       if (gruposLimpios.length || (r.plato.grupos?.length ?? 0) > 0)
@@ -474,6 +496,28 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
           <fieldset className="grupos-opciones">
             <legend>{t.grupos}</legend>
             <p className="suave">{t.gruposAyuda}</p>
+            {/* Los mismos grupos en varios platos (DoorDash y Uber los reutilizan): se copian de otro. */}
+            {(platos ?? []).some((x) => x.id !== v.id && (x.grupos?.length ?? 0) > 0) ? (
+              <label className="campo">
+                <span>{t.copiarDe}</span>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const origen = (platos ?? []).find((x) => x.id === e.target.value);
+                    if (origen) ponerGrupos(gruposAForm(origen.grupos, moneda));
+                  }}
+                >
+                  <option value="">{t.elegirPlato}</option>
+                  {(platos ?? [])
+                    .filter((x) => x.id !== v.id && (x.grupos?.length ?? 0) > 0)
+                    .map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {nombrePlato(x, idioma)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            ) : null}
             {grupos.map((g, gi) => (
               <div key={gi} className="grupo-opciones">
                 <div className="fila-campos">
@@ -597,6 +641,37 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                       />
                       {o.disponible ? t.disponible : t.agotado}
                     </label>
+                    {grupos.length > 1 ? (
+                      <label className="campo">
+                        <span>{t.abreGrupo}</span>
+                        <select
+                          value={o.abreGrupo ?? ''}
+                          onChange={(e) =>
+                            ponerGrupos(
+                              grupos.map((y, j) =>
+                                j === gi
+                                  ? {
+                                      ...y,
+                                      opciones: y.opciones.map((z, k) =>
+                                        k === oi ? { ...z, abreGrupo: e.target.value } : z,
+                                      ),
+                                    }
+                                  : y,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="">{t.ninguno}</option>
+                          {grupos.map((y, j) =>
+                            j === gi || !y.nombreEs.trim() ? null : (
+                              <option key={j} value={String(j)}>
+                                {y.nombreEs}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                    ) : null}
                     <button
                       type="button"
                       className="enlace"

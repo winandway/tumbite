@@ -28,6 +28,7 @@ import {
   categoriaPlato,
   nombreEtiquetaDieta,
   NOTA_PLATO_MAX,
+  gruposActivos,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -156,8 +157,10 @@ export default function MenuRestaurante() {
       return { ...x, [g.id]: [...actual, oid] };
     });
   }
+  // C-OPCIONES-ANIDADAS: los grupos de primer nivel y los que abren las opciones elegidas.
+  const activos = (p: Plato) => gruposActivos(p.grupos ?? [], Object.values(elegidas).flat());
   const opcionesElegidas = (p: Plato): OpcionElegida[] =>
-    (p.grupos ?? []).flatMap((g) =>
+    activos(p).flatMap((g) =>
       g.opciones
         .filter((o) => (elegidas[g.id] ?? []).includes(o.id))
         .map((o) => ({
@@ -169,7 +172,7 @@ export default function MenuRestaurante() {
     );
   function confirmarDetalle() {
     if (!eligiendo) return;
-    if (!(eligiendo.grupos ?? []).every(grupoCompleto)) return;
+    if (!activos(eligiendo).every(grupoCompleto)) return;
     const p = eligiendo;
     const opciones = opcionesElegidas(p);
     setEligiendo(null);
@@ -192,7 +195,7 @@ export default function MenuRestaurante() {
   const altoFoto = Math.min(260, Math.round(Math.min(width, ANCHO_MAX) * 0.62));
 
   const detalle = eligiendo;
-  const completo = (detalle?.grupos ?? []).every(grupoCompleto);
+  const completo = detalle ? activos(detalle).every(grupoCompleto) : true;
   const precioDetalle = detalle
     ? (detalle.precioCentavos +
         opcionesElegidas(detalle).reduce((s, o) => s + o.precioCentavos, 0)) *
@@ -577,8 +580,20 @@ export default function MenuRestaurante() {
                     {formatearMonto(detalle.precioCentavos, moneda, idioma)}
                   </Text>
 
-                  {(detalle.grupos ?? []).map((g) => (
-                    <View key={g.id} style={{ marginTop: 18 }}>
+                  {activos(detalle).map((g) => (
+                    <View
+                      key={g.id}
+                      style={[
+                        { marginTop: 18 },
+                        // El grupo anidado se ve dentro de la opción que lo abrió.
+                        g.anidado && {
+                          marginLeft: 12,
+                          paddingLeft: 12,
+                          borderLeftWidth: 1,
+                          borderLeftColor: '#D6D6D6',
+                        },
+                      ]}
+                    >
                       <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
                         {nombrePlato(g, idioma)}
                         <Text

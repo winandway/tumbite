@@ -1411,6 +1411,8 @@ const es: SeccionDocs[] = [
           'Al crear o editar un plato, abajo está «Opciones del plato». Cada grupo es una pregunta: «Tamaño», «Extras», «Sin…».',
           'El mínimo y el máximo dicen cuántas puede elegir el cliente. «Tamaño» con mínimo 1 y máximo 1 obliga a elegir uno. «Extras» con mínimo 0 y máximo 3 deja elegir hasta tres o ninguno.',
           'Cada opción tiene nombre en español e inglés y su precio extra (puede ser 0). Una opción se puede marcar agotada sin borrarla.',
+          'Una opción puede pedir otro grupo. En la opción, elige «Al elegirla, pide también» y el grupo: por ejemplo, en un combo, «Refresco» pide «Tamaño de la bebida». El cliente ve ese grupo solo cuando elige esa opción, y no puede pedir sin completarlo.',
+          'Si varios platos llevan las mismas opciones, arma uno y en los demás usa «Copiar las opciones de otro plato».',
           'En el pedido, tú y el repartidor ven lo elegido junto al plato: «Pizza margarita (Grande, Extra queso)».',
         ],
         capturas: [
@@ -4858,6 +4860,8 @@ const en: SeccionDocs[] = [
           'When creating or editing an item, “Item options” is at the bottom. Each group is a question: “Size,” “Extras,” “No…”.',
           'Min and max say how many the customer can choose. “Size” with min 1 and max 1 forces one choice. “Extras” with min 0 and max 3 allows up to three or none.',
           'Each option has a Spanish and English name and its extra price (can be 0). An option can be marked sold out without deleting it.',
+          'An option can ask for another group. On the option, choose “When chosen, also ask for” and the group: for example, in a combo, “Soda” asks for “Drink size”. The customer sees that group only when they pick that option, and can’t order without completing it.',
+          'If several items share the same options, set up one and use “Copy the options from another item” on the rest.',
           'On the order, you and the driver see what was chosen next to the item: “Margherita pizza (Large, Extra cheese).”',
         ],
         capturas: [

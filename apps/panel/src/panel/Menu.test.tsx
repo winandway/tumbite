@@ -78,4 +78,79 @@ describe('menú del restaurante', () => {
     expect(await screen.findByText('Agotado hasta mañana')).toBeInTheDocument();
     expect(enviados).toEqual([{ disponible: false, hasta: 'hoy' }]);
   });
+
+  // C-OPCIONES-ANIDADAS (30 oct 2026): copiar las opciones de otro plato y que una opción abra otro grupo.
+  it('copia las opciones de otro plato y guarda que «Refresco» abre «Tamaño»', async () => {
+    const combo = {
+      ...plato,
+      id: 'p2',
+      nombreEs: 'Combo',
+      nombreEn: 'Combo',
+      grupos: [
+        {
+          id: 'g1',
+          nombreEs: 'Bebida',
+          nombreEn: 'Drink',
+          minimo: 1,
+          maximo: 1,
+          opciones: [
+            {
+              id: 'o1',
+              nombreEs: 'Refresco',
+              nombreEn: 'Soda',
+              precioCentavos: 0,
+              disponible: true,
+            },
+          ],
+        },
+        {
+          id: 'g2',
+          nombreEs: 'Tamaño',
+          nombreEn: 'Size',
+          minimo: 1,
+          maximo: 1,
+          opciones: [
+            {
+              id: 'o2',
+              nombreEs: 'Grande',
+              nombreEn: 'Large',
+              precioCentavos: 100,
+              disponible: true,
+            },
+          ],
+        },
+      ],
+    };
+    const enviados: { url: string; cuerpo: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') {
+        enviados.push({ url, cuerpo: JSON.parse(String(init.body)) });
+        return new Response(JSON.stringify({ plato: { ...plato, grupos: [] } }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ restaurante: { id: 'r1' }, platos: [plato, combo] }), {
+        status: 200,
+      });
+    });
+    render(<Menu usuario={usuario} idioma="es" />);
+    const tres = await screen.findAllByRole('button', { name: 'Más opciones' });
+    await userEvent.click(tres[0]!);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Editar' }));
+    await userEvent.selectOptions(
+      screen.getByLabelText('Copiar las opciones de otro plato'),
+      'Combo',
+    );
+    expect(screen.getAllByLabelText('Nombre del grupo (español)')).toHaveLength(2);
+    await userEvent.selectOptions(
+      screen.getAllByLabelText('Al elegirla, pide también')[0]!,
+      'Tamaño',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar plato' }));
+    const opciones = await vi.waitFor(() => {
+      const x = enviados.find((e) => e.url.endsWith('/opciones'));
+      if (!x) throw new Error('sin opciones');
+      return x.cuerpo as { grupos: { opciones: { abreGrupo: number | null }[] }[] };
+    });
+    expect(opciones.grupos[0]!.opciones[0]!.abreGrupo).toBe(1);
+    expect(opciones.grupos[1]!.opciones[0]!.abreGrupo).toBeNull();
+  });
 });

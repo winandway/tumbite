@@ -53,6 +53,8 @@ export const esquemaGrupos = z.object({
               // El tope real depende del país del restaurante (C-TOPES-PAIS; EE. UU.: 100 dólares).
               precioCentavos: z.number().int().min(0).max(100_000_00).default(0),
               disponible: z.boolean().default(true),
+              /** C-OPCIONES-ANIDADAS: el número (desde 0) del grupo que abre esta opción. */
+              abreGrupo: z.number().int().min(0).max(9).nullable().default(null),
             }),
           )
           .min(1, { error: 'Cada grupo necesita al menos una opción.' })
@@ -162,6 +164,8 @@ export type Opcion = {
   nombreEn: string;
   precioCentavos: number;
   disponible: boolean;
+  /** C-OPCIONES-ANIDADAS: al elegirla, se pide también este grupo (el combo pide la bebida y su tamaño). */
+  abreGrupoId?: string | null;
 };
 /** Un grupo de opciones de un plato (Tamaño: elige 1; Extras: hasta 3; Sin…: hasta 5). */
 export type GrupoOpciones = {
@@ -171,7 +175,28 @@ export type GrupoOpciones = {
   minimo: number;
   maximo: number;
   opciones: Opcion[];
+  /** C-OPCIONES-ANIDADAS: solo aparece cuando se elige la opción que lo abre. */
+  anidado?: boolean;
 };
+
+/**
+ * C-OPCIONES-ANIDADAS (30 oct 2026, «nested modifier groups» de Uber Eats): los grupos que se piden
+ * con las opciones elegidas. Los de primer nivel siempre; uno anidado, solo si está elegida la opción
+ * que lo abre. El servidor valida con esta misma pieza y la app la usa para mostrar el detalle.
+ */
+export function gruposActivos(
+  grupos: GrupoOpciones[],
+  elegidas: readonly string[],
+): GrupoOpciones[] {
+  const abiertos = new Set(
+    grupos
+      .filter((g) => !g.anidado)
+      .flatMap((g) => g.opciones)
+      .filter((o) => o.abreGrupoId && elegidas.includes(o.id))
+      .map((o) => String(o.abreGrupoId)),
+  );
+  return grupos.filter((g) => !g.anidado || abiertos.has(g.id));
+}
 /** Lo elegido en una línea del pedido (nombre y precio congelados al pedir). */
 export type OpcionElegida = {
   id: string;
