@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { leerAamva } from './aamva';
 import { digitoControl, leerMrz } from './mrz';
-import { cruzarConFrente, edadEn, revisarDocumento } from './documento';
+import { cruzarConFrente, datosDelFrente, edadEn, revisarDocumento } from './documento';
 
 /** C-KYC-DOCUMENTO (29 oct 2026): lectura y reglas del documento del motor propio de verificación. */
 // Muestra con el formato público de AAMVA (datos inventados, no de una persona real).
@@ -90,5 +90,22 @@ describe('reglas del documento (C-KYC-DOCUMENTO)', () => {
     expect(otro.coincide).toBe(false);
     expect(otro.diferencias).toEqual(['nombre']);
     expect(cruzarConFrente(lic, {}).coincide).toBe(false);
+  });
+
+  it('cruza con el texto del frente leído por OCR, aunque confunda letras (C-KYC-OCR)', () => {
+    // Lo que el OCR suele devolver del frente: etiquetas, saltos y una O donde va un 0.
+    const frente =
+      'FLORIDA\nDRIVER LICENSE\nDL D123 456Z\nMUESTRA\nANA MARIA\nDOB 01/15/1990\nEXP 08/29/2029';
+    const leidos = datosDelFrente(lic, frente);
+    expect(leidos.numero).toBe(lic.numero);
+    expect(leidos.nacimiento).toBe('1990-01-15');
+    expect(cruzarConFrente(lic, leidos).coincide).toBe(true);
+    // El frente de OTRA persona: otro nombre, otra fecha y otro número no pasan.
+    const ajeno = datosDelFrente(lic, 'DRIVER LICENSE\nDL X998877\nGOMEZ\nPEDRO\nDOB 03/02/1985');
+    expect(ajeno.numero).toBe('X998877');
+    expect(ajeno.nacimiento).toBe('1985-03-02');
+    const cruce = cruzarConFrente(lic, ajeno);
+    expect(cruce.coincide).toBe(false);
+    expect(cruce.diferencias).toEqual(['nombre', 'nacimiento', 'numero']);
   });
 });

@@ -1760,5 +1760,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-KYC-OCR (29 oct 2026) — todos los países
 
 - `leerFrente` y `leerMrzDeFoto` (`apps/verificador/src/ocr.ts`): Tesseract (Apache 2.0) con los datos de idioma del paquete @tesseract.js-data/eng (MIT), sin bajar nada de internet al verificar.
-- **Hallazgo:** el OCR genérico confunde la franja del pasaporte («<» por K o L, «L» por «1»). Los dígitos de control detectan la lectura mala y nunca la dan por buena. Leerla bien necesita un modelo entrenado en la letra OCR-B (punto K6c de la fila).
-- **Prueba:** `ocr.test.ts` (una franja mal leída no pasa).
+- **Franja del pasaporte (K6c, 29 oct noche):** `corregirMrz` (`mrz.ts`) corrige por posición como los lectores de pasaportes: donde va un número, O→0; donde va una letra, 0→O; en los campos mixtos (número del pasaporte y dato opcional) prueba las letras parecidas hasta que cuadra el dígito de control. Si el OCR mete una letra de más en la segunda línea, se prueba quitando cada una. Nunca inventa: una corrección solo vale si su dígito de control la confirma. Con letra de ancho fijo lee la franja de la OACI completa; con Courier la rechaza (correcto).
+- **Límite del estándar:** en algunas posiciones «1» y «L» dan el mismo dígito de control; por eso el número también se cruza con el frente y el código de barras.
+- **Frente:** `datosDelFrente` (`documento.ts`) busca en el texto del OCR los datos del código (número sin las letras que el OCR confunde; fecha en MM/DD/AAAA, DD/MM/AAAA o AAAA-MM-DD) y, si el frente trae otro número u otra fecha con su etiqueta, los devuelve para que el cruce marque la diferencia.
+- **Prueba:** `ocr.test.ts` (corrección con la lectura real del OCR, rojo comprobado quitando la corrección; una franja aceptada siempre trae los datos correctos; el frente de la misma persona coincide y el de otra no) y `documento.test.ts`.

@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { createWorker } from 'tesseract.js';
 import sharp from 'sharp';
-import { leerMrz } from './mrz';
+import { corregirMrz, leerMrz } from './mrz';
 import type { DatosDocumento } from './aamva';
 
 /**
@@ -49,11 +49,23 @@ export async function leerMrzDeFoto(
     .split('\n')
     .map((l) => l.replace(/\s/g, ''))
     .filter((l) => l.length >= 40);
+  let primera: { datos: DatosDocumento; controlesOk: boolean } | null = null;
   for (let i = 0; i + 1 < lineas.length; i++) {
     const a = (lineas.at(i) ?? '').padEnd(44, '<').slice(0, 44);
-    const b = (lineas.at(i + 1) ?? '').padEnd(44, '<').slice(0, 44);
-    const r = leerMrz([a, b], hoy);
-    if (r) return r;
+    for (const b of a44(lineas.at(i + 1) ?? '')) {
+      const r = leerMrz(corregirMrz([a, b]), hoy);
+      if (r?.controlesOk) return r;
+      primera ??= r;
+    }
   }
-  return null;
+  return primera;
+}
+
+/**
+ * La segunda línea a 44 caracteres. Si el OCR metió una letra de más, se prueba quitando cada una: la
+ * buena es la que después cuadra con los dígitos de control.
+ */
+function a44(linea: string): string[] {
+  if (linea.length !== 45) return [linea.padEnd(44, '<').slice(0, 44)];
+  return [...linea].map((_, i) => linea.slice(0, i) + linea.slice(i + 1));
 }

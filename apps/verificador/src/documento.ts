@@ -81,3 +81,57 @@ export function cruzarConFrente(
     diferencias: notas.filter(([, n]) => n < 1).map(([k]) => k),
   };
 }
+
+/** Letras que el OCR confunde, llevadas a una sola forma para comparar números de documento. */
+const plegar = (t: string) =>
+  normalizarNombre(t)
+    .replace(/ /g, '')
+    .replace(/O|Q|D/g, '0')
+    .replace(/I|L/g, '1')
+    .replace(/S/g, '5')
+    .replace(/B/g, '8')
+    .replace(/Z/g, '2');
+
+/** Todas las fechas del texto como AAAA-MM-DD (MM/DD/AAAA de EE. UU. y DD/MM/AAAA de otros países). */
+function fechasDelTexto(texto: string): Set<string> {
+  const f = new Set<string>();
+  const p2 = (n: string) => n.padStart(2, '0');
+  for (const m of texto.matchAll(/\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/g))
+    f.add(`${m[1]}-${p2(m[2] ?? '')}-${p2(m[3] ?? '')}`);
+  for (const m of texto.matchAll(/\b(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})\b/g)) {
+    f.add(`${m[3]}-${p2(m[1] ?? '')}-${p2(m[2] ?? '')}`);
+    f.add(`${m[3]}-${p2(m[2] ?? '')}-${p2(m[1] ?? '')}`);
+  }
+  return f;
+}
+
+/**
+ * Del texto que el OCR leyó en el frente saca lo que hace falta para el cruce, buscando en él los datos
+ * del código de barras o de la franja (como el cruce de Idswyft). El número se compara sin las letras
+ * que el OCR confunde. Si el frente trae un número o una fecha de nacimiento con su etiqueta y no son
+ * los del código, se devuelven esos, para que el cruce marque la diferencia.
+ */
+export function datosDelFrente(
+  d: DatosDocumento,
+  texto: string,
+): { nombre?: string; nacimiento?: string; numero?: string } {
+  const t = texto.toUpperCase();
+  const r: { nombre?: string; nacimiento?: string; numero?: string } = {};
+  if (normalizarNombre(t)) r.nombre = t;
+  const numeroCodigo = plegar(d.numero);
+  if (numeroCodigo && plegar(t).includes(numeroCodigo)) r.numero = d.numero;
+  else {
+    const m =
+      /\b(?:DL|LIC|LICENSE|NO|NUM|NUMBER|DOC)\b\.?[ \t]*[:#]?[ \t]*([A-Z0-9][A-Z0-9 -]{4,15}[A-Z0-9])/.exec(
+        t,
+      );
+    if (m?.[1]) r.numero = m[1];
+  }
+  if (fechasDelTexto(t).has(d.nacimiento)) r.nacimiento = d.nacimiento;
+  else {
+    const m = /\b(?:DOB|BIRTH|NAC|NACIMIENTO)\b[^0-9]{0,12}([0-9][0-9/.-]{6,9}[0-9])/.exec(t);
+    const otra = m?.[1] ? [...fechasDelTexto(m[1])][0] : undefined;
+    if (otra) r.nacimiento = otra;
+  }
+  return r;
+}
