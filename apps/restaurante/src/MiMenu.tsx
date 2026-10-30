@@ -13,6 +13,9 @@ import {
   ETIQUETAS_DIETA,
   nombreEtiquetaDieta,
   leerEtiquetasDieta,
+  formularioAGrupos,
+  gruposAFormulario,
+  leerFormularioGrupos,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -25,6 +28,7 @@ import {
   useSesion,
 } from '@tumbite/movil';
 import { IMG } from './piezas/recursos';
+import { EditorOpciones } from './EditorOpciones';
 import { BotonGrande, Insignia, Pildora, Tarjeta } from './piezas/ui';
 import { textosRest } from './piezas/textos';
 
@@ -271,6 +275,8 @@ const VACIO = {
   disponible: 'si',
   /** C-FILTROS-DIETA: marcas separadas por coma («vegano,halal»). */
   etiquetas: '',
+  /** C-APP-OPCIONES: los grupos de opciones como texto (formulario), para el borrador. */
+  grupos: '[]',
 };
 
 /** Añadir / Editar producto. Lo escrito se guarda solo y vuelve si la app se cierra. */
@@ -318,6 +324,7 @@ function FormPlato({
       imagen: plato.imagen ?? '',
       disponible: plato.disponible ? 'si' : 'no',
       etiquetas: (plato.etiquetas ?? []).join(','),
+      grupos: JSON.stringify(gruposAFormulario(plato.grupos, moneda)),
     });
   }, [plato, cargarBase, moneda]);
 
@@ -368,6 +375,10 @@ function FormPlato({
             cuerpo,
           )
         : await api.pedir<{ plato: Plato }>('POST', '/datos/mi-restaurante/platos', cuerpo);
+      // C-APP-OPCIONES: las opciones van aparte, todas de una vez (si ya tenía, se reemplazan).
+      const grupos = formularioAGrupos(leerFormularioGrupos(v.grupos), moneda);
+      if (grupos.length || (plato?.grupos?.length ?? 0) > 0)
+        await api.pedir('PUT', `/datos/mi-restaurante/platos/${r.plato.id}/opciones`, { grupos });
       const quiere = v.disponible !== 'no';
       if (r.plato.disponible !== quiere)
         await api.pedir('PATCH', `/datos/mi-restaurante/platos/${r.plato.id}/disponible`, {
@@ -535,7 +546,12 @@ function FormPlato({
           );
         })}
       </View>
-      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>{t.opcionesPanel}</Text>
+      <EditorOpciones
+        valor={v.grupos}
+        cambiar={(x) => b.cambiar('grupos', x)}
+        moneda={moneda}
+        idioma={idioma}
+      />
       {error ? (
         <Text style={e.error} accessibilityRole="alert">
           {error}

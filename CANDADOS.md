@@ -1930,7 +1930,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-APP-RESTAURANTE-PAR (30 oct 2026) — todos los países
 
 - **Qué es:** como DoorDash Merchant y Uber Eats Manager, la app del restaurante hace en el celular lo que antes solo hacía el panel: «Horario y cierres» (`apps/restaurante/src/Horario.tsx`: turnos por día y festivos) y «Reseñas» (`Resenas.tsx`: lista y respuesta pública, con borrador). Se abren desde «Más» (`pantalla` en `opcionesMasRestaurante`).
-- **Pendiente honesto:** las opciones y extras de los platos se editan todavía en el panel web.
+- **Opciones (C-APP-OPCIONES, mismo día):** las opciones y extras, con grupos anidados, también se editan en la app (`apps/restaurante/src/EditorOpciones.tsx`, formulario en el borrador del plato; conversión en `packages/compartido/src/opcionesFormulario.ts`). Candados: `opcionesFormulario.test.ts` y la prueba «crea un grupo de opciones desde la app» de `masRestaurante.spec.ts`.
 - **Candados:** `masRestaurante.test.ts` y `e2e/recorrido/masRestaurante.spec.ts` (guarda un turno y lo comprueba en el servidor; abre reseñas). Capturas: `docs/capturas/restapp-horario-*.png`.
 
 ## C-CHAT-FOTOS (30 oct 2026) — todos los países

@@ -55,3 +55,4 @@ export * from './masRestaurante';
 export * from './flexTextos';
 export * from './calificacionPublica';
 export * from './menuPlanilla';
+export * from './opcionesFormulario';

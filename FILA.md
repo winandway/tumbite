@@ -105,6 +105,7 @@
 - [x] (C-APP-RESTAURANTE-PAR: horario, cierres y reseñas en la app; las opciones de platos siguen en el panel) (37) La app del restaurante a la par del panel: horarios y cierres, reseñas con respuesta y extras desde el celular. Todos los países.
 - [x] (C-CHAT-FOTOS) (38) Fotos dentro del chat del pedido (para mostrar reemplazos en Tiendas). Todos los países.
 - [x] (la ventanita no tenía uso: se quitó) (39) Driver: la ventanita «Muy pronto» está montada pero nada la abre; quitarla o conectarla. Todos los países.
+- [x] (C-APP-OPCIONES) (40) La app del restaurante edita también las opciones y extras de cada plato (hoy solo en el panel), con opciones anidadas, como Uber Eats Manager. Todos los países.
 
 ## Hecho
 

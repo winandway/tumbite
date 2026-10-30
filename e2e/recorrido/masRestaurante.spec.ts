@@ -101,3 +101,82 @@ for (const idioma of ['es', 'en'] as const)
     ).toBeVisible();
     await ctx.close();
   });
+
+// C-APP-OPCIONES (30 oct 2026): las opciones del plato se editan desde la app del restaurante.
+test('el restaurante crea un grupo de opciones desde la app', async ({ browser, request }) => {
+  test.setTimeout(180_000);
+  const id = `op${Date.now().toString(36)}`;
+  const r = await request.post('/datos/cuentas/registro', {
+    headers: { 'cf-connecting-ip': `10.94.9.${Date.now() % 250}` },
+    data: {
+      nombre: 'Dueño Opciones',
+      correo: `opc.${id}@recorrido.test`,
+      clave: DATOS!.clave,
+      rol: 'restaurante',
+    },
+  });
+  const { token } = (await r.json()) as { token: string };
+  const h = { authorization: `Bearer ${token}` };
+  await request.put('/datos/mi-restaurante', {
+    headers: h,
+    data: {
+      nombre: `Pizzería ${id}`,
+      categoria: 'Pizza',
+      telefono: '3055550100',
+      direccion: '100 Biscayne Blvd, Miami, FL',
+      lat: 25.7743,
+      lng: -80.1937,
+    },
+  });
+  const plato = await request.post('/datos/mi-restaurante/platos', {
+    headers: h,
+    data: { nombreEs: 'Pizza Margarita', precioCentavos: 1200 },
+  });
+  const pid = ((await plato.json()) as { plato: { id: string } }).plato.id;
+  const ctx = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
+  await ctx.addInitScript((pase) => {
+    localStorage.setItem('tumbite.idioma', 'es');
+    localStorage.setItem('tumbite.sesion', pase);
+  }, token);
+  const p = await ctx.newPage();
+  await p.goto('/restaurant/');
+  await p.getByRole('tab', { name: 'Menú' }).click({ timeout: 30_000 });
+  await p.getByRole('button', { name: 'Editar: Pizza Margarita' }).click();
+  await p.getByRole('button', { name: '+ Grupo de opciones' }).click();
+  await p.getByLabel('Nombre del grupo 1', { exact: true }).fill('Tamaño');
+  await p.getByLabel('Mínimo 1').fill('1');
+  await p.getByLabel('Opción 1.1', { exact: true }).fill('Grande');
+  await p.getByLabel('Precio extra 1.1').fill('3.00');
+  await p.screenshot({
+    path: join(RAIZ, 'docs', 'capturas', 'restapp-opciones-es.png'),
+    fullPage: true,
+  });
+  await p.getByRole('button', { name: 'Guardar', exact: true }).last().click();
+  await expect
+    .poll(
+      async () => {
+        const mio = await request.get('/datos/mi-restaurante', { headers: h });
+        const pl = (
+          (await mio.json()) as {
+            platos: {
+              id: string;
+              grupos?: {
+                nombreEs: string;
+                minimo: number;
+                opciones: { nombreEs: string; precioCentavos: number }[];
+              }[];
+            }[];
+          }
+        ).platos.find((x) => x.id === pid);
+        return pl?.grupos?.map((g) => [
+          g.nombreEs,
+          g.minimo,
+          g.opciones[0]?.nombreEs,
+          g.opciones[0]?.precioCentavos,
+        ]);
+      },
+      { timeout: 20_000 },
+    )
+    .toEqual([['Tamaño', 1, 'Grande', 300]]);
+  await ctx.close();
+});
