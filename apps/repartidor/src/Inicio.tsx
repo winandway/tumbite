@@ -48,7 +48,6 @@ import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
 import { Mapa } from './piezas/Mapa';
 import type { ZonaDemanda } from './piezas/mapaWeb';
-import { ModalMuyPronto } from './piezas/ModalMuyPronto';
 import { Progreso } from './piezas/Progreso';
 import { ResumenDia } from './piezas/ResumenDia';
 import { IMG } from './piezas/recursos';
@@ -439,7 +438,6 @@ export function Inicio() {
   useToqueAviso(alTocarAviso);
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const tg = textosGrandes(idioma);
-  const [pronto, setPronto] = useState(false);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [seccionPerfil, setSeccionPerfil] = useState<'vehiculo' | 'documentos' | 'soporte' | null>(
     null,
@@ -1165,7 +1163,6 @@ export function Inicio() {
         activa={pestana}
         alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
       />
-      <ModalMuyPronto visible={pronto} cerrar={() => setPronto(false)} idioma={idioma} />
       <Modal visible={escaneando} animationType="slide" onRequestClose={() => setEscaneando(false)}>
         <View style={{ flex: 1, backgroundColor: '#000' }}>
           <CameraView
