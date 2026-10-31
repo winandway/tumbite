@@ -12,7 +12,7 @@
 
 ## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
 
-- [ ] (H1) Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
+- [x] (H1) HECHO 31 oct: en producción c268d83, verificación en verde y humo 200 (la prueba de Tiendas ahora busca «Calle y número»). Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
 - [x] (H2) HECHO 31 oct: circuito completo en el simulador; 10 fallos arreglados (docs/investigaciones-rea/2026-10-31-repaso-iphone-simulador.md). Repaso de las tres apps NATIVAS de iPhone en el simulador contra el sitio de pruebas, de punta a punta: entrar, pedir en Pizzería Demo Novi, pagar con 4242 en la hoja de Stripe, restaurante acepta y marca listo, repartidor acepta, recoge y entrega, cliente califica. REA sobre nuestras apps; cada fallo con prueba en rojo y arreglo. EE. UU.
 - [x] (H3) HECHO 31 oct: Android en el emulador hasta el pago, tres arreglos (ver el informe del repaso). El mismo repaso con las tres apps de Android en el emulador, para que la versión acumulada para Google vaya limpia. EE. UU.
 - [x] (H4) HECHO 31 oct: certificado 99965J4YRA por la API de Apple, subido a Stripe, variable en eas.json. Apple Pay listo para encender: certificado de procesamiento de Apple Pay del identificador merchant.com.tumbite.cliente en Stripe (prueba y real) y la variable EXPO_PUBLIC_APPLE_PAY_COMERCIO en la compilación de producción. EE. UU.
@@ -182,3 +182,7 @@
 - 31 oct 2026, 02:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas, en la rama fase-repaso-1). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 3c39b7d y pruebas 2d6fd27 (los commits posteriores son [skip ci]). La rama fase-repaso-1 lleva arreglos de iPhone todavía sin fusionar a main; se deja a la sesión que la trabaja. No se tocó código.
 - 31 oct 2026, 04:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.
 - 31 oct 2026, 06:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.
+
+## Registro de la fábrica
+
+- 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.
