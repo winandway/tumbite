@@ -8,14 +8,16 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://divoox.com"
+        "EXPO_PUBLIC_API_URL": "https://divoox.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "node": "24.15.0"
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://divoox.com"
+        "EXPO_PUBLIC_API_URL": "https://divoox.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "android": {
         "buildType": "apk"
@@ -25,14 +27,16 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://divoox.com"
+        "EXPO_PUBLIC_API_URL": "https://divoox.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "node": "24.15.0"
     },
     "pruebas": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
+        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "android": {
         "buildType": "apk"
@@ -45,7 +49,8 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
+        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "node": "24.15.0"
     }
