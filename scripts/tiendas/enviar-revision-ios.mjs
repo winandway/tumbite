@@ -15,7 +15,7 @@ for (const nombre of pedidas) {
   }
   const [version] = (await asc('GET', `/v1/apps/${id}/appStoreVersions?filter[platform]=IOS`)).data;
   const estado = version.attributes.appStoreState;
-  if (estado !== 'PREPARE_FOR_SUBMISSION') {
+  if (!['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED'].includes(estado)) {
     console.log(`${nombre}: la versión ya está en «${estado}», no se envía otra vez.`);
     continue;
   }
