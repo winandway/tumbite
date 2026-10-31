@@ -147,6 +147,7 @@ describe('ciclo del pedido', () => {
     const ofertas = await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
     expect(ofertas.datos.ofertas[0].id).toBe(id);
     expect(ofertas.datos.ofertas[0].pagoRepartidor).toBe(900);
+    expect(ofertas.datos.ofertas[0].pais).toBe('US');
     expect(
       (await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token)).estado,
     ).toBe(200);

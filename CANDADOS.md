@@ -2010,3 +2010,65 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** en Driver («Mi nivel»), el repartidor elige una de sus últimas 10 entregas y cuenta qué pasó (10 a 500 letras, el borrador no se pierde). Solo sus propias entregas (si no, 404) y una vez por entrega (409). Soporte la ve en Superadmin → Rewards y la acepta o no (una sola vez: sentencia condicionada a «abierta»). Una entrega con apelación aceptada deja de contar en `unidadesPedidos`.
 - **Candado:** `sombra.test.ts` (apelar, no repetir, aceptar sube el puntaje, la ve como aceptada; entrega ajena 404).
+
+## C-COLOR-LOGISTICA (30 oct 2026) — todos los países
+
+- **Qué es:** decisión de Richard: logística (Flex y Envíos) tiene su propio color, distinto de comida, para reconocer una captura de un vistazo. Tomado del bloque real de Amazon Flex: `MARCA.colores.logistica` #1F4D69 (fondo), `logisticaAccion` #4AA5DC (botones) con texto `logisticaTexto` #0B1F2B, y `logisticaSuave`. Driver «Mi ruta» lleva arriba la franja «DIVOOX FLEX» y sus botones y la parada actual en ese color; el cliente lo ve en Envíos; el panel de empresas (`.flex-panel`) cambia `--primario` a logística.
+- **Candado:** `colorLogistica.test.ts` (distinto del rojo, del acento y del verde; contraste de lectura de 4.5 o más).
+
+## C-FLEX-GEOCERCA (30 oct 2026) — todos los países
+
+- **Qué es:** como «Fuera de área de entrega» de Amazon Flex: con la ubicación del celular, el servidor rechaza entregar una parada a más de 200 m de la dirección del envío (`RADIO_ENTREGA_M` en `flex/conductor.ts`, 409 con campo `ubicacion` y los metros). La app avisa antes de intentar, con el mismo radio. Sin ubicación del celular se acepta como antes (la cola sin conexión). El mapa de la ruta dibuja el círculo del área (200 m) alrededor de la parada siguiente, en el azul de logística, en el celular y en la web.
+- **Candado:** `flexRutas.test.ts` («lejos de la dirección no deja entregar; en la puerta sí»).
+
+## C-FLEX-LUGAR y C-FLEX-DESLIZAR (30 oct 2026) — todos los países
+
+- **Qué es:** como Amazon Flex: al entregar, el conductor elige dónde quedó el paquete (`LUGARES_ENTREGA`: destinatario, recepción, puerta, buzón, otro); el servidor lo valida y lo guarda en el evento de entrega (`metadatos_json.lugar`). La foto lleva el consejo «que se vea el lugar y sin personas». Se termina con `Deslizar` (piezas de Flex), no con un toque; con lector de pantalla, la acción «activar».
+- **Candado:** `flexRutas.test.ts` («se guarda una de las cinco opciones; otra cosa se rechaza»).
+
+## C-FLEX-FOTO-ANTERIOR (30 oct 2026) — todos los países
+
+- **Qué es:** como Amazon Flex: `GET …/conductor/rutas/:rutaId/paradas/:paradaId/foto-anterior` devuelve la foto de la última entrega hecha en la misma dirección (misma empresa, parada entregada, foto no purgada), solo durante la ruta en curso del propio conductor; sin entrega previa, 404. En Driver, la tarjeta de la parada la muestra como «Entrega anterior en esta puerta».
+- **Candado:** `flexRutas.test.ts` («en la misma dirección muestra la foto de la entrega anterior; sin entrega previa, nada»).
+
+## C-IOS-TEXTOS-PERMISO (30 oct 2026) — EE. UU. (App Store)
+
+- **Qué se rompió:** las compilaciones de iPhone de Divoox y Divoox Driver «se subieron» bien según Expo, pero nunca aparecieron en App Store Connect. Apple las rechazó al procesarlas con el error 90683: faltaba `NSMotionUsageDescription` (una librería toca el sensor de movimiento aunque la app no lo pida).
+- **Cómo se ve el motivo:** `GET /v1/apps/<id>/buildUploads` con la llave de la API muestra `state.errors` de cada subida (el listado de compilaciones no muestra las rechazadas).
+- **Causa real:** `expo-location` estaba configurado con `motionUsagePermission: false`, y ese `false` BORRA el texto al generar el proyecto nativo (el primer arreglo, solo en `infoPlist`, dio verde y Apple siguió rechazando la compilación 7 del cliente y la 2 de Driver). Se comprueba con `npx expo config --type introspect` dentro de la app: tiene que salir `NSMotionUsageDescription`.
+- **Arreglo:** el texto en `expo.ios.infoPlist` de las tres apps y en `motionUsagePermission` de `expo-location`. La prueba `packages/compartido/src/textosPermisosIos.test.ts` se pone en rojo si a una app le falta un texto exigido o si un plugin tiene el permiso de movimiento en `false` (las dos comprobadas en rojo).
+- **No tocar:** ningún texto de permiso se quita de `app.json` sin comprobar antes en `buildUploads` que Apple acepta la compilación.
+
+## C-PAGO-APPLE-PAY (31 oct 2026) — EE. UU. (app de iPhone del cliente)
+
+- **Qué se rompió:** en el iPhone, al llegar al pago, la hoja de Stripe no abría y salía en rojo «`merchantIdentifier` is required…». No se podía pagar ni con tarjeta. Lo vio Richard en la compilación 8 (la que Apple revisaba).
+- **Causa real:** `initPaymentSheet` pedía Apple Pay (`applePay`) y `initStripe` no recibía el identificador de comercio de Apple.
+- **Arreglo:** Apple Pay solo se pide si la compilación trae `EXPO_PUBLIC_APPLE_PAY_COMERCIO` (el identificador `merchant.com.tumbite.cliente` ya dado de alta con su certificado de Apple Pay en Stripe); entonces va también a `initStripe`. Sin la variable: tarjeta y Google Pay. Prueba `packages/compartido/src/pagoApplePay.test.ts` (comprobada en rojo).
+- **No tocar:** no se vuelve a poner `applePay` suelto en la hoja. Para encender Apple Pay: certificado en Stripe → variable en `eas.json` → compilar.
+
+## C-NO-RECIBE-AHORA (31 oct 2026) — todos los países
+
+- **Qué se veía:** un restaurante abierto todo el día pero sin su panel o app escuchando aparecía «Abre mañana a las 12:00» (la próxima apertura inventada) y el texto se cortaba en la tarjeta. Visto en el simulador de iPhone con Pizzería Demo Novi.
+- **Arreglo:** `textoNoDisponible` (`packages/compartido/src/horarios.ts`): en horario pero sin recibir → «No recibe pedidos ahora»; fuera de horario → cuándo abre; cerrado a mano o sin horario → «Cerrado». Lo usan la lista de restaurantes, el inicio y la ficha del restaurante. La fila del estado baja de línea en vez de cortarse. Pruebas en `horarios.test.ts`.
+
+## C-RUTA-SIN-BARRA (31 oct 2026) — todos los países
+
+- **Qué se veía:** al entrar al panel del restaurante por «/panel/» (con barra final) salía «Esta sección llega en el siguiente paso» en vez del tablero.
+- **Arreglo:** `sinBarraFinal` en `apps/panel/src/ruta.ts`: la dirección se lee sin la barra del final (salvo «/»). Prueba `apps/panel/src/ruta.test.tsx`.
+
+## C-RECORRIDO-NO-PISA (31 oct 2026) — sitio de pruebas
+
+- **Qué pasó:** una prueba manual en el simulador de iPhone (pedido de Pizzería Demo Novi, Michigan) quedó «cancelado» sin historial justo después de aceptarse. Causa: el recorrido automático, al arrancar en el sitio de pruebas, cancelaba TODOS los pedidos aceptados sin repartidor y desconectaba a TODOS los repartidores.
+- **Arreglo:** el recorrido solo cancela pedidos de restaurantes del propio recorrido (dueños `@recorrido.test`) y solo desconecta repartidores de Miami (donde corre); carro y envíos igual. Prueba `packages/compartido/src/recorridoNoPisa.test.ts` (comprobada en rojo).
+- **Regla:** ninguna limpieza automática del sitio de pruebas toca datos que no sean suyos: ahí también prueban las personas (guía de pruebas con teléfonos).
+
+## C-DISTANCIA-POR-PAIS (31 oct 2026) — EE. UU. y todos los países
+
+- **Qué se veía:** en el iPhone en español, en Michigan, la lista de restaurantes y la oferta del repartidor decían «6.4 km». En EE. UU. el estándar (DoorDash, Uber Eats) es millas en cualquier idioma.
+- **Arreglo:** `textoDistancia` / `usaMillas` en `packages/compartido/src/distancia.ts`: la unidad la decide el país del servicio (millas en US y PR, kilómetros en el resto). El servidor manda `pais` con cada restaurante (de la tabla `zonas`) y con cada pedido u oferta del repartidor (del código de la zona). Sin país conocido se mantiene lo de antes (por idioma). Pruebas: `distancia.test.ts`, `catalogo.test.ts`, `operacion.test.ts`.
+
+## C-CARRITO-NO-SE-BORRA-SOLO (31 oct 2026) — todos los países
+
+- **Qué se veía:** en el simulador de iPhone, «Pedir otra vez» abría el carrito lleno y a los pocos segundos quedaba «Tu carrito está vacío», sin tocar nada.
+- **Causa real:** la pantalla del pedido pregunta el seguimiento cada 5 segundos y en cada vuelta vaciaba el carrito si el pedido no estaba en «pago pendiente». Al abrir el carrito encima, la pantalla seguía viva detrás y borraba el carrito nuevo. Le pasaba a cualquiera con un pedido abierto detrás que empezara otro carrito.
+- **Arreglo:** se vacía una sola vez y solo al llegar recién pagado (`?nuevo=1`, que usan el pago en la app, el pago en la web con 3D Secure y el cobro directo). Prueba `packages/compartido/src/carritoNoSeBorra.test.ts` (comprobada en rojo).

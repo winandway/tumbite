@@ -545,6 +545,10 @@ export default function SeguirPedido() {
     }
   }
 
+  // C-CARRITO-NO-SE-BORRA-SOLO (31 oct 2026, visto en el simulador de iPhone): el seguimiento pregunta
+  // cada 5 segundos y vaciaba el carrito en CADA vuelta; con esta pantalla abierta detrás, «Pedir otra
+  // vez» o un carrito nuevo se borraban solos. Se vacía UNA vez, y solo al llegar recién pagado.
+  const carritoVaciado = useRef(false);
   useEffect(() => {
     let vivo = true;
     const cargar = () =>
@@ -554,7 +558,10 @@ export default function SeguirPedido() {
           if (!vivo) return;
           setP(r.pedido);
           setError('');
-          if (r.pedido.estado !== 'pago_pendiente') vaciar();
+          if (nuevo && !carritoVaciado.current && r.pedido.estado !== 'pago_pendiente') {
+            carritoVaciado.current = true;
+            vaciar();
+          }
         })
         .catch((x: unknown) => vivo && setError(x instanceof ErrorApi ? x.message : String(x)));
     void cargar();
@@ -564,7 +571,7 @@ export default function SeguirPedido() {
       vivo = false;
       clearInterval(reloj);
     };
-  }, [api, id, vaciar]);
+  }, [api, id, nuevo, vaciar]);
 
   // Cuatro pasos como en el diseño: Confirmado, En preparación, En camino, Entregado.
   const paso = p ? (PASOS_DISENO.get(p.estado) ?? -1) : -1;

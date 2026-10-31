@@ -55,10 +55,21 @@ export function Campo({
   error,
   ...props
 }: TextInputProps & { etiqueta: string; error?: string }) {
+  // C-CORREO-SIN-AUTOCORRECTOR (31 oct 2026, visto en el simulador de iPhone): un correo no se
+  // corrige ni se subraya; el iPhone cambiaba lo escrito. Vale para toda casilla de correo.
+  const correo = props.keyboardType === 'email-address';
   return (
     <View style={e.campo}>
       <Text style={e.etiqueta}>{etiqueta}</Text>
       <TextInput
+        {...(correo
+          ? {
+              autoCorrect: false,
+              spellCheck: false,
+              autoCapitalize: 'none' as const,
+              textContentType: 'emailAddress' as const,
+            }
+          : {})}
         {...props}
         accessibilityLabel={etiqueta}
         style={[e.input, error ? e.inputError : null]}
@@ -136,6 +147,7 @@ export function Boton({
   cargando,
   secundario,
   exito,
+  logistica,
 }: {
   texto: string;
   alTocar: () => void;
@@ -143,6 +155,8 @@ export function Boton({
   secundario?: boolean;
   /** Verde: aceptar, avanzar, terminar bien (regla «lo que sale bien va en verde»). */
   exito?: boolean;
+  /** C-COLOR-LOGISTICA: botón de Flex y Envíos, con el color propio de logística. */
+  logistica?: boolean;
 }) {
   return (
     <Pressable
@@ -154,13 +168,22 @@ export function Boton({
         e.boton,
         secundario && e.botonSecundario,
         exito && !secundario && { backgroundColor: C.exito },
+        logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
         pressed && { opacity: 0.85 },
       ]}
     >
       {cargando ? (
         <ActivityIndicator color="#fff" />
       ) : (
-        <Text style={[e.botonTexto, secundario && { color: C.secundario }]}>{texto}</Text>
+        <Text
+          style={[
+            e.botonTexto,
+            secundario && { color: C.secundario },
+            logistica && !secundario && !exito && { color: C.logisticaTexto },
+          ]}
+        >
+          {texto}
+        </Text>
       )}
     </Pressable>
   );
@@ -229,11 +252,13 @@ export const e = StyleSheet.create({
   },
   botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D6D6D6' },
   botonTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  // Sin franja gruesa al costado (regla de diseño de Richard, 12 oct 2026): borde fino y esquinas suaves.
   aviso: {
     backgroundColor: '#FFF1EE',
-    borderLeftWidth: 4,
-    borderLeftColor: C.acento,
-    padding: 10,
+    borderWidth: 1,
+    borderColor: '#F3CBC4',
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 12,
   },
   enlace: {

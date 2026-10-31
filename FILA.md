@@ -10,6 +10,36 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
+
+- [ ] (H1) Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
+- [x] (H2) HECHO 31 oct: circuito completo en el simulador; 10 fallos arreglados (docs/investigaciones-rea/2026-10-31-repaso-iphone-simulador.md). Repaso de las tres apps NATIVAS de iPhone en el simulador contra el sitio de pruebas, de punta a punta: entrar, pedir en Pizzería Demo Novi, pagar con 4242 en la hoja de Stripe, restaurante acepta y marca listo, repartidor acepta, recoge y entrega, cliente califica. REA sobre nuestras apps; cada fallo con prueba en rojo y arreglo. EE. UU.
+- [x] (H3) HECHO 31 oct: Android en el emulador hasta el pago, tres arreglos (ver el informe del repaso). El mismo repaso con las tres apps de Android en el emulador, para que la versión acumulada para Google vaya limpia. EE. UU.
+- [x] (H4) HECHO 31 oct: certificado 99965J4YRA por la API de Apple, subido a Stripe, variable en eas.json. Apple Pay listo para encender: certificado de procesamiento de Apple Pay del identificador merchant.com.tumbite.cliente en Stripe (prueba y real) y la variable EXPO_PUBLIC_APPLE_PAY_COMERCIO en la compilación de producción. EE. UU.
+- [x] (H5) HECHO 31 oct: Divoox compilación 10 y Driver 4 aceptadas por Apple y en TestFlight (todos los arreglos y Apple Pay); se mandan a la tienda cuando Apple apruebe la versión en revisión. Próxima versión de iPhone (1.0.1) en TestFlight con todo lo acumulado, sin tocar las revisiones en curso; lista para mandar cuando Apple apruebe la 1.0. EE. UU.
+
+## Apps de iPhone (membresía de Apple activa el 30 oct 2026; llave de API guardada en ~/.config/tumbite/apple-asc)
+
+- [x] (I1) Asociar en el portal de Apple el identificador de Apple Pay (merchant.com.tumbite.cliente) a la app del cliente y encender notificaciones en Driver y Restaurante. EE. UU.
+- [x] (I2) Compilar las tres apps de iPhone con EAS (cliente, Driver y Restaurante). EE. UU.
+- [x] (I3) Crear las tres apps en App Store Connect (Divoox 6829108108, Driver 6829108327, Restaurants 6829108322) y subir las compilaciones a TestFlight (subidas el 30 oct). EE. UU.
+- [x] (I5) Llave de notificaciones de Apple (APNs): crearla en el portal de Apple y cargarla en EAS para las tres apps, sin contraseña. EE. UU.
+- [x] (I4) Fichas de la App Store en inglés y español con capturas reales (10, 7 y 4 + iPad), categoría, edad, copyright, precio gratis, solo EE. UU. y cuentas de revisión. EE. UU.
+- [x] (I6) Privacidad de la app publicada en las tres apps (todo vinculado al usuario, nada de seguimiento) y derechos de contenido declarados. Restaurants con su compilación adjunta y ENVIADA a revisión de Apple (30 oct, a2d030b). EE. UU.
+- [x] (I7, 31 oct 00:20: Divoox compilación 8 y Driver compilación 3, con el arreglo 5ef2786, adjuntas y «esperando revisión» en Apple) Divoox y Driver: Apple rechazó sus compilaciones por falta del texto del sensor de movimiento (C-IOS-TEXTOS-PERMISO, 5635d7b); se compilan otra vez y, al quedar procesadas, se adjuntan y se envían a revisión con scripts/tiendas/enviar-revision-ios.mjs. EE. UU.
+
+## Divoox Flex como Amazon Flex (bloque real de Richard, 30 oct 2026; ficha docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md)
+
+- [x] (F1) Color propio de logística en MARCA y en toda pantalla de Flex y Envíos (Driver, cliente y panel de empresa), distinto de comida. Todos los países.
+- [x] (F2) Al entrar a Envíos, elegir entre «De A a B» y «Bloque de logística», los dos con el color de logística. Todos los países.
+- [x] (F3) «Mi ruta» con tres pestañas: Lista (hora de entrega, check verde, próxima parada), Mapa (filtros Todos, Apartamentos, Prioridad) y Resumen (barras y Pendientes, Correcto, Problemas). Todos los países.
+- [x] (F4) Iniciar viaje con elección de app de mapas (Apple Maps o Google Maps) y botón «Ya estacioné». Todos los países.
+- [x] (F5) Geocerca de entrega: no deja terminar fuera del área, con el círculo en el mapa y un mensaje claro; salida por soporte. Todos los países.
+- [x] (F5b) Dibujar en el mapa de la parada el círculo del área de entrega (200 m), como Amazon Flex. Todos los países.
+- [x] (F6) «¿Dónde dejaste el paquete?» con cinco opciones, revisión de la foto con aviso, «Volver a tomar» y «Deslizar para finalizar». Todos los países.
+- [x] (F7) Tarjeta de la parada con la foto de la entrega anterior en esa dirección. Todos los países.
+- [!] (decide Richard: proveedor de IA para traducir, su clave y su tope de gasto; el proyecto no tiene ninguno) (F7b) Instrucciones del cliente traducidas automáticamente con «Ver original», como Amazon Flex. Todos los países.
+
 ## Lanzamiento en producción controlada (directiva del 30 oct 2026, plan en docs/PLAN-LANZAMIENTO-PILOTO.md)
 
 - [x] (P1) Lista de participantes del piloto en el superadmin (cliente, restaurante, repartidor, empresa), con registro de cambios. Todos los países.
@@ -148,3 +178,7 @@
 - 30 oct 2026, 14:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace tres horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard (Rewards Fase 3 espera su orden; la rama fase-rewards-2 sigue solo en pruebas). Producción (divoox.com) muestra el último commit (bb587af). No se tocó código.
 - 30 oct 2026, 16:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra el último commit publicado (bb587af; los posteriores son [skip ci]). No se tocó código.
 - 30 oct 2026, 18:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Pruebas y producción (divoox.com) muestran el último commit publicado (3c39b7d; los posteriores son solo documentos). No se tocó código.
+- 31 oct 2026, 00:20 (tarea programada): otra sesión compiló Divoox y Driver para iPhone con el arreglo del sensor de movimiento; esta tarea esperó a que Apple las procesara, adjuntó la de Driver y envió las dos a revisión. Las tres apps de iPhone quedan en revisión de Apple. Lo demás de la fila es de Richard. EE. UU.
+- 31 oct 2026, 02:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas, en la rama fase-repaso-1). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 3c39b7d y pruebas 2d6fd27 (los commits posteriores son [skip ci]). La rama fase-repaso-1 lleva arreglos de iPhone todavía sin fusionar a main; se deja a la sesión que la trabaja. No se tocó código.
+- 31 oct 2026, 04:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.
+- 31 oct 2026, 06:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.

@@ -28,6 +28,7 @@ import {
   MAX_FILAS_MENU,
   leerPlanillaMenu,
   calificacionPublica,
+  paisDelCodigoZona,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -79,6 +80,8 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
     regalosPb: Number(f.regalos_pb),
     // C-MONEDA-RECORRIDO: la moneda de su zona (precios del menú y del carrito en esa unidad menor).
     moneda: String(f.zona_moneda ?? 'USD'),
+    // C-DISTANCIA-POR-PAIS: el país del servicio decide millas o kilómetros en las apps.
+    pais: (f.zona_pais as string | null) ?? paisDelCodigoZona(f.zona_id as string | null),
   };
 }
 
@@ -181,10 +184,11 @@ export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<Fi
     )
   ).sort((a, b) => Number(a.dia) - Number(b.dia) || a.abre.localeCompare(b.abre));
   const { results: zonas } = await db
-    .prepare('SELECT id, zona_horaria, moneda FROM zonas')
-    .all<{ id: string; zona_horaria: string; moneda: string | null }>();
+    .prepare('SELECT id, zona_horaria, moneda, pais FROM zonas')
+    .all<{ id: string; zona_horaria: string; moneda: string | null; pais: string | null }>();
   const tz = new Map(zonas.map((z) => [z.id, z.zona_horaria]));
   const monedas = new Map(zonas.map((z) => [z.id, z.moneda || 'USD']));
+  const paises = new Map(zonas.map((z) => [z.id, z.pais]));
   return filas.map((f) => ({
     ...f,
     horarios: turnos
@@ -192,6 +196,7 @@ export async function conHorarios(db: D1Database, filas: FilaRest[]): Promise<Fi
       .map((t) => ({ dia: Number(t.dia), abre: t.abre, cierra: t.cierra })),
     zona_horaria: tz.get(String(f.zona_id)) ?? 'America/New_York',
     zona_moneda: monedas.get(String(f.zona_id)) ?? 'USD',
+    zona_pais: paises.get(String(f.zona_id)) ?? null,
     cierres: cierres.filter((x) => x.restaurante_id === String(f.id)).map((x) => x.fecha),
   }));
 }

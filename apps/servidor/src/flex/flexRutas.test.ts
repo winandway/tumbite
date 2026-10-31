@@ -1205,3 +1205,94 @@ describe('Flex · etiqueta con ruta y parada', () => {
     expect(JSON.stringify(et)).not.toContain('telefono');
   });
 });
+
+// C-FLEX-GEOCERCA (30 oct 2026, como «Fuera de área de entrega» de Amazon Flex).
+describe('Flex · geocerca de entrega (C-FLEX-GEOCERCA)', () => {
+  it('lejos de la dirección no deja entregar; en la puerta sí', async () => {
+    const m = mundo();
+    const { cond, C, paradas } = await rutaEnCurso(m, 1, 1);
+    const p = paradas[0];
+    const foto = await subir(m, `${C}/paradas/${p.id}/prueba`, cond.token);
+    const env = await m.DB.prepare(
+      'SELECT e.lat, e.lng FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id WHERE rp.id = ?',
+    )
+      .bind(p.id)
+      .first<{ lat: number; lng: number }>();
+    const lejos = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lat: env!.lat + 0.03, lng: env!.lng },
+      cond.token,
+    );
+    expect(lejos.estado).toBe(409);
+    expect(lejos.datos.campo).toBe('ubicacion');
+    const cerca = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lat: env!.lat + 0.0005, lng: env!.lng },
+      cond.token,
+    );
+    expect(cerca.estado).toBe(200);
+  });
+});
+
+// C-FLEX-LUGAR (30 oct 2026, como «¿Dónde está dejando los paquetes?» de Amazon Flex).
+describe('Flex · dónde quedó el paquete (C-FLEX-LUGAR)', () => {
+  it('se guarda una de las cinco opciones; otra cosa se rechaza', async () => {
+    const m = mundo();
+    const { cond, C, paradas } = await rutaEnCurso(m, 1, 1);
+    const p = paradas[0];
+    const foto = await subir(m, `${C}/paradas/${p.id}/prueba`, cond.token);
+    const mal = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lugar: 'tejado' },
+      cond.token,
+    );
+    expect(mal.estado).toBe(400);
+    const ok = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lugar: 'recepcion' },
+      cond.token,
+    );
+    expect(ok.estado).toBe(200);
+    const ev = await m.DB.prepare(
+      "SELECT metadatos_json FROM paquete_eventos WHERE tipo = 'entregado' ORDER BY rowid DESC LIMIT 1",
+    ).first<{ metadatos_json: string }>();
+    expect(JSON.parse(ev!.metadatos_json).lugar).toBe('recepcion');
+  });
+});
+
+// C-FLEX-FOTO-ANTERIOR (30 oct 2026, como Amazon Flex): la foto de una entrega anterior en esa puerta.
+describe('Flex · foto de la entrega anterior (C-FLEX-FOTO-ANTERIOR)', () => {
+  it('en la misma dirección muestra la foto de la entrega anterior; sin entrega previa, nada', async () => {
+    const m = mundo();
+    const { cond, C, paradas } = await rutaEnCurso(m, 2, 1);
+    const [a, b] = [paradas[0], paradas[1]];
+    const sin = await m.llamar('GET', `${C}/paradas/${b.id}/foto-anterior`, undefined, cond.token);
+    expect(sin.estado).toBe(404);
+    // Las dos paradas van a la misma puerta.
+    await m.DB.prepare(
+      `UPDATE envios SET direccion = (SELECT e2.direccion FROM ruta_paradas r2 JOIN envios e2 ON e2.id = r2.envio_id WHERE r2.id = ?)
+        WHERE id = (SELECT envio_id FROM ruta_paradas WHERE id = ?)`,
+    )
+      .bind(a.id, b.id)
+      .run();
+    const foto = await subir(m, `${C}/paradas/${a.id}/prueba`, cond.token);
+    const ok = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${a.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lugar: 'puerta' },
+      cond.token,
+    );
+    expect(ok.estado).toBe(200);
+    const con = await m.llamar('GET', `${C}/paradas/${b.id}/foto-anterior`, undefined, cond.token);
+    expect(con.estado).toBe(200);
+  });
+});

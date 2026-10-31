@@ -1,4 +1,4 @@
-import type { Idioma } from '@tumbite/compartido';
+import { type Idioma, textoDistancia } from '@tumbite/compartido';
 
 const es = {
   cerca: 'Restaurantes cerca de ti',
@@ -25,7 +25,8 @@ const es = {
   propinaNota: 'El 100 % de la propina es para quien te lleva el pedido.',
   total: 'Total',
   direccion: 'Dirección de entrega',
-  direccionAyuda: 'Calle y número',
+  direccionCampo: 'Calle y número',
+  direccionAyuda: 'Busca tu dirección',
   apto: 'Apto, piso o edificio (opcional)',
   aptoAyuda: 'Ej.: Apto 4B, piso 3, Torre Norte',
   mapaAyuda: 'Toca el mapa o arrastra el pin hasta tu puerta.',
@@ -79,7 +80,8 @@ const en: T = {
   propinaNota: 'Your driver keeps 100% of the tip.',
   total: 'Total',
   direccion: 'Delivery address',
-  direccionAyuda: 'Street and number',
+  direccionCampo: 'Street address',
+  direccionAyuda: 'Search for your address',
   apto: 'Apt, suite or floor (optional)',
   aptoAyuda: 'E.g. Apt 4B, Floor 3, North Tower',
   mapaAyuda: 'Tap the map or drag the pin to your door.',
@@ -107,7 +109,7 @@ const en: T = {
 
 export const TEXTOS: Record<Idioma, T> = { es, en };
 
-/** En inglés de EE.UU. la distancia va en millas. */
-export function distanciaTexto(km: number, idioma: Idioma): string {
-  return idioma === 'en' ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`;
+/** C-DISTANCIA-POR-PAIS: millas o kilómetros según el país del servicio, no el idioma. */
+export function distanciaTexto(km: number, idioma: Idioma, pais?: string | null): string {
+  return textoDistancia(km, idioma, pais);
 }

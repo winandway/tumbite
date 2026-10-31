@@ -699,6 +699,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
   ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
+  [
+    'No hay una entrega anterior en esta dirección.',
+    'There’s no earlier delivery at this address.',
+  ],
   ['Esa entrega no es tuya o no existe.', 'That delivery isn’t yours or doesn’t exist.'],
   ['Ya pediste revisar esa entrega.', 'You already asked us to review that delivery.'],
   [
@@ -1427,6 +1431,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Estás fuera del área de entrega \(a (\d+) m\)\. Acércate a la dirección para entregar o escribe a soporte\.$/,
+    (m) =>
+      `You’re outside the delivery area (${m[1]} m away). Get closer to the address to deliver, or message support.`,
+  ],
   [
     /^En el piloto cada pedido puede ser de hasta \$([\d.]+)\.$/,
     (m) => `In the pilot each order can be up to $${m[1]}.`,

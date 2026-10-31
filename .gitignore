@@ -58,3 +58,6 @@ node_modules
 
 # Fábrica: freno manual
 .fabrica-pausa
+
+# Documentos para Richard con cuentas o datos privados (31 oct 2026): nunca al repositorio público
+privado/

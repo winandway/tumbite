@@ -30,16 +30,17 @@ describe('permisos de las apps para las tiendas', () => {
         // Solo el repartidor pide «Siempre» (GPS en segundo plano, punto 23) y lo explica con sus palabras.
         if (app === 'repartidor') {
           const op = loc[1] as Record<string, unknown>;
-          expect(op).toMatchObject({ motionUsagePermission: false });
           expect(String(op.locationAlwaysAndWhenInUsePermission)).toMatch(/Divoox/);
           expect(String(op.locationAlwaysPermission)).toMatch(/Divoox/);
         } else {
           expect(loc[1]).toMatchObject({
             locationAlwaysPermission: false,
             locationAlwaysAndWhenInUsePermission: false,
-            motionUsagePermission: false,
           });
         }
+        // C-IOS-TEXTOS-PERMISO: el sensor de movimiento NO va en false (Apple rechaza con el error
+        // 90683); lleva un texto propio de Divoox, nunca el genérico.
+        expect(String((loc[1] as Record<string, unknown>).motionUsagePermission)).toMatch(/Divoox/);
       }
       expect(JSON.stringify(e)).not.toContain('$(PRODUCT_NAME)');
     }

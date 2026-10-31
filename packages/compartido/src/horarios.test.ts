@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { abiertoPorHorario, esHora, proximaApertura, textoApertura } from './horarios';
+import {
+  abiertoPorHorario,
+  esHora,
+  proximaApertura,
+  textoApertura,
+  textoNoDisponible,
+} from './horarios';
 
 // Miércoles 14 oct 2026, 3:00 p. m. en Miami (19:00 UTC). Miércoles = día 3.
 const miercoles3pm = new Date('2026-10-14T19:00:00Z');
@@ -46,5 +52,25 @@ describe('horarios del restaurante (C-HORARIOS)', () => {
     expect(esHora('09:30')).toBe(true);
     expect(esHora('24:00')).toBe(false);
     expect(esHora('9:30')).toBe(false);
+  });
+});
+
+describe('restaurante que no recibe (C-NO-RECIBE-AHORA)', () => {
+  const todoElDia = [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: '00:00', cierra: '23:59' }));
+  // Sábado 31 oct 2026, 8:06 a. m. en Detroit.
+  const manana = new Date('2026-10-31T12:06:00Z');
+  it('en horario pero sin recibir: no inventa la próxima apertura', () => {
+    const r = { abierto: true, horarios: todoElDia, zonaHoraria: 'America/Detroit' };
+    expect(textoNoDisponible(r, 'es', manana)).toBe('No recibe pedidos ahora');
+    expect(textoNoDisponible(r, 'en', manana)).toBe('Not taking orders right now');
+  });
+  it('fuera de horario: dice cuándo abre', () => {
+    const tarde = [{ dia: 6, abre: '18:00', cierra: '22:00' }];
+    const r = { abierto: true, horarios: tarde, zonaHoraria: 'America/Detroit' };
+    expect(textoNoDisponible(r, 'es', manana)).toMatch(/^Abre hoy a las/);
+  });
+  it('cerrado a mano o sin horario: el «Cerrado» de siempre', () => {
+    expect(textoNoDisponible({ abierto: false, horarios: todoElDia }, 'es', manana)).toBeNull();
+    expect(textoNoDisponible({ abierto: true, horarios: [] }, 'es', manana)).toBeNull();
   });
 });

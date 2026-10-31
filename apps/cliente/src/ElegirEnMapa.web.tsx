@@ -16,6 +16,7 @@ export function ElegirEnMapa({
   punto: Punto | null;
   cambiarPunto: (p: Punto) => void;
   cambiarDireccion: (direccion: string) => void;
+  direccionVacia?: boolean;
   textos: { ayuda: string; buscando: string; pin: string };
 }) {
   const caja = useRef<HTMLDivElement>(null);

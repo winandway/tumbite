@@ -89,7 +89,8 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
   const cond = await cuenta('repartidor', 'Conductor Carro');
   const c = cond.usuario.id;
   const v = `veh-carro-${id}`;
-  sql(`UPDATE repartidores SET conectado = 0`);
+  // C-RECORRIDO-NO-PISA: solo Miami, donde corre; no desconecta a quien prueba en otra ciudad.
+  sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI'`);
   sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'carro'`);
   sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 1, ${ORIGEN.lat}, ${ORIGEN.lng}, datetime('now'), 'US-FL-MIAMI')
        ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);

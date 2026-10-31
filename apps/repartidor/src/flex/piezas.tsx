@@ -1,5 +1,13 @@
-import type { ReactNode } from 'react';
-import { Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type ReactNode, useMemo, useState } from 'react';
+import {
+  Animated,
+  PanResponder,
+  Pressable,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { C, e } from '@tumbite/movil';
 
 /**
@@ -20,7 +28,7 @@ export const tarjeta: StyleProp<ViewStyle> = [
 
 type Tono = 'activo' | 'exito' | 'neutro' | 'problema';
 const TONOS: Record<Tono, { fondo: string; texto: string }> = {
-  activo: { fondo: C.primario, texto: '#FFFFFF' },
+  activo: { fondo: C.logistica, texto: '#FFFFFF' },
   exito: { fondo: '#E6F3EB', texto: C.exito },
   neutro: { fondo: SUAVE, texto: GRIS },
   problema: { fondo: '#FDECEE', texto: C.acento },
@@ -106,7 +114,7 @@ export function Pestanas<T extends string>({
               paddingVertical: 9,
               paddingHorizontal: 4,
               borderRadius: 9,
-              backgroundColor: si ? C.primario : 'transparent',
+              backgroundColor: si ? C.logistica : 'transparent',
             }}
           >
             <Text
@@ -174,7 +182,7 @@ export function Numero({
     tono === 'hecho'
       ? C.exito
       : tono === 'actual'
-        ? C.primario
+        ? C.logistica
         : tono === 'fallida'
           ? C.acento
           : '#8E9198';
@@ -326,6 +334,81 @@ export function Banner({
         <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>{titulo}</Text>
         {ayuda ? <Text style={{ color: GRIS }}>{ayuda}</Text> : null}
       </View>
+    </View>
+  );
+}
+
+/**
+ * C-FLEX-DESLIZAR (como «Deslice para finalizar» de Amazon Flex): terminar una entrega exige
+ * deslizar, no un toque, para no cerrarla por error. Con lector de pantalla, la acción «activar».
+ */
+export function Deslizar({ texto, alTerminar }: { texto: string; alTerminar: () => void }) {
+  const [ancho, setAncho] = useState(0);
+  const x = useMemo(() => new Animated.Value(0), []);
+  const BOLA = 52;
+  const tope = Math.max(0, ancho - BOLA - 8);
+  const gesto = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4,
+        onPanResponderMove: (_e, g) => x.setValue(Math.min(Math.max(0, g.dx), tope)),
+        onPanResponderRelease: (_e, g) => {
+          if (g.dx >= tope * 0.85)
+            Animated.timing(x, {
+              toValue: tope,
+              duration: 120,
+              useNativeDriver: false,
+            }).start(() => {
+              alTerminar();
+              x.setValue(0);
+            });
+          else Animated.spring(x, { toValue: 0, useNativeDriver: false }).start();
+        },
+      }),
+    [x, tope, alTerminar],
+  );
+  return (
+    <View
+      onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={texto}
+      accessibilityActions={[{ name: 'activate' }]}
+      onAccessibilityAction={() => alTerminar()}
+      style={{
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: C.logisticaAccion,
+        justifyContent: 'center',
+        padding: 4,
+      }}
+    >
+      <Text
+        style={{
+          position: 'absolute',
+          alignSelf: 'center',
+          color: C.logisticaTexto,
+          fontWeight: '800',
+          fontSize: 16,
+        }}
+      >
+        {texto}
+      </Text>
+      <Animated.View
+        {...gesto.panHandlers}
+        testID="deslizar-bola"
+        style={{
+          width: BOLA,
+          height: BOLA,
+          borderRadius: BOLA / 2,
+          backgroundColor: C.logistica,
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ translateX: x }],
+        }}
+      >
+        <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18 }}>›››</Text>
+      </Animated.View>
     </View>
   );
 }

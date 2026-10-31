@@ -21,6 +21,7 @@ import {
   leerCodigoEscaneado,
   pruebasFaltantes,
   validarCobro,
+  distanciaKm,
 } from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
@@ -50,7 +51,13 @@ import { traducirError, volverABorrador } from './rutasEmpresa';
  * puede actuar como conductor. Cada acción lleva Idempotency-Key (la cola sin conexión la repite
  * sin duplicar nada).
  */
+/** C-FLEX-LUGAR: dónde quedó el paquete (las cinco opciones de Amazon Flex). */
+export const LUGARES_ENTREGA = ['destinatario', 'recepcion', 'puerta', 'buzon', 'otro'] as const;
+
 export const flexConductor = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+/** C-FLEX-GEOCERCA: distancia máxima entre el celular y la dirección para poder entregar. */
+export const RADIO_ENTREGA_M = 200;
 
 const punto = {
   lat: z.number().min(-90).max(90).nullable().optional(),
@@ -78,6 +85,8 @@ const esquemaEntrega = z.object({
   cobro: esquemaCobroEntrega.nullable().optional(),
   recibioDocumento: z.string().trim().max(20).default(''),
   recibioRelacion: z.string().trim().max(40).default(''),
+  // C-FLEX-LUGAR (como Amazon Flex): dónde quedó el paquete.
+  lugar: z.enum(LUGARES_ENTREGA).nullable().optional(),
   ...punto,
 });
 const esquemaIncidencia = z.object({
@@ -508,7 +517,7 @@ async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
   const f = await db
     .prepare(
       `SELECT rp.id, rp.envio_id, rp.estado, e.config_entrega_json AS envio_cfg, em.config_entrega_json AS empresa_cfg,
-         em.pais, e.cobro_monto, e.cobro_moneda, e.cobro_estado
+         em.pais, e.cobro_monto, e.cobro_moneda, e.cobro_estado, e.lat AS destino_lat, e.lng AS destino_lng
          FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id JOIN empresas em ON em.id = e.empresa_id
         WHERE rp.id = ? AND rp.ruta_id = ?`,
     )
@@ -517,6 +526,8 @@ async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
       id: string;
       envio_id: string;
       estado: string;
+      destino_lat: number | null;
+      destino_lng: number | null;
       envio_cfg: string | null;
       empresa_cfg: string | null;
       pais: string | null;
@@ -726,6 +737,37 @@ async function verificarPin(
  * Entregar los paquetes de una parada. Exige las pruebas que pide la empresa (o el envío): foto,
  * PIN, firma o «sin contacto» si se permite. Sin ellas no hay entrega. Repetir no duplica nada.
  */
+/**
+ * C-FLEX-FOTO-ANTERIOR (como Amazon Flex): la foto de la última entrega en esa misma dirección, de
+ * la misma empresa, para que el conductor reconozca la puerta. Solo durante su ruta en curso.
+ */
+flexConductor.get('/conductor/rutas/:rutaId/paradas/:paradaId/foto-anterior', async (c) => {
+  const u = conductor(c);
+  const db = base(c);
+  const r = await miRuta(db, u, c.req.param('rutaId'), ['en_curso']);
+  const f = await db
+    .prepare(
+      `SELECT p.clave FROM ruta_paradas actual
+         JOIN envios ea ON ea.id = actual.envio_id
+         JOIN envios e ON e.empresa_id = ea.empresa_id
+                      AND lower(trim(e.direccion)) = lower(trim(ea.direccion)) AND e.id <> ea.id
+         JOIN ruta_paradas rp ON rp.envio_id = e.id
+         JOIN flex_pruebas p ON p.parada_id = rp.id AND p.tipo = 'foto' AND p.purgada_en IS NULL
+        WHERE actual.id = ? AND actual.ruta_id = ? AND rp.estado = 'entregada'
+        ORDER BY p.creado_en DESC LIMIT 1`,
+    )
+    .bind(c.req.param('paradaId'), r.id)
+    .first<{ clave: string }>();
+  const obj = f && c.env.BUCKET ? await c.env.BUCKET.get(f.clave) : null;
+  if (!obj) throw new ErrorDatos('No hay una entrega anterior en esta dirección.', undefined, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': obj.httpMetadata?.contentType ?? 'image/webp',
+      'cache-control': 'private, no-store',
+    },
+  });
+});
+
 flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async (c) => {
   const u = conductor(c);
   const d = await leerCuerpo(c, esquemaEntrega);
@@ -750,6 +792,20 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
           undefined,
           409,
         );
+      }
+      // C-FLEX-GEOCERCA (como Amazon Flex): con la ubicación del celular, no se entrega lejos de
+      // la dirección. Si hace falta (dirección mal puesta), soporte lo resuelve aparte.
+      if (d.lat != null && d.lng != null && p.destino_lat != null && p.destino_lng != null) {
+        const metros = Math.round(
+          distanciaKm({ lat: d.lat, lng: d.lng }, { lat: p.destino_lat, lng: p.destino_lng }) *
+            1000,
+        );
+        if (metros > RADIO_ENTREGA_M)
+          throw new ErrorDatos(
+            `Estás fuera del área de entrega (a ${metros} m). Acércate a la dirección para entregar o escribe a soporte.`,
+            'ubicacion',
+            409,
+          );
       }
       const config = configEntrega(p.empresa_cfg, p.envio_cfg);
       const sinContacto = d.sinContacto && config.sinContacto;
@@ -788,6 +844,7 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
             }
           : null,
         capturadoEn: d.capturadoEn ?? null,
+        lugar: d.lugar ?? null,
       };
       const sentencias = [
         ...moverPaquetes(db, {

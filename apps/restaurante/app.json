@@ -14,7 +14,8 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "Divoox uses your photos so you can add a photo of each dish to your menu."
+        "NSPhotoLibraryUsageDescription": "Divoox uses your photos so you can add a photo of each dish to your menu.",
+        "NSMotionUsageDescription": "Divoox may use your phone’s motion sensors when you take photos of your dishes."
       }
     },
     "android": {

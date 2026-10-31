@@ -147,6 +147,8 @@ export type Restaurante = {
   regalosPb: number;
   distanciaKm?: number;
   /** C-MONEDA-RECORRIDO: moneda de su zona (USD, COP…). Los precios van en su unidad menor. */
+  /** País del servicio («US», «VE»…): decide millas o kilómetros. */
+  pais?: string | null;
   moneda?: string;
   /**
    * C-CALIFICACION-PUBLICA: promedio de 1 a 5 y número de opiniones de pedidos verificados. Llega

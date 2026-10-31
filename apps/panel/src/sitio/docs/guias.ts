@@ -636,6 +636,7 @@ const es: SeccionDocs[] = [
           'En la loseta del inicio, una etiqueta pequeña dice «Pronto» cuando el servicio viene, «En pausa» si se detuvo un tiempo, o «Actualiza» si tu versión de la app es muy vieja para usarlo. Sin etiqueta, el servicio funciona.',
           'Qué estado tiene cada servicio depende de tu ciudad: un servicio puede estar abierto en una y en construcción en otra. La app lo pregunta cada vez que entras.',
           'Comida: pide a restaurantes de tu ciudad. Moto y Carro: viajes. Envíos: paquetes por la ciudad. Mercado y Farmacia: compras por encargo. Licores: solo para mayores de 21 años, con verificación de edad. Más: lo que venga después.',
+          'Envíos tiene dos caminos, los dos en el color azul de logística: «De A a B», para mandar algo cerca hoy, y «Bloque de logística», para empresas que reparten muchos paquetes con Divoox Flex.',
         ],
         capturas: [
           {
@@ -1914,6 +1915,11 @@ const es: SeccionDocs[] = [
         resumen:
           'Las empresas te asignan u ofrecen rutas de paquetes. Las aceptas, cargas escaneando cada paquete, sigues las paradas en orden, entregas con foto, PIN o firma y devuelves al centro lo que no se pudo entregar.',
         explicacion: [
+          'Todo Divoox Flex va en azul, el color de logística, para que nunca se confunda con un pedido de comida. Durante la ruta tienes cuatro vistas: Mapa (con filtros Todos, Apartamentos y Prioridad), Lista (cada parada entregada dice a qué hora), Línea de ruta y Resumen (lo que te falta, y cuántas paradas van pendientes, correctas o con problemas).',
+          'Para ir a una parada toca «Navegar» y elige tu app de mapas: Apple Maps, Google Maps o Waze. Al llegar, toca «Ya estacioné» y sigue con la entrega.',
+          'Para entregar tienes que estar a menos de 200 metros de la dirección. Si estás más lejos, la app te avisa a cuántos metros estás y no deja terminar. Si la dirección está mal puesta, escríbele a soporte desde la misma parada.',
+          'Al entregar eliges dónde dejaste el paquete: a la persona o alguien del hogar, recepcionista o portero, puerta principal o porche, buzón seguro u otra ubicación segura. Revisa la foto (que se vea el lugar y sin personas) y desliza «Desliza para finalizar»: se termina deslizando, no con un toque, para no cerrarla por error.',
+          'Si ya se entregó antes en esa misma dirección, la parada te muestra la foto de esa entrega («Entrega anterior en esta puerta») para que reconozcas el lugar.',
           'En el menú de Divoox Driver entra a «Mi ruta (paquetes)». Ahí ves las rutas que te asignó una empresa con la que trabajas y las que te ofrecen (con la hora en que vence la oferta). Mientras haces una ruta no recibes otras rutas ni pedidos de comida.',
           'Te avisamos al celular cuando una empresa te ofrece o te asigna una ruta, cuando a tu oferta le quedan pocos minutos, si te la retiran o la cancelan, y cuando te autorizan reintentar una entrega. Toca el aviso y se abre esa ruta directamente.',
           'Al aceptar, ve al centro de la empresa y toca «Llegué al centro». Escanea cada paquete con la cámara (sirven el código QR y el código de barras de la etiqueta) o escribe su código. Si un paquete no está, márcalo como «No está en el centro». Cuando todo está cargado, toca «Salir a la ruta».',
@@ -4174,6 +4180,7 @@ const en: SeccionDocs[] = [
           'On the home tile, a small label says “Soon” when the service is coming, “Paused” if it stopped for a while, or “Update” if your app version is too old to use it. No label means the service works.',
           'Each service’s status depends on your city: a service can be open in one and under construction in another. The app checks every time you open it.',
           'Food: order from restaurants in your city. Moto and Car: rides. Delivery: packages across town. Grocery and Pharmacy: shopping on request. Liquor: ages 21+ only, with age verification. More: whatever comes next.',
+          'Delivery has two paths, both in the blue logistics color: “From A to B”, to send something nearby today, and “Logistics block”, for businesses that deliver many packages with Divoox Flex.',
         ],
         capturas: [
           {
@@ -5434,6 +5441,11 @@ const en: SeccionDocs[] = [
         resumen:
           'Companies assign or offer you package routes. You accept, load by scanning every package, follow the stops in order, deliver with a photo, PIN or signature, and bring back to the hub whatever couldn’t be delivered.',
         explicacion: [
+          'All of Divoox Flex is blue, the logistics color, so it never gets confused with a food order. During the route you have four views: Map (with All, Apartments and Priority filters), List (each delivered stop shows the time), Timeline and Summary (what you have left, and how many stops are pending, done or with problems).',
+          'To get to a stop, tap “Navigate” and pick your maps app: Apple Maps, Google Maps or Waze. When you arrive, tap “I’ve parked” and go on with the delivery.',
+          'To deliver you must be within 200 meters of the address. If you’re farther away, the app tells you how many meters and won’t let you finish. If the address is wrong, message support from the same stop.',
+          'When you deliver, choose where you left the package: with the person or someone at home, receptionist or doorman, front door or porch, secure mailbox, or another safe place. Check the photo (the spot is clear and no people show) and use “Slide to finish”: you finish by sliding, not with a tap, so you don’t close it by mistake.',
+          'If there was an earlier delivery at the same address, the stop shows that delivery’s photo (“Earlier delivery at this door”) so you recognize the place.',
           'In the Divoox Driver menu, open “My route (packages)”. There you see the routes a company you work with assigned to you and the ones offered to you (with the time the offer expires). While doing a route you get no other routes or food orders.',
           'We notify your phone when a company offers or assigns you a route, when your offer is about to expire, if it is withdrawn or canceled, and when you are authorized to retry a delivery. Tap the notification and that route opens directly.',
           'After accepting, go to the company’s hub and tap “I’m at the hub”. Scan every package with the camera (the label’s QR code and barcode both work) or type its code. If a package isn’t there, mark it “Not at the hub”. When everything is loaded, tap “Start the route”.',

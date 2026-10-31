@@ -11,7 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ErrorApi,
@@ -20,8 +20,6 @@ import {
   type Plato,
   type Restaurante,
   descripcion,
-  proximaApertura,
-  textoApertura,
   enIdioma,
   formatearMonto,
   nombrePlato,
@@ -29,6 +27,8 @@ import {
   nombreEtiquetaDieta,
   NOTA_PLATO_MAX,
   gruposActivos,
+  abiertoPorHorario,
+  textoNoDisponible,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -68,6 +68,7 @@ export default function MenuRestaurante() {
   const t = enIdioma(TEXTOS, idioma);
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
+  const bordes = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [datos, setDatos] = useState<{
     restaurante: Restaurante;
@@ -249,7 +250,9 @@ export default function MenuRestaurante() {
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
                 <Text style={{ color: '#fff', fontSize: 14 }}>
-                  {r.distanciaKm != null ? `${distanciaTexto(r.distanciaKm, idioma)} · ` : ''}
+                  {r.distanciaKm != null
+                    ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
+                    : ''}
                   {r.tiempoPrepMin + 10}–{r.tiempoPrepMin + 20} min
                 </Text>
                 <Estado abierto={abierto} texto={abierto ? tc.abierto : tc.cerrado} />
@@ -265,10 +268,12 @@ export default function MenuRestaurante() {
           {error ? <Text style={[e.error, { marginTop: 12 }]}>{error}</Text> : null}
           {r && !abierto ? (
             <Text style={[e.aviso, { marginTop: 12 }]}>
-              {t.cerradoAhora}
-              {r.abierto && r.horarios?.length
-                ? ` ${textoApertura(proximaApertura(r.horarios, r.zonaHoraria ?? 'America/New_York'), idioma)}.`
-                : ''}
+              {/* C-NO-RECIBE-AHORA: en horario pero sin recibir no se inventa la próxima apertura. */}
+              {r.abierto &&
+              r.horarios?.length &&
+              abiertoPorHorario(r.horarios, r.zonaHoraria ?? 'America/New_York')
+                ? `${textoNoDisponible(r, idioma) ?? ''}.`
+                : `${t.cerradoAhora}${textoNoDisponible(r, idioma) ? ` ${textoNoDisponible(r, idioma)}.` : ''}`}
             </Text>
           ) : null}
 
@@ -524,7 +529,8 @@ export default function MenuRestaurante() {
               right: 0,
               bottom: 0,
               paddingHorizontal: 16,
-              paddingBottom: 16,
+              // Por encima de la barra de gestos del teléfono (en Android quedaba debajo).
+              paddingBottom: Math.max(16, bordes.bottom + 8),
               paddingTop: 4,
               backgroundColor: '#fff',
             },

@@ -7,7 +7,13 @@ import type { PropsPago } from './pagoTipos';
 /**
  * Cobro dentro de la app (celular): la hoja de pago de Stripe se abre encima del carrito,
  * sin salir a ninguna página. Las tarjetas guardadas aparecen solas la próxima vez.
+ *
+ * C-PAGO-APPLE-PAY (31 oct 2026, visto por Richard en el iPhone): pedir Apple Pay sin el
+ * identificador de comercio rompe la hoja entera («merchantIdentifier is required») y no se puede
+ * pagar ni con tarjeta. Apple Pay va SOLO si la compilación trae EXPO_PUBLIC_APPLE_PAY_COMERCIO (el
+ * identificador ya dado de alta con su certificado en Stripe); sin eso, tarjeta y Google Pay.
  */
+const COMERCIO_APPLE = process.env.EXPO_PUBLIC_APPLE_PAY_COMERCIO ?? '';
 export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago) {
   const [lista, setLista] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +26,11 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
     const reloj = setTimeout(() => vivo && setError((x) => x || textos.sinFormulario), 20_000);
     void (async () => {
       try {
-        await initStripe({ publishableKey: clavePublica, urlScheme: 'tumbite-cliente' });
+        await initStripe({
+          publishableKey: clavePublica,
+          urlScheme: 'tumbite-cliente',
+          ...(COMERCIO_APPLE ? { merchantIdentifier: COMERCIO_APPLE } : {}),
+        });
         const r = await initPaymentSheet({
           merchantDisplayName: 'Divoox',
           paymentIntentClientSecret: cobro.clientSecret,
@@ -28,9 +38,8 @@ export function PagoTarjeta({ cobro, clavePublica, textos, alPagar }: PropsPago)
           customerSessionClientSecret: cobro.sesionCliente,
           returnURL: 'tumbite-cliente://stripe-redirect',
           allowsDelayedPaymentMethods: false,
-          // Apple Pay y Google Pay dentro de la misma hoja (si el celular los tiene). El de Apple
-          // se activa cuando la app tenga su identificador de comercio (cuenta de Apple de Richard).
-          applePay: { merchantCountryCode: 'US' },
+          // Apple Pay y Google Pay dentro de la misma hoja (si el celular los tiene).
+          ...(COMERCIO_APPLE ? { applePay: { merchantCountryCode: 'US' } } : {}),
           googlePay: { merchantCountryCode: 'US', testEnv: __DEV__, currencyCode: 'USD' },
         });
         if (!vivo) return;

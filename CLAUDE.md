@@ -153,6 +153,7 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - **Archivos maestros:** carpeta `identidad-divoox/` en la raíz (manual de marca en PDF, vectores SVG aprobados, PNG, favicon). Las piezas de la web y las apps se generan SOLO desde esos vectores con `node scripts/marca/generar-identidad.mjs` (nunca a mano, nunca estiradas).
 - Rojo principal `#F20D20` (acento oscuro de apoyo `#C20A1A`), negro principal `#101010`, blanco `#FFFFFF`, gris de apoyo `#666B73`.
 - PROHIBIDO el morado y cualquier otro color de marca. Grises neutros solo para bordes y textos suaves.
+- **Excepción decidida por Richard (30 oct 2026): logística tiene su propio color de servicio** (Flex y Envíos), distinto de comida, para reconocer una captura de un vistazo. Referencia: el azul petróleo oscuro con botones azul claro de Amazon Flex (`docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md`). Vive en `MARCA` como color de servicio; el rojo sigue siendo la marca.
 - Reglas del manual: no deformar, inclinar ni poner sombras o efectos 3D; espacio libre alrededor; en tamaño pequeño, el isotipo. El logo completo para fondo oscuro lleva la X roja: nunca sobre fondo rojo.
 - Íconos de las apps (variantes oficiales): cliente fondo rojo, repartidor fondo negro, restaurante fondo blanco.
 - Estilo de referencia: Uber Eats (titular grande, buscador de dirección con pin, comida grande a la derecha), con PIZZAS, no hamburguesas.
@@ -200,7 +201,7 @@ DESARROLLO → STAGING → PRUEBAS → PRODUCCIÓN. **Toda versión aprobada en 
 
 ## Perímetro
 
-- Carpeta: solo `/Users/windocellc/tumbite`.
+- Carpeta: solo `/Users/windocellc/Divoox` (renombrada el 31 oct 2026; `/Users/windocellc/tumbite` queda como acceso directo a la misma carpeta).
 - GitHub: repositorio `tumbite` de la cuenta conectada en `gh`.
 - YaDominios Cloud: solo el sitio `tumbite`.
 - Stripe: solo la cuenta de Windoce LLC (modo de prueba hasta probar el circuito completo).

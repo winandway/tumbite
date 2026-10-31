@@ -34,6 +34,7 @@ import {
   pruebasFaltantes,
   sePuedeReintentar,
   validarCobro,
+  cumpleFiltro,
 } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 import type { Punto } from '../piezas/mapaWeb';
@@ -43,6 +44,7 @@ import {
   Atras,
   Banner,
   Barra,
+  Deslizar,
   BORDE,
   Caja,
   Camara,
@@ -69,6 +71,7 @@ type Api = {
     extra?: { cabeceras?: Record<string, string> },
   ): Promise<T>;
   subirArchivo<T>(archivo: Blob, ruta: string, cabeceras?: Record<string, string>): Promise<T>;
+  verFoto(ruta: string): Promise<string>;
 };
 
 type Paquete = {
@@ -174,13 +177,27 @@ async function ubicacion(): Promise<{ lat: number; lng: number } | null> {
   }
 }
 
-function navegar(lat: number | null, lng: number | null, direccion: string) {
+function navegar(lat: number | null, lng: number | null, direccion: string, t?: Textos) {
   const destino = lat != null && lng != null ? `${lat},${lng}` : encodeURIComponent(direccion);
-  void Linking.openURL(
-    Platform.OS === 'ios'
-      ? `http://maps.apple.com/?daddr=${destino}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destino}`,
-  );
+  const apps = [
+    ...(Platform.OS === 'ios'
+      ? [{ text: 'Apple Maps', url: `http://maps.apple.com/?daddr=${destino}` }]
+      : []),
+    { text: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${destino}` },
+    {
+      text: 'Waze',
+      url: `https://waze.com/ul?${lat != null && lng != null ? `ll=${destino}` : `q=${destino}`}&navigate=yes`,
+    },
+  ];
+  // C-FLEX-MAPAS (como Amazon Flex): el repartidor elige su app de mapas. En la web, Google Maps.
+  if (!t || Platform.OS === 'web') {
+    void Linking.openURL(apps.find((a) => a.text === 'Google Maps')!.url);
+    return;
+  }
+  Alert.alert(t.elegirMapa, undefined, [
+    ...apps.map((a) => ({ text: a.text, onPress: () => void Linking.openURL(a.url) })),
+    { text: t.cancelar, style: 'cancel' as const },
+  ]);
 }
 
 const fecha = (f: string) => new Date(`${f.replace(' ', 'T')}${f.includes('Z') ? '' : 'Z'}`);
@@ -229,7 +246,10 @@ const resueltas = (r: Ruta) =>
  * entrega con las pruebas que pide la empresa, las incidencias, las devoluciones y el cierre.
  * Lo que se hace sin señal queda en la cola del celular y se manda solo, sin duplicar.
  */
-export function MiRuta({
+/** C-FLEX-GEOCERCA: el mismo radio que exige el servidor. */
+const RADIO_ENTREGA_M = 200;
+
+function MiRutaContenido({
   api,
   idioma,
   abrirRutaId = null,
@@ -249,7 +269,7 @@ export function MiRuta({
   const [ruta, setRuta] = useState<Ruta | null>(null);
   const [paradaId, setParadaId] = useState<string | null>(null);
   const [paqueteVer, setPaqueteVer] = useState<string | null>(null);
-  const [vistaRuta, setVistaRuta] = useState<'mapa' | 'lista' | 'linea'>('mapa');
+  const [vistaRuta, setVistaRuta] = useState<'mapa' | 'lista' | 'linea' | 'resumen'>('mapa');
   const [yo, setYo] = useState<Punto | null>(null);
   const [devoluciones, setDevoluciones] = useState<
     | {
@@ -666,7 +686,7 @@ export function MiRuta({
     return (
       <DetalleParada
         key={parada.id}
-        {...{ t, idioma, ruta, parada, encolar, yo }}
+        {...{ t, idioma, ruta, parada, encolar, yo, api }}
         error={avisoError}
         cola={avisoCola}
         colaLista={cola}
@@ -706,6 +726,7 @@ export function MiRuta({
                 ruta.centro?.lat ?? null,
                 ruta.centro?.lng ?? null,
                 ruta.centro?.direccion ?? '',
+                t,
               )
             }
           />
@@ -723,7 +744,7 @@ export function MiRuta({
       {['ofrecida', 'asignada'].includes(ruta.estado) ? (
         <>
           {ruta.estado === 'ofrecida' && ruta.ofertaVenceEn ? (
-            <Text style={{ color: C.primario, fontWeight: '700' }}>
+            <Text style={{ color: C.logistica, fontWeight: '700' }}>
               {t.venceA}: {hora(ruta.ofertaVenceEn, idioma)}
             </Text>
           ) : null}
@@ -863,6 +884,7 @@ export function MiRuta({
               { id: 'mapa', texto: t.vistas.mapa },
               { id: 'lista', texto: t.vistas.lista },
               { id: 'linea', texto: t.vistas.linea },
+              { id: 'resumen', texto: t.vistas.resumen },
             ]}
             activa={vistaRuta}
             alCambiar={setVistaRuta}
@@ -872,6 +894,8 @@ export function MiRuta({
             <VistaMapa {...{ t, idioma, ruta, siguiente, yo }} abrir={setParadaId} />
           ) : vistaRuta === 'linea' ? (
             <LineaRuta {...{ t, idioma, ruta, siguiente }} abrir={setParadaId} />
+          ) : vistaRuta === 'resumen' ? (
+            <TrabajoRestante t={t} ruta={ruta} />
           ) : (
             ruta.paradas.map((p) => (
               <Pressable
@@ -882,7 +906,7 @@ export function MiRuta({
                 style={[
                   tarjeta,
                   { gap: 6 },
-                  p.id === siguiente?.id && { backgroundColor: RESALTE, borderColor: C.primario },
+                  p.id === siguiente?.id && { backgroundColor: RESALTE, borderColor: C.logistica },
                 ]}
               >
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
@@ -897,6 +921,11 @@ export function MiRuta({
                   </View>
                   <Listo marcado={p.estado === 'entregada'} />
                 </View>
+                {p.estado === 'entregada' && p.resueltaEn ? (
+                  <Text style={{ color: C.exito, fontWeight: '600' }}>
+                    {t.entregadaA(horaLocal(p.resueltaEn, idioma))}
+                  </Text>
+                ) : null}
                 <Text style={{ color: p.estado === 'fallida' ? C.acento : GRIS }}>
                   {t.estadosParada[p.estado] ?? p.estado} · {t.nPaquetes(paquetesActivos(p).length)}
                 </Text>
@@ -909,7 +938,7 @@ export function MiRuta({
                 {p.instrucciones ? <Text style={{ color: GRIS }}>{p.instrucciones}</Text> : null}
                 <Text
                   style={[e.enlaceLinea, { alignSelf: 'flex-start' }]}
-                  onPress={() => navegar(p.lat, p.lng, p.direccion)}
+                  onPress={() => navegar(p.lat, p.lng, p.direccion, t)}
                   accessibilityRole="button"
                 >
                   {t.navegar}
@@ -1057,7 +1086,7 @@ function TarjetaRuta({
         </View>
       ) : null}
       {r.estado === 'ofrecida' && r.ofertaVenceEn ? (
-        <Text style={{ color: C.primario, fontWeight: '700' }}>
+        <Text style={{ color: C.logistica, fontWeight: '700' }}>
           {t.venceA}: {hora(r.ofertaVenceEn, idioma)}
         </Text>
       ) : null}
@@ -1091,7 +1120,7 @@ function TarjetaRuta({
         </View>
       ) : null}
       {enMarcha ? (
-        <Boton texto={`${t.continuar}  →`} alTocar={alAbrir} />
+        <Boton logistica texto={`${t.continuar}  →`} alTocar={alAbrir} />
       ) : (
         <Boton texto={t.verDetalles} secundario alTocar={alAbrir} />
       )}
@@ -1147,12 +1176,33 @@ function VistaMapa({
   yo: Punto | null;
   abrir: (id: string) => void;
 }) {
-  const puntos = puntosDe(ruta, siguiente?.id ?? null, t);
+  // C-FLEX-FILTROS (como Amazon Flex): todas, solo apartamentos o solo las que tienen hora límite.
+  const [filtro, setFiltro] = useState<'todos' | 'apartamentos' | 'prioridad'>('todos');
+  const paradasFiltradas =
+    filtro === 'todos' ? ruta.paradas : ruta.paradas.filter((p) => cumpleFiltro(p, filtro));
+  const puntos = puntosDe({ ...ruta, paradas: paradasFiltradas }, siguiente?.id ?? null, t);
   const distancia = siguiente ? km(yo, coord(siguiente), t, idioma) : null;
   return (
     <>
+      <Pestanas
+        opciones={(['todos', 'apartamentos', 'prioridad'] as const).map((id) => ({
+          id,
+          texto: t.filtrosMapa[id],
+        }))}
+        activa={filtro}
+        alCambiar={setFiltro}
+      />
       {puntos.length ? (
-        <MapaRuta puntos={puntos} yo={yo} etiqueta={t.vistas.mapa} />
+        <MapaRuta
+          puntos={puntos}
+          yo={yo}
+          etiqueta={t.vistas.mapa}
+          area={
+            siguiente && siguiente.lat != null && siguiente.lng != null
+              ? { punto: { lat: siguiente.lat, lng: siguiente.lng }, metros: RADIO_ENTREGA_M }
+              : null
+          }
+        />
       ) : (
         <Text style={{ color: GRIS }}>{t.sinCoordenadasMapa}</Text>
       )}
@@ -1180,7 +1230,7 @@ function VistaMapa({
           </Pressable>
           <Boton
             texto={t.iniciarNavegacion}
-            alTocar={() => navegar(siguiente.lat, siguiente.lng, siguiente.direccion)}
+            alTocar={() => navegar(siguiente.lat, siguiente.lng, siguiente.direccion, t)}
           />
           {distancia ? <Text style={{ color: GRIS, fontSize: 12 }}>{t.distanciaAyuda}</Text> : null}
         </>
@@ -1610,11 +1660,13 @@ function DetalleParada({
   volver,
   irA,
   abrirPaquete,
+  api,
 }: {
   t: Textos;
   idioma: Idioma;
   ruta: Ruta;
   parada: Parada;
+  api: Api;
   encolar: Encolar;
   yo: Punto | null;
   error: React.ReactNode;
@@ -1628,6 +1680,8 @@ function DetalleParada({
   const [pestana, setPestana] = useState<'paquetes' | 'detalles' | 'cliente'>('paquetes');
   const [prueba, setPrueba] = useState<'foto' | 'pin' | 'firma' | 'sinContacto'>('foto');
   const [foto, setFoto] = useState<string | null>(null);
+  // C-FLEX-LUGAR: dónde quedó el paquete (las cinco opciones de Amazon Flex).
+  const [lugar, setLugar] = useState<keyof typeof t.lugares | null>(null);
   const [firma, setFirma] = useState<string | null>(null);
   const [pidiendoFirma, setPidiendoFirma] = useState(false);
   const [pin, setPin] = useState('');
@@ -1652,6 +1706,21 @@ function DetalleParada({
   const [aviso, setAviso] = useState('');
   const [hecha, setHecha] = useState<{ en: Date; foto: boolean; firma: boolean } | null>(null);
   const base = `${B}/${ruta.id}/paradas/${parada.id}`;
+  // C-FLEX-FOTO-ANTERIOR: la foto de la última entrega en esta puerta, si la hay.
+  const [fotoAnterior, setFotoAnterior] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (ruta.estado === 'en_curso')
+      api
+        .verFoto(`${base}/foto-anterior`)
+        .then((f) => {
+          if (vivo) setFotoAnterior(f);
+        })
+        .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, base, ruta.estado]);
   const activos = paquetesActivos(parada);
   const enCamino = parada.paquetes.filter((p) => p.estado === 'en_transito');
   const fallidos = parada.paquetes.filter((p) => p.estado === 'entrega_fallida');
@@ -1698,8 +1767,14 @@ function DetalleParada({
       if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienPaga}.`);
       if (cedula.replace(/[\s.-]/g, '').length < 7) return setAviso(t.faltaCedula);
     }
+    if (!lugar) return setAviso(t.faltaLugar);
     setAviso('');
     const p = await ubicacion();
+    // C-FLEX-GEOCERCA: como Amazon Flex, avisa antes de intentar si está lejos de la dirección.
+    if (p && parada.lat != null && parada.lng != null) {
+      const metros = Math.round(distanciaKm(p, { lat: parada.lat, lng: parada.lng }) * 1000);
+      if (metros > RADIO_ENTREGA_M) return setAviso(t.fueraDeArea(metros));
+    }
     await encolar({
       tipo: 'entrega',
       rutaId: ruta.id,
@@ -1708,6 +1783,7 @@ function DetalleParada({
       cuerpo: {
         sinContacto,
         recibio,
+        lugar,
         ...(pin ? { pin } : {}),
         ...(cobro ? { cobro, recibioDocumento: cedula.trim(), recibioRelacion: relacion } : {}),
         ...(p ?? {}),
@@ -1808,7 +1884,7 @@ function DetalleParada({
         ) : otra ? (
           <Boton texto={t.siguienteParadaBoton} alTocar={() => irA(otra.id)} />
         ) : (
-          <Boton texto={t.volverRuta} alTocar={volver} />
+          <Boton logistica texto={t.volverRuta} alTocar={volver} />
         )}
       </View>
     );
@@ -1912,6 +1988,17 @@ function DetalleParada({
       {pestana === 'detalles' ? (
         <View style={[tarjeta, { gap: 0 }]}>
           <Dato etiqueta={t.direccion} valor={parada.direccion} />
+          {fotoAnterior ? (
+            <View style={{ gap: 4 }} testID="foto-anterior">
+              <Text style={{ color: GRIS, fontWeight: '700' }}>{t.fotoAnterior}</Text>
+              <Image
+                source={{ uri: fotoAnterior }}
+                style={{ width: 140, height: 180, borderRadius: 10 }}
+                resizeMode="cover"
+                accessibilityLabel={t.fotoAnterior}
+              />
+            </View>
+          ) : null}
           {parada.instrucciones ? (
             <Dato etiqueta={t.instrucciones} valor={parada.instrucciones} />
           ) : null}
@@ -1930,7 +2017,7 @@ function DetalleParada({
           <Boton
             texto={t.navegar}
             secundario
-            alTocar={() => navegar(parada.lat, parada.lng, parada.direccion)}
+            alTocar={() => navegar(parada.lat, parada.lng, parada.direccion, t)}
           />
         </View>
       ) : null}
@@ -2028,7 +2115,10 @@ function DetalleParada({
                   </View>
                 </Pressable>
                 {foto ? (
-                  <Text style={{ color: C.exito, fontWeight: '700' }}>{t.fotoLista}</Text>
+                  <>
+                    <Text style={{ color: C.exito, fontWeight: '700' }}>{t.fotoLista}</Text>
+                    <Text style={{ color: GRIS }}>{t.fotoConsejo}</Text>
+                  </>
                 ) : null}
               </View>
             ) : null}
@@ -2158,7 +2248,50 @@ function DetalleParada({
                 {aviso}
               </Text>
             ) : null}
-            <Boton texto={t.marcarEntregado} alTocar={() => void entregar()} />
+            <View style={{ gap: 8 }} testID="donde-lo-dejaste">
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.dondeLoDejaste}</Text>
+              {(Object.keys(t.lugares) as (keyof typeof t.lugares)[]).map((k) => (
+                <Pressable
+                  key={k}
+                  onPress={() => setLugar(k)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: lugar === k }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingVertical: 10,
+                    borderBottomWidth: 1,
+                    borderColor: BORDE,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      borderWidth: 2,
+                      borderColor: lugar === k ? C.logistica : '#8A8A8A',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lugar === k ? (
+                      <View
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 5,
+                          backgroundColor: C.logistica,
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                  <Text style={{ color: C.secundario, fontSize: 15 }}>{t.lugares[k]}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Deslizar texto={t.deslizarFinalizar} alTerminar={() => void entregar()} />
             <Boton
               texto={t.registrarIncidenciaBoton}
               secundario
@@ -2248,7 +2381,7 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
         height: 20,
         borderRadius: cuadrada ? 4 : 10,
         borderWidth: 2,
-        borderColor: marcada ? C.primario : '#8A8A8A',
+        borderColor: marcada ? C.logistica : '#8A8A8A',
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -2259,10 +2392,82 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
             width: 10,
             height: 10,
             borderRadius: cuadrada ? 2 : 5,
-            backgroundColor: C.primario,
+            backgroundColor: C.logistica,
           }}
         />
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * C-COLOR-LOGISTICA: «Mi ruta» lleva arriba la franja de Divoox Flex en el color de logística, para
+ * reconocer de un vistazo una captura de logística frente a una de comida.
+ */
+export function MiRuta(props: Parameters<typeof MiRutaContenido>[0]) {
+  return (
+    <View style={{ flex: 1 }}>
+      <View
+        testID="franja-logistica"
+        style={{ backgroundColor: C.logistica, paddingVertical: 8, paddingHorizontal: 16 }}
+      >
+        <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>DIVOOX FLEX</Text>
+      </View>
+      <MiRutaContenido {...props} />
+    </View>
+  );
+}
+
+/** Hora local corta de una fecha de la base («2026-10-30 18:18:00» en UTC). */
+function horaLocal(f: string, idioma: Idioma) {
+  return new Date(`${f.replace(' ', 'T')}Z`).toLocaleTimeString(
+    idioma === 'en' ? 'en-US' : 'es-US',
+    {
+      hour: 'numeric',
+      minute: '2-digit',
+    },
+  );
+}
+
+/**
+ * C-FLEX-RESUMEN (30 oct 2026, como «Resumen de itinerario» de Amazon Flex): lo que falta con su
+ * barra y las paradas Pendientes, Correcto y Problemas.
+ */
+function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
+  const total = ruta.paradas.length;
+  const correcto = ruta.paradas.filter((p) => p.estado === 'entregada').length;
+  const problemas = ruta.paradas.filter((p) => p.estado === 'fallida').length;
+  const pendientes = total - correcto - problemas;
+  const paquetes = ruta.paradas.flatMap((p) => p.paquetes).filter((q) => !q.excluido);
+  const paquetesHechos = paquetes.filter((q) => q.estado === 'entregado').length;
+  return (
+    <View testID="resumen-ruta" style={[tarjeta, { gap: 12 }]}>
+      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>
+        {t.trabajoRestante}
+      </Text>
+      <Barra
+        valor={total ? (total - pendientes) / total : 0}
+        etiqueta={`${pendientes} ${t.restantes.paradas}`}
+      />
+      <Barra
+        valor={paquetes.length ? paquetesHechos / paquetes.length : 0}
+        etiqueta={`${paquetes.length - paquetesHechos} ${t.restantes.paquetes}`}
+      />
+      {(
+        [
+          [t.estadoParadas.pendientes, pendientes, GRIS],
+          [t.estadoParadas.correcto, correcto, C.exito],
+          [t.estadoParadas.problemas, problemas, problemas ? C.acento : GRIS],
+        ] as const
+      ).map(([nombre, n, color]) => (
+        <View
+          key={nombre}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+        >
+          <Text style={{ fontSize: 16, color: C.secundario }}>{nombre}</Text>
+          <Text style={{ fontSize: 16, fontWeight: '800', color }}>{n}</Text>
+        </View>
+      ))}
     </View>
   );
 }
