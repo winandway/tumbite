@@ -51,6 +51,9 @@ import { traducirError, volverABorrador } from './rutasEmpresa';
  * puede actuar como conductor. Cada acción lleva Idempotency-Key (la cola sin conexión la repite
  * sin duplicar nada).
  */
+/** C-FLEX-LUGAR: dónde quedó el paquete (las cinco opciones de Amazon Flex). */
+export const LUGARES_ENTREGA = ['destinatario', 'recepcion', 'puerta', 'buzon', 'otro'] as const;
+
 export const flexConductor = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 /** C-FLEX-GEOCERCA: distancia máxima entre el celular y la dirección para poder entregar. */
@@ -82,6 +85,8 @@ const esquemaEntrega = z.object({
   cobro: esquemaCobroEntrega.nullable().optional(),
   recibioDocumento: z.string().trim().max(20).default(''),
   recibioRelacion: z.string().trim().max(40).default(''),
+  // C-FLEX-LUGAR (como Amazon Flex): dónde quedó el paquete.
+  lugar: z.enum(LUGARES_ENTREGA).nullable().optional(),
   ...punto,
 });
 const esquemaIncidencia = z.object({
@@ -808,6 +813,7 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
             }
           : null,
         capturadoEn: d.capturadoEn ?? null,
+        lugar: d.lugar ?? null,
       };
       const sentencias = [
         ...moverPaquetes(db, {
