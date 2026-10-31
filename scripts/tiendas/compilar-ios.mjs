@@ -31,6 +31,8 @@ const env = {
   EXPO_ASC_ISSUER_ID: leer('issuer-id'),
   EXPO_APPLE_TEAM_ID: leer('team-id'),
   EXPO_APPLE_TEAM_TYPE: 'COMPANY_OR_ORGANIZATION',
+  // Las capacidades (notificaciones, Apple Pay) ya se configuraron en el portal de Apple.
+  EXPO_NO_CAPABILITY_SYNC: '1',
 };
 for (const app of apps) {
   if (!APPS.includes(app)) {

@@ -15,7 +15,8 @@
         "NSCameraUsageDescription": "Divoox uses the camera to photograph the order when you pick it up and deliver it, and to take a photo of your ID and your face when you verify your identity.",
         "CFBundleAllowMixedLocalizations": true,
         "UIBackgroundModes": ["location"],
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Divoox keeps sending your location while you have an active delivery, even with the screen off, so the customer and the restaurant can see where you are."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Divoox keeps sending your location while you have an active delivery, even with the screen off, so the customer and the restaurant can see where you are.",
+        "NSMotionUsageDescription": "Divoox may use your phone’s motion sensors to turn the map toward the direction you are driving and keep directions accurate."
       },
       "config": {
         "usesNonExemptEncryption": false

@@ -12,7 +12,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Divoox uses your location to show nearby restaurants and to deliver your order.",
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleAllowMixedLocalizations": true
+        "CFBundleAllowMixedLocalizations": true,
+        "NSMotionUsageDescription": "Divoox may use your phone’s motion sensors to turn the map toward the direction you are facing."
       },
       "config": {
         "usesNonExemptEncryption": false

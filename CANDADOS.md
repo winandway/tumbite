@@ -2030,3 +2030,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** como Amazon Flex: `GET …/conductor/rutas/:rutaId/paradas/:paradaId/foto-anterior` devuelve la foto de la última entrega hecha en la misma dirección (misma empresa, parada entregada, foto no purgada), solo durante la ruta en curso del propio conductor; sin entrega previa, 404. En Driver, la tarjeta de la parada la muestra como «Entrega anterior en esta puerta».
 - **Candado:** `flexRutas.test.ts` («en la misma dirección muestra la foto de la entrega anterior; sin entrega previa, nada»).
+
+## C-IOS-TEXTOS-PERMISO (30 oct 2026) — EE. UU. (App Store)
+
+- **Qué se rompió:** las compilaciones de iPhone de Divoox y Divoox Driver «se subieron» bien según Expo, pero nunca aparecieron en App Store Connect. Apple las rechazó al procesarlas con el error 90683: faltaba `NSMotionUsageDescription` (una librería toca el sensor de movimiento aunque la app no lo pida).
+- **Cómo se ve el motivo:** `GET /v1/apps/<id>/buildUploads` con la llave de la API muestra `state.errors` de cada subida (el listado de compilaciones no muestra las rechazadas).
+- **Arreglo:** el texto en `expo.ios.infoPlist` de las tres apps. La prueba `packages/compartido/src/textosPermisosIos.test.ts` se pone en rojo si a una app le falta un texto exigido (comprobada en rojo).
+- **No tocar:** ningún texto de permiso se quita de `app.json` sin comprobar antes en `buildUploads` que Apple acepta la compilación.
