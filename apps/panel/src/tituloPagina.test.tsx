@@ -7,6 +7,10 @@ describe('título de la pestaña en el idioma de la página', () => {
     expect(tituloPagina('', true, 'es')).toBe('Divoox · Comida a domicilio en Miami');
     expect(tituloPagina('Hola', true, 'en')).toBe('Divoox · Food delivery in Miami');
   });
+  it('el panel sin encabezado no se presenta como la portada pública', () => {
+    expect(tituloPagina('', false, 'es', true)).toBe('Panel de tu negocio · Divoox');
+    expect(tituloPagina('', false, 'en', true)).toBe('Business panel · Divoox');
+  });
   it('las demás páginas usan su encabezado', () => {
     expect(tituloPagina('Configuración', false, 'es')).toBe('Configuración · Divoox');
     expect(tituloPagina('Divoox Docs', false, 'en')).toBe('Divoox Docs');

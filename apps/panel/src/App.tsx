@@ -71,6 +71,7 @@ export function App() {
         document.querySelector('main h1, h1')?.textContent ?? '',
         ruta === '/',
         idioma,
+        ruta.startsWith('/panel'),
       ));
     const a = requestAnimationFrame(poner);
     const b = window.setTimeout(poner, 600);
