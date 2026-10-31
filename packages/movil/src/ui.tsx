@@ -136,6 +136,7 @@ export function Boton({
   cargando,
   secundario,
   exito,
+  logistica,
 }: {
   texto: string;
   alTocar: () => void;
@@ -143,6 +144,8 @@ export function Boton({
   secundario?: boolean;
   /** Verde: aceptar, avanzar, terminar bien (regla «lo que sale bien va en verde»). */
   exito?: boolean;
+  /** C-COLOR-LOGISTICA: botón de Flex y Envíos, con el color propio de logística. */
+  logistica?: boolean;
 }) {
   return (
     <Pressable
@@ -154,13 +157,22 @@ export function Boton({
         e.boton,
         secundario && e.botonSecundario,
         exito && !secundario && { backgroundColor: C.exito },
+        logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
         pressed && { opacity: 0.85 },
       ]}
     >
       {cargando ? (
         <ActivityIndicator color="#fff" />
       ) : (
-        <Text style={[e.botonTexto, secundario && { color: C.secundario }]}>{texto}</Text>
+        <Text
+          style={[
+            e.botonTexto,
+            secundario && { color: C.secundario },
+            logistica && !secundario && !exito && { color: C.logisticaTexto },
+          ]}
+        >
+          {texto}
+        </Text>
       )}
     </Pressable>
   );

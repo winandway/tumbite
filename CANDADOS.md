@@ -2010,3 +2010,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** en Driver («Mi nivel»), el repartidor elige una de sus últimas 10 entregas y cuenta qué pasó (10 a 500 letras, el borrador no se pierde). Solo sus propias entregas (si no, 404) y una vez por entrega (409). Soporte la ve en Superadmin → Rewards y la acepta o no (una sola vez: sentencia condicionada a «abierta»). Una entrega con apelación aceptada deja de contar en `unidadesPedidos`.
 - **Candado:** `sombra.test.ts` (apelar, no repetir, aceptar sube el puntaje, la ve como aceptada; entrega ajena 404).
+
+## C-COLOR-LOGISTICA (30 oct 2026) — todos los países
+
+- **Qué es:** decisión de Richard: logística (Flex y Envíos) tiene su propio color, distinto de comida, para reconocer una captura de un vistazo. Tomado del bloque real de Amazon Flex: `MARCA.colores.logistica` #1F4D69 (fondo), `logisticaAccion` #4AA5DC (botones) con texto `logisticaTexto` #0B1F2B, y `logisticaSuave`. Driver «Mi ruta» lleva arriba la franja «DIVOOX FLEX» y sus botones y la parada actual en ese color; el cliente lo ve en Envíos; el panel de empresas (`.flex-panel`) cambia `--primario` a logística.
+- **Candado:** `colorLogistica.test.ts` (distinto del rojo, del acento y del verde; contraste de lectura de 4.5 o más).

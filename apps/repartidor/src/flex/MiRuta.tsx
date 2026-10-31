@@ -229,7 +229,7 @@ const resueltas = (r: Ruta) =>
  * entrega con las pruebas que pide la empresa, las incidencias, las devoluciones y el cierre.
  * Lo que se hace sin señal queda en la cola del celular y se manda solo, sin duplicar.
  */
-export function MiRuta({
+function MiRutaContenido({
   api,
   idioma,
   abrirRutaId = null,
@@ -723,7 +723,7 @@ export function MiRuta({
       {['ofrecida', 'asignada'].includes(ruta.estado) ? (
         <>
           {ruta.estado === 'ofrecida' && ruta.ofertaVenceEn ? (
-            <Text style={{ color: C.primario, fontWeight: '700' }}>
+            <Text style={{ color: C.logistica, fontWeight: '700' }}>
               {t.venceA}: {hora(ruta.ofertaVenceEn, idioma)}
             </Text>
           ) : null}
@@ -882,7 +882,7 @@ export function MiRuta({
                 style={[
                   tarjeta,
                   { gap: 6 },
-                  p.id === siguiente?.id && { backgroundColor: RESALTE, borderColor: C.primario },
+                  p.id === siguiente?.id && { backgroundColor: RESALTE, borderColor: C.logistica },
                 ]}
               >
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
@@ -1057,7 +1057,7 @@ function TarjetaRuta({
         </View>
       ) : null}
       {r.estado === 'ofrecida' && r.ofertaVenceEn ? (
-        <Text style={{ color: C.primario, fontWeight: '700' }}>
+        <Text style={{ color: C.logistica, fontWeight: '700' }}>
           {t.venceA}: {hora(r.ofertaVenceEn, idioma)}
         </Text>
       ) : null}
@@ -1091,7 +1091,7 @@ function TarjetaRuta({
         </View>
       ) : null}
       {enMarcha ? (
-        <Boton texto={`${t.continuar}  →`} alTocar={alAbrir} />
+        <Boton logistica texto={`${t.continuar}  →`} alTocar={alAbrir} />
       ) : (
         <Boton texto={t.verDetalles} secundario alTocar={alAbrir} />
       )}
@@ -1808,7 +1808,7 @@ function DetalleParada({
         ) : otra ? (
           <Boton texto={t.siguienteParadaBoton} alTocar={() => irA(otra.id)} />
         ) : (
-          <Boton texto={t.volverRuta} alTocar={volver} />
+          <Boton logistica texto={t.volverRuta} alTocar={volver} />
         )}
       </View>
     );
@@ -2248,7 +2248,7 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
         height: 20,
         borderRadius: cuadrada ? 4 : 10,
         borderWidth: 2,
-        borderColor: marcada ? C.primario : '#8A8A8A',
+        borderColor: marcada ? C.logistica : '#8A8A8A',
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -2259,10 +2259,28 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
             width: 10,
             height: 10,
             borderRadius: cuadrada ? 2 : 5,
-            backgroundColor: C.primario,
+            backgroundColor: C.logistica,
           }}
         />
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * C-COLOR-LOGISTICA: «Mi ruta» lleva arriba la franja de Divoox Flex en el color de logística, para
+ * reconocer de un vistazo una captura de logística frente a una de comida.
+ */
+export function MiRuta(props: Parameters<typeof MiRutaContenido>[0]) {
+  return (
+    <View style={{ flex: 1 }}>
+      <View
+        testID="franja-logistica"
+        style={{ backgroundColor: C.logistica, paddingVertical: 8, paddingHorizontal: 16 }}
+      >
+        <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>DIVOOX FLEX</Text>
+      </View>
+      <MiRutaContenido {...props} />
     </View>
   );
 }

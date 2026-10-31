@@ -20,7 +20,7 @@ export const tarjeta: StyleProp<ViewStyle> = [
 
 type Tono = 'activo' | 'exito' | 'neutro' | 'problema';
 const TONOS: Record<Tono, { fondo: string; texto: string }> = {
-  activo: { fondo: C.primario, texto: '#FFFFFF' },
+  activo: { fondo: C.logistica, texto: '#FFFFFF' },
   exito: { fondo: '#E6F3EB', texto: C.exito },
   neutro: { fondo: SUAVE, texto: GRIS },
   problema: { fondo: '#FDECEE', texto: C.acento },
@@ -106,7 +106,7 @@ export function Pestanas<T extends string>({
               paddingVertical: 9,
               paddingHorizontal: 4,
               borderRadius: 9,
-              backgroundColor: si ? C.primario : 'transparent',
+              backgroundColor: si ? C.logistica : 'transparent',
             }}
           >
             <Text
@@ -174,7 +174,7 @@ export function Numero({
     tono === 'hecho'
       ? C.exito
       : tono === 'actual'
-        ? C.primario
+        ? C.logistica
         : tono === 'fallida'
           ? C.acento
           : '#8E9198';

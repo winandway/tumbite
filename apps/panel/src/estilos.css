@@ -5231,3 +5231,9 @@ body.modo-tableta .panel-contenido {
   max-width: none;
   font-size: 1.1rem;
 }
+
+/* C-COLOR-LOGISTICA (decisión de Richard, 30 oct 2026): el panel de empresas de Divoox Flex usa el
+   color propio de logística, para distinguirlo de comida de un vistazo. */
+.flex-panel {
+  --primario: #1f4d69;
+}

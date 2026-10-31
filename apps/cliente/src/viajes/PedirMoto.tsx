@@ -356,7 +356,12 @@ export function PedirMoto({
           />
         </>
       ) : (
-        <Boton texto={t.verPrecio} alTocar={() => void cotizar()} cargando={trabajando} />
+        <Boton
+          texto={t.verPrecio}
+          alTocar={() => void cotizar()}
+          cargando={trabajando}
+          logistica={servicio === 'envios'}
+        />
       )}
     </View>
   );

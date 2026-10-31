@@ -14,7 +14,7 @@ export type PuntoRuta = {
 /** Hecho en verde (lo que salió bien va en verde), la parada actual en rojo, el resto en gris. */
 export const COLOR_TONO: Record<TonoPunto, string> = {
   hecho: MARCA.colores.exito,
-  actual: MARCA.colores.primario,
+  actual: MARCA.colores.logistica,
   pendiente: '#8E9198',
   fallida: MARCA.colores.acento,
   centro: MARCA.colores.secundario,
