@@ -33,6 +33,16 @@ export function Mapa({
   const mapa = useRef<MapView>(null);
   const puntos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
   useEffect(() => {
+    // C-MAPA-SIGUE-AL-REPARTIDOR (31 oct 2026): con un solo punto (el repartidor, sin pedido) el mapa
+    // se quedaba donde abrió (Miami) aunque estuviera en Michigan. Ahora va a ese punto.
+    const [solo] = puntos;
+    if (puntos.length === 1 && solo) {
+      mapa.current?.animateToRegion(
+        { latitude: solo.lat, longitude: solo.lng, latitudeDelta: 0.03, longitudeDelta: 0.03 },
+        300,
+      );
+      return;
+    }
     if (puntos.length < 2) return;
     mapa.current?.fitToCoordinates(
       puntos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
