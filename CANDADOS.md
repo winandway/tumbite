@@ -2038,3 +2038,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real:** `expo-location` estaba configurado con `motionUsagePermission: false`, y ese `false` BORRA el texto al generar el proyecto nativo (el primer arreglo, solo en `infoPlist`, dio verde y Apple siguió rechazando la compilación 7 del cliente y la 2 de Driver). Se comprueba con `npx expo config --type introspect` dentro de la app: tiene que salir `NSMotionUsageDescription`.
 - **Arreglo:** el texto en `expo.ios.infoPlist` de las tres apps y en `motionUsagePermission` de `expo-location`. La prueba `packages/compartido/src/textosPermisosIos.test.ts` se pone en rojo si a una app le falta un texto exigido o si un plugin tiene el permiso de movimiento en `false` (las dos comprobadas en rojo).
 - **No tocar:** ningún texto de permiso se quita de `app.json` sin comprobar antes en `buildUploads` que Apple acepta la compilación.
+
+## C-PAGO-APPLE-PAY (31 oct 2026) — EE. UU. (app de iPhone del cliente)
+
+- **Qué se rompió:** en el iPhone, al llegar al pago, la hoja de Stripe no abría y salía en rojo «`merchantIdentifier` is required…». No se podía pagar ni con tarjeta. Lo vio Richard en la compilación 8 (la que Apple revisaba).
+- **Causa real:** `initPaymentSheet` pedía Apple Pay (`applePay`) y `initStripe` no recibía el identificador de comercio de Apple.
+- **Arreglo:** Apple Pay solo se pide si la compilación trae `EXPO_PUBLIC_APPLE_PAY_COMERCIO` (el identificador `merchant.com.tumbite.cliente` ya dado de alta con su certificado de Apple Pay en Stripe); entonces va también a `initStripe`. Sin la variable: tarjeta y Google Pay. Prueba `packages/compartido/src/pagoApplePay.test.ts` (comprobada en rojo).
+- **No tocar:** no se vuelve a poner `applePay` suelto en la hoja. Para encender Apple Pay: certificado en Stripe → variable en `eas.json` → compilar.
