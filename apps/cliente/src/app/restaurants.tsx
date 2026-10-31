@@ -164,7 +164,9 @@ export default function Restaurantes() {
         </Text>
         <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>
           {t.cercaDeTi}
-          {lista ? ` · ${t.abiertosAhora.replace('{n}', String(abiertos))}` : ''}
+          {lista
+            ? ` · ${abiertos === 1 ? t.unoAbierto : t.abiertosAhora.replace('{n}', String(abiertos))}`
+            : ''}
         </Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }} accessibilityRole="radiogroup">
