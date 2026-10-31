@@ -13,7 +13,7 @@
 ## DoorDash Dasher al volver (capturas de Richard, 31 oct 2026; ficha docs/investigaciones-rea/2026-10-31-doordash-dasher-capturas.md)
 
 - [x] (D1) HECHO 31 oct (C-VUELTA-VERIFICA). Verificación obligatoria al volver: si el repartidor lleva 14 días o más sin conectarse, la foto de control se pide siempre (no al azar). Todos los países.
-- [ ] (D2) Prueba de vida en la foto de control: de frente y otra mirando a la derecha, con guía en pantalla; el equipo revisa las dos en el panel. Todos los países.
+- [x] (D2) HECHO 31 oct (C-PRUEBA-DE-VIDA). Prueba de vida en la foto de control: de frente y otra mirando a la derecha, con guía en pantalla; el equipo revisa las dos en el panel. Todos los países.
 - [ ] (D3) Permisos explicados antes de pedirlos en el Driver (ubicación y avisos, cada uno con su porqué, «Estoy listo»). Todos los países.
 - [ ] (D4) Términos actualizados: si cambió la versión de los términos del repartidor, aceptarlos antes de conectarse. Todos los países.
 - [ ] (D5) Mapa del Driver conectado sin ofertas: «Buscando ofertas… Es más probable en las zonas en rojo» y bienvenida «tu nivel no cambió» al volver. Todos los países.
