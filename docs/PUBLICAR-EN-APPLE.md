@@ -65,3 +65,18 @@ carpeta `~/.config/<proyecto>/` (carpeta 700, archivos 600) y nunca entran a un 
 - Apple revisa en uno a tres días y avisa a go@windoce.com.
 - Si la app NO es Expo (nativa, Flutter…), el paso 4 cambia (Xcode o su propia compilación en la nube); el
   resto es igual.
+
+## Probar en un iPhone antes de que la tienda apruebe: enlace público de TestFlight
+
+`node scripts/tiendas/testflight-publico.mjs` crea en cada app el grupo «Prueba pública» con enlace abierto
+(hasta 1000 personas), le pone la última compilación válida y la manda a la revisión de prueba de Apple
+(aparte de la de la tienda; suele tardar menos de un día). Mientras esa revisión no termine, el enlace
+abre pero dice que la prueba no está disponible todavía. Enlaces de Divoox (31 oct 2026):
+
+- Divoox (cliente): https://testflight.apple.com/join/mvQVYtxU
+- Divoox Driver: https://testflight.apple.com/join/T41qAYNU
+- Divoox Restaurants: https://testflight.apple.com/join/MT6VQ7Cs
+
+Quien lo abre en el iPhone instala la app TestFlight de Apple y, desde ahí, la nuestra. Cada compilación
+nueva hay que ponerla en el grupo con el mismo guion. Ojo: en la API el texto «Qué probar» se llama
+`whatsNew`.
