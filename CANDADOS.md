@@ -2066,3 +2066,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué se veía:** en el iPhone en español, en Michigan, la lista de restaurantes y la oferta del repartidor decían «6.4 km». En EE. UU. el estándar (DoorDash, Uber Eats) es millas en cualquier idioma.
 - **Arreglo:** `textoDistancia` / `usaMillas` en `packages/compartido/src/distancia.ts`: la unidad la decide el país del servicio (millas en US y PR, kilómetros en el resto). El servidor manda `pais` con cada restaurante (de la tabla `zonas`) y con cada pedido u oferta del repartidor (del código de la zona). Sin país conocido se mantiene lo de antes (por idioma). Pruebas: `distancia.test.ts`, `catalogo.test.ts`, `operacion.test.ts`.
+
+## C-CARRITO-NO-SE-BORRA-SOLO (31 oct 2026) — todos los países
+
+- **Qué se veía:** en el simulador de iPhone, «Pedir otra vez» abría el carrito lleno y a los pocos segundos quedaba «Tu carrito está vacío», sin tocar nada.
+- **Causa real:** la pantalla del pedido pregunta el seguimiento cada 5 segundos y en cada vuelta vaciaba el carrito si el pedido no estaba en «pago pendiente». Al abrir el carrito encima, la pantalla seguía viva detrás y borraba el carrito nuevo. Le pasaba a cualquiera con un pedido abierto detrás que empezara otro carrito.
+- **Arreglo:** se vacía una sola vez y solo al llegar recién pagado (`?nuevo=1`, que usan el pago en la app, el pago en la web con 3D Secure y el cobro directo). Prueba `packages/compartido/src/carritoNoSeBorra.test.ts` (comprobada en rojo).
