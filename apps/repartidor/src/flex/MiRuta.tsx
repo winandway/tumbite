@@ -71,6 +71,7 @@ type Api = {
     extra?: { cabeceras?: Record<string, string> },
   ): Promise<T>;
   subirArchivo<T>(archivo: Blob, ruta: string, cabeceras?: Record<string, string>): Promise<T>;
+  verFoto(ruta: string): Promise<string>;
 };
 
 type Paquete = {
