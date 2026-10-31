@@ -902,9 +902,9 @@ const es: SeccionDocs[] = [
           '¿Puedo pagar con Apple Pay o Google Pay?',
         ],
         pasos: [
-          'Abre la app de Divoox y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía.',
+          'Abre la app de Divoox y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía. En Estados Unidos la distancia va en millas; en los demás países, en kilómetros.',
           'Toca «Comida» y luego un restaurante. Toca un plato para ver su detalle: elige el tamaño, los extras y la cantidad, y toca «Agregar al carrito».',
-          'Ve al carrito. Escribe tu dirección y toca la sugerencia correcta (o marca el punto en el mapa), y agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
+          'Ve al carrito. Si ya diste tu ubicación, la casilla «Calle y número» se llena sola; si no, escribe tu dirección y toca la sugerencia correcta (o marca el punto en el mapa). Agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
           'Revisa el desglose: comida, envío, servicio y propina. Lo que ves es lo que pagas.',
           'Toca «Continuar al pago». El formulario de la tarjeta aparece ahí mismo, dentro de la app, protegido por Stripe. Al pagar ves «¡Pedido realizado!» con el número y el total; toca «Ver seguimiento» para seguirlo en vivo.',
@@ -1414,6 +1414,7 @@ const es: SeccionDocs[] = [
           'En «Mi restaurante», abajo, está «Horario». Cada día puede tener uno o más turnos (por ejemplo, de 11:00 a 15:00 y de 18:00 a 23:00). Un turno puede terminar después de medianoche.',
           'Con el horario cargado, tu restaurante aparece abierto solo dentro de esos turnos y con el botón de recibir pedidos encendido. Si pausas con el botón, se cierra aunque sea tu horario.',
           'Fuera de horario, en la app el cliente ve «Abre hoy a las 6:00 p. m.» o «Abre mañana a las 11:00 a. m.», y no puede pedir hasta esa hora.',
+          'Si estás dentro de tu horario pero no tienes abierta la app ni el panel (o pausaste los pedidos), el cliente ve «No recibe pedidos ahora». Para recibir, deja abierta la app de Divoox Restaurants o el panel en tu computadora.',
           'Sin horario cargado manda solo el botón: así funcionaba antes. La lista de activación del restaurante va a pedir el horario.',
         ],
         capturas: [
@@ -4446,9 +4447,9 @@ const en: SeccionDocs[] = [
           'Can I pay with Apple Pay or Google Pay?',
         ],
         pasos: [
-          'Open the Divoox app and allow location: you’ll see the restaurants in your area, closest first.',
+          'Open the Divoox app and allow location: you’ll see the restaurants in your area, closest first. In the United States distances are in miles; in other countries, in kilometers.',
           'Tap “Food” and then a restaurant. Tap a dish to see its details: choose the size, the extras, and the quantity, and tap “Add to cart.”',
-          'Go to the cart. Type your address and tap the right suggestion (or mark the spot on the map), and add notes if needed (for example, “ring twice”).',
+          'Go to the cart. If you already shared your location, the “Street address” box fills in by itself; if not, type your address and tap the right suggestion (or mark the spot on the map). Add notes if needed (for example, “ring twice”).',
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',
           'Review the breakdown: food, delivery, service, and tip. What you see is what you pay.',
           'Tap “Continue to payment.” The card form appears right there, inside the app, secured by Stripe. Once you pay, you see “Order placed!” with the number and the total; tap “Track order” to follow it live.',
@@ -4944,6 +4945,7 @@ const en: SeccionDocs[] = [
           'Under “My restaurant,” at the bottom, is “Hours.” Each day can have one or more shifts (for example, 11:00 to 15:00 and 18:00 to 23:00). A shift can end after midnight.',
           'With hours set, your restaurant shows as open only within those shifts and with the take-orders button on. If you pause with the button, you’re closed even during your hours.',
           'Outside your hours, customers see “Opens today at 6:00 PM” or “Opens tomorrow at 11:00 AM” in the app, and can’t order until then.',
+          'If you’re within your hours but don’t have the app or the panel open (or you paused orders), customers see “Not taking orders right now”. To receive orders, keep the Divoox Restaurants app or the panel open on your computer.',
           'Without hours set, only the button applies: that’s how it worked before. The restaurant activation checklist will ask for hours.',
         ],
         capturas: [
