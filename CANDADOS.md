@@ -2084,3 +2084,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** como DoorDash al volver a la app (capturas de Richard), si el repartidor lleva 14 días o más sin conectarse (su última ubicación), la foto de control se pide SIEMPRE antes de conectarse, aparte de la del azar semanal. Evita que otra persona use una cuenta que estaba quieta (alquiler o robo de cuenta).
 - **Sin bucle:** si ya tomó una foto de control en esos 14 días, no se le vuelve a pedir.
 - **Dónde:** `apps/servidor/src/rutas/operacion.ts` (`DIAS_PARA_VERIFICAR_AL_VOLVER`). Prueba en `kyc.test.ts` (comprobada en rojo).
+
+## C-PRUEBA-DE-VIDA (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash («Mira ligeramente a la derecha»), la foto de control son dos fotos: de frente y con la cabeza girada a la derecha. Una foto de una foto o de una pantalla no gira. El equipo ve las dos en el panel (Super › identidad) y marca si coincide. La comparación automática con IA sigue esperando el proveedor que decida Richard (K5).
+- **Servidor:** `POST /datos/kyc/selfie-control?pose=frente` y después `?pose=giro` (guardado como `<clave>-giro`); la foto queda «tomada» al llegar el giro. Sin `pose` funciona como antes (una sola foto) para las versiones de las apps que ya están en revisión. `estado.selfieControlFalta` dice cuál falta.
+- **Prueba:** `kyc.test.ts` (comprobada en rojo).

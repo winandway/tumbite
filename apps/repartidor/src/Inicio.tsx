@@ -154,6 +154,8 @@ type Estado = {
   };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  /** C-PRUEBA-DE-VIDA: cuál de las dos fotos falta. */
+  selfieControlFalta?: 'frente' | 'giro' | null;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
   agrupados?: Pedido[];
 };
@@ -229,6 +231,9 @@ const T = {
       'De vez en cuando, antes de conectarte, te pedimos una foto de tu cara. Nuestro equipo la compara con la de tu registro. De frente y con buena luz.',
     tomarSelfie: 'Tomarme la foto ahora',
     selfieLista: 'Foto enviada. Ya puedes conectarte.',
+    pasoFrente: 'Paso 1 de 2: mira de frente a la cámara.',
+    pasoGiro: 'Paso 2 de 2: gira la cabeza ligeramente a la derecha y toma la foto.',
+    tomarGiro: 'Tomar la foto mirando a la derecha',
     llamandoCliente:
       'Te estamos llamando. Contesta y te conectamos con el cliente; ninguno ve el número del otro.',
     bonoPorque: 'por tomar un pedido que otros dejaron pasar.',
@@ -339,6 +344,9 @@ const T = {
       'Every so often, before you go online, we ask for a photo of your face. Our team compares it with the one on file. Face the camera in good light.',
     tomarSelfie: 'Take my photo now',
     selfieLista: 'Photo sent. You can go online now.',
+    pasoFrente: 'Step 1 of 2: look straight at the camera.',
+    pasoGiro: 'Step 2 of 2: turn your head slightly to the right and take the photo.',
+    tomarGiro: 'Take the photo looking right',
     llamandoCliente:
       'We’re calling you now. Answer and we’ll connect you with the customer; neither of you sees the other’s number.',
     bonoPorque: 'for taking an order others passed on.',
@@ -1070,10 +1078,24 @@ export function Inicio() {
           <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
             {t.selfieControlAyuda}
           </Text>
+          {/* C-PRUEBA-DE-VIDA (como DoorDash): de frente y después mirando a la derecha. */}
+          <Text style={{ fontWeight: '700', marginBottom: 6 }}>
+            {estado.selfieControlFalta === 'giro' ? t.pasoGiro : t.pasoFrente}
+          </Text>
           <Boton
-            texto={subiendo ? t.subiendo : t.tomarSelfie}
+            texto={
+              subiendo
+                ? t.subiendo
+                : estado.selfieControlFalta === 'giro'
+                  ? t.tomarGiro
+                  : t.tomarSelfie
+            }
             alTocar={() =>
-              void tomarFoto('/datos/kyc/selfie-control', true).then(() => setAviso(t.selfieLista))
+              estado.selfieControlFalta === 'giro'
+                ? void tomarFoto('/datos/kyc/selfie-control?pose=giro', true).then(() =>
+                    setAviso(t.selfieLista),
+                  )
+                : void tomarFoto('/datos/kyc/selfie-control?pose=frente', true)
             }
             cargando={subiendo}
           />

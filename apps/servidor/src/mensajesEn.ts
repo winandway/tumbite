@@ -389,6 +389,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t reach the background check service. Try again later.',
   ],
   ['No tienes ninguna foto de control pendiente.', 'You have no identity check photo pending.'],
+  ['Primero toma la foto de frente.', 'Take the photo facing the camera first.'],
   [
     'Este pedido no es una recogida lista para entregar.',
     'This order isn’t a pickup ready to hand over.',

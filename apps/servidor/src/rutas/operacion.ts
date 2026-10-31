@@ -1039,11 +1039,13 @@ operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
   const selfiePendiente = await db
-    .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
+    .prepare('SELECT clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
     .bind(u.id)
-    .first();
+    .first<{ clave: string }>();
   return c.json({
     selfieControlPendiente: Boolean(selfiePendiente),
+    // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
+    selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
     conectado: Number(ficha.conectado) === 1,
     pausado: Number(ficha.pausado ?? 0) === 1,
     tipo: ficha.tipo,

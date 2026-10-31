@@ -122,6 +122,44 @@ describe('KYC (C-KYC)', () => {
 });
 
 describe('identidad continua y antecedentes con Checkr (C-ANTECEDENTES)', () => {
+  it('prueba de vida: foto de frente y después mirando a la derecha; el equipo ve las dos (C-PRUEBA-DE-VIDA)', async () => {
+    const { m, r2 } = conAlmacen({ SELFIE_CONTROL_SIEMPRE: '1' });
+    const rep = await m.cuenta('repartidor', 'Paula Pose');
+    const admin = await m.cuenta('admin');
+    const conectar = () =>
+      m.llamar(
+        'POST',
+        '/datos/repartidor/conectar',
+        { conectado: true, lat: 25.77, lng: -80.19 },
+        rep.token,
+      );
+    const subir = (pose: string) =>
+      m.crudo(`/datos/kyc/selfie-control?pose=${pose}`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${rep.token}`, 'content-type': 'image/jpeg' },
+        body: JPEG,
+      });
+    expect((await conectar()).estado).toBe(409);
+    // El giro sin la de frente no vale.
+    expect((await subir('giro')).status).toBe(409);
+    const frente = await subir('frente');
+    expect(frente.status).toBe(201);
+    // Con solo la de frente sigue pendiente y la app sabe que falta el giro.
+    expect((await conectar()).estado).toBe(409);
+    const estado = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(estado.datos.selfieControlFalta).toBe('giro');
+    expect((await subir('giro')).status).toBe(201);
+    expect((await conectar()).estado).toBe(200);
+    const detalle = await m.llamar('GET', `/datos/admin/kyc/${rep.id}`, undefined, admin.token);
+    const control = detalle.datos.selfiesControl[0];
+    expect(control.conGiro).toBe(true);
+    expect([...r2.datos.keys()].some((k) => k.endsWith('-giro'))).toBe(true);
+    const giro = await m.crudo(`/datos/admin/kyc/${rep.id}/control/${control.id}?pose=giro`, {
+      headers: { authorization: `Bearer ${admin.token}` },
+    });
+    expect(giro.status).toBe(200);
+  });
+
   it('al volver tras 14 días o más sin conectarse, la foto de control se pide siempre (C-VUELTA-VERIFICA)', async () => {
     // «0» = nunca al azar: si se pide, es por la regla de la vuelta (como DoorDash al volver).
     const { m } = conAlmacen({ SELFIE_CONTROL_SIEMPRE: '0' });
