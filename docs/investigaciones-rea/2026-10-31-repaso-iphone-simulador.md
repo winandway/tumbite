@@ -39,3 +39,11 @@ entrega con la ubicación confirmada en la puerta → «¡Pedido entregado!» co
 - **El simulador pierde letras al escribir muy rápido** (más de cien por segundo); una persona no.
 - **Ícono de comida por defecto:** la pizzería sin foto muestra una hamburguesa en el Driver.
 - **El nombre de la app de restaurantes en la pantalla de inicio sale «DivooxRest…»** (sin espacio).
+
+## Android (emulador, mismo día)
+
+Entrar, permisos, inicio, Comida en Michigan («1 abierto ahora», «4.0 mi»), menú, carrito y pago con la
+hoja de Stripe en modo prueba: funciona (pedido 3D21). Arreglado en el mismo trabajo: el aviso de
+borrador ya no lleva franja gruesa, el error de una casilla se va al corregirla y el botón «Ver carrito»
+queda sobre la barra de gestos. Nota: si la app abre antes de que el teléfono tenga ubicación, muestra
+la ciudad inicial hasta volver a abrirla.
