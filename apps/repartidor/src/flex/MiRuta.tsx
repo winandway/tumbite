@@ -244,6 +244,9 @@ const resueltas = (r: Ruta) =>
  * entrega con las pruebas que pide la empresa, las incidencias, las devoluciones y el cierre.
  * Lo que se hace sin señal queda en la cola del celular y se manda solo, sin duplicar.
  */
+/** C-FLEX-GEOCERCA: el mismo radio que exige el servidor. */
+const RADIO_ENTREGA_M = 200;
+
 function MiRutaContenido({
   api,
   idioma,
@@ -1736,6 +1739,11 @@ function DetalleParada({
     }
     setAviso('');
     const p = await ubicacion();
+    // C-FLEX-GEOCERCA: como Amazon Flex, avisa antes de intentar si está lejos de la dirección.
+    if (p && parada.lat != null && parada.lng != null) {
+      const metros = Math.round(distanciaKm(p, { lat: parada.lat, lng: parada.lng }) * 1000);
+      if (metros > RADIO_ENTREGA_M) return setAviso(t.fueraDeArea(metros));
+    }
     await encolar({
       tipo: 'entrega',
       rutaId: ruta.id,

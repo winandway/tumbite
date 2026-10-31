@@ -59,6 +59,8 @@ export const TEXTOS_RUTA = {
     llamar: 'Llamar',
     llegue: 'Ya estacioné',
     elegirMapa: 'Elige la app de mapas',
+    fueraDeArea: (m: number) =>
+      `Estás fuera del área de entrega (a ${m} m). Acércate a la dirección para entregar.`,
     cancelar: 'Cancelar',
     entregar: 'Entregar',
     noEntregado: 'No se pudo entregar',
@@ -296,6 +298,8 @@ export const TEXTOS_RUTA = {
     llamar: 'Call',
     llegue: 'I’ve parked',
     elegirMapa: 'Choose a maps app',
+    fueraDeArea: (m: number) =>
+      `You’re outside the delivery area (${m} m away). Get closer to the address to deliver.`,
     cancelar: 'Cancel',
     entregar: 'Deliver',
     noEntregado: 'Couldn’t deliver',
