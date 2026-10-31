@@ -19,6 +19,13 @@
 | **Más**         | La puerta a todo lo demás               | Sí: todos los servicios en grupos (30 oct) | Encendido        | Apagado                                              | Nada                                                                      |
 | **Divoox Flex** | Logística de paquetes para empresas     | Sí (fases 1 a 6)                           | Encendido        | **Encendido** (recargas apagadas)                    | Nada con dinero real probado                                              |
 
+### Al 30 oct 2026 (noche): lanzamiento en producción controlada
+
+- **Hecho y en producción** (versión 3c39b7d): el piloto (lista de participantes, servicios «solo piloto» por ciudad, topes de dinero) y Divoox Rewards completo (nivel visible, «Mi nivel», ajustes sin publicar, prioridad de despacho por nivel, premio como porcentaje del margen real, pago a la billetera, apelaciones y guía en Docs). Plan: `docs/PLAN-LANZAMIENTO-PILOTO.md`.
+- **Apagado hasta que se encienda:** Rewards necesita la variable `REWARDS_MODO=piloto`; los premios necesitan porcentaje y presupuesto (hoy en cero).
+- **Espera a Richard:** compra real de 1 dólar, precio y seguro de Envíos, lo legal de Moto y Carro, Twilio, Checkr, Apple Pay, cuenta de Apple, activación del prepago por país.
+- **Apps:** Google revisa Divoox y Driver; lo acumulado se sube en una sola versión cuando aprueben.
+
 ## 2. El orden
 
 Cada etapa se cierra antes de abrir la siguiente. Dentro de cada etapa, primero lo que toca dinero y
