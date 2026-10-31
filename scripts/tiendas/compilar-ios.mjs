@@ -3,7 +3,7 @@
 // Connect guardada UNA vez en ~/.config/tumbite/apple-asc/ (AuthKey.p8, key-id, issuer-id, team-id).
 // Ojo: la primera compilación de cada app necesitó responder a mano las preguntas de credenciales
 // de EAS (ya quedaron guardadas en Expo); desde ahora corre sin preguntas.
-// Uso: node scripts/tiendas/compilar-ios.mjs [--solo-enviar] [cliente|repartidor|restaurante ...]
+// Uso: node scripts/tiendas/compilar-ios.mjs [--solo-enviar] [--local] [cliente|repartidor|restaurante ...]
 // --solo-enviar: no compila; envía a App Store Connect la última compilación ya terminada.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -12,7 +12,9 @@ import { join } from 'node:path';
 
 const APPS = ['cliente', 'repartidor', 'restaurante'];
 const soloEnviar = process.argv.includes('--solo-enviar');
-const pedidas = process.argv.slice(2).filter((a) => a !== '--solo-enviar');
+// --local: compila en esta Mac (no gasta compilaciones de la nube de Expo) y envía ese archivo.
+const local = process.argv.includes('--local');
+const pedidas = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const apps = pedidas.length ? pedidas : APPS;
 const dir = join(homedir(), '.config', 'tumbite', 'apple-asc');
 const leer = (f) => readFileSync(join(dir, f), 'utf8').trim();
@@ -53,7 +55,9 @@ for (const app of apps) {
         '--profile',
         'production',
         '--non-interactive',
-        '--wait',
+        ...(local
+          ? ['--local', '--output', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)]
+          : ['--wait']),
       ],
       { cwd: join(process.cwd(), 'apps', app), env, stdio: 'inherit' },
     );
@@ -76,7 +80,7 @@ for (const app of apps) {
         'submit',
         '--platform',
         'ios',
-        '--latest',
+        ...(local ? ['--path', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)] : ['--latest']),
         '--profile',
         'production',
         '--non-interactive',
