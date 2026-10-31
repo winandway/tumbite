@@ -252,11 +252,13 @@ export const e = StyleSheet.create({
   },
   botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D6D6D6' },
   botonTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  // Sin franja gruesa al costado (regla de diseño de Richard, 12 oct 2026): borde fino y esquinas suaves.
   aviso: {
     backgroundColor: '#FFF1EE',
-    borderLeftWidth: 4,
-    borderLeftColor: C.acento,
-    padding: 10,
+    borderWidth: 1,
+    borderColor: '#F3CBC4',
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 12,
   },
   enlace: {

@@ -52,6 +52,12 @@ export function Acceso({
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
+  // El error de una casilla se va en cuanto la persona la corrige (antes quedaba en rojo aunque ya
+  // estuviera bien escrita).
+  const cambiar = (campo: keyof typeof INICIAL, valor: string) => {
+    b.cambiar(campo, valor);
+    setError((e) => (e?.campo === campo ? null : e));
+  };
   const turnstileSitio = useTurnstileSitio(api);
 
   async function enviar() {
@@ -139,7 +145,7 @@ export function Acceso({
         <Campo
           etiqueta={t.nombre}
           value={v.nombre}
-          onChangeText={(x) => b.cambiar('nombre', x)}
+          onChangeText={(x) => cambiar('nombre', x)}
           autoComplete="name"
           placeholder={t.nombre}
           error={errorDe('nombre')}
@@ -148,7 +154,7 @@ export function Acceso({
       <Campo
         etiqueta={t.correo}
         value={v.correo}
-        onChangeText={(x) => b.cambiar('correo', x)}
+        onChangeText={(x) => cambiar('correo', x)}
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
@@ -159,7 +165,7 @@ export function Acceso({
         <Campo
           etiqueta={t.telefono}
           value={v.telefono}
-          onChangeText={(x) => b.cambiar('telefono', x)}
+          onChangeText={(x) => cambiar('telefono', x)}
           keyboardType="phone-pad"
           autoComplete="tel"
           placeholder={t.telefono}
@@ -170,7 +176,7 @@ export function Acceso({
         <Campo
           etiqueta={t.cumple}
           value={v.fechaNacimiento}
-          onChangeText={(x) => b.cambiar('fechaNacimiento', x)}
+          onChangeText={(x) => cambiar('fechaNacimiento', x)}
           placeholder="2000-01-31"
           error={errorDe('fechaNacimiento')}
         />
@@ -178,7 +184,7 @@ export function Acceso({
       <CampoClave
         etiqueta={t.clave}
         valor={v.clave}
-        cambiar={(x) => b.cambiar('clave', x)}
+        cambiar={(x) => cambiar('clave', x)}
         nueva={Boolean(registro)}
         alEnviar={() => void enviar()}
         error={errorDe('clave')}

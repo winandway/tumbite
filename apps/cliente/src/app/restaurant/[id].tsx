@@ -11,7 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ErrorApi,
@@ -68,6 +68,7 @@ export default function MenuRestaurante() {
   const t = enIdioma(TEXTOS, idioma);
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
+  const bordes = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [datos, setDatos] = useState<{
     restaurante: Restaurante;
@@ -528,7 +529,8 @@ export default function MenuRestaurante() {
               right: 0,
               bottom: 0,
               paddingHorizontal: 16,
-              paddingBottom: 16,
+              // Por encima de la barra de gestos del teléfono (en Android quedaba debajo).
+              paddingBottom: Math.max(16, bordes.bottom + 8),
               paddingTop: 4,
               backgroundColor: '#fff',
             },
