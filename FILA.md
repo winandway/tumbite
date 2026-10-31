@@ -10,6 +10,14 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
+
+- [ ] (H1) Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
+- [ ] (H2) Repaso de las tres apps NATIVAS de iPhone en el simulador contra el sitio de pruebas, de punta a punta: entrar, pedir en Pizzería Demo Novi, pagar con 4242 en la hoja de Stripe, restaurante acepta y marca listo, repartidor acepta, recoge y entrega, cliente califica. REA sobre nuestras apps; cada fallo con prueba en rojo y arreglo. EE. UU.
+- [ ] (H3) El mismo repaso con las tres apps de Android en el emulador, para que la versión acumulada para Google vaya limpia. EE. UU.
+- [ ] (H4) Apple Pay listo para encender: certificado de procesamiento de Apple Pay del identificador merchant.com.tumbite.cliente en Stripe (prueba y real) y la variable EXPO_PUBLIC_APPLE_PAY_COMERCIO en la compilación de producción. EE. UU.
+- [ ] (H5) Próxima versión de iPhone (1.0.1) en TestFlight con todo lo acumulado, sin tocar las revisiones en curso; lista para mandar cuando Apple apruebe la 1.0. EE. UU.
+
 ## Apps de iPhone (membresía de Apple activa el 30 oct 2026; llave de API guardada en ~/.config/tumbite/apple-asc)
 
 - [x] (I1) Asociar en el portal de Apple el identificador de Apple Pay (merchant.com.tumbite.cliente) a la app del cliente y encender notificaciones en Driver y Restaurante. EE. UU.
