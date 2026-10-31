@@ -97,7 +97,8 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
                   <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
                     <View style={{ flex: 1 }}>
                       <Campo
-                        etiqueta={`${t.abre} · ${nombre}`}
+                        etiqueta={t.abre}
+                        nombreAccesible={`${t.abre} · ${nombre}`}
                         value={x.abre}
                         onChangeText={(v) => cambiar(i, 'abre', v)}
                         placeholder="09:00"
@@ -106,7 +107,8 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Campo
-                        etiqueta={`${t.cierra} · ${nombre}`}
+                        etiqueta={t.cierra}
+                        nombreAccesible={`${t.cierra} · ${nombre}`}
                         value={x.cierra}
                         onChangeText={(v) => cambiar(i, 'cierra', v)}
                         placeholder="22:00"
@@ -116,7 +118,8 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
                     <Pressable
                       accessibilityRole="button"
                       onPress={() => setTurnos((ts) => (ts ?? []).filter((_, j) => j !== i))}
-                      style={{ paddingVertical: 14 }}
+                      // A la altura de la casilla (el Campo deja 14 de margen abajo).
+                      style={{ paddingVertical: 14, marginBottom: 14 }}
                     >
                       <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.quitar}</Text>
                     </Pressable>
