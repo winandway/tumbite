@@ -10,6 +10,14 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
+
+- [ ] (S1) Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
+- [ ] (S2) Mapa del Driver durante la entrega: que se vean el restaurante y la casa con la ruta, no solo el punto del repartidor (como Uber Driver y Dasher). Todos los países.
+- [ ] (S3) Ubicación del cliente que se actualiza al volver a la app y al dar el permiso; sin ubicación, no decir «Cerca de tu ubicación». Todos los países.
+- [ ] (S4) Docs y web al día con lo visible de hoy (millas en EE. UU., «No recibe pedidos ahora», «Calle y número», «Pedir otra vez»): guías en español e inglés y capturas originales del recorrido. Todos los países.
+- [ ] (S5) Título de la pestaña del panel del restaurante (hoy «Comida a domicilio en Miami»). Todos los países.
+
 ## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
 
 - [x] (H1) HECHO 31 oct: en producción c268d83, verificación en verde y humo 200 (la prueba de Tiendas ahora busca «Calle y número»). Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
