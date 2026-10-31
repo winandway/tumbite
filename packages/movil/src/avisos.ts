@@ -22,7 +22,11 @@ export async function darDeBajaAvisos(api: Api) {
   }
 }
 
-export function useAvisosCelular(api: Api, usuario: Usuario | null) {
+/**
+ * `preguntar` en false: no muestra la ventana del sistema todavía (la app primero explica para qué
+ * los quiere, C-PERMISOS-EXPLICADOS); si el permiso ya estaba dado, se registra igual.
+ */
+export function useAvisosCelular(api: Api, usuario: Usuario | null, preguntar = true) {
   useEffect(() => {
     if (!usuario || Platform.OS === 'web') return;
     let vivo = true;
@@ -37,6 +41,7 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null) {
           return;
         }
         const permiso = await Notifications.getPermissionsAsync();
+        if (!permiso.granted && !preguntar) return;
         const estado = permiso.granted ? permiso : await Notifications.requestPermissionsAsync();
         if (!estado.granted) return;
         if (Platform.OS === 'android')
@@ -54,7 +59,7 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null) {
     return () => {
       vivo = false;
     };
-  }, [api, usuario]);
+  }, [api, usuario, preguntar]);
 }
 
 /**

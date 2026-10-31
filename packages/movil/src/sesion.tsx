@@ -60,6 +60,9 @@ type Sesion = {
   alEntrar: (token: string, u: Usuario) => Promise<void>;
   salir: () => Promise<void>;
   rolesPermitidos: Rol[];
+  /** C-PERMISOS-EXPLICADOS: la app todavía no explicó para qué pide los permisos a esta cuenta. */
+  permisosPorExplicar: boolean;
+  aceptarPermisos: () => void;
 };
 
 const Contexto = createContext<Sesion | null>(null);
@@ -79,7 +82,16 @@ function versionApp(): string {
   return Constants.expoConfig?.version ?? '0.0.0';
 }
 
-export function SesionProvider({ roles, children }: { roles: Rol[]; children: ReactNode }) {
+export function SesionProvider({
+  roles,
+  children,
+  explicarPermisos = false,
+}: {
+  roles: Rol[];
+  children: ReactNode;
+  /** C-PERMISOS-EXPLICADOS: la app muestra primero para qué pide los permisos. */
+  explicarPermisos?: boolean;
+}) {
   const [token, setToken] = useState<string | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -181,7 +193,34 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
     setUsuario(null);
   }, [api, usuario]);
 
-  useAvisosCelular(api, usuario);
+  // C-PERMISOS-EXPLICADOS (31 oct 2026, como DoorDash): con `explicarPermisos`, la ventana del
+  // sistema para los avisos sale después de la pantalla que explica para qué son.
+  const llavePermisos = usuario ? `divoox.permisos.${usuario.id}` : '';
+  // Lo leído del teléfono para cada cuenta (llave → visto); sin leer todavía = undefined.
+  const [permisosLeidos, setPermisosLeidos] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!llavePermisos) return;
+    let vivo = true;
+    void Promise.resolve(almacenTelefono.leer(llavePermisos))
+      .then((v) => v === '1')
+      .catch(() => true)
+      .then((visto) => {
+        if (vivo) setPermisosLeidos((x) => ({ ...x, [llavePermisos]: visto }));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [llavePermisos]);
+  const permisosVistos = llavePermisos
+    ? new Map(Object.entries(permisosLeidos)).get(llavePermisos)
+    : undefined;
+  const aceptarPermisos = useCallback(() => {
+    if (!llavePermisos) return;
+    setPermisosLeidos((x) => ({ ...x, [llavePermisos]: true }));
+    void almacenTelefono.guardar(llavePermisos, '1');
+  }, [llavePermisos]);
+  const permisosPorExplicar = Boolean(explicarPermisos && usuario && permisosVistos === false);
+  useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true);
 
   const cambiarIdioma = useCallback(
     (i: Idioma) => {
@@ -206,6 +245,8 @@ export function SesionProvider({ roles, children }: { roles: Rol[]; children: Re
     alEntrar,
     salir,
     rolesPermitidos: roles,
+    permisosPorExplicar,
+    aceptarPermisos,
   };
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

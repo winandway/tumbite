@@ -15,3 +15,4 @@ export * from './ChatPedido';
 export * from './CodigoQR';
 export * from './CampoDireccion';
 export * from './version';
+export * from './PantallaPermisos';
