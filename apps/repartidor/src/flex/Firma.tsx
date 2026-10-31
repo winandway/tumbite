@@ -1,7 +1,10 @@
 import { useRef } from 'react';
 import { Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Boton } from '@tumbite/movil';
+import { Boton as BotonBase } from '@tumbite/movil';
+
+/** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
+const Boton = (p: Parameters<typeof BotonBase>[0]) => <BotonBase oscuro {...p} />;
 
 /**
  * Firma del destinatario con el dedo, en un lienzo dentro de la vista web que la app ya trae
@@ -33,7 +36,7 @@ export function Firma({
   const vista = useRef<WebView>(null);
   return (
     <View style={{ gap: 8 }}>
-      <Text style={{ color: '#5E5E5E' }}>{textos.firmaAqui}</Text>
+      <Text style={{ color: '#A9B9C6' }}>{textos.firmaAqui}</Text>
       <View
         style={{
           height: 200,

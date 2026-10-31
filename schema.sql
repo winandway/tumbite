@@ -3028,3 +3028,12 @@ CREATE TABLE IF NOT EXISTS apelaciones_repartidor (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (repartidor_id, unidad_tipo, unidad_id)
 );
+
+-- C-TERMINOS-ACTUALIZADOS (31 oct 2026): qué versión de los términos aceptó cada persona y cuándo.
+-- Sin llave foránea a usuarios (como piloto_*): borrar una cuenta no se traba por esto.
+CREATE TABLE IF NOT EXISTS terminos_aceptados (
+  usuario_id TEXT NOT NULL,
+  version TEXT NOT NULL,
+  aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, version)
+);

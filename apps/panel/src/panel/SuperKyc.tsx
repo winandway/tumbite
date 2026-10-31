@@ -44,6 +44,8 @@ const T = {
       revisar: 'Para revisar (Checkr no dio «clear»)',
     } as Record<string, string>,
     controles: 'Fotos de control (identidad continua)',
+    giroDerecha: 'Mirando a la derecha',
+    conPruebaVida: 'con prueba de vida (frente y giro)',
     sinControles: 'Todavía no se le pidió ninguna.',
     pedida: 'Pedida',
     sinTomar: 'sin tomar',
@@ -86,6 +88,8 @@ const T = {
       revisar: 'Needs review (Checkr didn’t return “clear”)',
     } as Record<string, string>,
     controles: 'Identity check photos',
+    giroDerecha: 'Looking to the right',
+    conPruebaVida: 'with liveness check (front and turn)',
     sinControles: 'None requested yet.',
     pedida: 'Requested',
     sinTomar: 'not taken',
@@ -212,6 +216,8 @@ type Detalle = {
     revisadaEn: string | null;
     resultado: string;
     conFoto: boolean;
+    /** C-PRUEBA-DE-VIDA: trae también la foto mirando a la derecha. */
+    conGiro?: boolean;
   }[];
   persona: {
     nombre: string;
@@ -321,8 +327,16 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
                     loading="lazy"
                   />
                 ) : null}
+                {c.conGiro ? (
+                  <img
+                    src={`/datos/admin/kyc/${id}/control/${c.id}?pose=giro`}
+                    alt={t.giroDerecha}
+                    loading="lazy"
+                  />
+                ) : null}
                 <figcaption>
                   {t.pedida} {c.pedidaEn}
+                  {c.conGiro ? ` · ${t.conPruebaVida}` : ''}
                   {c.tomadaEn ? '' : ` · ${t.sinTomar}`}
                   {c.resultado
                     ? ` · ${c.resultado === 'coincide' ? t.coincide : t.noCoincide}`

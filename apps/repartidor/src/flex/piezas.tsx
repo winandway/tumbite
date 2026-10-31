@@ -1,11 +1,12 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   PanResponder,
   Pressable,
-  Text,
+  Text as TextoRN,
   View,
   type StyleProp,
+  type TextProps,
   type ViewStyle,
 } from 'react-native';
 import { C, e } from '@tumbite/movil';
@@ -15,23 +16,45 @@ import { C, e } from '@tumbite/movil';
  * pestañas, círculos numerados y marcas de listo dibujadas (sin emojis: candado C-SIN-EMOJIS).
  */
 
-export const GRIS = C.gris;
-export const BORDE = '#E3E3E6';
-export const SUAVE = '#F4F4F6';
-/** Fondo de la parada actual: un tinte claro del rojo, sin franjas gruesas. */
-export const RESALTE = '#FFF3F4';
+/**
+ * C-FLEX-OSCURO (31 oct 2026, Richard con las capturas de un bloque real de Amazon Flex): las pantallas
+ * de logística van en fondo oscuro, en el azul petróleo de logística, para no cansar la vista durante
+ * horas de reparto. Toda la paleta de «Mi ruta» vive aquí.
+ */
+export const FONDO = '#0F1F2A';
+export const TEXTO = '#FFFFFF';
+export const GRIS = '#A9B9C6';
+export const BORDE = '#2C4759';
+export const SUAVE = '#1C3445';
+/** Fondo de la parada actual: un tinte del azul de logística, sin franjas gruesas. */
+export const RESALTE = '#17405A';
+/** Verde de «hecho» que se lee bien sobre el fondo oscuro. */
+export const VERDE = '#3CC07A';
+
+/** Texto de «Mi ruta»: blanco por defecto sobre el fondo oscuro. */
+export function Texto({ style, ...props }: TextProps) {
+  return <TextoRN {...props} style={[{ color: TEXTO }, style]} />;
+}
+const Text = Texto;
 
 export const tarjeta: StyleProp<ViewStyle> = [
   e.tarjeta,
-  { borderWidth: 1, borderColor: BORDE, marginBottom: 0 },
+  {
+    borderWidth: 1,
+    borderColor: BORDE,
+    marginBottom: 0,
+    backgroundColor: '#172C3A',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
 ];
 
 type Tono = 'activo' | 'exito' | 'neutro' | 'problema';
 const TONOS: Record<Tono, { fondo: string; texto: string }> = {
   activo: { fondo: C.logistica, texto: '#FFFFFF' },
-  exito: { fondo: '#E6F3EB', texto: C.exito },
+  exito: { fondo: '#173D2A', texto: VERDE },
   neutro: { fondo: SUAVE, texto: GRIS },
-  problema: { fondo: '#FDECEE', texto: C.acento },
+  problema: { fondo: '#3D1A1E', texto: '#FF7A85' },
 };
 
 export function tonoRuta(estado: string): Tono {
@@ -69,12 +92,12 @@ export function Barra({ valor, etiqueta }: { valor: number; etiqueta: string }) 
   const v = Math.max(0, Math.min(1, Number.isFinite(valor) ? valor : 0));
   return (
     <View
-      style={{ height: 8, borderRadius: 4, backgroundColor: '#E8E8EB', overflow: 'hidden' }}
+      style={{ height: 8, borderRadius: 4, backgroundColor: BORDE, overflow: 'hidden' }}
       accessibilityRole="progressbar"
       accessibilityLabel={etiqueta}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(v * 100) }}
     >
-      <View style={{ width: `${v * 100}%`, height: '100%', backgroundColor: C.exito }} />
+      <View style={{ width: `${v * 100}%`, height: '100%', backgroundColor: VERDE }} />
     </View>
   );
 }
@@ -114,7 +137,7 @@ export function Pestanas<T extends string>({
               paddingVertical: 9,
               paddingHorizontal: 4,
               borderRadius: 9,
-              backgroundColor: si ? C.logistica : 'transparent',
+              backgroundColor: si ? C.logisticaAccion : 'transparent',
             }}
           >
             <Text
@@ -123,7 +146,7 @@ export function Pestanas<T extends string>({
                 textAlign: 'center',
                 fontWeight: si ? '800' : '600',
                 fontSize: opciones.length > 3 ? 12 : 13,
-                color: si ? '#FFFFFF' : C.secundario,
+                color: si ? C.logisticaTexto : TEXTO,
               }}
             >
               {o.texto}
@@ -144,8 +167,8 @@ export function Listo({ marcado, tamano = 22 }: { marcado: boolean; tamano?: num
         height: tamano,
         borderRadius: tamano / 2,
         borderWidth: marcado ? 0 : 2,
-        borderColor: '#C4C6CB',
-        backgroundColor: marcado ? C.exito : 'transparent',
+        borderColor: '#5E7587',
+        backgroundColor: marcado ? VERDE : 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -180,12 +203,12 @@ export function Numero({
 }) {
   const fondo =
     tono === 'hecho'
-      ? C.exito
+      ? VERDE
       : tono === 'actual'
-        ? C.logistica
+        ? C.logisticaAccion
         : tono === 'fallida'
           ? C.acento
-          : '#8E9198';
+          : '#4E6577';
   return (
     <View
       style={{
@@ -225,11 +248,11 @@ export function Caja() {
           height: 14,
           borderRadius: 2,
           borderWidth: 2,
-          borderColor: C.secundario,
+          borderColor: TEXTO,
           alignItems: 'center',
         }}
       >
-        <View style={{ width: 2, height: '100%', backgroundColor: C.secundario }} />
+        <View style={{ width: 2, height: '100%', backgroundColor: TEXTO }} />
       </View>
     </View>
   );
@@ -288,7 +311,7 @@ export function Fila({
       }}
     >
       <Text style={{ color: GRIS, flex: 1 }}>{etiqueta}</Text>
-      <Text style={{ fontWeight: '800', color: color ?? C.secundario }}>{valor}</Text>
+      <Text style={{ fontWeight: '800', color: color ?? TEXTO }}>{valor}</Text>
     </View>
   );
 }
@@ -302,7 +325,7 @@ export function Atras({ texto, alTocar }: { texto: string; alTocar: () => void }
       accessibilityLabel={texto}
       style={{ alignSelf: 'flex-start', paddingVertical: 6, paddingRight: 12 }}
     >
-      <Text style={{ color: C.secundario, fontWeight: '700', fontSize: 15 }}>‹ {texto}</Text>
+      <Text style={{ color: TEXTO, fontWeight: '700', fontSize: 15 }}>‹ {texto}</Text>
     </Pressable>
   );
 }
@@ -325,13 +348,13 @@ export function Banner({
         alignItems: 'center',
         padding: 14,
         borderRadius: 14,
-        backgroundColor: bien ? '#E6F3EB' : SUAVE,
+        backgroundColor: bien ? '#173D2A' : SUAVE,
       }}
       accessibilityRole="summary"
     >
       {bien ? <Listo marcado tamano={30} /> : null}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>{titulo}</Text>
+        <Text style={{ fontWeight: '900', fontSize: 16, color: TEXTO }}>{titulo}</Text>
         {ayuda ? <Text style={{ color: GRIS }}>{ayuda}</Text> : null}
       </View>
     </View>
@@ -347,26 +370,40 @@ export function Deslizar({ texto, alTerminar }: { texto: string; alTerminar: () 
   const x = useMemo(() => new Animated.Value(0), []);
   const BOLA = 52;
   const tope = Math.max(0, ancho - BOLA - 8);
-  const gesto = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4,
-        onPanResponderMove: (_e, g) => x.setValue(Math.min(Math.max(0, g.dx), tope)),
-        onPanResponderRelease: (_e, g) => {
-          if (g.dx >= tope * 0.85)
-            Animated.timing(x, {
-              toValue: tope,
-              duration: 120,
-              useNativeDriver: false,
-            }).start(() => {
-              alTerminar();
-              x.setValue(0);
-            });
-          else Animated.spring(x, { toValue: 0, useNativeDriver: false }).start();
-        },
-      }),
-    [x, tope, alTerminar],
-  );
+  // C-FLEX-DESLIZAR-SCROLL: el gesto se arma UNA vez y lee siempre el ancho y la acción actuales. Si
+  // se rearmaba en cada render, el iPhone se quedaba con el primero (ancho 0 y la acción vieja): tras
+  // un primer intento («elige dónde lo dejaste»), deslizar ya no cerraba la entrega.
+  const actual = useRef({ tope, alTerminar });
+  useEffect(() => {
+    actual.current = { tope, alTerminar };
+  });
+  // La referencia solo se lee dentro de los manejadores del toque, nunca al dibujar.
+  // eslint-disable-next-line react-hooks/refs
+  const [gesto] = useState(() => {
+    const volver = () => Animated.spring(x, { toValue: 0, useNativeDriver: false }).start();
+    return PanResponder.create({
+      // La bola toma el gesto al tocarla y no se lo cede a la lista que se desplaza.
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderMove: (_e, g) => x.setValue(Math.min(Math.max(0, g.dx), actual.current.tope)),
+      onPanResponderRelease: (_e, g) => {
+        const { tope: fin } = actual.current;
+        if (fin > 0 && g.dx >= fin * 0.85)
+          Animated.timing(x, {
+            toValue: fin,
+            duration: 120,
+            useNativeDriver: false,
+          }).start(() => {
+            actual.current.alTerminar();
+            x.setValue(0);
+          });
+        else volver();
+      },
+      // Si igual pierde el gesto, la bola vuelve al inicio (no se queda a medio camino).
+      onPanResponderTerminate: volver,
+    });
+  });
   return (
     <View
       onLayout={(e) => setAncho(e.nativeEvent.layout.width)}

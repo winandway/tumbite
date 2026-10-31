@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { paisDelCodigoZona, textoDistancia } from './distancia';
+import { paisDelCodigoZona, textoDistancia, textoDistanciaCorta } from './distancia';
 
 describe('distancia por país (C-DISTANCIA-POR-PAIS)', () => {
   it('en EE. UU. va en millas también en español', () => {
@@ -18,5 +18,16 @@ describe('distancia por país (C-DISTANCIA-POR-PAIS)', () => {
     expect(paisDelCodigoZona('US-MI-NOVI')).toBe('US');
     expect(paisDelCodigoZona('VE-DC-CARACAS')).toBe('VE');
     expect(paisDelCodigoZona(null)).toBeNull();
+  });
+});
+
+describe('textoDistanciaCorta (C-FLEX-DISTANCIA-PAIS)', () => {
+  it('en EE. UU. dice pies de cerca y millas de lejos', () => {
+    expect(textoDistanciaCorta(100, 'es', 'US')).toBe('328 ft');
+    expect(textoDistanciaCorta(1591, 'es', 'US')).toBe('1.0 mi');
+  });
+  it('en el resto, metros y kilómetros', () => {
+    expect(textoDistanciaCorta(250, 'es', 'VE')).toBe('250 m');
+    expect(textoDistanciaCorta(1591, 'en', 'CO')).toBe('1.6 km');
   });
 });

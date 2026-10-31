@@ -177,9 +177,17 @@ kyc.post('/checkr/aviso', async (c) => {
   return c.json({ ok: true, ...(await procesarAvisoCheckr(c.env, base(c), aviso)) });
 });
 
-/** La selfie de control pedida al conectarse: se guarda aparte y el equipo la compara. */
+/**
+ * La selfie de control pedida al conectarse: se guarda aparte y el equipo la compara.
+ * C-PRUEBA-DE-VIDA (31 oct 2026, como DoorDash): con `?pose=frente` y después `?pose=giro` (mirando
+ * a la derecha) se piden dos fotos; una foto de una foto no gira. Queda tomada al llegar el giro.
+ * Sin `pose` (apps anteriores) funciona como antes: una sola foto.
+ */
 kyc.post('/kyc/selfie-control', async (c) => {
   const u = exigir(c, 'repartidor');
+  const pose = c.req.query('pose');
+  if (pose !== undefined && pose !== 'frente' && pose !== 'giro')
+    throw new ErrorDatos('Esa foto no existe.', undefined, 400);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
   if (bytes.byteLength > MAX_FOTO_BYTES)
@@ -189,19 +197,31 @@ kyc.post('/kyc/selfie-control', async (c) => {
   const db = base(c);
   const sc = await db
     .prepare(
-      'SELECT id FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL ORDER BY pedida_en DESC LIMIT 1',
+      'SELECT id, clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL ORDER BY pedida_en DESC LIMIT 1',
     )
     .bind(u.id)
-    .first<{ id: string }>();
+    .first<{ id: string; clave: string }>();
   if (!sc) throw new ErrorDatos('No tienes ninguna foto de control pendiente.', undefined, 409);
-  const clave = `kyc/${u.id}/control-${sc.id}`;
+  if (pose === 'giro' && !sc.clave)
+    throw new ErrorDatos('Primero toma la foto de frente.', 'foto', 409);
+  const clave = pose === 'giro' ? `${sc.clave}-giro` : `kyc/${u.id}/control-${sc.id}`;
   await almacen(c.env).put(clave, bytes, {
     httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
   });
-  await db
-    .prepare("UPDATE selfies_control SET clave = ?, tomada_en = datetime('now') WHERE id = ?")
-    .bind(clave, sc.id)
-    .run();
+  if (pose === 'frente') {
+    await db.prepare('UPDATE selfies_control SET clave = ? WHERE id = ?').bind(clave, sc.id).run();
+    return c.json({ ok: true, falta: 'giro' }, 201);
+  }
+  if (pose === 'giro')
+    await db
+      .prepare("UPDATE selfies_control SET tomada_en = datetime('now') WHERE id = ?")
+      .bind(sc.id)
+      .run();
+  else
+    await db
+      .prepare("UPDATE selfies_control SET clave = ?, tomada_en = datetime('now') WHERE id = ?")
+      .bind(clave, sc.id)
+      .run();
   return c.json({ ok: true, url: `/datos/kyc/selfie-control` }, 201);
 });
 
@@ -402,6 +422,10 @@ kyc.get('/admin/kyc/:id', async (c) => {
     )
     .bind(id)
     .all<Record<string, unknown>>();
+  // C-PRUEBA-DE-VIDA: cuáles traen también la foto mirando a la derecha.
+  const giros = new Set<string>();
+  for (const x of controles)
+    if (x.clave && (await almacen(c.env).head(`${String(x.clave)}-giro`))) giros.add(String(x.id));
   const { results: auto } = await db
     .prepare(
       'SELECT decision, motivos_json, similitud, parecidas_json, creada_en FROM verificaciones_auto WHERE usuario_id = ? ORDER BY creada_en DESC LIMIT 5',
@@ -436,6 +460,7 @@ kyc.get('/admin/kyc/:id', async (c) => {
       revisadaEn: (x.revisada_en as string | null) ?? null,
       resultado: String(x.resultado ?? ''),
       conFoto: Boolean(x.clave),
+      conGiro: giros.has(String(x.id)),
     })),
   });
 });
@@ -448,7 +473,10 @@ kyc.get('/admin/kyc/:id/control/:cid', async (c) => {
     .bind(c.req.param('cid'), c.req.param('id'))
     .first<{ clave: string }>();
   if (!f?.clave) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
-  const obj = await almacen(c.env).get(f.clave);
+  // C-PRUEBA-DE-VIDA: «?pose=giro» devuelve la segunda foto (mirando a la derecha).
+  const obj = await almacen(c.env).get(
+    c.req.query('pose') === 'giro' ? `${f.clave}-giro` : f.clave,
+  );
   if (!obj) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
   const headers = new Headers();
   obj.writeHttpMetadata(headers);

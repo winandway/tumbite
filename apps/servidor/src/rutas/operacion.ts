@@ -45,6 +45,7 @@ import {
   nivelDe,
   prepSugerida,
   paisDelCodigoZona,
+  VERSION_TERMINOS,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
@@ -93,6 +94,8 @@ export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 const SEGUNDOS_OFERTA = 45;
 /** Probabilidad de pedir la selfie de control en cada conexión (como la identidad continua de los grandes). */
 const PROBABILIDAD_SELFIE = 0.2;
+/** Días sin conectarse a partir de los cuales la foto de control es obligatoria al volver. */
+const DIAS_PARA_VERIFICAR_AL_VOLVER = 14;
 const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
 /** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
 const puntoConPrecision = punto.extend({
@@ -1033,15 +1036,54 @@ async function agrupadosDe(db: D1Database, repartidorId: string, activo: FilaPed
   return results.map(conDatosRestaurante);
 }
 
+/** La versión de los términos que le falta aceptar (null si ya la aceptó; al revisor nunca). */
+async function terminosPorAceptar(
+  db: D1Database,
+  usuarioId: string,
+  revisor: boolean,
+): Promise<string | null> {
+  if (revisor) return null;
+  const ya = await db
+    .prepare('SELECT 1 FROM terminos_aceptados WHERE usuario_id = ? AND version = ?')
+    .bind(usuarioId, VERSION_TERMINOS)
+    .first();
+  return ya ? null : VERSION_TERMINOS;
+}
+
+operacion.post('/repartidor/terminos', async (c) => {
+  const { u, db } = await miFicha(c);
+  const { version } = await leerCuerpo(c, z.object({ version: z.string().trim().min(1).max(20) }));
+  if (version !== VERSION_TERMINOS)
+    throw new ErrorDatos(
+      'Esa no es la versión vigente de los términos. Vuelve a abrir la app.',
+      undefined,
+      409,
+    );
+  await db
+    .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
+    .bind(u.id, version)
+    .run();
+  return c.json({ ok: true });
+});
+
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
   const selfiePendiente = await db
-    .prepare('SELECT 1 FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
+    .prepare('SELECT clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
     .bind(u.id)
-    .first();
+    .first<{ clave: string }>();
+  const terminos = await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo));
+  // Días sin conectarse (desde su última ubicación), solo si son DIAS_PARA_VERIFICAR_AL_VOLVER o más.
+  const ultima = ficha.ubicacion_en ? Date.parse(`${String(ficha.ubicacion_en)}Z`) : NaN;
+  const dias = Number.isFinite(ultima) ? Math.floor((Date.now() - ultima) / 86_400_000) : 0;
   return c.json({
+    terminosPorAceptar: terminos,
+    vuelveTrasDias:
+      Number(ficha.conectado) !== 1 && dias >= DIAS_PARA_VERIFICAR_AL_VOLVER ? dias : null,
     selfieControlPendiente: Boolean(selfiePendiente),
+    // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
+    selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
     conectado: Number(ficha.conectado) === 1,
     pausado: Number(ficha.pausado ?? 0) === 1,
     tipo: ficha.tipo,
@@ -1073,6 +1115,13 @@ operacion.post('/repartidor/conectar', async (c) => {
       'kyc',
       403,
     );
+  // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
+  if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
+    throw new ErrorDatos(
+      'Actualizamos los términos para repartidores. Léelos y acéptalos para conectarte.',
+      'terminos',
+      409,
+    );
   // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no
   // más de una por semana). Mientras esté pendiente, no se conecta. Al revisor de las tiendas no
   // se le pide (27 oct 2026): probaría la app y se quedaría trancado en una selfie.
@@ -1088,11 +1137,22 @@ operacion.post('/repartidor/conectar', async (c) => {
         )
         .bind(u.id)
         .first();
-      // «1» = siempre (pruebas, recorrido); «0» = nunca (las demás pruebas); sin valor = al azar.
+      // C-VUELTA-VERIFICA (31 oct 2026, como DoorDash al volver a la app): si lleva 14 días o más
+      // sin conectarse, la foto de control va siempre, sin importar el azar ni la de la semana.
+      const vuelve = await db
+        .prepare(
+          `SELECT 1 FROM repartidores WHERE usuario_id = ?1 AND ubicacion_en IS NOT NULL
+           AND ubicacion_en < datetime('now','-${DIAS_PARA_VERIFICAR_AL_VOLVER} days')
+           AND NOT EXISTS (SELECT 1 FROM selfies_control sc WHERE sc.usuario_id = ?1
+             AND sc.tomada_en > datetime('now','-${DIAS_PARA_VERIFICAR_AL_VOLVER} days'))`,
+        )
+        .bind(u.id)
+        .first();
+      // «1» = siempre (pruebas, recorrido); «0» = nunca al azar (las demás pruebas); sin valor = al azar.
       const toca =
         c.env.SELFIE_CONTROL_SIEMPRE === '1' ||
         (c.env.SELFIE_CONTROL_SIEMPRE !== '0' && Math.random() < PROBABILIDAD_SELFIE);
-      if (!reciente && toca)
+      if (vuelve || (!reciente && toca))
         await db
           .prepare('INSERT INTO selfies_control (id, usuario_id) VALUES (?, ?)')
           .bind(nuevoId(), u.id)

@@ -227,9 +227,9 @@ export async function detalleRuta(
   opciones: { paraConductor: boolean },
 ) {
   const empresa = await db
-    .prepare('SELECT nombre, config_entrega_json FROM empresas WHERE id = ?')
+    .prepare('SELECT nombre, pais, config_entrega_json FROM empresas WHERE id = ?')
     .bind(r.empresa_id)
-    .first<{ nombre: string; config_entrega_json: string | null }>();
+    .first<{ nombre: string; pais: string | null; config_entrega_json: string | null }>();
   const centro = r.centro_id
     ? await db
         .prepare('SELECT nombre, direccion, lat, lng FROM empresa_centros WHERE id = ?')
@@ -287,6 +287,8 @@ export async function detalleRuta(
       loteId: r.lote_id,
       centroId: r.centro_id,
       empresa: empresa?.nombre ?? '',
+      // C-FLEX-DISTANCIA-PAIS: el país de la empresa decide millas o kilómetros en la app.
+      pais: empresa?.pais ?? null,
       centro,
       conductor: r.conductor_id ? { id: r.conductor_id, nombre: conductor?.nombre ?? '' } : null,
       // La posición del conductor solo mientras trabaja la ruta, y solo para la empresa.

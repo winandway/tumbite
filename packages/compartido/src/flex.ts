@@ -600,3 +600,26 @@ export function crearColaFlex(almacen: AlmacenAcciones, nuevoId: () => string) {
     },
   };
 }
+
+/**
+ * C-FLEX-ESCANEO-PARADA: a qué paquete de la parada corresponde un código escaneado o escrito
+ * (seguimiento DVX… o etiqueta). Si no es de esta parada, null.
+ */
+export function paqueteDeEscaneo(
+  texto: string,
+  paquetes: { id: string; codigoSeguimiento: string; codigoEtiqueta: string }[],
+): string | null {
+  const leido = leerCodigoEscaneado(texto);
+  if (!leido) return null;
+  const p = paquetes.find((x) =>
+    leido.tipo === 'seguimiento'
+      ? x.codigoSeguimiento.toUpperCase() === leido.codigo
+      : x.codigoEtiqueta.toUpperCase() === leido.codigo,
+  );
+  return p?.id ?? null;
+}
+
+/** Cuántos de los paquetes que se van a entregar todavía no se escanearon en la parada. */
+export function faltanPorEscanear(ids: string[], escaneados: Set<string>): number {
+  return ids.filter((id) => !escaneados.has(id)).length;
+}

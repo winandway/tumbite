@@ -151,6 +151,7 @@ export function Boton({
   secundario,
   exito,
   logistica,
+  oscuro,
 }: {
   texto: string;
   alTocar: () => void;
@@ -160,6 +161,8 @@ export function Boton({
   exito?: boolean;
   /** C-COLOR-LOGISTICA: botón de Flex y Envíos, con el color propio de logística. */
   logistica?: boolean;
+  /** C-FLEX-OSCURO: sobre fondo oscuro, el secundario va con borde azul claro, sin fondo blanco. */
+  oscuro?: boolean;
 }) {
   return (
     <Pressable
@@ -172,6 +175,12 @@ export function Boton({
         secundario && e.botonSecundario,
         exito && !secundario && { backgroundColor: C.exito },
         logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
+        oscuro &&
+          secundario && {
+            backgroundColor: 'transparent',
+            borderColor: C.logisticaAccion,
+            borderWidth: 1.5,
+          },
         pressed && { opacity: 0.85 },
       ]}
     >
@@ -182,6 +191,7 @@ export function Boton({
           style={[
             e.botonTexto,
             secundario && { color: C.secundario },
+            oscuro && secundario && { color: C.logisticaAccion },
             logistica && !secundario && !exito && { color: C.logisticaTexto },
           ]}
         >

@@ -63,6 +63,11 @@ import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
 import { MiRuta } from './flex/MiRuta';
+import { FONDO as FONDO_FLEX } from './flex/piezas';
+
+/** Lo mínimo de una ruta Flex para la tarjeta del inicio. */
+type RutaFlexInicio = { id: string; nombre: string; estado: string; paradas: number };
+const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso'];
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
@@ -154,6 +159,12 @@ type Estado = {
   };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
+  terminosPorAceptar?: string | null;
+  /** Días sin conectarse cuando son 14 o más (bienvenida de vuelta). */
+  vuelveTrasDias?: number | null;
+  /** C-PRUEBA-DE-VIDA: cuál de las dos fotos falta. */
+  selfieControlFalta?: 'frente' | 'giro' | null;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
   agrupados?: Pedido[];
 };
@@ -187,6 +198,15 @@ const T = {
     ubicacionTarda:
       'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que Divoox tenga permiso de ubicación, y vuelve a intentar.',
     buscando: 'Buscando pedidos cerca de ti…',
+    buscandoAyuda:
+      'Es más probable que recibas ofertas en las zonas en rojo del mapa, sobre todo a la hora del almuerzo y de la cena.',
+    rutaEnCurso: 'Tienes una ruta de paquetes en curso',
+    rutaPorAceptar: 'Tienes una ruta de paquetes por aceptar',
+    rutaParadas: (n: number) => `${n} ${n === 1 ? 'parada' : 'paradas'}`,
+    continuarRuta: 'Continuar ruta',
+    verRuta: 'Ver la ruta',
+    bienvenida: (n: string) => `¡Qué bueno verte de nuevo, ${n}!`,
+    bienvenidaNivel: 'El tiempo que estuviste fuera no cambió tu nivel. Conéctate cuando quieras.',
     oferta: 'Nueva oferta',
     ganas: 'Ganas',
     propinaIncluida: 'incluye propina de',
@@ -229,6 +249,15 @@ const T = {
       'De vez en cuando, antes de conectarte, te pedimos una foto de tu cara. Nuestro equipo la compara con la de tu registro. De frente y con buena luz.',
     tomarSelfie: 'Tomarme la foto ahora',
     selfieLista: 'Foto enviada. Ya puedes conectarte.',
+    pasoFrente: 'Paso 1 de 2: mira de frente a la cámara.',
+    terminosTitulo: 'Actualizamos los términos para repartidores',
+    terminosAyuda:
+      'Antes de conectarte, léelos y acéptalos. Explican cómo funcionan tus ganancias, la seguridad y cómo se resuelven los desacuerdos.',
+    terminosLeer: 'Leer los términos',
+    terminosAcepto: 'He leído, comprendo y acepto los términos para repartidores',
+    terminosDeAcuerdo: 'De acuerdo',
+    pasoGiro: 'Paso 2 de 2: gira la cabeza ligeramente a la derecha y toma la foto.',
+    tomarGiro: 'Tomar la foto mirando a la derecha',
     llamandoCliente:
       'Te estamos llamando. Contesta y te conectamos con el cliente; ninguno ve el número del otro.',
     bonoPorque: 'por tomar un pedido que otros dejaron pasar.',
@@ -297,6 +326,15 @@ const T = {
     ubicacionTarda:
       'We couldn’t read your location. Make sure GPS is on and Divoox has location permission, then try again.',
     buscando: 'Looking for orders near you…',
+    buscandoAyuda:
+      'You’re more likely to get offers in the red areas on the map, especially around lunch and dinner.',
+    rutaEnCurso: 'You have a package route in progress',
+    rutaPorAceptar: 'You have a package route to accept',
+    rutaParadas: (n: number) => `${n} ${n === 1 ? 'stop' : 'stops'}`,
+    continuarRuta: 'Continue route',
+    verRuta: 'View route',
+    bienvenida: (n: string) => `Good to see you again, ${n}!`,
+    bienvenidaNivel: 'Your time away didn’t change your level. Go online whenever you like.',
     oferta: 'New offer',
     ganas: 'You earn',
     propinaIncluida: 'includes a tip of',
@@ -339,6 +377,15 @@ const T = {
       'Every so often, before you go online, we ask for a photo of your face. Our team compares it with the one on file. Face the camera in good light.',
     tomarSelfie: 'Take my photo now',
     selfieLista: 'Photo sent. You can go online now.',
+    pasoFrente: 'Step 1 of 2: look straight at the camera.',
+    terminosTitulo: 'We updated the terms for drivers',
+    terminosAyuda:
+      'Before you go online, read and accept them. They explain how your earnings work, safety, and how disagreements are resolved.',
+    terminosLeer: 'Read the terms',
+    terminosAcepto: 'I have read, understand, and accept the driver terms',
+    terminosDeAcuerdo: 'I agree',
+    pasoGiro: 'Step 2 of 2: turn your head slightly to the right and take the photo.',
+    tomarGiro: 'Take the photo looking right',
     llamandoCliente:
       'We’re calling you now. Answer and we’ll connect you with the customer; neither of you sees the other’s number.',
     bonoPorque: 'for taking an order others passed on.',
@@ -432,6 +479,9 @@ export function Inicio() {
   // C-MOTO-CIUDAD: la ciudad pide la selfie con casco antes de aceptar viajes en moto.
   const [pideCasco, setPideCasco] = useState(false);
   const [cambiando, setCambiando] = useState(false);
+  const [rutaFlex, setRutaFlex] = useState<RutaFlexInicio | null>(null);
+  // C-FLEX-PARADA-ACTUAL: el botón fijo «Parada actual» de «Mi ruta», fuera de lo que se desplaza.
+  const [pieFlex, setPieFlex] = useState<ReactNode>(null);
   const [vista, setVista] = useState<
     | 'inicio'
     | 'billetera'
@@ -480,6 +530,7 @@ export function Inicio() {
   const vigilante = useRef<Location.LocationSubscription | null>(null);
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
+  const [aceptoTerminos, setAceptoTerminos] = useState(false);
   // Precisión del GPS en metros (la reporta el celular); se manda con cada ubicación.
   const [precision, setPrecision] = useState<number | null>(null);
   const [motivoGps, setMotivoGps] = useState('');
@@ -500,6 +551,11 @@ export function Inicio() {
 
   const cargar = useCallback(async () => {
     try {
+      // C-FLEX-RUTA-EN-INICIO: la ruta de paquetes activa se ve en el inicio, como en Amazon Flex.
+      api
+        .pedir<{ rutas: RutaFlexInicio[] }>('GET', '/datos/v1/flex/conductor/rutas')
+        .then((r) => setRutaFlex(r.rutas.find((x) => RUTA_FLEX_ACTIVA.includes(x.estado)) ?? null))
+        .catch(() => undefined);
       const s = await api.pedir<Estado>('GET', '/datos/repartidor/estado');
       setEstado(s);
       if (s.conectado) setConectadoDesde((d) => d ?? Date.now());
@@ -1064,16 +1120,75 @@ export function Inicio() {
           />
         </View>
       ) : null}
+      {estado?.terminosPorAceptar ? (
+        // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): leer, marcar y aceptar.
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]} testID="terminos">
+          <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.terminosTitulo}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>{t.terminosAyuda}</Text>
+          <Text
+            accessibilityRole="link"
+            style={{ color: C.secundario, textDecorationLine: 'underline', marginBottom: 10 }}
+            onPress={() =>
+              void Linking.openURL(`https://divoox.com${idioma === 'es' ? '/es' : ''}/driver-terms`)
+            }
+          >
+            {t.terminosLeer}
+          </Text>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: aceptoTerminos }}
+            onPress={() => setAceptoTerminos((x) => !x)}
+            style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 10 }}
+          >
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                borderWidth: 2,
+                borderColor: aceptoTerminos ? C.primario : '#8A8A8A',
+                backgroundColor: aceptoTerminos ? C.primario : '#fff',
+              }}
+            />
+            <Text style={{ flex: 1 }}>{t.terminosAcepto}</Text>
+          </Pressable>
+          <Boton
+            texto={t.terminosDeAcuerdo}
+            alTocar={() => {
+              if (!aceptoTerminos || !estado?.terminosPorAceptar) return;
+              void api
+                .pedir('POST', '/datos/repartidor/terminos', { version: estado.terminosPorAceptar })
+                .then(() => cargar())
+                .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+            }}
+            secundario={!aceptoTerminos}
+          />
+        </View>
+      ) : null}
       {estado?.selfieControlPendiente ? (
         <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieControl}</Text>
           <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
             {t.selfieControlAyuda}
           </Text>
+          {/* C-PRUEBA-DE-VIDA (como DoorDash): de frente y después mirando a la derecha. */}
+          <Text style={{ fontWeight: '700', marginBottom: 6 }}>
+            {estado.selfieControlFalta === 'giro' ? t.pasoGiro : t.pasoFrente}
+          </Text>
           <Boton
-            texto={subiendo ? t.subiendo : t.tomarSelfie}
+            texto={
+              subiendo
+                ? t.subiendo
+                : estado.selfieControlFalta === 'giro'
+                  ? t.tomarGiro
+                  : t.tomarSelfie
+            }
             alTocar={() =>
-              void tomarFoto('/datos/kyc/selfie-control', true).then(() => setAviso(t.selfieLista))
+              estado.selfieControlFalta === 'giro'
+                ? void tomarFoto('/datos/kyc/selfie-control?pose=giro', true).then(() =>
+                    setAviso(t.selfieLista),
+                  )
+                : void tomarFoto('/datos/kyc/selfie-control?pose=frente', true)
             }
             cargando={subiendo}
           />
@@ -1351,10 +1466,37 @@ export function Inicio() {
   // C-SEGURIDAD-REPARTIDOR: emergencia, recorrido compartido e incidentes.
   if (vista === 'seguridad') return lienzo('inicio', <Seguridad api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
+  // C-FLEX-PANTALLA-COMPLETA (como Amazon Flex): dentro de la ruta no va la cabecera con el logo; la
+  // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
   if (vista === 'miRuta')
-    return lienzo(
-      'pedidos',
-      <MiRuta key={rutaDelAviso ?? 'lista'} api={api} idioma={idioma} abrirRutaId={rutaDelAviso} />,
+    return (
+      <SafeAreaView
+        style={[e.fondo, { backgroundColor: C.logistica }]}
+        edges={['top', 'left', 'right']}
+        testID="mi-ruta-completa"
+      >
+        <ScrollView
+          style={{ backgroundColor: FONDO_FLEX }}
+          contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <MiRuta
+            key={rutaDelAviso ?? 'lista'}
+            api={api}
+            idioma={idioma}
+            abrirRutaId={rutaDelAviso}
+            alSeguridad={() => setVista('seguridad')}
+            alVolver={() => setVista('inicio')}
+            ponerPie={setPieFlex}
+          />
+        </ScrollView>
+        {pieFlex}
+        <BarraInferior
+          idioma={idioma}
+          activa="pedidos"
+          alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
+        />
+      </SafeAreaView>
     );
   if (vista === 'alta')
     return lienzo(
@@ -2235,6 +2377,46 @@ export function Inicio() {
           alto={alturaMapa}
           etiquetas={etiquetasMapa}
         />
+        {estado?.conectado ? (
+          // C-SEGURIDAD-A-LA-VISTA (31 oct 2026, como el escudo de SafeDash en el mapa de DoorDash):
+          // mientras trabaja, la seguridad está a un toque, sin buscarla en el menú.
+          <Pressable
+            onPress={() => setVista('seguridad')}
+            accessibilityRole="button"
+            accessibilityLabel={idioma === 'en' ? 'Safety' : 'Seguridad'}
+            testID="escudo-seguridad"
+            style={{
+              position: 'absolute',
+              top: 24,
+              right: 16,
+              zIndex: 3,
+              backgroundColor: '#fff',
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              borderWidth: 1,
+              borderColor: '#E3E6EB',
+            }}
+          >
+            <View
+              style={{
+                width: 12,
+                height: 14,
+                borderTopLeftRadius: 3,
+                borderTopRightRadius: 3,
+                borderBottomLeftRadius: 7,
+                borderBottomRightRadius: 7,
+                backgroundColor: C.primario,
+              }}
+            />
+            <Text style={{ fontWeight: '800', fontSize: 12, color: C.secundario }}>
+              {idioma === 'en' ? 'Safety' : 'Seguridad'}
+            </Text>
+          </Pressable>
+        ) : null}
         {aqui ? (
           <View
             style={{
@@ -2286,8 +2468,48 @@ export function Inicio() {
       </View>
       <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
         {mensajes}
-        {estado?.conectado ? (
-          <Text style={e.tarjeta}>{estado.pausado ? tg.pausa.enPausa : t.buscando}</Text>
+        {rutaFlex ? (
+          <Pressable
+            onPress={() => setVista('miRuta')}
+            accessibilityRole="button"
+            accessibilityLabel={`${rutaFlex.estado === 'en_curso' || rutaFlex.estado === 'en_carga' || rutaFlex.estado === 'aceptada' ? t.rutaEnCurso : t.rutaPorAceptar}: ${rutaFlex.nombre}`}
+            testID="ruta-flex-inicio"
+            style={[e.tarjeta, { backgroundColor: C.logistica, gap: 6 }]}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>
+              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
+                ? t.rutaEnCurso
+                : t.rutaPorAceptar}
+            </Text>
+            <Text style={{ color: '#FFFFFF' }}>
+              {rutaFlex.nombre} · {t.rutaParadas(rutaFlex.paradas)}
+            </Text>
+            <Text style={{ color: C.logisticaAccion, fontWeight: '800', marginTop: 2 }}>
+              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
+                ? t.continuarRuta
+                : t.verRuta}{' '}
+              →
+            </Text>
+          </Pressable>
+        ) : null}
+        {estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso') ? (
+          // Como «Buscando ofertas… zonas populares» de DoorDash: dónde y cuándo hay más ofertas.
+          <View style={e.tarjeta}>
+            <Text style={{ fontWeight: '800' }}>
+              {estado.pausado ? tg.pausa.enPausa : t.buscando}
+            </Text>
+            {!estado.pausado ? (
+              <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.buscandoAyuda}</Text>
+            ) : null}
+          </View>
+        ) : estado?.vuelveTrasDias ? (
+          // Como «¡Qué bueno verte de nuevo!» de DoorDash al volver después de un tiempo.
+          <View style={e.tarjeta} testID="bienvenida">
+            <Text style={{ fontWeight: '800', fontSize: 16 }}>
+              {t.bienvenida(usuario?.nombre.split(' ')[0] ?? '')}
+            </Text>
+            <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
+          </View>
         ) : null}
         {ofertasViaje[0] && !ofertas[0] ? (
           <OfertaViajeModal

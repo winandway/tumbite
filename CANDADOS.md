@@ -2078,3 +2078,48 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se veía:** en la hoja de pago, en español, «permites que {Divoox} cargue en tu tarjeta…» (con llaves).
 - **Causa real:** la traducción es-419 del SDK de Stripe para iPhone trae «{%@}» (la es-ES está bien). Nuestro `merchantDisplayName` es correcto.
 - **Arreglo:** `plugins/stripe-espanol.js` agrega al `post_install` del Podfile un paso que cambia «{%@}» por «%@» en las traducciones de StripePaymentSheet. Comprobado: después de `pod install` el texto sale sin llaves. Prueba `packages/compartido/src/stripeEspanol.test.ts`. Se quita cuando Stripe corrija su traducción.
+
+## C-VUELTA-VERIFICA (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash al volver a la app (capturas de Richard), si el repartidor lleva 14 días o más sin conectarse (su última ubicación), la foto de control se pide SIEMPRE antes de conectarse, aparte de la del azar semanal. Evita que otra persona use una cuenta que estaba quieta (alquiler o robo de cuenta).
+- **Sin bucle:** si ya tomó una foto de control en esos 14 días, no se le vuelve a pedir.
+- **Dónde:** `apps/servidor/src/rutas/operacion.ts` (`DIAS_PARA_VERIFICAR_AL_VOLVER`). Prueba en `kyc.test.ts` (comprobada en rojo).
+
+## C-PRUEBA-DE-VIDA (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash («Mira ligeramente a la derecha»), la foto de control son dos fotos: de frente y con la cabeza girada a la derecha. Una foto de una foto o de una pantalla no gira. El equipo ve las dos en el panel (Super › identidad) y marca si coincide. La comparación automática con IA sigue esperando el proveedor que decida Richard (K5).
+- **Servidor:** `POST /datos/kyc/selfie-control?pose=frente` y después `?pose=giro` (guardado como `<clave>-giro`); la foto queda «tomada» al llegar el giro. Sin `pose` funciona como antes (una sola foto) para las versiones de las apps que ya están en revisión. `estado.selfieControlFalta` dice cuál falta.
+- **Prueba:** `kyc.test.ts` (comprobada en rojo).
+
+## C-TERMINOS-ACTUALIZADOS (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash («Acuerdo de términos y condiciones actualizado»), si los términos de los repartidores cambian, cada repartidor los lee y los acepta antes de conectarse. Queda registrado quién aceptó qué versión y cuándo (tabla `terminos_aceptados`, sin llave foránea para no trabar el borrado de cuentas).
+- **Cómo se cambia la versión:** `VERSION_TERMINOS` en `packages/compartido/src/terminos.ts` = la fecha de «Actualizado» de `apps/panel/src/sitio/legales.ts`. Al registrarse se acepta la vigente. Al revisor de las tiendas no se le pide.
+- **Prueba:** `apps/servidor/src/rutas/terminos.test.ts` (comprobada en rojo).
+
+## C-FLEX-CARGA-LISTA, C-FLEX-MAPA-ENCUADRE y C-FLEX-DISTANCIA-PAIS (31 oct 2026) — todos los países (millas en EE. UU.)
+
+- **Cómo se vio:** repasando «Mi ruta» en el simulador de iPhone con una ruta de prueba en Michigan (`scripts/staging/armar-ruta-flex-novi.mjs`). Con los tres paquetes cargados seguía «Escanear siguiente» y «Salir a la ruta» quedaba abajo, debajo de «escanea todos los paquetes»; el mapa de la ruta no mostraba las paradas; la distancia a la parada salía en kilómetros.
+- **Arreglo:** con la carga completa (todo escaneado o marcado como faltante) el botón principal es «Salir a la ruta», también en la pantalla de «Paquete cargado» (como Amazon Flex). `MapaRuta` encuadra en `onMapReady` (el mismo fallo de C-MAPA-ENCUADRE). El detalle de la ruta trae `pais` de la empresa y la app usa `textoDistancia` (C-DISTANCIA-POR-PAIS).
+- **Prueba:** `packages/compartido/src/flexMiRutaRepaso.test.ts` (comprobada en rojo).
+
+## C-FLEX-DESLIZAR-SCROLL, C-FLEX-AVISO-AL-DAR, C-FLEX-TERMINAR-A-LA-VISTA, C-FLEX-SIN-DEVOLUCIONES, C-FLEX-RUTA-EN-INICIO (31 oct 2026) — todos los países
+
+- **Deslizar:** tras un primer intento rechazado («elige dónde lo dejaste»), «Desliza para finalizar» ya no cerraba la entrega: el gesto se rearmaba en cada render y el iPhone se quedaba con el primero (ancho 0). Ahora el gesto se arma una vez (`useState`) y lee el ancho y la acción en una referencia; toma el toque y no lo cede a la lista. Comprobado en el simulador: segundo intento cierra la entrega.
+- **Avisos:** al elegir dónde se dejó, al firmar o al tomar la foto, el aviso de lo que faltaba se borra. «Firma lista» va en verde.
+- **Final de la ruta:** con todas las paradas hechas, «Terminar entregas y volver al centro» es el botón principal verde arriba; sin devoluciones dice «Ya puedes cerrar la ruta» en vez de una caja vacía.
+- **Inicio:** la ruta de paquetes activa o por aceptar sale como tarjeta en el inicio del Driver; con la ruta en curso no dice «Buscando pedidos».
+- **Fuera del área:** en EE. UU. en pies o millas (`textoDistanciaCorta`).
+- **Prueba:** `packages/compartido/src/flexMiRutaRepaso.test.ts` y `distancia.test.ts` (comprobadas en rojo).
+
+## C-FLEX-OSCURO, C-FLEX-LISTA-UNIDA y C-FLEX-PANTALLA-COMPLETA (31 oct 2026, Richard con las capturas de Amazon Flex) — todos los países
+
+- **Qué es:** «Mi ruta» va en fondo oscuro azul petróleo (no cansa la vista en horas de reparto), con texto blanco por defecto (`Texto` en `flex/piezas.tsx`, toda la paleta vive ahí) y botones secundarios con borde azul claro (`Boton oscuro`). Dentro de la ruta no va la cabecera del logo: la franja de Divoox Flex lleva la flecha para salir y «Ayuda de emergencia». La lista de paradas va unida por una línea que se pone verde a medida que se entrega, con el chulito verde, la hora y la siguiente parada resaltada.
+- **No tocar:** no volver a `lienzo(...)` para `miRuta`, ni usar `C.secundario` (negro) como color de texto en Flex: sobre el fondo oscuro no se ve.
+- **Prueba:** `flexMiRutaRepaso.test.ts` (comprobada en rojo). Captura original: `docs/capturas/flex-lista-unida-es.png`.
+
+## C-FLEX-ESCANEO-PARADA y C-FLEX-PARADA-ACTUAL (31 oct 2026, como Amazon Flex) — todos los países
+
+- **Escaneo en la parada:** «X de Y paquetes escaneados»; no se puede deslizar para entregar sin escanear (o escribir) cada paquete de la parada; uno de otra parada se rechaza con «Ese paquete no es de esta parada». Lógica en `paqueteDeEscaneo` / `faltanPorEscanear` (`packages/compartido/src/flex.ts`). El escaneo vive en el celular (no se manda al servidor): el servidor sigue validando paquetes y parada al entregar.
+- **Parada actual:** botón fijo abajo en la ruta en curso, fuera de lo que se desplaza (`ponerPie` → `pieFlex` en `Inicio.tsx`).
+- **Prueba:** `flexEscaneoParada.test.ts` y `flexMiRutaRepaso.test.ts` (comprobadas en rojo). Captura: `docs/capturas/flex-escaneo-parada-es.png`.

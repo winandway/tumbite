@@ -28,6 +28,10 @@ export function crearAlmacenPruebas() {
         },
       };
     },
+    // Como el R2 real: los datos de un archivo sin bajarlo (null si no existe).
+    async head(clave: string) {
+      return datos.has(clave) ? { key: clave } : null;
+    },
     async list(op?: { prefix?: string }) {
       const objects = [...datos.keys()]
         .filter((k) => !op?.prefix || k.startsWith(op.prefix))

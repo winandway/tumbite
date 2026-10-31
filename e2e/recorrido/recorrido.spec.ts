@@ -558,6 +558,8 @@ for (const idioma of ['en', 'es'] as const) {
     await fotoAqui(rep, 'repartidor-registro');
     await rep.getByRole('checkbox').click(); // acepta los términos
     await rep.getByRole('button', { name: L.crearCuenta }).click();
+    // C-PERMISOS-EXPLICADOS: tras registrarse, la app explica los permisos antes de pedirlos.
+    await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.
     await rep
@@ -572,6 +574,12 @@ for (const idioma of ['en', 'es'] as const) {
       rep.getByRole('button', { name: L.tomarSelfie }).click(),
     ]);
     await selectorSelfie.setFiles(FOTO_RECOGIDA);
+    // C-PRUEBA-DE-VIDA: la segunda foto, con la cabeza girada a la derecha (como DoorDash).
+    const [selectorGiro] = await Promise.all([
+      rep.waitForEvent('filechooser', { timeout: 20_000 }),
+      rep.getByRole('button', { name: L.tomarGiro }).click({ timeout: 20_000 }),
+    ]);
+    await selectorGiro.setFiles(FOTO_RECOGIDA);
     await expect(rep.getByText(L.selfieLista)).toBeVisible({ timeout: 20_000 });
     await rep
       .getByRole('switch')

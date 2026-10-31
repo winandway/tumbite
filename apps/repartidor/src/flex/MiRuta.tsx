@@ -8,7 +8,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -27,6 +26,10 @@ import {
   PROXIMAS_ACCIONES,
   crearColaFlex,
   distanciaKm,
+  faltanPorEscanear,
+  paqueteDeEscaneo,
+  textoDistancia,
+  textoDistanciaCorta,
   efectivoEnMano,
   enIdioma,
   formatearMonto,
@@ -36,7 +39,10 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton as BotonBase, C, e } from '@tumbite/movil';
+
+/** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
+const Boton = (p: Parameters<typeof BotonBase>[0]) => <BotonBase oscuro {...p} />;
 import type { Punto } from '../piezas/mapaWeb';
 import { Firma } from './Firma';
 import { MapaRuta, type PuntoRuta } from './MapaRuta';
@@ -56,6 +62,10 @@ import {
   Pestanas,
   RESALTE,
   SUAVE,
+  FONDO,
+  TEXTO,
+  Texto as Text,
+  VERDE,
   type TonoParada,
   tarjeta,
   tonoPaquete,
@@ -123,6 +133,8 @@ type Ruta = {
   nombre: string;
   estado: string;
   empresa: string;
+  /** País de la empresa (millas o kilómetros). */
+  pais?: string | null;
   ofertaVenceEn: string | null;
   iniciadaEn: string | null;
   cerradaEn: string | null;
@@ -217,14 +229,19 @@ const horaSola = (f: string | null | undefined, idioma: Idioma) =>
 const coord = (x: { lat: number | null; lng: number | null } | null | undefined): Punto | null =>
   x && x.lat != null && x.lng != null ? { lat: x.lat, lng: x.lng } : null;
 
-/** Distancia en línea recta, dicha como aproximada (no tenemos tiempos ni distancias por calles). */
-function km(a: Punto | null, b: Punto | null, t: Textos, idioma: Idioma): string | null {
+/**
+ * Distancia en línea recta, dicha como aproximada (no tenemos tiempos ni distancias por calles), en
+ * la unidad del país de la ruta: millas en EE. UU. (C-FLEX-DISTANCIA-PAIS).
+ */
+function km(
+  a: Punto | null,
+  b: Punto | null,
+  t: Textos,
+  idioma: Idioma,
+  pais: string | null | undefined,
+): string | null {
   if (!a || !b) return null;
-  const d = distanciaKm(a, b);
-  return `${d.toLocaleString(idioma === 'en' ? 'en-US' : 'es-US', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })} km ${t.aprox}`;
+  return `${textoDistancia(distanciaKm(a, b), idioma, pais)} ${t.aprox}`;
 }
 
 const nombreParada = (p: Parada) => p.destinatarioNombre || p.direccion;
@@ -253,11 +270,14 @@ function MiRutaContenido({
   api,
   idioma,
   abrirRutaId = null,
+  ponerPie,
 }: {
   api: Api;
   idioma: Idioma;
   /** Fase 3: la ruta del aviso que tocó el conductor (se abre directo). */
   abrirRutaId?: string | null;
+  /** C-FLEX-PARADA-ACTUAL: el botón fijo de abajo lo dibuja la pantalla, fuera de lo que se desplaza. */
+  ponerPie?: (pie: React.ReactNode) => void;
 }) {
   const t = enIdioma(TEXTOS_RUTA, idioma);
   const [lista, setLista] = useState<Fila[] | null>(null);
@@ -525,6 +545,23 @@ function MiRutaContenido({
   ) : null;
 
   // ───────────────── Mis rutas ─────────────────
+  // C-FLEX-PARADA-ACTUAL (como Amazon Flex): en la ruta en curso, abajo y fijo, «Parada actual».
+  const idPie =
+    ruta?.estado === 'en_curso' && !paradaId && !paqueteVer && !escaneo && !devoluciones
+      ? (siguienteDe(ruta)?.id ?? null)
+      : null;
+  useEffect(() => {
+    if (!ponerPie) return;
+    ponerPie(
+      idPie ? (
+        <View style={{ padding: 12, backgroundColor: FONDO }} testID="parada-actual">
+          <Boton texto={`${t.paradaActual} →`} logistica alTocar={() => setParadaId(idPie)} />
+        </View>
+      ) : null,
+    );
+  }, [idPie, ponerPie, t.paradaActual]);
+  useEffect(() => () => ponerPie?.(null), [ponerPie]);
+
   if (!rutaId || !ruta) {
     const grupos = {
       actual: (lista ?? []).filter((r) => ACTUAL.includes(r.estado)),
@@ -547,9 +584,7 @@ function MiRutaContenido({
     return (
       <View style={{ padding: 16, gap: 12 }}>
         <View style={{ gap: 2 }}>
-          <Text style={{ fontSize: 28, fontWeight: '900', color: C.secundario }}>
-            {t.tituloLista}
-          </Text>
+          <Text style={{ fontSize: 28, fontWeight: '900', color: TEXTO }}>{t.tituloLista}</Text>
           <Text style={{ color: GRIS }}>{t.subtituloLista}</Text>
         </View>
         <Pestanas
@@ -592,6 +627,10 @@ function MiRutaContenido({
   const parada = ruta.paradas.find((p) => p.id === paradaId) ?? null;
   const todos = ruta.paradas.flatMap((p) => p.paquetes);
   const siguiente = siguienteDe(ruta);
+  // C-FLEX-CARGA-LISTA: todo lo que va en la ruta ya está escaneado (los faltantes no cuentan).
+  const cargaLista = todos.some((p) => !p.excluido) && todos.every((p) => p.excluido || p.cargado);
+  const todasHechas = ruta.paradas.length > 0 && resueltas(ruta) === ruta.paradas.length;
+  const salirARuta = () => void ubicacion().then((p) => accion('iniciar', p ?? {}));
 
   const escaner = (
     <Modal
@@ -648,11 +687,11 @@ function MiRutaContenido({
           if (codigo.trim()) alEnviar(codigo.trim());
           setCodigo('');
         }}
-        style={{ padding: 14, backgroundColor: C.secundario, borderRadius: 12 }}
+        style={{ padding: 14, backgroundColor: C.logisticaAccion, borderRadius: 12 }}
         accessibilityRole="button"
         accessibilityLabel={t.cargar}
       >
-        <Text style={{ color: '#fff', fontWeight: '800' }}>{t.cargar}</Text>
+        <Text style={{ color: C.logisticaTexto, fontWeight: '800' }}>{t.cargar}</Text>
       </Pressable>
     </View>
   );
@@ -676,7 +715,19 @@ function MiRutaContenido({
           modo={escaneo.modo}
           verPaquete={setPaqueteVer}
         />
-        <Boton texto={t.escanearSiguiente} alTocar={() => void abrirEscaner(escaneo.modo)} />
+        {escaneo.modo === 'carga' && cargaLista ? (
+          <Boton
+            texto={t.salir}
+            exito
+            cargando={trabajando}
+            alTocar={() => {
+              setEscaneo(null);
+              salirARuta();
+            }}
+          />
+        ) : (
+          <Boton texto={t.escanearSiguiente} alTocar={() => void abrirEscaner(escaneo.modo)} />
+        )}
         {avisoCola}
       </View>
     );
@@ -700,12 +751,12 @@ function MiRutaContenido({
     <View style={{ gap: 4 }}>
       <Atras texto={t.tituloLista} alTocar={salirDeRuta} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, fontSize: 24, fontWeight: '900', color: C.secundario }}>
+        <Text style={{ flex: 1, fontSize: 24, fontWeight: '900', color: TEXTO }}>
           {ruta.nombre || ruta.empresa}
         </Text>
         <Pastilla texto={t.estados[ruta.estado] ?? ruta.estado} tono={tonoRuta(ruta.estado)} />
       </View>
-      <Text style={{ color: C.secundario, fontWeight: '600' }}>{ruta.empresa}</Text>
+      <Text style={{ color: TEXTO, fontWeight: '600' }}>{ruta.empresa}</Text>
       <Text style={{ color: GRIS }}>
         {t.resumenCorto(ruta.progreso.total, ruta.paradas.length)}
       </Text>
@@ -715,7 +766,7 @@ function MiRutaContenido({
     ruta.centro ? (
       <View style={[tarjeta, { gap: 6 }]}>
         <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.centroDistribucion}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>{ruta.centro.nombre}</Text>
+        <Text style={{ fontWeight: '800', color: TEXTO }}>{ruta.centro.nombre}</Text>
         <Text style={{ color: GRIS }}>{ruta.centro.direccion}</Text>
         {conNavegar ? (
           <Boton
@@ -754,7 +805,7 @@ function MiRutaContenido({
               <View key={p.id} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                 <Numero n={p.orden} tono="pendiente" tamano={28} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: C.secundario, fontWeight: '600' }}>{p.direccion}</Text>
+                  <Text style={{ color: TEXTO, fontWeight: '600' }}>{p.direccion}</Text>
                   <Text style={{ color: GRIS, fontSize: 13 }}>
                     {t.nPaquetes(p.paquetes.length)}
                   </Text>
@@ -796,7 +847,7 @@ function MiRutaContenido({
       {ruta.estado === 'en_carga' ? (
         <>
           <View style={[tarjeta, { gap: 8 }]}>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>
+            <Text style={{ fontWeight: '800', color: TEXTO }}>
               {t.paquetesCargados(ruta.progreso.cargados, ruta.progreso.total)}
             </Text>
             <Barra
@@ -804,8 +855,14 @@ function MiRutaContenido({
               etiqueta={t.paquetesCargados(ruta.progreso.cargados, ruta.progreso.total)}
             />
           </View>
-          <Boton texto={t.escanear} alTocar={() => void abrirEscaner('carga')} />
-          {entradaManual((c) => void escaneado(c))}
+          {cargaLista ? (
+            <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+          ) : (
+            <>
+              <Boton texto={t.escanear} alTocar={() => void abrirEscaner('carga')} />
+              {entradaManual((c) => void escaneado(c))}
+            </>
+          )}
           <View style={[tarjeta, { paddingVertical: 4 }]}>
             {todos
               .filter((p) => !p.excluido)
@@ -829,9 +886,7 @@ function MiRutaContenido({
                       accessibilityRole="button"
                       accessibilityLabel={`${t.detallesPaquete} ${p.codigoSeguimiento}`}
                     >
-                      <Text style={{ fontWeight: '800', color: C.secundario }}>
-                        {p.codigoSeguimiento}
-                      </Text>
+                      <Text style={{ fontWeight: '800', color: TEXTO }}>{p.codigoSeguimiento}</Text>
                       <Pastilla
                         texto={t.estadosPaquete[p.estado] ?? p.estado}
                         tono={tonoPaquete(p.estado)}
@@ -839,7 +894,10 @@ function MiRutaContenido({
                     </Pressable>
                     {!p.cargado ? (
                       <Text
-                        style={[e.enlaceLinea, { fontSize: 13, alignSelf: 'flex-start' }]}
+                        style={[
+                          [e.enlaceLinea, { color: C.logisticaAccion }],
+                          { fontSize: 13, alignSelf: 'flex-start' },
+                        ]}
                         onPress={() => void accion('faltante', { paqueteId: p.id })}
                         accessibilityRole="button"
                       >
@@ -851,23 +909,22 @@ function MiRutaContenido({
                 </View>
               ))}
           </View>
-          <Text style={{ color: GRIS }}>{t.cargaCompleta}</Text>
-          <Boton
-            texto={t.salir}
-            exito
-            cargando={trabajando}
-            alTocar={() => void ubicacion().then((p) => accion('iniciar', p ?? {}))}
-          />
+          {cargaLista ? null : (
+            <>
+              <Text style={{ color: GRIS }}>{t.cargaCompleta}</Text>
+              <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+            </>
+          )}
         </>
       ) : null}
       {ruta.estado === 'en_curso' && !devoluciones ? (
         <>
           <View style={[tarjeta, { gap: 8 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.secundario, fontWeight: '600' }}>
+              <Text style={{ color: TEXTO, fontWeight: '600' }}>
                 {t.paradasCompletadas(resueltas(ruta), ruta.paradas.length)}
               </Text>
-              <Text style={{ color: C.exito, fontWeight: '800' }}>
+              <Text style={{ color: VERDE, fontWeight: '800' }}>
                 {ruta.paradas.length
                   ? Math.round((resueltas(ruta) / ruta.paradas.length) * 100)
                   : 0}
@@ -879,6 +936,16 @@ function MiRutaContenido({
               etiqueta={t.paradasCompletadas(resueltas(ruta), ruta.paradas.length)}
             />
           </View>
+          {todasHechas ? (
+            // C-FLEX-TERMINAR-A-LA-VISTA (como Amazon Flex): con todas las paradas hechas, terminar es
+            // el botón principal, arriba y en verde, no uno gris al final de la lista.
+            <Boton
+              texto={t.devolucion}
+              exito
+              cargando={trabajando}
+              alTocar={() => void accion('devolucion')}
+            />
+          ) : null}
           <Pestanas
             opciones={[
               { id: 'mapa', texto: t.vistas.mapa },
@@ -897,95 +964,144 @@ function MiRutaContenido({
           ) : vistaRuta === 'resumen' ? (
             <TrabajoRestante t={t} ruta={ruta} />
           ) : (
-            ruta.paradas.map((p) => (
-              <Pressable
-                key={p.id}
-                onPress={() => setParadaId(p.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`${p.orden}. ${p.direccion}`}
-                style={[
-                  tarjeta,
-                  { gap: 6 },
-                  p.id === siguiente?.id && { backgroundColor: RESALTE, borderColor: C.logistica },
-                ]}
-              >
-                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-                  <Numero n={p.orden} tono={tonoParada(p, siguiente?.id ?? null)} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '800', color: C.secundario }}>
-                      {nombreParada(p)}
-                    </Text>
-                    {p.destinatarioNombre ? (
-                      <Text style={{ color: GRIS }}>{p.direccion}</Text>
-                    ) : null}
+            // C-FLEX-LISTA-UNIDA (como la lista del itinerario de Amazon Flex): las paradas van unidas
+            // por una línea, para que se entienda que es un recorrido; la línea y el número se ponen en
+            // verde a medida que se entrega.
+            <View testID="lista-unida">
+              {ruta.paradas.map((p, i) => {
+                const hecha = p.estado === 'entregada';
+                const anteriorHecha = i > 0 && ruta.paradas[i - 1]?.estado === 'entregada';
+                const ultima = i === ruta.paradas.length - 1;
+                return (
+                  <View key={p.id} style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ width: 32, alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 3,
+                          height: 18,
+                          backgroundColor: i === 0 ? 'transparent' : anteriorHecha ? VERDE : BORDE,
+                        }}
+                      />
+                      <Numero n={p.orden} tono={tonoParada(p, siguiente?.id ?? null)} />
+                      <View
+                        style={{
+                          width: 3,
+                          flex: 1,
+                          backgroundColor: ultima ? 'transparent' : hecha ? VERDE : BORDE,
+                        }}
+                      />
+                    </View>
+                    <Pressable
+                      onPress={() => setParadaId(p.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${p.orden}. ${p.direccion}`}
+                      style={[
+                        tarjeta,
+                        { gap: 6, flex: 1, marginBottom: ultima ? 0 : 12 },
+                        p.id === siguiente?.id && {
+                          backgroundColor: RESALTE,
+                          borderColor: C.logisticaAccion,
+                        },
+                      ]}
+                    >
+                      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                        <View style={{ flex: 1 }}>
+                          {p.id === siguiente?.id ? (
+                            <Text style={{ color: C.logisticaAccion, fontWeight: '800' }}>
+                              {t.siguienteParada}
+                            </Text>
+                          ) : null}
+                          <Text style={{ fontWeight: '800', color: TEXTO }}>{nombreParada(p)}</Text>
+                          {p.destinatarioNombre ? (
+                            <Text style={{ color: GRIS }}>{p.direccion}</Text>
+                          ) : null}
+                        </View>
+                        <Listo marcado={hecha} />
+                      </View>
+                      {hecha && p.resueltaEn ? (
+                        <Text style={{ color: VERDE, fontWeight: '600' }}>
+                          {t.entregadaA(horaLocal(p.resueltaEn, idioma))}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: p.estado === 'fallida' ? C.acento : GRIS }}>
+                          {t.estadosParada[p.estado] ?? p.estado} ·{' '}
+                          {t.nPaquetes(paquetesActivos(p).length)}
+                        </Text>
+                      )}
+                      {p.ventanaDesde ? (
+                        <Text style={{ color: GRIS }}>
+                          {t.ventana}: {p.ventanaDesde.slice(11, 16)}–
+                          {(p.ventanaHasta ?? '').slice(11, 16)}
+                        </Text>
+                      ) : null}
+                      {p.instrucciones ? (
+                        <Text style={{ color: GRIS }}>{p.instrucciones}</Text>
+                      ) : null}
+                      {hecha ? null : (
+                        <Text
+                          style={[
+                            [e.enlaceLinea, { color: C.logisticaAccion }],
+                            { alignSelf: 'flex-start', color: C.logisticaAccion },
+                          ]}
+                          onPress={() => navegar(p.lat, p.lng, p.direccion, t)}
+                          accessibilityRole="button"
+                        >
+                          {t.navegar}
+                        </Text>
+                      )}
+                    </Pressable>
                   </View>
-                  <Listo marcado={p.estado === 'entregada'} />
-                </View>
-                {p.estado === 'entregada' && p.resueltaEn ? (
-                  <Text style={{ color: C.exito, fontWeight: '600' }}>
-                    {t.entregadaA(horaLocal(p.resueltaEn, idioma))}
-                  </Text>
-                ) : null}
-                <Text style={{ color: p.estado === 'fallida' ? C.acento : GRIS }}>
-                  {t.estadosParada[p.estado] ?? p.estado} · {t.nPaquetes(paquetesActivos(p).length)}
-                </Text>
-                {p.ventanaDesde ? (
-                  <Text style={{ color: GRIS }}>
-                    {t.ventana}: {p.ventanaDesde.slice(11, 16)}–
-                    {(p.ventanaHasta ?? '').slice(11, 16)}
-                  </Text>
-                ) : null}
-                {p.instrucciones ? <Text style={{ color: GRIS }}>{p.instrucciones}</Text> : null}
-                <Text
-                  style={[e.enlaceLinea, { alignSelf: 'flex-start' }]}
-                  onPress={() => navegar(p.lat, p.lng, p.direccion, t)}
-                  accessibilityRole="button"
-                >
-                  {t.navegar}
-                </Text>
-              </Pressable>
-            ))
+                );
+              })}
+            </View>
           )}
-          <Boton
-            texto={t.devolucion}
-            secundario
-            cargando={trabajando}
-            alTocar={() => void accion('devolucion')}
-          />
+          {todasHechas ? null : (
+            <Boton
+              texto={t.devolucion}
+              secundario
+              cargando={trabajando}
+              alTocar={() => void accion('devolucion')}
+            />
+          )}
         </>
       ) : null}
       {ruta.estado === 'en_curso' && devoluciones ? (
         <>
-          <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>
+          <Text style={{ fontSize: 20, fontWeight: '900', color: TEXTO }}>
             {t.devolucionTitulo}
           </Text>
-          <Text style={{ color: GRIS }}>{t.devolucionAyuda}</Text>
-          <View style={[tarjeta, { paddingVertical: 4 }]}>
-            {devoluciones.map((d, i) => (
-              <View
-                key={d.paqueteId}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  paddingVertical: 10,
-                  borderTopWidth: i ? 1 : 0,
-                  borderTopColor: BORDE,
-                }}
-              >
-                <Caja />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '800', color: C.secundario }}>
-                    {d.codigoSeguimiento}
-                  </Text>
-                  <Text style={{ color: d.entregadoAlCentro ? C.exito : GRIS }}>
-                    {d.entregadoAlCentro ? t.entregadoCentro : t.porEntregar}
-                  </Text>
+          {devoluciones.length ? (
+            <Text style={{ color: GRIS }}>{t.devolucionAyuda}</Text>
+          ) : (
+            // C-FLEX-SIN-DEVOLUCIONES: sin paquetes que devolver no se muestra una caja vacía.
+            <Text style={{ color: VERDE, fontWeight: '700' }}>{t.sinDevoluciones}</Text>
+          )}
+          {devoluciones.length ? (
+            <View style={[tarjeta, { paddingVertical: 4 }]}>
+              {devoluciones.map((d, i) => (
+                <View
+                  key={d.paqueteId}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingVertical: 10,
+                    borderTopWidth: i ? 1 : 0,
+                    borderTopColor: BORDE,
+                  }}
+                >
+                  <Caja />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: '800', color: TEXTO }}>{d.codigoSeguimiento}</Text>
+                    <Text style={{ color: d.entregadoAlCentro ? VERDE : GRIS }}>
+                      {d.entregadoAlCentro ? t.entregadoCentro : t.porEntregar}
+                    </Text>
+                  </View>
+                  <Listo marcado={d.entregadoAlCentro} />
                 </View>
-                <Listo marcado={d.entregadoAlCentro} />
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          ) : null}
           {devoluciones.length ? (
             <>
               <Boton texto={t.escanear} alTocar={() => void abrirEscaner('devolucion')} />
@@ -1067,19 +1183,19 @@ function TarjetaRuta({
   return (
     <View style={[tarjeta, { gap: 10 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, fontWeight: '900', fontSize: 18, color: C.secundario }}>
+        <Text style={{ flex: 1, fontWeight: '900', fontSize: 18, color: TEXTO }}>
           {r.nombre || r.empresa}
         </Text>
         <Pastilla texto={t.estados[r.estado] ?? r.estado} tono={tonoRuta(r.estado)} />
       </View>
       <View style={{ gap: 2 }}>
-        <Text style={{ fontWeight: '700', color: C.secundario }}>{r.empresa}</Text>
+        <Text style={{ fontWeight: '700', color: TEXTO }}>{r.empresa}</Text>
         <Text style={{ color: GRIS }}>{t.resumenCorto(r.paquetes, r.paradas)}</Text>
       </View>
       {r.bloqueDesde ? (
         <View style={{ gap: 2 }}>
           <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.horario}</Text>
-          <Text style={{ color: C.secundario, fontWeight: '600' }}>
+          <Text style={{ color: TEXTO, fontWeight: '600' }}>
             {hora(r.bloqueDesde, idioma)}
             {r.bloqueHasta ? ` – ${horaSola(r.bloqueHasta, idioma)}` : ''}
           </Text>
@@ -1098,8 +1214,8 @@ function TarjetaRuta({
       {avance && avance.estado === 'en_curso' ? (
         <View style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ color: C.secundario }}>{t.paradasCompletadas(hechas, total)}</Text>
-            <Text style={{ color: C.exito, fontWeight: '800' }}>
+            <Text style={{ color: TEXTO }}>{t.paradasCompletadas(hechas, total)}</Text>
+            <Text style={{ color: VERDE, fontWeight: '800' }}>
               {total ? Math.round((hechas / total) * 100) : 0}%
             </Text>
           </View>
@@ -1110,7 +1226,7 @@ function TarjetaRuta({
         </View>
       ) : avance && avance.estado === 'en_carga' ? (
         <View style={{ gap: 6 }}>
-          <Text style={{ color: C.secundario }}>
+          <Text style={{ color: TEXTO }}>
             {t.paquetesCargados(avance.progreso.cargados, avance.progreso.total)}
           </Text>
           <Barra
@@ -1181,7 +1297,7 @@ function VistaMapa({
   const paradasFiltradas =
     filtro === 'todos' ? ruta.paradas : ruta.paradas.filter((p) => cumpleFiltro(p, filtro));
   const puntos = puntosDe({ ...ruta, paradas: paradasFiltradas }, siguiente?.id ?? null, t);
-  const distancia = siguiente ? km(yo, coord(siguiente), t, idioma) : null;
+  const distancia = siguiente ? km(yo, coord(siguiente), t, idioma, ruta.pais) : null;
   return (
     <>
       <Pestanas
@@ -1218,7 +1334,7 @@ function VistaMapa({
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <Numero n={siguiente.orden} tono="actual" tamano={36} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>
+                <Text style={{ fontWeight: '900', fontSize: 16, color: TEXTO }}>
                   {nombreParada(siguiente)}
                 </Text>
                 {siguiente.destinatarioNombre ? (
@@ -1246,7 +1362,7 @@ function distanciasEntreParadas(ruta: Ruta, t: Textos, idioma: Idioma): (string 
   let anterior = coord(ruta.centro);
   return ruta.paradas.map((p) => {
     const q = coord(p);
-    const d = km(anterior, q, t, idioma);
+    const d = km(anterior, q, t, idioma, ruta.pais);
     if (q) anterior = q;
     return d;
   });
@@ -1329,7 +1445,7 @@ function LineaRuta({
               style={{
                 width: 2,
                 height: 12,
-                backgroundColor: i === 0 ? 'transparent' : f.tono === 'hecho' ? C.exito : BORDE,
+                backgroundColor: i === 0 ? 'transparent' : f.tono === 'hecho' ? VERDE : BORDE,
               }}
             />
             {f.id === 'centro' ? (
@@ -1338,7 +1454,7 @@ function LineaRuta({
                   width: 32,
                   height: 32,
                   borderRadius: 16,
-                  backgroundColor: C.secundario,
+                  backgroundColor: C.logisticaAccion,
                   borderWidth: 2,
                   borderColor: '#FFFFFF',
                 }}
@@ -1351,12 +1467,12 @@ function LineaRuta({
                 width: 2,
                 flex: 1,
                 minHeight: 12,
-                backgroundColor: i === filas.length - 1 ? 'transparent' : f.listo ? C.exito : BORDE,
+                backgroundColor: i === filas.length - 1 ? 'transparent' : f.listo ? VERDE : BORDE,
               }}
             />
           </View>
           <View style={{ flex: 1, paddingVertical: 12, gap: 2 }}>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>{f.titulo}</Text>
+            <Text style={{ fontWeight: '800', color: TEXTO }}>{f.titulo}</Text>
             <Text style={{ color: GRIS, fontSize: 13 }}>{f.sub}</Text>
             {f.detalle ? <Text style={{ color: GRIS, fontSize: 13 }}>{f.detalle}</Text> : null}
           </View>
@@ -1433,7 +1549,7 @@ function ResultadoEscaneo({
       <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
         <Listo marcado={listo} tamano={64} />
         <Text
-          style={{ fontSize: 20, fontWeight: '900', color: C.secundario, textAlign: 'center' }}
+          style={{ fontSize: 20, fontWeight: '900', color: TEXTO, textAlign: 'center' }}
           accessibilityRole="header"
         >
           {titulo}
@@ -1444,15 +1560,13 @@ function ResultadoEscaneo({
         {enCola?.estado === 'error' && enCola.error ? (
           <Text style={{ color: C.acento, textAlign: 'center' }}>{enCola.error}</Text>
         ) : null}
-        <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+        <Text style={{ fontWeight: '800', fontSize: 16, color: TEXTO }}>
           {paq?.codigoSeguimiento ?? dev?.codigoSeguimiento ?? leido?.codigo ?? texto}
         </Text>
         {paradaDe ? (
           <View style={{ alignItems: 'center' }}>
             {paradaDe.destinatarioNombre ? (
-              <Text style={{ fontWeight: '700', color: C.secundario }}>
-                {paradaDe.destinatarioNombre}
-              </Text>
+              <Text style={{ fontWeight: '700', color: TEXTO }}>{paradaDe.destinatarioNombre}</Text>
             ) : null}
             <Text style={{ color: GRIS, textAlign: 'center' }}>{paradaDe.direccion}</Text>
           </View>
@@ -1462,7 +1576,7 @@ function ResultadoEscaneo({
         <View style={[tarjeta, { flexDirection: 'row', gap: 12, alignItems: 'center' }]}>
           <Caja />
           <View style={{ flex: 1, gap: 6 }}>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>
+            <Text style={{ fontWeight: '800', color: TEXTO }}>
               {t.paquetesCargados(ruta.progreso.cargados, ruta.progreso.total)}
             </Text>
             <Barra
@@ -1494,14 +1608,12 @@ function DetallePaquete({
   return (
     <View style={{ padding: 16, gap: 12 }}>
       <Atras texto={t.volverRuta} alTocar={volver} />
-      <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
-        {t.detallesPaquete}
-      </Text>
+      <Text style={{ fontSize: 22, fontWeight: '900', color: TEXTO }}>{t.detallesPaquete}</Text>
       {paq && parada ? (
         <View style={[tarjeta, { gap: 4 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 6 }}>
             <Caja />
-            <Text style={{ flex: 1, fontWeight: '900', fontSize: 16, color: C.secundario }}>
+            <Text style={{ flex: 1, fontWeight: '900', fontSize: 16, color: TEXTO }}>
               {paq.codigoSeguimiento}
             </Text>
             <Pastilla
@@ -1530,7 +1642,7 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   return (
     <View style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: BORDE, gap: 2 }}>
       <Text style={{ color: GRIS, fontSize: 12 }}>{etiqueta}</Text>
-      <Text style={{ color: C.secundario, fontWeight: '600' }}>{valor}</Text>
+      <Text style={{ color: TEXTO, fontWeight: '600' }}>{valor}</Text>
     </View>
   );
 }
@@ -1552,9 +1664,7 @@ function EfectivoEnMano({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: 
   if (!monedas.length) return null;
   return (
     <View style={[tarjeta, { gap: 4 }]} testID="efectivo-en-mano">
-      <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
-        {t.efectivoEnMano}
-      </Text>
+      <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>{t.efectivoEnMano}</Text>
       {monedas.map(([moneda, monto]) => (
         <Text key={moneda} style={{ fontSize: 22, fontWeight: '900' }}>
           {formatearMonto(monto, moneda, idioma)}
@@ -1585,7 +1695,7 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
         ayuda={bien ? t.rutaCompletadaAyuda : t.rutaConIncidenciasAyuda}
       />
       <View style={[tarjeta, { gap: 0 }]}>
-        <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario, marginBottom: 6 }}>
+        <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO, marginBottom: 6 }}>
           {t.resumen}
         </Text>
         <Fila
@@ -1597,7 +1707,7 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
             key={k}
             etiqueta={texto}
             valor={String(ruta.resumen?.[k] ?? 0)}
-            color={k === 'entregados' ? C.exito : undefined}
+            color={k === 'entregados' ? VERDE : undefined}
           />
         ))}
         <View style={{ height: 1, backgroundColor: BORDE, marginVertical: 6 }} />
@@ -1612,7 +1722,7 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
       </View>
       {ultimas.length ? (
         <View style={[tarjeta, { gap: 0 }]}>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario, marginBottom: 6 }}>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO, marginBottom: 6 }}>
             {t.ultimasParadas}
           </Text>
           {ultimas.map((p, i) => (
@@ -1629,9 +1739,9 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
             >
               <Listo marcado={p.estado === 'entregada'} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700', color: C.secundario }}>
+                <Text style={{ fontWeight: '700', color: TEXTO }}>
                   {t.parada} {p.orden} ·{' '}
-                  <Text style={{ color: p.estado === 'entregada' ? C.exito : C.acento }}>
+                  <Text style={{ color: p.estado === 'entregada' ? VERDE : C.acento }}>
                     {t.estadosParada[p.estado] ?? p.estado}
                   </Text>
                 </Text>
@@ -1705,6 +1815,23 @@ function DetalleParada({
   const [proxima, setProxima] = useState<(typeof PROXIMAS_ACCIONES)[number]>('reintentar');
   const [aviso, setAviso] = useState('');
   const [hecha, setHecha] = useState<{ en: Date; foto: boolean; firma: boolean } | null>(null);
+  // C-FLEX-ESCANEO-PARADA (como Amazon Flex): cada paquete se escanea en la parada antes de entregar.
+  const [escaneados, setEscaneados] = useState<Set<string>>(new Set());
+  const [escaneandoParada, setEscaneandoParada] = useState(false);
+  const [codigoParada, setCodigoParada] = useState('');
+  const [avisoEscaneo, setAvisoEscaneo] = useState('');
+  const [permisoCamaraParada, pedirPermisoParada] = useCameraPermissions();
+  function escaneadoEnParada(texto: string) {
+    const id = paqueteDeEscaneo(texto, paquetesActivos(parada));
+    if (!id) return setAvisoEscaneo(t.noEsDeParada);
+    setAvisoEscaneo('');
+    setEscaneados((s) => new Set(s).add(id));
+  }
+  async function abrirEscanerParada() {
+    if (!permisoCamaraParada?.granted && !(await pedirPermisoParada()).granted)
+      return setAvisoEscaneo(t.permisoCamara);
+    setEscaneandoParada(true);
+  }
   const base = `${B}/${ruta.id}/paradas/${parada.id}`;
   // C-FLEX-FOTO-ANTERIOR: la foto de la última entrega en esta puerta, si la hay.
   const [fotoAnterior, setFotoAnterior] = useState<string | null>(null);
@@ -1729,7 +1856,7 @@ function DetalleParada({
   const previa = i > 0 ? ruta.paradas[i - 1] : undefined;
   const proximaParada = ruta.paradas[i + 1];
   const siguienteId = siguienteDe(ruta)?.id ?? null;
-  const distancia = km(yo, coord(parada), t, idioma);
+  const distancia = km(yo, coord(parada), t, idioma, ruta.pais);
   const pestanasPrueba = (
     [
       'foto',
@@ -1749,9 +1876,21 @@ function DetalleParada({
       base64: true,
     });
     const a = r.canceled ? null : r.assets[0];
-    if (a) setFoto(a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri);
+    if (a) {
+      setFoto(a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri);
+      setAviso('');
+    }
   }
   async function entregar() {
+    const sinEscanear = faltanPorEscanear(
+      enCamino.map((p) => p.id),
+      escaneados,
+    );
+    if (sinEscanear) {
+      setPestana('paquetes');
+      setAvisoEscaneo(t.faltaEscanear(sinEscanear));
+      return setAviso(t.faltaEscanear(sinEscanear));
+    }
     // Las mismas reglas que exige el servidor, para no guardar en el celular una entrega que rechazaría.
     const faltan = pruebasFaltantes(parada.pruebas, {
       foto: Boolean(foto),
@@ -1773,7 +1912,8 @@ function DetalleParada({
     // C-FLEX-GEOCERCA: como Amazon Flex, avisa antes de intentar si está lejos de la dirección.
     if (p && parada.lat != null && parada.lng != null) {
       const metros = Math.round(distanciaKm(p, { lat: parada.lat, lng: parada.lng }) * 1000);
-      if (metros > RADIO_ENTREGA_M) return setAviso(t.fueraDeArea(metros));
+      if (metros > RADIO_ENTREGA_M)
+        return setAviso(t.fueraDeArea(textoDistanciaCorta(metros, idioma, ruta.pais)));
     }
     await encolar({
       tipo: 'entrega',
@@ -1843,7 +1983,7 @@ function DetalleParada({
         <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
           <Listo marcado={confirmada} tamano={64} />
           <Text
-            style={{ fontSize: 22, fontWeight: '900', color: C.secundario, textAlign: 'center' }}
+            style={{ fontSize: 22, fontWeight: '900', color: TEXTO, textAlign: 'center' }}
             accessibilityRole="header"
           >
             {confirmada
@@ -1858,7 +1998,7 @@ function DetalleParada({
           {pendiente?.estado === 'error' && pendiente.error ? (
             <Text style={{ color: C.acento, textAlign: 'center' }}>{pendiente.error}</Text>
           ) : null}
-          <Text style={{ fontWeight: '800', color: C.secundario }}>{nombreParada(parada)}</Text>
+          <Text style={{ fontWeight: '800', color: TEXTO }}>{nombreParada(parada)}</Text>
           {parada.destinatarioNombre ? (
             <Text style={{ color: GRIS, textAlign: 'center' }}>{parada.direccion}</Text>
           ) : null}
@@ -1870,12 +2010,12 @@ function DetalleParada({
               timeStyle: 'short',
             })}
           />
-          {hecha.foto ? <Fila etiqueta={t.fotoGuardada} valor="✓" color={C.exito} /> : null}
-          {hecha.firma ? <Fila etiqueta={t.firmaGuardada} valor="✓" color={C.exito} /> : null}
+          {hecha.foto ? <Fila etiqueta={t.fotoGuardada} valor="✓" color={VERDE} /> : null}
+          {hecha.firma ? <Fila etiqueta={t.firmaGuardada} valor="✓" color={VERDE} /> : null}
           <Fila
             etiqueta={t.paradaDe(i + 1, ruta.paradas.length)}
             valor={t.paquetesEntregados(entregados)}
-            color={entregados ? C.exito : undefined}
+            color={entregados ? VERDE : undefined}
           />
         </View>
         {cola}
@@ -1908,9 +2048,7 @@ function DetalleParada({
         opacity: destino ? 1 : 0.35,
       }}
     >
-      <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginTop: -2 }}>
-        {signo}
-      </Text>
+      <Text style={{ fontSize: 22, fontWeight: '700', color: TEXTO, marginTop: -2 }}>{signo}</Text>
     </Pressable>
   );
 
@@ -1919,7 +2057,7 @@ function DetalleParada({
       <Atras texto={t.volverRuta} alTocar={volver} />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         {flecha(previa, t.paradaAnterior, '‹')}
-        <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+        <Text style={{ fontWeight: '800', fontSize: 16, color: TEXTO }}>
           {t.paradaDe(i + 1, ruta.paradas.length)}
         </Text>
         {flecha(proximaParada, t.paradaSiguiente, '›')}
@@ -1927,7 +2065,7 @@ function DetalleParada({
       <View style={[tarjeta, { flexDirection: 'row', gap: 12, alignItems: 'center' }]}>
         <Numero n={parada.orden} tono={tonoParada(parada, siguienteId)} tamano={40} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+          <Text style={{ fontWeight: '900', fontSize: 17, color: TEXTO }}>
             {nombreParada(parada)}
           </Text>
           {parada.destinatarioNombre ? (
@@ -1950,6 +2088,80 @@ function DetalleParada({
         activa={pestana}
         alCambiar={setPestana}
       />
+      {pestana === 'paquetes' && enCamino.length ? (
+        <View style={{ gap: 8 }} testID="escaneo-parada">
+          <Text style={{ fontWeight: '800', color: TEXTO }}>
+            {t.escaneadosDe(
+              enCamino.length -
+                faltanPorEscanear(
+                  enCamino.map((p) => p.id),
+                  escaneados,
+                ),
+              enCamino.length,
+            )}
+          </Text>
+          {avisoEscaneo ? (
+            <Text style={e.error} accessibilityRole="alert">
+              {avisoEscaneo}
+            </Text>
+          ) : null}
+          {faltanPorEscanear(
+            enCamino.map((p) => p.id),
+            escaneados,
+          ) ? (
+            <>
+              <Boton texto={t.escanearParada} logistica alTocar={() => void abrirEscanerParada()} />
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <TextInput
+                  value={codigoParada}
+                  onChangeText={setCodigoParada}
+                  placeholder={t.escribirCodigo}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (codigoParada.trim()) escaneadoEnParada(codigoParada.trim());
+                    setCodigoParada('');
+                  }}
+                  style={[e.input, { flex: 1 }]}
+                  accessibilityLabel={t.escribirCodigo}
+                />
+                <Pressable
+                  onPress={() => {
+                    if (codigoParada.trim()) escaneadoEnParada(codigoParada.trim());
+                    setCodigoParada('');
+                  }}
+                  style={{ padding: 14, backgroundColor: C.logisticaAccion, borderRadius: 12 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.agregar}
+                >
+                  <Text style={{ color: C.logisticaTexto, fontWeight: '800' }}>{t.agregar}</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
+          <Modal
+            visible={escaneandoParada}
+            animationType="slide"
+            onRequestClose={() => setEscaneandoParada(false)}
+          >
+            <View style={{ flex: 1, backgroundColor: '#101010' }}>
+              <CameraView
+                style={{ flex: 1 }}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128'] }}
+                onBarcodeScanned={({ data }) => {
+                  setEscaneandoParada(false);
+                  escaneadoEnParada(data);
+                }}
+              />
+              <View style={{ padding: 16 }}>
+                <Boton texto={t.cancelar} secundario alTocar={() => setEscaneandoParada(false)} />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      ) : null}
       {pestana === 'paquetes' ? (
         <View style={[tarjeta, { paddingVertical: 4 }]}>
           {activos.map((p, n) => (
@@ -1969,9 +2181,7 @@ function DetalleParada({
             >
               <Caja />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
-                  {p.codigoSeguimiento}
-                </Text>
+                <Text style={{ fontWeight: '800', color: TEXTO }}>{p.codigoSeguimiento}</Text>
                 {p.descripcion ? (
                   <Text style={{ color: GRIS, fontSize: 13 }}>{p.descripcion}</Text>
                 ) : null}
@@ -1980,7 +2190,7 @@ function DetalleParada({
                 texto={t.estadosPaquete[p.estado] ?? p.estado}
                 tono={tonoPaquete(p.estado)}
               />
-              <Listo marcado={p.estado === 'entregado'} />
+              <Listo marcado={p.estado === 'entregado' || escaneados.has(p.id)} />
             </Pressable>
           ))}
         </View>
@@ -2058,7 +2268,7 @@ function DetalleParada({
             />
           ) : null}
           <View style={[tarjeta, { gap: 10 }]}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
               {t.confirmarEntrega}
             </Text>
             {exige.length ? (
@@ -2116,7 +2326,7 @@ function DetalleParada({
                 </Pressable>
                 {foto ? (
                   <>
-                    <Text style={{ color: C.exito, fontWeight: '700' }}>{t.fotoLista}</Text>
+                    <Text style={{ color: VERDE, fontWeight: '700' }}>{t.fotoLista}</Text>
                     <Text style={{ color: GRIS }}>{t.fotoConsejo}</Text>
                   </>
                 ) : null}
@@ -2148,12 +2358,16 @@ function DetalleParada({
                   alGuardar={(d) => {
                     setFirma(d);
                     setPidiendoFirma(false);
+                    // C-FLEX-AVISO-AL-DAR: con la prueba dada, el aviso de lo que faltaba se borra.
+                    setAviso('');
                   }}
                 />
               ) : (
                 <Boton
                   texto={firma ? t.firmaLista : t.firmar}
                   secundario={!firma}
+                  // Lo que ya está hecho va en verde, nunca en rojo (regla de Richard).
+                  exito={Boolean(firma)}
                   alTocar={() => setPidiendoFirma(true)}
                 />
               )
@@ -2181,7 +2395,7 @@ function DetalleParada({
             />
             {cobroPendiente ? (
               <View style={{ gap: 8 }} testID="cobro-entrega">
-                <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
                   {t.cobrar}: {formatearMonto(cobroPendiente.monto, cobroPendiente.moneda, idioma)}
                 </Text>
                 <Text style={{ color: GRIS, fontSize: 13 }}>{t.cobrarAyuda}</Text>
@@ -2241,7 +2455,7 @@ function DetalleParada({
                 ))}
               </View>
             ) : parada.cobro?.estado === 'cobrado' ? (
-              <Text style={{ color: C.exito, fontWeight: '700' }}>{t.cobrado}</Text>
+              <Text style={{ color: VERDE, fontWeight: '700' }}>{t.cobrado}</Text>
             ) : null}
             {aviso ? (
               <Text style={e.error} accessibilityRole="alert">
@@ -2249,11 +2463,15 @@ function DetalleParada({
               </Text>
             ) : null}
             <View style={{ gap: 8 }} testID="donde-lo-dejaste">
-              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.dondeLoDejaste}</Text>
+              <Text style={{ fontWeight: '800', color: TEXTO }}>{t.dondeLoDejaste}</Text>
               {(Object.keys(t.lugares) as (keyof typeof t.lugares)[]).map((k) => (
                 <Pressable
                   key={k}
-                  onPress={() => setLugar(k)}
+                  onPress={() => {
+                    setLugar(k);
+                    // Elegido el lugar, el aviso de «elige dónde lo dejaste» ya no aplica.
+                    if (aviso === t.faltaLugar) setAviso('');
+                  }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: lugar === k }}
                   style={{
@@ -2287,7 +2505,7 @@ function DetalleParada({
                       />
                     ) : null}
                   </View>
-                  <Text style={{ color: C.secundario, fontSize: 15 }}>{t.lugares[k]}</Text>
+                  <Text style={{ color: TEXTO, fontSize: 15 }}>{t.lugares[k]}</Text>
                 </Pressable>
               ))}
             </View>
@@ -2320,7 +2538,7 @@ function DetalleParada({
         : null}
       {modo === 'incidencia' ? (
         <View style={[tarjeta, { gap: 10 }]}>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
             {t.registrarIncidenciaBoton}
           </Text>
           <Text style={{ fontWeight: '800' }}>{t.motivo}</Text>
@@ -2404,14 +2622,62 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
  * C-COLOR-LOGISTICA: «Mi ruta» lleva arriba la franja de Divoox Flex en el color de logística, para
  * reconocer de un vistazo una captura de logística frente a una de comida.
  */
-export function MiRuta(props: Parameters<typeof MiRutaContenido>[0]) {
+export function MiRuta({
+  alSeguridad,
+  alVolver,
+  ...props
+}: Parameters<typeof MiRutaContenido>[0] & {
+  /** C-SEGURIDAD-A-LA-VISTA: «Ayuda de emergencia» siempre a la vista, como Amazon Flex. */
+  alSeguridad?: () => void;
+  /** C-FLEX-PANTALLA-COMPLETA: sin la cabecera del logo, la franja lleva la flecha para salir. */
+  alVolver?: () => void;
+}) {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: FONDO }}>
       <View
         testID="franja-logistica"
-        style={{ backgroundColor: C.logistica, paddingVertical: 8, paddingHorizontal: 16 }}
+        style={{
+          backgroundColor: C.logistica,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
-        <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>DIVOOX FLEX</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {alVolver ? (
+            <Pressable
+              onPress={alVolver}
+              accessibilityRole="button"
+              accessibilityLabel={props.idioma === 'en' ? 'Back' : 'Volver'}
+              hitSlop={12}
+              testID="flex-volver"
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22 }}>‹</Text>
+            </Pressable>
+          ) : null}
+          <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>
+            DIVOOX FLEX
+          </Text>
+        </View>
+        {alSeguridad ? (
+          <Pressable
+            onPress={alSeguridad}
+            accessibilityRole="button"
+            testID="ayuda-emergencia"
+            style={{
+              paddingVertical: 4,
+              paddingHorizontal: 10,
+              borderRadius: 999,
+              backgroundColor: '#fff',
+            }}
+          >
+            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 12 }}>
+              {props.idioma === 'en' ? 'Emergency help' : 'Ayuda de emergencia'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
       <MiRutaContenido {...props} />
     </View>
@@ -2442,9 +2708,7 @@ function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
   const paquetesHechos = paquetes.filter((q) => q.estado === 'entregado').length;
   return (
     <View testID="resumen-ruta" style={[tarjeta, { gap: 12 }]}>
-      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>
-        {t.trabajoRestante}
-      </Text>
+      <Text style={{ fontSize: 20, fontWeight: '900', color: TEXTO }}>{t.trabajoRestante}</Text>
       <Barra
         valor={total ? (total - pendientes) / total : 0}
         etiqueta={`${pendientes} ${t.restantes.paradas}`}
@@ -2456,7 +2720,7 @@ function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
       {(
         [
           [t.estadoParadas.pendientes, pendientes, GRIS],
-          [t.estadoParadas.correcto, correcto, C.exito],
+          [t.estadoParadas.correcto, correcto, VERDE],
           [t.estadoParadas.problemas, problemas, problemas ? C.acento : GRIS],
         ] as const
       ).map(([nombre, n, color]) => (
@@ -2464,7 +2728,7 @@ function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
           key={nombre}
           style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
         >
-          <Text style={{ fontSize: 16, color: C.secundario }}>{nombre}</Text>
+          <Text style={{ fontSize: 16, color: TEXTO }}>{nombre}</Text>
           <Text style={{ fontSize: 16, fontWeight: '800', color }}>{n}</Text>
         </View>
       ))}

@@ -1,4 +1,4 @@
-import { correoCanonico, telefonoCanonico } from '@tumbite/compartido';
+import { VERSION_TERMINOS, correoCanonico, telefonoCanonico } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import {
   PAGINAS,
@@ -210,6 +210,11 @@ cuentas.post('/registro', async (c) => {
       correoUnico,
       telUnico,
     )
+    .run();
+  // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).
+  await db
+    .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
+    .bind(id, VERSION_TERMINOS)
     .run();
   const token = await abrirSesion(db, id);
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
