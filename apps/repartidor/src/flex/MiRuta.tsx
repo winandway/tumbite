@@ -175,13 +175,27 @@ async function ubicacion(): Promise<{ lat: number; lng: number } | null> {
   }
 }
 
-function navegar(lat: number | null, lng: number | null, direccion: string) {
+function navegar(lat: number | null, lng: number | null, direccion: string, t?: Textos) {
   const destino = lat != null && lng != null ? `${lat},${lng}` : encodeURIComponent(direccion);
-  void Linking.openURL(
-    Platform.OS === 'ios'
-      ? `http://maps.apple.com/?daddr=${destino}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destino}`,
-  );
+  const apps = [
+    ...(Platform.OS === 'ios'
+      ? [{ text: 'Apple Maps', url: `http://maps.apple.com/?daddr=${destino}` }]
+      : []),
+    { text: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${destino}` },
+    {
+      text: 'Waze',
+      url: `https://waze.com/ul?${lat != null && lng != null ? `ll=${destino}` : `q=${destino}`}&navigate=yes`,
+    },
+  ];
+  // C-FLEX-MAPAS (como Amazon Flex): el repartidor elige su app de mapas. En la web, Google Maps.
+  if (!t || Platform.OS === 'web') {
+    void Linking.openURL(apps.find((a) => a.text === 'Google Maps')!.url);
+    return;
+  }
+  Alert.alert(t.elegirMapa, undefined, [
+    ...apps.map((a) => ({ text: a.text, onPress: () => void Linking.openURL(a.url) })),
+    { text: t.cancelar, style: 'cancel' as const },
+  ]);
 }
 
 const fecha = (f: string) => new Date(`${f.replace(' ', 'T')}${f.includes('Z') ? '' : 'Z'}`);
@@ -707,6 +721,7 @@ function MiRutaContenido({
                 ruta.centro?.lat ?? null,
                 ruta.centro?.lng ?? null,
                 ruta.centro?.direccion ?? '',
+                t,
               )
             }
           />
@@ -918,7 +933,7 @@ function MiRutaContenido({
                 {p.instrucciones ? <Text style={{ color: GRIS }}>{p.instrucciones}</Text> : null}
                 <Text
                   style={[e.enlaceLinea, { alignSelf: 'flex-start' }]}
-                  onPress={() => navegar(p.lat, p.lng, p.direccion)}
+                  onPress={() => navegar(p.lat, p.lng, p.direccion, t)}
                   accessibilityRole="button"
                 >
                   {t.navegar}
@@ -1201,7 +1216,7 @@ function VistaMapa({
           </Pressable>
           <Boton
             texto={t.iniciarNavegacion}
-            alTocar={() => navegar(siguiente.lat, siguiente.lng, siguiente.direccion)}
+            alTocar={() => navegar(siguiente.lat, siguiente.lng, siguiente.direccion, t)}
           />
           {distancia ? <Text style={{ color: GRIS, fontSize: 12 }}>{t.distanciaAyuda}</Text> : null}
         </>
@@ -1951,7 +1966,7 @@ function DetalleParada({
           <Boton
             texto={t.navegar}
             secundario
-            alTocar={() => navegar(parada.lat, parada.lng, parada.direccion)}
+            alTocar={() => navegar(parada.lat, parada.lng, parada.direccion, t)}
           />
         </View>
       ) : null}
