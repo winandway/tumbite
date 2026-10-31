@@ -44,6 +44,7 @@ import {
   Atras,
   Banner,
   Barra,
+  Deslizar,
   BORDE,
   Caja,
   Camara,
@@ -1676,6 +1677,8 @@ function DetalleParada({
   const [pestana, setPestana] = useState<'paquetes' | 'detalles' | 'cliente'>('paquetes');
   const [prueba, setPrueba] = useState<'foto' | 'pin' | 'firma' | 'sinContacto'>('foto');
   const [foto, setFoto] = useState<string | null>(null);
+  // C-FLEX-LUGAR: dónde quedó el paquete (las cinco opciones de Amazon Flex).
+  const [lugar, setLugar] = useState<keyof typeof t.lugares | null>(null);
   const [firma, setFirma] = useState<string | null>(null);
   const [pidiendoFirma, setPidiendoFirma] = useState(false);
   const [pin, setPin] = useState('');
@@ -1746,6 +1749,7 @@ function DetalleParada({
       if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienPaga}.`);
       if (cedula.replace(/[\s.-]/g, '').length < 7) return setAviso(t.faltaCedula);
     }
+    if (!lugar) return setAviso(t.faltaLugar);
     setAviso('');
     const p = await ubicacion();
     // C-FLEX-GEOCERCA: como Amazon Flex, avisa antes de intentar si está lejos de la dirección.
@@ -1761,6 +1765,7 @@ function DetalleParada({
       cuerpo: {
         sinContacto,
         recibio,
+        lugar,
         ...(pin ? { pin } : {}),
         ...(cobro ? { cobro, recibioDocumento: cedula.trim(), recibioRelacion: relacion } : {}),
         ...(p ?? {}),
@@ -2081,7 +2086,10 @@ function DetalleParada({
                   </View>
                 </Pressable>
                 {foto ? (
-                  <Text style={{ color: C.exito, fontWeight: '700' }}>{t.fotoLista}</Text>
+                  <>
+                    <Text style={{ color: C.exito, fontWeight: '700' }}>{t.fotoLista}</Text>
+                    <Text style={{ color: GRIS }}>{t.fotoConsejo}</Text>
+                  </>
                 ) : null}
               </View>
             ) : null}
@@ -2211,7 +2219,50 @@ function DetalleParada({
                 {aviso}
               </Text>
             ) : null}
-            <Boton texto={t.marcarEntregado} alTocar={() => void entregar()} />
+            <View style={{ gap: 8 }} testID="donde-lo-dejaste">
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.dondeLoDejaste}</Text>
+              {(Object.keys(t.lugares) as (keyof typeof t.lugares)[]).map((k) => (
+                <Pressable
+                  key={k}
+                  onPress={() => setLugar(k)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: lugar === k }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    paddingVertical: 10,
+                    borderBottomWidth: 1,
+                    borderColor: BORDE,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      borderWidth: 2,
+                      borderColor: lugar === k ? C.logistica : '#8A8A8A',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {lugar === k ? (
+                      <View
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 5,
+                          backgroundColor: C.logistica,
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                  <Text style={{ color: C.secundario, fontSize: 15 }}>{t.lugares[k]}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Deslizar texto={t.deslizarFinalizar} alTerminar={() => void entregar()} />
             <Boton
               texto={t.registrarIncidenciaBoton}
               secundario
