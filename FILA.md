@@ -10,6 +10,14 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
+
+- [x] (S1) HECHO 31 oct: entrar, inicio, pedidos, menú, estadísticas, Más y horario revisados; arreglados la gráfica de pedidos por hora (bloque negro de lado a lado) y el horario (día repetido, «Quitar» desalineado). Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
+- [x] (S2) HECHO 31 oct: el encuadre esperaba al mapa cargado; comprobado en el simulador (repartidor en Walled Lake y restaurante en Novi a la vez, 4.0 mi). Mapa del Driver durante la entrega: que se vean el restaurante y la casa con la ruta, no solo el punto del repartidor (como Uber Driver y Dasher). Todos los países.
+- [x] (S3) HECHO 31 oct: GPS otra vez al volver a la app y «En tu zona» sin ubicación (C-UBICACION-AL-VOLVER). Ubicación del cliente que se actualiza al volver a la app y al dar el permiso; sin ubicación, no decir «Cerca de tu ubicación». Todos los países.
+- [x] (S4) HECHO 31 oct: guías ES/EN de horario y primer pedido actualizadas y 188 capturas originales rehechas. Docs y web al día con lo visible de hoy (millas en EE. UU., «No recibe pedidos ahora», «Calle y número», «Pedir otra vez»): guías en español e inglés y capturas originales del recorrido. Todos los países.
+- [x] (S5) HECHO 31 oct: «Panel de tu negocio · Divoox». Título de la pestaña del panel del restaurante (hoy «Comida a domicilio en Miami»). Todos los países.
+
 ## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
 
 - [x] (H1) HECHO 31 oct: en producción c268d83, verificación en verde y humo 200 (la prueba de Tiendas ahora busca «Calle y número»). Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.

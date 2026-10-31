@@ -4,6 +4,7 @@ import type { Idioma } from '@tumbite/compartido';
 const es = {
   restaurantes: 'Restaurantes',
   cercaDeTi: 'Cerca de tu ubicación',
+  enTuZona: 'En tu zona',
   abiertosAhora: '{n} abiertos ahora',
   unoAbierto: '1 abierto ahora',
   soloAbiertos: 'Solo abiertos',
@@ -65,6 +66,7 @@ type T = typeof es;
 const en: T = {
   restaurantes: 'Restaurants',
   cercaDeTi: 'Near your location',
+  enTuZona: 'In your area',
   abiertosAhora: '{n} open now',
   unoAbierto: '1 open now',
   soloAbiertos: 'Open now',

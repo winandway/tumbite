@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
@@ -32,7 +32,12 @@ export function Mapa({
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
+  // C-MAPA-ENCUADRE (31 oct 2026): el encuadre corre al cambiar un punto Y cuando el mapa termina
+  // de cargar; antes corría una sola vez, con el mapa todavía sin cargar, y en la entrega se veía
+  // solo al repartidor sin el restaurante ni la casa.
+  const [listo, setListo] = useState(false);
   useEffect(() => {
+    if (!listo) return;
     // C-MAPA-SIGUE-AL-REPARTIDOR (31 oct 2026): con un solo punto (el repartidor, sin pedido) el mapa
     // se quedaba donde abrió (Miami) aunque estuviera en Michigan. Ahora va a ese punto.
     const [solo] = puntos;
@@ -46,11 +51,11 @@ export function Mapa({
     if (puntos.length < 2) return;
     mapa.current?.fitToCoordinates(
       puntos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
-      { edgePadding: { top: 80, right: 60, bottom: 160, left: 60 }, animated: true },
+      { edgePadding: { top: 60, right: 50, bottom: 60, left: 50 }, animated: true },
     );
-    // Se reencuadra cuando cambia algún punto.
+    // Se reencuadra cuando cambia algún punto o cuando el mapa termina de cargar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [yo?.lat, yo?.lng, restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng]);
+  }, [listo, yo?.lat, yo?.lng, restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng]);
   const centro = yo ?? restaurante ?? casa ?? { lat: 25.7743, lng: -80.1937 };
   const ruta = restaurante && casa ? [restaurante, casa] : null;
   return (
@@ -64,6 +69,7 @@ export function Mapa({
           latitudeDelta: 0.03,
           longitudeDelta: 0.03,
         }}
+        onMapReady={() => setListo(true)}
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiquetas.yo}

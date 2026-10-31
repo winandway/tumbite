@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 import { type Api, type RespuestaRestaurantes, crearListaRestaurantes } from '@tumbite/compartido';
 import { almacenTelefono } from '@tumbite/movil';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -90,6 +91,24 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
     // Solo cuando cambia la ubicación de la portada: NO con la sesión ni con el idioma.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [claveUrl]);
+
+  // C-UBICACION-AL-VOLVER (31 oct 2026, visto en el emulador): si al abrir la app todavía no había
+  // permiso o GPS, la lista quedaba en la ciudad inicial hasta cerrar la app. Al volver a la app
+  // (por ejemplo, después de dar el permiso) se mira el GPS otra vez y, si cambió, se recarga.
+  useEffect(() => {
+    if (deUrl) return;
+    const sub = AppState.addEventListener('change', (e) => {
+      if (e !== 'active') return;
+      ultimoGps = null;
+      void gpsReciente().then(async (gps) => {
+        if (!gps || !vivo.current) return;
+        setElegido(gps);
+        await guardarUbicacion(gps);
+        await lista.cargar(gps);
+      });
+    });
+    return () => sub.remove();
+  }, [deUrl]);
 
   const reintentar = useCallback(() => lista.cargar(punto, { forzar: true }), [punto]);
   return useMemo(() => ({ ...estado, punto, reintentar }), [estado, punto, reintentar]);

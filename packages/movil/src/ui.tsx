@@ -53,8 +53,9 @@ export function Pantalla({
 export function Campo({
   etiqueta,
   error,
+  nombreAccesible,
   ...props
-}: TextInputProps & { etiqueta: string; error?: string }) {
+}: TextInputProps & { etiqueta: string; error?: string; nombreAccesible?: string }) {
   // C-CORREO-SIN-AUTOCORRECTOR (31 oct 2026, visto en el simulador de iPhone): un correo no se
   // corrige ni se subraya; el iPhone cambiaba lo escrito. Vale para toda casilla de correo.
   const correo = props.keyboardType === 'email-address';
@@ -71,7 +72,9 @@ export function Campo({
             }
           : {})}
         {...props}
-        accessibilityLabel={etiqueta}
+        // Lo que se lee en voz alta puede llevar más contexto que la etiqueta visible
+        // («Abre · Lunes»), sin repetirlo en pantalla.
+        accessibilityLabel={nombreAccesible ?? etiqueta}
         style={[e.input, error ? e.inputError : null]}
         placeholderTextColor="#9A9A9A"
       />
