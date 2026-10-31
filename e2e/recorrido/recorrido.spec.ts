@@ -574,6 +574,12 @@ for (const idioma of ['en', 'es'] as const) {
       rep.getByRole('button', { name: L.tomarSelfie }).click(),
     ]);
     await selectorSelfie.setFiles(FOTO_RECOGIDA);
+    // C-PRUEBA-DE-VIDA: la segunda foto, con la cabeza girada a la derecha (como DoorDash).
+    const [selectorGiro] = await Promise.all([
+      rep.waitForEvent('filechooser', { timeout: 20_000 }),
+      rep.getByRole('button', { name: L.tomarGiro }).click({ timeout: 20_000 }),
+    ]);
+    await selectorGiro.setFiles(FOTO_RECOGIDA);
     await expect(rep.getByText(L.selfieLista)).toBeVisible({ timeout: 20_000 });
     await rep
       .getByRole('switch')

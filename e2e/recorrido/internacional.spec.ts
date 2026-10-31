@@ -336,6 +336,12 @@ for (const P of PAISES) {
         rep.getByRole('button', { name: L.tomarSelfie }).click(),
       ]);
       await sel.setFiles(join(__dirname, 'fotos', 'bolsa-recogida.jpg'));
+      // C-PRUEBA-DE-VIDA: la segunda foto, con la cabeza girada.
+      const [giro] = await Promise.all([
+        rep.waitForEvent('filechooser', { timeout: 20_000 }),
+        rep.getByRole('button', { name: L.tomarGiro }).click({ timeout: 20_000 }),
+      ]);
+      await giro.setFiles(join(__dirname, 'fotos', 'bolsa-recogida.jpg'));
       await expect(rep.getByText(L.selfieLista)).toBeVisible({ timeout: 20_000 });
       await conectar();
       const paseRep = await rep.evaluate(() => localStorage.getItem('tumbite.sesion') ?? '');
