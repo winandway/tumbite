@@ -2025,3 +2025,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** como Amazon Flex: al entregar, el conductor elige dónde quedó el paquete (`LUGARES_ENTREGA`: destinatario, recepción, puerta, buzón, otro); el servidor lo valida y lo guarda en el evento de entrega (`metadatos_json.lugar`). La foto lleva el consejo «que se vea el lugar y sin personas». Se termina con `Deslizar` (piezas de Flex), no con un toque; con lector de pantalla, la acción «activar».
 - **Candado:** `flexRutas.test.ts` («se guarda una de las cinco opciones; otra cosa se rechaza»).
+
+## C-FLEX-FOTO-ANTERIOR (30 oct 2026) — todos los países
+
+- **Qué es:** como Amazon Flex: `GET …/conductor/rutas/:rutaId/paradas/:paradaId/foto-anterior` devuelve la foto de la última entrega hecha en la misma dirección (misma empresa, parada entregada, foto no purgada), solo durante la ruta en curso del propio conductor; sin entrega previa, 404. En Driver, la tarjeta de la parada la muestra como «Entrega anterior en esta puerta».
+- **Candado:** `flexRutas.test.ts` («en la misma dirección muestra la foto de la entrega anterior; sin entrega previa, nada»).
