@@ -52,3 +52,18 @@ Pásalos a la computadora (AirDrop, quedan en Descargas) con estos nombres, o di
 
 Yo los subo a cada app como adjunto para el revisor y vuelvo a enviar las tres a revisión. No hace falta
 que entres a App Store Connect.
+
+## Lo que encontré al investigar (31 oct 2026)
+
+- El video es privado: solo lo ve el revisor de Apple, como adjunto de la revisión. No sale en la tienda.
+- No hace falta voz ni música. Basta la grabación de pantalla navegando la app. Las explicaciones ya van por escrito en las notas, en inglés.
+- Tiene que ser en un iPhone físico con la última versión de iOS, y empezar tocando el ícono de la app.
+- Lo que suele fallar: subir el video y no responder en el Resolution Center; o que el adjunto no se vea (algunos lo resolvieron comprimiéndolo en zip). Después de responder, Apple tarda entre uno y varios días.
+
+Fuentes:
+
+- https://developer.apple.com/forums/thread/131843 (Apple pide el video en un dispositivo físico)
+- https://developer.apple.com/forums/thread/786863 (pauta 2.1, qué piden)
+- https://developer.apple.com/forums/thread/844076 (tiempos de respuesta después de enviar)
+- https://developer.apple.com/forums/thread/749073 (fallos al subir adjuntos; zip)
+- https://developer.apple.com/documentation/appstoreconnectapi/app-store-review-attachments (adjuntos de la revisión)
