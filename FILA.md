@@ -10,6 +10,22 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## DoorDash Dasher al volver (capturas de Richard, 31 oct 2026; ficha docs/investigaciones-rea/2026-10-31-doordash-dasher-capturas.md)
+
+- [ ] (D1) Verificación obligatoria al volver: si el repartidor lleva 14 días o más sin conectarse, la foto de control se pide siempre (no al azar). Todos los países.
+- [ ] (D2) Prueba de vida en la foto de control: de frente y otra mirando a la derecha, con guía en pantalla; el equipo revisa las dos en el panel. Todos los países.
+- [ ] (D3) Permisos explicados antes de pedirlos en el Driver (ubicación y avisos, cada uno con su porqué, «Estoy listo»). Todos los países.
+- [ ] (D4) Términos actualizados: si cambió la versión de los términos del repartidor, aceptarlos antes de conectarse. Todos los países.
+- [ ] (D5) Mapa del Driver conectado sin ofertas: «Buscando ofertas… Es más probable en las zonas en rojo» y bienvenida «tu nivel no cambió» al volver. Todos los países.
+- [ ] (D6) Revisar SafeDash (desliza para 911, compartir ubicación) y el dash actual (hora de fin, terminar ahora) frente a la ficha; construir lo que falte. Todos los países.
+- [!] (decide Richard: monto, horarios y presupuesto) (D7) Pago extra por hora pico («+$2.00 por orden») sobre el mapa de demanda. Todos los países.
+- [!] (espera Twilio, cuenta y costo de Richard) (D8) Verificar el teléfono por SMS al volver. Todos los países.
+
+## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
+
+- [ ] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países.
+- [ ] (L2) «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
+
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
 
 - [x] (S1) HECHO 31 oct: entrar, inicio, pedidos, menú, estadísticas, Más y horario revisados; arreglados la gráfica de pedidos por hora (bloque negro de lado a lado) y el horario (día repetido, «Quitar» desalineado). Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
