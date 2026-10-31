@@ -882,11 +882,13 @@ export default function PantallaCarrito() {
               if (p) void guardarUbicacion(p);
             }}
             cambiarDireccion={(x) => b.cambiar('direccion', x)}
+            direccionVacia={!b.valores.direccion.trim()}
             textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
           />
-          {/* C-DIRECCION-SUGERENCIAS: direcciones reales mientras se escribe; al elegir, el pin va ahí. */}
+          {/* C-DIRECCION-SUGERENCIAS: direcciones reales mientras se escribe; al elegir, el pin va ahí.
+              C-CARRITO-UNA-DIRECCION: la casilla no repite el título de la sección. */}
           <CampoDireccion
-            etiqueta={t.direccion}
+            etiqueta={t.direccionCampo}
             valor={b.valores.direccion}
             cambiar={(x) => b.cambiar('direccion', x)}
             alElegir={(d) => {
