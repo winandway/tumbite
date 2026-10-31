@@ -12,7 +12,7 @@
 
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
 
-- [ ] (S1) Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
+- [x] (S1) HECHO 31 oct: entrar, inicio, pedidos, menú, estadísticas, Más y horario revisados; arreglados la gráfica de pedidos por hora (bloque negro de lado a lado) y el horario (día repetido, «Quitar» desalineado). Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
 - [ ] (S2) Mapa del Driver durante la entrega: que se vean el restaurante y la casa con la ruta, no solo el punto del repartidor (como Uber Driver y Dasher). Todos los países.
 - [ ] (S3) Ubicación del cliente que se actualiza al volver a la app y al dar el permiso; sin ubicación, no decir «Cerca de tu ubicación». Todos los países.
 - [ ] (S4) Docs y web al día con lo visible de hoy (millas en EE. UU., «No recibe pedidos ahora», «Calle y número», «Pedir otra vez»): guías en español e inglés y capturas originales del recorrido. Todos los países.
