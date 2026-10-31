@@ -1173,12 +1173,7 @@ export function Inicio() {
     ) : pantallaMas === 'horario' ? (
       <Horario alVolver={() => setPantallaMas(null)} />
     ) : (
-      <Mas
-        titulo={tr.mas}
-        textoSalir={tm.salir}
-        salir={() => void salir()}
-        abrirPantalla={setPantallaMas}
-      />
+      <Mas titulo={tr.mas} abrirPantalla={setPantallaMas} />
     );
 
   const cuerpo = detalle ? (

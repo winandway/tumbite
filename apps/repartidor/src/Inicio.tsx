@@ -75,8 +75,8 @@ import {
   C,
   ChatPedido,
   MenuCuenta,
+  OpcionesCuenta,
   ReportarProblema,
-  TEXTOS_MOVIL,
   e,
   useSesion,
   useToqueAviso,
@@ -455,7 +455,7 @@ function abrirMapa(lat: number | null, lng: number | null, direccion: string) {
 
 export function Inicio() {
   useKeepAwake();
-  const { api, idioma, salir, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
+  const { api, idioma, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
   // El idioma de los avisos al celular sigue al de la app (antes se quedaba el del registro).
   const cambiarIdioma = useCallback(
     (i: Idioma) => {
@@ -468,7 +468,6 @@ export function Inicio() {
   // El mapa ocupa lo que queda de pantalla: la mitad en celulares normales.
   const alturaMapa = Math.max(240, Math.round(useWindowDimensions().height * 0.42));
   const t = enIdioma(T, idioma);
-  const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
   const [ofertas, setOfertas] = useState<Pedido[]>([]);
   // Divoox Moto (M4): la oferta de un viaje y el viaje en curso (otra operación, no un pedido).
@@ -1667,7 +1666,8 @@ export function Inicio() {
             </View>
           ) : null}
         </View>
-        <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+        {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
+        <OpcionesCuenta />
       </View>,
     );
   }
