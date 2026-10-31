@@ -1,5 +1,5 @@
 import { Modal, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Boton, C } from './ui';
 
@@ -34,9 +34,19 @@ export function PantallaPermisos({
   alAceptar: () => void;
 }) {
   const t = enIdioma(T, idioma);
+  // Dentro de un Modal el SafeAreaView no recibe los márgenes: se ponen a mano (el título quedaba
+  // debajo del reloj en el iPhone).
+  const bordes = useSafeAreaInsets();
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={alAceptar}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#fff',
+          paddingTop: bordes.top,
+          paddingBottom: bordes.bottom,
+        }}
+      >
         <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }}>
           <Text
             accessibilityRole="header"
@@ -58,7 +68,7 @@ export function PantallaPermisos({
         <View style={{ padding: 20 }}>
           <Boton texto={t.listo} alTocar={alAceptar} />
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
