@@ -685,7 +685,7 @@ function MiRutaContenido({
     return (
       <DetalleParada
         key={parada.id}
-        {...{ t, idioma, ruta, parada, encolar, yo }}
+        {...{ t, idioma, ruta, parada, encolar, yo, api }}
         error={avisoError}
         cola={avisoCola}
         colaLista={cola}
@@ -1659,11 +1659,13 @@ function DetalleParada({
   volver,
   irA,
   abrirPaquete,
+  api,
 }: {
   t: Textos;
   idioma: Idioma;
   ruta: Ruta;
   parada: Parada;
+  api: Api;
   encolar: Encolar;
   yo: Punto | null;
   error: React.ReactNode;
@@ -1703,6 +1705,21 @@ function DetalleParada({
   const [aviso, setAviso] = useState('');
   const [hecha, setHecha] = useState<{ en: Date; foto: boolean; firma: boolean } | null>(null);
   const base = `${B}/${ruta.id}/paradas/${parada.id}`;
+  // C-FLEX-FOTO-ANTERIOR: la foto de la última entrega en esta puerta, si la hay.
+  const [fotoAnterior, setFotoAnterior] = useState<string | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    if (ruta.estado === 'en_curso')
+      api
+        .verFoto(`${base}/foto-anterior`)
+        .then((f) => {
+          if (vivo) setFotoAnterior(f);
+        })
+        .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, base, ruta.estado]);
   const activos = paquetesActivos(parada);
   const enCamino = parada.paquetes.filter((p) => p.estado === 'en_transito');
   const fallidos = parada.paquetes.filter((p) => p.estado === 'entrega_fallida');
@@ -1970,6 +1987,17 @@ function DetalleParada({
       {pestana === 'detalles' ? (
         <View style={[tarjeta, { gap: 0 }]}>
           <Dato etiqueta={t.direccion} valor={parada.direccion} />
+          {fotoAnterior ? (
+            <View style={{ gap: 4 }} testID="foto-anterior">
+              <Text style={{ color: GRIS, fontWeight: '700' }}>{t.fotoAnterior}</Text>
+              <Image
+                source={{ uri: fotoAnterior }}
+                style={{ width: 140, height: 180, borderRadius: 10 }}
+                resizeMode="cover"
+                accessibilityLabel={t.fotoAnterior}
+              />
+            </View>
+          ) : null}
           {parada.instrucciones ? (
             <Dato etiqueta={t.instrucciones} valor={parada.instrucciones} />
           ) : null}

@@ -59,6 +59,7 @@ export const TEXTOS_RUTA = {
     llamar: 'Llamar',
     llegue: 'Ya estacioné',
     elegirMapa: 'Elige la app de mapas',
+    fotoAnterior: 'Entrega anterior en esta puerta',
     dondeLoDejaste: '¿Dónde dejaste el paquete?',
     lugares: {
       destinatario: 'A la persona o alguien del hogar',
@@ -309,6 +310,7 @@ export const TEXTOS_RUTA = {
     llamar: 'Call',
     llegue: 'I’ve parked',
     elegirMapa: 'Choose a maps app',
+    fotoAnterior: 'Earlier delivery at this door',
     dondeLoDejaste: 'Where did you leave the package?',
     lugares: {
       destinatario: 'With the person or someone at home',
