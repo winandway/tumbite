@@ -699,6 +699,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa persona no está en el piloto.', 'That person isn’t in the pilot.'],
   ['Tu nivel todavía no está activo.', 'Your level isn’t active yet.'],
+  [
+    'No hay una entrega anterior en esta dirección.',
+    'There’s no earlier delivery at this address.',
+  ],
   ['Esa entrega no es tuya o no existe.', 'That delivery isn’t yours or doesn’t exist.'],
   ['Ya pediste revisar esa entrega.', 'You already asked us to review that delivery.'],
   [

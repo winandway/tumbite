@@ -737,6 +737,37 @@ async function verificarPin(
  * Entregar los paquetes de una parada. Exige las pruebas que pide la empresa (o el envío): foto,
  * PIN, firma o «sin contacto» si se permite. Sin ellas no hay entrega. Repetir no duplica nada.
  */
+/**
+ * C-FLEX-FOTO-ANTERIOR (como Amazon Flex): la foto de la última entrega en esa misma dirección, de
+ * la misma empresa, para que el conductor reconozca la puerta. Solo durante su ruta en curso.
+ */
+flexConductor.get('/conductor/rutas/:rutaId/paradas/:paradaId/foto-anterior', async (c) => {
+  const u = conductor(c);
+  const db = base(c);
+  const r = await miRuta(db, u, c.req.param('rutaId'), ['en_curso']);
+  const f = await db
+    .prepare(
+      `SELECT p.clave FROM ruta_paradas actual
+         JOIN envios ea ON ea.id = actual.envio_id
+         JOIN envios e ON e.empresa_id = ea.empresa_id
+                      AND lower(trim(e.direccion)) = lower(trim(ea.direccion)) AND e.id <> ea.id
+         JOIN ruta_paradas rp ON rp.envio_id = e.id
+         JOIN flex_pruebas p ON p.parada_id = rp.id AND p.tipo = 'foto' AND p.purgada_en IS NULL
+        WHERE actual.id = ? AND actual.ruta_id = ? AND rp.estado = 'entregada'
+        ORDER BY p.creado_en DESC LIMIT 1`,
+    )
+    .bind(c.req.param('paradaId'), r.id)
+    .first<{ clave: string }>();
+  const obj = f && c.env.BUCKET ? await c.env.BUCKET.get(f.clave) : null;
+  if (!obj) throw new ErrorDatos('No hay una entrega anterior en esta dirección.', undefined, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': obj.httpMetadata?.contentType ?? 'image/webp',
+      'cache-control': 'private, no-store',
+    },
+  });
+});
+
 flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async (c) => {
   const u = conductor(c);
   const d = await leerCuerpo(c, esquemaEntrega);
