@@ -320,6 +320,7 @@ for (const P of PAISES) {
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
       await rep.getByRole('checkbox').click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
+      await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
       const conectar = () =>
         rep
           .getByRole('switch')
