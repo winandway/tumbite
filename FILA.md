@@ -13,7 +13,7 @@
 ## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
 
 - [ ] (H1) Publicar en producción los arreglos del 31 oct (carrito sin dirección repetida, mapa que sigue a la dirección, hoja de pago del iPhone): rama → pruebas → main → producción, con su verificación. Todos los países.
-- [ ] (H2) Repaso de las tres apps NATIVAS de iPhone en el simulador contra el sitio de pruebas, de punta a punta: entrar, pedir en Pizzería Demo Novi, pagar con 4242 en la hoja de Stripe, restaurante acepta y marca listo, repartidor acepta, recoge y entrega, cliente califica. REA sobre nuestras apps; cada fallo con prueba en rojo y arreglo. EE. UU.
+- [x] (H2) HECHO 31 oct: circuito completo en el simulador; 10 fallos arreglados (docs/investigaciones-rea/2026-10-31-repaso-iphone-simulador.md). Repaso de las tres apps NATIVAS de iPhone en el simulador contra el sitio de pruebas, de punta a punta: entrar, pedir en Pizzería Demo Novi, pagar con 4242 en la hoja de Stripe, restaurante acepta y marca listo, repartidor acepta, recoge y entrega, cliente califica. REA sobre nuestras apps; cada fallo con prueba en rojo y arreglo. EE. UU.
 - [ ] (H3) El mismo repaso con las tres apps de Android en el emulador, para que la versión acumulada para Google vaya limpia. EE. UU.
 - [ ] (H4) Apple Pay listo para encender: certificado de procesamiento de Apple Pay del identificador merchant.com.tumbite.cliente en Stripe (prueba y real) y la variable EXPO_PUBLIC_APPLE_PAY_COMERCIO en la compilación de producción. EE. UU.
 - [ ] (H5) Próxima versión de iPhone (1.0.1) en TestFlight con todo lo acumulado, sin tocar las revisiones en curso; lista para mandar cuando Apple apruebe la 1.0. EE. UU.
