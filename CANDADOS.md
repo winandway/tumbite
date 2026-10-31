@@ -2020,3 +2020,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** como «Fuera de área de entrega» de Amazon Flex: con la ubicación del celular, el servidor rechaza entregar una parada a más de 200 m de la dirección del envío (`RADIO_ENTREGA_M` en `flex/conductor.ts`, 409 con campo `ubicacion` y los metros). La app avisa antes de intentar, con el mismo radio. Sin ubicación del celular se acepta como antes (la cola sin conexión). El mapa de la ruta dibuja el círculo del área (200 m) alrededor de la parada siguiente, en el azul de logística, en el celular y en la web.
 - **Candado:** `flexRutas.test.ts` («lejos de la dirección no deja entregar; en la puerta sí»).
+
+## C-FLEX-LUGAR y C-FLEX-DESLIZAR (30 oct 2026) — todos los países
+
+- **Qué es:** como Amazon Flex: al entregar, el conductor elige dónde quedó el paquete (`LUGARES_ENTREGA`: destinatario, recepción, puerta, buzón, otro); el servidor lo valida y lo guarda en el evento de entrega (`metadatos_json.lugar`). La foto lleva el consejo «que se vea el lugar y sin personas». Se termina con `Deslizar` (piezas de Flex), no con un toque; con lector de pantalla, la acción «activar».
+- **Candado:** `flexRutas.test.ts` («se guarda una de las cinco opciones; otra cosa se rechaza»).
