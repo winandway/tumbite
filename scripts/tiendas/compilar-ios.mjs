@@ -1,9 +1,11 @@
 // Apps de iPhone (30 oct 2026): compila con EAS para la App Store y la envía a App Store Connect
 // (TestFlight y revisión), sin escribir la contraseña de Apple: usa la llave de la API de App Store
 // Connect guardada UNA vez en ~/.config/tumbite/apple-asc/ (AuthKey.p8, key-id, issuer-id, team-id).
+// Ojo: la primera compilación de cada app necesitó responder a mano las preguntas de credenciales
+// de EAS (ya quedaron guardadas en Expo); desde ahora corre sin preguntas.
 // Uso: node scripts/tiendas/compilar-ios.mjs [cliente|repartidor|restaurante ...]
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -43,10 +45,38 @@ for (const app of apps) {
       '--profile',
       'production',
       '--non-interactive',
-      '--auto-submit',
       '--wait',
     ],
     { cwd: join(process.cwd(), 'apps', app), env, stdio: 'inherit' },
   );
+  // Envío a TestFlight: la llave va en eas.json SOLO durante el envío y el archivo vuelve a quedar
+  // exactamente como estaba (los identificadores de la llave nunca entran al repositorio).
+  const ruta = join(process.cwd(), 'apps', app, 'eas.json');
+  const original = readFileSync(ruta, 'utf8');
+  const config = JSON.parse(original);
+  Object.assign(config.submit.production.ios, {
+    ascApiKeyPath: join(dir, 'AuthKey.p8'),
+    ascApiKeyIssuerId: leer('issuer-id'),
+    ascApiKeyId: leer('key-id'),
+  });
+  try {
+    writeFileSync(ruta, JSON.stringify(config, null, 2));
+    execFileSync(
+      'npx',
+      [
+        'eas-cli',
+        'submit',
+        '--platform',
+        'ios',
+        '--latest',
+        '--profile',
+        'production',
+        '--non-interactive',
+      ],
+      { cwd: join(process.cwd(), 'apps', app), env, stdio: 'inherit' },
+    );
+  } finally {
+    writeFileSync(ruta, original);
+  }
 }
 console.log('\nListo: las compilaciones quedaron en App Store Connect (TestFlight).');
