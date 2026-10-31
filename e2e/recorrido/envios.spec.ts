@@ -174,10 +174,15 @@ test('un envío de punta a punta: PIN para quien recibe, foto y entrega con el P
   expect((await paso('aceptar')).status()).toBe(200);
   expect((await paso('llegue')).status()).toBe(200);
   const ctxRep = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
-  await ctxRep.addInitScript((pase) => {
-    localStorage.setItem('tumbite.idioma', 'es');
-    localStorage.setItem('tumbite.sesion', pase);
-  }, cond.token);
+  await ctxRep.addInitScript(
+    ([pase, id]) => {
+      localStorage.setItem('tumbite.idioma', 'es');
+      localStorage.setItem('tumbite.sesion', pase);
+      // C-PERMISOS-EXPLICADOS: esta cuenta ya vio la pantalla que explica los permisos.
+      localStorage.setItem(`divoox.permisos.${id}`, '1');
+    },
+    [cond.token, cond.usuario.id] as const,
+  );
   const pr = await ctxRep.newPage();
   await pr.goto('/driver');
   await expect(pr.getByText('Tomar la foto del paquete')).toBeVisible({ timeout: 30_000 });
