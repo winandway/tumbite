@@ -35,6 +35,7 @@ import {
   type Pendiente,
   crearCola,
   sePuedeReintentar,
+  usaMillas,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -95,6 +96,8 @@ type Lugar = {
   lng: number | null;
 };
 type Pedido = {
+  /** C-DISTANCIA-POR-PAIS: país del pedido (millas en EE. UU.). */
+  pais?: string | null;
   id: string;
   estado: string;
   direccion: string;
@@ -1122,7 +1125,7 @@ export function Inicio() {
   const distanciaTexto =
     metrosObjetivo == null
       ? ''
-      : idioma === 'en'
+      : usaMillas(activo?.pais, idioma)
         ? `${(metrosObjetivo / 1609.34).toFixed(1)} mi`
         : metrosObjetivo < 1000
           ? `${metrosObjetivo} ${td.metros}`
@@ -1826,7 +1829,7 @@ export function Inicio() {
                       const falta =
                         m == null
                           ? ''
-                          : idioma === 'en'
+                          : usaMillas(activo?.pais, idioma)
                             ? `${(m / 1609.34).toFixed(1)} mi`
                             : m < 1000
                               ? `${m} m`

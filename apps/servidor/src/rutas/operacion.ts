@@ -44,6 +44,7 @@ import {
   minutosParaListo,
   nivelDe,
   prepSugerida,
+  paisDelCodigoZona,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
@@ -1478,6 +1479,8 @@ function conDatosRestaurante(f: FilaPedido) {
     pagoRepartidor: Number(f.pago_repartidor) + Number(f.bono ?? 0),
     bono: Number(f.bono ?? 0),
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
+    // C-DISTANCIA-POR-PAIS: el país del pedido decide millas o kilómetros en la app.
+    pais: paisDelCodigoZona(f.zona_id as string | null),
     // Lo que la app del repartidor necesita saber de sus propios pasos.
     verificado: f.h_verificado != null,
     llegoRestaurante: f.h_llego_rest != null,

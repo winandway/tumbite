@@ -59,3 +59,4 @@ export * from './opcionesFormulario';
 export * from './reputacion';
 export * from './rewardsHitos';
 export * from './flexParadas';
+export * from './distancia';

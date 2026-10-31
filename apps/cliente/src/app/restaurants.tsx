@@ -309,7 +309,9 @@ export default function Restaurantes() {
                 }}
               >
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                  {r.distanciaKm != null ? `${distanciaTexto(r.distanciaKm, idioma)} · ` : ''}
+                  {r.distanciaKm != null
+                    ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
+                    : ''}
                   {recoger
                     ? t.listoEn.replace('{n}', String(r.tiempoPrepMin))
                     : `${r.tiempoPrepMin + 10}–${r.tiempoPrepMin + 20} min`}

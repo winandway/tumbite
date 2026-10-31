@@ -43,6 +43,8 @@ describe('restaurantes y menús', () => {
     const lista = await m.llamar('GET', '/datos/restaurantes?lat=25.78&lng=-80.2');
     expect(lista.datos.restaurantes[0].abierto).toBe(true);
     expect(lista.datos.restaurantes[0].distanciaKm).toBeLessThan(3);
+    // C-DISTANCIA-POR-PAIS: el país de la zona viaja con el restaurante (millas en EE. UU.).
+    expect(lista.datos.restaurantes[0].pais).toBe('US');
     const det = await m.llamar('GET', `/datos/restaurantes/${r.datos.restaurante.id}`);
     expect(det.datos.platos[0].nombreEn).toBe('Cuban sandwich');
     expect(det.datos.platos[0].precioCentavos).toBe(1250);

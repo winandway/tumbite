@@ -249,7 +249,9 @@ export default function MenuRestaurante() {
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
                 <Text style={{ color: '#fff', fontSize: 14 }}>
-                  {r.distanciaKm != null ? `${distanciaTexto(r.distanciaKm, idioma)} · ` : ''}
+                  {r.distanciaKm != null
+                    ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
+                    : ''}
                   {r.tiempoPrepMin + 10}–{r.tiempoPrepMin + 20} min
                 </Text>
                 <Estado abierto={abierto} texto={abierto ? tc.abierto : tc.cerrado} />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, Vibration, View } from 'react-native';
-import { type Idioma, formatearMonto } from '@tumbite/compartido';
+import { type Idioma, formatearMonto, textoDistancia } from '@tumbite/compartido';
 import { Boton, C } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -23,10 +23,9 @@ export type OfertaCompleta = {
   metodoPago?: string;
   moneda?: string;
   adelantoLocal?: number;
+  /** C-DISTANCIA-POR-PAIS: país del pedido (millas en EE. UU.). */
+  pais?: string | null;
 };
-
-const km = (v: number, i: Idioma) =>
-  i === 'en' ? `${(v * 0.621371).toFixed(1)} mi` : `${v.toFixed(1)} km`;
 
 /**
  * La oferta como la de Dasher y Uber: pantalla completa, ganancia garantizada grande, viaje
@@ -144,10 +143,16 @@ export function Oferta({
           ) : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
             {oferta.distanciaAlLocalKm != null ? (
-              <Dato valor={km(oferta.distanciaAlLocalKm, idioma)} nombre={t.alLocal} />
+              <Dato
+                valor={textoDistancia(oferta.distanciaAlLocalKm, idioma, oferta.pais)}
+                nombre={t.alLocal}
+              />
             ) : null}
             {oferta.distanciaTotalKm != null ? (
-              <Dato valor={km(oferta.distanciaTotalKm, idioma)} nombre={t.total} />
+              <Dato
+                valor={textoDistancia(oferta.distanciaTotalKm, idioma, oferta.pais)}
+                nombre={t.total}
+              />
             ) : null}
             {oferta.minutosEstimados != null ? (
               <Dato valor={`${oferta.minutosEstimados}`} nombre={t.minutos} />

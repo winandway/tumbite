@@ -2061,3 +2061,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pasó:** una prueba manual en el simulador de iPhone (pedido de Pizzería Demo Novi, Michigan) quedó «cancelado» sin historial justo después de aceptarse. Causa: el recorrido automático, al arrancar en el sitio de pruebas, cancelaba TODOS los pedidos aceptados sin repartidor y desconectaba a TODOS los repartidores.
 - **Arreglo:** el recorrido solo cancela pedidos de restaurantes del propio recorrido (dueños `@recorrido.test`) y solo desconecta repartidores de Miami (donde corre); carro y envíos igual. Prueba `packages/compartido/src/recorridoNoPisa.test.ts` (comprobada en rojo).
 - **Regla:** ninguna limpieza automática del sitio de pruebas toca datos que no sean suyos: ahí también prueban las personas (guía de pruebas con teléfonos).
+
+## C-DISTANCIA-POR-PAIS (31 oct 2026) — EE. UU. y todos los países
+
+- **Qué se veía:** en el iPhone en español, en Michigan, la lista de restaurantes y la oferta del repartidor decían «6.4 km». En EE. UU. el estándar (DoorDash, Uber Eats) es millas en cualquier idioma.
+- **Arreglo:** `textoDistancia` / `usaMillas` en `packages/compartido/src/distancia.ts`: la unidad la decide el país del servicio (millas en US y PR, kilómetros en el resto). El servidor manda `pais` con cada restaurante (de la tabla `zonas`) y con cada pedido u oferta del repartidor (del código de la zona). Sin país conocido se mantiene lo de antes (por idioma). Pruebas: `distancia.test.ts`, `catalogo.test.ts`, `operacion.test.ts`.
