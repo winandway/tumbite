@@ -122,6 +122,46 @@ describe('KYC (C-KYC)', () => {
 });
 
 describe('identidad continua y antecedentes con Checkr (C-ANTECEDENTES)', () => {
+  it('al volver tras 14 días o más sin conectarse, la foto de control se pide siempre (C-VUELTA-VERIFICA)', async () => {
+    // «0» = nunca al azar: si se pide, es por la regla de la vuelta (como DoorDash al volver).
+    const { m } = conAlmacen({ SELFIE_CONTROL_SIEMPRE: '0' });
+    const conectar = (token: string) =>
+      m.llamar(
+        'POST',
+        '/datos/repartidor/conectar',
+        { conectado: true, lat: 25.77, lng: -80.19 },
+        token,
+      );
+    const vuelve = await m.cuenta('repartidor', 'Vera Vuelve');
+    expect((await conectar(vuelve.token)).estado).toBe(200);
+    await m.llamar('POST', '/datos/repartidor/conectar', { conectado: false }, vuelve.token);
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now','-20 days') WHERE usuario_id = ?",
+    )
+      .bind(vuelve.id)
+      .run();
+    const r = await conectar(vuelve.token);
+    expect(r.estado).toBe(409);
+    expect(r.datos.campo).toBe('selfie');
+    // Con la foto tomada se conecta (no se le vuelve a pedir en bucle).
+    const foto = await m.crudo('/datos/kyc/selfie-control', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${vuelve.token}`, 'content-type': 'image/jpeg' },
+      body: JPEG,
+    });
+    expect(foto.status).toBe(201);
+    expect((await conectar(vuelve.token)).estado).toBe(200);
+    // Quien se conectó hace poco no tiene que verificar otra vez.
+    const seguido = await m.cuenta('repartidor', 'Sara Seguida');
+    expect((await conectar(seguido.token)).estado).toBe(200);
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now','-3 days') WHERE usuario_id = ?",
+    )
+      .bind(seguido.id)
+      .run();
+    expect((await conectar(seguido.token)).estado).toBe(200);
+  });
+
   it('al conectarse se pide la selfie de control; sin tomarla no se conecta; el equipo la ve y la califica', async () => {
     const { m, r2 } = conAlmacen({ SELFIE_CONTROL_SIEMPRE: '1' });
     const rep = await m.cuenta('repartidor', 'Rita Control');

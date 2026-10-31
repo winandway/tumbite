@@ -93,6 +93,8 @@ export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 const SEGUNDOS_OFERTA = 45;
 /** Probabilidad de pedir la selfie de control en cada conexión (como la identidad continua de los grandes). */
 const PROBABILIDAD_SELFIE = 0.2;
+/** Días sin conectarse a partir de los cuales la foto de control es obligatoria al volver. */
+const DIAS_PARA_VERIFICAR_AL_VOLVER = 14;
 const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
 /** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
 const puntoConPrecision = punto.extend({
@@ -1088,11 +1090,22 @@ operacion.post('/repartidor/conectar', async (c) => {
         )
         .bind(u.id)
         .first();
-      // «1» = siempre (pruebas, recorrido); «0» = nunca (las demás pruebas); sin valor = al azar.
+      // C-VUELTA-VERIFICA (31 oct 2026, como DoorDash al volver a la app): si lleva 14 días o más
+      // sin conectarse, la foto de control va siempre, sin importar el azar ni la de la semana.
+      const vuelve = await db
+        .prepare(
+          `SELECT 1 FROM repartidores WHERE usuario_id = ?1 AND ubicacion_en IS NOT NULL
+           AND ubicacion_en < datetime('now','-${DIAS_PARA_VERIFICAR_AL_VOLVER} days')
+           AND NOT EXISTS (SELECT 1 FROM selfies_control sc WHERE sc.usuario_id = ?1
+             AND sc.tomada_en > datetime('now','-${DIAS_PARA_VERIFICAR_AL_VOLVER} days'))`,
+        )
+        .bind(u.id)
+        .first();
+      // «1» = siempre (pruebas, recorrido); «0» = nunca al azar (las demás pruebas); sin valor = al azar.
       const toca =
         c.env.SELFIE_CONTROL_SIEMPRE === '1' ||
         (c.env.SELFIE_CONTROL_SIEMPRE !== '0' && Math.random() < PROBABILIDAD_SELFIE);
-      if (!reciente && toca)
+      if (vuelve || (!reciente && toca))
         await db
           .prepare('INSERT INTO selfies_control (id, usuario_id) VALUES (?, ?)')
           .bind(nuevoId(), u.id)

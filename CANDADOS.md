@@ -2078,3 +2078,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se veía:** en la hoja de pago, en español, «permites que {Divoox} cargue en tu tarjeta…» (con llaves).
 - **Causa real:** la traducción es-419 del SDK de Stripe para iPhone trae «{%@}» (la es-ES está bien). Nuestro `merchantDisplayName` es correcto.
 - **Arreglo:** `plugins/stripe-espanol.js` agrega al `post_install` del Podfile un paso que cambia «{%@}» por «%@» en las traducciones de StripePaymentSheet. Comprobado: después de `pod install` el texto sale sin llaves. Prueba `packages/compartido/src/stripeEspanol.test.ts`. Se quita cuando Stripe corrija su traducción.
+
+## C-VUELTA-VERIFICA (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash al volver a la app (capturas de Richard), si el repartidor lleva 14 días o más sin conectarse (su última ubicación), la foto de control se pide SIEMPRE antes de conectarse, aparte de la del azar semanal. Evita que otra persona use una cuenta que estaba quieta (alquiler o robo de cuenta).
+- **Sin bucle:** si ya tomó una foto de control en esos 14 días, no se le vuelve a pedir.
+- **Dónde:** `apps/servidor/src/rutas/operacion.ts` (`DIAS_PARA_VERIFICAR_AL_VOLVER`). Prueba en `kyc.test.ts` (comprobada en rojo).
