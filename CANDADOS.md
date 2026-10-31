@@ -2018,5 +2018,5 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 ## C-FLEX-GEOCERCA (30 oct 2026) — todos los países
 
-- **Qué es:** como «Fuera de área de entrega» de Amazon Flex: con la ubicación del celular, el servidor rechaza entregar una parada a más de 200 m de la dirección del envío (`RADIO_ENTREGA_M` en `flex/conductor.ts`, 409 con campo `ubicacion` y los metros). La app avisa antes de intentar, con el mismo radio. Sin ubicación del celular se acepta como antes (la cola sin conexión). Falta dibujar el círculo en el mapa (F5b).
+- **Qué es:** como «Fuera de área de entrega» de Amazon Flex: con la ubicación del celular, el servidor rechaza entregar una parada a más de 200 m de la dirección del envío (`RADIO_ENTREGA_M` en `flex/conductor.ts`, 409 con campo `ubicacion` y los metros). La app avisa antes de intentar, con el mismo radio. Sin ubicación del celular se acepta como antes (la cola sin conexión). El mapa de la ruta dibuja el círculo del área (200 m) alrededor de la parada siguiente, en el azul de logística, en el celular y en la web.
 - **Candado:** `flexRutas.test.ts` («lejos de la dirección no deja entregar; en la puerta sí»).

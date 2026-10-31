@@ -1191,7 +1191,16 @@ function VistaMapa({
         alCambiar={setFiltro}
       />
       {puntos.length ? (
-        <MapaRuta puntos={puntos} yo={yo} etiqueta={t.vistas.mapa} />
+        <MapaRuta
+          puntos={puntos}
+          yo={yo}
+          etiqueta={t.vistas.mapa}
+          area={
+            siguiente && siguiente.lat != null && siguiente.lng != null
+              ? { punto: { lat: siguiente.lat, lng: siguiente.lng }, metros: RADIO_ENTREGA_M }
+              : null
+          }
+        />
       ) : (
         <Text style={{ color: GRIS }}>{t.sinCoordenadasMapa}</Text>
       )}

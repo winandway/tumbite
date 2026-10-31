@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
 import type { Punto } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
@@ -16,11 +16,14 @@ export function MapaRuta({
   yo,
   alto = 380,
   etiqueta,
+  area = null,
 }: {
   puntos: PuntoRuta[];
   yo: Punto | null;
   alto?: number;
   etiqueta: string;
+  /** C-FLEX-GEOCERCA: el círculo del área de entrega de la parada actual. */
+  area?: { punto: Punto; metros: number } | null;
 }) {
   const mapa = useRef<MapView>(null);
   const todos = [...puntos.map((p) => p.punto), ...(yo ? [yo] : [])];
@@ -58,6 +61,15 @@ export function MapaRuta({
             lineDashPattern={[8, 6]}
           />
         ) : null}
+        {area ? (
+          <Circle
+            center={{ latitude: area.punto.lat, longitude: area.punto.lng }}
+            radius={area.metros}
+            strokeColor={C.logisticaAccion}
+            fillColor="rgba(74, 165, 220, 0.18)"
+            strokeWidth={2}
+          />
+        ) : null}
         {puntos.map((p) => (
           <Marker
             key={p.id}
@@ -89,7 +101,7 @@ export function MapaRuta({
                 width: 20,
                 height: 20,
                 borderRadius: 10,
-                backgroundColor: C.primario,
+                backgroundColor: C.logisticaAccion,
                 borderWidth: 3,
                 borderColor: '#FFFFFF',
               }}

@@ -14,11 +14,14 @@ export function MapaRuta({
   yo,
   alto = 380,
   etiqueta,
+  area = null,
 }: {
   puntos: PuntoRuta[];
   yo: Punto | null;
   alto?: number;
   etiqueta: string;
+  /** C-FLEX-GEOCERCA: el círculo del área de entrega de la parada actual. */
+  area?: { punto: Punto; metros: number } | null;
 }) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
@@ -27,6 +30,7 @@ export function MapaRuta({
   const clave = [
     ...puntos.map((p) => `${p.id}:${p.tono}:${p.punto.lat},${p.punto.lng}`),
     yo ? `${yo.lat},${yo.lng}` : '',
+    area ? `${area.punto.lat},${area.punto.lng},${area.metros}` : '',
   ].join('|');
 
   useEffect(() => {
@@ -61,6 +65,16 @@ export function MapaRuta({
       });
       nuevas.push(L.marker([p.punto.lat, p.punto.lng], { icon: icono, title: p.nombre }));
     }
+    if (area)
+      nuevas.push(
+        L.circle([area.punto.lat, area.punto.lng], {
+          radius: area.metros,
+          color: '#4AA5DC',
+          weight: 2,
+          fillColor: '#4AA5DC',
+          fillOpacity: 0.18,
+        }),
+      );
     if (yo) nuevas.push(punto(yo, COLORES.repartidor, 9));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;

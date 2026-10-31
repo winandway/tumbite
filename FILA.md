@@ -17,7 +17,7 @@
 - [x] (F3) «Mi ruta» con tres pestañas: Lista (hora de entrega, check verde, próxima parada), Mapa (filtros Todos, Apartamentos, Prioridad) y Resumen (barras y Pendientes, Correcto, Problemas). Todos los países.
 - [x] (F4) Iniciar viaje con elección de app de mapas (Apple Maps o Google Maps) y botón «Ya estacioné». Todos los países.
 - [x] (F5) Geocerca de entrega: no deja terminar fuera del área, con el círculo en el mapa y un mensaje claro; salida por soporte. Todos los países.
-- [ ] (F5b) Dibujar en el mapa de la parada el círculo del área de entrega (200 m), como Amazon Flex. Todos los países.
+- [x] (F5b) Dibujar en el mapa de la parada el círculo del área de entrega (200 m), como Amazon Flex. Todos los países.
 - [ ] (F6) «¿Dónde dejaste el paquete?» con cinco opciones, revisión de la foto con aviso, «Volver a tomar» y «Deslizar para finalizar». Todos los países.
 - [ ] (F7) Tarjeta de la parada con la foto de la entrega anterior en esa dirección y las instrucciones del cliente traducidas con «Ver original». Todos los países.
 
