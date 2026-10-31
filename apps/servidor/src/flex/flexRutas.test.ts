@@ -1237,3 +1237,33 @@ describe('Flex · geocerca de entrega (C-FLEX-GEOCERCA)', () => {
     expect(cerca.estado).toBe(200);
   });
 });
+
+// C-FLEX-LUGAR (30 oct 2026, como «¿Dónde está dejando los paquetes?» de Amazon Flex).
+describe('Flex · dónde quedó el paquete (C-FLEX-LUGAR)', () => {
+  it('se guarda una de las cinco opciones; otra cosa se rechaza', async () => {
+    const m = mundo();
+    const { cond, C, paradas } = await rutaEnCurso(m, 1, 1);
+    const p = paradas[0];
+    const foto = await subir(m, `${C}/paradas/${p.id}/prueba`, cond.token);
+    const mal = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lugar: 'tejado' },
+      cond.token,
+    );
+    expect(mal.estado).toBe(400);
+    const ok = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lugar: 'recepcion' },
+      cond.token,
+    );
+    expect(ok.estado).toBe(200);
+    const ev = await m.DB.prepare(
+      "SELECT metadatos_json FROM paquete_eventos WHERE tipo = 'entregado' ORDER BY rowid DESC LIMIT 1",
+    ).first<{ metadatos_json: string }>();
+    expect(JSON.parse(ev!.metadatos_json).lugar).toBe('recepcion');
+  });
+});
