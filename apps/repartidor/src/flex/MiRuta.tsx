@@ -27,6 +27,7 @@ import {
   PROXIMAS_ACCIONES,
   crearColaFlex,
   distanciaKm,
+  textoDistancia,
   efectivoEnMano,
   enIdioma,
   formatearMonto,
@@ -123,6 +124,8 @@ type Ruta = {
   nombre: string;
   estado: string;
   empresa: string;
+  /** País de la empresa (millas o kilómetros). */
+  pais?: string | null;
   ofertaVenceEn: string | null;
   iniciadaEn: string | null;
   cerradaEn: string | null;
@@ -217,14 +220,19 @@ const horaSola = (f: string | null | undefined, idioma: Idioma) =>
 const coord = (x: { lat: number | null; lng: number | null } | null | undefined): Punto | null =>
   x && x.lat != null && x.lng != null ? { lat: x.lat, lng: x.lng } : null;
 
-/** Distancia en línea recta, dicha como aproximada (no tenemos tiempos ni distancias por calles). */
-function km(a: Punto | null, b: Punto | null, t: Textos, idioma: Idioma): string | null {
+/**
+ * Distancia en línea recta, dicha como aproximada (no tenemos tiempos ni distancias por calles), en
+ * la unidad del país de la ruta: millas en EE. UU. (C-FLEX-DISTANCIA-PAIS).
+ */
+function km(
+  a: Punto | null,
+  b: Punto | null,
+  t: Textos,
+  idioma: Idioma,
+  pais: string | null | undefined,
+): string | null {
   if (!a || !b) return null;
-  const d = distanciaKm(a, b);
-  return `${d.toLocaleString(idioma === 'en' ? 'en-US' : 'es-US', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })} km ${t.aprox}`;
+  return `${textoDistancia(distanciaKm(a, b), idioma, pais)} ${t.aprox}`;
 }
 
 const nombreParada = (p: Parada) => p.destinatarioNombre || p.direccion;
@@ -592,6 +600,9 @@ function MiRutaContenido({
   const parada = ruta.paradas.find((p) => p.id === paradaId) ?? null;
   const todos = ruta.paradas.flatMap((p) => p.paquetes);
   const siguiente = siguienteDe(ruta);
+  // C-FLEX-CARGA-LISTA: todo lo que va en la ruta ya está escaneado (los faltantes no cuentan).
+  const cargaLista = todos.some((p) => !p.excluido) && todos.every((p) => p.excluido || p.cargado);
+  const salirARuta = () => void ubicacion().then((p) => accion('iniciar', p ?? {}));
 
   const escaner = (
     <Modal
@@ -676,7 +687,19 @@ function MiRutaContenido({
           modo={escaneo.modo}
           verPaquete={setPaqueteVer}
         />
-        <Boton texto={t.escanearSiguiente} alTocar={() => void abrirEscaner(escaneo.modo)} />
+        {escaneo.modo === 'carga' && cargaLista ? (
+          <Boton
+            texto={t.salir}
+            exito
+            cargando={trabajando}
+            alTocar={() => {
+              setEscaneo(null);
+              salirARuta();
+            }}
+          />
+        ) : (
+          <Boton texto={t.escanearSiguiente} alTocar={() => void abrirEscaner(escaneo.modo)} />
+        )}
         {avisoCola}
       </View>
     );
@@ -804,8 +827,14 @@ function MiRutaContenido({
               etiqueta={t.paquetesCargados(ruta.progreso.cargados, ruta.progreso.total)}
             />
           </View>
-          <Boton texto={t.escanear} alTocar={() => void abrirEscaner('carga')} />
-          {entradaManual((c) => void escaneado(c))}
+          {cargaLista ? (
+            <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+          ) : (
+            <>
+              <Boton texto={t.escanear} alTocar={() => void abrirEscaner('carga')} />
+              {entradaManual((c) => void escaneado(c))}
+            </>
+          )}
           <View style={[tarjeta, { paddingVertical: 4 }]}>
             {todos
               .filter((p) => !p.excluido)
@@ -851,13 +880,12 @@ function MiRutaContenido({
                 </View>
               ))}
           </View>
-          <Text style={{ color: GRIS }}>{t.cargaCompleta}</Text>
-          <Boton
-            texto={t.salir}
-            exito
-            cargando={trabajando}
-            alTocar={() => void ubicacion().then((p) => accion('iniciar', p ?? {}))}
-          />
+          {cargaLista ? null : (
+            <>
+              <Text style={{ color: GRIS }}>{t.cargaCompleta}</Text>
+              <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+            </>
+          )}
         </>
       ) : null}
       {ruta.estado === 'en_curso' && !devoluciones ? (
@@ -1181,7 +1209,7 @@ function VistaMapa({
   const paradasFiltradas =
     filtro === 'todos' ? ruta.paradas : ruta.paradas.filter((p) => cumpleFiltro(p, filtro));
   const puntos = puntosDe({ ...ruta, paradas: paradasFiltradas }, siguiente?.id ?? null, t);
-  const distancia = siguiente ? km(yo, coord(siguiente), t, idioma) : null;
+  const distancia = siguiente ? km(yo, coord(siguiente), t, idioma, ruta.pais) : null;
   return (
     <>
       <Pestanas
@@ -1246,7 +1274,7 @@ function distanciasEntreParadas(ruta: Ruta, t: Textos, idioma: Idioma): (string 
   let anterior = coord(ruta.centro);
   return ruta.paradas.map((p) => {
     const q = coord(p);
-    const d = km(anterior, q, t, idioma);
+    const d = km(anterior, q, t, idioma, ruta.pais);
     if (q) anterior = q;
     return d;
   });
@@ -1729,7 +1757,7 @@ function DetalleParada({
   const previa = i > 0 ? ruta.paradas[i - 1] : undefined;
   const proximaParada = ruta.paradas[i + 1];
   const siguienteId = siguienteDe(ruta)?.id ?? null;
-  const distancia = km(yo, coord(parada), t, idioma);
+  const distancia = km(yo, coord(parada), t, idioma, ruta.pais);
   const pestanasPrueba = (
     [
       'foto',

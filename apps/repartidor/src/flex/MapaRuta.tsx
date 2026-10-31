@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
@@ -26,17 +26,19 @@ export function MapaRuta({
   area?: { punto: Punto; metros: number } | null;
 }) {
   const mapa = useRef<MapView>(null);
+  // C-FLEX-MAPA-ENCUADRE: encuadrar antes de que el mapa termine de cargar no hace nada.
+  const [listo, setListo] = useState(false);
   const todos = [...puntos.map((p) => p.punto), ...(yo ? [yo] : [])];
   const clave = todos.map((p) => `${p.lat},${p.lng}`).join('|');
   useEffect(() => {
-    if (todos.length < 2) return;
+    if (!listo || todos.length < 2) return;
     mapa.current?.fitToCoordinates(
       todos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
       { edgePadding: { top: 60, right: 50, bottom: 60, left: 50 }, animated: true },
     );
-    // Se reencuadra cuando cambia algún punto.
+    // Se reencuadra cuando el mapa termina de cargar y cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clave]);
+  }, [clave, listo]);
   const centro = todos[0] ?? { lat: 25.7743, lng: -80.1937 };
   return (
     <View style={{ height: alto, overflow: 'hidden', borderRadius: 14 }}>
@@ -49,6 +51,7 @@ export function MapaRuta({
           latitudeDelta: 0.08,
           longitudeDelta: 0.08,
         }}
+        onMapReady={() => setListo(true)}
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiqueta}

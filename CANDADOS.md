@@ -2096,3 +2096,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** como DoorDash («Acuerdo de términos y condiciones actualizado»), si los términos de los repartidores cambian, cada repartidor los lee y los acepta antes de conectarse. Queda registrado quién aceptó qué versión y cuándo (tabla `terminos_aceptados`, sin llave foránea para no trabar el borrado de cuentas).
 - **Cómo se cambia la versión:** `VERSION_TERMINOS` en `packages/compartido/src/terminos.ts` = la fecha de «Actualizado» de `apps/panel/src/sitio/legales.ts`. Al registrarse se acepta la vigente. Al revisor de las tiendas no se le pide.
 - **Prueba:** `apps/servidor/src/rutas/terminos.test.ts` (comprobada en rojo).
+
+## C-FLEX-CARGA-LISTA, C-FLEX-MAPA-ENCUADRE y C-FLEX-DISTANCIA-PAIS (31 oct 2026) — todos los países (millas en EE. UU.)
+
+- **Cómo se vio:** repasando «Mi ruta» en el simulador de iPhone con una ruta de prueba en Michigan (`scripts/staging/armar-ruta-flex-novi.mjs`). Con los tres paquetes cargados seguía «Escanear siguiente» y «Salir a la ruta» quedaba abajo, debajo de «escanea todos los paquetes»; el mapa de la ruta no mostraba las paradas; la distancia a la parada salía en kilómetros.
+- **Arreglo:** con la carga completa (todo escaneado o marcado como faltante) el botón principal es «Salir a la ruta», también en la pantalla de «Paquete cargado» (como Amazon Flex). `MapaRuta` encuadra en `onMapReady` (el mismo fallo de C-MAPA-ENCUADRE). El detalle de la ruta trae `pais` de la empresa y la app usa `textoDistancia` (C-DISTANCIA-POR-PAIS).
+- **Prueba:** `packages/compartido/src/flexMiRutaRepaso.test.ts` (comprobada en rojo).
