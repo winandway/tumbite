@@ -97,7 +97,7 @@ for (const [nombre, id] of Object.entries(APPS)) {
     data: [{ type: 'builds', id: build.id }],
   });
   // Revisión de prueba de Apple. Si ya está pedida (409) o hay otra compilación en revisión de prueba
-  // (422 ANOTHER_BUILD_IN_REVIEW), se sigue: esa se pide de nuevo cuando Apple termine la anterior.
+  // (422 ANOTHER_BUILD_IN_REVIEW), o ya pasó por ella (422 INVALID_QC_STATE), se sigue: esa se pide de nuevo cuando Apple termine la anterior.
   try {
     await asc('POST', '/v1/betaAppReviewSubmissions', {
       data: {
@@ -106,7 +106,7 @@ for (const [nombre, id] of Object.entries(APPS)) {
       },
     });
   } catch (e) {
-    if (!/409|ANOTHER_BUILD_IN_REVIEW/.test(String(e))) throw e;
+    if (!/409|ANOTHER_BUILD_IN_REVIEW|INVALID_QC_STATE/.test(String(e))) throw e;
   }
   const g = (await asc('GET', `/v1/betaGroups/${grupo.id}`)).data.attributes;
   console.log(
