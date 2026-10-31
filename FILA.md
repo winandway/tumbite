@@ -17,14 +17,14 @@
 - [x] (D3) HECHO 31 oct (C-PERMISOS-EXPLICADOS), visto en el simulador. Permisos explicados antes de pedirlos en el Driver (ubicación y avisos, cada uno con su porqué, «Estoy listo»). Todos los países.
 - [x] (D4) HECHO 31 oct (C-TERMINOS-ACTUALIZADOS). Términos actualizados: si cambió la versión de los términos del repartidor, aceptarlos antes de conectarse. Todos los países.
 - [x] (D5) HECHO 31 oct. Mapa del Driver conectado sin ofertas: «Buscando ofertas… Es más probable en las zonas en rojo» y bienvenida «tu nivel no cambió» al volver. Todos los países.
-- [ ] (D6) Revisar SafeDash (desliza para 911, compartir ubicación) y el dash actual (hora de fin, terminar ahora) frente a la ficha; construir lo que falte. Todos los países.
+- [x] (D6) HECHO 31 oct: ya existía el centro de seguridad (emergencia, compartir recorrido, reportar) pero escondido; ahora escudo en el mapa (C-SEGURIDAD-A-LA-VISTA). Los turnos y la pausa ya existían. Revisar SafeDash (desliza para 911, compartir ubicación) y el dash actual (hora de fin, terminar ahora) frente a la ficha; construir lo que falte. Todos los países.
 - [!] (decide Richard: monto, horarios y presupuesto) (D7) Pago extra por hora pico («+$2.00 por orden») sobre el mapa de demanda. Todos los países.
 - [!] (espera Twilio, cuenta y costo de Richard) (D8) Verificar el teléfono por SMS al volver. Todos los países.
 
 ## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
 
 - [ ] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países.
-- [ ] (L2) «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
+- [x] (L2) HECHO 31 oct (C-SEGURIDAD-A-LA-VISTA). «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
 
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
 
