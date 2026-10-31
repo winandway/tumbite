@@ -233,7 +233,7 @@ export default function Buscar() {
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
                 <Text
-                  style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}
+                  style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}
                   numberOfLines={1}
                 >
                   {r.nombre}
@@ -278,7 +278,7 @@ export default function Buscar() {
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
                 <Text
-                  style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}
+                  style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}
                   numberOfLines={1}
                 >
                   {p.nombre}

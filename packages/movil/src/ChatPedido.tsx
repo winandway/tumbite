@@ -150,7 +150,7 @@ export function ChatPedido({
 
   return (
     <View style={e.tarjeta} accessibilityLabel={t.titulo}>
-      <Text style={{ fontWeight: '800', marginBottom: 6 }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.titulo}</Text>
       {mensajes.length === 0 ? (
         <Text style={{ color: '#5E5E5E' }}>{abierto ? t.vacio : t.cerrado}</Text>
       ) : (
@@ -206,7 +206,7 @@ export function ChatPedido({
               onPress={() => void mandarFoto()}
               style={{ paddingHorizontal: 10, paddingVertical: 12 }}
             >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.foto}</Text>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>{t.foto}</Text>
             </Pressable>
           ) : null}
           <View style={{ width: 110 }}>

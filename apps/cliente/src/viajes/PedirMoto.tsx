@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import {
   type CotizacionViaje,
   ErrorApi,
@@ -137,6 +137,18 @@ export function PedirMoto({
   async function pedir() {
     if (!cotizacion) return;
     setError('');
+    // C-ENVIO-SIN-SILENCIO (31 oct 2026, Richard en TestFlight): «Enviar» no hacía nada porque la
+    // casilla de prohibidos no estaba marcada y el aviso salía arriba, fuera de la vista. Se avisa
+    // aquí, junto al botón, antes de mandar nada.
+    if (servicio === 'envios') {
+      if (
+        !v.paqueteDescripcion.trim() ||
+        !v.destinatarioNombre.trim() ||
+        v.destinatarioTelefono.replace(/\D/g, '').length < 7
+      )
+        return setError(t.faltaDatosEnvio);
+      if (!v.sinProhibidos) return setError(t.faltaProhibidos);
+    }
     setTrabajando(true);
     try {
       const r = await api.pedir<{ viaje: { id: string }; pago?: Omit<Cobro, 'pedidoId'> }>(
@@ -254,7 +266,7 @@ export function PedirMoto({
             <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>
               {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
             </Text>
-            <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
+            <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
               {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
             </Text>
             <Text style={{ color: '#5E5E5E' }}>
@@ -291,7 +303,7 @@ export function PedirMoto({
         </Tarjeta>
       ) : null}
 
-      {error ? (
+      {error && !cotizacion ? (
         <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
           {error}
         </Text>
@@ -320,6 +332,7 @@ export function PedirMoto({
                 etiqueta={t.paqueteQue}
                 value={v.paqueteDescripcion}
                 onChangeText={(x) => cambiar('paqueteDescripcion', x)}
+                returnKeyType="done"
                 placeholder={t.paqueteQueEjemplo}
               />
               <Campo
@@ -332,6 +345,8 @@ export function PedirMoto({
                 etiqueta={t.destinatarioNombre}
                 value={v.destinatarioNombre}
                 onChangeText={(x) => cambiar('destinatarioNombre', x)}
+                returnKeyType="done"
+                autoComplete="name"
               />
               <Campo
                 etiqueta={t.destinatarioTelefono}
@@ -340,13 +355,37 @@ export function PedirMoto({
                 keyboardType="phone-pad"
                 placeholder="(305) 000-0000"
               />
-              <Pildora
-                texto={t.sinProhibidos}
-                activa={v.sinProhibidos}
-                alTocar={() => cambiar('sinProhibidos', !v.sinProhibidos)}
-                rol="checkbox"
-              />
+              <Pressable
+                onPress={() => cambiar('sinProhibidos', !v.sinProhibidos)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: v.sinProhibidos }}
+                style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
+                testID="envio-prohibidos"
+              >
+                <View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    borderWidth: 2,
+                    borderColor: v.sinProhibidos ? C.exito : '#8A8A8A',
+                    backgroundColor: v.sinProhibidos ? C.exito : '#fff',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {v.sinProhibidos ? (
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>
+                  ) : null}
+                </View>
+                <Text style={{ flex: 1, color: C.secundario }}>{t.sinProhibidos}</Text>
+              </Pressable>
             </View>
+          ) : null}
+          {error ? (
+            <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
+              {error}
+            </Text>
           ) : null}
           <Boton
             texto={servicio === 'envios' ? t.pedirEnvio : t.pedirMoto}

@@ -40,7 +40,7 @@ export function SelectorIdioma({
         }}
       >
         <Text style={{ fontSize: 18 }}>{actual.bandera}</Text>
-        <Text style={{ color: '#fff', fontWeight: '800' }}>{actual.codigo.toUpperCase()}</Text>
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{actual.codigo.toUpperCase()}</Text>
         <Text style={{ color: '#fff', fontSize: 11 }}>▾</Text>
       </Pressable>
       <Modal

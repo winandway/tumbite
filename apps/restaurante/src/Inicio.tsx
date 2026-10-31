@@ -273,7 +273,7 @@ function CobroAlRepartidor({
   return (
     <Text style={{ marginTop: 4, color: C.secundario, fontSize: 13 }} testID="cobro-al-repartidor">
       {t.cobra}{' '}
-      <Text style={{ fontWeight: '900' }}>{formatearMonto(d.montoEsperado, d.moneda, idioma)}</Text>
+      <Text style={{ fontWeight: '800' }}>{formatearMonto(d.montoEsperado, d.moneda, idioma)}</Text>
       {' · '}
       {d.registrado
         ? t.registrado.replace(
@@ -471,10 +471,10 @@ export function Inicio() {
         {foto(p)}
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+            <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario }}>
               {numero(p)}
             </Text>
-            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+            <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario }}>
               {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
             </Text>
           </View>
@@ -705,7 +705,7 @@ export function Inicio() {
         />
       ) : null}
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '900' }} numberOfLines={1}>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }} numberOfLines={1}>
           {rest.nombre}
         </Text>
         {rest.categoria ? (
@@ -761,7 +761,7 @@ export function Inicio() {
           key={nombre}
           style={{ flex: 1, marginBottom: 0, alignItems: 'center', paddingVertical: 12 }}
         >
-          <Text style={{ fontSize: 28, fontWeight: '900', color }}>{n}</Text>
+          <Text style={{ fontSize: 28, fontWeight: '800', color }}>{n}</Text>
           <Text style={{ color: '#5E5E5E', fontSize: 12, textAlign: 'center' }}>{nombre}</Text>
         </Tarjeta>
       ))}
@@ -849,7 +849,7 @@ export function Inicio() {
             marginVertical: 6,
           }}
         >
-          <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>
             {tr.nuevoPedido} ({nuevos.length})
           </Text>
           <View
@@ -905,7 +905,7 @@ export function Inicio() {
         {foto(p, 56)}
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>
+            <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
               {numero(p)}
             </Text>
             <Text style={{ fontWeight: '800', color: C.secundario }}>
@@ -943,7 +943,7 @@ export function Inicio() {
 
   const columnaCocina = enCocina.length ? (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario, marginVertical: 8 }}>
+      <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario, marginVertical: 8 }}>
         {tr.enCocina} ({enCocina.length})
       </Text>
       {enCocina.map(filaPedido)}
@@ -964,7 +964,7 @@ export function Inicio() {
             <View style={{ flexDirection: 'row' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#5E5E5E' }}>{tr.transcurrido}</Text>
-                <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
+                <Text style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}>
                   {reloj(pasado)}{' '}
                   <Text style={{ fontSize: 13, fontWeight: '500', color: '#5E5E5E' }}>
                     {tr.de} {p.tiempoPrepMin} {t.minutos}
@@ -976,7 +976,7 @@ export function Inicio() {
                 <Text
                   style={{
                     fontSize: 34,
-                    fontWeight: '900',
+                    fontWeight: '800',
                     color: resta < 0 ? '#B3261E' : C.exito,
                   }}
                 >
@@ -1019,10 +1019,10 @@ export function Inicio() {
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900' }}>✓</Text>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800' }}>✓</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: C.exito, fontWeight: '900', fontSize: 17 }}>
+              <Text style={{ color: C.exito, fontWeight: '800', fontSize: 17 }}>
                 {p.entrega === 'recoger' ? t.recoge : tr.listoParaRecoger}
               </Text>
               {p.entrega !== 'recoger' ? (
@@ -1218,6 +1218,8 @@ export function Inicio() {
         <Cabecera idioma={idioma} cambiarIdioma={cambiarIdioma} />
       )}
       <ScrollView
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           paddingBottom: 32,

@@ -136,7 +136,7 @@ export function CalificarCliente({ api, idioma }: { api: Api; idioma: Idioma }) 
     return gracias ? <Text style={{ color: C.exito, fontWeight: '700' }}>{t.gracias}</Text> : null;
   return (
     <View style={{ gap: 8 }} testID="calificar-cliente">
-      <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.ayuda}</Text>
       {lista.map((p) => (
         <Una

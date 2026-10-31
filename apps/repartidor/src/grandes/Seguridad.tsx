@@ -140,7 +140,7 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
 
   return (
     <View style={{ padding: 16, gap: 12 }} testID="seguridad">
-      <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
       {aviso ? <Text style={{ color: C.exito, fontWeight: '700' }}>{aviso}</Text> : null}
       <View style={[e.tarjeta, { gap: 8 }]}>
@@ -155,7 +155,7 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '900', fontSize: 18 }}>{t.emergencia}</Text>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>{t.emergencia}</Text>
         </Pressable>
         <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.emergenciaAyuda}</Text>
         {numero ? (
@@ -167,7 +167,7 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
         <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.compartirAyuda}</Text>
       </View>
       <View style={[e.tarjeta, { gap: 8 }]}>
-        <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>{t.incidente}</Text>
+        <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.incidente}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {Object.entries(t.motivos).map(([k, texto]) => (
             <Pressable

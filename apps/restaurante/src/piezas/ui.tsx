@@ -279,7 +279,7 @@ export function Pasos({ nombres, paso }: { nombres: string[]; paso: number }) {
               backgroundColor: i <= paso ? C.exito : '#E5E5E5',
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '900' }}>{i <= paso ? '✓' : ''}</Text>
+            <Text style={{ color: '#fff', fontWeight: '800' }}>{i <= paso ? '✓' : ''}</Text>
           </View>
           <Text
             style={{

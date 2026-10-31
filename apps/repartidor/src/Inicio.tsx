@@ -1295,6 +1295,8 @@ export function Inicio() {
         <View style={{ flex: 1 }}>{cuerpo}</View>
       ) : (
         <ScrollView
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={{ paddingBottom: 16 }}
           keyboardShouldPersistTaps="handled"
         >
@@ -1354,7 +1356,7 @@ export function Inicio() {
       'ganancias',
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{td.ganancias}</Text>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{td.ganancias}</Text>
         {prepago &&
         (prepago.efectivoActivo || prepago.transferenciaActiva || prepago.recargasPuntoVenta) ? (
           <View
@@ -1368,13 +1370,13 @@ export function Inicio() {
             }}
             testID="saldo-prepago"
           >
-            <Text style={{ fontWeight: '900', color: C.secundario }}>{tg.prepago.titulo}</Text>
+            <Text style={{ fontWeight: '800', color: C.secundario }}>{tg.prepago.titulo}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ color: C.secundario }}>{tg.prepago.disponible}</Text>
               <Text
                 style={{
-                  fontWeight: '900',
+                  fontWeight: '800',
                   color: prepago.disponible > 0 ? '#0D7A3A' : C.primario,
                 }}
               >
@@ -1433,7 +1435,7 @@ export function Inicio() {
                 ? td.totalDe.semana
                 : td.totalDe.mes}
           </Text>
-          <Text style={{ fontSize: 34, fontWeight: '900', color: C.secundario }}>
+          <Text style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}>
             {/* Billetera de Stripe: solo pedidos con tarjeta, hoy siempre en USD. */}
             {formatearMonto(total, 'USD', idioma)}
           </Text>
@@ -1475,6 +1477,8 @@ export function Inicio() {
         testID="mi-ruta-completa"
       >
         <ScrollView
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
           style={{ backgroundColor: FONDO_FLEX }}
           contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
@@ -1521,7 +1525,7 @@ export function Inicio() {
       'pedidos',
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>
           {td.nav.pedidos}
         </Text>
         <CalificarCliente api={api} idioma={idioma} />
@@ -1530,7 +1534,7 @@ export function Inicio() {
           accessibilityRole="button"
           style={[e.tarjeta, { borderWidth: 1, borderColor: '#2a2a2a' }]}
         >
-          <Text style={{ fontWeight: '900', color: C.secundario }}>{t.vistaMiRuta}</Text>
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.vistaMiRuta}</Text>
           <Text style={{ color: '#5E5E5E' }}>{t.miRutaAyuda}</Text>
         </Pressable>
         {entregas.length === 0 ? (
@@ -1552,7 +1556,7 @@ export function Inicio() {
                   )}
                 </Text>
               </View>
-              <Text style={{ fontWeight: '900', color: C.secundario }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
                 {formatearMonto(m.monto, 'USD', idioma)}
               </Text>
             </View>
@@ -1606,9 +1610,9 @@ export function Inicio() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 34, fontWeight: '900' }}>{iniciales}</Text>
+            <Text style={{ color: '#fff', fontSize: 34, fontWeight: '800' }}>{iniciales}</Text>
           </View>
-          <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginTop: 8 }}>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginTop: 8 }}>
             {usuario?.nombre}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
@@ -1714,7 +1718,7 @@ export function Inicio() {
       'inicio',
       <View>
         <View style={{ backgroundColor: C.primario, paddingHorizontal: 16, paddingVertical: 14 }}>
-          <Text style={{ color: '#fff', fontSize: 30, fontWeight: '900' }}>
+          <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800' }}>
             {distanciaTexto || (activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn)}
           </Text>
           <Text style={{ color: '#fff', fontWeight: '700' }} numberOfLines={1}>
@@ -1748,7 +1752,7 @@ export function Inicio() {
                 {activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn}
               </Text>
               <Text
-                style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}
+                style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}
                 numberOfLines={1}
               >
                 {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.nombre}
@@ -2058,7 +2062,7 @@ export function Inicio() {
                             }}
                             testID="cobro-directo"
                           >
-                            <Text style={{ fontWeight: '900', color: C.secundario }}>
+                            <Text style={{ fontWeight: '800', color: C.secundario }}>
                               {tg.pedido.cobrar}
                             </Text>
                             {activo.cobroEstado && activo.cobroEstado !== 'pendiente' ? (
@@ -2071,7 +2075,7 @@ export function Inicio() {
                                   {activo.metodoPago === 'efectivo'
                                     ? tg.pedido.cobrarEfectivo
                                     : tg.pedido.cobrarTransfer}{' '}
-                                  <Text style={{ fontWeight: '900', color: C.secundario }}>
+                                  <Text style={{ fontWeight: '800', color: C.secundario }}>
                                     {formatearMonto(
                                       (activo.total ?? 0) - activo.propina,
                                       activo.moneda,

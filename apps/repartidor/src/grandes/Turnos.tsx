@@ -181,7 +181,7 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
 
   return (
     <View style={{ padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
       {ok ? <Text style={{ color: C.exito, fontWeight: '700' }}>{ok}</Text> : null}
@@ -209,7 +209,7 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
         </View>
       ))}
       <View style={[e.tarjeta, { gap: 10 }]}>
-        <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>{t.nuevo}</Text>
+        <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.nuevo}</Text>
         <Text style={{ color: '#5E5E5E' }}>{t.dia}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {Array.from({ length: TURNO.dias }, (_, n) => (

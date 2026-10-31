@@ -149,7 +149,7 @@ export function ViajeEnCurso({
       <Text
         accessibilityRole="header"
         testID={`viaje-estado-${viaje.estado}`}
-        style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}
+        style={{ fontSize: 24, fontWeight: '700', color: C.secundario }}
       >
         {titulo}
       </Text>
@@ -171,14 +171,14 @@ export function ViajeEnCurso({
       {viaje.conductor ? (
         <Tarjeta>
           <View testID="viaje-conductor" style={{ gap: 2 }}>
-            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+            <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
               {viaje.conductor.nombre}
             </Text>
             <Text style={{ color: '#5E5E5E' }}>
               {t.moto}: {[moto?.marca, moto?.modelo, moto?.color].filter(Boolean).join(' · ')}
             </Text>
             {moto?.placa ? (
-              <Text style={{ fontWeight: '800', color: C.secundario, letterSpacing: 1 }}>
+              <Text style={{ fontWeight: '700', color: C.secundario, letterSpacing: 1 }}>
                 {t.placa}: {moto.placa}
               </Text>
             ) : null}
@@ -188,7 +188,7 @@ export function ViajeEnCurso({
 
       {paquete ? (
         <Tarjeta>
-          <Text style={{ fontWeight: '800', color: C.secundario }}>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>
             {paquete.descripcion} · {t.paraQuien} {paquete.destinatario}
           </Text>
           {paquete.pinEntrega ? (
@@ -196,7 +196,7 @@ export function ViajeEnCurso({
               <Text style={{ marginTop: 6, color: '#5E5E5E' }}>{t.pinEntrega}</Text>
               <Text
                 testID="envio-pin"
-                style={{ fontSize: 30, fontWeight: '900', letterSpacing: 8, color: C.secundario }}
+                style={{ fontSize: 30, fontWeight: '700', letterSpacing: 8, color: C.secundario }}
               >
                 {paquete.pinEntrega}
               </Text>
@@ -210,7 +210,7 @@ export function ViajeEnCurso({
           <View testID="viaje-codigo" style={{ alignItems: 'center', gap: 4 }}>
             <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.codigo}</Text>
             <Text
-              style={{ fontSize: 40, fontWeight: '900', letterSpacing: 10, color: C.secundario }}
+              style={{ fontSize: 40, fontWeight: '700', letterSpacing: 10, color: C.secundario }}
             >
               {viaje.pin}
             </Text>
@@ -221,11 +221,11 @@ export function ViajeEnCurso({
 
       <Tarjeta>
         <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>{viaje.origen.direccion}</Text>
+        <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
         <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>{viaje.destino.direccion}</Text>
+        <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
         {viaje.total != null ? (
-          <Text style={{ marginTop: 8, fontWeight: '800', color: C.secundario }}>
+          <Text style={{ marginTop: 8, fontWeight: '700', color: C.secundario }}>
             {viaje.estado === 'terminado'
               ? viaje.metodoPago === 'tarjeta'
                 ? t.pagadoTarjeta
@@ -268,7 +268,7 @@ export function ViajeEnCurso({
       {viaje.estado === 'terminado' && !calificado ? (
         <Tarjeta>
           <View testID="viaje-calificar" style={{ gap: 8 }}>
-            <Text style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}>
+            <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
               {t.calificar}
             </Text>
             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -303,7 +303,7 @@ export function ViajeEnCurso({
             </Text>
           ) : (
             <View testID="viaje-propina" style={{ gap: 8 }}>
-              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.propinaTitulo}</Text>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>{t.propinaTitulo}</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {[100, 200, 500].map((c) => (
                   <View key={c} style={{ flex: 1 }}>

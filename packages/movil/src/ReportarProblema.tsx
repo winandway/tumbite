@@ -181,7 +181,7 @@ export function ReportarProblema({
     return <Boton texto={textoBoton ?? t.abrir} alTocar={() => setAbierto(true)} secundario />;
   return (
     <View style={e.tarjeta}>
-      <Text style={{ fontWeight: '800', fontSize: 17, marginBottom: 4 }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '700', fontSize: 17, marginBottom: 4 }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {pedidoId ? (

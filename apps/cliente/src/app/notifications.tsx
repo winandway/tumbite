@@ -157,7 +157,7 @@ const Titulo = ({ texto, punto }: { texto: string; punto?: boolean }) => (
     {punto ? (
       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.primario }} />
     ) : null}
-    <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario, flex: 1 }}>{texto}</Text>
+    <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario, flex: 1 }}>{texto}</Text>
   </View>
 );
 const Texto = ({ texto }: { texto: string }) => (

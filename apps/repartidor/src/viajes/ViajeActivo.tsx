@@ -160,7 +160,7 @@ export function ViajeActivo({
   if (cierre)
     return (
       <View testID="viaje-cerrado" style={{ padding: 20, gap: 14 }}>
-        <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
           {cierre === 'terminado' ? t.terminado : t.noShow}
         </Text>
         {cierre === 'terminado' &&
@@ -171,7 +171,7 @@ export function ViajeActivo({
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
             <Text style={{ color: '#5E5E5E' }}>{t.cobra}</Text>
-            <Text style={{ fontSize: 34, fontWeight: '900', color: C.exito }}>
+            <Text style={{ fontSize: 34, fontWeight: '800', color: C.exito }}>
               {formatearMonto(totalFinal ?? viaje.total ?? 0, viaje.moneda ?? 'USD', idioma)}
             </Text>
           </View>
@@ -216,7 +216,7 @@ export function ViajeActivo({
 
   return (
     <View testID="viaje-activo" style={{ padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{titulo}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{titulo}</Text>
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
         {viaje.metodo_pago === 'efectivo' && viaje.total != null ? (
@@ -252,7 +252,7 @@ export function ViajeActivo({
             <Text style={{ color: '#5E5E5E' }}>
               {quedaGratis > 0 ? t.esperaGratis : t.esperaTerminada}
             </Text>
-            <Text style={{ fontSize: 28, fontWeight: '900', color: C.secundario }}>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: C.secundario }}>
               {quedaGratis > 0 ? reloj(quedaGratis) : reloj(esperando)}
             </Text>
           </View>

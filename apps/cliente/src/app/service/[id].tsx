@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -78,7 +78,7 @@ export default function PantallaServicio() {
           />
           <Text
             accessibilityRole="header"
-            style={{ fontSize: 26, fontWeight: '900', color: C.secundario, marginTop: 8 }}
+            style={{ fontSize: 26, fontWeight: '700', color: C.secundario, marginTop: 8 }}
           >
             {nombre}
           </Text>
@@ -95,12 +95,12 @@ export default function PantallaServicio() {
         ) : null}
         {id === 'mas' && todos.length ? (
           <View style={{ marginTop: 18, gap: 14 }}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario }}>
               {t.todosLosServicios}
             </Text>
             {agruparServicios(todos).map((g) => (
               <View key={g.id} style={{ gap: 8 }}>
-                <Text style={{ fontWeight: '800', color: '#5E5E5E' }}>
+                <Text style={{ fontWeight: '700', color: '#5E5E5E' }}>
                   {t.grupos[g.id] ?? g.id}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -130,7 +130,7 @@ export default function PantallaServicio() {
                         resizeMode="contain"
                         accessibilityIgnoresInvertColors
                       />
-                      <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+                      <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 4 }}>
                         {(ORDEN_SERVICIOS as readonly string[]).includes(x.id)
                           ? t.servicios[x.id as Servicio]
                           : x.nombre}
@@ -170,10 +170,8 @@ export default function PantallaServicio() {
               {
                 titulo: t.envioBloque,
                 ayuda: t.envioBloqueAyuda,
-                ir: () =>
-                  void Linking.openURL(
-                    `https://divoox.com${idioma === 'es' ? '/es' : ''}/business`,
-                  ),
+                // C-BLOQUE-EN-LA-APP: se explica y se registra dentro de la app.
+                ir: () => router.push('/business'),
                 activo: true,
               },
             ].map((o) => (
@@ -192,7 +190,7 @@ export default function PantallaServicio() {
                 <Text
                   style={{
                     color: o.activo ? '#FFFFFF' : C.logistica,
-                    fontWeight: '800',
+                    fontWeight: '700',
                     fontSize: 17,
                   }}
                 >
@@ -217,7 +215,7 @@ export default function PantallaServicio() {
         ) : null}
         <Tarjeta style={{ marginTop: 22 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
               {t.loQueViene}
             </Text>
             <Text style={{ fontSize: 11, fontWeight: '700', color: '#8A8A8A' }}>{t.ejemplo}</Text>

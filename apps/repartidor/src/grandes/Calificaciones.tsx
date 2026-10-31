@@ -78,7 +78,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
         <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{nombre}</Text>
         <Text
           style={{
-            fontWeight: '900',
+            fontWeight: '800',
             fontSize: 22,
             color: bien == null ? C.secundario : bien ? C.exito : C.primario,
           }}
@@ -94,7 +94,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
   );
   return (
     <View style={{ padding: 16, gap: 12 }} testID="calificaciones">
-      <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       {!d ? null : d.entregasTotales === 0 && d.aceptacion.de === 0 ? (
         <Text style={{ color: '#5E5E5E' }}>{t.sinDatos}</Text>
       ) : (
@@ -133,7 +133,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
             <View style={[e.tarjeta, { gap: 6 }]} testID="destacado">
               <Text
                 style={{
-                  fontWeight: '900',
+                  fontWeight: '800',
                   fontSize: 17,
                   color: d.destacado ? C.exito : C.secundario,
                 }}
@@ -158,13 +158,13 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
           ) : null}
           <View style={[e.tarjeta, { flexDirection: 'row' }]}>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Text style={{ fontWeight: '900', fontSize: 22, color: C.secundario }}>
+              <Text style={{ fontWeight: '800', fontSize: 22, color: C.secundario }}>
                 {d.entregas30Dias}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.treinta}</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <Text style={{ fontWeight: '900', fontSize: 22, color: C.secundario }}>
+              <Text style={{ fontWeight: '800', fontSize: 22, color: C.secundario }}>
                 {d.entregasTotales}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.totales}</Text>

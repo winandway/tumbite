@@ -103,11 +103,11 @@ export function OfertaViajeModal({
               testID="oferta-viaje-efectivo"
               style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
             >
-              <Text style={{ fontWeight: '900', color: C.secundario }}>{t.enEfectivo}</Text>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
             </View>
           ) : null}
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.ganas}</Text>
-          <Text style={{ fontSize: 40, fontWeight: '900', color: C.secundario, lineHeight: 44 }}>
+          <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
             {formatearMonto(oferta.gananciaCentavos, oferta.moneda ?? 'USD', idioma)}
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -162,7 +162,7 @@ const Dato = ({ valor, nombre }: { valor: string; nombre: string }) => (
       alignItems: 'center',
     }}
   >
-    <Text style={{ fontWeight: '900', color: C.secundario, fontSize: 16 }}>{valor}</Text>
+    <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{valor}</Text>
     <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{nombre}</Text>
   </View>
 );

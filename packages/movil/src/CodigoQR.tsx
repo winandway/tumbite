@@ -42,7 +42,7 @@ export function CodigoQR({
           </View>
         ))}
       </View>
-      <Text style={{ fontWeight: '800', fontSize: 22, letterSpacing: 2, marginTop: 4 }}>
+      <Text style={{ fontWeight: '700', fontSize: 22, letterSpacing: 2, marginTop: 4 }}>
         {numero}
       </Text>
     </View>

@@ -35,7 +35,7 @@ export function Mas({
     <View>
       <Text
         accessibilityRole="header"
-        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 12 }}
+        style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 12 }}
       >
         {titulo}
       </Text>

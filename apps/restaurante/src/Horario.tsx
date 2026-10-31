@@ -80,7 +80,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
     <View testID="app-horario">
       <Text
         accessibilityRole="header"
-        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 10 }}
+        style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 10 }}
       >
         {t.titulo}
       </Text>
@@ -150,7 +150,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
             .catch(fallo);
         }}
       />
-      <Text style={{ fontSize: 18, fontWeight: '900', color: C.secundario, marginTop: 18 }}>
+      <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario, marginTop: 18 }}>
         {t.cierres}
       </Text>
       <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.cierresAyuda}</Text>

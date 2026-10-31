@@ -62,7 +62,7 @@ export function OpcionesCuenta() {
   return (
     <View style={[e.tarjeta, { gap: 10 }]} testID="opciones-cuenta">
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.titulo}</Text>
+        <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo}</Text>
         <Pressable
           onPress={() => setMenu((m) => !m)}
           accessibilityRole="button"
@@ -71,7 +71,7 @@ export function OpcionesCuenta() {
           style={{ paddingHorizontal: 10, paddingVertical: 4 }}
           testID="cuenta-tres-puntos"
         >
-          <Text style={{ fontSize: 22, fontWeight: '800' }}>⋮</Text>
+          <Text style={{ fontSize: 22, fontWeight: '700' }}>⋮</Text>
         </Pressable>
       </View>
       {menu ? (
@@ -105,7 +105,7 @@ export function OpcionesCuenta() {
           }}
         >
           <View style={[e.tarjeta, { gap: 12 }]}>
-            <Text style={{ fontWeight: '900', fontSize: 18 }}>{t.borrar}</Text>
+            <Text style={{ fontWeight: '700', fontSize: 18 }}>{t.borrar}</Text>
             <Text style={{ color: C.gris }}>{t.explicacion}</Text>
             <TextInput
               value={escrito}

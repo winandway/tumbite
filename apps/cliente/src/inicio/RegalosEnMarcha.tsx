@@ -22,7 +22,7 @@ export function RegalosEnMarcha({
   return (
     <View style={{ marginTop: 18, marginHorizontal: 16 }} testID="regalos-en-marcha">
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.tusRegalos}</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.tusRegalos}</Text>
         <Pressable onPress={alVer} accessibilityRole="button" accessibilityLabel={t.verRegalos}>
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verRegalos} ›</Text>
         </Pressable>
@@ -46,7 +46,7 @@ export function RegalosEnMarcha({
               elevation: 2,
             }}
           >
-            <Text style={{ fontWeight: '800', fontSize: 15, color: C.secundario }}>
+            <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>
               {(r.regalo === 'sellos' ? t.avisoSellos : t.avisoVuelve).replace(
                 '{restaurante}',
                 r.restauranteNombre,

@@ -43,7 +43,7 @@ export function AvisoPago({
         accessibilityIgnoresInvertColors
       />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>
+        <Text style={{ fontWeight: '700', color: C.secundario }}>
           {t.pendienteTitulo.replace('{monto}', formatearMonto(centavos, moneda, idioma))}
         </Text>
         <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pendienteTexto}</Text>
@@ -59,7 +59,7 @@ export function AvisoPago({
           paddingVertical: 10,
         }}
       >
-        <Text style={{ color: '#fff', fontWeight: '800' }}>{t.pagar}</Text>
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{t.pagar}</Text>
       </Pressable>
     </View>
   );

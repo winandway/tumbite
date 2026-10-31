@@ -75,7 +75,7 @@ export function Alta({
   const todo = pasos?.every((p) => p.estado === 'listo');
   return (
     <View style={{ padding: 16, gap: 12 }} testID="alta-guiada">
-      <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E' }}>{todo ? t.completo : t.intro}</Text>
       {(pasos ?? []).map((p, i) => {
         const listo = p.estado === 'listo';

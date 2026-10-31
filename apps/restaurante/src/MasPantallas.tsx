@@ -111,7 +111,7 @@ function Titulo({ texto }: { texto: string }) {
   return (
     <Text
       accessibilityRole="header"
-      style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 10 }}
+      style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 10 }}
     >
       {texto}
     </Text>
@@ -306,7 +306,7 @@ function Ganancias({ t }: { t: Textos }) {
         <>
           <Tarjeta>
             <Text style={{ color: '#5E5E5E' }}>{t.saldo}</Text>
-            <Text style={{ fontSize: 30, fontWeight: '900', color: C.exito }}>
+            <Text style={{ fontSize: 30, fontWeight: '800', color: C.exito }}>
               {formatearMonto(d.saldo, 'USD', idioma)}
             </Text>
           </Tarjeta>

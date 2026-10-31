@@ -76,7 +76,7 @@ export function ResenasRestaurante({ restauranteId }: { restauranteId: string })
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
         <Text
           accessibilityRole="header"
-          style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}
+          style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}
         >
           {idioma === 'en' ? 'Ratings & reviews' : 'Calificaciones y reseñas'}
         </Text>
@@ -94,14 +94,14 @@ export function ResenasRestaurante({ restauranteId }: { restauranteId: string })
             backgroundColor: '#fff',
           }}
         >
-          <Text style={{ fontWeight: '800', color: C.secundario }}>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>
             {r.cliente} <Text style={{ color: C.primario }}>{'★'.repeat(r.estrellas)}</Text>
             <Text style={{ color: '#9a9a9a', fontWeight: '400' }}> · {fecha(r.fecha)}</Text>
           </Text>
           <Text style={{ color: '#333', marginTop: 4 }}>{r.comentario}</Text>
           {r.respuesta ? (
             <Text style={{ color: '#5E5E5E', marginTop: 6, fontSize: 13 }}>
-              <Text style={{ fontWeight: '800' }}>
+              <Text style={{ fontWeight: '700' }}>
                 {idioma === 'en' ? 'Restaurant reply: ' : 'Respuesta del restaurante: '}
               </Text>
               {r.respuesta}

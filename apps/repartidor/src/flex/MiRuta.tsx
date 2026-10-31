@@ -584,7 +584,7 @@ function MiRutaContenido({
     return (
       <View style={{ padding: 16, gap: 12 }}>
         <View style={{ gap: 2 }}>
-          <Text style={{ fontSize: 28, fontWeight: '900', color: TEXTO }}>{t.tituloLista}</Text>
+          <Text style={{ fontSize: 28, fontWeight: '800', color: TEXTO }}>{t.tituloLista}</Text>
           <Text style={{ color: GRIS }}>{t.subtituloLista}</Text>
         </View>
         <Pestanas
@@ -751,7 +751,7 @@ function MiRutaContenido({
     <View style={{ gap: 4 }}>
       <Atras texto={t.tituloLista} alTocar={salirDeRuta} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, fontSize: 24, fontWeight: '900', color: TEXTO }}>
+        <Text style={{ flex: 1, fontSize: 24, fontWeight: '800', color: TEXTO }}>
           {ruta.nombre || ruta.empresa}
         </Text>
         <Pastilla texto={t.estados[ruta.estado] ?? ruta.estado} tono={tonoRuta(ruta.estado)} />
@@ -1067,7 +1067,7 @@ function MiRutaContenido({
       ) : null}
       {ruta.estado === 'en_curso' && devoluciones ? (
         <>
-          <Text style={{ fontSize: 20, fontWeight: '900', color: TEXTO }}>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: TEXTO }}>
             {t.devolucionTitulo}
           </Text>
           {devoluciones.length ? (
@@ -1183,7 +1183,7 @@ function TarjetaRuta({
   return (
     <View style={[tarjeta, { gap: 10 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ flex: 1, fontWeight: '900', fontSize: 18, color: TEXTO }}>
+        <Text style={{ flex: 1, fontWeight: '800', fontSize: 18, color: TEXTO }}>
           {r.nombre || r.empresa}
         </Text>
         <Pastilla texto={t.estados[r.estado] ?? r.estado} tono={tonoRuta(r.estado)} />
@@ -1334,7 +1334,7 @@ function VistaMapa({
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
               <Numero n={siguiente.orden} tono="actual" tamano={36} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '900', fontSize: 16, color: TEXTO }}>
+                <Text style={{ fontWeight: '800', fontSize: 16, color: TEXTO }}>
                   {nombreParada(siguiente)}
                 </Text>
                 {siguiente.destinatarioNombre ? (
@@ -1549,7 +1549,7 @@ function ResultadoEscaneo({
       <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
         <Listo marcado={listo} tamano={64} />
         <Text
-          style={{ fontSize: 20, fontWeight: '900', color: TEXTO, textAlign: 'center' }}
+          style={{ fontSize: 20, fontWeight: '800', color: TEXTO, textAlign: 'center' }}
           accessibilityRole="header"
         >
           {titulo}
@@ -1608,12 +1608,12 @@ function DetallePaquete({
   return (
     <View style={{ padding: 16, gap: 12 }}>
       <Atras texto={t.volverRuta} alTocar={volver} />
-      <Text style={{ fontSize: 22, fontWeight: '900', color: TEXTO }}>{t.detallesPaquete}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: TEXTO }}>{t.detallesPaquete}</Text>
       {paq && parada ? (
         <View style={[tarjeta, { gap: 4 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 6 }}>
             <Caja />
-            <Text style={{ flex: 1, fontWeight: '900', fontSize: 16, color: TEXTO }}>
+            <Text style={{ flex: 1, fontWeight: '800', fontSize: 16, color: TEXTO }}>
               {paq.codigoSeguimiento}
             </Text>
             <Pastilla
@@ -1664,9 +1664,9 @@ function EfectivoEnMano({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: 
   if (!monedas.length) return null;
   return (
     <View style={[tarjeta, { gap: 4 }]} testID="efectivo-en-mano">
-      <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>{t.efectivoEnMano}</Text>
+      <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>{t.efectivoEnMano}</Text>
       {monedas.map(([moneda, monto]) => (
-        <Text key={moneda} style={{ fontSize: 22, fontWeight: '900' }}>
+        <Text key={moneda} style={{ fontSize: 22, fontWeight: '800' }}>
           {formatearMonto(monto, moneda, idioma)}
         </Text>
       ))}
@@ -1695,7 +1695,7 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
         ayuda={bien ? t.rutaCompletadaAyuda : t.rutaConIncidenciasAyuda}
       />
       <View style={[tarjeta, { gap: 0 }]}>
-        <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO, marginBottom: 6 }}>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO, marginBottom: 6 }}>
           {t.resumen}
         </Text>
         <Fila
@@ -1722,7 +1722,7 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
       </View>
       {ultimas.length ? (
         <View style={[tarjeta, { gap: 0 }]}>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO, marginBottom: 6 }}>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO, marginBottom: 6 }}>
             {t.ultimasParadas}
           </Text>
           {ultimas.map((p, i) => (
@@ -1983,7 +1983,7 @@ function DetalleParada({
         <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
           <Listo marcado={confirmada} tamano={64} />
           <Text
-            style={{ fontSize: 22, fontWeight: '900', color: TEXTO, textAlign: 'center' }}
+            style={{ fontSize: 22, fontWeight: '800', color: TEXTO, textAlign: 'center' }}
             accessibilityRole="header"
           >
             {confirmada
@@ -2065,7 +2065,7 @@ function DetalleParada({
       <View style={[tarjeta, { flexDirection: 'row', gap: 12, alignItems: 'center' }]}>
         <Numero n={parada.orden} tono={tonoParada(parada, siguienteId)} tamano={40} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontWeight: '900', fontSize: 17, color: TEXTO }}>
+          <Text style={{ fontWeight: '800', fontSize: 17, color: TEXTO }}>
             {nombreParada(parada)}
           </Text>
           {parada.destinatarioNombre ? (
@@ -2268,7 +2268,7 @@ function DetalleParada({
             />
           ) : null}
           <View style={[tarjeta, { gap: 10 }]}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>
               {t.confirmarEntrega}
             </Text>
             {exige.length ? (
@@ -2395,7 +2395,7 @@ function DetalleParada({
             />
             {cobroPendiente ? (
               <View style={{ gap: 8 }} testID="cobro-entrega">
-                <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>
                   {t.cobrar}: {formatearMonto(cobroPendiente.monto, cobroPendiente.moneda, idioma)}
                 </Text>
                 <Text style={{ color: GRIS, fontSize: 13 }}>{t.cobrarAyuda}</Text>
@@ -2538,7 +2538,7 @@ function DetalleParada({
         : null}
       {modo === 'incidencia' ? (
         <View style={[tarjeta, { gap: 10 }]}>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: TEXTO }}>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>
             {t.registrarIncidenciaBoton}
           </Text>
           <Text style={{ fontWeight: '800' }}>{t.motivo}</Text>
@@ -2654,7 +2654,7 @@ export function MiRuta({
               hitSlop={12}
               testID="flex-volver"
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 22 }}>‹</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 22 }}>‹</Text>
             </Pressable>
           ) : null}
           <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>
@@ -2708,7 +2708,7 @@ function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
   const paquetesHechos = paquetes.filter((q) => q.estado === 'entregado').length;
   return (
     <View testID="resumen-ruta" style={[tarjeta, { gap: 12 }]}>
-      <Text style={{ fontSize: 20, fontWeight: '900', color: TEXTO }}>{t.trabajoRestante}</Text>
+      <Text style={{ fontSize: 20, fontWeight: '800', color: TEXTO }}>{t.trabajoRestante}</Text>
       <Barra
         valor={total ? (total - pendientes) / total : 0}
         etiqueta={`${pendientes} ${t.restantes.paradas}`}

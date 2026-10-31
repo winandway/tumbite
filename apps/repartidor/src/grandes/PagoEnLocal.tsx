@@ -107,10 +107,10 @@ export function PagoEnLocal({
       }}
       testID="pago-en-local"
     >
-      <Text style={{ fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E' }}>
         {t.paga}{' '}
-        <Text style={{ fontWeight: '900', color: C.secundario }}>
+        <Text style={{ fontWeight: '800', color: C.secundario }}>
           {formatearMonto(d.montoEsperado, d.moneda, idioma)}
         </Text>
       </Text>

@@ -46,7 +46,7 @@ export function FotoRepartidor({
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 18 }}>
+      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 18 }}>
         {nombre.trim().charAt(0).toUpperCase()}
       </Text>
     </View>

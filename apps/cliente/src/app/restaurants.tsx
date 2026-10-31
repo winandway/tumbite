@@ -158,7 +158,7 @@ export default function Restaurantes() {
       <View style={{ marginTop: 14 }}>
         <Text
           accessibilityRole="header"
-          style={{ fontSize: 28, fontWeight: '900', color: C.secundario }}
+          style={{ fontSize: 28, fontWeight: '700', color: C.secundario }}
         >
           {t.restaurantes}
         </Text>
@@ -274,7 +274,7 @@ export default function Restaurantes() {
             <View style={{ flex: 1, justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
                 <Text
-                  style={{ flex: 1, fontWeight: '800', fontSize: 17, color: C.secundario }}
+                  style={{ flex: 1, fontWeight: '700', fontSize: 17, color: C.secundario }}
                   numberOfLines={1}
                 >
                   {r.nombre}

@@ -114,6 +114,8 @@ export function Acceso({
           </View>
         </View>
         <ScrollView
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={{
             padding: 24,
             width: '100%',
@@ -218,7 +220,7 @@ export function Acceso({
             }}
           >
             {acepto ? (
-              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>✓</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
             ) : null}
           </Pressable>
           <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>

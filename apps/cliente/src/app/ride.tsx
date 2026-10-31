@@ -86,6 +86,11 @@ export default function PantallaMoto() {
         etiquetaVolver={tc.volver}
       />
       <ScrollView
+        // C-TECLADO-NO-TAPA (31 oct 2026, Richard en TestFlight): el teclado tapaba el formulario y no
+        // había cómo esconderlo. La casilla con el cursor sube sola y al deslizar el teclado se esconde.
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           paddingBottom: 32,

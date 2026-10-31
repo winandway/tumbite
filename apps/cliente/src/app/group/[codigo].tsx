@@ -188,12 +188,16 @@ export default function PedidoEnGrupo() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver={t.titulo} />
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      >
         <View style={{ width: '100%', maxWidth: ANCHO_MAX, alignSelf: 'center', gap: 12 }}>
           {error ? <Text style={e.error}>{error}</Text> : null}
           {g ? (
             <>
-              <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+              <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>
                 {g.restaurante.nombre}
               </Text>
               <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
@@ -262,7 +266,7 @@ export default function PedidoEnGrupo() {
               {!g.items.length ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
               {personas.map((persona) => (
                 <Tarjeta key={persona}>
-                  <Text style={{ fontWeight: '900', color: C.secundario, marginBottom: 6 }}>
+                  <Text style={{ fontWeight: '700', color: C.secundario, marginBottom: 6 }}>
                     {persona}
                   </Text>
                   {g.items
@@ -304,7 +308,7 @@ export default function PedidoEnGrupo() {
                 <Text style={e.aviso}>{t.noDisponibles(g.noDisponibles)}</Text>
               ) : null}
               {g.items.length ? (
-                <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+                <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                   {t.total}: {formatearMonto(total, g.restaurante.moneda, idioma)}
                 </Text>
               ) : null}

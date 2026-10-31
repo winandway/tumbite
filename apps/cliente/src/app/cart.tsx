@@ -463,6 +463,8 @@ export default function PantallaCarrito() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
       <Encabezado titulo={tc.tuCarrito} alVolver={volver} etiquetaVolver={tc.volver} />
       <ScrollView
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           paddingBottom: 32,
@@ -489,7 +491,7 @@ export default function PantallaCarrito() {
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 }}>
       <Text
         style={
-          fuerte ? { fontWeight: '900', fontSize: 19, color: C.secundario } : { color: '#5E5E5E' }
+          fuerte ? { fontWeight: '700', fontSize: 19, color: C.secundario } : { color: '#5E5E5E' }
         }
       >
         {texto}
@@ -497,7 +499,7 @@ export default function PantallaCarrito() {
       <Text
         style={
           fuerte
-            ? { fontWeight: '900', fontSize: 19, color: C.secundario }
+            ? { fontWeight: '700', fontSize: 19, color: C.secundario }
             : { color: C.secundario }
         }
       >
@@ -508,7 +510,7 @@ export default function PantallaCarrito() {
   const titulo = (texto: string) => (
     <Text
       style={{
-        fontWeight: '800',
+        fontWeight: '700',
         fontSize: 16,
         color: C.secundario,
         marginTop: 8,
@@ -539,7 +541,7 @@ export default function PantallaCarrito() {
 
   return marco(
     <>
-      <Text style={{ fontWeight: '800', fontSize: 15, color: '#5E5E5E', marginBottom: 8 }}>
+      <Text style={{ fontWeight: '700', fontSize: 15, color: '#5E5E5E', marginBottom: 8 }}>
         {carrito.restauranteNombre}
       </Text>
       {carrito.lineas.map((l) => {
@@ -555,10 +557,10 @@ export default function PantallaCarrito() {
                 />
               ) : null}
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>
                   {textoLinea(l, idioma)}
                 </Text>
-                <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+                <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 4 }}>
                   {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
                 </Text>
               </View>
@@ -568,7 +570,7 @@ export default function PantallaCarrito() {
                 alTocar={() => cambiarCantidad(l.clave ?? l.platoId, l.cantidad - 1)}
                 etiqueta={t.menos}
               />
-              <Text style={{ fontWeight: '800', minWidth: 20, textAlign: 'center' }}>
+              <Text style={{ fontWeight: '700', minWidth: 20, textAlign: 'center' }}>
                 {l.cantidad}
               </Text>
               <BotonRedondo
@@ -650,7 +652,7 @@ export default function PantallaCarrito() {
                 backgroundColor: '#fff',
               }}
             >
-              <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
+              <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
                 {modo === 'ahora'
                   ? te.ahora
                   : franjaElegida
@@ -760,7 +762,7 @@ export default function PantallaCarrito() {
                 opacity: apagado ? 0.45 : 1,
               }}
             >
-              <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
+              <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
                 {modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
@@ -782,7 +784,7 @@ export default function PantallaCarrito() {
       {modoActual === 'mano' ? (
         <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '800' }}>{te.pinTitulo}</Text>
+            <Text style={{ fontWeight: '700' }}>{te.pinTitulo}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{te.pinAyuda}</Text>
           </View>
           <Switch
@@ -828,7 +830,7 @@ export default function PantallaCarrito() {
                       backgroundColor: '#fff',
                     }}
                   >
-                    <Text style={{ fontWeight: '800', color: activo ? C.primario : C.secundario }}>
+                    <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
                       {etiqueta}
                     </Text>
                     <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>{ayuda}</Text>
@@ -863,7 +865,7 @@ export default function PantallaCarrito() {
                     }}
                   >
                     <Text
-                      style={{ color: activa ? '#fff' : C.secundario, fontWeight: '800' }}
+                      style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700' }}
                       numberOfLines={1}
                     >
                       {dir.etiqueta ? `${dir.etiqueta} · ` : ''}
@@ -914,7 +916,7 @@ export default function PantallaCarrito() {
             testID="carrito-apto"
           />
           <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={{ flex: 1, fontWeight: '800' }}>{te.guardar}</Text>
+            <Text style={{ flex: 1, fontWeight: '700' }}>{te.guardar}</Text>
             <Switch
               value={b.valores.guardarDireccion === 'si'}
               onValueChange={(v) => b.cambiar('guardarDireccion', v ? 'si' : 'no')}
@@ -959,7 +961,7 @@ export default function PantallaCarrito() {
               backgroundColor: propinaPb === pb ? C.primario : '#fff',
             }}
           >
-            <Text style={{ color: propinaPb === pb ? '#fff' : C.texto, fontWeight: '800' }}>
+            <Text style={{ color: propinaPb === pb ? '#fff' : C.texto, fontWeight: '700' }}>
               {pb === 'otra' ? t.otra : `${pb / 100}%`}
             </Text>
           </Pressable>
@@ -992,7 +994,7 @@ export default function PantallaCarrito() {
             },
           ]}
         >
-          <Text style={{ fontWeight: '800' }}>{enIdioma(NOMBRE_REGALO, idioma)[r.tipo]}</Text>
+          <Text style={{ fontWeight: '700' }}>{enIdioma(NOMBRE_REGALO, idioma)[r.tipo]}</Text>
           <Text
             style={{ color: regaloElegido === r.tipo ? C.exito : undefined, fontWeight: '700' }}
           >
@@ -1032,7 +1034,7 @@ export default function PantallaCarrito() {
             marginBottom: 12,
           }}
         >
-          <Text style={{ color: cupon ? C.secundario : '#fff', fontWeight: '800' }}>
+          <Text style={{ color: cupon ? C.secundario : '#fff', fontWeight: '700' }}>
             {cupon ? te.quitarCupon : te.aplicar}
           </Text>
         </Pressable>
@@ -1076,7 +1078,7 @@ export default function PantallaCarrito() {
       ) : null}
       {cobro?.clavePublica ? (
         <>
-          <Text style={{ fontWeight: '800', fontSize: 17, marginBottom: 8 }}>{t.tarjeta}</Text>
+          <Text style={{ fontWeight: '700', fontSize: 17, marginBottom: 8 }}>{t.tarjeta}</Text>
           <PagoTarjeta
             cobro={cobro}
             clavePublica={cobro.clavePublica}

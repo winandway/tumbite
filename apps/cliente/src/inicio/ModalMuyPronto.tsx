@@ -32,7 +32,7 @@ export function ModalMuyPronto({
           accessibilityViewIsModal
         >
           <Text
-            style={{ fontSize: 20, fontWeight: '800', color: C.secundario, textAlign: 'center' }}
+            style={{ fontSize: 20, fontWeight: '700', color: C.secundario, textAlign: 'center' }}
           >
             {t.prontoTitulo}
           </Text>

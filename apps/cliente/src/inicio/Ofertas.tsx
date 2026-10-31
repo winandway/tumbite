@@ -63,7 +63,7 @@ export function Ofertas({
     return (
       <View style={{ marginTop: 18 }} testID="promos-reales">
         <Text
-          style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginHorizontal: 16 }}
+          style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginHorizontal: 16 }}
         >
           {t.ofertas}
         </Text>
@@ -93,15 +93,15 @@ export function Ofertas({
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{texto(p)}</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{texto(p)}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
+                <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={2}>
                   {idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs}
                 </Text>
                 <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
                   {idioma === 'en' ? 'Code' : 'Código'}:{' '}
-                  <Text style={{ fontWeight: '900' }}>{p.codigo}</Text>
+                  <Text style={{ fontWeight: '700' }}>{p.codigo}</Text>
                   {p.minimoSubtotal > 0
                     ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearMonto(p.minimoSubtotal, p.moneda ?? 'USD', idioma)}`
                     : ''}
@@ -132,7 +132,7 @@ export function Ofertas({
           marginHorizontal: 16,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.ofertas}</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.ofertas}</Text>
         <Pressable
           onPress={alTocarEjemplo}
           accessibilityRole="button"
@@ -163,7 +163,7 @@ export function Ofertas({
                 <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={2}>
                   {o.nombre}
                 </Text>
-                <Text style={{ fontSize: 20, fontWeight: '900', color: C.primario }}>
+                <Text style={{ fontSize: 20, fontWeight: '700', color: C.primario }}>
                   {formatearMonto(o.precio, 'USD', idioma)}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -180,7 +180,7 @@ export function Ofertas({
                       paddingVertical: 2,
                     }}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: C.secundario }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: C.secundario }}>
                       {o.descuento}
                     </Text>
                   </View>
