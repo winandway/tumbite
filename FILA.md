@@ -15,7 +15,7 @@
 - [x] (S1) HECHO 31 oct: entrar, inicio, pedidos, menú, estadísticas, Más y horario revisados; arreglados la gráfica de pedidos por hora (bloque negro de lado a lado) y el horario (día repetido, «Quitar» desalineado). Repaso de la app NATIVA de restaurantes en el simulador de iPhone contra el sitio de pruebas: entrar, pedidos (aceptar, listo, rechazar), menú, horarios y ajustes. Cada fallo con prueba en rojo y arreglo. EE. UU.
 - [x] (S2) HECHO 31 oct: el encuadre esperaba al mapa cargado; comprobado en el simulador (repartidor en Walled Lake y restaurante en Novi a la vez, 4.0 mi). Mapa del Driver durante la entrega: que se vean el restaurante y la casa con la ruta, no solo el punto del repartidor (como Uber Driver y Dasher). Todos los países.
 - [x] (S3) HECHO 31 oct: GPS otra vez al volver a la app y «En tu zona» sin ubicación (C-UBICACION-AL-VOLVER). Ubicación del cliente que se actualiza al volver a la app y al dar el permiso; sin ubicación, no decir «Cerca de tu ubicación». Todos los países.
-- [ ] (S4) Docs y web al día con lo visible de hoy (millas en EE. UU., «No recibe pedidos ahora», «Calle y número», «Pedir otra vez»): guías en español e inglés y capturas originales del recorrido. Todos los países.
+- [x] (S4) HECHO 31 oct: guías ES/EN de horario y primer pedido actualizadas y 188 capturas originales rehechas. Docs y web al día con lo visible de hoy (millas en EE. UU., «No recibe pedidos ahora», «Calle y número», «Pedir otra vez»): guías en español e inglés y capturas originales del recorrido. Todos los países.
 - [x] (S5) HECHO 31 oct: «Panel de tu negocio · Divoox». Título de la pestaña del panel del restaurante (hoy «Comida a domicilio en Miami»). Todos los países.
 
 ## Hoy, 31 oct 2026 (piloto automático, pedido de Richard)
