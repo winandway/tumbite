@@ -2045,3 +2045,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real:** `initPaymentSheet` pedía Apple Pay (`applePay`) y `initStripe` no recibía el identificador de comercio de Apple.
 - **Arreglo:** Apple Pay solo se pide si la compilación trae `EXPO_PUBLIC_APPLE_PAY_COMERCIO` (el identificador `merchant.com.tumbite.cliente` ya dado de alta con su certificado de Apple Pay en Stripe); entonces va también a `initStripe`. Sin la variable: tarjeta y Google Pay. Prueba `packages/compartido/src/pagoApplePay.test.ts` (comprobada en rojo).
 - **No tocar:** no se vuelve a poner `applePay` suelto en la hoja. Para encender Apple Pay: certificado en Stripe → variable en `eas.json` → compilar.
+
+## C-NO-RECIBE-AHORA (31 oct 2026) — todos los países
+
+- **Qué se veía:** un restaurante abierto todo el día pero sin su panel o app escuchando aparecía «Abre mañana a las 12:00» (la próxima apertura inventada) y el texto se cortaba en la tarjeta. Visto en el simulador de iPhone con Pizzería Demo Novi.
+- **Arreglo:** `textoNoDisponible` (`packages/compartido/src/horarios.ts`): en horario pero sin recibir → «No recibe pedidos ahora»; fuera de horario → cuándo abre; cerrado a mano o sin horario → «Cerrado». Lo usan la lista de restaurantes, el inicio y la ficha del restaurante. La fila del estado baja de línea en vez de cortarse. Pruebas en `horarios.test.ts`.

@@ -2,12 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import {
-  type Restaurante,
-  filtrarRestaurantes,
-  proximaApertura,
-  textoApertura,
-} from '@tumbite/compartido';
+import { type Restaurante, filtrarRestaurantes, textoNoDisponible } from '@tumbite/compartido';
 import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -308,6 +303,9 @@ export default function Restaurantes() {
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  // El estado («No recibe pedidos ahora», «Abre mañana…») baja de línea en vez de cortarse.
+                  flexWrap: 'wrap',
+                  rowGap: 4,
                 }}
               >
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
@@ -318,16 +316,7 @@ export default function Restaurantes() {
                 </Text>
                 <Estado
                   abierto={abierto(r)}
-                  texto={
-                    abierto(r)
-                      ? t.abierto
-                      : r.abierto && r.horarios?.length
-                        ? textoApertura(
-                            proximaApertura(r.horarios, r.zonaHoraria ?? 'America/New_York'),
-                            idioma,
-                          )
-                        : t.cerrado
-                  }
+                  texto={abierto(r) ? t.abierto : (textoNoDisponible(r, idioma) ?? t.cerrado)}
                 />
               </View>
             </View>

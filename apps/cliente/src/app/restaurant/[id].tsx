@@ -20,8 +20,6 @@ import {
   type Plato,
   type Restaurante,
   descripcion,
-  proximaApertura,
-  textoApertura,
   enIdioma,
   formatearMonto,
   nombrePlato,
@@ -29,6 +27,8 @@ import {
   nombreEtiquetaDieta,
   NOTA_PLATO_MAX,
   gruposActivos,
+  abiertoPorHorario,
+  textoNoDisponible,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -265,10 +265,12 @@ export default function MenuRestaurante() {
           {error ? <Text style={[e.error, { marginTop: 12 }]}>{error}</Text> : null}
           {r && !abierto ? (
             <Text style={[e.aviso, { marginTop: 12 }]}>
-              {t.cerradoAhora}
-              {r.abierto && r.horarios?.length
-                ? ` ${textoApertura(proximaApertura(r.horarios, r.zonaHoraria ?? 'America/New_York'), idioma)}.`
-                : ''}
+              {/* C-NO-RECIBE-AHORA: en horario pero sin recibir no se inventa la próxima apertura. */}
+              {r.abierto &&
+              r.horarios?.length &&
+              abiertoPorHorario(r.horarios, r.zonaHoraria ?? 'America/New_York')
+                ? `${textoNoDisponible(r, idioma) ?? ''}.`
+                : `${t.cerradoAhora}${textoNoDisponible(r, idioma) ? ` ${textoNoDisponible(r, idioma)}.` : ''}`}
             </Text>
           ) : null}
 

@@ -83,6 +83,24 @@ export function textoApertura(
   return idioma === 'en' ? `Opens ${nombreDia} at ${hora}` : `Abre el ${nombreDia} a las ${hora}`;
 }
 
+/**
+ * C-NO-RECIBE-AHORA (31 oct 2026, visto en el simulador de iPhone): qué se le dice al cliente de un
+ * restaurante que no está recibiendo. Si está DENTRO de su horario pero no recibe (nadie tiene abierta
+ * su app o su panel, o lo pausó), no se inventa la próxima apertura: «No recibe pedidos ahora», como
+ * «Currently unavailable» de los grandes. Fuera de horario, cuándo abre. Null = el «Cerrado» de siempre.
+ */
+export function textoNoDisponible(
+  r: { abierto?: boolean; horarios?: Turno[]; zonaHoraria?: string | null },
+  idioma: 'es' | 'en',
+  ahora = new Date(),
+): string | null {
+  if (!r.abierto || !r.horarios?.length) return null;
+  const zona = r.zonaHoraria ?? 'America/New_York';
+  if (abiertoPorHorario(r.horarios, zona, ahora))
+    return idioma === 'en' ? 'Not taking orders right now' : 'No recibe pedidos ahora';
+  return textoApertura(proximaApertura(r.horarios, zona, ahora), idioma);
+}
+
 /** La fecha (AAAA-MM-DD) de «ahora» en la zona horaria del restaurante, para los festivos y cierres. */
 export function fechaLocal(zonaHoraria: string, ahora = new Date()): string {
   try {

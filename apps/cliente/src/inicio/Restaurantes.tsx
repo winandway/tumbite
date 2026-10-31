@@ -5,8 +5,7 @@ import {
   type Restaurante,
   calcularEnvio,
   formatearMonto,
-  proximaApertura,
-  textoApertura,
+  textoNoDisponible,
 } from '@tumbite/compartido';
 import { router } from 'expo-router';
 import { C, urlFoto } from '@tumbite/movil';
@@ -181,14 +180,7 @@ export function Restaurantes({
                   }}
                   numberOfLines={1}
                 >
-                  {abierto(r)
-                    ? t.abierto
-                    : r.abierto && r.horarios?.length
-                      ? textoApertura(
-                          proximaApertura(r.horarios, r.zonaHoraria ?? 'America/New_York'),
-                          idioma,
-                        )
-                      : t.cerrado}
+                  {abierto(r) ? t.abierto : (textoNoDisponible(r, idioma) ?? t.cerrado)}
                 </Text>
                 {envioDe(r) ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

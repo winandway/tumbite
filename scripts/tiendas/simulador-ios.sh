@@ -20,6 +20,8 @@ for app in "${APPS[@]}"; do
   echo "── $app: prebuild de iOS contra el sitio de pruebas"
   cd "$RAIZ/apps/$app"
   EXPO_PUBLIC_API_URL=https://staging.tumbite.com npx expo prebuild -p ios --clean --no-install >/dev/null
+  # El prebuild reescribe los comandos «ios»/«android» de package.json: se dejan como estaban.
+  git checkout -- package.json
   (cd ios && pod install >/dev/null)
   WS=$(ls -d ios/*.xcworkspace | head -1)
   ESQUEMA=$(basename "$WS" .xcworkspace)
