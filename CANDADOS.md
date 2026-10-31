@@ -2102,3 +2102,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo se vio:** repasando «Mi ruta» en el simulador de iPhone con una ruta de prueba en Michigan (`scripts/staging/armar-ruta-flex-novi.mjs`). Con los tres paquetes cargados seguía «Escanear siguiente» y «Salir a la ruta» quedaba abajo, debajo de «escanea todos los paquetes»; el mapa de la ruta no mostraba las paradas; la distancia a la parada salía en kilómetros.
 - **Arreglo:** con la carga completa (todo escaneado o marcado como faltante) el botón principal es «Salir a la ruta», también en la pantalla de «Paquete cargado» (como Amazon Flex). `MapaRuta` encuadra en `onMapReady` (el mismo fallo de C-MAPA-ENCUADRE). El detalle de la ruta trae `pais` de la empresa y la app usa `textoDistancia` (C-DISTANCIA-POR-PAIS).
 - **Prueba:** `packages/compartido/src/flexMiRutaRepaso.test.ts` (comprobada en rojo).
+
+## C-FLEX-DESLIZAR-SCROLL, C-FLEX-AVISO-AL-DAR, C-FLEX-TERMINAR-A-LA-VISTA, C-FLEX-SIN-DEVOLUCIONES, C-FLEX-RUTA-EN-INICIO (31 oct 2026) — todos los países
+
+- **Deslizar:** tras un primer intento rechazado («elige dónde lo dejaste»), «Desliza para finalizar» ya no cerraba la entrega: el gesto se rearmaba en cada render y el iPhone se quedaba con el primero (ancho 0). Ahora el gesto se arma una vez (`useState`) y lee el ancho y la acción en una referencia; toma el toque y no lo cede a la lista. Comprobado en el simulador: segundo intento cierra la entrega.
+- **Avisos:** al elegir dónde se dejó, al firmar o al tomar la foto, el aviso de lo que faltaba se borra. «Firma lista» va en verde.
+- **Final de la ruta:** con todas las paradas hechas, «Terminar entregas y volver al centro» es el botón principal verde arriba; sin devoluciones dice «Ya puedes cerrar la ruta» en vez de una caja vacía.
+- **Inicio:** la ruta de paquetes activa o por aceptar sale como tarjeta en el inicio del Driver; con la ruta en curso no dice «Buscando pedidos».
+- **Fuera del área:** en EE. UU. en pies o millas (`textoDistanciaCorta`).
+- **Prueba:** `packages/compartido/src/flexMiRutaRepaso.test.ts` y `distancia.test.ts` (comprobadas en rojo).
+
+## C-FLEX-OSCURO, C-FLEX-LISTA-UNIDA y C-FLEX-PANTALLA-COMPLETA (31 oct 2026, Richard con las capturas de Amazon Flex) — todos los países
+
+- **Qué es:** «Mi ruta» va en fondo oscuro azul petróleo (no cansa la vista en horas de reparto), con texto blanco por defecto (`Texto` en `flex/piezas.tsx`, toda la paleta vive ahí) y botones secundarios con borde azul claro (`Boton oscuro`). Dentro de la ruta no va la cabecera del logo: la franja de Divoox Flex lleva la flecha para salir y «Ayuda de emergencia». La lista de paradas va unida por una línea que se pone verde a medida que se entrega, con el chulito verde, la hora y la siguiente parada resaltada.
+- **No tocar:** no volver a `lienzo(...)` para `miRuta`, ni usar `C.secundario` (negro) como color de texto en Flex: sobre el fondo oscuro no se ve.
+- **Prueba:** `flexMiRutaRepaso.test.ts` (comprobada en rojo). Captura original: `docs/capturas/flex-lista-unida-es.png`.

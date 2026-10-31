@@ -26,3 +26,14 @@ export function usaMillas(pais: string | null | undefined, idioma: Idioma): bool
 export function textoDistancia(km: number, idioma: Idioma, pais?: string | null): string {
   return usaMillas(pais, idioma) ? `${(km * 0.621371).toFixed(1)} mi` : `${km.toFixed(1)} km`;
 }
+
+/**
+ * Distancia corta (metros), para avisos como «estás fuera del área de entrega»: pies o millas en
+ * EE. UU., metros o kilómetros en el resto (C-FLEX-DISTANCIA-PAIS, como Amazon Flex).
+ */
+export function textoDistanciaCorta(metros: number, idioma: Idioma, pais?: string | null): string {
+  const m = Math.max(0, Math.round(metros));
+  if (usaMillas(pais, idioma))
+    return m < 161 ? `${Math.round(m * 3.28084)} ft` : `${(m / 1609.344).toFixed(1)} mi`;
+  return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
+}

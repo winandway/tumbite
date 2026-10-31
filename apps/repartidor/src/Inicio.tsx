@@ -63,6 +63,11 @@ import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
 import { MiRuta } from './flex/MiRuta';
+import { FONDO as FONDO_FLEX } from './flex/piezas';
+
+/** Lo mínimo de una ruta Flex para la tarjeta del inicio. */
+type RutaFlexInicio = { id: string; nombre: string; estado: string; paradas: number };
+const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso'];
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
@@ -195,6 +200,11 @@ const T = {
     buscando: 'Buscando pedidos cerca de ti…',
     buscandoAyuda:
       'Es más probable que recibas ofertas en las zonas en rojo del mapa, sobre todo a la hora del almuerzo y de la cena.',
+    rutaEnCurso: 'Tienes una ruta de paquetes en curso',
+    rutaPorAceptar: 'Tienes una ruta de paquetes por aceptar',
+    rutaParadas: (n: number) => `${n} ${n === 1 ? 'parada' : 'paradas'}`,
+    continuarRuta: 'Continuar ruta',
+    verRuta: 'Ver la ruta',
     bienvenida: (n: string) => `¡Qué bueno verte de nuevo, ${n}!`,
     bienvenidaNivel: 'El tiempo que estuviste fuera no cambió tu nivel. Conéctate cuando quieras.',
     oferta: 'Nueva oferta',
@@ -318,6 +328,11 @@ const T = {
     buscando: 'Looking for orders near you…',
     buscandoAyuda:
       'You’re more likely to get offers in the red areas on the map, especially around lunch and dinner.',
+    rutaEnCurso: 'You have a package route in progress',
+    rutaPorAceptar: 'You have a package route to accept',
+    rutaParadas: (n: number) => `${n} ${n === 1 ? 'stop' : 'stops'}`,
+    continuarRuta: 'Continue route',
+    verRuta: 'View route',
     bienvenida: (n: string) => `Good to see you again, ${n}!`,
     bienvenidaNivel: 'Your time away didn’t change your level. Go online whenever you like.',
     oferta: 'New offer',
@@ -464,6 +479,7 @@ export function Inicio() {
   // C-MOTO-CIUDAD: la ciudad pide la selfie con casco antes de aceptar viajes en moto.
   const [pideCasco, setPideCasco] = useState(false);
   const [cambiando, setCambiando] = useState(false);
+  const [rutaFlex, setRutaFlex] = useState<RutaFlexInicio | null>(null);
   const [vista, setVista] = useState<
     | 'inicio'
     | 'billetera'
@@ -533,6 +549,11 @@ export function Inicio() {
 
   const cargar = useCallback(async () => {
     try {
+      // C-FLEX-RUTA-EN-INICIO: la ruta de paquetes activa se ve en el inicio, como en Amazon Flex.
+      api
+        .pedir<{ rutas: RutaFlexInicio[] }>('GET', '/datos/v1/flex/conductor/rutas')
+        .then((r) => setRutaFlex(r.rutas.find((x) => RUTA_FLEX_ACTIVA.includes(x.estado)) ?? null))
+        .catch(() => undefined);
       const s = await api.pedir<Estado>('GET', '/datos/repartidor/estado');
       setEstado(s);
       if (s.conectado) setConectadoDesde((d) => d ?? Date.now());
@@ -1443,16 +1464,35 @@ export function Inicio() {
   // C-SEGURIDAD-REPARTIDOR: emergencia, recorrido compartido e incidentes.
   if (vista === 'seguridad') return lienzo('inicio', <Seguridad api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
+  // C-FLEX-PANTALLA-COMPLETA (como Amazon Flex): dentro de la ruta no va la cabecera con el logo; la
+  // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
   if (vista === 'miRuta')
-    return lienzo(
-      'pedidos',
-      <MiRuta
-        key={rutaDelAviso ?? 'lista'}
-        api={api}
-        idioma={idioma}
-        abrirRutaId={rutaDelAviso}
-        alSeguridad={() => setVista('seguridad')}
-      />,
+    return (
+      <SafeAreaView
+        style={[e.fondo, { backgroundColor: C.logistica }]}
+        edges={['top', 'left', 'right']}
+        testID="mi-ruta-completa"
+      >
+        <ScrollView
+          style={{ backgroundColor: FONDO_FLEX }}
+          contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <MiRuta
+            key={rutaDelAviso ?? 'lista'}
+            api={api}
+            idioma={idioma}
+            abrirRutaId={rutaDelAviso}
+            alSeguridad={() => setVista('seguridad')}
+            alVolver={() => setVista('inicio')}
+          />
+        </ScrollView>
+        <BarraInferior
+          idioma={idioma}
+          activa="pedidos"
+          alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
+        />
+      </SafeAreaView>
     );
   if (vista === 'alta')
     return lienzo(
@@ -2424,7 +2464,31 @@ export function Inicio() {
       </View>
       <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
         {mensajes}
-        {estado?.conectado ? (
+        {rutaFlex ? (
+          <Pressable
+            onPress={() => setVista('miRuta')}
+            accessibilityRole="button"
+            accessibilityLabel={`${rutaFlex.estado === 'en_curso' || rutaFlex.estado === 'en_carga' || rutaFlex.estado === 'aceptada' ? t.rutaEnCurso : t.rutaPorAceptar}: ${rutaFlex.nombre}`}
+            testID="ruta-flex-inicio"
+            style={[e.tarjeta, { backgroundColor: C.logistica, gap: 6 }]}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>
+              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
+                ? t.rutaEnCurso
+                : t.rutaPorAceptar}
+            </Text>
+            <Text style={{ color: '#FFFFFF' }}>
+              {rutaFlex.nombre} · {t.rutaParadas(rutaFlex.paradas)}
+            </Text>
+            <Text style={{ color: C.logisticaAccion, fontWeight: '800', marginTop: 2 }}>
+              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
+                ? t.continuarRuta
+                : t.verRuta}{' '}
+              →
+            </Text>
+          </Pressable>
+        ) : null}
+        {estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso') ? (
           // Como «Buscando ofertas… zonas populares» de DoorDash: dónde y cuándo hay más ofertas.
           <View style={e.tarjeta}>
             <Text style={{ fontWeight: '800' }}>

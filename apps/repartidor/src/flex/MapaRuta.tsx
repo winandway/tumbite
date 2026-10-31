@@ -8,6 +8,25 @@ import { COLOR_TONO, type PuntoRuta } from './colorTono';
 export type { PuntoRuta };
 
 /**
+ * C-FLEX-MAPA-ENCUADRE: la región que cubre todos los puntos, con margen. El mapa nace ya mostrando
+ * el centro y todas las paradas (en el iPhone, encuadrar después no siempre se aplica).
+ */
+export function regionDe(puntos: Punto[]) {
+  if (!puntos.length)
+    return { latitude: 25.7743, longitude: -80.1937, latitudeDelta: 0.08, longitudeDelta: 0.08 };
+  const lats = puntos.map((p) => p.lat);
+  const lngs = puntos.map((p) => p.lng);
+  const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];
+  const [minLng, maxLng] = [Math.min(...lngs), Math.max(...lngs)];
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max((maxLat - minLat) * 1.5, 0.01),
+    longitudeDelta: Math.max((maxLng - minLng) * 1.5, 0.01),
+  };
+}
+
+/**
  * Mapa de la ruta Flex (celular, el mismo mapa nativo de la app): el centro y las paradas con su
  * número, unidos en orden con una línea punteada (es el orden de visita, no el camino por calles).
  */
@@ -39,18 +58,13 @@ export function MapaRuta({
     // Se reencuadra cuando el mapa termina de cargar y cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave, listo]);
-  const centro = todos[0] ?? { lat: 25.7743, lng: -80.1937 };
+  const inicial = regionDe(todos);
   return (
     <View style={{ height: alto, overflow: 'hidden', borderRadius: 14 }}>
       <MapView
         ref={mapa}
         style={{ flex: 1 }}
-        initialRegion={{
-          latitude: centro.lat,
-          longitude: centro.lng,
-          latitudeDelta: 0.08,
-          longitudeDelta: 0.08,
-        }}
+        initialRegion={inicial}
         onMapReady={() => setListo(true)}
         showsUserLocation={false}
         toolbarEnabled={false}

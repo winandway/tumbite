@@ -23,7 +23,7 @@
 
 ## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
 
-- [ ] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países.
+- [x] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países. HECHO 31 oct: recorrido completo en el simulador; arreglados deslizar, encuadre del mapa, millas, carga lista, avisos, final de ruta, ruta en el inicio; pantallas oscuras, lista unida y sin logo (pedido de Richard).
 - [x] (L2) HECHO 31 oct (C-SEGURIDAD-A-LA-VISTA). «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
 
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)

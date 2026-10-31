@@ -71,8 +71,8 @@ export const TEXTOS_RUTA = {
     faltaLugar: 'Elige dónde dejaste el paquete.',
     fotoConsejo: 'Que se vea bien dónde quedó el paquete y que no salgan personas en la foto.',
     deslizarFinalizar: 'Desliza para finalizar',
-    fueraDeArea: (m: number) =>
-      `Estás fuera del área de entrega (a ${m} m). Acércate a la dirección para entregar.`,
+    fueraDeArea: (distancia: string) =>
+      `Estás fuera del área de entrega (a ${distancia}). Acércate a la dirección para entregar.`,
     cancelar: 'Cancelar',
     entregar: 'Entregar',
     noEntregado: 'No se pudo entregar',
@@ -112,6 +112,7 @@ export const TEXTOS_RUTA = {
     reintentar: 'Reintentar entrega',
     devolucion: 'Terminar entregas y volver al centro',
     devolucionTitulo: 'Devoluciones',
+    sinDevoluciones: 'No tienes paquetes para devolver. Ya puedes cerrar la ruta.',
     devolucionAyuda:
       'En el centro, escanea cada paquete que devuelves. El centro confirma la recepción.',
     entregadoCentro: 'Entregado al centro ✓',
@@ -322,8 +323,8 @@ export const TEXTOS_RUTA = {
     faltaLugar: 'Choose where you left the package.',
     fotoConsejo: 'Make sure the spot is clear and no people show in the photo.',
     deslizarFinalizar: 'Slide to finish',
-    fueraDeArea: (m: number) =>
-      `You’re outside the delivery area (${m} m away). Get closer to the address to deliver.`,
+    fueraDeArea: (distancia: string) =>
+      `You’re outside the delivery area (${distancia} away). Get closer to the address to deliver.`,
     cancelar: 'Cancel',
     entregar: 'Deliver',
     noEntregado: 'Couldn’t deliver',
@@ -363,6 +364,7 @@ export const TEXTOS_RUTA = {
     reintentar: 'Retry delivery',
     devolucion: 'Finish deliveries and go back to the hub',
     devolucionTitulo: 'Returns',
+    sinDevoluciones: 'You have no packages to return. You can close the route now.',
     devolucionAyuda: 'At the hub, scan each package you return. The hub confirms reception.',
     entregadoCentro: 'Handed to the hub ✓',
     porEntregar: 'To hand to the hub',
