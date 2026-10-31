@@ -126,6 +126,8 @@ export default function MiCuenta() {
         etiquetaVolver={t.volver}
       />
       <ScrollView
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           paddingBottom: 32,
@@ -150,10 +152,10 @@ export default function MiCuenta() {
           testID="ir-mis-paquetes"
           style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
         >
-          <Text style={{ fontWeight: '800' }}>
+          <Text style={{ fontWeight: '700' }}>
             {idioma === 'en' ? 'My packages' : 'Mis paquetes'}
           </Text>
-          <Text style={{ fontWeight: '800' }}>›</Text>
+          <Text style={{ fontWeight: '700' }}>›</Text>
         </Pressable>
 
         <Text style={estilos.subtitulo}>{t.pedidos}</Text>
@@ -177,7 +179,7 @@ export default function MiCuenta() {
                 </Text>
               </Text>
             </View>
-            <Text style={{ fontWeight: '800' }}>
+            <Text style={{ fontWeight: '700' }}>
               {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
             </Text>
           </Pressable>
@@ -240,7 +242,7 @@ export default function MiCuenta() {
 const estilos = {
   subtitulo: {
     fontSize: 18,
-    fontWeight: '800' as const,
+    fontWeight: '700' as const,
     color: C.secundario,
     marginTop: 16,
     marginBottom: 8,

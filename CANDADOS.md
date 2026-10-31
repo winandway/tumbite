@@ -2123,3 +2123,23 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Escaneo en la parada:** «X de Y paquetes escaneados»; no se puede deslizar para entregar sin escanear (o escribir) cada paquete de la parada; uno de otra parada se rechaza con «Ese paquete no es de esta parada». Lógica en `paqueteDeEscaneo` / `faltanPorEscanear` (`packages/compartido/src/flex.ts`). El escaneo vive en el celular (no se manda al servidor): el servidor sigue validando paquetes y parada al entregar.
 - **Parada actual:** botón fijo abajo en la ruta en curso, fuera de lo que se desplaza (`ponerPie` → `pieFlex` en `Inicio.tsx`).
 - **Prueba:** `flexEscaneoParada.test.ts` y `flexMiRutaRepaso.test.ts` (comprobadas en rojo). Captura: `docs/capturas/flex-escaneo-parada-es.png`.
+
+## C-CUENTA-EN-LA-APP (31 oct 2026, Richard grabando el video para Apple) — todos los países
+
+- **Qué pasó:** en Driver no se encontraba «Cerrar sesión» ni «Borrar la cuenta» (estaban escondidos en Soporte y mandaban a la web); en la app del restaurante borrar la cuenta mandaba a la web. Apple (5.1.1 v) pide borrar desde la app.
+- **Arreglo:** pieza única `OpcionesCuenta` (`packages/movil`): tarjeta «Tu cuenta» con «Cerrar sesión» y, en los tres puntos, «Borrar la cuenta» con la palabra escrita (BORRAR / DELETE) y `DELETE /datos/cuentas/yo`, sin salir de la app. Va al final del Perfil del Driver y de «Más» del restaurante.
+- **Prueba:** `packages/compartido/src/cuentaEnLaApp.test.ts` (comprobada en rojo).
+
+## C-MAS-EN-LA-APP (31 oct 2026, Richard grabando el video para Apple) — todos los países
+
+- **Qué es:** en la app del restaurante, Más → «Datos del restaurante», «Ganancias», «Equipo» y «Configuración» se abren DENTRO de la app (`apps/restaurante/src/MasPantallas.tsx`), como DoorDash Merchant; antes mandaban a la web. Solo el alta de cobros en Stripe se abre afuera (es de Stripe). Formularios con borrador; contraseñas nunca en el borrador; quitar a un miembro va en los tres puntos.
+- **Prueba:** `packages/compartido/src/cuentaEnLaApp.test.ts` (comprobada en rojo).
+
+## C-LIKE-CORTO, C-ENVIO-SIN-SILENCIO, C-TECLADO-NO-TAPA, C-BLOQUE-EN-LA-APP, C-MOSAICO-UNA-LINEA y C-LETRA-NO-BLACK (31 oct 2026, Richard en TestFlight) — todos los países
+
+- **C-LIKE-CORTO:** cancelar cualquier viaje o envío fallaba con «LIKE or GLOB pattern too complex»: D1 no acepta patrones LIKE de más de 50 caracteres y el de las reservas medía 60. Se compara comienzo y final de la referencia. Prueba `apps/servidor/src/likeCorto.test.ts`.
+- **C-ENVIO-SIN-SILENCIO:** «Enviar» no hacía nada: la casilla de prohibidos (que parecía un botón) no estaba marcada y el aviso salía arriba, fuera de la vista. Ahora es una casilla de verdad y el aviso sale junto al botón.
+- **C-TECLADO-NO-TAPA:** las pantallas con formularios suben la casilla activa sobre el teclado y lo esconden al deslizar.
+- **C-BLOQUE-EN-LA-APP:** «Bloque de logística» abre `/business` dentro de la app (qué es Divoox Flex, cuatro pasos y el registro en la misma app).
+- **C-MOSAICO-UNA-LINEA / C-LETRA-NO-BLACK:** con la letra grande del iPhone, «Deliverie-s» se partía; el nombre va en una línea y se achica. La app del cliente deja la letra «Black» (900) y «Heavy» (800): máximo «Bold» (700), como Uber Eats y DoorDash.
+- **Prueba:** `packages/compartido/src/clienteEnviosTestflight.test.ts` (comprobada en rojo).

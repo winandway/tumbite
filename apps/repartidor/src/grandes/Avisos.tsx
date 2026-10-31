@@ -36,7 +36,7 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
   const titulos = new Map<string, string>(Object.entries(t));
   return (
     <View style={{ padding: 16, gap: 12 }} testID="avisos-repartidor">
-      <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       {d && d.avisos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text> : null}
       {(d?.avisos ?? []).map((a, i) => (
         <View key={`${a.tipo}-${a.pedidoId ?? i}-${a.en}`} style={e.tarjeta}>

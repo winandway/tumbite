@@ -1,7 +1,14 @@
 import { Linking, Pressable, Text, View } from 'react-native';
-import { opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
-import { C, URL_SERVIDOR, VERSION_APP, useSesion, useSoporte } from '@tumbite/movil';
-import { BotonGrande, Tarjeta } from './piezas/ui';
+import { type OpcionMas, opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
+import {
+  C,
+  OpcionesCuenta,
+  URL_SERVIDOR,
+  VERSION_APP,
+  useSesion,
+  useSoporte,
+} from '@tumbite/movil';
+import { Tarjeta } from './piezas/ui';
 
 /**
  * Pestaña «Más» (C-MAS-RESTAURANTE): la lista de DoorDash Merchant con lo del local y la ayuda.
@@ -9,19 +16,15 @@ import { BotonGrande, Tarjeta } from './piezas/ui';
  */
 export function Mas({
   titulo,
-  textoSalir,
-  salir,
   abrirPantalla,
 }: {
   titulo: string;
-  textoSalir: string;
-  salir: () => void;
   /** C-APP-RESTAURANTE-PAR: reseñas y horario se abren dentro de la app. */
-  abrirPantalla: (p: 'resenas' | 'horario') => void;
+  abrirPantalla: (p: NonNullable<OpcionMas['pantalla']>) => void;
 }) {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
-  const abrir = (o: { destino?: string; pantalla?: 'resenas' | 'horario' }) =>
+  const abrir = (o: { destino?: string; pantalla?: OpcionMas['pantalla'] }) =>
     o.pantalla
       ? abrirPantalla(o.pantalla)
       : o.destino
@@ -32,7 +35,7 @@ export function Mas({
     <View>
       <Text
         accessibilityRole="header"
-        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 12 }}
+        style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 12 }}
       >
         {titulo}
       </Text>
@@ -72,7 +75,8 @@ export function Mas({
           </Tarjeta>
         </View>
       ))}
-      <BotonGrande texto={textoSalir} tipo="claro" alTocar={salir} />
+      {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app. */}
+      <OpcionesCuenta />
       <Text
         testID="version-app"
         style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: '#9a9a9a' }}

@@ -1113,6 +1113,7 @@ const es: SeccionDocs[] = [
         preguntas: ['¿Dónde veo mis reseñas?', '¿Puedo responder a un cliente?'],
         pasos: [
           'Menú del panel → Reseñas, o en la app del restaurante: Más → Reseñas.',
+          'En la app del restaurante, la pestaña Más abre dentro de la app los datos del restaurante, las ganancias, el equipo y la configuración de tu cuenta (contraseña, cerrar sesión y borrar la cuenta).',
           'Toca «Responder» en la reseña (o escribe tu respuesta en la app) y publica.',
         ],
       },
@@ -4651,6 +4652,7 @@ const en: SeccionDocs[] = [
         preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
         pasos: [
           'Panel menu → Reviews, or in the restaurant app: More → Reviews.',
+          'In the restaurant app, the More tab opens your restaurant details, earnings, team and account settings (password, sign out and delete account) right inside the app.',
           'Tap “Reply” on the review (or type your reply in the app) and publish.',
         ],
       },

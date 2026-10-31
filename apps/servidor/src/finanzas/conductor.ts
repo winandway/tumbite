@@ -237,10 +237,14 @@ export async function devolverReservaViaje(
 /** Devuelve lo apartado por CUALQUIER conductor para ese viaje (cancelado, sin conductor…). */
 export async function devolverReservasViaje(db: D1Database, operacionId: string, motivo: string) {
   const { results } = await db
+    // C-LIKE-CORTO (31 oct 2026): la base de producción no acepta patrones LIKE de más de 50
+    // caracteres («pattern too complex»); con el id del viaje el patrón tenía 60 y toda cancelación
+    // fallaba. Se compara el comienzo y el final de la referencia, sin LIKE.
     .prepare(
-      "SELECT DISTINCT cuenta_id FROM libro WHERE bolsillo = 'reservado' AND referencia LIKE ?",
+      `SELECT DISTINCT cuenta_id FROM libro WHERE bolsillo = 'reservado'
+         AND substr(referencia, 1, length(?1)) = ?1 AND substr(referencia, -10) = ':reservado'`,
     )
-    .bind(`reserva_viaje:${operacionId}:%:reservado`)
+    .bind(`reserva_viaje:${operacionId}:`)
     .all<{ cuenta_id: string }>();
   for (const f of results) await devolverReservaViaje(db, operacionId, f.cuenta_id, motivo);
 }

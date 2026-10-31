@@ -114,7 +114,7 @@ export function Oferta({
                 gap: 2,
               }}
             >
-              <Text style={{ fontWeight: '900', color: C.secundario }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
                 {oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
               </Text>
               {oferta.adelantoLocal ? (
@@ -128,7 +128,7 @@ export function Oferta({
             </View>
           ) : null}
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.garantizado}</Text>
-          <Text style={{ fontSize: 40, fontWeight: '900', color: C.secundario, lineHeight: 44 }}>
+          <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
             {formatearMonto(oferta.pagoRepartidor, oferta.moneda, idioma)}
           </Text>
           {oferta.propina > 0 ? (
@@ -206,7 +206,7 @@ const Dato = ({ valor, nombre }: { valor: string; nombre: string }) => (
       alignItems: 'center',
     }}
   >
-    <Text style={{ fontWeight: '900', color: C.secundario, fontSize: 16 }}>{valor}</Text>
+    <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{valor}</Text>
     <Text style={{ color: '#5E5E5E', fontSize: 11 }}>{nombre}</Text>
   </View>
 );

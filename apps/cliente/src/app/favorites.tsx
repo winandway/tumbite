@@ -110,7 +110,7 @@ export default function Favoritos() {
             />
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <Text
-                style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}
+                style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}
                 numberOfLines={1}
               >
                 {r.nombre}

@@ -26,6 +26,7 @@
 - [x] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países. HECHO 31 oct: recorrido completo en el simulador; arreglados deslizar, encuadre del mapa, millas, carga lista, avisos, final de ruta, ruta en el inicio; pantallas oscuras, lista unida y sin logo (pedido de Richard).
 - [x] (L3) Escanear cada paquete en la parada antes de entregar («1 de 1 paquetes escaneados», como Amazon Flex), con «escribir el código» si la etiqueta no se lee. Todos los países.
 - [x] (L4) Botón fijo «Parada actual» abajo en la lista, el mapa y el resumen de la ruta (como Amazon Flex). Todos los países.
+- [x] (R1) App del restaurante: que «Mi restaurante», «Beneficios/Ganancias», «Equipo» y «Configuración» del menú Más se abran DENTRO de la app (hoy mandan a la web), como DoorDash Merchant. Visto por Richard grabando el video de Apple. Todos los países.
 - [!] (espera los tres videos de Richard grabados en su iPhone; guía en docs/VIDEO-REVISION-APPLE.md; las notas ya están puestas) Apple rechazó la 1.0 de las tres apps por la pauta 2.1 (falta información): subir los videos como adjunto y volver a enviar. EE. UU.
 - [x] (L2) HECHO 31 oct (C-SEGURIDAD-A-LA-VISTA). «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
 

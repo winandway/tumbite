@@ -138,7 +138,7 @@ export default function Tiendas() {
       </View>
       <Text
         accessibilityRole="header"
-        style={{ fontSize: 28, fontWeight: '900', color: C.secundario, marginTop: 14 }}
+        style={{ fontSize: 28, fontWeight: '700', color: C.secundario, marginTop: 14 }}
       >
         {nombreServicio}
       </Text>
@@ -207,7 +207,7 @@ export default function Tiendas() {
                     />
                   ) : null}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '800', color: C.secundario }}>{r.nombre}</Text>
+                    <Text style={{ fontWeight: '700', color: C.secundario }}>{r.nombre}</Text>
                     {detalleProducto(r, idioma) ? (
                       <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
                         {detalleProducto(r, idioma)}
@@ -218,7 +218,7 @@ export default function Tiendas() {
                       {r.distanciaKm != null ? ` · ${distanciaTexto(r.distanciaKm, idioma)}` : ''}
                     </Text>
                   </View>
-                  <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  <Text style={{ fontWeight: '700', color: C.secundario }}>
                     {formatearMonto(r.precio, moneda, idioma)}
                   </Text>
                 </Tarjeta>
@@ -247,7 +247,7 @@ export default function Tiendas() {
             >
               <Tarjeta style={{ padding: 14 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                  <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario, flex: 1 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario, flex: 1 }}>
                     {s.nombre}
                   </Text>
                   <Estado abierto={s.abierto} texto={s.abierto ? t.abierta : t.cerrada} />

@@ -209,7 +209,7 @@ export default function MisPaquetes() {
         {paquetes && direcciones.length === 0 ? (
           <Tarjeta>
             <View testID="marcar-casa" style={{ gap: 8 }}>
-              <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+              <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                 {t.casaTitulo}
               </Text>
               <Text style={{ color: '#5E5E5E' }}>{t.casaAyuda}</Text>
@@ -249,7 +249,7 @@ export default function MisPaquetes() {
         {paquetes?.map((p) => (
           <Tarjeta key={p.envioId}>
             <View testID={`paquete-${p.envioId}`} style={{ gap: 4 }}>
-              <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+              <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                 {t.de} {p.empresa}
               </Text>
               <Text
@@ -266,7 +266,7 @@ export default function MisPaquetes() {
               {p.referencias ? <Text style={{ color: '#5E5E5E' }}>{p.referencias}</Text> : null}
               <Text
                 style={{
-                  fontWeight: '800',
+                  fontWeight: '700',
                   color: p.ubicacion === 'confirmada' ? C.exito : C.secundario,
                 }}
               >
@@ -285,7 +285,7 @@ export default function MisPaquetes() {
                   }}
                   accessibilityRole="button"
                 >
-                  <Text style={{ color: C.primario, fontWeight: '800', paddingVertical: 6 }}>
+                  <Text style={{ color: C.primario, fontWeight: '700', paddingVertical: 6 }}>
                     {p.ubicacion === 'confirmada' ? t.cambiar : t.confirmar}
                   </Text>
                 </Pressable>
@@ -313,7 +313,7 @@ export default function MisPaquetes() {
                         padding: 10,
                       }}
                     >
-                      <Text style={{ fontWeight: '800' }}>{d.etiqueta || d.direccion}</Text>
+                      <Text style={{ fontWeight: '700' }}>{d.etiqueta || d.direccion}</Text>
                       <Text style={{ color: '#5E5E5E' }}>{d.direccion}</Text>
                       <Text style={{ color: C.primario, fontWeight: '700' }}>{t.usarGuardada}</Text>
                     </Pressable>

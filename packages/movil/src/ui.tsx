@@ -40,7 +40,12 @@ export function Pantalla({
         <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
       {scroll ? (
-        <ScrollView contentContainerStyle={e.contenido} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={e.contenido}
+          keyboardShouldPersistTaps="handled"
+        >
           {cuerpo}
         </ScrollView>
       ) : (
@@ -212,12 +217,12 @@ export const e = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  marca: { color: '#fff', fontSize: 22, fontWeight: '800' },
+  marca: { color: '#fff', fontSize: 22, fontWeight: '700' },
   banderas: { flexDirection: 'row', gap: 6 },
   bandera: { borderWidth: 2, borderColor: 'transparent', borderRadius: 8, paddingHorizontal: 4 },
   banderaActiva: { borderColor: '#FFFFFF' },
   contenido: { padding: 16, gap: 4 },
-  titulo: { fontSize: 26, fontWeight: '800', color: C.secundario, marginBottom: 12 },
+  titulo: { fontSize: 26, fontWeight: '700', color: C.secundario, marginBottom: 12 },
   campo: { marginBottom: 14 },
   etiqueta: { fontWeight: '600', marginBottom: 6, color: C.texto },
   input: {

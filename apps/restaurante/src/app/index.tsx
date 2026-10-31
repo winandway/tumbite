@@ -16,12 +16,12 @@ function Portada() {
         resizeMode="contain"
         accessibilityLabel="Divoox"
       />
-      <Text style={{ fontWeight: '900', fontSize: 20, color: C.secundario, marginTop: -6 }}>
+      <Text style={{ fontWeight: '800', fontSize: 20, color: C.secundario, marginTop: -6 }}>
         {t.restaurante}
       </Text>
       <Text
         accessibilityRole="header"
-        style={{ fontWeight: '900', fontSize: 26, color: C.secundario, marginTop: 22 }}
+        style={{ fontWeight: '800', fontSize: 26, color: C.secundario, marginTop: 22 }}
       >
         {t.iniciaSesion}
       </Text>

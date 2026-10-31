@@ -95,7 +95,13 @@ export function Servicios({
                   paddingVertical: 1,
                 }}
               >
-                <Text style={{ fontSize: 9, fontWeight: '700', color: '#5E5E5E' }}>{etiqueta}</Text>
+                <Text
+                  maxFontSizeMultiplier={1.2}
+                  numberOfLines={1}
+                  style={{ fontSize: 9, fontWeight: '600', color: '#5E5E5E' }}
+                >
+                  {etiqueta}
+                </Text>
               </View>
             ) : null}
             <Image
@@ -104,7 +110,17 @@ export function Servicios({
               resizeMode="contain"
               accessibilityIgnoresInvertColors
             />
-            <Text style={{ fontWeight: '700', fontSize: 14, color: C.secundario }}>{nombre}</Text>
+            {/* C-MOSAICO-UNA-LINEA (31 oct 2026, visto en el iPhone de Richard con letra grande): el nombre
+                del servicio va en una sola línea y se achica si no cabe; nunca «Deliverie-s». */}
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              maxFontSizeMultiplier={1.3}
+              style={{ fontWeight: '600', fontSize: 14, color: C.secundario }}
+            >
+              {nombre}
+            </Text>
           </Pressable>
         );
       })}

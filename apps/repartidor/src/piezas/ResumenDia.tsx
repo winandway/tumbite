@@ -23,7 +23,7 @@ export function ResumenDia({
   const m = Math.floor((segundosConectado % 3600) / 60);
   const celda = (valor: string, nombre: string) => (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>{valor}</Text>
+      <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario }}>{valor}</Text>
       <Text style={{ fontSize: 12, color: '#5E5E5E' }}>{nombre}</Text>
     </View>
   );

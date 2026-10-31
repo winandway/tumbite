@@ -171,7 +171,7 @@ export function Estadisticas() {
           <View key={nombre} style={{ width: `${100 / columnas - 3}%` }}>
             <Tarjeta style={{ marginBottom: 0 }}>
               <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{nombre}</Text>
-              <Text style={{ fontSize: 26, fontWeight: '900', color: C.secundario, marginTop: 4 }}>
+              <Text style={{ fontSize: 26, fontWeight: '800', color: C.secundario, marginTop: 4 }}>
                 {valor}
               </Text>
             </Tarjeta>
@@ -183,7 +183,7 @@ export function Estadisticas() {
           {tablero.topPlatos.length ? (
             <Tarjeta>
               <Text
-                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+                style={{ fontWeight: '800', fontSize: 16, color: C.secundario, marginBottom: 8 }}
               >
                 {t.topPlatos}
               </Text>
@@ -220,7 +220,7 @@ export function Estadisticas() {
           {tablero.porHora && tablero.porHora.some((h) => h.pedidos) ? (
             <Tarjeta>
               <Text
-                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+                style={{ fontWeight: '800', fontSize: 16, color: C.secundario, marginBottom: 8 }}
               >
                 {tr.porHora}
               </Text>
@@ -247,7 +247,7 @@ export function Estadisticas() {
           {tablero.porDia && tablero.porDia.some((h) => h.pedidos) ? (
             <Tarjeta>
               <Text
-                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+                style={{ fontWeight: '800', fontSize: 16, color: C.secundario, marginBottom: 8 }}
               >
                 {tr.porDia}
               </Text>
@@ -257,7 +257,7 @@ export function Estadisticas() {
           {tablero.clientes ? (
             <Tarjeta>
               <Text
-                style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}
+                style={{ fontWeight: '800', fontSize: 16, color: C.secundario, marginBottom: 8 }}
               >
                 {tr.clientes}
               </Text>
@@ -275,7 +275,7 @@ export function Estadisticas() {
                 ).map(([nombre, n]) => (
                   <View key={nombre} style={{ flex: 1 }}>
                     <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{nombre}</Text>
-                    <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>
                       {n}
                     </Text>
                   </View>
@@ -287,7 +287,7 @@ export function Estadisticas() {
             {tablero.calificacion != null ? (
               <Tarjeta style={{ flex: 1 }}>
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.calificacion}</Text>
-                <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>
+                <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
                   {tablero.calificacion} ★
                 </Text>
                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
@@ -298,7 +298,7 @@ export function Estadisticas() {
             {tablero.minutosCocina != null ? (
               <Tarjeta style={{ flex: 1 }}>
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cocinaReal}</Text>
-                <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>
+                <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
                   {tablero.minutosCocina} min
                 </Text>
                 {tablero.minutosPrometidos != null ? (

@@ -59,7 +59,7 @@ export function Cabecera({
             justifyContent: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{punto}</Text>
+          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{punto}</Text>
         </View>
       ) : null}
     </Pressable>
@@ -104,7 +104,7 @@ export function Cabecera({
         <Text
           style={{
             fontSize: 30,
-            fontWeight: '900',
+            fontWeight: '700',
             color: C.secundario,
             flex: 1,
             paddingBottom: 8,

@@ -63,7 +63,7 @@ const Tiempo = ({ texto }: { texto: string }) => (
       paddingVertical: 3,
     }}
   >
-    <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{texto}</Text>
+    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{texto}</Text>
   </View>
 );
 
@@ -110,7 +110,7 @@ export function Restaurantes({
           marginHorizontal: 16,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>
           {titulo ?? t.cerca}
         </Text>
         {!titulo && lista.length > 3 ? (
@@ -159,7 +159,7 @@ export function Restaurantes({
             </View>
             <View style={{ padding: 10 }}>
               <Text
-                style={{ fontWeight: '800', fontSize: 15, color: C.secundario }}
+                style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}
                 numberOfLines={1}
               >
                 {r.nombre}
@@ -239,7 +239,7 @@ export function Restaurantes({
                   </View>
                 </View>
                 <View style={{ padding: 10 }}>
-                  <Text style={{ fontWeight: '800', fontSize: 15, color: C.secundario }}>
+                  <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>
                     {r.nombre}
                   </Text>
                   <View

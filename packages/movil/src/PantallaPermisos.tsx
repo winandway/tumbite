@@ -50,7 +50,7 @@ export function PantallaPermisos({
         <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }}>
           <Text
             accessibilityRole="header"
-            style={{ fontSize: 26, fontWeight: '900', color: C.secundario }}
+            style={{ fontSize: 26, fontWeight: '700', color: C.secundario }}
           >
             {t.titulo}
           </Text>
@@ -60,7 +60,7 @@ export function PantallaPermisos({
               key={p.titulo}
               style={{ borderBottomWidth: 1, borderBottomColor: '#ECECEC', paddingVertical: 10 }}
             >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>{p.titulo}</Text>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>{p.titulo}</Text>
               <Text style={{ color: '#5E5E5E', marginTop: 2 }}>{p.porque}</Text>
             </View>
           ))}

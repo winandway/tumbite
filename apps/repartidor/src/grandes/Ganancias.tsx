@@ -110,7 +110,7 @@ export function Ganancias({
                   )}
                 </Text>
               </View>
-              <Text style={{ fontWeight: '900', color: C.secundario }}>
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
                 {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </Text>
             </View>

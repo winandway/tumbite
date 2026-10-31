@@ -91,7 +91,7 @@ export function Encabezado({
           flex: 1,
           textAlign: 'center',
           fontSize: 18,
-          fontWeight: '800',
+          fontWeight: '700',
           color: C.secundario,
         }}
       >
@@ -218,7 +218,7 @@ export function BotonAncho({
         opacity: pressed ? 0.85 : 1,
       })}
     >
-      <Text style={{ color: secundario ? C.secundario : '#fff', fontWeight: '800', fontSize: 16 }}>
+      <Text style={{ color: secundario ? C.secundario : '#fff', fontWeight: '700', fontSize: 16 }}>
         {texto}
       </Text>
     </Pressable>

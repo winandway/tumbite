@@ -354,7 +354,7 @@ export function Banner({
     >
       {bien ? <Listo marcado tamano={30} /> : null}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ fontWeight: '900', fontSize: 16, color: TEXTO }}>{titulo}</Text>
+        <Text style={{ fontWeight: '800', fontSize: 16, color: TEXTO }}>{titulo}</Text>
         {ayuda ? <Text style={{ color: GRIS }}>{ayuda}</Text> : null}
       </View>
     </View>
@@ -444,7 +444,7 @@ export function Deslizar({ texto, alTerminar }: { texto: string; alTerminar: () 
           transform: [{ translateX: x }],
         }}
       >
-        <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 18 }}>›››</Text>
+        <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 18 }}>›››</Text>
       </Animated.View>
     </View>
   );

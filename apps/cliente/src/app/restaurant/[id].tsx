@@ -243,7 +243,7 @@ export default function MenuRestaurante() {
               }}
             >
               <Text
-                style={{ color: '#fff', fontSize: 28, fontWeight: '900' }}
+                style={{ color: '#fff', fontSize: 28, fontWeight: '700' }}
                 accessibilityRole="header"
               >
                 {r.nombre}
@@ -296,7 +296,7 @@ export default function MenuRestaurante() {
           {/* C-PEDIDO-GRUPO: como DoorDash, el pedido en grupo se arma desde el menú. */}
           {grupo ? (
             <View style={{ marginTop: 12, gap: 6 }}>
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>
                 {idioma === 'en'
                   ? 'You’re adding to a group order.'
                   : 'Estás agregando a un pedido en grupo.'}
@@ -349,7 +349,7 @@ export default function MenuRestaurante() {
                 >
                   <Text
                     style={{
-                      fontWeight: '800',
+                      fontWeight: '700',
                       fontSize: 15,
                       color: activa ? C.primario : '#5E5E5E',
                     }}
@@ -368,18 +368,18 @@ export default function MenuRestaurante() {
               ) : null}
               {r.direccion ? (
                 <View>
-                  <Text style={{ fontWeight: '800', color: C.secundario }}>{tc.direccion}</Text>
+                  <Text style={{ fontWeight: '700', color: C.secundario }}>{tc.direccion}</Text>
                   <Text style={{ color: '#5E5E5E' }}>{r.direccion}</Text>
                 </View>
               ) : null}
               {r.telefono ? (
                 <View>
-                  <Text style={{ fontWeight: '800', color: C.secundario }}>{tc.telefono}</Text>
+                  <Text style={{ fontWeight: '700', color: C.secundario }}>{tc.telefono}</Text>
                   <Text style={{ color: '#5E5E5E' }}>{r.telefono}</Text>
                 </View>
               ) : null}
               <View>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>{tc.horario}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{tc.horario}</Text>
                 {r.horarios?.length ? (
                   tc.dias.map((dia, i) => {
                     const turnos = (r.horarios ?? []).filter((h) => h.dia === i);
@@ -426,7 +426,7 @@ export default function MenuRestaurante() {
                     <Text
                       style={{
                         fontSize: 18,
-                        fontWeight: '800',
+                        fontWeight: '700',
                         color: C.secundario,
                         marginTop: 10,
                         marginBottom: 4,
@@ -473,7 +473,7 @@ export default function MenuRestaurante() {
                             />
                           ) : null}
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+                            <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                               {nombrePlato(p, idioma)}
                             </Text>
                             {descripcion(p, idioma) ? (
@@ -486,7 +486,7 @@ export default function MenuRestaurante() {
                                 {p.etiquetas.map((m) => nombreEtiquetaDieta(m, idioma)).join(' · ')}
                               </Text>
                             ) : null}
-                            <Text style={{ marginTop: 4, fontWeight: '800', color: C.secundario }}>
+                            <Text style={{ marginTop: 4, fontWeight: '700', color: C.secundario }}>
                               {formatearMonto(p.precioCentavos, moneda, idioma)}
                             </Text>
                           </View>
@@ -502,7 +502,7 @@ export default function MenuRestaurante() {
                               <Text
                                 style={{
                                   color: enCarrito ? C.exito : C.secundario,
-                                  fontWeight: '800',
+                                  fontWeight: '700',
                                   fontSize: 12,
                                 }}
                               >
@@ -585,7 +585,7 @@ export default function MenuRestaurante() {
                     padding: 20,
                   }}
                 >
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}>
+                  <Text style={{ fontSize: 24, fontWeight: '700', color: C.secundario }}>
                     {nombrePlato(detalle, idioma)}
                   </Text>
                   {descripcion(detalle, idioma) ? (
@@ -599,7 +599,7 @@ export default function MenuRestaurante() {
                     </Text>
                   ) : null}
                   <Text
-                    style={{ fontSize: 24, fontWeight: '900', color: C.primario, marginTop: 8 }}
+                    style={{ fontSize: 24, fontWeight: '700', color: C.primario, marginTop: 8 }}
                   >
                     {formatearMonto(detalle.precioCentavos, moneda, idioma)}
                   </Text>
@@ -618,7 +618,7 @@ export default function MenuRestaurante() {
                         },
                       ]}
                     >
-                      <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+                      <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                         {nombrePlato(g, idioma)}
                         <Text
                           style={{
@@ -656,7 +656,7 @@ export default function MenuRestaurante() {
                                     borderColor: marcada ? C.primario : '#D6D6D6',
                                   }}
                                 >
-                                  <Text style={{ fontWeight: '800', color: C.secundario }}>
+                                  <Text style={{ fontWeight: '700', color: C.secundario }}>
                                     {nombrePlato(o, idioma)}
                                   </Text>
                                   {o.precioCentavos ? (
@@ -712,7 +712,7 @@ export default function MenuRestaurante() {
                                   >
                                     {marcada ? (
                                       <Text
-                                        style={{ color: '#fff', fontSize: 12, fontWeight: '900' }}
+                                        style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}
                                       >
                                         ✓
                                       </Text>
@@ -736,7 +736,7 @@ export default function MenuRestaurante() {
 
                   {grupo ? null : (
                     <View style={{ marginTop: 18 }}>
-                      <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
+                      <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                         {tc.notaPlato}
                       </Text>
                       <TextInput
@@ -778,7 +778,7 @@ export default function MenuRestaurante() {
                       etiqueta={t.menos}
                     />
                     <Text
-                      style={{ fontSize: 18, fontWeight: '800', minWidth: 24, textAlign: 'center' }}
+                      style={{ fontSize: 18, fontWeight: '700', minWidth: 24, textAlign: 'center' }}
                     >
                       {cantidad}
                     </Text>

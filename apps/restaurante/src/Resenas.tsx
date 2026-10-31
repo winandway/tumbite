@@ -112,7 +112,7 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
     <View testID="app-resenas">
       <Text
         accessibilityRole="header"
-        style={{ fontSize: 22, fontWeight: '900', color: C.secundario, marginBottom: 6 }}
+        style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 6 }}
       >
         {t.titulo}
       </Text>

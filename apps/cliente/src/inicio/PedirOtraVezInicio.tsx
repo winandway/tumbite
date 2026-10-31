@@ -57,7 +57,7 @@ export function PedirOtraVezInicio({ idioma }: { idioma: Idioma }) {
           marginHorizontal: 16,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>{t.titulo}</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.titulo}</Text>
         <Pressable onPress={() => router.push('/orders')} accessibilityRole="button">
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verTodos} ›</Text>
         </Pressable>
@@ -93,13 +93,13 @@ export function PedirOtraVezInicio({ idioma }: { idioma: Idioma }) {
                 borderColor: '#E6E7EA',
               }}
             >
-              <Text style={{ fontWeight: '900', color: C.secundario }} numberOfLines={1}>
+              <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
                 {p.restauranteNombre}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }} numberOfLines={2}>
                 {resumen}
               </Text>
-              <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 8 }}>
+              <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 8 }}>
                 {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} · {t.titulo} ›
               </Text>
             </Pressable>

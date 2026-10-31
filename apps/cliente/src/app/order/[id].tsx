@@ -604,6 +604,8 @@ export default function SeguirPedido() {
         />
       ) : null}
       <ScrollView
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         ref={desplazar}
         contentContainerStyle={{
           padding: 16,
@@ -649,11 +651,11 @@ export default function SeguirPedido() {
             borderColor: '#fff',
           }}
         >
-          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '900' }}>✓</Text>
+          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '700' }}>✓</Text>
         </View>
         <Text
           accessibilityRole="header"
-          style={{ fontSize: 26, fontWeight: '900', color: C.secundario, marginTop: 12 }}
+          style={{ fontSize: 26, fontWeight: '700', color: C.secundario, marginTop: 12 }}
         >
           {tc.pedidoRealizado}
         </Text>
@@ -661,8 +663,8 @@ export default function SeguirPedido() {
           {tc.enviadoA.replace('{restaurante}', p.restauranteNombre ?? '')}
         </Text>
         <Tarjeta style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>{numero}</Text>
-          <Text style={{ fontSize: 17, fontWeight: '800', color: C.secundario, marginTop: 4 }}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}>{numero}</Text>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: C.secundario, marginTop: 4 }}>
             {t.total}: {formatearMonto(p.total, moneda, idioma)}
           </Text>
           <Text
@@ -698,11 +700,11 @@ export default function SeguirPedido() {
                 marginTop: 8,
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 26, fontWeight: '900' }}>✓</Text>
+              <Text style={{ color: '#fff', fontSize: 26, fontWeight: '700' }}>✓</Text>
             </View>
             <Text
               accessibilityRole="header"
-              style={{ fontSize: 24, fontWeight: '900', color: C.secundario, marginTop: 10 }}
+              style={{ fontSize: 24, fontWeight: '700', color: C.secundario, marginTop: 10 }}
             >
               {tc.pedidoEntregado}
             </Text>
@@ -723,7 +725,7 @@ export default function SeguirPedido() {
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '900', fontSize: 19, color: C.secundario }}>
+                <Text style={{ fontWeight: '700', fontSize: 19, color: C.secundario }}>
                   {p.restauranteNombre}
                 </Text>
                 <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
@@ -732,7 +734,7 @@ export default function SeguirPedido() {
               </View>
               {p.minutosEstimados != null ? (
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 17, fontWeight: '900', color: C.secundario }}>
+                  <Text style={{ fontSize: 17, fontWeight: '700', color: C.secundario }}>
                     {t.llega} {p.minutosEstimados} {t.minutos}
                   </Text>
                 </View>
@@ -740,7 +742,7 @@ export default function SeguirPedido() {
             </View>
             {p.subtotal != null ? (
               <View style={{ marginTop: 10 }} testID="recibo">
-                <Text style={{ fontWeight: '900', color: C.secundario }}>{t.recibo}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.recibo}</Text>
                 {(
                   [
                     [t.comida, p.subtotal],
@@ -767,8 +769,8 @@ export default function SeguirPedido() {
                 <View
                   style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}
                 >
-                  <Text style={{ fontWeight: '800', color: C.secundario }}>{t.total}</Text>
-                  <Text style={{ fontWeight: '900', color: C.secundario }}>
+                  <Text style={{ fontWeight: '700', color: C.secundario }}>{t.total}</Text>
+                  <Text style={{ fontWeight: '700', color: C.secundario }}>
                     {formatearMonto(p.total, moneda, idioma)}
                   </Text>
                 </View>
@@ -786,7 +788,7 @@ export default function SeguirPedido() {
                 }}
                 testID="pago-al-recibir"
               >
-                <Text style={{ fontWeight: '900', color: C.secundario }}>{t.pagoAlRecibir}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.pagoAlRecibir}</Text>
                 {p.cobroEstado === 'confirmado' || p.cobroEstado === 'parcial' ? (
                   <Text style={{ color: C.exito, fontWeight: '700', marginTop: 4 }}>
                     {t.cobroConfirmado}
@@ -807,7 +809,7 @@ export default function SeguirPedido() {
                       )}
                     </Text>
                     <Text
-                      style={{ fontWeight: '800', marginTop: 4, color: C.secundario }}
+                      style={{ fontWeight: '700', marginTop: 4, color: C.secundario }}
                       selectable
                     >
                       {p.cuentaCobro.titular}
@@ -865,7 +867,7 @@ export default function SeguirPedido() {
                         backgroundColor: i <= paso ? C.exito : '#E5E5E5',
                       }}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '900', fontSize: 13 }}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
                         {i <= paso ? '✓' : ''}
                       </Text>
                     </View>
@@ -905,7 +907,7 @@ export default function SeguirPedido() {
           <Tarjeta style={{ borderWidth: 2, borderColor: '#E0A000' }}>
             {p.ajuste.estado === 'pendiente' ? (
               <>
-                <Text style={{ fontWeight: '800', fontSize: 17 }}>
+                <Text style={{ fontWeight: '700', fontSize: 17 }}>
                   {(esTienda ? t.faltaTituloTienda : t.faltaTitulo).replace(
                     '{plato}',
                     idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
@@ -998,14 +1000,14 @@ export default function SeguirPedido() {
         {p.pin && activo ? (
           <Tarjeta style={{ borderWidth: 2, borderColor: C.exito }}>
             <Text style={{ fontWeight: '700' }}>{t.tuPin}</Text>
-            <Text style={{ fontSize: 34, fontWeight: '800', letterSpacing: 6 }}>{p.pin}</Text>
+            <Text style={{ fontSize: 34, fontWeight: '700', letterSpacing: 6 }}>{p.pin}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.tuPinAyuda}</Text>
           </Tarjeta>
         ) : null}
         {p.estado === 'en_camino' &&
         (p.repartidor?.llego || p.repartidor?.casiLlega || p.repartidor?.llegaEn5) ? (
           <Text
-            style={{ color: C.exito, fontWeight: '800', fontSize: 17, marginBottom: 8 }}
+            style={{ color: C.exito, fontWeight: '700', fontSize: 17, marginBottom: 8 }}
             accessibilityRole="alert"
           >
             {p.repartidor?.llego ? t.enPuerta : p.repartidor?.casiLlega ? t.casiLlega : t.llegaEn5}
@@ -1031,7 +1033,7 @@ export default function SeguirPedido() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <FotoRepartidor ruta={p.repartidor.foto} nombre={p.repartidor.nombre} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+                <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                   {p.repartidor.nombre}
                 </Text>
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
@@ -1114,7 +1116,7 @@ export default function SeguirPedido() {
               <Text style={{ fontWeight: '700', color: C.exito }}>{t.gracias}</Text>
             ) : (
               <>
-                <Text style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}>
+                <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                   {t.calificar}
                 </Text>
                 <Estrellas
@@ -1161,7 +1163,7 @@ export default function SeguirPedido() {
         !p.propinaExtra &&
         !propinaEnviada ? (
           <Tarjeta>
-            <Text style={{ fontWeight: '800' }}>{t.propinaDespues}</Text>
+            <Text style={{ fontWeight: '700' }}>{t.propinaDespues}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
               {t.propinaDespuesAyuda}
             </Text>
@@ -1181,7 +1183,7 @@ export default function SeguirPedido() {
                     paddingVertical: 10,
                   }}
                 >
-                  <Text style={{ fontWeight: '800', color: C.exito }}>
+                  <Text style={{ fontWeight: '700', color: C.exito }}>
                     {formatearMonto(c, moneda, idioma)}
                   </Text>
                 </Pressable>
@@ -1199,7 +1201,7 @@ export default function SeguirPedido() {
         ) : null}
         {p.entrega === 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
           <Tarjeta style={{ borderWidth: 2, borderColor: C.exito }}>
-            <Text style={{ fontWeight: '800' }}>{t.recogerEnLocal}</Text>
+            <Text style={{ fontWeight: '700' }}>{t.recogerEnLocal}</Text>
             {p.estado === 'listo' ? (
               <Text style={{ color: C.exito, fontWeight: '700' }}>{t.recogerListo}</Text>
             ) : null}
@@ -1207,7 +1209,7 @@ export default function SeguirPedido() {
         ) : null}
         {p.entrega !== 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
           <Tarjeta>
-            <Text style={{ fontWeight: '800' }}>{t.cambiarDireccion}</Text>
+            <Text style={{ fontWeight: '700' }}>{t.cambiarDireccion}</Text>
             <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cambiarDireccionAyuda}</Text>
             {/* C-DIRECCION-SUGERENCIAS: la dirección nueva con su punto exacto. */}
             <CampoDireccion
@@ -1245,7 +1247,7 @@ export default function SeguirPedido() {
 
         {/* Detalle del pedido: lo que pediste, el total, a dónde y cómo se entrega. */}
         <Tarjeta>
-          <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario, marginBottom: 8 }}>
+          <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario, marginBottom: 8 }}>
             {tc.detalle} · {numero}
           </Text>
           {p.lineas.map((l) => (
@@ -1271,14 +1273,14 @@ export default function SeguirPedido() {
               paddingTop: 8,
             }}
           >
-            <Text style={{ fontWeight: '900', fontSize: 17 }}>{t.total}</Text>
-            <Text style={{ fontWeight: '900', fontSize: 17 }}>
+            <Text style={{ fontWeight: '700', fontSize: 17 }}>{t.total}</Text>
+            <Text style={{ fontWeight: '700', fontSize: 17 }}>
               {formatearMonto(p.total, moneda, idioma)}
             </Text>
           </View>
           {p.entrega !== 'recoger' && p.direccion ? (
             <>
-              <Text style={{ fontWeight: '800', marginTop: 12, color: C.secundario }}>
+              <Text style={{ fontWeight: '700', marginTop: 12, color: C.secundario }}>
                 {t.tuCasa}
               </Text>
               <Text style={{ color: '#5E5E5E' }}>{p.direccion}</Text>
@@ -1286,7 +1288,7 @@ export default function SeguirPedido() {
           ) : null}
           {entregaMostrada(p.entrega, p.entregadoComo) ? (
             <>
-              <Text style={{ fontWeight: '800', marginTop: 10, color: C.secundario }}>
+              <Text style={{ fontWeight: '700', marginTop: 10, color: C.secundario }}>
                 {tc.tipoEntrega}
               </Text>
               <Text style={{ color: '#5E5E5E' }}>
@@ -1320,8 +1322,8 @@ export default function SeguirPedido() {
 
         {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
           <Tarjeta style={{ borderWidth: 1, borderColor: '#2A2A2A' }}>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>{t.programado}</Text>
-            <Text style={{ fontWeight: '900', fontSize: 17, marginTop: 2 }}>
+            <Text style={{ fontWeight: '700', color: C.secundario }}>{t.programado}</Text>
+            <Text style={{ fontWeight: '700', fontSize: 17, marginTop: 2 }}>
               {textoFranja(
                 deSqlUtc(p.programadoPara),
                 Intl.DateTimeFormat().resolvedOptions().timeZone,

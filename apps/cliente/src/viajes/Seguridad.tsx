@@ -91,7 +91,7 @@ export function ContactosConfianza() {
 
   return (
     <Tarjeta>
-      <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
       {contactos.map((k) => (
         <View
@@ -206,7 +206,7 @@ export function PreguntaTodoBien({
     <Tarjeta>
       <Text
         accessibilityRole="alert"
-        style={{ fontWeight: '900', fontSize: 18, color: C.secundario }}
+        style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}
       >
         {t.pregunta}
       </Text>

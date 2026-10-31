@@ -143,7 +143,7 @@ export default function Pedidos() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text
-                  style={{ fontWeight: '900', fontSize: 17, color: C.secundario }}
+                  style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}
                   numberOfLines={1}
                 >
                   {p.restauranteNombre}
@@ -163,7 +163,7 @@ export default function Pedidos() {
                   </Text>
                 </Text>
               </View>
-              <Text style={{ fontWeight: '900', color: C.secundario }}>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>
                 {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </Text>
             </View>
@@ -183,7 +183,7 @@ export default function Pedidos() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>
                   {vivo(p) ? t.enCurso : t.ver}
                 </Text>
               </Pressable>

@@ -204,7 +204,7 @@ export default function Tienda() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text
               accessibilityRole="header"
-              style={{ fontSize: 26, fontWeight: '900', color: C.secundario, flex: 1 }}
+              style={{ fontSize: 26, fontWeight: '700', color: C.secundario, flex: 1 }}
             >
               {ficha.nombre}
             </Text>
@@ -214,7 +214,7 @@ export default function Tienda() {
           {/* C-PEDIDO-GRUPO-TIENDA: como en los restaurantes, el pedido en grupo sale de aquí. */}
           {grupo ? (
             <View style={{ marginTop: 8, gap: 4 }}>
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
+              <Text style={{ fontWeight: '700', color: C.secundario }}>
                 {idioma === 'en'
                   ? 'You’re adding to a group order.'
                   : 'Estás agregando a un pedido en grupo.'}
@@ -336,7 +336,7 @@ export default function Tienda() {
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 8 }}>
-                <Text style={{ fontWeight: '900', fontSize: 16, color: C.secundario }}>
+                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                   {formatearMonto(p.precio, moneda, idioma)}
                   {p.vendidoPor === 'weight' && p.unidadPeso ? `/${p.unidadPeso}` : ''}
                 </Text>
@@ -365,7 +365,7 @@ export default function Tienda() {
               ) : null}
               {n > 0 ? (
                 // Ya en el carrito = salió bien: verde (C-VERDE-EXITO).
-                <Text style={{ color: C.exito, fontWeight: '800', fontSize: 12, marginTop: 4 }}>
+                <Text style={{ color: C.exito, fontWeight: '700', fontSize: 12, marginTop: 4 }}>
                   {t.agregado} · {n}
                 </Text>
               ) : null}

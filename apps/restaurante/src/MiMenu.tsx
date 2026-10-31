@@ -97,7 +97,7 @@ export function MiMenu({
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text
           accessibilityRole="header"
-          style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}
+          style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}
         >
           {t.miMenu}
         </Text>
@@ -410,7 +410,7 @@ function FormPlato({
         </Pressable>
         <Text
           accessibilityRole="header"
-          style={{ flex: 1, fontSize: 20, fontWeight: '900', color: C.secundario }}
+          style={{ flex: 1, fontSize: 20, fontWeight: '800', color: C.secundario }}
         >
           {plato ? t.editarProducto : t.anadirProducto}
         </Text>
