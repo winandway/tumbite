@@ -26,6 +26,8 @@ import {
   PROXIMAS_ACCIONES,
   crearColaFlex,
   distanciaKm,
+  faltanPorEscanear,
+  paqueteDeEscaneo,
   textoDistancia,
   textoDistanciaCorta,
   efectivoEnMano,
@@ -268,11 +270,14 @@ function MiRutaContenido({
   api,
   idioma,
   abrirRutaId = null,
+  ponerPie,
 }: {
   api: Api;
   idioma: Idioma;
   /** Fase 3: la ruta del aviso que tocó el conductor (se abre directo). */
   abrirRutaId?: string | null;
+  /** C-FLEX-PARADA-ACTUAL: el botón fijo de abajo lo dibuja la pantalla, fuera de lo que se desplaza. */
+  ponerPie?: (pie: React.ReactNode) => void;
 }) {
   const t = enIdioma(TEXTOS_RUTA, idioma);
   const [lista, setLista] = useState<Fila[] | null>(null);
@@ -540,6 +545,23 @@ function MiRutaContenido({
   ) : null;
 
   // ───────────────── Mis rutas ─────────────────
+  // C-FLEX-PARADA-ACTUAL (como Amazon Flex): en la ruta en curso, abajo y fijo, «Parada actual».
+  const idPie =
+    ruta?.estado === 'en_curso' && !paradaId && !paqueteVer && !escaneo && !devoluciones
+      ? (siguienteDe(ruta)?.id ?? null)
+      : null;
+  useEffect(() => {
+    if (!ponerPie) return;
+    ponerPie(
+      idPie ? (
+        <View style={{ padding: 12, backgroundColor: FONDO }} testID="parada-actual">
+          <Boton texto={`${t.paradaActual} →`} logistica alTocar={() => setParadaId(idPie)} />
+        </View>
+      ) : null,
+    );
+  }, [idPie, ponerPie, t.paradaActual]);
+  useEffect(() => () => ponerPie?.(null), [ponerPie]);
+
   if (!rutaId || !ruta) {
     const grupos = {
       actual: (lista ?? []).filter((r) => ACTUAL.includes(r.estado)),
@@ -1793,6 +1815,23 @@ function DetalleParada({
   const [proxima, setProxima] = useState<(typeof PROXIMAS_ACCIONES)[number]>('reintentar');
   const [aviso, setAviso] = useState('');
   const [hecha, setHecha] = useState<{ en: Date; foto: boolean; firma: boolean } | null>(null);
+  // C-FLEX-ESCANEO-PARADA (como Amazon Flex): cada paquete se escanea en la parada antes de entregar.
+  const [escaneados, setEscaneados] = useState<Set<string>>(new Set());
+  const [escaneandoParada, setEscaneandoParada] = useState(false);
+  const [codigoParada, setCodigoParada] = useState('');
+  const [avisoEscaneo, setAvisoEscaneo] = useState('');
+  const [permisoCamaraParada, pedirPermisoParada] = useCameraPermissions();
+  function escaneadoEnParada(texto: string) {
+    const id = paqueteDeEscaneo(texto, paquetesActivos(parada));
+    if (!id) return setAvisoEscaneo(t.noEsDeParada);
+    setAvisoEscaneo('');
+    setEscaneados((s) => new Set(s).add(id));
+  }
+  async function abrirEscanerParada() {
+    if (!permisoCamaraParada?.granted && !(await pedirPermisoParada()).granted)
+      return setAvisoEscaneo(t.permisoCamara);
+    setEscaneandoParada(true);
+  }
   const base = `${B}/${ruta.id}/paradas/${parada.id}`;
   // C-FLEX-FOTO-ANTERIOR: la foto de la última entrega en esta puerta, si la hay.
   const [fotoAnterior, setFotoAnterior] = useState<string | null>(null);
@@ -1843,6 +1882,15 @@ function DetalleParada({
     }
   }
   async function entregar() {
+    const sinEscanear = faltanPorEscanear(
+      enCamino.map((p) => p.id),
+      escaneados,
+    );
+    if (sinEscanear) {
+      setPestana('paquetes');
+      setAvisoEscaneo(t.faltaEscanear(sinEscanear));
+      return setAviso(t.faltaEscanear(sinEscanear));
+    }
     // Las mismas reglas que exige el servidor, para no guardar en el celular una entrega que rechazaría.
     const faltan = pruebasFaltantes(parada.pruebas, {
       foto: Boolean(foto),
@@ -2040,6 +2088,80 @@ function DetalleParada({
         activa={pestana}
         alCambiar={setPestana}
       />
+      {pestana === 'paquetes' && enCamino.length ? (
+        <View style={{ gap: 8 }} testID="escaneo-parada">
+          <Text style={{ fontWeight: '800', color: TEXTO }}>
+            {t.escaneadosDe(
+              enCamino.length -
+                faltanPorEscanear(
+                  enCamino.map((p) => p.id),
+                  escaneados,
+                ),
+              enCamino.length,
+            )}
+          </Text>
+          {avisoEscaneo ? (
+            <Text style={e.error} accessibilityRole="alert">
+              {avisoEscaneo}
+            </Text>
+          ) : null}
+          {faltanPorEscanear(
+            enCamino.map((p) => p.id),
+            escaneados,
+          ) ? (
+            <>
+              <Boton texto={t.escanearParada} logistica alTocar={() => void abrirEscanerParada()} />
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <TextInput
+                  value={codigoParada}
+                  onChangeText={setCodigoParada}
+                  placeholder={t.escribirCodigo}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (codigoParada.trim()) escaneadoEnParada(codigoParada.trim());
+                    setCodigoParada('');
+                  }}
+                  style={[e.input, { flex: 1 }]}
+                  accessibilityLabel={t.escribirCodigo}
+                />
+                <Pressable
+                  onPress={() => {
+                    if (codigoParada.trim()) escaneadoEnParada(codigoParada.trim());
+                    setCodigoParada('');
+                  }}
+                  style={{ padding: 14, backgroundColor: C.logisticaAccion, borderRadius: 12 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.agregar}
+                >
+                  <Text style={{ color: C.logisticaTexto, fontWeight: '800' }}>{t.agregar}</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : null}
+          <Modal
+            visible={escaneandoParada}
+            animationType="slide"
+            onRequestClose={() => setEscaneandoParada(false)}
+          >
+            <View style={{ flex: 1, backgroundColor: '#101010' }}>
+              <CameraView
+                style={{ flex: 1 }}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128'] }}
+                onBarcodeScanned={({ data }) => {
+                  setEscaneandoParada(false);
+                  escaneadoEnParada(data);
+                }}
+              />
+              <View style={{ padding: 16 }}>
+                <Boton texto={t.cancelar} secundario alTocar={() => setEscaneandoParada(false)} />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      ) : null}
       {pestana === 'paquetes' ? (
         <View style={[tarjeta, { paddingVertical: 4 }]}>
           {activos.map((p, n) => (
@@ -2068,7 +2190,7 @@ function DetalleParada({
                 texto={t.estadosPaquete[p.estado] ?? p.estado}
                 tono={tonoPaquete(p.estado)}
               />
-              <Listo marcado={p.estado === 'entregado'} />
+              <Listo marcado={p.estado === 'entregado' || escaneados.has(p.id)} />
             </Pressable>
           ))}
         </View>

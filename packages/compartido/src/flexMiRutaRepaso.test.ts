@@ -127,3 +127,22 @@ describe('Mi ruta en oscuro y a pantalla completa (Richard, con las capturas de 
     expect(miRuta).toContain('testID="flex-volver"');
   });
 });
+
+describe('Mi ruta: escanear en la parada y «Parada actual» (como Amazon Flex)', () => {
+  const inicio = leer('repartidor', 'src', 'Inicio.tsx');
+  it('no deja deslizar para entregar sin escanear los paquetes de la parada (C-FLEX-ESCANEO-PARADA)', () => {
+    expect(miRuta).toContain('testID="escaneo-parada"');
+    expect(miRuta).toMatch(
+      /if \(sinEscanear\) \{[\s\S]{0,120}setAvisoEscaneo\(t\.faltaEscanear\(sinEscanear\)\)/,
+    );
+    expect(miRuta).toContain('setAvisoEscaneo(t.noEsDeParada)');
+    expect(miRuta).toContain(
+      "<Listo marcado={p.estado === 'entregado' || escaneados.has(p.id)} />",
+    );
+  });
+  it('«Parada actual» va fija abajo, fuera de lo que se desplaza (C-FLEX-PARADA-ACTUAL)', () => {
+    expect(miRuta).toContain('testID="parada-actual"');
+    expect(inicio).toContain('ponerPie={setPieFlex}');
+    expect(inicio).toMatch(/<\/ScrollView>\s*\{pieFlex\}/);
+  });
+});

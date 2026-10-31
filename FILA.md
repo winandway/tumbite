@@ -24,6 +24,9 @@
 ## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
 
 - [x] (L1) Revisar en el simulador «Mi ruta» de punta a punta con una ruta de prueba (escanear todos los paquetes de la parada, geocerca, lugar, deslizar) y arreglar lo que falle. Todos los países. HECHO 31 oct: recorrido completo en el simulador; arreglados deslizar, encuadre del mapa, millas, carga lista, avisos, final de ruta, ruta en el inicio; pantallas oscuras, lista unida y sin logo (pedido de Richard).
+- [x] (L3) Escanear cada paquete en la parada antes de entregar («1 de 1 paquetes escaneados», como Amazon Flex), con «escribir el código» si la etiqueta no se lee. Todos los países.
+- [x] (L4) Botón fijo «Parada actual» abajo en la lista, el mapa y el resumen de la ruta (como Amazon Flex). Todos los países.
+- [!] (espera los tres videos de Richard grabados en su iPhone; guía en docs/VIDEO-REVISION-APPLE.md; las notas ya están puestas) Apple rechazó la 1.0 de las tres apps por la pauta 2.1 (falta información): subir los videos como adjunto y volver a enviar. EE. UU.
 - [x] (L2) HECHO 31 oct (C-SEGURIDAD-A-LA-VISTA). «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
 
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)

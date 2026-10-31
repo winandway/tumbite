@@ -480,6 +480,8 @@ export function Inicio() {
   const [pideCasco, setPideCasco] = useState(false);
   const [cambiando, setCambiando] = useState(false);
   const [rutaFlex, setRutaFlex] = useState<RutaFlexInicio | null>(null);
+  // C-FLEX-PARADA-ACTUAL: el botón fijo «Parada actual» de «Mi ruta», fuera de lo que se desplaza.
+  const [pieFlex, setPieFlex] = useState<ReactNode>(null);
   const [vista, setVista] = useState<
     | 'inicio'
     | 'billetera'
@@ -1485,8 +1487,10 @@ export function Inicio() {
             abrirRutaId={rutaDelAviso}
             alSeguridad={() => setVista('seguridad')}
             alVolver={() => setVista('inicio')}
+            ponerPie={setPieFlex}
           />
         </ScrollView>
+        {pieFlex}
         <BarraInferior
           idioma={idioma}
           activa="pedidos"

@@ -2117,3 +2117,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** «Mi ruta» va en fondo oscuro azul petróleo (no cansa la vista en horas de reparto), con texto blanco por defecto (`Texto` en `flex/piezas.tsx`, toda la paleta vive ahí) y botones secundarios con borde azul claro (`Boton oscuro`). Dentro de la ruta no va la cabecera del logo: la franja de Divoox Flex lleva la flecha para salir y «Ayuda de emergencia». La lista de paradas va unida por una línea que se pone verde a medida que se entrega, con el chulito verde, la hora y la siguiente parada resaltada.
 - **No tocar:** no volver a `lienzo(...)` para `miRuta`, ni usar `C.secundario` (negro) como color de texto en Flex: sobre el fondo oscuro no se ve.
 - **Prueba:** `flexMiRutaRepaso.test.ts` (comprobada en rojo). Captura original: `docs/capturas/flex-lista-unida-es.png`.
+
+## C-FLEX-ESCANEO-PARADA y C-FLEX-PARADA-ACTUAL (31 oct 2026, como Amazon Flex) — todos los países
+
+- **Escaneo en la parada:** «X de Y paquetes escaneados»; no se puede deslizar para entregar sin escanear (o escribir) cada paquete de la parada; uno de otra parada se rechaza con «Ese paquete no es de esta parada». Lógica en `paqueteDeEscaneo` / `faltanPorEscanear` (`packages/compartido/src/flex.ts`). El escaneo vive en el celular (no se manda al servidor): el servidor sigue validando paquetes y parada al entregar.
+- **Parada actual:** botón fijo abajo en la ruta en curso, fuera de lo que se desplaza (`ponerPie` → `pieFlex` en `Inicio.tsx`).
+- **Prueba:** `flexEscaneoParada.test.ts` y `flexMiRutaRepaso.test.ts` (comprobadas en rojo). Captura: `docs/capturas/flex-escaneo-parada-es.png`.
