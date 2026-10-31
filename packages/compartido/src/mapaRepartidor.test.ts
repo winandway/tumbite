@@ -12,6 +12,10 @@ const fuente = readFileSync(
 );
 
 describe('mapa del repartidor', () => {
+  it('encuadra cuando el mapa termina de cargar (C-MAPA-ENCUADRE)', () => {
+    expect(fuente).toContain('onMapReady={() => setListo(true)}');
+    expect(fuente).toMatch(/if \(!listo\) return;/);
+  });
   it('con un solo punto va a ese punto', () => {
     expect(fuente).toMatch(/puntos\.length === 1[\s\S]{0,80}animateToRegion/);
   });
