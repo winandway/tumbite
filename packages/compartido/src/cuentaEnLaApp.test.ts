@@ -23,3 +23,15 @@ describe('cerrar sesión y borrar la cuenta dentro de la app', () => {
     expect(leer('apps', 'restaurante', 'src', 'Mas.tsx')).toContain('<OpcionesCuenta />');
   });
 });
+
+describe('el menú Más del restaurante se abre dentro de la app (C-MAS-EN-LA-APP)', () => {
+  it('Mi restaurante, Ganancias, Equipo y Configuración son pantallas de la app', () => {
+    const mas = leer('packages', 'compartido', 'src', 'masRestaurante.ts');
+    for (const id of ['restaurante', 'ganancias', 'equipo', 'configuracion'])
+      expect(mas).toContain(`o('${id}', undefined, '${id}')`);
+    expect(mas).not.toMatch(/'\/panel\/(restaurant|earnings|team|settings)'/);
+    const pantallas = leer('apps', 'restaurante', 'src', 'MasPantallas.tsx');
+    expect(pantallas).toContain('<OpcionesCuenta />');
+    expect(pantallas).toContain("formulario: 'app-mi-restaurante'");
+  });
+});

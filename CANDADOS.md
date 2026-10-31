@@ -2129,3 +2129,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pasó:** en Driver no se encontraba «Cerrar sesión» ni «Borrar la cuenta» (estaban escondidos en Soporte y mandaban a la web); en la app del restaurante borrar la cuenta mandaba a la web. Apple (5.1.1 v) pide borrar desde la app.
 - **Arreglo:** pieza única `OpcionesCuenta` (`packages/movil`): tarjeta «Tu cuenta» con «Cerrar sesión» y, en los tres puntos, «Borrar la cuenta» con la palabra escrita (BORRAR / DELETE) y `DELETE /datos/cuentas/yo`, sin salir de la app. Va al final del Perfil del Driver y de «Más» del restaurante.
 - **Prueba:** `packages/compartido/src/cuentaEnLaApp.test.ts` (comprobada en rojo).
+
+## C-MAS-EN-LA-APP (31 oct 2026, Richard grabando el video para Apple) — todos los países
+
+- **Qué es:** en la app del restaurante, Más → «Datos del restaurante», «Ganancias», «Equipo» y «Configuración» se abren DENTRO de la app (`apps/restaurante/src/MasPantallas.tsx`), como DoorDash Merchant; antes mandaban a la web. Solo el alta de cobros en Stripe se abre afuera (es de Stripe). Formularios con borrador; contraseñas nunca en el borrador; quitar a un miembro va en los tres puntos.
+- **Prueba:** `packages/compartido/src/cuentaEnLaApp.test.ts` (comprobada en rojo).

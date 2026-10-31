@@ -13,7 +13,7 @@ export type OpcionMas = {
   /** Página del sitio que abre; sin destino ni pantalla, soporte por WhatsApp. */
   destino?: string;
   /** C-APP-RESTAURANTE-PAR: pantalla de la propia app (sin salir al panel web). */
-  pantalla?: 'resenas' | 'horario';
+  pantalla?: 'resenas' | 'horario' | 'restaurante' | 'ganancias' | 'equipo' | 'configuracion';
 };
 
 const T = {
@@ -75,12 +75,13 @@ export function opcionesMasRestaurante(
     {
       titulo: t.local,
       opciones: [
-        o('restaurante', '/panel/restaurant'),
+        // C-MAS-EN-LA-APP: se abren dentro de la app, como DoorDash Merchant.
+        o('restaurante', undefined, 'restaurante'),
         o('horario', undefined, 'horario'),
-        o('ganancias', '/panel/earnings'),
+        o('ganancias', undefined, 'ganancias'),
         o('resenas', undefined, 'resenas'),
-        o('equipo', '/panel/team'),
-        o('configuracion', '/panel/settings'),
+        o('equipo', undefined, 'equipo'),
+        o('configuracion', undefined, 'configuracion'),
       ],
     },
     {

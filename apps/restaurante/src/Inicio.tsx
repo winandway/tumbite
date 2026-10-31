@@ -36,6 +36,7 @@ import {
   type Plato,
   textoActivacion,
   OPCIONES_COCINA_OCUPADA,
+  type OpcionMas,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -51,6 +52,7 @@ import {
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
 import { Mas } from './Mas';
+import { PantallaMas } from './MasPantallas';
 import { Resenas } from './Resenas';
 import { Horario } from './Horario';
 import type { Pestana } from './piezas/recursos';
@@ -305,7 +307,7 @@ export function Inicio() {
   const ancha = width >= 768;
   const [vista, setVista] = useState<Pestana>('inicio');
   // C-APP-RESTAURANTE-PAR: pantalla abierta desde «Más» (reseñas u horario).
-  const [pantallaMas, setPantallaMas] = useState<'resenas' | 'horario' | null>(null);
+  const [pantallaMas, setPantallaMas] = useState<NonNullable<OpcionMas['pantalla']> | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<'todos' | 'preparando' | 'listos' | 'completados'>('todos');
   const [platos, setPlatos] = useState<Plato[]>([]);
@@ -1172,6 +1174,8 @@ export function Inicio() {
       <Resenas alVolver={() => setPantallaMas(null)} />
     ) : pantallaMas === 'horario' ? (
       <Horario alVolver={() => setPantallaMas(null)} />
+    ) : pantallaMas ? (
+      <PantallaMas pantalla={pantallaMas} alVolver={() => setPantallaMas(null)} />
     ) : (
       <Mas titulo={tr.mas} abrirPantalla={setPantallaMas} />
     );

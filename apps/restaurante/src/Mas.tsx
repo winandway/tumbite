@@ -1,5 +1,5 @@
 import { Linking, Pressable, Text, View } from 'react-native';
-import { opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
+import { type OpcionMas, opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
 import {
   C,
   OpcionesCuenta,
@@ -20,11 +20,11 @@ export function Mas({
 }: {
   titulo: string;
   /** C-APP-RESTAURANTE-PAR: reseñas y horario se abren dentro de la app. */
-  abrirPantalla: (p: 'resenas' | 'horario') => void;
+  abrirPantalla: (p: NonNullable<OpcionMas['pantalla']>) => void;
 }) {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
-  const abrir = (o: { destino?: string; pantalla?: 'resenas' | 'horario' }) =>
+  const abrir = (o: { destino?: string; pantalla?: OpcionMas['pantalla'] }) =>
     o.pantalla
       ? abrirPantalla(o.pantalla)
       : o.destino
