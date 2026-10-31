@@ -55,17 +55,45 @@ const TR = {
   },
 };
 
+/** Ventana de al menos 12 horas que contiene [primera, ultima], dentro de 0–23. */
+export function ventanaHoras(primera: number, ultima: number): [number, number] {
+  const falta = Math.max(0, 11 - (ultima - primera));
+  let desde = primera - Math.ceil(falta / 2);
+  let hasta = ultima + Math.floor(falta / 2);
+  if (desde < 0) [desde, hasta] = [0, hasta - desde];
+  if (hasta > 23) [desde, hasta] = [Math.max(0, desde - (hasta - 23)), 23];
+  return [desde, hasta];
+}
+
+/** «8a», «12p», «5p» en inglés; «8», «12», «17» en español (como el reloj de cada país). */
+export function horaCorta(h: number, idioma: string): string {
+  if (idioma !== 'en') return String(h);
+  return `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'a' : 'p'}`;
+}
+
 /** Barras simples en vista nativa (sin librerías): la más alta llena el alto. */
 function Barras({ valores, etiquetas }: { valores: number[]; etiquetas: string[] }) {
   const max = Math.max(1, ...valores);
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 110 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        gap: 3,
+        height: 110,
+      }}
+    >
       {valores.map((v, i) => (
-        <View key={etiquetas.at(i) ?? String(i)} style={{ flex: 1, alignItems: 'center' }}>
+        // Barras finas como en los paneles de los grandes (no un bloque que llene el ancho).
+        <View
+          key={etiquetas.at(i) ?? String(i)}
+          style={{ flex: 1, alignItems: 'center', maxWidth: 28 }}
+        >
           <View
             accessibilityLabel={`${etiquetas.at(i) ?? String(i)}: ${v}`}
             style={{
-              width: '100%',
+              width: '70%',
               height: Math.max(2, Math.round((v / max) * 86)),
               borderRadius: 3,
               backgroundColor: v ? C.secundario : '#E6E7EA',
@@ -210,13 +238,17 @@ export function Estadisticas() {
                 const conPedidos = tablero.porHora
                   .map((h, i) => (h.pedidos ? i : -1))
                   .filter((i) => i >= 0);
-                const desde = Math.min(...conPedidos);
-                const hasta = Math.max(...conPedidos);
+                // Al menos 12 horas alrededor de las que tienen pedidos (como los paneles de los
+                // grandes): con un solo pedido ya no sale una barra que llena todo el ancho.
+                const [desde, hasta] = ventanaHoras(
+                  Math.min(...conPedidos),
+                  Math.max(...conPedidos),
+                );
                 const horas = tablero.porHora.slice(desde, hasta + 1);
                 return (
                   <Barras
                     valores={horas.map((h) => h.pedidos)}
-                    etiquetas={horas.map((_, i) => String(desde + i))}
+                    etiquetas={horas.map((_, i) => horaCorta(desde + i, idioma))}
                   />
                 );
               })()}
