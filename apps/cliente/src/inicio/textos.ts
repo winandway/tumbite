@@ -44,6 +44,11 @@ const es = {
   enConstruccion: 'En construcción',
   loQueViene: 'Lo que vas a poder hacer',
   abrirServicio: 'Abrir',
+  envioAB: 'De A a B',
+  envioABAyuda: 'Manda algo cerca, hoy: un repartidor lo recoge y lo entrega.',
+  envioBloque: 'Bloque de logística',
+  envioBloqueAyuda:
+    'Para empresas: rutas con muchos paquetes, centros de carga y entregas con prueba.',
   detalleServicio: {
     comida: [
       'Pedir a tus restaurantes favoritos',
@@ -191,6 +196,11 @@ const en: typeof es = {
   enConstruccion: 'Under construction',
   loQueViene: 'What you’ll be able to do',
   abrirServicio: 'Open',
+  envioAB: 'From A to B',
+  envioABAyuda: 'Send something nearby today: a driver picks it up and delivers it.',
+  envioBloque: 'Logistics block',
+  envioBloqueAyuda:
+    'For businesses: routes with many packages, loading hubs and proof of delivery.',
   detalleServicio: {
     comida: [
       'Order from your favorite restaurants',

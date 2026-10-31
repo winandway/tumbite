@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -156,8 +156,57 @@ export default function PantallaServicio() {
             />
           </View>
         ) : null}
+        {/* C-ENVIOS-DOS-TIPOS (30 oct 2026): en Envíos se elige entre algo cerca (de A a B) y un
+            bloque de logística para empresas (Divoox Flex), los dos en el color de logística. */}
+        {id === 'envios' ? (
+          <View style={{ marginTop: 18, gap: 10 }} testID="envios-tipos">
+            {[
+              {
+                titulo: t.envioAB,
+                ayuda: t.envioABAyuda,
+                ir: () => router.push({ pathname: '/ride', params: { servicio: 'envios' } }),
+                activo: accion === 'abrir',
+              },
+              {
+                titulo: t.envioBloque,
+                ayuda: t.envioBloqueAyuda,
+                ir: () =>
+                  void Linking.openURL(
+                    `https://divoox.com${idioma === 'es' ? '/es' : ''}/business`,
+                  ),
+                activo: true,
+              },
+            ].map((o) => (
+              <Pressable
+                key={o.titulo}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.titulo}. ${o.ayuda}`}
+                disabled={!o.activo}
+                onPress={o.ir}
+                style={{
+                  backgroundColor: o.activo ? C.logistica : C.logisticaSuave,
+                  borderRadius: 12,
+                  padding: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    color: o.activo ? '#FFFFFF' : C.logistica,
+                    fontWeight: '800',
+                    fontSize: 17,
+                  }}
+                >
+                  {o.titulo}
+                </Text>
+                <Text style={{ color: o.activo ? '#E7F1F8' : C.logistica, marginTop: 4 }}>
+                  {o.ayuda}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
         {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}
-        {accion === 'abrir' && (id === 'moto' || id === 'carro' || id === 'envios') ? (
+        {accion === 'abrir' && (id === 'moto' || id === 'carro') ? (
           <View style={{ marginTop: 18 }}>
             <Boton
               texto={t.abrirServicio}

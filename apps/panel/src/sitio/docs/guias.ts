@@ -636,6 +636,7 @@ const es: SeccionDocs[] = [
           'En la loseta del inicio, una etiqueta pequeña dice «Pronto» cuando el servicio viene, «En pausa» si se detuvo un tiempo, o «Actualiza» si tu versión de la app es muy vieja para usarlo. Sin etiqueta, el servicio funciona.',
           'Qué estado tiene cada servicio depende de tu ciudad: un servicio puede estar abierto en una y en construcción en otra. La app lo pregunta cada vez que entras.',
           'Comida: pide a restaurantes de tu ciudad. Moto y Carro: viajes. Envíos: paquetes por la ciudad. Mercado y Farmacia: compras por encargo. Licores: solo para mayores de 21 años, con verificación de edad. Más: lo que venga después.',
+          'Envíos tiene dos caminos, los dos en el color azul de logística: «De A a B», para mandar algo cerca hoy, y «Bloque de logística», para empresas que reparten muchos paquetes con Divoox Flex.',
         ],
         capturas: [
           {
@@ -4174,6 +4175,7 @@ const en: SeccionDocs[] = [
           'On the home tile, a small label says “Soon” when the service is coming, “Paused” if it stopped for a while, or “Update” if your app version is too old to use it. No label means the service works.',
           'Each service’s status depends on your city: a service can be open in one and under construction in another. The app checks every time you open it.',
           'Food: order from restaurants in your city. Moto and Car: rides. Delivery: packages across town. Grocery and Pharmacy: shopping on request. Liquor: ages 21+ only, with age verification. More: whatever comes next.',
+          'Delivery has two paths, both in the blue logistics color: “From A to B”, to send something nearby today, and “Logistics block”, for businesses that deliver many packages with Divoox Flex.',
         ],
         capturas: [
           {
