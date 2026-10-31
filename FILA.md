@@ -18,7 +18,7 @@
 - [x] (I5) Llave de notificaciones de Apple (APNs): crearla en el portal de Apple y cargarla en EAS para las tres apps, sin contraseña. EE. UU.
 - [x] (I4) Fichas de la App Store en inglés y español con capturas reales (10, 7 y 4 + iPad), categoría, edad, copyright, precio gratis, solo EE. UU. y cuentas de revisión. EE. UU.
 - [x] (I6) Privacidad de la app publicada en las tres apps (todo vinculado al usuario, nada de seguimiento) y derechos de contenido declarados. Restaurants con su compilación adjunta y ENVIADA a revisión de Apple (30 oct, a2d030b). EE. UU.
-- [ ] (I7) Divoox y Driver: Apple rechazó sus compilaciones por falta del texto del sensor de movimiento (C-IOS-TEXTOS-PERMISO, 5635d7b); se compilan otra vez y, al quedar procesadas, se adjuntan y se envían a revisión con scripts/tiendas/enviar-revision-ios.mjs. EE. UU.
+- [x] (I7, 31 oct 00:20: Divoox compilación 8 y Driver compilación 3, con el arreglo 5ef2786, adjuntas y «esperando revisión» en Apple) Divoox y Driver: Apple rechazó sus compilaciones por falta del texto del sensor de movimiento (C-IOS-TEXTOS-PERMISO, 5635d7b); se compilan otra vez y, al quedar procesadas, se adjuntan y se envían a revisión con scripts/tiendas/enviar-revision-ios.mjs. EE. UU.
 
 ## Divoox Flex como Amazon Flex (bloque real de Richard, 30 oct 2026; ficha docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md)
 
@@ -169,3 +169,4 @@
 - 30 oct 2026, 10:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace 23 minutos). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Se esperó a que terminara la publicación en curso; pruebas y producción (divoox.com) muestran el último commit (e9be234). No se tocó código.
 - 30 oct 2026, 14:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace tres horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard (Rewards Fase 3 espera su orden; la rama fase-rewards-2 sigue solo en pruebas). Producción (divoox.com) muestra el último commit (bb587af). No se tocó código.
 - 30 oct 2026, 16:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra el último commit publicado (bb587af; los posteriores son [skip ci]). No se tocó código.
+- 31 oct 2026, 00:20 (tarea programada): otra sesión compiló Divoox y Driver para iPhone con el arreglo del sensor de movimiento; esta tarea esperó a que Apple las procesara, adjuntó la de Driver y envió las dos a revisión. Las tres apps de iPhone quedan en revisión de Apple. Lo demás de la fila es de Richard. EE. UU.
