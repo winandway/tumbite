@@ -2050,3 +2050,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué se veía:** un restaurante abierto todo el día pero sin su panel o app escuchando aparecía «Abre mañana a las 12:00» (la próxima apertura inventada) y el texto se cortaba en la tarjeta. Visto en el simulador de iPhone con Pizzería Demo Novi.
 - **Arreglo:** `textoNoDisponible` (`packages/compartido/src/horarios.ts`): en horario pero sin recibir → «No recibe pedidos ahora»; fuera de horario → cuándo abre; cerrado a mano o sin horario → «Cerrado». Lo usan la lista de restaurantes, el inicio y la ficha del restaurante. La fila del estado baja de línea en vez de cortarse. Pruebas en `horarios.test.ts`.
+
+## C-RUTA-SIN-BARRA (31 oct 2026) — todos los países
+
+- **Qué se veía:** al entrar al panel del restaurante por «/panel/» (con barra final) salía «Esta sección llega en el siguiente paso» en vez del tablero.
+- **Arreglo:** `sinBarraFinal` en `apps/panel/src/ruta.ts`: la dirección se lee sin la barra del final (salvo «/»). Prueba `apps/panel/src/ruta.test.tsx`.
