@@ -10,6 +10,13 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Apps de iPhone (membresía de Apple activa el 30 oct 2026; llave de API guardada en ~/.config/tumbite/apple-asc)
+
+- [ ] (I1) Asociar en el portal de Apple el identificador de Apple Pay (merchant.com.tumbite.cliente) a la app del cliente y encender notificaciones en Driver y Restaurante. EE. UU.
+- [ ] (I2) Compilar las tres apps de iPhone con EAS (cliente, Driver y Restaurante). EE. UU.
+- [ ] (I3) Crear las tres apps en App Store Connect (Divoox, Divoox Driver, Divoox Restaurants) y subir las compilaciones a TestFlight. EE. UU.
+- [ ] (I4) Fichas de la App Store en inglés y español con capturas reales, privacidad, clasificación por edad y cuentas de revisión; dejar listas para «Enviar a revisión». EE. UU.
+
 ## Divoox Flex como Amazon Flex (bloque real de Richard, 30 oct 2026; ficha docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md)
 
 - [x] (F1) Color propio de logística en MARCA y en toda pantalla de Flex y Envíos (Driver, cliente y panel de empresa), distinto de comida. Todos los países.
