@@ -397,7 +397,7 @@ for (const P of PAISES) {
         .click();
       await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
       await cli.getByRole('radio', { name: L.enPuerta }).click();
-      await cli.getByLabel(L.direccionEntrega).fill('Calle de prueba 200, apto 3');
+      await cli.getByLabel(L.direccionCampo).fill('Calle de prueba 200, apto 3');
       // La tarjeta solo cobra en dólares: en esta moneda no se ofrece.
       await expect(cli.getByRole('radio', { name: /^(Card|Tarjeta)$/ })).toHaveCount(0);
       await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();

@@ -742,11 +742,11 @@ for (const idioma of ['en', 'es'] as const) {
       if (modo === 'recoger') {
         // Recogida en el local: sin dirección ni envío.
         await cli.getByRole('radio', { name: L.recojo }).click();
-        await expect(cli.getByLabel(L.direccionEntrega)).toHaveCount(0);
+        await expect(cli.getByLabel(L.direccionCampo)).toHaveCount(0);
       } else {
         // El borrador del carrito recuerda la última elección: se vuelve a «En la puerta».
         await cli.getByRole('radio', { name: L.enPuerta }).click();
-        await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+        await cli.getByLabel(L.direccionCampo).fill('200 S Biscayne Blvd, Apt 12');
       }
       if (fotoCarrito) {
         await mapaListo(cli);
@@ -1204,7 +1204,7 @@ for (const idioma of ['en', 'es'] as const) {
       );
       await expect(direccionGuardada).toBeVisible({ timeout: 20_000 });
       await direccionGuardada.click();
-      await expect(cli.getByLabel(L.direccionEntrega)).toHaveValue('200 S Biscayne Blvd, Apt 12');
+      await expect(cli.getByLabel(L.direccionCampo)).toHaveValue('200 S Biscayne Blvd, Apt 12');
       await mapaListo(cli);
       await direccionGuardada.scrollIntoViewIfNeeded();
       await foto(cli, 'cliente-direcciones');
@@ -1621,7 +1621,7 @@ for (const idioma of ['en', 'es'] as const) {
           .click();
         await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
         await cli.getByRole('radio', { name: L.enPuerta }).click();
-        await cli.getByLabel(L.direccionEntrega).fill('200 S Biscayne Blvd, Apt 12');
+        await cli.getByLabel(L.direccionCampo).fill('200 S Biscayne Blvd, Apt 12');
         await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();
         const [resp] = await Promise.all([
           cli.waitForResponse(
