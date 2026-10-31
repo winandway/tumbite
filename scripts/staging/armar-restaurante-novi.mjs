@@ -78,7 +78,11 @@ const datos = await api(
 exigir([200, 201].includes(datos.estado), `mi-restaurante: ${datos.estado} ${datos.d.error ?? ''}`);
 const rid = datos.d.restaurante.id;
 
-const menu = (await api('GET', '/datos/mi-restaurante/platos', undefined, token)).d.platos ?? [];
+// Los platos que ya tiene (se miran en la base: así correr el guion dos veces no los repite).
+const ya = await sql('SELECT nombre_es FROM platos WHERE restaurante_id = ?', [rid]);
+const nombres = new Set(
+  (ya.resultado?.results ?? ya.resultado ?? []).map((f) => f.nombre_es).filter(Boolean),
+);
 const PLATOS = [
   { nombreEs: 'Porción de pizza de queso', nombreEn: 'Cheese pizza slice', precioCentavos: 300 },
   {
@@ -89,7 +93,7 @@ const PLATOS = [
   { nombreEs: 'Refresco', nombreEn: 'Soda', precioCentavos: 150 },
 ];
 for (const p of PLATOS) {
-  if (menu.some((m) => m.nombreEs === p.nombreEs || m.nombre_es === p.nombreEs)) continue;
+  if (nombres.has(p.nombreEs)) continue;
   const r = await api(
     'POST',
     '/datos/mi-restaurante/platos',
