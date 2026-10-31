@@ -2072,3 +2072,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se veía:** en el simulador de iPhone, «Pedir otra vez» abría el carrito lleno y a los pocos segundos quedaba «Tu carrito está vacío», sin tocar nada.
 - **Causa real:** la pantalla del pedido pregunta el seguimiento cada 5 segundos y en cada vuelta vaciaba el carrito si el pedido no estaba en «pago pendiente». Al abrir el carrito encima, la pantalla seguía viva detrás y borraba el carrito nuevo. Le pasaba a cualquiera con un pedido abierto detrás que empezara otro carrito.
 - **Arreglo:** se vacía una sola vez y solo al llegar recién pagado (`?nuevo=1`, que usan el pago en la app, el pago en la web con 3D Secure y el cobro directo). Prueba `packages/compartido/src/carritoNoSeBorra.test.ts` (comprobada en rojo).
+
+## C-STRIPE-ES419 (31 oct 2026) — EE. UU. (app de iPhone del cliente)
+
+- **Qué se veía:** en la hoja de pago, en español, «permites que {Divoox} cargue en tu tarjeta…» (con llaves).
+- **Causa real:** la traducción es-419 del SDK de Stripe para iPhone trae «{%@}» (la es-ES está bien). Nuestro `merchantDisplayName` es correcto.
+- **Arreglo:** `plugins/stripe-espanol.js` agrega al `post_install` del Podfile un paso que cambia «{%@}» por «%@» en las traducciones de StripePaymentSheet. Comprobado: después de `pod install` el texto sale sin llaves. Prueba `packages/compartido/src/stripeEspanol.test.ts`. Se quita cuando Stripe corrija su traducción.

@@ -84,7 +84,8 @@
           "enableGooglePay": true
         }
       ],
-      "../../plugins/escenas-ios"
+      "../../plugins/escenas-ios",
+      "../../plugins/stripe-espanol"
     ],
     "description": "Food delivery in Miami. Order from local restaurants and track your driver live.",
     "owner": "windoce-llc",
