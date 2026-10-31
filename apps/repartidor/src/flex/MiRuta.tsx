@@ -2404,14 +2404,44 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
  * C-COLOR-LOGISTICA: «Mi ruta» lleva arriba la franja de Divoox Flex en el color de logística, para
  * reconocer de un vistazo una captura de logística frente a una de comida.
  */
-export function MiRuta(props: Parameters<typeof MiRutaContenido>[0]) {
+export function MiRuta({
+  alSeguridad,
+  ...props
+}: Parameters<typeof MiRutaContenido>[0] & {
+  /** C-SEGURIDAD-A-LA-VISTA: «Ayuda de emergencia» siempre a la vista, como Amazon Flex. */
+  alSeguridad?: () => void;
+}) {
   return (
     <View style={{ flex: 1 }}>
       <View
         testID="franja-logistica"
-        style={{ backgroundColor: C.logistica, paddingVertical: 8, paddingHorizontal: 16 }}
+        style={{
+          backgroundColor: C.logistica,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
         <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>DIVOOX FLEX</Text>
+        {alSeguridad ? (
+          <Pressable
+            onPress={alSeguridad}
+            accessibilityRole="button"
+            testID="ayuda-emergencia"
+            style={{
+              paddingVertical: 4,
+              paddingHorizontal: 10,
+              borderRadius: 999,
+              backgroundColor: '#fff',
+            }}
+          >
+            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 12 }}>
+              {props.idioma === 'en' ? 'Emergency help' : 'Ayuda de emergencia'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
       <MiRutaContenido {...props} />
     </View>

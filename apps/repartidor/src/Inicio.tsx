@@ -1446,7 +1446,13 @@ export function Inicio() {
   if (vista === 'miRuta')
     return lienzo(
       'pedidos',
-      <MiRuta key={rutaDelAviso ?? 'lista'} api={api} idioma={idioma} abrirRutaId={rutaDelAviso} />,
+      <MiRuta
+        key={rutaDelAviso ?? 'lista'}
+        api={api}
+        idioma={idioma}
+        abrirRutaId={rutaDelAviso}
+        alSeguridad={() => setVista('seguridad')}
+      />,
     );
   if (vista === 'alta')
     return lienzo(
@@ -2327,6 +2333,46 @@ export function Inicio() {
           alto={alturaMapa}
           etiquetas={etiquetasMapa}
         />
+        {estado?.conectado ? (
+          // C-SEGURIDAD-A-LA-VISTA (31 oct 2026, como el escudo de SafeDash en el mapa de DoorDash):
+          // mientras trabaja, la seguridad está a un toque, sin buscarla en el menú.
+          <Pressable
+            onPress={() => setVista('seguridad')}
+            accessibilityRole="button"
+            accessibilityLabel={idioma === 'en' ? 'Safety' : 'Seguridad'}
+            testID="escudo-seguridad"
+            style={{
+              position: 'absolute',
+              top: 24,
+              right: 16,
+              zIndex: 3,
+              backgroundColor: '#fff',
+              borderRadius: 999,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              borderWidth: 1,
+              borderColor: '#E3E6EB',
+            }}
+          >
+            <View
+              style={{
+                width: 12,
+                height: 14,
+                borderTopLeftRadius: 3,
+                borderTopRightRadius: 3,
+                borderBottomLeftRadius: 7,
+                borderBottomRightRadius: 7,
+                backgroundColor: C.primario,
+              }}
+            />
+            <Text style={{ fontWeight: '800', fontSize: 12, color: C.secundario }}>
+              {idioma === 'en' ? 'Safety' : 'Seguridad'}
+            </Text>
+          </Pressable>
+        ) : null}
         {aqui ? (
           <View
             style={{
