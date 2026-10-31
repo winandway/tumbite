@@ -1428,6 +1428,11 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [
+    /^Estás fuera del área de entrega \(a (\d+) m\)\. Acércate a la dirección para entregar o escribe a soporte\.$/,
+    (m) =>
+      `You’re outside the delivery area (${m[1]} m away). Get closer to the address to deliver, or message support.`,
+  ],
+  [
     /^En el piloto cada pedido puede ser de hasta \$([\d.]+)\.$/,
     (m) => `In the pilot each order can be up to $${m[1]}.`,
   ],

@@ -1205,3 +1205,35 @@ describe('Flex · etiqueta con ruta y parada', () => {
     expect(JSON.stringify(et)).not.toContain('telefono');
   });
 });
+
+// C-FLEX-GEOCERCA (30 oct 2026, como «Fuera de área de entrega» de Amazon Flex).
+describe('Flex · geocerca de entrega (C-FLEX-GEOCERCA)', () => {
+  it('lejos de la dirección no deja entregar; en la puerta sí', async () => {
+    const m = mundo();
+    const { cond, C, paradas } = await rutaEnCurso(m, 1, 1);
+    const p = paradas[0];
+    const foto = await subir(m, `${C}/paradas/${p.id}/prueba`, cond.token);
+    const env = await m.DB.prepare(
+      'SELECT e.lat, e.lng FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id WHERE rp.id = ?',
+    )
+      .bind(p.id)
+      .first<{ lat: number; lng: number }>();
+    const lejos = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lat: env!.lat + 0.03, lng: env!.lng },
+      cond.token,
+    );
+    expect(lejos.estado).toBe(409);
+    expect(lejos.datos.campo).toBe('ubicacion');
+    const cerca = await llamar(
+      m,
+      'POST',
+      `${C}/paradas/${p.id}/entregar`,
+      { fotoId: foto.datos.pruebaId, recibio: 'Portero', lat: env!.lat + 0.0005, lng: env!.lng },
+      cond.token,
+    );
+    expect(cerca.estado).toBe(200);
+  });
+});

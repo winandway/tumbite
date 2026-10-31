@@ -21,6 +21,7 @@ import {
   leerCodigoEscaneado,
   pruebasFaltantes,
   validarCobro,
+  distanciaKm,
 } from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
@@ -51,6 +52,9 @@ import { traducirError, volverABorrador } from './rutasEmpresa';
  * sin duplicar nada).
  */
 export const flexConductor = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+/** C-FLEX-GEOCERCA: distancia máxima entre el celular y la dirección para poder entregar. */
+export const RADIO_ENTREGA_M = 200;
 
 const punto = {
   lat: z.number().min(-90).max(90).nullable().optional(),
@@ -508,7 +512,7 @@ async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
   const f = await db
     .prepare(
       `SELECT rp.id, rp.envio_id, rp.estado, e.config_entrega_json AS envio_cfg, em.config_entrega_json AS empresa_cfg,
-         em.pais, e.cobro_monto, e.cobro_moneda, e.cobro_estado
+         em.pais, e.cobro_monto, e.cobro_moneda, e.cobro_estado, e.lat AS destino_lat, e.lng AS destino_lng
          FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id JOIN empresas em ON em.id = e.empresa_id
         WHERE rp.id = ? AND rp.ruta_id = ?`,
     )
@@ -517,6 +521,8 @@ async function paradaDe(db: D1Database, rutaId: string, paradaId: string) {
       id: string;
       envio_id: string;
       estado: string;
+      destino_lat: number | null;
+      destino_lng: number | null;
       envio_cfg: string | null;
       empresa_cfg: string | null;
       pais: string | null;
@@ -750,6 +756,20 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/entregar', async 
           undefined,
           409,
         );
+      }
+      // C-FLEX-GEOCERCA (como Amazon Flex): con la ubicación del celular, no se entrega lejos de
+      // la dirección. Si hace falta (dirección mal puesta), soporte lo resuelve aparte.
+      if (d.lat != null && d.lng != null && p.destino_lat != null && p.destino_lng != null) {
+        const metros = Math.round(
+          distanciaKm({ lat: d.lat, lng: d.lng }, { lat: p.destino_lat, lng: p.destino_lng }) *
+            1000,
+        );
+        if (metros > RADIO_ENTREGA_M)
+          throw new ErrorDatos(
+            `Estás fuera del área de entrega (a ${metros} m). Acércate a la dirección para entregar o escribe a soporte.`,
+            'ubicacion',
+            409,
+          );
       }
       const config = configEntrega(p.empresa_cfg, p.envio_cfg);
       const sinContacto = d.sinContacto && config.sinContacto;
