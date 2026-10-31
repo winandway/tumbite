@@ -156,6 +156,8 @@ type Estado = {
   selfieControlPendiente?: boolean;
   /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
   terminosPorAceptar?: string | null;
+  /** Días sin conectarse cuando son 14 o más (bienvenida de vuelta). */
+  vuelveTrasDias?: number | null;
   /** C-PRUEBA-DE-VIDA: cuál de las dos fotos falta. */
   selfieControlFalta?: 'frente' | 'giro' | null;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
@@ -191,6 +193,10 @@ const T = {
     ubicacionTarda:
       'No pudimos leer tu ubicación. Revisa que el GPS esté encendido y que Divoox tenga permiso de ubicación, y vuelve a intentar.',
     buscando: 'Buscando pedidos cerca de ti…',
+    buscandoAyuda:
+      'Es más probable que recibas ofertas en las zonas en rojo del mapa, sobre todo a la hora del almuerzo y de la cena.',
+    bienvenida: (n: string) => `¡Qué bueno verte de nuevo, ${n}!`,
+    bienvenidaNivel: 'El tiempo que estuviste fuera no cambió tu nivel. Conéctate cuando quieras.',
     oferta: 'Nueva oferta',
     ganas: 'Ganas',
     propinaIncluida: 'incluye propina de',
@@ -310,6 +316,10 @@ const T = {
     ubicacionTarda:
       'We couldn’t read your location. Make sure GPS is on and Divoox has location permission, then try again.',
     buscando: 'Looking for orders near you…',
+    buscandoAyuda:
+      'You’re more likely to get offers in the red areas on the map, especially around lunch and dinner.',
+    bienvenida: (n: string) => `Good to see you again, ${n}!`,
+    bienvenidaNivel: 'Your time away didn’t change your level. Go online whenever you like.',
     oferta: 'New offer',
     ganas: 'You earn',
     propinaIncluida: 'includes a tip of',
@@ -2369,7 +2379,23 @@ export function Inicio() {
       <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
         {mensajes}
         {estado?.conectado ? (
-          <Text style={e.tarjeta}>{estado.pausado ? tg.pausa.enPausa : t.buscando}</Text>
+          // Como «Buscando ofertas… zonas populares» de DoorDash: dónde y cuándo hay más ofertas.
+          <View style={e.tarjeta}>
+            <Text style={{ fontWeight: '800' }}>
+              {estado.pausado ? tg.pausa.enPausa : t.buscando}
+            </Text>
+            {!estado.pausado ? (
+              <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.buscandoAyuda}</Text>
+            ) : null}
+          </View>
+        ) : estado?.vuelveTrasDias ? (
+          // Como «¡Qué bueno verte de nuevo!» de DoorDash al volver después de un tiempo.
+          <View style={e.tarjeta} testID="bienvenida">
+            <Text style={{ fontWeight: '800', fontSize: 16 }}>
+              {t.bienvenida(usuario?.nombre.split(' ')[0] ?? '')}
+            </Text>
+            <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
+          </View>
         ) : null}
         {ofertasViaje[0] && !ofertas[0] ? (
           <OfertaViajeModal

@@ -1074,8 +1074,13 @@ operacion.get('/repartidor/estado', async (c) => {
     .bind(u.id)
     .first<{ clave: string }>();
   const terminos = await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo));
+  // Días sin conectarse (desde su última ubicación), solo si son DIAS_PARA_VERIFICAR_AL_VOLVER o más.
+  const ultima = ficha.ubicacion_en ? Date.parse(`${String(ficha.ubicacion_en)}Z`) : NaN;
+  const dias = Number.isFinite(ultima) ? Math.floor((Date.now() - ultima) / 86_400_000) : 0;
   return c.json({
     terminosPorAceptar: terminos,
+    vuelveTrasDias:
+      Number(ficha.conectado) !== 1 && dias >= DIAS_PARA_VERIFICAR_AL_VOLVER ? dias : null,
     selfieControlPendiente: Boolean(selfiePendiente),
     // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
     selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,

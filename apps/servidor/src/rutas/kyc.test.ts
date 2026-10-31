@@ -178,6 +178,9 @@ describe('identidad continua y antecedentes con Checkr (C-ANTECEDENTES)', () => 
     )
       .bind(vuelve.id)
       .run();
+    // La app le da la bienvenida de vuelta (como DoorDash).
+    const estadoVuelta = await m.llamar('GET', '/datos/repartidor/estado', undefined, vuelve.token);
+    expect(estadoVuelta.datos.vuelveTrasDias).toBeGreaterThanOrEqual(14);
     const r = await conectar(vuelve.token);
     expect(r.estado).toBe(409);
     expect(r.datos.campo).toBe('selfie');
