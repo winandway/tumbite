@@ -1,19 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { horaCorta, ventanaHoras } from './graficaHoras';
 
-vi.mock('react-native', () => ({
-  Text: 'Text',
-  View: 'View',
-  Pressable: 'Pressable',
-  ScrollView: 'ScrollView',
-}));
-vi.mock('@tumbite/movil', () => ({}));
-
-/**
- * Repaso de la app del restaurante (31 oct 2026): con un solo pedido, «Pedidos por hora» era un
- * bloque negro que llenaba todo el ancho. La gráfica muestra al menos 12 horas.
- */
-describe('gráfica de pedidos por hora', async () => {
-  const { ventanaHoras, horaCorta } = await import('../../../apps/restaurante/src/Estadisticas');
+/** Con un solo pedido, «Pedidos por hora» era un bloque negro de lado a lado. */
+describe('gráfica de pedidos por hora', () => {
   it('un solo pedido a las 8 muestra 12 horas alrededor', () => {
     const [d, h] = ventanaHoras(8, 8);
     expect(h - d).toBe(11);

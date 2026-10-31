@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
-import { ErrorApi, formatearMonto, nombrePlato } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  formatearMonto,
+  horaCorta,
+  nombrePlato,
+  ventanaHoras,
+} from '@tumbite/compartido';
 import { C, e, useSesion } from '@tumbite/movil';
 import { Pildora, Tarjeta } from './piezas/ui';
 import { textosRest } from './piezas/textos';
@@ -54,22 +60,6 @@ const TR = {
     reembolsos: 'Refunded',
   },
 };
-
-/** Ventana de al menos 12 horas que contiene [primera, ultima], dentro de 0–23. */
-export function ventanaHoras(primera: number, ultima: number): [number, number] {
-  const falta = Math.max(0, 11 - (ultima - primera));
-  let desde = primera - Math.ceil(falta / 2);
-  let hasta = ultima + Math.floor(falta / 2);
-  if (desde < 0) [desde, hasta] = [0, hasta - desde];
-  if (hasta > 23) [desde, hasta] = [Math.max(0, desde - (hasta - 23)), 23];
-  return [desde, hasta];
-}
-
-/** «8a», «12p», «5p» en inglés; «8», «12», «17» en español (como el reloj de cada país). */
-export function horaCorta(h: number, idioma: string): string {
-  if (idioma !== 'en') return String(h);
-  return `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'a' : 'p'}`;
-}
 
 /** Barras simples en vista nativa (sin librerías): la más alta llena el alto. */
 function Barras({ valores, etiquetas }: { valores: number[]; etiquetas: string[] }) {
