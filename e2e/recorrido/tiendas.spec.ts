@@ -185,7 +185,7 @@ for (const idioma of ['es', 'en'] as const) {
     await cli.getByText('Mercado Ejemplo').first().scrollIntoViewIfNeeded();
     await foto(cli, 'cliente-carrito');
     await cli
-      .getByLabel(idioma === 'en' ? 'Delivery address' : 'Dirección de entrega')
+      .getByLabel(idioma === 'en' ? 'Street address' : 'Calle y número')
       .fill('200 S Biscayne Blvd, Apt 12');
     const [resp] = await Promise.all([
       cli.waitForResponse(
