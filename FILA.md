@@ -13,9 +13,9 @@
 ## Apps de iPhone (membresía de Apple activa el 30 oct 2026; llave de API guardada en ~/.config/tumbite/apple-asc)
 
 - [x] (I1) Asociar en el portal de Apple el identificador de Apple Pay (merchant.com.tumbite.cliente) a la app del cliente y encender notificaciones en Driver y Restaurante. EE. UU.
-- [ ] (I2) Compilar las tres apps de iPhone con EAS (cliente, Driver y Restaurante). EE. UU.
+- [x] (I2) Compilar las tres apps de iPhone con EAS (cliente, Driver y Restaurante). EE. UU.
 - [ ] (I3) Crear las tres apps en App Store Connect (HECHO: Divoox 6829108108, Driver 6829108327, Restaurants 6829108322; falta subir a TestFlight) (Divoox, Divoox Driver, Divoox Restaurants) y subir las compilaciones a TestFlight. EE. UU.
-- [ ] (I5) Llave de notificaciones de Apple (APNs): crearla en el portal de Apple y cargarla en EAS para las tres apps, sin contraseña. EE. UU.
+- [x] (I5) Llave de notificaciones de Apple (APNs): crearla en el portal de Apple y cargarla en EAS para las tres apps, sin contraseña. EE. UU.
 - [ ] (I4) Fichas de la App Store en inglés y español con capturas reales, privacidad, clasificación por edad y cuentas de revisión; dejar listas para «Enviar a revisión». EE. UU.
 
 ## Divoox Flex como Amazon Flex (bloque real de Richard, 30 oct 2026; ficha docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md)
