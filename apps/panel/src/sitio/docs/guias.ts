@@ -1915,6 +1915,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Las empresas te asignan u ofrecen rutas de paquetes. Las aceptas, cargas escaneando cada paquete, sigues las paradas en orden, entregas con foto, PIN o firma y devuelves al centro lo que no se pudo entregar.',
         explicacion: [
+          'Todo Divoox Flex va en azul, el color de logística, para que nunca se confunda con un pedido de comida. Durante la ruta tienes cuatro vistas: Mapa (con filtros Todos, Apartamentos y Prioridad), Lista (cada parada entregada dice a qué hora), Línea de ruta y Resumen (lo que te falta, y cuántas paradas van pendientes, correctas o con problemas).',
           'En el menú de Divoox Driver entra a «Mi ruta (paquetes)». Ahí ves las rutas que te asignó una empresa con la que trabajas y las que te ofrecen (con la hora en que vence la oferta). Mientras haces una ruta no recibes otras rutas ni pedidos de comida.',
           'Te avisamos al celular cuando una empresa te ofrece o te asigna una ruta, cuando a tu oferta le quedan pocos minutos, si te la retiran o la cancelan, y cuando te autorizan reintentar una entrega. Toca el aviso y se abre esa ruta directamente.',
           'Al aceptar, ve al centro de la empresa y toca «Llegué al centro». Escanea cada paquete con la cámara (sirven el código QR y el código de barras de la etiqueta) o escribe su código. Si un paquete no está, márcalo como «No está en el centro». Cuando todo está cargado, toca «Salir a la ruta».',
@@ -5436,6 +5437,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Companies assign or offer you package routes. You accept, load by scanning every package, follow the stops in order, deliver with a photo, PIN or signature, and bring back to the hub whatever couldn’t be delivered.',
         explicacion: [
+          'All of Divoox Flex is blue, the logistics color, so it never gets confused with a food order. During the route you have four views: Map (with All, Apartments and Priority filters), List (each delivered stop shows the time), Timeline and Summary (what you have left, and how many stops are pending, done or with problems).',
           'In the Divoox Driver menu, open “My route (packages)”. There you see the routes a company you work with assigned to you and the ones offered to you (with the time the offer expires). While doing a route you get no other routes or food orders.',
           'We notify your phone when a company offers or assigns you a route, when your offer is about to expire, if it is withdrawn or canceled, and when you are authorized to retry a delivery. Tap the notification and that route opens directly.',
           'After accepting, go to the company’s hub and tap “I’m at the hub”. Scan every package with the camera (the label’s QR code and barcode both work) or type its code. If a package isn’t there, mark it “Not at the hub”. When everything is loaded, tap “Start the route”.',

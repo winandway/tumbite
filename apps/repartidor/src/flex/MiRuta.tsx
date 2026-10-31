@@ -34,6 +34,7 @@ import {
   pruebasFaltantes,
   sePuedeReintentar,
   validarCobro,
+  cumpleFiltro,
 } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
 import type { Punto } from '../piezas/mapaWeb';
@@ -249,7 +250,7 @@ function MiRutaContenido({
   const [ruta, setRuta] = useState<Ruta | null>(null);
   const [paradaId, setParadaId] = useState<string | null>(null);
   const [paqueteVer, setPaqueteVer] = useState<string | null>(null);
-  const [vistaRuta, setVistaRuta] = useState<'mapa' | 'lista' | 'linea'>('mapa');
+  const [vistaRuta, setVistaRuta] = useState<'mapa' | 'lista' | 'linea' | 'resumen'>('mapa');
   const [yo, setYo] = useState<Punto | null>(null);
   const [devoluciones, setDevoluciones] = useState<
     | {
@@ -863,6 +864,7 @@ function MiRutaContenido({
               { id: 'mapa', texto: t.vistas.mapa },
               { id: 'lista', texto: t.vistas.lista },
               { id: 'linea', texto: t.vistas.linea },
+              { id: 'resumen', texto: t.vistas.resumen },
             ]}
             activa={vistaRuta}
             alCambiar={setVistaRuta}
@@ -872,6 +874,8 @@ function MiRutaContenido({
             <VistaMapa {...{ t, idioma, ruta, siguiente, yo }} abrir={setParadaId} />
           ) : vistaRuta === 'linea' ? (
             <LineaRuta {...{ t, idioma, ruta, siguiente }} abrir={setParadaId} />
+          ) : vistaRuta === 'resumen' ? (
+            <TrabajoRestante t={t} ruta={ruta} />
           ) : (
             ruta.paradas.map((p) => (
               <Pressable
@@ -897,6 +901,11 @@ function MiRutaContenido({
                   </View>
                   <Listo marcado={p.estado === 'entregada'} />
                 </View>
+                {p.estado === 'entregada' && p.resueltaEn ? (
+                  <Text style={{ color: C.exito, fontWeight: '600' }}>
+                    {t.entregadaA(horaLocal(p.resueltaEn, idioma))}
+                  </Text>
+                ) : null}
                 <Text style={{ color: p.estado === 'fallida' ? C.acento : GRIS }}>
                   {t.estadosParada[p.estado] ?? p.estado} · {t.nPaquetes(paquetesActivos(p).length)}
                 </Text>
@@ -1147,10 +1156,22 @@ function VistaMapa({
   yo: Punto | null;
   abrir: (id: string) => void;
 }) {
-  const puntos = puntosDe(ruta, siguiente?.id ?? null, t);
+  // C-FLEX-FILTROS (como Amazon Flex): todas, solo apartamentos o solo las que tienen hora límite.
+  const [filtro, setFiltro] = useState<'todos' | 'apartamentos' | 'prioridad'>('todos');
+  const paradasFiltradas =
+    filtro === 'todos' ? ruta.paradas : ruta.paradas.filter((p) => cumpleFiltro(p, filtro));
+  const puntos = puntosDe({ ...ruta, paradas: paradasFiltradas }, siguiente?.id ?? null, t);
   const distancia = siguiente ? km(yo, coord(siguiente), t, idioma) : null;
   return (
     <>
+      <Pestanas
+        opciones={(['todos', 'apartamentos', 'prioridad'] as const).map((id) => ({
+          id,
+          texto: t.filtrosMapa[id],
+        }))}
+        activa={filtro}
+        alCambiar={setFiltro}
+      />
       {puntos.length ? (
         <MapaRuta puntos={puntos} yo={yo} etiqueta={t.vistas.mapa} />
       ) : (
@@ -2281,6 +2302,60 @@ export function MiRuta(props: Parameters<typeof MiRutaContenido>[0]) {
         <Text style={{ color: '#FFFFFF', fontWeight: '800', letterSpacing: 0.5 }}>DIVOOX FLEX</Text>
       </View>
       <MiRutaContenido {...props} />
+    </View>
+  );
+}
+
+/** Hora local corta de una fecha de la base («2026-10-30 18:18:00» en UTC). */
+function horaLocal(f: string, idioma: Idioma) {
+  return new Date(`${f.replace(' ', 'T')}Z`).toLocaleTimeString(
+    idioma === 'en' ? 'en-US' : 'es-US',
+    {
+      hour: 'numeric',
+      minute: '2-digit',
+    },
+  );
+}
+
+/**
+ * C-FLEX-RESUMEN (30 oct 2026, como «Resumen de itinerario» de Amazon Flex): lo que falta con su
+ * barra y las paradas Pendientes, Correcto y Problemas.
+ */
+function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
+  const total = ruta.paradas.length;
+  const correcto = ruta.paradas.filter((p) => p.estado === 'entregada').length;
+  const problemas = ruta.paradas.filter((p) => p.estado === 'fallida').length;
+  const pendientes = total - correcto - problemas;
+  const paquetes = ruta.paradas.flatMap((p) => p.paquetes).filter((q) => !q.excluido);
+  const paquetesHechos = paquetes.filter((q) => q.estado === 'entregado').length;
+  return (
+    <View testID="resumen-ruta" style={[tarjeta, { gap: 12 }]}>
+      <Text style={{ fontSize: 20, fontWeight: '900', color: C.secundario }}>
+        {t.trabajoRestante}
+      </Text>
+      <Barra
+        valor={total ? (total - pendientes) / total : 0}
+        etiqueta={`${pendientes} ${t.restantes.paradas}`}
+      />
+      <Barra
+        valor={paquetes.length ? paquetesHechos / paquetes.length : 0}
+        etiqueta={`${paquetes.length - paquetesHechos} ${t.restantes.paquetes}`}
+      />
+      {(
+        [
+          [t.estadoParadas.pendientes, pendientes, GRIS],
+          [t.estadoParadas.correcto, correcto, C.exito],
+          [t.estadoParadas.problemas, problemas, problemas ? C.acento : GRIS],
+        ] as const
+      ).map(([nombre, n, color]) => (
+        <View
+          key={nombre}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+        >
+          <Text style={{ fontSize: 16, color: C.secundario }}>{nombre}</Text>
+          <Text style={{ fontSize: 16, fontWeight: '800', color }}>{n}</Text>
+        </View>
+      ))}
     </View>
   );
 }
