@@ -65,7 +65,7 @@
           "locationWhenInUsePermission": "Divoox uses your location to show nearby restaurants and to deliver your order.",
           "locationAlwaysPermission": false,
           "locationAlwaysAndWhenInUsePermission": false,
-          "motionUsagePermission": false
+          "motionUsagePermission": "Divoox may use your phone’s motion sensors to turn the map toward the direction you are facing."
         }
       ],
       [

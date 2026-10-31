@@ -68,7 +68,7 @@
           "locationWhenInUsePermission": "Divoox uses your location to offer you nearby orders and to show your route while you deliver.",
           "locationAlwaysPermission": "Divoox keeps sending your location while you have an active delivery, even with the screen off.",
           "locationAlwaysAndWhenInUsePermission": "Divoox keeps sending your location while you have an active delivery, even with the screen off, so the customer and the restaurant can see where you are.",
-          "motionUsagePermission": false,
+          "motionUsagePermission": "Divoox may use your phone’s motion sensors to turn the map toward the direction you are driving and keep directions accurate.",
           "isAndroidBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": true
         }
