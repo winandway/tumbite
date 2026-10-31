@@ -134,10 +134,15 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
 
   // En el Driver: el código del pasajero, sin el interruptor del casco.
   const ctx = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
-  await ctx.addInitScript((pase) => {
-    localStorage.setItem('tumbite.idioma', 'es');
-    localStorage.setItem('tumbite.sesion', pase);
-  }, cond.token);
+  await ctx.addInitScript(
+    ([pase, id]) => {
+      localStorage.setItem('tumbite.idioma', 'es');
+      localStorage.setItem('tumbite.sesion', pase);
+      // C-PERMISOS-EXPLICADOS: esta cuenta ya vio la pantalla que explica los permisos.
+      localStorage.setItem(`divoox.permisos.${id}`, '1');
+    },
+    [cond.token, cond.usuario.id] as const,
+  );
   const pr = await ctx.newPage();
   await pr.goto('/driver');
   const codigo = pr.getByTestId('viaje-pin');
