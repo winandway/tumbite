@@ -2090,3 +2090,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** como DoorDash («Mira ligeramente a la derecha»), la foto de control son dos fotos: de frente y con la cabeza girada a la derecha. Una foto de una foto o de una pantalla no gira. El equipo ve las dos en el panel (Super › identidad) y marca si coincide. La comparación automática con IA sigue esperando el proveedor que decida Richard (K5).
 - **Servidor:** `POST /datos/kyc/selfie-control?pose=frente` y después `?pose=giro` (guardado como `<clave>-giro`); la foto queda «tomada» al llegar el giro. Sin `pose` funciona como antes (una sola foto) para las versiones de las apps que ya están en revisión. `estado.selfieControlFalta` dice cuál falta.
 - **Prueba:** `kyc.test.ts` (comprobada en rojo).
+
+## C-TERMINOS-ACTUALIZADOS (31 oct 2026) — todos los países
+
+- **Qué es:** como DoorDash («Acuerdo de términos y condiciones actualizado»), si los términos de los repartidores cambian, cada repartidor los lee y los acepta antes de conectarse. Queda registrado quién aceptó qué versión y cuándo (tabla `terminos_aceptados`, sin llave foránea para no trabar el borrado de cuentas).
+- **Cómo se cambia la versión:** `VERSION_TERMINOS` en `packages/compartido/src/terminos.ts` = la fecha de «Actualizado» de `apps/panel/src/sitio/legales.ts`. Al registrarse se acepta la vigente. Al revisor de las tiendas no se le pide.
+- **Prueba:** `apps/servidor/src/rutas/terminos.test.ts` (comprobada en rojo).

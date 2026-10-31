@@ -154,6 +154,8 @@ type Estado = {
   };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
+  terminosPorAceptar?: string | null;
   /** C-PRUEBA-DE-VIDA: cuál de las dos fotos falta. */
   selfieControlFalta?: 'frente' | 'giro' | null;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
@@ -232,6 +234,12 @@ const T = {
     tomarSelfie: 'Tomarme la foto ahora',
     selfieLista: 'Foto enviada. Ya puedes conectarte.',
     pasoFrente: 'Paso 1 de 2: mira de frente a la cámara.',
+    terminosTitulo: 'Actualizamos los términos para repartidores',
+    terminosAyuda:
+      'Antes de conectarte, léelos y acéptalos. Explican cómo funcionan tus ganancias, la seguridad y cómo se resuelven los desacuerdos.',
+    terminosLeer: 'Leer los términos',
+    terminosAcepto: 'He leído, comprendo y acepto los términos para repartidores',
+    terminosDeAcuerdo: 'De acuerdo',
     pasoGiro: 'Paso 2 de 2: gira la cabeza ligeramente a la derecha y toma la foto.',
     tomarGiro: 'Tomar la foto mirando a la derecha',
     llamandoCliente:
@@ -345,6 +353,12 @@ const T = {
     tomarSelfie: 'Take my photo now',
     selfieLista: 'Photo sent. You can go online now.',
     pasoFrente: 'Step 1 of 2: look straight at the camera.',
+    terminosTitulo: 'We updated the terms for drivers',
+    terminosAyuda:
+      'Before you go online, read and accept them. They explain how your earnings work, safety, and how disagreements are resolved.',
+    terminosLeer: 'Read the terms',
+    terminosAcepto: 'I have read, understand, and accept the driver terms',
+    terminosDeAcuerdo: 'I agree',
     pasoGiro: 'Step 2 of 2: turn your head slightly to the right and take the photo.',
     tomarGiro: 'Take the photo looking right',
     llamandoCliente:
@@ -488,6 +502,7 @@ export function Inicio() {
   const vigilante = useRef<Location.LocationSubscription | null>(null);
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
+  const [aceptoTerminos, setAceptoTerminos] = useState(false);
   // Precisión del GPS en metros (la reporta el celular); se manda con cada ubicación.
   const [precision, setPrecision] = useState<number | null>(null);
   const [motivoGps, setMotivoGps] = useState('');
@@ -1069,6 +1084,51 @@ export function Inicio() {
               })
             }
             cargando={subiendo}
+          />
+        </View>
+      ) : null}
+      {estado?.terminosPorAceptar ? (
+        // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): leer, marcar y aceptar.
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]} testID="terminos">
+          <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.terminosTitulo}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>{t.terminosAyuda}</Text>
+          <Text
+            accessibilityRole="link"
+            style={{ color: C.secundario, textDecorationLine: 'underline', marginBottom: 10 }}
+            onPress={() =>
+              void Linking.openURL(`https://divoox.com${idioma === 'es' ? '/es' : ''}/driver-terms`)
+            }
+          >
+            {t.terminosLeer}
+          </Text>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: aceptoTerminos }}
+            onPress={() => setAceptoTerminos((x) => !x)}
+            style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 10 }}
+          >
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                borderWidth: 2,
+                borderColor: aceptoTerminos ? C.primario : '#8A8A8A',
+                backgroundColor: aceptoTerminos ? C.primario : '#fff',
+              }}
+            />
+            <Text style={{ flex: 1 }}>{t.terminosAcepto}</Text>
+          </Pressable>
+          <Boton
+            texto={t.terminosDeAcuerdo}
+            alTocar={() => {
+              if (!aceptoTerminos || !estado?.terminosPorAceptar) return;
+              void api
+                .pedir('POST', '/datos/repartidor/terminos', { version: estado.terminosPorAceptar })
+                .then(() => cargar())
+                .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+            }}
+            secundario={!aceptoTerminos}
           />
         </View>
       ) : null}

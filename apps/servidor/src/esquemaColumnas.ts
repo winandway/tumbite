@@ -1961,5 +1961,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelta_por",
     "resuelta_en",
     "creado_en"
+  ],
+  "terminos_aceptados": [
+    "usuario_id",
+    "version",
+    "aceptado_en"
   ]
 };

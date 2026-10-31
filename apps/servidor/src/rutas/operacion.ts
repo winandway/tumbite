@@ -45,6 +45,7 @@ import {
   nivelDe,
   prepSugerida,
   paisDelCodigoZona,
+  VERSION_TERMINOS,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor } from './superadmin';
@@ -1035,6 +1036,36 @@ async function agrupadosDe(db: D1Database, repartidorId: string, activo: FilaPed
   return results.map(conDatosRestaurante);
 }
 
+/** La versión de los términos que le falta aceptar (null si ya la aceptó; al revisor nunca). */
+async function terminosPorAceptar(
+  db: D1Database,
+  usuarioId: string,
+  revisor: boolean,
+): Promise<string | null> {
+  if (revisor) return null;
+  const ya = await db
+    .prepare('SELECT 1 FROM terminos_aceptados WHERE usuario_id = ? AND version = ?')
+    .bind(usuarioId, VERSION_TERMINOS)
+    .first();
+  return ya ? null : VERSION_TERMINOS;
+}
+
+operacion.post('/repartidor/terminos', async (c) => {
+  const { u, db } = await miFicha(c);
+  const { version } = await leerCuerpo(c, z.object({ version: z.string().trim().min(1).max(20) }));
+  if (version !== VERSION_TERMINOS)
+    throw new ErrorDatos(
+      'Esa no es la versión vigente de los términos. Vuelve a abrir la app.',
+      undefined,
+      409,
+    );
+  await db
+    .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
+    .bind(u.id, version)
+    .run();
+  return c.json({ ok: true });
+});
+
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
@@ -1042,7 +1073,9 @@ operacion.get('/repartidor/estado', async (c) => {
     .prepare('SELECT clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
     .bind(u.id)
     .first<{ clave: string }>();
+  const terminos = await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo));
   return c.json({
+    terminosPorAceptar: terminos,
     selfieControlPendiente: Boolean(selfiePendiente),
     // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
     selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
@@ -1076,6 +1109,13 @@ operacion.post('/repartidor/conectar', async (c) => {
       'Antes de conectarte, verifica tu identidad en «Mis datos y vehículo».',
       'kyc',
       403,
+    );
+  // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
+  if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
+    throw new ErrorDatos(
+      'Actualizamos los términos para repartidores. Léelos y acéptalos para conectarte.',
+      'terminos',
+      409,
     );
   // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no
   // más de una por semana). Mientras esté pendiente, no se conecta. Al revisor de las tiendas no
