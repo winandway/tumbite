@@ -2055,3 +2055,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué se veía:** al entrar al panel del restaurante por «/panel/» (con barra final) salía «Esta sección llega en el siguiente paso» en vez del tablero.
 - **Arreglo:** `sinBarraFinal` en `apps/panel/src/ruta.ts`: la dirección se lee sin la barra del final (salvo «/»). Prueba `apps/panel/src/ruta.test.tsx`.
+
+## C-RECORRIDO-NO-PISA (31 oct 2026) — sitio de pruebas
+
+- **Qué pasó:** una prueba manual en el simulador de iPhone (pedido de Pizzería Demo Novi, Michigan) quedó «cancelado» sin historial justo después de aceptarse. Causa: el recorrido automático, al arrancar en el sitio de pruebas, cancelaba TODOS los pedidos aceptados sin repartidor y desconectaba a TODOS los repartidores.
+- **Arreglo:** el recorrido solo cancela pedidos de restaurantes del propio recorrido (dueños `@recorrido.test`) y solo desconecta repartidores de Miami (donde corre); carro y envíos igual. Prueba `packages/compartido/src/recorridoNoPisa.test.ts` (comprobada en rojo).
+- **Regla:** ninguna limpieza automática del sitio de pruebas toca datos que no sean suyos: ahí también prueban las personas (guía de pruebas con teléfonos).

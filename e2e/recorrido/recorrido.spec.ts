@@ -292,12 +292,14 @@ for (const idioma of ['en', 'es'] as const) {
     };
 
     // Si el recorrido del otro idioma se cayó a medias, sus pedidos sin repartidor no se le deben
-    // ofrecer al repartidor de este: se cierran antes de empezar.
+    // ofrecer al repartidor de este: se cierran antes de empezar. C-RECORRIDO-NO-PISA (31 oct 2026):
+    // SOLO los de restaurantes del recorrido (@recorrido.test) y SOLO los repartidores de Miami, donde
+    // corre; antes cancelaba los pedidos de cualquiera y cortó una prueba de Richard en Michigan.
     sql(
-      "UPDATE pedidos SET estado = 'cancelado' WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL",
+      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND restaurante_id IN (SELECT r.id FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo LIKE '%@recorrido.test')",
     );
-    // Y ningún repartidor de un recorrido anterior se queda conectado (se llevaría la oferta).
-    sql('UPDATE repartidores SET conectado = 0');
+    // Y ningún repartidor de un recorrido anterior se queda conectado en Miami (se llevaría la oferta).
+    sql("UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI'");
 
     // 1. El restaurante se registra en el panel y arma su ficha.
     const panelCtx = await nuevoContexto('computadora');
