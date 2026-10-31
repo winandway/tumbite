@@ -55,10 +55,21 @@ export function Campo({
   error,
   ...props
 }: TextInputProps & { etiqueta: string; error?: string }) {
+  // C-CORREO-SIN-AUTOCORRECTOR (31 oct 2026, visto en el simulador de iPhone): un correo no se
+  // corrige ni se subraya; el iPhone cambiaba lo escrito. Vale para toda casilla de correo.
+  const correo = props.keyboardType === 'email-address';
   return (
     <View style={e.campo}>
       <Text style={e.etiqueta}>{etiqueta}</Text>
       <TextInput
+        {...(correo
+          ? {
+              autoCorrect: false,
+              spellCheck: false,
+              autoCapitalize: 'none' as const,
+              textContentType: 'emailAddress' as const,
+            }
+          : {})}
         {...props}
         accessibilityLabel={etiqueta}
         style={[e.input, error ? e.inputError : null]}
