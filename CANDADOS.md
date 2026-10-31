@@ -2015,3 +2015,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** decisión de Richard: logística (Flex y Envíos) tiene su propio color, distinto de comida, para reconocer una captura de un vistazo. Tomado del bloque real de Amazon Flex: `MARCA.colores.logistica` #1F4D69 (fondo), `logisticaAccion` #4AA5DC (botones) con texto `logisticaTexto` #0B1F2B, y `logisticaSuave`. Driver «Mi ruta» lleva arriba la franja «DIVOOX FLEX» y sus botones y la parada actual en ese color; el cliente lo ve en Envíos; el panel de empresas (`.flex-panel`) cambia `--primario` a logística.
 - **Candado:** `colorLogistica.test.ts` (distinto del rojo, del acento y del verde; contraste de lectura de 4.5 o más).
+
+## C-FLEX-GEOCERCA (30 oct 2026) — todos los países
+
+- **Qué es:** como «Fuera de área de entrega» de Amazon Flex: con la ubicación del celular, el servidor rechaza entregar una parada a más de 200 m de la dirección del envío (`RADIO_ENTREGA_M` en `flex/conductor.ts`, 409 con campo `ubicacion` y los metros). La app avisa antes de intentar, con el mismo radio. Sin ubicación del celular se acepta como antes (la cola sin conexión). Falta dibujar el círculo en el mapa (F5b).
+- **Candado:** `flexRutas.test.ts` («lejos de la dirección no deja entregar; en la puerta sí»).
