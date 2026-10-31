@@ -163,7 +163,8 @@ export default function Restaurantes() {
           {t.restaurantes}
         </Text>
         <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>
-          {t.cercaDeTi}
+          {/* Sin ubicación todavía no se dice «cerca de ti» (no sabemos dónde está). */}
+          {catalogo.punto ? t.cercaDeTi : t.enTuZona}
           {lista
             ? ` · ${abiertos === 1 ? t.unoAbierto : t.abiertosAhora.replace('{n}', String(abiertos))}`
             : ''}
