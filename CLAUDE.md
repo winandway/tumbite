@@ -201,7 +201,7 @@ DESARROLLO → STAGING → PRUEBAS → PRODUCCIÓN. **Toda versión aprobada en 
 
 ## Perímetro
 
-- Carpeta: solo `/Users/windocellc/tumbite`.
+- Carpeta: solo `/Users/windocellc/Divoox` (renombrada el 31 oct 2026; `/Users/windocellc/tumbite` queda como acceso directo a la misma carpeta).
 - GitHub: repositorio `tumbite` de la cuenta conectada en `gh`.
 - YaDominios Cloud: solo el sitio `tumbite`.
 - Stripe: solo la cuenta de Windoce LLC (modo de prueba hasta probar el circuito completo).
