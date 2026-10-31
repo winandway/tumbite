@@ -16,7 +16,8 @@
 - [x] (I2) Compilar las tres apps de iPhone con EAS (cliente, Driver y Restaurante). EE. UU.
 - [x] (I3) Crear las tres apps en App Store Connect (Divoox 6829108108, Driver 6829108327, Restaurants 6829108322) y subir las compilaciones a TestFlight (subidas el 30 oct). EE. UU.
 - [x] (I5) Llave de notificaciones de Apple (APNs): crearla en el portal de Apple y cargarla en EAS para las tres apps, sin contraseña. EE. UU.
-- [ ] (I4) Fichas de la App Store en inglés y español con capturas reales, privacidad, clasificación por edad y cuentas de revisión; dejar listas para «Enviar a revisión». EE. UU.
+- [x] (I4) Fichas de la App Store en inglés y español con capturas reales (10, 7 y 4 + iPad), categoría, edad, copyright, precio gratis, solo EE. UU. y cuentas de revisión. EE. UU.
+- [ ] (I6) Privacidad de la app en App Store Connect (qué datos usa cada app, sacado del código) y adjuntar la compilación procesada a cada versión, para dejarlas a un clic de «Enviar a revisión». EE. UU.
 
 ## Divoox Flex como Amazon Flex (bloque real de Richard, 30 oct 2026; ficha docs/investigaciones-rea/2026-10-30-amazon-flex-capturas.md)
 
