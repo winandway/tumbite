@@ -3100,3 +3100,44 @@ CREATE TABLE IF NOT EXISTS ticket_adjuntos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS ticket_adjuntos_ticket ON ticket_adjuntos(ticket_id, mensaje_id);
+
+-- C-GANAR-POR-TIEMPO (1 nov 2026, como «Earn by Time» de DoorDash): el pedido que tomó un repartidor
+-- en modo «por tiempo» guarda la tarifa vigente y la hora en que aceptó; al entregar se le garantiza
+-- la hora activa (lo que falte se suma al bono del pedido).
+CREATE TABLE IF NOT EXISTS pagos_por_tiempo (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  centavos_hora INTEGER NOT NULL,
+  centavos_milla INTEGER NOT NULL DEFAULT 0,
+  aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  garantizado INTEGER,
+  complemento INTEGER
+);
+
+-- C-ANUNCIOS (R-T2, 1 nov 2026, como «Sponsored Listings» de DoorDash; evidencia REA ev_a6fcb13f…):
+-- el restaurante paga solo por los pedidos que llegan desde su anuncio (no por vistas ni toques),
+-- con un presupuesto semanal. Apagado mientras el precio por pedido esté en cero (config 'anuncios').
+CREATE TABLE IF NOT EXISTS campanas_anuncio (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL UNIQUE REFERENCES restaurantes(id),
+  activa INTEGER NOT NULL DEFAULT 0,
+  presupuesto_semanal INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS anuncios_dia (
+  campana_id TEXT NOT NULL REFERENCES campanas_anuncio(id),
+  dia TEXT NOT NULL,
+  impresiones INTEGER NOT NULL DEFAULT 0,
+  toques INTEGER NOT NULL DEFAULT 0,
+  pedidos INTEGER NOT NULL DEFAULT 0,
+  gasto INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (campana_id, dia)
+);
+-- El pedido que llegó desde un anuncio, con el precio vigente al pedir. Se cobra al entregar.
+CREATE TABLE IF NOT EXISTS pedidos_anuncio (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  campana_id TEXT NOT NULL REFERENCES campanas_anuncio(id),
+  centavos INTEGER NOT NULL,
+  cobrado_en TEXT
+);

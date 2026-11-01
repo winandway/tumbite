@@ -53,6 +53,7 @@
 - [Rate the food and the driver · Divoox](https://divoox.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
 - [Your customers’ reviews and how to reply · Divoox](https://divoox.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
+- [Ads: show first and pay only per order · Divoox](https://divoox.com/docs/restaurants/sponsored-listings): With an ad, your restaurant shows first on the app’s home screen with a “Sponsored” label. You pay only for delivered orders that come from your ad.
 - [Accept orders automatically · Divoox](https://divoox.com/docs/restaurants/auto-accept): Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.
 - [Holidays and closures · Divoox](https://divoox.com/docs/restaurants/holidays-and-closures): Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.
 - [Your team: managers and staff · Divoox](https://divoox.com/docs/restaurants/team-and-roles): Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.
@@ -102,6 +103,7 @@
 - [If you lose signal when delivering · Divoox](https://divoox.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
 - [Your year: deliveries, miles and earnings by month · Divoox](https://divoox.com/docs/trust/year-summary): In Earnings you see your year month by month: how many deliveries you made, the estimated distance and what you earned, and you can share it with your acco
 - [Shifts: book your hours · Divoox](https://divoox.com/docs/trust/driver-shifts): Book your hours up to 7 days ahead. During your shift, while online, offers reach you before drivers without a shift.
+- [Earn by Time: get paid per active hour instead of per offer · Divoox](https://divoox.com/docs/trust/earn-by-time): When Divoox turns it on in your area, you choose before going online whether to earn per offer or by time: a guaranteed minimum for each active hour.
 - [Busy areas: where to head for more orders · Divoox](https://divoox.com/docs/trust/busy-areas): The Driver app map highlights in red the areas of your city with the most orders in the last hour, so you know where the work is, just like the big deliver
 - [Top driver · Divoox](https://divoox.com/docs/trust/top-driver): Meet all five requirements and you’re a top driver: at the same distance, offers reach you first.
 - [Rate the customer · Divoox](https://divoox.com/docs/trust/rate-customer): After delivering, you can rate the customer with stars and, if something went wrong, say what happened.
