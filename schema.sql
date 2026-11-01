@@ -3045,3 +3045,13 @@ CREATE TABLE IF NOT EXISTS pases_web (
   usuario_id TEXT NOT NULL,
   vence_en TEXT NOT NULL
 );
+
+-- C-FLEX-RASTREAR (31 oct 2026, LG3): números de seguimiento que una persona sigue en su app
+-- (los que no son suyos solo muestran el estado, sin dirección ni nombres).
+CREATE TABLE IF NOT EXISTS paquetes_seguidos (
+  usuario_id TEXT NOT NULL,
+  codigo TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, codigo)
+);
+CREATE INDEX IF NOT EXISTS paquetes_seguidos_codigo ON paquetes_seguidos(codigo);
