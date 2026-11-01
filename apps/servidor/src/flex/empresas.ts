@@ -829,6 +829,48 @@ flexEmpresas.get('/conductor/invitaciones', async (c) => {
   });
 });
 
+/** Acepta la invitación con el enlace (el token prueba que se la mandaron a esta persona). */
+async function aceptarInvitacion(
+  db: D1Database,
+  usuarioId: string,
+  i: { id: string; empresa_id: string; vinculo: string },
+) {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE invitaciones_conductor SET estado = 'aceptada', usuario_id = ?, respondida_en = datetime('now') WHERE id = ? AND estado = 'pendiente'",
+      )
+      .bind(usuarioId, i.id),
+    db
+      .prepare(
+        `INSERT INTO empresa_conductores (empresa_id, usuario_id, vinculo) VALUES (?, ?, ?)
+         ON CONFLICT(empresa_id, usuario_id) DO UPDATE SET vinculo = excluded.vinculo, estado = 'activo', actualizado_en = datetime('now')`,
+      )
+      .bind(i.empresa_id, usuarioId, i.vinculo),
+  ]);
+  await asegurarVehiculoSinFrenar(db, usuarioId);
+}
+
+/**
+ * Con el enlace: en Divoox una cuenta tiene un solo papel, así que quien ya usa su celular o su
+ * correo como cliente crea su cuenta de Driver con otros. El enlace que le mandó la empresa basta.
+ */
+flexEmpresas.post('/conductor/invitacion-enlace/:token/aceptar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const i = await db
+    .prepare(
+      `SELECT i.id, i.empresa_id, i.vinculo, e.nombre AS empresa FROM invitaciones_conductor i
+         JOIN empresas e ON e.id = i.empresa_id
+        WHERE i.token_hash = ? AND i.estado = 'pendiente' AND i.vence_en > datetime('now')`,
+    )
+    .bind(await sha256(c.req.param('token')))
+    .first<{ id: string; empresa_id: string; vinculo: string; empresa: string }>();
+  if (!i) throw new ErrorDatos('Esa invitación no es tuya o ya no está pendiente.', undefined, 404);
+  await aceptarInvitacion(db, u.id, i);
+  return c.json({ ok: true, empresa: i.empresa });
+});
+
 flexEmpresas.post('/conductor/invitaciones/:invId/:respuesta', async (c) => {
   const u = exigir(c, 'repartidor');
   const respuesta = c.req.param('respuesta');

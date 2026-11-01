@@ -208,4 +208,41 @@ describe('invitar a un conductor de la empresa', () => {
     const v = await llamar(m, 'GET', `${B}/empresas/${e.id}/vehiculos`, undefined, e.dueno.token);
     expect(v.datos.vehiculos).toMatchObject([{ tipo: 'moto', placa: 'MOTO12' }]);
   });
+
+  it('con el enlace, la acepta aunque su cuenta tenga otro celular o correo', async () => {
+    const m = mundo();
+    const e = await empresa(m);
+    const inv = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/conductores/invitaciones`,
+      { nombre: 'Lía Enlace', correo: 'lia@ejemplo.com', vinculo: 'propio' },
+      e.dueno.token,
+    );
+    const token = (inv.datos.enlace as string).split('/').at(-1)!;
+    const rep = await m.cuenta('repartidor', 'Lía Enlace');
+    const r = await llamar(
+      m,
+      'POST',
+      `${B}/conductor/invitacion-enlace/${token}/aceptar`,
+      {},
+      rep.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.empresa).toBe('Paquetes Sur');
+    const lista = await llamar(
+      m,
+      'GET',
+      `${B}/empresas/${e.id}/conductores`,
+      undefined,
+      e.dueno.token,
+    );
+    expect(lista.datos.conductores).toMatchObject([{ nombre: 'Lía Enlace' }]);
+    // El mismo enlace no sirve dos veces.
+    const otra = await m.cuenta('repartidor', 'Otra');
+    expect(
+      (await llamar(m, 'POST', `${B}/conductor/invitacion-enlace/${token}/aceptar`, {}, otra.token))
+        .estado,
+    ).toBe(404);
+  });
 });

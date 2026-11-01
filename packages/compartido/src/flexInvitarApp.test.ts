@@ -10,6 +10,8 @@ describe('Driver: invitación de una empresa', () => {
     const tarjeta = leer('apps', 'repartidor', 'src', 'flex', 'InvitacionesEmpresa.tsx');
     expect(tarjeta).toContain('/datos/v1/flex/conductor/invitaciones');
     expect(tarjeta).toContain("responder(i, 'aceptar')");
+    // Con el enlace, aunque su cuenta de Driver tenga otro celular o correo.
+    expect(tarjeta).toContain('/datos/v1/flex/conductor/invitacion-enlace/');
   });
   it('el inicio la muestra', () => {
     expect(leer('apps', 'repartidor', 'src', 'Inicio.tsx')).toContain('<InvitacionesEmpresa');

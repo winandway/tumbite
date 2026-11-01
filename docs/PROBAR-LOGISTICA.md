@@ -1,7 +1,20 @@
 # Cómo probar la logística de Divoox (Divoox Flex) con tu impresora
 
-Para Richard, 31 oct 2026. Todo es en producción (divoox.com), con las apps de TestFlight, en Novi y
-Walled Lake (Michigan). No se mueve dinero: en Estados Unidos Flex no cobra al conductor.
+Para Richard, 31 oct 2026 (al día el 1 nov). Todo es en producción (divoox.com), con las apps de
+TestFlight, en Novi y Walled Lake (Michigan). No se mueve dinero: Flex no cobra.
+
+**Antes de esta guía, lee las dos de base:** el documento «LOGISTICA-COMO-FUNCIONA» (quién usa qué
+y el día de trabajo) y la guía pública «Empieza con Divoox Flex» en Docs (paso a paso con las
+pantallas reales).
+
+## Quién es quién en esta prueba
+
+- **La empresa** es la cuenta del cliente del revisor: entra en la computadora a divoox.com, menú
+  de la cuenta → «Divoox Flex (empresas)». Es la dueña de «Divoox Demo Logística».
+- **El conductor** es la cuenta de Driver del revisor, en la app Divoox Driver de TestFlight. Ya
+  está en la empresa.
+- **Quien recibe** es la cuenta del cliente del revisor en la app Divoox (o cualquiera con el
+  número de seguimiento).
 
 ## Lo que ya está armado para ti
 
@@ -45,7 +58,17 @@ cd /Users/windocellc/Divoox && node scripts/produccion/armar-demo-logistica.mjs
 
 Arma seis envíos nuevos, otra ruta y un PDF nuevo de etiquetas.
 
-## Lo que todavía no funciona sin ti
+## Si quieres probar también la invitación de un conductor
 
-- **Mensaje de texto y llamada** a quien recibe (la invitación y el «ya llega» por teléfono): están
-  hechos y se encienden solos cuando pongas las claves de Twilio.
+1. En el panel: «Conductores» → «Invitar conductor». Escribe un nombre y TU celular (o un correo
+   tuyo que no sea de una cuenta de restaurante).
+2. Te llega el enlace por correo (y por SMS cuando Twilio apruebe el número). En el panel también
+   aparece el enlace con «Mandar por WhatsApp».
+3. Abre el enlace en el celular: dice qué empresa te invita y cómo instalar Divoox Driver.
+4. En Divoox Driver, crea una cuenta con ese mismo celular o correo: en el inicio aparece «Divoox
+   Demo Logística te invitó». Toca «Aceptar».
+
+## Lo que todavía depende de otros
+
+- **Mensajes de texto en EE. UU.:** salen solos cuando Twilio apruebe el número gratuito (en
+  revisión desde el 31 oct).

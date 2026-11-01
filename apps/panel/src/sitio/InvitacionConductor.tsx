@@ -16,7 +16,7 @@ const T = {
     hola: (nombre: string) => `Hola, ${nombre}.`,
     pasos: [
       'Instala Divoox Driver en tu celular.',
-      'Crea tu cuenta o entra con el MISMO celular o correo donde te llegó esta invitación.',
+      'Crea tu cuenta o entra con el MISMO celular o correo donde te llegó esta invitación. Si ese celular o correo ya lo usas en otra cuenta de Divoox, crea tu cuenta de Driver con otros y, en el inicio de la app, toca «¿Una empresa te invitó? Pega su enlace».',
       'En la app aparece la invitación de tu empresa: toca «Aceptar». Desde ahí, tus rutas llegan a «Mi ruta (paquetes)».',
     ],
     android: 'Descargar en Google Play',
@@ -30,7 +30,7 @@ const T = {
     hola: (nombre: string) => `Hi, ${nombre}.`,
     pasos: [
       'Install Divoox Driver on your phone.',
-      'Create your account or sign in with the SAME phone or email where you got this invitation.',
+      'Create your account or sign in with the SAME phone or email where you got this invitation. If you already use that phone or email in another Divoox account, create your Driver account with different ones and, on the app’s home screen, tap “Did a company invite you? Paste its link.”',
       'Your company’s invitation shows up in the app: tap “Accept.” From then on, your routes arrive in “My route (packages).”',
     ],
     android: 'Get it on Google Play',

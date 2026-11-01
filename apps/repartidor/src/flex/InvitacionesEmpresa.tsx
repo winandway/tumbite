@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion } from '@tumbite/movil';
 
@@ -15,6 +15,9 @@ const T = {
     aceptar: 'Aceptar',
     rechazar: 'Ahora no',
     listo: (empresa: string) => `Listo: ya trabajas con ${empresa}.`,
+    tengoEnlace: '¿Una empresa te invitó? Pega su enlace',
+    enlace: 'Enlace de la invitación',
+    usarEnlace: 'Aceptar con este enlace',
   },
   en: {
     titulo: (empresa: string) => `${empresa} invited you to deliver its packages`,
@@ -22,6 +25,9 @@ const T = {
     aceptar: 'Accept',
     rechazar: 'Not now',
     listo: (empresa: string) => `Done: you now work with ${empresa}.`,
+    tengoEnlace: 'Did a company invite you? Paste its link',
+    enlace: 'Invitation link',
+    usarEnlace: 'Accept with this link',
   },
 };
 
@@ -32,6 +38,8 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
   const t = enIdioma(T, idioma);
   const [lista, setLista] = useState<Invitacion[]>([]);
   const [error, setError] = useState('');
+  const [conEnlace, setConEnlace] = useState(false);
+  const [enlace, setEnlace] = useState('');
   const cargar = useCallback(() => {
     api
       .pedir<{ invitaciones: Invitacion[] }>('GET', '/datos/v1/flex/conductor/invitaciones')
@@ -51,9 +59,49 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
     }
   }
 
-  if (!lista.length) return null;
+  // Si su cuenta de Driver tiene otro celular o correo (en Divoox una cuenta tiene un solo papel),
+  // acepta con el enlace que le mandó la empresa.
+  async function aceptarConEnlace() {
+    setError('');
+    const token = /\/driver\/join\/([A-Za-z0-9_-]{30,60})/.exec(enlace)?.[1] ?? enlace.trim();
+    try {
+      const r = await api.pedir<{ empresa: string }>(
+        'POST',
+        `/datos/v1/flex/conductor/invitacion-enlace/${encodeURIComponent(token)}/aceptar`,
+        {},
+      );
+      setEnlace('');
+      setConEnlace(false);
+      alAceptar(t.listo(r.empresa));
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   return (
     <View testID="invitaciones-empresa" style={{ gap: 8 }}>
+      {!lista.length ? (
+        conEnlace ? (
+          <View style={[e.tarjeta, { gap: 8 }]}>
+            <TextInput
+              value={enlace}
+              onChangeText={setEnlace}
+              placeholder="https://divoox.com/driver/join/…"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={e.input}
+              accessibilityLabel={t.enlace}
+            />
+            <Boton texto={t.usarEnlace} logistica alTocar={() => void aceptarConEnlace()} />
+          </View>
+        ) : (
+          <Pressable accessibilityRole="button" onPress={() => setConEnlace(true)} hitSlop={8}>
+            <Text style={{ color: '#5E5E5E', fontWeight: '600', textDecorationLine: 'underline' }}>
+              {t.tengoEnlace}
+            </Text>
+          </Pressable>
+        )
+      ) : null}
       {lista.map((i) => (
         <View key={i.id} style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
           <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo(i.empresa)}</Text>
