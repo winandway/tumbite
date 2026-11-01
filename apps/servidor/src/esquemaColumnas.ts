@@ -1976,5 +1976,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "codigo",
     "creado_en"
+  ],
+  "codigos_telefono": [
+    "usuario_id",
+    "telefono",
+    "codigo_hash",
+    "intentos",
+    "enviados_hoy",
+    "creado_en"
   ]
 };

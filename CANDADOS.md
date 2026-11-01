@@ -2201,3 +2201,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Recorrido local:** `ALCOHOL_SIN_HORARIO=1` (solo con entorno local; en los sitios no hace nada) para que el recorrido corra a cualquier hora.
 - **Pruebas:** `horarioAlcohol.test.ts` (tabla y pantalla) y `tiendasVitrina.test.ts` → «C-ALCOHOL-HORARIO». Comprobadas en rojo.
 - **No tocar:** la tabla solo se amplía con la ley citada de cada estado o país.
+
+## C-TELEFONO-VUELTA — el repartidor confirma su teléfono por SMS al volver (1 nov 2026, D8, todos los países donde sale el SMS)
+
+- **Por qué:** como DoorDash al volver a la app; evita que otra persona use la cuenta con otro número.
+- **Qué hay:** `apps/servidor/src/telefonoVuelta.ts` (14 días sin conectarse y sin confirmación reciente → código de 6 números, solo el hash, 10 minutos, 5 intentos, 1 por minuto y 5 por día). `/repartidor/conectar` responde 409 con campo `telefono`; `/repartidor/estado` trae `telefonoPorVerificar` (últimos 4); rutas `/repartidor/telefono/codigo` y `/verificar`. Tabla `codigos_telefono` y columna `usuarios.telefono_verificado_en`. App Driver: `ConfirmarTelefono.tsx`.
+- **No traba a nadie:** sin Twilio o fuera de los países encendidos (`SMS_PREFIJOS`, C-SMS-PAISES) no se exige. Al revisor de las tiendas no se le pide.
+- **Pruebas:** `telefonoVuelta.test.ts` (servidor, comprobada en rojo) y `telefonoVueltaApp.test.ts` (pantalla).

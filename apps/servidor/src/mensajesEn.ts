@@ -5,6 +5,26 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-TELEFONO-VUELTA
+  ['No hace falta confirmar tu teléfono ahora.', 'You don’t need to confirm your phone right now.'],
+  ['Espera un minuto para pedir otro código.', 'Wait a minute before requesting another code.'],
+  [
+    'Pediste demasiados códigos hoy. Inténtalo mañana o escribe a soporte.',
+    'You requested too many codes today. Try again tomorrow or contact support.',
+  ],
+  [
+    'No pudimos mandar el SMS. Inténtalo en unos minutos o escribe a soporte.',
+    'We couldn’t send the text. Try again in a few minutes or contact support.',
+  ],
+  ['Ese código ya venció. Pide uno nuevo.', 'That code has expired. Request a new one.'],
+  [
+    'El código no coincide. Revísalo e inténtalo otra vez.',
+    'That code doesn’t match. Check it and try again.',
+  ],
+  [
+    'Bienvenido de vuelta. Confirma tu teléfono con el código que te mandamos por SMS.',
+    'Welcome back. Confirm your phone with the code we text you.',
+  ],
   // C-OPCIONES-ANIDADAS
   [
     'Una opción solo puede abrir otro grupo del plato, de un solo nivel.',

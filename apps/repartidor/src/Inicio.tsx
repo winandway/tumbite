@@ -45,6 +45,7 @@ import { Seguridad } from './grandes/Seguridad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
+import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
@@ -159,6 +160,8 @@ type Estado = {
   };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  /** C-TELEFONO-VUELTA: últimos 4 del teléfono a confirmar por SMS al volver. */
+  telefonoPorVerificar?: string | null;
   /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
   terminosPorAceptar?: string | null;
   /** Días sin conectarse cuando son 14 o más (bienvenida de vuelta). */
@@ -1163,6 +1166,15 @@ export function Inicio() {
             secundario={!aceptoTerminos}
           />
         </View>
+      ) : null}
+      {estado?.telefonoPorVerificar ? (
+        <ConfirmarTelefono
+          ultimos={estado.telefonoPorVerificar}
+          alListo={(texto) => {
+            setAviso(texto);
+            void cargar();
+          }}
+        />
       ) : null}
       {estado?.selfieControlPendiente ? (
         <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>

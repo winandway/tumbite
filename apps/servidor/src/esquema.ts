@@ -185,6 +185,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-IDENTIDAD-UNICA (29 oct 2026): correo y teléfono en su forma única.
   ['usuarios', 'correo_canonico', 'TEXT'],
   ['usuarios', 'telefono_canonico', 'TEXT'],
+  // C-TELEFONO-VUELTA: cuándo confirmó su teléfono por SMS por última vez.
+  ['usuarios', 'telefono_verificado_en', 'TEXT'],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

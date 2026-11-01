@@ -16,6 +16,7 @@ import {
 } from '../internacional/pagoLocal';
 import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
+import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
 import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
@@ -1066,6 +1067,27 @@ operacion.post('/repartidor/terminos', async (c) => {
   return c.json({ ok: true });
 });
 
+operacion.post('/repartidor/telefono/codigo', async (c) => {
+  const { u, db } = await miFicha(c);
+  const ultimos = await mandarCodigo(c.env, db, u.id, u.idioma === 'en' ? 'en' : 'es');
+  return c.json({ ok: true, ultimos });
+});
+
+operacion.post('/repartidor/telefono/verificar', async (c) => {
+  const { u, db } = await miFicha(c);
+  const { codigo } = await leerCuerpo(
+    c,
+    z.object({
+      codigo: z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/),
+    }),
+  );
+  await comprobarCodigo(db, u.id, codigo);
+  return c.json({ ok: true });
+});
+
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
@@ -1082,6 +1104,10 @@ operacion.get('/repartidor/estado', async (c) => {
     vuelveTrasDias:
       Number(ficha.conectado) !== 1 && dias >= DIAS_PARA_VERIFICAR_AL_VOLVER ? dias : null,
     selfieControlPendiente: Boolean(selfiePendiente),
+    // C-TELEFONO-VUELTA: los últimos 4 del teléfono que hay que confirmar por SMS (o null).
+    telefonoPorVerificar: (await esRevisor(c, u.correo))
+      ? null
+      : await telefonoPorVerificar(c.env, db, u.id),
     // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
     selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
     conectado: Number(ficha.conectado) === 1,
@@ -1120,6 +1146,18 @@ operacion.post('/repartidor/conectar', async (c) => {
     throw new ErrorDatos(
       'Actualizamos los términos para repartidores. Léelos y acéptalos para conectarte.',
       'terminos',
+      409,
+    );
+  // C-TELEFONO-VUELTA (D8, como DoorDash): tras 14 días sin conectarse, el teléfono se confirma
+  // por SMS. Solo donde el SMS sale; al revisor de las tiendas no se le pide.
+  if (
+    d.conectado &&
+    !(await esRevisor(c, u.correo)) &&
+    (await telefonoPorVerificar(c.env, db, u.id))
+  )
+    throw new ErrorDatos(
+      'Bienvenido de vuelta. Confirma tu teléfono con el código que te mandamos por SMS.',
+      'telefono',
       409,
     );
   // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no

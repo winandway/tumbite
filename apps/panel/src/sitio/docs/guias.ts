@@ -2664,6 +2664,7 @@ const es: SeccionDocs[] = [
           'Antecedentes: en «Mis datos y vehículo» toca «Iniciar la verificación de antecedentes». Se abre el formulario de Checkr, un proveedor especializado, donde escribes tus datos sensibles (nunca en Divoox). Suele tardar de 1 a 3 días. Cuando el resultado es limpio, tu cuenta queda aprobada sola; si hay algo que revisar, lo mira nuestro equipo.',
           'Foto de control: de vez en cuando (no más de una vez por semana, al azar), al tocar «Conectarme» la app te pide una foto de tu cara. Es rápida: de frente y con buena luz. Nuestro equipo la compara con la foto de tu registro para confirmar que quien reparte eres tú.',
           'Mientras la foto de control esté pendiente, no puedes conectarte. Apenas la envías, puedes seguir.',
+          'Al volver después de 14 días o más sin conectarte, además confirmas tu teléfono: toca «Enviar el código», te llega un SMS con seis números y lo escribes en la app. El código vence a los 10 minutos. Así nadie puede usar tu cuenta con otro número.',
           'Estas dos medidas protegen a los clientes, a los restaurantes y a ti: nadie puede repartir con la cuenta de otro.',
         ],
         capturas: [
@@ -6192,6 +6193,7 @@ const en: SeccionDocs[] = [
           'Background check: under “My details and vehicle,” tap “Start the background check.” The Checkr form opens, a specialized provider, where you enter your sensitive details (never in Divoox). It usually takes 1 to 3 days. When the result is clear, your account is approved automatically; if something needs review, our team looks at it.',
           'Identity check photo: every so often (no more than once a week, at random), when you tap “Go online” the app asks for a photo of your face. It’s quick: face the camera in good light. Our team compares it with the photo on file to confirm the person delivering is you.',
           'While the check photo is pending, you can’t go online. As soon as you send it, you can continue.',
+          'When you come back after 14 days or more without going online, you also confirm your phone: tap “Send the code,” you’ll get a text with six digits, and you type it in the app. The code expires in 10 minutes. That way nobody can use your account with another number.',
           'These two measures protect customers, restaurants and you: nobody can deliver using someone else’s account.',
         ],
         capturas: [

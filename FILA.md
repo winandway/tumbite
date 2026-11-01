@@ -19,7 +19,7 @@
 - [x] (D5) HECHO 31 oct. Mapa del Driver conectado sin ofertas: «Buscando ofertas… Es más probable en las zonas en rojo» y bienvenida «tu nivel no cambió» al volver. Todos los países.
 - [x] (D6) HECHO 31 oct: ya existía el centro de seguridad (emergencia, compartir recorrido, reportar) pero escondido; ahora escudo en el mapa (C-SEGURIDAD-A-LA-VISTA). Los turnos y la pausa ya existían. Revisar SafeDash (desliza para 911, compartir ubicación) y el dash actual (hora de fin, terminar ahora) frente a la ficha; construir lo que falte. Todos los países.
 - [!] (decide Richard: monto, horarios y presupuesto) (D7) Pago extra por hora pico («+$2.00 por orden») sobre el mapa de demanda. Todos los países.
-- [!] (espera Twilio, cuenta y costo de Richard) (D8) Verificar el teléfono por SMS al volver. Todos los países.
+- [x] (D8) HECHO 1 nov (C-TELEFONO-VUELTA): tras 14 días sin conectarse, el Driver confirma su teléfono con un código por SMS; se exige solo donde el SMS sale (EE. UU. desde que Twilio apruebe el número). Todos los países.
 
 ## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
 
