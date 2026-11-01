@@ -160,7 +160,16 @@ export function RutasOperativas({ ctx }: { ctx: Contexto }) {
   }, [empresa.id, f]);
   return (
     <section className="super">
-      <h1>{t.rutasOperativas}</h1>
+      <header className="flex-encabezado">
+        <h1>{t.rutasOperativas}</h1>
+        {/* C-FLEX-RUTAS-UNA: crear, asignar y seguir, todo desde «Rutas». */}
+        {ctx.permisos.includes('lotes.gestionar') ? (
+          <Enlace a={`${ctx.raiz}/routes`} className="boton">
+            {t.crearRuta}
+          </Enlace>
+        ) : null}
+      </header>
+      <p className="pista">{t.rutasOperativasAyuda}</p>
       <Error_ error={error} />
       <div className="flex-filtros" aria-label={t.filtros}>
         <select

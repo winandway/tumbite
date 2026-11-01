@@ -2236,3 +2236,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué hay:** `apps/panel/src/panel/flex/primerosPasos.ts` (siete pasos: empresa, centro, conductor, primer envío, etiquetas, ruta asignada, primera entrega) que se marcan solos con el resumen del servidor (`GET /empresas/:id` trae `rutas` y `rutasAsignadas`). Las etiquetas se marcan al imprimir (guardado en el navegador). Barra de avance en verde y un botón «Hacer este paso» en lo que falta.
 - **Pruebas:** `apps/servidor/src/flex/primerosPasos.test.ts` y `PanelEmpresa.test.tsx` → «C-FLEX-PRIMEROS-PASOS», comprobadas en rojo.
+
+## C-FLEX-MENU-GRUPOS y C-FLEX-RUTAS-UNA — el panel de la empresa ordenado (1 nov 2026, todos los países)
+
+- **Qué confundía:** 18 entradas sueltas en el menú; la ruta se creaba en «Lotes y rutas» y se asignaba en «Rutas en curso», sin enlace entre las dos; no se elegía el centro de la ruta.
+- **Qué hay:** menú en tres grupos (Día a día: Inicio, Envíos, Rutas, Etiquetas, Devoluciones, Incidencias; Configuración: Centros, Conductores, Vehículos, Equipo, Perfil; Más: Paquetes, Importar, Reportes, Integraciones, Billetera, API). «Rutas» trae el botón «Nueva ruta»; al crearla (con su centro) se abre su página para asignarla u ofrecerla. La lista de rutas enlaza a cada detalle.
+- **Prueba:** `PanelEmpresa.test.tsx` → «C-FLEX-MENU-GRUPOS».

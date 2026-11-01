@@ -5287,3 +5287,18 @@ body.modo-tableta .panel-contenido {
   background: #0d7a3a;
   border-color: #0d7a3a;
 }
+
+/* C-FLEX-MENU-GRUPOS */
+.flex-menu-grupo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+.flex-menu-titulo {
+  margin: 8px 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666b73;
+}

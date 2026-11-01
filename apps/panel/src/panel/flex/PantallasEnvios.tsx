@@ -1617,6 +1617,9 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
   const [loteId, setLoteId] = useState('');
   const [nombreLote, setNombreLote] = useState('');
   const [nombreRuta, setNombreRuta] = useState('');
+  // C-FLEX-RUTAS-UNA: la ruta sale de un centro (el conductor carga ahí).
+  const [centros, setCentros] = useState<{ id: string; nombre: string; estado: string }[]>([]);
+  const [centroId, setCentroId] = useState('');
   const [error, setError] = useState('');
   const puede = ctx.permisos.includes('lotes.gestionar');
   const cargar = useCallback(() => {
@@ -1634,6 +1637,14 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
       pedir<{ envios: Envio[] }>('GET', `${BASE_FLEX}/empresas/${empresa.id}/envios`).then((r) =>
         setEnvios(r.envios),
       ),
+      pedir<{ centros: { id: string; nombre: string; estado: string }[] }>(
+        'GET',
+        `${BASE_FLEX}/empresas/${empresa.id}/centros`,
+      ).then((r) => {
+        const activos = r.centros.filter((c) => c.estado === 'activo');
+        setCentros(activos);
+        setCentroId((x) => x || activos[0]?.id || '');
+      }),
     ]).catch((x: unknown) => setError(mensajeDe(x)));
   }, [empresa.id]);
   useEffect(cargar, [cargar]);
@@ -1667,14 +1678,16 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
     if (!envElegidos.length) return;
     setError('');
     try {
-      await crear(`${BASE_FLEX}/empresas/${empresa.id}/rutas`, {
+      const r = await crear<{ ruta: { id: string } }>(`${BASE_FLEX}/empresas/${empresa.id}/rutas`, {
         nombre: nombreRuta,
         envioIds: envElegidos,
         loteId: loteId || null,
+        centroId: centroId || null,
       });
       setEnvElegidos([]);
       setNombreRuta('');
-      cargar();
+      // C-FLEX-RUTAS-UNA: recién creada, se abre su detalle para asignarla u ofrecerla ahí mismo.
+      ir(`${ctx.raiz}/operativas/${r.ruta.id}`);
     } catch (x) {
       setError(mensajeDe(x));
     }
@@ -1763,8 +1776,10 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
             <ul className="super-lista">
               {rutas.map((r) => (
                 <li key={r.id}>
-                  <strong>{r.nombre || r.id.slice(0, 8)}</strong> ·{' '}
-                  <span className="insignia">{t.estadosRuta[r.estado] ?? r.estado}</span> ·{' '}
+                  <Enlace a={`${ctx.raiz}/operativas/${r.id}`}>
+                    <strong>{r.nombre || r.id.slice(0, 8)}</strong>
+                  </Enlace>{' '}
+                  · <span className="insignia">{t.estadosRuta[r.estado] ?? r.estado}</span> ·{' '}
                   {typeof r.paradas === 'number' ? r.paradas : r.paradas.length} {t.paradas}
                 </li>
               ))}
@@ -1795,6 +1810,22 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
                   cambiar={setNombreRuta}
                   placeholder="Ruta 1"
                 />
+                {centros.length > 1 ? (
+                  <div className="campo">
+                    <label htmlFor="ruta-centro">{t.centroRuta}</label>
+                    <select
+                      id="ruta-centro"
+                      value={centroId}
+                      onChange={(e) => setCentroId(e.target.value)}
+                    >
+                      {centros.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   className="boton"

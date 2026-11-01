@@ -387,32 +387,47 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
     recargar: cargar,
   };
   const puede = (p: string) => ficha.permisos.includes(p);
-  const menu: [string, string][] = [
-    ['home', t.menu.home],
-    ['profile', t.menu.profile],
-    ['hubs', t.menu.hubs],
-    ...(puede('miembros.gestionar') ? ([['team', t.menu.team]] as [string, string][]) : []),
-    ...(puede('conductores.gestionar')
-      ? ([['drivers', t.menu.drivers]] as [string, string][])
-      : []),
-    ['shipments', t.menu.shipments],
-    ['packages', t.menu.packages],
-    ...(puede('importar') ? ([['import', t.menu.import]] as [string, string][]) : []),
-    ['labels', t.menu.labels],
-    ['routes', t.menu.routes],
-    ['operativas', t.menu.operativas],
-    ['incidents', t.menu.incidents],
-    ['returns', t.menu.returns],
-    ['operations', t.menu.operations],
-    ...(puede('conductores.gestionar')
-      ? ([['vehicles', t.menu.vehicles]] as [string, string][])
-      : []),
-    ...(puede('integraciones.gestionar')
-      ? ([['integrations', t.menu.integrations]] as [string, string][])
-      : []),
-    ...(puede('finanzas.ver') ? ([['wallet', t.menu.wallet]] as [string, string][]) : []),
-    ...(puede('claves.gestionar') ? ([['keys', t.menu.keys]] as [string, string][]) : []),
+  // C-FLEX-MENU-GRUPOS (1 nov 2026): el menú en tres grupos, como los paneles de Onfleet y Spoke:
+  // lo de cada día arriba, la configuración aparte y lo demás al final.
+  const item = (clave: string, permiso?: string): [string, string][] =>
+    !permiso || puede(permiso)
+      ? [[clave, new Map(Object.entries(t.menu)).get(clave) ?? clave]]
+      : [];
+  const grupos: [string, [string, string][]][] = [
+    [
+      'dia',
+      [
+        ...item('home'),
+        ...item('shipments'),
+        ...item('operativas'),
+        ...item('labels'),
+        ...item('returns'),
+        ...item('incidents'),
+      ],
+    ],
+    [
+      'config',
+      [
+        ...item('hubs'),
+        ...item('drivers', 'conductores.gestionar'),
+        ...item('vehicles', 'conductores.gestionar'),
+        ...item('team', 'miembros.gestionar'),
+        ...item('profile'),
+      ],
+    ],
+    [
+      'mas',
+      [
+        ...item('packages'),
+        ...item('import', 'importar'),
+        ...item('operations'),
+        ...item('integrations', 'integraciones.gestionar'),
+        ...item('wallet', 'finanzas.ver'),
+        ...item('keys', 'claves.gestionar'),
+      ],
+    ],
   ];
+
   const seccion = sub.split('/')[0] ?? '';
   let contenido: React.ReactNode;
   const envioId = /^shipments\/([0-9a-f-]{36})$/.exec(sub)?.[1];
@@ -453,15 +468,24 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
           <br />
           <small>{t.roles[ficha.rol ?? ''] ?? ficha.rol}</small>
         </p>
-        {menu.map(([clave, texto]) => {
-          const destino = clave === 'home' ? raiz : `${raiz}/${clave}`;
-          const activo = clave === 'home' ? sub === '' : seccion === clave;
-          return (
-            <Enlace key={clave} a={destino} className={activo ? 'activo' : undefined}>
-              {texto}
-            </Enlace>
-          );
-        })}
+        {grupos.map(([grupo, items]) => (
+          <div key={grupo} className="flex-menu-grupo">
+            <p className="flex-menu-titulo">{new Map(Object.entries(t.grupos)).get(grupo)}</p>
+            {items.map(([clave, texto]) => {
+              const destino = clave === 'home' ? raiz : `${raiz}/${clave}`;
+              // «Nueva ruta» vive dentro de «Rutas».
+              const activo =
+                clave === 'home'
+                  ? sub === ''
+                  : seccion === clave || (clave === 'operativas' && seccion === 'routes');
+              return (
+                <Enlace key={clave} a={destino} className={activo ? 'activo' : undefined}>
+                  {texto}
+                </Enlace>
+              );
+            })}
+          </div>
+        ))}
       </nav>
       <main className="panel-contenido">{contenido}</main>
     </div>

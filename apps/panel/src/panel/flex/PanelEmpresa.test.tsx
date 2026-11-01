@@ -168,6 +168,25 @@ describe('Divoox Flex · panel de empresas', () => {
     );
   });
 
+  it('C-FLEX-MENU-GRUPOS: el menú va en tres grupos y «Rutas» lleva a crear, asignar y seguir', async () => {
+    servidor({
+      '/datos/cuentas/yo': json({ usuario }),
+      '/datos/mi-franquicia': json({ ruta: null }),
+      [`/datos/v1/flex/empresas/${EMPRESA.id}`]: json(ficha(TODOS)),
+      [`/datos/v1/flex/empresas/${EMPRESA.id}/rutas`]: json({ rutas: [] }),
+    });
+    render(<PanelApp ruta={`/panel/business/${EMPRESA.id}/operativas`} />);
+    const menu = await screen.findByRole('navigation', { name: 'Divoox Flex' });
+    for (const g of ['Día a día', 'Configuración', 'Más'])
+      expect(within(menu).getByText(g)).toBeInTheDocument();
+    expect(within(menu).getByRole('link', { name: 'Rutas' })).toHaveClass('activo');
+    expect(within(menu).queryByText('Lotes y rutas')).toBeNull();
+    expect(await screen.findByRole('link', { name: 'Nueva ruta' })).toHaveAttribute(
+      'href',
+      `/panel/business/${EMPRESA.id}/routes`,
+    );
+  });
+
   it('C-FLEX-PRIMEROS-PASOS: el inicio marca los pasos hechos y lleva al que falta', async () => {
     servidor({
       '/datos/cuentas/yo': json({ usuario }),
