@@ -52,7 +52,8 @@ describe('Envíos y la app del cliente, como los vio Richard en TestFlight', () 
 describe('registro legal de la empresa en la app (C-EMPRESA-LEGAL, LG1)', () => {
   const b = leer('apps', 'cliente', 'src', 'app', 'business.tsx');
   it('pide los datos legales, valida el número fiscal y el centro con su punto', () => {
-    expect(b).toContain('numeroFiscalValido(v.pais, v.numeroFiscal)');
+    // C-FLEX-REGISTRO-UNICO: la validación es la misma pieza que usa la web.
+    expect(b).toContain('faltaEnRegistro(v, v.acepto)');
     expect(b).toContain("formulario: 'app-empresa-flex'");
     expect(b).toContain('<CampoDireccion');
     expect(b).toContain("'/datos/v1/flex/empresas'");
