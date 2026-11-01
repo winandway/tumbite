@@ -95,7 +95,13 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
             <Boton texto={t.usarEnlace} logistica alTocar={() => void aceptarConEnlace()} />
           </View>
         ) : (
-          <Pressable accessibilityRole="button" onPress={() => setConEnlace(true)} hitSlop={8}>
+          // Con aire arriba: debajo va el mapa del inicio y antes quedaba montado sobre su borde.
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setConEnlace(true)}
+            hitSlop={8}
+            style={{ marginTop: 16, paddingVertical: 4 }}
+          >
             <Text style={{ color: '#5E5E5E', fontWeight: '600', textDecorationLine: 'underline' }}>
               {t.tengoEnlace}
             </Text>

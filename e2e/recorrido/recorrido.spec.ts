@@ -799,7 +799,10 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(/Tu pedido en|Your order at/)).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-avisos');
     await cli.goto('/app/');
-    await expect(cli.getByTestId('campana-punto')).toBeVisible({ timeout: 20_000 });
+    // Al recargar, la app confirma la sesión con el servidor: hasta 3 intentos de 8 s
+    // (C-SESION-CON-LIMITE). El sitio de pruebas a veces tarda; con 20 s la prueba fallaba en la
+    // pantalla roja de carga (1 nov 2026, visto con REA y las capturas del fallo), no en la campana.
+    await expect(cli.getByTestId('campana-punto')).toBeVisible({ timeout: 45_000 });
     await cli.goto(`/app/order/${cobro.pedidoId}?nuevo=1`);
     await cli.getByRole('button', { name: /Track order|Ver seguimiento/ }).click();
     await expect(cli.getByText(/Confirmed|Confirmado/)).toBeVisible();
