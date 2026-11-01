@@ -1,7 +1,9 @@
+import { CORREOS_SOPORTE } from '@tumbite/compartido';
 import type { Idioma } from '@tumbite/compartido';
 
 /** Textos de la landing y las páginas legales, en los dos idiomas. */
-export const CONTACTO = 'go@windoce.com';
+// C-SOPORTE-UN-BUZON: el buzón de soporte de la app Divoox (clientes).
+export const CONTACTO = CORREOS_SOPORTE.divoox;
 
 const es = {
   menu: {

@@ -20,7 +20,7 @@ describe('política de privacidad lista para las tiendas', () => {
     const p = texto(PRIVACIDAD[idioma]);
     it(`(${idioma}) nombra a la empresa y un contacto de privacidad`, () => {
       expect(p).toContain('Windoce LLC');
-      expect(p).toContain('go@windoce.com');
+      expect(p).toContain('soporte+divoox@windoce.com');
     });
     it(`(${idioma}) dice cuánto tiempo se guardan los datos y cómo borrarlos`, () => {
       expect(PRIVACIDAD[idioma].secciones.some((s) => s.id && /tiempo|long/i.test(s.titulo))).toBe(
@@ -58,7 +58,7 @@ describe('página pública para borrar la cuenta (Google Play)', () => {
       expect(b.accion?.href).toBe('/panel/settings');
       const t = texto(b);
       expect(t).toContain('Divoox');
-      expect(t).toContain('go@windoce.com');
+      expect(t).toContain('soporte+divoox@windoce.com');
       expect(b.secciones.length).toBeGreaterThanOrEqual(4);
     });
   }

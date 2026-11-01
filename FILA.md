@@ -229,6 +229,8 @@
 
 - [x] HECHO 1 nov: no era la campana; la app se quedaba en la pantalla roja confirmando la sesión con el sitio de pruebas lento (hasta 3 intentos de 8 s) y la prueba solo esperaba 20 s; ahora espera 45 s. De paso, el enlace «¿Una empresa te invitó?» de Driver ya no queda sobre el mapa. (Original:) El recorrido de Comida en inglés del sitio de pruebas falla dos veces seguidas esperando el punto rojo de la campana del cliente (`campana-punto`, recorrido.spec.ts:802) con código que antes pasó: revisar con REA si es carrera o datos acumulados del sitio de pruebas. Todos los países.
 
+- [!] (espera que Google y Apple terminen sus revisiones: cambiar la ficha ahora puede cruzarse con ellas) Correo de contacto de las fichas de Google Play y del App Store al buzón de soporte de cada app (soporte+divoox, soporte+divoox.driver y soporte+divoox.restaurantes @windoce.com). Lo hago yo por la API apenas aprueben. Todos los países.
+
 ## Registro de la fábrica
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.

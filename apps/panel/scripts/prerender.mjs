@@ -47,7 +47,7 @@ try {
     name: 'Divoox',
     url: `${DOMINIO}/`,
     logo: `${DOMINIO}/icono-512.png`,
-    email: 'go@windoce.com',
+    email: 'soporte+divoox@windoce.com',
     description:
       'Divoox is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
     areaServed: 'Miami, Florida, United States',

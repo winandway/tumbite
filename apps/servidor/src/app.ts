@@ -8,7 +8,13 @@ import { blindarStripeEnPruebas, entornoDe, problemasDeEntorno } from './entorno
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { MARCA, direccionNueva, enIdiomaDireccion, panelNuevo } from '@tumbite/compartido';
+import {
+  CORREOS_SOPORTE,
+  MARCA,
+  direccionNueva,
+  enIdiomaDireccion,
+  panelNuevo,
+} from '@tumbite/compartido';
 import { type Env, revisarEnv } from './env';
 import { usarStripeLocal } from './stripe';
 import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
@@ -341,7 +347,7 @@ app.get('/datos/publico', (c) =>
     {
       whatsapp: c.env.WHATSAPP_SOPORTE ?? '',
       whatsappVentas: c.env.WHATSAPP_VENTAS ?? '',
-      correoSoporte: 'go@windoce.com',
+      correoSoporte: CORREOS_SOPORTE.divoox,
       stripePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
       // Clave pública del escudo anti-robots: vacía = apagado (F5).
       turnstileSitio: c.env.TURNSTILE_SITE_KEY ?? '',

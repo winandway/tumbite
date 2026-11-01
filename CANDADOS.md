@@ -2273,3 +2273,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se vio:** en el recorrido del sitio de pruebas (red lenta), el mensaje del cliente salió dos veces en su chat: la consulta de cada 4 s y la de después de enviar se cruzaban y las dos traían el mismo mensaje.
 - **Qué hay:** `unirMensajes` en `packages/compartido/src/chatMensajes.ts` (une por número de mensaje, sin repetir, en orden) y `ChatPedido.tsx` la usa; el «desde» guarda el número mayor visto.
 - **Prueba:** `chatMensajes.test.ts`, comprobada en rojo.
+
+## C-SOPORTE-UN-BUZON — el correo de soporte de cada app (1 nov 2026, orden de Richard, todos los países)
+
+- **Qué hay:** `packages/compartido/src/correosSoporte.ts` (`CORREOS_SOPORTE`: divoox, driver, restaurantes, con etiqueta en el buzón de Windoce). La web (`CONTACTO`, pie, legales, Docs, datos estructurados), `/datos/publico` (`correoSoporte`) y los «responder a» de los correos del servidor (clientes y lista de espera: divoox; restaurantes: restaurantes; cuentas de cobro del repartidor: driver) salen de ahí. La dirección vieja go@windoce.com sigue recibiendo.
+- **Pruebas:** `webHonesta.test.tsx` y `legales.test.tsx`.

@@ -5,7 +5,7 @@ import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
 import { LogoApple, LogoGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
-import { TEXTOS_SITIO } from './textos';
+import { CONTACTO, TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
 
 /**
@@ -122,7 +122,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/docs">{t.docs}</Enlace>
           <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>
           <Enlace a="/support">{t.soporte}</Enlace>
-          <a href="mailto:go@windoce.com">{t.contacto}</a>
+          <a href={`mailto:${CONTACTO}`}>{t.contacto}</a>
         </nav>
         <nav aria-label={t.ayuda}>
           <h3>{t.ayuda}</h3>
