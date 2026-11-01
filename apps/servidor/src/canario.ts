@@ -1,4 +1,4 @@
-import { correosEquipo } from './avisosEquipo';
+import { correosEquipo, smsEquipo } from './avisosEquipo';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 
@@ -55,6 +55,11 @@ export async function alertarCanario(
     for (const para of destinos)
       await enviarCorreo(env, { de: 'avisos', para, asunto, texto }).catch((e: unknown) =>
         console.error('canario: correo al equipo', e),
+      );
+    // C-SMS-EQUIPO: la caída también por SMS (la recuperación basta con el correo).
+    if (rojo)
+      await smsEquipo(env, 'sistema', `Divoox: ${asunto}. Revisa el sitio.`).catch((e: unknown) =>
+        console.error('canario: SMS al equipo', e),
       );
   }
 }

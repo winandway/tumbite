@@ -2208,3 +2208,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué hay:** `apps/servidor/src/telefonoVuelta.ts` (14 días sin conectarse y sin confirmación reciente → código de 6 números, solo el hash, 10 minutos, 5 intentos, 1 por minuto y 5 por día). `/repartidor/conectar` responde 409 con campo `telefono`; `/repartidor/estado` trae `telefonoPorVerificar` (últimos 4); rutas `/repartidor/telefono/codigo` y `/verificar`. Tabla `codigos_telefono` y columna `usuarios.telefono_verificado_en`. App Driver: `ConfirmarTelefono.tsx`.
 - **No traba a nadie:** sin Twilio o fuera de los países encendidos (`SMS_PREFIJOS`, C-SMS-PAISES) no se exige. Al revisor de las tiendas no se le pide.
 - **Pruebas:** `telefonoVuelta.test.ts` (servidor, comprobada en rojo) y `telefonoVueltaApp.test.ts` (pantalla).
+
+## C-SMS-EQUIPO — lo urgente también llega al equipo por SMS (1 nov 2026, EE. UU.)
+
+- **Qué hay:** `smsEquipo(env, tipo, texto)` en `apps/servidor/src/avisosEquipo.ts`: manda SMS a los administradores activos con teléfono que reciben ese tipo de aviso (`correosEquipo`). Se usa en el botón de emergencia del repartidor (`seguridadRepartidor.ts`) y cuando una pieza del canario pasa a rojo (`canario.ts`; la recuperación va solo por correo).
+- **Respeta** los países encendidos (C-SMS-PAISES) y nunca frena: si el SMS no sale, el correo ya salió.
+- **Prueba:** `apps/servidor/src/smsEquipo.test.ts`, comprobada en rojo.

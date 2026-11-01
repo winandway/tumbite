@@ -5,7 +5,7 @@ import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { correosEquipo } from '../avisosEquipo';
+import { correosEquipo, smsEquipo } from '../avisosEquipo';
 import { enviarCorreo } from '../correo';
 
 /**
@@ -58,6 +58,11 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
       asunto: `EMERGENCIA de un repartidor: ${r?.nombre ?? ''} (${r?.codigo ?? ''})`,
       texto: `El repartidor ${r?.nombre ?? ''} (${r?.codigo ?? ''}, teléfono ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia.\n\nDónde: ${donde}\nPedido: ${d.pedidoId ?? 'ninguno'}\n\nLlámalo ya.`,
     }).catch((e: unknown) => console.error('seguridad: correo de emergencia', e));
+  await smsEquipo(
+    c.env,
+    'sistema',
+    `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
+  ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
   return c.json({ numero: numeroEmergencia(r?.pais) }, 201);
 });
 

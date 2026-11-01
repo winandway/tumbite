@@ -159,7 +159,7 @@
 - [!] (toca el cobro: un solo pago repartido entre dos restaurantes, y el circuito de pagos todavía no está probado de punta a punta; la auditoría lo deja «cuando haya densidad») Pedir a dos tiendas en un solo pedido (DoubleDash): un carrito con dos locales cercanos, un repartidor y una entrega. Todos los países.
 - [!] (dinero: cuánto se paga por minuto y por milla lo decide Richard) Ganar por tiempo además de por oferta (como «Earn by Time» de Uber y DoorDash). Todos los países.
 - [!] (dinero: precio de los anuncios y cómo se cobran lo decide Richard) Promociones y anuncios pagados dentro de la app («patrocinado») con presupuesto y reporte para el restaurante. Todos los países.
-- [!] (cuenta y costo de un proveedor de SMS: espera a Richard; los avisos por push y correo ya existen) Avisos al equipo también por SMS. Todos los países.
+- [x] HECHO 1 nov (C-SMS-EQUIPO): la emergencia de un repartidor y el canario en rojo también llegan por SMS al equipo (Twilio, solo países encendidos). Todos los países.
 
 ## Etapa 1, punto 2 · Repaso en el celular de lo nuevo (30 oct 2026)
 
