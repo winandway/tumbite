@@ -8,6 +8,7 @@ import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { ElegirEnMapa } from '../ElegirEnMapa';
 import type { Punto } from '../ubicacion';
+import { RastrearPaquete } from '../RastrearPaquete';
 
 const T = {
   es: {
@@ -190,6 +191,9 @@ export default function MisPaquetes() {
         etiquetaVolver={tc.volver}
       />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           paddingBottom: 32,
@@ -200,6 +204,7 @@ export default function MisPaquetes() {
         }}
       >
         <Text style={{ color: '#5E5E5E' }}>{t.intro}</Text>
+        <RastrearPaquete estados={estados} alVincular={() => void cargar()} />
         {aviso ? <Text style={{ color: C.exito, fontWeight: '700' }}>{aviso}</Text> : null}
         {error ? (
           <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>

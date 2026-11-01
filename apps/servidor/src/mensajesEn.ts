@@ -1276,6 +1276,11 @@ export const MENSAJES_EN = new Map<string, string>([
   // Divoox Flex · retiro en un punto (C-FLEX-RETIRO).
   ['Elige el centro donde se retira el paquete.', 'Choose the hub where the package is picked up.'],
   ['Escribe el nombre del punto de encuentro.', 'Enter the name of the meeting point.'],
+  ['No encontramos ese número de seguimiento.', 'We couldn’t find that tracking number.'],
+  [
+    'Ese número de seguimiento no tiene la forma correcta.',
+    'That tracking number doesn’t look right.',
+  ],
   ['Marca en el mapa el punto de encuentro.', 'Mark the meeting point on the map.'],
   [
     'Ese número fiscal no tiene la forma del país (revisa los dígitos).',

@@ -2154,3 +2154,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué es:** además de «a domicilio» y «retiro en el centro», un envío puede entregarse en un **punto de encuentro de la vía** («Estación Doña María»), como los transportistas que entregan sobre la Panamericana. Se crea con `entrega: 'encuentro'`, `puntoEncuentro` (nombre) y el punto en el mapa (`lat`/`lng`, obligatorios). Columna `envios.punto_encuentro` en COLUMNAS. El panel lo ofrece al crear el envío; Driver lo muestra en la lista y en la parada.
 - **Prueba:** `apps/servidor/src/flex/encuentro.test.ts` (comprobada en rojo) y `flexMiRutaRepaso.test.ts`.
+
+## C-FLEX-RASTREAR (31 oct 2026, LG3, pedido de Richard) — todos los países
+
+- **Qué es:** en la app del cliente, «Mis paquetes» → «Rastrear un paquete» (también desde Envíos → «Espero un paquete»): se escribe o se escanea el número de seguimiento (DVX…). `POST /datos/v1/flex/mis-paquetes/seguir`: si el envío es para esa persona (su correo o los últimos 7 dígitos de su teléfono coinciden), queda vinculado a su cuenta y aparece completo con su ubicación; si no, lo sigue solo con el estado público (tabla `paquetes_seguidos`, sin dirección ni nombres). Los avisos push de cada paso llegan también a quien lo sigue (`avisarDestinatarios`).
+- **Seguridad:** con solo el número nadie ve la dirección ni el nombre de otra persona.
+- **Prueba:** `apps/servidor/src/flex/rastrear.test.ts` (comprobada en rojo) y `clienteEnviosTestflight.test.ts`.

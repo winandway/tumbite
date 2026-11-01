@@ -315,7 +315,15 @@ export async function avisarDestinatarios(
       `SELECT e.id, e.destinatario_usuario_id AS usuario, u.idioma, em.nombre AS empresa
          FROM envios e JOIN usuarios u ON u.id = e.destinatario_usuario_id
          JOIN empresas em ON em.id = e.empresa_id
-        WHERE e.id IN (SELECT value FROM json_each(?)) AND e.destinatario_usuario_id IS NOT NULL`,
+        WHERE e.id IN (SELECT value FROM json_each(?1)) AND e.destinatario_usuario_id IS NOT NULL
+       UNION
+       -- C-FLEX-RASTREAR: también quien sigue el número de seguimiento en su app.
+       SELECT e.id, s.usuario_id AS usuario, u.idioma, em.nombre AS empresa
+         FROM envios e JOIN paquetes p ON p.envio_id = e.id
+         JOIN paquetes_seguidos s ON s.codigo = p.codigo_seguimiento
+         JOIN usuarios u ON u.id = s.usuario_id
+         JOIN empresas em ON em.id = e.empresa_id
+        WHERE e.id IN (SELECT value FROM json_each(?1))`,
     )
     .bind(JSON.stringify(envioIds))
     .all<{ id: string; usuario: string; idioma: string; empresa: string }>();

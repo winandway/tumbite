@@ -46,6 +46,8 @@ const es = {
   abrirServicio: 'Abrir',
   envioAB: 'De A a B',
   envioABAyuda: 'Manda algo cerca, hoy: un repartidor lo recoge y lo entrega.',
+  envioRastrear: 'Espero un paquete',
+  envioRastrearAyuda: 'Rastréalo con su número de seguimiento y te avisamos cuando llegue.',
   envioBloque: 'Bloque de logística',
   envioBloqueAyuda:
     'Para empresas: rutas con muchos paquetes, centros de carga y entregas con prueba.',
@@ -198,6 +200,8 @@ const en: typeof es = {
   abrirServicio: 'Open',
   envioAB: 'From A to B',
   envioABAyuda: 'Send something nearby today: a driver picks it up and delivers it.',
+  envioRastrear: 'I’m expecting a package',
+  envioRastrearAyuda: 'Track it with its tracking number and we’ll let you know when it arrives.',
   envioBloque: 'Logistics block',
   envioBloqueAyuda:
     'For businesses: routes with many packages, loading hubs and proof of delivery.',

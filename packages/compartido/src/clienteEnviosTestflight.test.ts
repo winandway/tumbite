@@ -62,3 +62,15 @@ describe('registro legal de la empresa en la app (C-EMPRESA-LEGAL, LG1)', () => 
     expect(b).not.toContain('Linking');
   });
 });
+
+describe('rastrear un paquete en la app del cliente (C-FLEX-RASTREAR, LG3)', () => {
+  it('«Mis paquetes» tiene «Rastrear un paquete» con escáner y Envíos lleva a él', () => {
+    expect(leer('apps', 'cliente', 'src', 'app', 'packages.tsx')).toContain('<RastrearPaquete');
+    const r = leer('apps', 'cliente', 'src', 'RastrearPaquete.tsx');
+    expect(r).toContain("'/datos/v1/flex/mis-paquetes/seguir'");
+    expect(r).toContain('<CameraView');
+    expect(leer('apps', 'cliente', 'src', 'app', 'service', '[id].tsx')).toContain(
+      't.envioRastrear',
+    );
+  });
+});

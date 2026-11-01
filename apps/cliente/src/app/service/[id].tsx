@@ -168,6 +168,13 @@ export default function PantallaServicio() {
                 activo: accion === 'abrir',
               },
               {
+                // C-FLEX-RASTREAR: quien espera una caja la sigue con su número de seguimiento.
+                titulo: t.envioRastrear,
+                ayuda: t.envioRastrearAyuda,
+                ir: () => router.push('/packages'),
+                activo: true,
+              },
+              {
                 titulo: t.envioBloque,
                 ayuda: t.envioBloqueAyuda,
                 // C-BLOQUE-EN-LA-APP: se explica y se registra dentro de la app.

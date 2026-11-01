@@ -1971,5 +1971,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "codigo_hash",
     "usuario_id",
     "vence_en"
+  ],
+  "paquetes_seguidos": [
+    "usuario_id",
+    "codigo",
+    "creado_en"
   ]
 };
