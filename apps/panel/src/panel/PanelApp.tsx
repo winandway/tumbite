@@ -242,7 +242,11 @@ export function PanelApp({ ruta }: { ruta: string }) {
           <p>{t.cargando}</p>
         </main>
       ) : !usuario ? (
-        <Acceso idioma={idioma} alEntrar={(u) => setEstado({ cargando: false, usuario: u })} />
+        <Acceso
+          idioma={idioma}
+          tipo={esFlex ? 'empresa' : 'restaurante'}
+          alEntrar={(u) => setEstado({ cargando: false, usuario: u })}
+        />
       ) : esFranquicia ? (
         <main className="contenido">
           <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />

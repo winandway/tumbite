@@ -2225,3 +2225,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué hay:** `elegirUnidadDistancia` en `packages/compartido/src/distancia.ts` (lo elegido manda sobre el país en `textoDistancia` y `textoDistanciaCorta`). App Driver: `piezas/UnidadDistancia.tsx` («Distancias en: Millas | Kilómetros» en el perfil), guardado en el celular y cargado al abrir (`useUnidadDistancia` en `Inicio.tsx`). Sin elección, manda el país (C-DISTANCIA-POR-PAIS). `/repartidor/estado` trae `zonaId`.
 - **Prueba:** `distancia.test.ts` → «C-UNIDAD-ELEGIDA», comprobada en rojo.
+
+## C-FLEX-CUENTA-EMPRESA y C-FLEX-REGISTRO-UNICO — la empresa de logística entra y se registra bien (1 nov 2026, todos los países)
+
+- **Qué se rompía:** quien llegaba a /panel/business sin cuenta creaba una cuenta de RESTAURANTE («Crear cuenta de restaurante»). La web pedía 4 datos y la app pedía los datos legales y el centro: dos registros distintos.
+- **Qué hay:** `Acceso` recibe `tipo="empresa"` en /panel/business (rol cliente, textos «Divoox Flex», sin términos de restaurantes). Una sola pieza `packages/compartido/src/registroEmpresaFlex.ts` (`PAISES_FLEX`, `faltaEnRegistro`, `cuerposRegistro`) que usan la web (`PanelEmpresa.tsx`) y la app (`apps/cliente/src/app/business.tsx`): nombre, razón social, país, moneda, número fiscal del país, dirección fiscal, representante, teléfono y primer centro con punto exacto. El Perfil del panel edita los datos legales (con borrador).
+- **Pruebas:** `Acceso.test.tsx`, `registroEmpresaFlex.test.ts`, `PanelEmpresa.test.tsx` («crea una nueva…»). Comprobadas en rojo.

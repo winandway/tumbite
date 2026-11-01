@@ -5,6 +5,12 @@ const es = {
   tituloEntrar: 'Entrar al panel de tu restaurante',
   correoInvalido: 'Escribe un correo, por ejemplo nombre@dominio.com.',
   registrarse: 'Crear cuenta de restaurante',
+  // C-FLEX-CUENTA-EMPRESA: el acceso del panel de empresas (Divoox Flex).
+  empresa: {
+    tituloEntrar: 'Entrar a Divoox Flex',
+    registrarse: 'Crear la cuenta de tu empresa',
+    noTengo: '¿Tu empresa aún no usa Divoox Flex? Crea tu cuenta',
+  },
   aceptas: 'Acepto los',
   faltaAceptar: 'Marca la casilla para aceptar los términos y la política de privacidad.',
   terminos: 'Términos de uso',
@@ -80,6 +86,11 @@ const en: T = {
   tituloEntrar: 'Sign in to your restaurant panel',
   correoInvalido: 'Enter an email, for example name@domain.com.',
   registrarse: 'Create a restaurant account',
+  empresa: {
+    tituloEntrar: 'Sign in to Divoox Flex',
+    registrarse: 'Create your company account',
+    noTengo: 'Your company isn’t on Divoox Flex yet? Create your account',
+  },
   aceptas: 'I agree to the',
   faltaAceptar: 'Check the box to accept the terms and the privacy policy.',
   terminos: 'Terms of Service',

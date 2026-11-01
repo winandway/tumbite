@@ -4,6 +4,7 @@ import {
   PERMISOS_CLAVE_API,
   almacenNavegador,
   fechaHoraLocal,
+  numeroFiscalDe,
   textoAccionFlex,
   textoPermisoClave,
   useBorrador,
@@ -68,16 +69,42 @@ export function Inicio({ ctx, resumen }: { ctx: Contexto; resumen: Record<string
 
 export function Perfil({ ctx }: { ctx: Contexto }) {
   const { t, empresa } = ctx;
-  const [nombre, setNombre] = useState(empresa.nombre);
-  const [razon, setRazon] = useState(empresa.razonSocial);
+  // C-FLEX-REGISTRO-UNICO: los datos legales se corrigen aquí; lo escrito no se pierde.
+  const b = useBorrador({
+    formulario: `flex-perfil-${empresa.id}`,
+    inicial: {
+      nombre: '',
+      razonSocial: '',
+      numeroFiscal: '',
+      direccionFiscal: '',
+      representante: '',
+      telefono: '',
+    },
+    almacen: almacenNavegador,
+  });
+  const { cargarBase } = b;
+  useEffect(() => {
+    cargarBase({
+      nombre: empresa.nombre,
+      razonSocial: empresa.razonSocial ?? '',
+      numeroFiscal: empresa.numeroFiscal ?? '',
+      direccionFiscal: empresa.direccionFiscal ?? '',
+      representante: empresa.representante ?? '',
+      telefono: empresa.telefono ?? '',
+    });
+  }, [cargarBase, empresa]);
   const [error, setError] = useState('');
   const [ok, setOk] = useState(false);
   const puede = ctx.permisos.includes('empresa.editar');
+  const v = b.valores;
+  const fiscal = numeroFiscalDe(empresa.pais);
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setOk(false);
     try {
-      await pedir('PATCH', `${BASE_FLEX}/empresas/${empresa.id}`, { nombre, razonSocial: razon });
+      await pedir('PATCH', `${BASE_FLEX}/empresas/${empresa.id}`, v);
+      await b.limpiar();
       setOk(true);
       ctx.recargar();
     } catch (x) {
@@ -89,8 +116,38 @@ export function Perfil({ ctx }: { ctx: Contexto }) {
       <h1>{t.perfil}</h1>
       <Error_ error={error} />
       <form onSubmit={guardar} noValidate className="flex-form">
-        <Campo etiqueta={t.nombreComercial} valor={nombre} cambiar={setNombre} />
-        <Campo etiqueta={t.razonSocial} valor={razon} cambiar={setRazon} />
+        <Campo
+          etiqueta={t.nombreComercial}
+          valor={v.nombre}
+          cambiar={(x) => b.cambiar('nombre', x)}
+        />
+        <Campo
+          etiqueta={t.razonSocial}
+          valor={v.razonSocial}
+          cambiar={(x) => b.cambiar('razonSocial', x)}
+        />
+        <Campo
+          etiqueta={t.registro.fiscal(fiscal.nombre)}
+          valor={v.numeroFiscal}
+          cambiar={(x) => b.cambiar('numeroFiscal', x)}
+          placeholder={fiscal.ejemplo}
+        />
+        <Campo
+          etiqueta={t.registro.direccionFiscal}
+          valor={v.direccionFiscal}
+          cambiar={(x) => b.cambiar('direccionFiscal', x)}
+        />
+        <Campo
+          etiqueta={t.registro.representante}
+          valor={v.representante}
+          cambiar={(x) => b.cambiar('representante', x)}
+        />
+        <Campo
+          etiqueta={t.registro.telefono}
+          tipo="tel"
+          valor={v.telefono}
+          cambiar={(x) => b.cambiar('telefono', x)}
+        />
         <p>
           {t.pais}: <strong>{empresa.pais}</strong> · {t.moneda}: <strong>{empresa.moneda}</strong>{' '}
           · {t.estado}: <strong>{t.estadosEmpresa[empresa.estado] ?? empresa.estado}</strong>

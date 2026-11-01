@@ -8,7 +8,9 @@ import {
   enIdioma,
   enIdiomaDireccion,
   numeroFiscalDe,
-  numeroFiscalValido,
+  PAISES_FLEX,
+  cuerposRegistro,
+  faltaEnRegistro,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -30,18 +32,8 @@ import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
  * como Uber Direct y DoorDash Drive. El número fiscal se valida según el país (EIN, RIF, NIT, RFC).
  * El panel se abre en la misma app con un pase de un solo uso (sin volver a escribir la clave).
  */
-const PAISES = [
-  {
-    id: 'US',
-    es: 'Estados Unidos',
-    en: 'United States',
-    monedas: ['USD'],
-    zona: 'America/New_York',
-  },
-  { id: 'VE', es: 'Venezuela', en: 'Venezuela', monedas: ['USD', 'VES'], zona: 'America/Caracas' },
-  { id: 'CO', es: 'Colombia', en: 'Colombia', monedas: ['COP', 'USD'], zona: 'America/Bogota' },
-  { id: 'MX', es: 'México', en: 'Mexico', monedas: ['MXN', 'USD'], zona: 'America/Mexico_City' },
-] as const;
+// C-FLEX-REGISTRO-UNICO: la misma lista de países que el registro de la web.
+const PAISES = PAISES_FLEX;
 
 const T = {
   es: {
@@ -181,52 +173,28 @@ export default function PantallaEmpresas() {
 
   async function crear() {
     setError('');
-    const faltan = [
-      v.nombre,
-      v.razonSocial,
-      v.numeroFiscal,
-      v.direccionFiscal,
-      v.representante,
-      v.telefono,
-      v.centroNombre,
-      v.centroDireccion,
-      v.ciudad,
-    ].some((x) => !x.trim());
-    if (faltan || !v.acepto) return setError(t.falta);
-    if (!numeroFiscalValido(v.pais, v.numeroFiscal))
-      return setError(t.fiscalMal(fiscal.nombre, fiscal.ejemplo));
-    if (!v.centroLat) return setError(t.elegirCentro);
+    // C-FLEX-REGISTRO-UNICO: la misma validación que el registro de la web.
+    const falta = faltaEnRegistro(v, v.acepto);
+    if (falta)
+      return setError(
+        falta.motivo === 'fiscal'
+          ? t.fiscalMal(falta.nombre ?? '', falta.ejemplo ?? '')
+          : falta.motivo === 'centro'
+            ? t.elegirCentro
+            : t.falta,
+      );
     setTrabajando(true);
     try {
+      const cuerpos = cuerposRegistro(v);
       const e = await api.pedir<{ empresa: { id: string } }>(
         'POST',
         '/datos/v1/flex/empresas',
-        {
-          nombre: v.nombre.trim(),
-          razonSocial: v.razonSocial.trim(),
-          pais: v.pais,
-          moneda: v.moneda,
-          numeroFiscal: v.numeroFiscal.trim(),
-          direccionFiscal: v.direccionFiscal.trim(),
-          representante: v.representante.trim(),
-          telefono: v.telefono.trim(),
-        },
+        cuerpos.empresa,
         { cabeceras: { 'idempotency-key': clave() } },
       );
-      await api.pedir(
-        'POST',
-        `/datos/v1/flex/empresas/${e.empresa.id}/centros`,
-        {
-          nombre: v.centroNombre.trim(),
-          direccion: v.centroDireccion.trim(),
-          pais: v.pais,
-          ciudad: v.ciudad.trim(),
-          lat: Number(v.centroLat),
-          lng: Number(v.centroLng),
-          zonaHoraria: pais.zona,
-        },
-        { cabeceras: { 'idempotency-key': clave() } },
-      );
+      await api.pedir('POST', `/datos/v1/flex/empresas/${e.empresa.id}/centros`, cuerpos.centro, {
+        cabeceras: { 'idempotency-key': clave() },
+      });
       await b.limpiar();
       cargar();
       await abrirPanel();

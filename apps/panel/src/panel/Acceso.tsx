@@ -17,9 +17,22 @@ import { TEXTOS_PANEL } from './textos';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', clave: '' };
 
-/** Entrar y crear cuenta de restaurante. Lo escrito nunca se pierde (menos la contraseña). */
-export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usuario) => void }) {
-  const t = enIdioma(TEXTOS_PANEL, idioma);
+/**
+ * Entrar y crear cuenta de restaurante o, desde el panel de empresas (C-FLEX-CUENTA-EMPRESA), de
+ * empresa de logística. Lo escrito nunca se pierde (menos la contraseña).
+ */
+export function Acceso({
+  idioma,
+  alEntrar,
+  tipo = 'restaurante',
+}: {
+  idioma: Idioma;
+  alEntrar: (u: Usuario) => void;
+  tipo?: 'restaurante' | 'empresa';
+}) {
+  const base = enIdioma(TEXTOS_PANEL, idioma);
+  const empresa = tipo === 'empresa';
+  const t = empresa ? { ...base, ...base.empresa } : base;
   const [modo, setModo] = useState<'entrar' | 'registro'>('entrar');
   const b = useBorrador({
     formulario: `panel-${modo}`,
@@ -68,7 +81,8 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
               correo: v.correo,
               clave: v.clave,
               telefono: v.telefono || undefined,
-              rol: 'restaurante',
+              // La empresa de logística es una cuenta de cliente que crea su empresa en el panel.
+              rol: empresa ? 'cliente' : 'restaurante',
               idioma,
             });
       await b.limpiar();
@@ -149,10 +163,16 @@ export function Acceso({ idioma, alEntrar }: { idioma: Idioma; alEntrar: (u: Usu
             <a href="/terms" target="_blank" rel="noopener noreferrer">
               {t.terminos}
             </a>
-            ,{' '}
-            <a href="/restaurant-terms" target="_blank" rel="noopener noreferrer">
-              {t.terminosRestaurantes}
-            </a>{' '}
+            {empresa ? (
+              ' '
+            ) : (
+              <>
+                ,{' '}
+                <a href="/restaurant-terms" target="_blank" rel="noopener noreferrer">
+                  {t.terminosRestaurantes}
+                </a>{' '}
+              </>
+            )}
             {t.yLa}{' '}
             <a href="/privacy" target="_blank" rel="noopener noreferrer">
               {t.privacidad}

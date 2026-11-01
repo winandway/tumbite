@@ -2,10 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
+  PAISES_FLEX,
+  REGISTRO_EMPRESA_VACIO,
   almacenNavegador,
+  cuerposRegistro,
   enIdioma,
+  faltaEnRegistro,
+  numeroFiscalDe,
+  paisFlex,
   useBorrador,
 } from '@tumbite/compartido';
+import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { Campo } from '../CampoClave';
@@ -35,6 +42,11 @@ export type Empresa = {
   moneda: string;
   estado: string;
   rol?: string;
+  // C-EMPRESA-LEGAL: los datos legales (se editan en Perfil).
+  numeroFiscal?: string | null;
+  direccionFiscal?: string | null;
+  representante?: string | null;
+  telefono?: string | null;
 };
 export type Contexto = {
   empresa: Empresa;
@@ -65,16 +77,15 @@ export function PanelEmpresa({ ruta, idioma }: { ruta: string; idioma: Idioma })
   return <Empresa id={m[1]} sub={m[2] ?? ''} idioma={idioma} />;
 }
 
-const INICIAL_EMPRESA = { nombre: '', razonSocial: '', pais: 'US', moneda: 'USD' };
-
 function MisEmpresas({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_FLEX, idioma);
   const [lista, setLista] = useState<Empresa[] | null>(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [acepto, setAcepto] = useState(false);
   const b = useBorrador({
     formulario: 'flex-empresa',
-    inicial: INICIAL_EMPRESA,
+    inicial: REGISTRO_EMPRESA_VACIO,
     almacen: almacenNavegador,
   });
   const cargar = useCallback(() => {
@@ -86,9 +97,21 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    // C-FLEX-REGISTRO-UNICO: los mismos datos que pide la app, con la misma validación.
+    const falta = faltaEnRegistro(b.valores, acepto);
+    if (falta)
+      return setError(
+        falta.motivo === 'fiscal'
+          ? t.registro.fiscalMal(falta.nombre ?? '', falta.ejemplo ?? '')
+          : falta.motivo === 'centro'
+            ? t.registro.elegirCentro
+            : t.registro.falta,
+      );
     setEnviando(true);
     try {
-      const r = await crear<{ empresa: Empresa }>(`${BASE_FLEX}/empresas`, b.valores);
+      const cuerpos = cuerposRegistro(b.valores);
+      const r = await crear<{ empresa: Empresa }>(`${BASE_FLEX}/empresas`, cuerpos.empresa);
+      await crear(`${BASE_FLEX}/empresas/${r.empresa.id}/centros`, cuerpos.centro);
       await b.limpiar();
       ir(`/panel/business/${r.empresa.id}`);
     } catch (x) {
@@ -98,6 +121,7 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
     }
   }
   const v = b.valores;
+  const fiscal = numeroFiscalDe(v.pais);
   return (
     <section className="super flex-panel">
       <h1>{t.flex}</h1>
@@ -132,7 +156,8 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
           </button>
         </p>
       )}
-      <form onSubmit={guardar} noValidate className="flex-form">
+      <p className="pista">{t.registro.ayuda}</p>
+      <form onSubmit={guardar} noValidate className="flex-form" data-testid="registro-empresa">
         <Campo
           etiqueta={t.nombreComercial}
           valor={v.nombre}
@@ -147,11 +172,19 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
         />
         <div className="campo">
           <label htmlFor="flex-pais">{t.pais}</label>
-          <select id="flex-pais" value={v.pais} onChange={(e) => b.cambiar('pais', e.target.value)}>
-            <option value="US">United States</option>
-            <option value="CO">Colombia</option>
-            <option value="MX">México</option>
-            <option value="VE">Venezuela</option>
+          <select
+            id="flex-pais"
+            value={v.pais}
+            onChange={(e) => {
+              b.cambiar('pais', e.target.value);
+              b.cambiar('moneda', paisFlex(e.target.value).monedas[0]);
+            }}
+          >
+            {PAISES_FLEX.map((p) => (
+              <option key={p.id} value={p.id}>
+                {idioma === 'en' ? p.en : p.es}
+              </option>
+            ))}
           </select>
         </div>
         <div className="campo">
@@ -161,14 +194,82 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
             value={v.moneda}
             onChange={(e) => b.cambiar('moneda', e.target.value)}
           >
-            <option value="USD">USD</option>
-            <option value="COP">COP</option>
-            <option value="MXN">MXN</option>
-            <option value="VES">VES</option>
+            {paisFlex(v.pais).monedas.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
           </select>
         </div>
+        <Campo
+          etiqueta={t.registro.fiscal(fiscal.nombre)}
+          valor={v.numeroFiscal}
+          cambiar={(x) => b.cambiar('numeroFiscal', x)}
+          placeholder={fiscal.ejemplo}
+        />
+        <div className="campo">
+          <label htmlFor="flex-direccion-fiscal">{t.registro.direccionFiscal}</label>
+          <CampoDireccion
+            id="flex-direccion-fiscal"
+            valor={v.direccionFiscal}
+            cambiar={(x) => b.cambiar('direccionFiscal', x)}
+            alElegir={(d) => b.cambiar('direccionFiscal', d.direccion)}
+            pais={v.pais}
+            placeholder={t.registro.direccionFiscal}
+          />
+        </div>
+        <Campo
+          etiqueta={t.registro.representante}
+          valor={v.representante}
+          cambiar={(x) => b.cambiar('representante', x)}
+          placeholder={t.registro.representante}
+        />
+        <Campo
+          etiqueta={t.registro.telefono}
+          tipo="tel"
+          valor={v.telefono}
+          cambiar={(x) => b.cambiar('telefono', x)}
+          placeholder={t.registro.telefono}
+        />
+        <h3>{t.registro.centro}</h3>
+        <Campo
+          etiqueta={t.registro.centroNombre}
+          valor={v.centroNombre}
+          cambiar={(x) => b.cambiar('centroNombre', x)}
+          placeholder={t.registro.centroNombre}
+        />
+        <div className="campo">
+          <label htmlFor="flex-centro-direccion">{t.registro.centroDireccion}</label>
+          <CampoDireccion
+            id="flex-centro-direccion"
+            valor={v.centroDireccion}
+            cambiar={(x) => {
+              b.cambiar('centroDireccion', x);
+              // Si se cambia el texto, el punto elegido ya no vale.
+              b.cambiar('centroLat', '');
+              b.cambiar('centroLng', '');
+            }}
+            alElegir={(d) => {
+              b.cambiar('centroDireccion', d.direccion);
+              b.cambiar('centroLat', String(d.punto.lat));
+              b.cambiar('centroLng', String(d.punto.lng));
+            }}
+            pais={v.pais}
+            placeholder={t.registro.centroDireccion}
+          />
+        </div>
+        <Campo
+          etiqueta={t.registro.ciudad}
+          valor={v.ciudad}
+          cambiar={(x) => b.cambiar('ciudad', x)}
+          placeholder={t.registro.ciudad}
+        />
+        <label className="casilla">
+          <input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} />{' '}
+          {t.registro.acepto}
+        </label>
         <button type="submit" className="boton" disabled={enviando}>
-          {enviando ? t.guardando : t.crearEmpresa}
+          {enviando ? t.guardando : t.registro.crear}
         </button>
       </form>
     </section>

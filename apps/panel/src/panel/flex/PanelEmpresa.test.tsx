@@ -104,13 +104,47 @@ describe('Divoox Flex · panel de empresas', () => {
         201,
       ),
       [`/datos/v1/flex/empresas/22222222-2222-3333-4444-555555555555`]: json(ficha(TODOS)),
+      'POST /datos/v1/flex/empresas/22222222-2222-3333-4444-555555555555/centros': json(
+        { centro: { id: 'c1' } },
+        201,
+      ),
+      '/datos/lugares/sugerencias': json({
+        sugerencias: [{ id: 'ChIJ1', texto: '200 Main St, Miami' }],
+      }),
+      '/datos/lugares/punto/ChIJ1': json({
+        punto: { lat: 25.77, lng: -80.19 },
+        direccion: '200 Main St, Miami, FL',
+      }),
     });
     window.history.pushState(null, '', '/panel/business');
     render(<PanelApp ruta="/panel/business" />);
     expect(await screen.findByRole('heading', { name: 'Mis empresas' })).toBeInTheDocument();
     expect(await screen.findByText('Paquetes Sur')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Nombre comercial'), 'Nueva');
-    await userEvent.click(screen.getByRole('button', { name: 'Crear empresa' }));
+    // C-FLEX-REGISTRO-UNICO: sin los datos legales no se crea.
+    await userEvent.click(screen.getByRole('button', { name: 'Crear mi empresa' }));
+    expect(
+      await screen.findByText('Completa todos los datos y marca la casilla.'),
+    ).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText(/Razón social/), 'Nueva LLC');
+    await userEvent.type(screen.getByLabelText(/Número fiscal/), '12-3456789');
+    await userEvent.type(screen.getByLabelText('Dirección fiscal'), '100 Main St');
+    // Cada casilla de dirección abre su propia lista de sugerencias: se elige y se cierra.
+    await userEvent.click(await screen.findByRole('option', { name: '200 Main St, Miami' }));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Dirección fiscal')).toHaveValue('200 Main St, Miami, FL'),
+    );
+    await userEvent.type(screen.getByLabelText('Representante legal'), 'Ana Ejemplo');
+    await userEvent.type(screen.getByLabelText('Teléfono de la empresa'), '+13055550100');
+    await userEvent.type(screen.getByLabelText('Nombre del centro'), 'Centro Miami');
+    await userEvent.type(screen.getByLabelText('Dirección del centro'), '200 Main');
+    await userEvent.click(await screen.findByRole('option', { name: '200 Main St, Miami' }));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Dirección del centro')).toHaveValue('200 Main St, Miami, FL'),
+    );
+    await userEvent.type(screen.getByLabelText('Ciudad'), 'Miami');
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Crear mi empresa' }));
     await waitFor(() =>
       expect(
         llamadas.some((l) => l.metodo === 'POST' && l.url.endsWith('/datos/v1/flex/empresas')),
@@ -120,7 +154,18 @@ describe('Divoox Flex · panel de empresas', () => {
       (l) => l.metodo === 'POST' && l.url.endsWith('/datos/v1/flex/empresas'),
     )!;
     expect(creacion.headers['idempotency-key']).toBe('clave-fija-0000');
-    expect(creacion.cuerpo).toMatchObject({ nombre: 'Nueva', pais: 'US', moneda: 'USD' });
+    expect(creacion.cuerpo).toMatchObject({
+      nombre: 'Nueva',
+      pais: 'US',
+      moneda: 'USD',
+      numeroFiscal: '12-3456789',
+      representante: 'Ana Ejemplo',
+    });
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.metodo === 'POST' && l.url.endsWith('/centros'))?.cuerpo,
+      ).toMatchObject({ nombre: 'Centro Miami', lat: 25.77, lng: -80.19 }),
+    );
   });
 
   it('el inicio de la empresa muestra el resumen y el menú según los permisos del servidor', async () => {
