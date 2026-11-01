@@ -5,6 +5,14 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-FLEX-INVITAR-CONDUCTOR
+  ['Escribe el celular o el correo del conductor.', 'Enter the driver’s phone or email.'],
+  ['Esa invitación ya no está pendiente.', 'That invitation is no longer pending.'],
+  ['Esta invitación no existe.', 'This invitation doesn’t exist.'],
+  [
+    'Esa invitación no es tuya o ya no está pendiente.',
+    'That invitation isn’t yours or is no longer pending.',
+  ],
   // C-PAGO-PICO
   [
     'El presupuesto del día tiene que alcanzar al menos para un pago.',

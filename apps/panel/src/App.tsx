@@ -10,6 +10,7 @@ import { TicketPublico } from './sitio/TicketPublico';
 import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { PedidoCompartido } from './sitio/PedidoCompartido';
 import { RecorridoCompartido } from './sitio/RecorridoCompartido';
+import { InvitacionConductor } from './sitio/InvitacionConductor';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
@@ -124,6 +125,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <ConfirmarUbicacion codigo={entrega[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // Divoox Flex: el enlace con el que una empresa invita a su conductor (C-FLEX-INVITAR-CONDUCTOR).
+  const invitacion = /^\/driver\/join\/([A-Za-z0-9_-]{30,60})$/.exec(ruta);
+  if (invitacion?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <InvitacionConductor token={invitacion[1]} idioma={idioma} />
       </Sitio>
     );
   // Divoox Flex: rastreo público por número de guía (/track y /track/<código>).

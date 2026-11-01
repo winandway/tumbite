@@ -3065,3 +3065,24 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   enviados_hoy INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invita a su conductor con
+-- nombre y celular o correo; queda vinculado solo cuando él acepta en Divoox Driver. Solo el hash del enlace.
+CREATE TABLE IF NOT EXISTS invitaciones_conductor (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  nombre TEXT NOT NULL,
+  telefono_canonico TEXT,
+  correo_canonico TEXT,
+  vinculo TEXT NOT NULL CHECK (vinculo IN ('propio', 'red', 'hibrido')),
+  token_hash TEXT NOT NULL UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aceptada', 'rechazada', 'cancelada')),
+  usuario_id TEXT REFERENCES usuarios(id),
+  invitado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  vence_en TEXT NOT NULL DEFAULT (datetime('now', '+14 days')),
+  respondida_en TEXT
+);
+CREATE INDEX IF NOT EXISTS invitaciones_conductor_empresa ON invitaciones_conductor(empresa_id, estado);
+CREATE INDEX IF NOT EXISTS invitaciones_conductor_telefono ON invitaciones_conductor(telefono_canonico, estado);
+CREATE INDEX IF NOT EXISTS invitaciones_conductor_correo ON invitaciones_conductor(correo_canonico, estado);

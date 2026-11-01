@@ -47,6 +47,7 @@ import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
+import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
@@ -1176,6 +1177,13 @@ export function Inicio() {
           />
         </View>
       ) : null}
+      {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
+      <InvitacionesEmpresa
+        alAceptar={(texto) => {
+          setAviso(texto);
+          void cargar();
+        }}
+      />
       {estado?.telefonoPorVerificar ? (
         <ConfirmarTelefono
           ultimos={estado.telefonoPorVerificar}

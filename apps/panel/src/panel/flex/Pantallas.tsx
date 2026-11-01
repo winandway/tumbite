@@ -12,6 +12,7 @@ import {
 import { Enlace } from '../../Enlace';
 import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Campo } from '../CampoClave';
+import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { ConfigEntrega } from './PantallasRutas';
@@ -496,26 +497,86 @@ export function Equipo({ ctx }: { ctx: Contexto }) {
 
 type Conductor = { usuarioId: string; nombre: string; vinculo: string; estado: string };
 
+type InvitacionConductor = {
+  id: string;
+  nombre: string;
+  contacto: string;
+  vinculo: string;
+  venceEn: string;
+};
+
+/**
+ * C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invita a su conductor con
+ * nombre y celular o correo; le llega el enlace y la empresa también lo ve para mandarlo por
+ * WhatsApp. Queda en la lista cuando él acepta en Divoox Driver.
+ */
 export function Conductores({ ctx }: { ctx: Contexto }) {
   const { t, empresa } = ctx;
   const [lista, setLista] = useState<Conductor[] | null>(null);
+  const [invitaciones, setInvitaciones] = useState<InvitacionConductor[]>([]);
   const [error, setError] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [vinculo, setVinculo] = useState('propio');
+  const [enlace, setEnlace] = useState('');
+  const [copiado, setCopiado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const b = useBorrador({
+    formulario: `flex-invitar-conductor-${empresa.id}`,
+    inicial: { nombre: '', telefono: '', correo: '', vinculo: 'propio', correoCuenta: '' },
+    almacen: almacenNavegador,
+  });
+  const v = b.valores;
   const cargar = useCallback(() => {
-    pedir<{ conductores: Conductor[] }>('GET', `${BASE_FLEX}/empresas/${empresa.id}/conductores`)
-      .then((r) => setLista(r.conductores))
+    pedir<{ conductores: Conductor[]; invitaciones?: InvitacionConductor[] }>(
+      'GET',
+      `${BASE_FLEX}/empresas/${empresa.id}/conductores`,
+    )
+      .then((r) => {
+        setLista(r.conductores);
+        setInvitaciones(r.invitaciones ?? []);
+      })
       .catch((x: unknown) => setError(mensajeDe(x)));
   }, [empresa.id]);
   useEffect(cargar, [cargar]);
-  async function vincular(e: React.FormEvent) {
+  async function invitar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setEnlace('');
+    setCopiado(false);
+    setEnviando(true);
     try {
-      await pedir('POST', `${BASE_FLEX}/empresas/${empresa.id}/conductores`, { correo, vinculo });
-      setCorreo('');
+      const r = await pedir<{ enlace: string }>(
+        'POST',
+        `${BASE_FLEX}/empresas/${empresa.id}/conductores/invitaciones`,
+        { nombre: v.nombre, telefono: v.telefono, correo: v.correo, vinculo: v.vinculo },
+      );
+      setEnlace(r.enlace);
+      await b.limpiar();
+      cargar();
+    } catch (x) {
+      // Lo escrito se queda en pantalla para corregirlo.
+      setError(mensajeDe(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+  async function vincularCuenta() {
+    setError('');
+    try {
+      await pedir('POST', `${BASE_FLEX}/empresas/${empresa.id}/conductores`, {
+        correo: v.correoCuenta,
+        vinculo: v.vinculo,
+      });
+      b.cambiar('correoCuenta', '');
       cargar();
       ctx.recargar();
+    } catch (x) {
+      setError(mensajeDe(x));
+    }
+  }
+  async function cancelar(id: string) {
+    setError('');
+    try {
+      await pedir('DELETE', `${BASE_FLEX}/empresas/${empresa.id}/conductores/invitaciones/${id}`);
+      cargar();
     } catch (x) {
       setError(mensajeDe(x));
     }
@@ -526,22 +587,41 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
     });
     cargar();
   }
+  const mensajeWhatsapp = `${t.invitacionLista} ${enlace}`;
   return (
     <section className="super">
       <h1>{t.conductores}</h1>
       <Error_ error={error} />
-      <form onSubmit={vincular} noValidate className="flex-form flex-inline">
-        <h2>{t.vincular}</h2>
+      <h2>{t.invitarConductor}</h2>
+      <p className="pista">{t.invitarAyuda}</p>
+      <form onSubmit={invitar} noValidate className="flex-form" data-testid="invitar-conductor">
         <Campo
-          etiqueta={t.correoConductor}
+          etiqueta={t.nombreConductor}
+          valor={v.nombre}
+          cambiar={(x) => b.cambiar('nombre', x)}
+          placeholder={t.nombreConductor}
+        />
+        <Campo
+          etiqueta={t.celularConductor}
+          tipo="tel"
+          valor={v.telefono}
+          cambiar={(x) => b.cambiar('telefono', x)}
+          placeholder={t.celularConductor}
+        />
+        <Campo
+          etiqueta={t.correoInvitado}
           tipo="email"
-          valor={correo}
-          cambiar={setCorreo}
+          valor={v.correo}
+          cambiar={(x) => b.cambiar('correo', x)}
           placeholder="driver@example.com"
         />
         <div className="campo">
           <label htmlFor="flex-vinculo">{t.vinculo}</label>
-          <select id="flex-vinculo" value={vinculo} onChange={(e) => setVinculo(e.target.value)}>
+          <select
+            id="flex-vinculo"
+            value={v.vinculo}
+            onChange={(e) => b.cambiar('vinculo', e.target.value)}
+          >
             {['propio', 'red', 'hibrido'].map((x) => (
               <option key={x} value={x}>
                 {t.vinculos[x]}
@@ -549,10 +629,63 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
             ))}
           </select>
         </div>
-        <button type="submit" className="boton">
-          {t.vincular}
+        <button type="submit" className="boton" disabled={enviando}>
+          {enviando ? t.guardando : t.invitarConductor}
         </button>
       </form>
+      {enlace ? (
+        <div className="flex-enlace-invitacion" role="status">
+          <p className="texto-exito">{t.invitacionLista}</p>
+          <code>{enlace}</code>
+          <div className="flex-encabezado-botones">
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => {
+                void navigator.clipboard?.writeText(enlace).then(() => setCopiado(true));
+              }}
+            >
+              {copiado ? t.copiado : t.copiarEnlace}
+            </button>
+            <a
+              className="boton"
+              href={`https://wa.me/?text=${encodeURIComponent(mensajeWhatsapp)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t.porWhatsapp}
+            </a>
+          </div>
+        </div>
+      ) : null}
+      {invitaciones.length ? (
+        <>
+          <h2>{t.pendientes}</h2>
+          <ul className="super-lista">
+            {invitaciones.map((i) => (
+              <li key={i.id}>
+                <div className="lista-texto">
+                  <strong>{i.nombre}</strong>
+                  <span>
+                    {i.contacto} · {t.vinculos[i.vinculo] ?? i.vinculo} · {t.esperaRespuesta}
+                  </span>
+                </div>
+                <MenuTresPuntos
+                  etiqueta={`${t.cancelarInvitacion}: ${i.nombre}`}
+                  opciones={[
+                    {
+                      texto: t.cancelarInvitacion,
+                      peligro: true,
+                      alTocar: () => void cancelar(i.id),
+                    },
+                  ]}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <h2>{t.conductores}</h2>
       {lista === null ? (
         <p>{t.cargando}</p>
       ) : lista.length === 0 ? (
@@ -574,6 +707,21 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
           ))}
         </ul>
       )}
+      <details className="flex-avanzado">
+        <summary>{t.yaTieneCuenta}</summary>
+        <div className="flex-form flex-inline">
+          <Campo
+            etiqueta={t.correoConductor}
+            tipo="email"
+            valor={v.correoCuenta}
+            cambiar={(x) => b.cambiar('correoCuenta', x)}
+            placeholder="driver@example.com"
+          />
+          <button type="button" className="boton secundario" onClick={() => void vincularCuenta()}>
+            {t.vincular}
+          </button>
+        </div>
+      </details>
     </section>
   );
 }

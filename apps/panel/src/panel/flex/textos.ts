@@ -183,7 +183,22 @@ export const TEXTOS_FLEX = {
       string
     >,
     sinConductores:
-      'Todavía no hay conductores vinculados. La asignación de rutas llega en la siguiente fase.',
+      'Todavía no tienes conductores. Invítalos arriba: les llega un enlace para trabajar con Divoox Driver.',
+    // C-FLEX-INVITAR-CONDUCTOR
+    invitarConductor: 'Invitar conductor',
+    invitarAyuda:
+      'Escribe su nombre y su celular o correo. Le llega un SMS o un correo con el enlace para instalar Divoox Driver; entra con ese mismo celular o correo y acepta. También puedes mandarle el enlace tú, por WhatsApp.',
+    nombreConductor: 'Nombre del conductor',
+    celularConductor: 'Celular',
+    correoInvitado: 'Correo (opcional)',
+    invitacionLista: 'Invitación creada. Mándale también este enlace:',
+    copiarEnlace: 'Copiar el enlace',
+    copiado: 'Copiado',
+    porWhatsapp: 'Mandar por WhatsApp',
+    pendientes: 'Invitaciones pendientes',
+    cancelarInvitacion: 'Cancelar la invitación',
+    esperaRespuesta: 'Espera que acepte en Divoox Driver',
+    yaTieneCuenta: '¿Ya trabaja con Divoox Driver y sabes su correo?',
     // Envíos
     envios: 'Envíos',
     nuevoEnvio: 'Nuevo envío',
@@ -611,7 +626,22 @@ export const TEXTOS_FLEX = {
       string,
       string
     >,
-    sinConductores: 'No linked drivers yet.',
+    sinConductores:
+      'You don’t have drivers yet. Invite them above: they get a link to work with Divoox Driver.',
+    invitarConductor: 'Invite a driver',
+    invitarAyuda:
+      'Enter their name and phone or email. They get a text or email with the link to install Divoox Driver; they sign in with that same phone or email and accept. You can also send them the link yourself, by WhatsApp.',
+    nombreConductor: 'Driver name',
+    celularConductor: 'Mobile phone',
+    correoInvitado: 'Email (optional)',
+    invitacionLista: 'Invitation created. Send them this link too:',
+    copiarEnlace: 'Copy the link',
+    copiado: 'Copied',
+    porWhatsapp: 'Send by WhatsApp',
+    pendientes: 'Pending invitations',
+    cancelarInvitacion: 'Cancel the invitation',
+    esperaRespuesta: 'Waiting for them to accept in Divoox Driver',
+    yaTieneCuenta: 'Already on Divoox Driver and you know their email?',
     envios: 'Shipments',
     nuevoEnvio: 'New shipment',
     sinEnvios: 'No shipments yet.',

@@ -1984,5 +1984,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "intentos",
     "enviados_hoy",
     "creado_en"
+  ],
+  "invitaciones_conductor": [
+    "id",
+    "empresa_id",
+    "nombre",
+    "telefono_canonico",
+    "correo_canonico",
+    "vinculo",
+    "token_hash",
+    "estado",
+    "usuario_id",
+    "invitado_por",
+    "creado_en",
+    "vence_en",
+    "respondida_en"
   ]
 };

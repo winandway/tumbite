@@ -4,9 +4,13 @@ import {
   PERMISOS_CLAVE_API,
   type PermisoFlex,
   type RolEmpresa,
+  correoCanonico,
   numeroFiscalValido,
+  telefonoCanonico,
 } from '@tumbite/compartido';
 import { enviarCorreo } from '../correo';
+import { enviarSms } from '../sms';
+import { notificar } from '../notificaciones';
 import { nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -618,6 +622,16 @@ flexEmpresas.get('/empresas/:id/conductores', async (c) => {
     )
     .bind(actor.empresaId)
     .all<Record<string, unknown>>();
+  // C-FLEX-INVITAR-CONDUCTOR: las invitaciones que todavía esperan respuesta.
+  const inv = await base(c)
+    .prepare(
+      `SELECT id, nombre, telefono_canonico, correo_canonico, vinculo, creado_en, vence_en
+         FROM invitaciones_conductor
+        WHERE empresa_id = ? AND estado = 'pendiente' AND vence_en > datetime('now')
+        ORDER BY creado_en DESC`,
+    )
+    .bind(actor.empresaId)
+    .all<Record<string, unknown>>();
   // Sin el correo del conductor: la empresa ve el nombre, no los datos de contacto de la cuenta.
   return c.json({
     conductores: results.map((f) => ({
@@ -627,7 +641,219 @@ flexEmpresas.get('/empresas/:id/conductores', async (c) => {
       estado: f.estado,
       desde: f.desde,
     })),
+    invitaciones: inv.results.map((f) => ({
+      id: f.id,
+      nombre: f.nombre,
+      // Lo que la empresa misma escribió: los últimos cuatro, para reconocerla.
+      contacto: f.telefono_canonico
+        ? `…${String(f.telefono_canonico).slice(-4)}`
+        : String(f.correo_canonico ?? ''),
+      vinculo: f.vinculo,
+      estado: 'pendiente',
+      creadoEn: f.creado_en,
+      venceEn: f.vence_en,
+    })),
   });
+});
+
+/**
+ * C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invita con nombre y
+ * celular o correo. Le llega un SMS o un correo con el enlace, y la empresa también lo recibe para
+ * mandarlo por WhatsApp. Queda vinculado solo cuando el conductor acepta en Divoox Driver.
+ */
+const esquemaInvitacionConductor = z
+  .object({
+    nombre: texto(120),
+    telefono: z.string().trim().max(40).default(''),
+    correo: z.union([z.email().max(254), z.literal('')]).default(''),
+    vinculo: z.enum(['propio', 'red', 'hibrido']).default('propio'),
+  })
+  .refine((d) => telefonoCanonico(d.telefono) || d.correo, {
+    message: 'Escribe el celular o el correo del conductor.',
+    path: ['telefono'],
+  });
+
+flexEmpresas.post('/empresas/:id/conductores/invitaciones', async (c) => {
+  const actor = await actorDeEmpresa(c, c.req.param('id'));
+  exigirPermiso(actor, 'conductores.gestionar');
+  soloPersona(actor);
+  const d = await leerCuerpo(c, esquemaInvitacionConductor);
+  const db = base(c);
+  const e = await db
+    .prepare('SELECT nombre, pais FROM empresas WHERE id = ?')
+    .bind(actor.empresaId)
+    .first<{ nombre: string; pais: string }>();
+  const token = nuevoToken();
+  const id = nuevoIdFlex();
+  const telefono = telefonoCanonico(d.telefono);
+  const correo = d.correo ? correoCanonico(d.correo) : null;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO invitaciones_conductor
+           (id, empresa_id, nombre, telefono_canonico, correo_canonico, vinculo, token_hash, invitado_por)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        actor.empresaId,
+        d.nombre,
+        telefono,
+        correo,
+        d.vinculo,
+        await sha256(token),
+        actor.actorId,
+      ),
+    sentenciaAuditoria(db, actor, 'conductor.invitar', id, { vinculo: d.vinculo }),
+  ]);
+  const sitio = (c.env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
+  const enlace = `${sitio}/driver/join/${token}`;
+  const ingles = e?.pais === 'US';
+  const texto = ingles
+    ? `${e?.nombre ?? 'A company'} invited you to deliver with Divoox Driver. Install the app and sign in with this phone or email: ${enlace}`
+    : `${e?.nombre ?? 'Una empresa'} te invitó a repartir con Divoox Driver. Instala la app y entra con este celular o correo: ${enlace}`;
+  const avisos: Promise<unknown>[] = [];
+  if (d.telefono)
+    avisos.push(
+      enviarSms(c.env, db, {
+        usuarioId: actor.actorId,
+        pedidoId: null,
+        tipo: 'flex_invitar_conductor',
+        telefono: d.telefono,
+        texto,
+      }),
+    );
+  if (d.correo)
+    avisos.push(
+      enviarCorreo(c.env, {
+        de: 'avisos',
+        para: d.correo,
+        asunto: ingles
+          ? `${e?.nombre ?? 'A company'} invited you to Divoox Driver`
+          : `${e?.nombre ?? 'Una empresa'} te invitó a Divoox Driver`,
+        texto,
+      }),
+    );
+  // Si ya trabaja con Divoox Driver, también le llega al celular (en Venezuela no salen SMS).
+  const yaEsConductor = await db
+    .prepare(
+      `SELECT id, idioma FROM usuarios WHERE rol = 'repartidor' AND activo = 1
+        AND ((?1 IS NOT NULL AND telefono_canonico = ?1) OR (?2 IS NOT NULL AND correo_canonico = ?2)) LIMIT 1`,
+    )
+    .bind(telefono, correo)
+    .first<{ id: string; idioma: string }>();
+  if (yaEsConductor)
+    avisos.push(
+      notificar(c.env, db, yaEsConductor.id, {
+        titulo:
+          yaEsConductor.idioma === 'en'
+            ? `${e?.nombre ?? 'A company'} invited you`
+            : `${e?.nombre ?? 'Una empresa'} te invitó`,
+        cuerpo:
+          yaEsConductor.idioma === 'en'
+            ? 'Open Divoox Driver and accept to receive its routes.'
+            : 'Abre Divoox Driver y acepta para recibir sus rutas.',
+        datos: { tipo: 'flex_invitacion' },
+      }),
+    );
+  // Nunca frena: si el SMS o el correo no salen, la empresa tiene el enlace para mandarlo ella.
+  await Promise.allSettled(avisos);
+  return c.json(
+    {
+      invitacion: { id, nombre: d.nombre, vinculo: d.vinculo, estado: 'pendiente' },
+      enlace,
+    },
+    201,
+  );
+});
+
+flexEmpresas.delete('/empresas/:id/conductores/invitaciones/:invId', async (c) => {
+  const actor = await actorDeEmpresa(c, c.req.param('id'));
+  exigirPermiso(actor, 'conductores.gestionar');
+  soloPersona(actor);
+  const db = base(c);
+  const r = await db
+    .prepare(
+      "UPDATE invitaciones_conductor SET estado = 'cancelada', respondida_en = datetime('now') WHERE id = ? AND empresa_id = ? AND estado = 'pendiente'",
+    )
+    .bind(c.req.param('invId'), actor.empresaId)
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Esa invitación ya no está pendiente.', undefined, 404);
+  return c.json({ ok: true });
+});
+
+/** La página pública del enlace: quién invita y a quién (sin datos de contacto). */
+flexEmpresas.get('/invitacion-conductor/:token', async (c) => {
+  const f = await base(c)
+    .prepare(
+      `SELECT i.nombre, i.estado, i.vence_en > datetime('now') AS vigente, e.nombre AS empresa
+         FROM invitaciones_conductor i JOIN empresas e ON e.id = i.empresa_id WHERE i.token_hash = ?`,
+    )
+    .bind(await sha256(c.req.param('token')))
+    .first<{ nombre: string; estado: string; vigente: number; empresa: string }>();
+  if (!f) throw new ErrorDatos('Esta invitación no existe.', undefined, 404);
+  return c.json({
+    empresa: f.empresa,
+    nombre: f.nombre,
+    vigente: f.estado === 'pendiente' && Boolean(f.vigente),
+  });
+});
+
+/** Las invitaciones de la persona que entró a Divoox Driver (por su celular o su correo). */
+async function invitacionesDe(db: D1Database, usuarioId: string) {
+  const u = await db
+    .prepare('SELECT correo, telefono FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ correo: string; telefono: string | null }>();
+  const tel = telefonoCanonico(u?.telefono);
+  const correo = u?.correo ? correoCanonico(u.correo) : null;
+  const { results } = await db
+    .prepare(
+      `SELECT i.id, i.empresa_id, i.vinculo, e.nombre AS empresa FROM invitaciones_conductor i
+         JOIN empresas e ON e.id = i.empresa_id
+        WHERE i.estado = 'pendiente' AND i.vence_en > datetime('now')
+          AND ((?1 IS NOT NULL AND i.telefono_canonico = ?1) OR (?2 IS NOT NULL AND i.correo_canonico = ?2))
+        ORDER BY i.creado_en DESC`,
+    )
+    .bind(tel, correo)
+    .all<{ id: string; empresa_id: string; vinculo: string; empresa: string }>();
+  return results;
+}
+
+flexEmpresas.get('/conductor/invitaciones', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const lista = await invitacionesDe(base(c), u.id);
+  return c.json({
+    invitaciones: lista.map((i) => ({ id: i.id, empresa: i.empresa, vinculo: i.vinculo })),
+  });
+});
+
+flexEmpresas.post('/conductor/invitaciones/:invId/:respuesta', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const respuesta = c.req.param('respuesta');
+  if (respuesta !== 'aceptar' && respuesta !== 'rechazar')
+    throw new ErrorDatos('Esta página no existe.', undefined, 404);
+  const db = base(c);
+  const i = (await invitacionesDe(db, u.id)).find((x) => x.id === c.req.param('invId'));
+  if (!i) throw new ErrorDatos('Esa invitación no es tuya o ya no está pendiente.', undefined, 404);
+  const lote = [
+    db
+      .prepare(
+        "UPDATE invitaciones_conductor SET estado = ?, usuario_id = ?, respondida_en = datetime('now') WHERE id = ? AND estado = 'pendiente'",
+      )
+      .bind(respuesta === 'aceptar' ? 'aceptada' : 'rechazada', u.id, i.id),
+  ];
+  if (respuesta === 'aceptar')
+    lote.push(
+      db
+        .prepare(
+          `INSERT INTO empresa_conductores (empresa_id, usuario_id, vinculo) VALUES (?, ?, ?)
+           ON CONFLICT(empresa_id, usuario_id) DO UPDATE SET vinculo = excluded.vinculo, estado = 'activo', actualizado_en = datetime('now')`,
+        )
+        .bind(i.empresa_id, u.id, i.vinculo),
+    );
+  await db.batch(lote);
+  return c.json({ ok: true, empresa: i.empresa });
 });
 
 /** Vincular un conductor que YA tiene cuenta de repartidor en Divoox (no se crean cuentas). */

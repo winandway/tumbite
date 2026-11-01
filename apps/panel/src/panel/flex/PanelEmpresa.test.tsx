@@ -187,6 +187,36 @@ describe('Divoox Flex · panel de empresas', () => {
     );
   });
 
+  it('C-FLEX-INVITAR-CONDUCTOR: invita con nombre y celular y muestra el enlace para WhatsApp', async () => {
+    const llamadas = servidor({
+      '/datos/cuentas/yo': json({ usuario }),
+      '/datos/mi-franquicia': json({ ruta: null }),
+      [`/datos/v1/flex/empresas/${EMPRESA.id}`]: json(ficha(TODOS)),
+      [`/datos/v1/flex/empresas/${EMPRESA.id}/conductores`]: json({
+        conductores: [],
+        invitaciones: [
+          { id: 'i1', nombre: 'Pía', contacto: '…0100', vinculo: 'propio', venceEn: '' },
+        ],
+      }),
+      [`POST /datos/v1/flex/empresas/${EMPRESA.id}/conductores/invitaciones`]: json(
+        { invitacion: { id: 'i2' }, enlace: 'https://divoox.com/driver/join/abc' },
+        201,
+      ),
+    });
+    render(<PanelApp ruta={`/panel/business/${EMPRESA.id}/drivers`} />);
+    expect(await screen.findByText('Pía')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Nombre del conductor'), 'Rita Ruta');
+    await userEvent.type(screen.getByLabelText('Celular'), '3055550199');
+    await userEvent.click(screen.getByRole('button', { name: 'Invitar conductor' }));
+    expect(await screen.findByText('https://divoox.com/driver/join/abc')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Mandar por WhatsApp' }).getAttribute('href'),
+    ).toContain(encodeURIComponent('https://divoox.com/driver/join/abc'));
+    expect(
+      llamadas.find((l) => l.metodo === 'POST' && l.url.endsWith('/invitaciones'))?.cuerpo,
+    ).toMatchObject({ nombre: 'Rita Ruta', telefono: '3055550199', vinculo: 'propio' });
+  });
+
   it('C-FLEX-PRIMEROS-PASOS: el inicio marca los pasos hechos y lleva al que falta', async () => {
     servidor({
       '/datos/cuentas/yo': json({ usuario }),

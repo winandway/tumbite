@@ -23,6 +23,7 @@ const ACCIONES: [string, string, string][] = [
     'Received cash collected by a driver',
   ],
   ['conductor.vincular', 'Sumó un conductor', 'Added a driver'],
+  ['conductor.invitar', 'Invitó a un conductor', 'Invited a driver'],
   ['conductor.cambiar', 'Cambió un conductor', 'Updated a driver'],
   ['devolucion.recibir', 'Recibió una devolución', 'Received a return'],
   ['envio.crear', 'Creó un envío', 'Created a shipment'],

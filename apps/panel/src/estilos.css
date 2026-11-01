@@ -5302,3 +5302,20 @@ body.modo-tableta .panel-contenido {
   letter-spacing: 0.04em;
   color: #666b73;
 }
+
+/* C-FLEX-INVITAR-CONDUCTOR: el enlace de la invitación, a la vista para copiarlo o mandarlo. */
+.flex-enlace-invitacion {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  max-width: 720px;
+}
+.flex-enlace-invitacion code {
+  display: block;
+  word-break: break-all;
+  margin: 6px 0 10px;
+}
+.flex-avanzado {
+  margin-top: 18px;
+}
