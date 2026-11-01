@@ -187,6 +187,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'telefono_canonico', 'TEXT'],
   // C-TELEFONO-VUELTA: cuándo confirmó su teléfono por SMS por última vez.
   ['usuarios', 'telefono_verificado_en', 'TEXT'],
+  // C-GANAR-POR-TIEMPO: «oferta» (lo de siempre) o «tiempo».
+  ['repartidores', 'modo_pago', "TEXT NOT NULL DEFAULT 'oferta'"],
 ];
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */

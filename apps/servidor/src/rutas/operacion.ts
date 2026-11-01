@@ -18,6 +18,7 @@ import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
 import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
 import { pagoPicoPara } from '../pagoPico';
+import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
@@ -1090,6 +1091,41 @@ operacion.post('/repartidor/telefono/verificar', async (c) => {
   return c.json({ ok: true });
 });
 
+operacion.put('/repartidor/modo-pago', async (c) => {
+  const { u, db } = await miFicha(c);
+  const { modo } = await leerCuerpo(c, z.object({ modo: z.enum(['oferta', 'tiempo']) }));
+  if (modo === 'tiempo' && (await leerPorTiempo(db)).centavosHora <= 0)
+    throw new ErrorDatos('Ganar por tiempo todavía no está disponible en tu zona.', 'modo', 409);
+  await db
+    .prepare('UPDATE repartidores SET modo_pago = ? WHERE usuario_id = ?')
+    .bind(modo, u.id)
+    .run();
+  return c.json({ modo });
+});
+
+operacion.get('/admin/ganar-por-tiempo', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await leerPorTiempo(base(c)));
+});
+
+operacion.put('/admin/ganar-por-tiempo', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      centavosHora: z.number().int().min(0).max(10_000),
+      centavosMilla: z.number().int().min(0).max(500),
+    }),
+  );
+  await base(c)
+    .prepare(
+      "INSERT INTO config (clave, valor) VALUES ('ganar_por_tiempo', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+    )
+    .bind(JSON.stringify(d))
+    .run();
+  return c.json(d);
+});
+
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const activo = await entregaActiva(db, u.id);
@@ -1113,6 +1149,19 @@ operacion.get('/repartidor/estado', async (c) => {
     // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
     selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
     conectado: Number(ficha.conectado) === 1,
+    // C-GANAR-POR-TIEMPO: si está encendido, el repartidor elige cómo cobrar.
+    ganarPorTiempo: await (async () => {
+      const t = await leerPorTiempo(db);
+      return {
+        activo: t.centavosHora > 0,
+        centavosHora: t.centavosHora,
+        centavosMilla: t.centavosMilla,
+        modo:
+          (ficha.modo_pago as string | null) === 'tiempo' && t.centavosHora > 0
+            ? 'tiempo'
+            : 'oferta',
+      };
+    })(),
     // C-UNIDAD-ELEGIDA: la zona dice el país (millas o kilómetros si el repartidor no eligió).
     zonaId: (ficha.zona_id as string | null) ?? null,
     pausado: Number(ficha.pausado ?? 0) === 1,
@@ -1783,6 +1832,8 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     ]);
     await anotarEvento(db, id, 'agrupado', `con #${String(activa.id).slice(0, 6).toUpperCase()}`);
   }
+  // C-GANAR-POR-TIEMPO: si eligió «por tiempo», desde aquí corre su hora activa.
+  await anotarPorTiempo(db, id, u.id);
   await db.batch([
     db
       .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
@@ -2218,8 +2269,18 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   // lote), después se cobra. Si Stripe falla, la entrega ya quedó y el reloj termina el cobro.
   const pi = String(p.stripe_pago ?? '');
   const inicial = await estadoInicial(db, id, pi);
-  // Lo que gana el repartidor: envío + complemento + el bono de la oferta abierta (si lo hubo).
-  const entrega = Number(p.envio) + Number(p.complemento) + Number(p.bono ?? 0);
+  // C-GANAR-POR-TIEMPO: en modo «por tiempo», lo que falte para la hora activa garantizada se
+  // suma al bono del pedido (mismo camino que el pago pico; la conciliación ya lo cuenta).
+  const porTiempo = await completarPorTiempo(
+    db,
+    id,
+    u.id,
+    Number(p.envio) + Number(p.complemento),
+    Number(p.bono ?? 0),
+    Number(p.distancia_km ?? 0),
+  );
+  // Lo que gana el repartidor: envío + complemento + el bono (oferta abierta, hora pico, por tiempo).
+  const entrega = Number(p.envio) + Number(p.complemento) + Number(p.bono ?? 0) + porTiempo;
   try {
     await db.batch([
       sentenciaLiquidacion(db, id, pi, Number(p.total), inicial),

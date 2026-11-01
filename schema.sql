@@ -3100,3 +3100,16 @@ CREATE TABLE IF NOT EXISTS ticket_adjuntos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS ticket_adjuntos_ticket ON ticket_adjuntos(ticket_id, mensaje_id);
+
+-- C-GANAR-POR-TIEMPO (1 nov 2026, como «Earn by Time» de DoorDash): el pedido que tomó un repartidor
+-- en modo «por tiempo» guarda la tarifa vigente y la hora en que aceptó; al entregar se le garantiza
+-- la hora activa (lo que falte se suma al bono del pedido).
+CREATE TABLE IF NOT EXISTS pagos_por_tiempo (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  centavos_hora INTEGER NOT NULL,
+  centavos_milla INTEGER NOT NULL DEFAULT 0,
+  aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  garantizado INTEGER,
+  complemento INTEGER
+);

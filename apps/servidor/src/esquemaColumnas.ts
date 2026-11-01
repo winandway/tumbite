@@ -2009,5 +2009,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "tipo",
     "bytes",
     "creado_en"
+  ],
+  "pagos_por_tiempo": [
+    "pedido_id",
+    "repartidor_id",
+    "centavos_hora",
+    "centavos_milla",
+    "aceptado_en",
+    "garantizado",
+    "complemento"
   ]
 };

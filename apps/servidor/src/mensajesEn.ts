@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-GANAR-POR-TIEMPO
+  [
+    'Ganar por tiempo todavía no está disponible en tu zona.',
+    'Earn by Time isn’t available in your area yet.',
+  ],
   // C-CASOS-CAPTURAS
   ['Falta la captura.', 'The screenshot is missing.'],
   [

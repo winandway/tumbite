@@ -2108,6 +2108,56 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(bitacora).toBeTruthy();
   });
 
+  it('C-GANAR-POR-TIEMPO: con el modo «por tiempo» se garantiza la hora activa al entregar', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const admin = await m.cuenta('admin', 'Soporte Tiempo');
+    const rep = await repartidor('Tina Tiempo', 25.771, -80.191);
+    // Apagado de fábrica: no se puede elegir.
+    expect(
+      (await m.llamar('GET', '/datos/admin/ganar-por-tiempo', undefined, admin.token)).datos,
+    ).toMatchObject({ centavosHora: 0, centavosMilla: 0 });
+    expect(
+      (await m.llamar('PUT', '/datos/repartidor/modo-pago', { modo: 'tiempo' }, rep.token)).estado,
+    ).toBe(409);
+    // Encendido: $30 por hora activa.
+    await m.llamar(
+      'PUT',
+      '/datos/admin/ganar-por-tiempo',
+      { centavosHora: 3000, centavosMilla: 0 },
+      admin.token,
+    );
+    const est = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(est.datos.ganarPorTiempo).toMatchObject({
+      activo: true,
+      centavosHora: 3000,
+      modo: 'oferta',
+    });
+    expect(
+      (await m.llamar('PUT', '/datos/repartidor/modo-pago', { modo: 'tiempo' }, rep.token)).estado,
+    ).toBe(200);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    // Una hora activa desde que aceptó.
+    await m.DB.prepare(
+      "UPDATE pagos_por_tiempo SET aceptado_en = datetime('now', '-60 minutes') WHERE pedido_id = ?",
+    )
+      .bind(id)
+      .run();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    const mov = await m.DB.prepare(
+      "SELECT monto FROM movimientos WHERE pedido_id = ? AND usuario_id = ? AND concepto = 'entrega'",
+    )
+      .bind(id, rep.id)
+      .first<{ monto: number }>();
+    // Garantizado: $30 (60 minutos a $30/hora), aunque la oferta pagara menos. Propina aparte.
+    expect(mov!.monto).toBeGreaterThanOrEqual(3000);
+    expect(mov!.monto).toBeLessThan(3000 + 200);
+  });
+
   it('C-PAGO-PICO: en una zona con mucha demanda la oferta lleva el pago pico, con tope diario', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const admin = await m.cuenta('admin', 'Soporte Pico');
