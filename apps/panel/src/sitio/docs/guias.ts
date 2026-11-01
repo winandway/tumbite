@@ -2483,6 +2483,28 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'earn-by-time',
+        titulo: 'Ganar por tiempo: cobrar por hora activa en vez de por oferta',
+        resumen:
+          'Cuando Divoox lo enciende en tu zona, eliges antes de conectarte si cobras por oferta o por tiempo: un mínimo garantizado por cada hora activa.',
+        explicacion: [
+          'Hay dos formas de cobrar. Por oferta: ves lo que paga cada pedido antes de aceptarlo. Por tiempo: tienes garantizado un monto por hora activa, desde que aceptas un pedido hasta que lo entregas, más un monto por milla si Divoox lo incluye.',
+          'Si lo que paga la oferta es mayor que lo garantizado, ganas lo de la oferta: el modo por tiempo es un piso, nunca un techo. Las propinas y el pago por hora pico se suman aparte, completos.',
+          'Lo eliges en el inicio de Divoox Driver, en «¿Cómo quieres cobrar hoy?», antes de conectarte. Mientras estás conectado no se cambia; desconéctate para cambiarlo.',
+          'Cuando el modo por tiempo no está disponible en tu zona, esa tarjeta no aparece y cobras por oferta, como siempre.',
+        ],
+        preguntas: [
+          '¿Qué es ganar por tiempo?',
+          '¿Cómo cambio entre cobrar por oferta y por tiempo?',
+          '¿Las propinas cuentan aparte?',
+        ],
+        pasos: [
+          'Abre Divoox Driver sin conectarte.',
+          'En «¿Cómo quieres cobrar hoy?», toca «Por oferta» o «Por tiempo».',
+          'Conéctate. Al entregar, tu pago se calcula con el modo que elegiste.',
+        ],
+      },
+      {
         id: 'busy-areas',
         titulo: 'Zonas con más pedidos: hacia dónde moverte',
         resumen:
@@ -6124,6 +6146,28 @@ const en: SeccionDocs[] = [
           'Open the menu and tap “My shifts”.',
           'Pick the day, start time and length, and tap “Book”.',
           'Go online when your shift starts.',
+        ],
+      },
+      {
+        id: 'earn-by-time',
+        titulo: 'Earn by Time: get paid per active hour instead of per offer',
+        resumen:
+          'When Divoox turns it on in your area, you choose before going online whether to earn per offer or by time: a guaranteed minimum for each active hour.',
+        explicacion: [
+          'There are two ways to earn. Per offer: you see what each order pays before accepting it. By time: you’re guaranteed an amount per active hour, from accepting an order until you deliver it, plus a per-mile amount if Divoox includes one.',
+          'If the offer pays more than the guarantee, you get the offer: by-time pay is a floor, never a ceiling. Tips and Peak Pay are added on top, in full.',
+          'You choose it on the Divoox Driver home screen, under “How do you want to earn today?”, before going online. While you’re online it can’t be changed; go offline to change it.',
+          'When Earn by Time isn’t available in your area, that card doesn’t show and you earn per offer, as usual.',
+        ],
+        preguntas: [
+          'What is Earn by Time?',
+          'How do I switch between earning per offer and by time?',
+          'Are tips counted separately?',
+        ],
+        pasos: [
+          'Open Divoox Driver without going online.',
+          'Under “How do you want to earn today?”, tap “Per offer” or “By time.”',
+          'Go online. When you deliver, your pay is calculated with the mode you chose.',
         ],
       },
       {
