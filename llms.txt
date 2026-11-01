@@ -53,6 +53,7 @@
 - [Rate the food and the driver · Divoox](https://divoox.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
 - [Your customers’ reviews and how to reply · Divoox](https://divoox.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
+- [Ads: show first and pay only per order · Divoox](https://divoox.com/docs/restaurants/sponsored-listings): With an ad, your restaurant shows first on the app’s home screen with a “Sponsored” label. You pay only for delivered orders that come from your ad.
 - [Accept orders automatically · Divoox](https://divoox.com/docs/restaurants/auto-accept): Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.
 - [Holidays and closures · Divoox](https://divoox.com/docs/restaurants/holidays-and-closures): Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.
 - [Your team: managers and staff · Divoox](https://divoox.com/docs/restaurants/team-and-roles): Add the people at your restaurant with their own account and role. Each one signs in to the panel and the app without sharing your password.
