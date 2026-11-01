@@ -5237,3 +5237,53 @@ body.modo-tableta .panel-contenido {
 .flex-panel {
   --primario: #1f4d69;
 }
+
+/* C-FLEX-PRIMEROS-PASOS: la lista para arrancar, con su avance en verde (lo hecho es éxito). */
+.flex-progreso {
+  height: 8px;
+  border-radius: 4px;
+  background: #e6e6e6;
+  overflow: hidden;
+  margin: 4px 0 12px;
+  max-width: 520px;
+}
+.flex-progreso span {
+  display: block;
+  height: 100%;
+  background: #0d7a3a;
+}
+.flex-pasos-lista {
+  list-style: none;
+  padding: 0;
+  max-width: 720px;
+}
+.flex-pasos-lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+.flex-pasos-lista .lista-texto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.flex-paso-marca {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #8a8a8a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  flex: none;
+}
+.flex-pasos-lista li.hecho .flex-paso-marca {
+  background: #0d7a3a;
+  border-color: #0d7a3a;
+}

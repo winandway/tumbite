@@ -204,7 +204,10 @@ flexEmpresas.get('/empresas/:id', async (c) => {
         (SELECT COUNT(*) FROM envios WHERE empresa_id = ?1) AS envios,
         (SELECT COUNT(*) FROM paquetes WHERE empresa_id = ?1) AS paquetes,
         (SELECT COUNT(*) FROM paquetes WHERE empresa_id = ?1 AND estado = 'entregado') AS entregados,
-        (SELECT COUNT(*) FROM paquetes WHERE empresa_id = ?1 AND estado NOT IN ('entregado','devuelto','cancelado')) AS pendientes`,
+        (SELECT COUNT(*) FROM paquetes WHERE empresa_id = ?1 AND estado NOT IN ('entregado','devuelto','cancelado')) AS pendientes,
+        -- C-FLEX-PRIMEROS-PASOS: rutas creadas y rutas que ya tienen conductor.
+        (SELECT COUNT(*) FROM rutas_flex WHERE empresa_id = ?1 AND estado <> 'cancelada') AS rutas,
+        (SELECT COUNT(*) FROM rutas_flex WHERE empresa_id = ?1 AND conductor_id IS NOT NULL AND estado <> 'cancelada') AS rutasAsignadas`,
     )
     .bind(actor.empresaId)
     .first<Record<string, number>>();

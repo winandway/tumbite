@@ -15,6 +15,7 @@ import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { ConfigEntrega } from './PantallasRutas';
+import { pasosFlex } from './primerosPasos';
 
 /** Pantallas de la empresa: inicio, perfil, centros, equipo, conductores y claves de API. */
 
@@ -28,6 +29,8 @@ function Error_({ error }: { error: string }) {
 
 export function Inicio({ ctx, resumen }: { ctx: Contexto; resumen: Record<string, number> }) {
   const { t, raiz } = ctx;
+  const pasos = pasosFlex(raiz, ctx.empresa.id, resumen);
+  const hechos = pasos.filter((p) => p.hecho).length;
   const tarjetas: [keyof typeof t.resumen, string][] = [
     ['centros', `${raiz}/hubs`],
     ['miembros', `${raiz}/team`],
@@ -57,11 +60,38 @@ export function Inicio({ ctx, resumen }: { ctx: Contexto; resumen: Record<string
           </li>
         ))}
       </ul>
+      {/* C-FLEX-PRIMEROS-PASOS: se marcan solos con lo que la empresa ya hizo. */}
       <h2>{t.primerosPasos}</h2>
-      <ol className="flex-pasos">
-        {t.pasos.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
+      <p className="pista" data-testid="pasos-listos">
+        {t.pasosListos(hechos, pasos.length)}
+      </p>
+      <div
+        className="flex-progreso"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={pasos.length}
+        aria-valuenow={hechos}
+      >
+        <span style={{ width: `${Math.round((hechos / pasos.length) * 100)}%` }} />
+      </div>
+      <ol className="flex-pasos flex-pasos-lista">
+        {pasos.map((p) => {
+          const [titulo, ayuda] = t.pasosFlex[p.clave] ?? [p.clave, ''];
+          return (
+            <li key={p.clave} className={p.hecho ? 'hecho' : undefined} data-paso={p.clave}>
+              <span className="flex-paso-marca" aria-hidden="true">
+                {p.hecho ? '✓' : ''}
+              </span>
+              <div className="lista-texto">
+                <strong>{titulo}</strong>
+                <span>{ayuda}</span>
+              </div>
+              <Enlace a={p.destino} className={p.hecho ? 'enlace' : 'boton'}>
+                {p.hecho ? t.verPaso : t.hacerPaso}
+              </Enlace>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

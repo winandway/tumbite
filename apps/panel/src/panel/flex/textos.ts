@@ -100,6 +100,25 @@ export const TEXTOS_FLEX = {
       pendientes: 'Pendientes',
     },
     primerosPasos: 'Primeros pasos',
+    // C-FLEX-PRIMEROS-PASOS
+    pasosListos: (n: number, total: number) => `${n} de ${total} listos`,
+    hacerPaso: 'Hacer este paso',
+    verPaso: 'Ver',
+    pasosFlex: {
+      empresa: ['Registra tu empresa', 'Con sus datos legales reales.'],
+      centro: ['Agrega tu centro de carga', 'El lugar donde tus conductores recogen los paquetes.'],
+      conductor: [
+        'Invita a tus conductores',
+        'Les llega un enlace para trabajar con Divoox Driver.',
+      ],
+      envio: ['Carga tu primer envío', 'Uno por uno o con una planilla CSV.'],
+      etiquetas: [
+        'Imprime las etiquetas',
+        'Una por paquete: el conductor la escanea al cargar y al entregar.',
+      ],
+      ruta: ['Arma la ruta y asígnala', 'Elige los envíos, el centro y el conductor.'],
+      entrega: ['Sigue la primera entrega', 'En vivo, con su prueba de entrega.'],
+    } as Record<string, [string, string]>,
     pasos: [
       'Registra un centro de distribución (desde dónde salen los paquetes).',
       'Invita a tu equipo con el rol que le toca a cada quien.',
@@ -514,6 +533,21 @@ export const TEXTOS_FLEX = {
       pendientes: 'Pending',
     },
     primerosPasos: 'Getting started',
+    pasosListos: (n: number, total: number) => `${n} of ${total} done`,
+    hacerPaso: 'Do this step',
+    verPaso: 'View',
+    pasosFlex: {
+      empresa: ['Register your company', 'With its real legal details.'],
+      centro: ['Add your loading hub', 'Where your drivers pick up the packages.'],
+      conductor: ['Invite your drivers', 'They get a link to work with Divoox Driver.'],
+      envio: ['Load your first shipment', 'One by one or with a CSV sheet.'],
+      etiquetas: [
+        'Print the labels',
+        'One per package: the driver scans it when loading and delivering.',
+      ],
+      ruta: ['Build the route and assign it', 'Pick the shipments, the hub and the driver.'],
+      entrega: ['Follow the first delivery', 'Live, with its proof of delivery.'],
+    } as Record<string, [string, string]>,
     pasos: [
       'Register a distribution hub (where packages leave from).',
       'Invite your team with the right role for each person.',

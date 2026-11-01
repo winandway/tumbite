@@ -168,6 +168,24 @@ describe('Divoox Flex · panel de empresas', () => {
     );
   });
 
+  it('C-FLEX-PRIMEROS-PASOS: el inicio marca los pasos hechos y lleva al que falta', async () => {
+    servidor({
+      '/datos/cuentas/yo': json({ usuario }),
+      '/datos/mi-franquicia': json({ ruta: null }),
+      [`/datos/v1/flex/empresas/${EMPRESA.id}`]: json(ficha(TODOS)),
+    });
+    render(<PanelApp ruta={`/panel/business/${EMPRESA.id}`} />);
+    // empresa, centro, envío y entrega hechos; conductor, etiquetas y ruta faltan.
+    expect(await screen.findByTestId('pasos-listos')).toHaveTextContent('4 de 7 listos');
+    const conductor = document.querySelector('[data-paso="conductor"]') as HTMLElement;
+    expect(within(conductor).getByRole('link', { name: 'Hacer este paso' })).toHaveAttribute(
+      'href',
+      `/panel/business/${EMPRESA.id}/drivers`,
+    );
+    const centro = document.querySelector('[data-paso="centro"]') as HTMLElement;
+    expect(centro).toHaveClass('hecho');
+  });
+
   it('el inicio de la empresa muestra el resumen y el menú según los permisos del servidor', async () => {
     servidor({
       '/datos/cuentas/yo': json({ usuario }),

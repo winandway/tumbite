@@ -2231,3 +2231,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** quien llegaba a /panel/business sin cuenta creaba una cuenta de RESTAURANTE («Crear cuenta de restaurante»). La web pedía 4 datos y la app pedía los datos legales y el centro: dos registros distintos.
 - **Qué hay:** `Acceso` recibe `tipo="empresa"` en /panel/business (rol cliente, textos «Divoox Flex», sin términos de restaurantes). Una sola pieza `packages/compartido/src/registroEmpresaFlex.ts` (`PAISES_FLEX`, `faltaEnRegistro`, `cuerposRegistro`) que usan la web (`PanelEmpresa.tsx`) y la app (`apps/cliente/src/app/business.tsx`): nombre, razón social, país, moneda, número fiscal del país, dirección fiscal, representante, teléfono y primer centro con punto exacto. El Perfil del panel edita los datos legales (con borrador).
 - **Pruebas:** `Acceso.test.tsx`, `registroEmpresaFlex.test.ts`, `PanelEmpresa.test.tsx` («crea una nueva…»). Comprobadas en rojo.
+
+## C-FLEX-PRIMEROS-PASOS — el inicio del panel guía a la empresa nueva (1 nov 2026, todos los países)
+
+- **Qué hay:** `apps/panel/src/panel/flex/primerosPasos.ts` (siete pasos: empresa, centro, conductor, primer envío, etiquetas, ruta asignada, primera entrega) que se marcan solos con el resumen del servidor (`GET /empresas/:id` trae `rutas` y `rutasAsignadas`). Las etiquetas se marcan al imprimir (guardado en el navegador). Barra de avance en verde y un botón «Hacer este paso» en lo que falta.
+- **Pruebas:** `apps/servidor/src/flex/primerosPasos.test.ts` y `PanelEmpresa.test.tsx` → «C-FLEX-PRIMEROS-PASOS», comprobadas en rojo.

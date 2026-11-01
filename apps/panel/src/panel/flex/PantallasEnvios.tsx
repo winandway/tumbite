@@ -17,6 +17,7 @@ import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { RetiroEnPunto } from './RetiroEnPunto';
+import { marcarEtiquetasImpresas } from './primerosPasos';
 import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
@@ -1517,11 +1518,17 @@ export function Etiquetas({ ctx }: { ctx: Contexto }) {
   useEffect(() => {
     if (!pdf || impreso.current || !listas) return;
     impreso.current = true;
+    marcarEtiquetasImpresas(empresa.id);
     window.print();
-  }, [pdf, listas]);
+  }, [pdf, listas, empresa.id]);
   const alternar = (id: string) =>
     setElegidos(elegidos.includes(id) ? elegidos.filter((x) => x !== id) : [...elegidos, id]);
   const una = etiquetas.length === 1;
+  // C-FLEX-PRIMEROS-PASOS: imprimir marca el paso «etiquetas» en el inicio de la empresa.
+  function imprimir() {
+    marcarEtiquetasImpresas(empresa.id);
+    window.print();
+  }
   return (
     <section className="super flex-etiquetas">
       <header className="flex-encabezado flex-no-imprimir">
@@ -1534,16 +1541,11 @@ export function Etiquetas({ ctx }: { ctx: Contexto }) {
             type="button"
             className="boton secundario"
             disabled={!etiquetas.length}
-            onClick={() => window.print()}
+            onClick={imprimir}
           >
             {t.descargarPdf}
           </button>
-          <button
-            type="button"
-            className="boton"
-            disabled={!etiquetas.length}
-            onClick={() => window.print()}
-          >
+          <button type="button" className="boton" disabled={!etiquetas.length} onClick={imprimir}>
             {t.imprimir}
           </button>
         </div>
