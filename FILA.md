@@ -226,6 +226,8 @@
 - 1 nov 2026, 04:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila sigue sin puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas y producción muestran 208a535. No se tocó código.
 - 1 nov 2026, 15:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace 44 minutos). La fila no tiene puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas ya muestran 5655439; producción sigue en 6fad5f1 porque la verificación de main de ese commit todavía corre y publicará sola. No se tocó código.
 
+- [ ] (1 nov) El recorrido de Comida en inglés del sitio de pruebas falla dos veces seguidas esperando el punto rojo de la campana del cliente (`campana-punto`, recorrido.spec.ts:802) con código que antes pasó: revisar con REA si es carrera o datos acumulados del sitio de pruebas. Todos los países.
+
 ## Registro de la fábrica
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.
