@@ -235,7 +235,7 @@
 ## Repaso del 1 nov (docs/REPASO-ROADMAP-2026-11-01.md): construir como el mercado, apagado hasta poner el dinero
 
 - [x] HECHO 1 nov (C-GANAR-POR-TIEMPO). (R-T1) Ganar por tiempo («Earn by Time»): el repartidor elige cobrar por minuto y milla; superadmin con tarifa en cero (apagado); servidor, Driver, Docs y pruebas. Todos los países.
-- [ ] (R-T2) Anuncios patrocinados para restaurantes y tiendas («Sponsored»): salir primero con presupuesto diario y reporte; precio en cero (apagado). Todos los países.
+- [x] HECHO 1 nov (C-ANUNCIOS). (R-T2) Anuncios patrocinados («Sponsored Listings»): el restaurante sale primero con «Patrocinado», paga solo por pedido entregado desde el anuncio, presupuesto semanal y reporte de 30 días; precio en cero (apagado). Servidor, panel del restaurante, superadmin, app del cliente, Docs y pruebas. Todos los países. (Las tiendas usan su propia vitrina: quedan para cuando haya tiendas reales.)
 - [ ] (R-T3) Suscripción tipo DashPass: envío gratis y menos servicio por cuota mensual; probado solo con Stripe en modo prueba; apagada en producción. Todos los países.
 - [ ] (R-T4) Tarjetas de regalo y regalar un pedido; probado con Stripe en modo prueba; apagado en producción. Todos los países.
 

@@ -2108,6 +2108,91 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(bitacora).toBeTruthy();
   });
 
+  it('C-ANUNCIOS: el patrocinado sale primero y paga solo por el pedido que llega del anuncio', async () => {
+    const { m, dueno, cliente, repartidor, r, plato } = await escenario();
+    const admin = await m.cuenta('admin', 'Soporte Anuncios');
+    const lista = async () =>
+      (await m.llamar('GET', '/datos/restaurantes?lat=25.78&lng=-80.2', undefined, cliente.token))
+        .datos.restaurantes as { id: string; patrocinado?: boolean; anuncioId?: string }[];
+    // Apagado de fábrica: nadie puede anunciarse y la lista no cambia.
+    expect(
+      (await m.llamar('GET', '/datos/admin/anuncios', undefined, admin.token)).datos,
+    ).toMatchObject({ centavosPorPedido: 0 });
+    expect(
+      (
+        await m.llamar(
+          'PUT',
+          '/datos/mi-restaurante/anuncios',
+          { activa: true, presupuestoSemanalCentavos: 5000 },
+          dueno.token,
+        )
+      ).estado,
+    ).toBe(409);
+    expect((await lista()).some((x) => x.patrocinado)).toBe(false);
+    // Encendido: $3 por pedido, presupuesto de $5 a la semana.
+    await m.llamar(
+      'PUT',
+      '/datos/admin/anuncios',
+      { centavosPorPedido: 300, maxEnLista: 2 },
+      admin.token,
+    );
+    const puesta = await m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/anuncios',
+      { activa: true, presupuestoSemanalCentavos: 500 },
+      dueno.token,
+    );
+    expect(puesta.estado).toBe(200);
+    const primero = (await lista())[0]!;
+    expect(primero).toMatchObject({ id: r.datos.restaurante.id, patrocinado: true });
+    await m.llamar('POST', `/datos/anuncios/${primero.anuncioId}/toque`, {});
+    // El pedido llega desde el anuncio.
+    const p = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: r.datos.restaurante.id,
+        lineas: [{ platoId: plato.datos.plato.id, cantidad: 2 }],
+        propinaCentavos: 400,
+        direccion: '200 Calle Prueba',
+        lat: 25.78,
+        lng: -80.2,
+        anuncioId: primero.anuncioId,
+      },
+      cliente.token,
+    );
+    const id = p.datos.pedidoId as string;
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const rep = await repartidor('Ada Anuncio', 25.771, -80.191);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    await m.recoger(id, rep.token, dueno.token);
+    expect((await m.entregar(id, rep.token)).estado).toBe(200);
+    // Cobrado al restaurante como ajuste aparte: la venta queda entera.
+    const movs = await m.DB.prepare(
+      'SELECT concepto, monto, referencia FROM movimientos WHERE pedido_id = ? AND usuario_id = ?',
+    )
+      .bind(id, dueno.id)
+      .all<{ concepto: string; monto: number; referencia: string | null }>();
+    expect(movs.results.find((x) => x.concepto === 'ajuste')).toMatchObject({
+      monto: -300,
+      referencia: `anuncio:${primero.anuncioId}`,
+    });
+    const resumen = (
+      await m.llamar('GET', '/datos/mi-restaurante/anuncios', undefined, dueno.token)
+    ).datos;
+    expect(resumen.campana.gastoSemanaCentavos).toBe(300);
+    expect(resumen.dias[0]).toMatchObject({ pedidos: 1, gasto: 300, toques: 1 });
+    // Con $3 gastados de $5, otro pedido de $3 ya no cabe: deja de salir patrocinado.
+    expect((await lista()).some((x) => x.patrocinado)).toBe(false);
+  });
+
   it('C-GANAR-POR-TIEMPO: con el modo «por tiempo» se garantiza la hora activa al entregar', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const admin = await m.cuenta('admin', 'Soporte Tiempo');

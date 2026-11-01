@@ -18,6 +18,7 @@ import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
 import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
 import { pagoPicoPara } from '../pagoPico';
+import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
@@ -2315,6 +2316,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
               )
               .bind(nuevoId(), u.id, id, Number(p.propina)),
           ]),
+      // C-ANUNCIOS: si el pedido llegó desde un anuncio, se le cobra al restaurante al entregar.
+      ...sentenciasCobroAnuncio(db, id, String(p.dueno_id), nuevoId()),
       db.prepare('UPDATE repartidores SET puntos = puntos + 10 WHERE usuario_id = ?').bind(u.id),
     ]);
   } catch (e) {
@@ -2866,6 +2869,7 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
           "INSERT OR IGNORE INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, 'venta')",
         )
         .bind(nuevoId(), dueno, id, Number(p.pago_restaurante)),
+      ...sentenciasCobroAnuncio(db, id, dueno, nuevoId()),
       db
         .prepare(
           "INSERT OR IGNORE INTO evidencias (pedido_id, tipo, clave, modo, confirmada_en) VALUES (?, 'entrega', '', 'local', datetime('now'))",

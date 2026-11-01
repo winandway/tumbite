@@ -2018,5 +2018,27 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "aceptado_en",
     "garantizado",
     "complemento"
+  ],
+  "campanas_anuncio": [
+    "id",
+    "restaurante_id",
+    "activa",
+    "presupuesto_semanal",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "anuncios_dia": [
+    "campana_id",
+    "dia",
+    "impresiones",
+    "toques",
+    "pedidos",
+    "gasto"
+  ],
+  "pedidos_anuncio": [
+    "pedido_id",
+    "campana_id",
+    "centavos",
+    "cobrado_en"
   ]
 };

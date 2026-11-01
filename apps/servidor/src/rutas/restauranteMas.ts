@@ -26,7 +26,7 @@ export async function restauranteDe(
   return r ?? null;
 }
 
-async function mio(
+export async function mio(
   c: { get: (k: 'usuario') => { id: string; rol: string } | null },
   db: D1Database,
   minimo: 'staff' | 'manager' | 'dueno' = 'staff',

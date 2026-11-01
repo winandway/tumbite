@@ -164,6 +164,12 @@ export function Restaurantes({
               >
                 {r.nombre}
               </Text>
+              {r.patrocinado ? (
+                // C-ANUNCIOS: como «Sponsored» de DoorDash, discreto y debajo del nombre.
+                <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
+                  {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
+                </Text>
+              ) : null}
               <View
                 style={{
                   flexDirection: 'row',

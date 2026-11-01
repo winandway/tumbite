@@ -1119,6 +1119,30 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'sponsored-listings',
+        titulo: 'Anuncios: sal primero y paga solo por pedido',
+        resumen:
+          'Con un anuncio, tu restaurante sale primero en el inicio de la app con la etiqueta «Patrocinado». Pagas solo por los pedidos entregados que llegan desde tu anuncio.',
+        explicacion: [
+          'Cuando Divoox enciende los anuncios, en el menú del panel aparece «Anuncios». Ahí ves el precio por pedido, enciendes tu anuncio y escribes tu presupuesto semanal.',
+          'Con el anuncio encendido, tu restaurante puede salir entre los primeros del inicio de la app, con la palabra «Patrocinado» debajo del nombre. Solo salen restaurantes abiertos.',
+          'Pagas únicamente cuando un cliente toca tu anuncio, pide y el pedido se entrega. Nunca pagas por vistas ni por toques. El cobro se descuenta de tu saldo en Beneficios y tu venta queda completa.',
+          'Nunca gastas más que tu presupuesto: cuando lo gastado en los últimos siete días llega al límite, tu anuncio deja de salir hasta que haya espacio otra vez.',
+          'Debajo ves cuántas personas vieron tu anuncio, cuántas lo tocaron, cuántos pedidos llegaron y cuánto gastaste en los últimos 30 días.',
+          'Pueden encenderlo y cambiar el presupuesto el dueño y los managers.',
+        ],
+        preguntas: [
+          '¿Cómo anuncio mi restaurante en Divoox?',
+          '¿Cuánto cuesta un anuncio?',
+          '¿Me cobran por vistas o toques?',
+        ],
+        pasos: [
+          'Menú del panel → Anuncios.',
+          'Marca «Anuncio encendido» y escribe tu presupuesto semanal.',
+          'Toca «Guardar anuncio». Vuelve cuando quieras para ver los resultados.',
+        ],
+      },
+      {
         id: 'auto-accept',
         titulo: 'Aceptar pedidos automáticamente',
         resumen:
@@ -4800,6 +4824,30 @@ const en: SeccionDocs[] = [
           'Panel menu → Reviews, or in the restaurant app: More → Reviews.',
           'In the restaurant app, the More tab opens your restaurant details, earnings, team and account settings (password, sign out and delete account) right inside the app.',
           'Tap “Reply” on the review (or type your reply in the app) and publish.',
+        ],
+      },
+      {
+        id: 'sponsored-listings',
+        titulo: 'Ads: show first and pay only per order',
+        resumen:
+          'With an ad, your restaurant shows first on the app’s home screen with a “Sponsored” label. You pay only for delivered orders that come from your ad.',
+        explicacion: [
+          'When Divoox turns on ads, “Ads” appears in the panel menu. There you see the price per order, turn on your ad and enter your weekly budget.',
+          'With your ad on, your restaurant can show among the first on the app’s home screen, with the word “Sponsored” under its name. Only open restaurants are shown.',
+          'You pay only when a customer taps your ad, orders and the order is delivered. You never pay for views or taps. The charge comes out of your balance in Earnings, and your sale stays whole.',
+          'You never spend more than your budget: when your spend in the last seven days reaches the limit, your ad stops showing until there’s room again.',
+          'Below, you see how many people viewed your ad, how many tapped it, how many orders came in and how much you spent in the last 30 days.',
+          'The owner and managers can turn it on and change the budget.',
+        ],
+        preguntas: [
+          'How do I advertise my restaurant on Divoox?',
+          'How much does an ad cost?',
+          'Am I charged for views or taps?',
+        ],
+        pasos: [
+          'Panel menu → Ads.',
+          'Check “Ad on” and enter your weekly budget.',
+          'Tap “Save ad.” Come back anytime to see the results.',
         ],
       },
       {

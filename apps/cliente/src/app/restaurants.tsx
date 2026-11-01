@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { recordarAnuncio } from '../comida/anuncioTocado';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -246,7 +247,10 @@ export default function Restaurantes() {
         }
         renderItem={({ item: r, index }) => (
           <Pressable
-            onPress={() => abrirLocal(r.id)}
+            onPress={() => {
+              recordarAnuncio(api, r);
+              abrirLocal(r.id);
+            }}
             accessibilityRole="button"
             accessibilityLabel={r.nombre}
             style={({ pressed }) => [
@@ -279,6 +283,11 @@ export default function Restaurantes() {
                 >
                   {r.nombre}
                 </Text>
+                {r.patrocinado ? (
+                  <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
+                    {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
+                  </Text>
+                ) : null}
                 <Pressable
                   onPress={() => void alternarFavorito(r.id)}
                   accessibilityRole="button"

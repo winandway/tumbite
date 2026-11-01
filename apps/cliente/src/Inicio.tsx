@@ -7,6 +7,7 @@ import { Boton, MenuCuenta, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
 import { useRestaurantes } from './comida/useRestaurantes';
+import { recordarAnuncio } from './comida/anuncioTocado';
 import { EstadoCatalogo } from './comida/EstadoCatalogo';
 import { AvisoPago } from './inicio/AvisoPago';
 import { BarraInferior, type Pestana } from './inicio/BarraInferior';
@@ -167,7 +168,10 @@ export function Inicio() {
             cargando={false}
             titulo={idioma === 'en' ? 'You might like' : 'Te puede gustar'}
             testID="te-puede-gustar"
-            alTocar={(r) => router.push(`/restaurant/${r.id}`)}
+            alTocar={(r) => {
+              recordarAnuncio(api, r);
+              router.push(`/restaurant/${r.id}`);
+            }}
             alTocarEjemplo={() => setPronto(true)}
           />
         ) : null}
@@ -176,7 +180,10 @@ export function Inicio() {
           idioma={idioma}
           lista={filtrados}
           cargando={lista === null}
-          alTocar={(r) => router.push(`/restaurant/${r.id}`)}
+          alTocar={(r) => {
+            recordarAnuncio(api, r);
+            router.push(`/restaurant/${r.id}`);
+          }}
           alTocarEjemplo={() => setPronto(true)}
         />
         <View style={{ marginHorizontal: 16, marginTop: 8 }}>

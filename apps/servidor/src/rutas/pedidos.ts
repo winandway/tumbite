@@ -1,3 +1,4 @@
+import { anotarPedidoDeAnuncio } from '../anuncios';
 import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
@@ -101,6 +102,8 @@ const esquemaNuevoPedido = z.object({
   metodoPago: z.enum(['tarjeta', 'efectivo', 'transferencia_repartidor']).default('tarjeta'),
   /** C-PEDIDO-PROGRAMADO: inicio de la franja elegida (ISO, UTC). Sin él, lo antes posible. */
   programadoPara: z.iso.datetime().optional(),
+  /** C-ANUNCIOS: el pedido llegó desde el anuncio de este restaurante (se cobra al entregar). */
+  anuncioId: z.string().min(1).max(64).optional(),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -728,6 +731,7 @@ pedidos.post('/pedidos', async (c) => {
       d.apto,
     )
     .run();
+  await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
   if (cupon)
     await db
       .prepare(

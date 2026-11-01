@@ -1,3 +1,4 @@
+import { conPatrocinados } from '../anuncios';
 import { Hono } from 'hono';
 import { areaPara } from '../territorio';
 import { z } from 'zod';
@@ -341,7 +342,9 @@ catalogo.get('/restaurantes', async (c) => {
           (a.distanciaKm ?? 999) - (b.distanciaKm ?? 999),
       );
   }
-  return c.json({ restaurantes: lista, zona: { id: zona.id }, fueraDeZona: false });
+  // C-ANUNCIOS: hasta dos patrocinados primero, con su etiqueta (apagado con precio en cero).
+  const conAnuncios = await conPatrocinados(db, lista);
+  return c.json({ restaurantes: conAnuncios, zona: { id: zona.id }, fueraDeZona: false });
 });
 
 catalogo.get('/restaurantes/:id', async (c) => {

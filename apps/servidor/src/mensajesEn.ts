@@ -5,6 +5,12 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-ANUNCIOS
+  ['Los anuncios todavía no están disponibles.', 'Sponsored listings aren’t available yet.'],
+  [
+    'Escribe tu presupuesto semanal para encender el anuncio.',
+    'Enter your weekly budget to turn on your ad.',
+  ],
   // C-GANAR-POR-TIEMPO
   [
     'Ganar por tiempo todavía no está disponible en tu zona.',

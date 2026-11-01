@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { anuncioPara } from '../comida/anuncioTocado';
 import type React from 'react';
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -406,6 +407,8 @@ export default function PantallaCarrito() {
           ...(l.nota ? { nota: l.nota } : {}),
         })),
         propinaCentavos: propina,
+        // C-ANUNCIOS: si entró tocando el anuncio de este restaurante (se cobra al restaurante, no al cliente).
+        anuncioId: anuncioPara(carrito.restauranteId),
         // El servidor compara este total con el suyo y no cobra si no coinciden.
         totalEsperado: d.totalCliente,
         direccion: b.valores.direccion,

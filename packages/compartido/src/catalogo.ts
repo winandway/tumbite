@@ -155,6 +155,9 @@ export type Restaurante = {
    * solo con 10 opiniones o más (como DoorDash y Uber Eats); antes, null y la app dice «Nuevo».
    */
   calificacion?: { promedio: number; total: number } | null;
+  /** C-ANUNCIOS: sale primero por un anuncio; la app muestra «Patrocinado» y manda el id al pedir. */
+  patrocinado?: boolean;
+  anuncioId?: string;
   /** Solo para el dueño: la lista de activación (qué falta antes de abrir). */
   activacion?: Activacion;
 };

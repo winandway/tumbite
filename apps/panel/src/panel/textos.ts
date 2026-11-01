@@ -48,6 +48,7 @@ const es = {
     earnings: 'Beneficios',
     gifts: 'Regalos y marketing',
     reviews: 'Reseñas',
+    ads: 'Anuncios',
     team: 'Equipo',
   },
   menuAdmin: {
@@ -128,6 +129,7 @@ const en: T = {
     earnings: 'Earnings',
     gifts: 'Gifts and marketing',
     reviews: 'Reviews',
+    ads: 'Ads',
     team: 'Team',
   },
   menuAdmin: {
