@@ -2160,3 +2160,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** en la app del cliente, «Mis paquetes» → «Rastrear un paquete» (también desde Envíos → «Espero un paquete»): se escribe o se escanea el número de seguimiento (DVX…). `POST /datos/v1/flex/mis-paquetes/seguir`: si el envío es para esa persona (su correo o los últimos 7 dígitos de su teléfono coinciden), queda vinculado a su cuenta y aparece completo con su ubicación; si no, lo sigue solo con el estado público (tabla `paquetes_seguidos`, sin dirección ni nombres). Los avisos push de cada paso llegan también a quien lo sigue (`avisarDestinatarios`).
 - **Seguridad:** con solo el número nadie ve la dirección ni el nombre de otra persona.
 - **Prueba:** `apps/servidor/src/flex/rastrear.test.ts` (comprobada en rojo) y `clienteEnviosTestflight.test.ts`.
+
+## C-FLEX-YA-LLEGA (31 oct 2026, LG4, pedido de Richard) — todos los países
+
+- **Qué es:** con la ruta en curso, cada vez que Driver manda su ubicación (cada 30 s), si está a menos de 800 m de la próxima parada (1,5 km si es un punto de encuentro de la vía), quien recibe (y quien sigue el número) recibe UNA vez el aviso «Tu paquete ya llega»: el nombre del conductor, la marca, el modelo, el color y la placa del vehículo, y el punto de encuentro si lo hay. `avisarYaLlega` en `flex/avisosFlex.ts`; clave única en `flex_avisos`.
+- **Falta:** la llamada automática por teléfono, que necesita las claves de Twilio de Richard (LG5).
+- **Prueba:** `apps/servidor/src/flex/yaLlega.test.ts` (comprobada en rojo).
