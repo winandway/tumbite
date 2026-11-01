@@ -249,6 +249,7 @@ export async function detalleRuta(
               e.instrucciones, e.ventana_desde, e.ventana_hasta, e.config_entrega_json,
               e.referencias, e.cobro_monto, e.cobro_moneda, e.cobro_estado, e.cobro_metodo,
               e.cobro_monto_recibido, e.cobro_moneda_recibida, e.cobro_referencia, e.cobrado_en, e.liquidado_en,
+              e.entrega_tipo, e.punto_encuentro,
               (SELECT COUNT(*) FROM flex_pines fp WHERE fp.envio_id = e.id) AS tiene_pin
          FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id WHERE rp.ruta_id = ? ORDER BY rp.orden`,
     )
@@ -323,6 +324,9 @@ export async function detalleRuta(
         ),
         tienePin: Number(p.tiene_pin) > 0,
         referencias: p.referencias ?? '',
+        // C-FLEX-ENCUENTRO: el conductor ve si es a la puerta o en un punto de encuentro de la vía.
+        entrega: (p.entrega_tipo as string | null) ?? 'domicilio',
+        puntoEncuentro: (p.punto_encuentro as string | null) ?? '',
         // Fase 6 (C-FLEX-COBRO): lo que se cobra en esta parada y si ya se cobró.
         cobro: filaCobro(p),
         paquetes: (porParada.get(String(p.id)) ?? []).map((q) => ({

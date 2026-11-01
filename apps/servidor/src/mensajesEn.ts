@@ -1275,6 +1275,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Falta el precio (el producto es nuevo).', 'The price is missing (it’s a new product).'],
   // Divoox Flex · retiro en un punto (C-FLEX-RETIRO).
   ['Elige el centro donde se retira el paquete.', 'Choose the hub where the package is picked up.'],
+  ['Escribe el nombre del punto de encuentro.', 'Enter the name of the meeting point.'],
+  ['Marca en el mapa el punto de encuentro.', 'Mark the meeting point on the map.'],
+  [
+    'Ese número fiscal no tiene la forma del país (revisa los dígitos).',
+    'That tax ID doesn’t match the country’s format (check the digits).',
+  ],
   [
     'Hay envíos que se retiran en un punto: no van en una ruta a domicilio.',
     'Some shipments are picked up at a point: they don’t go on a delivery route.',

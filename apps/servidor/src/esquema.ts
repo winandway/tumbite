@@ -152,6 +152,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // Flex · C-FLEX-RETIRO: retiro en un punto (centro) con plazo.
   ['envios', 'entrega_tipo', "TEXT NOT NULL DEFAULT 'domicilio'"],
   ['envios', 'punto_centro_id', 'TEXT'],
+  // C-FLEX-ENCUENTRO (LG2): el nombre del punto de encuentro en la vía («Estación Doña María»).
+  ['envios', 'punto_encuentro', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'retiro_disponible_en', 'TEXT'],
   ['envios', 'retiro_vence', 'TEXT'],
   // Flex · Fase 4: disputa de una recarga de la billetera de una empresa.

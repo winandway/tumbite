@@ -70,8 +70,14 @@ export const esquemaEnvio = z.object({
     .nullable()
     .optional(),
   direccion: z.string().trim().min(3).max(300),
-  /** C-FLEX-RETIRO: «domicilio» (por defecto) o «punto»: se retira en un centro de la empresa. */
-  entrega: z.enum(['domicilio', 'punto']).default('domicilio'),
+  /**
+   * C-FLEX-RETIRO: «domicilio» (por defecto) o «punto»: se retira en un centro de la empresa.
+   * C-FLEX-ENCUENTRO (LG2): «encuentro»: se entrega en un punto de la vía donde pasa el camión
+   * («Estación Doña María»), marcado en el mapa; el conductor avisa al llegar. Como los transportistas
+   * de Venezuela que entregan sobre la Panamericana.
+   */
+  entrega: z.enum(['domicilio', 'punto', 'encuentro']).default('domicilio'),
+  puntoEncuentro: z.string().trim().max(120).default(''),
   puntoCentroId: z.string().uuid().nullable().optional(),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
@@ -117,6 +123,7 @@ const filaEnvio = (f: Record<string, unknown>) => ({
   // C-FLEX-RETIRO.
   entrega: (f.entrega_tipo as string) ?? 'domicilio',
   puntoCentroId: (f.punto_centro_id as string | null) ?? null,
+  puntoEncuentro: (f.punto_encuentro as string | null) ?? '',
   retiroDisponibleEn: (f.retiro_disponible_en as string | null) ?? null,
   retiroVence: (f.retiro_vence as string | null) ?? null,
   ventanaDesde: f.ventana_desde,
@@ -191,8 +198,9 @@ export function sentenciasDeEnvio(
         `INSERT INTO envios (id, empresa_id, centro_id, referencia_externa, remitente_nombre, destinatario_nombre,
          destinatario_telefono, direccion, lat, lng, instrucciones, ventana_desde, ventana_hasta,
          destinatario_correo, destinatario_documento, referencias, ubicacion_estado, ubicacion_fuente,
-         ubicacion_confirmada_en, cobro_monto, cobro_moneda, cobro_estado, entrega_tipo, punto_centro_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END, ?, ?, ?, ?, ?)`,
+         ubicacion_confirmada_en, cobro_monto, cobro_moneda, cobro_estado, entrega_tipo, punto_centro_id,
+         punto_encuentro)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -219,6 +227,7 @@ export function sentenciasDeEnvio(
         d.cobro ? 'pendiente' : 'sin_cobro',
         d.entrega,
         d.entrega === 'punto' ? (d.puntoCentroId ?? d.centroId ?? null) : null,
+        d.entrega === 'encuentro' ? d.puntoEncuentro : '',
       ),
   ];
   const paquetes = d.paquetes.map((p) => {
@@ -305,8 +314,15 @@ function exigirReglasDelPais(
 async function comprobarPunto(
   db: D1Database,
   empresaId: string,
-  d: Pick<EnvioEntrada, 'entrega' | 'puntoCentroId' | 'centroId'>,
+  d: Pick<EnvioEntrada, 'entrega' | 'puntoCentroId' | 'centroId' | 'puntoEncuentro' | 'lat'>,
 ) {
+  // C-FLEX-ENCUENTRO: el punto de encuentro tiene nombre y su lugar marcado en el mapa.
+  if (d.entrega === 'encuentro') {
+    if (!d.puntoEncuentro)
+      throw new ErrorDatos('Escribe el nombre del punto de encuentro.', 'puntoEncuentro', 422);
+    if (d.lat == null) throw new ErrorDatos('Marca en el mapa el punto de encuentro.', 'lat', 422);
+    return;
+  }
   if (d.entrega !== 'punto') return;
   const punto = d.puntoCentroId ?? d.centroId;
   if (!punto)

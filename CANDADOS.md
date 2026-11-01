@@ -2149,3 +2149,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** la empresa de logística se registra DENTRO de la app del cliente (`apps/cliente/src/app/business.tsx`) con nombre, razón social, país, moneda, número fiscal validado por país (EIN, RIF, NIT, RFC: `numeroFiscalValido` en `flexPaises.ts`), dirección fiscal, representante, teléfono y su centro de carga con el punto exacto. Columnas nuevas de `empresas` en COLUMNAS (`numero_fiscal`, `direccion_fiscal`, `representante`, `telefono`). Borrador del formulario; lo escrito no se pierde si falla.
 - **Panel dentro de la app:** `POST /datos/cuentas/pase-web` da un código de un solo uso (2 minutos; se guarda solo su hash en `pases_web`); `GET /datos/cuentas/pase-web/:codigo?ir=/panel/business` abre la sesión en la vista web y redirige; nunca a otro sitio.
 - **Prueba:** `apps/servidor/src/flex/empresaLegal.test.ts` y `packages/compartido/src/empresaLegal.test.ts` (comprobadas en rojo).
+
+## C-FLEX-ENCUENTRO (31 oct 2026, LG2, pedido de Richard) — todos los países
+
+- **Qué es:** además de «a domicilio» y «retiro en el centro», un envío puede entregarse en un **punto de encuentro de la vía** («Estación Doña María»), como los transportistas que entregan sobre la Panamericana. Se crea con `entrega: 'encuentro'`, `puntoEncuentro` (nombre) y el punto en el mapa (`lat`/`lng`, obligatorios). Columna `envios.punto_encuentro` en COLUMNAS. El panel lo ofrece al crear el envío; Driver lo muestra en la lista y en la parada.
+- **Prueba:** `apps/servidor/src/flex/encuentro.test.ts` (comprobada en rojo) y `flexMiRutaRepaso.test.ts`.
