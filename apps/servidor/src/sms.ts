@@ -46,6 +46,18 @@ export function telefonoE164(t: string | null | undefined): string | null {
   return solo.length >= 8 ? `+${solo}` : null;
 }
 
+/**
+ * C-SMS-PAISES: a qué países salen los SMS y las llamadas. Por defecto solo +1 (EE. UU.); un SMS a
+ * Venezuela cuesta unos 0,23 dólares. Se amplía con la variable SMS_PREFIJOS («+1,+57»).
+ */
+export function destinoPermitido(env: Env, para: string): boolean {
+  const prefijos = (env.SMS_PREFIJOS ?? '+1')
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p.startsWith('+'));
+  return prefijos.some((p) => para.startsWith(p));
+}
+
 async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<string, string>) {
   const cuerpo = new URLSearchParams(datos).toString();
   const c = credencialTwilio(env);
@@ -80,7 +92,7 @@ export async function enviarSms(
 ): Promise<boolean> {
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
-  if (!para) return false;
+  if (!para || !destinoPermitido(env, para)) return false;
   const id = nuevoId();
   try {
     await twilio(env, 'Messages', { To: para, From: env.TWILIO_FROM!, Body: a.texto });
@@ -182,7 +194,7 @@ export async function llamarConVoz(
 ): Promise<boolean> {
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(telefono);
-  if (!para) return false;
+  if (!para || !destinoPermitido(env, para)) return false;
   const limpio = texto.replace(/[<>&]/g, ' ');
   const voz = idioma === 'en' ? 'en-US' : 'es-MX';
   try {

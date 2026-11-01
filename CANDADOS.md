@@ -2186,3 +2186,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué hay:** sección 12 «Mensajes de texto (SMS)» con `id: 'sms'` en `PRIVACIDAD` (es y en) de `apps/panel/src/sitio/legales.ts`. Ancla pública: divoox.com/privacy#sms.
 - **Prueba:** `legales.test.tsx` → «mensajes de texto (verificación de Twilio y CTIA)». Comprobada en rojo.
 - **No tocar:** las cuatro piezas (opt-in, STOP, HELP, tarifas, no compartir) mientras haya un número verificado.
+
+## C-SMS-PAISES — los SMS y las llamadas automáticas solo salen a los países encendidos (31 oct 2026, EE. UU.)
+
+- **Por qué:** medido el 31 oct, un SMS a Venezuela cuesta 0,2257 dólares; a EE. UU., 0,0083. Richard decidió dejar Twilio para EE. UU. y buscar otro proveedor para Venezuela.
+- **Qué hay:** `destinoPermitido(env, para)` en `apps/servidor/src/sms.ts`, usado por `enviarSms` y `llamarConVoz`. Sin la variable `SMS_PREFIJOS` solo sale a «+1». Para ampliar: `SMS_PREFIJOS=+1,+57`.
+- **Prueba:** `apps/servidor/src/smsPaises.test.ts`, comprobada en rojo.
+- **Twilio de Divoox:** subcuenta «Divoox» (la principal tiene un perfil personal viejo y Twilio no deja verificar desde ella). Número gratuito +1 866 569 5258, verificación de número gratuito HHad9f853f48db6e35442954fb9f1620d4 enviada el 31 oct con los datos de Windoce LLC. Claves en `~/.config/tumbite/twilio-divoox`. Hasta que Twilio apruebe, los SMS a EE. UU. no salen (error 30032/30034).

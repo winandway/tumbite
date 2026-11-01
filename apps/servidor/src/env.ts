@@ -71,6 +71,8 @@ export const esquemaEnv = z.object({
     .optional(),
   /** Solo para el recorrido: Twilio simulado en localhost (en producción se ignora). */
   TWILIO_API_URL: z.string().optional(),
+  /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */
+  SMS_PREFIJOS: z.string().optional(),
   /** Checkr (antecedentes de repartidores). Sin la llave, el botón dice que se activa pronto. */
   CHECKR_API_KEY: z.string().min(16).optional(),
   /** Solo para el recorrido: Checkr simulado en localhost (en producción se ignora). */
