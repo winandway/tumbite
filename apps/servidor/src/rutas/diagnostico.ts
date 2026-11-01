@@ -1191,12 +1191,18 @@ diagnostico.post('/interno/diagnostico/pagar-plus', async (c) => {
   if (!s?.stripe_suscripcion?.startsWith('sub_'))
     throw new ErrorDatos('No encontrado.', undefined, 404);
   const stripe = crearStripe(llave)!;
-  const sub = await stripe.get<{ latest_invoice: string }>(
+  const sub = await stripe.get<{ latest_invoice: string; customer: string }>(
     `/subscriptions/${s.stripe_suscripcion}`,
+  );
+  // Stripe exige que la tarjeta sea del cliente de la factura: se asocia la de prueba y se paga.
+  const pm = await stripe.post<{ id: string }>(
+    '/payment_methods/pm_card_visa/attach',
+    { customer: sub.customer },
+    `diag-plus-pm-${sub.latest_invoice}`,
   );
   const r = await stripe.post<{ status: string }>(
     `/invoices/${sub.latest_invoice}/pay`,
-    { payment_method: 'pm_card_visa' },
+    { payment_method: pm.id },
     `diag-plus-${sub.latest_invoice}`,
   );
   return c.json({ estado: r.status });
