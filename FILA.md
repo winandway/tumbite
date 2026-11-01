@@ -220,6 +220,7 @@
 - 31 oct 2026, 14:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace 32 minutos). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Pruebas y producción (divoox.com) muestran el último commit (38fa434, el repaso de la tarde ya fusionado). No se tocó código.
 - 31 oct 2026, 16:10 (tarea programada): sin pausa; main sin commits en dos horas, pero otra sesión trabaja la rama fase-repaso-1 (último commit hace 25 minutos, ya en pruebas con 8c00d21) y se deja a esa sesión. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 38fa434. No se tocó código.
 - 31 oct 2026, 20:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace 53 minutos, la rama fase-repaso-1 ya fusionada). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Pruebas y producción (divoox.com) muestran el último commit (7c6977e). No se tocó código.
+- 1 nov 2026, 00:10 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Otra sesión fusionó fase-repaso-1 a main hace 22 minutos y su verificación sigue corriendo (pruebas en e08346d, producción en ec0f130); se deja terminar sin tocarla. No se tocó código.
 
 ## Registro de la fábrica
 
