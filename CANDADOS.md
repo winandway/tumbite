@@ -2143,3 +2143,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **C-BLOQUE-EN-LA-APP:** «Bloque de logística» abre `/business` dentro de la app (qué es Divoox Flex, cuatro pasos y el registro en la misma app).
 - **C-MOSAICO-UNA-LINEA / C-LETRA-NO-BLACK:** con la letra grande del iPhone, «Deliverie-s» se partía; el nombre va en una línea y se achica. La app del cliente deja la letra «Black» (900) y «Heavy» (800): máximo «Bold» (700), como Uber Eats y DoorDash.
 - **Prueba:** `packages/compartido/src/clienteEnviosTestflight.test.ts` (comprobada en rojo).
+
+## C-EMPRESA-LEGAL y C-PASE-WEB (31 oct 2026, LG1, pedido de Richard) — todos los países
+
+- **Qué es:** la empresa de logística se registra DENTRO de la app del cliente (`apps/cliente/src/app/business.tsx`) con nombre, razón social, país, moneda, número fiscal validado por país (EIN, RIF, NIT, RFC: `numeroFiscalValido` en `flexPaises.ts`), dirección fiscal, representante, teléfono y su centro de carga con el punto exacto. Columnas nuevas de `empresas` en COLUMNAS (`numero_fiscal`, `direccion_fiscal`, `representante`, `telefono`). Borrador del formulario; lo escrito no se pierde si falla.
+- **Panel dentro de la app:** `POST /datos/cuentas/pase-web` da un código de un solo uso (2 minutos; se guarda solo su hash en `pases_web`); `GET /datos/cuentas/pase-web/:codigo?ir=/panel/business` abre la sesión en la vista web y redirige; nunca a otro sitio.
+- **Prueba:** `apps/servidor/src/flex/empresaLegal.test.ts` y `packages/compartido/src/empresaLegal.test.ts` (comprobadas en rojo).

@@ -1,18 +1,48 @@
-import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
-import { enIdioma, enIdiomaDireccion } from '@tumbite/compartido';
-import { Boton, C, URL_SERVIDOR, useSesion } from '@tumbite/movil';
-import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
+import {
+  ErrorApi,
+  enIdioma,
+  enIdiomaDireccion,
+  numeroFiscalDe,
+  numeroFiscalValido,
+  useBorrador,
+} from '@tumbite/compartido';
+import {
+  AvisoBorrador,
+  Boton,
+  C,
+  Campo,
+  CampoDireccion,
+  URL_SERVIDOR,
+  alSalirTelefono,
+  almacenTelefono,
+  useSesion,
+} from '@tumbite/movil';
+import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
 
 /**
- * C-BLOQUE-EN-LA-APP (31 oct 2026, Richard en TestFlight): «Bloque de logística» mandaba directo a
- * la web. Ahora abre esta pantalla dentro de la app: qué es Divoox Flex, cómo funciona en cuatro
- * pasos y el registro de la empresa en la misma app (como Uber Direct o DoorDash Drive para
- * negocios). País: todos.
+ * C-BLOQUE-EN-LA-APP y C-EMPRESA-LEGAL (31 oct 2026, Richard en TestFlight; LG1): la empresa de
+ * logística se conoce, se registra con sus datos legales y entra a su panel SIN salir de la app,
+ * como Uber Direct y DoorDash Drive. El número fiscal se valida según el país (EIN, RIF, NIT, RFC).
+ * El panel se abre en la misma app con un pase de un solo uso (sin volver a escribir la clave).
  */
+const PAISES = [
+  {
+    id: 'US',
+    es: 'Estados Unidos',
+    en: 'United States',
+    monedas: ['USD'],
+    zona: 'America/New_York',
+  },
+  { id: 'VE', es: 'Venezuela', en: 'Venezuela', monedas: ['USD', 'VES'], zona: 'America/Caracas' },
+  { id: 'CO', es: 'Colombia', en: 'Colombia', monedas: ['COP', 'USD'], zona: 'America/Bogota' },
+  { id: 'MX', es: 'México', en: 'Mexico', monedas: ['MXN', 'USD'], zona: 'America/Mexico_City' },
+] as const;
+
 const T = {
   es: {
     titulo: 'Divoox Flex',
@@ -20,7 +50,7 @@ const T = {
     queEs:
       'Repartimos los paquetes de tu negocio por rutas: tú cargas los envíos, nosotros armamos la ruta, un conductor los recoge en tu centro y los entrega con foto, firma o PIN.',
     pasos: [
-      ['Registra tu empresa', 'Con tu país, tu moneda y tus centros de carga.'],
+      ['Registra tu empresa', 'Con sus datos legales, tu país y tu centro de carga.'],
       ['Carga tus envíos', 'Uno por uno, desde una hoja de cálculo o por la API.'],
       ['Arma y asigna la ruta', 'Ordenamos las paradas; la asignas a tus conductores o a Divoox.'],
       ['Sigue cada entrega', 'En vivo, con la prueba de entrega de cada paquete.'],
@@ -28,8 +58,28 @@ const T = {
     paraQuien:
       'Para tiendas en línea, farmacias, distribuidores y cualquier negocio que entrega todos los días.',
     registrar: 'Registrar mi empresa',
-    cerrar: 'Volver',
     volver: 'Volver',
+    datosEmpresa: 'Datos de la empresa',
+    nombre: 'Nombre comercial',
+    razon: 'Razón social (como aparece en sus papeles)',
+    pais: 'País de la empresa',
+    moneda: 'Moneda',
+    fiscal: (n: string) => `Número fiscal (${n})`,
+    direccionFiscal: 'Dirección fiscal',
+    representante: 'Representante legal',
+    telefono: 'Teléfono de la empresa',
+    centro: 'Tu centro de carga',
+    centroAyuda: 'El lugar donde el conductor recoge los paquetes.',
+    centroNombre: 'Nombre del centro',
+    centroDireccion: 'Dirección del centro',
+    ciudad: 'Ciudad',
+    acepto: 'Declaro que los datos son reales y que tengo permiso para registrar esta empresa.',
+    crear: 'Crear mi empresa',
+    falta: 'Completa todos los datos y marca la casilla.',
+    fiscalMal: (n: string, ej: string) => `Ese ${n} no tiene la forma correcta. Ejemplo: ${ej}`,
+    elegirCentro: 'Elige la dirección del centro de la lista, para guardar su punto exacto.',
+    abrirPanel: 'Abrir el panel de mi empresa',
+    misEmpresas: 'Tus empresas',
   },
   en: {
     titulo: 'Divoox Flex',
@@ -37,7 +87,7 @@ const T = {
     queEs:
       'We deliver your business’s packages in routes: you load the shipments, we build the route, a driver picks them up at your hub and delivers them with a photo, signature or PIN.',
     pasos: [
-      ['Register your company', 'With your country, currency and loading hubs.'],
+      ['Register your company', 'With its legal details, your country and your loading hub.'],
       ['Load your shipments', 'One by one, from a spreadsheet, or through the API.'],
       ['Build and assign the route', 'We order the stops; assign it to your drivers or to Divoox.'],
       ['Follow every delivery', 'Live, with proof of delivery for each package.'],
@@ -45,35 +95,181 @@ const T = {
     paraQuien:
       'For online stores, pharmacies, distributors and any business that delivers every day.',
     registrar: 'Register my company',
-    cerrar: 'Back',
     volver: 'Back',
+    datosEmpresa: 'Company details',
+    nombre: 'Business name',
+    razon: 'Legal name (as on its documents)',
+    pais: 'Company country',
+    moneda: 'Currency',
+    fiscal: (n: string) => `Tax ID (${n})`,
+    direccionFiscal: 'Registered address',
+    representante: 'Legal representative',
+    telefono: 'Company phone',
+    centro: 'Your loading hub',
+    centroAyuda: 'Where the driver picks up the packages.',
+    centroNombre: 'Hub name',
+    centroDireccion: 'Hub address',
+    ciudad: 'City',
+    acepto: 'I confirm the details are true and that I’m authorized to register this company.',
+    crear: 'Create my company',
+    falta: 'Fill in every field and check the box.',
+    fiscalMal: (n: string, ej: string) => `That ${n} doesn’t look right. Example: ${ej}`,
+    elegirCentro: 'Pick the hub address from the list so we save its exact location.',
+    abrirPanel: 'Open my company dashboard',
+    misEmpresas: 'Your companies',
   },
 };
 
+const INICIAL = {
+  nombre: '',
+  razonSocial: '',
+  pais: 'US',
+  moneda: 'USD',
+  numeroFiscal: '',
+  direccionFiscal: '',
+  representante: '',
+  telefono: '',
+  centroNombre: '',
+  centroDireccion: '',
+  centroLat: '',
+  centroLng: '',
+  ciudad: '',
+  acepto: false,
+};
+
+const clave = () => `empresa-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 export default function PantallaEmpresas() {
-  const { idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
-  const [registrando, setRegistrando] = useState(false);
+  const [vista, setVista] = useState<'info' | 'registro' | 'panel'>('info');
+  const [empresas, setEmpresas] = useState<{ id: string; nombre: string }[]>([]);
+  const [pase, setPase] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [trabajando, setTrabajando] = useState(false);
+  const b = useBorrador({
+    formulario: 'app-empresa-flex',
+    cuenta: usuario?.id,
+    inicial: INICIAL,
+    almacen: almacenTelefono,
+    alSalir: alSalirTelefono,
+  });
+  const v = b.valores;
+  const pais = PAISES.find((p) => p.id === v.pais) ?? PAISES[0];
+  const fiscal = numeroFiscalDe(v.pais);
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/'));
-  if (registrando)
+
+  const cargar = useCallback(() => {
+    if (!usuario) return;
+    api
+      .pedir<{ empresas: { id: string; nombre: string }[] }>('GET', '/datos/v1/flex/empresas')
+      .then((r) => setEmpresas(r.empresas))
+      .catch(() => undefined);
+  }, [api, usuario]);
+  useEffect(cargar, [cargar]);
+
+  async function abrirPanel() {
+    setError('');
+    try {
+      const r = await api.pedir<{ codigo: string }>('POST', '/datos/cuentas/pase-web', {});
+      setPase(r.codigo);
+      setVista('panel');
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  async function crear() {
+    setError('');
+    const faltan = [
+      v.nombre,
+      v.razonSocial,
+      v.numeroFiscal,
+      v.direccionFiscal,
+      v.representante,
+      v.telefono,
+      v.centroNombre,
+      v.centroDireccion,
+      v.ciudad,
+    ].some((x) => !x.trim());
+    if (faltan || !v.acepto) return setError(t.falta);
+    if (!numeroFiscalValido(v.pais, v.numeroFiscal))
+      return setError(t.fiscalMal(fiscal.nombre, fiscal.ejemplo));
+    if (!v.centroLat) return setError(t.elegirCentro);
+    setTrabajando(true);
+    try {
+      const e = await api.pedir<{ empresa: { id: string } }>(
+        'POST',
+        '/datos/v1/flex/empresas',
+        {
+          nombre: v.nombre.trim(),
+          razonSocial: v.razonSocial.trim(),
+          pais: v.pais,
+          moneda: v.moneda,
+          numeroFiscal: v.numeroFiscal.trim(),
+          direccionFiscal: v.direccionFiscal.trim(),
+          representante: v.representante.trim(),
+          telefono: v.telefono.trim(),
+        },
+        { cabeceras: { 'idempotency-key': clave() } },
+      );
+      await api.pedir(
+        'POST',
+        `/datos/v1/flex/empresas/${e.empresa.id}/centros`,
+        {
+          nombre: v.centroNombre.trim(),
+          direccion: v.centroDireccion.trim(),
+          pais: v.pais,
+          ciudad: v.ciudad.trim(),
+          lat: Number(v.centroLat),
+          lng: Number(v.centroLng),
+          zonaHoraria: pais.zona,
+        },
+        { cabeceras: { 'idempotency-key': clave() } },
+      );
+      await b.limpiar();
+      cargar();
+      await abrirPanel();
+    } catch (x) {
+      // Lo escrito se queda en pantalla (regla de formularios).
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setTrabajando(false);
+    }
+  }
+
+  if (vista === 'panel' && pase)
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
-        <Encabezado
-          titulo={t.titulo}
-          alVolver={() => setRegistrando(false)}
-          etiquetaVolver={t.cerrar}
-        />
+        <Encabezado titulo={t.titulo} alVolver={() => setVista('info')} etiquetaVolver={t.volver} />
         <WebView
-          source={{ uri: `${URL_SERVIDOR}${enIdiomaDireccion('/business', idioma)}` }}
+          source={{
+            uri: `${URL_SERVIDOR}/datos/cuentas/pase-web/${pase}?ir=${enIdiomaDireccion('/panel/business', idioma)}`,
+          }}
+          sharedCookiesEnabled
           style={{ flex: 1 }}
-          testID="empresas-registro"
+          testID="empresas-panel"
         />
       </SafeAreaView>
     );
+
+  const avisoError = error ? (
+    <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
+      {error}
+    </Text>
+  ) : null;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.fondo }} edges={['top']}>
-      <Encabezado titulo={t.titulo} alVolver={volver} etiquetaVolver={t.volver} />
+      <Encabezado
+        titulo={t.titulo}
+        alVolver={vista === 'registro' ? () => setVista('info') : volver}
+        etiquetaVolver={t.volver}
+      />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           padding: 16,
           gap: 12,
@@ -83,36 +279,195 @@ export default function PantallaEmpresas() {
         }}
         testID="empresas"
       >
-        <View style={{ backgroundColor: C.logistica, borderRadius: 18, padding: 18, gap: 6 }}>
-          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>{t.sub}</Text>
-          <Text style={{ color: '#E7F1F8', fontSize: 15, lineHeight: 21 }}>{t.queEs}</Text>
-        </View>
-        <Tarjeta>
-          {t.pasos.map(([titulo, ayuda], i) => (
-            <View key={titulo} style={{ flexDirection: 'row', gap: 12, paddingVertical: 8 }}>
+        {vista === 'info' ? (
+          <>
+            <View style={{ backgroundColor: C.logistica, borderRadius: 18, padding: 18, gap: 6 }}>
+              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>{t.sub}</Text>
+              <Text style={{ color: '#E7F1F8', fontSize: 15, lineHeight: 21 }}>{t.queEs}</Text>
+            </View>
+            <Tarjeta>
+              {t.pasos.map(([titulo, ayuda], i) => (
+                <View key={titulo} style={{ flexDirection: 'row', gap: 12, paddingVertical: 8 }}>
+                  <View
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: C.logisticaAccion,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ color: C.logisticaTexto, fontWeight: '700' }}>{i + 1}</Text>
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={{ fontWeight: '700', color: C.secundario, fontSize: 16 }}>
+                      {titulo}
+                    </Text>
+                    <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{ayuda}</Text>
+                  </View>
+                </View>
+              ))}
+            </Tarjeta>
+            <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{t.paraQuien}</Text>
+            {avisoError}
+            {empresas.length ? (
+              <Tarjeta>
+                <Text style={{ fontWeight: '700', color: C.secundario, marginBottom: 6 }}>
+                  {t.misEmpresas}
+                </Text>
+                {empresas.map((e) => (
+                  <Text key={e.id} style={{ color: C.secundario, paddingVertical: 2 }}>
+                    {e.nombre}
+                  </Text>
+                ))}
+              </Tarjeta>
+            ) : null}
+            {empresas.length ? (
+              <Boton texto={t.abrirPanel} logistica alTocar={() => void abrirPanel()} />
+            ) : null}
+            <Boton
+              texto={t.registrar}
+              logistica={!empresas.length}
+              secundario={empresas.length > 0}
+              alTocar={() => (usuario ? setVista('registro') : router.push('/account'))}
+            />
+          </>
+        ) : (
+          <View style={{ gap: 4 }} testID="empresa-registro">
+            <AvisoBorrador
+              visible={b.recuperado}
+              idioma={idioma}
+              empezar={() => void b.empezarDeNuevo()}
+            />
+            <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}>
+              {t.datosEmpresa}
+            </Text>
+            <Text style={{ fontWeight: '600', color: C.secundario, marginTop: 8 }}>{t.pais}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 6 }}>
+              {PAISES.map((p) => (
+                <Pildora
+                  key={p.id}
+                  texto={idioma === 'en' ? p.en : p.es}
+                  activa={v.pais === p.id}
+                  rol="radio"
+                  alTocar={() => {
+                    b.cambiar('pais', p.id);
+                    b.cambiar('moneda', p.monedas[0]);
+                  }}
+                />
+              ))}
+            </View>
+            {pais.monedas.length > 1 ? (
+              <>
+                <Text style={{ fontWeight: '600', color: C.secundario }}>{t.moneda}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginVertical: 6 }}>
+                  {pais.monedas.map((m) => (
+                    <Pildora
+                      key={m}
+                      texto={m}
+                      activa={v.moneda === m}
+                      rol="radio"
+                      alTocar={() => b.cambiar('moneda', m)}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
+            <Campo
+              etiqueta={t.nombre}
+              value={v.nombre}
+              onChangeText={(x) => b.cambiar('nombre', x)}
+            />
+            <Campo
+              etiqueta={t.razon}
+              value={v.razonSocial}
+              onChangeText={(x) => b.cambiar('razonSocial', x)}
+            />
+            <Campo
+              etiqueta={t.fiscal(fiscal.nombre)}
+              value={v.numeroFiscal}
+              placeholder={fiscal.ejemplo}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              onChangeText={(x) => b.cambiar('numeroFiscal', x)}
+            />
+            <CampoDireccion
+              etiqueta={t.direccionFiscal}
+              valor={v.direccionFiscal}
+              cambiar={(x) => b.cambiar('direccionFiscal', x)}
+              alElegir={(d) => b.cambiar('direccionFiscal', d.direccion)}
+              pais={v.pais}
+              testID="empresa-direccion-fiscal"
+            />
+            <Campo
+              etiqueta={t.representante}
+              value={v.representante}
+              autoComplete="name"
+              onChangeText={(x) => b.cambiar('representante', x)}
+            />
+            <Campo
+              etiqueta={t.telefono}
+              value={v.telefono}
+              keyboardType="phone-pad"
+              onChangeText={(x) => b.cambiar('telefono', x)}
+            />
+            <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario, marginTop: 12 }}>
+              {t.centro}
+            </Text>
+            <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{t.centroAyuda}</Text>
+            <Campo
+              etiqueta={t.centroNombre}
+              value={v.centroNombre}
+              onChangeText={(x) => b.cambiar('centroNombre', x)}
+            />
+            <CampoDireccion
+              etiqueta={t.centroDireccion}
+              valor={v.centroDireccion}
+              cambiar={(x) => {
+                b.cambiar('centroDireccion', x);
+                b.cambiar('centroLat', '');
+                b.cambiar('centroLng', '');
+              }}
+              alElegir={(d) => {
+                b.cambiar('centroDireccion', d.direccion);
+                b.cambiar('centroLat', String(d.punto.lat));
+                b.cambiar('centroLng', String(d.punto.lng));
+              }}
+              pais={v.pais}
+              testID="empresa-centro"
+            />
+            <Campo
+              etiqueta={t.ciudad}
+              value={v.ciudad}
+              onChangeText={(x) => b.cambiar('ciudad', x)}
+            />
+            <Pressable
+              onPress={() => b.cambiar('acepto', !v.acepto)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: v.acepto }}
+              style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
+            >
               <View
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  backgroundColor: C.logisticaAccion,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: v.acepto ? C.exito : '#8A8A8A',
+                  backgroundColor: v.acepto ? C.exito : '#fff',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: C.logisticaTexto, fontWeight: '700' }}>{i + 1}</Text>
+                {v.acepto ? <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text> : null}
               </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontWeight: '700', color: C.secundario, fontSize: 16 }}>
-                  {titulo}
-                </Text>
-                <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{ayuda}</Text>
-              </View>
-            </View>
-          ))}
-        </Tarjeta>
-        <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{t.paraQuien}</Text>
-        <Boton texto={t.registrar} logistica alTocar={() => setRegistrando(true)} />
+              <Text style={{ flex: 1, color: C.secundario }}>{t.acepto}</Text>
+            </Pressable>
+            {avisoError}
+            <Boton texto={t.crear} logistica cargando={trabajando} alTocar={() => void crear()} />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

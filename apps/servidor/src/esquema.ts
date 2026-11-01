@@ -121,6 +121,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['envios', 'destinatario_correo', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'destinatario_documento', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'referencias', "TEXT NOT NULL DEFAULT ''"],
+  // C-EMPRESA-LEGAL (LG1): los datos legales de la empresa de logística.
+  ['empresas', 'numero_fiscal', "TEXT NOT NULL DEFAULT ''"],
+  ['empresas', 'direccion_fiscal', "TEXT NOT NULL DEFAULT ''"],
+  ['empresas', 'representante', "TEXT NOT NULL DEFAULT ''"],
+  ['empresas', 'telefono', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'ubicacion_estado', "TEXT NOT NULL DEFAULT 'sin_coordenadas'"],
   ['envios', 'ubicacion_fuente', "TEXT NOT NULL DEFAULT ''"],
   ['envios', 'ubicacion_confirmada_en', 'TEXT'],

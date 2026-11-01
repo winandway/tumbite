@@ -3037,3 +3037,11 @@ CREATE TABLE IF NOT EXISTS terminos_aceptados (
   aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (usuario_id, version)
 );
+
+-- C-PASE-WEB (31 oct 2026, LG1): pase de un solo uso (2 minutos) para que la app abra el panel web
+-- dentro de la misma app sin volver a entrar. Se guarda solo el hash del código.
+CREATE TABLE IF NOT EXISTS pases_web (
+  codigo_hash TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  vence_en TEXT NOT NULL
+);
