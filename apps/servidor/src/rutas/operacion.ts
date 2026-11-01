@@ -1113,6 +1113,8 @@ operacion.get('/repartidor/estado', async (c) => {
     // C-PRUEBA-DE-VIDA: ya mandó la de frente y falta la de giro (sobrevive a cerrar la app).
     selfieControlFalta: selfiePendiente ? (selfiePendiente.clave ? 'giro' : 'frente') : null,
     conectado: Number(ficha.conectado) === 1,
+    // C-UNIDAD-ELEGIDA: la zona dice el país (millas o kilómetros si el repartidor no eligió).
+    zonaId: (ficha.zona_id as string | null) ?? null,
     pausado: Number(ficha.pausado ?? 0) === 1,
     tipo: ficha.tipo,
     puntos: Number(ficha.puntos),

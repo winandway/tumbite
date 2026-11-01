@@ -26,6 +26,7 @@ import {
   type Nivel,
   enIdioma,
   formatearMonto,
+  paisDelCodigoZona,
   textoAMonto,
   PRECISION_MAXIMA_M,
   llego,
@@ -46,6 +47,7 @@ import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
+import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
@@ -160,6 +162,7 @@ type Estado = {
   };
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
+  zonaId?: string | null;
   /** C-TELEFONO-VUELTA: últimos 4 del teléfono a confirmar por SMS al volver. */
   telefonoPorVerificar?: string | null;
   /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
@@ -457,6 +460,8 @@ function abrirMapa(lat: number | null, lng: number | null, direccion: string) {
 }
 
 export function Inicio() {
+  // C-UNIDAD-ELEGIDA: millas o kilómetros, lo que el repartidor eligió (vale para toda la app).
+  const unidadDistancia = useUnidadDistancia();
   useKeepAwake();
   const { api, idioma, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
   // El idioma de los avisos al celular sigue al de la app (antes se quedaba el del registro).
@@ -1686,6 +1691,11 @@ export function Inicio() {
             </View>
           ) : null}
         </View>
+        <UnidadDistancia
+          unidad={unidadDistancia.unidad}
+          porPais={usaMillas(paisDelCodigoZona(estado?.zonaId), idioma) ? 'mi' : 'km'}
+          cambiar={unidadDistancia.cambiar}
+        />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
         <OpcionesCuenta />
       </View>,

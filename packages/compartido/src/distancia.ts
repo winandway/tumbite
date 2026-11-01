@@ -17,7 +17,18 @@ export function paisDelCodigoZona(zonaId: string | null | undefined): string | n
   return /^[A-Z]{2}$/.test(pais) ? pais : null;
 }
 
+/**
+ * C-UNIDAD-ELEGIDA (1 nov 2026, pedido de Richard): cada repartidor decide si ve millas o
+ * kilómetros, como mejor calcule su cabeza. Sin elección, manda el país.
+ */
+let unidadElegida: 'mi' | 'km' | null = null;
+export function elegirUnidadDistancia(u: 'mi' | 'km' | null) {
+  unidadElegida = u;
+}
+export const unidadDistanciaElegida = () => unidadElegida;
+
 export function usaMillas(pais: string | null | undefined, idioma: Idioma): boolean {
+  if (unidadElegida) return unidadElegida === 'mi';
   // Sin país conocido (datos viejos), se mantiene lo de antes: millas en inglés.
   return pais ? PAISES_MILLAS.has(pais.toUpperCase()) : idioma === 'en';
 }

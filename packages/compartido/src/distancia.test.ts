@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { paisDelCodigoZona, textoDistancia, textoDistanciaCorta } from './distancia';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  elegirUnidadDistancia,
+  paisDelCodigoZona,
+  textoDistancia,
+  textoDistanciaCorta,
+} from './distancia';
 
 describe('distancia por país (C-DISTANCIA-POR-PAIS)', () => {
   it('en EE. UU. va en millas también en español', () => {
@@ -29,5 +34,31 @@ describe('textoDistanciaCorta (C-FLEX-DISTANCIA-PAIS)', () => {
   it('en el resto, metros y kilómetros', () => {
     expect(textoDistanciaCorta(250, 'es', 'VE')).toBe('250 m');
     expect(textoDistanciaCorta(1591, 'en', 'CO')).toBe('1.6 km');
+  });
+});
+
+describe('C-UNIDAD-ELEGIDA: el repartidor elige millas o kilómetros', () => {
+  afterEach(() => elegirUnidadDistancia(null));
+  it('lo que elige manda sobre el país, y sin elección vuelve al país', () => {
+    elegirUnidadDistancia('km');
+    expect(textoDistancia(10, 'en', 'US')).toBe('10.0 km');
+    expect(textoDistanciaCorta(250, 'es', 'US')).toBe('250 m');
+    elegirUnidadDistancia('mi');
+    expect(textoDistancia(10, 'es', 'VE')).toBe('6.2 mi');
+    elegirUnidadDistancia(null);
+    expect(textoDistancia(10, 'es', 'VE')).toBe('10.0 km');
+  });
+});
+
+describe('C-UNIDAD-ELEGIDA en la app Driver', () => {
+  it('el perfil tiene el interruptor y la app lo carga al abrir', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const leer = (...p: string[]) => readFileSync(join(__dirname, '..', '..', '..', ...p), 'utf8');
+    const inicio = leer('apps', 'repartidor', 'src', 'Inicio.tsx');
+    expect(inicio).toContain('<UnidadDistancia');
+    expect(inicio).toContain('useUnidadDistancia()');
+    const pieza = leer('apps', 'repartidor', 'src', 'piezas', 'UnidadDistancia.tsx');
+    expect(pieza).toContain('elegirUnidadDistancia(u)');
   });
 });
