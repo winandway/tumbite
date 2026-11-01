@@ -22,10 +22,8 @@ test('Divoox Plus y tarjetas de regalo con Stripe en modo prueba', async ({ requ
   };
   const id = Date.now().toString(36);
   const clave = `Prueba-${id}-Plus9`;
-  let ip = 0;
   const cuenta = async (nombre: string, correo: string) => {
     const r = await request.post('/datos/cuentas/registro', {
-      headers: { 'cf-connecting-ip': `10.98.${Math.floor(Math.random() * 250)}.${++ip}` },
       data: { nombre, correo, clave, rol: 'cliente' },
     });
     expect(r.ok(), await r.text()).toBe(true);

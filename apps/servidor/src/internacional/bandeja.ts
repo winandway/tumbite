@@ -143,10 +143,18 @@ type Crudo = Omit<Caso, 'estado' | 'responsable'>;
  */
 type Fuente = {
   tipo: TipoCaso;
-  /** SELECT … FROM … WHERE … (sin ORDER BY ni LIMIT); debe dar las columnas `clave` y `creado`. */
+  /**
+   * SELECT … FROM … WHERE … (sin ORDER BY ni LIMIT); debe dar las columnas `clave` y `creado`.
+   * Lleva la marca {{id}} donde va el filtro por un solo caso (C-BANDEJA-UN-CASO).
+   */
   sql: string;
+  /** La columna cuyo valor es lo que va después de «tipo:» en la clave. */
+  idCol: string;
   mapear: (f: Fila) => Crudo;
 };
+
+/** La consulta de una fuente sin filtrar por caso (para la bandeja). */
+const todos = (f: Fuente) => f.sql.replace('{{id}}', '1 = 1');
 
 const FUENTES: readonly Fuente[] = [
   {
@@ -154,7 +162,8 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'transferencia',
     sql: `SELECT ${CON_PEDIDO}, b.creado_en AS creado, 'transferencia:' || p.id AS clave
             FROM pedidos p JOIN bitacora_pedidos b ON b.pedido_id = p.id AND b.evento = 'transferencia_por_verificar'
-           WHERE p.metodo_pago = 'transferencia_repartidor' AND p.cobro_estado = 'pendiente'`,
+           WHERE p.metodo_pago = 'transferencia_repartidor' AND p.cobro_estado = 'pendiente' AND {{id}}`,
+    idCol: 'p.id',
     mapear: (f) =>
       base(
         'transferencia',
@@ -170,7 +179,8 @@ const FUENTES: readonly Fuente[] = [
     sql: `SELECT ${CON_PEDIDO}, l.monto_pagado, l.monto_esperado AS local_esperado, l.importe_ticket, l.diferencia_pago,
                  l.diferencia_ticket, COALESCE(p.cobro_confirmado_en, p.creado_en) AS creado, 'diferencia:' || p.id AS clave
             FROM pedidos p LEFT JOIN pagos_local l ON l.pedido_id = p.id
-           WHERE p.metodo_pago != 'tarjeta' AND p.conciliacion_estado = 'con_diferencia'`,
+           WHERE p.metodo_pago != 'tarjeta' AND p.conciliacion_estado = 'con_diferencia' AND {{id}}`,
+    idCol: 'p.id',
     mapear: (f) => {
       const esperado = n(f.total) - n(f.propina);
       return base(
@@ -200,7 +210,9 @@ const FUENTES: readonly Fuente[] = [
     sql: `SELECT ${CON_PEDIDO}, SUM(l.monto) AS neto, MIN(l.creado_en) AS creado, 'excedente:' || p.id AS clave
             FROM libro l JOIN pedidos p ON p.id = l.pedido_id
            WHERE l.bolsillo = 'directo' AND l.concepto IN ('excedente_cliente_por_devolver', 'excedente_devuelto_al_cliente')
+             AND {{id}}
            GROUP BY p.id HAVING SUM(l.monto) < 0`,
+    idCol: 'p.id',
     mapear: (f) =>
       base(
         'excedente',
@@ -215,8 +227,9 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'comida',
     sql: `SELECT ${CON_PEDIDO}, SUM(l.monto) AS neto, MIN(l.creado_en) AS creado, 'comida:' || p.id AS clave
             FROM libro l JOIN pedidos p ON p.id = l.pedido_id
-           WHERE l.bolsillo = 'directo' AND l.concepto = 'comida_comprada_sin_entregar'
+           WHERE l.bolsillo = 'directo' AND l.concepto = 'comida_comprada_sin_entregar' AND {{id}}
            GROUP BY p.id`,
+    idCol: 'p.id',
     mapear: (f) =>
       base(
         'comida',
@@ -231,7 +244,8 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'local',
     sql: `SELECT ${CON_PEDIDO}, l.monto_pagado, l.importe_ticket, l.creado_en AS creado, 'local:' || p.id AS clave
             FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
-           WHERE l.confirmado_restaurante_en IS NULL AND p.estado IN ('en_camino', 'entregado')`,
+           WHERE l.confirmado_restaurante_en IS NULL AND p.estado IN ('en_camino', 'entregado') AND {{id}}`,
+    idCol: 'p.id',
     mapear: (f) =>
       base(
         'local',
@@ -247,7 +261,8 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'incidencia',
     sql: `SELECT i.id, i.tipo AS incidencia_tipo, i.pedido_id, i.pais, i.moneda, i.monto_esperado, i.monto_recibido, i.detalle,
                  i.creado_en AS creado, (SELECT nombre FROM usuarios WHERE id = i.cuenta_id) AS repartidor, 'incidencia:' || i.id AS clave
-            FROM incidencias_dinero i WHERE i.estado = 'abierta'`,
+            FROM incidencias_dinero i WHERE i.estado = 'abierta' AND {{id}}`,
+    idCol: 'i.id',
     mapear: (f) => {
       const conocido = f.incidencia_tipo === 'recarga_monto_distinto';
       return {
@@ -272,7 +287,8 @@ const FUENTES: readonly Fuente[] = [
     sql: `SELECT d.id AS disputa, d.monto, d.estado AS disputa_estado, d.creado_en AS creado, r.moneda, r.pais,
                  r.monto AS recarga_monto, (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor,
                  'recarga_disputada:' || d.id AS clave
-            FROM disputas d JOIN recargas r ON r.id = d.recarga_id`,
+            FROM disputas d JOIN recargas r ON r.id = d.recarga_id WHERE {{id}}`,
+    idCol: 'd.id',
     mapear: (f) => ({
       ...base(
         'recarga_disputada',
@@ -289,7 +305,8 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'recarga_pendiente',
     sql: `SELECT r.id, r.moneda, r.pais, r.monto, r.creado_en AS creado,
                  (SELECT nombre FROM usuarios WHERE id = r.usuario_id) AS repartidor, 'recarga_pendiente:' || r.id AS clave
-            FROM recargas r WHERE r.canal = 'stripe' AND r.estado = 'pendiente' AND r.creado_en < datetime('now', '-1 day')`,
+            FROM recargas r WHERE r.canal = 'stripe' AND r.estado = 'pendiente' AND r.creado_en < datetime('now', '-1 day') AND {{id}}`,
+    idCol: 'r.id',
     mapear: (f) =>
       base(
         'recarga_pendiente',
@@ -355,14 +372,14 @@ export async function listarCasos(
   const crudos: Crudo[] = [];
   for (const f of FUENTES) {
     const total = await db
-      .prepare(`SELECT COUNT(*) AS n FROM (${f.sql}) x ${sinResueltos(incluir)}`)
+      .prepare(`SELECT COUNT(*) AS n FROM (${todos(f)}) x ${sinResueltos(incluir)}`)
       .first<{ n: number }>();
     totales[f.tipo] = Number(total?.n ?? 0);
     if (filtro.tipo && filtro.tipo !== f.tipo) continue;
     const desde = filtro.tipo ? pagina * POR_PAGINA : 0;
     const { results } = await db
       .prepare(
-        `SELECT * FROM (${f.sql}) x ${sinResueltos(incluir)} ORDER BY x.creado, x.clave LIMIT ? OFFSET ?`,
+        `SELECT * FROM (${todos(f)}) x ${sinResueltos(incluir)} ORDER BY x.creado, x.clave LIMIT ? OFFSET ?`,
       )
       .bind(POR_PAGINA, desde)
       .all<Fila>();
@@ -380,9 +397,11 @@ async function casoPorClave(db: D1Database, clave: string): Promise<Caso | null>
   const tipo = clave.slice(0, clave.indexOf(':'));
   const f = FUENTES.find((x) => x.tipo === tipo);
   if (!f) return null;
+  // C-BANDEJA-UN-CASO (1 nov 2026): el filtro va DENTRO de la consulta. Antes se calculaban todos
+  // los casos y se filtraba después; con muchos casos el detalle tardaba más de 20 segundos.
   const fila = await db
-    .prepare(`SELECT * FROM (${f.sql}) x WHERE x.clave = ?`)
-    .bind(clave)
+    .prepare(`SELECT * FROM (${f.sql.replace('{{id}}', `${f.idCol} = ?1`)}) x WHERE x.clave = ?2`)
+    .bind(clave.slice(clave.indexOf(':') + 1), clave)
     .first<Fila>();
   if (!fila) return null;
   return (await conSeguimiento(db, [f.mapear(fila)]))[0] ?? null;
