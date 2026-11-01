@@ -224,6 +224,7 @@
 - 1 nov 2026, 02:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace 76 minutos). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Pruebas y producción (divoox.com) muestran el último commit (208a535). No se tocó código.
 - 1 nov 2026, 06:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila sigue sin puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas y producción muestran 208a535. No se tocó código.
 - 1 nov 2026, 04:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila sigue sin puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas y producción muestran 208a535. No se tocó código.
+- 1 nov 2026, 15:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace 44 minutos). La fila no tiene puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas ya muestran 5655439; producción sigue en 6fad5f1 porque la verificación de main de ese commit todavía corre y publicará sola. No se tocó código.
 
 ## Registro de la fábrica
 
