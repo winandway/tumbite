@@ -310,7 +310,11 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
       setError(mensajeDe(x));
     }
   }
-  const elegido = conductores.find((c) => c.usuarioId === asig.conductorId);
+  // C-FLEX-ASIGNAR-A-LA-VISTA (1 nov 2026): con un solo clic. El primer conductor activo queda
+  // elegido para que «Asignar» u «Ofrecer» se vean de entrada (antes la lista empezaba vacía y
+  // los botones no aparecían hasta elegir: no se veía cómo asignar la ruta).
+  const conductorId = asig.conductorId || (conductores[0]?.usuarioId ?? '');
+  const elegido = conductores.find((c) => c.usuarioId === conductorId);
   const puedeAsignar = elegido && elegido.vinculo !== 'red';
   const puedeOfrecer = elegido && elegido.vinculo !== 'propio';
   const conFecha = (v: string) => (v ? v.replace('T', ' ') : null);
@@ -360,18 +364,18 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         conductores.length === 0 ? (
           <p className="pista">{t.sinConductoresRuta}</p>
         ) : (
-          <div className="flex-form flex-inline">
+          <div className="flex-form flex-inline" data-testid="asignar-ruta">
+            <h2>{t.asignarRutaTitulo}</h2>
             <div className="campo">
               <label htmlFor="flex-conductor">{t.conductor}</label>
               <select
                 id="flex-conductor"
-                value={asig.conductorId}
+                value={conductorId}
                 onChange={(e) => {
                   setConfirmarCapacidad(false);
                   setAsig({ ...asig, conductorId: e.target.value, vehiculoId: '' });
                 }}
               >
-                <option value="">—</option>
                 {conductores.map((c) => (
                   <option key={c.usuarioId} value={c.usuarioId}>
                     {c.nombre} · {t.vinculos[c.vinculo] ?? c.vinculo}
@@ -394,7 +398,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
             <CapacidadAlAsignar
               ctx={ctx}
               rutaId={r.id}
-              conductorId={asig.conductorId}
+              conductorId={conductorId}
               vehiculoId={asig.vehiculoId}
               cambiarVehiculo={(v) => setAsig({ ...asig, vehiculoId: v })}
               confirmada={confirmarCapacidad}
@@ -417,7 +421,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                     void hacer(
                       'asignar',
                       {
-                        conductorId: asig.conductorId,
+                        conductorId,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),
                         vehiculoId: asig.vehiculoId || null,
@@ -438,7 +442,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                     void hacer(
                       'ofrecer',
                       {
-                        conductorId: asig.conductorId,
+                        conductorId,
                         minutos: Number(asig.minutos) || 60,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),

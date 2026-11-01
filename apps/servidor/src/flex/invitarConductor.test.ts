@@ -166,4 +166,46 @@ describe('invitar a un conductor de la empresa', () => {
       { tipo: 'carro', descripcion: 'Toyota Corolla', placa: 'XYZ987' },
     ]);
   });
+
+  it('C-FLEX-VEHICULO-DRIVER: aceptar nunca falla aunque el conductor esté en plena operación', async () => {
+    const m = mundo();
+    const e = await empresa(m);
+    const rep = await m.cuenta('repartidor', 'Olga Ocupada');
+    await m.DB.prepare('UPDATE usuarios SET telefono = ? WHERE id = ?')
+      .bind('3055550122', rep.id)
+      .run();
+    await m.DB.prepare(
+      `INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, color, placa)
+       VALUES (?, 'moto', 'Honda', 'Navi', 'roja', 'MOTO12')`,
+    )
+      .bind(rep.id)
+      .run();
+    await m.DB.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)')
+      .bind(rep.id)
+      .run();
+    // Repartiendo comida en este momento: el candado no deja cambiarle el vehículo activo.
+    await m.DB.prepare(
+      "INSERT INTO conductor_ocupacion (conductor_id, tipo, pedidos) VALUES (?, 'comida', 1)",
+    )
+      .bind(rep.id)
+      .run();
+    await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/conductores/invitaciones`,
+      { nombre: 'Olga', telefono: '3055550122', vinculo: 'propio' },
+      e.dueno.token,
+    );
+    const mias = await llamar(m, 'GET', `${B}/conductor/invitaciones`, undefined, rep.token);
+    const r = await llamar(
+      m,
+      'POST',
+      `${B}/conductor/invitaciones/${mias.datos.invitaciones[0].id}/aceptar`,
+      {},
+      rep.token,
+    );
+    expect(r.estado).toBe(200);
+    const v = await llamar(m, 'GET', `${B}/empresas/${e.id}/vehiculos`, undefined, e.dueno.token);
+    expect(v.datos.vehiculos).toMatchObject([{ tipo: 'moto', placa: 'MOTO12' }]);
+  });
 });

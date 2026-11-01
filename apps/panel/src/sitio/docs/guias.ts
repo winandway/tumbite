@@ -3252,6 +3252,97 @@ const es: SeccionDocs[] = [
         nota: 'Las recargas con tarjeta se encienden país por país.',
       },
       {
+        id: 'flex-getting-started',
+        titulo:
+          'Empieza con Divoox Flex: guía paso a paso para tu empresa, tus conductores y tus clientes',
+        resumen:
+          'Divoox Flex es la tecnología para que tu empresa reparta sus paquetes con sus propios conductores y vehículos. Esta guía te lleva del registro a la primera entrega, con las pantallas reales.',
+        explicacion: [
+          'Quién usa qué: tu empresa trabaja en el panel web de Divoox Flex (también se abre en la app Divoox, en Envíos → «Bloque de logística»). Tus conductores usan la app Divoox Driver, en «Mi ruta (paquetes)». Quien recibe el paquete no necesita instalar nada: le llegan avisos con un enlace para seguirlo; si quiere, usa la app Divoox en «Mis paquetes».',
+          'Divoox no pone vehículos ni conductores: los pones tú. Sirve igual con camiones, carros o motos (en moto, sobres y cajas pequeñas). Cada vehículo tiene su capacidad y el panel te avisa si una ruta no cabe.',
+          '1. Registra tu empresa con sus datos legales reales (número fiscal de tu país, dirección fiscal, representante y teléfono) y tu primer centro de carga: el lugar donde tus conductores recogen los paquetes.',
+          '2. En el inicio verás «Primeros pasos»: se marcan solos a medida que avanzas y cada uno tiene su botón.',
+          '3. Invita a tus conductores en «Conductores» con su nombre y su celular o correo. Les llega un SMS o un correo con el enlace, y tú también lo ves para mandárselo por WhatsApp. Instalan Divoox Driver, entran con ese mismo celular o correo y aceptan.',
+          '4. Carga tus envíos en «Envíos»: uno por uno o cientos a la vez con una planilla CSV (la guardas desde Excel o Google Sheets).',
+          '5. Imprime las etiquetas en «Etiquetas» y pega una en cada paquete. Tu conductor las escanea al cargar y al entregar.',
+          '6. En «Rutas» toca «Nueva ruta»: eliges los envíos en el orden de las paradas y el centro de donde sale. Te sugerimos el mejor orden.',
+          '7. Al crearla se abre su página: asígnala a tu conductor (o ofrécesela con un plazo para aceptar).',
+          '8. Tu conductor llega al centro, escanea cada paquete y sale. En cada parada escanea, toma la foto, la firma o el PIN que pidas, y desliza para terminar. No deja entregar lejos de la dirección.',
+          '9. Quien recibe recibe los avisos: va en camino, ya llega (con el nombre del conductor, el vehículo y la placa) y entregado, con la prueba. Tú lo sigues todo en «Rutas», parada por parada.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-tutorial-01-registro-es.webp',
+            alt: 'Registro de una empresa en Divoox Flex: datos legales y primer centro de carga.',
+            pie: 'Paso 1: registra tu empresa con sus datos reales y tu primer centro.',
+          },
+          {
+            src: '/docs/flex-tutorial-02-inicio-es.webp',
+            alt: 'Inicio de la empresa con «Primeros pasos» y su barra de avance en verde.',
+            pie: 'Paso 2: el inicio te dice qué falta y te lleva a cada paso.',
+          },
+          {
+            src: '/docs/flex-tutorial-04-invitar-conductor-es.webp',
+            alt: 'Invitar a un conductor con su nombre y celular o correo; el enlace aparece para copiarlo o mandarlo por WhatsApp.',
+            pie: 'Paso 3: invita a tus conductores; también ves el enlace para WhatsApp.',
+          },
+          {
+            src: '/docs/flex-tutorial-11-invitacion-conductor-es.webp',
+            alt: 'La página que abre el conductor: quién lo invita y cómo entrar a Divoox Driver.',
+            pie: 'Lo que ve tu conductor al abrir el enlace.',
+          },
+          {
+            src: '/docs/flex-tutorial-05-nuevo-envio-es.webp',
+            alt: 'Formulario para crear un envío: quién recibe, dirección, paquetes y forma de entrega.',
+            pie: 'Paso 4: carga tus envíos uno por uno…',
+          },
+          {
+            src: '/docs/flex-tutorial-06-importar-es.webp',
+            alt: 'Importar envíos desde una planilla CSV, con las columnas aceptadas.',
+            pie: '…o cientos a la vez con una planilla CSV.',
+          },
+          {
+            src: '/docs/flex-tutorial-07-etiquetas-es.webp',
+            alt: 'Etiquetas listas para imprimir, con código QR y código de barras.',
+            pie: 'Paso 5: imprime una etiqueta por paquete.',
+          },
+          {
+            src: '/docs/flex-tutorial-09-nueva-ruta-es.webp',
+            alt: 'Crear una ruta: los envíos en orden de paradas y el centro de donde sale.',
+            pie: 'Paso 6: arma la ruta con sus envíos y su centro.',
+          },
+          {
+            src: '/docs/flex-tutorial-10-asignar-ruta-es.webp',
+            alt: 'La página de la ruta, para asignarla a un conductor propio u ofrecerla.',
+            pie: 'Paso 7: asígnala a tu conductor ahí mismo.',
+          },
+          {
+            src: '/docs/flex-tutorial-08-rutas-es.webp',
+            alt: 'La lista de rutas con su estado: borrador, asignada, en curso o terminada.',
+            pie: 'Paso 8: sigue todas tus rutas desde «Rutas».',
+          },
+          {
+            src: '/docs/flex-tutorial-12-rastreo-es.webp',
+            alt: 'El rastreo público de un paquete con su número de seguimiento.',
+            pie: 'Quien recibe sigue su paquete sin instalar nada.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo empiezo con Divoox Flex?',
+          '¿Qué app usa mi empresa, mis conductores y mis clientes?',
+          '¿Divoox pone los conductores?',
+          '¿Cómo invito a mis conductores?',
+        ],
+        pasos: [
+          'Registra tu empresa y tu primer centro en el panel de empresas.',
+          'Invita a tus conductores en «Conductores».',
+          'Carga tus envíos e imprime las etiquetas.',
+          'En «Rutas» crea la ruta y asígnala a tu conductor.',
+          'Sigue cada entrega en «Rutas».',
+        ],
+        nota: 'Divoox Flex no cobra por ahora. Cada país tiene sus reglas: en Venezuela, por ejemplo, la ubicación del destinatario se confirma antes de salir y se puede cobrar contra entrega.',
+      },
+      {
         id: 'flex-company-and-team',
         titulo: 'Divoox Flex: tu empresa de paquetería, tu equipo y tus centros',
         resumen:
@@ -6748,6 +6839,97 @@ const en: SeccionDocs[] = [
           'In “Settings” choose your balance alert and, if you like, automatic top-up.',
         ],
         nota: 'Card top-ups are turned on country by country.',
+      },
+      {
+        id: 'flex-getting-started',
+        titulo:
+          'Get started with Divoox Flex: a step-by-step guide for your company, your drivers and your customers',
+        resumen:
+          'Divoox Flex is the technology for your company to deliver its packages with its own drivers and vehicles. This guide takes you from sign-up to the first delivery, with the real screens.',
+        explicacion: [
+          'Who uses what: your company works in the Divoox Flex web dashboard (it also opens in the Divoox app, under Delivery → “Logistics block”). Your drivers use the Divoox Driver app, under “My route (packages)”. Recipients don’t need to install anything: they get alerts with a link to follow the package; if they want, they use the Divoox app under “My packages”.',
+          'Divoox doesn’t provide vehicles or drivers: you do. It works the same with trucks, cars or motorcycles (by motorcycle, envelopes and small boxes). Each vehicle has its capacity and the dashboard warns you if a route won’t fit.',
+          '1. Register your company with its real legal details (your country’s tax ID, registered address, legal representative and phone) and your first loading hub: the place where your drivers pick up the packages.',
+          '2. On the home screen you’ll see “Getting started”: steps check off on their own as you go, and each one has its button.',
+          '3. Invite your drivers in “Drivers” with their name and phone or email. They get a text or email with the link, and you see it too so you can send it by WhatsApp. They install Divoox Driver, sign in with that same phone or email and accept.',
+          '4. Load your shipments in “Shipments”: one by one or hundreds at once with a CSV sheet (saved from Excel or Google Sheets).',
+          '5. Print the labels in “Labels” and stick one on each package. Your driver scans them when loading and delivering.',
+          '6. In “Routes”, tap “New route”: pick the shipments in stop order and the hub it leaves from. We suggest the best order.',
+          '7. Once created, its page opens: assign it to your driver (or offer it with a deadline to accept).',
+          '8. Your driver arrives at the hub, scans each package and heads out. At each stop they scan, take the photo, signature or PIN you require, and swipe to finish. Deliveries far from the address aren’t allowed.',
+          '9. Recipients get the alerts: on the way, arriving soon (with the driver’s name, vehicle and plate) and delivered, with the proof. You follow everything in “Routes”, stop by stop.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-tutorial-01-registro-en.webp',
+            alt: 'Registering a company on Divoox Flex: legal details and first loading hub.',
+            pie: 'Step 1: register your company with its real details and your first hub.',
+          },
+          {
+            src: '/docs/flex-tutorial-02-inicio-en.webp',
+            alt: 'Company home with “Getting started” and its green progress bar.',
+            pie: 'Step 2: home tells you what’s missing and takes you to each step.',
+          },
+          {
+            src: '/docs/flex-tutorial-04-invitar-conductor-en.webp',
+            alt: 'Inviting a driver with their name and phone or email; the link shows up to copy or send by WhatsApp.',
+            pie: 'Step 3: invite your drivers; you also see the link for WhatsApp.',
+          },
+          {
+            src: '/docs/flex-tutorial-11-invitacion-conductor-en.webp',
+            alt: 'The page the driver opens: who invites them and how to sign in to Divoox Driver.',
+            pie: 'What your driver sees when they open the link.',
+          },
+          {
+            src: '/docs/flex-tutorial-05-nuevo-envio-en.webp',
+            alt: 'Form to create a shipment: recipient, address, packages and delivery method.',
+            pie: 'Step 4: load your shipments one by one…',
+          },
+          {
+            src: '/docs/flex-tutorial-06-importar-en.webp',
+            alt: 'Importing shipments from a CSV sheet, with the accepted columns.',
+            pie: '…or hundreds at once with a CSV sheet.',
+          },
+          {
+            src: '/docs/flex-tutorial-07-etiquetas-en.webp',
+            alt: 'Labels ready to print, with a QR code and a barcode.',
+            pie: 'Step 5: print one label per package.',
+          },
+          {
+            src: '/docs/flex-tutorial-09-nueva-ruta-en.webp',
+            alt: 'Creating a route: shipments in stop order and the hub it leaves from.',
+            pie: 'Step 6: build the route with its shipments and its hub.',
+          },
+          {
+            src: '/docs/flex-tutorial-10-asignar-ruta-en.webp',
+            alt: 'The route page, to assign it to your own driver or offer it.',
+            pie: 'Step 7: assign it to your driver right there.',
+          },
+          {
+            src: '/docs/flex-tutorial-08-rutas-en.webp',
+            alt: 'The list of routes with their status: draft, assigned, in progress or finished.',
+            pie: 'Step 8: follow all your routes in “Routes”.',
+          },
+          {
+            src: '/docs/flex-tutorial-12-rastreo-en.webp',
+            alt: 'Public tracking of a package with its tracking number.',
+            pie: 'Recipients follow their package without installing anything.',
+          },
+        ],
+        preguntas: [
+          'How do I get started with Divoox Flex?',
+          'Which app do my company, my drivers and my customers use?',
+          'Does Divoox provide the drivers?',
+          'How do I invite my drivers?',
+        ],
+        pasos: [
+          'Register your company and your first hub in the business dashboard.',
+          'Invite your drivers in “Drivers”.',
+          'Load your shipments and print the labels.',
+          'In “Routes”, create the route and assign it to your driver.',
+          'Follow every delivery in “Routes”.',
+        ],
+        nota: 'Divoox Flex doesn’t charge for now. Each country has its own rules: in Venezuela, for example, the recipient’s location is confirmed before heading out and cash on delivery is available.',
       },
       {
         id: 'flex-company-and-team',

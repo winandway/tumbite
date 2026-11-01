@@ -2254,3 +2254,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué fallaba:** «Vehículos», la capacidad al asignar y la placa del aviso «ya llega» leían la tabla `vehiculos`, que ninguna app llenaba (Driver guarda en `repartidor_datos`).
 - **Qué hay:** `apps/servidor/src/flex/vehiculoDriver.ts` (`asegurarVehiculoDesdeDriver`): crea una sola vez su vehículo (origen «migracion») y lo deja activo. Se llama al aceptar la invitación, al vincular por correo y antes del aviso «ya llega».
 - **Prueba:** `invitarConductor.test.ts` → «C-FLEX-VEHICULO-DRIVER», comprobada en rojo.
+
+## C-FLEX-ASIGNAR-A-LA-VISTA — en la página de la ruta, «Asignar» se ve de entrada (1 nov 2026, todos los países)
+
+- **Qué confundía (visto en las capturas reales de producción):** la lista de conductores empezaba vacía y los botones «Asignar» u «Ofrecer» solo aparecían al elegir uno: parecía que no había cómo asignar la ruta.
+- **Qué hay:** el primer conductor queda elegido (valor derivado `conductorId`, sin efecto), título «Asignar la ruta», bloque desde y hasta marcados «(opcional)». Cancelar y retirar siguen en los tres puntos.
+- **Prueba:** `PantallasRutas.test.tsx` → «asigna la ruta a un conductor propio…» sin tocar la lista, comprobada en rojo.
+
+## C-FLEX-VEHICULO-DRIVER (ampliado) — aceptar nunca falla con el conductor en operación
+
+- **Qué falló en producción el 1 nov:** aceptar la invitación dio 500 porque el conductor de la demostración tenía una ruta en curso y el disparador `repartidores_vehiculo_fijo_en_operacion` no deja cambiar el vehículo activo.
+- **Arreglo:** el vehículo se crea igual, y queda como activo solo si no tenía uno y no está en operación; todo dentro de `asegurarVehiculoSinFrenar` (nunca frena aceptar, vincular ni avisar). El aviso «ya llega» usa el activo o, si falta, el último registrado.
+- **Prueba:** `invitarConductor.test.ts` → «aceptar nunca falla aunque el conductor esté en plena operación», comprobada en rojo.

@@ -1,9 +1,9 @@
 // Capturas REALES de producción para el tutorial «Empieza con Divoox Flex» (1 nov 2026, pedido de
 // Richard: «un tutorial que explique y que tenga las pantallas reales»). Entra con las cuentas del
-// revisor (las de TestFlight), usa la empresa «Divoox Demo Logística», invita al conductor del
-// revisor desde la pantalla, arma una ruta nueva y fotografía cada paso en español y en inglés.
+// revisor (las de TestFlight), usa la empresa «Divoox Demo Logística», invita a un conductor de
+// ejemplo desde la pantalla (y la cancela al final), arma una ruta nueva y fotografía cada paso.
 // No mueve dinero (Flex no cobra). Las claves se leen de ~/.config/tumbite/revisores-tiendas.
-// Salida: docs/capturas/flex-tutorial/*.png (originales) y apps/panel/public/docs/flex-tutorial/*.webp.
+// Salida: docs/capturas/flex-tutorial/*.png (originales) y apps/panel/public/docs/flex-tutorial-*.webp.
 // Uso: node scripts/produccion/tutorial-logistica.mjs
 import fs from 'node:fs';
 import os from 'node:os';
@@ -13,9 +13,8 @@ import { chromium } from 'playwright';
 
 const SITIO = 'https://divoox.com';
 const ORIGINALES = join(process.cwd(), 'docs', 'capturas', 'flex-tutorial');
-const WEB = join(process.cwd(), 'apps', 'panel', 'public', 'docs', 'flex-tutorial');
+const WEB = join(process.cwd(), 'apps', 'panel', 'public', 'docs');
 fs.mkdirSync(ORIGINALES, { recursive: true });
-fs.mkdirSync(WEB, { recursive: true });
 
 // La ruta del archivo de cuentas es fija (la carpeta privada de esta Mac).
 const cuentas = new Map(
@@ -50,7 +49,6 @@ const entrar = (rol) =>
   });
 
 const dueno = await entrar('cliente');
-const conductor = await entrar('repartidor');
 const { empresas } = await api('GET', '/datos/v1/flex/empresas', undefined, dueno.token);
 const empresa = empresas.find((e) => e.nombre === 'Divoox Demo Logística');
 if (!empresa) throw new Error('Falta la empresa de demostración: corre armar-demo-logistica.mjs');
@@ -124,7 +122,7 @@ for (const idioma of ['es', 'en']) {
     await p.waitForTimeout(1200);
     const png = join(ORIGINALES, `${nombre}-${idioma}.png`);
     await p.screenshot({ path: png, fullPage: entera });
-    aWebp(png, join(WEB, `${nombre}-${idioma}.webp`));
+    aWebp(png, join(WEB, `flex-tutorial-${nombre}-${idioma}.webp`));
   };
   const ir = (ruta) =>
     p.goto(`${SITIO}${idioma === 'en' ? '' : '/es'}${ruta}`, { waitUntil: 'networkidle' });
@@ -136,13 +134,11 @@ for (const idioma of ['es', 'en']) {
   await foto('02-inicio', true);
   await ir(`${raiz}/hubs`);
   await foto('03-centros');
-  // Invitar al conductor desde la pantalla (el del revisor, una cuenta nuestra).
+  // Invitar a un conductor de ejemplo desde la pantalla (correo de ejemplo; se cancela al final).
   await ir(`${raiz}/drivers`);
   const t = (es, en) => (idioma === 'en' ? en : es);
   await p.getByLabel(t('Nombre del conductor', 'Driver name')).fill('Conductor de demostración');
-  await p
-    .getByLabel(t('Correo (opcional)', 'Email (optional)'))
-    .fill(cuentas.get('repartidor').correo);
+  await p.getByLabel(t('Correo (opcional)', 'Email (optional)')).fill('conductor.demo@ejemplo.com');
   await p.getByRole('button', { name: t('Invitar conductor', 'Invite a driver') }).click();
   await p.getByRole('link', { name: t('Mandar por WhatsApp', 'Send by WhatsApp') }).waitFor();
   enlaceInvitacion = (await p.locator('.flex-enlace-invitacion code').textContent()) ?? '';
@@ -173,7 +169,7 @@ for (const idioma of ['es', 'en']) {
     await c.waitForTimeout(1200);
     const png = join(ORIGINALES, `${nombre}-${idioma}.png`);
     await c.screenshot({ path: png });
-    aWebp(png, join(WEB, `${nombre}-${idioma}.webp`));
+    aWebp(png, join(WEB, `flex-tutorial-${nombre}-${idioma}.webp`));
   };
   const token = enlaceInvitacion.split('/').at(-1);
   await c.goto(`${SITIO}${idioma === 'en' ? '' : '/es'}/driver/join/${token}`, {
@@ -189,16 +185,11 @@ for (const idioma of ['es', 'en']) {
 }
 await navegador.close();
 
-// El conductor acepta la invitación (como lo haría en Divoox Driver).
-const { invitaciones } = await api(
-  'GET',
-  '/datos/v1/flex/conductor/invitaciones',
-  undefined,
-  conductor.token,
-);
+// Las invitaciones de ejemplo (a un correo que no existe) se cancelan: solo eran para la foto.
+const { invitaciones } = await api('GET', `${E}/conductores`, undefined, dueno.token);
 for (const i of invitaciones)
-  await api('POST', `/datos/v1/flex/conductor/invitaciones/${i.id}/aceptar`, {}, conductor.token);
+  await api('DELETE', `${E}/conductores/invitaciones/${i.id}`, undefined, dueno.token);
 console.log(
-  `Empresa ${empresa.id} · ruta tutorial ${ruta.id} · invitaciones aceptadas: ${invitaciones.length}`,
+  `Empresa ${empresa.id} · ruta tutorial ${ruta.id} · invitaciones de ejemplo canceladas: ${invitaciones.length}`,
 );
 console.log(`Capturas: ${ORIGINALES}`);

@@ -1,4 +1,4 @@
-import { asegurarVehiculoDesdeDriver } from './vehiculoDriver';
+import { asegurarVehiculoSinFrenar } from './vehiculoDriver';
 import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { notificar, type Aviso } from '../notificaciones';
@@ -445,12 +445,15 @@ export async function avisarYaLlega(
   const tope = p.entrega_tipo === 'encuentro' ? METROS_YA_LLEGA_ENCUENTRO : METROS_YA_LLEGA;
   if (metrosEntre(yo, p) > tope) return 0;
   // C-FLEX-VEHICULO-DRIVER: si todavía no tiene fila en vehiculos, se crea desde lo que registró en Driver.
-  await asegurarVehiculoDesdeDriver(db, conductorId);
+  await asegurarVehiculoSinFrenar(db, conductorId);
   const v = await db
     .prepare(
       `SELECT u.nombre, ve.marca, ve.modelo, ve.color, ve.placa FROM usuarios u
          LEFT JOIN repartidores r ON r.usuario_id = u.id
-         LEFT JOIN vehiculos ve ON ve.id = r.vehiculo_activo_id
+         -- El activo o, si todavía no tiene (estaba en operación al sumarse), el último registrado.
+         LEFT JOIN vehiculos ve ON ve.id = COALESCE(r.vehiculo_activo_id,
+           (SELECT v2.id FROM vehiculos v2 WHERE v2.conductor_id = u.id
+              AND v2.estado NOT IN ('rechazado', 'retirado') ORDER BY v2.creado_en DESC LIMIT 1))
         WHERE u.id = ?`,
     )
     .bind(conductorId)

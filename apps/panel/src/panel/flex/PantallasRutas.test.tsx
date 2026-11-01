@@ -150,7 +150,8 @@ describe('Divoox Flex · Fase 2 · panel', () => {
     render(<PanelApp ruta={`/panel/business/${E}/operativas/${R}`} />);
     expect(await screen.findByText(/Ruta Norte/)).toBeInTheDocument();
     expect(screen.getAllByRole('progressbar')[0]).toHaveAttribute('aria-valuenow', '25');
-    await userEvent.selectOptions(await screen.findByLabelText('Conductor'), 'c1');
+    // C-FLEX-ASIGNAR-A-LA-VISTA: sin tocar la lista, el conductor ya está elegido y el botón se ve.
+    expect(await screen.findByLabelText('Conductor')).toHaveValue('c1');
     await userEvent.click(screen.getByRole('button', { name: 'Asignar a un conductor propio' }));
     await waitFor(() =>
       expect(llamadas.some((l) => l.metodo === 'POST' && l.url.endsWith('/asignar'))).toBe(true),

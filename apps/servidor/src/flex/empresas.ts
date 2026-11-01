@@ -11,7 +11,7 @@ import {
 import { enviarCorreo } from '../correo';
 import { enviarSms } from '../sms';
 import { notificar } from '../notificaciones';
-import { asegurarVehiculoDesdeDriver } from './vehiculoDriver';
+import { asegurarVehiculoSinFrenar } from './vehiculoDriver';
 import { nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -854,7 +854,7 @@ flexEmpresas.post('/conductor/invitaciones/:invId/:respuesta', async (c) => {
         .bind(i.empresa_id, u.id, i.vinculo),
     );
   await db.batch(lote);
-  if (respuesta === 'aceptar') await asegurarVehiculoDesdeDriver(db, u.id);
+  if (respuesta === 'aceptar') await asegurarVehiculoSinFrenar(db, u.id);
   return c.json({ ok: true, empresa: i.empresa });
 });
 
@@ -886,7 +886,7 @@ flexEmpresas.post('/empresas/:id/conductores', async (c) => {
       .bind(actor.empresaId, u.id, d.vinculo),
     sentenciaAuditoria(db, actor, 'conductor.vincular', u.id, { vinculo: d.vinculo }),
   ]);
-  await asegurarVehiculoDesdeDriver(db, u.id);
+  await asegurarVehiculoSinFrenar(db, u.id);
   return c.json(
     { conductor: { usuarioId: u.id, nombre: u.nombre, vinculo: d.vinculo, estado: 'activo' } },
     201,
