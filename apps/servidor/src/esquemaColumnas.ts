@@ -2054,5 +2054,24 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "usuario_id",
     "descuento"
+  ],
+  "tarjetas_regalo": [
+    "id",
+    "codigo",
+    "centavos",
+    "comprador_id",
+    "para_correo",
+    "para_nombre",
+    "mensaje",
+    "stripe_pago",
+    "estado",
+    "canjeada_por",
+    "canjeada_en",
+    "creado_en"
+  ],
+  "pedidos_saldo_regalo": [
+    "pedido_id",
+    "usuario_id",
+    "centavos"
   ]
 };

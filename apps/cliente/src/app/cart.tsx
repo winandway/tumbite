@@ -10,6 +10,7 @@ import {
   type ConfigDinero,
   calcularPedido,
   descuentoPlus,
+  saldoAplicable,
   distanciaKm,
   enIdioma,
   formatearMonto,
@@ -343,6 +344,21 @@ export default function PantallaCarrito() {
 
   // Cupón (punto 15): se valida en el servidor al aplicarlo y otra vez al pedir.
   const [cupon, setCupon] = useState<{ codigo: string; descuento: number } | null>(null);
+  // C-TARJETAS-REGALO: el saldo de regalo del cliente y si lo quiere usar en este pedido.
+  const [saldoRegaloCli, setSaldoRegaloCli] = useState(0);
+  const [usarRegalo, setUsarRegalo] = useState(true);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ activas: boolean; saldo: number }>('GET', '/datos/tarjetas-regalo')
+      .then((r) => {
+        if (vivo && r.activas) setSaldoRegaloCli(r.saldo);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
   // C-PLUS: si el cliente tiene Divoox Plus vigente, sus ajustes (para descontar igual que el servidor).
   const [plusVigente, setPlusVigente] = useState<{
     minimoSubtotal: number;
@@ -414,10 +430,24 @@ export default function PantallaCarrito() {
     sinPlus && plusVigente && moneda === 'USD' && !recogidaElegida
       ? descuentoPlus(sinPlus, plusVigente)
       : 0;
-  const d =
+  const conPlus =
     sinPlus && descPlus
       ? calcularPedido({ ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus })
       : sinPlus;
+  // C-TARJETAS-REGALO: la misma cuenta que el servidor (solo con tarjeta y en dólares).
+  const regaloConTarjeta = (b.valores.metodoPago || 'tarjeta') === 'tarjeta';
+  const usoRegalo =
+    conPlus && usarRegalo && saldoRegaloCli > 0 && moneda === 'USD' && regaloConTarjeta
+      ? saldoAplicable(conPlus, saldoRegaloCli)
+      : 0;
+  const d =
+    conPlus && usoRegalo
+      ? calcularPedido({
+          ...base,
+          recogida: recogidaElegida,
+          descuento: descuentoCupon + descPlus + usoRegalo,
+        })
+      : conPlus;
 
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
@@ -438,6 +468,7 @@ export default function PantallaCarrito() {
         propinaCentavos: propina,
         // C-ANUNCIOS: si entró tocando el anuncio de este restaurante (se cobra al restaurante, no al cliente).
         anuncioId: anuncioPara(carrito.restauranteId),
+        usarSaldoRegalo: usoRegalo > 0,
         // El servidor compara este total con el suyo y no cobra si no coinciden.
         totalEsperado: d.totalCliente,
         direccion: b.valores.direccion,
@@ -828,6 +859,27 @@ export default function PantallaCarrito() {
         </Tarjeta>
       ) : null}
 
+      {saldoRegaloCli > 0 && moneda === 'USD' ? (
+        <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontWeight: '700' }}>
+              {idioma === 'en' ? 'Use my gift card balance' : 'Usar mi saldo de regalo'}
+            </Text>
+            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+              {formatearMonto(saldoRegaloCli, 'USD', idioma)}
+            </Text>
+          </View>
+          <Switch
+            testID="usar-saldo-regalo"
+            value={usarRegalo}
+            onValueChange={setUsarRegalo}
+            accessibilityLabel={
+              idioma === 'en' ? 'Use my gift card balance' : 'Usar mi saldo de regalo'
+            }
+            trackColor={{ true: C.exito, false: '#D6D6D6' }}
+          />
+        </Tarjeta>
+      ) : null}
       {directoPermitido ? (
         <>
           {titulo(te.pagoTitulo)}
@@ -1088,8 +1140,10 @@ export default function PantallaCarrito() {
         <Tarjeta>
           {fila(carrito.esTienda ? t.subtotalTienda : t.subtotal, d.subtotal)}
           {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
-          {d.descuento - descPlus > 0 && fila(te.descuento, -(d.descuento - descPlus))}
+          {d.descuento - descPlus - usoRegalo > 0 &&
+            fila(te.descuento, -(d.descuento - descPlus - usoRegalo))}
           {descPlus > 0 && fila('Divoox Plus', -descPlus)}
+          {usoRegalo > 0 && fila(idioma === 'en' ? 'Gift card' : 'Tarjeta de regalo', -usoRegalo)}
           {fila(t.envio, d.envio)}
           {fila(t.servicio, d.servicio)}
           {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}

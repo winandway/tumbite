@@ -396,6 +396,30 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'gift-cards',
+        titulo: 'Tarjetas de regalo: regala Divoox y canjea un código',
+        resumen:
+          'Compra una tarjeta de regalo para alguien con el monto que quieras. Le llega un código por correo y, al canjearlo, queda como saldo para sus pedidos.',
+        explicacion: [
+          'Cuando las tarjetas de regalo están disponibles, aparecen en Mi cuenta → Tarjetas de regalo.',
+          'Para regalar: escribe el monto, el correo de quien la recibe y, si quieres, su nombre y un mensaje. Paga con tu tarjeta, Apple Pay o Google Pay en la misma pantalla. Apenas se confirma el pago, le enviamos el código.',
+          'Para canjear: escribe el código en «Canjear un código». El monto se suma a tu saldo de regalo, que ves arriba en la misma pantalla.',
+          'En el carrito aparece «Usar mi saldo de regalo» con tu saldo. Encendido, el saldo paga la comida, el envío, el servicio y el impuesto; la propina se paga con tu tarjeta, porque es completa para el repartidor.',
+          'Si un pedido pagado en parte con saldo se cancela, ese saldo vuelve a tu cuenta.',
+          'Cada código sirve una sola vez.',
+        ],
+        preguntas: [
+          '¿Cómo regalo una tarjeta de Divoox?',
+          '¿Cómo canjeo un código de regalo?',
+          '¿El saldo de regalo paga la propina?',
+        ],
+        pasos: [
+          'Mi cuenta → Tarjetas de regalo.',
+          'Para regalar: monto, correo y «Comprar y enviar».',
+          'Para canjear: escribe el código y toca «Canjear».',
+        ],
+      },
+      {
         id: 'divoox-plus',
         titulo: 'Divoox Plus: envío gratis y menos servicio por una cuota mensual',
         resumen:
@@ -4132,6 +4156,30 @@ const en: SeccionDocs[] = [
           'Type the address in the cart and tap the suggestion that matches yours; add the notes.',
           'Turn on “Save this address for next time” and name it.',
           'Next time, tap it under “Your addresses”.',
+        ],
+      },
+      {
+        id: 'gift-cards',
+        titulo: 'Gift cards: give Divoox and redeem a code',
+        resumen:
+          'Buy a gift card for someone in the amount you choose. They get a code by email, and redeeming it adds a balance for their orders.',
+        explicacion: [
+          'When gift cards are available, they show in My account → Gift cards.',
+          'To give one: enter the amount, the recipient’s email and, if you like, their name and a message. Pay with your card, Apple Pay or Google Pay on the same screen. As soon as the payment is confirmed, we email them the code.',
+          'To redeem: enter the code under “Redeem a code.” The amount is added to your gift card balance, shown at the top of the same screen.',
+          'In your cart you’ll see “Use my gift card balance” with your balance. When it’s on, the balance pays for food, delivery, service and tax; the tip is paid with your card, because it goes in full to the driver.',
+          'If an order paid partly with your balance is canceled, that balance goes back to your account.',
+          'Each code works only once.',
+        ],
+        preguntas: [
+          'How do I give a Divoox gift card?',
+          'How do I redeem a gift card code?',
+          'Does my gift card balance pay the tip?',
+        ],
+        pasos: [
+          'My account → Gift cards.',
+          'To give one: amount, email and “Buy and send.”',
+          'To redeem: enter the code and tap “Redeem.”',
         ],
       },
       {

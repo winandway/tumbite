@@ -5,6 +5,18 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-TARJETAS-REGALO
+  ['Las tarjetas de regalo todavía no están disponibles.', 'Gift cards aren’t available yet.'],
+  ['Elige un monto dentro del rango permitido.', 'Choose an amount within the allowed range.'],
+  ['Ese código no es válido o ya se usó.', 'That code isn’t valid or was already used.'],
+  [
+    'Tu saldo de regalo cambió. Revisa el total.',
+    'Your gift card balance changed. Check the total.',
+  ],
+  [
+    'Las tarjetas de regalo se encienden con dinero real cuando su cobro esté probado de punta a punta.',
+    'Gift cards go live with real money once their payment is fully tested end to end.',
+  ],
   // C-PLUS
   ['Divoox Plus todavía no está disponible.', 'Divoox Plus isn’t available yet.'],
   ['Ya tienes Divoox Plus.', 'You already have Divoox Plus.'],

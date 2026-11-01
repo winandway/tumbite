@@ -1,3 +1,4 @@
+import { apartarSaldo, avisoTarjetaRegalo, saldoRegalo } from '../tarjetasRegalo';
 import { avisoPlus, leerPlus, tienePlus } from '../plus';
 import { anotarPedidoDeAnuncio } from '../anuncios';
 import { exigirTopePiloto } from './piloto';
@@ -26,6 +27,7 @@ import {
   abiertoPorHorario,
   calcularPedido,
   descuentoPlus,
+  saldoAplicable,
   distanciaKm,
   conSenal,
   NOTA_PLATO_MAX,
@@ -106,6 +108,8 @@ const esquemaNuevoPedido = z.object({
   programadoPara: z.iso.datetime().optional(),
   /** C-ANUNCIOS: el pedido llegó desde el anuncio de este restaurante (se cobra al entregar). */
   anuncioId: z.string().min(1).max(64).optional(),
+  /** C-TARJETAS-REGALO: usar el saldo de regalo del cliente en este pedido. */
+  usarSaldoRegalo: z.boolean().default(false),
 });
 
 export type FilaPedido = Record<string, unknown>;
@@ -680,7 +684,7 @@ pedidos.post('/pedidos', async (c) => {
   const planPlus =
     moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
   const descPlus = planPlus ? descuentoPlus(sinPlus, planPlus) : 0;
-  const desglose = descPlus
+  const conPlus = descPlus
     ? calcularPedido({
         lineas,
         plan,
@@ -692,6 +696,24 @@ pedidos.post('/pedidos', async (c) => {
         descuento: (cupon?.descuento ?? 0) + descPlus,
       })
     : sinPlus;
+  // C-TARJETAS-REGALO: el saldo de regalo baja el total como un descuento (Divoox ya cobró la
+  // tarjeta). Solo en dólares y con tarjeta; se aparta al crear el pedido.
+  const usoRegalo =
+    d.usarSaldoRegalo && moneda === 'USD' && d.metodoPago === 'tarjeta'
+      ? saldoAplicable(conPlus, await saldoRegalo(db, u.id))
+      : 0;
+  const desglose = usoRegalo
+    ? calcularPedido({
+        lineas,
+        plan,
+        propina: d.propinaCentavos,
+        distanciaKm: km,
+        config,
+        regalo,
+        recogida,
+        descuento: (cupon?.descuento ?? 0) + descPlus + usoRegalo,
+      })
+    : conPlus;
   // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
   // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
   if (d.totalEsperado != null && d.totalEsperado !== desglose.totalCliente)
@@ -751,6 +773,16 @@ pedidos.post('/pedidos', async (c) => {
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
+  if (usoRegalo && !(await apartarSaldo(db, id, u.id, usoRegalo))) {
+    // Otro pedido usó el saldo al mismo tiempo: este no se cobra y se avisa.
+    await db
+      .prepare(
+        "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = ? AND estado = 'pago_pendiente'",
+      )
+      .bind(id)
+      .run();
+    throw new ErrorDatos('Tu saldo de regalo cambió. Revisa el total.', undefined, 409);
+  }
   if (descPlus)
     await db
       .prepare(
@@ -1050,6 +1082,8 @@ pedidos.post('/stripe/aviso', async (c) => {
     }
     // C-PLUS: facturas y cierre de la suscripción (nunca son pedidos).
     await avisoPlus(db, evento.type, obj as Record<string, unknown>);
+    // C-TARJETAS-REGALO: la tarjeta pagada queda lista y le llega el código a quien la recibe.
+    await avisoTarjetaRegalo(c.env, db, evento.type, obj as Record<string, unknown>);
     if (evento.type === 'charge.refunded') await reembolsoDeRecarga(db, obj);
     if (evento.type === 'payment_intent.succeeded') {
       // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).

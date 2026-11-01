@@ -2108,6 +2108,131 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(bitacora).toBeTruthy();
   });
 
+  it('C-TARJETAS-REGALO: se paga, llega el código, se canjea y el saldo baja el pedido y vuelve si se cancela', async () => {
+    const { m, cliente, r, plato } = await escenario();
+    const admin = await m.cuenta('admin', 'Soporte Regalo');
+    const amiga = await m.cuenta('cliente', 'Bea Regalo');
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(JSON.stringify({ id: 'pi_regalo', client_secret: 'pi_regalo_secret' }), {
+          status: 200,
+        }),
+    );
+    const comprar = () =>
+      m.llamar(
+        'POST',
+        '/datos/tarjetas-regalo',
+        {
+          centavos: 2500,
+          paraCorreo: 'bea@ejemplo.com',
+          paraNombre: 'Bea',
+          mensaje: 'Feliz cumpleaños',
+        },
+        cliente.token,
+      );
+    // Apagadas de fábrica.
+    expect((await comprar()).estado).toBe(409);
+    // Con llave real de Stripe no se encienden.
+    const real = mundo({ STRIPE_SECRET_KEY: 'sk_live_x' });
+    const adminReal = await real.cuenta('admin', 'Soporte Real');
+    expect(
+      (
+        await real.llamar(
+          'PUT',
+          '/datos/admin/tarjetas-regalo',
+          { activas: true, minimo: 1500, maximo: 50000 },
+          adminReal.token,
+        )
+      ).estado,
+    ).toBe(409);
+    await m.llamar(
+      'PUT',
+      '/datos/admin/tarjetas-regalo',
+      { activas: true, minimo: 1500, maximo: 50000 },
+      admin.token,
+    );
+    const compra = await comprar();
+    expect(compra.estado).toBe(201);
+    const { codigo } = (await m.DB.prepare('SELECT codigo FROM tarjetas_regalo WHERE id = ?')
+      .bind(compra.datos.tarjetaId)
+      .first<{ codigo: string }>())!;
+    // Sin pago confirmado no se canjea.
+    expect(
+      (await m.llamar('POST', '/datos/tarjetas-regalo/canjear', { codigo }, amiga.token)).estado,
+    ).toBe(404);
+    // Aviso firmado de Stripe con un monto que no cuadra: no la activa.
+    const aviso = async (monto: number) => {
+      const cuerpo = JSON.stringify({
+        id: `evt_${crypto.randomUUID()}`,
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: 'pi_regalo',
+            amount_received: monto,
+            metadata: { tarjeta_regalo_id: compra.datos.tarjetaId },
+          },
+        },
+      });
+      await m.crudo('/datos/stripe/aviso', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'stripe-signature': await avisoFirmado(cuerpo),
+        },
+        body: cuerpo,
+      });
+    };
+    await aviso(100);
+    expect(
+      (await m.llamar('POST', '/datos/tarjetas-regalo/canjear', { codigo }, amiga.token)).estado,
+    ).toBe(404);
+    await aviso(2500);
+    const canje = await m.llamar(
+      'POST',
+      '/datos/tarjetas-regalo/canjear',
+      { codigo: codigo.toLowerCase() },
+      amiga.token,
+    );
+    expect(canje.datos.saldo).toBe(2500);
+    // Un código ya usado no sirve otra vez.
+    expect(
+      (await m.llamar('POST', '/datos/tarjetas-regalo/canjear', { codigo }, cliente.token)).estado,
+    ).toBe(404);
+    // El saldo baja el pedido (la propina se cobra igual con tarjeta).
+    const pedido = (usar: boolean) =>
+      m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: r.datos.restaurante.id,
+          lineas: [{ platoId: plato.datos.plato.id, cantidad: 2 }],
+          propinaCentavos: 300,
+          direccion: '200 Calle Prueba',
+          lat: 25.78,
+          lng: -80.2,
+          usarSaldoRegalo: usar,
+        },
+        amiga.token,
+      );
+    const sin = (await pedido(false)).datos.desglose;
+    const con = await pedido(true);
+    const usado = Math.min(2500, sin.totalCliente - 300);
+    expect(con.datos.desglose.totalCliente).toBe(sin.totalCliente - usado);
+    expect(
+      (await m.llamar('GET', '/datos/tarjetas-regalo', undefined, amiga.token)).datos.saldo,
+    ).toBe(2500 - usado);
+    // Si ese pedido se cancela, el saldo vuelve solo.
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = ?",
+    )
+      .bind(con.datos.pedidoId)
+      .run();
+    expect(
+      (await m.llamar('GET', '/datos/tarjetas-regalo', undefined, amiga.token)).datos.saldo,
+    ).toBe(2500);
+  });
+
   it('C-PLUS: la suscripción se activa solo con la factura pagada y quita envío y medio servicio', async () => {
     const { m, cliente, r, plato } = await escenario();
     const admin = await m.cuenta('admin', 'Soporte Plus');

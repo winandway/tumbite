@@ -107,13 +107,18 @@ export default function MiCuenta() {
       .catch(() => setTarjetas([]));
   }, [api]);
   useEffect(cargar, [cargar]);
-  // C-PLUS: la entrada a Divoox Plus aparece solo cuando está encendido.
+  // C-PLUS y C-TARJETAS-REGALO: sus entradas aparecen solo cuando están encendidas.
   const [plusDisponible, setPlusDisponible] = useState(false);
+  const [tarjetasActivas, setTarjetasActivas] = useState(false);
   useEffect(() => {
     let vivo = true;
     api
       .pedir<{ disponible: boolean }>('GET', '/datos/plus')
       .then((r) => vivo && setPlusDisponible(r.disponible))
+      .catch(() => undefined);
+    api
+      .pedir<{ activas: boolean }>('GET', '/datos/tarjetas-regalo')
+      .then((r) => vivo && setTarjetasActivas(r.activas))
       .catch(() => undefined);
     return () => {
       vivo = false;
@@ -175,6 +180,19 @@ export default function MiCuenta() {
             style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
           >
             <Text style={{ fontWeight: '700' }}>Divoox Plus</Text>
+            <Text style={{ fontWeight: '700' }}>›</Text>
+          </Pressable>
+        ) : null}
+        {tarjetasActivas ? (
+          <Pressable
+            onPress={() => router.push('/gift-cards')}
+            accessibilityRole="link"
+            testID="ir-tarjetas-regalo"
+            style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+          >
+            <Text style={{ fontWeight: '700' }}>
+              {idioma === 'en' ? 'Gift cards' : 'Tarjetas de regalo'}
+            </Text>
             <Text style={{ fontWeight: '700' }}>›</Text>
           </Pressable>
         ) : null}
