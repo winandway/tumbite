@@ -2040,5 +2040,19 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "campana_id",
     "centavos",
     "cobrado_en"
+  ],
+  "suscripciones_plus": [
+    "usuario_id",
+    "stripe_suscripcion",
+    "estado",
+    "vence_en",
+    "cancela_al_final",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "pedidos_plus": [
+    "pedido_id",
+    "usuario_id",
+    "descuento"
   ]
 };

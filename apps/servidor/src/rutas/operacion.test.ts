@@ -2108,6 +2108,126 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(bitacora).toBeTruthy();
   });
 
+  it('C-PLUS: la suscripción se activa solo con la factura pagada y quita envío y medio servicio', async () => {
+    const { m, cliente, r, plato } = await escenario();
+    const admin = await m.cuenta('admin', 'Soporte Plus');
+    const llamadas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      llamadas.push(String(url));
+      if (/\/v1\/subscriptions$/.test(url))
+        return new Response(
+          JSON.stringify({
+            id: 'sub_1',
+            latest_invoice: { confirmation_secret: { client_secret: 'pi_sub_secret' } },
+          }),
+          { status: 200 },
+        );
+      return new Response(JSON.stringify({ id: 'cus_1', client_secret: 'x' }), { status: 200 });
+    });
+    const pedirTotal = async () =>
+      (
+        await m.llamar(
+          'POST',
+          '/datos/pedidos',
+          {
+            restauranteId: r.datos.restaurante.id,
+            lineas: [{ platoId: plato.datos.plato.id, cantidad: 2 }],
+            propinaCentavos: 0,
+            direccion: '200 Calle Prueba',
+            lat: 25.78,
+            lng: -80.2,
+          },
+          cliente.token,
+        )
+      ).datos.desglose as {
+        envio: number;
+        servicio: number;
+        descuento: number;
+        totalCliente: number;
+      };
+    // Apagado de fábrica: no se puede suscribir.
+    expect((await m.llamar('POST', '/datos/plus/suscribirse', {}, cliente.token)).estado).toBe(409);
+    // Con llave real de Stripe no se puede encender (cobro recurrente sin probar).
+    const real = mundo({ STRIPE_SECRET_KEY: 'sk_live_x' });
+    const adminReal = await real.cuenta('admin', 'Soporte Real');
+    expect(
+      (
+        await real.llamar(
+          'PUT',
+          '/datos/admin/plus',
+          { centavosMes: 999, minimoSubtotal: 0, servicioDescuentoPct: 50 },
+          adminReal.token,
+        )
+      ).estado,
+    ).toBe(409);
+    // Encendido en modo prueba: $9.99 al mes.
+    await m.llamar(
+      'PUT',
+      '/datos/admin/plus',
+      { centavosMes: 999, minimoSubtotal: 0, servicioDescuentoPct: 50 },
+      admin.token,
+    );
+    const antes = await pedirTotal();
+    const sus = await m.llamar('POST', '/datos/plus/suscribirse', {}, cliente.token);
+    expect(sus.datos).toMatchObject({ clientSecret: 'pi_sub_secret', centavosMes: 999 });
+    expect(llamadas.some((u) => u.endsWith('/v1/products'))).toBe(true);
+    // Sin la factura pagada todavía no hay beneficio.
+    expect((await m.llamar('GET', '/datos/plus', undefined, cliente.token)).datos.activo).toBe(
+      false,
+    );
+    expect((await pedirTotal()).totalCliente).toBe(antes.totalCliente);
+    // Llega el aviso firmado de Stripe: factura pagada por un mes.
+    const fin = Math.floor(Date.now() / 1000) + 30 * 86_400;
+    const cuerpo = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'invoice.paid',
+      data: {
+        object: {
+          id: 'in_1',
+          parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_1' } },
+          lines: { data: [{ period: { end: fin } }] },
+        },
+      },
+    });
+    await m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cuerpo),
+      },
+      body: cuerpo,
+    });
+    expect((await m.llamar('GET', '/datos/plus', undefined, cliente.token)).datos.activo).toBe(
+      true,
+    );
+    const con = await pedirTotal();
+    const esperado = antes.envio + Math.round(antes.servicio / 2);
+    expect(con.descuento).toBe(esperado);
+    expect(con.totalCliente).toBe(antes.totalCliente - esperado);
+    // Cancelar: sigue vigente hasta el final del periodo; al cerrarla Stripe, se termina.
+    expect((await m.llamar('POST', '/datos/plus/cancelar', {}, cliente.token)).estado).toBe(200);
+    expect((await m.llamar('GET', '/datos/plus', undefined, cliente.token)).datos).toMatchObject({
+      activo: true,
+      suscripcion: { cancelaAlFinal: true },
+    });
+    const cierre = JSON.stringify({
+      id: `evt_${crypto.randomUUID()}`,
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_1' } },
+    });
+    await m.crudo('/datos/stripe/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': await avisoFirmado(cierre),
+      },
+      body: cierre,
+    });
+    expect((await m.llamar('GET', '/datos/plus', undefined, cliente.token)).datos.activo).toBe(
+      false,
+    );
+  });
+
   it('C-ANUNCIOS: el patrocinado sale primero y paga solo por el pedido que llega del anuncio', async () => {
     const { m, dueno, cliente, repartidor, r, plato } = await escenario();
     const admin = await m.cuenta('admin', 'Soporte Anuncios');

@@ -102,6 +102,9 @@ export const EVENTOS_PRINCIPAL = [
   'charge.dispute.closed',
   'transfer.created',
   'transfer.reversed',
+  // C-PLUS: la suscripción se activa con la factura pagada y termina cuando Stripe la cierra.
+  'invoice.paid',
+  'customer.subscription.deleted',
 ];
 
 /**

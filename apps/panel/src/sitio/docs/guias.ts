@@ -396,6 +396,29 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'divoox-plus',
+        titulo: 'Divoox Plus: envío gratis y menos servicio por una cuota mensual',
+        resumen:
+          'Con Divoox Plus no pagas envío y pagas menos cargo de servicio en los pedidos que llegan al mínimo. Se renueva solo cada mes y lo cancelas cuando quieras.',
+        explicacion: [
+          'Cuando Divoox Plus está disponible, aparece en Mi cuenta. Ahí ves el precio, los beneficios y el pedido mínimo.',
+          'Toca «Suscribirme» y paga con tu tarjeta, Apple Pay o Google Pay en la misma pantalla. En unos segundos dice «Tienes Divoox Plus».',
+          'En el carrito, los pedidos que llegan al mínimo muestran la línea «Divoox Plus» con lo que te ahorras: el envío completo y parte del cargo de servicio. La propina y el impuesto no cambian.',
+          'Se cobra cada mes en la misma fecha. Si cancelas, sigues con los beneficios hasta el final del mes que ya pagaste y no se vuelve a cobrar.',
+          'Los pedidos para recoger en el local ya no llevan envío, así que el descuento de Plus no aplica en ellos.',
+        ],
+        preguntas: [
+          '¿Qué es Divoox Plus?',
+          '¿Cómo cancelo Divoox Plus?',
+          '¿Divoox Plus sirve en todos los pedidos?',
+        ],
+        pasos: [
+          'Mi cuenta → Divoox Plus.',
+          'Toca «Suscribirme» y paga.',
+          'Para cancelar: Mi cuenta → Divoox Plus → «Cancelar Divoox Plus».',
+        ],
+      },
+      {
         id: 'coupons',
         titulo: 'Cupones y promociones',
         resumen:
@@ -4109,6 +4132,29 @@ const en: SeccionDocs[] = [
           'Type the address in the cart and tap the suggestion that matches yours; add the notes.',
           'Turn on “Save this address for next time” and name it.',
           'Next time, tap it under “Your addresses”.',
+        ],
+      },
+      {
+        id: 'divoox-plus',
+        titulo: 'Divoox Plus: free delivery and lower service fees for a monthly fee',
+        resumen:
+          'With Divoox Plus you pay no delivery fee and a lower service fee on orders over the minimum. It renews every month and you can cancel anytime.',
+        explicacion: [
+          'When Divoox Plus is available, it shows in My account. There you see the price, the benefits and the order minimum.',
+          'Tap “Join” and pay with your card, Apple Pay or Google Pay on the same screen. In a few seconds it says “You have Divoox Plus.”',
+          'In your cart, orders over the minimum show a “Divoox Plus” line with what you save: the full delivery fee and part of the service fee. Tip and tax don’t change.',
+          'You’re charged every month on the same date. If you cancel, you keep the benefits until the end of the month you already paid for and you aren’t charged again.',
+          'Pickup orders don’t have a delivery fee, so the Plus discount doesn’t apply to them.',
+        ],
+        preguntas: [
+          'What is Divoox Plus?',
+          'How do I cancel Divoox Plus?',
+          'Does Divoox Plus work on every order?',
+        ],
+        pasos: [
+          'My account → Divoox Plus.',
+          'Tap “Join” and pay.',
+          'To cancel: My account → Divoox Plus → “Cancel Divoox Plus.”',
         ],
       },
       {

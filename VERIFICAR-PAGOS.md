@@ -14,6 +14,8 @@
 
 Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito se vio funcionando en local (candado C-PAGO-FORMULARIO); falta la compra real de $1.
 
+> **1 nov, Divoox Plus (suscripción tipo DashPass, C-PLUS) y anuncios patrocinados (C-ANUNCIOS):** construidos y apagados. 🔴 **El cobro mensual de Divoox Plus NO está probado con Stripe de ninguna clase todavía** (solo pruebas automáticas con Stripe simulado). El servidor no deja encenderlo mientras la llave de Stripe sea real. Cómo se prueba: en staging, superadmin → Rewards → Divoox Plus con una cuota, suscribirse desde la app con la tarjeta 4242, comprobar en Stripe (modo prueba) la suscripción y la factura pagada, que «Mi cuenta → Divoox Plus» diga activa y que el carrito descuente envío y medio servicio; después cancelar. Los anuncios no cobran con tarjeta: descuentan del saldo del restaurante al entregar (ajuste negativo).
+
 > **27 oct, Divoox Flex · Fase 4 (rama `fase-flex-4`, solo staging):** billetera prepago de empresas sobre el libro, recargas con Stripe en **modo prueba**, comisiones por paquete con reserva, reembolsos, disputas, conciliación y recarga automática. 🔴 **Nada probado con dinero real.** La recarga de empresa se probó de punta a punta en staging con Stripe de prueba (ver `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`). Ninguna tarifa activa en producción.
 
 ## Cómo funciona (construido)

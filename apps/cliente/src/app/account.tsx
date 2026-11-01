@@ -107,6 +107,18 @@ export default function MiCuenta() {
       .catch(() => setTarjetas([]));
   }, [api]);
   useEffect(cargar, [cargar]);
+  // C-PLUS: la entrada a Divoox Plus aparece solo cuando está encendido.
+  const [plusDisponible, setPlusDisponible] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ disponible: boolean }>('GET', '/datos/plus')
+      .then((r) => vivo && setPlusDisponible(r.disponible))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
 
   async function quitar(id: string) {
     setError('');
@@ -155,6 +167,17 @@ export default function MiCuenta() {
           </Text>
         ) : null}
 
+        {plusDisponible ? (
+          <Pressable
+            onPress={() => router.push('/plus')}
+            accessibilityRole="link"
+            testID="ir-divoox-plus"
+            style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+          >
+            <Text style={{ fontWeight: '700' }}>Divoox Plus</Text>
+            <Text style={{ fontWeight: '700' }}>›</Text>
+          </Pressable>
+        ) : null}
         {/* Divoox Flex: lo que las empresas me envían (C-FLEX-UBICACION). */}
         <Pressable
           onPress={() => router.push('/packages')}

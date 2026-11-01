@@ -5,6 +5,15 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-PLUS
+  ['Divoox Plus todavía no está disponible.', 'Divoox Plus isn’t available yet.'],
+  ['Ya tienes Divoox Plus.', 'You already have Divoox Plus.'],
+  ['No tienes Divoox Plus.', 'You don’t have Divoox Plus.'],
+  ['Stripe no devolvió el cobro. Intenta otra vez.', 'Stripe didn’t return the charge. Try again.'],
+  [
+    'Divoox Plus se enciende con dinero real cuando su cobro esté probado de punta a punta.',
+    'Divoox Plus goes live with real money once its billing is fully tested end to end.',
+  ],
   // C-ANUNCIOS
   ['Los anuncios todavía no están disponibles.', 'Sponsored listings aren’t available yet.'],
   [

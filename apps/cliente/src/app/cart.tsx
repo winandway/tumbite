@@ -9,6 +9,7 @@ import {
   ErrorApi,
   type ConfigDinero,
   calcularPedido,
+  descuentoPlus,
   distanciaKm,
   enIdioma,
   formatearMonto,
@@ -342,6 +343,26 @@ export default function PantallaCarrito() {
 
   // Cupón (punto 15): se valida en el servidor al aplicarlo y otra vez al pedir.
   const [cupon, setCupon] = useState<{ codigo: string; descuento: number } | null>(null);
+  // C-PLUS: si el cliente tiene Divoox Plus vigente, sus ajustes (para descontar igual que el servidor).
+  const [plusVigente, setPlusVigente] = useState<{
+    minimoSubtotal: number;
+    servicioDescuentoPct: number;
+  } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ activo: boolean; minimoSubtotal: number; servicioDescuentoPct: number }>(
+        'GET',
+        '/datos/plus',
+      )
+      .then((r) => {
+        if (vivo && r.activo) setPlusVigente(r);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api]);
   const [cuponError, setCuponError] = useState('');
   async function aplicarCupon() {
     setCuponError('');
@@ -377,18 +398,26 @@ export default function PantallaCarrito() {
   const recogidaElegida = b.valores.entrega === 'recoger';
   const descuentoCupon = cupon?.descuento ?? 0;
   // Sin useMemo: el cálculo es barato y así el compilador de React no tiene que adivinar dependencias.
-  const d = carrito.lineas.length
-    ? calcularPedido({
-        lineas: carrito.lineas,
-        plan: carrito.plan,
-        propina,
-        distanciaKm: km,
-        config,
-        regalo,
-        recogida: recogidaElegida,
-        descuento: descuentoCupon,
-      })
+  const base = {
+    lineas: carrito.lineas,
+    plan: carrito.plan,
+    propina,
+    distanciaKm: km,
+    config,
+    regalo,
+  };
+  const sinPlus = carrito.lineas.length
+    ? calcularPedido({ ...base, recogida: recogidaElegida, descuento: descuentoCupon })
     : null;
+  // C-PLUS: la misma cuenta que el servidor (envío gratis y servicio rebajado, solo en dólares).
+  const descPlus =
+    sinPlus && plusVigente && moneda === 'USD' && !recogidaElegida
+      ? descuentoPlus(sinPlus, plusVigente)
+      : 0;
+  const d =
+    sinPlus && descPlus
+      ? calcularPedido({ ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus })
+      : sinPlus;
 
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
@@ -1059,7 +1088,8 @@ export default function PantallaCarrito() {
         <Tarjeta>
           {fila(carrito.esTienda ? t.subtotalTienda : t.subtotal, d.subtotal)}
           {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
-          {d.descuento > 0 && fila(te.descuento, -d.descuento)}
+          {d.descuento - descPlus > 0 && fila(te.descuento, -(d.descuento - descPlus))}
+          {descPlus > 0 && fila('Divoox Plus', -descPlus)}
           {fila(t.envio, d.envio)}
           {fila(t.servicio, d.servicio)}
           {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}

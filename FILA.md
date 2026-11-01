@@ -236,7 +236,7 @@
 
 - [x] HECHO 1 nov (C-GANAR-POR-TIEMPO). (R-T1) Ganar por tiempo («Earn by Time»): el repartidor elige cobrar por minuto y milla; superadmin con tarifa en cero (apagado); servidor, Driver, Docs y pruebas. Todos los países.
 - [x] HECHO 1 nov (C-ANUNCIOS). (R-T2) Anuncios patrocinados («Sponsored Listings»): el restaurante sale primero con «Patrocinado», paga solo por pedido entregado desde el anuncio, presupuesto semanal y reporte de 30 días; precio en cero (apagado). Servidor, panel del restaurante, superadmin, app del cliente, Docs y pruebas. Todos los países. (Las tiendas usan su propia vitrina: quedan para cuando haya tiendas reales.)
-- [ ] (R-T3) Suscripción tipo DashPass: envío gratis y menos servicio por cuota mensual; probado solo con Stripe en modo prueba; apagada en producción. Todos los países.
+- [x] HECHO 1 nov (C-PLUS). (R-T3) Divoox Plus (suscripción tipo DashPass): envío gratis y medio servicio desde el mínimo, cobro mensual con Stripe que solo se activa con la factura pagada, cancelar al final del periodo; apagado y bloqueado con llave real hasta probar el cobro en staging con la 4242. Solo EE. UU.
 - [ ] (R-T4) Tarjetas de regalo y regalar un pedido; probado con Stripe en modo prueba; apagado en producción. Todos los países.
 
 ## Registro de la fábrica

@@ -1,3 +1,4 @@
+import { avisoPlus, leerPlus, tienePlus } from '../plus';
 import { anotarPedidoDeAnuncio } from '../anuncios';
 import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
@@ -24,6 +25,7 @@ import {
   type Turno,
   abiertoPorHorario,
   calcularPedido,
+  descuentoPlus,
   distanciaKm,
   conSenal,
   NOTA_PLATO_MAX,
@@ -663,7 +665,7 @@ pedidos.post('/pedidos', async (c) => {
     });
     cupon = { codigo: v.cupon.codigo, descuento: v.descuento };
   }
-  const desglose = calcularPedido({
+  const sinPlus = calcularPedido({
     lineas,
     plan,
     propina: d.propinaCentavos,
@@ -673,6 +675,23 @@ pedidos.post('/pedidos', async (c) => {
     recogida,
     descuento: cupon?.descuento ?? 0,
   });
+  // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
+  // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
+  const planPlus =
+    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
+  const descPlus = planPlus ? descuentoPlus(sinPlus, planPlus) : 0;
+  const desglose = descPlus
+    ? calcularPedido({
+        lineas,
+        plan,
+        propina: d.propinaCentavos,
+        distanciaKm: km,
+        config,
+        regalo,
+        recogida,
+        descuento: (cupon?.descuento ?? 0) + descPlus,
+      })
+    : sinPlus;
   // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
   // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
   if (d.totalEsperado != null && d.totalEsperado !== desglose.totalCliente)
@@ -732,6 +751,13 @@ pedidos.post('/pedidos', async (c) => {
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
+  if (descPlus)
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO pedidos_plus (pedido_id, usuario_id, descuento) VALUES (?, ?, ?)',
+      )
+      .bind(id, u.id, descPlus)
+      .run();
   if (cupon)
     await db
       .prepare(
@@ -1022,6 +1048,8 @@ pedidos.post('/stripe/aviso', async (c) => {
           );
       } else if (evento.type === 'payment_intent.canceled') await recargaCancelada(db, obj);
     }
+    // C-PLUS: facturas y cierre de la suscripción (nunca son pedidos).
+    await avisoPlus(db, evento.type, obj as Record<string, unknown>);
     if (evento.type === 'charge.refunded') await reembolsoDeRecarga(db, obj);
     if (evento.type === 'payment_intent.succeeded') {
       // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).
