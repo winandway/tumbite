@@ -4,7 +4,7 @@ Pedido de Richard el 1 nov 2026: «le vamos a dar un frenazo y vamos a organizar
 al 100%». Fuentes: inventario del código (1 nov) y ficha REA
 `docs/investigaciones-rea/2026-11-01-logistica-actores-y-flujo.md`. Todos los países salvo donde se diga.
 
-- [ ] 1. Documento madre «Cómo funciona Divoox Flex»: los jugadores, qué app usa cada uno, el día de trabajo, qué se le vende a quién (docs/LOGISTICA-COMO-FUNCIONA.md).
+- [x] 1. Documento madre «Cómo funciona Divoox Flex»: los jugadores, qué app usa cada uno, el día de trabajo, qué se le vende a quién (docs/LOGISTICA-COMO-FUNCIONA.md).
 - [x] 2. La cuenta de una empresa nunca se crea como «restaurante»: el acceso desde /flex y /panel/business crea una cuenta de empresa.
 - [x] 3. Un solo registro de empresa, el mismo en la web y en la app: datos legales y primer centro; el Perfil deja editar los datos fiscales.
 - [x] 4. Primeros pasos que se van marcando en el Inicio del panel (centro, conductor, primer envío, etiquetas, ruta asignada), cada uno con su botón.
