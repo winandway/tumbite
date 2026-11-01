@@ -216,6 +216,7 @@
 - 31 oct 2026, 02:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas, en la rama fase-repaso-1). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 3c39b7d y pruebas 2d6fd27 (los commits posteriores son [skip ci]). La rama fase-repaso-1 lleva arreglos de iPhone todavía sin fusionar a main; se deja a la sesión que la trabaja. No se tocó código.
 - 31 oct 2026, 04:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.
 - 31 oct 2026, 06:10 (tarea programada): sin pausa y sin otra sesión activa (último commit hace dos horas). La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) sigue en 3c39b7d y pruebas en 2d6fd27; la rama fase-repaso-1 sigue sin fusionar y se deja a su sesión. No se tocó código.
+- 1 nov 2026, 00:10 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Otra sesión fusionó fase-repaso-1 a main hace 22 minutos y su verificación sigue corriendo (pruebas en e08346d, producción en ec0f130); se deja terminar sin tocarla. No se tocó código.
 
 ## Registro de la fábrica
 
