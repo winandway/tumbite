@@ -73,11 +73,13 @@ const deben = [
   'avisosCelular',
   'servicios',
   'respaldo',
+  // Twilio encendido el 31 oct 2026 (subcuenta Divoox, solo EE. UU.: C-SMS-PAISES).
+  'sms',
 ];
 if (modo === 'despues') deben.push('exclusividad');
 const pieza = new Map(Object.entries(p));
 for (const k of deben) exigir(pieza.get(k) === 'ok', `salud · ${k} = ok (está «${pieza.get(k)}»)`);
-for (const k of ['sms', 'retiros', 'tiempoReal'])
+for (const k of ['retiros', 'tiempoReal'])
   exigir(
     pieza.get(k) === 'pendiente',
     `salud · ${k} = pendiente, apagado a propósito (está «${pieza.get(k)}»)`,
