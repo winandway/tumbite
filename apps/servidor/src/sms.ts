@@ -11,8 +11,17 @@ const TWILIO_REAL = 'https://api.twilio.com';
 
 export let ultimoErrorSms: { cuando: string; motivo: string } | null = null;
 
+/** Quién firma las llamadas a Twilio: la llave de API (SK…) o, si no hay, el Auth Token de la cuenta. */
+function credencialTwilio(env: Env): { usuario: string; clave: string } | null {
+  if (env.TWILIO_API_KEY && env.TWILIO_API_SECRET)
+    return { usuario: env.TWILIO_API_KEY, clave: env.TWILIO_API_SECRET };
+  if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN)
+    return { usuario: env.TWILIO_ACCOUNT_SID, clave: env.TWILIO_AUTH_TOKEN };
+  return null;
+}
+
 export const smsConfigurado = (env: Env) =>
-  Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM);
+  Boolean(env.TWILIO_ACCOUNT_SID && credencialTwilio(env) && env.TWILIO_FROM);
 
 /** La dirección de Twilio: solo se cambia a localhost (el simulador del recorrido). */
 function baseTwilio(env: Env) {
@@ -39,7 +48,8 @@ export function telefonoE164(t: string | null | undefined): string | null {
 
 async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<string, string>) {
   const cuerpo = new URLSearchParams(datos).toString();
-  const auth = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
+  const c = credencialTwilio(env);
+  const auth = btoa(`${c?.usuario ?? ''}:${c?.clave ?? ''}`);
   const res = await fetch(
     `${baseTwilio(env)}/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/${recurso}.json`,
     {

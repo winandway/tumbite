@@ -2174,3 +2174,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Se encienden solos** cuando el sitio tenga `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_FROM`. Sin ellas no hace nada ni falla.
 - **Costo:** un SMS a Venezuela cuesta unos 0,23 USD; se manda uno solo por envío y solo a quien no tiene la app.
 - **Prueba:** `apps/servidor/src/flex/invitar.test.ts` (comprobada en rojo).
+
+## C-TWILIO-LLAVE (1 nov 2026) — todos los países
+
+- Twilio acepta la llave de API (`TWILIO_API_KEY` SK… + `TWILIO_API_SECRET`) en vez del Auth Token para mandar SMS y llamar (`credencialTwilio` en `sms.ts`). Las claves de la cuenta «Numeros de BOT» están en `~/.config/tumbite/twilio`; el número es el +1 231 800 8096.
+- **Costos medidos el 1 nov 2026:** SMS a Venezuela (Movilnet) 0,2257 USD, entregado. Llamadas a Venezuela: bloqueadas hasta encender el permiso de país en la consola de Twilio.

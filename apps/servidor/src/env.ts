@@ -57,6 +57,13 @@ export const esquemaEnv = z.object({
   /** Twilio (SMS de respaldo y llamadas con número oculto). Sin esto, se apagan solos. */
   TWILIO_ACCOUNT_SID: z.string().startsWith('AC').optional(),
   TWILIO_AUTH_TOKEN: z.string().min(16).optional(),
+  /**
+   * Llave de API de Twilio (SK…) en vez del Auth Token: con ella se manda y se llama (la usuaria es la
+   * llave y la clave su secreto). El Auth Token sigue haciendo falta solo para firmar los enlaces de
+   * las llamadas con número oculto.
+   */
+  TWILIO_API_KEY: z.string().startsWith('SK').optional(),
+  TWILIO_API_SECRET: z.string().min(16).optional(),
   /** El número de Divoox en Twilio, en formato internacional (+1…). */
   TWILIO_FROM: z
     .string()
