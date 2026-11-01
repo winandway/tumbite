@@ -11,8 +11,17 @@ const TWILIO_REAL = 'https://api.twilio.com';
 
 export let ultimoErrorSms: { cuando: string; motivo: string } | null = null;
 
+/** Quién firma las llamadas a Twilio: la llave de API (SK…) o, si no hay, el Auth Token de la cuenta. */
+function credencialTwilio(env: Env): { usuario: string; clave: string } | null {
+  if (env.TWILIO_API_KEY && env.TWILIO_API_SECRET)
+    return { usuario: env.TWILIO_API_KEY, clave: env.TWILIO_API_SECRET };
+  if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN)
+    return { usuario: env.TWILIO_ACCOUNT_SID, clave: env.TWILIO_AUTH_TOKEN };
+  return null;
+}
+
 export const smsConfigurado = (env: Env) =>
-  Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM);
+  Boolean(env.TWILIO_ACCOUNT_SID && credencialTwilio(env) && env.TWILIO_FROM);
 
 /** La dirección de Twilio: solo se cambia a localhost (el simulador del recorrido). */
 function baseTwilio(env: Env) {
@@ -37,9 +46,22 @@ export function telefonoE164(t: string | null | undefined): string | null {
   return solo.length >= 8 ? `+${solo}` : null;
 }
 
+/**
+ * C-SMS-PAISES: a qué países salen los SMS y las llamadas. Por defecto solo +1 (EE. UU.); un SMS a
+ * Venezuela cuesta unos 0,23 dólares. Se amplía con la variable SMS_PREFIJOS («+1,+57»).
+ */
+export function destinoPermitido(env: Env, para: string): boolean {
+  const prefijos = (env.SMS_PREFIJOS ?? '+1')
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p.startsWith('+'));
+  return prefijos.some((p) => para.startsWith(p));
+}
+
 async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<string, string>) {
   const cuerpo = new URLSearchParams(datos).toString();
-  const auth = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
+  const c = credencialTwilio(env);
+  const auth = btoa(`${c?.usuario ?? ''}:${c?.clave ?? ''}`);
   const res = await fetch(
     `${baseTwilio(env)}/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/${recurso}.json`,
     {
@@ -70,7 +92,7 @@ export async function enviarSms(
 ): Promise<boolean> {
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
-  if (!para) return false;
+  if (!para || !destinoPermitido(env, para)) return false;
   const id = nuevoId();
   try {
     await twilio(env, 'Messages', { To: para, From: env.TWILIO_FROM!, Body: a.texto });
@@ -172,7 +194,7 @@ export async function llamarConVoz(
 ): Promise<boolean> {
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(telefono);
-  if (!para) return false;
+  if (!para || !destinoPermitido(env, para)) return false;
   const limpio = texto.replace(/[<>&]/g, ' ');
   const voz = idioma === 'en' ? 'en-US' : 'es-MX';
   try {

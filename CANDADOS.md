@@ -2174,3 +2174,22 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Se encienden solos** cuando el sitio tenga `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_FROM`. Sin ellas no hace nada ni falla.
 - **Costo:** un SMS a Venezuela cuesta unos 0,23 USD; se manda uno solo por envío y solo a quien no tiene la app.
 - **Prueba:** `apps/servidor/src/flex/invitar.test.ts` (comprobada en rojo).
+
+## C-TWILIO-LLAVE (1 nov 2026) — todos los países
+
+- Twilio acepta la llave de API (`TWILIO_API_KEY` SK… + `TWILIO_API_SECRET`) en vez del Auth Token para mandar SMS y llamar (`credencialTwilio` en `sms.ts`). Las claves de la cuenta «Numeros de BOT» están en `~/.config/tumbite/twilio`; el número es el +1 231 800 8096.
+- **Costos medidos el 1 nov 2026:** SMS a Venezuela (Movilnet) 0,2257 USD, entregado. Llamadas a Venezuela: bloqueadas hasta encender el permiso de país en la consola de Twilio.
+
+## C-SMS-LEGAL — la privacidad explica los mensajes de texto (31 oct 2026, EE. UU.)
+
+- **Por qué:** Twilio exige, para verificar el número gratuito (sin eso los SMS a EE. UU. fallan con el error 30034), que la política de privacidad diga cómo se aceptan los mensajes, STOP/HELP, tarifas y que el número no se comparte para publicidad. Rechazan si falta.
+- **Qué hay:** sección 12 «Mensajes de texto (SMS)» con `id: 'sms'` en `PRIVACIDAD` (es y en) de `apps/panel/src/sitio/legales.ts`. Ancla pública: divoox.com/privacy#sms.
+- **Prueba:** `legales.test.tsx` → «mensajes de texto (verificación de Twilio y CTIA)». Comprobada en rojo.
+- **No tocar:** las cuatro piezas (opt-in, STOP, HELP, tarifas, no compartir) mientras haya un número verificado.
+
+## C-SMS-PAISES — los SMS y las llamadas automáticas solo salen a los países encendidos (31 oct 2026, EE. UU.)
+
+- **Por qué:** medido el 31 oct, un SMS a Venezuela cuesta 0,2257 dólares; a EE. UU., 0,0083. Richard decidió dejar Twilio para EE. UU. y buscar otro proveedor para Venezuela.
+- **Qué hay:** `destinoPermitido(env, para)` en `apps/servidor/src/sms.ts`, usado por `enviarSms` y `llamarConVoz`. Sin la variable `SMS_PREFIJOS` solo sale a «+1». Para ampliar: `SMS_PREFIJOS=+1,+57`.
+- **Prueba:** `apps/servidor/src/smsPaises.test.ts`, comprobada en rojo.
+- **Twilio de Divoox:** subcuenta «Divoox» (la principal tiene un perfil personal viejo y Twilio no deja verificar desde ella). Número gratuito +1 866 569 5258, verificación de número gratuito HHad9f853f48db6e35442954fb9f1620d4 enviada el 31 oct con los datos de Windoce LLC. Claves en `~/.config/tumbite/twilio-divoox`. Hasta que Twilio apruebe, los SMS a EE. UU. no salen (error 30032/30034).

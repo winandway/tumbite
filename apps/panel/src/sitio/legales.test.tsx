@@ -38,6 +38,19 @@ describe('política de privacidad lista para las tiendas', () => {
   }
 });
 
+describe('mensajes de texto (verificación de Twilio y CTIA), C-SMS-LEGAL', () => {
+  for (const idioma of ['es', 'en'] as const) {
+    const p = texto(PRIVACIDAD[idioma]);
+    it(`(${idioma}) dice cómo se aceptan, STOP/HELP, tarifas y que el número no se comparte`, () => {
+      expect(PRIVACIDAD[idioma].secciones.some((s) => s.id === 'sms')).toBe(true);
+      expect(p).toMatch(/STOP/);
+      expect(p).toMatch(/HELP/);
+      expect(p).toMatch(/tarifas de mensajes y datos|Message and data rates/);
+      expect(p).toMatch(/no se comparte|not be shared/);
+    });
+  }
+});
+
 describe('página pública para borrar la cuenta (Google Play)', () => {
   for (const idioma of ['es', 'en'] as const) {
     const b = BORRAR_CUENTA[idioma];
