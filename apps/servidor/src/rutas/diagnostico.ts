@@ -1177,6 +1177,50 @@ diagnostico.post('/interno/diagnostico/confirmar-pago', async (c) => {
   return c.json({ estado: r.status, autorizado: r.amount_capturable ?? 0 });
 });
 
+/** C-PLUS: paga la primera factura de la suscripción con la tarjeta de prueba (solo sk_test_). El
+ * aviso real «invoice.paid» llega después y la activa. */
+diagnostico.post('/interno/diagnostico/pagar-plus', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const { usuarioId } = await leerCuerpo(c, z.object({ usuarioId: z.string().min(1).max(64) }));
+  const s = await base(c)
+    .prepare('SELECT stripe_suscripcion FROM suscripciones_plus WHERE usuario_id = ?')
+    .bind(usuarioId)
+    .first<{ stripe_suscripcion: string | null }>();
+  if (!s?.stripe_suscripcion?.startsWith('sub_'))
+    throw new ErrorDatos('No encontrado.', undefined, 404);
+  const stripe = crearStripe(llave)!;
+  const sub = await stripe.get<{ latest_invoice: string }>(
+    `/subscriptions/${s.stripe_suscripcion}`,
+  );
+  const r = await stripe.post<{ status: string }>(
+    `/invoices/${sub.latest_invoice}/pay`,
+    { payment_method: 'pm_card_visa' },
+    `diag-plus-${sub.latest_invoice}`,
+  );
+  return c.json({ estado: r.status });
+});
+
+/** C-TARJETAS-REGALO: paga una tarjeta de regalo con la tarjeta de prueba (solo sk_test_). */
+diagnostico.post('/interno/diagnostico/pagar-tarjeta-regalo', async (c) => {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const { tarjetaId } = await leerCuerpo(c, z.object({ tarjetaId: z.string().min(1).max(64) }));
+  const t = await base(c)
+    .prepare('SELECT stripe_pago FROM tarjetas_regalo WHERE id = ?')
+    .bind(tarjetaId)
+    .first<{ stripe_pago: string | null }>();
+  if (!t?.stripe_pago?.startsWith('pi_')) throw new ErrorDatos('No encontrado.', undefined, 404);
+  const r = await crearStripe(llave)!.post<{ status: string }>(
+    `/payment_intents/${t.stripe_pago}/confirm`,
+    { payment_method: 'pm_card_visa', return_url: c.env.SITIO_URL ?? new URL(c.req.url).origin },
+    `diag-regalo-${tarjetaId}`,
+  );
+  return c.json({ estado: r.status });
+});
+
 /** Conciliación de saldos en pruebas: el libro del día cuadra por dentro, y cada cobro, captura y
  * devolución coincide con lo que Stripe (modo prueba) tiene registrado. También los retiros. */
 diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
