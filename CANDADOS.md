@@ -2248,3 +2248,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué fallaba:** para sumar un conductor había que saber el correo de una cuenta de Driver que ya existiera; si no, «créala primero». Y quedaba vinculado sin enterarse ni aceptar.
 - **Qué hay:** tabla `invitaciones_conductor` (solo el hash del enlace, vence a los 14 días). `POST /empresas/:id/conductores/invitaciones` (nombre + celular o correo + vínculo) manda SMS (países encendidos), correo y aviso al celular si ya usa Driver, y devuelve el enlace `/driver/join/<token>` para mandarlo por WhatsApp. `GET /empresas/:id/conductores` trae las pendientes; cancelar con `DELETE …/invitaciones/:id` (en el menú de tres puntos). Página pública `InvitacionConductor.tsx` (quién invita, tres pasos, tiendas). En Driver, `flex/InvitacionesEmpresa.tsx` lista las invitaciones de su celular o correo (`GET /conductor/invitaciones`) y las acepta o rechaza; al aceptar nace la fila en `empresa_conductores`. El vínculo directo por correo sigue en «¿Ya trabaja con Divoox Driver…?».
 - **Pruebas:** `apps/servidor/src/flex/invitarConductor.test.ts` (comprobada en rojo), `PanelEmpresa.test.tsx`, `InvitacionConductor.test.tsx`, `flexInvitarApp.test.ts`.
+
+## C-FLEX-VEHICULO-DRIVER — el vehículo del conductor sale de lo que registró en Driver (1 nov 2026, todos los países)
+
+- **Qué fallaba:** «Vehículos», la capacidad al asignar y la placa del aviso «ya llega» leían la tabla `vehiculos`, que ninguna app llenaba (Driver guarda en `repartidor_datos`).
+- **Qué hay:** `apps/servidor/src/flex/vehiculoDriver.ts` (`asegurarVehiculoDesdeDriver`): crea una sola vez su vehículo (origen «migracion») y lo deja activo. Se llama al aceptar la invitación, al vincular por correo y antes del aviso «ya llega».
+- **Prueba:** `invitarConductor.test.ts` → «C-FLEX-VEHICULO-DRIVER», comprobada en rojo.

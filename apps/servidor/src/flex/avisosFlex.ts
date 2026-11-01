@@ -1,3 +1,4 @@
+import { asegurarVehiculoDesdeDriver } from './vehiculoDriver';
 import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { notificar, type Aviso } from '../notificaciones';
@@ -443,6 +444,8 @@ export async function avisarYaLlega(
   if (!p) return 0;
   const tope = p.entrega_tipo === 'encuentro' ? METROS_YA_LLEGA_ENCUENTRO : METROS_YA_LLEGA;
   if (metrosEntre(yo, p) > tope) return 0;
+  // C-FLEX-VEHICULO-DRIVER: si todavía no tiene fila en vehiculos, se crea desde lo que registró en Driver.
+  await asegurarVehiculoDesdeDriver(db, conductorId);
   const v = await db
     .prepare(
       `SELECT u.nombre, ve.marca, ve.modelo, ve.color, ve.placa FROM usuarios u
