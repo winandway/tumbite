@@ -21,6 +21,7 @@ import {
   ubicacionInicial,
   vincularDestinatarios,
 } from './ubicacion';
+import { despues, invitarDestinatarios } from './avisosFlex';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   type ActorFlex,
@@ -394,6 +395,8 @@ flexEnvios.post('/empresas/:id/envios', async (c) => {
     );
     await db.batch(sentencias).catch(errorUnico);
     await vincularDestinatarios(db, [id], pais);
+    // C-FLEX-INVITAR: quien todavía no tiene la app recibe su número de seguimiento.
+    await despues(c, () => invitarDestinatarios(c.env, db, [id]));
     return { estado: 201, datos: { envio: await envioCompleto(db, actor.empresaId, id) } };
   });
 });
@@ -426,6 +429,13 @@ flexEnvios.post('/empresas/:id/envios/lote', async (c) => {
       db,
       creados.map((x) => x.id),
       pais,
+    );
+    await despues(c, () =>
+      invitarDestinatarios(
+        c.env,
+        db,
+        creados.map((x) => x.id),
+      ),
     );
     return {
       estado: 201,

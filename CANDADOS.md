@@ -2166,3 +2166,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** con la ruta en curso, cada vez que Driver manda su ubicación (cada 30 s), si está a menos de 800 m de la próxima parada (1,5 km si es un punto de encuentro de la vía), quien recibe (y quien sigue el número) recibe UNA vez el aviso «Tu paquete ya llega»: el nombre del conductor, la marca, el modelo, el color y la placa del vehículo, y el punto de encuentro si lo hay. `avisarYaLlega` en `flex/avisosFlex.ts`; clave única en `flex_avisos`.
 - **Falta:** la llamada automática por teléfono, que necesita las claves de Twilio de Richard (LG5).
 - **Prueba:** `apps/servidor/src/flex/yaLlega.test.ts` (comprobada en rojo).
+
+## C-FLEX-INVITAR y llamada «ya llega» (31 oct 2026, LG5) — todos los países
+
+- **Invitación:** al crear un envío (uno o en lote), si quien recibe no tiene cuenta, se le manda UNA vez un SMS (Twilio) y un correo (si lo dieron) con el número de seguimiento y el enlace `/track/<código>` (en inglés si la empresa es de EE. UU., en español si no). `invitarDestinatarios` en `flex/avisosFlex.ts`; clave `d:invitacion:<envío>` en `flex_avisos`.
+- **Llamada:** el aviso «ya llega» también llama con voz al teléfono de quien recibe, una vez por envío (`llamarConVoz` en `sms.ts`).
+- **Se encienden solos** cuando el sitio tenga `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_FROM`. Sin ellas no hace nada ni falla.
+- **Costo:** un SMS a Venezuela cuesta unos 0,23 USD; se manda uno solo por envío y solo a quien no tiene la app.
+- **Prueba:** `apps/servidor/src/flex/invitar.test.ts` (comprobada en rojo).

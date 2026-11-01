@@ -159,3 +159,32 @@ export async function llamarConNumeroOculto(
     Method: 'GET',
   });
 }
+
+/**
+ * C-FLEX-YA-LLEGA (LG4/LG5): llamada automática con voz («tu paquete ya llega») para que quien
+ * espera en la casa o en un punto de la vía salga a tiempo. Solo con Twilio configurado.
+ */
+export async function llamarConVoz(
+  env: Env,
+  telefono: string | null | undefined,
+  texto: string,
+  idioma: 'es' | 'en',
+): Promise<boolean> {
+  if (!smsConfigurado(env)) return false;
+  const para = telefonoE164(telefono);
+  if (!para) return false;
+  const limpio = texto.replace(/[<>&]/g, ' ');
+  const voz = idioma === 'en' ? 'en-US' : 'es-MX';
+  try {
+    await twilio(env, 'Calls', {
+      To: para,
+      From: env.TWILIO_FROM!,
+      Twiml: `<Response><Say language="${voz}">${limpio}</Say><Pause length="1"/><Say language="${voz}">${limpio}</Say></Response>`,
+    });
+    return true;
+  } catch (e) {
+    ultimoErrorSms = { cuando: new Date().toISOString(), motivo: String(e) };
+    console.error('llamada:', ultimoErrorSms.motivo);
+    return false;
+  }
+}

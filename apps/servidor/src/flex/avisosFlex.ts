@@ -1,5 +1,7 @@
 import type { Env } from '../env';
+import { enviarCorreo } from '../correo';
 import { notificar, type Aviso } from '../notificaciones';
+import { enviarSms, llamarConVoz } from '../sms';
 import type { Ctx } from './autorizacion';
 
 /**
@@ -490,6 +492,102 @@ export async function avisarYaLlega(
       sonido: SONIDO_CLIENTE,
       datos: { tipo: 'flex_paquete', evento: 'ya_llega', envioId: p.envio_id },
     });
+    enviados++;
+  }
+  // Y una llamada con voz al teléfono de quien recibe (una vez por envío), si hay Twilio.
+  const tel = await db
+    .prepare(
+      `SELECT e.destinatario_telefono AS tel, m.pais, m.dueno_id AS dueno FROM envios e
+         JOIN empresas m ON m.id = e.empresa_id WHERE e.id = ?`,
+    )
+    .bind(p.envio_id)
+    .first<{ tel: string; pais: string; dueno: string }>();
+  if (tel?.tel) {
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, ?)',
+      )
+      .bind(`d:ya_llega_llamada:${p.envio_id}`, tel.dueno, 'paquete_ya_llega_llamada', rutaId)
+      .run();
+    if (r.meta.changes) {
+      const idioma: 'es' | 'en' = tel.pais === 'US' ? 'en' : 'es';
+      const a = textoYaLlega(idioma, {
+        conductor,
+        vehiculo,
+        punto: p.entrega_tipo === 'encuentro' ? p.punto_encuentro : '',
+      });
+      await llamarConVoz(env, tel.tel, `${a.titulo}. ${a.cuerpo}`, idioma);
+    }
+  }
+  return enviados;
+}
+
+/**
+ * C-FLEX-INVITAR (31 oct 2026, LG5, pedido de Richard): al crear un envío, si quien recibe todavía
+ * no tiene la app, se le invita por mensaje de texto (Twilio) y por correo (si lo dieron) con su
+ * número de seguimiento y el enlace para seguirlo: la persona instala Divoox, escribe el número y le
+ * llegan los avisos de cada paso, incluido el «ya llega». Una sola vez por envío.
+ */
+export function textoInvitacion(
+  idioma: 'es' | 'en',
+  d: { empresa: string; codigo: string; enlace: string },
+) {
+  return idioma === 'en'
+    ? `${d.empresa} sent you a package with Divoox. Tracking number: ${d.codigo}. Follow it: ${d.enlace} — get the Divoox app and we'll let you know when it's close.`
+    : `${d.empresa} te envió un paquete con Divoox. Número de seguimiento: ${d.codigo}. Síguelo: ${d.enlace} — baja la app Divoox y te avisamos cuando esté cerca.`;
+}
+
+export async function invitarDestinatarios(env: Env, db: D1Database, envioIds: string[]) {
+  if (!envioIds.length) return 0;
+  const { results } = await db
+    .prepare(
+      `SELECT e.id, e.destinatario_telefono AS tel, e.destinatario_correo AS correo, m.nombre AS empresa,
+              m.pais, m.dueno_id AS dueno,
+              (SELECT codigo_seguimiento FROM paquetes WHERE envio_id = e.id ORDER BY creado_en LIMIT 1) AS codigo
+         FROM envios e JOIN empresas m ON m.id = e.empresa_id
+        WHERE e.id IN (SELECT value FROM json_each(?)) AND e.destinatario_usuario_id IS NULL`,
+    )
+    .bind(JSON.stringify(envioIds))
+    .all<{
+      id: string;
+      tel: string;
+      correo: string;
+      empresa: string;
+      pais: string;
+      dueno: string;
+      codigo: string | null;
+    }>();
+  const base = (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
+  let enviados = 0;
+  for (const f of results) {
+    if (!f.codigo || (!f.tel && !f.correo)) continue;
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, NULL)',
+      )
+      .bind(`d:invitacion:${f.id}`, f.dueno, 'paquete_invitacion')
+      .run();
+    if (!r.meta.changes) continue;
+    const idioma: 'es' | 'en' = f.pais === 'US' ? 'en' : 'es';
+    const enlace = `${base}${idioma === 'es' ? '/es' : ''}/track/${f.codigo}`;
+    const texto = textoInvitacion(idioma, { empresa: f.empresa, codigo: f.codigo, enlace });
+    if (f.tel)
+      await enviarSms(env, db, {
+        usuarioId: f.dueno,
+        pedidoId: null,
+        tipo: 'flex_invitacion',
+        telefono: f.tel,
+        texto,
+      });
+    if (f.correo)
+      await enviarCorreo(env, {
+        de: 'hola',
+        para: f.correo,
+        idioma,
+        asunto:
+          idioma === 'en' ? `${f.empresa} sent you a package` : `${f.empresa} te envió un paquete`,
+        texto,
+      });
     enviados++;
   }
   return enviados;
