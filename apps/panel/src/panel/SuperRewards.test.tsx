@@ -16,6 +16,8 @@ describe('C-REWARDS-AJUSTES en el panel', () => {
       if (metodo === 'PUT') return new Response(JSON.stringify({ ok: true }), { status: 200 });
       if (String(_url).endsWith('/apelaciones'))
         return new Response(JSON.stringify({ apelaciones: [] }), { status: 200 });
+      if (String(_url).endsWith('/ganar-por-tiempo'))
+        return new Response(JSON.stringify({ centavosHora: 0, centavosMilla: 0 }), { status: 200 });
       if (String(_url).endsWith('/pago-pico'))
         return new Response(JSON.stringify({ centavos: 0, presupuestoDiaCentavos: 0 }), {
           status: 200,

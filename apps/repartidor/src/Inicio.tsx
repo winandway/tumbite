@@ -49,6 +49,7 @@ import { Verificacion } from './Verificacion';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
+import { ModoPago } from './piezas/ModoPago';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
@@ -166,6 +167,7 @@ type Estado = {
   activo: Pedido | null;
   selfieControlPendiente?: boolean;
   zonaId?: string | null;
+  ganarPorTiempo?: { activo: boolean; centavosHora: number; modo: 'oferta' | 'tiempo' };
   /** C-TELEFONO-VUELTA: últimos 4 del teléfono a confirmar por SMS al volver. */
   telefonoPorVerificar?: string | null;
   /** C-TERMINOS-ACTUALIZADOS: versión de los términos que le falta aceptar. */
@@ -1178,6 +1180,13 @@ export function Inicio() {
             secundario={!aceptoTerminos}
           />
         </View>
+      ) : null}
+      {estado?.ganarPorTiempo ? (
+        <ModoPago
+          datos={estado.ganarPorTiempo}
+          conectado={Boolean(estado.conectado)}
+          alCambiar={() => void cargar()}
+        />
       ) : null}
       {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
       <InvitacionesEmpresa
