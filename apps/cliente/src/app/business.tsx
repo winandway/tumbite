@@ -40,11 +40,11 @@ const T = {
     titulo: 'Divoox Flex',
     sub: 'Logística para tu empresa',
     queEs:
-      'Repartimos los paquetes de tu negocio por rutas: tú cargas los envíos, nosotros armamos la ruta, un conductor los recoge en tu centro y los entrega con foto, firma o PIN.',
+      'La tecnología para que tu empresa reparta sus paquetes con sus propios conductores: cargas los envíos, armas la ruta (te sugerimos el orden), tu conductor la recoge en tu centro con Divoox Driver y entrega con foto, firma o PIN.',
     pasos: [
       ['Registra tu empresa', 'Con sus datos legales, tu país y tu centro de carga.'],
       ['Carga tus envíos', 'Uno por uno, desde una hoja de cálculo o por la API.'],
-      ['Arma y asigna la ruta', 'Ordenamos las paradas; la asignas a tus conductores o a Divoox.'],
+      ['Arma y asigna la ruta', 'Te sugerimos el orden de las paradas; la asignas a tu conductor.'],
       ['Sigue cada entrega', 'En vivo, con la prueba de entrega de cada paquete.'],
     ],
     paraQuien:
@@ -77,11 +77,11 @@ const T = {
     titulo: 'Divoox Flex',
     sub: 'Logistics for your business',
     queEs:
-      'We deliver your business’s packages in routes: you load the shipments, we build the route, a driver picks them up at your hub and delivers them with a photo, signature or PIN.',
+      'The technology for your company to deliver its packages with its own drivers: you load the shipments, build the route (we suggest the order), your driver picks it up at your hub with Divoox Driver and delivers with a photo, signature or PIN.',
     pasos: [
       ['Register your company', 'With its legal details, your country and your loading hub.'],
       ['Load your shipments', 'One by one, from a spreadsheet, or through the API.'],
-      ['Build and assign the route', 'We order the stops; assign it to your drivers or to Divoox.'],
+      ['Build and assign the route', 'We suggest the stop order; you assign it to your driver.'],
       ['Follow every delivery', 'Live, with proof of delivery for each package.'],
     ],
     paraQuien:

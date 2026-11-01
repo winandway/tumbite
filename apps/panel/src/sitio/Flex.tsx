@@ -27,7 +27,7 @@ const T = {
         {
           titulo: '1. Recibes el paquete y lo registras',
           texto:
-            'Uno por uno o cientos a la vez con una hoja de Excel. Guardas quién lo recibe, su teléfono, la dirección, el punto de referencia y, en Venezuela, su cédula o RIF.',
+            'Uno por uno o cientos a la vez con una planilla CSV (la guardas desde Excel o Google Sheets). Guardas quién lo recibe, su teléfono, la dirección, el punto de referencia y, en Venezuela, su cédula o RIF.',
           img: 'panel-nuevo-envio',
           alt: 'Formulario para crear un envío en el panel de Divoox Flex',
         },
@@ -96,7 +96,7 @@ const T = {
         'Crea la cuenta de tu empresa y elige tu país (Venezuela o Estados Unidos): el sistema se ajusta a cómo se trabaja allí.',
         'Registra tu centro de acopio o de distribución, desde donde salen los paquetes.',
         'Invita a tu equipo con su rol (recepción, despacho, finanzas) y a tus conductores, que usan la app Divoox Driver.',
-        'Carga tus envíos uno por uno o con la hoja de Excel que ya usas.',
+        'Carga tus envíos uno por uno o con la planilla que ya usas, guardada como CSV.',
         'Imprime las etiquetas, pide la ubicación a cada destinatario y arma las rutas.',
         'Sigue cada entrega en vivo desde el panel. Si mañana quieres conectar tu propio sistema, hay integraciones listas.',
       ],
@@ -147,7 +147,7 @@ const T = {
         {
           titulo: '1. You receive the package and register it',
           texto:
-            'One by one or hundreds at once with a spreadsheet. You save who receives it, their phone, the address, a landmark and, in Venezuela, their national ID.',
+            'One by one or hundreds at once with a CSV sheet (saved from Excel or Google Sheets). You save who receives it, their phone, the address, a landmark and, in Venezuela, their national ID.',
           img: 'panel-nuevo-envio',
           alt: 'Form to create a shipment in the Divoox Flex dashboard',
         },
@@ -216,7 +216,7 @@ const T = {
         'Create your company account and choose your country (Venezuela or the United States): the system adapts to how work is done there.',
         'Register your hub or distribution center, where packages leave from.',
         'Invite your team with their role (receiving, dispatch, finance) and your drivers, who use the Divoox Driver app.',
-        'Load your shipments one by one or with the spreadsheet you already use.',
+        'Load your shipments one by one or with the spreadsheet you already use, saved as CSV.',
         'Print the labels, ask each recipient for their location and build the routes.',
         'Follow every delivery live from the dashboard. If you want to connect your own system later, integrations are ready.',
       ],

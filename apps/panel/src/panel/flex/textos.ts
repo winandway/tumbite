@@ -233,7 +233,7 @@ export const TEXTOS_FLEX = {
     // Importar
     importar: 'Importar paquetes desde CSV',
     importarAyuda:
-      'Columnas aceptadas (español o inglés): referencia, destinatario, telefono, direccion, lat, lng, instrucciones, paquetes, peso_g, descripcion, ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
+      'Sube un archivo CSV (en Excel o Google Sheets: «Guardar como» o «Descargar» → CSV). Columnas aceptadas, en español o inglés: referencia, destinatario, telefono, correo, cedula (Venezuela), direccion, punto_referencia, lat, lng, instrucciones, paquetes, peso_g, descripcion, cobro y moneda (cobro contra entrega en Venezuela), ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
     archivo: 'Archivo CSV',
     previsualizar: 'Previsualizar',
     filas: 'Filas',
@@ -293,8 +293,6 @@ export const TEXTOS_FLEX = {
     >,
     // Billetera
     billetera: 'Billetera empresarial',
-    billeteraPronto:
-      'Muy pronto: saldo prepago, comisión por paquete entregado, historial de movimientos y facturas. En esta fase no hay cobros ni saldos.',
     // Claves
     claves: 'Claves de integración (API)',
     clavesAyuda:
@@ -434,7 +432,7 @@ export const TEXTOS_FLEX = {
     verEtiqueta: 'Ver etiqueta',
     elegirLote: 'Lote abierto',
     asignarAlLote: 'Asignar',
-    sinLotesAbiertos: 'No hay lotes abiertos. Crea uno en «Lotes y rutas».',
+    sinLotesAbiertos: 'No hay lotes abiertos. Crea uno en «Rutas» → «Nueva ruta».',
     agregadosAlLote: 'paquetes agregados al lote.',
     noAgregados: 'no se agregaron: ya salieron del centro o están en otra etapa.',
     etiquetasImpresion: 'Etiquetas para impresión',
@@ -672,7 +670,7 @@ export const TEXTOS_FLEX = {
     por: 'by',
     importar: 'Import packages from CSV',
     importarAyuda:
-      'Accepted columns (Spanish or English): reference, recipient, phone, address, lat, lng, instructions, packages, weight_g, description, window_from, window_to. Required: recipient and address.',
+      'Upload a CSV file (in Excel or Google Sheets: “Save as” or “Download” → CSV). Accepted columns, in Spanish or English: reference, recipient, phone, email, id_number (Venezuela), address, landmark, lat, lng, instructions, packages, weight_g, description, cod and currency (cash on delivery in Venezuela), window_from, window_to. Required: recipient and address.',
     archivo: 'CSV file',
     previsualizar: 'Preview',
     filas: 'Rows',
@@ -729,8 +727,6 @@ export const TEXTOS_FLEX = {
       string
     >,
     billetera: 'Business wallet',
-    billeteraPronto:
-      'Coming soon: prepaid balance, fee per delivered package, movement history and invoices. There are no charges or balances in this phase.',
     claves: 'Integration keys (API)',
     clavesAyuda:
       'Each key is shown only once. It travels in the x-api-key header and can only create and read shipments, packages, hubs and batches: it never manages the team or money.',
@@ -869,7 +865,7 @@ export const TEXTOS_FLEX = {
     verEtiqueta: 'View label',
     elegirLote: 'Open batch',
     asignarAlLote: 'Add',
-    sinLotesAbiertos: 'There are no open batches. Create one in “Batches and routes”.',
+    sinLotesAbiertos: 'There are no open batches. Create one in “Routes” → “New route”.',
     agregadosAlLote: 'packages added to the batch.',
     noAgregados: 'were not added: they already left the hub or are at another stage.',
     etiquetasImpresion: 'Labels for printing',
