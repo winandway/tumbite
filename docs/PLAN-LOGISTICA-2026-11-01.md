@@ -14,4 +14,18 @@ al 100%». Fuentes: inventario del código (1 nov) y ficha REA
 - [x] 8. Textos viejos corregidos (planilla CSV y sus columnas, «la asignación llega en la siguiente fase», «Rutas en curso»).
 - [x] 9. Probar en el sitio de pruebas de punta a punta y publicar en producción.
 - [x] 10. Tutorial público en Docs, español e inglés, con capturas REALES de producción: «Empieza con Divoox Flex paso a paso» (empresa, conductor, destinatario).
-- [ ] 11. Prueba completa en producción con la empresa de demostración (registro, centro, conductor invitado, envíos, etiquetas, ruta, entregas) y documento entregado a Richard con el enlace del tutorial.
+- [x] 11. Prueba completa en producción con la empresa de demostración (registro, centro, conductor invitado, envíos, etiquetas, ruta, entregas) y documento entregado a Richard con el enlace del tutorial.
+
+## Resultado (1 nov 2026)
+
+- Todo publicado en producción y comprobado en vivo (verificador en verde).
+- Prueba real en producción con «Divoox Demo Logística»: registro y panel, invitación de un
+  conductor desde la pantalla, página del enlace, aceptación con el enlace, vehículo del conductor
+  visible en la empresa, envíos nuevos, ruta nueva con su centro y su página para asignarla.
+- La prueba encontró dos fallos y quedaron arreglados con su prueba en rojo: aceptar la
+  invitación daba error si el conductor estaba en plena ruta, y los botones para asignar la ruta
+  no se veían hasta elegir un conductor.
+- Las apps nuevas (Driver y cliente) están en TestFlight. En Google Play se suben cuando Google
+  apruebe la revisión en curso.
+- Falta solo lo que se hace en la calle: imprimir las etiquetas, cargar y repartir la ruta de
+  demostración (guía «PROBAR-LOGISTICA»).
