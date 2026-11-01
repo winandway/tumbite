@@ -3055,3 +3055,13 @@ CREATE TABLE IF NOT EXISTS paquetes_seguidos (
   PRIMARY KEY (usuario_id, codigo)
 );
 CREATE INDEX IF NOT EXISTS paquetes_seguidos_codigo ON paquetes_seguidos(codigo);
+
+-- C-TELEFONO-VUELTA (1 nov 2026): códigos por SMS para confirmar el teléfono al volver (solo el hash).
+CREATE TABLE IF NOT EXISTS codigos_telefono (
+  usuario_id TEXT PRIMARY KEY,
+  telefono TEXT NOT NULL,
+  codigo_hash TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  enviados_hoy INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
