@@ -3671,8 +3671,9 @@ const es: SeccionDocs[] = [
         pasos: [
           'Desde un pedido, toca «¿Problemas con tu pedido? Cuéntanos». Repartidores: «Tengo un problema». Restaurantes: los tres puntos del pedido, «Reportar un problema».',
           'Escribe qué pasó y envíalo. Te llega un correo con el enlace a tu caso.',
-          'Cuando respondamos, te avisamos por correo. Abre el enlace para leer y contestar.',
-          'También puedes escribir a soporte+divoox@windoce.com.',
+          'Cuando respondamos, te avisamos al celular y por correo con «Te respondimos tu caso» y su número.',
+          'En la app, entra a «Mis casos de ayuda» (en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) para leer la respuesta y contestar sin salir de la app.',
+          'También puedes escribir a soporte+divoox@windoce.com (repartidores: soporte+divoox.driver@windoce.com; restaurantes: soporte+divoox.restaurantes@windoce.com).',
         ],
       },
     ],
@@ -7260,8 +7261,9 @@ const en: SeccionDocs[] = [
         pasos: [
           'From an order, tap “Problems with your order? Tell us.” Drivers: “I have a problem.” Restaurants: the order’s three-dot menu, “Report a problem.”',
           'Describe what happened and send it. You get an email with the link to your case.',
-          'When we reply, we email you. Open the link to read and answer.',
-          'You can also write to soporte+divoox@windoce.com.',
+          'When we reply, we notify your phone and email you “We replied to your case” with its number.',
+          'In the app, open “My help cases” (in your account; drivers: in Support; restaurants: in Settings) to read the reply and answer without leaving the app.',
+          'You can also write to soporte+divoox@windoce.com (drivers: soporte+divoox.driver@windoce.com; restaurants: soporte+divoox.restaurantes@windoce.com).',
         ],
       },
     ],
