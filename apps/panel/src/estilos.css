@@ -5319,3 +5319,13 @@ body.modo-tableta .panel-contenido {
 .flex-avanzado {
   margin-top: 18px;
 }
+
+/* C-CASOS-CAPTURAS */
+.ticket-captura {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  margin-top: 6px;
+}

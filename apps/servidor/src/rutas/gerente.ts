@@ -5,6 +5,7 @@ import { nuevoId, sha256 } from '../cripto';
 import type { Env } from '../env';
 import { guardarError } from '../errores';
 import { notificar } from '../notificaciones';
+import { adjuntosDe } from '../adjuntosTicket';
 import { limiteIntentos } from '../seguridad';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -65,13 +66,19 @@ gerente.get('/gerente/tickets', async (c) => {
     ? (
         await db
           .prepare(
-            `SELECT ticket_id, autor, texto, creado_en FROM ticket_mensajes
+            `SELECT id, ticket_id, autor, texto, creado_en FROM ticket_mensajes
               WHERE ticket_id IN (SELECT value FROM json_each(?)) ORDER BY creado_en`,
           )
           .bind(JSON.stringify(results.map((t) => t.id)))
-          .all<{ ticket_id: string; autor: string; texto: string; creado_en: string }>()
+          .all<{ id: string; ticket_id: string; autor: string; texto: string; creado_en: string }>()
       ).results
     : [];
+  // C-CASOS-CAPTURAS: las capturas de cada mensaje, con su enlace firmado de 8 días.
+  const adjuntos = await adjuntosDe(
+    c.env,
+    db,
+    results.map((t) => t.id),
+  );
   const iso = (f: string) => `${f.replace(' ', 'T')}Z`;
   return c.json({
     tickets: results.map((t) => ({
@@ -89,6 +96,11 @@ gerente.get('/gerente/tickets', async (c) => {
           de: m.autor === 'equipo' ? 'soporte' : 'cliente',
           fecha: iso(m.creado_en),
           texto: m.texto,
+          adjuntos: (adjuntos.get(m.id) ?? []).map((a) => ({
+            nombre: a.nombre,
+            tipo: a.tipo,
+            url: a.url,
+          })),
         })),
     })),
   });

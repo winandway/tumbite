@@ -8,6 +8,13 @@ import { nuevoId, nuevoToken } from '../cripto';
 import { enviarCorreo, type Remitente } from '../correo';
 import { limiteIntentos } from '../seguridad';
 import { type Variables, base, exigir } from '../sesion';
+import {
+  MAX_ADJUNTOS_MENSAJE,
+  MAX_ADJUNTO_BYTES,
+  adjuntosDe,
+  firmaAdjuntoValida,
+  tipoAdjunto,
+} from '../adjuntosTicket';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
@@ -188,18 +195,92 @@ type FilaTicket = {
   actualizado_en: string;
 };
 
-async function mensajesDe(db: D1Database, ticketId: string) {
+async function mensajesDe(env: Env, db: D1Database, ticketId: string) {
   const { results } = await db
     .prepare(
-      'SELECT autor, texto, creado_en AS fecha FROM ticket_mensajes WHERE ticket_id = ? ORDER BY creado_en, rowid',
+      'SELECT id, autor, texto, creado_en AS fecha FROM ticket_mensajes WHERE ticket_id = ? ORDER BY creado_en, rowid',
     )
     .bind(ticketId)
-    .all<{ autor: 'persona' | 'equipo'; texto: string; fecha: string }>();
-  return results;
+    .all<{ id: string; autor: 'persona' | 'equipo'; texto: string; fecha: string }>();
+  // C-CASOS-CAPTURAS: cada mensaje con sus capturas (enlace firmado de 8 días).
+  const adjuntos = await adjuntosDe(env, db, [ticketId]);
+  return results.map(({ id, ...m }) => ({ ...m, adjuntos: adjuntos.get(id) ?? [] }));
 }
 
 const esquemaMensaje = z.object({ texto: z.string().trim().min(1).max(5000) });
+/** La persona puede mandar solo capturas (hasta 3), solo texto o los dos. */
+const esquemaMensajePersona = z
+  .object({
+    texto: z.string().trim().max(5000).default(''),
+    adjuntos: z.array(z.string().min(10).max(80)).max(MAX_ADJUNTOS_MENSAJE).default([]),
+  })
+  .refine((d) => d.texto || d.adjuntos.length, {
+    message: 'Escribe un mensaje o adjunta una captura.',
+    path: ['texto'],
+  });
 const codigoValido = (c: string) => /^[A-Za-z0-9_-]{40,60}$/.test(c);
+
+/**
+ * C-CASOS-CAPTURAS: sube una captura al caso (con su enlace secreto, como los mensajes). Queda
+ * suelta hasta que se manda el mensaje. JPG, PNG, WebP o HEIC, hasta 10 MB.
+ */
+tickets.post('/tickets/:codigo/adjuntos', limiteIntentos(20, 60_000), async (c) => {
+  const codigo = c.req.param('codigo');
+  if (!codigoValido(codigo)) throw new ErrorDatos('Esta conversación no existe.', undefined, 404);
+  const db = base(c);
+  const t = await db
+    .prepare('SELECT id FROM tickets WHERE codigo = ?')
+    .bind(codigo)
+    .first<{ id: string }>();
+  if (!t) throw new ErrorDatos('Esta conversación no existe.', undefined, 404);
+  if (!c.env.BUCKET)
+    throw new ErrorDatos(
+      'El almacén de fotos no está disponible en este momento. Intenta más tarde.',
+      undefined,
+      503,
+    );
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  if (bytes.byteLength === 0) throw new ErrorDatos('Falta la captura.', 'adjunto', 400);
+  if (bytes.byteLength > MAX_ADJUNTO_BYTES)
+    throw new ErrorDatos('La captura pesa demasiado. El máximo es 10 MB.', 'adjunto', 413);
+  const tipo = tipoAdjunto(bytes);
+  if (!tipo) throw new ErrorDatos('Adjunta una imagen JPG, PNG, WebP o HEIC.', 'adjunto', 415);
+  const id = nuevoId();
+  const clave = `casos/${t.id}/${id}`;
+  await c.env.BUCKET.put(clave, bytes, {
+    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  });
+  const nombre =
+    (c.req.query('nombre') ?? 'captura').replace(/[^\w.\- ]/g, '').slice(0, 80) || 'captura';
+  await db
+    .prepare(
+      'INSERT INTO ticket_adjuntos (id, ticket_id, clave, nombre, tipo, bytes) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(id, t.id, clave, nombre, tipo, bytes.byteLength)
+    .run();
+  return c.json({ adjunto: { id, nombre, tipo } }, 201);
+});
+
+/** La captura, solo con su enlace firmado (8 días). Sin firma o vencida: 403. */
+tickets.get('/adjuntos/:id', limiteIntentos(120, 60_000), async (c) => {
+  const id = c.req.param('id');
+  if (!(await firmaAdjuntoValida(c.env, id, c.req.query('exp') ?? '', c.req.query('firma') ?? '')))
+    return c.json({ error: 'Este enlace no es válido o ya venció.' }, 403);
+  const a = await base(c)
+    .prepare('SELECT clave, tipo, nombre FROM ticket_adjuntos WHERE id = ?')
+    .bind(id)
+    .first<{ clave: string; tipo: string; nombre: string }>();
+  const obj = a && c.env.BUCKET ? await c.env.BUCKET.get(a.clave) : null;
+  if (!a || !obj) return c.json({ error: 'Esta captura ya no existe.' }, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': a.tipo,
+      'cache-control': 'private, no-store',
+      'content-disposition': `inline; filename="${a.nombre}"`,
+      'x-robots-tag': 'noindex, nofollow',
+    },
+  });
+});
 
 /** Número corto del caso («3F9A2C1D»): sale del id, nunca del código secreto del enlace. */
 export const numeroDeTicket = (id: string) => id.replace(/-/g, '').slice(0, 8).toUpperCase();
@@ -247,7 +328,7 @@ tickets.get('/tickets/:codigo', limiteIntentos(60, 60_000), async (c) => {
       nombre: t.nombre,
       asunto: t.asunto,
       creado: t.creado_en,
-      mensajes: await mensajesDe(base(c), t.id),
+      mensajes: await mensajesDe(c.env, base(c), t.id),
     },
   });
 });
@@ -261,13 +342,30 @@ tickets.post('/tickets/:codigo/mensajes', limiteIntentos(20, 60_000), async (c) 
     .bind(codigo)
     .first<FilaTicket>();
   if (!t) throw new ErrorDatos('Esta conversación no existe.', undefined, 404);
-  const { texto } = await leerCuerpo(c, esquemaMensaje);
+  const { texto, adjuntos } = await leerCuerpo(c, esquemaMensajePersona);
+  const mensajeId = nuevoId();
+  // C-CASOS-CAPTURAS: solo capturas sueltas de ESTE caso se pueden atar al mensaje.
+  if (adjuntos.length) {
+    const libres = await db
+      .prepare(
+        'SELECT COUNT(*) AS n FROM ticket_adjuntos WHERE ticket_id = ? AND mensaje_id IS NULL AND id IN (SELECT value FROM json_each(?))',
+      )
+      .bind(t.id, JSON.stringify(adjuntos))
+      .first<{ n: number }>();
+    if (Number(libres?.n ?? 0) !== new Set(adjuntos).size)
+      throw new ErrorDatos('Una de las capturas ya no está. Vuelve a adjuntarla.', 'adjuntos', 409);
+  }
   await db.batch([
     db
       .prepare(
         "INSERT INTO ticket_mensajes (id, ticket_id, autor, texto) VALUES (?, ?, 'persona', ?)",
       )
-      .bind(nuevoId(), t.id, texto),
+      .bind(mensajeId, t.id, texto),
+    db
+      .prepare(
+        'UPDATE ticket_adjuntos SET mensaje_id = ? WHERE ticket_id = ? AND mensaje_id IS NULL AND id IN (SELECT value FROM json_each(?))',
+      )
+      .bind(mensajeId, t.id, JSON.stringify(adjuntos)),
     db
       .prepare(
         "UPDATE tickets SET estado = 'abierto', actualizado_en = datetime('now') WHERE id = ?",
@@ -282,7 +380,7 @@ tickets.post('/tickets/:codigo/mensajes', limiteIntentos(20, 60_000), async (c) 
       asunto: `Respuesta en ticket · ${t.nombre} · ${t.asunto}`,
       texto: `${t.nombre} escribió:\n\n${texto}\n\nResponder en el superadmin: ${admin}`,
     });
-  return c.json({ ok: true, mensajes: await mensajesDe(db, t.id) }, 201);
+  return c.json({ ok: true, mensajes: await mensajesDe(c.env, db, t.id) }, 201);
 });
 
 // ───────────────────────── Formulario de franquicias ─────────────────────────
@@ -658,7 +756,7 @@ tickets.get('/admin/tickets/:id', async (c) => {
       asignadoA: t.asignado_a ?? null,
       creado: t.creado_en,
       enlace: `/t/${t.codigo}`,
-      mensajes: await mensajesDe(base(c), t.id),
+      mensajes: await mensajesDe(c.env, base(c), t.id),
     },
   });
 });
@@ -700,7 +798,7 @@ tickets.post('/admin/tickets/:id/mensajes', async (c) => {
       enlacePublico(t.codigo),
     ].join('\n'),
   });
-  return c.json({ ok: true, mensajes: await mensajesDe(db, t.id) }, 201);
+  return c.json({ ok: true, mensajes: await mensajesDe(c.env, db, t.id) }, 201);
 });
 
 const esquemaCambioTicket = z

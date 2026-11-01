@@ -1,8 +1,18 @@
+import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, MisCasos, ReportarProblema, URL_SERVIDOR, e, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  MisCasos,
+  selectorDeCapturas,
+  ReportarProblema,
+  URL_SERVIDOR,
+  e,
+  useSesion,
+} from '@tumbite/movil';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
@@ -234,7 +244,7 @@ export default function MiCuenta() {
         <Text style={estilos.subtitulo}>{t.ayuda}</Text>
         <ReportarProblema />
         {/* C-AYUDA-EN-LA-APP: los casos y su chat con Soporte, sin salir a la web. */}
-        <MisCasos />
+        <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
       </ScrollView>
       <BarraInferior idioma={idioma} activa="cuenta" alTocar={pestana} />
     </SafeAreaView>

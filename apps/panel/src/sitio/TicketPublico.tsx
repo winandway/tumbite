@@ -42,7 +42,13 @@ const T = {
   },
 };
 
-type Mensaje = { autor: 'persona' | 'equipo'; texto: string; fecha: string };
+type Mensaje = {
+  autor: 'persona' | 'equipo';
+  texto: string;
+  fecha: string;
+  // C-CASOS-CAPTURAS: las capturas del mensaje, con su enlace firmado.
+  adjuntos?: { id: string; nombre: string; tipo: string; url: string | null }[];
+};
 type Ticket = {
   asunto: string;
   estado: 'abierto' | 'respondido' | 'cerrado';
@@ -134,7 +140,18 @@ export function TicketPublico({ codigo, idioma }: { codigo: string; idioma: Idio
             <time dateTime={m.fecha}>
               {new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleString(idioma)}
             </time>
-            <p>{m.texto}</p>
+            {m.texto ? <p>{m.texto}</p> : null}
+            {(m.adjuntos ?? []).map((a) =>
+              a.url ? (
+                <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer">
+                  {a.tipo === 'image/heic' ? (
+                    a.nombre
+                  ) : (
+                    <img src={a.url} alt={a.nombre} className="ticket-captura" loading="lazy" />
+                  )}
+                </a>
+              ) : null,
+            )}
           </li>
         ))}
       </ol>

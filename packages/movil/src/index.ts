@@ -18,3 +18,4 @@ export * from './version';
 export * from './PantallaPermisos';
 export * from './OpcionesCuenta';
 export * from './MisCasos';
+export * from './elegirCapturas';

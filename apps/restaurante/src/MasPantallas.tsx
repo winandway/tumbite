@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
 // El saldo y los movimientos son de Stripe, que hoy solo cobra en dólares (C-MONEDA-RECORRIDO).
@@ -14,6 +15,7 @@ import {
   Campo,
   CampoClave,
   MisCasos,
+  selectorDeCapturas,
   OpcionesCuenta,
   ReportarProblema,
   URL_SERVIDOR,
@@ -581,7 +583,7 @@ function Configuracion({ t }: { t: Textos }) {
       </Tarjeta>
       {/* C-AYUDA-EN-LA-APP: pedir ayuda y seguir el caso sin salir de la app. */}
       <ReportarProblema />
-      <MisCasos />
+      <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
       <OpcionesCuenta />
     </View>
   );

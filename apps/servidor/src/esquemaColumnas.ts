@@ -1999,5 +1999,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "vence_en",
     "respondida_en"
+  ],
+  "ticket_adjuntos": [
+    "id",
+    "ticket_id",
+    "mensaje_id",
+    "clave",
+    "nombre",
+    "tipo",
+    "bytes",
+    "creado_en"
   ]
 };

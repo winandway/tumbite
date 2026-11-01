@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { useSesion } from './sesion';
@@ -25,6 +25,10 @@ const T = {
     responder: 'Escribe tu respuesta',
     enviar: 'Enviar',
     cerrar: 'Cerrar',
+    adjuntar: 'Adjuntar captura',
+    quitar: 'Quitar',
+    maximo: 'Puedes adjuntar hasta 3 capturas por mensaje.',
+    subiendo: 'Subiendo las capturas…',
   },
   en: {
     titulo: 'My help cases',
@@ -39,13 +43,23 @@ const T = {
     responder: 'Write your reply',
     enviar: 'Send',
     cerrar: 'Close',
+    adjuntar: 'Attach screenshot',
+    quitar: 'Remove',
+    maximo: 'You can attach up to 3 screenshots per message.',
+    subiendo: 'Uploading the screenshots…',
   },
 };
 
-type Caso = { codigo: string; numero: string; asunto: string; estado: string };
-type Mensaje = { autor: 'persona' | 'equipo'; texto: string; fecha: string };
+/** C-CASOS-CAPTURAS: cada app pasa su selector de fotos (la galería del celular). */
+export type Captura = { uri: string; nombre: string };
+export type ElegirCapturas = (maximo: number) => Promise<Captura[]>;
+const MAX_CAPTURAS = 3;
 
-export function MisCasos() {
+type Caso = { codigo: string; numero: string; asunto: string; estado: string };
+type Adjunto = { id: string; nombre: string; tipo: string; url: string | null };
+type Mensaje = { autor: 'persona' | 'equipo'; texto: string; fecha: string; adjuntos?: Adjunto[] };
+
+export function MisCasos({ elegirCapturas }: { elegirCapturas?: ElegirCapturas } = {}) {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const [casos, setCasos] = useState<Caso[] | null>(null);
@@ -64,7 +78,13 @@ export function MisCasos() {
       {casos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text> : null}
       {casos.map((c) =>
         abierto === c.codigo ? (
-          <ChatCaso key={c.codigo} caso={c} alCerrar={() => setAbierto(null)} alEnviar={cargar} />
+          <ChatCaso
+            key={c.codigo}
+            caso={c}
+            alCerrar={() => setAbierto(null)}
+            alEnviar={cargar}
+            elegirCapturas={elegirCapturas}
+          />
         ) : (
           <Pressable
             key={c.codigo}
@@ -89,16 +109,20 @@ function ChatCaso({
   caso,
   alCerrar,
   alEnviar,
+  elegirCapturas,
 }: {
   caso: Caso;
   alCerrar: () => void;
   alEnviar: () => void;
+  elegirCapturas?: ElegirCapturas;
 }) {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  // Las capturas elegidas, con su miniatura, antes de enviar (no se pierden si la subida falla).
+  const [capturas, setCapturas] = useState<Captura[]>([]);
   const b = useBorrador({
     formulario: `caso-${caso.codigo.slice(0, 12)}`,
     cuenta: usuario?.id,
@@ -114,18 +138,41 @@ function ChatCaso({
   }, [api, caso.codigo]);
   useEffect(leer, [leer]);
 
+  async function adjuntar() {
+    if (!elegirCapturas) return;
+    const libres = MAX_CAPTURAS - capturas.length;
+    if (libres <= 0) return setError(t.maximo);
+    try {
+      const nuevas = await elegirCapturas(libres);
+      setCapturas((x) => [...x, ...nuevas].slice(0, MAX_CAPTURAS));
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   async function enviar() {
     const texto = b.valores.texto.trim();
-    if (!texto || enviando) return;
+    if ((!texto && !capturas.length) || enviando) return;
     setError('');
     setEnviando(true);
     try {
+      // Primero se suben las capturas; si una falla, el texto y las capturas quedan en pantalla.
+      const ids: string[] = [];
+      for (const c of capturas) {
+        const blob = await (await fetch(c.uri)).blob();
+        const r = await api.subirArchivo<{ adjunto: { id: string } }>(
+          blob,
+          `/datos/tickets/${caso.codigo}/adjuntos?nombre=${encodeURIComponent(c.nombre)}`,
+        );
+        ids.push(r.adjunto.id);
+      }
       const r = await api.pedir<{ mensajes: Mensaje[] }>(
         'POST',
         `/datos/tickets/${caso.codigo}/mensajes`,
-        { texto },
+        { texto, adjuntos: ids },
       );
       setMensajes(r.mensajes);
+      setCapturas([]);
       await b.limpiar();
       alEnviar();
     } catch (x) {
@@ -158,7 +205,22 @@ function ChatCaso({
           <Text style={{ fontSize: 12, fontWeight: '700', color: '#5E5E5E' }}>
             {m.autor === 'persona' ? t.tu : t.soporte}
           </Text>
-          <Text>{m.texto}</Text>
+          {m.texto ? <Text>{m.texto}</Text> : null}
+          {(m.adjuntos ?? []).map((a) =>
+            a.url && a.tipo !== 'image/heic' ? (
+              <Image
+                key={a.id}
+                source={{ uri: a.url }}
+                style={{ width: 160, height: 160, borderRadius: 8, marginTop: 6 }}
+                resizeMode="cover"
+                accessibilityLabel={a.nombre}
+              />
+            ) : (
+              <Text key={a.id} style={{ color: '#5E5E5E', marginTop: 4 }}>
+                {a.nombre}
+              </Text>
+            ),
+          )}
         </View>
       ))}
       {caso.estado !== 'cerrado' ? (
@@ -174,8 +236,43 @@ function ChatCaso({
             onChangeText={(x) => b.cambiar('texto', x)}
             multiline
           />
+          {capturas.length ? (
+            <View
+              testID="capturas-elegidas"
+              style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
+            >
+              {capturas.map((c, i) => (
+                <View key={`${c.uri}-${i}`} style={{ alignItems: 'center', gap: 2 }}>
+                  <Image
+                    source={{ uri: c.uri }}
+                    style={{ width: 72, height: 72, borderRadius: 8 }}
+                    accessibilityLabel={c.nombre}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.quitar} ${c.nombre}`}
+                    onPress={() => setCapturas((x) => x.filter((_, j) => j !== i))}
+                    hitSlop={6}
+                  >
+                    <Text
+                      style={{ color: '#5E5E5E', fontSize: 12, textDecorationLine: 'underline' }}
+                    >
+                      {t.quitar}
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
           {error ? <Text style={e.error}>{error}</Text> : null}
-          <Boton texto={t.enviar} cargando={enviando} alTocar={() => void enviar()} />
+          {elegirCapturas && capturas.length < MAX_CAPTURAS ? (
+            <Boton texto={t.adjuntar} secundario alTocar={() => void adjuntar()} />
+          ) : null}
+          <Boton
+            texto={enviando && capturas.length ? t.subiendo : t.enviar}
+            cargando={enviando}
+            alTocar={() => void enviar()}
+          />
         </>
       ) : null}
       <Boton texto={t.cerrar} secundario alTocar={alCerrar} />

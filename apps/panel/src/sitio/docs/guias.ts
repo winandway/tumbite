@@ -3648,6 +3648,31 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'send-screenshot-to-support',
+        titulo: 'Cómo mandar una captura a soporte',
+        resumen:
+          'En «Mis casos de ayuda» puedes adjuntar hasta tres capturas de pantalla por mensaje, para que el equipo vea exactamente lo que ves tú.',
+        explicacion: [
+          'Una captura vale más que muchas palabras: muestra el error, el pedido o la pantalla tal como la ves. Divoox la guarda en privado y solo la ve el equipo de soporte, con un enlace que vence.',
+          'Primero toma la captura en tu celular: en iPhone, botón lateral y subir volumen a la vez; en Android, encendido y bajar volumen a la vez. Queda en tu galería.',
+          'Abre tu caso en «Mis casos de ayuda» (clientes: en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) y toca «Adjuntar captura». Elige hasta tres imágenes de tu galería.',
+          'Antes de enviar ves la miniatura de cada una; si te equivocaste, toca «Quitar». Puedes escribir un mensaje o mandar solo las capturas.',
+          'Se aceptan JPG, PNG, WebP y HEIC (el formato del iPhone), hasta 10 MB cada una. Si la señal falla al subir, lo que escribiste y las capturas siguen en pantalla para volver a intentarlo.',
+        ],
+        preguntas: [
+          '¿Cómo mando una captura de pantalla a soporte?',
+          '¿Quién puede ver mis capturas?',
+          '¿Cuántas capturas puedo mandar?',
+        ],
+        pasos: [
+          'Toma la captura de lo que quieres mostrar.',
+          'Abre tu caso en «Mis casos de ayuda».',
+          'Toca «Adjuntar captura» y elige hasta tres imágenes.',
+          'Revisa las miniaturas y toca «Enviar».',
+        ],
+        nota: 'Tus capturas no se publican: solo las ve el equipo de soporte de Divoox.',
+      },
+      {
         id: 'support',
         titulo: 'Ayuda de una persona real, con tu propio enlace',
         resumen:
@@ -7236,6 +7261,31 @@ const en: SeccionDocs[] = [
           'Your name, email, phone, birthday, order addresses, and rating comments are deleted. Order amounts remain without your name, for tax obligations. This can’t be undone.',
           'Without the app: email soporte+divoox@windoce.com from your account’s email and we’ll delete it within 30 days.',
         ],
+      },
+      {
+        id: 'send-screenshot-to-support',
+        titulo: 'How to send a screenshot to support',
+        resumen:
+          'In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.',
+        explicacion: [
+          'A screenshot is worth many words: it shows the error, the order or the screen just as you see it. Divoox keeps it private and only the support team can see it, through a link that expires.',
+          'First take the screenshot on your phone: on iPhone, press the side button and volume up together; on Android, power and volume down together. It goes to your gallery.',
+          'Open your case in “My help cases” (customers: in your account; drivers: in Support; restaurants: in Settings) and tap “Attach screenshot.” Pick up to three images from your gallery.',
+          'Before sending you see a thumbnail of each one; if you picked the wrong one, tap “Remove.” You can write a message or send just the screenshots.',
+          'JPG, PNG, WebP and HEIC (the iPhone format) are accepted, up to 10 MB each. If the signal drops while uploading, what you wrote and the screenshots stay on screen so you can try again.',
+        ],
+        preguntas: [
+          'How do I send a screenshot to support?',
+          'Who can see my screenshots?',
+          'How many screenshots can I send?',
+        ],
+        pasos: [
+          'Take a screenshot of what you want to show.',
+          'Open your case in “My help cases.”',
+          'Tap “Attach screenshot” and pick up to three images.',
+          'Check the thumbnails and tap “Send.”',
+        ],
+        nota: 'Your screenshots are never published: only the Divoox support team sees them.',
       },
       {
         id: 'support',

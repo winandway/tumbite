@@ -5,6 +5,20 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-CASOS-CAPTURAS
+  ['Falta la captura.', 'The screenshot is missing.'],
+  [
+    'La captura pesa demasiado. El máximo es 10 MB.',
+    'The screenshot is too large. The limit is 10 MB.',
+  ],
+  ['Adjunta una imagen JPG, PNG, WebP o HEIC.', 'Attach a JPG, PNG, WebP or HEIC image.'],
+  [
+    'Una de las capturas ya no está. Vuelve a adjuntarla.',
+    'One of the screenshots is gone. Attach it again.',
+  ],
+  ['Escribe un mensaje o adjunta una captura.', 'Write a message or attach a screenshot.'],
+  ['Este enlace no es válido o ya venció.', 'This link isn’t valid or has expired.'],
+  ['Esta captura ya no existe.', 'This screenshot no longer exists.'],
   // C-GERENTE-TICKETS
   ['No autorizado.', 'Not authorized.'],
   // C-FLEX-INVITAR-CONDUCTOR
