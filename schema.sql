@@ -3086,3 +3086,17 @@ CREATE TABLE IF NOT EXISTS invitaciones_conductor (
 CREATE INDEX IF NOT EXISTS invitaciones_conductor_empresa ON invitaciones_conductor(empresa_id, estado);
 CREATE INDEX IF NOT EXISTS invitaciones_conductor_telefono ON invitaciones_conductor(telefono_canonico, estado);
 CREATE INDEX IF NOT EXISTS invitaciones_conductor_correo ON invitaciones_conductor(correo_canonico, estado);
+
+-- C-CASOS-CAPTURAS (1 nov 2026): capturas de pantalla en los casos de ayuda. Privadas: se ven solo con
+-- un enlace firmado (8 días). Nacen sueltas (mensaje_id NULL) y se atan al mensaje al enviarlo.
+CREATE TABLE IF NOT EXISTS ticket_adjuntos (
+  id TEXT PRIMARY KEY,
+  ticket_id TEXT NOT NULL REFERENCES tickets(id),
+  mensaje_id TEXT REFERENCES ticket_mensajes(id),
+  clave TEXT NOT NULL,
+  nombre TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  bytes INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS ticket_adjuntos_ticket ON ticket_adjuntos(ticket_id, mensaje_id);

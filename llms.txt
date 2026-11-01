@@ -139,6 +139,7 @@
 - [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Divoox](https://divoox.com/docs/account/confirm-email): When you sign up, you get a link to confirm the email is yours.
 - [Delete your account · Divoox](https://divoox.com/docs/account/delete): From the account menu, in the three dots. Your personal data is removed.
+- [How to send a screenshot to support · Divoox](https://divoox.com/docs/account/send-screenshot-to-support): In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.
 - [Help from a real person, with your own link · Divoox](https://divoox.com/docs/account/support): Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.
 
 ## Countries
