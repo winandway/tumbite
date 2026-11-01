@@ -2491,10 +2491,12 @@ const es: SeccionDocs[] = [
           'El mapa se actualiza solo cada minuto. Una zona con un solo pedido no aparece: solo se marcan las que tienen movimiento de verdad.',
           'Las zonas se calculan con la ubicación de los restaurantes, nunca con la de los clientes. No se muestran nombres, direcciones ni pedidos concretos.',
           'Estar en una zona marcada no garantiza ofertas: es una guía de dónde está la demanda ahora mismo. Las ofertas siguen llegando por cercanía, turnos y nivel.',
+          'Pago por hora pico: cuando Divoox lo enciende, las zonas con más demanda muestran sobre el mapa cuánto se suma a cada pedido (por ejemplo, «+$2.00 por pedido»). La oferta de un pedido de esa zona dice «Incluye pago por hora pico» con el monto, y se te paga al entregar junto con lo demás. Hay un presupuesto por día: cuando se acaba, el monto deja de aparecer.',
         ],
         preguntas: [
           '¿Dónde hay más pedidos ahora en Divoox?',
           '¿Qué son los círculos rojos del mapa?',
+          '¿Qué es el pago por hora pico?',
           '¿El mapa muestra dónde viven los clientes?',
         ],
         pasos: [
@@ -6014,6 +6016,7 @@ const en: SeccionDocs[] = [
           'The map refreshes on its own every minute. An area with a single order isn’t shown: only areas with real activity are highlighted.',
           'Areas are based on restaurant locations, never customer locations. No names, addresses, or specific orders are shown.',
           'Being in a highlighted area doesn’t guarantee offers: it’s a guide to where demand is right now. Offers still come by distance, shifts, and level.',
+          'Peak Pay: when Divoox turns it on, the busiest areas show on the map how much is added to each order (for example, “+$2.00 per order”). An offer from that area says “Includes Peak Pay” with the amount, and you’re paid on delivery along with the rest. There’s a daily budget: once it runs out, the amount stops showing.',
         ],
         preguntas: [
           'Where are the most orders right now on Divoox?',

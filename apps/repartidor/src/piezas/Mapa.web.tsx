@@ -22,7 +22,7 @@ export function Mapa({
   casa?: Punto | null;
   marcadores?: { id: string; punto: Punto; nombre: string }[];
   zonasDemanda?: ZonaDemanda[];
-  etiquetaZona?: (pedidos: number) => string;
+  etiquetaZona?: (pedidos: number, pico?: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
 }) {
@@ -48,7 +48,7 @@ export function Mapa({
     if (!m) return;
     for (const c of capas.current) c.remove();
     const nuevas: L.Layer[] = [];
-    for (const z of zonasDemanda) nuevas.push(zona(z, etiquetaZona(z.pedidos)));
+    for (const z of zonasDemanda) nuevas.push(zona(z, etiquetaZona(z.pedidos, z.pico)));
     for (const x of marcadores) nuevas.push(punto(x.punto, COLORES.restaurante, 8, x.nombre));
     if (restaurante) nuevas.push(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante));
     if (casa) nuevas.push(punto(casa, COLORES.casa, 9, etiquetas.casa));

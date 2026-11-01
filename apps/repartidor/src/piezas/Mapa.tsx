@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
@@ -17,6 +17,7 @@ export function Mapa({
   casa,
   marcadores = [],
   zonasDemanda = [],
+  etiquetaZona,
   alto = 300,
   etiquetas,
 }: {
@@ -25,8 +26,8 @@ export function Mapa({
   casa?: Punto | null;
   marcadores?: { id: string; punto: Punto; nombre: string }[];
   zonasDemanda?: ZonaDemanda[];
-  /** Solo lo usa la web (el círculo nativo no lleva texto). */
-  etiquetaZona?: (pedidos: number) => string;
+  /** En el celular solo se dibuja sobre las zonas con pago pico (C-PAGO-PICO). */
+  etiquetaZona?: (pedidos: number, pico?: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
 }) {
@@ -84,6 +85,29 @@ export function Mapa({
             fillColor={z.nivel === 'alta' ? 'rgba(242,13,32,0.35)' : 'rgba(242,13,32,0.18)'}
           />
         ))}
+        {zonasDemanda
+          .filter((z) => z.pico)
+          .map((z) => (
+            <Marker
+              key={`pico-${z.lat},${z.lng}`}
+              coordinate={{ latitude: z.lat, longitude: z.lng }}
+              tracksViewChanges={false}
+              anchor={{ x: 0.5, y: 0.5 }}
+            >
+              <View
+                style={{
+                  backgroundColor: C.secundario,
+                  borderRadius: 14,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
+                  {etiquetaZona?.(z.pedidos, z.pico) ?? ''}
+                </Text>
+              </View>
+            </Marker>
+          ))}
         {marcadores.map((m) => (
           <Marker
             key={m.id}

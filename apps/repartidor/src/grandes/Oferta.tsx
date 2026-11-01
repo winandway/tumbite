@@ -9,6 +9,8 @@ export type OfertaCompleta = {
   pagoRepartidor: number;
   propina: number;
   bono?: number;
+  /** C-PAGO-PICO: «hora_pico» u «oferta_abierta». */
+  bonoMotivo?: string | null;
   direccion: string;
   restaurante: { nombre: string; direccion: string };
   distanciaKm: number | null;
@@ -138,7 +140,8 @@ export function Oferta({
           ) : null}
           {oferta.bono ? (
             <Text style={{ color: C.exito, fontWeight: '700' }}>
-              {t.bono} {formatearMonto(oferta.bono, oferta.moneda, idioma)}
+              {oferta.bonoMotivo === 'hora_pico' ? t.bonoPico : t.bono}{' '}
+              {formatearMonto(oferta.bono, oferta.moneda, idioma)}
             </Text>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>

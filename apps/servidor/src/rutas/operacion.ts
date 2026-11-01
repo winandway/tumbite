@@ -17,6 +17,7 @@ import {
 import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
 import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
+import { pagoPicoPara } from '../pagoPico';
 import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
@@ -115,7 +116,8 @@ const CON_HITOS = `(SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.i
   (SELECT creado_en FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'no_aparece') AS h_no_aparece`;
 
 /** Bono de la oferta abierta (centavos), si el pedido lo tiene. */
-const CON_BONO = `COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0) AS bono`;
+const CON_BONO = `COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0) AS bono,
+  (SELECT motivo FROM bonos_pedido b WHERE b.pedido_id = p.id) AS bono_motivo`;
 
 /** «No puedo confirmar mi ubicación»: pedida (sin autorizar) o autorizada por soporte. */
 const CON_EXCEPCION = `(SELECT CASE WHEN x.autorizado_en IS NULL THEN 'pedida' ELSE 'autorizada' END FROM excepciones_ubicacion x WHERE x.pedido_id = p.id) AS excepcion_ubicacion`;
@@ -1463,22 +1465,54 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
     if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
     if (!candidatos.length) continue;
+    // C-PAGO-PICO: en una celda con demanda alta, la primera oferta lleva el pago pico (si está
+    // encendido y queda presupuesto hoy). Se guarda como bono del pedido y se cobra al entregar.
+    const ya = await db
+      .prepare('SELECT centavos FROM bonos_pedido WHERE pedido_id = ?')
+      .bind(p.id)
+      .first<{ centavos: number }>();
+    let bono = Number(ya?.centavos ?? 0);
+    if (!ya) {
+      const pico = await pagoPicoPara(db, String(p.zona_id), p.lat, p.lng);
+      if (pico) {
+        await db
+          .prepare(
+            "INSERT OR IGNORE INTO bonos_pedido (pedido_id, centavos, motivo) VALUES (?, ?, 'hora_pico')",
+          )
+          .bind(p.id, pico)
+          .run();
+        await anotarEvento(db, p.id, 'pago_pico', `pago pico ${pico}`);
+        bono = pico;
+      }
+    }
     // Oferta abierta: a los 3 rechazos (o vencimientos) se ofrece a todos a la vez con un bono
     // que paga Divoox. Todos los que ya la vieron son rechazos o vencimientos (no hay ofrecida).
-    let bono = 0;
+    // Si ya llevaba pago pico, el bono de la oferta abierta se le suma.
+    let abierta = false;
     if (vistos.size >= RECHAZOS_PARA_ABRIR) {
       // C-TOPES-PAIS: el bono del país de la zona (EE. UU.: el de siempre).
-      bono = (await topesDeZona(db, String(p.zona_id))).topes?.bonoOfertaAbierta ?? 0;
+      const extra = (await topesDeZona(db, String(p.zona_id))).topes?.bonoOfertaAbierta ?? 0;
+      abierta = extra > 0;
       const r = await db
         .prepare(
-          "INSERT OR IGNORE INTO bonos_pedido (pedido_id, centavos, motivo) VALUES (?, ?, 'oferta_abierta')",
+          `INSERT INTO bonos_pedido (pedido_id, centavos, motivo) VALUES (?1, ?2, 'oferta_abierta')
+           ON CONFLICT(pedido_id) DO UPDATE SET centavos = centavos + ?2, motivo = 'oferta_abierta'
+           WHERE motivo <> 'oferta_abierta'`,
         )
-        .bind(p.id, bono)
+        .bind(p.id, extra)
         .run();
       if (r.meta.changes)
-        await anotarEvento(db, p.id, 'oferta_abierta', `${vistos.size} rechazos, bono ${bono}`);
+        await anotarEvento(db, p.id, 'oferta_abierta', `${vistos.size} rechazos, bono ${extra}`);
+      bono = Number(
+        (
+          await db
+            .prepare('SELECT centavos FROM bonos_pedido WHERE pedido_id = ?')
+            .bind(p.id)
+            .first<{ centavos: number }>()
+        )?.centavos ?? 0,
+      );
     }
-    const elegidos = bono ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
+    const elegidos = abierta ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
     for (const elegido of elegidos) {
       ocupados.add(elegido.id);
       await db
@@ -1576,6 +1610,8 @@ function conDatosRestaurante(f: FilaPedido) {
     // El bono de la oferta abierta se suma a lo que gana (lo paga Divoox al entregar).
     pagoRepartidor: Number(f.pago_repartidor) + Number(f.bono ?? 0),
     bono: Number(f.bono ?? 0),
+    // C-PAGO-PICO: «hora_pico» u «oferta_abierta», para que la app diga por qué lleva bono.
+    bonoMotivo: (f.bono_motivo as string | null) ?? null,
     distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
     // C-DISTANCIA-POR-PAIS: el país del pedido decide millas o kilómetros en la app.
     pais: paisDelCodigoZona(f.zona_id as string | null),

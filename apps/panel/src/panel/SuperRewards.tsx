@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { SuperPagoPico } from './SuperPagoPico';
 
 /**
  * C-REWARDS-AJUSTES (30 oct 2026, R3): el equipo ajusta Divoox Rewards sin publicar de nuevo:
@@ -271,6 +272,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
           </ul>
         </>
       ) : null}
+      <SuperPagoPico idioma={idioma} />
     </section>
   );
 }

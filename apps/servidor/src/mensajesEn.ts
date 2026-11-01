@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-PAGO-PICO
+  [
+    'El presupuesto del día tiene que alcanzar al menos para un pago.',
+    'The daily budget has to cover at least one payment.',
+  ],
   // C-TELEFONO-VUELTA
   ['No hace falta confirmar tu teléfono ahora.', 'You don’t need to confirm your phone right now.'],
   ['Espera un minuto para pedir otro código.', 'Wait a minute before requesting another code.'],

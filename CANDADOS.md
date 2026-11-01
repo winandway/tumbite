@@ -2214,3 +2214,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué hay:** `smsEquipo(env, tipo, texto)` en `apps/servidor/src/avisosEquipo.ts`: manda SMS a los administradores activos con teléfono que reciben ese tipo de aviso (`correosEquipo`). Se usa en el botón de emergencia del repartidor (`seguridadRepartidor.ts`) y cuando una pieza del canario pasa a rojo (`canario.ts`; la recuperación va solo por correo).
 - **Respeta** los países encendidos (C-SMS-PAISES) y nunca frena: si el SMS no sale, el correo ya salió.
 - **Prueba:** `apps/servidor/src/smsEquipo.test.ts`, comprobada en rojo.
+
+## C-PAGO-PICO — pago por hora pico en las zonas con mucha demanda (1 nov 2026, D7, todos los países)
+
+- **Por qué:** estándar de DoorDash («Peak Pay») y Uber («Boost»). Arranca APAGADO: monto y presupuesto diario en cero hasta que el equipo los fije en Superadmin → Rewards → «Pago por hora pico».
+- **Qué hay:** `apps/servidor/src/pagoPico.ts` (celda de geohash 6 con 5 pedidos o más en la última hora = demanda alta, la misma que el mapa; presupuesto diario contra la suma de `bonos_pedido` con motivo `hora_pico` de hoy). En el despacho (`operacion.ts`), la primera oferta de un pedido en esa celda guarda el bono `hora_pico`; si después pasa a oferta abierta, ese bono se suma (UPSERT) y el motivo pasa a `oferta_abierta`. Se paga al entregar por el mismo camino del bono de siempre (no toca el cobro). El mapa (`/repartidor/demanda`) trae `pico` en las zonas altas y `moneda`; la oferta trae `bonoMotivo`. Rutas `/admin/pago-pico` (GET/PUT). Panel: `SuperPagoPico.tsx`. App Driver: burbuja «+$2.00 por pedido» sobre la zona y «Incluye pago por hora pico» en la oferta.
+- **Pruebas:** `operacion.test.ts` → «C-PAGO-PICO» (con la oferta abierta de siempre en verde) y `SuperPagoPico.test.tsx`.

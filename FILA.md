@@ -18,7 +18,7 @@
 - [x] (D4) HECHO 31 oct (C-TERMINOS-ACTUALIZADOS). Términos actualizados: si cambió la versión de los términos del repartidor, aceptarlos antes de conectarse. Todos los países.
 - [x] (D5) HECHO 31 oct. Mapa del Driver conectado sin ofertas: «Buscando ofertas… Es más probable en las zonas en rojo» y bienvenida «tu nivel no cambió» al volver. Todos los países.
 - [x] (D6) HECHO 31 oct: ya existía el centro de seguridad (emergencia, compartir recorrido, reportar) pero escondido; ahora escudo en el mapa (C-SEGURIDAD-A-LA-VISTA). Los turnos y la pausa ya existían. Revisar SafeDash (desliza para 911, compartir ubicación) y el dash actual (hora de fin, terminar ahora) frente a la ficha; construir lo que falte. Todos los países.
-- [!] (decide Richard: monto, horarios y presupuesto) (D7) Pago extra por hora pico («+$2.00 por orden») sobre el mapa de demanda. Todos los países.
+- [x] (D7) HECHO 1 nov (C-PAGO-PICO): pago por hora pico construido de punta a punta y APAGADO (monto y presupuesto en cero); se enciende en Superadmin → Rewards cuando Richard fije el dinero. Todos los países.
 - [x] (D8) HECHO 1 nov (C-TELEFONO-VUELTA): tras 14 días sin conectarse, el Driver confirma su teléfono con un código por SMS; se exige solo donde el SMS sale (EE. UU. desde que Twilio apruebe el número). Todos los países.
 
 ## Logística: lo que falta frente a Amazon Flex (Richard, 31 oct: «la parte de logística no está terminada»)
@@ -33,7 +33,7 @@
 - [x] (LG4) Aviso de «ya llega» al destinatario: push con sonido insistente cuando el conductor está cerca (o en el punto de referencia), con nombre del conductor, vehículo, color y placa; llamada automática si tiene Twilio. Todos los países. HECHO 31 oct: aviso push con conductor, vehículo y placa; la llamada espera las claves de Twilio (va con LG5).
 - [x] (LG5) Invitación al destinatario al crear el envío: correo (ya hay) y SMS con el enlace para instalar la app y seguir su paquete con el número de seguimiento. El SMS sale por Twilio. Todos los países. HECHO 31 oct: SMS, correo y llamada «ya llega» construidos; se encienden solos al poner las claves de Twilio de Richard.
 - [x] (LG6) Bloque de demostración para Richard en producción: su empresa de demo, un centro, 6 envíos con etiquetas para IMPRIMIR (PDF listo para la impresora), una ruta asignada a su cuenta de Driver y el guion paso a paso para probarla en la calle con el teléfono. EE. UU.
-- [!] (espera los tres videos de Richard grabados en su iPhone; guía en docs/VIDEO-REVISION-APPLE.md; las notas ya están puestas) Apple rechazó la 1.0 de las tres apps por la pauta 2.1 (falta información): subir los videos como adjunto y volver a enviar. EE. UU.
+- [x] HECHO 31 oct: los tres videos subidos como adjunto y las tres apps reenviadas a Apple (en revisión). EE. UU.
 - [x] (L2) HECHO 31 oct (C-SEGURIDAD-A-LA-VISTA). «Ayuda de emergencia» a la vista desde «Mi ruta», como el menú de Amazon Flex. Todos los países.
 
 ## Siguiente, 31 oct 2026 por la tarde (Richard: «sigue con el roadmap»; Etapa 1, punto 2 y hallazgos del repaso)
@@ -88,7 +88,7 @@
 - [x] (R7) Apelaciones del repartidor y su bandeja en soporte. Todos los países.
 - [x] (R8) Guías de Rewards en Docs, en español e inglés, con capturas reales. Todos los países.
 - [x] Mercado, Farmacia y Licores listos para encender en piloto: el equipo los marca en Superadmin → Piloto cuando las tiendas del grupo se registren (sin código pendiente). EE. UU.
-- [!] (decide Richard: precio del envío, valor máximo y seguro del paquete en producción) Envíos en piloto: sin tarifa en producción no se puede cotizar. EE. UU.
+- [x] HECHO 31 oct (docs/ACTIVACION-PILOTO-2026-10-31.md): Envíos «solo piloto» en Miami y Novi con tarifa de mercado (2 USD base, 0,90 por km, mínimo 6, valor máximo 100). EE. UU.
 - [!] (decide Richard: aprobación legal y seguro del pasajero) Moto y Carro en piloto: llevan pasajeros reales. EE. UU.
 - [x] Monetización prepago: el código ya estaba hecho (Food por políticas, viajes y Tiendas con reserva y cobro, cancelaciones); Flex no aplica; solo falta la activación por mercado, que decide Richard. Todos los países.
 

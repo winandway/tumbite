@@ -36,7 +36,14 @@ export function punto(p: Punto, color: string, radio = 9, etiqueta?: string): L.
 }
 
 /** C-MAPA-DEMANDA: una zona con pedidos en la última hora (centro de la celda, unos 1,2 km). */
-export type ZonaDemanda = { lat: number; lng: number; pedidos: number; nivel: 'alta' | 'media' };
+export type ZonaDemanda = {
+  lat: number;
+  lng: number;
+  pedidos: number;
+  nivel: 'alta' | 'media';
+  /** C-PAGO-PICO: pago extra por pedido en esta zona (unidad menor de su moneda). */
+  pico?: number;
+};
 
 /** La zona como un círculo rojo translúcido: más intenso si la demanda es alta. */
 export function zona(z: ZonaDemanda, etiqueta: string): L.Circle {
@@ -47,6 +54,7 @@ export function zona(z: ZonaDemanda, etiqueta: string): L.Circle {
     fillColor: '#F20D20',
     fillOpacity: z.nivel === 'alta' ? 0.35 : 0.18,
   });
-  c.bindTooltip(etiqueta);
+  // Con pago pico, el monto queda a la vista sobre la zona (como el «+$2.00» de DoorDash).
+  c.bindTooltip(etiqueta, z.pico ? { permanent: true, direction: 'center' } : undefined);
   return c;
 }

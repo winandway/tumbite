@@ -2108,6 +2108,62 @@ describe('despacho completo: oferta abierta con bono, tiempo sugerido y cocina o
     expect(bitacora).toBeTruthy();
   });
 
+  it('C-PAGO-PICO: en una zona con mucha demanda la oferta lleva el pago pico, con tope diario', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const admin = await m.cuenta('admin', 'Soporte Pico');
+    const ofertasDe = async (token: string) =>
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, token)).datos.ofertas;
+    // Apagado de fábrica: sin monto, ningún bono.
+    const ajustes = await m.llamar('GET', '/datos/admin/pago-pico', undefined, admin.token);
+    expect(ajustes.datos).toMatchObject({ centavos: 0, presupuestoDiaCentavos: 0 });
+    // Cinco pedidos en la última hora en la celda del restaurante = demanda alta.
+    for (let i = 0; i < 5; i++) await pedidoPagado();
+    const rep = await repartidor('Pía Pico', 25.771, -80.191);
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    expect((await ofertasDe(rep.token))[0]?.bono ?? 0).toBe(0);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    // Encendido con $2 y presupuesto de $3 al día: el primero lo lleva, el segundo ya no cabe.
+    expect(
+      (
+        await m.llamar(
+          'PUT',
+          '/datos/admin/pago-pico',
+          { centavos: 200, presupuestoDiaCentavos: 300 },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const mapa = await m.llamar(
+      'GET',
+      '/datos/repartidor/demanda?lat=25.771&lng=-80.191',
+      undefined,
+      rep.token,
+    );
+    expect(mapa.datos.zonas[0]).toMatchObject({ nivel: 'alta', pico: 200 });
+    const rep2 = await repartidor('Paco Pico', 25.771, -80.191);
+    const id2 = await pedidoPagado();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id2}/aceptar`,
+      { minutos: 5 },
+      dueno.token,
+    );
+    const o = (await ofertasDe(rep2.token)).find((x: { id: string }) => x.id === id2);
+    expect(o).toMatchObject({ bono: 200, bonoMotivo: 'hora_pico' });
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id2}/aceptar`, {}, rep2.token);
+    const rep3 = await repartidor('Pepa Pico', 25.771, -80.191);
+    const id3 = await pedidoPagado();
+    await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id3}/aceptar`,
+      { minutos: 5 },
+      dueno.token,
+    );
+    const o3 = (await ofertasDe(rep3.token)).find((x: { id: string }) => x.id === id3);
+    expect(o3?.bono ?? 0).toBe(0);
+  });
+
   it('el tiempo sugerido sale del promedio real y «cocina ocupada» le suma minutos', async () => {
     const { m, dueno, pedidoPagado } = await escenario();
     // Sin historial: el configurado del restaurante (20).

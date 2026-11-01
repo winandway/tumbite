@@ -603,17 +603,21 @@ export function Inicio() {
 
   // C-MAPA-DEMANDA: las zonas con más pedidos de la última hora, cada minuto (como el «Dash Now»).
   const [zonasDemanda, setZonasDemanda] = useState<ZonaDemanda[]>([]);
+  const [monedaDemanda, setMonedaDemanda] = useState('USD');
   const latAqui = aqui ? Math.round(aqui.lat * 100) / 100 : null;
   const lngAqui = aqui ? Math.round(aqui.lng * 100) / 100 : null;
   useEffect(() => {
     if (latAqui == null || lngAqui == null) return;
     const leerDemanda = () =>
       void api
-        .pedir<{ zonas: ZonaDemanda[] }>(
+        .pedir<{ zonas: ZonaDemanda[]; moneda?: string }>(
           'GET',
           `/datos/repartidor/demanda?lat=${latAqui}&lng=${lngAqui}`,
         )
-        .then((r) => setZonasDemanda(r.zonas))
+        .then((r) => {
+          setZonasDemanda(r.zonas);
+          if (r.moneda) setMonedaDemanda(r.moneda);
+        })
         .catch((x: unknown) => console.warn('demanda: falló', x));
     const primero = setTimeout(leerDemanda, 0);
     const reloj = setInterval(leerDemanda, 60_000);
@@ -2389,7 +2393,11 @@ export function Inicio() {
           yo={aqui}
           marcadores={marcadoresOfertas}
           zonasDemanda={zonasDemanda}
-          etiquetaZona={(n) => td.zonaOcupada.replace('{n}', String(n))}
+          etiquetaZona={(n, pico) =>
+            pico
+              ? td.pagoPico.replace('{monto}', formatearMonto(pico, monedaDemanda, idioma))
+              : td.zonaOcupada.replace('{n}', String(n))
+          }
           alto={alturaMapa}
           etiquetas={etiquetasMapa}
         />
