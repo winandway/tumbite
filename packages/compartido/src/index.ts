@@ -62,3 +62,4 @@ export * from './flexParadas';
 export * from './distancia';
 export * from './graficaHoras';
 export * from './terminos';
+export * from './horarioAlcohol';

@@ -30,6 +30,7 @@ const ES = {
     contactar: 'Avísame',
   } as Record<Sustitucion, string>,
   edad: 'Se pide identificación al entregar',
+  alcoholDesde: 'Alcohol disponible desde las',
   reintentar: 'Reintentar',
   error: 'No pudimos cargar las tiendas. Revisa tu conexión.',
 };
@@ -63,6 +64,7 @@ const EN: typeof ES = {
     contactar: 'Ask me',
   },
   edad: 'ID is required at delivery',
+  alcoholDesde: 'Alcohol available from',
   reintentar: 'Try again',
   error: 'We couldn’t load the stores. Check your connection.',
 };

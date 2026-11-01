@@ -2193,3 +2193,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué hay:** `destinoPermitido(env, para)` en `apps/servidor/src/sms.ts`, usado por `enviarSms` y `llamarConVoz`. Sin la variable `SMS_PREFIJOS` solo sale a «+1». Para ampliar: `SMS_PREFIJOS=+1,+57`.
 - **Prueba:** `apps/servidor/src/smsPaises.test.ts`, comprobada en rojo.
 - **Twilio de Divoox:** subcuenta «Divoox» (la principal tiene un perfil personal viejo y Twilio no deja verificar desde ella). Número gratuito +1 866 569 5258, verificación de número gratuito HHad9f853f48db6e35442954fb9f1620d4 enviada el 31 oct con los datos de Windoce LLC. Claves en `~/.config/tumbite/twilio-divoox`. Hasta que Twilio apruebe, los SMS a EE. UU. no salen (error 30032/30034).
+
+## C-ALCOHOL-HORARIO — el alcohol solo se pide en la hora legal del estado (1 nov 2026, EE. UU. y todos los países)
+
+- **Por qué:** estándar de DoorDash y Uber Eats; brecha que quedó en la ficha de tiendas (`docs/investigaciones-rea/2026-10-29-tiendas-reemplazos.md`, punto 3).
+- **Qué hay:** tabla única por estado en `packages/compartido/src/horarioAlcohol.ts` (`alcoholPermitido`): Florida 7:00–0:00, Michigan 7:00–2:00 y domingo desde 12:00; lo no cargado, 8:00–22:00. El servidor rechaza el pedido con alcohol fuera de hora (`pedidos.ts`, a la hora de entrega si es programado) y la ficha de la tienda trae `alcohol: {ok, abre}` (`tiendas.ts`, `alcoholAhora`). La app marca el producto «Alcohol disponible desde las…» y apaga el botón.
+- **Recorrido local:** `ALCOHOL_SIN_HORARIO=1` (solo con entorno local; en los sitios no hace nada) para que el recorrido corra a cualquier hora.
+- **Pruebas:** `horarioAlcohol.test.ts` (tabla y pantalla) y `tiendasVitrina.test.ts` → «C-ALCOHOL-HORARIO». Comprobadas en rojo.
+- **No tocar:** la tabla solo se amplía con la ley citada de cada estado o país.

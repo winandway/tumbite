@@ -112,7 +112,10 @@ function stripeFalso() {
 const STRIPE = { STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_PUBLISHABLE_KEY: 'pk_test_x' };
 
 describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 
   it('el precio sale del catálogo, lo pesable al peso estimado y cada línea con qué hacer si falta', async () => {
     stripeFalso();
@@ -456,6 +459,8 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
 
   it('C-EDAD-EN-MANO: con alcohol, «en la puerta» pasa a «en mano»', async () => {
     stripeFalso();
+    // Al mediodía de Miami, dentro de la hora legal del alcohol (C-ALCOHOL-HORARIO).
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-04T17:00:00Z') });
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
     await m.llamar(
       'POST',
@@ -490,6 +495,53 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
       .bind(r.datos.pedidoId)
       .first<{ modo: string }>();
     expect(f?.modo).toBe('mano');
+  });
+
+  it('C-ALCOHOL-HORARIO: el alcohol no se pide fuera de la hora legal; lo demás sí', async () => {
+    stripeFalso();
+    // 1:00 de la madrugada en Miami (6:00 UTC): en Florida no se vende alcohol de 0:00 a 7:00.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-04T06:00:00Z') });
+    try {
+      const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+      await m.llamar(
+        'POST',
+        '/datos/mi-restaurante/productos/importar',
+        {
+          csv: 'sku,name,brand,category_1,price,available,restriction\nB9,Light beer,Brand Sample,Beer,1.80,yes,alcohol',
+          confirmar: true,
+        },
+        dueno.token,
+      );
+      const cliente = await m.cuenta('cliente');
+      const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+        id: string;
+        nombre: string;
+      }[];
+      const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+      const pedir = (nombre: string) =>
+        m.llamar(
+          'POST',
+          '/datos/pedidos',
+          {
+            restauranteId: tid,
+            lineas: [{ platoId: id(nombre), cantidad: 1 }],
+            propinaCentavos: 0,
+            direccion: '200 Calle Prueba, Miami',
+            lat: 25.78,
+            lng: -80.2,
+            entrega: 'mano',
+          },
+          cliente.token,
+        );
+      const ficha = (await m.llamar('GET', `/datos/tiendas/${tid}`)).datos.tienda;
+      expect(ficha.alcohol).toEqual({ ok: false, abre: '07:00' });
+      const cerveza = await pedir('Light beer');
+      expect(cerveza.estado).toBe(409);
+      expect(cerveza.datos.error).toMatch(/7:00/);
+      expect((await pedir('Spring water')).estado).toBe(201);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('lo agotado no se puede comprar aunque la app lo mande', async () => {

@@ -106,6 +106,8 @@ export const esquemaEnv = z.object({
   SELFIE_CONTROL_SIEMPRE: z.enum(['0', '1']).optional(),
   /** C-TIENDAS-VITRINA: «1» enciende las tiendas en el servidor LOCAL del recorrido (nunca en un sitio publicado). */
   TIENDAS_LOCAL: z.enum(['0', '1']).optional(),
+  /** C-ALCOHOL-HORARIO: solo el recorrido local salta la hora legal del alcohol. */
+  ALCOHOL_SIN_HORARIO: z.enum(['0', '1']).optional(),
 });
 
 export type Variables = z.infer<typeof esquemaEnv>;

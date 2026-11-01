@@ -26,7 +26,7 @@ Instacart (reemplazos del comprador) y DoorDash (Shop & Deliver, pedidos de merc
 
 1. Foto del producto propuesto en la propuesta (hoy nombre y precio).
 2. Chat de reemplazos con foto durante la compra (el chat del pedido ya existe).
-3. Límites de horario para licores por estado (DoorDash: el comercio solo manda pedidos de alcohol en horas legales). Necesita las horas de cada estado: va con el país que elija Richard.
+3. Límites de horario para licores por estado (DoorDash: el comercio solo manda pedidos de alcohol en horas legales). **HECHO 1 nov 2026 (C-ALCOHOL-HORARIO):** Florida de 7:00 a 0:00 (§ 562.14) y Michigan de 7:00 a 2:00, domingo desde las 12:00 (MCL 436.2113/2114, la mañana del domingo pide permiso aparte); otro lugar, de 8:00 a 22:00 hasta cargar su ley. [DOC] Las ordenanzas locales (por ejemplo, ciudades de Miami-Dade) pueden permitir más horas: se agregan cuando se confirme la ordenanza de cada ciudad.
 
 ## Decisión
 

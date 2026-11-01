@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   RESTRICCIONES,
   RESTRICCIONES_BLOQUEADAS,
+  alcoholPermitido,
   TIPOS_COMERCIO,
   UNIDADES_TAMANO,
   codigoBarrasValido,
@@ -495,7 +496,8 @@ async function tiendaPublica(c: Parameters<typeof base>[0], id: string) {
   const db = base(c);
   const t = await db
     .prepare(
-      `SELECT id, nombre, direccion, lat, lng, imagen, abierto, tipo_comercio, plan, zona_id
+      `SELECT id, nombre, direccion, lat, lng, imagen, abierto, tipo_comercio, plan, zona_id,
+              (SELECT z.zona_horaria FROM zonas z WHERE z.id = restaurantes.zona_id) AS zona_horaria
          FROM restaurantes WHERE id = ? AND estado = 'aprobado' AND tipo_comercio <> 'restaurante'`,
     )
     .bind(id)
@@ -504,6 +506,20 @@ async function tiendaPublica(c: Parameters<typeof base>[0], id: string) {
   await exigirServicio(c, servicioDe(String(t.tipo_comercio)));
   return { db, t };
 }
+/**
+ * C-ALCOHOL-HORARIO: ¿se puede pedir alcohol en esta zona a esta hora? El recorrido local lo salta
+ * con ALCOHOL_SIN_HORARIO (corre a cualquier hora); en los sitios, nunca.
+ */
+export function alcoholAhora(
+  c: Parameters<typeof base>[0],
+  zonaId: string,
+  zonaHoraria: string,
+  momento = new Date(),
+): { ok: boolean; abre?: string } {
+  if (entornoDe(c.req.url) === 'local' && c.env.ALCOHOL_SIN_HORARIO === '1') return { ok: true };
+  return alcoholPermitido(zonaId, zonaHoraria, momento);
+}
+
 const servicioDe = (tipo: string) =>
   (['mercado', 'farmacia', 'licores', 'mas'] as const).find((s) =>
     tiposDeServicio(s).includes(tipo as never),
@@ -534,6 +550,12 @@ tiendas.get('/tiendas/:id', async (c) => {
       abierto: Number(t.abierto) === 1,
       plan: t.plan,
       moneda,
+      // C-ALCOHOL-HORARIO: la app marca el alcohol «desde las 7:00» fuera de la hora legal.
+      alcohol: alcoholAhora(
+        c,
+        String(t.zona_id ?? ''),
+        String(t.zona_horaria ?? 'America/New_York'),
+      ),
     },
     pasillos: pasillos.results,
   });
@@ -674,6 +696,7 @@ export async function lineasDeTienda(
       cantidad: l.cantidad,
       opciones: [],
       requiereEdad: f.restriccion === 'alcohol' || f.restriccion === 'tobacco',
+      ...(f.restriccion === 'alcohol' ? { alcohol: true } : {}),
       sustitucion: l.sustitucion ?? 'reembolsar',
       ...conNotaPlato(l.nota),
       ...(f.vendido_por === 'weight' ? { pesable: true, unidadPeso: f.unidad_peso } : {}),

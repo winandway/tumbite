@@ -162,6 +162,7 @@ export default function Tienda() {
   }
 
   const moneda = ficha?.moneda ?? 'USD';
+  const sinAlcohol = ficha?.alcohol?.ok === false;
   const cabecera = (
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -330,7 +331,7 @@ export default function Tienda() {
                   <BotonRedondo
                     texto="+"
                     alTocar={() => void alMas(p)}
-                    desactivado={!ficha?.abierto}
+                    desactivado={!ficha?.abierto || (p.restriccion === 'alcohol' && sinAlcohol)}
                     etiqueta={`${t.agregar} ${p.nombre}`}
                   />
                 </View>
@@ -360,7 +361,15 @@ export default function Tienda() {
                   {detalleProducto(p, idioma)}
                 </Text>
               ) : null}
-              {p.restriccion === 'alcohol' || p.restriccion === 'tobacco' ? (
+              {p.restriccion === 'alcohol' && sinAlcohol ? (
+                // C-ALCOHOL-HORARIO: fuera de la hora legal del estado no se puede agregar.
+                <Text
+                  testID="alcohol-desde"
+                  style={{ color: '#5E5E5E', fontSize: 11, marginTop: 2, fontWeight: '600' }}
+                >
+                  {t.alcoholDesde} {ficha?.alcohol?.abre}
+                </Text>
+              ) : p.restriccion === 'alcohol' || p.restriccion === 'tobacco' ? (
                 <Text style={{ color: '#5E5E5E', fontSize: 11, marginTop: 2 }}>{t.edad}</Text>
               ) : null}
               {n > 0 ? (

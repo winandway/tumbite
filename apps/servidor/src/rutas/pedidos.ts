@@ -58,7 +58,7 @@ import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
 import { enviarCorreo } from '../correo';
-import { lineasDeTienda } from './tiendas';
+import { alcoholAhora, lineasDeTienda } from './tiendas';
 import { aceptarSiEsAutomatico } from './operacion';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -569,6 +569,28 @@ pedidos.post('/pedidos', async (c) => {
         d.lineas,
         d.programadoPara ? new Date(d.programadoPara) : new Date(),
       );
+
+  // C-ALCOHOL-HORARIO: como DoorDash y Uber Eats, el alcohol solo se pide en la hora legal del
+  // estado (para un pedido programado, a la hora de la entrega). En una tienda cuenta la restricción
+  // «alcohol»; en un restaurante, el plato para mayores de 21. El recorrido local lo salta con
+  // ALCOHOL_SIN_HORARIO (solo en la computadora: en los sitios, nunca).
+  const conAlcohol = lineas.some((l) =>
+    esTienda ? (l as { alcohol?: boolean }).alcohol === true : l.requiereEdad,
+  );
+  if (conAlcohol) {
+    const legal = alcoholAhora(
+      c,
+      String(rest.zona_id ?? ZONA_INICIAL),
+      String(restConHorario!.zona_horaria),
+      programado ?? new Date(),
+    );
+    if (!legal.ok)
+      throw new ErrorDatos(
+        `A esta hora la ley no permite vender alcohol aquí. Se puede pedir desde las ${legal.abre ?? '7:00'}. Quita el alcohol del carrito o prográmalo para más tarde.`,
+        'lineas',
+        409,
+      );
+  }
 
   // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (DoorDash y Uber Eats lo entregan
   // en mano y piden identificación). Si la app mandó «en la puerta», pasa a «en mano».

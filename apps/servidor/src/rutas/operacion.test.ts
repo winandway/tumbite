@@ -2620,7 +2620,8 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
   });
 
   it('mayoría de edad: un plato para mayores de 21 solo se entrega en mano con el documento revisado', async () => {
-    const { m, dueno, cliente, repartidor, r } = await escenario();
+    // Corre a cualquier hora: la hora legal del alcohol se prueba aparte (C-ALCOHOL-HORARIO).
+    const { m, dueno, cliente, repartidor, r } = await escenario({ ALCOHOL_SIN_HORARIO: '1' });
     const cerveza = await m.llamar(
       'POST',
       '/datos/mi-restaurante/platos',

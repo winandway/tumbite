@@ -24,6 +24,8 @@ export type FichaTienda = {
   abierto: boolean;
   plan: Plan;
   moneda: string;
+  /** C-ALCOHOL-HORARIO: fuera de la hora legal, el alcohol no se puede agregar. */
+  alcohol?: { ok: boolean; abre?: string };
 };
 export type ProductoTienda = {
   id: string;

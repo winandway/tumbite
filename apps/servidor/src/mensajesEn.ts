@@ -1452,6 +1452,11 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [
+    /^A esta hora la ley no permite vender alcohol aquí\. Se puede pedir desde las (\d{1,2}:\d{2})\. Quita el alcohol del carrito o prográmalo para más tarde\.$/,
+    (m) =>
+      `Alcohol can’t be sold here at this hour by law. You can order it from ${m[1]}. Remove the alcohol from your cart or schedule the order for later.`,
+  ],
+  [
     /^Estás fuera del área de entrega \(a (\d+) m\)\. Acércate a la dirección para entregar o escribe a soporte\.$/,
     (m) =>
       `You’re outside the delivery area (${m[1]} m away). Get closer to the address to deliver, or message support.`,
