@@ -3141,3 +3141,47 @@ CREATE TABLE IF NOT EXISTS pedidos_anuncio (
   centavos INTEGER NOT NULL,
   cobrado_en TEXT
 );
+
+-- C-PLUS (R-T3, 1 nov 2026, como DashPass): la suscripción del cliente. Se cobra con una
+-- suscripción de Stripe; solo el aviso firmado «invoice.paid» la activa y le pone vencimiento.
+CREATE TABLE IF NOT EXISTS suscripciones_plus (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  stripe_suscripcion TEXT UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'activa', 'terminada')),
+  vence_en TEXT,
+  cancela_al_final INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Lo que Divoox Plus descontó en cada pedido (para el reporte; el total ya va en pedidos.descuento).
+CREATE TABLE IF NOT EXISTS pedidos_plus (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  descuento INTEGER NOT NULL
+);
+
+-- C-TARJETAS-REGALO (R-T4, 1 nov 2026, como las tarjetas de regalo de DoorDash y Uber Eats):
+-- se compra con tarjeta, le llega a quien la recibe un código por correo y al canjearlo queda como
+-- saldo de regalo para sus pedidos. El saldo se calcula: canjeado menos lo usado en pedidos no
+-- cancelados (si un pedido se cancela por cualquier camino, el saldo vuelve solo).
+CREATE TABLE IF NOT EXISTS tarjetas_regalo (
+  id TEXT PRIMARY KEY,
+  codigo TEXT NOT NULL UNIQUE,
+  centavos INTEGER NOT NULL CHECK (centavos > 0),
+  comprador_id TEXT NOT NULL REFERENCES usuarios(id),
+  para_correo TEXT NOT NULL,
+  para_nombre TEXT NOT NULL DEFAULT '',
+  mensaje TEXT NOT NULL DEFAULT '',
+  stripe_pago TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'pagada', 'canjeada')),
+  canjeada_por TEXT REFERENCES usuarios(id),
+  canjeada_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS tarjetas_regalo_canjeada ON tarjetas_regalo(canjeada_por);
+CREATE TABLE IF NOT EXISTS pedidos_saldo_regalo (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  centavos INTEGER NOT NULL CHECK (centavos > 0)
+);
+CREATE INDEX IF NOT EXISTS pedidos_saldo_regalo_usuario ON pedidos_saldo_regalo(usuario_id);
