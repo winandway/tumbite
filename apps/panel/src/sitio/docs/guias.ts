@@ -1923,6 +1923,7 @@ const es: SeccionDocs[] = [
           'Para entregar tienes que estar a menos de 200 metros de la dirección. Si estás más lejos, la app te avisa a cuántos metros estás y no deja terminar. Si la dirección está mal puesta, escríbele a soporte desde la misma parada.',
           'Al entregar eliges dónde dejaste el paquete: a la persona o alguien del hogar, recepcionista o portero, puerta principal o porche, buzón seguro u otra ubicación segura. Revisa la foto (que se vea el lugar y sin personas) y desliza «Desliza para finalizar»: se termina deslizando, no con un toque, para no cerrarla por error.',
           'Si ya se entregó antes en esa misma dirección, la parada te muestra la foto de esa entrega («Entrega anterior en esta puerta») para que reconozcas el lugar.',
+          'Si trabajas para una empresa de reparto, ella te invita: te llega un SMS o un correo (o te mandan el enlace por WhatsApp). Instala Divoox Driver, entra con ese mismo celular o correo y, en el inicio, toca «Aceptar» en la invitación de tu empresa.',
           'En el menú de Divoox Driver entra a «Mi ruta (paquetes)». Ahí ves las rutas que te asignó una empresa con la que trabajas y las que te ofrecen (con la hora en que vence la oferta). Mientras haces una ruta no recibes otras rutas ni pedidos de comida.',
           'Las distancias salen en millas o en kilómetros, como prefieras: en tu perfil, en «Distancias en», toca «Millas» o «Kilómetros». Vale para toda la app: ofertas, Mi ruta y avisos.',
           'Cuando tienes una ruta, el inicio de la app te la muestra en una tarjeta azul con «Continuar ruta». Dentro de la ruta la pantalla es oscura y ocupa todo el espacio, para que no canse la vista en horas de reparto. En la lista, las paradas van unidas por una línea: cada vez que entregas una, la línea y el número se ponen en verde con la hora de la entrega, y la siguiente parada queda resaltada.',
@@ -3256,10 +3257,10 @@ const es: SeccionDocs[] = [
         resumen:
           'Divoox Flex es la logística de última milla para empresas: registras tu empresa, invitas a tu equipo con permisos y creas los centros desde donde salen los paquetes.',
         explicacion: [
-          'Divoox Flex sirve para empresas que mueven muchos paquetes: una tienda en línea, una distribuidora, una empresa de mensajería. Desde el panel registras tu empresa (nombre, país y moneda) y te conviertes en su dueño.',
+          'Divoox Flex sirve para empresas que mueven muchos paquetes: una tienda en línea, una distribuidora, una empresa de mensajería. Desde el panel (o desde la app Divoox, en Envíos → «Bloque de logística») registras tu empresa con sus datos legales reales —nombre comercial, razón social, país, moneda, número fiscal del país, dirección fiscal, representante y teléfono— y tu primer centro de carga, y te conviertes en su dueño.',
           'Invitas a tu equipo por correo con el rol que le toca a cada quien: administrador de operaciones, operador, finanzas o integración. La persona recibe un enlace que vence en siete días y que solo funciona con su propia cuenta de Divoox, con el correo confirmado. Nadie entra a tu empresa por el simple hecho de registrar un correo.',
           'Los centros de distribución son los lugares desde donde salen los paquetes: una bodega, una tienda, un punto de reparto. Cada envío puede indicar su centro de origen.',
-          'También puedes vincular conductores que ya tienen cuenta en Divoox Driver: propios de tu empresa, de la red Divoox o híbridos. A los propios les asignas las rutas directamente; a los de la red se las ofreces y ellos las aceptan.',
+          'Tus conductores se suman por invitación: en «Conductores» escribes su nombre y su celular o correo. Les llega un SMS o un correo con el enlace, y tú también lo ves para mandárselo por WhatsApp. Instalan Divoox Driver, entran con ese mismo celular o correo y aceptan. A los propios les asignas las rutas directamente; a los de la red se las ofreces y ellos las aceptan.',
         ],
         capturas: [
           {
@@ -3274,10 +3275,10 @@ const es: SeccionDocs[] = [
           '¿Qué puede hacer cada rol?',
         ],
         pasos: [
-          'Entra al panel y toca «Divoox Flex (empresas)»; crea tu empresa con su nombre, país y moneda.',
+          'Entra al panel de empresas y crea tu cuenta de empresa; registra tu empresa con sus datos legales y tu primer centro.',
           'En «Centros» registra tu primer centro de distribución con su dirección.',
           'En «Equipo» escribe el correo de la persona, elige su rol y envía la invitación; ella entra con su cuenta y acepta.',
-          'En «Conductores» vincula a los repartidores por el correo de su cuenta de Divoox Driver.',
+          'En «Conductores» invita a cada conductor con su nombre y su celular o correo; acepta en Divoox Driver.',
         ],
         nota: 'Las comisiones se cobran del saldo de tu billetera (guía «tu billetera, recargas, comisiones y comprobantes»).',
       },
@@ -5457,6 +5458,7 @@ const en: SeccionDocs[] = [
           'To deliver you must be within 200 meters of the address. If you’re farther away, the app tells you how many meters and won’t let you finish. If the address is wrong, message support from the same stop.',
           'When you deliver, choose where you left the package: with the person or someone at home, receptionist or doorman, front door or porch, secure mailbox, or another safe place. Check the photo (the spot is clear and no people show) and use “Slide to finish”: you finish by sliding, not with a tap, so you don’t close it by mistake.',
           'If there was an earlier delivery at the same address, the stop shows that delivery’s photo (“Earlier delivery at this door”) so you recognize the place.',
+          'If you work for a delivery company, it invites you: you get a text or email (or they send you the link by WhatsApp). Install Divoox Driver, sign in with that same phone or email and, on the home screen, tap “Accept” on your company’s invitation.',
           'In the Divoox Driver menu, open “My route (packages)”. There you see the routes a company you work with assigned to you and the ones offered to you (with the time the offer expires). While doing a route you get no other routes or food orders.',
           'Distances show in miles or kilometers, whichever you prefer: in your profile, under “Distances in,” tap “Miles” or “Kilometers.” It applies to the whole app: offers, My route and alerts.',
           'When you have a route, the app’s home screen shows it in a blue card with “Continue route.” Inside the route the screen is dark and uses the full space, so it’s easy on your eyes during long shifts. In the list, stops are connected by a line: each time you deliver one, the line and the number turn green with the delivery time, and the next stop is highlighted.',
@@ -6753,10 +6755,10 @@ const en: SeccionDocs[] = [
         resumen:
           'Divoox Flex is last-mile logistics for businesses: register your company, invite your team with permissions and create the hubs your packages leave from.',
         explicacion: [
-          'Divoox Flex is for businesses that move many packages: an online store, a distributor, a courier company. From the panel you register your company (name, country and currency) and become its owner.',
+          'Divoox Flex is for businesses that move many packages: an online store, a distributor, a courier company. From the panel (or from the Divoox app, under Delivery → “Logistics block”) you register your company with its real legal details —business name, legal name, country, currency, the country’s tax ID, registered address, legal representative and phone— and your first loading hub, and you become its owner.',
           'You invite your team by email with the role each person needs: operations admin, operator, finance or integration. The person receives a link that expires in seven days and works only with their own Divoox account, with a confirmed email. Nobody gets into your company just by registering an email address.',
           'Distribution hubs are the places packages leave from: a warehouse, a store, a pickup point. Each shipment can state its origin hub.',
-          'You can also link drivers who already have a Divoox Driver account: your company’s own, from the Divoox network, or hybrid. You assign routes directly to your own drivers; network drivers get an offer and accept it.',
+          'Your drivers join by invitation: in “Drivers” you enter their name and phone or email. They get a text or email with the link, and you see it too so you can send it by WhatsApp. They install Divoox Driver, sign in with that same phone or email and accept. You assign routes directly to your own drivers; network drivers get an offer and accept it.',
         ],
         capturas: [
           {
@@ -6771,10 +6773,10 @@ const en: SeccionDocs[] = [
           'What can each role do?',
         ],
         pasos: [
-          'Open the panel and tap “Divoox Flex (businesses)”; create your company with its name, country and currency.',
+          'Open the business panel and create your company account; register your company with its legal details and your first hub.',
           'In “Hubs”, register your first distribution hub with its address.',
           'In “Team”, type the person’s email, pick their role and send the invitation; they sign in with their account and accept.',
-          'In “Drivers”, link drivers by the email of their Divoox Driver account.',
+          'In “Drivers”, invite each driver with their name and phone or email; they accept in Divoox Driver.',
         ],
         nota: 'Commissions are charged from your wallet balance (see the guide on your wallet, top-ups, commissions and receipts).',
       },
