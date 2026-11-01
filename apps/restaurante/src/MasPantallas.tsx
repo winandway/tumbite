@@ -13,7 +13,9 @@ import {
   C,
   Campo,
   CampoClave,
+  MisCasos,
   OpcionesCuenta,
+  ReportarProblema,
   URL_SERVIDOR,
   alSalirTelefono,
   almacenTelefono,
@@ -577,6 +579,9 @@ function Configuracion({ t }: { t: Textos }) {
           alTocar={() => void cambiarClave()}
         />
       </Tarjeta>
+      {/* C-AYUDA-EN-LA-APP: pedir ayuda y seguir el caso sin salir de la app. */}
+      <ReportarProblema />
+      <MisCasos />
       <OpcionesCuenta />
     </View>
   );

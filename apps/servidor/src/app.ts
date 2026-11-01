@@ -39,6 +39,7 @@ import { grupos } from './rutas/grupos';
 import { pedidoCompartido } from './rutas/pedidoCompartido';
 import { seguridadRepartidor } from './rutas/seguridadRepartidor';
 import { apiPos } from './rutas/apiPos';
+import { gerente } from './rutas/gerente';
 import { tickets } from './rutas/tickets';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
@@ -447,6 +448,7 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+app.route('/datos', gerente);
 app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);

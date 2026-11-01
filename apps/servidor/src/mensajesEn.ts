@@ -5,6 +5,8 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-GERENTE-TICKETS
+  ['No autorizado.', 'Not authorized.'],
   // C-FLEX-INVITAR-CONDUCTOR
   ['Escribe el celular o el correo del conductor.', 'Enter the driver’s phone or email.'],
   ['Esa invitación ya no está pendiente.', 'That invitation is no longer pending.'],

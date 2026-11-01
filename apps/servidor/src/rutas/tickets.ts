@@ -201,6 +201,33 @@ async function mensajesDe(db: D1Database, ticketId: string) {
 const esquemaMensaje = z.object({ texto: z.string().trim().min(1).max(5000) });
 const codigoValido = (c: string) => /^[A-Za-z0-9_-]{40,60}$/.test(c);
 
+/** Número corto del caso («3F9A2C1D»): sale del id, nunca del código secreto del enlace. */
+export const numeroDeTicket = (id: string) => id.replace(/-/g, '').slice(0, 8).toUpperCase();
+
+/**
+ * C-AYUDA-EN-LA-APP (1 nov 2026): los casos de ayuda de la persona que entró, para ver el chat
+ * dentro de la app (antes se abría en la web). El chat sigue por /tickets/:codigo.
+ */
+tickets.get('/mis-tickets', async (c) => {
+  const u = exigir(c);
+  const { results } = await base(c)
+    .prepare(
+      `SELECT id, codigo, asunto, estado, actualizado_en FROM tickets
+        WHERE usuario_id = ? AND tipo IN ('soporte', 'queja') ORDER BY actualizado_en DESC LIMIT 30`,
+    )
+    .bind(u.id)
+    .all<{ id: string; codigo: string; asunto: string; estado: string; actualizado_en: string }>();
+  return c.json({
+    tickets: results.map((t) => ({
+      codigo: t.codigo,
+      numero: numeroDeTicket(t.id),
+      asunto: t.asunto,
+      estado: t.estado,
+      actualizado: t.actualizado_en,
+    })),
+  });
+});
+
 // ───────────────────────── La persona, con su enlace ─────────────────────────
 
 tickets.get('/tickets/:codigo', limiteIntentos(60, 60_000), async (c) => {

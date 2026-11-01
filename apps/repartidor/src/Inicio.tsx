@@ -80,6 +80,7 @@ import {
   ChatPedido,
   MenuCuenta,
   OpcionesCuenta,
+  MisCasos,
   ReportarProblema,
   e,
   useSesion,
@@ -1695,6 +1696,7 @@ export function Inicio() {
           {seccionPerfil === 'soporte' ? (
             <View style={{ paddingVertical: 8 }}>
               <ReportarProblema pedidoId={estado?.activo?.id} />
+              <MisCasos />
               <MenuCuenta />
             </View>
           ) : null}
