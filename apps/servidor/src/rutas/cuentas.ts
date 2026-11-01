@@ -433,6 +433,43 @@ cuentas.post('/hacer-admin', async (c) => {
  * Borrar la cuenta (Apple lo exige dentro de la app). Los datos personales se borran;
  * los pedidos se quedan sin nombre, porque la contabilidad y los impuestos los necesitan.
  */
+/**
+ * C-PASE-WEB (LG1): la app pide un pase de un solo uso (2 minutos) para abrir una página del panel
+ * dentro de la misma app (registro y panel de la empresa de logística) sin volver a escribir la clave.
+ * Solo se guarda el hash del código; al usarlo se borra y se abre una sesión nueva en esa vista web.
+ */
+cuentas.post('/pase-web', async (c) => {
+  const u = exigir(c);
+  const codigo = nuevoToken();
+  const db = base(c);
+  await db.batch([
+    db.prepare("DELETE FROM pases_web WHERE vence_en < datetime('now')"),
+    db
+      .prepare(
+        "INSERT INTO pases_web (codigo_hash, usuario_id, vence_en) VALUES (?, ?, datetime('now', '+2 minutes'))",
+      )
+      .bind(await sha256(codigo), u.id),
+  ]);
+  return c.json({ codigo });
+});
+
+/** Solo se puede ir al panel o a la web propia, nunca a otro sitio. */
+const DESTINO_PASE = new Set(['/panel', '/panel/business', '/es/panel', '/es/panel/business']);
+
+cuentas.get('/pase-web/:codigo', async (c) => {
+  const db = base(c);
+  const f = await db
+    .prepare(
+      "DELETE FROM pases_web WHERE codigo_hash = ? AND vence_en > datetime('now') RETURNING usuario_id",
+    )
+    .bind(await sha256(c.req.param('codigo')))
+    .first<{ usuario_id: string }>();
+  const ir = c.req.query('ir') ?? '/panel';
+  const destino = DESTINO_PASE.has(ir) ? ir : '/panel';
+  if (f) c.header('Set-Cookie', cookie(await abrirSesion(db, f.usuario_id)));
+  return c.redirect(destino, 302);
+});
+
 cuentas.delete('/yo', async (c) => {
   const u = exigir(c);
   const db = base(c);

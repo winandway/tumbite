@@ -3037,3 +3037,21 @@ CREATE TABLE IF NOT EXISTS terminos_aceptados (
   aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (usuario_id, version)
 );
+
+-- C-PASE-WEB (31 oct 2026, LG1): pase de un solo uso (2 minutos) para que la app abra el panel web
+-- dentro de la misma app sin volver a entrar. Se guarda solo el hash del código.
+CREATE TABLE IF NOT EXISTS pases_web (
+  codigo_hash TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  vence_en TEXT NOT NULL
+);
+
+-- C-FLEX-RASTREAR (31 oct 2026, LG3): números de seguimiento que una persona sigue en su app
+-- (los que no son suyos solo muestran el estado, sin dirección ni nombres).
+CREATE TABLE IF NOT EXISTS paquetes_seguidos (
+  usuario_id TEXT NOT NULL,
+  codigo TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, codigo)
+);
+CREATE INDEX IF NOT EXISTS paquetes_seguidos_codigo ON paquetes_seguidos(codigo);

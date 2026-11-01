@@ -2143,3 +2143,34 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **C-BLOQUE-EN-LA-APP:** «Bloque de logística» abre `/business` dentro de la app (qué es Divoox Flex, cuatro pasos y el registro en la misma app).
 - **C-MOSAICO-UNA-LINEA / C-LETRA-NO-BLACK:** con la letra grande del iPhone, «Deliverie-s» se partía; el nombre va en una línea y se achica. La app del cliente deja la letra «Black» (900) y «Heavy» (800): máximo «Bold» (700), como Uber Eats y DoorDash.
 - **Prueba:** `packages/compartido/src/clienteEnviosTestflight.test.ts` (comprobada en rojo).
+
+## C-EMPRESA-LEGAL y C-PASE-WEB (31 oct 2026, LG1, pedido de Richard) — todos los países
+
+- **Qué es:** la empresa de logística se registra DENTRO de la app del cliente (`apps/cliente/src/app/business.tsx`) con nombre, razón social, país, moneda, número fiscal validado por país (EIN, RIF, NIT, RFC: `numeroFiscalValido` en `flexPaises.ts`), dirección fiscal, representante, teléfono y su centro de carga con el punto exacto. Columnas nuevas de `empresas` en COLUMNAS (`numero_fiscal`, `direccion_fiscal`, `representante`, `telefono`). Borrador del formulario; lo escrito no se pierde si falla.
+- **Panel dentro de la app:** `POST /datos/cuentas/pase-web` da un código de un solo uso (2 minutos; se guarda solo su hash en `pases_web`); `GET /datos/cuentas/pase-web/:codigo?ir=/panel/business` abre la sesión en la vista web y redirige; nunca a otro sitio.
+- **Prueba:** `apps/servidor/src/flex/empresaLegal.test.ts` y `packages/compartido/src/empresaLegal.test.ts` (comprobadas en rojo).
+
+## C-FLEX-ENCUENTRO (31 oct 2026, LG2, pedido de Richard) — todos los países
+
+- **Qué es:** además de «a domicilio» y «retiro en el centro», un envío puede entregarse en un **punto de encuentro de la vía** («Estación Doña María»), como los transportistas que entregan sobre la Panamericana. Se crea con `entrega: 'encuentro'`, `puntoEncuentro` (nombre) y el punto en el mapa (`lat`/`lng`, obligatorios). Columna `envios.punto_encuentro` en COLUMNAS. El panel lo ofrece al crear el envío; Driver lo muestra en la lista y en la parada.
+- **Prueba:** `apps/servidor/src/flex/encuentro.test.ts` (comprobada en rojo) y `flexMiRutaRepaso.test.ts`.
+
+## C-FLEX-RASTREAR (31 oct 2026, LG3, pedido de Richard) — todos los países
+
+- **Qué es:** en la app del cliente, «Mis paquetes» → «Rastrear un paquete» (también desde Envíos → «Espero un paquete»): se escribe o se escanea el número de seguimiento (DVX…). `POST /datos/v1/flex/mis-paquetes/seguir`: si el envío es para esa persona (su correo o los últimos 7 dígitos de su teléfono coinciden), queda vinculado a su cuenta y aparece completo con su ubicación; si no, lo sigue solo con el estado público (tabla `paquetes_seguidos`, sin dirección ni nombres). Los avisos push de cada paso llegan también a quien lo sigue (`avisarDestinatarios`).
+- **Seguridad:** con solo el número nadie ve la dirección ni el nombre de otra persona.
+- **Prueba:** `apps/servidor/src/flex/rastrear.test.ts` (comprobada en rojo) y `clienteEnviosTestflight.test.ts`.
+
+## C-FLEX-YA-LLEGA (31 oct 2026, LG4, pedido de Richard) — todos los países
+
+- **Qué es:** con la ruta en curso, cada vez que Driver manda su ubicación (cada 30 s), si está a menos de 800 m de la próxima parada (1,5 km si es un punto de encuentro de la vía), quien recibe (y quien sigue el número) recibe UNA vez el aviso «Tu paquete ya llega»: el nombre del conductor, la marca, el modelo, el color y la placa del vehículo, y el punto de encuentro si lo hay. `avisarYaLlega` en `flex/avisosFlex.ts`; clave única en `flex_avisos`.
+- **Falta:** la llamada automática por teléfono, que necesita las claves de Twilio de Richard (LG5).
+- **Prueba:** `apps/servidor/src/flex/yaLlega.test.ts` (comprobada en rojo).
+
+## C-FLEX-INVITAR y llamada «ya llega» (31 oct 2026, LG5) — todos los países
+
+- **Invitación:** al crear un envío (uno o en lote), si quien recibe no tiene cuenta, se le manda UNA vez un SMS (Twilio) y un correo (si lo dieron) con el número de seguimiento y el enlace `/track/<código>` (en inglés si la empresa es de EE. UU., en español si no). `invitarDestinatarios` en `flex/avisosFlex.ts`; clave `d:invitacion:<envío>` en `flex_avisos`.
+- **Llamada:** el aviso «ya llega» también llama con voz al teléfono de quien recibe, una vez por envío (`llamarConVoz` en `sms.ts`).
+- **Se encienden solos** cuando el sitio tenga `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y `TWILIO_FROM`. Sin ellas no hace nada ni falla.
+- **Costo:** un SMS a Venezuela cuesta unos 0,23 USD; se manda uno solo por envío y solo a quien no tiene la app.
+- **Prueba:** `apps/servidor/src/flex/invitar.test.ts` (comprobada en rojo).

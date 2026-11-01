@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { PERMISOS_CLAVE_API, type PermisoFlex, type RolEmpresa } from '@tumbite/compartido';
+import {
+  PERMISOS_CLAVE_API,
+  type PermisoFlex,
+  type RolEmpresa,
+  numeroFiscalValido,
+} from '@tumbite/compartido';
 import { enviarCorreo } from '../correo';
 import { nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
@@ -27,15 +32,30 @@ export const flexEmpresas = new Hono<{ Bindings: Env; Variables: Variables }>();
 const PAISES = ['US', 'CO', 'VE', 'MX'] as const;
 const MONEDAS = ['USD', 'COP', 'VES', 'MXN'] as const;
 const texto = (max: number) => z.string().trim().min(1).max(max);
-const esquemaEmpresa = z.object({
+const camposEmpresa = {
   nombre: texto(120),
   razonSocial: z.string().trim().max(160).default(''),
   pais: z.enum(PAISES),
   moneda: z.enum(MONEDAS),
-});
-const esquemaEmpresaCambio = esquemaEmpresa.partial().extend({
-  estado: z.enum(['activa', 'pausada']).optional(),
-});
+  // C-EMPRESA-LEGAL (LG1): opcionales para las integraciones de siempre; la app los exige.
+  numeroFiscal: z.string().trim().max(40).default(''),
+  direccionFiscal: z.string().trim().max(300).default(''),
+  representante: z.string().trim().max(120).default(''),
+  telefono: z.string().trim().max(40).default(''),
+};
+/** Si viene el número fiscal, tiene que tener la forma del país (EIN, RIF, NIT, RFC). */
+const esquemaEmpresa = z
+  .object(camposEmpresa)
+  .refine((d) => !d.numeroFiscal || numeroFiscalValido(d.pais, d.numeroFiscal), {
+    message: 'Ese número fiscal no tiene la forma del país (revisa los dígitos).',
+    path: ['numeroFiscal'],
+  });
+const esquemaEmpresaCambio = z
+  .object(camposEmpresa)
+  .partial()
+  .extend({
+    estado: z.enum(['activa', 'pausada']).optional(),
+  });
 const ROLES_INVITABLES = ['operaciones', 'operador', 'finanzas', 'api'] as const;
 const esquemaInvitacion = z.object({
   correo: z.email().max(254),
@@ -87,6 +107,10 @@ const filaEmpresa = (f: Record<string, unknown>) => ({
   razonSocial: f.razon_social,
   pais: f.pais,
   moneda: f.moneda,
+  numeroFiscal: f.numero_fiscal ?? '',
+  direccionFiscal: f.direccion_fiscal ?? '',
+  representante: f.representante ?? '',
+  telefono: f.telefono ?? '',
   estado: f.estado,
   creadoEn: f.creado_en,
 });
@@ -119,9 +143,21 @@ flexEmpresas.post('/empresas', async (c) => {
     await db.batch([
       db
         .prepare(
-          'INSERT INTO empresas (id, nombre, razon_social, pais, moneda, dueno_id) VALUES (?, ?, ?, ?, ?, ?)',
+          `INSERT INTO empresas (id, nombre, razon_social, pais, moneda, dueno_id,
+             numero_fiscal, direccion_fiscal, representante, telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
-        .bind(id, d.nombre, d.razonSocial, d.pais, d.moneda, u.id),
+        .bind(
+          id,
+          d.nombre,
+          d.razonSocial,
+          d.pais,
+          d.moneda,
+          u.id,
+          d.numeroFiscal.replace(/\s/g, '').toUpperCase(),
+          d.direccionFiscal,
+          d.representante,
+          d.telefono,
+        ),
       db
         .prepare(
           "INSERT INTO empresa_miembros (empresa_id, usuario_id, rol) VALUES (?, ?, 'dueno')",
@@ -196,6 +232,10 @@ flexEmpresas.patch('/empresas/:id', async (c) => {
       .prepare(
         `UPDATE empresas SET nombre = COALESCE(?, nombre), razon_social = COALESCE(?, razon_social),
          pais = COALESCE(?, pais), moneda = COALESCE(?, moneda), estado = COALESCE(?, estado),
+         numero_fiscal = COALESCE(NULLIF(?, ''), numero_fiscal),
+         direccion_fiscal = COALESCE(NULLIF(?, ''), direccion_fiscal),
+         representante = COALESCE(NULLIF(?, ''), representante),
+         telefono = COALESCE(NULLIF(?, ''), telefono),
          actualizado_en = datetime('now') WHERE id = ?`,
       )
       .bind(
@@ -204,6 +244,10 @@ flexEmpresas.patch('/empresas/:id', async (c) => {
         d.pais ?? null,
         d.moneda ?? null,
         d.estado ?? null,
+        (d.numeroFiscal ?? '').replace(/\s/g, '').toUpperCase(),
+        d.direccionFiscal ?? '',
+        d.representante ?? '',
+        d.telefono ?? '',
         actor.empresaId,
       ),
     sentenciaAuditoria(db, actor, 'empresa.editar', actor.empresaId, {

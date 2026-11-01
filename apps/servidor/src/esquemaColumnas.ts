@@ -1966,5 +1966,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "version",
     "aceptado_en"
+  ],
+  "pases_web": [
+    "codigo_hash",
+    "usuario_id",
+    "vence_en"
+  ],
+  "paquetes_seguidos": [
+    "usuario_id",
+    "codigo",
+    "creado_en"
   ]
 };

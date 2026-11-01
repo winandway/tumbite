@@ -48,3 +48,29 @@ describe('Envíos y la app del cliente, como los vio Richard en TestFlight', () 
         expect(readFileSync(f, 'utf8'), f).not.toMatch(/fontWeight: '(900|800)'/);
   });
 });
+
+describe('registro legal de la empresa en la app (C-EMPRESA-LEGAL, LG1)', () => {
+  const b = leer('apps', 'cliente', 'src', 'app', 'business.tsx');
+  it('pide los datos legales, valida el número fiscal y el centro con su punto', () => {
+    expect(b).toContain('numeroFiscalValido(v.pais, v.numeroFiscal)');
+    expect(b).toContain("formulario: 'app-empresa-flex'");
+    expect(b).toContain('<CampoDireccion');
+    expect(b).toContain("'/datos/v1/flex/empresas'");
+  });
+  it('abre el panel dentro de la app con un pase de un solo uso, no con la web afuera', () => {
+    expect(b).toContain("'/datos/cuentas/pase-web'");
+    expect(b).not.toContain('Linking');
+  });
+});
+
+describe('rastrear un paquete en la app del cliente (C-FLEX-RASTREAR, LG3)', () => {
+  it('«Mis paquetes» tiene «Rastrear un paquete» con escáner y Envíos lleva a él', () => {
+    expect(leer('apps', 'cliente', 'src', 'app', 'packages.tsx')).toContain('<RastrearPaquete');
+    const r = leer('apps', 'cliente', 'src', 'RastrearPaquete.tsx');
+    expect(r).toContain("'/datos/v1/flex/mis-paquetes/seguir'");
+    expect(r).toContain('<CameraView');
+    expect(leer('apps', 'cliente', 'src', 'app', 'service', '[id].tsx')).toContain(
+      't.envioRastrear',
+    );
+  });
+});

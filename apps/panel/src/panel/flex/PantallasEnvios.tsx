@@ -58,7 +58,8 @@ type Envio = {
   // Fase 6 (C-FLEX-COBRO).
   cobro?: CobroEnvio | null;
   // C-FLEX-RETIRO.
-  entrega?: 'domicilio' | 'punto';
+  entrega?: 'domicilio' | 'punto' | 'encuentro';
+  puntoEncuentro?: string;
   retiroVence?: string | null;
 } & UbicacionDeEnvio;
 type CobroEnvio = {
@@ -217,6 +218,7 @@ const INICIAL_ENVIO = {
   referencias: '',
   // C-FLEX-RETIRO: a domicilio o retiro en el centro elegido abajo.
   entrega: 'domicilio',
+  puntoEncuentro: '',
   // C-DIRECCION-SUGERENCIAS: el punto de la dirección sugerida que se eligió.
   lat: '',
   lng: '',
@@ -237,6 +239,11 @@ const CAMPOS_DESTINATARIO = {
     entrega: 'Cómo se entrega',
     domicilio: 'A domicilio (sale en una ruta)',
     punto: 'Retiro en el centro elegido abajo (5 días hábiles)',
+    encuentro: 'En un punto de encuentro de la vía (estación, peaje, plaza)',
+    puntoEncuentro: 'Nombre del punto de encuentro',
+    puntoEncuentroEj: 'Estación de servicio Doña María',
+    puntoEncuentroAyuda:
+      'Elige la dirección o marca el punto exacto: el conductor avisa al llegar.',
     direccionPunto: 'Retiro en el centro',
     cobro: 'Cobrar al entregar (opcional)',
     cobroAyuda:
@@ -269,6 +276,11 @@ const CAMPOS_DESTINATARIO = {
     entrega: 'How it’s delivered',
     domicilio: 'To a home (goes on a route)',
     punto: 'Pickup at the hub chosen below (5 business days)',
+    encuentro: 'At a meeting point on the road (gas station, toll, plaza)',
+    puntoEncuentro: 'Meeting point name',
+    puntoEncuentroEj: 'Main Street gas station',
+    puntoEncuentroAyuda:
+      'Pick the address or mark the exact spot: the driver lets them know on arrival.',
     direccionPunto: 'Pickup at the hub',
     cobro: 'Collect on delivery (optional)',
     cobroAyuda:
@@ -348,6 +360,7 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           destinatarioTelefono: v.destinatarioTelefono,
           direccion: v.direccion || (v.entrega === 'punto' ? cd.direccionPunto : ''),
           entrega: v.entrega,
+          puntoEncuentro: v.entrega === 'encuentro' ? v.puntoEncuentro : '',
           ...(v.lat ? { lat: Number(v.lat), lng: Number(v.lng) } : {}),
           instrucciones: v.instrucciones,
           destinatarioCorreo: v.destinatarioCorreo,
@@ -409,8 +422,20 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           >
             <option value="domicilio">{cd.domicilio}</option>
             <option value="punto">{cd.punto}</option>
+            <option value="encuentro">{cd.encuentro}</option>
           </select>
         </div>
+        {v.entrega === 'encuentro' ? (
+          <>
+            <Campo
+              etiqueta={cd.puntoEncuentro}
+              valor={v.puntoEncuentro}
+              cambiar={(x) => b.cambiar('puntoEncuentro', x)}
+              placeholder={cd.puntoEncuentroEj}
+            />
+            <p className="ayuda">{cd.puntoEncuentroAyuda}</p>
+          </>
+        ) : null}
         <div className="campo">
           {/* C-DIRECCION-SUGERENCIAS: direcciones reales del país de la empresa, con su punto. */}
           <CampoDireccion

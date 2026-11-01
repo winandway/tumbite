@@ -1,4 +1,5 @@
 import {
+  avisarYaLlega,
   avisarDestinatarios,
   avisarEmpresa,
   avisarSiguienteParada,
@@ -508,6 +509,11 @@ flexConductor.post('/conductor/rutas/:rutaId/ubicacion', async (c) => {
   const ub = await guardarUbicacion(db, r.id, d);
   if (!ub) throw new ErrorDatos('Falta la ubicación.', 'lat');
   await ub.run();
+  // C-FLEX-YA-LLEGA: cerca de la próxima parada, quien recibe sabe que ya llega y en qué vehículo.
+  if (r.estado === 'en_curso' && d.lat != null && d.lng != null) {
+    const yo = { lat: d.lat, lng: d.lng };
+    await despues(c, () => avisarYaLlega(c.env, db, r.id, u.id, yo));
+  }
   return c.json({ ok: true });
 });
 

@@ -413,3 +413,107 @@ flexUbicacion.post('/mis-paquetes/:envioId/ubicacion', async (c) => {
   await confirmarPunto(db, e.id, e.pais, d, 'app_cliente');
   return c.json({ ok: true });
 });
+
+// ───────────────────────────── C-FLEX-RASTREAR (LG3) ─────────────────────────────
+
+/**
+ * «Rastrear paquete» en la app del cliente (pedido de Richard, 31 oct 2026; como UPS My Choice o
+ * Amazon): la persona escribe o escanea un número de seguimiento. Si el envío es para ella (su
+ * teléfono o su correo coinciden con los del destinatario), queda vinculado a su cuenta y lo ve
+ * completo en «Mis paquetes», con su ubicación y los avisos. Si no es suyo, lo sigue solo con el
+ * estado público (sin dirección ni nombres) y le llegan los avisos de cada paso.
+ */
+const esquemaSeguir = z.object({ codigo: z.string().trim().min(5).max(40) });
+
+flexUbicacion.post('/mis-paquetes/seguir', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const { codigo: crudo } = await leerCuerpo(c, esquemaSeguir);
+  const codigo = crudo.replace(/[\s-]/g, '').toUpperCase();
+  if (!/^DVX[A-Z2-9]{10}$/.test(codigo))
+    throw new ErrorDatos('Ese número de seguimiento no tiene la forma correcta.', 'codigo', 404);
+  const p = await db
+    .prepare(
+      `SELECT p.estado, e.id AS envio, e.destinatario_usuario_id AS dueno, e.destinatario_telefono AS tel,
+              e.destinatario_correo AS correo, m.pais, m.nombre AS empresa
+         FROM paquetes p JOIN envios e ON e.id = p.envio_id JOIN empresas m ON m.id = e.empresa_id
+        WHERE p.codigo_seguimiento = ?`,
+    )
+    .bind(codigo)
+    .first<{
+      estado: string;
+      envio: string;
+      dueno: string | null;
+      tel: string;
+      correo: string;
+      pais: string;
+      empresa: string;
+    }>();
+  if (!p) throw new ErrorDatos('No encontramos ese número de seguimiento.', 'codigo', 404);
+  const yo = await db
+    .prepare('SELECT telefono, correo FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ telefono: string | null; correo: string }>();
+  const ultimos = (x: string | null | undefined) => (x ?? '').replace(/\D/g, '').slice(-7);
+  const esSuyo =
+    p.dueno === u.id ||
+    (!p.dueno &&
+      Boolean(yo) &&
+      ((p.correo !== '' && p.correo.toLowerCase() === yo!.correo.toLowerCase()) ||
+        (ultimos(p.tel).length === 7 && ultimos(p.tel) === ultimos(yo!.telefono))));
+  if (esSuyo && !p.dueno) {
+    await db
+      .prepare(
+        'UPDATE envios SET destinatario_usuario_id = ? WHERE id = ? AND destinatario_usuario_id IS NULL',
+      )
+      .bind(u.id, p.envio)
+      .run();
+    await vincularDestinatarios(db, [p.envio], p.pais);
+  }
+  await db
+    .prepare('INSERT OR IGNORE INTO paquetes_seguidos (usuario_id, codigo) VALUES (?, ?)')
+    .bind(u.id, codigo)
+    .run();
+  return c.json({ codigo, estado: p.estado, empresa: p.empresa, suyo: esSuyo });
+});
+
+/** Los números que la persona sigue, con el estado público de cada uno. */
+flexUbicacion.get('/mis-paquetes/seguidos', async (c) => {
+  const u = exigir(c);
+  const { results } = await base(c)
+    .prepare(
+      `SELECT s.codigo, p.estado, m.nombre AS empresa, e.destinatario_usuario_id = s.usuario_id AS suyo,
+              (SELECT MAX(creado_en) FROM paquete_eventos WHERE paquete_id = p.id) AS actualizado
+         FROM paquetes_seguidos s
+         JOIN paquetes p ON p.codigo_seguimiento = s.codigo
+         JOIN envios e ON e.id = p.envio_id JOIN empresas m ON m.id = e.empresa_id
+        WHERE s.usuario_id = ? ORDER BY s.creado_en DESC LIMIT 50`,
+    )
+    .bind(u.id)
+    .all<{
+      codigo: string;
+      estado: string;
+      empresa: string;
+      suyo: number;
+      actualizado: string | null;
+    }>();
+  return c.json({
+    seguidos: results.map((f) => ({
+      codigo: f.codigo,
+      estado: f.estado,
+      empresa: f.empresa,
+      suyo: Number(f.suyo) === 1,
+      final: ESTADOS_FINALES_PAQUETE.includes(f.estado as (typeof ESTADOS_FINALES_PAQUETE)[number]),
+      actualizado: f.actualizado,
+    })),
+  });
+});
+
+flexUbicacion.delete('/mis-paquetes/seguidos/:codigo', async (c) => {
+  const u = exigir(c);
+  await base(c)
+    .prepare('DELETE FROM paquetes_seguidos WHERE usuario_id = ? AND codigo = ?')
+    .bind(u.id, c.req.param('codigo').toUpperCase())
+    .run();
+  return c.json({ ok: true });
+});

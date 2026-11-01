@@ -1,5 +1,7 @@
 import type { Env } from '../env';
+import { enviarCorreo } from '../correo';
 import { notificar, type Aviso } from '../notificaciones';
+import { enviarSms, llamarConVoz } from '../sms';
 import type { Ctx } from './autorizacion';
 
 /**
@@ -315,7 +317,15 @@ export async function avisarDestinatarios(
       `SELECT e.id, e.destinatario_usuario_id AS usuario, u.idioma, em.nombre AS empresa
          FROM envios e JOIN usuarios u ON u.id = e.destinatario_usuario_id
          JOIN empresas em ON em.id = e.empresa_id
-        WHERE e.id IN (SELECT value FROM json_each(?)) AND e.destinatario_usuario_id IS NOT NULL`,
+        WHERE e.id IN (SELECT value FROM json_each(?1)) AND e.destinatario_usuario_id IS NOT NULL
+       UNION
+       -- C-FLEX-RASTREAR: también quien sigue el número de seguimiento en su app.
+       SELECT e.id, s.usuario_id AS usuario, u.idioma, em.nombre AS empresa
+         FROM envios e JOIN paquetes p ON p.envio_id = e.id
+         JOIN paquetes_seguidos s ON s.codigo = p.codigo_seguimiento
+         JOIN usuarios u ON u.id = s.usuario_id
+         JOIN empresas em ON em.id = e.empresa_id
+        WHERE e.id IN (SELECT value FROM json_each(?1))`,
     )
     .bind(JSON.stringify(envioIds))
     .all<{ id: string; usuario: string; idioma: string; empresa: string }>();
@@ -372,4 +382,213 @@ export async function despues(c: Ctx, trabajo: () => Promise<unknown>): Promise<
   })();
   if (ctx) ctx.waitUntil(seguro());
   else await seguro();
+}
+
+/**
+ * C-FLEX-YA-LLEGA (31 oct 2026, LG4, pedido de Richard): cuando el conductor está cerca de la
+ * próxima parada (800 m; 1,5 km si es un punto de encuentro en la vía), quien recibe recibe un aviso
+ * con sonido: quién viene, el vehículo, el color y la placa, para salir a esperarlo. Una sola vez por
+ * envío. Como «tu repartidor está llegando» de Uber y DoorDash, con los datos del vehículo de Uber.
+ */
+export const METROS_YA_LLEGA = 800;
+export const METROS_YA_LLEGA_ENCUENTRO = 1500;
+
+export function textoYaLlega(
+  idioma: string,
+  d: { conductor: string; vehiculo: string; punto: string },
+): Aviso {
+  const en = idioma === 'en';
+  const quien = d.conductor || (en ? 'Your driver' : 'Tu conductor');
+  const donde = d.punto ? (en ? ` at ${d.punto}` : ` en ${d.punto}`) : '';
+  return {
+    titulo: en ? 'Your package is almost there' : 'Tu paquete ya llega',
+    cuerpo: en
+      ? `${quien} is a few minutes away${donde}.${d.vehiculo ? ` Look for: ${d.vehiculo}.` : ''} Be ready to receive it.`
+      : `${quien} está a pocos minutos${donde}.${d.vehiculo ? ` Busca: ${d.vehiculo}.` : ''} Sal a recibirlo.`,
+  };
+}
+
+const R_TIERRA_M = 6_371_000;
+function metrosEntre(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const rad = (x: number) => (x * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R_TIERRA_M * Math.asin(Math.sqrt(h));
+}
+
+export async function avisarYaLlega(
+  env: Env,
+  db: D1Database,
+  rutaId: string,
+  conductorId: string,
+  yo: { lat: number; lng: number },
+): Promise<number> {
+  const p = await db
+    .prepare(
+      `SELECT rp.envio_id, e.lat, e.lng, e.entrega_tipo, e.punto_encuentro
+         FROM ruta_paradas rp JOIN envios e ON e.id = rp.envio_id
+        WHERE rp.ruta_id = ? AND rp.estado IN ('pendiente', 'llegada') AND e.lat IS NOT NULL
+        ORDER BY rp.orden LIMIT 1`,
+    )
+    .bind(rutaId)
+    .first<{
+      envio_id: string;
+      lat: number;
+      lng: number;
+      entrega_tipo: string;
+      punto_encuentro: string;
+    }>();
+  if (!p) return 0;
+  const tope = p.entrega_tipo === 'encuentro' ? METROS_YA_LLEGA_ENCUENTRO : METROS_YA_LLEGA;
+  if (metrosEntre(yo, p) > tope) return 0;
+  const v = await db
+    .prepare(
+      `SELECT u.nombre, ve.marca, ve.modelo, ve.color, ve.placa FROM usuarios u
+         LEFT JOIN repartidores r ON r.usuario_id = u.id
+         LEFT JOIN vehiculos ve ON ve.id = r.vehiculo_activo_id
+        WHERE u.id = ?`,
+    )
+    .bind(conductorId)
+    .first<{
+      nombre: string;
+      marca: string | null;
+      modelo: string | null;
+      color: string | null;
+      placa: string | null;
+    }>();
+  const vehiculo = [v?.marca, v?.modelo, v?.color, v?.placa ? `· ${v.placa}` : '']
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const conductor = (v?.nombre ?? '').split(' ')[0] ?? '';
+  const { results } = await db
+    .prepare(
+      `SELECT e.destinatario_usuario_id AS usuario, u.idioma FROM envios e JOIN usuarios u ON u.id = e.destinatario_usuario_id
+        WHERE e.id = ?1
+       UNION
+       SELECT s.usuario_id AS usuario, u.idioma FROM paquetes p
+         JOIN paquetes_seguidos s ON s.codigo = p.codigo_seguimiento JOIN usuarios u ON u.id = s.usuario_id
+        WHERE p.envio_id = ?1`,
+    )
+    .bind(p.envio_id)
+    .all<{ usuario: string; idioma: string }>();
+  let enviados = 0;
+  for (const f of results) {
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, ?)',
+      )
+      .bind(`d:ya_llega:${p.envio_id}:${f.usuario}`, f.usuario, 'paquete_ya_llega', rutaId)
+      .run();
+    if (!r.meta.changes) continue;
+    await notificar(env, db, f.usuario, {
+      ...textoYaLlega(f.idioma, {
+        conductor,
+        vehiculo,
+        punto: p.entrega_tipo === 'encuentro' ? p.punto_encuentro : '',
+      }),
+      sonido: SONIDO_CLIENTE,
+      datos: { tipo: 'flex_paquete', evento: 'ya_llega', envioId: p.envio_id },
+    });
+    enviados++;
+  }
+  // Y una llamada con voz al teléfono de quien recibe (una vez por envío), si hay Twilio.
+  const tel = await db
+    .prepare(
+      `SELECT e.destinatario_telefono AS tel, m.pais, m.dueno_id AS dueno FROM envios e
+         JOIN empresas m ON m.id = e.empresa_id WHERE e.id = ?`,
+    )
+    .bind(p.envio_id)
+    .first<{ tel: string; pais: string; dueno: string }>();
+  if (tel?.tel) {
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, ?)',
+      )
+      .bind(`d:ya_llega_llamada:${p.envio_id}`, tel.dueno, 'paquete_ya_llega_llamada', rutaId)
+      .run();
+    if (r.meta.changes) {
+      const idioma: 'es' | 'en' = tel.pais === 'US' ? 'en' : 'es';
+      const a = textoYaLlega(idioma, {
+        conductor,
+        vehiculo,
+        punto: p.entrega_tipo === 'encuentro' ? p.punto_encuentro : '',
+      });
+      await llamarConVoz(env, tel.tel, `${a.titulo}. ${a.cuerpo}`, idioma);
+    }
+  }
+  return enviados;
+}
+
+/**
+ * C-FLEX-INVITAR (31 oct 2026, LG5, pedido de Richard): al crear un envío, si quien recibe todavía
+ * no tiene la app, se le invita por mensaje de texto (Twilio) y por correo (si lo dieron) con su
+ * número de seguimiento y el enlace para seguirlo: la persona instala Divoox, escribe el número y le
+ * llegan los avisos de cada paso, incluido el «ya llega». Una sola vez por envío.
+ */
+export function textoInvitacion(
+  idioma: 'es' | 'en',
+  d: { empresa: string; codigo: string; enlace: string },
+) {
+  return idioma === 'en'
+    ? `${d.empresa} sent you a package with Divoox. Tracking number: ${d.codigo}. Follow it: ${d.enlace} — get the Divoox app and we'll let you know when it's close.`
+    : `${d.empresa} te envió un paquete con Divoox. Número de seguimiento: ${d.codigo}. Síguelo: ${d.enlace} — baja la app Divoox y te avisamos cuando esté cerca.`;
+}
+
+export async function invitarDestinatarios(env: Env, db: D1Database, envioIds: string[]) {
+  if (!envioIds.length) return 0;
+  const { results } = await db
+    .prepare(
+      `SELECT e.id, e.destinatario_telefono AS tel, e.destinatario_correo AS correo, m.nombre AS empresa,
+              m.pais, m.dueno_id AS dueno,
+              (SELECT codigo_seguimiento FROM paquetes WHERE envio_id = e.id ORDER BY creado_en LIMIT 1) AS codigo
+         FROM envios e JOIN empresas m ON m.id = e.empresa_id
+        WHERE e.id IN (SELECT value FROM json_each(?)) AND e.destinatario_usuario_id IS NULL`,
+    )
+    .bind(JSON.stringify(envioIds))
+    .all<{
+      id: string;
+      tel: string;
+      correo: string;
+      empresa: string;
+      pais: string;
+      dueno: string;
+      codigo: string | null;
+    }>();
+  const base = (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
+  let enviados = 0;
+  for (const f of results) {
+    if (!f.codigo || (!f.tel && !f.correo)) continue;
+    const r = await db
+      .prepare(
+        'INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo, ruta_id) VALUES (?, ?, ?, NULL)',
+      )
+      .bind(`d:invitacion:${f.id}`, f.dueno, 'paquete_invitacion')
+      .run();
+    if (!r.meta.changes) continue;
+    const idioma: 'es' | 'en' = f.pais === 'US' ? 'en' : 'es';
+    const enlace = `${base}${idioma === 'es' ? '/es' : ''}/track/${f.codigo}`;
+    const texto = textoInvitacion(idioma, { empresa: f.empresa, codigo: f.codigo, enlace });
+    if (f.tel)
+      await enviarSms(env, db, {
+        usuarioId: f.dueno,
+        pedidoId: null,
+        tipo: 'flex_invitacion',
+        telefono: f.tel,
+        texto,
+      });
+    if (f.correo)
+      await enviarCorreo(env, {
+        de: 'hola',
+        para: f.correo,
+        idioma,
+        asunto:
+          idioma === 'en' ? `${f.empresa} sent you a package` : `${f.empresa} te envió un paquete`,
+        texto,
+      });
+    enviados++;
+  }
+  return enviados;
 }

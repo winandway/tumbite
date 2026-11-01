@@ -105,6 +105,9 @@ type Parada = {
   lat: number | null;
   lng: number | null;
   sinCoordenadas: boolean;
+  /** C-FLEX-ENCUENTRO: «domicilio», «punto» (retiro en centro) o «encuentro» (punto de la vía). */
+  entrega?: string;
+  puntoEncuentro?: string;
   destinatarioNombre: string | null;
   destinatarioTelefono: string | null;
   ventanaDesde: string | null;
@@ -1012,6 +1015,11 @@ function MiRutaContenido({
                             </Text>
                           ) : null}
                           <Text style={{ fontWeight: '800', color: TEXTO }}>{nombreParada(p)}</Text>
+                          {p.entrega === 'encuentro' && p.puntoEncuentro ? (
+                            <Text style={{ color: C.logisticaAccion, fontWeight: '700' }}>
+                              {t.encuentro}: {p.puntoEncuentro}
+                            </Text>
+                          ) : null}
                           {p.destinatarioNombre ? (
                             <Text style={{ color: GRIS }}>{p.direccion}</Text>
                           ) : null}
@@ -2079,6 +2087,17 @@ function DetalleParada({
       </View>
       {error}
       {cola}
+      {parada.entrega === 'encuentro' && parada.puntoEncuentro ? (
+        // C-FLEX-ENCUENTRO: se entrega en un punto de la vía; quien recibe espera ahí.
+        <View
+          testID="parada-encuentro"
+          style={[tarjeta, { gap: 4, borderColor: C.logisticaAccion, backgroundColor: RESALTE }]}
+        >
+          <Text style={{ color: C.logisticaAccion, fontWeight: '800' }}>{t.encuentro}</Text>
+          <Text style={{ fontWeight: '800', fontSize: 17 }}>{parada.puntoEncuentro}</Text>
+          <Text style={{ color: GRIS }}>{t.encuentroAyuda}</Text>
+        </View>
+      ) : null}
       <Pestanas
         opciones={[
           { id: 'paquetes', texto: `${t.pestanasParada.paquetes} (${activos.length})` },

@@ -146,3 +146,10 @@ describe('Mi ruta: escanear en la parada y «Parada actual» (como Amazon Flex)'
     expect(inicio).toMatch(/<\/ScrollView>\s*\{pieFlex\}/);
   });
 });
+
+describe('punto de encuentro en la parada (C-FLEX-ENCUENTRO, LG2)', () => {
+  it('el conductor ve el nombre del punto y que quien recibe lo espera ahí', () => {
+    expect(miRuta).toContain('testID="parada-encuentro"');
+    expect(miRuta).toContain("p.entrega === 'encuentro' && p.puntoEncuentro");
+  });
+});
