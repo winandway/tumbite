@@ -122,7 +122,16 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         ],
       },
       {
-        titulo: '12. Cambios a esta política',
+        id: 'sms',
+        titulo: '12. Mensajes de texto (SMS)',
+        parrafos: [
+          'Te enviamos mensajes de texto solo sobre tus pedidos y envíos: confirmación, el número de seguimiento, cuando el conductor va en camino o ya llega, y la entrega. Los aceptas al darnos tu número en la app o en el sitio, o cuando una empresa que usa Divoox para sus entregas nos da tu número para avisarte de tu paquete. No enviamos publicidad por mensaje de texto.',
+          `La cantidad de mensajes depende de tus pedidos. Pueden aplicar tarifas de mensajes y datos de tu operador. Responde STOP para dejar de recibirlos y HELP para pedir ayuda, o escríbenos a ${CONTACTO}.`,
+          'Tu número de celular y tu consentimiento para recibir mensajes no se comparten con terceros ni con afiliados para fines de publicidad. Solo lo usan los proveedores que envían el mensaje por nosotros.',
+        ],
+      },
+      {
+        titulo: '13. Cambios a esta política',
         parrafos: [
           'Si la cambiamos, publicaremos la nueva versión aquí con su fecha. Si el cambio es importante, te avisaremos por correo o en la app antes de que entre en vigor.',
         ],
@@ -224,7 +233,16 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         ],
       },
       {
-        titulo: '12. Changes to this policy',
+        id: 'sms',
+        titulo: '12. Text messages (SMS)',
+        parrafos: [
+          'We send text messages only about your orders and deliveries: confirmation, your tracking number, when the driver is on the way or arriving, and delivery. You opt in when you give us your phone number in the app or on the website, or when a business that uses Divoox for its deliveries gives us your number so we can update you about your package. We don’t send marketing by text message.',
+          `Message frequency varies with your orders. Message and data rates may apply. Reply STOP to opt out and HELP for help, or email ${CONTACTO}.`,
+          'Your mobile number and your SMS opt-in consent will not be shared with third parties or affiliates for marketing purposes. It is used only by the providers that deliver the message on our behalf.',
+        ],
+      },
+      {
+        titulo: '13. Changes to this policy',
         parrafos: [
           'If we change it, we’ll post the new version here with its date. If the change is significant, we’ll notify you by email or in the app before it takes effect.',
         ],
