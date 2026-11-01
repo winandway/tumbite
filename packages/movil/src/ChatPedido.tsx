@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
-import { ErrorApi, enIdioma } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, unirMensajes } from '@tumbite/compartido';
 import { Boton, C, e } from './ui';
 import { useSesion } from './sesion';
 
@@ -99,8 +99,9 @@ export function ChatPedido({
       );
       setAbierto(r.abierto);
       if (r.mensajes.length) {
-        ultimo.current = r.mensajes[r.mensajes.length - 1]!.id;
-        setMensajes((m) => [...m, ...r.mensajes]);
+        ultimo.current = Math.max(ultimo.current, r.mensajes[r.mensajes.length - 1]!.id);
+        // C-CHAT-SIN-DOBLES: dos consultas cruzadas pueden traer el mismo mensaje.
+        setMensajes((m) => unirMensajes(m, r.mensajes));
       }
     } catch {
       /* la siguiente consulta lo intenta otra vez */

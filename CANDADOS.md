@@ -2267,3 +2267,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** el vehículo se crea igual, y queda como activo solo si no tenía uno y no está en operación; todo dentro de `asegurarVehiculoSinFrenar` (nunca frena aceptar, vincular ni avisar). El aviso «ya llega» usa el activo o, si falta, el último registrado.
 - **Prueba:** `invitarConductor.test.ts` → «aceptar nunca falla aunque el conductor esté en plena operación», comprobada en rojo.
 - **Ampliado el 1 nov:** también se acepta con el enlace (`POST /conductor/invitacion-enlace/:token/aceptar`), porque en Divoox una cuenta tiene un solo papel: quien ya usa su celular o su correo como cliente crea su cuenta de Driver con otros y pega el enlace en el inicio de Driver («¿Una empresa te invitó? Pega su enlace»). El enlace sirve una sola vez. Prueba en `invitarConductor.test.ts`, comprobada en rojo.
+
+## C-CHAT-SIN-DOBLES — un mensaje del chat nunca se ve dos veces (1 nov 2026, todos los países)
+
+- **Qué se vio:** en el recorrido del sitio de pruebas (red lenta), el mensaje del cliente salió dos veces en su chat: la consulta de cada 4 s y la de después de enviar se cruzaban y las dos traían el mismo mensaje.
+- **Qué hay:** `unirMensajes` en `packages/compartido/src/chatMensajes.ts` (une por número de mensaje, sin repetir, en orden) y `ChatPedido.tsx` la usa; el «desde» guarda el número mayor visto.
+- **Prueba:** `chatMensajes.test.ts`, comprobada en rojo.
