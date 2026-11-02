@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-01T22:52:32-05:00",
+  "actualizado": "2026-11-01T23:47:37-05:00",
   "version": "6632d38",
   "ahora": {
-    "titulo": "Capturas en todas las guías de Docs",
-    "detalle": "Ya tienen capturas reales: zonas con más pedidos, Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte. Sigue la revisión de todas las demás guías."
+    "titulo": "Repaso de pantallas de las tres apps",
+    "detalle": "«Mis pedidos» rediseñado, la flecha de volver arreglada y una primera tanda de pulido visual. Sigue la revisión de todas las pantallas en los dos idiomas."
   },
   "proximo": [
     {
@@ -287,6 +287,28 @@
   "bitacora": [
     {
       "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "La flecha de volver ya no te saca de Mi cuenta",
+      "texto": "Desde Mi cuenta o Mis pedidos, al abrir un pedido y volver, regresas a donde estabas.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "«Mis pedidos» renovado",
+      "texto": "Foto del local, estado con color (verde si se entregó) y botones claros: «Ver recibo» y «Pedir otra vez».",
+      "paises": "Todos",
+      "docs": ["my-orders-and-reorder"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "Pulido visual de la app del cliente",
+      "texto": "Barra de abajo en un solo color, buscador sin recuadro azul en la web, carrito vacío con botón y casos de ayuda en el idioma de la app.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
       "tipo": "nuevo",
       "titulo": "Guías de Docs con capturas reales",
       "texto": "Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte, en español e inglés.",
@@ -439,7 +461,8 @@
     "rewards": "Divoox Rewards",
     "busy-areas": "Zonas con más pedidos",
     "support": "Soporte",
-    "send-screenshot-to-support": "Mandar capturas a soporte"
+    "send-screenshot-to-support": "Mandar capturas a soporte",
+    "my-orders-and-reorder": "Mis pedidos y pedir otra vez"
   },
   "presentacion": "La startup Divoox: reparto de comida, tiendas, logística para empresas y viajes en una sola plataforma. Tres apps (cliente, Driver y restaurante) y un panel web, en inglés y español, pensada para EE. UU. y Latinoamérica.",
   "apps": [
