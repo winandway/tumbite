@@ -67,6 +67,23 @@ export default defineConfig({
           branches: 90,
           statements: 90,
         },
+        // C-COBERTURA-DINERO (COB-7, 2 nov 2026): archivos de dinero del servidor que se subieron
+        // al 90 % de líneas; ninguno puede volver a bajar de ahí.
+        ...Object.fromEntries(
+          [
+            'finanzas/reloj.ts',
+            'finanzas/rutasEmpresa.ts',
+            'finanzas/rutasAdmin.ts',
+            'finanzas/billetera.ts',
+            'finanzas/cobrosRuta.ts',
+            'finanzas/conductor.ts',
+            'plus.ts',
+            'tarjetasRegalo.ts',
+            'viajesCobro.ts',
+            'internacional/recargas.ts',
+            'sms.ts',
+          ].map((f) => [`apps/servidor/src/${f}`, { lines: 90 }]),
+        ),
       },
     },
   },
