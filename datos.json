@@ -1,28 +1,35 @@
 {
-  "actualizado": "2026-11-02T00:22:47-05:00",
-  "version": "6632d38",
+  "actualizado": "2026-11-02T02:17:15-05:00",
+  "version": "9f567e0",
   "ahora": {
-    "titulo": "Repaso de pantallas de las tres apps",
-    "detalle": "«Mis pedidos» rediseñado, la flecha de volver arreglada y una primera tanda de pulido visual. Sigue la revisión de todas las pantallas en los dos idiomas."
+    "titulo": "Todo lo de la fila está publicado",
+    "detalle": "Repaso de pantallas, más verde, «Mis pedidos», la flecha de volver y el Bloque G ya están en producción. Lo que sigue depende de tus decisiones (abajo)."
   },
   "proximo": [
     {
-      "quien": "ia",
-      "titulo": "Capturas en las guías de Docs",
-      "detalle": "Ninguna guía sin imágenes. Las de venta llevan capturas grandes de cada paso."
-    },
-    {
-      "quien": "ia",
-      "titulo": "Decir «la startup Divoox» en la web",
-      "detalle": "Portada, franquicias, presentaciones y Docs de inicio."
+      "quien": "richard",
+      "titulo": "Confirmar el prepago de conductores",
+      "detalle": "País y porcentaje (la propuesta es Venezuela y Colombia al 10 %). Está listo y frenado hasta tu sí."
     },
     {
       "quien": "richard",
       "titulo": "Compra real de 1 dólar y prueba en la calle",
       "detalle": "Es lo único que falta para encender Comida en Miami."
+    },
+    {
+      "quien": "ia",
+      "titulo": "Seguir puliendo pantallas",
+      "detalle": "Repaso continuo de las tres apps en los dos idiomas con cada cambio."
     }
   ],
   "esperando": [
+    {
+      "id": "prepago-pais-porcentaje",
+      "prioridad": "alta",
+      "titulo": "Prepago de conductores: país y porcentaje",
+      "para": "Encender la comisión que se descuenta del saldo prepago del conductor en moto, carro y envíos. La propuesta, copiada de inDrive: Venezuela y Colombia al 10 %.",
+      "destraba": "Cobrar comisión a los conductores en esos países."
+    },
     {
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
