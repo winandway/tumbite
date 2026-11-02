@@ -907,6 +907,11 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Puedes tener hasta 5 promociones a la vez.', 'You can have up to 5 promotions at a time.'],
   ['Esa promoción no existe o ya terminó.', 'That promotion doesn’t exist or already ended.'],
   ['La fecha no es válida.', 'The date isn’t valid.'],
+  // C-MODO-DESTINO (BRE-6)
+  [
+    'Ya usaste el modo destino dos veces hoy. Vuelve a estar disponible mañana.',
+    'You already used destination mode twice today. It’s available again tomorrow.',
+  ],
   // C-PEDIDO-PRUEBA (BRE-4)
   [
     'Ya tienes un pedido de prueba abierto. Termínalo o recházalo antes de pedir otro.',

@@ -51,6 +51,7 @@ import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { ModoPago } from './piezas/ModoPago';
+import { ModoDestino } from './piezas/ModoDestino';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
@@ -1221,6 +1222,8 @@ export function Inicio() {
           alCambiar={() => void cargar()}
         />
       ) : null}
+      {/* C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día. */}
+      <ModoDestino cerca={aqui} />
       {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
       <InvitacionesEmpresa
         alAceptar={(texto) => {

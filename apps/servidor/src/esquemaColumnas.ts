@@ -2108,6 +2108,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "descuento",
     "creado_en"
   ],
+  "modo_destino": [
+    "repartidor_id",
+    "direccion",
+    "lat",
+    "lng",
+    "activo",
+    "encendido_en",
+    "apagado_en",
+    "motivo"
+  ],
+  "usos_modo_destino": [
+    "repartidor_id",
+    "dia",
+    "usos"
+  ],
   "suscripciones_plus": [
     "usuario_id",
     "stripe_suscripcion",

@@ -2588,3 +2588,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Docs:** guía «Promociones que creas y pagas tú» (`restaurants/promotions`), español e inglés. **Falta:** captura real al llegar al sitio de pruebas (en `ESPERAN`; FILA, BRE-5b).
 - **Sin probar con dinero:** construido, probado con Stripe simulado; ver `VERIFICAR-PAGOS.md`.
 - **Qué NO tocar:** la promoción nunca baja la ganancia de Divoox ni el pago del repartidor; los recálculos de un pedido usan la copia guardada en `pedidos_promocion`, no la promoción de hoy; si se agrega otro recálculo de pedido, tiene que pasar por `calcularConPromocion`.
+
+## C-MODO-DESTINO (2 nov 2026, BRE-6) — todos los países
+
+- **Qué es:** en Divoox Driver, tarjeta «Modo destino» en Inicio: el repartidor pone su destino (con la casilla de sugerencias, C-DIRECCION-SUGERENCIAS) y solo le llegan ofertas cuya entrega lo deja al menos 0,5 km más cerca. Hasta dos veces por día de su ciudad; se apaga solo a menos de 0,5 km del destino o con «Apagar». Como «Driver Destinations» de Uber. Ficha: `docs/investigaciones-rea/2026-11-02-promociones-y-destino.md`.
+- **Dónde vive:** reglas en `packages/compartido/src/modoDestino.ts` (`acercaAlDestino`, `llegoAlDestino`, `diaLocal`, `USOS_DESTINO_DIA`); tablas `modo_destino` y `usos_modo_destino` en `schema.sql`; rutas `GET/PUT/DELETE /datos/repartidor/destino` en `apps/servidor/src/modoDestino.ts`; filtro en `repartirOfertas` y apagado al llegar en `POST /repartidor/ubicacion` (`apps/servidor/src/rutas/operacion.ts`); pantalla `apps/repartidor/src/piezas/ModoDestino.tsx` en `Inicio.tsx`.
+- **Pruebas (comprobadas en rojo):** `apps/servidor/src/modoDestino.test.ts` (sin rutas fallan las cinco; sin el filtro falla la de ofertas), `packages/compartido/src/modoDestino.test.ts`.
+- **Docs:** guía «Modo destino: pedidos de camino a casa» (`drivers/destination-mode`), español e inglés. **Falta:** captura real al llegar al sitio de pruebas (en `ESPERAN`; FILA, BRE-6b).
+- **Qué NO tocar:** el contador sube con `ON CONFLICT … WHERE usos < 2` en un solo paso (nunca leer y después escribir); cualquier camino nuevo que elija repartidores para una oferta tiene que pasar por el mismo filtro de destino.

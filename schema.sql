@@ -3264,6 +3264,25 @@ CREATE TABLE IF NOT EXISTS pedidos_promocion (
 );
 CREATE INDEX IF NOT EXISTS pedidos_promocion_promo ON pedidos_promocion(promocion_id);
 
+-- C-MODO-DESTINO (BRE-6, 2 nov 2026, como «Driver Destinations» de Uber): el destino del repartidor
+-- (solo recibe ofertas que lo acercan) y cuántas veces lo encendió cada día de su ciudad.
+CREATE TABLE IF NOT EXISTS modo_destino (
+  repartidor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  direccion TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  activo INTEGER NOT NULL DEFAULT 1,
+  encendido_en TEXT NOT NULL DEFAULT (datetime('now')),
+  apagado_en TEXT,
+  motivo TEXT
+);
+CREATE TABLE IF NOT EXISTS usos_modo_destino (
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  dia TEXT NOT NULL,
+  usos INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (repartidor_id, dia)
+);
+
 -- C-PLUS (R-T3, 1 nov 2026, como DashPass): la suscripción del cliente. Se cobra con una
 -- suscripción de Stripe; solo el aviso firmado «invoice.paid» la activa y le pone vencimiento.
 CREATE TABLE IF NOT EXISTS suscripciones_plus (

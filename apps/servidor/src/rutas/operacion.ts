@@ -1,3 +1,4 @@
+import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
 import { evaluarDestacado } from './repartidorGrandes';
 import { correosEquipo } from '../avisosEquipo';
@@ -55,6 +56,7 @@ import {
   rangoLlegada,
   segundosDesde,
   senalPerdida,
+  acercaAlDestino,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
@@ -1429,6 +1431,8 @@ operacion.post('/repartidor/ubicacion', async (c) => {
   await registrarHitos(c.env, db, u.id, d, muestras).catch((e: unknown) =>
     console.error('hitos', e),
   );
+  // C-MODO-DESTINO: al llegar a su destino, el modo se apaga solo.
+  await revisarLlegadaDestino(db, u.id, d);
   return c.json({ ok: true });
 });
 
@@ -1563,6 +1567,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const { results: pendientes } = await db
     .prepare(
       `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash,
+        p.lat AS e_lat, p.lng AS e_lng,
         CAST((julianday(p.programado_para) - julianday('now')) * 1440 AS INTEGER) AS min_franja
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
@@ -1582,9 +1587,13 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       lat: number | null;
       lng: number | null;
       geohash: string | null;
+      e_lat: number | null;
+      e_lng: number | null;
       min_franja: number | null;
     }>();
   if (!pendientes.length) return;
+  // C-MODO-DESTINO: quien tiene el modo encendido solo recibe entregas que lo acercan a su destino.
+  const destinos = await destinosActivos(db);
   const prioridadNivel = (await leerAjustes(db)).prioridadDespacho;
   const ocupados = new Set<string>();
   for (const p of pendientes) {
@@ -1610,6 +1619,15 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
               : 0,
         }))
         .filter((d) => d.km <= 15 && debeOfrecer(faltan, d.km))
+        .filter((d) => {
+          const destino = destinos.get(d.id);
+          if (!destino) return true;
+          return (
+            p.e_lat != null &&
+            p.e_lng != null &&
+            acercaAlDestino(d, { lat: Number(p.e_lat), lng: Number(p.e_lng) }, destino)
+          );
+        })
         // C-TURNOS-REPARTIDOR, C-REWARDS-PRIORIDAD y C-REPARTIDOR-DESTACADO, en ese orden.
         .sort((a, b) => compararLibres(a, b, prioridadNivel));
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).

@@ -2353,6 +2353,29 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'destination-mode',
+        titulo: 'Modo destino: pedidos de camino a casa',
+        resumen:
+          'Pon tu destino —tu casa, por ejemplo— y Divoox Driver solo te ofrece pedidos cuya entrega te acerca. Lo puedes usar dos veces al día y se apaga solo cuando llegas.',
+        capturas: [],
+        preguntas: [
+          '¿Cómo recibo pedidos de camino a mi casa?',
+          '¿Cuántas veces al día puedo usar el modo destino?',
+          '¿Cuándo se apaga el modo destino?',
+        ],
+        pasos: [
+          'En Divoox Driver, en Inicio, busca la tarjeta «Modo destino».',
+          'Escribe tu destino y elígelo de la lista de sugerencias, para que quede el punto exacto.',
+          'Toca «Ir hacia allá». Desde ese momento solo te llegan ofertas cuya entrega te deja más cerca de tu destino.',
+          'Cuando llegas, el modo se apaga solo. Si cambias de plan, toca «Apagar».',
+        ],
+        explicacion: [
+          'Puedes encenderlo dos veces al día. El contador vuelve a cero a medianoche, hora de tu ciudad, y la tarjeta te dice cuántos usos te quedan.',
+          'Cada vez que lo enciendes cuenta como un uso, aunque lo apagues antes de llegar.',
+          'Con el modo encendido te pueden llegar menos ofertas, sobre todo si pocos pedidos van hacia donde vas.',
+        ],
+      },
+      {
         id: 'my-route-packages',
         titulo: 'Mi ruta: repartir paquetes de empresas con Divoox Driver',
         resumen:
@@ -6563,6 +6586,29 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'destination-mode',
+        titulo: 'Destination mode: orders on your way home',
+        resumen:
+          'Set your destination —home, for example— and Divoox Driver only offers you orders whose drop-off takes you closer. You can use it twice a day, and it turns off on its own when you arrive.',
+        capturas: [],
+        preguntas: [
+          'How do I get orders on my way home?',
+          'How many times a day can I use destination mode?',
+          'When does destination mode turn off?',
+        ],
+        pasos: [
+          'In Divoox Driver, on Home, find the “Destination mode” card.',
+          'Type your destination and pick it from the suggestions so we have the exact spot.',
+          'Tap “Head there.” From then on you only get offers whose drop-off leaves you closer to your destination.',
+          'When you arrive, the mode turns off on its own. If your plans change, tap “Turn off.”',
+        ],
+        explicacion: [
+          'You can turn it on twice a day. The count resets at midnight, your city’s time, and the card shows how many uses you have left.',
+          'Each time you turn it on counts as one use, even if you turn it off before arriving.',
+          'With the mode on you may get fewer offers, especially when few orders are headed your way.',
+        ],
+      },
       {
         id: 'my-route-packages',
         titulo: 'My route: delivering company packages with Divoox Driver',

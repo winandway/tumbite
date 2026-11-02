@@ -39,3 +39,20 @@ Decisiones [INF]: tabla nueva `promociones_restaurante` y `pedidos_promocion` (c
 - `packages/compartido/src/promociones.test.ts`: el descuento sale del restaurante, Divoox y repartidor iguales, el pedido cuadra al centavo; nunca negativo; los tres tipos; insignia en dos idiomas. Comprobado en rojo sin el cambio de `bolsillos.ts` (3 fallan).
 - `apps/servidor/src/promocionesRestaurante.test.ts`: apagadas de fábrica; 20 % con tope; venta abonada = pago con promoción y conciliación cuadra; envío gratis sigue al cambio de dirección; reglas (fechas, mínimo, usos, 1–50 %, terminar, solo su restaurante, apagar al momento); las pantallas usan la pieza. Comprobado en rojo sin las rutas (6 fallan).
 - `apps/panel/src/panel/Promociones.test.tsx`: apagadas, crear en centavos, terminar, error que deja lo escrito, interruptor del superadmin.
+
+## 4. Comparación y decisión — BRE-6
+
+| Pieza        | Uber Driver                     | Divoox antes | Divoox ahora                                                       |
+| ------------ | ------------------------------- | ------------ | ------------------------------------------------------------------ |
+| Destino      | Interruptor + dirección         | No           | Tarjeta «Modo destino» en Inicio de Driver, con `CampoDireccion`   |
+| Usos         | Dos al día, a cero a medianoche | —            | Dos por día de su ciudad (zona horaria de su zona)                 |
+| Qué le llega | Viajes que van hacia allá       | Todo         | Solo ofertas cuya entrega lo deja al menos 0,5 km más cerca        |
+| Apagado      | Al llegar / a mano              | —            | A menos de 0,5 km del destino (con su ubicación) o «Apagar»        |
+| Horas pico   | Puede no estar disponible       | —            | [INF] no se limita todavía; queda para cuando haya demanda medible |
+
+Decisiones [INF]: cada encendido cuenta un uso (Uber cuenta por viaje con el destino puesto; la regla nuestra es más simple de explicar y nunca da más de dos al día). El umbral de 0,5 km y medir solo la entrega (no el desvío a la recogida) son nuestros; el de Uber es [NV]. Tablas nuevas `modo_destino` y `usos_modo_destino` en `schema.sql`; el contador sube en un solo paso con tope, así dos toques a la vez no pasan de dos.
+
+## 5. Pruebas de aceptación — BRE-6
+
+- `packages/compartido/src/modoDestino.test.ts`: acerca / aleja / igual; llegada a medio kilómetro; el día en la hora de su ciudad.
+- `apps/servidor/src/modoDestino.test.ts`: apagado recibe todo, encendido solo lo que lo acerca (comprobado en rojo quitando el filtro); dos veces al día y la tercera 409, ayer no cuenta; se apaga solo al llegar; valida coordenadas y solo un repartidor; la app usa `CampoDireccion`. Sin las rutas fallan las cinco.
