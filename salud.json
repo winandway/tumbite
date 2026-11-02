@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "piezas": {
+    "base": "ok",
+    "almacen": "ok",
+    "entorno": "ok",
+    "esquema": "ok",
+    "variables": "ok",
+    "stripe": "ok",
+    "webhookStripe": "ok",
+    "webhookStripeConectadas": "pendiente",
+    "turnstile": "pendiente",
+    "correo": "ok",
+    "avisosCelular": "ok",
+    "sms": "ok",
+    "dinero": "ok",
+    "retiros": "pendiente",
+    "servicios": "ok",
+    "viajes": "ok",
+    "tiempoReal": "pendiente",
+    "exclusividad": "ok",
+    "reloj": "ok",
+    "transiciones": "ok",
+    "libro": "ok",
+    "disputas": "ok",
+    "errores": "ok",
+    "bandeja": "ok",
+    "cobros": "ok",
+    "billeteras": "ok",
+    "respaldo": "ok"
+  },
+  "medido": "2026-11-02T00:26:55.255938+00:00"
+}

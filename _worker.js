@@ -1,4 +1,4 @@
-/* global Response, crypto, TextEncoder, fetch, AbortSignal, URL, Headers, console */
+/* global Response, crypto, TextEncoder, URL, Headers, console */
 // Divoox · Progreso (1 nov 2026, pedido de Richard): la página del avance del proyecto para Richard
 // y su equipo. Sirve los estáticos (index.html, datos.json…) y tres rutas pequeñas:
 //   GET  /datos/marcas  → lo que Richard marcó como «Ya lo hice» (la IA lo lee antes de cada respuesta)
@@ -53,30 +53,18 @@ async function marcar(request, env) {
   return json({ ok: true, marcas: await marcas(env) });
 }
 
-async function salud() {
-  // Se prueba el dominio principal y, si no responde desde aquí, sus otras direcciones.
-  const fallos = [];
-  for (const base of ['https://divoox.com', 'https://tumbite.com', 'https://tumbite.sitios.dev']) {
-    try {
-      const r = await fetch(`${base}/datos/salud`, {
-        signal: AbortSignal.timeout(8000),
-        headers: { 'user-agent': 'Divoox-Progreso/1.0', accept: 'application/json' },
-      });
-      const texto = await r.text();
-      const d = JSON.parse(texto);
-      return json({ ok: Boolean(d.ok), piezas: d.piezas ?? {}, medido: new Date().toISOString() });
-    } catch (e) {
-      fallos.push(`${base}: ${String(e).slice(0, 120)}`);
-    }
+/**
+ * El estado de Divoox. Desde la plataforma un sitio no alcanza a otro (se queda esperando), así que
+ * se sirve la foto que toma scripts/progreso/publicar.sh en cada publicación, con su hora.
+ */
+async function salud(request, env) {
+  try {
+    const r = await env.ASSETS.fetch(new URL('/salud.json', request.url));
+    const d = await r.json();
+    return json({ ok: Boolean(d.ok), piezas: d.piezas ?? {}, medido: d.medido });
+  } catch {
+    return json({ ok: false, piezas: {}, medido: new Date().toISOString(), sinRespuesta: true });
   }
-  console.error('progreso: salud sin respuesta', fallos);
-  return json({
-    ok: false,
-    piezas: {},
-    medido: new Date().toISOString(),
-    sinRespuesta: true,
-    fallos,
-  });
 }
 
 export default {
@@ -87,7 +75,7 @@ export default {
         return json({ marcas: await marcas(env) });
       if (url.pathname === '/datos/marcar' && request.method === 'POST')
         return marcar(request, env);
-      if (url.pathname === '/datos/salud' && request.method === 'GET') return salud();
+      if (url.pathname === '/datos/salud' && request.method === 'GET') return salud(request, env);
     } catch (e) {
       console.error('progreso:', e);
       return json({ error: 'Algo falló de nuestro lado. Intenta otra vez.' }, 500);
