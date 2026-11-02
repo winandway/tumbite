@@ -66,7 +66,11 @@ describe('capturas en los casos de ayuda', () => {
     expect(ok.status).toBe(200);
     expect(new Uint8Array(await ok.arrayBuffer())).toEqual(PNG);
     expect((await m.crudo(ruta.split('?')[0]!, {})).status).toBe(403);
-    expect((await m.crudo(ruta.replace(/firma=./, 'firma=Z'), {})).status).toBe(403);
+    // La firma alterada SIEMPRE cambia (antes se ponía una «Z» fija y, si ya empezaba por «Z», no
+    // cambiaba nada: la prueba fallaba una de cada 64 veces).
+    const alterada = ruta.replace(/firma=(.)/, (_, c: string) => `firma=${c === 'A' ? 'B' : 'A'}`);
+    expect(alterada).not.toBe(ruta);
+    expect((await m.crudo(alterada, {})).status).toBe(403);
   });
 
   it('rechaza lo que no es imagen, más de 10 MB y más de 3 por mensaje', async () => {

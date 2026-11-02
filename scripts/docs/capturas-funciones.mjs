@@ -62,6 +62,48 @@ const antes = [];
 for (const [ruta] of AJUSTES) antes.push([ruta, await api('GET', ruta, undefined, admin.token)]);
 const anuncioAntes = await api('GET', '/datos/mi-restaurante/anuncios', undefined, rest.token);
 
+// Un caso de ayuda de la cuenta de demostración con una captura adjunta y la respuesta de soporte
+// (se crea una sola vez; las corridas siguientes reutilizan el mismo).
+async function casoDeDemostracion() {
+  const { tickets } = await api('GET', '/datos/mis-tickets', undefined, cliente.token);
+  if (
+    tickets?.some((x) => x.asunto?.includes('cupón') || x.mensajes?.[0]?.texto?.includes('cupón'))
+  )
+    return;
+  const q = await api(
+    'POST',
+    '/datos/quejas',
+    {
+      tipo: 'soporte',
+      texto: 'No puedo aplicar mi cupón en el carrito. Les mando la captura de lo que veo.',
+    },
+    cliente.token,
+  );
+  const codigo = q.enlace.split('/').at(-1);
+  const imagen = fs.readFileSync(join(ORIGINALES, 'cliente-plus-es.png'));
+  const r = await fetch(`${SITIO}/datos/tickets/${codigo}/adjuntos?nombre=captura-carrito.png`, {
+    method: 'POST',
+    headers: { 'content-type': 'image/png', authorization: `Bearer ${cliente.token}` },
+    body: imagen,
+  });
+  const { adjunto } = await r.json();
+  await api(
+    'POST',
+    `/datos/tickets/${codigo}/mensajes`,
+    { texto: 'Esta es la pantalla.', adjuntos: [adjunto.id] },
+    cliente.token,
+  );
+  await api(
+    'POST',
+    `/datos/admin/tickets/${q.ticketId}/mensajes`,
+    {
+      texto:
+        'Gracias por la captura. Ya vimos el problema: el cupón aplica desde 15 dólares. Avísanos si necesitas algo más.',
+    },
+    admin.token,
+  );
+}
+
 const aWebp = (png, webp, ancho) =>
   execFileSync('cwebp', [
     '-quiet',
@@ -163,6 +205,24 @@ try {
       await foto(p, 'cliente-tarjetas-regalo', { entera: true });
       await p.goto(`${SITIO}/app/account`, { waitUntil: 'networkidle' });
       await foto(p, 'cliente-mi-cuenta', { entera: true });
+      if (toca('soporte')) {
+        await casoDeDemostracion();
+        await p.reload({ waitUntil: 'networkidle' });
+        await p.waitForTimeout(2000);
+        const casos = p.getByText(t('Mis casos de ayuda', 'My help cases')).first();
+        await casos.scrollIntoViewIfNeeded();
+        await p.mouse.move(195, 500);
+        await p.mouse.wheel(0, 400);
+        await foto(p, 'cliente-casos-ayuda');
+        await p
+          .getByText(/cupón|coupon/i)
+          .first()
+          .click()
+          .catch(() => undefined);
+        await p.waitForTimeout(2500);
+        await p.mouse.wheel(0, 500);
+        await foto(p, 'cliente-caso-con-captura');
+      }
       await ctx.close();
     }
 
