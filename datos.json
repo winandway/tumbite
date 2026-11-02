@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 15:05",
+  "actualizado": "2026-11-02 17:45",
   "version": "468eee7",
   "ahora": {
-    "titulo": "Bloque nuevo: que ninguna pantalla se caiga por un dato mal leído",
-    "detalle": "Cinco de seis hechos: una revisión automática compara lo que leen las tres apps y el panel con lo que manda el servidor (la causa del cierre de «Equipo»), los fallos de las apps se ven por app en el superadmin, y se revisó el embudo de pedidos de producción: cuadra, y dos pedidos sin pagar del 12 de octubre que no se cerraban ya tienen su arreglo. Guardado; se publica cuando GitHub vuelva a tener sesión."
+    "titulo": "Bloque nuevo: lo que los grandes tienen y nosotros no",
+    "detalle": "Hechos seis de siete: seguimiento honesto («Actualizado hace X s», señal perdida y llegada en rango), elogios y motivos al calificar, pedido de prueba para el restaurante, promociones que paga el restaurante (apagadas), modo destino en Driver y el recorrido de «Recoger en el local». Dos revisiones de calidad devolvieron arreglos y ya están hechos. Nada está subido todavía: GitHub sigue sin sesión."
   },
   "proximo": [
     {
@@ -299,6 +299,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Seis funciones nuevas de los grandes, sin publicar",
+      "texto": "Seguimiento honesto, elogios y motivos, pedido de prueba del restaurante, promociones del restaurante (apagadas), modo destino del repartidor y recorrido de recoger en el local, con pruebas, candados y guías en dos idiomas. Revisadas y corregidas. Esperan la sesión de GitHub para subir. Todos los países."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Ninguna pantalla se cae por un dato mal leído",
