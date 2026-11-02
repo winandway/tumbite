@@ -2144,6 +2144,19 @@ CREATE TABLE IF NOT EXISTS politicas_financieras (
 CREATE INDEX IF NOT EXISTS politicas_financieras_busqueda
   ON politicas_financieras(servicio, tipo_cuenta, pais, activa);
 
+-- C-PREPAGO-MERCADOS (2 nov 2026): Richard dio el permiso comercial y legal del prepago de conductores por
+-- país. Venezuela y Colombia cobran la comisión del prepago en Moto, Carro y Envíos (10 %, como inDrive).
+-- EE. UU. sigue con Stripe Connect (sin política de prepago). Comida y Mercado siguen con la comisión del
+-- país. INSERT OR IGNORE: lo que el equipo cambie después en el panel no se pisa. Solo rige donde el país
+-- y el servicio estén encendidos.
+INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada, revision_legal_nota, motivo) VALUES
+  ('prepago-ve-ride', 'Moto · conductores · VE', 'ride', 'conductor', 'VE', 'prepago', 'VES', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
+  ('prepago-ve-car', 'Carro · conductores · VE', 'car', 'conductor', 'VE', 'prepago', 'VES', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
+  ('prepago-ve-express', 'Envíos · conductores · VE', 'express', 'conductor', 'VE', 'prepago', 'VES', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
+  ('prepago-co-ride', 'Moto · conductores · CO', 'ride', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
+  ('prepago-co-car', 'Carro · conductores · CO', 'car', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
+  ('prepago-co-express', 'Envíos · conductores · CO', 'express', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS');
+
 -- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
 -- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
 CREATE TABLE IF NOT EXISTS ciudades_web (
