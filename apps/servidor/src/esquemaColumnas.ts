@@ -2087,6 +2087,27 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "centavos",
     "cobrado_en"
   ],
+  "promociones_restaurante": [
+    "id",
+    "restaurante_id",
+    "tipo",
+    "valor",
+    "minimo_subtotal",
+    "tope_centavos",
+    "usos_max",
+    "inicia_en",
+    "vence_en",
+    "activa",
+    "creado_en"
+  ],
+  "pedidos_promocion": [
+    "pedido_id",
+    "promocion_id",
+    "restaurante_id",
+    "promocion_json",
+    "descuento",
+    "creado_en"
+  ],
   "suscripciones_plus": [
     "usuario_id",
     "stripe_suscripcion",

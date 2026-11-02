@@ -80,3 +80,4 @@ export * from './accesibilidadRepartidor';
 export * from './planillas';
 export * from './seguimientoHonesto';
 export * from './etiquetasCalificacion';
+export * from './promociones';

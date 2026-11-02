@@ -3,7 +3,12 @@ import { recordarAnuncio } from '../comida/anuncioTocado';
 import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { type Restaurante, filtrarRestaurantes, textoNoDisponible } from '@tumbite/compartido';
+import {
+  type Restaurante,
+  filtrarRestaurantes,
+  insigniaPromocion,
+  textoNoDisponible,
+} from '@tumbite/compartido';
 import { C, urlFoto, useSesion } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -333,6 +338,15 @@ export default function Restaurantes() {
                   />
                 </Pressable>
               </View>
+              {r.promocion ? (
+                // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante.
+                <Text
+                  testID="promocion"
+                  style={{ fontSize: 12, color: C.exito, fontWeight: '700' }}
+                >
+                  {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
+                </Text>
+              ) : null}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Calificacion c={r.calificacion} idioma={idioma} />
                 <Text style={{ color: '#5E5E5E', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>

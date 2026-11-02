@@ -3236,6 +3236,34 @@ CREATE TABLE IF NOT EXISTS pedidos_anuncio (
   cobrado_en TEXT
 );
 
+-- C-PROMO-RESTAURANTE (BRE-5, 2 nov 2026, como «Promotions» de DoorDash Merchant): promociones
+-- que arma y paga el restaurante. Se aplican solas y salen de su pago (pedidos.pago_restaurante).
+CREATE TABLE IF NOT EXISTS promociones_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('porcentaje', 'envio_gratis', 'gasta_ahorra')),
+  valor INTEGER NOT NULL DEFAULT 0,
+  minimo_subtotal INTEGER NOT NULL DEFAULT 0,
+  tope_centavos INTEGER NOT NULL DEFAULT 0,
+  usos_max INTEGER,
+  inicia_en TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  activa INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS promociones_restaurante_rest ON promociones_restaurante(restaurante_id, activa);
+-- La promoción que se aplicó a cada pedido, con su copia (si el restaurante la cambia después, el
+-- pedido se recalcula con la de entonces) y lo que descontó.
+CREATE TABLE IF NOT EXISTS pedidos_promocion (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  promocion_id TEXT NOT NULL REFERENCES promociones_restaurante(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  promocion_json TEXT NOT NULL,
+  descuento INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS pedidos_promocion_promo ON pedidos_promocion(promocion_id);
+
 -- C-PLUS (R-T3, 1 nov 2026, como DashPass): la suscripción del cliente. Se cobra con una
 -- suscripción de Stripe; solo el aviso firmado «invoice.paid» la activa y le pone vencimiento.
 CREATE TABLE IF NOT EXISTS suscripciones_plus (

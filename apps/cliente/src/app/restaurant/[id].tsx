@@ -31,6 +31,8 @@ import {
   textoNoDisponible,
   textoGusto,
   type GustoPlato,
+  type PromocionRestaurante,
+  insigniaPromocion,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -81,6 +83,8 @@ export default function MenuRestaurante() {
     gustoPlatos?: Record<string, GustoPlato>;
     /** C-MENU-HORARIO: categorías que ahora no se sirven, con su franja. */
     fueraDeHorario?: { categoria: string; abre: string; cierra: string }[];
+    /** C-PROMO-RESTAURANTE: las promociones vigentes que paga el restaurante. */
+    promociones?: PromocionRestaurante[];
   } | null>(null);
   const [error, setError] = useState('');
   const [pestana, setPestana] = useState<'menu' | 'info'>('menu');
@@ -282,6 +286,16 @@ export default function MenuRestaurante() {
 
         <View style={{ paddingHorizontal: 16 }}>
           {error ? <Text style={[e.error, { marginTop: 12 }]}>{error}</Text> : null}
+          {/* C-PROMO-RESTAURANTE: la insignia de cada promoción vigente, como DoorDash. */}
+          {(datos?.promociones ?? []).map((p) => (
+            <Text
+              key={p.id}
+              testID="promocion"
+              style={{ color: C.exito, fontWeight: '700', marginTop: 10 }}
+            >
+              {insigniaPromocion(p, moneda, idioma)}
+            </Text>
+          ))}
           {r && !abierto ? (
             <Text style={[e.aviso, { marginTop: 12 }]}>
               {/* C-NO-RECIBE-AHORA: en horario pero sin recibir no se inventa la próxima apertura. */}

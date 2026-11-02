@@ -6,6 +6,7 @@ import {
   calcularEnvio,
   formatearMonto,
   textoNoDisponible,
+  insigniaPromocion,
 } from '@tumbite/compartido';
 import { router } from 'expo-router';
 import { C, urlFoto } from '@tumbite/movil';
@@ -164,6 +165,15 @@ export function Restaurantes({
               >
                 {r.nombre}
               </Text>
+              {r.promocion ? (
+                // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante.
+                <Text
+                  testID="promocion"
+                  style={{ fontSize: 12, color: C.exito, fontWeight: '700' }}
+                >
+                  {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
+                </Text>
+              ) : null}
               {r.patrocinado ? (
                 // C-ANUNCIOS: como «Sponsored» de DoorDash, discreto y debajo del nombre.
                 <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>

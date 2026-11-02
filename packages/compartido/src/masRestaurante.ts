@@ -13,7 +13,14 @@ export type OpcionMas = {
   /** Página del sitio que abre; sin destino ni pantalla, soporte por WhatsApp. */
   destino?: string;
   /** C-APP-RESTAURANTE-PAR: pantalla de la propia app (sin salir al panel web). */
-  pantalla?: 'resenas' | 'horario' | 'restaurante' | 'ganancias' | 'equipo' | 'configuracion';
+  pantalla?:
+    | 'resenas'
+    | 'horario'
+    | 'restaurante'
+    | 'ganancias'
+    | 'promociones'
+    | 'equipo'
+    | 'configuracion';
 };
 
 const T = {
@@ -24,6 +31,7 @@ const T = {
     horario: ['Horario y cierres', 'Horas de cada día, festivos y vacaciones'],
     ganancias: ['Ganancias', 'Ventas, depósitos y tu cuenta para cobrar'],
     resenas: ['Reseñas', 'Lo que dicen tus clientes y tus respuestas'],
+    promociones: ['Promociones', 'Descuentos y envío gratis que pagas tú'],
     equipo: ['Equipo', 'Personas que pueden manejar tu restaurante'],
     configuracion: ['Configuración', 'Tu cuenta, contraseña y avisos'],
     guias: ['Guías', 'Cómo usar Divoox paso a paso'],
@@ -37,6 +45,7 @@ const T = {
     horario: ['Hours and closures', 'Hours for each day, holidays and time off'],
     ganancias: ['Earnings', 'Sales, payouts and your payout account'],
     resenas: ['Reviews', 'What your customers say and your replies'],
+    promociones: ['Promotions', 'Discounts and free delivery you fund'],
     equipo: ['Team', 'People who can manage your restaurant'],
     configuracion: ['Settings', 'Your account, password and notifications'],
     guias: ['Guides', 'How to use Divoox step by step'],
@@ -55,6 +64,7 @@ export function opcionesMasRestaurante(
     ['horario', t.horario],
     ['ganancias', t.ganancias],
     ['resenas', t.resenas],
+    ['promociones', t.promociones],
     ['equipo', t.equipo],
     ['configuracion', t.configuracion],
     ['guias', t.guias],
@@ -80,6 +90,8 @@ export function opcionesMasRestaurante(
         o('horario', undefined, 'horario'),
         o('ganancias', undefined, 'ganancias'),
         o('resenas', undefined, 'resenas'),
+        // C-PROMO-RESTAURANTE (BRE-5): como «Promotions» de DoorDash Merchant.
+        o('promociones', undefined, 'promociones'),
         o('equipo', undefined, 'equipo'),
         o('configuracion', undefined, 'configuracion'),
       ],

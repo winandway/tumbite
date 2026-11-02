@@ -1,4 +1,5 @@
 import type { Activacion } from './activacion';
+import type { PromocionRestaurante } from './promociones';
 import { z } from 'zod';
 
 /** Restaurantes y platos. Los textos que ve el público van en español e inglés. */
@@ -160,6 +161,8 @@ export type Restaurante = {
   /** C-ANUNCIOS: sale primero por un anuncio; la app muestra «Patrocinado» y manda el id al pedir. */
   patrocinado?: boolean;
   anuncioId?: string;
+  /** C-PROMO-RESTAURANTE: su promoción vigente (la app muestra la insignia). */
+  promocion?: PromocionRestaurante;
   /** Solo para el dueño: la lista de activación (qué falta antes de abrir). */
   activacion?: Activacion;
 };

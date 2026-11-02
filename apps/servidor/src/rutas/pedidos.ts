@@ -1,6 +1,7 @@
 import { apartarSaldo, avisoTarjetaRegalo, saldoRegalo } from '../tarjetasRegalo';
 import { avisoPlus, leerPlus, tienePlus } from '../plus';
 import { anotarPedidoDeAnuncio } from '../anuncios';
+import { anotarPromocion, promocionDelPedido, promocionesVigentes } from '../promociones';
 import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
@@ -26,6 +27,8 @@ import {
   type Turno,
   abiertoPorHorario,
   calcularPedido,
+  calcularConPromocion,
+  mejorPromocion,
   descuentoPlus,
   saldoAplicable,
   distanciaKm,
@@ -214,15 +217,19 @@ export async function calcularSinPlato(
             .bind(String(f.id))
             .first(),
         );
-  const desglose = calcularPedido({
-    lineas: nuevas,
-    plan: String(f.plan) as Plan,
-    propina: Number(f.propina),
-    distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
-    config,
-    regalo: Math.min(Number(f.regalo ?? 0), subtotal),
-    recogida,
-  });
+  // C-PROMO-RESTAURANTE: se recalcula con la misma promoción con que se cobró (si sigue valiendo).
+  const desglose = calcularConPromocion(
+    {
+      lineas: nuevas,
+      plan: String(f.plan) as Plan,
+      propina: Number(f.propina),
+      distanciaKm: f.distancia_km == null ? null : Number(f.distancia_km),
+      config,
+      regalo: Math.min(Number(f.regalo ?? 0), subtotal),
+      recogida,
+    },
+    await promocionDelPedido(db, String(f.id)),
+  );
   return { nuevas, desglose, devolucion: Math.max(0, Number(f.total) - desglose.totalCliente) };
 }
 
@@ -317,6 +324,9 @@ export async function aplicarAjuste(
         "UPDATE ajustes_pedido SET estado = 'quitado', devolucion = ?, reemplazo_id = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
       )
       .bind(devolucion, reemplazo?.platoId ?? null, pedidoId),
+    db
+      .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
+      .bind(desglose.descuentoRestaurante, pedidoId),
   ]);
   await anotarEvento(
     db,
@@ -387,6 +397,8 @@ export function aPedido(f: FilaPedido) {
     servicio: Number(f.servicio),
     impuesto: Number(f.impuesto ?? 0),
     descuento: Number(f.descuento ?? 0),
+    /** C-PROMO-RESTAURANTE: lo que pagó el restaurante con su promoción. */
+    descuentoRestaurante: Number(f.descuento_restaurante ?? 0),
     cupon: f.cupon ? String(f.cupon) : null,
     metodoPago: String(f.metodo_pago ?? 'tarjeta'),
     moneda: String(f.moneda ?? 'USD'),
@@ -683,6 +695,24 @@ pedidos.post('/pedidos', async (c) => {
     if (!disponible) throw new ErrorDatos('Ese regalo ya no está disponible.', 'regalo', 409);
     regalo = disponible.valorCentavos;
   }
+  // C-PROMO-RESTAURANTE (BRE-5): la promoción del restaurante se aplica sola en los pedidos con
+  // tarjeta (los únicos que Divoox liquida) y sale de su pago. La app hace la misma cuenta.
+  const promo =
+    d.metodoPago === 'tarjeta'
+      ? mejorPromocion(
+          (await promocionesVigentes(db, [String(rest.id)])).get(String(rest.id)),
+          calcularPedido({
+            lineas,
+            plan,
+            propina: d.propinaCentavos,
+            distanciaKm: km,
+            config,
+            regalo,
+            recogida,
+          }),
+        )
+      : null;
+  const conPromo = (p: Parameters<typeof calcularPedido>[0]) => calcularConPromocion(p, promo);
   // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
   let cupon: { codigo: string; descuento: number } | null = null;
   if (d.cupon) {
@@ -705,7 +735,7 @@ pedidos.post('/pedidos', async (c) => {
     });
     cupon = { codigo: v.cupon.codigo, descuento: v.descuento };
   }
-  const sinPlus = calcularPedido({
+  const sinPlus = conPromo({
     lineas,
     plan,
     propina: d.propinaCentavos,
@@ -721,7 +751,7 @@ pedidos.post('/pedidos', async (c) => {
     moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
   const descPlus = planPlus ? descuentoPlus(sinPlus, planPlus) : 0;
   const conPlus = descPlus
-    ? calcularPedido({
+    ? conPromo({
         lineas,
         plan,
         propina: d.propinaCentavos,
@@ -739,7 +769,7 @@ pedidos.post('/pedidos', async (c) => {
       ? saldoAplicable(conPlus, await saldoRegalo(db, u.id))
       : 0;
   const desglose = usoRegalo
-    ? calcularPedido({
+    ? conPromo({
         lineas,
         plan,
         propina: d.propinaCentavos,
@@ -830,6 +860,7 @@ pedidos.post('/pedidos', async (c) => {
       )
       .bind(id, u.id, descPlus)
       .run();
+  await anotarPromocion(db, id, String(rest.id), promo, desglose.descuentoRestaurante);
   if (cupon)
     await db
       .prepare(
@@ -1397,7 +1428,7 @@ pedidos.get('/pedidos/:id', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?`,
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_AJUSTE}, (SELECT pp.descuento FROM pedidos_promocion pp WHERE pp.pedido_id = p.id) AS descuento_restaurante, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = ?`,
     )
     .bind(c.req.param('id'))
     .first<FilaPedido>();
@@ -1601,14 +1632,18 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   await exigirCobertura(db, String(f.zona_id ?? ZONA_INICIAL), d.lat, d.lng);
   const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
   const lineas = lineasDe(f);
-  const desglose = calcularPedido({
-    lineas,
-    plan: String(f.plan) as Plan,
-    propina: Number(f.propina),
-    distanciaKm: km,
-    config,
-    regalo: Number(f.regalo ?? 0),
-  });
+  const promo = await promocionDelPedido(db, id);
+  const desglose = calcularConPromocion(
+    {
+      lineas,
+      plan: String(f.plan) as Plan,
+      propina: Number(f.propina),
+      distanciaKm: km,
+      config,
+      regalo: Number(f.regalo ?? 0),
+    },
+    promo,
+  );
   const nuevoTotal = desglose.totalCliente;
   if (nuevoTotal !== Number(f.total) && !d.aceptarTotal)
     return c.json(
@@ -1642,7 +1677,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   }
   await db
     .prepare(
-      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ? WHERE id = ?',
     )
     .bind(
       d.direccion,
@@ -1656,9 +1691,16 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       desglose.pagoRepartidor,
       desglose.complementoRepartidor,
       desglose.gananciaPlataforma,
+      desglose.pagoRestaurante,
       id,
     )
     .run();
+  // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.
+  if (promo)
+    await db
+      .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
+      .bind(desglose.descuentoRestaurante, id)
+      .run();
   await anotarEvento(db, id, 'direccion_cambiada', d.direccion);
   // El repartidor asignado se entera en el momento (C-REPARTIDOR-GRANDES).
   const asignado = await db

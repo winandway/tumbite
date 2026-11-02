@@ -11,6 +11,7 @@ import { pedir } from './api';
 import { SuperPagoPico } from './SuperPagoPico';
 import { SuperGanarPorTiempo } from './SuperGanarPorTiempo';
 import { SuperAnuncios } from './SuperAnuncios';
+import { SuperPromociones } from './SuperPromociones';
 import { SuperPlus } from './SuperPlus';
 import { SuperTarjetasRegalo } from './SuperTarjetasRegalo';
 import { SuperReferidos } from './SuperReferidos';
@@ -280,6 +281,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
       <SuperPagoPico idioma={idioma} />
       <SuperGanarPorTiempo idioma={idioma} />
       <SuperAnuncios idioma={idioma} />
+      <SuperPromociones idioma={idioma} />
       <SuperPlus idioma={idioma} />
       <SuperTarjetasRegalo idioma={idioma} />
       <SuperReferidos idioma={idioma} />

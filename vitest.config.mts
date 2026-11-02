@@ -82,8 +82,14 @@ export default defineConfig({
             'viajesCobro.ts',
             'internacional/recargas.ts',
             'sms.ts',
+            // C-PROMO-RESTAURANTE (BRE-5): la promoción que paga el restaurante.
+            'promociones.ts',
+            'rutas/promociones.ts',
           ].map((f) => [`apps/servidor/src/${f}`, { lines: 90 }]),
         ),
+        // C-PROMO-RESTAURANTE (BRE-5): el reparto del pedido y la promoción, al 90 % de líneas.
+        'packages/compartido/src/bolsillos.ts': { lines: 90 },
+        'packages/compartido/src/promociones.ts': { lines: 90 },
       },
     },
   },

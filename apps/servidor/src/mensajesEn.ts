@@ -891,6 +891,22 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Otro repartidor ya tomó este pedido.', 'Another driver already took this order.'],
   ['Primero completa los datos de tu restaurante.', 'First complete your restaurant’s details.'],
+  // C-PROMO-RESTAURANTE (BRE-5)
+  ['Las promociones todavía no están disponibles.', 'Promotions aren’t available yet.'],
+  ['El descuento tiene que ir del 1 al 50 %.', 'The discount must be between 1% and 50%.'],
+  ['Escribe cuánto ahorra el cliente.', 'Enter how much the customer saves.'],
+  [
+    'Lo que ahorra el cliente tiene que ser menos de lo que gasta.',
+    'What the customer saves must be less than what they spend.',
+  ],
+  [
+    'La promoción tiene que terminar después de empezar.',
+    'The promotion must end after it starts.',
+  ],
+  ['El ahorro pasa del máximo permitido.', 'The savings are over the maximum allowed.'],
+  ['Puedes tener hasta 5 promociones a la vez.', 'You can have up to 5 promotions at a time.'],
+  ['Esa promoción no existe o ya terminó.', 'That promotion doesn’t exist or already ended.'],
+  ['La fecha no es válida.', 'The date isn’t valid.'],
   // C-PEDIDO-PRUEBA (BRE-4)
   [
     'Ya tienes un pedido de prueba abierto. Termínalo o recházalo antes de pedir otro.',

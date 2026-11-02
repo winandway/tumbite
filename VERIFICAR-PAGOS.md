@@ -18,6 +18,8 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 > **27 oct, Divoox Flex · Fase 4 (rama `fase-flex-4`, solo staging):** billetera prepago de empresas sobre el libro, recargas con Stripe en **modo prueba**, comisiones por paquete con reserva, reembolsos, disputas, conciliación y recarga automática. 🔴 **Nada probado con dinero real.** La recarga de empresa se probó de punta a punta en staging con Stripe de prueba (ver `docs/DIVOOX-FLEX-FASE-4-RESULTADOS.md`). Ninguna tarifa activa en producción.
 
+> **2 nov, promociones que paga el restaurante (C-PROMO-RESTAURANTE, BRE-5): construido, sin probar con dinero.** La promoción baja el total del cliente y el pago del restaurante (`pedidos.pago_restaurante`, que es lo que se abona como «venta»); Divoox y el repartidor no cambian. Nace apagada (interruptor en Rewards del superadmin). Probado solo con Stripe simulado (`promocionesRestaurante.test.ts`, conciliación en verde). 🔴 **Nada con dinero real ni con Stripe de prueba en staging todavía.** Cómo se prueba en staging: superadmin → Rewards → «Promociones encendidas»; el restaurante demo crea «20 %» en Promociones; el cliente demo ve la insignia y paga con la 4242; en Stripe (modo prueba) la autorización es el total con el descuento; al entregar, la captura es ese total, la «venta» del restaurante es su pago menos el descuento y la conciliación del día dice que cuadra.
+
 ## Cómo funciona (construido)
 
 1. La app manda qué platos y cuántos. **El servidor pone los precios** desde la base y calcula los cuatro bolsillos (`packages/compartido/src/bolsillos.ts`).

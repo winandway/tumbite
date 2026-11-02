@@ -53,6 +53,7 @@ import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
 import { Mas } from './Mas';
 import { PantallaMas } from './MasPantallas';
+import { Promociones } from './Promociones';
 import { Resenas } from './Resenas';
 import { Horario } from './Horario';
 import type { Pestana } from './piezas/recursos';
@@ -1241,6 +1242,8 @@ export function Inicio() {
       <Resenas alVolver={() => setPantallaMas(null)} />
     ) : pantallaMas === 'horario' ? (
       <Horario alVolver={() => setPantallaMas(null)} />
+    ) : pantallaMas === 'promociones' ? (
+      <Promociones alVolver={() => setPantallaMas(null)} />
     ) : pantallaMas ? (
       <PantallaMas pantalla={pantallaMas} alVolver={() => setPantallaMas(null)} />
     ) : (

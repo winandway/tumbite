@@ -49,6 +49,7 @@ const es = {
     gifts: 'Regalos y marketing',
     reviews: 'Reseñas',
     ads: 'Anuncios',
+    promotions: 'Promociones',
     team: 'Equipo',
   },
   menuAdmin: {
@@ -130,6 +131,7 @@ const en: T = {
     gifts: 'Gifts and marketing',
     reviews: 'Reviews',
     ads: 'Ads',
+    promotions: 'Promotions',
     team: 'Team',
   },
   menuAdmin: {

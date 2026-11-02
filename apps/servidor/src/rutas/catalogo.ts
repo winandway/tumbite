@@ -1,4 +1,5 @@
 import { conPatrocinados } from '../anuncios';
+import { promocionesVigentes } from '../promociones';
 import { Hono } from 'hono';
 import { areaPara } from '../territorio';
 import { z } from 'zod';
@@ -347,7 +348,19 @@ catalogo.get('/restaurantes', async (c) => {
   }
   // C-ANUNCIOS: hasta dos patrocinados primero, con su etiqueta (apagado con precio en cero).
   const conAnuncios = await conPatrocinados(db, lista);
-  return c.json({ restaurantes: conAnuncios, zona: { id: zona.id }, fueraDeZona: false });
+  // C-PROMO-RESTAURANTE: la insignia de su promoción (la más nueva; apagadas, ninguna).
+  const promos = await promocionesVigentes(
+    db,
+    conAnuncios.map((r) => r.id),
+  );
+  return c.json({
+    restaurantes: conAnuncios.map((r) => {
+      const suyas = promos.get(r.id);
+      return suyas ? { ...r, promocion: suyas[0], promociones: suyas } : r;
+    }),
+    zona: { id: zona.id },
+    fueraDeZona: false,
+  });
 });
 
 catalogo.get('/restaurantes/:id', async (c) => {
@@ -386,8 +399,12 @@ catalogo.get('/restaurantes/:id', async (c) => {
     .bind(f.id)
     .all<{ platoId: string; gusta: number }>();
   const visiblesIds = new Set(visibles.map((p) => String(p.id)));
+  // C-PROMO-RESTAURANTE: sus promociones vigentes (la app muestra la insignia y las aplica igual
+  // que el servidor al cobrar).
+  const promociones = (await promocionesVigentes(db, [String(f.id)])).get(String(f.id)) ?? [];
   return c.json({
     restaurante,
+    promociones,
     fueraDeHorario,
     gustoPlatos: resumenGusto(votos.filter((v) => visiblesIds.has(v.platoId))),
     masPedidos: contarMasPedidos(

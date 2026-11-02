@@ -60,6 +60,8 @@ export type Desglose = {
   impuesto: Centavos;
   /** Lo que quitó el cupón (lo absorbe Divoox). */
   descuento: Centavos;
+  /** C-PROMO-RESTAURANTE: lo que quitó la promoción del restaurante (sale de su pago, nunca de Divoox). */
+  descuentoRestaurante: Centavos;
   totalCliente: Centavos;
   comisionRestaurante: Centavos;
   pagoRestaurante: Centavos;
@@ -101,6 +103,12 @@ export function calcularPedido(p: {
   recogida?: boolean;
   /** Cupón: baja el total del cliente y la ganancia de Divoox (nunca lo que recibe el restaurante o el repartidor). */
   descuento?: Centavos;
+  /**
+   * C-PROMO-RESTAURANTE (BRE-5): promoción creada y pagada por el restaurante. Baja el total del
+   * cliente y el pago del restaurante; la comisión se calcula ANTES de la promoción (como DoorDash)
+   * y la ganancia de Divoox no cambia. Nunca deja el pago del restaurante por debajo de cero.
+   */
+  descuentoRestaurante?: Centavos;
 }): Desglose {
   const c = p.config ?? CONFIG_DINERO_INICIAL;
   entero(p.propina, 'propina');
@@ -131,14 +139,30 @@ export function calcularPedido(p: {
     aCobrar + envio + servicio + cargoPedidoPequeno + impuesto,
   );
   entero(descuento, 'descuento');
-  const totalCliente =
-    aCobrar + envio + servicio + cargoPedidoPequeno + p.propina + impuesto - descuento;
-
   const comisionRestaurante = porcentajeDe(
     aCobrar,
     p.recogida ? COMISION_RECOGIDA_PB : c.comisionPb[p.plan],
   );
-  const pagoRestaurante = aCobrar - comisionRestaurante + (p.recogida ? p.propina : 0);
+  // La promoción del restaurante sale de lo que le toca por la comida (nunca de la propina) y no
+  // puede pasar de lo que paga el cliente después del cupón.
+  entero(p.descuentoRestaurante ?? 0, 'descuentoRestaurante');
+  const descuentoRestaurante = Math.min(
+    p.descuentoRestaurante ?? 0,
+    aCobrar - comisionRestaurante,
+    aCobrar + envio + servicio + cargoPedidoPequeno + impuesto - descuento,
+  );
+  const totalCliente =
+    aCobrar +
+    envio +
+    servicio +
+    cargoPedidoPequeno +
+    p.propina +
+    impuesto -
+    descuento -
+    descuentoRestaurante;
+
+  const pagoRestaurante =
+    aCobrar - comisionRestaurante - descuentoRestaurante + (p.recogida ? p.propina : 0);
   const complementoRepartidor = p.recogida ? 0 : Math.max(0, c.pagoMinimoRepartidor - envio);
   const pagoRepartidor = p.recogida ? 0 : envio + complementoRepartidor + p.propina;
   const gananciaPlataforma =
@@ -152,6 +176,7 @@ export function calcularPedido(p: {
     propina: p.propina,
     impuesto,
     descuento,
+    descuentoRestaurante,
     totalCliente,
     comisionRestaurante,
     pagoRestaurante,

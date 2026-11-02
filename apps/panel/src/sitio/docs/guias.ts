@@ -1415,6 +1415,32 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'promotions',
+        titulo: 'Promociones que creas y pagas tú',
+        resumen:
+          'Arma tu propia promoción —un porcentaje de descuento, envío gratis o «gasta X y ahorra Y»— con fechas y tope de pedidos. Sale con su insignia en la app del cliente, se aplica sola y la pagas tú con lo que te toca de cada pedido.',
+        capturas: [],
+        preguntas: [
+          '¿Cómo creo una promoción para mi restaurante?',
+          '¿Quién paga el descuento de mi promoción?',
+          '¿Cómo pongo envío gratis en mi restaurante?',
+        ],
+        pasos: [
+          'En el panel, entra a Promociones. En la app del restaurante: Más → Promociones.',
+          'Elige el tipo: porcentaje de descuento (del 1 al 50 %, con un máximo por pedido si quieres), envío gratis, o «gasta X y ahorra Y».',
+          'Si quieres, pon un pedido mínimo y un máximo de pedidos. Elige cuándo empieza y cuándo termina.',
+          'Toca «Crear promoción». Tus clientes ven la insignia en la lista de restaurantes, en tu página y en el carrito, y el descuento se aplica solo.',
+          'En la misma pantalla ves cuántos pedidos la usaron y cuánto te costó. Para cortarla antes, toca «Terminar».',
+        ],
+        explicacion: [
+          'La promoción la pagas tú: el descuento se resta de lo que te toca de cada pedido, y lo ves en tus Beneficios. Divoox no te cobra nada extra por tenerla.',
+          'Tu comisión se calcula sobre el precio de la comida antes del descuento, igual que en las grandes apps de reparto.',
+          'Con «envío gratis», el repartidor cobra su envío completo: ese envío lo pones tú.',
+          'Se aplica en los pedidos pagados con tarjeta. Si un pedido cumple con varias promociones tuyas, se aplica la que más le ahorra al cliente.',
+          'Puedes tener hasta cinco promociones a la vez.',
+        ],
+      },
+      {
         id: 'sponsored-listings',
         titulo: 'Anuncios: sal primero y paga solo por pedido',
         resumen:
@@ -5607,6 +5633,32 @@ const en: SeccionDocs[] = [
           'You need at least one available item on your menu, because the order is built from your items.',
           'You can have one open at a time. To start over, reject it from the three dots and send another.',
           'It’s also a great way to train your team on how to handle an order without fear of mistakes.',
+        ],
+      },
+      {
+        id: 'promotions',
+        titulo: 'Promotions you create and fund',
+        resumen:
+          'Set up your own promotion —a percentage off, free delivery, or “spend X, save Y”— with dates and an order limit. It shows with its badge in the customer app, applies automatically, and you fund it from what you earn on each order.',
+        capturas: [],
+        preguntas: [
+          'How do I create a promotion for my restaurant?',
+          'Who pays for my promotion’s discount?',
+          'How do I offer free delivery from my restaurant?',
+        ],
+        pasos: [
+          'In the dashboard, go to Promotions. In the restaurant app: More → Promotions.',
+          'Pick the type: percentage off (1% to 50%, with a per-order maximum if you want), free delivery, or “spend X, save Y.”',
+          'If you want, set a minimum order and a maximum number of orders. Choose when it starts and ends.',
+          'Tap “Create promotion.” Customers see the badge in the restaurant list, on your page, and in the cart, and the discount applies automatically.',
+          'On the same screen you see how many orders used it and what it cost you. To stop it early, tap “End.”',
+        ],
+        explicacion: [
+          'You fund the promotion: the discount comes out of what you earn on each order, and you see it in your Earnings. Divoox charges you nothing extra for running it.',
+          'Your commission is calculated on the food price before the discount, just like on the big delivery apps.',
+          'With “free delivery,” the driver still earns the full delivery fee: you cover it.',
+          'It applies to orders paid by card. If an order qualifies for more than one of your promotions, the one that saves the customer the most applies.',
+          'You can run up to five promotions at a time.',
         ],
       },
       {

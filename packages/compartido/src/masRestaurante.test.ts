@@ -9,6 +9,7 @@ describe('C-MAS-RESTAURANTE: la pestaña «Más» de la app del restaurante', ()
       'horario',
       'ganancias',
       'resenas',
+      'promociones',
       'equipo',
       'configuracion',
       'guias',

@@ -8,7 +8,11 @@ import {
   CONFIG_DINERO_INICIAL,
   ErrorApi,
   type ConfigDinero,
+  type PromocionRestaurante,
+  calcularConPromocion,
   calcularPedido,
+  insigniaPromocion,
+  mejorPromocion,
   descuentoPlus,
   saldoAplicable,
   distanciaKm,
@@ -223,6 +227,20 @@ export default function PantallaCarrito() {
     marcarRecoger(false);
   }, [recoger, cambiarEntrega, marcarRecoger]);
 
+  // C-PROMO-RESTAURANTE (BRE-5): las promociones vigentes del restaurante; se aplican igual que
+  // en el servidor (la que más ahorra, solo con tarjeta) para que el total visto sea el cobrado.
+  const [promociones, setPromociones] = useState<PromocionRestaurante[]>([]);
+  useEffect(() => {
+    if (!carrito.restauranteId) return;
+    api
+      .pedir<{ promociones?: PromocionRestaurante[] }>(
+        'GET',
+        `/datos/restaurantes/${carrito.restauranteId}`,
+      )
+      .then((r) => setPromociones(r.promociones ?? []))
+      .catch(() => setPromociones([]));
+  }, [api, carrito.restauranteId]);
+
   // C-PEDIDO-PROGRAMADO: las franjas las da el servidor (horario y festivos del comercio).
   const [franjas, setFranjas] = useState<{ inicio: string; es: string; en: string }[]>([]);
   useEffect(() => {
@@ -432,8 +450,13 @@ export default function PantallaCarrito() {
     config,
     regalo,
   };
+  const conTarjeta = (b.valores.metodoPago || 'tarjeta') === 'tarjeta';
+  const promo =
+    carrito.lineas.length && conTarjeta
+      ? mejorPromocion(promociones, calcularPedido({ ...base, recogida: recogidaElegida }))
+      : null;
   const sinPlus = carrito.lineas.length
-    ? calcularPedido({ ...base, recogida: recogidaElegida, descuento: descuentoCupon })
+    ? calcularConPromocion({ ...base, recogida: recogidaElegida, descuento: descuentoCupon }, promo)
     : null;
   // C-PLUS: la misma cuenta que el servidor (envío gratis y servicio rebajado, solo en dólares).
   const descPlus =
@@ -442,21 +465,27 @@ export default function PantallaCarrito() {
       : 0;
   const conPlus =
     sinPlus && descPlus
-      ? calcularPedido({ ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus })
+      ? calcularConPromocion(
+          { ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus },
+          promo,
+        )
       : sinPlus;
   // C-TARJETAS-REGALO: la misma cuenta que el servidor (solo con tarjeta y en dólares).
-  const regaloConTarjeta = (b.valores.metodoPago || 'tarjeta') === 'tarjeta';
+  const regaloConTarjeta = conTarjeta;
   const usoRegalo =
     conPlus && usarRegalo && saldoRegaloCli > 0 && moneda === 'USD' && regaloConTarjeta
       ? saldoAplicable(conPlus, saldoRegaloCli)
       : 0;
   const d =
     conPlus && usoRegalo
-      ? calcularPedido({
-          ...base,
-          recogida: recogidaElegida,
-          descuento: descuentoCupon + descPlus + usoRegalo,
-        })
+      ? calcularConPromocion(
+          {
+            ...base,
+            recogida: recogidaElegida,
+            descuento: descuentoCupon + descPlus + usoRegalo,
+          },
+          promo,
+        )
       : conPlus;
 
   async function pagar() {
@@ -1236,6 +1265,10 @@ export default function PantallaCarrito() {
           {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
           {d.descuento - descPlus - usoRegalo > 0 &&
             fila(te.descuento, -(d.descuento - descPlus - usoRegalo))}
+          {/* C-PROMO-RESTAURANTE: la paga el restaurante; se ve con su insignia. */}
+          {promo &&
+            d.descuentoRestaurante > 0 &&
+            fila(insigniaPromocion(promo, moneda, idioma), -d.descuentoRestaurante)}
           {descPlus > 0 && fila('Divoox Plus', -descPlus)}
           {usoRegalo > 0 && fila(idioma === 'en' ? 'Gift card' : 'Tarjeta de regalo', -usoRegalo)}
           {fila(t.envio, d.envio)}
