@@ -2486,3 +2486,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Dónde:** `apps/servidor/src/referidos.ts`; tablas `codigos_referido`, `referidos` y `creditos_regalo` (referencia única: un crédito nunca se repite). Los créditos suman al saldo de regalo (`SALDO` en `tarjetasRegalo.ts`), que se usa en el carrito (hoy solo en dólares). App: `apps/cliente/src/app/invite.tsx`. Superadmin: `SuperReferidos.tsx` en Rewards.
 - **Apagado y en cero:** nace `activos: false` y montos 0; el servidor no deja encenderlo sin un monto. El dinero lo fija Richard.
 - **Pruebas:** `referidos.test.ts` (en rojo si el crédito no suma al saldo) y `SuperReferidos.test.tsx`.
+
+## C-VERSION-PANEL — la publicación se frenaba con «la web no lleva el commit» (2 nov 2026) — todos los países
+
+- **Qué se rompió:** la corrida 299 de «publicar» falló en el paquete de pruebas: «index.html: la web no lleva el commit a50aa06». Producción quedó en ce6642d y pruebas en e3dfc71.
+- **Causa real:** GitHub no deja cambiar `GITHUB_SHA` en un paso (el `env: GITHUB_SHA:` de `publicar.yml` no hace nada); en un `workflow_run` vale la punta de main. La punta era un cambio `[skip ci]` posterior (5960912), y el panel (`apps/panel/vite.config.ts`) grababa ese commit en `<meta name="version">` en vez del verificado. El servidor y las apps ya usaban `VERSION` primero.
+- **Arreglo:** `vite.config.ts` usa `process.env.VERSION || process.env.GITHUB_SHA || 'local'` (VERSION es la versión verificada, puesta a nivel del trabajo).
+- **Prueba:** «C-VERSION-PANEL» en `apps/servidor/src/version.test.ts` (en rojo sin el arreglo).

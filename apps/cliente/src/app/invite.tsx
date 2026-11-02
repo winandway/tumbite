@@ -127,7 +127,7 @@ export default function InvitarAmigo() {
               <Text
                 testID="mi-codigo-invitacion"
                 selectable
-                style={{ fontSize: 28, fontWeight: '800', letterSpacing: 2, marginBottom: 12 }}
+                style={{ fontSize: 28, fontWeight: '700', letterSpacing: 2, marginBottom: 12 }}
               >
                 {estado.codigo}
               </Text>

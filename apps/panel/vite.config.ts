@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react';
 import raiz from '../../package.json' with { type: 'json' };
 
 /** Versión publicada (commit de main). Sirve para comprobar qué está en vivo: <meta name="version">. */
-const VERSION = (process.env.GITHUB_SHA ?? 'local').slice(0, 7);
+// C-VERSION-PANEL: VERSION primero (en «publicar», GITHUB_SHA es la punta de main y no se puede cambiar).
+const VERSION = (process.env.VERSION || process.env.GITHUB_SHA || 'local').slice(0, 7);
 /** Número de versión del proyecto (package.json de la raíz). Va con el commit al pie (C-VERSION-DEL-ARTEFACTO). */
 const NUMERO = raiz.version;
 

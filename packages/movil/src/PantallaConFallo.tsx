@@ -69,7 +69,7 @@ export function PantallaConFallo({
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24 }} testID="pantalla-con-fallo">
-        <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginBottom: 8 }}>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginBottom: 8 }}>
           {t.titulo}
         </Text>
         <Text style={{ fontSize: 16, color: '#5E5E5E', marginBottom: 24 }}>{t.texto}</Text>
@@ -83,7 +83,7 @@ export function PantallaConFallo({
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>{t.volver}</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>{t.volver}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

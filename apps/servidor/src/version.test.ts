@@ -30,4 +30,11 @@ describe('versión del servidor (C-VERSION-DEL-ARTEFACTO)', () => {
     };
     expect(pkg.scripts.build).toBe('node ../../scripts/construir-servidor.mjs');
   });
+  it('C-VERSION-PANEL: la web toma la versión de la publicación, no la punta de main', () => {
+    // GitHub no deja cambiar GITHUB_SHA en un paso: en «publicar» vale la punta de main. Si la
+    // punta era un cambio [skip ci], la web salía con otro commit y el control la frenaba (corrida
+    // 299, 2 nov 2026: «la web no lleva el commit a50aa06»). VERSION es la versión verificada.
+    const vite = readFileSync(join(__dirname, '..', '..', 'panel', 'vite.config.ts'), 'utf8');
+    expect(vite).toMatch(/process\.env\.VERSION \|\| process\.env\.GITHUB_SHA/);
+  });
 });
