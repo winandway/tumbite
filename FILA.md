@@ -270,6 +270,8 @@
 - 2 nov 2026, 14:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace 54 minutos). La fila sigue sin puntos `[ ]`: lo que queda es `[!]` de Richard, y las 18 brechas de la comparación con los grandes ya están hechas o esperan una cuenta de un tercero. Producción (divoox.com) muestra f1d266f (prepago de VE y CO), con verificación y publicación de main en verde. No se tocó código. Todos los países.
 - 2 nov 2026, 15:10 (tarea programada): sin pausa; main sin commits en 53 minutos, pero hay un guardado automático de otra sesión en la rama fase-repaso-1 hace 14 minutos y se deja a esa sesión. La fila sigue sin puntos `[ ]`: lo que queda es `[!]` de Richard. Pruebas ya muestran ce6642d (términos y guías dentro de la app); la publicación a producción de ese commit está corriendo y divoox.com todavía muestra f1d266f. No se tocó código. Todos los países.
 
+- 2 nov 2026, 12:30 (tarea programada): la fila estaba vacía y se rellenó con el bloque CLI (siete funciones de la app del cliente que tienen DoorDash y Uber Eats). Hechos CLI-1 (búsquedas recientes, 8a04417) y CLI-5 (explicación de tarifas, 29ba887), con prueba en rojo, verificación completa en verde y Docs en dos idiomas. NO están publicados: la sesión de GitHub de esta computadora desapareció entre las 11:35 y las 12:10 (gh sin token, llavero vacío) y git push falla; Richard tiene que volver a entrar a GitHub. Las capturas nuevas de Docs se toman del sitio de pruebas apenas se publique. Todos los países.
+
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
 - [x] HECHO 1 nov (C-DOCS-ZONAS). (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.

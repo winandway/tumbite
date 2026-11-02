@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 11:40 (Miami)",
+  "actualizado": "2026-11-02 12:30 (Miami)",
   "version": "468eee7",
   "ahora": {
-    "titulo": "Pruebas del dinero al 90 % o más",
-    "detalle": "Once archivos que manejan dinero (billeteras de empresas, superadmin, Plus, tarjetas de regalo, cobro de viajes, recargas y SMS de respaldo) ahora tienen pruebas de sus caminos de error y un candado que no deja bajar del 90 %."
+    "titulo": "Bloque nuevo: lo que el cliente de los grandes tiene y nosotros no",
+    "detalle": "Siete funciones de la app del cliente copiadas de DoorDash y Uber Eats. Ya hechas: búsquedas recientes y «¿Qué son estas tarifas?» en el carrito. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en esta computadora."
   },
   "proximo": [
     {
@@ -23,6 +23,13 @@
     }
   ],
   "esperando": [
+    {
+      "id": "github-sesion",
+      "prioridad": "alta",
+      "titulo": "Volver a entrar a GitHub en la computadora",
+      "para": "La sesión de GitHub de la Mac se borró hacia el mediodía del 2 nov; sin ella nada se publica.",
+      "destraba": "Publicar las búsquedas recientes, la explicación de tarifas y todo lo que venga después."
+    },
     {
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
@@ -292,6 +299,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Búsquedas recientes y tarifas explicadas en la app del cliente",
+      "texto": "La fila estaba vacía y se rellenó con siete funciones que DoorDash y Uber Eats tienen en la app del cliente. Hechas dos: el buscador muestra las últimas ocho búsquedas de cada cuenta, y el carrito explica cada cargo con los números reales del país. Las dos tienen su prueba y su guía en Docs en los dos idiomas. Quedan guardadas sin publicar porque GitHub perdió la sesión de la computadora."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Pruebas del dinero reforzadas y con candado",
