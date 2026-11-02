@@ -50,4 +50,17 @@ describe('C-SEGUIMIENTO-HONESTO en el enlace compartido', () => {
     expect(screen.getByRole('link', { name: /last known location/i })).toBeTruthy();
     expect(screen.getByText(/Arrives between/)).toBeTruthy();
   });
+  it('BRE-R (4): atrasado dice «Viene con retraso» y no muestra un «a más tardar» que ya pasó', async () => {
+    servidor({
+      ...BASE,
+      haceSegundos: 8,
+      senalPerdida: false,
+      llegaAMasTardar: '2026-11-02T16:30:00.000Z',
+      llegadaRango: { ...BASE.llegadaRango, atrasado: true },
+    });
+    render(<PedidoCompartido codigo={CODIGO} idioma="es" />);
+    expect(await screen.findByText(/Viene con retraso/)).toBeTruthy();
+    expect(screen.getByText(/Llega entre/)).toBeTruthy();
+    expect(screen.queryByText(/A más tardar/)).toBeNull();
+  });
 });

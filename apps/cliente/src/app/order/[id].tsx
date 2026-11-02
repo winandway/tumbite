@@ -27,6 +27,7 @@ import {
   type RangoLlegada,
   senalPerdida,
   textoActualizado,
+  textoAtrasado,
   textoRango,
   listaEtiquetas,
   type ParaEtiqueta,
@@ -1001,10 +1002,12 @@ export default function SeguirPedido() {
             ) : null}
             {p.llegadaRango && activo ? (
               <Text style={{ color: C.secundario, fontWeight: '700', marginTop: 10 }}>
+                {p.llegadaRango.atrasado ? `${textoAtrasado(idioma)} · ` : ''}
                 {t.llegaEntre} {textoRango(p.llegadaRango, idioma)}
               </Text>
             ) : null}
-            {p.llegaAMasTardar && activo ? (
+            {/* BRE-R (4): atrasado, el «a más tardar» ya pasó: no se muestra una hora que contradice. */}
+            {p.llegaAMasTardar && activo && !p.llegadaRango?.atrasado ? (
               <Text style={{ color: '#5E5E5E', marginTop: 10 }}>
                 {t.aMasTardar}{' '}
                 {new Date(p.llegaAMasTardar).toLocaleTimeString(

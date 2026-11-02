@@ -5,6 +5,7 @@ import {
   SENAL_PERDIDA_S,
   estimacionLlegada,
   rangoLlegada,
+  textoAtrasado,
   segundosDesde,
   senalPerdida,
   textoActualizado,
@@ -50,8 +51,19 @@ describe('C-SEGUIMIENTO-HONESTO', () => {
     // Con «a más tardar» antes del final del rango, el rango se recorta (mínimo 5 minutos).
     const c = rangoLlegada(AHORA, 10, '2026-11-02T16:47:00.000Z');
     expect(c?.hasta).toBe('2026-11-02T16:47:00.000Z');
+    expect(c?.atrasado).toBeUndefined();
+    // BRE-R (4): si ya no cabe ni el rango mínimo antes del «a más tardar», va atrasado. No se
+    // recorta para contradecirse: se da el rango honesto de diez minutos y se marca el retraso.
     const m = rangoLlegada(AHORA, 10, '2026-11-02T16:41:00.000Z');
-    expect(m?.hasta).toBe('2026-11-02T16:45:00.000Z');
+    expect(m).toEqual({
+      desde: '2026-11-02T16:40:00.000Z',
+      hasta: '2026-11-02T16:50:00.000Z',
+      atrasado: true,
+    });
+    const tarde = rangoLlegada(AHORA, 10, '2026-11-02T16:30:00.000Z');
+    expect(tarde?.atrasado).toBe(true);
+    expect(textoAtrasado('es')).toBe('Viene con retraso');
+    expect(textoAtrasado('en')).toBe('Running late');
     expect(rangoLlegada(AHORA, null, null)).toBeNull();
   });
 

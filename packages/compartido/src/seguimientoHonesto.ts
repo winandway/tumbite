@@ -40,11 +40,15 @@ export function textoActualizado(segundos: number, idioma: 'es' | 'en'): string 
   return idioma === 'en' ? `Updated ${cuanto} ago` : `Actualizado hace ${cuanto}`;
 }
 
-export type RangoLlegada = { desde: string; hasta: string };
+export type RangoLlegada = { desde: string; hasta: string; atrasado?: true };
 
 /**
  * La llegada como rango: desde «ahora + minutos estimados» (al minuto), diez minutos de ancho, sin
  * pasar del «a más tardar» prometido (pero nunca menos de cinco minutos de ancho).
+ *
+ * BRE-R (4): si ni siquiera el rango mínimo cabe antes del «a más tardar», el pedido va atrasado:
+ * se da el rango honesto de diez minutos marcado `atrasado` y la pantalla dice «Viene con retraso»
+ * en vez de un rango que se pasa de la hora prometida (como el «Running late» de DoorDash).
  */
 export function rangoLlegada(
   ahora: number,
@@ -55,9 +59,19 @@ export function rangoLlegada(
   const desde = Math.floor((ahora + minutosEstimados * 60_000) / 60_000) * 60_000;
   let hasta = desde + ANCHO_RANGO_MIN * 60_000;
   const tope = llegaAMasTardar ? Date.parse(llegaAMasTardar) : NaN;
-  if (!Number.isNaN(tope) && tope < hasta)
-    hasta = Math.max(tope, desde + RANGO_MINIMO_MIN * 60_000);
+  if (!Number.isNaN(tope) && tope < desde + RANGO_MINIMO_MIN * 60_000)
+    return {
+      desde: new Date(desde).toISOString(),
+      hasta: new Date(hasta).toISOString(),
+      atrasado: true,
+    };
+  if (!Number.isNaN(tope) && tope < hasta) hasta = tope;
   return { desde: new Date(desde).toISOString(), hasta: new Date(hasta).toISOString() };
+}
+
+/** Lo que se muestra en lugar del «a más tardar» cuando el rango ya se pasó de esa hora. */
+export function textoAtrasado(idioma: 'es' | 'en'): string {
+  return idioma === 'en' ? 'Running late' : 'Viene con retraso';
 }
 
 /** «11:40 AM–11:50 AM» en la hora y el idioma de quien lo mira. */

@@ -6,6 +6,7 @@ import {
   enIdioma,
   senalPerdida,
   textoActualizado,
+  textoAtrasado,
   textoRango,
 } from '@tumbite/compartido';
 import { api } from '../panel/api';
@@ -157,8 +158,9 @@ export function PedidoCompartido({ codigo, idioma }: { codigo: string; idioma: I
       </p>
       {p.llegadaRango ? (
         <p>
+          {p.llegadaRango.atrasado ? <strong>{textoAtrasado(idioma)} · </strong> : null}
           <strong>{t.llegaEntre}</strong> {textoRango(p.llegadaRango, idioma)}
-          {p.llegaAMasTardar ? (
+          {p.llegaAMasTardar && !p.llegadaRango.atrasado ? (
             <>
               <br />
               {t.aMasTardar}{' '}
