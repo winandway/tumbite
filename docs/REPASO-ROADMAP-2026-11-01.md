@@ -43,3 +43,18 @@ Quedan fuera, porque no son decisiones de producto:
 Se hace en el orden de la lista, cada uno terminado al 100% antes del siguiente: servidor, panel,
 apps, Docs en dos idiomas, pruebas en rojo, sitio de pruebas y producción (apagado). La fila de
 trabajo es `FILA.md`.
+
+## Resultado (1 nov 2026, noche)
+
+Las cuatro quedaron construidas de punta a punta, publicadas en producción y **apagadas**:
+
+| Función               | Qué hace                                                                                        | Cómo se enciende                         | Estado del cobro                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| Ganar por tiempo      | El repartidor elige cobrar por hora activa y milla                                              | Superadmin → Rewards → tarifa por hora   | Usa el mismo camino que el pago por hora pico                                       |
+| Anuncios patrocinados | El restaurante sale primero con «Patrocinado» y paga solo por pedido entregado desde el anuncio | Superadmin → Rewards → precio por pedido | Se descuenta del saldo del restaurante                                              |
+| Divoox Plus           | Envío gratis y medio servicio desde el mínimo, cuota mensual                                    | Superadmin → Rewards → cuota             | Probado en el sitio de pruebas con Stripe en modo prueba; bloqueado con dinero real |
+| Tarjetas de regalo    | Regalar un monto con mensaje; el código se canjea como saldo                                    | Superadmin → Rewards → encender          | Probado en el sitio de pruebas con Stripe en modo prueba; bloqueado con dinero real |
+
+De paso se arregló la bandeja de casos de dinero del superadmin: abrir un caso tardaba más de veinte segundos cuando había muchos (C-BANDEJA-UN-CASO).
+
+Lo que falta para encender cada una: el monto o precio (decisión de Richard) y, para Plus y las tarjetas, mirar la hoja de pago en el celular con la 4242 antes de quitar el bloqueo de dinero real.
