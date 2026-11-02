@@ -14,7 +14,7 @@ const T = {
     etiqueta: 'Cómo funciona',
     titulo: 'Cómo funciona Divoox',
     intro:
-      'Divoox es una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
+      'Divoox es una startup de reparto: una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
     indice: 'En esta página',
     tres: {
       titulo: 'Tres personas, una sola entrega',
@@ -182,7 +182,7 @@ const T = {
     etiqueta: 'How it works',
     titulo: 'How Divoox works',
     intro:
-      'Divoox is an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
+      'Divoox is a delivery startup: an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
     indice: 'On this page',
     tres: {
       titulo: 'Three people, one delivery',

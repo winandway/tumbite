@@ -14,7 +14,7 @@ const T = {
     etiqueta: 'Franquicia exclusiva por ciudad',
     titulo: 'Sea dueño de la app que lo hace todo en su ciudad',
     texto:
-      'Comida, mercado, farmacia, envíos de paquetes y viajes en moto o en carro, en una sola aplicación. Se la entregamos lista para lanzar, con exclusividad en su ciudad, su estado o su país.',
+      'La startup Divoox reúne comida, mercado, farmacia, envíos de paquetes y viajes en moto o en carro en una sola aplicación. Se la entregamos lista para lanzar, con exclusividad en su ciudad, su estado o su país.',
     pantallas: 'Las tres apps reales: cliente, restaurante y repartidor',
     recibeTitulo: 'Lo que recibe',
     recibe: [
@@ -30,7 +30,7 @@ const T = {
     etiqueta: 'Exclusive franchise by city',
     titulo: 'Own the app that does it all in your city',
     texto:
-      'Food, groceries, pharmacy, package delivery, and motorbike or car rides, in a single app. We hand it to you ready to launch, with exclusive rights to your city, state, or country.',
+      'The Divoox startup brings food, groceries, pharmacy, package delivery, and motorbike or car rides together in a single app. We hand it to you ready to launch, with exclusive rights to your city, state, or country.',
     pantallas: 'The three real apps: customer, restaurant, and driver',
     recibeTitulo: 'What you get',
     recibe: [
