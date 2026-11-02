@@ -7,7 +7,8 @@ import { enviarCorreo } from './correo';
 import type { Env } from './env';
 import { anotar } from './historial';
 import { notificar } from './notificaciones';
-import { crearStripe, type Stripe } from './stripe';
+import { ErrorStripe, crearStripe, type Stripe } from './stripe';
+import { guardarError } from './errores';
 import { ErrorDatos } from './validar';
 import { aceptarSiEsAutomatico, soltarPedido } from './rutas/operacion';
 import { aplicarAjuste } from './rutas/pedidos';
@@ -408,7 +409,31 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
       try {
         if (p.stripe_sesion) {
           if (!stripe) continue;
-          await stripe.post(`/payment_intents/${p.stripe_sesion}/cancel`, {}, `anular-${p.id}`);
+          const anulado = await stripe
+            .post(`/payment_intents/${p.stripe_sesion}/cancel`, {}, `anular-${p.id}`)
+            .then(() => true)
+            .catch(() => false);
+          // C-ABANDONADOS: Stripe no deja anular un cobro que ya venció o ya se anuló. Se mira su
+          // estado real: si ya no se puede pagar, se cierra; si se pagó, se deja y queda escrito.
+          if (!anulado) {
+            const real = await stripe
+              .get<{ status: string }>(`/payment_intents/${p.stripe_sesion}`)
+              .then((r) => r.status)
+              .catch((e: unknown) =>
+                e instanceof ErrorStripe && e.estado === 404 ? 'no_existe' : null,
+              );
+            if (real !== 'canceled' && real !== 'no_existe') {
+              await guardarError(
+                db,
+                'RELOJ',
+                `manager:abandonado:${p.id}`,
+                new Error(
+                  `Pedido sin pagar que Stripe no deja anular (estado del cobro: ${real ?? 'sin respuesta'})`,
+                ),
+              );
+              continue;
+            }
+          }
         }
         const r = await db
           .prepare(
@@ -422,6 +447,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
         }
       } catch (e) {
         console.error('manager: no se pudo cerrar un pedido sin pagar', p.id, e);
+        await guardarError(db, 'RELOJ', `manager:abandonado:${p.id}`, e).catch(() => undefined);
       }
     }
   }

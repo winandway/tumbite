@@ -2545,3 +2545,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **C-APP-SIN-CIERRES, 2 nov (CON-3):** en Superadmin → Resumen → errores, el selector «Origen» separa el servidor de cada app, y cada fallo de app se ve como «App restaurante · /equipo». Prueba en `apps/panel/src/panel/Superadmin.test.tsx` (C-ERRORES-VISIBLES), comprobada en rojo sin el cambio.
 - **C-CONTRATO-APPS, 2 nov (CON-4):** la misma prueba recorre el panel web; como el panel no dice el rol de cada pantalla, prueba con superadmin, restaurante, repartidor y cliente y vale la primera que entra. Comprobado en rojo cambiando la llave de los errores del superadmin.
+
+## C-ABANDONADOS (2 nov 2026, CON-5) — todos los países
+
+- **Qué se vio:** el embudo de producción cuadra (31 pedidos empezados, 11 pagados, 11 aceptados, 11 entregados, 18 abandonados sin pagar y cerrados), pero dos pedidos del 12 oct seguían «esperando el pago» tres semanas después, aunque el vigilante corre bien cada pocas horas.
+- **Causa:** si Stripe no deja anular el cobro (ya venció, ya se anuló o no existe con la llave actual), el vigilante lo atrapaba, lo escribía solo en la consola y lo volvía a intentar para siempre.
+- **Arreglo:** `apps/servidor/src/manager.ts` mira el estado real del cobro: anulado o inexistente → el pedido se cierra; pagado o sin respuesta → no se toca y queda en el registro de errores del superadmin («manager:abandonado:…»), que pone la salud en «pendiente».
+- **Prueba:** `operacion.test.ts`, «si Stripe no deja anular porque el cobro ya venció…», comprobada en rojo.
+- **Cómo se comprueba en producción después de publicar:** `SELECT COUNT(*) FROM pedidos WHERE estado = 'pago_pendiente' AND creado_en < datetime('now','-1 day')` tiene que dar cero después de la siguiente vuelta del reloj.

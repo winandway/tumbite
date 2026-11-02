@@ -676,6 +676,80 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     const f = await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first();
     expect(f?.estado).toBe('cancelado');
   });
+
+  /**
+   * C-ABANDONADOS (CON-5, 2 nov 2026): en producción dos pedidos del 12 oct seguían «esperando el
+   * pago» tres semanas después. Stripe no deja anular un cobro que ya venció o ya se anuló, el
+   * vigilante se saltaba el pedido en silencio y lo volvía a intentar para siempre. Ahora mira el
+   * estado real del cobro: si ya no se puede pagar, cierra; si se pagó, lo deja y queda escrito.
+   */
+  it('si Stripe no deja anular porque el cobro ya venció, el pedido se cierra igual', async () => {
+    const { m, cliente } = await escenario();
+    const { vigilarPedidos } = await import('../manager');
+    let estadoCobro = 'canceled';
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (/\/cancel$/.test(url))
+        return new Response(
+          JSON.stringify({ error: { message: 'You cannot cancel this PaymentIntent' } }),
+          { status: 400 },
+        );
+      if ((init?.method ?? 'GET') === 'GET' && /\/payment_intents\//.test(url))
+        return estadoCobro === 'missing'
+          ? new Response(JSON.stringify({ error: { message: 'No such payment_intent' } }), {
+              status: 404,
+            })
+          : new Response(JSON.stringify({ id: 'pi_x', status: estadoCobro }), { status: 200 });
+      return new Response(JSON.stringify({ id: 'pi_x', client_secret: 'pi_x_secret_y' }), {
+        status: 200,
+      });
+    });
+    const r = await m.DB.prepare('SELECT id FROM restaurantes LIMIT 1').first<{ id: string }>();
+    const plato = await m.DB.prepare('SELECT id FROM platos LIMIT 1').first<{ id: string }>();
+    const nuevoPedido = async () => {
+      const p = await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: r?.id,
+          lineas: [{ platoId: plato?.id, cantidad: 1 }],
+          propinaCentavos: 0,
+          direccion: '1 Calle',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        cliente.token,
+      );
+      const id = p.datos.pedidoId as string;
+      await m.DB.prepare(
+        "UPDATE pedidos SET creado_en = datetime('now','-3 hours'), stripe_sesion = 'pi_x' WHERE id = ?",
+      )
+        .bind(id)
+        .run();
+      return id;
+    };
+    const estado = async (id: string) =>
+      (await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(id).first())?.estado;
+    const env = { DB: m.DB, STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+
+    const vencido = await nuevoPedido();
+    expect((await vigilarPedidos(env, m.DB)).abandonados).toBe(1);
+    expect(await estado(vencido)).toBe('cancelado');
+
+    estadoCobro = 'missing';
+    const sinCobro = await nuevoPedido();
+    await vigilarPedidos(env, m.DB);
+    expect(await estado(sinCobro)).toBe('cancelado');
+
+    // Si el cobro sí se pagó, no se cierra: queda escrito para el equipo.
+    estadoCobro = 'succeeded';
+    const pagado = await nuevoPedido();
+    await vigilarPedidos(env, m.DB);
+    expect(await estado(pagado)).toBe('pago_pendiente');
+    const anotado = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM errores_servidor WHERE ruta LIKE 'manager:abandonado%'",
+    ).first<{ n: number }>();
+    expect(Number(anotado?.n)).toBeGreaterThan(0);
+  });
 });
 
 describe('recogida con foto y entrega en la puerta (C-RECOGIDA-FOTO, C-ENTREGA-EN-PUERTA)', () => {
