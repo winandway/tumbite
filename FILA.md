@@ -272,6 +272,8 @@
 
 - 2 nov 2026, 12:30 (tarea programada): la fila estaba vacía y se rellenó con el bloque CLI (siete funciones de la app del cliente que tienen DoorDash y Uber Eats). Hechos CLI-1 (búsquedas recientes, 8a04417) y CLI-5 (explicación de tarifas, 29ba887), con prueba en rojo, verificación completa en verde y Docs en dos idiomas. NO están publicados: la sesión de GitHub de esta computadora desapareció entre las 11:35 y las 12:10 (gh sin token, llavero vacío) y git push falla; Richard tiene que volver a entrar a GitHub. Las capturas nuevas de Docs se toman del sitio de pruebas apenas se publique. Todos los países.
 
+- 2 nov 2026, 12:40 (tarea programada, misma vuelta): hechos además CLI-2 (ordenar y filtros rápidos, 139632d), CLI-3 (lo más pedido, 471059d), CLI-4 (alergias, en el guardado automático 75561102 y 75d911b) y CLI-6 (regalar un pedido, en el guardado automático 43c1ebc), cada uno con prueba en rojo y Docs en dos idiomas. Siguen SIN publicar: GitHub sin sesión en la computadora. CLI-7 (referidos) queda para la próxima vuelta: otra sesión está trabajando ahora en la misma carpeta (commit bf637a4) y la regla es no pisarla. Todos los países.
+
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
 - [x] HECHO 1 nov (C-DOCS-ZONAS). (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
