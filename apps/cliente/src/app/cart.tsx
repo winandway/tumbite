@@ -13,6 +13,7 @@ import {
   calcularPedido,
   insigniaPromocion,
   mejorPromocion,
+  cuponConPlus,
   descuentoPlus,
   saldoAplicable,
   distanciaKm,
@@ -84,6 +85,7 @@ const TE = {
     aplicar: 'Aplicar',
     quitarCupon: 'Quitar',
     cuponOk: 'Cupón aplicado: −{monto}',
+    cuponConPlus: 'Ya tienes el envío gratis con Divoox Plus: este cupón no suma más.',
     descuento: 'Cupón',
   },
   en: {
@@ -121,6 +123,8 @@ const TE = {
     aplicar: 'Apply',
     quitarCupon: 'Remove',
     cuponOk: 'Coupon applied: −{monto}',
+    cuponConPlus:
+      'You already get free delivery with Divoox Plus, so this coupon doesn’t add more.',
     descuento: 'Coupon',
   },
 } as const;
@@ -452,7 +456,6 @@ export default function PantallaCarrito() {
       : null;
   // C-FALLOS-DINERO (F6): recoger en el local no lleva envío; se calcula igual que el servidor.
   const recogidaElegida = b.valores.entrega === 'recoger';
-  const descuentoCupon = cupon?.descuento ?? 0;
   // Sin useMemo: el cálculo es barato y así el compilador de React no tiene que adivinar dependencias.
   const base = {
     lineas: carrito.lineas,
@@ -477,11 +480,15 @@ export default function PantallaCarrito() {
   // BRE-R2: el envío que ya cubren Plus o un cupón de envío gratis no lo vuelve a pagar la
   // promoción «envío gratis» del restaurante (la misma regla que el servidor).
   const envioCubierto = previo && (plusAplica || cupon?.tipo === 'envio_gratis') ? previo.envio : 0;
+  // C-ENVIO-UNA-VEZ (BRE-R3b): con Plus el envío ya va gratis; el cupón de envío gratis no suma
+  // (aunque se haya validado antes de llegar al mínimo de Plus). La misma regla que el servidor.
+  const cuponSinEfecto = plusAplica && cupon?.tipo === 'envio_gratis';
+  const cuponAplicado = cuponConPlus(cupon, plusAplica);
   const promo =
     previo && conTarjeta ? mejorPromocion(promociones, previo, { regalo, envioCubierto }) : null;
   const sinPlus = carrito.lineas.length
     ? calcularConPromocion(
-        { ...base, recogida: recogidaElegida, descuento: descuentoCupon },
+        { ...base, recogida: recogidaElegida, descuento: cuponAplicado },
         promo,
         { envioCubierto },
       )
@@ -490,7 +497,7 @@ export default function PantallaCarrito() {
   const conPlus =
     sinPlus && descPlus
       ? calcularConPromocion(
-          { ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus },
+          { ...base, recogida: recogidaElegida, descuento: cuponAplicado + descPlus },
           promo,
           { envioCubierto },
         )
@@ -507,7 +514,7 @@ export default function PantallaCarrito() {
           {
             ...base,
             recogida: recogidaElegida,
-            descuento: descuentoCupon + descPlus + usoRegalo,
+            descuento: cuponAplicado + descPlus + usoRegalo,
           },
           promo,
           { envioCubierto },
@@ -1279,7 +1286,9 @@ export default function PantallaCarrito() {
           style={{ color: C.exito, fontWeight: '700', marginBottom: 8 }}
           accessibilityLiveRegion="polite"
         >
-          {te.cuponOk.replace('{monto}', formatearMonto(cupon.descuento, moneda, idioma))}
+          {cuponSinEfecto
+            ? te.cuponConPlus
+            : te.cuponOk.replace('{monto}', formatearMonto(cupon.descuento, moneda, idioma))}
         </Text>
       ) : null}
       {cuponError ? (

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { descuentoPlus } from './plus';
+import { cuponConPlus, descuentoPlus } from './plus';
 
 // C-PLUS: la app y el servidor descuentan lo mismo; solo desde el mínimo.
 const leer = (...p: string[]) => readFileSync(join(__dirname, '..', '..', '..', ...p), 'utf8');
@@ -21,5 +21,14 @@ describe('C-PLUS: descuento de Divoox Plus', () => {
     expect(leer('apps', 'cliente', 'src', 'app', 'plus.tsx')).toContain(
       "'/datos/plus/suscribirse'",
     );
+  });
+});
+
+describe('C-ENVIO-UNA-VEZ (BRE-R3b): cupón de envío gratis con Plus', () => {
+  it('con Plus aplicado, el cupón de envío gratis no descuenta nada; los demás cupones sí', () => {
+    expect(cuponConPlus({ tipo: 'envio_gratis', descuento: 399 }, true)).toBe(0);
+    expect(cuponConPlus({ tipo: 'envio_gratis', descuento: 399 }, false)).toBe(399);
+    expect(cuponConPlus({ tipo: 'monto', descuento: 500 }, true)).toBe(500);
+    expect(cuponConPlus(null, true)).toBe(0);
   });
 });

@@ -27,3 +27,17 @@ export function descuentoPlus(
   const pct = Math.min(100, Math.max(0, a.servicioDescuentoPct));
   return d.envio + Math.round((d.servicio * pct) / 100);
 }
+
+/**
+ * C-ENVIO-UNA-VEZ (BRE-R3b): lo que descuenta un cupón cuando también aplica Plus. Plus ya deja
+ * el envío en cero, así que un cupón de envío gratis no suma nada (si no, el envío se descontaría
+ * dos veces); los demás cupones descuentan lo de siempre. La app del cliente y el servidor usan
+ * esta misma regla.
+ */
+export function cuponConPlus(
+  cupon: { tipo?: string; descuento: number } | null | undefined,
+  plusAplica: boolean,
+): number {
+  if (!cupon) return 0;
+  return plusAplica && cupon.tipo === 'envio_gratis' ? 0 : cupon.descuento;
+}
