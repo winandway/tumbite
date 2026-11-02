@@ -913,6 +913,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'You already used destination mode twice today. It’s available again tomorrow.',
   ],
   // C-PEDIDO-PRUEBA (BRE-4)
+  ['La promoción se acabó. Revisa el total.', 'That promotion just ran out. Check your total.'],
   [
     'Ya hiciste 10 pedidos de prueba hoy. Puedes enviarte otro mañana.',
     'You already sent yourself 10 test orders today. You can send another tomorrow.',

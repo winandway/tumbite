@@ -8,6 +8,7 @@ import { topesDeZona } from '../internacional/tarifas';
 import { leerPromociones, resumenPromociones } from '../promociones';
 import { ZONA_INICIAL } from './zonas';
 import { mio } from './restauranteMas';
+import { limitesDelDia } from './operacion';
 
 /**
  * C-PROMO-RESTAURANTE (BRE-5): el restaurante arma, ve y termina sus promociones; el superadmin
@@ -21,6 +22,16 @@ const fecha = z
     error: 'La fecha no es válida.',
   })
   .transform((v) => (v.length === 10 ? `${v} 00:00:00` : v));
+
+/**
+ * BRE-5d: una fecha sin hora es un día entero en la hora del restaurante: «Empieza» desde su
+ * medianoche y «Termina» hasta el final de ese día (se guarda exclusivo, en UTC como la base).
+ */
+function diaLocal(v: string, zona: string, extremo: 'inicio' | 'fin'): string {
+  if (!/^\d{4}-\d{2}-\d{2} 00:00:00$/.test(v)) return v;
+  const [inicio, fin] = limitesDelDia(zona, new Date(`${v.slice(0, 10)}T12:00:00Z`));
+  return extremo === 'inicio' ? inicio : fin;
+}
 
 async function monedaDe(db: D1Database, restauranteId: string) {
   const f = await db
@@ -69,6 +80,17 @@ promociones.post('/mi-restaurante/promociones', async (c) => {
         400,
       );
   }
+  const zona =
+    (
+      await db
+        .prepare(
+          'SELECT z.zona_horaria FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+        )
+        .bind(r.id)
+        .first<{ zona_horaria: string | null }>()
+    )?.zona_horaria || 'America/New_York';
+  d.iniciaEn = diaLocal(d.iniciaEn, zona, 'inicio');
+  d.venceEn = diaLocal(d.venceEn, zona, 'fin');
   if (d.venceEn <= d.iniciaEn)
     throw new ErrorDatos('La promoción tiene que terminar después de empezar.', 'venceEn', 400);
   const { topes } = await monedaDe(db, r.id);

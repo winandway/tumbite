@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { conciliar } from './conciliacion';
+import { anotarPromocion, promocionesVigentes } from './promociones';
 
 /**
  * C-PROMO-RESTAURANTE (BRE-5, 2 nov 2026), como «Promotions» de DoorDash Merchant: el restaurante
@@ -286,5 +287,61 @@ describe('promociones del restaurante (C-PROMO-RESTAURANTE)', () => {
     );
     expect(leer('apps/cliente/src/app/cart.tsx')).toContain('calcularConPromocion');
     expect(leer('apps/panel/src/panel/SuperPromociones.tsx')).toContain('/datos/admin/promociones');
+  });
+
+  it('BRE-5d: con el tope alcanzado, anotar otro uso se niega (dos pedidos a la vez no lo pasan)', async () => {
+    const e = await escena();
+    const antes = await e.pedir();
+    await e.encender(true);
+    await e.crear({ tipo: 'porcentaje', valor: 1000, usosMax: 1 });
+    const con = await e.pedir();
+    expect(con.datos.desglose.descuentoRestaurante).toBeGreaterThan(0);
+    // El pedido que leyó «queda un uso» antes de que el otro lo gastara llega tarde a anotarlo.
+    const promo = (await promocionesVigentes(e.m.DB, [e.rid])).get(e.rid);
+    expect(promo).toBeUndefined();
+    const fila = await e.m.DB.prepare('SELECT promocion_json FROM pedidos_promocion').first<{
+      promocion_json: string;
+    }>();
+    const ok = await anotarPromocion(
+      e.m.DB,
+      antes.datos.pedidoId as string,
+      e.rid,
+      JSON.parse(fila!.promocion_json),
+      300,
+    );
+    expect(ok).toBe(false);
+    const usos = await e.m.DB.prepare('SELECT COUNT(*) AS n FROM pedidos_promocion').first<{
+      n: number;
+    }>();
+    expect(usos?.n).toBe(1);
+  });
+
+  it('BRE-5d: «Termina» vale el día completo en la hora del restaurante, no en la de Londres', async () => {
+    const e = await escena();
+    await e.encender(true);
+    const r = await e.crear({
+      tipo: 'envio_gratis',
+      iniciaEn: '2026-11-05',
+      venceEn: '2026-11-10',
+    });
+    expect(r.estado).toBe(201);
+    const f = await e.m.DB.prepare(
+      'SELECT inicia_en, vence_en FROM promociones_restaurante',
+    ).first<{
+      inicia_en: string;
+      vence_en: string;
+    }>();
+    // Miami en noviembre va 5 horas detrás: el día 10 termina a las 05:00 del 11 en UTC.
+    expect(f).toEqual({ inicia_en: '2026-11-05 05:00:00', vence_en: '2026-11-11 05:00:00' });
+    const mias = await e.m.llamar(
+      'GET',
+      '/datos/mi-restaurante/promociones',
+      undefined,
+      e.dueno.token,
+    );
+    expect(mias.datos.promociones[0]).toMatchObject({
+      iniciaEn: '2026-11-05',
+      venceEn: '2026-11-10',
+    });
   });
 });

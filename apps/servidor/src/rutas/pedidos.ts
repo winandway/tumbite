@@ -234,6 +234,7 @@ export async function calcularSinPlato(
       recogida,
     },
     await promocionDelPedido(db, String(f.id)),
+    Number(f.total),
   );
   const desglose = descuentos.desglose;
   return {
@@ -709,36 +710,19 @@ pedidos.post('/pedidos', async (c) => {
     if (!disponible) throw new ErrorDatos('Ese regalo ya no está disponible.', 'regalo', 409);
     regalo = disponible.valorCentavos;
   }
-  // C-PROMO-RESTAURANTE (BRE-5): la promoción del restaurante se aplica sola en los pedidos con
-  // tarjeta (los únicos que Divoox liquida) y sale de su pago. La app hace la misma cuenta.
-  const promo =
-    d.metodoPago === 'tarjeta'
-      ? mejorPromocion(
-          (await promocionesVigentes(db, [String(rest.id)])).get(String(rest.id)),
-          calcularPedido({
-            lineas,
-            plan,
-            propina: d.propinaCentavos,
-            distanciaKm: km,
-            config,
-            regalo,
-            recogida,
-          }),
-        )
-      : null;
-  const conPromo = (p: Parameters<typeof calcularPedido>[0]) => calcularConPromocion(p, promo);
+  // El pedido sin descuentos: sobre él se validan el cupón, Plus y la promoción del restaurante.
+  const previo = calcularPedido({
+    lineas,
+    plan,
+    propina: d.propinaCentavos,
+    distanciaKm: km,
+    config,
+    regalo,
+    recogida,
+  });
   // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
-  let cupon: { codigo: string; descuento: number } | null = null;
+  let cupon: { codigo: string; descuento: number; tipo: string } | null = null;
   if (d.cupon) {
-    const previo = calcularPedido({
-      lineas,
-      plan,
-      propina: d.propinaCentavos,
-      distanciaKm: km,
-      config,
-      regalo,
-      recogida,
-    });
     const v = await validarCupon(db, {
       codigo: d.cupon,
       usuarioId: u.id,
@@ -747,8 +731,28 @@ pedidos.post('/pedidos', async (c) => {
       envio: previo.envio,
       zonaId: String(rest.zona_id ?? ZONA_INICIAL),
     });
-    cupon = { codigo: v.cupon.codigo, descuento: v.descuento };
+    cupon = { codigo: v.cupon.codigo, descuento: v.descuento, tipo: v.cupon.tipo };
   }
+  // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
+  // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
+  const planPlus =
+    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
+  const plusAplica = planPlus ? descuentoPlus(previo, planPlus) > 0 : false;
+  // BRE-R2: el envío que ya absorbe Divoox (Plus o cupón de envío gratis) no lo vuelve a pagar la
+  // promoción «envío gratis» del restaurante.
+  const envioCubierto = plusAplica || cupon?.tipo === 'envio_gratis' ? previo.envio : 0;
+  // C-PROMO-RESTAURANTE (BRE-5): la promoción del restaurante se aplica sola en los pedidos con
+  // tarjeta (los únicos que Divoox liquida) y sale de su pago. La app hace la misma cuenta.
+  const promo =
+    d.metodoPago === 'tarjeta'
+      ? mejorPromocion(
+          (await promocionesVigentes(db, [String(rest.id)])).get(String(rest.id)),
+          previo,
+          { regalo, envioCubierto },
+        )
+      : null;
+  const conPromo = (p: Parameters<typeof calcularPedido>[0]) =>
+    calcularConPromocion(p, promo, { envioCubierto });
   const sinPlus = conPromo({
     lineas,
     plan,
@@ -759,11 +763,7 @@ pedidos.post('/pedidos', async (c) => {
     recogida,
     descuento: cupon?.descuento ?? 0,
   });
-  // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
-  // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
-  const planPlus =
-    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
-  const descPlus = planPlus ? descuentoPlus(sinPlus, planPlus) : 0;
+  const descPlus = planPlus && plusAplica ? descuentoPlus(sinPlus, planPlus) : 0;
   const conPlus = descPlus
     ? conPromo({
         lineas,
@@ -857,6 +857,17 @@ pedidos.post('/pedidos', async (c) => {
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
+  // BRE-5d: el uso de la promoción se reserva antes que todo lo demás; si otro pedido gastó el
+  // último, este no se cobra con un descuento que ya no existe y el cliente revisa el total.
+  if (!(await anotarPromocion(db, id, String(rest.id), promo, desglose.descuentoRestaurante))) {
+    await db
+      .prepare(
+        "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = ? AND estado = 'pago_pendiente'",
+      )
+      .bind(id)
+      .run();
+    throw new ErrorDatos('La promoción se acabó. Revisa el total.', undefined, 409);
+  }
   if (usoRegalo && !(await apartarSaldo(db, id, u.id, usoRegalo))) {
     // Otro pedido usó el saldo al mismo tiempo: este no se cobra y se avisa.
     await db
@@ -874,7 +885,6 @@ pedidos.post('/pedidos', async (c) => {
       )
       .bind(id, u.id, descPlus)
       .run();
-  await anotarPromocion(db, id, String(rest.id), promo, desglose.descuentoRestaurante);
   if (cupon)
     await db
       .prepare(

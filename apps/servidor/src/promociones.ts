@@ -6,7 +6,7 @@
  * cambian. Nace APAGADO: el superadmin la enciende (config «promociones_restaurante»).
  * Todos los países (hoy solo hay tarjeta en dólares, así que en la práctica vale en EE. UU.).
  */
-import type { PromocionRestaurante } from '@tumbite/compartido';
+import { type PromocionRestaurante, fechaLocal } from '@tumbite/compartido';
 
 export type AjustesPromociones = { encendidas: boolean };
 export const PROMOCIONES_INICIAL: AjustesPromociones = { encendidas: false };
@@ -89,25 +89,39 @@ export async function promocionDelPedido(
   return JSON.parse(f.promocion_json) as PromocionRestaurante;
 }
 
-/** Anota la promoción aplicada (si descontó algo). */
+/**
+ * Anota la promoción aplicada (si descontó algo). BRE-5d: el uso se reserva en el mismo paso que
+ * se cuenta, así dos pedidos a la vez no pasan el tope. Devuelve false si ya no quedaba uso (el
+ * pedido se calculó con un descuento que otro pedido gastó primero).
+ */
 export async function anotarPromocion(
   db: D1Database,
   pedidoId: string,
   restauranteId: string,
   promo: PromocionRestaurante | null,
   descuento: number,
-): Promise<void> {
-  if (!promo || descuento <= 0) return;
-  await db
+): Promise<boolean> {
+  if (!promo || descuento <= 0) return true;
+  const r = await db
     .prepare(
-      'INSERT OR IGNORE INTO pedidos_promocion (pedido_id, promocion_id, restaurante_id, promocion_json, descuento) VALUES (?, ?, ?, ?, ?)',
+      `INSERT OR IGNORE INTO pedidos_promocion (pedido_id, promocion_id, restaurante_id, promocion_json, descuento)
+       SELECT ?, pr.id, ?, ?, ? FROM promociones_restaurante pr
+        WHERE pr.id = ? AND (pr.usos_max IS NULL OR ${USOS} < pr.usos_max)`,
     )
-    .bind(pedidoId, promo.id, restauranteId, JSON.stringify(promo), descuento)
+    .bind(pedidoId, restauranteId, JSON.stringify(promo), descuento, promo.id)
     .run();
+  return r.meta.changes > 0;
 }
 
 /** Lo que el restaurante ve: sus promociones con usos y lo que le costaron (pedidos entregados). */
 export async function resumenPromociones(db: D1Database, restauranteId: string) {
+  const z = await db
+    .prepare(
+      'SELECT z.zona_horaria FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+    )
+    .bind(restauranteId)
+    .first<{ zona_horaria: string | null }>();
+  const zona = z?.zona_horaria || 'America/New_York';
   const { results } = await db
     .prepare(
       `SELECT pr.*, ${USOS} AS usos,
@@ -121,8 +135,9 @@ export async function resumenPromociones(db: D1Database, restauranteId: string) 
   return results.map((f) => ({
     ...aPromocion(f),
     usosMax: f.usos_max == null ? null : Number(f.usos_max),
-    iniciaEn: f.inicia_en,
-    venceEn: f.vence_en,
+    // BRE-5d: el día que el restaurante escribió, en su hora (el fin se guarda exclusivo).
+    iniciaEn: fechaLocal(zona, new Date(`${f.inicia_en.replace(' ', 'T')}Z`)),
+    venceEn: fechaLocal(zona, new Date(Date.parse(`${f.vence_en.replace(' ', 'T')}Z`) - 1000)),
     activa: Number(f.activa) === 1,
     vigente:
       Number(f.activa) === 1 &&

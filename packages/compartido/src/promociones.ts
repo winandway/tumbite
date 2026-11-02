@@ -39,16 +39,45 @@ export function descuentoPromocion(
 }
 
 /**
+ * Lo que ya cubrió otro descuento antes de la promoción, y si se respeta el mínimo.
+ * - `envioCubierto` (BRE-R2): el envío que ya absorbe Divoox Plus o un cupón de envío gratis. La
+ *   promoción «envío gratis» solo descuenta lo que queda del envío: nunca lo paga dos veces.
+ * - `sinMinimo` (BRE-R2): en un recálculo (plato agotado) la promoción ya aplicada se mantiene
+ *   aunque el subtotal baje de su mínimo, como los grandes: un recálculo nunca sube el total.
+ */
+export type OpcionesPromocion = { envioCubierto?: Centavos; sinMinimo?: boolean };
+
+/**
+ * La base sobre la que cuenta la promoción: la comida que paga el cliente (sin el plato regalado
+ * por el restaurante) y el envío que todavía no cubrió otro descuento.
+ */
+export function basePromocion(
+  d: Pick<Desglose, 'subtotal' | 'envio'>,
+  regalo: Centavos = 0,
+  envioCubierto: Centavos = 0,
+): Pick<Desglose, 'subtotal' | 'envio'> {
+  return {
+    subtotal: Math.max(0, d.subtotal - Math.max(0, regalo)),
+    envio: Math.max(0, d.envio - Math.max(0, envioCubierto)),
+  };
+}
+
+/**
  * La misma cuenta en el servidor y en la app: primero el pedido sin la promoción, después con lo
  * que descuenta. Si no hay promoción, devuelve el pedido tal cual.
  */
 export function calcularConPromocion(
   p: Parameters<typeof calcularPedido>[0],
   promo: PromocionRestaurante | null | undefined,
+  op: OpcionesPromocion = {},
 ): Desglose {
   const sin = calcularPedido(p);
   if (!promo) return sin;
-  const descuentoRestaurante = descuentoPromocion(promo, sin);
+  const regla = op.sinMinimo ? { ...promo, minimoSubtotal: 0 } : promo;
+  const descuentoRestaurante = descuentoPromocion(
+    regla,
+    basePromocion(sin, p.regalo, op.envioCubierto),
+  );
   return descuentoRestaurante ? calcularPedido({ ...p, descuentoRestaurante }) : sin;
 }
 
@@ -80,11 +109,13 @@ export function insigniaPromocion(
 export function mejorPromocion(
   lista: readonly PromocionRestaurante[] | null | undefined,
   d: Pick<Desglose, 'subtotal' | 'envio'>,
+  op: { regalo?: Centavos; envioCubierto?: Centavos } = {},
 ): PromocionRestaurante | null {
   let mejor: PromocionRestaurante | null = null;
   let ahorro = 0;
+  const b = basePromocion(d, op.regalo, op.envioCubierto);
   for (const p of lista ?? []) {
-    const a = descuentoPromocion(p, d);
+    const a = descuentoPromocion(p, b);
     if (a > ahorro) {
       mejor = p;
       ahorro = a;

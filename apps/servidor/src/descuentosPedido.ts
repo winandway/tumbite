@@ -1,8 +1,8 @@
 import {
   type Desglose,
   type PromocionRestaurante,
-  type calcularPedido,
   calcularConPromocion,
+  calcularPedido,
   descuentoPlus,
   porcentajeDe,
   saldoAplicable,
@@ -42,6 +42,8 @@ export async function recalcularConDescuentos(
   pedido: { id: string; cupon: unknown; descuento: unknown },
   p: Parameters<typeof calcularPedido>[0],
   promo: PromocionRestaurante | null | undefined,
+  /** En un recálculo que quita algo (plato agotado), el total cobrado antes: nunca se pasa. */
+  totalMaximo?: number,
 ): Promise<DescuentosRecalculados> {
   const g = await db
     .prepare(
@@ -55,7 +57,12 @@ export async function recalcularConDescuentos(
   const plusAntes = Math.max(0, Number(g?.plus ?? 0));
   const regaloAntes = Math.max(0, Number(g?.regalo ?? 0));
   const cuponAntes = Math.max(0, Number(pedido.descuento ?? 0) - plusAntes - regaloAntes);
-  const base = calcularConPromocion(p, promo);
+  // BRE-R2: el envío que ya cubren Plus o un cupón de envío gratis no lo paga otra vez la promoción
+  // del restaurante; y la promoción ya aplicada se mantiene aunque el subtotal baje de su mínimo.
+  const envioCubierto =
+    plusAntes > 0 || (pedido.cupon && g?.tipo === 'envio_gratis') ? calcularPedido(p).envio : 0;
+  const op = { envioCubierto, sinMinimo: true };
+  const base = calcularConPromocion(p, promo, op);
   const cupon = !pedido.cupon
     ? cuponAntes
     : g?.tipo === 'envio_gratis'
@@ -69,11 +76,19 @@ export async function recalcularConDescuentos(
         servicioDescuentoPct: (await leerPlus(db)).servicioDescuentoPct,
       })
     : 0;
-  const sinRegalo = calcularConPromocion({ ...p, descuento: cupon + plus }, promo);
+  const sinRegalo = calcularConPromocion({ ...p, descuento: cupon + plus }, promo, op);
   const regalo = regaloAntes ? saldoAplicable(sinRegalo, regaloAntes) : 0;
-  const desglose = regalo
-    ? calcularConPromocion({ ...p, descuento: cupon + plus + regalo }, promo)
+  let desglose = regalo
+    ? calcularConPromocion({ ...p, descuento: cupon + plus + regalo }, promo, op)
     : sinRegalo;
+  // BRE-R2: quitar algo nunca sube lo que se cobra (p. ej. el cargo por pedido pequeño que aparece
+  // al bajar el subtotal): la diferencia la absorbe Divoox, como un cupón.
+  if (totalMaximo != null && desglose.totalCliente > totalMaximo)
+    desglose = calcularConPromocion(
+      { ...p, descuento: cupon + plus + regalo + (desglose.totalCliente - totalMaximo) },
+      promo,
+      op,
+    );
   return { desglose, cupon, plus, regalo };
 }
 
