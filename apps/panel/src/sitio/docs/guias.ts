@@ -2633,6 +2633,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Arriba, el total del periodo separado en pago base, bonos y propinas, y el número de entregas. El pago base nunca cambia por la propina: la propina se suma encima.',
           'Debajo, cada pedido con el restaurante, la hora y su total. Toca «Ver desglose» para ver base, bono y propina de ese pedido.',
+          '«Exportar en planilla (CSV)» manda las entregas del periodo (fecha, pedido, restaurante, base, bonos, propinas y total) a donde elijas: tu correo, tus notas o tus archivos. Sirve para llevar tus cuentas o dárselas a tu contador.',
           'Si el cliente da propina después de entregar, te llega un aviso y aparece como «propina después de entregar» en ese pedido y en el total de propinas.',
           'Más abajo sigue tu billetera: saldo disponible, retiros y movimientos.',
           'Cada pedido se muestra en la moneda de su ciudad, en las ciudades donde Divoox opere. Si haces pedidos en ciudades con monedas distintas, ves un total por cada moneda: nunca se suman entre sí.',
@@ -6759,6 +6760,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'At the top, the period total split into base pay, bonuses, and tips, plus the number of deliveries. Base pay never changes because of the tip: the tip is added on top.',
           'Below, every order with the restaurant, the time, and its total. Tap “See breakdown” for that order’s base, bonus, and tip.',
+          '“Export as a spreadsheet (CSV)” sends the period’s deliveries (date, order, restaurant, base pay, bonuses, tips, and total) wherever you choose: your email, your notes, or your files. Use it to keep your books or give them to your accountant.',
           'If the customer tips after delivery, you get a notification and it shows as “tip after delivery” on that order and in the tips total.',
           'Further down is your wallet: available balance, payouts, and activity.',
           'Each order is shown in the local currency of its city, in the cities where Divoox operates. If you deliver in cities with different currencies, you see one total per currency: they are never added together.',

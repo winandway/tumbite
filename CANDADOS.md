@@ -2528,3 +2528,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `GET /datos/mi-restaurante/pedidos/planilla?desde=&hasta=` en `apps/servidor/src/rutas/informes.ts` (dueño o manager, hasta 5.000 pedidos, sin `pago_pendiente`). Columnas: fecha, pedido (6 letras), estado, artículos, moneda, subtotal, comisión, tu pago y propina, con decimales (`montoATexto`) y celdas seguras (`celdaCsv`). Nada del cliente. El enlace del panel viaja con la cookie de la sesión (`apps/panel/src/panel/PlanillaPedidos.tsx`).
 - **Prueba:** `apps/servidor/src/planillaPedidos.test.ts` (en rojo sin la ruta) y `apps/panel/src/panel/PlanillaPedidos.test.tsx`.
 - **Qué NO tocar:** que no salgan nombre, teléfono ni dirección del cliente, y que solo vea los pedidos de su propio restaurante.
+
+## C-PLANILLA-GANANCIAS (2 nov 2026) — todos los países
+
+- **Qué es:** «Exportar en planilla (CSV)» en Ganancias de Driver, como el estado de cuenta de Uber Driver: una fila por entrega del periodo elegido (hoy, semana o mes), compartida con la hoja del teléfono.
+- **Cómo funciona:** `planillaGanancias` y `celdaCsv` en `packages/compartido/src/planillas.ts` (la misma celda segura que usan los informes del servidor). La app arma el texto con los pedidos que ya trae `/datos/repartidor/ganancias` y lo comparte con `Share.share`, sin librerías nuevas.
+- **Prueba:** `packages/compartido/src/planillas.test.ts` (en rojo sin el archivo) y `apps/servidor/src/rutas/informes.test.ts` (celda segura).
+- **Qué NO tocar:** la celda segura (evita que un nombre de restaurante que empiece con «=» se ejecute como fórmula).

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { type Api, type Idioma, formatearMonto } from '@tumbite/compartido';
+import { Pressable, Share, Text, View } from 'react-native';
+import { type Api, type Idioma, formatearMonto, planillaGanancias } from '@tumbite/compartido';
 import { C, e } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -87,6 +87,21 @@ export function Ganancias({
           </View>
         ),
       )}
+      {d.pedidos.length ? (
+        // C-PLANILLA-GANANCIAS: como el estado de cuenta de Uber Driver, una fila por entrega.
+        <Pressable
+          onPress={() =>
+            void Share.share({ title: t.planilla, message: planillaGanancias(d.pedidos) }).catch(
+              (x: unknown) => console.warn('planilla de ganancias', x),
+            )
+          }
+          accessibilityRole="button"
+          accessibilityLabel={t.planilla}
+          style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
+        >
+          <Text style={{ color: C.primario, fontWeight: '800' }}>{t.planilla}</Text>
+        </Pressable>
+      ) : null}
       {d.pedidos.length === 0 ? (
         <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text>
       ) : (

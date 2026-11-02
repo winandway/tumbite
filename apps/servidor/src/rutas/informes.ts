@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
-import { montoATexto } from '@tumbite/compartido';
+import { celdaCsv, montoATexto } from '@tumbite/compartido';
 import { mio } from './restauranteMas';
 
 /**
@@ -91,12 +91,8 @@ export async function embudo(db: D1Database, desde: string, hasta: string) {
   };
 }
 
-/** Celda CSV segura: comillas dobladas y sin fórmulas (=, +, -, @) que abra una hoja de cálculo. */
-export function celdaCsv(v: string | number) {
-  const t = String(v);
-  const segura = /^[=+\-@]/.test(t) && typeof v === 'string' ? `'${t}` : t;
-  return /[",\n]/.test(segura) ? `"${segura.replace(/"/g, '""')}"` : segura;
-}
+// Celda CSV segura (sin fórmulas): vive en compartido y la usan también las apps.
+export { celdaCsv };
 
 informes.get('/admin/informes', async (c) => {
   exigir(c, 'admin');

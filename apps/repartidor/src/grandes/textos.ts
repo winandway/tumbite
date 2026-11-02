@@ -58,6 +58,7 @@ const es = {
     cerrar: 'Cerrar',
     sin: 'Todavía no hay entregas en este periodo.',
     garantia: 'El pago base nunca cambia por la propina.',
+    planilla: 'Exportar en planilla (CSV)',
   },
   avisos: {
     titulo: 'Tus avisos',
@@ -243,6 +244,7 @@ const en: T = {
     cerrar: 'Close',
     sin: 'No deliveries in this period yet.',
     garantia: 'Base pay never changes because of the tip.',
+    planilla: 'Export as a spreadsheet (CSV)',
   },
   avisos: {
     titulo: 'Your notifications',

@@ -77,3 +77,4 @@ export * from './explicacionTarifas';
 export * from './masPedidos';
 export * from './gustoPlatos';
 export * from './accesibilidadRepartidor';
+export * from './planillas';
