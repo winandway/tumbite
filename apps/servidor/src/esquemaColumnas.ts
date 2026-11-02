@@ -669,6 +669,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "requisito",
     "obligatorio"
   ],
+  "servicio_vehiculo_requisitos": [
+    "servicio_id",
+    "vehiculo_tipo",
+    "requisito"
+  ],
   "servicio_vehiculos": [
     "servicio_id",
     "vehiculo_tipo",
