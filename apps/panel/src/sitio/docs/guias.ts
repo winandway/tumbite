@@ -49,6 +49,18 @@ const es: SeccionDocs[] = [
             href: '/docs/presentaciones/divoox-clientes-es.pdf',
           },
         ],
+        capturas: [
+          {
+            src: '/docs/presentacion-clientes-es.webp',
+            alt: 'La portada de la presentación de Divoox para clientes, con el logo y el título.',
+            pie: 'La portada de la presentación para clientes.',
+          },
+          {
+            src: '/docs/presentacion-clientes-2-es.webp',
+            alt: 'Una lámina de la presentación de Divoox para clientes, con una pantalla real de la app al lado de la explicación.',
+            pie: 'Cada lámina muestra una pantalla real de la app con su explicación.',
+          },
+        ],
         preguntas: ['¿Tienen una presentación de Divoox para clientes?'],
         pasos: ['Toca «Descargar».', 'Ábrela en pantalla completa o compártela.'],
       },
@@ -65,6 +77,18 @@ const es: SeccionDocs[] = [
           {
             texto: 'Descargar la presentación para restaurantes (PDF)',
             href: '/docs/presentaciones/divoox-restaurantes-es.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-restaurantes-es.webp',
+            alt: 'La portada de la presentación de Divoox para restaurantes, con el logo y el título.',
+            pie: 'La portada de la presentación para restaurantes.',
+          },
+          {
+            src: '/docs/presentacion-restaurantes-2-es.webp',
+            alt: 'Una lámina de la presentación de Divoox para restaurantes, con una pantalla real de la app al lado de la explicación.',
+            pie: 'Cada lámina muestra una pantalla real de la app con su explicación.',
           },
         ],
         preguntas: [
@@ -91,6 +115,18 @@ const es: SeccionDocs[] = [
             href: '/docs/presentaciones/divoox-vendedores-es.pdf',
           },
         ],
+        capturas: [
+          {
+            src: '/docs/presentacion-vendedores-es.webp',
+            alt: 'La portada de la presentación de Divoox para vendedores, con el logo y el título.',
+            pie: 'La portada de la presentación para vendedores.',
+          },
+          {
+            src: '/docs/presentacion-vendedores-2-es.webp',
+            alt: 'Una lámina de la presentación de Divoox para vendedores, con una pantalla real de la app al lado de la explicación.',
+            pie: 'Cada lámina muestra una pantalla real de la app con su explicación.',
+          },
+        ],
         preguntas: ['¿Cómo vendo Divoox a un restaurante?', '¿Qué hago en la primera visita?'],
         pasos: [
           'Léela completa antes de tu primera visita.',
@@ -109,6 +145,18 @@ const es: SeccionDocs[] = [
           {
             texto: 'Descargar la presentación para repartidores (PDF)',
             href: '/docs/presentaciones/divoox-repartidores-es.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-repartidores-es.webp',
+            alt: 'La portada de la presentación de Divoox para repartidores, con el logo y el título.',
+            pie: 'La portada de la presentación para repartidores.',
+          },
+          {
+            src: '/docs/presentacion-repartidores-2-es.webp',
+            alt: 'Una lámina de la presentación de Divoox para repartidores, con una pantalla real de la app al lado de la explicación.',
+            pie: 'Cada lámina muestra una pantalla real de la app con su explicación.',
           },
         ],
         preguntas: ['¿Tienen una presentación para repartidores?'],
@@ -135,6 +183,28 @@ const es: SeccionDocs[] = [
           {
             texto: 'Descargar la presentación para repartidores (PDF)',
             href: '/docs/presentaciones/divoox-repartidores-es.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-clientes-es.webp',
+            alt: 'La portada de la presentación de Divoox para clientes, con el logo y el título.',
+            pie: 'La portada de la presentación para clientes.',
+          },
+          {
+            src: '/docs/presentacion-restaurantes-es.webp',
+            alt: 'La portada de la presentación de Divoox para restaurantes, con el logo y el título.',
+            pie: 'La portada de la presentación para restaurantes.',
+          },
+          {
+            src: '/docs/presentacion-repartidores-es.webp',
+            alt: 'La portada de la presentación de Divoox para repartidores, con el logo y el título.',
+            pie: 'La portada de la presentación para repartidores.',
+          },
+          {
+            src: '/docs/presentacion-vendedores-es.webp',
+            alt: 'La portada de la presentación de Divoox para vendedores, con el logo y el título.',
+            pie: 'La portada de la presentación para vendedores.',
           },
         ],
         preguntas: ['¿Dónde están las presentaciones de Divoox?'],
@@ -3896,6 +3966,18 @@ const en: SeccionDocs[] = [
             href: '/docs/presentaciones/divoox-customers-en.pdf',
           },
         ],
+        capturas: [
+          {
+            src: '/docs/presentacion-clientes-en.webp',
+            alt: 'The cover of the Divoox presentation for customers, with the logo and the title.',
+            pie: 'The cover of the presentation for customers.',
+          },
+          {
+            src: '/docs/presentacion-clientes-2-en.webp',
+            alt: 'A slide from the Divoox presentation for customers, with a real app screen next to the explanation.',
+            pie: 'Each slide shows a real app screen with its explanation.',
+          },
+        ],
         preguntas: ['Do you have a Divoox presentation for customers?'],
         pasos: ['Tap “Download”.', 'Open it full screen or share it.'],
       },
@@ -3912,6 +3994,18 @@ const en: SeccionDocs[] = [
           {
             texto: 'Download the restaurant presentation (PDF)',
             href: '/docs/presentaciones/divoox-restaurants-en.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-restaurantes-en.webp',
+            alt: 'The cover of the Divoox presentation for restaurants, with the logo and the title.',
+            pie: 'The cover of the presentation for restaurants.',
+          },
+          {
+            src: '/docs/presentacion-restaurantes-2-en.webp',
+            alt: 'A slide from the Divoox presentation for restaurants, with a real app screen next to the explanation.',
+            pie: 'Each slide shows a real app screen with its explanation.',
           },
         ],
         preguntas: [
@@ -3938,6 +4032,18 @@ const en: SeccionDocs[] = [
             href: '/docs/presentaciones/divoox-salespeople-en.pdf',
           },
         ],
+        capturas: [
+          {
+            src: '/docs/presentacion-vendedores-en.webp',
+            alt: 'The cover of the Divoox presentation for salespeople, with the logo and the title.',
+            pie: 'The cover of the presentation for salespeople.',
+          },
+          {
+            src: '/docs/presentacion-vendedores-2-en.webp',
+            alt: 'A slide from the Divoox presentation for salespeople, with a real app screen next to the explanation.',
+            pie: 'Each slide shows a real app screen with its explanation.',
+          },
+        ],
         preguntas: ['How do I sell Divoox to a restaurant?', 'What do I do on the first visit?'],
         pasos: [
           'Read it all before your first visit.',
@@ -3956,6 +4062,18 @@ const en: SeccionDocs[] = [
           {
             texto: 'Download the driver presentation (PDF)',
             href: '/docs/presentaciones/divoox-drivers-en.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-repartidores-en.webp',
+            alt: 'The cover of the Divoox presentation for drivers, with the logo and the title.',
+            pie: 'The cover of the presentation for drivers.',
+          },
+          {
+            src: '/docs/presentacion-repartidores-2-en.webp',
+            alt: 'A slide from the Divoox presentation for drivers, with a real app screen next to the explanation.',
+            pie: 'Each slide shows a real app screen with its explanation.',
           },
         ],
         preguntas: ['Do you have a presentation for drivers?'],
@@ -3982,6 +4100,28 @@ const en: SeccionDocs[] = [
           {
             texto: 'Download the driver presentation (PDF)',
             href: '/docs/presentaciones/divoox-drivers-en.pdf',
+          },
+        ],
+        capturas: [
+          {
+            src: '/docs/presentacion-clientes-en.webp',
+            alt: 'The cover of the Divoox presentation for customers, with the logo and the title.',
+            pie: 'The cover of the presentation for customers.',
+          },
+          {
+            src: '/docs/presentacion-restaurantes-en.webp',
+            alt: 'The cover of the Divoox presentation for restaurants, with the logo and the title.',
+            pie: 'The cover of the presentation for restaurants.',
+          },
+          {
+            src: '/docs/presentacion-repartidores-en.webp',
+            alt: 'The cover of the Divoox presentation for drivers, with the logo and the title.',
+            pie: 'The cover of the presentation for drivers.',
+          },
+          {
+            src: '/docs/presentacion-vendedores-en.webp',
+            alt: 'The cover of the Divoox presentation for salespeople, with the logo and the title.',
+            pie: 'The cover of the presentation for salespeople.',
           },
         ],
         preguntas: ['Where are the Divoox presentations?'],
