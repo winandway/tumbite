@@ -2424,3 +2424,17 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **El candado:** `vitest.config.mts` exige 90 % de líneas en cada uno de esos once archivos (`finanzas/reloj`, `rutasEmpresa`, `rutasAdmin`, `billetera`, `cobrosRuta`, `conductor`, `plus`, `tarjetasRegalo`, `viajesCobro`, `internacional/recargas`, `sms`). Si alguno baja, `npm run test` y por lo tanto `npm run verify` y el pre-push fallan. Comprobado: sin `smsTwilio.test.ts`, la verificación sale en rojo con «Coverage for lines (71.79%) does not meet "apps/servidor/src/sms.ts" threshold (90%)».
 - **Cómo se comprueba:** `npm run test` en verde.
 - **No tocar:** no se baja el umbral ni se saca un archivo de la lista para que pase un cambio; se agregan las pruebas que falten.
+
+## C-BUSQUEDAS-RECIENTES (2 nov 2026) — todos los países
+
+- **Qué es:** el buscador del cliente muestra las últimas ocho búsquedas bajo la casilla (como DoorDash y Uber Eats); se tocan para repetirlas, se quita una o se borra todo.
+- **Cómo funciona:** `packages/compartido/src/busquedasRecientes.ts` (lógica pura) y `apps/cliente/src/app/search.tsx`. Cuenta como búsqueda lo que se confirma: tecla «buscar» o tocar un resultado. Se guarda en el teléfono con la llave `divoox:busquedas-recientes:<cuenta>` (en un teléfono compartido nadie ve las de otro). Un valor roto devuelve lista vacía.
+- **Prueba:** `busquedasRecientes.test.ts` (en rojo si la repetida se duplica).
+- **Qué NO tocar:** la llave por cuenta y el tope de ocho.
+
+## C-TARIFAS-EXPLICADAS (2 nov 2026) — todos los países
+
+- **Qué es:** debajo del total del carrito, «¿Qué son estas tarifas?» abre qué es cada cargo (como «Fees & Estimated Tax» de DoorDash).
+- **Cómo funciona:** `packages/compartido/src/explicacionTarifas.ts` arma los textos con la configuración REAL del país del restaurante (la misma que calcula el total); el impuesto solo aparece donde se cobra; la propina dice 100 % para el repartidor (REQUISITOS.md).
+- **Prueba:** `explicacionTarifas.test.ts` (en rojo si un monto se escribe a mano).
+- **Qué NO tocar:** nunca escribir montos fijos en esos textos.
