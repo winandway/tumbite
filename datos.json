@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-02T03:17:47-05:00",
+  "actualizado": "2026-11-02T08:53",
   "version": "468eee7",
   "ahora": {
     "titulo": "Todo lo de la fila está publicado",
@@ -23,13 +23,6 @@
     }
   ],
   "esperando": [
-    {
-      "id": "prepago-pais-porcentaje",
-      "prioridad": "alta",
-      "titulo": "Prepago de conductores: país y porcentaje",
-      "para": "Encender la comisión que se descuenta del saldo prepago del conductor en moto, carro y envíos. La propuesta, copiada de inDrive: Venezuela y Colombia al 10 %.",
-      "destraba": "Cobrar comisión a los conductores en esos países."
-    },
     {
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
@@ -299,6 +292,13 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "tipo": "nuevo",
+      "titulo": "Prepago de conductores encendido en Venezuela y Colombia",
+      "texto": "Con el permiso de Richard, la comisión del 10 % se descuenta del saldo prepago del conductor en Moto, Carro y Envíos en Venezuela y Colombia, como hace inDrive. Estados Unidos sigue cobrando con Stripe. Moto y Carro siguen apagados en producción hasta lo legal de pasajeros.",
+      "paises": "Venezuela y Colombia"
+    },
     {
       "fecha": "2026-11-02",
       "tipo": "nuevo",
