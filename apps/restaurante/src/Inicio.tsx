@@ -791,6 +791,8 @@ export function Inicio() {
                 texto={min ? `+${min} ${t.minutos}` : t.normal}
                 etiqueta={`${t.cocina}: ${min ? `+${min} ${t.minutos}` : t.normal}`}
                 activa={cocina.cocinaOcupada === min}
+                // «Normal» es el estado bueno: verde. Los minutos extra quedan en rojo (aviso).
+                verde={min === 0}
                 alTocar={() =>
                   void api
                     .pedir<{ prepSugerida: number; cocinaOcupada: number }>(

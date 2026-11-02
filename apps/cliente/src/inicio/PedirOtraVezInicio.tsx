@@ -100,7 +100,8 @@ export function PedirOtraVezInicio({ idioma }: { idioma: Idioma }) {
                 {resumen}
               </Text>
               <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 8 }}>
-                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} · {t.titulo} ›
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} ·{' '}
+                <Text style={{ color: C.exito }}>{t.titulo} ›</Text>
               </Text>
             </Pressable>
           );

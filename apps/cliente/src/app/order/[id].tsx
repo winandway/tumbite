@@ -1357,6 +1357,7 @@ export default function SeguirPedido() {
           ))}
         {p.estado === 'entregado' || p.estado === 'cancelado' ? (
           <BotonAncho
+            exito
             texto={otraVez.texto}
             alTocar={() =>
               void otraVez

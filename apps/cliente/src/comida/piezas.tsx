@@ -193,12 +193,15 @@ export function BotonAncho({
   texto,
   alTocar,
   secundario = false,
+  exito = false,
   etiqueta,
   desactivado = false,
 }: {
   texto: string;
   alTocar: () => void;
   secundario?: boolean;
+  /** Verde: una acción positiva que no es el pago (pedir otra vez, confirmar). */
+  exito?: boolean;
   etiqueta?: string;
   desactivado?: boolean;
 }) {
@@ -210,7 +213,13 @@ export function BotonAncho({
       accessibilityLabel={etiqueta ?? texto}
       accessibilityState={{ disabled: desactivado }}
       style={({ pressed }) => ({
-        backgroundColor: desactivado ? '#CCCCCC' : secundario ? '#F2F3F5' : C.primario,
+        backgroundColor: desactivado
+          ? '#CCCCCC'
+          : secundario
+            ? '#F2F3F5'
+            : exito
+              ? C.exito
+              : C.primario,
         borderRadius: 14,
         paddingVertical: 15,
         alignItems: 'center',

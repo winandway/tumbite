@@ -278,5 +278,5 @@
 
 - [x] HECHO 1 nov. (UX-1) App del cliente, «Mis pedidos»: rediseñar las tarjetas como los grandes (miniatura del local o del plato, estado con color, verde para entregado, botones bien hechos: hoy «Ver pedido y recibo» sale como un óvalo roto y «Repetir pedido» parte el texto en dos líneas). Todos los países.
 - [x] HECHO 1 nov. (UX-2) Navegación: desde Mi cuenta → un pedido → la flecha de volver tiene que regresar a Mi cuenta, no al inicio. Buscar el mismo fallo en todas las pantallas de las tres apps (volver siempre al lugar de donde se vino). Todos los países.
-- [ ] (UX-3) Menos rojo, blanco y negro: sumar el verde de éxito y colores de apoyo donde corresponda (estados, confirmaciones, tarjetas), sin romper la identidad. Todos los países.
+- [x] HECHO 2 nov. (UX-3) Menos rojo, blanco y negro: sumar el verde de éxito y colores de apoyo donde corresponda (estados, confirmaciones, tarjetas), sin romper la identidad. Todos los países.
 - [ ] (UX-4) Revisar TODAS las pantallas de las tres apps en español e inglés (textos cortados, botones deformes, textos en el otro idioma) y el inicio (menús, servicios) con terminación profesional. Captura antes y después de cada arreglo. Todos los países.
