@@ -408,6 +408,18 @@ const es: SeccionDocs[] = [
           'Si un pedido pagado en parte con saldo se cancela, ese saldo vuelve a tu cuenta.',
           'Cada código sirve una sola vez.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-es.webp',
+            alt: 'Mi cuenta en la app Divoox con la entrada Tarjetas de regalo.',
+            pie: 'Las tarjetas de regalo están en Mi cuenta.',
+          },
+          {
+            src: '/docs/cliente-tarjetas-regalo-es.webp',
+            alt: 'La pantalla Tarjetas de regalo: saldo, canjear un código y regalar una tarjeta con monto, correo y mensaje.',
+            pie: 'Desde una sola pantalla ves tu saldo, canjeas un código o regalas una tarjeta.',
+          },
+        ],
         preguntas: [
           '¿Cómo regalo una tarjeta de Divoox?',
           '¿Cómo canjeo un código de regalo?',
@@ -430,6 +442,18 @@ const es: SeccionDocs[] = [
           'En el carrito, los pedidos que llegan al mínimo muestran la línea «Divoox Plus» con lo que te ahorras: el envío completo y parte del cargo de servicio. La propina y el impuesto no cambian.',
           'Se cobra cada mes en la misma fecha. Si cancelas, sigues con los beneficios hasta el final del mes que ya pagaste y no se vuelve a cobrar.',
           'Los pedidos para recoger en el local ya no llevan envío, así que el descuento de Plus no aplica en ellos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-es.webp',
+            alt: 'Mi cuenta en la app Divoox con las entradas Divoox Plus y Tarjetas de regalo.',
+            pie: 'Divoox Plus está en Mi cuenta.',
+          },
+          {
+            src: '/docs/cliente-plus-es.webp',
+            alt: 'La pantalla de Divoox Plus con los beneficios, el precio mensual y el botón Suscribirme.',
+            pie: 'Ves los beneficios y el precio antes de suscribirte.',
+          },
         ],
         preguntas: [
           '¿Qué es Divoox Plus?',
@@ -1177,6 +1201,18 @@ const es: SeccionDocs[] = [
           'Nunca gastas más que tu presupuesto: cuando lo gastado en los últimos siete días llega al límite, tu anuncio deja de salir hasta que haya espacio otra vez.',
           'Debajo ves cuántas personas vieron tu anuncio, cuántas lo tocaron, cuántos pedidos llegaron y cuánto gastaste en los últimos 30 días.',
           'Pueden encenderlo y cambiar el presupuesto el dueño y los managers.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-anuncios-es.webp',
+            alt: 'La pantalla Anuncios del panel del restaurante: anuncio encendido, presupuesto semanal y las cifras de los últimos 30 días.',
+            pie: 'Enciendes el anuncio, pones tu presupuesto y ves vistas, toques, pedidos y gasto.',
+          },
+          {
+            src: '/docs/cliente-inicio-patrocinado-es.webp',
+            alt: 'El inicio de la app Divoox con un restaurante marcado «Patrocinado» entre los primeros.',
+            pie: 'Así te ve el cliente: entre los primeros, con la etiqueta «Patrocinado».',
+          },
         ],
         preguntas: [
           '¿Cómo anuncio mi restaurante en Divoox?',
@@ -2564,6 +2600,18 @@ const es: SeccionDocs[] = [
           'Lo eliges en el inicio de Divoox Driver, en «¿Cómo quieres cobrar hoy?», antes de conectarte. Mientras estás conectado no se cambia; desconéctate para cambiarlo.',
           'Cuando el modo por tiempo no está disponible en tu zona, esa tarjeta no aparece y cobras por oferta, como siempre.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-ganar-por-tiempo-es.webp',
+            alt: 'La tarjeta «¿Cómo quieres cobrar hoy?» en el inicio de Divoox Driver, con «Por oferta» elegido.',
+            pie: 'Antes de conectarte eliges cómo cobrar.',
+          },
+          {
+            src: '/docs/driver-ganar-por-tiempo-elegido-es.webp',
+            alt: 'La misma tarjeta con «Por tiempo» elegido y el monto garantizado por hora activa.',
+            pie: 'Con «Por tiempo» ves cuánto tienes garantizado por hora activa.',
+          },
+        ],
         preguntas: [
           '¿Qué es ganar por tiempo?',
           '¿Cómo cambio entre cobrar por oferta y por tiempo?',
@@ -3769,6 +3817,18 @@ const es: SeccionDocs[] = [
           'Antes de enviar ves la miniatura de cada una; si te equivocaste, toca «Quitar». Puedes escribir un mensaje o mandar solo las capturas.',
           'Se aceptan JPG, PNG, WebP y HEIC (el formato del iPhone), hasta 10 MB cada una. Si la señal falla al subir, lo que escribiste y las capturas siguen en pantalla para volver a intentarlo.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-casos-ayuda-es.webp',
+            alt: 'Mis casos de ayuda en Mi cuenta de la app Divoox, con un caso respondido.',
+            pie: 'Tus casos de ayuda están en Mi cuenta, con su estado.',
+          },
+          {
+            src: '/docs/cliente-caso-con-captura-es.webp',
+            alt: 'Un caso de ayuda abierto con la captura adjunta y la respuesta de soporte.',
+            pie: 'Adjuntas hasta tres capturas por mensaje y soporte te responde en el mismo caso.',
+          },
+        ],
         preguntas: [
           '¿Cómo mando una captura de pantalla a soporte?',
           '¿Quién puede ver mis capturas?',
@@ -4188,6 +4248,18 @@ const en: SeccionDocs[] = [
           'If an order paid partly with your balance is canceled, that balance goes back to your account.',
           'Each code works only once.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-en.webp',
+            alt: 'My account in the Divoox app with the Gift cards entry.',
+            pie: 'Gift cards are in My account.',
+          },
+          {
+            src: '/docs/cliente-tarjetas-regalo-en.webp',
+            alt: 'The Gift cards screen: balance, redeem a code and send a card with amount, email and message.',
+            pie: 'From one screen you see your balance, redeem a code or send a card.',
+          },
+        ],
         preguntas: [
           'How do I give a Divoox gift card?',
           'How do I redeem a gift card code?',
@@ -4210,6 +4282,18 @@ const en: SeccionDocs[] = [
           'In your cart, orders over the minimum show a “Divoox Plus” line with what you save: the full delivery fee and part of the service fee. Tip and tax don’t change.',
           'You’re charged every month on the same date. If you cancel, you keep the benefits until the end of the month you already paid for and you aren’t charged again.',
           'Pickup orders don’t have a delivery fee, so the Plus discount doesn’t apply to them.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-en.webp',
+            alt: 'My account in the Divoox app with the Divoox Plus and Gift cards entries.',
+            pie: 'Divoox Plus is in My account.',
+          },
+          {
+            src: '/docs/cliente-plus-en.webp',
+            alt: 'The Divoox Plus screen with the benefits, the monthly price and the Join button.',
+            pie: 'You see the benefits and price before joining.',
+          },
         ],
         preguntas: [
           'What is Divoox Plus?',
@@ -4949,6 +5033,18 @@ const en: SeccionDocs[] = [
           'You never spend more than your budget: when your spend in the last seven days reaches the limit, your ad stops showing until there’s room again.',
           'Below, you see how many people viewed your ad, how many tapped it, how many orders came in and how much you spent in the last 30 days.',
           'The owner and managers can turn it on and change the budget.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-anuncios-en.webp',
+            alt: 'The Ads screen in the restaurant panel: ad on, weekly budget and the last 30 days of results.',
+            pie: 'Turn on your ad, set your budget and see views, taps, orders and spend.',
+          },
+          {
+            src: '/docs/cliente-inicio-patrocinado-en.webp',
+            alt: 'The Divoox app home screen with a restaurant labeled “Sponsored” near the top.',
+            pie: 'This is how customers see you: near the top, with the “Sponsored” label.',
+          },
         ],
         preguntas: [
           'How do I advertise my restaurant on Divoox?',
@@ -6318,6 +6414,18 @@ const en: SeccionDocs[] = [
           'You choose it on the Divoox Driver home screen, under “How do you want to earn today?”, before going online. While you’re online it can’t be changed; go offline to change it.',
           'When Earn by Time isn’t available in your area, that card doesn’t show and you earn per offer, as usual.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-ganar-por-tiempo-en.webp',
+            alt: 'The “How do you want to earn today?” card on the Divoox Driver home screen, with “Per offer” selected.',
+            pie: 'Before going online you choose how to earn.',
+          },
+          {
+            src: '/docs/driver-ganar-por-tiempo-elegido-en.webp',
+            alt: 'The same card with “By time” selected and the guaranteed amount per active hour.',
+            pie: 'With “By time” you see your guaranteed amount per active hour.',
+          },
+        ],
         preguntas: [
           'What is Earn by Time?',
           'How do I switch between earning per offer and by time?',
@@ -7493,6 +7601,18 @@ const en: SeccionDocs[] = [
           'Open your case in “My help cases” (customers: in your account; drivers: in Support; restaurants: in Settings) and tap “Attach screenshot.” Pick up to three images from your gallery.',
           'Before sending you see a thumbnail of each one; if you picked the wrong one, tap “Remove.” You can write a message or send just the screenshots.',
           'JPG, PNG, WebP and HEIC (the iPhone format) are accepted, up to 10 MB each. If the signal drops while uploading, what you wrote and the screenshots stay on screen so you can try again.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-casos-ayuda-en.webp',
+            alt: 'My help cases in My account in the Divoox app, with an answered case.',
+            pie: 'Your help cases are in My account, with their status.',
+          },
+          {
+            src: '/docs/cliente-caso-con-captura-en.webp',
+            alt: 'An open help case with the attached screenshot and support’s reply.',
+            pie: 'Attach up to three screenshots per message and support replies in the same case.',
+          },
         ],
         preguntas: [
           'How do I send a screenshot to support?',
