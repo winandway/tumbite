@@ -82,6 +82,8 @@ type Pedido = {
   /** C-MONEDA-RECORRIDO: la moneda del pedido. */
   moneda?: string;
   notas: string;
+  /** C-ALERGIAS: pedido de alergias del cliente (se muestra resaltado). */
+  alergias?: string;
   creadoEn: string;
   aceptadoEn?: string | null;
   tiempoPrepMin: number | null;
@@ -151,6 +153,7 @@ const T = {
     pausar: 'Pausar',
     vacio: 'Sin pedidos por ahora. La alarma sonará cuando entre uno.',
     notas: 'Notas',
+    alergias: 'ALERGIA',
     pedido: 'Pedido',
     estados: { entregado: 'Entregado', cancelado: 'Cancelado' } as Record<string, string>,
     sinRest: 'Completa tu restaurante en divoox.com/panel para empezar.',
@@ -207,6 +210,7 @@ const T = {
     pausar: 'Pause',
     vacio: 'No orders right now. The alarm will ring when one comes in.',
     notas: 'Notes',
+    alergias: 'ALLERGY',
     pedido: 'Order',
     estados: { entregado: 'Delivered', cancelado: 'Canceled' } as Record<string, string>,
     sinRest: 'Set up your restaurant at divoox.com/panel to get started.',
@@ -529,6 +533,23 @@ export function Inicio() {
       {p.notas ? (
         <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
           {t.notas}: {p.notas}
+        </Text>
+      ) : null}
+      {p.alergias ? (
+        // C-ALERGIAS: resaltado en rojo (es un problema posible, no un éxito).
+        <Text
+          accessibilityRole="alert"
+          style={{
+            marginTop: 8,
+            padding: 8,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: C.primario,
+            color: C.primario,
+            fontWeight: '800',
+          }}
+        >
+          ⚠ {t.alergias}: {p.alergias}
         </Text>
       ) : null}
       {p.ajuste?.estado === 'pendiente' ? (

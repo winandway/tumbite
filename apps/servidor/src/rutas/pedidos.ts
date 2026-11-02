@@ -93,6 +93,8 @@ const esquemaNuevoPedido = z.object({
   // C-DIRECCION-APTO: apartamento, piso o edificio (se suma a la dirección que ve el repartidor).
   apto: z.string().trim().max(60).default(''),
   notas: z.string().trim().max(300).default(''),
+  // C-ALERGIAS: lo que el cliente no puede comer; el restaurante lo ve resaltado y en el ticket.
+  alergias: z.string().trim().max(200).default(''),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
@@ -387,6 +389,7 @@ export function aPedido(f: FilaPedido) {
     total: Number(f.total),
     direccion: String(f.direccion),
     notas: String(f.notas ?? ''),
+    alergias: String(f.alergias ?? ''),
     lat: f.lat == null ? null : Number(f.lat),
     lng: f.lng == null ? null : Number(f.lng),
     tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
@@ -738,8 +741,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -774,6 +777,7 @@ pedidos.post('/pedidos', async (c) => {
       moneda,
       JSON.stringify(config),
       d.apto,
+      d.alergias.replace(/\s+/g, ' '),
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);

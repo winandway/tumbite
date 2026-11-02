@@ -541,6 +541,15 @@ h1 {
   color: #0d7a3a;
   font-weight: 600;
 }
+/* C-ALERGIAS: el pedido de alergias del cliente, resaltado en rojo de problema. */
+.alergia {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--primario);
+  border-radius: 8px;
+  color: var(--primario);
+}
 .estado {
   display: flex;
   align-items: center;

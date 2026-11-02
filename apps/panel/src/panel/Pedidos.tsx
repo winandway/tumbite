@@ -45,6 +45,8 @@ type Pedido = {
   /** C-MONEDA-RECORRIDO: la moneda del pedido. */
   moneda?: string;
   notas: string;
+  /** C-ALERGIAS: pedido de alergias del cliente (resaltado). */
+  alergias?: string;
   creadoEn: string;
   pagadoEn: string | null;
   aceptadoEn: string | null;
@@ -101,6 +103,7 @@ const T = {
     confirmar: '¿Rechazar este pedido? Se le devuelve todo el dinero al cliente.',
     mas: 'Más opciones',
     notas: 'Notas',
+    alergias: 'ALERGIA',
     esperandoFoto: 'Esperando que el repartidor tome la foto del pedido en su app.',
     sinConfirmar: 'La foto lleva más de 2 minutos sin confirmar. El repartidor te está esperando.',
     faltaPlato: 'Me falta un plato',
@@ -163,6 +166,7 @@ const T = {
     confirmar: 'Reject this order? The customer gets a full refund.',
     mas: 'More options',
     notas: 'Notes',
+    alergias: 'ALLERGY',
     esperandoFoto: 'Waiting for the driver to take a photo of the order in their app.',
     sinConfirmar: 'The photo has been waiting over 2 minutes. The driver is waiting on you.',
     faltaPlato: 'I’m out of an item',
@@ -451,6 +455,11 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.notas}: {p.notas}
                 </span>
               )}
+              {p.alergias ? (
+                <strong role="alert" className="alergia">
+                  ⚠ {t.alergias}: {p.alergias}
+                </strong>
+              ) : null}
               {p.entrega === 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
                 <p className="ok">
                   <strong>{t.recoge}</strong>

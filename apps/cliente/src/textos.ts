@@ -33,6 +33,10 @@ const es = {
   mapaBuscando: 'Buscando la dirección…',
   mapaPin: 'Punto de entrega',
   notas: 'Indicaciones para el repartidor (opcional)',
+  alergias: 'Alergias (opcional)',
+  alergiasAyuda: 'Ej.: maní, mariscos, lácteos',
+  alergiasNota:
+    'El restaurante la ve resaltada. Si no puede cumplirla, cancela el pedido y no pagas nada.',
   pagar: 'Pagar',
   continuarPago: 'Continuar al pago',
   tarjeta: 'Tu tarjeta',
@@ -88,6 +92,10 @@ const en: T = {
   mapaBuscando: 'Finding the address…',
   mapaPin: 'Delivery point',
   notas: 'Notes for your driver (optional)',
+  alergias: 'Allergies (optional)',
+  alergiasAyuda: 'E.g., peanuts, shellfish, dairy',
+  alergiasNota:
+    'The restaurant sees it highlighted. If they can’t meet it, they cancel the order and you pay nothing.',
   pagar: 'Pay',
   continuarPago: 'Continue to payment',
   tarjeta: 'Your card',

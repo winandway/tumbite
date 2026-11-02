@@ -9,6 +9,7 @@ export type PedidoComanda = {
   id: string;
   entrega?: 'puerta' | 'mano' | 'recoger';
   notas: string;
+  alergias?: string;
   programadoPara?: string | null;
   lineas: {
     nombreEs: string;
@@ -60,6 +61,7 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:14px;margin:6px 0}table{width:100%
 td{padding:3px 0;vertical-align:top}.c{width:34px;font-weight:bold}.n{border-top:1px dashed #000;margin-top:8px;padding-top:6px}</style>
 </head><body><h1>#${p.id.slice(0, 4).toUpperCase()}</h1>${restaurante ? `<div>${escapar(restaurante)}</div>` : ''}<div>${escapar(hora)}</div>
 <h2>${modo}${p.programadoPara ? (en ? ' · SCHEDULED' : ' · PROGRAMADO') : ''}</h2><table>${lineas}</table>
+${p.alergias ? `<div class="n"><b>*** ${en ? 'ALLERGY' : 'ALERGIA'}: ${escapar(p.alergias)} ***</b></div>` : ''}
 ${p.notas ? `<div class="n"><b>${en ? 'Notes' : 'Notas'}:</b> ${escapar(p.notas)}</div>` : ''}
 <script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script></body></html>`;
 }

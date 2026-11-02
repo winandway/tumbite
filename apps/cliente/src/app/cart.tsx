@@ -195,6 +195,7 @@ export default function PantallaCarrito() {
       direccion: '',
       apto: '',
       notas: '',
+      alergias: '',
       propinaOtra: '',
       entrega: 'puerta',
       pin: 'si',
@@ -477,6 +478,7 @@ export default function PantallaCarrito() {
         direccion: b.valores.direccion,
         apto: b.valores.apto,
         notas: b.valores.notas,
+        alergias: b.valores.alergias,
         entrega:
           b.valores.entrega === 'recoger'
             ? 'recoger'
@@ -1039,6 +1041,20 @@ export default function PantallaCarrito() {
         onChangeText={(x) => b.cambiar('notas', x)}
         placeholder={t.notas}
       />
+      {/* C-ALERGIAS: casilla aparte de las indicaciones, como «Allergy requests» de Uber Eats. */}
+      <Campo
+        etiqueta={t.alergias}
+        value={b.valores.alergias}
+        onChangeText={(x) => b.cambiar('alergias', x)}
+        placeholder={t.alergiasAyuda}
+        maxLength={200}
+        testID="carrito-alergias"
+      />
+      {b.valores.alergias.trim() ? (
+        <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: -4, marginBottom: 8 }}>
+          {t.alergiasNota}
+        </Text>
+      ) : null}
 
       {titulo(t.propina)}
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>

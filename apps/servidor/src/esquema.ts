@@ -68,6 +68,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['platos', 'agotado_hasta', 'TEXT'],
   // C-DIRECCION-APTO: apartamento, piso o edificio en su propia casilla (como DoorDash).
   ['pedidos', 'apto', "TEXT NOT NULL DEFAULT ''"],
+  // C-ALERGIAS (2 nov 2026): pedido de alergias del cliente, aparte de las notas (como Uber Eats).
+  ['pedidos', 'alergias', "TEXT NOT NULL DEFAULT ''"],
   ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
   // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
   ['opciones', 'abre_grupo_id', 'TEXT'],
