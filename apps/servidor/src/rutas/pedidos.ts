@@ -39,7 +39,8 @@ import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
 import { conHorarios, gruposDe, ventanasDe } from './catalogo';
 import type { Env } from '../env';
-import { nuevoId } from '../cripto';
+import { nuevoId, nuevoToken, sha256 } from '../cripto';
+import { enviarSms, telefonoE164 } from '../sms';
 import {
   SUSTITUCIONES,
   type Sustitucion,
@@ -95,6 +96,18 @@ const esquemaNuevoPedido = z.object({
   notas: z.string().trim().max(300).default(''),
   // C-ALERGIAS: lo que el cliente no puede comer; el restaurante lo ve resaltado y en el ticket.
   alergias: z.string().trim().max(200).default(''),
+  // C-REGALAR-PEDIDO: para otra persona; recibe el seguimiento por SMS. Se paga con el cobro normal.
+  paraOtro: z
+    .object({
+      nombre: z.string().trim().min(1, { error: 'Escribe el nombre de quien recibe.' }).max(60),
+      telefono: z
+        .string()
+        .trim()
+        .regex(/^\+?[0-9 ()-]{7,20}$/, { error: 'Escribe el celular de quien recibe.' }),
+      mensaje: z.string().trim().max(200).default(''),
+    })
+    .nullable()
+    .default(null),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   regalo: z.enum(['cumpleanos', 'sellos', 'vuelve']).nullable().default(null),
@@ -390,6 +403,13 @@ export function aPedido(f: FilaPedido) {
     direccion: String(f.direccion),
     notas: String(f.notas ?? ''),
     alergias: String(f.alergias ?? ''),
+    paraOtro: f.para_nombre
+      ? {
+          nombre: String(f.para_nombre),
+          telefono: String(f.para_telefono ?? ''),
+          mensaje: String(f.para_mensaje ?? ''),
+        }
+      : null,
     lat: f.lat == null ? null : Number(f.lat),
     lng: f.lng == null ? null : Number(f.lng),
     tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
@@ -621,6 +641,15 @@ pedidos.post('/pedidos', async (c) => {
     throw new ErrorDatos('Escribe la dirección de entrega.', 'direccion', 422);
   else if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
   if (recogida) d.apto = '';
+  // C-REGALAR-PEDIDO: un regalo se lleva a la puerta de otra persona; no hay regalo para recoger.
+  if (d.paraOtro && recogida)
+    throw new ErrorDatos('Un regalo se entrega a domicilio, no se recoge.', 'paraOtro', 422);
+  if (d.paraOtro) {
+    if (!telefonoE164(d.paraOtro.telefono))
+      throw new ErrorDatos('Escribe el celular de quien recibe.', 'paraOtro', 422);
+    // El repartidor y el restaurante saben a quién entregar (sin el teléfono, que queda privado).
+    d.notas = `${d.notas ? `${d.notas} · ` : ''}Regalo para ${d.paraOtro.nombre}`.slice(0, 300);
+  }
   const km =
     d.lat != null && d.lng != null && rest.lat != null && rest.lng != null
       ? distanciaKm({ lat: d.lat, lng: d.lng }, { lat: Number(rest.lat), lng: Number(rest.lng) })
@@ -741,8 +770,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias, para_nombre, para_telefono, para_mensaje)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -778,6 +807,9 @@ pedidos.post('/pedidos', async (c) => {
       JSON.stringify(config),
       d.apto,
       d.alergias.replace(/\s+/g, ' '),
+      d.paraOtro?.nombre ?? '',
+      d.paraOtro?.telefono ?? '',
+      d.paraOtro?.mensaje ?? '',
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
@@ -1302,12 +1334,50 @@ async function avisosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) 
     notas: String(f.notas ?? ''),
     moneda: String(f.moneda ?? 'USD'),
   });
+  await avisoDeRegalo(env, db, pedidoId);
   await notificar(env, db, String(f.dueno_id), {
     ...AVISOS.pedidoNuevo(
       f.dueno_idioma === 'en' ? 'en' : 'es',
       pedidoId.slice(0, 8).toUpperCase(),
     ),
     datos: { pedidoId },
+  });
+}
+
+/**
+ * C-REGALAR-PEDIDO: al pagarse un regalo, quien lo recibe recibe un SMS con el mensaje y el enlace
+ * de seguimiento (el mismo de «Compartir seguimiento», sin dirección ni dinero). Si el SMS no está
+ * encendido en ese país, no sale y el cliente puede compartir el enlace desde su pedido.
+ */
+export async function avisoDeRegalo(env: Env, db: D1Database, pedidoId: string) {
+  const f = await db
+    .prepare(
+      `SELECT p.cliente_id, p.para_nombre, p.para_telefono, p.para_mensaje, c.nombre AS remitente, c.idioma, r.nombre AS restaurante
+         FROM pedidos p JOIN usuarios c ON c.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.id = ?`,
+    )
+    .bind(pedidoId)
+    .first<Record<string, unknown>>();
+  if (!f?.para_telefono) return false;
+  const codigo = nuevoToken();
+  await db
+    .prepare('INSERT INTO pedidos_compartidos (huella, pedido_id, creado_por) VALUES (?, ?, ?)')
+    .bind(await sha256(codigo), pedidoId, String(f.cliente_id))
+    .run();
+  const url = `${(env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '')}/order-status/${codigo}`;
+  const de = String(f.remitente ?? '').split(' ')[0] || 'Divoox';
+  const en = f.idioma === 'en';
+  const m = String(f.para_mensaje ?? '');
+  const mensaje = m ? (en ? ` “${m}”` : ` «${m}»`) : '';
+  const texto = en
+    ? `${de} sent you a gift from ${String(f.restaurante)} on Divoox.${mensaje} Track it here: ${url}`
+    : `${de} te mandó un regalo de ${String(f.restaurante)} con Divoox.${mensaje} Síguelo aquí: ${url}`;
+  return enviarSms(env, db, {
+    usuarioId: String(f.cliente_id),
+    pedidoId,
+    tipo: 'regalo_destinatario',
+    telefono: String(f.para_telefono),
+    texto,
   });
 }
 

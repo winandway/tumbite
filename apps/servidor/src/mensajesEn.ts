@@ -521,6 +521,13 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t charge the tip to your saved card. Try again later.',
   ],
   ['Escribe la dirección de entrega.', 'Enter the delivery address.'],
+  // C-REGALAR-PEDIDO
+  [
+    'Un regalo se entrega a domicilio, no se recoge.',
+    'A gift is delivered to a door; it can’t be picked up.',
+  ],
+  ['Escribe el celular de quien recibe.', 'Enter the recipient’s mobile number.'],
+  ['Escribe el nombre de quien recibe.', 'Enter the recipient’s name.'],
   [
     'El envío cambia con la nueva dirección. Acepta el nuevo total para aplicarla.',
     'The delivery fee changes with the new address. Accept the new total to apply it.',

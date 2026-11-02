@@ -70,6 +70,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pedidos', 'apto', "TEXT NOT NULL DEFAULT ''"],
   // C-ALERGIAS (2 nov 2026): pedido de alergias del cliente, aparte de las notas (como Uber Eats).
   ['pedidos', 'alergias', "TEXT NOT NULL DEFAULT ''"],
+  // C-REGALAR-PEDIDO (2 nov 2026): pedido enviado como regalo (como «Send as a gift» de DoorDash).
+  ['pedidos', 'para_nombre', "TEXT NOT NULL DEFAULT ''"],
+  ['pedidos', 'para_telefono', "TEXT NOT NULL DEFAULT ''"],
+  ['pedidos', 'para_mensaje', "TEXT NOT NULL DEFAULT ''"],
   ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
   // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
   ['opciones', 'abre_grupo_id', 'TEXT'],

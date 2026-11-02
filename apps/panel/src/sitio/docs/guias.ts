@@ -503,6 +503,7 @@ const es: SeccionDocs[] = [
           'En el carrito aparece «Usar mi saldo de regalo» con tu saldo. Encendido, el saldo paga la comida, el envío, el servicio y el impuesto; la propina se paga con tu tarjeta, porque es completa para el repartidor.',
           'Si un pedido pagado en parte con saldo se cancela, ese saldo vuelve a tu cuenta.',
           'Cada código sirve una sola vez.',
+          'Regalar un pedido: en el carrito, enciende «Enviar como regalo», escribe la dirección de quien recibe, su nombre, su celular y, si quieres, un mensaje. Pagas como siempre. Al confirmarse el pago, le mandamos un SMS con tu mensaje y el enlace para seguir el pedido (sin ver precios ni tu dirección). El restaurante y el repartidor ven a quién entregarlo, pero nunca su celular. No se puede usar en «Recoger».',
         ],
         capturas: [
           {
@@ -4604,6 +4605,7 @@ const en: SeccionDocs[] = [
           'In your cart you’ll see “Use my gift card balance” with your balance. When it’s on, the balance pays for food, delivery, service and tax; the tip is paid with your card, because it goes in full to the driver.',
           'If an order paid partly with your balance is canceled, that balance goes back to your account.',
           'Each code works only once.',
+          'Send an order as a gift: in your cart, turn on “Send as a gift”, enter the recipient’s address, name, mobile number and, if you like, a message. You pay as usual. Once the payment is confirmed, we text them your message and a link to track the order (no prices and not your address). The restaurant and the driver see who to hand it to, but never their number. Not available for pickup.',
         ],
         capturas: [
           {

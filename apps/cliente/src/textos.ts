@@ -34,6 +34,14 @@ const es = {
   mapaPin: 'Punto de entrega',
   notas: 'Indicaciones para el repartidor (opcional)',
   alergias: 'Alergias (opcional)',
+  regaloTitulo: 'Enviar como regalo',
+  regaloAyuda:
+    'Lo recibe otra persona en la dirección de arriba. Le mandamos tu mensaje y el seguimiento por SMS.',
+  regaloNombre: 'Nombre de quien recibe',
+  regaloTelefono: 'Celular de quien recibe',
+  regaloMensaje: 'Mensaje (opcional)',
+  regaloMensajeAyuda: '¡Feliz cumpleaños!',
+  regaloFalta: 'Escribe el nombre y el celular de quien recibe el regalo.',
   alergiasAyuda: 'Ej.: maní, mariscos, lácteos',
   alergiasNota:
     'El restaurante la ve resaltada. Si no puede cumplirla, rechaza el pedido y se te devuelve todo.',
@@ -93,6 +101,14 @@ const en: T = {
   mapaPin: 'Delivery point',
   notas: 'Notes for your driver (optional)',
   alergias: 'Allergies (optional)',
+  regaloTitulo: 'Send as a gift',
+  regaloAyuda:
+    'Someone else receives it at the address above. We text them your message and the tracking link.',
+  regaloNombre: 'Recipient’s name',
+  regaloTelefono: 'Recipient’s mobile number',
+  regaloMensaje: 'Message (optional)',
+  regaloMensajeAyuda: 'Happy birthday!',
+  regaloFalta: 'Enter the name and mobile number of the person receiving the gift.',
   alergiasAyuda: 'E.g., peanuts, shellfish, dairy',
   alergiasNota:
     'The restaurant sees it highlighted. If they can’t meet it, they reject the order and you get a full refund.',

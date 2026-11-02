@@ -196,6 +196,11 @@ export default function PantallaCarrito() {
       apto: '',
       notas: '',
       alergias: '',
+      // C-REGALAR-PEDIDO: enviar como regalo a otra persona.
+      esRegalo: 'no',
+      paraNombre: '',
+      paraTelefono: '',
+      paraMensaje: '',
       propinaOtra: '',
       entrega: 'puerta',
       pin: 'si',
@@ -209,6 +214,7 @@ export default function PantallaCarrito() {
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
+  const comoRegalo = b.valores.esRegalo === 'si' && b.valores.entrega !== 'recoger';
   // C-RECOGER-MAPA: si eligió el local desde «Recoger», el carrito arranca en recoger (una vez).
   const { cambiar: cambiarEntrega } = b;
   useEffect(() => {
@@ -456,6 +462,11 @@ export default function PantallaCarrito() {
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
     if (sinTarifas) return setError(sinTarifas);
+    if (
+      comoRegalo &&
+      (!b.valores.paraNombre.trim() || b.valores.paraTelefono.replace(/\D/g, '').length < 10)
+    )
+      return setError(t.regaloFalta);
     if (programado && !franjaElegida) return setError(te.elegirFranja);
     setError('');
     setPagando(true);
@@ -479,6 +490,13 @@ export default function PantallaCarrito() {
         apto: b.valores.apto,
         notas: b.valores.notas,
         alergias: b.valores.alergias,
+        paraOtro: comoRegalo
+          ? {
+              nombre: b.valores.paraNombre,
+              telefono: b.valores.paraTelefono,
+              mensaje: b.valores.paraMensaje,
+            }
+          : null,
         entrega:
           b.valores.entrega === 'recoger'
             ? 'recoger'
@@ -1041,6 +1059,51 @@ export default function PantallaCarrito() {
         onChangeText={(x) => b.cambiar('notas', x)}
         placeholder={t.notas}
       />
+      {/* C-REGALAR-PEDIDO: como «Send as a gift» de DoorDash y Uber Eats (no en «Recoger»). */}
+      {b.valores.entrega !== 'recoger' ? (
+        <Tarjeta>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700' }}>{t.regaloTitulo}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.regaloAyuda}</Text>
+            </View>
+            <Switch
+              value={comoRegalo}
+              onValueChange={(v) => b.cambiar('esRegalo', v ? 'si' : 'no')}
+              accessibilityLabel={t.regaloTitulo}
+              trackColor={{ true: C.exito, false: '#D6D6D6' }}
+              testID="carrito-regalo"
+            />
+          </View>
+          {comoRegalo ? (
+            <View style={{ marginTop: 10 }}>
+              <Campo
+                etiqueta={t.regaloNombre}
+                value={b.valores.paraNombre}
+                onChangeText={(x) => b.cambiar('paraNombre', x)}
+                placeholder={t.regaloNombre}
+                maxLength={60}
+                autoComplete="off"
+              />
+              <Campo
+                etiqueta={t.regaloTelefono}
+                value={b.valores.paraTelefono}
+                onChangeText={(x) => b.cambiar('paraTelefono', x)}
+                placeholder="(555) 555-0100"
+                keyboardType="phone-pad"
+                maxLength={20}
+              />
+              <Campo
+                etiqueta={t.regaloMensaje}
+                value={b.valores.paraMensaje}
+                onChangeText={(x) => b.cambiar('paraMensaje', x)}
+                placeholder={t.regaloMensajeAyuda}
+                maxLength={200}
+              />
+            </View>
+          ) : null}
+        </Tarjeta>
+      ) : null}
       {/* C-ALERGIAS: casilla aparte de las indicaciones, como «Allergy requests» de Uber Eats. */}
       <Campo
         etiqueta={t.alergias}
