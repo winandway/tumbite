@@ -1704,6 +1704,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Calculadora en vivo:** la calculadora pública (`apps/panel/src/sitio/Calculadora.tsx`) lee `/datos/config-dinero` y usa esa comisión, envío y servicio; los nombres de los planes muestran el porcentaje real. Sin respuesta del servidor, usa `CONFIG_DINERO_INICIAL`.
 - **Prueba:** `apps/servidor/src/historialDinero.test.ts` (rojo comprobado quitando el registro), `apps/panel/src/panel/AdminDinero.test.tsx` y `apps/panel/src/sitio/Calculadora.test.tsx`.
 
+## C-RECOGER-PUNTA-A-PUNTA (2 nov 2026, BRE-7) — todos los países
+
+- **Qué protege:** «Recoger en el local» completo en el navegador: el cliente elige «Recojo en el local», paga (Stripe simulado), ve su PIN; el restaurante acepta, marca listo y entrega en SU APP con el PIN; un PIN equivocado no entrega; la tarjeta se cobra al entregar (liquidación por el total) y no hay pago de repartidor.
+- **Dónde:** `e2e/recorrido/recogerCompleto.spec.ts` (en y es), corre en cada `npm run recorrido`. Con `CAPTURAS=1` rehace las capturas `cliente-recoger-*` y `restapp-recoger-pin` de las guías de recogida.
+- **Arreglo que fijó:** en la recogida, la tarjeta del PIN decía «El repartidor lo necesita para entregarlo en mano»; ahora dice «Muéstralo en el mostrador cuando recojas tu pedido» (`tuPinRecoger` en `apps/cliente/src/app/order/[id].tsx`). Comprobado en rojo antes del arreglo.
+
 ## C-RECOGER-MAPA (29 oct 2026) — todos los países
 
 - **Qué es (como el «Pickup» de Uber Eats):** en Comida, arriba, «Entrega | Recoger». En Recoger: mapa con los locales abiertos (`apps/cliente/src/comida/MapaLocales.tsx` nativo y `.web.tsx` con Leaflet), lo más cerca primero y «Listo en X min» (tiempo de preparación). Al elegir un local, `marcarRecoger(true)` del carrito y el carrito arranca en «Recojo en el local» (una vez; luego se apaga).

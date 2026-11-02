@@ -195,6 +195,8 @@ const T = {
     tuPin: 'Tu PIN para recibir',
     tuPinAyuda:
       'Díselo solo a quien reciba el pedido. El repartidor lo necesita para entregarlo en mano.',
+    // BRE-7: en la recogida no hay repartidor; el PIN se muestra en el mostrador.
+    tuPinRecoger: 'Muéstralo en el mostrador cuando recojas tu pedido.',
     faltaTitulo: 'El restaurante no tiene «{plato}»',
     // C-TIENDAS-COMPRA: en una tienda se habla de la tienda y de tus productos, no de comida.
     estadosTienda: {
@@ -317,6 +319,7 @@ const T = {
     tuPin: 'Your PIN to receive',
     tuPinAyuda:
       'Share it only with whoever receives the order. The driver needs it to hand it over.',
+    tuPinRecoger: 'Show it at the counter when you pick up your order.',
     faltaTitulo: 'The restaurant is out of “{plato}”',
     estadosTienda: {
       pagado: 'Payment received. Waiting for the store to accept.',
@@ -1122,7 +1125,9 @@ export default function SeguirPedido() {
           <Tarjeta style={{ borderWidth: 2, borderColor: C.exito }}>
             <Text style={{ fontWeight: '700' }}>{t.tuPin}</Text>
             <Text style={{ fontSize: 34, fontWeight: '700', letterSpacing: 6 }}>{p.pin}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.tuPinAyuda}</Text>
+            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+              {p.entrega === 'recoger' ? t.tuPinRecoger : t.tuPinAyuda}
+            </Text>
           </Tarjeta>
         ) : null}
         {p.estado === 'en_camino' &&

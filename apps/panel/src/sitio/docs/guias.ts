@@ -935,6 +935,26 @@ const es: SeccionDocs[] = [
             pie: 'Recoger en el local.',
           },
           {
+            src: '/docs/recorrido-cliente-recoger-carrito-es.webp',
+            alt: 'En el carrito, las tres formas de recibir el pedido con «Recojo en el local» elegido: sin costo de envío.',
+            pie: 'En el carrito eliges «Recojo en el local».',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-pin-es.webp',
+            alt: 'Tarjeta «Tu PIN para recibir» con el PIN de 4 dígitos que muestras en el mostrador.',
+            pie: 'Tu PIN de 4 dígitos para el mostrador.',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-listo-es.webp',
+            alt: 'Aviso «Tu pedido está listo: pasa a buscarlo y muestra tu PIN».',
+            pie: 'Cuando está listo, la app te avisa.',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-entregado-es.webp',
+            alt: 'Pedido entregado en el local, con el tipo de entrega «Recoger» y la calificación.',
+            pie: 'Entregado: ya puedes calificar.',
+          },
+          {
             src: '/docs/recorrido-cliente-cambiar-direccion-es.webp',
             alt: 'Cambiar la dirección de entrega de un pedido.',
             pie: 'Cambiar la dirección antes de que salga.',
@@ -1833,6 +1853,11 @@ const es: SeccionDocs[] = [
             src: '/docs/recorrido-restaurante-recoger-es.webp',
             alt: 'Pedido para recoger en el panel del restaurante.',
             pie: 'Así ve el local un pedido para recoger.',
+          },
+          {
+            src: '/docs/recorrido-restapp-recoger-pin-es.webp',
+            alt: 'Pedido para recoger en la app del restaurante: «El cliente lo recoge en el local», la casilla del PIN del cliente y el botón «Entregado al cliente».',
+            pie: 'En la app: escribe el PIN del cliente y toca «Entregado al cliente».',
           },
         ],
         preguntas: [
@@ -5215,6 +5240,26 @@ const en: SeccionDocs[] = [
             pie: 'Pick up at the store.',
           },
           {
+            src: '/docs/recorrido-cliente-recoger-carrito-en.webp',
+            alt: 'In the cart, the three ways to get your order with “I’ll pick it up” selected: no delivery fee.',
+            pie: 'In the cart, choose “I’ll pick it up.”',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-pin-en.webp',
+            alt: 'The “Your PIN to receive” card with the 4-digit PIN you show at the counter.',
+            pie: 'Your 4-digit PIN for the counter.',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-listo-en.webp',
+            alt: 'The “Your order is ready: come pick it up and show your PIN” notice.',
+            pie: 'When it’s ready, the app lets you know.',
+          },
+          {
+            src: '/docs/recorrido-cliente-recoger-entregado-en.webp',
+            alt: 'A pickup order marked delivered, with the “Pickup” delivery type and the rating.',
+            pie: 'Delivered: now you can rate it.',
+          },
+          {
             src: '/docs/recorrido-cliente-cambiar-direccion-en.webp',
             alt: 'Changing the delivery address of an order in Divoox.',
             pie: 'Change the address before it leaves.',
@@ -6099,6 +6144,11 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-restaurante-recoger-en.webp',
             alt: 'A pickup order in the restaurant dashboard.',
             pie: 'How the store sees a pickup order.',
+          },
+          {
+            src: '/docs/recorrido-restapp-recoger-pin-en.webp',
+            alt: 'A pickup order in the restaurant app: “Customer picks up in store,” the customer PIN box and the “Handed to the customer” button.',
+            pie: 'In the app: type the customer’s PIN and tap “Handed to the customer.”',
           },
         ],
         preguntas: [
