@@ -953,6 +953,15 @@ CREATE TABLE IF NOT EXISTS servicio_requisitos (
   PRIMARY KEY (servicio_id, requisito)
 );
 
+-- G4 (2 nov 2026), como DoorDash: lo que se pide según el vehículo con que se reparte. En carro o moto,
+-- licencia y seguro; a pie o en bici, nada más. Solo aplica si la persona registró y activó ese vehículo.
+CREATE TABLE IF NOT EXISTS servicio_vehiculo_requisitos (
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  vehiculo_tipo TEXT NOT NULL CHECK (vehiculo_tipo IN ('carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),
+  requisito TEXT NOT NULL REFERENCES requisitos_def(requisito),
+  PRIMARY KEY (servicio_id, vehiculo_tipo, requisito)
+);
+
 CREATE TABLE IF NOT EXISTS servicio_vehiculos (
   servicio_id TEXT NOT NULL REFERENCES servicios(id),
   vehiculo_tipo TEXT NOT NULL CHECK (vehiculo_tipo IN ('carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),
@@ -1057,6 +1066,18 @@ INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) 
   ('mercado', 'identidad', 1), ('mercado', 'antecedentes', 1),
   ('envios', 'identidad', 1), ('envios', 'antecedentes', 1),
   ('farmacia', 'identidad', 1), ('farmacia', 'antecedentes', 1);
+
+INSERT OR IGNORE INTO servicio_vehiculo_requisitos (servicio_id, vehiculo_tipo, requisito) VALUES
+  ('comida', 'carro', 'licencia'), ('comida', 'carro', 'seguro_vehiculo'),
+  ('comida', 'moto', 'licencia_moto'), ('comida', 'moto', 'seguro_vehiculo'),
+  ('mercado', 'carro', 'licencia'), ('mercado', 'carro', 'seguro_vehiculo'),
+  ('mercado', 'moto', 'licencia_moto'), ('mercado', 'moto', 'seguro_vehiculo'),
+  ('farmacia', 'carro', 'licencia'), ('farmacia', 'carro', 'seguro_vehiculo'),
+  ('farmacia', 'moto', 'licencia_moto'), ('farmacia', 'moto', 'seguro_vehiculo'),
+  ('licores', 'carro', 'licencia'), ('licores', 'carro', 'seguro_vehiculo'),
+  ('licores', 'moto', 'licencia_moto'), ('licores', 'moto', 'seguro_vehiculo'),
+  ('envios', 'carro', 'licencia'), ('envios', 'carro', 'seguro_vehiculo'),
+  ('envios', 'moto', 'licencia_moto'), ('envios', 'moto', 'seguro_vehiculo');
 
 -- Una ciudad nueva nace con todo el catálogo «próximamente» y con Comida abierta si la ciudad
 -- está activa (como funciona Comida hoy). Prender una ciudad abre Comida, salvo que una persona
