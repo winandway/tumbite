@@ -1,25 +1,30 @@
 {
-  "actualizado": "2026-11-01",
+  "actualizado": "2026-11-01T21:03:14-05:00",
   "version": "6632d38",
   "ahora": {
-    "titulo": "Esta página de progreso",
-    "detalle": "La página donde ves en qué vamos, qué falta y qué depende de ti. Se actualiza con cada trabajo."
+    "titulo": "Capturas reales en las guías de Docs",
+    "detalle": "Zonas con más pedidos, Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte. Después, todas las guías que no tengan imágenes."
   },
   "proximo": [
     {
+      "quien": "ia",
+      "titulo": "Capturas en las guías de Docs",
+      "detalle": "Ninguna guía sin imágenes. Las de venta llevan capturas grandes de cada paso."
+    },
+    {
+      "quien": "ia",
+      "titulo": "Qué hace cada app y qué solo está en el panel web",
+      "detalle": "Una sección nueva en esta página para explicar la startup a clientes, inversores y aceleradoras."
+    },
+    {
+      "quien": "ia",
+      "titulo": "Decir «la startup Divoox» en la web",
+      "detalle": "Portada, franquicias, presentaciones y Docs de inicio."
+    },
+    {
       "quien": "richard",
       "titulo": "Compra real de 1 dólar y prueba en la calle",
-      "detalle": "Es lo único que falta para encender Comida en Miami. Con eso sabemos que el cobro con dinero real funciona de punta a punta."
-    },
-    {
-      "quien": "ia",
-      "titulo": "Seguir la fila del roadmap",
-      "detalle": "Lo siguiente de nuestro lado que no depende de dinero ni de cuentas."
-    },
-    {
-      "quien": "ia",
-      "titulo": "GPS de Driver con la app cerrada",
-      "detalle": "Se construye apenas Google apruebe la versión que está revisando."
+      "detalle": "Es lo único que falta para encender Comida en Miami."
     }
   ],
   "esperando": [
