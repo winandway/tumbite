@@ -17,8 +17,13 @@ import {
   nombreEtiquetaDieta,
   type Restaurante,
   formatearMonto,
+  guardarBusquedas,
+  leerBusquedas,
+  llaveBusquedas,
+  quitarBusqueda,
+  sumarBusqueda,
 } from '@tumbite/compartido';
-import { C, urlFoto, useSesion } from '@tumbite/movil';
+import { C, almacenTelefono, urlFoto, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -51,7 +56,7 @@ export const ESPERA_BUSQUEDA_MS = 300;
  * dieta (vegetariano, vegano…) filtran con o sin texto, como en DoorDash y Uber Eats.
  */
 export default function Buscar() {
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = textosInicio(idioma);
   const tc = textosComida(idioma);
   const [q, setQ] = useState('');
@@ -62,6 +67,24 @@ export default function Buscar() {
   const catalogo = useRestaurantes(api, null);
   const punto = catalogo.punto;
   const ultimo = useRef(0);
+  // C-BUSQUEDAS-RECIENTES: las últimas búsquedas de esta cuenta, guardadas en el teléfono.
+  const llave = llaveBusquedas(usuario?.id);
+  const [recientes, setRecientes] = useState<string[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    void leerBusquedas(almacenTelefono, llave).then((l) => vivo && setRecientes(l));
+    return () => {
+      vivo = false;
+    };
+  }, [llave]);
+  const cambiarRecientes = (l: string[]) => {
+    setRecientes(l);
+    void guardarBusquedas(almacenTelefono, llave, l);
+  };
+  // Cuenta como búsqueda lo que la persona confirma: tocar un resultado o la tecla «buscar».
+  const recordar = () => {
+    if (q.trim().length >= 2) cambiarRecientes(sumarBusqueda(recientes, q));
+  };
 
   const texto = q.trim();
   const conTexto = texto.length >= 2;
@@ -130,6 +153,7 @@ export default function Buscar() {
             accessibilityLabel={t.buscarTitulo}
             placeholderTextColor="#8A8A8A"
             returnKeyType="search"
+            onSubmitEditing={recordar}
             style={[
               { flex: 1, paddingVertical: 11, fontSize: 15, color: C.secundario },
               // En la web, sin el recuadro azul del navegador dentro de la cajita redonda.
@@ -159,6 +183,63 @@ export default function Buscar() {
           />
         ))}
       </ScrollView>
+      {!texto && !dieta && recientes.length ? (
+        <View style={{ paddingTop: 16 }} accessibilityLabel={t.recientesTitulo}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 4,
+            }}
+          >
+            <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
+              {t.recientesTitulo}
+            </Text>
+            <Pressable onPress={() => cambiarRecientes([])} accessibilityRole="button" hitSlop={8}>
+              <Text style={{ color: C.primario, fontWeight: '600' }}>{t.recientesBorrarTodo}</Text>
+            </Pressable>
+          </View>
+          {recientes.map((r) => (
+            <View
+              key={r}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderBottomWidth: 1,
+                borderBottomColor: '#E6E8EC',
+              }}
+            >
+              <Pressable
+                onPress={() => setQ(r)}
+                accessibilityRole="button"
+                accessibilityLabel={r}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  paddingVertical: 12,
+                }}
+              >
+                <Text style={{ color: '#8A8A8A', fontSize: 16 }}>↺</Text>
+                <Text style={{ color: C.secundario, fontSize: 15 }} numberOfLines={1}>
+                  {r}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => cambiarRecientes(quitarBusqueda(recientes, r))}
+                accessibilityRole="button"
+                accessibilityLabel={t.recientesQuitar.replace('{q}', r)}
+                hitSlop={8}
+                style={{ paddingHorizontal: 6, paddingVertical: 12 }}
+              >
+                <Text style={{ fontSize: 18, color: '#8A8A8A' }}>×</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 14 }}>
         <Pildora
           texto={`${t.pestanaRestaurantes}${resultado ? ` (${resultado.restaurantes.length})` : ''}`}
@@ -230,7 +311,10 @@ export default function Buscar() {
           }}
           renderItem={({ item: r, index }) => (
             <Pressable
-              onPress={() => router.push(`/restaurant/${r.id}`)}
+              onPress={() => {
+                recordar();
+                router.push(`/restaurant/${r.id}`);
+              }}
               accessibilityRole="button"
               accessibilityLabel={r.nombre}
               style={({ pressed }) => tarjeta(pressed, !abierto(r))}
@@ -275,7 +359,10 @@ export default function Buscar() {
           }}
           renderItem={({ item: p, index }) => (
             <Pressable
-              onPress={() => router.push(`/restaurant/${p.restauranteId}`)}
+              onPress={() => {
+                recordar();
+                router.push(`/restaurant/${p.restauranteId}`);
+              }}
               accessibilityRole="button"
               accessibilityLabel={`${p.nombre} · ${p.restauranteNombre}`}
               style={({ pressed }) => tarjeta(pressed, !p.abiertoAhora)}

@@ -239,6 +239,18 @@
 - [x] HECHO 1 nov (C-PLUS). (R-T3) Divoox Plus (suscripción tipo DashPass): envío gratis y medio servicio desde el mínimo, cobro mensual con Stripe que solo se activa con la factura pagada, cancelar al final del periodo; apagado y bloqueado con llave real hasta probar el cobro en staging con la 4242. Solo EE. UU.
 - [x] HECHO 1 nov (C-TARJETAS-REGALO). (R-T4) Tarjetas de regalo: comprar para alguien con mensaje, código por correo al confirmarse el pago, canjear como saldo y usarlo en el carrito (vuelve si el pedido se cancela); apagadas y bloqueadas con llave real hasta probar en staging con la 4242. Solo EE. UU.
 
+## Bloque CLI — lo que el cliente de los grandes tiene y nosotros no (2 nov 2026, 12:15, tarea programada)
+
+> Salen de recorrer la app del cliente contra DoorDash y Uber Eats (búsqueda, menú, carrito). Cada uno de punta a punta: servidor si toca, app, Docs en dos idiomas con captura, prueba en rojo y publicación.
+
+- [ ] (CLI-1) Búsquedas recientes en el buscador de la app del cliente, como DoorDash y Uber Eats: las últimas 8 búsquedas bajo la casilla, tocar para repetir, borrar una o todas; se guardan en el teléfono de esa persona. Todos los países.
+- [ ] (CLI-2) «Ordenar por» en los resultados de Comida (recomendado, entrega más rápida, mejor calificados, menor envío) y filtros rápidos «Menos de 30 min» y «4,5 o más», como Uber Eats. Todos los países.
+- [ ] (CLI-3) «Lo más pedido» en el menú del restaurante: sección arriba con los platos más pedidos de los últimos 30 días y la etiqueta «N.º 1 más pedido», como DoorDash. Todos los países.
+- [ ] (CLI-4) Pedido de alergias en el carrito, como Uber Eats («Allergy requests»): casilla aparte de las instrucciones; el restaurante la ve resaltada en su pantalla y en el ticket, y puede rechazar si no puede cumplirla. Todos los países.
+- [ ] (CLI-5) Explicación de tarifas en el carrito: botón de información junto a envío, servicio e impuestos que abre una hoja con qué es cada cargo, como «Fees & Estimated Tax» de DoorDash. Todos los países.
+- [ ] (CLI-6) Regalar un pedido («Send as a gift» de DoorDash y Uber Eats): nombre y teléfono del destinatario y un mensaje; el destinatario recibe el seguimiento por SMS o correo; se paga con el cobro normal. Todos los países.
+- [ ] (CLI-7) Invitar a un amigo (referidos, como DoorDash y Uber Eats): código personal para compartir, crédito para los dos en el primer pedido; construido completo y APAGADO con monto en cero hasta que Richard fije el dinero. Todos los países.
+
 ## Registro de la fábrica
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.

@@ -725,6 +725,7 @@ const es: SeccionDocs[] = [
           'En «Platos» ves el nombre del plato, su precio y el restaurante que lo prepara. Tocar un resultado abre ese restaurante con su menú completo.',
           'Da igual que escribas con o sin acentos o con mayúsculas: «sandwich» encuentra «Sándwich». Solo aparecen restaurantes aprobados y abiertos al público en tu ciudad, y los que están abiertos ahora van primero.',
           'Si todavía no llegamos a tu zona, el buscador te lo dice en vez de mostrar una lista vacía.',
+          'Búsquedas recientes: al abrir el buscador sin escribir nada ves tus últimas ocho búsquedas. Tócalas para repetirlas, quita una con la «×» o toca «Borrar todo». Se guardan solo en tu teléfono y son de tu cuenta: si otra persona entra en el mismo teléfono, no las ve.',
         ],
         capturas: [
           {
@@ -737,6 +738,7 @@ const es: SeccionDocs[] = [
           '¿Cómo busco un plato en Divoox?',
           '¿Por qué el buscador no encuentra nada?',
           '¿Puedo buscar por tipo de comida?',
+          '¿Cómo borro mis búsquedas recientes?',
         ],
         pasos: [
           'En el inicio, toca la barra «¿Qué se te antoja hoy?».',
@@ -4820,6 +4822,7 @@ const en: SeccionDocs[] = [
           'Under “Dishes” you see the dish name, its price, and the restaurant that makes it. Tapping a result opens that restaurant with its full menu.',
           'Accents and capital letters don’t matter: “sandwich” finds “Sándwich”. Only approved restaurants open to the public in your city show up, and the ones open right now come first.',
           'If we’re not in your area yet, the search tells you so instead of showing an empty list.',
+          'Recent searches: open the search screen without typing and you’ll see your last eight searches. Tap one to run it again, remove one with the “×”, or tap “Clear all”. They’re stored only on your phone and tied to your account, so anyone else who signs in on the same phone won’t see them.',
         ],
         capturas: [
           {
@@ -4832,6 +4835,7 @@ const en: SeccionDocs[] = [
           'How do I search for a dish on Divoox?',
           'Why doesn’t the search find anything?',
           'Can I search by type of food?',
+          'How do I clear my recent searches?',
         ],
         pasos: [
           'On the home screen, tap the “What are you craving today?” bar.',

@@ -72,3 +72,4 @@ export * from './plus';
 export * from './saldoRegalo';
 export * from './tituloCaso';
 export * from './contacto';
+export * from './busquedasRecientes';
