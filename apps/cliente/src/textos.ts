@@ -36,7 +36,7 @@ const es = {
   alergias: 'Alergias (opcional)',
   alergiasAyuda: 'Ej.: maní, mariscos, lácteos',
   alergiasNota:
-    'El restaurante la ve resaltada. Si no puede cumplirla, cancela el pedido y no pagas nada.',
+    'El restaurante la ve resaltada. Si no puede cumplirla, rechaza el pedido y se te devuelve todo.',
   pagar: 'Pagar',
   continuarPago: 'Continuar al pago',
   tarjeta: 'Tu tarjeta',
@@ -95,7 +95,7 @@ const en: T = {
   alergias: 'Allergies (optional)',
   alergiasAyuda: 'E.g., peanuts, shellfish, dairy',
   alergiasNota:
-    'The restaurant sees it highlighted. If they can’t meet it, they cancel the order and you pay nothing.',
+    'The restaurant sees it highlighted. If they can’t meet it, they reject the order and you get a full refund.',
   pagar: 'Pay',
   continuarPago: 'Continue to payment',
   tarjeta: 'Your card',

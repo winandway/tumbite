@@ -1210,7 +1210,7 @@ const es: SeccionDocs[] = [
           'Toca el plato y, debajo de las opciones, escribe lo que necesitas en «Instrucciones especiales». Cada plato lleva su propia nota.',
           'Si pides el mismo plato dos veces con notas distintas, salen como dos líneas en tu carrito, para que no se confundan.',
           'El restaurante ve la nota junto al plato, en su pantalla y en la comanda impresa. Las notas sirven para cambios sencillos; un cambio que cueste más se elige con las opciones del plato.',
-          'Alergias: en el carrito, debajo de las indicaciones para el repartidor, está la casilla «Alergias». Escribe ahí lo que no puedes comer (por ejemplo, maní o mariscos). El restaurante la ve resaltada en rojo en su pantalla y arriba de la comanda impresa. Si no puede cumplirla, cancela el pedido y no pagas nada.',
+          'Alergias: en el carrito, debajo de las indicaciones para el repartidor, está la casilla «Alergias». Escribe ahí lo que no puedes comer (por ejemplo, maní o mariscos). El restaurante la ve resaltada en rojo en su pantalla y arriba de la comanda impresa. Si no puede cumplirla, rechaza el pedido y se te devuelve todo el dinero.',
         ],
         capturas: [
           {
@@ -5306,6 +5306,7 @@ const en: SeccionDocs[] = [
           'Tap the item and, below the options, write what you need under “Special instructions”. Each item has its own note.',
           'If you order the same item twice with different notes, they show up as two lines in your cart so they don’t get mixed up.',
           'The restaurant sees the note next to the item, on its screen and on the printed ticket. Notes are for simple changes; anything that costs extra is chosen with the item’s options.',
+          'Allergies: in your cart, below the notes for your driver, there’s an “Allergies” box. Write what you can’t eat there (for example, peanuts or shellfish). The restaurant sees it highlighted in red on its screen and at the top of the printed ticket. If they can’t meet it, they reject the order and you get all your money back.',
         ],
         capturas: [
           {
