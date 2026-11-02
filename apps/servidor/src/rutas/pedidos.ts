@@ -720,7 +720,14 @@ pedidos.post('/pedidos', async (c) => {
     regalo,
     recogida,
   });
+  // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
+  // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
+  const planPlus =
+    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
+  const plusAplica = planPlus ? descuentoPlus(previo, planPlus) > 0 : false;
   // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
+  // C-ENVIO-UNA-VEZ (BRE-R3): si Plus ya deja el envío en cero, un cupón de envío gratis se rechaza
+  // (antes los dos descontaban el mismo envío y Divoox quedaba en negativo).
   let cupon: { codigo: string; descuento: number; tipo: string } | null = null;
   if (d.cupon) {
     const v = await validarCupon(db, {
@@ -730,14 +737,10 @@ pedidos.post('/pedidos', async (c) => {
       subtotal: previo.subtotal,
       envio: previo.envio,
       zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+      plusCubreEnvio: plusAplica && previo.envio > 0,
     });
     cupon = { codigo: v.cupon.codigo, descuento: v.descuento, tipo: v.cupon.tipo };
   }
-  // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
-  // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
-  const planPlus =
-    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
-  const plusAplica = planPlus ? descuentoPlus(previo, planPlus) > 0 : false;
   // BRE-R2: el envío que ya absorbe Divoox (Plus o cupón de envío gratis) no lo vuelve a pagar la
   // promoción «envío gratis» del restaurante.
   const envioCubierto = plusAplica || cupon?.tipo === 'envio_gratis' ? previo.envio : 0;

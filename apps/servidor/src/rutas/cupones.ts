@@ -2,10 +2,11 @@ import { paisDeZona } from '../internacional/paises';
 import { topesDePais } from '../internacional/tarifas';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { porcentajeDe } from '@tumbite/compartido';
+import { descuentoPlus, porcentajeDe } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { leerPlus, tienePlus } from '../plus';
 
 /**
  * Cupones y promociones reales (auditoría final, punto 15). Los crea el superadmin; el cliente los
@@ -44,6 +45,8 @@ export async function validarCupon(
     subtotal: number;
     envio: number;
     zonaId: string;
+    /** C-ENVIO-UNA-VEZ: Divoox Plus ya deja el envío de este pedido en cero. */
+    plusCubreEnvio?: boolean;
   },
 ): Promise<{ descuento: number; cupon: FilaCupon }> {
   const codigo = normalizarCupon(p.codigo);
@@ -64,6 +67,10 @@ export async function validarCupon(
     throw new ErrorDatos('Ese cupón no vale en tu ciudad.', 'cupon', 409);
   if (p.subtotal < c.minimo_subtotal)
     throw new ErrorDatos('Tu pedido no llega al mínimo de ese cupón.', 'cupon', 409);
+  // C-ENVIO-UNA-VEZ (BRE-R3): el envío se descuenta una sola vez. Con Plus ya va en cero (como un
+  // cupón de envío gratis con DashPass en DoorDash): el cupón no tiene nada que descontar.
+  if (c.tipo === 'envio_gratis' && p.plusCubreEnvio)
+    throw new ErrorDatos('Ya tienes el envío gratis con Divoox Plus.', 'cupon', 409);
   const usos = await db
     .prepare(
       'SELECT (SELECT COUNT(*) FROM usos_cupon WHERE codigo = ?1) AS total, (SELECT COUNT(*) FROM usos_cupon WHERE codigo = ?1 AND usuario_id = ?2) AS mios',
@@ -127,11 +134,14 @@ cupones.post('/cupones/validar', async (c) => {
     .prepare('SELECT zona_id FROM restaurantes WHERE id = ?')
     .bind(d.restauranteId)
     .first<{ zona_id: string }>();
-  const r = await validarCupon(db, {
-    ...d,
-    usuarioId: u.id,
-    zonaId: rest?.zona_id ?? 'US-FL-MIAMI',
-  });
+  const zonaId = rest?.zona_id ?? 'US-FL-MIAMI';
+  // La misma condición que al crear el pedido: Plus vigente, en dólares y con envío que cubrir.
+  const plusCubreEnvio =
+    d.envio > 0 &&
+    (await paisDeZona(db, zonaId)).moneda === 'USD' &&
+    (await tienePlus(db, u.id)) &&
+    descuentoPlus({ subtotal: d.subtotal, envio: d.envio, servicio: 0 }, await leerPlus(db)) > 0;
+  const r = await validarCupon(db, { ...d, usuarioId: u.id, zonaId, plusCubreEnvio });
   return c.json({ codigo: r.cupon.codigo, descuento: r.descuento, tipo: r.cupon.tipo });
 });
 

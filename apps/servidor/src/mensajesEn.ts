@@ -220,6 +220,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Ese cupón no existe o ya no está activo.', 'That coupon doesn’t exist or is no longer active.'],
   ['Ese cupón ya venció.', 'That coupon has expired.'],
+  ['Ya tienes el envío gratis con Divoox Plus.', 'You already get free delivery with Divoox Plus.'],
   ['Ese cupón es de otro restaurante.', 'That coupon is for another restaurant.'],
   ['Ese cupón no vale en tu ciudad.', 'That coupon isn’t valid in your city.'],
   ['Tu pedido no llega al mínimo de ese cupón.', 'Your order doesn’t reach that coupon’s minimum.'],

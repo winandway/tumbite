@@ -17,7 +17,8 @@ import { leerPlus } from './plus';
  *
  * Cada parte sigue a su regla, igual que al pedir:
  * - cupón de monto: el mismo monto; de porcentaje: sobre el subtotal nuevo; de envío gratis: el
- *   envío nuevo (lo absorbe Divoox).
+ *   envío nuevo (lo absorbe Divoox), o cero si el pedido tiene Plus (el envío se descuenta una
+ *   sola vez, C-ENVIO-UNA-VEZ).
  * - Divoox Plus: envío nuevo + la parte del servicio, sin volver a exigir el mínimo (ya se ganó).
  * - saldo de regalo: el mismo apartado, salvo que el total nuevo no lo admita (se devuelve la
  *   diferencia al saldo).
@@ -63,10 +64,13 @@ export async function recalcularConDescuentos(
     plusAntes > 0 || (pedido.cupon && g?.tipo === 'envio_gratis') ? calcularPedido(p).envio : 0;
   const op = { envioCubierto, sinMinimo: true };
   const base = calcularConPromocion(p, promo, op);
+  // C-ENVIO-UNA-VEZ (BRE-R3): con Plus el envío ya lo descuenta Plus; el cupón de envío, nada.
   const cupon = !pedido.cupon
     ? cuponAntes
     : g?.tipo === 'envio_gratis'
-      ? base.envio
+      ? plusAntes > 0
+        ? 0
+        : base.envio
       : g?.tipo === 'porcentaje'
         ? porcentajeDe(base.subtotal, Number(g.valor ?? 0))
         : cuponAntes;
