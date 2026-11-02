@@ -250,6 +250,7 @@
 - 2 nov 2026, 01:05 (tarea programada): CAP-7b hecho. El recorrido local (con CAPTURAS=1) suma una segunda pizzería abierta y fotografía «Te puede gustar» y «Califica a tus clientes de hoy» después de la entrega; las dos guías ya tienen foto y la prueba de Docs no tiene excepciones: ninguna guía sin captura. Todos los países.
 - 2 nov 2026, 02:10 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: todo lo que queda es `[!]` de Richard. La verificación del último commit (9f567e0, colores de «Entregado») está corriendo en GitHub; producción todavía muestra a098a47 y se pondrá al día sola cuando termine la publicación. No se tocó código ni se publicó nada para no frenar esa corrida.
 - 2 nov 2026, 08:10 (tarea programada): sin pausa; último commit en main hace 42 minutos (468eee7, página de contacto), ya en pruebas y con su verificación de main todavía corriendo en GitHub; producción muestra 9f567e0 y se pondrá al día sola. La fila no tiene puntos `[ ]`: todo lo que queda es `[!]` de Richard. No se tocó código ni se rellenó la fila para no cruzarse con la sesión que trabaja fase-repaso-1. Todos los países.
+- 2 nov 2026, 09:10 (tarea programada): sin pausa y sin otra sesión activa (último commit en main hace una hora). La fila no tiene puntos `[ ]`: todo lo que queda es `[!]` de Richard. Pruebas y producción (divoox.com) muestran el último commit publicado (468eee7) y la verificación y publicación de main dieron verde. No se tocó código. Todos los países.
 
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
