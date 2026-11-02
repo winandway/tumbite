@@ -2604,3 +2604,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo):** `apps/servidor/src/descuentosRecalculo.test.ts`: con el `pedidos.ts` anterior fallan las cuatro. Comparan el pedido recalculado con un pedido nuevo hecho así desde el principio, exigen total = restaurante + repartidor + Divoox + impuesto y la conciliación en «sí» después de entregar. Umbral de 90 % de líneas para `descuentosPedido.ts` en `vitest.config.mts`.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/descuentosRecalculo.test.ts`.
 - **Qué NO tocar:** ningún recálculo de un pedido ya creado llama a `calcularPedido` o `calcularConPromocion` directo: pasa por `recalcularConDescuentos`. `pedidos.descuento` es la suma cupón + Plus + saldo de regalo; la parte del cupón se deduce restando `pedidos_plus` y `pedidos_saldo_regalo`.
+
+## C-REVISOR-BRE-R (2 nov 2026) — arreglos del revisor para BRE-1 a BRE-4. Todos los países.
+
+- **Retraso honesto:** `rangoLlegada` (`packages/compartido/src/seguimientoHonesto.ts`) marca `atrasado` cuando ni el rango mínimo cabe antes del «a más tardar»; la app del cliente y el enlace compartido dicen «Viene con retraso» y esconden el «a más tardar». Pruebas: `seguimientoHonesto.test.ts`, `PedidoCompartido.test.tsx`.
+- **Pedido de prueba:** sin «Reportar un problema» y sin QR de recogida (panel `Pedidos.tsx`, app `Inicio.tsx`); tope `PRUEBAS_POR_DIA` = 10 en `pedidoPrueba.ts` (429). Pruebas: `PedidosPrueba.test.tsx`, `pedidoPrueba.test.ts`. Todas comprobadas en rojo.
+- **Guías:** «test-order» y «compliments-and-reasons» llevan capturas reales (panel local y app web del cliente compilada); originales en `docs/capturas/`.

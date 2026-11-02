@@ -1335,7 +1335,18 @@ const es: SeccionDocs[] = [
         titulo: 'Elogios y motivos al calificar',
         resumen:
           'Con 5 estrellas eliges qué te gustó; con 3 o menos, qué salió mal. En un toque, sin escribir.',
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/cliente-elogios-elegidos-es.webp',
+            alt: 'Pantalla «¿Qué tal todo?» de la app con 5 estrellas para la comida y el repartidor, y los elogios «Amable» y «Rápido» elegidos.',
+            pie: 'Con 5 estrellas eliges qué te gustó, en un toque.',
+          },
+          {
+            src: '/docs/cliente-motivos-es.webp',
+            alt: 'La comida con 2 estrellas y «¿Qué salió mal?» abierto, con «Llegó fría» elegido.',
+            pie: 'Con 3 estrellas o menos eliges qué salió mal.',
+          },
+        ],
         preguntas: [
           '¿Cómo felicito a mi repartidor?',
           '¿Cómo digo qué salió mal con mi pedido?',
@@ -5596,7 +5607,18 @@ const en: SeccionDocs[] = [
         titulo: 'Compliments and reasons when you rate',
         resumen:
           'With 5 stars you pick what went well; with 3 or fewer, what went wrong. One tap, no typing.',
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/cliente-elogios-elegidos-en.webp',
+            alt: 'The app’s “How was everything?” screen with 5 stars for the food and the driver, and the “Friendly” and “Fast” compliments picked.',
+            pie: 'With 5 stars you pick what went well, in one tap.',
+          },
+          {
+            src: '/docs/cliente-motivos-en.webp',
+            alt: 'The food at 2 stars with “What went wrong?” open and “Arrived cold” picked.',
+            pie: 'With 3 stars or fewer you pick what went wrong.',
+          },
+        ],
         preguntas: [
           'How do I compliment my driver?',
           'How do I say what went wrong with my order?',
