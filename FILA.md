@@ -243,11 +243,11 @@
 
 > Salen de recorrer la app del cliente contra DoorDash y Uber Eats (búsqueda, menú, carrito). Cada uno de punta a punta: servidor si toca, app, Docs en dos idiomas con captura, prueba en rojo y publicación.
 
-- [ ] (CLI-1) Búsquedas recientes en el buscador de la app del cliente, como DoorDash y Uber Eats: las últimas 8 búsquedas bajo la casilla, tocar para repetir, borrar una o todas; se guardan en el teléfono de esa persona. Todos los países.
+- [x] HECHO 2 nov (C-BUSQUEDAS-RECIENTES), commit 8a04417; sin publicar todavía: GitHub perdió la sesión de esta computadora. (CLI-1) Búsquedas recientes en el buscador de la app del cliente, como DoorDash y Uber Eats: las últimas 8 búsquedas bajo la casilla, tocar para repetir, borrar una o todas; se guardan en el teléfono de esa persona. Todos los países.
 - [ ] (CLI-2) «Ordenar por» en los resultados de Comida (recomendado, entrega más rápida, mejor calificados, menor envío) y filtros rápidos «Menos de 30 min» y «4,5 o más», como Uber Eats. Todos los países.
 - [ ] (CLI-3) «Lo más pedido» en el menú del restaurante: sección arriba con los platos más pedidos de los últimos 30 días y la etiqueta «N.º 1 más pedido», como DoorDash. Todos los países.
 - [ ] (CLI-4) Pedido de alergias en el carrito, como Uber Eats («Allergy requests»): casilla aparte de las instrucciones; el restaurante la ve resaltada en su pantalla y en el ticket, y puede rechazar si no puede cumplirla. Todos los países.
-- [ ] (CLI-5) Explicación de tarifas en el carrito: botón de información junto a envío, servicio e impuestos que abre una hoja con qué es cada cargo, como «Fees & Estimated Tax» de DoorDash. Todos los países.
+- [x] HECHO 2 nov (C-TARIFAS-EXPLICADAS); sin publicar todavía: GitHub perdió la sesión de esta computadora. (CLI-5) Explicación de tarifas en el carrito: botón de información junto a envío, servicio e impuestos que abre una hoja con qué es cada cargo, como «Fees & Estimated Tax» de DoorDash. Todos los países.
 - [ ] (CLI-6) Regalar un pedido («Send as a gift» de DoorDash y Uber Eats): nombre y teléfono del destinatario y un mensaje; el destinatario recibe el seguimiento por SMS o correo; se paga con el cobro normal. Todos los países.
 - [ ] (CLI-7) Invitar a un amigo (referidos, como DoorDash y Uber Eats): código personal para compartir, crédito para los dos en el primer pedido; construido completo y APAGADO con monto en cero hasta que Richard fije el dinero. Todos los países.
 

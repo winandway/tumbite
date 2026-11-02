@@ -13,6 +13,7 @@ import {
   saldoAplicable,
   distanciaKm,
   enIdioma,
+  explicarTarifas,
   formatearMonto,
   montoATexto,
   montoEscrito,
@@ -147,6 +148,8 @@ export default function PantallaCarrito() {
   const nombreSustitucion = (op: string) => new Map(Object.entries(tt.sustituciones)).get(op) ?? op;
   // C-MONEDA-RECORRIDO: las tarifas y la moneda del país del restaurante (las mismas del servidor).
   // Se guardan con el restaurante para el que se pidieron: si cambia el carrito, no se mezclan.
+  // C-TARIFAS-EXPLICADAS: «¿Qué son estas tarifas?» abre la explicación de cada cargo.
+  const [verTarifas, setVerTarifas] = useState(false);
   const [tarifas, setTarifas] = useState<{
     rid: string | null;
     config: ConfigDinero;
@@ -1164,6 +1167,43 @@ export default function PantallaCarrito() {
           <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
             {fila(t.total, d.totalCliente, true)}
           </View>
+          <Pressable
+            onPress={() => setVerTarifas(!verTarifas)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: verTarifas }}
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 }}
+          >
+            <Text
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 9,
+                borderWidth: 1,
+                borderColor: '#5E5E5E',
+                textAlign: 'center',
+                fontSize: 12,
+                lineHeight: 16,
+                color: '#5E5E5E',
+              }}
+            >
+              i
+            </Text>
+            <Text
+              style={{ color: C.secundario, fontWeight: '600', textDecorationLine: 'underline' }}
+            >
+              {idioma === 'en' ? 'What are these fees?' : '¿Qué son estas tarifas?'}
+            </Text>
+          </Pressable>
+          {verTarifas ? (
+            <View style={{ marginTop: 8, gap: 8 }} accessibilityLiveRegion="polite">
+              {explicarTarifas(config, moneda, idioma).map((x) => (
+                <Text key={x.clave} style={{ color: '#5E5E5E', fontSize: 13, lineHeight: 19 }}>
+                  {x.texto}
+                </Text>
+              ))}
+            </View>
+          ) : null}
         </Tarjeta>
       ) : null}
       {error ? (
