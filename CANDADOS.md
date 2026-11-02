@@ -2542,3 +2542,5 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `apps/servidor/src/rutas/contratoAppsTodas.test.ts` lee el código de las tres apps, toma cada `api.pedir<…>('GET', '/datos/…')` con dirección fija, la llama con una cuenta del rol de la app (el restaurante ya creado) y exige las llaves obligatorias del tipo, o una lista si el tipo es una lista. Hoy cubre unas cuarenta lecturas.
 - **Comprobado en rojo:** devolviendo la app al tipo viejo (`Miembro[]`) y cambiando una llave del tipo, la prueba falla con el archivo y la dirección.
 - **No tocar:** si una pantalla nueva lee con variables en la dirección, no entra; para esas se escribe su prueba propia (como `contratoApps.test.ts`).
+
+- **C-APP-SIN-CIERRES, 2 nov (CON-3):** en Superadmin → Resumen → errores, el selector «Origen» separa el servidor de cada app, y cada fallo de app se ve como «App restaurante · /equipo». Prueba en `apps/panel/src/panel/Superadmin.test.tsx` (C-ERRORES-VISIBLES), comprobada en rojo sin el cambio.

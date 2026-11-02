@@ -63,9 +63,18 @@ type ErrorServidor = {
  * C-ERRORES-VISIBLES: los últimos errores no controlados del servidor (ruta y mensaje, sin datos
  * personales). Antes solo iban a la consola del momento y no se podían revisar después.
  */
+/** C-APP-SIN-CIERRES: los fallos de pantalla de las apps llegan con método «APP» y «app:pantalla». */
+type Origen = 'todos' | 'servidor' | 'cliente' | 'repartidor' | 'restaurante';
+function origenDe(e: ErrorServidor): Exclude<Origen, 'todos'> {
+  if (e.metodo !== 'APP') return 'servidor';
+  const app = e.ruta.split(':')[0];
+  return app === 'cliente' || app === 'repartidor' || app === 'restaurante' ? app : 'servidor';
+}
+
 function ErroresServidor({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [errores, setErrores] = useState<ErrorServidor[] | null>(null);
+  const [origen, setOrigen] = useState<Origen>('todos');
   useEffect(() => {
     let vivo = true;
     pedir<{ errores: ErrorServidor[] }>('GET', '/datos/admin/errores')
@@ -81,8 +90,20 @@ function ErroresServidor({ idioma }: { idioma: Idioma }) {
   }, []);
   if (!errores) return null;
   if (!errores.length) return <p className="ok">{t.sinErrores}</p>;
+  const vistos = errores.filter((e) => origen === 'todos' || origenDe(e) === origen);
   return (
     <div className="tabla-ancha">
+      <label>
+        {t.origen}{' '}
+        <select value={origen} onChange={(e) => setOrigen(e.target.value as Origen)}>
+          {Object.entries(t.origenes).map(([o, nombre]) => (
+            <option key={o} value={o}>
+              {nombre}
+            </option>
+          ))}
+        </select>
+      </label>
+      {!vistos.length ? <p className="ok">{t.sinErrores}</p> : null}
       <table className="tabla" aria-label={t.errores}>
         <thead>
           <tr>
@@ -92,11 +113,13 @@ function ErroresServidor({ idioma }: { idioma: Idioma }) {
           </tr>
         </thead>
         <tbody>
-          {errores.slice(0, 20).map((e) => (
+          {vistos.slice(0, 20).map((e) => (
             <tr key={e.id}>
               <td>{e.creadoEn}</td>
               <td>
-                {e.metodo} {e.ruta}
+                {e.metodo === 'APP'
+                  ? `${t.origenes[origenDe(e)]} · ${e.ruta.split(':').slice(1).join(':') || '?'}`
+                  : `${e.metodo} ${e.ruta}`}
               </td>
               <td>{e.mensaje}</td>
             </tr>
@@ -118,6 +141,14 @@ const T = {
     erroresAyuda:
       'Los últimos fallos que el servidor no supo manejar (la persona vio «Algo salió mal»). Hora en UTC.',
     sinErrores: 'Sin errores registrados.',
+    origen: 'Origen',
+    origenes: {
+      todos: 'Todos',
+      servidor: 'Servidor',
+      cliente: 'App cliente',
+      repartidor: 'App Driver',
+      restaurante: 'App restaurante',
+    },
     cuando: 'Cuándo',
     ruta: 'Dónde',
     mensaje: 'Mensaje',
@@ -216,6 +247,14 @@ const T = {
     erroresAyuda:
       'The latest failures the server could not handle (the person saw “Something went wrong”). Time in UTC.',
     sinErrores: 'No errors recorded.',
+    origen: 'Source',
+    origenes: {
+      todos: 'All',
+      servidor: 'Server',
+      cliente: 'Customer app',
+      repartidor: 'Driver app',
+      restaurante: 'Restaurant app',
+    },
     cuando: 'When',
     ruta: 'Where',
     mensaje: 'Message',

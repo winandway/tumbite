@@ -337,8 +337,8 @@
 > La etapa siguiente del plan maestro del lado de la IA ya está toda hecha (Etapas 3 a 6 y 8); lo que queda abierto en el plan depende de Richard. Este bloque sigue la Etapa 1, punto 2 (repaso de las apps con REA, cada fallo con su prueba en rojo), y ataca la causa del cierre de «Equipo»: la app leía una forma de respuesta distinta de la que manda el servidor.
 
 - [x] HECHO 2 nov (C-CONTRATO-APPS; unas cuarenta lecturas en verde, comprobado en rojo con el fallo original de «Equipo»). (CON-1) Contrato apps ↔ servidor: una prueba automática que llama a cada dirección que leen las tres apps (cliente, Driver, restaurante) y comprueba que la respuesta trae las llaves que la pantalla usa. Lo que no cuadre se arregla con su prueba en rojo. Todos los países.
-- [ ] (CON-2) Billetera del restaurante en la moneda de su país (hoy la app la muestra siempre en dólares). Todos los países.
-- [ ] (CON-3) Los fallos de pantalla que mandan las apps (C-APP-SIN-CIERRES) se ven en el registro de errores del superadmin, filtrables por app y pantalla. Todos los países.
+- [x] NO HACE FALTA 2 nov: está en dólares a propósito, Stripe solo cobra en USD (candado de monedas, CANDADOS.md «Lo que sigue en dólares a propósito»). (CON-2) Billetera del restaurante en la moneda de su país (hoy la app la muestra siempre en dólares). Todos los países.
+- [x] HECHO 2 nov (C-APP-SIN-CIERRES): filtro «Origen» (servidor, app cliente, Driver, restaurante) y cada fallo de app con su pantalla; comprobado en rojo. (CON-3) Los fallos de pantalla que mandan las apps (C-APP-SIN-CIERRES) se ven en el registro de errores del superadmin, filtrables por app y pantalla. Todos los países.
 - [ ] (CON-4) El mismo contrato del punto 1 para el panel web (restaurante, empresa de Flex y superadmin). Todos los países.
 - [ ] (CON-5) Etapa 1, punto 1: comprobar en producción, solo lectura, el embudo de pedidos de los informes (cuántos entran, pagan, se aceptan y se entregan) y anotar lo que no cuadre. EE. UU.
 - [!] (espera la sesión de GitHub de Richard) (CON-6) Capturas reales de las guías nuevas del bloque PLT desde el sitio de pruebas, apenas se publique. Todos los países.

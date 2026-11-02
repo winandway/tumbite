@@ -116,6 +116,13 @@ describe('superadmin', () => {
                 mensaje: 'D1_ERROR: prueba',
                 creadoEn: '2026-10-19 21:43:17',
               },
+              {
+                id: 2,
+                metodo: 'APP',
+                ruta: 'restaurante:/equipo',
+                mensaje: 'd.map is not a function',
+                creadoEn: '2026-11-02 10:00:00',
+              },
             ],
           }
         : RESUMEN,
@@ -126,6 +133,11 @@ describe('superadmin', () => {
       screen.getByText('POST /datos/repartidor/pedidos/:id/foto-recogida'),
     ).toBeInTheDocument();
     expect(screen.getByText('Server errors')).toBeInTheDocument();
+    // C-APP-SIN-CIERRES: el fallo de la app se ve con su app y su pantalla, y se puede filtrar.
+    expect(screen.getByText('Restaurant app · /equipo')).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Source'), 'restaurante');
+    expect(screen.queryByText('D1_ERROR: prueba')).not.toBeInTheDocument();
+    expect(screen.getByText('d.map is not a function')).toBeInTheDocument();
   });
 
   it('C-REVISORES: el botón crea las cuentas del revisor y muestra las contraseñas una vez', async () => {
