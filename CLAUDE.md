@@ -25,6 +25,15 @@ Las reglas globales de Richard aplican; estas se suman.
 - Los puntos de `esperando` usan un `id` fijo (minúsculas y guiones): su marca se guarda con ese id. No cambiar un id ya publicado.
 - **Nada privado en la página** (el repositorio es público): ni claves, ni el EIN, ni la dirección del superadmin, ni datos de clientes. La clave del equipo para marcar está en `~/.config/tumbite/progreso-clave`; en el repo solo va su huella.
 
+## SE TRABAJA 24 HORAS, TODOS LOS DÍAS, CONTRA RELOJ (REGLA PRINCIPAL, Richard, 1 nov 2026)
+
+> Sus palabras: _«trabajamos 24 horas, día y noche sin parar… no hay horario fijo aquí para trabajar. Todos los días estamos trabajando porque… estamos contra reloj. Queremos urgente, lo más pronto posible, que nuestra startup Divoox esté lista»_.
+
+- No hay horario: la fábrica corre cada hora, día y noche, también fines de semana (tarea programada «fabrica-divoox», cada hora).
+- Nunca se deja un trabajo «para mañana» ni se espera a que Richard vuelva para seguir con lo que no depende de él.
+- Cuando la fila se vacía, la IA no se queda quieta: relee el roadmap, la comparación con los grandes y el repaso de las tres apps, y llena la fila con lo siguiente que acerque el lanzamiento (primero lo que toca a clientes y dinero, después el pulido de las tres apps).
+- Varias sesiones a la vez sobre la misma carpeta se reparten la fila por bloques escritos en `FILA.md` (`[sesión: nombre]`) y guardan solo sus propios archivos (`git commit -- <archivos>`), para no pisarse.
+
 ## LA FÁBRICA: FILA.md ES EL RUMBO Y LA SESIÓN NO SE PARA (Richard, 29 oct 2026)
 
 - `FILA.md` es la única lista de trabajo de la IA, en orden. Se ejecuta punto por punto sin cerrar el turno.
