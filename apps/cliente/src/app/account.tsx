@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Image, Linking, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import {
@@ -11,8 +11,10 @@ import {
   ReportarProblema,
   URL_SERVIDOR,
   e,
+  urlFoto,
   useSesion,
 } from '@tumbite/movil';
+import { fotoDeRelleno } from '../inicio/recursos';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
@@ -75,6 +77,8 @@ type Pedido = {
   id: string;
   estado: string;
   restauranteNombre?: string;
+  restauranteImagen?: string;
+  restauranteCategoria?: string;
   total: number;
   moneda?: string;
   creadoEn: string;
@@ -211,30 +215,53 @@ export default function MiCuenta() {
 
         <Text style={estilos.subtitulo}>{t.pedidos}</Text>
         {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}
-        {pedidos?.map((p) => (
-          <Pressable
-            key={p.id}
-            onPress={() => router.push(`/order/${p.id}`)}
-            accessibilityRole="link"
-            style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between', gap: 8 }]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '700' }}>{p.restauranteNombre}</Text>
-              <Text style={{ color: '#5E5E5E' }}>
-                {fecha(p.creadoEn)} ·{' '}
-                {/* Entregado en verde: algo que salió bien nunca va en rojo. */}
-                <Text
-                  style={p.estado === 'entregado' ? { color: C.exito, fontWeight: '700' } : null}
-                >
-                  {t.estados[p.estado] ?? p.estado}
+        {pedidos?.map((p, i) => {
+          // C-MIS-PEDIDOS-MINIATURA: la misma tarjeta que «Mis pedidos»: miniatura y estado con color.
+          const estado =
+            p.estado === 'entregado'
+              ? { fondo: '#E6F4EC', texto: C.exito }
+              : p.estado === 'cancelado'
+                ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
+                : { fondo: '#E7F0F7', texto: '#1F5F8B' };
+          const foto = urlFoto(p.restauranteImagen ?? null);
+          return (
+            <Pressable
+              key={p.id}
+              onPress={() => router.push(`/order/${p.id}`)}
+              accessibilityRole="link"
+              style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}
+            >
+              <Image
+                source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
+                style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                accessibilityIgnoresInvertColors
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ fontWeight: '700' }} numberOfLines={1}>
+                  {p.restauranteNombre}
                 </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{fecha(p.creadoEn)}</Text>
+                <View
+                  style={{
+                    alignSelf: 'flex-start',
+                    marginTop: 4,
+                    backgroundColor: estado.fondo,
+                    borderRadius: 999,
+                    paddingHorizontal: 10,
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text style={{ color: estado.texto, fontWeight: '700', fontSize: 12 }}>
+                    {t.estados[p.estado] ?? p.estado}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ fontWeight: '700' }}>
+                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
               </Text>
-            </View>
-            <Text style={{ fontWeight: '700' }}>
-              {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
-            </Text>
-          </Pressable>
-        ))}
+            </Pressable>
+          );
+        })}
 
         <Text style={estilos.subtitulo}>{t.tarjetas}</Text>
         {tarjetas?.length === 0 ? <Text style={e.tarjeta}>{t.sinTarjetas}</Text> : null}
