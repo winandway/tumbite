@@ -2507,3 +2507,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `POST /datos/pedidos/:id/calificar` acepta `platos: [{ platoId, gusta }]` (opcional). Solo se guardan los platos que estaban en ese pedido (`platosDelPedido` de `packages/compartido/src/gustoPlatos.ts`) y calificar otra vez reemplaza los votos. Tabla nueva `calificaciones_platos` (CREATE IF NOT EXISTS, sin migración). El menú público devuelve `gustoPlatos` y `/datos/mi-restaurante/resenas` devuelve `platos`, con `resumenGusto` (mínimo 5 votos).
 - **Prueba:** `packages/compartido/src/gustoPlatos.test.ts`, `apps/servidor/src/gustoPlatos.test.ts` y `apps/panel/src/panel/Resenas.test.tsx` (en rojo sin el cambio).
 - **Qué NO tocar:** el mínimo de 5 votos y el filtro de platos del pedido (evita votos inventados a platos que no se pidieron).
+
+## C-AUDITIVA-REPARTIDOR (2 nov 2026) — todos los países
+
+- **Qué es:** el repartidor con sordera o dificultad auditiva lo enciende en Driver → Seguridad, como en Uber y DoorDash. El cliente ve «tiene sordera o dificultad auditiva: escríbele por el chat» en la tarjeta del repartidor; el panel y la app del restaurante lo ven en la línea del repartidor; las ofertas (comida y viajes) vibran más largo.
+- **Cómo funciona:** tabla nueva `accesibilidad_repartidor` (CREATE IF NOT EXISTS). `GET/PUT /datos/repartidor/accesibilidad` (solo el repartidor). El seguimiento del cliente y `/datos/restaurante/pedidos` devuelven `repartidor.dificultadAuditiva`. `lineaRepartidor` (packages/compartido/src/mostrador.ts) suma el aviso; `patronVibracionOferta` da el patrón de vibración.
+- **Prueba:** `apps/servidor/src/auditivaRepartidor.test.ts`, `packages/compartido/src/mostrador.test.ts` y `packages/compartido/src/accesibilidadRepartidor.test.ts` (en rojo sin el cambio).
+- **Qué NO tocar:** que nazca apagado y que solo lo cambie el propio repartidor (es un dato de salud: nadie más lo marca).

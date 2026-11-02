@@ -122,6 +122,8 @@ type Pedido = {
     llego?: boolean;
     /** C-FOTO-VERIFICADA: la ruta privada de su foto aprobada, si la tiene. */
     foto?: string | null;
+    /** C-AUDITIVA-REPARTIDOR: escribirle por el chat en vez de llamarlo. */
+    dificultadAuditiva?: boolean;
   } | null;
 };
 
@@ -234,6 +236,8 @@ const T = {
     restaurante: 'La comida',
     culpa: 'El problema fue de la comida o la demora del restaurante',
     platosTitulo: '¿Qué tal cada plato?',
+    auditiva: (n: string) =>
+      `${n} tiene sordera o dificultad auditiva. Escríbele por el chat en vez de llamar.`,
     meGusto: 'Me gustó',
     noMeGusto: 'No me gustó',
     enviar: 'Enviar calificación',
@@ -349,6 +353,8 @@ const T = {
     restaurante: 'The food',
     culpa: 'The problem was the food or the restaurant’s delay',
     platosTitulo: 'How was each item?',
+    auditiva: (n: string) =>
+      `${n} is deaf or hard of hearing. Text them in the chat instead of calling.`,
     meGusto: 'Liked it',
     noMeGusto: 'Didn’t like it',
     enviar: 'Send rating',
@@ -1084,6 +1090,11 @@ export default function SeguirPedido() {
                 </>
               ) : null}
             </View>
+            {p.repartidor.dificultadAuditiva ? (
+              <Text style={{ color: C.secundario, fontSize: 13, marginTop: 8 }}>
+                {t.auditiva(p.repartidor.nombre)}
+              </Text>
+            ) : null}
             {avisoLlamada ? (
               <Text
                 style={{ color: C.exito, fontWeight: '700', marginTop: 8 }}

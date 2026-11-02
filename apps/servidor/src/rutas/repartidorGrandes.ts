@@ -169,6 +169,32 @@ repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
   return c.json({ ...metricas, destacado, requisitos });
 });
 
+/**
+ * C-AUDITIVA-REPARTIDOR (2 nov 2026), como Uber y DoorDash: el repartidor sordo o con dificultad
+ * auditiva lo marca aquí; el cliente y el restaurante de sus pedidos lo ven. Solo lo cambia él.
+ */
+repartidorGrandes.get('/repartidor/accesibilidad', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const f = await base(c)
+    .prepare('SELECT auditiva FROM accesibilidad_repartidor WHERE usuario_id = ?')
+    .bind(u.id)
+    .first<{ auditiva: number }>();
+  return c.json({ dificultadAuditiva: Number(f?.auditiva ?? 0) === 1 });
+});
+
+repartidorGrandes.put('/repartidor/accesibilidad', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(c, z.object({ dificultadAuditiva: z.boolean() }));
+  await base(c)
+    .prepare(
+      `INSERT INTO accesibilidad_repartidor (usuario_id, auditiva) VALUES (?, ?)
+       ON CONFLICT(usuario_id) DO UPDATE SET auditiva = excluded.auditiva, actualizado_en = datetime('now')`,
+    )
+    .bind(u.id, d.dificultadAuditiva ? 1 : 0)
+    .run();
+  return c.json({ dificultadAuditiva: d.dificultadAuditiva });
+});
+
 const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 repartidorGrandes.get('/repartidor/ganancias', async (c) => {
   const u = exigir(c, 'repartidor');

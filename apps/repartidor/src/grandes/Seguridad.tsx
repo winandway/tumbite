@@ -1,8 +1,19 @@
-import { useState } from 'react';
-import { Alert, Linking, Platform, Pressable, Share, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  Share,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import * as Location from 'expo-location';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e } from '@tumbite/movil';
+import { cargarAccesibilidad, fijarAuditiva } from './accesibilidad';
 
 /**
  * C-SEGURIDAD-REPARTIDOR (29 oct 2026), como el centro de seguridad de Dasher y Uber Driver:
@@ -35,6 +46,9 @@ const T = {
     detalle: '¿Qué pasó?',
     enviar: 'Enviar el reporte',
     enviado: 'Recibimos tu reporte. Nuestro equipo te contacta.',
+    auditiva: 'Tengo sordera o dificultad auditiva',
+    auditivaAyuda:
+      'El cliente y el restaurante verán que deben escribirte por el chat en vez de llamarte, y las ofertas vibrarán más fuerte.',
   },
   en: {
     titulo: 'Safety',
@@ -60,6 +74,9 @@ const T = {
     detalle: 'What happened?',
     enviar: 'Send the report',
     enviado: 'We got your report. Our team will contact you.',
+    auditiva: 'I’m deaf or hard of hearing',
+    auditivaAyuda:
+      'Customers and restaurants will see that they should text you in the chat instead of calling, and offers will vibrate harder.',
   },
 };
 
@@ -90,6 +107,21 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
   const [motivo, setMotivo] = useState('');
   const [detalle, setDetalle] = useState('');
   const falla = (x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x));
+  const [auditiva, setAuditiva] = useState(false);
+  useEffect(() => {
+    cargarAccesibilidad(api).then(setAuditiva).catch(falla);
+  }, [api]);
+  async function cambiarAuditiva(v: boolean) {
+    setError('');
+    setAuditiva(v);
+    try {
+      await api.pedir('PUT', '/datos/repartidor/accesibilidad', { dificultadAuditiva: v });
+      fijarAuditiva(v);
+    } catch (x) {
+      setAuditiva(!v);
+      falla(x);
+    }
+  }
 
   async function emergencia() {
     if (!(await confirmar(t.seguro, t.si, t.no))) return;
@@ -161,6 +193,17 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
         {numero ? (
           <Boton texto={t.llamar(numero)} alTocar={() => void Linking.openURL(`tel:${numero}`)} />
         ) : null}
+      </View>
+      <View style={[e.tarjeta, { gap: 6 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ flex: 1, fontWeight: '700', color: C.secundario }}>{t.auditiva}</Text>
+          <Switch
+            value={auditiva}
+            onValueChange={(v) => void cambiarAuditiva(v)}
+            accessibilityLabel={t.auditiva}
+          />
+        </View>
+        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.auditivaAyuda}</Text>
       </View>
       <View style={[e.tarjeta, { gap: 6 }]}>
         <Boton texto={t.compartir} alTocar={() => void compartir()} secundario />

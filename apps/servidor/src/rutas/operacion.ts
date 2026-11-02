@@ -177,6 +177,8 @@ function repartidorParaRestaurante(f: FilaPedido) {
     esperaEvitableSeg: f.h_espera == null ? null : Number(f.h_espera),
     // Escaneó el código de la pantalla: la app ya comprobó que es el pedido correcto.
     verificado: f.h_verificado != null,
+    // C-AUDITIVA-REPARTIDOR: escribirle por el chat en vez de llamarlo.
+    dificultadAuditiva: Number(f.rep_auditiva ?? 0) === 1,
     salio: estado === 'en_camino' || estado === 'entregado',
   };
 }
@@ -438,7 +440,8 @@ operacion.get('/restaurante/pedidos', async (c) => {
   await anotarSenal(base(c), rid);
   const { results } = await base(c)
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng,
+        (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
       WHERE p.restaurante_id = ? AND (p.estado IN ('pagado','aceptado','listo','en_camino')
@@ -2653,7 +2656,8 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en,
-        (SELECT 1 FROM kyc k WHERE k.usuario_id = p.repartidor_id AND k.estado = 'aprobado' AND k.selfie IS NOT NULL) AS rep_foto
+        (SELECT 1 FROM kyc k WHERE k.usuario_id = p.repartidor_id AND k.estado = 'aprobado' AND k.selfie IS NOT NULL) AS rep_foto,
+        (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id WHERE p.id = ?`,
     )
@@ -2792,6 +2796,8 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
             llego: f.h_llego_cli != null,
             // C-FOTO-VERIFICADA: la foto aprobada contra su documento (como el perfil de Uber).
             foto: f.rep_foto ? `/datos/pedidos/${String(f.id)}/repartidor/foto` : null,
+            // C-AUDITIVA-REPARTIDOR: el cliente le escribe por el chat en vez de llamarlo.
+            dificultadAuditiva: Number(f.rep_auditiva ?? 0) === 1,
           }
         : null,
     },

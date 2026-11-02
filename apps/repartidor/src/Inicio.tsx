@@ -43,6 +43,7 @@ import { Turnos } from './grandes/Turnos';
 import { ResumenAnual } from './grandes/ResumenAnual';
 import { MiNivel } from './grandes/MiNivel';
 import { Seguridad } from './grandes/Seguridad';
+import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
@@ -567,6 +568,10 @@ export function Inicio() {
     const reloj = setInterval(() => setTic(Date.now()), 1000);
     return () => clearInterval(reloj);
   }, []);
+  // C-AUDITIVA-REPARTIDOR: la oferta vibra más fuerte si lo marcó en Seguridad.
+  useEffect(() => {
+    cargarAccesibilidad(api).catch((x: unknown) => console.warn('accesibilidad', x));
+  }, [api]);
 
   const cargar = useCallback(async () => {
     try {

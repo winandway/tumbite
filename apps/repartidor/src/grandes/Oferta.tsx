@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, Vibration, View } from 'react-native';
 import { type Idioma, formatearMonto, textoDistancia } from '@tumbite/compartido';
+import { vibracionOferta } from './accesibilidad';
 import { Boton, C } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -48,7 +49,8 @@ export function Oferta({
   const t = textosGrandes(idioma).oferta;
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
-    Vibration.vibrate([0, 400, 200, 400]);
+    // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.
+    Vibration.vibrate(vibracionOferta());
     const reloj = setInterval(() => setAhora(Date.now()), 500);
     return () => {
       clearInterval(reloj);

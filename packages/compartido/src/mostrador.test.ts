@@ -58,4 +58,17 @@ describe('el mostrador del restaurante (C-MOSTRADOR)', () => {
     expect(avisoLlegada({ ...base, minutosParaLlegar: 5 })).toBe('cerca');
     expect(avisoLlegada({ ...base, llego: true })).toBe('llego');
   });
+
+  it('C-AUDITIVA-REPARTIDOR: avisa que hay que escribirle, en los dos idiomas', () => {
+    const r = { ...base, minutosParaLlegar: 4, dificultadAuditiva: true };
+    expect(lineaRepartidor(r, 'es', ahora)).toBe(
+      'Luis llega en 4 min · Tiene dificultad auditiva: escríbele por el chat',
+    );
+    expect(lineaRepartidor(r, 'en', ahora)).toBe(
+      'Luis arrives in 4 min · Deaf or hard of hearing: text them in the chat',
+    );
+    expect(lineaRepartidor({ ...base, minutosParaLlegar: 4 }, 'es', ahora)).toBe(
+      'Luis llega en 4 min',
+    );
+  });
 });

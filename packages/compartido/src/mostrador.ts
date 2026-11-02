@@ -11,6 +11,8 @@ export type RepartidorEnPedido = {
   /** Escaneó el código de la pantalla: la app ya comprobó que es el pedido correcto. */
   verificado: boolean;
   salio: boolean;
+  /** C-AUDITIVA-REPARTIDOR: sordo o con dificultad auditiva; hay que escribirle, no llamarlo. */
+  dificultadAuditiva?: boolean;
 };
 
 export const MINUTOS_PARA_AMARILLO = 2;
@@ -38,6 +40,18 @@ export function lineaRepartidor(
   r: RepartidorEnPedido | null | undefined,
   idioma: 'es' | 'en',
   ahora = Date.now(),
+): string | null {
+  const linea = lineaBase(r, idioma, ahora);
+  if (!linea || !r?.dificultadAuditiva) return linea;
+  return idioma === 'en'
+    ? `${linea} · Deaf or hard of hearing: text them in the chat`
+    : `${linea} · Tiene dificultad auditiva: escríbele por el chat`;
+}
+
+function lineaBase(
+  r: RepartidorEnPedido | null | undefined,
+  idioma: 'es' | 'en',
+  ahora: number,
 ): string | null {
   if (!r || r.salio) return null;
   const en = idioma === 'en';

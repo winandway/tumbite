@@ -2991,6 +2991,7 @@ const es: SeccionDocs[] = [
           'Emergencia: avisa al instante a nuestro equipo con tu ubicación y te muestra el botón para llamar al número de emergencias de tu país.',
           'Compartir mi recorrido: manda un enlace a alguien de confianza. Ve tu primer nombre y dónde vas, sin cuenta, durante 12 horas.',
           'Reportar un incidente: un accidente, acoso, un robo o un animal suelto. Cuéntanos qué pasó y nuestro equipo te contacta.',
+          'Tengo sordera o dificultad auditiva: si lo enciendes, el cliente y el restaurante de cada pedido ven que deben escribirte por el chat en vez de llamarte, y las ofertas vibran más largo y más veces. Solo tú puedes encenderlo o apagarlo.',
         ],
         capturas: [
           {
@@ -7110,6 +7111,7 @@ const en: SeccionDocs[] = [
           'Emergency: instantly alerts our team with your location and shows the button to call your country’s emergency number.',
           'Share my trip: send a link to someone you trust. They see your first name and where you are, without an account, for 12 hours.',
           'Report an incident: an accident, harassment, a robbery or a loose animal. Tell us what happened and our team will contact you.',
+          'I’m deaf or hard of hearing: when you turn it on, the customer and the restaurant of each order see that they should text you in the chat instead of calling, and offers vibrate longer and more times. Only you can turn it on or off.',
         ],
         capturas: [
           {

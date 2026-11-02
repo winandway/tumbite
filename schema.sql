@@ -277,6 +277,14 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- C-AUDITIVA-REPARTIDOR (2 nov 2026), como Uber y DoorDash: el repartidor sordo o con dificultad
+-- auditiva lo marca en su app; el cliente y el restaurante lo ven para escribirle en vez de llamar.
+CREATE TABLE IF NOT EXISTS accesibilidad_repartidor (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  auditiva INTEGER NOT NULL DEFAULT 0 CHECK (auditiva IN (0, 1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- C-GUSTO-PLATOS (2 nov 2026), como DoorDash: pulgar arriba o abajo por plato al calificar el pedido.
 CREATE TABLE IF NOT EXISTS calificaciones_platos (
   pedido_id TEXT NOT NULL REFERENCES pedidos(id),
