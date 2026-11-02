@@ -6,10 +6,17 @@
 export const EDAD_BASE_REPARTIDOR = 18;
 
 /** Estados de EE. UU. con una edad mayor a la base. */
-export const EDAD_POR_ESTADO: Readonly<Record<string, number>> = { FL: 19, TX: 19, CA: 21 };
+export const EDAD_POR_ESTADO: ReadonlyMap<string, number> = new Map([
+  ['FL', 19],
+  ['TX', 19],
+  ['CA', 21],
+]);
 
 /** Vehículos que piden más edad (Uber: 19 en moto o carro). */
-export const EDAD_POR_VEHICULO: Readonly<Record<string, number>> = { carro: 19, moto: 19 };
+export const EDAD_POR_VEHICULO: ReadonlyMap<string, number> = new Map([
+  ['carro', 19],
+  ['moto', 19],
+]);
 
 /** «US-FL-MIAMI» → «FL». Solo EE. UU.; en otro país no hay estado que aplique. */
 export function estadoEeuuDeZona(zonaId: string | null | undefined): string | null {
@@ -25,8 +32,8 @@ export function edadMinimaRepartidor(d: {
   const estado = estadoEeuuDeZona(d.zonaId);
   return Math.max(
     EDAD_BASE_REPARTIDOR,
-    (estado && EDAD_POR_ESTADO[estado]) || 0,
-    EDAD_POR_VEHICULO[d.vehiculo ?? ''] ?? 0,
+    (estado && EDAD_POR_ESTADO.get(estado)) || 0,
+    EDAD_POR_VEHICULO.get(d.vehiculo ?? '') ?? 0,
   );
 }
 

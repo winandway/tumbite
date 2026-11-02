@@ -32,7 +32,7 @@ const T = {
 type Fila = { id: string; nombre: string; correo: string; entregas: number; total: number };
 
 export function Resumen1099({ idioma }: { idioma: Idioma }) {
-  const t = T[idioma];
+  const t = idioma === 'en' ? T.en : T.es;
   const [filas, setFilas] = useState<Fila[] | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
