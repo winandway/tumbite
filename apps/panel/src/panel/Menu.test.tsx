@@ -57,6 +57,35 @@ describe('menú del restaurante', () => {
     expect(screen.getByLabelText('Nombre en español')).toHaveValue('Flan');
   });
 
+  // C-CALORIAS: como Uber Eats, calorías opcionales; se mandan como número o null.
+  it('manda las calorías como número y avisa si no son un número', async () => {
+    const cuerpos: unknown[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        cuerpos.push(JSON.parse(String(init.body)));
+        return new Response(JSON.stringify({ plato: { ...plato, id: 'p9' } }), { status: 201 });
+      }
+      return new Response(JSON.stringify({ restaurante: { id: 'r1' }, platos: [] }), {
+        status: 200,
+      });
+    });
+    render(<Menu usuario={usuario} idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: '+ Agregar plato' }));
+    await userEvent.type(screen.getByLabelText('Nombre en español'), 'Flan');
+    await userEvent.type(screen.getByLabelText('Precio en dólares'), '5');
+    await userEvent.type(screen.getByLabelText('Calorías (opcional)'), 'mucho');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar plato' }));
+    expect(
+      await screen.findByText('Escribe las calorías como un número entero, por ejemplo 520'),
+    ).toBeInTheDocument();
+    expect(cuerpos).toHaveLength(0);
+    await userEvent.clear(screen.getByLabelText('Calorías (opcional)'));
+    await userEvent.type(screen.getByLabelText('Calorías (opcional)'), '320');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar plato' }));
+    await vi.waitFor(() => expect(cuerpos).toHaveLength(1));
+    expect(cuerpos[0]).toMatchObject({ nombreEs: 'Flan', calorias: 320 });
+  });
+
   // C-AGOTADO-HOY: como DoorDash Merchant, «Agotado por hoy» vuelve solo a medianoche.
   it('«Agotado por hoy» manda hasta=hoy y el plato dice «Agotado hasta mañana»', async () => {
     const enviados: unknown[] = [];

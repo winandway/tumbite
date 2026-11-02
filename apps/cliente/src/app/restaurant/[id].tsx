@@ -581,6 +581,12 @@ export default function MenuRestaurante() {
                             ) : null}
                             <Text style={{ marginTop: 4, fontWeight: '700', color: C.secundario }}>
                               {formatearMonto(p.precioCentavos, moneda, idioma)}
+                              {p.calorias != null ? (
+                                // C-CALORIAS: como Uber Eats, «· 520 cal» junto al precio.
+                                <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
+                                  {` · ${p.calorias} cal`}
+                                </Text>
+                              ) : null}
                             </Text>
                             {datos.gustoPlatos?.[p.id] ? (
                               <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>

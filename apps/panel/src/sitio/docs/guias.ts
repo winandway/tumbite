@@ -800,6 +800,7 @@ const es: SeccionDocs[] = [
           'En el menú de cada restaurante, las marcas aparecen en verde debajo del nombre del plato, y también al abrir el plato.',
           'Para restaurantes: al crear o editar un plato, en el panel o en la app del restaurante, marca las casillas que le correspondan. Puedes marcar varias. Si un plato deja de cumplir una marca, quítala en ese momento.',
           'Las marcas las pone cada restaurante. Si tienes una alergia, confírmalo siempre con el restaurante antes de pedir: una marca no reemplaza esa consulta.',
+          'Calorías: si el restaurante las puso, las ves junto al precio de cada plato, por ejemplo «$12.00 · 520 cal». Para restaurantes: al crear o editar un plato, en el panel o en la app, escríbelas en «Calorías (opcional)»; déjala vacía si no las tienes. En Estados Unidos, la ley pide mostrarlas a las cadenas de 20 locales o más.',
         ],
         capturas: [
           {
@@ -4947,6 +4948,7 @@ const en: SeccionDocs[] = [
           'On each restaurant’s menu, labels appear in green under the dish name, and again when you open the dish.',
           'For restaurants: when you create or edit a dish, in the dashboard or the restaurant app, check the labels that apply. You can check several. If a dish no longer meets a label, remove it right away.',
           'Each restaurant sets its own labels. If you have an allergy, always confirm with the restaurant before ordering: a label doesn’t replace that conversation.',
+          'Calories: if the restaurant added them, you see them next to each dish’s price, for example “$12.00 · 520 cal”. For restaurants: when you create or edit a dish, in the dashboard or the app, enter them under “Calories (optional)”; leave it empty if you don’t have them. In the United States, the law requires chains with 20 or more locations to show them.',
         ],
         capturas: [
           {

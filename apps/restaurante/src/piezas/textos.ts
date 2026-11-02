@@ -89,6 +89,8 @@ const es = {
   // C-MONEDA-RECORRIDO: fuera del dólar, la moneda del restaurante.
   precioMoneda: 'Precio ({m})',
   precioMalMoneda: 'Escribe el precio en {m}, por ejemplo {ej}.',
+  calorias: 'Calorías (opcional)',
+  caloriasMal: 'Escribe las calorías como un número entero, por ejemplo 520.',
   sinPlatos: 'Todavía no tienes platos. Toca «Añadir» para crear el primero.',
   mas: 'Más',
   idioma: 'Idioma',
@@ -170,6 +172,8 @@ const en: T = {
   precioMal: 'Enter the price in dollars, for example 14.00.',
   precioMoneda: 'Price ({m})',
   precioMalMoneda: 'Enter the price in {m}, for example {ej}.',
+  calorias: 'Calories (optional)',
+  caloriasMal: 'Enter calories as a whole number, for example 520.',
   sinPlatos: 'You don’t have any items yet. Tap “Add” to create the first one.',
   mas: 'More',
   idioma: 'Language',

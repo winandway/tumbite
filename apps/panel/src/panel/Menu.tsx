@@ -38,6 +38,8 @@ const T = {
     categoria: 'Categoría en español (por ejemplo: Entradas)',
     categoriaEn: 'Categoría en inglés (por ejemplo: Starters)',
     precio: 'Precio en dólares',
+    calorias: 'Calorías (opcional)',
+    caloriasMal: 'Escribe las calorías como un número entero, por ejemplo 520',
     guardar: 'Guardar plato',
     cancelar: 'Cancelar',
     disponible: 'Disponible',
@@ -93,6 +95,8 @@ const T = {
     categoria: 'Category in Spanish (for example: Entradas)',
     categoriaEn: 'Category in English (for example: Starters)',
     precio: 'Price in dollars',
+    calorias: 'Calories (optional)',
+    caloriasMal: 'Enter calories as a whole number, for example 520',
     guardar: 'Save item',
     cancelar: 'Cancel',
     disponible: 'Available',
@@ -151,6 +155,8 @@ const VACIO = {
   requiereEdad: '',
   /** C-FILTROS-DIETA: marcas separadas por coma («vegano,halal»), como texto en el borrador. */
   etiquetas: '',
+  /** C-CALORIAS: calorías del plato, como texto en el borrador (vacío = sin calorías). */
+  calorias: '',
 };
 
 type GrupoForm = {
@@ -272,6 +278,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       nombreEs: p.nombreEs,
       requiereEdad: p.requiereEdad ? 'si' : '',
       etiquetas: (p.etiquetas ?? []).join(','),
+      calorias: p.calorias == null ? '' : String(p.calorias),
       nombreEn: p.nombreEn,
       descripcionEs: p.descripcionEs,
       descripcionEn: p.descripcionEn,
@@ -291,6 +298,9 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
     setError(null);
     const precioCentavos = montoEscrito(v.precio, moneda);
     if (precioCentavos === null) return setError({ mensaje: precioMal, campo: 'precioCentavos' });
+    const caloriasTexto = v.calorias.trim();
+    if (caloriasTexto && !/^\d{1,5}$/.test(caloriasTexto))
+      return setError({ mensaje: t.caloriasMal, campo: 'calorias' });
     const cuerpo = {
       nombreEs: v.nombreEs,
       nombreEn: v.nombreEn,
@@ -302,6 +312,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
       imagen: v.imagen || null,
       requiereEdad: v.requiereEdad === 'si',
       etiquetas: leerEtiquetasDieta(v.etiquetas),
+      calorias: caloriasTexto ? Number(caloriasTexto) : null,
     };
     try {
       let r = v.id
@@ -459,6 +470,13 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             cambiar={(x) => b.cambiar('precio', x)}
             placeholder={montoATexto(0, moneda)}
             error={errorDe('precioCentavos')}
+          />
+          <Campo
+            etiqueta={t.calorias}
+            valor={v.calorias}
+            cambiar={(x) => b.cambiar('calorias', x)}
+            placeholder="520"
+            error={errorDe('calorias')}
           />
           <label className="interruptor">
             <input

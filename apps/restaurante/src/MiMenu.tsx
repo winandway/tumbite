@@ -275,6 +275,8 @@ const VACIO = {
   disponible: 'si',
   /** C-FILTROS-DIETA: marcas separadas por coma («vegano,halal»). */
   etiquetas: '',
+  /** C-CALORIAS: calorías del plato como texto (vacío = sin calorías). */
+  calorias: '',
   /** C-APP-OPCIONES: los grupos de opciones como texto (formulario), para el borrador. */
   grupos: '[]',
 };
@@ -324,6 +326,7 @@ function FormPlato({
       imagen: plato.imagen ?? '',
       disponible: plato.disponible ? 'si' : 'no',
       etiquetas: (plato.etiquetas ?? []).join(','),
+      calorias: plato.calorias == null ? '' : String(plato.calorias),
       grupos: JSON.stringify(gruposAFormulario(plato.grupos, moneda)),
     });
   }, [plato, cargarBase, moneda]);
@@ -354,6 +357,8 @@ function FormPlato({
     setError('');
     const precioCentavos = montoEscrito(v.precio, moneda);
     if (precioCentavos === null) return setError(precioMal);
+    const caloriasTexto = v.calorias.trim();
+    if (caloriasTexto && !/^\d{1,5}$/.test(caloriasTexto)) return setError(t.caloriasMal);
     const cuerpo = {
       nombreEs: v.nombreEs,
       nombreEn: v.nombreEn,
@@ -365,6 +370,7 @@ function FormPlato({
       imagen: v.imagen || null,
       requiereEdad: plato?.requiereEdad ?? false,
       etiquetas: leerEtiquetasDieta(v.etiquetas),
+      calorias: caloriasTexto ? Number(caloriasTexto) : null,
     };
     setGuardando(true);
     try {
@@ -497,6 +503,13 @@ function FormPlato({
         onChangeText={(x) => b.cambiar('precio', x)}
         keyboardType="decimal-pad"
         placeholder={montoATexto(0, moneda)}
+      />
+      <Campo
+        etiqueta={t.calorias}
+        value={v.calorias}
+        onChangeText={(x) => b.cambiar('calorias', x)}
+        keyboardType="number-pad"
+        placeholder="520"
       />
       <Campo
         etiqueta={t.categoria}

@@ -2514,3 +2514,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** tabla nueva `accesibilidad_repartidor` (CREATE IF NOT EXISTS). `GET/PUT /datos/repartidor/accesibilidad` (solo el repartidor). El seguimiento del cliente y `/datos/restaurante/pedidos` devuelven `repartidor.dificultadAuditiva`. `lineaRepartidor` (packages/compartido/src/mostrador.ts) suma el aviso; `patronVibracionOferta` da el patrón de vibración.
 - **Prueba:** `apps/servidor/src/auditivaRepartidor.test.ts`, `packages/compartido/src/mostrador.test.ts` y `packages/compartido/src/accesibilidadRepartidor.test.ts` (en rojo sin el cambio).
 - **Qué NO tocar:** que nazca apagado y que solo lo cambie el propio repartidor (es un dato de salud: nadie más lo marca).
+
+## C-CALORIAS (2 nov 2026) — EE. UU.
+
+- **Qué es:** calorías opcionales por plato, como Uber Eats: el restaurante las escribe en el menú (panel y app) y el cliente ve «$12.00 · 520 cal» junto al precio.
+- **Cómo funciona:** columna `platos.calorias` (INTEGER, por COLUMNAS en `apps/servidor/src/esquema.ts`). `esquemaPlato` la acepta entre 0 y 10.000 o `null`; POST y PUT de `/datos/mi-restaurante/platos` la guardan y `aPlato` la devuelve.
+- **Prueba:** `apps/servidor/src/caloriasPlato.test.ts` y `apps/panel/src/panel/Menu.test.tsx` (en rojo sin el cambio).
+- **Qué NO tocar:** los DOS editores (panel `Menu.tsx` y app `apps/restaurante/src/MiMenu.tsx`) mandan `calorias`; si uno deja de mandarla, el PUT la borra al editar el plato.

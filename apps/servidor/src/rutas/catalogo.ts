@@ -104,6 +104,7 @@ export function aPlato(f: FilaRest): Plato {
     agotadoHasta: (f.agotado_hasta as string | null) ?? null,
     requiereEdad: Number(f.requiere_edad ?? 0) === 1,
     etiquetas: leerEtiquetasDieta(f.etiquetas),
+    calorias: f.calorias == null ? null : Number(f.calorias),
   };
 }
 
@@ -813,7 +814,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
   const id = nuevoId();
   await base(c)
     .prepare(
-      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible, imagen, requiere_edad, etiquetas) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO platos (id, restaurante_id, nombre_es, nombre_en, descripcion_es, descripcion_en, categoria, categoria_en, precio_centavos, disponible, imagen, requiere_edad, etiquetas, calorias) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
     )
     .bind(
       id,
@@ -829,6 +830,7 @@ catalogo.post('/mi-restaurante/platos', async (c) => {
       d.imagen,
       d.requiereEdad ? 1 : 0,
       d.etiquetas.join(','),
+      d.calorias,
     )
     .run();
   const f = await base(c).prepare('SELECT * FROM platos WHERE id = ?').bind(id).first<FilaRest>();
@@ -961,7 +963,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
   const d = await leerCuerpo(c, esquemaPlato);
   const r = await base(c)
     .prepare(
-      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=?, requiere_edad=?, etiquetas=? WHERE id=? AND restaurante_id=? AND eliminado=0',
+      'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=?, requiere_edad=?, etiquetas=?, calorias=? WHERE id=? AND restaurante_id=? AND eliminado=0',
     )
     .bind(
       d.nombreEs,
@@ -975,6 +977,7 @@ catalogo.put('/mi-restaurante/platos/:id', async (c) => {
       d.imagen,
       d.requiereEdad ? 1 : 0,
       d.etiquetas.join(','),
+      d.calorias,
       c.req.param('id'),
       rid,
     )

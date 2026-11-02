@@ -113,6 +113,8 @@ export const esquemaPlato = z.object({
   imagen: foto,
   /** Solo para mayores de 21 (alcohol): se entrega en mano con documento revisado. */
   requiereEdad: z.boolean().default(false),
+  /** C-CALORIAS: calorías del plato (opcional), como Uber Eats. */
+  calorias: z.number().int().min(0).max(10_000).nullable().default(null),
   /** C-FILTROS-DIETA: sin repetir y en el orden fijo de la lista. */
   etiquetas: z
     .array(z.enum(ETIQUETAS_DIETA))
@@ -257,6 +259,8 @@ export type Plato = {
   agotadoHasta?: string | null;
   requiereEdad?: boolean;
   etiquetas?: EtiquetaDieta[];
+  /** C-CALORIAS: calorías del plato, si el restaurante las puso. */
+  calorias?: number | null;
   grupos?: GrupoOpciones[];
 };
 

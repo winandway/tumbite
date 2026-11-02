@@ -93,6 +93,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['platos', 'requiere_edad', 'INTEGER NOT NULL DEFAULT 0'],
   // C-FILTROS-DIETA (29 oct 2026): marcas del plato separadas por coma («vegano,halal»).
   ['platos', 'etiquetas', "TEXT NOT NULL DEFAULT ''"],
+  // C-CALORIAS (2 nov 2026): calorías opcionales por plato, como Uber Eats.
+  ['platos', 'calorias', 'INTEGER'],
   // Cómo se entregó (14 oct 2026). Se agregaron al CREATE de una tabla que ya existía y nunca
   // llegaron a la base: el estado del repartidor y las fotos de recogida y entrega fallaban
   // (encontrado en la validación del 15 oct; candado C-ESQUEMA-COMPLETO).
