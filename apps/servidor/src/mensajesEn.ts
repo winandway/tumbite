@@ -5,6 +5,16 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-REFERIDOS
+  ['Las invitaciones no están activas.', 'Invites aren’t active.'],
+  ['No puedes usar tu propio código.', 'You can’t use your own code.'],
+  ['El código es solo para tu primer pedido.', 'This code is only for your first order.'],
+  ['Ya usaste un código de invitación.', 'You already used an invite code.'],
+  ['No pudimos crear tu código. Intenta de nuevo.', 'We couldn’t create your code. Try again.'],
+  [
+    'Para encender las invitaciones, fija al menos un monto.',
+    'To turn on invites, set at least one amount.',
+  ],
   // C-TARJETAS-REGALO
   ['Las tarjetas de regalo todavía no están disponibles.', 'Gift cards aren’t available yet.'],
   ['Elige un monto dentro del rango permitido.', 'Choose an amount within the allowed range.'],

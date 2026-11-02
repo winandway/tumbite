@@ -5,7 +5,6 @@ import { type Variables, base, exigir } from './sesion';
 import { ErrorDatos, leerCuerpo } from './validar';
 import { limiteIntentos } from './seguridad';
 import { nuevoId } from './cripto';
-import { rutaSuperadmin } from './superadmin';
 
 /**
  * C-REFERIDOS (CLI-7, 2 nov 2026, como «Invita a un amigo» de DoorDash y Uber Eats): cada cliente
@@ -47,8 +46,9 @@ export async function leerReferidos(db: D1Database): Promise<AjustesReferidos> {
 
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function codigoNuevo(nombre: string): string {
+  // El nombre de pila (sin tildes ni espacios) y cuatro letras al azar, como «ANA7KQ2».
   const base = (
-    nombre
+    (nombre.trim().split(/\s+/)[0] ?? '')
       .normalize('NFD')
       .replace(/[^A-Za-z]/g, '')
       .toUpperCase() || 'DIVOOX'
@@ -176,7 +176,8 @@ const esquemaAjustes = z
     path: ['paraAmigo'],
   });
 
-rutaSuperadmin(referidos, 'get', '/admin/referidos', async (c) => {
+referidos.get('/admin/referidos', async (c) => {
+  exigir(c, 'admin');
   const db = base(c);
   const totales = await db
     .prepare("SELECT COUNT(*) AS invitados, SUM(estado = 'premiado') AS premiados FROM referidos")
@@ -188,7 +189,8 @@ rutaSuperadmin(referidos, 'get', '/admin/referidos', async (c) => {
   });
 });
 
-rutaSuperadmin(referidos, 'put', '/admin/referidos', async (c) => {
+referidos.put('/admin/referidos', async (c) => {
+  exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaAjustes);
   const db = base(c);
   await db
@@ -199,3 +201,12 @@ rutaSuperadmin(referidos, 'put', '/admin/referidos', async (c) => {
     .run();
   return c.json(d);
 });
+
+/** Lo mismo, a partir del pedido que se acaba de entregar. Nunca frena la entrega. */
+export async function premiarReferidoDelPedido(db: D1Database, pedidoId: string): Promise<void> {
+  const f = await db
+    .prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
+    .bind(pedidoId)
+    .first<{ cliente_id: string }>();
+  if (f) await premiarReferido(db, f.cliente_id);
+}

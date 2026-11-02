@@ -2080,6 +2080,29 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "canjeada_en",
     "creado_en"
   ],
+  "codigos_referido": [
+    "usuario_id",
+    "codigo",
+    "creado_en"
+  ],
+  "referidos": [
+    "id",
+    "invitado_id",
+    "invitador_id",
+    "estado",
+    "para_amigo",
+    "para_quien_invita",
+    "creado_en",
+    "premiado_en"
+  ],
+  "creditos_regalo": [
+    "id",
+    "usuario_id",
+    "centavos",
+    "motivo",
+    "referencia",
+    "creado_en"
+  ],
   "pedidos_saldo_regalo": [
     "pedido_id",
     "usuario_id",

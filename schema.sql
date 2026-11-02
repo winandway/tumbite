@@ -3220,6 +3220,34 @@ CREATE TABLE IF NOT EXISTS tarjetas_regalo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS tarjetas_regalo_canjeada ON tarjetas_regalo(canjeada_por);
+-- C-REFERIDOS (CLI-7, 2 nov 2026): «Invita a un amigo». Un código por cliente; un amigo usa un solo
+-- código y antes de su primer pedido; los créditos suman al saldo de regalo (una vez cada uno).
+CREATE TABLE IF NOT EXISTS codigos_referido (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  codigo TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS referidos (
+  id TEXT PRIMARY KEY,
+  invitado_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),
+  invitador_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'premiado')),
+  para_amigo INTEGER NOT NULL DEFAULT 0,
+  para_quien_invita INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  premiado_en TEXT,
+  CHECK (invitado_id <> invitador_id)
+);
+CREATE INDEX IF NOT EXISTS referidos_invitador ON referidos(invitador_id);
+CREATE TABLE IF NOT EXISTS creditos_regalo (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  centavos INTEGER NOT NULL CHECK (centavos > 0),
+  motivo TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS creditos_regalo_usuario ON creditos_regalo(usuario_id);
 CREATE TABLE IF NOT EXISTS pedidos_saldo_regalo (
   pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),

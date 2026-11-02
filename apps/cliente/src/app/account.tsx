@@ -115,6 +115,8 @@ export default function MiCuenta() {
   // C-PLUS y C-TARJETAS-REGALO: sus entradas aparecen solo cuando están encendidas.
   const [plusDisponible, setPlusDisponible] = useState(false);
   const [tarjetasActivas, setTarjetasActivas] = useState(false);
+  // C-REFERIDOS: «Invita a un amigo» aparece solo cuando el equipo lo enciende.
+  const [invitarActivo, setInvitarActivo] = useState(false);
   useEffect(() => {
     let vivo = true;
     api
@@ -124,6 +126,10 @@ export default function MiCuenta() {
     api
       .pedir<{ activas: boolean }>('GET', '/datos/tarjetas-regalo')
       .then((r) => vivo && setTarjetasActivas(r.activas))
+      .catch(() => undefined);
+    api
+      .pedir<{ activos: boolean }>('GET', '/datos/referidos')
+      .then((r) => vivo && setInvitarActivo(r.activos))
       .catch(() => undefined);
     return () => {
       vivo = false;
@@ -197,6 +203,19 @@ export default function MiCuenta() {
           >
             <Text style={{ fontWeight: '700' }}>
               {idioma === 'en' ? 'Gift cards' : 'Tarjetas de regalo'}
+            </Text>
+            <Text style={{ fontWeight: '700' }}>›</Text>
+          </Pressable>
+        ) : null}
+        {invitarActivo ? (
+          <Pressable
+            onPress={() => router.push('/invite')}
+            accessibilityRole="link"
+            testID="ir-invitar-amigo"
+            style={[e.tarjeta, { flexDirection: 'row', justifyContent: 'space-between' }]}
+          >
+            <Text style={{ fontWeight: '700' }}>
+              {idioma === 'en' ? 'Invite a friend' : 'Invita a un amigo'}
             </Text>
             <Text style={{ fontWeight: '700' }}>›</Text>
           </Pressable>

@@ -1,3 +1,4 @@
+import { premiarReferidoDelPedido } from '../referidos';
 import { evaluarDestacado } from './repartidorGrandes';
 import { correosEquipo } from '../avisosEquipo';
 import { topesDeZona } from '../internacional/tarifas';
@@ -2388,6 +2389,10 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
     throw e;
   }
+  // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
+  await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
+    console.error('referidos: crédito de quien invitó', id, e),
+  );
   await liquidar(c.env, db, id).catch((e: unknown) =>
     console.error('entrega: el cobro queda para el reloj', id, e),
   );
@@ -2942,6 +2947,10 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
     if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
     throw e;
   }
+  // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
+  await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
+    console.error('referidos: crédito de quien invitó', id, e),
+  );
   await liquidar(c.env, db, id).catch((e: unknown) =>
     console.error('recogida: el cobro queda para el reloj', id, e),
   );

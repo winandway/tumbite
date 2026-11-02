@@ -2479,3 +2479,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `POST /datos/cuentas/puente` (con sesión) da un código de un solo uso (60 s, se guarda su hash en `puentes_sesion`); `GET /datos/cuentas/puente/:codigo?a=/ruta` deja la cookie de sesión y lleva a la ruta, solo del propio sitio. En la app, `abrirPanel(api, URL_SERVIDOR, '/panel/...')` abre esa dirección en el visor interno (C-PAGINA-EN-APP). Lo usan Configuración (cliente y menú de cuenta), Ganancias y las opciones de «Más» del restaurante. Stripe, la verificación y los antecedentes del repartidor, y «Olvidé mi contraseña», también se abren dentro.
 - **Lo único que sale de la app:** llamar por teléfono, la app de mapas para navegar y WhatsApp (como DoorDash y Uber).
 - **Pruebas:** `rutas/puentePanel.test.ts` (una vez, vencido, inventado, nunca afuera) y el tercer caso de `packages/compartido/src/paginaEnApp.test.ts` (en rojo si vuelve un `Linking.openURL` a una página).
+
+## C-REFERIDOS — «Invita a un amigo» (CLI-7, 2 nov 2026) — todos los países (crédito en dólares)
+
+- **Qué es:** como DoorDash y Uber Eats. Cada cliente tiene un código (nombre de pila y cuatro letras). El amigo lo escribe antes de su primer pedido (Mi cuenta → Invita a un amigo) y recibe su crédito al momento; quien invitó recibe el suyo cuando ese primer pedido se entrega (las dos formas de entregar, en `rutas/operacion.ts`, llaman a `premiarReferidoDelPedido`). Una vez por amigo, nunca a uno mismo, nunca con pedidos anteriores.
+- **Dónde:** `apps/servidor/src/referidos.ts`; tablas `codigos_referido`, `referidos` y `creditos_regalo` (referencia única: un crédito nunca se repite). Los créditos suman al saldo de regalo (`SALDO` en `tarjetasRegalo.ts`), que se usa en el carrito (hoy solo en dólares). App: `apps/cliente/src/app/invite.tsx`. Superadmin: `SuperReferidos.tsx` en Rewards.
+- **Apagado y en cero:** nace `activos: false` y montos 0; el servidor no deja encenderlo sin un monto. El dinero lo fija Richard.
+- **Pruebas:** `referidos.test.ts` (en rojo si el crédito no suma al saldo) y `SuperReferidos.test.tsx`.

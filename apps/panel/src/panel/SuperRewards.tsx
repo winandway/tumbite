@@ -13,6 +13,7 @@ import { SuperGanarPorTiempo } from './SuperGanarPorTiempo';
 import { SuperAnuncios } from './SuperAnuncios';
 import { SuperPlus } from './SuperPlus';
 import { SuperTarjetasRegalo } from './SuperTarjetasRegalo';
+import { SuperReferidos } from './SuperReferidos';
 
 /**
  * C-REWARDS-AJUSTES (30 oct 2026, R3): el equipo ajusta Divoox Rewards sin publicar de nuevo:
@@ -281,6 +282,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
       <SuperAnuncios idioma={idioma} />
       <SuperPlus idioma={idioma} />
       <SuperTarjetasRegalo idioma={idioma} />
+      <SuperReferidos idioma={idioma} />
     </section>
   );
 }

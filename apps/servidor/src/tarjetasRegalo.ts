@@ -35,8 +35,9 @@ export async function leerTarjetas(db: D1Database): Promise<AjustesTarjetas> {
   }
 }
 
-/** Lo canjeado menos lo usado en pedidos que no se cancelaron. */
+/** Lo canjeado más los créditos (C-REFERIDOS) menos lo usado en pedidos que no se cancelaron. */
 const SALDO = `(COALESCE((SELECT SUM(centavos) FROM tarjetas_regalo WHERE canjeada_por = ?1 AND estado = 'canjeada'), 0)
+  + COALESCE((SELECT SUM(centavos) FROM creditos_regalo WHERE usuario_id = ?1), 0)
   - COALESCE((SELECT SUM(u.centavos) FROM pedidos_saldo_regalo u JOIN pedidos p ON p.id = u.pedido_id
       WHERE u.usuario_id = ?1 AND p.estado <> 'cancelado'), 0))`;
 
