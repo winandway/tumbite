@@ -242,3 +242,4 @@
 ## Registro de la fábrica
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.
+- 1 nov 2026 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 2c502af, el último de main; la rama fase-repaso-1 (página de progreso y gerente, hasta 6e760cc) está en pruebas y la lleva su propia sesión, así que no se fusionó ni se tocó código.
