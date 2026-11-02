@@ -96,6 +96,7 @@ import {
   type FaltaPapel,
   faltaPapel,
   formatearMonto,
+  platosDelPedido,
   rendimientoRestaurante,
 } from '@tumbite/compartido';
 
@@ -3221,13 +3222,20 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
       estrellasRepartidor: z.number().int().min(1).max(5).nullable().default(null),
       culpaRestaurante: z.boolean().default(false),
       comentario: z.string().trim().max(500).default(''),
+      // C-GUSTO-PLATOS: pulgar arriba o abajo por cada plato del pedido (opcional).
+      platos: z
+        .array(z.object({ platoId: z.string().min(1).max(80), gusta: z.boolean() }))
+        .max(50)
+        .default([]),
     }),
   );
   const db = base(c);
   const p = await db
-    .prepare("SELECT 1 FROM pedidos WHERE id = ? AND cliente_id = ? AND estado = 'entregado'")
+    .prepare(
+      "SELECT restaurante_id, lineas_json FROM pedidos WHERE id = ? AND cliente_id = ? AND estado = 'entregado'",
+    )
     .bind(c.req.param('id'), u.id)
-    .first();
+    .first<{ restaurante_id: string; lineas_json: string }>();
   if (!p) throw new ErrorDatos('Solo se califican pedidos entregados.', undefined, 409);
   await db
     .prepare(
@@ -3244,5 +3252,19 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
       d.comentario,
     )
     .run();
+  // Solo cuentan los platos que estaban en este pedido; calificar otra vez reemplaza los votos.
+  const delPedido = platosDelPedido(String(p.lineas_json ?? '[]'));
+  const votos = d.platos.filter((x) => delPedido.has(x.platoId));
+  if (d.platos.length)
+    await db.batch([
+      db.prepare('DELETE FROM calificaciones_platos WHERE pedido_id = ?').bind(c.req.param('id')),
+      ...votos.map((v) =>
+        db
+          .prepare(
+            'INSERT INTO calificaciones_platos (pedido_id, plato_id, restaurante_id, gusta) VALUES (?, ?, ?, ?)',
+          )
+          .bind(c.req.param('id'), v.platoId, p.restaurante_id, v.gusta ? 1 : 0),
+      ),
+    ]);
   return c.json({ ok: true });
 });

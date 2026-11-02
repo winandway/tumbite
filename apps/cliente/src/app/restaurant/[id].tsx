@@ -29,6 +29,8 @@ import {
   gruposActivos,
   abiertoPorHorario,
   textoNoDisponible,
+  textoGusto,
+  type GustoPlato,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -75,6 +77,8 @@ export default function MenuRestaurante() {
     platos: Plato[];
     /** C-MAS-PEDIDOS: ids de los platos más pedidos del mes, del primero al quinto. */
     masPedidos?: string[];
+    /** C-GUSTO-PLATOS: «Le gustó al N %» por plato, solo con cinco votos o más. */
+    gustoPlatos?: Record<string, GustoPlato>;
     /** C-MENU-HORARIO: categorías que ahora no se sirven, con su franja. */
     fueraDeHorario?: { categoria: string; abre: string; cierra: string }[];
   } | null>(null);
@@ -578,6 +582,12 @@ export default function MenuRestaurante() {
                             <Text style={{ marginTop: 4, fontWeight: '700', color: C.secundario }}>
                               {formatearMonto(p.precioCentavos, moneda, idioma)}
                             </Text>
+                            {datos.gustoPlatos?.[p.id] ? (
+                              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+                                {idioma === 'en' ? 'Liked by ' : 'Le gustó al '}
+                                {textoGusto(datos.gustoPlatos[p.id]!, idioma)}
+                              </Text>
+                            ) : null}
                           </View>
                           <View style={{ alignItems: 'center', gap: 4 }}>
                             <BotonRedondo

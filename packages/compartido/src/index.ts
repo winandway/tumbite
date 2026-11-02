@@ -75,3 +75,4 @@ export * from './contacto';
 export * from './busquedasRecientes';
 export * from './explicacionTarifas';
 export * from './masPedidos';
+export * from './gustoPlatos';

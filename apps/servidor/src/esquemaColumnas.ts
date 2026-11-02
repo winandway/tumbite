@@ -216,6 +216,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "respondida_en",
     "creado_en"
   ],
+  "calificaciones_platos": [
+    "pedido_id",
+    "plato_id",
+    "restaurante_id",
+    "gusta",
+    "creado_en"
+  ],
   "regalos_config": [
     "restaurante_id",
     "cumpleanos",

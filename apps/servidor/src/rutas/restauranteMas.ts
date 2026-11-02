@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { resumenGusto } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -65,7 +66,34 @@ restauranteMas.get('/mi-restaurante/resenas', async (c) => {
     )
     .bind(r.id)
     .first<{ promedio: number | null; n: number; respondidas: number }>();
+  // C-GUSTO-PLATOS: cómo le va a cada plato (pulgares arriba), del que menos gusta al que más.
+  const { results: votos } = await db
+    .prepare(
+      'SELECT plato_id AS platoId, gusta FROM calificaciones_platos WHERE restaurante_id = ?',
+    )
+    .bind(r.id)
+    .all<{ platoId: string; gusta: number }>();
+  const gusto = resumenGusto(votos);
+  const ids = Object.keys(gusto);
+  const nombres = new Map<string, { nombreEs: string; nombreEn: string }>();
+  if (ids.length) {
+    const { results: filas } = await db
+      .prepare(
+        `SELECT id, nombre_es, nombre_en FROM platos WHERE restaurante_id = ? AND id IN (${ids.map(() => '?').join(',')})`,
+      )
+      .bind(r.id, ...ids)
+      .all<{ id: string; nombre_es: string; nombre_en: string | null }>();
+    for (const f of filas)
+      nombres.set(f.id, { nombreEs: f.nombre_es, nombreEn: f.nombre_en || f.nombre_es });
+  }
+  const platos = Object.entries(gusto)
+    .flatMap(([id, g]) => {
+      const n = nombres.get(id);
+      return n ? [{ platoId: id, ...n, ...g }] : [];
+    })
+    .sort((a, b) => a.porcentaje - b.porcentaje || b.votos - a.votos);
   return c.json({
+    platos,
     promedio: resumen?.promedio == null ? null : Math.round(resumen.promedio * 10) / 10,
     total: Number(resumen?.n ?? 0),
     respondidas: Number(resumen?.respondidas ?? 0),

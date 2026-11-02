@@ -233,6 +233,9 @@ const T = {
     calificar: '¿Qué tal todo?',
     restaurante: 'La comida',
     culpa: 'El problema fue de la comida o la demora del restaurante',
+    platosTitulo: '¿Qué tal cada plato?',
+    meGusto: 'Me gustó',
+    noMeGusto: 'No me gustó',
     enviar: 'Enviar calificación',
     gracias: '¡Gracias por tu calificación!',
     motivos: {
@@ -345,6 +348,9 @@ const T = {
     calificar: 'How was everything?',
     restaurante: 'The food',
     culpa: 'The problem was the food or the restaurant’s delay',
+    platosTitulo: 'How was each item?',
+    meGusto: 'Liked it',
+    noMeGusto: 'Didn’t like it',
     enviar: 'Send rating',
     gracias: 'Thanks for your rating!',
     motivos: {
@@ -434,6 +440,8 @@ export default function SeguirPedido() {
   const [estRep, setEstRep] = useState(0);
   const [culpa, setCulpa] = useState(false);
   const [calificado, setCalificado] = useState(false);
+  // C-GUSTO-PLATOS: pulgar arriba o abajo por plato, como DoorDash (opcional).
+  const [gustos, setGustos] = useState<Record<string, boolean>>({});
   const [nuevaDireccion, setNuevaDireccion] = useState('');
   const [nuevoPunto, setNuevoPunto] = useState<{ lat: number; lng: number } | null>(null);
   const [propuesta, setPropuesta] = useState<{ antes: number; despues: number } | null>(null);
@@ -538,6 +546,7 @@ export default function SeguirPedido() {
         estrellasRepartidor: estRep || null,
         culpaRestaurante: culpa,
         comentario,
+        platos: Object.entries(gustos).map(([platoId, gusta]) => ({ platoId, gusta })),
       });
       setCalificado(true);
     } catch (x) {
@@ -1128,6 +1137,55 @@ export default function SeguirPedido() {
                   etiqueta={t.restaurante}
                   idioma={idioma}
                 />
+                {estRest > 0 && p.lineas.length ? (
+                  <View style={{ marginTop: 8, gap: 8 }}>
+                    <Text style={{ fontWeight: '700', color: C.secundario }}>{t.platosTitulo}</Text>
+                    {[...new Map(p.lineas.map((l) => [l.platoId, l])).values()].map((l) => (
+                      <View
+                        key={l.platoId}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                      >
+                        <Text style={{ flex: 1, color: C.secundario }} numberOfLines={2}>
+                          {idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs}
+                        </Text>
+                        {([true, false] as const).map((gusta) => {
+                          const elegido = gustos[l.platoId] === gusta;
+                          return (
+                            <Pressable
+                              key={String(gusta)}
+                              onPress={() => setGustos((g) => ({ ...g, [l.platoId]: gusta }))}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected: elegido }}
+                              accessibilityLabel={`${gusta ? t.meGusto : t.noMeGusto}: ${l.nombreEs}`}
+                              style={{
+                                paddingHorizontal: 12,
+                                paddingVertical: 8,
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: elegido ? (gusta ? C.exito : C.secundario) : '#D9D9D9',
+                                backgroundColor: elegido
+                                  ? gusta
+                                    ? C.exito
+                                    : C.secundario
+                                  : '#FFFFFF',
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 13,
+                                  fontWeight: '700',
+                                  color: elegido ? '#FFFFFF' : C.secundario,
+                                }}
+                              >
+                                {gusta ? t.meGusto : t.noMeGusto}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
                 {p.repartidor && (
                   <Estrellas
                     valor={estRep}

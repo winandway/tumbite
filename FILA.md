@@ -251,6 +251,16 @@
 - [x] HECHO 2 nov (C-REGALAR-PEDIDO): interruptor en el carrito, SMS al destinatario con el mensaje y el seguimiento al pagarse (sale cuando Twilio esté encendido), nombre sin celular para restaurante y repartidor. Sin publicar todavía (GitHub sin sesión). (CLI-6) Regalar un pedido («Send as a gift» de DoorDash y Uber Eats): nombre y teléfono del destinatario y un mensaje; el destinatario recibe el seguimiento por SMS o correo; se paga con el cobro normal. Todos los países.
 - [x] HECHO 2 nov (C-REFERIDOS): servidor, app y superadmin, apagado y en cero; la guía de Docs entra con sus capturas al publicar. [sesión: Divoox.com] (CLI-7) Invitar a un amigo (referidos, como DoorDash y Uber Eats): código personal para compartir, crédito para los dos en el primer pedido; construido completo y APAGADO con monto en cero hasta que Richard fije el dinero. Todos los países.
 
+## Bloque PLT — lo que los grandes tienen en platos, repartidores y restaurantes (2 nov 2026, 14:20, tarea programada)
+
+> La fila estaba vacía. Revisado el código contra DoorDash y Uber Eats: estas cinco cosas no existen todavía. GitHub sigue sin sesión en la computadora: lo que se haga queda guardado en la rama y se publica cuando Richard vuelva a entrar.
+
+- [ ] (PLT-1) Calificar cada plato con pulgar arriba o abajo al calificar el pedido, y en el menú «Le gustó al 92 % (40)» cuando hay al menos 5 votos, como DoorDash. El restaurante lo ve en Reseñas. Todos los países.
+- [ ] (PLT-2) Repartidor sordo o con dificultad auditiva, como Uber y DoorDash: interruptor en Driver; el cliente y el restaurante ven «Tu repartidor tiene dificultad auditiva: escríbele por el chat», y las ofertas avisan con vibración fuerte. Todos los países.
+- [ ] (PLT-3) Calorías opcionales por plato, como Uber Eats (la ley federal las exige a cadenas de 20 o más locales): casilla en el menú del restaurante y «520 cal» en la app del cliente. EE. UU.
+- [ ] (PLT-4) Panel del restaurante: descargar los pedidos de un rango de fechas en una planilla (CSV), como el reporte de Uber Eats Manager. Todos los países.
+- [ ] (PLT-5) Driver: descargar las ganancias del mes en una planilla (CSV) desde Ganancias, como el estado de cuenta de Uber Driver. Todos los países.
+
 ## Registro de la fábrica
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.

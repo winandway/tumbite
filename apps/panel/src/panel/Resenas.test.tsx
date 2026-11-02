@@ -45,4 +45,31 @@ describe('C-RESENAS-SUGERIDAS en el panel', () => {
       'Lamentamos que tu pedido no fuera lo que esperabas, Ana. Gracias por decírnoslo: ya lo estamos revisando con la cocina.',
     );
   });
+
+  it('C-GUSTO-PLATOS: muestra cómo les va a los platos, en los dos idiomas', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            promedio: 4.5,
+            total: 6,
+            respondidas: 0,
+            resenas: [],
+            platos: [
+              { platoId: 'a', nombreEs: 'Ensalada', nombreEn: 'Salad', porcentaje: 40, votos: 5 },
+              { platoId: 'b', nombreEs: 'Pizza', nombreEn: 'Pizza', porcentaje: 92, votos: 40 },
+            ],
+          }),
+          { status: 200 },
+        ),
+    );
+    const { unmount } = render(<Resenas idioma="es" />);
+    expect(await screen.findByText('Tus platos según los clientes')).toBeInTheDocument();
+    expect(screen.getByText('le gustó al 40 % · 5 votos')).toBeInTheDocument();
+    unmount();
+    render(<Resenas idioma="en" />);
+    expect(await screen.findByText('Salad')).toBeInTheDocument();
+    expect(screen.getByText('liked by 92% · 40 votes')).toBeInTheDocument();
+  });
 });

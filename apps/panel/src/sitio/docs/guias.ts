@@ -1317,11 +1317,13 @@ const es: SeccionDocs[] = [
           'Cuando el pedido llega, en la pantalla del pedido aparece «¿Qué tal todo?».',
           'Califica la comida (el restaurante) y a tu repartidor por separado, con estrellas.',
           'Si le das pocas estrellas al repartidor pero el problema fue de la comida o la demora del restaurante, marca el interruptor: así la nota no le cuenta a él.',
+          'Si quieres, en «¿Qué tal cada plato?» marca «Me gustó» o «No me gustó» en cada plato que pediste.',
           'Toca «Enviar calificación». Gracias: eso mejora el reparto para todos.',
         ],
         explicacion: [
           'Tu calificación de la comida suma al promedio del restaurante. Cuando un restaurante tiene 10 opiniones o más, todos ven sus estrellas y cuántas opiniones tiene en la lista y en su página, junto con los comentarios más nuevos y las respuestas del restaurante. Solo se muestra tu nombre de pila.',
           'Con menos de 10 opiniones, el restaurante aparece como «Nuevo». Solo cuentan las opiniones de pedidos hechos de verdad en Divoox.',
+          'Lo que marcas en cada plato ayuda a los demás a elegir: cuando un plato junta cinco votos o más, en el menú aparece debajo del precio, por ejemplo «Le gustó al 92 % (40)». Solo cuentan los platos que de verdad venían en tu pedido.',
         ],
       },
     ],
@@ -1342,6 +1344,7 @@ const es: SeccionDocs[] = [
           'Cuando tienes 10 opiniones o más, tu promedio y tus reseñas más nuevas con comentario, junto con tus respuestas, se muestran en tu página para todos los clientes. Antes de eso apareces como «Nuevo».',
           'Para ir más rápido, arriba del cuadro hay respuestas sugeridas según las estrellas, con el nombre del cliente: tocas una, la cambias si quieres y la publicas.',
           'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
+          'Arriba de las reseñas está «Tus platos según los clientes»: a cuántos les gustó cada plato, primero los que menos gustan, para que sepas qué mejorar. Un plato aparece cuando junta cinco votos o más, y lo mismo ven tus clientes en el menú.',
           'Pueden responder el dueño y los managers; el staff solo las lee.',
         ],
         capturas: [
@@ -5452,11 +5455,13 @@ const en: SeccionDocs[] = [
           'When the order arrives, the order screen shows “How was everything?”',
           'Rate the food (the restaurant) and your driver separately, with stars.',
           'If you give the driver a low rating but the problem was the food or the restaurant’s delay, flip the switch: the rating won’t count against them.',
+          'If you like, under “How was each item?” mark “Liked it” or “Didn’t like it” for each item you ordered.',
           'Tap “Send rating.” Thanks: it makes delivery better for everyone.',
         ],
         explicacion: [
           'Your food rating counts toward the restaurant’s average. Once a restaurant has 10 or more ratings, everyone sees its stars and number of ratings in the list and on its page, along with the latest comments and the restaurant’s replies. Only your first name is shown.',
           'With fewer than 10 ratings, the restaurant shows as “New”. Only ratings from real Divoox orders count.',
+          'What you mark on each item helps others choose: once an item has five votes or more, the menu shows it under the price, for example “Liked by 92% (40)”. Only items that were really in your order count.',
         ],
       },
     ],
@@ -5477,6 +5482,7 @@ const en: SeccionDocs[] = [
           'Once you have 10 or more ratings, your average and your latest reviews with comments, along with your replies, appear on your store page for every customer. Until then you show as “New”.',
           'To go faster, above the box there are suggested replies based on the stars, with the customer’s name: tap one, change it if you want and publish it.',
           'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
+          'Above the reviews is “Your items, according to customers”: how many people liked each item, least liked first, so you know what to improve. An item shows once it has five votes or more, and your customers see the same on the menu.',
           'The owner and managers can reply; staff can only read them.',
         ],
         capturas: [

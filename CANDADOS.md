@@ -2500,3 +2500,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real:** UX-3 los pinta con `tintColor`, y los PNG `apps/cliente/assets/inicio/nav-*.png` tenían fondo blanco opaco: se pintaba el cuadro entero.
 - **Arreglo:** los cuatro PNG ahora tienen fondo transparente (el trazo oscuro pasó a ser la opacidad).
 - **Prueba:** `packages/compartido/src/iconosTransparentes.test.ts` revisa las esquinas de todos los íconos que se pintan (en rojo con los PNG viejos).
+
+## C-GUSTO-PLATOS (2 nov 2026) — todos los países
+
+- **Qué es:** pulgar arriba o abajo por plato al calificar el pedido, y «Le gustó al 92 % (40)» en el menú, como DoorDash. El restaurante lo ve en Reseñas («Tus platos según los clientes»).
+- **Cómo funciona:** `POST /datos/pedidos/:id/calificar` acepta `platos: [{ platoId, gusta }]` (opcional). Solo se guardan los platos que estaban en ese pedido (`platosDelPedido` de `packages/compartido/src/gustoPlatos.ts`) y calificar otra vez reemplaza los votos. Tabla nueva `calificaciones_platos` (CREATE IF NOT EXISTS, sin migración). El menú público devuelve `gustoPlatos` y `/datos/mi-restaurante/resenas` devuelve `platos`, con `resumenGusto` (mínimo 5 votos).
+- **Prueba:** `packages/compartido/src/gustoPlatos.test.ts`, `apps/servidor/src/gustoPlatos.test.ts` y `apps/panel/src/panel/Resenas.test.tsx` (en rojo sin el cambio).
+- **Qué NO tocar:** el mínimo de 5 votos y el filtro de platos del pedido (evita votos inventados a platos que no se pidieron).

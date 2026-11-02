@@ -27,6 +27,11 @@ const T = {
     sinComentario: '(sin comentario)',
     pedido: 'Pedido',
     sugeridas: 'Respuestas sugeridas (tócala y edítala si quieres)',
+    platos: 'Tus platos según los clientes',
+    platosAyuda:
+      'Al calificar, cada cliente marca si le gustó o no cada plato. Sale con cinco votos o más; arriba, los que menos gustan.',
+    leGusto: 'le gustó al',
+    votos: 'votos',
   },
   en: {
     titulo: 'Reviews',
@@ -44,6 +49,11 @@ const T = {
     sinComentario: '(no comment)',
     pedido: 'Order',
     sugeridas: 'Suggested replies (tap one and edit it if you like)',
+    platos: 'Your items, according to customers',
+    platosAyuda:
+      'When rating, each customer marks whether they liked each item. It shows with five votes or more; the least liked come first.',
+    leGusto: 'liked by',
+    votos: 'votes',
   },
 };
 
@@ -58,7 +68,21 @@ type Resena = {
   respondidaEn: string | null;
   creadoEn: string;
 };
-type Datos = { promedio: number | null; total: number; respondidas: number; resenas: Resena[] };
+type GustoPlatoFila = {
+  platoId: string;
+  nombreEs: string;
+  nombreEn: string;
+  porcentaje: number;
+  votos: number;
+};
+type Datos = {
+  promedio: number | null;
+  total: number;
+  respondidas: number;
+  resenas: Resena[];
+  /** C-GUSTO-PLATOS: pulgares arriba por plato. */
+  platos?: GustoPlatoFila[];
+};
 
 function Respuesta({
   pedidoId,
@@ -168,6 +192,25 @@ export function Resenas({ idioma }: { idioma: Idioma }) {
             <strong>{d.respondidas}</strong>
           </li>
         </ul>
+      ) : null}
+      {d?.platos?.length ? (
+        <>
+          <h2>{t.platos}</h2>
+          <p className="suave">{t.platosAyuda}</p>
+          <ul className="lista">
+            {d.platos.map((x) => (
+              <li key={x.platoId}>
+                <div className="lista-texto">
+                  <strong>{idioma === 'en' ? x.nombreEn : x.nombreEs}</strong>
+                  <span>
+                    {t.leGusto} {x.porcentaje}
+                    {idioma === 'en' ? '%' : ' %'} · {x.votos} {t.votos}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
       {d && !d.resenas.length ? <p>{t.sin}</p> : null}
       <ul className="lista">

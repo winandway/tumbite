@@ -31,6 +31,7 @@ import {
   calificacionPublica,
   paisDelCodigoZona,
   contarMasPedidos,
+  resumenGusto,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -376,9 +377,18 @@ catalogo.get('/restaurantes/:id', async (c) => {
     )
     .bind(f.id)
     .all<{ lineas_json: string }>();
+  // C-GUSTO-PLATOS: «Le gustó al N %» por plato, con cinco votos o más.
+  const { results: votos } = await db
+    .prepare(
+      'SELECT plato_id AS platoId, gusta FROM calificaciones_platos WHERE restaurante_id = ?',
+    )
+    .bind(f.id)
+    .all<{ platoId: string; gusta: number }>();
+  const visiblesIds = new Set(visibles.map((p) => String(p.id)));
   return c.json({
     restaurante,
     fueraDeHorario,
+    gustoPlatos: resumenGusto(votos.filter((v) => visiblesIds.has(v.platoId))),
     masPedidos: contarMasPedidos(
       entregados.map((x) => String(x.lineas_json ?? '[]')),
       new Set(visibles.map((p) => String(p.id))),

@@ -277,6 +277,17 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- C-GUSTO-PLATOS (2 nov 2026), como DoorDash: pulgar arriba o abajo por plato al calificar el pedido.
+CREATE TABLE IF NOT EXISTS calificaciones_platos (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  plato_id TEXT NOT NULL,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  gusta INTEGER NOT NULL CHECK (gusta IN (0, 1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, plato_id)
+);
+CREATE INDEX IF NOT EXISTS calificaciones_platos_restaurante ON calificaciones_platos(restaurante_id, plato_id);
+
 CREATE TABLE IF NOT EXISTS regalos_config (
   restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
   cumpleanos INTEGER NOT NULL DEFAULT 1,
