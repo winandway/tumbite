@@ -11,7 +11,7 @@ describe('C-SEGURIDAD-REPARTIDOR', () => {
       enviados.push(String(init?.body ?? ''));
       return new Response('{}', { status: 200 });
     });
-    const m = mundo({ ADMIN_CORREOS: 'equipo@ejemplo.com', YAD_TOKEN: 'x' });
+    const m = mundo({ ADMIN_CORREOS: 'equipo@divoox.com', YAD_TOKEN: 'x' });
     const rep = await m.cuenta('repartidor', 'Rafa Seguro');
     await m.llamar(
       'POST',
@@ -31,7 +31,7 @@ describe('C-SEGURIDAD-REPARTIDOR', () => {
     );
     expect(em.estado).toBe(201);
     expect(em.datos.numero).toBe('911');
-    expect(enviados.some((b) => b.includes('EMERGENCIA') && b.includes('equipo@ejemplo.com'))).toBe(
+    expect(enviados.some((b) => b.includes('EMERGENCIA') && b.includes('equipo@divoox.com'))).toBe(
       true,
     );
     expect(

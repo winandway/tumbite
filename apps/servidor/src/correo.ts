@@ -66,9 +66,16 @@ export let ultimoErrorCorreo: { cuando: string; motivo: string } | null = null;
 
 type Transporte = (entrada: string, init: RequestInit) => Promise<Response>;
 let transporte: Transporte = (e, i) => fetch(e, i);
+/** Con el servicio real, las direcciones de prueba nunca salen (C-CORREO-RESERVADO). */
+let omitirDePrueba = true;
 /** Solo para pruebas: nunca se le pega al servicio real desde una prueba. */
-export function usarTransporteCorreo(t: Transporte | null) {
+export function usarTransporteCorreo(
+  t: Transporte | null,
+  opciones?: { omitirDePrueba?: boolean },
+) {
   transporte = t ?? ((e, i) => fetch(e, i));
+  // Con un transporte simulado las pruebas miran los correos a direcciones de ejemplo.
+  omitirDePrueba = t === null ? true : (opciones?.omitirDePrueba ?? false);
   ultimoErrorCorreo = null;
 }
 
@@ -83,7 +90,26 @@ export function correoConfigurado(env: Env): boolean {
   return Boolean(env.YAD_TOKEN);
 }
 
+/**
+ * C-CORREO-RESERVADO (2 nov 2026): dominios que no existen (RFC 2606 y 6761) y el de las cuentas de
+ * demostración. Las cuentas del recorrido del sitio de pruebas viven ahí; mandarles correo gastaba el
+ * cupo diario de la cuenta y dejaba sin salir los correos de soporte de gente real.
+ */
+const DOMINIOS_DE_PRUEBA = ['example.com', 'example.net', 'example.org', 'ejemplo.com'];
+const TERMINACIONES_DE_PRUEBA = ['.test', '.invalid', '.example', '.localhost'];
+
+export function esCorreoDePrueba(correo: string): boolean {
+  const dominio = correo.trim().toLowerCase().split('@').pop() ?? '';
+  return (
+    TERMINACIONES_DE_PRUEBA.some((t) => dominio.endsWith(t)) ||
+    DOMINIOS_DE_PRUEBA.some((d) => dominio === d || dominio.endsWith(`.${d}`))
+  );
+}
+
 export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoCorreo> {
+  // No es un fallo: esa dirección no existe, así que no se gasta un envío en ella.
+  if (omitirDePrueba && esCorreoDePrueba(correo.para))
+    return { ok: true, id: 'omitido-de-prueba', rebotado: false };
   if (!env.YAD_TOKEN) {
     const motivo = 'Falta YAD_TOKEN: el sitio no puede mandar correos.';
     ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
