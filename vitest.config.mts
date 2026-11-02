@@ -87,6 +87,9 @@ export default defineConfig({
             'rutas/promociones.ts',
             // C-DESCUENTOS-RECALCULO (BRE-5c): cupón, Plus y regalo en los recálculos del pedido.
             'descuentosPedido.ts',
+            // C-ENVIO-UNA-VEZ (BRE-R3): crear el pedido y validar cupones (el envío una sola vez).
+            'rutas/pedidos.ts',
+            'rutas/cupones.ts',
           ].map((f) => [`apps/servidor/src/${f}`, { lines: 90 }]),
         ),
         // C-PROMO-RESTAURANTE (BRE-5): el reparto del pedido y la promoción, al 90 % de líneas.

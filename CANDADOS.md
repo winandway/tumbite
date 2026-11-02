@@ -2602,6 +2602,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo):** `apps/servidor/src/modoDestino.test.ts` (sin rutas fallan las cinco; sin el filtro falla la de ofertas), `packages/compartido/src/modoDestino.test.ts`.
 - **Docs:** guía «Modo destino: pedidos de camino a casa» (`drivers/destination-mode`), español e inglés. **Falta:** captura real al llegar al sitio de pruebas (en `ESPERAN`; FILA, BRE-6b).
 - **Qué NO tocar:** el contador sube con `ON CONFLICT … WHERE usos < 2` en un solo paso (nunca leer y después escribir); cualquier camino nuevo que elija repartidores para una oferta tiene que pasar por el mismo filtro de destino.
+- **Nota (BRE-R3, revisor):** en `repartirOperaciones` (`apps/servidor/src/operaciones.ts`, viajes, envíos y Flex) el filtro de destino usa la ÚLTIMA ubicación del conductor guardada en la base (`conductores_elegibles`), aunque la lista de candidatos venga del tiempo real. Es a propósito y vale (la base se actualiza con cada `POST /repartidor/ubicacion`), pero si algún día el tiempo real trae una ubicación más fresca, el filtro debe usar esa.
 
 ## C-DESCUENTOS-RECALCULO (2 nov 2026, BRE-5c) — EE. UU.
 
@@ -2624,6 +2625,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo):** `apps/servidor/src/promocionesRevision.test.ts` (4), `packages/compartido/src/promociones.test.ts` (BRE-R2, 2), `apps/servidor/src/modoDestinoRevision.test.ts` (2), `packages/compartido/src/modoDestino.test.ts` (zona mala anotada), `guiasPublicas.test.tsx` (ESPERAN vacío).
 - **Docs:** las guías «Promociones que creas y pagas tú» y «Modo destino» llevan MAQUETAS fieles (`apps/panel/public/docs/maqueta-*.webp`, originales en `docs/capturas/maquetas/`, guion `scripts/docs/maquetas-bre-r2.mjs`), marcadas en `guias.ts` para reemplazar por las reales en BRE-5b y BRE-6b.
 - **Qué NO tocar:** la promoción del restaurante nunca paga un envío que ya cubrió Divoox; un recálculo que quita algo nunca sube el total cobrado; todo camino que ofrezca trabajo a un conductor pasa por el filtro de destino.
+
+## C-ENVIO-UNA-VEZ (2 nov 2026, BRE-R3) — EE. UU.
+
+- **Qué se rompió y cómo se veía:** con Divoox Plus y además un cupón de «envío gratis», el envío se descontaba DOS veces: el cupón restaba el envío y `descuentoPlus` volvía a sumar el mismo envío (el cupón no baja el campo `envio`). Pedido de 30,00 + envío 3,99 + servicio 1,99 + propina 3,00 cobraba 30,00 en vez de 33,99 y Divoox quedaba en −5,75. Pasaba al crear (`POST /datos/pedidos`), en el recálculo (`recalcularConDescuentos`) y en el carrito de la app.
+- **Arreglo (regla: el envío se descuenta una sola vez):** con Plus el envío ya va en cero, así que un cupón de envío gratis no tiene nada que descontar y se RECHAZA (409, campo `cupon`, «Ya tienes el envío gratis con Divoox Plus.»), como DoorDash con DashPass. `validarCupon` (`apps/servidor/src/rutas/cupones.ts`) recibe `plusCubreEnvio`; `POST /datos/cupones/validar` lo calcula (Plus vigente + dólares + envío > 0 + mínimo de Plus) y `POST /datos/pedidos` lo pasa con `plusAplica && previo.envio > 0` (Plus se decide ANTES del cupón). Un pedido viejo con los dos se recalcula con el cupón de envío en 0 (`apps/servidor/src/descuentosPedido.ts`).
+- **El carrito:** sin cambios de código: valida el cupón con `/datos/cupones/validar`, que ahora lo rechaza con Plus, así que la app no lo suma. Caso que queda (BRE-R3b en FILA): cupón validado antes de llegar al mínimo de Plus y el carrito crece después; la app mostraría el doble descuento, pero el servidor rechaza el pedido (409) y no se cobra nada.
+- **Pruebas (comprobadas en rojo, cada parte por separado):** `apps/servidor/src/envioUnaVez.test.ts` (2): sin el arreglo de la validación falla la primera; sin `plusCubreEnvio` al crear, el pedido sale con 201 y falla; sin el cero del recálculo falla la segunda. Exigen total = restaurante + repartidor + Divoox + impuesto y conciliación en «sí» después de entregar. `rutas/pedidos.ts` y `rutas/cupones.ts` quedan con umbral de 90 % de líneas en `vitest.config.mts`.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/envioUnaVez.test.ts`.
+- **Qué NO tocar:** ningún descuento vuelve a descontar un envío que ya cubrió otro (Plus, cupón o promoción del restaurante, ver C-PROMO-REVISION). Plus se decide antes que el cupón al crear.
 
 ## C-RECOGER-SIN-REPARTIDOR (BRE-7b, 2 nov 2026). Todos los países.
 
