@@ -17,6 +17,8 @@ import { TAREAS_RELOJ } from '../rutas/operacion';
 import { saldoLibro } from '../internacional/libro';
 import { cobrarComisionConductor, saldosConductor } from './conductor';
 import { alertasSaldo, conciliarFinanzas, saludBilleteras } from './reloj';
+import { tipoMovimiento } from './billetera';
+import { recuperarCobrosHuerfanos } from './cobrosRuta';
 
 /**
  * Divoox · Fase 4 de Flex: dinero (C-FIN-POLITICAS, C-FIN-BILLETERA, C-FIN-RECARGAS, C-FIN-RESERVAS,
@@ -1429,4 +1431,191 @@ describe('C-FIN-POLITICAS · rutas de dinero del superadmin (COB-3)', () => {
     );
     expect(ajeno.estado).toBe(403);
   });
+});
+
+describe('C-FIN-RECARGAS · límites y fallos del saldo prepago de la empresa (COB-4)', () => {
+  const CLAVE = 'clave-segura-1';
+  const postRecarga = (
+    m: M,
+    e: { id: string; dueno: { token: string } },
+    monto: number,
+    clave = k(),
+  ) =>
+    llamar(m, 'POST', `${B}/empresas/${e.id}/billetera/recargas`, { monto }, e.dueno.token, {
+      'idempotency-key': clave,
+    });
+
+  it('cada movimiento del libro tiene su nombre corto estable', () => {
+    expect(tipoMovimiento('recarga_empresa', 'prepago')).toBe('recarga');
+    expect(tipoMovimiento('reserva_flex', 'prepago')).toBe('reserva');
+    expect(tipoMovimiento('reserva_flex', 'reservado')).toBe('reserva_apartada');
+    expect(tipoMovimiento('comision_flex_paquete', 'reservado')).toBe('comision');
+    expect(tipoMovimiento('liberacion_flex', 'reservado')).toBe('liberacion');
+    expect(tipoMovimiento('ajuste_flex', 'reservado')).toBe('liberacion');
+    expect(tipoMovimiento('reembolso_recarga', 'prepago')).toBe('reembolso');
+    expect(tipoMovimiento('disputa_recarga', 'prepago')).toBe('disputa');
+    expect(tipoMovimiento('ajuste_manual', 'prepago')).toBe('ajuste');
+    expect(tipoMovimiento('cualquier_cosa', 'prepago')).toBe('otro');
+  });
+
+  it('el superadmin no puede guardar límites de recarga incoherentes', async () => {
+    const { m, admin } = await escenario({ tarifa: null });
+    const guardar = (cfg: Record<string, unknown>) =>
+      llamar(
+        m,
+        'PUT',
+        '/datos/admin/finanzas/recargas-config/US',
+        { activas: true, automaticaPermitida: false, ...cfg },
+        admin.token,
+      );
+    expect((await guardar({ minimo: 5000, maximo: 1000, sugeridos: [] })).estado).toBe(409);
+    expect((await guardar({ minimo: 500, maximo: 1000, sugeridos: [2000] })).estado).toBe(409);
+  });
+
+  it('recargas: apagadas en el país, fuera de límites, clave repetida con otro monto y sin Stripe', async () => {
+    const { m, admin, e } = await escenario({ tarifa: null });
+    expect((await postRecarga(m, e, 100)).estado).toBe(409);
+    expect((await postRecarga(m, e, 200_000)).estado).toBe(409);
+    const clave = k();
+    expect((await postRecarga(m, e, 1000, clave)).estado).toBe(201);
+    expect((await postRecarga(m, e, 1500, clave)).estado).toBe(409);
+    await llamar(
+      m,
+      'PUT',
+      '/datos/admin/finanzas/recargas-config/US',
+      { activas: false, minimo: 500, maximo: 100_000, sugeridos: [], automaticaPermitida: false },
+      admin.token,
+    );
+    expect((await postRecarga(m, e, 1000)).estado).toBe(409);
+    // Sin la llave de Stripe: 503, sin crear nada a medias.
+    const sinStripe = mundo({ ...ENV, STRIPE_SECRET_KEY: '' });
+    const admin2 = await sinStripe.cuenta('admin');
+    const e2 = await empresa(sinStripe);
+    await llamar(
+      sinStripe,
+      'PUT',
+      '/datos/admin/finanzas/recargas-config/US',
+      { activas: true, minimo: 500, maximo: 100_000, sugeridos: [], automaticaPermitida: false },
+      admin2.token,
+    );
+    expect((await postRecarga(sinStripe, e2, 1000)).estado).toBe(503);
+  });
+
+  it('si Stripe falla al abrir el pago, la recarga queda fallida y no acredita', async () => {
+    const { m, e } = await escenario({ tarifa: null });
+    const original = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+      new URL(url).pathname === '/v1/payment_intents'
+        ? Response.json({ error: { message: 'tarjeta rechazada' } }, { status: 402 })
+        : original(url, init),
+    );
+    const r = await postRecarga(m, e, 1000);
+    expect(r.estado).toBeGreaterThanOrEqual(400);
+    const fila = await m.DB.prepare('SELECT estado FROM recargas_empresa WHERE empresa_id = ?')
+      .bind(e.id)
+      .first<{ estado: string }>();
+    expect(fila?.estado).toBe('fallida');
+    expect((await billetera(m, e)).saldo.disponible).toBe(0);
+  });
+
+  it('ajuste manual y reembolso: montos inválidos, saldo insuficiente y recargas que no se pueden devolver', async () => {
+    const { m, admin, e } = await escenario({ tarifa: null });
+    const ajuste = (monto: number) =>
+      llamar(
+        m,
+        'POST',
+        `/datos/admin/finanzas/empresas/${e.id}/ajuste`,
+        { monto, motivo: 'corrección de prueba', clave: CLAVE },
+        admin.token,
+      );
+    expect((await ajuste(0)).estado).toBe(400);
+    expect((await ajuste(-100)).estado).toBe(409);
+    expect((await ajuste(700)).estado).toBe(200);
+    expect((await ajuste(-200)).estado).toBe(200);
+    expect((await billetera(m, e)).saldo.disponible).toBe(500);
+    const pendiente = await recargar(m, e, 2000);
+    const devolver = (id: string, monto: number) =>
+      llamar(
+        m,
+        'POST',
+        `/datos/admin/finanzas/recargas/${id}/reembolsar`,
+        { monto, motivo: 'pedido por la empresa', clave: CLAVE },
+        admin.token,
+      );
+    // Todavía no se pagó: no hay nada que devolver.
+    expect((await devolver(pendiente.recargaId, 1000)).estado).toBe(409);
+    await confirmarPago(m, pendiente.pi);
+    expect((await devolver(pendiente.recargaId, 2001)).estado).toBe(409);
+    // La empresa gastó parte del saldo: no se devuelve lo que ya no tiene.
+    expect((await ajuste(-2000)).estado).toBe(200);
+    expect((await devolver(pendiente.recargaId, 1000)).estado).toBe(409);
+  });
+});
+
+describe('C-FIN-RESERVAS · cobro por ruta y reservas huérfanas (COB-4)', () => {
+  it('una política por ruta cobra una sola vez al cerrar la ruta, aunque se asigne de nuevo', async () => {
+    const { m, admin, e } = await escenario({ tarifa: null });
+    const p = await llamar(
+      m,
+      'POST',
+      '/datos/admin/finanzas/politicas',
+      {
+        nombre: 'Flex por ruta',
+        servicio: 'flex',
+        tipoCuenta: 'empresa',
+        pais: 'US',
+        modalidad: 'prepago',
+        moneda: 'USD',
+        regla: { tipo: 'por_ruta', monto: 300 },
+        motivo: 'Tarifa por ruta de prueba',
+      },
+      admin.token,
+    );
+    expect(p.estado).toBe(201);
+    await confirmarPago(m, (await recargar(m, e, 2000)).pi);
+    const { cond, rutaId } = await rutaLista(m, e, 2);
+    expect((await asignar(m, e, rutaId, cond.id)).estado).toBe(200);
+    // Volver a asignar al mismo no aparta otra vez.
+    await asignar(m, e, rutaId, cond.id);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 1700, reservado: 300 });
+    const { C, paradas } = await salir(m, rutaId, cond);
+    for (const x of paradas) expect((await entregar(m, C, cond, x.id)).estado).toBe(200);
+    expect((await llamar(m, 'POST', `${C}/cerrar`, {}, cond.token)).estado).toBe(200);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 1700, reservado: 0 });
+    expect(await saldoLibro(m.DB, 'tumbite', 'comisiones', 'US', 'USD')).toBe(300);
+  }, 60_000);
+
+  it('el reloj libera la reserva de una ruta cancelada y cierra la de una completada', async () => {
+    const { m, e } = await escenario({ tarifa: 25 });
+    await confirmarPago(m, (await recargar(m, e, 2000)).pi);
+    const a = await rutaLista(m, e, 4, 'A');
+    const b = await rutaLista(m, e, 4, 'B');
+    await asignar(m, e, a.rutaId, a.cond.id);
+    await asignar(m, e, b.rutaId, b.cond.id);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 1800, reservado: 200 });
+    // Una petición se cortó a medias: la ruta quedó cancelada o completada sin tocar su reserva.
+    // (Solo en esta base de prueba se permite el salto directo, para simular el corte.)
+    await m.DB.prepare(
+      "INSERT OR IGNORE INTO transiciones_ruta_flex (desde, hacia) SELECT estado, 'completada' FROM rutas_flex WHERE id = ?",
+    )
+      .bind(b.rutaId)
+      .run();
+    await m.DB.prepare("UPDATE rutas_flex SET estado = 'cancelada' WHERE id = ?")
+      .bind(a.rutaId)
+      .run();
+    await m.DB.prepare("UPDATE rutas_flex SET estado = 'completada' WHERE id = ?")
+      .bind(b.rutaId)
+      .run();
+    // Recién hecho: se espera, por si la otra petición todavía está terminando.
+    expect(await recuperarCobrosHuerfanos(m.DB)).toBe(0);
+    await m.DB.prepare(
+      "UPDATE flex_cobros_ruta SET creado_en = datetime('now', '-5 minutes') WHERE ruta_id IN (?, ?)",
+    )
+      .bind(a.rutaId, b.rutaId)
+      .run();
+    expect(await recuperarCobrosHuerfanos(m.DB)).toBe(2);
+    // Sin entregas no se cobra nada: todo vuelve al disponible.
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 2000, reservado: 0 });
+    expect(await recuperarCobrosHuerfanos(m.DB)).toBe(0);
+  }, 60_000);
 });
