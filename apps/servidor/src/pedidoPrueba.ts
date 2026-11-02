@@ -12,6 +12,8 @@ import { ErrorDatos } from './validar';
  */
 export const PREFIJO_PRUEBA = 'prueba-';
 
+/** Pedidos de prueba que un restaurante puede enviarse en un día. */
+export const PRUEBAS_POR_DIA = 10;
 export const esPedidoPrueba = (id: string) => id.startsWith(PREFIJO_PRUEBA);
 
 type FilaPrueba = {
@@ -78,6 +80,19 @@ export async function crearPedidoPrueba(db: D1Database, rid: string, usuarioId: 
       'Ya tienes un pedido de prueba abierto. Termínalo o recházalo antes de pedir otro.',
       undefined,
       409,
+    );
+  // BRE-R: tope diario, para que un botón de práctica no llene la lista ni la base.
+  const hoy = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM pedidos_prueba WHERE restaurante_id = ? AND creado_en > datetime('now','-1 day')",
+    )
+    .bind(rid)
+    .first<{ n: number }>();
+  if (Number(hoy?.n ?? 0) >= PRUEBAS_POR_DIA)
+    throw new ErrorDatos(
+      'Ya hiciste 10 pedidos de prueba hoy. Puedes enviarte otro mañana.',
+      undefined,
+      429,
     );
   const { results: platos } = await db
     .prepare(

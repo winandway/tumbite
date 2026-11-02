@@ -1091,7 +1091,8 @@ export function Inicio() {
             </View>
           </View>
         ) : null}
-        {p.estado === 'listo' && p.entrega !== 'recoger' ? (
+        {/* BRE-R (3): el de prueba no tiene repartidor que escanee: sin QR de recogida. */}
+        {p.estado === 'listo' && p.entrega !== 'recoger' && !p.prueba ? (
           <Tarjeta style={{ alignItems: 'center' }}>
             <CodigoQR texto={`tumbite:pedido:${p.id}`} numero={p.id.slice(0, 4).toUpperCase()} />
           </Tarjeta>

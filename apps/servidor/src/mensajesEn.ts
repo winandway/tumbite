@@ -914,6 +914,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   // C-PEDIDO-PRUEBA (BRE-4)
   [
+    'Ya hiciste 10 pedidos de prueba hoy. Puedes enviarte otro mañana.',
+    'You already sent yourself 10 test orders today. You can send another tomorrow.',
+  ],
+  [
     'Ya tienes un pedido de prueba abierto. Termínalo o recházalo antes de pedir otro.',
     'You already have an open test order. Finish or reject it before sending another.',
   ],

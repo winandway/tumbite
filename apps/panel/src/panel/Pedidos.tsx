@@ -285,7 +285,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
 
   useEffect(() => {
     for (const p of pedidos) {
-      if (p.estado !== 'listo' || qrs[p.id]) continue;
+      // BRE-R (3): el de prueba no tiene repartidor que escanee: no lleva QR de recogida.
+      if (p.estado !== 'listo' || p.prueba || qrs[p.id]) continue;
       void QRCode.toDataURL(`tumbite:pedido:${p.id}`, { margin: 1, width: 180 }).then((url) =>
         setQrs((q) => (q[p.id] ? q : { ...q, [p.id]: url })),
       );
@@ -539,7 +540,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   </button>
                 </div>
               )}
-              {p.estado === 'listo' && p.entrega !== 'recoger' && qrs[p.id] && (
+              {p.estado === 'listo' && p.entrega !== 'recoger' && !p.prueba && qrs[p.id] && (
                 <figure className="qr-pedido">
                   <img src={qrs[p.id]} alt={`QR ${p.id.slice(0, 4).toUpperCase()}`} />
                   <strong>{p.id.slice(0, 4).toUpperCase()}</strong>
@@ -721,7 +722,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
             <MenuTresPuntos
               etiqueta={t.mas}
               opciones={[
-                { texto: t.reportar, alTocar: () => setReportando(p.id) },
+                // BRE-R (2): un pedido de prueba no existe para soporte; reportarlo terminaba en error.
+                ...(p.prueba ? [] : [{ texto: t.reportar, alTocar: () => setReportando(p.id) }]),
                 ...((p.estado === 'pagado' || p.estado === 'aceptado') &&
                 !p.repartidor &&
                 !p.prueba &&

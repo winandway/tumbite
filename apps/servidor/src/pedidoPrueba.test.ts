@@ -128,6 +128,20 @@ describe('pedido de prueba del restaurante', () => {
     const segundo = await m.llamar('POST', '/datos/restaurante/pedido-prueba', {}, dueno.token);
     expect(segundo.estado).toBe(409);
   });
+  it('BRE-R extra: como mucho diez pedidos de prueba por día y por restaurante', async () => {
+    const { m, dueno } = await escena();
+    for (let i = 0; i < 10; i++) {
+      const r = await m.llamar('POST', '/datos/restaurante/pedido-prueba', {}, dueno.token);
+      expect(r.estado).toBe(200);
+      // Se cierra para que el siguiente no choque con «ya tienes uno abierto».
+      await m.DB.prepare("UPDATE pedidos_prueba SET estado = 'terminado' WHERE id = ?")
+        .bind(r.datos.pedido.id as string)
+        .run();
+    }
+    const once = await m.llamar('POST', '/datos/restaurante/pedido-prueba', {}, dueno.token);
+    expect(once.estado).toBe(429);
+    expect(String(once.datos.error)).toMatch(/10|diez|ten/i);
+  });
 });
 
 describe('C-PEDIDO-PRUEBA en el panel y la app del restaurante', () => {
