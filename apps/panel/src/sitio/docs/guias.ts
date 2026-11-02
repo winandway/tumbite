@@ -1210,6 +1210,7 @@ const es: SeccionDocs[] = [
           'Toca el plato y, debajo de las opciones, escribe lo que necesitas en «Instrucciones especiales». Cada plato lleva su propia nota.',
           'Si pides el mismo plato dos veces con notas distintas, salen como dos líneas en tu carrito, para que no se confundan.',
           'El restaurante ve la nota junto al plato, en su pantalla y en la comanda impresa. Las notas sirven para cambios sencillos; un cambio que cueste más se elige con las opciones del plato.',
+          'Alergias: en el carrito, debajo de las indicaciones para el repartidor, está la casilla «Alergias». Escribe ahí lo que no puedes comer (por ejemplo, maní o mariscos). El restaurante la ve resaltada en rojo en su pantalla y arriba de la comanda impresa. Si no puede cumplirla, cancela el pedido y no pagas nada.',
         ],
         capturas: [
           {
