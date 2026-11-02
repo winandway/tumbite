@@ -1,5 +1,6 @@
 # Bitácora de agentes
 
+2026-11-02 · revisor de calidad · revisión de BRE-R3 (6ba19232d, 3f180ebc7): envioUnaVez.test.ts y 8 archivos vecinos de dinero en verde, cuatro rojos comprobados en copia aislada, barrido de 7.200 casos sin fallos (reparto, envío una vez, cupón sin Plus, Plus bajo el mínimo, tope de lo autorizado), mensaje en los dos idiomas, umbrales del servidor en verde · APROBADO · commit revisado 05d25f15c
 2026-11-02 · desarrollador · BRE-R3: Plus + cupón de envío gratis ya no descuenta el envío dos veces (rechazo en validación y al crear, cupón en 0 en el recálculo), prueba envioUnaVez.test.ts en rojo por partes, umbral 90 % en pedidos.ts y cupones.ts, nota del modo destino; carrito anotado como BRE-R3b · ok · código en checkpoint 6ba19232d, ver C-ENVIO-UNA-VEZ
 2026-11-02 · revisor de calidad · revisión de BRE-5c y BRE-R2 (27d9ce2a4, e778df9be, 07dedda39, ab7ea2329): 7 archivos de prueba en verde, candados en rojo comprobados, barrido de recálculos sin fallos; Plus + cupón de envío gratis descuenta el envío dos veces · DEVUELTO (BRE-R3) · commit revisado ab7ea2329
 2026-11-02 · desarrollador · BRE-R2 (promo de envío no paga dos veces el envío, recálculo nunca sube el total, regalo fuera de la base, modo destino en viajes y envíos, uso tras guardar, maquetas en dos guías) · ok · ver git log C-PROMO-REVISION
