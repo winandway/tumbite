@@ -2011,6 +2011,30 @@ describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de
     expect(anotado).toBeTruthy();
   });
 
+  it('G2: una ubicación simulada no cuenta para llegar y queda en la bitácora', async () => {
+    const { m, rep, id, seguimiento } = await enCamino();
+    const una = await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { ...casa, precision: 5, simulada: true },
+      rep.token,
+    );
+    expect(una.datos.simulada).toBe(true);
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { ...casa, precision: 5, simulada: true },
+      rep.token,
+    );
+    expect((await seguimiento()).llego).toBe(false);
+    const anotado = await m.DB.prepare(
+      "SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'gps_simulado'",
+    )
+      .bind(id)
+      .first();
+    expect(anotado).toBeTruthy();
+  });
+
   it('«No puedo confirmar mi ubicación»: soporte autoriza con su nombre y recién ahí se entrega', async () => {
     const { m, rep, id, estado } = await enCamino();
     const admin = await m.cuenta('admin', 'Soporte Divoox');

@@ -237,6 +237,8 @@ const T = {
     confirmandoGps:
       'Estás en la puerta. Confirmando tu ubicación con el GPS (unos segundos, con el celular quieto).',
     gpsImpreciso: 'Tu GPS está impreciso aquí',
+    gpsSimulado:
+      'Tu celular está usando una ubicación simulada. Apaga la app que la cambia para poder entregar.',
     sinGps: '¿El GPS no te marca en la puerta?',
     sinGpsAyuda:
       'Cuéntanos qué pasa (edificio, garaje, celular sin señal). Soporte lo revisa y te autoriza entregar.',
@@ -365,6 +367,8 @@ const T = {
     confirmandoGps:
       'You’re at the door. Confirming your location with GPS (a few seconds, keep the phone still).',
     gpsImpreciso: 'Your GPS is imprecise here',
+    gpsSimulado:
+      'Your phone is using a mock location. Turn off the app that changes it so you can deliver.',
     sinGps: 'GPS not placing you at the door?',
     sinGpsAyuda:
       'Tell us what’s going on (tall building, garage, no signal). Support reviews it and authorizes the delivery.',
@@ -545,6 +549,8 @@ export function Inicio() {
   const [aceptoTerminos, setAceptoTerminos] = useState(false);
   // Precisión del GPS en metros (la reporta el celular); se manda con cada ubicación.
   const [precision, setPrecision] = useState<number | null>(null);
+  // G2: el celular dice que la ubicación es simulada (Android); no cuenta para llegar.
+  const [gpsSimulado, setGpsSimulado] = useState(false);
   const [motivoGps, setMotivoGps] = useState('');
   const [subiendo, setSubiendo] = useState(false);
   // Verificar el pedido en el restaurante (QR o número), soltarlo, y la entrega en la puerta.
@@ -704,11 +710,13 @@ export function Inicio() {
       (p) => {
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         setPrecision(p.coords.accuracy ?? null);
+        setGpsSimulado(p.mocked === true);
         void api
           .pedir('POST', '/datos/repartidor/ubicacion', {
             lat: p.coords.latitude,
             lng: p.coords.longitude,
             precision: p.coords.accuracy ?? null,
+            simulada: p.mocked === true,
           })
           .catch(() => undefined);
       },
@@ -750,11 +758,13 @@ export function Inicio() {
       if (!vivo || !p) return;
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
       setPrecision(p.coords.accuracy ?? null);
+      setGpsSimulado(p.mocked === true);
       await api
         .pedir('POST', '/datos/repartidor/ubicacion', {
           lat: p.coords.latitude,
           lng: p.coords.longitude,
           precision: p.coords.accuracy ?? null,
+          simulada: p.mocked === true,
         })
         .catch(() => undefined);
     };
@@ -1757,6 +1767,7 @@ export function Inicio() {
                     lat: p.coords.latitude,
                     lng: p.coords.longitude,
                     precision: p.coords.accuracy ?? null,
+                    simulada: p.mocked === true,
                   })
                   .catch(() => undefined);
             }
@@ -2052,8 +2063,8 @@ export function Inicio() {
                           />
                           {cerca ? (
                             <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
-                              {t.confirmandoGps}
-                              {precision != null && precision > PRECISION_MAXIMA_M
+                              {gpsSimulado ? t.gpsSimulado : t.confirmandoGps}
+                              {!gpsSimulado && precision != null && precision > PRECISION_MAXIMA_M
                                 ? ` ${t.gpsImpreciso} (±${Math.round(precision)} m).`
                                 : ''}
                             </Text>

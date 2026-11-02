@@ -34,6 +34,7 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
         lat: ultima.coords.latitude,
         lng: ultima.coords.longitude,
         precision: ultima.coords.accuracy ?? null,
+        simulada: ultima.mocked === true,
       }),
     });
     if (r.status === 401) await detenerUbicacionFondo();

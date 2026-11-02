@@ -104,6 +104,8 @@ const punto = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-
 /** La ubicación con la precisión que reporta el celular (metros; sin ella, no cuenta para «llegó»). */
 const puntoConPrecision = punto.extend({
   precision: z.number().min(0).max(100_000).nullable().optional(),
+  /** Android marca la ubicación simulada («mock»); G2: nunca cuenta para llegar ni mueve la ficha. */
+  simulada: z.boolean().optional(),
 });
 
 // ======================= Restaurante =======================
@@ -1292,6 +1294,19 @@ operacion.post('/repartidor/conectar', async (c) => {
 operacion.post('/repartidor/ubicacion', async (c) => {
   const { u, db } = await miFicha(c);
   const d = await leerCuerpo(c, puntoConPrecision);
+  // G2: una ubicación que el propio celular marca como simulada no se guarda ni cuenta; queda
+  // anotada en el pedido activo para que soporte la vea.
+  if (d.simulada) {
+    const activo = await db
+      .prepare(
+        "SELECT id FROM pedidos WHERE repartidor_id = ? AND estado IN ('aceptado','listo','en_camino') LIMIT 1",
+      )
+      .bind(u.id)
+      .first<{ id: string }>();
+    if (activo)
+      await anotarEvento(db, activo.id, 'gps_simulado', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
+    return c.json({ ok: true, simulada: true });
+  }
   const { muestras, salto } = await guardarMuestra(db, u.id, d);
   if (salto) {
     // No se mueve la ficha ni cuenta para los hitos; queda anotado en el pedido activo.
