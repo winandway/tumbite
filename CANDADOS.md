@@ -2394,3 +2394,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Datos de la empresa:** «Windoce, LLC», empresa de Delaware con oficinas en Novi, Michigan, con enlace a https://windoce.com (`MARCA.empresa`, legales, datos para buscadores). Miami no se presenta como sede ni como ciudad confirmada.
 - **Pendiente legal (no se toca sin el abogado):** la cláusula de ley aplicable de los términos sigue diciendo Florida y los tribunales de Miami-Dade.
 - **Pruebas:** `gerente.test.ts` → «C-CONTACTO», `FormContacto.test.tsx`, `packages/compartido/src/contacto.test.ts`, `Pie.test.tsx` (el enlace /contact existe).
+
+## C-PREPAGO-MERCADOS (2 nov 2026) — Venezuela y Colombia
+
+- **Qué es:** Richard dio el permiso comercial y legal del prepago de conductores por país. `schema.sql` siembra (INSERT OR IGNORE, ids `prepago-ve-ride`, `prepago-ve-car`, `prepago-ve-express` y los mismos con `co`) políticas `tipo_cuenta = 'conductor'`, modalidad `prepago`, 10 % (`{"tipo":"porcentaje","pb":1000}`), con `revision_legal_aprobada = 1` y la nota del permiso.
+- **Qué NO cambia:** EE. UU. sigue con Stripe Connect (sin política de prepago); Comida y Mercado siguen con `comisionPb` del país. Moto y Carro siguen apagados en producción hasta lo legal de pasajeros.
+- **Fuentes y decisión:** `docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md`.
+- **Prueba:** «C-PREPAGO-MERCADOS» en `finanzas/finanzas.test.ts` (en rojo sin la siembra).
+- **Qué NO tocar:** el equipo puede cambiar el porcentaje desde el panel de finanzas; la siembra no lo pisa.

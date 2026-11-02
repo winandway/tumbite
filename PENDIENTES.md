@@ -13,7 +13,7 @@
 👤 = depende de Richard. Ordenado por importancia.
 
 - [ ] **Monetización prepago multiservicio** (requisito de Richard, 27 oct 2026, `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`): unificar Food en cobro directo con la capa de políticas sin cambiar su resultado; política de cancelaciones por servicio; enchufar Express, Grocery y Flex conductor cuando existan.
-- [ ] 👤 **Autorización comercial y legal por mercado** para encender el prepago de conductores (sin ella la política no rige).
+- [x] **Autorización comercial y legal por mercado** para el prepago de conductores: Richard dijo «Sí» el 2 nov 2026. Encendido en Venezuela y Colombia al 10 % en Moto, Carro y Envíos (C-PREPAGO-MERCADOS); EE. UU. sigue con Stripe.
 - [x] **Divoox Flex · Fase 3** (27 oct 2026, rama `fase-flex-3` sobre la 2, solo staging): ofertas que vencen solas en el reloj existente, avisos al celular a conductor y empresa, integraciones firmadas con anti-SSRF, orden sugerido, capacidad de vehículos, indicadores de operación, retención con simulación, escala medida (10/100/1000 empresas), protocolo de piloto y cuentas de revisores resueltas en el código. Informe: `docs/DIVOOX-FLEX-FASE-3-RESULTADOS.md`; piloto: `docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`. 👤 Autorizar la Fase 4 (dinero).
 - [ ] **Llave `FLEX_LLAVE_WEBHOOKS` en producción** (el día que Flex pase a producción, con autorización). En staging ya está cargada (27 oct 2026, `scripts/staging/cargar-llave-flex.sh`).
 - [ ] **Piloto de Flex en la calle** (20 a 40 paquetes, Android y iPhone) según `docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`. Necesita personas y celulares; los avisos esperan Firebase (Android) y Apple.

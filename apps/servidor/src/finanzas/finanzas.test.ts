@@ -1002,3 +1002,25 @@ describe('C-FIN-CONDUCTOR · prepago de conductores, por mercado', () => {
     expect((await saldosConductor(m.DB, cond.id, 'US', 'USD')).prepago).toBe(920);
   });
 });
+
+describe('C-PREPAGO-MERCADOS: prepago de conductores encendido en Venezuela y Colombia (Richard, 2 nov 2026)', () => {
+  it('Moto, Carro y Envíos cobran 10 % del prepago en VE y CO; en EE. UU. no hay política de prepago', async () => {
+    const m = mundo();
+    const { comisionConductor } = await import('./conductor');
+    for (const servicio of ['ride', 'car', 'express'] as const) {
+      expect(
+        await comisionConductor(m.DB, { servicio, pais: 'VE', moneda: 'VES', valor: 10_000 }),
+      ).toMatchObject({ monto: 1000 });
+      expect(
+        await comisionConductor(m.DB, { servicio, pais: 'CO', moneda: 'COP', valor: 20_000 }),
+      ).toMatchObject({ monto: 2000 });
+      expect(
+        await comisionConductor(m.DB, { servicio, pais: 'US', moneda: 'USD', valor: 10_000 }),
+      ).toBeNull();
+    }
+    // Comida y Mercado siguen con la comisión del país (no se les crea política aquí).
+    expect(
+      await comisionConductor(m.DB, { servicio: 'food', pais: 'VE', moneda: 'VES', valor: 10_000 }),
+    ).toBeNull();
+  });
+});
