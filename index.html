@@ -495,6 +495,7 @@
         <a href="#resumen">Dónde estamos</a>
         <a href="#esperando">Lo que depende de ti</a>
         <a href="#partes">Cada parte</a>
+        <a href="#apps">Qué hace cada app</a>
         <a href="#etapas">Etapas</a>
         <a href="#novedades">Novedades</a>
         <a href="#estado">Estado del sistema</a>
@@ -502,6 +503,7 @@
 
       <section id="resumen">
         <h2>Dónde estamos</h2>
+        <p class="pista" id="presentacion"></p>
         <div class="resumen">
           <div class="tarjeta">
             <p class="etiqueta">Avance general</p>
@@ -558,6 +560,17 @@
           pantallas reales.
         </p>
         <div class="rejilla" id="lista-partes"></div>
+      </section>
+
+      <section id="apps">
+        <h2>Qué hace cada app</h2>
+        <p class="pista">
+          Para explicar la startup en una reunión con un cliente, un inversor o una aceleradora.
+        </p>
+        <div class="rejilla" id="lista-apps"></div>
+        <h3 style="margin: 22px 0 10px">Lo que solo existe en el panel web</h3>
+        <p class="pista">Funciones que hoy no están en ninguna de las tres apps.</p>
+        <div class="rejilla" id="lista-web"></div>
       </section>
 
       <section id="etapas">
@@ -701,6 +714,19 @@
       <p class="sub" style="margin:4px 0 0">Depende de: ${esc(p.quien)}</p>
       ${docs(p.docs)}
     </div>`,
+          )
+          .join('');
+        el('presentacion').textContent = datos.presentacion ?? '';
+        el('lista-apps').innerHTML = (datos.apps ?? [])
+          .map(
+            (a) =>
+              `<div class="tarjeta"><h3>${esc(a.nombre)}</h3><p class="sub">${esc(a.para)}</p><ul class="puntos">${a.funciones.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></div>`,
+          )
+          .join('');
+        el('lista-web').innerHTML = (datos.soloWeb ?? [])
+          .map(
+            (a) =>
+              `<div class="tarjeta"><h3>${esc(a.quien)}</h3><ul class="puntos">${a.funciones.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></div>`,
           )
           .join('');
         el('lista-etapas').innerHTML = datos.etapas

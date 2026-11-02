@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-01T21:03:14-05:00",
+  "actualizado": "2026-11-01T21:10:35-05:00",
   "version": "6632d38",
   "ahora": {
     "titulo": "Capturas reales en las guías de Docs",
@@ -10,11 +10,6 @@
       "quien": "ia",
       "titulo": "Capturas en las guías de Docs",
       "detalle": "Ninguna guía sin imágenes. Las de venta llevan capturas grandes de cada paso."
-    },
-    {
-      "quien": "ia",
-      "titulo": "Qué hace cada app y qué solo está en el panel web",
-      "detalle": "Una sección nueva en esta página para explicar la startup a clientes, inversores y aceleradoras."
     },
     {
       "quien": "ia",
@@ -293,6 +288,13 @@
     {
       "fecha": "2026-11-01",
       "tipo": "nuevo",
+      "titulo": "Qué hace cada app",
+      "texto": "Una sección en esta página con las funciones de cada app y lo que solo existe en el panel web, para presentar la startup.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
       "titulo": "Equipo de agentes con puestos fijos",
       "texto": "Siete puestos con su contrato: jefe de operaciones, investigador, desarrollador, revisor de calidad, guardia de producción, tiendas y tesorero. Cada uno con una sola tarea, permisos limitados y su registro. Se suman al gerente de correo.",
       "paises": "Todos",
@@ -402,5 +404,93 @@
     "busy-areas": "Zonas con más pedidos",
     "support": "Soporte",
     "send-screenshot-to-support": "Mandar capturas a soporte"
-  }
+  },
+  "presentacion": "La startup Divoox: reparto de comida, tiendas, logística para empresas y viajes en una sola plataforma. Tres apps (cliente, Driver y restaurante) y un panel web, en inglés y español, pensada para EE. UU. y Latinoamérica.",
+  "apps": [
+    {
+      "nombre": "Divoox (cliente)",
+      "para": "Quien pide",
+      "funciones": [
+        "Pedir comida y comprar en Mercado, Farmacia y Licores",
+        "Buscar con filtros por dieta, favoritos y direcciones guardadas",
+        "Programar un pedido o pedir en grupo",
+        "Pagar con tarjeta, Apple Pay y Google Pay; cupones, regalos y sellos",
+        "Seguir el pedido en el mapa, compartir el seguimiento y chatear con el repartidor",
+        "Llamar al repartidor sin ver su número",
+        "Calificar, dar propina después y pedir otra vez",
+        "Casos de ayuda con capturas de pantalla",
+        "Mis paquetes y rastrear un paquete de Divoox Flex",
+        "Divoox Plus y tarjetas de regalo (listas, apagadas)",
+        "Envíos de A a B (piloto) y viajes en moto o carro (listos, apagados)"
+      ]
+    },
+    {
+      "nombre": "Divoox Driver",
+      "para": "Quien reparte",
+      "funciones": [
+        "Alta con verificación de identidad y foto de control",
+        "Ofertas con el pago completo antes de aceptar",
+        "Mapa de zonas con más pedidos y pago por hora pico",
+        "Elegir cobrar por oferta o por tiempo (listo, apagado)",
+        "Recoger con código y foto; entregar con foto, PIN o código QR, solo cerca de la puerta",
+        "Chat y llamada con número oculto",
+        "Ganancias, billetera, nivel y Divoox Rewards",
+        "Turnos, seguridad y calificar al cliente",
+        "Mi ruta de paquetes para empresas (Divoox Flex) con escaneo",
+        "Kilómetros o millas, como prefiera el repartidor",
+        "Casos de ayuda con capturas"
+      ]
+    },
+    {
+      "nombre": "Divoox para restaurantes (app)",
+      "para": "El restaurante en el mostrador",
+      "funciones": [
+        "Recibir pedidos con alerta y aceptarlos (o aceptación automática)",
+        "Tiempo sugerido y cocina ocupada",
+        "Marcar platos agotados por hoy y pedidos listos",
+        "Entregar al repartidor con código",
+        "Mi menú, horario y festivos",
+        "Reseñas con respuesta",
+        "Ganancias y equipo",
+        "Casos de ayuda con capturas"
+      ]
+    }
+  ],
+  "soloWeb": [
+    {
+      "quien": "Restaurantes y tiendas",
+      "funciones": [
+        "Menú desde una planilla y alta asistida",
+        "Opciones anidadas y copiar opciones entre platos",
+        "Menús por horario",
+        "Catálogo de tienda con código de barras",
+        "Anuncios patrocinados con presupuesto y reporte",
+        "Regalos y marketing",
+        "Equipo con roles",
+        "Conexión con el punto de venta",
+        "Imprimir tickets y modo tableta",
+        "Informes del negocio"
+      ]
+    },
+    {
+      "quien": "Empresas de logística (Divoox Flex)",
+      "funciones": [
+        "Todo el panel de la empresa: envíos, planilla para cargar muchos, etiquetas con código QR",
+        "Rutas: armar, asignar u ofrecer y seguir",
+        "Invitar conductores",
+        "Centros de carga, devoluciones y reportes",
+        "API para conectar su sistema"
+      ]
+    },
+    {
+      "quien": "Franquicias",
+      "funciones": ["Panel de la franquicia con su territorio y su equipo"]
+    },
+    {
+      "quien": "El equipo de Divoox",
+      "funciones": [
+        "Superadmin: ciudades y áreas, verificaciones, cobro en mano, dinero y conciliación, Rewards y piloto, casos de ayuda e informes"
+      ]
+    }
+  ]
 }
