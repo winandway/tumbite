@@ -3177,6 +3177,18 @@ const es: SeccionDocs[] = [
           'Al cliente: Divoox cobra un envío desde 3,99 dólares (sube 50 centavos por kilómetro después de los primeros 3, con un tope de 7,99) y una tarifa de servicio del 5 % del pedido, con un mínimo de 1,99 y un máximo de 4,99. Si el pedido es de menos de 10 dólares, se suma un cargo por pedido pequeño de 2 dólares. DoorDash publica una tarifa de servicio del 15 % del pedido en varias ciudades y una variable en las demás, más un envío que depende del restaurante. Uber Eats publica una tarifa de servicio que es un porcentaje del pedido con un mínimo y un máximo según la región, más un envío que cambia según la zona y los repartidores disponibles.',
           'Al repartidor: en Divoox cada entrega paga al menos 5 dólares, y la propina es 100 % suya y nunca se usa para completar ese mínimo. DoorDash publica un pago base por oferta de 2 a más de 10 dólares, y que la propina es 100 % del repartidor.',
         ],
+        capturas: [
+          {
+            src: '/docs/web-comparar-restaurante-es.webp',
+            alt: 'La calculadora de la web de Divoox en la pestaña Restaurante: lo que le queda al mes con Divoox, con DoorDash Basic y con Uber Eats Lite.',
+            pie: 'En la calculadora de la web ves, con tus números, cuánto te queda con cada app.',
+          },
+          {
+            src: '/docs/web-comparar-cliente-es.webp',
+            alt: 'La calculadora de la web de Divoox en la pestaña Cliente, con lo que paga una persona por un pedido en cada app.',
+            pie: 'La pestaña Cliente compara lo que pagas por pedido.',
+          },
+        ],
         preguntas: [
           '¿Cuánto cobra Divoox a los restaurantes comparado con DoorDash y Uber Eats?',
           '¿Cuánto paga el cliente en Divoox?',
@@ -7065,6 +7077,18 @@ const en: SeccionDocs[] = [
           'An example with a $30 food order: with Divoox Starter the restaurant receives $27.75; with DoorDash Basic, $25.50; with Uber Eats Lite, $24.00. On higher plans the gap grows: $26.25 with Divoox Growth versus $22.50 with DoorDash Plus or Uber Eats Plus.',
           'To the customer: Divoox charges delivery from $3.99 (up 50 cents per kilometer after the first 3, capped at $7.99) and a service fee of 5% of the order, with a $1.99 minimum and a $4.99 maximum. Orders under $10 add a $2 small order fee. DoorDash publishes a service fee of 15% of the order in several cities and a variable one elsewhere, plus a delivery fee that depends on the restaurant. Uber Eats publishes a service fee that is a percentage of the order with a minimum and maximum by region, plus a delivery fee that changes with the area and available drivers.',
           'To the driver: on Divoox every delivery pays at least $5, and the tip is 100% theirs and is never used to reach that minimum. DoorDash publishes base pay per offer of $2 to $10+, and that drivers keep 100% of tips.',
+        ],
+        capturas: [
+          {
+            src: '/docs/web-comparar-restaurante-en.webp',
+            alt: 'The calculator on the Divoox website, Restaurant tab: what a restaurant keeps each month with Divoox, DoorDash Basic, and Uber Eats Lite.',
+            pie: 'On the website calculator you see, with your own numbers, how much you keep with each app.',
+          },
+          {
+            src: '/docs/web-comparar-cliente-en.webp',
+            alt: 'The calculator on the Divoox website, Customer tab, with what a person pays per order on each app.',
+            pie: 'The Customer tab compares what you pay per order.',
+          },
         ],
         preguntas: [
           'How much does Divoox charge restaurants compared with DoorDash and Uber Eats?',
