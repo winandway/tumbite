@@ -2057,10 +2057,12 @@ for (const idioma of ['en', 'es'] as const) {
         // consulta cada pocos segundos y una sola respuesta perdida colgaba la corrida 15 minutos).
         await expect(sup.getByLabel(L.clave, { exact: true })).toBeHidden({ timeout: 30_000 });
         await sup.goto(`/panel/${ruta}/cash/${encodeURIComponent(`comida:${c.id}`)}`);
-        await expect(sup.getByTestId('caso-dinero')).toBeVisible({ timeout: 20_000 });
+        // El panel corta una lectura colgada y la repite una vez (C-LECTURA-REINTENTO): en el sitio de
+        // pruebas eso puede pasar de 20 s; se espera lo mismo que el panel.
+        await expect(sup.getByTestId('caso-dinero')).toBeVisible({ timeout: 45_000 });
         await foto(sup, 'super-bandeja-caso');
         await sup.goto(`/panel/${ruta}/cash`);
-        await expect(sup.getByTestId('bandeja-dinero')).toBeVisible({ timeout: 20_000 });
+        await expect(sup.getByTestId('bandeja-dinero')).toBeVisible({ timeout: 45_000 });
         await foto(sup, 'super-bandeja');
         await supCtx.close();
         // Resuelto al final: el caso de esta corrida no se queda acumulado en la bandeja de pruebas.
