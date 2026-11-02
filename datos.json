@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 12:40 (Miami)",
+  "actualizado": "2026-11-02 14:45 (Miami)",
   "version": "468eee7",
   "ahora": {
-    "titulo": "Bloque nuevo: lo que el cliente de los grandes tiene y nosotros no",
-    "detalle": "Seis de siete hechas: búsquedas recientes, ordenar y filtros rápidos, lo más pedido, alergias, explicación de tarifas y regalar un pedido. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en esta computadora. Falta invitar a un amigo."
+    "titulo": "Bloque nuevo: platos, repartidores y restaurantes como los grandes",
+    "detalle": "Cinco de cinco hechas: calificar cada plato con «Le gustó al N %» en el menú, aviso de repartidor con sordera o dificultad auditiva, calorías por plato, planilla de pedidos para el restaurante y planilla de ganancias para el repartidor. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en la computadora."
   },
   "proximo": [
     {
@@ -299,6 +299,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Cinco funciones nuevas para clientes, repartidores y restaurantes",
+      "texto": "El cliente califica cada plato y el menú muestra «Le gustó al 92 % (40)», como DoorDash; el repartidor con sordera o dificultad auditiva lo marca y el cliente y el restaurante saben que deben escribirle; calorías opcionales por plato, como Uber Eats; el restaurante descarga sus pedidos en una planilla, y el repartidor exporta sus ganancias. Cada una con su prueba y su guía en Docs en los dos idiomas. Quedan guardadas sin publicar porque GitHub sigue sin sesión en la computadora."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Seis funciones nuevas en la app del cliente, como DoorDash y Uber Eats",
