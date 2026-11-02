@@ -1,8 +1,8 @@
-import { Stack } from 'expo-router';
+import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PantallaPermisos, SesionProvider, useSesion } from '@tumbite/movil';
+import { PantallaPermisos, SesionProvider, useSesion, PantallaConFallo } from '@tumbite/movil';
 
 /**
  * C-PERMISOS-EXPLICADOS (31 oct 2026, como DoorDash): la primera vez que entra, el repartidor ve para
@@ -53,6 +53,28 @@ function Permisos() {
         void Location.requestForegroundPermissionsAsync()
           .catch(() => undefined)
           .finally(aceptarPermisos);
+      }}
+    />
+  );
+}
+
+/**
+ * C-APP-SIN-CIERRES: si una pantalla falla, la app no se cierra; se ve el aviso con «Volver» (vuelve
+ * atrás o al inicio) y el fallo llega al registro de errores del servidor.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <PantallaConFallo
+      app="repartidor"
+      error={error}
+      volver={() => {
+        try {
+          if (router.canGoBack()) router.back();
+          else router.replace('/');
+        } catch {
+          // Sin navegación disponible: se vuelve a pintar la pantalla de inicio.
+        }
+        void retry();
       }}
     />
   );

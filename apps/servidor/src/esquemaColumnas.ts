@@ -46,6 +46,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creada_en",
     "expira_en"
   ],
+  "puentes_sesion": [
+    "id",
+    "usuario_id",
+    "expira_en",
+    "usado"
+  ],
   "confirmaciones": [
     "id",
     "usuario_id",

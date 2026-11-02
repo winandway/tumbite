@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, Text, View, Linking } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { type Api, ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, abrirPagina } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -180,7 +180,7 @@ export function Verificacion() {
     try {
       const r = await api.pedir<Antecedentes>('POST', '/datos/kyc/antecedentes/pedir', {});
       setAntecedentes(r);
-      if (r.url) await Linking.openURL(r.url);
+      if (r.url) abrirPagina(r.url);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -346,11 +346,7 @@ export function Verificacion() {
         {antecedentes.estado === 'sin_pedir' ? (
           <Boton texto={t.pedirAntecedentes} alTocar={() => void pedirAntecedentes()} secundario />
         ) : antecedentes.estado === 'invitado' && antecedentes.url ? (
-          <Boton
-            texto={t.abrirCheckr}
-            alTocar={() => void Linking.openURL(antecedentes.url)}
-            secundario
-          />
+          <Boton texto={t.abrirCheckr} alTocar={() => abrirPagina(antecedentes.url)} secundario />
         ) : null}
       </View>
     </View>

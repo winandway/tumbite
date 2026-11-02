@@ -1081,7 +1081,7 @@ export function Inicio() {
   async function banco() {
     try {
       const r = await api.pedir<{ url: string }>('POST', '/datos/billetera/conectar', {});
-      await Linking.openURL(r.url);
+      abrirPagina(r.url);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }

@@ -21,6 +21,7 @@ import {
   leerToken,
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
+import { limiteIntentos } from '../seguridad';
 import { enviarCorreo } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -637,4 +638,50 @@ cuentas.post('/correo', async (c) => {
     idioma: u.idioma,
   });
   return c.json({ usuario: { ...u, correo: d.correo } });
+});
+
+/**
+ * C-PUENTE-PANEL (2 nov 2026, Richard: «que no tenga que salir afuera para nada»): las pantallas del
+ * panel web que la app abre (Configuración, Ganancias…) se abren DENTRO de la app con la sesión ya
+ * iniciada. La app pide un código de un solo uso (vence en 60 segundos, solo queda su hash); el visor
+ * de la app abre /datos/cuentas/puente/<código>, que deja la cookie de sesión y lleva a la página.
+ * Solo a direcciones del propio sitio: nunca redirige afuera.
+ */
+const destinoPuente = z
+  .string()
+  .trim()
+  .max(300)
+  .regex(/^\/(?!\/)[A-Za-z0-9/_\-?=&.%]*$/);
+
+cuentas.post('/puente', limiteIntentos(20, 60_000), async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, z.object({ a: destinoPuente }));
+  const db = base(c);
+  const codigo = nuevoToken();
+  await db
+    .prepare(
+      "INSERT INTO puentes_sesion (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+60 seconds'))",
+    )
+    .bind(await sha256(codigo), u.id)
+    .run();
+  const origen = new URL(c.req.url).origin;
+  return c.json({ url: `${origen}/datos/cuentas/puente/${codigo}?a=${encodeURIComponent(d.a)}` });
+});
+
+cuentas.get('/puente/:codigo', limiteIntentos(30, 60_000), async (c) => {
+  const a = destinoPuente.safeParse(c.req.query('a') ?? '/');
+  const destino = a.success ? a.data : '/';
+  const db = base(c);
+  const fila = await db
+    .prepare(
+      "UPDATE puentes_sesion SET usado = 1 WHERE id = ? AND usado = 0 AND expira_en > datetime('now') RETURNING usuario_id",
+    )
+    .bind(await sha256(c.req.param('codigo')))
+    .first<{ usuario_id: string }>();
+  // Código usado, vencido o inventado: se llega a la página igual y el panel pide entrar.
+  if (!fila) return c.redirect(destino, 302);
+  const token = await abrirSesion(db, fila.usuario_id);
+  c.header('Set-Cookie', cookie(token));
+  c.header('Cache-Control', 'no-store');
+  return c.redirect(destino, 302);
 });

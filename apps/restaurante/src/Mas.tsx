@@ -1,4 +1,4 @@
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { type OpcionMas, opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
 import {
   C,
@@ -7,6 +7,7 @@ import {
   VERSION_APP,
   useSesion,
   useSoporte,
+  abrirPanel,
 } from '@tumbite/movil';
 import { Tarjeta } from './piezas/ui';
 
@@ -28,7 +29,7 @@ export function Mas({
     o.pantalla
       ? abrirPantalla(o.pantalla)
       : o.destino
-        ? void Linking.openURL(`${URL_SERVIDOR}${o.destino}`)
+        ? void abrirPanel(api, URL_SERVIDOR, o.destino)
         : void abrirWhatsapp();
 
   return (

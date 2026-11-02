@@ -19,6 +19,25 @@ export function abrirPagina(url: string): void {
   else void Linking.openURL(url);
 }
 
+/**
+ * C-PUENTE-PANEL: una pantalla del panel web (por ejemplo «/panel/settings») dentro de la app, con
+ * la sesión ya iniciada gracias a un código de un solo uso. Si el código no sale, se abre igual y el
+ * panel pide entrar.
+ */
+export async function abrirPanel(
+  api: { pedir: <T>(m: 'POST', ruta: string, cuerpo?: unknown) => Promise<T> },
+  servidor: string,
+  ruta: string,
+): Promise<void> {
+  if (Platform.OS === 'web') return void Linking.openURL(`${servidor}${ruta}`);
+  try {
+    const r = await api.pedir<{ url: string }>('POST', '/datos/cuentas/puente', { a: ruta });
+    abrirPagina(r.url);
+  } catch {
+    abrirPagina(`${servidor}${ruta}`);
+  }
+}
+
 const T = {
   es: { listo: 'Listo', navegador: 'Abrir en el navegador' },
   en: { listo: 'Done', navegador: 'Open in browser' },

@@ -349,4 +349,18 @@ describe('el restaurante como los grandes (C-RESTAURANTE-MAS)', () => {
         .run(),
     ).rejects.toThrow(/UNIQUE/);
   });
+
+  it('C-EQUIPO-APP: la app del restaurante lee la lista con la misma llave que manda el servidor', async () => {
+    const e = await escenario();
+    const r = await e.m.llamar('GET', '/datos/mi-restaurante/equipo', undefined, e.dueno.token);
+    expect(Object.keys(r.datos).sort()).toEqual(['equipo', 'miRol']);
+    expect(Array.isArray(r.datos.equipo)).toBe(true);
+    // Antes la app leía «miembros», que no existe: `d.miembros.map` cerraba la app al tocar «Equipo».
+    const app = readFileSync(
+      join(__dirname, '..', '..', '..', 'restaurante', 'src', 'MasPantallas.tsx'),
+      'utf8',
+    );
+    expect(app).toMatch(/pedir<\{ equipo: Miembro\[\]; miRol: string \}>/);
+    expect(app).not.toMatch(/\.miembros\b/);
+  });
 });

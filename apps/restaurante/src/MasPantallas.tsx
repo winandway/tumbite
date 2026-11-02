@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 // El saldo y los movimientos son de Stripe, que hoy solo cobra en dólares (C-MONEDA-RECORRIDO).
 import {
   ErrorApi,
@@ -23,6 +23,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
+  abrirPanel,
 } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
@@ -348,7 +349,7 @@ function Ganancias({ t }: { t: Textos }) {
           <BotonGrande
             texto={t.cobros}
             tipo="claro"
-            alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/earnings`)}
+            alTocar={() => void abrirPanel(api, URL_SERVIDOR, '/panel/earnings')}
           />
         </>
       ) : null}
@@ -360,7 +361,7 @@ type Miembro = { usuarioId: string; nombre: string; correo: string; rol: string 
 
 function Equipo({ t }: { t: Textos }) {
   const { api, usuario, idioma } = useSesion();
-  const [d, setD] = useState<{ miembros: Miembro[]; miRol: string } | null>(null);
+  const [d, setD] = useState<{ equipo: Miembro[]; miRol: string } | null>(null);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
   const [menu, setMenu] = useState<string | null>(null);
@@ -373,7 +374,7 @@ function Equipo({ t }: { t: Textos }) {
   });
   const cargar = useCallback(() => {
     api
-      .pedir<{ miembros: Miembro[]; miRol: string }>('GET', '/datos/mi-restaurante/equipo')
+      .pedir<{ equipo: Miembro[]; miRol: string }>('GET', '/datos/mi-restaurante/equipo')
       .then(setD)
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
   }, [api]);
@@ -419,7 +420,7 @@ function Equipo({ t }: { t: Textos }) {
       <Mensajes error={error} aviso={aviso} />
       {d ? (
         <Tarjeta>
-          {d.miembros.map((m) => (
+          {d.equipo.map((m) => (
             <View
               key={m.usuarioId}
               style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#EEE' }}

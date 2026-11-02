@@ -20,3 +20,4 @@ export * from './OpcionesCuenta';
 export * from './MisCasos';
 export * from './elegirCapturas';
 export * from './PaginaEnApp';
+export * from './PantallaConFallo';

@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Linking, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import {
@@ -13,6 +13,7 @@ import {
   e,
   urlFoto,
   useSesion,
+  abrirPanel,
 } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { ScrollView } from 'react-native';
@@ -305,7 +306,7 @@ export default function MiCuenta() {
         <Text style={estilos.subtitulo}>{t.datos}</Text>
         <Boton
           texto={t.editarDatos}
-          alTocar={() => void Linking.openURL(`${URL_SERVIDOR}/panel/settings`)}
+          alTocar={() => void abrirPanel(api, URL_SERVIDOR, '/panel/settings')}
           secundario
         />
 

@@ -2458,3 +2458,24 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** columna `pedidos.alergias` (TEXT, vacía por defecto) que llega con `COLUMNAS` de `esquema.ts` (no en schema.sql). El esquema del pedido la acepta hasta 200 letras y `aPedido` la devuelve. Si el restaurante no puede cumplirla, usa «Rechazar» (devolución total, ya existía).
 - **Prueba:** `apps/servidor/src/alergias.test.ts` (en rojo si el pedido no la devuelve).
 - **Qué NO tocar:** el rojo es correcto aquí (es un riesgo, no un éxito); sin emojis (regla sinEmojis).
+
+## C-REGALAR-PEDIDO (2 nov 2026) — todos los países
+
+- **Qué es:** «Enviar como regalo» en el carrito (como «Send as a gift» de DoorDash y Uber Eats): nombre, celular y mensaje de quien recibe; se paga con el cobro normal.
+- **Cómo funciona:** columnas `pedidos.para_nombre`, `para_telefono`, `para_mensaje` por `COLUMNAS`. El servidor exige un celular válido (`telefonoE164`) y rechaza el regalo en «Recoger». A las notas se suma «Regalo para <nombre>» (nunca el celular). Al pagarse, `avisoDeRegalo` crea un enlace de seguimiento compartido (sin dirección ni dinero) y manda el SMS; si el SMS no está encendido en ese país, no sale y el cliente comparte el enlace desde su pedido.
+- **Prueba:** `apps/servidor/src/regalarPedido.test.ts` (en rojo sin la validación del celular).
+- **Qué NO tocar:** el celular de quien recibe no se muestra al restaurante ni al repartidor.
+
+## C-EQUIPO-APP y C-APP-SIN-CIERRES — «Equipo» cerraba la app del restaurante (2 nov 2026) — todos los países
+
+- **Qué se rompió:** en la app de restaurantes, Más → Equipo cerraba la app («Divoox Restaurants falló»). Causa real: la pantalla esperaba `{ miembros }` y el servidor manda `{ miRol, equipo }`; `d.miembros.map` sobre algo que no existe tiró la app entera, porque ninguna app tenía red de seguridad.
+- **Qué se hizo:** (1) `MasPantallas.tsx` lee `equipo`. (2) Cada app exporta `ErrorBoundary` en `src/app/_layout.tsx` con `PantallaConFallo` (`packages/movil/src/PantallaConFallo.tsx`): si una pantalla falla se ve «Algo falló en esta pantalla» con «Volver» (atrás o al inicio) y la app no se cierra. (3) El fallo llega a `POST /datos/app/error` (`rutas/erroresApp.ts`) y queda en `errores_servidor` con método `APP` y ruta `<app>:<pantalla>`.
+- **Pruebas:** «C-EQUIPO-APP» en `rutas/restauranteMas.test.ts` y `rutas/erroresApp.test.ts` (las dos en rojo sin el arreglo).
+- **Qué NO tocar:** no quitar el `ErrorBoundary` de ningún `_layout.tsx`.
+
+## C-PUENTE-PANEL — el panel web se abre dentro de la app con la sesión (2 nov 2026) — todos los países
+
+- **Pedido de Richard:** «que no tenga que salir afuera para nada… 100 % nativa la navegación».
+- **Qué se hizo:** `POST /datos/cuentas/puente` (con sesión) da un código de un solo uso (60 s, se guarda su hash en `puentes_sesion`); `GET /datos/cuentas/puente/:codigo?a=/ruta` deja la cookie de sesión y lleva a la ruta, solo del propio sitio. En la app, `abrirPanel(api, URL_SERVIDOR, '/panel/...')` abre esa dirección en el visor interno (C-PAGINA-EN-APP). Lo usan Configuración (cliente y menú de cuenta), Ganancias y las opciones de «Más» del restaurante. Stripe, la verificación y los antecedentes del repartidor, y «Olvidé mi contraseña», también se abren dentro.
+- **Lo único que sale de la app:** llamar por teléfono, la app de mapas para navegar y WhatsApp (como DoorDash y Uber).
+- **Pruebas:** `rutas/puentePanel.test.ts` (una vez, vencido, inventado, nunca afuera) y el tercer caso de `packages/compartido/src/paginaEnApp.test.ts` (en rojo si vuelve un `Linking.openURL` a una página).

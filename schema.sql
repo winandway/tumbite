@@ -59,6 +59,13 @@ CREATE TABLE IF NOT EXISTS sesiones (
   expira_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
+-- C-PUENTE-PANEL (2 nov 2026): código de un solo uso para abrir el panel dentro de la app con la sesión.
+CREATE TABLE IF NOT EXISTS puentes_sesion (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  expira_en TEXT NOT NULL,
+  usado INTEGER NOT NULL DEFAULT 0
+);
 
 -- Enlaces de un solo uso para confirmar el correo al registrarse (se guarda el hash).
 CREATE TABLE IF NOT EXISTS confirmaciones (

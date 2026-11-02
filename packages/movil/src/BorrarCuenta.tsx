@@ -1,6 +1,6 @@
-import { abrirPagina } from './PaginaEnApp';
+import { abrirPagina, abrirPanel } from './PaginaEnApp';
 import { useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { enIdioma, enIdiomaDireccion, textoVersion } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { C } from './ui';
@@ -77,7 +77,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}/panel/settings`);
+            void abrirPanel(api, URL_SERVIDOR, '/panel/settings');
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}

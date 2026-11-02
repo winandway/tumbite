@@ -1,6 +1,6 @@
 import { abrirPagina } from './PaginaEnApp';
 import { useState, type ReactNode } from 'react';
-import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -256,7 +256,7 @@ export function Acceso({
       {modo === 'entrar' ? (
         <Text
           style={e.enlace}
-          onPress={() => void Linking.openURL(`${URL_SERVIDOR}/forgot-password`)}
+          onPress={() => abrirPagina(`${URL_SERVIDOR}/forgot-password`)}
           accessibilityRole="link"
         >
           {t.olvide}
