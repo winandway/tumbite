@@ -100,4 +100,14 @@ describe('Docs públicos', () => {
         expect(srcs).toContain(`/docs/driver-zonas-${n}-${i}.webp`);
     }
   });
+
+  it('ninguna guía sin captura (regla de Richard, 1 nov 2026), en los dos idiomas', () => {
+    // Las únicas que esperan su foto: necesitan una entrega completa del recorrido (FILA, CAP-7b).
+    const ESPERAN = new Set(['ordering/you-might-like', 'trust/rate-customer']);
+    for (const i of ['es', 'en'] as const)
+      for (const s of DOCS[i])
+        for (const g of s.guias)
+          if (!ESPERAN.has(`${s.id}/${g.id}`))
+            expect(g.capturas?.length ?? 0, `${i} ${s.id}/${g.id}`).toBeGreaterThan(0);
+  });
 });

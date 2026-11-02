@@ -246,6 +246,8 @@
 
 - 1 nov 2026, 22:30 (tarea programada): CAP-1 hecho. Tres capturas reales del mapa de Driver (zona, detalle al tocar y pago por hora pico) en la guía de zonas, en español e inglés, con su prueba. Guion capturas-zonas.mjs: crea pedidos en efectivo solo en pruebas, fotografía y los cancela. Todos los países.
 
+- 1 nov 2026, 23:50 (tarea programada): CAP-7 hecho. 21 guías de Docs que no tenían foto ahora la tienen, en español e inglés (cursos, comparación, pedido en grupo, seguimiento, pago, filtros de dieta, instrucciones, panel del restaurante, Driver y Flex en inglés). Prueba nueva: ninguna guía sin captura, salvo las dos de CAP-7b. Guion capturas-guias-faltantes.mjs, solo en pruebas; deja platos, efectivo y grupos como estaban. Todos los países.
+
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
 - [x] HECHO 1 nov (C-DOCS-ZONAS). (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
@@ -254,13 +256,14 @@
 - [x] HECHO 1 nov. (CAP-4) Capturas de «Divoox Plus»: la pantalla para suscribirse, el carrito con el descuento y Mi cuenta. EE. UU.
 - [x] HECHO 1 nov. (CAP-5) Capturas de «Tarjetas de regalo»: comprar, canjear, saldo y el interruptor del carrito. EE. UU.
 - [x] HECHO 1 nov. (CAP-6) Capturas y explicación paso a paso de «Mandar capturas a soporte». Todos los países.
-- [ ] (CAP-7) Revisar TODAS las guías de Docs y agregar capturas a las que no tengan (regla nueva: ninguna guía sin captura). Todos los países.
+- [x] HECHO 1 nov (C-DOCS-CON-CAPTURAS). (CAP-7) Revisar TODAS las guías de Docs y agregar capturas a las que no tengan (regla nueva: ninguna guía sin captura). Todos los países.
+- [ ] (CAP-7b) Capturas de «Te puede gustar» (cliente con un pedido entregado en una pizzería y otra pizzería abierta) y de «Calificar al cliente» (Driver con una entrega de hoy): sumarlas al recorrido (npm run recorrido:capturas), que es el único que completa una entrega con fotos y GPS. Al tenerlas, sacarlas de ESPERAN en guiasPublicas.test.tsx. Todos los países.
 - [x] HECHO 1 nov. (PRO-1) Página de progreso: sección «Qué hace cada app» (cliente, Driver, restaurante) y «Lo que solo existe en el panel web», pensada para explicar la startup a clientes, inversores y aceleradoras. Todos los países.
 - [x] HECHO 1 nov. (STA-1) Llamarla «la startup Divoox» en la web y en Docs donde corresponda (portada, Acerca de, franquicias, presentaciones). Todos los países.
 
 ## Pedidos de Richard del 1 nov (noche, con capturas del iPhone) — después de lo anterior
 
-- [ ] (UX-1) App del cliente, «Mis pedidos»: rediseñar las tarjetas como los grandes (miniatura del local o del plato, estado con color, verde para entregado, botones bien hechos: hoy «Ver pedido y recibo» sale como un óvalo roto y «Repetir pedido» parte el texto en dos líneas). Todos los países.
-- [ ] (UX-2) Navegación: desde Mi cuenta → un pedido → la flecha de volver tiene que regresar a Mi cuenta, no al inicio. Buscar el mismo fallo en todas las pantallas de las tres apps (volver siempre al lugar de donde se vino). Todos los países.
+- [x] HECHO 1 nov. (UX-1) App del cliente, «Mis pedidos»: rediseñar las tarjetas como los grandes (miniatura del local o del plato, estado con color, verde para entregado, botones bien hechos: hoy «Ver pedido y recibo» sale como un óvalo roto y «Repetir pedido» parte el texto en dos líneas). Todos los países.
+- [x] HECHO 1 nov. (UX-2) Navegación: desde Mi cuenta → un pedido → la flecha de volver tiene que regresar a Mi cuenta, no al inicio. Buscar el mismo fallo en todas las pantallas de las tres apps (volver siempre al lugar de donde se vino). Todos los países.
 - [ ] (UX-3) Menos rojo, blanco y negro: sumar el verde de éxito y colores de apoyo donde corresponda (estados, confirmaciones, tarjetas), sin romper la identidad. Todos los países.
 - [ ] (UX-4) Revisar TODAS las pantallas de las tres apps en español e inglés (textos cortados, botones deformes, textos en el otro idioma) y el inicio (menús, servicios) con terminación profesional. Captura antes y después de cada arreglo. Todos los países.

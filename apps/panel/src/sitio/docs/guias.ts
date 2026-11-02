@@ -370,6 +370,18 @@ const es: SeccionDocs[] = [
           'Si quieres, pon una hora de cierre (en 30 minutos, 1 hora o 2 horas). Al llegar la hora nadie puede agregar más y te avisamos para que revises y pagues.',
           'Cuando estén todos, toca «Cerrar y pagar»: nadie puede agregar más, los platos pasan a tu carrito con el precio de hoy y pagas como siempre. Si algo ya no está disponible, te avisamos y no se cobra.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-grupo-boton-es.webp',
+            alt: 'El menú de un restaurante en la app de Divoox con el enlace «Hacer un pedido en grupo» debajo del nombre.',
+            pie: 'En el menú del restaurante toca «Hacer un pedido en grupo».',
+          },
+          {
+            src: '/docs/cliente-grupo-es.webp',
+            alt: 'La pantalla del pedido en grupo en la app de Divoox, con la hora de cierre, el botón para compartir el enlace y el de agregar platos.',
+            pie: 'Compartes el enlace, eliges la hora de cierre y cada persona agrega lo suyo.',
+          },
+        ],
         preguntas: [
           '¿Cómo hago un pedido para varias personas?',
           '¿Quién paga el pedido en grupo?',
@@ -390,6 +402,13 @@ const es: SeccionDocs[] = [
           'En la pantalla de tu pedido, toca «Compartir el seguimiento» y elige a quién mandarlo.',
           'Quien abre el enlace ve el estado del pedido, de qué restaurante es y, cuando va en camino, el nombre del repartidor y dónde va en el mapa.',
           'No ve tu dirección, tu nombre ni lo que pagaste. El enlace se apaga solo cuando el pedido se entrega o se cancela.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-compartir-seguimiento-es.webp',
+            alt: 'El seguimiento de un pedido en la app de Divoox, con el mapa, el detalle del pedido y el enlace «Compartir el seguimiento».',
+            pie: 'Debajo del detalle del pedido está «Compartir el seguimiento».',
+          },
         ],
         preguntas: ['¿Cómo le muestro a alguien dónde va mi pedido?', '¿Qué ve la otra persona?'],
         pasos: [
@@ -643,7 +662,13 @@ const es: SeccionDocs[] = [
           'Tus datos de pago los guarda Apple, Google o Stripe; Divoox nunca ve el número de tu tarjeta.',
           'Si no te aparece Apple Pay o Google Pay, revisa que tengas una tarjeta agregada en la billetera de tu celular.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/cliente-carrito-pagar-es.webp',
+            alt: 'El carrito de la app de Divoox con la propina, el cupón, el total y el botón «Continuar al pago».',
+            pie: 'Al tocar «Continuar al pago» eliges cómo pagar.',
+          },
+        ],
         preguntas: ['¿Puedo pagar con Apple Pay?', '¿Puedo pagar con Google Pay?'],
         pasos: [
           'Arma tu carrito y toca «Pagar».',
@@ -724,6 +749,18 @@ const es: SeccionDocs[] = [
           'En el menú de cada restaurante, las marcas aparecen en verde debajo del nombre del plato, y también al abrir el plato.',
           'Para restaurantes: al crear o editar un plato, en el panel o en la app del restaurante, marca las casillas que le correspondan. Puedes marcar varias. Si un plato deja de cumplir una marca, quítala en ese momento.',
           'Las marcas las pone cada restaurante. Si tienes una alergia, confírmalo siempre con el restaurante antes de pedir: una marca no reemplaza esa consulta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-filtros-dieta-es.webp',
+            alt: 'El buscador de la app de Divoox con la fila de filtros de dieta: vegetariano, vegano, sin gluten, halal y picante.',
+            pie: 'Los filtros de dieta están arriba del buscador.',
+          },
+          {
+            src: '/docs/cliente-filtros-dieta-elegido-es.webp',
+            alt: 'El buscador de la app de Divoox con el filtro «Vegetariano» elegido y los platos vegetarianos que encontró.',
+            pie: 'Con un filtro elegido, solo ves los platos que lo cumplen.',
+          },
         ],
         preguntas: [
           '¿Cómo encuentro platos veganos en Divoox?',
@@ -1162,6 +1199,13 @@ const es: SeccionDocs[] = [
           'Si pides el mismo plato dos veces con notas distintas, salen como dos líneas en tu carrito, para que no se confundan.',
           'El restaurante ve la nota junto al plato, en su pantalla y en la comanda impresa. Las notas sirven para cambios sencillos; un cambio que cueste más se elige con las opciones del plato.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-nota-plato-es.webp',
+            alt: 'Un plato abierto en la app de Divoox con la casilla «Instrucciones especiales» y una nota escrita: sin hielo, por favor.',
+            pie: 'Al abrir un plato, escribe tu nota en «Instrucciones especiales».',
+          },
+        ],
         preguntas: [
           '¿Cómo pido un plato sin cebolla?',
           '¿Dónde escribo una nota para el restaurante?',
@@ -1305,6 +1349,13 @@ const es: SeccionDocs[] = [
           'El aviso sonoro de pedido nuevo suena igual, para que tu equipo empiece a preparar. El cliente ve enseguida que aceptaste y buscamos repartidor sin esperar.',
           'Un pedido programado para más tarde se acepta solo cuando faltan 45 minutos para su hora. Si falta un producto y el cliente todavía no decidió qué hacer, el pedido espera a su respuesta.',
           'Puedes apagarlo cuando quieras, por ejemplo en las horas de más trabajo. Solo el dueño y los managers pueden cambiarlo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-aceptar-automatico-es.webp',
+            alt: 'La pantalla de pedidos del panel del restaurante en Divoox, con la casilla «Aceptar pedidos automáticamente».',
+            pie: 'La casilla «Aceptar pedidos automáticamente» está arriba de tus pedidos.',
+          },
         ],
         preguntas: [
           '¿Cómo acepto los pedidos automáticamente?',
@@ -1548,7 +1599,13 @@ const es: SeccionDocs[] = [
           'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
           'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/restaurante-beneficios-es.webp',
+            alt: 'La pantalla «Beneficios» del panel del restaurante en Divoox, con lo vendido hoy, la comparación con otras apps y el saldo disponible.',
+            pie: 'En «Beneficios» ves tu saldo y conectas o cambias tu cuenta bancaria.',
+          },
+        ],
         preguntas: ['¿Por qué no me llegó mi retiro?', '¿Qué hago si el banco rechazó mi abono?'],
         pasos: [
           'Lee el aviso: dice el motivo del rechazo.',
@@ -1835,6 +1892,13 @@ const es: SeccionDocs[] = [
           'Si un plato ya existe con el mismo nombre, se actualiza (precio, descripción, categoría); no se duplica. Las fotos y las opciones se agregan después, plato por plato.',
           'Si prefieres no hacerlo tú, nuestro equipo puede cargar tu menú por ti durante el alta: escríbenos desde Soporte.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-horarios-menu-es.webp',
+            alt: 'El final del menú del panel del restaurante en Divoox, con la sección «Cargar el menú desde una planilla».',
+            pie: 'Al final del menú está «Cargar el menú desde una planilla».',
+          },
+        ],
         preguntas: ['¿Puedo subir mi menú desde Excel?', '¿Divoox puede cargar mi menú por mí?'],
         pasos: [
           'Menú → «Descargar la plantilla».',
@@ -1850,6 +1914,13 @@ const es: SeccionDocs[] = [
           'En «Menú», en «Horarios del menú», pon la hora de inicio y de fin de cada categoría que no se sirve todo el día. Por ejemplo, «Desayuno» de 07:00 a 11:00.',
           'Fuera de su franja, esos platos no aparecen en tu página y nadie los puede pedir. El cliente ve una línea que le dice a qué hora se sirven.',
           'Un pedido programado para más tarde se revisa con la hora para la que se pidió. Las categorías sin franja se sirven en todo tu horario.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-horarios-menu-es.webp',
+            alt: 'El menú del panel del restaurante en Divoox con la sección «Horarios del menú»: desde y hasta para cada categoría.',
+            pie: 'En «Horarios del menú» le pones su franja a cada categoría.',
+          },
         ],
         preguntas: ['¿Puedo tener un menú de desayuno?', '¿Cómo pongo horario a una categoría?'],
         pasos: [
@@ -1960,6 +2031,13 @@ const es: SeccionDocs[] = [
           'La comanda trae el número del pedido, si es a domicilio o para recoger, si es programado, los platos con sus opciones y las notas. No trae la dirección ni el dinero del cliente.',
           'Sale en el ancho de 80 mm de las impresoras térmicas; también se puede imprimir en una hoja normal.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-aceptar-automatico-es.webp',
+            alt: 'La pantalla de pedidos del panel del restaurante en Divoox, con la casilla «Imprimir la comanda al aceptar» arriba.',
+            pie: 'Arriba de tus pedidos está «Imprimir la comanda al aceptar».',
+          },
+        ],
         preguntas: ['¿Cómo imprimo los pedidos para la cocina?', '¿Puedo imprimir al aceptar?'],
         pasos: [
           'Abre Pedidos.',
@@ -1976,6 +2054,13 @@ const es: SeccionDocs[] = [
           'Ponle un nombre a la llave y toca «Crear llave». La llave completa se muestra una sola vez: cópiala y pásasela a quien instala tu sistema.',
           'Con ella, tu sistema lee los pedidos en curso (platos, opciones, notas y si es programado) y puede aceptarlos o marcarlos listos. Nunca ve la dirección, el teléfono ni el dinero del cliente.',
           'Si cambias de sistema o se pierde la llave, revócala desde los tres puntos: deja de servir al instante.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-punto-de-venta-es.webp',
+            alt: 'La sección «Conectar tu punto de venta» en Mi restaurante, dentro del panel de Divoox, con la casilla para nombrar la llave.',
+            pie: 'En «Mi restaurante», abajo, creas la llave para tu sistema de caja.',
+          },
         ],
         preguntas: ['¿Puedo recibir los pedidos en mi sistema de caja?', '¿Cómo creo una llave?'],
         pasos: [
@@ -2648,6 +2733,13 @@ const es: SeccionDocs[] = [
           'Conéctate en la primera media hora de tu turno. Si no, el turno queda como perdido y se libera para otros.',
           'Puedes cancelar un turno reservado mientras no haya empezado. Los turnos no son obligatorios: también puedes conectarte cuando quieras.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-turnos-es.webp',
+            alt: 'La pantalla «Mis turnos» de Divoox Driver, para reservar un turno eligiendo el día, la hora de inicio y cuánto dura.',
+            pie: 'En «Mis turnos» eliges el día, la hora y cuánto dura.',
+          },
+        ],
         preguntas: [
           '¿Cómo reservo un turno?',
           '¿Qué gano con tener turno?',
@@ -2746,6 +2838,18 @@ const es: SeccionDocs[] = [
           'Lo revisamos cada vez que te conectas o abres tus calificaciones. Si dejas de cumplir uno, dejas de ser destacado hasta que lo recuperes; nadie se desactiva por esto.',
           'Si además tienes un turno reservado, el turno va primero.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-calificaciones-es.webp',
+            alt: 'La pantalla «Mis calificaciones» de Divoox Driver con la calificación de clientes, la aceptación, la finalización y la puntualidad.',
+            pie: 'En «Mis calificaciones» ves cada número con su referencia.',
+          },
+          {
+            src: '/docs/driver-destacado-es.webp',
+            alt: 'El bloque «Repartidor destacado» de Divoox Driver, con los cinco requisitos y cuánto le falta a la persona en cada uno.',
+            pie: 'Los requisitos que ya cumples salen en verde.',
+          },
+        ],
         preguntas: ['¿Cómo llego a repartidor destacado?', '¿Qué gano siendo destacado?'],
         pasos: [
           'Abre «Calificaciones» en la app.',
@@ -2780,6 +2884,13 @@ const es: SeccionDocs[] = [
           'Emergencia: avisa al instante a nuestro equipo con tu ubicación y te muestra el botón para llamar al número de emergencias de tu país.',
           'Compartir mi recorrido: manda un enlace a alguien de confianza. Ve tu primer nombre y dónde vas, sin cuenta, durante 12 horas.',
           'Reportar un incidente: un accidente, acoso, un robo o un animal suelto. Cuéntanos qué pasó y nuestro equipo te contacta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-seguridad-es.webp',
+            alt: 'La pantalla «Seguridad» de Divoox Driver con el botón de emergencia, compartir el recorrido y reportar un incidente.',
+            pie: 'Desde «Seguridad» pides ayuda, compartes tu recorrido o reportas un incidente.',
+          },
         ],
         preguntas: ['¿Qué hago si tengo una emergencia repartiendo?', '¿Cómo comparto dónde voy?'],
         pasos: ['Abre el menú y toca «Seguridad».', 'Elige: emergencia, compartir o reportar.'],
@@ -2879,7 +2990,13 @@ const es: SeccionDocs[] = [
           'Entra a «Billetera», revisa o corrige los datos de tu cuenta bancaria y vuelve a retirar.',
           'Nuestro equipo también recibe el aviso y revisa cada día que todo el dinero cuadre: lo vendido, lo cobrado, lo devuelto y lo abonado.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/driver-billetera-es.webp',
+            alt: 'La billetera de Divoox Driver con lo ganado, lo disponible para retirar y el botón para conectar la cuenta bancaria.',
+            pie: 'En tu billetera ves lo disponible para retirar y conectas o cambias tu cuenta bancaria.',
+          },
+        ],
         preguntas: ['¿Por qué no me llegó mi retiro?', '¿Qué hago si el banco rechazó mi abono?'],
         pasos: [
           'Lee el aviso: dice el motivo del rechazo.',
@@ -4299,6 +4416,18 @@ const en: SeccionDocs[] = [
           'If you want, set a closing time (in 30 minutes, 1 hour or 2 hours). At that time nobody can add more and we let you know so you can review and pay.',
           'When everyone is in, tap “Close and pay”: nobody can add more, the items move to your cart at today’s prices and you pay as usual. If something is no longer available, we tell you and it isn’t charged.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-grupo-boton-en.webp',
+            alt: 'A restaurant menu in the Divoox app with the “Start a group order” link under the name.',
+            pie: 'On the restaurant menu, tap “Start a group order.”',
+          },
+          {
+            src: '/docs/cliente-grupo-en.webp',
+            alt: 'The group order screen in the Divoox app, with the closing time, the share-link button, and the add-items button.',
+            pie: 'Share the link, pick a closing time, and everyone adds their own items.',
+          },
+        ],
         preguntas: [
           'How do I order for several people?',
           'Who pays for a group order?',
@@ -4319,6 +4448,13 @@ const en: SeccionDocs[] = [
           'On your order screen, tap “Share tracking” and choose who to send it to.',
           'Whoever opens the link sees the order status, which restaurant it’s from and, once it’s on the way, the driver’s name and where they are on the map.',
           'They don’t see your address, your name or what you paid. The link turns off on its own when the order is delivered or canceled.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-compartir-seguimiento-en.webp',
+            alt: 'Order tracking in the Divoox app, with the map, the order details, and the “Share tracking” link.',
+            pie: '“Share tracking” is right below the order details.',
+          },
         ],
         preguntas: ['How do I show someone where my order is?', 'What does the other person see?'],
         pasos: ['Open your order.', 'Tap “Share tracking”.', 'Send it by WhatsApp, text or email.'],
@@ -4565,7 +4701,13 @@ const en: SeccionDocs[] = [
           'Your payment details are held by Apple, Google or Stripe; Divoox never sees your card number.',
           'If Apple Pay or Google Pay doesn’t show up, check that you have a card added to your phone’s wallet.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/cliente-carrito-pagar-en.webp',
+            alt: 'The Divoox app cart with the tip, the promo code, the total, and the “Continue to payment” button.',
+            pie: 'Tap “Continue to payment” to choose how to pay.',
+          },
+        ],
         preguntas: ['Can I pay with Apple Pay?', 'Can I pay with Google Pay?'],
         pasos: [
           'Build your cart and tap “Pay.”',
@@ -4646,6 +4788,18 @@ const en: SeccionDocs[] = [
           'On each restaurant’s menu, labels appear in green under the dish name, and again when you open the dish.',
           'For restaurants: when you create or edit a dish, in the dashboard or the restaurant app, check the labels that apply. You can check several. If a dish no longer meets a label, remove it right away.',
           'Each restaurant sets its own labels. If you have an allergy, always confirm with the restaurant before ordering: a label doesn’t replace that conversation.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-filtros-dieta-en.webp',
+            alt: 'The Divoox app search with the row of diet filters: vegetarian, vegan, gluten-free, halal, and spicy.',
+            pie: 'The diet filters sit at the top of search.',
+          },
+          {
+            src: '/docs/cliente-filtros-dieta-elegido-en.webp',
+            alt: 'The Divoox app search with the “Vegetarian” filter on and the vegetarian dishes it found.',
+            pie: 'With a filter on, you only see the dishes that match it.',
+          },
         ],
         preguntas: [
           'How do I find vegan dishes on Divoox?',
@@ -5079,6 +5233,13 @@ const en: SeccionDocs[] = [
           'If you order the same item twice with different notes, they show up as two lines in your cart so they don’t get mixed up.',
           'The restaurant sees the note next to the item, on its screen and on the printed ticket. Notes are for simple changes; anything that costs extra is chosen with the item’s options.',
         ],
+        capturas: [
+          {
+            src: '/docs/cliente-nota-plato-en.webp',
+            alt: 'A dish open in the Divoox app with the “Special instructions” box and a note: no ice, please.',
+            pie: 'Open a dish and write your note in “Special instructions.”',
+          },
+        ],
         preguntas: [
           'How do I order an item without onions?',
           'Where do I write a note for the restaurant?',
@@ -5219,6 +5380,13 @@ const en: SeccionDocs[] = [
           'The new-order sound still plays so your team starts cooking. The customer sees right away that you accepted, and we look for a driver without waiting.',
           'An order scheduled for later is accepted automatically 45 minutes before its time. If an item is missing and the customer hasn’t decided what to do yet, the order waits for their answer.',
           'You can turn it off anytime, for example during your busiest hours. Only the owner and managers can change it.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-aceptar-automatico-en.webp',
+            alt: 'The Orders screen in the Divoox restaurant panel, with the “Accept orders automatically” checkbox.',
+            pie: 'The “Accept orders automatically” checkbox sits above your orders.',
+          },
         ],
         preguntas: [
           'How do I accept orders automatically?',
@@ -5453,7 +5621,13 @@ const en: SeccionDocs[] = [
           'Open “Wallet,” check or fix your bank account details and withdraw again.',
           'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/restaurante-beneficios-en.webp',
+            alt: 'The “Earnings” screen of the Divoox restaurant panel, with today’s sales, the comparison with other apps, and the available balance.',
+            pie: 'In “Earnings” you see your balance and connect or change your bank account.',
+          },
+        ],
         preguntas: [
           'Why didn’t my withdrawal arrive?',
           'What do I do if the bank rejected my payout?',
@@ -5744,6 +5918,13 @@ const en: SeccionDocs[] = [
           'If an item already exists with the same name, it’s updated (price, description, category); it isn’t duplicated. Photos and options are added afterwards, item by item.',
           'If you’d rather not do it yourself, our team can load your menu for you during onboarding: message us from Support.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-horarios-menu-en.webp',
+            alt: 'The bottom of the Menu page in the Divoox restaurant panel, with the “Upload your menu from a spreadsheet” section.',
+            pie: '“Upload your menu from a spreadsheet” is at the bottom of the menu.',
+          },
+        ],
         preguntas: ['Can I upload my menu from Excel?', 'Can Divoox load my menu for me?'],
         pasos: [
           'Menu → “Download the template”.',
@@ -5759,6 +5940,13 @@ const en: SeccionDocs[] = [
           'In “Menu”, under “Menu hours”, set a start and end time for each category that isn’t served all day. For example, “Breakfast” from 07:00 to 11:00.',
           'Outside its window, those items don’t show on your page and nobody can order them. The customer sees a line telling them when they’re served.',
           'An order scheduled for later is checked against the time it was ordered for. Categories without a window are served during all your hours.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-horarios-menu-en.webp',
+            alt: 'The Menu page of the Divoox restaurant panel with the “Menu hours” section: from and to for each category.',
+            pie: 'In “Menu hours” you set a time window for each category.',
+          },
         ],
         preguntas: ['Can I have a breakfast menu?', 'How do I set hours for a category?'],
         pasos: [
@@ -5868,6 +6056,13 @@ const en: SeccionDocs[] = [
           'The ticket shows the order number, whether it’s delivery or pickup, whether it’s scheduled, the items with their options and the notes. It doesn’t show the customer’s address or money.',
           'It prints at the 80 mm width of thermal printers; it can also be printed on a regular page.',
         ],
+        capturas: [
+          {
+            src: '/docs/restaurante-aceptar-automatico-en.webp',
+            alt: 'The Orders screen in the Divoox restaurant panel, with the “Print the ticket when accepting” checkbox at the top.',
+            pie: '“Print the ticket when accepting” is at the top of your orders.',
+          },
+        ],
         preguntas: ['How do I print orders for the kitchen?', 'Can I print when accepting?'],
         pasos: ['Open Orders.', 'Check “Print the ticket when accepting” or tap “Print ticket”.'],
       },
@@ -5881,6 +6076,13 @@ const en: SeccionDocs[] = [
           'Name the key and tap “Create key”. The full key is shown only once: copy it and give it to whoever sets up your system.',
           'With it, your system reads the orders in progress (items, options, notes and whether it’s scheduled) and can accept them or mark them ready. It never sees the customer’s address, phone or money.',
           'If you change systems or lose the key, revoke it from the three dots: it stops working right away.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-punto-de-venta-en.webp',
+            alt: 'The “Connect your point of sale” section in My restaurant, in the Divoox panel, with the box to name the key.',
+            pie: 'At the bottom of “My restaurant” you create the key for your POS system.',
+          },
         ],
         preguntas: ['Can I receive orders in my POS system?', 'How do I create a key?'],
         pasos: [
@@ -6544,6 +6746,13 @@ const en: SeccionDocs[] = [
           'Go online within the first half hour of your shift. Otherwise the shift is marked as missed and opens up for others.',
           'You can cancel a booked shift until it starts. Shifts are optional: you can also go online whenever you want.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-turnos-en.webp',
+            alt: 'The “My shifts” screen in Divoox Driver, to book a shift by picking the day, the start time, and how long it lasts.',
+            pie: 'In “My shifts” you pick the day, the time, and how long.',
+          },
+        ],
         preguntas: [
           'How do I book a shift?',
           'What do I get from having a shift?',
@@ -6641,6 +6850,18 @@ const en: SeccionDocs[] = [
           'We check it every time you go online or open your ratings. If you stop meeting one, you stop being a top driver until you get it back; nobody is deactivated for this.',
           'If you also have a booked shift, the shift comes first.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-calificaciones-en.webp',
+            alt: 'The “My ratings” screen in Divoox Driver with customer rating, acceptance, completion, and on-time rate.',
+            pie: '“My ratings” shows each number with its benchmark.',
+          },
+          {
+            src: '/docs/driver-destacado-en.webp',
+            alt: 'The “Top driver” section in Divoox Driver, with the five requirements and how close the driver is on each one.',
+            pie: 'The requirements you already meet show in green.',
+          },
+        ],
         preguntas: ['How do I become a top driver?', 'What do I get as a top driver?'],
         pasos: [
           'Open “Ratings” in the app.',
@@ -6675,6 +6896,13 @@ const en: SeccionDocs[] = [
           'Emergency: instantly alerts our team with your location and shows the button to call your country’s emergency number.',
           'Share my trip: send a link to someone you trust. They see your first name and where you are, without an account, for 12 hours.',
           'Report an incident: an accident, harassment, a robbery or a loose animal. Tell us what happened and our team will contact you.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-seguridad-en.webp',
+            alt: 'The “Safety” screen in Divoox Driver with the emergency button, share my trip, and report an incident.',
+            pie: 'From “Safety” you get help, share your trip, or report an incident.',
+          },
         ],
         preguntas: ['What do I do in an emergency while delivering?', 'How do I share where I am?'],
         pasos: ['Open the menu and tap “Safety”.', 'Choose: emergency, share or report.'],
@@ -6777,7 +7005,13 @@ const en: SeccionDocs[] = [
           'Open “Wallet,” check or fix your bank account details and withdraw again.',
           'Our team gets the alert too and checks every day that all the money adds up: sales, charges, refunds and payouts.',
         ],
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/driver-billetera-en.webp',
+            alt: 'The Divoox Driver wallet with earnings, the amount available to withdraw, and the button to connect a bank account.',
+            pie: 'Your wallet shows what you can withdraw and lets you connect or change your bank account.',
+          },
+        ],
         preguntas: [
           'Why didn’t my withdrawal arrive?',
           'What do I do if the bank rejected my payout?',
@@ -7310,6 +7544,23 @@ const en: SeccionDocs[] = [
           'Integrations: in “Integrations” you register your system’s secure (https) address and choose which changes you want: package created, assigned, loaded, on the way, delivered, not delivered or returned; route assigned, accepted, on the way or finished; and exceptions. Divoox notifies your system every time, signed with a secret shown only once. If your system doesn’t respond, it retries for almost a day and, if it keeps failing, the integration pauses itself. You can send a test, see every attempt and change the secret without interrupting the service.',
           'Operations: in “Operations” you see, for the dates you choose, routes on the street, open offers, delivered and undelivered packages, the share delivered on the first attempt, the share delivered within the time window (only if your shipments have one), exceptions by reason and the average route duration. These are operations metrics: there are no charges or payments here.',
         ],
+        capturas: [
+          {
+            src: '/docs/flex-operacion-en.webp',
+            alt: 'The Operations page in the Divoox Flex panel: routes on the street, open offers, packages delivered and not delivered, and delivery rates for the dates you choose.',
+            pie: 'Your operations metrics for the dates you pick.',
+          },
+          {
+            src: '/docs/flex-vehiculos-en.webp',
+            alt: 'The Vehicles page in the Divoox Flex panel, where you declare how much each driver’s vehicle can carry.',
+            pie: 'How much each vehicle can carry.',
+          },
+          {
+            src: '/docs/flex-integraciones-en.webp',
+            alt: 'The Integrations page in the Divoox Flex panel, where you register your system’s secure address and choose which changes it receives.',
+            pie: 'Updates sent to your system.',
+          },
+        ],
         preguntas: [
           'How do I know when a driver accepts or finishes a route?',
           'What happens if nobody accepts a route offer?',
@@ -7341,6 +7592,13 @@ const en: SeccionDocs[] = [
           'Receipts: every top-up, refund, adjustment and each route’s commissions have a numbered receipt with date and amount. You can print it or save it as PDF. They are wallet receipts, not tax invoices.',
           'Settings: choose the balance at which we alert you, whether you also want email alerts and, if your country allows it, automatic top-up: when the available balance drops below the threshold, we top up the amount you choose with your saved card (at most once an hour).',
           'If a refund or a chargeback leaves an outstanding balance, new routes won’t go out until you top up (the next top-up pays the outstanding amount first). Routes already on the street finish normally.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-billetera-en.webp',
+            alt: 'A company wallet in the Divoox Flex panel: available balance, amount reserved for routes, total, the Top up button, and recent activity.',
+            pie: 'Your balance, top-ups, and receipts.',
+          },
         ],
         preguntas: [
           'How do I top up in Divoox Flex?',
