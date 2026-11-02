@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-01T20:42:27-05:00",
+  "actualizado": "2026-11-01",
   "version": "6632d38",
   "ahora": {
     "titulo": "Esta página de progreso",
@@ -285,6 +285,14 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Equipo de agentes con puestos fijos",
+      "texto": "Siete puestos con su contrato: jefe de operaciones, investigador, desarrollador, revisor de calidad, guardia de producción, tiendas y tesorero. Cada uno con una sola tarea, permisos limitados y su registro. Se suman al gerente de correo.",
+      "paises": "Todos",
+      "docs": []
+    },
     {
       "fecha": "2026-11-01",
       "tipo": "arreglo",
