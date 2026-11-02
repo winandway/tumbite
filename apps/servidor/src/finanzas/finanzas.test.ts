@@ -16,7 +16,7 @@ import { reiniciarLimiteClaves } from '../flex/autorizacion';
 import { TAREAS_RELOJ } from '../rutas/operacion';
 import { saldoLibro } from '../internacional/libro';
 import { cobrarComisionConductor, saldosConductor } from './conductor';
-import { conciliarFinanzas } from './reloj';
+import { alertasSaldo, conciliarFinanzas, saludBilleteras } from './reloj';
 
 /**
  * Divoox · Fase 4 de Flex: dinero (C-FIN-POLITICAS, C-FIN-BILLETERA, C-FIN-RECARGAS, C-FIN-RESERVAS,
@@ -1022,5 +1022,143 @@ describe('C-PREPAGO-MERCADOS: prepago de conductores encendido en Venezuela y Co
     expect(
       await comisionConductor(m.DB, { servicio: 'food', pais: 'VE', moneda: 'VES', valor: 10_000 }),
     ).toBeNull();
+  });
+});
+
+describe('C-FIN-CONCILIACION · casos del reloj que faltaban (COB-1)', () => {
+  const envDe = (m: M) => ({ DB: m.DB, ...m.extra, ...ENV }) as never;
+  const estadoRecarga = async (m: M, id: string) =>
+    (await m.DB.prepare('SELECT estado, motivo FROM recargas_empresa WHERE id = ?')
+      .bind(id)
+      .first<{ estado: string; motivo: string | null }>())!;
+
+  it('sin conciliación todavía la salud de billeteras queda «pendiente»', async () => {
+    const m = mundo(ENV);
+    expect(await saludBilleteras(m.DB)).toBe('pendiente');
+    await conciliarFinanzas(envDe(m), m.DB);
+    expect(await saludBilleteras(m.DB)).toBe('ok');
+  });
+
+  it('una recarga que nunca abrió pago en Stripe se da por fallida a la hora, no antes', async () => {
+    const { m, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    await m.DB.prepare(
+      "UPDATE recargas_empresa SET stripe_pi = NULL, creado_en = datetime('now', '-20 minutes') WHERE id = ?",
+    )
+      .bind(r.recargaId)
+      .run();
+    await conciliarFinanzas(envDe(m), m.DB);
+    expect((await estadoRecarga(m, r.recargaId)).estado).toBe('pendiente');
+    await m.DB.prepare(
+      "UPDATE recargas_empresa SET creado_en = datetime('now', '-2 hours') WHERE id = ?",
+    )
+      .bind(r.recargaId)
+      .run();
+    await conciliarFinanzas(envDe(m), m.DB);
+    expect(await estadoRecarga(m, r.recargaId)).toMatchObject({
+      estado: 'fallida',
+      motivo: 'sin intento de pago',
+    });
+    expect((await billetera(m, e)).saldo.disponible).toBe(0);
+  });
+
+  it('una recarga cancelada en Stripe queda cancelada y no acredita nada', async () => {
+    const { m, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    r.pi.status = 'canceled';
+    await m.DB.prepare(
+      "UPDATE recargas_empresa SET creado_en = datetime('now', '-20 minutes') WHERE id = ?",
+    )
+      .bind(r.recargaId)
+      .run();
+    const res = await conciliarFinanzas(envDe(m), m.DB);
+    expect(res.recargasRecuperadas).toBe(0);
+    expect((await estadoRecarga(m, r.recargaId)).estado).toBe('cancelada');
+    expect((await billetera(m, e)).saldo.disponible).toBe(0);
+  });
+
+  it('una recarga abandonada un día entero se cancela en Stripe y aquí', async () => {
+    const { m, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    await m.DB.prepare(
+      "UPDATE recargas_empresa SET creado_en = datetime('now', '-2 hours') WHERE id = ?",
+    )
+      .bind(r.recargaId)
+      .run();
+    // Dos horas sin pagar: todavía se espera.
+    await conciliarFinanzas(envDe(m), m.DB);
+    expect((await estadoRecarga(m, r.recargaId)).estado).toBe('pendiente');
+    expect(llamadasStripe.some((l) => l.ruta.endsWith('/cancel'))).toBe(false);
+    await m.DB.prepare(
+      "UPDATE recargas_empresa SET creado_en = datetime('now', '-25 hours') WHERE id = ?",
+    )
+      .bind(r.recargaId)
+      .run();
+    await conciliarFinanzas(envDe(m), m.DB);
+    expect(llamadasStripe.some((l) => l.ruta === `/v1/payment_intents/${r.pi.id}/cancel`)).toBe(
+      true,
+    );
+    expect((await estadoRecarga(m, r.recargaId)).estado).toBe('cancelada');
+  });
+
+  it('ve un saldo negativo y comisiones descuadradas, y pone la salud en rojo', async () => {
+    const { m, e } = await escenario();
+    await m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('neg1', ?, 'reservado', 'US', 'USD', -300, 'ajuste', 'ajuste:neg1')",
+    )
+      .bind(`empresa:${e.id}`)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('com1', 'divoox', 'comisiones', 'US', 'USD', 25, 'comision_flex_paquete', 'comision_flex_paquete:p1:divoox')",
+    ).run();
+    // Con un correo del equipo de dinero, intenta avisar (aquí sin YAD_TOKEN: queda en el log de error).
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const env = { DB: m.DB, ...m.extra, ...ENV, ADMIN_CORREOS: 'equipo@divoox.com' } as never;
+    const res = await conciliarFinanzas(env, m.DB);
+    expect(res.ok).toBe(false);
+    expect(res.problemas.map((p) => p.tipo)).toEqual(
+      expect.arrayContaining(['saldo_negativo', 'comisiones_descuadradas']),
+    );
+    expect(await saludBilleteras(m.DB)).toBe('error');
+    expect(errores.mock.calls.some((c) => String(c[0]).startsWith('correo:'))).toBe(true);
+    errores.mockRestore();
+  });
+
+  it('las tres tareas de dinero corren desde el reloj sin romperse con la base vacía', async () => {
+    const m = mundo(ENV);
+    for (const nombre of ['fin_conciliacion', 'fin_recarga_automatica', 'fin_alertas_saldo']) {
+      const tarea = TAREAS_RELOJ.find((t) => t.nombre === nombre)!;
+      await expect(tarea.correr(envDe(m), m.DB)).resolves.toBeTruthy();
+    }
+    expect(await saludBilleteras(m.DB)).toBe('ok');
+  });
+
+  it('alerta de saldo bajo: avisa una vez al día y solo si el disponible está por debajo', async () => {
+    const { m, e } = await escenario();
+    const cfg = await llamar(
+      m,
+      'PUT',
+      `${B}/empresas/${e.id}/billetera/config`,
+      {
+        alertaSaldo: 500,
+        avisosCorreo: true,
+        recargaAutomatica: { activa: false, umbral: null, monto: null },
+      },
+      e.dueno.token,
+    );
+    expect(cfg.estado).toBe(200);
+    const env = envDe(m);
+    expect(await alertasSaldo(env, m.DB)).toEqual({ enviadas: 1 });
+    // El mismo día no se repite.
+    expect(await alertasSaldo(env, m.DB)).toEqual({ enviadas: 0 });
+    // Al día siguiente, con saldo de sobra, tampoco.
+    await m.DB.prepare(
+      "UPDATE empresa_finanzas SET alerta_enviada_en = datetime('now', '-2 days') WHERE empresa_id = ?",
+    )
+      .bind(e.id)
+      .run();
+    const r = await recargar(m, e, 2000);
+    await confirmarPago(m, r.pi);
+    expect(await alertasSaldo(env, m.DB)).toEqual({ enviadas: 0 });
   });
 });

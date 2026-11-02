@@ -289,3 +289,15 @@
 - [x] HECHO 1 nov. (UX-2) Navegación: desde Mi cuenta → un pedido → la flecha de volver tiene que regresar a Mi cuenta, no al inicio. Buscar el mismo fallo en todas las pantallas de las tres apps (volver siempre al lugar de donde se vino). Todos los países.
 - [x] HECHO 2 nov. (UX-3) Menos rojo, blanco y negro: sumar el verde de éxito y colores de apoyo donde corresponda (estados, confirmaciones, tarjetas), sin romper la identidad. Todos los países.
 - [x] HECHO 2 nov. (UX-4: repaso de 11 pantallas de las tres apps en los dos idiomas con scripts/docs/repaso-pantallas.mjs; arreglados los fallos encontrados) Revisar TODAS las pantallas de las tres apps en español e inglés (textos cortados, botones deformes, textos en el otro idioma) y el inicio (menús, servicios) con terminación profesional. Captura antes y después de cada arreglo. Todos los países.
+
+## Bloque COB — cobertura del dinero al 90 % (2 nov 2026, 11:10, tarea programada)
+
+> Medido hoy: cobertura total 82,6 %. La regla global pide 90 % en todo lo que toca dinero; estos archivos del servidor están por debajo. Solo pruebas nuevas que describen lo que el código YA hace; si una prueba destapa un fallo, se arregla con su prueba en rojo.
+
+- [x] HECHO 2 nov (C-FIN-CONCILIACION). (COB-1) `finanzas/reloj.ts` (65 %) a 91 %: recarga sin pago, cancelada y abandonada, saldo negativo, comisiones descuadradas con aviso al equipo, alerta de saldo bajo una vez al día y las tres tareas del reloj; comprobado en rojo. Todos los países.
+- [ ] (COB-2) `finanzas/rutasEmpresa.ts` (70 %) a 90 % o más: las rutas de dinero de las empresas. Todos los países.
+- [ ] (COB-3) `finanzas/rutasAdmin.ts` (77 %) a 90 % o más: las rutas de dinero del superadmin. Todos los países.
+- [ ] (COB-4) `finanzas/billetera.ts` y `finanzas/cobrosRuta.ts` (86 %) a 90 % o más: saldo prepago y cobros de ruta. Todos los países.
+- [ ] (COB-5) `viajesCobro.ts`, `internacional/recargas.ts`, `plus.ts` y `tarjetasRegalo.ts` (87 a 89 %) a 90 % o más. Todos los países.
+- [ ] (COB-6) `sms.ts` (72 %) a 90 % o más: el aviso por SMS de respaldo, con Twilio simulado. EE. UU.
+- [ ] (COB-7) Candado: umbral de cobertura por archivo en vitest.config para los archivos de dinero de este bloque, para que no vuelvan a bajar del 90 %. Todos los países.
