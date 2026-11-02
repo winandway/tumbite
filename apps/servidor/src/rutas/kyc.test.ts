@@ -19,6 +19,65 @@ function conAlmacen(extra: Record<string, unknown> = {}) {
   return { m, r2, subir };
 }
 
+describe('G3: edad mínima del repartidor por estado y vehículo', () => {
+  async function pendiente(fecha: string) {
+    const { m, subir } = conAlmacen();
+    const rep = await m.cuenta('repartidor', 'Rep Edad');
+    await m.DB.prepare('UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ?')
+      .bind(fecha, rep.id)
+      .run();
+    for (const p of ['doc_frente', 'doc_reverso', 'selfie']) await subir(rep.token, p);
+    expect(
+      (await m.llamar('POST', '/datos/kyc/enviar', { docTipo: 'licencia' }, rep.token)).estado,
+    ).toBe(200);
+    const admin = await m.cuenta('admin');
+    return { m, rep, admin };
+  }
+  const haceAnios = (n: number) => {
+    const d = new Date();
+    d.setUTCFullYear(d.getUTCFullYear() - n);
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  };
+
+  it('en Florida, con 18 años no se aprueba y el panel dice por qué', async () => {
+    const { m, rep, admin } = await pendiente(haceAnios(18));
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/admin/kyc/${rep.id}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    expect(r.estado).toBe(409);
+    expect(r.datos.error).toMatch(/18 años.*FL.*19/);
+  });
+
+  it('en Florida, con 19 años sí se aprueba', async () => {
+    const { m, rep, admin } = await pendiente(haceAnios(19));
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/admin/kyc/${rep.id}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    expect(r.estado).toBe(200);
+  });
+
+  it('con el interruptor apagado queda la regla de siempre', async () => {
+    const { m, rep, admin } = await pendiente(haceAnios(18));
+    await m.DB.prepare(
+      "INSERT OR REPLACE INTO config (clave, valor) VALUES ('edad_repartidor_por_estado', '0')",
+    ).run();
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/admin/kyc/${rep.id}`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    expect(r.estado).toBe(200);
+  });
+});
+
 describe('KYC (C-KYC)', () => {
   it('punto 27: al enviar la verificación, cada correo de ADMIN_CORREOS recibe el aviso (C-OPERACION-D1)', async () => {
     const enviados: { para: string; asunto: string }[] = [];

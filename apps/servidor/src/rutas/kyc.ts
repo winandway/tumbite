@@ -1,7 +1,12 @@
 import { correosEquipo } from '../avisosEquipo';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { distanciaKm } from '@tumbite/compartido';
+import {
+  distanciaKm,
+  edadEnAnios,
+  edadMinimaRepartidor,
+  estadoEeuuDeZona,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { enviarCorreo } from '../correo';
@@ -344,6 +349,7 @@ kyc.post('/kyc/enviar', async (c) => {
       reverso: f.doc_reverso,
       selfie: f.selfie,
       giros: [f.giro_1, f.giro_2],
+      edadMinima: await edadMinimaDe(db, u.id),
     });
     if (d) {
       await guardarDecision(db, u.id, d);
@@ -585,6 +591,55 @@ kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * G3: si la persona no alcanza la edad mínima de su estado y su vehículo, no se aprueba. Sin fecha de
+ * nacimiento no se puede comprobar aquí: la revisa el equipo con el documento, como siempre.
+ * Interruptor: config «edad_repartidor_por_estado» = '0' la apaga.
+ */
+async function datosEdad(db: D1Database, id: string) {
+  return db
+    .prepare(
+      `SELECT u.fecha_nacimiento, COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona_id,
+              COALESCE(v.tipo, NULLIF(d.vehiculo_tipo, '')) AS vehiculo
+         FROM usuarios u
+         LEFT JOIN repartidores r ON r.usuario_id = u.id
+         LEFT JOIN vehiculos v ON v.id = r.vehiculo_activo_id
+         LEFT JOIN repartidor_datos d ON d.usuario_id = u.id
+        WHERE u.id = ?`,
+    )
+    .bind(id)
+    .first<{ fecha_nacimiento: string | null; zona_id: string; vehiculo: string | null }>();
+}
+
+/** G3: la edad mínima que se le pasa al motor de verificación (18 si el interruptor está apagado). */
+async function edadMinimaDe(db: D1Database, id: string): Promise<number> {
+  const apagada = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'edad_repartidor_por_estado'")
+    .first<{ valor: string }>();
+  const f = await datosEdad(db, id);
+  if (apagada?.valor === '0' || !f) return 18;
+  return edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
+}
+
+async function exigirEdadRepartidor(db: D1Database, id: string) {
+  const apagada = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'edad_repartidor_por_estado'")
+    .first<{ valor: string }>();
+  if (apagada?.valor === '0') return;
+  const f = await datosEdad(db, id);
+  const edad = edadEnAnios(f?.fecha_nacimiento);
+  if (edad == null || !f) return;
+  const minima = edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
+  if (edad < minima)
+    throw new ErrorDatos(
+      `Esta persona tiene ${edad} años; para repartir en ${estadoEeuuDeZona(f.zona_id) ?? f.zona_id}${
+        f.vehiculo ? ` en ${f.vehiculo}` : ''
+      } hacen falta ${minima}.`,
+      undefined,
+      409,
+    );
+}
+
 const esquemaRevision = z.object({
   estado: z.enum(['aprobado', 'rechazado']),
   motivo: z.string().trim().max(500).default(''),
@@ -602,6 +657,8 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     .bind(id)
     .first<{ nombre: string; correo: string; idioma: 'es' | 'en'; rol: string }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  // G3: edad mínima del repartidor por estado y vehículo (como DoorDash y Uber), con interruptor.
+  if (d.estado === 'aprobado' && u.rol === 'repartidor') await exigirEdadRepartidor(db, id);
   // Los restaurantes se vuelven a verificar cada año (¿sigue el local ahí?).
   const proxima =
     d.estado === 'aprobado' && u.rol === 'restaurante'

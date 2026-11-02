@@ -366,6 +366,54 @@ describe('vehículos', () => {
   });
 });
 
+describe('G4: licencia y seguro según el vehículo en Comida (como DoorDash)', () => {
+  const comidaDe = async (m: ReturnType<typeof mundo>, token: string) =>
+    (await m.llamar('GET', '/datos/conductor/servicios', undefined, token)).datos.servicios.find(
+      (s: { servicioId: string }) => s.servicioId === 'comida',
+    );
+
+  it('en carro se pide la licencia; con la licencia aprobada vuelve a repartir', async () => {
+    const e = await escenario();
+    const { m, rep, admin } = e;
+    const id = await vehiculoAprobado(e, 'carro', 'CAR111');
+    await m.llamar('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: id }, rep.token);
+    const antes = await comidaDe(m, rep.token);
+    expect(antes).toMatchObject({ puedeActivar: false, motivo: 'requisitos_faltantes' });
+    expect(antes.requisitosFaltantes).toEqual(['licencia']);
+    expect(
+      (
+        await m.llamar(
+          'PUT',
+          `/datos/admin/cumplimientos/${rep.id}/licencia`,
+          { estado: 'aprobado', venceEn: '2099-01-01' },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(await comidaDe(m, rep.token)).toMatchObject({
+      puedeActivar: true,
+      motivo: 'habilitado',
+    });
+  });
+
+  it('en moto se pide la licencia de moto', async () => {
+    const e = await escenario();
+    const { m, rep } = e;
+    const id = await vehiculoAprobado(e, 'moto', 'MOT222');
+    await m.llamar('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: id }, rep.token);
+    expect((await comidaDe(m, rep.token)).requisitosFaltantes).toEqual(['licencia_moto']);
+  });
+
+  it('sin vehículo registrado (a pie o en bici de siempre) Comida sigue igual', async () => {
+    const { m, rep } = await escenario();
+    expect(await comidaDe(m, rep.token)).toMatchObject({
+      puedeActivar: true,
+      motivo: 'habilitado',
+      requisitosFaltantes: [],
+    });
+  });
+});
+
 describe('habilitaciones', () => {
   it('Moto no se habilita sin sus requisitos; con ellos sí, con historial', async () => {
     const { m, admin, rep } = await escenario();

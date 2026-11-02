@@ -19,6 +19,7 @@ export * from './despacho';
 export * from './mostrador';
 export * from './horarios';
 export * from './gps';
+export * from './edadRepartidor';
 export * from './activacion';
 export * from './colaEntrega';
 export * from './firmaInterna';

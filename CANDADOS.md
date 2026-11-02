@@ -2358,3 +2358,17 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué sigue igual:** el tope duro de «entregado» y la llegada al restaurante siguen en `RADIO_LLEGADA_M` (200 m); la excepción «No puedo confirmar mi ubicación» que autoriza soporte sigue siendo la salida en edificios.
 - **Pruebas:** `gps.test.ts` («GPS como los estudios», 4) y `operacion.test.ts` («G2: una ubicación simulada…»), comprobadas en rojo sin el arreglo.
 - **Qué NO tocar:** una lectura simulada nunca cuenta, ni para llegar ni para mover la ficha; si se cambian 30 m u 80 m, se cambian también las guías.
+
+## C-EDAD-REPARTIDOR (2 nov 2026, bloque G, punto G3) — EE. UU.
+
+- **Qué faltaba:** la edad del repartidor era 18 fija en todos lados; DoorDash pide 19 en Florida y Texas y 21 en California, y Uber 19 en moto o carro (estudios de Richard, E2 p.3).
+- **Qué se hizo:** `packages/compartido/src/edadRepartidor.ts` (`edadMinimaRepartidor`, `estadoEeuuDeZona`, `edadEnAnios`; manda la mayor regla; fuera de EE. UU., 18). En `apps/servidor/src/rutas/kyc.ts`, al aprobar la verificación de un repartidor (`PATCH /datos/admin/kyc/:id`), si tiene fecha de nacimiento y no alcanza la edad de su zona y su vehículo, responde 409 con el motivo («Esta persona tiene 18 años; para repartir en FL hacen falta 19.»). El motor de verificación recibe `edadMinima` en vez de 18. Interruptor: `config.edad_repartidor_por_estado = '0'` vuelve a la regla de 18.
+- **Pruebas:** `edadRepartidor.test.ts` (5) y «G3» en `kyc.test.ts` (3), en rojo sin la comprobación.
+- **Qué NO tocar:** la zona manda el estado (`US-FL-…`); sin fecha de nacimiento la revisa el equipo con el documento.
+
+## C-REQUISITOS-VEHICULO (2 nov 2026, bloque G, punto G4) — todos los países
+
+- **Qué faltaba:** los requisitos iban solo por servicio; DoorDash pide licencia y seguro si se reparte en carro (E2 p.3).
+- **Qué se hizo:** tabla nueva `servicio_vehiculo_requisitos` (schema.sql) con Comida, Mercado, Farmacia, Licores y Envíos: en carro `licencia` y `seguro_vehiculo`; en moto `licencia_moto` y `seguro_vehiculo`; a pie o en bici nada. `estadoDelConductor` (`rutas/servicios.ts`) suma esos requisitos según el vehículo activo aprobado. Sin vehículo registrado, Comida sigue igual (C-COMIDA-INTACTA).
+- **Límite que queda:** Comida todavía no lee el catálogo de habilitaciones para repartir (eso es M6); hasta entonces el requisito se ve y se exige en el catálogo y en los servicios nuevos, no en el reparto de Comida. Punto G4b de la fila.
+- **Pruebas:** «G4» en `servicios.test.ts` (3), en rojo sin la tabla.

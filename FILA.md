@@ -267,8 +267,9 @@
 
 - [x] HECHO 2 nov. (G1) Poner al día la tabla «Lo que NO tenemos» de docs/COMPARACION-CICLO-PEDIDO.md: 13 de las 18 brechas ya están hechas con su candado; dejar abiertas solo las que de verdad faltan. Todos los países.
 - [x] HECHO 2 nov (C-GPS-ESTUDIOS). (G2) GPS de la entrega como el estudio: precisión exigida 30 m (hoy 60), radio de llegada unos 80 m (hoy 200) y detección de ubicación simulada en Android, que manda el caso a soporte en vez de aceptar. Todos los países.
-- [ ] (G3) Edad mínima del repartidor por estado y por vehículo, como DoorDash y Uber (Florida y Texas 19, California 21, moto y carro 19), con interruptor por zona; la edad sale de la fecha de nacimiento que ya trae la verificación. EE. UU.
-- [ ] (G4) Licencia y seguro según el vehículo también en Comida (en carro o moto se piden; en bici o a pie no), con la tabla servicio por vehículo. Todos los países.
+- [x] HECHO 2 nov (C-EDAD-REPARTIDOR). (G3) Edad mínima del repartidor por estado y por vehículo, como DoorDash y Uber (Florida y Texas 19, California 21, moto y carro 19), con interruptor por zona; la edad sale de la fecha de nacimiento que ya trae la verificación. EE. UU.
+- [x] HECHO 2 nov en el catálogo (C-REQUISITOS-VEHICULO); el reparto de Comida lo exige en G4b. (G4) Licencia y seguro según el vehículo también en Comida (en carro o moto se piden; en bici o a pie no), con la tabla servicio por vehículo. Todos los países.
+- [ ] (G4b) M6: que el reparto de Comida lea vehículos, habilitaciones y requisitos (con bandera, como dice la migración M5), para que licencia y seguro se exijan de verdad al repartir comida; el Driver sube su licencia desde «Mi vehículo». Todos los países.
 - [ ] (G5) Resumen anual por repartidor con el umbral de 2.000 dólares del formulario 1099-NEC, apagado; la emisión real la decide el contador. EE. UU.
 - [ ] (G6) Quitar del Driver los textos «¡Muy pronto en Divoox!» que quedaron sin uso. Todos los países.
 

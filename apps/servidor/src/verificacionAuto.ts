@@ -88,6 +88,8 @@ export type FotosKyc = {
   reverso: string | null;
   selfie: string;
   giros: [string, string];
+  /** G3: edad mínima de su estado y su vehículo; el motor la usa en vez de 18. */
+  edadMinima?: number;
 };
 
 /**
@@ -126,6 +128,7 @@ export async function pedirDecision(
     reverso,
     selfie,
     giros: [g1, g2],
+    edadMinima: fotos.edadMinima,
     malaConducta: malas.map((m) => ({ id: m.id, huella: JSON.parse(m.h) as number[] })),
   });
   const hora = String(Date.now());

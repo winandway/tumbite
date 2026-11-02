@@ -272,9 +272,24 @@ async function estadoDelConductor(
                  WHERE c.conductor_id = ? AND c.requisito = sr.requisito AND c.estado = 'aprobado'
                    AND c.vehiculo_id = CASE rd.nivel WHEN 'vehiculo' THEN ? ELSE '' END
                    AND (c.vence_en IS NULL OR c.vence_en > datetime('now')))
-          ORDER BY sr.servicio_id, sr.requisito`,
+         UNION
+         -- G4: lo que pide el vehículo activo (licencia y seguro en carro o moto).
+         SELECT svr.servicio_id, svr.requisito FROM servicio_vehiculo_requisitos svr
+           JOIN requisitos_def rd ON rd.requisito = svr.requisito
+          WHERE svr.vehiculo_tipo = ? AND NOT EXISTS (
+                SELECT 1 FROM cumplimientos c
+                 WHERE c.conductor_id = ? AND c.requisito = svr.requisito AND c.estado = 'aprobado'
+                   AND c.vehiculo_id = CASE rd.nivel WHEN 'vehiculo' THEN ? ELSE '' END
+                   AND (c.vence_en IS NULL OR c.vence_en > datetime('now')))
+          ORDER BY 1, 2`,
       )
-      .bind(conductorId, vehiculo?.estado === 'aprobado' ? vehiculo.id : '-')
+      .bind(
+        conductorId,
+        vehiculo?.estado === 'aprobado' ? vehiculo.id : '-',
+        vehiculo?.estado === 'aprobado' ? vehiculo.tipo : '-',
+        conductorId,
+        vehiculo?.estado === 'aprobado' ? vehiculo.id : '-',
+      )
       .all<{ servicio_id: string; requisito: string }>(),
   ]);
   const hab = new Map(habs.results.map((h) => [h.servicio_id, h]));
