@@ -64,41 +64,57 @@ const anuncioAntes = await api('GET', '/datos/mi-restaurante/anuncios', undefine
 
 // Un caso de ayuda de la cuenta de demostración con una captura adjunta y la respuesta de soporte
 // (se crea una sola vez; las corridas siguientes reutilizan el mismo).
-async function casoDeDemostracion() {
-  const { tickets } = await api('GET', '/datos/mis-tickets', undefined, cliente.token);
-  if (
-    tickets?.some((x) => x.asunto?.includes('cupón') || x.mensajes?.[0]?.texto?.includes('cupón'))
-  )
-    return;
-  const q = await api(
-    'POST',
-    '/datos/quejas',
-    {
-      tipo: 'soporte',
-      texto: 'No puedo aplicar mi cupón en el carrito. Les mando la captura de lo que veo.',
-    },
-    cliente.token,
-  );
-  const codigo = q.enlace.split('/').at(-1);
-  const imagen = fs.readFileSync(join(ORIGINALES, 'cliente-plus-es.png'));
-  const r = await fetch(`${SITIO}/datos/tickets/${codigo}/adjuntos?nombre=captura-carrito.png`, {
+async function casoDeDemostracion(idioma) {
+  const en = idioma === 'en';
+  const marca = en ? 'coupon' : 'cupón';
+  const { tickets } = await fetch(`${SITIO}/datos/mis-tickets`, {
+    headers: { authorization: `Bearer ${cliente.token}` },
+  }).then((r) => r.json());
+  if (tickets?.some((x) => x.mensajes?.some((m) => m.texto?.includes(marca)))) return;
+  const r0 = await fetch(`${SITIO}/datos/quejas`, {
     method: 'POST',
-    headers: { 'content-type': 'image/png', authorization: `Bearer ${cliente.token}` },
-    body: imagen,
+    headers: {
+      'content-type': 'application/json',
+      'x-idioma': idioma,
+      authorization: `Bearer ${cliente.token}`,
+    },
+    body: JSON.stringify({
+      tipo: 'soporte',
+      texto: en
+        ? 'I can’t apply my coupon in the cart. Here is a screenshot of what I see.'
+        : 'No puedo aplicar mi cupón en el carrito. Les mando la captura de lo que veo.',
+    }),
   });
+  const q = await r0.json();
+  const codigo = q.enlace.split('/').at(-1);
+  // La ruta sale de la carpeta fija de originales y del idioma (es o en), no de datos de afuera.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  const imagen = fs.readFileSync(join(ORIGINALES, `cliente-plus-${idioma}.png`));
+  const r = await fetch(
+    `${SITIO}/datos/tickets/${codigo}/adjuntos?nombre=${en ? 'cart' : 'carrito'}.png`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'image/png', authorization: `Bearer ${cliente.token}` },
+      body: imagen,
+    },
+  );
   const { adjunto } = await r.json();
   await api(
     'POST',
     `/datos/tickets/${codigo}/mensajes`,
-    { texto: 'Esta es la pantalla.', adjuntos: [adjunto.id] },
+    {
+      texto: en ? 'This is the screen.' : 'Esta es la pantalla.',
+      adjuntos: [adjunto.id],
+    },
     cliente.token,
   );
   await api(
     'POST',
     `/datos/admin/tickets/${q.ticketId}/mensajes`,
     {
-      texto:
-        'Gracias por la captura. Ya vimos el problema: el cupón aplica desde 15 dólares. Avísanos si necesitas algo más.',
+      texto: en
+        ? 'Thanks for the screenshot. We found it: the coupon applies to orders of $15 or more. Let us know if you need anything else.'
+        : 'Gracias por la captura. Ya vimos el problema: el cupón aplica desde 15 dólares. Avísanos si necesitas algo más.',
     },
     admin.token,
   );
@@ -206,7 +222,7 @@ try {
       await p.goto(`${SITIO}/app/account`, { waitUntil: 'networkidle' });
       await foto(p, 'cliente-mi-cuenta', { entera: true });
       if (toca('soporte')) {
-        await casoDeDemostracion();
+        await casoDeDemostracion(idioma);
         await p.reload({ waitUntil: 'networkidle' });
         await p.waitForTimeout(2000);
         const casos = p.getByText(t('Mis casos de ayuda', 'My help cases')).first();
@@ -214,8 +230,9 @@ try {
         await p.mouse.move(195, 500);
         await p.mouse.wheel(0, 400);
         await foto(p, 'cliente-casos-ayuda');
+        // El caso más nuevo es el de esta corrida: se abre tocando su fila.
         await p
-          .getByText(/cupón|coupon/i)
+          .getByText(/^(Caso|Case) [0-9A-F]{8} · /)
           .first()
           .click()
           .catch(() => undefined);

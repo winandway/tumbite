@@ -134,6 +134,34 @@ describe('tickets (C-TICKETS)', () => {
   });
 });
 
+describe('C-CASO-EN-SU-IDIOMA', () => {
+  it('el caso toma el idioma en que la persona usa la app, no solo el de su cuenta', async () => {
+    buzon();
+    const m = mundo(ENV);
+    const cliente = await m.cuenta('cliente', 'Ana Idioma');
+    await m.llamar('POST', '/datos/quejas', { texto: 'La app no me deja entrar.' }, cliente.token, {
+      'x-idioma': 'es',
+    });
+    await m.llamar(
+      'POST',
+      '/datos/quejas',
+      { texto: 'The app will not let me in.' },
+      cliente.token,
+      {
+        'x-idioma': 'en',
+      },
+    );
+    const { tickets } = (await m.llamar('GET', '/datos/mis-tickets', undefined, cliente.token))
+      .datos as {
+      tickets: { asunto: string }[];
+    };
+    expect(tickets.map((t) => t.asunto).sort()).toEqual([
+      'Problem report',
+      'Reporte de un problema',
+    ]);
+  });
+});
+
 describe('C-TICKETS-EQUIPO', () => {
   it('prioridad, asignación a alguien del equipo y respuestas guardadas', async () => {
     buzon();

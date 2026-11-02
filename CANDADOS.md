@@ -2330,3 +2330,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** la app Driver solo conocía la ubicación estando conectada o en camino, así que desconectada nunca pedía `/datos/repartidor/demanda` y el mapa salía sin zonas. Lo destapó la captura para Docs pedida por Richard.
 - **Arreglo:** `apps/repartidor/src/Inicio.tsx` lee la ubicación una vez estando desconectada, solo si el permiso ya está dado (nunca lo vuelve a pedir), como Dasher.
 - **Prueba:** `packages/compartido/src/zonasAntesDeConectar.test.ts` (comprobada en rojo).
+
+## C-CASO-EN-SU-IDIOMA — el caso de ayuda toma el idioma en que se usa la app (1 nov 2026, todos los países)
+
+- **Qué se rompía:** el título del caso («Pedido de ayuda», «Reporte de un problema») salía en el idioma guardado en la cuenta, no en el de la app: una persona que usaba la app en español veía «Help request». Lo destapó la captura de Docs.
+- **Arreglo:** `POST /datos/quejas` usa la cabecera `x-idioma` de la app y, si no viene, el idioma de la cuenta. El gerente de correo responde en ese idioma.
+- **Prueba:** `tickets.test.ts` → «C-CASO-EN-SU-IDIOMA» (comprobada en rojo).

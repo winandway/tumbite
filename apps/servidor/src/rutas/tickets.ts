@@ -540,13 +540,17 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
     restaurante: 'restaurante',
     admin: 'admin',
   }[u.rol];
+  // C-CASO-EN-SU-IDIOMA: el idioma en que usa la app manda (la cuenta puede estar en otro); así el
+  // título del caso y la respuesta del equipo llegan en su idioma.
+  const pedido = c.req.header('x-idioma');
+  const idioma = pedido === 'es' || pedido === 'en' ? pedido : u.idioma;
   const t = await crearTicket(c.env, db, {
     tipo: d.tipo,
     nombre: u.nombre,
     correo: u.correo,
-    idioma: u.idioma,
+    idioma,
     asunto:
-      (u.idioma === 'en'
+      (idioma === 'en'
         ? d.tipo === 'queja'
           ? 'Problem report'
           : 'Help request'
