@@ -238,7 +238,12 @@ export default function PantallaCarrito() {
         `/datos/restaurantes/${carrito.restauranteId}`,
       )
       .then((r) => setPromociones(r.promociones ?? []))
-      .catch(() => setPromociones([]));
+      .catch((e: unknown) => {
+        // BRE-R2: sin promociones el carrito sigue (el servidor devuelve el total correcto), pero
+        // el fallo queda anotado en vez de callarse.
+        console.warn('carrito: no se pudieron leer las promociones del restaurante', e);
+        setPromociones([]);
+      });
   }, [api, carrito.restauranteId]);
 
   // C-PEDIDO-PROGRAMADO: las franjas las da el servidor (horario y festivos del comercio).
@@ -371,7 +376,9 @@ export default function PantallaCarrito() {
   }
 
   // Cupón (punto 15): se valida en el servidor al aplicarlo y otra vez al pedir.
-  const [cupon, setCupon] = useState<{ codigo: string; descuento: number } | null>(null);
+  const [cupon, setCupon] = useState<{ codigo: string; descuento: number; tipo?: string } | null>(
+    null,
+  );
   // C-TARJETAS-REGALO: el saldo de regalo del cliente y si lo quiere usar en este pedido.
   const [saldoRegaloCli, setSaldoRegaloCli] = useState(0);
   const [usarRegalo, setUsarRegalo] = useState(true);
@@ -412,7 +419,7 @@ export default function PantallaCarrito() {
     setCuponError('');
     if (!carrito.restauranteId) return;
     try {
-      const r = await api.pedir<{ codigo: string; descuento: number }>(
+      const r = await api.pedir<{ codigo: string; descuento: number; tipo?: string }>(
         'POST',
         '/datos/cupones/validar',
         {
@@ -451,23 +458,36 @@ export default function PantallaCarrito() {
     regalo,
   };
   const conTarjeta = (b.valores.metodoPago || 'tarjeta') === 'tarjeta';
-  const promo =
-    carrito.lineas.length && conTarjeta
-      ? mejorPromocion(promociones, calcularPedido({ ...base, recogida: recogidaElegida }))
-      : null;
-  const sinPlus = carrito.lineas.length
-    ? calcularConPromocion({ ...base, recogida: recogidaElegida, descuento: descuentoCupon }, promo)
+  const previo = carrito.lineas.length
+    ? calcularPedido({ ...base, recogida: recogidaElegida })
     : null;
   // C-PLUS: la misma cuenta que el servidor (envío gratis y servicio rebajado, solo en dólares).
-  const descPlus =
-    sinPlus && plusVigente && moneda === 'USD' && !recogidaElegida
-      ? descuentoPlus(sinPlus, plusVigente)
-      : 0;
+  const plusAplica = Boolean(
+    previo &&
+    plusVigente &&
+    moneda === 'USD' &&
+    !recogidaElegida &&
+    descuentoPlus(previo, plusVigente) > 0,
+  );
+  // BRE-R2: el envío que ya cubren Plus o un cupón de envío gratis no lo vuelve a pagar la
+  // promoción «envío gratis» del restaurante (la misma regla que el servidor).
+  const envioCubierto = previo && (plusAplica || cupon?.tipo === 'envio_gratis') ? previo.envio : 0;
+  const promo =
+    previo && conTarjeta ? mejorPromocion(promociones, previo, { regalo, envioCubierto }) : null;
+  const sinPlus = carrito.lineas.length
+    ? calcularConPromocion(
+        { ...base, recogida: recogidaElegida, descuento: descuentoCupon },
+        promo,
+        { envioCubierto },
+      )
+    : null;
+  const descPlus = sinPlus && plusVigente && plusAplica ? descuentoPlus(sinPlus, plusVigente) : 0;
   const conPlus =
     sinPlus && descPlus
       ? calcularConPromocion(
           { ...base, recogida: recogidaElegida, descuento: descuentoCupon + descPlus },
           promo,
+          { envioCubierto },
         )
       : sinPlus;
   // C-TARJETAS-REGALO: la misma cuenta que el servidor (solo con tarjeta y en dólares).
@@ -485,6 +505,7 @@ export default function PantallaCarrito() {
             descuento: descuentoCupon + descPlus + usoRegalo,
           },
           promo,
+          { envioCubierto },
         )
       : conPlus;
 
