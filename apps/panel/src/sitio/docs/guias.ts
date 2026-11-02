@@ -427,6 +427,13 @@ const es: SeccionDocs[] = [
           'Salen restaurantes del mismo tipo de comida que ya pediste (pizza, sushi, comida cubana…), abiertos ahora y del más cercano al más lejano. Los que ya probaste no se repiten aquí: están en «Pedir otra vez».',
           'Si todavía no pediste nada, la fila no aparece y ves la lista de siempre.',
         ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-te-puede-gustar-es.webp',
+            alt: 'El inicio de la app de Divoox con la fila «Te puede gustar» debajo de «Pedir otra vez»: una pizzería abierta y cercana que la persona todavía no probó.',
+            pie: 'Debajo de «Pedir otra vez» aparece «Te puede gustar», con locales nuevos del tipo de comida que ya pediste.',
+          },
+        ],
         preguntas: ['¿Por qué me recomiendan estos restaurantes?'],
         pasos: ['Abre el inicio.', 'Desliza la fila «Te puede gustar» y toca uno.'],
       },
@@ -2869,6 +2876,13 @@ const es: SeccionDocs[] = [
           'Es opcional. Solo lo ve nuestro equipo de soporte, para cuidar a los repartidores; el cliente no ve tu nota y nadie se bloquea por una calificación.',
           'Cada entrega se califica una sola vez, el mismo día.',
         ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-calificar-cliente-es.webp',
+            alt: 'La pestaña Pedidos de Divoox Driver con «Califica a tus clientes de hoy»: el nombre de pila y el número del pedido, con las estrellas para calificar.',
+            pie: 'En «Pedidos» calificas, si quieres, a quien recibió tus entregas de hoy.',
+          },
+        ],
         preguntas: ['¿Puedo calificar a un cliente?', '¿El cliente ve mi calificación?'],
         pasos: [
           'Abre «Pedidos».',
@@ -4470,6 +4484,13 @@ const en: SeccionDocs[] = [
           'Once you’ve received an order, the home screen adds the “You might like” row, below “Order again”.',
           'It shows restaurants of the same kind of food you ordered (pizza, sushi, Cuban food…), open now, nearest first. The ones you already tried don’t repeat here: they’re in “Order again”.',
           'If you haven’t ordered yet, the row doesn’t appear and you see the usual list.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-cliente-te-puede-gustar-en.webp',
+            alt: 'The Divoox app home screen with the “You might like” row under “Order again”: an open pizza place nearby the person hasn’t tried yet.',
+            pie: 'Under “Order again” you’ll see “You might like,” with new places serving the kind of food you already ordered.',
+          },
         ],
         preguntas: ['Why am I seeing these restaurants?'],
         pasos: ['Open the home screen.', 'Swipe the “You might like” row and tap one.'],
@@ -6882,6 +6903,13 @@ const en: SeccionDocs[] = [
           'Under “Orders” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait.',
           'It’s optional. Only our support team sees it, to look after drivers; the customer doesn’t see your rating and nobody is blocked over one rating.',
           'Each delivery can be rated once, on the same day.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-calificar-cliente-en.webp',
+            alt: 'The Orders tab in Divoox Driver with “Rate today’s customers”: the first name and the order number, with the stars to rate.',
+            pie: 'In “Orders” you can rate the people who received today’s deliveries, if you want.',
+          },
         ],
         preguntas: ['Can I rate a customer?', 'Does the customer see my rating?'],
         pasos: [

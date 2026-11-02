@@ -1084,11 +1084,12 @@ for (const idioma of ['en', 'es'] as const) {
       // «Te puede gustar»: otra pizzería abierta al lado que el cliente todavía no probó (solo en
       // la base local del recorrido, con su propia dueña en cada idioma).
       const otra = `${rest.id}-otra`;
+      const otraNombre = idioma === 'en' ? 'Napoli Pizza' : 'Pizzería Roma';
       const duena = (
         (await (
           await request.post('/datos/cuentas/registro', {
             data: {
-              nombre: 'Napoli Pizza',
+              nombre: otraNombre,
               correo: correo('napoli'),
               clave: DATOS.clave,
               rol: 'cliente',
@@ -1098,7 +1099,7 @@ for (const idioma of ['en', 'es'] as const) {
       ).usuario.id;
       sql(
         `INSERT INTO restaurantes (id, dueno_id, nombre, categoria, telefono, direccion, lat, lng, estado, abierto, zona_id, geohash, senal_en)
-          SELECT '${otra}', '${duena}', 'Napoli Pizza', categoria, telefono, direccion, lat + 0.004, lng + 0.004, 'aprobado', 1, zona_id, geohash, datetime('now')
+          SELECT '${otra}', '${duena}', '${otraNombre}', categoria, telefono, direccion, lat + 0.004, lng + 0.004, 'aprobado', 1, zona_id, geohash, datetime('now')
           FROM restaurantes WHERE id = '${rest.id}'`,
       );
       sql(

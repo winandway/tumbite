@@ -247,6 +247,7 @@
 - 1 nov 2026, 22:30 (tarea programada): CAP-1 hecho. Tres capturas reales del mapa de Driver (zona, detalle al tocar y pago por hora pico) en la guía de zonas, en español e inglés, con su prueba. Guion capturas-zonas.mjs: crea pedidos en efectivo solo en pruebas, fotografía y los cancela. Todos los países.
 
 - 1 nov 2026, 23:50 (tarea programada): CAP-7 hecho. 21 guías de Docs que no tenían foto ahora la tienen, en español e inglés (cursos, comparación, pedido en grupo, seguimiento, pago, filtros de dieta, instrucciones, panel del restaurante, Driver y Flex en inglés). Prueba nueva: ninguna guía sin captura, salvo las dos de CAP-7b. Guion capturas-guias-faltantes.mjs, solo en pruebas; deja platos, efectivo y grupos como estaban. Todos los países.
+- 2 nov 2026, 01:05 (tarea programada): CAP-7b hecho. El recorrido local (con CAPTURAS=1) suma una segunda pizzería abierta y fotografía «Te puede gustar» y «Califica a tus clientes de hoy» después de la entrega; las dos guías ya tienen foto y la prueba de Docs no tiene excepciones: ninguna guía sin captura. Todos los países.
 
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
@@ -257,7 +258,7 @@
 - [x] HECHO 1 nov. (CAP-5) Capturas de «Tarjetas de regalo»: comprar, canjear, saldo y el interruptor del carrito. EE. UU.
 - [x] HECHO 1 nov. (CAP-6) Capturas y explicación paso a paso de «Mandar capturas a soporte». Todos los países.
 - [x] HECHO 1 nov (C-DOCS-CON-CAPTURAS). (CAP-7) Revisar TODAS las guías de Docs y agregar capturas a las que no tengan (regla nueva: ninguna guía sin captura). Todos los países.
-- [ ] (CAP-7b) Capturas de «Te puede gustar» (cliente con un pedido entregado en una pizzería y otra pizzería abierta) y de «Calificar al cliente» (Driver con una entrega de hoy): sumarlas al recorrido (npm run recorrido:capturas), que es el único que completa una entrega con fotos y GPS. Al tenerlas, sacarlas de ESPERAN en guiasPublicas.test.tsx. Todos los países.
+- [x] HECHO 2 nov (C-DOCS-CON-CAPTURAS). (CAP-7b) Capturas de «Te puede gustar» (cliente con un pedido entregado en una pizzería y otra pizzería abierta) y de «Calificar al cliente» (Driver con una entrega de hoy): sumarlas al recorrido (npm run recorrido:capturas), que es el único que completa una entrega con fotos y GPS. Al tenerlas, sacarlas de ESPERAN en guiasPublicas.test.tsx. Todos los países.
 - [x] HECHO 1 nov. (PRO-1) Página de progreso: sección «Qué hace cada app» (cliente, Driver, restaurante) y «Lo que solo existe en el panel web», pensada para explicar la startup a clientes, inversores y aceleradoras. Todos los países.
 - [x] HECHO 1 nov. (STA-1) Llamarla «la startup Divoox» en la web y en Docs donde corresponda (portada, Acerca de, franquicias, presentaciones). Todos los países.
 
