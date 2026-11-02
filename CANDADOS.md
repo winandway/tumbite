@@ -2451,3 +2451,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `GET /datos/restaurantes/:id` devuelve `masPedidos` (ids) con `contarMasPedidos` de `packages/compartido/src/masPedidos.ts`: unidades de pedidos ENTREGADOS de los últimos 30 días, solo platos visibles hoy, mínimo 3 unidades, máximo 5. La app los pinta en `apps/cliente/src/app/restaurant/[id].tsx`.
 - **Prueba:** `apps/servidor/src/masPedidos.test.ts` (en rojo sin el mínimo de unidades).
 - **Qué NO tocar:** el mínimo de unidades (evita un «N.º 1» con un solo pedido).
+
+## C-ALERGIAS (2 nov 2026) — todos los países
+
+- **Qué es:** casilla «Alergias» en el carrito, aparte de las indicaciones (como «Allergy requests» de Uber Eats). El restaurante la ve resaltada en rojo en su app y en el panel, y arriba del ticket impreso («*** ALERGIA: … ***»).
+- **Cómo funciona:** columna `pedidos.alergias` (TEXT, vacía por defecto) que llega con `COLUMNAS` de `esquema.ts` (no en schema.sql). El esquema del pedido la acepta hasta 200 letras y `aPedido` la devuelve. Si el restaurante no puede cumplirla, usa «Rechazar» (devolución total, ya existía).
+- **Prueba:** `apps/servidor/src/alergias.test.ts` (en rojo si el pedido no la devuelve).
+- **Qué NO tocar:** el rojo es correcto aquí (es un riesgo, no un éxito); sin emojis (regla sinEmojis).

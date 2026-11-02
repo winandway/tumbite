@@ -457,7 +457,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
               )}
               {p.alergias ? (
                 <strong role="alert" className="alergia">
-                  ⚠ {t.alergias}: {p.alergias}
+                  {t.alergias}: {p.alergias}
                 </strong>
               ) : null}
               {p.entrega === 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (

@@ -549,7 +549,7 @@ export function Inicio() {
             fontWeight: '800',
           }}
         >
-          ⚠ {t.alergias}: {p.alergias}
+          {t.alergias}: {p.alergias}
         </Text>
       ) : null}
       {p.ajuste?.estado === 'pendiente' ? (
