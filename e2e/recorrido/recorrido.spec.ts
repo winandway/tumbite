@@ -1079,6 +1079,35 @@ for (const idioma of ['en', 'es'] as const) {
       cli.getByRole('button', { name: L.enviarCalificacion }).click(),
     ]);
 
+    // 11a. Capturas para Docs (CAP-7b) de lo que solo existe después de una entrega de verdad.
+    if (CAPTURAS && !STAGING) {
+      // «Te puede gustar»: otra pizzería abierta al lado que el cliente todavía no probó (solo en
+      // la base local del recorrido; la dueña es la cuenta del equipo, que no tiene local).
+      const otra = `${rest.id}-otra`;
+      sql(
+        `INSERT INTO restaurantes (id, dueno_id, nombre, categoria, telefono, direccion, lat, lng, estado, abierto, zona_id, geohash, senal_en)
+          SELECT '${otra}', (SELECT id FROM usuarios WHERE correo = '${correoEquipo}'), 'Napoli Pizza', categoria, telefono, direccion, lat + 0.004, lng + 0.004, 'aprobado', 1, zona_id, geohash, datetime('now')
+          FROM restaurantes WHERE id = '${rest.id}'`,
+      );
+      sql(
+        `INSERT INTO horarios_restaurante (restaurante_id, dia, abre, cierra) SELECT '${otra}', dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id = '${rest.id}'`,
+      );
+      await cli.goto('/app/');
+      const gustar = cli.getByTestId('te-puede-gustar');
+      await expect(gustar).toBeVisible({ timeout: 20_000 });
+      await gustar.scrollIntoViewIfNeeded();
+      await foto(cli, 'cliente-te-puede-gustar');
+      // Calificar al cliente: el repartidor, en «Pedidos», califica a quien recibió hoy.
+      await rep
+        .getByText(/^(Orders|Pedidos)$/)
+        .last()
+        .click();
+      const calificarCliente = rep.getByTestId('calificar-cliente');
+      await expect(calificarCliente).toBeVisible({ timeout: 20_000 });
+      await calificarCliente.scrollIntoViewIfNeeded();
+      await foto(rep, 'driver-calificar-cliente');
+    }
+
     // 11b. Lo nuevo de la Fase 2 que ve el público (capturas para Docs). Sin fotos, sirve igual
     //      de prueba: cada pantalla carga y responde.
     // Reseñas con respuesta: el restaurante contesta en público y el cliente la ve en su pedido.
