@@ -85,6 +85,16 @@ Carpeta `Proyectos Para estudiar y copiar clonar ideas /`: «Del primer registro
 - Dinero del pedido separado del estado logístico; bitácora por pedido con quién, cuándo y evidencia (E1 p.16). Tenemos `historial_estados`, `bitacora_pedidos`, `hitos_pedido`, `evidencias`, `movimientos`.
 - Cobros y transferencias separados con Stripe Connect (E1 p.24, E2 p.11). Así está.
 
+### Estado de estas brechas al 2 nov 2026 (revisado contra el código y CANDADOS.md)
+
+La tabla de abajo es la foto del 14 oct y se deja como historia. Hoy:
+
+- **Hechas, con su candado:** 1 autorizar y capturar al entregar (C-CAPTURA), 2 PIN en mano (C-PIN; obligatorio con alcohol o tabaco, C-EDAD-EN-MANO), 3 horarios (C-HORARIOS), 4 modificadores (C-OPCIONES, C-OPCIONES-ANIDADAS), 6 lista de activación (C-ACTIVACION), 7 sin red al entregar (C-COLA-SIN-RED), 8 oferta abierta tras 3 rechazos con bono (C-DESPACHO-COMPLETO), 10 cambio de dirección (C-ETAPA-2¾-FINAL), 11 retención de fotos 30 días (C-DINERO-VIGILADO), 12 recogida en el local (C-RECOGER-MAPA), 14 conciliación diaria y alertas (C-CONCILIACION-DIRECTA), 15 cocina ocupada y propina después.
+- **Código hecho, falta la cuenta de un tercero:** 9 SMS de respaldo (Twilio en verificación), 13 antecedentes (cuenta de Checkr), 16 Apple Pay (interruptores en Stripe).
+- **A medias, se cierran en el bloque G de la fila:** 5 GPS (falta precisión de 30 m, radio de unos 80 m y detectar ubicación simulada).
+- **Abiertas, bloque G:** 18 resumen 1099 (se construye apagado; la emisión la decide el contador), y del apartado de repartidores la brecha 1 (edad por estado y vehículo) y la brecha 2 (licencia y seguro según el vehículo en Comida).
+- **Decisión de política:** 17 tiempos del Manager. Hoy 1, 3 y 6 minutos (C-MANAGER-TIEMPOS) frente a 45, 90 y 120 segundos del estudio.
+
 ### Lo que NO tenemos (brechas nuevas, por orden de importancia)
 
 | #   | Brecha                                                                    | Qué dicen los estudios                                                                                                                                                                                                | Tumbite hoy                                                                             | Decisión                                                                     |
