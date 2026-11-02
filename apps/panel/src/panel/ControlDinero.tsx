@@ -7,6 +7,7 @@ import {
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
+import { Resumen1099 } from './Resumen1099';
 import { pedir } from './api';
 import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
 
@@ -1252,6 +1253,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
           </table>
         </div>
       ) : null}
+      <Resumen1099 idioma={idioma} />
       {error && (
         <p className="error-general" role="alert">
           {error}

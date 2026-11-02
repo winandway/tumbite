@@ -283,6 +283,42 @@ repartidorGrandes.get('/repartidor/resumen-anual', async (c) => {
   return c.json({ anio, ...r });
 });
 
+/**
+ * G5 (2 nov 2026): quién pasa el umbral del formulario 1099-NEC en el año (2.000 dólares desde 2026,
+ * estudios E2 p.11), con la misma cuenta que «Ganancias». Solo el equipo lo ve y solo informa: la
+ * emisión y el envío de los formularios están apagados hasta que el contador lo decida.
+ */
+export const UMBRAL_1099_CENTAVOS = 200_000;
+repartidorGrandes.get('/admin/fiscal/1099', async (c) => {
+  exigir(c, 'admin');
+  const q = z
+    .object({ anio: z.coerce.number().int().min(2025).max(2100).optional() })
+    .safeParse(c.req.query());
+  const anio = (q.success && q.data.anio) || new Date().getUTCFullYear();
+  const { results } = await base(c)
+    .prepare(
+      `SELECT u.id, u.nombre, u.correo, COUNT(*) AS entregas, SUM(
+              p.envio + p.complemento + p.propina
+                + COALESCE((SELECT centavos FROM bonos_pedido b WHERE b.pedido_id = p.id), 0)
+                + COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = p.repartidor_id AND m.concepto = 'ajuste' AND m.referencia = 'propina-extra-' || p.id), 0)) AS total
+         FROM pedidos p JOIN usuarios u ON u.id = p.repartidor_id
+        WHERE p.estado = 'entregado' AND substr(p.entregado_en, 1, 4) = ?
+          AND COALESCE(p.moneda, 'USD') = 'USD'
+        GROUP BY u.id`,
+    )
+    .bind(String(anio))
+    .all<{ id: string; nombre: string; correo: string; entregas: number; total: number }>();
+  return c.json({
+    anio,
+    umbral: UMBRAL_1099_CENTAVOS,
+    emision: 'apagada',
+    repartidores: results
+      .map((r) => ({ ...r, entregas: Number(r.entregas), total: Number(r.total) }))
+      .filter((r) => r.total >= UMBRAL_1099_CENTAVOS)
+      .sort((a, b) => b.total - a.total),
+  });
+});
+
 /** La campana: calculada al momento, sin tabla nueva (igual que la del cliente). */
 repartidorGrandes.get('/repartidor/avisos', async (c) => {
   const u = exigir(c, 'repartidor');

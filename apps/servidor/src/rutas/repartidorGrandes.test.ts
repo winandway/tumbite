@@ -267,6 +267,32 @@ describe('resumen del año (C-RESUMEN-ANUAL)', () => {
   });
 });
 
+describe('G5: resumen para el 1099-NEC (umbral de 2.000 dólares), solo para el equipo', () => {
+  it('lista a quien pasa el umbral en el año, con su total, y no a quien no llega', async () => {
+    const e = await escenario();
+    const { m } = e;
+    const rep = await e.repartidor('Rep Fiscal');
+    const id = await e.pedidoPagado();
+    await e.aceptar(id);
+    await e.ofertasDe(rep.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await llevarA(m.DB, id, 'entregado', "entregado_en = datetime('now')");
+    const admin = await m.cuenta('admin');
+    const bajo = await m.llamar('GET', '/datos/admin/fiscal/1099', undefined, admin.token);
+    expect(bajo.estado).toBe(200);
+    expect(bajo.datos).toMatchObject({ umbral: 200_000, emision: 'apagada', repartidores: [] });
+    // Una propina grande la lleva por encima del umbral.
+    await m.DB.prepare('UPDATE pedidos SET propina = 250000 WHERE id = ?').bind(id).run();
+    const alto = await m.llamar('GET', '/datos/admin/fiscal/1099', undefined, admin.token);
+    expect(alto.datos.repartidores).toHaveLength(1);
+    expect(alto.datos.repartidores[0]).toMatchObject({ id: rep.id, entregas: 1 });
+    expect(alto.datos.repartidores[0].total).toBeGreaterThanOrEqual(250_000);
+    expect((await m.llamar('GET', '/datos/admin/fiscal/1099', undefined, rep.token)).estado).toBe(
+      403,
+    );
+  });
+});
+
 describe('avisos reales del repartidor', () => {
   it('cancelación del restaurante y cambio de dirección le llegan por push y en la campana', async () => {
     const e = await escenario();

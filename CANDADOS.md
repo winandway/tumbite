@@ -2372,3 +2372,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** tabla nueva `servicio_vehiculo_requisitos` (schema.sql) con Comida, Mercado, Farmacia, Licores y Envíos: en carro `licencia` y `seguro_vehiculo`; en moto `licencia_moto` y `seguro_vehiculo`; a pie o en bici nada. `estadoDelConductor` (`rutas/servicios.ts`) suma esos requisitos según el vehículo activo aprobado. Sin vehículo registrado, Comida sigue igual (C-COMIDA-INTACTA).
 - **Límite que queda:** Comida todavía no lee el catálogo de habilitaciones para repartir (eso es M6); hasta entonces el requisito se ve y se exige en el catálogo y en los servicios nuevos, no en el reparto de Comida. Punto G4b de la fila.
 - **Pruebas:** «G4» en `servicios.test.ts` (3), en rojo sin la tabla.
+
+## C-RESUMEN-1099 (2 nov 2026, bloque G, punto G5) — EE. UU.
+
+- **Qué es:** quién pasa en el año el umbral del formulario 1099-NEC (2.000 dólares, estudios E2 p.11), con la misma cuenta que «Ganancias» y «Tu año» (envío + complemento + propina + bono + propina después de entregar), solo en dólares.
+- **Cómo:** `GET /datos/admin/fiscal/1099?anio=` en `rutas/repartidorGrandes.ts` (solo admin; responde `umbral`, `emision: 'apagada'` y la lista); vista `apps/panel/src/panel/Resumen1099.tsx` al final de «Control del dinero» del superadmin.
+- **Apagado:** no emite ni envía formularios; eso lo decide el contador (PENDIENTES).
+- **Pruebas:** «G5» en `repartidorGrandes.test.ts` (en rojo sin la ruta) y `Resumen1099.test.tsx` (2).
