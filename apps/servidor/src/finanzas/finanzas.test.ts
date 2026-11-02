@@ -1162,3 +1162,130 @@ describe('C-FIN-CONCILIACION · casos del reloj que faltaban (COB-1)', () => {
     expect(await alertasSaldo(env, m.DB)).toEqual({ enviadas: 0 });
   });
 });
+
+describe('C-FIN-BILLETERA · rutas de la billetera de la empresa (COB-2)', () => {
+  const get = (m: M, e: { id: string; dueno: { token: string } }, ruta: string) =>
+    llamar(m, 'GET', `${B}/empresas/${e.id}${ruta}`, undefined, e.dueno.token);
+
+  it('lista recargas y movimientos por fechas, y valida el rango', async () => {
+    const { m, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    await confirmarPago(m, r.pi);
+    const lista = await get(m, e, '/billetera/recargas');
+    expect(lista.estado).toBe(200);
+    expect(lista.datos.recargas.map((x: { id: string }) => x.id)).toContain(r.recargaId);
+    const una = await get(m, e, `/billetera/recargas/${r.recargaId}`);
+    expect(una.datos.recarga).toMatchObject({ id: r.recargaId });
+    expect((await get(m, e, '/billetera/recargas/no-existe')).estado).toBe(404);
+    const hoy = new Date().toISOString().slice(0, 10);
+    const mov = await get(m, e, `/billetera/movimientos?desde=2020-01-01&hasta=${hoy}`);
+    expect(mov.estado).toBe(200);
+    expect(mov.datos.movimientos.length).toBeGreaterThan(0);
+    expect((await get(m, e, `/billetera/movimientos?desde=${hoy}&hasta=2020-01-01`)).estado).toBe(
+      400,
+    );
+  });
+
+  it('comprobantes: lista del periodo, detalle con el emisor y 404 si no es de la empresa', async () => {
+    const { m, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    await confirmarPago(m, r.pi);
+    const lista = await get(m, e, '/comprobantes');
+    expect(lista.estado).toBe(200);
+    const primero = lista.datos.comprobantes[0];
+    if (primero) {
+      const det = await get(m, e, `/comprobantes/${primero.id}`);
+      expect(det.estado).toBe(200);
+      expect(det.datos.emisor.nombre).toContain('Windoce');
+    }
+    expect((await get(m, e, '/comprobantes/no-existe')).estado).toBe(404);
+  });
+
+  it('una recarga sin clave de idempotencia se rechaza sin tocar Stripe', async () => {
+    const { m, e } = await escenario();
+    const antes = llamadasStripe.length;
+    const r = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/billetera/recargas`,
+      { monto: 1000 },
+      e.dueno.token,
+      { 'idempotency-key': '' },
+    );
+    expect(r.estado).toBe(400);
+    expect(llamadasStripe.length).toBe(antes);
+  });
+
+  it('recarga automática: exige tarjeta guardada e importe dentro de los límites; quitar la tarjeta la apaga', async () => {
+    const { m, e } = await escenario();
+    const config = (recargaAutomatica: Record<string, unknown>) =>
+      llamar(
+        m,
+        'PUT',
+        `${B}/empresas/${e.id}/billetera/config`,
+        { alertaSaldo: null, avisosCorreo: false, recargaAutomatica },
+        e.dueno.token,
+      );
+    expect((await config({ activa: true, umbral: 1000, monto: 2000 })).estado).toBe(409);
+    await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/billetera/recargas`,
+      { monto: 1000, guardarMetodo: true },
+      e.dueno.token,
+      { 'idempotency-key': k() },
+    );
+    await confirmarPago(m, intentos.get([...intentos.keys()].at(-1)!)!);
+    expect((await config({ activa: true, umbral: 1000, monto: 1 })).estado).toBe(409);
+    expect((await config({ activa: true, umbral: null, monto: 2000 })).estado).toBe(409);
+    expect((await config({ activa: true, umbral: 1000, monto: 2000 })).estado).toBe(200);
+    const quitar = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/billetera/metodo/quitar`,
+      {},
+      e.dueno.token,
+    );
+    expect(quitar.estado).toBe(200);
+    expect(quitar.datos.config.metodoGuardado).toBeFalsy();
+    expect(quitar.datos.config.recargaAutomatica?.activa ?? false).toBe(false);
+  });
+
+  it('recarga automática: no se enciende en un país que no la permite', async () => {
+    const { m, admin, e } = await escenario();
+    await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/billetera/recargas`,
+      { monto: 1000, guardarMetodo: true },
+      e.dueno.token,
+      { 'idempotency-key': k() },
+    );
+    await confirmarPago(m, intentos.get([...intentos.keys()].at(-1)!)!);
+    await llamar(
+      m,
+      'PUT',
+      '/datos/admin/finanzas/recargas-config/US',
+      {
+        activas: true,
+        minimo: 500,
+        maximo: 100_000,
+        sugeridos: [1000],
+        automaticaPermitida: false,
+      },
+      admin.token,
+    );
+    const r = await llamar(
+      m,
+      'PUT',
+      `${B}/empresas/${e.id}/billetera/config`,
+      {
+        alertaSaldo: null,
+        avisosCorreo: false,
+        recargaAutomatica: { activa: true, umbral: 1000, monto: 2000 },
+      },
+      e.dueno.token,
+    );
+    expect(r.estado).toBe(409);
+  });
+});
