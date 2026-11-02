@@ -1,6 +1,6 @@
 {
-  "actualizado": "2026-11-01T19:33:18-05:00",
-  "version": "2c502af",
+  "actualizado": "2026-11-01T20:42:27-05:00",
+  "version": "6632d38",
   "ahora": {
     "titulo": "Esta página de progreso",
     "detalle": "La página donde ves en qué vamos, qué falta y qué depende de ti. Se actualiza con cada trabajo."
@@ -287,6 +287,14 @@
   "bitacora": [
     {
       "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "Respuestas de soporte con plantillas nuevas",
+      "texto": "El gerente de correo ya puede usar plantillas a partir de la número 10, como la de «cuándo sale la app».",
+      "paises": "Todos",
+      "docs": ["support"]
+    },
+    {
+      "fecha": "2026-11-01",
       "tipo": "nuevo",
       "titulo": "Página de progreso",
       "texto": "Esta página: el avance de todo Divoox en un solo lugar, con lo que depende de ti y casillas para marcarlo.",
@@ -357,7 +365,7 @@
       "fecha": "2026-11-01",
       "estado": "resuelto",
       "titulo": "Pruebas automáticas que fallaban a ratos",
-      "texto": "La bandeja de dinero del superadmin tardaba demasiado en abrir un caso. Arreglado y vigilado."
+      "texto": "La bandeja de dinero del superadmin tardaba en abrir un caso. Se arregló la consulta y la prueba espera lo mismo que el panel."
     }
   ],
   "guias": {
