@@ -231,13 +231,21 @@ const T = {
     propinaGracias: 'Propina enviada. ¡Gracias!',
     recogerEnLocal: 'Recoges en el local',
     recogerListo: 'Tu pedido está listo: pasa a buscarlo y muestra tu PIN.',
+    // BRE-7b: en la recogida no hay repartidor, como el «Pickup» de DoorDash y Uber Eats.
+    estadosRecoger: {
+      listo: 'Tu pedido está listo. Pasa a recogerlo al local.',
+      entregado: '¡Recogido! Buen provecho.',
+    } as Record<string, string>,
+    listoEn: 'Listo en unos',
+    pasosRecoger: ['Confirmado', 'En preparación', 'Listo para recoger', 'Recogido'],
     llamar: 'Llamar al repartidor (número oculto)',
     llamando:
       'Te estamos llamando. Contesta y te conectamos con tu repartidor; ninguno ve el número del otro.',
-    pediste: { puerta: 'Pediste: en la puerta', mano: 'Pediste: en mano' } as Record<
-      string,
-      string
-    >,
+    pediste: {
+      puerta: 'Pediste: en la puerta',
+      mano: 'Pediste: en mano',
+      recoger: 'Recoges en el local',
+    } as Record<string, string>,
     entregadoComo: {
       puerta: 'Lo dejaron en tu puerta.',
       mano: 'Te lo entregaron en mano.',
@@ -353,13 +361,20 @@ const T = {
     propinaGracias: 'Tip sent. Thank you!',
     recogerEnLocal: 'You’re picking it up',
     recogerListo: 'Your order is ready: come pick it up and show your PIN.',
+    estadosRecoger: {
+      listo: 'Your order is ready. Come pick it up at the store.',
+      entregado: 'Picked up! Enjoy your meal.',
+    } as Record<string, string>,
+    listoEn: 'Ready in about',
+    pasosRecoger: ['Confirmed', 'Preparing', 'Ready for pickup', 'Picked up'],
     llamar: 'Call the driver (masked number)',
     llamando:
       'We’re calling you now. Answer and we’ll connect you with your driver; neither of you sees the other’s number.',
-    pediste: { puerta: 'You chose: leave at door', mano: 'You chose: hand it to me' } as Record<
-      string,
-      string
-    >,
+    pediste: {
+      puerta: 'You chose: leave at door',
+      mano: 'You chose: hand it to me',
+      recoger: 'You’re picking it up',
+    } as Record<string, string>,
     entregadoComo: {
       puerta: 'It was left at your door.',
       mano: 'It was handed to you.',
@@ -683,7 +698,9 @@ export default function SeguirPedido() {
   }, [api, id, nuevo, vaciar]);
 
   // Cuatro pasos como en el diseño: Confirmado, En preparación, En camino, Entregado.
-  const paso = p ? (PASOS_DISENO.get(p.estado) ?? -1) : -1;
+  const recoge = p?.entrega === 'recoger';
+  // En la recogida «listo» ya es el tercer paso: no hay «En camino».
+  const paso = p ? (recoge && p.estado === 'listo' ? 2 : (PASOS_DISENO.get(p.estado) ?? -1)) : -1;
   const activo = p ? !['entregado', 'cancelado'].includes(p.estado) : false;
   const haceRep =
     p?.estado === 'en_camino' && p.repartidor?.haceSegundos != null
@@ -694,6 +711,7 @@ export default function SeguirPedido() {
   const esTienda = Boolean(p?.lineas.some((l) => l.sustitucion));
   const estadoTexto = p
     ? ((p.estado === 'cancelado' && p.motivoCancelacion ? t.motivos[p.motivoCancelacion] : null) ??
+      (recoge ? t.estadosRecoger[p.estado] : undefined) ??
       (esTienda ? t.estadosTienda[p.estado] : undefined) ??
       t.estados[p.estado] ??
       p.estado)
@@ -849,10 +867,10 @@ export default function SeguirPedido() {
                   {numero} · {formatearMonto(p.total, moneda, idioma)}
                 </Text>
               </View>
-              {p.minutosEstimados != null ? (
+              {p.minutosEstimados != null && !(recoge && p.estado === 'listo') ? (
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={{ fontSize: 17, fontWeight: '700', color: C.secundario }}>
-                    {t.llega} {p.minutosEstimados} {t.minutos}
+                    {recoge ? t.listoEn : t.llega} {p.minutosEstimados} {t.minutos}
                   </Text>
                 </View>
               ) : null}
@@ -959,7 +977,7 @@ export default function SeguirPedido() {
             </Text>
             {p.estado !== 'cancelado' ? (
               <View style={{ flexDirection: 'row', marginTop: 14 }} accessibilityRole="progressbar">
-                {tc.pasos.map((nombre, i) => (
+                {(recoge ? t.pasosRecoger : tc.pasos).map((nombre, i) => (
                   <View key={nombre} style={{ flex: 1, alignItems: 'center' }}>
                     {i > 0 ? (
                       <View
@@ -1003,14 +1021,14 @@ export default function SeguirPedido() {
                 ))}
               </View>
             ) : null}
-            {p.llegadaRango && activo ? (
+            {p.llegadaRango && activo && !recoge ? (
               <Text style={{ color: C.secundario, fontWeight: '700', marginTop: 10 }}>
                 {p.llegadaRango.atrasado ? `${textoAtrasado(idioma)} · ` : ''}
                 {t.llegaEntre} {textoRango(p.llegadaRango, idioma)}
               </Text>
             ) : null}
             {/* BRE-R (4): atrasado, el «a más tardar» ya pasó: no se muestra una hora que contradice. */}
-            {p.llegaAMasTardar && activo && !p.llegadaRango?.atrasado ? (
+            {p.llegaAMasTardar && activo && !recoge && !p.llegadaRango?.atrasado ? (
               <Text style={{ color: '#5E5E5E', marginTop: 10 }}>
                 {t.aMasTardar}{' '}
                 {new Date(p.llegaAMasTardar).toLocaleTimeString(
@@ -1237,7 +1255,8 @@ export default function SeguirPedido() {
             />
           </Tarjeta>
         )}
-        {p.estado === 'entregado' && (p.fotoEntrega || p.entregadoComo) && (
+        {/* BRE-7b: en la recogida no hay foto ni «cómo te lo dejaron»: sin tarjeta vacía. */}
+        {p.estado === 'entregado' && !recoge && (p.fotoEntrega || p.entregadoComo) && (
           <Tarjeta>
             {p.entregadoComo ? (
               <Text style={{ fontWeight: '700' }}>

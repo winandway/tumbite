@@ -109,6 +109,23 @@ describe('cupones reales (C-CUPONES-DIRECCIONES)', () => {
     ).toBe(409);
   });
 
+  it('BRE-7b: un pedido para recoger lleva PIN aunque el cliente lo haya apagado (el local siempre comprueba)', async () => {
+    const e = await escenario();
+    const r = await e.pedir({ entrega: 'recoger', pin: false });
+    expect(r.estado).toBe(201);
+    const f = await e.m.DB.prepare('SELECT pin FROM pines_entrega WHERE pedido_id = ?')
+      .bind(r.datos.pedidoId as string)
+      .first<{ pin: string }>();
+    expect(f?.pin).toMatch(/^\d{4}$/);
+    // En mano, apagarlo sigue valiendo (es decisión del cliente, como en DoorDash).
+    const mano = await e.pedir({ entrega: 'mano', pin: false });
+    expect(
+      await e.m.DB.prepare('SELECT 1 FROM pines_entrega WHERE pedido_id = ?')
+        .bind(mano.datos.pedidoId as string)
+        .first(),
+    ).toBeNull();
+  });
+
   it('reglas: mínimo, porcentaje, envío gratis, vencido, solo primer pedido y tope de usos', async () => {
     const e = await escenario();
     const crear = (c: Record<string, unknown>) =>

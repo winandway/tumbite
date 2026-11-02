@@ -903,8 +903,9 @@ pedidos.post('/pedidos', async (c) => {
       .run();
   if (recogida)
     await db.prepare('INSERT OR IGNORE INTO recogidas (pedido_id) VALUES (?)').bind(id).run();
-  // PIN también en la recogida en el local: el cliente lo muestra en el mostrador.
-  if ((d.entrega === 'mano' || recogida) && d.pin) {
+  // PIN también en la recogida en el local: el cliente lo muestra en el mostrador. BRE-7b: en la
+  // recogida va siempre (el interruptor solo se ve en «En mano»; sin PIN el local no comprueba nada).
+  if (recogida || (d.entrega === 'mano' && d.pin)) {
     const pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0]! % 9000));
     await db
       .prepare('INSERT OR REPLACE INTO pines_entrega (pedido_id, pin) VALUES (?, ?)')

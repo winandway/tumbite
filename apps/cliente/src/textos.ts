@@ -23,6 +23,9 @@ const es = {
   pequeno: 'Cargo por pedido pequeño',
   propina: 'Propina para tu repartidor',
   propinaNota: 'El 100 % de la propina es para quien te lleva el pedido.',
+  // BRE-7b: en la recogida no hay repartidor; la propina va entera al restaurante.
+  propinaRecoger: 'Propina para el restaurante (opcional)',
+  propinaNotaRecoger: 'La propina va entera al equipo del restaurante que prepara tu pedido.',
   total: 'Total',
   direccion: 'Dirección de entrega',
   direccionCampo: 'Calle y número',
@@ -33,6 +36,7 @@ const es = {
   mapaBuscando: 'Buscando la dirección…',
   mapaPin: 'Punto de entrega',
   notas: 'Indicaciones para el repartidor (opcional)',
+  notasRecoger: 'Indicaciones para el restaurante (opcional)',
   alergias: 'Alergias (opcional)',
   regaloTitulo: 'Enviar como regalo',
   regaloAyuda:
@@ -90,6 +94,8 @@ const en: T = {
   pequeno: 'Small order fee',
   propina: 'Tip for your driver',
   propinaNota: 'Your driver keeps 100% of the tip.',
+  propinaRecoger: 'Tip for the restaurant (optional)',
+  propinaNotaRecoger: 'The restaurant team that prepares your order keeps 100% of the tip.',
   total: 'Total',
   direccion: 'Delivery address',
   direccionCampo: 'Street address',
@@ -100,6 +106,7 @@ const en: T = {
   mapaBuscando: 'Finding the address…',
   mapaPin: 'Delivery point',
   notas: 'Notes for your driver (optional)',
+  notasRecoger: 'Notes for the restaurant (optional)',
   alergias: 'Allergies (optional)',
   regaloTitulo: 'Send as a gift',
   regaloAyuda:

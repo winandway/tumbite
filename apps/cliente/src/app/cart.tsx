@@ -185,7 +185,10 @@ export default function PantallaCarrito() {
     };
   }, [api, ridPais]);
   const [punto, setPunto] = useState<Punto | null>(null);
-  const [propinaPb, setPropinaPb] = useState<number | 'otra'>(2000);
+  const [propinaEntregaPb, setPropinaEntregaPb] = useState<number | 'otra'>(2000);
+  // BRE-7b: como el «Pickup» de DoorDash y Uber Eats, en la recogida la propina va al restaurante,
+  // es opcional y arranca en 0 %; cada forma de recibir recuerda la suya.
+  const [propinaRecogerPb, setPropinaRecogerPb] = useState<number | 'otra'>(0);
   const [error, setError] = useState('');
   const [pagando, setPagando] = useState(false);
   const [regalos, setRegalos] = useState<Regalo[]>([]);
@@ -437,6 +440,8 @@ export default function PantallaCarrito() {
   }
 
   const subtotal = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
+  const propinaPb = b.valores.entrega === 'recoger' ? propinaRecogerPb : propinaEntregaPb;
+  const setPropinaPb = b.valores.entrega === 'recoger' ? setPropinaRecogerPb : setPropinaEntregaPb;
   const propina =
     propinaPb === 'otra'
       ? (montoEscrito(b.valores.propinaOtra, moneda) ?? 0)
@@ -1104,10 +1109,10 @@ export default function PantallaCarrito() {
         </>
       ) : null}
       <Campo
-        etiqueta={t.notas}
+        etiqueta={recogidaElegida ? t.notasRecoger : t.notas}
         value={b.valores.notas}
         onChangeText={(x) => b.cambiar('notas', x)}
-        placeholder={t.notas}
+        placeholder={recogidaElegida ? t.notasRecoger : t.notas}
       />
       {/* C-REGALAR-PEDIDO: como «Send as a gift» de DoorDash y Uber Eats (no en «Recoger»). */}
       {b.valores.entrega !== 'recoger' ? (
@@ -1169,14 +1174,14 @@ export default function PantallaCarrito() {
         </Text>
       ) : null}
 
-      {titulo(t.propina)}
+      {titulo(recogidaElegida ? t.propinaRecoger : t.propina)}
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
         {[...PROPINAS, 'otra' as const].map((pb) => (
           <Pressable
             key={String(pb)}
             onPress={() => setPropinaPb(pb)}
             accessibilityRole="button"
-            accessibilityLabel={`${t.propina}: ${pb === 'otra' ? t.otra : `${pb / 100}%`}`}
+            accessibilityLabel={`${recogidaElegida ? t.propinaRecoger : t.propina}: ${pb === 'otra' ? t.otra : `${pb / 100}%`}`}
             accessibilityState={{ selected: propinaPb === pb }}
             style={{
               flexGrow: 1,
@@ -1197,14 +1202,16 @@ export default function PantallaCarrito() {
       </View>
       {propinaPb === 'otra' && (
         <Campo
-          etiqueta={t.propina}
+          etiqueta={recogidaElegida ? t.propinaRecoger : t.propina}
           value={b.valores.propinaOtra}
           onChangeText={(x) => b.cambiar('propinaOtra', x)}
           keyboardType="decimal-pad"
           placeholder={montoATexto(0, moneda)}
         />
       )}
-      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>{t.propinaNota}</Text>
+      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>
+        {recogidaElegida ? t.propinaNotaRecoger : t.propinaNota}
+      </Text>
 
       {regalos.map((r) => (
         <Pressable
@@ -1296,7 +1303,7 @@ export default function PantallaCarrito() {
           {fila(t.servicio, d.servicio)}
           {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
           {d.impuesto > 0 && fila(t.impuesto, d.impuesto)}
-          {fila(t.propina, d.propina)}
+          {fila(recogidaElegida ? t.propinaRecoger : t.propina, d.propina)}
           <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
             {fila(t.total, d.totalCliente, true)}
           </View>

@@ -2624,3 +2624,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo):** `apps/servidor/src/promocionesRevision.test.ts` (4), `packages/compartido/src/promociones.test.ts` (BRE-R2, 2), `apps/servidor/src/modoDestinoRevision.test.ts` (2), `packages/compartido/src/modoDestino.test.ts` (zona mala anotada), `guiasPublicas.test.tsx` (ESPERAN vacío).
 - **Docs:** las guías «Promociones que creas y pagas tú» y «Modo destino» llevan MAQUETAS fieles (`apps/panel/public/docs/maqueta-*.webp`, originales en `docs/capturas/maquetas/`, guion `scripts/docs/maquetas-bre-r2.mjs`), marcadas en `guias.ts` para reemplazar por las reales en BRE-5b y BRE-6b.
 - **Qué NO tocar:** la promoción del restaurante nunca paga un envío que ya cubrió Divoox; un recálculo que quita algo nunca sube el total cobrado; todo camino que ofrezca trabajo a un conductor pasa por el filtro de destino.
+
+## C-RECOGER-SIN-REPARTIDOR (BRE-7b, 2 nov 2026). Todos los países.
+
+- **Qué se rompía:** en un pedido para recoger, la app del cliente hablaba de repartidor («Buscando repartidor…», «Llega en…», paso «En camino», «A más tardar … · undefined»), dejaba una tarjeta vacía al entregar, el carrito pedía «Propina para tu repartidor» con 20 % (la propina va al restaurante) y el pedido podía salir sin PIN si el cliente lo había apagado en «En mano».
+- **Arreglo:** `apps/cliente/src/app/order/[id].tsx` (`recoge`, `estadosRecoger`, `pasosRecoger`, `listoEn`, `pediste.recoger`), `apps/cliente/src/app/cart.tsx` + `textos.ts` (`propinaRecoger`, `propinaNotaRecoger`, `notasRecoger`, propina en 0 % al elegir recoger), `apps/servidor/src/rutas/pedidos.ts` (la recogida crea PIN siempre).
+- **Candados:** `e2e/recorrido/recogerCompleto.spec.ts` (comprobado en rojo quitando el arreglo de la pantalla) y la prueba BRE-7b de `apps/servidor/src/rutas/cupones.test.ts`.

@@ -36,6 +36,11 @@ const PROPIOS = {
     pinAyuda: 'Show it at the counter when you pick up your order.',
     entrar: 'Sign in',
     pizza: 'Margherita pizza',
+    recogido: 'Picked up! Enjoy your meal.',
+    propina: 'Tip for the restaurant (optional)',
+    propinaNota: 'The restaurant team that prepares your order keeps 100% of the tip.',
+    paso: 'Ready for pickup',
+    repartidor: /driver|undefined/i,
   },
   es: {
     tuPin: 'Tu PIN para recibir',
@@ -44,6 +49,11 @@ const PROPIOS = {
     pinAyuda: 'Muéstralo en el mostrador cuando recojas tu pedido.',
     entrar: 'Entrar',
     pizza: 'Pizza margarita',
+    recogido: '¡Recogido! Buen provecho.',
+    propina: 'Propina para el restaurante (opcional)',
+    propinaNota: 'La propina va entera al equipo del restaurante que prepara tu pedido.',
+    paso: 'Listo para recoger',
+    repartidor: /repartidor|undefined/i,
   },
 } as const;
 
@@ -166,6 +176,15 @@ for (const idioma of ['en', 'es'] as const)
     await cli.getByRole('radio', { name: L.recojo }).click();
     // Recogida: sin dirección de entrega ni costo de envío.
     await expect(cli.getByLabel(L.direccionCampo)).toHaveCount(0);
+    // BRE-7b: en la recogida la propina es para el restaurante, opcional y sin nada elegido de entrada.
+    await expect(cli.getByText(P.propina).first()).toBeVisible();
+    await expect(cli.getByText(P.propinaNota)).toBeVisible();
+    // Las otras formas de recibir sí explican lo que hace el repartidor; la propina y las
+    // indicaciones, no.
+    await expect(cli.getByText(/Tip for your driver|Propina para tu repartidor/)).toHaveCount(0);
+    await expect(
+      cli.getByText(/Notes for your driver|Indicaciones para el repartidor/),
+    ).toHaveCount(0);
     await cli.getByText(L.continuarPago).filter({ visible: true }).scrollIntoViewIfNeeded();
     // Solo las tres formas de recibir (lo que explica la guía), con «Recojo en el local» elegido.
     const formas = cli.getByRole('radio', { name: L.recojo }).locator('..');
@@ -261,6 +280,9 @@ for (const idioma of ['en', 'es'] as const)
     await cli.reload();
     await expect(cli.getByText(P.recogerListo)).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-recoger-listo', cli.getByText(P.recogerListo).locator('..'));
+    // BRE-7b: ni repartidor, ni «En camino», ni «a más tardar … · undefined» en una recogida.
+    await expect(cli.getByText(P.paso)).toBeVisible();
+    await expect(cli.getByText(P.repartidor)).toHaveCount(0);
 
     // 6. En el mostrador: un PIN equivocado no entrega; con el del cliente, sí.
     const campoPin = rapp.getByLabel(L.pinCliente);
@@ -299,8 +321,9 @@ for (const idioma of ['en', 'es'] as const)
 
     // 7. El cliente lo ve entregado, sin PIN a la vista (ya se usó).
     await cli.reload();
-    await expect(cli.getByText(L.entregado)).toBeVisible({ timeout: 20_000 });
+    await expect(cli.getByText(P.recogido)).toBeVisible({ timeout: 20_000 });
     await expect(cli.getByText(P.tuPin)).toHaveCount(0);
+    await expect(cli.getByText(P.repartidor)).toHaveCount(0);
     await expect(cli.getByText(L.recogerEnLocal)).toHaveCount(0);
     await foto(cli, 'cliente-recoger-entregado');
     await cliCtx.close();
