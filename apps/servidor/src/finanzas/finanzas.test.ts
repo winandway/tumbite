@@ -1289,3 +1289,144 @@ describe('C-FIN-BILLETERA · rutas de la billetera de la empresa (COB-2)', () =>
     expect(r.estado).toBe(409);
   });
 });
+
+describe('C-FIN-POLITICAS · rutas de dinero del superadmin (COB-3)', () => {
+  const POL = {
+    nombre: 'Flex EE. UU. futura',
+    servicio: 'flex',
+    tipoCuenta: 'empresa',
+    pais: 'US',
+    modalidad: 'prepago',
+    moneda: 'USD',
+    regla: { tipo: 'por_paquete', monto: 30 },
+    motivo: 'Tarifa de prueba',
+  };
+  const manana = () => new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const pasado = () => new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+
+  it('política: fechas al revés se rechazan; cerrar antes de empezar la apaga; 404 si no existe', async () => {
+    const { m, admin } = await escenario({ tarifa: null });
+    const mal = await llamar(
+      m,
+      'POST',
+      '/datos/admin/finanzas/politicas',
+      { ...POL, vigenteDesde: pasado(), vigenteHasta: manana() },
+      admin.token,
+    );
+    expect(mal.estado).toBe(409);
+    const p = await llamar(
+      m,
+      'POST',
+      '/datos/admin/finanzas/politicas',
+      { ...POL, vigenteDesde: pasado() },
+      admin.token,
+    );
+    expect(p.estado).toBe(201);
+    const id = p.datos.politica.id as string;
+    const cerrar = await llamar(
+      m,
+      'POST',
+      `/datos/admin/finanzas/politicas/${id}/cerrar`,
+      { desde: manana(), motivo: 'Ya no se usa' },
+      admin.token,
+    );
+    expect(cerrar.estado).toBe(200);
+    const fila = await m.DB.prepare('SELECT activa FROM politicas_financieras WHERE id = ?')
+      .bind(id)
+      .first<{ activa: number }>();
+    expect(fila?.activa).toBe(0);
+    for (const ruta of ['cerrar', 'revision-legal'])
+      expect(
+        (
+          await llamar(
+            m,
+            'POST',
+            `/datos/admin/finanzas/politicas/no-existe/${ruta}`,
+            { motivo: 'Motivo suficiente', aprobada: true, nota: 'Nota legal de prueba' },
+            admin.token,
+          )
+        ).estado,
+      ).toBe(404);
+  });
+
+  it('configuración de recargas por país: se lee y el país va en dos letras', async () => {
+    const { m, admin } = await escenario({ tarifa: null });
+    const leer = await llamar(
+      m,
+      'GET',
+      '/datos/admin/finanzas/recargas-config/us',
+      undefined,
+      admin.token,
+    );
+    expect(leer.estado).toBe(200);
+    expect(leer.datos.config.activas).toBe(true);
+    const mal = await llamar(
+      m,
+      'PUT',
+      '/datos/admin/finanzas/recargas-config/USA',
+      { activas: true, minimo: 500, maximo: 1000, sugeridos: [500], automaticaPermitida: false },
+      admin.token,
+    );
+    expect(mal.estado).toBe(400);
+  });
+
+  it('empresas con su saldo, movimientos con auditoría y conciliación a mano', async () => {
+    const { m, admin, e } = await escenario();
+    const r = await recargar(m, e, 2000);
+    await confirmarPago(m, r.pi);
+    const lista = await llamar(m, 'GET', '/datos/admin/finanzas/empresas', undefined, admin.token);
+    expect(lista.estado).toBe(200);
+    const fila = lista.datos.empresas.find((x: { id: string }) => x.id === e.id);
+    expect(fila.saldo.disponible).toBe(2000);
+    const mov = await llamar(
+      m,
+      'GET',
+      `/datos/admin/finanzas/empresas/${e.id}/movimientos`,
+      undefined,
+      admin.token,
+    );
+    expect(mov.estado).toBe(200);
+    expect(mov.datos.recargas.length).toBe(1);
+    expect(mov.datos.movimientos.length).toBeGreaterThan(0);
+    expect(
+      (await llamar(m, 'GET', '/datos/admin/finanzas/conciliacion', undefined, admin.token)).datos
+        .ultima,
+    ).toBeNull();
+    const conc = await llamar(m, 'POST', '/datos/admin/finanzas/conciliacion', {}, admin.token);
+    expect(conc.datos.resultado.ok).toBe(true);
+    expect(
+      (await llamar(m, 'GET', '/datos/admin/finanzas/conciliacion', undefined, admin.token)).datos
+        .ultima.ok,
+    ).toBe(true);
+  });
+
+  it('el simulador del servicio logístico devuelve el desglose y solo lo usa el superadmin', async () => {
+    const { m, admin, e } = await escenario({ tarifa: null });
+    const cuerpo = {
+      paquetes: 100,
+      tecnologiaPorPaquete: 25,
+      transportePorPaquete: 300,
+      conductorPb: 8000,
+      procesadorPb: 290,
+      procesadorFijo: 30,
+      impuestoPb: 0,
+    };
+    const r = await llamar(
+      m,
+      'POST',
+      '/datos/admin/finanzas/simular-logistico',
+      cuerpo,
+      admin.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.desglose).toBeTruthy();
+    const ajeno = await llamar(
+      m,
+      'POST',
+      '/datos/admin/finanzas/simular-logistico',
+      cuerpo,
+      e.dueno.token,
+    );
+    expect(ajeno.estado).toBe(403);
+  });
+});
