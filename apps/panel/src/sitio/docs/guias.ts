@@ -529,6 +529,47 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'invite-a-friend',
+        titulo: 'Invita a un amigo: crédito para los dos',
+        resumen:
+          'Comparte tu código personal. Tu amigo recibe crédito para su primer pedido y tú recibes el tuyo cuando se lo entregamos.',
+        explicacion: [
+          'Cuando las invitaciones están disponibles, aparecen en Mi cuenta → Invita a un amigo. Ahí ves tu código, cuánto recibe tu amigo y cuánto recibes tú.',
+          'Toca «Compartir mi código» y mándalo por WhatsApp, mensaje o correo, como prefieras.',
+          'Tu amigo crea su cuenta, entra a Mi cuenta → Invita a un amigo y escribe tu código en «¿Te invitaron?» antes de hacer su primer pedido. El crédito le llega al momento como saldo de regalo y se usa en el carrito con «Usar mi saldo de regalo».',
+          'Cuando entregamos ese primer pedido, tu crédito aparece en tu saldo de regalo. En la misma pantalla ves cuántos amigos usaron tu código y cuántos ya hicieron su primer pedido.',
+          'Cada amigo usa un solo código, una sola vez, y antes de su primer pedido. No puedes usar tu propio código.',
+          'El saldo de regalo paga la comida, el envío, el servicio y el impuesto; la propina se paga con tu tarjeta.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-invitar-es.webp',
+            alt: 'Mi cuenta en la app Divoox con la entrada Invita a un amigo arriba.',
+            pie: 'Invita a un amigo está en Mi cuenta.',
+          },
+          {
+            src: '/docs/cliente-invitar-amigo-es.webp',
+            alt: 'La pantalla Invita a un amigo con el código personal, el botón Compartir mi código y cuántos amigos lo usaron.',
+            pie: 'Tu código, cuánto recibe cada uno y el botón para compartirlo.',
+          },
+          {
+            src: '/docs/cliente-invitar-codigo-es.webp',
+            alt: 'La casilla Código de invitación con un código escrito y el botón Usar el código.',
+            pie: 'Si te invitaron, escribes el código aquí antes de tu primer pedido.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo invito a un amigo a Divoox?',
+          '¿Cuándo recibo mi crédito por invitar?',
+          '¿Dónde escribo el código que me pasaron?',
+        ],
+        pasos: [
+          'Mi cuenta → Invita a un amigo.',
+          'Toca «Compartir mi código» y mándaselo a tu amigo.',
+          'Tu amigo lo escribe en «¿Te invitaron?» antes de su primer pedido.',
+        ],
+      },
+      {
         id: 'divoox-plus',
         titulo: 'Divoox Plus: envío gratis y menos servicio por una cuota mensual',
         resumen:
@@ -4628,6 +4669,47 @@ const en: SeccionDocs[] = [
           'My account → Gift cards.',
           'To give one: amount, email and “Buy and send.”',
           'To redeem: enter the code and tap “Redeem.”',
+        ],
+      },
+      {
+        id: 'invite-a-friend',
+        titulo: 'Invite a friend: credit for both of you',
+        resumen:
+          'Share your personal code. Your friend gets credit for their first order, and you get yours once we deliver it.',
+        explicacion: [
+          'When invites are available, they show in My account → Invite a friend. There you see your code, what your friend gets and what you get.',
+          'Tap “Share my code” and send it by WhatsApp, text or email, whichever you like.',
+          'Your friend creates an account, goes to My account → Invite a friend and enters your code under “Got an invite?” before placing their first order. The credit lands right away as gift balance and is used in the cart with “Use my gift card balance.”',
+          'When we deliver that first order, your credit shows up in your gift balance. On the same screen you see how many friends used your code and how many have placed their first order.',
+          'Each friend can use one code, once, before their first order. You can’t use your own code.',
+          'Gift balance pays for food, delivery, service and tax; the tip is paid with your card.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-mi-cuenta-invitar-en.webp',
+            alt: 'My account in the Divoox app with the Invite a friend entry at the top.',
+            pie: 'Invite a friend is in My account.',
+          },
+          {
+            src: '/docs/cliente-invitar-amigo-en.webp',
+            alt: 'The Invite a friend screen with the personal code, the Share my code button and how many friends used it.',
+            pie: 'Your code, what each of you gets, and the button to share it.',
+          },
+          {
+            src: '/docs/cliente-invitar-codigo-en.webp',
+            alt: 'The Invite code box with a code typed in and the Use code button.',
+            pie: 'If someone invited you, enter the code here before your first order.',
+          },
+        ],
+        preguntas: [
+          'How do I invite a friend to Divoox?',
+          'When do I get my referral credit?',
+          'Where do I enter the code I was given?',
+        ],
+        pasos: [
+          'My account → Invite a friend.',
+          'Tap “Share my code” and send it to your friend.',
+          'Your friend enters it under “Got an invite?” before their first order.',
         ],
       },
       {
