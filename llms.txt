@@ -28,6 +28,7 @@
 - [Favorites: save your restaurants · Divoox](https://divoox.com/docs/ordering/favorites): Tap a restaurant’s heart to save it to Favorites and find it instantly next time.
 - [Saved addresses and delivery instructions · Divoox](https://divoox.com/docs/ordering/saved-addresses): Save home, work or wherever you order often, with instructions for the driver, and pick them with one tap in the cart.
 - [Gift cards: give Divoox and redeem a code](https://divoox.com/docs/ordering/gift-cards): Buy a gift card for someone in the amount you choose. They get a code by email, and redeeming it adds a balance for their orders.
+- [Invite a friend: credit for both of you · Divoox](https://divoox.com/docs/ordering/invite-a-friend): Share your personal code. Your friend gets credit for their first order, and you get yours once we deliver it.
 - [Divoox Plus: free delivery and lower service fees for a monthly fee](https://divoox.com/docs/ordering/divoox-plus): With Divoox Plus you pay no delivery fee and a lower service fee on orders over the minimum. It renews every month and you can cancel anytime.
 - [Coupons and promotions · Divoox](https://divoox.com/docs/ordering/coupons): Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.
 - [Reporting a problem with your order · Divoox](https://divoox.com/docs/ordering/report-a-problem): Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded
@@ -53,8 +54,11 @@
 - [Special instructions for an item · Divoox](https://divoox.com/docs/ordering/special-instructions): Ask for “no onions” or “well done” on each item, and the restaurant sees it in your order.
 - [See a restaurant’s rating · Divoox](https://divoox.com/docs/ordering/restaurant-ratings): The stars, how many ratings it has and what other customers wrote, before you order.
 - [Rate the food and the driver · Divoox](https://divoox.com/docs/ordering/rate): Two separate ratings. If the food was late, it’s not the driver’s fault.
+- [Compliments and reasons when you rate · Divoox](https://divoox.com/docs/ordering/compliments-and-reasons): With 5 stars you pick what went well; with 3 or fewer, what went wrong. One tap, no typing.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsYour customers’ reviews and how to replyUnder Reviews you see what each customer rated and wrote, and you reply publicly. The custo
 - [Your customers’ reviews and how to reply · Divoox](https://divoox.com/docs/restaurants/reviews-and-replies): Under Reviews you see what each customer rated and wrote, and you reply publicly. The customer sees your reply in their order.
+- [Send yourself a test order · Divoox](https://divoox.com/docs/restaurants/test-order): Before you open, send yourself a test order: it rings the alarm like a real one and you practice accepting, printing, and marking it ready. Nothing is char
+- [Promotions you create and fund · Divoox](https://divoox.com/docs/restaurants/promotions): Set up your own promotion —a percentage off, free delivery, or “spend X, save Y”— with dates and an order limit. It shows with its badge in the customer ap
 - [Ads: show first and pay only per order · Divoox](https://divoox.com/docs/restaurants/sponsored-listings): With an ad, your restaurant shows first on the app’s home screen with a “Sponsored” label. You pay only for delivered orders that come from your ad.
 - [Accept orders automatically · Divoox](https://divoox.com/docs/restaurants/auto-accept): Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.
 - [Holidays and closures · Divoox](https://divoox.com/docs/restaurants/holidays-and-closures): Mark the days you don’t open (Christmas, vacation, repairs) and on that day your restaurant shows as closed even within your hours.
@@ -86,7 +90,8 @@
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Divoox](https://divoox.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
-- [For drivers · Divoox](https://divoox.com/docs/drivers): ⌘K← Docs For driversMy route: delivering company packages with Divoox DriverCompanies assign or offer you package routes. You accept, load by scanning ever
+- [For drivers · Divoox](https://divoox.com/docs/drivers): ⌘K← Docs For driversDestination mode: orders on your way homeSet your destination —home, for example— and Divoox Driver only offers you orders whose drop-o
+- [Destination mode: orders on your way home · Divoox](https://divoox.com/docs/drivers/destination-mode): Set your destination —home, for example— and Divoox Driver only offers you orders whose drop-off takes you closer. You can use it twice a day, and it turns
 - [My route: delivering company packages with Divoox Driver](https://divoox.com/docs/drivers/my-route-packages): Companies assign or offer you package routes. You accept, load by scanning every package, follow the stops in order, deliver with a photo, PIN or signature
 - [Your location with the screen off · Divoox](https://divoox.com/docs/drivers/background-location): While you’re online, Divoox keeps sending your position even if you lock the phone or open the map: the customer and the restaurant see where you are witho
 - [Deliveries with an age check · Divoox](https://divoox.com/docs/drivers/id-check-deliveries): If the order has items for people over 21, you hand it over in person, check the ID and note the ID type, its last four digits and the name of the person r

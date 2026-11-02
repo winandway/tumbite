@@ -59,6 +59,13 @@ CREATE TABLE IF NOT EXISTS sesiones (
   expira_en TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
+-- C-PUENTE-PANEL (2 nov 2026): código de un solo uso para abrir el panel dentro de la app con la sesión.
+CREATE TABLE IF NOT EXISTS puentes_sesion (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  expira_en TEXT NOT NULL,
+  usado INTEGER NOT NULL DEFAULT 0
+);
 
 -- Enlaces de un solo uso para confirmar el correo al registrarse (se guarda el hash).
 CREATE TABLE IF NOT EXISTS confirmaciones (
@@ -269,6 +276,59 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   respondida_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-AUDITIVA-REPARTIDOR (2 nov 2026), como Uber y DoorDash: el repartidor sordo o con dificultad
+-- auditiva lo marca en su app; el cliente y el restaurante lo ven para escribirle en vez de llamar.
+CREATE TABLE IF NOT EXISTS accesibilidad_repartidor (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  auditiva INTEGER NOT NULL DEFAULT 0 CHECK (auditiva IN (0, 1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- C-GUSTO-PLATOS (2 nov 2026), como DoorDash: pulgar arriba o abajo por plato al calificar el pedido.
+CREATE TABLE IF NOT EXISTS calificaciones_platos (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  plato_id TEXT NOT NULL,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  gusta INTEGER NOT NULL CHECK (gusta IN (0, 1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, plato_id)
+);
+CREATE INDEX IF NOT EXISTS calificaciones_platos_restaurante ON calificaciones_platos(restaurante_id, plato_id);
+
+-- C-ELOGIOS-MOTIVOS (BRE-3, 2 nov 2026), como Uber Eats y DoorDash: con 5 estrellas, elogios ya
+-- escritos; con 3 o menos, el motivo. Los motivos sobre el repartidor solo los ve el equipo.
+CREATE TABLE IF NOT EXISTS calificaciones_etiquetas (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  para TEXT NOT NULL CHECK (para IN ('repartidor', 'restaurante')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('elogio', 'motivo')),
+  etiqueta TEXT NOT NULL,
+  repartidor_id TEXT REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, para, etiqueta)
+);
+CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_repartidor ON calificaciones_etiquetas(repartidor_id, tipo);
+CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_restaurante ON calificaciones_etiquetas(restaurante_id, tipo);
+
+-- C-PEDIDO-PRUEBA (BRE-4, 2 nov 2026), como «Create test order» de DoorDash Merchant: pedido
+-- ficticio para practicar. Tabla aparte A PROPÓSITO: nunca entra en pedidos, la conciliación, los
+-- informes, el embudo ni el despacho. Sin cobro, sin repartidor y sin cliente.
+CREATE TABLE IF NOT EXISTS pedidos_prueba (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('pagado', 'aceptado', 'listo', 'terminado', 'cancelado')),
+  lineas_json TEXT NOT NULL,
+  subtotal INTEGER NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  tiempo_prep_min INTEGER,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  aceptado_en TEXT,
+  listo_en TEXT,
+  terminado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS pedidos_prueba_restaurante ON pedidos_prueba(restaurante_id, estado);
 
 CREATE TABLE IF NOT EXISTS regalos_config (
   restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
@@ -3176,6 +3236,53 @@ CREATE TABLE IF NOT EXISTS pedidos_anuncio (
   cobrado_en TEXT
 );
 
+-- C-PROMO-RESTAURANTE (BRE-5, 2 nov 2026, como «Promotions» de DoorDash Merchant): promociones
+-- que arma y paga el restaurante. Se aplican solas y salen de su pago (pedidos.pago_restaurante).
+CREATE TABLE IF NOT EXISTS promociones_restaurante (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('porcentaje', 'envio_gratis', 'gasta_ahorra')),
+  valor INTEGER NOT NULL DEFAULT 0,
+  minimo_subtotal INTEGER NOT NULL DEFAULT 0,
+  tope_centavos INTEGER NOT NULL DEFAULT 0,
+  usos_max INTEGER,
+  inicia_en TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  activa INTEGER NOT NULL DEFAULT 1,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS promociones_restaurante_rest ON promociones_restaurante(restaurante_id, activa);
+-- La promoción que se aplicó a cada pedido, con su copia (si el restaurante la cambia después, el
+-- pedido se recalcula con la de entonces) y lo que descontó.
+CREATE TABLE IF NOT EXISTS pedidos_promocion (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  promocion_id TEXT NOT NULL REFERENCES promociones_restaurante(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  promocion_json TEXT NOT NULL,
+  descuento INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS pedidos_promocion_promo ON pedidos_promocion(promocion_id);
+
+-- C-MODO-DESTINO (BRE-6, 2 nov 2026, como «Driver Destinations» de Uber): el destino del repartidor
+-- (solo recibe ofertas que lo acercan) y cuántas veces lo encendió cada día de su ciudad.
+CREATE TABLE IF NOT EXISTS modo_destino (
+  repartidor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  direccion TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  activo INTEGER NOT NULL DEFAULT 1,
+  encendido_en TEXT NOT NULL DEFAULT (datetime('now')),
+  apagado_en TEXT,
+  motivo TEXT
+);
+CREATE TABLE IF NOT EXISTS usos_modo_destino (
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  dia TEXT NOT NULL,
+  usos INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (repartidor_id, dia)
+);
+
 -- C-PLUS (R-T3, 1 nov 2026, como DashPass): la suscripción del cliente. Se cobra con una
 -- suscripción de Stripe; solo el aviso firmado «invoice.paid» la activa y le pone vencimiento.
 CREATE TABLE IF NOT EXISTS suscripciones_plus (
@@ -3213,6 +3320,34 @@ CREATE TABLE IF NOT EXISTS tarjetas_regalo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS tarjetas_regalo_canjeada ON tarjetas_regalo(canjeada_por);
+-- C-REFERIDOS (CLI-7, 2 nov 2026): «Invita a un amigo». Un código por cliente; un amigo usa un solo
+-- código y antes de su primer pedido; los créditos suman al saldo de regalo (una vez cada uno).
+CREATE TABLE IF NOT EXISTS codigos_referido (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  codigo TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS referidos (
+  id TEXT PRIMARY KEY,
+  invitado_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),
+  invitador_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'premiado')),
+  para_amigo INTEGER NOT NULL DEFAULT 0,
+  para_quien_invita INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  premiado_en TEXT,
+  CHECK (invitado_id <> invitador_id)
+);
+CREATE INDEX IF NOT EXISTS referidos_invitador ON referidos(invitador_id);
+CREATE TABLE IF NOT EXISTS creditos_regalo (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  centavos INTEGER NOT NULL CHECK (centavos > 0),
+  motivo TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS creditos_regalo_usuario ON creditos_regalo(usuario_id);
 CREATE TABLE IF NOT EXISTS pedidos_saldo_regalo (
   pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),
