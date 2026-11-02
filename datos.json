@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 10:00 (Miami)",
+  "actualizado": "2026-11-02 11:40 (Miami)",
   "version": "468eee7",
   "ahora": {
-    "titulo": "Todo lo de la fila está publicado",
-    "detalle": "Repaso de pantallas, más verde, «Mis pedidos», la flecha de volver y el Bloque G ya están en producción. Lo que sigue depende de tus decisiones (abajo)."
+    "titulo": "Pruebas del dinero al 90 % o más",
+    "detalle": "Once archivos que manejan dinero (billeteras de empresas, superadmin, Plus, tarjetas de regalo, cobro de viajes, recargas y SMS de respaldo) ahora tienen pruebas de sus caminos de error y un candado que no deja bajar del 90 %."
   },
   "proximo": [
     {
@@ -292,6 +292,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Pruebas del dinero reforzadas y con candado",
+      "texto": "La fila estaba vacía y se rellenó con un bloque de siete puntos: subir al 90 % o más las pruebas de todo lo que maneja dinero. El reloj que concilia las billeteras pasó de 65 % a 91 %, las pantallas de dinero de las empresas al 100 %, las del superadmin a 96 %, el saldo prepago a 98 %, Plus al 100 %, tarjetas de regalo, cobro de viajes y recargas por encima del 95 %, y el SMS de respaldo de 72 % a 97 %. Cada prueba se comprobó rompiendo el código a propósito, y un candado nuevo hace fallar la verificación si alguno vuelve a bajar. No cambia nada visible para los usuarios. Todos los países."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Términos dentro de la app y correos de soporte que vuelven a salir",
