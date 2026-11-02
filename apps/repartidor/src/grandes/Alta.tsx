@@ -29,7 +29,7 @@ export function Alta({
           .pedir<{ datos: { vehiculoTipo?: string } | null }>('GET', '/datos/repartidor/datos')
           .catch(() => null),
         api
-          .pedir<{ kyc: { estado: string; antecedentes?: { estado: string } } }>(
+          .pedir<{ kyc: { estado: string } | null; antecedentes?: { estado: string } | null }>(
             'GET',
             '/datos/kyc',
           )
@@ -37,8 +37,9 @@ export function Alta({
         api.pedir<{ cuentaConectada: boolean }>('GET', '/datos/billetera').catch(() => null),
       ]);
       if (!vivo) return;
-      const k = kyc?.kyc.estado ?? 'sin_enviar';
-      const a = kyc?.kyc.antecedentes?.estado ?? 'sin_pedir';
+      const k = kyc?.kyc?.estado ?? 'sin_enviar';
+      // C-ALTA-ANTECEDENTES: el servidor manda «antecedentes» al lado de «kyc», no adentro.
+      const a = kyc?.antecedentes?.estado ?? 'sin_pedir';
       setPasos([
         { id: 'datos', estado: datos?.datos?.vehiculoTipo ? 'listo' : 'pendiente' },
         {
