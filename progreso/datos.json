@@ -1,0 +1,378 @@
+{
+  "actualizado": "2026-11-01T19:18:19-05:00",
+  "version": "2c502af",
+  "ahora": {
+    "titulo": "Esta página de progreso",
+    "detalle": "La página donde ves en qué vamos, qué falta y qué depende de ti. Se actualiza con cada trabajo."
+  },
+  "proximo": [
+    {
+      "quien": "richard",
+      "titulo": "Compra real de 1 dólar y prueba en la calle",
+      "detalle": "Es lo único que falta para encender Comida en Miami. Con eso sabemos que el cobro con dinero real funciona de punta a punta."
+    },
+    {
+      "quien": "ia",
+      "titulo": "Subir las apps de iPhone a TestFlight",
+      "detalle": "La app del cliente y Divoox Driver con Divoox Plus, tarjetas de regalo, anuncios y Ganar por tiempo. Ya están compilando."
+    },
+    {
+      "quien": "ia",
+      "titulo": "GPS de Driver con la app cerrada",
+      "detalle": "Se construye apenas Google apruebe la versión que está revisando."
+    }
+  ],
+  "esperando": [
+    {
+      "id": "compra-real-1-dolar",
+      "prioridad": "alta",
+      "titulo": "Compra real de 1 dólar con tu tarjeta",
+      "para": "Probar el cobro con dinero real: una compra, otra cancelada y una devolución parcial.",
+      "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
+    },
+    {
+      "id": "prueba-en-la-calle",
+      "prioridad": "alta",
+      "titulo": "Prueba en la calle con cliente, restaurante y repartidor",
+      "para": "Ver el pedido completo en la vida real: radio de entrega, código QR, chat y entrega en mano.",
+      "destraba": "El lanzamiento de Comida."
+    },
+    {
+      "id": "sesion-admin-google-play",
+      "prioridad": "alta",
+      "titulo": "Abrir tu sesión de administrador en el panel de Divoox",
+      "para": "Preparar las cuentas con las que Google revisa las tres apps. Yo no escribo tus contraseñas.",
+      "destraba": "Que Google pueda entrar a revisar las apps sin trabas."
+    },
+    {
+      "id": "contrasena-expo",
+      "prioridad": "alta",
+      "titulo": "Cambiar la contraseña de Expo",
+      "para": "Una contraseña de pruebas quedó en el historial del repositorio público en octubre.",
+      "destraba": "Cerrar ese riesgo de seguridad."
+    },
+    {
+      "id": "montos-para-encender",
+      "prioridad": "media",
+      "titulo": "Montos para encender las funciones de crecimiento",
+      "para": "Tarifa por hora de Ganar por tiempo, precio por pedido de los anuncios, cuota de Divoox Plus y montos de las tarjetas de regalo. Se ponen en el superadmin, en Rewards.",
+      "destraba": "Encenderlas: ya están construidas y probadas.",
+      "docs": ["earn-by-time", "sponsored-listings", "divoox-plus", "gift-cards"]
+    },
+    {
+      "id": "prueba-ruta-logistica",
+      "prioridad": "media",
+      "titulo": "Probar la ruta de logística con las etiquetas impresas",
+      "para": "Cargar y repartir la ruta de demostración en la calle.",
+      "destraba": "Dar Divoox Flex por probado de punta a punta.",
+      "docs": ["flex-getting-started"]
+    },
+    {
+      "id": "tiendas-pais",
+      "prioridad": "media",
+      "titulo": "Elegir el país donde se encienden Mercado, Farmacia y Licores",
+      "para": "Ya están construidas y la compra de prueba está hecha.",
+      "destraba": "Encender las tiendas.",
+      "docs": ["shop-stores"]
+    },
+    {
+      "id": "moto-carro-legal",
+      "prioridad": "media",
+      "titulo": "Moto y Carro: país, permiso legal, seguro del pasajero y tarifas",
+      "para": "Llevan pasajeros reales; sin abogado y aseguradora no se encienden.",
+      "destraba": "Encender Moto y Carro en el primer país."
+    },
+    {
+      "id": "envios-precio",
+      "prioridad": "media",
+      "titulo": "Envíos de persona a persona: valor máximo, seguro y precio",
+      "para": "Hoy el valor máximo declarado es 100 dólares por defecto.",
+      "destraba": "Abrir Envíos a todo el público."
+    },
+    {
+      "id": "caras-proveedor",
+      "prioridad": "baja",
+      "titulo": "Comparación de caras con IA: proveedor y costo",
+      "para": "Verificar que el repartidor es quien dice ser. El abogado aprueba el consentimiento.",
+      "destraba": "La verificación automática de identidad.",
+      "docs": ["background-check-and-identity"]
+    },
+    {
+      "id": "checkr",
+      "prioridad": "baja",
+      "titulo": "Cuenta de Checkr para antecedentes de repartidores",
+      "para": "La revisión de antecedentes penales y de manejo, como DoorDash.",
+      "destraba": "El botón de antecedentes en la app del repartidor."
+    }
+  ],
+  "terceros": [
+    {
+      "titulo": "Google revisa Divoox y Divoox Driver",
+      "detalle": "Cuando aprueben, subo lo acumulado en una sola versión."
+    },
+    {
+      "titulo": "Apple revisa las apps",
+      "detalle": "Mientras tanto, TestFlight está al día."
+    },
+    {
+      "titulo": "Twilio revisa el número de mensajes de texto",
+      "detalle": "Mientras tanto, los avisos salen por correo y notificación en el celular."
+    }
+  ],
+  "partes": [
+    {
+      "nombre": "Comida",
+      "que": "Pedidos a restaurantes",
+      "avance": 90,
+      "estado": "produccion",
+      "paises": "EE. UU.",
+      "falta": "Compra real de 1 dólar, prueba en la calle y encender Miami en la web.",
+      "quien": "Richard",
+      "docs": ["first-order", "ordering", "track-order"]
+    },
+    {
+      "nombre": "Logística (Divoox Flex)",
+      "que": "Empresas que reparten con sus propios conductores",
+      "avance": 95,
+      "estado": "produccion",
+      "paises": "Todos",
+      "falta": "Probar la ruta en la calle con las etiquetas.",
+      "quien": "Richard",
+      "docs": ["flex-getting-started", "flex-routes", "flex-tracking"]
+    },
+    {
+      "nombre": "Envíos de A a B",
+      "que": "Una persona manda un paquete ya mismo",
+      "avance": 85,
+      "estado": "piloto",
+      "paises": "EE. UU. (Miami y Novi)",
+      "falta": "Valor máximo, seguro del paquete y precio.",
+      "quien": "Richard",
+      "docs": ["services"]
+    },
+    {
+      "nombre": "Mercado, Farmacia y Licores",
+      "que": "Tiendas dentro de la app",
+      "avance": 85,
+      "estado": "apagado",
+      "paises": "Todos",
+      "falta": "Elegir el país y que se registren tiendas reales.",
+      "quien": "Richard",
+      "docs": ["shop-stores", "store-catalog", "store-orders"]
+    },
+    {
+      "nombre": "Moto y Carro",
+      "que": "Viajes de pasajeros",
+      "avance": 80,
+      "estado": "apagado",
+      "paises": "Todos",
+      "falta": "Permiso legal, seguro del pasajero y tarifas.",
+      "quien": "Richard"
+    },
+    {
+      "nombre": "Pagos al repartidor",
+      "que": "Rewards, pago por hora pico y Ganar por tiempo",
+      "avance": 90,
+      "estado": "apagado",
+      "paises": "Todos",
+      "falta": "Poner los montos en el superadmin.",
+      "quien": "Richard",
+      "docs": ["rewards", "busy-areas", "earn-by-time"]
+    },
+    {
+      "nombre": "Crecimiento",
+      "que": "Anuncios patrocinados, Divoox Plus y tarjetas de regalo",
+      "avance": 90,
+      "estado": "apagado",
+      "paises": "EE. UU.",
+      "falta": "Poner los precios. Plus y las tarjetas: mirar la hoja de pago en el celular antes de cobrar con dinero real.",
+      "quien": "Richard",
+      "docs": ["sponsored-listings", "divoox-plus", "gift-cards"]
+    },
+    {
+      "nombre": "Soporte",
+      "que": "Un buzón por app, casos de ayuda con capturas",
+      "avance": 95,
+      "estado": "produccion",
+      "paises": "Todos",
+      "falta": "Poner los correos de soporte en las fichas de las tiendas cuando terminen las revisiones.",
+      "quien": "Divoox",
+      "docs": ["support", "send-screenshot-to-support"]
+    },
+    {
+      "nombre": "Identidad de repartidores",
+      "que": "Verificación, foto bloqueada y antecedentes",
+      "avance": 70,
+      "estado": "parcial",
+      "paises": "Todos",
+      "falta": "Proveedor de comparación de caras y cuenta de Checkr.",
+      "quien": "Richard",
+      "docs": ["background-check-and-identity", "verify"]
+    },
+    {
+      "nombre": "Apps en las tiendas",
+      "que": "Divoox, Divoox Driver y la app del restaurante",
+      "avance": 75,
+      "estado": "revision",
+      "paises": "Todos",
+      "falta": "Que Apple y Google aprueben.",
+      "quien": "Apple y Google"
+    },
+    {
+      "nombre": "Cobro con dinero real",
+      "que": "El circuito de pagos de punta a punta",
+      "avance": 60,
+      "estado": "sin-probar",
+      "paises": "EE. UU.",
+      "falta": "Ningún método está probado todavía con dinero real dentro de la app.",
+      "quien": "Richard"
+    }
+  ],
+  "etapas": [
+    {
+      "n": "1",
+      "nombre": "Comida lista para Miami",
+      "avance": 90,
+      "estado": "en-curso"
+    },
+    {
+      "n": "1½",
+      "nombre": "Identidad de repartidores",
+      "avance": 70,
+      "estado": "en-curso"
+    },
+    {
+      "n": "2",
+      "nombre": "Tiendas: Mercado, Farmacia y Licores",
+      "avance": 85,
+      "estado": "espera"
+    },
+    {
+      "n": "3",
+      "nombre": "Moto",
+      "avance": 80,
+      "estado": "espera"
+    },
+    {
+      "n": "4",
+      "nombre": "Carro",
+      "avance": 80,
+      "estado": "espera"
+    },
+    {
+      "n": "5",
+      "nombre": "Envíos de persona a persona",
+      "avance": 85,
+      "estado": "espera"
+    },
+    {
+      "n": "6",
+      "nombre": "La pantalla «Más»",
+      "avance": 100,
+      "estado": "hecho"
+    },
+    {
+      "n": "7",
+      "nombre": "Crecer: Plus, regalos, anuncios, ganar por tiempo",
+      "avance": 90,
+      "estado": "espera"
+    },
+    {
+      "n": "8",
+      "nombre": "Brechas frente a los grandes",
+      "avance": 100,
+      "estado": "hecho"
+    }
+  ],
+  "bitacora": [
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Página de progreso",
+      "texto": "Esta página: el avance de todo Divoox en un solo lugar, con lo que depende de ti y casillas para marcarlo.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Divoox Plus y tarjetas de regalo",
+      "texto": "Construidas, probadas con Stripe en modo prueba y publicadas apagadas.",
+      "paises": "EE. UU.",
+      "docs": ["divoox-plus", "gift-cards"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Anuncios patrocinados y Ganar por tiempo",
+      "texto": "El restaurante paga solo por pedido que llega del anuncio; el repartidor puede cobrar por hora activa. Publicados apagados.",
+      "paises": "Todos",
+      "docs": ["sponsored-listings", "earn-by-time"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "La bandeja de casos de dinero abre al instante",
+      "texto": "Abrir un caso tardaba más de veinte segundos cuando había muchos.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Logística ordenada de punta a punta",
+      "texto": "Invitación de conductores, primeros pasos, menú por grupos y tutorial con pantallas reales.",
+      "paises": "Todos",
+      "docs": ["flex-getting-started"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Mis casos de ayuda con capturas",
+      "texto": "En las tres apps: el cliente, el repartidor y el restaurante ven sus casos y mandan capturas.",
+      "paises": "Todos",
+      "docs": ["send-screenshot-to-support"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Número de mensajes de texto en EE. UU.",
+      "texto": "Número gratuito comprado y verificación enviada a Twilio.",
+      "paises": "EE. UU."
+    }
+  ],
+  "incidencias": [
+    {
+      "fecha": "2026-11-01",
+      "estado": "en-curso",
+      "titulo": "Mensajes de texto en espera",
+      "texto": "Twilio todavía revisa el número. Los avisos salen por correo y notificación en el celular."
+    },
+    {
+      "fecha": "2026-11-01",
+      "estado": "resuelto",
+      "titulo": "Pruebas automáticas que fallaban a ratos",
+      "texto": "La bandeja de dinero del superadmin tardaba demasiado en abrir un caso. Arreglado y vigilado."
+    }
+  ],
+  "guias": {
+    "earn-by-time": "Ganar por tiempo",
+    "sponsored-listings": "Anuncios",
+    "divoox-plus": "Divoox Plus",
+    "gift-cards": "Tarjetas de regalo",
+    "flex-getting-started": "Empieza con Divoox Flex",
+    "flex-routes": "Rutas de Flex",
+    "flex-tracking": "Rastreo de paquetes",
+    "shop-stores": "Comprar en tiendas",
+    "store-catalog": "Catálogo de la tienda",
+    "store-orders": "Pedidos de la tienda",
+    "background-check-and-identity": "Identidad y antecedentes",
+    "verify": "Verificación",
+    "first-order": "Primer pedido",
+    "ordering": "Cómo pedir",
+    "track-order": "Seguir el pedido",
+    "services": "Servicios",
+    "rewards": "Divoox Rewards",
+    "busy-areas": "Zonas con más pedidos",
+    "support": "Soporte",
+    "send-screenshot-to-support": "Mandar capturas a soporte"
+  }
+}

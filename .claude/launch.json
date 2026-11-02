@@ -56,6 +56,13 @@
         "EXPO_NO_TELEMETRY": "1"
       },
       "port": 8081
+    },
+    {
+      "name": "progreso",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8790"],
+      "cwd": "progreso",
+      "port": 8790
     }
   ]
 }

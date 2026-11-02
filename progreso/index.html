@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Divoox · Progreso</title>
+    <link rel="icon" href="https://divoox.com/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --rojo: #f20d20;
+        --rojo-osc: #c20a1a;
+        --negro: #101010;
+        --gris: #666b73;
+        --linea: #e3e4e6;
+        --fondo: #f6f6f7;
+        --blanco: #fff;
+        --verde: #12813f;
+        --verde-claro: #e6f4ec;
+        --ambar: #a15c00;
+        --ambar-claro: #fdf1df;
+        --azul: #1f5f8b;
+        --azul-claro: #e7f0f7;
+        --rojo-claro: #fde8ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--fondo);
+        color: var(--negro);
+        font:
+          15px/1.55 Montserrat,
+          system-ui,
+          sans-serif;
+      }
+      h1,
+      h2,
+      h3,
+      .boton,
+      .chip {
+        font-family: Poppins, Montserrat, sans-serif;
+      }
+      a {
+        color: var(--azul);
+      }
+      .cab {
+        background: var(--negro);
+        color: var(--blanco);
+      }
+      .cab .in {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 18px 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .marca {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font:
+          700 20px Poppins,
+          sans-serif;
+      }
+      .marca b {
+        color: var(--rojo);
+      }
+      .cab small {
+        color: #c9cbcf;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      section {
+        margin-top: 28px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 12px;
+      }
+      .pista {
+        color: var(--gris);
+        margin: -6px 0 14px;
+      }
+      .rejilla {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      }
+      .tarjeta {
+        background: var(--blanco);
+        border: 1px solid var(--linea);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(16, 16, 16, 0.05);
+      }
+      .tarjeta h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+      .sub {
+        color: var(--gris);
+        font-size: 13px;
+        margin: 0 0 10px;
+      }
+      .barra {
+        height: 10px;
+        background: #ececee;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .barra > i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: var(--verde);
+      }
+      .barra.media > i {
+        background: #2f9e5b;
+      }
+      .barra.baja > i {
+        background: var(--ambar);
+      }
+      .num {
+        font:
+          700 14px Poppins,
+          sans-serif;
+      }
+      .fila {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0 6px;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .c-produccion,
+      .c-hecho,
+      .c-resuelto {
+        background: var(--verde-claro);
+        color: var(--verde);
+      }
+      .c-piloto,
+      .c-en-curso,
+      .c-parcial {
+        background: var(--azul-claro);
+        color: var(--azul);
+      }
+      .c-apagado,
+      .c-espera,
+      .c-revision {
+        background: var(--ambar-claro);
+        color: var(--ambar);
+      }
+      .c-sin-probar {
+        background: var(--rojo-claro);
+        color: var(--rojo-osc);
+      }
+      .falta {
+        margin: 10px 0 0;
+        font-size: 14px;
+      }
+      .falta b {
+        font-weight: 600;
+      }
+      .docs {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .docs a {
+        font-size: 12px;
+        text-decoration: none;
+        border: 1px solid var(--linea);
+        border-radius: 99px;
+        padding: 3px 10px;
+        color: var(--negro);
+        background: #fafafa;
+      }
+      .docs a:hover {
+        border-color: var(--negro);
+      }
+      .resumen {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 2fr 1fr 1fr;
+      }
+      @media (max-width: 820px) {
+        .resumen {
+          grid-template-columns: 1fr;
+        }
+      }
+      .grande {
+        font:
+          700 40px Poppins,
+          sans-serif;
+        line-height: 1;
+      }
+      .ahora {
+        border-left: 0;
+      }
+      .etiqueta {
+        font:
+          600 12px Poppins,
+          sans-serif;
+        color: var(--gris);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 0 0 6px;
+      }
+      .lista {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .lista li {
+        padding: 10px 0;
+        border-top: 1px solid var(--linea);
+      }
+      .lista li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .quien {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gris);
+      }
+      .pend {
+        display: grid;
+        gap: 10px;
+      }
+      .pend .tarjeta {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+      .pend .tarjeta.listo {
+        background: #fbfdfc;
+        border-color: #bfe3cc;
+      }
+      .pend .tarjeta.listo h3 {
+        color: var(--verde);
+      }
+      .caja {
+        width: 24px;
+        height: 24px;
+        accent-color: var(--verde);
+        margin-top: 2px;
+        cursor: pointer;
+      }
+      .prio {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .p-alta {
+        color: var(--rojo-osc);
+      }
+      .p-media {
+        color: var(--ambar);
+      }
+      .p-baja {
+        color: var(--gris);
+      }
+      .det {
+        font-size: 14px;
+        margin: 4px 0 0;
+      }
+      .det span {
+        color: var(--gris);
+      }
+      .marca-hecha {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--verde);
+      }
+      textarea {
+        width: 100%;
+        margin-top: 8px;
+        font: inherit;
+        font-size: 14px;
+        border: 1px solid var(--linea);
+        border-radius: 10px;
+        padding: 8px 10px;
+        resize: vertical;
+        min-height: 40px;
+      }
+      .boton {
+        border: 0;
+        border-radius: 10px;
+        padding: 9px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--negro);
+        color: #fff;
+      }
+      .boton.sec {
+        background: #fff;
+        color: var(--negro);
+        border: 1px solid var(--linea);
+      }
+      .acciones {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .tiempo {
+        display: grid;
+        gap: 8px;
+      }
+      .etapa {
+        display: grid;
+        grid-template-columns: 44px 1fr 120px;
+        gap: 12px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--linea);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .etapa .n {
+        font:
+          700 16px Poppins,
+          sans-serif;
+        color: var(--gris);
+      }
+      @media (max-width: 560px) {
+        .etapa {
+          grid-template-columns: 34px 1fr;
+        }
+        .etapa .der {
+          grid-column: 1 / -1;
+        }
+      }
+      .bit {
+        display: grid;
+        gap: 10px;
+      }
+      .bit .tarjeta {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 560px) {
+        .bit .tarjeta {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fecha {
+        color: var(--gris);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .t-nuevo {
+        background: var(--verde-claro);
+        color: var(--verde);
+      }
+      .t-arreglo {
+        background: var(--azul-claro);
+        color: var(--azul);
+      }
+      .estado-sis {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .punto {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #bbb;
+        flex: none;
+      }
+      .punto.ok {
+        background: var(--verde);
+      }
+      .punto.mal {
+        background: var(--rojo);
+      }
+      .piezas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .piezas span {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        background: #f1f1f2;
+        color: var(--gris);
+      }
+      .piezas span.ok {
+        background: var(--verde-claro);
+        color: var(--verde);
+      }
+      .piezas span.mal {
+        background: var(--rojo-claro);
+        color: var(--rojo-osc);
+      }
+      .aviso {
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: var(--rojo-claro);
+        color: var(--rojo-osc);
+        margin-top: 10px;
+        font-size: 14px;
+      }
+      .ok-msg {
+        background: var(--verde-claro);
+        color: var(--verde);
+      }
+      .clave {
+        display: none;
+        margin-top: 10px;
+      }
+      .clave input {
+        font: inherit;
+        border: 1px solid var(--linea);
+        border-radius: 10px;
+        padding: 8px 10px;
+        width: min(320px, 100%);
+      }
+      nav.menu {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      nav.menu a {
+        font-size: 13px;
+        text-decoration: none;
+        color: var(--negro);
+        background: #fff;
+        border: 1px solid var(--linea);
+        border-radius: 99px;
+        padding: 5px 12px;
+      }
+      footer {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 18px 16px 32px;
+        color: var(--gris);
+        font-size: 13px;
+        border-top: 1px solid var(--linea);
+      }
+      footer a {
+        color: var(--negro);
+      }
+      footer a:hover {
+        color: var(--rojo);
+      }
+      .vacio {
+        color: var(--gris);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="cab">
+      <div class="in">
+        <div class="marca">
+          <span>Divo<b>o</b>x</span><span style="font-weight: 600; opacity: 0.8">· Progreso</span>
+        </div>
+        <small id="actualizado">Cargando…</small>
+      </div>
+    </header>
+    <main>
+      <nav class="menu" aria-label="Secciones">
+        <a href="#resumen">Dónde estamos</a>
+        <a href="#esperando">Lo que depende de ti</a>
+        <a href="#partes">Cada parte</a>
+        <a href="#etapas">Etapas</a>
+        <a href="#novedades">Novedades</a>
+        <a href="#estado">Estado del sistema</a>
+      </nav>
+
+      <section id="resumen">
+        <h2>Dónde estamos</h2>
+        <div class="resumen">
+          <div class="tarjeta">
+            <p class="etiqueta">Avance general</p>
+            <div class="fila">
+              <span class="grande" id="total">—</span><span class="sub" id="total-sub"></span>
+            </div>
+            <div class="barra"><i id="total-barra" style="width: 0"></i></div>
+            <p class="etiqueta" style="margin-top: 16px">Ahora mismo</p>
+            <h3 id="ahora-t"></h3>
+            <p class="sub" id="ahora-d" style="margin: 0"></p>
+          </div>
+          <div class="tarjeta">
+            <p class="etiqueta">Depende de ti</p>
+            <span class="grande" id="n-pend">—</span>
+            <p class="sub" id="n-pend-sub" style="margin-top: 6px"></p>
+            <a href="#esperando">Ver la lista</a>
+          </div>
+          <div class="tarjeta">
+            <p class="etiqueta">Divoox en vivo</p>
+            <div class="estado-sis">
+              <span class="punto" id="vivo-punto"></span><b id="vivo-t">Comprobando…</b>
+            </div>
+            <p class="sub" id="vivo-d" style="margin-top: 6px"></p>
+            <a href="#estado">Ver el estado</a>
+          </div>
+        </div>
+        <div class="tarjeta" style="margin-top: 12px">
+          <p class="etiqueta">Lo próximo que se recomienda</p>
+          <ul class="lista" id="proximo"></ul>
+        </div>
+      </section>
+
+      <section id="esperando">
+        <h2>Lo que depende de ti</h2>
+        <p class="pista">
+          Cuando hagas algo, márcalo y escribe una nota si quieres. Nosotros lo leemos y seguimos
+          desde ahí.
+        </p>
+        <div class="clave tarjeta" id="clave-caja">
+          <b>Clave del equipo</b>
+          <p class="sub" style="margin: 4px 0 8px">Se pide una sola vez en este navegador.</p>
+          <input id="clave" type="password" autocomplete="off" aria-label="Clave del equipo" />
+          <div class="acciones"><button class="boton" id="clave-ok">Guardar clave</button></div>
+        </div>
+        <div class="pend" id="pend"></div>
+        <h3 style="margin: 22px 0 10px">Esperando a otros</h3>
+        <div class="rejilla" id="terceros"></div>
+      </section>
+
+      <section id="partes">
+        <h2>Cada parte de Divoox</h2>
+        <p class="pista">
+          Cuánto falta, qué falta y de quién depende. Las etiquetas de abajo abren la guía con
+          pantallas reales.
+        </p>
+        <div class="rejilla" id="lista-partes"></div>
+      </section>
+
+      <section id="etapas">
+        <h2>Etapas del roadmap</h2>
+        <div class="tiempo" id="lista-etapas"></div>
+      </section>
+
+      <section id="novedades">
+        <h2>Novedades</h2>
+        <div class="bit" id="lista-bit"></div>
+      </section>
+
+      <section id="estado">
+        <h2>Estado del sistema</h2>
+        <div class="tarjeta">
+          <div class="estado-sis">
+            <span class="punto" id="vivo-punto2"></span><b id="vivo-t2">Comprobando…</b>
+          </div>
+          <div class="piezas" id="piezas"></div>
+        </div>
+        <h3 style="margin: 18px 0 10px">Incidencias</h3>
+        <div class="bit" id="lista-inc"></div>
+      </section>
+    </main>
+    <footer>
+      © 2026 divoox.com | All rights reserved. Developed by
+      <a href="https://windoce.com" target="_blank" rel="noopener noreferrer">Windoce LLC</a>
+    </footer>
+
+    <script>
+      const ESTADOS = {
+        produccion: 'En producción',
+        piloto: 'Solo piloto',
+        apagado: 'Listo, apagado',
+        parcial: 'A medias',
+        revision: 'En revisión',
+        'sin-probar': 'Sin probar',
+        'en-curso': 'En curso',
+        espera: 'Construido, espera',
+        hecho: 'Terminado',
+        resuelto: 'Resuelto',
+      };
+      const NOMBRE_PIEZA = {
+        base: 'Base de datos',
+        almacen: 'Archivos',
+        correo: 'Correos',
+        avisosCelular: 'Notificaciones',
+        sms: 'Mensajes de texto',
+        stripe: 'Pagos',
+        webhookStripe: 'Avisos de pago',
+        dinero: 'Dinero cuadrado',
+        servicios: 'Servicios',
+        viajes: 'Viajes',
+        reloj: 'Reloj',
+      };
+      const el = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s ?? '').replace(
+          /[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+        );
+      const docs = (ids) =>
+        ids && ids.length
+          ? `<div class="docs">${ids.map((i) => `<a href="https://divoox.com/es/docs/${esc(i)}" target="_blank" rel="noopener">Guía: ${esc(datos?.guias?.[i] ?? i.replace(/-/g, ' '))}</a>`).join('')}</div>`
+          : '';
+      const barra = (n) =>
+        `<div class="barra ${n >= 85 ? '' : n >= 70 ? 'media' : 'baja'}"><i style="width:${Math.max(0, Math.min(100, n))}%"></i></div>`;
+      const fecha = (iso) =>
+        new Date(iso.length <= 10 ? iso + 'T12:00:00' : iso).toLocaleDateString('es-US', {
+          day: 'numeric',
+          month: 'long',
+        });
+      let datos = null,
+        marcas = new Map();
+      function guardado(k, v) {
+        try {
+          if (v === undefined) return localStorage.getItem(k);
+          localStorage.setItem(k, v);
+        } catch {
+          return null;
+        }
+      }
+
+      function pintar() {
+        if (!datos) return;
+        const act = new Date(datos.actualizado);
+        el('actualizado').textContent =
+          `Actualizado el ${act.toLocaleDateString('es-US', { day: 'numeric', month: 'long' })} a las ${act.toLocaleTimeString('es-US', { hour: 'numeric', minute: '2-digit' })}`;
+        const total = Math.round(
+          datos.partes.reduce((s, p) => s + p.avance, 0) / datos.partes.length,
+        );
+        el('total').textContent = `${total} %`;
+        el('total-barra').style.width = `${total}%`;
+        el('total-sub').textContent =
+          `${datos.partes.filter((p) => p.estado === 'produccion').length} de ${datos.partes.length} partes en producción`;
+        el('ahora-t').textContent = datos.ahora.titulo;
+        el('ahora-d').textContent = datos.ahora.detalle;
+        el('proximo').innerHTML = datos.proximo
+          .map(
+            (p) =>
+              `<li><span class="quien">${p.quien === 'richard' ? 'Tú' : 'Nosotros'}</span><br><b>${esc(p.titulo)}</b><div class="sub" style="margin:2px 0 0">${esc(p.detalle)}</div></li>`,
+          )
+          .join('');
+        const faltan = datos.esperando.filter((e) => !marcas.get(e.id)?.hecho);
+        el('n-pend').textContent = faltan.length;
+        el('n-pend-sub').textContent =
+          `${faltan.filter((e) => e.prioridad === 'alta').length} urgentes · ${datos.esperando.length - faltan.length} ya marcadas`;
+        el('pend').innerHTML = datos.esperando
+          .map((e) => {
+            const m = marcas.get(e.id);
+            const listo = Boolean(m?.hecho);
+            return `<div class="tarjeta ${listo ? 'listo' : ''}" data-id="${esc(e.id)}">
+      <input type="checkbox" class="caja" ${listo ? 'checked' : ''} aria-label="Ya lo hice: ${esc(e.titulo)}">
+      <div>
+        <span class="prio p-${esc(e.prioridad)}">${{ alta: 'Urgente', media: 'Importante', baja: 'Puede esperar' }[e.prioridad] ?? ''}</span>
+        <h3>${esc(e.titulo)}</h3>
+        <p class="det"><span>Para qué:</span> ${esc(e.para)}</p>
+        <p class="det"><span>Qué destraba:</span> ${esc(e.destraba)}</p>
+        ${docs(e.docs)}
+        ${m ? `<div class="marca-hecha">${listo ? 'Marcado como hecho' : 'Desmarcado'} ${m.quien ? 'por ' + esc(m.quien) + ' ' : ''}el ${fecha(m.actualizado_en.replace(' ', 'T') + 'Z')}${m.nota ? ' · «' + esc(m.nota) + '»' : ''}</div>` : ''}
+        <textarea placeholder="Nota opcional: qué hiciste o qué quedó pendiente" aria-label="Nota">${esc(guardado('nota:' + e.id) ?? m?.nota ?? '')}</textarea>
+        <div class="acciones"><button class="boton" data-accion="guardar">${listo ? 'Guardar nota' : 'Ya lo hice'}</button>${listo ? '<button class="boton sec" data-accion="deshacer">Todavía no</button>' : ''}</div>
+        <div class="mensaje"></div>
+      </div></div>`;
+          })
+          .join('');
+        el('terceros').innerHTML = datos.terceros
+          .map(
+            (t) =>
+              `<div class="tarjeta"><span class="chip c-revision">En espera</span><h3 style="margin-top:8px">${esc(t.titulo)}</h3><p class="sub" style="margin:0">${esc(t.detalle)}</p></div>`,
+          )
+          .join('');
+        el('lista-partes').innerHTML = datos.partes
+          .map(
+            (p) => `<div class="tarjeta">
+      <div class="fila" style="margin-top:0"><h3>${esc(p.nombre)}</h3><span class="chip c-${esc(p.estado)}">${ESTADOS[p.estado] ?? esc(p.estado)}</span></div>
+      <p class="sub">${esc(p.que)} · ${esc(p.paises)}</p>
+      <div class="fila"><span class="sub" style="margin:0">Avance</span><span class="num">${p.avance} %</span></div>
+      ${barra(p.avance)}
+      <p class="falta"><b>Falta:</b> ${esc(p.falta)}</p>
+      <p class="sub" style="margin:4px 0 0">Depende de: ${esc(p.quien)}</p>
+      ${docs(p.docs)}
+    </div>`,
+          )
+          .join('');
+        el('lista-etapas').innerHTML = datos.etapas
+          .map(
+            (e) =>
+              `<div class="etapa"><span class="n">${esc(e.n)}</span><div><b>${esc(e.nombre)}</b><div style="margin-top:6px">${barra(e.avance)}</div></div><div class="der" style="text-align:right"><span class="chip c-${esc(e.estado)}">${ESTADOS[e.estado] ?? ''}</span><div class="num" style="margin-top:4px">${e.avance} %</div></div></div>`,
+          )
+          .join('');
+        el('lista-bit').innerHTML = datos.bitacora
+          .map(
+            (b) =>
+              `<div class="tarjeta"><div><div class="fecha">${fecha(b.fecha)}</div><span class="chip t-${esc(b.tipo)}" style="margin-top:6px">${b.tipo === 'arreglo' ? 'Arreglo' : 'Nuevo'}</span></div><div><h3>${esc(b.titulo)}</h3><p class="sub" style="margin:0">${esc(b.texto)} · ${esc(b.paises)}</p>${docs(b.docs)}</div></div>`,
+          )
+          .join('');
+        el('lista-inc').innerHTML = datos.incidencias.length
+          ? datos.incidencias
+              .map(
+                (i) =>
+                  `<div class="tarjeta"><div><div class="fecha">${fecha(i.fecha)}</div><span class="chip c-${esc(i.estado)}" style="margin-top:6px">${ESTADOS[i.estado] ?? ''}</span></div><div><h3>${esc(i.titulo)}</h3><p class="sub" style="margin:0">${esc(i.texto)}</p></div></div>`,
+              )
+              .join('')
+          : '<p class="vacio">Sin incidencias.</p>';
+      }
+
+      async function cargar() {
+        try {
+          const [d, m] = await Promise.all([
+            fetch('/datos.json', { cache: 'no-store' }).then((r) => r.json()),
+            fetch('/datos/marcas', { cache: 'no-store' })
+              .then((r) => r.json())
+              .catch(() => ({ marcas: [] })),
+          ]);
+          datos = d;
+          marcas = new Map((m.marcas ?? []).map((x) => [x.id, x]));
+          pintar();
+        } catch {
+          el('actualizado').textContent = 'No pudimos cargar los datos. Recarga la página.';
+        }
+        try {
+          const s = await fetch('/datos/salud', { cache: 'no-store' }).then((r) => r.json());
+          const piezas = Object.entries(s.piezas ?? {});
+          const malas = piezas.filter(([, v]) => v === 'error');
+          const ok = s.ok && !malas.length;
+          for (const [p, t] of [
+            ['vivo-punto', 'vivo-t'],
+            ['vivo-punto2', 'vivo-t2'],
+          ]) {
+            el(p).className = 'punto ' + (s.sinRespuesta ? 'mal' : ok ? 'ok' : 'mal');
+            el(t).textContent = s.sinRespuesta
+              ? 'Divoox no responde'
+              : ok
+                ? 'Todo funciona'
+                : `${malas.length} pieza(s) con problema`;
+          }
+          el('vivo-d').textContent =
+            `Comprobado a las ${new Date(s.medido).toLocaleTimeString('es-US', { hour: 'numeric', minute: '2-digit' })}`;
+          el('piezas').innerHTML = piezas
+            .filter(([k]) => NOMBRE_PIEZA[k])
+            .map(
+              ([k, v]) =>
+                `<span class="${v === 'ok' ? 'ok' : v === 'error' ? 'mal' : ''}">${NOMBRE_PIEZA[k]}: ${v === 'ok' ? 'bien' : v === 'error' ? 'con problema' : 'pendiente'}</span>`,
+            )
+            .join('');
+        } catch {
+          /* el estado en vivo es un extra: la página sigue */
+        }
+      }
+
+      async function enviar(tarjeta, hecho) {
+        const id = tarjeta.dataset.id;
+        const nota = tarjeta.querySelector('textarea').value;
+        const msg = tarjeta.querySelector('.mensaje');
+        const clave = guardado('clave-equipo');
+        if (!clave) {
+          el('clave-caja').style.display = 'block';
+          el('clave').focus();
+          msg.innerHTML = '<div class="aviso">Primero escribe la clave del equipo, arriba.</div>';
+          return;
+        }
+        msg.innerHTML = '';
+        try {
+          const r = await fetch('/datos/marcar', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id, hecho, nota, clave, quien: guardado('quien') ?? 'Richard' }),
+          });
+          const d = await r.json();
+          if (!r.ok) {
+            if (r.status === 401) {
+              guardado('clave-equipo', '');
+              el('clave-caja').style.display = 'block';
+            }
+            msg.innerHTML = `<div class="aviso">${esc(d.error ?? 'No se pudo guardar. Intenta otra vez.')}</div>`;
+            return;
+          }
+          try {
+            localStorage.removeItem('nota:' + id);
+          } catch {}
+          marcas = new Map(d.marcas.map((x) => [x.id, x]));
+          pintar();
+        } catch {
+          // Sin internet: lo escrito se queda en la casilla para intentarlo otra vez.
+          msg.innerHTML =
+            '<div class="aviso">Sin conexión. Lo escrito se queda aquí; intenta otra vez.</div>';
+        }
+      }
+
+      document.addEventListener('click', (ev) => {
+        const b = ev.target.closest('button[data-accion]');
+        if (b) enviar(b.closest('[data-id]'), b.dataset.accion !== 'deshacer');
+      });
+      document.addEventListener('change', (ev) => {
+        if (ev.target.classList.contains('caja'))
+          enviar(ev.target.closest('[data-id]'), ev.target.checked);
+      });
+      // Las notas se guardan solas mientras se escriben: si se cierra la página, vuelven.
+      let espera;
+      document.addEventListener('input', (ev) => {
+        if (ev.target.tagName !== 'TEXTAREA') return;
+        const id = ev.target.closest('[data-id]').dataset.id;
+        clearTimeout(espera);
+        espera = setTimeout(() => guardado('nota:' + id, ev.target.value), 500);
+      });
+      el('clave-ok').addEventListener('click', () => {
+        const v = el('clave').value.trim();
+        if (!v) return;
+        guardado('clave-equipo', v);
+        el('clave-caja').style.display = 'none';
+      });
+      cargar();
+      // Cada dos minutos se refresca, salvo mientras se escribe una nota.
+      setInterval(() => document.activeElement?.tagName !== 'TEXTAREA' && cargar(), 120000);
+    </script>
+  </body>
+</html>
