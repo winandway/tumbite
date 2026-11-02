@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 14:45 (Miami)",
+  "actualizado": "2026-11-02 15:05",
   "version": "468eee7",
   "ahora": {
-    "titulo": "Bloque nuevo: platos, repartidores y restaurantes como los grandes",
-    "detalle": "Cinco de cinco hechas: calificar cada plato con «Le gustó al N %» en el menú, aviso de repartidor con sordera o dificultad auditiva, calorías por plato, planilla de pedidos para el restaurante y planilla de ganancias para el repartidor. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en la computadora."
+    "titulo": "Bloque nuevo: que ninguna pantalla se caiga por un dato mal leído",
+    "detalle": "Cinco de seis hechos: una revisión automática compara lo que leen las tres apps y el panel con lo que manda el servidor (la causa del cierre de «Equipo»), los fallos de las apps se ven por app en el superadmin, y se revisó el embudo de pedidos de producción: cuadra, y dos pedidos sin pagar del 12 de octubre que no se cerraban ya tienen su arreglo. Guardado; se publica cuando GitHub vuelva a tener sesión."
   },
   "proximo": [
     {
@@ -299,6 +299,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Ninguna pantalla se cae por un dato mal leído",
+      "texto": "Revisión automática de unas cuarenta lecturas de las apps y todas las del panel contra el servidor; fallos de las apps filtrables por app en el superadmin; embudo de producción revisado y cierre de pedidos sin pagar arreglado. Todos los países."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Cinco funciones nuevas para clientes, repartidores y restaurantes",
