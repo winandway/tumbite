@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-02T08:53",
+  "actualizado": "2026-11-02 10:00 (Miami)",
   "version": "468eee7",
   "ahora": {
     "titulo": "Todo lo de la fila está publicado",
@@ -294,6 +294,13 @@
   "bitacora": [
     {
       "fecha": "2026-11-02",
+      "titulo": "Términos dentro de la app y correos de soporte que vuelven a salir",
+      "texto": "Un restaurante en prueba avisó que los términos lo sacaban de la app: ahora términos, privacidad y guías se abren dentro de las tres apps, con botón «Listo». Además, la respuesta de soporte no le había llegado porque el sitio de pruebas gastaba el cupo diario de correos en cuentas inventadas; ya no lo gasta. Todos los países.",
+      "tipo": "arreglo",
+      "paises": "Todos los países"
+    },
+    {
+      "fecha": "2026-11-02",
       "tipo": "nuevo",
       "titulo": "Prepago de conductores encendido en Venezuela y Colombia",
       "texto": "Con el permiso de Richard, la comisión del 10 % se descuenta del saldo prepago del conductor en Moto, Carro y Envíos en Venezuela y Colombia, como hace inDrive. Estados Unidos sigue cobrando con Stripe. Moto y Carro siguen apagados en producción hasta lo legal de pasajeros.",
@@ -458,6 +465,12 @@
     }
   ],
   "incidencias": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Cupo diario de correos agotado por el sitio de pruebas",
+      "estado": "resuelto",
+      "texto": "Los correos de prueba ya no cuentan. La respuesta pendiente al restaurante se reenvía esta noche."
+    },
     {
       "fecha": "2026-11-01",
       "estado": "en-curso",
