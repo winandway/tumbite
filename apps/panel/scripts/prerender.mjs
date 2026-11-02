@@ -49,12 +49,18 @@ try {
     logo: `${DOMINIO}/icono-512.png`,
     email: 'soporte+divoox@windoce.com',
     description:
-      'Divoox is a food delivery app with fair commissions for restaurants and 100% of the tip for the driver. It starts in Miami and opens city by city with local franchises.',
-    areaServed: 'Miami, Florida, United States',
+      'Divoox is a delivery startup: food, stores and packages in one app, with fair commissions for restaurants and 100% of the tip for the driver. It opens city by city with local franchises.',
+    areaServed: 'United States',
     parentOrganization: {
       '@type': 'Organization',
-      name: 'Windoce LLC',
+      name: 'Windoce, LLC',
       url: 'https://windoce.com',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Novi',
+        addressRegion: 'MI',
+        addressCountry: 'US',
+      },
     },
   };
   const SITIO_WEB = {
@@ -96,6 +102,7 @@ try {
     '/driver-terms',
     '/delete-account',
     '/support',
+    '/contact',
     '/docs',
     '/docs/how-to',
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
@@ -136,8 +143,8 @@ try {
       const titulo =
         ruta === '/'
           ? lengua === 'en'
-            ? 'Divoox · Food delivery in Miami'
-            : 'Divoox · Comida a domicilio en Miami'
+            ? 'Divoox · Food, stores and packages delivered'
+            : 'Divoox · Comida, tiendas y paquetes a domicilio'
           : /divoox/i.test(h1)
             ? h1
             : `${h1} · Divoox`;
@@ -239,14 +246,14 @@ ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</lo
   };
   const llms = `# Divoox
 
-> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact and franchises: go@windoce.com.
+> Divoox is a delivery startup by Windoce, LLC, a Delaware company with offices in Novi, Michigan (United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: https://divoox.com/contact.
 
 ${grupo('Main pages', (r) => r === '/' || r === '/how-it-works')}
 ${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}
 ${grupo('Countries', (r) => r.startsWith('/country/'))}
 ${grupo('Cities', (r) => r.startsWith('/city/'))}
 ${grupo('Food types', (r) => r.startsWith('/food/'))}
-${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|delete-account|support)$/.test(r))}
+${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|delete-account|support|contact)$/.test(r))}
 ## En español
 
 Every page above also exists in Spanish under ${DOMINIO}/es (for example ${DOMINIO}/es/how-it-works).

@@ -4,8 +4,8 @@ import { TITULO_PORTADA, tituloPagina } from './tituloPagina';
 
 describe('título de la pestaña en el idioma de la página', () => {
   it('la portada lleva su título en cada idioma', () => {
-    expect(tituloPagina('', true, 'es')).toBe('Divoox · Comida a domicilio en Miami');
-    expect(tituloPagina('Hola', true, 'en')).toBe('Divoox · Food delivery in Miami');
+    expect(tituloPagina('', true, 'es')).toBe('Divoox · Comida, tiendas y paquetes a domicilio');
+    expect(tituloPagina('Hola', true, 'en')).toBe('Divoox · Food, stores and packages delivered');
   });
   it('el panel sin encabezado no se presenta como la portada pública', () => {
     expect(tituloPagina('', false, 'es', true)).toBe('Panel de tu negocio · Divoox');

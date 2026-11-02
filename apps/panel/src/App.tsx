@@ -21,6 +21,8 @@ import { useEffect } from 'react';
 import { useIdioma } from './usarIdioma';
 import { idiomaElegido } from './idioma';
 import { Landing } from './sitio/Landing';
+import { PaginaContacto } from './sitio/Contacto';
+import { FormContacto } from './sitio/FormContacto';
 import { Legal } from './sitio/Legal';
 import {
   BORRAR_CUENTA,
@@ -203,6 +205,12 @@ export function App() {
         <Confirmar idioma={idioma} />
       </Sitio>
     );
+  if (ruta === '/contact')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <PaginaContacto idioma={idioma} />
+      </Sitio>
+    );
   if (ruta === '/reset-password')
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
@@ -225,7 +233,15 @@ export function App() {
   return (
     <Sitio idioma={idioma} cambiar={cambiar}>
       {legal ? (
-        <Legal doc={enIdioma(legal, idioma)} volver={volver} />
+        <>
+          <Legal doc={enIdioma(legal, idioma)} volver={volver} />
+          {/* C-CONTACTO: en Soporte, el formulario reemplaza al correo suelto. */}
+          {ruta === '/support' ? (
+            <main className="legal contacto">
+              <FormContacto idioma={idioma} />
+            </main>
+          ) : null}
+        </>
       ) : (
         <Landing idioma={idioma} />
       )}

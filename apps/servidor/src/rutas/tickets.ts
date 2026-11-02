@@ -16,6 +16,7 @@ import {
   tipoAdjunto,
 } from '../adjuntosTicket';
 import { pasaTurnstile } from '../turnstile';
+import { SOY_CONTACTO } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
@@ -453,6 +454,63 @@ tickets.post('/franquicias', limiteIntentos(5, 60_000), async (c) => {
         : `Gracias por querer llevar Divoox a ${d.ciudad}. Nuestro equipo va a estudiar tu ciudad y te responde con los números.`,
   });
   return c.json({ ok: true, enlace: `/t/${t.codigo}` }, 201);
+});
+
+// ───────────────────────── Contacto público (C-CONTACTO) ─────────────────────────
+
+const esquemaContacto = z.object({
+  nombre: z.string().trim().min(2).max(80),
+  correo: z.email().max(160),
+  soy: z.enum(SOY_CONTACTO),
+  numeroUsuario: z.string().trim().max(40).default(''),
+  ciudad: z.string().trim().max(80).default(''),
+  mensaje: z.string().trim().min(5).max(5000),
+  idioma: z.enum(['es', 'en']).default('en'),
+});
+const SOY_TEXTO: Record<string, [string, string]> = {
+  cliente: ['Cliente', 'Customer'],
+  restaurante: ['Restaurante', 'Restaurant'],
+  repartidor: ['Repartidor', 'Driver'],
+  franquicia: ['Franquicia o inversión', 'Franchise or investment'],
+  prensa: ['Prensa', 'Press'],
+  otro: ['Otro', 'Other'],
+};
+
+/**
+ * C-CONTACTO (2 nov 2026, pedido de Richard): el formulario público de divoox.com abre un caso real
+ * (el mismo de «Ayuda de una persona real»): a la persona le llega por correo el enlace privado de su
+ * conversación y el gerente de correo lo ve con origen «contacto». Turnstile y límite de intentos.
+ */
+tickets.post('/contacto', limiteIntentos(5, 60_000), async (c) => {
+  const humano = await pasaTurnstile(
+    c.env.TURNSTILE_SECRET_KEY,
+    c.req.header('cf-turnstile-response'),
+    c.req.header('cf-connecting-ip'),
+  );
+  if (!humano)
+    throw new ErrorDatos(
+      'No pudimos confirmar que eres una persona. Recarga la página e intenta de nuevo.',
+      undefined,
+      403,
+    );
+  const d = await leerCuerpo(c, esquemaContacto);
+  const en = d.idioma === 'en';
+  const quien = (SOY_TEXTO[d.soy] ?? SOY_TEXTO.otro!)[en ? 1 : 0];
+  await crearTicket(c.env, base(c), {
+    tipo: 'soporte',
+    nombre: d.nombre,
+    correo: d.correo,
+    ciudad: d.ciudad,
+    idioma: d.idioma,
+    asunto: en ? `Contact · ${quien}` : `Contacto · ${quien}`,
+    mensaje: d.mensaje,
+    datos: { origen: 'contacto', soy: d.soy, numeroUsuario: d.numeroUsuario || null },
+    intro: en
+      ? 'Thanks for writing to Divoox. A person on our team will reply in this conversation.'
+      : 'Gracias por escribirle a Divoox. Una persona de nuestro equipo te responde en esta conversación.',
+  });
+  // El enlace privado solo va al correo: así se comprueba que el correo es de quien escribe.
+  return c.json({ ok: true }, 201);
 });
 
 // ───────────────────────── Quejas y soporte (con sesión) ─────────────────────────

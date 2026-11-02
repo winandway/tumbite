@@ -123,7 +123,7 @@ describe('pie de los correos (27 oct 2026)', () => {
   it('el pie dice divoox.com, nunca el dominio del remitente', async () => {
     const { aHtml } = await import('../correo');
     const html = aHtml('Hola.');
-    expect(html).toContain('Windoce LLC');
+    expect(html).toContain('Windoce, LLC');
     expect(html).toContain('divoox.com/marca/divoox-logo-correo.png');
     expect(html).not.toContain('tumbite.com');
   });

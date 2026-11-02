@@ -2387,3 +2387,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Apagado de fábrica:** los papeles nacen apagados (se encienden en Superadmin → Verificaciones); la edad por estado nace encendida.
 - **Pruebas:** `papelesVehiculo.test.ts` (5), «G4b» en `operacion.test.ts` (5, dos en rojo sin el freno), interruptores en `kyc.test.ts` y `InterruptoresRepartidor.test.tsx`.
 - UX-3 (1 nov): verde donde algo sale bien o es una acción positiva: «Pedir otra vez» en verde en la lista, el detalle (`BotonAncho exito`) y el inicio; «Normal» de cocina ocupada en verde en la app del restaurante. El rojo queda para la marca, el pago y las alertas.
+
+## C-CONTACTO — puerta pública de contacto que abre un caso real (2 nov 2026, pedido de Richard por el gerente de correo, todos los países)
+
+- **Qué hay:** `POST /datos/contacto` (Turnstile, 5 intentos por minuto, zod) abre un caso de tipo `soporte` con `datos.origen = 'contacto'`, `soy`, `numeroUsuario` y la ciudad; el enlace privado `/t/…` SOLO va por correo (la respuesta es `{ ok: true }`). La puerta del gerente (`GET /datos/gerente/tickets`) entrega `origen: 'contacto'` (o `'app'`), `soy`, `numero_usuario` y `ciudad`. Web: `sitio/FormContacto.tsx` (borrador, sugerencia de correo con `sugerirCorreo`, Turnstile), página `/contact` y `/es/contact` con «Quiénes somos», botón flotante «¿Preguntas?» en las páginas públicas (no en /contact ni /support), columna «Empresa» en el pie y el formulario en `/support`.
+- **Datos de la empresa:** «Windoce, LLC», empresa de Delaware con oficinas en Novi, Michigan, con enlace a https://windoce.com (`MARCA.empresa`, legales, datos para buscadores). Miami no se presenta como sede ni como ciudad confirmada.
+- **Pendiente legal (no se toca sin el abogado):** la cláusula de ley aplicable de los términos sigue diciendo Florida y los tribunales de Miami-Dade.
+- **Pruebas:** `gerente.test.ts` → «C-CONTACTO», `FormContacto.test.tsx`, `packages/compartido/src/contacto.test.ts`, `Pie.test.tsx` (el enlace /contact existe).

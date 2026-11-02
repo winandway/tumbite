@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { BotonPreguntas } from './Contacto';
 import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { SelectorIdioma } from '../SelectorIdioma';
@@ -45,6 +46,7 @@ export function Sitio({
       </header>
       {children}
       <Pie idioma={idioma} />
+      <BotonPreguntas idioma={idioma} />
     </div>
   );
 }

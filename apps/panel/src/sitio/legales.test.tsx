@@ -19,7 +19,7 @@ describe('política de privacidad lista para las tiendas', () => {
   for (const idioma of ['es', 'en'] as const) {
     const p = texto(PRIVACIDAD[idioma]);
     it(`(${idioma}) nombra a la empresa y un contacto de privacidad`, () => {
-      expect(p).toContain('Windoce LLC');
+      expect(p).toContain('Windoce, LLC');
       expect(p).toContain('soporte+divoox@windoce.com');
     });
     it(`(${idioma}) dice cuánto tiempo se guardan los datos y cómo borrarlos`, () => {

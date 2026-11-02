@@ -17,6 +17,51 @@ describe('puerta del gerente para los tickets', () => {
     usarTransporteCorreo(null);
   });
 
+  it('C-CONTACTO: el formulario público abre un caso, manda el enlace por correo y el gerente lo ve con su origen', async () => {
+    const cuerpos: string[] = [];
+    usarTransporteCorreo(async (_e, init) => {
+      cuerpos.push(String(init.body));
+      return new Response('{"success":true,"message_id":"m1"}', { status: 200 });
+    });
+    const m = mundo({ GERENTE_SECRETO: SECRETO, YAD_TOKEN: 'x'.repeat(40) });
+    const r = await m.llamar('POST', '/datos/contacto', {
+      nombre: 'Lucía Contacto',
+      correo: 'lucia@ejemplo.com',
+      soy: 'restaurante',
+      numeroUsuario: 'R-1234',
+      ciudad: 'Novi',
+      mensaje: 'Quiero sumar mi restaurante a Divoox.',
+      idioma: 'es',
+    });
+    expect(r.estado).toBe(201);
+    expect(r.datos).toEqual({ ok: true });
+    // El enlace privado solo viaja por correo.
+    expect(cuerpos.some((b) => b.includes('lucia@ejemplo.com') && b.includes('/t/'))).toBe(true);
+    // Datos mal escritos: no abre nada.
+    expect(
+      (
+        await m.llamar('POST', '/datos/contacto', {
+          nombre: 'X',
+          correo: 'no-es-correo',
+          soy: 'cliente',
+          mensaje: 'hola',
+        })
+      ).estado,
+    ).toBe(400);
+    const lista = (await (
+      await m.crudo('/datos/gerente/tickets?estado=abiertos', {
+        headers: { authorization: `Bearer ${SECRETO}` },
+      })
+    ).json()) as { tickets: Record<string, unknown>[] };
+    expect(lista.tickets.find((t) => t.cliente_nombre === 'Lucía Contacto')).toMatchObject({
+      origen: 'contacto',
+      soy: 'restaurante',
+      numero_usuario: 'R-1234',
+      ciudad: 'Novi',
+      asunto: 'Contacto · Restaurante',
+    });
+  });
+
   it('sin el secreto o con uno malo da 401', async () => {
     const m = mundo({ GERENTE_SECRETO: SECRETO });
     expect((await m.llamar('GET', '/datos/gerente/tickets?estado=abiertos')).estado).toBe(401);

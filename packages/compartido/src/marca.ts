@@ -1,7 +1,7 @@
 /** Identidad de la marca. Un solo lugar para el nombre y los colores. */
 export const MARCA = {
   nombre: 'Divoox',
-  empresa: 'Windoce LLC',
+  empresa: 'Windoce, LLC',
   sitioEmpresa: 'https://windoce.com',
   colores: {
     // Paleta oficial de Divoox (Manual de Marca v1, 23 oct 2026; identidad-divoox/): rojo principal,

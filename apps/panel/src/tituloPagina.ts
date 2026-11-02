@@ -7,8 +7,8 @@ import type { Idioma } from '@tumbite/compartido';
  * inglés en una pantalla en español. Candado C-TITULO-IDIOMA.
  */
 export const TITULO_PORTADA: Record<Idioma, string> = {
-  en: 'Divoox · Food delivery in Miami',
-  es: 'Divoox · Comida a domicilio en Miami',
+  en: 'Divoox · Food, stores and packages delivered',
+  es: 'Divoox · Comida, tiendas y paquetes a domicilio',
 };
 
 /** El panel sin encabezado (por ejemplo, Pedidos) no se presenta como la portada pública. */

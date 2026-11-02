@@ -237,7 +237,7 @@ finanzasEmpresa.get('/empresas/:id/comprobantes/:cid', async (c) => {
     comprobante: comprobantePublico(x),
     empresa: e,
     emisor: {
-      nombre: 'Windoce LLC (Divoox)',
+      nombre: 'Windoce, LLC (Divoox)',
       nota: 'Comprobante de movimiento de la billetera. No es una factura fiscal.',
     },
   });

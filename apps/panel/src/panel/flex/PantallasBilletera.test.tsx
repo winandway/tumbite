@@ -260,7 +260,7 @@ describe('Divoox Flex · Fase 4 · billetera en el panel', () => {
             datos: {},
           },
           empresa: { nombre: 'Paquetes Sur', razon_social: '', pais: 'US' },
-          emisor: { nombre: 'Windoce LLC (Divoox)' },
+          emisor: { nombre: 'Windoce, LLC (Divoox)' },
         }),
       }),
     );

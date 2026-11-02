@@ -5,7 +5,7 @@ import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
 import { LogoApple, LogoGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
-import { CONTACTO, TEXTOS_SITIO } from './textos';
+import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
 
 /**
@@ -116,13 +116,13 @@ export function Pie({ idioma }: { idioma: Idioma }) {
       </section>
 
       <div className="pie-columnas">
-        <nav aria-label={t.conocenos}>
-          <h3>{t.conocenos}</h3>
-          <Enlace a="/how-it-works">{t.sobre}</Enlace>
+        <nav aria-label={idioma === 'en' ? 'Company' : 'Empresa'}>
+          <h3>{idioma === 'en' ? 'Company' : 'Empresa'}</h3>
+          <Enlace a="/contact">{t.contacto}</Enlace>
           <Enlace a="/docs">{t.docs}</Enlace>
-          <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>
           <Enlace a="/support">{t.soporte}</Enlace>
-          <a href={`mailto:${CONTACTO}`}>{t.contacto}</a>
+          <Enlace a="/how-it-works">{t.sobre}</Enlace>
+          <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>
         </nav>
         <nav aria-label={t.ayuda}>
           <h3>{t.ayuda}</h3>

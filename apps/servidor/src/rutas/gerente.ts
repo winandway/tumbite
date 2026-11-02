@@ -48,7 +48,7 @@ gerente.get('/gerente/tickets', async (c) => {
   const abiertos = c.req.query('estado') !== 'todos';
   const { results } = await db
     .prepare(
-      `SELECT t.id, t.nombre, t.idioma, t.asunto, t.estado, t.creado_en, u.rol
+      `SELECT t.id, t.nombre, t.idioma, t.asunto, t.estado, t.creado_en, t.datos_json, t.ciudad, u.rol
          FROM tickets t LEFT JOIN usuarios u ON u.id = t.usuario_id
         WHERE t.tipo IN ('soporte', 'queja') ${abiertos ? "AND t.estado = 'abierto'" : ''}
         ORDER BY t.actualizado_en DESC LIMIT 100`,
@@ -60,6 +60,8 @@ gerente.get('/gerente/tickets', async (c) => {
       asunto: string;
       estado: string;
       creado_en: string;
+      datos_json: string | null;
+      ciudad: string | null;
       rol: string | null;
     }>();
   const mensajes = results.length
@@ -81,28 +83,46 @@ gerente.get('/gerente/tickets', async (c) => {
   );
   const iso = (f: string) => `${f.replace(' ', 'T')}Z`;
   return c.json({
-    tickets: results.map((t) => ({
-      id: t.id,
-      numero: numeroDeTicket(t.id),
-      app: APP_POR_ROL.get(t.rol ?? '') ?? 'divoox',
-      cliente_nombre: t.nombre,
-      idioma: t.idioma === 'en' ? 'en' : 'es',
-      asunto: t.asunto,
-      estado: t.estado,
-      creado: iso(t.creado_en),
-      mensajes: mensajes
-        .filter((m) => m.ticket_id === t.id)
-        .map((m) => ({
-          de: m.autor === 'equipo' ? 'soporte' : 'cliente',
-          fecha: iso(m.creado_en),
-          texto: m.texto,
-          adjuntos: (adjuntos.get(m.id) ?? []).map((a) => ({
-            nombre: a.nombre,
-            tipo: a.tipo,
-            url: a.url,
+    tickets: results.map((t) => {
+      // C-CONTACTO: los casos que llegan por el formulario público traen su origen y el «Soy…».
+      const datos = ((): Record<string, unknown> => {
+        try {
+          return JSON.parse(t.datos_json ?? '{}') as Record<string, unknown>;
+        } catch {
+          return {};
+        }
+      })();
+      return {
+        id: t.id,
+        origen: datos.origen === 'contacto' ? 'contacto' : 'app',
+        ...(datos.origen === 'contacto'
+          ? {
+              soy: String(datos.soy ?? 'otro'),
+              numero_usuario: datos.numeroUsuario ? String(datos.numeroUsuario) : null,
+              ciudad: t.ciudad || null,
+            }
+          : {}),
+        numero: numeroDeTicket(t.id),
+        app: APP_POR_ROL.get(t.rol ?? '') ?? 'divoox',
+        cliente_nombre: t.nombre,
+        idioma: t.idioma === 'en' ? 'en' : 'es',
+        asunto: t.asunto,
+        estado: t.estado,
+        creado: iso(t.creado_en),
+        mensajes: mensajes
+          .filter((m) => m.ticket_id === t.id)
+          .map((m) => ({
+            de: m.autor === 'equipo' ? 'soporte' : 'cliente',
+            fecha: iso(m.creado_en),
+            texto: m.texto,
+            adjuntos: (adjuntos.get(m.id) ?? []).map((a) => ({
+              nombre: a.nombre,
+              tipo: a.tipo,
+              url: a.url,
+            })),
           })),
-        })),
-    })),
+      };
+    }),
   });
 });
 

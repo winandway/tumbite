@@ -1596,6 +1596,46 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'who-pays-me',
+        titulo: '¿Quién me paga y cuándo me llega?',
+        resumen:
+          'Si eres restaurante o repartidor en Estados Unidos, tus pagos los hace Stripe Connect, la plataforma de pagos de muchas apps grandes. Conectas tu cuenta bancaria una sola vez y Stripe te deposita.',
+        explicacion: [
+          'Quién te paga: Stripe Connect. Divoox anota en tu saldo cada venta o cada entrega con su propina, y Stripe envía ese dinero a tu banco. Tus datos bancarios los escribes en Stripe: Divoox nunca los ve.',
+          'Cómo conectas tu banco: repartidores, en Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria»; restaurantes, en el panel → «Beneficios». Stripe te pide tus datos y los de tu cuenta, y verifica tu identidad. Se hace una sola vez.',
+          'Qué cuenta sirve: una cuenta bancaria de Estados Unidos, corriente o de ahorros, a tu nombre. Si eres un restaurante, la cuenta de tu negocio, a nombre de la empresa que registraste.',
+          'Cuándo te llega: el primer pago suele tardar entre 7 y 14 días desde tu primer cobro, porque Stripe revisa la cuenta nueva. Después, cada retiro llega normalmente en 2 o 3 días hábiles. Tu banco puede tardar un poco más en mostrarlo.',
+          'Si un pago no llega o el banco lo rechaza, la app te avisa y te dice qué corregir (ver «Si un abono a tu banco falla»). Si algo no cuadra, escríbenos desde «Tengo un problema» y te responde una persona.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-billetera-es.webp',
+            alt: 'Billetera de la app Divoox Driver con el saldo disponible, lo ganado, las propinas y cada movimiento con su pedido.',
+            pie: 'Repartidores: tu saldo y cada movimiento, en «Mi billetera».',
+          },
+          {
+            src: '/docs/recorrido-repartidor-retiro-es.webp',
+            alt: 'Billetera del repartidor después de retirar, con el aviso «Retiro en camino a tu banco».',
+            pie: 'Después de retirar, el dinero va camino a tu banco por Stripe.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-beneficios-es.webp',
+            alt: 'Pantalla Beneficios del panel del restaurante con las ventas, lo que recibe el restaurante y el saldo.',
+            pie: 'Restaurantes: tus ventas y tu saldo, en «Beneficios».',
+          },
+        ],
+        preguntas: [
+          '¿Quién me paga en Divoox?',
+          '¿Cuánto tarda en llegar mi dinero al banco?',
+          '¿Qué cuenta bancaria necesito?',
+        ],
+        pasos: [
+          'Repartidores: Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria». Restaurantes: panel → «Beneficios».',
+          'Completa tus datos y los de tu cuenta en Stripe (una sola vez).',
+          'Retira tu saldo: el primer pago tarda de 7 a 14 días; los siguientes, unos 2 o 3 días hábiles.',
+        ],
+      },
+      {
         id: 'payout-failed',
         titulo: 'Si un abono a tu banco falla',
         resumen:
@@ -5631,6 +5671,46 @@ const en: SeccionDocs[] = [
           'When accepting, tap the green “suggested” button (or pick another time).',
           'If you’re slammed, tap “Busy kitchen” → “+10 min” or “+20 min.”',
           'When things calm down, switch back to “Normal.”',
+        ],
+      },
+      {
+        id: 'who-pays-me',
+        titulo: 'Who pays me and when does it arrive?',
+        resumen:
+          'If you’re a restaurant or a driver in the United States, your payouts are made by Stripe Connect, the payments platform behind many large apps. You connect your bank account once and Stripe deposits to it.',
+        explicacion: [
+          'Who pays you: Stripe Connect. Divoox records every sale or every delivery with its tip in your balance, and Stripe sends that money to your bank. You enter your bank details at Stripe: Divoox never sees them.',
+          'How you connect your bank: drivers, in Divoox Driver → “My wallet” → “Connect my bank account”; restaurants, in the panel → “Earnings.” Stripe asks for your details and your account’s, and verifies your identity. You do it only once.',
+          'Which account works: a U.S. bank account, checking or savings, in your name. If you’re a restaurant, your business account, in the name of the company you registered.',
+          'When it arrives: your first payout usually takes 7 to 14 days from your first charge, because Stripe reviews new accounts. After that, each withdrawal normally arrives in 2 to 3 business days. Your bank may take a little longer to show it.',
+          'If a payout doesn’t arrive or the bank rejects it, the app tells you and what to fix (see “If a payout to your bank fails”). If something doesn’t add up, write to us from “I have a problem” and a person replies.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-billetera-en.webp',
+            alt: 'Wallet in the Divoox Driver app with the available balance, earnings, tips and every movement with its order.',
+            pie: 'Drivers: your balance and every movement, in “My wallet.”',
+          },
+          {
+            src: '/docs/recorrido-repartidor-retiro-en.webp',
+            alt: 'Driver wallet after withdrawing, with the “Withdrawal on its way to your bank” notice.',
+            pie: 'After you withdraw, the money is on its way to your bank through Stripe.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-beneficios-en.webp',
+            alt: 'Earnings screen in the restaurant panel with sales, what the restaurant receives and the balance.',
+            pie: 'Restaurants: your sales and your balance, in “Earnings.”',
+          },
+        ],
+        preguntas: [
+          'Who pays me on Divoox?',
+          'How long does my money take to reach my bank?',
+          'Which bank account do I need?',
+        ],
+        pasos: [
+          'Drivers: Divoox Driver → “My wallet” → “Connect my bank account.” Restaurants: panel → “Earnings.”',
+          'Complete your details and your account’s at Stripe (only once).',
+          'Withdraw your balance: the first payout takes 7 to 14 days; after that, about 2 to 3 business days.',
         ],
       },
       {

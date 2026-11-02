@@ -21,7 +21,7 @@ export type DocumentoLegal = {
 };
 
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
-const EMPRESA = 'Windoce LLC';
+const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
 
 // ─────────────────────────────── Privacidad ───────────────────────────────
@@ -35,7 +35,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '1. Quiénes somos y cómo contactarnos',
         parrafos: [
-          `Divoox es un servicio de ${EMPRESA}, una empresa de Florida, Estados Unidos, que es la responsable de tus datos.`,
+          `Divoox es un servicio de ${EMPRESA}, una empresa de Delaware con oficinas en Novi, Michigan, Estados Unidos, que es la responsable de tus datos.`,
           `Para cualquier pregunta sobre privacidad o para ejercer tus derechos, escríbenos a ${CONTACTO}. Respondemos en español y en inglés.`,
         ],
       },
@@ -146,7 +146,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '1. Who we are and how to reach us',
         parrafos: [
-          `Divoox is a service of ${EMPRESA}, a Florida company in the United States, which is responsible for your data.`,
+          `Divoox is a service of ${EMPRESA}, a Delaware company with offices in Novi, Michigan, United States, which is responsible for your data.`,
           `For any privacy question or to exercise your rights, email us at ${CONTACTO}. We answer in English and Spanish.`,
         ],
       },
@@ -692,7 +692,9 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
     secciones: [
       {
         titulo: 'Escríbenos',
-        parrafos: [`Respondemos en español y en inglés. Correo: ${CONTACTO}`],
+        parrafos: [
+          'Usa el formulario de abajo: te responde una persona de nuestro equipo, en español o en inglés, y la conversación te llega al correo con su enlace privado.',
+        ],
       },
       {
         titulo: 'Problemas con un pedido',
@@ -716,7 +718,12 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
     titulo: 'Support',
     actualizado: FECHA.en,
     secciones: [
-      { titulo: 'Contact us', parrafos: [`We answer in English and Spanish. Email: ${CONTACTO}`] },
+      {
+        titulo: 'Contact us',
+        parrafos: [
+          'Use the form below: a person on our team replies, in English or Spanish, and the conversation is emailed to you with its private link.',
+        ],
+      },
       {
         titulo: 'Problems with an order',
         parrafos: [
