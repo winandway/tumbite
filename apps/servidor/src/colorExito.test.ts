@@ -17,9 +17,11 @@ describe('verde para el éxito', () => {
     const pedido = leer('apps', 'cliente', 'src', 'app', 'order', '[id].tsx');
     expect(pedido).toMatch(/backgroundColor: i <= paso \? C\.exito/);
     expect(pedido).not.toMatch(/backgroundColor: i <= paso \? C\.primario/);
-    expect(leer('apps', 'cliente', 'src', 'app', 'account.tsx')).toMatch(
-      /'entregado' \? \{ color: C\.exito/,
-    );
+    // Mi cuenta y Mis pedidos: la etiqueta de «Entregado» va en verde (C-MIS-PEDIDOS-MINIATURA).
+    for (const archivo of ['account.tsx', 'orders.tsx'])
+      expect(leer('apps', 'cliente', 'src', 'app', archivo)).toMatch(
+        /'entregado'\s*\?\s*\{ fondo: '#E6F4EC', texto: C\.exito \}/,
+      );
   });
   it('el plato ya en el carrito y el regalo aplicado salen en verde', () => {
     expect(leer('apps', 'cliente', 'src', 'app', 'restaurant', '[id].tsx')).toMatch(
