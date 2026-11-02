@@ -16,4 +16,17 @@ describe('La flecha de volver regresa a donde estaba la persona', () => {
     expect(pedido).toContain('alVolver={volver}');
     expect(pedido).not.toContain('alVolver={irInicio}');
   });
+
+  it('ninguna pantalla del cliente con flecha manda siempre al inicio sin mirar de dónde se vino', () => {
+    for (const archivo of [
+      'orders.tsx',
+      'favorites.tsx',
+      'account.tsx',
+      'notifications.tsx',
+      'packages.tsx',
+    ])
+      expect(leer('apps', 'cliente', 'src', 'app', archivo)).not.toContain(
+        "alVolver={() => router.replace('/')}",
+      );
+  });
 });

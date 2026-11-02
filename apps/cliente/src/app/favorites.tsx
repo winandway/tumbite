@@ -68,7 +68,7 @@ export default function Favoritos() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={t.titulo}
-        alVolver={() => router.replace('/')}
+        alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         etiquetaVolver={t.volver}
       />
       <ScrollView
