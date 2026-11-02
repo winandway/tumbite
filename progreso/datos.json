@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-01T21:10:35-05:00",
+  "actualizado": "2026-11-01T22:52:32-05:00",
   "version": "6632d38",
   "ahora": {
-    "titulo": "Capturas reales en las guías de Docs",
-    "detalle": "Zonas con más pedidos, Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte. Después, todas las guías que no tengan imágenes."
+    "titulo": "Capturas en todas las guías de Docs",
+    "detalle": "Ya tienen capturas reales: zonas con más pedidos, Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte. Sigue la revisión de todas las demás guías."
   },
   "proximo": [
     {
@@ -285,6 +285,42 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Guías de Docs con capturas reales",
+      "texto": "Ganar por tiempo, Anuncios, Divoox Plus, Tarjetas de regalo y Mandar capturas a soporte, en español e inglés.",
+      "paises": "Todos",
+      "docs": [
+        "earn-by-time",
+        "sponsored-listings",
+        "divoox-plus",
+        "gift-cards",
+        "send-screenshot-to-support"
+      ]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "El mapa de zonas se ve antes de conectarse",
+      "texto": "En Divoox Driver el mapa de zonas con más pedidos solo aparecía estando conectado. Ahora se ve antes, como en Dasher, que es cuando sirve para decidir adónde ir.",
+      "paises": "Todos",
+      "docs": ["busy-areas"]
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "Los casos de ayuda, en el idioma de la app",
+      "texto": "Una persona que usaba la app en español veía el título de su caso en inglés.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "arreglo",
+      "titulo": "Formulario de anuncios ordenado",
+      "texto": "La casilla y el presupuesto salían pegados en una línea; ahora cada uno va en su sitio, con el reporte en cifras.",
+      "paises": "Todos"
+    },
     {
       "fecha": "2026-11-01",
       "tipo": "nuevo",

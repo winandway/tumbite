@@ -249,11 +249,11 @@
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
 - [x] HECHO 1 nov (C-DOCS-ZONAS). (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
-- [ ] (CAP-2) Capturas de «Ganar por tiempo»: la tarjeta «¿Cómo quieres cobrar hoy?» en Driver y el superadmin. Todos los países.
-- [ ] (CAP-3) Capturas grandes de «Anuncios»: el panel del restaurante (encender, presupuesto, reporte), la etiqueta «Patrocinado» en la app del cliente y el superadmin. Es material de venta. Todos los países.
-- [ ] (CAP-4) Capturas de «Divoox Plus»: la pantalla para suscribirse, el carrito con el descuento y Mi cuenta. EE. UU.
-- [ ] (CAP-5) Capturas de «Tarjetas de regalo»: comprar, canjear, saldo y el interruptor del carrito. EE. UU.
-- [ ] (CAP-6) Capturas y explicación paso a paso de «Mandar capturas a soporte». Todos los países.
+- [x] HECHO 1 nov. (CAP-2) Capturas de «Ganar por tiempo»: la tarjeta «¿Cómo quieres cobrar hoy?» en Driver y el superadmin. Todos los países.
+- [x] HECHO 1 nov. (CAP-3) Capturas grandes de «Anuncios»: el panel del restaurante (encender, presupuesto, reporte), la etiqueta «Patrocinado» en la app del cliente y el superadmin. Es material de venta. Todos los países.
+- [x] HECHO 1 nov. (CAP-4) Capturas de «Divoox Plus»: la pantalla para suscribirse, el carrito con el descuento y Mi cuenta. EE. UU.
+- [x] HECHO 1 nov. (CAP-5) Capturas de «Tarjetas de regalo»: comprar, canjear, saldo y el interruptor del carrito. EE. UU.
+- [x] HECHO 1 nov. (CAP-6) Capturas y explicación paso a paso de «Mandar capturas a soporte». Todos los países.
 - [ ] (CAP-7) Revisar TODAS las guías de Docs y agregar capturas a las que no tengan (regla nueva: ninguna guía sin captura). Todos los países.
 - [x] HECHO 1 nov. (PRO-1) Página de progreso: sección «Qué hace cada app» (cliente, Driver, restaurante) y «Lo que solo existe en el panel web», pensada para explicar la startup a clientes, inversores y aceleradoras. Todos los países.
 - [ ] (STA-1) Llamarla «la startup Divoox» en la web y en Docs donde corresponda (portada, Acerca de, franquicias, presentaciones). Todos los países.
