@@ -110,6 +110,28 @@ describe('puerta del gerente para los tickets', () => {
     });
   });
 
+  it('acepta plantillas de una y dos cifras (P10 en adelante) y rechaza las de tres', async () => {
+    const m = mundo({ GERENTE_SECRETO: SECRETO, YAD_TOKEN: 'x'.repeat(40) });
+    const t = await crearTicket({ DB: m.DB, ...m.extra } as never, m.DB, {
+      tipo: 'soporte',
+      nombre: 'Sin Cuenta',
+      correo: 'plantilla@ejemplo.com',
+      idioma: 'es',
+      asunto: '¿Cuándo sale la app?',
+      mensaje: 'Quiero saber cuándo sale.',
+    });
+    const responder = (plantilla: string) =>
+      m.crudo(`/datos/gerente/tickets/${t.id}/responder`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${SECRETO}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ texto: 'Muy pronto.', plantilla }),
+      });
+    expect((await responder('P100')).status).toBe(400);
+    const r = await responder('P10');
+    expect(r.status).toBe(200);
+    expect(await r.json()).toMatchObject({ ok: true, plantilla: 'P10' });
+  });
+
   it('si el correo falla, lo dice y queda en el registro de errores', async () => {
     usarTransporteCorreo(async () => new Response('fallo', { status: 500 }));
     const m = mundo({ GERENTE_SECRETO: SECRETO, YAD_TOKEN: 'x'.repeat(40) });

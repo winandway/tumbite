@@ -110,7 +110,7 @@ const esquemaRespuesta = z.object({
   texto: z.string().trim().min(1).max(4000),
   plantilla: z
     .string()
-    .regex(/^P[1-9]$/)
+    .regex(/^P\d{1,2}$/)
     .optional(),
   cerrar: z.boolean().default(false),
 });
