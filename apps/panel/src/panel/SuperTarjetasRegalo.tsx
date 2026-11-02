@@ -84,7 +84,7 @@ export function SuperTarjetasRegalo({ idioma }: { idioma: Idioma }) {
   }
 
   const campo = (clave: 'cuota' | 'minimo', etiqueta: string, valor: string) => (
-    <label>
+    <label className="campo">
       {etiqueta}
       <input
         type="number"
@@ -105,7 +105,7 @@ export function SuperTarjetasRegalo({ idioma }: { idioma: Idioma }) {
         empezar={() => void b.empezarDeNuevo()}
       />
       <form className="formulario tarjeta-form" onSubmit={(e) => void guardar(e)} noValidate>
-        <label className="casilla">
+        <label className="casilla-fila">
           <input
             type="checkbox"
             checked={b.valores.activas}

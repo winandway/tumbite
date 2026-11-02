@@ -84,7 +84,7 @@ export function SuperPlus({ idioma }: { idioma: Idioma }) {
   }
 
   const campo = (clave: 'cuota' | 'minimo' | 'pct', etiqueta: string, valor: string) => (
-    <label>
+    <label className="campo">
       {etiqueta}
       <input
         type="number"

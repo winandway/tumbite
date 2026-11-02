@@ -5329,3 +5329,42 @@ body.modo-tableta .panel-contenido {
   border: 1px solid #2a2a2a;
   margin-top: 6px;
 }
+
+/* Casilla de marcar con su texto en la misma fila (Anuncios, tarjetas del superadmin). */
+.casilla-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.casilla-fila input {
+  width: 20px;
+  height: 20px;
+  accent-color: #12813f;
+}
+/* Las cifras del reporte de un anuncio: vistas, toques, pedidos y gasto. */
+.resumen-anuncio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  max-width: 720px;
+  margin: 0;
+}
+.resumen-anuncio div {
+  background: #fff;
+  border: 1px solid #e3e4e6;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.resumen-anuncio dt {
+  color: #666b73;
+  font-size: 0.85rem;
+}
+.resumen-anuncio dd {
+  margin: 4px 0 0;
+  font:
+    700 1.4rem Poppins,
+    sans-serif;
+}

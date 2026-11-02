@@ -140,7 +140,7 @@ export function Anuncios({ usuario, idioma }: { usuario: { id: string }; idioma:
             empezar={() => void b.empezarDeNuevo()}
           />
           <form className="formulario tarjeta-form" onSubmit={(e) => void guardar(e)} noValidate>
-            <label className="casilla">
+            <label className="casilla-fila">
               <input
                 type="checkbox"
                 checked={b.valores.activa}
@@ -148,7 +148,7 @@ export function Anuncios({ usuario, idioma }: { usuario: { id: string }; idioma:
               />
               {t.activa}
             </label>
-            <label>
+            <label className="campo">
               {t.presupuesto}
               <input
                 type="number"

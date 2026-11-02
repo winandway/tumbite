@@ -87,7 +87,7 @@ export function SuperPagoPico({ idioma }: { idioma: Idioma }) {
         empezar={() => void b.empezarDeNuevo()}
       />
       <form className="formulario tarjeta-form" onSubmit={(e) => void guardar(e)} noValidate>
-        <label>
+        <label className="campo">
           {t.monto}
           <input
             type="number"
@@ -96,7 +96,7 @@ export function SuperPagoPico({ idioma }: { idioma: Idioma }) {
             onChange={(e) => b.cambiar('monto', e.target.value)}
           />
         </label>
-        <label>
+        <label className="campo">
           {t.presupuesto}
           <input
             type="number"
