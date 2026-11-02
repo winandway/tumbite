@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
+import { montoATexto } from '@tumbite/compartido';
+import { mio } from './restauranteMas';
 
 /**
  * C-INFORMES (29 oct 2026): informe del superadmin por rango de fechas, por ciudad y moneda
@@ -147,5 +149,87 @@ informes.get('/admin/informes', async (c) => {
     hasta: h.data,
     filas,
     embudo: await embudo(base(c), d.data, h.data),
+  });
+});
+
+/**
+ * C-PLANILLA-PEDIDOS (2 nov 2026), como el reporte de pedidos de Uber Eats Manager: el dueño o un
+ * manager descarga sus pedidos de un rango (hasta 5.000) con lo que vendió y lo que cobra. Montos
+ * con decimales en la moneda del pedido; nada del cliente (ni nombre ni dirección).
+ */
+informes.get('/mi-restaurante/pedidos/planilla', async (c) => {
+  const db = base(c);
+  const r = await mio(c, db, 'manager');
+  const d = fecha.safeParse(c.req.query('desde'));
+  const h = fecha.safeParse(c.req.query('hasta'));
+  if (!d.success || !h.success)
+    throw new ErrorDatos('Elige la fecha inicial y la final.', 'desde', 400);
+  if (d.data > h.data)
+    throw new ErrorDatos('La fecha final va después de la inicial.', 'hasta', 400);
+  const { results } = await db
+    .prepare(
+      `SELECT id, creado_en, estado, lineas_json, moneda, subtotal, comision, pago_restaurante, propina
+         FROM pedidos WHERE restaurante_id = ? AND estado <> 'pago_pendiente'
+          AND date(creado_en) BETWEEN ? AND ? ORDER BY creado_en DESC LIMIT 5000`,
+    )
+    .bind(r.id, d.data, h.data)
+    .all<{
+      id: string;
+      creado_en: string;
+      estado: string;
+      lineas_json: string;
+      moneda: string | null;
+      subtotal: number;
+      comision: number;
+      pago_restaurante: number;
+      propina: number;
+    }>();
+  const articulos = (crudo: string) => {
+    try {
+      const lineas = JSON.parse(crudo) as { cantidad?: unknown }[];
+      return Array.isArray(lineas)
+        ? lineas.reduce(
+            (s, l) => s + (Number.isFinite(Number(l?.cantidad)) ? Number(l.cantidad) : 0),
+            0,
+          )
+        : 0;
+    } catch {
+      console.warn('planilla: líneas ilegibles en un pedido');
+      return 0;
+    }
+  };
+  const cab = [
+    'fecha',
+    'pedido',
+    'estado',
+    'articulos',
+    'moneda',
+    'subtotal',
+    'comision',
+    'tu_pago',
+    'propina_repartidor',
+  ];
+  const cuerpo = [
+    cab.join(','),
+    ...results.map((f) => {
+      const moneda = f.moneda ?? 'USD';
+      return [
+        f.creado_en,
+        f.id.slice(0, 6).toUpperCase(),
+        f.estado,
+        articulos(f.lineas_json),
+        moneda,
+        montoATexto(f.subtotal, moneda),
+        montoATexto(f.comision, moneda),
+        montoATexto(f.pago_restaurante, moneda),
+        montoATexto(f.propina, moneda),
+      ]
+        .map(celdaCsv)
+        .join(',');
+    }),
+  ].join('\n');
+  return c.body(cuerpo, 200, {
+    'content-type': 'text/csv; charset=utf-8',
+    'content-disposition': `attachment; filename="divoox-pedidos-${d.data}-${h.data}.csv"`,
   });
 });

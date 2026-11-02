@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { PlanillaPedidos } from './PlanillaPedidos';
 
 const T = {
   es: {
@@ -269,6 +270,7 @@ export function TableroRestaurante({ nombre, idioma }: { nombre: string; idioma:
               </ul>
             </div>
           ) : null}
+          <PlanillaPedidos idioma={idioma} />
         </>
       )}
     </section>

@@ -2521,3 +2521,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** columna `platos.calorias` (INTEGER, por COLUMNAS en `apps/servidor/src/esquema.ts`). `esquemaPlato` la acepta entre 0 y 10.000 o `null`; POST y PUT de `/datos/mi-restaurante/platos` la guardan y `aPlato` la devuelve.
 - **Prueba:** `apps/servidor/src/caloriasPlato.test.ts` y `apps/panel/src/panel/Menu.test.tsx` (en rojo sin el cambio).
 - **Qué NO tocar:** los DOS editores (panel `Menu.tsx` y app `apps/restaurante/src/MiMenu.tsx`) mandan `calorias`; si uno deja de mandarla, el PUT la borra al editar el plato.
+
+## C-PLANILLA-PEDIDOS (2 nov 2026) — todos los países
+
+- **Qué es:** «Descargar tus pedidos» al final del tablero del panel del restaurante: planilla CSV de un rango de fechas, como el reporte de pedidos de Uber Eats Manager.
+- **Cómo funciona:** `GET /datos/mi-restaurante/pedidos/planilla?desde=&hasta=` en `apps/servidor/src/rutas/informes.ts` (dueño o manager, hasta 5.000 pedidos, sin `pago_pendiente`). Columnas: fecha, pedido (6 letras), estado, artículos, moneda, subtotal, comisión, tu pago y propina, con decimales (`montoATexto`) y celdas seguras (`celdaCsv`). Nada del cliente. El enlace del panel viaja con la cookie de la sesión (`apps/panel/src/panel/PlanillaPedidos.tsx`).
+- **Prueba:** `apps/servidor/src/planillaPedidos.test.ts` (en rojo sin la ruta) y `apps/panel/src/panel/PlanillaPedidos.test.tsx`.
+- **Qué NO tocar:** que no salgan nombre, teléfono ni dirección del cliente, y que solo vea los pedidos de su propio restaurante.

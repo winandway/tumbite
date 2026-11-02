@@ -2180,6 +2180,7 @@ const es: SeccionDocs[] = [
           'Al final, tus horas y días fuertes de los últimos 30 días, en la hora de tu ciudad: así sabes cuándo reforzar la cocina. Y tus clientes: cuántos son nuevos, cuántos repiten y cuántos pedidos se cancelaron.',
           'También ves cuántos pedidos tuvieron un problema (un plato que faltó, vino equivocado o llegó dañado), qué porcentaje de tus pedidos salió sin problemas y cuánto se les devolvió a los clientes en el mes. Es la mejor pista para revisar el armado de las bolsas.',
           'Lo mismo lo ves en la app del restaurante, en Estadísticas.',
+          'Al final del tablero del panel está «Descargar tus pedidos»: eliges desde y hasta qué fecha y te llevas una planilla con cada pedido (fecha, estado, artículos, lo que vendiste, la comisión y lo que recibes), lista para Excel, Numbers o Google Sheets y para tu contador. No lleva datos de tus clientes. La descargan el dueño y los managers.',
         ],
         capturas: [
           {
@@ -6311,6 +6312,7 @@ const en: SeccionDocs[] = [
           'At the bottom, your busiest hours and days over the last 30 days, in your city’s time, so you know when to staff up. And your customers: how many are new, how many come back, and how many orders were canceled.',
           'You also see how many orders had an issue (an item missing, wrong or damaged), what share of your orders went out without issues, and how much was refunded to customers this month. It’s the best clue for checking how bags are packed.',
           'You see the same in the restaurant app, under Stats.',
+          'At the bottom of the dashboard in the web panel is “Download your orders”: pick a start and end date and get a spreadsheet with every order (date, status, items, what you sold, the commission and what you receive), ready for Excel, Numbers or Google Sheets and for your accountant. It doesn’t include your customers’ details. The owner and managers can download it.',
         ],
         capturas: [
           {

@@ -258,7 +258,7 @@
 - [x] HECHO 2 nov (C-GUSTO-PLATOS); sin publicar todavía (GitHub sin sesión); la captura del menú con el porcentaje se toma del sitio de pruebas al publicar. (PLT-1) Calificar cada plato con pulgar arriba o abajo al calificar el pedido, y en el menú «Le gustó al 92 % (40)» cuando hay al menos 5 votos, como DoorDash. El restaurante lo ve en Reseñas. Todos los países.
 - [x] HECHO 2 nov (C-AUDITIVA-REPARTIDOR); sin publicar todavía (GitHub sin sesión); la captura de Seguridad se rehace del sitio de pruebas al publicar. (PLT-2) Repartidor sordo o con dificultad auditiva, como Uber y DoorDash: interruptor en Driver; el cliente y el restaurante ven «Tu repartidor tiene dificultad auditiva: escríbele por el chat», y las ofertas avisan con vibración fuerte. Todos los países.
 - [x] HECHO 2 nov (C-CALORIAS); sin publicar todavía (GitHub sin sesión). (PLT-3) Calorías opcionales por plato, como Uber Eats (la ley federal las exige a cadenas de 20 o más locales): casilla en el menú del restaurante y «520 cal» en la app del cliente. EE. UU.
-- [ ] (PLT-4) Panel del restaurante: descargar los pedidos de un rango de fechas en una planilla (CSV), como el reporte de Uber Eats Manager. Todos los países.
+- [x] HECHO 2 nov (C-PLANILLA-PEDIDOS); sin publicar todavía (GitHub sin sesión). (PLT-4) Panel del restaurante: descargar los pedidos de un rango de fechas en una planilla (CSV), como el reporte de Uber Eats Manager. Todos los países.
 - [ ] (PLT-5) Driver: descargar las ganancias del mes en una planilla (CSV) desde Ganancias, como el estado de cuenta de Uber Driver. Todos los países.
 
 ## Registro de la fábrica
