@@ -28,6 +28,10 @@ import {
   senalPerdida,
   textoActualizado,
   textoRango,
+  listaEtiquetas,
+  type ParaEtiqueta,
+  tipoEtiquetas,
+  tituloEtiquetas,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -422,6 +426,62 @@ function Estrellas({
   );
 }
 
+/**
+ * C-ELOGIOS-MOTIVOS (BRE-3): con 5 estrellas, elogios ya escritos; con 3 o menos, «¿Qué salió mal?»
+ * con motivos (como Uber Eats y DoorDash). Con 4 no se abre nada.
+ */
+function Etiquetas({
+  para,
+  estrellas,
+  elegidas,
+  cambiar,
+  idioma,
+}: {
+  para: ParaEtiqueta;
+  estrellas: number;
+  elegidas: string[];
+  cambiar: (x: string[]) => void;
+  idioma: 'es' | 'en';
+}) {
+  const tipo = tipoEtiquetas(estrellas);
+  if (!tipo) return null;
+  const lista = listaEtiquetas(para, tipo);
+  return (
+    <View style={{ marginBottom: 6 }} testID={`etiquetas-${para}`}>
+      <Text style={{ fontWeight: '700', color: '#101010', marginBottom: 6 }}>
+        {tituloEtiquetas(tipo, idioma)}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {lista.map(([codigo, texto]) => {
+          const si = elegidas.includes(codigo);
+          return (
+            <Pressable
+              key={codigo}
+              onPress={() =>
+                cambiar(si ? elegidas.filter((x) => x !== codigo) : [...elegidas, codigo])
+              }
+              accessibilityRole="button"
+              accessibilityState={{ selected: si }}
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: si ? '#101010' : '#D9D9D9',
+                backgroundColor: si ? '#101010' : '#FFFFFF',
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '700', color: si ? '#FFFFFF' : '#101010' }}>
+                {idioma === 'en' ? texto.en : texto.es}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 /** Estado del pedido → paso del diseño (Confirmado, En preparación, En camino, Entregado). */
 const PASOS_DISENO = new Map<string, number>([
   ['pagado', 0],
@@ -472,6 +532,9 @@ export default function SeguirPedido() {
   const [calificado, setCalificado] = useState(false);
   // C-GUSTO-PLATOS: pulgar arriba o abajo por plato, como DoorDash (opcional).
   const [gustos, setGustos] = useState<Record<string, boolean>>({});
+  // C-ELOGIOS-MOTIVOS: las etiquetas elegidas; al cambiar las estrellas se vacían.
+  const [etqRest, setEtqRest] = useState<string[]>([]);
+  const [etqRep, setEtqRep] = useState<string[]>([]);
   const [nuevaDireccion, setNuevaDireccion] = useState('');
   const [nuevoPunto, setNuevoPunto] = useState<{ lat: number; lng: number } | null>(null);
   const [propuesta, setPropuesta] = useState<{ antes: number; despues: number } | null>(null);
@@ -577,6 +640,8 @@ export default function SeguirPedido() {
         culpaRestaurante: culpa,
         comentario,
         platos: Object.entries(gustos).map(([platoId, gusta]) => ({ platoId, gusta })),
+        etiquetasRestaurante: etqRest,
+        etiquetasRepartidor: estRep ? etqRep : [],
       });
       setCalificado(true);
     } catch (x) {
@@ -1193,8 +1258,18 @@ export default function SeguirPedido() {
                 </Text>
                 <Estrellas
                   valor={estRest}
-                  cambiar={setEstRest}
+                  cambiar={(n) => {
+                    setEstRest(n);
+                    setEtqRest([]);
+                  }}
                   etiqueta={t.restaurante}
+                  idioma={idioma}
+                />
+                <Etiquetas
+                  para="restaurante"
+                  estrellas={estRest}
+                  elegidas={etqRest}
+                  cambiar={setEtqRest}
                   idioma={idioma}
                 />
                 {estRest > 0 && p.lineas.length ? (
@@ -1247,12 +1322,24 @@ export default function SeguirPedido() {
                   </View>
                 ) : null}
                 {p.repartidor && (
-                  <Estrellas
-                    valor={estRep}
-                    cambiar={setEstRep}
-                    etiqueta={`${t.repartidor}: ${p.repartidor.nombre}`}
-                    idioma={idioma}
-                  />
+                  <>
+                    <Estrellas
+                      valor={estRep}
+                      cambiar={(n) => {
+                        setEstRep(n);
+                        setEtqRep([]);
+                      }}
+                      etiqueta={`${t.repartidor}: ${p.repartidor.nombre}`}
+                      idioma={idioma}
+                    />
+                    <Etiquetas
+                      para="repartidor"
+                      estrellas={estRep}
+                      elegidas={etqRep}
+                      cambiar={setEtqRep}
+                      idioma={idioma}
+                    />
+                  </>
                 )}
                 {estRep > 0 && estRep < 4 && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

@@ -1321,12 +1321,37 @@ const es: SeccionDocs[] = [
           'Califica la comida (el restaurante) y a tu repartidor por separado, con estrellas.',
           'Si le das pocas estrellas al repartidor pero el problema fue de la comida o la demora del restaurante, marca el interruptor: así la nota no le cuenta a él.',
           'Si quieres, en «¿Qué tal cada plato?» marca «Me gustó» o «No me gustó» en cada plato que pediste.',
+          'Con 5 estrellas aparece «¿Qué te gustó?» para elegir elogios; con 3 o menos, «¿Qué salió mal?» para elegir el motivo. Es opcional.',
           'Toca «Enviar calificación». Gracias: eso mejora el reparto para todos.',
         ],
         explicacion: [
           'Tu calificación de la comida suma al promedio del restaurante. Cuando un restaurante tiene 10 opiniones o más, todos ven sus estrellas y cuántas opiniones tiene en la lista y en su página, junto con los comentarios más nuevos y las respuestas del restaurante. Solo se muestra tu nombre de pila.',
           'Con menos de 10 opiniones, el restaurante aparece como «Nuevo». Solo cuentan las opiniones de pedidos hechos de verdad en Divoox.',
           'Lo que marcas en cada plato ayuda a los demás a elegir: cuando un plato junta cinco votos o más, en el menú aparece debajo del precio, por ejemplo «Le gustó al 92 % (40)». Solo cuentan los platos que de verdad venían en tu pedido.',
+        ],
+      },
+      {
+        id: 'compliments-and-reasons',
+        titulo: 'Elogios y motivos al calificar',
+        resumen:
+          'Con 5 estrellas eliges qué te gustó; con 3 o menos, qué salió mal. En un toque, sin escribir.',
+        capturas: [],
+        preguntas: [
+          '¿Cómo felicito a mi repartidor?',
+          '¿Cómo digo qué salió mal con mi pedido?',
+          '¿El repartidor ve lo que marqué?',
+        ],
+        pasos: [
+          'Cuando el pedido llega, en «¿Qué tal todo?» califica la comida y al repartidor con estrellas.',
+          'Si das 5 estrellas, aparece «¿Qué te gustó?»: toca los elogios que quieras, por ejemplo «Amable», «Rápido», «Cuidó la comida» o «Siguió las instrucciones» para el repartidor, y «Bien empacado» o «Porciones generosas» para el restaurante.',
+          'Si das 3 estrellas o menos, aparece «¿Qué salió mal?»: toca el motivo, por ejemplo «Llegó tarde» o «Llegó fría».',
+          'Toca «Enviar calificación».',
+        ],
+        explicacion: [
+          'Los elogios le llegan al repartidor: en su app ve cuántas veces lo felicitaron por cada cosa, igual que en las grandes apps de reparto.',
+          'Los motivos de una mala nota sobre el repartidor no se le muestran a él: los ve nuestro equipo para ayudarlo a mejorar.',
+          'Lo que marcas sobre la comida lo ve el restaurante en sus reseñas, para saber qué hace bien y qué mejorar.',
+          'Con 4 estrellas no se abre nada: tu nota basta. Si cambias las estrellas, lo que habías marcado se borra para que elijas otra vez.',
         ],
       },
     ],
@@ -1348,6 +1373,7 @@ const es: SeccionDocs[] = [
           'Para ir más rápido, arriba del cuadro hay respuestas sugeridas según las estrellas, con el nombre del cliente: tocas una, la cambias si quieres y la publicas.',
           'Cuando el cliente marcó que el repartidor no tuvo la culpa de una mala nota, lo ves indicado.',
           'Arriba de las reseñas está «Tus platos según los clientes»: a cuántos les gustó cada plato, primero los que menos gustan, para que sepas qué mejorar. Un plato aparece cuando junta cinco votos o más, y lo mismo ven tus clientes en el menú.',
+          'También ves «Lo que más elogian» (por ejemplo «Bien empacado» o «Porciones generosas») y «Lo que salió mal» (por ejemplo «Llegó fría» o «Faltó algo»), con cuántas veces lo eligieron los clientes. En cada reseña aparecen los que eligió ese cliente.',
           'Pueden responder el dueño y los managers; el staff solo las lee.',
         ],
         capturas: [
@@ -2607,6 +2633,7 @@ const es: SeccionDocs[] = [
           'Tasa de finalización: de los pedidos que aceptaste, cuántos entregaste. Soltar un pedido cuenta en contra. Las grandes apps piden 90 % o más.',
           'Puntualidad: cuántas entregas llegaron dentro de la hora prometida al cliente. Si el restaurante se demora y tú llegaste a tiempo, no es culpa tuya.',
           'Entregas en 30 días y totales: tu historial de un vistazo.',
+          'Tus elogios: lo que los clientes destacaron al darte 5 estrellas («Amable», «Rápido», «Cuidó la comida», «Siguió las instrucciones»), del más elegido al menos. También salen en «Mi nivel».',
           'En Divoox estos números son tu guía y cuentan para tu nivel; no se desactiva a nadie por ellos.',
         ],
         capturas: [
@@ -5465,12 +5492,37 @@ const en: SeccionDocs[] = [
           'Rate the food (the restaurant) and your driver separately, with stars.',
           'If you give the driver a low rating but the problem was the food or the restaurant’s delay, flip the switch: the rating won’t count against them.',
           'If you like, under “How was each item?” mark “Liked it” or “Didn’t like it” for each item you ordered.',
+          'With 5 stars, “What went well?” lets you pick compliments; with 3 or fewer, “What went wrong?” lets you pick the reason. It’s optional.',
           'Tap “Send rating.” Thanks: it makes delivery better for everyone.',
         ],
         explicacion: [
           'Your food rating counts toward the restaurant’s average. Once a restaurant has 10 or more ratings, everyone sees its stars and number of ratings in the list and on its page, along with the latest comments and the restaurant’s replies. Only your first name is shown.',
           'With fewer than 10 ratings, the restaurant shows as “New”. Only ratings from real Divoox orders count.',
           'What you mark on each item helps others choose: once an item has five votes or more, the menu shows it under the price, for example “Liked by 92% (40)”. Only items that were really in your order count.',
+        ],
+      },
+      {
+        id: 'compliments-and-reasons',
+        titulo: 'Compliments and reasons when you rate',
+        resumen:
+          'With 5 stars you pick what went well; with 3 or fewer, what went wrong. One tap, no typing.',
+        capturas: [],
+        preguntas: [
+          'How do I compliment my driver?',
+          'How do I say what went wrong with my order?',
+          'Does the driver see what I picked?',
+        ],
+        pasos: [
+          'When the order arrives, under “How was everything?” rate the food and the driver with stars.',
+          'If you give 5 stars, “What went well?” appears: tap any compliments, for example “Friendly,” “Fast,” “Handled the food with care,” or “Followed instructions” for the driver, and “Well packaged” or “Generous portions” for the restaurant.',
+          'If you give 3 stars or fewer, “What went wrong?” appears: tap the reason, for example “Arrived late” or “Arrived cold.”',
+          'Tap “Send rating.”',
+        ],
+        explicacion: [
+          'Compliments go to the driver: their app shows how many times they were praised for each one, just like the big delivery apps.',
+          'Reasons for a low driver rating aren’t shown to the driver: our team reviews them to help them improve.',
+          'What you pick about the food goes to the restaurant’s reviews, so it knows what it does well and what to improve.',
+          'With 4 stars nothing opens: your rating says it all. If you change the stars, what you picked is cleared so you can choose again.',
         ],
       },
     ],
@@ -5492,6 +5544,7 @@ const en: SeccionDocs[] = [
           'To go faster, above the box there are suggested replies based on the stars, with the customer’s name: tap one, change it if you want and publish it.',
           'When the customer marked that the driver wasn’t at fault for a low rating, you see it noted.',
           'Above the reviews is “Your items, according to customers”: how many people liked each item, least liked first, so you know what to improve. An item shows once it has five votes or more, and your customers see the same on the menu.',
+          'You also see “What customers praise most” (for example “Well packaged” or “Generous portions”) and “What went wrong” (for example “Arrived cold” or “Missing items”), with how many times customers picked each one. Each review shows the ones that customer picked.',
           'The owner and managers can reply; staff can only read them.',
         ],
         capturas: [
@@ -6736,6 +6789,7 @@ const en: SeccionDocs[] = [
           'Completion rate: of the orders you accepted, how many you delivered. Dropping an order counts against you. The big apps ask for 90% or higher.',
           'On-time rate: how many deliveries arrived within the time promised to the customer. If the restaurant runs late and you arrived on time, it’s not on you.',
           'Deliveries in 30 days and lifetime: your history at a glance.',
+          'Your compliments: what customers highlighted when they gave you 5 stars (“Friendly,” “Fast,” “Handled the food with care,” “Followed instructions”), most picked first. They also show in “My level.”',
           'At Divoox these numbers are your guide and count toward your level; nobody is deactivated because of them.',
         ],
         capturas: [

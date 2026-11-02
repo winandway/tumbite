@@ -5,6 +5,7 @@ import {
   almacenNavegador,
   enIdioma,
   respuestasSugeridas,
+  textoEtiqueta,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -32,6 +33,10 @@ const T = {
       'Al calificar, cada cliente marca si le gustó o no cada plato. Sale con cinco votos o más; arriba, los que menos gustan.',
     leGusto: 'le gustó al',
     votos: 'votos',
+    elogios: 'Lo que más elogian',
+    motivos: 'Lo que salió mal',
+    etiquetasAyuda:
+      'Con 5 estrellas el cliente elige qué le gustó; con 3 o menos, qué salió mal. Aquí, cuántas veces.',
   },
   en: {
     titulo: 'Reviews',
@@ -54,6 +59,10 @@ const T = {
       'When rating, each customer marks whether they liked each item. It shows with five votes or more; the least liked come first.',
     leGusto: 'liked by',
     votos: 'votes',
+    elogios: 'What customers praise most',
+    motivos: 'What went wrong',
+    etiquetasAyuda:
+      'With 5 stars, customers pick what went well; with 3 or fewer, what went wrong. Here, how many times.',
   },
 };
 
@@ -64,6 +73,8 @@ type Resena = {
   estrellasRepartidor: number | null;
   culpaRestaurante: boolean;
   comentario: string;
+  /** C-ELOGIOS-MOTIVOS: elogios o motivos que eligió el cliente en este pedido. */
+  etiquetas?: string[];
   respuesta: string | null;
   respondidaEn: string | null;
   creadoEn: string;
@@ -82,7 +93,11 @@ type Datos = {
   resenas: Resena[];
   /** C-GUSTO-PLATOS: pulgares arriba por plato. */
   platos?: GustoPlatoFila[];
+  /** C-ELOGIOS-MOTIVOS: conteo de elogios y de motivos sobre su comida. */
+  elogios?: EtiquetaFila[];
+  motivos?: EtiquetaFila[];
 };
+type EtiquetaFila = { etiqueta: string; n: number; es: string; en: string };
 
 function Respuesta({
   pedidoId,
@@ -212,6 +227,22 @@ export function Resenas({ idioma }: { idioma: Idioma }) {
           </ul>
         </>
       ) : null}
+      {d?.elogios?.length || d?.motivos?.length ? (
+        <div data-testid="resenas-etiquetas">
+          <p className="suave">{t.etiquetasAyuda}</p>
+          {[
+            { k: 'elogios', titulo: t.elogios, lista: d.elogios ?? [] },
+            { k: 'motivos', titulo: t.motivos, lista: d.motivos ?? [] },
+          ].map((x) =>
+            x.lista.length ? (
+              <p key={x.k}>
+                <strong>{x.titulo}:</strong>{' '}
+                {x.lista.map((y) => `${idioma === 'en' ? y.en : y.es} (${y.n})`).join(' · ')}
+              </p>
+            ) : null,
+          )}
+        </div>
+      ) : null}
       {d && !d.resenas.length ? <p>{t.sin}</p> : null}
       <ul className="lista">
         {d?.resenas.map((r) => (
@@ -225,6 +256,14 @@ export function Resenas({ idioma }: { idioma: Idioma }) {
                 </span>
               </strong>
               <span>{r.comentario || t.sinComentario}</span>
+              {r.etiquetas?.length ? (
+                <span className="suave">
+                  {r.etiquetas
+                    .map((x) => textoEtiqueta('restaurante', x, idioma === 'en' ? 'en' : 'es'))
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              ) : null}
               {r.culpaRestaurante ? <span className="suave">{t.culpa}</span> : null}
               {r.respuesta ? (
                 <span>

@@ -82,6 +82,8 @@ const T = {
     propinas: 'Propinas',
     saldo: 'Saldo',
     calificacion: 'Calificación',
+    elogios: 'Elogios de los clientes',
+    motivos: 'Motivos de las malas notas (solo los ve el equipo)',
     historial: 'Historial',
     quejas: 'Quejas y tickets',
     sinQuejas: 'Sin quejas.',
@@ -177,6 +179,8 @@ const T = {
     propinas: 'Tips',
     saldo: 'Balance',
     calificacion: 'Rating',
+    elogios: 'Customer compliments',
+    motivos: 'Reasons for low ratings (team only)',
     historial: 'History',
     quejas: 'Complaints and tickets',
     sinQuejas: 'No complaints.',
@@ -606,6 +610,9 @@ type Repartidor = {
   saldo: number;
   calificacion: number | null;
   calificaciones: number;
+  /** C-ELOGIOS-MOTIVOS: conteo de elogios y de motivos de las malas notas. */
+  elogios?: { etiqueta: string; n: number; es: string; en: string }[];
+  motivos?: { etiqueta: string; n: number; es: string; en: string }[];
   historial: {
     id: string;
     estado: string;
@@ -718,6 +725,17 @@ export function SuperRepartidor({
           <small>({r.calificaciones})</small>
         </li>
       </ul>
+      {[
+        { k: 'elogios', titulo: t.elogios, lista: r.elogios ?? [] },
+        { k: 'motivos', titulo: t.motivos, lista: r.motivos ?? [] },
+      ].map((x) =>
+        x.lista.length ? (
+          <p key={x.k} className="super-etiquetas" data-testid={`super-${x.k}`}>
+            <strong>{x.titulo}:</strong>{' '}
+            {x.lista.map((y) => `${idioma === 'en' ? y.en : y.es} (${y.n})`).join(' · ')}
+          </p>
+        ) : null,
+      )}
       <div className="super-dos">
         <div className="tarjeta-form">
           <h2>{t.datos}</h2>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma, enIdioma, useBorrador } from '@tumbite/compartido';
 import { AvisoBorrador, Boton, C, Campo, almacenTelefono, e } from '@tumbite/movil';
+import { Elogios } from './Elogios';
 
 /**
  * C-REWARDS-MI-NIVEL (30 oct 2026, R2): el puntaje explicado, como «Ratings» de Dasher: cada parte
@@ -148,6 +149,10 @@ export function MiNivel({ api, idioma }: { api: Api; idioma: Idioma }) {
             {servicios.get(k)}: {n}
           </Text>
         ))}
+      {/* C-ELOGIOS-MOTIVOS: lo que los clientes destacan de ti, junto a tu puntaje. */}
+      <View style={{ marginTop: 10 }}>
+        <Elogios api={api} idioma={idioma} />
+      </View>
       {ap ? (
         <View style={{ marginTop: 12 }} testID="apelaciones">
           <Text style={{ fontWeight: '800' }}>{t.apelar}</Text>

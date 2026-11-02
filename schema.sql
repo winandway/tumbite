@@ -296,6 +296,21 @@ CREATE TABLE IF NOT EXISTS calificaciones_platos (
 );
 CREATE INDEX IF NOT EXISTS calificaciones_platos_restaurante ON calificaciones_platos(restaurante_id, plato_id);
 
+-- C-ELOGIOS-MOTIVOS (BRE-3, 2 nov 2026), como Uber Eats y DoorDash: con 5 estrellas, elogios ya
+-- escritos; con 3 o menos, el motivo. Los motivos sobre el repartidor solo los ve el equipo.
+CREATE TABLE IF NOT EXISTS calificaciones_etiquetas (
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  para TEXT NOT NULL CHECK (para IN ('repartidor', 'restaurante')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('elogio', 'motivo')),
+  etiqueta TEXT NOT NULL,
+  repartidor_id TEXT REFERENCES usuarios(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pedido_id, para, etiqueta)
+);
+CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_repartidor ON calificaciones_etiquetas(repartidor_id, tipo);
+CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_restaurante ON calificaciones_etiquetas(restaurante_id, tipo);
+
 CREATE TABLE IF NOT EXISTS regalos_config (
   restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
   cumpleanos INTEGER NOT NULL DEFAULT 1,

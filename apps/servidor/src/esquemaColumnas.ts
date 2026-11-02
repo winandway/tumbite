@@ -228,6 +228,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "gusta",
     "creado_en"
   ],
+  "calificaciones_etiquetas": [
+    "pedido_id",
+    "para",
+    "tipo",
+    "etiqueta",
+    "repartidor_id",
+    "restaurante_id",
+    "creado_en"
+  ],
   "regalos_config": [
     "restaurante_id",
     "cumpleanos",

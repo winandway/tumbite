@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import type { Api, Idioma } from '@tumbite/compartido';
 import { C, e } from '@tumbite/movil';
 import { textosGrandes } from './textos';
+import { type Elogio, Elogios } from './Elogios';
 
 type Datos = {
   clientes: { promedio: number | null; cuantas: number; minimo: number };
@@ -14,6 +15,8 @@ type Datos = {
   /** C-REPARTIDOR-DESTACADO */
   destacado?: boolean;
   requisitos?: { clave: string; meta: number; valor: number | null; ok: boolean }[];
+  /** C-ELOGIOS-MOTIVOS */
+  elogios?: Elogio[];
 };
 
 const TD = {
@@ -129,6 +132,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
             t.sinMinimo,
             null,
           )}
+          <Elogios elogios={d.elogios ?? []} idioma={idioma} />
           {d.requisitos ? (
             <View style={[e.tarjeta, { gap: 6 }]} testID="destacado">
               <Text

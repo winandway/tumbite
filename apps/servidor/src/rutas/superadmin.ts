@@ -2,7 +2,12 @@ import { rutaSinIds } from '../errores';
 import { devolverParcial, guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { correoCanonico, semaforoPedido, telefonoCanonico } from '@tumbite/compartido';
+import {
+  correoCanonico,
+  resumenEtiquetas,
+  semaforoPedido,
+  telefonoCanonico,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
@@ -466,9 +471,27 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
     .bind(id, id)
     .all();
   const kyc = await kycResumen(db, id);
+  // C-ELOGIOS-MOTIVOS: elogios y motivos de las malas notas (estos solo los ve el equipo).
+  const { results: etq } = await db
+    .prepare(
+      `SELECT tipo, etiqueta, COUNT(*) AS n FROM calificaciones_etiquetas
+        WHERE repartidor_id = ? AND para = 'repartidor' GROUP BY tipo, etiqueta`,
+    )
+    .bind(id)
+    .all<{ tipo: string; etiqueta: string; n: number }>();
   return c.json({
     repartidor: {
       kyc,
+      elogios: resumenEtiquetas(
+        'repartidor',
+        'elogios',
+        etq.filter((x) => x.tipo === 'elogio'),
+      ),
+      motivos: resumenEtiquetas(
+        'repartidor',
+        'motivos',
+        etq.filter((x) => x.tipo === 'motivo'),
+      ),
       id: String(r.id),
       codigo: String(r.codigo ?? ''),
       nombre: String(r.nombre),

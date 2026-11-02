@@ -101,6 +101,7 @@ import {
   faltaPapel,
   formatearMonto,
   platosDelPedido,
+  etiquetasValidas,
   rendimientoRestaurante,
 } from '@tumbite/compartido';
 
@@ -3232,15 +3233,18 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
         .array(z.object({ platoId: z.string().min(1).max(80), gusta: z.boolean() }))
         .max(50)
         .default([]),
+      // C-ELOGIOS-MOTIVOS: elogios (5 estrellas) o motivos (3 o menos) ya escritos, por código.
+      etiquetasRestaurante: z.array(z.string().min(1).max(40)).max(12).default([]),
+      etiquetasRepartidor: z.array(z.string().min(1).max(40)).max(12).default([]),
     }),
   );
   const db = base(c);
   const p = await db
     .prepare(
-      "SELECT restaurante_id, lineas_json FROM pedidos WHERE id = ? AND cliente_id = ? AND estado = 'entregado'",
+      "SELECT restaurante_id, repartidor_id, lineas_json FROM pedidos WHERE id = ? AND cliente_id = ? AND estado = 'entregado'",
     )
     .bind(c.req.param('id'), u.id)
-    .first<{ restaurante_id: string; lineas_json: string }>();
+    .first<{ restaurante_id: string; repartidor_id: string | null; lineas_json: string }>();
   if (!p) throw new ErrorDatos('Solo se califican pedidos entregados.', undefined, 409);
   await db
     .prepare(
@@ -3271,5 +3275,35 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
           .bind(c.req.param('id'), v.platoId, p.restaurante_id, v.gusta ? 1 : 0),
       ),
     ]);
+  // C-ELOGIOS-MOTIVOS: solo las del tipo que tocan las estrellas; calificar otra vez las reemplaza.
+  const etiquetas = [
+    ...etiquetasValidas('restaurante', d.estrellasRestaurante, d.etiquetasRestaurante).map((x) => ({
+      ...x,
+      para: 'restaurante',
+    })),
+    ...(p.repartidor_id
+      ? etiquetasValidas('repartidor', d.estrellasRepartidor, d.etiquetasRepartidor).map((x) => ({
+          ...x,
+          para: 'repartidor',
+        }))
+      : []),
+  ];
+  await db.batch([
+    db.prepare('DELETE FROM calificaciones_etiquetas WHERE pedido_id = ?').bind(c.req.param('id')),
+    ...etiquetas.map((x) =>
+      db
+        .prepare(
+          'INSERT INTO calificaciones_etiquetas (pedido_id, para, tipo, etiqueta, repartidor_id, restaurante_id) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .bind(
+          c.req.param('id'),
+          x.para,
+          x.tipo,
+          x.etiqueta,
+          p.repartidor_id ?? null,
+          p.restaurante_id,
+        ),
+    ),
+  ]);
   return c.json({ ok: true });
 });

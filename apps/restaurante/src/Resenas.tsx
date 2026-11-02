@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { ErrorApi, deSqlUtc, enIdioma, useBorrador } from '@tumbite/compartido';
+import { ErrorApi, deSqlUtc, enIdioma, textoEtiqueta, useBorrador } from '@tumbite/compartido';
 import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
@@ -19,6 +19,8 @@ const T = {
     ejemplo: '¡Gracias por pedir! Te esperamos pronto.',
     volver: 'Volver',
     soloManager: 'Solo el dueño y los managers pueden responder.',
+    elogios: 'Lo que más elogian',
+    motivos: 'Lo que salió mal',
   },
   en: {
     titulo: 'Reviews',
@@ -30,6 +32,8 @@ const T = {
     ejemplo: 'Thanks for ordering! See you soon.',
     volver: 'Back',
     soloManager: 'Only the owner and managers can reply.',
+    elogios: 'What customers praise most',
+    motivos: 'What went wrong',
   },
 };
 
@@ -40,7 +44,10 @@ type Resena = {
   comentario: string;
   respuesta: string | null;
   creadoEn?: string;
+  /** C-ELOGIOS-MOTIVOS */
+  etiquetas?: string[];
 };
+type EtiquetaFila = { etiqueta: string; n: number; es: string; en: string };
 
 function Responder({ pedidoId, alPublicar }: { pedidoId: string; alPublicar: () => void }) {
   const { api, idioma, usuario } = useSesion();
@@ -99,6 +106,8 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
     total: number;
     respondidas: number;
     resenas: Resena[];
+    elogios?: EtiquetaFila[];
+    motivos?: EtiquetaFila[];
   } | null>(null);
   const [error, setError] = useState('');
   const cargar = useCallback(() => {
@@ -122,6 +131,18 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
           {t.resumen((datos.promedio ?? 0).toFixed(1), datos.total, datos.respondidas)}
         </Text>
       ) : null}
+      {/* C-ELOGIOS-MOTIVOS: cuántas veces eligieron cada elogio y cada motivo. */}
+      {[
+        { k: 'elogios', titulo: t.elogios, lista: datos?.elogios ?? [] },
+        { k: 'motivos', titulo: t.motivos, lista: datos?.motivos ?? [] },
+      ].map((x) =>
+        x.lista.length ? (
+          <Text key={x.k} style={{ color: C.secundario, marginBottom: 8 }} testID={`app-${x.k}`}>
+            <Text style={{ fontWeight: '800' }}>{x.titulo}: </Text>
+            {x.lista.map((y) => `${idioma === 'en' ? y.en : y.es} (${y.n})`).join(' · ')}
+          </Text>
+        ) : null,
+      )}
       {datos && !datos.resenas.length ? (
         <Text style={{ color: '#5E5E5E' }}>{t.sinResenas}</Text>
       ) : null}
@@ -141,6 +162,14 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
             ) : null}
           </Text>
           {r.comentario ? <Text style={{ marginTop: 4 }}>{r.comentario}</Text> : null}
+          {r.etiquetas?.length ? (
+            <Text style={{ marginTop: 4, color: '#5E5E5E' }}>
+              {r.etiquetas
+                .map((x) => textoEtiqueta('restaurante', x, idioma === 'en' ? 'en' : 'es'))
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          ) : null}
           {r.respuesta ? (
             <Text style={{ marginTop: 6, color: '#5E5E5E' }}>
               <Text style={{ fontWeight: '800' }}>{t.tuRespuesta}: </Text>

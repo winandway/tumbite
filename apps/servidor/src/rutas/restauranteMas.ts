@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { resumenGusto } from '@tumbite/compartido';
+import { resumenEtiquetas, resumenGusto } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -92,7 +92,25 @@ restauranteMas.get('/mi-restaurante/resenas', async (c) => {
       return n ? [{ platoId: id, ...n, ...g }] : [];
     })
     .sort((a, b) => a.porcentaje - b.porcentaje || b.votos - a.votos);
+  // C-ELOGIOS-MOTIVOS: lo que los clientes elogiaron y lo que salió mal, sobre su comida.
+  const { results: etq } = await db
+    .prepare(
+      `SELECT pedido_id, tipo, etiqueta FROM calificaciones_etiquetas
+        WHERE restaurante_id = ? AND para = 'restaurante'`,
+    )
+    .bind(r.id)
+    .all<{ pedido_id: string; tipo: string; etiqueta: string }>();
+  const contar = (tipo: string) => {
+    const n = new Map<string, number>();
+    for (const x of etq) if (x.tipo === tipo) n.set(x.etiqueta, (n.get(x.etiqueta) ?? 0) + 1);
+    return [...n].map(([etiqueta, k]) => ({ etiqueta, n: k }));
+  };
+  const porPedido = new Map<string, string[]>();
+  for (const x of etq)
+    porPedido.set(x.pedido_id, [...(porPedido.get(x.pedido_id) ?? []), x.etiqueta]);
   return c.json({
+    elogios: resumenEtiquetas('restaurante', 'elogios', contar('elogio')),
+    motivos: resumenEtiquetas('restaurante', 'motivos', contar('motivo')),
     platos,
     promedio: resumen?.promedio == null ? null : Math.round(resumen.promedio * 10) / 10,
     total: Number(resumen?.n ?? 0),
@@ -105,6 +123,7 @@ restauranteMas.get('/mi-restaurante/resenas', async (c) => {
       estrellasRepartidor: x.estrellas_repartidor == null ? null : Number(x.estrellas_repartidor),
       culpaRestaurante: Number(x.culpa_restaurante) === 1,
       comentario: String(x.comentario ?? ''),
+      etiquetas: porPedido.get(String(x.pedido_id)) ?? [],
       respuesta: x.respuesta ? String(x.respuesta) : null,
       respondidaEn: x.respondida_en ? String(x.respondida_en) : null,
       creadoEn: String(x.creado_en),

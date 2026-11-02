@@ -7,6 +7,7 @@ import {
   minutosDeViaje,
   requisitosDestacado,
   resumenAnual,
+  resumenEtiquetas,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -165,8 +166,23 @@ export async function evaluarDestacado(db: D1Database, repartidorId: string) {
 
 repartidorGrandes.get('/repartidor/calificaciones', async (c) => {
   const u = exigir(c, 'repartidor');
-  const { metricas, destacado, requisitos } = await evaluarDestacado(base(c), u.id);
-  return c.json({ ...metricas, destacado, requisitos });
+  const db = base(c);
+  const { metricas, destacado, requisitos } = await evaluarDestacado(db, u.id);
+  // C-ELOGIOS-MOTIVOS: solo sus elogios, del más elegido al menos (como el perfil de Uber Eats).
+  // Los motivos de las malas notas no se le muestran: quedan para el equipo.
+  const { results } = await db
+    .prepare(
+      `SELECT etiqueta, COUNT(*) AS n FROM calificaciones_etiquetas
+        WHERE repartidor_id = ? AND para = 'repartidor' AND tipo = 'elogio' GROUP BY etiqueta`,
+    )
+    .bind(u.id)
+    .all<{ etiqueta: string; n: number }>();
+  return c.json({
+    ...metricas,
+    destacado,
+    requisitos,
+    elogios: resumenEtiquetas('repartidor', 'elogios', results),
+  });
 });
 
 /**
