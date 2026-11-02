@@ -331,3 +331,14 @@
 - 2 nov 2026, 12:25 (tarea programada, cierre): después de 40 minutos, producción (divoox.com) sigue en ce6642d y pruebas en e3dfc71. Los commits que vinieron después son solo pruebas, configuración de pruebas y documentos: no cambian lo que corre. No se pudo ver por qué la verificación de main no publicó, porque la sesión de GitHub de la computadora se cayó («Failed to log in») y el límite de consultas sin sesión se agotó. La próxima tarea lo comprueba. Todos los países.
 
 - 2 nov 2026, 14:45 (tarea programada): la fila estaba vacía y se rellenó con el bloque PLT (cinco funciones de los grandes). Hechos los cinco, cada uno con prueba en rojo, verificación completa en verde, candado y Docs en dos idiomas: PLT-1 gusto por plato (en el guardado automático 6628514), PLT-2 dificultad auditiva (22c1fdc), PLT-3 calorías (66e8917, EE. UU.), PLT-4 planilla de pedidos del restaurante (ea5963b) y PLT-5 planilla de ganancias del repartidor (5b1f077). NO están publicados: GitHub sigue sin sesión en la computadora (gh con token vencido, llavero vacío, sin llave SSH) y git push falla; son ya 23 cambios esperando. Las capturas nuevas de Docs se toman del sitio de pruebas apenas se publique. Todos los países salvo PLT-3 (EE. UU.).
+
+## Bloque CON — que ninguna pantalla se caiga por un dato mal leído (2 nov 2026, 15:05, orden del jefe de operaciones)
+
+> La etapa siguiente del plan maestro del lado de la IA ya está toda hecha (Etapas 3 a 6 y 8); lo que queda abierto en el plan depende de Richard. Este bloque sigue la Etapa 1, punto 2 (repaso de las apps con REA, cada fallo con su prueba en rojo), y ataca la causa del cierre de «Equipo»: la app leía una forma de respuesta distinta de la que manda el servidor.
+
+- [x] HECHO 2 nov (C-CONTRATO-APPS; unas cuarenta lecturas en verde, comprobado en rojo con el fallo original de «Equipo»). (CON-1) Contrato apps ↔ servidor: una prueba automática que llama a cada dirección que leen las tres apps (cliente, Driver, restaurante) y comprueba que la respuesta trae las llaves que la pantalla usa. Lo que no cuadre se arregla con su prueba en rojo. Todos los países.
+- [ ] (CON-2) Billetera del restaurante en la moneda de su país (hoy la app la muestra siempre en dólares). Todos los países.
+- [ ] (CON-3) Los fallos de pantalla que mandan las apps (C-APP-SIN-CIERRES) se ven en el registro de errores del superadmin, filtrables por app y pantalla. Todos los países.
+- [ ] (CON-4) El mismo contrato del punto 1 para el panel web (restaurante, empresa de Flex y superadmin). Todos los países.
+- [ ] (CON-5) Etapa 1, punto 1: comprobar en producción, solo lectura, el embudo de pedidos de los informes (cuántos entran, pagan, se aceptan y se entregan) y anotar lo que no cuadre. EE. UU.
+- [!] (espera la sesión de GitHub de Richard) (CON-6) Capturas reales de las guías nuevas del bloque PLT desde el sitio de pruebas, apenas se publique. Todos los países.

@@ -2535,3 +2535,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `planillaGanancias` y `celdaCsv` en `packages/compartido/src/planillas.ts` (la misma celda segura que usan los informes del servidor). La app arma el texto con los pedidos que ya trae `/datos/repartidor/ganancias` y lo comparte con `Share.share`, sin librerías nuevas.
 - **Prueba:** `packages/compartido/src/planillas.test.ts` (en rojo sin el archivo) y `apps/servidor/src/rutas/informes.test.ts` (celda segura).
 - **Qué NO tocar:** la celda segura (evita que un nombre de restaurante que empiece con «=» se ejecute como fórmula).
+
+## C-CONTRATO-APPS (2 nov 2026, CON-1) — todos los países
+
+- **Qué se rompió:** «Equipo» cerraba la app del restaurante: la pantalla esperaba una lista y el servidor manda `{ equipo, miRol }`. Nadie lo notó porque cada lado tenía su prueba por separado.
+- **Candado:** `apps/servidor/src/rutas/contratoAppsTodas.test.ts` lee el código de las tres apps, toma cada `api.pedir<…>('GET', '/datos/…')` con dirección fija, la llama con una cuenta del rol de la app (el restaurante ya creado) y exige las llaves obligatorias del tipo, o una lista si el tipo es una lista. Hoy cubre unas cuarenta lecturas.
+- **Comprobado en rojo:** devolviendo la app al tipo viejo (`Miembro[]`) y cambiando una llave del tipo, la prueba falla con el archivo y la dirección.
+- **No tocar:** si una pantalla nueva lee con variables en la dirección, no entra; para esas se escribe su prueba propia (como `contratoApps.test.ts`).
