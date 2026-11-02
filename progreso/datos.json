@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-01T19:18:19-05:00",
+  "actualizado": "2026-11-01T19:33:18-05:00",
   "version": "2c502af",
   "ahora": {
     "titulo": "Esta página de progreso",
@@ -13,8 +13,8 @@
     },
     {
       "quien": "ia",
-      "titulo": "Subir las apps de iPhone a TestFlight",
-      "detalle": "La app del cliente y Divoox Driver con Divoox Plus, tarjetas de regalo, anuncios y Ganar por tiempo. Ya están compilando."
+      "titulo": "Seguir la fila del roadmap",
+      "detalle": "Lo siguiente de nuestro lado que no depende de dinero ni de cuentas."
     },
     {
       "quien": "ia",
@@ -290,6 +290,13 @@
       "tipo": "nuevo",
       "titulo": "Página de progreso",
       "texto": "Esta página: el avance de todo Divoox en un solo lugar, con lo que depende de ti y casillas para marcarlo.",
+      "paises": "Todos"
+    },
+    {
+      "fecha": "2026-11-01",
+      "tipo": "nuevo",
+      "titulo": "Apps de iPhone en TestFlight",
+      "texto": "La app del cliente y Divoox Driver con Divoox Plus, tarjetas de regalo, anuncios y Ganar por tiempo.",
       "paises": "Todos"
     },
     {
