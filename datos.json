@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-01T23:47:37-05:00",
+  "actualizado": "2026-11-02T00:22:47-05:00",
   "version": "6632d38",
   "ahora": {
     "titulo": "Repaso de pantallas de las tres apps",
@@ -285,6 +285,14 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "tipo": "nuevo",
+      "titulo": "Brechas frente a los grandes",
+      "texto": "GPS más estricto con aviso de ubicación simulada, edad mínima por estado y vehículo, licencia y seguro vigentes para repartir en carro o moto (apagado hasta encenderlo) y resumen anual 1099 en el superadmin (emisión apagada).",
+      "paises": "EE. UU.",
+      "docs": ["verify"]
+    },
     {
       "fecha": "2026-11-01",
       "tipo": "arreglo",
