@@ -54,16 +54,29 @@ async function marcar(request, env) {
 }
 
 async function salud() {
-  try {
-    const r = await fetch('https://divoox.com/datos/salud', {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'user-agent': 'Divoox-Progreso/1.0' },
-    });
-    const d = await r.json();
-    return json({ ok: Boolean(d.ok), piezas: d.piezas ?? {}, medido: new Date().toISOString() });
-  } catch {
-    return json({ ok: false, piezas: {}, medido: new Date().toISOString(), sinRespuesta: true });
+  // Se prueba el dominio principal y, si no responde desde aquí, sus otras direcciones.
+  const fallos = [];
+  for (const base of ['https://divoox.com', 'https://tumbite.com', 'https://tumbite.sitios.dev']) {
+    try {
+      const r = await fetch(`${base}/datos/salud`, {
+        signal: AbortSignal.timeout(8000),
+        headers: { 'user-agent': 'Divoox-Progreso/1.0', accept: 'application/json' },
+      });
+      const texto = await r.text();
+      const d = JSON.parse(texto);
+      return json({ ok: Boolean(d.ok), piezas: d.piezas ?? {}, medido: new Date().toISOString() });
+    } catch (e) {
+      fallos.push(`${base}: ${String(e).slice(0, 120)}`);
+    }
   }
+  console.error('progreso: salud sin respuesta', fallos);
+  return json({
+    ok: false,
+    piezas: {},
+    medido: new Date().toISOString(),
+    sinRespuesta: true,
+    fallos,
+  });
 }
 
 export default {
