@@ -1082,15 +1082,31 @@ for (const idioma of ['en', 'es'] as const) {
     // 11a. Capturas para Docs (CAP-7b) de lo que solo existe después de una entrega de verdad.
     if (CAPTURAS && !STAGING) {
       // «Te puede gustar»: otra pizzería abierta al lado que el cliente todavía no probó (solo en
-      // la base local del recorrido; la dueña es la cuenta del equipo, que no tiene local).
+      // la base local del recorrido, con su propia dueña en cada idioma).
       const otra = `${rest.id}-otra`;
+      const duena = (
+        (await (
+          await request.post('/datos/cuentas/registro', {
+            data: {
+              nombre: 'Napoli Pizza',
+              correo: correo('napoli'),
+              clave: DATOS.clave,
+              rol: 'cliente',
+            },
+          })
+        ).json()) as { usuario: { id: string } }
+      ).usuario.id;
       sql(
         `INSERT INTO restaurantes (id, dueno_id, nombre, categoria, telefono, direccion, lat, lng, estado, abierto, zona_id, geohash, senal_en)
-          SELECT '${otra}', (SELECT id FROM usuarios WHERE correo = '${correoEquipo}'), 'Napoli Pizza', categoria, telefono, direccion, lat + 0.004, lng + 0.004, 'aprobado', 1, zona_id, geohash, datetime('now')
+          SELECT '${otra}', '${duena}', 'Napoli Pizza', categoria, telefono, direccion, lat + 0.004, lng + 0.004, 'aprobado', 1, zona_id, geohash, datetime('now')
           FROM restaurantes WHERE id = '${rest.id}'`,
       );
       sql(
         `INSERT INTO horarios_restaurante (restaurante_id, dia, abre, cierra) SELECT '${otra}', dia, abre, cierra FROM horarios_restaurante WHERE restaurante_id = '${rest.id}'`,
+      );
+      // Los locales de otras pruebas llevan la corrida al final del nombre: en la foto, sin ella.
+      sql(
+        "UPDATE restaurantes SET nombre = 'Pizzería Estrellas' WHERE nombre LIKE 'Pizzería Estrellas %'",
       );
       await cli.goto('/app/');
       const gustar = cli.getByTestId('te-puede-gustar');
