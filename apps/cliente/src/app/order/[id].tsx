@@ -24,6 +24,10 @@ import {
   formatearMonto,
   textoLinea,
   type OpcionElegida,
+  type RangoLlegada,
+  senalPerdida,
+  textoActualizado,
+  textoRango,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -74,6 +78,8 @@ type Pedido = {
   programadoPara?: string | null;
   notaEntrega?: string;
   llegaAMasTardar?: string | null;
+  /** C-SEGUIMIENTO-HONESTO: la llegada como rango («12:40–12:50»). */
+  llegadaRango?: RangoLlegada | null;
   pin?: string | null;
   pinRequerido?: boolean;
   /** Fase 2 · cobro directo. */
@@ -117,6 +123,9 @@ type Pedido = {
     lat: number | null;
     lng: number | null;
     actualizado: string | null;
+    /** C-SEGUIMIENTO-HONESTO: segundos desde su última ubicación y si se perdió la señal. */
+    haceSegundos?: number | null;
+    senalPerdida?: boolean;
     llegaEn5?: boolean;
     casiLlega?: boolean;
     llego?: boolean;
@@ -175,6 +184,9 @@ const T = {
     llega: 'Llega en unos',
     minutos: 'min',
     aMasTardar: 'A más tardar a las',
+    llegaEntre: 'Llega entre',
+    sinSenal:
+      'Perdimos la señal de tu repartidor. En el mapa ves su última ubicación conocida; sigue en camino y la hora puede cambiar.',
     tuPin: 'Tu PIN para recibir',
     tuPinAyuda:
       'Díselo solo a quien reciba el pedido. El repartidor lo necesita para entregarlo en mano.',
@@ -294,6 +306,9 @@ const T = {
     llega: 'Arriving in about',
     minutos: 'min',
     aMasTardar: 'Latest arrival by',
+    llegaEntre: 'Arrives between',
+    sinSenal:
+      'We lost your driver’s signal. The map shows their last known location; they’re still on the way and the time may change.',
     tuPin: 'Your PIN to receive',
     tuPinAyuda:
       'Share it only with whoever receives the order. The driver needs it to hand it over.',
@@ -439,6 +454,15 @@ export default function SeguirPedido() {
   const posChat = useRef(0);
   const { vaciar } = useCarrito();
   const [p, setP] = useState<Pedido | null>(null);
+  // C-SEGUIMIENTO-HONESTO: «Actualizado hace X s» sigue contando entre consulta y consulta.
+  const [recibido, setRecibido] = useState(() => Date.now());
+  const [ahora, setAhora] = useState(() => Date.now());
+  const enCaminoAhora = p?.estado === 'en_camino';
+  useEffect(() => {
+    if (!enCaminoAhora) return;
+    const r = setInterval(() => setAhora(Date.now()), 1_000);
+    return () => clearInterval(r);
+  }, [enCaminoAhora]);
   const moneda = p?.moneda ?? 'USD';
   const [error, setError] = useState('');
   const [avisoLlamada, setAvisoLlamada] = useState('');
@@ -572,6 +596,7 @@ export default function SeguirPedido() {
         .then((r) => {
           if (!vivo) return;
           setP(r.pedido);
+          setRecibido(Date.now());
           setError('');
           if (nuevo && !carritoVaciado.current && r.pedido.estado !== 'pago_pendiente') {
             carritoVaciado.current = true;
@@ -591,6 +616,11 @@ export default function SeguirPedido() {
   // Cuatro pasos como en el diseño: Confirmado, En preparación, En camino, Entregado.
   const paso = p ? (PASOS_DISENO.get(p.estado) ?? -1) : -1;
   const activo = p ? !['entregado', 'cancelado'].includes(p.estado) : false;
+  const haceRep =
+    p?.estado === 'en_camino' && p.repartidor?.haceSegundos != null
+      ? p.repartidor.haceSegundos + Math.max(0, Math.floor((ahora - recibido) / 1000))
+      : null;
+  const sinSenal = Boolean(p?.repartidor?.senalPerdida) || senalPerdida(haceRep);
   const numero = `#${String(id).slice(0, 4).toUpperCase()}`;
   const esTienda = Boolean(p?.lineas.some((l) => l.sustitucion));
   const estadoTexto = p
@@ -904,6 +934,11 @@ export default function SeguirPedido() {
                 ))}
               </View>
             ) : null}
+            {p.llegadaRango && activo ? (
+              <Text style={{ color: C.secundario, fontWeight: '700', marginTop: 10 }}>
+                {t.llegaEntre} {textoRango(p.llegadaRango, idioma)}
+              </Text>
+            ) : null}
             {p.llegaAMasTardar && activo ? (
               <Text style={{ color: '#5E5E5E', marginTop: 10 }}>
                 {t.aMasTardar}{' '}
@@ -1043,7 +1078,21 @@ export default function SeguirPedido() {
               }
               nombreRepartidor={p.repartidor?.nombre}
               etiquetas={{ restaurante: t.elRestaurante, casa: t.tuCasa, repartidor: t.repartidor }}
+              sinSenal={sinSenal}
             />
+            {haceRep != null ? (
+              <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+                {textoActualizado(haceRep, idioma)}
+              </Text>
+            ) : null}
+            {sinSenal ? (
+              <Text
+                accessibilityRole="alert"
+                style={{ color: C.secundario, fontWeight: '700', marginTop: 6 }}
+              >
+                {t.sinSenal}
+              </Text>
+            ) : null}
           </View>
         )}
         {p.repartidor && activo ? (

@@ -3588,6 +3588,59 @@ describe('C-SEGUIMIENTO-COMPARTIDO', () => {
   });
 });
 
+describe('C-SEGUIMIENTO-HONESTO', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('la app y el enlace dicen hace cuánto se movió el repartidor, avisan sin señal y dan la llegada como rango', async () => {
+    const { m, cliente, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const rep = await repartidor('Rafa Honesto', 25.781, -80.201);
+    for (const estado of ['aceptado', 'listo', 'en_camino'])
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = ?, repartidor_id = ?, aceptado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(estado, rep.id, id)
+        .run();
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-10 seconds') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    const r = await m.llamar('POST', `/datos/pedidos/${id}/compartir`, {}, cliente.token);
+    const codigo = String(r.datos.url).split('/order-status/')[1]!;
+    const app = async () =>
+      (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)).datos
+        .pedido;
+    const enlace = async () =>
+      (await m.llamar('GET', `/datos/publico/pedido/${codigo}`)).datos.pedido;
+
+    const a = await app();
+    expect(a.repartidor.haceSegundos).toBeGreaterThanOrEqual(9);
+    expect(a.repartidor.haceSegundos).toBeLessThan(30);
+    expect(a.repartidor.senalPerdida).toBe(false);
+    expect(a.llegadaRango).toEqual({ desde: expect.any(String), hasta: expect.any(String) });
+    expect(
+      Date.parse(a.llegadaRango.hasta) - Date.parse(a.llegadaRango.desde),
+    ).toBeGreaterThanOrEqual(5 * 60_000);
+    const e = await enlace();
+    expect(e.haceSegundos).toBeGreaterThanOrEqual(9);
+    expect(e.senalPerdida).toBe(false);
+    expect(e.llegadaRango).toEqual(a.llegadaRango);
+    expect(e.llegaAMasTardar).toBe(a.llegaAMasTardar);
+
+    // Dos minutos sin ubicación: los dos lo dicen, y el enlace deja de dar el punto como en vivo.
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-2 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    expect((await app()).repartidor.senalPerdida).toBe(true);
+    const sin = await enlace();
+    expect(sin.senalPerdida).toBe(true);
+    expect(sin.haceSegundos).toBeGreaterThanOrEqual(119);
+  });
+});
+
 describe('C-CALIFICA-CLIENTE', () => {
   afterEach(() => vi.unstubAllGlobals());
 

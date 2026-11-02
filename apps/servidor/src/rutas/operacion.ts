@@ -51,6 +51,10 @@ import {
   prepSugerida,
   paisDelCodigoZona,
   VERSION_TERMINOS,
+  estimacionLlegada,
+  rangoLlegada,
+  segundosDesde,
+  senalPerdida,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
@@ -2698,25 +2702,17 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
     f.rest_lat != null && f.rest_lng != null
       ? { lat: Number(f.rest_lat), lng: Number(f.rest_lng) }
       : null;
-  const origen = repLat != null && repLng != null ? { lat: repLat, lng: repLng } : rest;
-  const kmQueFaltan = origen && casa ? distanciaKm(origen, casa) : null;
-  const minutosViaje =
-    kmQueFaltan == null ? null : Math.max(5, Math.round((kmQueFaltan / 25) * 60));
-  const minutosCocina =
-    f.estado === 'pagado' || f.estado === 'aceptado' ? Number(f.tiempo_prep_min ?? 20) : 0;
-  const minutosEstimados =
-    f.estado === 'entregado' || f.estado === 'cancelado' || minutosViaje == null
-      ? null
-      : minutosCocina + minutosViaje;
-  // «Llega a más tardar»: se fija cuando el restaurante acepta (su tiempo + el viaje + 10 de margen).
-  const aceptadoMs = msDeBase(f.aceptado_en);
-  const viajeRestCasa = rest && casa ? minutosDeViaje(distanciaKm(rest, casa)) : 15;
-  const llegaAMasTardar =
-    aceptadoMs != null && f.estado !== 'entregado' && f.estado !== 'cancelado'
-      ? new Date(
-          aceptadoMs + (Number(f.tiempo_prep_min ?? 20) + viajeRestCasa + 10) * 60_000,
-        ).toISOString()
-      : null;
+  // C-SEGUIMIENTO-HONESTO: la misma cuenta que el enlace compartido (pieza compartida).
+  const { minutosEstimados, llegaAMasTardar } = estimacionLlegada({
+    estado: String(f.estado),
+    tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
+    aceptadoMs: msDeBase(f.aceptado_en),
+    restaurante: rest,
+    casa,
+    repartidor: repLat != null && repLng != null ? { lat: repLat, lng: repLng } : null,
+  });
+  const llegadaRango = rangoLlegada(Date.now(), minutosEstimados, llegaAMasTardar);
+  const haceSegundos = enRuta ? segundosDesde(f.rep_en as string | null) : null;
   return c.json({
     pedido: {
       ...aPedido(f),
@@ -2725,6 +2721,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
       restaurante: rest,
       minutosEstimados,
       llegaAMasTardar,
+      llegadaRango,
       // Solo el cliente ve su PIN: se lo da a quien reciba el pedido.
       pin:
         f.cliente_id === u.id
@@ -2791,6 +2788,8 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
             lat: repLat,
             lng: repLng,
             actualizado: enRuta ? ((f.rep_en as string | null) ?? null) : null,
+            haceSegundos,
+            senalPerdida: senalPerdida(haceSegundos),
             llegaEn5: f.h_llega5 != null,
             casiLlega: f.h_casi != null,
             llego: f.h_llego_cli != null,

@@ -3,6 +3,7 @@ import type { Env } from '../env';
 import { nuevoToken, sha256 } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
+import { estimacionLlegada, rangoLlegada, segundosDesde, senalPerdida } from '@tumbite/compartido';
 
 /**
  * C-SEGUIMIENTO-COMPARTIDO (29 oct 2026), como «Share delivery status» de Uber Eats y el viaje
@@ -40,7 +41,8 @@ pedidoCompartido.get('/publico/pedido/:codigo', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT p.estado, p.aceptado_en, p.tiempo_prep_min, r.nombre AS restaurante,
-              u.nombre AS repartidor, d.lat, d.lng
+              u.nombre AS repartidor, d.lat, d.lng, d.ubicacion_en,
+              p.lat AS casa_lat, p.lng AS casa_lng, r.lat AS rest_lat, r.lng AS rest_lng
          FROM pedidos_compartidos s JOIN pedidos p ON p.id = s.pedido_id
          JOIN restaurantes r ON r.id = p.restaurante_id
          LEFT JOIN usuarios u ON u.id = p.repartidor_id
@@ -55,16 +57,32 @@ pedidoCompartido.get('/publico/pedido/:codigo', async (c) => {
   if (TERMINADOS.includes(estado))
     return c.json({ pedido: { estado, terminado: true, restaurante: String(f.restaurante) } });
   const enCamino = estado === 'en_camino';
+  const punto = (lat: unknown, lng: unknown) =>
+    lat != null && lng != null ? { lat: Number(lat), lng: Number(lng) } : null;
+  const repartidorPunto = enCamino ? punto(f.lat, f.lng) : null;
+  // C-SEGUIMIENTO-HONESTO: hace cuánto se movió, si se perdió la señal y la llegada como rango.
+  // La dirección de la casa solo se usa para la cuenta; nunca sale en la respuesta.
+  const haceSegundos = enCamino ? segundosDesde(f.ubicacion_en as string | null) : null;
+  const aceptado = f.aceptado_en ? Date.parse(`${String(f.aceptado_en).replace(' ', 'T')}Z`) : NaN;
+  const { minutosEstimados, llegaAMasTardar } = estimacionLlegada({
+    estado,
+    tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
+    aceptadoMs: Number.isNaN(aceptado) ? null : aceptado,
+    restaurante: punto(f.rest_lat, f.rest_lng),
+    casa: punto(f.casa_lat, f.casa_lng),
+    repartidor: repartidorPunto,
+  });
   return c.json({
     pedido: {
       estado,
       terminado: false,
       restaurante: String(f.restaurante),
       repartidor: f.repartidor ? String(f.repartidor).split(' ')[0] : null,
-      ubicacion:
-        enCamino && f.lat != null && f.lng != null
-          ? { lat: Number(f.lat), lng: Number(f.lng) }
-          : null,
+      ubicacion: repartidorPunto,
+      haceSegundos,
+      senalPerdida: senalPerdida(haceSegundos),
+      llegaAMasTardar,
+      llegadaRango: rangoLlegada(Date.now(), minutosEstimados, llegaAMasTardar),
     },
   });
 });

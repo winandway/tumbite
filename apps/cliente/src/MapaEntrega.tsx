@@ -9,6 +9,8 @@ export type Punto = { lat: number; lng: number };
  * Mapa en vivo de la entrega: el restaurante, tu casa y el repartidor acercándose.
  * El repartidor se mueve con cada actualización (cada 5 s). iOS usa Apple Maps;
  * Android necesita la llave de Google Maps en app.json (pendiente de Richard).
+ * C-SEGUIMIENTO-HONESTO (BRE-2): sin señal del repartidor (más de 60 s) su punto se ve apagado y
+ * sin la línea de ruta, para no presentar una ubicación vieja como si fuera en vivo.
  */
 export function MapaEntrega({
   restaurante,
@@ -16,12 +18,14 @@ export function MapaEntrega({
   repartidor,
   nombreRepartidor,
   etiquetas,
+  sinSenal = false,
 }: {
   restaurante: Punto | null;
   casa: Punto | null;
   repartidor: Punto | null;
   nombreRepartidor?: string;
   etiquetas: { restaurante: string; casa: string; repartidor: string };
+  sinSenal?: boolean;
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
@@ -38,7 +42,8 @@ export function MapaEntrega({
 
   if (puntos.length === 0) return null;
   const centro = puntos[0] as Punto;
-  const ruta = (repartidor ?? restaurante) && casa ? [repartidor ?? restaurante, casa] : null;
+  const ruta =
+    !sinSenal && (repartidor ?? restaurante) && casa ? [repartidor ?? restaurante, casa] : null;
 
   return (
     <View style={{ height: 260, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
@@ -80,9 +85,10 @@ export function MapaEntrega({
                 width: 22,
                 height: 22,
                 borderRadius: 11,
-                backgroundColor: C.primario,
+                backgroundColor: sinSenal ? '#9A9A9A' : C.primario,
                 borderWidth: 3,
                 borderColor: '#fff',
+                opacity: sinSenal ? 0.6 : 1,
               }}
             />
           </Marker>

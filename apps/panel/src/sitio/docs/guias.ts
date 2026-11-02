@@ -400,7 +400,7 @@ const es: SeccionDocs[] = [
           'Manda un enlace para que otra persona vea cómo va tu pedido, sin cuenta y sin ver tus datos.',
         explicacion: [
           'En la pantalla de tu pedido, toca «Compartir el seguimiento» y elige a quién mandarlo.',
-          'Quien abre el enlace ve el estado del pedido, de qué restaurante es y, cuando va en camino, el nombre del repartidor y dónde va en el mapa.',
+          'Quien abre el enlace ve el estado del pedido, de qué restaurante es, la llegada como rango («Llega entre…») y, cuando va en camino, el nombre del repartidor, dónde va en el mapa y hace cuánto se actualizó. Si se pierde la señal del repartidor, el enlace también lo dice.',
           'No ve tu dirección, tu nombre ni lo que pagaste. El enlace se apaga solo cuando el pedido se entrega o se cancela.',
         ],
         capturas: [
@@ -1161,7 +1161,9 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Después de pagar, la pantalla del pedido muestra cuatro pasos: confirmado, en preparación, en camino y entregado. Lo que ya pasó se marca en verde.',
-          'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta, con el tiempo estimado de llegada.',
+          'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta. La llegada se muestra como un rango, por ejemplo «Llega entre 12:40 y 12:50», junto con la hora «a más tardar».',
+          'Debajo del mapa ves «Actualizado hace 8 s»: así sabes que el punto del repartidor es reciente.',
+          'Si el celular del repartidor pierde la señal por más de un minuto, te lo decimos con un aviso: «Perdimos la señal de tu repartidor». Su punto se ve en gris, porque es su última ubicación conocida, y la hora puede cambiar. Sigue en camino; en cuanto vuelve la señal, el mapa se pone al día solo.',
           'Te llega un aviso al celular en cada paso importante, si los tienes encendidos.',
           'Si algo no cuadra, toca «¿Problemas con tu pedido?» y escríbenos: te contesta una persona.',
         ],
@@ -4557,7 +4559,7 @@ const en: SeccionDocs[] = [
           'Send a link so someone else can see how your order is going, without an account and without seeing your details.',
         explicacion: [
           'On your order screen, tap “Share tracking” and choose who to send it to.',
-          'Whoever opens the link sees the order status, which restaurant it’s from and, once it’s on the way, the driver’s name and where they are on the map.',
+          'Whoever opens the link sees the order status, which restaurant it’s from, the arrival window (“Arrives between…”) and, once it’s on the way, the driver’s name, where they are on the map, and how long ago it updated. If the driver’s signal is lost, the link says so too.',
           'They don’t see your address, your name or what you paid. The link turns off on its own when the order is delivered or canceled.',
         ],
         capturas: [
@@ -5309,7 +5311,9 @@ const en: SeccionDocs[] = [
         preguntas: ['Where can I see where my order is?', 'How long until my food arrives?'],
         pasos: [
           'After paying, the order screen shows four steps: confirmed, preparing, on the way, and delivered. What’s done turns green.',
-          'When the driver picks up your food, they appear on the map heading to your door, with the estimated arrival time.',
+          'When the driver picks up your food, they appear on the map heading to your door. Arrival is shown as a window, for example “Arrives between 12:40 and 12:50,” along with the “latest arrival” time.',
+          'Under the map you see “Updated 8 s ago,” so you know the driver’s location is fresh.',
+          'If the driver’s phone loses signal for more than a minute, we tell you with a notice: “We lost your driver’s signal.” Their dot turns gray because it’s their last known location, and the time may change. They’re still on the way; as soon as the signal is back, the map catches up on its own.',
           'You get a phone notification at each key step, if notifications are on.',
           'If something’s off, tap “Problems with your order?” and write to us: a real person answers.',
         ],
