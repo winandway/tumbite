@@ -3,6 +3,17 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## NINGUNA GUÍA DE DOCS SIN CAPTURAS (REGLA PRINCIPAL, Richard, 1 nov 2026)
+
+> Sus palabras: _«no poner ninguna explicación para los usuarios si no tiene una captura de pantalla… eso se vende por imágenes»_.
+
+- Toda guía de Docs lleva capturas de la función: tres o más cuando la función tiene varios pasos, al menos una o dos si es pequeña. Las de funciones que se venden (anuncios, Plus, tarjetas, franquicias) llevan capturas grandes de cada paso: dónde se toca, qué se ve, cómo queda.
+- Primero capturas REALES de la app o del panel (sitio de pruebas, con datos neutros). Si la pantalla todavía no existe o no se puede encender, se hace una maqueta fiel y se marca para reemplazarla por la real apenas se pueda. Nunca se deja una guía sin imagen.
+
+## LA STARTUP DIVOOX (REGLA PRINCIPAL, Richard, 1 nov 2026)
+
+- Divoox es una startup, no «una empresa». En los textos donde se presenta (portada, Acerca de, franquicias, presentaciones, Docs de inicio, prensa) se dice «la startup Divoox». En el resto, simplemente «Divoox». En inglés: «the Divoox startup» / «Divoox, a startup…».
+
 ## LA PÁGINA DE PROGRESO SE ACTUALIZA CON CADA TRABAJO Y SU LINK VA AL PIE (REGLA PRINCIPAL, Richard, 1 nov 2026)
 
 > Sus palabras: _«en vez de actualizar un archivo MD para mí, me actualices un link que yo y mi equipo veamos cada actualización… con barras de proceso… y que cuando yo haga del lado mío lo que tenga que hacer, pueda ponerle que ya fue hecho… de manera que usted las pueda leer»_.

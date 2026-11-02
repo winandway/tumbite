@@ -243,3 +243,15 @@
 
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.
 - 1 nov 2026 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 2c502af, el último de main; la rama fase-repaso-1 (página de progreso y gerente, hasta 6e760cc) está en pruebas y la lleva su propia sesión, así que no se fusionó ni se tocó código.
+
+## Pedidos de Richard del 1 nov (noche) — en este orden
+
+- [ ] (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
+- [ ] (CAP-2) Capturas de «Ganar por tiempo»: la tarjeta «¿Cómo quieres cobrar hoy?» en Driver y el superadmin. Todos los países.
+- [ ] (CAP-3) Capturas grandes de «Anuncios»: el panel del restaurante (encender, presupuesto, reporte), la etiqueta «Patrocinado» en la app del cliente y el superadmin. Es material de venta. Todos los países.
+- [ ] (CAP-4) Capturas de «Divoox Plus»: la pantalla para suscribirse, el carrito con el descuento y Mi cuenta. EE. UU.
+- [ ] (CAP-5) Capturas de «Tarjetas de regalo»: comprar, canjear, saldo y el interruptor del carrito. EE. UU.
+- [ ] (CAP-6) Capturas y explicación paso a paso de «Mandar capturas a soporte». Todos los países.
+- [ ] (CAP-7) Revisar TODAS las guías de Docs y agregar capturas a las que no tengan (regla nueva: ninguna guía sin captura). Todos los países.
+- [ ] (PRO-1) Página de progreso: sección «Qué hace cada app» (cliente, Driver, restaurante) y «Lo que solo existe en el panel web», pensada para explicar la startup a clientes, inversores y aceleradoras. Todos los países.
+- [ ] (STA-1) Llamarla «la startup Divoox» en la web y en Docs donde corresponda (portada, Acerca de, franquicias, presentaciones). Todos los países.
