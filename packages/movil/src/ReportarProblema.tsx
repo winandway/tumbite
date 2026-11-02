@@ -1,5 +1,6 @@
+import { abrirPagina } from './PaginaEnApp';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
@@ -170,11 +171,7 @@ export function ReportarProblema({
         {resultado ? (
           <Text style={{ color: '#0D7A3A', fontWeight: '700', marginBottom: 8 }}>{resultado}</Text>
         ) : null}
-        <Boton
-          texto={t.ver}
-          alTocar={() => void Linking.openURL(`${URL_SERVIDOR}${enlace}`)}
-          secundario
-        />
+        <Boton texto={t.ver} alTocar={() => abrirPagina(`${URL_SERVIDOR}${enlace}`)} secundario />
       </View>
     );
   if (!abierto && !b.valores.texto)

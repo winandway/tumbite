@@ -1,3 +1,4 @@
+import { abrirPagina } from './PaginaEnApp';
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { enIdioma, enIdiomaDireccion, textoVersion } from '@tumbite/compartido';
@@ -39,7 +40,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/docs', idioma)}`);
+            abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion('/docs', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}
@@ -63,7 +64,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/privacy', idioma)}`);
+            abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion('/privacy', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}
@@ -90,7 +91,7 @@ export function MenuCuenta() {
         <Pressable
           onPress={() => {
             setAbierto(false);
-            void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion('/delete-account', idioma)}`);
+            abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion('/delete-account', idioma)}`);
           }}
           accessibilityRole="link"
           style={{ padding: 10 }}

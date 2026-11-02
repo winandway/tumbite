@@ -1,3 +1,4 @@
+import { abrirPagina } from './PaginaEnApp';
 import { useState, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -103,8 +104,7 @@ export function Acceso({
 
   const registro = modo === 'registro' && rolRegistro;
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
-  const abrir = (ruta: string) =>
-    void Linking.openURL(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
+  const abrir = (ruta: string) => abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
   const marco = (cuerpo: ReactNode) =>
     portada ? (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

@@ -76,6 +76,7 @@ const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_cu
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
+  abrirPagina,
   Boton,
   C,
   ChatPedido,
@@ -1172,7 +1173,7 @@ export function Inicio() {
             accessibilityRole="link"
             style={{ color: C.secundario, textDecorationLine: 'underline', marginBottom: 10 }}
             onPress={() =>
-              void Linking.openURL(`https://divoox.com${idioma === 'es' ? '/es' : ''}/driver-terms`)
+              abrirPagina(`https://divoox.com${idioma === 'es' ? '/es' : ''}/driver-terms`)
             }
           >
             {t.terminosLeer}

@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { VisorPaginas } from './PaginaEnApp';
 import { paseTurnstile } from './Turnstile';
 import {
   createContext,
@@ -248,7 +249,12 @@ export function SesionProvider({
     permisosPorExplicar,
     aceptarPermisos,
   };
-  return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
+  return (
+    <Contexto.Provider value={valor}>
+      {children}
+      <VisorPaginas idioma={idioma} />
+    </Contexto.Provider>
+  );
 }
 
 export function useSesion(): Sesion {

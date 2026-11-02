@@ -2402,3 +2402,17 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Fuentes y decisión:** `docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md`.
 - **Prueba:** «C-PREPAGO-MERCADOS» en `finanzas/finanzas.test.ts` (en rojo sin la siembra).
 - **Qué NO tocar:** el equipo puede cambiar el porcentaje desde el panel de finanzas; la siembra no lo pisa.
+
+## C-CORREO-RESERVADO — no se gastan correos en direcciones que no existen (2 nov 2026) — todos los países
+
+- **Qué se rompió:** la respuesta de soporte a un restaurante real (formulario de contacto) no salió: «Hoy ya se enviaron los 1000 correos incluidos de tu plan». El cupo es de la cuenta y lo gastó el sitio de pruebas: el recorrido creó 333 cuentas en `recorrido.test` y `prueba.invalid` y les mandó bienvenidas, recibos y avisos.
+- **Qué se hizo:** `esCorreoDePrueba` en `apps/servidor/src/correo.ts` (terminaciones `.test`, `.invalid`, `.example`, `.localhost`; dominios `example.com/net/org` y `ejemplo.com`). `enviarCorreo` responde `ok` con id `omitido-de-prueba` sin llamar al servicio. Con un transporte simulado (pruebas) no se omite, salvo `usarTransporteCorreo(t, { omitirDePrueba: true })`.
+- **Prueba:** `correoReservado.test.ts` (en rojo sin el freno).
+- **Qué NO tocar:** no cambiar las cuentas del recorrido a dominios reales.
+
+## C-PAGINA-EN-APP — términos, privacidad y guías se abren dentro de la app (2 nov 2026) — todos los países
+
+- **Qué pasaba:** un restaurante reportó que al tocar «términos y condiciones» la app lo sacaba al navegador.
+- **Qué se hizo:** `packages/movil/src/PaginaEnApp.tsx`: `abrirPagina(url)` y `<VisorPaginas />` (visor web dentro de la app con «Listo» y «Abrir en el navegador», como el navegador interno de DoorDash y Uber Eats), montado una vez en `SesionProvider`. En la web abre la dirección como siempre. Lo usan Acceso (términos, términos del repartidor, privacidad), el menú de la cuenta (guías, privacidad, borrar cuenta), la conversación de un caso y los términos del repartidor en el inicio del Driver.
+- **Prueba:** `packages/compartido/src/paginaEnApp.test.ts` (en rojo si vuelve un `Linking.openURL` a una página legal).
+- **Qué NO tocar:** lo del panel web con sesión (`/panel/...`) sigue en el navegador: dentro del visor pediría entrar otra vez.
