@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { recordarAnuncio } from '../comida/anuncioTocado';
-import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { type Restaurante, filtrarRestaurantes, textoNoDisponible } from '@tumbite/compartido';
@@ -27,7 +27,10 @@ export default function Restaurantes() {
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
   const [soloAbiertos, setSoloAbiertos] = useState(false);
-  const [orden, setOrden] = useState<'cerca' | 'rapido' | null>(null);
+  const [orden, setOrden] = useState<'cerca' | 'rapido' | 'calificados' | null>(null);
+  // C-ORDENAR-COMIDA: filtros rápidos «Menos de 30 min» y «4,5 o más», como Uber Eats.
+  const [menos30, setMenos30] = useState(false);
+  const [cuatroCinco, setCuatroCinco] = useState(false);
   // C-RECOGER-MAPA: «Entrega | Recoger» arriba, como Uber Eats; en Recoger, mapa y lo más cerca primero.
   const { marcarRecoger } = useCarrito();
   const [recoger, setRecoger] = useState(false);
@@ -90,8 +93,10 @@ export default function Restaurantes() {
         categoria,
         soloAbiertos,
         orden: recoger ? (orden ?? 'cerca') : orden,
+        menos30: !recoger && menos30,
+        calificacionMin: cuatroCinco ? 4.5 : null,
       }),
-    [lista, busqueda, categoria, soloAbiertos, orden, recoger],
+    [lista, busqueda, categoria, soloAbiertos, orden, recoger, menos30, cuatroCinco],
   );
   const locales = useMemo(
     () =>
@@ -202,7 +207,11 @@ export default function Restaurantes() {
           />
         )}
       />
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 8, marginBottom: 10 }}
+      >
         <Pildora
           texto={t.soloAbiertos}
           activa={soloAbiertos}
@@ -221,7 +230,27 @@ export default function Restaurantes() {
           alTocar={() => setOrden((o) => (o === 'rapido' ? null : 'rapido'))}
           rol="radio"
         />
-      </View>
+        <Pildora
+          texto={t.mejorCalificados}
+          activa={orden === 'calificados'}
+          alTocar={() => setOrden((o) => (o === 'calificados' ? null : 'calificados'))}
+          rol="radio"
+        />
+        {recoger ? null : (
+          <Pildora
+            texto={t.menos30}
+            activa={menos30}
+            alTocar={() => setMenos30((v) => !v)}
+            rol="checkbox"
+          />
+        )}
+        <Pildora
+          texto={t.cuatroCinco}
+          activa={cuatroCinco}
+          alTocar={() => setCuatroCinco((v) => !v)}
+          rol="checkbox"
+        />
+      </ScrollView>
       <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
     </View>
   );

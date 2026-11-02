@@ -86,3 +86,32 @@ describe('filtros rápidos de Comida', () => {
     ).toEqual(['Lejos y rápido']);
   });
 });
+
+describe('C-ORDENAR-COMIDA', () => {
+  type C = R & { calificacion?: { promedio: number; total: number } | null };
+  const base = { categoria: 'Pizza', abierto: true, abiertoAhora: true };
+  const l: C[] = [
+    { ...base, nombre: 'Nuevo', tiempoPrepMin: 5, calificacion: null },
+    { ...base, nombre: 'Bueno', tiempoPrepMin: 25, calificacion: { promedio: 4.6, total: 40 } },
+    { ...base, nombre: 'Regular', tiempoPrepMin: 10, calificacion: { promedio: 4.1, total: 90 } },
+    { ...base, nombre: 'Mejor', tiempoPrepMin: 15, calificacion: { promedio: 4.9, total: 12 } },
+  ];
+  const nombres = (x: C[]) => x.map((r) => r.nombre);
+
+  it('mejor calificados primero y los nuevos al final', () => {
+    expect(nombres(filtrarRestaurantes([...l], { orden: 'calificados' }))).toEqual([
+      'Mejor',
+      'Bueno',
+      'Regular',
+      'Nuevo',
+    ]);
+  });
+
+  it('«4,5 o más» deja solo los que tienen esa calificación pública', () => {
+    expect(nombres(filtrarRestaurantes(l, { calificacionMin: 4.5 }))).toEqual(['Bueno', 'Mejor']);
+  });
+
+  it('«Menos de 30 min» usa el tiempo más largo que promete la tarjeta', () => {
+    expect(nombres(filtrarRestaurantes(l, { menos30: true }))).toEqual(['Nuevo', 'Regular']);
+  });
+});

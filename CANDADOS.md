@@ -2438,3 +2438,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `packages/compartido/src/explicacionTarifas.ts` arma los textos con la configuración REAL del país del restaurante (la misma que calcula el total); el impuesto solo aparece donde se cobra; la propina dice 100 % para el repartidor (REQUISITOS.md).
 - **Prueba:** `explicacionTarifas.test.ts` (en rojo si un monto se escribe a mano).
 - **Qué NO tocar:** nunca escribir montos fijos en esos textos.
+
+## C-ORDENAR-COMIDA (2 nov 2026) — todos los países
+
+- **Qué es:** en la lista de Comida, además de «Solo abiertos», «Más cerca» y «Más rápido»: «Mejor calificados» (los nuevos sin calificación pública al final), «Menos de 30 min» y «4,5 o más», como Uber Eats.
+- **Cómo funciona:** `filtrarRestaurantes` en `packages/compartido/src/filtrosComida.ts`. «Menos de 30 min» usa el extremo largo que promete la tarjeta (preparación + 20 min, `MINUTOS_ENTREGA_EXTRA`), para no prometer de más; en «Recoger» no aparece.
+- **Prueba:** «C-ORDENAR-COMIDA» en `filtrosComida.test.ts` (en rojo si se usa solo la preparación).
