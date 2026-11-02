@@ -166,7 +166,7 @@ try {
     if (toca('driver')) {
       const { ctx, p } = await celular(rep, '/driver/');
       await p.waitForTimeout(4000);
-      await foto(p, 'driver-zonas-mapa');
+      // El mapa de zonas tiene su propio guion (capturas-zonas.mjs): necesita pedidos de la última hora.
       const modo = p.getByText(t('¿Cómo quieres cobrar hoy?', 'How do you want to earn today?'));
       if (await modo.count()) {
         await modo.scrollIntoViewIfNeeded();

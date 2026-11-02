@@ -2588,6 +2588,23 @@ const es: SeccionDocs[] = [
           'Estar en una zona marcada no garantiza ofertas: es una guía de dónde está la demanda ahora mismo. Las ofertas siguen llegando por cercanía, turnos y nivel.',
           'Pago por hora pico: cuando Divoox lo enciende, las zonas con más demanda muestran sobre el mapa cuánto se suma a cada pedido (por ejemplo, «+$2.00 por pedido»). La oferta de un pedido de esa zona dice «Incluye pago por hora pico» con el monto, y se te paga al entregar junto con lo demás. Hay un presupuesto por día: cuando se acaba, el monto deja de aparecer.',
         ],
+        capturas: [
+          {
+            src: '/docs/driver-zonas-mapa-es.webp',
+            alt: 'El inicio de la app Divoox Driver con el mapa de Miami y una zona con más pedidos marcada con un círculo rojo.',
+            pie: 'El círculo rojo marca la zona con más pedidos de la última hora.',
+          },
+          {
+            src: '/docs/driver-zonas-detalle-es.webp',
+            alt: 'La zona marcada en el mapa de Divoox Driver con el recuadro que dice cuántos pedidos tuvo en la última hora.',
+            pie: 'Al tocar la zona ves cuántos pedidos tuvo en la última hora.',
+          },
+          {
+            src: '/docs/driver-zonas-pico-es.webp',
+            alt: 'La zona marcada en el mapa de Divoox Driver con el monto del pago por hora pico escrito encima: más dos dólares por pedido.',
+            pie: 'Con pago por hora pico encendido, el monto extra por pedido queda escrito sobre la zona.',
+          },
+        ],
         preguntas: [
           '¿Dónde hay más pedidos ahora en Divoox?',
           '¿Qué son los círculos rojos del mapa?',
@@ -6324,6 +6341,23 @@ const en: SeccionDocs[] = [
           'Areas are based on restaurant locations, never customer locations. No names, addresses, or specific orders are shown.',
           'Being in a highlighted area doesn’t guarantee offers: it’s a guide to where demand is right now. Offers still come by distance, shifts, and level.',
           'Peak Pay: when Divoox turns it on, the busiest areas show on the map how much is added to each order (for example, “+$2.00 per order”). An offer from that area says “Includes Peak Pay” with the amount, and you’re paid on delivery along with the rest. There’s a daily budget: once it runs out, the amount stops showing.',
+        ],
+        capturas: [
+          {
+            src: '/docs/driver-zonas-mapa-en.webp',
+            alt: 'The Divoox Driver home screen with the Miami map and a busy area highlighted with a red circle.',
+            pie: 'The red circle marks the area with the most orders in the last hour.',
+          },
+          {
+            src: '/docs/driver-zonas-detalle-en.webp',
+            alt: 'A highlighted area on the Divoox Driver map with the label showing how many orders it had in the last hour.',
+            pie: 'Tap the area to see how many orders it had in the last hour.',
+          },
+          {
+            src: '/docs/driver-zonas-pico-en.webp',
+            alt: 'A highlighted area on the Divoox Driver map with the Peak Pay amount on top: plus two dollars per order.',
+            pie: 'With Peak Pay on, the extra amount per order shows right on the area.',
+          },
         ],
         preguntas: [
           'Where are the most orders right now on Divoox?',

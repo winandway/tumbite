@@ -91,4 +91,13 @@ describe('Docs públicos', () => {
         expect(lista).toContain(`/docs/recorrido-${n}-${i}.webp`);
     }
   });
+
+  it('«Zonas con más pedidos» lleva sus tres capturas reales del mapa (CAP-1)', () => {
+    for (const i of ['es', 'en'] as const) {
+      const g = DOCS[i].flatMap((s) => s.guias).find((x) => x.id === 'busy-areas');
+      const srcs = (g?.capturas ?? []).map((c) => c.src);
+      for (const n of ['mapa', 'detalle', 'pico'])
+        expect(srcs).toContain(`/docs/driver-zonas-${n}-${i}.webp`);
+    }
+  });
 });

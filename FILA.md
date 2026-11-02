@@ -244,9 +244,11 @@
 - 31 oct 2026, 10:50: la verificación de main había fallado en la prueba de compra en tienda (buscaba la casilla vieja «Dirección de entrega»); se corrigió a «Calle y número», pasó en la nube y quedó publicado en pruebas y en producción (c268d83). Todos los países.
 - 1 nov 2026 (tarea programada): sin pausa. La fila no tiene puntos `[ ]`: lo que queda es todo `[!]` de Richard. Producción (divoox.com) muestra 2c502af, el último de main; la rama fase-repaso-1 (página de progreso y gerente, hasta 6e760cc) está en pruebas y la lleva su propia sesión, así que no se fusionó ni se tocó código.
 
+- 1 nov 2026, 22:30 (tarea programada): CAP-1 hecho. Tres capturas reales del mapa de Driver (zona, detalle al tocar y pago por hora pico) en la guía de zonas, en español e inglés, con su prueba. Guion capturas-zonas.mjs: crea pedidos en efectivo solo en pruebas, fotografía y los cancela. Todos los países.
+
 ## Pedidos de Richard del 1 nov (noche) — en este orden
 
-- [ ] (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
+- [x] HECHO 1 nov (C-DOCS-ZONAS). (CAP-1) Capturas en Docs de «Zonas con más pedidos»: mapa real de Driver con zonas marcadas (3 o más capturas). Todos los países.
 - [ ] (CAP-2) Capturas de «Ganar por tiempo»: la tarjeta «¿Cómo quieres cobrar hoy?» en Driver y el superadmin. Todos los países.
 - [ ] (CAP-3) Capturas grandes de «Anuncios»: el panel del restaurante (encender, presupuesto, reporte), la etiqueta «Patrocinado» en la app del cliente y el superadmin. Es material de venta. Todos los países.
 - [ ] (CAP-4) Capturas de «Divoox Plus»: la pantalla para suscribirse, el carrito con el descuento y Mi cuenta. EE. UU.
