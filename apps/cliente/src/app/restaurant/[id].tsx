@@ -73,6 +73,8 @@ export default function MenuRestaurante() {
   const [datos, setDatos] = useState<{
     restaurante: Restaurante;
     platos: Plato[];
+    /** C-MAS-PEDIDOS: ids de los platos más pedidos del mes, del primero al quinto. */
+    masPedidos?: string[];
     /** C-MENU-HORARIO: categorías que ahora no se sirven, con su franja. */
     fueraDeHorario?: { categoria: string; abre: string; cierra: string }[];
   } | null>(null);
@@ -192,6 +194,16 @@ export default function MenuRestaurante() {
     [datos],
   );
   const visibles = categorias.filter((c) => categoria === null || c === categoria);
+  // C-MAS-PEDIDOS: «Lo más pedido» arriba del menú, como «Most Ordered» de DoorDash.
+  const masPedidos = useMemo(
+    () =>
+      (datos?.masPedidos ?? [])
+        .map((pid) => datos?.platos.find((p) => p.id === pid))
+        .filter((p): p is Plato => Boolean(p)),
+    [datos],
+  );
+  const numeroUno = masPedidos[0]?.id;
+  const textoNumeroUno = idioma === 'en' ? '#1 most ordered' : 'N.º 1 más pedido';
   const nombreCategoria = (cat: string) =>
     categoriaPlato(
       datos?.platos.find((p) => p.categoria === cat) ?? { categoria: cat, categoriaEn: '' },
@@ -420,6 +432,78 @@ export default function MenuRestaurante() {
                   ))}
                 </ScrollView>
               ) : null}
+              {categoria === null && masPedidos.length ? (
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: '700',
+                      color: C.secundario,
+                      marginTop: 10,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {idioma === 'en' ? 'Most ordered' : 'Lo más pedido'}
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
+                  >
+                    {masPedidos.map((p, i) => {
+                      const foto = urlFoto(p.imagen);
+                      return (
+                        <Pressable
+                          key={p.id}
+                          onPress={() => abrirDetalle(p)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${nombrePlato(p, idioma)}${i === 0 ? ` · ${textoNumeroUno}` : ''}`}
+                          style={{ width: 150 }}
+                        >
+                          <View
+                            style={{
+                              width: 150,
+                              height: 104,
+                              borderRadius: 14,
+                              backgroundColor: '#f1f1f1',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {foto ? (
+                              <Image
+                                source={{ uri: foto }}
+                                accessibilityIgnoresInvertColors
+                                style={{ width: 150, height: 104 }}
+                              />
+                            ) : null}
+                          </View>
+                          {i === 0 ? (
+                            <Text
+                              style={{
+                                color: C.exito,
+                                fontSize: 12,
+                                fontWeight: '700',
+                                marginTop: 6,
+                              }}
+                            >
+                              {textoNumeroUno}
+                            </Text>
+                          ) : null}
+                          <Text
+                            style={{ fontWeight: '700', color: C.secundario, marginTop: i ? 6 : 2 }}
+                            numberOfLines={2}
+                          >
+                            {nombrePlato(p, idioma)}
+                          </Text>
+                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                            {formatearMonto(p.precioCentavos, moneda, idioma)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
               {visibles.map((cat) => (
                 <View key={cat || 'general'}>
                   {cat ? (
@@ -476,6 +560,11 @@ export default function MenuRestaurante() {
                             <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                               {nombrePlato(p, idioma)}
                             </Text>
+                            {p.id === numeroUno ? (
+                              <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
+                                {textoNumeroUno}
+                              </Text>
+                            ) : null}
                             {descripcion(p, idioma) ? (
                               <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={2}>
                                 {descripcion(p, idioma)}

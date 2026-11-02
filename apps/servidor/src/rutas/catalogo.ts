@@ -30,6 +30,7 @@ import {
   leerPlanillaMenu,
   calificacionPublica,
   paisDelCodigoZona,
+  contarMasPedidos,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -367,13 +368,22 @@ catalogo.get('/restaurantes/:id', async (c) => {
   const zona = restaurante?.zonaHoraria ?? 'America/New_York';
   const fueraDeHorario = ventanas.filter((v) => !categoriaEnHorario(v, zona));
   const fuera = new Set(fueraDeHorario.map((v) => v.categoria));
+  const visibles = ordenarPlatos(f, results).filter((p) => !fuera.has(String(p.categoria ?? '')));
+  // C-MAS-PEDIDOS: los platos más pedidos de los últimos 30 días (solo los que hoy se pueden pedir).
+  const { results: entregados } = await db
+    .prepare(
+      "SELECT lineas_json FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now','-30 days')",
+    )
+    .bind(f.id)
+    .all<{ lineas_json: string }>();
   return c.json({
     restaurante,
     fueraDeHorario,
-    platos: await platosConGrupos(
-      db,
-      ordenarPlatos(f, results).filter((p) => !fuera.has(String(p.categoria ?? ''))),
+    masPedidos: contarMasPedidos(
+      entregados.map((x) => String(x.lineas_json ?? '[]')),
+      new Set(visibles.map((p) => String(p.id))),
     ),
+    platos: await platosConGrupos(db, visibles),
   });
 });
 

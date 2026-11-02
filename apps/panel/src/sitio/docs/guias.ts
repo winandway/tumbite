@@ -1093,6 +1093,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Abre la app de Divoox y deja que use tu ubicación: así ves los restaurantes de tu zona, ordenados por cercanía. En Estados Unidos la distancia va en millas; en los demás países, en kilómetros.',
           'Toca «Comida». Arriba de la lista puedes ordenar y filtrar como en las grandes apps: «Solo abiertos», «Más cerca», «Más rápido», «Mejor calificados» (los nuevos, sin calificación todavía, van al final), «Menos de 30 min» (cuenta el tiempo más largo que promete cada tarjeta) y «4,5 o más».',
+          'Arriba del menú de cada restaurante está «Lo más pedido»: los platos que más pidieron los clientes en los últimos 30 días, con la marca «N.º 1 más pedido» en el primero. Solo aparece cuando un plato ya se pidió varias veces.',
           'Toca «Comida» y luego un restaurante. Toca un plato para ver su detalle: elige el tamaño, los extras y la cantidad, y toca «Agregar al carrito».',
           'Ve al carrito. Si ya diste tu ubicación, la casilla «Calle y número» se llena sola; si no, escribe tu dirección y toca la sugerencia correcta (o marca el punto en el mapa). Agrega notas si hace falta (por ejemplo, «tocar el timbre dos veces»).',
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
@@ -5192,6 +5193,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Open the Divoox app and allow location: you’ll see the restaurants in your area, closest first. In the United States distances are in miles; in other countries, in kilometers.',
           'Tap “Food”. Above the list you can sort and filter like the big apps: “Open now”, “Nearest”, “Fastest”, “Top rated” (new places without a rating yet go last), “Under 30 min” (it uses the longest time each card promises), and “4.5+”.',
+          'At the top of each restaurant’s menu is “Most ordered”: the dishes customers ordered most in the last 30 days, with a “#1 most ordered” tag on the first one. It only shows up once a dish has been ordered several times.',
           'Tap “Food” and then a restaurant. Tap a dish to see its details: choose the size, the extras, and the quantity, and tap “Add to cart.”',
           'Go to the cart. If you already shared your location, the “Street address” box fills in by itself; if not, type your address and tap the right suggestion (or mark the spot on the map). Add notes if needed (for example, “ring twice”).',
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',

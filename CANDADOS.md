@@ -2444,3 +2444,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** en la lista de Comida, además de «Solo abiertos», «Más cerca» y «Más rápido»: «Mejor calificados» (los nuevos sin calificación pública al final), «Menos de 30 min» y «4,5 o más», como Uber Eats.
 - **Cómo funciona:** `filtrarRestaurantes` en `packages/compartido/src/filtrosComida.ts`. «Menos de 30 min» usa el extremo largo que promete la tarjeta (preparación + 20 min, `MINUTOS_ENTREGA_EXTRA`), para no prometer de más; en «Recoger» no aparece.
 - **Prueba:** «C-ORDENAR-COMIDA» en `filtrosComida.test.ts` (en rojo si se usa solo la preparación).
+
+## C-MAS-PEDIDOS (2 nov 2026) — todos los países
+
+- **Qué es:** «Lo más pedido» arriba del menú del restaurante, con «N.º 1 más pedido» en el primero (como «Most Ordered» de DoorDash).
+- **Cómo funciona:** `GET /datos/restaurantes/:id` devuelve `masPedidos` (ids) con `contarMasPedidos` de `packages/compartido/src/masPedidos.ts`: unidades de pedidos ENTREGADOS de los últimos 30 días, solo platos visibles hoy, mínimo 3 unidades, máximo 5. La app los pinta en `apps/cliente/src/app/restaurant/[id].tsx`.
+- **Prueba:** `apps/servidor/src/masPedidos.test.ts` (en rojo sin el mínimo de unidades).
+- **Qué NO tocar:** el mínimo de unidades (evita un «N.º 1» con un solo pedido).

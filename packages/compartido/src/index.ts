@@ -74,3 +74,4 @@ export * from './tituloCaso';
 export * from './contacto';
 export * from './busquedasRecientes';
 export * from './explicacionTarifas';
+export * from './masPedidos';
