@@ -78,6 +78,31 @@ describe('G3: edad mínima del repartidor por estado y vehículo', () => {
   });
 });
 
+describe('G3 y G4b: interruptores del equipo para repartidores', () => {
+  it('el admin ve y cambia la edad por estado y los papeles del vehículo; nadie más', async () => {
+    const { m } = conAlmacen();
+    const admin = await m.cuenta('admin');
+    const rep = await m.cuenta('repartidor', 'Rep Curioso');
+    const antes = await m.llamar(
+      'GET',
+      '/datos/admin/interruptores-repartidor',
+      undefined,
+      admin.token,
+    );
+    expect(antes.datos).toEqual({ edadPorEstado: true, papelesVehiculo: false });
+    const cambio = await m.llamar(
+      'PUT',
+      '/datos/admin/interruptores-repartidor',
+      { edadPorEstado: false, papelesVehiculo: true },
+      admin.token,
+    );
+    expect(cambio.datos).toEqual({ edadPorEstado: false, papelesVehiculo: true });
+    expect(
+      (await m.llamar('GET', '/datos/admin/interruptores-repartidor', undefined, rep.token)).estado,
+    ).toBe(403);
+  });
+});
+
 describe('KYC (C-KYC)', () => {
   it('punto 27: al enviar la verificación, cada correo de ADMIN_CORREOS recibe el aviso (C-OPERACION-D1)', async () => {
     const enviados: { para: string; asunto: string }[] = [];

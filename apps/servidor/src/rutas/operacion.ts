@@ -52,7 +52,7 @@ import {
   VERSION_TERMINOS,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { asegurarCodigoRepartidor } from './superadmin';
+import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
@@ -91,7 +91,12 @@ import {
   telefonoE164,
   twimlPuente,
 } from '../sms';
-import { formatearMonto, rendimientoRestaurante } from '@tumbite/compartido';
+import {
+  type FaltaPapel,
+  faltaPapel,
+  formatearMonto,
+  rendimientoRestaurante,
+} from '@tumbite/compartido';
 
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -1180,6 +1185,25 @@ operacion.get('/repartidor/estado', async (c) => {
   });
 });
 
+const TEXTO_PAPEL = new Map<FaltaPapel, string>([
+  [
+    'licencia',
+    'Para repartir en carro o moto, escribe tu licencia y su vencimiento en «Mis datos y vehículo».',
+  ],
+  [
+    'licencia_vencida',
+    'Tu licencia está vencida. Actualízala en «Mis datos y vehículo» para conectarte.',
+  ],
+  [
+    'seguro',
+    'Para repartir en carro o moto, escribe tu seguro y su vencimiento en «Mis datos y vehículo».',
+  ],
+  [
+    'seguro_vencido',
+    'Tu seguro está vencido. Actualízalo en «Mis datos y vehículo» para conectarte.',
+  ],
+]);
+
 operacion.post('/repartidor/conectar', async (c) => {
   const { u, db } = await miFicha(c);
   const d = await leerCuerpo(
@@ -1197,6 +1221,29 @@ operacion.post('/repartidor/conectar', async (c) => {
       'kyc',
       403,
     );
+  // G4b (como DoorDash): en carro o moto, licencia y seguro vigentes antes de conectarse.
+  if (d.conectado && (await papelesObligatorios(db))) {
+    const p = await db
+      .prepare(
+        'SELECT vehiculo_tipo, licencia_numero, licencia_vence, seguro_poliza, seguro_vence FROM repartidor_datos WHERE usuario_id = ?',
+      )
+      .bind(u.id)
+      .first<{
+        vehiculo_tipo: string;
+        licencia_numero: string | null;
+        licencia_vence: string | null;
+        seguro_poliza: string | null;
+        seguro_vence: string | null;
+      }>();
+    const falta = faltaPapel({
+      vehiculoTipo: p?.vehiculo_tipo,
+      licenciaNumero: p?.licencia_numero,
+      licenciaVence: p?.licencia_vence,
+      seguroPoliza: p?.seguro_poliza,
+      seguroVence: p?.seguro_vence,
+    });
+    if (falta) throw new ErrorDatos(TEXTO_PAPEL.get(falta) ?? '', 'papeles', 409);
+  }
   // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
   if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
     throw new ErrorDatos(

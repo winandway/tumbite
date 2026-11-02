@@ -2441,6 +2441,8 @@ const es: SeccionDocs[] = [
           'Cuando un cliente recibe su comida, quiere saber que quien toca su puerta es la persona que dice ser. Por eso todo repartidor de Divoox pasa por una verificación de identidad antes de repartir.',
           'Solo necesitas tu documento y una foto de tu cara. El documento lo ve únicamente el equipo de Divoox que revisa las verificaciones; no se publica y se borra si cierras tu cuenta.',
           'La foto de tu cara, una vez aprobada, es tu foto de perfil: el equipo la compara con tu documento y la ve el cliente del pedido que llevas, para que sepa quién toca su puerta. Nadie más la ve. Como es la foto verificada, no la puedes cambiar desde la app; si necesitas una nueva, escríbenos y la revisamos otra vez.',
+          'Si repartes en carro o en moto, en «Mis datos y vehículo» también escribes tu licencia y tu seguro, cada uno con su fecha de vencimiento. Tienen que estar vigentes para conectarte: si uno vence, la app te avisa al conectarte y te dice dónde actualizarlo. A pie o en bicicleta no se pide ninguno de los dos.',
+          'La edad mínima para repartir depende de dónde y en qué repartes, como en las demás apps de reparto: 18 años en general, 19 en Florida y Texas, 21 en California, y 19 si repartes en moto o en carro.',
         ],
         capturas: [
           {
@@ -6456,6 +6458,8 @@ const en: SeccionDocs[] = [
           'When customers get their food, they want to know the person at their door is who they say they are. That’s why every Divoox driver goes through an identity check before delivering.',
           'All you need is your ID and a photo of your face. Only the Divoox team that reviews verifications sees your ID; it’s never published and it’s deleted if you close your account.',
           'Once approved, the photo of your face is your profile photo: our team compares it with your ID, and the customer of the order you’re carrying sees it, so they know who’s at their door. No one else sees it. Since it’s your verified photo, you can’t change it from the app; if you need a new one, contact us and we’ll review it again.',
+          'If you deliver by car or motorcycle, under “My details and vehicle” you also enter your license and your insurance, each with its expiration date. They must be valid to go online: if one expires, the app tells you when you go online and where to update it. On foot or by bike, neither is required.',
+          'The minimum age to deliver depends on where and how you deliver, like other delivery apps: 18 in general, 19 in Florida and Texas, 21 in California, and 19 if you deliver by motorcycle or car.',
         ],
         capturas: [
           {

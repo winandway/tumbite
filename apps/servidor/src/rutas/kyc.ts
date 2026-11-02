@@ -640,6 +640,43 @@ async function exigirEdadRepartidor(db: D1Database, id: string) {
     );
 }
 
+/** G3 y G4b: los dos interruptores de repartidores (config). La edad nace encendida; los papeles, apagados. */
+kyc.get('/admin/interruptores-repartidor', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      "SELECT clave, valor FROM config WHERE clave IN ('edad_repartidor_por_estado', 'papeles_vehiculo_obligatorios')",
+    )
+    .all<{ clave: string; valor: string }>();
+  const v = new Map(results.map((r) => [r.clave, r.valor]));
+  return c.json({
+    edadPorEstado: v.get('edad_repartidor_por_estado') !== '0',
+    papelesVehiculo: v.get('papeles_vehiculo_obligatorios') === '1',
+  });
+});
+
+kyc.put('/admin/interruptores-repartidor', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({ edadPorEstado: z.boolean(), papelesVehiculo: z.boolean() }),
+  );
+  const db = base(c);
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('edad_repartidor_por_estado', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(d.edadPorEstado ? '1' : '0'),
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('papeles_vehiculo_obligatorios', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(d.papelesVehiculo ? '1' : '0'),
+  ]);
+  return c.json(d);
+});
+
 const esquemaRevision = z.object({
   estado: z.enum(['aprobado', 'rechazado']),
   motivo: z.string().trim().max(500).default(''),

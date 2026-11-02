@@ -2379,3 +2379,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo:** `GET /datos/admin/fiscal/1099?anio=` en `rutas/repartidorGrandes.ts` (solo admin; responde `umbral`, `emision: 'apagada'` y la lista); vista `apps/panel/src/panel/Resumen1099.tsx` al final de «Control del dinero» del superadmin.
 - **Apagado:** no emite ni envía formularios; eso lo decide el contador (PENDIENTES).
 - **Pruebas:** «G5» en `repartidorGrandes.test.ts` (en rojo sin la ruta) y `Resumen1099.test.tsx` (2).
+
+## C-PAPELES-VEHICULO (2 nov 2026, bloque G, punto G4b) — todos los países
+
+- **Qué faltaba:** el Driver escribía licencia y seguro en «Mis datos y vehículo», pero nada los exigía vigentes para repartir en carro o moto (DoorDash los pide, E2 p.3). El catálogo de requisitos (C-REQUISITOS-VEHICULO) no lo lee todavía el reparto de Comida.
+- **Qué se hizo:** `faltaPapel` en `packages/compartido/src/papelesVehiculo.ts` (carro, moto o scooter: licencia con número y vencimiento vigente, seguro con póliza y vencimiento vigente; a pie o en bici nada). Con el interruptor `config.papeles_vehiculo_obligatorios = '1'`: `PUT /datos/repartidor/datos` pide la póliza en carro o moto, y `POST /datos/repartidor/conectar` responde 409 `campo: 'papeles'` con el texto de qué falta o qué venció (traducido en `mensajesEn.ts`); la app ya muestra ese mensaje. Interruptores del equipo (`GET/PUT /datos/admin/interruptores-repartidor`, pieza `InterruptoresRepartidor.tsx` arriba de «Verificaciones» del superadmin) para esto y para la edad por estado (C-EDAD-REPARTIDOR). Guía «verify» del repartidor (ES y EN) con licencia, seguro y edad.
+- **Apagado de fábrica:** los papeles nacen apagados (se encienden en Superadmin → Verificaciones); la edad por estado nace encendida.
+- **Pruebas:** `papelesVehiculo.test.ts` (5), «G4b» en `operacion.test.ts` (5, dos en rojo sin el freno), interruptores en `kyc.test.ts` y `InterruptoresRepartidor.test.tsx`.

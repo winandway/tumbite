@@ -162,6 +162,14 @@ superadmin.get('/repartidor/datos', async (c) => {
   return c.json({ codigo, datos: aDatos(f) });
 });
 
+/** G4b: interruptor «papeles_vehiculo_obligatorios» (config); apagado por defecto. */
+export async function papelesObligatorios(db: D1Database): Promise<boolean> {
+  const f = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'papeles_vehiculo_obligatorios'")
+    .first<{ valor: string }>();
+  return f?.valor === '1';
+}
+
 superadmin.put('/repartidor/datos', async (c) => {
   const u = exigir(c, 'repartidor');
   const d = await leerCuerpo(c, esquemaDatosRepartidor);
@@ -170,6 +178,9 @@ superadmin.put('/repartidor/datos', async (c) => {
   if (motor && !d.placa) throw new ErrorDatos('Escribe la placa del vehículo.', 'placa');
   if (motor && !d.licenciaNumero)
     throw new ErrorDatos('Escribe el número de tu licencia.', 'licenciaNumero');
+  // G4b (como DoorDash): con el interruptor encendido, en carro o moto también se pide el seguro.
+  if (motor && !d.seguroPoliza && (await papelesObligatorios(base(c))))
+    throw new ErrorDatos('Escribe la póliza de tu seguro.', 'seguroPoliza');
   await base(c)
     .prepare(
       `INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, anio, color, placa, licencia_numero, licencia_estado,

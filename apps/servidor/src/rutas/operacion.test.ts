@@ -113,6 +113,60 @@ async function escenario(extraEnv: Record<string, string> = {}) {
   return { m, dueno, cliente, pedidoPagado, pedidoPagadoPorStripe, repartidor, r, plato };
 }
 
+describe('G4b: en carro o moto, licencia y seguro vigentes para conectarse (como DoorDash)', () => {
+  async function conPapeles(datos: Record<string, unknown>, encendido = true) {
+    const m = mundo();
+    const rep = await m.cuenta('repartidor', 'Rep Papeles');
+    if (encendido)
+      await m.DB.prepare(
+        "INSERT OR REPLACE INTO config (clave, valor) VALUES ('papeles_vehiculo_obligatorios', '1')",
+      ).run();
+    const g = await m.llamar('PUT', '/datos/repartidor/datos', datos, rep.token);
+    const conectar = () =>
+      m.llamar(
+        'POST',
+        '/datos/repartidor/conectar',
+        { conectado: true, lat: 25.7617, lng: -80.1918 },
+        rep.token,
+      );
+    return { g, conectar };
+  }
+  const carro = {
+    vehiculoTipo: 'carro',
+    placa: 'ABC123',
+    licenciaNumero: 'D123',
+    licenciaVence: '2099-01-01',
+    seguroAseguradora: 'Aseguradora',
+    seguroPoliza: 'P-9',
+    seguroVence: '2099-01-01',
+  };
+
+  it('con todo vigente se conecta', async () => {
+    const { conectar } = await conPapeles(carro);
+    expect((await conectar()).estado).toBe(200);
+  });
+  it('sin seguro no se guarda en carro', async () => {
+    const { g } = await conPapeles({ ...carro, seguroPoliza: '' });
+    expect(g.estado).toBe(400);
+    expect(g.datos.campo).toBe('seguroPoliza');
+  });
+  it('con la licencia vencida no se conecta y le dice dónde actualizarla', async () => {
+    const { conectar } = await conPapeles({ ...carro, licenciaVence: '2020-01-01' });
+    const r = await conectar();
+    expect(r.estado).toBe(409);
+    expect(r.datos.campo).toBe('papeles');
+    expect(r.datos.error).toMatch(/licencia está vencida|license has expired/);
+  });
+  it('en bici no se pide nada', async () => {
+    const { conectar } = await conPapeles({ vehiculoTipo: 'bicicleta' });
+    expect((await conectar()).estado).toBe(200);
+  });
+  it('con el interruptor apagado queda como antes', async () => {
+    const { conectar } = await conPapeles({ ...carro, licenciaVence: '2020-01-01' }, false);
+    expect((await conectar()).estado).toBe(200);
+  });
+});
+
 describe('día del restaurante', () => {
   it('el día empieza a medianoche de Miami, no de Londres', async () => {
     const { limitesDelDia } = await import('./operacion');

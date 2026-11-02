@@ -594,6 +594,23 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe el nombre del plato.', 'Enter the item name.'],
   ['Escribe el nombre del restaurante.', 'Enter the restaurant name.'],
   ['Escribe el número de tu licencia.', 'Enter your license number.'],
+  ['Escribe la póliza de tu seguro.', 'Enter your insurance policy number.'],
+  [
+    'Para repartir en carro o moto, escribe tu licencia y su vencimiento en «Mis datos y vehículo».',
+    'To deliver by car or motorcycle, enter your license and its expiration date in “My details and vehicle.”',
+  ],
+  [
+    'Tu licencia está vencida. Actualízala en «Mis datos y vehículo» para conectarte.',
+    'Your license has expired. Update it in “My details and vehicle” to go online.',
+  ],
+  [
+    'Para repartir en carro o moto, escribe tu seguro y su vencimiento en «Mis datos y vehículo».',
+    'To deliver by car or motorcycle, enter your insurance and its expiration date in “My details and vehicle.”',
+  ],
+  [
+    'Tu seguro está vencido. Actualízalo en «Mis datos y vehículo» para conectarte.',
+    'Your insurance has expired. Update it in “My details and vehicle” to go online.',
+  ],
   ['Escribe la dirección de entrega.', 'Enter the delivery address.'],
   ['Escribe la dirección del restaurante.', 'Enter the restaurant address.'],
   ['Escribe la placa del vehículo.', 'Enter the vehicle’s license plate.'],
