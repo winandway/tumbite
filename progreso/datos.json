@@ -1,6 +1,6 @@
 {
-  "actualizado": "2026-11-02T02:17:15-05:00",
-  "version": "9f567e0",
+  "actualizado": "2026-11-02T03:17:47-05:00",
+  "version": "468eee7",
   "ahora": {
     "titulo": "Todo lo de la fila está publicado",
     "detalle": "Repaso de pantallas, más verde, «Mis pedidos», la flecha de volver y el Bloque G ya están en producción. Lo que sigue depende de tus decisiones (abajo)."
@@ -110,6 +110,13 @@
       "titulo": "Cuenta de Checkr para antecedentes de repartidores",
       "para": "La revisión de antecedentes penales y de manejo, como DoorDash.",
       "destraba": "El botón de antecedentes en la app del repartidor."
+    },
+    {
+      "id": "ley-aplicable-terminos",
+      "prioridad": "media",
+      "titulo": "Abogado: ley aplicable de los términos",
+      "para": "Los términos dicen que rigen las leyes de Florida y los tribunales de Miami-Dade, y la empresa es de Delaware con oficinas en Michigan.",
+      "destraba": "Corregir esa cláusula con el texto que diga el abogado."
     }
   ],
   "terceros": [
@@ -295,6 +302,14 @@
     {
       "fecha": "2026-11-02",
       "tipo": "nuevo",
+      "titulo": "Puerta de contacto en divoox.com",
+      "texto": "Página «Contacto», botón «¿Preguntas?» en toda la web y formulario en Soporte: cada mensaje abre una conversación real con enlace privado. Nueva guía «¿Quién me paga y cuándo me llega?». La empresa aparece como Windoce, LLC, de Delaware con oficinas en Novi, Michigan.",
+      "paises": "Todos",
+      "docs": ["who-pays-me"]
+    },
+    {
+      "fecha": "2026-11-02",
+      "tipo": "nuevo",
       "titulo": "Brechas frente a los grandes",
       "texto": "GPS más estricto con aviso de ubicación simulada, edad mínima por estado y vehículo, licencia y seguro vigentes para repartir en carro o moto (apagado hasta encenderlo) y resumen anual 1099 en el superadmin (emisión apagada).",
       "paises": "EE. UU.",
@@ -477,7 +492,8 @@
     "busy-areas": "Zonas con más pedidos",
     "support": "Soporte",
     "send-screenshot-to-support": "Mandar capturas a soporte",
-    "my-orders-and-reorder": "Mis pedidos y pedir otra vez"
+    "my-orders-and-reorder": "Mis pedidos y pedir otra vez",
+    "who-pays-me": "¿Quién me paga y cuándo me llega?"
   },
   "presentacion": "La startup Divoox: reparto de comida, tiendas, logística para empresas y viajes en una sola plataforma. Tres apps (cliente, Driver y restaurante) y un panel web, en inglés y español, pensada para EE. UU. y Latinoamérica.",
   "apps": [
