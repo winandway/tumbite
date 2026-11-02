@@ -1,9 +1,9 @@
 {
-  "actualizado": "2026-11-02 12:30 (Miami)",
+  "actualizado": "2026-11-02 12:40 (Miami)",
   "version": "468eee7",
   "ahora": {
     "titulo": "Bloque nuevo: lo que el cliente de los grandes tiene y nosotros no",
-    "detalle": "Siete funciones de la app del cliente copiadas de DoorDash y Uber Eats. Ya hechas: búsquedas recientes y «¿Qué son estas tarifas?» en el carrito. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en esta computadora."
+    "detalle": "Seis de siete hechas: búsquedas recientes, ordenar y filtros rápidos, lo más pedido, alergias, explicación de tarifas y regalar un pedido. Están guardadas, pero no se pueden publicar hasta que GitHub vuelva a tener sesión en esta computadora. Falta invitar a un amigo."
   },
   "proximo": [
     {
@@ -301,8 +301,8 @@
   "bitacora": [
     {
       "fecha": "2026-11-02",
-      "titulo": "Búsquedas recientes y tarifas explicadas en la app del cliente",
-      "texto": "La fila estaba vacía y se rellenó con siete funciones que DoorDash y Uber Eats tienen en la app del cliente. Hechas dos: el buscador muestra las últimas ocho búsquedas de cada cuenta, y el carrito explica cada cargo con los números reales del país. Las dos tienen su prueba y su guía en Docs en los dos idiomas. Quedan guardadas sin publicar porque GitHub perdió la sesión de la computadora."
+      "titulo": "Seis funciones nuevas en la app del cliente, como DoorDash y Uber Eats",
+      "texto": "Búsquedas recientes, ordenar por mejor calificados con filtros «Menos de 30 min» y «4,5 o más», «Lo más pedido» en el menú, casilla de alergias que el restaurante ve resaltada, explicación de cada tarifa en el carrito y enviar un pedido como regalo con aviso por SMS a quien lo recibe. Cada una con su prueba y su guía en Docs en los dos idiomas. Quedan guardadas sin publicar porque GitHub perdió la sesión de la computadora."
     },
     {
       "fecha": "2026-11-02",
