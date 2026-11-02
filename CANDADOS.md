@@ -2324,3 +2324,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** el detalle de un caso de la bandeja de dinero calculaba TODOS los casos de su tipo y después filtraba por uno (`SELECT * FROM (todo) WHERE clave = ?`). Con muchos casos acumulados (el sitio de pruebas suma casos en cada corrida) tardaba más de 20 segundos y el recorrido automático fallaba a ratos en «caso-dinero». Con el tiempo le pasaría igual a producción.
 - **Arreglo:** cada fuente de `apps/servidor/src/internacional/bandeja.ts` lleva `idCol` y la marca `{{id}}` en su WHERE; el detalle la cambia por `idCol = ?` y la bandeja por `1 = 1`.
 - **Prueba:** `bandejaUnCaso.test.ts` (comprobada en rojo quitando la marca de una fuente) y las pruebas de la bandeja de siempre.
+
+## C-ZONAS-ANTES-DE-CONECTAR — el mapa de zonas se ve antes de conectarse (1 nov 2026, todos los países)
+
+- **Qué se rompía:** la app Driver solo conocía la ubicación estando conectada o en camino, así que desconectada nunca pedía `/datos/repartidor/demanda` y el mapa salía sin zonas. Lo destapó la captura para Docs pedida por Richard.
+- **Arreglo:** `apps/repartidor/src/Inicio.tsx` lee la ubicación una vez estando desconectada, solo si el permiso ya está dado (nunca lo vuelve a pedir), como Dasher.
+- **Prueba:** `packages/compartido/src/zonasAntesDeConectar.test.ts` (comprobada en rojo).

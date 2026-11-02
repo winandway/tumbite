@@ -123,6 +123,7 @@ try {
 
     if (toca('driver')) {
       const { ctx, p } = await celular(rep, '/driver/');
+      await p.waitForTimeout(4000);
       await foto(p, 'driver-zonas-mapa');
       const modo = p.getByText(t('¿Cómo quieres cobrar hoy?', 'How do you want to earn today?'));
       if (await modo.count()) {
@@ -147,8 +148,10 @@ try {
       // El local solo cuenta como abierto si su panel está escuchando pedidos (C-PAUSA-SIN-SENAL).
       await api('GET', '/datos/restaurante/pedidos', undefined, rest.token);
       const { ctx, p } = await celular(cliente, '/app/');
-      const cerca = p.getByText(t('Restaurantes cerca de ti', 'Restaurants near you')).first();
-      if (await cerca.count()) await cerca.scrollIntoViewIfNeeded();
+      // La pantalla es una lista con su propio desplazamiento: se baja con la rueda, como una persona.
+      await p.mouse.move(195, 500);
+      await p.mouse.wheel(0, 950);
+      await p.waitForTimeout(1500);
       await foto(p, 'cliente-inicio-patrocinado');
       await api('GET', '/datos/restaurante/pedidos', undefined, rest.token);
       await p.goto(`${SITIO}/app/restaurants`, { waitUntil: 'networkidle' });
@@ -190,6 +193,9 @@ try {
     }
   }
 } finally {
+  await api('PUT', '/datos/repartidor/modo-pago', { modo: 'oferta' }, rep.token).catch(
+    () => undefined,
+  );
   // Todo vuelve a como estaba en el sitio de pruebas (la campaña primero: con los anuncios
   // apagados el restaurante ya no puede tocarla).
   await api(

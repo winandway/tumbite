@@ -723,6 +723,23 @@ export function Inicio() {
     };
   }, [estado?.conectado, api, tg.fondo.titulo, tg.fondo.cuerpo]);
 
+  // C-ZONAS-ANTES-DE-CONECTAR: desconectado también se ve el mapa de zonas con más pedidos (como
+  // Dasher): es cuando el repartidor decide adónde ir. Se lee la ubicación UNA vez y solo si ya dio
+  // el permiso (aquí nunca se le vuelve a pedir).
+  useEffect(() => {
+    if (estado?.conectado || aqui) return;
+    let vivo = true;
+    void (async () => {
+      const permiso = await Location.getForegroundPermissionsAsync().catch(() => null);
+      if (!permiso?.granted) return;
+      const p = await ubicacionConLimite();
+      if (vivo && p) setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [estado?.conectado, aqui]);
+
   // En camino: la ubicación se revisa cada 5 segundos para saber si ya llegó a la puerta.
   const enCamino = estado?.activo?.estado === 'en_camino';
   useEffect(() => {
