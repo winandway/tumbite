@@ -2544,3 +2544,4 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **No tocar:** si una pantalla nueva lee con variables en la dirección, no entra; para esas se escribe su prueba propia (como `contratoApps.test.ts`).
 
 - **C-APP-SIN-CIERRES, 2 nov (CON-3):** en Superadmin → Resumen → errores, el selector «Origen» separa el servidor de cada app, y cada fallo de app se ve como «App restaurante · /equipo». Prueba en `apps/panel/src/panel/Superadmin.test.tsx` (C-ERRORES-VISIBLES), comprobada en rojo sin el cambio.
+- **C-CONTRATO-APPS, 2 nov (CON-4):** la misma prueba recorre el panel web; como el panel no dice el rol de cada pantalla, prueba con superadmin, restaurante, repartidor y cliente y vale la primera que entra. Comprobado en rojo cambiando la llave de los errores del superadmin.

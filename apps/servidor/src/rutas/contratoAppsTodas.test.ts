@@ -120,4 +120,41 @@ describe('C-CONTRATO-APPS: lo que leen las tres apps es lo que manda el servidor
     }
     expect(fallos).toEqual([]);
   });
+
+  it('CON-4: el panel web lee lo que manda el servidor (superadmin, restaurante y demás)', async () => {
+    const m = mundo();
+    const restaurante = (await m.cuenta('restaurante', 'Rosa Panel')).token;
+    await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, restaurante);
+    // El panel no dice el rol de cada pantalla: se prueba con cada cuenta y vale la primera que entra.
+    const cuentas = [
+      (await m.cuenta('admin', 'Soporte Panel')).token,
+      restaurante,
+      (await m.cuenta('repartidor', 'Rita Panel')).token,
+      (await m.cuenta('cliente', 'Ana Panel')).token,
+    ];
+    const ls = archivos(join(RAIZ, 'panel', 'src')).flatMap((archivo) =>
+      lecturas(readFileSync(archivo, 'utf8')).map((l) => ({
+        archivo: relative(RAIZ, archivo),
+        ...l,
+      })),
+    );
+    expect(ls.length).toBeGreaterThan(30);
+    const fallos: string[] = [];
+    for (const l of ls) {
+      let datos: unknown;
+      for (const token of cuentas) {
+        const r = await m.llamar('GET', l.ruta, undefined, token);
+        if (r.estado === 200) {
+          datos = r.datos;
+          break;
+        }
+      }
+      if (datos === undefined) continue;
+      if (l.lista && !Array.isArray(datos))
+        fallos.push(`${l.archivo}: ${l.ruta} espera una lista y llega un objeto`);
+      for (const k of l.llaves)
+        if (!(k in (datos as object))) fallos.push(`${l.archivo}: ${l.ruta} no trae «${k}»`);
+    }
+    expect(fallos).toEqual([]);
+  });
 });
