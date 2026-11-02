@@ -6,6 +6,7 @@ import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
+import { guardarDescuentos, recalcularConDescuentos } from '../descuentosPedido';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
 import { acreditarRecargaStripe } from '../internacional/recargas';
 import {
@@ -205,7 +206,8 @@ export async function calcularSinPlato(
     : lineas.filter((l) => l.platoId !== platoId);
   // C-TARIFAS-PAIS: se recalcula con las tarifas que se aplicaron al pedido, no con las de hoy.
   const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
-  if (!nuevas.length) return { nuevas, desglose: null, devolucion: Number(f.total) };
+  if (!nuevas.length)
+    return { nuevas, desglose: null, descuentos: null, devolucion: Number(f.total) };
   const subtotal = nuevas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   // C-FALLOS-DINERO (F8): un pedido para recoger se cobró sin envío; se recalcula igual.
   const recogida =
@@ -218,7 +220,10 @@ export async function calcularSinPlato(
             .first(),
         );
   // C-PROMO-RESTAURANTE: se recalcula con la misma promoción con que se cobró (si sigue valiendo).
-  const desglose = calcularConPromocion(
+  // C-DESCUENTOS-RECALCULO (BRE-5c): y con el cupón, Plus y el saldo de regalo con que se cobró.
+  const descuentos = await recalcularConDescuentos(
+    db,
+    { id: String(f.id), cupon: f.cupon, descuento: f.descuento },
     {
       lineas: nuevas,
       plan: String(f.plan) as Plan,
@@ -230,7 +235,13 @@ export async function calcularSinPlato(
     },
     await promocionDelPedido(db, String(f.id)),
   );
-  return { nuevas, desglose, devolucion: Math.max(0, Number(f.total) - desglose.totalCliente) };
+  const desglose = descuentos.desglose;
+  return {
+    nuevas,
+    desglose,
+    descuentos,
+    devolucion: Math.max(0, Number(f.total) - desglose.totalCliente),
+  };
 }
 
 /**
@@ -258,7 +269,7 @@ export async function aplicarAjuste(
     decision === 'reemplazar' ? propuestasDe(f).find((x) => x.platoId === reemplazoId) : undefined;
   if (decision === 'reemplazar' && !reemplazo)
     throw new ErrorDatos('Elige uno de los reemplazos que te propuso la tienda.', 'platoId', 409);
-  const { nuevas, desglose, devolucion } = await calcularSinPlato(
+  const { nuevas, desglose, descuentos, devolucion } = await calcularSinPlato(
     db,
     f,
     String(f.aj_plato),
@@ -302,7 +313,7 @@ export async function aplicarAjuste(
   await db.batch([
     db
       .prepare(
-        'UPDATE pedidos SET lineas_json = ?, subtotal = ?, envio = ?, servicio = ?, cargo_pequeno = ?, propina = ?, total = ?, comision = ?, pago_restaurante = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+        'UPDATE pedidos SET lineas_json = ?, subtotal = ?, envio = ?, servicio = ?, cargo_pequeno = ?, propina = ?, total = ?, descuento = ?, impuesto = ?, comision = ?, pago_restaurante = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
       )
       .bind(
         JSON.stringify(nuevas),
@@ -312,6 +323,8 @@ export async function aplicarAjuste(
         desglose.cargoPedidoPequeno,
         desglose.propina,
         desglose.totalCliente,
+        desglose.descuento,
+        desglose.impuesto,
         desglose.comisionRestaurante,
         desglose.pagoRestaurante,
         desglose.pagoRepartidor,
@@ -327,6 +340,7 @@ export async function aplicarAjuste(
     db
       .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
       .bind(desglose.descuentoRestaurante, pedidoId),
+    ...(descuentos ? guardarDescuentos(db, pedidoId, descuentos) : []),
   ]);
   await anotarEvento(
     db,
@@ -1633,7 +1647,10 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
   const lineas = lineasDe(f);
   const promo = await promocionDelPedido(db, id);
-  const desglose = calcularConPromocion(
+  // C-DESCUENTOS-RECALCULO (BRE-5c): el cupón, Plus y el saldo de regalo siguen al mudarse.
+  const descuentos = await recalcularConDescuentos(
+    db,
+    { id, cupon: f.cupon, descuento: f.descuento },
     {
       lineas,
       plan: String(f.plan) as Plan,
@@ -1644,6 +1661,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     },
     promo,
   );
+  const desglose = descuentos.desglose;
   const nuevoTotal = desglose.totalCliente;
   if (nuevoTotal !== Number(f.total) && !d.aceptarTotal)
     return c.json(
@@ -1677,7 +1695,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   }
   await db
     .prepare(
-      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ? WHERE id = ?',
+      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, descuento = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ? WHERE id = ?',
     )
     .bind(
       d.direccion,
@@ -1688,6 +1706,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       desglose.envio,
       desglose.servicio,
       nuevoTotal,
+      desglose.descuento,
       desglose.pagoRepartidor,
       desglose.complementoRepartidor,
       desglose.gananciaPlataforma,
@@ -1695,6 +1714,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       id,
     )
     .run();
+  await db.batch(guardarDescuentos(db, id, descuentos));
   // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.
   if (promo)
     await db

@@ -85,6 +85,8 @@ export default defineConfig({
             // C-PROMO-RESTAURANTE (BRE-5): la promoción que paga el restaurante.
             'promociones.ts',
             'rutas/promociones.ts',
+            // C-DESCUENTOS-RECALCULO (BRE-5c): cupón, Plus y regalo en los recálculos del pedido.
+            'descuentosPedido.ts',
           ].map((f) => [`apps/servidor/src/${f}`, { lines: 90 }]),
         ),
         // C-PROMO-RESTAURANTE (BRE-5): el reparto del pedido y la promoción, al 90 % de líneas.
