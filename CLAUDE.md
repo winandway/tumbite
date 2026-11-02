@@ -3,6 +3,17 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## LA PÁGINA DE PROGRESO SE ACTUALIZA CON CADA TRABAJO Y SU LINK VA AL PIE (REGLA PRINCIPAL, Richard, 1 nov 2026)
+
+> Sus palabras: _«en vez de actualizar un archivo MD para mí, me actualices un link que yo y mi equipo veamos cada actualización… con barras de proceso… y que cuando yo haga del lado mío lo que tenga que hacer, pueda ponerle que ya fue hecho… de manera que usted las pueda leer»_.
+
+- **La página:** https://divoox-progreso.sitios.dev (sitio `divoox-progreso` de YaDominios Cloud, conectado a la rama `progreso-sitio`, que solo lleva la carpeta `progreso/`).
+- **Antes de cada respuesta a Richard** se leen sus marcas: `bash scripts/progreso/leer-marcas.sh`. Lo que marcó como hecho se comprueba en su fuente, se quita de «Esperando por ti» y se dice qué se destrabó.
+- **Después de cada trabajo** se edita `progreso/datos.json` (fecha `actualizado`, `ahora`, `proximo`, `esperando`, avance de `partes` y `etapas`, una entrada nueva arriba en `bitacora`, `incidencias`), se hace commit y se publica con `bash scripts/progreso/publicar.sh`.
+- **El link va al pie de cada respuesta a Richard**, solo, en su propio bloque copiable (es la excepción a la regla del podcast: él lo pidió).
+- Los puntos de `esperando` usan un `id` fijo (minúsculas y guiones): su marca se guarda con ese id. No cambiar un id ya publicado.
+- **Nada privado en la página** (el repositorio es público): ni claves, ni el EIN, ni la dirección del superadmin, ni datos de clientes. La clave del equipo para marcar está en `~/.config/tumbite/progreso-clave`; en el repo solo va su huella.
+
 ## LA FÁBRICA: FILA.md ES EL RUMBO Y LA SESIÓN NO SE PARA (Richard, 29 oct 2026)
 
 - `FILA.md` es la única lista de trabajo de la IA, en orden. Se ejecuta punto por punto sin cerrar el turno.
