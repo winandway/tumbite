@@ -1,10 +1,10 @@
 # Divoox
 
-> Divoox is a food delivery app by Windoce LLC (Florida, United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It starts in Miami and opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact and franchises: go@windoce.com.
+> Divoox is a delivery startup by Windoce, LLC, a Delaware company with offices in Novi, Michigan (United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: https://divoox.com/contact.
 
 ## Main pages
 
-- [Divoox · Food delivery in Miami](https://divoox.com/): Your favorite Miami restaurants, with drivers who truly earn.
+- [Divoox · Food, stores and packages delivered](https://divoox.com/): Your favorite Miami restaurants, with drivers who truly earn.
 - [How Divoox works](https://divoox.com/how-it-works): Divoox is a delivery startup: an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so a
 
 ## Guides (Docs)
@@ -64,6 +64,7 @@
 - [The restaurant app: orders, timing, the pickup code, and your menu · Divoox](https://divoox.com/docs/restaurants/restaurant-app): From the counter phone or tablet: the alarm tells you about every new order, you accept it with its prep time, follow each one in the kitchen, show the cod
 - [Ready to open: what you need before taking orders · Divoox](https://divoox.com/docs/restaurants/activation-checklist): Before turning on “Taking orders,” your restaurant needs a phone number, an address with a pin, hours, and at least one dish with a price. The checklist te
 - [The suggested time when accepting, and “Busy kitchen” · Divoox](https://divoox.com/docs/restaurants/busy-kitchen-and-suggested-time): When you accept an order, the first button (in green) is the suggested time: your kitchen’s real average. If you’re slammed, “Busy kitchen” adds 10 or 20 m
+- [Who pays me and when does it arrive? · Divoox](https://divoox.com/docs/restaurants/who-pays-me): If you’re a restaurant or a driver in the United States, your payouts are made by Stripe Connect, the payments platform behind many large apps. You connect
 - [If a payout to your bank fails · Divoox](https://divoox.com/docs/restaurants/payout-failed): If the bank rejects a deposit, we let you know in the app and by email, and the money stays in your Divoox balance. Check your bank details under “Wallet” 
 - [Pickup orders and 21+ items · Divoox](https://divoox.com/docs/restaurants/pickup-orders-and-age-restricted-items): A pickup order has no driver: you hand it over at the counter with the customer’s PIN and pay only a 5% commission. 21+ items are flagged in the menu and a
 - [Your hours: open and close on their own · Divoox](https://divoox.com/docs/restaurants/hours): Set your shifts per day and Divoox opens and closes your restaurant at those times. Outside of them customers see when you open.
@@ -206,14 +207,15 @@
 ## Legal and support
 
 - [Privacy Policy · Divoox](https://divoox.com/privacy): This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to
-- [Terms of Service · Divoox](https://divoox.com/terms): These terms are an agreement between you and Windoce LLC for using Divoox. By creating an account or placing an order you accept them. Restaurants and driv
+- [Terms of Service · Divoox](https://divoox.com/terms): These terms are an agreement between you and Windoce, LLC for using Divoox. By creating an account or placing an order you accept them. Restaurants and dri
 - [Restaurant Terms · Divoox](https://divoox.com/restaurant-terms): These terms add to the Terms of Service and apply to businesses selling on Divoox. By registering your restaurant you accept them on behalf of the business
 - [Driver Terms · Divoox](https://divoox.com/driver-terms): These terms add to the Terms of Service and apply to anyone delivering with Divoox Driver. By creating a driver account you accept them.
-- [Delete your Divoox account](https://divoox.com/delete-account): Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by Windoce LLC. You don’t need the app installed.
+- [Delete your Divoox account](https://divoox.com/delete-account): Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by Windoce, LLC. You don’t need the app installed.
 - [Support · Divoox](https://divoox.com/support): Last updated: October 18, 2026
+- [Contact · Divoox](https://divoox.com/contact): Divoox is a delivery startup: food, stores and packages in one app.
 
 ## En español
 
 Every page above also exists in Spanish under https://divoox.com/es (for example https://divoox.com/es/how-it-works).
-- [Divoox · Comida a domicilio en Miami](https://divoox.com/es): Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.
+- [Divoox · Comida, tiendas y paquetes a domicilio](https://divoox.com/es): Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.
 - [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una startup de reparto: una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) he

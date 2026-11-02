@@ -12,6 +12,7 @@
   <url><loc>https://divoox.com/driver-terms</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/delete-account</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/support</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/contact</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/docs</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/how-to</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/courses</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
@@ -67,6 +68,7 @@
   <url><loc>https://divoox.com/docs/restaurants/restaurant-app</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/activation-checklist</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/busy-kitchen-and-suggested-time</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/restaurants/who-pays-me</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/payout-failed</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/pickup-orders-and-age-restricted-items</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/hours</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
@@ -208,6 +210,7 @@
   <url><loc>https://divoox.com/es/driver-terms</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/delete-account</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/support</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/es/contact</loc><lastmod>2026-11-02</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/docs</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/how-to</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/courses</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
@@ -263,6 +266,7 @@
   <url><loc>https://divoox.com/es/docs/restaurants/restaurant-app</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/activation-checklist</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/busy-kitchen-and-suggested-time</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/restaurants/who-pays-me</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/payout-failed</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/pickup-orders-and-age-restricted-items</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/hours</loc><lastmod>2026-11-02</lastmod><priority>0.7</priority></url>
