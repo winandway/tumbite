@@ -2493,3 +2493,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real:** GitHub no deja cambiar `GITHUB_SHA` en un paso (el `env: GITHUB_SHA:` de `publicar.yml` no hace nada); en un `workflow_run` vale la punta de main. La punta era un cambio `[skip ci]` posterior (5960912), y el panel (`apps/panel/vite.config.ts`) grababa ese commit en `<meta name="version">` en vez del verificado. El servidor y las apps ya usaban `VERSION` primero.
 - **Arreglo:** `vite.config.ts` usa `process.env.VERSION || process.env.GITHUB_SHA || 'local'` (VERSION es la versión verificada, puesta a nivel del trabajo).
 - **Prueba:** «C-VERSION-PANEL» en `apps/servidor/src/version.test.ts` (en rojo sin el arreglo).
+
+## C-ICONOS-TRANSPARENTES — la barra de abajo del cliente salía con cuadros grises (2 nov 2026) — todos los países
+
+- **Qué se veía:** en la app del cliente (web y iPhone, desde UX-3), los cuatro íconos de la barra de abajo eran cuadros grises y uno rojo.
+- **Causa real:** UX-3 los pinta con `tintColor`, y los PNG `apps/cliente/assets/inicio/nav-*.png` tenían fondo blanco opaco: se pintaba el cuadro entero.
+- **Arreglo:** los cuatro PNG ahora tienen fondo transparente (el trazo oscuro pasó a ser la opacidad).
+- **Prueba:** `packages/compartido/src/iconosTransparentes.test.ts` revisa las esquinas de todos los íconos que se pintan (en rojo con los PNG viejos).
